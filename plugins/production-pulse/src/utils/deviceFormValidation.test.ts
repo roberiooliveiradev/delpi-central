@@ -66,7 +66,8 @@ describe("deviceFormValidation", () => {
       },
       DEFAULT_BINDING_VALUES,
     );
-    expect(errors.pollIntervalSeconds).toBeTruthy();
+    expect(errors.pollIntervalSeconds).toContain("0.5");
+    expect(errors.pollIntervalSeconds).toContain("300");
   });
 
   it("formats probe metrics", () => {

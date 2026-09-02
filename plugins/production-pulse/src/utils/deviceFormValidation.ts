@@ -1,23 +1,19 @@
 import type { AnchorType, BindingFormValues, DeviceFormValues } from "../types/form";
-
-const IPV4_RE =
-  /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/;
+import {
+  clampPollInterval,
+  formatValidationMessage,
+  NAME_MAX_LENGTH,
+  POLL_INTERVAL_MAX_SECONDS,
+  POLL_INTERVAL_MIN_SECONDS,
+  validateIpv4,
+} from "../content/deviceValidationContent";
 
 export type DeviceFormErrors = Partial<Record<keyof DeviceFormValues, string>> & {
   binding?: Partial<Record<keyof BindingFormValues, string>>;
   form?: string;
 };
 
-export function validateIpv4(value: string): boolean {
-  return IPV4_RE.test(value.trim());
-}
-
-export const POLL_INTERVAL_MIN_SECONDS = 0.5;
-export const POLL_INTERVAL_MAX_SECONDS = 300;
-
-export function clampPollInterval(value: number): number {
-  return Math.min(POLL_INTERVAL_MAX_SECONDS, Math.max(POLL_INTERVAL_MIN_SECONDS, value));
-}
+export { clampPollInterval, POLL_INTERVAL_MAX_SECONDS, POLL_INTERVAL_MIN_SECONDS, validateIpv4 };
 
 export function validateDeviceForm(
   device: DeviceFormValues,
@@ -27,24 +23,32 @@ export function validateDeviceForm(
   const errors: DeviceFormErrors = {};
 
   const name = device.name.trim();
-  if (!name) errors.name = "Nome é obrigatório.";
-  else if (name.length > 120) errors.name = "Nome deve ter no máximo 120 caracteres.";
+  if (!name) errors.name = formatValidationMessage("name_required");
+  else if (name.length > NAME_MAX_LENGTH) {
+    errors.name = formatValidationMessage("name_too_long");
+  }
 
-  if (!device.branch) errors.branch = "Filial é obrigatória.";
+  if (!device.branch) errors.branch = formatValidationMessage("branch_required");
 
   const ip = device.ipAddress.trim();
-  if (!ip) errors.ipAddress = "Endereço IP é obrigatório.";
-  else if (!validateIpv4(ip)) errors.ipAddress = "IP inválido.";
+  if (!ip) errors.ipAddress = formatValidationMessage("ip_address_required");
+  else if (!validateIpv4(ip)) errors.ipAddress = formatValidationMessage("invalid_ipv4");
 
-  if (!device.driverKey.trim()) errors.driverKey = "Driver é obrigatório.";
+  if (!device.driverKey.trim()) errors.driverKey = formatValidationMessage("driver_key_required");
 
   if (!Number.isFinite(device.pollIntervalSeconds)) {
-    errors.pollIntervalSeconds = "Intervalo inválido.";
+    errors.pollIntervalSeconds = formatValidationMessage("poll_interval_out_of_range", {
+      min: POLL_INTERVAL_MIN_SECONDS,
+      max: POLL_INTERVAL_MAX_SECONDS,
+    });
   } else if (
     device.pollIntervalSeconds < POLL_INTERVAL_MIN_SECONDS ||
     device.pollIntervalSeconds > POLL_INTERVAL_MAX_SECONDS
   ) {
-    errors.pollIntervalSeconds = "Intervalo deve estar entre 0,5 e 300 segundos.";
+    errors.pollIntervalSeconds = formatValidationMessage("poll_interval_out_of_range", {
+      min: POLL_INTERVAL_MIN_SECONDS,
+      max: POLL_INTERVAL_MAX_SECONDS,
+    });
   }
 
   const bindingErrors = validateBindingForm(binding, options.requireBinding);
@@ -67,14 +71,20 @@ export function validateBindingForm(
 
   if (binding.anchorType === "work_center") {
     if (!binding.workCenterCode.trim()) {
-      errors.workCenterCode = "Centro de trabalho é obrigatório para posto PCP.";
+      errors.workCenterCode = formatValidationMessage("work_center_code_required");
     }
   } else if (binding.anchorType === "machine") {
-    if (!binding.machineLabel.trim()) errors.machineLabel = "Nome da máquina é obrigatório.";
+    if (!binding.machineLabel.trim()) {
+      errors.machineLabel = formatValidationMessage("machine_label_required");
+    }
   } else if (binding.anchorType === "equipment") {
-    if (!binding.equipmentLabel.trim()) errors.equipmentLabel = "Nome do equipamento é obrigatório.";
+    if (!binding.equipmentLabel.trim()) {
+      errors.equipmentLabel = formatValidationMessage("equipment_label_required");
+    }
   } else if (binding.anchorType === "area") {
-    if (!binding.areaLabel.trim()) errors.areaLabel = "Nome da área é obrigatório.";
+    if (!binding.areaLabel.trim()) {
+      errors.areaLabel = formatValidationMessage("area_label_required");
+    }
   }
 
   return errors;

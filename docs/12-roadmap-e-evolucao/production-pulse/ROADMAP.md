@@ -18,7 +18,7 @@
 | E6.S1 — Docs + smoke | ✅ Feito | `check-production-pulse.sh` 8/8 OK |
 | **E6.S2 — Verify live ESP piloto** | ⏳ **Pendente** | WSL não alcança `192.168.20.2`; checklist UI §3–5 |
 | P1 (gauge, KPI delta, reset HW, thresholds) | ✅ Feito | commits em `main` pós-MVP |
-| **E7 — Alinhamento `.cursor` (conteúdo + kit)** | 🔄 **Em curso** | E7.S0–S2 ✅ em `main`; E7.S3–S5 pendentes |
+| **E7 — Alinhamento `.cursor` (conteúdo + kit)** | 🔄 **Em curso** | E7.S0–S3 ✅ em `main`; E7.S4–S5 pendentes |
 
 Smoke dev: `bash ./scripts/homologacao/check-production-pulse.sh`  
 Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-production-pulse.sh` — ver [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md).
@@ -28,6 +28,8 @@ Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts
 **E7.S1 entregue (set/2026):** `commandErrors` + `validationErrors` no JSON; `ContentCodedError`; comandos/validação HTTP via loader; drivers retornam `error_code` — commit `1c91f052d`.
 
 **E7.S2 entregue (set/2026):** `DeviceDriverError` code-first; HTTP compartilhado em `device_http_support`; `last_error` grava código; mensagem PT só no boundary JSON — commit `d7e6675fa`.
+
+**E7.S3 entregue (set/2026):** `device_validation_content.json` + loader API; MFE `deviceValidationContent.ts` com sync test; formulário consome limites/regex/mensagens do JSON — commit pendente desta entrega.
 
 ---
 
@@ -369,9 +371,10 @@ flowchart LR
 - **Pronto quando:** grep zero strings PT com pontuação em `infrastructure/drivers/` (exceto comentários)
 - **Commit:** `refactor(production-pulse): drivers LAN emitem códigos canônicos sem copy PT`
 
-#### E7.S3 — Validação form API ↔ MFE (content compartilhado)
+#### E7.S3 — Validação form API ↔ MFE (content compartilhado) ✅
 
 - **Objetivo:** Regex IPv4, limites poll 0.5–300 e labels de erro idênticos API e MFE via JSON.
+- **Status:** ✅ `main` — após commit desta entrega.
 - **Fazer:**
   1. Criar `device_validation_content.json` (+ loader API)
   2. Refatorar `device_validation_service.py` — limites/regex do JSON
@@ -411,7 +414,7 @@ flowchart LR
 - [x] E7.S0 — poll/live/test-probe/404/409 no catálogo JSON; MFE device vs infra
 - [x] E7.S1 — comandos + validação HTTP no JSON
 - [x] E7.S2 — drivers sem copy PT ao usuário
-- [ ] E7.S3 — form validation content sync API/MFE
+- [x] E7.S3 — form validation content sync API/MFE
 - [ ] E7.S4 — modais host-contained
 - [ ] E7.S5 — zero override `.delpi-ui-*` no MFE
 

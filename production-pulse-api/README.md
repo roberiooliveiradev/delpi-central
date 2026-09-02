@@ -76,8 +76,9 @@ Envelope: `{ "success", "message", "data" }`.
 |---------|-----|
 | `production_pulse_app/content/device_drivers.json` | Registry de drivers, métricas e comandos |
 | `production_pulse_app/content/device_api_messages.json` | Mensagens PT de erro HTTP (`deviceConnectivity`, `httpErrors`, `commandErrors`, `validationErrors`) + códigos canônicos |
+| `production_pulse_app/content/device_validation_content.json` | Limites e regex de validação de cadastro (poll, IPv4, filiais) |
 
-Loader: `device_api_messages_content_service.py`. O MFE espelha **somente** `deviceConnectivity.codes` em `plugins/production-pulse/src/content/deviceApiMessages.ts` — textos vêm do `error.message` da API.
+Loader: `device_api_messages_content_service.py`, `device_validation_content_service.py`. O MFE espelha `deviceConnectivity.codes` em `deviceApiMessages.ts` e copia `device_validation_content.json` + mensagens de `validationErrors` em `deviceValidationContent.ts` — ver testes sync em `deviceApiMessages.test.ts` e `deviceValidationContent.test.ts`.
 
 ## Stack
 

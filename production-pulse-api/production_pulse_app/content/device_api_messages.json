@@ -34,6 +34,7 @@
     "invalid_branch": "A filial deve ser 01 ou 02.",
     "poll_interval_out_of_range": "O intervalo de leitura deve estar entre {min} e {max} segundos.",
     "ip_address_required": "Informe o endereço IP do dispositivo.",
+    "invalid_ipv4": "Informe um endereço IPv4 válido.",
     "name_required": "Informe o nome do dispositivo.",
     "name_too_long": "O nome do dispositivo deve ter no máximo 120 caracteres.",
     "driver_key_required": "Selecione o driver (protocolo) do dispositivo.",
