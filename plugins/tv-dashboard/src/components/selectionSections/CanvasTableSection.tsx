@@ -47,6 +47,7 @@ import {
   clearCanvasTableSelectionFormats,
   deleteCanvasTableBand,
   insertCanvasTableBand,
+  patchCanvasTableBorderColor,
   patchCanvasTableCellsStyle,
 } from "../../utils/canvasTableSelectionCommands";
 import { CanvasTableCellFormatMenu } from "../CanvasTableCellFormatMenu";
@@ -54,6 +55,7 @@ import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
 import { DeckRibbonTilePopover } from "../deck/DeckRibbonTilePopover";
+import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { TdRibbonSelect } from "../tdRibbonUi";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
@@ -450,6 +452,18 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
           active={opts.borderStyle === "none"}
           onClick={() => patchOptions({ borderStyle: "none" })}
         />
+      </div>
+      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
+        {opts.borderStyle !== "none" ? (
+          <TvRibbonColorPicker
+            label="Cor das bordas"
+            variant="outline"
+            value={table.style?.borderColor}
+            onChange={(color) =>
+              updateSelected(patchCanvasTableBorderColor({ block: table, color }))
+            }
+          />
+        ) : null}
       </div>
     </>
   );

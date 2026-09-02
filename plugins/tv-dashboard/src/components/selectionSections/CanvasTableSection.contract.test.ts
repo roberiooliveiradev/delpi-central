@@ -17,6 +17,7 @@ describe("CanvasTableSection chrome (plugin-ui + ícones)", () => {
     expect(source).toContain("DeckRibbonTile");
     expect(source).toContain("ComboboxNumberControl");
     expect(source).toContain("ToolbarSelectField");
+    expect(source).toContain("TvRibbonColorPicker");
     expect(source).toContain("TdRibbonSelect");
     expect(source).toContain("Heading2");
     expect(source).toContain("Grid3x3");

@@ -24,6 +24,7 @@ import {
   applyCanvasTableMergeToBlock,
   deleteCanvasTableBand,
   insertCanvasTableBand,
+  patchCanvasTableBorderColor,
   patchCanvasTableCellsStyle,
   type CanvasTableCellStylePatch,
 } from "../utils/canvasTableSelectionCommands";
@@ -239,6 +240,14 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
           <CanvasTableBlockStylesMenu
             options={block.canvasTableOptions}
             headerRow={Boolean(block.headerRow)}
+            borderColor={block.style?.borderColor}
+            onBorderColorChange={(color) => {
+              updateBlock(
+                block.id,
+                patchCanvasTableBorderColor({ block, color }),
+              );
+              close();
+            }}
             onToggleHeaderRow={() => {
               updateBlock(block.id, { headerRow: !block.headerRow });
               close();

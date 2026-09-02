@@ -5,6 +5,8 @@ import type {
 } from "@delpi/tv-dashboard-presentation";
 import { canvasTablePresetOptions, mergeCanvasTableOptions } from "@delpi/tv-dashboard-presentation";
 
+import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
+
 export type CanvasTableBlockStyleActionId =
   | "preset-grid"
   | "preset-minimal"
@@ -21,8 +23,10 @@ export type CanvasTableBlockStyleActionId =
 type Props = {
   options?: CanvasTableOptions | null;
   headerRow?: boolean;
+  borderColor?: string | null;
   onSelect: (actionId: CanvasTableBlockStyleActionId) => void;
   onToggleHeaderRow?: () => void;
+  onBorderColorChange?: (color: string) => void;
   footer?: ReactNode;
   className?: string;
 };
@@ -57,8 +61,10 @@ type Choice = {
 export function CanvasTableBlockStylesMenu({
   options,
   headerRow,
+  borderColor,
   onSelect,
   onToggleHeaderRow,
+  onBorderColorChange,
   footer,
   className,
 }: Props) {
@@ -147,6 +153,19 @@ export function CanvasTableBlockStylesMenu({
       ) : null}
       {renderSection("Cabeçalho", headers)}
       {renderSection("Bordas", borders)}
+      {onBorderColorChange && opts.borderStyle !== "none" ? (
+        <section className="td-chart-style-menu__section">
+          <h4>Cor das bordas</h4>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
+            <TvRibbonColorPicker
+              label="Cor das bordas"
+              variant="outline"
+              value={borderColor ?? undefined}
+              onChange={onBorderColorChange}
+            />
+          </div>
+        </section>
+      ) : null}
       {footer ? <div className="td-chart-style-menu__footer">{footer}</div> : null}
     </div>
   );
