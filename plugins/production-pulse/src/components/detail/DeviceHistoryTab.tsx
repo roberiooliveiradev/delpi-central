@@ -37,6 +37,7 @@ import {
   resolveChartTickGranularity,
   resolveDefaultHistoryPreset,
   resolveHistoryChartPageSize,
+  resolveHistoryChartSampleIntervalMs,
   type HistoryRangePreset,
 } from "../../utils/historyTimeRange";
 import { ReadingHardwareResetBadge } from "./ReadingHardwareResetBadge";
@@ -135,6 +136,11 @@ export function DeviceHistoryTab({ device, refreshToken = 0 }: DeviceHistoryTabP
     const from = appliedFrom || undefined;
     const to = appliedTo || undefined;
     const chartPageSize = resolveHistoryChartPageSize(from, to, device.pollIntervalMs);
+    const sampleIntervalMs = resolveHistoryChartSampleIntervalMs(
+      from,
+      to,
+      device.pollIntervalMs,
+    );
 
     Promise.all([
       fetchDeviceReadings(device.id, {
@@ -151,6 +157,7 @@ export function DeviceHistoryTab({ device, refreshToken = 0 }: DeviceHistoryTabP
         from,
         to,
         metric: metricKey ?? undefined,
+        sampleIntervalMs,
         signal: controller.signal,
       }),
     ])

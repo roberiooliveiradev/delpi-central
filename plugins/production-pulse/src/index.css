@@ -462,6 +462,15 @@
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
 
+/* Card do painel não é navegável — detalhe só via botão «Ver detalhe». */
+.dashboard-production-pulse .pp-data-record-card {
+  cursor: default;
+}
+
+.dashboard-production-pulse a.pp-data-record-card {
+  cursor: pointer;
+}
+
 .pp-device-card-actions {
   display: flex;
   flex-wrap: wrap;

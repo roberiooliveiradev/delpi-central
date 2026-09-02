@@ -25,6 +25,15 @@ function pad2(value: number): string {
   return String(value).padStart(2, "0");
 }
 
+function resolveSpanMs(fromIso: string | undefined, toIso: string | undefined): number {
+  const fromMs = fromIso ? new Date(fromIso).getTime() : NaN;
+  const toMs = toIso ? new Date(toIso).getTime() : Date.now();
+  if (Number.isFinite(fromMs) && Number.isFinite(toMs) && toMs >= fromMs) {
+    return Math.max(toMs - fromMs, 1);
+  }
+  return 60 * 60_000;
+}
+
 /** Valor para o filtro datetime-local no fuso local. */
 export function toDatetimeLocalValue(date: Date): string {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
@@ -64,21 +73,18 @@ export function boundsForHistoryPreset(
   return { fromIso: from.toISOString(), toIso: to.toISOString() };
 }
 
+/**
+ * Granularidade do eixo X pelo **intervalo exibido** (não pelo poll).
+ * Poll rápido não deve forçar segundos em janelas de horas/dias.
+ */
 export function resolveChartTickGranularity(
   fromIso: string | undefined,
   toIso: string | undefined,
-  pollIntervalMs: number,
+  _pollIntervalMs?: number,
 ): ChartTickGranularity {
-  const fromMs = fromIso ? new Date(fromIso).getTime() : NaN;
-  const toMs = toIso ? new Date(toIso).getTime() : Date.now();
-  const spanMs =
-    Number.isFinite(fromMs) && Number.isFinite(toMs) && toMs >= fromMs
-      ? toMs - fromMs
-      : 60 * 60_000;
-  const poll = Number.isFinite(pollIntervalMs) && pollIntervalMs > 0 ? pollIntervalMs : 1000;
-
-  if (spanMs <= 5 * 60_000 || poll < 2000) return "second";
-  if (spanMs <= 24 * 60 * 60_000) return "minute";
+  const spanMs = resolveSpanMs(fromIso, toIso);
+  if (spanMs <= 5 * 60_000) return "second";
+  if (spanMs <= 6 * 60 * 60_000) return "minute";
   if (spanMs <= 7 * 24 * 60 * 60_000) return "hour";
   return "day";
 }
@@ -119,15 +125,30 @@ export function resolveHistoryChartPageSize(
   toIso: string | undefined,
   pollIntervalMs: number,
 ): number {
-  const fromMs = fromIso ? new Date(fromIso).getTime() : NaN;
-  const toMs = toIso ? new Date(toIso).getTime() : Date.now();
-  const spanMs =
-    Number.isFinite(fromMs) && Number.isFinite(toMs) && toMs >= fromMs
-      ? Math.max(toMs - fromMs, 1)
-      : 60 * 60_000;
+  const spanMs = resolveSpanMs(fromIso, toIso);
   const poll = Number.isFinite(pollIntervalMs) && pollIntervalMs > 0 ? pollIntervalMs : 1000;
   const expected = Math.ceil(spanMs / poll) + 4;
   return Math.min(HISTORY_CHART_PAGE_SIZE_MAX, Math.max(48, expected));
+}
+
+/**
+ * Intervalo de amostragem uniforme no servidor quando o período tem mais leituras
+ * do que o pageSize do gráfico. Sem isso, o LIMIT pega só o fim da janela.
+ */
+export function resolveHistoryChartSampleIntervalMs(
+  fromIso: string | undefined,
+  toIso: string | undefined,
+  pollIntervalMs: number,
+  targetPoints: number = CHART_TARGET_POINTS,
+): number | undefined {
+  const spanMs = resolveSpanMs(fromIso, toIso);
+  const poll = Number.isFinite(pollIntervalMs) && pollIntervalMs > 0 ? pollIntervalMs : 1000;
+  const expectedRaw = Math.ceil(spanMs / poll);
+  if (expectedRaw <= HISTORY_CHART_PAGE_SIZE_MAX) {
+    return undefined;
+  }
+  const points = Math.max(8, Math.min(targetPoints, HISTORY_CHART_PAGE_SIZE_MAX));
+  return Math.max(poll, Math.ceil(spanMs / points));
 }
 
 /** Reduz pontos densos mantendo início/fim e passo uniforme. */

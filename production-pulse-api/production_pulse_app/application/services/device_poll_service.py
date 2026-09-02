@@ -333,10 +333,14 @@ class DevicePollService:
         recorded_from: datetime | None = None,
         recorded_to: datetime | None = None,
         metric_key: str | None = None,
+        sample_interval_ms: int | None = None,
     ) -> dict[str, Any]:
         self._require_device(device_id)
         page = max(1, page)
         page_size = min(max(1, page_size), 500)
+        interval: int | None = None
+        if sample_interval_ms is not None:
+            interval = min(max(int(sample_interval_ms), 100), 86_400_000)
         rows, total = self._readings.list_for_device(
             device_id,
             page=page,
@@ -344,6 +348,7 @@ class DevicePollService:
             recorded_from=recorded_from,
             recorded_to=recorded_to,
             metric_key=metric_key,
+            sample_interval_ms=interval,
         )
         return {
             "items": [json_safe(reading_row_to_api(row)) for row in rows],

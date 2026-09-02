@@ -85,6 +85,7 @@ class PostgresDeviceReadingRepository:
         recorded_from: datetime | None = None,
         recorded_to: datetime | None = None,
         metric_key: str | None = None,
+        sample_interval_ms: int | None = None,
     ) -> tuple[list[dict[str, Any]], int]:
         clauses = ["device_id = %s"]
         params: list[Any] = [device_id]
@@ -101,6 +102,11 @@ class PostgresDeviceReadingRepository:
 
         where_sql = " AND ".join(clauses)
         offset = (page - 1) * page_size
+        interval_ms = (
+            int(sample_interval_ms)
+            if sample_interval_ms is not None and int(sample_interval_ms) > 0
+            else None
+        )
 
         with plugins_connection() as conn:
             with conn.cursor() as cur:
@@ -109,16 +115,49 @@ class PostgresDeviceReadingRepository:
                     params,
                 )
                 total = int(cur.fetchone()["total"])
-                cur.execute(
-                    f"""
-                    SELECT {_READING_COLUMNS}
-                    FROM production_pulse.readings
-                    WHERE {where_sql}
-                    ORDER BY recorded_at DESC, id DESC
-                    LIMIT %s OFFSET %s
-                    """,
-                    [*params, page_size, offset],
-                )
+                if interval_ms is None:
+                    cur.execute(
+                        f"""
+                        SELECT {_READING_COLUMNS}
+                        FROM production_pulse.readings
+                        WHERE {where_sql}
+                        ORDER BY recorded_at DESC, id DESC
+                        LIMIT %s OFFSET %s
+                        """,
+                        [*params, page_size, offset],
+                    )
+                else:
+                    # Uma leitura por bucket temporal — cobre o intervalo inteiro no gráfico.
+                    cur.execute(
+                        f"""
+                        WITH filtered AS (
+                            SELECT {_READING_COLUMNS},
+                                   FLOOR(
+                                       EXTRACT(EPOCH FROM recorded_at) * 1000 / %s
+                                   )::bigint AS sample_bucket
+                            FROM production_pulse.readings
+                            WHERE {where_sql}
+                        ),
+                        ranked AS (
+                            SELECT
+                                id, device_id, metrics, delta_metrics, meta, source,
+                                recorded_at, created_at,
+                                ROW_NUMBER() OVER (
+                                    PARTITION BY sample_bucket
+                                    ORDER BY recorded_at DESC, id DESC
+                                ) AS rn
+                            FROM filtered
+                        )
+                        SELECT
+                            id, device_id, metrics, delta_metrics, meta, source,
+                            recorded_at, created_at
+                        FROM ranked
+                        WHERE rn = 1
+                        ORDER BY recorded_at DESC, id DESC
+                        LIMIT %s OFFSET %s
+                        """,
+                        [interval_ms, *params, page_size, offset],
+                    )
                 rows = list(cur.fetchall())
         return rows, total
 

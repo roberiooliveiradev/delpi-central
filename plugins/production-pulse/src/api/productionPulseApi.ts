@@ -181,6 +181,7 @@ export type FetchDeviceReadingsParams = {
   from?: string;
   to?: string;
   metric?: string;
+  sampleIntervalMs?: number;
   signal?: AbortSignal;
 };
 
@@ -194,6 +195,9 @@ export async function fetchDeviceReadings(
   if (params.from) searchParams.set("from", params.from);
   if (params.to) searchParams.set("to", params.to);
   if (params.metric) searchParams.set("metric", params.metric);
+  if (params.sampleIntervalMs != null && params.sampleIntervalMs > 0) {
+    searchParams.set("sampleIntervalMs", String(params.sampleIntervalMs));
+  }
   const suffix = searchParams.toString();
   const payload = await httpGet<ApiEnvelope<PaginatedItems<DeviceReading>>>(
     `${PRODUCTION_PULSE_API_BASE}/devices/${deviceId}/readings${suffix ? `?${suffix}` : ""}`,

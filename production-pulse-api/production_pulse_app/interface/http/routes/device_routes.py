@@ -284,6 +284,12 @@ async def list_device_readings(
     recorded_from: str | None = Query(default=None, alias="from"),
     recorded_to: str | None = Query(default=None, alias="to"),
     metric: str | None = Query(default=None),
+    sample_interval_ms: int | None = Query(
+        default=None,
+        ge=100,
+        le=86_400_000,
+        alias="sampleIntervalMs",
+    ),
 ):
     _, denied = _load_device_for_request(request, device_id, action="view")
     if denied is not None:
@@ -304,6 +310,7 @@ async def list_device_readings(
             recorded_from=_parse_dt(recorded_from),
             recorded_to=_parse_dt(recorded_to),
             metric_key=metric,
+            sample_interval_ms=sample_interval_ms,
         )
         return success(data)
     except Exception as exc:

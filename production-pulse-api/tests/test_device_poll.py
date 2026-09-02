@@ -303,3 +303,59 @@ def test_live_device_unreachable_returns_422(client, unique_ip, monkeypatch):
     response = client.get(f"/devices/{device['id']}/live")
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "network_error"
+
+
+def test_readings_sample_interval_covers_full_range(client, unique_ip):
+    from datetime import datetime, timedelta, timezone
+    from uuid import UUID
+
+    from production_pulse_app.infrastructure.persistence.repositories.postgres_device_reading_repository import (
+        PostgresDeviceReadingRepository,
+    )
+
+    device = _create_device(client, unique_ip)
+    repo = PostgresDeviceReadingRepository()
+    device_id = UUID(device["id"])
+    start = datetime(2026, 8, 26, 14, 0, tzinfo=timezone.utc)
+
+    for hour in range(0, 48):
+        repo.insert(
+            device_id,
+            metrics={"counter": hour},
+            delta_metrics={"counter": 1},
+            meta={},
+            source="poll",
+            recorded_at=start + timedelta(hours=hour),
+        )
+
+    dense = client.get(
+        f"/devices/{device['id']}/readings",
+        params={
+            "from": start.isoformat().replace("+00:00", "Z"),
+            "to": (start + timedelta(hours=47)).isoformat().replace("+00:00", "Z"),
+            "pageSize": 10,
+        },
+    )
+    assert dense.status_code == 200
+    dense_items = dense.json()["data"]["items"]
+    assert len(dense_items) == 10
+    # Sem sample: LIMIT pega só o final da janela (DESC).
+    dense_times = [item["recordedAt"] for item in dense_items]
+    assert all(t.startswith("2026-08-28") for t in dense_times)
+
+    sampled = client.get(
+        f"/devices/{device['id']}/readings",
+        params={
+            "from": start.isoformat().replace("+00:00", "Z"),
+            "to": (start + timedelta(hours=47)).isoformat().replace("+00:00", "Z"),
+            "pageSize": 10,
+            "sampleIntervalMs": 6 * 60 * 60 * 1000,
+        },
+    )
+    assert sampled.status_code == 200
+    sampled_items = sampled.json()["data"]["items"]
+    assert 2 <= len(sampled_items) <= 10
+    sampled_times = sorted(item["recordedAt"] for item in sampled_items)
+    assert sampled_times[0].startswith("2026-08-26")
+    assert sampled_times[-1].startswith("2026-08-28")
+    assert sampled.json()["data"]["pagination"]["total"] == 48

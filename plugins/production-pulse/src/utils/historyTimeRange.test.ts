@@ -9,6 +9,7 @@ import {
   resolveChartTickGranularity,
   resolveDefaultHistoryPreset,
   resolveHistoryChartPageSize,
+  resolveHistoryChartSampleIntervalMs,
   toDatetimeLocalValue,
 } from "./historyTimeRange";
 
@@ -35,7 +36,7 @@ describe("historyTimeRange", () => {
     expect(Number.isNaN(Date.parse(iso!))).toBe(false);
   });
 
-  it("adapta granularidade do eixo ao intervalo", () => {
+  it("adapta granularidade do eixo ao intervalo, independente do poll rápido", () => {
     expect(
       resolveChartTickGranularity(
         "2026-09-02T14:00:00.000Z",
@@ -47,16 +48,30 @@ describe("historyTimeRange", () => {
       resolveChartTickGranularity(
         "2026-09-02T10:00:00.000Z",
         "2026-09-02T14:00:00.000Z",
-        5000,
+        200,
       ),
     ).toBe("minute");
     expect(
       resolveChartTickGranularity(
-        "2026-08-28T14:00:00.000Z",
+        "2026-09-01T14:00:00.000Z",
         "2026-09-02T14:00:00.000Z",
-        60_000,
+        200,
       ),
     ).toBe("hour");
+    expect(
+      resolveChartTickGranularity(
+        "2026-08-26T14:00:00.000Z",
+        "2026-09-02T14:00:00.000Z",
+        200,
+      ),
+    ).toBe("hour");
+    expect(
+      resolveChartTickGranularity(
+        "2026-08-01T14:00:00.000Z",
+        "2026-09-02T14:00:00.000Z",
+        200,
+      ),
+    ).toBe("day");
   });
 
   it("formata ticks conforme granularidade", () => {
@@ -90,5 +105,23 @@ describe("historyTimeRange", () => {
 
     const labeled = applyAdaptiveChartLabels(reduced.slice(0, 2), "minute");
     expect(labeled[0]?.label).toMatch(/\d{2}:\d{2}/);
+  });
+
+  it("pede sampleIntervalMs só quando o período excede o pageSize do gráfico", () => {
+    expect(
+      resolveHistoryChartSampleIntervalMs(
+        "2026-09-02T14:00:00.000Z",
+        "2026-09-02T14:01:00.000Z",
+        200,
+      ),
+    ).toBeUndefined();
+
+    const sample = resolveHistoryChartSampleIntervalMs(
+      "2026-08-26T14:00:00.000Z",
+      "2026-09-02T14:00:00.000Z",
+      200,
+    );
+    expect(sample).toBeGreaterThan(200);
+    expect(sample).toBeGreaterThanOrEqual(Math.ceil((7 * 24 * 60 * 60_000) / 96));
   });
 });

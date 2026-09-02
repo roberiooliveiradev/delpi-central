@@ -57,7 +57,7 @@
 | `GET` | `/devices/{id}/live` | `devices.view` | Lê chip **sem** gravar reading; aplica continuity; status R9–R12 |
 | `POST` | `/devices/{id}/poll` | `devices.view` | Lê + persist reading + `last_metrics` (R14) ou falha R13 |
 | `POST` | `/devices/poll-all` | `devices.manage` | Poll em massa (só com binding); query `branch`, `role` |
-| `GET` | `/devices/{id}/readings` | `devices.view` | Histórico; query `from`, `to`, `metric`, `page`, `pageSize` (máx 500) |
+| `GET` | `/devices/{id}/readings` | `devices.view` | Histórico; query `from`, `to`, `metric`, `page`, `pageSize` (máx 500), `sampleIntervalMs` (R45) |
 
 **Poll OK (R14 + continuidade):**
 
@@ -181,6 +181,7 @@ Numeração estável. Implementação deve citar o id da regra em teste quando p
 | **R42** | Board do posto: só devices `operatorEligible` + binding; ordenação danger → warn → ok → offline. |
 | **R43** | Superfície UI escolhida por `capabilities.operatorSurface` — **proibido** ramificar por `driver_key` no MFE. |
 | **R44** | Novo medidor = entrada no registry + `DeviceDriver` + (se preciso) surface; **sem** rota CRUD nova. |
+| **R45** | Série do gráfico de histórico: quando o período tem mais leituras que o `pageSize`, o MFE envia `sampleIntervalMs` e a API devolve **uma leitura por bucket** cobrindo o intervalo inteiro — não só o fim da janela (LIMIT DESC). Tick do eixo X segue o **span** (não o poll). |
 
 ---
 
