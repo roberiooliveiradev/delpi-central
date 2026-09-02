@@ -63,7 +63,7 @@ export function DeviceOverviewTab({
           onPollNow={onPollNow}
           onReset={onReset}
         />
-        <DeviceBindingCard binding={device.binding} />
+        <DeviceBindingCard binding={device.binding} deviceName={device.name} />
       </div>
 
       <PpSectionCard title="Mini histórico (24h)" hint={PP_HELP.detail.chartDelta}>

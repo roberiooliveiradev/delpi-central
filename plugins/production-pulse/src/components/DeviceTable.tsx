@@ -6,11 +6,10 @@ import {
   formatCounterPeriodDelta,
   formatPrimaryMetric,
   formatRelativeTime,
-  placementLabel,
   roleLabel,
 } from "../utils/deviceDisplay";
 import { PpDataTable, type DataTableColumn } from "../app/productionPulseUi";
-import { AnchorTypeBadge } from "./AnchorTypeBadge";
+import { PlacementObjectDisplay } from "./PlacementObjectDisplay";
 import { DeviceStatusBadge } from "./DeviceStatusBadge";
 
 type DeviceTableProps = {
@@ -41,12 +40,7 @@ export function DeviceTable({
     {
       key: "placement",
       header: "Objeto",
-      render: (row) => (
-        <span className="pp-device-placement">
-          {placementLabel(row)}
-          {row.binding ? <AnchorTypeBadge anchorType={row.binding.anchorType} /> : null}
-        </span>
-      ),
+      render: (row) => <PlacementObjectDisplay device={row} />,
     },
     {
       key: "role",

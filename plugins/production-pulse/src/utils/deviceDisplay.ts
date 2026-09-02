@@ -1,4 +1,4 @@
-import type { DeviceListItem, DeviceStatus, DeviceSummary } from "../types/device";
+import type { DeviceBinding, DeviceListItem, DeviceStatus, DeviceSummary } from "../types/device";
 
 const ROLE_LABELS: Record<string, string> = {
   pulse_counter: "Contador",
@@ -85,10 +85,14 @@ export function formatCounterDeltaKpi(
 
 export function placementLabel(device: DeviceListItem): string {
   if (!device.binding) return "—";
-  if (device.binding.anchorType === "standalone") return "—";
-  const label = device.binding.placementLabel?.trim();
+  return bindingObjectLabel(device.binding, device.name);
+}
+
+export function bindingObjectLabel(binding: DeviceBinding, deviceName: string): string {
+  if (binding.anchorType === "standalone") return "—";
+  const label = binding.placementLabel?.trim();
   if (!label) return "—";
-  if (label === device.name.trim()) return "—";
+  if (label === deviceName.trim()) return "—";
   return label;
 }
 

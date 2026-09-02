@@ -1,13 +1,14 @@
 import type { DeviceBinding } from "../../types/device";
 import { PP_HELP } from "../../content/helpTooltips";
 import { PpSectionCard } from "../../app/productionPulseUi";
-import { anchorTypeLabel } from "../../utils/deviceDisplay";
+import { anchorTypeLabel, bindingObjectLabel } from "../../utils/deviceDisplay";
 
 type DeviceBindingCardProps = {
   binding: DeviceBinding | null;
+  deviceName: string;
 };
 
-export function DeviceBindingCard({ binding }: DeviceBindingCardProps) {
+export function DeviceBindingCard({ binding, deviceName }: DeviceBindingCardProps) {
   return (
     <PpSectionCard title="Amarração" hint={PP_HELP.detail.bindingCard}>
       {!binding ? (
@@ -16,7 +17,7 @@ export function DeviceBindingCard({ binding }: DeviceBindingCardProps) {
         <dl className="pp-detail-dl">
           <div>
             <dt>Local</dt>
-            <dd>{binding.placementLabel || "—"}</dd>
+            <dd>{bindingObjectLabel(binding, deviceName)}</dd>
           </div>
           <div>
             <dt>Tipo</dt>

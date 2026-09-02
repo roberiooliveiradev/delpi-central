@@ -300,6 +300,14 @@
   align-items: start;
 }
 
+.pp-device-card__header-aside {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .pp-device-card__title {
   font-size: 1rem;
 }

@@ -27,6 +27,9 @@ export function DeviceCard({
   onPoll,
   onOpen,
 }: DeviceCardProps) {
+  const standalone = device.binding?.anchorType === "standalone";
+  const showPlacementRow = device.binding != null && !standalone;
+
   return (
     <article
       className={`pp-device-card${compact ? " pp-device-card--compact" : ""}`}
@@ -42,12 +45,22 @@ export function DeviceCard({
     >
       <div className="pp-device-card__header">
         <strong className="pp-device-card__title">{device.name}</strong>
-        <DeviceStatusBadge status={device.status} />
+        <div className="pp-device-card__header-aside">
+          {standalone ? <AnchorTypeBadge anchorType="standalone" /> : null}
+          <DeviceStatusBadge status={device.status} />
+        </div>
       </div>
-      <div className="pp-device-card__placement">
-        <span>{placementLabel(device)}</span>
-        {device.binding ? <AnchorTypeBadge anchorType={device.binding.anchorType} /> : null}
-      </div>
+      {showPlacementRow ? (
+        <div className="pp-device-card__placement">
+          <span>{placementLabel(device)}</span>
+          <AnchorTypeBadge anchorType={device.binding!.anchorType} />
+        </div>
+      ) : null}
+      {!device.binding ? (
+        <div className="pp-device-card__placement">
+          <span>—</span>
+        </div>
+      ) : null}
       <p className="pp-device-card__meta">
         {roleLabel(device.roleKey)} ·{" "}
         <span className="pp-tabular-nums">{formatPrimaryMetric(device)}</span>
