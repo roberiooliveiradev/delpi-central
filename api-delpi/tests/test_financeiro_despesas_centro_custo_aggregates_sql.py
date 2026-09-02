@@ -79,6 +79,10 @@ def test_build_ranking_centros_query_uses_default_limit() -> None:
 
     assert f"TOP ({DEFAULT_RANKING_LIMIT})" in query
     assert "percentual" in query
+    assert "SUM(valor_total) OVER ()" in query
+    assert "WITH scoped AS" not in query
+    assert "period_total AS" not in query
+    assert "CROSS JOIN" not in query
     assert "SELECT *" not in query
     assert params == ("20250601", "20250630", "003287", "01")
 
@@ -104,6 +108,9 @@ def test_build_ranking_fornecedores_query_applies_cost_center_filter() -> None:
 
     assert "LTRIM(RTRIM(centro_custo_codigo)) = ?" in query
     assert "TOP (25)" in query
+    assert "SUM(valor_total) OVER ()" in query
+    assert "WITH scoped AS" not in query
+    assert "CROSS JOIN" not in query
     assert params == ("20250601", "20250630", "02", "0101")
 
 

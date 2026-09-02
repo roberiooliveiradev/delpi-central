@@ -66,6 +66,13 @@ Query params já estão em **EN**. Alinhamento full EN do body fica para estrat�
 
 ---
 
+## Performance (rankings)
+
+- SQL dos rankings (`/ranking-centros`, `/ranking-fornecedores`): **um** `GROUP BY` na view + percentual com `SUM(...) OVER ()` (sem CTE `scoped` + `period_total` + segundo scan).
+- Cache em memória `query_cache`, namespace `despesas-cc-ranking-v1` (TTL = `QUERY_CACHE_TTL_SECONDS`, default 300 s) — reduz carga no polling do Portal Financeiro / MFE legado.
+
+---
+
 ## Referências
 
 - Índice: [06-modulos-departamentais.md](./06-modulos-departamentais.md)
