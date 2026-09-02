@@ -1257,16 +1257,18 @@
       "viewBuildPolicy": "eager"
     },
     "sql": {
-      "defaultViewPolicy": "generic",
+      "defaultViewPolicy": "table_when_available",
+      "viewBuildPolicy": "eager",
       "viewOrder": [
-        "text",
-        "table"
+        "table",
+        "text"
       ],
       "stackPlan": "default",
       "flags": [
         "sql"
       ],
-      "commentaryProfileKey": "generic_list"
+      "commentaryProfileKey": "generic_list",
+      "chartPolicy": "skip"
     },
     "system": {
       "defaultViewPolicy": "generic",
