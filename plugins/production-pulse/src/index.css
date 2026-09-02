@@ -74,6 +74,14 @@
   );
 }
 
+/* Contrato portal: preenche a área útil do .content (sem faixa branca abaixo). */
+.dashboard-production-pulse.dashboard-page--fill {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
 .dashboard-production-pulse .pp-page-stack {
   display: flex;
   flex-direction: column;
@@ -208,12 +216,22 @@
   min-height: 100%;
 }
 
+#root:has(> .dashboard-production-pulse.dashboard-page--fill),
 #root:has(> .dashboard-production-pulse--operator:has(.pp-counter-pad)),
 #root:has(> .dashboard-production-pulse--operator:has(.pp-gauge-readout)) {
   height: 100%;
-  max-height: 100vh;
-  max-height: 100svh;
+  max-height: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#root:has(> .dashboard-production-pulse.dashboard-page--fill) > .dashboard-page--fill,
+#root:has(> .dashboard-production-pulse--operator:has(.pp-counter-pad)) > .dashboard-production-pulse--operator,
+#root:has(> .dashboard-production-pulse--operator:has(.pp-gauge-readout)) > .dashboard-production-pulse--operator {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
 }
 
 .pp-kpi-strip {
@@ -1047,12 +1065,18 @@
   flex-direction: column;
   min-height: 0;
   height: 100%;
-  max-height: 100vh;
-  max-height: 100svh;
+  max-height: 100%;
   overflow: hidden;
   width: 100%;
   max-width: none;
   margin: 0;
+}
+
+.dashboard-production-pulse--operator.dashboard-page--fill {
+  /* Host federado já limita à área do .content — evita 100vh cortando/sobrando. */
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
 }
 
 .dashboard-production-pulse--operator:has(.pp-operator-hub),
@@ -1066,8 +1090,7 @@
 .dashboard-production-pulse--operator:has(.pp-counter-pad),
 .dashboard-production-pulse--operator:has(.pp-gauge-readout) {
   height: 100%;
-  max-height: 100vh;
-  max-height: 100svh;
+  max-height: 100%;
   overflow: hidden;
 }
 
@@ -1082,9 +1105,19 @@
 }
 
 .dashboard-production-pulse--operator:has(.pp-counter-pad) > .pp-operator-surface.pp-counter-pad {
-  display: grid;
-  grid-template-rows: auto auto auto minmax(min-content, 1fr) auto;
-  align-content: stretch;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dashboard-production-pulse--operator:has(.pp-gauge-readout) > .pp-operator-surface.pp-gauge-readout {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .dashboard-production-pulse--operator[data-pp-viewport="mobile"] {
@@ -1408,7 +1441,14 @@
 }
 
 .pp-counter-pad__workspace {
-  display: contents;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(6px, 1.5vh, var(--pp-section-gap));
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .pp-gauge-readout__workspace {
@@ -1429,10 +1469,11 @@
   justify-content: center;
   gap: clamp(4px, 1vh, 8px);
   padding: clamp(4px, 1vh, 12px) 0;
+  flex: 1 1 auto;
   min-height: var(--pp-operator-stage-min-height);
   width: 100%;
   overflow: visible;
-  align-self: center;
+  align-self: stretch;
 }
 
 .pp-counter-pad__stage--muted {
