@@ -74,9 +74,11 @@
 }
 ```
 
-**Firmware:** ver [README.md § Protocolo piloto](./README.md).
+**Firmware:** ver [README.md § Protocolo piloto](./README.md) e [firmware/esp8266_counter_v1/](./firmware/esp8266_counter_v1/).
 
-**HTTP:** `GET /api/sensores` → `{"rpm": <number>, "temperatura": <number>}` (aliases `rotacao`, `temperature_c`).
+Contrato config: `GET/POST /api/config` + header `X-Device-Token`. Contagem pública em `GET /api/contador`.
+
+**HTTP gauge:** `GET /api/sensores` → `{"rpm": <number>, "temperatura": <number>}` (aliases `rotacao`, `temperature_c`).
 
 ### `esp8266_gauge_v1` (P1 — implementado)
 
