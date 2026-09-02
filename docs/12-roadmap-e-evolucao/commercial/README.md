@@ -13,6 +13,7 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 
 | Documento | Conteúdo |
 |-----------|----------|
+| **[TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMENTO-PORTAL-COMERCIAL-1H.md)** | **Roadmap treinamento 1h** — mapa de funcionalidades, agenda, FAQ por tópico |
 | **[GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)** | **Norte consolidação** — nav, perms, DoD, filtros, OV vs ADY |
 | **[PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)** | Playbook mestre — matriz dores, fases, gates |
 | **[IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)** | Status executável F0–F2 + consolidação nativa |
