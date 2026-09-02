@@ -13,7 +13,7 @@ import {
   PpNativeTextField,
   ppFieldError,
   ppFieldHint,
-} from "./data/ppFormFields";
+} from "../app/productionPulseUi";
 
 type DeviceBindingSectionProps = {
   binding: BindingFormValues;

@@ -1,13 +1,12 @@
-import { NativeSwitchControl, NativeTextControl } from "@delpi/plugin-ui/index";
-
 import { PpActionButton, PpFormGrid } from "../app/productionPulseUi";
 import { PP_HELP } from "../content/helpTooltips";
 import { getPpSectionIntro } from "../content/sectionIntros";
 import type { DeviceFormValues, DriverCatalogItem } from "../types/form";
 import { branchLabel, resolveBranchOptions } from "../constants/branches";
 import {
-  PpFormFieldShell,
+  PpNativeInlineTextField,
   PpNativeSelectField,
+  PpNativeSwitchField,
   PpNativeTextField,
   ppFieldError,
   ppFieldHint,
@@ -73,23 +72,18 @@ export function DeviceForm({
           afterControl={ppFieldError(errors?.branch)}
         />
 
-        <PpFormFieldShell
+        <PpNativeInlineTextField
           id="pp-device-ip"
           label="Endereço IP"
           hint={PP_HELP.form.ip}
           span
           className="pp-form-grid__span-full pp-field--ip-row"
-          controlWrapperClassName="pp-field__inline-controls"
+          value={device.ipAddress}
+          placeholder="192.168.20.2"
+          onChange={(value) => onChange({ ipAddress: value })}
           afterControl={ppFieldError(errors?.ipAddress)}
-        >
-          <>
-            <NativeTextControl
-              id="pp-device-ip"
-              value={device.ipAddress}
-              placeholder="192.168.20.2"
-              onChange={(value) => onChange({ ipAddress: value })}
-            />
-            {onTestConnection ? (
+          trailing={
+            onTestConnection ? (
               <PpActionButton
                 variant="ghost"
                 className="pp-test-connection-btn"
@@ -98,9 +92,9 @@ export function DeviceForm({
               >
                 {testingConnection ? "Testando…" : "Testar conexão"}
               </PpActionButton>
-            ) : null}
-          </>
-        </PpFormFieldShell>
+            ) : null
+          }
+        />
 
         <PpNativeSelectField
           id="pp-device-driver"
@@ -140,19 +134,13 @@ export function DeviceForm({
           afterControl={ppFieldError(errors?.pollIntervalSeconds)}
         />
 
-        <PpFormFieldShell
+        <PpNativeSwitchField
           id="pp-device-enabled"
           label="Dispositivo ativo"
           hint={PP_HELP.form.enabled}
-          className="pp-field--switch"
-          afterControl={null}
-        >
-          <NativeSwitchControl
-            checked={device.enabled}
-            aria-label="Dispositivo ativo"
-            onChange={(checked) => onChange({ enabled: checked })}
-          />
-        </PpFormFieldShell>
+          checked={device.enabled}
+          onChange={(checked) => onChange({ enabled: checked })}
+        />
       </PpFormGrid>
     </div>
   );

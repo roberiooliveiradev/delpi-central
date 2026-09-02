@@ -100,6 +100,39 @@ describe("production-pulse kit contracts", () => {
     expect(css).not.toMatch(/\.delpi-ui-/);
   });
 
+  it("inputs e selects só via ppFormFields ou filtersUi — sem HTML cru", () => {
+    const kitGateways = new Set([
+      "components/data/ppFormFields.tsx",
+      "components/data/filtersUi.tsx",
+    ]);
+    const bannedKitImports = [
+      /\bNativeTextControl\b/,
+      /\bNativeSwitchControl\b/,
+      /\bNativeTextField\b/,
+      /\bNativeSelectField\b/,
+      /\bNativeTextAreaField\b/,
+      /\bcreateDashboardNativeFormFields\b/,
+      /\bFilterInputField as PluginFilterInputField\b/,
+      /\bcreateDashboardFiltersKit\b/,
+    ];
+
+    for (const { rel, source } of sources) {
+      if (kitGateways.has(rel)) continue;
+      expect(source, rel).not.toMatch(/<input[\s/>]/);
+      expect(source, rel).not.toMatch(/<select[\s/>]/);
+      expect(source, rel).not.toMatch(/<textarea[\s/>]/);
+      for (const pattern of bannedKitImports) {
+        expect(source, rel).not.toMatch(pattern);
+      }
+    }
+
+    expect(readRelative("components/DeviceForm.tsx")).toMatch(/PpNative(TextField|SelectField|InlineTextField|SwitchField)/);
+    expect(readRelative("components/DeviceBindingSection.tsx")).toMatch(/PpNative(TextField|SelectField|TextAreaField)/);
+    expect(readRelative("components/DeviceFiltersBar.tsx")).toMatch(/PpFilter(InputField|SelectField)/);
+    expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/PpFilterInputField/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/ppFormFields"/);
+  });
+
   it("cadastro usa grade responsiva e footer compacto", () => {
     const formPage = readRelative("pages/DeviceFormPage.tsx");
     const deviceForm = readRelative("components/DeviceForm.tsx");
