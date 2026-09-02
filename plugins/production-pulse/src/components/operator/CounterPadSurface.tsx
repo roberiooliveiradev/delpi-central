@@ -153,51 +153,55 @@ export function CounterPadSurface({
           <DeviceStatusBadge status={device.status} />
         </div>
 
-        <div
-          className={`pp-counter-pad__pad${commandsDisabled ? " pp-counter-pad__pad--disabled" : ""}`}
-        >
-          <PpActionButton
-            variant="ghost"
-            className="pp-counter-pad__btn pp-counter-pad__btn--decrement"
-            disabled={commandsDisabled}
-            onClick={() => void runCommand("decrement")}
-            title={PP_HELP.operator.counterDecrement}
-          >
-            <Minus size={32} aria-hidden="true" />
-            <span className="pp-counter-pad__btn-label">Diminuir</span>
-          </PpActionButton>
-          <PpActionButton
-            variant="ghost"
-            className="pp-counter-pad__btn pp-counter-pad__btn--clear pp-counter-pad__btn--warn"
-            disabled={commandsDisabled}
-            onClick={() => setClearOpen(true)}
-            title={PP_HELP.operator.counterClear}
-          >
-            <Eraser size={32} aria-hidden="true" />
-            <span className="pp-counter-pad__btn-label">Limpar</span>
-          </PpActionButton>
-          <PpActionButton
-            variant="primary"
-            className="pp-counter-pad__btn pp-counter-pad__btn--increment pp-counter-pad__btn--accent"
-            disabled={commandsDisabled}
-            onClick={() => void runCommand("increment")}
-            title={PP_HELP.operator.counterIncrement}
-          >
-            <Plus size={32} aria-hidden="true" />
-            <span className="pp-counter-pad__btn-label pp-counter-pad__btn-label--long">Aumentar golpe</span>
-            <span className="pp-counter-pad__btn-label pp-counter-pad__btn-label--short">Aumentar</span>
-          </PpActionButton>
-        </div>
+        <div className="pp-counter-pad__controls">
+          <div className="pp-counter-pad__pad-host">
+            <div
+              className={`pp-counter-pad__pad${commandsDisabled ? " pp-counter-pad__pad--disabled" : ""}`}
+            >
+              <PpActionButton
+                variant="primary"
+                className="pp-counter-pad__btn pp-counter-pad__btn--increment pp-counter-pad__btn--accent"
+                disabled={commandsDisabled}
+                onClick={() => void runCommand("increment")}
+                title={PP_HELP.operator.counterIncrement}
+              >
+                <Plus size={32} aria-hidden="true" />
+                <span className="pp-counter-pad__btn-label pp-counter-pad__btn-label--long">Aumentar golpe</span>
+                <span className="pp-counter-pad__btn-label pp-counter-pad__btn-label--short">Aumentar</span>
+              </PpActionButton>
+              <PpActionButton
+                variant="ghost"
+                className="pp-counter-pad__btn pp-counter-pad__btn--decrement"
+                disabled={commandsDisabled}
+                onClick={() => void runCommand("decrement")}
+                title={PP_HELP.operator.counterDecrement}
+              >
+                <Minus size={32} aria-hidden="true" />
+                <span className="pp-counter-pad__btn-label">Diminuir</span>
+              </PpActionButton>
+              <PpActionButton
+                variant="ghost"
+                className="pp-counter-pad__btn pp-counter-pad__btn--clear pp-counter-pad__btn--warn"
+                disabled={commandsDisabled}
+                onClick={() => setClearOpen(true)}
+                title={PP_HELP.operator.counterClear}
+              >
+                <Eraser size={32} aria-hidden="true" />
+                <span className="pp-counter-pad__btn-label">Limpar</span>
+              </PpActionButton>
+            </div>
+          </div>
 
-        <div className="pp-counter-pad__sync">
-          <PpActionButton
-            variant="ghost"
-            className="pp-counter-pad__sync-btn"
-            onClick={() => void syncNow()}
-            disabled={busy}
-          >
-            {busy ? "Sincronizando…" : "Sincronizar agora"}
-          </PpActionButton>
+          <div className="pp-counter-pad__sync">
+            <PpActionButton
+              variant="ghost"
+              className="pp-counter-pad__sync-btn"
+              onClick={() => void syncNow()}
+              disabled={busy}
+            >
+              {busy ? "Sincronizando…" : "Sincronizar agora"}
+            </PpActionButton>
+          </div>
         </div>
       </div>
 

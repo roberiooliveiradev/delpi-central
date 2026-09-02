@@ -182,6 +182,8 @@ describe("production-pulse kit contracts", () => {
     const gauge = readRelative("components/operator/GaugeReadoutSurface.tsx");
     const css = readRelative("index.css");
     expect(counter).toMatch(/pp-counter-pad__workspace/);
+    expect(counter).toMatch(/pp-counter-pad__pad-host/);
+    expect(counter).toMatch(/pp-counter-pad__controls/);
     expect(counter).toMatch(/pp-counter-pad__btn--increment/);
     expect(counter).not.toMatch(/isMobileViewport/);
     expect(counter).not.toMatch(/pp-counter-pad__pad--stack/);
@@ -192,10 +194,13 @@ describe("production-pulse kit contracts", () => {
     expect(css).toMatch(/\.pp-operator-surface[\s\S]*max-width: none/);
     expect(css).toMatch(/data-pp-viewport-short="true"/);
     expect(css).toMatch(/max-height: 100svh/);
-    expect(css).toMatch(/grid-template-rows: auto auto auto minmax\(min-content, 1fr\) auto auto/);
+    expect(css).toMatch(/grid-template-rows: auto auto auto minmax\(min-content, 1fr\) auto/);
     expect(css).toMatch(/\.pp-counter-pad__workspace[\s\S]*display: contents/);
+    expect(css).toMatch(/container-type: inline-size/);
+    expect(css).toMatch(/container-name: pp-counter-pad/);
+    expect(css).toMatch(/pp-counter-pad__pad \.pp-counter-pad__btn \+ \.pp-counter-pad__btn[\s\S]*margin-inline-start: 0/);
+    expect(css).toMatch(/@container pp-counter-pad \(min-width: 26rem\)/);
     expect(css).toMatch(/min-height: 0/);
-    expect(css).toMatch(/data-pp-viewport="mobile"\]:not\(\[data-pp-viewport-short="true"\]\) \.pp-counter-pad__pad/);
     expect(css).toMatch(/min-width: 901px\)[\s\S]*pp-gauge-readout__grid/);
     expect(css).toMatch(/--pp-operator-card-min-height/);
     expect(css).toMatch(/dashboard-production-pulse--operator \.pp-device-status/);
