@@ -51,7 +51,11 @@ export const PP_HELP = {
     colStatus: "Online se houve poll recente com sucesso; offline se timeout ou erro.",
     colLastSeen: "Momento da última comunicação bem-sucedida com o hardware.",
     rowPoll: "Lê o device agora e atualiza a métrica exibida.",
+    rowPollAction: "Atualizar",
     pollNoticeTitle: "Dispositivo não respondeu",
+    pollNoticeClose: "Fechar",
+    retryLoad: "Tentar novamente",
+    clearFilters: "Limpar filtros",
     rowReset:
       "Zera o contador físico (somente devices contador). Operação auditada.",
     emptyFilial:
@@ -82,6 +86,8 @@ export const PP_HELP = {
       "Desligado — para de pollar e some do hub operador; histórico é preservado.",
     testConnection:
       "Testa comunicação HTTP com o device sem gravar histórico. No cadastro novo usa test-probe (IP + driver); na edição, test no device salvo.",
+    testConnectionAction: "Testar conexão",
+    testConnectionLoading: "Testando…",
     anchorType:
       "Tipo de objeto onde o sensor está: posto PCP (CT), máquina, equipamento, área ou avulso.",
     anchorWorkCenter:
@@ -120,6 +126,8 @@ export const PP_HELP = {
     commandsTable:
       "Quem executou cada comando, quando e se o hardware respondeu com sucesso.",
     pollNow: "Força leitura imediata e grava no histórico.",
+    pollNowAction: "Atualizar agora",
+    pollNowLoading: "Atualizando…",
     resetCounter:
       "Zera o contador no ESP. Use com cuidado — ação registrada em auditoria.",
     deactivate:
@@ -141,6 +149,10 @@ export const PP_HELP = {
     testOk: "Conexão OK. Métricas retornadas pelo driver.",
     testFail:
       "Não foi possível alcançar o device. Verifique IP, cabo, Wi‑Fi ou firewall.",
+    testTitle: "Testar conexão",
+    testLoading: "Testando comunicação com o device…",
+    testLatencyPrefix: "Latência",
+    testClose: "Fechar",
     deactivateTitle: "Desativar este dispositivo?",
     deactivateBody:
       "Para leituras automáticas. O cadastro e o histórico permanecem consultáveis.",

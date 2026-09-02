@@ -81,6 +81,13 @@ export {
   readingsToSeriesPoints,
   type PpReadingsChartVariant,
 } from "../components/data/ppCharts";
+export { PpDataTable, type DataTableColumn } from "../components/data/dataTableUi";
+export {
+  PpFilterInputField,
+  PpFilterSelectField,
+  PpFiltersRow,
+  PpFilterToolbarRowClasses,
+} from "../components/data/filtersUi";
 export {
   PpFormFieldShell,
   PpNativeInlineTextField,

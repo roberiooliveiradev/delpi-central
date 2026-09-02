@@ -1,14 +1,15 @@
 import { Plus } from "lucide-react";
 
-import { PpActionButton, PpSegmentToggle } from "../app/productionPulseUi";
-import { PP_HELP } from "../content/helpTooltips";
-import type { PanelFilters, PanelGroupBy } from "../utils/panelFilterUrl";
 import {
+  PpActionButton,
   PpFilterInputField,
   PpFilterSelectField,
   PpFiltersRow,
   PpFilterToolbarRowClasses,
-} from "./data/filtersUi";
+  PpSegmentToggle,
+} from "../app/productionPulseUi";
+import { PP_HELP } from "../content/helpTooltips";
+import type { PanelFilters, PanelGroupBy } from "../utils/panelFilterUrl";
 
 type DeviceFiltersBarProps = {
   filters: PanelFilters;

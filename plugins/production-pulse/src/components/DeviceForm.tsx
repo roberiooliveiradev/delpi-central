@@ -1,16 +1,17 @@
-import { PpActionButton, PpFormGrid } from "../app/productionPulseUi";
-import { PP_HELP } from "../content/helpTooltips";
-import { getPpSectionIntro } from "../content/sectionIntros";
-import type { DeviceFormValues, DriverCatalogItem } from "../types/form";
-import { branchLabel, resolveBranchOptions } from "../constants/branches";
 import {
+  PpActionButton,
+  PpFormGrid,
   PpNativeInlineTextField,
   PpNativeSelectField,
   PpNativeSwitchField,
   PpNativeTextField,
   ppFieldError,
   ppFieldHint,
-} from "./data/ppFormFields";
+} from "../app/productionPulseUi";
+import { PP_HELP } from "../content/helpTooltips";
+import { getPpSectionIntro } from "../content/sectionIntros";
+import type { DeviceFormValues, DriverCatalogItem } from "../types/form";
+import { branchLabel, resolveBranchOptions } from "../constants/branches";
 
 type DeviceFormProps = {
   device: DeviceFormValues;
@@ -90,7 +91,7 @@ export function DeviceForm({
                 disabled={testingConnection || !device.ipAddress.trim()}
                 onClick={onTestConnection}
               >
-                {testingConnection ? "Testando…" : "Testar conexão"}
+                {testingConnection ? PP_HELP.form.testConnectionLoading : PP_HELP.form.testConnectionAction}
               </PpActionButton>
             ) : null
           }

@@ -9,7 +9,7 @@ import {
   placementLabel,
   roleLabel,
 } from "../utils/deviceDisplay";
-import { PpDataTable, type DataTableColumn } from "./data/dataTableUi";
+import { PpDataTable, type DataTableColumn } from "../app/productionPulseUi";
 import { AnchorTypeBadge } from "./AnchorTypeBadge";
 import { DeviceStatusBadge } from "./DeviceStatusBadge";
 

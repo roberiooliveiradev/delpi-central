@@ -134,6 +134,50 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/DeviceFiltersBar.tsx")).toMatch(/PpFilter(InputField|SelectField)/);
     expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/PpFilterInputField/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/ppFormFields"/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/dataTableUi"/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/filtersUi"/);
+  });
+
+  it("consumidores importam data gateways só via productionPulseUi", () => {
+    const uiHub = "app/productionPulseUi.tsx";
+    const dataGateways = new Set([
+      "components/data/dataTableUi.tsx",
+      "components/data/filtersUi.tsx",
+      "components/data/ppFormFields.tsx",
+      "components/data/ppCharts.tsx",
+      uiHub,
+    ]);
+    const bannedDirectImport =
+      /from ["']\.\.?\/(?:components\/)?data\/(?:dataTableUi|filtersUi|ppFormFields|ppCharts)["']/;
+
+    for (const { rel, source } of sources) {
+      if (dataGateways.has(rel)) continue;
+      expect(source, rel).not.toMatch(bannedDirectImport);
+    }
+
+    expect(readRelative("components/DeviceForm.tsx")).toMatch(/from "\.\.\/app\/productionPulseUi"/);
+    expect(readRelative("components/DeviceTable.tsx")).toMatch(/from "\.\.\/app\/productionPulseUi"/);
+    expect(readRelative("components/DeviceFiltersBar.tsx")).toMatch(/from "\.\.\/app\/productionPulseUi"/);
+  });
+
+  it("painel usa kit canônico — segment toggle de filial e paginação compacta", () => {
+    const panel = readRelative("pages/PanelPage.tsx");
+    expect(panel).toMatch(/PpSegmentToggle/);
+    expect(panel).toMatch(/PpPagination/);
+    expect(panel).not.toMatch(/FilialSwitcher/);
+    expect(panel).not.toMatch(/pp-compact-pagination/);
+    expect(sources.some(({ rel }) => rel === "components/FilialSwitcher.tsx")).toBe(false);
+  });
+
+  it("textos de ação e modal não ficam hardcoded fora de helpTooltips", () => {
+    const contentPaths = new Set(["content/helpTooltips.ts", "content/deviceApiMessages.ts"]);
+    for (const { rel, source } of sources) {
+      if (contentPaths.has(rel) || !rel.endsWith(".tsx")) continue;
+      expect(source, rel).not.toMatch(/>\s*Poll\s*</);
+      expect(source, rel).not.toMatch(/"Poll agora"/);
+      expect(source, rel).not.toMatch(/"Testar conexão"/);
+    }
+    expect(readRelative("components/modals/TestConnectionModal.tsx")).toMatch(/PP_HELP\.modals/);
   });
 
   it("gráficos só via ppCharts — sem imports diretos do pacote de charts do kit", () => {

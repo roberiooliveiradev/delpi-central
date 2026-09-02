@@ -85,7 +85,7 @@ export function DeviceCard({
             }}
           >
             <RefreshCw size={14} className={polling ? "pp-spin" : undefined} aria-hidden="true" />
-            Poll
+            {PP_HELP.panel.rowPollAction}
           </button>
         </div>
       ) : null}

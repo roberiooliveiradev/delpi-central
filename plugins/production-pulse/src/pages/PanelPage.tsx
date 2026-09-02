@@ -6,7 +6,14 @@ import { navigateProductionPulse } from "../utils/navigation";
 import { resolveBranchOptions } from "../constants/branches";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import { PP_HELP } from "../content/helpTooltips";
-import { PpActionButton, PpPageHero, PpStateBox, ppShellIcon } from "../app/productionPulseUi";
+import {
+  PpActionButton,
+  PpPageHero,
+  PpPagination,
+  PpSegmentToggle,
+  PpStateBox,
+  ppShellIcon,
+} from "../app/productionPulseUi";
 import { usePanelData } from "../hooks/usePanelData";
 import { usePanelFilters } from "../hooks/usePanelFilters";
 import { isMobileViewport } from "../utils/viewportLayout";
@@ -17,7 +24,6 @@ import { DeviceFiltersBar } from "../components/DeviceFiltersBar";
 import { DeviceGroupedByWorkCenter } from "../components/DeviceGroupedByWorkCenter";
 import { DeviceKpiStrip } from "../components/DeviceKpiStrip";
 import { DeviceTable } from "../components/DeviceTable";
-import { FilialSwitcher } from "../components/FilialSwitcher";
 
 const PAGE_SIZE = 20;
 
@@ -110,11 +116,13 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
         badge={ppShellIcon}
         actions={
           branchOptions.length > 1 ? (
-            <FilialSwitcher
-              compact
-              filiais={branchOptions}
+            <PpSegmentToggle
+              ariaLabel="Filial"
+              size="sm"
+              widthMode="content"
               value={filters.branch}
               onChange={(branch) => setFilters({ branch, page: 1 })}
+              options={branchOptions.map((item) => ({ value: item.id, label: item.label }))}
             />
           ) : null
         }
@@ -134,7 +142,7 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
           <strong>{PP_HELP.panel.pollNoticeTitle}</strong>
           <span>{pollNotice}</span>
           <PpActionButton variant="ghost" onClick={clearPollNotice}>
-            Fechar
+            {PP_HELP.panel.pollNoticeClose}
           </PpActionButton>
         </div>
       ) : null}
@@ -146,7 +154,7 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
           message={error}
           action={
             <PpActionButton variant="ghost" onClick={() => void reload()}>
-              Tentar novamente
+              {PP_HELP.panel.retryLoad}
             </PpActionButton>
           }
         />
@@ -185,7 +193,7 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
                 })
               }
             >
-              Limpar filtros
+              {PP_HELP.panel.clearFilters}
             </PpActionButton>
           }
         />
@@ -218,26 +226,15 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
         )
       ) : null}
 
-      {!showEmptyFilial && !showEmptyFilters && filters.view === "list" && pageCount > 1 ? (
-        <div className="pp-compact-pagination">
-          <PpActionButton
-            variant="ghost"
-            disabled={filters.page <= 1}
-            onClick={() => setFilters({ page: filters.page - 1 })}
-          >
-            Anterior
-          </PpActionButton>
-          <span>
-            Página {filters.page} de {pageCount}
-          </span>
-          <PpActionButton
-            variant="ghost"
-            disabled={filters.page >= pageCount}
-            onClick={() => setFilters({ page: filters.page + 1 })}
-          >
-            Próxima
-          </PpActionButton>
-        </div>
+      {!showEmptyFilial && !showEmptyFilters && filters.view === "list" ? (
+        <PpPagination
+          page={filters.page}
+          pageSize={PAGE_SIZE}
+          total={filteredDevices.length}
+          totalPages={pageCount}
+          onPageChange={(page) => setFilters({ page })}
+          hideWhenSinglePage
+        />
       ) : null}
     </div>
   );

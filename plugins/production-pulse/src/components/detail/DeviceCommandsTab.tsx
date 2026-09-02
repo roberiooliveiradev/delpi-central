@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { fetchDeviceCommands } from "../../api/productionPulseApi";
-import { PpActionButton, PpPagination, PpSectionCard } from "../../app/productionPulseUi";
-import { PpDataTable, type DataTableColumn } from "../data/dataTableUi";
+import { PpActionButton, PpDataTable, PpPagination, PpSectionCard, type DataTableColumn } from "../../app/productionPulseUi";
 import type { DeviceCommandAudit } from "../../types/detail";
 import { PP_HELP } from "../../content/helpTooltips";
 import { useViewportBucket } from "../../hooks/useViewportBucket";

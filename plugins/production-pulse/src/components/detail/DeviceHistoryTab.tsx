@@ -4,13 +4,15 @@ import { fetchDeviceReadings } from "../../api/productionPulseApi";
 import {
   PpActionButton,
   PpChartCard,
+  PpDataTable,
+  PpFilterInputField,
+  PpFiltersRow,
   PpPagination,
   PpReadingsAreaChart,
   PpSectionCard,
   PpSegmentToggle,
+  type DataTableColumn,
 } from "../../app/productionPulseUi";
-import { PpDataTable, type DataTableColumn } from "../data/dataTableUi";
-import { PpFilterInputField, PpFiltersRow } from "../data/filtersUi";
 import type { DeviceListItem } from "../../types/device";
 import type { DeviceReading } from "../../types/detail";
 import { PP_HELP } from "../../content/helpTooltips";

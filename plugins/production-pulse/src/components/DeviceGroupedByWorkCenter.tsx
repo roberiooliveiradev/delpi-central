@@ -7,6 +7,7 @@ import { AnchorTypeBadge } from "./AnchorTypeBadge";
 import { DeviceCard } from "./DeviceCard";
 import { DeviceStatusBadge } from "./DeviceStatusBadge";
 import { formatPrimaryMetric } from "../utils/deviceDisplay";
+import { PP_HELP } from "../content/helpTooltips";
 
 type DeviceGroupedByWorkCenterProps = {
   groups: DeviceGroup[];
@@ -101,9 +102,9 @@ function GroupedRow({
         className="pp-row-action"
         disabled={polling}
         onClick={() => onPoll(device.id)}
-        aria-label={`Atualizar ${device.name}`}
+        aria-label={`${PP_HELP.panel.rowPollAction} ${device.name}`}
       >
-        Poll
+        {PP_HELP.panel.rowPollAction}
       </button>
     </div>
   );

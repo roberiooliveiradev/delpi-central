@@ -156,7 +156,7 @@ export function DeviceDetailPage({
               </PpActionButton>
             ) : null}
             <PpActionButton variant="ghost" onClick={() => void pollNow()} disabled={refreshing}>
-              {refreshing ? "Poll…" : "Poll agora"}
+              {refreshing ? PP_HELP.detail.pollNowLoading : PP_HELP.detail.pollNowAction}
             </PpActionButton>
           </div>
         }
