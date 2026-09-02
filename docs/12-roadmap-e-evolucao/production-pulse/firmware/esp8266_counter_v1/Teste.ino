@@ -9,6 +9,7 @@
 static const char* DEFAULT_WIFI_SSID = "YOUR_SSID";
 static const char* DEFAULT_WIFI_PASSWORD = "YOUR_PASSWORD";
 static const unsigned long DEFAULT_DEBOUNCE_MS = 100;
+static const char* FIRMWARE_VERSION = "esp8266_counter_v1.1.0";
 static const uint16_t EEPROM_SIZE = 512;
 static const uint32_t CONFIG_MAGIC = 0x50505301;  // "PPS\x01"
 
@@ -195,6 +196,7 @@ void enviarStatus() {
     return;
   }
   enviarCors();
+  bool wifiOk = WiFi.status() == WL_CONNECTED;
   String json =
     "{"
     "\"codigoControlador\":\"" + codigoControlador + "\","
@@ -203,7 +205,12 @@ void enviarStatus() {
     "\"contador\":" + String(contador) + ","
     "\"ip\":\"" + WiFi.localIP().toString() + "\","
     "\"mac\":\"" + WiFi.macAddress() + "\","
-    "\"status\":\"online\""
+    "\"status\":\"online\","
+    "\"firmwareVersion\":\"" + String(FIRMWARE_VERSION) + "\","
+    "\"uptimeMs\":" + String(millis()) + ","
+    "\"freeHeap\":" + String(ESP.getFreeHeap()) + ","
+    "\"rssi\":" + String(wifiOk ? WiFi.RSSI() : 0) + ","
+    "\"wifiConnected\":" + String(wifiOk ? "true" : "false") +
     "}";
   server.send(200, "application/json", json);
 }

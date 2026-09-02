@@ -8,7 +8,7 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 |--------|------|------|--------|
 | `GET` | `/` | não | Página somente leitura: código do controlador + contagem |
 | `GET` | `/api/contador` | **não** (única API pública) | `{"contador": N}` |
-| `GET` | `/api/status` | `X-Device-Token` se `apiToken` setado | `controllerCode`, IP, MAC, contador |
+| `GET` | `/api/status` | `X-Device-Token` se `apiToken` setado | Identidade + contador + health: `firmwareVersion`, `uptimeMs`, `freeHeap`, `rssi`, `wifiConnected` |
 | `GET` | `/api/config` | idem | `ssid`, `debounceMs`, `passwordSet`, `apiTokenSet`, `wifiConfigured` — **sem** secrets |
 | `POST` | `/api/config` | idem (aberto se token vazio) | body parcial EN: `ssid`, `password`, `debounceMs`, `apiToken` |
 | `POST` | `/api/incrementar` | idem | +1 |
