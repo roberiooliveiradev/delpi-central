@@ -95,6 +95,14 @@ Detalhe: [SCHEMA.md § device_bindings](./SCHEMA.md) · [INTEGRATIONS-TOTVS.md](
 
 Driver interno: `esp8266_counter_v1` — primeiro entry do registry; novos firmwares = novo `driver_key`, mesmo schema de leituras.
 
+### ESP8266 gauge v1 (`esp8266_gauge_v1`)
+
+| Método | Rota | Corpo / resposta |
+|--------|------|------------------|
+| `GET` | `/api/sensores` | `{"rpm": <number>, "temperatura": <number>}` |
+
+Chaves canônicas na API: `rpm`, `temperature_c`. O driver aceita aliases `rotacao` / `temperatura` / `temperature_c` no JSON do firmware.
+
 Referências: `maintenance-api`, `production-control-api`, `travel-expenses-api`.
 
 ---
