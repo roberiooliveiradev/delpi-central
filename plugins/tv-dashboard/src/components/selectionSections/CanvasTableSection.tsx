@@ -568,6 +568,21 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
       onColorChange={(color) => applyCellsStyle({ color })}
       onBackgroundChange={(color) => applyCellsStyle({ backgroundColor: color })}
       onNoFill={() => applyCellsStyle({ backgroundColor: undefined })}
+      borderColor={selectedCell.style?.borderColor}
+      onBorderColorChange={(color) =>
+        updateBlock(table.id, patchCanvasTableBorderColor({
+          block: table,
+          selection: cellSelection?.cells,
+          color,
+        }))
+      }
+      onClearBorderColor={() =>
+        updateBlock(table.id, patchCanvasTableBorderColor({
+          block: table,
+          selection: cellSelection?.cells,
+          color: undefined,
+        }))
+      }
     />
   ) : null;
 

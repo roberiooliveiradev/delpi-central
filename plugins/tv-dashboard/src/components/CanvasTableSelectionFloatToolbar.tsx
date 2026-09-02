@@ -235,6 +235,29 @@ export function CanvasTableSelectionFloatToolbar({ block }: Props) {
               applyCellsStyle({ backgroundColor: undefined });
               close();
             }}
+            borderColor={focusCell.style?.borderColor}
+            onBorderColorChange={(color) => {
+              updateBlock(
+                block.id,
+                patchCanvasTableBorderColor({
+                  block,
+                  selection: cells,
+                  color,
+                }),
+              );
+              close();
+            }}
+            onClearBorderColor={() => {
+              updateBlock(
+                block.id,
+                patchCanvasTableBorderColor({
+                  block,
+                  selection: cells,
+                  color: undefined,
+                }),
+              );
+              close();
+            }}
           />
         ) : (
           <CanvasTableBlockStylesMenu

@@ -26,6 +26,9 @@ type Props = {
   onColorChange: (color: string) => void;
   onBackgroundChange: (color: string) => void;
   onNoFill: () => void;
+  borderColor?: string | null;
+  onBorderColorChange?: (color: string) => void;
+  onClearBorderColor?: () => void;
   footer?: ReactNode;
   className?: string;
 };
@@ -47,6 +50,9 @@ export function CanvasTableCellFormatMenu({
   onColorChange,
   onBackgroundChange,
   onNoFill,
+  borderColor,
+  onBorderColorChange,
+  onClearBorderColor,
   footer,
   className,
 }: Props) {
@@ -179,6 +185,22 @@ export function CanvasTableCellFormatMenu({
           />
         </div>
       </section>
+
+      {onBorderColorChange ? (
+        <section className="td-chart-style-menu__section">
+          <h4>Bordas</h4>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
+            <TvRibbonColorPicker
+              label="Cor das bordas"
+              variant="outline"
+              showNoFill
+              value={borderColor ?? undefined}
+              onChange={onBorderColorChange}
+              onNoFill={onClearBorderColor}
+            />
+          </div>
+        </section>
+      ) : null}
 
       {footer ? <div className="td-chart-style-menu__footer">{footer}</div> : null}
     </div>

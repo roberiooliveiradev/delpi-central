@@ -37,6 +37,7 @@ import {
   clearCanvasTableSelectionFormats,
   deleteCanvasTableBand,
   insertCanvasTableBand,
+  patchCanvasTableBorderColor,
   patchCanvasTableCellsStyle,
   type CanvasTableCellStylePatch,
 } from "../utils/canvasTableSelectionCommands";
@@ -275,6 +276,31 @@ export function CanvasTableContextMenu({ block, open, position, onClose }: Props
           onColorChange={(color) => run(() => patchStyle({ color }))}
           onBackgroundChange={(color) => run(() => patchStyle({ backgroundColor: color }))}
           onNoFill={() => run(() => patchStyle({ backgroundColor: undefined }))}
+          borderColor={focusCell.style?.borderColor}
+          onBorderColorChange={(color) =>
+            run(() =>
+              updateBlock(
+                block.id,
+                patchCanvasTableBorderColor({
+                  block,
+                  selection: cells,
+                  color,
+                }),
+              ),
+            )
+          }
+          onClearBorderColor={() =>
+            run(() =>
+              updateBlock(
+                block.id,
+                patchCanvasTableBorderColor({
+                  block,
+                  selection: cells,
+                  color: undefined,
+                }),
+              ),
+            )
+          }
         />
       ) : null}
       <ContextMenuDivider />
