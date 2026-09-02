@@ -12,6 +12,7 @@ from financial_app.core.responses import fail
 from financial_app.interface.http.routes.billing_routes import router as billing_router
 from financial_app.interface.http.routes.cost_center_routes import router as cost_center_router
 from financial_app.interface.http.routes.delinquency_routes import router as delinquency_router
+from financial_app.interface.http.routes.freight_routes import router as freight_router
 from financial_app.interface.http.routes.indicators_routes import router as indicators_router
 from financial_app.interface.http.routes.overview_routes import router as overview_router
 from financial_app.interface.http.routes.subplugin_routes import router as subplugin_router
@@ -97,4 +98,5 @@ app.include_router(overview_router)
 app.include_router(billing_router)
 app.include_router(delinquency_router)
 app.include_router(cost_center_router)
+app.include_router(freight_router)
 app.include_router(indicators_router)

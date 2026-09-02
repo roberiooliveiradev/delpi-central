@@ -35,19 +35,44 @@ def test_catalog_filters_by_permission() -> None:
     load_subplugin_catalog.cache_clear()
     catalog = load_subplugin_catalog()
     assert catalog[0].id == "home"
-    assert {item.id for item in catalog} >= {"billing", "delinquency", "cost-centers", "indicators"}
+    assert {item.id for item in catalog} >= {
+        "billing",
+        "delinquency",
+        "cost-centers",
+        "freight",
+        "indicators",
+    }
     assert any(item.status == "coming_soon" for item in catalog)
 
     service = SubpluginCatalogService()
     visible_ids = {item.id for item in service.list_visible(full_user())}
-    assert {"home", "billing", "delinquency", "cost-centers", "indicators"} <= visible_ids
+    assert {
+        "home",
+        "billing",
+        "delinquency",
+        "cost-centers",
+        "freight",
+        "indicators",
+    } <= visible_ids
 
     only_access_ids = {item.id for item in service.list_visible(user("financial.access"))}
     assert "home" in only_access_ids
     assert "billing" in only_access_ids
     assert "delinquency" not in only_access_ids
     assert "cost-centers" not in only_access_ids
+    assert "freight" not in only_access_ids
     assert "indicators" not in only_access_ids
+
+
+def test_catalog_shows_freight_only_with_its_permission() -> None:
+    from financial_app.application.services.subplugin_catalog_service import (
+        SubpluginCatalogService,
+    )
+
+    service = SubpluginCatalogService()
+    granted = user("financial.access", "financial.freight.view")
+
+    assert "freight" in {item.id for item in service.list_visible(granted)}
 
 
 def test_catalog_requires_access_permission() -> None:

@@ -37,6 +37,15 @@
       "permission": "financial.cost-centers.view"
     },
     {
+      "id": "freight",
+      "label": "Fretes",
+      "description": "Percentual de frete das compras: rateio do CT-e por NF e alerta acima do limite da filial.",
+      "icon": "truck",
+      "route": "/freight",
+      "status": "active",
+      "permission": "financial.freight.view"
+    },
+    {
       "id": "indicators",
       "label": "Indicadores estratégicos",
       "description": "Nota IDD do Financeiro e IGD da Delpi, com meta e realizado por indicador.",

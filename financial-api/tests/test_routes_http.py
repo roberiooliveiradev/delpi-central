@@ -10,6 +10,7 @@ from financial_app.composition import financial_composer
 from financial_app.interface.http.routes.billing_routes import router as billing_router
 from financial_app.interface.http.routes.cost_center_routes import router as cost_center_router
 from financial_app.interface.http.routes.delinquency_routes import router as delinquency_router
+from financial_app.interface.http.routes.freight_routes import router as freight_router
 from financial_app.interface.http.routes.indicators_routes import router as indicators_router
 from financial_app.interface.http.routes.overview_routes import router as overview_router
 from tests.conftest import full_user
@@ -40,6 +41,7 @@ def client(monkeypatch: pytest.MonkeyPatch):
     for router in (
         delinquency_router,
         cost_center_router,
+        freight_router,
         indicators_router,
         overview_router,
         billing_router,
@@ -169,3 +171,56 @@ def test_overview_degrades_without_breaking_the_screen(
     assert body["success"] is True
     assert blocks["pmr"]["available"] is False
     assert blocks["rol"]["available"] is True
+
+
+_FREIGHT_PERIOD = "issueStart=2026-03-01&issueEnd=2026-03-31"
+
+
+def test_freight_dashboard_returns_envelope(client) -> None:
+    body = client.get(f"/freight/dashboard?{_FREIGHT_PERIOD}").json()
+
+    assert body["success"] is True
+    assert body["data"]["summary"]["invoiceCount"] == 2
+    assert body["data"]["limits"]["01"] == "3.25"
+    assert body["data"]["items"]
+
+
+def test_freight_inconsistencies_returns_envelope(client) -> None:
+    body = client.get(f"/freight/inconsistencies?{_FREIGHT_PERIOD}").json()
+
+    assert body["success"] is True
+    assert body["data"]["totalsByReason"]
+    assert any(item["reasonCode"] == "nf_not_found" for item in body["data"]["items"])
+
+
+def test_freight_without_any_period_returns_400(client) -> None:
+    response = client.get("/freight/dashboard")
+
+    assert response.status_code == 400
+    assert "emissão ou de digitação" in response.json()["message"]
+
+
+def test_freight_before_the_cutoff_returns_400(client) -> None:
+    response = client.get(
+        "/freight/dashboard?issueStart=2021-01-01&issueEnd=2021-12-31"
+    )
+
+    assert response.status_code == 400
+    assert "01/01/2023" in response.json()["message"]
+
+
+def test_freight_invalid_situation_returns_400(client) -> None:
+    response = client.get(f"/freight/dashboard?{_FREIGHT_PERIOD}&situation=alto")
+
+    assert response.status_code == 400
+    assert response.json()["success"] is False
+
+
+def test_freight_denied_without_permission(client) -> None:
+    from tests.conftest import user
+
+    client.state["user"] = user("financial.access")
+    response = client.get(f"/freight/dashboard?{_FREIGHT_PERIOD}")
+
+    assert response.status_code == 403
+    assert response.json()["success"] is False
