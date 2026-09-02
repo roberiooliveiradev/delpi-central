@@ -5,6 +5,8 @@
 > **Base da auditoria:** manifesto + README do MFE, `GESTAO-A-VISTA.md`, `WIREFRAMES.md` (matriz rota×WF), `PERFIS-E-PERMISSOES.md`, `HELP-COVERAGE.md`, `ATA-MAPA-NECESSIDADES.md`, código em `plugins/commercial/src/features/*` (set/2026).  
 > **Não cobre:** implementação técnica, backlog (confirmação de pedidos, Diretoria, forecast, kanban pipeline), nem plugins irmãos como se fossem o Portal.
 
+**Manual para participantes / usuários:** [MANUAL-USUARIO-PORTAL-COMERCIAL.md](./MANUAL-USUARIO-PORTAL-COMERCIAL.md) (“Quero…” → onde ir + FAQ).
+
 ---
 
 ## 1. Como usar este documento
