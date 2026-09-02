@@ -1,0 +1,24 @@
+{
+  "deviceConnectivity": {
+    "httpStatusCode": 422,
+    "codes": [
+      "timeout",
+      "network_error",
+      "http_error",
+      "invalid_response",
+      "device_error",
+      "missing_ip",
+      "driver_not_implemented"
+    ],
+    "messages": {
+      "timeout": "O dispositivo não respondeu a tempo. Verifique se está ligado e acessível na rede.",
+      "network_error": "Não foi possível contactar o dispositivo. Verifique IP, cabo e energia.",
+      "http_error": "O dispositivo respondeu com erro HTTP. Confira o firmware ou reinicie o hardware.",
+      "invalid_response": "O dispositivo respondeu com dados inválidos. Confira o driver e o firmware.",
+      "device_error": "O dispositivo não respondeu à leitura.",
+      "missing_ip": "O cadastro do dispositivo não possui endereço IP. Informe o IP antes de ler o hardware.",
+      "driver_not_implemented": "O driver selecionado ainda não está disponível neste ambiente."
+    },
+    "fallbackMessage": "O dispositivo não respondeu à leitura."
+  }
+}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { fetchDeviceSummary, fetchDevices, pollDevice } from "../api/productionPulseApi";
 import type { DeviceListItem, DeviceSummary } from "../types/device";
+import { resolveDeviceActionError } from "../utils/apiErrors";
 import { applyClientFilters } from "../utils/deviceGrouping";
 import type { PanelFilters } from "../utils/panelFilterUrl";
 
@@ -11,6 +12,7 @@ type PanelDataState = {
   filteredDevices: DeviceListItem[];
   loading: boolean;
   error: string | null;
+  pollNotice: string | null;
   pollingDeviceId: string | null;
 };
 
@@ -21,6 +23,7 @@ export function usePanelData(filters: PanelFilters, enabled: boolean) {
     filteredDevices: [],
     loading: enabled,
     error: null,
+    pollNotice: null,
     pollingDeviceId: null,
   });
 
@@ -70,23 +73,31 @@ export function usePanelData(filters: PanelFilters, enabled: boolean) {
   }, [enabled, reload]);
 
   const runPoll = async (deviceId: string) => {
-    setState((current) => ({ ...current, pollingDeviceId: deviceId }));
+    setState((current) => ({ ...current, pollingDeviceId: deviceId, pollNotice: null, error: null }));
     try {
       await pollDevice(deviceId);
       await reload();
     } catch (err) {
+      await reload();
+      const resolved = resolveDeviceActionError(err, "Falha ao atualizar dispositivo.");
       setState((current) => ({
         ...current,
-        error: err instanceof Error ? err.message : "Falha ao atualizar dispositivo.",
+        pollNotice: resolved.kind === "device" ? resolved.message : null,
+        error: resolved.kind !== "device" ? resolved.message : null,
       }));
     } finally {
       setState((current) => ({ ...current, pollingDeviceId: null }));
     }
   };
 
+  const clearPollNotice = () => {
+    setState((current) => ({ ...current, pollNotice: null }));
+  };
+
   return {
     ...state,
     reload: () => reload(),
     runPoll,
+    clearPollNotice,
   };
 }

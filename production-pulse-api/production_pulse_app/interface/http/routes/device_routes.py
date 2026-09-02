@@ -33,6 +33,7 @@ from production_pulse_app.application.services.device_service import (
 )
 from production_pulse_app.core.responses import error, success
 from production_pulse_app.domain.services.device_serialization_service import parse_device_id
+from production_pulse_app.interface.http.device_connectivity_responses import device_poll_failed_response
 from production_pulse_app.interface.http.rbac_http import (
     guard_admin_command,
     guard_branch_access,
@@ -238,11 +239,7 @@ async def get_device_live(request: Request, device_id: UUID):
     try:
         return success(_poll_service.read_live(parse_device_id(str(device_id))))
     except DevicePollFailedError as exc:
-        payload = error(str(exc), code=exc.code, status_code=502, details=exc.connectivity)
-        status_code = payload.pop("_status_code", 502)
-        from fastapi.responses import JSONResponse
-
-        return JSONResponse(status_code=status_code, content=payload)
+        return device_poll_failed_response(exc)
     except Exception as exc:
         return _json_error(exc)
 
@@ -255,11 +252,7 @@ async def poll_device(request: Request, device_id: UUID):
     try:
         return success(_poll_service.poll_and_persist(parse_device_id(str(device_id)), source="manual"))
     except DevicePollFailedError as exc:
-        payload = error(str(exc), code=exc.code, status_code=502, details=exc.connectivity)
-        status_code = payload.pop("_status_code", 502)
-        from fastapi.responses import JSONResponse
-
-        return JSONResponse(status_code=status_code, content=payload)
+        return device_poll_failed_response(exc)
     except Exception as exc:
         return _json_error(exc)
 

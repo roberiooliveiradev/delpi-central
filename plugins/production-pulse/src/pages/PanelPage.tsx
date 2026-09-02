@@ -45,9 +45,11 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
     filteredDevices,
     loading,
     error,
+    pollNotice,
     pollingDeviceId,
     reload,
     runPoll,
+    clearPollNotice,
   } = usePanelData(filters, permissions.canViewDevices && branchAllowed);
 
   const groups = useMemo(
@@ -125,6 +127,16 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
         onChange={setFilters}
         onCreateDevice={openCreate}
       />
+
+      {pollNotice ? (
+        <div className="pp-poll-notice" role="status">
+          <strong>Dispositivo não respondeu</strong>
+          <span>{pollNotice}</span>
+          <PpActionButton variant="ghost" onClick={clearPollNotice}>
+            Fechar
+          </PpActionButton>
+        </div>
+      ) : null}
 
       {error ? (
         <PpStateBox

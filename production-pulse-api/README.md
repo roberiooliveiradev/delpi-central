@@ -70,6 +70,15 @@ Envelope: `{ "success", "message", "data" }`.
 | POST | `/operator/devices/{id}/commands/{key}` | `operator` |
 | GET | `/operator/work-centers/{code}/devices` | **308** → `/operator/placements/wc:{branch}:{code}/devices` |
 
+## Conteúdo declarativo
+
+| Arquivo | Uso |
+|---------|-----|
+| `production_pulse_app/content/device_drivers.json` | Registry de drivers, métricas e comandos |
+| `production_pulse_app/content/device_api_messages.json` | Mensagens PT de erro HTTP (conectividade device) + códigos canônicos |
+
+Loader: `device_api_messages_content_service.py`. O MFE espelha **somente** `deviceConnectivity.codes` em `plugins/production-pulse/src/content/deviceApiMessages.ts` — textos vêm do `error.message` da API.
+
 ## Stack
 
 FastAPI · Postgres (`schema production_pulse` em postgres-plugins) · `delpi_auth` · drivers HTTP LAN

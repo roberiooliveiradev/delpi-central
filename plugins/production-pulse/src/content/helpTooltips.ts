@@ -3,6 +3,10 @@
  * Copiar para `plugins/production-pulse/src/content/helpTooltips.ts` no scaffold E5.S1.
  */
 export const PP_HELP = {
+  apiErrors: {
+    apiUnavailable: "API Pulso de Produção indisponível. Tente novamente em instantes.",
+  },
+
   shell: {
     heroTitle:
       "Monitoramento de dispositivos IoT na filial: contadores, sensores de rotação, temperatura e demais métricas.",

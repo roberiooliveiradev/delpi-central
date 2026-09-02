@@ -5,6 +5,7 @@ import { PpActionButton } from "../../app/productionPulseUi";
 import { DeviceStatusBadge } from "../DeviceStatusBadge";
 import { OperatorBrandBar } from "./OperatorBrandBar";
 import type { OperatorDeviceItem } from "../../types/operator";
+import { resolveDeviceActionMessage } from "../../utils/apiErrors";
 import { PP_HELP } from "../../content/helpTooltips";
 import {
   productionPulseOperatorPath,
@@ -51,7 +52,7 @@ export function GaugeReadoutSurface({
     try {
       setDevice(await fetchOperatorDevice(deviceId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao sincronizar.");
+      setError(resolveDeviceActionMessage(err, "Erro ao sincronizar."));
     } finally {
       setBusy(false);
     }

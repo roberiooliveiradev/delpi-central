@@ -8,6 +8,7 @@ import { DeviceStatusBadge } from "../DeviceStatusBadge";
 import { OperatorBrandBar } from "./OperatorBrandBar";
 import type { OperatorDeviceItem } from "../../types/operator";
 import { PP_HELP } from "../../content/helpTooltips";
+import { resolveDeviceActionMessage } from "../../utils/apiErrors";
 import {
   productionPulseOperatorPath,
   productionPulseOperatorPlacementPath,
@@ -88,7 +89,7 @@ export function CounterPadSurface({
       }
       applyMetrics(result.metrics);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao enviar comando.");
+      setError(resolveDeviceActionMessage(err, "Erro ao enviar comando."));
     } finally {
       setBusy(false);
     }
@@ -100,7 +101,7 @@ export function CounterPadSurface({
     try {
       setDevice(await fetchOperatorDevice(deviceId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao sincronizar.");
+      setError(resolveDeviceActionMessage(err, "Erro ao sincronizar."));
     } finally {
       setBusy(false);
     }
@@ -118,7 +119,7 @@ export function CounterPadSurface({
       applyMetrics(result.metrics);
       setClearOpen(false);
     } catch (err) {
-      setClearError(err instanceof Error ? err.message : "Erro ao zerar contador.");
+      setClearError(resolveDeviceActionMessage(err, "Erro ao zerar contador."));
     } finally {
       setClearLoading(false);
     }

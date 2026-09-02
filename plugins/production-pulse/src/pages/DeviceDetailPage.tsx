@@ -46,6 +46,7 @@ export function DeviceDetailPage({
     device,
     loading,
     error,
+    actionError,
     liveSnapshot,
     refreshing,
     commandsRefreshToken,
@@ -171,7 +172,7 @@ export function DeviceDetailPage({
         aria-label="Abas do dispositivo"
       />
 
-      {error ? <p className="pp-detail-banner-error">{error}</p> : null}
+      {actionError ? <p className="pp-detail-banner-error">{actionError}</p> : null}
 
       {tab === "overview" ? (
         <DeviceOverviewTab
