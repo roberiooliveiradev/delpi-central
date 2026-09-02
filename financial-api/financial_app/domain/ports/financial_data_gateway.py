@@ -131,6 +131,20 @@ class FinancialDataGateway(Protocol):
         exclude_mp_products: bool = False,
     ) -> dict[str, Any]: ...
 
+    def fetch_purchase_freight_links(
+        self,
+        *,
+        branch: str | None,
+        issue_start: str | None,
+        issue_end: str | None,
+        entry_start: str | None,
+        entry_end: str | None,
+        supplier: str | None,
+        invoice_document: str | None,
+        freight_document: str | None,
+        limit: int,
+    ) -> dict[str, Any]: ...
+
     def fetch_rol(
         self, *, branch: str | None, start_date: str | None, end_date: str | None
     ) -> dict[str, Any]: ...

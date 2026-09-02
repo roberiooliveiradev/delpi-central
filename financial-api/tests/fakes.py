@@ -15,12 +15,67 @@ DELINQUENCY_PERIOD = {
 COST_CENTER_PERIOD = {"data_inicio": "01/08/2026", "data_fim": "22/08/2026"}
 
 
+def freight_link(**overrides: Any) -> dict[str, Any]:
+    """Vínculo NF x CT-e no contrato da api-delpi (snake_case)."""
+    link = {
+        "branch": "01",
+        "in_filter": True,
+        "link_entry_date": "2026-03-12",
+        "invoice_found": True,
+        "invoice_document": "000000001",
+        "invoice_series": "1",
+        "supplier_code": "001992",
+        "supplier_store": "03",
+        "supplier_name": "FORNECEDOR X",
+        "invoice_goods_value": 1000.0,
+        "invoice_issue_date": "2026-03-10",
+        "invoice_entry_date": "2026-03-12",
+        "freight_found": True,
+        "freight_document": "000000900",
+        "freight_series": "1",
+        "carrier_code": "003686",
+        "carrier_store": "01",
+        "carrier_name": "TRANSPORTADORA Y",
+        "freight_gross_value": 32.5,
+        "freight_issue_date": "2026-03-11",
+        "freight_access_key": "4326" + "0" * 40,
+        "freight_document_type": "N",
+        "freight_document_kind": "CTE",
+    }
+    link.update(overrides)
+    return link
+
+
+# Cenário padrão: uma NF no limite, uma acima do limite e um vínculo órfão.
+FREIGHT_LINKS: list[dict[str, Any]] = [
+    freight_link(),
+    freight_link(
+        invoice_document="000000002",
+        freight_document="000000901",
+        invoice_goods_value=1000.0,
+        freight_gross_value=50.0,
+    ),
+    freight_link(
+        invoice_document="",
+        invoice_series="",
+        invoice_found=False,
+        invoice_goods_value=None,
+        invoice_issue_date="",
+        invoice_entry_date="",
+        freight_document="000000902",
+        freight_gross_value=4300.0,
+    ),
+]
+
+
 class FakeFinancialGateway:
     """Devolve payloads no formato da api-delpi e registra as chamadas."""
 
     def __init__(self, *, failing: set[str] | None = None) -> None:
         self.calls: list[tuple[str, dict[str, Any]]] = []
         self._failing = failing or set()
+        # Sobrescrito por teste que precisa de um cenário de frete específico.
+        self.freight_links: list[dict[str, Any]] = list(FREIGHT_LINKS)
 
     def _record(self, name: str, **kwargs: Any) -> None:
         if name in self._failing:
@@ -306,6 +361,29 @@ class FakeFinancialGateway:
                         "recno_sd1": 998877,
                     }
                 ],
+            }
+        )
+
+    # ---------------------------------------------------------------- freight
+
+    def fetch_purchase_freight_links(self, **kwargs: Any) -> dict[str, Any]:
+        self._record("fetch_purchase_freight_links", **kwargs)
+        return envelope(
+            {
+                "branch": kwargs.get("branch") or "consolidated",
+                "items": list(self.freight_links),
+                "pagination": {
+                    "limit": kwargs.get("limit"),
+                    "offset": 0,
+                    "returned": len(self.freight_links),
+                    "is_complete": True,
+                },
+                "summary": {
+                    "total_records": len(self.freight_links),
+                    "in_filter_records": sum(
+                        1 for item in self.freight_links if item.get("in_filter")
+                    ),
+                },
             }
         )
 

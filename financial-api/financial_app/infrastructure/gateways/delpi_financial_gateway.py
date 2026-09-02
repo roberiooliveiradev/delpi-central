@@ -343,6 +343,35 @@ class DelpiFinancialGateway:
             params={**self._kpi_params(branch, start_date, end_date), "limit": limit},
         )
 
+    def fetch_purchase_freight_links(
+        self,
+        *,
+        branch: str | None,
+        issue_start: str | None,
+        issue_end: str | None,
+        entry_start: str | None,
+        entry_end: str | None,
+        supplier: str | None,
+        invoice_document: str | None,
+        freight_document: str | None,
+        limit: int,
+    ) -> dict[str, Any]:
+        return self._request(
+            "GET",
+            "/financial/purchase-freight/links",
+            params={
+                "branch": branch,
+                "issue_start": issue_start,
+                "issue_end": issue_end,
+                "entry_start": entry_start,
+                "entry_end": entry_end,
+                "supplier": supplier,
+                "invoice_document": invoice_document,
+                "freight_document": freight_document,
+                "limit": limit,
+            },
+        )
+
     def fetch_rol_series(
         self,
         *,
