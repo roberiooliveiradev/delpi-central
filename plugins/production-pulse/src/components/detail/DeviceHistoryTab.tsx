@@ -5,12 +5,12 @@ import {
   PpActionButton,
   PpChartCard,
   PpPagination,
+  PpReadingsAreaChart,
   PpSectionCard,
   PpSegmentToggle,
 } from "../../app/productionPulseUi";
 import { PpDataTable, type DataTableColumn } from "../data/dataTableUi";
 import { PpFilterInputField, PpFiltersRow } from "../data/filtersUi";
-import { SimpleLineChart } from "../charts/SimpleLineChart";
 import type { DeviceListItem } from "../../types/device";
 import type { DeviceReading } from "../../types/detail";
 import { PP_HELP } from "../../content/helpTooltips";
@@ -159,7 +159,7 @@ export function DeviceHistoryTab({ device }: DeviceHistoryTabProps) {
           />
         }
       >
-        <SimpleLineChart points={chartPoints} height={isMobile ? 180 : 240} />
+        <PpReadingsAreaChart points={chartPoints} height={isMobile ? 200 : 280} variant="detail" />
       </PpChartCard>
 
       <PpSectionCard title="Leituras" hint={PP_HELP.detail.readingsTable}>

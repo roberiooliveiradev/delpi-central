@@ -811,32 +811,12 @@
   font-size: var(--pp-font-md);
 }
 
-.pp-line-chart {
+.pp-readings-chart {
   width: 100%;
 }
 
-.pp-line-chart__svg {
+.pp-readings-chart__series {
   width: 100%;
-  height: 100%;
-}
-
-.pp-line-chart__axis {
-  stroke: var(--pp-border);
-  stroke-width: 1;
-}
-
-.pp-line-chart__line {
-  stroke: var(--pp-accent);
-  stroke-width: 2;
-}
-
-.pp-line-chart__dot {
-  fill: var(--pp-accent);
-}
-
-.pp-line-chart__label {
-  fill: var(--pp-text-muted);
-  font-size: 11px;
 }
 
 .pp-chart-empty {

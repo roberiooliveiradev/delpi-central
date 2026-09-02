@@ -133,6 +133,34 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/ppFormFields"/);
   });
 
+  it("gráficos só via ppCharts — sem imports diretos do pacote de charts do kit", () => {
+    const chartGateways = new Set(["components/data/ppCharts.tsx"]);
+    const bannedChartImports = [
+      /\bAreaSeriesChart\b/,
+      /\bLineSeriesChart\b/,
+      /\bBarSeriesChart\b/,
+      /\bConfigurableSeriesChart\b/,
+      /\bSeriesChartPrimitive\b/,
+      /\bChartCard\b/,
+      /\bchartCardBemClasses\b/,
+    ];
+
+    for (const { rel, source } of sources) {
+      if (chartGateways.has(rel)) continue;
+      for (const pattern of bannedChartImports) {
+        expect(source, rel).not.toMatch(pattern);
+      }
+    }
+
+    expect(readRelative("components/detail/DeviceOverviewTab.tsx")).toMatch(/PpReadingsAreaChart/);
+    expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/PpReadingsAreaChart/);
+    expect(readRelative("components/detail/DeviceHistoryTab.tsx")).toMatch(/PpChartCard/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/ppCharts"/);
+    expect(readRelative("components/data/ppCharts.tsx")).toMatch(/AreaSeriesChart/);
+    expect(readRelative("components/data/ppCharts.tsx")).toMatch(/ChartCard/);
+    expect(readRelative("components/data/ppChartConfig.ts")).toMatch(/buildPpReadingsChartOptions/);
+  });
+
   it("cadastro usa grade responsiva e footer compacto", () => {
     const formPage = readRelative("pages/DeviceFormPage.tsx");
     const deviceForm = readRelative("components/DeviceForm.tsx");

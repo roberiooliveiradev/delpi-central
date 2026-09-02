@@ -2,8 +2,6 @@ import type { ComponentProps, ReactNode } from "react";
 import {
   ActionButton,
   BackLink,
-  ChartCard,
-  chartCardBemClasses,
   createCompactPagination,
   createHostContainedModalShell,
   catalogSearchBarBemClasses,
@@ -74,32 +72,15 @@ export const PpPagination = createCompactPagination({
   },
 });
 
-const CHART_CARD_CLASSES = chartCardBemClasses(PREFIX, { headerLayout: "titleRow" });
-
-type PpChartCardProps = {
-  title: string;
-  hint?: string;
-  titleHint?: string;
-  children: ReactNode;
-  headerActions?: ReactNode;
-};
-
-export function PpChartCard({ title, hint, titleHint, children, headerActions }: PpChartCardProps) {
-  return (
-    <ChartCard
-      title={title}
-      hint={hint}
-      titleHint={titleHint}
-      headerActions={headerActions}
-      classNames={CHART_CARD_CLASSES}
-    >
-      {children}
-    </ChartCard>
-  );
-}
-
 export const ppShellIcon = <Activity size={28} strokeWidth={1.75} />;
 
+export {
+  PpChartCard,
+  PpReadingsAreaChart,
+  buildPpReadingsChartOptions,
+  readingsToSeriesPoints,
+  type PpReadingsChartVariant,
+} from "../components/data/ppCharts";
 export {
   PpFormFieldShell,
   PpNativeInlineTextField,
