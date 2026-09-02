@@ -17,7 +17,11 @@ import { usePortfolioScope } from "../../app/PortfolioScopeContext";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
 import { CM_HELP } from "../../content/helpTooltips";
 import type { CommercialProposal } from "../../types/analytics";
-import type { OpportunityCollaboratorSummaryRow } from "../../api/analyticsApi";
+import {
+  getCommercialProposals,
+  getOpportunityCollaboratorSummary,
+  type OpportunityCollaboratorSummaryRow,
+} from "../../api/analyticsApi";
 import { AnalyticsFilters } from "./components/AnalyticsFilters";
 import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
 import { CommercialProposalsTable } from "./components/CommercialProposalsTable";
@@ -38,6 +42,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
   const filters = useAnalyticsFilters();
   const [items, setItems] = useState<CommercialProposal[]>([]);
   const [collab, setCollab] = useState<OpportunityCollaboratorSummaryRow[]>([]);
+  const [collabTruncated, setCollabTruncated] = useState(false);
   const [slaConfigured, setSlaConfigured] = useState(false);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState(() => readAnalyticsOpportunitySearch());
