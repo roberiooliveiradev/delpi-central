@@ -99,4 +99,16 @@ describe("production-pulse kit contracts", () => {
     const css = readRelative("index.css");
     expect(css).not.toMatch(/\.delpi-ui-/);
   });
+
+  it("cadastro usa grade responsiva e footer compacto", () => {
+    const formPage = readRelative("pages/DeviceFormPage.tsx");
+    const deviceForm = readRelative("components/DeviceForm.tsx");
+    expect(formPage).toMatch(/isCompactViewport/);
+    expect(formPage).toMatch(/pp-form-footer--sticky/);
+    expect(deviceForm).toMatch(/pp-form-grid--pair/);
+    expect(readRelative("App.tsx")).toMatch(/data-pp-viewport/);
+    const css = readRelative("index.css");
+    expect(css).toMatch(/--pp-form-max-width/);
+    expect(css).toMatch(/pp-form-grid--pair/);
+  });
 });

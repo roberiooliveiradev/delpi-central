@@ -19,6 +19,7 @@
 | **E6.S2 — Verify live ESP piloto** | ⏳ **Pendente** | WSL não alcança `192.168.20.2`; checklist UI §3–5 |
 | P1 (gauge, KPI delta, reset HW, thresholds) | ✅ Feito | commits em `main` pós-MVP |
 | **E7 — Alinhamento `.cursor` (conteúdo + kit)** | ✅ **Concluído** | E7.S0–S5 em `main` |
+| **E8 — Layout responsivo (formulários + superfícies)** | 🔄 **Em curso** | E8.S0–S3 nesta entrega |
 
 Smoke dev: `bash ./scripts/homologacao/check-production-pulse.sh`  
 Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-production-pulse.sh` — ver [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md).
@@ -34,6 +35,86 @@ Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts
 **E7.S4 entregue (set/2026):** `PpHostContainedDialog` + migração de modais; teste estrutural anti-ModalShell — commit `98e58f0a6`.
 
 **E7.S5 entregue (set/2026):** `SegmentToggle` width/column no kit; toolbar filtros via `filterToolbarRowBemClasses`; zero `.delpi-ui-*` no `index.css` do MFE; teste estrutural — commit `d645243f5`.
+
+---
+
+## E8 — Layout responsivo (formulários + superfícies)
+
+Complementa E5 (wireframes WF-PP-01/02/03/OP). Objetivo: **todas as páginas** legíveis em mobile (≤768px), tablet (769–1100px) e desktop — formulários com grade, touch targets e footers sticky onde couber.
+
+### Decisões travadas (E8)
+
+| Tema | Decisão |
+|------|---------|
+| Breakpoints | Mobile ≤768 · tablet ≤1100 · desktop >1100 — `resolveViewportBucket` + `data-pp-viewport` no shell |
+| Form cadastro | `max-width: 720px`; grade 2 col (nome+filial, poll+ativo) ≥769px; footer sticky mobile+tablet |
+| Campos compact | `min-height: 44px`, `font-size: 16px` em inputs ≤1100px (evita zoom iOS) |
+| Painel | KPI 4→2→1 col; tabela compacta tablet; cards só mobile |
+| Detalhe | Overview 2 col ≥901px; hero actions empilhadas mobile; nav horizontal scroll |
+| Operador | Hub filtros coluna ≤600px; grid 1→2→3→4 col por breakpoint |
+| CSS kit | Sem override `.delpi-ui-*` — só tokens `--pp-*` e seletores `.pp-*` |
+
+### Matriz de fluxos (E8)
+
+| Fluxo | Superfície | Caminho | E8 |
+|-------|------------|---------|-----|
+| Cadastro device + binding | Form | `DeviceFormPage` | S1 |
+| Filtros histórico | Detalhe aba history | `DeviceHistoryTab` | S2 |
+| Hero ações poll/editar | Detalhe | `DeviceDetailPage` | S2 |
+| Lista painel | Painel | `PanelPage` | S2 |
+| Hub operador filtros | Tablet | `OperatorPlacementHub` | S3 |
+| Contador / gauge | Tablet | `CounterPadSurface`, `GaugeReadoutSurface` | S3 (herda E5) |
+
+### Etapas
+
+#### E8.S0 — Tokens viewport + shell ✅
+
+- **Objetivo:** Uma fonte de breakpoints e `data-pp-viewport` no root do MFE.
+- **Fazer:** `--pp-form-max-width`, `--pp-breakpoint-*` em `index.css`; `App.tsx` + `viewportLayout.ts` + testes.
+- **Pronto quando:** vitest `viewportLayout.test.ts` verde; grep `data-pp-viewport` no shell.
+
+#### E8.S1 — Formulário cadastro (WF-PP-02) ✅
+
+- **Objetivo:** Grade 2 col desktop/tablet; sticky footer compact; IP row + teste full-width ≤1100px.
+- **Fazer:** `DeviceForm.tsx` (`pp-form-grid--pair`); `DeviceBindingSection` TOTVS pair; `DeviceFormPage` `isCompactViewport`.
+- **Pronto quando:** form legível ≤768px e max-w 720px tablet; teste estrutural cadastro.
+
+#### E8.S2 — Painel + detalhe (WF-PP-01/03) ✅
+
+- **Objetivo:** Hero detalhe, nav abas, filtros histórico e painel adaptados a mobile/tablet.
+- **Fazer:** CSS `pp-panel-page`, `pp-device-detail__hero-actions`, `pp-detail-history__filters`; helpers `isMobileViewport` nos tabs.
+- **Pronto quando:** vitest estrutural + build MFE; sem regressão KPI/tablet compact table.
+
+#### E8.S3 — Operador hub (WF-PP-OP) ✅
+
+- **Objetivo:** Filtros hub empilham em celular; toggles largura total.
+- **Fazer:** CSS `pp-operator-hub__filters` ≤600px; herda grid cards E5.
+- **Pronto quando:** hub 1 col mobile · 2–3 col tablet (grid existente).
+
+#### E8.S4 — Verify visual + homologação tablet ⏳
+
+- **Objetivo:** Checklist manual WF-PP em 375px / 768px / 1024px antes de E6.S2 live.
+- **Fazer:** Rodar `npm test && npm run build`; smoke portal dev; anotar pass/fail em HOMOLOGACAO-E6-S2 § UI.
+- **Pronto quando:** checklist tablet preenchido ou issues abertas documentadas.
+- **Commit:** só se fix de regressão visual.
+
+### Critérios de pronto (E8)
+
+- [x] E8.S0 — tokens + `data-pp-viewport`
+- [x] E8.S1 — form grade + footer compact
+- [x] E8.S2 — painel + detalhe responsive
+- [x] E8.S3 — operador hub filtros mobile
+- [ ] E8.S4 — verify visual tablet (pré E6.S2 live)
+
+### Fora do escopo (E8)
+
+- Modo quiosque fullscreen (`?kiosk=1`) — ADR-001 P1
+- Rename `FilialSwitcher` → EN
+- Breakpoints diferentes do resto do Portal (1100px alinhado a maintenance/controle-retrabalhos)
+
+### Protocolo de execução (E8)
+
+E8.S0–S3 = **um commit** com escopo responsive (testes incluídos). E8.S4 = verify-only; commit só se fix.
 
 ---
 

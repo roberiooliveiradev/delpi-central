@@ -9,6 +9,7 @@ import { PP_HELP } from "../content/helpTooltips";
 import { PpActionButton, PpPageHero, PpStateBox, ppShellIcon } from "../app/productionPulseUi";
 import { usePanelData } from "../hooks/usePanelData";
 import { usePanelFilters } from "../hooks/usePanelFilters";
+import { isMobileViewport } from "../utils/viewportLayout";
 import { useViewportBucket } from "../hooks/useViewportBucket";
 import { groupDevices, paginateDevices, totalPages } from "../utils/deviceGrouping";
 import { DeviceCardList } from "../components/DeviceCard";
@@ -33,7 +34,7 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
   const defaultBranch = branchOptions[0]?.id ?? "01";
   const { filters, setFilters } = usePanelFilters(search, defaultBranch);
   const viewport = useViewportBucket();
-  const isMobile = viewport === "mobile";
+  const isMobile = isMobileViewport(viewport);
 
   const branchAllowed =
     permissions.isAdmin ||
@@ -102,7 +103,7 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
   const showEmptyFilters = !loading && !error && filteredDevices.length === 0 && !showEmptyFilial;
 
   return (
-    <div className="pp-page-stack">
+    <div className="pp-page-stack pp-panel-page">
       <PpPageHero
         title="Pulso de Produção"
         description={PP_HELP.shell.heroTitle}

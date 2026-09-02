@@ -166,8 +166,8 @@ export function DeviceBindingSection({
         >
           <summary>Vincular ao TOTVS (opcional)</summary>
           <p className="pp-section-intro">{getPpSectionIntro("form.totvsDetails")}</p>
-          <PpFormGrid className="pp-form-grid--single">
-            <label className="pp-field">
+          <PpFormGrid className="pp-form-grid--pair">
+            <label className="pp-field pp-form-grid__span-full">
               <PpFieldLabel label="Centro de trabalho" hint={PP_HELP.form.workCenterOptional} />
               <input
                 list="pp-work-centers-opt"

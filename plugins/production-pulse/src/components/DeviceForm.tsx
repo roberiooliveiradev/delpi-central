@@ -45,7 +45,7 @@ export function DeviceForm({
   return (
     <div className="pp-device-form">
       <p className="pp-section-intro">{getPpSectionIntro("form.device")}</p>
-      <PpFormGrid className="pp-form-grid--single">
+      <PpFormGrid className="pp-form-grid--pair">
         <label className="pp-field">
           <PpFieldLabel label="Nome do dispositivo" hint={PP_HELP.form.name} />
           <input
@@ -72,7 +72,7 @@ export function DeviceForm({
           {errors?.branch ? <span className="pp-field-error">{errors.branch}</span> : null}
         </label>
 
-        <div className="pp-field pp-field--ip-row">
+        <div className="pp-field pp-field--ip-row pp-form-grid__span-full">
           <label className="pp-field">
             <PpFieldLabel label="Endereço IP" hint={PP_HELP.form.ip} />
             <input
@@ -94,7 +94,7 @@ export function DeviceForm({
           ) : null}
         </div>
 
-        <label className="pp-field">
+        <label className="pp-field pp-form-grid__span-full">
           <PpFieldLabel label="Driver" hint={PP_HELP.form.driver} />
           <select
             value={device.driverKey}

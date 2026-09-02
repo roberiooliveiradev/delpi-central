@@ -13,6 +13,7 @@ import {
   productionPulseOperatorPath,
   productionPulseOperatorPlacementPath,
 } from "../../constants/routes";
+import { isMobileViewport } from "../../utils/viewportLayout";
 import { useViewportBucket } from "../../hooks/useViewportBucket";
 import { navigateProductionPulse } from "../../utils/navigation";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
@@ -42,7 +43,7 @@ export function CounterPadSurface({
   initialDevice,
 }: CounterPadSurfaceProps) {
   const viewport = useViewportBucket();
-  const portraitStack = viewport === "mobile";
+  const portraitStack = isMobileViewport(viewport);
   const [device, setDevice] = useState(initialDevice);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

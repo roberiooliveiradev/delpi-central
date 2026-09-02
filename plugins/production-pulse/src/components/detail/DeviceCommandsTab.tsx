@@ -6,6 +6,7 @@ import { PpDataTable, type DataTableColumn } from "../data/dataTableUi";
 import type { DeviceCommandAudit } from "../../types/detail";
 import { PP_HELP } from "../../content/helpTooltips";
 import { useViewportBucket } from "../../hooks/useViewportBucket";
+import { isMobileViewport } from "../../utils/viewportLayout";
 import { commandLabel, formatDateTime } from "../../utils/detailDisplay";
 import { CommandAuditCard } from "./CommandAuditCard";
 import { CommandJsonModal } from "../modals/CommandJsonModal";
@@ -19,7 +20,7 @@ type DeviceCommandsTabProps = {
 
 export function DeviceCommandsTab({ deviceId, refreshToken }: DeviceCommandsTabProps) {
   const viewport = useViewportBucket();
-  const isMobile = viewport === "mobile";
+  const isMobile = isMobileViewport(viewport);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

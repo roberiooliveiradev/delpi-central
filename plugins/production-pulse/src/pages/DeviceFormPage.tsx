@@ -35,6 +35,7 @@ import {
   validateDeviceForm,
   type DeviceFormErrors,
 } from "../utils/deviceFormValidation";
+import { isCompactViewport, isMobileViewport } from "../utils/viewportLayout";
 import { useViewportBucket } from "../hooks/useViewportBucket";
 import { navigateProductionPulse } from "../utils/navigation";
 import { buildPanelPath } from "../utils/panelFilterUrl";
@@ -69,7 +70,8 @@ export function DeviceFormPage({
   permissions,
 }: DeviceFormPageProps) {
   const viewport = useViewportBucket();
-  const isMobile = viewport === "mobile";
+  const isMobile = isMobileViewport(viewport);
+  const isCompact = isCompactViewport(viewport);
 
   const [device, setDevice] = useState<DeviceFormValues>({
     ...DEFAULT_DEVICE_FORM_VALUES,
@@ -234,7 +236,7 @@ export function DeviceFormPage({
         </PpSectionCard>
       </div>
 
-      <div className={`pp-form-footer${isMobile ? " pp-form-footer--sticky" : ""}`}>
+      <div className={`pp-form-footer${isCompact ? " pp-form-footer--sticky" : ""}`}>
         <PpFormActions>
           <PpActionButton variant="ghost" onClick={goBack} disabled={saving}>
             Cancelar
