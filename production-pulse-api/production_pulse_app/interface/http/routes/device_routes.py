@@ -10,13 +10,9 @@ from production_pulse_app.application.services.work_center_catalog_service impor
 )
 from production_pulse_app.application.services.device_binding_service import (
     BindingNotFoundError,
-    BindingValidationError,
     DeviceBindingService,
 )
-from production_pulse_app.application.services.device_command_service import (
-    CommandNotSupportedError,
-    DeviceCommandService,
-)
+from production_pulse_app.application.services.device_command_service import DeviceCommandService
 from production_pulse_app.application.services.device_poll_service import (
     DevicePollFailedError,
     DevicePollService,
@@ -29,13 +25,18 @@ from production_pulse_app.application.services.device_service import (
     DeviceConflictError,
     DeviceNotFoundError,
     DeviceService,
-    DeviceValidationError,
 )
 from production_pulse_app.core.responses import error, success
+from production_pulse_app.domain.errors import (
+    BindingValidationError,
+    CommandNotSupportedError,
+    DeviceValidationError,
+)
 from production_pulse_app.infrastructure.content.device_api_messages_content_service import (
     http_error_message,
 )
 from production_pulse_app.domain.services.device_serialization_service import parse_device_id
+from production_pulse_app.interface.http.content_coded_error_response import content_coded_error_response
 from production_pulse_app.interface.http.device_connectivity_responses import device_poll_failed_response
 from production_pulse_app.interface.http.rbac_http import (
     guard_admin_command,
@@ -80,7 +81,7 @@ def _handle_domain_errors(exc: Exception):
     if isinstance(exc, PermissionError):
         return error(str(exc), code="forbidden", status_code=403)
     if isinstance(exc, (DeviceValidationError, BindingValidationError, CommandNotSupportedError)):
-        return error(str(exc), code="validation_error", status_code=422)
+        raise exc
     if isinstance(exc, WorkCenterCatalogUnavailableError):
         return error(str(exc), code="upstream_unavailable", status_code=503)
     if isinstance(exc, (DeviceNotFoundError, BindingNotFoundError)):
@@ -98,6 +99,8 @@ def _handle_domain_errors(exc: Exception):
 
 
 def _json_error(exc: Exception):
+    if isinstance(exc, (DeviceValidationError, BindingValidationError, CommandNotSupportedError)):
+        return content_coded_error_response(exc)
     payload = _handle_domain_errors(exc)
     status_code = payload.pop("_status_code", 400)
     from fastapi.responses import JSONResponse

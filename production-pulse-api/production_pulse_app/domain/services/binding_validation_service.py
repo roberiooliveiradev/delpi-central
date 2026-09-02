@@ -6,11 +6,9 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
+from production_pulse_app.domain.errors import BindingValidationError
+
 ANCHOR_TYPES = frozenset({"work_center", "machine", "equipment", "area", "standalone"})
-
-
-class BindingValidationError(ValueError):
-    pass
 
 
 @dataclass(frozen=True)
@@ -45,9 +43,7 @@ def _optional_text(value: Any) -> str | None:
 def normalize_binding_input(payload: dict[str, Any]) -> NormalizedBindingInput:
     anchor_type = _optional_text(_pick(payload, "anchor_type", "anchorType"))
     if anchor_type not in ANCHOR_TYPES:
-        raise BindingValidationError(
-            "anchor_type inválido. Use work_center, machine, equipment, area ou standalone."
-        )
+        raise BindingValidationError("invalid_anchor_type")
 
     work_center_code = _optional_text(_pick(payload, "work_center_code", "workCenterCode"))
     work_center_name = _optional_text(_pick(payload, "work_center_name", "workCenterName"))
@@ -61,16 +57,16 @@ def normalize_binding_input(payload: dict[str, Any]) -> NormalizedBindingInput:
 
     if anchor_type == "work_center":
         if not work_center_code:
-            raise BindingValidationError("work_center_code é obrigatório para anchor_type=work_center.")
+            raise BindingValidationError("work_center_code_required")
     elif anchor_type == "machine":
         if not machine_label:
-            raise BindingValidationError("machine_label é obrigatório para anchor_type=machine.")
+            raise BindingValidationError("machine_label_required")
     elif anchor_type == "equipment":
         if not equipment_label:
-            raise BindingValidationError("equipment_label é obrigatório para anchor_type=equipment.")
+            raise BindingValidationError("equipment_label_required")
     elif anchor_type == "area":
         if not area_label:
-            raise BindingValidationError("area_label é obrigatório para anchor_type=area.")
+            raise BindingValidationError("area_label_required")
     elif anchor_type == "standalone":
         forbidden = [
             work_center_code,
@@ -81,9 +77,7 @@ def normalize_binding_input(payload: dict[str, Any]) -> NormalizedBindingInput:
             area_label,
         ]
         if any(forbidden):
-            raise BindingValidationError(
-                "anchor_type=standalone não aceita campos de CT, máquina, equipamento ou área."
-            )
+            raise BindingValidationError("standalone_forbidden_fields")
 
     return NormalizedBindingInput(
         anchor_type=anchor_type,

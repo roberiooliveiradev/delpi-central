@@ -26,7 +26,7 @@ def resolve_driver(driver_key: str) -> ResolvedDriver:
 def validate_branch(branch: str) -> str:
     normalized = (branch or "").strip()
     if normalized not in VALID_BRANCHES:
-        raise DeviceValidationError("branch deve ser 01 ou 02.")
+        raise DeviceValidationError("invalid_branch")
     return normalized
 
 
@@ -34,7 +34,9 @@ def validate_poll_interval(seconds: int | float) -> float:
     value = float(seconds)
     if value < POLL_INTERVAL_MIN or value > POLL_INTERVAL_MAX:
         raise DeviceValidationError(
-            f"poll_interval_seconds deve estar entre {POLL_INTERVAL_MIN} e {int(POLL_INTERVAL_MAX)}."
+            "poll_interval_out_of_range",
+            min=POLL_INTERVAL_MIN,
+            max=int(POLL_INTERVAL_MAX),
         )
     return round(value, 2)
 
@@ -42,16 +44,16 @@ def validate_poll_interval(seconds: int | float) -> float:
 def normalize_ip_address(ip_address: str) -> str:
     normalized = (ip_address or "").strip()
     if not normalized:
-        raise DeviceValidationError("ip_address é obrigatório.")
+        raise DeviceValidationError("ip_address_required")
     return normalized
 
 
 def normalize_name(name: str) -> str:
     normalized = (name or "").strip()
     if not normalized:
-        raise DeviceValidationError("name é obrigatório.")
+        raise DeviceValidationError("name_required")
     if len(normalized) > 120:
-        raise DeviceValidationError("name deve ter no máximo 120 caracteres.")
+        raise DeviceValidationError("name_too_long")
     return normalized
 
 

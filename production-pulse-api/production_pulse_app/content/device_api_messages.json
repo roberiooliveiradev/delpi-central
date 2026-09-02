@@ -25,5 +25,27 @@
     "notFoundDevice": "Dispositivo não encontrado.",
     "notFoundBinding": "Amarração não encontrada.",
     "duplicateIp": "Já existe dispositivo com este IP nesta filial."
+  },
+  "commandErrors": {
+    "unsupported_command": "Este dispositivo não suporta o comando solicitado.",
+    "command_failed": "Não foi possível concluir o comando no dispositivo."
+  },
+  "validationErrors": {
+    "invalid_branch": "A filial deve ser 01 ou 02.",
+    "poll_interval_out_of_range": "O intervalo de leitura deve estar entre {min} e {max} segundos.",
+    "ip_address_required": "Informe o endereço IP do dispositivo.",
+    "name_required": "Informe o nome do dispositivo.",
+    "name_too_long": "O nome do dispositivo deve ter no máximo 120 caracteres.",
+    "driver_key_required": "Selecione o driver (protocolo) do dispositivo.",
+    "unknown_driver": "Driver desconhecido: {driver}.",
+    "driver_missing_role_key": "Driver \"{driver}\" sem roleKey no registry.",
+    "invalid_anchor_type": "Tipo de amarração inválido. Use posto, máquina, equipamento, área ou avulso.",
+    "work_center_code_required": "Informe o centro de trabalho para amarração por posto.",
+    "machine_label_required": "Informe o rótulo da máquina para amarração por máquina.",
+    "equipment_label_required": "Informe o rótulo do equipamento para amarração por equipamento.",
+    "area_label_required": "Informe o rótulo da área para amarração por área.",
+    "standalone_forbidden_fields": "Amarração avulsa não aceita campos de posto, máquina, equipamento ou área.",
+    "branch_required": "Informe a filial.",
+    "work_center_not_in_catalog": "O centro de trabalho \"{work_center_code}\" não existe no catálogo TOTVS da filial."
   }
 }

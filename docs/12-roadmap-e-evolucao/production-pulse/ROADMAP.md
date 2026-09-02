@@ -18,12 +18,14 @@
 | E6.S1 — Docs + smoke | ✅ Feito | `check-production-pulse.sh` 8/8 OK |
 | **E6.S2 — Verify live ESP piloto** | ⏳ **Pendente** | WSL não alcança `192.168.20.2`; checklist UI §3–5 |
 | P1 (gauge, KPI delta, reset HW, thresholds) | ✅ Feito | commits em `main` pós-MVP |
-| **E7 — Alinhamento `.cursor` (conteúdo + kit)** | 🔄 **Em curso** | E7.S0 ✅ em `main`; E7.S1–S5 pendentes |
+| **E7 — Alinhamento `.cursor` (conteúdo + kit)** | 🔄 **Em curso** | E7.S0–S1 ✅ em `main`; E7.S2–S5 pendentes |
 
 Smoke dev: `bash ./scripts/homologacao/check-production-pulse.sh`  
 Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-production-pulse.sh` — ver [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md).
 
 **E7.S0 entregue (set/2026):** poll/live 422 + `device_api_messages.json`; test-probe `errorMessage`; HTTP 404/409 no JSON; MFE `resolveDeviceActionError` — commits `56c3c7606`, `4c7a3fe13`.
+
+**E7.S1 entregue (set/2026):** `commandErrors` + `validationErrors` no JSON; `ContentCodedError`; comandos/validação HTTP via loader; drivers retornam `error_code`.
 
 ---
 
@@ -346,19 +348,11 @@ flowchart LR
 - **Status:** ✅ `main` — `56c3c7606`, `4c7a3fe13`.
 - **Pronto quando:** pytest content/probe; vitest `apiErrors` + sync codes; painel aviso amarelo em poll offline.
 
-#### E7.S1 — Catálogo JSON: comandos + validação HTTP
+#### E7.S1 — Catálogo JSON: comandos + validação HTTP ✅
 
 - **Objetivo:** Comandos e erros de domínio expostos ao usuário saem do JSON, não de strings nos drivers/services.
-- **Fazer:**
-  1. Estender `device_api_messages.json` — seções `commandErrors`, `validationErrors` (chaves estáveis: `unsupported_command`, `poll_interval_min`, …)
-  2. Loader `device_api_messages_content_service.py` — `command_error_message(code)`, `validation_error_message(key)`
-  3. `device_command_service.py` + rotas — `CommandResult` / 422 com mensagem do loader (manter `code` técnico)
-  4. `binding_validation_service.py` / `device_validation_service.py` — levantar códigos; mensagem só no handler HTTP ou loader
-  5. MFE operador/detalhe — consumir `errorMessage` da API (sem literal de driver)
-- **Não fazer:** `if path` por rota; duplicar frase no MFE; alterar contrato 200 de test-probe.
-- **Teste:** `pytest production-pulse-api/tests/test_device_commands.py -q` (+ casos novos command message); vitest superfície operador mock 422
-- **Pronto quando:** grep zero `"Comando não suportado"` em `device_command_service.py` / drivers expostos ao HTTP; assert mensagem PT vem do JSON
-- **Commit:** `refactor(production-pulse): mensagens de comando e validação no catálogo JSON`
+- **Status:** ✅ `main` — após commit desta entrega.
+- **Pronto quando:** pytest command/content/validation; grep zero `"Comando não suportado"` em `device_command_service.py`; assert mensagem PT vem do JSON.
 
 #### E7.S2 — Drivers HTTP: códigos only
 
@@ -412,7 +406,7 @@ flowchart LR
 ### Critérios de pronto (E7)
 
 - [x] E7.S0 — poll/live/test-probe/404/409 no catálogo JSON; MFE device vs infra
-- [ ] E7.S1 — comandos + validação HTTP no JSON
+- [x] E7.S1 — comandos + validação HTTP no JSON
 - [ ] E7.S2 — drivers sem copy PT ao usuário
 - [ ] E7.S3 — form validation content sync API/MFE
 - [ ] E7.S4 — modais host-contained

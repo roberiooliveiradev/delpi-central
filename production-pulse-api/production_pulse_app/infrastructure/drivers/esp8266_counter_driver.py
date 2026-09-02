@@ -64,10 +64,7 @@ class Esp8266CounterDriver:
         normalized = (command_key or "").strip().lower()
         path = _COMMAND_PATHS.get(normalized)
         if path is None:
-            return CommandResult(
-                success=False,
-                error_message=f"Comando não suportado: {command_key}",
-            )
+            return CommandResult(success=False, error_code="unsupported_command")
 
         try:
             response_body = self._post_json(device, path, payload=payload)
@@ -78,7 +75,7 @@ class Esp8266CounterDriver:
                 response_payload=response_body if isinstance(response_body, dict) else {},
             )
         except DeviceDriverError as exc:
-            return CommandResult(success=False, error_message=str(exc))
+            return CommandResult(success=False, error_code=exc.code, error_message=str(exc))
 
     def _fetch_counter(self, device: dict[str, Any]) -> DeviceReading:
         body = self._get_json(device, _READ_PATH)

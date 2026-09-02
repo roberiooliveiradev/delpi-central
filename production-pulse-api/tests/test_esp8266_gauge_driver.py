@@ -60,7 +60,7 @@ def test_execute_any_command_returns_failure():
     driver = Esp8266GaugeDriver(timeout_seconds=1.0)
     result = driver.execute(_DEVICE, "reset")
     assert result.success is False
-    assert "não suportado" in (result.error_message or "")
+    assert result.error_code == "unsupported_command"
 
 
 def test_register_device_drivers_exposes_gauge_implementation():

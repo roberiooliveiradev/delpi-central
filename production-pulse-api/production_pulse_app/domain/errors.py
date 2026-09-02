@@ -1,4 +1,24 @@
-class DeviceValidationError(ValueError):
+from __future__ import annotations
+
+from typing import Any
+
+
+class ContentCodedError(ValueError):
+    def __init__(self, code: str, **params: Any) -> None:
+        self.code = code
+        self.params = params
+        super().__init__(code)
+
+
+class DeviceValidationError(ContentCodedError):
+    pass
+
+
+class BindingValidationError(ContentCodedError):
+    pass
+
+
+class CommandNotSupportedError(ContentCodedError):
     pass
 
 
@@ -8,5 +28,10 @@ class DeviceDriverError(RuntimeError):
         super().__init__(message)
 
 
-class CommandNotSupportedError(ValueError):
-    pass
+__all__ = [
+    "BindingValidationError",
+    "CommandNotSupportedError",
+    "ContentCodedError",
+    "DeviceDriverError",
+    "DeviceValidationError",
+]

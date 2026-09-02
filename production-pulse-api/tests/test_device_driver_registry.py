@@ -39,8 +39,9 @@ def test_resolve_driver_maps_role_key():
 
 
 def test_resolve_driver_unknown_raises():
-    with pytest.raises(DeviceValidationError, match="Driver desconhecido"):
+    with pytest.raises(DeviceValidationError) as exc_info:
         resolve_driver("modbus_plc_v99")
+    assert exc_info.value.code == "unknown_driver"
 
 
 def test_poll_timeout_ms_default_and_override():

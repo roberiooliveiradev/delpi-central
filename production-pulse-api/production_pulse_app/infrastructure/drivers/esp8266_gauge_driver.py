@@ -58,11 +58,8 @@ class Esp8266GaugeDriver:
         _ = device, payload
         normalized = (command_key or "").strip().lower()
         if not normalized:
-            return CommandResult(success=False, error_message="Comando não suportado.")
-        return CommandResult(
-            success=False,
-            error_message=f"Comando não suportado: {command_key}",
-        )
+            return CommandResult(success=False, error_code="unsupported_command")
+        return CommandResult(success=False, error_code="unsupported_command")
 
     def _fetch_gauge(self, device: dict[str, Any]) -> DeviceReading:
         body = self._get_json(device, _READ_PATH)

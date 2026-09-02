@@ -21,6 +21,6 @@ def test_work_center_requires_code():
     try:
         normalize_binding_input({"anchorType": "work_center"})
     except BindingValidationError as exc:
-        assert "work_center_code" in str(exc)
+        assert exc.code == "work_center_code_required"
     else:
         raise AssertionError("expected BindingValidationError")

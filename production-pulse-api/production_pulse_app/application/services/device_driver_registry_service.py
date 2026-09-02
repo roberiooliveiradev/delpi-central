@@ -41,15 +41,15 @@ class DeviceDriverRegistryService:
     def resolve_driver(self, driver_key: str) -> ResolvedDriverDefinition:
         normalized = (driver_key or "").strip()
         if not normalized:
-            raise DeviceValidationError("driver_key é obrigatório.")
+            raise DeviceValidationError("driver_key_required")
 
         definition = get_driver_definitions().get(normalized)
         if definition is None:
-            raise DeviceValidationError(f"Driver desconhecido: {normalized}")
+            raise DeviceValidationError("unknown_driver", driver=normalized)
 
         role_key = str(definition.get("roleKey") or "").strip()
         if not role_key:
-            raise DeviceValidationError(f"Driver '{normalized}' sem roleKey no registry.")
+            raise DeviceValidationError("driver_missing_role_key", driver=normalized)
 
         return ResolvedDriverDefinition(
             driver_key=normalized,
