@@ -2,12 +2,15 @@ import type { ReactNode } from "react";
 
 import {
   createDashboardNativeFormFields,
+  FormSelectControl,
   formFieldShellBemClasses,
   NativeSwitchControl,
   NativeTextControl,
   type FormFieldShellClassNames,
   type NativeTextControlProps,
 } from "@delpi/plugin-ui/index";
+
+const PP_PORTAL_SCOPE = "dashboard-production-pulse";
 
 const PP_FIELD_CLASS_NAMES: FormFieldShellClassNames = {
   ...formFieldShellBemClasses("pp"),
@@ -17,11 +20,73 @@ const PP_FIELD_CLASS_NAMES: FormFieldShellClassNames = {
 export const {
   FormFieldShell: PpFormFieldShell,
   TextField: PpNativeTextField,
-  SelectField: PpNativeSelectField,
   TextAreaField: PpNativeTextAreaField,
 } = createDashboardNativeFormFields({
   classNames: PP_FIELD_CLASS_NAMES,
 });
+
+export type PpNativeSelectOption = {
+  value: string;
+  label: string;
+};
+
+export type PpNativeSelectFieldProps = {
+  id: string;
+  label: string;
+  hint?: string;
+  span?: boolean;
+  disabled?: boolean;
+  className?: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: readonly PpNativeSelectOption[];
+  placeholderOption?: string;
+  searchable?: boolean;
+  afterControl?: ReactNode;
+};
+
+/** Select de formulário — FormSelectControl do kit (painel portado), não select HTML nativo. */
+export function PpNativeSelectField({
+  id,
+  label,
+  hint,
+  span,
+  disabled,
+  className,
+  value,
+  onChange,
+  options,
+  placeholderOption,
+  searchable = false,
+  afterControl,
+}: PpNativeSelectFieldProps) {
+  const allowEmpty = placeholderOption !== undefined;
+
+  return (
+    <PpFormFieldShell
+      id={id}
+      label={label}
+      hint={hint}
+      span={span}
+      className={className}
+      afterControl={afterControl}
+    >
+      <FormSelectControl
+        id={id}
+        options={options}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        searchable={searchable}
+        allowEmpty={allowEmpty}
+        emptyLabel={placeholderOption}
+        placeholder={placeholderOption ?? "Selecione…"}
+        portalScopeClassName={PP_PORTAL_SCOPE}
+        ariaLabel={label}
+      />
+    </PpFormFieldShell>
+  );
+}
 
 export function ppFieldError(message?: string | null): ReactNode {
   return message ? <span className="pp-field-error">{message}</span> : null;

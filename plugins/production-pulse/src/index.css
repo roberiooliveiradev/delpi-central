@@ -523,7 +523,6 @@
 }
 
 .pp-field input:not([type="checkbox"]),
-.pp-field select,
 .pp-field textarea {
   width: 100%;
 }
@@ -603,7 +602,6 @@
   }
 
   .pp-field input:not([type="checkbox"]),
-  .pp-field select,
   .pp-field textarea {
     min-height: var(--pp-field-min-height-compact);
     font-size: 16px;

@@ -110,8 +110,11 @@ describe("production-pulse kit contracts", () => {
       /\bNativeSwitchControl\b/,
       /\bNativeTextField\b/,
       /\bNativeSelectField\b/,
+      /\bNativeSelectControl\b/,
       /\bNativeTextAreaField\b/,
       /\bcreateDashboardNativeFormFields\b/,
+      /\bFormSelectControl\b/,
+      /\bSelectControl\b/,
       /\bFilterInputField as PluginFilterInputField\b/,
       /\bcreateDashboardFiltersKit\b/,
     ];
@@ -174,6 +177,8 @@ describe("production-pulse kit contracts", () => {
     expect(bindingSection).not.toMatch(/<datalist/);
     expect(readRelative("App.tsx")).toMatch(/data-pp-viewport/);
     expect(readRelative("components/data/ppFormFields.tsx")).toMatch(/createDashboardNativeFormFields/);
+    expect(readRelative("components/data/ppFormFields.tsx")).toMatch(/FormSelectControl/);
+    expect(readRelative("components/data/ppFormFields.tsx")).not.toMatch(/<select[\s/>]/);
     const css = readRelative("index.css");
     expect(css).toMatch(/--pp-form-max-width/);
     expect(css).toMatch(/pp-form-grid--pair/);
