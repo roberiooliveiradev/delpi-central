@@ -698,6 +698,18 @@ export {
   resolveCanvasTableGutterHandles,
 } from "./canvasTableSelectionOverlay";
 export {
+  CANVAS_TABLE_FILL_HANDLE_SIZE,
+  applyCanvasTableAutoFill,
+  boundsFromCanvasTableCells,
+  resolveCanvasTableAutoFillTarget,
+  resolveCanvasTableFillHandleRect,
+} from "./canvasTableAutoFill";
+export type {
+  CanvasTableAutoFillDirection,
+  CanvasTableBounds,
+  CanvasTableHostRect,
+} from "./canvasTableAutoFill";
+export {
   ComunicadoInputBlockView,
   resolveInputControlKind,
 } from "./ComunicadoInputBlockView";

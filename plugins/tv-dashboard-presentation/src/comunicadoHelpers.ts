@@ -153,6 +153,18 @@ export {
   canvasTableClipboardToTsv,
 } from "./canvasTableClipboard";
 export {
+  CANVAS_TABLE_FILL_HANDLE_SIZE,
+  applyCanvasTableAutoFill,
+  boundsFromCanvasTableCells,
+  resolveCanvasTableAutoFillTarget,
+  resolveCanvasTableFillHandleRect,
+} from "./canvasTableAutoFill";
+export type {
+  CanvasTableAutoFillDirection,
+  CanvasTableBounds,
+  CanvasTableHostRect,
+} from "./canvasTableAutoFill";
+export {
   getCanvasTableSessionClipboard,
   setCanvasTableSessionClipboard,
 } from "./canvasTableSessionClipboard";
