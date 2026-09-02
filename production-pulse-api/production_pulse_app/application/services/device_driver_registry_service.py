@@ -88,11 +88,15 @@ class DeviceDriverRegistryService:
         ) else []
 
         operator_surface = str(definition.get("operatorSurface") or "").strip()
-        return {
+        payload: dict[str, Any] = {
             "metrics": metric_keys,
             "commands": commands,
             "operatorSurface": operator_surface,
         }
+        thresholds = definition.get("thresholds") or {}
+        if isinstance(thresholds, dict) and thresholds:
+            payload["thresholds"] = thresholds
+        return payload
 
     def poll_timeout_ms(self, driver_key: str) -> int:
         resolved = self.resolve_driver(driver_key)

@@ -13,6 +13,7 @@ import {
 import { navigateProductionPulse } from "../../utils/navigation";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
 import { formatMetricValue, metricLabel, metricUnit } from "../../utils/detailDisplay";
+import { resolveMetricThresholdLevel } from "../../utils/gaugeThresholds";
 import { resolveOperatorHeaderTitle } from "../../utils/operatorDisplay";
 
 type GaugeReadoutSurfaceProps = {
@@ -90,8 +91,23 @@ export function GaugeReadoutSurface({
       {error ? <p className="pp-detail-error">{error}</p> : null}
 
       <div className="pp-gauge-readout__grid">
-        {metricKeys.map((key) => (
-          <div key={key} className="pp-gauge-readout__tile">
+        {metricKeys.map((key) => {
+          const level = resolveMetricThresholdLevel(
+            key,
+            device.lastMetrics?.[key],
+            device.capabilities?.thresholds,
+          );
+          return (
+            <div
+              key={key}
+              className={`pp-gauge-readout__tile${
+                level === "warn"
+                  ? " pp-gauge-readout__tile--warn"
+                  : level === "danger"
+                    ? " pp-gauge-readout__tile--danger"
+                    : ""
+              }`}
+            >
             <p className="pp-gauge-readout__value">
               {formatMetricValue(key, device.lastMetrics?.[key])
                 .replace(` ${metricUnit(key) ?? ""}`, "")
@@ -100,7 +116,8 @@ export function GaugeReadoutSurface({
             {metricUnit(key) ? <p className="pp-gauge-readout__unit">{metricUnit(key)}</p> : null}
             <p className="pp-gauge-readout__label">{metricLabel(key)}</p>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="pp-gauge-readout__footer">

@@ -29,6 +29,7 @@ def test_registry_gauge_capabilities():
     assert caps["metrics"] == ["rpm", "temperature_c"]
     assert caps["commands"] == []
     assert caps["operatorSurface"] == "gauge_readout"
+    assert caps["thresholds"]["temperature_c"]["warnAbove"] == 75
 
 
 def test_resolve_driver_maps_role_key():

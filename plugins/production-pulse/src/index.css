@@ -1307,6 +1307,32 @@
   background: var(--pp-surface);
 }
 
+.pp-gauge-readout__tile--warn {
+  border-color: color-mix(in srgb, var(--pp-warning) 45%, var(--pp-border));
+  background: color-mix(in srgb, var(--pp-warning) 8%, var(--pp-surface));
+}
+
+.pp-gauge-readout__tile--warn .pp-gauge-readout__value {
+  color: color-mix(in srgb, var(--pp-warning) 82%, var(--pp-text));
+}
+
+.pp-gauge-readout__tile--danger {
+  border-color: color-mix(in srgb, var(--pp-danger) 45%, var(--pp-border));
+  background: color-mix(in srgb, var(--pp-danger) 8%, var(--pp-surface));
+}
+
+.pp-gauge-readout__tile--danger .pp-gauge-readout__value {
+  color: color-mix(in srgb, var(--pp-danger) 82%, var(--pp-text));
+}
+
+:root[data-theme="dark"] .pp-gauge-readout__tile--warn .pp-gauge-readout__value {
+  color: color-mix(in srgb, var(--pp-warning) 70%, white);
+}
+
+:root[data-theme="dark"] .pp-gauge-readout__tile--danger .pp-gauge-readout__value {
+  color: color-mix(in srgb, var(--pp-danger) 70%, white);
+}
+
 .pp-gauge-readout__value {
   margin: 0;
   font-size: clamp(2.5rem, 10vw, 4rem);

@@ -19,6 +19,15 @@ export type DeviceCapabilities = {
   metrics: string[];
   commands: string[];
   operatorSurface: string;
+  thresholds?: Record<
+    string,
+    {
+      warnAbove?: number;
+      dangerAbove?: number;
+      warnBelow?: number;
+      dangerBelow?: number;
+    }
+  >;
 };
 
 export type DeviceStatus = "online" | "offline" | "disabled" | "no_binding";
