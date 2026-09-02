@@ -388,12 +388,18 @@
       "title": "Agentes especializados",
       "category": "chat_basic",
       "status": "available",
-      "summary": "Escolha de agente com APIs e skills adequadas à tarefa.",
+      "summary": "Ative um especialista no composer para usar APIs e skills da tarefa.",
       "requiresAgent": false,
       "helpTopicId": "agent",
+      "howToUse": [
+        "No composer, toque em + (ou digite @) e abra a lista de agentes.",
+        "Escolha o agente com as actions da tarefa (produto, estoque, indicadores, SQL…).",
+        "Confirme que o nome do agente aparece no contexto e faça a pergunta operacional."
+      ],
       "examples": [
         "Como escolho um agente?",
-        "Qual agente consulta estoque?"
+        "Como ativo o agente?",
+        "Qual agente escolher para estoque?"
       ],
       "relatedFeatures": [
         "product_lookup",

@@ -71,13 +71,23 @@ class ChatTvDashboardCopilotIntentService:
         return surface in tokens or surface == TV_DASHBOARD_SURFACE
 
     @classmethod
+    def matches_explicit_phrase(cls, message: str | None) -> bool:
+        """Frases TV fortes (slide/playlist/copiloto) — sem markers fracos (tabela+monte)."""
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        if not normalized or len(normalized) < 4:
+            return False
+        return any(
+            phrase and phrase in normalized for phrase in cls._normalized_phrases()
+        )
+
+    @classmethod
     def matches(cls, message: str | None) -> bool:
         """Heurística leve de surface (frases/markers) — não lista ops do BFF."""
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         if not normalized or len(normalized) < 4:
             return False
 
-        if any(phrase and phrase in normalized for phrase in cls._normalized_phrases()):
+        if cls.matches_explicit_phrase(message):
             return True
 
         markers = cls._list("markers")

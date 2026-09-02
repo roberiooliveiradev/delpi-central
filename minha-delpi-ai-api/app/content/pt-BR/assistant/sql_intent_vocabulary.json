@@ -243,7 +243,8 @@
     ],
     "sqlContextTerms": [
       "sql",
-      "consulta",
+      "consulta sql",
+      "consulta no banco",
       "query",
       "select",
       "tabela",
@@ -661,7 +662,8 @@
   "advancedSqlSpecialist": {
     "activationTerms": [
       "sql",
-      "consulta",
+      "consulta sql",
+      "consulta no banco",
       "query",
       "select",
       "tabela",

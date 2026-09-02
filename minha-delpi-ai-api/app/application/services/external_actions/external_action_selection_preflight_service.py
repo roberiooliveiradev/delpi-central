@@ -95,10 +95,20 @@ class ExternalActionSelectionPreflightService:
             ChatSqlAuthoringGuidanceService,
         )
 
-        if ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message):
-            return "skip"
-
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message):
+            # Elaborar SQL (sem executar): só metadado /system/* — nunca REST operacional
+            # (ex.: programação de produção por similaridade semântica com «produtos»).
+            if OperationalRouteMatcherService.looks_like_system_metadata_question(
+                normalized
+            ):
+                return route_selection.select_system_metadata(
+                    message,
+                    allowed_action_ids=allowed_action_ids,
+                    candidates_loader=candidates_loader,
+                )
+            return None
 
         if OperationalRouteMatcherService.looks_like_system_metadata_question(normalized):
             return route_selection.select_system_metadata(

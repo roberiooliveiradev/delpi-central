@@ -20,7 +20,7 @@ _DESTRUCTIVE_TOKENS = re.compile(
 )
 
 _SQL_CONTEXT = re.compile(
-    r"\b(select|from|where|sql|consulta|query|sc20\d{2}|/data/sql|protheus)\b",
+    r"\b(select|from|where|sql|query|consulta\s+sql|consulta\s+no\s+banco|sc20\d{2}|/data/sql|protheus)\b",
     flags=re.IGNORECASE,
 )
 

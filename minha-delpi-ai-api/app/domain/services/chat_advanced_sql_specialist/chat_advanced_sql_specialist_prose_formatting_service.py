@@ -181,7 +181,13 @@ class ChatAdvancedSqlSpecialistProseFormattingService:
 
         before_first = re.split(r"```sql", text, maxsplit=1, flags=re.IGNORECASE)[0].strip()
         custom_before = cls._sql_authoring_intro_re().sub("", before_first).strip()
-        paragraphs = cls._collect_unique_authoring_prose(text)
+        if custom_before and cls._paragraph_has_instruction_leak(custom_before):
+            custom_before = ""
+        paragraphs = [
+            p
+            for p in cls._collect_unique_authoring_prose(text)
+            if not cls._paragraph_has_instruction_leak(p)
+        ]
 
         parts: list[str] = []
 
@@ -201,10 +207,68 @@ class ChatAdvancedSqlSpecialistProseFormattingService:
         return "\n\n".join(parts).strip()
 
     @classmethod
+    def _sql_instruction_leak_markers(cls) -> tuple[str, ...]:
+        from app.domain.services.chat_llm_synthesis_delivery_content_service import (
+            ChatLlmSynthesisDeliveryContentService,
+        )
+
+        return ChatLlmSynthesisDeliveryContentService.common_leak_markers()
+
+    @classmethod
+    def _paragraph_has_instruction_leak(cls, paragraph: str) -> bool:
+        lowered = paragraph.lower()
+        compact = re.sub(r"\s+", "", lowered)
+        for marker in cls._sql_instruction_leak_markers():
+            token = str(marker or "").strip().lower()
+            if not token:
+                continue
+            if token in lowered or re.sub(r"\s+", "", token) in compact:
+                return True
+        return False
+
+    @classmethod
+    def _strip_instruction_leak_prose(cls, text: str) -> str:
+        """Remove eco do prompt do especialista SQL; preserva fence ```sql```."""
+        if not text or "```sql" not in text.lower():
+            if text and cls._paragraph_has_instruction_leak(text):
+                return ""
+            return text
+
+        parts: list[str] = []
+        cursor = 0
+        for match in _SQL_BLOCK_RE.finditer(text):
+            before = text[cursor : match.start()]
+            kept_before = [
+                p.strip()
+                for p in re.split(r"\n\s*\n", before)
+                if p.strip() and not cls._paragraph_has_instruction_leak(p)
+            ]
+            if kept_before:
+                parts.append("\n\n".join(kept_before))
+            parts.append(match.group(0).strip())
+            cursor = match.end()
+
+        after = text[cursor:]
+        kept_after = [
+            p.strip()
+            for p in re.split(r"\n\s*\n", after)
+            if p.strip() and not cls._paragraph_has_instruction_leak(p)
+        ]
+        if kept_after:
+            parts.append("\n\n".join(kept_after))
+
+        return "\n\n".join(parts).strip()
+
+    @classmethod
     def format_sql_authoring_answer(cls, answer: str | None) -> str:
         text = str(answer or "").strip()
 
-        if not text or "```sql" not in text.lower():
+        if not text:
+            return text
+
+        text = cls._strip_instruction_leak_prose(text)
+
+        if "```sql" not in text.lower():
             return text
 
         text = cls._canonicalize_sql_authoring_layout(text)
@@ -242,14 +306,38 @@ class ChatAdvancedSqlSpecialistProseFormattingService:
                 "status='ativo'",
             )
         )
-        uses_protheus = any(col.lower() in sql_lower for col in columns)
+        uses_protheus_columns = bool(
+            columns and any(col.lower() in sql_lower for col in columns)
+        )
+        uses_protheus_family = bool(
+            re.search(r"\b(sa|sb|sc|sd|se|sf|sg|sh)\d{0,4}\b", sql_lower)
+            or re.search(r"\b[a-z]\d_[a-z0-9_]+\b", sql_lower)
+        )
+        uses_protheus = uses_protheus_columns or uses_protheus_family
         domain_mismatch = ChatAdvancedSqlSpecialistPromptService._authoring_sql_domain_mismatch(
             message=message,
             sql_block=sql_block,
         )
 
-        if not uses_generic and uses_protheus and not domain_mismatch:
-            return text
+        # Follow-up incremental (ex.: top N) com SQL Protheus válido: preservar família.
+        if uses_protheus and not uses_generic and not domain_mismatch:
+            from app.domain.services.chat_sql_query_refinement_service import (
+                ChatSqlQueryRefinementService,
+            )
+
+            ctx = ChatAdvancedSqlSpecialistPromptService._authoring_context(message=message)
+            top_limit = ctx.get("topLimit")
+            if top_limit and "top " not in sql_lower:
+                updated = ChatSqlQueryRefinementService.apply_top_limit(sql_block, int(top_limit))
+                if updated and updated.strip() != sql_block.strip():
+                    text = re.sub(
+                        r"```sql\s*[\s\S]*?```",
+                        f"```sql\n{updated.strip()}\n```",
+                        text,
+                        count=1,
+                        flags=re.IGNORECASE,
+                    )
+            return cls.format_sql_authoring_answer(text)
 
         if domain_mismatch or uses_generic or not uses_protheus:
             replacement = ChatAdvancedSqlSpecialistPromptService._authoring_sql_from_message(

@@ -57,6 +57,29 @@ def test_tv_slide_request_does_not_activate_sql_specialist():
     )
 
 
+def test_monte_consulta_tabela_activates_sql_outside_tv_surface():
+    """monte + tabela é SQL authoring; markers TV fracos não devem bloquear."""
+    msg = (
+        "Monte uma consulta para listar clientes ativos da tabela SA1, "
+        "só código e nome, sem executar."
+    )
+    assert ChatAdvancedSqlSpecialistService.should_activate(
+        msg,
+        workspace_context=_ctx(),
+    )
+
+
+def test_agent_help_does_not_activate_sql_specialist():
+    assert not ChatAdvancedSqlSpecialistService.should_activate(
+        "qual agente consulta produto?",
+        workspace_context=_ctx(),
+    )
+    assert not ChatAdvancedSqlSpecialistService.should_activate(
+        "como ativo o agente?",
+        workspace_context=_ctx(),
+    )
+
+
 def test_sql2_default_dialect_when_not_informed():
     resolved = ChatSqlDialectResolverService.resolve("monte uma consulta de vendas")
 

@@ -119,7 +119,9 @@ class ChatAdvancedSqlSpecialistActivationService:
             workspace_context=workspace,
         ):
             return True
-        if ChatTvDashboardCopilotIntentService.matches(message):
+        # Fora do surface TV: só frases explícitas (slide/playlist). Markers fracos
+        # (ex.: monte + tabela) são SQL authoring comum e não devem sequestrar.
+        if ChatTvDashboardCopilotIntentService.matches_explicit_phrase(message):
             return True
         return bool(skills.get(TV_DASHBOARD_COPILOT_SKILL_FLAG)) and bool(
             ChatTvDashboardCopilotIntentService.has_mutation_verb(message)

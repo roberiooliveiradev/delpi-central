@@ -1898,3 +1898,46 @@ def test_product_open_op_question_selects_production_status_not_global_open_list
     assert selected is not None
     assert selected["arguments"]["actionId"] == "production-status"
     assert selected["arguments"]["parameters"]["code"] == "90260255"
+
+
+def test_create_sql_authoring_does_not_select_production_schedule():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "api_delpi.produ_o_operacional.get_production_schedule_today",
+                    "method": "GET",
+                    "path": "/production/schedule/today",
+                    "operationId": "get_production_schedule_today",
+                    "summary": "Produtos programados para produzir na data",
+                    "selectionScore": 0.99,
+                    "parametersSchema": [
+                        {"name": "reference_date"},
+                        {"name": "branch"},
+                    ],
+                },
+                {
+                    "actionId": "search-products",
+                    "method": "GET",
+                    "path": "/products/search",
+                    "operationId": "search_products",
+                    "summary": "Busca produtos por grupo",
+                    "selectionScore": 0.5,
+                    "parametersSchema": [
+                        {"name": "group_code"},
+                        {"name": "description"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "crie um sql que liste os 10 primeiros produtos do grupo 1008",
+        allowed_action_ids=[
+            "api_delpi.produ_o_operacional.get_production_schedule_today",
+            "search-products",
+        ],
+    )
+
+    assert selected is None

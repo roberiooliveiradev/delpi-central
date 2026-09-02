@@ -479,6 +479,62 @@ def test_normalize_replaces_sa1_with_sb1_for_product_authoring():
     assert "SA1010" not in fixed
 
 
+def test_normalize_preserves_sb1_when_follow_up_only_asks_top_n():
+    from app.domain.services.chat_advanced_sql_specialist.chat_advanced_sql_specialist_prose_formatting_service import (
+        ChatAdvancedSqlSpecialistProseFormattingService,
+    )
+
+    answer = (
+        "Segue a consulta.\n\n```sql\n"
+        "SELECT B1_COD, B1_DESC\n"
+        "FROM SB1010\n"
+        "WHERE D_E_L_E_T_ = ''\n"
+        "```\n"
+    )
+    fixed = ChatAdvancedSqlSpecialistProseFormattingService.normalize_protheus_sql_answer(
+        answer,
+        message="ajuste o sql para trazer os top 10",
+        tool_calls=[],
+    )
+
+    assert "SB1010" in fixed
+    assert "B1_COD" in fixed
+    assert "TOP 10" in fixed.upper()
+    assert "SA1010" not in fixed
+    assert "A1_COD" not in fixed
+
+
+def test_format_sql_authoring_strips_specialist_prompt_leak():
+    from app.domain.services.chat_advanced_sql_specialist.chat_advanced_sql_specialist_prose_formatting_service import (
+        ChatAdvancedSqlSpecialistProseFormattingService,
+    )
+
+    leaked = (
+        "O usuário pediu para criar um SQL. O contexto do Especialista SQL indica:\n"
+        "- Modo: create\n"
+        "- Dialeto: sqlserver (assumido)\n"
+        "ENTREGA OBRIGATÓRIA: responda com bloco\n\n"
+        "```sql\n"
+        "SELECT TOP 10 B1_COD, B1_DESC\n"
+        "FROM SB1010\n"
+        "WHERE D_E_L_E_T_ = ''\n"
+        "  AND B1_GRUPO = '1008'\n"
+        "```\n\n"
+        "contendo a consulta pedida antes de qualquer outro conteúdo."
+    )
+    fixed = ChatAdvancedSqlSpecialistProseFormattingService.format_sql_authoring_answer(
+        leaked
+    )
+
+    assert "```sql" in fixed.lower()
+    assert "SB1010" in fixed
+    assert "B1_GRUPO" in fixed
+    assert "ENTREGA OBRIGATÓRIA" not in fixed.upper()
+    assert "Modo: create" not in fixed
+    assert "Especialista SQL" not in fixed
+    assert "antes de qualquer outro" not in fixed.lower()
+
+
 def test_plan_schema_prefetch_chains_sb1_columns_after_table_search():
     from app.domain.services.chat_sql_authoring_guidance_service import (
         ChatSqlAuthoringGuidanceService,

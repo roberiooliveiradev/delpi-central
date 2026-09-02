@@ -151,6 +151,9 @@ class ChatCapabilitiesService:
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 
         if ChatSqlIntentService.is_sql_conversation_turn(message):
+            # Help de ativação/escolha de agente não deve cair no stack SQL.
+            if cls.classify_help_topic(message) == "agent":
+                return True
             return False
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)

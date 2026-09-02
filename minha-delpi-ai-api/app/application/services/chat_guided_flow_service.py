@@ -35,6 +35,7 @@ _GUIDE_REQUEST_TERMS = (
 
 
 _FLOW_TOPIC_MARKERS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("agent", ("agente", "especialista", "ativar agente", "ativo o agente", "escolho um agente", "escolher agente", "qual agente")),
     ("stock", ("estoque", "saldo", "armazem", "armazém")),
     ("product", ("produto", "ficha", "cadastro", "codigo", "código")),
     ("suppliers", ("fornecedor", "fornecedores")),
@@ -112,7 +113,7 @@ class ChatGuidedFlowService:
             "canvas": "product",
             "chart": "indicators",
             "attachment": "attachment",
-            "agent": "product",
+            "agent": "agent",
         }
 
         return topic_map.get(topic or "")

@@ -109,7 +109,8 @@ class ChatAdvancedSqlSpecialistPromptService:
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         mapping = ChatSqlSemanticSchemaMapperService.map_message(message)
-        logical_table = "SA1"
+        logical_table: str | None = None
+        domain_explicit = False
         code_col = "A1_COD"
         name_col = "A1_NOME"
         group_col: str | None = None
@@ -119,6 +120,7 @@ class ChatAdvancedSqlSpecialistPromptService:
 
             if table_hints:
                 logical_table = str(table_hints[0]).upper()
+                domain_explicit = True
                 break
 
         explicit = re.search(
@@ -129,8 +131,15 @@ class ChatAdvancedSqlSpecialistPromptService:
 
         if explicit:
             logical_table = explicit.group(0).upper()
+            domain_explicit = True
 
-        if logical_table.startswith("SB"):
+        if not logical_table:
+            # Sem entidade na mensagem: não inventar SA1 (evita sobrescrever SB1 em follow-ups).
+            logical_table = ""
+            code_col = ""
+            name_col = ""
+            group_col = None
+        elif logical_table.startswith("SB"):
             code_col = "B1_COD"
             name_col = "B1_DESC"
             group_col = "B1_GRUPO"
@@ -167,11 +176,13 @@ class ChatAdvancedSqlSpecialistPromptService:
                 group_col,
             )
 
-        physical = (
-            logical_table
-            if re.search(r"\d{3}$", logical_table)
-            else f"{logical_table}010"
-        )
+        physical = ""
+        if logical_table:
+            physical = (
+                logical_table
+                if re.search(r"\d{3}$", logical_table)
+                else f"{logical_table}010"
+            )
 
         top_limit: int | None = None
         top_match = re.search(r"\btop\s+(\d+)\b", normalized, flags=re.IGNORECASE)
@@ -197,12 +208,18 @@ class ChatAdvancedSqlSpecialistPromptService:
 
                 if recent_count:
                     top_limit = int(recent_count.group(1))
-
-        group_value: str | None = None
-        group_match = re.search(r"\bgrupo\s+(\d+)\b", normalized, flags=re.IGNORECASE)
-
-        if group_match:
-            group_value = group_match.group(1)
+                else:
+                    trazer_top = re.search(
+                        r"\b(?:trazer|traga|ajuste|ajustar).*?\btop\s*(\d+)\b",
+                        normalized,
+                        flags=re.IGNORECASE,
+                    )
+                    if trazer_top:
+                        top_limit = int(trazer_top.group(1))
+                    else:
+                        top_n = re.search(r"\btop\s*(\d+)\b", normalized, flags=re.IGNORECASE)
+                        if top_n:
+                            top_limit = int(top_n.group(1))
 
         return {
             "logicalTable": logical_table,
@@ -210,14 +227,28 @@ class ChatAdvancedSqlSpecialistPromptService:
             "codeColumn": code_col,
             "nameColumn": name_col,
             "groupColumn": group_col,
-            "groupValue": group_value,
+            "groupValue": (
+                group_match.group(1)
+                if (group_match := re.search(r"\bgrupo\s+(\d+)\b", normalized, flags=re.IGNORECASE))
+                else None
+            ),
             "topLimit": top_limit,
+            "domainExplicit": domain_explicit,
         }
 
     @classmethod
     def _authoring_sql_from_message(cls, message: str | None, columns: list[str]) -> str | None:
         ctx = cls._authoring_context(message=message, columns=columns)
         logical = str(ctx.get("logicalTable") or "").upper()
+        if not logical:
+            logical = "SA1"
+            ctx = {
+                **ctx,
+                "logicalTable": "SA1",
+                "physicalTable": "SA1010",
+                "codeColumn": ctx.get("codeColumn") or "A1_COD",
+                "nameColumn": ctx.get("nameColumn") or "A1_NOME",
+            }
         select_prefix = (
             f"SELECT TOP {ctx['topLimit']} "
             if ctx.get("topLimit")
@@ -278,6 +309,9 @@ class ChatAdvancedSqlSpecialistPromptService:
     @classmethod
     def _authoring_sql_domain_mismatch(cls, *, message: str | None, sql_block: str) -> bool:
         ctx = cls._authoring_context(message=message)
+        if not ctx.get("domainExplicit"):
+            return False
+
         logical = str(ctx.get("logicalTable") or "").upper()
         sql_lower = sql_block.lower()
 

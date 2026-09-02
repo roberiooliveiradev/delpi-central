@@ -50,6 +50,13 @@ def test_matches_create_slide_without_host():
     assert ChatTextTaskIntentService.is_pure_text_task("crie um slide") is False
 
 
+def test_weak_monte_tabela_is_not_explicit_tv_phrase():
+    msg = "Monte uma consulta para listar clientes ativos da tabela SA1"
+    assert ChatTvDashboardCopilotIntentService.matches(msg) is True
+    assert ChatTvDashboardCopilotIntentService.matches_explicit_phrase(msg) is False
+    assert ChatTvDashboardCopilotIntentService.matches_explicit_phrase("monte um slide") is True
+
+
 def test_normalize_host_context_preserves_operation_and_data_source_ids():
     normalized = ChatTvDashboardCopilotIntentService.normalize_host_context(
         {

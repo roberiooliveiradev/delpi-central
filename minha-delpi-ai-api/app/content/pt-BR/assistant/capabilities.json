@@ -435,7 +435,7 @@
     },
     "agentHelp": {
       "title": "**Agentes especializados**",
-      "body": "No composer, escolha um **agente** com as APIs/actions que você precisa (estoque, vendas, SQL, etc.).\n\n**Chat comum** — respostas gerais, textos e RAG.\n**Com agente** — consultas operacionais DELPI autorizadas.\n\nSe faltar dado, verifique se o agente certo está selecionado e se sua conta tem permissão para a rota."
+      "body": "Para **ativar** um agente nesta conversa:\n\n1. No composer, toque em **+** (ou digite **@**) e escolha o agente na lista.\n2. Confirme que o nome do agente aparece no contexto da conversa.\n3. Faça a pergunta operacional (estoque, produto, indicadores, SQL…).\n\n**Chat comum** (sem agente) — documentação, textos, anexos e orientação.\n**Com agente** — actions/APIs DELPI autorizadas daquele especialista.\n\nNão invento nomes de agentes: use o menu **+** para ver os disponíveis na sua conta. Se a rota faltar, peça ao administrador para habilitar a action no agente."
     },
     "stockHelp": {
       "title": "**Consulta de estoque**",
@@ -1111,6 +1111,28 @@
     ]
   },
   "guidedFlows": {
+    "agent": {
+      "id": "agent",
+      "title": "Ativar e escolher agente",
+      "intro": "Passo a passo para selecionar o especialista certo no composer.",
+      "steps": [
+        {
+          "order": 1,
+          "text": "No composer, toque em **+** (ou digite **@**) e abra a lista de agentes disponíveis.",
+          "suggestion": { "label": "O que você pode fazer?", "query": "o que você pode fazer?" }
+        },
+        {
+          "order": 2,
+          "text": "Escolha o agente com as **actions** da tarefa (produto, estoque, indicadores, SQL…). O nome deve aparecer no contexto da conversa.",
+          "suggestion": { "label": "Como escolho um agente?", "query": "como escolho um agente?" }
+        },
+        {
+          "order": 3,
+          "text": "Faça a pergunta operacional já com o agente ativo (ex.: estoque ou ficha de produto).",
+          "suggestion": { "label": "Exemplo estoque", "query": "qual o estoque do produto {{productCode}}?" }
+        }
+      ]
+    },
     "product": {
       "id": "product",
       "title": "Consultar produto",
@@ -1119,7 +1141,7 @@
         {
           "order": 1,
           "text": "Selecione no composer um **agente** com actions de produto (ex.: GET /products).",
-          "suggestion": { "label": "Como escolher agente?", "query": "qual agente consulta produto?" }
+          "suggestion": { "label": "Como escolher agente?", "query": "como escolho um agente?" }
         },
         {
           "order": 2,

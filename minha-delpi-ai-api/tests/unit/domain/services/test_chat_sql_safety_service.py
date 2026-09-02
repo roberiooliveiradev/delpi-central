@@ -43,3 +43,20 @@ def test_blocked_direct_answer_none_for_execute_query():
     assert ChatSqlSafetyService.blocked_direct_answer(
         "execute essa query e traga os 5 produtos do grupo 1008"
     ) is None
+
+
+def test_agent_help_phrase_is_not_sql_payload():
+    assert not ChatSqlSafetyService.looks_like_sql_payload("qual agente consulta produto?")
+    assert not ChatSqlSafetyService.looks_like_sql_payload("como ativo o agente?")
+
+
+def test_sql_specialist_prompt_leak_triggers_fallback_marker():
+    from app.domain.services.chat_llm_synthesis_leak_guard_service import (
+        ChatLlmSynthesisLeakGuardService,
+    )
+
+    leaked = (
+        "ENTREGA OBRIGATÓRIA: responda com bloco ```sql``` "
+        "antes de qualquer outro conteúdo."
+    )
+    assert ChatLlmSynthesisLeakGuardService.needs_fallback(answer=leaked)
