@@ -174,7 +174,7 @@ Marcar **feito** quando **todos** forem verdadeiros:
 
 | Sintoma | Verificar |
 |---------|-----------|
-| test-probe timeout | Host na VLAN? `network_mode: host` no dev? Firewall? |
+| test-probe timeout | Host na VLAN? `network_mode: host` no dev? Firewall? **WSL:** se `curl 192.168.20.2` falha no host, a VLAN pode não estar roteada para o WSL — teste no Windows ou máquina na LAN |
 | Online permanece offline | Grace = 2× poll_interval (min 60 s); ESP responde `/api/contador`? |
 | CT autocomplete vazio | api-delpi + gateway; permissão TOTVS; filial correta |
 | Operador sem cards | Device `enabled`? Binding ativo? Role operador elegível? |
