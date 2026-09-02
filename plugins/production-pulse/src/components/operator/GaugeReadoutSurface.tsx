@@ -7,11 +7,7 @@ import { OperatorBrandBar } from "./OperatorBrandBar";
 import type { OperatorDeviceItem } from "../../types/operator";
 import { resolveDeviceActionMessage } from "../../utils/apiErrors";
 import { PP_HELP } from "../../content/helpTooltips";
-import {
-  productionPulseOperatorPath,
-  productionPulseOperatorPlacementPath,
-} from "../../constants/routes";
-import { navigateProductionPulse } from "../../utils/navigation";
+import { navigateOperatorPlacementHub } from "../../utils/operatorNavigation";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
 import { formatMetricValue, metricLabel, metricUnit } from "../../utils/detailDisplay";
 import { resolveMetricThresholdLevel, gaugeThresholdAriaLabel } from "../../utils/gaugeThresholds";
@@ -59,11 +55,7 @@ export function GaugeReadoutSurface({
   };
 
   const goBack = () => {
-    if (placementKey) {
-      navigateProductionPulse(productionPulseOperatorPlacementPath(placementKey, branch));
-      return;
-    }
-    navigateProductionPulse(productionPulseOperatorPath(branch));
+    navigateOperatorPlacementHub(branch);
   };
 
   const metricKeys = device.capabilities?.metrics?.length

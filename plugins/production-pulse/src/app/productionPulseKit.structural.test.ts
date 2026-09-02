@@ -177,13 +177,24 @@ describe("production-pulse kit contracts", () => {
     expect(hook).toMatch(/query\.has\("view"\)/);
   });
 
+  it("trocar posto no operador volta ao hub — evita auto-redirect do picker", () => {
+    const counter = readRelative("components/operator/CounterPadSurface.tsx");
+    const gauge = readRelative("components/operator/GaugeReadoutSurface.tsx");
+    const nav = readRelative("utils/operatorNavigation.ts");
+    expect(counter).toMatch(/navigateOperatorPlacementHub/);
+    expect(counter).not.toMatch(/productionPulseOperatorPlacementPath/);
+    expect(gauge).toMatch(/navigateOperatorPlacementHub/);
+    expect(gauge).not.toMatch(/productionPulseOperatorPlacementPath/);
+    expect(nav).toMatch(/productionPulseOperatorPath/);
+  });
+
   it("router hook escuta popstate e lê pathname do browser (não só do host)", () => {
     const hook = readRelative("hooks/useProductionPulseRouterPath.ts");
     expect(hook).toMatch(/addEventListener\("popstate"/);
-    expect(hook).toMatch(/setSearch\(readSearch\(\)\)/);
-    expect(hook).toMatch(/setPathname\(readPathname\(\)\)/);
-    expect(hook).toMatch(/pathnameFromHost === readPathname\(\)/);
-    expect(hook).not.toMatch(/setPathname\(pathnameFromHost\);\s*\n\s*\}, \[pathnameFromHost\]\)/);
+    expect(hook).toMatch(/routeEpoch/);
+    expect(hook).toMatch(/readPathname\(\)/);
+    expect(hook).toMatch(/readSearch\(\)/);
+    expect(hook).not.toMatch(/setPathname\(pathnameFromHost\)/);
   });
 
   it("textos de ação e modal não ficam hardcoded fora de helpTooltips", () => {

@@ -9,13 +9,9 @@ import { OperatorBrandBar } from "./OperatorBrandBar";
 import type { OperatorDeviceItem } from "../../types/operator";
 import { PP_HELP } from "../../content/helpTooltips";
 import { resolveDeviceActionMessage } from "../../utils/apiErrors";
-import {
-  productionPulseOperatorPath,
-  productionPulseOperatorPlacementPath,
-} from "../../constants/routes";
+import { navigateOperatorPlacementHub } from "../../utils/operatorNavigation";
 import { isMobileViewport } from "../../utils/viewportLayout";
 import { useViewportBucket } from "../../hooks/useViewportBucket";
-import { navigateProductionPulse } from "../../utils/navigation";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
 import {
   formatMetricValue,
@@ -127,11 +123,7 @@ export function CounterPadSurface({
   };
 
   const goBack = () => {
-    if (placementKey) {
-      navigateProductionPulse(productionPulseOperatorPlacementPath(placementKey, branch));
-      return;
-    }
-    navigateProductionPulse(productionPulseOperatorPath(branch));
+    navigateOperatorPlacementHub(branch);
   };
 
   const statusLine = `${device.name} · ${formatRelativeTime(device.lastSeenAt)}`;

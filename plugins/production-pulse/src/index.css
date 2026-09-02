@@ -117,14 +117,16 @@
   z-index: 2;
 }
 
-.dashboard-production-pulse .pp-page-hero__actions .pp-action-button,
 .dashboard-production-pulse .pp-operator-hero-btn {
+  min-height: var(--pp-operator-touch-min, 44px);
+  padding-inline: 14px;
   border-color: var(--pp-hero-brand-btn-border);
   color: var(--pp-hero-brand-fg);
   background: var(--pp-hero-brand-btn-bg);
+  font-weight: 650;
+  opacity: 1;
 }
 
-.dashboard-production-pulse .pp-page-hero__actions .pp-action-button:hover:not(:disabled),
 .dashboard-production-pulse .pp-operator-hero-btn:hover:not(:disabled) {
   border-color: rgba(255, 255, 255, 0.88);
   background: rgba(255, 255, 255, 0.18);
@@ -946,7 +948,6 @@
 
 .dashboard-production-pulse--operator .pp-operator-hero-btn {
   min-height: var(--pp-operator-touch-min);
-  padding-inline: 14px;
 }
 
 .pp-panel-page .pp-page-hero__actions .pp-action-button {

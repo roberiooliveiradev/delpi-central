@@ -1,9 +1,28 @@
+function readCurrentPath(): string {
+  if (typeof window === "undefined") return "";
+  return `${window.location.pathname}${window.location.search}`;
+}
+
 export function navigateProductionPulse(path: string): void {
-  window.history.pushState({}, "", path);
-  window.dispatchEvent(new PopStateEvent("popstate"));
+  if (typeof window === "undefined") return;
+  if (readCurrentPath() === path) return;
+
+  window.history.pushState(null, "", path);
+  const popState =
+    typeof PopStateEvent === "function"
+      ? new PopStateEvent("popstate")
+      : new Event("popstate");
+  window.dispatchEvent(popState);
 }
 
 export function replaceProductionPulse(path: string): void {
-  window.history.replaceState({}, "", path);
-  window.dispatchEvent(new PopStateEvent("popstate"));
+  if (typeof window === "undefined") return;
+  if (readCurrentPath() === path) return;
+
+  window.history.replaceState(null, "", path);
+  const popState =
+    typeof PopStateEvent === "function"
+      ? new PopStateEvent("popstate")
+      : new Event("popstate");
+  window.dispatchEvent(popState);
 }
