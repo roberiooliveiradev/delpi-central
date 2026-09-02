@@ -30,8 +30,11 @@ describe("CanvasTableContextMenu (contrato)", () => {
   });
 
   it("Quebrar texto usa toggle canônico (não só pre-wrap fixo)", () => {
+    expect(menu).toContain("CanvasTableCellFormatMenu");
     expect(menu).toContain("nextCanvasTableWhiteSpaceToggle");
-    expect(menu).toContain('label="Quebrar texto"');
-    expect(menu).toContain('label="Não quebrar"');
+    expect(menu).toContain("patchCanvasTableCellsStyle");
+    expect(menu).not.toContain('label="Quebrar texto"');
+    expect(menu).not.toContain('label="Centralizar"');
+    expect(menu).not.toContain('label="Alinhar ao topo"');
   });
 });

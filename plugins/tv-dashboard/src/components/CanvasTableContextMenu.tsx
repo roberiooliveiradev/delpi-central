@@ -5,7 +5,6 @@ import {
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
 import {
-  AlignCenter,
   ClipboardCopy,
   ClipboardPaste,
   Combine,
@@ -13,7 +12,6 @@ import {
   RemoveFormatting,
   Scissors,
   TableCellsSplit,
-  WrapText,
 } from "lucide-react";
 import {
   canMergeRect,
@@ -21,6 +19,7 @@ import {
   clearCanvasTableCellsContent,
   getCanvasTableSessionClipboard,
   nextCanvasTableWhiteSpaceToggle,
+  normalizeCanvasTableCell,
   parseCanvasTableClipboardTsv,
   pasteCanvasTableClipboard,
   serializeCanvasTableClipboard,
@@ -29,6 +28,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
+import { CanvasTableCellFormatMenu } from "./CanvasTableCellFormatMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { canUnmergeCanvasTableSelection } from "../utils/canvasTableMergeCommands";
 import {
@@ -62,6 +62,9 @@ export function CanvasTableContextMenu({ block, open, position, onClose }: Props
     cells.length && canUnmergeCanvasTableSelection(block.merges, cells),
   );
   const hasSelection = cells.length > 0;
+  const focusCell = focus
+    ? normalizeCanvasTableCell(block.cells[focus.row]?.[focus.col])
+    : null;
 
   function clearContent() {
     if (!hasSelection) return;
@@ -221,49 +224,28 @@ export function CanvasTableContextMenu({ block, open, position, onClose }: Props
         onSelect={() => run(() => insertCol("after"))}
       />
       <ContextMenuDivider />
-      <ContextMenuItem
-        label="Quebrar texto"
-        icon={WrapText}
-        disabled={!hasSelection}
-        onSelect={() =>
-          run(() => {
-            const focusCell = focus
-              ? block.cells[focus.row]?.[focus.col]
-              : cells[0]
-                ? block.cells[cells[0].row]?.[cells[0].col]
-                : undefined;
-            patchStyle({
-              whiteSpace: nextCanvasTableWhiteSpaceToggle(focusCell?.style?.whiteSpace),
-            });
-          })
-        }
-      />
-      <ContextMenuItem
-        label="Não quebrar"
-        disabled={!hasSelection}
-        onSelect={() => run(() => patchStyle({ whiteSpace: "nowrap" }))}
-      />
-      <ContextMenuItem
-        label="Alinhar ao topo"
-        disabled={!hasSelection}
-        onSelect={() => run(() => patchStyle({ verticalAlign: "top" }))}
-      />
-      <ContextMenuItem
-        label="Alinhar ao meio"
-        disabled={!hasSelection}
-        onSelect={() => run(() => patchStyle({ verticalAlign: "middle" }))}
-      />
-      <ContextMenuItem
-        label="Alinhar à base"
-        disabled={!hasSelection}
-        onSelect={() => run(() => patchStyle({ verticalAlign: "bottom" }))}
-      />
-      <ContextMenuItem
-        label="Centralizar"
-        icon={AlignCenter}
-        disabled={!hasSelection}
-        onSelect={() => run(() => patchStyle({ textAlign: "center" }))}
-      />
+      {hasSelection && focusCell ? (
+        <CanvasTableCellFormatMenu
+          textAlign={focusCell.style?.textAlign}
+          verticalAlign={focusCell.style?.verticalAlign}
+          whiteSpace={focusCell.style?.whiteSpace}
+          color={focusCell.style?.color}
+          backgroundColor={focusCell.style?.backgroundColor}
+          onAlign={(align) => run(() => patchStyle({ textAlign: align }))}
+          onVerticalAlign={(align) => run(() => patchStyle({ verticalAlign: align }))}
+          onToggleWrap={() =>
+            run(() =>
+              patchStyle({
+                whiteSpace: nextCanvasTableWhiteSpaceToggle(focusCell.style?.whiteSpace),
+              }),
+            )
+          }
+          onSetNowrap={() => run(() => patchStyle({ whiteSpace: "nowrap" }))}
+          onColorChange={(color) => run(() => patchStyle({ color }))}
+          onBackgroundChange={(color) => run(() => patchStyle({ backgroundColor: color }))}
+          onNoFill={() => run(() => patchStyle({ backgroundColor: undefined }))}
+        />
+      ) : null}
       <ContextMenuDivider />
       <ContextMenuItem
         label="Limpar conteúdo"
