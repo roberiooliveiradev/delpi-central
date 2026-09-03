@@ -9,5 +9,18 @@ class GetTableUseCase:
     def __init__(self, repository: SystemRepositoryPort):
         self._repository = repository
 
-    def execute(self, request: GetTableRequest) -> list[dict]:
-        return self._repository.get_table(request.table_name)
+    def execute(self, request: GetTableRequest) -> dict:
+        """Retorna um objeto scalar (contrato get_protheus_table), não lista crua."""
+        rows = self._repository.get_table(request.table_name)
+
+        if isinstance(rows, dict):
+            return rows
+
+        if isinstance(rows, list):
+            for item in rows:
+                if isinstance(item, dict):
+                    return item
+
+            return {}
+
+        return {}

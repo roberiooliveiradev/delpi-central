@@ -32,6 +32,9 @@ class ExternalActionKpiChartDetectionService:
         *,
         entity: str | None = None,
     ) -> bool:
+        if not isinstance(root, dict):
+            return False
+
         if entity == "product_billing":
             return False
 

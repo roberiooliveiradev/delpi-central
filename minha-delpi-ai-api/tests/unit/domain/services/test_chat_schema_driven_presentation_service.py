@@ -392,3 +392,29 @@ def test_build_bundle_skips_chart_when_stock_chart_policy_is_skip():
         path="/products/10090016/stock",
         entity="product_stock",
     )
+
+
+def test_build_kpi_returns_none_for_list_root():
+    presenter = ExternalActionResultPresenter()
+    kpi = ChatSchemaDrivenPresentationService.build_kpi(
+        presenter,
+        [{"name": "SB1010", "description": "Produtos"}],
+        path="/system/tables/SB1010",
+        entity="protheus_table",
+    )
+
+    assert kpi is None
+
+
+def test_build_bundle_tolerates_list_data_without_raising():
+    presenter = ExternalActionResultPresenter()
+    bundle = ChatSchemaDrivenPresentationService.build_bundle(
+        presenter,
+        [{"X2_CHAVE": "SB1", "X2_NOME": "Cadastro de Produtos"}],
+        path="/system/tables/SB1010",
+        entity="protheus_table",
+        response_shape="scalar",
+    )
+
+    assert bundle.kpi is None
+    assert bundle.table is not None or bundle.text is not None

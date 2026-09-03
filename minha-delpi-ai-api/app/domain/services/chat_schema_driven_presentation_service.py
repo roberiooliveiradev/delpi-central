@@ -985,6 +985,9 @@ class ChatSchemaDrivenPresentationService:
         path: str,
         entity: str | None,
     ) -> dict[str, Any] | None:
+        if not isinstance(root, dict):
+            return None
+
         kpi_chart = host._kpi_chart()
 
         if not kpi_chart.looks_like_kpi_response(root, path, entity=entity):
