@@ -699,7 +699,7 @@ Fonte: `app/content/pt-BR/skills/catalog.json` (7 skills).
 | **Este documento (canônico)** | `docs/testing/chat-ai-flow-families.md` |
 | Índice de testes | `docs/testing/README.md` |
 | Bateria HTTP (typos, multi-turn) | `scripts/human_interaction_battery_live.py` |
-| Gates domínio F01/F03/F04 | `scripts/smoke_chat_flow_families_f01_f04_f03.py` |
+| Gates domínio F01/F03/F04 | `scripts/smoke_chat_flow_families_f01_f04_f03.py` (antes: `smoke_audit_familias_f01_f04_f03.py`) |
 | Eval A–D (compare, dataAnswer) | `scripts/eval_packages_a_d_human_live.py` |
 | SQL / new_intent / deixis | `scripts/smoke_new_intent_user_simulation.py` |
 | Saída JSON da bateria | `docs/testing/evidence/chat-human-interaction-battery.json` |
