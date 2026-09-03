@@ -22,7 +22,7 @@ def test_synthesize_select_oneshot_sb1010_group():
 
 def test_synthesize_select_without_table_returns_none_for_execute():
     sql = ChatSqlExecutableSynthesisService.synthesize_select(
-        "executa no banco select top 10 de produtos",
+        "executa no banco select top 10 de itens aleatorios sem dominio",
         invent_default_table=False,
     )
 
