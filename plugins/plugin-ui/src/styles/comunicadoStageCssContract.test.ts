@@ -65,4 +65,18 @@ describe("comunicado-stage.css contract (plugin-ui)", () => {
     );
     expect(css).toMatch(/\.td-canvas-table__fill-handle[\s\S]*?cursor:\s*crosshair/);
   });
+
+  it("marcadores de lista compartilham chrome leitura (ul/ol) e edição (data-list-type)", () => {
+    expect(css).toMatch(/\.delpi-ui-comunicado__list\s*\{[^}]*list-style:\s*none/);
+    expect(css).not.toMatch(/\.delpi-ui-comunicado__list--bullet\s*\{[^}]*list-style-type:\s*disc/);
+    expect(css).toMatch(
+      /\.delpi-ui-comunicado__list--bullet > \.delpi-ui-comunicado__list-item::before[\s\S]*?border-radius:\s*50%/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-comunicado__rich-text \[data-comunicado-line\]\[data-list-type="bullet"\]::before[\s\S]*?border-radius:\s*50%/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-comunicado__rich-text \[data-comunicado-line\]\[data-list-type="ordered"\]::before[\s\S]*?counter\(delpi-comunicado-ol\)/,
+    );
+  });
 });

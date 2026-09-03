@@ -23,6 +23,7 @@ import {
   type ComunicadoShapeBlock,
 } from "@delpi/tv-dashboard-presentation";
 
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui";
 import { useVisualBoxTextEditorBridge } from "../hooks/useVisualBoxTextEditorBridge";
 import { shouldPreserveTextEditOnBlur } from "../utils/preserveTextEditFocus";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -318,14 +319,17 @@ function ComunicadoEditorShapeBlockInner({
           visualBoxTextContent={
             <div
               ref={editorRef}
-              className={[
-                "td-composer__inline-text",
-                "td-composer__inline-text--rich",
-                "td-composer__inline-text--shape",
-                showPlaceholder ? "td-composer__text-placeholder" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
+              className={ensureComunicadoDualClass(
+                [
+                  "tdp-comunicado__rich-text",
+                  "td-composer__inline-text",
+                  "td-composer__inline-text--rich",
+                  "td-composer__inline-text--shape",
+                  showPlaceholder ? "td-composer__text-placeholder" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" "),
+              )}
               contentEditable
               suppressContentEditableWarning
               role="textbox"

@@ -2974,39 +2974,10 @@ body.td-composer--marqueeing *{
   outline: none;
 }
 .dashboard-tv-dashboard .td-composer__inline-text--rich{
-  /* Mesmo gap do rich-text da TV (comunicado-stage.css) — paridade edição/leitura. */
+  /* Layout espelha .delpi-ui-comunicado__rich-text (kit); marcadores de lista só no kit. */
   display: flex;
   flex-direction: column;
   gap: 0.35em;
-}
-.dashboard-tv-dashboard .td-composer__inline-text--rich [data-comunicado-line]{
-  position: relative;
-  min-height: 1em;
-  padding-left: 0;
-}
-.dashboard-tv-dashboard .td-composer__inline-text--rich [data-comunicado-line][data-list-type="bullet"]{
-  padding-left: 1.35em;
-}
-.dashboard-tv-dashboard .td-composer__inline-text--rich [data-comunicado-line][data-list-type="bullet"]::before{
-  content: "•";
-  position: absolute;
-  left: 0;
-  width: 1.1em;
-  text-align: center;
-}
-.dashboard-tv-dashboard .td-composer__inline-text--rich [data-comunicado-line][data-list-type="ordered"]{
-  padding-left: 1.6em;
-  counter-increment: td-comunicado-line;
-}
-.dashboard-tv-dashboard .td-composer__inline-text--rich{
-  counter-reset: td-comunicado-line;
-}
-.dashboard-tv-dashboard .td-composer__inline-text--rich [data-comunicado-line][data-list-type="ordered"]::before{
-  content: counter(td-comunicado-line) ".";
-  position: absolute;
-  left: 0;
-  width: 1.4em;
-  text-align: right;
 }
 .dashboard-tv-dashboard .td-composer__resize{
   position: absolute;

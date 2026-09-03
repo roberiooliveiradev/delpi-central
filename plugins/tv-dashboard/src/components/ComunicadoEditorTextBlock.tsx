@@ -25,6 +25,7 @@ import {
   type ComunicadoBlock,
   type ComunicadoContentRun,
 } from "@delpi/tv-dashboard-presentation";
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui";
 import { useVisualBoxTextEditorBridge } from "../hooks/useVisualBoxTextEditorBridge";
 import { shouldPreserveTextEditOnBlur } from "../utils/preserveTextEditFocus";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -346,14 +347,19 @@ export function ComunicadoEditorTextBlock({
           visualBoxTextContent={
             <div
               ref={editorRef}
-              className={[
-                "td-composer__inline-text",
-                "td-composer__inline-text--rich",
-                block.type === "heading" ? "td-composer__inline-text--heading" : "td-composer__inline-text--body",
-                showPlaceholder ? "td-composer__text-placeholder" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
+              className={ensureComunicadoDualClass(
+                [
+                  "tdp-comunicado__rich-text",
+                  "td-composer__inline-text",
+                  "td-composer__inline-text--rich",
+                  block.type === "heading"
+                    ? "td-composer__inline-text--heading"
+                    : "td-composer__inline-text--body",
+                  showPlaceholder ? "td-composer__text-placeholder" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" "),
+              )}
               style={innerStyle}
               contentEditable
               suppressContentEditableWarning

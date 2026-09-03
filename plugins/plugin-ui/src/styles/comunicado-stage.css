@@ -479,6 +479,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.35em;
+  /* Contador compartilhado com linhas editáveis [data-list-type=ordered]. */
+  counter-reset: delpi-comunicado-ol;
 }
 
 .delpi-ui-comunicado__text-segment {
@@ -486,18 +488,64 @@
   white-space: pre-wrap;
 }
 
+/*
+ * Marcadores de lista — um chrome para leitura (ul/ol) e edição (data-list-type).
+ * Evita disc/decimal nativo vs "•"/counter sintético (indicador menor no contentEditable).
+ */
 .delpi-ui-comunicado__list {
   margin: 0;
-  padding: 0 0 0 1.35em;
-  list-style-position: outside;
+  padding: 0;
+  list-style: none;
 }
 
-.delpi-ui-comunicado__list--bullet {
-  list-style-type: disc;
+.delpi-ui-comunicado__list--bullet > .delpi-ui-comunicado__list-item,
+.delpi-ui-comunicado__rich-text [data-comunicado-line][data-list-type="bullet"] {
+  position: relative;
+  padding-left: 1.35em;
+}
+
+.delpi-ui-comunicado__list--bullet > .delpi-ui-comunicado__list-item::before,
+.delpi-ui-comunicado__rich-text [data-comunicado-line][data-list-type="bullet"]::before {
+  content: "";
+  position: absolute;
+  left: 0.28em;
+  top: 0.52em;
+  width: 0.42em;
+  height: 0.42em;
+  border-radius: 50%;
+  background-color: currentColor;
+  pointer-events: none;
 }
 
 .delpi-ui-comunicado__list--ordered {
-  list-style-type: decimal;
+  counter-reset: delpi-comunicado-ol;
+}
+
+.delpi-ui-comunicado__list--ordered > .delpi-ui-comunicado__list-item,
+.delpi-ui-comunicado__rich-text [data-comunicado-line][data-list-type="ordered"] {
+  position: relative;
+  padding-left: 1.6em;
+  counter-increment: delpi-comunicado-ol;
+}
+
+.delpi-ui-comunicado__list--ordered > .delpi-ui-comunicado__list-item::before,
+.delpi-ui-comunicado__rich-text [data-comunicado-line][data-list-type="ordered"]::before {
+  content: counter(delpi-comunicado-ol) ".";
+  position: absolute;
+  left: 0;
+  width: 1.4em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  pointer-events: none;
+}
+
+.delpi-ui-comunicado__rich-text [data-comunicado-line] {
+  position: relative;
+  min-height: 1em;
 }
 
 .delpi-ui-comunicado__list-item {

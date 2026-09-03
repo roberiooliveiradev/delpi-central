@@ -75,3 +75,17 @@ describe("text edit commit cleanup contract", () => {
     expect(composerSrc).not.toMatch(/isolateGroupedBlockOnDoubleClick/);
   });
 });
+
+describe("text edit list marker parity contract", () => {
+  it("contentEditable usa rich-text dual-class do kit (não marcadores locais no MFE)", () => {
+    const textSrc = readFileSync(join(base, "ComunicadoEditorTextBlock.tsx"), "utf8");
+    const shapeSrc = readFileSync(join(base, "ComunicadoEditorShapeBlock.tsx"), "utf8");
+    const mfeCss = readFileSync(join(base, "../index.css"), "utf8");
+    expect(textSrc).toContain("ensureComunicadoDualClass");
+    expect(textSrc).toContain("tdp-comunicado__rich-text");
+    expect(shapeSrc).toContain("ensureComunicadoDualClass");
+    expect(shapeSrc).toContain("tdp-comunicado__rich-text");
+    expect(mfeCss).not.toMatch(/data-list-type="bullet"\]::before/);
+    expect(mfeCss).not.toMatch(/content:\s*"•"/);
+  });
+});
