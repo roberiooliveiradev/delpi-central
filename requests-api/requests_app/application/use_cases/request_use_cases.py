@@ -18,6 +18,9 @@ from requests_app.domain.ports import (
     RequestRepositoryPort,
     RequestTypeRepositoryPort,
 )
+from requests_app.application.services.payload_validator_registry import (
+    PayloadValidatorRegistry,
+)
 from requests_app.domain.ports.file_repository_port import FileRepositoryPort
 from requests_app.domain.ports.integration_outbox_port import IntegrationOutboxRepositoryPort
 from requests_app.domain.services.workflow_engine import WorkflowEngine
@@ -58,6 +61,7 @@ class CreateRequestUseCase:
         engine: WorkflowEngine | None = None,
         files: FileRepositoryPort | None = None,
         outbox: IntegrationOutboxRepositoryPort | None = None,
+        validators: PayloadValidatorRegistry | None = None,
     ) -> None:
         self._types = types
         self._requests = requests
@@ -65,6 +69,7 @@ class CreateRequestUseCase:
         self._engine = engine or WorkflowEngine()
         self._files = files
         self._outbox = outbox
+        self._validators = validators or PayloadValidatorRegistry()
 
     def execute(
         self,
@@ -106,6 +111,7 @@ class CreateRequestUseCase:
         )
         if payload is None or not isinstance(payload, dict):
             raise ApplicationError(code="payload_required", status_code=422)
+        payload = self._validators.validate(type_code, payload)
 
         workflow = request_type.workflow_definition or {}
         initial = str(workflow.get("initialStatus") or "submitted")
@@ -334,11 +340,13 @@ class UpdateRequestPayloadUseCase:
         requests: RequestRepositoryPort,
         idempotency: IdempotencyRepositoryPort,
         engine: WorkflowEngine | None = None,
+        validators: PayloadValidatorRegistry | None = None,
     ) -> None:
         self._types = types
         self._requests = requests
         self._idempotency = idempotency
         self._engine = engine or WorkflowEngine()
+        self._validators = validators or PayloadValidatorRegistry()
 
     def execute(
         self,
@@ -376,6 +384,7 @@ class UpdateRequestPayloadUseCase:
             raise ApplicationError(code="edit_forbidden", status_code=403)
         if not isinstance(payload, dict):
             raise ApplicationError(code="payload_required", status_code=422)
+        payload = self._validators.validate(request.type_code, payload)
         if expected_version is not None and request.version != expected_version:
             raise ApplicationError(code="stale_version", status_code=409)
 

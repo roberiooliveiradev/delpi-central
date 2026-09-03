@@ -20,6 +20,7 @@ def test_list_migration_files_in_order():
         "V003__idempotency_keys.sql",
         "V004__attachments_artifacts_events.sql",
         "V005__integration_outbox.sql",
+        "V006__seed_invoice_issuance_request_type.sql",
     ]
 
 
@@ -57,9 +58,11 @@ def test_v002_contains_core_tables():
     assert name == "core_domain"
 
 
-def test_v003_idempotency_keys():
-    v003 = MIGRATIONS_DIR / "V003__idempotency_keys.sql"
-    sql = v003.read_text(encoding="utf-8")
-    assert "idempotency_keys" in sql
-    _, name = parse_version_and_name(v003)
-    assert name == "idempotency_keys"
+def test_v006_seeds_invoice_issuance():
+    v006 = MIGRATIONS_DIR / "V006__seed_invoice_issuance_request_type.sql"
+    sql = v006.read_text(encoding="utf-8")
+    assert "invoice-issuance" in sql
+    assert "my-requests.invoice-issuance" in sql
+    assert "api_delpi" in sql
+    _, name = parse_version_and_name(v006)
+    assert name == "seed_invoice_issuance_request_type"

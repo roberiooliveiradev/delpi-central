@@ -15,6 +15,7 @@ from requests_app.composition.requests_composer import (
     build_file_use_cases,
     build_get_request_type_use_case,
     build_get_request_use_case,
+    build_invoice_issuance_lookup_use_cases,
     build_list_my_requests_use_case,
     build_list_request_types_use_case,
     build_list_work_queue_use_case,
@@ -77,6 +78,86 @@ def get_request_type(code: str):
     user = _current_user()
     try:
         data = build_get_request_type_use_case().execute(user=user, code=code)
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data)
+
+
+@router.get("/request-types/invoice-issuance/lookups/parties")
+def lookup_parties(
+    party_type: str = Query(..., min_length=1),
+    query: str = Query(..., min_length=2),
+    limit: int = Query(default=20, ge=1, le=50),
+):
+    user = _current_user()
+    try:
+        data = build_invoice_issuance_lookup_use_cases().search_parties(
+            user=user, party_type=party_type, query=query, limit=limit
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data)
+
+
+@router.get("/request-types/invoice-issuance/lookups/products")
+def lookup_products(
+    query: str = Query(..., min_length=2),
+    limit: int = Query(default=20, ge=1, le=50),
+):
+    user = _current_user()
+    try:
+        data = build_invoice_issuance_lookup_use_cases().search_products(
+            user=user, query=query, limit=limit
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data)
+
+
+@router.get("/request-types/invoice-issuance/lookups/carriers")
+def lookup_carriers(
+    query: str = Query(..., min_length=2),
+    limit: int = Query(default=20, ge=1, le=50),
+):
+    user = _current_user()
+    try:
+        data = build_invoice_issuance_lookup_use_cases().search_carriers(
+            user=user, query=query, limit=limit
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data)
+
+
+@router.get("/request-types/invoice-issuance/lookups/open-sales-orders")
+def lookup_open_sales_orders(
+    branch: str = Query(..., min_length=2, max_length=2),
+    party_code: str = Query(..., min_length=1),
+    party_store: str = Query(..., min_length=1),
+):
+    user = _current_user()
+    try:
+        data = build_invoice_issuance_lookup_use_cases().list_open_sales_orders(
+            user=user,
+            branch=branch,
+            party_code=party_code,
+            party_store=party_store,
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data)
+
+
+@router.get("/request-types/invoice-issuance/lookups/products/{code}/warehouse-01-balance")
+def lookup_warehouse_balance(
+    code: str,
+    branch: str = Query(..., min_length=2, max_length=2),
+):
+    user = _current_user()
+    try:
+        data = build_invoice_issuance_lookup_use_cases().warehouse_balance(
+            user=user, product_code=code, branch=branch
+        )
     except ApplicationError as exc:
         return _handle(exc)
     return ok(data)

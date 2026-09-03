@@ -14,6 +14,8 @@
     "edit_forbidden": "Você não pode editar esta solicitação.",
     "idempotency_required": "Informe o cabeçalho Idempotency-Key.",
     "payload_required": "Informe o payload da solicitação.",
+    "payload_invalid": "Payload da solicitação inválido.",
+    "lookup_forbidden": "Sem permissão para consultar cadastros deste tipo.",
     "upload_forbidden": "Você não pode enviar arquivos nesta solicitação.",
     "download_forbidden": "Você não pode baixar este arquivo.",
     "attachment_not_found": "Anexo não encontrado.",

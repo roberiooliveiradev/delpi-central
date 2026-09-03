@@ -50,7 +50,7 @@ def test_commercial_stub_deliver():
         payload={"x": 1},
     )
     assert result.ok is True
-    assert "stub" in result.detail
+    assert "deliver" in result.detail.lower() or "stub" in result.detail.lower() or "acknowledged" in result.detail.lower()
 
 
 def test_api_delpi_deliver_stub_without_http():

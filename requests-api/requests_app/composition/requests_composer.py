@@ -1,7 +1,16 @@
 from __future__ import annotations
 
-from requests_app.composition.destination_registry import DestinationAdapterRegistry
+from requests_app.application.services.attachment_storage import (
+    ArtifactStorage,
+    AttachmentStorage,
+)
+from requests_app.application.services.payload_validator_registry import (
+    PayloadValidatorRegistry,
+)
 from requests_app.application.use_cases.file_use_cases import FileUseCases
+from requests_app.application.use_cases.invoice_issuance_lookup_use_cases import (
+    InvoiceIssuanceLookupUseCases,
+)
 from requests_app.application.use_cases.request_use_cases import (
     CreateRequestUseCase,
     GetRequestTypeUseCase,
@@ -12,11 +21,12 @@ from requests_app.application.use_cases.request_use_cases import (
     TransitionRequestUseCase,
     UpdateRequestPayloadUseCase,
 )
-from requests_app.application.services.attachment_storage import (
-    ArtifactStorage,
-    AttachmentStorage,
+from requests_app.composition.destination_registry import DestinationAdapterRegistry
+from requests_app.domain.services.invoice_issuance_payload_validator import (
+    InvoiceIssuancePayloadValidator,
 )
 from requests_app.domain.services.workflow_engine import WorkflowEngine
+from requests_app.infrastructure.gateways.api_delpi_adapter import ApiDelpiAdapter
 from requests_app.infrastructure.persistence.repositories.postgres_file_repository import (
     PostgresFileRepository,
 )
@@ -32,6 +42,12 @@ from requests_app.infrastructure.persistence.repositories.postgres_repositories 
 
 def _engine() -> WorkflowEngine:
     return WorkflowEngine()
+
+
+def build_payload_validator_registry() -> PayloadValidatorRegistry:
+    registry = PayloadValidatorRegistry()
+    registry.register(InvoiceIssuancePayloadValidator())
+    return registry
 
 
 def build_file_use_cases() -> FileUseCases:
@@ -61,6 +77,7 @@ def build_create_request_use_case() -> CreateRequestUseCase:
         _engine(),
         PostgresFileRepository(),
         PostgresIntegrationOutboxRepository(),
+        build_payload_validator_registry(),
     )
 
 
@@ -94,6 +111,7 @@ def build_update_request_payload_use_case() -> UpdateRequestPayloadUseCase:
         PostgresRequestRepository(),
         PostgresIdempotencyRepository(),
         _engine(),
+        build_payload_validator_registry(),
     )
 
 
@@ -110,6 +128,13 @@ def build_transition_request_use_case() -> TransitionRequestUseCase:
 
 def build_destination_registry() -> DestinationAdapterRegistry:
     return DestinationAdapterRegistry()
+
+
+def build_invoice_issuance_lookup_use_cases() -> InvoiceIssuanceLookupUseCases:
+    return InvoiceIssuanceLookupUseCases(
+        PostgresRequestTypeRepository(),
+        ApiDelpiAdapter(),
+    )
 
 
 def build_timeline_use_cases():
