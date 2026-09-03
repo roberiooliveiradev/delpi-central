@@ -1,3 +1,4 @@
+from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -9,6 +10,16 @@ def test_normalize_fixes_common_typos():
     )
     assert "fornecedor" in result
     assert "forncedores" not in result
+
+
+def test_normalize_for_matching_applies_fuzzy_lexicon_estrutura():
+    configure_domain_infrastructure_ports()
+    result = ChatMessageNormalizationService.normalize_for_matching(
+        "qual a estrutra do 90260148?"
+    )
+    assert "estrutura" in result
+    assert "estrutra" not in result
+    assert "90260148" in result
 
 
 def test_normalize_strips_accents():

@@ -49,6 +49,7 @@ INTENT_CASES = [
     ("qual a descrição do 10.080.055", ChatProductQueryIntent.DESCRIPTION),
     ("busque o estoque desse produto", ChatProductQueryIntent.STOCK),
     ("saldo disponível do item", ChatProductQueryIntent.STOCK),
+    ("qual a estrutra do 90260148?", ChatProductQueryIntent.STRUCTURE),
     ("informações completas do produto 10080055", ChatProductQueryIntent.ANALYSER),
     (
         "análise integrada do cadastro, roteiro e estrutura do 90260149",

@@ -75,6 +75,26 @@ class ChatTypingCorrectionFuzzyLexiconService:
         return len(cls._terms)
 
     @classmethod
+    def apply_to_text(cls, text: str) -> str:
+        """Aplica correções fuzzy token a token (matching de intenção / tipografia operacional)."""
+        if not cls.is_enabled() or not str(text or "").strip():
+            return text
+
+        parts: list[str] = []
+        last_end = 0
+
+        for match in _TOKEN_PATTERN.finditer(text):
+            start, end = match.start(), match.end()
+            token = text[start:end]
+            replacement = cls._match_token(token)
+            parts.append(text[last_end:start])
+            parts.append(replacement if replacement and replacement != token else token)
+            last_end = end
+
+        parts.append(text[last_end:])
+        return "".join(parts)
+
+    @classmethod
     def collect_candidates(
         cls,
         text: str,

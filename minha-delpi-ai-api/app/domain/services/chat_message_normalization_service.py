@@ -88,6 +88,13 @@ class ChatMessageNormalizationService:
         for pattern, replacement in cls._LEARNED_PATTERNS:
             text = pattern.sub(replacement, text)
 
+        from app.domain.services.chat_typing_correction_fuzzy_lexicon_service import (
+            ChatTypingCorrectionFuzzyLexiconService,
+        )
+
+        if ChatTypingCorrectionFuzzyLexiconService.is_enabled():
+            text = ChatTypingCorrectionFuzzyLexiconService.apply_to_text(text)
+
         return text
 
     @classmethod

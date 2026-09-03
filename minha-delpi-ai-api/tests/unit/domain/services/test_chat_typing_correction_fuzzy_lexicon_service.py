@@ -25,3 +25,35 @@ def test_fuzzy_match_conservative_gates():
     assert ChatTypingCorrectionFuzzyLexiconService._match_token("como") is None
     assert ChatTypingCorrectionFuzzyLexiconService._match_token("num") is None
     assert ChatTypingCorrectionFuzzyLexiconService._match_token("fab") is None
+
+    from app.infrastructure.content.content_service import ContentService
+
+    ChatTypingCorrectionFuzzyLexiconService.configure(
+        ContentService.load_json("assistant/typing_correction_lexicon"),
+        enabled=True,
+    )
+
+def test_apply_to_text_corrects_tokens_and_preserves_codes():
+    configure_domain_infrastructure_ports()
+    ChatTypingCorrectionFuzzyLexiconService.configure(
+        {
+            "terms": ["estrutura", "estoque"],
+            "ambiguousTokens": [],
+            "protectedPortugueseTokens": [],
+        },
+        enabled=True,
+    )
+
+    result = ChatTypingCorrectionFuzzyLexiconService.apply_to_text(
+        "qual a estrutra do 90260148?"
+    )
+    assert "estrutura" in result
+    assert "estrutra" not in result
+    assert "90260148" in result
+
+    from app.infrastructure.content.content_service import ContentService
+
+    ChatTypingCorrectionFuzzyLexiconService.configure(
+        ContentService.load_json("assistant/typing_correction_lexicon"),
+        enabled=True,
+    )

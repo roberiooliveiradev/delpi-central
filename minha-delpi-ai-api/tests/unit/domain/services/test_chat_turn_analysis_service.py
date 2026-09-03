@@ -162,3 +162,12 @@ def test_system_prompt_prefers_execute_for_grounded_enrich_insight():
 
     assert "grounded_enrich_insight" in prompt
     assert "decision=execute" in prompt
+
+
+def test_system_prompt_documents_operational_typography_execute():
+    prompt = ChatTurnAnalysisContentService.system_prompt()
+
+    assert "Tipografia operacional" in prompt
+    assert "clarify só por ortografia" in prompt
+    assert "operational_query" in prompt
+    assert "estrutra" in prompt

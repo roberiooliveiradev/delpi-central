@@ -63,6 +63,52 @@ def test_single_scope_intent_from_json_map():
     )
 
 
+def test_detect_structure_with_operational_typography_typo():
+    """Tipografia operacional (estrutra) deve resolver via fuzzy no normalize — não unclear."""
+    from app.composition.content_composer import configure_domain_infrastructure_ports
+    from app.domain.services.chat_typing_correction_fuzzy_lexicon_service import (
+        ChatTypingCorrectionFuzzyLexiconService,
+    )
+    from app.infrastructure.content.content_service import ContentService
+
+    configure_domain_infrastructure_ports()
+    message = "qual a estrutra do 90260148?"
+
+    normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+    assert "estrutura" in normalized
+    assert "estrutra" not in normalized
+
+    assert (
+        ChatProductQueryIntentDetectionService.detect(message)
+        == ChatProductQueryIntent.STRUCTURE
+    )
+    assert (
+        ChatProductQueryIntentDetectionService.refine_operational_intent_from_full(message)
+        == ChatProductQueryIntent.STRUCTURE
+    )
+
+    # Sem fuzzy no matching, tipografia residual não vira structure (regressão de qualidade).
+    ChatTypingCorrectionFuzzyLexiconService.configure(
+        {"terms": ["estrutura"], "ambiguousTokens": [], "protectedPortugueseTokens": []},
+        enabled=False,
+    )
+    assert "estrutra" in ChatMessageNormalizationService.normalize_for_matching(message)
+    assert (
+        ChatProductQueryIntentDetectionService.detect(message)
+        != ChatProductQueryIntent.STRUCTURE
+    )
+
+    # Restaura léxico completo (configure_domain_infrastructure_ports é no-op após 1ª chamada).
+    ChatTypingCorrectionFuzzyLexiconService.configure(
+        ContentService.load_json("assistant/typing_correction_lexicon"),
+        enabled=True,
+    )
+    assert ChatTypingCorrectionFuzzyLexiconService.is_enabled()
+    assert (
+        ChatProductQueryIntentDetectionService.detect(message)
+        == ChatProductQueryIntent.STRUCTURE
+    )
+
 def test_mixed_documental_operational_probe():
     normalized = ChatMessageNormalizationService.normalize_for_matching(
         "explique a politica de estoque do produto"
