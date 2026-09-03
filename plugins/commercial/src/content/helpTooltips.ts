@@ -127,7 +127,7 @@ export const CM_HELP = {
     kpiCanInvoice: "Linhas com estoque suficiente para faturar integralmente.",
     kpiPartialStock: "Linhas com estoque parcial — atendem só parte da quantidade em aberto.",
     kpiLate: "Linhas com data de entrega prometida vencida e ainda em aberto.",
-    filters: "Refine a lista por busca, unidade, cliente, status de estoque e janela de entrega.",
+    filters: "Refine a lista por busca, unidade, cliente, status de estoque e janela de entrega. Com filtros ativos, use Limpar (destaque) no cabeçalho da barra.",
     filterSearch: "Busca em cliente, pedido, produto e códigos da linha.",
     filterBranch:
       "Unidade responsável pelo pedido (Santa Catarina ou Espírito Santo). Vazio = todas as unidades do escopo.",
@@ -286,14 +286,30 @@ export const CM_HELP = {
       "Glossário: «Em aberto / carteira aberta» = pedidos com saldo (backlog). «Faturamento» = notas fiscais / ROL no período. O share empresa e a tendência usam só faturamento — nunca o valor em aberto.",
     portfolioBillingShare:
       "Share = faturamento da carteira/escopo ÷ faturamento da empresa no mesmo período (bruto ou líquido conforme a Natureza). Exige permissão de analytics, equipe ou gestão de carteiras.",
+    workspacePanel:
+      "Escolha a visão da carteira. Faturamento = série e mix; ABC = participação no período; Ranking = crescimento ou queda vs. o mesmo período no ano anterior; Clientes = lista operacional (foco, tendência e busca). Os filtros do hero mudam com a visão; Natureza e carteira permanecem compartilhados.",
+    panelBilling:
+      "Série de faturamento e mix por produto/família no período. Use Período, cliente, família, produto e mercado no hero. Não confundir com ABC (participação) nem Ranking (variação YoY).",
+    panelAbc:
+      "Curva ABC/Pareto: clientes ordenados por participação no faturamento do período (avatar, CNPJ e praça). Mesmos filtros de período e recorte do Faturamento. Diferente do Ranking, que mede crescimento ou queda YoY.",
+    panelRanking:
+      "Maiores altas ou quedas de faturamento versus o mesmo período no ano anterior. No hero: agrupar (cliente/vendedor), foco altas/quedas, período YoY e Top N. Natureza bruto/líquido vale para o valor comparado.",
+    panelCustomers:
+      "Lista de clientes da carteira com Foco operacional, Tendência de faturamento, janela 7d/30d/90d, busca e produto em pedido aberto. Clique no cliente para abrir a Conta.",
     billingRanking:
       "Ranking de crescimento/queda do faturamento versus o mesmo período no ano anterior (bruto ou líquido conforme a Natureza). Período, grupo, ordem e Top N ficam no hero deste painel. Gestores podem agrupar por vendedor.",
+    rankingGroup:
+      "Agrupa o ranking por cliente (padrão) ou por vendedor/carteira. Agrupar por vendedor exige permissão de equipe ou gestão.",
+    rankingOrder:
+      "Maiores altas = maior crescimento YoY no topo; Maiores quedas = maior retração. O Top N limita quantas linhas aparecem.",
+    rankingLimit:
+      "Quantidade máxima de linhas no ranking (10, 15, 20 ou 50).",
     billingSeries:
       "Soma do faturamento no período escolhido (bruto de nota ou líquido ROL). Selecione um cliente para ver só a série dele. Presets iguais à Visão geral; opcionalmente compare com anos anteriores em colunas agrupadas.",
     billingNature:
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingSeriesPeriod:
-      "No hero (painéis Faturamento e ABC): recorte do gráfico (paridade Visão geral) — hoje, semana, mês, mês passado, trimestre, ano, últimos 12 meses ou intervalo personalizado.",
+      "No hero (Faturamento, ABC e Ranking): recorte do período — hoje, semana, mês, mês passado, trimestre, ano, últimos 12 meses ou intervalo personalizado (só Faturamento/ABC).",
     billingSeriesGrain:
       "Agrupamento da série. Dia e semana ficam indisponíveis quando o período é longo demais para aquele recorte.",
     billingSeriesYoy:

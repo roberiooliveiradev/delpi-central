@@ -1,14 +1,16 @@
 import type { ReactNode } from "react";
 
 import {
+  CommercialClearFiltersButton,
   CommercialFilterBarShell,
+  CommercialScopeChipBar,
   CommercialSectionHintLabel,
-  CommercialSegmentToggle,
   CommercialSelectField,
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import {
   BILLING_SERIES_PRESET_OPTIONS,
+  DEFAULT_BILLING_SERIES_PRESET,
   type BillingSeriesPeriodPreset,
 } from "../utils/billingSeriesPeriod";
 
@@ -23,6 +25,13 @@ export type PortfolioBillingRankingFilters = {
   order: RankingOrder;
   limit: RankingLimit;
   periodPreset: RankingPeriodPreset;
+};
+
+export const DEFAULT_RANKING_FILTERS: PortfolioBillingRankingFilters = {
+  groupBy: "customer",
+  order: "growth",
+  limit: 20,
+  periodPreset: DEFAULT_BILLING_SERIES_PRESET,
 };
 
 const RANKING_PERIOD_OPTIONS = BILLING_SERIES_PRESET_OPTIONS.filter(
@@ -46,72 +55,118 @@ export function PortfolioBillingRankingFiltersBar({
   const effectiveGroupBy =
     filters.groupBy === "seller" && canUseTeamScope ? "seller" : "customer";
 
+  const hasActiveFilters =
+    effectiveGroupBy !== DEFAULT_RANKING_FILTERS.groupBy ||
+    filters.order !== DEFAULT_RANKING_FILTERS.order ||
+    filters.limit !== DEFAULT_RANKING_FILTERS.limit ||
+    filters.periodPreset !== DEFAULT_RANKING_FILTERS.periodPreset;
+
+  const periodChips = RANKING_PERIOD_OPTIONS.map((option) => ({
+    id: option.id,
+    label: option.label,
+    active: filters.periodPreset === option.id,
+    onSelect: () => onChange({ periodPreset: option.id }),
+  }));
+
+  const groupChips = [
+    {
+      id: "customer",
+      label: "Cliente",
+      active: effectiveGroupBy === "customer",
+      onSelect: () => onChange({ groupBy: "customer" }),
+    },
+    ...(canUseTeamScope
+      ? [
+          {
+            id: "seller",
+            label: "Vendedor",
+            active: effectiveGroupBy === "seller",
+            onSelect: () => onChange({ groupBy: "seller" }),
+          },
+        ]
+      : []),
+  ];
+
+  const orderChips = [
+    {
+      id: "growth",
+      label: "Maiores altas",
+      active: filters.order === "growth",
+      onSelect: () => onChange({ order: "growth" }),
+    },
+    {
+      id: "decline",
+      label: "Maiores quedas",
+      active: filters.order === "decline",
+      onSelect: () => onChange({ order: "decline" }),
+    },
+  ];
+
   return (
-    <CommercialFilterBarShell
-      embedded
-      ariaLabel={CM_HELP.customers.billingRanking}
-      className="cm-customers-page__filter-bar cm-customers-page__filter-bar--ranking"
-    >
-      <div className="cm-customers-page__ranking-period">
-        <CommercialSectionHintLabel
-          label="Período"
-          hint={CM_HELP.customers.billingSeriesPeriod}
+    <>
+      <div className="cm-customers-page__chip-row">
+        <CommercialScopeChipBar
+          label={
+            <CommercialSectionHintLabel
+              label="Período"
+              hint={CM_HELP.customers.billingSeriesPeriod}
+            />
+          }
+          aria-label={CM_HELP.customers.billingSeriesPeriod}
+          chips={periodChips}
         />
-        <CommercialSegmentToggle
-          ariaLabel={CM_HELP.customers.billingSeriesPeriod}
-          idPrefix="customers-ranking-period"
-          value={filters.periodPreset}
-          onChange={(value) => {
-            const next = RANKING_PERIOD_OPTIONS.find((option) => option.id === value);
-            if (next) onChange({ periodPreset: next.id });
-          }}
-          options={RANKING_PERIOD_OPTIONS.map((option) => ({
-            value: option.id,
-            label: option.label,
-          }))}
+        {canUseTeamScope ? (
+          <CommercialScopeChipBar
+            label={
+              <CommercialSectionHintLabel
+                label="Agrupar"
+                hint={CM_HELP.customers.rankingGroup}
+              />
+            }
+            aria-label={CM_HELP.customers.rankingGroup}
+            chips={groupChips}
+          />
+        ) : null}
+        <CommercialScopeChipBar
+          label={
+            <CommercialSectionHintLabel
+              label="Foco"
+              hint={CM_HELP.customers.rankingOrder}
+            />
+          }
+          aria-label={CM_HELP.customers.rankingOrder}
+          chips={orderChips}
         />
       </div>
-      {canUseTeamScope ? (
-        <CommercialSegmentToggle
-          ariaLabel="Agrupar ranking"
-          idPrefix="customers-ranking-group"
-          value={effectiveGroupBy}
-          onChange={(value) =>
-            onChange({ groupBy: value === "seller" ? "seller" : "customer" })
-          }
-          options={[
-            { value: "customer", label: "Cliente" },
-            { value: "seller", label: "Vendedor" },
-          ]}
+      <CommercialFilterBarShell
+        embedded
+        ariaLabel={CM_HELP.customers.billingRanking}
+        className="cm-customers-page__filter-bar"
+      >
+        <CommercialSelectField
+          label="Top N"
+          hint={CM_HELP.customers.rankingLimit}
+          value={String(filters.limit)}
+          onChange={(value) => {
+            const parsed = Number(value);
+            if (RANKING_LIMIT_OPTIONS.includes(parsed as RankingLimit)) {
+              onChange({ limit: parsed as RankingLimit });
+            }
+          }}
+          options={RANKING_LIMIT_OPTIONS.map((n) => ({
+            value: String(n),
+            label: String(n),
+          }))}
         />
-      ) : null}
-      <CommercialSegmentToggle
-        ariaLabel="Foco do ranking"
-        idPrefix="customers-ranking-order"
-        value={filters.order}
-        onChange={(value) =>
-          onChange({ order: value === "decline" ? "decline" : "growth" })
-        }
-        options={[
-          { value: "growth", label: "Maiores altas" },
-          { value: "decline", label: "Maiores quedas" },
-        ]}
-      />
-      <CommercialSelectField
-        label="Top N"
-        value={String(filters.limit)}
-        onChange={(value) => {
-          const parsed = Number(value);
-          if (RANKING_LIMIT_OPTIONS.includes(parsed as RankingLimit)) {
-            onChange({ limit: parsed as RankingLimit });
-          }
-        }}
-        options={RANKING_LIMIT_OPTIONS.map((n) => ({
-          value: String(n),
-          label: String(n),
-        }))}
-      />
-      {sellerFilter}
-    </CommercialFilterBarShell>
+        {sellerFilter}
+        {hasActiveFilters ? (
+          <div className="cm-customers-page__filter-actions">
+            <CommercialClearFiltersButton
+              onClick={() => onChange({ ...DEFAULT_RANKING_FILTERS })}
+            />
+          </div>
+        ) : null}
+      </CommercialFilterBarShell>
+    </>
   );
 }

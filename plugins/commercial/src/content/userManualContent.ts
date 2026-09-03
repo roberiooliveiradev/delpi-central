@@ -185,15 +185,15 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Como exporto o mix de produto do faturamento?",
-          a: "Minha Carteira → Faturamento. No hero: período, cliente, família, produto e mercado; use Excel na tabela de produto/família, abaixo do gráfico.",
+          a: "Minha Carteira → Faturamento. No hero: chips de Período e Mercado; cliente, família, produto e carteira na barra (como em Clientes). Excel na tabela abaixo do gráfico.",
         },
         {
           q: "Como exporto o ABC de clientes?",
-          a: "Minha Carteira → ABC. Os filtros do hero são os mesmos do Faturamento; use Excel na tabela do painel.",
+          a: "Minha Carteira → ABC. Mesmos filtros do Faturamento no hero; use Excel na tabela do painel.",
         },
         {
           q: "Os filtros mudam ao trocar Faturamento, ABC, Ranking e Clientes?",
-          a: "Sim. Cada painel mostra no hero os filtros pertinentes (período ROL em Faturamento/ABC; período YoY, grupo e Top N no Ranking; foco/tendência e busca em Clientes). Natureza e escopo de carteira ficam compartilhados.",
+          a: "Sim. O label Visão (com help e ícones) troca o painel; cada um mostra chips de ação e barra de filtros no padrão de Clientes. Natureza e escopo de carteira ficam compartilhados.",
         },
       ],
     },

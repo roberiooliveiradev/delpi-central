@@ -10,7 +10,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 
 | Família | Exemplos no catálogo |
 |---------|----------------------|
-| actions | ActionButton, BackLink, IconButton |
+| actions | ActionButton, BackLink, IconButton, ClearFiltersButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
 | layout | TopBar, UnderlineNav, PageHeader, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard… |
 | feedback | EmptyState, **EmptyGuidance**, ModalShell, DrawerShell, ScreenLoading, InlineLoadingProgress, **AlertQueue**, **ScopeChipBar**, **WorklistItem**… |
@@ -32,7 +32,7 @@ import { HelpTooltip, FieldLabel, TabHintCell } from "@delpi/plugin-ui";
 
 ---
 
-## `ActionButton`, `BackLink` e `IconButton`
+## `ActionButton`, `BackLink`, `IconButton` e `ClearFiltersButton`
 
 Controles canônicos para ações e navegação de retorno. O MFE deve mapear apenas tokens
 `--delpi-ui-*` e layout do contêiner; não deve copiar o chrome dos botões no CSS local.
@@ -45,6 +45,9 @@ Controles canônicos para ações e navegação de retorno. O MFE deve mapear ap
 <ActionButton variant="ghost" onClick={refresh}>Atualizar</ActionButton>
 <ActionButton variant="link" onClick={manage}>Gerenciar</ActionButton>
 
+<ClearFiltersButton onClick={resetFilters} />
+<ClearFiltersButton density="compact" label="Limpar" onClick={resetFilters} />
+
 <IconButton aria-label="Remover participante" tone="danger" onClick={remove}>
   <X size={16} />
 </IconButton>
@@ -54,6 +57,7 @@ Controles canônicos para ações e navegação de retorno. O MFE deve mapear ap
 |------------|------------------|
 | `ActionButton` | `variant` (`default`, `primary`, `ghost`, `link`), `type`, `disabled`, `onClick`, `className` |
 | `BackLink` | `variant` (`default`, `prominent`), `onClick`, `className`, `children` |
+| `ClearFiltersButton` | `onClick`, `label` (padrão «Limpar filtros»), `density` (`default` \| `compact`), `disabled` |
 | `IconButton` | `aria-label`, `tone` (`default`, `danger`), `disabled`, `onClick`, `children` |
 
 ---

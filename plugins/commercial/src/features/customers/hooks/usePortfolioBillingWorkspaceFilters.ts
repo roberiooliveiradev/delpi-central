@@ -43,6 +43,9 @@ export type PortfolioBillingWorkspaceFilters = {
   productCodesCsv: string;
   productGroupsCsv: string;
   clearProductAndMarketFilters: () => void;
+  /** Limpa cliente/família/produto/mercado (mantém período). */
+  clearRecorteFilters: () => void;
+  hasActiveRecorteFilters: boolean;
 };
 
 function customerOptionsFromList(
@@ -124,6 +127,19 @@ export function usePortfolioBillingWorkspaceFilters(
     setSelectedMarkets([]);
   }, []);
 
+  const clearRecorteFilters = useCallback(() => {
+    setSelectedCustomerKeys([]);
+    setSelectedProductCodes([]);
+    setSelectedProductGroups([]);
+    setSelectedMarkets([]);
+  }, []);
+
+  const hasActiveRecorteFilters =
+    effectiveCustomerKeys.length > 0 ||
+    selectedProductCodes.length > 0 ||
+    selectedProductGroups.length > 0 ||
+    selectedMarkets.length > 0;
+
   return {
     preset,
     setPreset,
@@ -148,5 +164,7 @@ export function usePortfolioBillingWorkspaceFilters(
     productCodesCsv,
     productGroupsCsv,
     clearProductAndMarketFilters,
+    clearRecorteFilters,
+    hasActiveRecorteFilters,
   };
 }

@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from "react";
-import { Filter, RotateCcw } from "lucide-react";
+import { Filter } from "lucide-react";
 import {
   ActionButton,
+  ClearFiltersButton,
   OPERATIONAL_UNIT_FIELD_LABEL,
   SectionHintLabel,
   buildOperationalUnitOptions,
@@ -66,10 +67,7 @@ export function FilterBar({
               {showMore ? "Menos filtros" : "Mais filtros"}
             </ActionButton>
             {hasActiveFilters ? (
-              <ActionButton variant="ghost" onClick={onReset}>
-                <RotateCcw size={14} aria-hidden="true" />
-                Limpar
-              </ActionButton>
+              <ClearFiltersButton density="compact" label="Limpar" onClick={onReset} />
             ) : null}
           </div>
         </div>

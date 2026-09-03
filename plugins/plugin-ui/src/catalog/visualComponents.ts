@@ -54,6 +54,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-07-16",
     description: "Botão só com ícone (remover, fechar) com tone default/danger.",
   }),
+  vc("layout", "ClearFiltersButton", {
+    addedAt: "2026-09-03",
+    description:
+      "Ação destacada para limpar filtros ativos (ícone FilterX; densidade default/compact).",
+  }),
   // help — pacote 0.1.0
   vc("help", "HelpTooltip"),
   vc("help", "FieldLabel"),

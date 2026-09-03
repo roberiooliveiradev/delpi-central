@@ -2,7 +2,12 @@ import { Activity, CalendarDays, Eye, MapPin, Maximize2, ShoppingCart, Type } fr
 import { useState } from "react";
 
 import { PUC_DASHBOARD_ROOT, PUC_PREFIX } from "../../app/bemPrefix";
-import { ActionButton, BackLink, IconButton } from "../../components/actions";
+import {
+  ActionButton,
+  BackLink,
+  ClearFiltersButton,
+  IconButton,
+} from "../../components/actions";
 import {
   RibbonGroup,
   ribbonGroupBemClasses,
@@ -207,6 +212,31 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
             <ActionButton variant="ghost">Atualizar</ActionButton>
             <ActionButton variant="link">Gerenciar</ActionButton>
           </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.ClearFiltersButton",
+    family: "layout",
+    exportName: "ClearFiltersButton",
+    title: "ClearFiltersButton",
+    description: "Ação destacada para descartar filtros ativos nas barras e empty states.",
+    demos: [
+      {
+        id: "default",
+        label: "Padrão",
+        render: () => <ClearFiltersButton onClick={() => undefined} />,
+      },
+      {
+        id: "compact",
+        label: "Compacto",
+        render: () => (
+          <ClearFiltersButton
+            onClick={() => undefined}
+            density="compact"
+            label="Limpar"
+          />
         ),
       },
     ],

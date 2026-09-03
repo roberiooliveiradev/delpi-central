@@ -45,7 +45,9 @@ describe("PortfolioBillingRankingTable", () => {
     assert.match(filters, /Maiores altas/);
     assert.match(filters, /Maiores quedas/);
     assert.match(filters, /CommercialSelectField/);
-    assert.match(filters, /customers-ranking-period/);
+    assert.match(filters, /CommercialScopeChipBar/);
+    assert.match(filters, /CommercialClearFiltersButton/);
+    assert.match(filters, /DEFAULT_RANKING_FILTERS/);
   });
 
   it("CustomersPage alterna painéis com SegmentToggle e ranking/série", () => {
@@ -54,6 +56,7 @@ describe("PortfolioBillingRankingTable", () => {
     assert.match(page, /CustomerBillingSeriesChart/);
     assert.match(page, /CommercialSegmentToggle/);
     assert.match(page, /cm-customers-page__panel-toolbar/);
+    assert.match(page, /cm-customers-page__vision/);
     assert.match(page, /PortfolioBillingRankingFiltersBar/);
     assert.match(page, /customers-workspace-panel/);
     assert.match(page, /customers-billing-nature/);

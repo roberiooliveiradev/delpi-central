@@ -1,4 +1,4 @@
-import { RefreshCw, TriangleAlert } from "lucide-react";
+import { ChartColumn, LineChart, RefreshCw, TrendingUp, TriangleAlert, Users } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { navigatePluginView } from "../../../app/pluginNavigation";
@@ -9,6 +9,7 @@ import {
 } from "../../../app/usePortfolioSellerAccess";
 import {
   CommercialActionButton,
+  CommercialClearFiltersButton,
   CommercialEmptyState,
   CommercialFilterBarShell,
   CommercialLoadingCard,
@@ -37,6 +38,7 @@ import { usePortfolioBillingWorkspaceFilters } from "../hooks/usePortfolioBillin
 import { PortfolioBillingRankingTable } from "../components/PortfolioBillingRankingTable";
 import {
   PortfolioBillingRankingFiltersBar,
+  DEFAULT_RANKING_FILTERS,
   type PortfolioBillingRankingFilters,
 } from "../components/PortfolioBillingRankingFiltersBar";
 import { CustomersTable } from "../components/CustomersTable";
@@ -61,7 +63,6 @@ import {
   DEFAULT_BILLING_TREND_WINDOW_DAYS,
   type BillingTrendWindowPreset,
 } from "../utils/billingTrendWindow";
-import { DEFAULT_BILLING_SERIES_PRESET } from "../utils/billingSeriesPeriod";
 
 function formatUpdatedAt(value: Date | null): string {
   if (!value) return "—";
@@ -191,12 +192,8 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     },
     [],
   );
-  const [rankingFilters, setRankingFilters] = useState<PortfolioBillingRankingFilters>({
-    groupBy: "customer",
-    order: "growth",
-    limit: 20,
-    periodPreset: DEFAULT_BILLING_SERIES_PRESET,
-  });
+  const [rankingFilters, setRankingFilters] =
+    useState<PortfolioBillingRankingFilters>(DEFAULT_RANKING_FILTERS);
   const patchRankingFilters = useCallback((next: Partial<PortfolioBillingRankingFilters>) => {
     setRankingFilters((current) => ({ ...current, ...next }));
   }, []);
@@ -419,27 +416,79 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
         }
       >
         <div className="cm-customers-page__panel-toolbar">
-          <CommercialSegmentToggle
-            ariaLabel="Painel da carteira"
-            idPrefix="customers-workspace-panel"
-            value={panel}
-            onChange={(value) => {
-              if (
-                value === "billing" ||
-                value === "abc" ||
-                value === "ranking" ||
-                value === "customers"
-              ) {
-                selectPanel(value);
-              }
-            }}
-            options={[
-              { value: "billing", label: "Faturamento" },
-              { value: "abc", label: "ABC" },
-              { value: "ranking", label: "Ranking" },
-              { value: "customers", label: "Clientes" },
-            ]}
-          />
+          <div className="cm-customers-page__vision">
+            <CommercialSectionHintLabel
+              label="Visão"
+              hint={CM_HELP.customers.workspacePanel}
+            />
+            <CommercialSegmentToggle
+              ariaLabel={CM_HELP.customers.workspacePanel}
+              idPrefix="customers-workspace-panel"
+              value={panel}
+              widthMode="content"
+              onChange={(value) => {
+                if (
+                  value === "billing" ||
+                  value === "abc" ||
+                  value === "ranking" ||
+                  value === "customers"
+                ) {
+                  selectPanel(value);
+                }
+              }}
+              options={[
+                {
+                  value: "billing",
+                  ariaLabel: "Faturamento",
+                  label: (
+                    <span className="cm-customers-page__vision-option">
+                      <LineChart size={16} aria-hidden="true" />
+                      Faturamento
+                    </span>
+                  ),
+                },
+                {
+                  value: "abc",
+                  ariaLabel: "ABC",
+                  label: (
+                    <span className="cm-customers-page__vision-option">
+                      <ChartColumn size={16} aria-hidden="true" />
+                      ABC
+                    </span>
+                  ),
+                },
+                {
+                  value: "ranking",
+                  ariaLabel: "Ranking",
+                  label: (
+                    <span className="cm-customers-page__vision-option">
+                      <TrendingUp size={16} aria-hidden="true" />
+                      Ranking
+                    </span>
+                  ),
+                },
+                {
+                  value: "customers",
+                  ariaLabel: "Clientes",
+                  label: (
+                    <span className="cm-customers-page__vision-option">
+                      <Users size={16} aria-hidden="true" />
+                      Clientes
+                    </span>
+                  ),
+                },
+              ]}
+            />
+            <p className="cm-customers-page__vision-hint" role="note">
+              {panel === "billing"
+                ? CM_HELP.customers.panelBilling
+                : panel === "abc"
+                  ? CM_HELP.customers.panelAbc
+                  : panel === "ranking"
+                    ? CM_HELP.customers.panelRanking
+                    : CM_HELP.customers.panelCustomers}
+            </p>
+          </div>
           {isPortfolioBillingNatureToggleAvailable(PORTFOLIO_SUPPORTED_BILLING_NATURES) ? (
             <div className="cm-customers-page__billing-nature">
               <CommercialSectionHintLabel
@@ -450,6 +499,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 ariaLabel={CM_HELP.customers.billingNature}
                 idPrefix="customers-billing-nature"
                 value={billingNature}
+                widthMode="content"
                 onChange={(value) => {
                   if (value === "gross" || value === "net") {
                     setBillingNature(value as PortfolioBillingAmountNature);
@@ -561,9 +611,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
               {sellerFilterControl}
               {hasActiveFilters ? (
                 <div className="cm-customers-page__filter-actions">
-                  <CommercialActionButton variant="ghost" onClick={resetFilters}>
-                    Limpar filtros
-                  </CommercialActionButton>
+                  <CommercialClearFiltersButton onClick={resetFilters} />
                 </div>
               ) : null}
             </CommercialFilterBarShell>
@@ -655,9 +703,10 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
               title="Nenhum resultado"
               message="Nenhum cliente corresponde à busca e aos filtros."
             >
-                <CommercialActionButton variant="ghost" onClick={resetFilters}>
-                  Limpar busca e filtros
-                </CommercialActionButton>
+              <CommercialClearFiltersButton
+                onClick={resetFilters}
+                label="Limpar busca e filtros"
+              />
             </CommercialEmptyState>
           ) : null}
 

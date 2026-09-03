@@ -1,5 +1,6 @@
 import {
   ActionButton,
+  ClearFiltersButton,
   createDashboardAlertQueue,
   createDashboardAttachmentFileList,
   createDashboardAttachmentPreviewStrip,
@@ -188,6 +189,7 @@ export const CommercialCommandPalette = createDashboardCommandPalette({
 });
 export const CommercialTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
 export const CommercialActionButton = ActionButton;
+export const CommercialClearFiltersButton = ClearFiltersButton;
 export const CommercialExcelExportButton = ExcelExportButton;
 export const CommercialSectionHintLabel = SectionHintLabel;
 export const CommercialTableColumnVisibilityMenu = TableColumnVisibilityMenu;

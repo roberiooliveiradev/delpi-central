@@ -7,6 +7,7 @@ import { SegmentToggle } from "@delpi/plugin-ui/index";
 import {
   CommercialDateField,
   CommercialFilterBarShell,
+  CommercialSectionHintLabel,
   UI_PREFIX,
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
@@ -97,7 +98,10 @@ export function PeriodCompareControls({
   if (variant === "bare") {
     return (
       <div className="cm-period-compare-controls cm-period-compare-controls--bare">
-        {toggle}
+        <div className="cm-customers-page__trend-window">
+          <CommercialSectionHintLabel label="Período" hint={periodHint} />
+          <div className="cm-customers-page__trend-window-controls">{toggle}</div>
+        </div>
         {customDates ? (
           <div className="cm-period-compare-controls__dates">{customDates}</div>
         ) : null}

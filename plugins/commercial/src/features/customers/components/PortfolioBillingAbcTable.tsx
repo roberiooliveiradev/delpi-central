@@ -3,7 +3,7 @@ import { DataTable, runTabularExport } from "@delpi/plugin-ui/index";
 
 import { getCommercialRolByCustomer } from "../../../api/analyticsApi";
 import {
-  CommercialActionButton,
+  CommercialClearFiltersButton,
   CommercialDataListToolbar,
   CommercialEmptyState,
   CommercialLoadingCard,
@@ -346,12 +346,10 @@ export function PortfolioBillingAbcTable({
         <>
           <CommercialEmptyState title={CUSTOMER_BILLING_CONTENT.emptyAbc} />
           {hasFilters ? (
-            <CommercialActionButton
-              variant="ghost"
+            <CommercialClearFiltersButton
               onClick={filters.clearProductAndMarketFilters}
-            >
-              {CUSTOMER_BILLING_CONTENT.clearFilters}
-            </CommercialActionButton>
+              label={CUSTOMER_BILLING_CONTENT.clearFilters}
+            />
           ) : null}
         </>
       ) : null}

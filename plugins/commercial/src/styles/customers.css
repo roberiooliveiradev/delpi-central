@@ -29,26 +29,26 @@
 .dashboard-commercial .cm-portfolio-billing-filters .cm-filter-bar,
 .dashboard-commercial .cm-portfolio-billing-filters .delpi-ui-filter-bar {
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  align-items: stretch;
+  flex-wrap: wrap;
+  flex-direction: row;
+  gap: 0.65rem 0.85rem;
+  align-items: flex-end;
   margin-bottom: 0;
-  padding: 0.85rem 1rem;
 }
 
-/* FiltersRow dentro do shell: sem segundo card. */
-.dashboard-commercial .cm-portfolio-billing-filters .cm-filters-row,
-.dashboard-commercial .cm-portfolio-billing-filters .delpi-ui-filters-row {
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  border-radius: 0;
+.dashboard-commercial .cm-portfolio-billing-filters {
+  display: flex;
+  flex-direction: column;
   gap: 0.65rem;
+  min-width: 0;
+  width: 100%;
 }
 
 .dashboard-commercial .cm-period-compare-controls--bare {
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
+  min-width: 0;
 }
 
 .dashboard-commercial .cm-period-compare-controls__dates {
@@ -182,9 +182,32 @@
 .dashboard-commercial .cm-customers-page__panel-toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 0.65rem 1rem;
   min-width: 0;
+}
+
+.dashboard-commercial .cm-customers-page__vision {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1 1 18rem;
+}
+
+.dashboard-commercial .cm-customers-page__vision-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dashboard-commercial .cm-customers-page__vision-hint {
+  margin: 0;
+  max-width: 52rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--cm-text-muted);
 }
 
 .dashboard-commercial .cm-customers-page__ranking-period {
@@ -192,22 +215,14 @@
   flex-direction: column;
   gap: 0.35rem;
   min-width: 0;
-  flex: 1 1 100%;
-}
-
-.dashboard-commercial .cm-customers-page__filter-bar--ranking {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.65rem 0.85rem;
 }
 
 .dashboard-commercial .cm-customers-page__billing-nature {
   display: inline-flex;
-  flex-direction: row;
+  flex-direction: column;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 0.65rem;
+  align-items: flex-start;
+  gap: 0.4rem;
   min-width: 0;
   margin-inline-start: auto;
 }
