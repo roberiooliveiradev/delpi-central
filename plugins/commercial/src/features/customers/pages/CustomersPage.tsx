@@ -35,6 +35,10 @@ import { PortfolioBillingByProductTable } from "../components/PortfolioBillingBy
 import { PortfolioBillingAbcTable } from "../components/PortfolioBillingAbcTable";
 import { usePortfolioBillingWorkspaceFilters } from "../hooks/usePortfolioBillingWorkspaceFilters";
 import { PortfolioBillingRankingTable } from "../components/PortfolioBillingRankingTable";
+import {
+  PortfolioBillingRankingFiltersBar,
+  type PortfolioBillingRankingFilters,
+} from "../components/PortfolioBillingRankingFiltersBar";
 import { CustomersTable } from "../components/CustomersTable";
 import { MyPortfolioAuditSection } from "../components/MyPortfolioAuditSection";
 import { SellerScopeFilter } from "../components/SellerScopeFilter";
@@ -57,6 +61,7 @@ import {
   DEFAULT_BILLING_TREND_WINDOW_DAYS,
   type BillingTrendWindowPreset,
 } from "../utils/billingTrendWindow";
+import { DEFAULT_BILLING_SERIES_PRESET } from "../utils/billingSeriesPeriod";
 
 function formatUpdatedAt(value: Date | null): string {
   if (!value) return "—";
@@ -185,6 +190,41 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
       setBillingProductGroupOptions(options.groups);
     },
     [],
+  );
+  const [rankingFilters, setRankingFilters] = useState<PortfolioBillingRankingFilters>({
+    groupBy: "customer",
+    order: "growth",
+    limit: 20,
+    periodPreset: DEFAULT_BILLING_SERIES_PRESET,
+  });
+  const patchRankingFilters = useCallback((next: Partial<PortfolioBillingRankingFilters>) => {
+    setRankingFilters((current) => ({ ...current, ...next }));
+  }, []);
+
+  const sellerFilterControl = canFilterPortfolios ? (
+    <SellerScopeFilter
+      sellers={filterablePortfolios}
+      value={sellerIdFilter}
+      onChange={setSellerId}
+      hint={CM_HELP.customers.sellerScope}
+      teamScope={canUseTeamScope}
+    />
+  ) : null;
+
+  const selectPanel = useCallback(
+    (value: typeof panel) => {
+      setPanel(value);
+      if (value === "billing" || value === "abc") {
+        billingFilters.setPreset(rankingFilters.periodPreset);
+      }
+      if (value === "ranking" && billingFilters.preset !== "custom") {
+        patchRankingFilters({
+          periodPreset:
+            billingFilters.preset as PortfolioBillingRankingFilters["periodPreset"],
+        });
+      }
+    },
+    [billingFilters, patchRankingFilters, rankingFilters.periodPreset, setPanel],
   );
 
   const [productQuery, setProductQuery] = useState("");
@@ -378,109 +418,175 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
           </div>
         }
       >
-        <div className="cm-customers-page__chip-row">
-          <CommercialScopeChipBar
-            label={
-              <CommercialSectionHintLabel
-                label="Foco"
-                hint={CM_HELP.customers.filterFocus}
-              />
-            }
-            aria-label="Foco operacional da carteira"
-            chips={focusChips}
+        <div className="cm-customers-page__panel-toolbar">
+          <CommercialSegmentToggle
+            ariaLabel="Painel da carteira"
+            idPrefix="customers-workspace-panel"
+            value={panel}
+            onChange={(value) => {
+              if (
+                value === "billing" ||
+                value === "abc" ||
+                value === "ranking" ||
+                value === "customers"
+              ) {
+                selectPanel(value);
+              }
+            }}
+            options={[
+              { value: "billing", label: "Faturamento" },
+              { value: "abc", label: "ABC" },
+              { value: "ranking", label: "Ranking" },
+              { value: "customers", label: "Clientes" },
+            ]}
           />
-          <CommercialScopeChipBar
-            label={
+          {isPortfolioBillingNatureToggleAvailable(PORTFOLIO_SUPPORTED_BILLING_NATURES) ? (
+            <div className="cm-customers-page__billing-nature">
               <CommercialSectionHintLabel
-                label="Tendência"
-                hint={CM_HELP.customers.filterTrend}
+                label="Natureza"
+                hint={CM_HELP.customers.billingNature}
               />
-            }
-            aria-label="Tendência de faturamento da carteira"
-            chips={trendChips}
-          />
-        </div>
-        <CommercialFilterBarShell
-          embedded
-          ariaLabel="Janela da tendência, busca e escopo da carteira"
-          className="cm-customers-page__filter-bar"
-        >
-          <div className="cm-customers-page__trend-window">
-            <CommercialSectionHintLabel
-              label="Janela da tendência"
-              hint={CM_HELP.customers.trendWindow}
-            />
-            <div className="cm-customers-page__trend-window-controls">
               <CommercialSegmentToggle
-                ariaLabel={CM_HELP.customers.trendWindow}
-                idPrefix="customers-trend-window"
-                value={String(trendWindowPreset)}
+                ariaLabel={CM_HELP.customers.billingNature}
+                idPrefix="customers-billing-nature"
+                value={billingNature}
                 onChange={(value) => {
-                  if (value === "custom") {
-                    setTrendWindowPreset("custom");
-                    return;
-                  }
-                  const days = Number(value);
-                  if ((BILLING_TREND_WINDOW_PRESETS as readonly number[]).includes(days)) {
-                    setTrendWindowPreset(days as (typeof BILLING_TREND_WINDOW_PRESETS)[number]);
+                  if (value === "gross" || value === "net") {
+                    setBillingNature(value as PortfolioBillingAmountNature);
                   }
                 }}
                 options={[
-                  ...BILLING_TREND_WINDOW_PRESETS.map((days) => ({
-                    value: String(days),
-                    label: `${days}d`,
-                  })),
-                  { value: "custom", label: "Personalizado" },
+                  {
+                    value: "gross",
+                    label: BILLING_NATURE_CONTENT.gross.shortLabel,
+                  },
+                  {
+                    value: "net",
+                    label: BILLING_NATURE_CONTENT.net.shortLabel,
+                  },
                 ]}
               />
-              {trendWindowPreset === "custom" ? (
-                <CommercialTextField
-                  className="cm-customers-page__trend-window-days"
-                  label="Dias"
-                  hint={CM_HELP.customers.trendWindowCustom}
-                  type="number"
-                  value={customTrendWindowDays}
-                  onChange={setCustomTrendWindowDays}
-                  placeholder="1–365"
+            </div>
+          ) : null}
+        </div>
+
+        {panel === "customers" ? (
+          <>
+            <div className="cm-customers-page__chip-row">
+              <CommercialScopeChipBar
+                label={
+                  <CommercialSectionHintLabel
+                    label="Foco"
+                    hint={CM_HELP.customers.filterFocus}
+                  />
+                }
+                aria-label="Foco operacional da carteira"
+                chips={focusChips}
+              />
+              <CommercialScopeChipBar
+                label={
+                  <CommercialSectionHintLabel
+                    label="Tendência"
+                    hint={CM_HELP.customers.filterTrend}
+                  />
+                }
+                aria-label="Tendência de faturamento da carteira"
+                chips={trendChips}
+              />
+            </div>
+            <CommercialFilterBarShell
+              embedded
+              ariaLabel="Janela da tendência, busca e escopo da carteira"
+              className="cm-customers-page__filter-bar"
+            >
+              <div className="cm-customers-page__trend-window">
+                <CommercialSectionHintLabel
+                  label="Janela da tendência"
+                  hint={CM_HELP.customers.trendWindow}
                 />
+                <div className="cm-customers-page__trend-window-controls">
+                  <CommercialSegmentToggle
+                    ariaLabel={CM_HELP.customers.trendWindow}
+                    idPrefix="customers-trend-window"
+                    value={String(trendWindowPreset)}
+                    onChange={(value) => {
+                      if (value === "custom") {
+                        setTrendWindowPreset("custom");
+                        return;
+                      }
+                      const days = Number(value);
+                      if ((BILLING_TREND_WINDOW_PRESETS as readonly number[]).includes(days)) {
+                        setTrendWindowPreset(days as (typeof BILLING_TREND_WINDOW_PRESETS)[number]);
+                      }
+                    }}
+                    options={[
+                      ...BILLING_TREND_WINDOW_PRESETS.map((days) => ({
+                        value: String(days),
+                        label: `${days}d`,
+                      })),
+                      { value: "custom", label: "Personalizado" },
+                    ]}
+                  />
+                  {trendWindowPreset === "custom" ? (
+                    <CommercialTextField
+                      className="cm-customers-page__trend-window-days"
+                      label="Dias"
+                      hint={CM_HELP.customers.trendWindowCustom}
+                      type="number"
+                      value={customTrendWindowDays}
+                      onChange={setCustomTrendWindowDays}
+                      placeholder="1–365"
+                    />
+                  ) : null}
+                </div>
+              </div>
+              <CommercialTextField
+                className="cm-customers-page__search-field"
+                label="Buscar cliente"
+                hint={CM_HELP.customers.filterSearch}
+                type="search"
+                value={search}
+                onChange={setSearch}
+                placeholder="Código ou nome"
+              />
+              <CommercialTextField
+                className="cm-customers-page__search-field"
+                label="Produto (pedido aberto)"
+                hint="Clientes com linha em aberto cujo código contém o texto. Família/grupo (B1_GRUPO) na lista = ADR-003 até open-orders expor product_group."
+                type="search"
+                value={productQuery}
+                onChange={setProductQuery}
+                placeholder="Código do produto"
+              />
+              {sellerFilterControl}
+              {hasActiveFilters ? (
+                <div className="cm-customers-page__filter-actions">
+                  <CommercialActionButton variant="ghost" onClick={resetFilters}>
+                    Limpar filtros
+                  </CommercialActionButton>
+                </div>
               ) : null}
-            </div>
-          </div>
-          <CommercialTextField
-            className="cm-customers-page__search-field"
-            label="Buscar cliente"
-            hint={CM_HELP.customers.filterSearch}
-            type="search"
-            value={search}
-            onChange={setSearch}
-            placeholder="Código ou nome"
+            </CommercialFilterBarShell>
+          </>
+        ) : null}
+
+        {panel === "billing" || panel === "abc" ? (
+          <PortfolioBillingFiltersBar
+            filters={billingFilters}
+            productOptions={billingProductOptions}
+            productGroupOptions={billingProductGroupOptions}
+            sellerFilter={sellerFilterControl}
           />
-          <CommercialTextField
-            className="cm-customers-page__search-field"
-            label="Produto (pedido aberto)"
-            hint="Clientes com linha em aberto cujo código contém o texto. Família/grupo (B1_GRUPO) na lista = ADR-003 até open-orders expor product_group."
-            type="search"
-            value={productQuery}
-            onChange={setProductQuery}
-            placeholder="Código do produto"
+        ) : null}
+
+        {panel === "ranking" ? (
+          <PortfolioBillingRankingFiltersBar
+            filters={rankingFilters}
+            onChange={patchRankingFilters}
+            canUseTeamScope={canUseTeamScope}
+            sellerFilter={sellerFilterControl}
           />
-          {canFilterPortfolios ? (
-            <SellerScopeFilter
-              sellers={filterablePortfolios}
-              value={sellerIdFilter}
-              onChange={setSellerId}
-              hint={CM_HELP.customers.sellerScope}
-              teamScope={canUseTeamScope}
-            />
-          ) : null}
-          {hasActiveFilters ? (
-            <div className="cm-customers-page__filter-actions">
-              <CommercialActionButton variant="ghost" onClick={resetFilters}>
-                Limpar filtros
-              </CommercialActionButton>
-            </div>
-          ) : null}
-        </CommercialFilterBarShell>
+        ) : null}
       </CommercialPageHero>
 
       {portfolioEmpty && portfolioMessage ? (
@@ -557,68 +663,11 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
 
           {!showEmptyDataset ? (
             <div className="cm-customers-page__panels">
-              <div className="cm-customers-page__panel-toolbar">
-                <CommercialSegmentToggle
-                  ariaLabel="Painel da carteira"
-                  idPrefix="customers-workspace-panel"
-                  value={panel}
-                  onChange={(value) => {
-                    if (
-                      value === "billing" ||
-                      value === "abc" ||
-                      value === "ranking" ||
-                      value === "customers"
-                    ) {
-                      setPanel(value);
-                    }
-                  }}
-                  options={[
-                    { value: "billing", label: "Faturamento" },
-                    { value: "abc", label: "ABC" },
-                    { value: "ranking", label: "Ranking" },
-                    { value: "customers", label: "Clientes" },
-                  ]}
-                />
-                {isPortfolioBillingNatureToggleAvailable(PORTFOLIO_SUPPORTED_BILLING_NATURES) ? (
-                  <div className="cm-customers-page__billing-nature">
-                    <CommercialSectionHintLabel
-                      label="Natureza"
-                      hint={CM_HELP.customers.billingNature}
-                    />
-                    <CommercialSegmentToggle
-                      ariaLabel={CM_HELP.customers.billingNature}
-                      idPrefix="customers-billing-nature"
-                      value={billingNature}
-                      onChange={(value) => {
-                        if (value === "gross" || value === "net") {
-                          setBillingNature(value as PortfolioBillingAmountNature);
-                        }
-                      }}
-                      options={[
-                        {
-                          value: "gross",
-                          label: BILLING_NATURE_CONTENT.gross.shortLabel,
-                        },
-                        {
-                          value: "net",
-                          label: BILLING_NATURE_CONTENT.net.shortLabel,
-                        },
-                      ]}
-                    />
-                  </div>
-                ) : null}
-              </div>
-
               <div
                 className="cm-customers-page__panel"
                 hidden={panel !== "billing"}
                 aria-hidden={panel !== "billing"}
               >
-                <PortfolioBillingFiltersBar
-                  filters={billingFilters}
-                  productOptions={billingProductOptions}
-                  productGroupOptions={billingProductGroupOptions}
-                />
                 <CustomerBillingSeriesChart
                   customers={aggregation.customers}
                   filters={billingFilters}
@@ -639,11 +688,6 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 hidden={panel !== "abc"}
                 aria-hidden={panel !== "abc"}
               >
-                <PortfolioBillingFiltersBar
-                  filters={billingFilters}
-                  productOptions={billingProductOptions}
-                  productGroupOptions={billingProductGroupOptions}
-                />
                 <PortfolioBillingAbcTable
                   filters={billingFilters}
                   sellerId={canFilterPortfolios ? sellerIdFilter : null}
@@ -661,6 +705,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                   sellerId={canFilterPortfolios ? sellerIdFilter : null}
                   active={panel === "ranking"}
                   billingNature={billingNature}
+                  filters={rankingFilters}
                 />
               </div>
 

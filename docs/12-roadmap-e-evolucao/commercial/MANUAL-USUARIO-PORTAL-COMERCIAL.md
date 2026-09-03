@@ -42,9 +42,10 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Ver atrasos de entrega | **Meus pedidos** (ou atalho no Início) | Chip **Atraso** / “Ver atrasos” |
 | Ver o que pode faturar | **Meus pedidos** | Chip / filtro de estoque e “Pode faturar” (estoque alocado em ordem FIFO) |
 | Acompanhar uma linha ou OP | **Meus pedidos** → clique na linha | Abre ficha da linha; daí abre a OP se houver |
-| Ver meus clientes | **Minha Carteira** | Lista; use busca, Foco e Tendência |
-| Ver mix de produto do faturamento | **Minha Carteira** → Faturamento | Filtros; tabela abaixo do gráfico; colunas personalizáveis; Excel |
-| Ver ABC de clientes | **Minha Carteira** → ABC | Mesmos filtros do Faturamento; avatar + participação; Excel |
+| Ver meus clientes | **Minha Carteira** → Clientes | No hero: busca, Foco e Tendência |
+| Ver mix de produto do faturamento | **Minha Carteira** → Faturamento | Filtros no hero; tabela abaixo do gráfico; Excel |
+| Ver ABC de clientes | **Minha Carteira** → ABC | Mesmos filtros do hero que o Faturamento; Excel |
+| Ver ranking crescimento/queda | **Minha Carteira** → Ranking | Período YoY, grupo e Top N no hero |
 | Preparar visita / call com cliente | **Minha Carteira** → cliente | Conta: abas Resumo, Pedidos, Histórico, Oportunidades, Contatos, Atividades |
 | Criar ou concluir follow-up | **Minhas tarefas** | Buckets (atrasadas / hoje / …); criar com prazo e responsável |
 | Conversar com o time sobre um pedido | **Sala de interação** ou painel na ficha | Inbox ou “abrir sala” no pedido/conta/OV |

@@ -25,18 +25,27 @@ describe("PortfolioBillingRankingTable", () => {
     assert.match(source, /CommercialAvatar/);
     assert.match(source, /CommercialCompareSparkline/);
     assert.match(source, /CommercialTrendDelta/);
-    assert.match(source, /order/);
-    assert.match(source, /limit/);
-    assert.match(source, /RANKING_LIMIT_OPTIONS/);
-    assert.match(source, /Maiores altas/);
-    assert.match(source, /Maiores quedas/);
-    assert.match(source, /CommercialSelectField/);
     assert.match(source, /CommercialDataCellValue/);
     assert.match(source, /usePortfolioBillingTablePreferences/);
     assert.match(source, /CommercialTableColumnVisibilityMenu/);
     assert.match(source, /enableColumnReorder/);
+    assert.match(source, /filters: PortfolioBillingRankingFilters/);
+    assert.doesNotMatch(source, /customers-ranking-period/);
+    assert.doesNotMatch(source, /CommercialSelectField/);
     assert.doesNotMatch(source, /apiDelpiUrl|API_DELPI|\/apps\/api-delpi/);
     assert.doesNotMatch(source, /\.delpi-ui-/);
+  });
+
+  it("filtros do ranking ficam no hero via RankingFiltersBar", () => {
+    const filters = readFileSync(
+      join(here, "PortfolioBillingRankingFiltersBar.tsx"),
+      "utf8",
+    );
+    assert.match(filters, /RANKING_LIMIT_OPTIONS/);
+    assert.match(filters, /Maiores altas/);
+    assert.match(filters, /Maiores quedas/);
+    assert.match(filters, /CommercialSelectField/);
+    assert.match(filters, /customers-ranking-period/);
   });
 
   it("CustomersPage alterna painéis com SegmentToggle e ranking/série", () => {
@@ -45,13 +54,15 @@ describe("PortfolioBillingRankingTable", () => {
     assert.match(page, /CustomerBillingSeriesChart/);
     assert.match(page, /CommercialSegmentToggle/);
     assert.match(page, /cm-customers-page__panel-toolbar/);
+    assert.match(page, /PortfolioBillingRankingFiltersBar/);
     assert.match(page, /customers-workspace-panel/);
     assert.match(page, /customers-billing-nature/);
     assert.match(page, /setBillingNature/);
-    assert.match(page, /setPanel/);
+    assert.match(page, /selectPanel/);
     assert.match(page, /active=\{panel === "billing"\}/);
     assert.match(page, /active=\{panel === "abc"\}/);
     assert.match(page, /active=\{panel === "ranking"\}/);
     assert.match(page, /billingNature=\{billingNature\}/);
+    assert.match(page, /filters=\{rankingFilters\}/);
   });
 });

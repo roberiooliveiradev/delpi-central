@@ -15,6 +15,7 @@ describe("Portfolio billing tables — estrutural", () => {
     assert.match(page, /usePortfolioBillingWorkspaceFilters/);
     assert.match(page, /value: "abc"/);
     assert.match(page, /active=\{panel === "abc"\}/);
+    assert.match(page, /panel === "billing" \|\| panel === "abc"/);
     const abcMount = page.indexOf("<PortfolioBillingAbcTable");
     assert.ok(abcMount >= 0);
     const abcSlice = page.slice(abcMount, abcMount + 280);

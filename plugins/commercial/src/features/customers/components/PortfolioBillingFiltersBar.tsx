@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import {
   CommercialFilterBarShell,
   CommercialMultiSelectField,
@@ -17,18 +19,27 @@ type PortfolioBillingFiltersBarProps = {
   filters: PortfolioBillingWorkspaceFilters;
   productOptions: ProductOption[];
   productGroupOptions: ProductOption[];
+  /** Escopo de carteira compartilhado (hero). */
+  sellerFilter?: ReactNode;
+  className?: string;
 };
 
 export function PortfolioBillingFiltersBar({
   filters,
   productOptions,
   productGroupOptions,
+  sellerFilter = null,
+  className,
 }: PortfolioBillingFiltersBarProps) {
   const { FiltersRow } = cmFiltersKit;
 
   return (
-    <div className="cm-portfolio-billing-filters">
-      <CommercialFilterBarShell ariaLabel={CUSTOMER_BILLING_CONTENT.portfolioFiltersAria}>
+    <div className={["cm-portfolio-billing-filters", className].filter(Boolean).join(" ")}>
+      <CommercialFilterBarShell
+        embedded
+        ariaLabel={CUSTOMER_BILLING_CONTENT.portfolioFiltersAria}
+        className="cm-customers-page__filter-bar"
+      >
         <PeriodCompareControls
           idPrefix="portfolio-billing"
           variant="bare"
@@ -91,6 +102,7 @@ export function PortfolioBillingFiltersBar({
             }
             emptyLabel={CUSTOMER_BILLING_CONTENT.filterMarketEmpty}
           />
+          {sellerFilter}
         </FiltersRow>
       </CommercialFilterBarShell>
     </div>

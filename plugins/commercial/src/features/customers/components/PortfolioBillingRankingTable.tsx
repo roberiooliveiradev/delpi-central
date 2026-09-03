@@ -15,8 +15,6 @@ import {
   CommercialExcelExportButton,
   CommercialLoadingCard,
   CommercialSectionCard,
-  CommercialSegmentToggle,
-  CommercialSelectField,
   CommercialStateBanner,
   CommercialTableColumnVisibilityMenu,
   CommercialTableFontSizeControls,
@@ -47,41 +45,28 @@ import {
   PORTFOLIO_RANKING_COLUMNS_STORAGE_KEY,
   PORTFOLIO_RANKING_FONT_STORAGE_KEY,
 } from "../utils/portfolioBillingTableColumns";
+import { periodRangeFromBillingPreset } from "../utils/billingSeriesPeriod";
 import {
   BILLING_SERIES_PRESET_OPTIONS,
-  DEFAULT_BILLING_SERIES_PRESET,
-  periodRangeFromBillingPreset,
-  type BillingSeriesPeriodPreset,
 } from "../utils/billingSeriesPeriod";
+import type { PortfolioBillingRankingFilters } from "./PortfolioBillingRankingFiltersBar";
 
 type PortfolioBillingRankingTableProps = {
   sellerId?: string | null;
   /** Quando false, não dispara fetch (painel oculto). Default true. */
   active?: boolean;
   billingNature?: "gross" | "net";
+  filters: PortfolioBillingRankingFilters;
 };
-
-type RankingOrder = "growth" | "decline";
-
-const RANKING_LIMIT_OPTIONS = [10, 15, 20, 50] as const;
-type RankingLimit = (typeof RANKING_LIMIT_OPTIONS)[number];
-
-const RANKING_PERIOD_OPTIONS = BILLING_SERIES_PRESET_OPTIONS.filter(
-  (option): option is { id: Exclude<BillingSeriesPeriodPreset, "custom">; label: string } =>
-    option.id !== "custom",
-);
 
 export function PortfolioBillingRankingTable({
   sellerId,
   active = true,
   billingNature = "gross",
+  filters,
 }: PortfolioBillingRankingTableProps) {
   const { canUseTeamScope } = usePortfolioScope();
-  const [groupBy, setGroupBy] = useState<"customer" | "seller">("customer");
-  const [order, setOrder] = useState<RankingOrder>("growth");
-  const [limit, setLimit] = useState<RankingLimit>(20);
-  const [periodPreset, setPeriodPreset] =
-    useState<Exclude<BillingSeriesPeriodPreset, "custom">>(DEFAULT_BILLING_SERIES_PRESET);
+  const { groupBy, order, limit, periodPreset } = filters;
   const [items, setItems] = useState<PortfolioBillingRankingItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -118,7 +103,7 @@ export function PortfolioBillingRankingTable({
   );
 
   const periodLabel =
-    RANKING_PERIOD_OPTIONS.find((option) => option.id === periodPreset)?.label ??
+    BILLING_SERIES_PRESET_OPTIONS.find((option) => option.id === periodPreset)?.label ??
     periodPreset;
   const focusLabel = order === "decline" ? "Maiores quedas" : "Maiores altas";
   const natureLabel = billingNatureShortLabel(billingNature);
@@ -281,64 +266,6 @@ export function PortfolioBillingRankingTable({
       title="Ranking crescimento/queda"
       subtitle={cardSubtitle}
       hint={CM_HELP.customers.billingRanking}
-      actions={
-        <div className="cm-customers-page__filter-actions">
-          {canUseTeamScope ? (
-            <CommercialSegmentToggle
-              ariaLabel="Agrupar ranking"
-              idPrefix="customers-ranking-group"
-              value={effectiveGroupBy}
-              onChange={(value) =>
-                setGroupBy(value === "seller" ? "seller" : "customer")
-              }
-              options={[
-                { value: "customer", label: "Cliente" },
-                { value: "seller", label: "Vendedor" },
-              ]}
-            />
-          ) : null}
-          <CommercialSegmentToggle
-            ariaLabel="Foco do ranking"
-            idPrefix="customers-ranking-order"
-            value={order}
-            onChange={(value) =>
-              setOrder(value === "decline" ? "decline" : "growth")
-            }
-            options={[
-              { value: "growth", label: "Maiores altas" },
-              { value: "decline", label: "Maiores quedas" },
-            ]}
-          />
-          <CommercialSelectField
-            label="Período"
-            value={periodPreset}
-            onChange={(value) => {
-              const next = RANKING_PERIOD_OPTIONS.find((option) => option.id === value);
-              if (next) setPeriodPreset(next.id);
-            }}
-            options={RANKING_PERIOD_OPTIONS.map((option) => ({
-              value: option.id,
-              label: option.label,
-            }))}
-          />
-          <CommercialSelectField
-            label="Top N"
-            value={String(limit)}
-            onChange={(value) => {
-              const parsed = Number(value);
-              if (
-                RANKING_LIMIT_OPTIONS.includes(parsed as RankingLimit)
-              ) {
-                setLimit(parsed as RankingLimit);
-              }
-            }}
-            options={RANKING_LIMIT_OPTIONS.map((n) => ({
-              value: String(n),
-              label: String(n),
-            }))}
-          />
-        </div>
-      }
     >
       <CommercialDataListToolbar
         style={tableStyle}

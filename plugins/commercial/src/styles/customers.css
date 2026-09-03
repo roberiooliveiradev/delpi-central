@@ -187,6 +187,21 @@
   min-width: 0;
 }
 
+.dashboard-commercial .cm-customers-page__ranking-period {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1 1 100%;
+}
+
+.dashboard-commercial .cm-customers-page__filter-bar--ranking {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem 0.85rem;
+}
+
 .dashboard-commercial .cm-customers-page__billing-nature {
   display: inline-flex;
   flex-direction: row;

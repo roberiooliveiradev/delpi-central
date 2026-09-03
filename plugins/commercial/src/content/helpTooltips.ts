@@ -287,13 +287,13 @@ export const CM_HELP = {
     portfolioBillingShare:
       "Share = faturamento da carteira/escopo ÷ faturamento da empresa no mesmo período (bruto ou líquido conforme a Natureza). Exige permissão de analytics, equipe ou gestão de carteiras.",
     billingRanking:
-      "Ranking de crescimento/queda do faturamento versus o mesmo período no ano anterior (bruto ou líquido conforme a Natureza). Gestores podem agrupar por vendedor.",
+      "Ranking de crescimento/queda do faturamento versus o mesmo período no ano anterior (bruto ou líquido conforme a Natureza). Período, grupo, ordem e Top N ficam no hero deste painel. Gestores podem agrupar por vendedor.",
     billingSeries:
       "Soma do faturamento no período escolhido (bruto de nota ou líquido ROL). Selecione um cliente para ver só a série dele. Presets iguais à Visão geral; opcionalmente compare com anos anteriores em colunas agrupadas.",
     billingNature:
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingSeriesPeriod:
-      "Recorte do gráfico (paridade Visão geral): hoje, semana, mês, mês passado, trimestre, ano, últimos 12 meses ou intervalo personalizado.",
+      "No hero (painéis Faturamento e ABC): recorte do gráfico (paridade Visão geral) — hoje, semana, mês, mês passado, trimestre, ano, últimos 12 meses ou intervalo personalizado.",
     billingSeriesGrain:
       "Agrupamento da série. Dia e semana ficam indisponíveis quando o período é longo demais para aquele recorte.",
     billingSeriesYoy:
