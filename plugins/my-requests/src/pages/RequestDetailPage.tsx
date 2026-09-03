@@ -11,6 +11,12 @@ import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { InvoiceIssuancePayloadPanel } from "../features/invoice-issuance/ui/InvoiceIssuancePayloadPanel";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestDetail } from "../types/requests";
+import {
+  DetailFields,
+  MyRequestsLoadingState,
+  MyRequestsSectionCard,
+  MyRequestsStateBanner,
+} from "../ui/mrUi";
 
 type RequestDetailPageProps = {
   requestId: string;
@@ -78,45 +84,33 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
       title={request ? request.request_number : "Detalhe"}
       canCreate={access.canCreateInvoiceIssuance || access.canManage}
     >
-      <section
-        className="dashboard-my-requests__panel"
-        data-help="detail"
-        title={MY_REQUESTS_HELP_TOOLTIPS.detail.section}
-      >
-        {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
-        {!request && !error ? (
-          <p className="dashboard-my-requests__muted">Carregando…</p>
-        ) : null}
-        {request ? (
-          <>
-            <dl className="dashboard-my-requests__meta">
-              <div>
-                <dt>Tipo</dt>
-                <dd>{request.type_code}</dd>
-              </div>
-              <div>
-                <dt>Status</dt>
-                <dd>{request.status_alias || request.status}</dd>
-              </div>
-              <div>
-                <dt>Filial</dt>
-                <dd>{request.branch_code || "—"}</dd>
-              </div>
-              <div>
-                <dt>Solicitante</dt>
-                <dd>{request.created_by_name}</dd>
-              </div>
-            </dl>
-            <div title={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}>
-              <ActionBar
-                actions={request.allowed_actions || []}
-                busy={busy}
-                onAction={onAction}
+      <MyRequestsSectionCard title="Solicitação">
+        <div data-help="detail" title={MY_REQUESTS_HELP_TOOLTIPS.detail.section}>
+          {error ? (
+            <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
+          ) : null}
+          {!request && !error ? <MyRequestsLoadingState /> : null}
+          {request ? (
+            <>
+              <DetailFields
+                fields={[
+                  { label: "Tipo", value: request.type_code },
+                  { label: "Status", value: request.status_alias || request.status },
+                  { label: "Filial", value: request.branch_code || "—" },
+                  { label: "Solicitante", value: request.created_by_name },
+                ]}
               />
-            </div>
-          </>
-        ) : null}
-      </section>
+              <div title={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}>
+                <ActionBar
+                  actions={request.allowed_actions || []}
+                  busy={busy}
+                  onAction={onAction}
+                />
+              </div>
+            </>
+          ) : null}
+        </div>
+      </MyRequestsSectionCard>
       {request?.type_code === "invoice-issuance" ? (
         <InvoiceIssuancePayloadPanel payload={request.payload} />
       ) : null}

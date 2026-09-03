@@ -3,164 +3,61 @@
   box-sizing: border-box;
 }
 
+/* Tokens do plugin + mapeamento para o kit (--delpi-ui-*). Sem CSS de componente. */
 .dashboard-my-requests {
-  --mr-page-padding: 24px;
-  --mr-section-gap: 20px;
-  --mr-accent: var(--primary, #089bdb);
-  --mr-title: var(--secundary, #003866);
-  --mr-text: var(--text, #111111);
-  --mr-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
-  --mr-surface: var(--surface, #ffffff);
-  --mr-border: var(--border, #e6e6e6);
-  --mr-danger: var(--danger, #b42318);
-  --delpi-ui-accent: var(--mr-accent);
-  --delpi-ui-title: var(--mr-title);
-  --delpi-ui-surface: var(--mr-surface);
-  --delpi-ui-text: var(--mr-text);
-  --delpi-ui-text-muted: var(--mr-text-muted);
-  --delpi-ui-border: var(--mr-border);
-  --delpi-ui-danger: var(--mr-danger);
+  --my-requests-page-padding: 24px;
+  --my-requests-section-gap: 20px;
+  --my-requests-accent: var(--primary, #089bdb);
+  --my-requests-title: var(--secundary, #003866);
+  --my-requests-text: var(--text, #111111);
+  --my-requests-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
+  --my-requests-surface: var(--surface, #ffffff);
+  --my-requests-border: var(--border, #e6e6e6);
+  --my-requests-danger: var(--danger, #b42318);
 
+  --delpi-ui-accent: var(--my-requests-accent);
+  --delpi-ui-title: var(--my-requests-title);
+  --delpi-ui-surface: var(--my-requests-surface);
+  --delpi-ui-text: var(--my-requests-text);
+  --delpi-ui-text-muted: var(--my-requests-text-muted);
+  --delpi-ui-muted: var(--my-requests-text-muted);
+  --delpi-ui-border: var(--my-requests-border);
+  --delpi-ui-danger: var(--my-requests-danger);
+  --delpi-ui-section-gap: var(--my-requests-section-gap);
+}
+
+:root[data-theme="dark"] .dashboard-my-requests {
+  --my-requests-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
+  --my-requests-text: rgba(255, 255, 255, 0.88);
+  --my-requests-text-muted: rgba(255, 255, 255, 0.64);
+  --my-requests-surface: color-mix(in srgb, var(--surface, #1e293b) 92%, black);
+  --my-requests-border: rgba(255, 255, 255, 0.12);
+}
+
+/* Layout de página apenas */
+.dashboard-my-requests.dashboard-page {
   display: flex;
   flex-direction: column;
-  gap: var(--mr-section-gap);
-  padding: var(--mr-page-padding);
-  color: var(--mr-text);
+  gap: var(--my-requests-section-gap);
   min-height: 100%;
+  padding: var(--my-requests-page-padding);
+  color: var(--my-requests-text);
 }
 
-.dashboard-my-requests__header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.dashboard-my-requests__header h1 {
-  margin: 0;
-  color: var(--mr-title);
-  font-size: 1.5rem;
-}
-
-.dashboard-my-requests__panel {
-  background: var(--mr-surface);
-  border: 1px solid var(--mr-border);
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-}
-
-.dashboard-my-requests__panel h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1.1rem;
-  color: var(--mr-title);
-}
-
-.dashboard-my-requests__nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.dashboard-my-requests__nav a {
-  color: var(--mr-accent);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.dashboard-my-requests__error {
-  color: var(--mr-danger);
-  margin: 0 0 0.75rem;
-}
-
-.dashboard-my-requests__muted {
-  color: var(--mr-text-muted);
-  margin: 0 0 0.75rem;
-}
-
-.dashboard-my-requests__table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.dashboard-my-requests__table th,
-.dashboard-my-requests__table td {
-  text-align: left;
-  padding: 0.5rem 0.35rem;
-  border-bottom: 1px solid var(--mr-border);
-}
-
-.dashboard-my-requests__table a {
-  color: var(--mr-accent);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.dashboard-my-requests__action-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.dashboard-my-requests__btn {
-  appearance: none;
-  border: 1px solid var(--mr-accent);
-  background: var(--mr-accent);
-  color: #fff;
-  border-radius: 8px;
-  padding: 0.45rem 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.dashboard-my-requests__btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.dashboard-my-requests__form {
+.dashboard-my-requests .my-requests-page-stack,
+.dashboard-my-requests .my-requests-form-stack {
   display: flex;
   flex-direction: column;
+  gap: var(--my-requests-section-gap);
+}
+
+.dashboard-my-requests .my-requests-form-stack {
   gap: 0.75rem;
-  max-width: 28rem;
+  max-width: 36rem;
 }
 
-.dashboard-my-requests__form label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-weight: 600;
-}
-
-.dashboard-my-requests__form input,
-.dashboard-my-requests__form select,
-.dashboard-my-requests__form textarea {
-  font: inherit;
-  font-weight: 400;
-  padding: 0.45rem 0.6rem;
-  border-radius: 8px;
-  border: 1px solid var(--mr-border);
-}
-
-.dashboard-my-requests__list {
+/* Lista de domínio (hits de lookup / comentários) — não é chrome do kit */
+.dashboard-my-requests .my-requests-domain-list {
   margin: 0;
   padding-left: 1.1rem;
-}
-
-.dashboard-my-requests__meta {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
-  margin: 0 0 0.5rem;
-}
-
-.dashboard-my-requests__meta dt {
-  font-size: 0.8rem;
-  color: var(--mr-text-muted);
-}
-
-.dashboard-my-requests__meta dd {
-  margin: 0.15rem 0 0;
-  font-weight: 600;
 }

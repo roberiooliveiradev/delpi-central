@@ -1,8 +1,15 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { ActionButton, FieldLabel, NativeTextAreaControl } from "@delpi/plugin-ui/index";
 
 import { createComment, listComments } from "../api/requestsApi";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { RequestComment } from "../types/requests";
+import {
+  MyRequestsEmptyState,
+  MyRequestsFormActions,
+  MyRequestsSectionCard,
+  MyRequestsStateBanner,
+} from "../ui/mrUi";
 
 type CommentsPanelProps = {
   requestId: string;
@@ -44,34 +51,44 @@ export function CommentsPanel({ requestId }: CommentsPanelProps) {
   }
 
   return (
-    <section
-      className="dashboard-my-requests__panel"
-      data-help="comments"
-      title={MY_REQUESTS_HELP_TOOLTIPS.comments.section}
-    >
-      <h2>Comentários</h2>
-      {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
-      <ul className="dashboard-my-requests__list">
-        {items.map((item) => (
-          <li key={item.id}>
-            <strong>{item.author_name || "Usuário"}</strong>: {item.body}
-          </li>
-        ))}
-      </ul>
-      <form className="dashboard-my-requests__form" onSubmit={onSubmit}>
-        <label>
-          Novo comentário
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            rows={3}
-            disabled={busy}
-          />
-        </label>
-        <button type="submit" className="dashboard-my-requests__btn" disabled={busy || !body.trim()}>
-          Enviar
-        </button>
-      </form>
-    </section>
+    <MyRequestsSectionCard title="Comentários">
+      <div data-help="comments" title={MY_REQUESTS_HELP_TOOLTIPS.comments.section}>
+        {error ? (
+          <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
+        ) : null}
+        {items.length === 0 ? (
+          <MyRequestsEmptyState message="Nenhum comentário ainda." />
+        ) : (
+          <ul className="my-requests-domain-list">
+            {items.map((item) => (
+              <li key={item.id}>
+                <strong>{item.author_name || "Usuário"}</strong>: {item.body}
+              </li>
+            ))}
+          </ul>
+        )}
+        <form className="my-requests-form-stack" onSubmit={onSubmit}>
+          <div>
+            <FieldLabel label="Novo comentário" htmlFor="mr-new-comment" />
+            <NativeTextAreaControl
+              id="mr-new-comment"
+              value={body}
+              onChange={setBody}
+              rows={3}
+              disabled={busy}
+            />
+          </div>
+          <MyRequestsFormActions>
+            <ActionButton
+              type="submit"
+              variant="primary"
+              disabled={busy || !body.trim()}
+            >
+              Enviar
+            </ActionButton>
+          </MyRequestsFormActions>
+        </form>
+      </div>
+    </MyRequestsSectionCard>
   );
 }

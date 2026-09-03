@@ -1,9 +1,15 @@
 /**
- * Contratos mínimos do remote `@delpi/plugin-ui` para o `tsc` do MFE.
+ * Contratos tipados do remote `@delpi/plugin-ui` para o `tsc` do MFE.
  * Em runtime o Module Federation resolve o pacote real.
+ * Em vitest: alias `pluginUiTestAliases` aponta para o fonte do kit.
  */
 declare module "@delpi/plugin-ui/index" {
-  import type { ComponentType, InputHTMLAttributes, ReactElement, ReactNode } from "react";
+  import type {
+    ComponentType,
+    InputHTMLAttributes,
+    ReactElement,
+    ReactNode,
+  } from "react";
 
   export type StatusBadgeVariant = "neutral" | "info" | "success" | "warning" | "danger";
 
@@ -16,6 +22,8 @@ declare module "@delpi/plugin-ui/index" {
   export function createDashboardStatusBadge(config: {
     prefix: string;
   }): ComponentType<DashboardStatusBadgeProps>;
+
+  export function statusBadgeBemClasses(prefix: string): Record<string, string>;
 
   export type StateBannerVariant = "default" | "error" | "success";
 
@@ -66,10 +74,9 @@ declare module "@delpi/plugin-ui/index" {
     options?: { buttonClass?: string; spinClass?: string },
   ): Record<string, string | undefined>;
 
-  export function pageHeaderHeroBemClasses(prefix: string): Record<string, string | undefined>;
-
   export type DashboardSectionCardProps = {
     title: string;
+    subtitle?: string;
     children?: ReactNode;
   };
 
@@ -118,33 +125,187 @@ declare module "@delpi/plugin-ui/index" {
 
   export function createTimeline(config: { prefix: string }): ComponentType<DashboardTimelineProps>;
 
-  export type DashboardDrawerShellProps = {
-    open: boolean;
-    title: string;
-    description?: string;
-    onClose: () => void;
-    children: ReactNode;
+  export type FormActionsAlign = "start" | "end";
+
+  export type FormActionsClassNames = {
+    root: string;
+    alignEndModifier: string;
   };
 
-  export function createHostContainedDrawerShell(config: {
-    prefix: string;
-    portalScopeClassName: string;
-  }): ComponentType<DashboardDrawerShellProps>;
-
-  export type DashboardModalShellProps = {
-    open: boolean;
-    title: string;
-    description?: string;
-    onClose: () => void;
+  export type DashboardFormActionsProps = {
     children: ReactNode;
+    align?: FormActionsAlign;
+    className?: string;
   };
 
-  export function createHostContainedModalShell(config: {
+  export function createDashboardFormActions(config: {
+    classNames: FormActionsClassNames;
+  }): ComponentType<DashboardFormActionsProps>;
+
+  export function formActionsBemClasses(prefix: string): FormActionsClassNames;
+
+  export type ActionButtonVariant = "default" | "primary" | "ghost" | "link";
+
+  export type ActionButtonProps = {
+    children: ReactNode;
+    variant?: ActionButtonVariant;
+    disabled?: boolean;
+    className?: string;
+    "aria-label"?: string;
+    title?: string;
+    type?: "button" | "submit";
+    href?: string;
+    onClick?: () => void;
+  };
+
+  export function ActionButton(props: ActionButtonProps): ReactElement;
+
+  export type FieldLabelProps = {
+    label: string;
+    hint?: string;
+    htmlFor?: string;
+    className?: string;
+  };
+
+  export function FieldLabel(props: FieldLabelProps): ReactElement;
+
+  export type NativeTextAreaControlProps = {
+    value: string;
+    onChange?: (value: string) => void;
+    onChangeEvent?: InputHTMLAttributes<HTMLTextAreaElement>["onChange"];
+    className?: string;
+    rows?: number;
+    disabled?: boolean;
+    id?: string;
+    placeholder?: string;
+  };
+
+  export function NativeTextAreaControl(props: NativeTextAreaControlProps): ReactElement;
+
+  export type NativeCheckboxControlProps = {
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+    disabled?: boolean;
+    id?: string;
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function NativeCheckboxControl(props: NativeCheckboxControlProps): ReactElement;
+
+  export type TextFieldClassNames = Record<string, string>;
+
+  export type DashboardTextFieldProps = {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    hint?: string;
+    placeholder?: string;
+    disabled?: boolean;
+    type?: string;
+    id?: string;
+  };
+
+  export function createDashboardTextField(config: {
+    classNames: TextFieldClassNames;
+  }): ComponentType<DashboardTextFieldProps>;
+
+  export function textFieldPacClasses(prefix: string): TextFieldClassNames;
+  export function textFieldBemClasses(prefix: string): TextFieldClassNames;
+
+  export type SelectFieldOption = { value: string; label: string };
+
+  export type SelectFieldClassNames = Record<string, string>;
+  export type SelectControlClassNames = Record<string, string>;
+
+  export type SelectFieldLabels = {
+    placeholder: string;
+    emptyLabel: string;
+    control: {
+      searchPlaceholder: string;
+      emptyOptions: string;
+      searchAriaLabel: (label?: string) => string;
+    };
+  };
+
+  export type DashboardSelectFieldProps = {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    options: readonly SelectFieldOption[];
+    hint?: string;
+    disabled?: boolean;
+    searchable?: boolean;
+  };
+
+  export function createDashboardSelectField(config: {
+    field: SelectFieldClassNames;
+    control: SelectControlClassNames;
+    labels: SelectFieldLabels;
+  }): ComponentType<DashboardSelectFieldProps>;
+
+  export function selectFieldPacClasses(prefix: string): {
+    field: SelectFieldClassNames;
+    control: SelectControlClassNames;
+  };
+
+  export type SegmentToggleOption<T extends string = string> = {
+    value: T;
+    label: ReactNode;
+    ariaLabel?: string;
+    disabled?: boolean;
+  };
+
+  export type DashboardSegmentToggleProps<T extends string = string> = {
+    options: readonly SegmentToggleOption<T>[];
+    value: T;
+    onChange: (value: T) => void;
+    ariaLabel: string;
+    disabled?: boolean;
+  };
+
+  export function createDashboardSegmentToggle(
+    prefix: string,
+  ): <T extends string>(props: DashboardSegmentToggleProps<T>) => ReactElement;
+
+  export type DetailField = {
+    label: string;
+    hint?: string;
+    value: ReactNode;
+    wide?: boolean;
+  };
+
+  export type DashboardDetailFieldGridProps = {
+    fields: DetailField[];
+  };
+
+  export function createDashboardDetailFieldGrid(config: {
     prefix: string;
-    portalScopeClassName: string;
-    containedLayout?: "fill" | "dialog";
-    variant?: "default" | "wide" | "page";
-  }): ComponentType<DashboardModalShellProps>;
+    labels: { fieldHelpAriaLabel: (label: string) => string };
+    valueFallback?: string;
+    wrapLabels?: boolean;
+  }): ComponentType<DashboardDetailFieldGridProps>;
+
+  export type DataTableColumn<T> = {
+    key: string;
+    header: string;
+    render: (row: T) => ReactNode;
+  };
+
+  export type DataTableProps<T> = {
+    columns: DataTableColumn<T>[];
+    rows: T[];
+    rowKey: (row: T, index: number) => string;
+    loading?: boolean;
+    onRowClick?: (row: T) => void;
+    layout?: "section" | "embedded" | "scroll";
+    classNames: Record<string, string>;
+    labels: Record<string, string | ((header: string) => string)>;
+  };
+
+  export function DataTable<T>(props: DataTableProps<T>): ReactElement;
+
+  export function dataTableBemClasses(prefix: string): Record<string, string>;
 
   export type FilterInputFieldProps = {
     label: string;
@@ -176,139 +337,6 @@ declare module "@delpi/plugin-ui/index" {
     labels: { filtersAriaLabel: string };
     portalScopeClassName?: string;
   }): DashboardFiltersKit;
-
-  export type MultiSelectOption = { value: string; label: string };
-
-  export type MultiSelectFieldLabels = {
-    emptyLabel: string;
-    searchPlaceholder: string;
-    selectVisible: string;
-    clear: string;
-    emptyOptions: string;
-    multipleSelected: (count: number) => string;
-    createOption?: (query: string) => string;
-    searchAriaLabel?: (label: string) => string;
-    selectedCountLabel?: (count: number) => string;
-    emptyOptionsCreatable?: string;
-    removeTagAriaLabel?: (value: string) => string;
-  };
-
-  export type DashboardMultiSelectFieldProps = {
-    label: string;
-    selectedValues: string[];
-    options?: readonly MultiSelectOption[];
-    onChange: (values: string[]) => void;
-    disabled?: boolean;
-    searchable?: boolean;
-    showBulkActions?: boolean;
-    emptyLabel?: string;
-    hint?: string;
-    placeholder?: string;
-  };
-
-  export type DashboardCreatableMultiSelectFieldProps = Omit<
-    DashboardMultiSelectFieldProps,
-    "searchable" | "showBulkActions"
-  >;
-
-  export function multiSelectBemClasses(prefix: string): Record<string, string>;
-  export function multiSelectCreatablePacClasses(prefix: string): Record<string, string>;
-
-  export function createDashboardMultiSelectField(config: {
-    prefix?: string;
-    classNames?: Record<string, string>;
-    labels: MultiSelectFieldLabels;
-    portalScopeClassName?: string;
-  }): ComponentType<DashboardMultiSelectFieldProps>;
-
-  export function createDashboardCreatableMultiSelectField(config: {
-    prefix?: string;
-    classNames?: Record<string, string>;
-    labels: MultiSelectFieldLabels;
-    portalScopeClassName?: string;
-  }): ComponentType<DashboardCreatableMultiSelectFieldProps>;
-
-  export type DataTableColumn<T> = {
-    key: string;
-    header: string;
-    render: (row: T) => ReactNode;
-  };
-
-  export type DataTableProps<T> = {
-    columns: DataTableColumn<T>[];
-    rows: T[];
-    rowKey: (row: T, index: number) => string;
-    loading?: boolean;
-    onRowClick?: (row: T) => void;
-    layout?: "section" | "embedded" | "scroll";
-    classNames: Record<string, string>;
-    labels: Record<string, string | ((header: string) => string)>;
-  };
-
-  export function DataTable<T>(props: DataTableProps<T>): ReactElement;
-
-  export function dataTableBemClasses(prefix: string): Record<string, string>;
-  export function dataTableSectionBemClasses(prefix: string): { section: string };
-
-  export type CompactPaginationLabels = {
-    info: (args: {
-      page: number;
-      totalPages: number;
-      total: number;
-      pageSize: number;
-    }) => string;
-    pageSizeLabel?: string;
-    previous: string;
-    next: string;
-    navigationAriaLabel: string;
-  };
-
-  export type CompactPaginationProps = {
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages?: number;
-    onPageChange: (page: number) => void;
-    disabled?: boolean;
-    layout?: "grouped" | "flat";
-    classNames: Record<string, string>;
-    labels: CompactPaginationLabels;
-  };
-
-  export function CompactPagination(props: CompactPaginationProps): ReactElement;
-
-  export function compactPaginationBemClasses(
-    prefix: string,
-    options?: { ghostBtn?: string },
-  ): Record<string, string>;
-
-  export type DirectoryUserOption = {
-    id: string;
-    name: string;
-    email: string;
-  };
-
-  export type UserDirectoryPickerProps = {
-    value: DirectoryUserOption[];
-    onChange: (users: DirectoryUserOption[]) => void;
-    searchUsers: (
-      query: string,
-      limit?: number,
-      signal?: AbortSignal,
-    ) => Promise<DirectoryUserOption[]>;
-    disabled?: boolean;
-    showSelectedList?: boolean;
-    showEmail?: boolean;
-    maxSelected?: number;
-    labels?: {
-      title?: string;
-      hint?: string;
-      placeholder?: string;
-    };
-    className?: string;
-  };
-
-  export function UserDirectoryPicker(props: UserDirectoryPickerProps): ReactElement;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

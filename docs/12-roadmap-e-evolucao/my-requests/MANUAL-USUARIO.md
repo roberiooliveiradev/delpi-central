@@ -4,7 +4,9 @@ Espelho da Ajuda in-app (`plugins/my-requests/src/content/helpTooltips.ts`).
 
 ## O que é
 
-**Minhas Solicitações** centraliza pedidos operacionais (emissão de NF, criação de MP, etc.) em um único app. O motor de workflow e as permissões ficam na **requests-api**; a tela só mostra o que a API libera.
+**Minhas Solicitações** centraliza pedidos operacionais (emissão de NF, criação de MP, etc.) em um único app. O motor de workflow e as permissões ficam na **requests-api**; a tela só mostra o que a API libera. A interface usa o kit visual compartilhado do portal (`plugin-ui`) — botões, tabelas e cards seguem o mesmo padrão dos demais módulos.
+
+Layout e componentes por tela (wireframes): [WIREFRAMES.md](./WIREFRAMES.md).
 
 ## Onde encontrar
 

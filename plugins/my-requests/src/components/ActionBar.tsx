@@ -1,4 +1,7 @@
+import { ActionButton } from "@delpi/plugin-ui/index";
+
 import type { AllowedAction } from "../types/requests";
+import { MyRequestsEmptyState, MyRequestsFormActions } from "../ui/mrUi";
 
 type ActionBarProps = {
   actions: AllowedAction[];
@@ -9,23 +12,21 @@ type ActionBarProps = {
 /** Render-only: actions come from API `allowed_actions` — no state machine in the MFE. */
 export function ActionBar({ actions, busy = false, onAction }: ActionBarProps) {
   if (!actions.length) {
-    return (
-      <p className="dashboard-my-requests__muted">Nenhuma ação disponível neste status.</p>
-    );
+    return <MyRequestsEmptyState message="Nenhuma ação disponível neste status." />;
   }
   return (
-    <div className="dashboard-my-requests__action-bar" role="group" aria-label="Ações permitidas">
+    <MyRequestsFormActions>
       {actions.map((action) => (
-        <button
+        <ActionButton
           key={action}
           type="button"
-          className="dashboard-my-requests__btn"
+          variant="primary"
           disabled={busy}
           onClick={() => onAction(action)}
         >
           {action}
-        </button>
+        </ActionButton>
       ))}
-    </div>
+    </MyRequestsFormActions>
   );
 }

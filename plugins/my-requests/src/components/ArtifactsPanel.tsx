@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
+import { ActionButton } from "@delpi/plugin-ui/index";
 
 import { artifactDownloadUrl, listArtifacts } from "../api/requestsApi";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { RequestArtifact } from "../types/requests";
+import {
+  MyRequestsEmptyState,
+  MyRequestsSectionCard,
+  MyRequestsStateBanner,
+} from "../ui/mrUi";
 
 type ArtifactsPanelProps = {
   requestId: string;
@@ -23,26 +29,31 @@ export function ArtifactsPanel({ requestId }: ArtifactsPanelProps) {
   }, [requestId]);
 
   return (
-    <section
-      className="dashboard-my-requests__panel"
-      data-help="artifacts"
-      title={MY_REQUESTS_HELP_TOOLTIPS.artifacts.section}
-    >
-      <h2>Artefatos</h2>
-      {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
-      {!error && items.length === 0 ? (
-        <p className="dashboard-my-requests__muted">Nenhum artefato.</p>
-      ) : null}
-      <ul className="dashboard-my-requests__list">
-        {items.map((item) => (
-          <li key={item.id}>
-            <a href={artifactDownloadUrl(item.id)}>{item.file_name}</a>
-            {item.kind ? (
-              <span className="dashboard-my-requests__muted"> ({item.kind})</span>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-    </section>
+    <MyRequestsSectionCard title="Artefatos">
+      <div data-help="artifacts" title={MY_REQUESTS_HELP_TOOLTIPS.artifacts.section}>
+        {error ? (
+          <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
+        ) : null}
+        {!error && items.length === 0 ? (
+          <MyRequestsEmptyState message="Nenhum artefato." />
+        ) : null}
+        {items.length > 0 ? (
+          <ul className="my-requests-domain-list">
+            {items.map((item) => (
+              <li key={item.id}>
+                <ActionButton
+                  href={artifactDownloadUrl(item.id)}
+                  title={`Baixar ${item.file_name}`}
+                  variant="link"
+                >
+                  {item.file_name}
+                </ActionButton>
+                {item.kind ? ` (${item.kind})` : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    </MyRequestsSectionCard>
   );
 }

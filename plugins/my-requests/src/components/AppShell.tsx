@@ -1,42 +1,48 @@
 import type { ReactNode } from "react";
+import { ActionButton } from "@delpi/plugin-ui/index";
 
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { MyRequestsFormActions, MyRequestsPageHeader } from "../ui/mrUi";
 
 type AppShellProps = {
   title: string;
+  subtitle?: string;
   children: ReactNode;
   canCreate?: boolean;
 };
 
-export function AppShell({ title, children, canCreate = false }: AppShellProps) {
+export function AppShell({ title, subtitle, children, canCreate = false }: AppShellProps) {
   return (
     <div className="dashboard-my-requests dashboard-page">
-      <header
-        className="dashboard-my-requests__header"
-        data-help="shell-nav"
-        title={MY_REQUESTS_HELP_TOOLTIPS.shell.nav}
-      >
-        <div>
-          <h1>{title}</h1>
-        </div>
-        <nav className="dashboard-my-requests__nav" aria-label="Navegação do módulo">
-          <a href="/apps/my-requests/mine" title={MY_REQUESTS_HELP_TOOLTIPS.mine.section}>
+      <MyRequestsPageHeader title={title} subtitle={subtitle} />
+      <nav aria-label="Navegação do módulo" data-help="shell-nav">
+        <MyRequestsFormActions>
+          <ActionButton
+            href="/apps/my-requests/mine"
+            title={MY_REQUESTS_HELP_TOOLTIPS.shell.nav}
+            variant="ghost"
+          >
             Minhas
-          </a>
-          <a
+          </ActionButton>
+          <ActionButton
             href="/apps/my-requests/work-queue"
             title={MY_REQUESTS_HELP_TOOLTIPS.workQueue.section}
+            variant="ghost"
           >
             Fila
-          </a>
+          </ActionButton>
           {canCreate ? (
-            <a href="/apps/my-requests/new" title={MY_REQUESTS_HELP_TOOLTIPS.new.section}>
+            <ActionButton
+              href="/apps/my-requests/new"
+              title={MY_REQUESTS_HELP_TOOLTIPS.new.section}
+              variant="primary"
+            >
               Nova
-            </a>
+            </ActionButton>
           ) : null}
-        </nav>
-      </header>
-      {children}
+        </MyRequestsFormActions>
+      </nav>
+      <div className="my-requests-page-stack">{children}</div>
     </div>
   );
 }

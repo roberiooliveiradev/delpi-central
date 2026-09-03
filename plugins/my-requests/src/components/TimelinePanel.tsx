@@ -1,8 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { listEvents } from "../api/requestsApi";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { TimelineEvent } from "../types/requests";
+import {
+  MyRequestsEmptyState,
+  MyRequestsSectionCard,
+  MyRequestsStateBanner,
+  MyRequestsTimeline,
+} from "../ui/mrUi";
 
 type TimelinePanelProps = {
   requestId: string;
@@ -22,28 +28,28 @@ export function TimelinePanel({ requestId }: TimelinePanelProps) {
     return () => ac.abort();
   }, [requestId]);
 
+  const timelineItems = useMemo(
+    () =>
+      items.map((item) => ({
+        id: item.id,
+        title: item.event_type,
+        occurredAt: item.created_at,
+        detail: item.actor_name || undefined,
+      })),
+    [items],
+  );
+
   return (
-    <section
-      className="dashboard-my-requests__panel"
-      data-help="timeline"
-      title={MY_REQUESTS_HELP_TOOLTIPS.timeline.section}
-    >
-      <h2>Linha do tempo</h2>
-      {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
-      {!error && items.length === 0 ? (
-        <p className="dashboard-my-requests__muted">Sem eventos ainda.</p>
-      ) : null}
-      <ul className="dashboard-my-requests__list">
-        {items.map((item) => (
-          <li key={item.id}>
-            <strong>{item.event_type}</strong>
-            {item.actor_name ? ` — ${item.actor_name}` : ""}
-            {item.created_at ? (
-              <span className="dashboard-my-requests__muted"> · {item.created_at}</span>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-    </section>
+    <MyRequestsSectionCard title="Linha do tempo">
+      <div data-help="timeline" title={MY_REQUESTS_HELP_TOOLTIPS.timeline.section}>
+        {error ? (
+          <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
+        ) : null}
+        {!error && items.length === 0 ? (
+          <MyRequestsEmptyState message="Sem eventos ainda." />
+        ) : null}
+        {timelineItems.length > 0 ? <MyRequestsTimeline items={timelineItems} /> : null}
+      </div>
+    </MyRequestsSectionCard>
   );
 }

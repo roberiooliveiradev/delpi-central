@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { ActionButton } from "@delpi/plugin-ui/index";
 
 import { createRequest, listRequestTypes } from "../api/requestsApi";
 import { AppShell } from "../components/AppShell";
@@ -6,6 +7,12 @@ import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { InvoiceIssuanceWizard } from "../features/invoice-issuance/ui/InvoiceIssuanceWizard";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestTypeSummary } from "../types/requests";
+import {
+  MyRequestsFormActions,
+  MyRequestsSectionCard,
+  MyRequestsStateBanner,
+  SelectField,
+} from "../ui/mrUi";
 
 export function NewRequestPage() {
   const access = useRequestsPermissions();
@@ -61,48 +68,50 @@ export function NewRequestPage() {
     }
   }
 
+  const branchOptions = (access.branches.length ? access.branches : ["01", "02"]).map(
+    (code) => ({ value: code, label: code }),
+  );
+  const typeOptions = types.map((item) => ({
+    value: item.code,
+    label: `${item.name} (${item.code})`,
+  }));
+
   return (
     <AppShell title="Nova solicitação" canCreate>
-      <section
-        className="dashboard-my-requests__panel"
-        data-help="new"
-        title={MY_REQUESTS_HELP_TOOLTIPS.new.section}
-      >
-        {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
-        <form className="dashboard-my-requests__form" onSubmit={onSubmit}>
-          <label title={MY_REQUESTS_HELP_TOOLTIPS.new.type}>
-            Tipo
-            <select
+      <MyRequestsSectionCard title="Criar">
+        <div data-help="new" title={MY_REQUESTS_HELP_TOOLTIPS.new.section}>
+          {error ? (
+            <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
+          ) : null}
+          <form className="my-requests-form-stack" onSubmit={onSubmit}>
+            <SelectField
+              label="Tipo"
+              hint={MY_REQUESTS_HELP_TOOLTIPS.new.type}
               value={typeCode}
-              onChange={(e) => setTypeCode(e.target.value)}
+              onChange={setTypeCode}
+              options={typeOptions}
               disabled={busy || types.length === 0}
-            >
-              {types.map((item) => (
-                <option key={item.code} value={item.code}>
-                  {item.name} ({item.code})
-                </option>
-              ))}
-            </select>
-          </label>
-          <label title={MY_REQUESTS_HELP_TOOLTIPS.new.branch}>
-            Filial
-            <select
+            />
+            <SelectField
+              label="Filial"
+              hint={MY_REQUESTS_HELP_TOOLTIPS.new.branch}
               value={branchCode}
-              onChange={(e) => setBranchCode(e.target.value)}
+              onChange={setBranchCode}
+              options={branchOptions}
               disabled={busy}
-            >
-              {(access.branches.length ? access.branches : ["01", "02"]).map((code) => (
-                <option key={code} value={code}>
-                  {code}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="submit" className="dashboard-my-requests__btn" disabled={busy || !typeCode}>
-            {typeCode === "invoice-issuance" ? "Abrir wizard de NF" : "Criar"}
-          </button>
-        </form>
-      </section>
+            />
+            <MyRequestsFormActions>
+              <ActionButton
+                type="submit"
+                variant="primary"
+                disabled={busy || !typeCode}
+              >
+                {typeCode === "invoice-issuance" ? "Abrir wizard de NF" : "Criar"}
+              </ActionButton>
+            </MyRequestsFormActions>
+          </form>
+        </div>
+      </MyRequestsSectionCard>
     </AppShell>
   );
 }

@@ -365,7 +365,19 @@ returned → (PATCH + resubmit) → pending
 | **Core API** | SSO, RBAC, apps, manifestos, notificações plataforma | Domínio de solicitações |
 | **requests-api** | Request Engine, workflow, persistência, outbox | SQL TOTVS direto |
 | **api-delpi** | TOTVS, lookups operacionais | Regra de workflow de solicitação (pós-cutover) |
-| **MFE my-requests** | UI, render-only de `allowed_actions` | State machine no frontend |
+| **MFE my-requests** | UI, render-only de `allowed_actions` | State machine no frontend; **primitivos de UI locais** |
+
+### 6.1.1 UI kit-first (obrigatório)
+
+O MFE **não** inventa botão/card/tabela/campo próprio. Tudo via `@delpi/plugin-ui` (Federation) + factories em [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/src/ui/mrUi.tsx).
+
+| Fazer | Não fazer |
+|-------|-----------|
+| `ActionButton`, `DataTable`, `SectionCard`, `TextField`, `SelectField`, `FieldLabel`, … | `<button class="…__btn">`, tabelas/painéis BEM locais |
+| Tokens + layout de página em `index.css` | CSS que espelha `.delpi-ui-*` no MFE |
+| Teste `mrUi.kitFirst.test.ts` | Aceitar chrome primitivo “só nesta tela” |
+
+Regra Cursor: `plugins-reusable-components.mdc`. Doc plugin: [`plugins/my-requests/README.md`](../../../plugins/my-requests/README.md) § UI kit-first. **Wireframes + catálogo de componentes (em uso e previstos):** [`WIREFRAMES.md`](./WIREFRAMES.md).
 
 ### 6.2 Bounded context
 
@@ -1115,67 +1127,22 @@ Sem alteração no WorkflowEngine
 
 ---
 
-## 19. Wireframes textuais
+## 19. Wireframes e catálogo de UI
 
-### 19.1 Minhas solicitações (`/mine`)
+**Canônico:** [`WIREFRAMES.md`](./WIREFRAMES.md) — inventário de componentes `@delpi/plugin-ui` (em uso + previstos), matriz tela×kit, ASCII WF-01…WF-07 e checklist de mudança de UI.
 
-```text
-+------------------------------------------------------------------+
-| [icon] Minhas Solicitações                    [+ Nova solicitação]|
-+------------------------------------------------------------------+
-| Filtros: [Tipo v] [Status v] [Filial v] [Busca________] [Aplicar]|
-+------------------------------------------------------------------+
-| Número      | Tipo           | Status        | Atualizado | Filial|
-| REQ-...042  | Emissão NF     | Em atendimento| há 2h      | 01    |
-| REQ-...038  | Matéria-prima  | Concluída     | ontem      | —     |
-+------------------------------------------------------------------+
-| Paginação: < 1 2 3 >                                              |
-+------------------------------------------------------------------+
-```
+Resumo das superfícies P0:
 
-### 19.2 Fila de trabalho (`/work-queue`)
+| WF | Rota | Kit principal |
+|----|------|---------------|
+| WF-01 | `/mine` | DataTable, StatusBadge, SectionCard |
+| WF-02 | `/work-queue` | DataTable |
+| WF-03 | `/new` | SelectField, ActionButton |
+| WF-04 | wizard NF | SegmentToggle, TextField, SelectField, FormActions |
+| WF-05 | `/requests/:id` | DetailFields, ActionBar, Timeline, painéis |
+| WF-07 | MP schema | SchemaForm (E7 — previsto) |
 
-```text
-+------------------------------------------------------------------+
-| Fila de trabalho                                                  |
-+------------------------------------------------------------------+
-| [Emissão NF] [Matéria-prima] [Todos]     Filial: [01 v]          |
-+------------------------------------------------------------------+
-| REQ-...042 | Cliente X | Pendente | [Iniciar]                     |
-| REQ-...041 | Cliente Y | Em atendimento | [Abrir]                 |
-+------------------------------------------------------------------+
-```
-
-### 19.3 Detalhe (`/requests/:id`)
-
-```text
-+------------------+---------------------------+-------------------+
-| TIMELINE         | RESUMO                    | AÇÕES             |
-| • Criada         | REQ-2026-000042           | [Devolver]        |
-| • Início atend.  | Tipo: Emissão NF          | [Concluir]        |
-| • Comentário     | Status: Em atendimento    | [Cancelar]        |
-|                  | Filial: 01                |                   |
-|                  | Destinatário: ...         | COMENTÁRIOS       |
-|                  | Itens (tabela)            | [textarea] [Enviar|
-|                  | ANEXOS (entrada)          |                   |
-|                  | ARTEFATOS (saída) [PDF]   |                   |
-+------------------+---------------------------+-------------------+
-```
-
-### 19.4 Nova solicitação (`/new`)
-
-```text
-+------------------------------------------------------------------+
-| Nova solicitação — escolha o tipo                                 |
-+------------------------------------------------------------------+
-| [card] Emissão de Nota Fiscal    — Solicitar NF ao Faturamento   |
-| [card] Criação de Matéria-prima  — Cadastro MP Engenharia         |
-+------------------------------------------------------------------+
-```
-
-### 19.5 Admin tipos (`/admin`) — fase 1 read-only
-
-Lista RequestTypes ativos, version, presentation_mode — sem edição inline.
+Factories: [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/src/ui/mrUi.tsx). **Proibido** chrome primitivo local.
 
 ---
 

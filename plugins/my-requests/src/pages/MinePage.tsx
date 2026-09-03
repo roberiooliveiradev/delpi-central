@@ -1,15 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ActionButton, DataTable, type DataTableColumn } from "@delpi/plugin-ui/index";
 
 import { listMyRequests } from "../api/requestsApi";
 import { AppShell } from "../components/AppShell";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestSummary } from "../types/requests";
+import {
+  MyRequestsEmptyState,
+  MyRequestsLoadingState,
+  MyRequestsSectionCard,
+  MyRequestsStateBanner,
+  MyRequestsStatusBadge,
+} from "../ui/mrUi";
+import { mrDataTableClassNames, mrDataTableLabels } from "../ui/mrUiContracts";
 
 export function MinePage() {
   const access = useRequestsPermissions();
   const [items, setItems] = useState<RequestSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -17,47 +27,65 @@ export function MinePage() {
       .then((data) => setItems(data.items || []))
       .catch((err: Error) => {
         if (err.name !== "AbortError") setError(err.message);
-      });
+      })
+      .finally(() => setLoading(false));
     return () => ac.abort();
   }, []);
+
+  const columns = useMemo<DataTableColumn<RequestSummary>[]>(
+    () => [
+      {
+        key: "number",
+        header: "Número",
+        render: (row) => (
+          <ActionButton
+            href={`/apps/my-requests/requests/${row.id}`}
+            title={`Abrir ${row.request_number}`}
+            variant="link"
+          >
+            {row.request_number}
+          </ActionButton>
+        ),
+      },
+      { key: "type", header: "Tipo", render: (row) => row.type_code },
+      {
+        key: "status",
+        header: "Status",
+        render: (row) => (
+          <MyRequestsStatusBadge label={row.status_alias || row.status} variant="info" />
+        ),
+      },
+      { key: "branch", header: "Filial", render: (row) => row.branch_code || "—" },
+    ],
+    [],
+  );
 
   return (
     <AppShell
       title="Minhas solicitações"
       canCreate={access.canCreateInvoiceIssuance || access.canManage}
     >
-      <section
-        className="dashboard-my-requests__panel"
-        data-help="mine"
-        title={MY_REQUESTS_HELP_TOOLTIPS.mine.section}
-      >
-        {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
-        {!error && items.length === 0 ? (
-          <p className="dashboard-my-requests__muted">Você ainda não criou solicitações.</p>
-        ) : null}
-        <table className="dashboard-my-requests__table">
-          <thead>
-            <tr>
-              <th>Número</th>
-              <th>Tipo</th>
-              <th>Status</th>
-              <th>Filial</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((row) => (
-              <tr key={row.id}>
-                <td>
-                  <a href={`/apps/my-requests/requests/${row.id}`}>{row.request_number}</a>
-                </td>
-                <td>{row.type_code}</td>
-                <td>{row.status_alias || row.status}</td>
-                <td>{row.branch_code || "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      <MyRequestsSectionCard title="Lista">
+        <div data-help="mine" title={MY_REQUESTS_HELP_TOOLTIPS.mine.section}>
+          {error ? (
+            <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
+          ) : null}
+          {loading ? <MyRequestsLoadingState /> : null}
+          {!loading && !error && items.length === 0 ? (
+            <MyRequestsEmptyState message="Você ainda não criou solicitações." />
+          ) : null}
+          {!loading && items.length > 0 ? (
+            <DataTable
+              columns={columns}
+              rows={items}
+              rowKey={(row) => row.id}
+              layout="embedded"
+              classNames={mrDataTableClassNames}
+              labels={mrDataTableLabels}
+            />
+          ) : null}
+        </div>
+      </MyRequestsSectionCard>
     </AppShell>
   );
 }
