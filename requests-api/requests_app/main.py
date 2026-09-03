@@ -10,6 +10,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from delpi_auth.credential_guard import check_credentials
 from requests_app.config import settings
 from requests_app.core.responses import fail
+from requests_app.interface.http.routes.requests_routes import router as requests_router
 from requests_app.middleware.auth_middleware import jwt_middleware
 from requests_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
@@ -92,3 +93,6 @@ app.add_middleware(
 @app.get("/health", tags=["Health"])
 def health():
     return {"status": "online", "service": "requests-api"}
+
+
+app.include_router(requests_router)

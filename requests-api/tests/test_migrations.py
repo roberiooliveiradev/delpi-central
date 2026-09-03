@@ -17,6 +17,7 @@ def test_list_migration_files_in_order():
     assert names == [
         "V001__schema_migrations.sql",
         "V002__core_domain.sql",
+        "V003__idempotency_keys.sql",
     ]
 
 
@@ -52,3 +53,11 @@ def test_v002_contains_core_tables():
 
     _, name = parse_version_and_name(v002)
     assert name == "core_domain"
+
+
+def test_v003_idempotency_keys():
+    v003 = MIGRATIONS_DIR / "V003__idempotency_keys.sql"
+    sql = v003.read_text(encoding="utf-8")
+    assert "idempotency_keys" in sql
+    _, name = parse_version_and_name(v003)
+    assert name == "idempotency_keys"
