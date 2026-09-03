@@ -40,6 +40,9 @@ class ListCustomerBillingSeriesRequest:
     end_date: str | None = None
     granularity: str | None = None
     nature: str | None = None
+    product_codes: Sequence[str] | None = None
+    product_groups: Sequence[str] | None = None
+    market: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -170,6 +173,9 @@ class ListCustomerBillingSeriesUseCase:
                 end_date=end_protheus,
                 granularity=grain,
                 nature=nature,
+                product_codes=request.product_codes,
+                product_groups=request.product_groups,
+                market=request.market,
             )
             for row in rows:
                 period_key = period_key_from_protheus(

@@ -20,6 +20,9 @@ export type CustomerBillingSeriesQuery = {
   endDate?: string;
   granularity?: "day" | "week" | "month" | "year";
   nature?: "gross" | "net";
+  productCodes?: string[];
+  productGroups?: string[];
+  market?: "domestic" | "export";
   signal?: AbortSignal;
 };
 
@@ -42,6 +45,13 @@ function billingSeriesBody(options?: CustomerBillingSeriesQuery) {
       : {}),
     ...(options?.granularity ? { granularity: options.granularity } : {}),
     ...(options?.nature ? { nature: options.nature } : {}),
+    ...(options?.productCodes?.length
+      ? { product_codes: options.productCodes }
+      : {}),
+    ...(options?.productGroups?.length
+      ? { product_groups: options.productGroups }
+      : {}),
+    ...(options?.market ? { market: options.market } : {}),
   };
 }
 
@@ -74,6 +84,9 @@ export async function fetchCustomerBillingSeries(
       endDate: options?.endDate,
       granularity: options?.granularity,
       nature: options?.nature,
+      productCodes: options?.productCodes,
+      productGroups: options?.productGroups,
+      market: options?.market,
       signal: options?.signal,
     }),
   });

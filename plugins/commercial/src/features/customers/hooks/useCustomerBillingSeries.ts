@@ -80,6 +80,9 @@ export type UseCustomerBillingSeriesOptions = {
   /** Overlays −1a…−3a (0–3). Preferir sobre comparePriorYear. */
   compareYears?: CompareYearsCount;
   nature?: "gross" | "net";
+  productCodes?: string[];
+  productGroups?: string[];
+  market?: "domestic" | "export";
   /** Controle externo do filtro de clientes (workspace Faturamento). */
   selectedKeys?: string[];
   onSelectedKeysChange?: (keys: string[]) => void;
@@ -99,6 +102,11 @@ export function useCustomerBillingSeries(
     options?.compareYears ?? (options?.comparePriorYear ? 1 : 0),
   );
   const nature = options?.nature;
+  const productCodesKey = (options?.productCodes ?? []).join("\0");
+  const productGroupsKey = (options?.productGroups ?? []).join("\0");
+  const market = options?.market;
+  const productCodes = options?.productCodes;
+  const productGroups = options?.productGroups;
   const controlledKeys = options?.selectedKeys;
   const onSelectedKeysChange = options?.onSelectedKeysChange;
   const [internalSelectedKeys, setInternalSelectedKeys] = useState<string[]>([]);
@@ -156,6 +164,9 @@ export function useCustomerBillingSeries(
       endDate,
       granularity,
       nature,
+      productCodes,
+      productGroups,
+      market,
       signal: controller.signal,
     } as const;
 
@@ -172,6 +183,9 @@ export function useCustomerBillingSeries(
         endDate: range.end_date,
         granularity,
         nature,
+        productCodes,
+        productGroups,
+        market,
         signal: controller.signal,
       });
     });
@@ -215,6 +229,9 @@ export function useCustomerBillingSeries(
     granularity,
     compareYears,
     nature,
+    productCodesKey,
+    productGroupsKey,
+    market,
   ]);
 
   const displayedPoints = useMemo(

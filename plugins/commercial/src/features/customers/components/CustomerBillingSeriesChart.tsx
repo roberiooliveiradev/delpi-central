@@ -165,6 +165,9 @@ export function CustomerBillingSeriesChart({
     granularity: effectiveGrain,
     compareYears: yoyActive ? compareYears : 0,
     nature: billingNature,
+    productCodes: filters.selectedProductCodes,
+    productGroups: filters.selectedProductGroups,
+    market: filters.marketParam,
     selectedKeys: filters.selectedCustomerKeys,
     onSelectedKeysChange: filters.setSelectedCustomerKeys,
   });

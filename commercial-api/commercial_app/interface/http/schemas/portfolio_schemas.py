@@ -105,6 +105,19 @@ class BillingSeriesBody(BaseModel):
         pattern=r"^(gross|net)$",
         description="Natureza do faturamento: gross (NF) ou net (ROL). Default gross.",
     )
+    product_codes: list[str] | None = Field(
+        default=None,
+        description="Códigos de produto (D2_COD).",
+    )
+    product_groups: list[str] | None = Field(
+        default=None,
+        description="Famílias Protheus (B1_GRUPO).",
+    )
+    market: str | None = Field(
+        default=None,
+        pattern=r"^(domestic|export)$",
+        description="Mercado: domestic (CFOP 5/6) ou export (CFOP 7).",
+    )
 
 
 class CustomerCoverageLookupBody(BaseModel):

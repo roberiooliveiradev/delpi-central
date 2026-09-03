@@ -154,6 +154,54 @@ def test_billing_series_bff_filters_pairs() -> None:
     assert payload["customers"] == [{"customer_code": "100", "customer_store": "01"}]
 
 
+def test_billing_series_bff_passes_product_market_recorte() -> None:
+    gateway = MagicMock()
+    gateway.list_customer_billing_series.return_value = {
+        "success": True,
+        "data": {"months": 12, "customer_count": 1, "points": []},
+    }
+    scope = CommercialCustomerScope(
+        unrestricted=True,
+        allowed_customers=frozenset(),
+    )
+    scope_svc = MagicMock()
+    scope_svc.execute.return_value = scope
+    scope_svc.filter_pairs.return_value = [("100", "01")]
+
+    request = _request("/customers/billing-series", method="POST")
+    request.state.user = _User(["commercial.access"])
+    body = BillingSeriesBody.model_validate(
+        {
+            "customers": [{"customer_code": "100", "customer_store": "01"}],
+            "months": 12,
+            "product_codes": ["90A"],
+            "product_groups": ["3019"],
+            "market": "domestic",
+        }
+    )
+
+    with (
+        patch.object(
+            customer_routes,
+            "build_delpi_commercial_gateway",
+            return_value=gateway,
+        ),
+        patch.object(
+            customer_routes,
+            "build_resolve_commercial_customer_scope_service",
+            return_value=scope_svc,
+        ),
+        patch.object(customer_routes, "actor_sub_from_request", return_value="u1"),
+    ):
+        response = customer_routes.list_commercial_customer_billing_series(request, body)
+
+    assert response.status_code == 200
+    payload = gateway.list_customer_billing_series.call_args.kwargs["payload"]
+    assert payload["product_codes"] == ["90A"]
+    assert payload["product_groups"] == ["3019"]
+    assert payload["market"] == "domestic"
+
+
 def test_billing_series_multi_select_dedupes_allowed_pairs() -> None:
     """Multi-select (2+ pares): membership + dedupe antes do gateway."""
     gateway = MagicMock()

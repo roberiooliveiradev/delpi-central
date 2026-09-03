@@ -270,6 +270,12 @@ def list_commercial_customer_billing_series(
             payload["granularity"] = body.granularity
         if body.nature:
             payload["nature"] = body.nature
+        if body.product_codes:
+            payload["product_codes"] = body.product_codes
+        if body.product_groups:
+            payload["product_groups"] = body.product_groups
+        if body.market:
+            payload["market"] = body.market
         result = build_delpi_commercial_gateway().list_customer_billing_series(
             payload=payload
         )

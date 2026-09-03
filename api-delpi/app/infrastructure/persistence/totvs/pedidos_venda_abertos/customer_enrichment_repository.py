@@ -16,6 +16,7 @@ from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing
     build_customer_billing_12m_sql,
     build_customer_billing_series_sql,
     normalize_billing_nature,
+    normalize_billing_series_recorte,
 )
 
 
@@ -142,12 +143,20 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
         end_date: str,
         granularity: str = "month",
         nature: str = DEFAULT_BILLING_NATURE,
+        product_codes: Sequence[str] | None = None,
+        product_groups: Sequence[str] | None = None,
+        market: str | None = None,
     ) -> list[CustomerBillingMonthRow]:
         pairs = [(c.strip(), s.strip()) for c, s in customers if c.strip() and s.strip()]
         if not pairs:
             return []
 
         nature = normalize_billing_nature(nature)
+        recorte = normalize_billing_series_recorte(
+            product_codes=list(product_codes or []),
+            product_groups=list(product_groups or []),
+            market=market,
+        )
         clauses: list[str] = []
         pair_params: list[str] = []
         for code, store in pairs:
@@ -159,12 +168,14 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
             where_pairs=where_pairs,
             granularity=granularity,
             nature=nature,
+            recorte=recorte,
         )
         params = billing_series_params(
             pair_params=pair_params,
             start_date=start_date,
             end_date=end_date,
             nature=nature,
+            recorte=recorte,
         )
         with self as repo:
             rows = repo.execute_query(sql, params)

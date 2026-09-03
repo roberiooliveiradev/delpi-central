@@ -305,7 +305,7 @@ export const CM_HELP = {
     rankingLimit:
       "Quantidade máxima de linhas no ranking (10, 15, 20 ou 50).",
     billingSeries:
-      "Soma do faturamento no período escolhido (bruto de nota ou líquido ROL). Selecione um cliente para ver só a série dele. Presets iguais à Visão geral; opcionalmente compare com anos anteriores em colunas agrupadas.",
+      "Soma do faturamento no período (bruto de nota ou líquido ROL). Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix.",
     billingNature:
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingSeriesPeriod:

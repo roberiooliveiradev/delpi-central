@@ -72,6 +72,46 @@ def test_billing_series_sql_buckets_by_granularity() -> None:
         billing_series_period_expr("hour")
 
 
+def test_billing_series_sql_applies_product_and_market_recorte() -> None:
+    from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing_series_sql import (
+        billing_series_params,
+        normalize_billing_series_recorte,
+    )
+
+    recorte = normalize_billing_series_recorte(
+        product_codes=["90A"],
+        product_groups=["3019"],
+        market="domestic",
+    )
+    gross_sql = build_customer_billing_series_sql(
+        where_pairs="(D2.D2_CLIENTE = ? AND D2.D2_LOJA = ?)",
+        granularity="month",
+        nature="gross",
+        recorte=recorte,
+    )
+    assert "D2_TOTAL" in gross_sql or "sale_gross" in gross_sql.lower() or "ISNULL(D2.D2_TOTAL" in gross_sql
+    assert "D2.D2_COD IN" in gross_sql
+    assert "B1_GRUPO" in gross_sql
+    assert "F2_VALBRUT" not in gross_sql
+    params = billing_series_params(
+        pair_params=["C1", "01"],
+        start_date="20260101",
+        end_date="20261231",
+        nature="gross",
+        recorte=recorte,
+    )
+    assert params[-2:] == ("90A", "3019") or ("90A" in params and "3019" in params)
+
+    net_sql = build_customer_billing_series_sql(
+        where_pairs="(D2.D2_CLIENTE = ? AND D2.D2_LOJA = ?)",
+        granularity="month",
+        nature="net",
+        recorte=recorte,
+    )
+    assert "D2.D2_COD IN" in net_sql
+    assert "D1.D1_COD IN" in net_sql
+
+
 def test_list_customer_billing_series_aggregates_and_fills() -> None:
     repo = MagicMock()
     repo.fetch_billing_monthly_series.return_value = [

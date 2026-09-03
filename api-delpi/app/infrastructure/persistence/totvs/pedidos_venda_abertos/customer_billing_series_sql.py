@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from app.domain.services.commercial.commercial_rol_return_sql import (
     CommercialRolReturnSql,
 )
@@ -14,12 +16,119 @@ SUPPORTED_BILLING_NATURES = list(BILLING_NATURES)
 _ISSUE_YYYYMMDD = "LEFT(LTRIM(RTRIM(CONVERT(VARCHAR(8), issue_date))), 8)"
 _ISSUE_DATE = f"CONVERT(DATE, {_ISSUE_YYYYMMDD}, 112)"
 
+_SB1_SALE_JOIN = """
+                LEFT JOIN SB1010 SB1 WITH (NOLOCK)
+                    ON  SB1.D_E_L_E_T_ = ''
+                    AND SB1.B1_COD = D2.D2_COD
+"""
+_SB1_RETURN_JOIN = """
+                LEFT JOIN SB1010 SB1D WITH (NOLOCK)
+                    ON  SB1D.D_E_L_E_T_ = ''
+                    AND SB1D.B1_COD = D1.D1_COD
+"""
+
+
+@dataclass(frozen=True, slots=True)
+class BillingSeriesRecorte:
+    """Filtros de produto/família/mercado alinhados ao ROL by-product."""
+
+    product_codes: tuple[str, ...] = ()
+    product_groups: tuple[str, ...] = ()
+    market: str | None = None
+
+    @property
+    def has_line_filters(self) -> bool:
+        return bool(self.product_codes or self.product_groups or self.market)
+
 
 def normalize_billing_nature(value: str | None) -> str:
     nature = (value or DEFAULT_BILLING_NATURE).strip().lower() or DEFAULT_BILLING_NATURE
     if nature not in BILLING_NATURES:
         raise ValueError("nature inválida. Use gross ou net.")
     return nature
+
+
+def normalize_billing_series_recorte(
+    *,
+    product_codes: list[str] | tuple[str, ...] | None = None,
+    product_groups: list[str] | tuple[str, ...] | None = None,
+    market: str | None = None,
+) -> BillingSeriesRecorte:
+    codes = tuple(
+        sorted({str(code).strip() for code in (product_codes or []) if str(code).strip()})
+    )
+    groups = tuple(
+        sorted(
+            {
+                str(group).strip()
+                for group in (product_groups or [])
+                if str(group).strip()
+            }
+        )
+    )
+    market_pred = None
+    if market is not None and str(market).strip():
+        CommercialRolReturnSql.market_filter_predicate(str(market).strip())
+        market_pred = str(market).strip().lower()
+        if market_pred in {"external", "foreign"}:
+            market_pred = "export"
+    return BillingSeriesRecorte(
+        product_codes=codes,
+        product_groups=groups,
+        market=market_pred,
+    )
+
+
+def _in_list_clause(column: str, values: tuple[str, ...]) -> tuple[str, list[str]]:
+    placeholders = ", ".join("?" for _ in values)
+    return f"{column} IN ({placeholders})", list(values)
+
+
+def _recorte_sale_fragments(
+    recorte: BillingSeriesRecorte,
+) -> tuple[str, str, list[str]]:
+    joins = _SB1_SALE_JOIN if recorte.product_groups else ""
+    clauses: list[str] = []
+    params: list[str] = []
+    if recorte.product_codes:
+        clause, values = _in_list_clause("D2.D2_COD", recorte.product_codes)
+        clauses.append(clause)
+        params.extend(values)
+    if recorte.product_groups:
+        clause, values = _in_list_clause(
+            "RTRIM(LTRIM(SB1.B1_GRUPO))",
+            recorte.product_groups,
+        )
+        clauses.append(clause)
+        params.extend(values)
+    market_pred = CommercialRolReturnSql.market_filter_predicate(
+        recorte.market, d2_alias="D2"
+    )
+    if market_pred:
+        clauses.append(market_pred)
+    where = (" AND " + " AND ".join(clauses)) if clauses else ""
+    return joins, where, params
+
+
+def _recorte_return_fragments(
+    recorte: BillingSeriesRecorte,
+) -> tuple[str, str, list[str]]:
+    joins = _SB1_RETURN_JOIN if recorte.product_groups else ""
+    clauses: list[str] = []
+    params: list[str] = []
+    if recorte.product_codes:
+        clause, values = _in_list_clause("D1.D1_COD", recorte.product_codes)
+        clauses.append(clause)
+        params.extend(values)
+    if recorte.product_groups:
+        clause, values = _in_list_clause(
+            "RTRIM(LTRIM(SB1D.B1_GRUPO))",
+            recorte.product_groups,
+        )
+        clauses.append(clause)
+        params.extend(values)
+    where = (" AND " + " AND ".join(clauses)) if clauses else ""
+    return joins, where, params
 
 
 def billing_series_period_expr(granularity: str) -> str:
@@ -61,11 +170,23 @@ def build_customer_billing_series_sql(
     where_pairs: str,
     granularity: str,
     nature: str = DEFAULT_BILLING_NATURE,
+    recorte: BillingSeriesRecorte | None = None,
 ) -> str:
     nature = normalize_billing_nature(nature)
-    if nature == "gross":
+    active = recorte if recorte and recorte.has_line_filters else BillingSeriesRecorte()
+    if nature == "gross" and not active.has_line_filters:
         return _build_gross_series_sql(where_pairs=where_pairs, granularity=granularity)
-    return _build_net_series_sql(where_pairs=where_pairs, granularity=granularity)
+    if nature == "gross":
+        return _build_gross_line_series_sql(
+            where_pairs=where_pairs,
+            granularity=granularity,
+            recorte=active,
+        )
+    return _build_net_series_sql(
+        where_pairs=where_pairs,
+        granularity=granularity,
+        recorte=active,
+    )
 
 
 def _build_gross_series_sql(*, where_pairs: str, granularity: str) -> str:
@@ -112,8 +233,43 @@ def _build_gross_series_sql(*, where_pairs: str, granularity: str) -> str:
         """
 
 
-def _build_net_series_sql(*, where_pairs: str, granularity: str) -> str:
+def _build_gross_line_series_sql(
+    *,
+    where_pairs: str,
+    granularity: str,
+    recorte: BillingSeriesRecorte,
+) -> str:
+    """Gross filtrado por produto/mercado: soma D2_TOTAL (não F2_VALBRUT da nota)."""
+    sale_period = _period_expr_from_protheus_col("D2.D2_EMISSAO", granularity)
+    joins, where_extra, _ = _recorte_sale_fragments(recorte)
+    gross_sum = CommercialRolReturnSql.sale_gross_sum_expr(d2_alias="D2")
+    return f"""
+            SELECT
+                {sale_period} AS year_month,
+                {gross_sum} AS billed_value
+              FROM SD2010 D2 WITH (NOLOCK)
+              {joins}
+             WHERE D2.D_E_L_E_T_ = ''
+               AND ISNULL(D2.D2_TIPO, '') <> 'D'
+               AND ({where_pairs})
+               AND D2.D2_EMISSAO >= ?
+               AND D2.D2_EMISSAO <= ?
+               {where_extra}
+             GROUP BY {sale_period}
+             ORDER BY year_month ASC
+        """
+
+
+def _build_net_series_sql(
+    *,
+    where_pairs: str,
+    granularity: str,
+    recorte: BillingSeriesRecorte | None = None,
+) -> str:
     """ROL líquido por bucket: vendas (D2_EMISSAO) − devoluções (D1_DTDIGIT)."""
+    active = recorte or BillingSeriesRecorte()
+    sale_joins, sale_where, _ = _recorte_sale_fragments(active)
+    ret_joins, ret_where, _ = _recorte_return_fragments(active)
     sale_period = _period_expr_from_protheus_col("D2.D2_EMISSAO", granularity)
     ret_period = _period_expr_from_protheus_col("D1.D1_DTDIGIT", granularity)
     exists_where = "D1X.D1_DTDIGIT >= ? AND D1X.D1_DTDIGIT <= ?"
@@ -134,11 +290,13 @@ def _build_net_series_sql(*, where_pairs: str, granularity: str) -> str:
                   FROM SD2010 D2 WITH (NOLOCK)
                   {CommercialRolReturnSql.sale_customer_join(with_nolock=True)}
                   {CommercialRolReturnSql.sale_tes_join(with_nolock=True)}
+                  {sale_joins}
                  WHERE D2.D_E_L_E_T_ = ''
                    AND ({d2_pairs})
                    AND D2.D2_EMISSAO >= ?
                    AND D2.D2_EMISSAO <= ?
                    AND {eligibility}
+                   {sale_where}
                  GROUP BY {sale_period}
             ),
             devolucoes AS (
@@ -147,11 +305,13 @@ def _build_net_series_sql(*, where_pairs: str, granularity: str) -> str:
                     {net_ret} AS billed_value
                   FROM SD1010 D1 WITH (NOLOCK)
                   {CommercialRolReturnSql.tes_join(d1_alias="D1", f4_alias="F4D", with_nolock=True)}
+                  {ret_joins}
                  WHERE D1.D_E_L_E_T_ = ''
                    AND ({d1_pairs})
                    AND D1.D1_DTDIGIT >= ?
                    AND D1.D1_DTDIGIT <= ?
                    AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}
+                   {ret_where}
                  GROUP BY {ret_period}
             )
             SELECT
@@ -327,14 +487,23 @@ def billing_series_params(
     start_date: str,
     end_date: str,
     nature: str,
+    recorte: BillingSeriesRecorte | None = None,
 ) -> tuple:
     nature = normalize_billing_nature(nature)
-    if nature == "gross":
+    active = recorte if recorte and recorte.has_line_filters else BillingSeriesRecorte()
+    _, _, sale_params = _recorte_sale_fragments(active)
+    _, _, ret_params = _recorte_return_fragments(active)
+    if nature == "gross" and not active.has_line_filters:
         return tuple(pair_params + [start_date, end_date])
-    # net: vendas pairs+start/end+exists start/end; devolucoes pairs+start/end
+    if nature == "gross":
+        # pairs + dates + product/group binds
+        return tuple(pair_params + [start_date, end_date] + sale_params)
+    # net: vendas pairs+start/end+exists start/end+sale filters; devolucoes pairs+start/end+ret filters
     return tuple(
         pair_params
         + [start_date, end_date, start_date, end_date]
+        + sale_params
         + pair_params
         + [start_date, end_date]
+        + ret_params
     )

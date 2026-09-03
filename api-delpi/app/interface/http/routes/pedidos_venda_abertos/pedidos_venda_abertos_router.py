@@ -148,6 +148,19 @@ class BillingSeriesBody(BaseModel):
         pattern=r"^(gross|net)$",
         description="Billing nature: gross (F2_VALBRUT) or net (ROL). Default gross.",
     )
+    product_codes: Optional[list[str]] = Field(
+        default=None,
+        description="Optional product codes (D2_COD). When set, gross uses line totals.",
+    )
+    product_groups: Optional[list[str]] = Field(
+        default=None,
+        description="Optional product groups (B1_GRUPO).",
+    )
+    market: Optional[str] = Field(
+        default=None,
+        pattern=r"^(domestic|export)$",
+        description="Optional market filter: domestic (CFOP 5/6) or export (CFOP 7).",
+    )
 
 
 def _resolve_scope(seller_id: Optional[str] = None):
@@ -480,6 +493,9 @@ def list_customer_billing_series_route(body: BillingSeriesBody = Body(...)):
                 end_date=body.end_date,
                 granularity=body.granularity,
                 nature=body.nature,
+                product_codes=body.product_codes,
+                product_groups=body.product_groups,
+                market=body.market,
             )
         )
         return api_delpi_success(
