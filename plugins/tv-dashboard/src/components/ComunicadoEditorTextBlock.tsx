@@ -25,7 +25,7 @@ import {
   type ComunicadoBlock,
   type ComunicadoContentRun,
 } from "@delpi/tv-dashboard-presentation";
-import { ensureComunicadoDualClass } from "@delpi/plugin-ui";
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 import { useVisualBoxTextEditorBridge } from "../hooks/useVisualBoxTextEditorBridge";
 import { shouldPreserveTextEditOnBlur } from "../utils/preserveTextEditFocus";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
