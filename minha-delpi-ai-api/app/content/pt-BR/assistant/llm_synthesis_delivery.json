@@ -101,7 +101,28 @@
     "each with",
     "i should respond",
     "according to my instructions",
-    "let me think"
+    "let me think",
+    "key facts",
+    "total available",
+    "available balance",
+    "highest concentration",
+    "sales complement",
+    "alert level",
+    "average price",
+    "total quantity",
+    "positions with zero",
+    "negative available",
+    "units across",
+    "branch 0",
+    "attention:"
+  ],
+  "englishAnswerHardMarkers": [
+    "key facts",
+    "sales complement",
+    "total available balance",
+    "highest concentration in branch",
+    "alert level: critical",
+    "average price:"
   ],
   "englishAnswerMinMarkerHits": 2
 }

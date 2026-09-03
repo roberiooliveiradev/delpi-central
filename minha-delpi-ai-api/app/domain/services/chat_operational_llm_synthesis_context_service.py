@@ -182,6 +182,12 @@ class ChatOperationalLlmSynthesisContextService:
             if cross_rule:
                 result = f"{result}\n\n{cross_rule}" if result else f"\n\n{cross_rule}"
 
+        # Idioma por último — modelos cloud tendem a priorizar a instrução final.
+        language_lock = ChatOperationalLlmSynthesisContextContentService.language_lock_rule()
+
+        if language_lock:
+            result = f"{result}\n\n{language_lock}" if result else f"\n\n{language_lock}"
+
         return result
 
     @classmethod

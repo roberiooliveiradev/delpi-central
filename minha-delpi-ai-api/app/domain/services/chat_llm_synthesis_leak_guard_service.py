@@ -114,6 +114,17 @@ class ChatLlmSynthesisLeakGuardService:
 
         lowered = text.lower()
         compact = cls.compact_for_match(text)
+
+        hard_markers = ChatLlmSynthesisDeliveryContentService.english_answer_hard_markers()
+        for marker in hard_markers:
+            token = str(marker or "").strip().lower()
+            if not token:
+                continue
+            if cls._contains_marker(
+                haystack=lowered, haystack_compact=compact, marker=token
+            ):
+                return True
+
         markers = ChatLlmSynthesisDeliveryContentService.english_answer_markers()
         min_hits = ChatLlmSynthesisDeliveryContentService.english_answer_min_marker_hits()
 

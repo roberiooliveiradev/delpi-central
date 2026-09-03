@@ -76,6 +76,13 @@ class ChatOperationalLlmSynthesisContextContentService:
         ).strip()
 
     @classmethod
+    def language_lock_rule(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(_BUNDLE, "languageLockRule", default="")
+            or ""
+        ).strip()
+
+    @classmethod
     def factual_fidelity_rule(cls) -> str:
         return str(
             ChatAssistantContentService.get(_BUNDLE, "factualFidelityRule", default="")

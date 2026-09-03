@@ -165,3 +165,28 @@ def test_looks_like_english_answer_ignores_portuguese_with_accents():
         "com cabos CB16 nas cores azul, branco e laranja."
     )
     assert not ChatLlmSynthesisLeakGuardService.looks_like_english_answer(answer)
+
+
+def test_looks_like_english_operational_stock_prose_triggers_fallback():
+    """Kimi/OpenRouter às vezes sintetiza estoque em inglês apesar do system PT-BR."""
+    answer = (
+        "O produto **10080001** —Key facts:\n"
+        "- Total available balance: 3,104,266 units across 8 positions\n"
+        "- Highest concentration in branch 02 (2,714,974 units available)\n"
+        "- Alert level: critical\n"
+        "Sales complement:\n"
+        "- Average price: R$ 0.06\n"
+        "- Documents: 67"
+    )
+    assert ChatLlmSynthesisLeakGuardService.looks_like_english_answer(answer)
+    fallback = (
+        "O produto **10080001** tem saldo disponível total de **3.104.266** un. "
+        "em **8** posições. Maior concentração na filial **02**."
+    )
+    guarded = ChatLlmSynthesisLeakGuardService.guard_answer(
+        answer=answer,
+        fallback=fallback,
+    )
+    assert guarded == fallback
+    assert "key facts" not in guarded.lower()
+    assert "sales complement" not in guarded.lower()

@@ -432,7 +432,7 @@ class ChatToolContextExternalActionFormatter:
                 f"Path: {path}\n"
                 f"Status HTTP: {status_code}\n"
                 f"Sucesso: {ok}\n"
-                "Regra obrigatória: responda ao usuário em português natural, sem mostrar JSON bruto.\n"
+                "Regra obrigatória: responda ao usuário **somente em português brasileiro** (nunca inglês, salvo pedido explícito de tradução), sem mostrar JSON bruto.\n"
                 "Use o resumo humanizado como fonte principal.\n"
                 f"{commentary_rule}\n"
                 "Se precisar de algum dado técnico, use apenas o resumo técnico compacto.\n"

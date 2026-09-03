@@ -49,6 +49,16 @@ class ChatLlmSynthesisDeliveryContentService:
         )
 
     @classmethod
+    def english_answer_hard_markers(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(
+                _BUNDLE, "englishAnswerHardMarkers"
+            )
+            if str(item).strip()
+        )
+
+    @classmethod
     def english_answer_min_marker_hits(cls) -> int:
         return int(
             ChatAssistantContentService.get(
