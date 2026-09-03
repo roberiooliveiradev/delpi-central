@@ -41,56 +41,56 @@ export function PortfolioBillingFiltersBar({
         {filters.periodError ? (
           <CommercialStateBanner>{filters.periodError}</CommercialStateBanner>
         ) : null}
+        <FiltersRow variant="extended">
+          <CommercialMultiSelectField
+            label={CUSTOMER_BILLING_CONTENT.filterCustomer}
+            hint={CM_HELP.customers.billingFilterCustomer}
+            options={filters.customerOptions.map((customer) => ({
+              value: customer.key,
+              label: `${customer.nome} (${customer.codigo}/${customer.loja})`,
+            }))}
+            selectedValues={filters.selectedCustomerKeys}
+            onChange={filters.setSelectedCustomerKeys}
+            emptyLabel={CUSTOMER_BILLING_CONTENT.filterCustomerEmpty}
+            searchable
+          />
+          <CommercialMultiSelectField
+            label={CUSTOMER_BILLING_CONTENT.filterProductGroup}
+            hint={CM_HELP.customers.billingFilterProductGroup}
+            options={productGroupOptions}
+            selectedValues={filters.selectedProductGroups}
+            onChange={filters.setSelectedProductGroups}
+            emptyLabel={CUSTOMER_BILLING_CONTENT.filterProductGroupEmpty}
+            searchable
+          />
+          <CommercialMultiSelectField
+            label={CUSTOMER_BILLING_CONTENT.filterProduct}
+            hint={CM_HELP.customers.billingFilterProduct}
+            options={productOptions}
+            selectedValues={filters.selectedProductCodes}
+            onChange={filters.setSelectedProductCodes}
+            emptyLabel={CUSTOMER_BILLING_CONTENT.filterProductEmpty}
+            searchable
+          />
+          <CommercialMultiSelectField
+            label={CUSTOMER_BILLING_CONTENT.filterMarket}
+            hint={CM_HELP.customers.billingFilterMarket}
+            options={[
+              { value: "domestic", label: CUSTOMER_BILLING_CONTENT.marketDomestic },
+              { value: "export", label: CUSTOMER_BILLING_CONTENT.marketExport },
+            ]}
+            selectedValues={filters.selectedMarkets}
+            onChange={(values) =>
+              filters.setSelectedMarkets(
+                values.filter((value): value is "domestic" | "export" =>
+                  value === "domestic" || value === "export",
+                ),
+              )
+            }
+            emptyLabel={CUSTOMER_BILLING_CONTENT.filterMarketEmpty}
+          />
+        </FiltersRow>
       </CommercialFilterBarShell>
-      <FiltersRow variant="extended">
-        <CommercialMultiSelectField
-          label={CUSTOMER_BILLING_CONTENT.filterCustomer}
-          hint={CM_HELP.customers.billingFilterCustomer}
-          options={filters.customerOptions.map((customer) => ({
-            value: customer.key,
-            label: `${customer.nome} (${customer.codigo}/${customer.loja})`,
-          }))}
-          selectedValues={filters.selectedCustomerKeys}
-          onChange={filters.setSelectedCustomerKeys}
-          emptyLabel={CUSTOMER_BILLING_CONTENT.filterCustomerEmpty}
-          searchable
-        />
-        <CommercialMultiSelectField
-          label={CUSTOMER_BILLING_CONTENT.filterProductGroup}
-          hint={CM_HELP.customers.billingFilterProductGroup}
-          options={productGroupOptions}
-          selectedValues={filters.selectedProductGroups}
-          onChange={filters.setSelectedProductGroups}
-          emptyLabel={CUSTOMER_BILLING_CONTENT.filterProductGroupEmpty}
-          searchable
-        />
-        <CommercialMultiSelectField
-          label={CUSTOMER_BILLING_CONTENT.filterProduct}
-          hint={CM_HELP.customers.billingFilterProduct}
-          options={productOptions}
-          selectedValues={filters.selectedProductCodes}
-          onChange={filters.setSelectedProductCodes}
-          emptyLabel={CUSTOMER_BILLING_CONTENT.filterProductEmpty}
-          searchable
-        />
-        <CommercialMultiSelectField
-          label={CUSTOMER_BILLING_CONTENT.filterMarket}
-          hint={CM_HELP.customers.billingFilterMarket}
-          options={[
-            { value: "domestic", label: CUSTOMER_BILLING_CONTENT.marketDomestic },
-            { value: "export", label: CUSTOMER_BILLING_CONTENT.marketExport },
-          ]}
-          selectedValues={filters.selectedMarkets}
-          onChange={(values) =>
-            filters.setSelectedMarkets(
-              values.filter((value): value is "domestic" | "export" =>
-                value === "domestic" || value === "export",
-              ),
-            )
-          }
-          emptyLabel={CUSTOMER_BILLING_CONTENT.filterMarketEmpty}
-        />
-      </FiltersRow>
     </div>
   );
 }

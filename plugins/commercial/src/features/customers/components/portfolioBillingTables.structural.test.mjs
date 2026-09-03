@@ -38,5 +38,10 @@ describe("Portfolio billing tables — estrutural", () => {
     assert.match(filters, /CommercialFilterBarShell/);
     assert.match(filters, /CommercialMultiSelectField/);
     assert.match(filters, /FiltersRow/);
+    const shellOpen = filters.indexOf("<CommercialFilterBarShell");
+    const shellClose = filters.indexOf("</CommercialFilterBarShell>");
+    const filtersRow = filters.indexOf("<FiltersRow");
+    assert.ok(shellOpen >= 0 && shellClose > shellOpen);
+    assert.ok(filtersRow > shellOpen && filtersRow < shellClose);
   });
 });
