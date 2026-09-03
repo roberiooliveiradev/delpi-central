@@ -1,3 +1,8 @@
+import {
+  USER_MANUAL_TERM_CATALOG,
+  type UserManualTermGroup,
+} from "./userManualTermCatalog";
+
 /**
  * Conteúdo PT-BR do Manual do usuário (página /help).
  * Espelha docs/.../MANUAL-USUARIO-PORTAL-COMERCIAL.md — atualizar os dois juntos.
@@ -21,12 +26,13 @@ export type UserManualSection = {
   links?: readonly UserManualLinkRow[];
   faqs?: readonly UserManualFaq[];
   glossary?: readonly { term: string; meaning: string }[];
+  glossaryGroups?: readonly UserManualTermGroup[];
 };
 
 export const USER_MANUAL_CONTENT = {
   pageTitle: "Manual do usuário",
   pageSubtitle:
-    "Consulta rápida: onde ir no Portal Comercial e respostas às dúvidas mais comuns.",
+    "Consulta rápida: onde ir no Portal Comercial, dúvidas frequentes e o catálogo de termos usados nas telas e nos ?.",
   backHome: "Voltar ao Início",
   tocTitle: "Nesta página",
   tocAriaLabel: "Índice do manual",
@@ -117,6 +123,11 @@ export const USER_MANUAL_CONTENT = {
           want: "Administrar carteiras",
           where: "Administração",
           how: "Só com permissão de administrar",
+        },
+        {
+          want: "Saber o que significa um termo",
+          where: "Ajuda",
+          how: "Catálogo de termos (definição e onde aparece)",
         },
       ],
     },
@@ -231,24 +242,10 @@ export const USER_MANUAL_CONTENT = {
     },
     {
       id: "glossary",
-      title: "Glossário curto",
-      glossary: [
-        { term: "Carteira", meaning: "Clientes + membros (vendedores) no Delpi." },
-        { term: "Membership", meaning: "Você está vinculado a uma carteira." },
-        { term: "Escopo", meaning: "Filtro de “de quem” (própria / equipe / todas)." },
-        { term: "ROL", meaning: "Receita / faturamento nos indicadores comerciais." },
-        { term: "Meta", meaning: "Meta do Indicadores Estratégicos, proporcional ao período." },
-        { term: "OTD", meaning: "Pontualidade: faturamento vs. data prometida." },
-        { term: "FIFO", meaning: "Estoque alocado do mais antigo para o mais novo entre pedidos." },
-        { term: "Incoterm", meaning: "Condição comercial (EXW, FOB, CIF) que define se o cliente busca ou se a Delpi entrega — e o que a data de entrega representa." },
-        {
-          term: "Data de entrega",
-          meaning:
-            "Compromisso da linha: cliente busca (EXW/FOB) = data na expedição; Delpi entrega (CIF) = saída da empresa. Não é a chegada no cliente.",
-        },
-        { term: "Data de despacho", meaning: "Data registrada de saída da fábrica; vazia quando ainda não registrada." },
-        { term: "SC / ES", meaning: "Unidades (filiais) nos filtros." },
-      ],
+      title: "Catálogo de termos",
+      intro:
+        "Significados já usados no Portal e nos ? das telas. «Onde aparece» é a aplicação. Os mesmos textos dos helps — sem inventar outro glossário.",
+      glossaryGroups: USER_MANUAL_TERM_CATALOG,
     },
   ] satisfies readonly UserManualSection[],
 } as const;

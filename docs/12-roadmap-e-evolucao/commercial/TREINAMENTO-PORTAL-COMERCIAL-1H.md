@@ -5,7 +5,8 @@
 > **Base da auditoria:** manifesto + README do MFE, `GESTAO-A-VISTA.md`, `WIREFRAMES.md` (matriz rota×WF), `PERFIS-E-PERMISSOES.md`, `HELP-COVERAGE.md`, `ATA-MAPA-NECESSIDADES.md`, código em `plugins/commercial/src/features/*` (set/2026).  
 > **Não cobre:** implementação técnica, backlog (confirmação de pedidos, Diretoria, forecast, kanban pipeline), nem plugins irmãos como se fossem o Portal.
 
-**Manual para participantes / usuários:** [MANUAL-USUARIO-PORTAL-COMERCIAL.md](./MANUAL-USUARIO-PORTAL-COMERCIAL.md) (“Quero…” → onde ir + FAQ) — **também na UI** em `/apps/commercial/help`.
+**Manual para participantes / usuários:** [MANUAL-USUARIO-PORTAL-COMERCIAL.md](./MANUAL-USUARIO-PORTAL-COMERCIAL.md) (“Quero…” → onde ir + FAQ) — **também na UI** em `/apps/commercial/help`.  
+**Termos relacionados (Incoterm, datas):** [GLOSSARIO-TERMOS.md](./GLOSSARIO-TERMOS.md).
 
 ---
 
@@ -194,7 +195,7 @@ Ajuste fino conforme a sala: se **só vendedores**, enxugue Admin (T8) e alongue
 3. Chips: **Atraso**, estoque (`com_estoque` / `parcial` / `sem_estoque`), “Pode faturar” (FIFO no BFF).
 4. Badge da nav “Meus pedidos” alinhado ao mesmo critério de pronto para faturar.
 5. Board/kanban por etapa (se habilitado na build).
-6. **Ficha da linha:** status fabril, OPs, BOM, timeline, OV relacionada.
+6. **Ficha da linha:** status fabril, OPs, BOM, timeline, OV relacionada. Coluna **Data de entrega** depende do **Incoterm** (EXW/FOB = expedição; CIF = saída da empresa) — ver [GLOSSARIO-TERMOS.md](./GLOSSARIO-TERMOS.md).
 7. **Ficha da OP:** apontamentos, prazo OTD, troca de OP na URL.
 8. Retorno à lista preservando filtros (URL compartilhável).
 
@@ -209,6 +210,7 @@ Ajuste fino conforme a sala: se **só vendedores**, enxugue Admin (T8) e alongue
 | Dúvida | Resposta curta |
 |--------|----------------|
 | “Tem estoque no Protheus mas aqui diz sem” | Alocação **FIFO** entre pedidos; estoque pode estar “reservado” por outra linha. |
+| Data de entrega = chegada no cliente? | **Não.** Depende do Incoterm: EXW/FOB = expedição (cliente busca); CIF = saída da empresa. |
 | Pedido ≠ OV | Pedido = C5/SC6; OV = AD1010; proposta documento = ADY — três conceitos. |
 | Por que vejo clientes de outro vendedor? | Sem membership: consolidado; com `manage`: todas as carteiras; com membership: só as suas. |
 | Notificação “pronto para faturar” | Só quem tem `commercial.billing.notify` (não todos os membros da carteira). |

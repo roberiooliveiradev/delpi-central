@@ -197,6 +197,30 @@ export function UserManualPage({ basePath }: UserManualPageProps) {
                     ))}
                   </dl>
                 ) : null}
+
+                {section.glossaryGroups?.map((group) => (
+                  <div key={group.id} className="cm-user-manual__glossary-group">
+                    <h3 className="cm-user-manual__glossary-group-title">{group.title}</h3>
+                    <dl className="cm-user-manual__glossary">
+                      {group.entries.map((item) => (
+                        <div key={item.term} className="cm-user-manual__glossary-item">
+                          <dt>
+                            <UserManualLinkedText text={item.term} basePath={basePath} />
+                          </dt>
+                          <dd>
+                            <UserManualLinkedText text={item.meaning} basePath={basePath} />
+                            <p className="cm-user-manual__glossary-applies">
+                              <span className="cm-user-manual__glossary-applies-label">
+                                Onde aparece
+                              </span>
+                              <UserManualLinkedText text={item.applies} basePath={basePath} />
+                            </p>
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                ))}
               </SectionCard>
             </section>
           ))}

@@ -71,6 +71,7 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | Arquivo | Conteúdo |
 |---|---|
 | [commercial/README.md](./commercial/README.md) | Índice do **Portal Comercial** (`commercial`) — F0–F2b em `main` |
+| [commercial/GLOSSARIO-TERMOS.md](./commercial/GLOSSARIO-TERMOS.md) | Termos relacionados — Incoterm (EXW/FOB/CIF), datas da linha e faturamento |
 | [commercial/PLAYBOOK-MODULO-COMERCIAL.md](./commercial/PLAYBOOK-MODULO-COMERCIAL.md) | **Playbook mestre** — matriz dores × cobertura (§ 1.2), paridade, fases, gates `.cursor` |
 | [commercial/IMPLEMENTATION-PLAN.md](./commercial/IMPLEMENTATION-PLAN.md) | Status executável F0–F2c |
 | [commercial/HOMOLOGACAO-PARIDADE-PEDIDOS.md](./commercial/HOMOLOGACAO-PARIDADE-PEDIDOS.md) | Checklist de paridade (assinatura Comercial/QA) |

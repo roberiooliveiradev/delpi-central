@@ -3,8 +3,8 @@
 > **Para quem:** vendedores, orçamentistas, faturamento, supervisores e gestores.  
 > **Onde abrir:** menu Minha Delpi → **Portal Comercial** → item de topo **Ajuda**  
 > (também no Início → Ajuda → Manual do usuário; URL: `/apps/commercial/help`).  
-> **Como usar este manual:** comece pelo **“Quero…”** (§2). Se a dúvida for específica, use o **FAQ** (§4).  
-> **Ajuda na tela:** ícones `?` e dicas nos campos/colunas explicam o mesmo conceito sem sair do Portal. A página **Manual do usuário** no Portal concentra este conteúdo para consulta a qualquer momento.
+> **Como usar este manual:** comece pelo **“Quero…”** (§2). Se a dúvida for específica, use o **FAQ** (§4). O **catálogo de termos** (§7) explica o que cada palavra significa e **onde aparece**.  
+> **Ajuda na tela:** ícones `?` e dicas nos campos/colunas usam as mesmas definições. A página **Manual do usuário** no Portal (`/apps/commercial/help`) concentra este conteúdo.
 
 Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMENTO-PORTAL-COMERCIAL-1H.md).
 
@@ -51,6 +51,7 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Ver oportunidades (OV) no período | **Início** → Oportunidades | Lista global; clique abre a ficha da OV |
 | Gerar / revisar PDF de proposta | **Início** → **Propostas** | Documento ADY (não é a lista de OV) |
 | Trocar de carteira (se eu tiver mais de uma) | Menu do usuário (canto) / **Escopo** | Escolha a carteira ativa |
+| Saber o que significa um termo | **Ajuda** | Catálogo de termos (definição e onde aparece) |
 
 ### Gestão e administração
 
@@ -218,23 +219,96 @@ Pontualidade compara **data de faturamento** com a **data prometida** (veja a aj
 
 ---
 
-## 7. Glossário curto
+## 7. Catálogo de termos
 
-| Termo | Significado no Portal |
-|-------|------------------------|
-| Carteira | Conjunto de clientes + membros (vendedores) no Delpi |
-| Membership | Você está vinculado a uma carteira |
-| Escopo | Filtro de “de quem” (própria / equipe / todas) |
-| ROL | Receita / faturamento no sentido dos indicadores comerciais |
-| Meta | Meta do Indicadores Estratégicos, proporcional ao período |
-| OTD | On-time delivery — pontualidade de faturamento vs. prometida |
-| OV | Oportunidade / proposta AD1010 |
-| ADY | Documento de proposta + PDF |
-| FIFO (estoque) | Estoque alocado do mais antigo para o mais novo entre pedidos |
-| Incoterm | Condição comercial (EXW, FOB, CIF): cliente busca ou Delpi entrega — define o que a data de entrega representa |
-| Data de entrega | Compromisso da linha: EXW/FOB = expedição; CIF = saída da empresa. Não é chegada no cliente |
-| Data de despacho | Data registrada de saída da fábrica; vazia quando ainda não registrada |
-| SC / ES | Unidades (filiais) nos filtros |
+Fonte na UI: **Ajuda** → **Catálogo de termos** (`plugins/commercial/src/content/userManualTermCatalog.ts`). Definições = mesmos textos dos `?` (`CM_HELP`) e das métricas da Visão geral. **Onde aparece** = aplicação.
+
+### Telas e recortes
+
+| Termo | Significado | Onde aparece |
+|-------|-------------|--------------|
+| Escopo | Identidade da sessão: carteiras em que você participa. Não é o filtro de datas. | Chip no topo |
+| Início | Alertas do dia e atalhos para as áreas do portal | Menu superior |
+| Visão geral | Dashboard do período (ROL, meta, conversão, carteira aberta) | Menu superior |
+| Meus pedidos | Itens de pedido de venda em aberto nas suas carteiras | Menu superior |
+| Minha Carteira | Clientes vinculados às carteiras que você atende | Menu superior |
+| Conta | Visão integrada do cliente (pedidos, faturamento, OV, contatos) | Minha Carteira → cliente |
+| Minhas tarefas | Fila de follow-ups (atrasadas, hoje, depois) | Menu superior |
+| Sala de interação | Conversas internas ligadas a pedido, conta ou OV | Menu e painel na ficha |
+| Administração | Cadastro de carteiras, membros e transferências | Menu (quem administra) |
+| Ajuda | Manual, FAQ e este catálogo | Menu superior |
+| SC / ES | Unidades Santa Catarina e Espírito Santo | Filtros |
+| Membership | Você está vinculado a uma carteira | Escopo / carteira |
+
+### Pedido, oportunidade e proposta
+
+| Termo | Significado | Onde aparece |
+|-------|-------------|--------------|
+| Pedido | Linha de pedido de venda em aberto (operação e fábrica) | Meus pedidos · Conta |
+| Oportunidade (OV) | Proposta comercial no funil (não é o pedido nem o PDF) | Início → Oportunidades |
+| Proposta (documento) | Documento ADY + PDF para o cliente | Início → Propostas |
+| Carteira | Clientes + membros (vendedores) | Escopo · Administração |
+| Compartilhado | Cliente em mais de uma carteira ativa | Badge na carteira/conta |
+
+### Datas e Incoterm
+
+| Termo | Significado | Onde aparece |
+|-------|-------------|--------------|
+| Incoterm | EXW, FOB ou CIF: quem busca / quem entrega e o que a data de entrega representa | Help da Data de entrega · frete da proposta |
+| EXW | Cliente busca na origem; data de entrega = expedição | Data de entrega |
+| FOB | Frete por conta do comprador; data de entrega = expedição | Data de entrega |
+| CIF | Delpi entrega; data de entrega = saída da empresa | Data de entrega |
+| Data de entrega | Compromisso da linha segundo o Incoterm. Não é chegada no cliente | Meus pedidos · ficha · Conta |
+| Data de despacho | Saída registrada da fábrica; vazia = ainda não registrada | Meus pedidos · ficha |
+| Previsão entrega (OP) | Disponibilidade pela produção; badge compara com a data de entrega | Meus pedidos · ficha |
+| Próxima entrega | Menor data de entrega prometida ainda em aberto | Minha Carteira · Conta |
+| Postergado | Data de entrega após o mês corrente (heurística) | Chip em Meus pedidos |
+| Atraso (dias) | Dias desde a data de entrega prometida, com saldo em aberto | Meus pedidos |
+
+### Estoque, status e Kanban
+
+| Termo | Significado | Onde aparece |
+|-------|-------------|--------------|
+| FIFO | Estoque físico alocado do mais antigo para o mais novo, por produto e unidade. Não é reserva formal | Meus pedidos · Pode faturar |
+| Estoque alocado | Parte do estoque já atribuída à linha no FIFO | Coluna · ficha |
+| Cobertura | Estoque alocado ÷ saldo (verde ≈ 100%) | Meus pedidos |
+| Saldo | Quantidade ainda em aberto (pedida − entregue) | Meus pedidos |
+| Valor aberto | Saldo × preço da linha | Meus pedidos · carteira |
+| Status estoque | Pode faturar, parcial, sem estoque ou atrasado | Coluna Status |
+| Pode faturar | Estoque alocado cobre o saldo inteiro | Chip · badge · Kanban |
+| Estoque parcial | Atende só parte da quantidade em aberto | Filtro · status |
+| Sem estoque | Sem alocação suficiente para o saldo | Filtro · status |
+| Próximos / Em andamento / Pronto para faturar | Etapas do board (fila, vencido/parcial, estoque cobre o saldo) | Kanban de Meus pedidos |
+| OP | Ordem de produção na previsão da linha | Ficha da linha / OP |
+
+### Indicadores e faturamento
+
+| Termo | Significado | Onde aparece |
+|-------|-------------|--------------|
+| ROL | Receita operacional líquida versus meta. Não some com carteira em aberto | Visão geral |
+| Meta | Meta SI proporcional aos dias do intervalo | Visão geral |
+| Carteira em aberto | Valor aberto de pedido **agora** (snapshot). Não é ROL, PCP nem forecast | Visão geral |
+| Faturamento | Notas / ROL no período. Share e tendência usam só faturamento, nunca o valor em aberto | Visão geral · Minha Carteira |
+| Bruto / Líquido | Bruto = NF; líquido = fórmula ROL. Toggle na Minha Carteira | Natureza do faturamento |
+| Share empresa | Faturamento do escopo ÷ faturamento da empresa no período | Visão geral · carteira |
+| Gap vs meta | Quanto falta para a meta ROL do período | Visão geral |
+| Carteira no tempo | Valor aberto por data de entrega (atrasado, este mês, 1–3 meses…) | Visão geral |
+| Taxa de conversão / Funil | Propostas ganhas ÷ revisões abertas no período | Visão geral |
+| OTD | Pontualidade: data da nota × data de entrega prometida | Início → Pontualidade (OTD) |
+| Fat. 12 meses | Soma do faturamento dos últimos 12 meses | Minha Carteira · Conta |
+
+### Minha Carteira — foco e tendência
+
+| Termo | Significado | Onde aparece |
+|-------|-------------|--------------|
+| Foco | Atenção (atraso/parcial), em dia, sem venda 60d, ou todos | Filtro Foco |
+| Tendência | Alta / estável / queda do faturamento vs. janela anterior (default 30 dias) | Coluna e filtro |
+| Em aberto | Soma do valor em aberto dos pedidos da conta | Coluna |
+| Atrasos | Quantidade de pedidos com linha vencida | Coluna |
+| Última venda | Data da última NF de saída conhecida | Lista · Conta |
+| Sem venda 60d | Última venda há 60 dias ou mais | Foco e KPI |
+
+---
 
 ---
 
@@ -243,6 +317,7 @@ Pontualidade compara **data de faturamento** com a **data prometida** (veja a aj
 | Documento | Público |
 |-----------|---------|
 | Este manual | Usuário final |
+| [GLOSSARIO-TERMOS.md](./GLOSSARIO-TERMOS.md) | Produto — relações Incoterm × datas; catálogo ao usuário = Ajuda |
 | [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMENTO-PORTAL-COMERCIAL-1H.md) | Instrutor (agenda 1h) |
 | [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) | Admin de acessos |
 | [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) | Produto / norte das telas |

@@ -37,7 +37,7 @@ Rotas com parâmetros (`:userId`, `:codigo`, …) são resolvidas pelo SPA — *
 | Rota | Descrição | Permissão |
 |------|-----------|-----------|
 | `/apps/commercial` | Início — hero + eventos do dia + launcher de funcionalidades | `commercial.access` |
-| `/apps/commercial/help` | Manual do usuário — “Quero…” + FAQ (consulta permanente) | `commercial.access` |
+| `/apps/commercial/help` | Manual do usuário — “Quero…”, FAQ e **catálogo de termos** | `commercial.access` |
 | `/apps/commercial/overview` | Visão geral — KPIs (incl. carteira aberta), filtros/período, ROL + YoY, funil, série hit rate + YoY | `commercial.access` |
 | `/apps/commercial/my-tasks` (alias `/my-day`) | Minhas tarefas — worklist | `commercial.access` |
 | `/apps/commercial/users/:userId` | Perfil de usuário (SPA; não declarado no manifesto) | `commercial.access` |
@@ -69,7 +69,7 @@ Alias `/administration/members` → Equipe; detalhe legado `/seller-portfolios/:
 
 ## Pedidos em aberto
 
-Bancada operacional em `/apps/commercial/open-orders` (WF-02R). Contrato UX: [WIREFRAMES.md](../../docs/12-roadmap-e-evolucao/commercial/WIREFRAMES.md) § WF-02R / WF-02R-D.
+Bancada operacional em `/apps/commercial/open-orders` (WF-02R). Contrato UX: [WIREFRAMES.md](../../docs/12-roadmap-e-evolucao/commercial/WIREFRAMES.md) § WF-02R / WF-02R-D. Termos da coluna **Data de entrega** (Incoterm EXW/FOB/CIF, despacho, previsão OP, faturamento): [GLOSSARIO-TERMOS.md](../../docs/12-roadmap-e-evolucao/commercial/GLOSSARIO-TERMOS.md).
 
 Chip «Pode faturar» e badge da nav **Meus pedidos** usam a mesma regra: estoque **FIFO** calculado no BFF (`estoque_alocado` / `kanbanStageCounts.ready_to_invoice`). O MFE reaplica `allocateStockToOrders` só para previsão de OP — não para a contagem do badge.
 
@@ -198,6 +198,7 @@ Snapshot e KPIs locais da linha não bloqueiam o loading dos extras. Ao abrir:
 - OPs: prefetch limitado + fetch on-demand; prazo OTD + tabela PI; timeline; apontamentos agregados
 - BOM (`/products/{code}/structure`) com empty/erro/loading visíveis
 - Helps: `SectionHintLabel` + textos em [`src/content/helpTooltips.ts`](./src/content/helpTooltips.ts) (linguagem de negócio, sem paths de API)
+- Catálogo ao usuário (definição + onde aparece): [`src/content/userManualTermCatalog.ts`](./src/content/userManualTermCatalog.ts) na Ajuda `/help`
 
 A linha abre diretamente na ficha SPA
 `/open-orders/:filial/:pedido/:linha`, preservando o estado canônico completo da
@@ -362,7 +363,7 @@ TOKEN=<jwt> BASE_URL=http://localhost ./plugins/commercial/scripts/register-mani
 
 ## Conteúdo PT
 
-Help/tooltips/labels de UI em [`src/content/`](./src/content/) (`helpTooltips.ts`, `shellNav`, `homeLauncher`, `overviewMetricsCatalog`, `administration`). Não hardcode frases longas em JSX. No detalhe de pedidos, preferir hover no rótulo (`SectionHintLabel`), sem ícone «?» solto.
+Help/tooltips/labels de UI em [`src/content/`](./src/content/) (`helpTooltips.ts`, `userManualTermCatalog.ts`, `shellNav`, `homeLauncher`, `overviewMetricsCatalog`, `administration`). Não hardcode frases longas em JSX. No detalhe de pedidos, preferir hover no rótulo (`SectionHintLabel`), sem ícone «?» solto.
 
 Cobertura de `hint` / `headerHint` em campos e colunas: inventário e isenções em [`docs/12-roadmap-e-evolucao/commercial/HELP-COVERAGE.md`](../../docs/12-roadmap-e-evolucao/commercial/HELP-COVERAGE.md). Auditoria: `node scripts/audit_help_coverage.mjs` + gate `src/content/helpCoverage.structural.test.mjs` (C16 em `helpTooltips.structural.test.mjs`).
 

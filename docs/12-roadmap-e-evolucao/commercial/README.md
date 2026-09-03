@@ -14,6 +14,7 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | Documento | Conteúdo |
 |-----------|----------|
 | **[MANUAL-USUARIO-PORTAL-COMERCIAL.md](./MANUAL-USUARIO-PORTAL-COMERCIAL.md)** | **Manual do usuário** — “Quero…” → onde ir + FAQ |
+| **[GLOSSARIO-TERMOS.md](./GLOSSARIO-TERMOS.md)** | **Termos relacionados** — Incoterm (EXW/FOB/CIF), data de entrega × despacho × OP × faturamento |
 | **[TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMENTO-PORTAL-COMERCIAL-1H.md)** | **Roadmap treinamento 1h** — mapa de funcionalidades, agenda, FAQ por tópico |
 | **[GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)** | **Norte consolidação** — nav, perms, DoD, filtros, OV vs ADY |
 | **[PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)** | Playbook mestre — matriz dores, fases, gates |
@@ -71,7 +72,7 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | **Ata alinhamento 2** — inventário meta/rename/confirmação/sala/Diretoria/MyVEG; GR→TV | **Entregue (docs)** — [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) |
 | **Inventário Parcial + W0** — meta SI, labels, rename, filtros Conta, OTD copy, favoritos | **Existe** (W0) + revisão código + **§ Bloqueado por `.cursor`** — [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) |
 
-Helps do MFE (incl. chip **Escopo** = identidade da sessão, não filtro) vivem em `plugins/commercial/src/content/helpTooltips.ts` — já alinhados ao E5.1.
+Helps do MFE (incl. chip **Escopo** = identidade da sessão, não filtro) vivem em `plugins/commercial/src/content/helpTooltips.ts`. Catálogo ao usuário (definição + onde aparece): Ajuda `/help` · `userManualTermCatalog.ts`.
 
 ## Pacotes e URLs
 

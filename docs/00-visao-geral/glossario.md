@@ -869,6 +869,24 @@ A documentação oficial possui especificações para módulos de qualidade, com
 
 ---
 
+### Incoterm (Portal Comercial)
+
+Condição comercial do pedido (EXW, FOB, CIF). Define se o **cliente busca** ou se a **Delpi entrega**, e o que a coluna **Data de entrega** representa.
+
+Não é a data de chegada no cliente nem a data da nota fiscal.
+
+| Termo | Relação |
+|-------|---------|
+| **EXW** / **FOB** | Cliente busca — data de entrega = data na expedição |
+| **CIF** | Delpi entrega — data de entrega = saída da empresa |
+| **Data de despacho** | Saída registrada da fábrica (pode estar vazia) |
+| **Previsão entrega (OP)** | Disponibilidade pela produção, comparada à data de entrega |
+| **Data de faturamento** (OTD) | Nota fiscal / DatFat — outro evento |
+
+Detalhe e relações: [GLOSSARIO-TERMOS.md](../12-roadmap-e-evolucao/commercial/GLOSSARIO-TERMOS.md).
+
+---
+
 ## 10. Convenções de nomenclatura
 
 | Termo preferido | Evitar / legado | Observação |
@@ -892,4 +910,5 @@ docs/01-arquitetura/arquitetura-geral.md
 docs/02-infraestrutura/docker-compose.md
 docs/03-autenticacao-autorizacao/rbac.md
 docs/05-plugin-system/manifesto-plugin.md
+docs/12-roadmap-e-evolucao/commercial/GLOSSARIO-TERMOS.md
 ```
