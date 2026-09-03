@@ -114,6 +114,27 @@ def test_resolve_grounded_stage_narrate_insight_only():
     )
 
 
+def test_resolve_grounded_stage_interprete_resultado_is_insight_not_recap():
+    excerpt = {
+        "title": "Resultado da consulta",
+        "rowCount": 2,
+        "topKeys": ["10080001", "10080002"],
+    }
+
+    assert (
+        ChatTurnGroundingService.resolve_grounded_stage(
+            message="interprete o resultado da última consulta SQL",
+            excerpt=excerpt,
+            last_action={
+                "name": "external_action",
+                "path": "/data/sql",
+                "operationId": "execute_readonly_sql",
+            },
+        )
+        == "grounded_narrate_insight"
+    )
+
+
 def test_should_not_narrate_when_stock_expansion_requested():
     excerpt = {
         "title": "Estrutura 90260149",

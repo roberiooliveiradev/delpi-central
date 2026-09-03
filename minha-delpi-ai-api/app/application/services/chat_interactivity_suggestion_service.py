@@ -54,6 +54,19 @@ class ChatInteractivitySuggestionService:
         intent_route: dict | None = None,
         message: str | None = None,
     ) -> None:
+        from app.domain.services.chat_agent_personality_service import (
+            ChatAgentPersonalityService,
+        )
+        from app.domain.services.chat_agent_profile_service import ChatAgentProfileService
+
+        profile = ChatAgentProfileService.from_workspace(workspace_context)
+        personality = ChatAgentPersonalityService.from_profile(profile)
+
+        if not personality.suggest_follow_ups:
+            metadata.pop("interactivity", None)
+            cls._clear_prose_recommendation_channels(metadata)
+            return
+
         presentation = ChatPresentationInteractivityService.build_from_tool_calls(tool_calls)
 
         if presentation:
@@ -133,6 +146,11 @@ class ChatInteractivitySuggestionService:
             ),
             "suggestionsShown": [item.get("label") for item in primary + sum(more.values(), [])],
         }
+
+        # Canal único: chips de interatividade. Não espelhar as mesmas
+        # recomendações no box «Sugestão:» / dataAnswer (evita triplicar UX).
+        if primary or more:
+            cls._clear_prose_recommendation_channels(metadata)
 
         admin_debug = metadata.get("adminDebug")
 
@@ -517,6 +535,77 @@ class ChatInteractivitySuggestionService:
             "items": chips,
             "summary": summary,
         }
+
+    @classmethod
+    def _clear_prose_recommendation_channels(cls, metadata: dict) -> None:
+        """Remove recomendações espelhadas na prosa / box Sugestão quando há chips."""
+        data_answer = metadata.get("dataAnswer")
+
+        if isinstance(data_answer, dict):
+            data_answer = dict(data_answer)
+            data_answer["recommendations"] = []
+            summary = data_answer.get("summary")
+
+            if isinstance(summary, dict):
+                summary = dict(summary)
+                summary["nextAction"] = ""
+                data_answer["summary"] = summary
+
+            metadata["dataAnswer"] = data_answer
+
+        commentary = metadata.get("dataCommentary")
+
+        if isinstance(commentary, dict):
+            commentary = dict(commentary)
+            commentary["nextAction"] = ""
+            commentary["recommendations"] = []
+            metadata["dataCommentary"] = commentary
+
+        decision = metadata.get("presentationDecision")
+
+        if isinstance(decision, dict):
+            decision = dict(decision)
+            # Mantém só recomendações de *formato* (view); remove next-step genéricos.
+            remaining: list[dict[str, Any]] = []
+
+            for item in decision.get("recommendations") or []:
+                if not isinstance(item, dict):
+                    continue
+
+                view = str(item.get("view") or "").strip()
+
+                if view:
+                    remaining.append(item)
+
+            if remaining:
+                decision["recommendations"] = remaining
+            else:
+                decision.pop("recommendations", None)
+
+            metadata["presentationDecision"] = decision
+
+        for call in metadata.get("toolCalls") or []:
+            if not isinstance(call, dict):
+                continue
+
+            tool_meta = call.get("metadata")
+
+            if not isinstance(tool_meta, dict):
+                continue
+
+            nested_answer = tool_meta.get("dataAnswer")
+
+            if isinstance(nested_answer, dict):
+                nested_answer = dict(nested_answer)
+                nested_answer["recommendations"] = []
+                tool_meta["dataAnswer"] = nested_answer
+
+            nested_decision = tool_meta.get("presentationDecision")
+
+            if isinstance(nested_decision, dict):
+                nested_decision = dict(nested_decision)
+                nested_decision.pop("recommendations", None)
+                tool_meta["presentationDecision"] = nested_decision
 
     @classmethod
     def _max_primary(cls) -> int:

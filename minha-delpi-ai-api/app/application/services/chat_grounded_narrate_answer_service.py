@@ -35,9 +35,34 @@ class ChatGroundedNarrateAnswerService:
         if not isinstance(excerpt, dict) or not excerpt:
             return None
 
+        from app.domain.services.chat_turn_grounding_service import (
+            ChatTurnGroundingService,
+        )
+
+        # Pedidos de interpretação/insight: não devolver template — o pipeline
+        # injeta o contexto e a síntese LLM disserta sobre os dados.
+        if ChatTurnGroundingService.should_narrate_insight_only(message):
+            return None
+
         from app.application.services.chat_data_interpretation_answer_service import (
             ChatDataInterpretationAnswerService,
         )
+        from app.domain.services.chat_analysis_intent_service import (
+            ChatAnalysisIntentService,
+        )
+        from app.domain.services.chat_presentation_row_detail_answer_service import (
+            ChatPresentationRowDetailAnswerService,
+        )
+
+        if ChatAnalysisIntentService.is_data_interpretation_request(
+            message,
+            previous_messages,
+        ) and not ChatPresentationRowDetailAnswerService.looks_like_request(message):
+            if not ChatAnalysisIntentService.is_email_from_operational_data_request(
+                message,
+                previous_messages,
+            ):
+                return None
 
         interpreted = ChatDataInterpretationAnswerService.build_answer(
             message,

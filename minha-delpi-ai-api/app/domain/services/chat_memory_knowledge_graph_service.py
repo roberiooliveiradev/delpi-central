@@ -44,19 +44,31 @@ class ChatMemoryKnowledgeGraphService:
             nodes.append({"id": "topic", "type": "topic", "label": topic[:80]})
 
         task_node_id = None
+        task_label = ""
 
         if task:
             task_id = str(task.get("type") or task.get("label") or "task")
             task_node_id = f"task:{task_id}"
-            nodes.append(
-                {
-                    "id": task_node_id,
-                    "type": "task",
-                    "label": str(task.get("label") or task_id)[:80],
-                }
-            )
+            task_label = str(task.get("label") or task_id).strip()[:80]
+            # Evita «SQL · SQL» quando tópico e tarefa repetem o mesmo rótulo.
+            if task_label and task_label.casefold() != topic.casefold():
+                nodes.append(
+                    {
+                        "id": task_node_id,
+                        "type": "task",
+                        "label": task_label,
+                    }
+                )
+            elif task_label and not topic:
+                nodes.append(
+                    {
+                        "id": task_node_id,
+                        "type": "task",
+                        "label": task_label,
+                    }
+                )
 
-            if topic:
+            if topic and any(node.get("id") == task_node_id for node in nodes):
                 edges.append({"from": "topic", "to": task_node_id, "kind": "active_task"})
 
         for key, value in entities.items():
@@ -71,7 +83,7 @@ class ChatMemoryKnowledgeGraphService:
             node_id = f"entity:{key}"
             nodes.append({"id": node_id, "type": "entity", "label": label})
 
-            if task_node_id:
+            if task_node_id and any(node.get("id") == task_node_id for node in nodes):
                 edges.append(
                     {
                         "from": task_node_id,
@@ -82,23 +94,26 @@ class ChatMemoryKnowledgeGraphService:
 
         last_action = snapshot.get("lastAction")
 
-        if isinstance(last_action, dict) and last_action.get("name"):
-            nodes.append(
-                {
-                    "id": "action:last",
-                    "type": "action",
-                    "label": str(last_action["name"])[:60],
-                }
-            )
+        if isinstance(last_action, dict):
+            action_label = cls._user_facing_action_label(last_action)
 
-            if entities.get("productCode"):
-                edges.append(
+            if action_label:
+                nodes.append(
                     {
-                        "from": "action:last",
-                        "to": "entity:productCode",
-                        "kind": "last_query",
+                        "id": "action:last",
+                        "type": "action",
+                        "label": action_label[:60],
                     }
                 )
+
+                if entities.get("productCode"):
+                    edges.append(
+                        {
+                            "from": "action:last",
+                            "to": "entity:productCode",
+                            "kind": "last_query",
+                        }
+                    )
 
         recall = snapshot.get("episodicRecall")
 
@@ -144,6 +159,38 @@ class ChatMemoryKnowledgeGraphService:
             "nodeCount": len(nodes),
             "edgeCount": len(edges),
         }
+
+    @classmethod
+    def _user_facing_action_label(cls, last_action: dict[str, Any]) -> str:
+        """Rótulo amigável para a barra de contexto — sem `external_action` técnico."""
+        domain = str(
+            last_action.get("apiRouteDomain")
+            or last_action.get("parameterStrategy")
+            or ""
+        ).strip()
+        result_type = str(last_action.get("resultType") or "").strip()
+        operation_id = str(
+            last_action.get("operationId") or last_action.get("operation_id") or ""
+        ).strip()
+        path = str(last_action.get("path") or "").strip()
+        name = str(last_action.get("name") or "").strip()
+
+        if domain and domain.casefold() not in {"external_action", "generic"}:
+            label = domain.replace("_", " ").strip()
+            if result_type and result_type.casefold() not in {label.casefold(), "table"}:
+                return f"{label} · {result_type}"
+            return label.capitalize() if label.isalpha() else label
+
+        if operation_id and "sql" in operation_id.casefold():
+            return "Consulta SQL"
+
+        if path and "/sql" in path.casefold():
+            return "Consulta SQL"
+
+        if name and name.casefold() not in {"external_action", "execute_external_action"}:
+            return name[:60]
+
+        return ""
 
     @classmethod
     def format_prompt_block(cls, snapshot: dict | None) -> str | None:

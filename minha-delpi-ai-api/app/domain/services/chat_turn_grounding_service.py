@@ -223,6 +223,9 @@ class ChatTurnGroundingService:
         }:
             return follow_up_stage
 
+        if cls.should_narrate_insight_only(message):
+            return "grounded_narrate_insight"
+
         if interpretation.decision == "narrate_recap" and follow_up_stage:
             return follow_up_stage
 
@@ -234,9 +237,6 @@ class ChatTurnGroundingService:
 
         if cls.should_enrich_before_insight(message, excerpt):
             return "grounded_enrich_insight"
-
-        if cls.should_narrate_insight_only(message):
-            return "grounded_narrate_insight"
 
         if interpretation.suppress_broad_narrate:
             return None

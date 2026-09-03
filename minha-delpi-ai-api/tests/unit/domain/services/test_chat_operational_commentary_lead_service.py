@@ -31,7 +31,8 @@ def test_brief_profile_limits_highlights_and_skips_attention():
     assert "Limitações" not in lead
 
 
-def test_expanded_profile_includes_attention_limitations_and_next_steps():
+def test_expanded_profile_includes_attention_limitations_without_next_steps_in_prose():
+    """Próximos passos vivem nos chips de interatividade — não na prosa do lead."""
     lead = ChatOperationalCommentaryLeadService.format_lead(
         _commentary(),
         depth="expanded",
@@ -43,5 +44,15 @@ def test_expanded_profile_includes_attention_limitations_and_next_steps():
     assert "Atenção 4" in lead
     assert "Limitações" in lead
     assert "Insight narrativo." in lead
-    assert "Próximos passos" in lead
-    assert "Passo 3" in lead
+    assert "Próximos passos" not in lead
+    assert "Passo 3" not in lead
+
+
+def test_standard_profile_skips_next_steps_in_prose():
+    lead = ChatOperationalCommentaryLeadService.format_lead(
+        _commentary(),
+        depth="standard",
+    )
+
+    assert "Destaque A" in lead
+    assert "Próximos passos" not in lead

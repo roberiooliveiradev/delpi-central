@@ -83,3 +83,39 @@ def test_build_answer_from_excerpt_top_keys_fallback():
     assert "50230130" in answer
     assert "6" in answer
     assert "reformular" not in answer.lower()
+
+
+def test_build_answer_returns_none_for_explicit_interpretation_request():
+    """«Interprete o resultado» deve forçar síntese LLM, não template de contagem."""
+    previous = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": _structure_tool_meta(),
+                    }
+                ]
+            },
+        }
+    ]
+    workspace = {
+        "turnGrounding": {"status": "grounded", "stage": "grounded_narrate_insight"},
+        "workingMemory": {
+            "lastResultExcerpt": {
+                "title": "Resultado da consulta",
+                "rowCount": 2,
+                "topKeys": ["10080001"],
+            }
+        },
+    }
+
+    answer = ChatGroundedNarrateAnswerService.build_answer(
+        "interprete o resultado da última consulta SQL",
+        previous,
+        workspace_context=workspace,
+        tool_context={"groundedNarrate": True},
+    )
+
+    assert answer is None

@@ -425,43 +425,66 @@ class ChatTurnPreparationPostToolResolutionService:
                         pipeline_stages.append("grounded_narrate_direct")
 
         if not direct_answer and skip_tools_for_data_interpretation:
-            from app.application.services.chat_data_interpretation_answer_service import (
-                ChatDataInterpretationAnswerService,
+            from app.domain.services.chat_turn_grounding_service import (
+                ChatTurnGroundingService,
+            )
+            from app.domain.services.chat_presentation_row_detail_answer_service import (
+                ChatPresentationRowDetailAnswerService,
             )
 
-            interpreted = ChatDataInterpretationAnswerService.build_answer(
-                message,
-                history_source,
-            )
-
-            if interpreted:
-                direct_answer = interpreted
-                skip_rag = True
-
-                from app.application.services.chat_text_task_composer_service import (
-                    ChatTextTaskComposerService,
+            # Interpretação explícita → síntese LLM com fatos já no contexto.
+            if ChatTurnGroundingService.should_narrate_insight_only(
+                message
+            ) or (
+                ChatAnalysisIntentService.is_data_interpretation_request(
+                    message,
+                    history_source,
                 )
-                from app.domain.services.chat_presentation_row_detail_answer_service import (
-                    ChatPresentationRowDetailAnswerService,
+                and not ChatPresentationRowDetailAnswerService.looks_like_request(message)
+                and not ChatAnalysisIntentService.is_email_from_operational_data_request(
+                    message,
+                    history_source,
+                )
+            ):
+                tool_context = dict(tool_context)
+                tool_context["requiresDataInterpretationLlm"] = True
+                if "data_interpretation_llm" not in pipeline_stages:
+                    pipeline_stages.append("data_interpretation_llm")
+            else:
+                from app.application.services.chat_data_interpretation_answer_service import (
+                    ChatDataInterpretationAnswerService,
                 )
 
-                if (
-                    not ChatPresentationRowDetailAnswerService.looks_like_request(message)
-                    and ChatAnalysisIntentService.is_email_from_operational_data_request(
-                        message,
-                        history_source,
-                    )
-                ):
-                    draft_meta = ChatTextTaskComposerService.build_operational_email_with_metadata(
-                        message=message,
-                        previous_messages=history_source,
+                interpreted = ChatDataInterpretationAnswerService.build_answer(
+                    message,
+                    history_source,
+                )
+
+                if interpreted:
+                    direct_answer = interpreted
+                    skip_rag = True
+
+                    from app.application.services.chat_text_task_composer_service import (
+                        ChatTextTaskComposerService,
                     )
 
-                    if draft_meta:
-                        tool_context["operationalEmailDraft"] = draft_meta
+                    if (
+                        not ChatPresentationRowDetailAnswerService.looks_like_request(message)
+                        and ChatAnalysisIntentService.is_email_from_operational_data_request(
+                            message,
+                            history_source,
+                        )
+                    ):
+                        draft_meta = ChatTextTaskComposerService.build_operational_email_with_metadata(
+                            message=message,
+                            previous_messages=history_source,
+                        )
 
-                        if "email_operational" not in pipeline_stages:
-                            pipeline_stages.append("email_operational")
+                        if draft_meta:
+                            tool_context["operationalEmailDraft"] = draft_meta
+
+                            if "email_operational" not in pipeline_stages:
+                                pipeline_stages.append("email_operational")
 
         from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
 

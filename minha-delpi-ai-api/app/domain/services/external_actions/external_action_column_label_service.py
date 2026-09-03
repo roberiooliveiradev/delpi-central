@@ -973,6 +973,11 @@ class ExternalActionColumnLabelService:
 
             return " ".join(part.capitalize() for part in parts)
 
+        # Alias SQL / token ALL CAPS (`CODIGO`, `GRUPO`): não tratar como camelCase
+        # — o lookbehind `(?=[A-Z])` inseria espaço entre cada letra («C O D I G O»).
+        if re.fullmatch(r"[A-Z][A-Z0-9]*", normalized):
+            return normalized.capitalize() if normalized.isalpha() else normalized
+
         spaced = re.sub(r"(?<!^)(?=[A-Z])", " ", normalized)
         parts = [part for part in spaced.split() if part]
 

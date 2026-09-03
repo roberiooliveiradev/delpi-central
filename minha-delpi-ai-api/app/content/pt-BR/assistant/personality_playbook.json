@@ -18,6 +18,9 @@
     "proactivity": true,
     "suggestFollowUps": true
   },
+  "personalityFieldHelp": {
+    "suggestFollowUps": "Quando ativo, o chat mostra chips «Próximos passos» após respostas com dados. Quando desligado, os chips e o box «Sugestão:» de próximos passos ficam ocultos — a prosa não lista próximos passos."
+  },
   "feedbackReasons": [
     {
       "id": "lost_context",

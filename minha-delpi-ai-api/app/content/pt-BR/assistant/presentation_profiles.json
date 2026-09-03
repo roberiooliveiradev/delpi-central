@@ -433,6 +433,7 @@
     "kpi_series": "llm",
     "kpi_dashboard": "llm",
     "tree_hierarchy": "llm",
+    "sql": "llm",
     "generic": "llm"
   },
   "proseCompositionPolicyByProfile": {
@@ -1268,7 +1269,9 @@
         "sql"
       ],
       "commentaryProfileKey": "generic_list",
-      "chartPolicy": "skip"
+      "chartPolicy": "skip",
+      "humanizedNarrative": "skip",
+      "dataAnswerLeadAlignment": "preserve_template"
     },
     "system": {
       "defaultViewPolicy": "generic",

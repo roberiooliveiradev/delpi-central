@@ -779,6 +779,8 @@ class ChatTurnPreparationToolRoutingService:
                         workspace_context=workspace_context,
                     )
                     analysis_mode = True
+                    tool_context = dict(tool_context)
+                    tool_context["requiresDataInterpretationLlm"] = True
                 elif stage == "grounded_challenge_result":
                     from app.application.services.chat_follow_up_grounded_answer_service import (
                         ChatFollowUpGroundedAnswerService,

@@ -89,3 +89,32 @@ def test_turn_mode_consume_prior_for_unclear_request():
     assert mode == ChatTurnModeService.CONSUME_PRIOR
     assert ChatTurnModeService.should_skip_llm(mode)
     assert ChatTurnModeService.should_skip_agentic(mode)
+
+
+def test_turn_mode_llm_narrate_for_data_interpretation_insight():
+    mode = ChatTurnModeService.resolve(
+        message="interprete o resultado da última consulta SQL",
+        tool_context={"requiresDataInterpretationLlm": True, "directAnswer": "template fraco"},
+        direct_answer="template fraco",
+        pipeline_stages=["grounded_narrate_insight"],
+        tool_calls=[],
+    )
+
+    assert mode == ChatTurnModeService.LLM_NARRATE
+    assert not ChatTurnModeService.should_skip_llm(mode)
+
+
+def test_response_mode_clears_direct_answer_for_insight_llm():
+    direct, skip_rag, effect = ChatResponseModeService.apply_turn_direct_answer_policy(
+        message="interprete o resultado da última consulta SQL",
+        response_mode="normal",
+        direct_answer="Foram retornados 2 registros.",
+        skip_rag=True,
+        tool_calls=[],
+        tool_context={"requiresDataInterpretationLlm": True},
+        pipeline_stages=["grounded_narrate_insight", "data_interpretation_llm"],
+    )
+
+    assert direct is None
+    assert effect == "llm_synthesis"
+    assert skip_rag is True

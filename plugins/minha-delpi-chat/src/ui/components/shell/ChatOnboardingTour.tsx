@@ -377,7 +377,7 @@ export function ChatOnboardingTour({
             suggestions={effect?.demoSuggestions ?? []}
             onUseSuggestion={(query) => onDemoQuery?.(query)}
             groupLabel="Próximos passos (exemplo)"
-            ariaLabel="Demonstração de próximos passos"
+            ariaLabel="Demonstração de próximos passos — ativáveis na personalidade do agente (sugerir follow-ups)"
           />
         </div>
       ) : null}

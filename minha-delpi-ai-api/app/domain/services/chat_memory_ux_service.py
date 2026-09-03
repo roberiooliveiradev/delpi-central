@@ -122,11 +122,25 @@ class ChatMemoryUxService:
         graph = snap.get("memoryGraph") or {}
 
         if isinstance(graph, dict) and graph.get("nodes"):
-            labels = [
-                str(node.get("label") or "")
-                for node in graph.get("nodes") or []
-                if isinstance(node, dict) and node.get("label")
-            ]
+            labels: list[str] = []
+            seen: set[str] = set()
+
+            for node in graph.get("nodes") or []:
+                if not isinstance(node, dict):
+                    continue
+
+                label = str(node.get("label") or "").strip()
+
+                if not label:
+                    continue
+
+                key = label.casefold()
+
+                if key in seen:
+                    continue
+
+                seen.add(key)
+                labels.append(label)
 
             if labels:
                 return " · ".join(labels[:6])

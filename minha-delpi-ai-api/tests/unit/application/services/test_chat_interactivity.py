@@ -297,5 +297,58 @@ def test_max_primary_is_four():
     }
 
     ChatInteractivitySuggestionService.attach_to_assistant_metadata(metadata)
+    interactivity = metadata.get("interactivity") or {}
+    assert len(interactivity.get("suggestions") or []) <= 4
 
-    assert len(metadata["interactivity"]["suggestions"]) <= 4
+
+def test_interactivity_clears_data_answer_recommendations_when_chips_present():
+    metadata = {
+        "followUpSuggestions": [
+            {"label": "Interpretar resultado", "query": "interprete o resultado"},
+            {"label": "Mostrar SQL", "query": "mostre o sql"},
+        ],
+        "dataAnswer": {
+            "summary": {"answer": "2 registros", "nextAction": "Filtrar"},
+            "recommendations": [
+                {"label": "Filtrar os registros por critério relevante", "query": "filtrar"}
+            ],
+        },
+        "presentationDecision": {
+            "selected": "table",
+            "recommendations": [
+                {"label": "Filtrar os registros", "query": "filtrar"},
+                {"label": "Ver em gráfico", "query": "gere gráfico", "view": "chart"},
+            ],
+        },
+    }
+
+    ChatInteractivitySuggestionService.attach_to_assistant_metadata(metadata)
+
+    assert metadata["interactivity"]["suggestions"]
+    assert metadata["dataAnswer"]["recommendations"] == []
+    assert metadata["dataAnswer"]["summary"]["nextAction"] == ""
+    remaining = metadata["presentationDecision"].get("recommendations") or []
+    assert all(item.get("view") for item in remaining)
+
+
+def test_interactivity_disabled_when_personality_suggest_follow_ups_false():
+    metadata = {
+        "followUpSuggestions": [
+            {"label": "Interpretar resultado", "query": "interprete o resultado"},
+        ],
+        "dataAnswer": {
+            "recommendations": [{"label": "Filtrar", "query": "filtrar"}],
+        },
+    }
+
+    ChatInteractivitySuggestionService.attach_to_assistant_metadata(
+        metadata,
+        workspace_context={
+            "agent": {
+                "metadata": {"personality": {"suggestFollowUps": False}},
+            }
+        },
+    )
+
+    assert "interactivity" not in metadata
+    assert metadata["dataAnswer"]["recommendations"] == []

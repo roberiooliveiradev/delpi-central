@@ -223,10 +223,10 @@
         "summaryLineLimit": 3,
         "attentionLimit": 3,
         "limitationsLimit": 0,
-        "nextStepsLimit": 1,
+        "nextStepsLimit": 0,
         "includeNarrativeInsight": false,
         "includeSummaryWhenNoHighlights": true,
-        "includeNextSteps": true
+        "includeNextSteps": false
       },
       "expanded": {
         "highlightLimit": 6,
@@ -234,10 +234,10 @@
         "summaryLineLimit": 3,
         "attentionLimit": 6,
         "limitationsLimit": 4,
-        "nextStepsLimit": 3,
+        "nextStepsLimit": 0,
         "includeNarrativeInsight": true,
         "includeSummaryWhenNoHighlights": true,
-        "includeNextSteps": true
+        "includeNextSteps": false
       }
     }
   }

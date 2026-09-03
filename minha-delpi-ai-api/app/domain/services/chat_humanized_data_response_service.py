@@ -365,6 +365,7 @@ class ChatHumanizedDataResponseService:
         profile_key: str,
         alert_level: str,
     ) -> str:
+        del alert_level
         explicit = str(commentary.get("nextAction") or "").strip()
 
         if explicit:
@@ -389,10 +390,9 @@ class ChatHumanizedDataResponseService:
             if action:
                 return action
 
-        if alert_level == "ok":
-            return "Use os painéis abaixo para auditar detalhes ou aprofundar a análise."
-
-        return "Revise os pontos de atenção e valide a causa operacional antes de decidir."
+        # Próximos passos ficam nos chips de interatividade — não inventar
+        # bullet genérico na prosa (evita «Próximos passos» duplicado).
+        return ""
 
     @classmethod
     def _build_facts(cls, highlights: list[str]) -> list[dict[str, str]]:

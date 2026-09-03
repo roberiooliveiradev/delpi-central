@@ -151,8 +151,23 @@ def test_label_for_resolves_snake_case_dictionary_from_camel_case_key():
 def test_label_for_humanizes_unknown_snake_and_camel_keys():
     service = ExternalActionColumnLabelService()
 
-    assert service.label_for("some_custom_metric") == "Some Custom Metric"
-    assert service.label_for("someCustomMetric") == "Some Custom Metric"
+    assert service.label_for("some_custom_metric", enable_discovery=False) == "Some Custom Metric"
+    assert service.label_for("someCustomMetric", enable_discovery=False) == "Some Custom Metric"
+
+
+def test_humanize_all_caps_sql_alias_does_not_space_letters():
+    """Regressão: CODIGO/GRUPO viravam «C O D I G O» / «G R U P O» no header da tabela SQL."""
+    assert ExternalActionColumnLabelService._humanize_field_key("CODIGO") == "Codigo"
+    assert ExternalActionColumnLabelService._humanize_field_key("GRUPO") == "Grupo"
+    assert ExternalActionColumnLabelService._humanize_field_key("DESCRICAO") == "Descricao"
+    assert ExternalActionColumnLabelService._humanize_field_key("SC2010") == "SC2010"
+    assert ExternalActionColumnLabelService._humanize_field_key("productCode") == "Product Code"
+    assert ExternalActionColumnLabelService._humanize_field_key("B1_COD") == "B1 Cod"
+
+    service = ExternalActionColumnLabelService()
+
+    assert service.label_for("CODIGO", enable_discovery=False) == "Codigo"
+    assert service.label_for("GRUPO", enable_discovery=False) == "Grupo"
 
 
 def test_format_field_value_applies_currency_percent_and_days():

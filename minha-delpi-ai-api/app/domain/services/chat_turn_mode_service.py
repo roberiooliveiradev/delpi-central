@@ -23,7 +23,7 @@ class ChatTurnModeService:
         pipeline_stages: list[str] | None = None,
         tool_calls: list | None = None,
     ) -> str:
-        del message
+        user_message = message
         context = tool_context if isinstance(tool_context, dict) else {}
         answer = str(direct_answer or context.get("directAnswer") or "").strip()
         stages = {str(stage).strip() for stage in (pipeline_stages or []) if str(stage).strip()}
@@ -70,10 +70,45 @@ class ChatTurnModeService:
         ):
             return cls.CONSUME_PRIOR
 
+        if cls._requires_llm_narration(
+            message=user_message,
+            tool_context=context,
+            stages=stages,
+        ):
+            return cls.LLM_NARRATE
+
         if answer and not tool_calls:
             return cls.CONSUME_PRIOR
 
         return cls.LLM_NARRATE
+
+    @classmethod
+    def _requires_llm_narration(
+        cls,
+        *,
+        message: str | None,
+        tool_context: dict,
+        stages: set[str],
+    ) -> bool:
+        if tool_context.get("groundedInsightNarrate") or tool_context.get(
+            "requiresDataInterpretationLlm"
+        ):
+            return True
+
+        if stages.intersection(
+            {
+                "grounded_narrate_insight",
+                "grounded_enrich_insight",
+                "data_interpretation",
+            }
+        ):
+            return True
+
+        from app.domain.services.chat_turn_grounding_service import (
+            ChatTurnGroundingService,
+        )
+
+        return ChatTurnGroundingService.should_narrate_insight_only(str(message or ""))
 
     @classmethod
     def should_skip_llm(cls, mode: str) -> bool:
