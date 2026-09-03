@@ -585,7 +585,15 @@ export function OpenOrdersTable({
             <DataTable
               rows={rows}
               rowKey={rowKey}
-              classNames={cmDataTableClassNames}
+              classNames={{
+                ...cmDataTableClassNames,
+                wrapSection: [
+                  cmDataTableClassNames.wrapSection,
+                  cmDataTableClassNames.sentenceHeadersWrap,
+                ]
+                  .filter(Boolean)
+                  .join(" "),
+              }}
               labels={{ ...cmDataTableLabels, emptyMessage }}
               layout="section"
               loading={loading}

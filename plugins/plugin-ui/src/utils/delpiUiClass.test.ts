@@ -100,6 +100,7 @@ describe("kits DataTable/Pagination — classes delpi-ui", () => {
     const table = dataTableBemClasses("dp");
     expect(table.sortButton).toContain("delpi-ui-table__sort-button");
     expect(table.wrapSection).toContain("delpi-ui-table-wrap--section");
+    expect(table.sentenceHeadersWrap).toContain("delpi-ui-table-wrap--sentence-headers");
     expect(table.sortableTable).toContain("delpi-ui-table--sortable");
     expect(table.compactTable).toContain("delpi-ui-table--compact");
     expect(table.colNumeric).toContain("delpi-ui-table__col--numeric");

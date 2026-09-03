@@ -107,7 +107,7 @@ export function buildOpenOrdersProductionDetailViewModel(
     },
     {
       id: "dispatch",
-      label: "Despacho",
+      label: "Data de despacho",
       value: item.data_despacho ? formatDisplayDate(item.data_despacho) : "Não informado",
     },
     {

@@ -841,7 +841,7 @@ Helpers: `chartToolbarBemClasses(prefix)` e `createDashboardChartToolbarKit({ pr
 
 ### `DataTable` + `DataTableSection`
 
-Cabeçalho operacional (modo claro): navy (`--delpi-ui-title` / `--secundary`) com texto branco, no mesmo padrão do dashboard 5S. `grid-preview` mantém o wash claro.
+Cabeçalho operacional (modo claro): navy (`--delpi-ui-title` / `--secundary`) com texto branco, no mesmo padrão do dashboard 5S. `grid-preview` mantém o wash claro. Opt-in `sentenceHeadersWrap` (`delpi-ui-table-wrap--sentence-headers`) desliga o `uppercase` dos `th` — use quando os rótulos da coluna devem aparecer como no catálogo (ex.: «Data de despacho», não «DATA DE DESPACHO»).
 
 Tabela genérica com sort, empty/loading e seção completa (busca, page size, paginação, loading cards).
 

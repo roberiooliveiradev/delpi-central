@@ -89,6 +89,11 @@ table.delpi-ui-table:not(.delpi-ui-table--grid-preview) th {
   padding-block: var(--delpi-ui-table-header-pad-y, 10px);
 }
 
+.delpi-ui-table-wrap--sentence-headers table.delpi-ui-table:not(.delpi-ui-table--grid-preview) th {
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
 table.delpi-ui-table--sortable th {
   padding: 0;
 }

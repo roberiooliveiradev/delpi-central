@@ -166,14 +166,15 @@ export const CM_HELP = {
       entregue: "Quantidade já entregue / faturada desta linha.",
       saldo: "Quantidade ainda em aberto (pedida − entregue).",
       no_estoque:
-        "Estoque físico alocado a esta linha (FIFO por produto/unidade no cliente — não é reserva formal).",
+        "Estoque físico alocado a esta linha (do mais antigo para o mais novo, por produto e unidade). Não é reserva formal.",
       cobertura:
         "Proporção estoque alocado ÷ saldo em aberto. Verde ≈ 100%; amarelo parcial; vermelho sem cobertura.",
       data_entrega:
         "Data de faturamento prometida no pedido (compromisso comercial). Não indica chegada física ao cliente — depende de FOB/CIF e logística.",
       previsao_entrega_op:
         "Previsão de disponibilidade pela cobertura FIFO das OPs abertas. Clique para o detalhe da linha. O badge compara previsão OP × data de faturamento do pedido.",
-      data_despacho: "Data de despacho registrada para o item, quando houver.",
+      data_despacho:
+        "Data combinada para o despacho da linha (saída da fábrica). Não é a chegada ao cliente — depende de FOB/CIF e logística. Quando vazia, ainda não há despacho registrado («Não informado»).",
       valor_aberto: "Valor em aberto da linha (saldo × preço).",
       status:
         "Situação operacional de estoque/atraso calculada no cliente: pode faturar, parcial, sem estoque ou atrasado.",
@@ -228,7 +229,8 @@ export const CM_HELP = {
         "Como a linha está coberta: estoque, OP completa, parcial, sem OP ou OP sem data prevista.",
       entregaPedido:
         "Data de faturamento prometida no pedido de venda. Não afirma chegada ao cliente (FOB/CIF).",
-      despacho: "Data de despacho informada no sistema, quando houver.",
+      despacho:
+        "Data combinada para o despacho da linha (saída da fábrica). Não afirma chegada ao cliente (FOB/CIF). Vazio = ainda não registrado.",
       previsaoEntrega:
         "Data (ou rótulo) da previsão pela OP mais tarde necessária na alocação FIFO.",
       chartCobertura:

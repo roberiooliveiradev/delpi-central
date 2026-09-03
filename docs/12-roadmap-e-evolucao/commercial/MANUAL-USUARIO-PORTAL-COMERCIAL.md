@@ -152,6 +152,9 @@ Não — veja a tabela do §1. Pedido = operação; OV = oportunidade; Proposta 
 **Recebi (ou não) aviso de “Pronto para faturar”.**  
 Quem recebe o aviso precisa da permissão de **notificação de faturamento**. Ser membro da carteira sozinho não garante o aviso.
 
+**Qual a diferença entre data de faturamento, despacho e previsão OP?**  
+**Faturamento** é a data prometida da linha (compromisso comercial). **Despacho** é a saída da fábrica, quando houver (coluna **Data de despacho**). **Previsão OP** é a disponibilidade pela produção — o badge compara essa previsão com a data de faturamento.
+
 **Consigo confirmar prazo / confirmação comercial aqui?**  
 Ainda **não** é função deste Portal. Use o processo atual da empresa até a feature existir.
 
@@ -228,6 +231,7 @@ Pontualidade compara **data de faturamento** com a **data prometida** (veja a aj
 | OV | Oportunidade / proposta AD1010 |
 | ADY | Documento de proposta + PDF |
 | FIFO (estoque) | Estoque alocado do mais antigo para o mais novo entre pedidos |
+| Data de despacho | Data combinada para a saída da fábrica; vazia quando ainda não registrada |
 | SC / ES | Unidades (filiais) nos filtros |
 
 ---

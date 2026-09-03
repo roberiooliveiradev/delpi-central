@@ -191,6 +191,10 @@ export const USER_MANUAL_CONTENT = {
           a: "Não. Pedido = operação; OV = oportunidade; Proposta = documento/PDF.",
         },
         {
+          q: "Qual a diferença entre data de faturamento, despacho e previsão OP?",
+          a: "Faturamento é a data prometida da linha (compromisso comercial). Despacho é a saída da fábrica, quando houver. Previsão OP é a disponibilidade pela produção — o badge compara essa previsão com a data de faturamento.",
+        },
+        {
           q: "Não recebi aviso de Pronto para faturar",
           a: "Quem recebe o aviso precisa da permissão de notificação de faturamento. Ser membro da carteira sozinho não garante o aviso.",
         },
@@ -236,6 +240,7 @@ export const USER_MANUAL_CONTENT = {
         { term: "Meta", meaning: "Meta do Indicadores Estratégicos, proporcional ao período." },
         { term: "OTD", meaning: "Pontualidade: faturamento vs. data prometida." },
         { term: "FIFO", meaning: "Estoque alocado do mais antigo para o mais novo entre pedidos." },
+        { term: "Data de despacho", meaning: "Data combinada para a saída da fábrica; vazia quando ainda não registrada." },
         { term: "SC / ES", meaning: "Unidades (filiais) nos filtros." },
       ],
     },

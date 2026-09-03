@@ -29,13 +29,14 @@ export type TableColumnDef = {
   className?: string;
 };
 
-/** Colunas default enxutas (WF-02R-T). */
+/** Colunas default enxutas (WF-02R-T), com as três datas operacionais visíveis. */
 export const DEFAULT_VISIBLE_COLUMN_KEYS: readonly TableColumnKey[] = [
   "nome_cliente",
   "pedido",
   "produto",
   "cobertura",
   "data_entrega",
+  "data_despacho",
   "previsao_entrega_op",
   "status",
   "valor_aberto",
@@ -53,11 +54,11 @@ export const TABLE_COLUMNS: TableColumnDef[] = [
   { key: "quantidade", label: "Qtd." },
   { key: "entregue", label: "Entregue" },
   { key: "saldo", label: "Saldo", sortable: true },
-  { key: "no_estoque", label: "Est. alocado" },
+  { key: "no_estoque", label: "Estoque alocado" },
   { key: "cobertura", label: "Cobertura", sortable: true },
   { key: "data_entrega", label: "Data de faturamento", sortable: true },
+  { key: "data_despacho", label: "Data de despacho", sortable: true },
   { key: "previsao_entrega_op", label: "Previsão entrega (OP)", sortable: true },
-  { key: "data_despacho", label: "Despacho", sortable: true },
   { key: "valor_aberto", label: "Valor aberto", sortable: true },
   { key: "status", label: "Status estoque", sortable: true },
   { key: "atraso_dias", label: "Atraso (dias)", sortable: true },

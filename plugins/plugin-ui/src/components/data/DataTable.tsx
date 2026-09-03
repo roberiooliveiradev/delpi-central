@@ -79,6 +79,8 @@ export type DataTableClassNames = {
   wrapEmbedded: string;
   /** Wrapper padrão (sem --section/--embedded). */
   wrap?: string;
+  /** Wrapper com cabeçalhos em caixa de sentença (sem uppercase do kit). */
+  sentenceHeadersWrap?: string;
   /** Container externo opcional (ex.: dm-datatable). */
   outerRoot?: string;
   /** Área com scroll horizontal opcional (ex.: dm-datatable__scroll). */
@@ -197,6 +199,7 @@ export function dataTableBemClasses(prefix: string): DataTableClassNames {
   const tableDual = delpiUiClass(table, ui);
   return {
     wrap: delpiUiClass(wrap, uiWrap),
+    sentenceHeadersWrap: withBemModifier(delpiUiClass(wrap, uiWrap), "sentence-headers"),
     wrapSection: delpiUiClass(
       `${wrap} ${wrap}--section`,
       `${uiWrap} ${uiWrap}--section`,

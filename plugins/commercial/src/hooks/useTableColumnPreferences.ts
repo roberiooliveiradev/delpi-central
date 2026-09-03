@@ -9,7 +9,7 @@ import {
   type TableColumnPreferences,
 } from "../utils/tableColumns";
 
-const STORAGE_KEY = "commercial:open-orders:table-columns:v7";
+const STORAGE_KEY = "commercial:open-orders:table-columns:v8";
 const LEGACY_STORAGE_KEYS = [
   "commercial:open-orders:table-columns:v6",
   "commercial:open-orders:table-columns:v5",
