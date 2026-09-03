@@ -1,5 +1,6 @@
 /**
- * Copy PT da aba Conta · Histórico (filtros, série, avisos de NF).
+ * Copy PT da aba Conta · Histórico (filtros, série, avisos de NF)
+ * e do painel Faturamento da Minha Carteira (mix + ABC).
  */
 export const CUSTOMER_BILLING_CONTENT = {
   filtersSectionTitle: "Filtros",
@@ -8,4 +9,35 @@ export const CUSTOMER_BILLING_CONTENT = {
     "Notas canceladas no Protheus (exclusão lógica) não aparecem nesta lista.",
   showTrendLine: "Linha de tendência",
   trendLineSeriesName: "Tendência",
+  portfolioFiltersAria: "Filtros do faturamento",
+  filterCustomer: "Cliente",
+  filterCustomerEmpty: "Todos os clientes",
+  filterProductGroup: "Família",
+  filterProductGroupEmpty: "Todas as famílias",
+  filterProduct: "Produto",
+  filterProductEmpty: "Todos os produtos",
+  filterMarket: "Mercado",
+  filterMarketEmpty: "Todos",
+  marketDomestic: "Interno",
+  marketExport: "Externo",
+  byProductTitle: "Receita operacional por produto",
+  byProductGroupTitle: "Receita operacional por família",
+  byProductGroupProduct: "Produto",
+  byProductGroupFamily: "Família",
+  colProduct: "Produto ou família",
+  colDomestic: "Interno R$",
+  colExport: "Externo R$",
+  colTotal: "Total R$",
+  colValue: "Valor R$",
+  colShare: "Participação %",
+  exportCountriesPrefix: "Principais países destino de exportação:",
+  abcTitle: "ABC de clientes",
+  colCustomer: "Cliente",
+  colCnpj: "CNPJ",
+  colCityState: "Cidade / UF",
+  emptyByProduct: "Sem faturamento no período para o recorte de produto.",
+  emptyAbc: "Sem clientes com faturamento no período para o recorte.",
+  clearFilters: "Limpar filtros",
+  loadingByProduct: "Carregando mix de produto…",
+  loadingAbc: "Carregando ABC de clientes…",
 } as const;

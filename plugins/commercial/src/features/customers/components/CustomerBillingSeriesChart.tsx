@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   ChartOverlayOptionsPopover,
   ChartTypeSegmentToggle,
@@ -16,7 +16,6 @@ import {
 import {
   CommercialActionButton,
   CommercialChartGranularityToggle,
-  CommercialMultiSelectField,
   CommercialSectionCard,
   CommercialStateBanner,
   CommercialTabularExportButtons,
@@ -32,21 +31,17 @@ import {
   type PortfolioBillingAmountNature,
 } from "../../../content/billingNature";
 import {
-  PeriodCompareControls,
   type CompareYearsCount,
 } from "../../analytics/components/PeriodCompareControls";
 import { formatCurrency } from "../../../utils/format";
 import { buildBillingSeriesExportPayload } from "../utils/billingSeriesExportBuilders";
-import { validateBillingPeriod } from "../billing/utils/billingPeriod";
 import { useCustomerBillingSeries } from "../hooks/useCustomerBillingSeries";
 import type { CustomerSummary } from "../types/customerSummary";
+import type { PortfolioBillingWorkspaceFilters } from "../hooks/usePortfolioBillingWorkspaceFilters";
 import {
   BILLING_SERIES_GRANULARITY_OPTIONS,
-  DEFAULT_BILLING_SERIES_PRESET,
   allowedBillingSeriesGranularities,
   billingSeriesPresetLabel,
-  periodRangeFromBillingPreset,
-  type BillingSeriesPeriodPreset,
 } from "../utils/billingSeriesPeriod";
 
 /** Mesma altura do gráfico ROL do dashboard comercial. */
@@ -60,6 +55,7 @@ const PRIOR_3_COLOR = "var(--chart-5, #475569)";
 
 type CustomerBillingSeriesChartProps = {
   customers: CustomerSummary[];
+  filters: PortfolioBillingWorkspaceFilters;
   /** Quando false, não dispara fetch (painel oculto). Default true. */
   active?: boolean;
   billingNature?: PortfolioBillingAmountNature;
@@ -93,19 +89,14 @@ function billingFilterLabel(
 }
 
 /**
- * Faturamento da carteira — período (paridade Overview) + YoY opcional.
+ * Faturamento da carteira — período e clientes vêm do workspace compartilhado.
  */
 export function CustomerBillingSeriesChart({
   customers,
+  filters,
   active = true,
   billingNature = "gross",
 }: CustomerBillingSeriesChartProps) {
-  const defaultRange = periodRangeFromBillingPreset(DEFAULT_BILLING_SERIES_PRESET);
-  const [preset, setPreset] = useState<BillingSeriesPeriodPreset>(
-    DEFAULT_BILLING_SERIES_PRESET,
-  );
-  const [customStart, setCustomStart] = useState(defaultRange.startDate);
-  const [customEnd, setCustomEnd] = useState(defaultRange.endDate);
   const { preferences, setPreferences, setChartType } = usePersistedChartPreferences({
     storageKey: "commercial:customers:billing-series",
     defaults: { chartType: "column", compareYears: 0, showTrend: false },
@@ -145,31 +136,22 @@ export function CustomerBillingSeriesChart({
     ];
   }, [compareYears, setPreferences, showTrend]);
 
-  const range =
-    preset === "custom"
-      ? { startDate: customStart, endDate: customEnd }
-      : periodRangeFromBillingPreset(preset);
-  const periodError =
-    preset === "custom" ? validateBillingPeriod(range.startDate, range.endDate) : null;
-  const queryEnabled = active && !periodError;
+  const queryEnabled = active && !filters.periodError;
   const allowedGrains = allowedBillingSeriesGranularities(
-    range.startDate,
-    range.endDate,
+    filters.startDate,
+    filters.endDate,
   );
   const { granularity, setGranularity } = useChartGranularitySelection(
-    range.startDate,
-    range.endDate,
+    filters.startDate,
+    filters.endDate,
   );
   const effectiveGrain = allowedGrains.includes(granularity)
     ? granularity
     : (allowedGrains[0] ?? "month");
 
-  const yoyActive = compareYears >= 1 && Boolean(range.startDate && range.endDate);
+  const yoyActive = compareYears >= 1 && Boolean(filters.startDate && filters.endDate);
 
   const {
-    selectedKeys,
-    setSelectedKeys,
-    customerOptions,
     points,
     loading,
     error,
@@ -178,11 +160,13 @@ export function CustomerBillingSeriesChart({
     reload,
   } = useCustomerBillingSeries(customers, {
     enabled: queryEnabled,
-    startDate: range.startDate,
-    endDate: range.endDate,
+    startDate: filters.startDate,
+    endDate: filters.endDate,
     granularity: effectiveGrain,
     compareYears: yoyActive ? compareYears : 0,
     nature: billingNature,
+    selectedKeys: filters.selectedCustomerKeys,
+    onSelectedKeysChange: filters.setSelectedCustomerKeys,
   });
 
   const chartData = useMemo(
@@ -241,14 +225,17 @@ export function CustomerBillingSeriesChart({
           (point.faturamento_prior_2 != null && point.faturamento_prior_2 > 0) ||
           (point.faturamento_prior_3 != null && point.faturamento_prior_3 > 0))),
   );
-  const filterLabel = billingFilterLabel(selectedKeys, customerOptions);
-  const periodLabel = billingSeriesPresetLabel(preset);
+  const filterLabel = billingFilterLabel(
+    filters.selectedCustomerKeys,
+    filters.customerOptions,
+  );
+  const periodLabel = billingSeriesPresetLabel(filters.preset);
   const natureLabel = billingNatureShortLabel(billingNature);
   const chartTitle = appendBillingNatureContext(
     `Faturamento — ${periodLabel}`,
     billingNature,
   );
-  const isAllCustomers = selectedKeys.length === 0;
+  const isAllCustomers = filters.selectedCustomerKeys.length === 0;
 
   return (
     <div className="cm-billing-series-chart">
@@ -262,38 +249,7 @@ export function CustomerBillingSeriesChart({
               ? `Total no período · ${filterLabel}: ${formatCurrency(totalValue)} · ${natureLabel}`
               : undefined
         }
-        actions={
-          <div className="cm-billing-series-chart__customer-filter">
-            <CommercialMultiSelectField
-              label="Cliente"
-              hint={CM_HELP.customerDetail.billingSeriesCustomer}
-              options={customerOptions.map((customer) => ({
-                value: customer.key,
-                label: `${customer.nome} (${customer.codigo}/${customer.loja})`,
-              }))}
-              selectedValues={selectedKeys}
-              onChange={setSelectedKeys}
-              emptyLabel="Todos os clientes"
-              searchable
-              disabled={loading && customerOptions.length === 0}
-            />
-          </div>
-        }
       >
-      <div className="cm-billing-series-chart__controls">
-        <PeriodCompareControls
-          idPrefix="customers-billing"
-          preset={preset}
-          onPresetChange={setPreset}
-          customStart={customStart}
-          customEnd={customEnd}
-          onCustomStartChange={setCustomStart}
-          onCustomEndChange={setCustomEnd}
-        />
-        {periodError ? (
-          <CommercialStateBanner>{periodError}</CommercialStateBanner>
-        ) : null}
-      </div>
       {error && !hasValues ? (
         <EmptyState
           classNames={cmEmptyStateClassNames}

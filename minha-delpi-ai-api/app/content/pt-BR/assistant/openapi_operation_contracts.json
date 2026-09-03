@@ -359,6 +359,10 @@
     "entity": "commercial_rol_by_customer",
     "shape": "paged_list"
   },
+  "get_commercial_rol_by_product": {
+    "entity": "commercial_rol_by_product",
+    "shape": "paged_list"
+  },
   "list_commercial_proposals": {
     "entity": "commercial_proposal",
     "shape": "paged_list"

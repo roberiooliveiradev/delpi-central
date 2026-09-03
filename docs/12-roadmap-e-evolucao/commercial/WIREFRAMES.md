@@ -58,7 +58,7 @@ Fonte de verdade das rotas: `plugins/commercial/src/app/pluginRoutes.ts`. Status
 | `/open-orders` | WF-02R | **entregue** | Bancada |
 | `/open-orders/:filial/:pedido/:linha` | WF-02R-D | **entregue** | Linha |
 | `/open-orders/:filial/:pedido/:linha/op/:op` | WF-02R-D | **entregue** | OP |
-| `/customers` | WF-03R / WF-03R-M | **entregue** | Minha Carteira |
+| `/customers` | WF-03R / WF-03R-M / WF-03R-FAT | **entregue** | Minha Carteira (+ mix/ABC no Faturamento) |
 | `/customers/:code/:store` | WF-04R / WF-04R-M | **entregue** | Conta 360 |
 | `/customers/:code/:store/orders/:branch/:orderNumber` | WF-04R | **entregue** | Detalhe pedido Conta |
 | `/customers/:code/:store/outbound-invoices/...` | WF-04R | **entregue** | Detalhe NF |
@@ -642,11 +642,15 @@ Filtro «Todas as carteiras» = união dedupe quando o usuário participa de N c
 │ ‡ Share só com analytics.view | accounts.team.view | seller-portfolios.manage │
 └─────────────────────────────────────────────────────────────────────────┘
 ┌─ [ Faturamento | Ranking | Clientes ]  (?panel=billing|ranking|customers) ─┐
-│ default: Clientes · sem chevron collapsible                               │
+│ default: Clientes · Natureza [ Bruto | Líquido ] (?)                       │
 └────────────────────────────────────────────────────────────────────────────┘
-┌─ Painel Faturamento — {preset} ──────────────────── Cliente [Todos ▾] ───┐
-│ PeriodCompareControls · colunas agrupadas (+ YoY) · ☑ Linha de tendência │
-└────────────────────────────────────────────────────────────────────────────┘
+┌─ FilterBarShell · Faturamento (período · cliente · família · produto · mercado) ┐
+│ PeriodCompareControls · multi-selects kit (portal) · vazio = todos           │
+└──────────────────────────────────────────────────────────────────────────────┘
+┌─ SectionCard Faturamento — {preset} · {natureza} · série + YoY + export ────┐
+├─ SectionCard ROL por produto|família · Interno/Externo/Total · Excel ───────┤
+├─ SectionCard ABC de clientes · CNPJ · Cidade/UF · Participação % · Excel ───┤
+└─────────────────────────────────────────────────────────────────────────────┘
 ┌─ Painel Ranking crescimento/queda + Excel ─────────────────────────────────┐
 │ Cliente|Vendedor · Maiores altas|quedas · Top N · período                 │
 └────────────────────────────────────────────────────────────────────────────┘
@@ -659,6 +663,7 @@ Filtro «Todas as carteiras» = união dedupe quando o usuário participa de N c
 ```
 
 **Share / ranking:** Share no hero (`usePortfolioBillingShare`); BFF `portfolio-billing-share` e `portfolio-billing-ranking`; Conta `?secao=historico` espelha YoY no painel NF.
+**Faturamento (mix + ABC):** ver **WF-03R-FAT** — filtros compartilhados + `GET /analytics/rol/by-product` e `/rol/by-customer` via commercial-api.
 **Painéis:** `?panel=` no deep link da lista (`customersListDeepLink`).
 **Realtime (carteiras):** mutações auditadas emitem `portfolio.changed` para
 salas `user:{memberId}`. Auth WS: `accounts.view` **ou** `worklist.view`.
@@ -672,7 +677,9 @@ Admin (lista/detalhe) refetch silencioso; membro vê Histórico em Minha Carteir
 
 **Composições de domínio no `commercial`:** `CustomersPage`,
 `SellerScopeFilter`, `CustomersTable`, `MyPortfolioAuditSection`,
-`CustomerBillingSeriesChart` e o mapper `CustomerSummary → DataRecordCard`.
+`CustomerBillingSeriesChart`, `PortfolioBillingFiltersBar`,
+`PortfolioBillingByProductTable`, `PortfolioBillingAbcTable` e o mapper
+`CustomerSummary → DataRecordCard`.
 O MFE mantém apenas layout/responsividade e regra comercial; não replica CSS do kit.
 
 **Colunas default:** Cliente, Última venda, Fat. 12 meses, Tendência, Status,
@@ -711,6 +718,46 @@ Filtro por produto (ADR-003) continua dependendo das linhas do overlay open-orde
 
 No mobile, `DataRecordCard` usa o mesmo conjunto filtrado, ordenado e paginado
 da `DataTable`; não existe segundo pipeline nem segundo fetch.
+
+### WF-03R-FAT — Faturamento: mix de produto + ABC (entregue)
+
+**Superfície:** Minha Carteira → `?panel=billing` (abaixo do gráfico de série).  
+**BFF:** `GET /analytics/rol/by-product`, `GET /analytics/rol/by-customer` (membership na commercial-api; MFE não chama api-delpi).  
+**Kit:** `FilterBarShell` + `MultiSelectField` (portal) · `SegmentToggle` Produto|Família · `DataTable` `sentenceHeadersWrap` · `TabularExportButtons` · `EmptyState` / `LoadingCard` / `StateBanner`.
+
+#### WF-03R-FAT-00 — Desktop
+
+```text
+┌─ FilterBarShell · Faturamento ───────────────────────────────────────────┐
+│ PeriodCompareControls  [Este mês ▾]   datas se Personalizado              │
+│ Cliente (?)     [Todos os clientes ▾]   searchable multi                  │
+│ Família (?)     [Todas as famílias ▾]   B1_GRUPO                          │
+│ Produto (?)     [Todos os produtos ▾]   D2_COD                            │
+│ Mercado (?)     [Todos ▾]  Interno · Externo  (vazio = ambos)             │
+└───────────────────────────────────────────────────────────────────────────┘
+┌─ SectionCard · Faturamento — {preset} · {natureza} ───────────────────────┐
+│ ChartViewShell · granularidade · overlays YoY · export                    │
+└───────────────────────────────────────────────────────────────────────────┘
+┌─ SectionCard · Receita operacional por produto (?) ──── [Produto|Família] ┐
+│ [Excel] · DataTable: Produto/família │ Interno │ Externo │ Total │ Part.% │
+│ muted: * Países destino exportação (se CFOP 7 no recorte)                 │
+└───────────────────────────────────────────────────────────────────────────┘
+┌─ SectionCard · ABC de clientes (?) ────────────────────────────── [Excel] ┐
+│ DataTable: Cliente │ CNPJ │ Cidade/UF │ Participação %                    │
+│ Sem faixas A/B/C. Ordenado por participação desc. ≠ painel Ranking YoY.   │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+Com **Mercado** = só Interno ou só Externo: coluna única **Valor R$** + **Part. %**.
+
+#### WF-03R-FAT-01…06
+
+- **01** — Sem header spanning de ano; período no título + filtro.  
+- **02** — Multi-select via `AnchoredPanelPortal` (`portalScopeClassName=dashboard-commercial`).  
+- **03** — Loading/vazio/erro por `SectionCard` (gráfico pode ter dado e tabela falhar).  
+- **04** — Mobile: filtros empilhados; tabelas com scroll X.  
+- **05** — Ranking e Clientes **não** mudam; ABC só no Faturamento.  
+- **06** — Hints `CM_HELP.customers.billingFilter*` / `billingByProduct` / `billingAbc`.
 
 ---
 

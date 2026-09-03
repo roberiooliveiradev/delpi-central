@@ -42,6 +42,9 @@ from app.application.dto.commercial.commercial_rol_series_request import (
 from app.application.dto.commercial.get_rol_by_customer_request import (
     GetRolByCustomerRequest,
 )
+from app.application.dto.commercial.get_rol_by_product_request import (
+    GetRolByProductRequest,
+)
 from app.application.dto.commercial.get_rol_by_branch_request import (
     GetRolByBranchRequest,
 )
@@ -78,6 +81,7 @@ from app.composition.commercial_composer import (
     build_get_commercial_rol_series_use_case,
     build_get_commercial_rol_summary_use_case,
     build_get_commercial_rol_by_customer_use_case,
+    build_get_commercial_rol_by_product_use_case,
     build_get_commercial_rol_by_branch_use_case,
     build_get_sales_order_otd_use_case,
     build_get_sales_order_otd_panel_use_case,
@@ -369,6 +373,17 @@ def get_commercial_rol_by_customer(
     exclude_customer_names: Optional[str] = Query(
         None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
     ),
+    product_codes: Optional[str] = Query(
+        None, description="CSV of product codes (SB1.B1_COD / D2_COD)."
+    ),
+    product_groups: Optional[str] = Query(
+        None, description="CSV of product groups (SB1.B1_GRUPO)."
+    ),
+    market: Optional[str] = Query(
+        None,
+        description="Market filter: domestic (CFOP 5/6) or export (CFOP 7).",
+        pattern="^(domestic|export)$",
+    ),
     limit: int = Query(20, ge=1, le=500),
     include_others: bool = Query(True),
 ):
@@ -382,6 +397,9 @@ def get_commercial_rol_by_customer(
             customer_names=parse_customer_names(customer_names),
             exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
             exclude_customer_names=parse_customer_names(exclude_customer_names),
+            product_codes=parse_customer_codes(product_codes),
+            product_groups=parse_customer_codes(product_groups),
+            market=market,
             limit=limit,
             include_others=include_others,
         )
@@ -398,6 +416,82 @@ def get_commercial_rol_by_customer(
         log_error(f"Error while fetching ROL by customer: {exc}")
         return error_response(
             "Internal error while fetching ROL by customer.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/rol/by-product",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_commercial_rol_by_product",
+        path="/commercial/rol/by-product",
+    ),
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def get_commercial_rol_by_product(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV of TOTVS customer codes (portfolio filter)."
+    ),
+    customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to include (partial match, LIKE)."
+    ),
+    exclude_customer_codes: Optional[str] = Query(
+        None, description="Comma-separated TOTVS customer codes to exclude."
+    ),
+    exclude_customer_names: Optional[str] = Query(
+        None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
+    ),
+    product_codes: Optional[str] = Query(
+        None, description="CSV of product codes (SB1.B1_COD / D2_COD)."
+    ),
+    product_groups: Optional[str] = Query(
+        None, description="CSV of product groups (SB1.B1_GRUPO)."
+    ),
+    market: Optional[str] = Query(
+        None,
+        description="Market filter: domestic (CFOP 5/6) or export (CFOP 7).",
+        pattern="^(domestic|export)$",
+    ),
+    group_by: str = Query(
+        default="product",
+        pattern="^(product|product_group)$",
+        description="Aggregate by product code or product group (family).",
+    ),
+    limit: int = Query(500, ge=1, le=500),
+):
+    try:
+        request = GetRolByProductRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+            customer_names=parse_customer_names(customer_names),
+            exclude_customer_codes=parse_customer_codes(exclude_customer_codes),
+            exclude_customer_names=parse_customer_names(exclude_customer_names),
+            product_codes=parse_customer_codes(product_codes),
+            product_groups=parse_customer_codes(product_groups),
+            market=market,
+            group_by=group_by,
+            limit=limit,
+        )
+        result = build_get_commercial_rol_by_product_use_case().execute(request)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_commercial_rol_by_product",
+            message="Commercial ROL by product fetched successfully.",
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching ROL by product: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching ROL by product: {exc}")
+        return error_response(
+            "Internal error while fetching ROL by product.",
             status_code=500,
         )
 

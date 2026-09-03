@@ -29,6 +29,7 @@ _ENTITY_LABELS: dict[str, str] = {
     "commercial_rol_target": "meta percentual ROL comercial",
     "commercial_rol_series": "série temporal de ROL comercial",
     "commercial_rol_by_customer": "ranking de ROL comercial por cliente",
+    "commercial_rol_by_product": "ROL comercial por produto ou família",
     "commercial_rol_by_branch": "ROL comercial por filial",
     "production_order_detail": "detalhe de ordem de produção por OP",
     "open_sales_order": "pedidos de venda em aberto",

@@ -45,6 +45,15 @@ class CommercialRolByCustomerRepository(
             exclude_customer_codes=request.exclude_customer_codes,
             exclude_customer_names=request.exclude_customer_names,
         )
+        if request.product_codes:
+            vendas_qb.in_list("D2.D2_COD", request.product_codes)
+        if request.product_groups:
+            vendas_qb.in_list("RTRIM(LTRIM(SB1.B1_GRUPO))", request.product_groups)
+        market_pred = CommercialRolReturnSql.market_filter_predicate(
+            request.market, d2_alias="D2"
+        )
+        if market_pred:
+            vendas_qb.raw(market_pred)
         vendas_where, vendas_params = vendas_qb.build()
 
         exists_qb = QueryBuilder()
@@ -66,7 +75,28 @@ class CommercialRolByCustomerRepository(
             exclude_customer_codes=request.exclude_customer_codes,
             exclude_customer_names=request.exclude_customer_names,
         )
+        if request.product_codes:
+            dev_qb.in_list("D1.D1_COD", request.product_codes)
+        if request.product_groups:
+            dev_qb.in_list("RTRIM(LTRIM(SB1D.B1_GRUPO))", request.product_groups)
+        # Returns use inbound CFOP; do not apply market filter on SD1.
         dev_where, dev_params = dev_qb.build()
+
+        needs_sb1 = bool(request.product_groups)
+        sb1_join = ""
+        if needs_sb1:
+            sb1_join = """
+                LEFT JOIN SB1010 SB1 WITH (NOLOCK)
+                    ON  SB1.D_E_L_E_T_ = ''
+                    AND SB1.B1_COD = D2.D2_COD
+            """
+        sb1d_join = ""
+        if needs_sb1:
+            sb1d_join = """
+                LEFT JOIN SB1010 SB1D WITH (NOLOCK)
+                    ON  SB1D.D_E_L_E_T_ = ''
+                    AND SB1D.B1_COD = D1.D1_COD
+            """
 
         sql = f"""
             WITH VENDAS AS (
@@ -89,6 +119,7 @@ class CommercialRolByCustomerRepository(
                          OR F4.F4_FILIAL = ''
                          OR F4.F4_FILIAL IS NULL
                     )
+                {sb1_join}
                 WHERE {vendas_where}
                     AND ISNULL(A1.A1_NOME, '') <> ''
                     AND ISNULL(D2.D2_TIPO, '') <> 'D'
@@ -147,6 +178,7 @@ class CommercialRolByCustomerRepository(
                     AND A1D.A1_COD  = D1.D1_FORNECE
                     AND A1D.A1_LOJA = D1.D1_LOJA
                 {CommercialRolReturnSql.tes_join(d1_alias="D1", f4_alias="F4D", with_nolock=True)}
+                {sb1d_join}
                 WHERE {dev_where}
                     AND {CommercialRolReturnSql.sales_return_predicate(d1_alias="D1", f4_alias="F4D")}
                 GROUP BY D1.D1_FILIAL, D1.D1_FORNECE, D1.D1_LOJA
@@ -180,6 +212,9 @@ class CommercialRolByCustomerRepository(
                         NULLIF(RTRIM(SA1.A1_NREDUZ), ''),
                         ISNULL(RTRIM(SA1.A1_NOME), RA.COD_CLIENTE)
                     ) AS NOME_CLIENTE,
+                    NULLIF(RTRIM(ISNULL(SA1.A1_CGC, '')), '') AS CNPJ,
+                    NULLIF(RTRIM(ISNULL(SA1.A1_MUN, '')), '') AS CIDADE,
+                    NULLIF(RTRIM(ISNULL(SA1.A1_EST, '')), '') AS UF,
                     RA.ROL_CLIENTE,
                     RA.GROSS_CLIENTE
                 FROM ROL_AGREGADO RA
@@ -201,6 +236,9 @@ class CommercialRolByCustomerRepository(
                     RN.COD_CLIENTE,
                     RN.LOJA,
                     RN.NOME_CLIENTE,
+                    RN.CNPJ,
+                    RN.CIDADE,
+                    RN.UF,
                     RN.ROL_CLIENTE,
                     RN.GROSS_CLIENTE,
                     T.TOTAL_ROL,
@@ -214,6 +252,9 @@ class CommercialRolByCustomerRepository(
                 COD_CLIENTE,
                 LOJA,
                 NOME_CLIENTE,
+                CNPJ,
+                CIDADE,
+                UF,
                 ROL_CLIENTE,
                 GROSS_CLIENTE,
                 TOTAL_ROL,
@@ -251,11 +292,18 @@ class CommercialRolByCustomerRepository(
                 return None
             return round((value * 100.0) / total_rol, 2)
 
+        def _optional_str(value: object) -> str | None:
+            text = str(value or "").strip()
+            return text or None
+
         items = tuple(
             RolByCustomerItem(
                 customer_code=str(row.get("COD_CLIENTE") or "").strip(),
                 customer_store=str(row.get("LOJA") or "").strip(),
                 customer_name=str(row.get("NOME_CLIENTE") or "").strip(),
+                cnpj=_optional_str(row.get("CNPJ")),
+                city=_optional_str(row.get("CIDADE")),
+                state=_optional_str(row.get("UF")),
                 rol=float(row.get("ROL_CLIENTE") or 0),
                 gross_revenue=float(row.get("GROSS_CLIENTE") or 0),
                 share_pct=_share(float(row.get("ROL_CLIENTE") or 0)),
@@ -272,6 +320,9 @@ class CommercialRolByCustomerRepository(
                 customer_code="",
                 customer_store="",
                 customer_name="Demais",
+                cnpj=None,
+                city=None,
+                state=None,
                 rol=others_value,
                 gross_revenue=others_gross,
                 share_pct=_share(others_value),

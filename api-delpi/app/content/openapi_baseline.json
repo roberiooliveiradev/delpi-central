@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 696,
+  "operation_count": 699,
   "operations": [
     {
       "method": "POST",
@@ -2561,6 +2561,27 @@
           "type": "string"
         },
         {
+          "name": "product_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV of product codes (SB1.B1_COD / D2_COD).",
+          "type": "string"
+        },
+        {
+          "name": "product_groups",
+          "in": "query",
+          "required": false,
+          "description": "CSV of product groups (SB1.B1_GRUPO).",
+          "type": "string"
+        },
+        {
+          "name": "market",
+          "in": "query",
+          "required": false,
+          "description": "Market filter: domestic (CFOP 5/6) or export (CFOP 7).",
+          "type": "string"
+        },
+        {
           "name": "limit",
           "in": "query",
           "required": false,
@@ -2763,6 +2784,60 @@
               }
             }
           },
+          "product_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated product codes (SB1.B1_COD / D2_COD).",
+                "label": "Product codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos de produto (SB1.B1_COD / D2_COD).",
+                "label": "Códigos de produtos"
+              }
+            }
+          },
+          "product_groups": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated product groups (SB1.B1_GRUPO).",
+                "label": "Product groups"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de famílias/grupos de produto (SB1.B1_GRUPO).",
+                "label": "Grupos de produto"
+              }
+            }
+          },
+          "market": {
+            "locale": {
+              "en": {
+                "description": "Market filter: domestic (CFOP 5/6) or export (CFOP 7).",
+                "label": "Market"
+              },
+              "pt-BR": {
+                "description": "Filtro de mercado: domestic (CFOP 5/6) ou export (CFOP 7).",
+                "label": "Mercado"
+              }
+            },
+            "enumLabels": {
+              "domestic": {
+                "en": {
+                  "label": "Domestic"
+                },
+                "pt-BR": {
+                  "label": "Interno"
+                }
+              },
+              "export": {
+                "en": {
+                  "label": "Export"
+                },
+                "pt-BR": {
+                  "label": "Externo"
+                }
+              }
+            }
+          },
           "start_date": {
             "locale": {
               "en": {
@@ -2784,6 +2859,465 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Top customers by net operating revenue (ROL) for a period, with optional others bucket."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/rol/by-product",
+      "operationId": "get_commercial_rol_by_product",
+      "summary": "Commercial ROL by product or product group",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer codes (portfolio filter).",
+          "type": "string"
+        },
+        {
+          "name": "customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to include (partial match, LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated TOTVS customer codes to exclude.",
+          "type": "string"
+        },
+        {
+          "name": "exclude_customer_names",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+          "type": "string"
+        },
+        {
+          "name": "product_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV of product codes (SB1.B1_COD / D2_COD).",
+          "type": "string"
+        },
+        {
+          "name": "product_groups",
+          "in": "query",
+          "required": false,
+          "description": "CSV of product groups (SB1.B1_GRUPO).",
+          "type": "string"
+        },
+        {
+          "name": "market",
+          "in": "query",
+          "required": false,
+          "description": "Market filter: domestic (CFOP 5/6) or export (CFOP 7).",
+          "type": "string"
+        },
+        {
+          "name": "group_by",
+          "in": "query",
+          "required": false,
+          "description": "Aggregate by product code or product group (family).",
+          "type": "string",
+          "default": "product"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Limit query parameter.",
+          "type": "integer",
+          "default": 500
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_rol_by_product",
+        "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Commercial ROL by product or product group",
+            "description": "Net operating revenue (ROL) aggregated by product or product family, with domestic/export market split and optional export destination countries.",
+            "label": "Commercial ROL by product"
+          },
+          "pt-BR": {
+            "summary": "ROL comercial por produto ou família",
+            "description": "Receita operacional líquida agregada por produto ou família, com split mercado interno/externo e países de destino de exportação.",
+            "label": "Indicador — ROL por produto"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to include (partial match, LIKE).",
+                "label": "Customer names (include)"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a incluir (correspondência parcial, LIKE).",
+                "label": "Nomes de clientes (incluir)"
+              }
+            }
+          },
+          "exclude_customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to exclude from the result.",
+                "label": "Exclude customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a excluir do resultado.",
+                "label": "Excluir códigos de clientes"
+              }
+            }
+          },
+          "exclude_customer_names": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated customer names to exclude (partial match, NOT LIKE).",
+                "label": "Exclude customer names"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de nomes de clientes a excluir (correspondência parcial, NOT LIKE).",
+                "label": "Excluir nomes de clientes"
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "group_by": {
+            "locale": {
+              "en": {
+                "description": "Breakdown mode: none, customer or branch.",
+                "label": "Group by"
+              },
+              "pt-BR": {
+                "description": "Como agregar o resultado (geral, filial, produto etc.).",
+                "label": "Agrupar por"
+              }
+            },
+            "enumLabels": {
+              "branch": {
+                "en": {
+                  "label": "Branch"
+                },
+                "pt-BR": {
+                  "label": "Filial"
+                }
+              },
+              "customer": {
+                "en": {
+                  "label": "Customer"
+                },
+                "pt-BR": {
+                  "label": "Cliente"
+                }
+              },
+              "branch_summary": {
+                "en": {
+                  "label": "Branch summary"
+                },
+                "pt-BR": {
+                  "label": "Resumo por filial"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "day_work_center": {
+                "en": {
+                  "label": "Day × work center"
+                },
+                "pt-BR": {
+                  "label": "Dia × centro de trabalho"
+                }
+              },
+              "general": {
+                "en": {
+                  "label": "General"
+                },
+                "pt-BR": {
+                  "label": "Geral"
+                }
+              },
+              "none": {
+                "en": {
+                  "label": "None"
+                },
+                "pt-BR": {
+                  "label": "Nenhum"
+                }
+              },
+              "product": {
+                "en": {
+                  "label": "Product"
+                },
+                "pt-BR": {
+                  "label": "Produto"
+                }
+              },
+              "product_group": {
+                "en": {
+                  "label": "Product group"
+                },
+                "pt-BR": {
+                  "label": "Grupo de produto"
+                }
+              },
+              "unit": {
+                "en": {
+                  "label": "Unit"
+                },
+                "pt-BR": {
+                  "label": "Unidade"
+                }
+              }
+            }
+          },
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "product_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated product codes (SB1.B1_COD / D2_COD).",
+                "label": "Product codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos de produto (SB1.B1_COD / D2_COD).",
+                "label": "Códigos de produtos"
+              }
+            }
+          },
+          "product_groups": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated product groups (SB1.B1_GRUPO).",
+                "label": "Product groups"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de famílias/grupos de produto (SB1.B1_GRUPO).",
+                "label": "Grupos de produto"
+              }
+            }
+          },
+          "market": {
+            "locale": {
+              "en": {
+                "description": "Market filter: domestic (CFOP 5/6) or export (CFOP 7).",
+                "label": "Market"
+              },
+              "pt-BR": {
+                "description": "Filtro de mercado: domestic (CFOP 5/6) ou export (CFOP 7).",
+                "label": "Mercado"
+              }
+            },
+            "enumLabels": {
+              "domestic": {
+                "en": {
+                  "label": "Domestic"
+                },
+                "pt-BR": {
+                  "label": "Interno"
+                }
+              },
+              "export": {
+                "en": {
+                  "label": "Export"
+                },
+                "pt-BR": {
+                  "label": "Externo"
+                }
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Receita operacional líquida agregada por produto ou família, com split mercado interno/externo e países de destino de exportação.",
+          "label": "Indicador — ROL por produto"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Net operating revenue (ROL) aggregated by product or product family, with domestic/export market split and optional export destination countries."
     },
     {
       "method": "GET",
@@ -70661,6 +71195,126 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Create audit 5S area."
+    },
+    {
+      "method": "PATCH",
+      "path": "/quality/audit-5s/areas/{area_id}",
+      "operationId": "update_audit_5s_area",
+      "summary": "Update audit 5S area",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "area_id",
+          "in": "path",
+          "required": true,
+          "description": "Area identifier (e.g. 5S audit).",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "audit_5s_area",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Update audit 5S area",
+            "description": "Rename or activate/deactivate an audit 5S area.",
+            "whenToUse": "Use to rename or deactivate an audit 5S area.",
+            "label": "Update Area"
+          },
+          "pt-BR": {
+            "summary": "Atualizar área da auditoria 5S",
+            "description": "Renomear ou ativar/desativar uma área da auditoria 5S.",
+            "whenToUse": "Use para renomear ou desativar uma área da auditoria 5S.",
+            "label": "Atualizar área 5S"
+          }
+        },
+        "params": {
+          "area_id": {
+            "locale": {
+              "en": {
+                "description": "Area identifier (e.g. 5S audit).",
+                "label": "Area"
+              },
+              "pt-BR": {
+                "description": "Identificador da área (ex.: auditoria 5S).",
+                "label": "Área"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para renomear ou desativar uma área da auditoria 5S.",
+          "description": "Renomear ou ativar/desativar uma área da auditoria 5S.",
+          "label": "Atualizar área 5S"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Rename or activate/deactivate an audit 5S area."
+    },
+    {
+      "method": "PUT",
+      "path": "/quality/audit-5s/areas/{area_id}/children",
+      "operationId": "set_audit_5s_area_children",
+      "summary": "Set audit 5S area children",
+      "tags": [
+        "Qualidade",
+        "Auditoria 5S"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "area_id",
+          "in": "path",
+          "required": true,
+          "description": "Area identifier (e.g. 5S audit).",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "audit_5s_area",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Set audit 5S area children",
+            "description": "Link sub-areas under an aggregator area (branch 02 only).",
+            "whenToUse": "Use to define which areas belong to an aggregator area.",
+            "label": "Set Area Children"
+          },
+          "pt-BR": {
+            "summary": "Vincular subáreas da auditoria 5S",
+            "description": "Define as subáreas de uma área agregadora (somente filial 02).",
+            "whenToUse": "Use para definir quais áreas pertencem a uma área agregadora.",
+            "label": "Vincular subáreas 5S"
+          }
+        },
+        "params": {
+          "area_id": {
+            "locale": {
+              "en": {
+                "description": "Area identifier (e.g. 5S audit).",
+                "label": "Area"
+              },
+              "pt-BR": {
+                "description": "Identificador da área (ex.: auditoria 5S).",
+                "label": "Área"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para definir quais áreas pertencem a uma área agregadora.",
+          "description": "Define as subáreas de uma área agregadora (somente filial 02).",
+          "label": "Vincular subáreas 5S"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Link sub-areas under an aggregator area (branch 02 only)."
     },
     {
       "method": "GET",

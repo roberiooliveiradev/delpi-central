@@ -14,6 +14,7 @@ export const MANUAL_TOOL_TARGETS: readonly ManualToolTarget[] = [
   { label: "Pontualidade (OTD)", viewId: "analytics_otd" },
   { label: "Sala de interação", viewId: "interaction_rooms" },
   { label: "Manual do usuário", viewId: "help" },
+  { label: "Minha Carteira → Faturamento", viewId: "customers", search: "?panel=billing" },
   { label: "Minha Carteira", viewId: "customers" },
   { label: "Minhas tarefas", viewId: "my_tasks" },
   { label: "Meus pedidos", viewId: "open_orders" },

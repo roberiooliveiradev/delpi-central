@@ -16,6 +16,46 @@ from __future__ import annotations
 
 class CommercialRolReturnSql:
     SALES_RETURN_CFOPS = ("1201", "2201")
+    # Primeiro dígito do CFOP (D2_CF): 5/6 = mercado interno (Brasil); 7 = exportação.
+    DOMESTIC_CFOP_PREFIXES = ("5", "6")
+    EXPORT_CFOP_PREFIXES = ("7",)
+
+    @staticmethod
+    def cfop_first_digit_expr(*, d2_alias: str = "D2") -> str:
+        """Primeiro dígito do CFOP da linha SD2 (trim)."""
+        return f"LEFT(LTRIM(RTRIM(ISNULL({d2_alias}.D2_CF, ''))), 1)"
+
+    @staticmethod
+    def is_domestic_market_predicate(*, d2_alias: str = "D2") -> str:
+        digit = CommercialRolReturnSql.cfop_first_digit_expr(d2_alias=d2_alias)
+        prefixes = ", ".join(
+            f"'{p}'" for p in CommercialRolReturnSql.DOMESTIC_CFOP_PREFIXES
+        )
+        return f"{digit} IN ({prefixes})"
+
+    @staticmethod
+    def is_export_market_predicate(*, d2_alias: str = "D2") -> str:
+        digit = CommercialRolReturnSql.cfop_first_digit_expr(d2_alias=d2_alias)
+        prefixes = ", ".join(
+            f"'{p}'" for p in CommercialRolReturnSql.EXPORT_CFOP_PREFIXES
+        )
+        return f"{digit} IN ({prefixes})"
+
+    @staticmethod
+    def market_filter_predicate(
+        market: str | None,
+        *,
+        d2_alias: str = "D2",
+    ) -> str | None:
+        """Filtro opcional: ``domestic`` | ``export`` | None (ambos)."""
+        if not market:
+            return None
+        normalized = str(market).strip().lower()
+        if normalized == "domestic":
+            return CommercialRolReturnSql.is_domestic_market_predicate(d2_alias=d2_alias)
+        if normalized in {"export", "external", "foreign"}:
+            return CommercialRolReturnSql.is_export_market_predicate(d2_alias=d2_alias)
+        raise ValueError("market inválido. Use domestic ou export.")
 
     @staticmethod
     def sale_net_line_expr(*, d2_alias: str = "D2") -> str:

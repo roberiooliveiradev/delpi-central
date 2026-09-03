@@ -1168,6 +1168,21 @@
       },
       "category": "commercial"
     },
+    "get_commercial_rol_by_product": {
+      "locale": {
+        "en": {
+          "summary": "Commercial ROL by product or product group",
+          "description": "Net operating revenue (ROL) aggregated by product or product family, with domestic/export market split and optional export destination countries.",
+          "label": "Commercial ROL by product"
+        },
+        "pt-BR": {
+          "label": "Indicador — ROL por produto",
+          "summary": "ROL comercial por produto ou família",
+          "description": "Receita operacional líquida agregada por produto ou família, com split mercado interno/externo e países de destino de exportação."
+        }
+      },
+      "category": "commercial"
+    },
     "get_console_alerts": {
       "locale": {
         "en": {

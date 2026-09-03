@@ -28,6 +28,25 @@ def test_sale_eligibility_predicate_includes_tes_and_cf_rules() -> None:
     assert "D1X.D1_DTDIGIT" in pred
 
 
+def test_market_predicates_use_cfop_first_digit() -> None:
+    domestic = CommercialRolReturnSql.is_domestic_market_predicate(d2_alias="D2")
+    export = CommercialRolReturnSql.is_export_market_predicate(d2_alias="D2")
+    assert "LEFT(LTRIM(RTRIM(ISNULL(D2.D2_CF, ''))), 1)" in domestic
+    assert "'5'" in domestic and "'6'" in domestic
+    assert "'7'" in export
+    assert CommercialRolReturnSql.market_filter_predicate(None) is None
+    assert CommercialRolReturnSql.market_filter_predicate("domestic") == domestic
+    assert CommercialRolReturnSql.market_filter_predicate("export") == export
+
+
+def test_market_filter_rejects_unknown() -> None:
+    try:
+        CommercialRolReturnSql.market_filter_predicate("weird")
+        raise AssertionError("expected ValueError")
+    except ValueError as exc:
+        assert "market" in str(exc).lower()
+
+
 def test_get_rol_sql_excludes_tipo_d_without_duplicata() -> None:
     repository = FinancialRepository()
     captured: dict[str, object] = {}

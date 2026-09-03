@@ -279,7 +279,25 @@ export const USER_MANUAL_TERM_CATALOG: readonly UserManualTermGroup[] = [
       {
         term: "Faturamento",
         meaning: OV.glossaryOpenVsBilled,
-        applies: "Visão geral · Minha Carteira (série, Fat. 12 meses, tendência, share)",
+        applies: "Visão geral · Minha Carteira (série, Fat. 12 meses, tendência, share, mix e ABC)",
+      },
+      {
+        term: "Família de produto",
+        meaning:
+          "Grupo Protheus (B1_GRUPO). No Faturamento da Minha Carteira filtra o mix e o ABC; o toggle Produto|Família agrega a tabela.",
+        applies: "Minha Carteira → Faturamento",
+      },
+      {
+        term: "Mercado interno / externo",
+        meaning:
+          "CFOP com primeiro dígito 5 ou 6 = interno (Brasil); 7 = exportação. Países de destino vêm do cadastro do cliente nas linhas de exportação.",
+        applies: "Minha Carteira → Faturamento (filtro Mercado)",
+      },
+      {
+        term: "ABC de clientes",
+        meaning:
+          "Lista ordenada por participação no faturamento do período (Pareto). Não usa faixas A/B/C e não é o Ranking de crescimento/queda YoY.",
+        applies: "Minha Carteira → Faturamento",
       },
       {
         term: BILLING_NATURE_CONTENT.gross.shortLabel,

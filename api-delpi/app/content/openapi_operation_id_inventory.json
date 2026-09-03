@@ -95,6 +95,13 @@
       "stable": true
     },
     {
+      "operationId": "get_commercial_rol_by_product",
+      "method": "GET",
+      "path": "/commercial/rol/by-product",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
       "operationId": "get_commercial_rol_series",
       "method": "GET",
       "path": "/commercial/rol/series",

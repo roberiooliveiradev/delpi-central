@@ -1,5 +1,5 @@
 import { RefreshCw, TriangleAlert } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { navigatePluginView } from "../../../app/pluginNavigation";
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
@@ -30,6 +30,10 @@ import {
   type PortfolioBillingAmountNature,
 } from "../../../content/billingNature";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
+import { PortfolioBillingFiltersBar } from "../components/PortfolioBillingFiltersBar";
+import { PortfolioBillingByProductTable } from "../components/PortfolioBillingByProductTable";
+import { PortfolioBillingAbcTable } from "../components/PortfolioBillingAbcTable";
+import { usePortfolioBillingWorkspaceFilters } from "../hooks/usePortfolioBillingWorkspaceFilters";
 import { PortfolioBillingRankingTable } from "../components/PortfolioBillingRankingTable";
 import { CustomersTable } from "../components/CustomersTable";
 import { MyPortfolioAuditSection } from "../components/MyPortfolioAuditSection";
@@ -164,6 +168,24 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     sellerId: canFilterPortfolios ? sellerIdFilter : null,
     nature: billingNature,
   });
+
+  const billingFilters = usePortfolioBillingWorkspaceFilters(aggregation?.customers);
+  const [billingProductOptions, setBillingProductOptions] = useState<
+    Array<{ value: string; label: string }>
+  >([]);
+  const [billingProductGroupOptions, setBillingProductGroupOptions] = useState<
+    Array<{ value: string; label: string }>
+  >([]);
+  const handleBillingCatalogOptions = useCallback(
+    (options: {
+      products: Array<{ value: string; label: string }>;
+      groups: Array<{ value: string; label: string }>;
+    }) => {
+      setBillingProductOptions(options.products);
+      setBillingProductGroupOptions(options.groups);
+    },
+    [],
+  );
 
   const [productQuery, setProductQuery] = useState("");
   const productMatchedCustomers = useMemo(() => {
@@ -584,8 +606,27 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 hidden={panel !== "billing"}
                 aria-hidden={panel !== "billing"}
               >
+                <PortfolioBillingFiltersBar
+                  filters={billingFilters}
+                  productOptions={billingProductOptions}
+                  productGroupOptions={billingProductGroupOptions}
+                />
                 <CustomerBillingSeriesChart
                   customers={aggregation.customers}
+                  filters={billingFilters}
+                  active={panel === "billing"}
+                  billingNature={billingNature}
+                />
+                <PortfolioBillingByProductTable
+                  filters={billingFilters}
+                  sellerId={canFilterPortfolios ? sellerIdFilter : null}
+                  active={panel === "billing"}
+                  billingNature={billingNature}
+                  onCatalogOptions={handleBillingCatalogOptions}
+                />
+                <PortfolioBillingAbcTable
+                  filters={billingFilters}
+                  sellerId={canFilterPortfolios ? sellerIdFilter : null}
                   active={panel === "billing"}
                   billingNature={billingNature}
                 />

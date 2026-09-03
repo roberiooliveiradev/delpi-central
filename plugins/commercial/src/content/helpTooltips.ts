@@ -298,6 +298,18 @@ export const CM_HELP = {
       "Agrupamento da série. Dia e semana ficam indisponíveis quando o período é longo demais para aquele recorte.",
     billingSeriesYoy:
       "Compara o mesmo período filtrado deslocado −1…−3 anos em colunas agrupadas. Alinhamento por bucket em qualquer granularidade permitida.",
+    billingFilterCustomer:
+      "Restringe o gráfico e as tabelas de Faturamento aos clientes selecionados. Vazio = toda a carteira do escopo.",
+    billingFilterProductGroup:
+      "Família Protheus (B1_GRUPO). Filtra o mix de produto e o ABC. Vazio = todas as famílias do recorte.",
+    billingFilterProduct:
+      "Código de produto (D2_COD). Filtra o mix e o ABC. Vazio = todos os produtos do recorte.",
+    billingFilterMarket:
+      "Mercado interno (CFOP 5/6) ou externo/exportação (CFOP 7). Vazio = ambos. Com um mercado só, a tabela de produto mostra uma coluna de valor.",
+    billingByProduct:
+      "Receita operacional (bruto ou líquido conforme a Natureza) agregada por produto ou família, com split interno/externo quando o mercado não está filtrado. Exporta para Excel.",
+    billingAbc:
+      "Clientes ordenados por participação no faturamento do período (curva ABC/Pareto). Não confundir com o painel Ranking (crescimento/queda YoY). Inclui CNPJ e praça.",
     filterSearch: "Busca por código, loja, nome fantasia/razão ou número de pedido.",
     filterFocus:
       "Recorte operacional. Atenção = atraso ou atendimento parcial. Em dia = com pedido aberto sem atraso. Sem venda 60d usa a última NF quando o cadastro estiver coberto. Todos = membership completo da carteira.",

@@ -28,6 +28,12 @@ export type AnalyticsFilterParams = {
   product_group?: string;
   /** gross | net — faturamento da carteira (share/ranking). */
   nature?: "gross" | "net";
+  /** CSV de códigos de produto (ROL by-product / by-customer). */
+  product_codes?: string;
+  /** CSV de famílias B1_GRUPO. */
+  product_groups?: string;
+  /** domestic | export */
+  market?: "domestic" | "export";
 };
 
 export type RolTargetData = DashboardGoalFields & {
@@ -99,6 +105,61 @@ export type PortfolioBillingRankingData = {
   nature: "gross" | "net" | "portfolio_billing_ranking";
   kpiNature?: "portfolio_billing_ranking";
   billingNature?: "gross" | "net";
+};
+
+export type CommercialRolByProductItem = {
+  product_code: string;
+  product_group: string;
+  product_name: string;
+  domestic_rol: number;
+  export_rol: number;
+  rol: number;
+  domestic_gross_revenue?: number;
+  export_gross_revenue?: number;
+  gross_revenue?: number;
+  share_pct?: number | null;
+  rank?: number;
+};
+
+export type CommercialRolByProductData = {
+  branch?: string;
+  start_date?: string;
+  end_date?: string;
+  group_by?: "product" | "product_group";
+  market?: string | null;
+  items: CommercialRolByProductItem[];
+  export_destination_countries?: string[];
+  summary?: {
+    total_rol?: number;
+    total_gross_revenue?: number;
+    items_count?: number;
+  };
+};
+
+export type CommercialRolByCustomerItem = {
+  customer_code: string;
+  customer_store?: string;
+  customer_name: string;
+  cnpj?: string | null;
+  city?: string | null;
+  state?: string | null;
+  rol: number;
+  gross_revenue?: number;
+  share_pct?: number | null;
+  rank?: number;
+};
+
+export type CommercialRolByCustomerData = {
+  branch?: string;
+  start_date?: string;
+  end_date?: string;
+  items: CommercialRolByCustomerItem[];
+  others?: CommercialRolByCustomerItem | null;
+  summary?: {
+    total_rol?: number;
+    customers_count?: number;
+    items_count?: number;
+  };
 };
 
 export type OpenPortfolioHorizonBucketId =

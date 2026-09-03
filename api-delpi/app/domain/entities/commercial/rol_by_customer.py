@@ -14,12 +14,18 @@ class RolByCustomerItem:
     share_pct: Optional[float]
     rank: int
     gross_revenue: float = 0.0
+    cnpj: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "customer_code": self.customer_code,
             "customer_store": self.customer_store,
             "customer_name": self.customer_name,
+            "cnpj": self.cnpj,
+            "city": self.city,
+            "state": self.state,
             "rol": self.rol,
             "gross_revenue": self.gross_revenue,
             "share_pct": self.share_pct,

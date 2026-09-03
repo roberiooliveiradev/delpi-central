@@ -85,6 +85,11 @@ export const USER_MANUAL_CONTENT = {
           how: "Busca, Foco e Tendência",
         },
         {
+          want: "Ver mix de produto e ABC do faturamento",
+          where: "Minha Carteira",
+          how: "Painel Faturamento — filtros de período/cliente/família/produto/mercado; tabelas abaixo do gráfico; export Excel",
+        },
+        {
           want: "Preparar visita ou call",
           where: "Minha Carteira → Conta",
           how: "Abas Resumo, Pedidos, Histórico, Oportunidades, Contatos, Atividades",
@@ -138,7 +143,7 @@ export const USER_MANUAL_CONTENT = {
         "Início — hub: eventos + caminhos (favoritos, recentes, busca).",
         "Visão geral — placar do período (ROL, meta, conversão, carteira aberta…).",
         "Meus pedidos — bancada operacional; URL compartilhável com filtros.",
-        "Minha Carteira — clientes vinculados; clique abre a Conta.",
+        "Minha Carteira — clientes vinculados; painel Faturamento com série, mix de produto/família e ABC; clique no cliente abre a Conta.",
         "Minhas tarefas — fila de follow-ups.",
         "Sala de interação — conversas internas.",
         "Administração — carteiras, equipe e grupos (gestores).",
@@ -168,6 +173,14 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "O filtro de clientes da Visão geral lista todos os clientes do TOTVS?",
           a: "Não. A lista vem das carteiras do recorte (ou de todas as carteiras ativas, se você não filtrar carteira). Vazio = todos os clientes daquele recorte.",
+        },
+        {
+          q: "ABC de clientes é o mesmo que Ranking?",
+          a: "Não. No painel Faturamento, o ABC ordena por participação no período (CNPJ e praça). O painel Ranking mostra crescimento ou queda versus o mesmo período no ano anterior.",
+        },
+        {
+          q: "Como exporto o mix de produto do faturamento?",
+          a: "Minha Carteira → Faturamento. Ajuste período, cliente, família, produto e mercado; use Excel nas tabelas de produto/família e de ABC, abaixo do gráfico.",
         },
       ],
     },

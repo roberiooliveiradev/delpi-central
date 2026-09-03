@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from app.domain.entities.commercial.rol_by_customer import RolByCustomerResult
+from app.domain.entities.commercial.rol_by_customer import (
+    RolByCustomerItem,
+    RolByCustomerResult,
+)
 from tests.support.route_contract_smoke import assert_envelope_meta, body_json
 
 
@@ -20,10 +23,23 @@ def test_get_commercial_rol_by_customer_returns_meta(mock_build) -> None:
         branch="consolidated",
         start_date="2026-06-01",
         end_date="2026-06-30",
-        items=(),
+        items=(
+            RolByCustomerItem(
+                customer_code="000001",
+                customer_store="01",
+                customer_name="ACME",
+                rol=1000.0,
+                share_pct=100.0,
+                rank=1,
+                gross_revenue=1200.0,
+                cnpj="00000000000191",
+                city="Joinville",
+                state="SC",
+            ),
+        ),
         others=None,
-        total_rol=0.0,
-        customers_count=0,
+        total_rol=1000.0,
+        customers_count=1,
     )
     mock_build.return_value = use_case
 
@@ -41,4 +57,8 @@ def test_get_commercial_rol_by_customer_returns_meta(mock_build) -> None:
         operation_id="get_commercial_rol_by_customer",
         shape="paged_list",
     )
-    assert payload["data"]["summary"]["total_rol"] == 0.0
+    assert payload["data"]["summary"]["total_rol"] == 1000.0
+    item = payload["data"]["items"][0]
+    assert item["cnpj"] == "00000000000191"
+    assert item["city"] == "Joinville"
+    assert item["state"] == "SC"

@@ -239,12 +239,16 @@ class GetPortfolioBillingRankingUseCase:
                 name = str(cur.get("customer_name"))
             elif pri and pri.get("customer_name"):
                 name = str(pri.get("customer_name"))
+            source = cur or pri or {}
             delta = round(current_rol - prior_rol, 2)
             rows.append(
                 {
                     "customerCode": key[0],
                     "customerStore": key[1],
                     "customerName": name,
+                    "cnpj": source.get("cnpj"),
+                    "city": source.get("city"),
+                    "state": source.get("state"),
                     "sellerName": None,
                     "currentRol": round(current_rol, 2),
                     "priorRol": round(prior_rol, 2),

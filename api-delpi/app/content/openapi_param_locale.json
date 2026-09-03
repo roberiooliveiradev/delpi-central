@@ -2674,6 +2674,18 @@
         }
       }
     },
+    "product_codes": {
+      "locale": {
+        "en": {
+          "label": "Product codes",
+          "description": "Comma-separated product codes (SB1.B1_COD / D2_COD)."
+        },
+        "pt-BR": {
+          "label": "Códigos de produtos",
+          "description": "Lista CSV de códigos de produto (SB1.B1_COD / D2_COD)."
+        }
+      }
+    },
     "product_group": {
       "locale": {
         "en": {
@@ -2683,6 +2695,48 @@
         "pt-BR": {
           "label": "Grupo de produto",
           "description": "Grupo de produto no Protheus."
+        }
+      }
+    },
+    "product_groups": {
+      "locale": {
+        "en": {
+          "label": "Product groups",
+          "description": "Comma-separated product groups (SB1.B1_GRUPO)."
+        },
+        "pt-BR": {
+          "label": "Grupos de produto",
+          "description": "Lista CSV de famílias/grupos de produto (SB1.B1_GRUPO)."
+        }
+      }
+    },
+    "market": {
+      "locale": {
+        "en": {
+          "label": "Market",
+          "description": "Market filter: domestic (CFOP 5/6) or export (CFOP 7)."
+        },
+        "pt-BR": {
+          "label": "Mercado",
+          "description": "Filtro de mercado: domestic (CFOP 5/6) ou export (CFOP 7)."
+        }
+      },
+      "enumLabels": {
+        "domestic": {
+          "en": {
+            "label": "Domestic"
+          },
+          "pt-BR": {
+            "label": "Interno"
+          }
+        },
+        "export": {
+          "en": {
+            "label": "Export"
+          },
+          "pt-BR": {
+            "label": "Externo"
+          }
         }
       }
     },

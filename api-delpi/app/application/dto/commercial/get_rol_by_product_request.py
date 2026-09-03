@@ -5,7 +5,7 @@ from typing import Optional
 
 
 @dataclass
-class GetRolByCustomerRequest:
+class GetRolByProductRequest:
     branch: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
@@ -17,10 +17,8 @@ class GetRolByCustomerRequest:
     product_codes: Optional[list[str]] = None
     product_groups: Optional[list[str]] = None
     market: Optional[str] = None
-    limit: int = 20
-    include_others: bool = True
-    page: int = 1
-    page_size: Optional[int] = None
+    group_by: str = "product"
+    limit: int = 500
 
     def validate(self) -> None:
         if not self.start_date or not self.end_date:
@@ -29,12 +27,10 @@ class GetRolByCustomerRequest:
             raise ValueError("limit deve estar entre 1 e 500.")
         if self.branch is not None and str(self.branch).strip() not in {"01", "02"}:
             raise ValueError("branch deve ser 01, 02 ou omitido (consolidado).")
-        if int(self.page) < 1:
-            raise ValueError("page deve ser >= 1.")
-        if self.page_size is not None and (
-            int(self.page_size) < 1 or int(self.page_size) > 500
-        ):
-            raise ValueError("page_size deve estar entre 1 e 500.")
+        group = (self.group_by or "product").strip().lower()
+        if group not in {"product", "product_group"}:
+            raise ValueError("group_by deve ser product ou product_group.")
+        self.group_by = group
         if self.market is not None:
             market = str(self.market).strip().lower()
             if market not in {"domestic", "export"}:

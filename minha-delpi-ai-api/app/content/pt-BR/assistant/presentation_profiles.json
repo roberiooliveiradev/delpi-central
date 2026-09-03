@@ -545,6 +545,16 @@
   },
   "pathRules": [
     {
+      "contains": "/commercial/rol/by-product",
+      "profile": "table_list",
+      "chartPolicy": "skip"
+    },
+    {
+      "contains": "/commercial/rol/by-customer",
+      "profile": "table_list",
+      "chartPolicy": "skip"
+    },
+    {
       "contains": "/process-inspection-plans/summary",
       "profile": "kpi_series"
     },

@@ -632,6 +632,90 @@ def bff_rol_series(
     )
 
 
+@router.get("/rol/by-product", operation_id="bff_get_commercial_rol_by_product")
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_rol_by_product(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    customer_segment: str | None = None,
+    product_codes: str | None = Query(default=None),
+    product_groups: str | None = Query(default=None),
+    market: str | None = Query(default=None),
+    group_by: str | None = Query(default="product"),
+    limit: int | None = Query(default=500, ge=1, le=500),
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+):
+    return _proxy(
+        request,
+        operation_id="bff_get_commercial_rol_by_product",
+        path="/rol/by-product",
+        seller_id=seller_id,
+        portfolio_id=portfolio_id,
+        params={
+            **_common_filters(
+                start_date=start_date,
+                end_date=end_date,
+                branch=branch,
+                customer_segment=customer_segment,
+            ),
+            "product_codes": product_codes,
+            "product_groups": product_groups,
+            "market": market,
+            "group_by": group_by,
+            "limit": limit,
+        },
+        message="ROL por produto carregado.",
+    )
+
+
+@router.get("/rol/by-customer", operation_id="bff_get_commercial_rol_by_customer")
+@require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
+def bff_rol_by_customer(
+    request: Request,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    branch: str | None = None,
+    customer_segment: str | None = None,
+    product_codes: str | None = Query(default=None),
+    product_groups: str | None = Query(default=None),
+    market: str | None = Query(default=None),
+    limit: int | None = Query(default=500, ge=1, le=500),
+    include_others: bool | None = Query(default=False),
+    seller_id: str | None = Query(default=None),
+    portfolio_id: str | None = Query(default=None),
+):
+    """ABC / ranking de participação — envelope api-delpi sem remap YoY."""
+    params: dict[str, Any] = {
+        **_common_filters(
+            start_date=start_date,
+            end_date=end_date,
+            branch=branch,
+            customer_segment=customer_segment,
+        ),
+        "limit": limit,
+        "include_others": include_others,
+    }
+    # Optional filters may be ignored by api-delpi until wired; pass through if set.
+    if product_codes:
+        params["product_codes"] = product_codes
+    if product_groups:
+        params["product_groups"] = product_groups
+    if market:
+        params["market"] = market
+    return _proxy(
+        request,
+        operation_id="bff_get_commercial_rol_by_customer",
+        path="/rol/by-customer",
+        seller_id=seller_id,
+        portfolio_id=portfolio_id,
+        params=params,
+        message="ROL por cliente carregado.",
+    )
+
+
 @router.get("/proposals", operation_id="bff_list_commercial_proposals")
 @require_any_permission(*COMMERCIAL_ANALYTICS_PERMISSIONS)
 def bff_list_proposals(

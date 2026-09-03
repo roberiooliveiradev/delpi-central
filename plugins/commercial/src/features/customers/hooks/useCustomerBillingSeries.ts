@@ -80,6 +80,9 @@ export type UseCustomerBillingSeriesOptions = {
   /** Overlays −1a…−3a (0–3). Preferir sobre comparePriorYear. */
   compareYears?: CompareYearsCount;
   nature?: "gross" | "net";
+  /** Controle externo do filtro de clientes (workspace Faturamento). */
+  selectedKeys?: string[];
+  onSelectedKeysChange?: (keys: string[]) => void;
 };
 
 const PRIOR_VALUE_KEYS = ["value_prior", "value_prior_2", "value_prior_3"] as const;
@@ -96,7 +99,11 @@ export function useCustomerBillingSeries(
     options?.compareYears ?? (options?.comparePriorYear ? 1 : 0),
   );
   const nature = options?.nature;
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const controlledKeys = options?.selectedKeys;
+  const onSelectedKeysChange = options?.onSelectedKeysChange;
+  const [internalSelectedKeys, setInternalSelectedKeys] = useState<string[]>([]);
+  const selectedKeys = controlledKeys ?? internalSelectedKeys;
+  const setSelectedKeys = onSelectedKeysChange ?? setInternalSelectedKeys;
   const [points, setPoints] = useState<BillingSeriesChartPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

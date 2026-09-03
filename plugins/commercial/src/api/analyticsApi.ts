@@ -5,6 +5,8 @@ import type {
   CommercialProposalDetail,
   CommercialProposalHistoryEventsData,
   CommercialProposalsPage,
+  CommercialRolByCustomerData,
+  CommercialRolByProductData,
   CommercialRolSeriesData,
   AnalyticsFilterParams,
   NewBusinessRolPctData,
@@ -60,6 +62,15 @@ function buildQuery(
   if (params.order) searchParams.set("order", params.order);
   if (params.nature === "gross" || params.nature === "net") {
     searchParams.set("nature", params.nature);
+  }
+  if (params.product_codes?.trim()) {
+    searchParams.set("product_codes", params.product_codes.trim());
+  }
+  if (params.product_groups?.trim()) {
+    searchParams.set("product_groups", params.product_groups.trim());
+  }
+  if (params.market === "domestic" || params.market === "export") {
+    searchParams.set("market", params.market);
   }
   const query = searchParams.toString();
   return query ? `?${query}` : "";
@@ -186,6 +197,51 @@ export function getCommercialRolSeries(
   signal?: AbortSignal,
 ) {
   return fetchAnalyticsData<CommercialRolSeriesData>("/rol/series", params, signal);
+}
+
+export function getCommercialRolByProduct(
+  params: AnalyticsFilterParams & {
+    group_by?: "product" | "product_group";
+    limit?: number;
+  },
+  signal?: AbortSignal,
+) {
+  return fetchAnalyticsData<CommercialRolByProductData>("/rol/by-product", params, signal);
+}
+
+export function getCommercialRolByCustomer(
+  params: AnalyticsFilterParams & {
+    limit?: number;
+    include_others?: boolean;
+  },
+  signal?: AbortSignal,
+) {
+  const searchParams = new URLSearchParams();
+  if (params.start_date) searchParams.set("start_date", params.start_date);
+  if (params.end_date) searchParams.set("end_date", params.end_date);
+  if (params.branch) searchParams.set("branch", params.branch);
+  if (params.seller_id?.trim()) searchParams.set("seller_id", params.seller_id.trim());
+  if (params.customer_codes?.trim()) {
+    searchParams.set("customer_codes", params.customer_codes.trim());
+  }
+  if (params.product_codes?.trim()) {
+    searchParams.set("product_codes", params.product_codes.trim());
+  }
+  if (params.product_groups?.trim()) {
+    searchParams.set("product_groups", params.product_groups.trim());
+  }
+  if (params.market === "domestic" || params.market === "export") {
+    searchParams.set("market", params.market);
+  }
+  if (params.limit != null) searchParams.set("limit", String(params.limit));
+  if (params.include_others != null) {
+    searchParams.set("include_others", params.include_others ? "true" : "false");
+  }
+  const query = searchParams.toString();
+  return httpGet<ApiSuccessResponse<CommercialRolByCustomerData>>(
+    `${commercialApiUrl(`${ANALYTICS_PATH}/rol/by-customer`)}${query ? `?${query}` : ""}`,
+    { signal },
+  ).then((response) => unwrapEnvelope(response, "Erro na API comercial"));
 }
 
 export function getSalesConversionRateSeries(

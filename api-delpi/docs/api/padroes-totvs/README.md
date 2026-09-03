@@ -35,6 +35,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 | Pedido de venda — postergação | [pedido-venda-postergacao.md](./pedido-venda-postergacao.md) | Sem campo TOTVS; heurística BFF `availability` (entrega após o mês) |
 | Transportadoras | [transportadora.md](./transportadora.md) | `SA4` / `A4_NREDUZ` na emissão de NF |
 | ROL financeiro (receita líquida) | — | Campo HTTP canônico **`rol`** = vendas − devoluções (`VLR_VENDA − VLR_DEVOLUCAO`); identificador legado `rol_with_ipi` removido (breaking). Expressão reutilizável: `CommercialRolReturnSql` em `app/domain/services/commercial/commercial_rol_return_sql.py` (billing líquido da carteira / série `nature=net`). Bruto de NF = `F2_VALBRUT`; bruto no envelope by-customer = `gross_revenue`. |
+| ROL — mercado interno/externo | [rol-mercado-cfop.md](./rol-mercado-cfop.md) | CFOP `5`/`6` = interno; `7` = exportação; países via `A1_PAIS` |
 
 ---
 

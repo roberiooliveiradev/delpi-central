@@ -13,6 +13,7 @@ Cada bloco do slide TV usa **uma** rota, sem `group_by`:
 | KPI ROL (pares SI) | `get_si_indicator_commercial_rol_realized` / `_meta` | `/dashboard/indicators/commercial-rol/*` |
 | Série ROL | `get_commercial_rol_series` | `/commercial/rol/series` |
 | ROL por cliente | `get_commercial_rol_by_customer` | `/commercial/rol/by-customer` |
+| ROL por produto / família | `get_commercial_rol_by_product` | `/commercial/rol/by-product` |
 | ROL por filial | `get_commercial_rol_by_branch` | `/commercial/rol/by-branch` |
 | KPI OTD + meta SI | `get_sales_order_otd_summary` | `/commercial/sales-order-otd/summary` |
 | KPI OTD | `get_sales_order_otd` | `/commercial/sales-order-otd` |
