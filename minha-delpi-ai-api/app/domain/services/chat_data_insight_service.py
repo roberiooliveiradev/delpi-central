@@ -126,7 +126,19 @@ class ChatDataInsightService:
             if visual_hints:
                 commentary["visualHints"] = visual_hints
 
-            if not commentary.get("derivedMetrics"):
+            skip_numeric = False
+            if profile_key:
+                from app.domain.services.chat_operational_commentary_profile_service import (
+                    ChatOperationalCommentaryProfileService,
+                )
+
+                skip_numeric = (
+                    ChatOperationalCommentaryProfileService.skip_numeric_derived_metrics(
+                        profile_key
+                    )
+                )
+
+            if not commentary.get("derivedMetrics") and not skip_numeric:
                 commentary["derivedMetrics"] = cls._build_derived_metrics(rows=rows, shape=shape)
         elif not commentary.get("visualHints"):
             from app.domain.services.chat_humanized_data_response_content_service import (
