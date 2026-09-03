@@ -10,8 +10,10 @@ import {
   loadPortalTourProgress,
   repairLocalCompletedWhenRemoteIncomplete,
 } from "./portalTourPersistence";
-import { resolvePortalTourHomeEntryState } from "./portalTourHomeEntry";
-import { shouldShowPortalTour } from "./portalTourStorage";
+import {
+  resolvePortalTourHomeEntryState,
+  resolvePortalTourHomeVisible,
+} from "./portalTourHomeEntry";
 import {
   DELPI_PORTAL_TOUR_HOME_REFRESH_EVENT,
   usePortalTourSession,
@@ -20,6 +22,7 @@ import {
 const HOME_ENTRY_CACHE_KEY = "delpi.portal.tourHomeEntry.v1";
 
 type HomeEntryDisplayCache = {
+  visible?: boolean;
   requiredDone: number;
   requiredTotal: number;
   progressPercent: number;
@@ -154,9 +157,10 @@ export function usePortalTourHomeProgress(): PortalTourHomeProgress {
   );
 
   useEffect(() => {
-    if (!user?.id || !dataReady || !entry.visible) return;
+    if (!user?.id || !dataReady) return;
 
     writeHomeEntryDisplayCache(user.id, {
+      visible: entry.visible,
       requiredDone: entry.requiredDone,
       requiredTotal: entry.requiredTotal,
       progressPercent: entry.progressPercent,
@@ -181,21 +185,17 @@ export function usePortalTourHomeProgress(): PortalTourHomeProgress {
         newQuestCount: 0,
       };
 
-  const tourLikelyVisible = Boolean(
-    user?.id &&
-      coreLoaded &&
-      (shouldShowPortalTour(user.id) ||
-        (cachedDisplay != null &&
-          (cachedDisplay.progressPercent < 100 ||
-            cachedDisplay.requiredDone < cachedDisplay.requiredTotal))),
-  );
-
   const loading = Boolean(user?.id && coreLoaded && !dataReady);
-  const visible =
-    Boolean(user?.id && coreLoaded) &&
-    !session.dismissed &&
-    !session.completed &&
-    ((!dataReady && tourLikelyVisible) || (dataReady && entry.visible));
+  const visible = resolvePortalTourHomeVisible({
+    hasUser: Boolean(user?.id),
+    coreLoaded,
+    sessionDismissed: session.dismissed,
+    sessionCompleted: session.completed,
+    dataReady,
+    entryVisible: entry.visible,
+    cachedVisible:
+      typeof cachedDisplay?.visible === "boolean" ? cachedDisplay.visible : null,
+  });
 
   return {
     ready: dataReady,

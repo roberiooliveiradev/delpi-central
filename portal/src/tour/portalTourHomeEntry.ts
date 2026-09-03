@@ -86,3 +86,23 @@ export function resolvePortalTourHomeEntryState(
     newQuestCount,
   };
 }
+
+/**
+ * Visibilidade na home antes/depois do GET de progresso.
+ * «Agora não» só existe no remoto — não usar localStorage de “não concluído”
+ * como preview, senão o card pisca e some no F5.
+ */
+export function resolvePortalTourHomeVisible(input: {
+  hasUser: boolean;
+  coreLoaded: boolean;
+  sessionDismissed: boolean;
+  sessionCompleted: boolean;
+  dataReady: boolean;
+  entryVisible: boolean;
+  cachedVisible: boolean | null;
+}): boolean {
+  if (!input.hasUser || !input.coreLoaded) return false;
+  if (input.sessionDismissed || input.sessionCompleted) return false;
+  if (input.dataReady) return input.entryVisible;
+  return input.cachedVisible === true;
+}

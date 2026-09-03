@@ -5,7 +5,10 @@ import type {
   PortalTourCatalogResponse,
   PortalTourProgressResponse,
 } from "../data/coreApi.ts";
-import { resolvePortalTourHomeEntryState } from "./portalTourHomeEntry.ts";
+import {
+  resolvePortalTourHomeEntryState,
+  resolvePortalTourHomeVisible,
+} from "./portalTourHomeEntry.ts";
 import {
   isPortalTourDismissed,
   shouldActivatePortalTourSession,
@@ -130,5 +133,44 @@ describe("resolvePortalTourHomeEntryState", () => {
     assert.equal(entry.visible, true);
     assert.equal(entry.requiredDone, 1);
     assert.equal(entry.requiredTotal, 6);
+  });
+});
+
+describe("resolvePortalTourHomeVisible", () => {
+  const base = {
+    hasUser: true,
+    coreLoaded: true,
+    sessionDismissed: false,
+    sessionCompleted: false,
+    dataReady: false,
+    entryVisible: true,
+    cachedVisible: null as boolean | null,
+  };
+
+  it("não antecipa o card sem cache (evita flash pós Agora não)", () => {
+    assert.equal(resolvePortalTourHomeVisible(base), false);
+  });
+
+  it("só antecipa quando o cache confirma visível", () => {
+    assert.equal(
+      resolvePortalTourHomeVisible({ ...base, cachedVisible: true }),
+      true,
+    );
+    assert.equal(
+      resolvePortalTourHomeVisible({ ...base, cachedVisible: false }),
+      false,
+    );
+  });
+
+  it("depois do GET segue o remoto, inclusive dismissed", () => {
+    assert.equal(
+      resolvePortalTourHomeVisible({
+        ...base,
+        dataReady: true,
+        entryVisible: false,
+        cachedVisible: true,
+      }),
+      false,
+    );
   });
 });
