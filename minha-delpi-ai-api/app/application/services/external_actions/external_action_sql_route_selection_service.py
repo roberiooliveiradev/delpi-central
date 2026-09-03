@@ -47,6 +47,23 @@ class ExternalActionSqlRouteSelectionService:
         )
 
         if not sql_query:
+            from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+            from app.domain.services.chat_sql_executable_synthesis_service import (
+                ChatSqlExecutableSynthesisService,
+            )
+
+            source = str(raw_message or message).strip()
+
+            if ChatSqlIntentService.should_auto_execute_sql(source):
+                synthesized = ChatSqlExecutableSynthesisService.synthesize_select(
+                    source,
+                    invent_default_table=False,
+                )
+
+                if synthesized and self._is_executable_select_candidate(synthesized):
+                    sql_query = synthesized
+
+        if not sql_query:
             return None
 
         if ChatSqlSafetyService.contains_destructive_sql(sql_query):

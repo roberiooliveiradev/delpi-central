@@ -57,7 +57,7 @@ def test_select_sql_uses_data_sql_action_when_sql_provided():
 
 
 def test_select_sql_without_executable_query_returns_none():
-    """Sem SELECT…FROM não ranquear REST (ex.: schedule/today) nem body só com message."""
+    """Sem SELECT…FROM e sem domínio inferível não ranquear REST."""
     repository = _FakeRepository(
         [
             {
@@ -79,10 +79,7 @@ def test_select_sql_without_executable_query_returns_none():
         ]
     )
     service = ExternalActionSqlRouteSelectionService(repository)
-    message = (
-        "executa no banco esse select top 10 de produtos do grupo 1008 "
-        "(SB1010, B1_COD, B1_DESC, B1_GRUPO)"
-    )
+    message = "executa no banco esse select top 10 de coisas aleatorias sem tabela"
 
     selected = service.select(
         message,
@@ -92,6 +89,38 @@ def test_select_sql_without_executable_query_returns_none():
     )
 
     assert selected is None
+
+
+def test_select_sql_synthesizes_oneshot_with_explicit_table():
+    """F05 T3: prosa com SB1010 + grupo sintetiza SELECT…FROM e POST /data/sql."""
+    from app.composition.content_composer import configure_domain_infrastructure_ports
+
+    configure_domain_infrastructure_ports()
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "sql-action",
+                "method": "POST",
+                "path": "/data/sql",
+                "operationId": "execute_sql",
+                "parametersSchema": [],
+            },
+        ]
+    )
+    service = ExternalActionSqlRouteSelectionService(repository)
+    message = (
+        "executa no banco esse select top 10 de produtos do grupo 1008 "
+        "(SB1010, B1_COD, B1_DESC, B1_GRUPO)"
+    )
+
+    selected = service.select(message, ["sql-action"])
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "sql-action"
+    sql_body = selected["arguments"]["body"]["sql"]
+    assert "FROM SB1010" in sql_body.upper().replace(" ", " ") or "FROM SB1010" in sql_body.upper()
+    assert "SELECT" in sql_body.upper()
+    assert "1008" in sql_body
 
 
 def test_select_sql_with_embedded_select_from_uses_sql_action_only():
