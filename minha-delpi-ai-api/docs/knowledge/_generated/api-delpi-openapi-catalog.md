@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 698 · **Gerado em:** 2026-08-31 12:01 UTC
+**Provider:** `api-delpi` · **Rotas:** 698 · **Gerado em:** 2026-09-03 11:11 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -45,19 +45,14 @@
 |--------|------|-------------|---------|
 | `GET` | `/customers/search` | `search_customers` | Search Customers Route |
 
-## Comercial (26)
+## Comercial (22)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
-| `GET` | `/commercial/branch_new_business_rol_target_pct` | `get_branch_new_business_rol_target_pct` | Indicator — Commercial rol new business target |
-| `GET` | `/commercial/branch_rol_target_pct` | `get_branch_rol_target_pct` | Indicator — Meta percentage rol comercial |
-| `GET` | `/commercial/branch_weg_rol_target_pct` | `get_branch_weg_rol_target_pct` | Indicator — Commercial rol weg target |
 | `GET` | `/commercial/closing-rate` | `get_sales_conversion_rate` | Sales conversion rate |
 | `GET` | `/commercial/closing-rate/series` | `get_sales_conversion_rate_series` | Sales conversion rate series |
-| `GET` | `/commercial/head_office_new_business_rol_target_pct` | `get_head_office_new_business_rol_target_pct` | Indicator — Commercial rol new business target |
-| `GET` | `/commercial/head_office_rol_target_pct` | `get_head_office_rol_target_pct` | Indicator — Meta percentage rol comercial |
-| `GET` | `/commercial/head_office_weg_rol_target_pct` | `get_head_office_weg_rol_target_pct` | Indicator — Commercial rol weg target |
 | `GET` | `/commercial/new-business-rol-pct` | `get_new_business_rol_pct` | New business rol pct |
+| `GET` | `/commercial/new-business-rol-target-pct` | `get_new_business_rol_target_pct` | Commercial new business ROL target (realized and goal) |
 | `GET` | `/commercial/new-clients-average` | `get_new_clients_average` | New clients average |
 | `GET` | `/commercial/new-clients-rol-pct` | `get_new_clients_rol_pct` | Indicator — percentage rol de clientes novos |
 | `GET` | `/commercial/proposals` | `list_commercial_proposals` | Commercial proposals |
@@ -75,6 +70,7 @@
 | `GET` | `/commercial/sales-order-otd/series` | `get_sales_order_otd_series` | Sales order otd series |
 | `GET` | `/commercial/sales-order-otd/series-by-customer` | `get_sales_order_otd_series_by_customer` | Lista paginada — Série temporal otd de pedidos de venda por cliente |
 | `GET` | `/commercial/sales-order-otd/summary` | `get_sales_order_otd_summary` | Sales order OTD summary (realized and goal) |
+| `GET` | `/commercial/weg-rol-target-pct` | `get_weg_rol_target_pct` | Commercial WEG ROL target (realized and goal) |
 
 ## Compras operacionais (1)
 
@@ -228,14 +224,16 @@
 | `GET` | `/engineering/transforma-mais/processes/summary` | `get_transforma_mais_summary` | Transforma mais summary |
 | `GET` | `/engineering/transformometro/savings-investment/series` | `get_transformometro_savings_investment_series` | Economia bruta vs Investimento do TRANSFORMA+ DELPI |
 
-## Financeiro (4)
+## Financeiro (6)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
 | `GET` | `/financial/ebitda_pct` | `get_financial_ebitda_pct` | Financial EBITDA percentage |
 | `GET` | `/financial/fixed_cost_pct` | `get_financial_fixed_cost_pct` | Financial fixed cost percentage |
 | `GET` | `/financial/pmr` | `get_financial_pmr` | Financial pmr |
+| `GET` | `/financial/purchase-freight/links` | `get_financial_purchase_freight_links` | Purchase invoice to freight document links |
 | `GET` | `/financial/rol` | `get_financial_rol` | Financial ROL (net operating revenue) |
+| `GET` | `/financial/rol/invoices` | `get_financial_rol_invoices` | ROL invoices (sales and returns) |
 
 ## Financeiro — Despesas por Centro de Custo (6)
 
@@ -645,7 +643,7 @@
 | `GET` | `/propostas-comerciais/{proposta_interna}/pdf` | `export_proposta_comercial_pdf` | Export Proposta Comercial Pdf Route |
 | `POST` | `/propostas-comerciais/{proposta_interna}/pdf` | `export_proposta_comercial_pdf_with_overrides` | Export proposal commercial PDF with overrides |
 
-## Qualidade (146)
+## Qualidade (148)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -697,6 +695,8 @@
 | `GET` | `/quality/audit-5s/analytics/dashboard` | `get_audit_5s_analytics_dashboard` | Get Audit 5S Dashboard |
 | `GET` | `/quality/audit-5s/areas` | `list_audit_5s_areas` | List Areas |
 | `POST` | `/quality/audit-5s/areas` | `create_audit_5s_area` | Create audit 5S area |
+| `PATCH` | `/quality/audit-5s/areas/{area_id}` | `update_audit_5s_area` | Update audit 5S area |
+| `PUT` | `/quality/audit-5s/areas/{area_id}/children` | `set_audit_5s_area_children` | Set audit 5S area children |
 | `GET` | `/quality/audit-5s/audits` | `list_audit_5s_audits` | List Audits |
 | `POST` | `/quality/audit-5s/audits` | `create_audit_5s_audit` | Create audit 5S audit |
 | `GET` | `/quality/audit-5s/audits/{audit_id}` | `get_audit_5s_audit` | Get Audit |

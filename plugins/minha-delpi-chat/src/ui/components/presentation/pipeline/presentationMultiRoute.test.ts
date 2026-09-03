@@ -63,6 +63,43 @@ describe("presentationMultiRoute", () => {
     ]);
   });
 
+  it("não trata enrichment (wave-2) como rota multi-produto", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          compositionRole: "primary",
+          path: "/products/10080001/stock",
+          tablePresentation: {
+            type: "table",
+            title: "Estoque",
+            columns: [{ key: "branch", label: "Filial" }],
+            rows: [{ branch: "01" }],
+          },
+        },
+      },
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          compositionRole: "enrichment",
+          path: "/products/10080001/sales",
+          kpiPresentation: {
+            type: "kpi",
+            title: "Indicador",
+            cards: [{ key: "documents", label: "Documentos", value: 67 }],
+          },
+        },
+      },
+    ]);
+
+    expect(isMultiRouteProductPresentation(toolCalls)).toBe(false);
+    expect(collectProductRouteBlocks(toolCalls).map((block) => block.routeKey)).toEqual([
+      "stock",
+    ]);
+  });
+
   it("ordena visuais por rota — árvore não fica entre tabela e gráfico de estoque", () => {
     const toolCalls = fixtureToolCalls([
       {

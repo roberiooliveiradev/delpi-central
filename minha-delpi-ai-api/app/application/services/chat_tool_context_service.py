@@ -736,6 +736,13 @@ class ChatToolContextService:
                     if isinstance(follow, dict) and follow.get("routeId"):
                         meta["enrichmentRouteId"] = str(follow.get("routeId"))
 
+        from app.domain.services.chat_presentation_enrichment_composition_service import (
+            ChatPresentationEnrichmentCompositionService,
+        )
+
+        ChatPresentationEnrichmentCompositionService.compose_into_primary(
+            [*execution.safe_tool_calls, *follow_state.safe_tool_calls]
+        )
 
         if isinstance(selected_external_action_meta, dict):
             audit = selected_external_action_meta.setdefault("enrichmentPlan", {})

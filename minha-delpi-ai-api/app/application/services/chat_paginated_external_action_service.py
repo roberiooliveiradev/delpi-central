@@ -159,8 +159,11 @@ class ChatPaginatedExternalActionService:
         if not intent.is_refinement:
             return FormatRefinementShortcutResult(kind="skip")
 
+        requested_format = intent.requested_format
+
         operation = ChatPresentationFormatRefinementService.collect_last_successful_operation(
             previous_messages,
+            requested_format=requested_format,
         )
 
         if not operation:
@@ -172,8 +175,6 @@ class ChatPaginatedExternalActionService:
                     reason="no_prior",
                 ),
             )
-
-        requested_format = intent.requested_format
 
         if not requested_format:
             return FormatRefinementShortcutResult(
@@ -265,8 +266,11 @@ class ChatPaginatedExternalActionService:
         if not intent.is_refinement:
             return None
 
+        requested = requested_format or intent.requested_format
+
         operation = ChatPresentationFormatRefinementService.collect_last_successful_operation(
             previous_messages,
+            requested_format=requested,
         )
 
         if not operation:

@@ -98,6 +98,12 @@ export function collectProductRouteBlocks(toolCalls: ChatToolCall[]): ProductRou
     }
 
     const metadata = (toolCall.metadata ?? {}) as Record<string, unknown>;
+
+    // Enrichment (critic wave-2) não abre seção multi-rota — entra no renderPlan do primary.
+    if (String(metadata.compositionRole || "").trim().toLowerCase() === "enrichment") {
+      continue;
+    }
+
     const path = String(metadata.path || "").trim();
 
     if (!path) {

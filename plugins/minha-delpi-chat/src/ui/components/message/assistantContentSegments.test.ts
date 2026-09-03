@@ -413,4 +413,60 @@ describe("assistantContentSegments", () => {
 
     expect(segments.some((item) => item.kind === "download")).toBe(true);
   });
+
+  it("renderPlan primary composto (estoque tabela + enrichment KPI) exibe ambos", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          compositionRole: "primary",
+          path: "/products/10080001/stock",
+          presentationDecision: { selected: "table", layoutMode: "stack" },
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "assistantMessage" },
+              { kind: "table", slot: "primary", source: "tablePresentation" },
+              { kind: "kpi", slot: "enrichment", source: "kpiPresentation" },
+            ],
+          },
+          tablePresentation: {
+            type: "table",
+            title: "Estoque do produto",
+            columns: [{ key: "branch", label: "Filial" }],
+            rows: [{ branch: "01" }, { branch: "02" }],
+          },
+          kpiPresentation: {
+            type: "kpi",
+            title: "Indicador",
+            cards: [{ key: "documents", label: "Documentos", value: 67 }],
+          },
+        },
+      },
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          compositionRole: "enrichment",
+          path: "/products/10080001/sales",
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [{ kind: "markdown", slot: "lead", source: "assistantMessage" }],
+          },
+        },
+      },
+    ];
+
+    const segments = buildAssistantContentSegments(
+      "O produto **10080001** tem saldo disponível.",
+      toolCalls,
+    );
+    const kinds = segments.map((item) => item.kind);
+
+    expect(kinds).toContain("table");
+    expect(kinds).toContain("kpi");
+  });
 });

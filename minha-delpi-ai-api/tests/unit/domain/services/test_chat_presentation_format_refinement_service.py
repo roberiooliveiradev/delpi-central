@@ -116,6 +116,70 @@ def test_collect_last_successful_operation_skips_system_tables():
     assert "/stock" in op["path"]
 
 
+def test_collect_prefers_primary_table_over_enrichment_sales_for_table_format():
+    """Refine «em tabela» não deve reapresentar KPI escalar de vendas (enrichment)."""
+    history = [
+        {
+            "role": "assistant",
+            "content": "Estoque consultado",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "stock-action",
+                            "parameters": {"code": "10080001"},
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080001/stock",
+                            "actionId": "stock-action",
+                            "compositionRole": "primary",
+                            "preferredFormat": "table",
+                            "entity": "product_stock",
+                            "tablePresentation": {
+                                "type": "table",
+                                "title": "Estoque",
+                                "columns": [{"key": "branch", "label": "Filial"}],
+                                "rows": [{"branch": "01"}, {"branch": "02"}],
+                            },
+                        },
+                    },
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "sales-action",
+                            "parameters": {"code": "10080001"},
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080001/sales",
+                            "actionId": "sales-action",
+                            "compositionRole": "enrichment",
+                            "preferredFormat": "kpi",
+                            "entity": "product_sales",
+                            "kpiPresentation": {
+                                "type": "kpi",
+                                "title": "Indicador",
+                                "cards": [{"key": "documents", "value": 67}],
+                            },
+                        },
+                    },
+                ]
+            },
+        }
+    ]
+
+    op = ChatPresentationFormatRefinementService.collect_last_successful_operation(
+        history,
+        requested_format="table",
+    )
+
+    assert op is not None
+    assert op["actionId"] == "stock-action"
+    assert "/stock" in op["path"]
+
+
 def test_intent_router_skips_presentation_task_for_format_refinement():
     result = ChatIntentRouterService.classify("mostre os dados acima em tabela")
 

@@ -30,53 +30,187 @@ class ChatPresentationFormatRefinementService:
     def collect_last_successful_operation(
         cls,
         previous_messages: list[Any] | None,
+        *,
+        requested_format: str | None = None,
     ) -> dict[str, Any] | None:
+        """Última operação reapresentável.
+
+        Prefere ``compositionRole=primary`` (não enrichment wave-2) e, quando
+        ``requested_format`` é informado, a tool que realmente carrega esse visual
+        (ex.: tabela no estoque, não KPI escalar de vendas).
+        """
         for item in reversed((previous_messages or [])[-16:]):
             metadata = cls._message_metadata(item)
             tool_calls = metadata.get("toolCalls") or []
+            candidates: list[dict[str, Any]] = []
 
-            for tool_call in reversed(tool_calls):
-                if not isinstance(tool_call, dict):
-                    continue
+            for tool_call in tool_calls:
+                operation = cls._operation_from_tool_call(tool_call)
 
-                if str(tool_call.get("name") or "") != "execute_external_action":
-                    continue
+                if operation:
+                    candidates.append(operation)
 
-                tool_meta = tool_call.get("metadata") or {}
+            if not candidates:
+                continue
 
-                if not tool_meta.get("ok"):
-                    continue
-
-                path = str(tool_meta.get("path") or "").lower()
-                entity = str(tool_meta.get("entity") or "").strip()
-
-                if entity in {"protheus_table", "protheus_column"} or (
-                    not entity and "tables" in path and "/system/" in path
-                ):
-                    continue
-
-                arguments = tool_call.get("arguments") or {}
-                parameters = arguments.get("parameters") or {}
-
-                if not isinstance(parameters, dict):
-                    parameters = {}
-
-                action_id = str(
-                    tool_meta.get("actionId") or arguments.get("actionId") or ""
-                ).strip()
-
-                if not action_id and not path:
-                    continue
-
-                return {
-                    "actionId": action_id,
-                    "path": str(tool_meta.get("path") or ""),
-                    "parameters": dict(parameters),
-                    "metadata": dict(tool_meta),
-                    "arguments": dict(arguments) if isinstance(arguments, dict) else {},
-                }
+            return cls._pick_best_operation(
+                candidates,
+                requested_format=requested_format,
+            )
 
         return None
+
+    @classmethod
+    def _operation_from_tool_call(
+        cls,
+        tool_call: Any,
+    ) -> dict[str, Any] | None:
+        if not isinstance(tool_call, dict):
+            return None
+
+        if str(tool_call.get("name") or "") != "execute_external_action":
+            return None
+
+        tool_meta = tool_call.get("metadata") or {}
+
+        if not isinstance(tool_meta, dict) or not tool_meta.get("ok"):
+            return None
+
+        path = str(tool_meta.get("path") or "").lower()
+        entity = str(tool_meta.get("entity") or "").strip()
+
+        if entity in {"protheus_table", "protheus_column"} or (
+            not entity and "tables" in path and "/system/" in path
+        ):
+            return None
+
+        arguments = tool_call.get("arguments") or {}
+        parameters = arguments.get("parameters") or {}
+
+        if not isinstance(parameters, dict):
+            parameters = {}
+
+        action_id = str(
+            tool_meta.get("actionId") or arguments.get("actionId") or ""
+        ).strip()
+
+        if not action_id and not path:
+            return None
+
+        return {
+            "actionId": action_id,
+            "path": str(tool_meta.get("path") or ""),
+            "parameters": dict(parameters),
+            "metadata": dict(tool_meta),
+            "arguments": dict(arguments) if isinstance(arguments, dict) else {},
+        }
+
+    @classmethod
+    def _pick_best_operation(
+        cls,
+        candidates: list[dict[str, Any]],
+        *,
+        requested_format: str | None,
+    ) -> dict[str, Any]:
+        def sort_key(operation: dict[str, Any]) -> tuple[int, int, int]:
+            meta = operation.get("metadata") or {}
+            role = str(meta.get("compositionRole") or "").strip().lower()
+            # primary primeiro; enrichment por último; sem role no meio.
+            role_rank = 2 if role == "enrichment" else (0 if role == "primary" else 1)
+            format_rank = -cls._format_capability_score(meta, requested_format)
+            # Empate: preferir o primeiro da wave-1 (ordem original).
+            return (role_rank, format_rank, 0)
+
+        # Estável: índice original desempatar mantendo ordem da wave-1.
+        indexed = list(enumerate(candidates))
+        indexed.sort(
+            key=lambda pair: (
+                sort_key(pair[1])[0],
+                sort_key(pair[1])[1],
+                pair[0],
+            )
+        )
+        return indexed[0][1]
+
+    @classmethod
+    def _format_capability_score(
+        cls,
+        meta: dict[str, Any],
+        requested_format: str | None,
+    ) -> int:
+        fmt = str(requested_format or "").strip().lower()
+
+        if not fmt:
+            return 0
+
+        preferred = str(meta.get("preferredFormat") or "").strip().lower()
+        decision = meta.get("presentationDecision")
+        selected = ""
+
+        if isinstance(decision, dict):
+            selected = str(decision.get("selected") or "").strip().lower()
+
+        if fmt == "table":
+            if cls._has_table_presentation(meta):
+                return 100
+            if preferred == "table" or selected == "table":
+                return 60
+            return 0
+
+        if fmt == "kpi":
+            if isinstance(meta.get("kpiPresentation"), dict):
+                return 100
+            if preferred == "kpi" or selected == "kpi":
+                return 60
+            return 0
+
+        if fmt in {"chart", "line_chart", "bar_chart"}:
+            if isinstance(meta.get("chartPresentation"), dict):
+                return 100
+            if preferred in {"chart", "line_chart"} or "chart" in selected:
+                return 60
+            return 0
+
+        if fmt == "tree":
+            if isinstance(meta.get("treePresentation"), dict):
+                return 100
+            if preferred == "tree" or selected == "tree":
+                return 60
+            return 0
+
+        if preferred == fmt or selected == fmt:
+            return 40
+
+        return 0
+
+    @classmethod
+    def _has_table_presentation(cls, meta: dict[str, Any]) -> bool:
+        table = meta.get("tablePresentation")
+
+        if isinstance(table, dict) and str(table.get("type") or "").lower() == "table":
+            rows = table.get("rows")
+            return isinstance(rows, list) and len(rows) > 0
+
+        bundled = meta.get("tablePresentations")
+
+        if isinstance(bundled, list):
+            for item in bundled:
+                if (
+                    isinstance(item, dict)
+                    and str(item.get("type") or "").lower() == "table"
+                    and isinstance(item.get("rows"), list)
+                    and item.get("rows")
+                ):
+                    return True
+
+        presentation = meta.get("presentation")
+
+        return (
+            isinstance(presentation, dict)
+            and str(presentation.get("type") or "").lower() == "table"
+            and isinstance(presentation.get("rows"), list)
+            and bool(presentation.get("rows"))
+        )
 
     @classmethod
     def resolve_payload(
