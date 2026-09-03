@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { usePortfolioScope } from "../../../app/PortfolioScopeContext";
 import { usePortfolioSellerAccess } from "../../../app/usePortfolioSellerAccess";
@@ -97,6 +97,11 @@ function serializeSellerIdsForApi(sellerIds: string[]): string | undefined {
   return sellerIds.join(",");
 }
 
+function serializeCustomerCodesForApi(codes: string[]): string | undefined {
+  if (codes.length === 0) return undefined;
+  return codes.join(",");
+}
+
 export function useAnalyticsFilters() {
   const initial = readAnalyticsFilters();
   const {
@@ -111,6 +116,7 @@ export function useAnalyticsFilters() {
   const [branches, setBranchesState] = useState(initial.branches);
   const [customerSegment, setCustomerSegmentState] = useState(initial.customerSegment);
   const [sellerIds, setSellerIdsState] = useState(initial.sellerIds);
+  const [customerCodes, setCustomerCodesState] = useState(initial.customerCodes);
   const [storedPeriodPreset, setStoredPeriodPreset] = useState<PeriodPresetId | null>(
     initial.periodPreset,
   );
@@ -155,6 +161,8 @@ export function useAnalyticsFilters() {
   } = usePortfolioScope();
 
   const effectiveSellerIds = sanitizeSellerIds(sellerIds, sellerAccess);
+  const sellerScopeKey = effectiveSellerIds.join(",");
+  const previousSellerScopeKey = useRef(sellerScopeKey);
 
   useEffect(() => {
     const sanitized = sanitizeSellerIds(sellerIds, sellerAccess);
@@ -175,6 +183,12 @@ export function useAnalyticsFilters() {
     }
   }, [canFilterPortfolios, effectiveSellerIds, sellerIdFilter, setSellerIdFilter]);
 
+  useEffect(() => {
+    if (previousSellerScopeKey.current === sellerScopeKey) return;
+    previousSellerScopeKey.current = sellerScopeKey;
+    setCustomerCodesState([]);
+  }, [sellerScopeKey]);
+
   const periodPreset: PeriodPresetId = forceCustomPreset
     ? "custom"
     : resolveEffectivePeriodPreset(dateStart, dateEnd, storedPeriodPreset);
@@ -187,6 +201,7 @@ export function useAnalyticsFilters() {
       branches,
       customerSegment,
       sellerIds: effectiveSellerIds,
+      customerCodes,
       periodPreset: forceCustomPreset ? null : storedPeriodPreset,
     });
   }, [
@@ -196,6 +211,7 @@ export function useAnalyticsFilters() {
     branches,
     customerSegment,
     effectiveSellerIds,
+    customerCodes,
     storedPeriodPreset,
     forceCustomPreset,
   ]);
@@ -207,6 +223,7 @@ export function useAnalyticsFilters() {
       setBranchesState(next.branches);
       setCustomerSegmentState(next.customerSegment);
       setSellerIdsState(sanitizeSellerIds(next.sellerIds, sellerAccess));
+      setCustomerCodesState(next.customerCodes);
       setStoredPeriodPreset(next.periodPreset);
       setForceCustomPreset(false);
     });
@@ -218,6 +235,7 @@ export function useAnalyticsFilters() {
     branch: resolveAnalyticsApiBranch(branches),
     customer_segment: customerSegment || undefined,
     seller_id: serializeSellerIdsForApi(effectiveSellerIds),
+    customer_codes: serializeCustomerCodesForApi(customerCodes),
   };
 
   const filterState: AnalyticsFilterUrlState = {
@@ -227,6 +245,7 @@ export function useAnalyticsFilters() {
     branches,
     customerSegment,
     sellerIds: effectiveSellerIds,
+    customerCodes,
     periodPreset: forceCustomPreset ? null : storedPeriodPreset,
   };
 
@@ -253,6 +272,7 @@ export function useAnalyticsFilters() {
     branches,
     customerSegment,
     sellerIds: effectiveSellerIds,
+    customerCodes,
     canFilterPortfolios,
     canUseTeamScope,
     filterablePortfolios,
@@ -268,6 +288,7 @@ export function useAnalyticsFilters() {
       [],
     ),
     setSellerIds: useCallback((v: string[]) => setSellerIdsState(v), []),
+    setCustomerCodes: useCallback((v: string[]) => setCustomerCodesState(v), []),
     apiParams,
     filterState,
   };

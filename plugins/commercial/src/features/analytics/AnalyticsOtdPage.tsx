@@ -137,6 +137,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
     filters.apiParams.branch,
     filters.apiParams.customer_segment,
     filters.apiParams.seller_id,
+    filters.apiParams.customer_codes,
   ].join("|");
 
   useEffect(() => {
@@ -168,6 +169,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
     filters.apiParams.branch,
     filters.apiParams.customer_segment,
     filters.apiParams.seller_id,
+    filters.apiParams.customer_codes,
     reloadKey,
   ]);
 
@@ -199,10 +201,9 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
       });
     return () => controller.abort();
   }, [
-    filters.apiParams.start_date,
-    filters.apiParams.end_date,
     filters.apiParams.customer_segment,
     filters.apiParams.seller_id,
+    filters.apiParams.customer_codes,
     reloadKey,
   ]);
 
@@ -241,6 +242,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
     filters.apiParams.branch,
     filters.apiParams.customer_segment,
     filters.apiParams.seller_id,
+    filters.apiParams.customer_codes,
     listState.page,
     listState.search,
     listState.status,
@@ -492,6 +494,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
           branches={filters.branches}
           customerSegment={filters.customerSegment}
           sellerIds={filters.sellerIds}
+          customerCodes={filters.customerCodes}
           canFilterPortfolios={filters.canFilterPortfolios}
           canUseTeamScope={filters.canUseTeamScope}
           filterablePortfolios={filters.filterablePortfolios}
@@ -501,6 +504,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
           onPeriodPreset={filters.setPeriodPreset}
           onBranches={filters.setBranches}
           onCustomerSegment={filters.setCustomerSegment}
+          onCustomerCodes={filters.setCustomerCodes}
           onSellerIds={filters.setSellerIds}
         />
       </CommercialPageHero>

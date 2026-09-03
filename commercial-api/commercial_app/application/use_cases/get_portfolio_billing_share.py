@@ -83,13 +83,17 @@ def compute_share_pct(portfolio_rol: float, company_rol: float) -> float | None:
 def _totvs_params(
     scope: CommercialCustomerScope,
     base: dict[str, object | None],
+    *,
+    selected_customer_codes: str | None = None,
 ) -> dict[str, object]:
     params: dict[str, object] = {
         key: value
         for key, value in base.items()
         if value is not None and value != ""
     }
-    codes = AnalyticsCustomerCodesService.codes_param(scope)
+    codes = AnalyticsCustomerCodesService.codes_param_for_selection(
+        scope, selected_customer_codes
+    )
     if codes is not None:
         params["customer_codes"] = codes
     return params
@@ -108,6 +112,7 @@ class GetPortfolioBillingShareUseCase:
         branch: str | None = None,
         customer_segment: str | None = None,
         nature: str | None = None,
+        selected_customer_codes: str | None = None,
     ) -> dict[str, Any]:
         amount_nature = normalize_billing_amount_nature(nature)
         company_scope = CommercialCustomerScope(
@@ -120,7 +125,12 @@ class GetPortfolioBillingShareUseCase:
             "customer_segment": customer_segment,
         }
         portfolio_rol = self._sum_amount(
-            gateway, portfolio_scope, base, branch, amount_nature
+            gateway,
+            portfolio_scope,
+            base,
+            branch,
+            amount_nature,
+            selected_customer_codes=selected_customer_codes,
         )
         company_rol = self._sum_amount(
             gateway, company_scope, base, branch, amount_nature
@@ -145,8 +155,11 @@ class GetPortfolioBillingShareUseCase:
         base: dict[str, object | None],
         branch: str | None,
         nature: str,
+        selected_customer_codes: str | None = None,
     ) -> float:
-        params = _totvs_params(scope, base)
+        params = _totvs_params(
+            scope, base, selected_customer_codes=selected_customer_codes
+        )
         total = 0.0
         for branch_code in resolve_rol_branches_for_branch(branch):
             call_params = {**params, "branch": branch_code}

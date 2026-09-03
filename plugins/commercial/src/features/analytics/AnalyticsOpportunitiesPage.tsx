@@ -115,6 +115,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     filters.apiParams.branch,
     filters.apiParams.customer_segment,
     filters.apiParams.seller_id,
+    filters.apiParams.customer_codes,
     search,
     statusFilter,
     reloadKey,
@@ -151,6 +152,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
         branches={filters.branches}
         customerSegment={filters.customerSegment}
         sellerIds={filters.sellerIds}
+        customerCodes={filters.customerCodes}
         canFilterPortfolios={filters.canFilterPortfolios}
         canUseTeamScope={filters.canUseTeamScope}
         filterablePortfolios={filters.filterablePortfolios}
@@ -160,6 +162,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
         onPeriodPreset={filters.setPeriodPreset}
         onBranches={filters.setBranches}
         onCustomerSegment={filters.setCustomerSegment}
+        onCustomerCodes={filters.setCustomerCodes}
         onSellerIds={filters.setSellerIds}
       />
       </CommercialPageHero>

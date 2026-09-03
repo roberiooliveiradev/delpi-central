@@ -99,13 +99,17 @@ def _items_map(raw: Any) -> dict[tuple[str, str], dict[str, Any]]:
 def _totvs_params(
     scope: CommercialCustomerScope,
     base: dict[str, object | None],
+    *,
+    selected_customer_codes: str | None = None,
 ) -> dict[str, object]:
     params: dict[str, object] = {
         key: value
         for key, value in base.items()
         if value is not None and value != ""
     }
-    codes = AnalyticsCustomerCodesService.codes_param(scope)
+    codes = AnalyticsCustomerCodesService.codes_param_for_selection(
+        scope, selected_customer_codes
+    )
     if codes is not None:
         params["customer_codes"] = codes
     return params
@@ -128,6 +132,7 @@ class GetPortfolioBillingRankingUseCase:
         order: RankingOrder = "growth",
         seller_name_by_customer: dict[tuple[str, str], str] | None = None,
         nature: str | None = None,
+        selected_customer_codes: str | None = None,
     ) -> dict[str, Any]:
         if not start_date or not end_date:
             raise ValueError("start_date e end_date são obrigatórios.")
@@ -150,11 +155,19 @@ class GetPortfolioBillingRankingUseCase:
         }
         current_raw = gateway.get_commercial_analytics(
             "/rol/by-customer",
-            params=_totvs_params(portfolio_scope, base_current),
+            params=_totvs_params(
+                portfolio_scope,
+                base_current,
+                selected_customer_codes=selected_customer_codes,
+            ),
         )
         prior_raw = gateway.get_commercial_analytics(
             "/rol/by-customer",
-            params=_totvs_params(portfolio_scope, base_prior),
+            params=_totvs_params(
+                portfolio_scope,
+                base_prior,
+                selected_customer_codes=selected_customer_codes,
+            ),
         )
         current_map = _items_map(current_raw)
         prior_map = _items_map(prior_raw)

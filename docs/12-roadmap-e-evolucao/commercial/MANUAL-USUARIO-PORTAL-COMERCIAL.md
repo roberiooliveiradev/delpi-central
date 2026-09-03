@@ -125,6 +125,9 @@ Só quem tem permissão de **administrar** o Portal. Uso do dia a dia não preci
 **O chip Escopo muda o mês do gráfico?**  
 Não. Escopo = carteira(s). Período = filtros da **Visão geral** (ou da tela em que você está).
 
+**O filtro de clientes da Visão geral lista todos os clientes do TOTVS?**  
+Não. A lista vem das carteiras do recorte (ou de todas as carteiras ativas, se você não filtrar carteira). Vazio = todos os clientes daquele recorte.
+
 ### Indicadores (Visão geral)
 
 **Onde vejo o ROL do mês?**  
@@ -238,6 +241,7 @@ Fonte na UI: **Ajuda** → **Catálogo de termos** (`plugins/commercial/src/cont
 | Administração | Cadastro de carteiras, membros e transferências | Menu (quem administra) |
 | Ajuda | Manual, FAQ e este catálogo | Menu superior |
 | SC / ES | Unidades Santa Catarina e Espírito Santo | Filtros |
+| Filtro de clientes | Um ou mais clientes do recorte (carteira ou carteiras ativas). Vazio = todos desse recorte | Visão geral · OTD · Oportunidades |
 | Membership | Você está vinculado a uma carteira | Escopo / carteira |
 
 ### Pedido, oportunidade e proposta

@@ -99,6 +99,32 @@ def test_use_case_share_portfolio_over_company() -> None:
     assert gateway.get_commercial_analytics.call_count == 4
 
 
+def test_use_case_share_selected_codes_only_on_numerator() -> None:
+    gateway = MagicMock()
+
+    def _analytics(path: str, *, params=None):
+        codes = (params or {}).get("customer_codes")
+        if codes == "100":
+            return {"data": {"rol": 10.0}}
+        if codes is None:
+            return {"data": {"rol": 100.0}}
+        raise AssertionError(codes)
+
+    gateway.get_commercial_analytics.side_effect = _analytics
+    scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
+    data = GetPortfolioBillingShareUseCase().execute(
+        gateway,
+        scope,
+        start_date="2026-01-01",
+        end_date="2026-01-31",
+        branch="01",
+        selected_customer_codes="100",
+    )
+    assert data["portfolioRol"] == 10.0
+    assert data["companyRol"] == 100.0
+    assert data["sharePct"] == 10.0
+
+
 def test_use_case_share_net_uses_rol_field() -> None:
     gateway = MagicMock()
     gateway.get_commercial_analytics.return_value = {

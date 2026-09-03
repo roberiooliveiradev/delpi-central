@@ -9,6 +9,8 @@ export type AnalyticsFilterParams = {
   customer_segment?: AnalyticsCustomerSegment;
   /** Filtro de carteira — commercial-api resolve customer_codes no servidor. CSV multi. */
   seller_id?: string;
+  /** Filtro de clientes — commercial-api intersecta com membership. CSV de códigos TOTVS. */
+  customer_codes?: string;
   /**
    * Conta 360: filtra OVs deste código sem membership de carteira
    * (`account_customer_code` no BFF).

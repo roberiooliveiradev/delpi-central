@@ -5,6 +5,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
+from commercial_app.application.services.analytics_customer_codes_service import (
+    AnalyticsCustomerCodesService,
+)
 from commercial_app.application.services.filter_open_orders_by_scope_service import (
     FilterOpenOrdersByScopeService,
 )
@@ -52,8 +55,16 @@ class GetOpenPortfolioSummaryUseCase:
         scope: CommercialCustomerScope,
         *,
         as_of: datetime | None = None,
+        selected_customer_codes: str | None = None,
     ) -> dict[str, Any]:
-        filtered = self._filter.apply(raw_data if isinstance(raw_data, dict) else {}, scope)
+        selected = frozenset(
+            AnalyticsCustomerCodesService.parse_codes_csv(selected_customer_codes)
+        )
+        filtered = self._filter.apply(
+            raw_data if isinstance(raw_data, dict) else {},
+            scope,
+            selected_customer_codes=selected or None,
+        )
         open_value, open_line_count = _summary_from_filtered(filtered)
         stamp = as_of or datetime.now(timezone.utc)
         if stamp.tzinfo is None:

@@ -88,3 +88,40 @@ def test_filter_open_orders_unrestricted_keeps_items() -> None:
     }
     data = FilterOpenOrdersByScopeService().apply(raw, scope)
     assert len(data["items"]) == 1
+
+
+def test_filter_open_orders_selected_codes_on_unrestricted() -> None:
+    scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
+    data = FilterOpenOrdersByScopeService().apply(
+        {
+            "items": [
+                {"codigo_cadastro": "100", "loja_cadastro": "01", "valor_aberto": 10},
+                {"codigo_cadastro": "200", "loja_cadastro": "01", "valor_aberto": 20},
+            ]
+        },
+        scope,
+        selected_customer_codes=frozenset({"200"}),
+    )
+    assert len(data["items"]) == 1
+    assert data["items"][0]["codigo_cadastro"] == "200"
+    assert data["summary"]["total_linhas"] == 1
+
+
+def test_filter_open_orders_selected_codes_after_membership() -> None:
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("100", "01"), ("200", "01")}),
+    )
+    data = FilterOpenOrdersByScopeService().apply(
+        {
+            "items": [
+                {"codigo_cadastro": "100", "loja_cadastro": "01", "valor_aberto": 10},
+                {"codigo_cadastro": "200", "loja_cadastro": "01", "valor_aberto": 20},
+                {"codigo_cadastro": "999", "loja_cadastro": "01", "valor_aberto": 99},
+            ]
+        },
+        scope,
+        selected_customer_codes=frozenset({"100"}),
+    )
+    assert len(data["items"]) == 1
+    assert data["items"][0]["codigo_cadastro"] == "100"

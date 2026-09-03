@@ -30,6 +30,7 @@ from commercial_app.core.auth_actor import (
     current_user_from_request,
 )
 from commercial_app.core.responses import fail, ok
+from commercial_app.interface.http.routes.totvs_bff_helpers import parse_portfolio_id_csv
 from commercial_app.interface.http.schemas.account_contact_schemas import (
     CreateAccountContactBody,
     UpdateAccountContactBody,
@@ -134,12 +135,12 @@ def list_customers_in_scope(
         user = current_user_from_request(request)
         unrestricted = can_manage_portfolios(user) or can_use_team_scope(user)
         user_id = actor_sub_from_request(request) or ""
-        pid = (portfolio_id or seller_id or "").strip() or None
+        portfolio_ids = parse_portfolio_id_csv(portfolio_id, seller_id)
         # Sem for_open_orders: empty membership permanece empty (não consolida TOTVS).
         scope = build_resolve_commercial_customer_scope_service().execute(
             user_id=user_id,
             unrestricted=unrestricted,
-            portfolio_id=pid,
+            portfolio_ids=portfolio_ids or None,
         )
         data = build_list_customers_in_scope_use_case().execute(scope)
         return ok(data, message="Clientes da carteira carregados.")

@@ -546,7 +546,7 @@ export const CM_HELP = {
     portfolioFilter:
       "Não filtrar = indicadores no consolidado global (TOTVS). Selecione uma ou mais carteiras (ou «Selecionar visíveis») para restringir ao escopo dessas carteiras.",
     filters:
-      "Período, competência, unidade (Santa Catarina / Espírito Santo), segmento e carteira(s) aplicados aos painéis e listas desta página.",
+      "Período, competência, unidade (Santa Catarina / Espírito Santo), segmento, cliente(s) e carteira(s) aplicados aos painéis e listas desta página.",
     filterDateStart: "Início do período analítico.",
     filterDateEnd: "Fim do período analítico.",
     filterPeriodPreset:
@@ -556,6 +556,8 @@ export const CM_HELP = {
     filterBranch:
       "Unidades incluídas no consolidado (Santa Catarina / Espírito Santo). Vazio = todas as unidades do escopo.",
     filterSegment: "Segmento de cliente (TOTVS). Vazio = todos.",
+    filterCustomer:
+      "Um ou mais clientes do recorte (carteira selecionada ou, sem carteira, clientes das carteiras ativas). Vazio = todos os clientes daquele recorte. Com carteira, só entram códigos da membership.",
     otdPage:
       "Pontualidade comercial das linhas: compara data de faturamento (DatFat) com a data de entrega prometida no pedido. Ciclo Apoio→confirmação→fabricação→faturamento completo fica na onda W4.",
     otdKpi: "OTD %, linhas no prazo e atrasadas no período filtrado (DatFat × entrega prometida).",
@@ -631,7 +633,7 @@ export const CM_HELP = {
     page:
       "Dashboard do período: filtros, indicadores (≤8), evolução ROL (com YoY opcional), série de conversão e funil. Sem lista de OVs nem faixa Aprofundar.",
     filters:
-      "Datas, competência, atalho de período (hoje…últimos 12 meses), unidade, segmento e carteira (quando permitido) aplicados aos painéis de período. O KPI «Carteira em aberto» é snapshot agora e ignora o período.",
+      "Datas, competência, atalho de período (hoje…últimos 12 meses), unidade, segmento, cliente(s) e carteira (quando permitido) aplicados aos painéis de período. O KPI «Carteira em aberto» é snapshot agora e ignora o período.",
     kpis: "Indicadores do período: ROL vs meta (natureza líquido), conversão, OTD% e novos negócios. «Carteira em aberto» é valor aberto de pedido (snapshot) — não some com ROL e não é programação do PCP. Bruto só com contrato BFF.",
     rolSeries:
       "Evolução do ROL no período. Com «Unidade (indicadores)» em Todas, compara Santa Catarina e Espírito Santo; com uma unidade selecionada, mostra só essa série.",

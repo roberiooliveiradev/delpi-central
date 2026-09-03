@@ -42,6 +42,9 @@ function buildQuery(
   if (params.seller_id?.trim()) {
     searchParams.set("seller_id", params.seller_id.trim());
   }
+  if (params.customer_codes?.trim()) {
+    searchParams.set("customer_codes", params.customer_codes.trim());
+  }
   if (params.account_customer_code?.trim()) {
     searchParams.set("account_customer_code", params.account_customer_code.trim());
   }
@@ -96,12 +99,12 @@ export function getClosingRate(params: AnalyticsFilterParams, signal?: AbortSign
 
 /** Snapshot de carteira em aberto — ignora período; usa seller_id/escopo. */
 export function getOpenPortfolioSummary(
-  params: Pick<AnalyticsFilterParams, "seller_id"> = {},
+  params: Pick<AnalyticsFilterParams, "seller_id" | "customer_codes"> = {},
   signal?: AbortSignal,
 ) {
   return fetchAnalyticsData<OpenPortfolioSummaryData>(
     "/open-portfolio-summary",
-    { seller_id: params.seller_id },
+    { seller_id: params.seller_id, customer_codes: params.customer_codes },
     signal,
   );
 }
@@ -158,12 +161,12 @@ export function getPortfolioBillingRanking(
 
 /** Buckets por data_entrega — snapshot; seller_id/escopo. */
 export function getOpenPortfolioHorizon(
-  params: Pick<AnalyticsFilterParams, "seller_id"> = {},
+  params: Pick<AnalyticsFilterParams, "seller_id" | "customer_codes"> = {},
   signal?: AbortSignal,
 ) {
   return fetchAnalyticsData<OpenPortfolioHorizonData>(
     "/open-portfolio-horizon",
-    { seller_id: params.seller_id },
+    { seller_id: params.seller_id, customer_codes: params.customer_codes },
     signal,
   );
 }

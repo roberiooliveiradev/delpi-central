@@ -31,6 +31,7 @@ describe("userManualTermCatalog", () => {
         "Pode faturar",
         "OTD",
         "Carteira em aberto",
+        "Filtro de clientes",
       ]),
     );
   });

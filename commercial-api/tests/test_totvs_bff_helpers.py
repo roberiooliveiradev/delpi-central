@@ -110,3 +110,50 @@ def test_resolve_analytics_portfolio_scope_with_ids_delegates(monkeypatch):
 def test_parse_portfolio_id_csv_dedupes_and_splits():
     assert parse_portfolio_id_csv("a, b", "b,c", None, "") == ["a", "b", "c"]
     assert parse_portfolio_id_csv(None, None) == []
+
+
+def test_merge_strips_unsanitized_customer_codes_from_base():
+    scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
+    params = merge_totvs_params(
+        scope,
+        {"branch": "01", "customer_codes": "HACK"},
+    )
+    assert params == {"branch": "01"}
+    assert "customer_codes" not in params
+
+
+def test_merge_selected_codes_on_unrestricted():
+    scope = CommercialCustomerScope(unrestricted=True, allowed_customers=None)
+    params = merge_totvs_params(
+        scope,
+        {"branch": "01"},
+        selected_customer_codes="100,200",
+    )
+    assert params == {"branch": "01", "customer_codes": "100,200"}
+
+
+def test_merge_selected_codes_intersects_membership():
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("100", "01"), ("200", "01")}),
+    )
+    params = merge_totvs_params(
+        scope,
+        {"start_date": "2026-01-01"},
+        selected_customer_codes="200,999",
+    )
+    assert params["customer_codes"] == "200"
+
+
+def test_merge_account_code_ignores_selected_codes():
+    scope = CommercialCustomerScope(
+        unrestricted=False,
+        allowed_customers=frozenset({("OTHER", "01")}),
+    )
+    params = merge_totvs_params(
+        scope,
+        {"search": "000001"},
+        account_customer_code="000001",
+        selected_customer_codes="999",
+    )
+    assert params == {"search": "000001", "customer_codes": "000001"}

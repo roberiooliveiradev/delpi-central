@@ -57,8 +57,20 @@ describe("analyticsFilterUrl — period_preset", () => {
       branches: [],
       customerSegment: "",
       sellerIds: [],
+      customerCodes: [],
       periodPreset: null,
     });
     expect(params).not.toContain("period_preset");
+  });
+});
+
+describe("analyticsFilterUrl — customerCodes multi", () => {
+  it("lê CSV de customer_codes e serializa de volta", () => {
+    const state = readAnalyticsFilters(
+      "?start_date=2026-01-01&end_date=2026-01-31&customer_codes=001,002",
+    );
+    expect(state.customerCodes).toEqual(["001", "002"]);
+    const params = buildAnalyticsFilterSearchParams(state);
+    expect(params).toContain("customer_codes=001%2C002");
   });
 });

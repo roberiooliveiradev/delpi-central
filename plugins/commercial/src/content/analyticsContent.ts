@@ -110,6 +110,8 @@ export const ANALYTICS_CONTENT = {
     segmentAll: "Todos",
     segmentWeg: "WEG",
     segmentNewBusiness: "Novos negócios",
+    customer: "Cliente",
+    customerAll: "Todos os clientes",
   },
 };
 

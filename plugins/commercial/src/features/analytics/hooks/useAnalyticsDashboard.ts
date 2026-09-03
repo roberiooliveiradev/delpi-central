@@ -88,12 +88,14 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
       start_date: filters.start_date,
       end_date: filters.end_date,
       seller_id: filters.seller_id,
+      customer_codes: filters.customer_codes,
     };
     const rolParams = {
       start_date: filters.start_date,
       end_date: filters.end_date,
       customer_segment: filters.customer_segment,
       seller_id: filters.seller_id,
+      customer_codes: filters.customer_codes,
     };
 
     void Promise.allSettled([
@@ -195,6 +197,7 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
     filters.branch,
     filters.customer_segment,
     filters.seller_id,
+    filters.customer_codes,
     reloadKey,
   ]);
 
@@ -203,7 +206,10 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
     const controller = new AbortController();
     setOpenPortfolioLoading(true);
     setOpenPortfolioError(null);
-    void getOpenPortfolioHorizon({ seller_id: filters.seller_id }, controller.signal)
+    void getOpenPortfolioHorizon(
+      { seller_id: filters.seller_id, customer_codes: filters.customer_codes },
+      controller.signal,
+    )
       .then((data) => {
         if (controller.signal.aborted) return;
         setOpenPortfolioHorizon(data);
@@ -226,7 +232,7 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
         if (!controller.signal.aborted) setOpenPortfolioLoading(false);
       });
     return () => controller.abort();
-  }, [filters.seller_id, reloadKey]);
+  }, [filters.seller_id, filters.customer_codes, reloadKey]);
 
   return {
     headOfficeRol,

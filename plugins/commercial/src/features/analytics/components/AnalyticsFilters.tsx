@@ -11,6 +11,7 @@ import { CM_HELP } from "../../../content/helpTooltips";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { SellerScopeFilter, ANALYTICS_PORTFOLIO_FILTER_EMPTY_LABEL } from "../../customers/components/SellerScopeFilter";
 import { ANALYTICS_BRANCH_OPTIONS } from "../utils/analyticsBranchFilters";
+import { useAnalyticsCustomerOptions } from "../hooks/useAnalyticsCustomerOptions";
 import {
   PERIOD_PRESET_OPTIONS,
   type PeriodPresetId,
@@ -35,6 +36,8 @@ type AnalyticsFiltersProps = {
   onPeriodPreset?: (value: PeriodPresetId) => void;
   onBranches: (value: string[]) => void;
   onCustomerSegment: (value: AnalyticsFilterUrlState["customerSegment"]) => void;
+  customerCodes?: string[];
+  onCustomerCodes?: (value: string[]) => void;
   onSellerIds?: (value: string[]) => void;
 };
 
@@ -55,9 +58,12 @@ export function AnalyticsFilters({
   onPeriodPreset,
   onBranches,
   onCustomerSegment,
+  customerCodes = [],
+  onCustomerCodes,
   onSellerIds,
 }: AnalyticsFiltersProps) {
   const { FiltersRow } = cmFiltersKit;
+  const customerOptions = useAnalyticsCustomerOptions(sellerIds);
 
   return (
     <>
@@ -129,6 +135,17 @@ export function AnalyticsFilters({
           emptyLabel={ANALYTICS_CONTENT.filters.segmentAll}
           hint={CM_HELP.analytics.filterSegment}
         />
+        {onCustomerCodes ? (
+          <CommercialMultiSelectField
+            label={ANALYTICS_CONTENT.filters.customer}
+            selectedValues={customerCodes}
+            onChange={onCustomerCodes}
+            options={customerOptions}
+            emptyLabel={ANALYTICS_CONTENT.filters.customerAll}
+            searchable
+            hint={CM_HELP.analytics.filterCustomer}
+          />
+        ) : null}
         {canFilterPortfolios && onSellerIds ? (
           <SellerScopeFilter
             multiple

@@ -82,29 +82,47 @@ def resolve_analytics_portfolio_scope(
     )
 
 
+def selected_customer_codes_from_request(request: Request) -> str | None:
+    raw = (request.query_params.get("customer_codes") or "").strip()
+    return raw or None
+
+
 def merge_totvs_params(
     scope: CommercialCustomerScope,
     base: dict[str, object | None],
     *,
     account_customer_code: str | None = None,
+    selected_customer_codes: str | None = None,
 ) -> dict[str, object]:
     """Insere customer_codes a partir do escopo; remove seller_id/portfolio_id.
 
     Conta 360: com ``account_customer_code`` explícito, restringe só a esse código
     (não à membership da carteira) — mesma semântica do enrichment 1 par.
+
+    ``selected_customer_codes`` (CSV do MFE): interseção com membership; em
+    recorte irrestrito, aplica os códigos selecionados. Nunca amplia o escopo.
+    ``customer_codes`` no ``base`` é descartado (não confiar no browser).
     """
     params: dict[str, object] = {
         key: value
         for key, value in base.items()
         if value is not None
         and value != ""
-        and key not in {"seller_id", "portfolio_id", "account_customer_code"}
+        and key
+        not in {
+            "seller_id",
+            "portfolio_id",
+            "account_customer_code",
+            "customer_codes",
+        }
     }
     account_code = (account_customer_code or "").strip()
     if account_code:
         params["customer_codes"] = account_code
         return params
-    codes = AnalyticsCustomerCodesService.codes_param(scope)
+    codes = AnalyticsCustomerCodesService.codes_param_for_selection(
+        scope, selected_customer_codes
+    )
     if codes is not None:
         params["customer_codes"] = codes
     return params

@@ -84,6 +84,11 @@ export const USER_MANUAL_TERM_CATALOG: readonly UserManualTermGroup[] = [
         applies: "Filtros de Meus pedidos e Visão geral",
       },
       {
+        term: "Filtro de clientes",
+        meaning: CM_HELP.analytics.filterCustomer,
+        applies: "Visão geral · OTD · Oportunidades",
+      },
+      {
         term: "Membership",
         meaning: "Você está vinculado a uma carteira. Sem vínculo, a lista pode vir consolidada.",
         applies: "Escopo · Minha Carteira · Administração",

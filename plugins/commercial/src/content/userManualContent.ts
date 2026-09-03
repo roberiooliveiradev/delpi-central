@@ -165,6 +165,10 @@ export const USER_MANUAL_CONTENT = {
           q: "O chip Escopo muda o mês do gráfico?",
           a: "Não. Escopo = carteira(s). Período = filtros da Visão geral (ou da tela em que você está).",
         },
+        {
+          q: "O filtro de clientes da Visão geral lista todos os clientes do TOTVS?",
+          a: "Não. A lista vem das carteiras do recorte (ou de todas as carteiras ativas, se você não filtrar carteira). Vazio = todos os clientes daquele recorte.",
+        },
       ],
     },
     {

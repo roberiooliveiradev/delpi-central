@@ -18,6 +18,35 @@ class AnalyticsCustomerCodesService:
     """
 
     @staticmethod
+    def parse_codes_csv(raw: object | None) -> list[str]:
+        seen: set[str] = set()
+        out: list[str] = []
+        if not isinstance(raw, str) or not raw.strip():
+            return out
+        for part in str(raw).split(","):
+            code = part.strip()
+            if not code or code in seen:
+                continue
+            seen.add(code)
+            out.append(code)
+        return out
+
+    @staticmethod
+    def apply_selection(scope_codes: str | None, selected: list[str]) -> str | None:
+        """Intersecta seleção do MFE com o escopo; não amplia membership."""
+        if not selected:
+            return scope_codes
+        if scope_codes is None:
+            return ",".join(selected)
+        if scope_codes == _EMPTY_SCOPE_SENTINEL:
+            return _EMPTY_SCOPE_SENTINEL
+        allowed = set(scope_codes.split(","))
+        intersected = [code for code in selected if code in allowed]
+        if not intersected:
+            return _EMPTY_SCOPE_SENTINEL
+        return ",".join(intersected)
+
+    @staticmethod
     def codes_param(scope: CommercialCustomerScope) -> str | None:
         if scope.unrestricted and scope.allowed_customers is None:
             return None
@@ -26,3 +55,14 @@ class AnalyticsCustomerCodesService:
         if not codes:
             return _EMPTY_SCOPE_SENTINEL
         return ",".join(codes)
+
+    @classmethod
+    def codes_param_for_selection(
+        cls,
+        scope: CommercialCustomerScope,
+        selected_codes: str | None = None,
+    ) -> str | None:
+        return cls.apply_selection(
+            cls.codes_param(scope),
+            cls.parse_codes_csv(selected_codes),
+        )

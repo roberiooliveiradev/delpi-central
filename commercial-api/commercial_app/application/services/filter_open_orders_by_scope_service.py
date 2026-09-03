@@ -63,12 +63,14 @@ class FilterOpenOrdersByScopeService:
         self,
         data: dict[str, Any] | None,
         scope: CommercialCustomerScope,
+        *,
+        selected_customer_codes: frozenset[str] | None = None,
     ) -> dict[str, Any]:
         base = dict(data or {})
         # Irrestrito (ex.: for_open_orders sem carteira) prevalece sobre empty_portfolio.
         if scope.unrestricted or scope.allowed_customers is None:
             portfolio = base.get("portfolio") if isinstance(base.get("portfolio"), dict) else {}
-            return {
+            result = {
                 **base,
                 "portfolio": {
                     "empty": False,
@@ -76,6 +78,7 @@ class FilterOpenOrdersByScopeService:
                     "seller_id": scope.portfolio_id or (portfolio.get("seller_id") if portfolio else None),
                 },
             }
+            return self._restrict_items_to_codes(result, selected_customer_codes)
 
         if scope.empty_portfolio:
             empty_summary = _recompute_summary([])
@@ -94,7 +97,7 @@ class FilterOpenOrdersByScopeService:
         filtered = [
             item for item in items if _item_in_scope(item, scope.allowed_customers)
         ]
-        return {
+        result = {
             "items": filtered,
             "summary": _recompute_summary(filtered),
             "portfolio": {
@@ -102,4 +105,29 @@ class FilterOpenOrdersByScopeService:
                 "message": scope.message,
                 "seller_id": scope.portfolio_id,
             },
+        }
+        return self._restrict_items_to_codes(result, selected_customer_codes)
+
+    @staticmethod
+    def _restrict_items_to_codes(
+        result: dict[str, Any],
+        selected_customer_codes: frozenset[str] | None,
+    ) -> dict[str, Any]:
+        if not selected_customer_codes:
+            return result
+        items_raw = result.get("items")
+        items = (
+            [item for item in items_raw if isinstance(item, dict)]
+            if isinstance(items_raw, list)
+            else []
+        )
+        filtered = [
+            item
+            for item in items
+            if _as_str(item.get("codigo_cadastro")) in selected_customer_codes
+        ]
+        return {
+            **result,
+            "items": filtered,
+            "summary": _recompute_summary(filtered),
         }

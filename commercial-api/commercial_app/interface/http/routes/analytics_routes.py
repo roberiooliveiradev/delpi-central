@@ -37,6 +37,7 @@ from commercial_app.domain.services.opportunity_collaborator_summary_service imp
 from commercial_app.interface.http.routes.totvs_bff_helpers import (
     merge_totvs_params,
     resolve_analytics_portfolio_scope,
+    selected_customer_codes_from_request,
     unwrap_gateway_data,
 )
 
@@ -64,6 +65,7 @@ def _proxy(
             scope,
             params,
             account_customer_code=account_customer_code,
+            selected_customer_codes=selected_customer_codes_from_request(request),
         )
         payload = build_delpi_commercial_gateway().get_commercial_analytics(
             path, params=totvs_params
@@ -128,6 +130,7 @@ def bff_portfolio_billing_share(
     customer_segment: str | None = None,
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    customer_codes: str | None = Query(default=None),
     nature: str | None = None,
 ):
     """KPI-PORTFOLIO-SHARE: portfolioRol ÷ companyRol no período filtrado."""
@@ -145,6 +148,7 @@ def bff_portfolio_billing_share(
             branch=branch,
             customer_segment=customer_segment,
             nature=nature,
+            selected_customer_codes=customer_codes,
         )
         return ok(
             data,
@@ -185,6 +189,7 @@ def bff_portfolio_billing_ranking(
     group_by: str = Query(default="customer", pattern="^(customer|seller)$"),
     limit: int = Query(default=50, ge=1, le=500),
     order: str = Query(default="growth", pattern="^(growth|decline)$"),
+    customer_codes: str | None = Query(default=None),
     nature: str | None = None,
 ):
     """Ranking delta % faturamento vs período −1 ano (cliente; vendedor se team/manage)."""
@@ -222,6 +227,7 @@ def bff_portfolio_billing_ranking(
             group_by=resolved_group,  # type: ignore[arg-type]
             order=resolved_order,  # type: ignore[arg-type]
             nature=nature if isinstance(nature, str) else None,
+            selected_customer_codes=customer_codes,
         )
         return ok(
             data,
@@ -250,6 +256,7 @@ def bff_open_portfolio_summary(
     request: Request,
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    customer_codes: str | None = Query(default=None),
 ):
     """KPI-CARTEIRA: saldo em aberto agora (sem items; ignora período MTD/YTD)."""
     operation_id = "bff_get_analytics_open_portfolio_summary"
@@ -262,6 +269,7 @@ def bff_open_portfolio_summary(
         data = GetOpenPortfolioSummaryUseCase().execute(
             raw if isinstance(raw, dict) else {},
             scope,
+            selected_customer_codes=customer_codes,
         )
         return ok(
             data,
@@ -290,6 +298,7 @@ def bff_open_portfolio_horizon(
     request: Request,
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
+    customer_codes: str | None = Query(default=None),
 ):
     """KPI-CARTEIRA-HORIZON: buckets por data_entrega (snapshot; sem items)."""
     operation_id = "bff_get_analytics_open_portfolio_horizon"
@@ -302,6 +311,7 @@ def bff_open_portfolio_horizon(
         data = GetOpenPortfolioHorizonUseCase().execute(
             raw if isinstance(raw, dict) else {},
             scope,
+            selected_customer_codes=customer_codes,
         )
         return ok(
             data,
@@ -701,6 +711,7 @@ def bff_opportunity_collaborator_summary(
                 page=1,
                 page_size=200,
             ),
+            selected_customer_codes=selected_customer_codes_from_request(request),
         )
         payload = build_delpi_commercial_gateway().get_commercial_analytics(
             "/proposals", params=totvs_params
