@@ -484,7 +484,9 @@ Para cada família: **esperado**, **roteiros**, **gaps**, **âncoras**.
 
 **Roteiros:** «quais colunas da SB1?», «schema da tabela de clientes», «liste tabelas de produto no dicionário».
 
-**Gaps:** ambiguidade com authoring; exige agente + actions `/system`.
+**Esperado (schema explícito):** path `/system/tables/{t}/schema`; `tablePresentations` no cliente; prosa `system_metadata` (alias/columnCount — não «N registros» genérico); prefetch interno só com flag (authoring/recovery).
+
+**Gaps:** ambiguidade com authoring; exige agente + actions `/system`; chips follow-up período/filial ainda genéricos (fora do P0 de apresentação).
 
 ---
 
