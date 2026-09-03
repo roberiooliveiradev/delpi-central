@@ -4,11 +4,14 @@ import { DataTable, runTabularExport } from "@delpi/plugin-ui/index";
 import { getCommercialRolByProduct } from "../../../api/analyticsApi";
 import {
   CommercialActionButton,
+  CommercialDataListToolbar,
   CommercialEmptyState,
   CommercialLoadingCard,
   CommercialSectionCard,
   CommercialSegmentToggle,
   CommercialStateBanner,
+  CommercialTableColumnVisibilityMenu,
+  CommercialTableFontSizeControls,
   CommercialTabularExportButtons,
   cmDataTableClassNames,
   cmDataTableLabels,
@@ -23,7 +26,13 @@ import {
 import type { CommercialRolByProductItem } from "../../../types/analytics";
 import { formatCurrency } from "../../../utils/format";
 import { billingSeriesPresetLabel } from "../utils/billingSeriesPeriod";
+import { usePortfolioBillingTablePreferences } from "../hooks/usePortfolioBillingTablePreferences";
 import type { PortfolioBillingWorkspaceFilters } from "../hooks/usePortfolioBillingWorkspaceFilters";
+import {
+  PORTFOLIO_BY_PRODUCT_COLUMN_CATALOG,
+  PORTFOLIO_BY_PRODUCT_COLUMNS_STORAGE_KEY,
+  PORTFOLIO_BY_PRODUCT_FONT_STORAGE_KEY,
+} from "../utils/portfolioBillingTableColumns";
 import {
   formatSharePct,
   mapRolByProductRows,
@@ -67,6 +76,29 @@ export function PortfolioBillingByProductTable({
     filters.marketParam === "domestic" || filters.marketParam === "export"
       ? filters.marketParam
       : "all";
+  const {
+    visibility,
+    orderedColumns,
+    visibleColumnCount,
+    setColumnVisible,
+    reorderColumns,
+    applyVisibleOrder,
+    resetColumns,
+    filterColumns,
+    tableStyle,
+    fontSize,
+    increaseFont,
+    decreaseFont,
+    resetFont,
+    canIncreaseFont,
+    canDecreaseFont,
+    isDefaultFont,
+  } = usePortfolioBillingTablePreferences({
+    columnsStorageKey: PORTFOLIO_BY_PRODUCT_COLUMNS_STORAGE_KEY,
+    fontSizeStorageKey: PORTFOLIO_BY_PRODUCT_FONT_STORAGE_KEY,
+    columns: PORTFOLIO_BY_PRODUCT_COLUMN_CATALOG,
+    emptyFallbackKeys: ["label", "share"],
+  });
   const queryEnabled =
     active && !filters.periodError && Boolean(filters.startDate && filters.endDate);
 
@@ -249,6 +281,15 @@ export function PortfolioBillingByProductTable({
     return base;
   }, [marketMode]);
 
+  const visibleColumns = useMemo(() => {
+    return filterColumns(columns).filter((column) => {
+      if (marketMode !== "all" && (column.key === "domestic" || column.key === "export")) {
+        return false;
+      }
+      return true;
+    });
+  }, [columns, filterColumns, marketMode]);
+
   const periodLabel = billingSeriesPresetLabel(filters.preset);
   const title = appendBillingNatureContext(
     `${
@@ -302,30 +343,66 @@ export function PortfolioBillingByProductTable({
               },
             ]}
           />
-          <CommercialTabularExportButtons
-            compact
-            disabled={!rows.length || loading}
-            onExport={(format) => {
-              runTabularExport({
-                kind: "table",
-                format,
-                payload: {
-                  title,
-                  columns: exportColumns,
-                  rows: rows.map((row) => ({
-                    label: row.label,
-                    domestic: formatCurrency(row.domestic),
-                    export: formatCurrency(row.export),
-                    total: formatCurrency(row.total),
-                    sharePct: formatSharePct(row.sharePct),
-                  })),
-                },
-              });
-            }}
-          />
         </div>
       }
     >
+      <CommercialDataListToolbar
+        style={tableStyle}
+        hint={
+          <span className="delpi-ui-section-hint-label">
+            {visibleColumnCount} coluna(s) · {rows.length.toLocaleString("pt-BR")} linha(s)
+          </span>
+        }
+        actions={
+          <>
+            <CommercialTabularExportButtons
+              compact
+              disabled={!rows.length || loading}
+              onExport={(format) => {
+                runTabularExport({
+                  kind: "table",
+                  format,
+                  payload: {
+                    title,
+                    columns: exportColumns,
+                    rows: rows.map((row) => ({
+                      label: row.label,
+                      domestic: formatCurrency(row.domestic),
+                      export: formatCurrency(row.export),
+                      total: formatCurrency(row.total),
+                      sharePct: formatSharePct(row.sharePct),
+                    })),
+                  },
+                });
+              }}
+            />
+            <CommercialTableFontSizeControls
+              fontSize={fontSize}
+              onIncrease={increaseFont}
+              onDecrease={decreaseFont}
+              onReset={resetFont}
+              canIncrease={canIncreaseFont}
+              canDecrease={canDecreaseFont}
+              isDefault={isDefaultFont}
+            />
+            <CommercialTableColumnVisibilityMenu
+              columns={orderedColumns}
+              visibility={visibility}
+              onToggleColumn={setColumnVisible}
+              onReorderColumns={reorderColumns}
+              onReset={resetColumns}
+              labels={{
+                trigger: "Colunas",
+                panelTitle: "Colunas do mix",
+                reset: "Restaurar padrão",
+                hint: CM_HELP.customers.billingByProduct,
+                columnAriaLabel: (label) => `Exibir coluna ${label}`,
+                reorderAriaLabel: (label) => `Reordenar coluna ${label}`,
+              }}
+            />
+          </>
+        }
+      />
       {loading && !rows.length ? (
         <CommercialLoadingCard
           title={CUSTOMER_BILLING_CONTENT.loadingByProduct}
@@ -351,15 +428,19 @@ export function PortfolioBillingByProductTable({
       {rows.length ? (
         <>
           {error ? <CommercialStateBanner>{error}</CommercialStateBanner> : null}
-          <DataTable
-            classNames={sentenceTableClassNames()}
-            labels={cmDataTableLabels}
-            columns={columns}
-            rows={rows}
-            rowKey={(row) => row.id}
-            layout="section"
-            emptyMessage={CUSTOMER_BILLING_CONTENT.emptyByProduct}
-          />
+          <div style={tableStyle}>
+            <DataTable
+              classNames={sentenceTableClassNames()}
+              labels={cmDataTableLabels}
+              columns={visibleColumns}
+              rows={rows}
+              rowKey={(row) => row.id}
+              layout="section"
+              emptyMessage={CUSTOMER_BILLING_CONTENT.emptyByProduct}
+              enableColumnReorder
+              onColumnOrderChange={applyVisibleOrder}
+            />
+          </div>
           {showCountries ? (
             <p className="cm-muted">
               * {CUSTOMER_BILLING_CONTENT.exportCountriesPrefix} {countries.join(", ")}

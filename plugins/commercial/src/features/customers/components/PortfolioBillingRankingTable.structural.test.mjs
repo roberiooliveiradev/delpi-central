@@ -31,6 +31,9 @@ describe("PortfolioBillingRankingTable", () => {
     assert.match(source, /Maiores quedas/);
     assert.match(source, /CommercialSelectField/);
     assert.match(source, /CommercialDataCellValue/);
+    assert.match(source, /usePortfolioBillingTablePreferences/);
+    assert.match(source, /CommercialTableColumnVisibilityMenu/);
+    assert.match(source, /enableColumnReorder/);
     assert.doesNotMatch(source, /apiDelpiUrl|API_DELPI|\/apps\/api-delpi/);
     assert.doesNotMatch(source, /\.delpi-ui-/);
   });

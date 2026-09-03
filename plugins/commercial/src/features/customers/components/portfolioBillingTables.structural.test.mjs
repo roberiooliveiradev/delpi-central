@@ -31,9 +31,14 @@ describe("Portfolio billing tables — estrutural", () => {
     assert.match(byProduct, /DataTable/);
     assert.match(byProduct, /runTabularExport/);
     assert.match(byProduct, /sentenceHeadersWrap/);
+    assert.match(byProduct, /usePortfolioBillingTablePreferences/);
+    assert.match(byProduct, /CommercialTableColumnVisibilityMenu/);
+    assert.match(byProduct, /enableColumnReorder/);
     assert.doesNotMatch(byProduct, /api-delpi|API_DELPI/);
     assert.match(abc, /DataTable/);
     assert.match(abc, /runTabularExport/);
+    assert.match(abc, /usePortfolioBillingTablePreferences/);
+    assert.match(abc, /CommercialTableColumnVisibilityMenu/);
     assert.doesNotMatch(abc, /<table[\s>]/);
   });
 

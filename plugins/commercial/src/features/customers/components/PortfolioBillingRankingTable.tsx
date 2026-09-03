@@ -10,6 +10,7 @@ import {
   CommercialAvatar,
   CommercialCompareSparkline,
   CommercialDataCellValue,
+  CommercialDataListToolbar,
   CommercialDataTable,
   CommercialExcelExportButton,
   CommercialLoadingCard,
@@ -17,6 +18,8 @@ import {
   CommercialSegmentToggle,
   CommercialSelectField,
   CommercialStateBanner,
+  CommercialTableColumnVisibilityMenu,
+  CommercialTableFontSizeControls,
   CommercialTrendDelta,
   cmDataTableClassNames,
   type DataTableColumn,
@@ -30,6 +33,12 @@ import {
 import type { PortfolioBillingRankingItem } from "../../../types/analytics";
 import { formatCurrency } from "../../../utils/format";
 import { OtdCustomerIdentityCell } from "../../analytics/components/OtdCustomerIdentityCell";
+import { usePortfolioBillingTablePreferences } from "../hooks/usePortfolioBillingTablePreferences";
+import {
+  PORTFOLIO_RANKING_COLUMN_CATALOG,
+  PORTFOLIO_RANKING_COLUMNS_STORAGE_KEY,
+  PORTFOLIO_RANKING_FONT_STORAGE_KEY,
+} from "../utils/portfolioBillingTableColumns";
 import {
   BILLING_SERIES_PRESET_OPTIONS,
   DEFAULT_BILLING_SERIES_PRESET,
@@ -68,6 +77,29 @@ export function PortfolioBillingRankingTable({
   const [items, setItems] = useState<PortfolioBillingRankingItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const {
+    visibility,
+    orderedColumns,
+    visibleColumnCount,
+    setColumnVisible,
+    reorderColumns,
+    applyVisibleOrder,
+    resetColumns,
+    filterColumns,
+    tableStyle,
+    fontSize,
+    increaseFont,
+    decreaseFont,
+    resetFont,
+    canIncreaseFont,
+    canDecreaseFont,
+    isDefaultFont,
+  } = usePortfolioBillingTablePreferences({
+    columnsStorageKey: PORTFOLIO_RANKING_COLUMNS_STORAGE_KEY,
+    fontSizeStorageKey: PORTFOLIO_RANKING_FONT_STORAGE_KEY,
+    columns: PORTFOLIO_RANKING_COLUMN_CATALOG,
+    emptyFallbackKeys: ["rank", "customer", "seller"],
+  });
 
   const effectiveGroupBy =
     groupBy === "seller" && canUseTeamScope ? "seller" : "customer";
@@ -207,6 +239,14 @@ export function PortfolioBillingRankingTable({
     return base;
   }, [amountHeader, effectiveGroupBy]);
 
+  const visibleColumns = useMemo(() => {
+    return filterColumns(columns).filter((column) => {
+      if (effectiveGroupBy === "seller" && column.key === "customer") return false;
+      if (effectiveGroupBy === "customer" && column.key === "seller") return false;
+      return true;
+    });
+  }, [columns, effectiveGroupBy, filterColumns]);
+
   return (
     <CommercialSectionCard
       title="Ranking crescimento/queda"
@@ -268,54 +308,94 @@ export function PortfolioBillingRankingTable({
               label: String(n),
             }))}
           />
-          <CommercialExcelExportButton
-            disabled={loading || items.length === 0}
-            onExport={() => {
-              runTabularExport({
-                kind: "table",
-                format: "xlsx",
-                payload: {
-                  title: `ranking-faturamento-${effectiveGroupBy}-${order}-top${limit}`,
-                  columns:
-                    effectiveGroupBy === "seller"
-                      ? [
-                          { key: "rank", label: "Rank" },
-                          { key: "sellerName", label: "Vendedor" },
-                          { key: "currentRol", label: `${amountHeader} atual` },
-                          { key: "priorRol", label: `${amountHeader} ano ant.` },
-                          { key: "delta", label: "Delta" },
-                          { key: "deltaPct", label: "Delta %" },
-                        ]
-                      : [
-                          { key: "rank", label: "Rank" },
-                          { key: "customerName", label: "Cliente" },
-                          { key: "customerCode", label: "Código" },
-                          { key: "customerStore", label: "Loja" },
-                          { key: "currentRol", label: `${amountHeader} atual` },
-                          { key: "priorRol", label: `${amountHeader} ano ant.` },
-                          { key: "delta", label: "Delta" },
-                          { key: "deltaPct", label: "Delta %" },
-                        ],
-                  rows: items as unknown as Record<string, unknown>[],
-                },
-              });
-            }}
-          />
         </div>
       }
     >
+      <CommercialDataListToolbar
+        style={tableStyle}
+        hint={
+          <span className="delpi-ui-section-hint-label">
+            {visibleColumnCount} coluna(s) · {items.length.toLocaleString("pt-BR")} linha(s)
+          </span>
+        }
+        actions={
+          <>
+            <CommercialExcelExportButton
+              disabled={loading || items.length === 0}
+              onExport={() => {
+                runTabularExport({
+                  kind: "table",
+                  format: "xlsx",
+                  payload: {
+                    title: `ranking-faturamento-${effectiveGroupBy}-${order}-top${limit}`,
+                    columns:
+                      effectiveGroupBy === "seller"
+                        ? [
+                            { key: "rank", label: "Rank" },
+                            { key: "sellerName", label: "Vendedor" },
+                            { key: "currentRol", label: `${amountHeader} atual` },
+                            { key: "priorRol", label: `${amountHeader} ano ant.` },
+                            { key: "delta", label: "Delta" },
+                            { key: "deltaPct", label: "Delta %" },
+                          ]
+                        : [
+                            { key: "rank", label: "Rank" },
+                            { key: "customerName", label: "Cliente" },
+                            { key: "customerCode", label: "Código" },
+                            { key: "customerStore", label: "Loja" },
+                            { key: "currentRol", label: `${amountHeader} atual` },
+                            { key: "priorRol", label: `${amountHeader} ano ant.` },
+                            { key: "delta", label: "Delta" },
+                            { key: "deltaPct", label: "Delta %" },
+                          ],
+                    rows: items as unknown as Record<string, unknown>[],
+                  },
+                });
+              }}
+            />
+            <CommercialTableFontSizeControls
+              fontSize={fontSize}
+              onIncrease={increaseFont}
+              onDecrease={decreaseFont}
+              onReset={resetFont}
+              canIncrease={canIncreaseFont}
+              canDecrease={canDecreaseFont}
+              isDefault={isDefaultFont}
+            />
+            <CommercialTableColumnVisibilityMenu
+              columns={orderedColumns}
+              visibility={visibility}
+              onToggleColumn={setColumnVisible}
+              onReorderColumns={reorderColumns}
+              onReset={resetColumns}
+              labels={{
+                trigger: "Colunas",
+                panelTitle: "Colunas do ranking",
+                reset: "Restaurar padrão",
+                hint: CM_HELP.customers.billingRanking,
+                columnAriaLabel: (label) => `Exibir coluna ${label}`,
+                reorderAriaLabel: (label) => `Reordenar coluna ${label}`,
+              }}
+            />
+          </>
+        }
+      />
       {loading ? (
         <CommercialLoadingCard title="Carregando ranking…" variant="panel" />
       ) : null}
       {error ? <CommercialStateBanner variant="error">{error}</CommercialStateBanner> : null}
       {!loading && !error ? (
-        <CommercialDataTable
-          rows={items}
-          columns={columns}
-          rowKey={(row) => `${row.rank}-${row.customerCode ?? row.sellerName ?? ""}`}
-          layout="section"
-          emptyMessage="Sem dados de ranking no período."
-        />
+        <div style={tableStyle}>
+          <CommercialDataTable
+            rows={items}
+            columns={visibleColumns}
+            rowKey={(row) => `${row.rank}-${row.customerCode ?? row.sellerName ?? ""}`}
+            layout="section"
+            emptyMessage="Sem dados de ranking no período."
+            enableColumnReorder
+            onColumnOrderChange={applyVisibleOrder}
+          />
+        </div>
       ) : null}
     </CommercialSectionCard>
   );
