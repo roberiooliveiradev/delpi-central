@@ -11,12 +11,14 @@ from requests_app.application.security.requests_permissions import (
 )
 from requests_app.application.serializers import allowed_actions_for, serialize_request
 from requests_app.domain.entities import Actor, Request, StatusHistoryEntry
+from requests_app.domain.entities.files import RequestEvent
 from requests_app.domain.exceptions import WorkflowEngineError
 from requests_app.domain.ports import (
     IdempotencyRepositoryPort,
     RequestRepositoryPort,
     RequestTypeRepositoryPort,
 )
+from requests_app.domain.ports.file_repository_port import FileRepositoryPort
 from requests_app.domain.services.workflow_engine import WorkflowEngine
 
 
@@ -50,11 +52,13 @@ class CreateRequestUseCase:
         requests: RequestRepositoryPort,
         idempotency: IdempotencyRepositoryPort,
         engine: WorkflowEngine | None = None,
+        files: FileRepositoryPort | None = None,
     ) -> None:
         self._types = types
         self._requests = requests
         self._idempotency = idempotency
         self._engine = engine or WorkflowEngine()
+        self._files = files
 
     def execute(
         self,
@@ -120,6 +124,17 @@ class CreateRequestUseCase:
             actor_name=actor.user_name,
         )
         stored = self._requests.create(request, history=history)
+        if self._files is not None:
+            self._files.append_event(
+                RequestEvent(
+                    id=uuid4(),
+                    request_id=stored.id,
+                    event_type="created",
+                    actor_user_id=actor.user_id,
+                    actor_name=actor.user_name,
+                    payload={"status": stored.status},
+                )
+            )
         actions = allowed_actions_for(
             stored, actor=actor, workflow=workflow, engine=self._engine
         )
@@ -388,11 +403,13 @@ class TransitionRequestUseCase:
         requests: RequestRepositoryPort,
         idempotency: IdempotencyRepositoryPort,
         engine: WorkflowEngine | None = None,
+        files: FileRepositoryPort | None = None,
     ) -> None:
         self._types = types
         self._requests = requests
         self._idempotency = idempotency
         self._engine = engine or WorkflowEngine()
+        self._files = files
 
     def execute(
         self,
@@ -448,6 +465,21 @@ class TransitionRequestUseCase:
             assignment=result.assignment,
             expected_version=request.version,
         )
+        if self._files is not None:
+            self._files.append_event(
+                RequestEvent(
+                    id=uuid4(),
+                    request_id=stored.id,
+                    event_type="transition",
+                    actor_user_id=actor.user_id,
+                    actor_name=actor.user_name,
+                    payload={
+                        "action": result.history.action,
+                        "from_status": result.history.from_status,
+                        "to_status": result.history.to_status,
+                    },
+                )
+            )
         response = serialize_request(
             stored,
             allowed_actions=allowed_actions_for(

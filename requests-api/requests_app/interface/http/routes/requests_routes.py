@@ -18,6 +18,7 @@ from requests_app.composition.requests_composer import (
     build_list_my_requests_use_case,
     build_list_request_types_use_case,
     build_list_work_queue_use_case,
+    build_timeline_use_cases,
     build_transition_request_use_case,
     build_update_request_payload_use_case,
 )
@@ -55,6 +56,10 @@ class TransitionBody(BaseModel):
     version: int | None = None
     return_reason: str | None = None
     cancel_justification: str | None = None
+
+
+class CommentBody(BaseModel):
+    body: str = Field(..., min_length=1)
 
 
 @router.get("/request-types")
@@ -306,3 +311,55 @@ def download_artifact(artifact_id: UUID):
         media_type=artifact.mime_type,
         filename=artifact.original_name,
     )
+
+
+@router.get("/requests/{request_id}/events")
+def list_events(
+    request_id: UUID,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+):
+    user = _current_user()
+    try:
+        data = build_timeline_use_cases().list_events(
+            user=user,
+            request_id=str(request_id),
+            page=page,
+            page_size=page_size,
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data)
+
+
+@router.get("/requests/{request_id}/comments")
+def list_comments(
+    request_id: UUID,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+):
+    user = _current_user()
+    try:
+        data = build_timeline_use_cases().list_comments(
+            user=user,
+            request_id=str(request_id),
+            page=page,
+            page_size=page_size,
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data)
+
+
+@router.post("/requests/{request_id}/comments")
+def create_comment(request_id: UUID, body: CommentBody):
+    user = _current_user()
+    try:
+        data = build_timeline_use_cases().create_comment(
+            user=user,
+            request_id=str(request_id),
+            body=body.body,
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data, message="Comentário criado.", status_code=201)

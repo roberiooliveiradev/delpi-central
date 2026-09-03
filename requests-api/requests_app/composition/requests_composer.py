@@ -55,6 +55,7 @@ def build_create_request_use_case() -> CreateRequestUseCase:
         PostgresRequestRepository(),
         PostgresIdempotencyRepository(),
         _engine(),
+        PostgresFileRepository(),
     )
 
 
@@ -97,4 +98,15 @@ def build_transition_request_use_case() -> TransitionRequestUseCase:
         PostgresRequestRepository(),
         PostgresIdempotencyRepository(),
         _engine(),
+        PostgresFileRepository(),
+    )
+
+
+def build_timeline_use_cases():
+    from requests_app.application.use_cases.timeline_use_cases import TimelineUseCases
+
+    return TimelineUseCases(
+        PostgresRequestTypeRepository(),
+        PostgresRequestRepository(),
+        PostgresFileRepository(),
     )
