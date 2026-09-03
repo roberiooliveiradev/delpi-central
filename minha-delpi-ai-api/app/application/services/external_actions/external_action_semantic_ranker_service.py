@@ -43,6 +43,14 @@ class ExternalActionSemanticRankerService:
         if not intelligence.external_action_semantic_rank_enabled:
             return candidates
 
+        from app.infrastructure.embeddings.disabled_embedding_gateway import (
+            DisabledEmbeddingGateway,
+        )
+
+        # Embed off: não chamar gateway (evita Exception/timeout em caminho morto).
+        if isinstance(self.embedding_gateway, DisabledEmbeddingGateway):
+            return candidates
+
         normalized_message = str(message or "").strip()[:2000]
 
         if not normalized_message or not candidates:

@@ -42,6 +42,18 @@ def test_judge_identity_fast_flags_slow():
     assert "lento" in case.detail
 
 
+def test_judge_capabilities_flags_slow():
+    mod = _load_module()
+    case = mod.BatteryCase("t", "F02", "x", "o q vc pode fazer?", "capabilities")
+    msg = {
+        "content": "Posso ajudar com consultas autorizadas e documentação da plataforma.",
+        "toolCalls": [],
+    }
+    mod._judge(case, msg, 15000)
+    assert case.status == "FAIL"
+    assert "lento" in case.detail
+
+
 def test_judge_sql_authoring_pass():
     mod = _load_module()
     case = mod.BatteryCase("t", "F04", "x", "crie sql", "sql_authoring")

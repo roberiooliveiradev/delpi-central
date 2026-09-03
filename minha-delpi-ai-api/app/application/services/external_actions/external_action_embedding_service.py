@@ -16,6 +16,13 @@ class ExternalActionEmbeddingService:
         return ExternalActionManifestTextService.build(action)
 
     def embed_action(self, action: dict) -> list[float] | None:
+        from app.infrastructure.embeddings.disabled_embedding_gateway import (
+            DisabledEmbeddingGateway,
+        )
+
+        if isinstance(self.embedding_gateway, DisabledEmbeddingGateway):
+            return None
+
         text = self.build_action_text(action).strip()
 
         if not text:

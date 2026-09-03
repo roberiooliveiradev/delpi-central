@@ -1,13 +1,16 @@
 from app.application.services.external_actions.external_action_semantic_ranker_service import (
     ExternalActionSemanticRankerService,
 )
+from app.infrastructure.embeddings.disabled_embedding_gateway import DisabledEmbeddingGateway
 
 
 class FakeEmbeddingGateway:
     def __init__(self, vectors: dict[str, list[float]]):
         self.vectors = vectors
+        self.calls = 0
 
     def embed(self, text: str) -> list[float]:
+        self.calls += 1
         return self.vectors[text]
 
 
@@ -72,3 +75,29 @@ def test_rank_returns_empty_when_below_min_score():
     )
 
     assert ranked == []
+
+
+def test_rank_skips_http_when_embedding_provider_off():
+    """Embed off: retorna candidatos sem chamar gateway (R8 / selectionEmbedMs ~0)."""
+
+    class CountingDisabled(DisabledEmbeddingGateway):
+        def __init__(self):
+            self.calls = 0
+
+        def embed(self, text: str) -> list[float]:
+            self.calls += 1
+            return super().embed(text)
+
+    gw = CountingDisabled()
+    candidates = [
+        {
+            "actionId": "orders",
+            "method": "GET",
+            "path": "/orders",
+            "summary": "list open orders",
+        }
+    ]
+    service = ExternalActionSemanticRankerService(gw)
+    ranked = service.rank("pedidos abertos", candidates)
+    assert ranked is candidates
+    assert gw.calls == 0

@@ -241,6 +241,8 @@ def _data_answer_in_tools(msg: dict) -> bool:
 def _r8_verdict(ms: int, mode: str, expect: str) -> str:
     if expect == "identity_fast":
         target = _LATENCY_IDENTITY_MS
+    elif expect == "capabilities":
+        target = _LATENCY_NORMAL_MS
     elif mode == "fast":
         target = _LATENCY_FAST_MS
     else:
@@ -262,6 +264,8 @@ def _build_evidence(case: BatteryCase, msg: dict, ms: int, errors: list[str]) ->
 
     r8 = _r8_verdict(total_ms, mode, case.expect)
     if case.expect == "identity_fast" and errors and "lento" in "; ".join(errors):
+        r8 = "FAIL"
+    if case.expect == "capabilities" and errors and "lento" in "; ".join(errors):
         r8 = "FAIL"
 
     return {
@@ -342,6 +346,8 @@ def _judge(case: BatteryCase, msg: dict, ms: int) -> None:
             errors.append("prosa curta")
         if any("/financial/rol" in p for p in paths):
             errors.append("executou ROL em capabilities")
+        if ms > _LATENCY_NORMAL_MS * 2:
+            errors.append(f"lento {ms}ms (capabilities sem shortcut?)")
     elif expect == "stock_path":
         if not any("/stock" in p or "stock" in p.lower() for p in paths):
             errors.append(f"sem path stock ({paths})")
