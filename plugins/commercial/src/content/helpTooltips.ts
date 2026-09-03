@@ -291,7 +291,7 @@ export const CM_HELP = {
     billingSeries:
       "Soma do faturamento no período escolhido (bruto de nota ou líquido ROL). Selecione um cliente para ver só a série dele. Presets iguais à Visão geral; opcionalmente compare com anos anteriores em colunas agrupadas.",
     billingNature:
-      "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, ranking e share.",
+      "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingSeriesPeriod:
       "Recorte do gráfico (paridade Visão geral): hoje, semana, mês, mês passado, trimestre, ano, últimos 12 meses ou intervalo personalizado.",
     billingSeriesGrain:
@@ -299,7 +299,7 @@ export const CM_HELP = {
     billingSeriesYoy:
       "Compara o mesmo período filtrado deslocado −1…−3 anos em colunas agrupadas. Alinhamento por bucket em qualquer granularidade permitida.",
     billingFilterCustomer:
-      "Restringe o gráfico e as tabelas de Faturamento aos clientes selecionados. Vazio = toda a carteira do escopo.",
+      "Restringe o gráfico, o mix e o ABC aos clientes selecionados. Vazio = toda a carteira do escopo. Compartilhado entre os painéis Faturamento e ABC.",
     billingFilterProductGroup:
       "Família Protheus (B1_GRUPO). Filtra o mix de produto e o ABC. Vazio = todas as famílias do recorte.",
     billingFilterProduct:
@@ -307,9 +307,37 @@ export const CM_HELP = {
     billingFilterMarket:
       "Mercado interno (CFOP 5/6) ou externo/exportação (CFOP 7). Vazio = ambos. Com um mercado só, a tabela de produto mostra uma coluna de valor.",
     billingByProduct:
-      "Receita operacional (bruto ou líquido conforme a Natureza) agregada por produto ou família, com split interno/externo quando o mercado não está filtrado. Exporta para Excel.",
+      "Receita operacional (bruto ou líquido conforme a Natureza) agregada por produto ou família, com split interno/externo quando o mercado não está filtrado. Personalize colunas e exporte.",
+    billingByProductColumns:
+      "Escolha a ordem e as colunas do mix de produto. A preferência fica salva neste navegador.",
     billingAbc:
-      "Clientes ordenados por participação no faturamento do período (curva ABC/Pareto). Não confundir com o painel Ranking (crescimento/queda YoY). Inclui CNPJ e praça.",
+      "Painel ABC: clientes ordenados por participação no faturamento do período (curva ABC/Pareto). Não confundir com Ranking (crescimento/queda YoY). Inclui avatar, CNPJ e praça.",
+    billingAbcColumns:
+      "Escolha a ordem e as colunas do ABC. A preferência fica salva neste navegador.",
+    billingRankingColumns:
+      "Escolha a ordem e as colunas do ranking. A preferência fica salva neste navegador.",
+    byProductColumns: {
+      label: "Produto (código e descrição) ou família Protheus, conforme o agrupamento.",
+      domestic: "Receita operacional de mercado interno (CFOP 5/6) no período.",
+      export: "Receita operacional de exportação (CFOP 7) no período.",
+      total: "Soma interno + externo (ou o valor do mercado filtrado).",
+      share: "Participação percentual da linha no total do recorte.",
+    },
+    abcColumns: {
+      customer: "Cliente da carteira com avatar e link para a Conta 360.",
+      cnpj: "CNPJ do cadastro, quando disponível no envelope de ROL.",
+      city: "Cidade e UF (ou marcação de exterior) do cliente.",
+      share: "Participação percentual do cliente no faturamento do período.",
+    },
+    rankingColumns: {
+      rank: "Posição no ranking conforme o foco (maiores altas ou quedas).",
+      customer: "Cliente com avatar e link para a Conta 360.",
+      seller: "Vendedor/carteira quando o ranking está agrupado por vendedor.",
+      trend: "Sparkline comparando o período atual com o mesmo período no ano anterior.",
+      current: "Faturamento no período atual (bruto ou líquido conforme a Natureza).",
+      prior: "Faturamento no mesmo período do ano anterior.",
+      deltaPct: "Variação percentual entre o período atual e o ano anterior.",
+    },
     filterSearch: "Busca por código, loja, nome fantasia/razão ou número de pedido.",
     filterFocus:
       "Recorte operacional. Atenção = atraso ou atendimento parcial. Em dia = com pedido aberto sem atraso. Sem venda 60d usa a última NF quando o cadastro estiver coberto. Todos = membership completo da carteira.",

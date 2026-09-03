@@ -25,6 +25,10 @@ import {
 } from "../../../content/billingNature";
 import type { CommercialRolByProductItem } from "../../../types/analytics";
 import { formatCurrency } from "../../../utils/format";
+import {
+  PORTFOLIO_BY_PRODUCT_COLUMN_HELP,
+  withColumnHelp,
+} from "../../../utils/customersColumnHelp";
 import { billingSeriesPresetLabel } from "../utils/billingSeriesPeriod";
 import { usePortfolioBillingTablePreferences } from "../hooks/usePortfolioBillingTablePreferences";
 import type { PortfolioBillingWorkspaceFilters } from "../hooks/usePortfolioBillingWorkspaceFilters";
@@ -282,12 +286,14 @@ export function PortfolioBillingByProductTable({
   }, [marketMode]);
 
   const visibleColumns = useMemo(() => {
-    return filterColumns(columns).filter((column) => {
-      if (marketMode !== "all" && (column.key === "domestic" || column.key === "export")) {
-        return false;
-      }
-      return true;
-    });
+    return filterColumns(withColumnHelp(columns, PORTFOLIO_BY_PRODUCT_COLUMN_HELP)).filter(
+      (column) => {
+        if (marketMode !== "all" && (column.key === "domestic" || column.key === "export")) {
+          return false;
+        }
+        return true;
+      },
+    );
   }, [columns, filterColumns, marketMode]);
 
   const periodLabel = billingSeriesPresetLabel(filters.preset);
@@ -395,7 +401,7 @@ export function PortfolioBillingByProductTable({
                 trigger: "Colunas",
                 panelTitle: "Colunas do mix",
                 reset: "Restaurar padrão",
-                hint: CM_HELP.customers.billingByProduct,
+                hint: CM_HELP.customers.billingByProductColumns,
                 columnAriaLabel: (label) => `Exibir coluna ${label}`,
                 reorderAriaLabel: (label) => `Reordenar coluna ${label}`,
               }}

@@ -121,6 +121,31 @@ export const PROPOSAL_DETAIL_ITEMS_COLUMN_HELP: Record<string, string> = {
   prazo: CM_HELP.proposals.columns.prazo,
 };
 
+export const PORTFOLIO_BY_PRODUCT_COLUMN_HELP: Record<string, string> = {
+  label: CM_HELP.customers.byProductColumns.label,
+  domestic: CM_HELP.customers.byProductColumns.domestic,
+  export: CM_HELP.customers.byProductColumns.export,
+  total: CM_HELP.customers.byProductColumns.total,
+  share: CM_HELP.customers.byProductColumns.share,
+};
+
+export const PORTFOLIO_ABC_COLUMN_HELP: Record<string, string> = {
+  customer: CM_HELP.customers.abcColumns.customer,
+  cnpj: CM_HELP.customers.abcColumns.cnpj,
+  city: CM_HELP.customers.abcColumns.city,
+  share: CM_HELP.customers.abcColumns.share,
+};
+
+export const PORTFOLIO_RANKING_COLUMN_HELP: Record<string, string> = {
+  rank: CM_HELP.customers.rankingColumns.rank,
+  customer: CM_HELP.customers.rankingColumns.customer,
+  seller: CM_HELP.customers.rankingColumns.seller,
+  trend: CM_HELP.customers.rankingColumns.trend,
+  current: CM_HELP.customers.rankingColumns.current,
+  prior: CM_HELP.customers.rankingColumns.prior,
+  deltaPct: CM_HELP.customers.rankingColumns.deltaPct,
+};
+
 export function withColumnHelp<T extends { key: string; headerHint?: string }>(
   columns: T[],
   helpByKey: Record<string, string>,

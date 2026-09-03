@@ -41,6 +41,10 @@ import {
   formatCnpj,
   formatSharePct,
 } from "../utils/portfolioBillingTableMappers";
+import {
+  PORTFOLIO_ABC_COLUMN_HELP,
+  withColumnHelp,
+} from "../../../utils/customersColumnHelp";
 
 type PortfolioBillingAbcTableProps = {
   filters: PortfolioBillingWorkspaceFilters;
@@ -254,7 +258,7 @@ export function PortfolioBillingAbcTable({
   }, [avatarPresence]);
 
   const visibleColumns = useMemo(
-    () => filterColumns(columns),
+    () => filterColumns(withColumnHelp(columns, PORTFOLIO_ABC_COLUMN_HELP)),
     [columns, filterColumns],
   );
 
@@ -324,7 +328,7 @@ export function PortfolioBillingAbcTable({
                 trigger: "Colunas",
                 panelTitle: "Colunas do ABC",
                 reset: "Restaurar padrão",
-                hint: CM_HELP.customers.billingAbc,
+                hint: CM_HELP.customers.billingAbcColumns,
                 columnAriaLabel: (label) => `Exibir coluna ${label}`,
                 reorderAriaLabel: (label) => `Reordenar coluna ${label}`,
               }}

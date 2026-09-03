@@ -33,6 +33,10 @@ import {
 import type { PortfolioBillingRankingItem } from "../../../types/analytics";
 import { formatCurrency } from "../../../utils/format";
 import {
+  PORTFOLIO_RANKING_COLUMN_HELP,
+  withColumnHelp,
+} from "../../../utils/customersColumnHelp";
+import {
   customerAvatarKey,
   useCustomerAvatarPresence,
 } from "../../../hooks/useCustomerAvatarPresence";
@@ -263,11 +267,13 @@ export function PortfolioBillingRankingTable({
   }, [amountHeader, avatarPresence, effectiveGroupBy]);
 
   const visibleColumns = useMemo(() => {
-    return filterColumns(columns).filter((column) => {
-      if (effectiveGroupBy === "seller" && column.key === "customer") return false;
-      if (effectiveGroupBy === "customer" && column.key === "seller") return false;
-      return true;
-    });
+    return filterColumns(withColumnHelp(columns, PORTFOLIO_RANKING_COLUMN_HELP)).filter(
+      (column) => {
+        if (effectiveGroupBy === "seller" && column.key === "customer") return false;
+        if (effectiveGroupBy === "customer" && column.key === "seller") return false;
+        return true;
+      },
+    );
   }, [columns, effectiveGroupBy, filterColumns]);
 
   return (
@@ -395,7 +401,7 @@ export function PortfolioBillingRankingTable({
                 trigger: "Colunas",
                 panelTitle: "Colunas do ranking",
                 reset: "Restaurar padrão",
-                hint: CM_HELP.customers.billingRanking,
+                hint: CM_HELP.customers.billingRankingColumns,
                 columnAriaLabel: (label) => `Exibir coluna ${label}`,
                 reorderAriaLabel: (label) => `Reordenar coluna ${label}`,
               }}
