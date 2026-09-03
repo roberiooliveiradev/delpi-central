@@ -50,6 +50,8 @@ describe("Portfolio billing tables — estrutural", () => {
     assert.match(filters, /CommercialFilterBarShell/);
     assert.match(filters, /CommercialMultiSelectField/);
     assert.match(filters, /FiltersRow/);
+    assert.match(filters, /variant="bare"/);
+    assert.match(filters, /size="sm"/);
     const shellOpen = filters.indexOf("<CommercialFilterBarShell");
     const shellClose = filters.indexOf("</CommercialFilterBarShell>");
     const filtersRow = filters.indexOf("<FiltersRow");

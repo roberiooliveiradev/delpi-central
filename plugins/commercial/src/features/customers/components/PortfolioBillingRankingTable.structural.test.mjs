@@ -44,6 +44,7 @@ describe("PortfolioBillingRankingTable", () => {
     assert.match(page, /PortfolioBillingRankingTable/);
     assert.match(page, /CustomerBillingSeriesChart/);
     assert.match(page, /CommercialSegmentToggle/);
+    assert.match(page, /cm-customers-page__panel-toolbar/);
     assert.match(page, /customers-workspace-panel/);
     assert.match(page, /customers-billing-nature/);
     assert.match(page, /setBillingNature/);

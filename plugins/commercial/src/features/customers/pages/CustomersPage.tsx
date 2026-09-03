@@ -557,55 +557,57 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
 
           {!showEmptyDataset ? (
             <div className="cm-customers-page__panels">
-              <CommercialSegmentToggle
-                ariaLabel="Painel da carteira"
-                idPrefix="customers-workspace-panel"
-                value={panel}
-                onChange={(value) => {
-                  if (
-                    value === "billing" ||
-                    value === "abc" ||
-                    value === "ranking" ||
-                    value === "customers"
-                  ) {
-                    setPanel(value);
-                  }
-                }}
-                options={[
-                  { value: "billing", label: "Faturamento" },
-                  { value: "abc", label: "ABC" },
-                  { value: "ranking", label: "Ranking" },
-                  { value: "customers", label: "Clientes" },
-                ]}
-              />
-              {isPortfolioBillingNatureToggleAvailable(PORTFOLIO_SUPPORTED_BILLING_NATURES) ? (
-                <div className="cm-customers-page__billing-nature">
-                  <CommercialSectionHintLabel
-                    label="Natureza do faturamento"
-                    hint={CM_HELP.customers.billingNature}
-                  />
-                  <CommercialSegmentToggle
-                    ariaLabel={CM_HELP.customers.billingNature}
-                    idPrefix="customers-billing-nature"
-                    value={billingNature}
-                    onChange={(value) => {
-                      if (value === "gross" || value === "net") {
-                        setBillingNature(value as PortfolioBillingAmountNature);
-                      }
-                    }}
-                    options={[
-                      {
-                        value: "gross",
-                        label: BILLING_NATURE_CONTENT.gross.shortLabel,
-                      },
-                      {
-                        value: "net",
-                        label: BILLING_NATURE_CONTENT.net.shortLabel,
-                      },
-                    ]}
-                  />
-                </div>
-              ) : null}
+              <div className="cm-customers-page__panel-toolbar">
+                <CommercialSegmentToggle
+                  ariaLabel="Painel da carteira"
+                  idPrefix="customers-workspace-panel"
+                  value={panel}
+                  onChange={(value) => {
+                    if (
+                      value === "billing" ||
+                      value === "abc" ||
+                      value === "ranking" ||
+                      value === "customers"
+                    ) {
+                      setPanel(value);
+                    }
+                  }}
+                  options={[
+                    { value: "billing", label: "Faturamento" },
+                    { value: "abc", label: "ABC" },
+                    { value: "ranking", label: "Ranking" },
+                    { value: "customers", label: "Clientes" },
+                  ]}
+                />
+                {isPortfolioBillingNatureToggleAvailable(PORTFOLIO_SUPPORTED_BILLING_NATURES) ? (
+                  <div className="cm-customers-page__billing-nature">
+                    <CommercialSectionHintLabel
+                      label="Natureza"
+                      hint={CM_HELP.customers.billingNature}
+                    />
+                    <CommercialSegmentToggle
+                      ariaLabel={CM_HELP.customers.billingNature}
+                      idPrefix="customers-billing-nature"
+                      value={billingNature}
+                      onChange={(value) => {
+                        if (value === "gross" || value === "net") {
+                          setBillingNature(value as PortfolioBillingAmountNature);
+                        }
+                      }}
+                      options={[
+                        {
+                          value: "gross",
+                          label: BILLING_NATURE_CONTENT.gross.shortLabel,
+                        },
+                        {
+                          value: "net",
+                          label: BILLING_NATURE_CONTENT.net.shortLabel,
+                        },
+                      ]}
+                    />
+                  </div>
+                ) : null}
+              </div>
 
               <div
                 className="cm-customers-page__panel"

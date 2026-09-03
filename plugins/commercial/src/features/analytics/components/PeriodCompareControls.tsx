@@ -34,6 +34,12 @@ type PeriodCompareControlsProps = {
   dateStartHint?: string;
   dateEndHint?: string;
   disabled?: boolean;
+  /**
+   * `shell` — FilterBarShell próprio (ex.: gráfico).
+   * `bare` — só controles, para embutir em outro FilterBarShell (evita card aninhado).
+   */
+  variant?: "shell" | "bare";
+  size?: "sm" | "md";
 };
 
 export function PeriodCompareControls({
@@ -48,46 +54,66 @@ export function PeriodCompareControls({
   dateStartHint = CM_HELP.customerDetail.billingSeriesDateStart,
   dateEndHint = CM_HELP.customerDetail.billingSeriesDateEnd,
   disabled = false,
+  variant = "shell",
+  size = "md",
 }: PeriodCompareControlsProps) {
+  const toggle = (
+    <SegmentToggle
+      prefix={UI_PREFIX}
+      ariaLabel={periodHint}
+      idPrefix={`${idPrefix}-period`}
+      value={preset}
+      onChange={(value) => onPresetChange(value as BillingSeriesPeriodPreset)}
+      options={BILLING_SERIES_PRESET_OPTIONS.map((item) => ({
+        value: item.id,
+        label: item.label,
+      }))}
+      disabled={disabled}
+      size={size}
+      widthMode="content"
+    />
+  );
+
+  const customDates =
+    preset === "custom" ? (
+      <>
+        <CommercialDateField
+          label="Data inicial"
+          hint={dateStartHint}
+          value={customStart}
+          onChange={onCustomStartChange}
+          disabled={disabled}
+        />
+        <CommercialDateField
+          label="Data final"
+          hint={dateEndHint}
+          value={customEnd}
+          onChange={onCustomEndChange}
+          disabled={disabled}
+        />
+      </>
+    ) : null;
+
+  if (variant === "bare") {
+    return (
+      <div className="cm-period-compare-controls cm-period-compare-controls--bare">
+        {toggle}
+        {customDates ? (
+          <div className="cm-period-compare-controls__dates">{customDates}</div>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className="cm-period-compare-controls">
       <CommercialFilterBarShell
         embedded
         layout={preset === "custom" ? "grid" : "inline"}
         ariaLabel={periodHint}
-        leading={
-          <SegmentToggle
-            prefix={UI_PREFIX}
-            ariaLabel={periodHint}
-            idPrefix={`${idPrefix}-period`}
-            value={preset}
-            onChange={(value) => onPresetChange(value as BillingSeriesPeriodPreset)}
-            options={BILLING_SERIES_PRESET_OPTIONS.map((item) => ({
-              value: item.id,
-              label: item.label,
-            }))}
-            disabled={disabled}
-          />
-        }
+        leading={toggle}
       >
-        {preset === "custom" ? (
-          <>
-            <CommercialDateField
-              label="Data inicial"
-              hint={dateStartHint}
-              value={customStart}
-              onChange={onCustomStartChange}
-              disabled={disabled}
-            />
-            <CommercialDateField
-              label="Data final"
-              hint={dateEndHint}
-              value={customEnd}
-              onChange={onCustomEndChange}
-              disabled={disabled}
-            />
-          </>
-        ) : null}
+        {customDates}
       </CommercialFilterBarShell>
     </div>
   );

@@ -31,6 +31,8 @@ export function PortfolioBillingFiltersBar({
       <CommercialFilterBarShell ariaLabel={CUSTOMER_BILLING_CONTENT.portfolioFiltersAria}>
         <PeriodCompareControls
           idPrefix="portfolio-billing"
+          variant="bare"
+          size="sm"
           preset={filters.preset}
           onPresetChange={filters.setPreset}
           customStart={filters.customStart}

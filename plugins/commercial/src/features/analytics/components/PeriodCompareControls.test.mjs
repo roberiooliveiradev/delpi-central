@@ -34,6 +34,8 @@ describe("PeriodCompareControls helpers", () => {
   it("componente só período — overlays no ChartViewShell", () => {
     const source = readFileSync(join(here, "PeriodCompareControls.tsx"), "utf8");
     assert.match(source, /BILLING_SERIES_PRESET_OPTIONS/);
+    assert.match(source, /variant/);
+    assert.match(source, /bare/);
     assert.doesNotMatch(source, /NativeCheckboxControl|AnchoredPanelPortal/);
     assert.doesNotMatch(source, /apiDelpiUrl|API_DELPI|\/apps\/api-delpi/);
     assert.doesNotMatch(source, /\.delpi-ui-/);
