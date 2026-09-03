@@ -171,6 +171,12 @@ class ChatAdvancedSqlSpecialistSchemaPrefetchService:
 
     @classmethod
     def strip_schema_catalog_presentations(cls, result: dict) -> dict:
+        """Remove apresentação de catálogo só quando o turno marcou prefetch interno.
+
+        Path `/schema|/columns|/relations` **não** implica interno: pedido explícito
+        («me mostra o schema…») deve manter `tablePresentations` / `renderPlan` no cliente.
+        Flags canônicas: `sqlSchemaPrefetch` ou `suppressClientPresentation` (annotate).
+        """
         updated = dict(result)
         tool_calls = updated.get("toolCalls")
 
@@ -187,11 +193,7 @@ class ChatAdvancedSqlSpecialistSchemaPrefetchService:
             item = dict(tool_call)
             metadata = dict(item.get("metadata") or {})
 
-            if (
-                metadata.get("sqlSchemaPrefetch")
-                or metadata.get("suppressClientPresentation")
-                or sql_specialist_service().is_schema_prefetch_path(str(metadata.get("path") or ""))
-            ):
+            if metadata.get("sqlSchemaPrefetch") or metadata.get("suppressClientPresentation"):
                 for key in cls._CLIENT_PRESENTATION_KEYS:
                     metadata.pop(key, None)
 

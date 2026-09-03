@@ -145,7 +145,8 @@ def test_schema_relations_prefetch_internal():
     assert meta.get("sqlSchemaPrefetch") is True
 
 
-def test_strip_schema_presentation_by_prefetch_path():
+def test_strip_schema_presentation_preserves_explicit_catalog_without_flags():
+    """Path /columns|/schema sozinho não stripa — só flags de prefetch interno."""
     result = ChatAdvancedSqlSpecialistService.strip_schema_catalog_presentations(
         {
             "toolCalls": [
@@ -158,7 +159,9 @@ def test_strip_schema_presentation_by_prefetch_path():
             ]
         }
     )
-    assert "presentation" not in result["toolCalls"][0]["metadata"]
+    meta = result["toolCalls"][0]["metadata"]
+    assert meta.get("presentation") == {"type": "table", "title": "Colunas"}
+    assert meta.get("suppressClientPresentation") is not True
 
 
 def test_strip_schema_prefetch_hides_coverage_and_catalog():
