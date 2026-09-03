@@ -28,6 +28,20 @@ class ExternalActionColumnLabelService:
         {"parents", "children", "components", "child", "childs"}
     )
 
+    # Chaves exatas de agregação/contagem (COUNT(*) AS TOTAL) — nunca moeda.
+    _EXACT_QUANTITY_KEYS = frozenset(
+        {
+            "total",
+            "count",
+            "cnt",
+            "n",
+            "registros",
+            "row_count",
+            "total_registros",
+            "records",
+        }
+    )
+
     _FIELD_FORMAT_TOKENS: dict[str, tuple[str, ...]] = {
         "currency": (
             "revenue",
@@ -927,6 +941,9 @@ class ExternalActionColumnLabelService:
         if not lowered:
             return None
 
+        if lowered in cls._EXACT_QUANTITY_KEYS:
+            return "quantity"
+
         if (
             lowered.endswith("_percent")
             or lowered.endswith("_pct")
@@ -1031,9 +1048,11 @@ class ExternalActionColumnLabelService:
 
     _COLUMN_TYPE_MAP: dict[str, tuple[str, ...]] = {
         "currency": (
-            "valor", "preco", "price", "custo", "cost", "total", "revenue",
+            "valor", "preco", "price", "custo", "cost", "revenue",
             "faturamento", "receita", "vlr", "vl_", "last_purchase_price",
             "standard_cost", "unit_price", "net_value", "gross_value",
+            "valor_total", "total_value", "total_valor", "total_revenue",
+            "total_cost", "total_rol", "grand_total", "amount",
         ),
         "percent": (
             "pct", "percent", "taxa", "rate", "margem", "margin", "otd",
@@ -1047,11 +1066,18 @@ class ExternalActionColumnLabelService:
             "qtd", "quantidade", "qty", "quantity", "saldo", "disponivel",
             "reservado", "estoque", "volume", "current_quantity",
             "available_quantity", "committed_quantity", "reserved_quantity",
+            "count", "cnt", "registros", "row_count",
         ),
     }
 
     def infer_column_type(self, key: str) -> str | None:
-        lowered = key.lower()
+        lowered = str(key or "").strip().lower()
+
+        if not lowered:
+            return None
+
+        if lowered in self._EXACT_QUANTITY_KEYS:
+            return "quantity"
 
         for data_type, tokens in self._COLUMN_TYPE_MAP.items():
             if any(token in lowered for token in tokens):

@@ -9,6 +9,17 @@ describe("tableCellFormatting", () => {
     ).toBe("15");
   });
 
+  it("formats COUNT(*) AS TOTAL as quantity, not currency", () => {
+    expect(formatCellValue(1898, "TOTAL")).toBe("1.898");
+    expect(formatCellValue(1898, "total")).toBe("1.898");
+    expect(formatCellValue(42, "count")).toBe("42");
+  });
+
+  it("keeps monetary compound totals as currency", () => {
+    expect(formatCellValue(1898, "total_revenue")).toBe("R$\u00a01.898,00");
+    expect(formatCellValue(1898, "valor_total")).toBe("R$\u00a01.898,00");
+  });
+
   it("formats billing value as currency", () => {
     expect(
       formatCellValue(2519.81, "valor", undefined, {

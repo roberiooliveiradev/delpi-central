@@ -178,6 +178,22 @@ def test_format_field_value_applies_currency_percent_and_days():
     assert service.format_field_value("pmr_days", 42) == "42 dias"
 
 
+def test_count_aggregate_total_is_quantity_not_currency():
+    """COUNT(*) AS TOTAL — quantidade de itens, não R$."""
+    service = ExternalActionColumnLabelService()
+
+    assert service.infer_column_type("TOTAL") == "quantity"
+    assert service.infer_column_type("total") == "quantity"
+    assert service.infer_column_type("count") == "quantity"
+    assert service.resolve_field_format("TOTAL") == "quantity"
+    assert service.enrich_column("TOTAL", "Total")["dataType"] == "quantity"
+    assert "R$" not in service.format_field_value("TOTAL", 1898)
+    assert service.format_field_value("TOTAL", 1898) in {"1.898", "1898"}
+    # Compostos monetários continuam moeda
+    assert service.infer_column_type("total_revenue") == "currency"
+    assert service.infer_column_type("valor_total") == "currency"
+
+
 def test_format_field_value_unwraps_consolidated_envelope():
     service = ExternalActionColumnLabelService()
 

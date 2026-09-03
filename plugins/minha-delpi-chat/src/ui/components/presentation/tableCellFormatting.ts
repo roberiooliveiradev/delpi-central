@@ -8,13 +8,15 @@ export type ColumnType =
   | "days"
   | undefined;
 
+const COUNT_AGGREGATE_KEYS =
+  /^(total|count|cnt|n|registros|row_count|total_registros|records)$/i;
 const CURRENCY_KEYS =
-  /preco|price|custo|cost|total|revenue|faturamento|receita|saldo|vlr|vl_/i;
+  /preco|price|custo|cost|revenue|faturamento|receita|saldo|vlr|vl_|valor_total|total_value|total_valor|total_revenue|total_cost|total_rol|grand_total|amount/i;
 const PERCENT_KEYS = /pct|percent|taxa|rate|margem|margin|otd|giro|eficiencia/i;
 const DATE_KEYS =
   /data|date|emissao|criacao|atualizacao|inicio|fim|vencimento|dt_|created|updated/i;
 const QTY_KEYS =
-  /qtd|quantidade|qty|quantity|disponivel|reservado|estoque|volume|documento/i;
+  /qtd|quantidade|qty|quantity|disponivel|reservado|estoque|volume|documento|count|cnt|registros/i;
 const DAYS_KEYS = /_days|pmr|lead_time|dias_uteis/i;
 
 function normalizeLabel(value: string): string {
@@ -80,11 +82,16 @@ export function inferColumnType(
     return undefined;
   }
 
+  // COUNT(*) AS TOTAL / agregações — quantidade, não moeda.
+  if (COUNT_AGGREGATE_KEYS.test(key)) {
+    return "quantity";
+  }
+
+  if (QTY_KEYS.test(key)) return "quantity";
   if (CURRENCY_KEYS.test(key)) return "currency";
   if (PERCENT_KEYS.test(key)) return "percent";
   if (DATE_KEYS.test(key)) return "date";
   if (DAYS_KEYS.test(key)) return "days";
-  if (QTY_KEYS.test(key)) return "quantity";
 
   return undefined;
 }
