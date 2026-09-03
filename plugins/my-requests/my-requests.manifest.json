@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "my-requests",
+  "name": "Minhas Solicitações",
+  "description": "Solicitações transversais — minhas, fila de trabalho e detalhe com ações permitidas pela API.",
+  "icon": "clipboard-list",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/my-requests",
+  "entry": "/apps/my-requests/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "my-requests.access",
+      "name": "Acessar Minhas Solicitações",
+      "description": "Permite abrir o módulo Minhas Solicitações.",
+      "module": "my-requests"
+    },
+    {
+      "code": "my-requests.view-all",
+      "name": "Ver todas as solicitações",
+      "description": "Visualizar solicitações de outros usuários no escopo autorizado.",
+      "module": "my-requests"
+    },
+    {
+      "code": "my-requests.manage",
+      "name": "Administrar Minhas Solicitações",
+      "description": "Operações administrativas do módulo.",
+      "module": "my-requests"
+    },
+    {
+      "code": "my-requests.view.filial-01",
+      "name": "Minhas Solicitações — Filial 01",
+      "description": "Escopo de dados da filial SC (01).",
+      "module": "my-requests"
+    },
+    {
+      "code": "my-requests.view.filial-02",
+      "name": "Minhas Solicitações — Filial 02",
+      "description": "Escopo de dados da filial ES (02).",
+      "module": "my-requests"
+    },
+    {
+      "code": "my-requests.invoice-issuance.create",
+      "name": "Criar solicitação de emissão de NF",
+      "description": "Criar solicitações do tipo emissão de notas fiscais.",
+      "module": "my-requests"
+    },
+    {
+      "code": "my-requests.invoice-issuance.process",
+      "name": "Processar solicitação de emissão de NF",
+      "description": "Processar solicitações do tipo emissão de notas fiscais.",
+      "module": "my-requests"
+    },
+    {
+      "code": "my-requests.raw-material-creation.create",
+      "name": "Criar solicitação de MP",
+      "description": "Criar solicitações do tipo criação de matéria-prima (placeholder).",
+      "module": "my-requests"
+    },
+    {
+      "code": "my-requests.raw-material-creation.process",
+      "name": "Processar solicitação de MP",
+      "description": "Processar solicitações do tipo criação de matéria-prima (placeholder).",
+      "module": "my-requests"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/my-requests",
+      "label": "Minhas Solicitações",
+      "permission": "my-requests.access",
+      "icon": "clipboard-list",
+      "order": 32,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

@@ -1841,6 +1841,29 @@ services:
     networks:
       - delpi-network
 
+  my-requests:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: my-requests/Dockerfile
+      target: production
+
+    container_name: delpi-my-requests
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - delpi-network
+
   commercial-api:
     build:
       context: ..
@@ -2522,6 +2545,8 @@ services:
       - production-pulse
       - purchase-requests-api
       - purchase-requests
+      - requests-api
+      - my-requests
       - comite-etica-conduta-api
       - comite-etica-conduta
 

@@ -137,6 +137,7 @@ FASE_MFE=(
   travel-expenses
   production-pulse
   purchase-requests
+  my-requests
   cultura-delpi
   codigo-etica
   guias-procedimentos

@@ -1785,6 +1785,22 @@ services:
     networks:
       - delpi-network
 
+  my-requests:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: my-requests/Dockerfile
+      target: production
+
+    container_name: delpi-my-requests
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   commercial-api:
     <<: *plugin-profile
     build:

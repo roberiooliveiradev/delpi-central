@@ -81,6 +81,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/invoice-issuance` | `invoice-issuance` | microfrontend | plugin | `/apps/invoice-issuance` | `delpi-invoice-issuance` |
 | `plugins/inspecoes-processo` | `inspecoes-processo` | microfrontend | plugin | `/apps/inspecoes-processo` | `delpi-inspecoes-processo` |
 | `plugins/controle-retrabalhos` | `controle-retrabalhos` | microfrontend | plugin | `/apps/controle-retrabalhos` | `delpi-controle-retrabalhos` |
+| `plugins/my-requests` | `my-requests` | microfrontend | plugin | `/apps/my-requests` | `delpi-my-requests` |
 | `plugins/cipa` | `cipa` | microfrontend | plugin | `/apps/cipa` | `delpi-cipa` |
 | `plugins/comite-etica-conduta` | `comite-etica-conduta` | microfrontend | plugin | `/apps/comite-etica-conduta` | `delpi-comite-etica-conduta` |
 | `plugins/scrap-monitoring` | `scrap-monitoring` | microfrontend | plugin | `/apps/scrap-monitoring` | `delpi-scrap-monitoring` |
@@ -199,6 +200,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | invoice-issuance | `invoice-issuance` |
 | inspecoes-processo | `inspecoes-processo` |
 | controle-retrabalhos | `controle-retrabalhos` |
+| my-requests | `my-requests` (API: `requests-api`; não chama api-delpi no browser) |
 | scrap-monitoring | `scrap-monitoring` |
 | estoque-seguranca | `estoque-seguranca` |
 | materiais-terceiros | `materiais-terceiros` |
@@ -230,6 +232,7 @@ Declaradas no manifesto e persistidas na Core API:
 | invoice-issuance | `invoice-issuance.access`, `.create`, `.view`, `.view.filial-01/02`, `.process`, `.manage` |
 | inspecoes-processo | `inspecoes-processo.view`, `inspecoes-processo.view.filial-01`, `inspecoes-processo.view.filial-02` |
 | controle-retrabalhos | `controle-retrabalhos.view.filial-sc`, `.view.filial-es`, `.view`, `.access`, `.export` |
+| my-requests | `my-requests.access`, `.view-all`, `.manage`, `.view.filial-*`, `.invoice-issuance.create/process`, `.raw-material-creation.create/process` |
 | scrap-monitoring | `scrap-monitoring.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | estoque-seguranca | `estoque-seguranca.access`, `.view.filial-sc`, `.view.filial-es` |
 | materiais-terceiros | `materiais-terceiros.access`, `.view.filial-sc`, `.view.filial-es`, `.export` |
