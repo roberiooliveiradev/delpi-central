@@ -166,6 +166,7 @@ FASE_API=(
   transformometro-api
   maintenance-api
   purchase-requests-api
+  requests-api
   commercial-api
   cipa-api
   comite-etica-conduta-api

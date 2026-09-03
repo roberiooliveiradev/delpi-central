@@ -1,0 +1,537 @@
+[
+  {
+    "caseId": "F02.1",
+    "family": "F02",
+    "label": "o-que-faz",
+    "message": "o q vc pode fazer?",
+    "expect": "capabilities",
+    "useAgent": false,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "FAIL",
+    "detail": "HTTP Error 500: INTERNAL SERVER ERROR",
+    "ms": 0,
+    "prose": "",
+    "evidence": {},
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F03.2-typo-estrutra",
+    "family": "F03",
+    "label": "estrutra-produto",
+    "message": "qual a estrutra do 90260148?",
+    "expect": "structure_path",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "FAIL",
+    "detail": "sem path structure ([]); sem tools | 46042ms",
+    "ms": 46042,
+    "prose": "Não ficou claro o que você precisa. Pode reformular em uma frase o que deseja consultar ou fazer?",
+    "evidence": {
+      "R1": {
+        "intent": "clarification",
+        "subIntent": "unclear",
+        "decision": "llm_fallback",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "FAIL"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 97,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 45260,
+        "wallMs": 46042,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 44211,
+          "toolsMs": 12,
+          "ragMs": 8,
+          "llmMs": 952
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R3",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F03.3-rol-abrev",
+    "family": "F03",
+    "label": "rol-ago-abrev",
+    "message": "rol 01 ago/26",
+    "expect": "rol_01",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 17623ms | paths=['/financial/rol'] | br=['01']",
+    "ms": 17623,
+    "prose": "**ROL:** R$ 723.419,01\n\n**Receita bruta:** R$ 885.852,90",
+    "evidence": {
+      "R1": {
+        "intent": "operational_query",
+        "subIntent": "department_kpi",
+        "decision": "operational_action",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 1,
+        "paths": [
+          "/financial/rol"
+        ],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [
+          "01"
+        ],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 56,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 16708,
+        "wallMs": 17623,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 1298,
+          "toolsMs": 14698,
+          "ragMs": 7,
+          "llmMs": 624
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [
+        "/financial/rol"
+      ],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F03.4-typo-filail",
+    "family": "F03",
+    "label": "rol-filail",
+    "message": "rol da filail 01 em agosto/2026",
+    "expect": "rol_01",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 15072ms | paths=['/financial/rol'] | br=['01']",
+    "ms": 15072,
+    "prose": "**ROL:** R$ 723.419,01\n\n**Receita bruta:** R$ 885.852,90",
+    "evidence": {
+      "R1": {
+        "intent": "operational_query",
+        "subIntent": "department_kpi",
+        "decision": "operational_action",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 1,
+        "paths": [
+          "/financial/rol"
+        ],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [
+          "01"
+        ],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 56,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 14336,
+        "wallMs": 15072,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 1172,
+          "toolsMs": 12214,
+          "ragMs": 8,
+          "llmMs": 859
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [
+        "/financial/rol"
+      ],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F03.5-schedule-casual",
+    "family": "F03",
+    "label": "programado-hoje",
+    "message": "qtos tem programado p produzir hj?",
+    "expect": "schedule_path",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 6306ms | paths=['/production/schedule/today']",
+    "ms": 6306,
+    "prose": "Foram retornados **108** registros. O formato dos dados sugere apresentação em **tabela**. **Pontos de atenção**\n\n- A lista é extensa; considere filtros ou paginação para focar o que importa.",
+    "evidence": {
+      "R1": {
+        "intent": "operational_query",
+        "subIntent": "schedule_today_lookup",
+        "decision": "operational_action",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 1,
+        "paths": [
+          "/production/schedule/today"
+        ],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 191,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 5652,
+        "wallMs": 6306,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 1052,
+          "toolsMs": 4043,
+          "ragMs": 7,
+          "llmMs": 458
+        },
+        "verdict": "WARN"
+      },
+      "paths": [
+        "/production/schedule/today"
+      ],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F03.6-follow-fornecedores",
+    "family": "F03",
+    "label": "follow-fornecedores",
+    "message": "e os fornecedores?",
+    "expect": "follow_up_operational",
+    "useAgent": true,
+    "seed": [
+      "ficha do produto 10080047"
+    ],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 21199ms | paths=['/products/10080047/suppliers']",
+    "ms": 21199,
+    "prose": "O produto **10080047**\n\nForam retornados **4** registros. O formato dos dados sugere apresentação em **tabela**.",
+    "evidence": {
+      "R1": {
+        "intent": "operational_query",
+        "subIntent": "supplier_lookup",
+        "decision": "operational_action",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 1,
+        "paths": [
+          "/products/10080047/suppliers"
+        ],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 112,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 1,
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 20600,
+        "wallMs": 21199,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 18484,
+          "toolsMs": 1618,
+          "ragMs": 7,
+          "llmMs": 399
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [
+        "/products/10080047/suppliers"
+      ],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R6",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F04.1",
+    "family": "F04",
+    "label": "sql-grupo-1008",
+    "message": "crie um sql q liste os 10 primeiros produtos do grupo 1008",
+    "expect": "sql_authoring",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 29252ms",
+    "ms": 29252,
+    "prose": "Segue a consulta em SQL (somente leitura, sem executar no sistema). Ajuste o sufixo da tabela física Protheus (padrão …010) conforme o ambiente:\n\n```sql\nSELECT TOP 10\n    B1_COD    AS codigo,\n    B1_DESC   AS descricao,\n    B1_GRUPO  AS grupo\nFROM SB1010\nWHERE B1_GRUPO = '1008'\n  AND B1_MSACTIVE = '1';\n```\n\n**O que ess",
+    "evidence": {
+      "R1": {
+        "intent": "llm_general",
+        "subIntent": "no_rag",
+        "decision": "sql_route",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 817,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 28930,
+        "wallMs": 29252,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 511,
+          "toolsMs": 13811,
+          "ragMs": 8,
+          "llmMs": 14561
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F04.2",
+    "family": "F04",
+    "label": "select-sb1",
+    "message": "monta um select da SB1 sem executar",
+    "expect": "sql_authoring",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 69352ms",
+    "ms": 69352,
+    "prose": "Segue a consulta em SQL (somente leitura, sem executar no sistema). Ajuste o sufixo da tabela física Protheus (padrão …010) conforme o ambiente:\n\n```sql\nSELECT TOP 100\n    B1_FILIAL  AS Filial,\n    B1_COD     AS Codigo_Produto,\n    B1_DESC    AS Descricao,\n    B1_TIPO    AS Tipo,\n    B1_UM      AS Unidade_Medida,\n    B",
+    "evidence": {
+      "R1": {
+        "intent": "llm_general",
+        "subIntent": "no_rag",
+        "decision": "sql_route",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 1140,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 68563,
+        "wallMs": 69352,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 895,
+          "toolsMs": 27919,
+          "ragMs": 8,
+          "llmMs": 39706
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F04.leak",
+    "family": "F04",
+    "label": "sql-sem-leak",
+    "message": "crie sql top 10 SB1 grupo 1008",
+    "expect": "sql_authoring",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "FAIL",
+    "detail": "HTTP Error 500: INTERNAL SERVER ERROR",
+    "ms": 0,
+    "prose": "",
+    "evidence": {},
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  }
+]
