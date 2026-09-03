@@ -1,9 +1,12 @@
 # Troca de provedor LLM — operação
 
-Guia para alternar o motor de inferência do chat mantendo **Ollama como padrão** em dev/homolog.
+**Seletor único:** `LLM_PROVIDER`. Texto, embeddings e visão **herdam** esse valor quando `EMBEDDING_PROVIDER` / `VISION_LLM_PROVIDER` estão vazios.
 
-**Tutorial passo a passo:** [tutorial-conectar-llm-externo.md](./tutorial-conectar-llm-externo.md)  
-**Playbook:** [playbook-24-llm-provider-pluggable-jul2026.md](../roadmap/playbook-24-llm-provider-pluggable-jul2026.md)
+Hoje: `openai_compatible` + `KIMI_*` (OpenRouter). Para Ollama local: `LLM_PROVIDER=ollama`. Não apontar `http://ollama:11434` fora dos gateways de infra.
+
+Guia: [tutorial-conectar-llm-externo.md](./tutorial-conectar-llm-externo.md)  
+Playbook: [playbook-24-llm-provider-pluggable-jul2026.md](../roadmap/playbook-24-llm-provider-pluggable-jul2026.md)  
+Regra Cursor: `llm-stack-centralized.mdc`.
 
 ---
 

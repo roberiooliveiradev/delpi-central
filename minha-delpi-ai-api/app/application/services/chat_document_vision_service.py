@@ -239,8 +239,12 @@ class ChatDocumentVisionService:
         return ChatDocumentVisionStageService.stage_tesseract_image(*args, **kwargs)
 
     @classmethod
+    def _stage_vlm(cls, *args, **kwargs):
+        return ChatDocumentVisionStageService.stage_vlm(*args, **kwargs)
+
+    @classmethod
     def _stage_ollama_vlm(cls, *args, **kwargs):
-        return ChatDocumentVisionStageService.stage_ollama_vlm(*args, **kwargs)
+        return cls._stage_vlm(*args, **kwargs)
 
     @classmethod
     def _stage_neural_backend(cls, *args, **kwargs):

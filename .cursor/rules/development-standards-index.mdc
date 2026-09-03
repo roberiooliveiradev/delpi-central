@@ -17,7 +17,7 @@ alwaysApply: true
 | `plugins-reusable-components.mdc` | UI MFE — `@delpi/plugin-ui`; zero CSS de componente do kit no MFE |
 | `plugins-visual-design-system.mdc` | Tokens, layout, anti-vazamento CSS, claro/escuro |
 | `plan-construction.mdc` | CreatePlan / multi-etapa — matriz de fluxos + **receita por `E*.S*`** (objetivo, fazer, não fazer, teste, pronto, commit) |
-| `test-and-commit.mdc` | Ao concluir alteração de código |
+| `llm-stack-centralized.mdc` | Chat — texto/embed/visão; troca de motor via `LLM_PROVIDER` (hoje Kimi; Ollama só se o seletor for `ollama`) |
 | `infra-sequential-container-startup.mdc` | Deploy / docker up / rebuild |
 
 ## Frontend (plugins MFE + kit)
@@ -43,7 +43,7 @@ Bug overlay/toolbar cortada ou scroll fantasma
 
 ## Chat / API
 
-Ver regras `chat-intelligence-base`, `schema-first-presentation-delivered`, `assistant-content-json`, `new-api-route-checklist`, `operational-api-routing` (quando o escopo for chat/api-delpi).
+Ver regras `chat-intelligence-base`, `llm-stack-centralized`, `schema-first-presentation-delivered`, `assistant-content-json`, `new-api-route-checklist`, `operational-api-routing` (quando o escopo for chat/api-delpi).
 
 ## Ordem de prioridade em conflito
 

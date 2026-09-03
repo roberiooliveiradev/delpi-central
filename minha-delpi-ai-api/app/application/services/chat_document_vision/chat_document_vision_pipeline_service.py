@@ -126,7 +126,7 @@ class ChatDocumentVisionPipelineService:
             return result
 
         if backend in {"ollama_vlm", "vlm"}:
-            vlm = vision_service()._stage_ollama_vlm(
+            vlm = vision_service()._stage_vlm(
                 storage_path,
                 filename=filename,
                 content_type=content_type,

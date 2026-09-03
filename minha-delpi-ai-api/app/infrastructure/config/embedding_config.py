@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 
 from app.domain.entities.embedding_config import EmbeddingConfig
+from app.infrastructure.config.llm_stack_config import resolve_inherited_provider
 from app.infrastructure.config.llm_text_config import resolve_llm_provider_name
 
 OPENAI_COMPATIBLE_EMBEDDING_PROVIDERS = frozenset(
@@ -41,10 +42,11 @@ def resolve_embedding_provider_name() -> str:
 
 
 def _requested_embedding_provider() -> str:
-    explicit = _env("EMBEDDING_PROVIDER")
-    if explicit:
-        return normalize_embedding_provider(explicit)
-    return normalize_embedding_provider(resolve_llm_provider_name())
+    return resolve_inherited_provider(
+        "EMBEDDING_PROVIDER",
+        normalize=normalize_embedding_provider,
+        stack_provider=resolve_llm_provider_name(),
+    )
 
 
 def _is_local_ollama_embedding_model(model: str) -> bool:

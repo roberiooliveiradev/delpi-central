@@ -59,7 +59,7 @@ class ChatDocumentVisionStageService:
         use_drawing_regions = cls._payload_suggests_drawing_regions(payload, stages=stages)
         partial_ocr_texts = cls._partial_ocr_texts_from_payload(payload)
 
-        vlm = vision_service()._stage_ollama_vlm(
+        vlm = vision_service()._stage_vlm(
             storage_path,
             filename=filename,
             content_type=content_type,
@@ -358,7 +358,7 @@ class ChatDocumentVisionStageService:
         hybrid_purpose = ChatDocumentVisionContentService.vision_purpose("hybrid")
 
         if resolved_purpose == describe_purpose and ChatDocumentVisionConfigService.image_describe_enabled():
-            vlm = vision_service()._stage_ollama_vlm(
+            vlm = vision_service()._stage_vlm(
                 storage_path,
                 filename=filename,
                 content_type=content_type,
@@ -389,7 +389,7 @@ class ChatDocumentVisionStageService:
             backend = "tesseract"
 
         if backend in {"ollama_vlm", "vlm"}:
-            vlm = vision_service()._stage_ollama_vlm(
+            vlm = vision_service()._stage_vlm(
                 storage_path,
                 filename=filename,
                 content_type=content_type,
@@ -572,7 +572,7 @@ class ChatDocumentVisionStageService:
             ChatDocumentVisionContentService,
         )
 
-        vlm = vision_service()._stage_ollama_vlm(
+        vlm = vision_service()._stage_vlm(
             storage_path,
             filename=filename,
             content_type=content_type,
@@ -703,7 +703,7 @@ class ChatDocumentVisionStageService:
         return base64.b64encode(buffer.getvalue()).decode("ascii")
 
     @classmethod
-    def stage_ollama_vlm(
+    def stage_vlm(
         cls,
         storage_path: str,
         *,
@@ -874,6 +874,10 @@ class ChatDocumentVisionStageService:
         built["vlmRegionsSent"] = vlm_regions_sent
         built["vlmImageCount"] = vlm_image_count
         return built
+
+    @classmethod
+    def stage_ollama_vlm(cls, *args, **kwargs):
+        return cls.stage_vlm(*args, **kwargs)
 
     @classmethod
     def parse_drawing_vlm_response(cls, content: str) -> dict[str, str]:

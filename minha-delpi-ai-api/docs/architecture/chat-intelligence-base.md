@@ -30,6 +30,8 @@ Melhorias de inteligência (comparação, insights, fast path operacional, respo
 
 **ADRs:** [`adr/README.md`](./adr/README.md) — decisões aceitas (chat base, paridade send/stream, JSON, ports, HTTP modular, gate de conteúdo).
 
+**Stack LLM (texto / embed / visão):** [`llm-stack.md`](./llm-stack.md) — seletor `LLM_PROVIDER`; hoje Kimi; Ollama só se o seletor for `ollama`.
+
 ---
 
 ## Índice de sub-sistemas
@@ -48,6 +50,7 @@ Mapa de navegação — não substitui a tabela completa em [§ Serviços centra
 | **Memória & contexto** | Snapshot, assertividade, projeto | `ChatConversationMemoryService` · `ChatWorkingMemoryService` · `ChatUserContextItemService` | [`session-memory.md`](./session-memory.md) |
 | **Intent & respostas diretas** | Identidade, small talk, gate simples | `ChatIntentRouterService` · `ChatSimpleTurnGateService` · `ChatAssistantIdentityService` | [`intent-routing.md`](./intent-routing.md) |
 | **HTTP & composição** | Rotas finas, DI | `interfaces/http/routes/chat/` · `composition/*_composer.py` | [ADR 004](./adr/004-repository-ports-composition-root.md) · [ADR 005](./adr/005-http-routes-modular-facade.md) |
+| **Stack LLM** | Seletor único texto/embed/visão | `llm_stack_config` · `make_llm_gateway` / `make_embedding_gateway` / `make_vision_llm_gateway` | [`llm-stack.md`](./llm-stack.md) · [`llm-provider-switch.md`](../operations/llm-provider-switch.md) |
 | **Admin & qualidade** | Métricas, feedback, relatório semanal | `ChatQualityUnifiedMetricsService` · `GenerateWeeklyQualityReportUseCase` | `GET/POST /admin/metrics/*` · `GET/POST /admin/reports/quality/*` |
 | **Auditoria CI** | God files, domain→infra, conteúdo | `scripts/audit_clean_architecture.py` · `test_no_hardcoded_pt_strings.py` | [`clean-architecture-baseline.json`](./clean-architecture-baseline.json) |
 

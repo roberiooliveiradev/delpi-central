@@ -8,6 +8,7 @@ from app.domain.entities.llm_generation_result import LlmGenerationResult, LlmTo
 from app.domain.exceptions.llm_exceptions import LlmProviderUnavailableError
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
 from app.domain.services.llm_tool_argument_parser import parse_llm_tool_arguments
+from app.infrastructure.config.llm_text_config import resolve_llm_text_config
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.llm.http_stream_utf8 import (
     force_response_utf8,
@@ -22,9 +23,10 @@ logger = logging.getLogger("minha-delpi-ai-api.ollama")
 
 class OllamaLlmGateway(LlmGatewayPort):
     def __init__(self):
-        self.base_url = Settings.OLLAMA_BASE_URL.rstrip("/")
-        self.model = Settings.OLLAMA_MODEL
-        self.timeout = Settings.OLLAMA_TIMEOUT_SECONDS
+        config = resolve_llm_text_config()
+        self.base_url = config.base_url.rstrip("/")
+        self.model = config.model
+        self.timeout = config.timeout_seconds
 
     def _active(self):
         return get_active_config()

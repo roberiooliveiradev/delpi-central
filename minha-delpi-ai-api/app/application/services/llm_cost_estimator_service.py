@@ -4,10 +4,7 @@ import os
 from app.domain.ports.admin_runtime_settings_repository_port import (
     AdminRuntimeSettingsRepositoryPort,
 )
-from app.infrastructure.config.llm_text_config import (
-    is_openai_compatible_provider,
-    resolve_llm_text_config,
-)
+from app.infrastructure.config.llm_text_config import resolve_llm_text_config
 from app.infrastructure.config.settings import Settings
 
 
@@ -27,7 +24,7 @@ class LlmCostEstimatorService:
         return [dict(item) for item in self._entries]
 
     def resolve_rates(self, *, provider: str | None, model: str | None) -> dict:
-        normalized_provider = str(provider or Settings.LLM_PROVIDER).lower().strip()
+        normalized_provider = str(provider or resolve_llm_text_config().provider).lower().strip()
         normalized_model = str(model or self._default_model_for(normalized_provider)).strip()
 
         for entry in self._entries:
@@ -96,7 +93,7 @@ class LlmCostEstimatorService:
         if parsed:
             return parsed
 
-        provider = Settings.LLM_PROVIDER
+        provider = resolve_llm_text_config().provider
         model = self._default_model_for(provider)
 
         return [
@@ -114,7 +111,7 @@ class LlmCostEstimatorService:
 
     def _normalize_entry(self, entry: dict) -> dict:
         return {
-            "provider": str(entry.get("provider") or Settings.LLM_PROVIDER).lower().strip(),
+            "provider": str(entry.get("provider") or resolve_llm_text_config().provider).lower().strip(),
             "model": str(entry.get("model") or "").strip(),
             "promptCostPer1k": float(
                 entry.get("promptCostPer1k", Settings.LLM_PROMPT_TOKEN_COST_PER_1K)
@@ -126,8 +123,4 @@ class LlmCostEstimatorService:
             "source": str(entry.get("source") or "configured"),
         }
 
-    def _default_model_for(self, provider: str) -> str:
-        if is_openai_compatible_provider(provider):
-            return resolve_llm_text_config().model
-
-        return Settings.OLLAMA_MODEL
+        return resolve_llm_text_config().model

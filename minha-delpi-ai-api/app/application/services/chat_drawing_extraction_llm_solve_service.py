@@ -161,7 +161,7 @@ class ChatDrawingExtractionLlmSolveService:
         stages: list[str] = []
         warnings: list[str] = []
 
-        vlm = ChatDocumentVisionStageService.stage_ollama_vlm(
+        vlm = ChatDocumentVisionStageService.stage_vlm(
             storage_path,
             filename=filename,
             content_type=content_type,

@@ -5,7 +5,6 @@ from app.composition.rate_limit_composer import get_rate_limit_service
 from app.domain.ports.admin_metrics_repository_port import AdminMetricsRepositoryPort
 from app.extensions.db import db
 from app.infrastructure.config.llm_text_config import (
-    is_openai_compatible_provider,
     normalize_llm_provider,
     resolve_llm_text_config,
 )
@@ -472,17 +471,14 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
     @staticmethod
     def _resolve_provider_model(metadata: dict) -> tuple[str, str]:
         provider = normalize_llm_provider(
-            str(metadata.get("provider") or Settings.LLM_PROVIDER)
+            str(metadata.get("provider") or resolve_llm_text_config().provider)
         )
         model = metadata.get("model")
 
         if model:
             return provider, str(model)
 
-        if is_openai_compatible_provider(provider):
-            return provider, resolve_llm_text_config().model
-
-        return provider, Settings.OLLAMA_MODEL
+        return provider, resolve_llm_text_config().model
 
     @staticmethod
     def _llm_rate_limit_snapshot() -> list[dict]:

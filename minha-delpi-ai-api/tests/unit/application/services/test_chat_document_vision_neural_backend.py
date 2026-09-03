@@ -96,7 +96,7 @@ def test_ollama_vlm_backend_falls_back_to_auto(monkeypatch):
     with _patch_vision_runtime():
         with patch.object(
             ChatDocumentVisionService,
-            "_stage_ollama_vlm",
+            "_stage_vlm",
             return_value={"fullText": "", "warnings": ["ollama_vlm_empty_response"]},
         ):
             with patch.object(
@@ -131,7 +131,7 @@ def test_ollama_vlm_backend_success(monkeypatch):
     with _patch_vision_runtime():
         with patch.object(
             ChatDocumentVisionService,
-            "_stage_ollama_vlm",
+            "_stage_vlm",
             return_value={
                 "fullText": "PRODUTO 90260140 REV 01",
                 "engine": "ollama_vlm",

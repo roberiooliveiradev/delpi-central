@@ -14,6 +14,7 @@ alwaysApply: true
 | Domínio | Módulo canônico | Não duplicar em |
 |---------|-----------------|-----------------|
 | Pipeline / intenção / tools / RAG / direct answer | `minha-delpi-ai-api` → serviços em `application/services/` + `domain/services/` (`ChatTurnPreparation*`, `ChatIntentRouterService`, `ChatAssistantIdentityService`) | `SendChatMessageUseCase`, `StreamChatMessageUseCase`, prompt de agente |
+| Stack LLM (texto / embed / visão) | `LLM_PROVIDER` + `llm_stack_config` → `make_llm_gateway` / `make_embedding_gateway` / `make_vision_llm_gateway` (`llm-stack-centralized.mdc`) | `http://ollama:11434` em use case, `Settings.OLLAMA_*` para escolher motor, `_stage_ollama_vlm` novo |
 | Skip de tools por intenção | `ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags` + `should_skip_tools` | `build_tool_context` inline, flags só no frontend |
 | Ativação de agente (chat comum vs agente) | API: `ChatWorkspaceAgentActivationService` + `ChatWorkspaceContextService` · MFE: `chatAgentActivation.ts` | `default_agent_id` de projeto na rota, `setContextAgentId` ad hoc |
 | Textos PT (status, activity, respostas) | `app/content/pt-BR/assistant/*.json` | strings em Python/TS |

@@ -79,7 +79,7 @@ def test_llm_solve_skips_when_already_meets_target():
 def test_llm_solve_marks_attempted_when_vlm_empty():
     with patch(
         "app.application.services.chat_document_vision.chat_document_vision_stage_service."
-        "ChatDocumentVisionStageService.stage_ollama_vlm",
+        "ChatDocumentVisionStageService.stage_vlm",
         return_value={"fullText": "", "warnings": ["vlm_no_images"]},
     ):
         result = ChatDrawingExtractionLlmSolveService.apply_if_needed(
@@ -104,7 +104,7 @@ def test_llm_solve_merges_vlm_text_and_reattaches_meta():
 
     with patch(
         "app.application.services.chat_document_vision.chat_document_vision_stage_service."
-        "ChatDocumentVisionStageService.stage_ollama_vlm",
+        "ChatDocumentVisionStageService.stage_vlm",
         return_value={
             "fullText": high_text,
             "stampText": "90264277 REV 02",

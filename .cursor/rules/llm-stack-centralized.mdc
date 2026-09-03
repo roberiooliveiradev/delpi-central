@@ -1,0 +1,49 @@
+---
+description: Stack LLM canônico — um seletor, três eixos; sem chamada direta a Ollama
+alwaysApply: true
+---
+
+# Stack LLM centralizado
+
+## Princípio
+
+**Um seletor:** `LLM_PROVIDER` (`ollama` | `openai_compatible`; aliases `vllm`/`openai`).  
+Hoje o ambiente usa **Kimi/OpenRouter** (`openai_compatible` + `KIMI_*`). Trocar o motor = mudar `LLM_PROVIDER` (e credenciais do eixo), **não** apontar host `ollama` em use case, RAG, visão ou MFE.
+
+Texto, embeddings e visão **herdam** o seletor quando o env do eixo está vazio.
+
+```
+LLM_PROVIDER
+ → make_llm_gateway()              (texto / tools / prosa)
+ → make_embedding_gateway()        (RAG / actions)
+ → make_vision_llm_gateway()       (VLM documentos)
+```
+
+Ollama só existe como **implementação de infra** (`OllamaLlmGateway`, …) escolhida pelo registry quando o provedor efetivo é `ollama`.
+
+## Módulos canônicos
+
+| Eixo | Resolver | Composer |
+|------|----------|----------|
+| Seletor / herança | `llm_stack_config.resolve_inherited_provider` | — |
+| Texto | `resolve_llm_text_config` | `make_llm_gateway` / `get_gateway_for_provider` |
+| Embeddings | `resolve_embedding_config` | `make_embedding_gateway` |
+| Visão | `resolve_vision_llm_config` | `make_vision_llm_gateway` · stage `stage_vlm` |
+| Override por agente | `ChatLlmGatewayResolverService` + `metadata.intelligence.llmProviderOverride` | mesmo registry |
+
+Overrides opcionais: `EMBEDDING_PROVIDER`, `VISION_LLM_PROVIDER`. Com Kimi + modelo local de embed (`bge-m3`) o vetor fica `off` (RAG keyword).
+
+## O que NÃO fazer
+
+- `http://ollama:11434`, `Settings.OLLAMA_*` ou `CHAT_DOCUMENT_VISION_OLLAMA_*` em domain/application para decidir o motor.
+- `if Settings.LLM_PROVIDER == "ollama"` espalhado; usar `ChatDomainConfigService.llm_provider()` / configs resolvidas.
+- Novo fluxo de visão `_stage_ollama_vlm` — usar `stage_vlm` (alias legado permitido).
+- Subir Ollama para “consertar RAG/VLM” quando o stack é `openai_compatible`.
+
+## O que fazer
+
+1. Troca de motor → `LLM_PROVIDER` + `KIMI_*` ou `OLLAMA_*` conforme o provedor.
+2. Consumir só composers/ports.
+3. Teste no resolver do eixo (`test_llm_text_config`, `test_embedding_config`, `test_vision_llm_config`, `test_llm_stack_config`).
+
+Doc: `minha-delpi-ai-api/docs/operations/llm-provider-switch.md`.

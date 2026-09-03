@@ -37,8 +37,8 @@ class Settings:
     LLM_PROMPT_CACHE_ENABLED = (
         os.getenv("LLM_PROMPT_CACHE_ENABLED", "true").lower() == "true"
     )
-    EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "ollama").lower().strip()
-    VISION_LLM_PROVIDER = os.getenv("VISION_LLM_PROVIDER", "ollama").lower().strip()
+    EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "").lower().strip()
+    VISION_LLM_PROVIDER = os.getenv("VISION_LLM_PROVIDER", "").lower().strip()
     LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.4"))
     LLM_MAX_TOKENS = resolve_llm_max_tokens()
     LLM_PROMPT_TOKEN_COST_PER_1K = float(

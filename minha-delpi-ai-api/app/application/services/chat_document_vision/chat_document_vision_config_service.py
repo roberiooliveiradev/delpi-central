@@ -24,15 +24,22 @@ class ChatDocumentVisionConfigService:
     def auto_vlm_fallback_enabled(cls) -> bool:
         return bool(
             vision_runtime().get("documentVisionAutoVlmFallback")
-            and Settings.CHAT_DOCUMENT_VISION_OLLAMA_MODEL
+            and cls._vision_llm_ready()
         )
 
     @classmethod
     def image_describe_enabled(cls) -> bool:
         return bool(
             vision_runtime().get("documentVisionImageDescribeEnabled")
-            and Settings.CHAT_DOCUMENT_VISION_OLLAMA_MODEL
+            and cls._vision_llm_ready()
         )
+
+    @classmethod
+    def _vision_llm_ready(cls) -> bool:
+        from app.infrastructure.config.vision_llm_config import resolve_vision_llm_config
+
+        config = resolve_vision_llm_config()
+        return bool(config.provider != "off" and config.model)
 
     @classmethod
     def is_pdf(cls, content_type: str, filename: str, storage_path: str) -> bool:

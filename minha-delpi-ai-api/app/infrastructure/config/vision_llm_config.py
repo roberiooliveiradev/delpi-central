@@ -4,6 +4,9 @@ import os
 
 from dataclasses import dataclass
 
+from app.infrastructure.config.llm_stack_config import resolve_inherited_provider
+from app.infrastructure.config.llm_text_config import resolve_llm_provider_name
+
 OPENAI_COMPATIBLE_VISION_PROVIDERS = frozenset(
     {"openai_compatible", "openai", "vllm"}
 )
@@ -19,7 +22,10 @@ class VisionLlmConfig:
 
 
 def normalize_vision_llm_provider(provider: str) -> str:
-    normalized = str(provider or "ollama").lower().strip()
+    normalized = str(provider or "").lower().strip()
+
+    if not normalized:
+        return normalize_vision_llm_provider(resolve_llm_provider_name())
 
     if normalized in {"off", "disabled", "none"}:
         return "off"
@@ -31,7 +37,15 @@ def normalize_vision_llm_provider(provider: str) -> str:
 
 
 def resolve_vision_llm_provider_name() -> str:
-    return normalize_vision_llm_provider(_env("VISION_LLM_PROVIDER", "ollama"))
+    return resolve_vision_llm_config().provider
+
+
+def _requested_vision_provider() -> str:
+    return resolve_inherited_provider(
+        "VISION_LLM_PROVIDER",
+        normalize=normalize_vision_llm_provider,
+        stack_provider=resolve_llm_provider_name(),
+    )
 
 
 def _env(name: str, default: str = "") -> str:
@@ -65,7 +79,7 @@ def resolve_vision_llm_config() -> VisionLlmConfig:
     Em produção basta ``KIMI_*`` + ``VISION_LLM_PROVIDER=openai_compatible`` (mesmo modelo
     multimodal do texto, ex. ``moonshotai/kimi-k3``).
     """
-    provider = resolve_vision_llm_provider_name()
+    provider = _requested_vision_provider()
 
     if provider == "openai_compatible":
         base_url = _first_env(

@@ -37,7 +37,23 @@ def test_vision_llm_vars_override_kimi(monkeypatch):
     assert config.api_key == "vision-key"
 
 
-def test_ollama_default_ignores_kimi_model(monkeypatch):
+def test_vision_inherits_central_llm_stack_when_unset(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "openai_compatible")
+    monkeypatch.delenv("VISION_LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("VISION_LLM_MODEL", raising=False)
+    monkeypatch.delenv("LLM_TEXT_MODEL", raising=False)
+    monkeypatch.setenv("KIMI_BASE_URL", "https://openrouter.ai/api/v1")
+    monkeypatch.setenv("KIMI_MODEL", "moonshotai/kimi-k3")
+    monkeypatch.setenv("KIMI_API_KEY", "sk-or-test")
+
+    config = resolve_vision_llm_config()
+
+    assert config.provider == "openai_compatible"
+    assert config.model == "moonshotai/kimi-k3"
+    assert config.base_url == "https://openrouter.ai/api/v1"
+
+
+def test_explicit_ollama_vision_ignores_kimi_model(monkeypatch):
     monkeypatch.setenv("VISION_LLM_PROVIDER", "ollama")
     monkeypatch.delenv("VISION_LLM_MODEL", raising=False)
     monkeypatch.setenv("CHAT_DOCUMENT_VISION_OLLAMA_MODEL", "qwen2.5vl:7b")
