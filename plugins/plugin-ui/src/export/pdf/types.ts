@@ -19,6 +19,12 @@ export type DelpiDocumentImageSection = {
   alt?: string;
 };
 
+/** Bloco narrativo (título + corpo) — fichas A4 com grade 2×2. */
+export type DelpiDocumentTextSection = {
+  title: string;
+  body: string;
+};
+
 export type DelpiDocumentBadgeTone = "approved" | "rejected" | "neutral";
 
 export type DelpiDocumentSpec = {
@@ -28,6 +34,8 @@ export type DelpiDocumentSpec = {
   badgeTone?: DelpiDocumentBadgeTone;
   runningMeta?: string;
   summaryLines?: DelpiDocumentSummaryLine[];
+  /** Blocos narrativos renderizados em grade (ex.: processo / problema / melhoria). */
+  textSections?: DelpiDocumentTextSection[];
   tables?: DelpiDocumentTable[];
   imageSections?: DelpiDocumentImageSection[];
   footerNote?: string;

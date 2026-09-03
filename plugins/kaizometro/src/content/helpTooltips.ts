@@ -108,4 +108,8 @@ export const KAIZEN_HELP_TOOLTIPS = {
     editDraft:
       "Ajusta o rascunho antes de implantar. Só versões Recebido (rascunho) podem ser editadas por aqui.",
   },
+  actions: {
+    exportPdf:
+      "Gera uma ficha A4 de uma página com identificação, datas, economia, narrativa (processo/problema/melhoria/resultado) e equipe da versão selecionada. Abre o diálogo de impressão do navegador — use “Salvar como PDF”. Não inclui fotos de evidência, changelog nem histórico completo de versões.",
+  },
 } as const;

@@ -33,10 +33,16 @@ Dashboard qualidade → /quality/kaizens/summary (PostgreSQL)
 |------|------|
 | `/apps/kaizometro` | Listagem com filtros e tabela paginada |
 | `/apps/kaizometro/novo` | Formulário de criação |
-| `/apps/kaizometro/detalhe/{uuid}` | Ficha visual com edição por seção, versões, evidências |
+| `/apps/kaizometro/detalhe/{uuid}` | Ficha visual com edição por seção, versões, evidências e **Exportar PDF** (1 folha A4) |
 | `/apps/kaizometro/editar/{uuid}` | Formulário legado de edição (redireciona ao detalhe quando aplicável) |
 
 Navegação interna via estado do MFE (`CadastroKaizenPage`); o Portal monta o plugin em `basePath` do manifesto.
+
+### Exportar PDF da ficha (1 folha)
+
+Na tela de detalhe, o botão **Exportar PDF** gera uma ficha A4 (layout certificado DELPI via `@delpi/plugin-ui`) com identificação, datas, economia, narrativa (processo / problema / melhoria / resultado) e equipe da **versão selecionada**. Abre o diálogo de impressão do navegador — use **Salvar como PDF**. Não inclui fotos de evidência, changelog nem histórico completo de versões.
+
+Arquivos: `src/utils/kaizenPdfSpec.ts`, `src/utils/exportKaizenPdf.ts`.
 
 ## Formulário público de sugestão
 
@@ -194,12 +200,14 @@ src/
     KaizenListPage.tsx                # Tabela + Compartilhar sugestão
     KaizenFormPage.tsx                # Criar
     KaizenDashboardPage.tsx           # Painel KPI + filtros
-    KaizenDetailPage.tsx              # Ficha com revisões
+    KaizenDetailPage.tsx              # Ficha com revisões + Exportar PDF
   components/
     KaizenShareSuggestionModal.tsx    # QR + link + Exportar PNG
     KaizenListHeaderActions.tsx
     form/ … detail/ … ui/
   utils/kaizenPublicSuggestionLink.ts # URL pública + QR + download PNG
+  utils/kaizenPdfSpec.ts              # DelpiDocumentSpec da ficha A4
+  utils/exportKaizenPdf.ts            # printDelpiDocumentSpec
   constants/kaizen.ts
   content/helpTooltips.ts
 
