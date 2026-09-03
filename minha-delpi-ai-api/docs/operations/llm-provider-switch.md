@@ -11,15 +11,17 @@ Guia para alternar o motor de inferência do chat mantendo **Ollama como padrão
 
 | Eixo | Variável principal | Default |
 |------|-------------------|---------|
-| Texto (chat) | `LLM_PROVIDER` | `ollama` |
-| Embeddings (RAG) | `EMBEDDING_PROVIDER` | `ollama` |
-| Visão (VLM) | `VISION_LLM_PROVIDER` | `ollama` |
+| Texto (chat) | `LLM_PROVIDER` | herda env; sem valor → `ollama` |
+| Embeddings (RAG) | `EMBEDDING_PROVIDER` | **vazio = mesmo eixo do texto** (`LLM_PROVIDER`) |
+| Visão (VLM) | `VISION_LLM_PROVIDER` | `ollama` (em prod Kimi: `openai_compatible`) |
 
-Trocar só `LLM_PROVIDER` **não** altera RAG nem visão de documentos.
+Com `LLM_PROVIDER=openai_compatible` (Kimi/OpenRouter), **não** use Ollama para embeddings. Se `EMBEDDING_MODEL` for tag local (`bge-m3`, `nomic-embed-text`, …), o vetor fica **`off`** e o RAG cai em busca por palavra-chave — o turno **não** quebra. Para vetor no mesmo stack: `EMBEDDING_PROVIDER=openai_compatible` + modelo `/v1/embeddings` (ex. `openai/text-embedding-3-small`) e reindex.
+
+Trocar só `LLM_PROVIDER` **alinha** embeddings ao mesmo provedor quando `EMBEDDING_PROVIDER` está vazio. `VISION_LLM_PROVIDER` continua independente até ser setado.
 
 ---
 
-## Ollama local (padrão)
+## Ollama local (legado)
 
 ```env
 LLM_PROVIDER=ollama
@@ -57,12 +59,11 @@ LLM_TEXT_TIMEOUT_SECONDS=120
 # VLLM_MODEL=...
 # VLLM_API_KEY=...
 
-# Embeddings: Ollama local ou API externa
-EMBEDDING_PROVIDER=ollama
-EMBEDDING_MODEL=bge-m3
+# Embeddings: vazio herda LLM_PROVIDER. Tag local (bge-m3) com Kimi → vetor off (keyword RAG).
 # EMBEDDING_PROVIDER=openai_compatible
-# EMBEDDING_BASE_URL=https://api.openai.com/v1
-# EMBEDDING_API_KEY=sk-...
+# EMBEDDING_MODEL=openai/text-embedding-3-small
+# EMBEDDING_PROVIDER=ollama
+# EMBEDDING_MODEL=bge-m3
 
 # Visão (VLM documentos) — eixo independente do texto
 VISION_LLM_PROVIDER=ollama
@@ -108,7 +109,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 Resposta esperada de `/admin/llm/status`:
 
 - `text.provider` — `ollama` ou `openai_compatible`
-- `embedding.provider` — `ollama` (até P2)
+- `embedding.provider` — `openai_compatible`, `off` (keyword RAG) ou `ollama` (legado)
 - `vision.provider` — `ollama` ou `openai_compatible`
 
 ---
@@ -158,7 +159,7 @@ docker compose restart minha-delpi-ai-api
 
 | Sintoma | Causa provável |
 |---------|----------------|
-| Chat OK, RAG falha | `EMBEDDING_PROVIDER=ollama` mas serviço Ollama indisponível |
+| Chat OK, RAG falha / HTTP 500 no turno | Embeddings ainda no Ollama; com Kimi o vetor deve herdar o LLM ou ficar `off` |
 | Tools não funcionam | API externa sem suporte a function calling |
 | Warmup lento no startup | Normal com `LLM_PROVIDER=ollama`; desligar com `LLM_WARMUP_ON_STARTUP=false` |
 | Custo zerado no admin | Configurar `LLM_PROMPT_TOKEN_COST_PER_1K` / tabela no admin |

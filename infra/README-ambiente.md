@@ -566,6 +566,7 @@ As mesmas variáveis alimentam o **chat** quando `LLM_PROVIDER=openai_compatible
 | `KIMI_MODEL` | `moonshotai/kimi-k3` | |
 | `LLM_PROVIDER` | `ollama` | Em prod com Kimi no chat: `openai_compatible` |
 | `LLM_TEXT_*` | vazio | Opcional; se vazio com `openai_compatible`, herda `KIMI_*` |
+| `EMBEDDING_PROVIDER` | vazio | **Herda `LLM_PROVIDER`**. Com Kimi + `bge-m3`, vetor `off` (RAG keyword), sem Ollama |
 
 Definir em `infra/.env`. Compose (dev e prod) repassa `KIMI_*` a `transformometro-api` **e** a `minha-delpi-ai-api`. Detalhes: [meeting-minutes-kimi.md](../transformometro-api/docs/meeting-minutes-kimi.md) · [tutorial LLM externo](../minha-delpi-ai-api/docs/operations/tutorial-conectar-llm-externo.md).
 

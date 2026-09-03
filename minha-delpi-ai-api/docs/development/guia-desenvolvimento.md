@@ -323,7 +323,7 @@ Skills: registro em `domain/skills/`, doc [api/11-skills.md](../api/11-skills.md
 | Variável | Default dev | Notas |
 |----------|-------------|-------|
 | `LLM_PROVIDER` | `ollama` | `openai_compatible` para API externa; ver [tutorial-conectar-llm-externo.md](../operations/tutorial-conectar-llm-externo.md) |
-| `EMBEDDING_PROVIDER` | `ollama` | Independente do texto |
+| `EMBEDDING_PROVIDER` | vazio = `LLM_PROVIDER` | Com Kimi + `bge-m3` o vetor fica `off` (RAG keyword), sem Ollama |
 | `VISION_LLM_PROVIDER` | `ollama` | VLM documentos |
 | `RATE_LIMIT_EXTERNAL_LLM_PER_WINDOW` | `10` | Rate limit extra para API externa |
 | `OLLAMA_MODEL` | `qwen2.5:1.5b` | Modelo rápido CPU |

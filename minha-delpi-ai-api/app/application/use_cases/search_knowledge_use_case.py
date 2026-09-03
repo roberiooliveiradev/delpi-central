@@ -1,4 +1,5 @@
 from dataclasses import replace
+import logging
 
 from app.application.dto.search_knowledge_request import SearchKnowledgeRequest
 from app.domain.services.keyword_similarity import keyword_overlap_score
@@ -8,6 +9,8 @@ from app.application.services.chat_intelligence_settings_service import (
 from app.domain.ports.embedding_gateway_port import EmbeddingGatewayPort
 from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
 from app.infrastructure.config.settings import Settings
+
+logger = logging.getLogger("minha-delpi-ai-api.knowledge.search")
 
 
 class SearchKnowledgeUseCase:
@@ -46,6 +49,13 @@ class SearchKnowledgeUseCase:
             )
         else:
             chunks = self._vector_search(query, limit=limit, filters=filters)
+            if not chunks:
+                chunks = self.knowledge_repository.search_keyword_chunks(
+                    query,
+                    limit=limit,
+                    filters=filters,
+                    use_fts=self._fts_enabled(),
+                )
 
         chunks = self._rerank_chunks(query, chunks, limit=limit, filters=filters)
 
@@ -108,7 +118,11 @@ class SearchKnowledgeUseCase:
         if self._hybrid_enabled():
             candidate_limit = limit * Settings.CHAT_RAG_HYBRID_CANDIDATE_MULTIPLIER
 
-        embedding = self.embedding_gateway.embed(query)
+        try:
+            embedding = self.embedding_gateway.embed(query)
+        except Exception as error:
+            logger.warning("vector embedding skipped: %s", error)
+            return []
 
         return self.knowledge_repository.search_similar_chunks(
             embedding=embedding,

@@ -8,6 +8,7 @@ from app.infrastructure.config.embedding_config import (
     normalize_embedding_provider,
     resolve_embedding_provider_name,
 )
+from app.infrastructure.embeddings.disabled_embedding_gateway import DisabledEmbeddingGateway
 from app.infrastructure.embeddings.ollama_embedding_gateway import OllamaEmbeddingGateway
 from app.infrastructure.embeddings.openai_compatible_embedding_gateway import (
     OpenAiCompatibleEmbeddingGateway,
@@ -18,6 +19,7 @@ EmbeddingGatewayFactory = Callable[[], EmbeddingGatewayPort]
 _EMBEDDING_GATEWAY_FACTORIES: dict[str, EmbeddingGatewayFactory] = {
     "ollama": OllamaEmbeddingGateway,
     "openai_compatible": OpenAiCompatibleEmbeddingGateway,
+    "off": DisabledEmbeddingGateway,
 }
 
 

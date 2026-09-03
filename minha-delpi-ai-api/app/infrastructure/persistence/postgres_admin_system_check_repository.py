@@ -170,6 +170,13 @@ class PostgresAdminSystemCheckRepository(AdminSystemCheckRepositoryPort):
                 "message": "OpenAI-compatible embedding provider configured.",
             }
 
+        if provider == "off":
+            return {
+                "status": "ok",
+                "provider": "off",
+                "message": "Vector embeddings off; RAG uses keyword search (LLM stack is not Ollama).",
+            }
+
         return {
             "status": "error",
             "provider": provider,

@@ -81,3 +81,25 @@ def test_hybrid_search_rerank_promotes_keyword_match(monkeypatch):
 
     assert len(results) == 2
     assert "pedidos" in results[0]["content"]
+
+
+class RaisingEmbedding:
+    def embed(self, text):
+        raise RuntimeError("ollama down")
+
+
+def test_hybrid_search_falls_back_to_keyword_when_embedding_fails(monkeypatch):
+    _patch_rag_settings(
+        monkeypatch,
+        CHAT_RAG_HYBRID_ENABLED=True,
+        CHAT_RAG_RERANK_ENABLED=False,
+        MAX_CONTEXT_CHUNKS=2,
+    )
+
+    use_case = SearchKnowledgeUseCase(FakeRepository(), RaisingEmbedding())
+    results = use_case.execute(
+        SearchKnowledgeRequest(query="pedidos abertos", limit=2, filters={}),
+    )
+
+    assert len(results) == 1
+    assert "pedidos" in results[0]["content"]

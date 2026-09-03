@@ -91,15 +91,15 @@ LLM_TEXT_MODEL=gpt-4o-mini
 LLM_TEXT_API_KEY=sk-SUA_CHAVE_AQUI
 LLM_TEXT_TIMEOUT_SECONDS=120
 
-# --- Embeddings: manter Ollama (RAG) ---
-EMBEDDING_PROVIDER=ollama
-OLLAMA_BASE_URL=http://ollama:11434
-EMBEDDING_MODEL=bge-m3
-EMBEDDING_DIMENSIONS=1024
+# --- Embeddings: herda LLM_PROVIDER (não usar Ollama com Kimi) ---
+# Tag local (bge-m3) → vetor off, RAG keyword. Para vetor no mesmo stack:
+# EMBEDDING_PROVIDER=openai_compatible
+# EMBEDDING_MODEL=openai/text-embedding-3-small
+# EMBEDDING_DIMENSIONS=1536
+# (reindex obrigatório se mudar dimensões)
 
-# --- Visão: manter Ollama ---
-VISION_LLM_PROVIDER=ollama
-# CHAT_DOCUMENT_VISION_OLLAMA_MODEL=qwen2.5vl:7b  # se já existir no compose
+# --- Visão: mesmo stack do texto ---
+# VISION_LLM_PROVIDER=openai_compatible
 
 # --- Custo no admin (opcional mas recomendado) ---
 LLM_PROMPT_TOKEN_COST_PER_1K=0.00015
@@ -355,7 +355,7 @@ Opção 2 — painel admin (persistido em `ai_admin_runtime_settings`).
 
 - [ ] `GET /admin/llm/status` — três eixos com provider esperado
 - [ ] Pergunta operacional com **tools** (action api-delpi executada)
-- [ ] Pergunta com **RAG** (fonte recuperada) — se `EMBEDDING_PROVIDER=ollama`, Ollama up
+- [ ] Pergunta com **RAG** — com Kimi, vetor `off` (keyword) até haver modelo `/v1/embeddings` + reindex; **não** depende de Ollama
 - [ ] Anexo com **visão** — se `VISION_LLM_PROVIDER=ollama`, modelo VLM puxado no Ollama
 - [ ] `scripts/smoke_llm_provider_switch.py` verde
 - [ ] Métricas admin mostram provider correto em `llmProviderUsage24h`
@@ -368,7 +368,7 @@ Opção 2 — painel admin (persistido em `ai_admin_runtime_settings`).
 |---------|----------------|------|
 | `401` / `403` na resposta | API key inválida ou URL errada | Conferir `LLM_TEXT_API_KEY` e `LLM_TEXT_BASE_URL` |
 | Chat responde, tools não rodam | Modelo sem function calling | Trocar modelo (ex.: `gpt-4o-mini`) |
-| RAG vazio / erro embedding | Ollama down com `EMBEDDING_PROVIDER=ollama` | Subir `ollama` ou mudar para `openai_compatible` + reindex |
+| RAG vazio / HTTP 500 no turno | Embeddings Ollama com stack Kimi | Herdar LLM; tag `bge-m3` → `off` (keyword). Não subir Ollama |
 | `Rate limit exceeded for external LLM` | `RATE_LIMIT_EXTERNAL_LLM_PER_WINDOW` | Aumentar env ou aguardar janela |
 | Custo zerado no admin | Tabela de custo não configurada | `LLM_COST_TABLE_JSON` ou admin cost table |
 | Warmup lento no startup | Normal com Ollama | Com externo, warmup é ignorado; se ainda lento, verificar health Ollama para RAG |
@@ -397,7 +397,7 @@ Remova `llmProviderOverride` dos agentes se tiver configurado override.
 | `LLM_TEXT_BASE_URL` | Texto | Provider externo |
 | `LLM_TEXT_MODEL` | Texto | Provider externo |
 | `LLM_TEXT_API_KEY` | Texto | Provider externo (exceto vLLM local sem auth) |
-| `EMBEDDING_PROVIDER` | RAG | Sempre (default `ollama`) |
+| `EMBEDDING_PROVIDER` | RAG | Vazio herda texto; `off` / Kimi+`bge-m3` = keyword |
 | `EMBEDDING_BASE_URL` | RAG | `EMBEDDING_PROVIDER=openai_compatible` |
 | `EMBEDDING_API_KEY` | RAG | `EMBEDDING_PROVIDER=openai_compatible` |
 | `EMBEDDING_DIMENSIONS` | RAG | Deve bater com modelo; reindex se mudar |
