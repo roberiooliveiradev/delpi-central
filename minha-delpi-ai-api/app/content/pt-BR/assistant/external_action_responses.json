@@ -939,14 +939,33 @@
         "sx2",
         "sx3",
         "metadado",
+        "schema",
         "schema da tabela",
+        "dicionario da tabela",
+        "dicionário da tabela",
         "indices da tabela",
         "índices da tabela",
+        "indexes da tabela",
         "relacionamento da tabela"
       ]
     },
     "systemMetadataColumnTerms": [
       "coluna"
+    ],
+    "systemMetadataSchemaTerms": [
+      "schema",
+      "schema da tabela",
+      "dicionario da tabela",
+      "dicionário da tabela"
+    ],
+    "systemMetadataIndexTerms": [
+      "indice",
+      "índice",
+      "indices",
+      "índices",
+      "indexes",
+      "indices da tabela",
+      "índices da tabela"
     ],
     "systemMetadataRelationTerms": [
       "relacion",
@@ -1368,6 +1387,12 @@
     },
     "systemWantsColumns": {
       "termsFrom": "external_action_responses.actionSelection.systemMetadataColumnTerms"
+    },
+    "systemWantsSchema": {
+      "termsFrom": "external_action_responses.actionSelection.systemMetadataSchemaTerms"
+    },
+    "systemWantsIndexes": {
+      "termsFrom": "external_action_responses.actionSelection.systemMetadataIndexTerms"
     },
     "systemWantsRelations": {
       "termsFrom": "external_action_responses.actionSelection.systemMetadataRelationTerms"

@@ -2116,6 +2116,68 @@
       }
     },
     {
+      "id": "systemTableSchema",
+      "domain": "domainSystem",
+      "priority": 150,
+      "match": {
+        "allOf": [
+          {
+            "customPredicate": "systemMetadataQuestion"
+          },
+          {
+            "customPredicate": "systemHasTableName"
+          },
+          {
+            "customPredicate": "systemWantsSchema"
+          }
+        ]
+      },
+      "route": {
+        "pathMarkers": [
+          "/system/tables/",
+          "/schema"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "system_metadata"
+      },
+      "presentation": {
+        "reasonKey": "systemMetadata"
+      }
+    },
+    {
+      "id": "systemTableIndexes",
+      "domain": "domainSystem",
+      "priority": 148,
+      "match": {
+        "allOf": [
+          {
+            "customPredicate": "systemMetadataQuestion"
+          },
+          {
+            "customPredicate": "systemHasTableName"
+          },
+          {
+            "customPredicate": "systemWantsIndexes"
+          }
+        ]
+      },
+      "route": {
+        "pathMarkers": [
+          "/system/tables/",
+          "/indexes"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "system_metadata"
+      },
+      "presentation": {
+        "reasonKey": "systemMetadata"
+      }
+    },
+    {
       "id": "systemTableRelations",
       "domain": "domainSystem",
       "priority": 145,
@@ -2260,7 +2322,9 @@
         "excludePathMarkers": [
           "/search",
           "/columns",
-          "/relations"
+          "/relations",
+          "/schema",
+          "/indexes"
         ],
         "method": "GET"
       },

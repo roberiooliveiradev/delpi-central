@@ -25,14 +25,39 @@ class ChatSystemMetadataIntentService:
 
     @classmethod
     def wants_columns(cls, normalized: str) -> bool:
-        return "coluna" in normalized
+        terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "systemMetadataColumnTerms",
+        )
+
+        return any(term in normalized for term in terms)
+
+    @classmethod
+    def wants_schema(cls, normalized: str) -> bool:
+        terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "systemMetadataSchemaTerms",
+        )
+
+        return any(term in normalized for term in terms)
+
+    @classmethod
+    def wants_indexes(cls, normalized: str) -> bool:
+        terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "systemMetadataIndexTerms",
+        )
+
+        return any(term in normalized for term in terms)
 
     @classmethod
     def wants_relations(cls, normalized: str) -> bool:
-        return any(
-            term in normalized
-            for term in ("relacion", "relacionar", "join", "ligar", "associar")
+        terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "systemMetadataRelationTerms",
         )
+
+        return any(term in normalized for term in terms)
 
     @classmethod
     def wants_table_search(cls, normalized: str) -> bool:
@@ -164,10 +189,18 @@ class ChatSystemMetadataIntentService:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         table_name = cls.extract_table_name(message)
         wants_columns = cls.wants_columns(normalized)
+        wants_schema = cls.wants_schema(normalized)
+        wants_indexes = cls.wants_indexes(normalized)
         wants_relations = cls.wants_relations(normalized)
         wants_table_search = cls.wants_table_search(normalized)
         path = str(action.get("path") or "").lower()
         value = 0
+
+        if wants_schema and table_name and "/tables/" in path and "/schema" in path:
+            value += 140
+
+        if wants_indexes and table_name and "/tables/" in path and "/indexes" in path:
+            value += 135
 
         if wants_relations and table_name and "/tables/" in path and "/relations" in path:
             value += 130
@@ -186,5 +219,11 @@ class ChatSystemMetadataIntentService:
 
         if wants_columns and "/columns/search" in path and table_name:
             value -= 30
+
+        if wants_schema and "/schema" not in path:
+            value -= 20
+
+        if wants_indexes and "/indexes" not in path:
+            value -= 20
 
         return value

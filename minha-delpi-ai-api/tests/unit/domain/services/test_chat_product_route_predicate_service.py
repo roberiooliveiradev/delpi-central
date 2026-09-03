@@ -185,6 +185,12 @@ def test_system_predicates_metadata_routes():
     relations = ChatMessageNormalizationService.normalize_for_matching(
         "relacionamentos da tabela sb1"
     )
+    schema = ChatMessageNormalizationService.normalize_for_matching(
+        "mostre o schema da tabela SB1010"
+    )
+    indexes = ChatMessageNormalizationService.normalize_for_matching(
+        "índices da tabela SB1"
+    )
     table_search = ChatMessageNormalizationService.normalize_for_matching(
         "qual tabela guarda clientes"
     )
@@ -193,6 +199,9 @@ def test_system_predicates_metadata_routes():
     assert ChatProductRoutePredicateService.matches("systemWantsColumns", columns)
     assert ChatProductRoutePredicateService.matches("systemHasTableName", columns)
     assert ChatProductRoutePredicateService.matches("systemWantsRelations", relations)
+    assert ChatProductRoutePredicateService.matches("systemWantsSchema", schema)
+    assert ChatProductRoutePredicateService.matches("systemHasTableName", schema)
+    assert ChatProductRoutePredicateService.matches("systemWantsIndexes", indexes)
     assert ChatProductRoutePredicateService.matches("systemWantsTableSearch", table_search)
 
 
