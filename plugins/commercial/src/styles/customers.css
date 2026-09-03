@@ -26,9 +26,17 @@
   font-variant-numeric: tabular-nums;
 }
 
+.dashboard-commercial .cm-portfolio-billing-filters .cm-filter-bar,
+.dashboard-commercial .cm-portfolio-billing-filters .delpi-ui-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-grid-gap, 0.75rem);
+  align-items: stretch;
+}
+
 .dashboard-commercial .cm-billing-series-chart,
 .dashboard-commercial .cm-purchase-evolution {
-  margin-top: 4px;
+  margin-top: 0;
 }
 
 /* Filtro Cliente: cresce no header; painel portaled segue o conteúdo (kit). */
