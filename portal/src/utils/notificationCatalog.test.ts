@@ -56,4 +56,15 @@ describe("resolveNotificationPreferenceDisplay", () => {
     assert.equal(posting.notificationName, "Pendências e menções de lançamento");
     assert.equal(posting.applicationName, "Lançamento de Notas Fiscais");
   });
+
+  it("portal RH: sourceApp do push S2S casa com o app publicado", () => {
+    const display = resolveNotificationPreferenceDisplay(
+      "portal_rh",
+      FALLBACK_NOTIFICATION_CATALOG,
+      [{ id: "portal-rh", name: "Portal RH", icon: "users-round" }],
+    );
+    assert.equal(display.notificationName, "Avisos do Portal RH");
+    assert.equal(display.applicationName, "Portal RH");
+    assert.equal(display.iconName, "users-round");
+  });
 });

@@ -20,6 +20,8 @@ def test_catalog_contains_app_sources():
     assert catalog.categories["comite_etica_conduta"].source_apps == ("comite-etica-conduta",)
     assert catalog.categories["tv_dashboard"].plugin_id == "tv-dashboard"
     assert catalog.categories["tv_dashboard"].source_apps == ("tv-dashboard",)
+    assert catalog.categories["portal_rh"].plugin_id == "portal-rh"
+    assert catalog.categories["portal_rh"].source_apps == ("portal-rh",)
 
 
 def test_every_category_has_notification_label():
@@ -48,6 +50,7 @@ def test_source_app_plugin_aliases_from_catalog():
     assert aliases["auditoria-5s"] == "auditoria-5s"
     assert aliases["comite-etica-conduta"] == "comite-etica-conduta"
     assert aliases["tv-dashboard"] == "tv-dashboard"
+    assert aliases["portal-rh"] == "portal-rh"
 
 
 def test_loader_rejects_app_category_without_source_apps(tmp_path: Path):

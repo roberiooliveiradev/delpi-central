@@ -192,6 +192,15 @@
       "kind": "app",
       "sourceApps": ["my-requests"],
       "pluginId": "my-requests"
+    },
+    "portal_rh": {
+      "label": "Portal RH",
+      "notificationLabel": "Avisos do Portal RH",
+      "icon": "users",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["portal-rh"],
+      "pluginId": "portal-rh"
     }
   },
   "legacyCategoryAliases": {

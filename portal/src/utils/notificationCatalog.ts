@@ -64,6 +64,7 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
     { id: "commercial_collaboration", label: "Sala de interação", notificationLabel: "Menções na sala de interação", icon: "briefcase", mutable: true, kind: "app", sourceApps: ["commercial"], pluginId: "commercial" },
     { id: "purchase_requests", label: "Solicitações de Compras", notificationLabel: "Atualizações da solicitação de compra", icon: "shopping-cart", mutable: true, kind: "app", sourceApps: ["purchase-requests"], pluginId: "purchase-requests" },
     { id: "my_requests", label: "Minhas Solicitações", notificationLabel: "Atualizações das minhas solicitações", icon: "clipboard-list", mutable: true, kind: "app", sourceApps: ["my-requests"], pluginId: "my-requests" },
+    { id: "portal_rh", label: "Portal RH", notificationLabel: "Avisos do Portal RH", icon: "users", mutable: true, kind: "app", sourceApps: ["portal-rh"], pluginId: "portal-rh" },
   ],
   legacyCategoryAliases: {
     quality: "quality_action_plans",

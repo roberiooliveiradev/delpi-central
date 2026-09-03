@@ -173,8 +173,24 @@ Exemplo `GET /me/notifications/catalog`:
 | `commercial` | Faturar notas fiscais | `commercial` | `commercial` |
 | `commercial_tasks` | Tarefas comerciais | `commercial` | `commercial` |
 | `commercial_collaboration` | Menções na sala de interação | `commercial` | `commercial` |
+| `portal_rh` | Avisos do Portal RH | `portal-rh` | `portal-rh` |
 
 Categorias `platform` (boas-vindas, aniversário, comunicado, …) não têm `sourceApp` — são disparadas pela Core API ou Admin.
+
+### Portal RH (push S2S)
+
+O Portal RH espelha suas notificações via `POST /core-api/integrations/notifications` (outbox + service token `CORE_API_INTEGRATIONS_SERVICE_TOKEN`). Valores do emissor:
+
+| Campo | Valor |
+|-------|-------|
+| `category` | `portal_rh` |
+| `sourceApp` | `portal-rh` |
+| `metadata.source` | `portal_rh` |
+| `action` | `{ "type": "portal_route", "label": "Abrir", "target": "/portal-rh" }` |
+
+O tipo de evento do RH viaja em `metadata.event` (`chamado:aberto`, `desempenho:aprovada`, `indique_talento:criado`, …, fallback `portal_rh:notificacao`) — é informativo, **não** vira categoria. Todos caem em `portal_rh`, então o usuário silencia/marca como importante um único card «Avisos do Portal RH».
+
+Pré-requisito de entrega: o app iframe precisa estar registrado no Admin com `id=portal-rh`, `basePath=/portal-rh` e permissão `portal-rh.access` — `pluginId` do catálogo é comparado com `apps.id` em `filter_mutable_categories_for_user` / `notification_app_access_service`.
 
 ---
 
