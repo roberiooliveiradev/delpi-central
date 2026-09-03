@@ -562,12 +562,18 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                 idPrefix="customers-workspace-panel"
                 value={panel}
                 onChange={(value) => {
-                  if (value === "billing" || value === "ranking" || value === "customers") {
+                  if (
+                    value === "billing" ||
+                    value === "abc" ||
+                    value === "ranking" ||
+                    value === "customers"
+                  ) {
                     setPanel(value);
                   }
                 }}
                 options={[
                   { value: "billing", label: "Faturamento" },
+                  { value: "abc", label: "ABC" },
                   { value: "ranking", label: "Ranking" },
                   { value: "customers", label: "Clientes" },
                 ]}
@@ -624,10 +630,22 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                   billingNature={billingNature}
                   onCatalogOptions={handleBillingCatalogOptions}
                 />
+              </div>
+
+              <div
+                className="cm-customers-page__panel"
+                hidden={panel !== "abc"}
+                aria-hidden={panel !== "abc"}
+              >
+                <PortfolioBillingFiltersBar
+                  filters={billingFilters}
+                  productOptions={billingProductOptions}
+                  productGroupOptions={billingProductGroupOptions}
+                />
                 <PortfolioBillingAbcTable
                   filters={billingFilters}
                   sellerId={canFilterPortfolios ? sellerIdFilter : null}
-                  active={panel === "billing"}
+                  active={panel === "abc"}
                   billingNature={billingNature}
                 />
               </div>

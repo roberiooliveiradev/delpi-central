@@ -13,6 +13,13 @@ describe("Portfolio billing tables — estrutural", () => {
     assert.match(page, /PortfolioBillingByProductTable/);
     assert.match(page, /PortfolioBillingAbcTable/);
     assert.match(page, /usePortfolioBillingWorkspaceFilters/);
+    assert.match(page, /value: "abc"/);
+    assert.match(page, /active=\{panel === "abc"\}/);
+    const abcMount = page.indexOf("<PortfolioBillingAbcTable");
+    assert.ok(abcMount >= 0);
+    const abcSlice = page.slice(abcMount, abcMount + 280);
+    assert.match(abcSlice, /active=\{panel === "abc"\}/);
+    assert.doesNotMatch(abcSlice, /active=\{panel === "billing"\}/);
   });
 
   it("tabelas usam CommercialDataTable e export tabular", () => {

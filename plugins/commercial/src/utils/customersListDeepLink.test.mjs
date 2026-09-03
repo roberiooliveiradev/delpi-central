@@ -259,6 +259,27 @@ describe("customersListDeepLink", () => {
       parseCustomersListDeepLink("?panel=nope", TEAM_ACCESS).panel,
       "customers",
     );
+    assert.equal(
+      parseCustomersListDeepLink("?panel=abc", TEAM_ACCESS).panel,
+      "abc",
+    );
+    assert.equal(
+      buildCustomersListSearch(
+        {
+          q: "",
+          focus: "all",
+          trend: "all",
+          sellerId: null,
+          sort: "attention",
+          dir: "asc",
+          page: 1,
+          panel: "abc",
+          billingNature: "gross",
+        },
+        TEAM_ACCESS,
+      ),
+      "?panel=abc",
+    );
   });
 });
 

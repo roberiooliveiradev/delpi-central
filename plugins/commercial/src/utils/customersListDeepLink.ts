@@ -22,7 +22,12 @@ export const CUSTOMER_LIST_FOCUS_VALUES = [
 
 export const CUSTOMER_LIST_TREND_VALUES = ["all", "up", "stable", "down"] as const;
 
-export const CUSTOMER_LIST_PANEL_VALUES = ["billing", "ranking", "customers"] as const;
+export const CUSTOMER_LIST_PANEL_VALUES = [
+  "billing",
+  "abc",
+  "ranking",
+  "customers",
+] as const;
 
 export type CustomerListFocus = (typeof CUSTOMER_LIST_FOCUS_VALUES)[number];
 export type CustomerListTrend = (typeof CUSTOMER_LIST_TREND_VALUES)[number];
