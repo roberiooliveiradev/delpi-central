@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Smoke audit F01 / F04 / F03 — gates de domínio + HTTP self-help/SQL quando possível.
+"""Smoke famílias F01 / F04 / F03 — gates de domínio + HTTP self-help/SQL quando possível.
 
 Doc canônico: docs/testing/chat-ai-flow-families.md
 
 Uso (host, via gateway):
-  cd minha-delpi-ai-api && PYTHONPATH=. .venv/bin/python scripts/smoke_audit_familias_f01_f04_f03.py
+  cd minha-delpi-ai-api && PYTHONPATH=. .venv/bin/python scripts/smoke_chat_flow_families_f01_f04_f03.py
 
 Uso (container):
   docker exec -e SMOKE_BASE_URL=http://delpi-gateway -w /app delpi-minha-delpi-ai-api \\
-    python scripts/smoke_audit_familias_f01_f04_f03.py
+    python scripts/smoke_chat_flow_families_f01_f04_f03.py
 """
 
 from __future__ import annotations

@@ -18,7 +18,7 @@
 | Script | Escopo |
 |--------|--------|
 | `scripts/human_interaction_battery_live.py` | Bateria HTTP — typos, multi-turn, R1–R8 |
-| `scripts/smoke_audit_familias_f01_f04_f03.py` | Gates domínio + HTTP F01/F03/F04 |
+| `scripts/smoke_chat_flow_families_f01_f04_f03.py` | Gates domínio + HTTP F01/F03/F04 |
 | `scripts/eval_packages_a_d_human_live.py` | Pacotes A–D (guidance, compare, dataAnswer) |
 | `scripts/smoke_new_intent_user_simulation.py` | SQL execute, new_intent, deixis «isso» |
 

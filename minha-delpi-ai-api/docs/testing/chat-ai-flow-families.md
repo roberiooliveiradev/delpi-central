@@ -21,7 +21,7 @@
 |------|--------|
 | Inventário + roteiros | ✅ pronto |
 | Unitários das regressões recentes (agente / SQL authoring / leak) | ✅ verdes (set/2026) |
-| Smoke domain + HTTP F01 / F04 / F03 | ✅ **18/18 PASS** (set/2026) — `scripts/smoke_audit_familias_f01_f04_f03.py` |
+| Smoke domain + HTTP F01 / F04 / F03 | ✅ **18/18 PASS** (set/2026) — `scripts/smoke_chat_flow_families_f01_f04_f03.py` |
 | Bateria interação humana simulada (HTTP + R1–R8) | ✅ script `scripts/human_interaction_battery_live.py` — rodar em stack live |
 | Smoke live UI (demais famílias § 5) | ⏳ pendente |
 
@@ -159,7 +159,7 @@ Campos admin úteis: `intentRoute`, `tooling.selectedExternalAction.matchSource`
 
 ### 1.3 Bateria de interação humana simulada
 
-Além dos gates de domínio (`smoke_audit_familias_f01_f04_f03.py`) e da avaliação A–D (`eval_packages_a_d_human_live.py`), existe uma **bateria unificada** que simula usuário real contra a API live (send + `includeAdminDebug`), com os mesmos critérios **R1–R8** deste audit.
+Além dos gates de domínio (`smoke_chat_flow_families_f01_f04_f03.py`) e da avaliação A–D (`eval_packages_a_d_human_live.py`), existe uma **bateria unificada** que simula usuário real contra a API live (send + `includeAdminDebug`), com os mesmos critérios **R1–R8** deste audit.
 
 **O que simula «humano real»**
 
@@ -197,7 +197,7 @@ SMOKE_FAMILY=F01,F03,F14 python scripts/human_interaction_battery_live.py
 
 | Harness | Escopo | Quando usar |
 |---------|--------|-------------|
-| `smoke_audit_familias_f01_f04_f03.py` | Gates domínio + HTTP mínimo F01/F03/F04 | CI rápido, sem LLM pesado em domain |
+| `smoke_chat_flow_families_f01_f04_f03.py` | Gates domínio + HTTP mínimo F01/F03/F04 | CI rápido, sem LLM pesado em domain |
 | `human_interaction_battery_live.py` | **Bateria F01–F16/F19/F23** + typos + multi-turn | Antes de release inteligência; regressão humana |
 | `eval_packages_a_d_human_live.py` | Pacotes A–D (guidance, compare, dataAnswer) | Deep-dive financeiro / compare |
 | `smoke_new_intent_user_simulation.py` | SQL execute + new_intent + deixis «isso» | Follow-up SQL / grounding |
@@ -325,7 +325,7 @@ Os critérios R1–R8 seguem o que plataformas de avaliação de **agentes com t
 | **Trajectory multi-turn** — histórico e follow-up | ADK `multi_turn_*`, frameworks RAG/agent eval | **R6**, **R7** |
 | **Faithfulness / grounding** — resposta apoiada em retrieve/tool, não inventada | RAG eval (claim-level), production assistants | **R4** + **R6**; RAG em F07 |
 | **Safety / leak** — não expor instruções internas | Critérios safety em ADK; leak guards em prod | Família **F23** → **R4** |
-| **Human rubric + automação** — smoke script + julgamento humano com mesma rubrica | ADK yes/no por rubric; eval harnesses | `human_interaction_battery_live.py` + `smoke_audit_familias_f01_f04_f03.py` + live § 5 |
+| **Human rubric + automação** — smoke script + julgamento humano com mesma rubrica | ADK yes/no por rubric; eval harnesses | `human_interaction_battery_live.py` + `smoke_chat_flow_families_f01_f04_f03.py` + live § 5 |
 
 **O que não copiamos do mercado (de propósito)**
 
@@ -670,7 +670,7 @@ Fonte: `app/content/pt-BR/skills/catalog.json` (7 skills).
 | F18.1 | PAC atrasados | | | | | | | | | | | | |
 | F23.1 | leak pós-tool | | | | | | | | | | | | |
 
-*(Smoke automatizado: `docker exec -e SMOKE_BASE_URL=http://delpi-gateway -w /app delpi-minha-delpi-ai-api python scripts/smoke_audit_familias_f01_f04_f03.py`.)*
+*(Smoke automatizado: `docker exec -e SMOKE_BASE_URL=http://delpi-gateway -w /app delpi-minha-delpi-ai-api python scripts/smoke_chat_flow_families_f01_f04_f03.py`.)*
 
 *(Bateria interação humana: `docker exec -e SMOKE_BASE_URL=http://delpi-gateway -w /app delpi-minha-delpi-ai-api python scripts/human_interaction_battery_live.py` → JSON em `docs/testing/evidence/chat-human-interaction-battery.json`.)*
 
@@ -699,7 +699,7 @@ Fonte: `app/content/pt-BR/skills/catalog.json` (7 skills).
 | **Este documento (canônico)** | `docs/testing/chat-ai-flow-families.md` |
 | Índice de testes | `docs/testing/README.md` |
 | Bateria HTTP (typos, multi-turn) | `scripts/human_interaction_battery_live.py` |
-| Gates domínio F01/F03/F04 | `scripts/smoke_audit_familias_f01_f04_f03.py` |
+| Gates domínio F01/F03/F04 | `scripts/smoke_chat_flow_families_f01_f04_f03.py` |
 | Eval A–D (compare, dataAnswer) | `scripts/eval_packages_a_d_human_live.py` |
 | SQL / new_intent / deixis | `scripts/smoke_new_intent_user_simulation.py` |
 | Saída JSON da bateria | `docs/testing/evidence/chat-human-interaction-battery.json` |
