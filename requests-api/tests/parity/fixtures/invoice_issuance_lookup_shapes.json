@@ -1,0 +1,35 @@
+{
+  "parties": {
+    "required_item_keys": [
+      "party_code",
+      "party_store",
+      "party_name",
+      "party_type",
+      "blocked"
+    ]
+  },
+  "products": {
+    "required_item_keys": [
+      "product_code",
+      "code",
+      "description",
+      "unit",
+      "blocked"
+    ]
+  },
+  "carriers": {
+    "required_item_keys": ["carrier_code", "carrier_name"]
+  },
+  "open_sales_orders": {
+    "required_keys": [
+      "party_code",
+      "party_store",
+      "orders",
+      "orders_count",
+      "lines_count"
+    ]
+  },
+  "warehouse_01_balance": {
+    "required_keys": ["product_code", "warehouse", "balance"]
+  }
+}
