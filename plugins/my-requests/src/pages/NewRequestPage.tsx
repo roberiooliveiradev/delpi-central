@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { createRequest, listRequestTypes } from "../api/requestsApi";
 import { AppShell } from "../components/AppShell";
+import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestTypeSummary } from "../types/requests";
 
@@ -47,10 +48,14 @@ export function NewRequestPage() {
 
   return (
     <AppShell title="Nova solicitação" canCreate>
-      <section className="dashboard-my-requests__panel" data-help="new">
+      <section
+        className="dashboard-my-requests__panel"
+        data-help="new"
+        title={MY_REQUESTS_HELP_TOOLTIPS.new.section}
+      >
         {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
         <form className="dashboard-my-requests__form" onSubmit={onSubmit}>
-          <label>
+          <label title={MY_REQUESTS_HELP_TOOLTIPS.new.type}>
             Tipo
             <select
               value={typeCode}
@@ -64,7 +69,7 @@ export function NewRequestPage() {
               ))}
             </select>
           </label>
-          <label>
+          <label title={MY_REQUESTS_HELP_TOOLTIPS.new.branch}>
             Filial
             <select
               value={branchCode}

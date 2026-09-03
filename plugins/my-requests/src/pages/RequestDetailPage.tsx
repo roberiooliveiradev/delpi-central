@@ -7,6 +7,7 @@ import { ArtifactsPanel } from "../components/ArtifactsPanel";
 import { AttachmentsPanel } from "../components/AttachmentsPanel";
 import { CommentsPanel } from "../components/CommentsPanel";
 import { TimelinePanel } from "../components/TimelinePanel";
+import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestDetail } from "../types/requests";
 
@@ -58,7 +59,11 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
       title={request ? request.request_number : "Detalhe"}
       canCreate={access.canCreateInvoiceIssuance || access.canManage}
     >
-      <section className="dashboard-my-requests__panel" data-help="detail">
+      <section
+        className="dashboard-my-requests__panel"
+        data-help="detail"
+        title={MY_REQUESTS_HELP_TOOLTIPS.detail.section}
+      >
         {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
         {!request && !error ? (
           <p className="dashboard-my-requests__muted">Carregando…</p>
@@ -83,11 +88,13 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
                 <dd>{request.created_by_name}</dd>
               </div>
             </dl>
-            <ActionBar
-              actions={request.allowed_actions || []}
-              busy={busy}
-              onAction={onAction}
-            />
+            <div title={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}>
+              <ActionBar
+                actions={request.allowed_actions || []}
+                busy={busy}
+                onAction={onAction}
+              />
+            </div>
           </>
         ) : null}
       </section>

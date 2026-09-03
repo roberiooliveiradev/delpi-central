@@ -265,6 +265,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Emissão de Notas Fiscais | [Plugin README](../../plugins/invoice-issuance/README.md) · [Playbook](../12-roadmap-e-evolucao/invoice-issuance/PLAYBOOK.md) · [Roadmap](../12-roadmap-e-evolucao/invoice-issuance/ROADMAP.md) · [API](../../api-delpi/docs/api/invoice-issuance.md) |
 | Inspeções de Processo | [Plugin README](../../plugins/inspecoes-processo/README.md) · [Auditoria](../../docs/12-roadmap-e-evolucao/inspecoes-processo/ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md) · [API](../../api-delpi/docs/api/inspecoes-processo.md) |
 | Controle de Retrabalhos | [Plugin README](../../plugins/controle-retrabalhos/README.md) · [Roadmap](../../docs/12-roadmap-e-evolucao/controle-retrabalhos/README.md) · [API](../../api-delpi/docs/api/controle-retrabalhos.md) |
+| Minhas Solicitações | [Plugin README](../../plugins/my-requests/README.md) · [Playbook](../../docs/12-roadmap-e-evolucao/my-requests/PLAYBOOK.md) · [Manual](../../docs/12-roadmap-e-evolucao/my-requests/MANUAL-USUARIO.md) · API `requests-api` |
 | Acompanhamento de Refugos | [Plugin README](../../plugins/scrap-monitoring/README.md) · [API](../../api-delpi/docs/api/scrap-monitoring.md) |
 | Apontamento de Produção | [Plugin README](../../plugins/production-appointments/README.md) · [API](../../api-delpi/docs/api/production-appointments.md) |
 | Canal de Denúncia | [Plugin README](../../plugins/canal-denuncia/README.md) · [API](../../api-delpi/docs/api/canal-denuncia.md) · [público `/p/canal-denuncia/denuncia/aberto`](../../plugins/public-hub/README.md) |

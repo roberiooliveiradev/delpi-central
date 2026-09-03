@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { listMyRequests } from "../api/requestsApi";
 import { AppShell } from "../components/AppShell";
+import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestSummary } from "../types/requests";
 
@@ -25,7 +26,11 @@ export function MinePage() {
       title="Minhas solicitações"
       canCreate={access.canCreateInvoiceIssuance || access.canManage}
     >
-      <section className="dashboard-my-requests__panel" data-help="mine">
+      <section
+        className="dashboard-my-requests__panel"
+        data-help="mine"
+        title={MY_REQUESTS_HELP_TOOLTIPS.mine.section}
+      >
         {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
         {!error && items.length === 0 ? (
           <p className="dashboard-my-requests__muted">Você ainda não criou solicitações.</p>

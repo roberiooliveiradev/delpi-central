@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { createComment, listComments } from "../api/requestsApi";
+import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { RequestComment } from "../types/requests";
 
 type CommentsPanelProps = {
@@ -43,7 +44,11 @@ export function CommentsPanel({ requestId }: CommentsPanelProps) {
   }
 
   return (
-    <section className="dashboard-my-requests__panel" data-help="comments">
+    <section
+      className="dashboard-my-requests__panel"
+      data-help="comments"
+      title={MY_REQUESTS_HELP_TOOLTIPS.comments.section}
+    >
       <h2>Comentários</h2>
       {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
       <ul className="dashboard-my-requests__list">

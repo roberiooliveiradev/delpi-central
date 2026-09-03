@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { listEvents } from "../api/requestsApi";
+import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { TimelineEvent } from "../types/requests";
 
 type TimelinePanelProps = {
@@ -22,7 +23,11 @@ export function TimelinePanel({ requestId }: TimelinePanelProps) {
   }, [requestId]);
 
   return (
-    <section className="dashboard-my-requests__panel" data-help="timeline">
+    <section
+      className="dashboard-my-requests__panel"
+      data-help="timeline"
+      title={MY_REQUESTS_HELP_TOOLTIPS.timeline.section}
+    >
       <h2>Linha do tempo</h2>
       {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
       {!error && items.length === 0 ? (

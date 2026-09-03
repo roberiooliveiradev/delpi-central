@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { artifactDownloadUrl, listArtifacts } from "../api/requestsApi";
+import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { RequestArtifact } from "../types/requests";
 
 type ArtifactsPanelProps = {
@@ -22,7 +23,11 @@ export function ArtifactsPanel({ requestId }: ArtifactsPanelProps) {
   }, [requestId]);
 
   return (
-    <section className="dashboard-my-requests__panel" data-help="artifacts">
+    <section
+      className="dashboard-my-requests__panel"
+      data-help="artifacts"
+      title={MY_REQUESTS_HELP_TOOLTIPS.artifacts.section}
+    >
       <h2>Artefatos</h2>
       {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
       {!error && items.length === 0 ? (

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { listWorkQueue } from "../api/requestsApi";
 import { AppShell } from "../components/AppShell";
+import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestSummary } from "../types/requests";
 
@@ -25,7 +26,11 @@ export function WorkQueuePage() {
       title="Fila de trabalho"
       canCreate={access.canCreateInvoiceIssuance || access.canManage}
     >
-      <section className="dashboard-my-requests__panel" data-help="work-queue">
+      <section
+        className="dashboard-my-requests__panel"
+        data-help="work-queue"
+        title={MY_REQUESTS_HELP_TOOLTIPS.workQueue.section}
+      >
         {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
         {!error && items.length === 0 ? (
           <p className="dashboard-my-requests__muted">Nenhuma solicitação na fila.</p>

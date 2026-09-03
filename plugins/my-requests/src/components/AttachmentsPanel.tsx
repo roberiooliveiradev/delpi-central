@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { attachmentDownloadUrl, listAttachments } from "../api/requestsApi";
+import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { RequestAttachment } from "../types/requests";
 
 type AttachmentsPanelProps = {
@@ -22,7 +23,11 @@ export function AttachmentsPanel({ requestId }: AttachmentsPanelProps) {
   }, [requestId]);
 
   return (
-    <section className="dashboard-my-requests__panel" data-help="attachments">
+    <section
+      className="dashboard-my-requests__panel"
+      data-help="attachments"
+      title={MY_REQUESTS_HELP_TOOLTIPS.attachments.section}
+    >
       <h2>Anexos</h2>
       {error ? <p className="dashboard-my-requests__error">{error}</p> : null}
       {!error && items.length === 0 ? (
