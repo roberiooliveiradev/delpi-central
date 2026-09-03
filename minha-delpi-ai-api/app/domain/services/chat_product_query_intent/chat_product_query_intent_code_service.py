@@ -54,6 +54,10 @@ class ChatProductQueryIntentCodeService:
 
         digits = re.sub(r"\D", "", normalized)
 
+        # Período Protheus/ISO (YYYYMM, YYYYMMDD, 2026-07-01) — nunca código de produto.
+        if cls._is_date_numeric_token(normalized) or cls._is_date_numeric_token(digits):
+            return False
+
         if "." in normalized and len(digits) < 5:
             return False
 
@@ -176,7 +180,21 @@ class ChatProductQueryIntentCodeService:
 
     @classmethod
     def _is_date_numeric_token(cls, token: str) -> bool:
-        return bool(VOCAB.DATE_TOKEN_RE.match(str(token or "").strip()))
+        raw = str(token or "").strip()
+
+        if not raw:
+            return False
+
+        if VOCAB.DATE_TOKEN_RE.match(raw):
+            return True
+
+        # `2026-07-01` → dígitos `20260701` (ISO / hífen removido).
+        digits = re.sub(r"\D", "", raw)
+
+        if digits and digits != raw and VOCAB.DATE_TOKEN_RE.match(digits):
+            return True
+
+        return False
 
     @classmethod
     def _is_calendar_year_token(cls, text: str, match: re.Match[str]) -> bool:

@@ -208,6 +208,15 @@ class ChatErrorHandlingClassifier:
             if cls._tool_calls_have_presentation_evidence(tool_calls):
                 return None
 
+            # Prosa já explica o vazio (LLM / template) — card genérico não agrega.
+            if cls._answer_adequately_explains_empty(answer):
+                return None
+
+            # Resumo/narrate sem tool vazia neste turno: menção a «sem registros»
+            # na resposta não deve abrir «Nenhum resultado» / Recuperar consulta.
+            if not cls._tool_calls_indicate_empty_result(tool_calls):
+                return None
+
             empty_type = cls._resolve_empty_result_type(message, tool_calls)
 
             return cls._stub_classification(
@@ -343,6 +352,62 @@ class ChatErrorHandlingClassifier:
             preview = str(metadata.get("responsePreview") or "")
 
             if '"rows": 0' in preview or '"rows":0' in preview:
+                return True
+
+        return False
+
+    @classmethod
+    def _answer_adequately_explains_empty(cls, answer: str) -> bool:
+        """Prosa já narra o vazio — card «Nenhum resultado» / Recuperar não agrega."""
+        stripped = str(answer or "").strip()
+
+        if len(stripped) < 80:
+            return False
+
+        lowered = stripped.lower()
+        cold = {
+            str(item).strip().lower()
+            for item in ((_error_handling_content().get("coldAnswerPatterns") or []))
+            if str(item).strip()
+        }
+
+        if lowered in cold:
+            return False
+
+        from app.domain.services.chat_follow_up_suggestion_service import (
+            ChatFollowUpSuggestionService,
+        )
+
+        return ChatFollowUpSuggestionService._looks_like_empty(lowered)
+
+    @classmethod
+    def _tool_calls_indicate_empty_result(cls, tool_calls: list | None) -> bool:
+        if cls._tool_calls_have_empty_records(tool_calls):
+            return True
+
+        for call in tool_calls or []:
+            if not isinstance(call, dict):
+                continue
+
+            if str(call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            if metadata.get("emptyResult") is True:
+                return True
+
+            data_answer = metadata.get("dataAnswer")
+
+            if isinstance(data_answer, dict) and data_answer.get("emptyResult") is True:
+                return True
+
+            commentary = metadata.get("dataCommentary")
+
+            if isinstance(commentary, dict) and commentary.get("emptyResult") is True:
                 return True
 
         return False

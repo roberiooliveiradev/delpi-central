@@ -16,6 +16,67 @@ def test_extract_product_code_ignores_date_tokens():
     ) is None
 
 
+def test_extract_product_code_ignores_compact_protheus_period_dates():
+    """YYYYMM / YYYYMMDD / ISO não podem virar código de produto (ex.: pós-ROL → estoque)."""
+    assert ChatProductQueryIntentService.extract_product_code("202607") is None
+    assert ChatProductQueryIntentService.extract_product_code("20260701") is None
+    assert ChatProductQueryIntentService.extract_product_code("2026-07-01") is None
+    assert (
+        ChatProductQueryIntentService.extract_product_code(
+            "ROL do período 20260701 a 20260731"
+        )
+        is None
+    )
+    assert ChatProductQueryIntentService.is_plausible_product_code("202607") is False
+    assert ChatProductQueryIntentService.is_plausible_product_code("20260701") is False
+    assert ChatProductQueryIntentService.extract_product_code("produto 10080001") == (
+        "10080001"
+    )
+
+
+def test_resolve_stock_follow_up_does_not_inherit_rol_period_as_product():
+    history = [
+        {
+            "role": "user",
+            "content": "qual o rol de julho/2026?",
+        },
+        {
+            "role": "assistant",
+            "content": "ROL do período 20260701 a 20260731: R$ 344.331,23",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/financial/rol",
+                            "parameters": {
+                                "start_date": "20260701",
+                                "end_date": "20260731",
+                            },
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    assert (
+        ChatProductQueryIntentService.resolve_product_code(
+            "e o estoque?",
+            previous_messages=history,
+        )
+        is None
+    )
+    assert (
+        ChatProductQueryIntentService.resolve_product_code(
+            "e o estoque?",
+            previous_messages=history,
+            operational_focus={"productCode": "202607"},
+        )
+        is None
+    )
+
 def test_extract_product_code_ignores_file_size_from_inventory_line():
     text = "- **1º TREINAMENTO — FEVEREIRO 2026.docx** · 24.0 KB · 4 chunk(s) · Indexado"
 
