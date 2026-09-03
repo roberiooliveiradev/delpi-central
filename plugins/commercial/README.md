@@ -124,7 +124,7 @@ o MFE:
 | `sort` | Ordenação allowlisted da carteira |
 | `dir=asc\|desc` | Direção da ordenação |
 | `page` | Página da lista em memória |
-| `panel=billing\|ranking\|customers` | Painel ativo (Faturamento / Ranking / Clientes) |
+| `panel=billing\|abc\|ranking\|customers` | Painel ativo (Faturamento / ABC / Ranking / Clientes) |
 | `billingNature=gross\|net` | Natureza do faturamento (default **gross**, omitido na URL); Fat.12m, tendência, série, ranking e share |
 
 Somente `q`, `focus`, `trend`, `seller_id`, `sort`, `dir`, `page`, `panel` e

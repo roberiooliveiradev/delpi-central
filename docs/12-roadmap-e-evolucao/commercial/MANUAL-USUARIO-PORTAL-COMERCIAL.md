@@ -43,7 +43,8 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Ver o que pode faturar | **Meus pedidos** | Chip / filtro de estoque e “Pode faturar” (estoque alocado em ordem FIFO) |
 | Acompanhar uma linha ou OP | **Meus pedidos** → clique na linha | Abre ficha da linha; daí abre a OP se houver |
 | Ver meus clientes | **Minha Carteira** | Lista; use busca, Foco e Tendência |
-| Ver mix de produto e ABC do faturamento | **Minha Carteira** → Faturamento | Filtros de período/cliente/família/produto/mercado; tabelas abaixo do gráfico; Excel |
+| Ver mix de produto do faturamento | **Minha Carteira** → Faturamento | Filtros; tabela abaixo do gráfico; colunas personalizáveis; Excel |
+| Ver ABC de clientes | **Minha Carteira** → ABC | Mesmos filtros do Faturamento; avatar + participação; Excel |
 | Preparar visita / call com cliente | **Minha Carteira** → cliente | Conta: abas Resumo, Pedidos, Histórico, Oportunidades, Contatos, Atividades |
 | Criar ou concluir follow-up | **Minhas tarefas** | Buckets (atrasadas / hoje / …); criar com prazo e responsável |
 | Conversar com o time sobre um pedido | **Sala de interação** ou painel na ficha | Inbox ou “abrir sala” no pedido/conta/OV |
@@ -294,9 +295,9 @@ Fonte na UI: **Ajuda** → **Catálogo de termos** (`plugins/commercial/src/cont
 | Meta | Meta SI proporcional aos dias do intervalo | Visão geral |
 | Carteira em aberto | Valor aberto de pedido **agora** (snapshot). Não é ROL, PCP nem forecast | Visão geral |
 | Faturamento | Notas / ROL no período. Share e tendência usam só faturamento, nunca o valor em aberto | Visão geral · Minha Carteira |
-| Família de produto | Grupo Protheus (B1_GRUPO); filtra mix e ABC no painel Faturamento | Minha Carteira → Faturamento |
-| Mercado interno / externo | CFOP 5/6 = interno; CFOP 7 = exportação | Minha Carteira → Faturamento |
-| ABC de clientes | Ordenação por participação no período (Pareto); ≠ Ranking YoY | Minha Carteira → Faturamento |
+| Família de produto | Grupo Protheus (B1_GRUPO); filtra mix e ABC | Minha Carteira → Faturamento · ABC |
+| Mercado interno / externo | CFOP 5/6 = interno; CFOP 7 = exportação | Minha Carteira → Faturamento · ABC |
+| ABC de clientes | Ordenação por participação no período (Pareto); ≠ Ranking YoY | Minha Carteira → ABC |
 | Bruto / Líquido | Bruto = NF; líquido = fórmula ROL. Toggle na Minha Carteira | Natureza do faturamento |
 | Share empresa | Faturamento do escopo ÷ faturamento da empresa no período | Visão geral · carteira |
 | Gap vs meta | Quanto falta para a meta ROL do período | Visão geral |

@@ -85,9 +85,14 @@ export const USER_MANUAL_CONTENT = {
           how: "Busca, Foco e Tendência",
         },
         {
-          want: "Ver mix de produto e ABC do faturamento",
-          where: "Minha Carteira",
-          how: "Painel Faturamento — filtros de período/cliente/família/produto/mercado; tabelas abaixo do gráfico; export Excel",
+          want: "Ver mix de produto do faturamento",
+          where: "Minha Carteira → Faturamento",
+          how: "Filtros de período/cliente/família/produto/mercado; tabela abaixo do gráfico; personalize colunas e exporte",
+        },
+        {
+          want: "Ver ABC de clientes",
+          where: "Minha Carteira → ABC",
+          how: "Mesmos filtros do Faturamento; tabela com avatar, CNPJ e participação; personalize colunas e exporte",
         },
         {
           want: "Preparar visita ou call",
@@ -143,7 +148,7 @@ export const USER_MANUAL_CONTENT = {
         "Início — hub: eventos + caminhos (favoritos, recentes, busca).",
         "Visão geral — placar do período (ROL, meta, conversão, carteira aberta…).",
         "Meus pedidos — bancada operacional; URL compartilhável com filtros.",
-        "Minha Carteira — clientes vinculados; painel Faturamento com série, mix de produto/família e ABC; clique no cliente abre a Conta.",
+        "Minha Carteira — clientes vinculados; painéis Faturamento (série + mix), ABC, Ranking e Clientes; clique no cliente abre a Conta.",
         "Minhas tarefas — fila de follow-ups.",
         "Sala de interação — conversas internas.",
         "Administração — carteiras, equipe e grupos (gestores).",
@@ -176,11 +181,15 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "ABC de clientes é o mesmo que Ranking?",
-          a: "Não. No painel Faturamento, o ABC ordena por participação no período (CNPJ e praça). O painel Ranking mostra crescimento ou queda versus o mesmo período no ano anterior.",
+          a: "Não. O painel ABC ordena por participação no período (avatar, CNPJ e praça). O painel Ranking mostra crescimento ou queda versus o mesmo período no ano anterior.",
         },
         {
           q: "Como exporto o mix de produto do faturamento?",
-          a: "Minha Carteira → Faturamento. Ajuste período, cliente, família, produto e mercado; use Excel nas tabelas de produto/família e de ABC, abaixo do gráfico.",
+          a: "Minha Carteira → Faturamento. Ajuste período, cliente, família, produto e mercado; use Excel na tabela de produto/família, abaixo do gráfico.",
+        },
+        {
+          q: "Como exporto o ABC de clientes?",
+          a: "Minha Carteira → ABC. Os filtros são os mesmos do Faturamento; use Excel na tabela do painel.",
         },
       ],
     },

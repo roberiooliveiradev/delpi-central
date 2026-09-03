@@ -1,6 +1,6 @@
 /**
  * Copy PT da aba Conta · Histórico (filtros, série, avisos de NF)
- * e do painel Faturamento da Minha Carteira (mix + ABC).
+ * e dos painéis Faturamento (mix) e ABC da Minha Carteira.
  */
 export const CUSTOMER_BILLING_CONTENT = {
   filtersSectionTitle: "Filtros",

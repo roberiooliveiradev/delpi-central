@@ -284,20 +284,20 @@ export const USER_MANUAL_TERM_CATALOG: readonly UserManualTermGroup[] = [
       {
         term: "Família de produto",
         meaning:
-          "Grupo Protheus (B1_GRUPO). No Faturamento da Minha Carteira filtra o mix e o ABC; o toggle Produto|Família agrega a tabela.",
-        applies: "Minha Carteira → Faturamento",
+          "Grupo Protheus (B1_GRUPO). Nos painéis Faturamento e ABC da Minha Carteira filtra o mix e o ABC; o toggle Produto|Família agrega a tabela de mix.",
+        applies: "Minha Carteira → Faturamento · Minha Carteira → ABC",
       },
       {
         term: "Mercado interno / externo",
         meaning:
-          "CFOP com primeiro dígito 5 ou 6 = interno (Brasil); 7 = exportação. Países de destino vêm do cadastro do cliente nas linhas de exportação.",
-        applies: "Minha Carteira → Faturamento (filtro Mercado)",
+          "CFOP com primeiro dígito 5 ou 6 = interno (Brasil); 7 = exportação. Países de destino vêm do cadastro do cliente nas linhas de exportação. Filtro compartilhado entre Faturamento e ABC.",
+        applies: "Minha Carteira → Faturamento · Minha Carteira → ABC (filtro Mercado)",
       },
       {
         term: "ABC de clientes",
         meaning:
           "Lista ordenada por participação no faturamento do período (Pareto). Não usa faixas A/B/C e não é o Ranking de crescimento/queda YoY.",
-        applies: "Minha Carteira → Faturamento",
+        applies: "Minha Carteira → ABC",
       },
       {
         term: BILLING_NATURE_CONTENT.gross.shortLabel,

@@ -18,12 +18,15 @@ describe("user manual page", () => {
     assert.match(content, /pageTitle: \"Manual do usuário\"/);
     assert.match(content, /USER_MANUAL_TERM_CATALOG/);
     assert.match(content, /Catálogo de termos/);
+    assert.match(content, /Minha Carteira → ABC/);
+    assert.match(content, /painel ABC/);
     const catalog = readSrc("content/userManualTermCatalog.ts");
     assert.match(catalog, /export const USER_MANUAL_TERM_CATALOG/);
     assert.match(catalog, /term: \"EXW\"/);
     assert.match(catalog, /term: \"FOB\"/);
     assert.match(catalog, /term: \"CIF\"/);
     assert.match(catalog, /applies:/);
+    assert.match(catalog, /Minha Carteira → ABC/);
     const page = readSrc("features/help/UserManualPage.tsx");
     assert.match(page, /USER_MANUAL_CONTENT/);
     assert.match(page, /glossaryGroups/);
@@ -33,6 +36,8 @@ describe("user manual page", () => {
     const links = readSrc("content/userManualToolLinks.ts");
     assert.match(links, /MANUAL_TOOL_TARGETS/);
     assert.match(links, /splitManualTextWithToolLinks/);
+    assert.match(links, /Minha Carteira → ABC/);
+    assert.match(links, /\?panel=abc/);
   });
 
   it("App e manifesto expõem /help", () => {
