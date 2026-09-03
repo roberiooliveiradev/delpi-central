@@ -1,6 +1,15 @@
+import type { ReactNode } from "react";
+
 import { configureHttpClient } from "./api/httpClient";
-import { useMyRequestsRouterPath } from "./hooks/useMyRequestsRouterPath";
-import { ShellHomePage } from "./pages/ShellHomePage";
+import {
+  resolveInternalRoute,
+  useMyRequestsRouterPath,
+} from "./hooks/useMyRequestsRouterPath";
+import { MinePage } from "./pages/MinePage";
+import { NewRequestPage } from "./pages/NewRequestPage";
+import { RequestDetailPage } from "./pages/RequestDetailPage";
+import { WorkQueuePage } from "./pages/WorkQueuePage";
+import { RequestsPermissionsProvider } from "./security/RequestsPermissionsContext";
 import { buildAccessFromPermissions } from "./security/requestsAccess";
 
 export type AppProps = {
@@ -19,8 +28,9 @@ export default function App({
   isSuperadmin = false,
 }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
-  useMyRequestsRouterPath(pathnameFromHost, searchFromHost);
+  const { pathname } = useMyRequestsRouterPath(pathnameFromHost, searchFromHost);
   const access = buildAccessFromPermissions(permissions, isSuperadmin);
+  const route = resolveInternalRoute(pathname);
 
   if (!access.canAccess) {
     return (
@@ -32,9 +42,27 @@ export default function App({
     );
   }
 
+  let page: ReactNode;
+  switch (route.name) {
+    case "work-queue":
+      page = <WorkQueuePage />;
+      break;
+    case "new":
+      page = <NewRequestPage />;
+      break;
+    case "detail":
+      page = <RequestDetailPage requestId={route.requestId!} />;
+      break;
+    case "mine":
+    case "home":
+    default:
+      page = <MinePage />;
+      break;
+  }
+
   return (
-    <div className="dashboard-my-requests dashboard-page">
-      <ShellHomePage canCreate={access.canCreateInvoiceIssuance || access.canManage} />
-    </div>
+    <RequestsPermissionsProvider permissions={permissions} isSuperadmin={isSuperadmin}>
+      {page}
+    </RequestsPermissionsProvider>
   );
 }

@@ -29,15 +29,31 @@
   min-height: 100%;
 }
 
-.dashboard-my-requests__panel h1 {
-  margin: 0 0 0.5rem;
+.dashboard-my-requests__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-my-requests__header h1 {
+  margin: 0;
   color: var(--mr-title);
   font-size: 1.5rem;
 }
 
-.dashboard-my-requests__panel p {
-  margin: 0 0 1rem;
-  color: var(--mr-text-muted);
+.dashboard-my-requests__panel {
+  background: var(--mr-surface);
+  border: 1px solid var(--mr-border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+
+.dashboard-my-requests__panel h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  color: var(--mr-title);
 }
 
 .dashboard-my-requests__nav {
@@ -54,5 +70,97 @@
 
 .dashboard-my-requests__error {
   color: var(--mr-danger);
+  margin: 0 0 0.75rem;
+}
+
+.dashboard-my-requests__muted {
+  color: var(--mr-text-muted);
+  margin: 0 0 0.75rem;
+}
+
+.dashboard-my-requests__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dashboard-my-requests__table th,
+.dashboard-my-requests__table td {
+  text-align: left;
+  padding: 0.5rem 0.35rem;
+  border-bottom: 1px solid var(--mr-border);
+}
+
+.dashboard-my-requests__table a {
+  color: var(--mr-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.dashboard-my-requests__action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.dashboard-my-requests__btn {
+  appearance: none;
+  border: 1px solid var(--mr-accent);
+  background: var(--mr-accent);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-my-requests__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dashboard-my-requests__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 28rem;
+}
+
+.dashboard-my-requests__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.dashboard-my-requests__form input,
+.dashboard-my-requests__form select,
+.dashboard-my-requests__form textarea {
+  font: inherit;
+  font-weight: 400;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--mr-border);
+}
+
+.dashboard-my-requests__list {
   margin: 0;
+  padding-left: 1.1rem;
+}
+
+.dashboard-my-requests__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 0.5rem;
+}
+
+.dashboard-my-requests__meta dt {
+  font-size: 0.8rem;
+  color: var(--mr-text-muted);
+}
+
+.dashboard-my-requests__meta dd {
+  margin: 0.15rem 0 0;
+  font-weight: 600;
 }
