@@ -45,6 +45,8 @@ export type RequestTypeSummary = {
   active: boolean;
   presentation_mode?: string;
   branch_scope?: string;
+  form_schema?: Record<string, unknown> | null;
+  ui_schema?: Record<string, unknown> | null;
 };
 
 export type TimelineEvent = {

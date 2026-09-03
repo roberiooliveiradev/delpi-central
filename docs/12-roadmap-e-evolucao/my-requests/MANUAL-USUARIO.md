@@ -27,7 +27,7 @@ Itens elegíveis ao seu perfil de processar/gerenciar. O escopo vem da API (não
 
 ## Nova solicitação
 
-Escolha o **tipo** e a **filial**. Para **emissão de NF**, abra o wizard specialized (6 passos). Outros tipos usam o formulário genérico até o vertical correspondente.
+Escolha o **tipo** e a **filial**. Para **emissão de NF**, abra o wizard specialized (6 passos). Para **matéria-prima**, abra o formulário schema-driven (descrição, unidade, observações). Outros tipos usam o fluxo genérico.
 
 ## Detalhe
 
@@ -48,7 +48,7 @@ Painéis:
 - `my-requests.view.filial-01` / `.filial-02` — escopo de filial
 - `my-requests.view-all` / `.manage` — visão ampliada / admin
 - `my-requests.invoice-issuance.create` / `.process` — tipo NF
-- Placeholders `raw-material-creation.*` para o vertical de MP
+- `my-requests.raw-material-creation.create` / `.process` — tipo MP
 
 ## Notificações
 
@@ -60,7 +60,10 @@ Quando o tipo é **invoice-issuance**, a tela Nova abre o wizard specialized (6 
 
 No detalhe, solicitações NF mostram o painel **Dados da emissão** além das ações `allowed_actions`.
 
-## Limitações atuais (E6)
+## Formulário de matéria-prima
 
-- Vertical MP schema-driven: etapa E7
+Quando o tipo é **raw-material-creation**, a tela Nova abre o formulário schema-driven (campos vindos do `form_schema` do tipo: descrição, unidade UN/KG/M, observações). A criação usa apenas `/apps/requests-api`.
+
+## Limitações atuais
+
 - Cutover do app legado de emissão: etapa E8 (plugin `invoice-issuance` permanece em dual-run)

@@ -54,13 +54,13 @@
     {
       "code": "my-requests.raw-material-creation.create",
       "name": "Criar solicitação de MP",
-      "description": "Criar solicitações do tipo criação de matéria-prima (placeholder).",
+      "description": "Criar solicitações do tipo criação de matéria-prima.",
       "module": "my-requests"
     },
     {
       "code": "my-requests.raw-material-creation.process",
       "name": "Processar solicitação de MP",
-      "description": "Processar solicitações do tipo criação de matéria-prima (placeholder).",
+      "description": "Processar solicitações do tipo criação de matéria-prima.",
       "module": "my-requests"
     }
   ],

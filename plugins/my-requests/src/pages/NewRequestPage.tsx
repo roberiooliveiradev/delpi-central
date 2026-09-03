@@ -5,6 +5,7 @@ import { createRequest, listRequestTypes } from "../api/requestsApi";
 import { AppShell } from "../components/AppShell";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { InvoiceIssuanceWizard } from "../features/invoice-issuance/ui/InvoiceIssuanceWizard";
+import { SchemaFormPage } from "../features/raw-material-creation/SchemaFormPage";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestTypeSummary } from "../types/requests";
 import {
@@ -21,7 +22,9 @@ export function NewRequestPage() {
   const [branchCode, setBranchCode] = useState(access.branches[0] || "01");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [wizardOpen, setWizardOpen] = useState(false);
+  const [specializedOpen, setSpecializedOpen] = useState(false);
+
+  const selectedType = types.find((item) => item.code === typeCode) || null;
 
   useEffect(() => {
     const ac = new AbortController();
@@ -36,20 +39,35 @@ export function NewRequestPage() {
     return () => ac.abort();
   }, []);
 
-  if (wizardOpen && typeCode === "invoice-issuance") {
+  if (specializedOpen && selectedType?.code === "invoice-issuance") {
     return (
       <InvoiceIssuanceWizard
         lockedBranch={branchCode}
-        onCancel={() => setWizardOpen(false)}
+        onCancel={() => setSpecializedOpen(false)}
+      />
+    );
+  }
+
+  if (specializedOpen && selectedType?.code === "raw-material-creation") {
+    return (
+      <SchemaFormPage
+        requestType={selectedType}
+        lockedBranch={branchCode || undefined}
+        onCancel={() => setSpecializedOpen(false)}
       />
     );
   }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!typeCode) return;
-    if (typeCode === "invoice-issuance") {
-      setWizardOpen(true);
+    if (!typeCode || !selectedType) return;
+    if (
+      selectedType.presentation_mode === "specialized" ||
+      selectedType.presentation_mode === "schema_driven" ||
+      typeCode === "invoice-issuance" ||
+      typeCode === "raw-material-creation"
+    ) {
+      setSpecializedOpen(true);
       return;
     }
     setBusy(true);
@@ -76,6 +94,13 @@ export function NewRequestPage() {
     label: `${item.name} (${item.code})`,
   }));
 
+  const submitLabel =
+    typeCode === "invoice-issuance"
+      ? "Abrir wizard de NF"
+      : typeCode === "raw-material-creation"
+        ? "Abrir formulário de MP"
+        : "Criar";
+
   return (
     <AppShell title="Nova solicitação" canCreate>
       <MyRequestsSectionCard title="Criar">
@@ -101,12 +126,8 @@ export function NewRequestPage() {
               disabled={busy}
             />
             <MyRequestsFormActions>
-              <ActionButton
-                type="submit"
-                variant="primary"
-                disabled={busy || !typeCode}
-              >
-                {typeCode === "invoice-issuance" ? "Abrir wizard de NF" : "Criar"}
+              <ActionButton type="submit" variant="primary" disabled={busy || !typeCode}>
+                {submitLabel}
               </ActionButton>
             </MyRequestsFormActions>
           </form>

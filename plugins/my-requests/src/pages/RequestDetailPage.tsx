@@ -10,6 +10,7 @@ import { TimelinePanel } from "../components/TimelinePanel";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { InvoiceIssuancePayloadPanel } from "../features/invoice-issuance/ui/InvoiceIssuancePayloadPanel";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
+import { canCreateAnyRequest } from "../security/requestsAccess";
 import type { RequestDetail } from "../types/requests";
 import {
   DetailFields,
@@ -82,7 +83,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
   return (
     <AppShell
       title={request ? request.request_number : "Detalhe"}
-      canCreate={access.canCreateInvoiceIssuance || access.canManage}
+      canCreate={canCreateAnyRequest(access)}
     >
       <MyRequestsSectionCard title="Solicitação">
         <div data-help="detail" title={MY_REQUESTS_HELP_TOOLTIPS.detail.section}>

@@ -5,6 +5,8 @@ export type AppPermissions = {
   branches: string[];
   canCreateInvoiceIssuance: boolean;
   canProcessInvoiceIssuance: boolean;
+  canCreateRawMaterial: boolean;
+  canProcessRawMaterial: boolean;
 };
 
 export function buildAccessFromPermissions(
@@ -20,6 +22,8 @@ export function buildAccessFromPermissions(
       branches: ["01", "02"],
       canCreateInvoiceIssuance: true,
       canProcessInvoiceIssuance: true,
+      canCreateRawMaterial: true,
+      canProcessRawMaterial: true,
     };
   }
   const branches: string[] = [];
@@ -32,5 +36,15 @@ export function buildAccessFromPermissions(
     branches,
     canCreateInvoiceIssuance: set.has("my-requests.invoice-issuance.create"),
     canProcessInvoiceIssuance: set.has("my-requests.invoice-issuance.process"),
+    canCreateRawMaterial: set.has("my-requests.raw-material-creation.create"),
+    canProcessRawMaterial: set.has("my-requests.raw-material-creation.process"),
   };
+}
+
+export function canCreateAnyRequest(access: AppPermissions): boolean {
+  return (
+    access.canManage ||
+    access.canCreateInvoiceIssuance ||
+    access.canCreateRawMaterial
+  );
 }

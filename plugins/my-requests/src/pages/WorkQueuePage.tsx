@@ -5,6 +5,7 @@ import { listWorkQueue } from "../api/requestsApi";
 import { AppShell } from "../components/AppShell";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
+import { canCreateAnyRequest } from "../security/requestsAccess";
 import type { RequestSummary } from "../types/requests";
 import {
   MyRequestsEmptyState,
@@ -61,10 +62,7 @@ export function WorkQueuePage() {
   );
 
   return (
-    <AppShell
-      title="Fila de trabalho"
-      canCreate={access.canCreateInvoiceIssuance || access.canManage}
-    >
+    <AppShell title="Fila de trabalho" canCreate={canCreateAnyRequest(access)}>
       <MyRequestsSectionCard title="Pendências">
         <div data-help="work-queue" title={MY_REQUESTS_HELP_TOOLTIPS.workQueue.section}>
           {error ? (

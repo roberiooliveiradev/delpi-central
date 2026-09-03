@@ -1140,7 +1140,7 @@ Resumo das superfícies P0:
 | WF-03 | `/new` | SelectField, ActionButton |
 | WF-04 | wizard NF | SegmentToggle, TextField, SelectField, FormActions |
 | WF-05 | `/requests/:id` | DetailFields, ActionBar, Timeline, painéis |
-| WF-07 | MP schema | SchemaForm (E7 — previsto) |
+| WF-07 | MP schema | SchemaFormPage + TextField/SelectField | **entregue** |
 
 Factories: [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/src/ui/mrUi.tsx). **Proibido** chrome primitivo local.
 

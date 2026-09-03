@@ -14,7 +14,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   new: {
     section:
-      "Escolha o tipo: genérico cria direto; emissão de NF abre o wizard specialized (6 passos).",
+      "Escolha o tipo: emissão de NF abre o wizard; matéria-prima abre o formulário schema-driven; outros tipos usam o fluxo genérico.",
     type: "Tipo cadastrado no Request Engine (workflow declarativo).",
     branch: "Filial TOTVS do escopo da solicitação (01 = SC, 02 = ES).",
   },
@@ -24,6 +24,11 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     partySearch:
       "Busque destinatário (cliente/fornecedor) via lookup TOTVS proxied pela requests-api.",
     steps: "Seis etapas alinhadas ao fluxo legado de emissão, sem state machine no frontend.",
+  },
+  rawMaterialForm: {
+    section:
+      "Formulário schema-driven de criação de matéria-prima: campos vêm do form_schema do RequestType. Create só via requests-api.",
+    fields: "Descrição e unidade são obrigatórios; observações são opcionais.",
   },
   detail: {
     section:

@@ -5,6 +5,7 @@ import { listMyRequests } from "../api/requestsApi";
 import { AppShell } from "../components/AppShell";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
+import { canCreateAnyRequest } from "../security/requestsAccess";
 import type { RequestSummary } from "../types/requests";
 import {
   MyRequestsEmptyState,
@@ -61,10 +62,7 @@ export function MinePage() {
   );
 
   return (
-    <AppShell
-      title="Minhas solicitações"
-      canCreate={access.canCreateInvoiceIssuance || access.canManage}
-    >
+    <AppShell title="Minhas solicitações" canCreate={canCreateAnyRequest(access)}>
       <MyRequestsSectionCard title="Lista">
         <div data-help="mine" title={MY_REQUESTS_HELP_TOOLTIPS.mine.section}>
           {error ? (

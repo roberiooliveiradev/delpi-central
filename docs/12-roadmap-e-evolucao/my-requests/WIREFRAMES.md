@@ -73,7 +73,7 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 | `createDashboardFileDropzone` | Upload de anexos no detalhe | E3 UI upload (hoje list-only) |
 | `createHostContainedModalShell` | Confirmar return/cancel (substituir `window.prompt`) | polish |
 | `createDashboardCreatableMultiSelectField` | Tags / multi-seleção futura | backlog |
-| Schema form renderer (`plugin-ui` form) | `raw-material-creation` schema-driven | **E7** |
+| Schema form renderer (MFE `SchemaFormPage`) | `raw-material-creation` schema-driven | **entregue E7** |
 | `AnchoredPanelPortal` / menus | Menus flutuantes se surgirem | sob demanda |
 
 Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), wireframe abaixo, Ajuda se user-facing.
@@ -91,7 +91,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 | Payload NF | detalhe | SectionCard, DetailFields |
 | Comentários | detalhe | SectionCard, FieldLabel, NativeTextArea, ActionButton |
 | Anexos / Artefatos | detalhe | SectionCard, Empty, ActionButton(link) |
-| Schema MP (futuro) | `/new` type MP | Schema form + SectionCard | **E7** |
+| Schema MP | `/new` type MP | SchemaFormPage + SectionCard + kit fields | **entregue E7** |
 
 ---
 
@@ -103,8 +103,9 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 | `/work-queue` | WF-02 | **entregue** | Fila processador |
 | `/new` | WF-03 | **entregue** | Select tipo/filial |
 | `/new` + `invoice-issuance` | WF-04 | **entregue** | Wizard 6 passos |
+| `/new` + `raw-material-creation` | WF-07 | **entregue** | SchemaFormPage |
 | `/requests/:id` | WF-05 | **entregue** | Stack de SectionCards |
-| `/admin` | WF-06 | **fora P0** | Playbook §19.5 — não implementar sem etapa |
+| `/admin` | WF-06 | **fora P0** | Playbook — não implementar sem etapa |
 
 ---
 
@@ -227,16 +228,21 @@ Se tipo = `invoice-issuance` → abre **WF-04** (não POST genérico).
 
 Lista `RequestTypes` read-only — ver Playbook §19.5. Sem UI até etapa explícita.
 
-### WF-07 — Schema MP (E7 — previsto)
+### WF-07 — Schema MP (E7 — entregue)
 
 ```text
-┌─ PageHeader: Nova matéria-prima ────────────────────────────────────┐
+┌─ PageHeader: Criação de Matéria-prima ──────────────────────────────┐
 └─────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard «Formulário» ──────────────────────────────────────────┐
-│ SchemaForm (plugin-ui) a partir de form_schema do RequestType       │
-│ FormActions [Criar]                                                 │
+│ TextField Descrição                                                  │
+│ SelectField Unidade [UN|KG|M]                                       │
+│ FieldLabel + NativeTextArea Observações                             │
+│ FormActions [Voltar] [Criar solicitação]                            │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+**Kit:** TextField · SelectField · NativeTextArea · FormActions · ActionButton  
+**Fonte:** `form_schema` / `ui_schema` do RequestType via GET `/v1/request-types`
 
 ---
 
