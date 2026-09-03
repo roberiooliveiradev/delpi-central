@@ -19,7 +19,11 @@ from requests_app.domain.ports import (
     RequestTypeRepositoryPort,
 )
 from requests_app.domain.ports.file_repository_port import FileRepositoryPort
+from requests_app.domain.ports.integration_outbox_port import IntegrationOutboxRepositoryPort
 from requests_app.domain.services.workflow_engine import WorkflowEngine
+from requests_app.infrastructure.gateways.core_notification_adapter import (
+    build_notification_payload,
+)
 
 
 def _normalize_branch(raw: Any) -> str | None:
@@ -53,12 +57,14 @@ class CreateRequestUseCase:
         idempotency: IdempotencyRepositoryPort,
         engine: WorkflowEngine | None = None,
         files: FileRepositoryPort | None = None,
+        outbox: IntegrationOutboxRepositoryPort | None = None,
     ) -> None:
         self._types = types
         self._requests = requests
         self._idempotency = idempotency
         self._engine = engine or WorkflowEngine()
         self._files = files
+        self._outbox = outbox
 
     def execute(
         self,
@@ -134,6 +140,23 @@ class CreateRequestUseCase:
                     actor_name=actor.user_name,
                     payload={"status": stored.status},
                 )
+            )
+        if self._outbox is not None:
+            self._outbox.enqueue(
+                event_type="request.created",
+                aggregate_type="request",
+                aggregate_id=str(stored.id),
+                request_id=str(stored.id),
+                request_version=stored.version,
+                dedupe_key=f"request:{stored.id}:created:v{stored.version}",
+                payload=build_notification_payload(
+                    event_type="request.created",
+                    request_id=str(stored.id),
+                    request_number=stored.request_number,
+                    type_code=stored.type_code,
+                    status=stored.status,
+                    actor_name=actor.user_name,
+                ),
             )
         actions = allowed_actions_for(
             stored, actor=actor, workflow=workflow, engine=self._engine
@@ -404,12 +427,14 @@ class TransitionRequestUseCase:
         idempotency: IdempotencyRepositoryPort,
         engine: WorkflowEngine | None = None,
         files: FileRepositoryPort | None = None,
+        outbox: IntegrationOutboxRepositoryPort | None = None,
     ) -> None:
         self._types = types
         self._requests = requests
         self._idempotency = idempotency
         self._engine = engine or WorkflowEngine()
         self._files = files
+        self._outbox = outbox
 
     def execute(
         self,
@@ -479,6 +504,26 @@ class TransitionRequestUseCase:
                         "to_status": result.history.to_status,
                     },
                 )
+            )
+        if self._outbox is not None:
+            self._outbox.enqueue(
+                event_type="request.transition",
+                aggregate_type="request",
+                aggregate_id=str(stored.id),
+                request_id=str(stored.id),
+                request_version=stored.version,
+                dedupe_key=(
+                    f"request:{stored.id}:transition:{result.history.action}"
+                    f":v{stored.version}"
+                ),
+                payload=build_notification_payload(
+                    event_type="request.transition",
+                    request_id=str(stored.id),
+                    request_number=stored.request_number,
+                    type_code=stored.type_code,
+                    status=stored.status,
+                    actor_name=actor.user_name,
+                ),
             )
         response = serialize_request(
             stored,

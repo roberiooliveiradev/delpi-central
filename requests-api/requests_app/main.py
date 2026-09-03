@@ -1,6 +1,7 @@
+import asyncio
 import logging
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -44,9 +45,30 @@ ALLOWED_ORIGINS = build_allowed_origins()
 async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
+    worker_task = None
+    from requests_app.infrastructure.schedulers.outbox_worker import (
+        run_outbox_worker_loop,
+        should_start_outbox_worker,
+    )
+
+    if should_start_outbox_worker():
+        import asyncio
+
+        from requests_app.infrastructure.persistence.repositories.postgres_outbox_repository import (
+            PostgresIntegrationOutboxRepository,
+        )
+
+        worker_task = asyncio.create_task(
+            run_outbox_worker_loop(outbox=PostgresIntegrationOutboxRepository())
+        )
+        logging.getLogger(__name__).info("requests_outbox_worker_started")
     try:
         yield
     finally:
+        if worker_task is not None:
+            worker_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await worker_task
         from requests_app.infrastructure.persistence.plugins_postgres_connection import (
             close_plugins_connection,
         )

@@ -19,6 +19,9 @@ from requests_app.domain.services.workflow_engine import WorkflowEngine
 from requests_app.infrastructure.persistence.repositories.postgres_file_repository import (
     PostgresFileRepository,
 )
+from requests_app.infrastructure.persistence.repositories.postgres_outbox_repository import (
+    PostgresIntegrationOutboxRepository,
+)
 from requests_app.infrastructure.persistence.repositories.postgres_repositories import (
     PostgresIdempotencyRepository,
     PostgresRequestRepository,
@@ -56,6 +59,7 @@ def build_create_request_use_case() -> CreateRequestUseCase:
         PostgresIdempotencyRepository(),
         _engine(),
         PostgresFileRepository(),
+        PostgresIntegrationOutboxRepository(),
     )
 
 
@@ -99,6 +103,7 @@ def build_transition_request_use_case() -> TransitionRequestUseCase:
         PostgresIdempotencyRepository(),
         _engine(),
         PostgresFileRepository(),
+        PostgresIntegrationOutboxRepository(),
     )
 
 
