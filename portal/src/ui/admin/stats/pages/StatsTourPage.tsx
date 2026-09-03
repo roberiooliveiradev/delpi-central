@@ -116,9 +116,9 @@ export function StatsTourPage() {
 
       <StatsInsightRow>
         <StatsInsight
-          label="Pularam (legado)"
+          label="Adiaram"
           value={String(summary?.dismissed ?? 0)}
-          detail="Registros antigos antes da remoção do botão Pular"
+          detail="Escolheram «Agora não» e adiaram a exploração"
         />
         <StatsInsight
           label="Período do ranking"

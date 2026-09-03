@@ -1,6 +1,7 @@
 import type { PortalTourCatalogResponse, PortalTourProgressResponse } from "../data/coreApi";
 import {
   hasPendingNewPortalTourQuests,
+  isPortalTourDismissed,
   isPortalTourFullyCompleted,
 } from "./portalTourPersistence";
 
@@ -11,6 +12,7 @@ export type PortalTourHomeEntryState = {
   requiredTotal: number;
   progressPercent: number;
   explorerLevel: string;
+  newQuestCount: number;
 };
 
 export function resolvePortalTourHomeEntryState(
@@ -25,6 +27,7 @@ export function resolvePortalTourHomeEntryState(
     requiredTotal: 0,
     progressPercent: 0,
     explorerLevel: "Explorador",
+    newQuestCount: 0,
   };
 
   if (!userId) {
@@ -33,29 +36,31 @@ export function resolvePortalTourHomeEntryState(
 
   const pendingNew = hasPendingNewPortalTourQuests(progress, catalog);
   const tourCompleted = isPortalTourFullyCompleted(userId, progress, catalog);
+  const dismissed = isPortalTourDismissed(progress, catalog);
+
+  // Agora não: esconde card até bump com novidades ou retomada no perfil.
+  if (dismissed) {
+    return { ...empty, ready: true };
+  }
 
   // Tour 100% na versão atual e sem novidades → esconde o card.
   if (tourCompleted && !pendingNew) {
     return { ...empty, ready: true };
   }
 
-  const normalizedProgress =
-    progress?.status === "dismissed"
-      ? { ...progress, status: "exploring" as const }
-      : progress;
-
   if (!catalog?.requiredQuestIds.length) {
     return {
       ready: true,
       visible: true,
-      requiredDone: normalizedProgress?.completedQuestIds?.length ?? 0,
+      requiredDone: progress?.completedQuestIds?.length ?? 0,
       requiredTotal: 0,
       progressPercent: 0,
       explorerLevel: "Explorador",
+      newQuestCount: catalog?.newQuestIds?.length ?? 0,
     };
   }
 
-  const completedIds = new Set(normalizedProgress?.completedQuestIds ?? []);
+  const completedIds = new Set(progress?.completedQuestIds ?? []);
 
   const requiredTotal = catalog.requiredQuestIds.length;
   const requiredDone = catalog.requiredQuestIds.filter((id) =>
@@ -63,6 +68,10 @@ export function resolvePortalTourHomeEntryState(
   ).length;
   const progressPercent =
     requiredTotal > 0 ? Math.round((requiredDone / requiredTotal) * 100) : 0;
+
+  const newQuestCount = (catalog.newQuestIds ?? []).filter(
+    (id) => catalog.requiredQuestIds.includes(id) && !completedIds.has(id),
+  ).length;
 
   // Card na home enquanto houver desafio obrigatório pendente (inclui novidades pós-conclusão).
   const visible = requiredTotal > 0 && (progressPercent < 100 || pendingNew);
@@ -74,5 +83,6 @@ export function resolvePortalTourHomeEntryState(
     requiredTotal,
     progressPercent: catalog.progressPercent ?? progressPercent,
     explorerLevel: catalog.explorerLevel ?? "Explorador",
+    newQuestCount,
   };
 }

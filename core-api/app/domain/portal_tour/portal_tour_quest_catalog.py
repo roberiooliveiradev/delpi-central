@@ -4,8 +4,12 @@ Catálogo canônico de desafios do tour do portal.
 
 Ao lançar uma funcionalidade nova:
 1. Adicionar entrada aqui (id estável, permissões, optional, introduced_in_version).
-2. Registrar interação DOM no portal (`portalTourQuestRegistry.ts`).
+2. Registrar interação DOM no portal (`portalTourQuests.ts`).
 3. Bump CURRENT_PORTAL_TOUR_VERSION quando quiser reexibir o tour a quem concluiu.
+
+First-run (obrigatórios): open-apps, pin-app, sidebar-logo-home,
+sidebar-notifications, sidebar-profile, sidebar-theme.
+O restante é aprofundamento opcional (just-in-time).
 """
 
 from dataclasses import dataclass
@@ -17,6 +21,18 @@ CURRENT_PORTAL_TOUR_VERSION = "2026-08-portal-v7-notification-channels"
 LEGACY_PORTAL_TOUR_VERSION = "2026-06-portal-v6-explore"
 
 ADMIN_PERMISSION = "rbac.manage"
+
+# Núcleo do getting started — manter em sync com portalTourQuests.ts.
+CORE_REQUIRED_QUEST_IDS: frozenset[str] = frozenset(
+    {
+        "open-apps",
+        "pin-app",
+        "sidebar-logo-home",
+        "sidebar-notifications",
+        "sidebar-profile",
+        "sidebar-theme",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -84,6 +100,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Acesse ou reorganize apps fixados.",
             category="apps",
             scope="sidebar",
+            optional=True,
         ),
         _quest(
             id="open-apps",
@@ -105,6 +122,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Encontre apps e rotas pela busca.",
             category="apps",
             scope="launcher",
+            optional=True,
         ),
         _quest(
             id="sidebar-logo-home",
@@ -119,6 +137,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Veja quantas mensagens não lidas você tem.",
             category="home",
             scope="home",
+            optional=True,
         ),
         _quest(
             id="home-favorites",
@@ -126,6 +145,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Gerencie favoritos direto da página inicial.",
             category="home",
             scope="home",
+            optional=True,
         ),
         _quest(
             id="home-recent",
@@ -133,6 +153,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Retome de onde parou.",
             category="home",
             scope="home",
+            optional=True,
         ),
         _quest(
             id="home-notifications",
@@ -140,6 +161,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Acompanhe avisos sem sair da home.",
             category="home",
             scope="home",
+            optional=True,
         ),
         _quest(
             id="home-portal-tour-resume",
@@ -162,6 +184,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Histórico completo com filtros.",
             category="notifications",
             scope="notifications",
+            optional=True,
         ),
         _quest(
             id="page-notifications-filter",
@@ -169,6 +192,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Refine por status, categoria ou importantes.",
             category="notifications",
             scope="notifications",
+            optional=True,
         ),
         _quest(
             id="page-notifications-preferences",
@@ -176,6 +200,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Configure canais: importante, e-mail e silêncio.",
             category="notifications",
             scope="notifications",
+            optional=True,
         ),
         _quest(
             id="page-notifications-important",
@@ -183,6 +208,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Importantes abrem painel na tela (e-mail é o envelope).",
             category="notifications",
             scope="notifications",
+            optional=True,
             introduced_in_version=CURRENT_PORTAL_TOUR_VERSION,
         ),
         _quest(
@@ -191,6 +217,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Envelope liga o e-mail; estrela é só o painel importante.",
             category="notifications",
             scope="notifications",
+            optional=True,
             introduced_in_version=CURRENT_PORTAL_TOUR_VERSION,
         ),
         _quest(
@@ -199,6 +226,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Toasts do Windows/macOS com o portal aberto.",
             category="notifications",
             scope="notifications",
+            optional=True,
             introduced_in_version=CURRENT_PORTAL_TOUR_VERSION,
         ),
         _quest(
@@ -214,6 +242,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Nome, e-mail e status de superadmin.",
             category="profile",
             scope="profile",
+            optional=True,
         ),
         _quest(
             id="page-profile-rbac",
@@ -221,6 +250,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Entenda seu acesso na plataforma.",
             category="profile",
             scope="profile",
+            optional=True,
         ),
         _quest(
             id="page-profile-apps",
@@ -228,6 +258,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Todos os aplicativos liberados para você.",
             category="profile",
             scope="profile",
+            optional=True,
         ),
         _quest(
             id="page-profile-tour-restart",
@@ -235,6 +266,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Revise as funcionalidades quando quiser.",
             category="profile",
             scope="profile",
+            optional=True,
         ),
         _quest(
             id="page-privacy-consent",
@@ -242,6 +274,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Gerencie finalidades de uso de dados.",
             category="privacy",
             scope="privacy",
+            optional=True,
         ),
         _quest(
             id="page-privacy-export",
@@ -249,6 +282,7 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
             hint="Solicite uma cópia dos seus dados.",
             category="privacy",
             scope="privacy",
+            optional=True,
         ),
         _quest(
             id="sidebar-theme",

@@ -48,6 +48,29 @@ def test_required_quest_ids_ignore_optional_admin():
 
     assert "sidebar-admin" not in required
     assert "open-apps" in required
+    assert set(required) == {
+        "open-apps",
+        "pin-app",
+        "sidebar-logo-home",
+        "sidebar-notifications",
+        "sidebar-profile",
+        "sidebar-theme",
+    }
+
+
+def test_required_quest_ids_core_short_for_regular_user():
+    context = PortalTourUserContext(
+        permissions=frozenset(),
+        is_superadmin=False,
+    )
+    available = resolve_available_quests(context)
+    required = resolve_required_quest_ids(available)
+
+    assert len(required) == 6
+    assert "page-privacy-consent" not in required
+    assert "page-notifications-important" not in required
+    assert "home-favorites" not in required
+    assert "page-profile-tour-restart" not in required
 
 
 def test_resolve_new_quest_ids_for_current_version():

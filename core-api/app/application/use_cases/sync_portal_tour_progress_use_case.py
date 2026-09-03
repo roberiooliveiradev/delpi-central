@@ -44,8 +44,6 @@ class SyncPortalTourProgressUseCase:
             raise ValueError("tourVersion is required")
 
         normalized_status = (status or "").strip().lower()
-        if normalized_status == "dismissed":
-            normalized_status = "exploring"
         if normalized_status not in ALLOWED_STATUSES:
             raise ValueError("status must be exploring, completed or dismissed")
 
@@ -76,10 +74,10 @@ class SyncPortalTourProgressUseCase:
 
         if normalized_status == "completed":
             completed_at = datetime.utcnow()
+        elif normalized_status in {"exploring", "dismissed"}:
+            completed_at = None
         else:
-            completed_at = None if normalized_status == "exploring" else (
-                existing.completed_at if existing else None
-            )
+            completed_at = existing.completed_at if existing else None
 
         for quest_id in merged_quest_ids:
             self.uow.portal_tour.record_quest_completion(

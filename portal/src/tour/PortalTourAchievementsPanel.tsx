@@ -80,7 +80,8 @@ export function PortalTourAchievementsPanel() {
             Conquistas do portal
           </h3>
           <p className="home-panel-hint">
-            Selos desbloqueados ao explorar a Minha DELPI no tour gamificado.
+            Checklist opcional «Descubra o portal» — não é um chat. Continue na
+            home, escolha Agora não se preferir depois, ou zere o progresso aqui.
           </p>
         </div>
         {data ? (

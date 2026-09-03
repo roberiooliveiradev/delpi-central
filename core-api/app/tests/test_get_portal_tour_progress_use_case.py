@@ -42,14 +42,14 @@ def test_get_portal_tour_progress_normalizes_invalid_completed_to_exploring():
     uow.portal_tour.upsert_progress.assert_called_once()
 
 
-def test_get_portal_tour_progress_normalizes_dismissed_to_exploring():
+def test_get_portal_tour_progress_preserves_dismissed():
     user_id = str(uuid4())
     now = datetime.utcnow()
 
     uow = MagicMock()
     uow.portal_tour.get_progress.return_value = PortalTourProgressDTO(
         user_id=user_id,
-        tour_version="2026-06-portal-v6-explore",
+        tour_version="2026-08-portal-v7-notification-channels",
         status="dismissed",
         completed_quest_ids=["open-apps"],
         started_at=now,
@@ -57,20 +57,12 @@ def test_get_portal_tour_progress_normalizes_dismissed_to_exploring():
         completed_at=None,
     )
     uow.portal_tour.list_quest_events.return_value = []
-    uow.portal_tour.upsert_progress.return_value = PortalTourProgressDTO(
-        user_id=user_id,
-        tour_version="2026-06-portal-v6-explore",
-        status="exploring",
-        completed_quest_ids=["open-apps"],
-        started_at=now,
-        last_activity_at=now,
-        completed_at=None,
-    )
 
     result = GetPortalTourProgressUseCase(uow).execute(user_id)
 
-    assert result.status == "exploring"
-    uow.portal_tour.upsert_progress.assert_called_once()
+    assert result.status == "dismissed"
+    assert result.completed_quest_ids == ["open-apps"]
+    uow.portal_tour.upsert_progress.assert_not_called()
 
 
 def test_get_portal_tour_progress_merges_quest_events_into_completed_ids():

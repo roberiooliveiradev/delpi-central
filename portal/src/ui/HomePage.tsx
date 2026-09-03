@@ -21,6 +21,8 @@ import { useRoutesByApp } from "../hooks/useRoutesByApp";
 import { useAppsById } from "../hooks/useAppsById";
 import { isLaunchableApp } from "../utils/launchableApps";
 import { PortalTourHomeEntry } from "../tour/PortalTourHomeEntry";
+import { PortalTourHomeBanner } from "../tour/PortalTourHomeBanner";
+import { usePortalTourHomeProgress } from "../tour/usePortalTourHomeProgress";
 import {
   homeFadeUp,
   HomePanelHeader,
@@ -81,6 +83,7 @@ export const HomePage = () => {
   };
 
   const topNotifications = notifications.slice(0, 4);
+  const portalTourHome = usePortalTourHomeProgress();
 
   return (
     <div id="home-page" className="home-wrap" data-tour="home-page">
@@ -119,6 +122,8 @@ export const HomePage = () => {
         </div>
       </motion.div>
 
+      <PortalTourHomeBanner home={portalTourHome} />
+
       {/* QUICK SUMMARY */}
       <motion.div
         className="home-summary"
@@ -127,7 +132,7 @@ export const HomePage = () => {
         variants={fadeUp}
         custom={1}
       >
-        <PortalTourHomeEntry />
+        <PortalTourHomeEntry home={portalTourHome} />
 
         <HomeSummaryCard
           icon={<Bell size={18} />}

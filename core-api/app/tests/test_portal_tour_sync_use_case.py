@@ -98,6 +98,40 @@ def test_sync_portal_tour_progress_rejects_invalid_status(uow):
         )
 
 
+def test_sync_portal_tour_progress_accepts_dismissed(uow):
+    user_id = str(uuid4())
+    uow.portal_tour.get_progress.return_value = PortalTourProgressDTO(
+        user_id=user_id,
+        tour_version="2026-08-portal-v7-notification-channels",
+        status="exploring",
+        completed_quest_ids=["open-apps"],
+        started_at=datetime.utcnow(),
+        last_activity_at=datetime.utcnow(),
+        completed_at=None,
+    )
+    uow.portal_tour.upsert_progress.return_value = PortalTourProgressDTO(
+        user_id=user_id,
+        tour_version="2026-08-portal-v7-notification-channels",
+        status="dismissed",
+        completed_quest_ids=["open-apps"],
+        started_at=datetime.utcnow(),
+        last_activity_at=datetime.utcnow(),
+        completed_at=None,
+    )
+
+    SyncPortalTourProgressUseCase(uow).execute(
+        user_id,
+        tour_version="2026-08-portal-v7-notification-channels",
+        status="dismissed",
+        completed_quest_ids=["open-apps"],
+    )
+
+    kwargs = uow.portal_tour.upsert_progress.call_args.kwargs
+    assert kwargs["status"] == "dismissed"
+    assert kwargs["completed_at"] is None
+    assert kwargs["completed_quest_ids"] == ["open-apps"]
+
+
 def test_sync_portal_tour_progress_keeps_existing_when_client_sends_empty_list(uow):
     user_id = str(uuid4())
     uow.portal_tour.get_progress.return_value = PortalTourProgressDTO(

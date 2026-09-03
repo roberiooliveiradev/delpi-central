@@ -7,43 +7,40 @@ import {
 
 export type { TourHighlightRect };
 
+/**
+ * Anéis só sob demanda (botão Dica) — no máximo 1 alvo.
+ * Sem painel aberto ou sem dica ativa → zero highlights.
+ */
 export function usePortalTourHighlights(
-  active: boolean,
+  panelOpen: boolean,
+  hintQuestId: string | null,
   quests: PortalTourQuest[],
   completedIds: ReadonlySet<string>,
 ) {
   const [highlights, setHighlights] = useState<TourHighlightRect[]>([]);
 
   const remeasure = useCallback(() => {
-    const next = resolveQuestHighlights(quests, completedIds);
-
-    setHighlights((current) => {
-      if (
-        current.length === next.length &&
-        current.every((item, index) => {
-          const other = next[index];
-          return (
-            other &&
-            item.questId === other.questId &&
-            Math.abs(item.top - other.top) < 1 &&
-            Math.abs(item.left - other.left) < 1 &&
-            Math.abs(item.width - other.width) < 1 &&
-            Math.abs(item.height - other.height) < 1
-          );
-        })
-      )
-        return current;
-      return next;
-    });
-  }, [quests, completedIds]);
-
-  useEffect(() => {
-    if (!active) {
+    if (!panelOpen || !hintQuestId) {
       setHighlights([]);
       return;
     }
 
+    const focused = quests.filter((quest) => quest.id === hintQuestId);
+    if (!focused.length || completedIds.has(hintQuestId)) {
+      setHighlights([]);
+      return;
+    }
+
+    const next = resolveQuestHighlights(focused, completedIds).slice(0, 1);
+    setHighlights(next);
+  }, [panelOpen, hintQuestId, quests, completedIds]);
+
+  useEffect(() => {
     remeasure();
+
+    if (!panelOpen || !hintQuestId) {
+      return;
+    }
 
     const onChange = () => remeasure();
     window.addEventListener("scroll", onChange, true);
@@ -58,7 +55,7 @@ export function usePortalTourHighlights(
       window.removeEventListener("orientationchange", onChange);
       window.clearInterval(interval);
     };
-  }, [active, remeasure]);
+  }, [panelOpen, hintQuestId, remeasure]);
 
   return highlights;
 }

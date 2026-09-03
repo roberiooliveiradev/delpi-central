@@ -51,6 +51,7 @@ export function getPortalTourQuests({
       unlockHint: "Fixe um app pelo pin no catálogo (Apps) para criar favoritos.",
       scope: "sidebar",
       category: "apps",
+      optional: true,
       actionSelector:
         '[data-tour="sidebar-favorites"] [data-app-id], [data-tour="sidebar-favorites"] .launcher-app-tile',
       highlightSelector:
@@ -108,6 +109,7 @@ export function getPortalTourQuests({
       unlockHint: "Abra Apps na sidebar para acessar a busca.",
       scope: "launcher",
       category: "apps",
+      optional: true,
       actionSelector:
         '[data-tour="launcher-search"] input, [data-tour="launcher-search"]',
       highlightSelector: '[data-tour="launcher-search"]',
@@ -147,6 +149,7 @@ export function getPortalTourQuests({
       ],
       scope: "home",
       category: "home",
+      optional: true,
       actionSelector: '[data-tour="home-summary-notifications"]',
       isAvailable: () =>
         isHomeRoute() &&
@@ -165,6 +168,7 @@ export function getPortalTourQuests({
       unlockHint: "Acesse a página inicial e fixe apps pelo catálogo.",
       scope: "home",
       category: "home",
+      optional: true,
       actionSelector: "#home-favorites .launcher-pin, #home-favorites .launcher-app-tile",
       highlightSelector: "#home-favorites .launcher-app-tile",
       isAvailable: () =>
@@ -184,6 +188,7 @@ export function getPortalTourQuests({
       unlockHint: "Abra qualquer app — ele aparecerá em Continuar trabalhando.",
       scope: "home",
       category: "home",
+      optional: true,
       actionSelector:
         "#home-recent .launcher-app-tile, #home-recent .launcher-pin",
       highlightSelector: "#home-recent .launcher-app-tile",
@@ -203,6 +208,7 @@ export function getPortalTourQuests({
       unlockHint: "Vá à página inicial para ver o painel de notificações.",
       scope: "home",
       category: "home",
+      optional: true,
       actionSelector:
         '#home-notifications .home-panel-action, #home-notifications [data-tour="home-notification-card"], #home-notifications button[type="button"]',
       highlightSelector: "#home-notifications .home-panel-action",
@@ -265,6 +271,7 @@ export function getPortalTourQuests({
       unlockHint: 'Use "Ver todas" na home ou no painel do sino.',
       scope: "notifications",
       category: "notifications",
+      optional: true,
       actionSelector:
         '[data-tour="notifications-list"] [data-tour="notification-card"], [data-tour="notifications-list"] .notification-card, #notifications-section-inbox',
       highlightSelector: '[data-tour="notifications-list"]',
@@ -284,6 +291,7 @@ export function getPortalTourQuests({
       unlockHint: "Acesse a página Notificações para usar os filtros.",
       scope: "notifications",
       category: "notifications",
+      optional: true,
       actionSelector:
         '[data-tour="notifications-filters"] button, [data-tour="notifications-filters"] select, .notifications-page__status-tab, .notifications-page__important-toggle',
       highlightSelector: '[data-tour="notifications-filters"]',
@@ -303,6 +311,7 @@ export function getPortalTourQuests({
       unlockHint: "Abra a página Notificações e troque para Preferências.",
       scope: "notifications",
       category: "notifications",
+      optional: true,
       actionSelector:
         '#notifications-section-preferences, [data-tour="notifications-preferences"] input, [data-tour="notifications-preferences"] button, [data-tour="notifications-preferences"] label',
       highlightSelector: "#notifications-section-preferences",
@@ -322,6 +331,7 @@ export function getPortalTourQuests({
       unlockHint: "Abra Notificações → Preferências.",
       scope: "notifications",
       category: "notifications",
+      optional: true,
       actionSelector: '[data-tour="notification-pref-important"]',
       highlightSelector: '[data-tour="notification-pref-important"]',
       isAvailable: () =>
@@ -340,6 +350,7 @@ export function getPortalTourQuests({
       unlockHint: "Abra Notificações → Preferências.",
       scope: "notifications",
       category: "notifications",
+      optional: true,
       actionSelector: '[data-tour="notification-pref-email"]',
       highlightSelector: '[data-tour="notification-pref-email"]',
       isAvailable: () =>
@@ -358,6 +369,7 @@ export function getPortalTourQuests({
       unlockHint: "Abra Notificações → Preferências.",
       scope: "notifications",
       category: "notifications",
+      optional: true,
       actionSelector:
         '[data-tour="notification-pref-desktop-toasts"] button, [data-tour="notification-pref-desktop-toasts"]',
       highlightSelector: '[data-tour="notification-pref-desktop-toasts"]',
@@ -398,6 +410,7 @@ export function getPortalTourQuests({
       unlockHint: "Menu de perfil → Meu Perfil.",
       scope: "profile",
       category: "profile",
+      optional: true,
       actionSelector: '[data-tour="profile-info"], [data-tour="profile-summary-card"]',
       highlightSelector: '[data-tour="profile-info"]',
       isAvailable: () =>
@@ -415,6 +428,7 @@ export function getPortalTourQuests({
       unlockHint: "Abra Meu Perfil — as seções aparecem conforme seu vínculo.",
       scope: "profile",
       category: "profile",
+      optional: true,
       actionSelector:
         '[data-tour="profile-rbac-summary"] .home-summary-card, [data-tour="profile-groups"], [data-tour="profile-roles"]',
       highlightSelector: '[data-tour="profile-rbac-summary"]',
@@ -436,6 +450,7 @@ export function getPortalTourQuests({
       unlockHint: "Meu Perfil → seção Aplicativos (quando houver apps).",
       scope: "profile",
       category: "profile",
+      optional: true,
       actionSelector:
         '[data-tour="profile-apps"] .launcher-app-tile, [data-tour="profile-apps"] input, [data-tour="profile-apps"]',
       highlightSelector: '[data-tour="profile-apps"]',
@@ -454,6 +469,7 @@ export function getPortalTourQuests({
       unlockHint: "Abra Meu Perfil para retomar o tour.",
       scope: "profile",
       category: "profile",
+      optional: true,
       actionSelector: '[data-tour="profile-tour-resume"]',
       isAvailable: () =>
         isProfileRoute() &&
@@ -473,6 +489,7 @@ export function getPortalTourQuests({
       unlockHint: "Menu de perfil → Privacidade e Dados.",
       scope: "privacy",
       category: "privacy",
+      optional: true,
       actionSelector:
         '[data-tour="privacy-consent"] button, [data-tour="privacy-consent"] .privacy-page__toggle',
       highlightSelector: '[data-tour="privacy-consent"]',
@@ -491,6 +508,7 @@ export function getPortalTourQuests({
       unlockHint: "Menu de perfil → Privacidade e Dados.",
       scope: "privacy",
       category: "privacy",
+      optional: true,
       actionSelector: '[data-tour="privacy-export"]',
       highlightSelector: '[data-tour="privacy-export"]',
       isAvailable: () =>

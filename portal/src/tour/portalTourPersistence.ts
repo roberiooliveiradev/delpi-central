@@ -80,6 +80,19 @@ export function hasPendingNewPortalTourQuests(
   return hasPendingNewRequiredQuests(remote, catalog);
 }
 
+export function isPortalTourDismissed(
+  remote: PortalTourProgressResponse | null,
+  catalog?: PortalTourCatalogResponse | null,
+): boolean {
+  if (remote?.status !== "dismissed") return false;
+  // Bump com novidades obrigatórias: «Agora não» da versão anterior não esconde o card.
+  if (hasPendingNewRequiredQuests(remote, catalog)) return false;
+  if (hasIncompleteRequiredQuests(remote, catalog) && remote.tourVersion !== PORTAL_TOUR_VERSION) {
+    return false;
+  }
+  return true;
+}
+
 /**
  * Tour completo só quando todos os obrigatórios do catálogo estão feitos
  * e o status/localStorage batem com a versão atual.
@@ -114,7 +127,33 @@ export function resolveShouldShowPortalTour(
   remote: PortalTourProgressResponse | null,
   catalog?: PortalTourCatalogResponse | null,
 ): boolean {
+  if (isPortalTourDismissed(remote, catalog)) {
+    return false;
+  }
   return !isPortalTourFullyCompleted(userId, remote, catalog);
+}
+
+/**
+ * Sessão em background (watch de cliques) só quando o usuário já aceitou explorar.
+ * «Agora não» e 1º acesso sem clique explícito não ativam detecção.
+ */
+export function shouldActivatePortalTourSession(
+  remote: PortalTourProgressResponse | null,
+  catalog?: PortalTourCatalogResponse | null,
+): boolean {
+  if (isPortalTourDismissed(remote, catalog)) {
+    return false;
+  }
+  if (remote?.status === "exploring") {
+    return hasIncompleteRequiredQuests(remote, catalog) || remote.completedQuestIds.length > 0;
+  }
+  if (
+    remote?.status === "completed" &&
+    hasIncompleteRequiredQuests(remote, catalog)
+  ) {
+    return true;
+  }
+  return false;
 }
 
 export function isResumablePortalTourProgress(
@@ -122,9 +161,9 @@ export function isResumablePortalTourProgress(
   catalog?: PortalTourCatalogResponse | null,
 ): boolean {
   if (!remote?.tourVersion) return false;
+  if (isPortalTourDismissed(remote, catalog)) return false;
 
   if (remote.tourVersion !== PORTAL_TOUR_VERSION) {
-    // Migração de versão: retoma com progresso preservado se há novidades ou histórico.
     if (hasIncompleteRequiredQuests(remote, catalog)) return true;
     return (
       remote.completedQuestIds.length > 0 ||
@@ -139,68 +178,17 @@ export function isResumablePortalTourProgress(
   }
   return (
     remote.status === "exploring" ||
-    remote.status === "dismissed" ||
     remote.completedQuestIds.length > 0 ||
     Boolean(remote.startedAt)
   );
 }
 
+/** Getting started opt-in: nunca abre o painel sozinho. */
 export function shouldAutoOpenPortalTourPanel(
-  remote: PortalTourProgressResponse | null,
-  catalog?: PortalTourCatalogResponse | null,
+  _remote?: PortalTourProgressResponse | null,
+  _catalog?: PortalTourCatalogResponse | null,
 ): boolean {
-  // Funcionalidade nova / completed desatualizado: abre o companion como no 1º acesso.
-  if (hasPendingNewRequiredQuests(remote, catalog)) {
-    return true;
-  }
-  if (
-    remote?.status === "completed" &&
-    hasIncompleteRequiredQuests(remote, catalog)
-  ) {
-    return true;
-  }
-  return !isResumablePortalTourProgress(remote, catalog);
-}
-
-export function normalizePortalTourProgressResponse(
-  remote: PortalTourProgressResponse | null,
-): PortalTourProgressResponse | null {
-  if (!remote?.tourVersion || remote.tourVersion !== PORTAL_TOUR_VERSION) {
-    return remote;
-  }
-  if (remote.status !== "dismissed") {
-    return remote;
-  }
-  return {
-    ...remote,
-    status: "exploring",
-  };
-}
-
-export async function repairLegacyDismissedPortalTour(
-  api: CoreApi,
-  remote: PortalTourProgressResponse | null,
-): Promise<PortalTourProgressResponse | null> {
-  const normalized = normalizePortalTourProgressResponse(remote);
-  if (
-    !remote ||
-    remote.tourVersion !== PORTAL_TOUR_VERSION ||
-    remote.status !== "dismissed"
-  ) {
-    return normalized;
-  }
-
-  try {
-    await api.syncPortalTourProgress({
-      tourVersion: PORTAL_TOUR_VERSION,
-      status: "exploring",
-      completedQuestIds: remote.completedQuestIds,
-    });
-  } catch {
-    // Falha remota não bloqueia retomada local
-  }
-
-  return normalized;
+  return false;
 }
 
 export function hydrateCompletedQuestIds(
@@ -219,6 +207,10 @@ export function canReopenPortalTourPanel(
   catalog?: PortalTourCatalogResponse | null,
 ): boolean {
   if (!remote?.tourVersion) return false;
+  if (isPortalTourDismissed(remote, catalog)) {
+    // Perfil «Continuar explorando» ainda pode reabrir após Agora não.
+    return true;
+  }
   if (remote.tourVersion !== PORTAL_TOUR_VERSION) {
     return (
       hasPendingNewRequiredQuests(remote, catalog) ||
@@ -288,11 +280,10 @@ export async function loadPortalTourProgress(
 ): Promise<PortalTourProgressResponse | null> {
   try {
     const remote = await api.getPortalTourProgress();
-    const repaired = await repairLegacyDismissedPortalTour(api, remote);
     if (userId) {
-      repairLocalCompletedWhenRemoteIncomplete(userId, repaired);
+      repairLocalCompletedWhenRemoteIncomplete(userId, remote);
     }
-    return repaired;
+    return remote;
   } catch {
     return null;
   }
@@ -308,6 +299,36 @@ export function syncPortalTourStarted(api: CoreApi, completedQuestIds: string[])
     payload.completedQuestIds = completedQuestIds;
   }
   enqueueSync(api, payload);
+}
+
+export function syncPortalTourDismissed(
+  api: CoreApi,
+  completedQuestIds: string[],
+) {
+  if (syncTimer !== null) {
+    window.clearTimeout(syncTimer);
+    syncTimer = null;
+  }
+  pendingSync = null;
+
+  const payload: PortalTourSyncPayload = {
+    tourVersion: PORTAL_TOUR_VERSION,
+    status: "dismissed",
+  };
+  if (completedQuestIds.length > 0) {
+    payload.completedQuestIds = completedQuestIds;
+  }
+
+  syncChain = syncChain
+    .then(() => api.syncPortalTourProgress(payload))
+    .then(() => {
+      publishPortalTourSyncStatus(false);
+      return undefined;
+    })
+    .catch(() => {
+      publishPortalTourSyncStatus(true);
+      return undefined;
+    });
 }
 
 export function syncPortalTourQuestCompleted(
@@ -351,7 +372,7 @@ export function syncPortalTourCompleted(
     });
 }
 
-/** @deprecated Use syncPortalTourCompleted — «pular» não existe mais. */
+/** @deprecated Prefer syncPortalTourCompleted ou syncPortalTourDismissed. */
 export function syncPortalTourFinished(
   api: CoreApi,
   completed: boolean,
@@ -361,7 +382,7 @@ export function syncPortalTourFinished(
     syncPortalTourCompleted(api, completedQuestIds);
     return;
   }
-  syncPortalTourStarted(api, completedQuestIds);
+  syncPortalTourDismissed(api, completedQuestIds);
 }
 
 export async function restartPortalTourRemote(

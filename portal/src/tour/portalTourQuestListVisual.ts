@@ -92,8 +92,8 @@ export function resolveQuestListHint(
   state: PortalTourQuestListVisualState,
   guideFirstStep: string | null,
 ): string {
-  if (state === "done") return "Concluído — parabéns!";
-  if (state === "near") return "Perto — conclua nesta tela";
+  if (state === "done") return "";
+  if (state === "near") return "Nesta tela";
   if (state === "pending" || state === "locked") {
     return quest.hint || guideFirstStep || "Disponível em breve.";
   }

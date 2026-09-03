@@ -35,22 +35,15 @@ class GetPortalTourProgressUseCase:
             )
 
         status = progress.status
-        if status in {"dismissed", "completed"} and not progress.completed_quest_ids:
+        # «completed» sem nenhum desafio é inconsistente — reabre como exploring.
+        # «dismissed» (Agora não) permanece até o usuário retomar ou zerar.
+        if status == "completed" and not progress.completed_quest_ids:
             progress = self.uow.portal_tour.upsert_progress(
                 user_id=user_id,
                 tour_version=progress.tour_version,
                 status="exploring",
                 completed_quest_ids=list(progress.completed_quest_ids),
                 completed_at=None,
-            )
-            status = progress.status
-        elif status == "dismissed":
-            progress = self.uow.portal_tour.upsert_progress(
-                user_id=user_id,
-                tour_version=progress.tour_version,
-                status="exploring",
-                completed_quest_ids=list(progress.completed_quest_ids),
-                completed_at=progress.completed_at,
             )
             status = progress.status
 

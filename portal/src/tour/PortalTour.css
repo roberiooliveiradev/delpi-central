@@ -71,8 +71,8 @@ html[data-portal-tour-active="true"] [data-tour="launcher-modal"] .launcher-app-
   }
 }
 
-html[data-portal-tour-companion="true"] .notif-dropdown,
-html[data-portal-tour-companion="true"] .dropdown.sidebar-user {
+html[data-portal-tour-active="true"] .notif-dropdown,
+html[data-portal-tour-active="true"] .dropdown.sidebar-user {
   z-index: 10045;
 }
 
@@ -550,24 +550,26 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
   bottom: max(16px, env(safe-area-inset-bottom, 0px));
   z-index: 10060;
   pointer-events: auto;
-  width: min(360px, calc(100vw - 32px));
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--surface) 96%, transparent);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(12px);
+  width: min(340px, calc(100vw - 32px));
+  border-radius: 16px;
+  background: var(--surface);
+  border: none;
+  box-shadow:
+    0 8px 28px color-mix(in srgb, #000 18%, transparent),
+    0 1px 0 color-mix(in srgb, var(--border) 55%, transparent);
   overflow: hidden;
 }
 
 .portal-tour-quest-panel.is-collapsed {
   width: auto;
-  min-width: 220px;
+  min-width: 200px;
 }
 
 .portal-tour-quest-toggle-row {
   display: flex;
   align-items: stretch;
   border-bottom: 1px solid transparent;
+  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
 }
 
 .portal-tour-quest-panel.is-expanded .portal-tour-quest-toggle-row {
@@ -579,35 +581,74 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
   min-width: 0;
 }
 
-.portal-tour-quest-close {
+button.portal-tour-quest-close {
   flex-shrink: 0;
+  align-self: center;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
+  width: 32px;
+  height: 32px;
+  margin: 0 8px 0 0;
   padding: 0;
   border: none;
-  border-left: 1px solid var(--border);
+  border-radius: 999px;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
+  box-shadow: none;
+  transform: none;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
 }
 
-.portal-tour-quest-close:hover {
+button.portal-tour-quest-close:hover,
+button.portal-tour-quest-close:hover:not(:disabled) {
   color: var(--text);
-  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
-  border-color: var(--border);
+  background: color-mix(in srgb, var(--surface-2) 88%, transparent);
+  border: none;
+  border-radius: 999px;
   box-shadow: none;
   transform: none;
 }
 
-.portal-tour-quest-close:focus-visible {
+button.portal-tour-quest-close:focus-visible {
   outline: none;
-  box-shadow: inset var(--focus-ring);
+  box-shadow: var(--focus-ring);
+  border-radius: 999px;
 }
 
 .portal-tour-home-entry {
   cursor: pointer;
+  border: none;
+  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
+  box-shadow: none;
+  transform: none;
+}
+
+button.portal-tour-home-entry:hover,
+button.portal-tour-home-entry:hover:not(:disabled) {
+  border: none;
+  color: inherit;
+  background: color-mix(in srgb, var(--surface-2) 78%, var(--surface));
+  box-shadow: none;
+  transform: none;
+}
+
+.portal-tour-home-entry .home-summary-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.portal-tour-home-entry__help {
+  display: inline-flex;
+}
+
+.portal-tour-home-entry__help button {
+  width: 16px;
+  height: 16px;
 }
 
 .portal-tour-home-entry--loading {
@@ -627,11 +668,24 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
   gap: 10px;
   padding: 12px 14px;
   border: none;
+  border-radius: 0;
   background: transparent;
   color: var(--text);
   font: inherit;
   cursor: pointer;
   text-align: left;
+  box-shadow: none;
+  transform: none;
+}
+
+.portal-tour-quest-toggle:hover,
+.portal-tour-quest-toggle:hover:not(:disabled) {
+  border: none;
+  border-radius: 0;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-2) 35%, transparent);
+  box-shadow: none;
+  transform: none;
 }
 
 .portal-tour-quest-toggle:focus-visible {
@@ -642,7 +696,25 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 .portal-tour-quest-toggle-main {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-width: 0;
+}
+
+.portal-tour-quest-toggle-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+}
+
+.portal-tour-quest-toggle-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   min-width: 0;
 }
 
@@ -650,6 +722,16 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
   font-size: 14px;
   font-weight: 650;
   letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.portal-tour-quest-toggle-meta {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .portal-tour-quest-badge {
@@ -663,32 +745,28 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 }
 
 .portal-tour-quest-body {
-  padding: 0 14px 14px;
+  padding: 12px 12px 14px;
 }
 
 .portal-tour-quest-intro {
-  margin: 12px 0 10px;
+  margin: 0 0 10px;
   font-size: 12px;
   line-height: 1.5;
   color: var(--text-muted);
 }
 
 .portal-tour-xp-bar {
-  height: 6px;
+  height: 4px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--text-muted) 16%, transparent);
+  background: color-mix(in srgb, var(--text-muted) 14%, transparent);
   overflow: hidden;
-  margin-bottom: 12px;
+  margin: 0 2px 12px;
 }
 
 .portal-tour-xp-bar-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    var(--primary),
-    color-mix(in srgb, var(--primary) 70%, #fff)
-  );
+  background: var(--primary);
   transition: width 320ms ease;
 }
 
@@ -698,10 +776,11 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: min(46vh, 360px);
+  gap: 14px;
+  max-height: min(44vh, 340px);
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .portal-tour-quest-group {
@@ -711,42 +790,42 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 }
 
 .portal-tour-quest-group-title {
-  margin: 0 0 6px;
-  padding: 0 2px;
+  margin: 0 0 8px;
+  padding: 0 4px;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-weight: 650;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: color-mix(in srgb, var(--text-muted) 88%, transparent);
 }
 
 .portal-tour-quest-group-list {
   list-style: none;
-  margin: 0 0 4px;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .portal-tour-quest-item {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  padding: 8px 10px;
+  padding: 9px 10px;
   border-radius: 12px;
-  border: 1px solid transparent;
+  border: none;
   background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+  box-shadow: none;
   transition:
-    border-color 180ms ease,
-    background 180ms ease,
-    opacity 180ms ease,
-    box-shadow 180ms ease;
+    background 160ms ease,
+    opacity 160ms ease;
 }
 
 .portal-tour-quest-item.is-pending {
-  border-color: color-mix(in srgb, var(--border) 80%, transparent);
-  background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+  border: none;
+  background: color-mix(in srgb, var(--surface-2) 72%, transparent);
+  box-shadow: none;
   opacity: 1;
 }
 
@@ -755,9 +834,9 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 }
 
 .portal-tour-quest-item.is-near {
-  border-color: color-mix(in srgb, var(--success) 45%, var(--border));
-  background: color-mix(in srgb, var(--success) 12%, var(--surface-2));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--success) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 22%, var(--border));
+  background: color-mix(in srgb, var(--success) 6%, var(--surface-2));
+  box-shadow: none;
   opacity: 1;
 }
 
@@ -766,43 +845,47 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 }
 
 .portal-tour-quest-item.is-near .portal-tour-quest-hint {
-  color: color-mix(in srgb, var(--success) 55%, var(--text-muted));
+  color: color-mix(in srgb, var(--success) 40%, var(--text-muted));
 }
 
 .portal-tour-quest-item.is-near .portal-tour-quest-check {
-  border-color: color-mix(in srgb, var(--success) 55%, var(--border));
-  background: color-mix(in srgb, var(--success) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+  background: color-mix(in srgb, var(--success) 8%, var(--surface));
 }
 
 .portal-tour-quest-item.is-done {
-  opacity: 0.48;
-  border-color: transparent;
-  background: color-mix(in srgb, var(--surface-2) 40%, transparent);
+  opacity: 0.55;
+  border: none;
+  background: transparent;
+  padding-block: 6px;
   box-shadow: none;
 }
 
 .portal-tour-quest-item.is-done .portal-tour-quest-title {
   color: var(--text-muted);
-  font-weight: 550;
+  font-weight: 500;
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--text-muted) 45%, transparent);
 }
 
 .portal-tour-quest-item.is-locked {
-  opacity: 0.58;
-  border-color: transparent;
-  background: color-mix(in srgb, var(--surface-2) 45%, transparent);
+  opacity: 0.5;
+  border: none;
+  background: color-mix(in srgb, var(--surface-2) 36%, transparent);
+  box-shadow: none;
 }
 
 .portal-tour-quest-item.is-unavailable {
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .portal-tour-quest-check {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  margin-top: 1px;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
   border-radius: 999px;
-  border: 1.5px solid color-mix(in srgb, var(--text-muted) 40%, var(--border));
+  border: 1.5px solid color-mix(in srgb, var(--text-muted) 36%, var(--border));
   display: grid;
   place-items: center;
   color: var(--text-muted);
@@ -810,59 +893,72 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 }
 
 .portal-tour-quest-item.is-done .portal-tour-quest-check {
-  border-color: color-mix(in srgb, var(--text-muted) 50%, var(--border));
-  background: color-mix(in srgb, var(--surface-2) 70%, var(--surface));
-  color: var(--text-muted);
+  border-color: color-mix(in srgb, var(--success) 40%, var(--border));
+  background: color-mix(in srgb, var(--success) 14%, var(--surface));
+  color: var(--success);
 }
 
 .portal-tour-quest-copy {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .portal-tour-quest-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text);
   line-height: 1.35;
 }
 
-.portal-tour-quest-optional {
-  margin-left: 6px;
+.portal-tour-quest-optional,
+.portal-tour-quest-new,
+.portal-tour-quest-near-badge {
+  margin-left: 0;
+  padding: 1px 6px;
+  border-radius: 999px;
   font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  line-height: 1.4;
+}
+
+.portal-tour-quest-optional {
   color: var(--text-muted);
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
 }
 
 .portal-tour-quest-new {
-  margin-left: 6px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--success);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
 }
 
 .portal-tour-quest-near-badge {
-  margin-left: 6px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--success);
+  background: color-mix(in srgb, var(--success) 16%, transparent);
 }
 
 .portal-tour-quest-hint {
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.4;
   color: var(--text-muted);
 }
 
 .portal-tour-quest-item.is-done .portal-tour-quest-hint {
+  display: none;
+}
+
+.portal-tour-quest-more-done {
+  list-style: none;
+  margin: 0;
+  padding: 2px 8px 0;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
@@ -882,15 +978,15 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 
 @media (max-width: 768px), (max-height: 520px) and (orientation: landscape) {
   .portal-tour-quest-panel {
-    right: max(8px, env(safe-area-inset-right, 0px));
-    left: max(8px, env(safe-area-inset-left, 0px));
-    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    right: max(10px, env(safe-area-inset-right, 0px));
+    left: max(10px, env(safe-area-inset-left, 0px));
+    bottom: max(10px, env(safe-area-inset-bottom, 0px));
     width: auto;
-    max-height: min(54vh, 440px);
+    max-height: min(52vh, 420px);
   }
 
   .portal-tour-quest-list {
-    max-height: min(36vh, 300px);
+    max-height: min(34vh, 280px);
   }
 
   .portal-tour-quest-steps li {
@@ -1011,8 +1107,9 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 }
 
 .portal-tour-quest-item.is-hint-open {
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent);
+  border: none;
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface-2));
+  box-shadow: none;
 }
 
 .portal-tour-quest-hint-btn {
@@ -1020,29 +1117,35 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
   align-items: center;
   gap: 5px;
   align-self: flex-start;
-  margin-top: 6px;
+  margin-top: 4px;
   padding: 5px 10px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
-  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
-  color: var(--primary);
+  border-radius: 8px;
+  border: none;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--text-muted);
   font-size: 11px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1;
   cursor: pointer;
+  box-shadow: none;
+  transform: none;
   transition:
     background 160ms ease,
-    border-color 160ms ease;
+    color 160ms ease;
 }
 
-.portal-tour-quest-hint-btn:hover {
-  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
-  border-color: color-mix(in srgb, var(--primary) 50%, var(--border));
+button.portal-tour-quest-hint-btn:hover,
+button.portal-tour-quest-hint-btn:hover:not(:disabled) {
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-2) 100%, transparent);
+  border: none;
+  box-shadow: none;
+  transform: none;
 }
 
 .portal-tour-quest-hint-btn:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--primary) 55%, transparent);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .portal-tour-quest-unlock-label {
@@ -1055,8 +1158,9 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
 }
 
 .portal-tour-quest-item.is-focused {
-  border-color: color-mix(in srgb, var(--success) 45%, var(--border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--success) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 28%, var(--border));
+  background: color-mix(in srgb, var(--success) 8%, var(--surface-2));
+  box-shadow: none;
 }
 
 .portal-tour-quest-steps {
@@ -1416,7 +1520,7 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
   animation: portal-tour-modal-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.portal-tour-modal-close {
+button.portal-tour-modal-close {
   position: absolute;
   top: 12px;
   right: 12px;
@@ -1428,22 +1532,27 @@ html[data-portal-tour-active="true"] .portal-tour-pulse-target {
   padding: 0;
   border: none;
   border-radius: 999px;
+  background: transparent;
   color: var(--text-muted);
   cursor: pointer;
   flex-shrink: 0;
+  box-shadow: none;
+  transform: none;
   transition:
     color 0.15s ease,
     background 0.15s ease;
 }
 
-.portal-tour-modal-close svg {
+button.portal-tour-modal-close svg {
   flex-shrink: 0;
 }
 
-.portal-tour-modal-close:hover {
+button.portal-tour-modal-close:hover,
+button.portal-tour-modal-close:hover:not(:disabled) {
   color: var(--text);
-  background: color-mix(in srgb, var(--surface-2) 100%, transparent);
-  border-color: transparent;
+  background: color-mix(in srgb, var(--surface-2) 88%, transparent);
+  border: none;
+  border-radius: 999px;
   box-shadow: none;
   transform: none;
 }

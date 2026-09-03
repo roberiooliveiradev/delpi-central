@@ -4,7 +4,7 @@ export const PORTAL_TOUR_STATUS_LABELS: Record<PortalTourStatus | "all", string>
   all: "Todos",
   exploring: "Explorando",
   completed: "Concluiu",
-  dismissed: "Pulou",
+  dismissed: "Adiou",
 };
 
 export type PortalTourStatusFilter = PortalTourStatus | "all";
