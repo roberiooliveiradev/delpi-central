@@ -80,6 +80,21 @@ Permissão: `auditoria-5s.admin.filial-XX` da filial da auditoria.
 
 Botão **Critérios** e `PUT /catalog/publish` exigem `auditoria-5s.admin.filial-XX`.
 
+### Áreas agregadoras (somente admin — filial 02)
+
+Botão **Áreas** na rota `/apps/auditoria-5s/filial-02/admin` (+ permissão `auditoria-5s.admin.filial-02`):
+
+| Método | Path | Uso |
+|--------|------|-----|
+| `GET` | `/areas?branch=02` | Lista com `parent_area_id`, `is_aggregator`, `is_sub_area` |
+| `POST` | `/areas` | Criar área (folha ou agregadora vazia) |
+| `PATCH` | `/areas/{id}` | Renomear / ativar-desativar |
+| `PUT` | `/areas/{id}/children` | Vincular subáreas (`{ child_ids: [] }`) — só filial 02 |
+
+Auditorias usam **somente folhas** no select. No dashboard, a média da agregadora é a **média das médias** das subáreas no período.
+
+Migration: `V045__audit_5s_area_hierarchy.sql` (aplicar com `up`, nunca `reset` em produção).
+
 ### Administração — encerrar NCs em aberto
 
 Rotas do Portal (por filial):
@@ -89,7 +104,7 @@ Rotas do Portal (por filial):
 | `/apps/auditoria-5s/filial-01/admin` | `auditoria-5s.admin.filial-01` |
 | `/apps/auditoria-5s/filial-02/admin` | `auditoria-5s.admin.filial-02` |
 
-Ações administrativas na UI (**Critérios**, **Excluir auditoria**, **Encerrar NC's em aberto**) aparecem **somente** na rota `/filial-XX/admin` **e** com a permissão `auditoria-5s.admin.filial-XX`. Na rota normal `/filial-XX` esses botões ficam ocultos, mesmo para quem tem a permissão (a API continua exigindo a permissão admin).
+Ações administrativas na UI (**Critérios**, **Áreas** na filial 02, **Excluir auditoria**, **Encerrar NC's em aberto**) aparecem **somente** na rota `/filial-XX/admin` **e** com a permissão `auditoria-5s.admin.filial-XX`. Na rota normal `/filial-XX` esses botões ficam ocultos, mesmo para quem tem a permissão (a API continua exigindo a permissão admin).
 
 No **board de não conformidades** (`/filial-XX/admin` → Gestão de NCs), o menu **Mais ações** (⋯) de cada linha inclui **Encerrar NC** (admin): cancela a NC `open`/`in_progress` sem tratar (`status=cancelled`), distinto de **Reabrir ação** (NC já `closed`).
 

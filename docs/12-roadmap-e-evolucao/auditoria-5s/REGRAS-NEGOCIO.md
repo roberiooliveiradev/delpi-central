@@ -25,8 +25,9 @@ Não há cadastro livre de turnos: apenas estas quatro opções.
 
 A área auditada **não** é texto livre na hora da auditoria. O fluxo é:
 
-1. **Cadastro de áreas** — usuários com permissão de auditoria podem cadastrar novas áreas conforme a necessidade da filial.
-2. **Seleção na auditoria** — ao iniciar ou editar o cabeçalho, a área é escolhida na lista cadastrada da filial.
+1. **Cadastro de áreas** — usuários com permissão de auditoria podem cadastrar novas áreas (folhas) conforme a necessidade da filial.
+2. **Seleção na auditoria** — ao iniciar ou editar o cabeçalho, a área é escolhida na lista cadastrada da filial (**somente folhas** — áreas que não são agregadoras).
+3. **Áreas agregadoras (filial 02)** — somente admin (`auditoria-5s.admin.filial-02`, rota `/apps/auditoria-5s/filial-02/admin`) pode criar uma área maior e vincular áreas existentes como subáreas.
 
 ### 2.1 Regras do cadastro
 
@@ -38,17 +39,32 @@ A área auditada **não** é texto livre na hora da auditoria. O fluxo é:
 | Histórico | Auditorias antigas mantêm referência à área mesmo se desativada depois |
 | Responsável pela área | Informado no **cabeçalho da auditoria**, não no cadastro da área |
 
-### 2.2 Modelo previsto
+### 2.2 Hierarquia (somente filial 02)
+
+| Regra | Detalhe |
+|-------|---------|
+| Modelo | Uma linha em `audit_5s_areas`. Agregadora = área sem pai com filhos. Subárea = área com `parent_area_id`. |
+| Profundidade | **1 nível** (agregadora → subáreas). Neto e área ser pai e filho ao mesmo tempo são proibidos. |
+| Quem gerencia | Só admin da filial 02 (+ superadmin) |
+| Dados existentes | Áreas já cadastradas permanecem folhas; o admin cria a agregadora e seleciona quais viram subáreas |
+| Auditoria | **Só folhas**. Agregadora fora do select e rejeitada na API (422) |
+| Promoção | `PUT /areas/{id}/children` exige que a agregadora **não** tenha auditorias (criar área nova vazia) |
+| Filial 01 | Sem hierarquia na UI/API de escrita; `parent_area_id` permanece `NULL` |
+
+**Média da agregadora (dashboard):** média aritmética das médias das subáreas no período filtrado (cada subárea pesa igual; subárea sem auditoria com nota no período não entra no denominador).
+
+### 2.3 Modelo
 
 Tabela `audit_5s_areas`:
 
-- `id`, `branch_code`, `name`, `active`, `created_at`, `created_by_user_id`
+- `id`, `branch_code`, `name`, `active`, `parent_area_id`, `created_at`, `created_by_user_id`
 
-Endpoints previstos:
+Endpoints:
 
-- `GET /quality/audit-5s/areas?branch=01` — listagem (ativas por padrão)
+- `GET /quality/audit-5s/areas?branch=01` — listagem (ativas por padrão; inclui campos de hierarquia)
 - `POST /quality/audit-5s/areas` — cadastrar nova área na filial
-- `PATCH /quality/audit-5s/areas/{id}` — renomear ou desativar (soft)
+- `PATCH /quality/audit-5s/areas/{id}` — renomear ou desativar (admin)
+- `PUT /quality/audit-5s/areas/{id}/children` — substituir subáreas (admin, filial 02)
 
 ---
 
@@ -191,6 +207,7 @@ Endpoint: `POST /quality/audit-5s/audits/{id}/close-without-nc-treatment` (exige
 
 | Data | Nota |
 |------|------|
+| 2026-09-02 | Hierarquia de áreas (agregadora → subáreas) só filial 02; média das médias no dashboard |
 | 2026-08-12 | Join/visualização e Socket `audit5s.join` **não** inserem em `audit_5s_auditors` — auditores só pelo cabeçalho |
 | 2026-05-28 | Turnos: 1º, 2º, 3º, administrativo |
 | 2026-05-28 | Área auditada: cadastro sob demanda por filial |
