@@ -170,6 +170,16 @@ Formulários, filtros, KPIs, tabelas e seções usam wrappers finos em `src/comp
 
 Detalhes, mapa de wrappers e checklist para novos campos: **[UI-PLUGIN-UI.md](./UI-PLUGIN-UI.md)**.
 
+### 7.2 Export PDF da ficha (1 folha A4)
+
+Na ficha (`KaizenDetailPage`), **Exportar PDF** monta um `DelpiDocumentSpec` (`kaizenPdfSpec.ts`) e chama `printDelpiDocumentSpec` do kit (diálogo Imprimir → Salvar como PDF).
+
+| Inclui | Não inclui |
+|--------|------------|
+| Identificação, datas, economia, narrativa 2×2, equipe | Fotos de evidência, changelog, histórico completo de versões |
+
+Exporta o **estado visualizado** (versão ativa ou snapshot da revisão selecionada). Textos longos são truncados para caber em uma página. Ajuda: `KAIZEN_HELP_TOOLTIPS.actions.exportPdf`.
+
 ## 8. Variáveis de ambiente
 
 | Variável | Uso |
@@ -247,7 +257,7 @@ Resumo dos próximos passos:
 2. **Fase 5** — Scripts CI/homologação (`check-kaizometro.sh`)
 3. **Fase 6b/6c** — `summary` Postgres com cálculo temporal — ver [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/kaizometro/ESPECIFICACAO-REVISOES.md)
 4. **Fases 7–9** — Dashboard, agente chat, cutover planilha
-5. **Fase 10** — Export em massa de registros (backlog; export PNG do QR de sugestão já entregue)
+5. **Fase 10** — Export em massa de registros (backlog; export PNG do QR e **PDF de ficha A4** na detalhe já entregues)
 
 Status detalhado: [status-atual.md](../../../docs/12-roadmap-e-volucao/kaizometro/status-atual.md).
 
@@ -264,6 +274,7 @@ PYTHONPATH="../shared:.:." pytest \
   tests/test_route_meta_smoke.py -k "kaizen" -q
 
 cd plugins/kaizometro
+npm test -- src/utils/kaizenPdfSpec.test.ts
 npm run ci
 
 cd plugins/public-hub

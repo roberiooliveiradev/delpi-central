@@ -4,6 +4,7 @@ import type {
   DelpiDocumentSpec,
   DelpiDocumentSummaryLine,
   DelpiDocumentTable,
+  DelpiDocumentTextSection,
 } from "./types";
 
 export function escapeDelpiDocumentHtml(value: string): string {
@@ -126,6 +127,37 @@ function buildSummaryHtml(lines: DelpiDocumentSummaryLine[]): string {
   `;
 }
 
+export function buildDelpiDocumentTextSectionsHtml(
+  sections: DelpiDocumentTextSection[],
+): string {
+  if (!sections.length) {
+    return "";
+  }
+
+  const items = sections
+    .map((section) => {
+      const title = String(section.title ?? "").trim();
+      const body = String(section.body ?? "").trim() || "—";
+      return `
+        <article class="cert-text-sections__item">
+          ${
+            title
+              ? `<h3 class="cert-text-sections__title">${escapeDelpiDocumentHtml(title)}</h3>`
+              : ""
+          }
+          <p class="cert-text-sections__body">${escapeDelpiDocumentHtml(body)}</p>
+        </article>
+      `;
+    })
+    .join("");
+
+  return `
+    <section class="cert-text-sections" aria-label="Narrativa">
+      <div class="cert-text-sections__grid">${items}</div>
+    </section>
+  `;
+}
+
 export function buildDelpiDocumentTableSection(table: DelpiDocumentTable): string {
   const columns = table.columns ?? [];
   const rows = table.rows ?? [];
@@ -224,6 +256,7 @@ export function buildDelpiDocumentHtml(
   logoUrl?: string,
 ): string {
   const logoMarkup = buildLogoMarkup(logoUrl);
+  const textSections = buildDelpiDocumentTextSectionsHtml(spec.textSections ?? []);
   const tableSections = (spec.tables ?? []).map(buildDelpiDocumentTableSection).join("");
   const imageSections = (spec.imageSections ?? []).map(buildImageSection).join("");
   const footerContext = spec.footerContext || spec.documentTitle;
@@ -246,6 +279,7 @@ export function buildDelpiDocumentHtml(
             <div class="cert-main cert-body-content">
               ${buildFirstPageHeaderHtml(spec, logoMarkup)}
               ${buildSummaryHtml(spec.summaryLines ?? [])}
+              ${textSections}
               ${imageSections}
               ${tableSections}
               <footer class="cert-footer">

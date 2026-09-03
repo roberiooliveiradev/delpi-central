@@ -42,6 +42,7 @@ export {
   buildDelpiBrandBarHtml,
   buildDelpiDocumentHtml,
   buildDelpiDocumentTableSection,
+  buildDelpiDocumentTextSectionsHtml,
   buildDefaultExportSummaryLines,
   escapeDelpiDocumentHtml,
   resolveDelpiLogoUrl,
@@ -61,6 +62,7 @@ export type {
   DelpiDocumentSpec,
   DelpiDocumentSummaryLine,
   DelpiDocumentTable,
+  DelpiDocumentTextSection,
 } from "./pdf";
 
 export {

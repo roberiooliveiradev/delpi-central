@@ -157,6 +157,45 @@ export function buildDelpiDocumentStyles(): string {
       font-weight: 700;
       margin-bottom: 2px;
     }
+    .cert-text-sections {
+      margin: 0 0 12px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .cert-text-sections__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .cert-text-sections__item {
+      border: 1px solid var(--cert-gray-200);
+      border-radius: 4px;
+      padding: 8px 10px;
+      background: var(--cert-gray-50);
+      min-height: 0;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .cert-text-sections__title {
+      margin: 0 0 4px;
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--cert-blue-900);
+      font-weight: 700;
+    }
+    .cert-text-sections__body {
+      margin: 0;
+      font-size: 8.5pt;
+      line-height: 1.35;
+      color: var(--cert-gray-900);
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 8;
+      overflow: hidden;
+    }
     .cert-section {
       margin-bottom: 12px;
       break-inside: auto;

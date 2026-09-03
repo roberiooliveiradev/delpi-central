@@ -5,6 +5,7 @@ export type {
   DelpiDocumentSpec,
   DelpiDocumentSummaryLine,
   DelpiDocumentTable,
+  DelpiDocumentTextSection,
 } from "./types";
 
 export { buildDelpiDocumentStyles, buildDelpiBrandBarHtml } from "./delpiDocumentStyles";
@@ -12,6 +13,7 @@ export { buildDelpiDocumentStyles, buildDelpiBrandBarHtml } from "./delpiDocumen
 export {
   buildDelpiDocumentHtml,
   buildDelpiDocumentTableSection,
+  buildDelpiDocumentTextSectionsHtml,
   buildDefaultExportSummaryLines,
   escapeDelpiDocumentHtml,
   resolveDelpiLogoUrl,

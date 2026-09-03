@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { FileDown, Trash2 } from "lucide-react";
 
 import { valuesEqual } from "@delpi/plugin-ui/index";
 
@@ -64,12 +64,14 @@ import type {
   KaizenVersionStatus,
 } from "../types/kaizen";
 import { formatCurrency, formatDate } from "../utils/format";
+import { exportKaizenPdf } from "../utils/exportKaizenPdf";
 import { categoriesFromRecord } from "../utils/kaizenCategories";
 import { savingsTypeLabel } from "../utils/labels";
 import type { BranchOption } from "../utils/kaizenBranchPermissions";
 import { isMultiUnitAccount } from "../utils/kaizenBranchPermissions";
 import { validateKaizenFormStatusDates } from "../utils/validateKaizenStatusDates";
 import { useKaizenSectionEdit } from "../hooks/useKaizenSectionEdit";
+import { KZ_GHOST_BTN } from "../components/ui/ghostChrome";
 
 type Props = {
   recordId: string;
@@ -414,15 +416,31 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
           onNavigate(listPath());
         }}
         actions={
-          <button
-            type="button"
-            className="kz-danger-btn"
-            onClick={() => void handleDeleteRecord()}
-            disabled={deletingRecord}
-          >
-            <Trash2 size={16} aria-hidden="true" />
-            {deletingRecord ? "Excluindo…" : "Excluir"}
-          </button>
+          <>
+            <button
+              type="button"
+              className={KZ_GHOST_BTN}
+              title={KAIZEN_HELP_TOOLTIPS.actions.exportPdf}
+              onClick={() =>
+                exportKaizenPdf({
+                  ...view,
+                  participants: viewParticipants,
+                })
+              }
+            >
+              <FileDown size={16} aria-hidden="true" />
+              Exportar PDF
+            </button>
+            <button
+              type="button"
+              className="kz-danger-btn"
+              onClick={() => void handleDeleteRecord()}
+              disabled={deletingRecord}
+            >
+              <Trash2 size={16} aria-hidden="true" />
+              {deletingRecord ? "Excluindo…" : "Excluir"}
+            </button>
+          </>
         }
       />
 
