@@ -28,6 +28,7 @@ class SqlQueryRefinement:
     sql: str
     title: str | None = None
     reason: str = ""
+    clarify_label: str | None = None
 
 
 @dataclass(frozen=True)
@@ -186,26 +187,50 @@ class ChatSqlQueryRefinementService:
 
         column_key = cls._extract_column_key(normalized, sql=active_sql)
 
-        if column_key and cls._looks_like_add_column(normalized):
-            updated = cls.add_column(active_sql, column_key)
+        if cls._looks_like_add_column(normalized):
+            if column_key:
+                updated = cls.add_column(active_sql, column_key)
 
-            if updated != active_sql:
+                if updated != active_sql:
+                    return SqlQueryRefinement(
+                        mode=mode,
+                        sql=updated,
+                        title=title,
+                        reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "addColumn"),
+                    )
+            else:
                 return SqlQueryRefinement(
-                    mode=mode,
-                    sql=updated,
+                    mode="show_sql",
+                    sql=active_sql,
                     title=title,
-                    reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "addColumn"),
+                    reason=ExternalActionResponseContentService.get(
+                        "sqlQueryRefinement",
+                        "unknownAddColumn",
+                    ),
+                    clarify_label=cls._extract_requested_column_phrase(normalized),
                 )
 
-        if column_key and cls._looks_like_remove_column(normalized):
-            updated = cls.remove_column(active_sql, column_key)
+        if cls._looks_like_remove_column(normalized):
+            if column_key:
+                updated = cls.remove_column(active_sql, column_key)
 
-            if updated != active_sql:
+                if updated != active_sql:
+                    return SqlQueryRefinement(
+                        mode=mode,
+                        sql=updated,
+                        title=title,
+                        reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "removeColumn"),
+                    )
+            else:
                 return SqlQueryRefinement(
-                    mode=mode,
-                    sql=updated,
+                    mode="show_sql",
+                    sql=active_sql,
                     title=title,
-                    reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "removeColumn"),
+                    reason=ExternalActionResponseContentService.get(
+                        "sqlQueryRefinement",
+                        "unknownRemoveColumn",
+                    ),
+                    clarify_label=cls._extract_requested_column_phrase(normalized),
                 )
 
         if cls._looks_like_filter_adjustment(normalized):
@@ -727,12 +752,76 @@ class ChatSqlQueryRefinementService:
     @classmethod
     def format_show_sql_answer(cls, refinement: SqlQueryRefinement) -> str:
         title = refinement.title or ExternalActionResponseContentService.get("sqlQueryRefinement", "fallbackTitle")
+        reason = str(refinement.reason or "")
+        unknown_add = ExternalActionResponseContentService.get("sqlQueryRefinement", "unknownAddColumn")
+        unknown_remove = ExternalActionResponseContentService.get(
+            "sqlQueryRefinement",
+            "unknownRemoveColumn",
+        )
+
+        if reason in {unknown_add, unknown_remove}:
+            return cls.format_unknown_column_answer(refinement)
+
         return (
             f"### {title}\n\n"
             f"{ExternalActionResponseContentService.get('sqlQueryRefinement', 'showSqlAnswerIntro')}\n\n"
             f"```sql\n{refinement.sql.strip()}\n```\n\n"
             f"{ExternalActionResponseContentService.get('sqlQueryRefinement', 'showSqlAnswerHint')}"
         )
+
+    @classmethod
+    def format_unknown_column_answer(cls, refinement: SqlQueryRefinement) -> str:
+        title = refinement.title or ExternalActionResponseContentService.get("sqlQueryRefinement", "fallbackTitle")
+        label = (
+            str(refinement.clarify_label or "").strip()
+            or ExternalActionResponseContentService.get(
+                "sqlQueryRefinement",
+                "unknownColumnFallbackLabel",
+            )
+        )
+        reason = str(refinement.reason or "")
+        unknown_remove = ExternalActionResponseContentService.get(
+            "sqlQueryRefinement",
+            "unknownRemoveColumn",
+        )
+        intro_key = (
+            "unknownRemoveColumnIntro"
+            if reason == unknown_remove
+            else "unknownAddColumnIntro"
+        )
+        intro = ExternalActionResponseContentService.format(
+            "sqlQueryRefinement",
+            intro_key,
+            column=label,
+        )
+
+        return (
+            f"### {title}\n\n"
+            f"{intro}\n\n"
+            f"{ExternalActionResponseContentService.get('sqlQueryRefinement', 'showSqlAnswerIntro')}\n\n"
+            f"```sql\n{refinement.sql.strip()}\n```\n\n"
+            f"{ExternalActionResponseContentService.get('sqlQueryRefinement', 'showSqlAnswerHint')}"
+        )
+
+    @classmethod
+    def _extract_requested_column_phrase(cls, normalized: str) -> str | None:
+        match = re.search(
+            r"\bcoluna(?:s)?\s+(?:de\s+|da\s+|do\s+)?(.+)$",
+            normalized,
+        )
+
+        if not match:
+            return None
+
+        phrase = match.group(1).strip(" .?")
+        # Drop trailing context like "na consulta anterior"
+        phrase = re.split(
+            r"\b(?:na|no|da|do|de)\s+consulta\b",
+            phrase,
+            maxsplit=1,
+        )[0].strip(" .?")
+
+        return phrase[:80] or None
 
     @classmethod
     def _column_definitions_for_sql(cls, sql: str) -> dict[str, dict[str, Any]]:

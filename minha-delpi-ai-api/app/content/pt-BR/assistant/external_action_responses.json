@@ -67,6 +67,11 @@
     "countAggregate": "Refinamento SQL: agregação COUNT(*) sobre a consulta anterior.",
     "addColumn": "Refinamento SQL: inclusão de coluna solicitada na consulta anterior.",
     "removeColumn": "Refinamento SQL: remoção de coluna solicitada na consulta anterior.",
+    "unknownAddColumn": "Refinamento SQL: coluna solicitada não reconhecida — clarificação.",
+    "unknownRemoveColumn": "Refinamento SQL: coluna a remover não reconhecida — clarificação.",
+    "unknownAddColumnIntro": "Não reconheci a coluna **{column}** na consulta ativa. Informe o nome técnico do campo (ex.: `B1_DESC`) ou peça o schema da tabela.",
+    "unknownRemoveColumnIntro": "Não reconheci a coluna **{column}** para remover. Informe o nome técnico do campo presente no SELECT.",
+    "unknownColumnFallbackLabel": "solicitada",
     "rowValueFilter": "Refinamento SQL: filtro por valor da linha aplicado na consulta anterior.",
     "applyBranchFilter": "Refinamento SQL: filtro de filial aplicado na consulta anterior.",
     "showQuery": "A mensagem solicita exibir a consulta SQL da conversa.",
@@ -1381,6 +1386,9 @@
       "noneOf": [
         {
           "excludeIfSqlAuthoring": true
+        },
+        {
+          "excludeIfSqlConversation": true
         }
       ],
       "termsFrom": "external_action_responses.actionSelection.systemMetadata.terms"
@@ -1401,6 +1409,9 @@
       "noneOf": [
         {
           "excludeIfSqlAuthoring": true
+        },
+        {
+          "excludeIfSqlConversation": true
         }
       ],
       "anyOf": [

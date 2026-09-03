@@ -225,6 +225,34 @@ class ChatToolContextResultAssemblyService:
             direct_answer = None
             skip_rag = False
 
+        if not str(direct_answer or "").strip():
+            from app.domain.services.chat_turn_mode_service import ChatTurnModeService
+            from app.application.services.chat_error_handling_service import (
+                ChatErrorHandlingService,
+            )
+
+            if ChatTurnModeService.all_external_tools_failed_validation(safe_tool_calls):
+                classification = ChatErrorHandlingService.classify(
+                    message=raw_message,
+                    answer="",
+                    tool_calls=safe_tool_calls,
+                )
+
+                if classification and classification.error_type in {
+                    "missing_required_parameter",
+                    "missing_path_parameter",
+                    "unknown_parameter",
+                }:
+                    config = ChatErrorHandlingService.type_config(classification.error_type)
+                    structured = ChatErrorHandlingService.build_structured_answer(
+                        classification,
+                        config=config,
+                    )
+
+                    if structured.strip():
+                        direct_answer = structured
+                        skip_rag = True
+
         if pagination_continue_prompt:
             direct_answer = (
                 f"{direct_answer}\n\n{pagination_continue_prompt}".strip()

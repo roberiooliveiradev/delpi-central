@@ -219,6 +219,20 @@ def test_system_table_search_blocked_for_sql_authoring():
     )
 
 
+def test_system_metadata_blocked_for_sql_conversation_follow_up():
+    message = "adicione a coluna cidade na consulta anterior"
+    normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+    from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+    assert ChatSqlIntentService.is_sql_conversation_turn(normalized)
+    assert not ChatProductRoutePredicateService.matches(
+        "systemMetadataQuestion",
+        normalized,
+        message=message,
+    )
+
+
 def test_product_search_predicates_description_and_group():
     by_description = ChatMessageNormalizationService.normalize_for_matching(
         "busque produtos parafuso sextavado"

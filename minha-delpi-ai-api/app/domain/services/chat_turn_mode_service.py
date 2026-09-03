@@ -175,6 +175,10 @@ class ChatTurnModeService:
         return saw_external
 
     @classmethod
+    def all_external_tools_failed_validation(cls, tool_calls: list | None) -> bool:
+        return cls._all_tool_calls_failed_validation(tool_calls)
+
+    @classmethod
     def _has_pending_or_successful_tools(cls, tool_calls: list | None) -> bool:
         for call in tool_calls or []:
             if not isinstance(call, dict):

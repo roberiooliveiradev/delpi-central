@@ -285,7 +285,14 @@
       "executar",
       "relacion",
       "relacionar",
-      "schema"
+      "schema",
+      "adicione",
+      "acrescente",
+      "remova",
+      "remova a coluna",
+      "consulta anterior",
+      "query anterior",
+      "sql anterior"
     ],
     "sqlReviewTerms": [
       "revise",

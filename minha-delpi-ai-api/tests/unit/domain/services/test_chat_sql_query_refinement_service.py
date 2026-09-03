@@ -180,6 +180,35 @@ def test_does_not_match_without_history():
     )
 
 
+def test_unknown_add_column_clarifies_without_changing_sql():
+    history = _history_with_sql(SAMPLE_SQL)
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "adicione a coluna cidade na consulta anterior",
+        previous_messages=history,
+    )
+
+    assert refinement is not None
+    assert refinement.mode == "show_sql"
+    assert refinement.sql == SAMPLE_SQL or SAMPLE_SQL in refinement.sql
+    assert "cidade" in str(refinement.clarify_label or "")
+    answer = ChatSqlQueryRefinementService.format_show_sql_answer(refinement)
+    assert "cidade" in answer.lower()
+    assert "```sql" in answer
+    assert "a1_mun" not in answer.lower()
+    assert "não reconheci a coluna" in answer.lower() or "nao reconheci a coluna" in answer.lower()
+
+
+def test_unknown_remove_column_clarifies():
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "remova a coluna xyzzy da consulta",
+        previous_messages=_history_with_sql(SAMPLE_SQL),
+    )
+
+    assert refinement is not None
+    assert refinement.mode == "show_sql"
+    assert "xyzzy" in str(refinement.clarify_label or "")
+
+
 CUSTOMER_SQL = "SELECT A1_COD, A1_NOME\nFROM SA1010\nWHERE D_E_L_E_T_ = ''"
 
 
