@@ -13,7 +13,12 @@
     "create_forbidden": "Você não pode criar este tipo de solicitação.",
     "edit_forbidden": "Você não pode editar esta solicitação.",
     "idempotency_required": "Informe o cabeçalho Idempotency-Key.",
-    "payload_required": "Informe o payload da solicitação."
+    "payload_required": "Informe o payload da solicitação.",
+    "upload_forbidden": "Você não pode enviar arquivos nesta solicitação.",
+    "download_forbidden": "Você não pode baixar este arquivo.",
+    "attachment_not_found": "Anexo não encontrado.",
+    "artifact_not_found": "Artefato não encontrado.",
+    "comment_required": "Informe o texto do comentário."
   },
   "fieldLabels": {
     "return_reason": "motivo da devolução",

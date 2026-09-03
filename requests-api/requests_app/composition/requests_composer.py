@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from requests_app.application.use_cases.file_use_cases import FileUseCases
 from requests_app.application.use_cases.request_use_cases import (
     CreateRequestUseCase,
     GetRequestTypeUseCase,
@@ -10,7 +11,14 @@ from requests_app.application.use_cases.request_use_cases import (
     TransitionRequestUseCase,
     UpdateRequestPayloadUseCase,
 )
+from requests_app.application.services.attachment_storage import (
+    ArtifactStorage,
+    AttachmentStorage,
+)
 from requests_app.domain.services.workflow_engine import WorkflowEngine
+from requests_app.infrastructure.persistence.repositories.postgres_file_repository import (
+    PostgresFileRepository,
+)
 from requests_app.infrastructure.persistence.repositories.postgres_repositories import (
     PostgresIdempotencyRepository,
     PostgresRequestRepository,
@@ -20,6 +28,17 @@ from requests_app.infrastructure.persistence.repositories.postgres_repositories 
 
 def _engine() -> WorkflowEngine:
     return WorkflowEngine()
+
+
+def build_file_use_cases() -> FileUseCases:
+    return FileUseCases(
+        PostgresRequestTypeRepository(),
+        PostgresRequestRepository(),
+        PostgresFileRepository(),
+        AttachmentStorage(),
+        ArtifactStorage(),
+        _engine(),
+    )
 
 
 def build_list_request_types_use_case() -> ListRequestTypesUseCase:

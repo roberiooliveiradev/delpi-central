@@ -1780,6 +1780,10 @@ services:
       DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
       DELPI_API_CALLER_APP: requests-api
 
+      MY_REQUESTS_ATTACHMENT_UPLOAD_DIR: ${MY_REQUESTS_ATTACHMENT_UPLOAD_DIR:-/app/data/my-requests-attachments}
+      MY_REQUESTS_ARTIFACT_UPLOAD_DIR: ${MY_REQUESTS_ARTIFACT_UPLOAD_DIR:-/app/data/my-requests-artifacts}
+      REQUESTS_OUTBOX_WORKER_ENABLED: ${REQUESTS_OUTBOX_WORKER_ENABLED:-true}
+
       PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
       PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
       PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
@@ -1787,6 +1791,10 @@ services:
       PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
       PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+    volumes:
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/my-requests-attachments:/app/data/my-requests-attachments
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/my-requests-artifacts:/app/data/my-requests-artifacts
 
     depends_on:
       keycloak:

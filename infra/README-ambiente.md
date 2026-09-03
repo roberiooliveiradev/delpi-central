@@ -475,6 +475,8 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 | `QUALITY_LABELS_CERTIFICATE_DIR` | `/app/data/quality-labels/certificates` | `${DELPI_DATA_HOST_DIR}/quality-labels/certificates` |
 | `REPORTS_RUN_ARTIFACTS_DIR` | `/app/data/reports-runs` | `${DELPI_DATA_HOST_DIR}/reports-runs` |
 | `INVOICE_ISSUANCE_UPLOAD_DIR` | `/app/data/invoice-issuance` | `${DELPI_DATA_HOST_DIR}/invoice-issuance` |
+| `MY_REQUESTS_ATTACHMENT_UPLOAD_DIR` | `/app/data/my-requests-attachments` | `${DELPI_DATA_HOST_DIR}/my-requests-attachments` |
+| `MY_REQUESTS_ARTIFACT_UPLOAD_DIR` | `/app/data/my-requests-artifacts` | `${DELPI_DATA_HOST_DIR}/my-requests-artifacts` |
 
 > **Anexos do Comercial** (`COMMERCIAL_ATTACHMENT_UPLOAD_DIR`): o volume **já** monta o diretório inteiro. Não criar volume extra. Subdirs no disco: `task/{taskId}/` (tarefas) e `room_message/{messageId}/` (sala de interação). Recreate do `commercial-api` não apaga os binários enquanto o bind mount existir.
 
@@ -484,7 +486,7 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 
 ```bash
 # srv-api (produção)
-sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/planejamento-orcamentario /var/lib/delpi/kaizen-evidences /var/lib/delpi/guias-procedimentos /var/lib/delpi/mural-acessos /var/lib/delpi/audit-5s-responses /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates /var/lib/delpi/reports-runs /var/lib/delpi/invoice-issuance
+sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/planejamento-orcamentario /var/lib/delpi/kaizen-evidences /var/lib/delpi/guias-procedimentos /var/lib/delpi/mural-acessos /var/lib/delpi/audit-5s-responses /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates /var/lib/delpi/reports-runs /var/lib/delpi/invoice-issuance /var/lib/delpi/my-requests-attachments /var/lib/delpi/my-requests-artifacts
 # em infra/.env:
 DELPI_DATA_HOST_DIR=/var/lib/delpi
 

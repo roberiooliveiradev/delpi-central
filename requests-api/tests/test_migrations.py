@@ -18,6 +18,7 @@ def test_list_migration_files_in_order():
         "V001__schema_migrations.sql",
         "V002__core_domain.sql",
         "V003__idempotency_keys.sql",
+        "V004__attachments_artifacts_events.sql",
     ]
 
 

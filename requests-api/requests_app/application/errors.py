@@ -10,9 +10,12 @@ class ApplicationError(Exception):
     code: str
     status_code: int = 400
     field: str | None = None
+    detail: str | None = None
 
     @property
     def message(self) -> str:
+        if self.detail:
+            return self.detail
         return engine_reason(self.code, field=self.field)
 
     def __str__(self) -> str:

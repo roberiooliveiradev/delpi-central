@@ -1,0 +1,36 @@
+{
+  "attachment": {
+    "maxBytes": 26214400,
+    "allowedMimeTypes": [
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "text/plain",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ]
+  },
+  "artifact": {
+    "maxBytes": 52428800,
+    "allowedMimeTypes": [
+      "application/pdf",
+      "application/xml",
+      "text/xml",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel"
+    ]
+  },
+  "errors": {
+    "emptyFile": "Arquivo vazio.",
+    "tooLarge": "Arquivo excede o limite de {maxMb} MB.",
+    "invalidMime": "Formato inválido para este tipo de arquivo.",
+    "invalidPath": "Caminho de arquivo inválido.",
+    "notFound": "Arquivo não encontrado.",
+    "uploadForbidden": "Você não pode enviar arquivos nesta solicitação.",
+    "downloadForbidden": "Você não pode baixar este arquivo."
+  }
+}

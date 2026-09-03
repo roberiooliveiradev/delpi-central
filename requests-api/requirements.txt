@@ -6,4 +6,5 @@ PyJWT
 psycopg[binary]
 python-jose[cryptography]
 httpx
+python-multipart
 pytest

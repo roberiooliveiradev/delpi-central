@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, File, Form, Header, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from delpi_auth.request_context import get_current_user
@@ -11,6 +12,7 @@ from delpi_auth.request_context import get_current_user
 from requests_app.application.errors import ApplicationError
 from requests_app.composition.requests_composer import (
     build_create_request_use_case,
+    build_file_use_cases,
     build_get_request_type_use_case,
     build_get_request_use_case,
     build_list_my_requests_use_case,
@@ -202,3 +204,105 @@ def transition_request(
     except ApplicationError as exc:
         return _handle(exc)
     return ok(data, message="Transição aplicada.")
+
+
+@router.get("/requests/{request_id}/attachments")
+def list_attachments(request_id: UUID):
+    user = _current_user()
+    try:
+        data = build_file_use_cases().list_attachments(
+            user=user, request_id=str(request_id)
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data)
+
+
+@router.post("/requests/{request_id}/attachments")
+async def create_attachment(
+    request_id: UUID,
+    file: UploadFile = File(...),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    _ = idempotency_key
+    user = _current_user()
+    content = await file.read()
+    try:
+        data = build_file_use_cases().upload_attachment(
+            user=user,
+            request_id=str(request_id),
+            original_name=file.filename or "anexo.bin",
+            content=content,
+            mime_type=file.content_type,
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data, message="Anexo enviado.", status_code=201)
+
+
+@router.get("/attachments/{attachment_id}/download")
+def download_attachment(attachment_id: UUID):
+    user = _current_user()
+    try:
+        path, attachment = build_file_use_cases().resolve_attachment_path(
+            user=user, attachment_id=str(attachment_id)
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return FileResponse(
+        path,
+        media_type=attachment.mime_type,
+        filename=attachment.original_name,
+    )
+
+
+@router.get("/requests/{request_id}/artifacts")
+def list_artifacts(request_id: UUID):
+    user = _current_user()
+    try:
+        data = build_file_use_cases().list_artifacts(
+            user=user, request_id=str(request_id)
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data)
+
+
+@router.post("/requests/{request_id}/artifacts")
+async def create_artifact(
+    request_id: UUID,
+    file: UploadFile = File(...),
+    artifact_kind: str = Form(default="generic"),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
+):
+    _ = idempotency_key
+    user = _current_user()
+    content = await file.read()
+    try:
+        data = build_file_use_cases().upload_artifact(
+            user=user,
+            request_id=str(request_id),
+            original_name=file.filename or "artefato.bin",
+            content=content,
+            mime_type=file.content_type,
+            artifact_kind=artifact_kind,
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data, message="Artefato enviado.", status_code=201)
+
+
+@router.get("/artifacts/{artifact_id}/download")
+def download_artifact(artifact_id: UUID):
+    user = _current_user()
+    try:
+        path, artifact = build_file_use_cases().resolve_artifact_path(
+            user=user, artifact_id=str(artifact_id)
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return FileResponse(
+        path,
+        media_type=artifact.mime_type,
+        filename=artifact.original_name,
+    )

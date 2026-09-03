@@ -46,5 +46,19 @@ class Settings:
     PLUGINS_DB_CONNECT_TIMEOUT: str = _get_env("PLUGINS_DB_CONNECT_TIMEOUT", default="5")
     PLUGINS_DB_SSLMODE: str = _get_env("PLUGINS_DB_SSLMODE", default="prefer")
 
+    MY_REQUESTS_ATTACHMENT_UPLOAD_DIR: str = _get_env(
+        "MY_REQUESTS_ATTACHMENT_UPLOAD_DIR",
+        default="/app/data/my-requests-attachments",
+    )
+    MY_REQUESTS_ARTIFACT_UPLOAD_DIR: str = _get_env(
+        "MY_REQUESTS_ARTIFACT_UPLOAD_DIR",
+        default="/app/data/my-requests-artifacts",
+    )
+    REQUESTS_OUTBOX_WORKER_ENABLED: bool = (
+        str(_get_env("REQUESTS_OUTBOX_WORKER_ENABLED", default="false") or "false").lower()
+        in {"1", "true", "yes", "on"}
+    )
+    CORE_API_URL: str = _get_env("CORE_API_URL", default="http://core-api:8000")
+
 
 settings = Settings()
