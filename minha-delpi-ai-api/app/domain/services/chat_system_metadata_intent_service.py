@@ -21,7 +21,16 @@ class ChatSystemMetadataIntentService:
             "terms",
         )
 
-        return any(term in normalized for term in terms)
+        if any(term in normalized for term in terms):
+            return True
+
+        # Schema/índices/colunas sem a palavra «tabela» ainda são metadado Protheus.
+        return (
+            cls.wants_schema(normalized)
+            or cls.wants_indexes(normalized)
+            or cls.wants_columns(normalized)
+            or cls.wants_relations(normalized)
+        )
 
     @classmethod
     def wants_columns(cls, normalized: str) -> bool:
@@ -97,7 +106,8 @@ class ChatSystemMetadataIntentService:
             return table_match.group(1).upper()
 
         inline_match = re.search(
-            r"\bcolunas?\s+(?:da|de)\s+([a-z]{2,4}\d{0,4})\b",
+            r"\b(?:colunas?|schema|indices?|índices?|indexes?|relacionamentos?)\s+"
+            r"(?:da|de|do)\s+([a-z]{2,4}\d{0,4})\b",
             normalized,
             flags=re.IGNORECASE,
         )
@@ -106,6 +116,25 @@ class ChatSystemMetadataIntentService:
             inline_match.group(1)
         ):
             return inline_match.group(1).upper()
+
+        # «quais indexes da SB1010» / «schema SB1010» — token Protheus no texto.
+        bare_match = re.search(
+            r"\b([a-z]{2,4}\d{2,4})\b",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+
+        if bare_match and ChatSqlAuthoringGuidanceService._is_table_name_candidate(
+            bare_match.group(1)
+        ):
+            if (
+                cls.wants_schema(normalized)
+                or cls.wants_indexes(normalized)
+                or cls.wants_columns(normalized)
+                or cls.wants_relations(normalized)
+                or "tabela" in normalized
+            ):
+                return bare_match.group(1).upper()
 
         return None
 

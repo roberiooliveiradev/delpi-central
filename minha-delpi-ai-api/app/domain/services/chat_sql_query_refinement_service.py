@@ -198,17 +198,17 @@ class ChatSqlQueryRefinementService:
                         title=title,
                         reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "addColumn"),
                     )
-            else:
-                return SqlQueryRefinement(
-                    mode="show_sql",
-                    sql=active_sql,
-                    title=title,
-                    reason=ExternalActionResponseContentService.get(
-                        "sqlQueryRefinement",
-                        "unknownAddColumn",
-                    ),
-                    clarify_label=cls._extract_requested_column_phrase(normalized),
-                )
+
+            return SqlQueryRefinement(
+                mode="show_sql",
+                sql=active_sql,
+                title=title,
+                reason=ExternalActionResponseContentService.get(
+                    "sqlQueryRefinement",
+                    "unknownAddColumn",
+                ),
+                clarify_label=cls._extract_requested_column_phrase(normalized),
+            )
 
         if cls._looks_like_remove_column(normalized):
             if column_key:
@@ -221,17 +221,17 @@ class ChatSqlQueryRefinementService:
                         title=title,
                         reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "removeColumn"),
                     )
-            else:
-                return SqlQueryRefinement(
-                    mode="show_sql",
-                    sql=active_sql,
-                    title=title,
-                    reason=ExternalActionResponseContentService.get(
-                        "sqlQueryRefinement",
-                        "unknownRemoveColumn",
-                    ),
-                    clarify_label=cls._extract_requested_column_phrase(normalized),
-                )
+
+            return SqlQueryRefinement(
+                mode="show_sql",
+                sql=active_sql,
+                title=title,
+                reason=ExternalActionResponseContentService.get(
+                    "sqlQueryRefinement",
+                    "unknownRemoveColumn",
+                ),
+                clarify_label=cls._extract_requested_column_phrase(normalized),
+            )
 
         if cls._looks_like_filter_adjustment(normalized):
             value_filters = cls._extract_value_filters(message, active_sql)
@@ -814,9 +814,9 @@ class ChatSqlQueryRefinementService:
             return None
 
         phrase = match.group(1).strip(" .?")
-        # Drop trailing context like "na consulta anterior"
+        # Drop trailing context like "na consulta anterior" / "nessa consulta"
         phrase = re.split(
-            r"\b(?:na|no|da|do|de)\s+consulta\b",
+            r"\b(?:nessa|nesta|na|no|da|do|de)\s+consulta\b",
             phrase,
             maxsplit=1,
         )[0].strip(" .?")

@@ -139,9 +139,16 @@ class ChatSqlMemoryWorkspaceService:
             content = cls._message_content(msg)
             sql = ChatSqlPerformanceAdvisorService.extract_sql_block(content)
 
-            if sql:
-                last_idx = idx
-                last_sql = sql
+            if not sql:
+                continue
+
+            # Prefetch/LLM pode sugerir INFORMATION_SCHEMA — não vira consulta ativa Protheus.
+            lowered = sql.lower()
+            if "information_schema" in lowered or "sys.indexes" in lowered:
+                continue
+
+            last_idx = idx
+            last_sql = sql
 
         return last_idx, last_sql
 

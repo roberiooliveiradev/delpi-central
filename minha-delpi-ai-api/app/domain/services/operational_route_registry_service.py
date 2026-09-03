@@ -165,11 +165,17 @@ class OperationalRouteRegistryService:
 
     @classmethod
     def system_metadata_routes(cls) -> list[dict[str, Any]]:
-        return [
+        routes = [
             route
             for route in cls.routes()
             if str(route.get("domain") or "").strip() == "domainSystem"
         ]
+
+        return sorted(
+            routes,
+            key=lambda route: int(route.get("priority") or 0),
+            reverse=True,
+        )
 
     @classmethod
     def lmp_routes(cls) -> list[dict[str, Any]]:

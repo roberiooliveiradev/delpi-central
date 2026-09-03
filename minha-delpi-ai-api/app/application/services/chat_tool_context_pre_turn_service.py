@@ -471,6 +471,7 @@ class ChatToolContextPreTurnService:
                             sql_refinement
                         ),
                         "skipRag": True,
+                        "suppressAdvancedSqlEnrichment": True,
                         "currentMessage": raw_message,
                     },
                 ),

@@ -653,12 +653,17 @@ Fonte: `app/content/pt-BR/skills/catalog.json` (7 skills).
 | F01.1 | como ativo o agente? | ✓ | ✓ | — | ✓ | — | — | — | ✓ | PASS | — | PASS | domain `flowId=agent`; live `capabilities_catalog`, 0 tools, prosa «Agentes especializados» |
 | F01.2 | qual agente consulta produto? | ✓ | ✓ | — | ✓ | — | — | — | ✓ | PASS | — | PASS | não SQL/specialist; live help agente, `selected=None` |
 | F01.3 | estoque sem agente | ✓ | ✓ | — | ✓ | — | — | — | ✓ | PASS | — | PASS | domain: `tools_off` + guidance exige agente |
+| F02.1 | o q vc pode fazer? | ✓ | ✓ | — | ✓ | — | — | — | ✓ | PASS | — | PASS | meta shortcut; R8 ~2.7s (antes ~22–46s llmMs); bateria FAIL se >2× alvo |
 | F03.1 | estoque com código | ✓ | ✓ | ✓ | ✓ | ✓ | — | — | ✓ | — | PASS | PASS | domain stock-action; live `path=/products/10080001/stock` |
+| F03.2 | tipografia estrutra → BOM | ✓ | ✓ | ✓ | ✓ | — | — | — | ✓ | — | PASS | PASS | catálogo `estrutra`; live `/products/…/structure` ~3.9s |
 | F03.6 | programação hoje (REST ok) | ✓ | ✓ | ✓ | ✓ | — | — | — | ✓ | — | PASS | PASS | domain selection `get_production_schedule_today` |
-| F04.1 | crie sql grupo 1008 | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | preflight `selected=None`; live SQL sem schedule/leak (`sub=no_rag`) |
+| F04.1 | crie sql grupo 1008 | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | skip agentic; bateria FAIL se `/data/sql`; live SQL autorado |
 | F04.4 | ajuste top 10 | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | ✓ | — | PASS | PASS | domain normalize: SB1 + TOP 10, sem A1 |
 | F04.leak | strip ENTREGA OBRIGATÓRIA | — | — | — | ✓ | — | — | — | — | — | PASS | PASS | domain prose formatting |
-| F05.1 | execute SQL | | | | | | | | | | | | |
+| F05.1 | execute SQL (T1–T3) | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | ✓ | — | PASS | PASS | síntese canônica; T3 one-shot `/data/sql` |
+| F06.schema | schema SB1010 | ✓ | ✓ | ✓ | ✓ | — | — | — | — | — | PASS | PASS | `pathSuffix=/schema`; sem AttributeError; não prefetch interno |
+| F06.indexes | indexes SB1010 | ✓ | ✓ | ✓ | ✓ | — | — | — | — | — | PASS | PASS | registry `systemTableIndexes` + terms indexes |
+| F06.addcol | add coluna desconhecida | ✓ | ✓ | — | ✓ | — | ✓ | — | ✓ | — | PASS | PASS | clarify show_sql; não inventar SA1 via LLM |
 | F07.1 | política compras RAG | | | | | | | | | | | | |
 | F08.1 | pesquise na web | | | | | | | | | | | | |
 | F10.1 | analise desenho | | | | | | | | | | | | |

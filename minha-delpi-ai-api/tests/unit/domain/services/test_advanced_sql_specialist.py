@@ -317,6 +317,30 @@ def test_enrich_tool_context_adds_supplement():
     assert "Especialista SQL Avançado" in result["context"]
 
 
+def test_enrich_preserves_show_sql_clarify_direct_answer():
+    history = [
+        {
+            "role": "assistant",
+            "content": "```sql\nSELECT TOP 5 * FROM SB1010 WHERE D_E_L_E_T_ = '';\n```",
+        }
+    ]
+    clarify = "Não reconheci a coluna **cidade** na consulta ativa."
+    result = ChatAdvancedSqlSpecialistService.enrich_tool_context(
+        message="adicione a coluna cidade nessa consulta",
+        result={
+            "context": "",
+            "toolCalls": [],
+            "directAnswer": clarify,
+            "skipRag": True,
+        },
+        workspace_context=_ctx(),
+        previous_messages=history,
+    )
+
+    assert result.get("directAnswer") == clarify
+    assert result.get("sqlRequiresLlm") is not True
+
+
 def test_follow_up_suggestions_for_review_mode():
     snapshot = ChatAdvancedSqlSpecialistService.build_pipeline_snapshot(
         message="revisa essa query",

@@ -60,6 +60,12 @@ class ChatAdvancedSqlSpecialistSchemaPrefetchService:
     @classmethod
     def should_treat_schema_as_internal(cls, message: str | None, *, path: str | None) -> bool:
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+        from app.domain.services.chat_system_metadata_intent_service import (
+            ChatSystemMetadataIntentService,
+        )
+        from app.domain.services.chat_message_normalization_service import (
+            ChatMessageNormalizationService,
+        )
 
         path_str = str(path or "")
 
@@ -71,6 +77,22 @@ class ChatAdvancedSqlSpecialistSchemaPrefetchService:
 
         if ChatSqlIntentService.is_authoring_request(message):
             return True
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        table_name = ChatSystemMetadataIntentService.extract_table_name(message)
+        # Pedido explícito de schema/índices (entrega ao usuário) — não confundir com
+        # prefetch interno de authoring («valide no schema» + relações).
+        if table_name and not ChatSqlIntentService.is_authoring_request(message):
+            if ChatSystemMetadataIntentService.wants_indexes(normalized):
+                return False
+            if ChatSystemMetadataIntentService.wants_schema(
+                normalized
+            ) and not ChatSystemMetadataIntentService.wants_relations(normalized):
+                return False
+            if ChatSystemMetadataIntentService.wants_columns(
+                normalized
+            ) and not ChatSystemMetadataIntentService.wants_relations(normalized):
+                return False
 
         mode = sql_specialist_service().classify_mode(message)
 
@@ -296,7 +318,9 @@ class ChatAdvancedSqlSpecialistSchemaPrefetchService:
                 ],
             }
 
-        columns = cls._extract_column_names_from_schema_payload(data)
+        columns = ChatAdvancedSqlSpecialistPromptService._extract_column_names_from_schema_payload(
+            data
+        )
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         prioritized: list[str] = []
 

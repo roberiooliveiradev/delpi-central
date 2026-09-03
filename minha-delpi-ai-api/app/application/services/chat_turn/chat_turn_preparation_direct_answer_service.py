@@ -132,6 +132,21 @@ class ChatTurnPreparationDirectAnswerService:
             message=message,
         )
 
+        # Clarificação de refino SQL (coluna desconhecida etc.) — before tools/LLM.
+        if not utility_direct:
+            from app.domain.services.chat_sql_query_refinement_service import (
+                ChatSqlQueryRefinementService,
+            )
+
+            sql_refinement = ChatSqlQueryRefinementService.resolve(
+                message,
+                previous_messages=history_source,
+            )
+            if sql_refinement and sql_refinement.mode == "show_sql":
+                utility_direct = ChatSqlQueryRefinementService.format_show_sql_answer(
+                    sql_refinement
+                )
+
         unclear_direct = None
         if (
             not defer_unclear

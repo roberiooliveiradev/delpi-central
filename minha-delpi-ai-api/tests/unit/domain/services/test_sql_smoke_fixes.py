@@ -108,7 +108,21 @@ def test_compact_table_search_prefetch_context_lists_candidates():
     assert "Cadastro de Produtos" in joined
 
 
-def test_schema_prefetch_annotates_metadata():
+def test_explicit_schema_question_is_not_internal_prefetch():
+    from app.domain.services.chat_advanced_sql_specialist_service import (
+        ChatAdvancedSqlSpecialistService,
+    )
+
+    meta = ChatAdvancedSqlSpecialistService.annotate_schema_prefetch_tool_metadata(
+        "me mostra o schema da tabela SB1010",
+        {"path": "/system/tables/SB1010/schema", "ok": True},
+    )
+
+    assert not meta.get("sqlSchemaPrefetch")
+    assert not meta.get("suppressClientPresentation")
+
+
+def test_schema_prefetch_annotates_metadata_on_authoring():
     from app.domain.services.chat_advanced_sql_specialist_service import (
         ChatAdvancedSqlSpecialistService,
     )

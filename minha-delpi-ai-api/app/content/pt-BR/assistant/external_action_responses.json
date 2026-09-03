@@ -948,6 +948,11 @@
         "schema da tabela",
         "dicionario da tabela",
         "dicionário da tabela",
+        "indice",
+        "índice",
+        "indices",
+        "índices",
+        "indexes",
         "indices da tabela",
         "índices da tabela",
         "indexes da tabela",
@@ -1386,9 +1391,6 @@
       "noneOf": [
         {
           "excludeIfSqlAuthoring": true
-        },
-        {
-          "excludeIfSqlConversation": true
         }
       ],
       "termsFrom": "external_action_responses.actionSelection.systemMetadata.terms"
@@ -1422,6 +1424,16 @@
           "regexPatterns": [
             "\\bqual\\s+(?:a\\s+)?tabela\\b"
           ]
+        }
+      ]
+    },
+    "systemColumnsSearchAllowed": {
+      "noneOf": [
+        {
+          "excludeIfSqlAuthoring": true
+        },
+        {
+          "excludeIfSqlConversation": true
         }
       ]
     },

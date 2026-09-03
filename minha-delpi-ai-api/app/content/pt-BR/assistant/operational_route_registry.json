@@ -2134,9 +2134,9 @@
       },
       "route": {
         "pathMarkers": [
-          "/system/tables/",
-          "/schema"
+          "/system/tables/"
         ],
+        "pathSuffix": "/schema",
         "method": "GET"
       },
       "parameters": {
@@ -2165,9 +2165,9 @@
       },
       "route": {
         "pathMarkers": [
-          "/system/tables/",
-          "/indexes"
+          "/system/tables/"
         ],
+        "pathSuffix": "/indexes",
         "method": "GET"
       },
       "parameters": {
@@ -2196,9 +2196,9 @@
       },
       "route": {
         "pathMarkers": [
-          "/system/tables/",
-          "/relations"
+          "/system/tables/"
         ],
+        "pathSuffix": "/relations",
         "method": "GET"
       },
       "parameters": {
@@ -2227,9 +2227,9 @@
       },
       "route": {
         "pathMarkers": [
-          "/system/tables/",
-          "/columns"
+          "/system/tables/"
         ],
+        "pathSuffix": "/columns",
         "excludePathMarkers": [
           "/columns/search"
         ],
@@ -2253,6 +2253,9 @@
           },
           {
             "customPredicate": "systemWantsColumns"
+          },
+          {
+            "customPredicate": "systemColumnsSearchAllowed"
           }
         ],
         "noneOf": [

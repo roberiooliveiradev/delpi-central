@@ -39,7 +39,54 @@ def test_registry_has_system_table_schema_and_indexes_routes():
 
     assert "systemTableSchema" in routes
     assert "systemTableIndexes" in routes
+    schema_route = routes["systemTableSchema"].get("route") or {}
+    indexes_route = routes["systemTableIndexes"].get("route") or {}
+    assert schema_route.get("pathSuffix") == "/schema"
+    assert indexes_route.get("pathSuffix") == "/indexes"
     detail = routes["systemTableDetail"]
     excludes = detail.get("route", {}).get("excludePathMarkers") or []
     assert "/schema" in excludes
     assert "/indexes" in excludes
+
+
+def test_extract_table_name_from_indexes_without_tabela_word():
+    assert (
+        ChatSystemMetadataIntentService.extract_table_name("quais indexes da SB1010?")
+        == "SB1010"
+    )
+
+
+def test_looks_like_question_for_indexes_without_tabela_word():
+    normalized = "quais indexes da sb1010?"
+    assert ChatSystemMetadataIntentService.looks_like_question(normalized)
+    assert ChatSystemMetadataIntentService.wants_indexes(normalized)
+
+
+def test_columns_search_blocked_during_sql_conversation_but_schema_allowed():
+    from app.domain.services.chat_product_route_predicate_service import (
+        ChatProductRoutePredicateService,
+    )
+    from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+    schema_msg = "me mostra o schema da tabela SB1010"
+    add_col = "adicione a coluna cidade nessa consulta"
+
+    assert ChatSqlIntentService.is_sql_conversation_turn(add_col)
+    assert not ChatSqlIntentService.is_sql_conversation_turn(schema_msg)
+
+    assert ChatProductRoutePredicateService.matches(
+        "systemMetadataQuestion",
+        schema_msg.lower(),
+        message=schema_msg,
+    )
+    assert ChatProductRoutePredicateService.matches(
+        "systemWantsSchema",
+        schema_msg.lower(),
+        message=schema_msg,
+    )
+    # columns/search não compete com refinement SQL
+    assert not ChatProductRoutePredicateService.matches(
+        "systemColumnsSearchAllowed",
+        add_col.lower(),
+        message=add_col,
+    )

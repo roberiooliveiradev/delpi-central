@@ -100,11 +100,17 @@ class ChatAdvancedSqlSpecialistToolContextService:
             updated["context"] = f"{existing}\n\n{supplement}".strip() if existing else supplement
 
         if sql_specialist_service().requires_llm_response(snapshot):
-            updated.pop("directAnswer", None)
-            if not cls._has_successful_operational_tool_result(updated):
-                updated["skipRag"] = False
-            updated["sqlRequiresLlm"] = True
-            updated = sql_specialist_service().strip_schema_catalog_presentations(updated)
+            existing_direct = str(updated.get("directAnswer") or "").strip()
+            if existing_direct:
+                # Clarificação/refino show_sql (ex.: coluna desconhecida) prevalece — não forçar LLM.
+                updated["skipRag"] = True
+                updated.pop("sqlRequiresLlm", None)
+            else:
+                updated.pop("directAnswer", None)
+                if not cls._has_successful_operational_tool_result(updated):
+                    updated["skipRag"] = False
+                updated["sqlRequiresLlm"] = True
+                updated = sql_specialist_service().strip_schema_catalog_presentations(updated)
 
         return updated
 
