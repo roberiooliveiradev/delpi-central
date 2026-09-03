@@ -90,3 +90,37 @@ def test_select_operational_registry_directives_via_route_selection():
     assert selected is not None
     assert selected["arguments"]["actionId"] == "directives-action"
     assert selected["arguments"]["parameters"]["identifier"] == "90260882"
+
+
+def test_select_structure_route_with_estrutra_typography():
+    """Tipografia estática estrutra → STRUCTURE → path /structure."""
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "structure-action",
+                "method": "GET",
+                "path": "/products/{code}/structure",
+                "operationId": "get_product_structure",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+            {
+                "actionId": "analyser-action",
+                "method": "GET",
+                "path": "/products/{code}/analyser",
+                "operationId": "get_product_analyser",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+        ]
+    )
+    route_selection = ExternalActionRouteSelectionService(repository)
+
+    selected = route_selection.select_intent_bound_route(
+        "qual a estrutra do 90260148?",
+        "90260148",
+        intent="structure",
+        allowed_action_ids=["structure-action", "analyser-action"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "structure-action"
+    assert selected["arguments"]["parameters"]["code"] == "90260148"

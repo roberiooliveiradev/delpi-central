@@ -19,3 +19,14 @@ def test_normalize_estouque_from_catalog():
 
     assert "estoque" in result
     assert "90262404" in result.replace(" ", "")
+
+
+def test_normalize_estrutra_static_rule_from_catalog():
+    configure_domain_infrastructure_ports()
+
+    result = ChatMessageNormalizationService.normalize_for_matching(
+        "qual a estrutra do 90260148?"
+    )
+
+    assert "estrutura" in result
+    assert "estrutra" not in result

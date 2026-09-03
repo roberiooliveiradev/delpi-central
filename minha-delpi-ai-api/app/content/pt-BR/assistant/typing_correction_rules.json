@@ -187,6 +187,10 @@
       "replacement": "tabela de preco"
     },
     {
+      "pattern": "\\bestrutra\\b",
+      "replacement": "estrutura"
+    },
+    {
       "pattern": "\\bestrutur(a)?\\b",
       "replacement": "estrutura"
     },

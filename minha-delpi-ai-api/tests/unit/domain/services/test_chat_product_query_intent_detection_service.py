@@ -64,7 +64,7 @@ def test_single_scope_intent_from_json_map():
 
 
 def test_detect_structure_with_operational_typography_typo():
-    """Tipografia operacional (estrutra) deve resolver via fuzzy no normalize — não unclear."""
+    """Tipografia operacional (estrutra) resolve via regra estática — independente do fuzzy."""
     from app.composition.content_composer import configure_domain_infrastructure_ports
     from app.domain.services.chat_typing_correction_fuzzy_lexicon_service import (
         ChatTypingCorrectionFuzzyLexiconService,
@@ -87,15 +87,16 @@ def test_detect_structure_with_operational_typography_typo():
         == ChatProductQueryIntent.STRUCTURE
     )
 
-    # Sem fuzzy no matching, tipografia residual não vira structure (regressão de qualidade).
+    # Sem fuzzy: regra estática \\bestrutra\\b ainda corrige → STRUCTURE.
     ChatTypingCorrectionFuzzyLexiconService.configure(
         {"terms": ["estrutura"], "ambiguousTokens": [], "protectedPortugueseTokens": []},
         enabled=False,
     )
-    assert "estrutra" in ChatMessageNormalizationService.normalize_for_matching(message)
+    assert "estrutura" in ChatMessageNormalizationService.normalize_for_matching(message)
+    assert "estrutra" not in ChatMessageNormalizationService.normalize_for_matching(message)
     assert (
         ChatProductQueryIntentDetectionService.detect(message)
-        != ChatProductQueryIntent.STRUCTURE
+        == ChatProductQueryIntent.STRUCTURE
     )
 
     # Restaura léxico completo (configure_domain_infrastructure_ports é no-op após 1ª chamada).
