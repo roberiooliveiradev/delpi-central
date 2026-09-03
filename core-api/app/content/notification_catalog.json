@@ -183,6 +183,15 @@
       "mutable": true,
       "sourceApps": ["purchase-requests"],
       "pluginId": "purchase-requests"
+    },
+    "my_requests": {
+      "label": "Minhas Solicitações",
+      "notificationLabel": "Atualizações das minhas solicitações",
+      "icon": "clipboard-list",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["my-requests"],
+      "pluginId": "my-requests"
     }
   },
   "legacyCategoryAliases": {

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from requests_app.composition.destination_registry import DestinationAdapterRegistry
 from requests_app.application.use_cases.file_use_cases import FileUseCases
 from requests_app.application.use_cases.request_use_cases import (
     CreateRequestUseCase,
@@ -105,6 +106,10 @@ def build_transition_request_use_case() -> TransitionRequestUseCase:
         PostgresFileRepository(),
         PostgresIntegrationOutboxRepository(),
     )
+
+
+def build_destination_registry() -> DestinationAdapterRegistry:
+    return DestinationAdapterRegistry()
 
 
 def build_timeline_use_cases():
