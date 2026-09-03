@@ -21,6 +21,7 @@ def test_list_migration_files_in_order():
         "V004__attachments_artifacts_events.sql",
         "V005__integration_outbox.sql",
         "V006__seed_invoice_issuance_request_type.sql",
+        "V007__seed_raw_material_creation_request_type.sql",
     ]
 
 
@@ -66,3 +67,14 @@ def test_v006_seeds_invoice_issuance():
     assert "api_delpi" in sql
     _, name = parse_version_and_name(v006)
     assert name == "seed_invoice_issuance_request_type"
+
+
+def test_v007_seeds_raw_material_creation():
+    v007 = MIGRATIONS_DIR / "V007__seed_raw_material_creation_request_type.sql"
+    sql = v007.read_text(encoding="utf-8")
+    assert "raw-material-creation" in sql
+    assert "schema_driven" in sql
+    assert "my-requests.raw-material-creation" in sql
+    assert "description" in sql
+    _, name = parse_version_and_name(v007)
+    assert name == "seed_raw_material_creation_request_type"

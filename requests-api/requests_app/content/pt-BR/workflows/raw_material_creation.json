@@ -1,0 +1,48 @@
+{
+  "initialStatus": "submitted",
+  "terminalStatuses": ["completed", "rejected", "cancelled"],
+  "computedActions": [
+    {
+      "action": "view",
+      "requires": {
+        "ownershipOr": ["view_all", "process", "manage"]
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "action": "start",
+      "from": ["submitted"],
+      "to": "in_progress",
+      "requires": {
+        "permissions": ["process"]
+      },
+      "assignSelf": true
+    },
+    {
+      "action": "complete",
+      "from": ["in_progress"],
+      "to": "completed",
+      "requires": {
+        "permissions": ["process"]
+      }
+    },
+    {
+      "action": "reject",
+      "from": ["in_progress"],
+      "to": "rejected",
+      "requires": {
+        "permissions": ["process"]
+      }
+    },
+    {
+      "action": "cancel",
+      "from": ["submitted"],
+      "to": "cancelled",
+      "requires": {
+        "permissions": ["create"],
+        "ownership": true
+      }
+    }
+  ]
+}

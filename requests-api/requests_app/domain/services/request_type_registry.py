@@ -47,6 +47,8 @@ class RequestTypeRegistry:
         presentation_mode: str = "specialized",
         branch_scope: str = "optional",
         active: bool = True,
+        form_schema: dict | None = None,
+        ui_schema: dict | None = None,
     ) -> RequestType:
         return RequestType(
             id=uuid4(),
@@ -57,4 +59,6 @@ class RequestTypeRegistry:
             presentation_mode=presentation_mode,
             branch_scope=branch_scope,
             active=active,
+            form_schema=form_schema or {},
+            ui_schema=ui_schema or {},
         )

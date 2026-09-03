@@ -111,7 +111,9 @@ class CreateRequestUseCase:
         )
         if payload is None or not isinstance(payload, dict):
             raise ApplicationError(code="payload_required", status_code=422)
-        payload = self._validators.validate(type_code, payload)
+        payload = self._validators.validate(
+            type_code, payload, form_schema=request_type.form_schema
+        )
 
         workflow = request_type.workflow_definition or {}
         initial = str(workflow.get("initialStatus") or "submitted")
@@ -384,7 +386,9 @@ class UpdateRequestPayloadUseCase:
             raise ApplicationError(code="edit_forbidden", status_code=403)
         if not isinstance(payload, dict):
             raise ApplicationError(code="payload_required", status_code=422)
-        payload = self._validators.validate(request.type_code, payload)
+        payload = self._validators.validate(
+            request.type_code, payload, form_schema=request_type.form_schema
+        )
         if expected_version is not None and request.version != expected_version:
             raise ApplicationError(code="stale_version", status_code=409)
 
