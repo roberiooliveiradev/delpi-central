@@ -3,7 +3,6 @@
   flex-direction: column;
   gap: var(--cm-space-4, 1rem);
   width: 100%;
-  max-width: var(--cm-max-width, 1480px);
 }
 
 .cm-user-manual__eyebrow {
