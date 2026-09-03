@@ -152,6 +152,7 @@ Changelogs recentes:
 
 | Documento | Conteúdo |
 |-----------|----------|
+| [**chat-ai-flow-families.md**](./testing/chat-ai-flow-families.md) | **Canônico** — famílias F01–F24, critérios R1–R8, bateria humana, governança |
 | [README.md](./testing/README.md) | Índice de testes e smokes |
 | [smoke-operacional-manual.md](./testing/smoke-operacional-manual.md) | Checklist manual (U1–U9, G1–G3, #70–79…) |
 | [perguntas-teste-chat-jun2026.md](./testing/perguntas-teste-chat-jun2026.md) | Perguntas de regressão |

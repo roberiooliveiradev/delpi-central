@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Smoke audit F01 / F04 / F03 — gates de domínio + HTTP self-help/SQL quando possível.
 
+Doc canônico: docs/testing/chat-ai-flow-families.md
+
 Uso (host, via gateway):
   cd minha-delpi-ai-api && PYTHONPATH=. .venv/bin/python scripts/smoke_audit_familias_f01_f04_f03.py
 

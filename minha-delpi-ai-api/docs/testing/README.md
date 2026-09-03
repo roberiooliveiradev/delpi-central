@@ -1,7 +1,31 @@
 # Testes — minha-delpi-ai-api
 
 > **Suíte automatizada:** `tests/unit/` (pytest)  
-> **Regressão de inteligência:** `tests/fixtures/chat_intelligence_regression_cases.py`
+> **Regressão de inteligência:** `tests/fixtures/chat_intelligence_regression_cases.py`  
+> **Canônico famílias F01–F24 + R1–R8:** [`chat-ai-flow-families.md`](./chat-ai-flow-families.md)
+
+---
+
+## Canônico — testes de IA do chat
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [**chat-ai-flow-families.md**](./chat-ai-flow-families.md) | **Obrigatório em PR de inteligência/fluxo** — famílias F01–F24, critérios R1–R8, roteiros PT-BR, governança § 0, planilha § 5 |
+| [evidence/](./evidence/) | Saídas JSON de baterias live (ex.: `chat-human-interaction-battery.json`) |
+
+### Scripts live (famílias)
+
+| Script | Escopo |
+|--------|--------|
+| `scripts/human_interaction_battery_live.py` | Bateria HTTP — typos, multi-turn, R1–R8 |
+| `scripts/smoke_audit_familias_f01_f04_f03.py` | Gates domínio + HTTP F01/F03/F04 |
+| `scripts/eval_packages_a_d_human_live.py` | Pacotes A–D (guidance, compare, dataAnswer) |
+| `scripts/smoke_new_intent_user_simulation.py` | SQL execute, new_intent, deixis «isso» |
+
+```bash
+docker exec -e SMOKE_BASE_URL=http://delpi-gateway -w /app delpi-minha-delpi-ai-api \
+  python scripts/human_interaction_battery_live.py
+```
 
 ---
 

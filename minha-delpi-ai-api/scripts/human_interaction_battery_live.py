@@ -16,8 +16,8 @@ Filtros:
   SMOKE_FAMILY=F03,F14                   — só famílias listadas
   SMOKE_SKIP_OPTIONAL=1                  — pula casos optional (TV/PAC/desenho)
 
-Saída JSON: docs/operations/human-interaction-battery-eval.json
-Doc canônica: docs/roadmap/audit-chat-base-familias-fluxos-set2026.md § 1.3
+Saída JSON: docs/testing/evidence/chat-human-interaction-battery.json
+Doc canônica: docs/testing/chat-ai-flow-families.md § 1.3
 """
 
 from __future__ import annotations
@@ -774,8 +774,9 @@ def main() -> int:
             os.path.dirname(__file__),
             "..",
             "docs",
-            "operations",
-            "human-interaction-battery-eval.json",
+            "testing",
+            "evidence",
+            "chat-human-interaction-battery.json",
         )
     )
     _write_report(cases, out)

@@ -77,7 +77,7 @@ Roda se `!skip_rag`, ou força documental (identidade assistente, normas, desenh
 
 Regressão: `FLOW_FAMILY_MATRIX_CASES` + `test_flow_family_matrix_gates.py` (web, text, API, skill, message_search). Harness: `scripts/check_flow_family_matrix_harness.py`.
 
-**Smoke live (humano):** critérios R1–R8 e planilha § 5 em [`audit-chat-base-familias-fluxos-set2026.md`](../roadmap/audit-chat-base-familias-fluxos-set2026.md) § 1.1; **bateria HTTP simulada** § 1.3 → `scripts/human_interaction_battery_live.py`.
+**Smoke live (humano):** critérios R1–R8 e planilha § 5 em [`chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md) § 1.1; **bateria HTTP simulada** § 1.3 → `scripts/human_interaction_battery_live.py`.
 
 ## Metadata / SSE
 

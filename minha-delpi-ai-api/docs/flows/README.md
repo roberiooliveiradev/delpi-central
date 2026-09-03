@@ -23,8 +23,8 @@ Blueprint chat: `/chat` → URL pública `/apps/minha-delpi-ai/api/chat`
 | Código morto removido + dívida de padrão | [07-higiene-codigo-e-padroes.md](./07-higiene-codigo-e-padroes.md) |
 | Pipeline e serviços (~200) | [../architecture/chat-intelligence-base.md](../architecture/chat-intelligence-base.md) |
 | Contrato HTTP detalhado | [../api/README.md](../api/README.md) |
-| Auditoria famílias F01–F24 + **critérios R1–R8** (smoke live) | [../roadmap/audit-chat-base-familias-fluxos-set2026.md](../roadmap/audit-chat-base-familias-fluxos-set2026.md) § 1.1 |
-| **Bateria interação humana simulada** (HTTP live) | [../roadmap/audit-chat-base-familias-fluxos-set2026.md](../roadmap/audit-chat-base-familias-fluxos-set2026.md) § 1.3 · `scripts/human_interaction_battery_live.py` |
+| Famílias F01–F24 + **critérios R1–R8** (canônico) | [../testing/chat-ai-flow-families.md](../testing/chat-ai-flow-families.md) § 1.1 |
+| **Bateria interação humana simulada** (HTTP live) | [../testing/chat-ai-flow-families.md](../testing/chat-ai-flow-families.md) § 1.3 · `scripts/human_interaction_battery_live.py` |
 
 ---
 
