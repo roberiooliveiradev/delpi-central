@@ -8,6 +8,7 @@ import { AttachmentsPanel } from "../components/AttachmentsPanel";
 import { CommentsPanel } from "../components/CommentsPanel";
 import { TimelinePanel } from "../components/TimelinePanel";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { InvoiceIssuancePayloadPanel } from "../features/invoice-issuance/ui/InvoiceIssuancePayloadPanel";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestDetail } from "../types/requests";
 
@@ -42,9 +43,27 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
     setBusy(true);
     setError(null);
     try {
+      let returnReason: string | undefined;
+      let cancelJustification: string | undefined;
+      if (action === "return") {
+        returnReason = window.prompt("Motivo da devolução") || undefined;
+        if (!returnReason) {
+          setBusy(false);
+          return;
+        }
+      }
+      if (action === "cancel") {
+        cancelJustification = window.prompt("Justificativa do cancelamento") || undefined;
+        if (!cancelJustification) {
+          setBusy(false);
+          return;
+        }
+      }
       const updated = await transitionRequest(request.id, action, {
         version: request.version,
         idempotencyKey: crypto.randomUUID(),
+        returnReason,
+        cancelJustification,
       });
       setRequest(updated);
     } catch (err) {
@@ -98,6 +117,9 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
           </>
         ) : null}
       </section>
+      {request?.type_code === "invoice-issuance" ? (
+        <InvoiceIssuancePayloadPanel payload={request.payload} />
+      ) : null}
       <TimelinePanel requestId={requestId} />
       <CommentsPanel requestId={requestId} />
       <AttachmentsPanel requestId={requestId} />

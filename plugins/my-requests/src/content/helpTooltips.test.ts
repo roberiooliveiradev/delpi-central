@@ -7,6 +7,7 @@ const REQUIRED_SECTIONS = [
   "mine",
   "workQueue",
   "new",
+  "invoiceWizard",
   "detail",
   "timeline",
   "comments",
@@ -28,5 +29,6 @@ describe("MY_REQUESTS_HELP_TOOLTIPS", () => {
     expect(MY_REQUESTS_HELP_TOOLTIPS.detail.section.length).toBeGreaterThan(20);
     expect(MY_REQUESTS_HELP_TOOLTIPS.detail.actions.length).toBeGreaterThan(20);
     expect(MY_REQUESTS_HELP_TOOLTIPS.timeline.section.length).toBeGreaterThan(10);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard.section.length).toBeGreaterThan(20);
   });
 });

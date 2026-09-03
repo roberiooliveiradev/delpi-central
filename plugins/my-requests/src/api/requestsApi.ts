@@ -12,11 +12,15 @@ import type {
 
 export const API_BASE = "/apps/requests-api/v1";
 
-function unwrap<T>(body: Envelope<T>): T {
+export function unwrapEnvelope<T>(body: Envelope<T>): T {
   if (!body.success) {
     throw new Error(body.message || "Erro na API de Minhas Solicitações.");
   }
   return body.data;
+}
+
+function unwrap<T>(body: Envelope<T>): T {
+  return unwrapEnvelope(body);
 }
 
 export async function listRequestTypes(options?: { signal?: AbortSignal }) {

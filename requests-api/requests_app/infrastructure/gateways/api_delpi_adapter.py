@@ -189,6 +189,7 @@ class InMemoryOperationalLookupAdapter(OperationalLookupPort):
             "items": [
                 {
                     "product_code": "P001",
+                    "code": "P001",
                     "description": f"Produto {query}",
                     "unit": "UN",
                     "blocked": False,

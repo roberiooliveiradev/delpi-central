@@ -25,7 +25,7 @@ Itens elegíveis ao seu perfil de processar/gerenciar. O escopo vem da API (não
 
 ## Nova solicitação
 
-Escolha o **tipo** e a **filial**. Wizards especializados (ex.: emissão de NF completa) entram em entregas futuras; o shell cria o registro genérico.
+Escolha o **tipo** e a **filial**. Para **emissão de NF**, abra o wizard specialized (6 passos). Outros tipos usam o formulário genérico até o vertical correspondente.
 
 ## Detalhe
 
@@ -52,8 +52,13 @@ Painéis:
 
 Atualizações podem aparecer no sino do portal na categoria **Minhas Solicitações** (`my_requests`). Ajuste em Preferências de notificação.
 
-## Limitações atuais (E5)
+## Wizard de emissão de NF
 
-- Wizard NF e lookups TOTVS: etapa E6
+Quando o tipo é **invoice-issuance**, a tela Nova abre o wizard specialized (6 passos: destinatário → tipo → itens → frete → adicionais → conferência). Lookups e criação usam apenas `/apps/requests-api` (nunca api-delpi no browser).
+
+No detalhe, solicitações NF mostram o painel **Dados da emissão** além das ações `allowed_actions`.
+
+## Limitações atuais (E6)
+
 - Vertical MP schema-driven: etapa E7
-- Cutover do app legado de emissão: etapa E8
+- Cutover do app legado de emissão: etapa E8 (plugin `invoice-issuance` permanece em dual-run)

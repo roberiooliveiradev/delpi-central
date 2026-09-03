@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { createRequest, listRequestTypes } from "../api/requestsApi";
 import { AppShell } from "../components/AppShell";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { InvoiceIssuanceWizard } from "../features/invoice-issuance/ui/InvoiceIssuanceWizard";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestTypeSummary } from "../types/requests";
 
@@ -13,6 +14,7 @@ export function NewRequestPage() {
   const [branchCode, setBranchCode] = useState(access.branches[0] || "01");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -27,9 +29,22 @@ export function NewRequestPage() {
     return () => ac.abort();
   }, []);
 
+  if (wizardOpen && typeCode === "invoice-issuance") {
+    return (
+      <InvoiceIssuanceWizard
+        lockedBranch={branchCode}
+        onCancel={() => setWizardOpen(false)}
+      />
+    );
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!typeCode) return;
+    if (typeCode === "invoice-issuance") {
+      setWizardOpen(true);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -84,7 +99,7 @@ export function NewRequestPage() {
             </select>
           </label>
           <button type="submit" className="dashboard-my-requests__btn" disabled={busy || !typeCode}>
-            Criar
+            {typeCode === "invoice-issuance" ? "Abrir wizard de NF" : "Criar"}
           </button>
         </form>
       </section>

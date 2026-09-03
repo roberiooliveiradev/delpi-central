@@ -14,15 +14,24 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   new: {
     section:
-      "Cria uma solicitação genérica escolhendo tipo e filial. Wizards especializados (ex.: NF) entram em etapas futuras.",
+      "Escolha o tipo: genérico cria direto; emissão de NF abre o wizard specialized (6 passos).",
     type: "Tipo cadastrado no Request Engine (workflow declarativo).",
     branch: "Filial TOTVS do escopo da solicitação (01 = SC, 02 = ES).",
+  },
+  invoiceWizard: {
+    section:
+      "Wizard specialized de emissão de NF: destinatário, tipo, itens, frete, adicionais e conferência. Lookups e create vão só para requests-api.",
+    partySearch:
+      "Busque destinatário (cliente/fornecedor) via lookup TOTVS proxied pela requests-api.",
+    steps: "Seis etapas alinhadas ao fluxo legado de emissão, sem state machine no frontend.",
   },
   detail: {
     section:
       "Detalhe da solicitação. Status e botões de ação vêm da API (`allowed_actions`) — o MFE não calcula a máquina de estados.",
     actions:
       "Cada botão corresponde a uma transição liberada pelo WorkflowEngine para o seu perfil e status atual.",
+    invoicePayload:
+      "Resumo do payload de emissão de NF (destinatário, tipo, itens) quando o type_code é invoice-issuance.",
   },
   timeline: {
     section:
