@@ -50,6 +50,36 @@ describe("chatMarkdown", () => {
     );
     expect(prepareMarkdownContent(raw)).not.toContain("<!-- section:");
   });
+
+  it("converte bullets unicode • em lista markdown GFM", () => {
+    const raw =
+      "Interpretando o resultado:\n• **Produto 10080001** — terminal\n• **Produto 10080002** — terminal";
+
+    const prepared = prepareMarkdownContent(raw);
+
+    expect(prepared).toContain("- **Produto 10080001**");
+    expect(prepared).toContain("- **Produto 10080002**");
+    expect(prepared).not.toContain("•");
+    expect(prepared).toMatch(/resultado:\n\n-/);
+  });
+
+  it("quebra bullets unicode colados na mesma linha", () => {
+    const raw =
+      "Itens: • **A** — um • **B** — dois";
+
+    const prepared = prepareMarkdownContent(raw);
+
+    expect(prepared).toBe("Itens:\n\n- **A** — um\n- **B** — dois");
+  });
+
+  it("não altera bullets dentro de fence de código", () => {
+    const raw = "Antes\n```text\n• keep\n```\nDepois • item";
+
+    const prepared = prepareMarkdownContent(raw);
+
+    expect(prepared).toContain("```text\n• keep\n```");
+    expect(prepared).toContain("- item");
+  });
 });
 
 describe("resolveCitationBadgeDisplay", () => {

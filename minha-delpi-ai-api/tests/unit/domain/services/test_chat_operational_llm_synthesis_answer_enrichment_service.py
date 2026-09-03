@@ -199,3 +199,23 @@ def test_strips_exclusivity_contradiction_when_zero_exclusive_mps():
     )
 
     assert enriched == "" or "exclusividade definida" not in enriched.lower()
+
+
+def test_normalize_unicode_bullets_into_markdown_lists():
+    answer = (
+        "Interpretando o resultado:\n"
+        "• **Produto 10080001** — terminal\n"
+        "• **Produto 10080002** — terminal"
+    )
+
+    enriched = ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
+        answer,
+        message="interprete o resultado",
+        tool_calls=[],
+        response_mode_effect=None,
+    )
+
+    assert "•" not in enriched
+    assert "- **Produto 10080001**" in enriched
+    assert "- **Produto 10080002**" in enriched
+    assert "resultado:\n\n-" in enriched

@@ -30,18 +30,49 @@ export function hasMarkdownSyntax(content: string | null | undefined): boolean {
     /(?:^|\n)#{1,6}\s/.test(text) ||
     /```/.test(text) ||
     /(?:^|\n)\s*[-*]\s+\S/.test(text) ||
+    /(?:^|\n)\s*[•●◦▪▸►]\s+\S/.test(text) ||
     /(?<![\w*])\*[^*\s][^*]*\*(?![\w*])/.test(text) ||
     /__[^_]+__/.test(text) ||
     /\[[^\]]+\]\([^)]+\)/.test(text)
   );
 }
 
+/**
+ * LLMs frequentemente emitem `•` (unicode) em vez de `-`/`*`.
+ * Em CommonMark isso **não** é lista — linhas consecutivas viram um parágrafo
+ * e a UI mostra «• a • b» colado. Converte para listas GFM e quebra bullets inline.
+ */
+export function normalizeUnicodeBulletLists(content: string): string {
+  const parts = String(content || "").split(/(```[\s\S]*?```)/g);
+
+  return parts
+    .map((part, index) => {
+      if (index % 2 === 1) {
+        return part;
+      }
+
+      let text = part;
+      // Bullet no meio da linha (após texto) → nova linha de lista.
+      text = text.replace(/([^\n])[ \t]*[•●◦▪▸►]\s+/g, "$1\n- ");
+      // Bullet no início da linha → marcador markdown.
+      text = text.replace(/^[ \t]*[•●◦▪▸►]\s+/gm, "- ");
+      // Linha em branco antes do 1º item quando a linha anterior não é lista
+      // (CommonMark precisa disso após parágrafo/colon).
+      text = text.replace(/(^|\n)(?!-\s)([^\n]+)\n(-\s+\S)/g, "$1$2\n\n$3");
+
+      return text;
+    })
+    .join("");
+}
+
 /** Normaliza escapes comuns vindos do LLM antes do parse markdown. */
 export function prepareMarkdownContent(content: string): string {
   return stripPresentationSectionMarkers(
-    String(content || "")
-      .replace(/\\(\*|_|`)/g, "$1")
-      .replace(/\r\n/g, "\n"),
+    normalizeUnicodeBulletLists(
+      String(content || "")
+        .replace(/\\(\*|_|`)/g, "$1")
+        .replace(/\r\n/g, "\n"),
+    ),
   );
 }
 

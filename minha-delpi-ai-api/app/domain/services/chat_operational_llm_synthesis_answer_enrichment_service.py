@@ -43,8 +43,14 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
     ) -> str:
         body = str(answer or "").strip()
 
-        if not body or not cls._should_enrich(response_mode_effect, tool_calls):
+        if not body:
             return str(answer or "")
+
+        # Sempre: `•` do LLM não é lista GFM — normaliza antes de qualquer early-return.
+        body = cls._normalize_unicode_bullet_lists(body)
+
+        if not cls._should_enrich(response_mode_effect, tool_calls):
+            return body
 
         product_code = cls._resolve_product_code(message, tool_calls)
 
@@ -68,6 +74,7 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
                 body = cls._dedupe_markdown_sections(body)
 
         body = cls._strip_sparse_list_items(body)
+        body = cls._normalize_unicode_bullet_lists(body)
         body = cls._strip_contradictory_claims(body, tool_calls)
         body = cls._strip_profile_factual_verdict_claims(body, tool_calls)
         body = cls._strip_hallucination_markers(body)
@@ -112,6 +119,30 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         collapsed = re.sub(r"\n{3,}", "\n\n", collapsed)
 
         return collapsed.strip()
+
+    @classmethod
+    def _normalize_unicode_bullet_lists(cls, answer: str) -> str:
+        """Converte `•` (não-GFM) em listas `-` para o markdown renderizar itens em linhas."""
+        text = str(answer or "")
+
+        if not text:
+            return text
+
+        parts = re.split(r"(```[\s\S]*?```)", text)
+        out: list[str] = []
+
+        for index, part in enumerate(parts):
+            if index % 2 == 1:
+                out.append(part)
+                continue
+
+            chunk = part
+            chunk = re.sub(r"([^\n])[ \t]*[•●◦▪▸►]\s+", r"\1\n- ", chunk)
+            chunk = re.sub(r"(?m)^[ \t]*[•●◦▪▸►]\s+", "- ", chunk)
+            chunk = re.sub(r"(^|\n)(?!-\s)([^\n]+)\n(-\s+\S)", r"\1\2\n\n\3", chunk)
+            out.append(chunk)
+
+        return "".join(out)
 
     @classmethod
     def _trim_brief_prose(cls, answer: str) -> str:
