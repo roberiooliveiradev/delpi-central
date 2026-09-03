@@ -98,6 +98,79 @@ def test_resolve_grounded_stage_recap_for_list_codes():
     )
 
 
+def test_resolve_grounded_stage_count_total_is_new_intent_not_recap():
+    """«quantidade total» não pode recapitular o TOP N — precisa tools/SQL."""
+    excerpt = {
+        "title": "Resultado da consulta",
+        "rowCount": 2,
+        "topKeys": ["10080001", "10080002"],
+        "preview": "10080001 …",
+    }
+
+    assert (
+        ChatTurnGroundingService.resolve_grounded_stage(
+            message="traga a quantidade total de intens no grupo 1008",
+            excerpt=excerpt,
+            last_action={
+                "name": "external_action",
+                "path": "/data/sql",
+                "operationId": "execute_readonly_sql",
+            },
+        )
+        is None
+    )
+    assert not ChatTurnGroundingService.should_narrate_excerpt(
+        "traga a quantidade total de intens no grupo 1008",
+        excerpt,
+    )
+
+
+def test_isso_substring_in_disso_does_not_force_recap():
+    """«disso»/«nisso» não podem casar o token «isso» por substring."""
+    excerpt = {
+        "title": "Resultado da consulta",
+        "rowCount": 2,
+        "topKeys": ["10080001"],
+        "preview": "10080001 …",
+    }
+    last_action = {
+        "name": "external_action",
+        "path": "/data/sql",
+        "operationId": "execute_readonly_sql",
+    }
+
+    assert (
+        ChatTurnGroundingService.resolve_grounded_stage(
+            message="preciso disso amanha com o total do grupo",
+            excerpt=excerpt,
+            last_action=last_action,
+        )
+        is None
+    )
+    assert not ChatTurnGroundingService.should_narrate_excerpt(
+        "nao quero isso agora, quero o total",
+        excerpt,
+    )
+
+
+def test_bare_isso_with_excerpt_still_recaps():
+    excerpt = {
+        "title": "Resultado da consulta",
+        "rowCount": 2,
+        "topKeys": ["10080001"],
+        "preview": "10080001 …",
+    }
+
+    assert (
+        ChatTurnGroundingService.resolve_grounded_stage(
+            message="isso",
+            excerpt=excerpt,
+            last_action={"path": "/data/sql"},
+        )
+        == "grounded_narrate_recap"
+    )
+
+
 def test_resolve_grounded_stage_narrate_insight_only():
     excerpt = {
         "title": "Estrutura 90260149",

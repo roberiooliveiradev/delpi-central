@@ -65,6 +65,21 @@ class ChatSqlQueryRefinementService:
             "removeBranchTerms",
         )
 
+    @classmethod
+    def _count_aggregate_terms(cls) -> tuple[str, ...]:
+        return ChatSqlIntentVocabularyService.terms(
+            "queryRefinement",
+            "countAggregateTerms",
+        )
+
+    @classmethod
+    def _count_result_alias(cls) -> str:
+        alias = str(
+            ChatSqlIntentVocabularyService.node("queryRefinement", "countResultAlias")
+            or "TOTAL"
+        ).strip()
+        return alias or "TOTAL"
+
     _BRANCH_RE = re.compile(
         r"\b(?:filial|fil\.)\s*[_-]?\s*(\d{1,2})\b",
         re.IGNORECASE,
@@ -137,6 +152,23 @@ class ChatSqlQueryRefinementService:
                     sql=updated,
                     title=title,
                     reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "removeBranchFilter"),
+                )
+
+        if cls._looks_like_count_aggregate(normalized):
+            updated = cls.apply_count_aggregate(active_sql)
+
+            if updated != active_sql:
+                count_mode: SqlRefinementMode = (
+                    "show_sql" if cls._is_authoring_only(normalized) else "execute"
+                )
+                return SqlQueryRefinement(
+                    mode=count_mode,
+                    sql=updated,
+                    title=title,
+                    reason=ExternalActionResponseContentService.get(
+                        "sqlQueryRefinement",
+                        "countAggregate",
+                    ),
                 )
 
         top_limit = cls._extract_top_limit(normalized)
@@ -658,6 +690,41 @@ class ChatSqlQueryRefinementService:
         )
 
     @classmethod
+    def apply_count_aggregate(cls, sql: str) -> str:
+        """Transforma SELECT de listagem em COUNT(*) preservando FROM/WHERE."""
+        original = str(sql or "").strip()
+
+        if not original:
+            return original
+
+        trailing_semicolon = original.endswith(";")
+        body = original.rstrip().rstrip(";").strip()
+
+        if re.search(r"\bSELECT\s+(?:TOP\s+\d+\s+)?COUNT\s*\(", body, flags=re.I):
+            return original
+
+        from_match = re.search(r"\bFROM\b", body, flags=re.I)
+
+        if not from_match:
+            return original
+
+        from_onward = body[from_match.start() :]
+        from_onward = re.split(r"\bORDER\s+BY\b", from_onward, maxsplit=1, flags=re.I)[0]
+        from_onward = re.split(r"\bOPTION\s*\(", from_onward, maxsplit=1, flags=re.I)[0]
+        from_onward = from_onward.strip()
+
+        alias = cls._count_result_alias()
+
+        if re.search(r"\bGROUP\s+BY\b", from_onward, flags=re.I):
+            inner = body
+            inner = re.split(r"\bORDER\s+BY\b", inner, maxsplit=1, flags=re.I)[0].strip()
+            updated = f"SELECT COUNT(*) AS {alias} FROM ({inner}) AS _count_src"
+        else:
+            updated = f"SELECT COUNT(*) AS {alias} {from_onward}"
+
+        return f"{updated};" if trailing_semicolon else updated
+
+    @classmethod
     def format_show_sql_answer(cls, refinement: SqlQueryRefinement) -> str:
         title = refinement.title or ExternalActionResponseContentService.get("sqlQueryRefinement", "fallbackTitle")
         return (
@@ -824,6 +891,10 @@ class ChatSqlQueryRefinementService:
     @classmethod
     def _looks_like_remove_branch_filter(cls, normalized: str) -> bool:
         return any(term in normalized for term in cls._remove_branch_terms())
+
+    @classmethod
+    def _looks_like_count_aggregate(cls, normalized: str) -> bool:
+        return any(term in normalized for term in cls._count_aggregate_terms())
 
     @classmethod
     def _looks_like_branch_breakdown_request(cls, normalized: str) -> bool:

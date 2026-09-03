@@ -31,6 +31,31 @@ def test_follow_up_patterns_compile():
     assert ChatFollowUpTurnContentService.challenge_triggers()
 
 
+def test_narrate_reference_word_boundary_and_whole_message():
+    assert ChatFollowUpTurnContentService.message_matches_narrate_reference("isso")
+    assert ChatFollowUpTurnContentService.message_matches_narrate_reference("isso?")
+    assert ChatFollowUpTurnContentService.message_matches_narrate_reference(
+        "resuma isso"
+    )
+    assert ChatFollowUpTurnContentService.message_matches_narrate_reference(
+        "com base nisso"
+    )
+    assert not ChatFollowUpTurnContentService.message_matches_narrate_reference(
+        "preciso disso amanha"
+    )
+    assert not ChatFollowUpTurnContentService.message_matches_narrate_reference(
+        "nao quero isso agora, quero o total"
+    )
+    assert ChatFollowUpTurnContentService.trigger_matches_with_word_boundary(
+        "explique isso agora",
+        "explique isso",
+    )
+    assert not ChatFollowUpTurnContentService.trigger_matches_with_word_boundary(
+        "disso",
+        "isso",
+    )
+
+
 def test_filail_normalizes_and_extracts_branch():
     assert (
         ChatFollowUpTurnContentService.normalize_branch_typos("rol filail 01 deste mês")

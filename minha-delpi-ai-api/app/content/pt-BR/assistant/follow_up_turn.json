@@ -211,7 +211,6 @@
     "nao confere"
   ],
   "narrateReferenceTriggers": [
-    "isso",
     "esse resultado",
     "este resultado",
     "o resultado",
@@ -219,7 +218,35 @@
     "resuma o resultado",
     "resume isso",
     "sintetize isso",
-    "com base nisso"
+    "com base nisso",
+    "explique isso",
+    "explica isso",
+    "fale sobre isso",
+    "sobre isso",
+    "lista os códigos",
+    "liste os códigos",
+    "lista os codigos",
+    "liste os codigos",
+    "mostre os códigos",
+    "mostra os códigos",
+    "mostre os codigos",
+    "mostra os codigos",
+    "quais códigos",
+    "quais codigos",
+    "lista os resultados",
+    "liste os resultados",
+    "mostre os resultados",
+    "mostra os resultados",
+    "quais vieram",
+    "o que veio na consulta"
+  ],
+  "narrateReferenceWholeMessages": [
+    "isso",
+    "e isso",
+    "só isso",
+    "so isso",
+    "isso ai",
+    "isso aí"
   ],
   "branchTypos": {
     "filail": "filial",

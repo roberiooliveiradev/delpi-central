@@ -312,3 +312,35 @@ ORDER BY H6_DATA DESC, H6_HORA DESC"""
     assert refinement.mode == "execute"
     assert "SH6010" in refinement.sql
     assert "SB1010" not in refinement.sql
+
+
+def test_count_aggregate_from_previous_list_sql():
+    sql = (
+        "SELECT TOP 2 B1_COD AS CODIGO, B1_DESC AS DESCRICAO "
+        "FROM SB1010 WHERE B1_GRUPO = '1008' AND D_E_L_E_T_ = '' "
+        "ORDER BY B1_COD;"
+    )
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "traga a quantidade total de itens no grupo 1008",
+        previous_messages=_history_with_sql(sql, title="Resultado da consulta"),
+    )
+
+    assert refinement is not None
+    assert refinement.mode == "execute"
+    assert "COUNT(*)" in refinement.sql.upper()
+    assert "AS TOTAL" in refinement.sql.upper()
+    assert "B1_GRUPO = '1008'" in refinement.sql
+    assert "TOP 2" not in refinement.sql.upper()
+    assert "ORDER BY" not in refinement.sql.upper()
+
+
+def test_apply_count_aggregate_wraps_group_by():
+    sql = (
+        "SELECT B1_GRUPO, COUNT(*) AS QTD FROM SB1010 "
+        "WHERE D_E_L_E_T_ = '' GROUP BY B1_GRUPO"
+    )
+    updated = ChatSqlQueryRefinementService.apply_count_aggregate(sql)
+
+    assert updated.upper().startswith("SELECT COUNT(*) AS TOTAL FROM (")
+    assert "GROUP BY B1_GRUPO" in updated.upper()
+    assert "_COUNT_SRC" in updated.upper()

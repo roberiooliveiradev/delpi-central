@@ -3193,7 +3193,7 @@ FLOW_FAMILY_MATRIX_CASES = [
             "follow_up_decision": "revise_last_query",
             "slot_delta_branch": "01",
             "grounded_stage": "grounded_revise_query",
-            "should_narrate_excerpt": True,
+            "should_narrate_excerpt": False,
         },
     },
     {
@@ -3255,6 +3255,53 @@ FLOW_FAMILY_MATRIX_CASES = [
             "grounded_status": "grounded",
             "follow_up_decision": "narrate_recap",
             "grounded_stage": "grounded_narrate_insight",
+        },
+    },
+    {
+        "id": "FF-FOLLOW-SQL-COUNT-NOT-RECAP-01",
+        "family": "follow_up_turn",
+        "message": "traga a quantidade total de itens no grupo 1008",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "Resultado da consulta",
+                "rowCount": 2,
+                "topKeys": ["10080001", "10080002"],
+                "preview": "10080001 …",
+            },
+            "lastAction": {
+                "path": "/data/sql",
+                "operationId": "execute_readonly_sql",
+                "name": "external_action",
+            },
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "new_intent",
+            "grounded_stage": None,
+            "should_narrate_excerpt": False,
+        },
+    },
+    {
+        "id": "FF-FOLLOW-ISSO-NOT-SUBSTRING-01",
+        "family": "follow_up_turn",
+        "message": "preciso disso amanha com o total do grupo",
+        "snapshot": {
+            "lastResultExcerpt": {
+                "title": "Resultado da consulta",
+                "rowCount": 2,
+                "topKeys": ["10080001"],
+                "preview": "10080001 …",
+            },
+            "lastAction": {
+                "path": "/data/sql",
+                "operationId": "execute_readonly_sql",
+            },
+        },
+        "expects": {
+            "grounded_status": "grounded",
+            "follow_up_decision": "new_intent",
+            "grounded_stage": None,
+            "should_narrate_excerpt": False,
         },
     },
     {

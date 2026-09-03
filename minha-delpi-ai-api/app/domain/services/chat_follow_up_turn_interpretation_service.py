@@ -123,6 +123,7 @@ class ChatFollowUpTurnInterpretationService:
             return cls._build(
                 decision="new_intent",
                 reason="defer_enrich_insight",
+                suppress_broad_narrate=True,
             )
 
         if cls._is_explicit_insight_narrate(typo_normalized) and has_excerpt:
@@ -134,9 +135,8 @@ class ChatFollowUpTurnInterpretationService:
 
         if (
             has_excerpt
-            and ChatFollowUpTurnContentService.message_has_any_trigger(
+            and ChatFollowUpTurnContentService.message_matches_narrate_reference(
                 typo_normalized,
-                ChatFollowUpTurnContentService.narrate_reference_triggers(),
             )
         ):
             return cls._build(
@@ -148,6 +148,7 @@ class ChatFollowUpTurnInterpretationService:
         return cls._build(
             decision="new_intent",
             reason="no_follow_up_match",
+            suppress_broad_narrate=True,
         )
 
     @classmethod
@@ -217,6 +218,7 @@ class ChatFollowUpTurnInterpretationService:
         return cls._build(
             decision="new_intent",
             reason=f"classifier:{label}",
+            suppress_broad_narrate=True,
         )
 
     @classmethod

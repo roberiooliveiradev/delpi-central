@@ -64,6 +64,7 @@
     "fallbackTitle": "Consulta SQL",
     "removeBranchFilter": "Refinamento SQL: filtro de filial removido da consulta anterior.",
     "topLimitAdjusted": "Refinamento SQL: limite TOP ajustado na consulta anterior.",
+    "countAggregate": "Refinamento SQL: agregação COUNT(*) sobre a consulta anterior.",
     "addColumn": "Refinamento SQL: inclusão de coluna solicitada na consulta anterior.",
     "removeColumn": "Refinamento SQL: remoção de coluna solicitada na consulta anterior.",
     "rowValueFilter": "Refinamento SQL: filtro por valor da linha aplicado na consulta anterior.",

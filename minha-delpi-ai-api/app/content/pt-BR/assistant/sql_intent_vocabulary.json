@@ -408,6 +408,32 @@
       "sem filtro de filial",
       "sem filial"
     ],
+    "countAggregateTerms": [
+      "quantidade total",
+      "qtd total",
+      "qtde total",
+      "quantos",
+      "quantas",
+      "total de itens",
+      "total de item",
+      "total de registros",
+      "total de produtos",
+      "numero de itens",
+      "número de itens",
+      "numero de registros",
+      "número de registros",
+      "numero de produtos",
+      "número de produtos",
+      "count(*)",
+      "count (*)",
+      "contar quantos",
+      "conte quantos",
+      "quantos itens",
+      "quantos produtos",
+      "quantos registros",
+      "total no grupo"
+    ],
+    "countResultAlias": "TOTAL",
     "incrementalAuthoringSpecific": [
       "primeiros",
       "primeiras"

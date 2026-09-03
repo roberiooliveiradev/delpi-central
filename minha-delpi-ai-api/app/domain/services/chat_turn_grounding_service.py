@@ -144,6 +144,16 @@ class ChatTurnGroundingService:
         if cls._should_expand_from_excerpt(normalized):
             return False
 
+        from app.domain.services.chat_follow_up_turn_content_service import (
+            ChatFollowUpTurnContentService,
+        )
+
+        # Recap só com referência explícita ao resultado — não qualquer msg com excerpt.
+        if not ChatFollowUpTurnContentService.message_matches_narrate_reference(
+            normalized,
+        ):
+            return False
+
         has_content = bool(excerpt.get("preview")) or bool(excerpt.get("topKeys"))
         row_count = excerpt.get("rowCount")
 
@@ -229,7 +239,9 @@ class ChatTurnGroundingService:
         if interpretation.decision == "narrate_recap" and follow_up_stage:
             return follow_up_stage
 
-        if interpretation.suppress_broad_narrate and interpretation.decision == "new_intent":
+        # new_intent = descoberta / tools / LLM — nunca recap template do excerpt.
+        # Exceção: enrich explícito quando o excerpt tem chaves para fan-out.
+        if interpretation.decision == "new_intent":
             if interpretation.reason == "defer_enrich_insight":
                 if cls.should_enrich_before_insight(message, excerpt):
                     return "grounded_enrich_insight"

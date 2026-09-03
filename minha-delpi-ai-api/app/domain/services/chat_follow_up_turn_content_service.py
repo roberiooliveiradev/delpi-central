@@ -53,6 +53,72 @@ class ChatFollowUpTurnContentService:
         )
 
     @classmethod
+    def narrate_reference_whole_messages(cls) -> frozenset[str]:
+        return frozenset(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(
+                _BUNDLE,
+                "narrateReferenceWholeMessages",
+            )
+            if str(item).strip()
+        )
+
+    @classmethod
+    def message_matches_narrate_reference(cls, message: str) -> bool:
+        """Referência explícita ao resultado — token com fronteira de palavra, não substring."""
+        haystack = str(message or "").strip().lower()
+
+        if not haystack:
+            return False
+
+        whole = cls._normalize_whole_message(haystack)
+
+        if whole in cls.narrate_reference_whole_messages():
+            return True
+
+        return any(
+            cls.trigger_matches_with_word_boundary(haystack, trigger)
+            for trigger in cls.narrate_reference_triggers()
+        )
+
+    @classmethod
+    def _normalize_whole_message(cls, message: str) -> str:
+        text = str(message or "").strip().lower()
+        text = re.sub(r"[?!.,;:…]+$", "", text).strip()
+        return text
+
+    @classmethod
+    def _is_word_char(cls, char: str) -> bool:
+        if not char:
+            return False
+        return bool(re.match(r"[0-9A-Za-zÀ-ÿ_]", char))
+
+    @classmethod
+    def trigger_matches_with_word_boundary(cls, haystack: str, trigger: str) -> bool:
+        needle = str(trigger or "").strip().lower()
+        text = str(haystack or "").strip().lower()
+
+        if not needle or not text:
+            return False
+
+        start = 0
+
+        while True:
+            idx = text.find(needle, start)
+
+            if idx < 0:
+                return False
+
+            before_ok = idx == 0 or not cls._is_word_char(text[idx - 1])
+            end = idx + len(needle)
+            after_ok = end >= len(text) or not cls._is_word_char(text[end])
+
+            if before_ok and after_ok:
+                return True
+
+            start = idx + 1
+
+    @classmethod
     @lru_cache(maxsize=1)
     def branch_typos(cls) -> dict[str, str]:
         node = ChatAssistantContentService.get_node(_BUNDLE, "branchTypos") or {}
