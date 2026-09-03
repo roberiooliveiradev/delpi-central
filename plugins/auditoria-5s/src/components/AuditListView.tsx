@@ -13,6 +13,7 @@ import {
   FileText,
   FilterX,
   ListChecks,
+  MapPinned,
   Lock,
   MoreHorizontal,
   OctagonX,
@@ -76,6 +77,7 @@ type Props = {
   onOpenDashboard: () => void;
   onOpenNcBoard: () => void;
   onOpenCatalog: () => void;
+  onOpenAreas?: () => void;
   onOpenAudit: (auditId: string) => void;
   onOpenNc: (auditId: string) => void;
   onEditAudit: (auditId: string) => void;
@@ -136,6 +138,7 @@ export function AuditListView({
   onOpenDashboard,
   onOpenNcBoard,
   onOpenCatalog,
+  onOpenAreas,
   onOpenAudit,
   onOpenNc,
   onEditAudit,
@@ -302,6 +305,12 @@ export function AuditListView({
             <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--header" onClick={onOpenCatalog}>
               <ListChecks size={16} aria-hidden />
               Critérios
+            </button>
+          ) : null}
+          {canAdmin && branch === "02" && onOpenAreas ? (
+            <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--header" onClick={onOpenAreas}>
+              <MapPinned size={16} aria-hidden />
+              Áreas
             </button>
           ) : null}
           <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--header" onClick={onOpenNcBoard}>

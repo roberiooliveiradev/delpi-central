@@ -17,6 +17,11 @@ export type AuditArea = {
   branch_code: string;
   name: string;
   active: boolean;
+  parent_area_id?: string | null;
+  parent_area_name?: string | null;
+  children_count?: number;
+  is_aggregator?: boolean;
+  is_sub_area?: boolean;
 };
 
 export type AuditListItem = {
@@ -144,6 +149,29 @@ export async function createArea(branch: string, name: string) {
     branch_code: branch,
     name,
   });
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
+export async function updateArea(
+  areaId: string,
+  payload: { name?: string; active?: boolean },
+) {
+  const res = await httpPatch<ApiEnvelope<AuditArea>>(
+    `${API_BASE}/areas/${encodeURIComponent(areaId)}`,
+    payload,
+  );
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
+export type SetAreaChildrenResult = AuditArea & {
+  children?: AuditArea[];
+};
+
+export async function setAreaChildren(areaId: string, childIds: string[]) {
+  const res = await httpPut<ApiEnvelope<SetAreaChildrenResult>>(
+    `${API_BASE}/areas/${encodeURIComponent(areaId)}/children`,
+    { child_ids: childIds },
+  );
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 

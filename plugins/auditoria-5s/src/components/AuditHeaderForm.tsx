@@ -2,6 +2,7 @@ import type { AuditArea } from "../api/audit5sApi";
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { SHIFTS } from "../constants/audit5s";
 import type { AuditAuditorSelection } from "../types/auditAuditor";
+import { leafAreas } from "../utils/auditAreasHierarchy";
 import { AuditAuditorPicker } from "./AuditAuditorPicker";
 import { AuditResponsiblePicker } from "./AuditResponsiblePicker";
 import { AuditNativeSelectField, AuditNativeTextField } from "./auditFormFields";
@@ -44,6 +45,7 @@ export function AuditHeaderForm({
 }: Props) {
   const canSubmit =
     Boolean(form.area_id) && Boolean(form.area_responsible.trim()) && selectedAuditors.length > 0;
+  const selectableAreas = leafAreas(areas);
 
   return (
     <section className="a5s-panel a5s-form a5s-form--new-audit">
@@ -61,7 +63,7 @@ export function AuditHeaderForm({
         value={form.area_id}
         onChange={(area_id) => onFormChange({ area_id })}
         placeholderOption="Selecione..."
-        options={areas.map((area) => ({ value: area.id, label: area.name }))}
+        options={selectableAreas.map((area) => ({ value: area.id, label: area.name }))}
       />
       <div className="a5s-inline a5s-form__full">
         <NativeTextControl

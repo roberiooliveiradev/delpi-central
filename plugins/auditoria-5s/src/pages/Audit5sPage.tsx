@@ -29,6 +29,7 @@ import { AuditNativeTextAreaField } from "../components/auditFormFields";
 import { AuditListView } from "../components/AuditListView";
 import { AuditDashboardPage } from "./AuditDashboardPage";
 import { AuditCatalogPage } from "./AuditCatalogPage";
+import { AuditAreasPage } from "./AuditAreasPage";
 import { NcManagementPage } from "./NcManagementPage";
 import { AuditDetailHero } from "../components/AuditDetailHero";
 import { AuditNcView } from "../components/AuditNcView";
@@ -64,7 +65,7 @@ type Props = {
   search?: string;
 };
 
-type View = "list" | "new" | "edit" | "audit" | "nc" | "dashboard" | "catalog" | "nc-board";
+type View = "list" | "new" | "edit" | "audit" | "nc" | "dashboard" | "catalog" | "areas" | "nc-board";
 
 export function Audit5sPage({ pathname, search }: Props) {
   const branch = branchFromPathname(pathname);
@@ -585,6 +586,8 @@ export function Audit5sPage({ pathname, search }: Props) {
               ? "Acompanhe planos de ação, responsáveis, prazos e progresso das não conformidades."
             : view === "catalog"
               ? "Edite e publique o catálogo de critérios desta filial."
+              : view === "areas"
+                ? "Cadastre áreas agregadoras e vincule subáreas da filial 02."
             : auditListSubtitle(branch);
 
   return (
@@ -604,6 +607,8 @@ export function Audit5sPage({ pathname, search }: Props) {
                   ? "Gestão de não conformidades"
                 : view === "catalog"
                   ? "Critérios da auditoria"
+                  : view === "areas"
+                    ? "Áreas agregadoras"
                 : undefined
           }
           subtitle={pageSubtitle}
@@ -626,6 +631,7 @@ export function Audit5sPage({ pathname, search }: Props) {
           onOpenDashboard={() => setView("dashboard")}
           onOpenNcBoard={() => setView("nc-board")}
           onOpenCatalog={() => setView("catalog")}
+          onOpenAreas={() => setView("areas")}
           onOpenAudit={(auditId) => void openAudit(auditId)}
           onOpenNc={(auditId) => void openNc(auditId)}
           onEditAudit={(auditId) => void openEditAudit(auditId)}
@@ -662,6 +668,29 @@ export function Audit5sPage({ pathname, search }: Props) {
           onDenied={() => {
             setError(
               "Critérios só podem ser editados na rota Admin 5S da filial.",
+            );
+            setView("list");
+          }}
+        />
+      )}
+
+      {view === "areas" && (
+        <AuditAreasPage
+          branch={branch}
+          pathname={pathname}
+          onAreasChanged={() => {
+            void (async () => {
+              try {
+                const next = await fetchAreas(branch);
+                setAreas(next);
+              } catch {
+                /* lista principal recarrega no próximo acesso */
+              }
+            })();
+          }}
+          onDenied={() => {
+            setError(
+              "Áreas agregadoras só podem ser gerenciadas na rota Admin 5S da filial 02.",
             );
             setView("list");
           }}
