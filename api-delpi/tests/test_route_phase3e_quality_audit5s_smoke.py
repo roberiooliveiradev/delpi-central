@@ -47,8 +47,11 @@ def _audit_repo(**kwargs: object) -> MagicMock:
 
 
 @_user_patch()
+@patch(f"{_AUDIT}.branch_audit_allowed", return_value=True)
+@patch(f"{_AUDIT}.branch_admin_allowed", return_value=True)
+@patch(f"{_AUDIT}.branch_access_error", return_value=None)
 @patch(f"{_AUDIT}.build_audit_5s_repository")
-def test_create_audit_5s_area_returns_meta(mock_build, _user) -> None:
+def test_create_audit_5s_area_returns_meta(mock_build, _access, _admin, _audit, _user) -> None:
     from app.interface.http.routes.quality.audit_5s_operational_router import (
         CreateAreaBody,
         create_area,

@@ -277,6 +277,40 @@
       },
       "category": "quality"
     },
+    "update_audit_5s_area": {
+      "locale": {
+        "en": {
+          "summary": "Update audit 5S area",
+          "description": "Rename or activate/deactivate an audit 5S area.",
+          "label": "Update Area",
+          "whenToUse": "Use to rename or deactivate an audit 5S area."
+        },
+        "pt-BR": {
+          "summary": "Atualizar área da auditoria 5S",
+          "description": "Renomear ou ativar/desativar uma área da auditoria 5S.",
+          "label": "Atualizar área 5S",
+          "whenToUse": "Use para renomear ou desativar uma área da auditoria 5S."
+        }
+      },
+      "category": "quality"
+    },
+    "set_audit_5s_area_children": {
+      "locale": {
+        "en": {
+          "summary": "Set audit 5S area children",
+          "description": "Link sub-areas under an aggregator area (branch 02 only).",
+          "label": "Set Area Children",
+          "whenToUse": "Use to define which areas belong to an aggregator area."
+        },
+        "pt-BR": {
+          "summary": "Vincular subáreas da auditoria 5S",
+          "description": "Define as subáreas de uma área agregadora (somente filial 02).",
+          "label": "Vincular subáreas 5S",
+          "whenToUse": "Use para definir quais áreas pertencem a uma área agregadora."
+        }
+      },
+      "category": "quality"
+    },
     "create_audit_5s_audit": {
       "locale": {
         "en": {

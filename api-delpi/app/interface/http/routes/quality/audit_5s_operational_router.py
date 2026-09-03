@@ -52,7 +52,11 @@ from app.application.services.audit_5s.realtime_publisher import (
 from app.core.responses import error_response
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
-from app.interface.http.routes.quality.audit_5s_branch_access import branch_access_error
+from app.interface.http.routes.quality.audit_5s_branch_access import (
+    branch_access_error,
+    branch_admin_allowed,
+    branch_audit_allowed,
+)
 from app.shared.utils.person_name import format_person_name
 from app.utils.logger import log_error
 from app.interface.http.period_query_params import (
@@ -80,6 +84,15 @@ router = APIRouter(prefix="/audit-5s", tags=["Auditoria 5S"])
 class CreateAreaBody(BaseModel):
     branch_code: str = Field(..., pattern="^(01|02)$")
     name: str = Field(..., min_length=2, max_length=200)
+
+
+class UpdateAreaBody(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=200)
+    active: bool | None = None
+
+
+class SetAreaChildrenBody(BaseModel):
+    child_ids: list[str] = Field(default_factory=list)
 
 
 class AuditorBody(BaseModel):
@@ -349,6 +362,16 @@ def list_areas(
 @router.post("/areas", operation_id="create_audit_5s_area")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 def create_area(body: CreateAreaBody = Body(...)):
+    denied = branch_access_error(body.branch_code)
+    if denied is not None:
+        return denied
+    if not (
+        branch_audit_allowed(body.branch_code) or branch_admin_allowed(body.branch_code)
+    ):
+        return error_response(
+            "Sem permissão para cadastrar áreas nesta filial da Auditoria 5S.",
+            status_code=403,
+        )
     try:
         repo = build_audit_5s_repository()
         data = repo.create_area(
@@ -362,6 +385,79 @@ def create_area(body: CreateAreaBody = Body(...)):
     except Exception as exc:
         log_error(f"Erro ao cadastrar área 5S: {exc}")
         return error_response("Erro interno ao cadastrar área.", status_code=500)
+
+
+@router.patch("/areas/{area_id}", operation_id="update_audit_5s_area")
+@require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
+def update_area(area_id: str, body: UpdateAreaBody = Body(...)):
+    try:
+        repo = build_audit_5s_repository()
+        existing = repo.get_area(area_id)
+        if existing is None:
+            return error_response("Área não encontrada.", status_code=404)
+        denied = branch_access_error(
+            str(existing.get("branch_code") or ""),
+            require_admin=True,
+        )
+        if denied is not None:
+            return denied
+        if body.name is None and body.active is None:
+            return error_response("Nenhuma alteração informada.", status_code=400)
+        data = repo.update_area(
+            area_id=area_id,
+            name=body.name,
+            active=body.active,
+        )
+        return api_delpi_success(data, operation_id="update_audit_5s_area")
+    except PluginsRepositoryError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao atualizar área 5S: {exc}")
+        return error_response("Erro interno ao atualizar área.", status_code=500)
+
+
+@router.put("/areas/{area_id}/children", operation_id="set_audit_5s_area_children")
+@require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
+def set_area_children(area_id: str, body: SetAreaChildrenBody = Body(...)):
+    try:
+        repo = build_audit_5s_repository()
+        existing = repo.get_area(area_id)
+        if existing is None:
+            return error_response("Área agregadora não encontrada.", status_code=404)
+        branch_code = str(existing.get("branch_code") or "")
+        denied = branch_access_error(branch_code, require_admin=True)
+        if denied is not None:
+            return denied
+        if branch_code != "02":
+            return error_response(
+                "Hierarquia de áreas 5S só é permitida na filial 02.",
+                status_code=422,
+            )
+        data = repo.set_area_children(
+            parent_area_id=area_id,
+            child_ids=list(body.child_ids or []),
+        )
+        return api_delpi_success(data, operation_id="set_audit_5s_area_children")
+    except PluginsRepositoryError as exc:
+        message = str(exc)
+        status = (
+            422
+            if any(
+                token in message
+                for token in (
+                    "Hierarquia",
+                    "agregadora",
+                    "subárea",
+                    "auditorias",
+                    "filial",
+                )
+            )
+            else 400
+        )
+        return error_response(message, status_code=status)
+    except Exception as exc:
+        log_error(f"Erro ao vincular subáreas 5S: {exc}")
+        return error_response("Erro interno ao vincular subáreas.", status_code=500)
 
 
 @router.get("/criteria", operation_id="list_audit_5s_criteria")
@@ -507,7 +603,9 @@ def create_audit(body: CreateAuditBody = Body(...)):
         )
         return api_delpi_success(data, operation_id="create_audit_5s_audit")
     except PluginsRepositoryError as exc:
-        return error_response(str(exc), status_code=400)
+        message = str(exc)
+        status = 422 if "agregadora" in message.lower() else 400
+        return error_response(message, status_code=status)
     except Exception as exc:
         log_error(f"Erro ao criar auditoria 5S: {exc}")
         return error_response("Erro interno ao criar auditoria.", status_code=500)

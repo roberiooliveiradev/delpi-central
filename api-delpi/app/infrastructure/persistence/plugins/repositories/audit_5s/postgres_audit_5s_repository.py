@@ -9,6 +9,13 @@ from app.application.dto.audit_5s.get_audit_5s_dashboard_request import (
 from app.application.dto.audit_5s.list_audit_5s_nc_board_request import (
     ListAudit5sNcBoardRequest,
 )
+from app.domain.services.audit_5s.audit_5s_area_hierarchy_service import (
+    Audit5sAreaHierarchyError,
+    assert_area_auditable,
+    enrich_area_hierarchy_fields,
+    mean_of_means,
+    validate_set_children,
+)
 from app.domain.services.audit_5s.audit_5s_nc_sla_service import (
     NC_CANCELLED_VIEW_ONLY_MESSAGE,
     is_nc_cancelled,
@@ -77,18 +84,85 @@ class PostgresAudit5sRepository(PluginBaseRepository):
     def list_areas(self, branch_code: str, *, active_only: bool = True) -> list[dict[str, Any]]:
         scope = normalize_branch_scope(branch_code)
         query = """
-            SELECT id, branch_code, name, active, created_at
-              FROM quality.audit_5s_areas
+            SELECT a.id,
+                   a.branch_code,
+                   a.name,
+                   a.active,
+                   a.created_at,
+                   a.parent_area_id,
+                   p.name AS parent_area_name,
+                   (
+                       SELECT COUNT(*)::int
+                         FROM quality.audit_5s_areas c
+                        WHERE c.parent_area_id = a.id
+                   ) AS children_count
+              FROM quality.audit_5s_areas a
+              LEFT JOIN quality.audit_5s_areas p ON p.id = a.parent_area_id
              WHERE 1=1
         """
         params: list[Any] = []
         if not is_all_branches(scope):
-            query += " AND branch_code = %s"
+            query += " AND a.branch_code = %s"
             params.append(scope)
         if active_only:
-            query += " AND active = TRUE"
-        query += " ORDER BY lower(name)"
-        return self.fetch_all(query, tuple(params))
+            query += " AND a.active = TRUE"
+        query += " ORDER BY lower(a.name)"
+        rows = self.fetch_all(query, tuple(params))
+        return [enrich_area_hierarchy_fields(row) for row in rows]
+
+    def get_area(self, area_id: str) -> dict[str, Any] | None:
+        row = self.fetch_one(
+            """
+            SELECT a.id,
+                   a.branch_code,
+                   a.name,
+                   a.active,
+                   a.created_at,
+                   a.parent_area_id,
+                   p.name AS parent_area_name,
+                   (
+                       SELECT COUNT(*)::int
+                         FROM quality.audit_5s_areas c
+                        WHERE c.parent_area_id = a.id
+                   ) AS children_count
+              FROM quality.audit_5s_areas a
+              LEFT JOIN quality.audit_5s_areas p ON p.id = a.parent_area_id
+             WHERE a.id = %s
+            """,
+            (area_id,),
+        )
+        return enrich_area_hierarchy_fields(row) if row else None
+
+    def count_audits_for_area(self, area_id: str) -> int:
+        row = self.fetch_one(
+            """
+            SELECT COUNT(*)::int AS audit_count
+              FROM quality.audit_5s_audits
+             WHERE area_id = %s
+            """,
+            (area_id,),
+        )
+        return int((row or {}).get("audit_count") or 0)
+
+    def list_area_children(self, parent_area_id: str) -> list[dict[str, Any]]:
+        rows = self.fetch_all(
+            """
+            SELECT a.id,
+                   a.branch_code,
+                   a.name,
+                   a.active,
+                   a.created_at,
+                   a.parent_area_id,
+                   p.name AS parent_area_name,
+                   0 AS children_count
+              FROM quality.audit_5s_areas a
+              LEFT JOIN quality.audit_5s_areas p ON p.id = a.parent_area_id
+             WHERE a.parent_area_id = %s
+             ORDER BY lower(a.name)
+            """,
+            (parent_area_id,),
+        )
+        return [enrich_area_hierarchy_fields(row) for row in rows]
 
     def create_area(
         self,
@@ -102,13 +176,133 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             INSERT INTO quality.audit_5s_areas (
                 branch_code, name, created_by_user_id
             ) VALUES (%s, %s, %s)
-            RETURNING id, branch_code, name, active, created_at
+            RETURNING id, branch_code, name, active, created_at, parent_area_id
             """,
             (branch_code, name.strip(), created_by_user_id),
         )
         if not row:
             raise PluginsRepositoryError("Falha ao cadastrar área auditada.")
-        return row
+        return enrich_area_hierarchy_fields({**row, "children_count": 0, "parent_area_name": None})
+
+    def update_area(
+        self,
+        *,
+        area_id: str,
+        name: str | None = None,
+        active: bool | None = None,
+    ) -> dict[str, Any]:
+        area = self.get_area(area_id)
+        if not area:
+            raise PluginsRepositoryError("Área não encontrada.")
+        fields: list[str] = []
+        params: list[Any] = []
+        if name is not None:
+            cleaned = name.strip()
+            if len(cleaned) < 2:
+                raise PluginsRepositoryError("Nome da área deve ter ao menos 2 caracteres.")
+            fields.append("name = %s")
+            params.append(cleaned)
+        if active is not None:
+            fields.append("active = %s")
+            params.append(bool(active))
+        if not fields:
+            raise PluginsRepositoryError("Nenhuma alteração informada.")
+        fields.append("updated_at = NOW()")
+        params.append(area_id)
+        self.execute(
+            f"""
+            UPDATE quality.audit_5s_areas
+               SET {", ".join(fields)}
+             WHERE id = %s
+            """,
+            tuple(params),
+        )
+        updated = self.get_area(area_id)
+        if not updated:
+            raise PluginsRepositoryError("Área não encontrada após atualização.")
+        return updated
+
+    def set_area_children(
+        self,
+        *,
+        parent_area_id: str,
+        child_ids: list[str],
+    ) -> dict[str, Any]:
+        parent = self.get_area(parent_area_id)
+        if parent is None:
+            raise PluginsRepositoryError("Área agregadora não encontrada.")
+
+        unique_ids: list[str] = []
+        seen: set[str] = set()
+        for raw in child_ids:
+            cid = str(raw or "").strip()
+            if not cid or cid in seen:
+                continue
+            seen.add(cid)
+            unique_ids.append(cid)
+
+        children: list[dict[str, Any]] = []
+        for cid in unique_ids:
+            child = self.get_area(cid)
+            if child is None:
+                raise PluginsRepositoryError("Uma ou mais subáreas não foram encontradas.")
+            children.append(child)
+
+        try:
+            normalized = validate_set_children(
+                parent=parent,
+                children=children,
+                child_ids=unique_ids,
+                parent_audit_count=self.count_audits_for_area(parent_area_id),
+            )
+        except Audit5sAreaHierarchyError as exc:
+            raise PluginsRepositoryError(str(exc)) from exc
+
+        with self.db():
+            self.execute(
+                """
+                UPDATE quality.audit_5s_areas
+                   SET parent_area_id = NULL,
+                       updated_at = NOW()
+                 WHERE parent_area_id = %s
+                """,
+                (parent_area_id,),
+                auto_commit=False,
+            )
+            for cid in normalized:
+                self.execute(
+                    """
+                    UPDATE quality.audit_5s_areas
+                       SET parent_area_id = %s,
+                           updated_at = NOW()
+                     WHERE id = %s
+                    """,
+                    (parent_area_id, cid),
+                    auto_commit=False,
+                )
+            self.commit()
+
+        updated = self.get_area(parent_area_id)
+        if not updated:
+            raise PluginsRepositoryError("Área agregadora não encontrada após vínculo.")
+        return {
+            **updated,
+            "children": self.list_area_children(parent_area_id),
+        }
+
+    def assert_area_is_auditable(self, area_id: str, *, branch_code: str | None = None) -> dict[str, Any]:
+        area = self.get_area(area_id)
+        if area is None:
+            raise PluginsRepositoryError("Área auditada não encontrada.")
+        if branch_code is not None and str(area.get("branch_code")) != str(branch_code):
+            raise PluginsRepositoryError("Área auditada inválida para esta filial.")
+        if not area.get("active", True):
+            raise PluginsRepositoryError("Área auditada inválida para esta filial.")
+        try:
+            assert_area_auditable(area)
+        except Audit5sAreaHierarchyError as exc:
+            raise PluginsRepositoryError(str(exc)) from exc
+        return area
 
     def list_criteria_catalog(self, catalog_version: int | None = None) -> list[dict[str, Any]]:
         version = catalog_version or self.CATALOG_VERSION
@@ -466,6 +660,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         created_by_user_id: str,
         auditors: list[dict[str, str]],
     ) -> dict[str, Any]:
+        self.assert_area_is_auditable(area_id, branch_code=branch_code)
         with self.db():
             sequence_key = f"audit_5s_branch_{branch_code}"
             code_generator = PostgresSequentialCodeGenerator(connection=self.connection)
@@ -544,18 +739,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             )
 
         if area_id is not None:
-            area = self.fetch_one(
-                """
-                SELECT id
-                  FROM quality.audit_5s_areas
-                 WHERE id = %s
-                   AND branch_code = %s
-                   AND active = TRUE
-                """,
-                (area_id, audit["branch_code"]),
-            )
-            if not area:
-                raise PluginsRepositoryError("Área auditada inválida para esta filial.")
+            self.assert_area_is_auditable(area_id, branch_code=str(audit["branch_code"]))
 
         fields: list[str] = []
         params: list[Any] = []
@@ -2627,6 +2811,17 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 tuple(params),
             )
 
+        score_by_area = self._merge_aggregator_score_by_area(
+            score_by_area,
+            branch_code=request.branch_code,
+            date_start=request.date_start.isoformat(),
+            date_end=request.date_end.isoformat(),
+            shift=request.shift,
+            audit_status=request.audit_status,
+            senso_order=senso_order,
+            filter_area_id=request.area_id,
+        )
+
         score_by_senso_where = (
             f"{where_sql} AND a.status != 'draft'"
             if senso_order
@@ -3194,8 +3389,14 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             conditions.insert(0, "a.branch_code = %s")
             params.insert(0, scope)
         if area_id:
-            conditions.append("a.area_id = %s")
-            params.append(area_id)
+            area_ids = self._resolve_dashboard_area_ids(area_id)
+            if len(area_ids) == 1:
+                conditions.append("a.area_id = %s")
+                params.append(area_ids[0])
+            else:
+                placeholders = ", ".join(["%s"] * len(area_ids))
+                conditions.append(f"a.area_id IN ({placeholders})")
+                params.extend(area_ids)
         if shift:
             conditions.append("a.shift = %s")
             params.append(shift)
@@ -3203,6 +3404,168 @@ class PostgresAudit5sRepository(PluginBaseRepository):
             conditions.append("a.status = %s")
             params.append(audit_status)
         return " AND ".join(conditions), params
+
+    def _resolve_dashboard_area_ids(self, area_id: str) -> list[str]:
+        """Se a área for agregadora, expande para os IDs das subáreas."""
+        area = self.get_area(area_id)
+        if area and area.get("is_aggregator"):
+            children = self.list_area_children(area_id)
+            child_ids = [str(c["id"]) for c in children]
+            return child_ids or [area_id]
+        return [area_id]
+
+    def _merge_aggregator_score_by_area(
+        self,
+        leaf_rows: list[dict[str, Any]],
+        *,
+        branch_code: str,
+        date_start: str,
+        date_end: str,
+        shift: str | None,
+        audit_status: str | None,
+        senso_order: int | None,
+        filter_area_id: str | None,
+    ) -> list[dict[str, Any]]:
+        """Inclui agregadoras com média das médias das subáreas no período."""
+        leaf_by_id = {
+            str(row.get("area_id")): row for row in leaf_rows if row.get("area_id")
+        }
+
+        # Quando o filtro já é uma agregadora, as folhas no chart são as filhas;
+        # ainda assim mostramos a linha da agregadora.
+        scope = normalize_branch_scope(branch_code)
+        agg_params: list[Any] = []
+        agg_branch_sql = ""
+        if not is_all_branches(scope):
+            agg_branch_sql = " AND p.branch_code = %s"
+            agg_params.append(scope)
+        agg_filter_sql = ""
+        if filter_area_id:
+            agg_filter_sql = " AND (p.id::text = %s OR c.id::text = %s)"
+            agg_params.extend([filter_area_id, filter_area_id])
+
+        aggregators = self.fetch_all(
+            f"""
+            SELECT p.id::text AS area_id,
+                   p.name AS area_name,
+                   array_agg(c.id::text ORDER BY lower(c.name)) AS child_ids
+              FROM quality.audit_5s_areas p
+              JOIN quality.audit_5s_areas c ON c.parent_area_id = p.id
+             WHERE p.parent_area_id IS NULL
+               {agg_branch_sql}
+               {agg_filter_sql}
+             GROUP BY p.id, p.name
+            """,
+            tuple(agg_params),
+        )
+
+        # Preferir médias já calculadas nas folhas; se o filtro excluiu folhas
+        # do chart (LIMIT), recalcular por agregadora via SQL dedicado.
+        merged = [dict(row) for row in leaf_rows]
+        for agg in aggregators:
+            child_ids = list(agg.get("child_ids") or [])
+            child_means: list[float] = []
+            audit_count = 0
+            missing = [cid for cid in child_ids if cid not in leaf_by_id]
+            for cid in child_ids:
+                leaf = leaf_by_id.get(cid)
+                if leaf and leaf.get("average_score_pct") is not None:
+                    child_means.append(float(leaf["average_score_pct"]))
+                    audit_count += int(leaf.get("audit_count") or 0)
+
+            if missing:
+                # Recalcula médias das filhas ausentes no top-20
+                extra = self._leaf_area_scores_for_ids(
+                    child_ids=missing,
+                    branch_code=branch_code,
+                    date_start=date_start,
+                    date_end=date_end,
+                    shift=shift,
+                    audit_status=audit_status,
+                    senso_order=senso_order,
+                )
+                for leaf in extra:
+                    if leaf.get("average_score_pct") is not None:
+                        child_means.append(float(leaf["average_score_pct"]))
+                        audit_count += int(leaf.get("audit_count") or 0)
+
+            avg = mean_of_means(child_means)
+            if avg is None:
+                continue
+            merged.append(
+                {
+                    "area_id": str(agg["area_id"]),
+                    "area_name": agg["area_name"],
+                    "average_score_pct": avg,
+                    "audit_count": audit_count,
+                    "aggregation": "mean_of_means",
+                }
+            )
+
+        merged.sort(
+            key=lambda row: (
+                -(float(row["average_score_pct"]) if row.get("average_score_pct") is not None else -1),
+                str(row.get("area_name") or ""),
+            )
+        )
+        return merged[:20]
+
+    def _leaf_area_scores_for_ids(
+        self,
+        *,
+        child_ids: list[str],
+        branch_code: str,
+        date_start: str,
+        date_end: str,
+        shift: str | None,
+        audit_status: str | None,
+        senso_order: int | None,
+    ) -> list[dict[str, Any]]:
+        if not child_ids:
+            return []
+        where_sql, params = self._dashboard_filter_clause(
+            branch_code=branch_code,
+            date_start=date_start,
+            date_end=date_end,
+            area_id=None,
+            shift=shift,
+            audit_status=audit_status,
+        )
+        placeholders = ", ".join(["%s"] * len(child_ids))
+        where_sql = f"{where_sql} AND a.area_id IN ({placeholders})"
+        params = [*params, *child_ids]
+        if senso_order:
+            return self.fetch_all(
+                f"""
+                SELECT a.area_id::text AS area_id,
+                       ar.name AS area_name,
+                       ROUND(AVG(senso_score.score_pct)::numeric, 2) AS average_score_pct,
+                       COUNT(*)::int AS audit_count
+                  FROM quality.audit_5s_audits a
+                  JOIN quality.audit_5s_areas ar ON ar.id = a.area_id
+                  CROSS JOIN LATERAL ({self._dashboard_senso_score_subquery(senso_order)}) AS senso_score
+                 WHERE {where_sql}
+                   AND a.status != 'draft'
+                   AND senso_score.score_pct IS NOT NULL
+                 GROUP BY a.area_id, ar.name
+                """,
+                tuple(params),
+            )
+        return self.fetch_all(
+            f"""
+            SELECT a.area_id::text AS area_id,
+                   ar.name AS area_name,
+                   ROUND(AVG(a.overall_score_pct)::numeric, 2) AS average_score_pct,
+                   COUNT(*)::int AS audit_count
+              FROM quality.audit_5s_audits a
+              JOIN quality.audit_5s_areas ar ON ar.id = a.area_id
+             WHERE {where_sql}
+               AND a.status != 'draft'
+               AND a.overall_score_pct IS NOT NULL
+             GROUP BY a.area_id, ar.name
+            """,
+            tuple(params),
+        )
 
     @staticmethod
     def _dashboard_date_trunc_unit(granularity: str) -> str:
