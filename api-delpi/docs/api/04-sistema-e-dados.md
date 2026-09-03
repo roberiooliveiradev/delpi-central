@@ -49,7 +49,17 @@ Relacionamentos (SX9010).
 
 ### GET /system/tables/{tableName}/schema
 
-Schema agregado (SX2 + SX3 + SIX + SX9).
+Schema agregado (SX2 + SX3 + SIX + SX9) no contrato **`composite_analysis`**:
+
+| Seção (`data`) | Conteúdo |
+|---|---|
+| `summary` | `tableName`, `alias`, `description`, contagens |
+| `columns` | `{ items, total, truncated }` — dicionário SX3 |
+| `indexes` | `{ items, total, truncated }` — SIX |
+| `relations` | `{ items, total, truncated }` — SX9 (aggregate pode truncar; `total` preserva o total real) |
+| `table` | `{ items, total, truncated }` — metadados SX2 (1 item) |
+
+`meta.sections[]` lista as seções com `key`, `label`, `itemCount`, `truncated` (mesmo padrão de factory-status / safety-stock).
 
 ---
 

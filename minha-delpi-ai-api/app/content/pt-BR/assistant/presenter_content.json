@@ -342,7 +342,10 @@
       "rows",
       "entries",
       "points",
-      "indicators"
+      "indicators",
+      "columns",
+      "indexes",
+      "relations"
     ],
     "payloadEnvelopeKeys": [
       "data",
@@ -372,19 +375,33 @@
       "intro": "Visão consolidada dos dados retornados nesta consulta.",
       "sectionsLine": "Seções analisadas: {sections}."
     },
+    "preferredSectionKeys": [
+      "columns",
+      "indexes",
+      "relations",
+      "table"
+    ],
     "sectionRoles": {
       "structure": "structure",
       "raw_material_stock": "stock",
       "production": "list",
       "shipping": "other",
-      "materials": "list"
+      "materials": "list",
+      "columns": "list",
+      "indexes": "list",
+      "relations": "list",
+      "table": "other"
     },
     "sectionLabels": {
       "structure": "Estrutura (BOM)",
       "raw_material_stock": "Estoque de matérias-primas",
       "production": "Ordens de produção",
       "shipping": "Expedição",
-      "materials": "Matérias-primas por impacto de custo"
+      "materials": "Matérias-primas por impacto de custo",
+      "columns": "Colunas (SX3)",
+      "indexes": "Índices (SIX)",
+      "relations": "Relacionamentos (SX9)",
+      "table": "Metadados da tabela (SX2)"
     },
     "indicatorCards": [
       { "key": "total_components", "label": "Componentes", "unit": "" },

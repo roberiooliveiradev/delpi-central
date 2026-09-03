@@ -14,6 +14,10 @@ from app.application.dto.system.system_requests import (
     SearchColumnsInTableRequest,
     SearchColumnsByDescriptionRequest,
 )
+from app.application.services.composite_sections_builder import (
+    PROTHEUS_TABLE_SCHEMA_SECTIONS,
+    build_composite_sections,
+)
 from app.composition.system_composer import (
     build_get_table_use_case,
     build_list_table_columns_use_case,
@@ -202,6 +206,10 @@ def table_schema(tableName: str):
             result,
             operation_id="get_protheus_table_schema",
             message="Schema completo retornado!",
+            sections=build_composite_sections(
+                result,
+                section_keys=PROTHEUS_TABLE_SCHEMA_SECTIONS,
+            ),
         )
 
     except Exception as e:

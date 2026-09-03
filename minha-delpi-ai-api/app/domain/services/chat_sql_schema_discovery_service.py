@@ -197,6 +197,9 @@ class ChatSqlSchemaDiscoveryService:
         for source_key in ("results", "columns", "fields"):
             raw = payload.get(source_key)
 
+            if isinstance(raw, dict):
+                raw = raw.get("items")
+
             if isinstance(raw, list):
                 for item in raw:
                     if not isinstance(item, dict):
@@ -269,6 +272,9 @@ class ChatSqlSchemaDiscoveryService:
     def _parse_relation_results(cls, payload: dict) -> list[dict[str, str]]:
         relations: list[dict[str, str]] = []
         raw = payload.get("results") or payload.get("relations")
+
+        if isinstance(raw, dict):
+            raw = raw.get("items")
 
         if not isinstance(raw, list):
             return relations

@@ -132,11 +132,13 @@ class ChatPresentationApiDeliveredMetadataService:
             available_formats.append("dashboard")
 
         if is_composite:
-            primary_presentation = (
-                text_presentation
-                or dashboard_presentation
-                or table_presentation
-                or kpi_presentation
+            primary_presentation = cls._resolve_composite_primary_presentation(
+                path=resolved_path,
+                entity=entity,
+                table_presentation=table_presentation,
+                dashboard_presentation=dashboard_presentation,
+                text_presentation=text_presentation,
+                kpi_presentation=kpi_presentation,
             )
         else:
             primary_presentation = (
@@ -149,7 +151,7 @@ class ChatPresentationApiDeliveredMetadataService:
         preferred_format = cls._resolve_preferred_format(
             session_format=session_format,
             has_text=bool(text_presentation),
-            has_table=bool(table_presentation),
+            has_table=bool(table_presentation) or bool(composite_tables),
             has_kpi=bool(kpi_presentation),
         )
 
@@ -324,6 +326,47 @@ class ChatPresentationApiDeliveredMetadataService:
         )
 
         return metadata
+
+    @classmethod
+    def _resolve_composite_primary_presentation(
+        cls,
+        *,
+        path: str,
+        entity: str | None,
+        table_presentation: Any,
+        dashboard_presentation: Any,
+        text_presentation: Any,
+        kpi_presentation: Any,
+    ) -> Any:
+        """Primary do composite segue defaultViewPolicy / stackTailPolicy do perfil."""
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        view_policy = str(
+            (profile or {}).get("defaultViewPolicy") or ""
+        ).strip().lower()
+        stack_tail = str((profile or {}).get("stackTailPolicy") or "").strip().lower()
+        table_first = view_policy in {
+            "table_when_available",
+            "table_primary",
+        } or stack_tail == "table_primary"
+
+        if table_first:
+            return (
+                table_presentation
+                or dashboard_presentation
+                or text_presentation
+                or kpi_presentation
+            )
+
+        return (
+            text_presentation
+            or dashboard_presentation
+            or table_presentation
+            or kpi_presentation
+        )
 
     @staticmethod
     def _resolve_preferred_format(

@@ -293,6 +293,77 @@ def test_composite_bundle_for_safety_stock_detail_exposes_commitments_and_timeli
     assert "open_purchase_orders" in titles
 
 
+def test_composite_bundle_for_protheus_table_schema_section_blocks():
+    """Schema Protheus — seções canônicas `{items,total,truncated}` (Playbook 10)."""
+    presenter = ExternalActionResultPresenter()
+    payload = {
+        "summary": {
+            "tableName": "SB1010",
+            "alias": "SB1",
+            "description": "Descrição Genérica do Produto",
+            "columnCount": 2,
+            "indexCount": 1,
+            "relationCount": 1,
+        },
+        "columns": {
+            "items": [
+                {"X3_CAMPO": "B1_COD", "X3_DESCRIC": "Codigo", "X3_TIPO": "C"},
+                {"X3_CAMPO": "B1_DESC", "X3_DESCRIC": "Descricao", "X3_TIPO": "C"},
+            ],
+            "total": 2,
+            "truncated": False,
+        },
+        "indexes": {
+            "items": [{"INDICE": "SB1", "CHAVE": "B1_FILIAL+B1_COD", "ORDEM": "1"}],
+            "total": 1,
+            "truncated": False,
+        },
+        "relations": {
+            "items": [{"X9_DOM": "SB1", "X9_CAMPO": "B1_COD", "X9_EXPDOM": "SB2"}],
+            "total": 1,
+            "truncated": False,
+        },
+        "table": {
+            "items": [
+                {
+                    "TableName": "SB1010",
+                    "X2_CHAVE": "SB1",
+                    "X2_ARQUIVO": "SB1010",
+                    "X2_NOME": "Descrição Genérica do Produto",
+                }
+            ],
+            "total": 1,
+            "truncated": False,
+        },
+    }
+    sections = [
+        {"key": "columns", "label": "Colunas (SX3)", "itemCount": 2, "truncated": False},
+        {"key": "indexes", "label": "Índices (SIX)", "itemCount": 1, "truncated": False},
+        {"key": "relations", "label": "Relacionamentos (SX9)", "itemCount": 1, "truncated": False},
+        {"key": "table", "label": "Metadados da tabela (SX2)", "itemCount": 1, "truncated": False},
+    ]
+
+    bundle = ChatSchemaDrivenPresentationService.build_composite_bundle(
+        presenter,
+        payload,
+        path="/system/tables/SB1010/schema",
+        entity="protheus_table_schema",
+        sections=sections,
+    )
+
+    tables = list(bundle.tables or ())
+    assert len(tables) >= 3
+    assert bundle.table is not None
+    assert bundle.dashboard is None  # perfil system: compositeDashboardPolicy=skip
+    primary_rows = bundle.table.get("rows") or []
+    assert any(
+        str(row.get("X3_CAMPO") or row.get("x3_campo") or "").upper() == "B1_COD"
+        for row in primary_rows
+    )
+    titles = " | ".join(str(table.get("title") or "") for table in tables).lower()
+    assert "coluna" in titles or "sx3" in titles
+
+
 def test_extract_download_artifacts_normalizes_relative_path():
     artifacts = ChatSchemaDrivenPresentationService.extract_download_artifacts(
         {

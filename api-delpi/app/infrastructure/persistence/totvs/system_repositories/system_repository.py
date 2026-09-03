@@ -70,8 +70,10 @@ class SystemRepository(BaseRepository, SystemRepositoryPort):
 
         if page < 1:
             page = 1
-        if page_size < 1 or page_size > 200:
+        if page_size < 1:
             page_size = 50
+        elif page_size > 500:
+            page_size = 500
 
         offset = (page - 1) * page_size
 

@@ -1274,16 +1274,21 @@
       "dataAnswerLeadAlignment": "preserve_template"
     },
     "system": {
-      "defaultViewPolicy": "generic",
+      "defaultViewPolicy": "table_when_available",
       "viewOrder": [
-        "text",
-        "table"
+        "table",
+        "text"
       ],
       "stackPlan": "default",
+      "stackTailPolicy": "table_primary",
+      "compositeDashboardPolicy": "skip",
+      "chartPolicy": "skip",
       "flags": [
         "system"
       ],
-      "commentaryProfileKey": "generic_list"
+      "commentaryProfileKey": "generic_list",
+      "humanizedNarrative": "skip",
+      "dataAnswerLeadAlignment": "preserve_template"
     },
     "kpi_series": {
       "defaultViewPolicy": "kpi_when_available",

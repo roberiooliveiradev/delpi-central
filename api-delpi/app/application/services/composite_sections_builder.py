@@ -23,7 +23,41 @@ SECTION_LABELS: dict[str, str] = {
     "open_commitments": "Empenhos em aberto",
     "stock_projection": "Extrato projetado de saldo",
     "linked_suppliers": "Fornecedores vinculados",
+    # Dicionário Protheus — GET /system/tables/{table}/schema
+    "columns": "Colunas (SX3)",
+    "indexes": "Índices (SIX)",
+    "relations": "Relacionamentos (SX9)",
+    "table": "Metadados da tabela (SX2)",
 }
+
+PROTHEUS_TABLE_SCHEMA_SECTIONS: tuple[str, ...] = (
+    "columns",
+    "indexes",
+    "relations",
+    "table",
+)
+
+
+def build_section_block(
+    items: list[dict[str, Any]] | None,
+    *,
+    limit: int | None = None,
+) -> dict[str, Any]:
+    """Bloco canônico de seção composite: `{items, total, truncated}`."""
+    rows = [item for item in (items or []) if isinstance(item, dict)]
+    total = len(rows)
+    truncated = False
+    shown = rows
+
+    if limit is not None and limit >= 0 and total > limit:
+        shown = rows[:limit]
+        truncated = True
+
+    return {
+        "items": shown,
+        "total": total,
+        "truncated": truncated,
+    }
 
 
 def _item_count(block: dict[str, Any]) -> int:

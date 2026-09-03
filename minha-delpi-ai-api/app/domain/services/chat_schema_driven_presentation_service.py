@@ -336,7 +336,10 @@ class ChatSchemaDrivenPresentationService:
         text = cls._build_composite_text(host, root, path=path, entity=entity) or cls.build_text(
             host, root, rows=None, path=path, entity=entity
         )
-        dashboard = cls._build_composite_dashboard(kpi=kpi, tree=tree, tables=tables)
+        dashboard = None
+
+        if not cls._composite_dashboard_skipped(path=path, entity=entity):
+            dashboard = cls._build_composite_dashboard(kpi=kpi, tree=tree, tables=tables)
 
         return SchemaPresentationBundle(
             table=tables[0] if tables else None,
@@ -348,6 +351,44 @@ class ChatSchemaDrivenPresentationService:
         )
 
     @classmethod
+    def _composite_dashboard_skipped(cls, *, path: str, entity: str | None) -> bool:
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+
+        if not isinstance(profile, dict):
+            return False
+
+        policy = str(profile.get("compositeDashboardPolicy") or "").strip().lower()
+        return policy in {"skip", "never", "off", "false", "0"}
+
+    @classmethod
+    def _composite_section_items(cls, block: Any) -> list[dict[str, Any]]:
+        """Itens de seção composite — contrato canônico `{items:[…]}`.
+
+        Lista plana é fallback transitório (payload legado pré-normalização).
+        """
+        if isinstance(block, dict):
+            nested = block.get("items")
+
+            if isinstance(nested, list):
+                return [item for item in nested if isinstance(item, dict)]
+
+            return []
+
+        if isinstance(block, list):
+            return [item for item in block if isinstance(item, dict)]
+
+        return []
+
+    @classmethod
+    def _composite_preferred_section_keys(cls) -> tuple[str, ...]:
+        raw = cls._composite_node("preferredSectionKeys")
+
+        if isinstance(raw, list) and raw:
+            return tuple(str(item).strip() for item in raw if str(item).strip())
+
+        return ("columns", "indexes", "relations", "table")
+
+    @classmethod
     def _composite_sections(
         cls,
         root: Any,
@@ -357,33 +398,41 @@ class ChatSchemaDrivenPresentationService:
             return []
 
         ordered_keys: list[tuple[str, str]] = []
+        seen: set[str] = set()
 
         if isinstance(sections_meta, list) and sections_meta:
             for section in sections_meta:
                 if isinstance(section, dict) and str(section.get("key") or "").strip():
-                    ordered_keys.append(
-                        (str(section["key"]).strip(), str(section.get("label") or "").strip())
-                    )
+                    key = str(section["key"]).strip()
+                    ordered_keys.append((key, str(section.get("label") or "").strip()))
+                    seen.add(key)
         else:
+            for key in cls._composite_preferred_section_keys():
+                if key in root and key not in seen:
+                    ordered_keys.append((key, ""))
+                    seen.add(key)
+
             for key, value in root.items():
-                if isinstance(value, dict) and isinstance(value.get("items"), list):
-                    ordered_keys.append((str(key), ""))
+                token = str(key)
+
+                if token in seen:
+                    continue
+
+                if cls._composite_section_items(value):
+                    ordered_keys.append((token, ""))
+                    seen.add(token)
 
         label_map = cls._composite_node("sectionLabels")
         resolved: list[tuple[str, str, list[dict[str, Any]]]] = []
 
         for key, label in ordered_keys:
-            block = root.get(key)
-            items = block.get("items") if isinstance(block, dict) else None
+            dict_items = cls._composite_section_items(root.get(key))
 
-            if isinstance(items, list) and items:
-                dict_items = [item for item in items if isinstance(item, dict)]
-
-                if dict_items:
-                    fallback_label = (
-                        str(label_map.get(key)) if isinstance(label_map, dict) and label_map.get(key) else key
-                    )
-                    resolved.append((key, label or fallback_label, dict_items))
+            if dict_items:
+                fallback_label = (
+                    str(label_map.get(key)) if isinstance(label_map, dict) and label_map.get(key) else key
+                )
+                resolved.append((key, label or fallback_label, dict_items))
 
         return resolved
 

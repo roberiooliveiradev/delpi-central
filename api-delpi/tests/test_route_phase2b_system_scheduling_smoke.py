@@ -70,7 +70,15 @@ def test_get_protheus_table_schema_returns_meta(mock_build) -> None:
     from app.interface.http.routes.system_routes import table_schema
 
     mock_build.return_value = MagicMock(
-        execute=MagicMock(return_value={"table": "SB1010", "columns": []})
+        execute=MagicMock(
+            return_value={
+                "summary": {"tableName": "SB1010", "columnCount": 0},
+                "columns": {"items": [], "total": 0, "truncated": False},
+                "indexes": {"items": [], "total": 0, "truncated": False},
+                "relations": {"items": [], "total": 0, "truncated": False},
+                "table": {"items": [], "total": 0, "truncated": False},
+            }
+        )
     )
     response = table_schema(tableName="SB1010")
     assert_envelope_meta(
