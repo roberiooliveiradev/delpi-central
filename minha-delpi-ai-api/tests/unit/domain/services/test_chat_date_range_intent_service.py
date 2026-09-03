@@ -144,6 +144,20 @@ def test_named_month_without_year_is_ambiguous_before_month_occurs():
     assert resolved is None
 
 
+def test_dez_primeiros_is_not_december_ambiguity():
+    ambiguous = ChatDateRangeIntentService.detect_ambiguous_named_month(
+        "me passa o select dos produtos do grupo 1008, só os dez primeiros ok?",
+        today=date(2026, 9, 2),
+    )
+    assert ambiguous is None
+
+    clarification = ChatDateRangeIntentService.build_ambiguity_clarification(
+        "gera sql top 10 do grupo 1008 — os dez primeiros",
+        today=date(2026, 9, 2),
+    )
+    assert clarification is None
+
+
 def test_year_follow_up_resolves_pending_month():
     history = [{"role": "user", "content": "rol do mes de marco"}]
 

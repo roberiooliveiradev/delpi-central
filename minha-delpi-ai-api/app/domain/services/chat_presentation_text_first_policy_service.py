@@ -1,8 +1,13 @@
 """Política texto-first e visuais sob demanda — Playbook 12 R14.
 
-Anti-padrão: nunca forçar texto (e ocultar tabela/árvore no renderPlan) quando o
-perfil efetivo do turno pede evidência (`table_when_available`, `tree_when_available`,
-`kpi_when_available`, `stock`). Callers devem passar ``metadata`` para reutilizar o
+Anti-padrão: nunca forçar texto (e ocultar tabela/árvore no renderPlan) quando:
+- o perfil efetivo pede evidência (`table_when_available`, `tree_when_available`,
+  `kpi_when_available`, `stock`); ou
+- o turno já materializou evidência em ``tablePresentation`` / árvore / KPI / etc.
+
+``defaultViewPolicy: generic`` + ``viewBuildPolicy: on_demand`` **não** implica
+ocultar tabela no Automático — só ``text_when_available`` e ``textFirstProfiles``
+forçam texto-only. Callers devem passar ``metadata`` para reutilizar o
 ``presentationProfile`` cacheado / shape OpenAPI.
 """
 
@@ -61,7 +66,6 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         token = str(profile.get("viewBuildPolicy") or "on_demand").strip().lower()
 
         return token if token in {"eager", "on_demand"} else "on_demand"
-
 
     @classmethod
     def stack_layout_policy(
@@ -129,7 +133,6 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
 
         return False
 
-
     @classmethod
     def should_default_to_text_only(
         cls,
@@ -146,6 +149,11 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
             return False
 
         if cls.looks_like_integrated_stack_request(user_message):
+            return False
+
+        # Evidência já montada no turno: Automático não pode virar resumo sem tabela/árvore.
+        # Antes de resolver perfil (evita depender de content port só para este guard).
+        if cls._metadata_has_evidence_visual(metadata):
             return False
 
         if cls.view_build_policy(path, entity, metadata=metadata) == "eager":
@@ -178,10 +186,20 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         if policy == "text_when_available":
             return True
 
-        if cls.view_build_policy(path, entity, metadata=metadata) == "on_demand" and not normalized:
-            return policy not in _EVIDENCE_VIEW_POLICIES
-
+        # generic + on_demand: deixa o Automático (scores / viewIntent) escolher a vista.
+        # Não expandir text-first para toda família generic (regredia SQL, system, listagens…).
         return False
+
+    @classmethod
+    def _metadata_has_evidence_visual(cls, metadata: dict[str, Any] | None) -> bool:
+        if not isinstance(metadata, dict):
+            return False
+
+        from app.domain.services.chat_presentation_decision_metadata_service import (
+            ChatPresentationDecisionMetadataService,
+        )
+
+        return ChatPresentationDecisionMetadataService.metadata_has_visual(metadata)
 
     @classmethod
     def should_use_stack_layout(

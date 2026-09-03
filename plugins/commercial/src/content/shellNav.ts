@@ -1,5 +1,5 @@
 /**
- * Navegação de topo do Portal Comercial (IA 2026): rótulos e ordem das sete áreas.
+ * Navegação de topo do Portal Comercial (IA 2026): rótulos e ordem das áreas.
  * Fonte única — o shell só filtra por capacidade, aplica ícone e navega.
  */
 import type { PluginNavId } from "../app/pluginRoutes";
@@ -21,6 +21,7 @@ export const SHELL_NAV_ITEMS: readonly ShellNavItem[] = [
   { id: "open_orders", label: "Meus pedidos", requiredCap: "always" },
   { id: "customers", label: "Minha Carteira", requiredCap: "customers" },
   { id: "administration", label: "Administração", requiredCap: "admin" },
+  { id: "help", label: "Ajuda", requiredCap: "always" },
 ] as const;
 
 export type ShellNavCapabilities = Record<Exclude<ShellNavCapability, "always">, boolean>;

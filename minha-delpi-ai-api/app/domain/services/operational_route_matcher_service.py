@@ -342,6 +342,7 @@ class OperationalRouteMatcherService:
             and not spec.get("excludeIfWebSearch")
             and not spec.get("excludeIfSqlOperational")
             and not spec.get("excludeIfSqlAuthoring")
+            and not spec.get("excludeIfSqlExecute")
             and not spec.get("excludeIfProductionRestRoute")
             and not plural_scope
             and not spec.get("hasProductEntityReference")
@@ -365,6 +366,7 @@ class OperationalRouteMatcherService:
         probes = (
             ("excludeIfSqlConversation", cls._is_sql_conversation_turn),
             ("excludeIfSqlAuthoring", cls._is_sql_authoring_turn),
+            ("excludeIfSqlExecute", cls._is_sql_execute_turn),
             ("excludeIfWebSearch", cls._is_web_search_turn),
             ("excludeIfSqlOperational", cls._requires_sql_operational_knowledge),
             ("excludeIfProductionRestRoute", cls._matches_production_rest_route),
@@ -383,6 +385,12 @@ class OperationalRouteMatcherService:
         )
 
         return ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message or normalized)
+
+    @staticmethod
+    def _is_sql_execute_turn(normalized: str, *, message: str = "") -> bool:
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+        return ChatSqlIntentService.should_auto_execute_sql(message or normalized)
 
     @staticmethod
     def _is_sql_conversation_turn(normalized: str, *, message: str = "") -> bool:
@@ -452,7 +460,29 @@ class OperationalRouteMatcherService:
         if not terms:
             return False
 
-        return any(term in normalized for term in terms)
+        return any(cls._term_occurs(term, normalized) for term in terms)
+
+    @staticmethod
+    def _term_occurs(term: str, normalized: str) -> bool:
+        """Substring com fronteira à esquerda — evita ``op `` em ``top `` e ``ct `` em ``select ``."""
+        needle = str(term or "")
+        haystack = str(normalized or "")
+
+        if not needle or not haystack:
+            return False
+
+        start = 0
+
+        while True:
+            idx = haystack.find(needle, start)
+
+            if idx < 0:
+                return False
+
+            if idx == 0 or not haystack[idx - 1].isalnum():
+                return True
+
+            start = idx + 1
 
     @classmethod
     def _resolve_terms(cls, terms_from: str) -> list[str]:

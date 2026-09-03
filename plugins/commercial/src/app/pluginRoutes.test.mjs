@@ -26,7 +26,7 @@ describe("rotas nativas do pedido comercial", () => {
       pathname: "/apps/commercial/help",
       relativePath: "help",
     });
-    assert.equal(resolveActiveNavId("help"), null);
+    assert.equal(resolveActiveNavId("help"), "help");
   });
 
   it("resolve interaction-rooms (inbox e detalhe) em EN", () => {

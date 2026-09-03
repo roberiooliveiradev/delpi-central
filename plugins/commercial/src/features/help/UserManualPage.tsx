@@ -11,6 +11,7 @@ import {
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
 import { USER_MANUAL_CONTENT } from "../../content/userManualContent";
+import { UserManualLinkedText } from "./UserManualLinkedText";
 
 type UserManualPageProps = {
   basePath: string;
@@ -58,111 +59,149 @@ export function UserManualPage({ basePath }: UserManualPageProps) {
         }
       />
 
-      <p className="cm-user-manual__scope-note">{c.scopeNote}</p>
+      <p className="cm-user-manual__scope-note">
+        <UserManualLinkedText text={c.scopeNote} basePath={basePath} />
+      </p>
 
-      <SectionCard
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
-        title={c.conceptsTitle}
-      >
-        <ul className="cm-user-manual__concepts">
-          {c.concepts.map((item) => (
-            <li key={item.term}>
-              <strong>{item.term}</strong> — {item.meaning}
-            </li>
-          ))}
-        </ul>
-      </SectionCard>
-
-      <nav className="cm-user-manual__toc" aria-label={c.tocAriaLabel}>
-        <p className="cm-user-manual__toc-title">{c.tocTitle}</p>
-        <ul>
-          {c.sections.map((section) => (
-            <li key={section.id}>
+      <div className="cm-user-manual__layout">
+        <nav className="cm-user-manual__toc" aria-label={c.tocAriaLabel}>
+          <p className="cm-user-manual__toc-title">{c.tocTitle}</p>
+          <ul>
+            <li>
               <button
                 type="button"
                 className="cm-user-manual__toc-link"
-                onClick={() => scrollToSection(section.id)}
+                onClick={() => scrollToSection("concepts")}
               >
-                {section.title}
+                {c.conceptsTitle}
               </button>
             </li>
-          ))}
-        </ul>
-      </nav>
+            {c.sections.map((section) => (
+              <li key={section.id}>
+                <button
+                  type="button"
+                  className="cm-user-manual__toc-link"
+                  onClick={() => scrollToSection(section.id)}
+                >
+                  {section.title}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      {c.sections.map((section) => (
-        <section
-          key={section.id}
-          id={`manual-${section.id}`}
-          className="cm-user-manual__section"
-        >
-          <SectionCard
-            classNames={cmSectionCardClassNames}
-            labels={cmSectionLabels}
-            title={section.title}
-          >
-            {section.intro ? (
-              <p className="cm-user-manual__intro">{section.intro}</p>
-            ) : null}
-
-            {section.links?.length ? (
-              <div className="cm-user-manual__table-wrap">
-                <table className="cm-user-manual__table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Quero…</th>
-                      <th scope="col">Onde ir</th>
-                      <th scope="col">Como</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {section.links.map((row) => (
-                      <tr key={row.want}>
-                        <td>{row.want}</td>
-                        <td>
-                          <strong>{row.where}</strong>
-                        </td>
-                        <td>{row.how}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : null}
-
-            {section.bullets?.length ? (
-              <ul className="cm-user-manual__list">
-                {section.bullets.map((item) => (
-                  <li key={item}>{item}</li>
+        <div className="cm-user-manual__main">
+          <section id="manual-concepts" className="cm-user-manual__section">
+            <SectionCard
+              classNames={cmSectionCardClassNames}
+              labels={cmSectionLabels}
+              title={c.conceptsTitle}
+            >
+              <ul className="cm-user-manual__concepts">
+                {c.concepts.map((item) => (
+                  <li key={item.term} className="cm-user-manual__concept-card">
+                    <strong>{item.term}</strong>
+                    <UserManualLinkedText text={item.meaning} basePath={basePath} />
+                  </li>
                 ))}
               </ul>
-            ) : null}
+            </SectionCard>
+          </section>
 
-            {section.faqs?.length ? (
-              <dl className="cm-user-manual__faq">
-                {section.faqs.map((item) => (
-                  <div key={item.q} className="cm-user-manual__faq-item">
-                    <dt>{item.q}</dt>
-                    <dd>{item.a}</dd>
-                  </div>
-                ))}
-              </dl>
-            ) : null}
+          {c.sections.map((section) => (
+            <section
+              key={section.id}
+              id={`manual-${section.id}`}
+              className="cm-user-manual__section"
+            >
+              <SectionCard
+                classNames={cmSectionCardClassNames}
+                labels={cmSectionLabels}
+                title={section.title}
+              >
+                {section.intro ? (
+                  <p className="cm-user-manual__intro">
+                    <UserManualLinkedText text={section.intro} basePath={basePath} />
+                  </p>
+                ) : null}
 
-            {section.glossary?.length ? (
-              <dl className="cm-user-manual__glossary">
-                {section.glossary.map((item) => (
-                  <div key={item.term} className="cm-user-manual__glossary-item">
-                    <dt>{item.term}</dt>
-                    <dd>{item.meaning}</dd>
+                {section.links?.length ? (
+                  <div className="cm-user-manual__table-wrap">
+                    <table className="cm-user-manual__table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Quero…</th>
+                          <th scope="col">Onde ir</th>
+                          <th scope="col">Como</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {section.links.map((row) => (
+                          <tr key={row.want}>
+                            <td>
+                              <UserManualLinkedText text={row.want} basePath={basePath} />
+                            </td>
+                            <td>
+                              <UserManualLinkedText
+                                text={row.where}
+                                basePath={basePath}
+                                className="cm-user-manual__where"
+                              />
+                            </td>
+                            <td>
+                              <UserManualLinkedText text={row.how} basePath={basePath} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
-              </dl>
-            ) : null}
-          </SectionCard>
-        </section>
-      ))}
+                ) : null}
+
+                {section.bullets?.length ? (
+                  <ul className="cm-user-manual__list">
+                    {section.bullets.map((item) => (
+                      <li key={item}>
+                        <UserManualLinkedText text={item} basePath={basePath} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+
+                {section.faqs?.length ? (
+                  <dl className="cm-user-manual__faq">
+                    {section.faqs.map((item) => (
+                      <div key={item.q} className="cm-user-manual__faq-item">
+                        <dt>
+                          <UserManualLinkedText text={item.q} basePath={basePath} />
+                        </dt>
+                        <dd>
+                          <UserManualLinkedText text={item.a} basePath={basePath} />
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+
+                {section.glossary?.length ? (
+                  <dl className="cm-user-manual__glossary">
+                    {section.glossary.map((item) => (
+                      <div key={item.term} className="cm-user-manual__glossary-item">
+                        <dt>
+                          <UserManualLinkedText text={item.term} basePath={basePath} />
+                        </dt>
+                        <dd>
+                          <UserManualLinkedText text={item.meaning} basePath={basePath} />
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+              </SectionCard>
+            </section>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

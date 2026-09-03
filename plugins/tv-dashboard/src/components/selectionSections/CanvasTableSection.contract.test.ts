@@ -21,7 +21,6 @@ describe("CanvasTableSection chrome (plugin-ui + ícones)", () => {
     expect(source).toContain("TdRibbonSelect");
     expect(source).toContain("Heading2");
     expect(source).toContain("Grid3x3");
-    expect(source).toContain("AlignLeft");
     expect(source).toContain("TableCellsMerge");
     expect(source).toContain("TableCellsSplit");
     expect(source).toContain('label="Mesclar"');
@@ -38,5 +37,11 @@ describe("CanvasTableSection chrome (plugin-ui + ícones)", () => {
     expect(collapseIcons).toContain('"canvas-table"');
     expect(collapseIcons).toContain('"canvas-table-design"');
     expect(collapseIcons).toContain('"canvas-table-cell"');
+  });
+
+  it("Quebrar alterna wrap via nextCanvasTableWhiteSpaceToggle", () => {
+    expect(source).toContain("nextCanvasTableWhiteSpaceToggle");
+    expect(source).toContain("CanvasTableCellFormatMenu");
+    expect(source).toContain('label="Formato"');
   });
 });

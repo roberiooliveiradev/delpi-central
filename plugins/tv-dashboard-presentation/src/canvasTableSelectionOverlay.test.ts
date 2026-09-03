@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   mapViewportRectToHostLocal,
   resolveCanvasTableGutterHandles,
+  resolveCanvasTableSelectionFillHandleRect,
   resolveCanvasTableSelectionOverlayRects,
   resolveCanvasTableTrackHandles,
 } from "./canvasTableSelectionOverlay";
@@ -146,5 +147,15 @@ describe("mapViewportRectToHostLocal", () => {
       targetRect: { left: 30, top: 40, width: 40, height: 20 },
     });
     expect(local).toEqual({ left: 20, top: 20, width: 40, height: 20 });
+  });
+});
+
+describe("resolveCanvasTableSelectionFillHandleRect", () => {
+  it("alça no canto SE do range de seleção", () => {
+    expect(
+      resolveCanvasTableSelectionFillHandleRect({
+        range: { left: 0, top: 0, width: 80, height: 40 },
+      }),
+    ).toEqual({ left: 76, top: 36, width: 8, height: 8 });
   });
 });

@@ -393,12 +393,13 @@
       "helpTopicId": "agent",
       "howToUse": [
         "No composer, toque em + (ou digite @) e abra a lista de agentes.",
-        "Escolha o agente com as actions da tarefa (produto, estoque, indicadores, SQL…).",
+        "Para produto, estoque, indicadores ou SQL operacional, escolha Minha DELPI (ou o agente com essas actions).",
         "Confirme que o nome do agente aparece no contexto e faça a pergunta operacional."
       ],
       "examples": [
         "Como escolho um agente?",
         "Como ativo o agente?",
+        "Qual agente consulta produto?",
         "Qual agente escolher para estoque?"
       ],
       "relatedFeatures": [

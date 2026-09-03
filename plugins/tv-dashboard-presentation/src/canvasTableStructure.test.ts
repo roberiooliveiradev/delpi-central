@@ -4,6 +4,9 @@ import {
   autoFitCanvasTableTrack,
   canvasTableBandSelection,
   canvasTableTrackContentWeights,
+  canvasTableTrackRectWeights,
+  deleteCanvasTableCols,
+  deleteCanvasTableRows,
   insertCanvasTableCol,
   insertCanvasTableRow,
 } from "./canvasTableStructure";
@@ -100,5 +103,63 @@ describe("canvasTableStructure", () => {
     });
     expect(next.reduce((s, n) => s + n, 0)).toBeCloseTo(100, 5);
     expect(next[1]).toBeGreaterThan(next[0]!);
+  });
+
+  it("delete rows no-op com 0 índices ou se esvaziasse a grade", () => {
+    const base = {
+      cells: [
+        [normalizeCanvasTableCell("A"), normalizeCanvasTableCell("B")],
+        [normalizeCanvasTableCell("C"), normalizeCanvasTableCell("D")],
+      ],
+      rows: 2,
+      cols: 2,
+      merges: [{ row: 0, col: 0, rowspan: 2, colspan: 1 }],
+      rowHeights: [40, 60],
+    };
+    const empty = deleteCanvasTableRows({ ...base, indices: [] });
+    expect(empty.rows).toBe(2);
+    expect(empty.merges[0]?.rowspan).toBe(2);
+    const wipe = deleteCanvasTableRows({ ...base, indices: [0, 1] });
+    expect(wipe.rows).toBe(2);
+  });
+
+  it("delete rows remapeia merges e tracks somam 100", () => {
+    const result = deleteCanvasTableRows({
+      cells: [
+        [normalizeCanvasTableCell("A"), normalizeCanvasTableCell("B")],
+        [normalizeCanvasTableCell("C"), normalizeCanvasTableCell("D")],
+        [normalizeCanvasTableCell("E"), normalizeCanvasTableCell("F")],
+      ],
+      rows: 3,
+      cols: 2,
+      indices: [1],
+      merges: [{ row: 0, col: 0, rowspan: 3, colspan: 1 }],
+      rowHeights: [20, 30, 50],
+    });
+    expect(result.rows).toBe(2);
+    expect(result.cells[1]?.[1]?.text).toBe("F");
+    expect(result.merges[0]?.rowspan).toBe(2);
+    expect(result.rowHeights.reduce((s, n) => s + n, 0)).toBeCloseTo(100, 5);
+  });
+
+  it("delete cols remapeia merges e tracks somam 100", () => {
+    const result = deleteCanvasTableCols({
+      cells: [
+        [
+          normalizeCanvasTableCell("A"),
+          normalizeCanvasTableCell("B"),
+          normalizeCanvasTableCell("C"),
+        ],
+      ],
+      rows: 1,
+      cols: 3,
+      indices: [1],
+      merges: [{ row: 0, col: 0, rowspan: 1, colspan: 3 }],
+      columnWidths: [20, 30, 50],
+    });
+    expect(result.cols).toBe(2);
+    expect(result.cells[0]?.[1]?.text).toBe("C");
+    expect(result.merges[0]?.colspan).toBe(2);
+    expect(result.columnWidths.reduce((s, n) => s + n, 0)).toBeCloseTo(100, 5);
   });
 });

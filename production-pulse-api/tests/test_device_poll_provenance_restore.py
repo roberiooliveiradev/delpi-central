@@ -30,6 +30,7 @@ def test_poll_restores_small_drop_without_recent_command():
     bindings.get_active.return_value = {"id": 1}
     readings = MagicMock()
     readings.insert.return_value = {"id": 9, "recorded_at": "2026-09-02T14:00:00+00:00"}
+    readings.latest_recorded_at.return_value = None
     commands = MagicMock()
     commands.has_recent_successful_command.return_value = False
 
@@ -85,6 +86,7 @@ def test_poll_accepts_drop_when_recent_decrement_command():
     bindings.get_active.return_value = {"id": 1}
     readings = MagicMock()
     readings.insert.return_value = {"id": 10, "recorded_at": "2026-09-02T14:00:00+00:00"}
+    readings.latest_recorded_at.return_value = None
     commands = MagicMock()
     commands.has_recent_successful_command.return_value = True
 

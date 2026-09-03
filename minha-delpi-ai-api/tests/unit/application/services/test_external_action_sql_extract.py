@@ -32,3 +32,23 @@ def test_extract_sql_query_handles_execute_prefix():
 
     assert sql is not None
     assert sql.startswith("SELECT A1_COD")
+
+
+def test_extract_sql_query_rejects_portuguese_select_prose():
+    service = ExternalActionSqlRouteSelectionService(_Repo())
+    message = (
+        "executa no banco esse select top 10 de produtos do grupo 1008 "
+        "(SB1010, B1_COD, B1_DESC, B1_GRUPO)"
+    )
+
+    assert service._extract_sql_query(message) is None
+
+
+def test_term_occurs_rejects_op_inside_top():
+    from app.domain.services.operational_route_matcher_service import (
+        OperationalRouteMatcherService,
+    )
+
+    assert OperationalRouteMatcherService._term_occurs("op ", "select top 10") is False
+    assert OperationalRouteMatcherService._term_occurs("ct ", "select top 10") is False
+    assert OperationalRouteMatcherService._term_occurs("op ", "listar op atrasada") is True

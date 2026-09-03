@@ -6,8 +6,10 @@ import {
 } from "./canvasTableClipboard";
 import { centerCanvasTableMergeAnchor } from "./canvasTableMerge";
 import {
+  nextCanvasTableWhiteSpaceToggle,
   normalizeCanvasTableCell,
   resolveCanvasTableCellBoxStyle,
+  resolveCanvasTableWrapActive,
 } from "./comunicadoCanvasTable";
 
 describe("resolveCanvasTableCellBoxStyle defaults", () => {
@@ -37,6 +39,33 @@ describe("resolveCanvasTableCellBoxStyle defaults", () => {
     );
     expect(nowrap.whiteSpace).toBe("nowrap");
     expect(nowrap.textOverflow).toBe("ellipsis");
+  });
+
+  it("toggle Quebrar alterna wrap ↔ nowrap e nowrap é visível no box style", () => {
+    expect(resolveCanvasTableWrapActive(undefined)).toBe(true);
+    expect(resolveCanvasTableWrapActive("pre-wrap")).toBe(true);
+    expect(resolveCanvasTableWrapActive("nowrap")).toBe(false);
+    expect(nextCanvasTableWhiteSpaceToggle(undefined)).toBe("nowrap");
+    expect(nextCanvasTableWhiteSpaceToggle("nowrap")).toBe("pre-wrap");
+    const toggled = resolveCanvasTableCellBoxStyle(
+      normalizeCanvasTableCell({
+        kind: "text",
+        text: "x",
+        style: { whiteSpace: nextCanvasTableWhiteSpaceToggle("pre-wrap") },
+      }),
+    );
+    expect(toggled.whiteSpace).toBe("nowrap");
+  });
+
+  it("borderColor da célula sobrescreve a borda no box style", () => {
+    const styled = resolveCanvasTableCellBoxStyle(
+      normalizeCanvasTableCell({
+        kind: "text",
+        text: "x",
+        style: { borderColor: "#ef4444" },
+      }),
+    );
+    expect(styled.borderColor).toBe("#ef4444");
   });
 
   it("verticalAlign middle por default", () => {

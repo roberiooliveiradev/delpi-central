@@ -40,6 +40,7 @@ describe("CM_HELP matriz (C16)", () => {
       "shell.navOrders",
       "shell.navCustomers",
       "shell.navAdmin",
+      "shell.navHelp",
       "interactionRooms.panel",
       "home.overview",
       "home.alerts",

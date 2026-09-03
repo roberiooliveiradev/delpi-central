@@ -18,6 +18,8 @@ export const CM_HELP = {
     navCustomers:
       "Clientes vinculados às carteiras que você atende, com indicadores comerciais e pedidos em aberto quando houver.",
     navAdmin: "Cadastro de carteiras, vínculo de clientes e transferência entre vendedores.",
+    navHelp:
+      "Manual do usuário: onde ir em cada situação e respostas às dúvidas mais comuns do Portal Comercial.",
   },
   interactionRooms: {
     panel:

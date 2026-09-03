@@ -25,6 +25,22 @@ def test_resolve_schedule_today_intent() -> None:
     assert kind == ProductionOperationalIntentKind.SCHEDULE_TODAY
 
 
+def test_matches_rest_route_false_for_sql_top_n_product_execute() -> None:
+    """«op » / «ct » não podem casar dentro de «top » / «select » (falso positivo OTD)."""
+    message = (
+        "executa no banco esse select top 10 de produtos do grupo 1008 "
+        "(SB1010, B1_COD, B1_DESC, B1_GRUPO)"
+    )
+
+    assert ChatProductionOperationalIntentService.matches_rest_route(message) is False
+
+
+def test_matches_rest_route_false_for_sql_authoring_top_products() -> None:
+    message = "monta pra mim um sql dos 10 primeiros produtos do grupo 1008, sem executar"
+
+    assert ChatProductionOperationalIntentService.matches_rest_route(message) is False
+
+
 def test_matches_rest_route_for_late_production_orders_blocks_sql_preflight() -> None:
     message = "ordens de produção em atraso"
 

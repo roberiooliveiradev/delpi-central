@@ -46,6 +46,8 @@ export type CanvasTableCellStyle = {
   verticalAlign?: "top" | "middle" | "bottom";
   /** Quebra de linha — default de render é `pre-wrap` se omitido. */
   whiteSpace?: "normal" | "nowrap" | "pre-wrap";
+  /** Cor uniforme das bordas da célula (sobrescreve a do bloco). */
+  borderColor?: string;
 };
 
 export type CanvasTableCell = {
@@ -477,6 +479,7 @@ export function resolveCanvasTableCellBoxStyle(
   if (colorOverride) style.color = colorOverride;
   else if (cell.style?.color) style.color = cell.style.color;
   if (cell.style?.backgroundColor) style.backgroundColor = cell.style.backgroundColor;
+  if (cell.style?.borderColor) style.borderColor = cell.style.borderColor;
   const textAlign =
     cell.style?.textAlign ?? (cell.kind === "number" ? "right" : "left");
   style.textAlign = textAlign;
@@ -490,6 +493,20 @@ export function resolveCanvasTableCellBoxStyle(
     style.textOverflow = "clip";
   }
   return style;
+}
+
+/** Wrap ativo = qualquer valor distinto de `nowrap` (default Excel = pre-wrap). */
+export function resolveCanvasTableWrapActive(
+  whiteSpace: CanvasTableCellStyle["whiteSpace"] | null | undefined,
+): boolean {
+  return (whiteSpace ?? "pre-wrap") !== "nowrap";
+}
+
+/** Alterna Quebrar ↔ 1 linha a partir do whiteSpace atual da célula. */
+export function nextCanvasTableWhiteSpaceToggle(
+  whiteSpace: CanvasTableCellStyle["whiteSpace"] | null | undefined,
+): "pre-wrap" | "nowrap" {
+  return resolveCanvasTableWrapActive(whiteSpace) ? "nowrap" : "pre-wrap";
 }
 
 /** Snapshot de geometria/modelo que deve ser idêntico com ou sem chrome de edição. */

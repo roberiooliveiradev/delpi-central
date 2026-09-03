@@ -64,8 +64,8 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     try {
       const live = await fetchDeviceLive(deviceId);
       applyLiveSnapshot(live);
-      setHistoryRefreshToken((value) => value + 1);
-      setCommandsRefreshToken((value) => value + 1);
+      // Histórico/comandos NÃO recarregam no tick live — só em poll/comando explícito.
+      // Recalcular bounds + abort/refetch a cada poll travava presets longos («Este mês»).
     } catch {
       // Tick live silencioso — não mascara erros de ações manuais.
     }

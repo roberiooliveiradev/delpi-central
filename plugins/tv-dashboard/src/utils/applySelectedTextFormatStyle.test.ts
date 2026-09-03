@@ -187,4 +187,31 @@ describe("buildSelectedTextFormatBlockPatch", () => {
     expect(patch?.tableParts?.["headerCell:0"]?.style?.color).toBe("#123456");
     expect(patch?.tableParts?.["headerCell:2"]?.style?.color).toBe("#123456");
   });
+
+  it("bold com célula da Grade grava fontWeight no cell.style", () => {
+    const selected = {
+      id: "ct1",
+      type: "canvas_table",
+      frame: { x: 0, y: 0, w: 30, h: 20 },
+      rows: 1,
+      cols: 2,
+      cells: [
+        [
+          { kind: "text", text: "A" },
+          { kind: "text", text: "B" },
+        ],
+      ],
+    } as ComunicadoBlock;
+    const patch = buildSelectedTextFormatBlockPatch({
+      selected,
+      selectedCanvasTableCell: {
+        blockId: "ct1",
+        cells: [{ row: 0, col: 0 }],
+        focus: { row: 0, col: 0 },
+      },
+      patch: { fontWeight: "bold" },
+    });
+    expect(patch?.cells?.[0]?.[0]?.style?.fontWeight).toBe("bold");
+    expect(patch?.cells?.[0]?.[1]?.style?.fontWeight).toBeUndefined();
+  });
 });

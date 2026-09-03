@@ -72,6 +72,29 @@ def test_show_sql_from_history():
     assert "SC2010" in refinement.sql
 
 
+def test_execute_wins_over_mostra_resultado_phrasing():
+    """«executa … e me mostra o resultado» não pode virar show_sql por causa de «mostra»."""
+    sql = (
+        "SELECT TOP 10 B1_COD, B1_DESC FROM SB1010 "
+        "WHERE B1_GRUPO = '1008' AND D_E_L_E_T_ = ' ' ORDER BY B1_COD;"
+    )
+    previous = [
+        {
+            "role": "assistant",
+            "content": f"```sql\n{sql}\n```",
+        }
+    ]
+
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "agora executa esse sql aí e me mostra o resultado",
+        previous_messages=previous,
+    )
+
+    assert refinement is not None
+    assert refinement.mode == "execute"
+    assert "SB1010" in refinement.sql
+
+
 def test_apply_branch_filter_production():
     updated = ChatSqlQueryRefinementService.apply_branch_filter(SAMPLE_SQL, ["02"])
 

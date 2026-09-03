@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from production_pulse_app.domain.models.device_reading import DeviceReading
 
 
@@ -84,11 +86,14 @@ def test_manual_poll_persists_reading_and_delta(client, unique_ip, monkeypatch):
     assert first_body["deltaMetrics"]["counter"] == 0
     assert first_body["online"] is True
     assert first_body["status"] == "online"
+    assert first_body["meta"]["readingPersisted"] is True
 
     second = client.post(f"/devices/{device['id']}/poll")
     assert second.status_code == 200
     second_body = second.json()["data"]
     assert second_body["deltaMetrics"]["counter"] == 5
+    assert second_body["meta"]["readingPersisted"] is True
+    assert second_body["meta"]["persistReason"] == "change"
 
     readings = client.get(f"/devices/{device['id']}/readings")
     assert readings.status_code == 200
@@ -132,10 +137,17 @@ def test_device_without_binding_reports_no_binding_status(client, unique_ip, mon
 
 
 def test_gauge_poll_persists_heartbeat_without_delta(client, unique_ip, monkeypatch):
+    t0 = datetime(2026, 9, 2, 12, 0, 0, tzinfo=timezone.utc)
     sequence = iter(
         [
-            DeviceReading(metrics={"rpm": 1180.0, "temperature_c": 42.0}),
-            DeviceReading(metrics={"rpm": 1180.0, "temperature_c": 42.0}),
+            DeviceReading(
+                metrics={"rpm": 1180.0, "temperature_c": 42.0},
+                recorded_at=t0,
+            ),
+            DeviceReading(
+                metrics={"rpm": 1180.0, "temperature_c": 42.0},
+                recorded_at=t0 + timedelta(seconds=61),
+            ),
         ]
     )
 
@@ -163,9 +175,12 @@ def test_gauge_poll_persists_heartbeat_without_delta(client, unique_ip, monkeypa
     first_body = first.json()["data"]
     assert first_body["metrics"]["rpm"] == 1180.0
     assert first_body.get("deltaMetrics") in ({}, None)
+    assert first_body["meta"]["readingPersisted"] is True
 
     second = client.post(f"/devices/{device['id']}/poll")
     assert second.status_code == 200
+    assert second.json()["data"]["meta"]["readingPersisted"] is True
+    assert second.json()["data"]["meta"]["persistReason"] == "heartbeat"
 
     readings = client.get(f"/devices/{device['id']}/readings")
     assert readings.json()["data"]["pagination"]["total"] == 2
@@ -303,3 +318,88 @@ def test_live_device_unreachable_returns_422(client, unique_ip, monkeypatch):
     response = client.get(f"/devices/{device['id']}/live")
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "network_error"
+
+
+def test_readings_sample_interval_covers_full_range(client, unique_ip):
+    from datetime import datetime, timedelta, timezone
+    from uuid import UUID
+
+    from production_pulse_app.infrastructure.persistence.repositories.postgres_device_reading_repository import (
+        PostgresDeviceReadingRepository,
+    )
+
+    device = _create_device(client, unique_ip)
+    repo = PostgresDeviceReadingRepository()
+    device_id = UUID(device["id"])
+    start = datetime(2026, 8, 26, 14, 0, tzinfo=timezone.utc)
+
+    for hour in range(0, 48):
+        repo.insert(
+            device_id,
+            metrics={"counter": hour},
+            delta_metrics={"counter": 1},
+            meta={},
+            source="poll",
+            recorded_at=start + timedelta(hours=hour),
+        )
+
+    dense = client.get(
+        f"/devices/{device['id']}/readings",
+        params={
+            "from": start.isoformat().replace("+00:00", "Z"),
+            "to": (start + timedelta(hours=47)).isoformat().replace("+00:00", "Z"),
+            "pageSize": 10,
+        },
+    )
+    assert dense.status_code == 200
+    dense_items = dense.json()["data"]["items"]
+    assert len(dense_items) == 10
+    # Sem sample: LIMIT pega só o final da janela (DESC).
+    dense_times = [item["recordedAt"] for item in dense_items]
+    assert all(t.startswith("2026-08-28") for t in dense_times)
+
+    sampled = client.get(
+        f"/devices/{device['id']}/readings",
+        params={
+            "from": start.isoformat().replace("+00:00", "Z"),
+            "to": (start + timedelta(hours=47)).isoformat().replace("+00:00", "Z"),
+            "pageSize": 10,
+            "sampleIntervalMs": 6 * 60 * 60 * 1000,
+        },
+    )
+    assert sampled.status_code == 200
+    sampled_items = sampled.json()["data"]["items"]
+    assert 2 <= len(sampled_items) <= 10
+    sampled_times = sorted(item["recordedAt"] for item in sampled_items)
+    assert sampled_times[0].startswith("2026-08-26")
+    assert sampled_times[-1].startswith("2026-08-28")
+    assert sampled.json()["data"]["pagination"]["total"] == 48
+
+
+def test_poll_skips_persist_when_counter_unchanged(client, unique_ip, monkeypatch):
+    def fake_read(_self, _device):
+        return DeviceReading(metrics={"counter": 42})
+
+    monkeypatch.setattr(
+        "production_pulse_app.application.services.device_poll_service.DevicePollService._read_from_driver",
+        fake_read,
+    )
+
+    device = _create_device(client, unique_ip)
+    _bind_equipment(client, device["id"])
+
+    first = client.post(f"/devices/{device['id']}/poll")
+    assert first.status_code == 200
+    assert first.json()["data"]["meta"]["readingPersisted"] is True
+    assert first.json()["data"]["meta"]["persistReason"] == "first"
+
+    second = client.post(f"/devices/{device['id']}/poll")
+    assert second.status_code == 200
+    body = second.json()["data"]
+    assert body["metrics"]["counter"] == 42
+    assert body["meta"]["readingPersisted"] is False
+    assert body["meta"]["persistReason"] == "skipped_unchanged"
+    assert body.get("readingId") is None
+
+    readings = client.get(f"/devices/{device['id']}/readings")
+    assert readings.json()["data"]["pagination"]["total"] == 1

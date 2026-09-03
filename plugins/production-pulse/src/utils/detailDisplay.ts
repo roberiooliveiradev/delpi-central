@@ -11,6 +11,7 @@ const SOURCE_LABELS: Record<string, string> = {
   poll: "Poll",
   manual: "Manual",
   command: "Comando",
+  rollup: "Agregado",
 };
 
 const COMMAND_LABELS: Record<string, string> = {

@@ -287,6 +287,8 @@ Regressão de intenção: `tests/fixtures/chat_intelligence_regression_cases.py`
 
 Precedência: `explicitSessionFormat` (toolbar) → hints na mensagem (`UserFormatPreference`) → Automático (`viewIntent` + scores + `defaultViewPolicy`).
 
+Text-first (`ChatPresentationTextFirstPolicyService.should_default_to_text_only`): só `text_when_available` / `textFirstProfiles` forçam texto. Perfil `generic` + `on_demand` **não** oculta tabela/árvore; se o turno já tem `tablePresentation` (ou outro visual de evidência), Automático não rebaixa para resumo-only.
+
 | Pedido / modo | viewIntent típico | Kind primary | Lead prosa | Notas |
 |---------------|-------------------|--------------|------------|-------|
 | Automático + stock | auditable_list | `table` | markdown (`assistantMessage` se decoupled) | `chartPolicy: skip`; `narrativeFirstMaxRows: 0` |
@@ -326,3 +328,4 @@ Regressão: `tests/fixtures/chat_presentation_compose_matrix.py` + `test_chat_pr
 | jun/2026 | Fase 3b — rich stack automático desligado em `as_delivered`; `structure_exclusivity` → `on_demand` |
 | jun/2026 | Fase 9 — fachada `ChatPresentationDecisionService` mínima (~85 linhas) |
 | jun/2026 | Fase 10 — `x-delpi` no import, `delpi_metadata`, perfil derivado OpenAPI |
+| set/2026 | Text-first: `generic`+`on_demand` não oculta tabela; evidência em metadata vence Automático |

@@ -207,7 +207,9 @@ class ChatSqlQueryRefinementService:
                     reason=ExternalActionResponseContentService.get("sqlQueryRefinement", "applyBranchFilter"),
                 )
 
-        if cls._looks_like_show_query(normalized):
+        if cls._looks_like_show_query(normalized) and not cls._looks_like_execute_active_query(
+            message
+        ):
             return SqlQueryRefinement(
                 mode="show_sql",
                 sql=active_sql,

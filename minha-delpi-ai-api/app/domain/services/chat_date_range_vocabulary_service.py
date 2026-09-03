@@ -36,9 +36,19 @@ class ChatDateRangeVocabularyService(ChatAssistantVocabularyService):
         cls.compile_pattern.cache_clear()
         cls.months_pt.cache_clear()
         cls.month_labels_pt.cache_clear()
+        cls.month_abbrev_false_positive_followers.cache_clear()
         cls.week_offset_phrases.cache_clear()
         cls.weekdays_pt.cache_clear()
         cls.fixed_semester_phrases.cache_clear()
+
+    @classmethod
+    @lru_cache(maxsize=1)
+    def month_abbrev_false_positive_followers(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip().lower()
+            for item in cls.terms("monthAbbrevFalsePositiveFollowers")
+            if str(item).strip()
+        )
 
     @classmethod
     @lru_cache(maxsize=1)

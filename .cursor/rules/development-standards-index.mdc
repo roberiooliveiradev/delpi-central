@@ -10,6 +10,7 @@ alwaysApply: true
 | Regra | Quando consultar |
 |-------|------------------|
 | `english-code-identifiers.mdc` | **Sempre** — paths, arquivos, permissões, `operationId` em inglês; PT só em UI/locale/docs |
+| `feature-help-sync.mdc` | **Inegociável** — feature/modificação user-facing → atualizar Ajuda in-app (+ links/espelho) no mesmo entregável |
 | `centralized-rules-first.mdc` | Qualquer fix — localizar módulo canônico antes de codar |
 | `root-cause-generalized-fix.mdc` | **Qualquer bug/fix** — causa raiz, solução generalista, alinhar contrato API+MFE |
 | `plugins-overlay-positioning.mdc` | **Overlay / toolbar / popover** — portal + coords; **proibido** clip/padding/abspos paliativo |
@@ -48,4 +49,5 @@ Ver regras `chat-intelligence-base`, `schema-first-presentation-delivered`, `ass
 
 1. Módulo canônico + contrato (API manda metadata; MFE render-only quando couber)
 2. Perfis/JSON declarativos e portais do kit antes de `if`/CSS paliativo
-3. Teste de regressão no pacote alterado
+3. Ajuda in-app do módulo dono sincronizada (`feature-help-sync.mdc`) — sem “deixar pra depois”
+4. Teste de regressão no pacote alterado

@@ -1,7 +1,7 @@
 export type DeviceDetailTab = "overview" | "history" | "commands" | "firmware";
 
 export type DeviceReading = {
-  id: number;
+  id: number | string;
   deviceId: string;
   metrics: Record<string, number | string>;
   deltaMetrics: Record<string, number | string>;

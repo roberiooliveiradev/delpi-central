@@ -37,6 +37,9 @@ import {
   resolveChartTickGranularity,
   resolveDefaultHistoryPreset,
   resolveHistoryChartPageSize,
+  resolveHistoryChartSampleIntervalMs,
+  resolveHistoryReadingsResolution,
+  shouldSlideHistoryRangeOnRefresh,
   type HistoryRangePreset,
 } from "../../utils/historyTimeRange";
 import { ReadingHardwareResetBadge } from "./ReadingHardwareResetBadge";
@@ -105,11 +108,18 @@ export function DeviceHistoryTab({ device, refreshToken = 0 }: DeviceHistoryTabP
 
   useEffect(() => {
     if (refreshToken === 0 || preset === "custom") return;
-    const bounds = boundsForHistoryPreset(preset);
-    setFromLocal(isoToDatetimeLocalValue(bounds.fromIso));
-    setToLocal(isoToDatetimeLocalValue(bounds.toIso));
-    setAppliedFrom(bounds.fromIso);
-    setAppliedTo(bounds.toIso);
+    if (shouldSlideHistoryRangeOnRefresh(preset)) {
+      const bounds = boundsForHistoryPreset(preset);
+      setFromLocal(isoToDatetimeLocalValue(bounds.fromIso));
+      setToLocal(isoToDatetimeLocalValue(bounds.toIso));
+      setAppliedFrom(bounds.fromIso);
+      setAppliedTo(bounds.toIso);
+      return;
+    }
+    // Calendar / longo: mantém «De»; avança «Até» uma vez no refresh explícito.
+    const nowIso = new Date().toISOString();
+    setToLocal(isoToDatetimeLocalValue(nowIso));
+    setAppliedTo(nowIso);
   }, [preset, refreshToken]);
 
   useEffect(() => {
@@ -134,7 +144,12 @@ export function DeviceHistoryTab({ device, refreshToken = 0 }: DeviceHistoryTabP
 
     const from = appliedFrom || undefined;
     const to = appliedTo || undefined;
+    const chartResolution = resolveHistoryReadingsResolution(from, to);
     const chartPageSize = resolveHistoryChartPageSize(from, to, device.pollIntervalMs);
+    const sampleIntervalMs =
+      chartResolution === "raw"
+        ? resolveHistoryChartSampleIntervalMs(from, to, device.pollIntervalMs)
+        : undefined;
 
     Promise.all([
       fetchDeviceReadings(device.id, {
@@ -143,6 +158,7 @@ export function DeviceHistoryTab({ device, refreshToken = 0 }: DeviceHistoryTabP
         from,
         to,
         metric: metricKey ?? undefined,
+        resolution: "raw",
         signal: controller.signal,
       }),
       fetchDeviceReadings(device.id, {
@@ -151,6 +167,8 @@ export function DeviceHistoryTab({ device, refreshToken = 0 }: DeviceHistoryTabP
         from,
         to,
         metric: metricKey ?? undefined,
+        resolution: chartResolution,
+        sampleIntervalMs,
         signal: controller.signal,
       }),
     ])
@@ -163,6 +181,7 @@ export function DeviceHistoryTab({ device, refreshToken = 0 }: DeviceHistoryTabP
       .catch((err) => {
         if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : "Erro ao carregar histórico.");
+        setChartReadings([]);
         setLoading(false);
       });
     return () => controller.abort();

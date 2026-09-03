@@ -9,6 +9,10 @@ import {
   resolveChartTickGranularity,
   resolveDefaultHistoryPreset,
   resolveHistoryChartPageSize,
+  resolveHistoryChartSampleIntervalMs,
+  resolveHistoryReadingsResolution,
+  shouldSlideHistoryRangeOnRefresh,
+  HISTORY_CHART_SAMPLE_INTERVAL_MS_MAX,
   toDatetimeLocalValue,
 } from "./historyTimeRange";
 
@@ -27,6 +31,28 @@ describe("historyTimeRange", () => {
     expect(bounds.fromIso).toBe("2026-09-02T13:00:00.000Z");
   });
 
+  it("monta bounds de este mês e últimos 12 meses", () => {
+    const now = Date.parse("2026-09-15T18:30:00.000Z");
+    const month = boundsForHistoryPreset("month", now);
+    expect(month.toIso).toBe("2026-09-15T18:30:00.000Z");
+    const monthFrom = new Date(month.fromIso);
+    expect(monthFrom.getDate()).toBe(1);
+    expect(monthFrom.getMonth()).toBe(new Date(now).getMonth());
+    expect(monthFrom.getFullYear()).toBe(2026);
+    expect(monthFrom.getHours()).toBe(0);
+    expect(monthFrom.getMinutes()).toBe(0);
+
+    const twelve = boundsForHistoryPreset("12m", now);
+    expect(twelve.toIso).toBe("2026-09-15T18:30:00.000Z");
+    const twelveFrom = new Date(twelve.fromIso);
+    expect(twelveFrom.getFullYear()).toBe(2025);
+    expect(twelveFrom.getMonth()).toBe(8);
+    expect(twelveFrom.getDate()).toBe(15);
+
+    const thirty = boundsForHistoryPreset("30d", now);
+    expect(Date.parse(thirty.toIso) - Date.parse(thirty.fromIso)).toBe(30 * 24 * 60 * 60_000);
+  });
+
   it("converte datetime-local local ↔ ISO", () => {
     const local = toDatetimeLocalValue(new Date("2026-09-02T15:30:00"));
     expect(local).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
@@ -35,7 +61,7 @@ describe("historyTimeRange", () => {
     expect(Number.isNaN(Date.parse(iso!))).toBe(false);
   });
 
-  it("adapta granularidade do eixo ao intervalo", () => {
+  it("adapta granularidade do eixo ao intervalo, independente do poll rápido", () => {
     expect(
       resolveChartTickGranularity(
         "2026-09-02T14:00:00.000Z",
@@ -47,16 +73,30 @@ describe("historyTimeRange", () => {
       resolveChartTickGranularity(
         "2026-09-02T10:00:00.000Z",
         "2026-09-02T14:00:00.000Z",
-        5000,
+        200,
       ),
     ).toBe("minute");
     expect(
       resolveChartTickGranularity(
-        "2026-08-28T14:00:00.000Z",
+        "2026-09-01T14:00:00.000Z",
         "2026-09-02T14:00:00.000Z",
-        60_000,
+        200,
       ),
     ).toBe("hour");
+    expect(
+      resolveChartTickGranularity(
+        "2026-08-26T14:00:00.000Z",
+        "2026-09-02T14:00:00.000Z",
+        200,
+      ),
+    ).toBe("hour");
+    expect(
+      resolveChartTickGranularity(
+        "2026-08-01T14:00:00.000Z",
+        "2026-09-02T14:00:00.000Z",
+        200,
+      ),
+    ).toBe("day");
   });
 
   it("formata ticks conforme granularidade", () => {
@@ -90,5 +130,64 @@ describe("historyTimeRange", () => {
 
     const labeled = applyAdaptiveChartLabels(reduced.slice(0, 2), "minute");
     expect(labeled[0]?.label).toMatch(/\d{2}:\d{2}/);
+  });
+
+  it("pede sampleIntervalMs só quando o período excede o pageSize do gráfico", () => {
+    expect(
+      resolveHistoryChartSampleIntervalMs(
+        "2026-09-02T14:00:00.000Z",
+        "2026-09-02T14:01:00.000Z",
+        200,
+      ),
+    ).toBeUndefined();
+
+    const sample = resolveHistoryChartSampleIntervalMs(
+      "2026-08-26T14:00:00.000Z",
+      "2026-09-02T14:00:00.000Z",
+      200,
+    );
+    expect(sample).toBeGreaterThan(200);
+    expect(sample).toBeGreaterThanOrEqual(Math.ceil((7 * 24 * 60 * 60_000) / 96));
+
+    const longCustom = resolveHistoryChartSampleIntervalMs(
+      "2026-05-26T20:40:00.000Z",
+      "2026-09-02T20:40:00.000Z",
+      200,
+    );
+    expect(longCustom).toBeDefined();
+    expect(longCustom!).toBeLessThanOrEqual(HISTORY_CHART_SAMPLE_INTERVAL_MS_MAX);
+    expect(longCustom!).toBeGreaterThan(86_400_000);
+  });
+
+  it("escolhe resolution rollup conforme span (R51)", () => {
+    expect(
+      resolveHistoryReadingsResolution(
+        "2026-09-02T12:00:00.000Z",
+        "2026-09-02T14:00:00.000Z",
+      ),
+    ).toBe("raw");
+    expect(
+      resolveHistoryReadingsResolution(
+        "2026-08-20T14:00:00.000Z",
+        "2026-09-02T14:00:00.000Z",
+      ),
+    ).toBe("hour");
+    expect(
+      resolveHistoryReadingsResolution(
+        "2026-05-01T14:00:00.000Z",
+        "2026-09-02T14:00:00.000Z",
+      ),
+    ).toBe("day");
+  });
+
+  it("só desliza janela no refresh para presets curtos", () => {
+    expect(shouldSlideHistoryRangeOnRefresh("1m")).toBe(true);
+    expect(shouldSlideHistoryRangeOnRefresh("15m")).toBe(true);
+    expect(shouldSlideHistoryRangeOnRefresh("1h")).toBe(true);
+    expect(shouldSlideHistoryRangeOnRefresh("24h")).toBe(false);
+    expect(shouldSlideHistoryRangeOnRefresh("7d")).toBe(false);
+    expect(shouldSlideHistoryRangeOnRefresh("month")).toBe(false);
+    expect(shouldSlideHistoryRangeOnRefresh("12m")).toBe(false);
+    expect(shouldSlideHistoryRangeOnRefresh("custom")).toBe(false);
   });
 });

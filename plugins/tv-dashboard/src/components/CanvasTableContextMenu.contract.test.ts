@@ -28,4 +28,19 @@ describe("CanvasTableContextMenu (contrato)", () => {
     expect(menu).toContain("setCanvasTableSessionClipboard");
     expect(menu).not.toContain("execCommand");
   });
+
+  it("expõe Excluir linha/coluna via deleteCanvasTableBand", () => {
+    expect(menu).toContain('label="Excluir linha"');
+    expect(menu).toContain('label="Excluir coluna"');
+    expect(menu).toContain("deleteCanvasTableBand");
+  });
+
+  it("Quebrar texto usa toggle canônico (não só pre-wrap fixo)", () => {
+    expect(menu).toContain("CanvasTableCellFormatMenu");
+    expect(menu).toContain("nextCanvasTableWhiteSpaceToggle");
+    expect(menu).toContain("patchCanvasTableCellsStyle");
+    expect(menu).not.toContain('label="Quebrar texto"');
+    expect(menu).not.toContain('label="Centralizar"');
+    expect(menu).not.toContain('label="Alinhar ao topo"');
+  });
 });

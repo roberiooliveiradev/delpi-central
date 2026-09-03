@@ -180,6 +180,8 @@ def test_format_sql_authoring_answer_adds_intro_and_dedupes():
 
     assert "Segue a consulta em SQL" in formatted
     assert formatted.lower().count("```sql") == 1
+    assert "SA1010" not in formatted.split("```")[0]
+    assert "…010" in formatted or "...010" in formatted or "010" in formatted.split("```")[0]
 
 
 def test_format_sql_authoring_answer_strips_redundant_tail_prose():

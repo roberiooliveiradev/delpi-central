@@ -7,6 +7,9 @@ from production_pulse_app.application.services.device_driver_registry_service im
     DeviceDriverNotImplementedError,
     get_device_driver_registry,
 )
+from production_pulse_app.application.services.device_reading_rollup_service import (
+    DeviceReadingRollupService,
+)
 from production_pulse_app.core.serialize import json_safe
 from production_pulse_app.domain.errors import CommandNotSupportedError, DeviceDriverError
 from production_pulse_app.domain.models.device_reading import CommandResult
@@ -49,10 +52,12 @@ class DeviceCommandService:
         device_repository: PostgresDeviceRepository | None = None,
         command_repository: PostgresDeviceCommandRepository | None = None,
         reading_repository: PostgresDeviceReadingRepository | None = None,
+        rollup_service: DeviceReadingRollupService | None = None,
     ) -> None:
         self._devices = device_repository or PostgresDeviceRepository()
         self._commands = command_repository or PostgresDeviceCommandRepository()
         self._readings = reading_repository or PostgresDeviceReadingRepository()
+        self._rollups = rollup_service or DeviceReadingRollupService()
         self._registry = get_device_driver_registry()
 
     def _require_device(self, device_id: UUID) -> dict[str, Any]:
@@ -190,6 +195,12 @@ class DeviceCommandService:
                 delta_metrics=delta_metrics,
                 meta=meta,
                 source="command",
+            )
+            self._rollups.apply_persisted_reading(
+                device_id,
+                recorded_at=reading_row["recorded_at"],
+                metrics=canonical_public,
+                delta_metrics=delta_metrics,
             )
             self._devices.record_poll_success(device_id, metrics=canonical)
             reading_id = reading_row["id"]

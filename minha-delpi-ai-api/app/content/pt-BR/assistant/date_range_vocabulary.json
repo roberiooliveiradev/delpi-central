@@ -25,6 +25,27 @@
     "dezembro": 12,
     "dez": 12
   },
+  "monthAbbrevFalsePositiveFollowers": [
+    "primeiro",
+    "primeira",
+    "primeiros",
+    "primeiras",
+    "ultimo",
+    "última",
+    "ultima",
+    "últimos",
+    "ultimos",
+    "últimas",
+    "ultimas",
+    "maior",
+    "maiores",
+    "menor",
+    "menores",
+    "melhor",
+    "melhores",
+    "pior",
+    "piores"
+  ],
   "monthLabelsPt": {
     "1": "janeiro",
     "2": "fevereiro",

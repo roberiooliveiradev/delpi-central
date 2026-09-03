@@ -9,10 +9,10 @@ Complementa `test-and-commit.mdc`. Aplica-se a CreatePlan, iteração de plano e
 
 ## Checklist obrigatório (nesta ordem)
 
-1. **Diretrizes Cursor** — consultar `development-standards-index.mdc` (se existir) e as regras do domínio; o plano **não** pode contradizer regras ativas (`english-code-identifiers`, `plugins-reusable-components`, `plugins-overlay-positioning`, `centralized-rules-first`, etc.).
+1. **Diretrizes Cursor** — consultar `development-standards-index.mdc` (se existir) e as regras do domínio; o plano **não** pode contradizer regras ativas (`english-code-identifiers`, `feature-help-sync`, `plugins-reusable-components`, `plugins-overlay-positioning`, `centralized-rules-first`, etc.).
 2. **Inventário do existente** — mapear o que já há (kit `plugin-ui`, rotas, permissões, CSS, clones); preferir **estender** o módulo canônico a reinventar.
 3. **Pesquisa de mercado** — padrões/libs/UX de referência; travar P0 vs fora na tabela de decisões.
-4. **Fluxos + matriz transversal (obrigatório)** — não basta o happy path do sintoma.
+4. **Fluxos + matriz transversal (obrigatório)** — não basta o happy path do sintoma. **Incluir satélite Ajuda** (`feature-help-sync.mdc`) quando a mudança for user-facing.
    Antes de travar etapas, **estudar e nomear** todos os consumidores do mesmo contrato
    (compose, edit, leitura/bolha, rascunho F5, reply, clip vs inline, undo, upload/rewrite,
    dedup de strip, gates, realtime, preview inbox, etc. — o que existir no domínio).
@@ -37,8 +37,8 @@ Complementa `test-and-commit.mdc`. Aplica-se a CreatePlan, iteração de plano e
 | Matriz de fluxos transversais | Tabela Fluxo × superfície × P0/herança/fora (+ satélites) |
 | Etapas `E1…En` | Agrupamento lógico |
 | Subetapas `E*.S*` | Trabalho atomicamente entregável — **cada uma com receita** (ver abaixo) |
-| Critérios de pronto | Verificável |
-| Fora do escopo | Explícito |
+| Critérios de pronto | Verificável — inclui sync de Ajuda se user-facing (`feature-help-sync.mdc`) |
+| Fora do escopo | Explícito — **proibido** colocar sync de Ajuda user-facing em “fora” |
 | Todos YAML | ids `eN-sM-slug` alinhados às subetapas |
 | Receita por subetapa | Obrigatória em planos multi-etapa (ver § Receita) |
 
@@ -85,3 +85,4 @@ No fluxo cotidiano (sem esse protocolo no plano): commit **somente** se o usuár
 - Plano só do sintoma reportado sem inventariar fluxos irmãos (edit, bolha, rascunho, clip, …).
 - Commit sem testes do escopo.
 - Patch local que ignora módulo canônico já mapeado no inventário.
+- Feature user-facing no plano **sem** satélite/subetapa de Ajuda (`feature-help-sync.mdc`).

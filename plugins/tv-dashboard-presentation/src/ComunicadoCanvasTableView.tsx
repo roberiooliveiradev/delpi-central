@@ -24,8 +24,16 @@ import {
 import { resolveCanvasTableCellDisplay, resolveCanvasTableCellResolved } from "./canvasTableProjection";
 import { resolveCanvasTableKeyboardAction } from "./canvasTableKeyboard";
 import {
+  applyCanvasTableAutoFill,
+  resolveCanvasTableAutoFillTarget,
+  resolveCanvasTableBoundsOverlayRect,
+  resolveCanvasTableCellAtHostPoint,
+  type CanvasTableBounds,
+} from "./canvasTableAutoFill";
+import {
   mapViewportRectToHostLocal,
   resolveCanvasTableGutterHandles,
+  resolveCanvasTableSelectionFillHandleRect,
   resolveCanvasTableSelectionOverlayRects,
   resolveCanvasTableTrackHandles,
   type CanvasTableCellDomRect,
@@ -107,6 +115,17 @@ type CanvasTableTrackDrag = {
   captureTarget: HTMLElement | null;
 };
 
+type CanvasTableFillDrag = {
+  pointerId: number;
+  sourceCells: CanvasTableCellRef[];
+  lastTarget: {
+    sourceBounds: CanvasTableBounds;
+    targetBounds: CanvasTableBounds;
+    direction: "up" | "down" | "left" | "right";
+  } | null;
+  captureTarget: HTMLElement | null;
+};
+
 type Props = {
   block: ComunicadoCanvasTableBlock;
   editable?: boolean;
@@ -183,9 +202,16 @@ export function ComunicadoCanvasTableView({
     columnWidths?: number[];
     rowHeights?: number[];
   } | null>(null);
+  const [fillPreviewBounds, setFillPreviewBounds] = useState<CanvasTableBounds | null>(null);
   const pendingReplaceRef = useRef<string | null>(null);
   const trackDragRef = useRef<CanvasTableTrackDrag | null>(null);
   const trackDragListenersRef = useRef<{
+    onPointerMove: (event: PointerEvent) => void;
+    onPointerUp: (event: PointerEvent) => void;
+    onLostPointerCapture: (event: PointerEvent) => void;
+  } | null>(null);
+  const fillDragRef = useRef<CanvasTableFillDrag | null>(null);
+  const fillDragListenersRef = useRef<{
     onPointerMove: (event: PointerEvent) => void;
     onPointerUp: (event: PointerEvent) => void;
     onLostPointerCapture: (event: PointerEvent) => void;
@@ -300,6 +326,17 @@ export function ComunicadoCanvasTableView({
 
   const allowCellSelection = interaction?.blockSelected !== false;
   const showTrackHandles = editable && allowCellSelection;
+  const showFillHandle = showTrackHandles && selectedCells.length > 0 && !editingCell;
+  const fillHandleRect = showFillHandle
+    ? resolveCanvasTableSelectionFillHandleRect({ range: overlay.range })
+    : null;
+  const fillPreviewRect =
+    fillPreviewBounds && cellRects.length
+      ? resolveCanvasTableBoundsOverlayRect({
+          cellRects,
+          bounds: fillPreviewBounds,
+        })
+      : null;
   const trackHandles = showTrackHandles
     ? resolveCanvasTableTrackHandles({
         cellRects,
@@ -355,8 +392,126 @@ export function ComunicadoCanvasTableView({
     return () => {
       trackDragRef.current = null;
       removeTrackDragWindowListeners();
+      fillDragRef.current = null;
+      removeFillDragWindowListeners();
     };
   }, []);
+
+  function removeFillDragWindowListeners() {
+    const listeners = fillDragListenersRef.current;
+    if (!listeners) return;
+    window.removeEventListener("pointermove", listeners.onPointerMove);
+    window.removeEventListener("pointerup", listeners.onPointerUp);
+    window.removeEventListener("pointercancel", listeners.onPointerUp);
+    window.removeEventListener("lostpointercapture", listeners.onLostPointerCapture);
+    fillDragListenersRef.current = null;
+  }
+
+  function pointerToHostCell(clientX: number, clientY: number): CanvasTableCellRef | null {
+    const host = hostRef.current;
+    if (!host) return null;
+    const box = host.getBoundingClientRect();
+    const local = mapViewportRectToHostLocal({
+      hostRect: box,
+      hostOffsetWidth: host.offsetWidth,
+      hostOffsetHeight: host.offsetHeight,
+      targetRect: { left: clientX, top: clientY, width: 0, height: 0 },
+    });
+    return resolveCanvasTableCellAtHostPoint({
+      cellRects,
+      x: local.left,
+      y: local.top,
+    });
+  }
+
+  function finishFillDrag(options?: { commit?: boolean }) {
+    const drag = fillDragRef.current;
+    fillDragRef.current = null;
+    removeFillDragWindowListeners();
+    if (drag?.captureTarget) {
+      try {
+        if (drag.captureTarget.hasPointerCapture(drag.pointerId)) {
+          drag.captureTarget.releasePointerCapture(drag.pointerId);
+        }
+      } catch {
+        /* capture já solto */
+      }
+    }
+    const target = drag?.lastTarget ?? null;
+    setFillPreviewBounds(null);
+    if (!drag || options?.commit === false || !target) return;
+
+    const filled = applyCanvasTableAutoFill({
+      cells: block.cells,
+      merges: block.merges,
+      sourceBounds: target.sourceBounds,
+      targetBounds: target.targetBounds,
+      direction: target.direction,
+    });
+    interaction?.onCellsCommit?.(filled);
+    const nw = { row: target.targetBounds.rowMin, col: target.targetBounds.colMin };
+    const se = { row: target.targetBounds.rowMax, col: target.targetBounds.colMax };
+    interaction?.onSelectCell?.({ cell: nw });
+    interaction?.onSelectCell?.({ cell: se, range: true });
+  }
+
+  function onFillHandlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!editable || !allowCellSelection || editingCell) return;
+    if (!selectedCells.length) return;
+    if (Number.isFinite(event.button) && event.button !== 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    finishTrackDrag({ commit: false });
+    finishFillDrag({ commit: false });
+    const captureTarget = event.currentTarget;
+    fillDragRef.current = {
+      pointerId: event.pointerId,
+      sourceCells: selectedCells.map((cell) => ({ ...cell })),
+      lastTarget: null,
+      captureTarget,
+    };
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const drag = fillDragRef.current;
+      if (!drag || moveEvent.pointerId !== drag.pointerId) return;
+      moveEvent.preventDefault();
+      const pointerCell = pointerToHostCell(moveEvent.clientX, moveEvent.clientY);
+      if (!pointerCell) return;
+      const next = resolveCanvasTableAutoFillTarget({
+        sourceCells: drag.sourceCells,
+        pointerCell,
+        rows: block.rows,
+        cols: block.cols,
+        merges: block.merges,
+      });
+      drag.lastTarget = next;
+      setFillPreviewBounds(next?.targetBounds ?? null);
+    };
+
+    const onPointerUp = (upEvent: PointerEvent) => {
+      const drag = fillDragRef.current;
+      if (!drag || upEvent.pointerId !== drag.pointerId) return;
+      upEvent.preventDefault();
+      finishFillDrag({ commit: true });
+    };
+
+    const onLostPointerCapture = (lostEvent: PointerEvent) => {
+      const drag = fillDragRef.current;
+      if (!drag || lostEvent.pointerId !== drag.pointerId) return;
+      finishFillDrag({ commit: true });
+    };
+
+    fillDragListenersRef.current = { onPointerMove, onPointerUp, onLostPointerCapture };
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+    window.addEventListener("lostpointercapture", onLostPointerCapture);
+    try {
+      captureTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* ambientes de teste */
+    }
+  }
 
   function onTrackHandlePointerDown(
     event: ReactPointerEvent<HTMLDivElement>,
@@ -826,6 +981,33 @@ export function ComunicadoCanvasTableView({
             width: overlay.focus.width,
             height: overlay.focus.height,
           }}
+        />
+      ) : null}
+      {fillPreviewRect ? (
+        <div
+          className="td-canvas-table__fill-preview"
+          aria-hidden
+          style={{
+            left: fillPreviewRect.left,
+            top: fillPreviewRect.top,
+            width: fillPreviewRect.width,
+            height: fillPreviewRect.height,
+          }}
+        />
+      ) : null}
+      {fillHandleRect ? (
+        <div
+          className="td-canvas-table__fill-handle"
+          role="button"
+          tabIndex={-1}
+          aria-label="Preencher células"
+          style={{
+            left: fillHandleRect.left,
+            top: fillHandleRect.top,
+            width: fillHandleRect.width,
+            height: fillHandleRect.height,
+          }}
+          onPointerDown={onFillHandlePointerDown}
         />
       ) : null}
       {trackHandles.map((handle) => (

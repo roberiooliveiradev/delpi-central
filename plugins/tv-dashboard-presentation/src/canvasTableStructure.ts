@@ -162,6 +162,155 @@ export function insertCanvasTableCol(params: {
   };
 }
 
+function uniqueSortedIndices(indices: readonly number[], count: number): number[] {
+  const set = new Set<number>();
+  for (const raw of indices) {
+    const index = Math.round(raw);
+    if (index >= 0 && index < count) set.add(index);
+  }
+  return Array.from(set).sort((a, b) => a - b);
+}
+
+function removeTrackSizes(tracks: number[] | undefined, count: number, remove: readonly number[]): number[] {
+  const current = normalizeCanvasTableTrackSizes(tracks, count);
+  const next = current.filter((_, index) => !remove.includes(index));
+  return normalizeCanvasTableTrackSizes(next, Math.max(1, count - remove.length));
+}
+
+function remapMergesAfterRowDelete(
+  merges: readonly CanvasTableMerge[] | undefined,
+  removeSorted: readonly number[],
+  nextRows: number,
+  cols: number,
+): CanvasTableMerge[] {
+  const removeSet = new Set(removeSorted);
+  const remapped: CanvasTableMerge[] = [];
+  for (const merge of merges ?? []) {
+    if (removeSet.has(merge.row)) continue;
+    let row = merge.row;
+    let rowspan = merge.rowspan;
+    for (const removed of removeSorted) {
+      if (removed < merge.row) row -= 1;
+      else if (removed > merge.row && removed < merge.row + merge.rowspan) rowspan -= 1;
+    }
+    if (rowspan < 1) continue;
+    remapped.push({ ...merge, row, rowspan });
+  }
+  return normalizeCanvasTableMerges(remapped, nextRows, cols);
+}
+
+function remapMergesAfterColDelete(
+  merges: readonly CanvasTableMerge[] | undefined,
+  removeSorted: readonly number[],
+  rows: number,
+  nextCols: number,
+): CanvasTableMerge[] {
+  const removeSet = new Set(removeSorted);
+  const remapped: CanvasTableMerge[] = [];
+  for (const merge of merges ?? []) {
+    if (removeSet.has(merge.col)) continue;
+    let col = merge.col;
+    let colspan = merge.colspan;
+    for (const removed of removeSorted) {
+      if (removed < merge.col) col -= 1;
+      else if (removed > merge.col && removed < merge.col + merge.colspan) colspan -= 1;
+    }
+    if (colspan < 1) continue;
+    remapped.push({ ...merge, col, colspan });
+  }
+  return normalizeCanvasTableMerges(remapped, rows, nextCols);
+}
+
+/** Exclui linhas (mantém mín. 1). Índices inválidos/vazios → no-op. */
+export function deleteCanvasTableRows(params: {
+  cells: CanvasTableCell[][];
+  rows: number;
+  cols: number;
+  indices: readonly number[];
+  merges?: readonly CanvasTableMerge[];
+  rowHeights?: number[];
+  canvasTableOptions?: CanvasTableOptions;
+}): {
+  rows: number;
+  cells: CanvasTableCell[][];
+  merges: CanvasTableMerge[];
+  rowHeights: number[];
+  canvasTableOptions?: CanvasTableOptions;
+} {
+  const remove = uniqueSortedIndices(params.indices, params.rows);
+  if (!remove.length || remove.length >= params.rows) {
+    return {
+      rows: params.rows,
+      cells: normalizeCanvasTableCells(params.cells, params.rows, params.cols),
+      merges: normalizeCanvasTableMerges(params.merges, params.rows, params.cols),
+      rowHeights: normalizeCanvasTableTrackSizes(params.rowHeights, params.rows),
+      canvasTableOptions: params.canvasTableOptions,
+    };
+  }
+  const removeSet = new Set(remove);
+  const cells = normalizeCanvasTableCells(params.cells, params.rows, params.cols).filter(
+    (_, row) => !removeSet.has(row),
+  );
+  const nextRows = cells.length;
+  const rowHeights = removeTrackSizes(params.rowHeights, params.rows, remove);
+  const merges = remapMergesAfterRowDelete(params.merges, remove, nextRows, params.cols);
+  return {
+    rows: nextRows,
+    cells,
+    merges,
+    rowHeights,
+    canvasTableOptions: {
+      ...(params.canvasTableOptions ?? {}),
+      rowHeights,
+    },
+  };
+}
+
+/** Exclui colunas (mantém mín. 1). Índices inválidos/vazios → no-op. */
+export function deleteCanvasTableCols(params: {
+  cells: CanvasTableCell[][];
+  rows: number;
+  cols: number;
+  indices: readonly number[];
+  merges?: readonly CanvasTableMerge[];
+  columnWidths?: number[];
+  canvasTableOptions?: CanvasTableOptions;
+}): {
+  cols: number;
+  cells: CanvasTableCell[][];
+  merges: CanvasTableMerge[];
+  columnWidths: number[];
+  canvasTableOptions?: CanvasTableOptions;
+} {
+  const remove = uniqueSortedIndices(params.indices, params.cols);
+  if (!remove.length || remove.length >= params.cols) {
+    return {
+      cols: params.cols,
+      cells: normalizeCanvasTableCells(params.cells, params.rows, params.cols),
+      merges: normalizeCanvasTableMerges(params.merges, params.rows, params.cols),
+      columnWidths: normalizeCanvasTableTrackSizes(params.columnWidths, params.cols),
+      canvasTableOptions: params.canvasTableOptions,
+    };
+  }
+  const removeSet = new Set(remove);
+  const cells = normalizeCanvasTableCells(params.cells, params.rows, params.cols).map((row) =>
+    row.filter((_, col) => !removeSet.has(col)),
+  );
+  const nextCols = cells[0]?.length ?? 1;
+  const columnWidths = removeTrackSizes(params.columnWidths, params.cols, remove);
+  const merges = remapMergesAfterColDelete(params.merges, remove, params.rows, nextCols);
+  return {
+    cols: nextCols,
+    cells,
+    merges,
+    columnWidths,
+    canvasTableOptions: {
+      ...(params.canvasTableOptions ?? {}),
+      columnWidths,
+    },
+  };
+}
+
 /**
  * Auto-fit da faixa `index` — redistribui % a partir de pesos de conteúdo (clamp mín.).
  * Não altera o frame do bloco.

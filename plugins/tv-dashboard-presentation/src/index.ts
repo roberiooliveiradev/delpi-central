@@ -620,6 +620,8 @@ export {
   resolveCanvasTableFontSize,
   resolveCanvasTableHostStyle,
   resolveCanvasTableCellBoxStyle,
+  resolveCanvasTableWrapActive,
+  nextCanvasTableWhiteSpaceToggle,
   resolveCanvasTableGeometrySnapshot,
   parseCanvasTableOptions,
   normalizeCanvasTableTrackSizes,
@@ -681,6 +683,8 @@ export type {
 export {
   insertCanvasTableRow,
   insertCanvasTableCol,
+  deleteCanvasTableRows,
+  deleteCanvasTableCols,
   autoFitCanvasTableTrack,
   canvasTableBandSelection,
   canvasTableTrackContentWeights,
@@ -690,9 +694,25 @@ export type { CanvasTableInsertPlacement } from "./canvasTableStructure";
 export {
   mapViewportRectToHostLocal,
   resolveCanvasTableSelectionOverlayRects,
+  resolveCanvasTableSelectionFillHandleRect,
   resolveCanvasTableTrackHandles,
   resolveCanvasTableGutterHandles,
 } from "./canvasTableSelectionOverlay";
+export {
+  CANVAS_TABLE_FILL_HANDLE_SIZE,
+  applyCanvasTableAutoFill,
+  boundsFromCanvasTableCells,
+  canvasTableCellsFromBounds,
+  resolveCanvasTableAutoFillTarget,
+  resolveCanvasTableBoundsOverlayRect,
+  resolveCanvasTableCellAtHostPoint,
+  resolveCanvasTableFillHandleRect,
+} from "./canvasTableAutoFill";
+export type {
+  CanvasTableAutoFillDirection,
+  CanvasTableBounds,
+  CanvasTableHostRect,
+} from "./canvasTableAutoFill";
 export {
   ComunicadoInputBlockView,
   resolveInputControlKind,

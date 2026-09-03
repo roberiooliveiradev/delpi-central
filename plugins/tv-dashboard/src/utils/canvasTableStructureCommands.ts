@@ -3,6 +3,8 @@
  */
 
 import {
+  deleteCanvasTableCols,
+  deleteCanvasTableRows,
   insertCanvasTableCol,
   insertCanvasTableRow,
   type CanvasTableInsertPlacement,
@@ -64,6 +66,76 @@ export function buildCanvasTableInsertPatch(params: {
     columnWidths: block.canvasTableOptions?.columnWidths,
     canvasTableOptions: block.canvasTableOptions,
   });
+  return {
+    cols: next.cols,
+    cells: next.cells,
+    merges: next.merges.length ? next.merges : undefined,
+    canvasTableOptions: next.canvasTableOptions,
+  };
+}
+
+/** Índices únicos de linhas/colunas cobertos pela seleção (ou foco). */
+export function resolveCanvasTableBandIndices(params: {
+  axis: CanvasTableStructureInsertAxis;
+  selection?: readonly { row: number; col: number }[];
+  focus?: { row: number; col: number } | null;
+}): number[] {
+  const fromSelection = (params.selection ?? []).map((cell) =>
+    params.axis === "row" ? cell.row : cell.col,
+  );
+  if (fromSelection.length) {
+    return Array.from(new Set(fromSelection)).sort((a, b) => a - b);
+  }
+  if (params.focus) {
+    return [params.axis === "row" ? params.focus.row : params.focus.col];
+  }
+  return [];
+}
+
+/** Patch após excluir faixas cobertas pela seleção/foco (mín. 1×1). */
+export function buildCanvasTableDeletePatch(params: {
+  block: ComunicadoCanvasTableBlock;
+  axis: CanvasTableStructureInsertAxis;
+  selection?: readonly { row: number; col: number }[];
+  focus?: { row: number; col: number } | null;
+}): Partial<ComunicadoCanvasTableBlock> | null {
+  const { block } = params;
+  const indices = resolveCanvasTableBandIndices({
+    axis: params.axis,
+    selection: params.selection,
+    focus: params.focus ?? resolveCanvasTableInsertFocus(block, null),
+  });
+  if (!indices.length) return null;
+  if (params.axis === "row") {
+    if (indices.length >= block.rows) return null;
+    const next = deleteCanvasTableRows({
+      cells: block.cells,
+      rows: block.rows,
+      cols: block.cols,
+      indices,
+      merges: block.merges,
+      rowHeights: block.canvasTableOptions?.rowHeights,
+      canvasTableOptions: block.canvasTableOptions,
+    });
+    if (next.rows === block.rows) return null;
+    return {
+      rows: next.rows,
+      cells: next.cells,
+      merges: next.merges.length ? next.merges : undefined,
+      canvasTableOptions: next.canvasTableOptions,
+    };
+  }
+  if (indices.length >= block.cols) return null;
+  const next = deleteCanvasTableCols({
+    cells: block.cells,
+    rows: block.rows,
+    cols: block.cols,
+    indices,
+    merges: block.merges,
+    columnWidths: block.canvasTableOptions?.columnWidths,
+    canvasTableOptions: block.canvasTableOptions,
+  });
+  if (next.cols === block.cols) return null;
   return {
     cols: next.cols,
     cells: next.cells,

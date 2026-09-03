@@ -15,7 +15,8 @@ Plataforma de **dispositivos IoT** na rede industrial: contadores de golpe, rota
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [ROADMAP.md](./ROADMAP.md) | Fases, subetapas e critérios de pronto |
+| [ROADMAP.md](./ROADMAP.md) | Fases, subetapas e critérios de pronto (inclui **P3** telemetria) |
+| [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md) | Persistência seletiva, heartbeat, rollups, retenção (padrão mercado) |
 | [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md) | Telas, drivers/papéis, regras, API |
 | [SCHEMA.md](./SCHEMA.md) | Modelo Postgres + leituras genéricas (`metrics` JSONB) |
 | [DESIGN-FRONTEND.md](./DESIGN-FRONTEND.md) | Cores, tokens, componentes plugin-ui, estrutura MFE |
@@ -33,7 +34,7 @@ Plataforma de **dispositivos IoT** na rede industrial: contadores de golpe, rota
 | [content/sectionIntros.ts](./content/sectionIntros.ts) | Copy visível abaixo dos títulos de seção |
 | [WIREFRAMES.md](./WIREFRAMES.md) | Wireframes ASCII (admin + operador + P2 TEMP/ROTATION/COMBO) |
 | [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md) | Spec P2: temperatura, rotação, painel combinado, alertas, metas, % |
-| [API-ROUTES-AND-BUSINESS-RULES.md](./API-ROUTES-AND-BUSINESS-RULES.md) | Rotas REST + regras R1–R44 (canônico) |
+| [API-ROUTES-AND-BUSINESS-RULES.md](./API-ROUTES-AND-BUSINESS-RULES.md) | Rotas REST + regras R1–R51 (R46–R51 P3 planejado) |
 | [API-MFE-DEVICE-EVOLUTION.md](./API-MFE-DEVICE-EVOLUTION.md) | Plano evolução API + MFE a partir do contador e padrão de mercado |
 | [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md) | Checklist verify live ESP8266 (UI + smoke) |
 | [MANIFEST-DRAFT.md](./MANIFEST-DRAFT.md) | Rotas menu e permissões (rascunho) |

@@ -49,6 +49,18 @@ def test_should_not_block_semantic_action_fallback_for_global_catalog():
     )
 
 
+def test_should_block_semantic_fallback_for_sql_execute_oneshot():
+    message = (
+        "executa no banco esse select top 10 de produtos do grupo 1008 "
+        "(SB1010, B1_COD, B1_DESC, B1_GRUPO)"
+    )
+
+    assert (
+        ChatOperationalParameterService.should_block_semantic_action_fallback(message)
+        is True
+    )
+
+
 def test_should_skip_agentic_for_stock_branch_refinement():
     history = [
         {"role": "user", "content": "estoque do produto 10080022"},
