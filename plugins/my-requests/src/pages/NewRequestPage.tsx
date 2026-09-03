@@ -14,11 +14,12 @@ import {
   MyRequestsStateBanner,
   SelectField,
 } from "../ui/mrUi";
+import { readTypeCodeFromSearch } from "./newRequestDeepLink";
 
 export function NewRequestPage() {
   const access = useRequestsPermissions();
   const [types, setTypes] = useState<RequestTypeSummary[]>([]);
-  const [typeCode, setTypeCode] = useState("");
+  const [typeCode, setTypeCode] = useState(() => readTypeCodeFromSearch());
   const [branchCode, setBranchCode] = useState(access.branches[0] || "01");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -28,10 +29,15 @@ export function NewRequestPage() {
 
   useEffect(() => {
     const ac = new AbortController();
+    const preferred = readTypeCodeFromSearch();
     listRequestTypes({ signal: ac.signal })
       .then((items) => {
         setTypes(items);
-        if (items[0]?.code) setTypeCode(items[0].code);
+        if (preferred && items.some((item) => item.code === preferred)) {
+          setTypeCode(preferred);
+          return;
+        }
+        if (!preferred && items[0]?.code) setTypeCode(items[0].code);
       })
       .catch((err: Error) => {
         if (err.name !== "AbortError") setError(err.message);

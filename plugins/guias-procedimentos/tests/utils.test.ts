@@ -209,3 +209,24 @@ test("vídeo externo aceita Google Drive público e normaliza", async () => {
     false,
   );
 });
+
+const { EMISSAO_NOTA_FISCAL_GUIDE } = await import(
+  "../src/content/guides/emissao-nota-fiscal.ts"
+);
+
+test("guia emissão NF aponta Minhas Solicitações (E8 cutover)", () => {
+  assert.match(
+    EMISSAO_NOTA_FISCAL_GUIDE.introduction,
+    /\/apps\/my-requests\/new\?type=invoice-issuance/,
+  );
+  assert.match(
+    EMISSAO_NOTA_FISCAL_GUIDE.footerNotice,
+    /\/apps\/my-requests\/new\?type=invoice-issuance/,
+  );
+  assert.equal(
+    EMISSAO_NOTA_FISCAL_GUIDE.introduction.includes(
+      "O cadastro guiado está em /apps/invoice-issuance",
+    ),
+    false,
+  );
+});

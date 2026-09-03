@@ -162,6 +162,8 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 
 Se tipo = `invoice-issuance` → abre **WF-04** (não POST genérico).
 
+Deep link: `/apps/my-requests/new?type=invoice-issuance` (também `type_code`) pré-seleciona o tipo. O app legado `/apps/invoice-issuance` exibe banner de depreciação (E8 dual-run).
+
 ### WF-04 — Wizard emissão NF (6 passos)
 
 ```text

@@ -34,7 +34,7 @@ export const EMISSAO_NOTA_FISCAL_GUIDE: GuideDocument = {
     status: "published",
   },
   introduction:
-    "Antes de solicitar a emissão de uma nota fiscal, reúna e confira todas as informações necessárias. Isso reduz correções, atrasos e devoluções da solicitação. O cadastro guiado está em /apps/invoice-issuance.",
+    "Antes de solicitar a emissão de uma nota fiscal, reúna e confira todas as informações necessárias. Isso reduz correções, atrasos e devoluções da solicitação. O cadastro guiado canônico está em /apps/my-requests/new?type=invoice-issuance (Minhas Solicitações).",
   sections: [
     {
       id: "destinatario",
@@ -119,5 +119,5 @@ export const EMISSAO_NOTA_FISCAL_GUIDE: GuideDocument = {
     { id: "chk-peso", label: "Peso e volumes informados." },
   ],
   footerNotice:
-    "Em caso de dúvida sobre um caso específico, confirme as informações com o setor de Faturamento antes de enviar a solicitação. Use o plugin Emissão de Notas Fiscais em /apps/invoice-issuance.",
+    "Em caso de dúvida sobre um caso específico, confirme as informações com o setor de Faturamento antes de enviar a solicitação. Use Minhas Solicitações em /apps/my-requests/new?type=invoice-issuance (o app legado /apps/invoice-issuance permanece em dual-run até o cutover completo).",
 };

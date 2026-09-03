@@ -14,7 +14,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   new: {
     section:
-      "Escolha o tipo: emissão de NF abre o wizard; matéria-prima abre o formulário schema-driven; outros tipos usam o fluxo genérico.",
+      "Escolha o tipo: emissão de NF abre o wizard; matéria-prima abre o formulário schema-driven; outros tipos usam o fluxo genérico. Deep link: /new?type=invoice-issuance. O app legado invoice-issuance permanece em dual-run com banner de depreciação.",
     type: "Tipo cadastrado no Request Engine (workflow declarativo).",
     branch: "Filial TOTVS do escopo da solicitação (01 = SC, 02 = ES).",
   },

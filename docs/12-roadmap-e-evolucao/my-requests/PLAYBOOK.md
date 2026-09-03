@@ -276,7 +276,7 @@ flowchart LR
 | `core-api/app/content/notification_catalog.json` | Categoria `invoice_issuance` |
 | `api-delpi/docs/api/invoice-issuance.md` | Doc API |
 | `docs/12-roadmap-e-evolucao/invoice-issuance/` | Roadmap legado |
-| `plugins/guias-procedimentos/.../emissao-nota-fiscal.ts` | Guia → `/apps/invoice-issuance` |
+| `plugins/guias-procedimentos/.../emissao-nota-fiscal.ts` | Guia → `/apps/my-requests/new?type=invoice-issuance` (legado dual-run) |
 
 ### 3.6 Rotas HTTP ativas (14)
 

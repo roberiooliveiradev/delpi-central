@@ -308,6 +308,20 @@
   background: color-mix(in srgb, var(--ii-warning) 12%, var(--ii-surface));
 }
 
+.ii-deprecation-banner {
+  margin-bottom: 12px;
+}
+
+.ii-deprecation-banner__links {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+
+.ii-deprecation-banner__links a {
+  color: inherit;
+  font-weight: 600;
+}
+
 .ii-error {
   background: color-mix(in srgb, var(--ii-danger) 12%, var(--ii-surface));
   color: var(--ii-danger);

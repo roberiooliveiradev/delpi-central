@@ -1,6 +1,7 @@
 import { IssuancePermissionsProvider } from "./application/IssuancePermissionsContext";
 import { configureHttpClient } from "./data/api/httpClient";
 import { branchFromPathname, type BranchCode } from "./constants/branch";
+import { DeprecationBanner } from "./ui/components/DeprecationBanner";
 import { QueuePage } from "./ui/pages/QueuePage";
 import { RequestDetailPage } from "./ui/pages/RequestDetailPage";
 import { IssuanceWizardPage } from "./ui/pages/IssuanceWizardPage";
@@ -75,6 +76,7 @@ export default function App({ getAccessToken, pathname }: AppProps) {
   return (
     <IssuancePermissionsProvider>
       <div className="dashboard-invoice-issuance ii-page">
+        <DeprecationBanner />
         {view.name === "queue" && (
           <QueuePage
             branch={branch}

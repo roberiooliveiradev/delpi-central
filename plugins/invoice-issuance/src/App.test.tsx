@@ -99,5 +99,12 @@ describe("App deep link", () => {
     await waitFor(() => expect(screen.getByTestId("detail-page")).toBeTruthy());
     expect(screen.getByText("Solicitação criada")).toBeTruthy();
     expect(api.getRequest).toHaveBeenCalledWith("req-deep");
+    expect(screen.getByTestId("deprecation-banner")).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Abrir Minhas Solicitações" }).getAttribute("href"),
+    ).toBe("/apps/my-requests");
+    expect(
+      screen.getByRole("link", { name: "Nova solicitação de NF" }).getAttribute("href"),
+    ).toBe("/apps/my-requests/new?type=invoice-issuance");
   });
 });

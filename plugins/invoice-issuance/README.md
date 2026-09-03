@@ -2,6 +2,16 @@
 
 Microfrontend federado para **solicitar, acompanhar e concluir** a emissão de notas fiscais de saída: wizard guiado (destinatário TOTVS, itens, tipo, transporte e observação) e fila de atendimento do Faturamento.
 
+## Deprecação (dual-run E8)
+
+O fluxo **canônico** passou a ser **[Minhas Solicitações](/apps/my-requests)** (`plugins/my-requests` + `requests-api`).
+
+- Novas solicitações: `/apps/my-requests/new?type=invoice-issuance`
+- Este plugin permanece disponível em dual-run (banner de aviso na UI)
+- Schema `invoice_issuance` e rotas api-delpi **não** foram removidos nesta etapa
+- Guia de procedimentos: `emissao-nota-fiscal` aponta para my-requests
+- Runbook de migração de dados: [`MIGRATION-RUNBOOK.md`](../../docs/12-roadmap-e-evolucao/my-requests/MIGRATION-RUNBOOK.md)
+
 Documentação de roadmap: [docs/12-roadmap-e-evolucao/invoice-issuance/](../../docs/12-roadmap-e-evolucao/invoice-issuance/) · API: [invoice-issuance.md](../../api-delpi/docs/api/invoice-issuance.md).
 
 Este plugin é **separado** do [Lançamento de Notas Fiscais](../lancamento-notas-fiscais/README.md) (entrada / SF1). Aqui **não** há conciliação Protheus (SF2) nesta versão.

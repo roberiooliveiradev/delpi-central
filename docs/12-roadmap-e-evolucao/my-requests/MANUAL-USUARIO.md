@@ -66,4 +66,5 @@ Quando o tipo é **raw-material-creation**, a tela Nova abre o formulário schem
 
 ## Limitações atuais
 
-- Cutover do app legado de emissão: etapa E8 (plugin `invoice-issuance` permanece em dual-run)
+- App legado `invoice-issuance`: dual-run com banner de depreciação; canônico = Minhas Solicitações (`/apps/my-requests/new?type=invoice-issuance`)
+- Migração de histórico legado: ver `MIGRATION-RUNBOOK.md` (E8)
