@@ -57,14 +57,14 @@ describe("resolveNotificationPreferenceDisplay", () => {
     assert.equal(posting.applicationName, "Lançamento de Notas Fiscais");
   });
 
-  it("portal RH: sourceApp do push S2S casa com o app publicado", () => {
+  it("portal RH: pluginId rhdelpi casa com o app publicado no Admin", () => {
     const display = resolveNotificationPreferenceDisplay(
       "portal_rh",
       FALLBACK_NOTIFICATION_CATALOG,
-      [{ id: "portal-rh", name: "Portal RH", icon: "users-round" }],
+      [{ id: "rhdelpi", name: "Portal RH", icon: "file-user" }],
     );
     assert.equal(display.notificationName, "Avisos do Portal RH");
     assert.equal(display.applicationName, "Portal RH");
-    assert.equal(display.iconName, "users-round");
+    assert.equal(display.iconName, "file-user");
   });
 });

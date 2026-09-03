@@ -196,11 +196,11 @@
     "portal_rh": {
       "label": "Portal RH",
       "notificationLabel": "Avisos do Portal RH",
-      "icon": "users",
+      "icon": "file-user",
       "mutable": true,
       "kind": "app",
-      "sourceApps": ["portal-rh"],
-      "pluginId": "portal-rh"
+      "sourceApps": ["rhdelpi", "portal-rh"],
+      "pluginId": "rhdelpi"
     }
   },
   "legacyCategoryAliases": {
