@@ -361,6 +361,8 @@ def _judge(case: BatteryCase, msg: dict, ms: int) -> None:
             errors.append("sem bloco SQL")
         if any("schedule" in p.lower() for p in paths):
             errors.append("REST schedule no authoring")
+        if any("/data/sql" in p for p in paths):
+            errors.append("execute /data/sql no authoring")
         if LEAK_RE.search(prose):
             errors.append("leak prompt/especialista")
     elif expect == "identity_fast":

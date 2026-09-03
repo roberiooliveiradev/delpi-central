@@ -51,3 +51,20 @@ def test_judge_sql_authoring_pass():
     }
     mod._judge(case, msg, 2000)
     assert case.status == "PASS"
+
+
+def test_judge_sql_authoring_fails_on_data_sql_path():
+    mod = _load_module()
+    case = mod.BatteryCase("t", "F04", "x", "crie sql", "sql_authoring")
+    msg = {
+        "content": "```sql\nSELECT TOP 10 B1_COD FROM SB1010\n```",
+        "toolCalls": [
+            {
+                "name": "execute_external_action",
+                "metadata": {"path": "/data/sql", "ok": True},
+            }
+        ],
+    }
+    mod._judge(case, msg, 2000)
+    assert case.status == "FAIL"
+    assert "/data/sql" in case.detail
