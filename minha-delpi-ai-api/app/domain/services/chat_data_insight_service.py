@@ -304,6 +304,18 @@ class ChatDataInsightService:
                 profile_key=profile_key,
             )
 
+        aggregate_highlights = cls._highlights_from_single_row_aggregate(rows)
+
+        if aggregate_highlights and not summary_highlights:
+            commentary["profileKey"] = "kpi_summary"
+            commentary["highlights"] = aggregate_highlights
+            commentary["summaryLines"] = aggregate_highlights[:4]
+            commentary["derivedMetrics"] = cls._build_derived_metrics(rows=rows, shape=shape)
+            return ChatHumanizedDataResponseService.normalize(
+                commentary,
+                profile_key="kpi_summary",
+            )
+
         if not summary_highlights:
             highlights.append(
                 ChatHumanizedDataResponseContentService.format(
@@ -371,9 +383,9 @@ class ChatDataInsightService:
 
             if key.casefold() not in skip_numeric:
                 values = [
-                    float(row.get(key))
+                    parsed
                     for row in rows
-                    if isinstance(row.get(key), (int, float)) and not isinstance(row.get(key), bool)
+                    if (parsed := cls._coerce_numeric(row.get(key))) is not None
                 ]
 
                 if values:
@@ -396,6 +408,120 @@ class ChatDataInsightService:
             commentary,
             profile_key=profile_key,
         )
+
+    @classmethod
+    def _highlights_from_single_row_aggregate(
+        cls,
+        rows: list[dict[str, Any]],
+    ) -> list[str]:
+        """Uma linha com TOTAL/COUNT (int, Decimal ou string) → lead factual, não rowCount genérico."""
+        from app.domain.services.chat_humanized_data_response_content_service import (
+            ChatHumanizedDataResponseContentService,
+        )
+
+        if len(rows) != 1 or not isinstance(rows[0], dict) or not rows[0]:
+            return []
+
+        row = rows[0]
+        preferred = [
+            str(token).strip().upper()
+            for token in ChatHumanizedDataResponseContentService.list(
+                "singleRowAggregate",
+                "preferredKeys",
+            )
+            if str(token).strip()
+        ]
+
+        if not preferred:
+            return []
+
+        labels = ChatHumanizedDataResponseContentService.get_mapping(
+            "singleRowAggregate",
+            "labels",
+        )
+        row_by_upper = {str(key).strip().upper(): (key, value) for key, value in row.items()}
+        lines: list[str] = []
+
+        for token in preferred:
+            pair = row_by_upper.get(token)
+
+            if not pair:
+                continue
+
+            original_key, raw = pair
+            numeric = cls._coerce_numeric(raw)
+
+            if numeric is None:
+                continue
+
+            label = str(labels.get(token) or labels.get(original_key) or token).strip() or token
+            lines.append(
+                ChatHumanizedDataResponseContentService.format(
+                    "singleRowAggregate",
+                    "metricLine",
+                    label=label,
+                    value=cls._format_number(numeric),
+                )
+            )
+
+        if lines:
+            return lines[:4]
+
+        # Fallback: exatamente uma coluna numérica na linha (ex.: SELECT COUNT(*) AS X).
+        if len(row) != 1:
+            return []
+
+        only_key, only_value = next(iter(row.items()))
+        numeric = cls._coerce_numeric(only_value)
+
+        if numeric is None:
+            return []
+
+        label = str(labels.get(str(only_key).strip().upper()) or only_key).strip() or str(only_key)
+        return [
+            ChatHumanizedDataResponseContentService.format(
+                "singleRowAggregate",
+                "metricLine",
+                label=label,
+                value=cls._format_number(numeric),
+            )
+        ]
+
+    @classmethod
+    def _coerce_numeric(cls, value: object) -> float | None:
+        if value is None or isinstance(value, bool):
+            return None
+
+        if isinstance(value, (int, float)):
+            return float(value)
+
+        try:
+            from decimal import Decimal
+
+            if isinstance(value, Decimal):
+                return float(value)
+        except Exception:
+            pass
+
+        text = str(value).strip()
+
+        if not text:
+            return None
+
+        candidates = [text]
+
+        if "," in text and "." in text:
+            candidates.append(text.replace(".", "").replace(",", "."))
+        elif "," in text:
+            candidates.append(text.replace(",", "."))
+
+        for candidate in candidates:
+            try:
+                return float(candidate)
+            except (TypeError, ValueError):
+                continue
+
+        return None
 
     @classmethod
     def _highlights_from_operational_summary(cls, data: dict[str, Any]) -> list[str]:

@@ -524,3 +524,29 @@ def test_build_summary_first_commentary_prefers_summary_over_days_diff_total():
     )
     assert "atraso" in fact_text.casefold() or "otd" in fact_text.casefold()
     assert "days_diff" not in fact_text.casefold()
+
+
+def test_single_row_count_aggregate_leads_with_total_not_rowcount():
+    """COUNT(*) / TOTAL (mesmo como string JSON) não pode virar «1 registro» genérico."""
+    metadata = {
+        "path": "/data/sql",
+        "tablePresentation": {
+            "type": "table",
+            "rows": [{"TOTAL": "1898"}],
+        },
+    }
+    data = {"rows": [{"TOTAL": "1898"}]}
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert isinstance(data_answer, dict)
+    summary = data_answer.get("summary") if isinstance(data_answer.get("summary"), dict) else {}
+    answer = str(summary.get("answer") or "")
+    facts = " ".join(
+        str(item.get("text") if isinstance(item, dict) else item)
+        for item in (data_answer.get("facts") or [])
+    )
+    blob = f"{answer} {facts}"
+    assert "1898" in blob.replace(".", "")
+    assert "foram retornados" not in blob.casefold()
+    assert "formato dos dados sugere" not in blob.casefold()

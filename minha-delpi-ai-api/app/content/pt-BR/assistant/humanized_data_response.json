@@ -303,6 +303,37 @@
     "largeList": "A lista é extensa; considere filtros ou paginação para focar o que importa.",
     "numericTotal": "Total de **{field}**: **{total}**."
   },
+  "singleRowAggregate": {
+    "preferredKeys": [
+      "TOTAL",
+      "COUNT",
+      "CNT",
+      "QTD",
+      "QTDE",
+      "QUANTIDADE",
+      "QTY",
+      "N",
+      "TOTAL_REGISTROS",
+      "ROW_COUNT",
+      "RECORDS",
+      "REGISTROS"
+    ],
+    "metricLine": "**{label}**: **{value}**.",
+    "labels": {
+      "TOTAL": "Total",
+      "COUNT": "Quantidade",
+      "CNT": "Quantidade",
+      "QTD": "Quantidade",
+      "QTDE": "Quantidade",
+      "QUANTIDADE": "Quantidade",
+      "QTY": "Quantidade",
+      "N": "Quantidade",
+      "TOTAL_REGISTROS": "Total de registros",
+      "ROW_COUNT": "Total de registros",
+      "RECORDS": "Registros",
+      "REGISTROS": "Registros"
+    }
+  },
   "emptyResult": {
     "forProductSuffix": " para o produto {code}",
     "generic": "Nenhum registro encontrado{forProduct}.",
