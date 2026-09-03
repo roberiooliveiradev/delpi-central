@@ -661,7 +661,7 @@ Fonte: `app/content/pt-BR/skills/catalog.json` (7 skills).
 | F04.4 | ajuste top 10 | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | ✓ | — | PASS | PASS | domain normalize: SB1 + TOP 10, sem A1 |
 | F04.leak | strip ENTREGA OBRIGATÓRIA | — | — | — | ✓ | — | — | — | — | — | PASS | PASS | domain prose formatting |
 | F05.1 | execute SQL (T1–T3) | ✓ | ✓ | ✓ | ✓ | — | ✓ | — | ✓ | — | PASS | PASS | síntese canônica; T3 one-shot `/data/sql` |
-| F06.schema | schema SB1010 | ✓ | ✓ | ✓ | ✓ | — | — | — | — | — | PASS | PASS | `pathSuffix=/schema`; sem AttributeError; não prefetch interno |
+| F06.schema | schema SB1010 | ✓ | ✓ | ✓ | ✓ | — | — | — | — | — | PASS | PASS | `/schema` + `tablePresentations` (Colunas SX3); prosa `system_metadata` (columnCount); sem strip por path; sem «N registros»/X3_TAMANHO |
 | F06.indexes | indexes SB1010 | ✓ | ✓ | ✓ | ✓ | — | — | — | — | — | PASS | PASS | registry `systemTableIndexes` + terms indexes |
 | F06.addcol | add coluna desconhecida | ✓ | ✓ | — | ✓ | — | ✓ | — | ✓ | — | PASS | PASS | clarify show_sql; não inventar SA1 via LLM |
 | F07.1 | política compras RAG | | | | | | | | | | | | |
