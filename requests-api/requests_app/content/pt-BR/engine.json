@@ -1,0 +1,22 @@
+{
+  "reasons": {
+    "invalid_transition": "Transição não permitida para o status atual.",
+    "missing_field": "Informe o campo obrigatório: {field}.",
+    "stale_version": "A solicitação foi atualizada por outro usuário. Recarregue e tente novamente.",
+    "forbidden": "Você não tem permissão para esta ação.",
+    "not_found": "Solicitação não encontrada.",
+    "type_not_found": "Tipo de solicitação não encontrado.",
+    "type_inactive": "Este tipo de solicitação não está ativo.",
+    "branch_required": "Informe a filial.",
+    "branch_invalid": "Filial inválida. Use 01 ou 02.",
+    "branch_forbidden": "Sem permissão para acessar dados desta filial.",
+    "create_forbidden": "Você não pode criar este tipo de solicitação.",
+    "edit_forbidden": "Você não pode editar esta solicitação.",
+    "idempotency_required": "Informe o cabeçalho Idempotency-Key.",
+    "payload_required": "Informe o payload da solicitação."
+  },
+  "fieldLabels": {
+    "return_reason": "motivo da devolução",
+    "cancel_justification": "justificativa de cancelamento"
+  }
+}

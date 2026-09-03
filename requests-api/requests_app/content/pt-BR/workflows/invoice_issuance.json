@@ -1,0 +1,85 @@
+{
+  "initialStatus": "submitted",
+  "terminalStatuses": ["completed", "cancelled", "rejected"],
+  "statusAliases": {
+    "submitted": "pending",
+    "needs_information": "returned",
+    "completed": "issued"
+  },
+  "computedActions": [
+    {
+      "action": "view",
+      "requires": {
+        "ownershipOr": ["view_all", "process", "manage"]
+      }
+    },
+    {
+      "action": "edit",
+      "whenStatus": ["needs_information"],
+      "requires": {
+        "permissions": ["create"],
+        "ownership": true
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "action": "start",
+      "from": ["submitted"],
+      "to": "in_progress",
+      "requires": {
+        "permissionsAny": ["process", "manage"]
+      },
+      "assignSelf": true
+    },
+    {
+      "action": "return",
+      "from": ["in_progress"],
+      "to": "needs_information",
+      "requires": {
+        "permissionsAny": ["process", "manage"],
+        "fields": ["return_reason"]
+      }
+    },
+    {
+      "action": "resubmit",
+      "from": ["needs_information"],
+      "to": "submitted",
+      "requires": {
+        "permissions": ["create"],
+        "ownership": true
+      }
+    },
+    {
+      "action": "complete",
+      "from": ["in_progress"],
+      "to": "completed",
+      "requires": {
+        "permissionsAny": ["process", "manage"]
+      },
+      "actionAlias": "issue"
+    },
+    {
+      "action": "cancel",
+      "from": ["submitted", "in_progress", "needs_information"],
+      "to": "cancelled",
+      "requires": {
+        "anyOf": [
+          {
+            "permissions": ["create"],
+            "ownership": true,
+            "from": ["submitted"]
+          },
+          {
+            "permissions": ["process"],
+            "from": ["in_progress"]
+          },
+          {
+            "permissions": ["manage"]
+          }
+        ],
+        "fields": ["cancel_justification"]
+      }
+    }
+  ]
+}
