@@ -49,7 +49,10 @@
       "unclear_request",
       "drawing_analysis",
       "drawing_report_adjustment",
-      "operational_parameter"
+      "operational_parameter",
+      "capabilities",
+      "assistant_identity",
+      "meta_direct_answer"
     ],
     "openOnReasons": ["no_clear_intent"],
     "openOnDecisions": ["llm_fallback"],

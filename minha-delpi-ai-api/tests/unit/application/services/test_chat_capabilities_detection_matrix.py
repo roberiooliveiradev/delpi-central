@@ -7,6 +7,8 @@ from app.application.services.chat_capabilities_service import ChatCapabilitiesS
 _SHOULD_DETECT = (
     "o que você pode fazer?",
     "o que vc pode fazer",
+    "o q vc pode fazer?",
+    "o q voce pode fazer",
     "o que vc é capaz de fazer?",
     "o que voce e capaz de fazer",
     "do que voce e capaz",
