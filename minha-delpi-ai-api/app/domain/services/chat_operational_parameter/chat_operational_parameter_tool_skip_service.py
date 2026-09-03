@@ -68,6 +68,14 @@ class ChatOperationalParameterToolSkipService:
         if ChatFastPathService.is_small_talk(message):
             return True
 
+        from app.domain.services.chat_sql_authoring_guidance_service import (
+            ChatSqlAuthoringGuidanceService,
+        )
+
+        # Authoring custom (crie sql…) não deve entrar no loop agentic de execute.
+        if ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message):
+            return True
+
         from app.domain.services.chat_follow_up_chip_query_service import (
             ChatFollowUpChipQueryService,
         )

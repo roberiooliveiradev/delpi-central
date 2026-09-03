@@ -120,6 +120,23 @@ def test_should_skip_agentic_for_normas_guidance():
     )
 
 
+def test_should_skip_agentic_for_custom_sql_authoring():
+    assert ChatOperationalParameterService.should_skip_agentic_loop(
+        "crie um sql top 10 da SB1 grupo 1008",
+        tool_context={"toolCalls": []},
+    )
+
+
+def test_should_not_skip_agentic_only_because_of_sql_execute_phrase():
+    """Execute explícito não herda o skip de authoring custom."""
+    from app.domain.services.chat_sql_authoring_guidance_service import (
+        ChatSqlAuthoringGuidanceService,
+    )
+
+    message = "agora executa essa consulta no banco"
+    assert not ChatSqlAuthoringGuidanceService.is_custom_sql_authoring(message)
+
+
 def test_should_skip_tools_after_missing_code_prompt_with_example():
     context = (
         "user: estoque do produto\n"
