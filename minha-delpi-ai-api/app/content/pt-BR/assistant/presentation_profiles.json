@@ -1286,7 +1286,7 @@
       "flags": [
         "system"
       ],
-      "commentaryProfileKey": "generic_list",
+      "commentaryProfileKey": "system_metadata",
       "humanizedNarrative": "skip",
       "dataAnswerLeadAlignment": "preserve_template"
     },

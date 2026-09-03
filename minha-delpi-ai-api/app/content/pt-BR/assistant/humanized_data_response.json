@@ -81,6 +81,11 @@
       "Pedir a próxima página se a lista estiver truncada",
       "Detalhar um registro específico da lista"
     ],
+    "system_metadata": [
+      "Listar colunas da tabela",
+      "Ver índices da tabela",
+      "Montar um SELECT de leitura com os campos principais"
+    ],
     "generic_kpi_series": [
       "Comparar com o período anterior",
       "Ver detalhamento por filial",
@@ -303,6 +308,14 @@
     "largeList": "A lista é extensa; considere filtros ou paginação para focar o que importa.",
     "numericTotal": "Total de **{field}**: **{total}**."
   },
+  "systemMetadata": {
+    "titleWithDescription": "**{tableName}** ({alias}) — {description}",
+    "titleWithAlias": "**{tableName}** ({alias})",
+    "titleTableOnly": "**{tableName}**",
+    "countsLine": "**{columnCount}** colunas · **{indexCount}** índices · **{relationCount}** relacionamentos",
+    "columnsLine": "**{columnCount}** colunas no catálogo (SX3)",
+    "tableHint": "As colunas aparecem na **tabela** desta resposta."
+  },
   "singleRowAggregate": {
     "preferredKeys": [
       "TOTAL",
@@ -457,7 +470,8 @@
     "purchase_budget_history",
     "kpi_summary",
     "generic_kpi_series",
-    "structure"
+    "structure",
+    "system_metadata"
   ],
   "commentaryProfiles": {
     "structure_exclusivity": {
@@ -592,6 +606,97 @@
       "contentSection": "genericList",
       "builderStrategy": "none",
       "templateProseCommentary": "full"
+    },
+    "system_metadata": {
+      "contentSection": "systemMetadata",
+      "builderStrategy": "highlight_rules",
+      "templateProseCommentary": "full",
+      "skipRowCountLead": true,
+      "skipNumericDerivedMetrics": true,
+      "visualHints": ["table"],
+      "highlightRules": [
+        {
+          "whenAll": [
+            { "path": "summary.tableName", "op": "present" },
+            { "path": "summary.alias", "op": "present" },
+            { "path": "summary.description", "op": "present" }
+          ],
+          "presenter": {
+            "section": "systemMetadata",
+            "key": "titleWithDescription"
+          },
+          "values": {
+            "tableName": "{summary.tableName}",
+            "alias": "{summary.alias}",
+            "description": "{summary.description}"
+          }
+        },
+        {
+          "whenAll": [
+            { "path": "summary.tableName", "op": "present" },
+            { "path": "summary.alias", "op": "present" },
+            { "path": "summary.description", "op": "absent" }
+          ],
+          "presenter": {
+            "section": "systemMetadata",
+            "key": "titleWithAlias"
+          },
+          "values": {
+            "tableName": "{summary.tableName}",
+            "alias": "{summary.alias}"
+          }
+        },
+        {
+          "whenAll": [
+            { "path": "summary.tableName", "op": "present" },
+            { "path": "summary.alias", "op": "absent" }
+          ],
+          "presenter": {
+            "section": "systemMetadata",
+            "key": "titleTableOnly"
+          },
+          "values": {
+            "tableName": "{summary.tableName}"
+          }
+        },
+        {
+          "whenAll": [
+            { "path": "summary.columnCount", "op": "present" },
+            { "path": "summary.indexCount", "op": "present" },
+            { "path": "summary.relationCount", "op": "present" }
+          ],
+          "presenter": {
+            "section": "systemMetadata",
+            "key": "countsLine"
+          },
+          "values": {
+            "columnCount": "{summary.columnCount}",
+            "indexCount": "{summary.indexCount}",
+            "relationCount": "{summary.relationCount}"
+          }
+        },
+        {
+          "whenAll": [
+            { "path": "summary.columnCount", "op": "present" },
+            { "path": "summary.indexCount", "op": "absent" }
+          ],
+          "presenter": {
+            "section": "systemMetadata",
+            "key": "columnsLine"
+          },
+          "values": {
+            "columnCount": "{summary.columnCount}"
+          }
+        },
+        {
+          "whenAll": [{ "path": "summary.tableName", "op": "present" }],
+          "presenter": {
+            "section": "systemMetadata",
+            "key": "tableHint"
+          },
+          "values": {}
+        }
+      ]
     },
     "kpi_summary": {
       "contentSection": "summaryFirstCommentary",

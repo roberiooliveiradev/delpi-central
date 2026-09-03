@@ -42,6 +42,20 @@ class ChatOperationalDataCommentarySupportService:
         from app.domain.services.chat_assistant_content_service import (
             ChatAssistantContentService,
         )
+        from app.domain.services.chat_humanized_data_response_content_service import (
+            ChatHumanizedDataResponseContentService,
+        )
+
+        # highlight_rules podem apontar para seções do humanized_data_response
+        # (ex.: systemMetadata) sem duplicar em presenter_content.
+        humanized = ChatHumanizedDataResponseContentService.format(
+            section,
+            key,
+            default="",
+            **(values or {}),
+        )
+        if humanized:
+            return humanized
 
         return ChatAssistantContentService.format(
             "presenter_content",
