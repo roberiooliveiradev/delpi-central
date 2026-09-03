@@ -25,7 +25,7 @@ class FakeSelectionService:
         }
 
 
-def test_stock_low_anomaly_plans_sales_follow_up():
+def test_stock_low_anomaly_defers_sales_to_chips_not_auto_tool():
     tool_calls = [
         {
             "name": "execute_external_action",
@@ -49,8 +49,7 @@ def test_stock_low_anomaly_plans_sales_follow_up():
         remaining_slots=2,
     )
 
-    assert len(planned) >= 1
-    assert planned[0].get("anomalyFollowUp", {}).get("routeId") == "productSales"
+    assert planned == []
 
 
 def test_no_follow_up_when_cap_exhausted():

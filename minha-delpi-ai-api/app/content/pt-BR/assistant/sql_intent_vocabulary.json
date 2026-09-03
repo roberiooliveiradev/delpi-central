@@ -23,6 +23,12 @@
       "restringe por",
       "somente",
       "apenas"
+    ],
+    "executionImperativePrefixes": [
+      "execute:",
+      "executar:",
+      "execute ",
+      "executar "
     ]
   },
   "operationalIntent": {

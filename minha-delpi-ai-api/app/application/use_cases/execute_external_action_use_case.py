@@ -57,6 +57,14 @@ class ExecuteExternalActionUseCase:
         provider = action_bundle["provider"]
         action = action_bundle["action"]
         arguments = self._normalize_arguments_for_method(action, arguments)
+        from app.domain.services.external_actions.external_action_sql_capability_service import (
+            ExternalActionSqlCapabilityService,
+        )
+
+        arguments = ExternalActionSqlCapabilityService.normalize_sql_execution_arguments(
+            action,
+            arguments,
+        )
         pipeline_parameters = self._extract_pipeline_parameters(arguments)
         arguments = self._drop_internal_unknown_parameters(action, arguments)
         arguments = self._ground_parameters(action, arguments, pipeline_parameters)

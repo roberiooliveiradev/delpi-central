@@ -183,6 +183,23 @@ class ExternalActionRegistryDispatchPhaseService:
 
         state = SqlFallbackRunState()
 
+        # KPI departamental (ROL, receita…) vence sticky product_code do histórico.
+        from app.domain.services.chat_department_kpi_intent_service import (
+            ChatDepartmentKpiIntentService,
+        )
+
+        if ChatDepartmentKpiIntentService.resolve(ctx.message) is not None:
+            selected = handlers["domainRoutes"](state)
+            if selected:
+                from app.application.services.external_actions.external_action_selection_diagnostics_service import (
+                    ExternalActionSelectionDiagnosticsService,
+                )
+
+                return ExternalActionSelectionDiagnosticsService.annotate(
+                    selected,
+                    match_source="domainRoutes",
+                )
+
         if prioritize_intent_bound:
             selected = handlers["intentBoundRoutes"](state)
 

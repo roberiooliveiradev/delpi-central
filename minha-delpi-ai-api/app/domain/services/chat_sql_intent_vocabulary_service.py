@@ -42,6 +42,21 @@ class ChatSqlIntentVocabularyService(ChatAssistantVocabularyService):
         )
 
     @classmethod
+    def execution_imperative_prefixes(cls) -> tuple[str, ...]:
+        """Prefixos de imperativo de chat a remover antes do POST /data/sql."""
+        return tuple(
+            sorted(
+                (
+                    str(item).strip()
+                    for item in cls.terms("shared", "executionImperativePrefixes")
+                    if str(item).strip()
+                ),
+                key=len,
+                reverse=True,
+            )
+        )
+
+    @classmethod
     @lru_cache(maxsize=8)
     def column_definitions(cls, table_group: str) -> dict[str, dict[str, Any]]:
         raw = cls.node("queryRefinement", "columnDefinitions", table_group)

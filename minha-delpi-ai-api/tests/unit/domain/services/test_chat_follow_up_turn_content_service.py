@@ -120,6 +120,26 @@ def test_previous_period_and_branch_compare_vocab_loaded():
     assert ChatFollowUpTurnContentService.extract_branch_codes(
         "comparar filial 01 com filial 02"
     ) == ["01", "02"]
+    assert "financial" in ChatFollowUpTurnContentService.topic_switch_markers()
+    assert "department_kpi" in ChatFollowUpTurnContentService.api_route_domain_affinity()[
+        "financial"
+    ]
+    assert " entre filial " in ChatFollowUpTurnContentService.branch_compare_markers()
+    assert ChatFollowUpTurnContentService.message_topic_domains("rol filial 01 agosto") == (
+        "financial",
+    )
+    suppliers = {
+        "path": "/products/10080047/suppliers",
+        "apiRouteDomain": "product",
+    }
+    assert not ChatFollowUpTurnContentService.domains_affine_to_last_action(
+        ("financial",),
+        suppliers,
+    )
+    assert ChatFollowUpTurnContentService.domains_affine_to_last_action(
+        ("financial",),
+        {"path": "/financial/rol", "apiRouteDomain": "department_kpi"},
+    )
     ack = ChatFollowUpTurnContentService.period_compare_format(
         "branchCompareAckTemplate",
         baseline_branch="01",

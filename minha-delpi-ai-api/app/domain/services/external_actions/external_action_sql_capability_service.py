@@ -164,7 +164,7 @@ class ExternalActionSqlCapabilityService:
 
     @classmethod
     def normalize_extracted_sql(cls, text: str | None) -> str | None:
-        """Remove só aspas que envolvem a consulta inteira — preserva literais como `= ''`."""
+        """Remove aspas externas e prefixos imperativos (execute:) — preserva literais `= ''`."""
         raw = str(text or "").strip()
 
         if not raw:
@@ -174,15 +174,34 @@ class ExternalActionSqlCapabilityService:
             inner = raw[1:-1].strip()
 
             if inner:
-                return inner
+                raw = inner
 
-        if len(raw) >= 2 and raw[0] == raw[-1] == "'" and raw.count("'") == 2:
+        elif len(raw) >= 2 and raw[0] == raw[-1] == "'" and raw.count("'") == 2:
             inner = raw[1:-1].strip()
 
             if inner:
-                return inner
+                raw = inner
 
-        return raw
+        return cls._strip_execution_imperative_prefix(raw) or None
+
+    @classmethod
+    def _strip_execution_imperative_prefix(cls, sql: str) -> str:
+        text = str(sql or "").strip()
+        if not text:
+            return text
+
+        from app.domain.services.chat_sql_intent_vocabulary_service import (
+            ChatSqlIntentVocabularyService,
+        )
+
+        lowered = text.casefold()
+        for prefix in ChatSqlIntentVocabularyService.execution_imperative_prefixes():
+            needle = str(prefix or "").strip()
+            if not needle:
+                continue
+            if lowered.startswith(needle.casefold()):
+                return text[len(needle) :].strip()
+        return text
 
     @classmethod
     def prepare_sql_for_execution(cls, text: str | None) -> str:
@@ -204,6 +223,24 @@ class ExternalActionSqlCapabilityService:
             "sql": query,
             "statement": query,
         }
+
+    @classmethod
+    def normalize_sql_execution_arguments(cls, action: dict | None, arguments: dict | None) -> dict:
+        """Garante body SQL sem prefixo imperativo em qualquer caminho (LLM tool / selection)."""
+        normalized = dict(arguments or {})
+        if not cls.is_sql_execution_action(action if isinstance(action, dict) else None):
+            return normalized
+
+        raw_sql = cls.extract_sql_from_arguments(normalized)
+        if not raw_sql:
+            return normalized
+
+        body = cls.build_sql_request_body(raw_sql)
+        normalized["body"] = body
+        for key in ("sql", "query", "statement"):
+            if key in normalized:
+                normalized[key] = body["sql"]
+        return normalized
 
     @classmethod
     def extract_sql_from_arguments(cls, arguments: dict | None) -> str | None:

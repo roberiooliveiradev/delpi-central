@@ -9,8 +9,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 842ms",
-    "ms": 842,
+    "detail": "ok | 890ms",
+    "ms": 890,
     "prose": "**Agentes especializados**\n\nAtive um especialista no composer para usar APIs e skills da tarefa.\n\n**Como usar:**\n- No composer, toque em + (ou digite @) e abra a lista de agentes.\n- Para produto, estoque, indicadores ou SQL operacional, escolha Minha DELPI (ou o agente com essas actions).\n- Confirme que o nome do agent",
     "evidence": {
       "R1": {
@@ -45,14 +45,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 577,
-        "wallMs": 842,
+        "totalMs": 623,
+        "wallMs": 890,
         "mode": "normal",
         "timings": {
-          "preToolMs": 277,
-          "toolsMs": 21,
+          "preToolMs": 293,
+          "toolsMs": 23,
           "ragMs": 7,
-          "llmMs": 244
+          "llmMs": 270
         },
         "verdict": "PASS"
       },
@@ -76,8 +76,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 500ms",
-    "ms": 500,
+    "detail": "ok | 555ms",
+    "ms": 555,
     "prose": "**Para esta tarefa**\n\nAtive o agente da plataforma **Minha DELPI** (composer **+** ou **@**), ou outro da lista com actions de produto/estoque. Em seguida faça a pergunta operacional.\n\n**Agentes especializados**\n\nAtive um especialista no composer para usar APIs e skills da tarefa.\n\n**Como usar:**\n- No composer, toque e",
     "evidence": {
       "R1": {
@@ -112,14 +112,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 312,
-        "wallMs": 500,
+        "totalMs": 348,
+        "wallMs": 555,
         "mode": "normal",
         "timings": {
-          "preToolMs": 194,
-          "toolsMs": 9,
-          "ragMs": 7,
-          "llmMs": 72
+          "preToolMs": 199,
+          "toolsMs": 11,
+          "ragMs": 9,
+          "llmMs": 92
         },
         "verdict": "PASS"
       },
@@ -143,8 +143,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 867ms",
-    "ms": 867,
+    "detail": "ok | 893ms",
+    "ms": 893,
     "prose": "**Dados operacionais exigem um agente**\n\nNo **chat comum** não acesso APIs da DELPI (estoque, produtos, OV/LMP, indicadores financeiros, SQL em produção…).\n\n**Neste modo ainda posso:**\n- Responder com **documentação e conhecimento** autorizado (RAG).\n- Ajudar com **textos**, revisão, e-mails, atas e traduções.\n- Analis",
     "evidence": {
       "R1": {
@@ -179,14 +179,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 632,
-        "wallMs": 867,
+        "totalMs": 622,
+        "wallMs": 893,
         "mode": "normal",
         "timings": {
-          "preToolMs": 449,
+          "preToolMs": 418,
           "toolsMs": 11,
-          "ragMs": 7,
-          "llmMs": 98
+          "ragMs": 9,
+          "llmMs": 115
         },
         "verdict": "PASS"
       },
@@ -210,8 +210,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 2695ms",
-    "ms": 2695,
+    "detail": "ok | 2510ms",
+    "ms": 2510,
     "prose": "Você está no **chat comum** (sem agente ativo). Neste modo respondo com documentação autorizada, textos, anexos, pesquisa web, lousa, gráficos e orientação — e indico qual **agente especializado** ativar no menu **+** para consultas operacionais (estoque, produtos, indicadores…).\n\nPosso ajudar você nestes formatos:\n\n**",
     "evidence": {
       "R1": {
@@ -230,7 +230,7 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 5237,
+        "proseLen": 5357,
         "verdict": "PASS"
       },
       "R5": {
@@ -246,14 +246,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 1914,
-        "wallMs": 2695,
+        "totalMs": 1851,
+        "wallMs": 2510,
         "mode": "normal",
         "timings": {
-          "preToolMs": 981,
-          "toolsMs": 23,
-          "ragMs": 50,
-          "llmMs": 826
+          "preToolMs": 997,
+          "toolsMs": 22,
+          "ragMs": 2,
+          "llmMs": 808
         },
         "verdict": "PASS"
       },
@@ -277,8 +277,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 841ms",
-    "ms": 841,
+    "detail": "ok | 825ms",
+    "ms": 825,
     "prose": "**Dados operacionais exigem um agente**\n\nNo **chat comum** não acesso APIs da DELPI (estoque, produtos, OV/LMP, indicadores financeiros, SQL em produção…).\n\n**Neste modo ainda posso:**\n- Responder com **documentação e conhecimento** autorizado (RAG).\n- Ajudar com **textos**, revisão, e-mails, atas e traduções.\n- Analis",
     "evidence": {
       "R1": {
@@ -313,14 +313,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 564,
-        "wallMs": 841,
+        "totalMs": 553,
+        "wallMs": 825,
         "mode": "normal",
         "timings": {
-          "preToolMs": 389,
-          "toolsMs": 17,
+          "preToolMs": 392,
+          "toolsMs": 20,
           "ragMs": 7,
-          "llmMs": 89
+          "llmMs": 79
         },
         "verdict": "PASS"
       },
@@ -344,9 +344,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 31969ms | paths=['/products/10080047/stock', '/products/10080047/sales']",
-    "ms": 31969,
-    "prose": "O produto **10080047** tem **23.814 unidades disponíveis** no total, distribuídas em **5 posições de estoque** — mas há um ponto crítico que merece atenção imediata. \n\nA maior parte do saldo está concentrada na **filial 02**, com **15.744 unidades disponíveis**, o que representa cerca de dois terços do total. O detalha",
+    "detail": "ok | 2077ms | paths=['/products/10080047/stock']",
+    "ms": 2077,
+    "prose": "O produto **10080047**\n\nSaldo disponível total: **23.814** un. em **5** posição(ões). Maior concentração na filial **02** (15.744 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado. - Empenho elevado pode bloquear novas saídas — conferir pe",
     "evidence": {
       "R1": {
         "intent": "operational_query",
@@ -355,10 +355,9 @@
         "verdict": "PASS"
       },
       "R2": {
-        "toolCount": 2,
+        "toolCount": 1,
         "paths": [
-          "/products/10080047/stock",
-          "/products/10080047/sales"
+          "/products/10080047/stock"
         ],
         "verdict": "PASS"
       },
@@ -367,7 +366,7 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 488,
+        "proseLen": 418,
         "verdict": "PASS"
       },
       "R5": {
@@ -383,20 +382,19 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 31505,
-        "wallMs": 31969,
+        "totalMs": 1707,
+        "wallMs": 2077,
         "mode": "normal",
         "timings": {
-          "preToolMs": 383,
-          "toolsMs": 963,
-          "ragMs": 7,
-          "llmMs": 30117
+          "preToolMs": 427,
+          "toolsMs": 730,
+          "ragMs": 8,
+          "llmMs": 428
         },
-        "verdict": "FAIL"
+        "verdict": "PASS"
       },
       "paths": [
-        "/products/10080047/stock",
-        "/products/10080047/sales"
+        "/products/10080047/stock"
       ],
       "operationIds": []
     },
@@ -419,8 +417,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 3899ms | paths=['/products/90260148/structure']",
-    "ms": 3899,
+    "detail": "ok | 2542ms | paths=['/products/90260148/structure']",
+    "ms": 2542,
     "prose": "Produto **90260148** — CHICOTE DE LIGACAO. A composição tem **2** componente(s) de nível 1.",
     "evidence": {
       "R1": {
@@ -457,14 +455,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 2735,
-        "wallMs": 3899,
+        "totalMs": 2138,
+        "wallMs": 2542,
         "mode": "normal",
         "timings": {
-          "preToolMs": 490,
-          "toolsMs": 1736,
-          "ragMs": 7,
-          "llmMs": 409
+          "preToolMs": 540,
+          "toolsMs": 1078,
+          "ragMs": 8,
+          "llmMs": 420
         },
         "verdict": "PASS"
       },
@@ -491,8 +489,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 16705ms | paths=['/financial/rol'] | br=['01']",
-    "ms": 16705,
+    "detail": "ok | 16276ms | paths=['/financial/rol'] | br=['01']",
+    "ms": 16276,
     "prose": "**ROL:** R$ 723.419,01\n\n**Receita bruta:** R$ 885.852,90",
     "evidence": {
       "R1": {
@@ -531,14 +529,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 15965,
-        "wallMs": 16705,
+        "totalMs": 15438,
+        "wallMs": 16276,
         "mode": "normal",
         "timings": {
-          "preToolMs": 1021,
-          "toolsMs": 14317,
-          "ragMs": 6,
-          "llmMs": 552
+          "preToolMs": 1177,
+          "toolsMs": 13520,
+          "ragMs": 8,
+          "llmMs": 640
         },
         "verdict": "FAIL"
       },
@@ -564,8 +562,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 14642ms | paths=['/financial/rol'] | br=['01']",
-    "ms": 14642,
+    "detail": "ok | 14903ms | paths=['/financial/rol'] | br=['01']",
+    "ms": 14903,
     "prose": "**ROL:** R$ 723.419,01\n\n**Receita bruta:** R$ 885.852,90",
     "evidence": {
       "R1": {
@@ -604,14 +602,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 14021,
-        "wallMs": 14642,
+        "totalMs": 14148,
+        "wallMs": 14903,
         "mode": "normal",
         "timings": {
-          "preToolMs": 1069,
-          "toolsMs": 12099,
+          "preToolMs": 1281,
+          "toolsMs": 11971,
           "ragMs": 8,
-          "llmMs": 769
+          "llmMs": 810
         },
         "verdict": "FAIL"
       },
@@ -637,9 +635,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 5201ms | paths=['/production/schedule/today']",
-    "ms": 5201,
-    "prose": "Foram retornados **108** registros. O formato dos dados sugere apresentação em **tabela**. **Pontos de atenção**\n\n- A lista é extensa; considere filtros ou paginação para focar o que importa.",
+    "detail": "ok | 15018ms | paths=['/production/schedule/today']",
+    "ms": 15018,
+    "prose": "A distribuição por item está no gráfico e a lista completa na tabela abaixo:\n\nSe quiser, posso detalhar algum item específico da programação ou filtrar por filial, linha ou produto.",
     "evidence": {
       "R1": {
         "intent": "operational_query",
@@ -659,7 +657,7 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 191,
+        "proseLen": 181,
         "verdict": "PASS"
       },
       "R5": {
@@ -675,16 +673,16 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 4586,
-        "wallMs": 5201,
+        "totalMs": 14354,
+        "wallMs": 15018,
         "mode": "normal",
         "timings": {
-          "preToolMs": 810,
-          "toolsMs": 3298,
-          "ragMs": 7,
-          "llmMs": 392
+          "preToolMs": 855,
+          "toolsMs": 3570,
+          "ragMs": 8,
+          "llmMs": 9846
         },
-        "verdict": "PASS"
+        "verdict": "FAIL"
       },
       "paths": [
         "/production/schedule/today"
@@ -710,9 +708,9 @@
     ],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 6417ms | paths=['/products/10080047/suppliers']",
-    "ms": 6417,
-    "prose": "O produto **10080047**\n\nForam retornados **4** registros. O formato dos dados sugere apresentação em **tabela**.",
+    "detail": "ok | 6968ms | paths=['/products/10080047/suppliers']",
+    "ms": 6968,
+    "prose": "O produto **10080047**\n\nTotal de **real_lead_time_sample_size**: **148**.",
     "evidence": {
       "R1": {
         "intent": "operational_query",
@@ -732,7 +730,7 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 112,
+        "proseLen": 73,
         "verdict": "PASS"
       },
       "R5": {
@@ -748,14 +746,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 5905,
-        "wallMs": 6417,
+        "totalMs": 6350,
+        "wallMs": 6968,
         "mode": "normal",
         "timings": {
-          "preToolMs": 4337,
-          "toolsMs": 1090,
+          "preToolMs": 4734,
+          "toolsMs": 1160,
           "ragMs": 7,
-          "llmMs": 391
+          "llmMs": 372
         },
         "verdict": "WARN"
       },
@@ -782,9 +780,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 38556ms",
-    "ms": 38556,
-    "prose": "Segue a consulta em SQL (somente leitura, sem executar no sistema). Ajuste o sufixo da tabela física Protheus (padrão …010) conforme o ambiente:\n\n```sql\nSELECT TOP 10\n    B1_COD,\n    B1_DESC,\n    B1_GRUPO,\n    B1_TIPO,\n    B1_UM\nFROM SB1010\nWHERE B1_GRUPO = '1008'\n  AND D_E_L_E_T_ = ' '\nORDER BY B1_COD;\n```\n\n**O que a ",
+    "detail": "ok | 18411ms",
+    "ms": 18411,
+    "prose": "Segue a consulta em SQL (somente leitura, sem executar no sistema). Ajuste o sufixo da tabela física Protheus (padrão …010) conforme o ambiente:\n\n```sql\nSELECT TOP 10\n    B1_COD   AS Codigo,\n    B1_DESC  AS Descricao,\n    B1_GRUPO AS Grupo\nFROM SB1010\nWHERE B1_GRUPO = '1008'\n  AND D_E_L_E_T_ = ' '\nORDER BY B1_COD;\n```\n",
     "evidence": {
       "R1": {
         "intent": "rag_question",
@@ -802,7 +800,7 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 1043,
+        "proseLen": 875,
         "verdict": "PASS"
       },
       "R5": {
@@ -818,14 +816,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 38071,
-        "wallMs": 38556,
+        "totalMs": 18047,
+        "wallMs": 18411,
         "mode": "normal",
         "timings": {
-          "preToolMs": 324,
-          "toolsMs": 519,
-          "ragMs": 491,
-          "llmMs": 36692
+          "preToolMs": 286,
+          "toolsMs": 421,
+          "ragMs": 72,
+          "llmMs": 17231
         },
         "verdict": "FAIL"
       },
@@ -848,57 +846,11 @@
     "useAgent": true,
     "seed": [],
     "responseMode": "normal",
-    "status": "PASS",
-    "detail": "ok | 26985ms",
-    "ms": 26985,
-    "prose": "Segue a consulta em SQL (somente leitura, sem executar no sistema). Ajuste o sufixo da tabela física Protheus (padrão …010) conforme o ambiente:\n\n```sql\nSELECT TOP 100\n    B1_COD      AS CodigoProduto,\n    B1_DESC     AS Descricao,\n    B1_TIPO     AS Tipo,\n    B1_UM       AS UnidadeMedida,\n    B1_GRUPO    AS Grupo,\n   ",
-    "evidence": {
-      "R1": {
-        "intent": "rag_question",
-        "subIntent": "sql_generate",
-        "decision": "sql_route",
-        "verdict": "PASS"
-      },
-      "R2": {
-        "toolCount": 0,
-        "paths": [],
-        "verdict": "PASS"
-      },
-      "R3": {
-        "branches": [],
-        "verdict": "PASS"
-      },
-      "R4": {
-        "proseLen": 1296,
-        "verdict": "PASS"
-      },
-      "R5": {
-        "presentationDecision": null,
-        "verdict": "PASS"
-      },
-      "R6": {
-        "seedCount": 0,
-        "verdict": "PASS"
-      },
-      "R7": {
-        "surface": "send",
-        "verdict": "N/A"
-      },
-      "R8": {
-        "totalMs": 25977,
-        "wallMs": 26985,
-        "mode": "normal",
-        "timings": {
-          "preToolMs": 824,
-          "toolsMs": 2581,
-          "ragMs": 77,
-          "llmMs": 22457
-        },
-        "verdict": "FAIL"
-      },
-      "paths": [],
-      "operationIds": []
-    },
+    "status": "FAIL",
+    "detail": "HTTP Error 429: TOO MANY REQUESTS",
+    "ms": 0,
+    "prose": "",
+    "evidence": {},
     "rRequired": [
       "R1",
       "R2",
@@ -915,61 +867,11 @@
     "useAgent": true,
     "seed": [],
     "responseMode": "normal",
-    "status": "PASS",
-    "detail": "ok | 41407ms | paths=['/data/sql']",
-    "ms": 41407,
-    "prose": "A execução foi chamada sem o texto da consulta. Cole o SQL, use «execute:» com o SELECT ou peça para interpretar o resultado da consulta anterior.\n\nTentei: /data/sql\n\nPossíveis motivos:\n- o corpo da requisição não incluiu sql/query/statement\n- pedido de interpretação pode ter sido confundido com nova execução no banco\n",
-    "evidence": {
-      "R1": {
-        "intent": "operational_query",
-        "subIntent": "sql_generate",
-        "decision": "sql_route",
-        "verdict": "PASS"
-      },
-      "R2": {
-        "toolCount": 1,
-        "paths": [
-          "/data/sql"
-        ],
-        "verdict": "PASS"
-      },
-      "R3": {
-        "branches": [],
-        "verdict": "PASS"
-      },
-      "R4": {
-        "proseLen": 331,
-        "verdict": "PASS"
-      },
-      "R5": {
-        "presentationDecision": null,
-        "verdict": "PASS"
-      },
-      "R6": {
-        "seedCount": 0,
-        "verdict": "PASS"
-      },
-      "R7": {
-        "surface": "send",
-        "verdict": "N/A"
-      },
-      "R8": {
-        "totalMs": 41019,
-        "wallMs": 41407,
-        "mode": "normal",
-        "timings": {
-          "preToolMs": 460,
-          "toolsMs": 19249,
-          "ragMs": 85,
-          "llmMs": 21200
-        },
-        "verdict": "FAIL"
-      },
-      "paths": [
-        "/data/sql"
-      ],
-      "operationIds": []
-    },
+    "status": "FAIL",
+    "detail": "HTTP Error 429: TOO MANY REQUESTS",
+    "ms": 0,
+    "prose": "",
+    "evidence": {},
     "rRequired": [
       "R1",
       "R2",
@@ -987,8 +889,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 20969ms | paths=['/financial/rol']",
-    "ms": 20969,
+    "detail": "ok | 18578ms | paths=['/financial/rol']",
+    "ms": 18578,
     "prose": "**ROL:** R$ 4.455.783,89\n\n**Receita bruta:** R$ 5.114.477,00",
     "evidence": {
       "R1": {
@@ -1025,14 +927,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 19566,
-        "wallMs": 20969,
+        "totalMs": 17443,
+        "wallMs": 18578,
         "mode": "normal",
         "timings": {
-          "preToolMs": 2032,
-          "toolsMs": 16538,
-          "ragMs": 9,
-          "llmMs": 881
+          "preToolMs": 1731,
+          "toolsMs": 14606,
+          "ragMs": 10,
+          "llmMs": 997
         },
         "verdict": "FAIL"
       },
@@ -1059,49 +961,34 @@
       "ROL filial 01 agosto 2026"
     ],
     "responseMode": "normal",
-    "status": "FAIL",
-    "detail": "HTTP Error 401: UNAUTHORIZED",
-    "ms": 0,
-    "prose": "",
-    "evidence": {},
-    "rRequired": [
-      "R1",
-      "R2",
-      "R4",
-      "R8"
-    ]
-  },
-  {
-    "caseId": "F19-B2",
-    "family": "F19",
-    "label": "identity-vc",
-    "message": "como vc se chama?",
-    "expect": "identity_fast",
-    "useAgent": false,
-    "seed": [],
-    "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 3585ms",
-    "ms": 3585,
-    "prose": "**Sobre o assistente**\n\nOlá! Sou o assistente da **Minha DELPI** — um chat corporativo em português, integrado à plataforma DELPI.\n\nAjudo com documentação autorizada, conversas do dia a dia e, quando você escolhe um **agente especialista**, ganho consultas e ferramentas extras daquele perfil.\n\nNão preciso do seu nome o",
+    "detail": "ok | 40986ms | paths=['/financial/rol', '/financial/rol'] | br=['01', '02']",
+    "ms": 40986,
+    "prose": "Comparação entre filiais 01 e 02 no período 01-08-2026 a 31-08-2026.\n- **Receita bruta (filial 01):** R$ 885.852,90\n- **Receita bruta (filial 02):** R$ 4.228.624,10\n- **Variação:** queda de R$ 3.342.771,20 (-79.1%)\n**Próximos passos**\n- Voltar ao mês atual\n- Outra filial\n- Comparar filiais 01 e 02",
     "evidence": {
       "R1": {
-        "intent": "identity",
-        "subIntent": "assistant_profile",
-        "decision": "identity",
+        "intent": "operational_query",
+        "subIntent": "analysis",
+        "decision": "operational_action",
         "verdict": "PASS"
       },
       "R2": {
-        "toolCount": 0,
-        "paths": [],
+        "toolCount": 2,
+        "paths": [
+          "/financial/rol",
+          "/financial/rol"
+        ],
         "verdict": "PASS"
       },
       "R3": {
-        "branches": [],
+        "branches": [
+          "01",
+          "02"
+        ],
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 428,
+        "proseLen": 298,
         "verdict": "PASS"
       },
       "R5": {
@@ -1109,7 +996,7 @@
         "verdict": "PASS"
       },
       "R6": {
-        "seedCount": 0,
+        "seedCount": 1,
         "verdict": "PASS"
       },
       "R7": {
@@ -1117,18 +1004,21 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 2946,
-        "wallMs": 3585,
+        "totalMs": 40424,
+        "wallMs": 40986,
         "mode": "normal",
         "timings": {
-          "preToolMs": 2302,
-          "toolsMs": 17,
-          "ragMs": 3,
-          "llmMs": 574
+          "preToolMs": 386,
+          "toolsMs": 11307,
+          "ragMs": 7,
+          "llmMs": 28591
         },
-        "verdict": "PASS"
+        "verdict": "FAIL"
       },
-      "paths": [],
+      "paths": [
+        "/financial/rol",
+        "/financial/rol"
+      ],
       "operationIds": []
     },
     "rRequired": [

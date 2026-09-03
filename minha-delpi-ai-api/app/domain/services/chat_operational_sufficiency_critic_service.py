@@ -316,6 +316,17 @@ class ChatOperationalSufficiencyCriticService:
                     deferred_to_chips=True,
                 )
 
+            if route_ids and max_follow == 0:
+                return SufficiencyVerdict(
+                    action="chips",
+                    plan_id=plan_id,
+                    reason_key=reason_key,
+                    reason=reason,
+                    follow_up_route_ids=route_ids,
+                    clarify_key=clarify_key,
+                    deferred_to_chips=True,
+                )
+
         return SufficiencyVerdict(
             action="sufficient",
             reason_key="sufficient",

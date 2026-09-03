@@ -72,14 +72,16 @@ class ChatFollowUpTurnInterpretationService:
         action = last_action if isinstance(last_action, dict) else None
         action_useful = cls._is_useful_last_action(action)
 
+        slot_delta = cls._extract_slot_delta(typo_fixed, typo_normalized, action)
+
         if action_useful and cls._is_topic_switch(typo_normalized, action):
             return cls._build(
                 decision="new_intent",
                 reason="topic_switch",
+                slot_delta=slot_delta or None,
                 suppress_broad_narrate=True,
             )
 
-        slot_delta = cls._extract_slot_delta(typo_fixed, typo_normalized, action)
         has_revise_trigger = cls._has_revise_slot_trigger(typo_normalized)
         has_challenge = ChatFollowUpTurnContentService.message_has_any_trigger(
             typo_normalized,
@@ -88,6 +90,13 @@ class ChatFollowUpTurnInterpretationService:
 
         if slot_delta:
             if action_useful:
+                if not cls._revise_domain_compatible(typo_normalized, action):
+                    return cls._build(
+                        decision="new_intent",
+                        reason="domain_affinity_mismatch",
+                        slot_delta=slot_delta,
+                        suppress_broad_narrate=True,
+                    )
                 return cls._build(
                     decision="revise_last_query",
                     reason="slot_delta",
@@ -162,7 +171,7 @@ class ChatFollowUpTurnInterpretationService:
     ) -> ChatFollowUpTurnInterpretation:
         """Reentra no contrato a partir do label residual (sem tool-pick)."""
         decision = ChatFollowUpTurnContentService.decision_for_classifier_label(label)
-        if decision == current.decision and current.continuity_mode != "allow_discovery":
+        if decision == current.decision:
             return current
 
         typo_fixed = ChatFollowUpTurnContentService.normalize_branch_typos(message)
@@ -172,6 +181,11 @@ class ChatFollowUpTurnInterpretationService:
         action = last_action if isinstance(last_action, dict) else None
 
         if decision == "revise_last_query":
+            # Não reverter pivot de domínio (topic_switch / affinity) para revise no lastAction errado.
+            if current.reason in {"topic_switch", "domain_affinity_mismatch"}:
+                return current
+            if not cls._revise_domain_compatible(typo_normalized, action):
+                return current
             slot_delta = cls._extract_slot_delta(typo_fixed, typo_normalized, action)
             if label == "revise_period" and "period" not in slot_delta:
                 slot_delta["period"] = "previous_year_same_range"
@@ -273,17 +287,11 @@ class ChatFollowUpTurnInterpretationService:
     ) -> dict[str, str]:
         delta: dict[str, str] = {}
         branch_codes = ChatFollowUpTurnContentService.extract_branch_codes(message)
-        compare_markers = (
-            " vs ",
-            " versus ",
-            " com a filial",
-            " com filial",
-            " entre filiais",
-            " comparar filial",
-            " comparar filiais",
-        )
-        wants_branch_compare = any(marker in f" {normalized} " for marker in compare_markers) or (
-            "comparar" in normalized and "filial" in normalized
+        compare_markers = ChatFollowUpTurnContentService.branch_compare_markers()
+        padded = f" {normalized} "
+        wants_branch_compare = any(marker in padded for marker in compare_markers) or (
+            ("comparar" in normalized or "compara" in normalized)
+            and ("filial" in normalized or "filiais" in normalized)
         )
         if wants_branch_compare and len(branch_codes) >= 2:
             delta["compareAxis"] = "branch"
@@ -355,6 +363,19 @@ class ChatFollowUpTurnInterpretationService:
         )
 
     @classmethod
+    def _revise_domain_compatible(
+        cls,
+        normalized: str,
+        last_action: dict[str, Any] | None,
+    ) -> bool:
+        """Revise só quando a mensagem não pivota para domínio incompatível com lastAction."""
+        domains = ChatFollowUpTurnContentService.message_topic_domains(normalized)
+        return ChatFollowUpTurnContentService.domains_affine_to_last_action(
+            domains,
+            last_action,
+        )
+
+    @classmethod
     def _is_topic_switch(cls, normalized: str, last_action: dict[str, Any]) -> bool:
         action_blob = " ".join(
             str(last_action.get(key) or "")
@@ -373,11 +394,16 @@ class ChatFollowUpTurnInterpretationService:
             exclude = excludes.get(domain) or ()
             if any(token in action_blob for token in exclude):
                 continue
-            # Pivot: mensagem traz domínio novo e ainda parece pergunta (não só refine de filial)
+            # Refine de filial no mesmo domínio: não é topic switch.
+            # Pivot (ex.: suppliers → ROL) permanece switch mesmo com filial na frase.
             if cls._has_revise_slot_trigger(normalized) and ChatFollowUpTurnContentService.extract_branch_code(
                 normalized
             ):
-                continue
+                if ChatFollowUpTurnContentService.domains_affine_to_last_action(
+                    (str(domain).strip().lower(),),
+                    last_action,
+                ):
+                    continue
             return True
         return False
 

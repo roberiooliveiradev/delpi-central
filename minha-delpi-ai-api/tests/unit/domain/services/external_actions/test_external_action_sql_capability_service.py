@@ -105,6 +105,42 @@ def test_build_sql_request_body_uppercases_protheus_identifiers():
     assert body["sql"].endswith("= ''")
 
 
+def test_normalize_and_body_strip_execute_imperative_prefix():
+    raw = "execute: SELECT TOP 3 B1_COD FROM SB1010 WHERE B1_GRUPO='1008'"
+    normalized = ExternalActionSqlCapabilityService.normalize_extracted_sql(raw)
+    assert normalized is not None
+    assert normalized.lstrip().upper().startswith("SELECT")
+    assert not normalized.upper().startswith("EXECUTE")
+
+    body = ExternalActionSqlCapabilityService.build_sql_request_body(
+        "EXECUTE: SELECT TOP 3 B1_COD FROM SB1010"
+    )
+    assert body["sql"].startswith("SELECT")
+    assert "EXECUTE" not in body["sql"][:20]
+
+
+def test_normalize_sql_execution_arguments_rewrites_llm_body():
+    action = {
+        "method": "POST",
+        "path": "/data/sql",
+        "sensitivity": "sql",
+        "operationId": "execute_readonly_sql",
+        "actionId": "api_delpi.data.execute_readonly_sql",
+    }
+    args = ExternalActionSqlCapabilityService.normalize_sql_execution_arguments(
+        action,
+        {
+            "body": {
+                "query": "EXECUTE: SELECT TOP 3 B1_COD FROM SB1010",
+                "sql": "EXECUTE: SELECT TOP 3 B1_COD FROM SB1010",
+                "statement": "EXECUTE: SELECT TOP 3 B1_COD FROM SB1010",
+            }
+        },
+    )
+    assert args["body"]["sql"].startswith("SELECT")
+    assert args["body"]["query"].startswith("SELECT")
+
+
 def test_attach_request_sql_to_nested_payload():
     data = {
         "success": True,

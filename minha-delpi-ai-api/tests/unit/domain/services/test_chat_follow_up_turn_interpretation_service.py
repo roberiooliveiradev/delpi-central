@@ -6,6 +6,7 @@ from app.domain.services.chat_turn_grounding_service import ChatTurnGroundingSer
 _ROL_ACTION = {
     "name": "financial_rol",
     "path": "/financial/rol",
+    "apiRouteDomain": "department_kpi",
     "params": {"start_date": "2026-08-01", "end_date": "2026-08-28"},
 }
 _EXCERPT = {
@@ -228,3 +229,81 @@ def test_revise_does_not_fall_through_to_narrate_without_last_action():
     )
     assert stage != "grounded_narrate_recap"
     assert stage is None
+
+
+def test_rol_after_suppliers_is_new_intent_not_revise():
+    suppliers = {
+        "name": "product_suppliers",
+        "path": "/products/10080047/suppliers",
+        "apiRouteDomain": "product",
+        "params": {"code": "10080047"},
+    }
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="ROL filial 01 agosto 2026",
+        last_action=suppliers,
+        last_result_excerpt={"title": "Fornecedores", "rowCount": 4},
+    )
+    assert result.decision == "new_intent"
+    assert result.reason in {"topic_switch", "domain_affinity_mismatch"}
+    assert result.slot_delta.get("branch") == "01"
+
+
+def test_compare_filail_after_rol_revises_with_compare_axis():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="compara filail 01 vs filail 02",
+        last_action={
+            **_ROL_ACTION,
+            "params": {
+                "start_date": "01-08-2026",
+                "end_date": "31-08-2026",
+                "branch": "01",
+            },
+        },
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "revise_last_query"
+    assert result.slot_delta.get("compareAxis") == "branch"
+    assert result.slot_delta.get("baseline_branch") == "01"
+    assert result.slot_delta.get("branch") == "02"
+
+
+def test_compare_entre_filiais_sets_compare_axis():
+    result = ChatFollowUpTurnInterpretationService.interpret(
+        message="compara entre filiais 01 e 02",
+        last_action={
+            **_ROL_ACTION,
+            "params": {
+                "start_date": "01-08-2026",
+                "end_date": "31-08-2026",
+                "branch": "01",
+            },
+        },
+        last_result_excerpt=_EXCERPT,
+    )
+    assert result.decision == "revise_last_query"
+    assert result.slot_delta.get("compareAxis") == "branch"
+    assert result.slot_delta.get("baseline_branch") == "01"
+    assert result.slot_delta.get("branch") == "02"
+
+
+def test_classifier_cannot_revise_after_topic_switch_to_financial():
+    suppliers = {
+        "name": "product_suppliers",
+        "path": "/products/10080047/suppliers",
+        "apiRouteDomain": "product",
+        "params": {"code": "10080047"},
+    }
+    current = ChatFollowUpTurnInterpretationService.interpret(
+        message="ROL filial 01 agosto 2026",
+        last_action=suppliers,
+    )
+    assert current.decision == "new_intent"
+    assert current.reason == "topic_switch"
+    overridden = ChatFollowUpTurnInterpretationService.apply_classifier_label(
+        current,
+        "revise_branch",
+        message="ROL filial 01 agosto 2026",
+        last_action=suppliers,
+    )
+    assert overridden.decision == "new_intent"
+    assert overridden.reason == "topic_switch"

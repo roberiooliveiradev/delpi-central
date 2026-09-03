@@ -646,7 +646,7 @@ def _run_case(
 ) -> str:
     print(f"\n→ [{case.case_id}] {case.message!r}", flush=True)
     aid = agent_id if case.use_agent else None
-    cache_key = f"{aid or 'common'}:{case.reuse_session}"
+    cache_key = f"{aid or 'common'}:{case.case_id}" if case.reuse_session else f"{aid or 'common'}:ephemeral"
     sid = session_cache.get(cache_key) if case.reuse_session else None
     if not sid:
         body: dict[str, Any] = {"title": f"battery-{case.case_id}"[:60]}

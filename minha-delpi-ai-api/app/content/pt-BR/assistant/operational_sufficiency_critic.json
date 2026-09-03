@@ -13,7 +13,7 @@
       },
       "then": {
         "followUpRouteIds": ["productSales"],
-        "maxAutoFollowUps": 1
+        "maxAutoFollowUps": 0
       },
       "reasonKey": "stockLowNeedsSales"
     },

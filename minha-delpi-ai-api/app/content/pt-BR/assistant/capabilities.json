@@ -38,6 +38,7 @@
       "Se faltar contexto, pergunto o que você precisa em vez de inventar dados.",
       "Use *próxima página* ou *mais linhas* quando a tabela vier truncada.",
       "Para comparar ou resumir um resultado anterior, referencie «essa tabela» ou «esses dados».",
+      "Após um KPI (ex.: ROL), peça «compara filial 01 vs filial 02» (typos como filail também funcionam) na mesma conversa.",
       "Perguntas de **negócio** (ex.: «visão 360° do produto», «onde é usado e quem fornece?») costumam cruzar estoque, estrutura, compras e vendas.",
       "Para **pesquisa na internet**, use frases como «pesquise na web sobre …» quando o agente tiver busca web habilitada."
     ]
@@ -45,7 +46,7 @@
   "skills": {
     "sqlAuthoringOn": "- **SQL (elaborar consultas)**: posso montar, explicar e **revisar/corrigir** queries `SELECT` (SQL genérico) em blocos de código, incluindo análise de erros de sintaxe quando você colar SQL ou mensagens de erro (skill).",
     "sqlAuthoringOff": "- **SQL (elaborar consultas)**: desligado nesta sessão — habilite a skill no agente ou use o chat comum (padrão global).",
-    "sqlExecutionOn": "- **SQL (executar)**: action `POST /data/sql` habilitada — consigo rodar consultas somente leitura autorizadas e mostrar o resultado.",
+    "sqlExecutionOn": "- **SQL (executar)**: action `POST /data/sql` habilitada — cole um `SELECT` (ou `execute: SELECT …`) somente leitura; o prefixo imperativo é removido antes da execução.",
     "sqlExecutionOffWithActions": "- **SQL (executar)**: não há action de execução SQL habilitada; só elaboro o texto da query se a skill estiver ativa.",
     "sqlExecutionOff": "- **SQL (executar)**: requer agente com action `POST /data/sql` configurada (diferente da skill de elaboração).",
     "skillsVsActions": "- **Skills ≠ Actions**: skills orientam *como* respondo; actions *executam* APIs."

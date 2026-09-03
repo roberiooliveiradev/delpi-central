@@ -70,7 +70,7 @@
       "anomalyTypes": ["negative_value", "zero_value", "empty_list"],
       "profileKeys": ["stock"],
       "followUpRouteIds": ["productSales"],
-      "maxFollowUps": 1
+      "maxFollowUps": 0
     },
     "sales_empty": {
       "anomalyTypes": ["empty_list"],

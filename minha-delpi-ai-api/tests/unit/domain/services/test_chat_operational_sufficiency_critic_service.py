@@ -54,12 +54,14 @@ def test_evaluate_sufficient_when_no_match():
     assert verdict.action == "sufficient"
 
 
-def test_evaluate_stock_low_execute_with_slot():
+def test_evaluate_stock_low_chips_with_slot():
+    """Anomalia de estoque sugere vendas via chips — sem auto follow-up HTTP."""
     verdict = ChatOperationalSufficiencyCriticService.evaluate(
         tool_calls=[_stock_low_call()],
         remaining_slots=2,
     )
-    assert verdict.action == "execute"
+    assert verdict.action == "chips"
+    assert verdict.deferred_to_chips is True
     assert verdict.plan_id == "stock_low_needs_sales"
     assert "productSales" in verdict.follow_up_route_ids
 
@@ -131,7 +133,7 @@ def test_evaluate_single_source_needs_cross():
     assert "productStock" not in verdict.follow_up_route_ids
 
 
-def test_no_double_execute_same_route_in_selections():
+def test_no_auto_execute_when_stock_low_deferred_to_chips():
     class FakeSelection:
         def select_registry_route_id(self, route_id, message, **kwargs):
             return {
@@ -146,6 +148,7 @@ def test_no_double_execute_same_route_in_selections():
         tool_calls=[_stock_low_call()],
         remaining_slots=2,
     )
+    assert verdict.action == "chips"
     follow = ChatOperationalSufficiencyCriticService.plan_follow_up_selections(
         FakeSelection(),
         verdict=verdict,
@@ -153,23 +156,7 @@ def test_no_double_execute_same_route_in_selections():
         tool_calls=[_stock_low_call()],
         allowed_action_ids=["id-productSales"],
     )
-    assert len(follow) == 1
-    assert follow[0]["sufficiencyFollowUp"]["routeId"] == "productSales"
-
-    # Already executed sales → skip
-    sales_done = {
-        "name": "execute_external_action",
-        "arguments": {"actionId": "id-productSales", "path": "/products/10080047/productSales"},
-        "metadata": {"ok": True, "path": "/products/10080047/productSales"},
-    }
-    follow2 = ChatOperationalSufficiencyCriticService.plan_follow_up_selections(
-        FakeSelection(),
-        verdict=verdict,
-        message="estoque 10080047",
-        tool_calls=[_stock_low_call(), sales_done],
-        allowed_action_ids=["id-productSales"],
-    )
-    assert follow2 == []
+    assert follow == []
 
 
 def test_audit_payload_shape():
@@ -178,6 +165,6 @@ def test_audit_payload_shape():
         remaining_slots=1,
     )
     payload = ChatOperationalSufficiencyCriticService.audit_payload(verdict)
-    assert payload["verdict"] == "execute"
+    assert payload["verdict"] == "chips"
     assert payload["planId"] == "stock_low_needs_sales"
     assert "reasonKey" in payload

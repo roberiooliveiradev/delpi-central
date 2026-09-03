@@ -328,30 +328,54 @@ class ChatDataInsightService:
                 profile_key="kpi_summary",
             )
 
+        numeric_keys = shape.get("numericKeys") or []
+        skip_numeric = {
+            str(token).strip().casefold()
+            for token in ChatHumanizedDataResponseContentService.list(
+                "summaryFirstCommentary",
+                "skipNumericRowKeys",
+            )
+            if str(token).strip()
+        }
+        numeric_highlights: list[str] = []
+
+        if numeric_keys and rows and not summary_highlights:
+            key = str(numeric_keys[0])
+
+            if key.casefold() not in skip_numeric:
+                values = [
+                    parsed
+                    for row in rows
+                    if (parsed := cls._coerce_numeric(row.get(key))) is not None
+                ]
+
+                if values:
+                    total = sum(values)
+                    numeric_highlights.append(
+                        ChatHumanizedDataResponseContentService.format(
+                            "generic",
+                            "numericTotal",
+                            field=key,
+                            total=cls._format_number(total),
+                        )
+                    )
+
         if not summary_highlights:
-            highlights.append(
-                ChatHumanizedDataResponseContentService.format(
-                    "generic",
-                    "rowCount",
-                    count=str(len(rows)),
-                )
-            )
-
-            recommended = str(shape.get("recommended") or "table").strip()
-            visual_label = ChatHumanizedDataResponseContentService.get(
-                "visualHints",
-                recommended,
-                default=recommended,
-            )
-
-            if visual_label:
+            if numeric_highlights:
+                highlights.extend(numeric_highlights)
+            else:
                 highlights.append(
                     ChatHumanizedDataResponseContentService.format(
                         "generic",
-                        "shapeRecommend",
-                        visual=visual_label,
+                        "rowCount",
+                        count=str(len(rows)),
                     )
                 )
+
+            recommended = str(shape.get("recommended") or "table").strip()
+            if recommended:
+                # Hint visual — não entra no lead de prosa (toolbar / recommendations).
+                commentary["recommendedVisual"] = recommended
 
         if int(shape.get("rows") or 0) > 25:
             from app.domain.services.chat_operational_result_completeness_service import (
@@ -379,37 +403,6 @@ class ChatDataInsightService:
                 if large_list_notice and large_list_notice not in limitations:
                     limitations.append(large_list_notice)
                     commentary["limitations"] = limitations
-
-        numeric_keys = shape.get("numericKeys") or []
-        skip_numeric = {
-            str(token).strip().casefold()
-            for token in ChatHumanizedDataResponseContentService.list(
-                "summaryFirstCommentary",
-                "skipNumericRowKeys",
-            )
-            if str(token).strip()
-        }
-
-        if numeric_keys and rows and not summary_highlights:
-            key = str(numeric_keys[0])
-
-            if key.casefold() not in skip_numeric:
-                values = [
-                    parsed
-                    for row in rows
-                    if (parsed := cls._coerce_numeric(row.get(key))) is not None
-                ]
-
-                if values:
-                    total = sum(values)
-                    highlights.append(
-                        ChatHumanizedDataResponseContentService.format(
-                            "generic",
-                            "numericTotal",
-                            field=key,
-                            total=cls._format_number(total),
-                        )
-                    )
 
         commentary["highlights"] = highlights
         commentary["attention"] = attention

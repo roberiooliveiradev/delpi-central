@@ -220,6 +220,86 @@ class ChatFollowUpTurnContentService:
         return resolved
 
     @classmethod
+    def api_route_domain_affinity(cls) -> dict[str, tuple[str, ...]]:
+        """Mapa follow-up domain → apiRouteDomain(s) compatíveis com revise grounded."""
+        node = ChatAssistantContentService.get_node(_BUNDLE, "apiRouteDomainAffinity") or {}
+        if not isinstance(node, dict):
+            return {}
+        resolved: dict[str, tuple[str, ...]] = {}
+        for domain, values in node.items():
+            if not isinstance(values, list):
+                continue
+            cleaned = tuple(str(item).strip().lower() for item in values if str(item).strip())
+            if cleaned:
+                resolved[str(domain).strip().lower()] = cleaned
+        return resolved
+
+    @classmethod
+    def branch_compare_markers(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item)
+            for item in ChatAssistantContentService.list(_BUNDLE, "branchCompareMarkers")
+            if str(item or "").strip()
+        )
+
+    @classmethod
+    def message_topic_domains(cls, normalized: str) -> tuple[str, ...]:
+        """Domínios de topicSwitchMarkers presentes na mensagem normalizada."""
+        text = f" {str(normalized or '').strip().lower()} "
+        if not text.strip():
+            return ()
+        found: list[str] = []
+        for domain, markers in cls.topic_switch_markers().items():
+            if any(f" {marker} " in text or marker in text for marker in markers):
+                found.append(str(domain).strip().lower())
+        return tuple(found)
+
+    @classmethod
+    def last_action_route_domain(cls, last_action: dict[str, Any] | None) -> str:
+        if not isinstance(last_action, dict):
+            return ""
+        explicit = str(
+            last_action.get("apiRouteDomain") or last_action.get("api_route_domain") or ""
+        ).strip().lower()
+        if explicit:
+            return explicit
+        path = str(last_action.get("path") or "").strip()
+        if not path:
+            return ""
+        from app.domain.services.chat_operational_api_domain_service import (
+            ChatOperationalApiDomainService,
+        )
+
+        return str(ChatOperationalApiDomainService.classify_path(path) or "").strip().lower()
+
+    @classmethod
+    def domains_affine_to_last_action(
+        cls,
+        message_domains: tuple[str, ...] | list[str],
+        last_action: dict[str, Any] | None,
+    ) -> bool:
+        """True se não há domínio na mensagem ou algum domínio é afim ao lastAction."""
+        domains = [str(item).strip().lower() for item in (message_domains or []) if str(item).strip()]
+        if not domains:
+            return True
+        route_domain = cls.last_action_route_domain(last_action)
+        if not route_domain:
+            return False
+        affinity = cls.api_route_domain_affinity()
+        for domain in domains:
+            allowed = affinity.get(domain) or ()
+            if route_domain in allowed:
+                return True
+            excludes = cls.topic_switch_exclude_markers().get(domain) or ()
+            action_blob = " ".join(
+                str(last_action.get(key) or "")
+                for key in ("path", "name", "operationId", "operation_id", "apiRouteDomain")
+            ).lower() if isinstance(last_action, dict) else ""
+            if any(token in action_blob for token in excludes):
+                return True
+        return False
+
+    @classmethod
     def clarify_slot_prompt(cls, slot: str) -> str:
         return str(
             ChatAssistantContentService.get(

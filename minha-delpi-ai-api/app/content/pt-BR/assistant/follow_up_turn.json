@@ -265,16 +265,37 @@
     "product": ["cadastro", "ficha do produto", "dados do produto"],
     "purchases": ["compras", "fornecedor", "fornecedores"],
     "quality": ["qualidade", "não conformidade", "nao conformidade", "nc "],
-    "production": ["produção", "producao", "ordem de produção", "ordem de producao", "oee"]
+    "production": ["produção", "producao", "ordem de produção", "ordem de producao", "oee"],
+    "financial": ["rol", "receita", "faturamento", "ebitda", "financeiro", "financial"]
   },
   "topicSwitchExcludeWhenLastActionMarkers": {
     "stock": ["/products/", "/stock", "estoque"],
     "structure": ["/structure", "estrutura"],
     "product": ["/products/"],
-    "purchases": ["/purchases", "compras"],
+    "purchases": ["/purchases", "/suppliers", "compras", "fornecedor"],
     "quality": ["/quality", "qualidade"],
-    "production": ["/production", "produção", "producao"]
+    "production": ["/production", "produção", "producao"],
+    "financial": ["/financial/", "department_kpi", "rol"]
   },
+  "apiRouteDomainAffinity": {
+    "financial": ["department_kpi", "financial"],
+    "stock": ["product", "department_kpi"],
+    "structure": ["product"],
+    "product": ["product"],
+    "purchases": ["product", "purchases", "supplies_kpi"],
+    "quality": ["product", "quality"],
+    "production": ["production", "production_schedule", "department_kpi"]
+  },
+  "branchCompareMarkers": [
+    " vs ",
+    " versus ",
+    " com a filial",
+    " com filial",
+    " entre filiais",
+    " entre filial ",
+    " comparar filial",
+    " comparar filiais"
+  ],
   "clarifySlotPrompts": {
     "branch": "Qual filial você quer consultar? Informe o código com dois dígitos (ex.: 01 ou 02).",
     "period": "Qual período você quer usar? Por exemplo: este mês, mês passado ou um intervalo de datas."

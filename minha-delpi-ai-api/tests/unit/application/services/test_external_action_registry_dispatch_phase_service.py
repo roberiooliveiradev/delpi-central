@@ -105,6 +105,35 @@ def test_domain_routes_run_when_operational_routes_miss() -> None:
     route_selection.select_department_kpi.assert_called_once()
 
 
+def test_department_kpi_beats_sticky_product_operational_routes() -> None:
+    """«ROL filial 01» com product_code no histórico não pode ficar em /suppliers."""
+    route_selection = MagicMock()
+    route_selection.select_operational_registry.return_value = {
+        "name": "execute_external_action",
+        "arguments": {"actionId": "suppliers", "parameters": {}},
+    }
+    route_selection.select_department_kpi.return_value = {
+        "name": "execute_external_action",
+        "arguments": {"actionId": "rol", "parameters": {"branch": "01"}},
+    }
+
+    service = ExternalActionRegistryDispatchPhaseService(route_selection)
+    selected = service.run(
+        _context(
+            message="ROL filial 01 agosto 2026",
+            normalized="rol filial 01 agosto 2026",
+            product_code="10080047",
+            bound_product_intent=ChatProductQueryIntent.FULL,
+        ),
+        callbacks=_callbacks(),
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "rol"
+    route_selection.select_department_kpi.assert_called_once()
+    route_selection.select_operational_registry.assert_not_called()
+
+
 def test_intent_bound_routes_run_after_domain_routes() -> None:
     route_selection = MagicMock()
     route_selection.select_operational_registry.return_value = None

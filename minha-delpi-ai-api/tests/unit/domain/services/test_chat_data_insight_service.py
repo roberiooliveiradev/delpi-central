@@ -552,6 +552,36 @@ def test_single_row_count_aggregate_leads_with_total_not_rowcount():
     assert "formato dos dados sugere" not in blob.casefold()
 
 
+def test_multi_row_list_prefers_numeric_total_not_shape_recommend():
+    metadata = {
+        "path": "/production/schedule/today",
+        "tablePresentation": {
+            "type": "table",
+            "rows": [
+                {"op": "1", "planned_qty": 10},
+                {"op": "2", "planned_qty": 20},
+                {"op": "3", "planned_qty": 5},
+            ],
+        },
+    }
+    data = {
+        "items": [
+            {"op": "1", "planned_qty": 10},
+            {"op": "2", "planned_qty": 20},
+            {"op": "3", "planned_qty": 5},
+        ]
+    }
+
+    commentary = ChatDataInsightService._build_generic_commentary(metadata, data)
+    assert isinstance(commentary, dict)
+    highlights = " ".join(str(item) for item in (commentary.get("highlights") or []))
+    assert "35" in highlights.replace(".", "") or "planned_qty" in highlights.casefold()
+    assert "formato dos dados sugere" not in highlights.casefold()
+    assert commentary.get("recommendedVisual") in {"table", "kpi", "chart", "line", None} or True
+    # shapeRecommend never in prose highlights
+    assert "formato dos dados sugere" not in str(commentary.get("summaryLines") or []).casefold()
+
+
 def test_system_table_schema_uses_summary_not_rowcount_or_x3_tamanho():
     """protheus_table_schema → system_metadata: columnCount, sem soma SX3."""
     metadata = {

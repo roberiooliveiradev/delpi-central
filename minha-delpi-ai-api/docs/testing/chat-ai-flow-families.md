@@ -473,10 +473,13 @@ Para cada família: **esperado**, **roteiros**, **gaps**, **âncoras**.
 2. «rode o SQL e traga os 5 produtos do grupo 1008»
 3. Chat comum: tentar execute → **não** deve rodar no banco
 4. «adicione a coluna cidade e execute de novo»
+5. Oneshot `execute: SELECT …` — prefixo imperativo removido em `normalize_extracted_sql` antes do validator
 
 **Gaps:** skill authoring ON sem action = elabora e não executa (mensagem clara?); show-mode vs execute; templates SQL vs REST.
 
-**Âncoras:** `ChatSqlQueryRefinementService`, SQL fallback policy, `sql_execution_errors.json`.
+**Âncoras:** `ExternalActionSqlCapabilityService.normalize_extracted_sql`, `ChatSqlQueryRefinementService`, SQL fallback policy, `sql_execution_errors.json`.
+
+**Compare filial×filial (D5):** após KPI na mesma sessão, `compara filail 01 vs 02` exige afinidade de domínio no revise (`follow_up_turn.json` + `ChatFollowUpTurnInterpretationService`); bateria isola `reuse_session` por `caseId`.
 
 ---
 
