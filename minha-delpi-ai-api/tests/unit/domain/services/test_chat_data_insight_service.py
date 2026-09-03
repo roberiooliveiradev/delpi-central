@@ -550,3 +550,65 @@ def test_single_row_count_aggregate_leads_with_total_not_rowcount():
     assert "1898" in blob.replace(".", "")
     assert "foram retornados" not in blob.casefold()
     assert "formato dos dados sugere" not in blob.casefold()
+
+
+def test_system_table_schema_uses_summary_not_rowcount_or_x3_tamanho():
+    """protheus_table_schema → system_metadata: columnCount, sem soma SX3."""
+    metadata = {
+        "path": "/system/tables/SB1010/schema",
+        "apiDelpiResponseMeta": {
+            "entity": "protheus_table_schema",
+            "shape": "composite_analysis",
+        },
+        "tablePresentation": {
+            "type": "table",
+            "rows": [
+                {"X3_CAMPO": "B1_COD", "X3_TAMANHO": 8},
+                {"X3_CAMPO": "B1_DESC", "X3_TAMANHO": 60},
+            ],
+        },
+    }
+    data = {
+        "summary": {
+            "tableName": "SB1010",
+            "alias": "SB1",
+            "description": "Descrição Genérica do Produto",
+            "columnCount": 318,
+            "indexCount": 19,
+            "relationCount": 962,
+        },
+        "columns": {
+            "items": [
+                {"X3_CAMPO": "B1_COD", "X3_TAMANHO": 8},
+                {"X3_CAMPO": "B1_DESC", "X3_TAMANHO": 60},
+            ],
+            "total": 318,
+            "truncated": False,
+        },
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert isinstance(data_answer, dict)
+    assert data_answer.get("profileKey") == "system_metadata"
+    blob = " ".join(
+        [
+            str((data_answer.get("summary") or {}).get("answer") or ""),
+            *[
+                str(item.get("text") if isinstance(item, dict) else item)
+                for item in (data_answer.get("facts") or [])
+            ],
+        ]
+    )
+    assert "SB1010" in blob
+    assert "318" in blob
+    assert "foram retornados" not in blob.casefold()
+    assert "x3_tamanho" not in blob.casefold()
+    assert "x3 tamanho" not in blob.casefold()
+    metrics = data_answer.get("derivedMetrics") or []
+    metric_blob = " ".join(
+        f"{m.get('label')} {m.get('value')}" for m in metrics if isinstance(m, dict)
+    ).casefold()
+    assert "tamanho" not in metric_blob
+    assert "2703" not in metric_blob
+    assert "média" not in metric_blob

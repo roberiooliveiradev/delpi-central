@@ -63,7 +63,9 @@ class ChatOperationalCommentaryProfileService:
         highlights = cls.build_highlight_rules(profile_key, data, format_line=format_line)
         visual_hints = cls.visual_hints(profile_key)
 
-        if not highlights and not visual_hints:
+        # Sem highlights, devolver None para o insight cair no fallback genérico
+        # (ex.: /system/tables/search com perfil system_metadata sem summary de schema).
+        if not highlights:
             return None
 
         return {
@@ -93,6 +95,14 @@ class ChatOperationalCommentaryProfileService:
             return []
 
         return [str(item).strip() for item in hints if str(item or "").strip()]
+
+    @classmethod
+    def skip_row_count_lead(cls, profile_key: str) -> bool:
+        return bool(cls.profile_config(profile_key).get("skipRowCountLead"))
+
+    @classmethod
+    def skip_numeric_derived_metrics(cls, profile_key: str) -> bool:
+        return bool(cls.profile_config(profile_key).get("skipNumericDerivedMetrics"))
 
     @classmethod
     def try_build_metadata_only(
