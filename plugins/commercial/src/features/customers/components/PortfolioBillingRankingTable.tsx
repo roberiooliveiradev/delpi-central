@@ -32,6 +32,10 @@ import {
 } from "../../../content/billingNature";
 import type { PortfolioBillingRankingItem } from "../../../types/analytics";
 import { formatCurrency } from "../../../utils/format";
+import {
+  customerAvatarKey,
+  useCustomerAvatarPresence,
+} from "../../../hooks/useCustomerAvatarPresence";
 import { OtdCustomerIdentityCell } from "../../analytics/components/OtdCustomerIdentityCell";
 import { usePortfolioBillingTablePreferences } from "../hooks/usePortfolioBillingTablePreferences";
 import {
@@ -158,6 +162,18 @@ export function PortfolioBillingRankingTable({
     billingNature,
   ]);
 
+  const avatarPairs = useMemo(
+    () =>
+      items
+        .filter((item) => (item.customerCode || "").trim())
+        .map((item) => ({
+          customer_code: (item.customerCode || "").trim(),
+          customer_store: (item.customerStore || "01").trim() || "01",
+        })),
+    [items],
+  );
+  const avatarPresence = useCustomerAvatarPresence(avatarPairs);
+
   const columns = useMemo((): DataTableColumn<PortfolioBillingRankingItem>[] => {
     const base: DataTableColumn<PortfolioBillingRankingItem>[] = [
       {
@@ -188,17 +204,24 @@ export function PortfolioBillingRankingTable({
         header: "Cliente",
         interactive: true,
         rowClick: "stop",
-        render: (row) => (
-          <OtdCustomerIdentityCell
-            customer={{
-              code: row.customerCode,
-              store: row.customerStore,
-              name: row.customerName,
-            }}
-            size="sm"
-            returnLabel="Minha Carteira"
-          />
-        ),
+        render: (row) => {
+          const code = (row.customerCode || "").trim();
+          const store = (row.customerStore || "01").trim() || "01";
+          return (
+            <OtdCustomerIdentityCell
+              customer={{
+                code,
+                store,
+                name: row.customerName,
+                hasAvatar: code
+                  ? avatarPresence.get(customerAvatarKey(code, store))
+                  : false,
+              }}
+              size="sm"
+              returnLabel="Minha Carteira"
+            />
+          );
+        },
       });
     }
     base.push(
@@ -237,7 +260,7 @@ export function PortfolioBillingRankingTable({
       },
     );
     return base;
-  }, [amountHeader, effectiveGroupBy]);
+  }, [amountHeader, avatarPresence, effectiveGroupBy]);
 
   const visibleColumns = useMemo(() => {
     return filterColumns(columns).filter((column) => {

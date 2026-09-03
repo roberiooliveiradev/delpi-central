@@ -21,6 +21,7 @@ describe("PortfolioBillingRankingTable", () => {
     assert.doesNotMatch(source, /collapsible/);
     assert.doesNotMatch(source, /defaultOpen/);
     assert.match(source, /OtdCustomerIdentityCell/);
+    assert.match(source, /useCustomerAvatarPresence/);
     assert.match(source, /CommercialAvatar/);
     assert.match(source, /CommercialCompareSparkline/);
     assert.match(source, /CommercialTrendDelta/);

@@ -37,8 +37,8 @@ describe("Portfolio billing tables — estrutural", () => {
     assert.doesNotMatch(byProduct, /api-delpi|API_DELPI/);
     assert.match(abc, /DataTable/);
     assert.match(abc, /runTabularExport/);
-    assert.match(abc, /usePortfolioBillingTablePreferences/);
-    assert.match(abc, /CommercialTableColumnVisibilityMenu/);
+    assert.match(abc, /OtdCustomerIdentityCell/);
+    assert.match(abc, /useCustomerAvatarPresence/);
     assert.doesNotMatch(abc, /<table[\s>]/);
   });
 

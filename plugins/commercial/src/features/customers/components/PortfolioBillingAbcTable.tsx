@@ -23,6 +23,11 @@ import {
   type PortfolioBillingAmountNature,
 } from "../../../content/billingNature";
 import type { CommercialRolByCustomerItem } from "../../../types/analytics";
+import {
+  customerAvatarKey,
+  useCustomerAvatarPresence,
+} from "../../../hooks/useCustomerAvatarPresence";
+import { OtdCustomerIdentityCell } from "../../analytics/components/OtdCustomerIdentityCell";
 import { billingSeriesPresetLabel } from "../utils/billingSeriesPeriod";
 import { usePortfolioBillingTablePreferences } from "../hooks/usePortfolioBillingTablePreferences";
 import type { PortfolioBillingWorkspaceFilters } from "../hooks/usePortfolioBillingWorkspaceFilters";
@@ -46,6 +51,8 @@ type PortfolioBillingAbcTableProps = {
 
 type AbcRow = {
   id: string;
+  customerCode: string;
+  customerStore: string;
   customerName: string;
   cnpj: string;
   cityState: string;
@@ -161,6 +168,8 @@ export function PortfolioBillingAbcTable({
   const rows = useMemo((): AbcRow[] => {
     const mapped = items.map((item, index) => ({
       id: `${item.customer_code}|${item.customer_store || ""}|${index}`,
+      customerCode: (item.customer_code || "").trim(),
+      customerStore: (item.customer_store || "01").trim() || "01",
       customerName: item.customer_name || item.customer_code || "—",
       cnpj: formatCnpj(item.cnpj),
       cityState: formatCityState(item.city, item.state),
@@ -180,12 +189,42 @@ export function PortfolioBillingAbcTable({
     return mapped.sort((a, b) => (b.sharePct ?? -1) - (a.sharePct ?? -1));
   }, [items, billingNature]);
 
+  const avatarPairs = useMemo(
+    () =>
+      rows
+        .filter((row) => row.customerCode)
+        .map((row) => ({
+          customer_code: row.customerCode,
+          customer_store: row.customerStore,
+        })),
+    [rows],
+  );
+  const avatarPresence = useCustomerAvatarPresence(avatarPairs);
+
   const columns = useMemo((): DataTableColumn<AbcRow>[] => {
     return [
       {
         key: "customer",
         header: CUSTOMER_BILLING_CONTENT.colCustomer,
-        render: (row) => row.customerName,
+        interactive: true,
+        rowClick: "stop",
+        render: (row) =>
+          row.customerCode ? (
+            <OtdCustomerIdentityCell
+              customer={{
+                code: row.customerCode,
+                store: row.customerStore,
+                name: row.customerName,
+                hasAvatar: avatarPresence.get(
+                  customerAvatarKey(row.customerCode, row.customerStore),
+                ),
+              }}
+              size="sm"
+              returnLabel="Minha Carteira"
+            />
+          ) : (
+            row.customerName
+          ),
         sortValue: (row) => row.customerName,
         sortable: true,
       },
@@ -212,7 +251,7 @@ export function PortfolioBillingAbcTable({
         align: "right",
       },
     ];
-  }, []);
+  }, [avatarPresence]);
 
   const visibleColumns = useMemo(
     () => filterColumns(columns),
