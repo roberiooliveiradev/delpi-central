@@ -24,7 +24,7 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 | [../changelog/2026-06-playbook-inteligencia.md](../changelog/2026-06-playbook-inteligencia.md) | **Jun/2026:** playbook inteligência — typos, gate de turno simples, fallback honesto, preferências de sessão, métricas de eficiência, feedback, starters, streaming humanizado, avisar/contornar erros. |
 | [../changelog/2026-06-playbook-14-corretor-digitacao-composer.md](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md) | **Jun/2026:** Playbook 14 — chip de correção de digitação no composer, endpoint `typing-suggestions`, telemetria `typing_correction_*`. |
 | [api-delpi-chat-intelligence-audit.md](./api-delpi-chat-intelligence-audit.md) | Auditoria maio/2026: cobertura api-delpi, heurísticas de seleção, typos, regressão e backlog. |
-| [audit-chat-base-familias-fluxos-set2026.md](./audit-chat-base-familias-fluxos-set2026.md) | **Set/2026:** auditoria por família (F01–F24) — roteiros de usuário, skills, gaps P0–P2 e planilha de smoke. |
+| [audit-chat-base-familias-fluxos-set2026.md](./audit-chat-base-familias-fluxos-set2026.md) | **Canônico — testes de IA do chat (set/2026):** famílias F01–F24, critérios R1–R8, bateria humana, governança § 0, planilha de smoke. **Obrigatório atualizar em todo PR de inteligência/fluxo.** |
 | [playbook-04-autoajuda-chat.md](./playbook-04-autoajuda-chat.md) | **Playbook 04:** autoajuda — manual vivo do chat (catálogo, ajuda contextual, regressão A1–A12). |
 | [playbook-05-anexos-lousa.md](./playbook-05-anexos-lousa.md) | **Playbook 05:** anexos e lousa — welcome, chips, ambiguidade, metadata de versão (L1–L12). |
 | [apresentacao-dados-generalizada-jun2026.md](./apresentacao-dados-generalizada-jun2026.md) | **Jun/2026 (onda 1 concluída):** apresentação generalizada — 130 rotas, preferência UI, perfis declarativos, markdown canônico, chips. |
@@ -54,5 +54,7 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 ## Regra operacional
 
 Antes de criar funcionalidades, alterar layout, endpoints, migrations ou comportamento do agente, consultar estes documentos e a documentação da API em `docs/api/`.
+
+**Testes de IA do chat (canônico):** [`audit-chat-base-familias-fluxos-set2026.md`](./audit-chat-base-familias-fluxos-set2026.md) — toda alteração de inteligência, fluxo, skill ou apresentação deve mapear família Fxx, roteiros § 3, critérios R1–R8 e planilha § 5 (governança § 0).
 
 **Inteligência do chat:** ondas 1–11 concluídas ([paridade ChatGPT/Gemini + interações básicas PT-BR](./inteligencia-chat-onda-11-paridade-assistentes.md)). Entregas adicionais maio/2026: [changelog](../changelog/2026-05-inteligencia-chat-entregas.md). **Onda 12 (backlog):** [análise de desenhos PDF](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md). Onda 10 entregou novas rotas na api-delpi (`/products/{code}`, `/products/{code}/summary`), títulos contextuais no presenter, vocabulário expandido para detecção de intent, fix na seleção de OVs, e alcançou 100% de acerto em suite de 36 cenários reais. Onda 9 entregou apresentação rica de dados: tabelas interativas com sort/CSV, gráficos Recharts com toggle tabela↔gráfico, cards KPI com tendência, canvas expandível com exportação XLSX/PDF/PNG.

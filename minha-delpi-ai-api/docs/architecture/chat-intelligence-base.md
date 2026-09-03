@@ -932,6 +932,7 @@ Pesquisa e plano de produto (28/mai/2026): decisão de rota **antes** do LLM, ca
 | Conhecimento global (Normas) | [`../knowledge/domains/global/`](../knowledge/domains/global/) |
 | Bundle agente exportável | [`../knowledge/domains/agents/minha-delpi-chat/`](../knowledge/domains/agents/minha-delpi-chat/) |
 | Auditoria rota a rota + status | [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md) |
+| **Testes de IA — famílias, R1–R8, bateria humana (canônico)** | [`../roadmap/audit-chat-base-familias-fluxos-set2026.md`](../roadmap/audit-chat-base-familias-fluxos-set2026.md) |
 | Changelog jun/2026 (extração PDF chat base) | [`../changelog/2026-06-chat-pdf-extraction-base.md`](../changelog/2026-06-chat-pdf-extraction-base.md) |
 | Extração PDF (arquitetura) | [`chat-pdf-document-extraction.md`](./chat-pdf-document-extraction.md) |
 | Limite upload conhecimento | `KNOWLEDGE_DOCUMENT_MAX_CHARS` (default 2M) |

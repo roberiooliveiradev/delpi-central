@@ -1,6 +1,10 @@
 # Auditoria — famílias do chat base, agentes e skills (set/2026)
 
-**Objetivo:** inventário acionável para caçar bugs/gaps por família, com **roteiros de usuário** (PT-BR) prontos para smoke live depois.  
+> **Documento canônico — testes de IA do chat**  
+> Toda mudança de **inteligência**, **fluxo de turno**, **skill**, **roteamento operacional** ou **apresentação** no chat base deve ser **mapeada aqui** antes do merge (roteiro § 3, planilha § 5, critérios R1–R8).  
+> Complementa (não substitui): `chat-intelligence-base.md` (arquitetura), `api-delpi-chat-intelligence-audit.md` (rotas api-delpi), `docs/flows/` (mapa HTTP).
+
+**Objetivo:** inventário acionável para caçar bugs/gaps por família, com **roteiros de usuário** (PT-BR) prontos para smoke live.  
 **Escopo:** chat base (`minha-delpi-ai-api`) + MFE `plugins/minha-delpi-chat` + skills/agentes.  
 **Princípio:** inteligência transversal no chat base; agentes só filtram actions/skills/prompt (`docs/architecture/chat-intelligence-base.md`).
 
@@ -21,6 +25,49 @@
 - Follow-up top N não troca família Protheus (SB↔SA).
 - Strip de leak do especialista SQL + marcadores em `llm_synthesis_delivery.json`.
 - TV: `monte+tabela` não sequestra SQL fora do surface.
+
+---
+
+## 0. Governança — novos fluxos e alterações (obrigatório)
+
+Este arquivo é a **fonte única** para planejar e registrar testes de IA do chat. Não abrir PR de inteligência/fluxo sem atualizar o mapeamento abaixo.
+
+### 0.1 Quando atualizar (gatilhos)
+
+| Mudança no código/produto | Ação neste doc |
+|---------------------------|----------------|
+| Nova intenção, sub-intent, heurística ou policy JSON | § 3 (família existente ou **F25+** na § 2) + fixture em `chat_intelligence_regression_cases.py` |
+| Nova rota api-delpi consumida pelo chat | Família **F03** (ou F06/F17…) + `operational_route_registry.json` + roteiro § 3 |
+| Nova skill ou action de agente | § 4 (skills) + § 3 da família + allowed actions |
+| Novo fluxo UI (toolbar, formato, ativação agente) | Família **F01/F13/F22** + roteiro manual § 8.2 |
+| Fix de bug reportado em conversa | Linha na planilha § 5 + caso na bateria § 1.3 (se reproduzível via HTTP) |
+| Alteração de latência / turn analysis / skip tools | R8 § 1.4 + re-run bateria ou `SMOKE_ONLY` |
+| Novo surface (TV, PAC, anexo, simulate) | Família dedicada § 3 + marcar `optional` na bateria se HTTP não couber |
+
+### 0.2 Checklist por PR (inteligência / chat)
+
+1. **Família** — qual Fxx? Se nenhuma couber, adicionar linha em § 2 e bloco em § 3.
+2. **Roteiros** — pelo menos 2 frases PT-BR (canônica + variação humana: typo/abreviação/follow-up).
+3. **R1–R8** — quais dimensões são obrigatórias para essa família (tabela § 1.1).
+4. **Automação** — unitário/fixture **e** (quando possível) caso em `human_interaction_battery_live.py` ou smoke da família.
+5. **Planilha § 5** — nova linha ou atualizar veredito/evidência.
+6. **Não duplicar** — regra transversal no chat base; não criar checklist só no prompt do agente.
+
+### 0.3 Nova família (F25+)
+
+1. Atribuir ID `F25`, nome, superfície crítica na tabela § 2.
+2. Criar § 3 com: **Esperado**, **Roteiros** (≥3), **Gaps**, **Âncoras** (serviços/paths reais).
+3. Registrar dimensões obrigatórias na tabela § 1.1.
+4. Adicionar linhas em § 5 e, se automatizável, entradas em `_cases_catalog()` do script § 1.3.
+
+### 0.4 O que este doc não cobre
+
+| Tema | Documento canônico |
+|------|-------------------|
+| Contrato HTTP / OpenAPI api-delpi | `api-delpi-chat-intelligence-audit.md`, `new-api-route-checklist.mdc` |
+| Mapa de endpoints e pipeline send/stream | `docs/flows/` |
+| Arquitetura de serviços | `chat-intelligence-base.md` |
+| Homologação manual operacional legada | `docs/testing/smoke-operacional-manual.md` |
 
 ---
 
