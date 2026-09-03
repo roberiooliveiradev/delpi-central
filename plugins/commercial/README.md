@@ -16,7 +16,7 @@ W0 entregue — detalhe em [PARCIAL-INVENTARIO.md](../../docs/12-roadmap-e-evolu
 |----|---------|
 | P0-META | Meta = soma proporcional por dia (SI); % incompleto = sum diária; YTD % = average |
 | P0-LABEL | Chip MTD·YTD + Meta / Meta parcial / Meta acumulada |
-| P0-RENAME | Timeline/ficha OP: «data de faturamento» |
+| P0-RENAME | Timeline/ficha OP: «data de entrega» (Incoterm) |
 | P0-OPP | Filtros Conta: status, período, OV, produto/família |
 | P0-OTD-COPY | Help OTD = DatFat × prometida |
 | P0-FAV | Favoritos no `PluginShell` (strip em todas as rotas) |

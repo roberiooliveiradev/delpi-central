@@ -11,6 +11,7 @@ import {
 } from "../../../utils/customersColumnHelp";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate, getDeliveryOverdueDays, isDeliveryOverdue } from "../../../utils/dates";
+import { tableColumnLabel } from "../../../utils/tableColumns";
 import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
 import { toFiniteNumber } from "../utils/customerAggregation";
 import {
@@ -201,7 +202,7 @@ export function CustomerOrderLines({
     },
     {
       key: "delivery",
-      header: "Entrega",
+      header: tableColumnLabel("data_entrega"),
       render: (line) => formatDisplayDate(line.data_entrega),
     },
     {

@@ -16,6 +16,8 @@ describe("user manual page", () => {
     const content = readSrc("content/userManualContent.ts");
     assert.match(content, /export const USER_MANUAL_CONTENT/);
     assert.match(content, /pageTitle: \"Manual do usuário\"/);
+    assert.match(content, /Incoterm/);
+    assert.match(content, /Data de entrega/);
     const page = readSrc("features/help/UserManualPage.tsx");
     assert.match(page, /USER_MANUAL_CONTENT/);
     assert.match(page, /UserManualLinkedText/);

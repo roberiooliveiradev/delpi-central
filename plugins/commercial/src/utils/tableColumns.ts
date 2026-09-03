@@ -56,7 +56,7 @@ export const TABLE_COLUMNS: TableColumnDef[] = [
   { key: "saldo", label: "Saldo", sortable: true },
   { key: "no_estoque", label: "Estoque alocado" },
   { key: "cobertura", label: "Cobertura", sortable: true },
-  { key: "data_entrega", label: "Data de faturamento", sortable: true },
+  { key: "data_entrega", label: "Data de entrega", sortable: true },
   { key: "data_despacho", label: "Data de despacho", sortable: true },
   { key: "previsao_entrega_op", label: "Previsão entrega (OP)", sortable: true },
   { key: "valor_aberto", label: "Valor aberto", sortable: true },
@@ -65,6 +65,10 @@ export const TABLE_COLUMNS: TableColumnDef[] = [
 ];
 
 export const TABLE_COLUMN_KEYS = TABLE_COLUMNS.map((column) => column.key);
+
+export function tableColumnLabel(key: TableColumnKey): string {
+  return TABLE_COLUMNS.find((column) => column.key === key)?.label ?? key;
+}
 
 export function isSortableTableColumnKey(key: TableColumnKey): key is SortKey {
   const column = TABLE_COLUMNS.find((item) => item.key === key);

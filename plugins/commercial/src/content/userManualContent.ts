@@ -191,8 +191,8 @@ export const USER_MANUAL_CONTENT = {
           a: "Não. Pedido = operação; OV = oportunidade; Proposta = documento/PDF.",
         },
         {
-          q: "Qual a diferença entre data de faturamento, despacho e previsão OP?",
-          a: "Faturamento é a data prometida da linha (compromisso comercial). Despacho é a saída da fábrica, quando houver. Previsão OP é a disponibilidade pela produção — o badge compara essa previsão com a data de faturamento.",
+          q: "Qual a diferença entre data de entrega, despacho e previsão OP?",
+          a: "Data de entrega é o compromisso da linha, interpretado pelo Incoterm: se o cliente busca (EXW ou FOB), é a data na expedição; se a Delpi entrega (CIF), é a data de saída da empresa. Despacho é a saída registrada da fábrica, quando houver. Previsão OP é a disponibilidade pela produção — o badge compara essa previsão com a data de entrega.",
         },
         {
           q: "Não recebi aviso de Pronto para faturar",
@@ -240,7 +240,13 @@ export const USER_MANUAL_CONTENT = {
         { term: "Meta", meaning: "Meta do Indicadores Estratégicos, proporcional ao período." },
         { term: "OTD", meaning: "Pontualidade: faturamento vs. data prometida." },
         { term: "FIFO", meaning: "Estoque alocado do mais antigo para o mais novo entre pedidos." },
-        { term: "Data de despacho", meaning: "Data combinada para a saída da fábrica; vazia quando ainda não registrada." },
+        { term: "Incoterm", meaning: "Condição comercial (EXW, FOB, CIF) que define se o cliente busca ou se a Delpi entrega — e o que a data de entrega representa." },
+        {
+          term: "Data de entrega",
+          meaning:
+            "Compromisso da linha: cliente busca (EXW/FOB) = data na expedição; Delpi entrega (CIF) = saída da empresa. Não é a chegada no cliente.",
+        },
+        { term: "Data de despacho", meaning: "Data registrada de saída da fábrica; vazia quando ainda não registrada." },
         { term: "SC / ES", meaning: "Unidades (filiais) nos filtros." },
       ],
     },

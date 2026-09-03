@@ -11,7 +11,7 @@ import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { formatCurrency } from "../utils/format";
 import { formatDisplayDate } from "../utils/dates";
 import { OpenOrdersLineCard } from "./OpenOrdersLineCard";
-import type { TableColumnKey } from "../utils/tableColumns";
+import { tableColumnLabel, type TableColumnKey } from "../utils/tableColumns";
 
 export type OpenOrderKanbanStageId =
   | "upcoming"
@@ -163,7 +163,7 @@ export function OpenOrdersKanbanBoardView({
                   },
                   {
                     id: "entrega",
-                    label: "Entrega",
+                    label: tableColumnLabel("data_entrega"),
                     value: formatDisplayDate(item.data_entrega),
                     valueTone: "meta",
                   },

@@ -61,6 +61,7 @@ import { forecastKindBadgeVariant, forecastKindLabel } from "../utils/forecastKi
 import { buildOpenOrdersContextSearch } from "../utils/openOrdersDeepLink";
 import { buildOpenOrdersProductionDetailViewModel } from "../utils/openOrdersProductionDetailViewModel";
 import type { BadgeTone } from "../utils/statusBadges";
+import { tableColumnLabel } from "../utils/tableColumns";
 import { OpenOrdersFactoryStatusStrip } from "./OpenOrdersFactoryStatusStrip";
 import { OpenOrdersOpProgressBlock } from "./OpenOrdersOpProgressBlock";
 import { OpenOrdersProductStructureAccordion } from "./OpenOrdersProductStructureAccordion";
@@ -332,7 +333,7 @@ export function OpenOrdersProductionDetailContent({
             ].join(" ")}
           >
             <SectionHintLabel
-              label="Data de faturamento"
+              label={tableColumnLabel("data_entrega")}
               hint={DETAIL.entregaPedido}
               className="cm-open-orders-detail__snapshot-label"
             />
@@ -569,7 +570,7 @@ export function OpenOrdersProductionDetailContent({
             <div className="cm-open-orders-detail__prazo-cards">
               <div className="cm-open-orders-detail__prazo-card">
                 <SectionHintLabel
-                  label="Data de faturamento"
+                  label={tableColumnLabel("data_entrega")}
                   hint={DETAIL.entregaPedido}
                   className="cm-open-orders-detail__snapshot-label"
                 />

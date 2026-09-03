@@ -2,6 +2,14 @@
  * Textos dos balões de explicação (HelpTooltip / SectionCard.hint / titleHint / FieldLabel.hint).
  * Fonte única — não espalhar strings de ajuda nos componentes.
  */
+
+/** Compromisso da linha: significado pelo Incoterm. */
+export const OPEN_ORDER_DELIVERY_DATE_HELP =
+  "Data de entrega prometida da linha. O significado depende do Incoterm: se o cliente busca (EXW ou FOB), é a data na expedição (pronta para retirada); se a Delpi entrega (CIF), é a data de saída da empresa. Não é a chegada no cliente.";
+
+const OPEN_ORDER_NEXT_DELIVERY_HELP =
+  "Menor data de entrega prometida ainda em aberto. Interpretação pelo Incoterm: cliente busca (EXW/FOB) = expedição; Delpi entrega (CIF) = saída da empresa.";
+
 export const CM_HELP = {
   shell: {
     portal:
@@ -118,7 +126,7 @@ export const CM_HELP = {
     kpiValue: "Soma do valor em aberto das linhas filtradas (saldo × preço).",
     kpiCanInvoice: "Linhas com estoque suficiente para faturar integralmente.",
     kpiPartialStock: "Linhas com estoque parcial — atendem só parte da quantidade em aberto.",
-    kpiLate: "Linhas com data de faturamento prometida vencida e ainda em aberto.",
+    kpiLate: "Linhas com data de entrega prometida vencida e ainda em aberto.",
     filters: "Refine a lista por busca, unidade, cliente, status de estoque e janela de entrega.",
     filterSearch: "Busca em cliente, pedido, produto e códigos da linha.",
     filterBranch:
@@ -128,9 +136,9 @@ export const CM_HELP = {
       "Situação de estoque da linha: pode faturar, parcial ou sem estoque/atrasado. Os chips de atenção também aplicam este filtro.",
     filterLate: "Filtrar só linhas com entrega prometida vencida e saldo em aberto.",
     filterPostponed:
-      "Postergado: data de faturamento prometida após o mês corrente (heurística — não há campo TOTVS de postergação). Deep link postponed=1.",
-    filterDateStart: "Início da janela pela data de faturamento prometida da linha.",
-    filterDateEnd: "Fim da janela pela data de faturamento prometida da linha.",
+      "Postergado: data de entrega prometida após o mês corrente (heurística — não há campo TOTVS de postergação). Deep link postponed=1.",
+    filterDateStart: "Início da janela pela data de entrega prometida da linha.",
+    filterDateEnd: "Fim da janela pela data de entrega prometida da linha.",
     sellerScope:
       "Filtra pedidos pela carteira do vendedor selecionado. Vazio = todas as carteiras que você pode ver.",
     table:
@@ -169,22 +177,21 @@ export const CM_HELP = {
         "Estoque físico alocado a esta linha (do mais antigo para o mais novo, por produto e unidade). Não é reserva formal.",
       cobertura:
         "Proporção estoque alocado ÷ saldo em aberto. Verde ≈ 100%; amarelo parcial; vermelho sem cobertura.",
-      data_entrega:
-        "Data de faturamento prometida no pedido (compromisso comercial). Não indica chegada física ao cliente — depende de FOB/CIF e logística.",
+      data_entrega: OPEN_ORDER_DELIVERY_DATE_HELP,
       previsao_entrega_op:
-        "Previsão de disponibilidade pela cobertura FIFO das OPs abertas. Clique para o detalhe da linha. O badge compara previsão OP × data de faturamento do pedido.",
+        "Previsão de disponibilidade pela cobertura FIFO das OPs abertas. Clique para o detalhe da linha. O badge compara previsão OP × data de entrega do pedido.",
       data_despacho:
-        "Data combinada para o despacho da linha (saída da fábrica). Não é a chegada ao cliente — depende de FOB/CIF e logística. Quando vazia, ainda não há despacho registrado («Não informado»).",
+        "Data registrada de despacho da linha (saída da fábrica). Quando vazia, ainda não há despacho («Não informado»). Diferente da data de entrega, cujo significado depende do Incoterm.",
       valor_aberto: "Valor em aberto da linha (saldo × preço).",
       status:
         "Situação operacional de estoque/atraso calculada no cliente: pode faturar, parcial, sem estoque ou atrasado.",
       atraso_dias:
-        "Dias corridos desde a data de faturamento prometida, só se ainda houver saldo em aberto.",
+        "Dias corridos desde a data de entrega prometida, só se ainda houver saldo em aberto.",
     },
     detail: {
       page:
         "Página do item: situação fabril do produto, indicadores, gráficos, evolução da produção e ordens usadas na previsão.",
-      guideResumo: "Cartões de situação, cobertura, data de faturamento e previsão de produção no início da página.",
+      guideResumo: "Cartões de situação, cobertura, data de entrega e previsão de produção no início da página.",
       guideFabril: "Status fabril do produto: produção PA/PI, expedição e capacidade de matéria-prima.",
       guideIndicadores: "Saldo, estoque alocado, valor aberto e demais indicadores da linha do pedido.",
       guideCobertura: "Gráficos de cobertura estoque × demanda e prazo (entrega vs previsão OP).",
@@ -211,7 +218,7 @@ export const CM_HELP = {
       appointments:
         "Apontamentos da OP: período, quantidade produzida e centros de trabalho.",
       timeline:
-        "Marcos da OP (emissão, início/fim previstos, data de faturamento do pedido, apontamentos e fim real) em ordem cronológica.",
+        "Marcos da OP (emissão, início/fim previstos, data de entrega do pedido, apontamentos e fim real) em ordem cronológica.",
       opProgress: "Progresso produzido ÷ planejado da OP selecionada.",
       otdStatus: "Classificação OTD da OP: no prazo, atrasada ou em aberto.",
       otdDays:
@@ -223,20 +230,19 @@ export const CM_HELP = {
         "Parte do estoque físico já atribuída a esta linha no algoritmo FIFO do portal.",
       saldoProduzir: "Quanto ainda precisa ser produzido após considerar o estoque alocado.",
       valorAberto: "Valor monetário ainda em aberto nesta linha.",
-      atraso: "Dias de atraso da data de faturamento prometida, se a linha ainda estiver em aberto.",
+      atraso: "Dias de atraso da data de entrega prometida, se a linha ainda estiver em aberto.",
       status: "Pode faturar / parcial / sem estoque / atrasado — mesmo critério da coluna Status.",
       coberturaKind:
         "Como a linha está coberta: estoque, OP completa, parcial, sem OP ou OP sem data prevista.",
-      entregaPedido:
-        "Data de faturamento prometida no pedido de venda. Não afirma chegada ao cliente (FOB/CIF).",
+      entregaPedido: OPEN_ORDER_DELIVERY_DATE_HELP,
       despacho:
-        "Data combinada para o despacho da linha (saída da fábrica). Não afirma chegada ao cliente (FOB/CIF). Vazio = ainda não registrado.",
+        "Data registrada de despacho da linha (saída da fábrica). Vazio = ainda não registrado. Diferente da data de entrega, cujo significado depende do Incoterm.",
       previsaoEntrega:
         "Data (ou rótulo) da previsão pela OP mais tarde necessária na alocação FIFO.",
       chartCobertura:
         "Compara quantidade alocada em estoque versus saldo a produzir para fechar a linha.",
       chartPrazo:
-        "Dias até a data de faturamento do pedido e até a previsão OP (valor negativo = data já passou).",
+        "Dias até a data de entrega do pedido e até a previsão OP (valor negativo = data já passou).",
       chartPrazoCaption: "Negativo = já passou",
       chartOps: "Por OP: quanto foi alocado a este pedido versus o saldo restante da OP.",
       chartOpsCaption: "Alocado no pedido vs saldo OP",
@@ -254,7 +260,7 @@ export const CM_HELP = {
       opSaldo: "Saldo restante da OP no momento da alocação.",
       opAlocado: "Quanto desta OP foi atribuído a esta linha do pedido.",
       opFim: "Data fim prevista da OP (quando cadastrada).",
-      opStatus: "Status da OP ou comparação do fim previsto com a data de faturamento do pedido.",
+      opStatus: "Status da OP ou comparação do fim previsto com a data de entrega do pedido.",
       opOtd: "On-time delivery da OP (no prazo, atrasada ou em aberto), quando disponível.",
       opObs: "Observação cadastrada na OP, quando houver.",
       bom: "Estrutura de componentes do produto deste item.",
@@ -330,7 +336,7 @@ export const CM_HELP = {
       status: "Situação operacional na carteira (ativo, sem venda recente, etc.).",
       valorTotalAberto: "Soma do valor em aberto dos pedidos de venda desta conta.",
       quantidadePedidosAtrasados: "Quantidade de pedidos com linha vencida e saldo em aberto.",
-      proximaEntrega: "Menor data de faturamento prometida ainda em aberto nesta conta.",
+      proximaEntrega: OPEN_ORDER_NEXT_DELIVERY_HELP,
     },
   },
   customerDetail: {
@@ -427,7 +433,7 @@ export const CM_HELP = {
       status: "Situação consolidada do pedido (em dia, atraso, parcial).",
       lines: "Quantidade de linhas com saldo em aberto neste pedido.",
       overdue: "Maior atraso em dias entre as linhas em aberto.",
-      delivery: "Próxima data de faturamento prometida ainda em aberto.",
+      delivery: OPEN_ORDER_NEXT_DELIVERY_HELP,
       value: "Valor em aberto consolidado do pedido.",
     },
     orderLinesColumns: {
@@ -435,7 +441,7 @@ export const CM_HELP = {
       ordered: "Quantidade pedida na linha.",
       delivered: "Quantidade já entregue/faturada.",
       balance: "Saldo ainda em aberto na linha.",
-      delivery: "Data de entrega prometida da linha.",
+      delivery: OPEN_ORDER_DELIVERY_DATE_HELP,
       openValue: "Valor em aberto da linha.",
       delay: "Indicador de atraso da linha em relação à entrega prometida.",
     },
