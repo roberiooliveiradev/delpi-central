@@ -92,3 +92,5 @@ def test_maybe_recover_fetches_schema_and_retries_sql():
     assert len(execute_tool.calls) == 2
     assert execute_tool.calls[0]["actionId"] == "schema-action"
     assert execute_tool.calls[1]["body"]["sql"] == recovery.plan.corrected_sql
+    assert recovery.schema_metadata.get("sqlSchemaPrefetch") is True
+    assert recovery.schema_metadata.get("suppressClientPresentation") is True

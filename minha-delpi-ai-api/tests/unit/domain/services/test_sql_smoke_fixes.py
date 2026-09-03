@@ -164,6 +164,53 @@ def test_strip_schema_presentation_preserves_explicit_catalog_without_flags():
     assert meta.get("suppressClientPresentation") is not True
 
 
+def test_sanitize_preserves_explicit_schema_presentation():
+    """Finalize sanitize não apaga catálogo de «me mostra o schema…»."""
+    presentation = {"type": "table", "title": "Colunas SX3"}
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/system/tables/SB1010/schema",
+                "presentation": presentation,
+                "tablePresentations": [{"title": "Colunas", "rows": [{"X3_CAMPO": "B1_COD"}]}],
+            },
+        }
+    ]
+    # annotate: pedido explícito não marca interno
+    annotated = ChatAdvancedSqlSpecialistService.annotate_schema_prefetch_tool_metadata(
+        "me mostra o schema da tabela SB1010",
+        dict(tool_calls[0]["metadata"]),
+    )
+    assert not annotated.get("sqlSchemaPrefetch")
+    tool_calls[0]["metadata"] = annotated
+    sanitized = ChatAdvancedSqlSpecialistService.sanitize_tool_calls_for_client(tool_calls)
+    meta = sanitized[0]["metadata"]
+    assert meta.get("presentation") == presentation
+    assert meta.get("tablePresentations")
+    assert meta.get("suppressClientPresentation") is not True
+
+
+def test_strip_still_hides_when_prefetch_flag_set():
+    result = ChatAdvancedSqlSpecialistService.strip_schema_catalog_presentations(
+        {
+            "toolCalls": [
+                {
+                    "metadata": {
+                        "path": "/system/tables/SB1010/schema",
+                        "sqlSchemaPrefetch": True,
+                        "presentation": {"type": "table", "title": "Colunas"},
+                    }
+                }
+            ]
+        }
+    )
+    meta = result["toolCalls"][0]["metadata"]
+    assert "presentation" not in meta
+    assert meta.get("suppressClientPresentation") is True
+
+
 def test_strip_schema_prefetch_hides_coverage_and_catalog():
     result = ChatAdvancedSqlSpecialistService.strip_schema_catalog_presentations(
         {

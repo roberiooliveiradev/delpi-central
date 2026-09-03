@@ -90,6 +90,11 @@ class ChatSqlRecoveryService:
         if not schema_metadata.get("ok"):
             return None
 
+        # Recovery consulta schema só para corrigir SQL — não entregar catálogo na UI.
+        # Flags explícitas: strip não usa mais path sozinho.
+        schema_metadata["sqlSchemaPrefetch"] = True
+        schema_metadata["suppressClientPresentation"] = True
+
         plan = ChatSqlErrorRecoveryService.build_recovery_plan(
             sql=original_sql,
             invalid_column=invalid_column,

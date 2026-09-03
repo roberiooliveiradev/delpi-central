@@ -287,6 +287,8 @@ class ChatToolContextAuxiliaryService:
                 metadata=recovery.schema_metadata,
                 data=recovery.schema_data,
             )
+            schema_metadata["sqlSchemaPrefetch"] = True
+            schema_metadata["suppressClientPresentation"] = True
             schema_reason = ChatToolContextContentService.format(
                 "sqlRecovery",
                 "schemaPrefetchReason",
