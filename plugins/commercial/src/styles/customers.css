@@ -162,6 +162,13 @@
   min-width: 0;
 }
 
+.dashboard-commercial .cm-customers-page__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-section-gap);
+  min-width: 0;
+}
+
 .dashboard-commercial .cm-customers-page__panel[hidden] {
   display: none !important;
 }
