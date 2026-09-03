@@ -58,6 +58,18 @@ class ChatProductQueryIntentCodeService:
         if cls._is_date_numeric_token(normalized) or cls._is_date_numeric_token(digits):
             return False
 
+        # Escalares decimais / float de KPI (ex.: 4772289.73 → 4772289729999995).
+        if cls._is_decimal_scalar_token(normalized):
+            return False
+
+        max_digits = ChatProductQueryIntentContentService.limit_int(
+            "maxProductCodeDigits",
+            12,
+        )
+
+        if len(digits) > max_digits:
+            return False
+
         if "." in normalized and len(digits) < 5:
             return False
 
@@ -68,6 +80,19 @@ class ChatProductQueryIntentCodeService:
             return False
 
         return len(digits) >= 3
+
+    @classmethod
+    def _is_decimal_scalar_token(cls, token: str) -> bool:
+        raw = str(token or "").strip()
+
+        if not raw:
+            return False
+
+        if VOCAB.DECIMAL_SCALAR_TOKEN_RE.match(raw):
+            return True
+
+        # Float serializado com ruído binário (4772289.7299999995).
+        return bool(re.fullmatch(r"\d+\.\d*9{4,}\d*", raw))
 
     @classmethod
     def _is_specification_numeric_token(cls, token: str) -> bool:
@@ -148,6 +173,9 @@ class ChatProductQueryIntentCodeService:
                 continue
 
             if ChatProductQueryIntentCodeService._is_date_numeric_token(token):
+                continue
+
+            if ChatProductQueryIntentCodeService._is_decimal_scalar_token(token):
                 continue
 
             if ChatProductQueryIntentCodeService._is_calendar_year_token(raw, match):
@@ -359,6 +387,9 @@ class ChatProductQueryIntentCodeService:
             if ChatProductQueryIntentCodeService._is_date_numeric_token(match.group(0)):
                 continue
 
+            if ChatProductQueryIntentCodeService._is_decimal_scalar_token(match.group(0)):
+                continue
+
             if ChatProductQueryIntentCodeService._is_calendar_year_token(raw, match):
                 continue
 
@@ -375,6 +406,9 @@ class ChatProductQueryIntentCodeService:
                 continue
 
             if ChatProductQueryIntentCodeService._is_file_size_token(raw, match):
+                continue
+
+            if ChatProductQueryIntentCodeService._is_currency_like_token(raw, match):
                 continue
 
             code = intent_service().normalize_product_code(match.group(0))

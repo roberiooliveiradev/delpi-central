@@ -25,3 +25,4 @@ class ChatProductQueryIntentVocabulary:
     DATE_TOKEN_RE = _LazyPattern("dateToken")
     CALENDAR_YEAR_RE = _LazyPattern("calendarYear")
     EXAMPLE_CODE_PREFIX_RE = _LazyPattern("exampleCodePrefix")
+    DECIMAL_SCALAR_TOKEN_RE = _LazyPattern("decimalScalarToken")

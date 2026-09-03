@@ -546,8 +546,18 @@ class ChatTurnCompletionMetadataService:
         if not label:
             return
 
-        interactivity = metadata.setdefault("interactivity", {})
-        context_bar = interactivity.setdefault("contextBar", {})
+        interactivity = metadata.get("interactivity")
+
+        if not isinstance(interactivity, dict):
+            interactivity = {}
+            metadata["interactivity"] = interactivity
+
+        context_bar = interactivity.get("contextBar")
+
+        if not isinstance(context_bar, dict):
+            context_bar = {}
+            interactivity["contextBar"] = context_bar
+
         context_bar["summary"] = label
 
     @staticmethod

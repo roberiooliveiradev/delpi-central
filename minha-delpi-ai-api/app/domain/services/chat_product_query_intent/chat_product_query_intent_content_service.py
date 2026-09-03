@@ -19,6 +19,7 @@ _PATTERN_FLAGS = {
     "exampleCodePrefix": re.IGNORECASE,
     "currencyLikeToken": re.IGNORECASE,
     "currencyPrefixBefore": re.IGNORECASE,
+    "decimalScalarToken": 0,
 }
 
 
@@ -77,6 +78,19 @@ class ChatProductQueryIntentContentService:
     @classmethod
     def invalidate_cache(cls) -> None:
         cls.compile_pattern.cache_clear()
+
+    @classmethod
+    def limit_int(cls, key: str, default: int) -> int:
+        raw = ChatAssistantContentService.get(
+            _INTENT_CONTENT_BUNDLE,
+            "limits",
+            key,
+            default=default,
+        )
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return int(default)
 
     @classmethod
     def _terms(cls, *path: str) -> tuple[str, ...]:

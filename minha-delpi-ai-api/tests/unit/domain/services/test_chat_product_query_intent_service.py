@@ -34,6 +34,28 @@ def test_extract_product_code_ignores_compact_protheus_period_dates():
     )
 
 
+def test_extract_product_code_ignores_rol_money_and_float_scalars():
+    """Valores de ROL/KPI não podem virar código (R$ 4.772… / 4772289.73 / float ruidoso)."""
+    assert (
+        ChatProductQueryIntentService.extract_product_code(
+            "**ROL:** R$ 4.772.289,73 **Receita bruta:** R$ 5.392.568,49"
+        )
+        is None
+    )
+    assert ChatProductQueryIntentService.extract_last_product_code(
+        "**ROL:** R$ 4.772.289,73 **Receita bruta:** R$ 5.392.568,49"
+    ) is None
+    assert ChatProductQueryIntentService.extract_product_code("4772289.73") is None
+    assert ChatProductQueryIntentService.extract_last_product_code(
+        '{"rol":4772289.73}'
+    ) is None
+    assert (
+        ChatProductQueryIntentService.is_plausible_product_code("4772289729999995")
+        is False
+    )
+    assert ChatProductQueryIntentService.is_plausible_product_code("4772289.73") is False
+
+
 def test_resolve_stock_follow_up_does_not_inherit_rol_period_as_product():
     history = [
         {
