@@ -1,4 +1,4 @@
-import { RefreshCw } from "lucide-react";
+import { ListChecks, RefreshCw, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getSlaPolicies } from "../../api/slaPoliciesApi";
@@ -10,6 +10,7 @@ import {
   CommercialPageHero,
   CommercialSectionCard,
   CommercialSectionHintLabel,
+  CommercialSegmentToggle,
   CommercialSelectField,
   CommercialTextField,
 } from "../../app/commercialUi";
@@ -38,6 +39,11 @@ import {
   DEFAULT_PROPOSAL_SORT_KEY,
   proposalApiSortParams,
 } from "./utils/proposalListSort";
+import {
+  parseOpportunitiesView,
+  writeOpportunitiesViewToUrl,
+  type OpportunitiesView,
+} from "./utils/opportunitiesViewDeepLink";
 
 type AnalyticsOpportunitiesPageProps = {
   basePath: string;
@@ -46,6 +52,7 @@ type AnalyticsOpportunitiesPageProps = {
 export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesPageProps) {
   const { canViewProposals } = usePortfolioScope();
   const filters = useAnalyticsFilters();
+  const [view, setView] = useState<OpportunitiesView>(() => parseOpportunitiesView());
   const [items, setItems] = useState<CommercialProposal[]>([]);
   const [collab, setCollab] = useState<OpportunityCollaboratorSummaryRow[]>([]);
   const [slaConfigured, setSlaConfigured] = useState(false);
@@ -56,8 +63,13 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
   const [sortDirection, setSortDirection] =
     useState<TableSortDirection>(DEFAULT_PROPOSAL_SORT_DIR);
   const [loading, setLoading] = useState(true);
+  const [collabLoading, setCollabLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    writeOpportunitiesViewToUrl(view);
+  }, [view]);
 
   useEffect(() => {
     writeAnalyticsOpportunitySearchToUrl(search);
@@ -67,11 +79,13 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     () =>
       subscribeAnalyticsFilterRouteSync(() => {
         setSearch(readAnalyticsOpportunitySearch());
+        setView(parseOpportunitiesView());
       }),
     [],
   );
 
   useEffect(() => {
+    if (view !== "opportunity") return;
     const controller = new AbortController();
     setLoading(true);
     setError(null);
@@ -104,6 +118,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
       });
     return () => controller.abort();
   }, [
+    view,
     filters.apiParams.start_date,
     filters.apiParams.end_date,
     filters.apiParams.branch,
@@ -118,7 +133,9 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
   ]);
 
   useEffect(() => {
+    if (view !== "collaborator") return;
     const controller = new AbortController();
+    setCollabLoading(true);
     void Promise.all([
       getOpportunityCollaboratorSummary(
         { ...filters.apiParams },
@@ -133,9 +150,11 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
         setCollab([]);
       }
       setSlaConfigured(Boolean(sla?.configured));
+      setCollabLoading(false);
     });
     return () => controller.abort();
   }, [
+    view,
     filters.apiParams.start_date,
     filters.apiParams.end_date,
     filters.apiParams.branch,
@@ -144,6 +163,20 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     filters.apiParams.customer_codes,
     reloadKey,
   ]);
+
+  // SLA banner: load once for opportunity view too (lightweight)
+  useEffect(() => {
+    if (view !== "opportunity") return;
+    const controller = new AbortController();
+    void getSlaPolicies(controller.signal)
+      .then((sla) => {
+        if (!controller.signal.aborted) setSlaConfigured(Boolean(sla?.configured));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setSlaConfigured(false);
+      });
+    return () => controller.abort();
+  }, [view, reloadKey]);
 
   return (
     <section className="cm-page-stack">
@@ -168,102 +201,157 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
           </CommercialActionButton>
         }
       >
-      <AnalyticsFilters
-        dateStart={filters.dateStart}
-        dateEnd={filters.dateEnd}
-        competence={filters.competence}
-        periodPreset={filters.periodPreset}
-        branches={filters.branches}
-        customerSegment={filters.customerSegment}
-        sellerIds={filters.sellerIds}
-        customerCodes={filters.customerCodes}
-        canFilterPortfolios={filters.canFilterPortfolios}
-        canUseTeamScope={filters.canUseTeamScope}
-        filterablePortfolios={filters.filterablePortfolios}
-        onDateStart={filters.setDateStart}
-        onDateEnd={filters.setDateEnd}
-        onCompetence={filters.setCompetence}
-        onPeriodPreset={filters.setPeriodPreset}
-        onBranches={filters.setBranches}
-        onCustomerSegment={filters.setCustomerSegment}
-        onCustomerCodes={filters.setCustomerCodes}
-        onSellerIds={filters.setSellerIds}
-      />
+        <div className="cm-customers-page__panel-toolbar">
+          <div className="cm-customers-page__vision">
+            <CommercialSectionHintLabel
+              label="Visão"
+              hint={CM_HELP.analytics.opportunitiesView}
+            />
+            <CommercialSegmentToggle
+              ariaLabel={CM_HELP.analytics.opportunitiesView}
+              idPrefix="analytics-opportunities-view"
+              value={view}
+              widthMode="content"
+              onChange={(value) => {
+                if (value === "collaborator" || value === "opportunity") {
+                  setView(value);
+                }
+              }}
+              options={[
+                {
+                  value: "collaborator",
+                  ariaLabel: "Por colaborador",
+                  label: (
+                    <span className="cm-customers-page__vision-option">
+                      <Users size={16} aria-hidden="true" />
+                      Por colaborador
+                    </span>
+                  ),
+                },
+                {
+                  value: "opportunity",
+                  ariaLabel: "Por oportunidade",
+                  label: (
+                    <span className="cm-customers-page__vision-option">
+                      <ListChecks size={16} aria-hidden="true" />
+                      Por oportunidade
+                    </span>
+                  ),
+                },
+              ]}
+            />
+          </div>
+        </div>
+        <AnalyticsFilters
+          dateStart={filters.dateStart}
+          dateEnd={filters.dateEnd}
+          competence={filters.competence}
+          periodPreset={filters.periodPreset}
+          branches={filters.branches}
+          customerSegment={filters.customerSegment}
+          sellerIds={filters.sellerIds}
+          customerCodes={filters.customerCodes}
+          canFilterPortfolios={filters.canFilterPortfolios}
+          canUseTeamScope={filters.canUseTeamScope}
+          filterablePortfolios={filters.filterablePortfolios}
+          onDateStart={filters.setDateStart}
+          onDateEnd={filters.setDateEnd}
+          onCompetence={filters.setCompetence}
+          onPeriodPreset={filters.setPeriodPreset}
+          onBranches={filters.setBranches}
+          onCustomerSegment={filters.setCustomerSegment}
+          onCustomerCodes={filters.setCustomerCodes}
+          onSellerIds={filters.setSellerIds}
+        />
       </CommercialPageHero>
 
       {!slaConfigured ? (
         <CommercialEmptyState defaultMessage="SLA de etapa não configurado. Cadastre políticas em settings quando o Comercial homologar prazos." />
       ) : null}
 
-      {!loading && collab.length > 0 ? (
+      {view === "collaborator" ? (
         <CommercialSectionCard
           title="Por colaborador"
           hint={CM_HELP.analytics.collaboratorSummary}
         >
-          <CommercialDataTable
-            rows={collab}
-            rowKey={(row) => row.sellerCode || "_"}
-            columns={[
-              { key: "seller", header: "Vendedor", render: (row) => row.sellerName || row.sellerCode || "—" },
-              { key: "open", header: "Abertas", render: (row) => String(row.openCount) },
-              { key: "won", header: "Ganhas", render: (row) => String(row.wonCount) },
-              { key: "lost", header: "Perdidas", render: (row) => String(row.lostCount) },
-              { key: "total", header: "Total", render: (row) => String(row.totalCount) },
-              {
-                key: "age",
-                header: "Idade média (dias)",
-                render: (row) =>
-                  row.ageDaysAvg == null ? "—" : row.ageDaysAvg.toLocaleString("pt-BR"),
-              },
-            ]}
-          />
+          {collabLoading ? (
+            <CommercialLoadingCard title="Carregando…" variant="panel" />
+          ) : null}
+          {!collabLoading && collab.length === 0 ? (
+            <CommercialEmptyState defaultMessage="Nenhum colaborador com oportunidades no período." />
+          ) : null}
+          {!collabLoading && collab.length > 0 ? (
+            <CommercialDataTable
+              rows={collab}
+              rowKey={(row) => row.sellerCode || "_"}
+              columns={[
+                {
+                  key: "seller",
+                  header: "Vendedor",
+                  render: (row) => row.sellerName || row.sellerCode || "—",
+                },
+                { key: "open", header: "Abertas", render: (row) => String(row.openCount) },
+                { key: "won", header: "Ganhas", render: (row) => String(row.wonCount) },
+                { key: "lost", header: "Perdidas", render: (row) => String(row.lostCount) },
+                { key: "total", header: "Total", render: (row) => String(row.totalCount) },
+                {
+                  key: "age",
+                  header: "Idade média (dias)",
+                  render: (row) =>
+                    row.ageDaysAvg == null ? "—" : row.ageDaysAvg.toLocaleString("pt-BR"),
+                },
+              ]}
+            />
+          ) : null}
         </CommercialSectionCard>
       ) : null}
 
-      <CommercialTextField
-        label="Busca"
-        hint={CM_HELP.analytics.searchOpportunities}
-        value={search}
-        onChange={setSearch}
-        placeholder="Número da OV, cliente…"
-      />
-      <CommercialSelectField
-        label="Status"
-        hint={CM_HELP.analytics.opportunityStatus}
-        value={statusFilter || "all"}
-        onChange={(value) => setStatusFilter(value === "all" ? "" : value)}
-        options={[
-          { value: "all", label: "Todos" },
-          { value: "open", label: "Abertas" },
-          { value: "won", label: "Ganhas" },
-          { value: "lost", label: "Perdidas" },
-        ]}
-      />
-
-      <CommercialSectionCard
-        title={`Oportunidades (${total.toLocaleString("pt-BR")})`}
-        hint={CM_HELP.analytics.opportunitiesList}
-      >
-        {loading ? <CommercialLoadingCard title="Carregando…" variant="panel" /> : null}
-        {error ? (
-          <CommercialEmptyState defaultMessage={error} />
-        ) : null}
-        {!loading && !error ? (
-          <CommercialProposalsTable
-            rows={items}
-            basePath={basePath}
-            detailSearch={buildAnalyticsOpportunityBackSearch()}
-            showOpenProposal={canViewProposals}
-            sortKey={sortKey}
-            sortDirection={sortDirection}
-            onSortChange={(columnKey) => {
-              const next = nextTableSortState(sortKey, sortDirection, columnKey);
-              setSortKey(next.sortKey);
-              setSortDirection(next.sortDirection);
-            }}
+      {view === "opportunity" ? (
+        <>
+          <CommercialTextField
+            label="Busca"
+            hint={CM_HELP.analytics.searchOpportunities}
+            value={search}
+            onChange={setSearch}
+            placeholder="Número da OV, cliente…"
           />
-        ) : null}
-      </CommercialSectionCard>
+          <CommercialSelectField
+            label="Status"
+            hint={CM_HELP.analytics.opportunityStatus}
+            value={statusFilter || "all"}
+            onChange={(value) => setStatusFilter(value === "all" ? "" : value)}
+            options={[
+              { value: "all", label: "Todos" },
+              { value: "open", label: "Abertas" },
+              { value: "won", label: "Ganhas" },
+              { value: "lost", label: "Perdidas" },
+            ]}
+          />
+
+          <CommercialSectionCard
+            title={`Oportunidades (${total.toLocaleString("pt-BR")})`}
+            hint={CM_HELP.analytics.opportunitiesList}
+          >
+            {loading ? <CommercialLoadingCard title="Carregando…" variant="panel" /> : null}
+            {error ? <CommercialEmptyState defaultMessage={error} /> : null}
+            {!loading && !error ? (
+              <CommercialProposalsTable
+                rows={items}
+                basePath={basePath}
+                detailSearch={buildAnalyticsOpportunityBackSearch()}
+                showOpenProposal={canViewProposals}
+                sortKey={sortKey}
+                sortDirection={sortDirection}
+                onSortChange={(columnKey) => {
+                  const next = nextTableSortState(sortKey, sortDirection, columnKey);
+                  setSortKey(next.sortKey);
+                  setSortDirection(next.sortDirection);
+                }}
+              />
+            ) : null}
+          </CommercialSectionCard>
+        </>
+      ) : null}
     </section>
   );
 }

@@ -12,6 +12,10 @@ import {
   parsePeriodPresetId,
   type PeriodPresetId,
 } from "./periodPreset";
+import {
+  applyOpportunitiesViewToSearchParams,
+  parseOpportunitiesView,
+} from "./opportunitiesViewDeepLink";
 
 export type AnalyticsFilterUrlState = LinkedDateFilters & {
   branches: string[];
@@ -289,6 +293,10 @@ export function writeAnalyticsFiltersToUrl(state: AnalyticsFilterUrlState): void
   const nextParams = new URLSearchParams(buildAnalyticsFilterSearchParams(state));
   const opportunitySearch = readAnalyticsOpportunitySearch(window.location.search);
   if (opportunitySearch) nextParams.set("search", opportunitySearch);
+  applyOpportunitiesViewToSearchParams(
+    nextParams,
+    parseOpportunitiesView(window.location.search),
+  );
   const serialized = nextParams.toString();
   const nextSearch = serialized ? `?${serialized}` : "";
   const nextUrl = `${window.location.pathname}${nextSearch}${window.location.hash}`;

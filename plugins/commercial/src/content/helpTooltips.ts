@@ -633,6 +633,8 @@ export const CM_HELP = {
       "Top 10 linhas ainda não faturadas com a promessa mais próxima.",
     opportunitiesPage:
       "Lista global de oportunidades de venda (OV) no período. Use a Conta para ver só um cliente.",
+    opportunitiesView:
+      "Alterna entre o resumo Por colaborador e a lista Por oportunidade. A escolha fica na URL (?view=) para compartilhar o recorte.",
     collaboratorSummary:
       "Resumo global do período com os filtros do hero. Abertas/perdidas pela data de abertura; ganhas pela data de aceite (mesmo critério da lista Ganhas). Não muda com o Status da lista.",
     opportunitiesList:
