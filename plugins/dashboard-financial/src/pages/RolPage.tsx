@@ -13,6 +13,7 @@ import { useFinancialFilters } from "../hooks/useFinancialFilters";
 import { useFinancialResource } from "../hooks/useFinancialResource";
 import { formatPeriodLabel } from "../utils/dates";
 import { formatBranchFilterLabel } from "../utils/branchClientFilters";
+import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatCurrency } from "../utils/format";
 import { FINANCIAL_HELP_TOOLTIPS } from "../content/helpTooltips";
 
@@ -43,6 +44,7 @@ export function RolPage({ pathname }: RolPageProps) {
     () => formatPeriodLabel(dateStart, dateEnd),
     [dateStart, dateEnd]
   );
+  const branchLabel = formatBranchFilterLabel(branches);
 
   const breakdownRows = useMemo<RolRow[]>(() => {
     if (!data) return [];
@@ -83,6 +85,11 @@ export function RolPage({ pathname }: RolPageProps) {
   );
 
   const isBusy = loading || refreshing;
+  const goalOpts = {
+    realizedValue: data?.rol,
+    dateStart,
+    dateEnd,
+  };
 
   return (
     <div className="dashboard-financial dashboard-page">
@@ -117,7 +124,12 @@ export function RolPage({ pathname }: RolPageProps) {
           title="ROL"
           titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rol}
           value={formatCurrency(data?.rol)}
-          subtitle={periodLabel}
+          {...buildKpiGoalPresentation(
+            `${branchLabel} · ${periodLabel}`,
+            data,
+            undefined,
+            goalOpts,
+          )}
           icon={<TrendingUp size={22} />}
           loading={isBusy}
         />
@@ -125,7 +137,7 @@ export function RolPage({ pathname }: RolPageProps) {
           title="ROL"
           titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rolDetail}
           value={formatCurrency(data?.rol)}
-          subtitle={formatBranchFilterLabel(branches)}
+          {...buildKpiGoalPresentation(branchLabel, data, undefined, goalOpts)}
           icon={<TrendingUp size={22} />}
           loading={isBusy}
         />

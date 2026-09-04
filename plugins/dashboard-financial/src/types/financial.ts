@@ -6,7 +6,7 @@ export type FinancialFilterParams = {
   branch?: string;
 };
 
-export type RolData = {
+export type RolData = DashboardGoalFields & {
   branch: string;
   start_date: string;
   end_date: string;

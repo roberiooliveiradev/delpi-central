@@ -131,6 +131,19 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
   const kpiExportRows = useMemo(
     () => {
       const dateOpts = { dateStart, dateEnd };
+      const rolGoal = buildKpiGoalPresentationWithBranchIdd(
+        `${branchLabel} · ${periodLabel}`,
+        rol,
+        {
+          realizedValue: rol?.rol,
+          activeBranch: activeApiBranch,
+          iddScoreLabel: pickSiIddScoreLabel(
+            siScoresById,
+            FINANCIAL_SI_INDICATORS.rol,
+          ),
+          ...dateOpts,
+        },
+      );
       const ebitdaGoal = buildKpiGoalPresentationWithBranchIdd(
         ebitda?.ebitda_value != null
           ? `EBITDA ${formatCurrency(ebitda.ebitda_value)} · ${periodLabel}`
@@ -178,7 +191,10 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
         {
           indicador: "ROL",
           valor: formatCurrency(rol?.rol),
-          contexto: `${branchLabel} · ${periodLabel}`,
+          contexto: joinKpiExportContext(
+            `${branchLabel} · ${periodLabel}`,
+            ...formatKpiGoalExportFragments(rolGoal),
+          ),
         },
         {
           indicador: "EBITDA / ROL",
@@ -289,7 +305,20 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
           title="ROL"
           titleHint={FINANCIAL_HELP_TOOLTIPS.kpis.rol}
           value={formatCurrency(rol?.rol)}
-          subtitle={`${branchLabel} · ${periodLabel}`}
+          {...buildKpiGoalPresentationWithBranchIdd(
+            `${branchLabel} · ${periodLabel}`,
+            rol,
+            {
+              realizedValue: rol?.rol,
+              activeBranch: activeApiBranch,
+              dateStart,
+              dateEnd,
+              iddScoreLabel: pickSiIddScoreLabel(
+                siScoresById,
+                FINANCIAL_SI_INDICATORS.rol,
+              ),
+            },
+          )}
           icon={<TrendingUp size={22} />}
           loading={isBusy}
         />
