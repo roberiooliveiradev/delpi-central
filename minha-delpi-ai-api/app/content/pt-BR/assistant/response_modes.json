@@ -90,7 +90,9 @@
       "messageSearchMaxHits": 3,
       "messageSearchMaxChars": 1500,
       "messageSearchLookbackMessages": 40,
-      "maxMultiActionsPerTurn": 1
+      "maxMultiActionsPerTurn": 1,
+      "priorTurnFactsPreToolMaxChars": 400,
+      "priorTurnFactsSynthesisMaxChars": 800
     },
     "normal": {
       "historyMaxMessages": 12,
@@ -101,7 +103,9 @@
       "messageSearchMaxHits": 6,
       "messageSearchMaxChars": 3500,
       "messageSearchLookbackMessages": 80,
-      "maxMultiActionsPerTurn": 4
+      "maxMultiActionsPerTurn": 4,
+      "priorTurnFactsPreToolMaxChars": 900,
+      "priorTurnFactsSynthesisMaxChars": 1800
     },
     "thinker": {
       "historyMaxMessages": 20,
@@ -112,7 +116,9 @@
       "messageSearchMaxHits": 10,
       "messageSearchMaxChars": 6000,
       "messageSearchLookbackMessages": 120,
-      "maxMultiActionsPerTurn": 6
+      "maxMultiActionsPerTurn": 6,
+      "priorTurnFactsPreToolMaxChars": 1400,
+      "priorTurnFactsSynthesisMaxChars": 2800
     }
   },
   "contextBudgetCloud": {
@@ -125,7 +131,9 @@
       "messageSearchMaxHits": 4,
       "messageSearchMaxChars": 2000,
       "messageSearchLookbackMessages": 50,
-      "maxMultiActionsPerTurn": 1
+      "maxMultiActionsPerTurn": 1,
+      "priorTurnFactsPreToolMaxChars": 600,
+      "priorTurnFactsSynthesisMaxChars": 1200
     },
     "normal": {
       "historyMaxMessages": 12,
@@ -136,7 +144,9 @@
       "messageSearchMaxHits": 8,
       "messageSearchMaxChars": 4500,
       "messageSearchLookbackMessages": 100,
-      "maxMultiActionsPerTurn": 5
+      "maxMultiActionsPerTurn": 5,
+      "priorTurnFactsPreToolMaxChars": 1200,
+      "priorTurnFactsSynthesisMaxChars": 2400
     },
     "thinker": {
       "historyMaxMessages": 20,
@@ -147,7 +157,9 @@
       "messageSearchMaxHits": 12,
       "messageSearchMaxChars": 8000,
       "messageSearchLookbackMessages": 140,
-      "maxMultiActionsPerTurn": 8
+      "maxMultiActionsPerTurn": 8,
+      "priorTurnFactsPreToolMaxChars": 1800,
+      "priorTurnFactsSynthesisMaxChars": 3600
     }
   },
   "generationLimitsCloud": {

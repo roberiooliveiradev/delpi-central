@@ -407,8 +407,17 @@ class ChatWorkingMemoryService:
 
     @classmethod
     def _prior_turn_facts_max_chars(cls, snapshot: dict) -> int | None:
-        """Teto do bloco de fatos — sem orçamento explícito, empacota livre."""
-        return None
+        """Teto do bloco de fatos por estágio (síntese no prompt; pre_tool se marcado)."""
+        from app.domain.services.chat_response_mode_context_budget_service import (
+            ChatResponseModeContextBudgetService,
+        )
+
+        mode = str(snapshot.get("responseMode") or "normal").strip() or "normal"
+        stage = str(snapshot.get("contextPackingStage") or "synthesis").strip() or "synthesis"
+        return ChatResponseModeContextBudgetService.prior_turn_facts_max_chars(
+            mode,
+            stage=stage,
+        )
 
     @classmethod
     def merge_conversation_context(cls, memory_block: str, conversation_context: str | None) -> str | None:
@@ -431,8 +440,18 @@ class ChatWorkingMemoryService:
         behavior = snapshot.get("behaviorInstructions") or {}
         context_items = cls._merged_user_context_items(snapshot)
 
+        from app.domain.services.chat_prior_turn_facts_packing_service import (
+            ChatPriorTurnFactsPackingService,
+        )
+
+        prior_turn_facts = ChatPriorTurnFactsPackingService.build(
+            snapshot,
+            max_chars=cls._prior_turn_facts_max_chars(snapshot),
+        )
+
         return {
             "loaded": True,
+            "priorTurnFacts": prior_turn_facts.as_admin_debug(),
             "activeContextItems": [
                 str(item.get("label") or "").strip()
                 for item in context_items

@@ -24,6 +24,8 @@ class ChatContextBudget:
     message_search_max_chars: int
     message_search_lookback_messages: int
     max_multi_actions_per_turn: int
+    prior_turn_facts_pre_tool_max_chars: int
+    prior_turn_facts_synthesis_max_chars: int
 
     def as_admin_debug(self) -> dict[str, Any]:
         return {
@@ -38,7 +40,15 @@ class ChatContextBudget:
             "messageSearchMaxChars": self.message_search_max_chars,
             "messageSearchLookbackMessages": self.message_search_lookback_messages,
             "maxMultiActionsPerTurn": self.max_multi_actions_per_turn,
+            "priorTurnFactsPreToolMaxChars": self.prior_turn_facts_pre_tool_max_chars,
+            "priorTurnFactsSynthesisMaxChars": self.prior_turn_facts_synthesis_max_chars,
         }
+
+    def prior_turn_facts_max_chars(self, stage: str = "synthesis") -> int:
+        token = str(stage or "synthesis").strip().lower()
+        if token in {"pre_tool", "pretool", "pre-tool"}:
+            return self.prior_turn_facts_pre_tool_max_chars
+        return self.prior_turn_facts_synthesis_max_chars
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -58,6 +68,8 @@ class ChatResponseModeContextBudgetService:
             "messageSearchMaxChars": 1500,
             "messageSearchLookbackMessages": 40,
             "maxMultiActionsPerTurn": 1,
+            "priorTurnFactsPreToolMaxChars": 400,
+            "priorTurnFactsSynthesisMaxChars": 800,
         },
         "normal": {
             "historyMaxMessages": 12,
@@ -69,6 +81,8 @@ class ChatResponseModeContextBudgetService:
             "messageSearchMaxChars": 3500,
             "messageSearchLookbackMessages": 80,
             "maxMultiActionsPerTurn": 4,
+            "priorTurnFactsPreToolMaxChars": 900,
+            "priorTurnFactsSynthesisMaxChars": 1800,
         },
         "thinker": {
             "historyMaxMessages": 20,
@@ -80,6 +94,8 @@ class ChatResponseModeContextBudgetService:
             "messageSearchMaxChars": 6000,
             "messageSearchLookbackMessages": 120,
             "maxMultiActionsPerTurn": 6,
+            "priorTurnFactsPreToolMaxChars": 1400,
+            "priorTurnFactsSynthesisMaxChars": 2800,
         },
     }
 
@@ -114,6 +130,14 @@ class ChatResponseModeContextBudgetService:
                 minimum=10,
             ),
             max_multi_actions_per_turn=_int("maxMultiActionsPerTurn"),
+            prior_turn_facts_pre_tool_max_chars=_int(
+                "priorTurnFactsPreToolMaxChars",
+                minimum=100,
+            ),
+            prior_turn_facts_synthesis_max_chars=_int(
+                "priorTurnFactsSynthesisMaxChars",
+                minimum=100,
+            ),
         )
 
     @classmethod
@@ -144,3 +168,15 @@ class ChatResponseModeContextBudgetService:
     @classmethod
     def max_multi_actions_per_turn(cls, response_mode: str | None) -> int:
         return cls.resolve(response_mode).max_multi_actions_per_turn
+
+    @classmethod
+    def prior_turn_facts_max_chars(
+        cls,
+        response_mode: str | None,
+        *,
+        stage: str = "synthesis",
+        provider: str | None = None,
+    ) -> int:
+        return cls.resolve(response_mode, provider=provider).prior_turn_facts_max_chars(
+            stage
+        )

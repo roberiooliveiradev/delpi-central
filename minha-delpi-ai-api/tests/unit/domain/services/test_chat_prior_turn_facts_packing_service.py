@@ -112,3 +112,12 @@ def test_packing_does_not_duplicate_product_and_branch_context_items():
     )
 
     assert facts.is_empty
+
+
+def test_admin_debug_exposes_prior_turn_facts_packing_size():
+    debug = ChatWorkingMemoryService.compact_for_admin_debug(_snapshot())
+
+    packing = debug["priorTurnFacts"]
+    assert packing["chars"] > 0
+    assert "identity" in packing["sections"]
+    assert packing["truncated"] is False

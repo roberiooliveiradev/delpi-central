@@ -33,6 +33,28 @@ def test_admin_debug_keys():
     assert payload["profile"] == "local"
     assert payload["historyMaxMessages"] == 12
     assert "messageSearchLookbackMessages" in payload
+    assert payload["priorTurnFactsPreToolMaxChars"] < payload["priorTurnFactsSynthesisMaxChars"]
+
+
+def test_prior_turn_facts_stage_caps_local_vs_cloud():
+    local = ChatResponseModeContextBudgetService.resolve("normal", provider="ollama")
+    cloud = ChatResponseModeContextBudgetService.resolve(
+        "normal",
+        provider="openai_compatible",
+    )
+
+    assert local.prior_turn_facts_max_chars("pre_tool") < local.prior_turn_facts_max_chars(
+        "synthesis"
+    )
+    assert cloud.prior_turn_facts_synthesis_max_chars >= local.prior_turn_facts_synthesis_max_chars
+    assert (
+        ChatResponseModeContextBudgetService.prior_turn_facts_max_chars(
+            "fast",
+            stage="pre_tool",
+            provider="ollama",
+        )
+        == 400
+    )
 
 
 def test_context_budget_cloud_profile_when_openai_compatible(monkeypatch):
