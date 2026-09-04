@@ -18,8 +18,11 @@ from app.domain.services.pedidos_venda_abertos.billing_series_service import (
 )
 from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing_series_sql import (
     BILLING_SERIES_GRANULARITIES,
+    DEFAULT_BILLING_METRIC,
     DEFAULT_BILLING_NATURE,
+    SUPPORTED_BILLING_METRICS,
     SUPPORTED_BILLING_NATURES,
+    normalize_billing_metric,
     normalize_billing_nature,
 )
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
@@ -40,6 +43,7 @@ class ListCustomerBillingSeriesRequest:
     end_date: str | None = None
     granularity: str | None = None
     nature: str | None = None
+    metric: str | None = None
     product_codes: Sequence[str] | None = None
     product_groups: Sequence[str] | None = None
     market: str | None = None
@@ -54,6 +58,9 @@ class CustomerBillingSeriesResult:
     start_date: str
     end_date: str
     nature: str = DEFAULT_BILLING_NATURE
+    metric: str = DEFAULT_BILLING_METRIC
+    unit: str | None = None
+    mixed_units: bool = False
 
     def to_dict(self) -> dict:
         return {
@@ -65,6 +72,10 @@ class CustomerBillingSeriesResult:
             "nature": self.nature,
             "billingNature": self.nature,
             "supportedNatures": list(SUPPORTED_BILLING_NATURES),
+            "metric": self.metric,
+            "supportedMetrics": list(SUPPORTED_BILLING_METRICS),
+            "unit": self.unit,
+            "mixed_units": self.mixed_units,
             "points": [point.to_dict() for point in self.points],
         }
 
@@ -156,6 +167,7 @@ class ListCustomerBillingSeriesUseCase:
 
         start, end, grain, months = self._resolve_window(request)
         nature = normalize_billing_nature(request.nature)
+        metric = normalize_billing_metric(request.metric)
         buckets = build_period_buckets(
             start_date=start.isoformat(),
             end_date=end.isoformat(),
@@ -163,6 +175,8 @@ class ListCustomerBillingSeriesUseCase:
         ).buckets
 
         billed_by_key: dict[str, float] = {}
+        units: set[str] = set()
+        mixed_units = False
         if pairs:
             qb = QueryBuilder()
             start_protheus = qb.convert_date_to_protheus(start.isoformat())
@@ -173,6 +187,7 @@ class ListCustomerBillingSeriesUseCase:
                 end_date=end_protheus,
                 granularity=grain,
                 nature=nature,
+                metric=metric,
                 product_codes=request.product_codes,
                 product_groups=request.product_groups,
                 market=request.market,
@@ -189,6 +204,17 @@ class ListCustomerBillingSeriesUseCase:
                 billed_by_key[bucket_key] = billed_by_key.get(bucket_key, 0.0) + float(
                     row.billed_value or 0.0
                 )
+                if row.mixed_units:
+                    mixed_units = True
+                unit = (row.unit or "").strip()
+                if unit:
+                    units.add(unit)
+
+        if mixed_units or len(units) > 1:
+            series_unit = None
+            mixed_units = True
+        else:
+            series_unit = next(iter(units), None)
 
         points = [
             BillingSeriesPoint(
@@ -208,4 +234,7 @@ class ListCustomerBillingSeriesUseCase:
             start_date=start.isoformat(),
             end_date=end.isoformat(),
             nature=nature,
+            metric=metric,
+            unit=series_unit,
+            mixed_units=mixed_units,
         )

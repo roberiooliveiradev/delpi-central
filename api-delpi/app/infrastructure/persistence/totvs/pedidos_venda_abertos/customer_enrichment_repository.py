@@ -10,11 +10,13 @@ from app.domain.ports.pedidos_venda_abertos.customer_enrichment_repository_port 
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.pedidos_venda_abertos.customer_billing_series_sql import (
+    DEFAULT_BILLING_METRIC,
     DEFAULT_BILLING_NATURE,
     billing_12m_params,
     billing_series_params,
     build_customer_billing_12m_sql,
     build_customer_billing_series_sql,
+    normalize_billing_metric,
     normalize_billing_nature,
     normalize_billing_series_recorte,
 )
@@ -143,6 +145,7 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
         end_date: str,
         granularity: str = "month",
         nature: str = DEFAULT_BILLING_NATURE,
+        metric: str = DEFAULT_BILLING_METRIC,
         product_codes: Sequence[str] | None = None,
         product_groups: Sequence[str] | None = None,
         market: str | None = None,
@@ -152,6 +155,7 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
             return []
 
         nature = normalize_billing_nature(nature)
+        metric = normalize_billing_metric(metric)
         recorte = normalize_billing_series_recorte(
             product_codes=list(product_codes or []),
             product_groups=list(product_groups or []),
@@ -168,6 +172,7 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
             where_pairs=where_pairs,
             granularity=granularity,
             nature=nature,
+            metric=metric,
             recorte=recorte,
         )
         params = billing_series_params(
@@ -175,6 +180,7 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
             start_date=start_date,
             end_date=end_date,
             nature=nature,
+            metric=metric,
             recorte=recorte,
         )
         with self as repo:
@@ -184,6 +190,8 @@ class CustomerEnrichmentRepository(BaseRepository, CustomerEnrichmentRepositoryP
             CustomerBillingMonthRow(
                 year_month=_trim(row.get("year_month")),
                 billed_value=_to_float(row.get("billed_value")),
+                unit=_trim(row.get("unit")) or None,
+                mixed_units=bool(int(row.get("mixed_units") or 0)),
             )
             for row in rows
             if _trim(row.get("year_month"))

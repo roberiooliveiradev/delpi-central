@@ -31,9 +31,13 @@ import {
   type PortfolioBillingAmountNature,
 } from "../../../content/billingNature";
 import {
+  billingMetricShortLabel,
+  type PortfolioBillingMetric,
+} from "../../../content/billingMetric";
+import {
   type CompareYearsCount,
 } from "../../analytics/components/PeriodCompareControls";
-import { formatCurrency } from "../../../utils/format";
+import { formatCurrency, formatQuantity } from "../../../utils/format";
 import { buildBillingSeriesExportPayload } from "../utils/billingSeriesExportBuilders";
 import { useCustomerBillingSeries } from "../hooks/useCustomerBillingSeries";
 import type { CustomerSummary } from "../types/customerSummary";
@@ -59,6 +63,7 @@ type CustomerBillingSeriesChartProps = {
   /** Quando false, não dispara fetch (painel oculto). Default true. */
   active?: boolean;
   billingNature?: PortfolioBillingAmountNature;
+  billingMetric?: PortfolioBillingMetric;
 };
 
 function formatChartCurrency(value: number): string {
@@ -75,6 +80,13 @@ function formatChartCurrency(value: number): string {
     })} mil`;
   }
   return formatCurrency(value);
+}
+
+function formatChartMetricValue(value: number, metric: PortfolioBillingMetric): string {
+  if (metric === "quantity") {
+    return formatQuantity(value);
+  }
+  return formatChartCurrency(value);
 }
 
 function billingFilterLabel(
@@ -96,6 +108,7 @@ export function CustomerBillingSeriesChart({
   filters,
   active = true,
   billingNature = "gross",
+  billingMetric = "value",
 }: CustomerBillingSeriesChartProps) {
   const { preferences, setPreferences, setChartType } = usePersistedChartPreferences({
     storageKey: "commercial:customers:billing-series",
@@ -165,6 +178,7 @@ export function CustomerBillingSeriesChart({
     granularity: effectiveGrain,
     compareYears: yoyActive ? compareYears : 0,
     nature: billingNature,
+    metric: billingMetric,
     productCodes: filters.selectedProductCodes,
     productGroups: filters.selectedProductGroups,
     market: filters.marketParam,
@@ -188,10 +202,14 @@ export function CustomerBillingSeriesChart({
   );
 
   const bars = useMemo((): MultiTypeSeriesSpec[] => {
+    const seriesName =
+      billingMetric === "quantity"
+        ? "Quantidade fornecida"
+        : appendBillingNatureContext("Faturamento", billingNature);
     const list: MultiTypeSeriesSpec[] = [
       {
         dataKey: "faturamento",
-        name: appendBillingNatureContext("Faturamento", billingNature),
+        name: seriesName,
         fill: SERIES_COLOR,
         trendSource: true,
       },
@@ -218,7 +236,7 @@ export function CustomerBillingSeriesChart({
       });
     }
     return list;
-  }, [billingNature, compareYears]);
+  }, [billingMetric, billingNature, compareYears]);
 
   const hasValues = chartData.some(
     (point) =>
@@ -234,11 +252,17 @@ export function CustomerBillingSeriesChart({
   );
   const periodLabel = billingSeriesPresetLabel(filters.preset);
   const natureLabel = billingNatureShortLabel(billingNature);
-  const chartTitle = appendBillingNatureContext(
-    `Faturamento — ${periodLabel}`,
-    billingNature,
-  );
+  const metricLabel = billingMetricShortLabel(billingMetric);
+  const chartTitle =
+    billingMetric === "quantity"
+      ? `Quantidade fornecida — ${periodLabel}`
+      : appendBillingNatureContext(`Faturamento — ${periodLabel}`, billingNature);
   const isAllCustomers = filters.selectedCustomerKeys.length === 0;
+  const formatValue = (value: number) => formatChartMetricValue(value, billingMetric);
+  const totalLabel =
+    billingMetric === "quantity"
+      ? formatQuantity(totalValue)
+      : formatCurrency(totalValue);
 
   return (
     <div className="cm-billing-series-chart">
@@ -249,7 +273,9 @@ export function CustomerBillingSeriesChart({
           loading
             ? "Atualizando série…"
             : hasValues
-              ? `Total no período · ${filterLabel}: ${formatCurrency(totalValue)} · ${natureLabel}`
+              ? `Total no período · ${filterLabel}: ${totalLabel} · ${metricLabel}${
+                  billingMetric === "value" ? ` · ${natureLabel}` : ""
+                }`
               : undefined
         }
       >
@@ -342,8 +368,8 @@ export function CustomerBillingSeriesChart({
               showTrend={showTrend}
               showLegend={yoyActive || showTrend}
               trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
-              formatY={formatChartCurrency}
-              formatTooltipValue={formatCurrency}
+              formatY={formatValue}
+              formatTooltipValue={formatValue}
             />
           </ChartViewShell>
         </>

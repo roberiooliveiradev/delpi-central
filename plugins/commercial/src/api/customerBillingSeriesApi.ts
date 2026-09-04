@@ -20,6 +20,7 @@ export type CustomerBillingSeriesQuery = {
   endDate?: string;
   granularity?: "day" | "week" | "month" | "year";
   nature?: "gross" | "net";
+  metric?: "value" | "quantity";
   productCodes?: string[];
   productGroups?: string[];
   market?: "domestic" | "export";
@@ -32,6 +33,9 @@ export type CustomerBillingSeriesPayload = {
   granularity?: string;
   start_date?: string;
   end_date?: string;
+  metric?: "value" | "quantity";
+  unit?: string | null;
+  mixed_units?: boolean;
   points: CustomerBillingSeriesPoint[];
   coverage: { covered: number; total: number; failedBatches: number };
   partialError: string | null;
@@ -45,6 +49,7 @@ function billingSeriesBody(options?: CustomerBillingSeriesQuery) {
       : {}),
     ...(options?.granularity ? { granularity: options.granularity } : {}),
     ...(options?.nature ? { nature: options.nature } : {}),
+    ...(options?.metric ? { metric: options.metric } : {}),
     ...(options?.productCodes?.length
       ? { product_codes: options.productCodes }
       : {}),
@@ -84,6 +89,7 @@ export async function fetchCustomerBillingSeries(
       endDate: options?.endDate,
       granularity: options?.granularity,
       nature: options?.nature,
+      metric: options?.metric,
       productCodes: options?.productCodes,
       productGroups: options?.productGroups,
       market: options?.market,
@@ -92,8 +98,13 @@ export async function fetchCustomerBillingSeries(
   });
   const byMonth = new Map<string, CustomerBillingSeriesPoint>();
   let covered = 0;
+  let mixedUnits = false;
+  const units = new Set<string>();
   for (const batch of execution.batches) {
     if (!batch.value) continue;
+    if (batch.value.mixed_units) mixedUnits = true;
+    const unit = (batch.value.unit || "").trim();
+    if (unit) units.add(unit);
     const reportedCount = Number(batch.value.customer_count);
     covered += Number.isFinite(reportedCount)
       ? Math.max(0, Math.min(batch.inputCount, Math.trunc(reportedCount)))
@@ -110,9 +121,15 @@ export async function fetchCustomerBillingSeries(
     const byDate = a.date_start.localeCompare(b.date_start);
     return byDate || a.month.localeCompare(b.month);
   });
+  if (mixedUnits || units.size > 1) {
+    mixedUnits = true;
+  }
   return {
     months: options?.months ?? 12,
     customer_count: covered,
+    metric: options?.metric ?? "value",
+    unit: mixedUnits || units.size !== 1 ? null : [...units][0] ?? null,
+    mixed_units: mixedUnits,
     points,
     coverage: { covered, total: customers.length, failedBatches: execution.failedBatches },
     partialError: execution.failedBatches > 0 || covered < customers.length

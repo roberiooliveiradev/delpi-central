@@ -26,6 +26,7 @@ def test_get_commercial_rol_by_product_returns_meta(mock_build) -> None:
         export_destination_countries=(),
         total_rol=0.0,
         total_gross_revenue=0.0,
+        total_qty=0.0,
         items_count=0,
     )
     mock_build.return_value = use_case

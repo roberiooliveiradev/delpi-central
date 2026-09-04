@@ -5,6 +5,10 @@ import {
   type PortfolioBillingAmountNature,
 } from "../../../content/billingNature";
 import {
+  DEFAULT_PORTFOLIO_BILLING_METRIC,
+  type PortfolioBillingMetric,
+} from "../../../content/billingMetric";
+import {
   buildCustomersListPath,
   buildCustomersListSearch,
   DEFAULT_CUSTOMERS_LIST_DIRECTION,
@@ -47,6 +51,7 @@ const DEFAULT_STATE: CustomersListState = {
   page: 1,
   panel: DEFAULT_CUSTOMERS_LIST_PANEL,
   billingNature: DEFAULT_PORTFOLIO_BILLING_NATURE,
+  billingMetric: DEFAULT_PORTFOLIO_BILLING_METRIC,
 };
 
 export function useCustomersListState(options: {
@@ -137,6 +142,10 @@ export function useCustomersListState(options: {
     (billingNature: PortfolioBillingAmountNature) => mutate({ billingNature }),
     [mutate],
   );
+  const setBillingMetric = useCallback(
+    (billingMetric: PortfolioBillingMetric) => mutate({ billingMetric }),
+    [mutate],
+  );
   const resetFilters = useCallback(() => {
     setScopeSellerId(null);
     setState(DEFAULT_STATE);
@@ -155,6 +164,7 @@ export function useCustomersListState(options: {
     setPage,
     setPanel,
     setBillingNature,
+    setBillingMetric,
     resetFilters,
     listSearch,
   };

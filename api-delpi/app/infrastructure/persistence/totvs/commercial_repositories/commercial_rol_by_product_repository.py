@@ -141,7 +141,21 @@ class CommercialRolByProductRepository(
                         AS GROSS_DOMESTIC,
                     SUM(CASE WHEN {_EXPORT} THEN CONVERT(FLOAT, {_GROSS}) ELSE 0 END)
                         AS GROSS_EXPORT,
-                    SUM(CONVERT(FLOAT, {_GROSS})) AS GROSS_TOTAL
+                    SUM(CONVERT(FLOAT, {_GROSS})) AS GROSS_TOTAL,
+                    SUM(CASE WHEN {_DOMESTIC} THEN CONVERT(FLOAT, ISNULL(D2.D2_QUANT, 0)) ELSE 0 END)
+                        AS QTY_DOMESTIC,
+                    SUM(CASE WHEN {_EXPORT} THEN CONVERT(FLOAT, ISNULL(D2.D2_QUANT, 0)) ELSE 0 END)
+                        AS QTY_EXPORT,
+                    SUM(CONVERT(FLOAT, ISNULL(D2.D2_QUANT, 0))) AS QTY_TOTAL,
+                    CASE
+                        WHEN COUNT(DISTINCT NULLIF(RTRIM(D2.D2_UM), '')) = 1
+                        THEN MAX(NULLIF(RTRIM(D2.D2_UM), ''))
+                        ELSE NULL
+                    END AS UNIT,
+                    CASE
+                        WHEN COUNT(DISTINCT NULLIF(RTRIM(D2.D2_UM), '')) > 1 THEN 1
+                        ELSE 0
+                    END AS MIXED_UNITS
                 FROM SD2010 D2 WITH (NOLOCK)
                 LEFT JOIN SA1010 A1 WITH (NOLOCK)
                     ON  A1.D_E_L_E_T_ = ''
@@ -207,7 +221,8 @@ class CommercialRolByProductRepository(
             DEVOLUCOES AS (
                 SELECT
                     {ret_key_select},
-                    {CommercialRolReturnSql.return_net_sum_expr(d1_alias="D1")} AS VLR_DEVOLUCAO
+                    {CommercialRolReturnSql.return_net_sum_expr(d1_alias="D1")} AS VLR_DEVOLUCAO,
+                    SUM(CONVERT(FLOAT, ISNULL(D1.D1_QUANT, 0))) AS QTY_DEVOLUCAO
                 FROM SD1010 D1 WITH (NOLOCK)
                 LEFT JOIN SA1010 A1D WITH (NOLOCK)
                     ON  A1D.D_E_L_E_T_ = ''
@@ -232,7 +247,12 @@ class CommercialRolByProductRepository(
                     ISNULL(V.NET_TOTAL, 0) - ISNULL(D.VLR_DEVOLUCAO, 0) AS ROL_ITEM,
                     ISNULL(V.GROSS_DOMESTIC, 0) AS DOMESTIC_GROSS,
                     ISNULL(V.GROSS_EXPORT, 0) AS EXPORT_GROSS,
-                    ISNULL(V.GROSS_TOTAL, 0) AS GROSS_ITEM
+                    ISNULL(V.GROSS_TOTAL, 0) AS GROSS_ITEM,
+                    ISNULL(V.QTY_DOMESTIC, 0) AS DOMESTIC_QTY,
+                    ISNULL(V.QTY_EXPORT, 0) AS EXPORT_QTY,
+                    ISNULL(V.QTY_TOTAL, 0) - ISNULL(D.QTY_DEVOLUCAO, 0) AS QTY_ITEM,
+                    V.UNIT AS UNIT,
+                    ISNULL(V.MIXED_UNITS, 0) AS MIXED_UNITS
                 FROM VENDAS V
                 FULL OUTER JOIN DEVOLUCOES D
                     ON {join_ret}
@@ -242,11 +262,13 @@ class CommercialRolByProductRepository(
                 FROM ROL_ITEM
                 WHERE ROL_ITEM <> 0 OR GROSS_ITEM <> 0
                    OR DOMESTIC_ROL <> 0 OR EXPORT_ROL <> 0
+                   OR QTY_ITEM <> 0
             ),
             TOTAIS AS (
                 SELECT
                     ISNULL(SUM(ROL_ITEM), 0) AS TOTAL_ROL,
                     ISNULL(SUM(GROSS_ITEM), 0) AS TOTAL_GROSS,
+                    ISNULL(SUM(QTY_ITEM), 0) AS TOTAL_QTY,
                     COUNT(1) AS ITEMS_COUNT
                 FROM ROL_FILTRADO
             ),
@@ -255,6 +277,7 @@ class CommercialRolByProductRepository(
                     RF.*,
                     T.TOTAL_ROL,
                     T.TOTAL_GROSS,
+                    T.TOTAL_QTY,
                     T.ITEMS_COUNT,
                     ROW_NUMBER() OVER (ORDER BY {rank_order}) AS RNK
                 FROM ROL_FILTRADO RF
@@ -270,8 +293,14 @@ class CommercialRolByProductRepository(
                 DOMESTIC_GROSS,
                 EXPORT_GROSS,
                 GROSS_ITEM,
+                DOMESTIC_QTY,
+                EXPORT_QTY,
+                QTY_ITEM,
+                UNIT,
+                MIXED_UNITS,
                 TOTAL_ROL,
                 TOTAL_GROSS,
+                TOTAL_QTY,
                 ITEMS_COUNT,
                 RNK
             FROM RANKED
@@ -348,11 +377,13 @@ class CommercialRolByProductRepository(
                 export_destination_countries=countries,
                 total_rol=0.0,
                 total_gross_revenue=0.0,
+                total_qty=0.0,
                 items_count=0,
             )
 
         total_rol = float(rows[0].get("TOTAL_ROL") or 0)
         total_gross = float(rows[0].get("TOTAL_GROSS") or 0)
+        total_qty = float(rows[0].get("TOTAL_QTY") or 0)
         items_count = int(rows[0].get("ITEMS_COUNT") or 0)
         limit = int(request.limit)
         top_rows = rows[:limit]
@@ -373,6 +404,11 @@ class CommercialRolByProductRepository(
                 domestic_gross_revenue=float(row.get("DOMESTIC_GROSS") or 0),
                 export_gross_revenue=float(row.get("EXPORT_GROSS") or 0),
                 gross_revenue=float(row.get("GROSS_ITEM") or 0),
+                domestic_qty=float(row.get("DOMESTIC_QTY") or 0),
+                export_qty=float(row.get("EXPORT_QTY") or 0),
+                qty=float(row.get("QTY_ITEM") or 0),
+                unit=(str(row.get("UNIT") or "").strip() or None),
+                mixed_units=bool(int(row.get("MIXED_UNITS") or 0)),
                 share_pct=_share(float(row.get("ROL_ITEM") or 0)),
                 rank=int(row.get("RNK") or 0),
             )
@@ -389,5 +425,6 @@ class CommercialRolByProductRepository(
             export_destination_countries=countries,
             total_rol=total_rol,
             total_gross_revenue=total_gross,
+            total_qty=total_qty,
             items_count=items_count,
         )

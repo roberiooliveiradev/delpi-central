@@ -117,6 +117,11 @@ export type CommercialRolByProductItem = {
   domestic_gross_revenue?: number;
   export_gross_revenue?: number;
   gross_revenue?: number;
+  domestic_qty?: number;
+  export_qty?: number;
+  qty?: number;
+  unit?: string | null;
+  mixed_units?: boolean;
   share_pct?: number | null;
   rank?: number;
 };
@@ -132,6 +137,7 @@ export type CommercialRolByProductData = {
   summary?: {
     total_rol?: number;
     total_gross_revenue?: number;
+    total_qty?: number;
     items_count?: number;
   };
 };

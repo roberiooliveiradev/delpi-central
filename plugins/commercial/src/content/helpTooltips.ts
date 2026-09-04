@@ -308,6 +308,8 @@ export const CM_HELP = {
       "Soma do faturamento no período (bruto de nota ou líquido ROL). Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix.",
     billingNature:
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
+    billingMetric:
+      "R$ = valor (bruto ou líquido conforme Natureza). Qtd = quantidade fornecida no período (série e mix por produto). UMs mistas não são convertidas automaticamente.",
     billingSeriesPeriod:
       "No hero (Faturamento, ABC e Ranking): recorte do período — hoje, semana, mês, mês passado, trimestre, ano, últimos 12 meses ou intervalo personalizado (só Faturamento/ABC).",
     billingSeriesGrain:

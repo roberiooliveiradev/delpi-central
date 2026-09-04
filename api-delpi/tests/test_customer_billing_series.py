@@ -205,3 +205,57 @@ def test_list_customer_billing_series_operation_id_in_router() -> None:
     assert "/customers/billing-series" in router
     assert "start_date" in router
     assert "granularity" in router
+    assert "metric" in router
+
+
+def test_billing_series_sql_quantity_uses_line_qty_not_note_value() -> None:
+    sql = build_customer_billing_series_sql(
+        where_pairs="(D2.D2_CLIENTE = ? AND D2.D2_LOJA = ?)",
+        granularity="month",
+        metric="quantity",
+        nature="gross",
+    )
+    assert "D2_QUANT" in sql
+    assert "F2_VALBRUT" not in sql
+    assert "mixed_units" in sql
+
+
+def test_billing_series_sql_quantity_net_subtracts_return_qty() -> None:
+    sql = build_customer_billing_series_sql(
+        where_pairs="(D2.D2_CLIENTE = ? AND D2.D2_LOJA = ?)",
+        granularity="month",
+        metric="quantity",
+        nature="net",
+    )
+    assert "D2_QUANT" in sql
+    assert "D1_QUANT" in sql
+    assert "devolucoes" in sql.lower()
+
+
+def test_list_customer_billing_series_passes_metric_and_mixed_units() -> None:
+    repo = MagicMock()
+    repo.fetch_billing_monthly_series.return_value = [
+        CustomerBillingMonthRow("202607", 12.5, unit="MI", mixed_units=False),
+        CustomerBillingMonthRow("202608", 3.0, unit="PC", mixed_units=False),
+    ]
+    use_case = ListCustomerBillingSeriesUseCase(repo)
+    with patch(
+        "app.application.use_cases.pedidos_venda_abertos.list_customer_billing_series_use_case.date"
+    ) as mock_date:
+        mock_date.today.return_value = date(2026, 8, 15)
+        mock_date.side_effect = lambda *args, **kwargs: date(*args, **kwargs)
+        result = use_case.execute(
+            ListCustomerBillingSeriesRequest(
+                customers=[("100", "01")],
+                months=2,
+                metric="quantity",
+                nature="gross",
+            )
+        )
+    assert result.metric == "quantity"
+    assert result.mixed_units is True
+    assert result.unit is None
+    assert repo.fetch_billing_monthly_series.call_args.kwargs["metric"] == "quantity"
+    payload = result.to_dict()
+    assert payload["supportedMetrics"] == ["value", "quantity"]
+    assert payload["mixed_units"] is True

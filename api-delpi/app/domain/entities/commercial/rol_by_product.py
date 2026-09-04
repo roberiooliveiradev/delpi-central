@@ -16,6 +16,11 @@ class RolByProductItem:
     domestic_gross_revenue: float = 0.0
     export_gross_revenue: float = 0.0
     gross_revenue: float = 0.0
+    domestic_qty: float = 0.0
+    export_qty: float = 0.0
+    qty: float = 0.0
+    unit: str | None = None
+    mixed_units: bool = False
     share_pct: Optional[float] = None
     rank: int = 0
 
@@ -30,6 +35,11 @@ class RolByProductItem:
             "domestic_gross_revenue": self.domestic_gross_revenue,
             "export_gross_revenue": self.export_gross_revenue,
             "gross_revenue": self.gross_revenue,
+            "domestic_qty": self.domestic_qty,
+            "export_qty": self.export_qty,
+            "qty": self.qty,
+            "unit": self.unit,
+            "mixed_units": self.mixed_units,
             "share_pct": self.share_pct,
             "rank": self.rank,
         }
@@ -46,6 +56,7 @@ class RolByProductResult:
     export_destination_countries: tuple[str, ...]
     total_rol: float
     total_gross_revenue: float
+    total_qty: float
     items_count: int
 
     def to_dict(self) -> dict[str, Any]:
@@ -60,6 +71,7 @@ class RolByProductResult:
             "summary": {
                 "total_rol": self.total_rol,
                 "total_gross_revenue": self.total_gross_revenue,
+                "total_qty": self.total_qty,
                 "items_count": self.items_count,
             },
         }

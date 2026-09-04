@@ -152,6 +152,11 @@ class BillingSeriesBody(BaseModel):
         pattern=r"^(gross|net)$",
         description="Billing nature: gross (F2_VALBRUT) or net (ROL). Default gross.",
     )
+    metric: Optional[str] = Field(
+        default=None,
+        pattern=r"^(value|quantity)$",
+        description="Series metric: value (R$) or quantity (D2_QUANT net of returns when nature=net). Default value.",
+    )
     product_codes: Optional[list[str]] = Field(
         default=None,
         description="Optional product codes (D2_COD). When set, gross uses line totals.",
@@ -497,6 +502,7 @@ def list_customer_billing_series_route(body: BillingSeriesBody = Body(...)):
                 end_date=body.end_date,
                 granularity=body.granularity,
                 nature=body.nature,
+                metric=body.metric,
                 product_codes=body.product_codes,
                 product_groups=body.product_groups,
                 market=body.market,

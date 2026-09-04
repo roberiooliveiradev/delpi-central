@@ -12,6 +12,34 @@ BILLING_SERIES_GRANULARITIES = ("day", "week", "month", "year")
 BILLING_NATURES = ("gross", "net")
 DEFAULT_BILLING_NATURE = "gross"
 SUPPORTED_BILLING_NATURES = list(BILLING_NATURES)
+BILLING_METRICS = ("value", "quantity")
+DEFAULT_BILLING_METRIC = "value"
+SUPPORTED_BILLING_METRICS = list(BILLING_METRICS)
+
+_QTY_SALE_SUM = "SUM(CONVERT(FLOAT, ISNULL(D2.D2_QUANT, 0)))"
+_QTY_RETURN_SUM = "SUM(CONVERT(FLOAT, ISNULL(D1.D1_QUANT, 0)))"
+_UNIT_AGG_SALE = """
+                CASE
+                    WHEN COUNT(DISTINCT NULLIF(RTRIM(D2.D2_UM), '')) = 1
+                    THEN MAX(NULLIF(RTRIM(D2.D2_UM), ''))
+                    ELSE NULL
+                END AS unit,
+                CASE
+                    WHEN COUNT(DISTINCT NULLIF(RTRIM(D2.D2_UM), '')) > 1 THEN 1
+                    ELSE 0
+                END AS mixed_units
+"""
+_UNIT_AGG_RETURN = """
+                CASE
+                    WHEN COUNT(DISTINCT NULLIF(RTRIM(D1.D1_UM), '')) = 1
+                    THEN MAX(NULLIF(RTRIM(D1.D1_UM), ''))
+                    ELSE NULL
+                END AS unit,
+                CASE
+                    WHEN COUNT(DISTINCT NULLIF(RTRIM(D1.D1_UM), '')) > 1 THEN 1
+                    ELSE 0
+                END AS mixed_units
+"""
 
 _ISSUE_YYYYMMDD = "LEFT(LTRIM(RTRIM(CONVERT(VARCHAR(8), issue_date))), 8)"
 _ISSUE_DATE = f"CONVERT(DATE, {_ISSUE_YYYYMMDD}, 112)"
@@ -46,6 +74,13 @@ def normalize_billing_nature(value: str | None) -> str:
     if nature not in BILLING_NATURES:
         raise ValueError("nature inválida. Use gross ou net.")
     return nature
+
+
+def normalize_billing_metric(value: str | None) -> str:
+    metric = (value or DEFAULT_BILLING_METRIC).strip().lower() or DEFAULT_BILLING_METRIC
+    if metric not in BILLING_METRICS:
+        raise ValueError("metric inválida. Use value ou quantity.")
+    return metric
 
 
 def normalize_billing_series_recorte(
@@ -170,10 +205,26 @@ def build_customer_billing_series_sql(
     where_pairs: str,
     granularity: str,
     nature: str = DEFAULT_BILLING_NATURE,
+    metric: str = DEFAULT_BILLING_METRIC,
     recorte: BillingSeriesRecorte | None = None,
 ) -> str:
     nature = normalize_billing_nature(nature)
+    metric = normalize_billing_metric(metric)
     active = recorte if recorte and recorte.has_line_filters else BillingSeriesRecorte()
+    if metric == "quantity":
+        if nature == "gross":
+            return _build_gross_line_series_sql(
+                where_pairs=where_pairs,
+                granularity=granularity,
+                recorte=active,
+                metric="quantity",
+            )
+        return _build_net_series_sql(
+            where_pairs=where_pairs,
+            granularity=granularity,
+            recorte=active,
+            metric="quantity",
+        )
     if nature == "gross" and not active.has_line_filters:
         return _build_gross_series_sql(where_pairs=where_pairs, granularity=granularity)
     if nature == "gross":
@@ -181,11 +232,13 @@ def build_customer_billing_series_sql(
             where_pairs=where_pairs,
             granularity=granularity,
             recorte=active,
+            metric="value",
         )
     return _build_net_series_sql(
         where_pairs=where_pairs,
         granularity=granularity,
         recorte=active,
+        metric="value",
     )
 
 
@@ -238,15 +291,23 @@ def _build_gross_line_series_sql(
     where_pairs: str,
     granularity: str,
     recorte: BillingSeriesRecorte,
+    metric: str = DEFAULT_BILLING_METRIC,
 ) -> str:
-    """Gross filtrado por produto/mercado: soma D2_TOTAL (não F2_VALBRUT da nota)."""
+    """Gross por linha: D2_TOTAL (value) ou D2_QUANT (quantity) — nunca F2_VALBRUT."""
+    metric = normalize_billing_metric(metric)
     sale_period = _period_expr_from_protheus_col("D2.D2_EMISSAO", granularity)
     joins, where_extra, _ = _recorte_sale_fragments(recorte)
-    gross_sum = CommercialRolReturnSql.sale_gross_sum_expr(d2_alias="D2")
+    if metric == "quantity":
+        value_expr = _QTY_SALE_SUM
+        unit_select = f",{_UNIT_AGG_SALE}"
+    else:
+        value_expr = CommercialRolReturnSql.sale_gross_sum_expr(d2_alias="D2")
+        unit_select = ""
     return f"""
             SELECT
                 {sale_period} AS year_month,
-                {gross_sum} AS billed_value
+                {value_expr} AS billed_value
+                {unit_select}
               FROM SD2010 D2 WITH (NOLOCK)
               {joins}
              WHERE D2.D_E_L_E_T_ = ''
@@ -265,8 +326,10 @@ def _build_net_series_sql(
     where_pairs: str,
     granularity: str,
     recorte: BillingSeriesRecorte | None = None,
+    metric: str = DEFAULT_BILLING_METRIC,
 ) -> str:
     """ROL líquido por bucket: vendas (D2_EMISSAO) − devoluções (D1_DTDIGIT)."""
+    metric = normalize_billing_metric(metric)
     active = recorte or BillingSeriesRecorte()
     sale_joins, sale_where, _ = _recorte_sale_fragments(active)
     ret_joins, ret_where, _ = _recorte_return_fragments(active)
@@ -277,16 +340,39 @@ def _build_net_series_sql(
     d1_pairs = where_pairs.replace("D2.D2_CLIENTE", "D1.D1_FORNECE").replace(
         "D2.D2_LOJA", "D1.D1_LOJA"
     )
-    net_sale = CommercialRolReturnSql.sale_net_sum_expr(d2_alias="D2")
-    net_ret = CommercialRolReturnSql.return_net_sum_expr(d1_alias="D1")
+    if metric == "quantity":
+        sale_value = _QTY_SALE_SUM
+        ret_value = _QTY_RETURN_SUM
+        sale_unit = f",{_UNIT_AGG_SALE}"
+        ret_unit = f",{_UNIT_AGG_RETURN}"
+        outer_unit = """
+                CASE
+                    WHEN ISNULL(V.mixed_units, 0) = 1 OR ISNULL(D.mixed_units, 0) = 1 THEN NULL
+                    WHEN V.unit IS NOT NULL AND D.unit IS NOT NULL AND V.unit <> D.unit THEN NULL
+                    ELSE COALESCE(V.unit, D.unit)
+                END AS unit,
+                CASE
+                    WHEN ISNULL(V.mixed_units, 0) = 1 OR ISNULL(D.mixed_units, 0) = 1 THEN 1
+                    WHEN V.unit IS NOT NULL AND D.unit IS NOT NULL AND V.unit <> D.unit THEN 1
+                    ELSE 0
+                END AS mixed_units
+        """
+    else:
+        sale_value = CommercialRolReturnSql.sale_net_sum_expr(d2_alias="D2")
+        ret_value = CommercialRolReturnSql.return_net_sum_expr(d1_alias="D1")
+        sale_unit = ""
+        ret_unit = ""
+        outer_unit = ""
     eligibility = CommercialRolReturnSql.sale_eligibility_predicate(
         exists_where=exists_where,
     )
+    outer_unit_select = f",{outer_unit}" if outer_unit else ""
     return f"""
             WITH vendas AS (
                 SELECT
                     {sale_period} AS year_month,
-                    {net_sale} AS billed_value
+                    {sale_value} AS billed_value
+                    {sale_unit}
                   FROM SD2010 D2 WITH (NOLOCK)
                   {CommercialRolReturnSql.sale_customer_join(with_nolock=True)}
                   {CommercialRolReturnSql.sale_tes_join(with_nolock=True)}
@@ -302,7 +388,8 @@ def _build_net_series_sql(
             devolucoes AS (
                 SELECT
                     {ret_period} AS year_month,
-                    {net_ret} AS billed_value
+                    {ret_value} AS billed_value
+                    {ret_unit}
                   FROM SD1010 D1 WITH (NOLOCK)
                   {CommercialRolReturnSql.tes_join(d1_alias="D1", f4_alias="F4D", with_nolock=True)}
                   {ret_joins}
@@ -317,6 +404,7 @@ def _build_net_series_sql(
             SELECT
                 ISNULL(V.year_month, D.year_month) AS year_month,
                 ISNULL(V.billed_value, 0) - ISNULL(D.billed_value, 0) AS billed_value
+                {outer_unit_select}
               FROM vendas V
               FULL OUTER JOIN devolucoes D
                 ON D.year_month = V.year_month
@@ -487,16 +575,18 @@ def billing_series_params(
     start_date: str,
     end_date: str,
     nature: str,
+    metric: str = DEFAULT_BILLING_METRIC,
     recorte: BillingSeriesRecorte | None = None,
 ) -> tuple:
     nature = normalize_billing_nature(nature)
+    metric = normalize_billing_metric(metric)
     active = recorte if recorte and recorte.has_line_filters else BillingSeriesRecorte()
     _, _, sale_params = _recorte_sale_fragments(active)
     _, _, ret_params = _recorte_return_fragments(active)
-    if nature == "gross" and not active.has_line_filters:
-        return tuple(pair_params + [start_date, end_date])
     if nature == "gross":
-        # pairs + dates + product/group binds
+        # value+sem recorte = path F2_VALBRUT; quantity ou recorte = path linha
+        if metric == "value" and not active.has_line_filters:
+            return tuple(pair_params + [start_date, end_date])
         return tuple(pair_params + [start_date, end_date] + sale_params)
     # net: vendas pairs+start/end+exists start/end+sale filters; devolucoes pairs+start/end+ret filters
     return tuple(

@@ -80,6 +80,7 @@ export type UseCustomerBillingSeriesOptions = {
   /** Overlays −1a…−3a (0–3). Preferir sobre comparePriorYear. */
   compareYears?: CompareYearsCount;
   nature?: "gross" | "net";
+  metric?: "value" | "quantity";
   productCodes?: string[];
   productGroups?: string[];
   market?: "domestic" | "export";
@@ -102,6 +103,7 @@ export function useCustomerBillingSeries(
     options?.compareYears ?? (options?.comparePriorYear ? 1 : 0),
   );
   const nature = options?.nature;
+  const metric = options?.metric;
   const productCodesKey = (options?.productCodes ?? []).join("\0");
   const productGroupsKey = (options?.productGroups ?? []).join("\0");
   const market = options?.market;
@@ -164,6 +166,7 @@ export function useCustomerBillingSeries(
       endDate,
       granularity,
       nature,
+      metric,
       productCodes,
       productGroups,
       market,
@@ -183,6 +186,7 @@ export function useCustomerBillingSeries(
         endDate: range.end_date,
         granularity,
         nature,
+        metric,
         productCodes,
         productGroups,
         market,
@@ -229,6 +233,7 @@ export function useCustomerBillingSeries(
     granularity,
     compareYears,
     nature,
+    metric,
     productCodesKey,
     productGroupsKey,
     market,

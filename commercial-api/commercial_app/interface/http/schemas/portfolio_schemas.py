@@ -105,6 +105,11 @@ class BillingSeriesBody(BaseModel):
         pattern=r"^(gross|net)$",
         description="Natureza do faturamento: gross (NF) ou net (ROL). Default gross.",
     )
+    metric: str | None = Field(
+        default=None,
+        pattern=r"^(value|quantity)$",
+        description="Métrica da série: value (R$) ou quantity (qtd fornecida). Default value.",
+    )
     product_codes: list[str] | None = Field(
         default=None,
         description="Códigos de produto (D2_COD).",

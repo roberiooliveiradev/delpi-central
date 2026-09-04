@@ -8,6 +8,11 @@ import {
   normalizePortfolioBillingNature,
   type PortfolioBillingAmountNature,
 } from "../content/billingNature";
+import {
+  DEFAULT_PORTFOLIO_BILLING_METRIC,
+  normalizePortfolioBillingMetric,
+  type PortfolioBillingMetric,
+} from "../content/billingMetric";
 import type {
   CustomerListSortDirection,
   CustomerListSortKey,
@@ -43,6 +48,7 @@ export type CustomersListDeepLink = {
   page: number;
   panel: CustomerListPanel;
   billingNature: PortfolioBillingAmountNature;
+  billingMetric: PortfolioBillingMetric;
 };
 
 export type CustomersListDeepLinkInput = {
@@ -55,6 +61,7 @@ export type CustomersListDeepLinkInput = {
   page?: number | string | null;
   panel?: string | null;
   billingNature?: string | null;
+  billingMetric?: string | null;
 };
 
 export type CustomersListSellerAccess = {
@@ -157,6 +164,7 @@ export function sanitizeCustomersListDeepLink(
     page: normalizePage(value.page),
     panel: normalizePanel(value.panel),
     billingNature: normalizePortfolioBillingNature(value.billingNature),
+    billingMetric: normalizePortfolioBillingMetric(value.billingMetric),
   };
 }
 
@@ -176,6 +184,7 @@ export function parseCustomersListDeepLink(
       page: params.get("page"),
       panel: params.get("panel"),
       billingNature: params.get("billingNature"),
+      billingMetric: params.get("billingMetric"),
     },
     access,
   );
@@ -197,6 +206,9 @@ export function buildCustomersListSearch(
   if (sanitized.panel !== DEFAULT_CUSTOMERS_LIST_PANEL) params.set("panel", sanitized.panel);
   if (sanitized.billingNature !== DEFAULT_PORTFOLIO_BILLING_NATURE) {
     params.set("billingNature", sanitized.billingNature);
+  }
+  if (sanitized.billingMetric !== DEFAULT_PORTFOLIO_BILLING_METRIC) {
+    params.set("billingMetric", sanitized.billingMetric);
   }
   const query = params.toString();
   return query ? `?${query}` : "";

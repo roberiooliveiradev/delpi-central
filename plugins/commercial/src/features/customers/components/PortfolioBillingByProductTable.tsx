@@ -23,8 +23,9 @@ import {
   appendBillingNatureContext,
   type PortfolioBillingAmountNature,
 } from "../../../content/billingNature";
+import type { PortfolioBillingMetric } from "../../../content/billingMetric";
 import type { CommercialRolByProductItem } from "../../../types/analytics";
-import { formatCurrency } from "../../../utils/format";
+import { formatCurrency, formatQuantity } from "../../../utils/format";
 import {
   PORTFOLIO_BY_PRODUCT_COLUMN_HELP,
   withColumnHelp,
@@ -48,6 +49,7 @@ type PortfolioBillingByProductTableProps = {
   sellerId?: string | null;
   active?: boolean;
   billingNature?: PortfolioBillingAmountNature;
+  billingMetric?: PortfolioBillingMetric;
   onCatalogOptions?: (options: {
     products: Array<{ value: string; label: string }>;
     groups: Array<{ value: string; label: string }>;
@@ -68,6 +70,7 @@ export function PortfolioBillingByProductTable({
   sellerId = null,
   active = true,
   billingNature = "gross",
+  billingMetric = "value",
   onCatalogOptions,
 }: PortfolioBillingByProductTableProps) {
   const [groupBy, setGroupBy] = useState<"product" | "product_group">("product");
@@ -223,9 +226,13 @@ export function PortfolioBillingByProductTable({
         nature: billingNature,
         market: marketMode,
         groupBy,
+        metric: billingMetric,
       }),
-    [items, billingNature, marketMode, groupBy],
+    [items, billingNature, billingMetric, marketMode, groupBy],
   );
+
+  const formatAmount = (value: number) =>
+    billingMetric === "quantity" ? formatQuantity(value) : formatCurrency(value);
 
   const columns = useMemo((): DataTableColumn<PortfolioBillingByProductRow>[] => {
     const base: DataTableColumn<PortfolioBillingByProductRow>[] = [
@@ -242,7 +249,7 @@ export function PortfolioBillingByProductTable({
         {
           key: "domestic",
           header: CUSTOMER_BILLING_CONTENT.colDomestic,
-          render: (row) => formatCurrency(row.domestic),
+          render: (row) => formatAmount(row.domestic),
           sortValue: (row) => row.domestic,
           sortable: true,
           align: "right",
@@ -250,7 +257,7 @@ export function PortfolioBillingByProductTable({
         {
           key: "export",
           header: CUSTOMER_BILLING_CONTENT.colExport,
-          render: (row) => formatCurrency(row.export),
+          render: (row) => formatAmount(row.export),
           sortValue: (row) => row.export,
           sortable: true,
           align: "right",
@@ -258,7 +265,7 @@ export function PortfolioBillingByProductTable({
         {
           key: "total",
           header: CUSTOMER_BILLING_CONTENT.colTotal,
-          render: (row) => formatCurrency(row.total),
+          render: (row) => formatAmount(row.total),
           sortValue: (row) => row.total,
           sortable: true,
           align: "right",
@@ -268,22 +275,32 @@ export function PortfolioBillingByProductTable({
       base.push({
         key: "total",
         header: CUSTOMER_BILLING_CONTENT.colValue,
-        render: (row) => formatCurrency(row.total),
+        render: (row) => formatAmount(row.total),
         sortValue: (row) => row.total,
         sortable: true,
         align: "right",
       });
     }
-    base.push({
-      key: "share",
-      header: CUSTOMER_BILLING_CONTENT.colShare,
-      render: (row) => formatSharePct(row.sharePct),
-      sortValue: (row) => row.sharePct ?? -1,
-      sortable: true,
-      align: "right",
-    });
+    if (billingMetric === "quantity") {
+      base.push({
+        key: "unit",
+        header: "UM",
+        render: (row) => (row.mixedUnits ? "mistas" : row.unit?.trim() || "—"),
+        sortValue: (row) => row.unit || "",
+        sortable: true,
+      });
+    } else {
+      base.push({
+        key: "share",
+        header: CUSTOMER_BILLING_CONTENT.colShare,
+        render: (row) => formatSharePct(row.sharePct),
+        sortValue: (row) => row.sharePct ?? -1,
+        sortable: true,
+        align: "right",
+      });
+    }
     return base;
-  }, [marketMode]);
+  }, [billingMetric, marketMode]);
 
   const visibleColumns = useMemo(() => {
     return filterColumns(withColumnHelp(columns, PORTFOLIO_BY_PRODUCT_COLUMN_HELP)).filter(
@@ -297,14 +314,14 @@ export function PortfolioBillingByProductTable({
   }, [columns, filterColumns, marketMode]);
 
   const periodLabel = billingSeriesPresetLabel(filters.preset);
-  const title = appendBillingNatureContext(
-    `${
-      groupBy === "product_group"
-        ? CUSTOMER_BILLING_CONTENT.byProductGroupTitle
-        : CUSTOMER_BILLING_CONTENT.byProductTitle
-    } — ${periodLabel}`,
-    billingNature,
-  );
+  const mixTitleBase =
+    groupBy === "product_group"
+      ? CUSTOMER_BILLING_CONTENT.byProductGroupTitle
+      : CUSTOMER_BILLING_CONTENT.byProductTitle;
+  const title =
+    billingMetric === "quantity"
+      ? `${mixTitleBase} (qtd) — ${periodLabel}`
+      : appendBillingNatureContext(`${mixTitleBase} — ${periodLabel}`, billingNature);
   const hasFilters =
     filters.selectedProductCodes.length > 0 ||
     filters.selectedProductGroups.length > 0 ||
@@ -373,9 +390,9 @@ export function PortfolioBillingByProductTable({
                     columns: exportColumns,
                     rows: rows.map((row) => ({
                       label: row.label,
-                      domestic: formatCurrency(row.domestic),
-                      export: formatCurrency(row.export),
-                      total: formatCurrency(row.total),
+                      domestic: formatAmount(row.domestic),
+                      export: formatAmount(row.export),
+                      total: formatAmount(row.total),
                       sharePct: formatSharePct(row.sharePct),
                     })),
                   },

@@ -32,6 +32,8 @@ class CustomerBillingMonthRow:
 
     year_month: str
     billed_value: float
+    unit: str | None = None
+    mixed_units: bool = False
 
 
 class CustomerEnrichmentRepositoryPort(ABC):
@@ -64,6 +66,7 @@ class CustomerEnrichmentRepositoryPort(ABC):
         end_date: str,
         granularity: str = "month",
         nature: str = "gross",
+        metric: str = "value",
         product_codes: Sequence[str] | None = None,
         product_groups: Sequence[str] | None = None,
         market: str | None = None,

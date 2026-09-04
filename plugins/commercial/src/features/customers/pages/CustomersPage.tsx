@@ -30,6 +30,10 @@ import {
   isPortfolioBillingNatureToggleAvailable,
   type PortfolioBillingAmountNature,
 } from "../../../content/billingNature";
+import {
+  BILLING_METRIC_CONTENT,
+  type PortfolioBillingMetric,
+} from "../../../content/billingMetric";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
 import { PortfolioBillingFiltersBar } from "../components/PortfolioBillingFiltersBar";
 import { PortfolioBillingByProductTable } from "../components/PortfolioBillingByProductTable";
@@ -113,6 +117,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     setPage,
     setPanel,
     setBillingNature,
+    setBillingMetric,
     resetFilters,
     listSearch,
   } = useCustomersListState({
@@ -132,6 +137,7 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     page: requestedPage,
     panel,
     billingNature,
+    billingMetric,
   } = listState;
 
   const sellerNameByKey = useMemo(() => {
@@ -518,6 +524,35 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
               />
             </div>
           ) : null}
+          {panel === "billing" ? (
+            <div className="cm-customers-page__billing-nature">
+              <CommercialSectionHintLabel
+                label="Métrica"
+                hint={CM_HELP.customers.billingMetric}
+              />
+              <CommercialSegmentToggle
+                ariaLabel={CM_HELP.customers.billingMetric}
+                idPrefix="customers-billing-metric"
+                value={billingMetric}
+                widthMode="content"
+                onChange={(value) => {
+                  if (value === "value" || value === "quantity") {
+                    setBillingMetric(value as PortfolioBillingMetric);
+                  }
+                }}
+                options={[
+                  {
+                    value: "value",
+                    label: BILLING_METRIC_CONTENT.value.shortLabel,
+                  },
+                  {
+                    value: "quantity",
+                    label: BILLING_METRIC_CONTENT.quantity.shortLabel,
+                  },
+                ]}
+              />
+            </div>
+          ) : null}
         </div>
 
         {panel === "customers" ? (
@@ -722,12 +757,14 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
                   filters={billingFilters}
                   active={panel === "billing"}
                   billingNature={billingNature}
+                  billingMetric={billingMetric}
                 />
                 <PortfolioBillingByProductTable
                   filters={billingFilters}
                   sellerId={canFilterPortfolios ? sellerIdFilter : null}
                   active={panel === "billing"}
                   billingNature={billingNature}
+                  billingMetric={billingMetric}
                   onCatalogOptions={handleBillingCatalogOptions}
                 />
               </div>

@@ -252,6 +252,10 @@ def list_commercial_customer_billing_series(
                     "nature": body.nature or "gross",
                     "billingNature": body.nature or "gross",
                     "supportedNatures": ["gross", "net"],
+                    "metric": body.metric or "value",
+                    "supportedMetrics": ["value", "quantity"],
+                    "unit": None,
+                    "mixed_units": False,
                 },
                 message="Faturamento mensal carregado.",
                 operation_id="list_commercial_customer_billing_series",
@@ -270,6 +274,8 @@ def list_commercial_customer_billing_series(
             payload["granularity"] = body.granularity
         if body.nature:
             payload["nature"] = body.nature
+        if body.metric:
+            payload["metric"] = body.metric
         if body.product_codes:
             payload["product_codes"] = body.product_codes
         if body.product_groups:
