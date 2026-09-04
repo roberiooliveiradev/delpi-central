@@ -316,6 +316,8 @@ export const CM_HELP = {
       "Agrupamento da série. Dia e semana ficam indisponíveis quando o período é longo demais para aquele recorte.",
     billingSeriesYoy:
       "Compara o mesmo período filtrado deslocado −1…−3 anos em colunas agrupadas. Alinhamento por bucket em qualquer granularidade permitida.",
+    billingTrendIncomplete:
+      "Por padrão a tendência exclui o bucket incompleto (ex.: mês corrente). Ative «Ponderar período parcial» para incluir o valor escalado pelo % do período já decorrido.",
     billingFilterCustomer:
       "Restringe o gráfico, o mix e o ABC aos clientes selecionados. Vazio = toda a carteira do escopo. Compartilhado entre os painéis Faturamento e ABC.",
     billingFilterProductGroup:

@@ -16,6 +16,8 @@ export type PersistedChartPreferences = {
   /** YoY depth for billing series (0–3). */
   compareYears?: number;
   showTrend?: boolean;
+  /** Incomplete bucket handling for OLS trend. Default exclude when unset. */
+  incompleteBucketMode?: "exclude" | "weightByFraction";
 };
 
 export type UsePersistedChartPreferencesOptions = {
@@ -73,6 +75,13 @@ function mergePreferences(
   if (merged.compareYears != null) {
     const n = Number(merged.compareYears);
     merged.compareYears = Number.isFinite(n) ? Math.max(0, Math.min(3, Math.trunc(n))) : defaults.compareYears;
+  }
+  if (
+    merged.incompleteBucketMode != null &&
+    merged.incompleteBucketMode !== "exclude" &&
+    merged.incompleteBucketMode !== "weightByFraction"
+  ) {
+    merged.incompleteBucketMode = defaults.incompleteBucketMode ?? "exclude";
   }
   return merged;
 }

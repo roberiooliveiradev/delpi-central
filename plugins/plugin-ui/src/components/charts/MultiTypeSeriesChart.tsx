@@ -18,7 +18,10 @@ import {
 } from "recharts";
 
 import type { PersistedChartType } from "../../hooks/usePersistedChartPreferences";
-import { withLinearTrendField } from "../../utils/linearTrendSeries";
+import {
+  withLinearTrendField,
+  type IncompleteBucketMode,
+} from "../../utils/linearTrendSeries";
 import { StableResponsiveContainer } from "./StableResponsiveContainer";
 
 export type MultiTypeSeriesSpec = {
@@ -36,6 +39,13 @@ export type MultiTypeSeriesChartProps = {
   chartType: PersistedChartType;
   height?: number;
   showTrend?: boolean;
+  /**
+   * Incomplete (partial) buckets — default exclude from OLS fit.
+   * Rows may carry fraction via `bucketFractionKey` (0..1).
+   */
+  incompleteBucketMode?: IncompleteBucketMode;
+  /** Field on each row with bucket completeness 0..1. */
+  bucketFractionKey?: string;
   trendSeriesName?: string;
   formatY?: (value: number) => string;
   formatTooltipValue?: (value: number) => string;
@@ -107,6 +117,8 @@ export function MultiTypeSeriesChart({
   chartType,
   height = 280,
   showTrend = false,
+  incompleteBucketMode = "exclude",
+  bucketFractionKey = "_bucketFraction",
   trendSeriesName = "Tendência",
   formatY = defaultFormatY,
   formatTooltipValue,
@@ -137,10 +149,20 @@ export function MultiTypeSeriesChart({
       chartType === "column" || chartType === "line" || chartType === "area";
     if (!showTrend || !trendAllowed || trendSources.length === 0) return rows;
     for (const source of trendSources) {
-      rows = withLinearTrendField(rows, source.dataKey, `_trend_${source.dataKey}`);
+      rows = withLinearTrendField(rows, source.dataKey, `_trend_${source.dataKey}`, {
+        incompleteBucketMode,
+        fractionKey: bucketFractionKey,
+      });
     }
     return rows;
-  }, [chartType, data, showTrend, trendSources]);
+  }, [
+    bucketFractionKey,
+    chartType,
+    data,
+    incompleteBucketMode,
+    showTrend,
+    trendSources,
+  ]);
 
   const tooltipValue = formatTooltipValue ?? formatY;
 

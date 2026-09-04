@@ -25,6 +25,7 @@ import { ANALYTICS_CONTENT } from "../../../../content/analyticsContent";
 import { CUSTOMER_BILLING_CONTENT } from "../../../../content/customerBillingContent";
 import { CM_HELP } from "../../../../content/helpTooltips";
 import { formatCurrency } from "../../../../utils/format";
+import { resolveCalendarBucketFraction } from "../../../../utils/linearTrendSeries";
 import { buildBillingSeriesExportPayload } from "../../utils/billingSeriesExportBuilders";
 import { useCustomerBillingSeries } from "../../hooks/useCustomerBillingSeries";
 import type { CustomerSummary } from "../../types/customerSummary";
@@ -98,10 +99,18 @@ export function CustomerAccountBillingChart({
 }: CustomerAccountBillingChartProps) {
   const { preferences, setPreferences, setChartType } = usePersistedChartPreferences({
     storageKey: "commercial:account:billing-series",
-    defaults: { chartType: "column", showTrend: false },
+    defaults: {
+      chartType: "column",
+      showTrend: false,
+      incompleteBucketMode: "exclude",
+    },
     allowedChartTypes: TIME_MULTI_SERIES_TYPES,
   });
   const showTrend = Boolean(preferences.showTrend);
+  const incompleteBucketMode =
+    preferences.incompleteBucketMode === "weightByFraction"
+      ? "weightByFraction"
+      : "exclude";
   const chartType = preferences.chartType ?? "column";
 
   const overlayOptions = useMemo((): ChartOverlayOption[] => {
@@ -114,8 +123,20 @@ export function CustomerAccountBillingChart({
         hint: CM_HELP.customerDetail.billingSeriesTrend,
         hintAriaLabel: "Ajuda: linha de tendência",
       },
+      {
+        id: "trend-weight",
+        label: "Ponderar período parcial",
+        checked: incompleteBucketMode === "weightByFraction",
+        onChange: (checked) =>
+          setPreferences({
+            incompleteBucketMode: checked ? "weightByFraction" : "exclude",
+          }),
+        hint: CM_HELP.customers.billingTrendIncomplete,
+        hintAriaLabel: "Ajuda: tendência em período parcial",
+        disabled: !showTrend,
+      },
     ];
-  }, [setPreferences, showTrend]);
+  }, [incompleteBucketMode, setPreferences, showTrend]);
 
   const customers = useMemo(
     () => [accountAsSeriesCustomer(codigo, loja)],
@@ -148,6 +169,10 @@ export function CustomerAccountBillingChart({
         faturamento: Number(point.value) || 0,
         faturamento_prior:
           point.value_prior == null ? null : Number(point.value_prior) || 0,
+        _bucketFraction: resolveCalendarBucketFraction(
+          point.date_start,
+          point.date_end,
+        ),
       })),
     [points],
   );
@@ -284,6 +309,7 @@ export function CustomerAccountBillingChart({
                 chartType={chartType}
                 height={CHART_HEIGHT}
                 showTrend={showTrend}
+                incompleteBucketMode={incompleteBucketMode}
                 showLegend={comparePriorYear || showTrend}
                 trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
                 formatY={formatChartCurrency}

@@ -38,6 +38,7 @@ import {
   type CompareYearsCount,
 } from "../../analytics/components/PeriodCompareControls";
 import { formatCurrency, formatQuantity } from "../../../utils/format";
+import { resolveCalendarBucketFraction } from "../../../utils/linearTrendSeries";
 import { buildBillingSeriesExportPayload } from "../utils/billingSeriesExportBuilders";
 import { useCustomerBillingSeries } from "../hooks/useCustomerBillingSeries";
 import type { CustomerSummary } from "../types/customerSummary";
@@ -112,11 +113,20 @@ export function CustomerBillingSeriesChart({
 }: CustomerBillingSeriesChartProps) {
   const { preferences, setPreferences, setChartType } = usePersistedChartPreferences({
     storageKey: "commercial:customers:billing-series",
-    defaults: { chartType: "column", compareYears: 0, showTrend: false },
+    defaults: {
+      chartType: "column",
+      compareYears: 0,
+      showTrend: false,
+      incompleteBucketMode: "exclude",
+    },
     allowedChartTypes: TIME_MULTI_SERIES_TYPES,
   });
   const compareYears = (preferences.compareYears ?? 0) as CompareYearsCount;
   const showTrend = Boolean(preferences.showTrend);
+  const incompleteBucketMode =
+    preferences.incompleteBucketMode === "weightByFraction"
+      ? "weightByFraction"
+      : "exclude";
   const chartType = preferences.chartType ?? "column";
 
   const overlayOptions = useMemo((): ChartOverlayOption[] => {
@@ -146,8 +156,21 @@ export function CustomerBillingSeriesChart({
         hint: CM_HELP.customerDetail.billingSeriesTrend,
         hintAriaLabel: "Ajuda: linha de tendência",
       },
+      {
+        id: "trend-weight",
+        label: "Ponderar período parcial",
+        summaryLabel: "Tendência ponderada",
+        hint: CM_HELP.customers.billingTrendIncomplete,
+        hintAriaLabel: "Ajuda: tendência em período parcial",
+        checked: incompleteBucketMode === "weightByFraction",
+        onChange: (checked) =>
+          setPreferences({
+            incompleteBucketMode: checked ? "weightByFraction" : "exclude",
+          }),
+        disabled: !showTrend,
+      },
     ];
-  }, [compareYears, setPreferences, showTrend]);
+  }, [compareYears, incompleteBucketMode, setPreferences, showTrend]);
 
   const queryEnabled = active && !filters.periodError;
   const allowedGrains = allowedBillingSeriesGranularities(
@@ -197,6 +220,10 @@ export function CustomerBillingSeriesChart({
           point.value_prior_2 == null ? null : Number(point.value_prior_2) || 0,
         faturamento_prior_3:
           point.value_prior_3 == null ? null : Number(point.value_prior_3) || 0,
+        _bucketFraction: resolveCalendarBucketFraction(
+          point.date_start,
+          point.date_end,
+        ),
       })),
     [points],
   );
@@ -366,6 +393,7 @@ export function CustomerBillingSeriesChart({
               chartType={chartType}
               height={CHART_HEIGHT}
               showTrend={showTrend}
+              incompleteBucketMode={incompleteBucketMode}
               showLegend={yoyActive || showTrend}
               trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
               formatY={formatValue}
