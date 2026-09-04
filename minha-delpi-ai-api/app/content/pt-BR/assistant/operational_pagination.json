@@ -1,0 +1,20 @@
+{
+  "tiers": {
+    "standard": 50,
+    "hierarchical": 500,
+    "drawingAnalyser": 50
+  },
+  "pathTierMarkers": {
+    "hierarchical": ["/structure", "/parents"]
+  },
+  "productSearch": {
+    "default": 5,
+    "messageCap": 20
+  },
+  "exclusiveCatalogLimit": 10,
+  "suppliesStockTopLimit": 10,
+  "refinementContextFallback": 25,
+  "autoRecoveryPageSizeCap": 100,
+  "requestedPageSizeCap": 500,
+  "agenticExamplePageSize": 50
+}
