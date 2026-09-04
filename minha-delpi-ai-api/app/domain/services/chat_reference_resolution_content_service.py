@@ -25,6 +25,27 @@ class ChatReferenceResolutionContentService:
         return re.compile(source, re.IGNORECASE)
 
     @classmethod
+    def coreference_text(cls, key: str, *, default: str = "") -> str:
+        return ChatAssistantContentService.get(
+            cls.BUNDLE,
+            "coreference",
+            key,
+            default=default,
+        )
+
+    @classmethod
+    def coreference_confidence(cls, key: str, *, default: float = 0.7) -> float:
+        node = ChatAssistantContentService.get_node(cls.BUNDLE, "coreference")
+
+        if not isinstance(node, dict):
+            return default
+
+        try:
+            return float(node.get(key, default))
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
     def ambiguity_text(cls, key: str, *, default: str = "") -> str:
         return ChatAssistantContentService.get(
             cls.BUNDLE,

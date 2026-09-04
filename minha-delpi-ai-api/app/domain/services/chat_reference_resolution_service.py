@@ -69,11 +69,14 @@ class ChatReferenceResolutionService:
         operational_follow_up = ChatFollowUpIntentService.is_operational_follow_up(message)
 
         if product_code and not explicit_code and (
-            operational_follow_up or cls._pattern("productRef").search(normalized)
+            operational_follow_up
+            or cls._pattern("productRef").search(normalized)
+            or cls._pattern("pronounCoref").search(normalized)
+            or cls._pattern("previousRef").search(normalized)
         ):
             resolved.append(
                 cls._entry(
-                    text="esse produto" if cls._pattern("productRef").search(normalized) else "follow-up operacional",
+                    text="esse produto" if cls._pattern("productRef").search(normalized) else "referência conversacional",
                     resolved_to="productCode",
                     value=product_code,
                     source="operationalFocus.productCode",
@@ -294,8 +297,92 @@ class ChatReferenceResolutionService:
             resolved=resolved,
             used_keys=used_keys,
         )
+        cls._append_coreference_references(
+            normalized,
+            snapshot,
+            explicit_code=explicit_code,
+            resolved=resolved,
+            used_keys=used_keys,
+        )
 
         return resolved, used_keys
+
+    @classmethod
+    def _append_coreference_references(
+        cls,
+        message: str,
+        snapshot: dict,
+        *,
+        explicit_code: str | None,
+        resolved: list[dict[str, Any]],
+        used_keys: list[str],
+    ) -> None:
+        """Correferência pronominal («ele», «nesse», «item anterior») ancorada no turno."""
+        if explicit_code:
+            return
+
+        from app.domain.services.chat_result_set_reference_service import (
+            ChatResultSetReferenceService,
+        )
+
+        already = {str(item.get("resolvedTo") or "") for item in resolved}
+        result_set = ChatResultSetReferenceService.primary_set(snapshot)
+        items = [
+            item
+            for item in ((result_set or {}).get("items") or [])
+            if isinstance(item, dict) and str(item.get("code") or "").strip()
+        ]
+
+        def add(entry: dict[str, Any], key: str) -> None:
+            resolved.append(entry)
+
+            if key not in used_keys:
+                used_keys.append(key)
+
+        pronoun = cls._pattern("pronounCoref").search(message)
+        list_scope = cls._pattern("resultSetScopeCoref").search(message)
+
+        if (pronoun or list_scope) and len(items) == 1 and "resultSetItem" not in already:
+            item = items[0]
+            add(
+                cls._entry(
+                    text=ChatReferenceResolutionContentService.coreference_text(
+                        "singleItemText",
+                        default="único item da lista anterior",
+                    ),
+                    resolved_to="resultSetItem",
+                    value=str(item.get("code") or "").strip(),
+                    source="resultSets.items[1]",
+                    confidence=ChatReferenceResolutionContentService.coreference_confidence(
+                        "singleItemConfidence",
+                        default=0.8,
+                    ),
+                ),
+                "resultSets",
+            )
+            return
+
+        if (
+            cls._pattern("previousItemCoref").search(message)
+            and len(items) >= 2
+            and "resultSetItem" not in already
+        ):
+            add(
+                cls._entry(
+                    text=ChatReferenceResolutionContentService.coreference_text(
+                        "previousItemText",
+                        default="item anterior da lista",
+                    ),
+                    resolved_to="resultSetItem",
+                    value=str(items[-2].get("code") or "").strip(),
+                    source="resultSets.items[-2]",
+                    confidence=ChatReferenceResolutionContentService.coreference_confidence(
+                        "previousItemConfidence",
+                        default=0.7,
+                    ),
+                ),
+                "resultSets",
+            )
 
     @classmethod
     def _append_result_set_references(

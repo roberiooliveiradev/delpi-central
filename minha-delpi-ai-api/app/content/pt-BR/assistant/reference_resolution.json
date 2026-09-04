@@ -8,13 +8,23 @@
     "thisRef": "\\b(?:isso|essa\\s+resposta)\\b",
     "thatRef": "\\b(?:esse|essa|aquele|aquela)\\b",
     "previousRef": "\\b(?:o\\s+)?anterior\\b|\\bresposta\\s+anterior\\b|\\búltima\\s+resposta\\b",
+    "pronounCoref": "\\b(?:ele|ela|dele|dela|desse|dessa|deste|desta)\\b",
+    "ordinalCoref": "\\b(?:o|a)\\s+(?:primeir[oa]|segund[oa]|terceir[oa]|quart[oa]|quint[oa]|últim[oa]|ultim[oa])\\b",
     "canvasRef": "\\b(?:a\\s+)?lousa\\b|\\bno\\s+canvas\\b",
     "attachmentRef": "\\b(?:esse|este|o)\\s+arquivo\\b|\\b(?:o\\s+)?anexo\\b|\\bdo\\s+anexo\\b",
     "sqlEdit": "\\b(?:adicione|inclua|acrescente)\\s+(?:uma\\s+)?coluna\\b|\\b(?:essa|esta)\\s+consulta\\b|\\bquery\\s+anterior\\b|\\b(?:na|à)\\s+consulta\\b",
     "codeRef": "\\b(?:esse|este)\\s+c[oó]digo\\b",
     "lastQuery": "\\búltima\\s+consulta\\b",
     "comparePrevious": "\\bcompare?\\s+com\\s+o\\s+anterior\\b",
-    "sameBranch": "\\bmesma\\s+filial\\b"
+    "sameBranch": "\\bmesma\\s+filial\\b",
+    "resultSetScopeCoref": "\\b(?:dessa|desta|nessa|nesta|da|na)\\s+(?:lista|listagem|rela[cç][aã]o)\\b|\\b(?:dos|nos)\\s+resultados\\b|\\b(?:os|esses|estes)\\s+itens\\s+(?:acima|listados)\\b",
+    "previousItemCoref": "\\b(?:o\\s+)?item\\s+anterior\\b|\\b(?:o\\s+)?c[oó]digo\\s+anterior\\b"
+  },
+  "coreference": {
+    "singleItemConfidence": 0.8,
+    "previousItemConfidence": 0.7,
+    "singleItemText": "único item da lista anterior",
+    "previousItemText": "item anterior da lista"
   },
   "ambiguity": {
     "thisReferencePromptHint": "Quando você diz «isso» ou «esse», você quer a última resposta, a tabela/gráfico, a lousa ou o arquivo anexado?",
