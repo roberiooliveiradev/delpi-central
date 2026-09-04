@@ -1,0 +1,144 @@
+{
+  "generatedAt": "2026-09-04T17:19:41.943088+00:00",
+  "phase": "E8.S1",
+  "caseCount": 6,
+  "rows": [
+    {
+      "caseId": "search.liste-top-terminais-pino",
+      "message": "liste os top 50 terminais pino",
+      "pipeline": {
+        "decision": "operational_action",
+        "subIntent": "product_search",
+        "looksLikeProductSearch": true
+      },
+      "shadow": {
+        "subtaskCount": 1,
+        "taskCount": 1,
+        "topCapabilities": [
+          "action.product_search"
+        ],
+        "clarification": {
+          "action": "continue",
+          "reasonCode": "skipped_discoverable_search",
+          "candidateCode": "product_search",
+          "hasAnswer": false
+        }
+      }
+    },
+    {
+      "caseId": "search.pela-descricao-typo",
+      "message": "use api para pesquisar pela descrição top 50 termnais com pino na descrição",
+      "pipeline": {
+        "decision": "operational_action",
+        "subIntent": "product_search",
+        "looksLikeProductSearch": true
+      },
+      "shadow": {
+        "subtaskCount": 1,
+        "taskCount": 1,
+        "topCapabilities": [],
+        "clarification": {
+          "action": "continue",
+          "reasonCode": "skipped_discoverable_search",
+          "candidateCode": "product_search",
+          "hasAnswer": false
+        }
+      }
+    },
+    {
+      "caseId": "search.busque-produtos-grupo",
+      "message": "busque produtos do grupo 1008",
+      "pipeline": {
+        "decision": "operational_action",
+        "subIntent": "product_search",
+        "looksLikeProductSearch": true
+      },
+      "shadow": {
+        "subtaskCount": 1,
+        "taskCount": 1,
+        "topCapabilities": [
+          "action.product_search",
+          "action.product_stock",
+          "action.product_description"
+        ],
+        "clarification": {
+          "action": "continue",
+          "reasonCode": "skipped_discoverable_search",
+          "candidateCode": "product_search",
+          "hasAnswer": false
+        }
+      }
+    },
+    {
+      "caseId": "description.with-code",
+      "message": "qual a descrição do produto 10080047",
+      "pipeline": {
+        "decision": "operational_action",
+        "subIntent": "product_lookup",
+        "looksLikeProductSearch": false
+      },
+      "shadow": {
+        "subtaskCount": 1,
+        "taskCount": 1,
+        "topCapabilities": [
+          "action.product_search",
+          "action.product_stock",
+          "action.product_description"
+        ],
+        "clarification": {
+          "action": "continue",
+          "reasonCode": "continue_no_ambiguity",
+          "candidateCode": null,
+          "hasAnswer": false
+        }
+      }
+    },
+    {
+      "caseId": "stock.missing-code-should-clarify",
+      "message": "qual o estoque do produto",
+      "pipeline": {
+        "decision": "operational_action",
+        "subIntent": "stock_lookup",
+        "looksLikeProductSearch": false
+      },
+      "shadow": {
+        "subtaskCount": 1,
+        "taskCount": 1,
+        "topCapabilities": [
+          "action.product_stock",
+          "action.product_search",
+          "action.product_description"
+        ],
+        "clarification": {
+          "action": "continue",
+          "reasonCode": "continue_no_ambiguity",
+          "candidateCode": null,
+          "hasAnswer": false
+        }
+      }
+    },
+    {
+      "caseId": "normas.follow-up-phrase",
+      "message": "a descrição esta dentro das normas?",
+      "pipeline": {
+        "decision": "direct_answer",
+        "subIntent": "technical_description_compliance_unavailable",
+        "looksLikeProductSearch": false
+      },
+      "shadow": {
+        "subtaskCount": 1,
+        "taskCount": 1,
+        "topCapabilities": [
+          "rag.company_knowledge",
+          "skill.technical_description_compliance"
+        ],
+        "clarification": {
+          "action": "continue",
+          "reasonCode": "continue_no_ambiguity",
+          "candidateCode": null,
+          "hasAnswer": false
+        }
+      }
+    }
+  ]
+}

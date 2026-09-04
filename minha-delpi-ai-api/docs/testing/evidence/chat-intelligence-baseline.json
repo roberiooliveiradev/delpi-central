@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T16:55:32.805416+00:00",
+  "generatedAt": "2026-09-04T17:19:33.334035+00:00",
   "harness": "chat_intelligence_baseline_harness",
   "fixture": "tests/fixtures/intelligence_baseline/routing_cases.json",
   "summary": {
