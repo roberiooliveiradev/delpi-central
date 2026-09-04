@@ -5,6 +5,28 @@ alwaysApply: true
 
 # Diretrizes do repositório — índice
 
+## Protocolo cognitivo obrigatório (antes de qualquer outra regra)
+
+| Regra | Quando consultar |
+|-------|------------------|
+| `evidence-driven-execution.mdc` | **Sempre** — decompor o pedido completo, separar fato de inferência, investigar antes de editar, validar causa/objetivo com evidência e revisar contra o pedido original antes de concluir |
+
+Fluxo mental obrigatório:
+
+```text
+Pedido completo
+→ decomposição
+→ evidências
+→ arquitetura atual
+→ causa/objetivo
+→ consumidores e impacto
+→ decisão
+→ regra técnica aplicável
+→ implementação
+→ contraexemplos
+→ validação do objetivo original
+```
+
 ## Princípios transversais (sempre)
 
 | Regra | Quando consultar |
@@ -47,7 +69,10 @@ Ver regras `chat-intelligence-base`, `llm-stack-centralized`, `schema-first-pres
 
 ## Ordem de prioridade em conflito
 
-1. Módulo canônico + contrato (API manda metadata; MFE render-only quando couber)
-2. Perfis/JSON declarativos e portais do kit antes de `if`/CSS paliativo
-3. Ajuda in-app do módulo dono sincronizada (`feature-help-sync.mdc`) — sem “deixar pra depois”
-4. Teste de regressão no pacote alterado
+1. `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md` + `evidence-driven-execution.mdc` para entendimento, evidência e decisão
+2. Módulo canônico + contrato (API manda metadata; MFE render-only quando couber)
+3. Perfis/JSON declarativos e portais do kit antes de `if`/CSS paliativo
+4. Ajuda in-app do módulo dono sincronizada (`feature-help-sync.mdc`) — sem “deixar pra depois”
+5. Teste de regressão no pacote alterado
+
+Conflitos entre fontes relevantes devem ser registrados como **drift**; não reconciliar contradições silenciosamente.
