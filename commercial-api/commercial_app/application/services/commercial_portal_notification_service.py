@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from typing import Any, Sequence
 
 import httpx
@@ -18,6 +19,17 @@ _SOURCE_APP = "commercial"
 _CATEGORY = "commercial"
 
 EVENT_READY_TO_INVOICE = "commercial.order.ready_to_invoice"
+
+
+@dataclass(frozen=True, slots=True)
+class PortalNotifyResult:
+    """Outcome of a core-api portal notification POST."""
+
+    ok: bool
+    rate_limited: bool = False
+
+    def __bool__(self) -> bool:
+        return self.ok
 
 
 class CommercialPortalNotificationService:
@@ -58,12 +70,12 @@ class CommercialPortalNotificationService:
         event_type: str,
         category: str | None = None,
         metadata: dict[str, Any] | None = None,
-    ) -> bool:
+    ) -> PortalNotifyResult:
         if not self.enabled:
-            return False
+            return PortalNotifyResult(ok=False)
         if not self.service_token:
             logger.warning("commercial_notification_skipped_no_token")
-            return False
+            return PortalNotifyResult(ok=False)
 
         recipients = [
             str(uid).strip() for uid in (user_ids or ()) if str(uid).strip()
@@ -74,7 +86,7 @@ class CommercialPortalNotificationService:
             if str(code).strip()
         ]
         if not recipients and not codes:
-            return False
+            return PortalNotifyResult(ok=False)
 
         payload: dict[str, Any] = {
             "title": title,
@@ -109,17 +121,23 @@ class CommercialPortalNotificationService:
                 json=payload,
                 timeout=self.timeout,
             )
+            if response.status_code == 429:
+                logger.warning(
+                    "commercial_notification_rate_limited body=%s",
+                    response.text[:300],
+                )
+                return PortalNotifyResult(ok=False, rate_limited=True)
             if response.status_code >= 400:
                 logger.warning(
                     "commercial_notification_rejected status=%s body=%s",
                     response.status_code,
                     response.text[:300],
                 )
-                return False
-            return True
+                return PortalNotifyResult(ok=False)
+            return PortalNotifyResult(ok=True)
         except Exception:
             logger.exception("commercial_notification_failed dedupe=%s", dedupe_key)
-            return False
+            return PortalNotifyResult(ok=False)
 
     def notify_ready_to_invoice(
         self,
@@ -132,7 +150,7 @@ class CommercialPortalNotificationService:
         cliente: str,
         action_target: str | None = None,
         filial: str = "",
-    ) -> bool:
+    ) -> PortalNotifyResult:
         content = ReadyToInvoiceNotificationContentService
         block = content.notification_block()
         title = str(block.get("title") or "Pedido pronto para faturar").strip()
@@ -177,14 +195,14 @@ class CommercialPortalNotificationService:
         action_target: str | None = None,
         dedupe_key: str | None = None,
         bucket: str | None = None,
-    ) -> bool:
+    ) -> PortalNotifyResult:
         from commercial_app.domain.services.task_portal_notification_content_service import (
             TASK_PORTAL_EVENT_TYPES,
             TaskPortalNotificationContentService as Content,
         )
 
         if event_type not in TASK_PORTAL_EVENT_TYPES:
-            return False
+            return PortalNotifyResult(ok=False)
         action_label = Content.action_label()
         notification_type = Content.notification_type_for(event_type)
         message = Content.format_message(
@@ -222,7 +240,7 @@ class CommercialPortalNotificationService:
         excerpt: str,
         action_target: str | None = None,
         dedupe_key: str | None = None,
-    ) -> bool:
+    ) -> PortalNotifyResult:
         from commercial_app.domain.services.interaction_room_content_service import (
             InteractionRoomContentService as Content,
         )

@@ -26,6 +26,8 @@ class _OutboxMemory:
         self.rows: list[IntegrationOutboxRow] = []
         self.published: list[str] = []
         self.failed: list[tuple[str, str]] = []
+        self.fail_delays: list[tuple[str, int | None]] = []
+        self.deferred: list[tuple[str, int]] = []
 
     def enqueue(self, *, event_type, aggregate_type, aggregate_id, payload):
         row = IntegrationOutboxRow(
@@ -44,13 +46,40 @@ class _OutboxMemory:
         return row
 
     def list_pending(self, *, limit: int = 50):
-        return [row for row in self.rows if row.id not in self.published][:limit]
+        deferred_ids = {item[0] for item in self.deferred}
+        return [
+            row
+            for row in self.rows
+            if row.id not in self.published and row.id not in deferred_ids
+        ][:limit]
 
     def mark_published(self, outbox_id: str) -> None:
         self.published.append(outbox_id)
 
-    def mark_failed(self, outbox_id: str, *, error: str) -> None:
+    def mark_failed(
+        self, outbox_id: str, *, error: str, delay_seconds: int | None = None
+    ) -> None:
         self.failed.append((outbox_id, error))
+        self.fail_delays.append((outbox_id, delay_seconds))
+        for index, row in enumerate(self.rows):
+            if row.id != outbox_id:
+                continue
+            self.rows[index] = IntegrationOutboxRow(
+                id=row.id,
+                event_type=row.event_type,
+                aggregate_type=row.aggregate_type,
+                aggregate_id=row.aggregate_id,
+                payload=row.payload,
+                created_at=row.created_at,
+                available_at=row.available_at,
+                published_at=row.published_at,
+                attempts=row.attempts + 1,
+                last_error=error,
+            )
+            break
+
+    def defer(self, outbox_id: str, *, delay_seconds: int) -> None:
+        self.deferred.append((outbox_id, delay_seconds))
 
 
 class _DetectStub:
@@ -364,3 +393,120 @@ def test_portal_notification_payload_shape(monkeypatch) -> None:
     assert body["userIds"] == ["u1"]
     assert body["permissionCodes"] == ["commercial.billing.notify"]
     assert body["metadata"]["dedupeKey"] == "commercial:ready_to_invoice:01|1|01"
+
+
+def test_publish_skips_ws_toast_on_retry(monkeypatch) -> None:
+    from commercial_app.application.services import (
+        task_portal_notification_delivery_policy as policy_mod,
+    )
+    from commercial_app.application.services import commercial_realtime_notify as notify_mod
+    from commercial_app.application.services.commercial_portal_notification_service import (
+        PortalNotifyResult,
+    )
+
+    class _Hub:
+        def is_user_online(self, user_id: str | None) -> bool:
+            return False
+
+    monkeypatch.setattr(policy_mod, "commercial_realtime_hub", _Hub())
+    ws_calls: list[dict] = []
+
+    def _capture_r2i(**kwargs):
+        ws_calls.append(kwargs)
+
+    monkeypatch.setattr(notify_mod, "notify_ready_to_invoice_changed", _capture_r2i)
+    outbox = _OutboxMemory()
+    outbox.enqueue(
+        event_type="commercial.order.ready_to_invoice",
+        aggregate_type="open_order_line",
+        aggregate_id="01|10|01",
+        payload={
+            "lineKey": "01|10|01",
+            "userIds": ["u1"],
+            "permissionCodes": ["commercial.billing.notify"],
+            "actionTarget": "/apps/commercial/open-orders?stage=ready_to_invoice",
+            "pedido": "10",
+            "linha": "01",
+            "cliente": "ACME",
+            "filial": "01",
+        },
+    )
+
+    class _Notifier(CommercialPortalNotificationService):
+        def __init__(self) -> None:
+            super().__init__(enabled=True, service_token="tok")
+
+        def notify_ready_to_invoice(self, **kwargs):  # type: ignore[override]
+            return PortalNotifyResult(ok=False)
+
+    uc = PublishIntegrationOutboxUseCase(outbox=outbox, notifier=_Notifier())
+    first = uc.execute()
+    assert first.failed == 1
+    assert len(ws_calls) == 1
+    assert outbox.rows[0].attempts == 1
+
+    second = uc.execute()
+    assert second.failed == 1
+    assert len(ws_calls) == 1
+
+
+def test_publish_rate_limit_defers_rest_of_batch(monkeypatch) -> None:
+    from commercial_app.application.services import (
+        task_portal_notification_delivery_policy as policy_mod,
+    )
+    from commercial_app.application.services import commercial_realtime_notify as notify_mod
+    from commercial_app.application.services.commercial_portal_notification_service import (
+        PortalNotifyResult,
+    )
+    from commercial_app.domain.services.ready_to_invoice_notification_content_service import (
+        ReadyToInvoiceNotificationContentService,
+        _load,
+    )
+
+    _load.cache_clear()
+
+    class _Hub:
+        def is_user_online(self, user_id: str | None) -> bool:
+            return False
+
+    monkeypatch.setattr(policy_mod, "commercial_realtime_hub", _Hub())
+    monkeypatch.setattr(notify_mod, "notify_ready_to_invoice_changed", lambda **kwargs: None)
+    outbox = _OutboxMemory()
+    for idx in range(3):
+        outbox.enqueue(
+            event_type="commercial.order.ready_to_invoice",
+            aggregate_type="open_order_line",
+            aggregate_id=f"01|1{idx}|01",
+            payload={
+                "lineKey": f"01|1{idx}|01",
+                "userIds": [],
+                "permissionCodes": ["commercial.billing.notify"],
+                "actionTarget": "/apps/commercial/open-orders?stage=ready_to_invoice",
+                "pedido": f"1{idx}",
+                "linha": "01",
+                "cliente": "ACME",
+                "filial": "01",
+            },
+        )
+
+    class _Notifier(CommercialPortalNotificationService):
+        def __init__(self) -> None:
+            super().__init__(enabled=True, service_token="tok")
+            self.calls = 0
+
+        def notify_ready_to_invoice(self, **kwargs):  # type: ignore[override]
+            self.calls += 1
+            return PortalNotifyResult(ok=False, rate_limited=True)
+
+    notifier = _Notifier()
+    result = PublishIntegrationOutboxUseCase(
+        outbox=outbox, notifier=notifier
+    ).execute()
+    assert notifier.calls == 1
+    assert result.failed == 1
+    assert result.processed == 1
+    assert outbox.failed[0][1] == "portal_notification_rate_limited"
+    assert outbox.fail_delays[0][1] == (
+        ReadyToInvoiceNotificationContentService.outbox_rate_limit_backoff_seconds()
+    )
+    assert len(outbox.deferred) == 2

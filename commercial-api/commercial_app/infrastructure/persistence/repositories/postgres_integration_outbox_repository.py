@@ -194,14 +194,33 @@ class PostgresIntegrationOutboxRepository(
             (outbox_id,),
         )
 
-    def mark_failed(self, outbox_id: str, *, error: str) -> None:
+    def mark_failed(
+        self,
+        outbox_id: str,
+        *,
+        error: str,
+        delay_seconds: int | None = None,
+    ) -> None:
+        delay = max(1, int(delay_seconds) if delay_seconds is not None else 60)
         self.execute(
             """
             UPDATE commercial.integration_outbox
             SET attempts = attempts + 1,
                 last_error = %s,
-                available_at = NOW() + INTERVAL '1 minute'
+                available_at = NOW() + make_interval(secs => %s)
             WHERE id = %s::uuid
             """,
-            ((error or "")[:2000], outbox_id),
+            ((error or "")[:2000], delay, outbox_id),
+        )
+
+    def defer(self, outbox_id: str, *, delay_seconds: int) -> None:
+        delay = max(1, int(delay_seconds))
+        self.execute(
+            """
+            UPDATE commercial.integration_outbox
+            SET available_at = NOW() + make_interval(secs => %s)
+            WHERE id = %s::uuid
+              AND published_at IS NULL
+            """,
+            (delay, outbox_id),
         )

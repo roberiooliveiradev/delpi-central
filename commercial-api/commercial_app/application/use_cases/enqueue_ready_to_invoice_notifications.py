@@ -7,6 +7,7 @@ from typing import Any
 
 from commercial_app.application.services.commercial_portal_notification_service import (
     CommercialPortalNotificationService,
+    PortalNotifyResult,
 )
 from commercial_app.application.use_cases.detect_ready_to_invoice_entries import (
     DetectReadyToInvoiceEntriesUseCase,
@@ -18,6 +19,12 @@ from commercial_app.domain.ports.integration_outbox_repository_port import (
 from commercial_app.domain.services.ready_to_invoice_notification_content_service import (
     ReadyToInvoiceNotificationContentService,
 )
+
+
+def _as_portal_result(value: object) -> PortalNotifyResult:
+    if isinstance(value, PortalNotifyResult):
+        return value
+    return PortalNotifyResult(ok=bool(value))
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,7 +105,7 @@ class PublishIntegrationOutboxUseCase:
         self._notifier = notifier or CommercialPortalNotificationService()
         self._content = content or ReadyToInvoiceNotificationContentService
 
-    def _publish_row(self, row) -> bool:
+    def _publish_row(self, row) -> PortalNotifyResult:
         from commercial_app.application.services.commercial_realtime_notify import (
             notify_ready_to_invoice_changed,
             notify_worklist_changed,
@@ -114,17 +121,18 @@ class PublishIntegrationOutboxUseCase:
 
         payload = row.payload if isinstance(row.payload, dict) else {}
         if not self._notifier.enabled:
-            return True
+            return PortalNotifyResult(ok=True)
 
+        # Retry must not re-broadcast in-app toast (localhost 429 loop).
+        is_retry = int(getattr(row, "attempts", 0) or 0) > 0
         delivery = TaskPortalNotificationDeliveryPolicy()
         ready_event = self._content.event_type()
         if row.event_type == ready_event:
             all_user_ids = list(payload.get("userIds") or [])
             permission_codes = list(payload.get("permissionCodes") or [])
             online, offline = delivery.split_online_offline(ready_event, all_user_ids)
-            # Toast: online sellers + always TEAM_ROOM (managers). Empty online with
-            # only billing permission codes still fans out to team room.
-            if online or permission_codes or all_user_ids:
+            # Toast: online sellers + hub room. Skip on retry — WS already fired.
+            if not is_retry and (online or permission_codes or all_user_ids):
                 notify_ready_to_invoice_changed(
                     user_ids=online,
                     line_key=str(payload.get("lineKey") or row.aggregate_id),
@@ -135,16 +143,18 @@ class PublishIntegrationOutboxUseCase:
                     action_target=str(payload.get("actionTarget") or "") or None,
                 )
             if not offline and not permission_codes:
-                return True
-            return self._notifier.notify_ready_to_invoice(
-                user_ids=offline,
-                permission_codes=permission_codes,
-                line_key=str(payload.get("lineKey") or row.aggregate_id),
-                pedido=str(payload.get("pedido") or ""),
-                linha=str(payload.get("linha") or ""),
-                cliente=str(payload.get("cliente") or ""),
-                filial=str(payload.get("filial") or ""),
-                action_target=str(payload.get("actionTarget") or "") or None,
+                return PortalNotifyResult(ok=True)
+            return _as_portal_result(
+                self._notifier.notify_ready_to_invoice(
+                    user_ids=offline,
+                    permission_codes=permission_codes,
+                    line_key=str(payload.get("lineKey") or row.aggregate_id),
+                    pedido=str(payload.get("pedido") or ""),
+                    linha=str(payload.get("linha") or ""),
+                    cliente=str(payload.get("cliente") or ""),
+                    filial=str(payload.get("filial") or ""),
+                    action_target=str(payload.get("actionTarget") or "") or None,
+                )
             )
 
         if row.event_type in TASK_PORTAL_EVENT_TYPES:
@@ -153,7 +163,7 @@ class PublishIntegrationOutboxUseCase:
                 row.event_type, all_user_ids
             )
             ws_reason = portal_task_event_to_worklist_reason(row.event_type)
-            if online and ws_reason is not None:
+            if not is_retry and online and ws_reason is not None:
                 title = str(payload.get("title") or "Tarefa")
                 due_at = str(payload.get("dueAt") or "") or None
                 message = TaskPortalNotificationContentService.format_message(
@@ -181,19 +191,21 @@ class PublishIntegrationOutboxUseCase:
                     },
                 )
             if not offline:
-                return True
-            return self._notifier.notify_task_event(
-                event_type=row.event_type,
-                user_ids=offline,
-                task_id=str(payload.get("taskId") or row.aggregate_id),
-                title=str(payload.get("title") or "Tarefa"),
-                due_at=str(payload.get("dueAt") or "") or None,
-                action_target=str(payload.get("actionTarget") or "") or None,
-                dedupe_key=str(payload.get("dedupeKey") or "") or None,
-                bucket=str(payload.get("bucket") or "") or None,
+                return PortalNotifyResult(ok=True)
+            return _as_portal_result(
+                self._notifier.notify_task_event(
+                    event_type=row.event_type,
+                    user_ids=offline,
+                    task_id=str(payload.get("taskId") or row.aggregate_id),
+                    title=str(payload.get("title") or "Tarefa"),
+                    due_at=str(payload.get("dueAt") or "") or None,
+                    action_target=str(payload.get("actionTarget") or "") or None,
+                    dedupe_key=str(payload.get("dedupeKey") or "") or None,
+                    bucket=str(payload.get("bucket") or "") or None,
+                )
             )
 
-        return False
+        return PortalNotifyResult(ok=False)
 
     def execute(self, *, limit: int = 50) -> PublishOutboxResult:
         from commercial_app.domain.services.task_portal_notification_content_service import (
@@ -202,25 +214,44 @@ class PublishIntegrationOutboxUseCase:
 
         ready_event = self._content.event_type()
         supported = {ready_event, *TASK_PORTAL_EVENT_TYPES}
+        default_backoff = self._content.outbox_default_backoff_seconds()
+        rate_limit_backoff = self._content.outbox_rate_limit_backoff_seconds()
         pending = self._outbox.list_pending(limit=limit)
         processed = 0
         published = 0
         failed = 0
-        for row in pending:
+        for index, row in enumerate(pending):
             processed += 1
             if row.event_type not in supported:
                 self._outbox.mark_failed(
-                    row.id, error=f"unsupported_event_type:{row.event_type}"
+                    row.id,
+                    error=f"unsupported_event_type:{row.event_type}",
+                    delay_seconds=default_backoff,
                 )
                 failed += 1
                 continue
-            ok = self._publish_row(row)
-            if ok:
+            outcome = self._publish_row(row)
+            if outcome.ok:
                 self._outbox.mark_published(row.id)
                 published += 1
-            else:
-                self._outbox.mark_failed(row.id, error="portal_notification_failed")
-                failed += 1
+                continue
+            delay = (
+                rate_limit_backoff if outcome.rate_limited else default_backoff
+            )
+            error = (
+                "portal_notification_rate_limited"
+                if outcome.rate_limited
+                else "portal_notification_failed"
+            )
+            self._outbox.mark_failed(row.id, error=error, delay_seconds=delay)
+            failed += 1
+            if outcome.rate_limited:
+                # Evita 50×429 no mesmo tick; demais rows voltam no próximo ciclo.
+                for deferred in pending[index + 1 :]:
+                    self._outbox.defer(
+                        deferred.id, delay_seconds=rate_limit_backoff
+                    )
+                break
         return PublishOutboxResult(
             processed=processed, published=published, failed=failed
         )

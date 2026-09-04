@@ -126,6 +126,26 @@ class ReadyToInvoiceNotificationContentService:
         return dict(block) if isinstance(block, dict) else {}
 
     @classmethod
+    def outbox_default_backoff_seconds(cls) -> int:
+        return cls._outbox_int("defaultBackoffSeconds", 60)
+
+    @classmethod
+    def outbox_rate_limit_backoff_seconds(cls) -> int:
+        return cls._outbox_int("rateLimitBackoffSeconds", 120)
+
+    @classmethod
+    def _outbox_int(cls, key: str, default: int) -> int:
+        block = _load().get("outbox")
+        if not isinstance(block, dict):
+            return default
+        raw = block.get(key)
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            return default
+        return max(1, value)
+
+    @classmethod
     def format_message(cls, *, pedido: str, linha: str, cliente: str) -> str:
         block = cls.notification_block()
         template = str(block.get("messageTemplate") or "").strip()

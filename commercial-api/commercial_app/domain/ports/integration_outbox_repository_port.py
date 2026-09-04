@@ -70,5 +70,16 @@ class IntegrationOutboxRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def mark_failed(self, outbox_id: str, *, error: str) -> None:
+    def mark_failed(
+        self,
+        outbox_id: str,
+        *,
+        error: str,
+        delay_seconds: int | None = None,
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def defer(self, outbox_id: str, *, delay_seconds: int) -> None:
+        """Postpone without counting as a failed delivery attempt."""
         raise NotImplementedError

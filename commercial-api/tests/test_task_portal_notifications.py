@@ -61,8 +61,13 @@ class _OutboxMemory:
     def mark_published(self, outbox_id: str) -> None:
         self.published.append(outbox_id)
 
-    def mark_failed(self, outbox_id: str, *, error: str) -> None:
+    def mark_failed(
+        self, outbox_id: str, *, error: str, delay_seconds: int | None = None
+    ) -> None:
         self.failed.append((outbox_id, error))
+
+    def defer(self, outbox_id: str, *, delay_seconds: int) -> None:
+        return None
 
 
 class _GroupsMemory:

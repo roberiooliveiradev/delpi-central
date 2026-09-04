@@ -6,6 +6,10 @@
   "recipientMode": "billing_permission_only",
   "billingUserIds": [],
   "billingPermissionCodes": ["commercial.billing.notify"],
+  "outbox": {
+    "defaultBackoffSeconds": 60,
+    "rateLimitBackoffSeconds": 120
+  },
   "notification": {
     "title": "Pedido pronto para faturar",
     "messageTemplate": "A linha {pedido}/{linha} do cliente {cliente} entrou em Pronto para faturar.",
