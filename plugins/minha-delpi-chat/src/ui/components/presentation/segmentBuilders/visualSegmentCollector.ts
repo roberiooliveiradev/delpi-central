@@ -14,16 +14,9 @@ import { appendVisualSegment } from "./segmentDedupe";
 function isSuppressedToolCall(toolCall: ChatToolCall): boolean {
   const metadata = (toolCall.metadata ?? {}) as Record<string, unknown>;
 
-  if (metadata.sqlSchemaPrefetch === true || metadata.suppressClientPresentation === true) {
-    return true;
-  }
-
-  const path = String(metadata.path || "").toLowerCase();
-
-  return (
-    path.includes("/system/tables") &&
-    (path.includes("/columns") || path.includes("/schema") || path.includes("/relations"))
-  );
+  // Só flags explícitas da API — não ocultar /system/tables/columns|schema|relations
+  // (F06: renderPlan pede tabela; suppress por path deixava só a prosa).
+  return metadata.sqlSchemaPrefetch === true || metadata.suppressClientPresentation === true;
 }
 
 function shouldCollectVisualKind(kind: string, toolCalls: ChatToolCall[]): boolean {

@@ -292,13 +292,35 @@ class ChatRichPresentationTextService:
     @classmethod
     def prepare_evidence_first_chat_narrative(cls, metadata: dict[str, Any]) -> None:
         text_presentation = metadata.get("textPresentation")
+        data_answer = metadata.get("dataAnswer")
+        lead = ""
+
+        if isinstance(data_answer, dict):
+            lead = cls._resolve_data_answer_lead(data_answer)
 
         if not isinstance(text_presentation, dict):
+            # View só-tabela: ainda precisa do lead na bolha quando prosa é template.
+            if not lead:
+                return
+
+            from app.domain.services.chat_presentation_prose_delivery_service import (
+                ChatPresentationProseDeliveryService,
+            )
+
+            if not ChatPresentationProseDeliveryService.is_template_delivery_metadata(metadata):
+                return
+
+            metadata["textPresentation"] = {
+                "type": "markdown",
+                "markdown": lead,
+            }
             return
 
         markdown = str(text_presentation.get("markdown") or "").strip()
 
         if not markdown:
+            if lead:
+                text_presentation["markdown"] = lead
             return
 
         decision = metadata.get("presentationDecision")
@@ -730,6 +752,14 @@ class ChatRichPresentationTextService:
             if cls._should_prefer_playbook_operational_text_answer(metadata):
                 return True
 
+            # Prosa template (ex.: /system): o markdown autorizado / dataAnswer é a bolha —
+            # não colapsar no título «Resultado da consulta» só porque selected=table.
+            if ChatPresentationProseDeliveryService.is_template_delivery_metadata(metadata):
+                if cls._template_authorized_prose_available(metadata):
+                    return True
+
+                continue
+
             text_presentation = metadata.get("textPresentation")
 
             if not isinstance(text_presentation, dict):
@@ -747,6 +777,30 @@ class ChatRichPresentationTextService:
                 continue
 
             if cls.is_stack_layout(metadata) or cls.has_complementary_visuals(metadata):
+                return True
+
+        return False
+
+    @classmethod
+    def _template_authorized_prose_available(cls, metadata: dict[str, Any]) -> bool:
+        text_presentation = metadata.get("textPresentation")
+
+        if isinstance(text_presentation, dict) and str(
+            text_presentation.get("markdown") or ""
+        ).strip():
+            return True
+
+        data_answer = metadata.get("dataAnswer")
+
+        if isinstance(data_answer, dict) and cls._resolve_data_answer_lead(data_answer):
+            return True
+
+        humanized = metadata.get("humanizedSummary")
+
+        if isinstance(humanized, dict):
+            lines = humanized.get("linhas")
+
+            if isinstance(lines, list) and any(str(line or "").strip() for line in lines):
                 return True
 
         return False

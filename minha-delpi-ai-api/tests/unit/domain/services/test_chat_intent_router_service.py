@@ -148,6 +148,23 @@ def test_classify_system_metadata_table_question():
     assert route.sub_intent == "system_metadata"
 
 
+def test_classify_system_metadata_columns_and_indexes_not_sql_generate():
+    """Colunas/índices Protheus são system_metadata — não sql_generate (F06 R1)."""
+    for message in (
+        "quais colunas da tabela SB1010?",
+        "quais indexes da SB1010?",
+        "colunas da tabela sb1",
+        "índices da tabela SB1",
+    ):
+        route = ChatIntentRouterService.classify(
+            message,
+            allowed_action_ids=["api_delpi.system.get_table_columns_system_tables_table_name_columns_get"],
+        )
+        assert route.intent == "operational_query", message
+        assert route.sub_intent == "system_metadata", message
+        assert route.decision != "sql_route", message
+
+
 def test_classify_small_talk():
     route = ChatIntentRouterService.classify("obrigado!")
 

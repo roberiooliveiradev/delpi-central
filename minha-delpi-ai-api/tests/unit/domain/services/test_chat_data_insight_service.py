@@ -288,10 +288,93 @@ def test_build_system_tables_search_counts_results_rows() -> None:
     data_answer = ChatDataInsightService.build(metadata, data)
 
     assert data_answer is not None
-    derived_metrics = data_answer.get("derivedMetrics") or []
-    assert derived_metrics[0]["label"] == "Registros"
-    assert derived_metrics[0]["value"] == "2"
-    assert "não retornou registros" not in str(data_answer.get("summary") or "").lower()
+    assert data_answer.get("profileKey") == "system_metadata"
+    blob = " ".join(
+        [
+            str((data_answer.get("summary") or {}).get("answer") or ""),
+            *[
+                str(item.get("text") if isinstance(item, dict) else item)
+                for item in (data_answer.get("facts") or [])
+            ],
+        ]
+    )
+    assert "5477" in blob
+    assert "similarity_ratio" not in blob.casefold()
+    assert "não retornou registros" not in blob.casefold()
+    assert not (data_answer.get("derivedMetrics") or [])
+
+
+def test_build_system_tables_search_skips_similarity_ratio_total() -> None:
+    """Search com score numérico não vira «Total de similarity_ratio» (F06 R4)."""
+    rows = [
+        {"X2_ARQUIVO": f"T{i:04d}", "similarity_ratio": 0.5 + (i % 10) / 100}
+        for i in range(32)
+    ]
+    metadata = {
+        "path": "/system/tables/search",
+        "apiDelpiResponseMeta": {
+            "entity": "protheus_table",
+            "shape": "paged_list",
+        },
+        "tablePresentation": {"type": "table", "rows": rows},
+    }
+    data = {
+        "total_records": 5477,
+        "results": rows,
+        "pagination": {"returned": 32, "is_complete": False},
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert data_answer is not None
+    assert data_answer.get("profileKey") == "system_metadata"
+    blob = str(data_answer).casefold()
+    assert "similarity_ratio" not in blob
+    assert "lista é extensa" not in blob
+    assert "5477" in blob
+
+
+def test_build_system_columns_uses_catalog_total_not_generic_numeric() -> None:
+    metadata = {
+        "path": "/system/tables/SB1010/columns",
+        "apiDelpiResponseMeta": {
+            "entity": "protheus_column",
+            "shape": "paged_list",
+        },
+        "tablePresentation": {
+            "type": "table",
+            "rows": [
+                {"X3_CAMPO": "B1_COD", "X3_TAMANHO": 8},
+                {"X3_CAMPO": "B1_DESC", "X3_TAMANHO": 60},
+            ],
+        },
+    }
+    data = {
+        "items": [
+            {"X3_CAMPO": "B1_COD", "X3_TAMANHO": 8},
+            {"X3_CAMPO": "B1_DESC", "X3_TAMANHO": 60},
+        ],
+        "total": 318,
+        "page": 1,
+        "pageSize": 50,
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert data_answer is not None
+    assert data_answer.get("profileKey") == "system_metadata"
+    blob = " ".join(
+        [
+            str((data_answer.get("summary") or {}).get("answer") or ""),
+            *[
+                str(item.get("text") if isinstance(item, dict) else item)
+                for item in (data_answer.get("facts") or [])
+            ],
+        ]
+    )
+    assert "318" in blob
+    assert "x3_tamanho" not in blob.casefold()
+    assert "similarity_ratio" not in blob.casefold()
 
 
 def test_build_schedule_today_complete_list_does_not_add_page_limitation() -> None:

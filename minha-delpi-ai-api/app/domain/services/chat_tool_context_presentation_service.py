@@ -326,17 +326,50 @@ class ChatToolContextPresentationService:
             from app.domain.services.chat_presentation_prose_delivery_service import (
                 ChatPresentationProseDeliveryService,
             )
+            from app.domain.services.chat_rich_presentation_text_service import (
+                ChatRichPresentationTextService,
+            )
 
             if ChatPresentationProseDeliveryService.should_block_template_prose_metadata(metadata):
                 return None
 
             text_presentation = metadata.get("textPresentation")
+            markdown = ""
 
             if isinstance(text_presentation, dict):
                 markdown = str(text_presentation.get("markdown") or "").strip()
 
-                if markdown and not cls._text_is_scalar_kpi_boilerplate(markdown):
+                if markdown and cls._text_is_scalar_kpi_boilerplate(markdown):
+                    markdown = ""
+
+            data_answer = metadata.get("dataAnswer")
+            lead = ""
+
+            if isinstance(data_answer, dict):
+                lead = ChatRichPresentationTextService._resolve_data_answer_lead(data_answer)
+
+            if ChatPresentationProseDeliveryService.is_template_delivery_metadata(metadata):
+                if lead and markdown:
+                    if lead in markdown:
+                        return markdown
+
+                    return f"{lead}\n\n{markdown}".strip()
+
+                if lead:
+                    return lead
+
+                if markdown:
                     return markdown
+
+                humanized = metadata.get("humanizedSummary")
+
+                if isinstance(humanized, dict):
+                    return cls._markdown_from_humanized(humanized)
+
+                return None
+
+            if markdown:
+                return markdown
 
             humanized = metadata.get("humanizedSummary")
 

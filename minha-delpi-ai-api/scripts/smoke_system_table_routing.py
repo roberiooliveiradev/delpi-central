@@ -198,6 +198,9 @@ def _validate_chat_e2e(token: str) -> list[str]:
 
 
 def main() -> int:
+    from app.composition.content_composer import configure_domain_infrastructure_ports
+
+    configure_domain_infrastructure_ports()
     failed = 0
 
     unit_errors = _validate_unit()

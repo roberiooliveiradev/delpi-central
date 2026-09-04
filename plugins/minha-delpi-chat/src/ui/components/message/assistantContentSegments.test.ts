@@ -469,4 +469,48 @@ describe("assistantContentSegments", () => {
     expect(kinds).toContain("table");
     expect(kinds).toContain("kpi");
   });
+
+  it("F06 columns: path /system/tables/.../columns com presentation table aparece na bolha", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          path: "/system/tables/SB1010/columns",
+          preferredFormat: "table",
+          presentationDecision: {
+            selected: "table",
+            layoutMode: "single",
+          },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [
+              { kind: "decision", slot: "lead", source: "dataAnswer" },
+              { kind: "table", slot: "primary", source: "presentation" },
+            ],
+          },
+          presentation: {
+            type: "table",
+            title: "Colunas (SX3)",
+            columns: [
+              { key: "X3_CAMPO", label: "Campo" },
+              { key: "X3_TITULO", label: "Título" },
+            ],
+            rows: [
+              { X3_CAMPO: "B1_COD", X3_TITULO: "Codigo" },
+              { X3_CAMPO: "B1_DESC", X3_TITULO: "Descricao" },
+            ],
+          },
+        },
+      },
+    ];
+
+    const segments = buildAssistantContentSegments(
+      "**318** registro(s) no catálogo de metadados.",
+      toolCalls as never,
+    );
+
+    expect(segments.some((item) => item.kind === "table")).toBe(true);
+  });
 });

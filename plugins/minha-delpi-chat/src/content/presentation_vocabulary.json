@@ -427,13 +427,13 @@
     }
   },
   "legacyFallbacks": {
-    "description": "Fallbacks MFE permitidos quando a API não envia role/label (Playbook 12 R20). Baseline — não aumentar sem revisão.",
+    "description": "Fallbacks MFE legados (Playbook 12 R20). MFE é render-only: não decidir formato/título/suppress por path. Baseline path.includes = 0 — não aumentar sem revisão.",
     "inventoryBaseline": {
       "inferTableRoleFromTitleConditionalReturns": 0,
       "pathIncludesByModule": {
-        "chatPresentation.ts": 7,
-        "presentation/segmentBuilders/visualSegmentCollector.ts": 4,
-        "message/assistantProseRendering.ts": 1
+        "chatPresentation.ts": 0,
+        "presentation/segmentBuilders/visualSegmentCollector.ts": 0,
+        "message/assistantProseRendering.ts": 0
       }
     },
     "tableRoleFromTitle": {
@@ -448,11 +448,7 @@
       "preferMetadataField": "columns[].label",
       "resolver": "resolveFieldLabel"
     },
-    "allowedPathIncludesModules": [
-      "chatPresentation.ts",
-      "presentation/segmentBuilders/visualSegmentCollector.ts",
-      "message/assistantProseRendering.ts"
-    ]
+    "allowedPathIncludesModules": []
   },
   "playbook12Refactor": {
     "auditFiles": [

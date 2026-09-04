@@ -6,7 +6,6 @@ import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import {
   getChartPresentationFromPair,
   getPresentationPairFromToolCalls,
-  hasRenderPlanContract,
 } from "../chatPresentation";
 import { ChatDashboardDataPanel } from "./ChatDashboardDataPanel";
 import { ChatMarkdown } from "../message/ChatMarkdown";
@@ -244,7 +243,7 @@ export function ChatRichDashboard({
                     }
                   : null
               }
-              allowChartSynthesis={!hasRenderPlanContract(toolCalls)}
+              allowChartSynthesis={false}
               onDrillDown={onDrillDown}
               onOpenCanvas={onOpenCanvas}
             />

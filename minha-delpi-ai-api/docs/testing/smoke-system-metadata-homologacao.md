@@ -45,8 +45,22 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app -w /ap
   tests/unit/domain/services/test_external_action_result_presenter_system.py \
   tests/unit/domain/services/test_chat_security_messaging_service.py \
   tests/unit/domain/services/test_chat_intent_router_service.py::test_classify_system_metadata_table_question \
+  tests/unit/domain/services/test_chat_intent_router_service.py::test_classify_system_metadata_columns_and_indexes_not_sql_generate \
+  tests/unit/domain/services/test_chat_data_insight_service.py::test_build_system_tables_search_skips_similarity_ratio_total \
+  tests/unit/domain/services/test_chat_data_insight_service.py::test_build_system_columns_uses_catalog_total_not_generic_numeric \
+  tests/unit/domain/services/test_chat_presentation_profile_service.py::test_prose_delivery_mode_system_metadata_is_template \
   -q
 ```
+
+Regressões F06 cobertas:
+
+| Critério | Fix canônico |
+|----------|----------------|
+| R1 — colunas/índices sem `sql_generate` | Predicado `systemMetadataQuestion` no pipeline de sub-intent (+ `excludeIfSqlConversation`) |
+| R4 — sem «Total de similarity_ratio» / lista genérica | `suppressGenericInsightFallback` + highlightRules `searchHitCount`/`catalogTotal` |
+| R4 — lead na bolha (não só título) | prosa `template` + preferir markdown autorizado / `dataAnswer` |
+| R4 — tabela no MFE | remover suppress por path em `visualSegmentCollector` (só `sqlSchemaPrefetch` / `suppressClientPresentation`) |
+| R8 — prosa sem LLM pesado | `proseDeliveryByProfile.system` / entidades `protheus_*` = `template` + `dataAnswerLeadAlignment: inject` |
 
 ## Diagnóstico rápido (DB timeout)
 

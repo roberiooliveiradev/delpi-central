@@ -53,6 +53,10 @@ class ChatOperationalCommentaryProfileService:
         ).strip()
 
     @classmethod
+    def suppress_generic_insight_fallback(cls, profile_key: str) -> bool:
+        return bool(cls.profile_config(profile_key).get("suppressGenericInsightFallback"))
+
+    @classmethod
     def build_from_highlight_rules(
         cls,
         profile_key: str,
@@ -63,9 +67,17 @@ class ChatOperationalCommentaryProfileService:
         highlights = cls.build_highlight_rules(profile_key, data, format_line=format_line)
         visual_hints = cls.visual_hints(profile_key)
 
-        # Sem highlights, devolver None para o insight cair no fallback genérico
-        # (ex.: /system/tables/search com perfil system_metadata sem summary de schema).
+        # Sem highlights: ou suprime o fallback genérico (ex.: system_metadata —
+        # evita «Total de similarity_ratio») ou devolve None para o insight genérico.
         if not highlights:
+            if cls.suppress_generic_insight_fallback(profile_key):
+                return {
+                    "profileKey": profile_key,
+                    "highlights": [],
+                    "summaryLines": [],
+                    "visualHints": visual_hints or None,
+                }
+
             return None
 
         return {

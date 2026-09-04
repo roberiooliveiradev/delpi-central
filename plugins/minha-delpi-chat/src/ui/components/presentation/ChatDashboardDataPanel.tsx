@@ -38,7 +38,7 @@ export function ChatDashboardDataPanel({
   title,
   table,
   chart,
-  allowChartSynthesis = true,
+  allowChartSynthesis = false,
   onDrillDown,
   onOpenCanvas,
 }: {

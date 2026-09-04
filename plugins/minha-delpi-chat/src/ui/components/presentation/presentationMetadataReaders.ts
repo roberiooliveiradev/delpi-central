@@ -93,15 +93,6 @@ export function getDataCoverageNoticeFromToolCall(
     return null;
   }
 
-  const path = String(metadata.path || "").toLowerCase();
-
-  if (
-    path.includes("/system/tables") &&
-    (path.includes("/columns") || path.includes("/schema") || path.includes("/relations"))
-  ) {
-    return null;
-  }
-
   const notice = metadata.dataCoverageNotice;
 
   if (

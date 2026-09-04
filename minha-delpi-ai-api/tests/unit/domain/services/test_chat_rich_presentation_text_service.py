@@ -126,6 +126,56 @@ def test_should_not_prefer_authorized_markdown_for_single_table_layout():
     )
 
 
+def test_should_prefer_authorized_for_template_system_table_layout():
+    """F06 — prosa template /system não pode colapsar no título da tabela."""
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/system/tables/SB1010/schema",
+                "proseDeliveryMode": "template",
+                "apiDelpiResponseMeta": {"entity": "protheus_table_schema"},
+                "dataAnswer": {
+                    "profileKey": "system_metadata",
+                    "summary": {
+                        "answer": (
+                            "**SB1010** (SB1) — Produtos "
+                            "**318** colunas · **19** índices · **962** relacionamentos"
+                        ),
+                        "meaning": "",
+                    },
+                },
+                "presentationDecision": {
+                    "selected": "table",
+                    "layoutMode": "single",
+                    "visualOrder": ["table"],
+                },
+                "tablePresentation": {
+                    "type": "table",
+                    "title": "Colunas (SX3)",
+                    "rows": [{"X3_CAMPO": "B1_COD"}],
+                },
+            },
+        }
+    ]
+
+    assert ChatRichPresentationTextService.should_prefer_authorized_answer_over_llm(
+        tool_calls
+    )
+
+    from app.domain.services.chat_tool_context_presentation_service import (
+        ChatToolContextPresentationService,
+    )
+
+    authorized = ChatToolContextPresentationService.build_authorized_answer_from_tool_calls(
+        tool_calls
+    )
+    assert authorized is not None
+    assert "318" in authorized
+    assert "SB1010" in authorized
+
+
 def test_should_not_persist_authorized_markdown_for_single_table_layout():
     from app.domain.services.chat_tool_context_presentation_service import (
         ChatToolContextPresentationService,

@@ -408,7 +408,12 @@
     "product_production_status": "llm",
     "product_shipping_status": "llm",
     "product_stock": "llm",
-    "product_structure_exclusivity": "llm"
+    "product_structure_exclusivity": "llm",
+    "protheus_table": "template",
+    "protheus_column": "template",
+    "protheus_index": "template",
+    "protheus_relation": "template",
+    "protheus_table_schema": "template"
   },
   "proseDeliveryByEntitySet": {
     "playbookOperational": "llm",
@@ -434,6 +439,7 @@
     "kpi_dashboard": "llm",
     "tree_hierarchy": "llm",
     "sql": "llm",
+    "system": "template",
     "generic": "llm"
   },
   "proseCompositionPolicyByProfile": {
@@ -1298,7 +1304,7 @@
       ],
       "commentaryProfileKey": "system_metadata",
       "humanizedNarrative": "skip",
-      "dataAnswerLeadAlignment": "preserve_template"
+      "dataAnswerLeadAlignment": "inject"
     },
     "kpi_series": {
       "defaultViewPolicy": "kpi_when_available",

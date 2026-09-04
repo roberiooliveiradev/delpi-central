@@ -54,6 +54,7 @@ export function productCodeFromPath(path: string): string | null {
   return match?.[1]?.trim() || null;
 }
 
+/** @deprecated Preferir `routeKeyFromToolMetadata` (profileKey da API). */
 export function routeKeyFromPath(path: string): ProductRouteKey {
   const lowered = String(path || "").trim().toLowerCase();
 
@@ -88,6 +89,50 @@ export function routeKeyFromPath(path: string): ProductRouteKey {
   return "other";
 }
 
+const PROFILE_KEY_TO_ROUTE: Record<string, ProductRouteKey> = {
+  stock: "stock",
+  analyser: "analyser",
+  tree_hierarchy: "structure",
+  structure_exclusivity: "structure",
+  parents: "parents",
+  guide: "guide",
+  product_guide: "guide",
+  product_stock: "stock",
+  product_analyser: "analyser",
+  product_structure: "structure",
+  product_parents: "parents",
+  product_inspection: "inspection",
+  inspection: "inspection",
+};
+
+/**
+ * Chave de seção multi-rota — prioriza `presentationProfileKey` da API
+ * (não redecidir por path no MFE).
+ */
+export function routeKeyFromToolMetadata(metadata: Record<string, unknown>): ProductRouteKey {
+  const decision = metadata.presentationDecision;
+  const fromDecision =
+    decision && typeof decision === "object"
+      ? String((decision as { presentationProfileKey?: unknown }).presentationProfileKey || "").trim()
+      : "";
+  const fromMeta = String(metadata.presentationProfileKey || "").trim();
+  const profileKey = (fromDecision || fromMeta).toLowerCase();
+
+  if (profileKey) {
+    const mapped = PROFILE_KEY_TO_ROUTE[profileKey];
+
+    if (mapped) {
+      return mapped;
+    }
+
+    if (isProductRouteKey(profileKey)) {
+      return profileKey;
+    }
+  }
+
+  return routeKeyFromPath(String(metadata.path || ""));
+}
+
 export function collectProductRouteBlocks(toolCalls: ChatToolCall[]): ProductRouteBlock[] {
   const blocks: ProductRouteBlock[] = [];
   const seenPaths = new Set<string>();
@@ -120,7 +165,7 @@ export function collectProductRouteBlocks(toolCalls: ChatToolCall[]): ProductRou
 
     blocks.push({
       path,
-      routeKey: routeKeyFromPath(path),
+      routeKey: routeKeyFromToolMetadata(metadata),
       toolCall,
     });
   }

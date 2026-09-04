@@ -228,6 +228,30 @@ class ChatPresentationProseDeliveryService:
         return str(metadata.get("proseDeliveryMode") or "").strip().lower() == MODE_LLM
 
     @classmethod
+    def is_template_delivery_metadata(cls, metadata: dict[str, Any] | None) -> bool:
+        """Perfil/entidade com prosa template — bolha deve usar markdown autorizado / dataAnswer."""
+        if not isinstance(metadata, dict):
+            return False
+
+        stamped = str(metadata.get("proseDeliveryMode") or "").strip().lower()
+
+        if stamped == MODE_TEMPLATE:
+            return True
+
+        if stamped == MODE_LLM or stamped == MODE_DIRECT:
+            return False
+
+        path = str(metadata.get("path") or "").strip() or None
+
+        return (
+            cls._entity_prose_delivery_mode(
+                path=path,
+                tool_calls=[{"name": "execute_external_action", "metadata": metadata}],
+            )
+            == MODE_TEMPLATE
+        )
+
+    @classmethod
     def should_omit_legacy_tool_context_direct_answer(
         cls,
         metadata: dict[str, Any] | None,

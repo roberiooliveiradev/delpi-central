@@ -1716,7 +1716,10 @@
       { "termsAny": "guideTerms", "subIntent": "guide_lookup" },
       { "termsAny": "inspectionTerms", "subIntent": "inspection_lookup" },
       { "predicate": "parentsQuestion", "subIntent": "parents_lookup" },
-      { "probe": "systemMetadataQuestion", "subIntent": "system_metadata" },
+      {
+        "predicate": "systemMetadataQuestion",
+        "subIntent": "system_metadata"
+      },
       { "messageContains": "produto", "subIntent": "product_lookup" }
     ],
     "operationalAmbiguityExclusionPredicates": [

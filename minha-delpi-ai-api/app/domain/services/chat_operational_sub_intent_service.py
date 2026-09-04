@@ -134,14 +134,13 @@ class ChatOperationalSubIntentService:
                     message
                 )
             ),
-            "systemMetadataQuestion": lambda _message, _normalized, lowered: (
-                any(
-                    term in lowered
-                    for term in cls._router_terms("systemMetadataTableTerms")
-                )
-                and any(
-                    phrase in lowered
-                    for phrase in cls._router_terms("systemMetadataQuestionPhrases")
+            # Preferir o predicado canônico (systemPredicates) — o probe estreito
+            # (frases «qual a tabela») deixava colunas/índices cair em sql_generate.
+            "systemMetadataQuestion": lambda message, normalized, _lowered: (
+                ChatProductRoutePredicateService.matches(
+                    "systemMetadataQuestion",
+                    normalized,
+                    message=message,
                 )
             ),
         }

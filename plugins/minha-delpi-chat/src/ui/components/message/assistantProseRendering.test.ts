@@ -142,6 +142,31 @@ describe("assistantProseRendering", () => {
     ).toBe(report);
   });
 
+  it("remove apresentação rica de qualquer tool visual em turno de relatório de desenho", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          path: "/products/90260140/stock",
+          presentation: { type: "table", title: "Estoque", columns: [], rows: [] },
+          renderPlan: { segments: [{ kind: "table", slot: "primary" }] },
+        },
+      },
+    ];
+    const stripped = toolCallsForDrawingAnalysisDisplay(toolCalls, {
+      drawingAnalysisMode: true,
+      drawingAnalysisExport: {
+        filename: "relatorio.md",
+        mimeType: "text/markdown",
+        markdown: "## Relatório",
+      },
+    });
+
+    expect(stripped[0].metadata?.presentation).toBeUndefined();
+    expect(stripped[0].metadata?.renderPlan).toBeUndefined();
+    expect(stripped[0].metadata?.suppressClientPresentation).toBe(true);
+  });
+
   it("remove apresentação rica do analyser em turno de relatório de desenho", () => {
     const toolCalls = [
       {

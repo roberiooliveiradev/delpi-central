@@ -9,6 +9,7 @@ import {
   resolveRouteTextDetailMarkdown,
   routeKeyFromPath,
   routeKeyFromSectionId,
+  routeKeyFromToolMetadata,
 } from "./presentationMultiRoute";
 import {
   filterSegmentsByVisualKind,
@@ -256,6 +257,40 @@ describe("presentationMultiRoute", () => {
     expect(routeKeyFromPath("/products/1/guide")).toBe("guide");
     expect(routeKeyFromPath("/products/1/structure")).toBe("structure");
     expect(routeKeyFromSectionId("route-stock")).toBe("stock");
+  });
+
+  it("prioriza presentationProfileKey da API sobre path no multi-rota", () => {
+    expect(
+      routeKeyFromToolMetadata({
+        path: "/products/1/analyser",
+        presentationProfileKey: "stock",
+      }),
+    ).toBe("stock");
+    expect(
+      routeKeyFromToolMetadata({
+        path: "/products/1/unknown-route",
+        presentationDecision: { presentationProfileKey: "tree_hierarchy" },
+      }),
+    ).toBe("structure");
+
+    const blocks = collectProductRouteBlocks([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          path: "/products/1/analyser",
+          presentationProfileKey: "stock",
+          tablePresentation: {
+            type: "table",
+            title: "Estoque",
+            columns: [{ key: "branch", label: "Filial" }],
+            rows: [{ branch: "01" }],
+          },
+        },
+      },
+    ] as never);
+
+    expect(blocks[0]?.routeKey).toBe("stock");
   });
 
   it("agrupa segmentos por seção de rota e não expõe toolbar global", () => {

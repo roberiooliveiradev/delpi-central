@@ -314,7 +314,9 @@
     "titleTableOnly": "**{tableName}**",
     "countsLine": "**{columnCount}** colunas · **{indexCount}** índices · **{relationCount}** relacionamentos",
     "columnsLine": "**{columnCount}** colunas no catálogo (SX3)",
-    "tableHint": "As colunas aparecem na **tabela** desta resposta."
+    "searchHitCount": "**{count}** tabela(s) encontradas no catálogo Protheus (SX2).",
+    "catalogTotal": "**{count}** registro(s) no catálogo de metadados.",
+    "tableHint": "O detalhe aparece na **tabela** desta resposta."
   },
   "singleRowAggregate": {
     "preferredKeys": [
@@ -389,7 +391,9 @@
       "op",
       "order",
       "sequence",
-      "sequen"
+      "sequen",
+      "similarity_ratio",
+      "total_score"
     ],
     "metricLine": "**{label}**: **{value}**.",
     "labels": {
@@ -613,6 +617,7 @@
       "templateProseCommentary": "full",
       "skipRowCountLead": true,
       "skipNumericDerivedMetrics": true,
+      "suppressGenericInsightFallback": true,
       "visualHints": ["table"],
       "highlightRules": [
         {
@@ -689,7 +694,54 @@
           }
         },
         {
+          "whenAll": [{ "path": "total_records", "op": "present" }],
+          "presenter": {
+            "section": "systemMetadata",
+            "key": "searchHitCount"
+          },
+          "values": {
+            "count": "{total_records}"
+          }
+        },
+        {
+          "whenAll": [{ "path": "data.total_records", "op": "present" }],
+          "presenter": {
+            "section": "systemMetadata",
+            "key": "searchHitCount"
+          },
+          "values": {
+            "count": "{data.total_records}"
+          }
+        },
+        {
+          "whenAll": [
+            { "path": "total", "op": "present" },
+            { "path": "summary.tableName", "op": "absent" },
+            { "path": "total_records", "op": "absent" }
+          ],
+          "presenter": {
+            "section": "systemMetadata",
+            "key": "catalogTotal"
+          },
+          "values": {
+            "count": "{total}"
+          }
+        },
+        {
           "whenAll": [{ "path": "summary.tableName", "op": "present" }],
+          "presenter": {
+            "section": "systemMetadata",
+            "key": "tableHint"
+          },
+          "values": {}
+        },
+        {
+          "whenAll": [
+            { "path": "summary.tableName", "op": "absent" },
+            { "path": "total_records", "op": "absent" },
+            { "path": "data.total_records", "op": "absent" },
+            { "path": "total", "op": "absent" }
+          ],
           "presenter": {
             "section": "systemMetadata",
             "key": "tableHint"

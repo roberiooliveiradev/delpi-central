@@ -127,8 +127,9 @@ export function resolveAssistantDisplayContent(
 }
 
 /**
- * Em turno de relatório de desenho, a árvore/tabelas do analyser ficam só nos exports —
- * o corpo da mensagem é o markdown do relatório.
+ * Em turno de relatório de desenho, a árvore/tabelas das tools ficam só nos exports —
+ * o corpo da mensagem é o markdown do relatório (contrato `drawingAnalysisMode` da API).
+ * Não filtrar por path: a API manda o modo do turno; o MFE só aplica suppress explícito.
  */
 export function toolCallsForDrawingAnalysisDisplay(
   toolCalls: ChatToolCall[] = [],
@@ -139,9 +140,7 @@ export function toolCallsForDrawingAnalysisDisplay(
   }
 
   return toolCalls.map((call) => {
-    const path = String(call.metadata?.path || "").toLowerCase();
-
-    if (!path.includes("/analyser")) {
+    if (call.name && call.name !== "execute_external_action") {
       return call;
     }
 

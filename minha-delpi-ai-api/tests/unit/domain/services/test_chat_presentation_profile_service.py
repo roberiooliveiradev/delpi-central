@@ -285,6 +285,13 @@ def test_data_answer_lead_alignment_from_profile() -> None:
         )
         == "inject"
     )
+    assert (
+        ChatPresentationProfileService.data_answer_lead_alignment(
+            "/system/tables/search",
+            "protheus_table",
+        )
+        == "inject"
+    )
 
 
 def test_resolve_default_preferred_format_stock_table() -> None:
@@ -425,6 +432,38 @@ def test_prose_delivery_mode_entity_and_profile_fallback() -> None:
             entity="product_guide",
         )
         in {"template", "llm"}
+    )
+
+
+def test_prose_delivery_mode_system_metadata_is_template() -> None:
+    """Metadado /system usa prosa template — evita LLM lento e SQL inventado (F06 R8)."""
+    assert (
+        ChatPresentationProfileService.prose_delivery_mode(
+            entity="protheus_table",
+            path="/system/tables/search",
+        )
+        == "template"
+    )
+    assert (
+        ChatPresentationProfileService.prose_delivery_mode(
+            entity="protheus_column",
+            path="/system/tables/SB1010/columns",
+        )
+        == "template"
+    )
+    assert (
+        ChatPresentationProfileService.prose_delivery_mode(
+            entity="protheus_table_schema",
+            path="/system/tables/SB1010/schema",
+        )
+        == "template"
+    )
+    assert (
+        ChatPresentationProfileService.prose_delivery_mode(
+            path="/system/tables/SB1010/indexes",
+            entity="protheus_index",
+        )
+        == "template"
     )
 
 

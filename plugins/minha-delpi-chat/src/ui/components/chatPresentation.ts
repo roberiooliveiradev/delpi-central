@@ -34,7 +34,6 @@ import {
 import {
   getAvailableFormatsFromToolCalls,
   getDownloadArtifactsFromToolCalls,
-  getPathFromToolCalls,
   getPresentationRenderHintsFromToolCalls,
   getTextPresentationTitleFromToolCalls,
   hasRenderPlanContract,
@@ -125,43 +124,21 @@ function getTableMarkdownBody(toolCalls?: ChatToolCall[]): string {
   return tablePresentationToMarkdown(table, { includeTitle: false });
 }
 
-function inferPresentationTitleFromToolPath(path: string): string | null {
-  const lowered = path.toLowerCase();
-
-  if (lowered.includes("eficiencia-fabril") || lowered.includes("eficiencia_fabril")) {
-    return "Eficiência fabril";
-  }
-
-  if (lowered.includes("/lmp")) {
-    return "Lista de LMPs";
-  }
-
-  return null;
-}
-
-const STALE_LMP_TITLE = "Lista de LMPs";
-
 export function getPresentationTitle(
   messageContent: string | null | undefined,
   toolCalls?: ChatToolCall[],
 ): string {
-  const pathTitle = inferPresentationTitleFromToolPath(getPathFromToolCalls(toolCalls ?? []));
+  // Títulos vêm da API (textPresentation / presentation.title). Não inventar por path.
   const textTitle = getTextPresentationTitleFromToolCalls(toolCalls);
 
-  if (textTitle && (!pathTitle || textTitle !== STALE_LMP_TITLE)) {
+  if (textTitle) {
     return textTitle;
   }
 
   const pair = getPresentationPairFromToolCalls(toolCalls);
 
   if (pair.primary?.type === "chart" && pair.primary.title) {
-    const chartTitle = pair.primary.title;
-
-    if (pathTitle && chartTitle === STALE_LMP_TITLE) {
-      return pathTitle;
-    }
-
-    return chartTitle;
+    return pair.primary.title;
   }
 
   const tree = getTreePresentationFromPair(pair);
@@ -173,15 +150,7 @@ export function getPresentationTitle(
   const table = getTablePresentationFromPair(pair);
 
   if (table?.title) {
-    if (pathTitle && table.title === STALE_LMP_TITLE) {
-      return pathTitle;
-    }
-
     return table.title;
-  }
-
-  if (pathTitle) {
-    return pathTitle;
   }
 
   const trimmed = String(messageContent || "").trim();

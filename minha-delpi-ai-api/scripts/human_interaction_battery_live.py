@@ -432,6 +432,50 @@ def _judge(case: BatteryCase, msg: dict, ms: int) -> None:
     elif expect == "soft":
         if not prose or len(prose) < 8:
             errors.append("resposta vazia")
+    elif expect == "system_tables_search":
+        if not any("/system/tables/search" in p for p in paths):
+            errors.append(f"sem /system/tables/search ({paths})")
+        if not tools:
+            errors.append("sem tools")
+        route = _intent_route(msg)
+        if str(route.get("subIntent") or "") != "system_metadata":
+            errors.append(f"subIntent={route.get('subIntent')!r}")
+        if not prose:
+            errors.append("prosa vazia")
+    elif expect == "system_schema":
+        # Aceita /schema (roteiro canônico) ou /columns («quais colunas…»)
+        if not any(("/schema" in p or "/columns" in p) for p in paths):
+            errors.append(f"sem /schema|/columns ({paths})")
+        if not any("/system/tables" in p for p in paths):
+            errors.append(f"sem /system/tables ({paths})")
+        if not tools:
+            errors.append("sem tools")
+        if "x3_tamanho" in prose.lower() or re.search(r"\bn registros\b", prose.lower()):
+            errors.append("prosa genérica/técnica SX3")
+        if not prose or len(prose) < 40:
+            errors.append("prosa curta/inútil")
+        route = _intent_route(msg)
+        sub = str(route.get("subIntent") or "")
+        if sub and sub not in {"system_metadata", "sql_generate", "sql_schema"}:
+            errors.append(f"subIntent={sub!r}")
+    elif expect == "system_indexes":
+        if not any("/indexes" in p for p in paths):
+            errors.append(f"sem /indexes ({paths})")
+        if not tools:
+            errors.append("sem tools")
+        if not prose:
+            errors.append("prosa vazia")
+    elif expect == "system_clarify_column":
+        # Não inventar SA1; prefer clarify/show_sql ou schema da tabela pedida
+        if any("/data/sql" in p for p in paths):
+            errors.append("execute SQL indevido")
+        low = prose.lower()
+        if "sa1" in low and "sb1" not in " ".join(paths).lower():
+            # only fail if it jumped to SA1 via tool without user asking
+            if any("/system/tables/SA1" in p or "/system/tables/sa1" in p.lower() for p in paths):
+                errors.append("inventou SA1 via tool")
+        if not prose:
+            errors.append("prosa vazia")
 
     case.evidence = _build_evidence(case, msg, ms, errors)
     bits: list[str] = []
@@ -543,6 +587,54 @@ def _cases_catalog() -> list[BatteryCase]:
             "crie sql top 10 SB1 grupo 1008",
             "sql_authoring",
             use_agent=True,
+        ),
+        # F06 — metadado Protheus /system
+        BatteryCase(
+            "F06.search",
+            "F06",
+            "tabela-produtos",
+            "qual a tabela de produtos?",
+            "system_tables_search",
+            use_agent=True,
+            r_required=("R1", "R2", "R4", "R8"),
+        ),
+        BatteryCase(
+            "F06.schema",
+            "F06",
+            "schema-sb1010",
+            "me mostre o schema da tabela SB1010",
+            "system_schema",
+            use_agent=True,
+            r_required=("R1", "R2", "R3", "R4", "R8"),
+        ),
+        BatteryCase(
+            "F06.columns",
+            "F06",
+            "colunas-sb1010",
+            "quais colunas da tabela SB1010?",
+            "system_schema",
+            use_agent=True,
+            r_required=("R1", "R2", "R3", "R4", "R8"),
+        ),
+        BatteryCase(
+            "F06.indexes",
+            "F06",
+            "indexes-sb1010",
+            "quais indexes da SB1010?",
+            "system_indexes",
+            use_agent=True,
+            r_required=("R1", "R2", "R3", "R4", "R8"),
+        ),
+        BatteryCase(
+            "F06.addcol",
+            "F06",
+            "addcol-desconhecida",
+            "adicione a coluna cidade nessa consulta",
+            "system_clarify_column",
+            use_agent=True,
+            seed=["crie um sql que liste produtos do grupo 1008 sem executar"],
+            reuse_session=True,
+            r_required=("R1", "R2", "R4", "R6", "R8"),
         ),
         # F14 — follow-up
         BatteryCase(

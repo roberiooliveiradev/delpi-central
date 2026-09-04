@@ -186,4 +186,63 @@ describe("collectVisualSegments", () => {
 
     expect(kinds).toEqual(["table"]);
   });
+
+  it("coleta tabela de /system/tables/.../columns (não suprime por path)", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          path: "/system/tables/SB1010/columns",
+          preferredFormat: "table",
+          presentationDecision: {
+            layoutMode: "single",
+            selected: "table",
+          },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [
+              { kind: "decision", slot: "lead", source: "dataAnswer" },
+              { kind: "table", slot: "primary", source: "presentation" },
+            ],
+          },
+          presentation: {
+            type: "table",
+            title: "Colunas (SX3)",
+            columns: [
+              { key: "X3_CAMPO", label: "Campo" },
+              { key: "X3_TITULO", label: "Título" },
+            ],
+            rows: [{ X3_CAMPO: "B1_COD", X3_TITULO: "Codigo" }],
+          },
+        },
+      },
+    ]);
+
+    const kinds = collectVisualSegments(toolCalls).map((segment) => segment.kind);
+
+    expect(kinds).toEqual(["table"]);
+  });
+
+  it("ainda suprime visuais com sqlSchemaPrefetch explícito", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          path: "/system/tables/SB1010/columns",
+          sqlSchemaPrefetch: true,
+          presentation: {
+            type: "table",
+            title: "Colunas (SX3)",
+            columns: [{ key: "X3_CAMPO", label: "Campo" }],
+            rows: [{ X3_CAMPO: "B1_COD" }],
+          },
+        },
+      },
+    ]);
+
+    expect(collectVisualSegments(toolCalls)).toEqual([]);
+  });
 });
