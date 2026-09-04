@@ -31,9 +31,6 @@ from commercial_app.application.use_cases.get_portfolio_billing_ranking import (
 from commercial_app.core.auth_actor import current_user_from_request
 from commercial_app.core.responses import fail, ok
 from commercial_app.composition.commercial_composer import build_delpi_commercial_gateway
-from commercial_app.domain.services.opportunity_collaborator_summary_service import (
-    OpportunityCollaboratorSummaryService,
-)
 from commercial_app.interface.http.routes.totvs_bff_helpers import (
     merge_totvs_params,
     resolve_analytics_portfolio_scope,
@@ -775,11 +772,10 @@ def bff_opportunity_collaborator_summary(
     end_date: str | None = None,
     branch: str | None = None,
     customer_segment: str | None = None,
-    status: str | None = None,
     seller_id: str | None = Query(default=None),
     portfolio_id: str | None = Query(default=None),
 ):
-    """Aggregate OV counts by seller from the scoped proposals list (page cap 200)."""
+    """SQL-backed OV counts by seller (opening-date period). Independent of list status."""
     try:
         scope = resolve_analytics_portfolio_scope(
             request, seller_id=seller_id, portfolio_id=portfolio_id
@@ -791,27 +787,41 @@ def bff_opportunity_collaborator_summary(
                 end_date=end_date,
                 branch=branch,
                 customer_segment=customer_segment,
-                status=status,
-                page=1,
-                page_size=200,
             ),
             selected_customer_codes=selected_customer_codes_from_request(request),
         )
         payload = build_delpi_commercial_gateway().get_commercial_analytics(
-            "/proposals", params=totvs_params
+            "/proposals/collaborator-summary", params=totvs_params
         )
         data = unwrap_gateway_data(payload)
+        raw_items = data.get("items") if isinstance(data, dict) else None
+        items_in = raw_items if isinstance(raw_items, list) else []
         items = []
-        truncated = False
-        total = 0
-        if isinstance(data, dict):
-            raw_items = data.get("items")
-            items = [item for item in raw_items if isinstance(item, dict)] if isinstance(raw_items, list) else []
-            total = int(data.get("total") or len(items))
-            truncated = total > len(items)
-        rows = OpportunityCollaboratorSummaryService().summarize(items)
+        for row in items_in:
+            if not isinstance(row, dict):
+                continue
+            age = row.get("age_days_avg")
+            items.append(
+                {
+                    "sellerCode": str(row.get("seller_code") or "").strip(),
+                    "sellerName": str(row.get("seller_name") or "").strip(),
+                    "openCount": int(row.get("open_count") or 0),
+                    "wonCount": int(row.get("won_count") or 0),
+                    "lostCount": int(row.get("lost_count") or 0),
+                    "totalCount": int(row.get("total_count") or 0),
+                    "ageDaysAvg": float(age) if age is not None else None,
+                }
+            )
+        source_count = int(
+            (data.get("source_count") if isinstance(data, dict) else None) or sum(i["totalCount"] for i in items)
+        )
         return ok(
-            {"items": rows, "sourceCount": len(items), "total": total, "truncated": truncated},
+            {
+                "items": items,
+                "sourceCount": source_count,
+                "total": source_count,
+                "truncated": False,
+            },
             message="Resumo de oportunidades por colaborador.",
             operation_id="bff_opportunity_collaborator_summary",
         )
@@ -830,6 +840,7 @@ def bff_opportunity_collaborator_summary(
             500,
             operation_id="bff_opportunity_collaborator_summary",
         )
+
 
 
 @router.get(

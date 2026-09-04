@@ -51,7 +51,7 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Conversar com o time sobre um pedido | **Sala de interação** ou painel na ficha | Inbox ou “abrir sala” no pedido/conta/OV |
 | Ver indicadores do mês / ano | **Visão geral** | Ajuste período e unidade (SC/ES); KPIs e gráficos |
 | Ver pontualidade (OTD) | **Início** (launcher) ou drill na Visão geral → **OTD** | Página Pontualidade |
-| Ver oportunidades (OV) no período | **Início** → Oportunidades | Lista global; clique abre a ficha da OV |
+| Ver oportunidades (OV) no período | **Início** → Oportunidades | Lista global; **Por colaborador** mostra totais do período (data de abertura), independente do filtro Status da lista |
 | Gerar / revisar PDF de proposta | **Início** → **Propostas** | Documento ADY (não é a lista de OV) |
 | Trocar de carteira (se eu tiver mais de uma) | Menu do usuário (canto) / **Escopo** | Escolha a carteira ativa |
 | Saber o que significa um termo | **Ajuda** | Catálogo de termos (definição e onde aparece) |

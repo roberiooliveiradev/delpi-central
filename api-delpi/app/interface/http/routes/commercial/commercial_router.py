@@ -30,6 +30,9 @@ from app.application.dto.commercial.commercial_target_request import CommercialT
 from app.application.dto.commercial.list_commercial_proposals_request import (
     ListCommercialProposalsRequest,
 )
+from app.application.dto.commercial.summarize_commercial_proposals_by_collaborator_request import (
+    SummarizeCommercialProposalsByCollaboratorRequest,
+)
 from app.application.dto.commercial.sales_conversion_rate_request import SalesConversionRateRequest
 from app.application.dto.commercial.sales_conversion_rate_series_request import (
     SalesConversionRateSeriesRequest,
@@ -75,6 +78,7 @@ from app.composition.commercial_composer import (
     build_get_sales_conversion_rate_use_case,
     build_get_sales_conversion_rate_series_use_case,
     build_list_commercial_proposals_use_case,
+    build_summarize_commercial_proposals_by_collaborator_use_case,
     build_get_commercial_proposal_use_case,
     build_get_new_clients_average_use_case,
     build_get_new_clients_rol_pct_use_case,
@@ -119,6 +123,7 @@ from app.interface.http.openapi_agent_metadata import (
     COMMERCIAL_PROPOSAL_DETAIL,
     COMMERCIAL_PROPOSAL_HISTORY_EVENTS,
     COMMERCIAL_PROPOSALS,
+    COMMERCIAL_PROPOSAL_COLLABORATOR_SUMMARY,
 )
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 
@@ -626,6 +631,51 @@ def list_commercial_proposals(
             status_code=500,
         )
 
+
+
+
+@router.get(
+    "/proposals/collaborator-summary",
+    **COMMERCIAL_PROPOSAL_COLLABORATOR_SUMMARY,
+)
+@require_any_permission(KPI_COMMERCIAL_ACCESS)
+def summarize_commercial_proposals_by_collaborator(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    customer_codes: Optional[str] = Query(
+        None, description="CSV of TOTVS customer codes (portfolio scope)."
+    ),
+    product_code: Optional[str] = Query(None, max_length=30),
+    product_group: Optional[str] = Query(None, min_length=4, max_length=4),
+):
+    try:
+        use_case = build_summarize_commercial_proposals_by_collaborator_use_case()
+        request = SummarizeCommercialProposalsByCollaboratorRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            customer_segment=parse_customer_segment(customer_segment),
+            customer_codes=parse_customer_codes(customer_codes),
+            product_code=product_code,
+            product_group=product_group,
+        )
+        result = use_case.execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="summarize_commercial_proposals_by_collaborator",
+            message="Commercial proposal collaborator summary fetched successfully.",
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while summarizing proposals by collaborator: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while summarizing proposals by collaborator: {exc}")
+        return error_response(
+            "Internal error while summarizing proposals by collaborator.",
+            status_code=500,
+        )
 
 @router.get("/proposals/{proposal_number}", **COMMERCIAL_PROPOSAL_DETAIL)
 @require_any_permission(KPI_COMMERCIAL_ACCESS)

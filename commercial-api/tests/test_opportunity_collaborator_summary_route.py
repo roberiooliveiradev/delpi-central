@@ -1,4 +1,4 @@
-"""GET /analytics/opportunity-collaborator-summary — envelope ok/fail (sem NameError)."""
+"""GET /analytics/opportunity-collaborator-summary — SQL summary via api-delpi (sem agregação truncada)."""
 
 from __future__ import annotations
 
@@ -51,11 +51,15 @@ def test_collaborator_summary_returns_envelope() -> None:
                 {
                     "seller_code": "001",
                     "seller_name": "Ana",
-                    "status_category": "open",
-                    "proposal_date": "2026-08-01",
+                    "open_count": 35,
+                    "won_count": 11,
+                    "lost_count": 0,
+                    "total_count": 46,
+                    "age_days_avg": 15.3,
                 }
             ],
-            "total": 1,
+            "source_count": 46,
+            "truncated": False,
         },
     }
     request = _request()
@@ -81,7 +85,14 @@ def test_collaborator_summary_returns_envelope() -> None:
     assert body["success"] is True
     assert body["meta"]["operationId"] == "bff_opportunity_collaborator_summary"
     assert body["data"]["items"][0]["sellerCode"] == "001"
-    assert body["data"]["sourceCount"] == 1
+    assert body["data"]["items"][0]["wonCount"] == 11
+    assert body["data"]["sourceCount"] == 46
+    assert body["data"]["truncated"] is False
+    gateway.get_commercial_analytics.assert_called_once()
+    path = gateway.get_commercial_analytics.call_args.args[0]
+    assert path == "/proposals/collaborator-summary"
+    params = gateway.get_commercial_analytics.call_args.kwargs.get("params") or {}
+    assert "status" not in params
 
 
 def test_collaborator_summary_gateway_down_returns_502_envelope() -> None:

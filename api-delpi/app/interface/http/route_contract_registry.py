@@ -277,6 +277,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "commercial_rol_by_branch", "paged_list"
     ),
     "list_commercial_proposals": RouteContract("commercial_proposal", "paged_list"),
+    "summarize_commercial_proposals_by_collaborator": RouteContract(
+        "commercial_proposal_collaborator_summary", "playbook_report"
+    ),
     "get_commercial_proposal": RouteContract("commercial_proposal", "product_snapshot"),
     "get_commercial_proposal_history_events": RouteContract(
         "commercial_proposal_history", "paged_list"

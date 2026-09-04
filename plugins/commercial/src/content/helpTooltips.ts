@@ -633,6 +633,8 @@ export const CM_HELP = {
       "Top 10 linhas ainda não faturadas com a promessa mais próxima.",
     opportunitiesPage:
       "Lista global de oportunidades de venda (OV) no período. Use a Conta para ver só um cliente.",
+    collaboratorSummary:
+      "Totais por vendedor no período (data de abertura). Não muda com o Status da lista — ganhas/abertas/perdidas vêm agregadas no SQL.",
     opportunitiesList: "OVs do período. Clique na linha ou no número da OV para abrir o detalhe.",
     tableRowOpensDetail:
       "Clique na linha (ou na identidade) abre o detalhe. Controles internos com destino diferente não propagam o clique.",
@@ -649,7 +651,7 @@ export const CM_HELP = {
     searchOpportunities:
       "Filtra a lista por número da OV, código ou nome do cliente no período selecionado.",
     opportunityStatus:
-      "Status canônico da OV (aberta, ganha, perdida) — mesmo contrato do BFF. Analista/etapa/família de cliente ainda sem campo no envelope.",
+      "Filtra só a lista de OVs abaixo (abertas, ganhas, perdidas). Não altera a tabela Por colaborador, que sempre mostra o total do período por data de abertura.",
     columns: {
       order: "Número do pedido e item da linha avaliada no OTD.",
       branch: "Unidade operacional (Santa Catarina ou Espírito Santo) da linha.",

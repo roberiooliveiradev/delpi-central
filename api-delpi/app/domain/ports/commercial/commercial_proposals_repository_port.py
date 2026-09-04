@@ -6,6 +6,9 @@ from app.application.dto.commercial.get_commercial_proposal_request import (
 from app.application.dto.commercial.list_commercial_proposals_request import (
     ListCommercialProposalsRequest,
 )
+from app.application.dto.commercial.summarize_commercial_proposals_by_collaborator_request import (
+    SummarizeCommercialProposalsByCollaboratorRequest,
+)
 from app.application.models.page import Page
 from app.domain.entities.commercial.commercial_proposal import CommercialProposal
 from app.domain.entities.commercial.commercial_proposal_detail import (
@@ -26,4 +29,11 @@ class CommercialProposalsRepositoryPort(ABC):
         self,
         request: GetCommercialProposalRequest,
     ) -> CommercialProposalDetail | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def summarize_by_collaborator(
+        self,
+        request: SummarizeCommercialProposalsByCollaboratorRequest,
+    ) -> dict:
         raise NotImplementedError

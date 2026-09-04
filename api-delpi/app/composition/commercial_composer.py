@@ -15,6 +15,9 @@ from app.application.use_cases.commercial.get_commercial_proposal_use_case impor
 from app.application.use_cases.commercial.list_commercial_proposals_use_case import (
     ListCommercialProposalsUseCase,
 )
+from app.application.use_cases.commercial.summarize_commercial_proposals_by_collaborator_use_case import (
+    SummarizeCommercialProposalsByCollaboratorUseCase,
+)
 from app.infrastructure.persistence.totvs.commercial_repositories.commercial_proposals_repository import (
     CommercialProposalsRepository,
 )
@@ -89,6 +92,12 @@ def build_get_sales_conversion_rate_series_use_case() -> GetSalesConversionRateS
 
 def build_list_commercial_proposals_use_case() -> ListCommercialProposalsUseCase:
     return ListCommercialProposalsUseCase(
+        commercial_proposals_repository=CommercialProposalsRepository()
+    )
+
+
+def build_summarize_commercial_proposals_by_collaborator_use_case() -> SummarizeCommercialProposalsByCollaboratorUseCase:
+    return SummarizeCommercialProposalsByCollaboratorUseCase(
         commercial_proposals_repository=CommercialProposalsRepository()
     )
 

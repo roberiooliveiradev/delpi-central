@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 699 · **Gerado em:** 2026-09-03 19:55 UTC
+**Provider:** `api-delpi` · **Rotas:** 700 · **Gerado em:** 2026-09-04 10:37 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -45,7 +45,7 @@
 |--------|------|-------------|---------|
 | `GET` | `/customers/search` | `search_customers` | Search Customers Route |
 
-## Comercial (23)
+## Comercial (24)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
@@ -56,6 +56,7 @@
 | `GET` | `/commercial/new-clients-average` | `get_new_clients_average` | New clients average |
 | `GET` | `/commercial/new-clients-rol-pct` | `get_new_clients_rol_pct` | Indicator — percentage rol de clientes novos |
 | `GET` | `/commercial/proposals` | `list_commercial_proposals` | Commercial proposals |
+| `GET` | `/commercial/proposals/collaborator-summary` | `summarize_commercial_proposals_by_collaborator` | Commercial proposal counts by collaborator |
 | `GET` | `/commercial/proposals/{proposal_number}` | `get_commercial_proposal` | Commercial proposal detail (sales order) |
 | `GET` | `/commercial/proposals/{proposal_number}/history/events` | `get_commercial_proposal_history_events` | Commercial proposal stage history |
 | `GET` | `/commercial/rol/by-branch` | `get_commercial_rol_by_branch` | Lista paginada — Rol comercial por filial |

@@ -280,6 +280,15 @@
       "status": "covered"
     },
     {
+      "operationId": "summarize_commercial_proposals_by_collaborator",
+      "method": "GET",
+      "path": "/commercial/proposals/collaborator-summary",
+      "module": "commercial",
+      "entity": "commercial_proposal_collaborator_summary",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
       "operationId": "get_commercial_proposal",
       "method": "GET",
       "path": "/commercial/proposals/{proposal_number}",

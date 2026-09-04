@@ -42,7 +42,6 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
   const filters = useAnalyticsFilters();
   const [items, setItems] = useState<CommercialProposal[]>([]);
   const [collab, setCollab] = useState<OpportunityCollaboratorSummaryRow[]>([]);
-  const [collabTruncated, setCollabTruncated] = useState(false);
   const [slaConfigured, setSlaConfigured] = useState(false);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState(() => readAnalyticsOpportunitySearch());
@@ -67,37 +66,22 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    void Promise.all([
-      getCommercialProposals(
-        {
-          ...filters.apiParams,
-          page: 1,
-          page_size: 50,
-          search: search.trim() || undefined,
-          status: statusFilter || undefined,
-          sort_by: "proposal_date",
-          sort_dir: "desc",
-        },
-        controller.signal,
-      ),
-      getOpportunityCollaboratorSummary(
-        { ...filters.apiParams, status: statusFilter || undefined },
-        controller.signal,
-      ).catch(() => null),
-      getSlaPolicies(controller.signal).catch(() => ({ items: [], configured: false })),
-    ])
-      .then(([page, summary, sla]) => {
+    void getCommercialProposals(
+      {
+        ...filters.apiParams,
+        page: 1,
+        page_size: 50,
+        search: search.trim() || undefined,
+        status: statusFilter || undefined,
+        sort_by: "proposal_date",
+        sort_dir: "desc",
+      },
+      controller.signal,
+    )
+      .then((page) => {
         if (controller.signal.aborted) return;
         setItems(page.items ?? []);
         setTotal(page.total ?? 0);
-        if (summary) {
-          setCollab(summary.items ?? []);
-          setCollabTruncated(Boolean(summary.truncated));
-        } else {
-          setCollab([]);
-          setCollabTruncated(false);
-        }
-        setSlaConfigured(Boolean(sla?.configured));
       })
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
@@ -118,6 +102,34 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     filters.apiParams.customer_codes,
     search,
     statusFilter,
+    reloadKey,
+  ]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void Promise.all([
+      getOpportunityCollaboratorSummary(
+        { ...filters.apiParams },
+        controller.signal,
+      ).catch(() => null),
+      getSlaPolicies(controller.signal).catch(() => ({ items: [], configured: false })),
+    ]).then(([summary, sla]) => {
+      if (controller.signal.aborted) return;
+      if (summary) {
+        setCollab(summary.items ?? []);
+      } else {
+        setCollab([]);
+      }
+      setSlaConfigured(Boolean(sla?.configured));
+    });
+    return () => controller.abort();
+  }, [
+    filters.apiParams.start_date,
+    filters.apiParams.end_date,
+    filters.apiParams.branch,
+    filters.apiParams.customer_segment,
+    filters.apiParams.seller_id,
+    filters.apiParams.customer_codes,
     reloadKey,
   ]);
 
@@ -174,11 +186,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
       {!loading && collab.length > 0 ? (
         <CommercialSectionCard
           title="Por colaborador"
-          hint={
-            collabTruncated
-              ? "Agregação das primeiras 200 OVs do filtro (lista truncada)."
-              : "Contagem de OVs abertas/ganhas/perdidas por vendedor TOTVS (AD1_VEND)."
-          }
+          hint={CM_HELP.analytics.collaboratorSummary}
         >
           <CommercialDataTable
             rows={collab}

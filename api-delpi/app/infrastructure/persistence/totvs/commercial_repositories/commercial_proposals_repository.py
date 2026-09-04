@@ -6,6 +6,9 @@ from app.application.dto.commercial.get_commercial_proposal_request import (
 from app.application.dto.commercial.list_commercial_proposals_request import (
     ListCommercialProposalsRequest,
 )
+from app.application.dto.commercial.summarize_commercial_proposals_by_collaborator_request import (
+    SummarizeCommercialProposalsByCollaboratorRequest,
+)
 from app.application.models.page import Page
 from app.domain.entities.commercial.commercial_proposal import CommercialProposal
 from app.domain.entities.commercial.commercial_proposal_detail import (
@@ -18,6 +21,7 @@ from app.domain.services.commercial_proposal_list_search_service import (
     CommercialProposalListSearchService,
 )
 from app.domain.services.commercial_proposal_status import (
+    LOST_STATUS_CODES,
     WON_STATUS_CODE,
     resolve_proposal_status_category,
     resolve_proposal_status_label,
@@ -251,6 +255,115 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
             page=page,
             page_size=page_size,
         )
+
+
+    def summarize_by_collaborator(
+        self,
+        request: SummarizeCommercialProposalsByCollaboratorRequest,
+    ) -> dict:
+        """Aggregate OV counts by seller for the opening-date period (no page cap / status)."""
+        qb = QueryBuilder()
+        qb.raw("AD1.D_E_L_E_T_ = ''")
+        if request.branch:
+            qb.eq("AD1.AD1_FILIAL", request.branch)
+        qb.date_range("AD1.AD1_DATA", request.start_date, request.end_date)
+        CommercialCustomerSegmentService.apply_segment_to_query_builder(
+            qb,
+            "AD1.AD1_CODCLI",
+            request.customer_segment,
+        )
+        CommercialCustomerCodesFilterService.apply_to_query_builder(
+            qb,
+            "AD1.AD1_CODCLI",
+            request.customer_codes,
+        )
+        # Reuse product filters via a lightweight shim with the same attribute names.
+        list_like = type(
+            "ListLike",
+            (),
+            {
+                "product_code": request.product_code,
+                "product_group": request.product_group,
+            },
+        )()
+        self._apply_product_filters(qb, list_like)
+
+        where_clause, where_params = qb.build()
+        lost_sql = ", ".join(f"'{code}'" for code in sorted(LOST_STATUS_CODES))
+        open_sql = "'1', '2', '3', '4', '5', '6', '7'"
+
+        sql = f"""
+            WITH ovs_base AS (
+                SELECT
+                    AD1.AD1_FILIAL,
+                    AD1.AD1_NROPOR,
+                    AD1.AD1_REVISA,
+                    AD1.AD1_DATA,
+                    AD1.AD1_STATUS,
+                    AD1.AD1_VEND,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY AD1.AD1_FILIAL, AD1.AD1_NROPOR
+                        ORDER BY AD1.AD1_REVISA DESC
+                    ) AS rn
+                FROM AD1010 AD1
+                WHERE {where_clause}
+            ),
+            ovs_latest AS (
+                SELECT
+                    AD1_FILIAL,
+                    AD1_NROPOR,
+                    AD1_DATA,
+                    LTRIM(RTRIM(ISNULL(AD1_STATUS, ''))) AS status_code,
+                    LTRIM(RTRIM(ISNULL(AD1_VEND, ''))) AS seller_code
+                FROM ovs_base
+                WHERE rn = 1
+            )
+            SELECT
+                L.seller_code AS seller_code,
+                MAX(LTRIM(RTRIM(ISNULL(SA3.A3_NOME, '')))) AS seller_name,
+                SUM(CASE WHEN L.status_code = '{WON_STATUS_CODE}' THEN 1 ELSE 0 END) AS won_count,
+                SUM(CASE WHEN L.status_code IN ({lost_sql}) THEN 1 ELSE 0 END) AS lost_count,
+                SUM(CASE WHEN L.status_code IN ({open_sql}) THEN 1 ELSE 0 END) AS open_count,
+                COUNT(1) AS total_count,
+                AVG(
+                    CAST(
+                        DATEDIFF(DAY, L.AD1_DATA, CAST(GETDATE() AS DATE))
+                        AS FLOAT
+                    )
+                ) AS age_days_avg
+            FROM ovs_latest L
+            LEFT JOIN SA3010 SA3
+                ON SA3.D_E_L_E_T_ = ''
+               AND LTRIM(RTRIM(SA3.A3_COD)) = L.seller_code
+            GROUP BY L.seller_code
+            ORDER BY total_count DESC, seller_code ASC
+        """
+
+        with self:
+            rows = self.execute_query(sql, where_params)
+
+        items: list[dict] = []
+        source_count = 0
+        for row in rows or []:
+            total = int(row.get("total_count") or 0)
+            source_count += total
+            age = row.get("age_days_avg")
+            items.append(
+                {
+                    "seller_code": (row.get("seller_code") or "").strip(),
+                    "seller_name": (row.get("seller_name") or "").strip() or None,
+                    "open_count": int(row.get("open_count") or 0),
+                    "won_count": int(row.get("won_count") or 0),
+                    "lost_count": int(row.get("lost_count") or 0),
+                    "total_count": total,
+                    "age_days_avg": round(float(age), 1) if age is not None else None,
+                }
+            )
+        return {
+            "items": items,
+            "source_count": source_count,
+            "truncated": False,
+        }
 
     def get_proposal(
         self,
