@@ -288,7 +288,39 @@ class ChatReferenceResolutionService:
         ):
             cls._set_this_ambiguity(snapshot)
 
+        cls._append_result_set_references(
+            normalized,
+            snapshot,
+            resolved=resolved,
+            used_keys=used_keys,
+        )
+
         return resolved, used_keys
+
+    @classmethod
+    def _append_result_set_references(
+        cls,
+        message: str,
+        snapshot: dict,
+        *,
+        resolved: list[dict[str, Any]],
+        used_keys: list[str],
+    ) -> None:
+        """Ordinais («o segundo», «os três primeiros») ancorados em ``resultSets``."""
+        from app.domain.services.chat_result_set_reference_service import (
+            ChatResultSetReferenceService,
+        )
+
+        entries, keys = ChatResultSetReferenceService.resolve(message, snapshot)
+
+        if not entries:
+            return
+
+        resolved.extend(entries)
+
+        for key in keys:
+            if key not in used_keys:
+                used_keys.append(key)
 
     @classmethod
     def _set_this_ambiguity(cls, snapshot: dict) -> None:

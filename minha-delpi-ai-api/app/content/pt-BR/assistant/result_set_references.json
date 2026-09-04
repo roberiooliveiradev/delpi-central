@@ -1,0 +1,102 @@
+{
+  "version": "2026.09.1",
+  "limits": {
+    "maxSets": 3,
+    "maxItemsPerSet": 20,
+    "maxLabelChars": 90,
+    "maxRangeSize": 10,
+    "minProductRatio": 0.6
+  },
+  "fields": {
+    "code": [
+      "product_code",
+      "productcode",
+      "code",
+      "codigo",
+      "item_code",
+      "itemcode",
+      "sku",
+      "produto",
+      "b1_cod"
+    ],
+    "label": [
+      "description",
+      "descricao",
+      "b1_desc",
+      "product_description",
+      "label",
+      "name",
+      "nome",
+      "title",
+      "titulo"
+    ]
+  },
+  "kinds": {
+    "product": "product",
+    "generic": "generic"
+  },
+  "ordinals": {
+    "words": {
+      "primeiro": 1,
+      "primeira": 1,
+      "segundo": 2,
+      "segunda": 2,
+      "terceiro": 3,
+      "terceira": 3,
+      "quarto": 4,
+      "quarta": 4,
+      "quinto": 5,
+      "quinta": 5,
+      "sexto": 6,
+      "sexta": 6,
+      "setimo": 7,
+      "setima": 7,
+      "oitavo": 8,
+      "oitava": 8,
+      "nono": 9,
+      "nona": 9,
+      "decimo": 10,
+      "decima": 10
+    },
+    "cardinals": {
+      "dois": 2,
+      "duas": 2,
+      "tres": 3,
+      "quatro": 4,
+      "cinco": 5,
+      "seis": 6,
+      "sete": 7,
+      "oito": 8,
+      "nove": 9,
+      "dez": 10
+    },
+    "patterns": {
+      "singleOrdinalWord": "\\b(primeir[oa]|segund[oa]|terceir[oa]|quart[oa]|quint[oa]|sext[oa]|setim[oa]|oitav[oa]|non[oa]|decim[oa])\\b",
+      "firstNWord": "\\b(?:[dn]?os|[dn]?as)\\s+(dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\\s+primeir[oa]s\\b",
+      "firstNNumeric": "\\b(?:[dn]?os|[dn]?as)\\s+(\\d{1,2})\\s+primeir[oa]s\\b",
+      "lastItem": "\\b(?:[dn]?[oa])\\s+ultim[oa]\\b",
+      "itemNumber": "\\b(?:item|linha|registro)\\s+(\\d{1,2})\\b"
+    }
+  },
+  "resolution": {
+    "confidence": 0.88,
+    "singleReferenceText": "{ordinalWord} item da lista",
+    "rangeReferenceText": "os {count} primeiros itens da lista",
+    "lastReferenceText": "último item da lista",
+    "sourceTemplate": "resultSets[{setId}].items",
+    "resolvedToSingle": "resultSetItem",
+    "resolvedToRange": "resultSetItems"
+  },
+  "ordinalWords": {
+    "1": "primeiro",
+    "2": "segundo",
+    "3": "terceiro",
+    "4": "quarto",
+    "5": "quinto",
+    "6": "sexto",
+    "7": "sétimo",
+    "8": "oitavo",
+    "9": "nono",
+    "10": "décimo"
+  }
+}

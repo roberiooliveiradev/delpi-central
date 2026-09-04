@@ -58,6 +58,11 @@ class ChatConversationMemoryExtractor:
             previous_messages,
             tool_calls,
         )
+        result["resultSets"] = cls._extract_result_sets(
+            result,
+            previous_messages=previous_messages,
+            tool_calls=tool_calls,
+        )
         result = cls._attach_contrast_metrics(result, tool_calls=tool_calls)
         result["canvas"] = cls._extract_canvas_state(previous_messages)
         result["lastAttachment"] = cls._extract_last_attachment(
@@ -384,6 +389,40 @@ class ChatConversationMemoryExtractor:
             calls,
             message_id=message_id,
             previous_messages=previous_messages,
+        )
+
+    @classmethod
+    def _extract_result_sets(
+        cls,
+        snapshot: dict[str, Any],
+        *,
+        previous_messages: list[Any] | None,
+        tool_calls: list | None,
+    ) -> list[dict[str, Any]]:
+        from app.domain.services.chat_result_set_reference_service import (
+            ChatResultSetReferenceService,
+        )
+
+        calls = list(tool_calls or [])
+        message_id: str | None = None
+
+        if not calls:
+            for item in reversed(previous_messages or []):
+                if cls._message_role(item) != "assistant":
+                    continue
+
+                stored = cls._message_metadata(item).get("toolCalls") or []
+
+                if stored:
+                    calls = stored
+                    message_id = cls._message_id(item)
+                    break
+
+        return ChatResultSetReferenceService.build_result_sets(
+            tool_calls=calls,
+            excerpt=snapshot.get("lastResultExcerpt"),
+            message_id=message_id,
+            previous_result_sets=snapshot.get("resultSets"),
         )
 
     @classmethod
