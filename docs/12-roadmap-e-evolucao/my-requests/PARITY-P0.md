@@ -42,7 +42,22 @@ Dual-run: legado permanece intacto até cutover completo; E8 entregou script de 
 | Dual-run UI lado a lado em staging | Exige operadores + stack TOTVS | Homologação operacional |
 | Lookups contra TOTVS real | Suite usa `InMemoryOperationalLookupAdapter` + golden de chaves; shape HTTP live fica no smoke api-delpi | Smoke ambiente com Protheus |
 | Apply migração de dados em prod | Script + runbook E8 prontos; dry-run obrigatório antes | Operação após staging |
-| Remoção do plugin legado | Dual-run obrigatório | Release major pós-janela |
+| Remoção do plugin legado | Dual-run obrigatório | Soft = E12; hard Compose = E13 pós-soak |
+
+## Gate soft cutover (E12 — antes de prod)
+
+Assinar esta checklist **antes** de deploy em produção com `showInMenu: false` no manifesto `invoice-issuance` e redirect de bookmarks. Staging pode receber o soft cutover para soak.
+
+| # | Item | Responsável | Feito |
+|---|------|-------------|-------|
+| 1 | Checklist §20.3 exercitado live (criar / fila / start→issue / return / cancel) no canônico my-requests | Ops | [ ] |
+| 2 | Smoke lookups TOTVS reais via wizard my-requests (`parties` / `products` / `carriers`) | Ops | [ ] |
+| 3 | Dry-run migração em staging sem `missing_attachment_files` críticos | Ops | [ ] |
+| 4 | (Recomendado) `--apply` migração em staging + amostragem de anexos | Ops | [ ] |
+| 5 | Comunicação: menu legado some; URL direta ainda abre o MFE legado até E13 | Produto | [ ] |
+| 6 | Confirmar que lookups api-delpi `/invoice-issuance/*` **permanecem** (adapter) | Dev | [ ] |
+
+Após o gate: soak com menu oculto → então E13 (Compose sem MFE legado). **Não** dropar schema nem remover paths de lookup na mesma janela.
 
 ## Como rodar
 

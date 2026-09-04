@@ -2,7 +2,7 @@
 
 > **Plugin:** `my-requests`  
 > **API:** `/apps/requests-api/v1`  
-> **Status:** discovery concluído — playbook executável para implementação  
+> **Status:** E1–E11 entregues — próximo = E12 soft cutover (menu oculto + redirect); fase 7 hard = E13; WF-06 admin RO = E14  
 > **Referência legado:** [`invoice-issuance`](../invoice-issuance/README.md)
 
 ---
@@ -1254,6 +1254,11 @@ Formato [`plan-construction.mdc`](../../../.cursor/rules/plan-construction.mdc):
 | Inventário plugins docs | E5.S1 |
 | Paridade dual-run | E6.S3, E9 |
 | Guia procedimentos cutover | E8.S2 |
+| UX polish (filtros, modal, anexos) | E10 |
+| Busca `q` + upload artefatos | E11 |
+| Soft cutover legado | E12 |
+| Hard descomission (pós-soak) | E13 (= fase 7 operacional) |
+| Admin RequestTypes RO | E14 (WF-06) |
 
 ```mermaid
 flowchart LR
@@ -1267,6 +1272,11 @@ flowchart LR
   E6 --> E8[E8 Cutover]
   E7 --> E8
   E8 --> E9[E9 Verify]
+  E9 --> E10[E10 UX]
+  E10 --> E11[E11 Search Artifacts]
+  E11 --> E12[E12 Soft Cutover]
+  E12 --> E13[E13 Hard Decommission]
+  E13 --> E14[E14 Admin RO]
 ```
 
 ---
@@ -1516,6 +1526,25 @@ flowchart LR
 
 ---
 
+### E10–E11 — UX + busca/artefatos (entregues)
+
+| Etapa | Entrega | Status |
+|-------|---------|--------|
+| **E10** | FiltersKit + CompactPagination; ModalShell return/cancel; FileDropzone anexos | **entregue** |
+| **E11** | Param `q` mine/work-queue; FilterInputField; upload artefatos (process/manage) | **entregue** |
+
+### E12–E14 — Soft cutover → descomission → admin (em curso)
+
+| Etapa | Entrega | Nota |
+|-------|---------|------|
+| **E12** | Soft cutover: docs gate, `showInMenu: false`, redirect bookmarks | Prod só após gate live em `PARITY-P0.md` |
+| **E13** | Hard descomission: Compose/scripts sem MFE legado; RBAC/retenção docs | Pós-soak; **não** DROP schema; lookups api-delpi mantidos enquanto `ApiDelpiAdapter` precisar |
+| **E14** | WF-06 `/admin` RequestTypes read-only (`my-requests.manage`) | Sem CRUD |
+
+Detalhe das receitas: planos Cursor E10/E11/E12+.
+
+---
+
 ## Apêndice A — Tabela componente × destino (consolidada)
 
 | Componente atual | Específico NF | Generalizável | Destino futuro |
@@ -1550,5 +1579,5 @@ flowchart LR
 
 ---
 
-**Status:** `DISCOVERY CONCLUÍDO`  
-**Próximo passo:** executar E1.S1 após aprovação do time.
+**Status:** `E1–E11 ENTREGUES`  
+**Próximo passo:** E12 soft cutover (menu oculto + redirect); depois gate ops → E13 hard → E14 admin RO.
