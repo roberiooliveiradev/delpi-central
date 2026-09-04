@@ -227,6 +227,44 @@ class ChatTurnPreparationService:
             if "turn_understanding_shadow" not in pipeline_stages:
                 pipeline_stages.append("turn_understanding_shadow")
 
+        from app.domain.services.chat_capability_discovery_service import (
+            ChatCapabilityDiscoveryService,
+        )
+        from app.domain.services.chat_task_planner_service import ChatTaskPlannerService
+
+        discovery = ChatCapabilityDiscoveryService.discover(message)
+        if isinstance(workspace_context, dict):
+            workspace_context = {
+                **workspace_context,
+                **discovery.as_admin_debug(),
+            }
+
+        shadow_plan = ChatTaskPlannerService.plan_shadow(
+            message,
+            response_mode=getattr(request, "response_mode", None),
+            previous_messages=history_source,
+        )
+        if shadow_plan is not None and isinstance(workspace_context, dict):
+            workspace_context = {
+                **workspace_context,
+                "shadowTaskPlan": shadow_plan.as_admin_debug(),
+            }
+            if "task_plan_shadow" not in pipeline_stages:
+                pipeline_stages.append("task_plan_shadow")
+
+        execution_plan = ChatTaskPlannerService.plan_for_execution(
+            message,
+            response_mode=getattr(request, "response_mode", None),
+            previous_messages=history_source,
+        )
+        if execution_plan is not None and isinstance(workspace_context, dict):
+            workspace_context = {
+                **workspace_context,
+                "activeTaskPlan": execution_plan.as_admin_debug(),
+            }
+            if "task_plan_cutover" not in pipeline_stages:
+                pipeline_stages.append("task_plan_cutover")
+
         # Continuity reexec (revise/YoY) vence text_task «comparar» — não é redação pura.
         turn_grounding = (
             workspace_context.get("turnGrounding")
