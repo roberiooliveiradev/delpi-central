@@ -37,9 +37,12 @@ services:
       OLLAMA_MAX_LOADED_MODELS: "1"
       OLLAMA_KEEP_ALIVE: 5m
       OLLAMA_NUM_CTX: ${OLLAMA_NUM_CTX:-1536}
+      # Fallback/status; com Kimi o teto do turno é generationLimitsCloud / CLOUD_*.
       LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-1024}
       CHAT_HISTORY_MAX_MESSAGES: "8"
       MAX_CONTEXT_CHUNKS: "4"
+      # Com Kimi em host RAM limitada, preferir 12000+ no .env (não 9000 legado).
+      MAX_CONTEXT_CHARS: ${MAX_CONTEXT_CHARS:-12000}
       CHAT_AGENTIC_LOOP_MAX_STEPS: "1"
 
   ollama:

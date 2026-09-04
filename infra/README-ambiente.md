@@ -361,25 +361,46 @@ Injetados em `docker-compose.dev.yml` e `docker-compose.yml` quando ausentes no 
 
 | Variável | Default compose | Papel |
 |----------|-----------------|-------|
-| `OLLAMA_MODEL` | `qwen2.5:1.5b` | `qwen2.5:1.5b` (igual dev; override no `.env` se srv-api usar 3b) |
-| `CHAT_LLM_LATENCY_PROFILE` | `operational_cpu` | Preset 320 tokens / ctx 1024 |
-| `LLM_MAX_TOKENS` | `320` | Teto global (override do preset) |
+| `OLLAMA_MODEL` | `qwen2.5:1.5b` | Modelo local (igual dev; override no `.env` se srv-api usar 3b) |
+| `CHAT_LLM_LATENCY_PROFILE` | `operational_cpu` | Preset Ollama 320 tokens / ctx 1024 |
+| `LLM_MAX_TOKENS` | `320` | Fallback/status admin — **não** é o teto do turno com modos ligados |
 | `LLM_TEMPERATURE` | `0.2` | Igual dev |
-| `OLLAMA_NUM_CTX` | `1024` | Contexto global |
-| `MAX_CONTEXT_CHUNKS` / `MAX_CONTEXT_CHARS` | `6` / `9000` | Igual dev (menos RAG = menos latência) |
+| `OLLAMA_NUM_CTX` | `1024` | Contexto global Ollama |
+| `MAX_CONTEXT_CHUNKS` / `MAX_CONTEXT_CHARS` | `6` / `12000` | Fallback agentic; RAG usa `contextBudget*` do modo. Kimi: `24000` no `.env` |
 | `CHAT_FAST_PATH_MAX_CHARS` | `48` | Igual dev |
 | `CHAT_DIRECT_RESPONSE_STREAM_*` | `4` chars / `0` ms | Sem delay artificial (prod antigo: 2/45) |
 | `CHAT_RESPONSE_MODES_ENABLED` | `true` | Seletor Rápida/Normal/Pensador |
 | `CHAT_RESPONSE_MODE_FAST_*` | 96 tok / ctx 512 | Modo Rápida (**só Ollama/local**) |
 | `CHAT_RESPONSE_MODE_NORMAL_*` | 1.5b, 256 tok, ctx 1536 | Modo Normal (**só Ollama/local**) |
 | `CHAT_RESPONSE_MODE_THINKER_*` | 3b, 512 tok, ctx 2048 | Modo Pensador (**só Ollama/local**) |
-| `CHAT_RESPONSE_MODE_CLOUD_*` | opcional | Override de teto com `LLM_PROVIDER=openai_compatible` (Kimi). Sem isso: `generationLimitsCloud` no JSON (Normal 2048 tok). |
+| `CHAT_RESPONSE_MODE_CLOUD_*` | vazio (= JSON) | Override com `LLM_PROVIDER=openai_compatible`. Sem valor: `generationLimitsCloud` (Normal **2048** tok) |
+
+#### Outros limitadores (ainda valem com Kimi)
+
+| Variável / fonte | Onde | Efeito |
+|------------------|------|--------|
+| `CHAT_HISTORY_MAX_MESSAGES` | compose `12` (minimal/cpu `8`) | Menos histórico no prompt |
+| `CHAT_AGENTIC_LOOP_MAX_STEPS` | compose `2` (minimal/cpu `1`) | Menos rodadas de tools |
+| `MAX_CONTEXT_CHUNKS` | compose `6` (minimal/cpu `4`) | Cap de chunks se budget falhar |
+| `contextBudgetCloud` | `response_modes.json` | Cap RAG/tools por modo com Kimi |
+| `KIMI_TIMEOUT_SECONDS` | default `180` | Timeout HTTP OpenRouter |
+| `CHAT_RESPONSE_MODES_ENABLED=false` | `.env` | Aí `LLM_MAX_TOKENS` (320) volta a mandar no turno |
 
 Com **Kimi/OpenRouter**, os `CHAT_RESPONSE_MODE_*_MAX_TOKENS` do Compose **não** aplicam (eram teto Ollama e geravam prosa vazia em RAG). Ajuste cloud via JSON ou `CHAT_RESPONSE_MODE_CLOUD_NORMAL_MAX_TOKENS`.
 
+**`.env` recomendado com Kimi** (dev e prod):
+
+```env
+LLM_PROVIDER=openai_compatible
+KIMI_API_KEY=...
+# opcional — só se quiser subir o teto além do JSON:
+# CHAT_RESPONSE_MODE_CLOUD_NORMAL_MAX_TOKENS=4096
+MAX_CONTEXT_CHARS=24000
+```
+
 Documentação: [`chat-response-modes.md`](../minha-delpi-ai-api/docs/architecture/chat-response-modes.md), changelog [`2026-06-playbook-19-prosa-latencia-analyser.md`](../minha-delpi-ai-api/docs/changelog/2026-06-playbook-19-prosa-latencia-analyser.md).
 
-**Prod srv-api:** defaults de `docker-compose.yml` alinhados ao dev (jun/2026). `.env` de produção: só overrides (R16, paths, secrets) — **remover** bloco IA legado com `3b`/ctx alto se ainda existir. Após mudança: `docker compose -f infra/docker-compose.yml --env-file infra/.env up -d --force-recreate minha-delpi-ai-api`.
+**Prod srv-api:** defaults de `docker-compose.yml` alinhados ao dev (jun/2026). `.env` de produção: só overrides (R16, paths, secrets) — **remover** bloco IA legado com `3b`/ctx alto se ainda existir; **não** definir `CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS=256` esperando efeito no Kimi. Após mudança: `./infra/scripts/up-prod-sequential.sh --fase chat --build` (ou recreate do serviço chat).
 
 Backend `docling` e OCR regional `easyocr` exigem `requirements-vision.txt` na imagem (dev já inclui). Verificação: `python3 scripts/check_vision_profile_deps.py` dentro do container.
 
