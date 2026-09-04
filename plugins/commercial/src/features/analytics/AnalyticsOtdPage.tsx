@@ -60,7 +60,7 @@ import {
   OPERATIONAL_UNIT_COLUMN_LABEL,
   formatOperationalUnitCode,
 } from "./utils/analyticsBranchFilters";
-import { fetchPerBranchMetricSlices } from "../overview/goalDisplay";
+import { fetchPerBranchMetricSlices, resolveLevelUnitGoalValue } from "../overview/goalDisplay";
 import {
   defaultOtdListUrlState,
   parseOtdListUrlState,
@@ -184,10 +184,7 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
       .then((slices) => {
         if (controller.signal.aborted) return;
         const goalOf = (slice: { goal?: SalesOrderOtdData | null } | null) => {
-          const goal = slice?.goal;
-          if (!goal) return null;
-          const raw = goal.comparable_goal ?? goal.target;
-          return raw == null || Number.isNaN(Number(raw)) ? null : Number(raw);
+          return resolveLevelUnitGoalValue(slice?.goal ?? null);
         };
         setOtdGoalByBranch({
           "01": goalOf(slices.filial01),
@@ -201,6 +198,9 @@ export function AnalyticsOtdPage({ basePath }: AnalyticsOtdPageProps) {
       });
     return () => controller.abort();
   }, [
+    filters.apiParams.start_date,
+    filters.apiParams.end_date,
+    filters.apiParams.branch,
     filters.apiParams.customer_segment,
     filters.apiParams.seller_id,
     filters.apiParams.customer_codes,

@@ -440,7 +440,7 @@ export function resolveGoalPerformanceBadge(
     return null;
   }
 
-  const comparable = goal.comparable_goal ?? goal.target;
+  const comparable = resolveLevelUnitGoalValue(goal);
   if (comparable == null || comparable <= 0) {
     return null;
   }
@@ -465,6 +465,36 @@ function positiveGoalNumber(value: unknown): number | null {
   const numeric = Number(value);
   if (!Number.isFinite(numeric) || numeric <= 0) return null;
   return numeric;
+}
+
+/** Unidades de nível: meta visual/comparação = cadastro, não pró-rata diária do SI. */
+const LEVEL_VALUE_UNITS = new Set(["percent", "ppm", "ratio", "%"]);
+
+function isLevelValueUnit(goal?: DashboardGoalFields | null): boolean {
+  if (!goal) return false;
+  const unit = (goal.value_unit ?? "").trim().toLowerCase();
+  if (LEVEL_VALUE_UNITS.has(unit)) return true;
+  const suffix = (goal.value_suffix ?? "").trim().toLowerCase();
+  return suffix === "%" || suffix === "ppm";
+}
+
+/**
+ * Meta para gauge, funil e badge de desempenho em unidades de nível (%/ppm/ratio).
+ *
+ * Em mês parcial o SI devolve `comparable_goal` pró-rata (ex.: 95 × 4/30 ≈ 12,7).
+ * Faixas do speedômetro e “dentro da meta” devem usar o nível cadastrado
+ * (`reference_goal` / `goal_value`). Currency/count continuam no `comparable_goal`.
+ */
+export function resolveLevelUnitGoalValue(
+  goal?: DashboardGoalFields | null,
+): number | null {
+  if (!goal) return null;
+  const level = positiveGoalNumber(goal.reference_goal ?? goal.goal_value);
+  const comparable = positiveGoalNumber(goal.comparable_goal ?? goal.target);
+  if (isLevelValueUnit(goal)) {
+    return level ?? comparable;
+  }
+  return comparable ?? level;
 }
 
 export function resolveGoalLabel(

@@ -9,6 +9,7 @@ import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
 import { buildOverviewFunnelPayload } from "../../overview/overviewExportBuilders";
 import type { ClosingRateData } from "../../../types/analytics";
 import { formatNumber } from "../../../utils/format";
+import { resolveLevelUnitGoalValue } from "../../overview/goalDisplay";
 
 type AnalyticsFunnelChartProps = {
   closingRate: ClosingRateData | null;
@@ -77,7 +78,7 @@ export function AnalyticsFunnelChart({
   const proposals = closingRate?.qtd_proposals ?? 0;
   const won = closingRate?.qtd_won ?? 0;
   const conversionPct = closingRate?.sales_conversion_rate_pct ?? null;
-  const goalPct = closingRate?.comparable_goal ?? closingRate?.target ?? null;
+  const goalPct = resolveLevelUnitGoalValue(closingRate);
 
   const stages = useMemo(() => buildStages(proposals, won), [proposals, won]);
   const hasData = proposals > 0;

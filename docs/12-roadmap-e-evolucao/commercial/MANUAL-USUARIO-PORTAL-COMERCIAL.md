@@ -226,6 +226,9 @@ Sim — escolha modo **Grupos** (não misture usuários e grupos na mesma atribu
 **OTD usa qual data?**  
 Pontualidade compara **data de faturamento** com a **data prometida** (veja a ajuda `?` na tela OTD).
 
+**A meta do velocímetro OTD é a pró-rata do mês?**  
+Não. O velocímetro usa o **nível cadastrado** (Meta mês, ex.: 95%). A pró-rata diária do SI aparece como «Meta parcial» nos KPIs da Visão geral, não nas faixas do gauge.
+
 ---
 
 ## 5. Quem pedir ajuda (papéis)

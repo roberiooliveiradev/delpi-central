@@ -31,6 +31,7 @@ export {
   resolveOffTrackStatusLabel,
   resolveGoalPerformanceBadge,
   resolveGoalLabel,
+  resolveLevelUnitGoalValue,
   resolveAccumulatedGoalPrefix,
   resolveGoalPeriodPartial,
   resolveGoalPeriodKind,

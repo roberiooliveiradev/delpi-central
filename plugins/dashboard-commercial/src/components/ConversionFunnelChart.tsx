@@ -2,6 +2,7 @@ import { useMemo, type CSSProperties } from "react";
 
 import { CHART_COLORS } from "../constants/chartColors";
 import { formatInteger, formatPercent } from "../utils/format";
+import { resolveLevelUnitGoalValue } from "../utils/goalDisplay";
 import type { ClosingRateData } from "../types/commercial";
 import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
@@ -59,7 +60,7 @@ export function ConversionFunnelChart({
   const proposals = data?.qtd_proposals ?? 0;
   const won = data?.qtd_won ?? 0;
   const conversionPct = data?.sales_conversion_rate_pct ?? null;
-  const goalPct = data?.comparable_goal ?? data?.target ?? null;
+  const goalPct = resolveLevelUnitGoalValue(data);
 
   const stages = useMemo(
     () => buildStages(proposals, won),

@@ -629,7 +629,7 @@ export const CM_HELP = {
     otdKpiLateDays:
       "Distribuição dos dias de atraso (média, P50 e P90) apenas nas linhas classificadas como atrasadas.",
     otdSeries:
-      "Evolução do OTD por Santa Catarina e Espírito Santo no período.",
+      "Evolução do OTD por Santa Catarina e Espírito Santo no período. A meta do velocímetro é o nível cadastrado (Meta mês), não a pró-rata diária do período parcial.",
     otdLines:
       "Linhas do período com busca, status, ordenação e paginação no servidor. Clique abre o detalhe.",
     otdLinesSearch: "Busca por pedido, cliente ou produto.",

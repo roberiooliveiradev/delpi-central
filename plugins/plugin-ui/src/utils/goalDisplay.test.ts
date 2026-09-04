@@ -13,6 +13,8 @@ import {
   resolveAverageSiIddScoreLabel,
   resolveGoalPeriodPartial,
   resolveIndicatorIddScoreLabelFromSi,
+  resolveLevelUnitGoalValue,
+  resolveGoalPerformanceBadge,
 } from "./goalDisplay";
 import { formatGoalScopeUnitLabel, formatFilterViewScopeLabel } from "./operationalUnitLabels";
 
@@ -266,5 +268,46 @@ describe("goalDisplay", () => {
         end_date: "2026-07-31",
       }),
     ).toBe("Meta");
+  });
+
+  it("resolveLevelUnitGoalValue: % parcial usa reference_goal (não pró-rata 12,7)", () => {
+    const otdPartial = {
+      comparable_goal: 12.67,
+      target: 12.67,
+      reference_goal: 95,
+      goal_value: 95,
+      value_unit: "percent",
+      goal_period_kind: "partial",
+      performance_direction: "higher_is_better" as const,
+    };
+    expect(resolveLevelUnitGoalValue(otdPartial)).toBe(95);
+    // negativo: currency continua no comparable pró-rata
+    expect(
+      resolveLevelUnitGoalValue({
+        comparable_goal: 500_000,
+        reference_goal: 1_000_000,
+        goal_value: 1_000_000,
+        value_unit: "currency",
+        goal_period_kind: "partial",
+      }),
+    ).toBe(500_000);
+  });
+
+  it("badge de desempenho em % parcial compara ao nível cadastrado", () => {
+    const goal = {
+      comparable_goal: 12.67,
+      reference_goal: 95,
+      goal_value: 95,
+      value_unit: "percent",
+      goal_period_kind: "partial",
+      performance_direction: "higher_is_better" as const,
+    };
+    // 76,9% vs meta 95% → abaixo; vs pró-rata 12,7 estaria «dentro»
+    expect(resolveGoalPerformanceBadge(76.9, goal)?.statusLabel).toBe(
+      "Abaixo da meta",
+    );
+    expect(resolveGoalPerformanceBadge(98, goal)?.statusLabel).toBe(
+      "Dentro da meta",
+    );
   });
 });

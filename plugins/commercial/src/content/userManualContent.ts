@@ -224,7 +224,11 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Por que a meta aparece parcial?",
-          a: "A meta do período é proporcional aos dias do intervalo. Mês incompleto não usa a meta cheia do mês.",
+          a: "Nos KPIs da Visão geral, a meta do período (R$) é proporcional aos dias do intervalo; mês incompleto não usa a meta cheia. Em indicadores %, o SI também calcula pró-rata — mas o velocímetro OTD e o funil usam o nível cadastrado (Meta mês).",
+        },
+        {
+          q: "A meta do velocímetro OTD é a pró-rata do mês?",
+          a: "Não. O velocímetro usa o nível cadastrado (Meta mês, ex.: 95%). A pró-rata diária do SI aparece como Meta parcial nos KPIs, não nas faixas do gauge.",
         },
         {
           q: "No consolidado (unidade Todas) a Visão geral mostra meta?",
