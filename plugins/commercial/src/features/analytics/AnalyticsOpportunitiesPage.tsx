@@ -22,6 +22,7 @@ import {
   getOpportunityCollaboratorSummary,
   type OpportunityCollaboratorSummaryRow,
 } from "../../api/analyticsApi";
+import { nextTableSortState, type TableSortDirection } from "../../utils/sortTableRows";
 import { AnalyticsFilters } from "./components/AnalyticsFilters";
 import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
 import { CommercialProposalsTable } from "./components/CommercialProposalsTable";
@@ -32,6 +33,11 @@ import {
   subscribeAnalyticsFilterRouteSync,
   writeAnalyticsOpportunitySearchToUrl,
 } from "./utils/analyticsFilterUrl";
+import {
+  DEFAULT_PROPOSAL_SORT_DIR,
+  DEFAULT_PROPOSAL_SORT_KEY,
+  proposalApiSortParams,
+} from "./utils/proposalListSort";
 
 type AnalyticsOpportunitiesPageProps = {
   basePath: string;
@@ -46,6 +52,9 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState(() => readAnalyticsOpportunitySearch());
   const [statusFilter, setStatusFilter] = useState("");
+  const [sortKey, setSortKey] = useState(DEFAULT_PROPOSAL_SORT_KEY);
+  const [sortDirection, setSortDirection] =
+    useState<TableSortDirection>(DEFAULT_PROPOSAL_SORT_DIR);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -66,6 +75,7 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     const controller = new AbortController();
     setLoading(true);
     setError(null);
+    const apiSort = proposalApiSortParams(sortKey, sortDirection);
     void getCommercialProposals(
       {
         ...filters.apiParams,
@@ -73,8 +83,8 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
         page_size: 50,
         search: search.trim() || undefined,
         status: statusFilter || undefined,
-        sort_by: "proposal_date",
-        sort_dir: "desc",
+        sort_by: apiSort.sort_by,
+        sort_dir: apiSort.sort_dir,
       },
       controller.signal,
     )
@@ -102,6 +112,8 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     filters.apiParams.customer_codes,
     search,
     statusFilter,
+    sortKey,
+    sortDirection,
     reloadKey,
   ]);
 
@@ -242,6 +254,13 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
             basePath={basePath}
             detailSearch={buildAnalyticsOpportunityBackSearch()}
             showOpenProposal={canViewProposals}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSortChange={(columnKey) => {
+              const next = nextTableSortState(sortKey, sortDirection, columnKey);
+              setSortKey(next.sortKey);
+              setSortDirection(next.sortDirection);
+            }}
           />
         ) : null}
       </CommercialSectionCard>

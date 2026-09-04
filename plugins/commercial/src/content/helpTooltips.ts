@@ -635,7 +635,8 @@ export const CM_HELP = {
       "Lista global de oportunidades de venda (OV) no período. Use a Conta para ver só um cliente.",
     collaboratorSummary:
       "Resumo global do período com os filtros do hero. Abertas/perdidas pela data de abertura; ganhas pela data de aceite (mesmo critério da lista Ganhas). Não muda com o Status da lista.",
-    opportunitiesList: "OVs do período. Clique na linha ou no número da OV para abrir o detalhe.",
+    opportunitiesList:
+      "OVs do período ordenadas no servidor (clique no cabeçalho). Clique na linha ou no número da OV para abrir o detalhe.",
     tableRowOpensDetail:
       "Clique na linha (ou na identidade) abre o detalhe. Controles internos com destino diferente não propagam o clique.",
     ovStatus: "Etapa atual da oportunidade comercial.",

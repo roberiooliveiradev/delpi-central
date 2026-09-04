@@ -108,6 +108,34 @@ def test_list_proposals_applies_sort_by_on_server() -> None:
     assert "proposal_number ASC, proposal_number ASC" not in sql
 
 
+def test_list_proposals_sort_by_stage_on_server() -> None:
+    repository = CommercialProposalsRepository()
+    request = ListCommercialProposalsRequest(
+        start_date="2026-01-01",
+        end_date="2026-06-30",
+        page=1,
+        page_size=20,
+        sort_by="stage",
+        sort_dir="desc",
+    )
+    captured: dict[str, str] = {}
+
+    def _execute_query(sql: str, params: tuple) -> list:
+        captured["list_sql"] = sql
+        return []
+
+    def _execute_one(sql: str, params: tuple) -> dict:
+        return {"total": 0}
+
+    with patch.object(CommercialProposalsRepository, "__enter__", return_value=repository):
+        with patch.object(CommercialProposalsRepository, "__exit__", return_value=False):
+            with patch.object(repository, "execute_query", side_effect=_execute_query):
+                with patch.object(repository, "execute_one", side_effect=_execute_one):
+                    repository.list_proposals(request)
+
+    assert "ORDER BY stage DESC" in captured["list_sql"]
+
+
 def test_list_proposals_applies_search_on_latest_rows() -> None:
     repository = CommercialProposalsRepository()
     request = ListCommercialProposalsRequest(

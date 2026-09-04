@@ -1,5 +1,5 @@
 import type { DataTableColumn } from "@delpi/plugin-ui/index";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import {
   CommercialDataTable,
@@ -20,11 +20,7 @@ import {
   withColumnHelp,
 } from "../../../utils/customersColumnHelp";
 import { formatDisplayDate } from "../../../utils/dates";
-import {
-  nextTableSortState,
-  sortTableRows,
-  type TableSortDirection,
-} from "../../../utils/sortTableRows";
+import type { TableSortDirection } from "../../../utils/sortTableRows";
 import { OpenProposalFromOpportunityButton } from "./OpenProposalFromOpportunityButton";
 
 export type CommercialProposalsTableOptions = {
@@ -158,6 +154,10 @@ export function buildCommercialProposalColumns(
 type CommercialProposalsTableProps = CommercialProposalsTableOptions & {
   rows: CommercialProposal[];
   onRowClick?: (row: CommercialProposal) => void;
+  /** Server-side sort — rows must already be ordered by the API. */
+  sortKey: string;
+  sortDirection: TableSortDirection;
+  onSortChange: (columnKey: string) => void;
 };
 
 export function CommercialProposalsTable({
@@ -167,10 +167,10 @@ export function CommercialProposalsTable({
   hideCustomerColumn,
   showOpenProposal,
   onRowClick,
+  sortKey,
+  sortDirection,
+  onSortChange,
 }: CommercialProposalsTableProps) {
-  const [sortKey, setSortKey] = useState<string>("date");
-  const [sortDirection, setSortDirection] = useState<TableSortDirection>("desc");
-
   const baseColumns = useMemo(
     () =>
       buildCommercialProposalColumns({
@@ -182,24 +182,16 @@ export function CommercialProposalsTable({
     [basePath, detailSearch, hideCustomerColumn, showOpenProposal],
   );
   const columns = withColumnHelp(baseColumns, PROPOSALS_DOCUMENTS_COLUMN_HELP);
-  const sortedRows = useMemo(
-    () => sortTableRows(rows, columns, sortKey, sortDirection),
-    [columns, rows, sortDirection, sortKey],
-  );
 
   return (
     <CommercialDataTable
-      rows={sortedRows}
+      rows={rows}
       columns={columns}
       rowKey={(row) => `${row.branch}-${row.proposal_number}-${row.revision}`}
       layout="section"
       sortKey={sortKey}
       sortDirection={sortDirection}
-      onSortChange={(key) => {
-        const next = nextTableSortState(sortKey, sortDirection, key);
-        setSortKey(next.sortKey);
-        setSortDirection(next.sortDirection);
-      }}
+      onSortChange={onSortChange}
       onRowClick={
         onRowClick ??
         ((row) =>

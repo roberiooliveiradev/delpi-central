@@ -19,7 +19,13 @@ import type {
   CommercialProposal,
   CommercialProposalStatusCategory,
 } from "../../../types/analytics";
+import { nextTableSortState, type TableSortDirection } from "../../../utils/sortTableRows";
 import { CommercialProposalsTable } from "../../analytics/components/CommercialProposalsTable";
+import {
+  DEFAULT_PROPOSAL_SORT_DIR,
+  DEFAULT_PROPOSAL_SORT_KEY,
+  proposalApiSortParams,
+} from "../../analytics/utils/proposalListSort";
 
 type CustomerOpportunitiesSectionProps = {
   basePath: string;
@@ -60,6 +66,9 @@ export function CustomerOpportunitiesSection({
   const [dateEnd, setDateEnd] = useState("");
   const [productCode, setProductCode] = useState("");
   const [productGroup, setProductGroup] = useState("");
+  const [sortKey, setSortKey] = useState(DEFAULT_PROPOSAL_SORT_KEY);
+  const [sortDirection, setSortDirection] =
+    useState<TableSortDirection>(DEFAULT_PROPOSAL_SORT_DIR);
   const debouncedSearch = useDebouncedValue(search, TEXT_FILTER_DEBOUNCE_MS);
   const debouncedProductCode = useDebouncedValue(productCode, TEXT_FILTER_DEBOUNCE_MS);
   const debouncedProductGroup = useDebouncedValue(productGroup, TEXT_FILTER_DEBOUNCE_MS);
@@ -87,12 +96,13 @@ export function CustomerOpportunitiesSection({
     const product = debouncedProductCode.trim();
     const group = debouncedProductGroup.trim();
 
+    const apiSort = proposalApiSortParams(sortKey, sortDirection);
     void getCommercialProposals(
       {
         page: 1,
         page_size: 100,
-        sort_by: "proposal_date",
-        sort_dir: "desc",
+        sort_by: apiSort.sort_by,
+        sort_dir: apiSort.sort_dir,
         account_customer_code: code,
         status: apiStatus,
         start_date: dateStart.trim() || undefined,
@@ -130,6 +140,8 @@ export function CustomerOpportunitiesSection({
     debouncedProductCode,
     debouncedProductGroup,
     debouncedSearch,
+    sortKey,
+    sortDirection,
   ]);
 
   const statusCounts = useMemo(() => {
@@ -303,6 +315,13 @@ export function CustomerOpportunitiesSection({
               detailSearch={detailSearch}
               hideCustomerColumn
               showOpenProposal={canViewProposals}
+              sortKey={sortKey}
+              sortDirection={sortDirection}
+              onSortChange={(columnKey) => {
+                const next = nextTableSortState(sortKey, sortDirection, columnKey);
+                setSortKey(next.sortKey);
+                setSortDirection(next.sortDirection);
+              }}
             />
           ) : null}
         </div>

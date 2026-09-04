@@ -58,6 +58,7 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
             "customer": "customer_code",
             "customer_code": "customer_code",
             "customer_store": "customer_store",
+            "stage": "stage",
         }
         sort_key = (request.sort_by or "").strip().lower()
         sort_column = sort_columns.get(sort_key)

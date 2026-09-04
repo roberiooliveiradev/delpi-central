@@ -569,7 +569,7 @@ def list_commercial_proposals(
         None,
         description=(
             "Coluna de ordenação: branch, proposal_number, revision, description, "
-            "proposal_date, end_date, status_code, customer_code, customer_store."
+            "proposal_date, end_date, status_code, customer_code, customer_store, stage."
         ),
     ),
     sort_dir: str = SORT_DIR_QUERY(),

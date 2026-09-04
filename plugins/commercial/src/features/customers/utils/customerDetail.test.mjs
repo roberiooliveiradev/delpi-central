@@ -544,7 +544,8 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(opportunities, /CommercialScopeChipBar/);
     assert.match(opportunities, /statusFilter/);
     assert.match(proposalsTable, /onSortChange/);
-    assert.match(proposalsTable, /sortTableRows/);
+    assert.doesNotMatch(proposalsTable, /sortTableRows\(/);
+    assert.match(opportunities, /proposalApiSortParams/);
     assert.match(opportunities, /canViewAnalytics/);
     assert.match(lines, /line\.filial.*line\.pedido.*line\.linha/s);
     assert.match(lines, /getLineOpForecast/);
