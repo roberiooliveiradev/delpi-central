@@ -314,6 +314,7 @@ export function CustomerOpportunitiesSection({
               basePath={basePath}
               detailSearch={detailSearch}
               hideCustomerColumn
+              hideSellerColumn
               showOpenProposal={canViewProposals}
               sortKey={sortKey}
               sortDirection={sortDirection}

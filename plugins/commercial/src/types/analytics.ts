@@ -220,6 +220,8 @@ export type CommercialProposal = {
   customer_code?: string | null;
   customer_store?: string | null;
   stage?: string | null;
+  seller_code?: string | null;
+  seller_name?: string | null;
 };
 
 export type CommercialProduct = {

@@ -47,6 +47,9 @@ describe("Table audit P0 (E7.S1)", () => {
     assert.match(opp, /OpenProposalFromOpportunityButton/);
     assert.match(opp, /statusBadgeVariant|status_category/);
     assert.match(opp, /interactive:\s*true/);
+    assert.match(opp, /CommercialDataListToolbar/);
+    assert.match(opp, /useTableColumnVisibility|useOpportunitiesTablePreferences/);
+    assert.doesNotMatch(opp, /sortTableRows\(/);
 
     const myDay = readFileSync(join(src, "features/my-day/MyDayPage.tsx"), "utf8");
     assert.match(myDay, /CommercialSectionCard/);
