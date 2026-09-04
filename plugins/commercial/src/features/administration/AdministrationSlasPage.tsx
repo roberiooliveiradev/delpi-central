@@ -212,17 +212,26 @@ export function AdministrationSlasPage({ basePath }: AdministrationSlasPageProps
     <section className="cm-page-stack cm-administration-slas">
       <CommercialPagePath
         aria-label={copy.title}
+        back={{
+          label: "Portal Comercial",
+          href: basePath,
+          onNavigate: (event) => {
+            event.preventDefault();
+            navigatePluginView("home", { basePath });
+          },
+        }}
         items={[
           {
             id: "admin-root",
             label: ADMINISTRATION_CONTENT.breadcrumbRoot,
             href: `${basePath}/administration`,
-            onNavigate: () => {
+            onNavigate: (event) => {
+              event.preventDefault();
               navigatePluginView("administration", { basePath });
             },
           },
-          { id: "slas", label: copy.title, current: true },
         ]}
+        current={copy.navLabel}
       />
       <AdministrationSubNav basePath={basePath} active="slas" />
       <CommercialPageHero

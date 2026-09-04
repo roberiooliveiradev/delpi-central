@@ -117,6 +117,8 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos · SLAs)",
     assert.match(source, /deactivateSlaPolicy/);
     assert.match(source, /active="slas"/);
     assert.match(source, /cm-administration-slas__form/);
+    assert.match(source, /back=\{\{/);
+    assert.match(source, /current=\{copy\.navLabel\}/);
     assert.match(source, /openCreate/);
     assert.match(source, /openEdit/);
     assert.match(source, /submitForm/);
