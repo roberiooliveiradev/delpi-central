@@ -22,6 +22,8 @@ describe("user manual page", () => {
     assert.match(content, /painel ABC/);
     assert.match(content, /Administração → SLAs/);
     assert.match(content, /Onde configuro os SLAs/);
+    assert.match(content, /No consolidado \(unidade Todas\) a Visão geral mostra meta/);
+    assert.match(content, /agregação SC\+ES pelo SI|somam Santa Catarina \+ Espírito Santo pelo método/);
     const catalog = readSrc("content/userManualTermCatalog.ts");
     assert.match(catalog, /export const USER_MANUAL_TERM_CATALOG/);
     assert.match(catalog, /term: \"EXW\"/);
@@ -29,6 +31,7 @@ describe("user manual page", () => {
     assert.match(catalog, /term: \"CIF\"/);
     assert.match(catalog, /applies:/);
     assert.match(catalog, /Minha Carteira → ABC/);
+    assert.match(catalog, /agregação SC\+ES pelo SI/);
     const page = readSrc("features/help/UserManualPage.tsx");
     assert.match(page, /USER_MANUAL_CONTENT/);
     assert.match(page, /glossaryGroups/);

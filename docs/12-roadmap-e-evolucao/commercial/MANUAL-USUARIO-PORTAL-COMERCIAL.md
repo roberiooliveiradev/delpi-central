@@ -149,6 +149,9 @@ Não. O resumo usa só os filtros compartilhados do hero (período, unidade, seg
 **Por que a meta aparece “parcial”?**  
 A meta do período é **proporcional aos dias** do intervalo. Mês incompleto não usa a meta cheia do mês.
 
+**No consolidado (unidade Todas) a Visão geral mostra meta?**  
+Sim. Realizado e meta somam Santa Catarina + Espírito Santo pelo método dos **Indicadores Estratégicos (SI)**. Não é soma inventada no Portal. Se a agregação não for possível, aparece o aviso para filtrar uma unidade.
+
 **Posso somar “carteira aberta” com o ROL do mês?**  
 Não. São conceitos diferentes: ROL é faturamento no período; carteira aberta é snapshot do que ainda está em aberto **agora**.
 
@@ -302,8 +305,8 @@ Fonte na UI: **Ajuda** → **Catálogo de termos** (`plugins/commercial/src/cont
 
 | Termo | Significado | Onde aparece |
 |-------|-------------|--------------|
-| ROL | Receita operacional líquida versus meta. Não some com carteira em aberto | Visão geral |
-| Meta | Meta SI proporcional aos dias do intervalo | Visão geral |
+| ROL | Receita operacional líquida versus meta SI. No consolidado, SC+ES agregados pelo SI. Não some com carteira em aberto | Visão geral |
+| Meta | Meta SI proporcional aos dias; consolidado = agregação SC+ES pelo SI | Visão geral |
 | Carteira em aberto | Valor aberto de pedido **agora** (snapshot). Não é ROL, PCP nem forecast | Visão geral |
 | Faturamento | Notas / ROL no período. Share e tendência usam só faturamento, nunca o valor em aberto | Visão geral · Minha Carteira |
 | Família de produto | Grupo Protheus (B1_GRUPO); filtra mix e ABC | Minha Carteira → Faturamento · ABC |

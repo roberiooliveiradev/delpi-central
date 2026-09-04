@@ -28,17 +28,19 @@ export const OVERVIEW_METRICS: readonly OverviewMetricDefinition[] = [
     id: "rol",
     label: "ROL",
     tooltip:
-      "Receita operacional líquida (natureza: líquido) versus meta por unidade. Série bruta indisponível neste contrato.",
+      "Receita operacional líquida (natureza: líquido) versus meta SI. Em consolidado (unidade Todas), realizado e meta somam SC+ES pelo método do SI; com uma unidade, meta daquela unidade. Série bruta indisponível neste contrato.",
   },
   {
     id: "rol_weg",
     label: "ROL WEG",
-    tooltip: "ROL do segmento WEG versus meta por unidade.",
+    tooltip:
+      "ROL do segmento WEG versus meta SI (consolidado = SC+ES agregados; uma unidade = meta da unidade).",
   },
   {
     id: "rol_new_business",
     label: "ROL Novos Negócios",
-    tooltip: "ROL de novos negócios versus meta por unidade.",
+    tooltip:
+      "ROL de novos negócios versus meta SI (consolidado = SC+ES agregados; uma unidade = meta da unidade).",
   },
   {
     id: "closing_rate",

@@ -718,7 +718,7 @@ export const CM_HELP = {
       "Dashboard do período: filtros, indicadores (≤8), evolução ROL (com YoY opcional), série de conversão e funil. Sem lista de OVs nem faixa Aprofundar.",
     filters:
       "Datas, competência, atalho de período (hoje…últimos 12 meses), unidade, segmento, cliente(s) e carteira (quando permitido) aplicados aos painéis de período. O KPI «Carteira em aberto» é snapshot agora e ignora o período.",
-    kpis: "Indicadores do período: ROL vs meta (natureza líquido), conversão, OTD% e novos negócios. «Carteira em aberto» é valor aberto de pedido (snapshot) — não some com ROL e não é programação do PCP. Bruto só com contrato BFF.",
+    kpis: "Indicadores do período: ROL vs meta SI (natureza líquido; consolidado = realizado+meta SC+ES pelo SI), conversão, OTD% e novos negócios. «Carteira em aberto» é valor aberto de pedido (snapshot) — não some com ROL e não é programação do PCP. Bruto só com contrato BFF.",
     rolSeries:
       "Evolução do ROL no período. Com «Unidade (indicadores)» em Todas, compara Santa Catarina e Espírito Santo; com uma unidade selecionada, mostra só essa série.",
     rolSeriesYoy:

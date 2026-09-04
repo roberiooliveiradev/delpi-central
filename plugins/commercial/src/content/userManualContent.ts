@@ -227,6 +227,10 @@ export const USER_MANUAL_CONTENT = {
           a: "A meta do período é proporcional aos dias do intervalo. Mês incompleto não usa a meta cheia do mês.",
         },
         {
+          q: "No consolidado (unidade Todas) a Visão geral mostra meta?",
+          a: "Sim. Realizado e meta somam Santa Catarina + Espírito Santo pelo método dos Indicadores Estratégicos (SI). Não é soma inventada no Portal. Se a agregação não for possível, aparece o aviso para filtrar uma unidade.",
+        },
+        {
           q: "Posso somar carteira aberta com o ROL?",
           a: "Não. ROL é faturamento no período; carteira aberta é o que ainda está em aberto agora.",
         },

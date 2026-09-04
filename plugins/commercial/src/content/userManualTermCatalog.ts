@@ -273,7 +273,7 @@ export const USER_MANUAL_TERM_CATALOG: readonly UserManualTermGroup[] = [
       {
         term: "Meta",
         meaning:
-          "Meta dos Indicadores Estratégicos, proporcional aos dias do intervalo. Mês incompleto não usa a meta cheia.",
+          "Meta dos Indicadores Estratégicos, proporcional aos dias do intervalo. No consolidado (unidade Todas), a meta exibida é a agregação SC+ES pelo SI — não inventada no Portal. Mês incompleto não usa a meta cheia.",
         applies: "Visão geral (ROL vs meta)",
       },
       {

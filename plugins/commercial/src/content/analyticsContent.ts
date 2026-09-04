@@ -11,7 +11,8 @@ export const ANALYTICS_CONTENT = {
       "Indicadores do período, evolução de ROL e funil de conversão. OTD e Oportunidades abrem pelo Início.",
     filters:
       "Período, unidade (Santa Catarina / Espírito Santo) e segmento aplicados a todos os painéis desta página.",
-    rolKpi: "ROL consolidado versus meta no período filtrado.",
+    rolKpi:
+      "ROL versus meta SI no período filtrado. Com unidade Todas, realizado e meta agregam SC+ES pelo SI.",
     branchRolKpi: "ROL por unidade versus meta no período filtrado.",
     closingKpi: "Taxa de conversão: propostas ganhas ÷ total de propostas.",
     otdKpi: "On-time delivery de linhas de pedido de venda.",
