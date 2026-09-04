@@ -223,9 +223,7 @@ class ChatTurnCompletionFinalizeService:
             # Operacional com tools já guarda em ChatOperationalLlmSynthesisTurnFinalizationService.
             return answer
 
-        if not is_synthesis and has_tools and not reasoning_fallback:
-            return answer
-
+        # RAG/tools sem síntese operacional também vazam CoT EN no content — sempre guardar.
         guarded = ChatLlmSynthesisLeakGuardService.guard_answer(
             answer=answer,
             fallback=ChatLlmSynthesisDeliveryContentService.safe_fallback_answer(),

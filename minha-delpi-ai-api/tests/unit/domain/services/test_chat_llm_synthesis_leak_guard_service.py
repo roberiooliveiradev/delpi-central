@@ -96,6 +96,15 @@ def test_needs_fallback_on_english_cot_marker():
     )
 
 
+def test_needs_fallback_on_terminal_description_cot_leak():
+    leaked = (
+        "The user is asking how to describe a terminal. This is a general question "
+        "about grupo 1008. I have retrieved context from Normas_Tecnicas_DELPI.md. "
+        "Use Portuguese. Let me structure:"
+    )
+    assert ChatLlmSynthesisLeakGuardService.needs_fallback(answer=leaked)
+
+
 def test_needs_fallback_on_capabilities_cot_leak():
     """Regressão: Kimi/OpenRouter devolve CoT EN como resposta de capacidades."""
     leaked = (

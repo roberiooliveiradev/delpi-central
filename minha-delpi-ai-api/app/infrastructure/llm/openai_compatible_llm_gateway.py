@@ -292,7 +292,44 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
             ) as response:
                 response.raise_for_status()
                 reasoning_parts: list[str] = []
+                content_parts: list[str] = []
                 content_seen = False
+                # Libera prosa só depois de um trecho mínimo sem CoT — evita vazar
+                # raciocínio EN no content (Kimi) token a token.
+                pending_release = True
+                cot_suppressed = False
+                release_min_chars = 72
+
+                def _flush_guarded(joined: str) -> Iterator[str]:
+                    from app.domain.services.chat_llm_generation_context_service import (
+                        mark_reasoning_fallback,
+                    )
+                    from app.domain.services.chat_llm_synthesis_delivery_content_service import (
+                        ChatLlmSynthesisDeliveryContentService,
+                    )
+                    from app.domain.services.chat_llm_synthesis_leak_guard_service import (
+                        ChatLlmSynthesisLeakGuardService,
+                    )
+
+                    text = repair_utf8_mojibake(joined).strip()
+                    if not text:
+                        return
+                    if ChatLlmSynthesisLeakGuardService.needs_fallback(answer=text):
+                        mark_reasoning_fallback(True)
+                        recovered = ChatLlmSynthesisLeakGuardService.try_recover_portuguese_body(
+                            text
+                        )
+                        if recovered:
+                            yield recovered
+                            return
+                        safe = ChatLlmSynthesisDeliveryContentService.safe_fallback_answer()
+                        logger.warning(
+                            "openai_compatible_stream_content_cot_using_safe_fallback"
+                        )
+                        if safe:
+                            yield safe
+                        return
+                    yield text
 
                 for line in iter_utf8_lines(response):
                     line = line.strip()
@@ -321,7 +358,27 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
 
                     if content:
                         content_seen = True
-                        yield repair_utf8_mojibake(str(content))
+                        piece = repair_utf8_mojibake(str(content))
+                        content_parts.append(piece)
+                        if cot_suppressed:
+                            continue
+                        joined = "".join(content_parts)
+                        if pending_release:
+                            if len(joined) < release_min_chars:
+                                continue
+                            from app.domain.services.chat_llm_synthesis_leak_guard_service import (
+                                ChatLlmSynthesisLeakGuardService,
+                            )
+
+                            if ChatLlmSynthesisLeakGuardService.needs_fallback(
+                                answer=joined
+                            ):
+                                cot_suppressed = True
+                                continue
+                            pending_release = False
+                            yield joined
+                            continue
+                        yield piece
                         continue
 
                     # Não faz stream de reasoning: Kimi costuma emitir CoT sem espaços
@@ -329,6 +386,10 @@ class OpenAiCompatibleLlmGateway(LlmGatewayPort):
                     reasoning = delta.get("reasoning")
                     if reasoning:
                         reasoning_parts.append(str(reasoning))
+
+                if cot_suppressed or (content_seen and pending_release):
+                    yield from _flush_guarded("".join(content_parts))
+                    return
 
                 if not content_seen and reasoning_parts:
                     from app.domain.services.chat_llm_generation_context_service import (

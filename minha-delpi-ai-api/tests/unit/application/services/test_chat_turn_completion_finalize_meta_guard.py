@@ -108,3 +108,31 @@ def test_finalize_keeps_clean_free_path_answer():
     )
 
     assert result.answer == clean
+
+
+def test_finalize_guards_english_cot_even_with_rag_tools():
+    """Regressão: CoT EN com retrieve/RAG não pode bypassar a guarda free-path."""
+    leaked = (
+        "The user is asking how to describe a terminal. I have retrieved context "
+        "from Normas_Tecnicas_DELPI.md. Use Portuguese. Let me structure:"
+    )
+    turn = _turn(
+        answer=leaked,
+        tool_context={"responseModeEffect": "direct", "toolCalls": [{"name": "retrieve"}]},
+    )
+    object.__setattr__(
+        turn,
+        "tool_calls",
+        [
+            {
+                "name": "retrieve",
+                "metadata": {"ok": True, "path": "/rag"},
+            }
+        ],
+    )
+    result = ChatTurnCompletionFinalizeService.finalize(turn)
+
+    assert result.answer != leaked
+    assert "let me structure" not in result.answer.lower()
+    assert "the user is asking" not in result.answer.lower()
+    assert result.answer.strip()

@@ -123,4 +123,6 @@ class LlmCostEstimatorService:
             "source": str(entry.get("source") or "configured"),
         }
 
+    def _default_model_for(self, provider: str | None = None) -> str:
+        """Modelo padrão do eixo de texto (herda LLM_PROVIDER / Kimi / Ollama)."""
         return resolve_llm_text_config().model

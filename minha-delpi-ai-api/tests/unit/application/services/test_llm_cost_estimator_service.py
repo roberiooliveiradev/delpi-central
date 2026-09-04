@@ -44,3 +44,12 @@ def test_list_cost_table_uses_env_json(monkeypatch):
 
     assert len(service.list_cost_table()) == 1
     assert service.list_cost_table()[0]["provider"] == "ollama"
+
+
+def test_default_cost_table_loads_without_env(monkeypatch):
+    monkeypatch.delenv("LLM_COST_TABLE_JSON", raising=False)
+    service = LlmCostEstimatorService(entries=None)
+    table = service.list_cost_table()
+    assert len(table) == 1
+    assert table[0]["model"]
+    assert table[0]["source"] == "env_default"
