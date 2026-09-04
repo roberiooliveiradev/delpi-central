@@ -476,6 +476,49 @@ def _judge(case: BatteryCase, msg: dict, ms: int) -> None:
                 errors.append("inventou SA1 via tool")
         if not prose:
             errors.append("prosa vazia")
+    elif expect == "rag_internal":
+        route = _intent_route(msg)
+        admin = _admin(msg)
+        pipeline = admin.get("pipeline") if isinstance(admin.get("pipeline"), dict) else {}
+        rag = admin.get("rag") if isinstance(admin.get("rag"), dict) else {}
+        decision = str(route.get("decision") or "")
+        if decision and decision not in {"rag_internal", "rag_question"}:
+            # operacional misto com requiresRag ainda é aceitável se skipRag=False
+            if not (
+                decision == "operational_action"
+                and (route.get("requiresRag") is True or pipeline.get("skipRag") is False)
+            ):
+                errors.append(f"decision={decision!r} (esperado rag_internal)")
+        if pipeline.get("skipRag") is True:
+            errors.append("skipRag indevido em consulta documental")
+        if any("/products/" in p and "/stock" in p for p in paths) and "política" in case.message.lower():
+            # F07.stock-policy: estoque OK, mas RAG não pode ser skipado
+            if pipeline.get("skipRag") is True:
+                errors.append("skipRag com estoque+política")
+        erp_only = any(p.startswith("/products/") for p in paths) and not (
+            route.get("requiresRag") or (rag.get("sources") or [])
+        )
+        if "política de compras" in case.message.lower() or "glossário" in case.message.lower():
+            if any("/products/" in p for p in paths):
+                errors.append(f"ERP indevido em RAG puro ({paths})")
+            if erp_only:
+                errors.append("só ERP sem RAG")
+        if not prose or len(prose) < 20:
+            errors.append("prosa curta/vazia")
+        if LEAK_RE.search(prose):
+            errors.append("leak")
+    elif expect == "rag_with_stock":
+        route = _intent_route(msg)
+        admin = _admin(msg)
+        pipeline = admin.get("pipeline") if isinstance(admin.get("pipeline"), dict) else {}
+        if not any("/stock" in p for p in paths):
+            errors.append(f"sem /stock ({paths})")
+        if pipeline.get("skipRag") is True and route.get("requiresRag") is not False:
+            # documental wording deve preservar RAG mesmo com estoque
+            if "política" in case.message.lower() or "politica" in case.message.lower():
+                errors.append("skipRag com estoque+política")
+        if not prose:
+            errors.append("prosa vazia")
 
     case.evidence = _build_evidence(case, msg, ms, errors)
     bits: list[str] = []
@@ -636,6 +679,43 @@ def _cases_catalog() -> list[BatteryCase]:
             reuse_session=True,
             r_required=("R1", "R2", "R4", "R6", "R8"),
         ),
+        # F07 — RAG / company-knowledge
+        BatteryCase(
+            "F07.policy",
+            "F07",
+            "politica-compras",
+            "o que diz a política de compras?",
+            "rag_internal",
+            use_agent=True,
+            r_required=("R1", "R2", "R4", "R8"),
+        ),
+        BatteryCase(
+            "F07.glossary",
+            "F07",
+            "glossario-qualidade",
+            "explique o glossário de qualidade",
+            "rag_internal",
+            use_agent=True,
+            r_required=("R1", "R2", "R4", "R8"),
+        ),
+        BatteryCase(
+            "F07.normas",
+            "F07",
+            "normas-materia-prima",
+            "o que dizem as normas técnicas DELPI sobre matéria-prima?",
+            "rag_internal",
+            use_agent=True,
+            r_required=("R1", "R2", "R4", "R8"),
+        ),
+        BatteryCase(
+            "F07.stock-policy",
+            "F07",
+            "estoque-com-politica",
+            "estoque do 10080001 segundo a política interna",
+            "rag_with_stock",
+            use_agent=True,
+            r_required=("R1", "R2", "R4", "R8"),
+        ),
         # F14 — follow-up
         BatteryCase(
             "F14.1-filial",
@@ -786,7 +866,9 @@ def _filter_cases(cases: list[BatteryCase]) -> list[BatteryCase]:
 def _write_report(cases: list[BatteryCase], path: str) -> None:
     existing: list[dict] = []
     only = os.environ.get("SMOKE_ONLY", "").strip()
-    if only and os.path.exists(path):
+    families = os.environ.get("SMOKE_FAMILY", "").strip()
+    # Merge quando filtro parcial — não apagar F01–Fn ao rodar só uma família.
+    if (only or families) and os.path.exists(path):
         try:
             with open(path, encoding="utf-8") as fh:
                 existing = json.load(fh)

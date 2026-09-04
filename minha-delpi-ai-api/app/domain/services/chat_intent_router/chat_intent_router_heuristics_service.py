@@ -232,7 +232,16 @@ class ChatIntentRouterHeuristicsService:
 
     @staticmethod
     def looks_rag_document(message: str) -> bool:
-        lowered = message.lower()
+        """Consulta a base documental (company-knowledge) — não criação de texto."""
+        lowered = str(message or "").lower()
+
+        if any(
+            phrase in lowered
+            for phrase in ChatIntentRouterHeuristicsService.intent_router_terms(
+                "ragDocumentCreateExcludePhrases"
+            )
+        ):
+            return False
 
         return any(
             term in lowered

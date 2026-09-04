@@ -497,7 +497,9 @@ Para cada família: **esperado**, **roteiros**, **gaps**, **âncoras**.
 
 **Roteiros:** «o que diz a política de compras?», «explique o glossário de qualidade», «estoque segundo a política» (não deve virar só ERP).
 
-**Gaps:** fast path preserva RAG (custo); colisão com operacional.
+**Esperado:** `decision=rag_internal` (ou operacional com `requiresRag` no misto); `skipRag=false`; sem ERP em consulta documental pura; skill `company-knowledge`.
+
+**Gaps residual:** base pode não ter o PDF de política/glossário (prosa «não encontrei» com RAG on ainda é PASS de roteamento); embeddings off → keyword only.
 
 ---
 
@@ -669,7 +671,10 @@ Fonte: `app/content/pt-BR/skills/catalog.json` (7 skills).
 | F06.schema | schema SB1010 | ✓ | ✓ | ✓ | ✓ | — | — | — | — | — | PASS | PASS | `/schema` + `tablePresentations` (Colunas SX3); prosa `system_metadata` (columnCount); sem strip por path; sem «N registros»/X3_TAMANHO |
 | F06.indexes | indexes SB1010 | ✓ | ✓ | ✓ | ✓ | — | — | — | — | — | PASS | PASS | registry `systemTableIndexes` + terms indexes |
 | F06.addcol | add coluna desconhecida | ✓ | ✓ | — | ✓ | — | ✓ | — | ✓ | — | PASS | PASS | clarify show_sql; não inventar SA1 via LLM |
-| F07.1 | política compras RAG | | | | | | | | | | | | |
+| F07.policy | política compras RAG | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | documental > purchase_lookup; skip ERP; RAG on |
+| F07.glossary | glossário qualidade RAG | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | não pedir período KPI; documental ≠ text_task |
+| F07.normas | normas matéria-prima | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | `rag_internal` + company-knowledge |
+| F07.stock-policy | estoque + política | ✓ | ✓ | ✓ | ✓ | — | — | — | ✓ | — | PASS | PASS | `/stock` + preserva RAG (não só ERP) |
 | F08.1 | pesquise na web | | | | | | | | | | | | |
 | F10.1 | analise desenho | | | | | | | | | | | | |
 | F11.1 | normas vs cadastro | | | | | | | | | | | | |

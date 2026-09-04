@@ -249,6 +249,14 @@ class ChatTextTaskIntentService:
         if ChatProductionOperationalIntentService.matches_rest_route(message):
             return False
 
+        from app.domain.services.chat_intent_router.chat_intent_router_heuristics_service import (
+            ChatIntentRouterHeuristicsService,
+        )
+
+        # Consulta a base documental (política/norma/glossário) não é redação pura.
+        if ChatIntentRouterHeuristicsService.looks_rag_document(message):
+            return False
+
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 
         normalized = (message or "").strip().lower()

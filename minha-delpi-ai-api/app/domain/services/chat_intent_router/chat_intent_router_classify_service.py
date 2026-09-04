@@ -500,6 +500,28 @@ class ChatIntentRouterClassifyService:
             or ChatIntentRouterHeuristicsService.looks_like_short_context_reply(normalized)
         )
 
+        # F07: wording documental (política/norma/glossário) vence keyword ERP fraco
+        # («compras») quando não há código de produto — evita skip_rag em company-knowledge.
+        if ChatIntentRouterHeuristicsService.looks_rag_document(normalized):
+            from app.domain.services.chat_product_query_intent_service import (
+                ChatProductQueryIntentService,
+            )
+
+            product_code = ChatProductQueryIntentService.extract_product_code(normalized)
+            if not product_code:
+                return ChatIntentRouterSupportService.with_decision(
+                    IntentRouteResult(
+                        intent="rag_question",
+                        confidence=0.78,
+                        requires_rag=True,
+                        requires_llm=True,
+                        priority_applied=8,
+                        flags=("internal_document", "documental_over_operational"),
+                    ),
+                    decision="rag_internal",
+                    reason="documental_wording",
+                )
+
         if (
             operational_optimize
             or ChatIntentRouterHeuristicsService.looks_operational(normalized)
@@ -517,6 +539,8 @@ class ChatIntentRouterClassifyService:
                 sub = ChatFollowUpIntentService.follow_up_type(normalized)
                 sub = ChatIntentRouterHeuristicsService.map_follow_up_sub_intent(sub)
 
+            documental = ChatIntentRouterHeuristicsService.looks_rag_document(normalized)
+
             return ChatIntentRouterSupportService.with_decision(
                 IntentRouteResult(
                     intent="operational_query",
@@ -524,12 +548,13 @@ class ChatIntentRouterClassifyService:
                     is_follow_up=is_follow_up,
                     confidence=0.63 if ambiguous else 0.82,
                     requires_tool=bool(sub) or bool(allowed_action_ids),
-                    requires_rag=False,
-                    requires_llm=False,
+                    requires_rag=documental,
+                    requires_llm=documental,
                     priority_applied=6,
                     resolved_params=resolved_params,
                     ambiguous=ambiguous,
                     candidates=candidates,
+                    flags=("internal_document",) if documental else (),
                 ),
                 decision="operational_action" if not ambiguous else "clarify_operational",
                 reason=(

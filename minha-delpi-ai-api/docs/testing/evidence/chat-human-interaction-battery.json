@@ -1027,5 +1027,277 @@
       "R4",
       "R8"
     ]
+  },
+  {
+    "caseId": "F07.policy",
+    "family": "F07",
+    "label": "politica-compras",
+    "message": "o que diz a política de compras?",
+    "expect": "rag_internal",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 6454ms",
+    "ms": 6454,
+    "prose": "Não encontrei informações sobre a **política de compras** na documentação autorizada disponível no momento.\n\nPara eu conseguir ajudar, você pode:\n\n- **Anexar o documento** da política de compras aqui na conversa — eu leio e resumo o conteúdo para você;\n- **Reformular a pergunta** com mais detalhes (ex.: um tema específ",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": null,
+        "decision": "rag_internal",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 570,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 5649,
+        "wallMs": 6454,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 851,
+          "toolsMs": 18,
+          "ragMs": 77,
+          "llmMs": 4607
+        },
+        "verdict": "WARN"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F07.glossary",
+    "family": "F07",
+    "label": "glossario-qualidade",
+    "message": "explique o glossário de qualidade",
+    "expect": "rag_internal",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 16455ms",
+    "ms": 16455,
+    "prose": "Não encontrei um documento de glossário de qualidade específico na base de conhecimento autorizada no momento. O que posso oferecer é a explicação dos **principais termos de qualidade usados no módulo PAC da plataforma**, que fazem parte do dia a dia do tratamento de não conformidades:\n\n## Termos do módulo PAC Qualidad",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": null,
+        "decision": "rag_internal",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 3006,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 15503,
+        "wallMs": 16455,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 1107,
+          "toolsMs": 19,
+          "ragMs": 48,
+          "llmMs": 14233
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F07.normas",
+    "family": "F07",
+    "label": "normas-materia-prima",
+    "message": "o que dizem as normas técnicas DELPI sobre matéria-prima?",
+    "expect": "rag_internal",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 15387ms",
+    "ms": 15387,
+    "prose": "No momento, a base de conhecimento não retornou trechos do documento **Normas Técnicas DELPI**, então não tenho o conteúdo detalhado disponível para citar com segurança — e prefiro não inventar regras que não estejam na fonte autorizada.\n\nO que posso adiantar sobre o escopo dessa norma:\n\n- Ela cobre a **descrição padro",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": null,
+        "decision": "rag_internal",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 955,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 14904,
+        "wallMs": 15387,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 615,
+          "toolsMs": 20,
+          "ragMs": 72,
+          "llmMs": 14106
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F07.stock-policy",
+    "family": "F07",
+    "label": "estoque-com-politica",
+    "message": "estoque do 10080001 segundo a política interna",
+    "expect": "rag_with_stock",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 2365ms | paths=['/products/10080001/stock']",
+    "ms": 2365,
+    "prose": "O produto **10080001**\n\nSaldo disponível total: **2.677.615** un. em **8** posição(ões). Maior concentração na filial **02** (2.290.510 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado. - Empenho elevado pode bloquear novas saídas — confe",
+    "evidence": {
+      "R1": {
+        "intent": "operational_query",
+        "subIntent": "stock_lookup",
+        "decision": "operational_action",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 1,
+        "paths": [
+          "/products/10080001/stock"
+        ],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 424,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 1944,
+        "wallMs": 2365,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 432,
+          "toolsMs": 889,
+          "ragMs": 70,
+          "llmMs": 442
+        },
+        "verdict": "PASS"
+      },
+      "paths": [
+        "/products/10080001/stock"
+      ],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
   }
 ]

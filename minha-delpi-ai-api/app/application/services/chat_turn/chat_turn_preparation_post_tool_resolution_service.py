@@ -188,8 +188,14 @@ class ChatTurnPreparationPostToolResolutionService:
             from app.domain.services.chat_follow_up_intent_service import (
                 ChatFollowUpIntentService,
             )
+            from app.domain.services.chat_intent_router.chat_intent_router_heuristics_service import (
+                ChatIntentRouterHeuristicsService,
+            )
 
-            if ChatWorkspaceAgentActivationService.operational_tools_enabled(
+            # F07: consulta documental não é «miss operacional» — preservar RAG.
+            if ChatIntentRouterHeuristicsService.looks_rag_document(message):
+                pass
+            elif ChatWorkspaceAgentActivationService.operational_tools_enabled(
                 workspace_context
             ) and (
                 ChatFollowUpIntentService.is_retry_or_continue_request(message)
@@ -683,6 +689,14 @@ class ChatTurnPreparationPostToolResolutionService:
                 pipeline_stages=pipeline_stages,
             )
         )
+
+        from app.domain.services.chat_intent_router.chat_intent_router_heuristics_service import (
+            ChatIntentRouterHeuristicsService,
+        )
+
+        # F07: wording documental preserva RAG (puro ou misto com ERP).
+        if ChatIntentRouterHeuristicsService.looks_rag_document(message):
+            skip_rag = False
 
         if response_mode_effect:
             tool_context["responseModeEffect"] = response_mode_effect

@@ -63,6 +63,13 @@ class ChatIntentRouterExecutedService:
             if not mapping:
                 continue
 
+            # F07: estágio skip_rag / parameter não anula consulta documental prevista.
+            if predicted.requires_rag and stage in {
+                "skip_rag",
+                "operational_parameter",
+            }:
+                continue
+
             intent, sub_intent, priority = mapping
             flags: list[str] = [f"stage:{stage}"]
 
@@ -83,7 +90,7 @@ class ChatIntentRouterExecutedService:
                 is_follow_up=predicted.is_follow_up,
                 confidence=max(predicted.confidence, 0.85),
                 requires_tool=bool(tool_calls) or predicted.requires_tool,
-                requires_rag=not skip_rag and stage == "rag",
+                requires_rag=bool(predicted.requires_rag) or (not skip_rag and stage == "rag"),
                 requires_web=requires_web,
                 requires_canvas=requires_canvas,
                 requires_llm=not bool(direct_answer)

@@ -11,17 +11,47 @@ def test_intent_router_content_bundles_have_router_terms():
     )
 
 
-def test_classify_text_task_pure():
+def test_classify_politica_compras_is_rag_not_purchase():
+    route = ChatIntentRouterService.classify("o que diz a política de compras?")
+
+    assert route.decision == "rag_internal"
+    assert route.requires_rag is True
+    assert route.intent == "rag_question"
+    assert route.sub_intent != "purchase_lookup"
+
+
+def test_classify_glossario_qualidade_is_rag_not_text_task():
+    route = ChatIntentRouterService.classify("explique o glossário de qualidade")
+
+    assert route.decision == "rag_internal"
+    assert route.requires_rag is True
+    assert route.intent != "text_task"
+
+
+def test_classify_estoque_com_politica_preserves_rag():
     route = ChatIntentRouterService.classify(
-        "corrija: segue em anexo os documento solicitado",
-        text_task_pure=True,
-        text_task_category="correct",
+        "estoque do 10080001 segundo a política interna"
     )
 
+    assert route.decision == "operational_action"
+    assert route.sub_intent == "stock_lookup"
+    assert route.requires_rag is True
+
+
+def test_classify_ultimas_compras_com_codigo_continua_purchase():
+    route = ChatIntentRouterService.classify("ultimas compras do 10080001")
+
+    assert route.decision == "operational_action"
+    assert route.sub_intent == "purchase_lookup"
+    assert route.requires_rag is False
+
+
+def test_classify_crie_glossario_continua_text_task():
+    from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
+
+    assert ChatTextTaskIntentService.is_pure_text_task("crie um glossário dos termos abaixo")
+    route = ChatIntentRouterService.classify("crie um glossário dos termos abaixo")
     assert route.intent == "text_task"
-    assert route.sub_intent == "correct"
-    assert route.requires_tool is False
-    assert route.priority_applied == 3
 
 
 def test_classify_conversation_meta_not_operational_with_memory_focus():

@@ -33,6 +33,7 @@ class ChatTurnPreparationSkipToolFlags:
     skip_tools_for_project_sources_content: bool
     skip_tools_for_session_review: bool
     skip_tools_for_grounded_narrate: bool
+    skip_tools_for_documental_rag: bool
     request_attachment_ids: list[str]
 
 
@@ -182,8 +183,15 @@ class ChatTurnPreparationToolRoutingService:
 
         missing_date_answer = None
 
+        from app.domain.services.chat_intent_router.chat_intent_router_heuristics_service import (
+            ChatIntentRouterHeuristicsService,
+        )
+
+        # F07: glossário/política/norma não pedem período de KPI («qualidade»).
+        documental_rag = ChatIntentRouterHeuristicsService.looks_rag_document(message)
+
         if not missing_product_code_answer and not ambiguous_period_answer:
-            if not cls._suppress_missing_date_for_follow_up(workspace):
+            if not cls._suppress_missing_date_for_follow_up(workspace) and not documental_rag:
                 missing_date_answer = (
                     ChatOperationalParameterService.resolve_missing_date_answer(
                         message,
@@ -192,6 +200,10 @@ class ChatTurnPreparationToolRoutingService:
                         memory_snapshot=working_memory_snapshot,
                     )
                 )
+
+        if documental_rag:
+            missing_date_answer = None
+            ambiguous_period_answer = None
 
         from app.application.services.chat_common_chat_operational_guidance_service import (
             ChatCommonChatOperationalGuidanceService,
@@ -388,6 +400,19 @@ class ChatTurnPreparationToolRoutingService:
             and ChatConversationContextService.has_recent_tool_data(history_source)
         )
 
+        from app.domain.services.chat_intent_router.chat_intent_router_heuristics_service import (
+            ChatIntentRouterHeuristicsService,
+        )
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        # F07: documental puro não dispara ERP (ex.: «compras» em política de compras).
+        skip_tools_for_documental_rag = bool(
+            ChatIntentRouterHeuristicsService.looks_rag_document(message)
+            and not ChatProductQueryIntentService.extract_product_code(message)
+        )
+
         return ChatTurnPreparationSkipToolFlags(
             skip_tools_for_user_identity=skip_tools_for_user_identity,
             skip_tools_for_assistant_identity=skip_tools_for_assistant_identity,
@@ -397,6 +422,7 @@ class ChatTurnPreparationToolRoutingService:
             skip_tools_for_project_sources_content=skip_tools_for_project_sources_content,
             skip_tools_for_session_review=skip_tools_for_session_review,
             skip_tools_for_grounded_narrate=skip_tools_for_grounded_narrate,
+            skip_tools_for_documental_rag=skip_tools_for_documental_rag,
             request_attachment_ids=request_attachment_ids,
         )
 
@@ -443,6 +469,7 @@ class ChatTurnPreparationToolRoutingService:
                 or skip_flags.skip_tools_for_inactive_agent
                 or skip_flags.skip_tools_for_project_sources_content
                 or skip_flags.skip_tools_for_session_review
+                or skip_flags.skip_tools_for_documental_rag
                 or small_talk_direct
                 or utility_direct
                 or web_save_sources_direct
@@ -487,6 +514,8 @@ class ChatTurnPreparationToolRoutingService:
             pipeline_stages.append("assistant_identity_shortcut")
         elif skip_flags.skip_tools_for_session_review:
             pipeline_stages.append("session_review")
+        elif skip_flags.skip_tools_for_documental_rag:
+            pipeline_stages.append("rag")
         elif skip_flags.skip_tools_for_grounded_narrate:
             pipeline_stages.append(grounded_stage or "grounded_narrate")
         elif skip_flags.skip_tools_for_data_interpretation:

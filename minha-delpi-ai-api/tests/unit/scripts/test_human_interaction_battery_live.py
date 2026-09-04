@@ -23,8 +23,16 @@ def test_catalog_covers_core_families():
     cases = mod._cases_catalog()
     assert len(cases) >= 20
     families = {c.family for c in cases}
-    for required in ("F01", "F03", "F04", "F14", "F19"):
+    for required in ("F01", "F03", "F04", "F06", "F07", "F14", "F19"):
         assert required in families, f"missing family {required}"
+
+
+def test_f07_rag_cases_present():
+    mod = _load_module()
+    ids = {c.case_id for c in mod._cases_catalog()}
+    assert "F07.policy" in ids
+    assert "F07.glossary" in ids
+    assert "F07.stock-policy" in ids
 
 
 def test_typo_estrutra_case_present():
