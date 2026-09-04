@@ -483,3 +483,51 @@ def test_classify_operational_includes_product_code_in_resolved_params():
 
     assert route.resolved_params == {"productCode": "10080001"}
     assert route.to_dict()["resolvedParams"]["productCode"] == "10080001"
+
+
+def test_inline_correction_directive_is_not_documental_query():
+    """«corrija: … documento» é redação pura, não consulta à base documental."""
+    from app.domain.services.chat_intent_router.chat_intent_router_heuristics_service import (
+        ChatIntentRouterHeuristicsService,
+    )
+
+    assert (
+        ChatIntentRouterHeuristicsService.looks_rag_document(
+            "corrija: segue em anexo os documento"
+        )
+        is False
+    )
+
+
+def test_inline_correction_directive_with_preamble_is_not_documental_query():
+    """Irmão: a diretiva pode ter preâmbulo antes dos dois-pontos."""
+    from app.domain.services.chat_intent_router.chat_intent_router_heuristics_service import (
+        ChatIntentRouterHeuristicsService,
+    )
+
+    assert (
+        ChatIntentRouterHeuristicsService.looks_rag_document(
+            "corrija sem mudar meu estilo: segue o documento em anexo"
+        )
+        is False
+    )
+
+
+def test_document_summary_without_inline_text_stays_documental():
+    """Negativo: sem texto colado, resumo de norma continua consulta documental."""
+    from app.domain.services.chat_intent_router.chat_intent_router_heuristics_service import (
+        ChatIntentRouterHeuristicsService,
+    )
+
+    assert (
+        ChatIntentRouterHeuristicsService.looks_rag_document(
+            "resuma a norma de embalagem da Delpi"
+        )
+        is True
+    )
+    assert (
+        ChatIntentRouterHeuristicsService.looks_rag_document(
+            "o que diz a política de compras?"
+        )
+        is True
+    )

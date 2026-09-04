@@ -112,6 +112,23 @@
     "transforme em glossário",
     "transforme em glossario"
   ],
+  "ragDocumentInlineDirectiveLeads": [
+    "corrija",
+    "corrigir",
+    "revise",
+    "revisar",
+    "reveja",
+    "traduza",
+    "traduzir",
+    "resuma",
+    "resumir",
+    "melhore",
+    "adapte",
+    "transforme",
+    "escreva",
+    "redija",
+    "deixe"
+  ],
   "presentationTerms": [
     "mostre em tabela",
     "mostre em gráfico",

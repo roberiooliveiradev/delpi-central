@@ -249,10 +249,29 @@ class ChatIntentRouterHeuristicsService:
         ):
             return False
 
+        if ChatIntentRouterHeuristicsService._has_inline_text_directive(lowered):
+            return False
+
         return any(
             term in lowered
             for term in ChatIntentRouterHeuristicsService.intent_router_terms("ragDocumentTerms")
         )
+
+    @staticmethod
+    def _has_inline_text_directive(lowered: str) -> bool:
+        """Diretiva de redação com texto colado (``corrija: …``) não é consulta documental.
+
+        Sem isto, qualquer pedido de correção que cite «documento» ou «anexo» cai na
+        base documental e perde a tarefa de texto puro.
+        """
+        if ":" not in lowered:
+            return False
+
+        leads = ChatIntentRouterHeuristicsService.intent_router_terms(
+            "ragDocumentInlineDirectiveLeads"
+        )
+
+        return any(lowered.startswith(lead) for lead in leads)
 
     @classmethod
     def previous_assistant_was_documental_rag(cls, previous_messages: list | None) -> bool:
