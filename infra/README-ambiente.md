@@ -373,7 +373,7 @@ Injetados em `docker-compose.dev.yml` e `docker-compose.yml` quando ausentes no 
 | `CHAT_RESPONSE_MODE_FAST_*` | 96 tok / ctx 512 | Modo Rápida (**só Ollama/local**) |
 | `CHAT_RESPONSE_MODE_NORMAL_*` | 1.5b, 256 tok, ctx 1536 | Modo Normal (**só Ollama/local**) |
 | `CHAT_RESPONSE_MODE_THINKER_*` | 3b, 512 tok, ctx 2048 | Modo Pensador (**só Ollama/local**) |
-| `CHAT_RESPONSE_MODE_CLOUD_*` | vazio (= JSON) | Override com `LLM_PROVIDER=openai_compatible`. Sem valor: `generationLimitsCloud` (Rápida **1024**, Normal **2048** tok) |
+| `CHAT_RESPONSE_MODE_CLOUD_*` | Rápida **2048** / Normal **4096** / Pensador **8192** | Default Compose + `generationLimitsCloud` (faixa usual de mercado / GPT-4o-like). Override no `.env` se precisar. |
 
 #### Outros limitadores (ainda valem com Kimi)
 
@@ -393,9 +393,8 @@ Com **Kimi/OpenRouter**, os `CHAT_RESPONSE_MODE_*_MAX_TOKENS` do Compose **não*
 ```env
 LLM_PROVIDER=openai_compatible
 KIMI_API_KEY=...
-# opcional — só se quiser subir o teto além do JSON:
-# CHAT_RESPONSE_MODE_CLOUD_NORMAL_MAX_TOKENS=4096
-MAX_CONTEXT_CHARS=24000
+# Defaults Compose já injetam CLOUD_*: Rápida 2048 / Normal 4096 / Pensador 8192
+# MAX_CONTEXT_CHARS=24000
 ```
 
 Documentação: [`chat-response-modes.md`](../minha-delpi-ai-api/docs/architecture/chat-response-modes.md), changelog [`2026-06-playbook-19-prosa-latencia-analyser.md`](../minha-delpi-ai-api/docs/changelog/2026-06-playbook-19-prosa-latencia-analyser.md).

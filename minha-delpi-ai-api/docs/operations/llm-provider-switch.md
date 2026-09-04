@@ -52,10 +52,8 @@ LLM_TEXT_TIMEOUT_SECONDS=120
 # KIMI_BASE_URL=https://openrouter.ai/api/v1
 # KIMI_MODEL=moonshotai/kimi-k3
 # LLM_PROVIDER=openai_compatible
-# Caps cloud (opcional — default em generationLimitsCloud do response_modes.json).
+# Caps cloud (opcional — Compose default: Rápida 2048 · Normal 4096 · Pensador 8192).
 # NÃO use CHAT_RESPONSE_MODE_*_MAX_TOKENS com openai_compatible (só Ollama).
-# CHAT_RESPONSE_MODE_CLOUD_NORMAL_MAX_TOKENS=2048
-# CHAT_RESPONSE_MODE_CLOUD_THINKER_MAX_TOKENS=4096
 # MAX_CONTEXT_CHARS=24000
 
 # Aliases legados (ainda suportados)

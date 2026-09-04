@@ -52,7 +52,7 @@ def test_openai_compatible_ignores_ollama_era_max_tokens_env(monkeypatch):
 
     config = ChatResponseModeService.resolve("normal")
 
-    assert config.max_tokens == 2048
+    assert config.max_tokens == 4096
     assert config.num_ctx == 16384
 
 
