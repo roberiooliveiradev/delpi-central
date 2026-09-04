@@ -32,6 +32,7 @@
   --delpi-ui-accent: var(--cm-accent);
   --delpi-ui-surface: var(--cm-surface);
   --delpi-ui-text: var(--cm-text);
+  --delpi-ui-title: var(--secundary, #003866);
   --delpi-ui-text-muted: var(--cm-text-muted);
   --delpi-ui-border: var(--cm-border);
   --delpi-ui-muted: var(--cm-text-muted);
@@ -52,6 +53,7 @@
   --delpi-ui-accent: var(--cm-accent);
   --delpi-ui-surface: var(--cm-surface);
   --delpi-ui-text: var(--cm-text);
+  --delpi-ui-title: var(--cm-text);
   --delpi-ui-text-muted: var(--cm-text-muted);
   --delpi-ui-border: var(--cm-border);
   --delpi-ui-muted: var(--cm-text-muted);

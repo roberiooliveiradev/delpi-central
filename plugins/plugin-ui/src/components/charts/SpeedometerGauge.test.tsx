@@ -35,7 +35,9 @@ describe("SpeedometerGauge", () => {
     );
     const gauge = container.querySelector('[role="img"]')!;
     fireEvent.mouseEnter(gauge);
-    expect(screen.getByRole("tooltip").textContent).toContain("OTD SC no período");
+    const tip = screen.getByRole("tooltip");
+    expect(tip.textContent).toContain("OTD SC no período");
+    expect(tip.className).toMatch(/speedometer-gauge__tooltip/);
   });
 
   it("não mostra tooltip no hover sem tip explícito", () => {
