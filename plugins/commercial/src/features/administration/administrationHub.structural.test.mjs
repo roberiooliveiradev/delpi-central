@@ -106,6 +106,30 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos · SLAs)",
     );
   });
 
+  it("SLAs lista políticas, cria/edita e soft-desativa via API client", () => {
+    const source = readFileSync(join(feature, "AdministrationSlasPage.tsx"), "utf8");
+    assert.match(source, /listSlaPolicies/);
+    assert.match(source, /includeInactive:\s*true/);
+    assert.match(source, /createSlaPolicy/);
+    assert.match(source, /updateSlaPolicy/);
+    assert.match(source, /deactivateSlaPolicy/);
+    assert.match(source, /active="slas"/);
+    assert.match(source, /cm-administration-slas__form/);
+    assert.match(source, /openCreate/);
+    assert.match(source, /openEdit/);
+    assert.match(source, /submitForm/);
+    assert.match(source, /onDeactivate/);
+    assert.match(source, /CommercialEmptyState/);
+    assert.match(source, /CommercialDataTable/);
+    const api = readFileSync(join(root, "src/api/slaPoliciesApi.ts"), "utf8");
+    assert.match(api, /settings\/sla-policies/);
+    assert.match(api, /include_inactive/);
+    assert.match(api, /createSlaPolicy/);
+    assert.match(api, /deactivateSlaPolicy/);
+    const css = readFileSync(join(root, "src/index.css"), "utf8");
+    assert.match(css, /\.cm-administration-slas__form/);
+  });
+
   it("App roteia Painel, Carteiras, Equipe, Grupos e SLAs", () => {
     const app = readFileSync(join(root, "src/App.tsx"), "utf8");
     assert.match(app, /AdministrationHomePage/);

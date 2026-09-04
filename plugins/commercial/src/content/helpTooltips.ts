@@ -755,6 +755,14 @@ export const CM_HELP = {
     members: "Roster de pessoas com acesso às carteiras ativas do Portal.",
     slasPage:
       "Catálogo de políticas de SLA (prazos). Criar, editar e desativar políticas após homologação dos prazos com as áreas.",
+    slasCode: "Código estável da política (único). Use um identificador curto, ex.: OFFER-24H.",
+    slasName: "Nome amigável exibido na Administração e em futuros avisos de prazo.",
+    slasAppliesTo:
+      "Domínio em que o prazo se aplica: tarefa, amostra, confirmação de pedido ou etapa de oferta.",
+    slasDurationHours: "Prazo em horas corridas (inteiro positivo) para o domínio escolhido.",
+    slasCalendarCode:
+      "Código opcional de calendário de negócio (texto). Sem tabela de calendários nesta versão.",
+    slasActive: "Políticas inativas não entram em novos cálculos; permanecem no histórico da lista.",
     teamSearch: "Filtra a lista de pessoas por nome ou e-mail.",
     teamFilterGroup: "Mostra só membros do grupo operacional selecionado.",
     teamFilterPortfolio: "Mostra só pessoas com acesso à carteira selecionada.",
