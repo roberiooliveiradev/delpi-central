@@ -51,6 +51,11 @@ class AppConfigPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def conversational_intelligence_flag_override(self, key: str) -> bool | None:
+        """``None`` quando o ambiente não define a flag — vale o default do JSON."""
+        raise NotImplementedError
+
+    @abstractmethod
     def chat_web_search_direct_response_enabled(self) -> bool:
         raise NotImplementedError
 

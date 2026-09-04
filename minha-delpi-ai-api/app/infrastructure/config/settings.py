@@ -247,6 +247,9 @@ class Settings:
     CHAT_TOOL_ROUTER_ENABLED = (
         os.getenv("CHAT_TOOL_ROUTER_ENABLED", "true").lower() == "true"
     )
+    # Vazio = usa o default declarativo de conversational_intelligence.json.
+    CHAT_TURN_UNDERSTANDING_SHADOW = os.getenv("CHAT_TURN_UNDERSTANDING_SHADOW", "")
+    CHAT_TASK_PLANNER_ENABLED = os.getenv("CHAT_TASK_PLANNER_ENABLED", "")
     CHAT_FAST_PATH_ENABLED = (
         os.getenv("CHAT_FAST_PATH_ENABLED", "true").lower() == "true"
     )

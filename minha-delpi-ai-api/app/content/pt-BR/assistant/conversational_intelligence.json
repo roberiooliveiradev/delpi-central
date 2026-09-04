@@ -1,0 +1,11 @@
+{
+  "version": "2026.09.1",
+  "featureFlags": {
+    "turnUnderstandingShadow": true,
+    "taskPlannerEnabled": false
+  },
+  "envOverrides": {
+    "turnUnderstandingShadow": "CHAT_TURN_UNDERSTANDING_SHADOW",
+    "taskPlannerEnabled": "CHAT_TASK_PLANNER_ENABLED"
+  }
+}

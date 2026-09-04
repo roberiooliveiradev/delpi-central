@@ -1,0 +1,121 @@
+{
+  "version": "2026.09.1",
+  "limits": {
+    "maxSubtasks": 8,
+    "minSubtaskChars": 4,
+    "maxSubtaskChars": 220,
+    "maxMessageChars": 4000,
+    "compoundMinSubtasks": 2
+  },
+  "patterns": {
+    "enumerationLine": "(?m)^[\\s>*-]*(?:\\d{1,2}\\s*[\\.\\)\\-]|[-*\\u2022])\\s+",
+    "inlineEnumeration": "(?:(?<=[\\s;,])|^)\\d{1,2}\\s*[\\.\\)]\\s+",
+    "hardSeparator": "[;\\n]+",
+    "sequenceConnector": "\\s+(?:e\\s+tambem|e\\s+depois|e\\s+dai|depois\\s+disso|depois|em\\s+seguida|alem\\s+disso|por\\s+fim|finalmente|logo\\s+depois|ai\\s+entao)\\s+",
+    "coordinationConnector": "\\s+e\\s+(?=(?:me\\s+|nos\\s+)?(?:diga|mostra|mostre|traga|traz|liste|lista|informe|verifica|verifique|confere|confira|compare|calcula|calcule|busca|busque|procura|procure|manda|mande|envia|envie|gera|gere|explica|explique|resume|resuma|quero|preciso|qual|quais|quanto|quantos|quando|onde|como|se\\b))",
+    "questionSplit": "(?<=\\?)\\s+"
+  },
+  "verbs": {
+    "action": [
+      "envia",
+      "envie",
+      "manda",
+      "mande",
+      "gera",
+      "gere",
+      "cria",
+      "crie",
+      "atualiza",
+      "atualize",
+      "cadastra",
+      "cadastre",
+      "abre",
+      "abra",
+      "salva",
+      "salve"
+    ],
+    "lookup": [
+      "qual",
+      "quais",
+      "quanto",
+      "quantos",
+      "quantas",
+      "mostra",
+      "mostre",
+      "liste",
+      "lista",
+      "traga",
+      "traz",
+      "busca",
+      "busque",
+      "procura",
+      "procure",
+      "verifica",
+      "verifique",
+      "confere",
+      "confira",
+      "informe",
+      "diga",
+      "consulta",
+      "consulte"
+    ],
+    "reasoning": [
+      "compare",
+      "compara",
+      "analisa",
+      "analise",
+      "explica",
+      "explique",
+      "resume",
+      "resuma",
+      "avalia",
+      "avalie",
+      "calcula",
+      "calcule",
+      "interpreta",
+      "interprete",
+      "por que",
+      "porque"
+    ]
+  },
+  "kinds": {
+    "lookup": "lookup",
+    "action": "action",
+    "reasoning": "reasoning",
+    "unknown": "unknown"
+  },
+  "dependencyMarkers": [
+    "desse",
+    "desta",
+    "deste",
+    "dessa",
+    "deles",
+    "delas",
+    "dele",
+    "dela",
+    "anterior",
+    "mesmo",
+    "mesma",
+    "segundo",
+    "terceiro",
+    "resultado acima"
+  ],
+  "confidence": {
+    "single": 0.55,
+    "compoundBase": 0.5,
+    "compoundStep": 0.08,
+    "compoundMax": 0.9
+  },
+  "continuation": {
+    "maxHintChars": 120
+  },
+  "noiseTokens": [
+    "por favor",
+    "pfv",
+    "obrigado",
+    "obrigada",
+    "bom dia",
+    "boa tarde",
+    "boa noite"
+  ]
+}

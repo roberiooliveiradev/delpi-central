@@ -308,6 +308,14 @@ class ChatAdminDebugService:
             "topRagScore",
             "enrichmentPlan",
             "evidenceRefs",
+            "turnUnderstanding",
+            "taskPlan",
+            "capabilityCandidates",
+            "capabilityDiscardReasons",
+            "clarificationDecision",
+            "replanCount",
+            "shadowDiff",
+            "contextPackingStats",
         ):
             value = intelligence_metadata.get(key)
 
@@ -413,6 +421,21 @@ class ChatAdminDebugService:
             "intelligence": {
                 "turnAnalysis": tool_context.get("turnAnalysis")
                 if isinstance(tool_context.get("turnAnalysis"), dict)
+                else None,
+                "turnUnderstanding": workspace_context.get("shadowTurnUnderstanding")
+                if isinstance(workspace_context.get("shadowTurnUnderstanding"), dict)
+                else None,
+                "taskPlan": workspace_context.get("shadowTaskPlan")
+                if isinstance(workspace_context.get("shadowTaskPlan"), dict)
+                else None,
+                "capabilityCandidates": workspace_context.get("capabilityCandidates")
+                if isinstance(workspace_context.get("capabilityCandidates"), list)
+                else None,
+                "capabilityDiscardReasons": workspace_context.get("capabilityDiscardReasons")
+                if isinstance(workspace_context.get("capabilityDiscardReasons"), list)
+                else None,
+                "clarificationDecision": workspace_context.get("clarificationDecision")
+                if isinstance(workspace_context.get("clarificationDecision"), dict)
                 else None,
                 "skillsLoaded": list(tool_context.get("skillsLoaded") or [])
                 if isinstance(tool_context.get("skillsLoaded"), list)

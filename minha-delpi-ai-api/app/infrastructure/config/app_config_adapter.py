@@ -88,6 +88,24 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
 
         return bool(learning.get(key))
 
+    _CONVERSATIONAL_INTELLIGENCE_ENV_KEYS = {
+        "turnUnderstandingShadow": "CHAT_TURN_UNDERSTANDING_SHADOW",
+        "taskPlannerEnabled": "CHAT_TASK_PLANNER_ENABLED",
+    }
+
+    def conversational_intelligence_flag_override(self, key: str) -> bool | None:
+        env_key = self._CONVERSATIONAL_INTELLIGENCE_ENV_KEYS.get(str(key or "").strip())
+
+        if not env_key:
+            return None
+
+        raw = str(getattr(Settings, env_key, "") or os.getenv(env_key, "")).strip().lower()
+
+        if not raw:
+            return None
+
+        return raw in {"1", "true", "yes", "on"}
+
     def chat_web_search_direct_response_enabled(self) -> bool:
         return self._intelligence().web_search_direct_response_enabled
 

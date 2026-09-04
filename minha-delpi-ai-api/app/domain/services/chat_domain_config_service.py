@@ -56,6 +56,10 @@ class ChatDomainConfigService:
         return cls._require_config().learning_pipeline_flag(key)
 
     @classmethod
+    def conversational_intelligence_flag_override(cls, key: str) -> bool | None:
+        return cls._require_config().conversational_intelligence_flag_override(key)
+
+    @classmethod
     def chat_web_search_direct_response_enabled(cls) -> bool:
         return cls._require_config().chat_web_search_direct_response_enabled()
 

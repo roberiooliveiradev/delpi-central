@@ -210,6 +210,23 @@ class ChatTurnPreparationService:
             if stage not in pipeline_stages:
                 pipeline_stages.append(stage)
 
+        from app.domain.services.chat_turn_understanding_service import (
+            ChatTurnUnderstandingService,
+        )
+
+        shadow_understanding = ChatTurnUnderstandingService.analyze_shadow(
+            message,
+            response_mode=getattr(request, "response_mode", None),
+            previous_messages=history_source,
+        )
+        if shadow_understanding is not None and isinstance(workspace_context, dict):
+            workspace_context = {
+                **workspace_context,
+                "shadowTurnUnderstanding": shadow_understanding.as_admin_debug(),
+            }
+            if "turn_understanding_shadow" not in pipeline_stages:
+                pipeline_stages.append("turn_understanding_shadow")
+
         # Continuity reexec (revise/YoY) vence text_task «comparar» — não é redação pura.
         turn_grounding = (
             workspace_context.get("turnGrounding")
