@@ -330,6 +330,104 @@ class ChatResponseModeService:
         return cls._provider_default_model()
 
     @classmethod
+    def _uses_cloud_generation_limits(cls) -> bool:
+        from app.domain.services.chat_llm_provider_normalization_service import (
+            ChatLlmProviderNormalizationService,
+        )
+
+        return ChatLlmProviderNormalizationService.is_openai_compatible(
+            ChatDomainConfigService.llm_provider()
+        )
+
+    @classmethod
+    def _resolve_int_limit(
+        cls,
+        *,
+        mode: str,
+        field: str,
+        env_key: str,
+        default: int,
+    ) -> int:
+        """Local (Ollama): env compose ganha. Cloud (Kimi): JSON generationLimitsCloud.
+
+        Env ``CHAT_RESPONSE_MODE_*_MAX_TOKENS/NUM_CTX`` do Compose é legado Ollama
+        (ex.: Normal 256/1536) e não pode capar o OpenRouter — causa prosa vazia
+        (completionTokens≈2) em RAG/síntese.
+        """
+        from app.domain.services.chat_response_mode_content_service import (
+            ChatResponseModeContentService,
+        )
+
+        from_json = ChatResponseModeContentService.generation_limit_int(
+            mode,
+            field,
+            default=default,
+        )
+
+        if cls._uses_cloud_generation_limits():
+            cloud_key = env_key.replace(
+                "CHAT_RESPONSE_MODE_",
+                "CHAT_RESPONSE_MODE_CLOUD_",
+                1,
+            )
+            cloud_raw = os.getenv(cloud_key, "").strip()
+            if cloud_raw:
+                try:
+                    return max(1, int(cloud_raw))
+                except ValueError:
+                    return from_json
+            return from_json
+
+        raw = os.getenv(env_key, "").strip()
+        if raw:
+            try:
+                return max(1, int(raw))
+            except ValueError:
+                return from_json
+        return from_json
+
+    @classmethod
+    def _resolve_float_limit(
+        cls,
+        *,
+        mode: str,
+        field: str,
+        env_key: str,
+        default: float,
+    ) -> float:
+        from app.domain.services.chat_response_mode_content_service import (
+            ChatResponseModeContentService,
+        )
+
+        from_json = ChatResponseModeContentService.generation_limit_float(
+            mode,
+            field,
+            default=default,
+        )
+
+        if cls._uses_cloud_generation_limits():
+            cloud_key = env_key.replace(
+                "CHAT_RESPONSE_MODE_",
+                "CHAT_RESPONSE_MODE_CLOUD_",
+                1,
+            )
+            cloud_raw = os.getenv(cloud_key, "").strip()
+            if cloud_raw:
+                try:
+                    return float(cloud_raw)
+                except ValueError:
+                    return from_json
+            return from_json
+
+        raw = os.getenv(env_key, "").strip()
+        if raw:
+            try:
+                return float(raw)
+            except ValueError:
+                return from_json
+        return from_json
+
+    @classmethod
     def _resolve_skip_rag_for_llm_synthesis(
         cls,
         skip_rag: bool,
@@ -362,41 +460,23 @@ class ChatResponseModeService:
                     default="qwen2.5:1.5b",
                 ),
             ),
-            max_tokens=int(
-                os.getenv(
-                    "CHAT_RESPONSE_MODE_FAST_MAX_TOKENS",
-                    str(
-                        ChatResponseModeContentService.generation_limit_int(
-                            "fast",
-                            "maxTokens",
-                            default=96,
-                        )
-                    ),
-                )
+            max_tokens=cls._resolve_int_limit(
+                mode="fast",
+                field="maxTokens",
+                env_key="CHAT_RESPONSE_MODE_FAST_MAX_TOKENS",
+                default=96,
             ),
-            num_ctx=int(
-                os.getenv(
-                    "CHAT_RESPONSE_MODE_FAST_NUM_CTX",
-                    str(
-                        ChatResponseModeContentService.generation_limit_int(
-                            "fast",
-                            "numCtx",
-                            default=512,
-                        )
-                    ),
-                )
+            num_ctx=cls._resolve_int_limit(
+                mode="fast",
+                field="numCtx",
+                env_key="CHAT_RESPONSE_MODE_FAST_NUM_CTX",
+                default=512,
             ),
-            temperature=float(
-                os.getenv(
-                    "CHAT_RESPONSE_MODE_FAST_TEMPERATURE",
-                    str(
-                        ChatResponseModeContentService.generation_limit_float(
-                            "fast",
-                            "temperature",
-                            default=0.2,
-                        )
-                    ),
-                )
+            temperature=cls._resolve_float_limit(
+                mode="fast",
+                field="temperature",
+                env_key="CHAT_RESPONSE_MODE_FAST_TEMPERATURE",
+                default=0.2,
             ),
             response_mode="fast",
         )
@@ -415,41 +495,23 @@ class ChatResponseModeService:
                     default="qwen2.5:1.5b",
                 ),
             ),
-            max_tokens=int(
-                os.getenv(
-                    "CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS",
-                    str(
-                        ChatResponseModeContentService.generation_limit_int(
-                            "normal",
-                            "maxTokens",
-                            default=256,
-                        )
-                    ),
-                )
+            max_tokens=cls._resolve_int_limit(
+                mode="normal",
+                field="maxTokens",
+                env_key="CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS",
+                default=256,
             ),
-            num_ctx=int(
-                os.getenv(
-                    "CHAT_RESPONSE_MODE_NORMAL_NUM_CTX",
-                    str(
-                        ChatResponseModeContentService.generation_limit_int(
-                            "normal",
-                            "numCtx",
-                            default=1536,
-                        )
-                    ),
-                )
+            num_ctx=cls._resolve_int_limit(
+                mode="normal",
+                field="numCtx",
+                env_key="CHAT_RESPONSE_MODE_NORMAL_NUM_CTX",
+                default=1536,
             ),
-            temperature=float(
-                os.getenv(
-                    "CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE",
-                    str(
-                        ChatResponseModeContentService.generation_limit_float(
-                            "normal",
-                            "temperature",
-                            default=0.1,
-                        )
-                    ),
-                )
+            temperature=cls._resolve_float_limit(
+                mode="normal",
+                field="temperature",
+                env_key="CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE",
+                default=0.1,
             ),
             response_mode="normal",
         )
@@ -468,41 +530,23 @@ class ChatResponseModeService:
                     default="qwen2.5:3b",
                 ),
             ),
-            max_tokens=int(
-                os.getenv(
-                    "CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS",
-                    str(
-                        ChatResponseModeContentService.generation_limit_int(
-                            "thinker",
-                            "maxTokens",
-                            default=512,
-                        )
-                    ),
-                )
+            max_tokens=cls._resolve_int_limit(
+                mode="thinker",
+                field="maxTokens",
+                env_key="CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS",
+                default=512,
             ),
-            num_ctx=int(
-                os.getenv(
-                    "CHAT_RESPONSE_MODE_THINKER_NUM_CTX",
-                    str(
-                        ChatResponseModeContentService.generation_limit_int(
-                            "thinker",
-                            "numCtx",
-                            default=2048,
-                        )
-                    ),
-                )
+            num_ctx=cls._resolve_int_limit(
+                mode="thinker",
+                field="numCtx",
+                env_key="CHAT_RESPONSE_MODE_THINKER_NUM_CTX",
+                default=2048,
             ),
-            temperature=float(
-                os.getenv(
-                    "CHAT_RESPONSE_MODE_THINKER_TEMPERATURE",
-                    str(
-                        ChatResponseModeContentService.generation_limit_float(
-                            "thinker",
-                            "temperature",
-                            default=0.15,
-                        )
-                    ),
-                )
+            temperature=cls._resolve_float_limit(
+                mode="thinker",
+                field="temperature",
+                env_key="CHAT_RESPONSE_MODE_THINKER_TEMPERATURE",
+                default=0.15,
             ),
             response_mode="thinker",
         )
