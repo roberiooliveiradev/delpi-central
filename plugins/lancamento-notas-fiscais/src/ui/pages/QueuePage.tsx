@@ -206,7 +206,7 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
     <div className="lnf-stack" data-testid="queue-page">
       <LnfPageHeader
         title="Lançamento de Notas Fiscais"
-        subtitle={`Fila · ${branchLabel(branch)} · por ordem de recebimento físico.`}
+        subtitle={`Fila · ${branchLabel(branch)} · mais recentes primeiro (recebimento físico).`}
         meta={
           listLoadedAt
             ? `Fila carregada em ${formatDateTime(listLoadedAt)}`
