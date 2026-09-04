@@ -62,7 +62,7 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 | `createDashboardFiltersKit` | `MyRequestsFiltersRow` / `FilterSelectField` / `FilterInputField` | Mine + Fila |
 | `createCompactPagination` | `MyRequestsCompactPagination` | Mine + Fila |
 | `createHostContainedModalShell` | `MyRequestsModal` | Detalhe return/cancel |
-| `createDashboardFileDropzone` | `MyRequestsFileDropzone` | Upload anexos no detalhe |
+| `createDashboardFileDropzone` | `MyRequestsFileDropzone` | Upload anexos e artefatos no detalhe |
 | `ActionButton` | — | Nav, ações, links de linha |
 | `DataTable` + `dataTableBemClasses` | `mrDataTableClassNames` | `/mine`, `/work-queue` |
 | `FieldLabel` | — | Comentários, observação NF |
@@ -91,7 +91,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 | Detalhe | `/requests/:id` | SectionCard, DetailFields, ActionBar→ActionButton, ModalShell (return/cancel), Timeline, painéis |
 | Payload NF | detalhe | SectionCard, DetailFields |
 | Comentários | detalhe | SectionCard, FieldLabel, NativeTextArea, ActionButton |
-| Anexos / Artefatos | detalhe | SectionCard, FileDropzone (anexos), Empty, ActionButton(link) |
+| Anexos / Artefatos | detalhe | SectionCard, FileDropzone (anexos + artefatos se process/manage), SelectField (kind), Empty, ActionButton(link) |
 | Schema MP | `/new` type MP | SchemaFormPage + SectionCard + kit fields | **entregue E7** |
 
 ---
@@ -220,14 +220,15 @@ Deep link: `/apps/my-requests/new?type=invoice-issuance` (também `type_code`) p
 └─────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard «Comentários» ── lista · TextArea · [Enviar] ─────────┐
 └─────────────────────────────────────────────────────────────────────┘
-┌─ SectionCard «Anexos» ── links ActionButton ────────────────────────┐
+┌─ SectionCard «Anexos» ── FileDropzone · links ActionButton ─────────┐
 └─────────────────────────────────────────────────────────────────────┘
-┌─ SectionCard «Artefatos» ── links ActionButton ─────────────────────┐
+┌─ SectionCard «Artefatos» ── Select kind† · FileDropzone† · links ───┐
+│ † upload só se process/manage                                       │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 **Regra:** botões = `allowed_actions` da API (render-only).  
-**Previsto:** ModalShell para return/cancel; FileDropzone upload.
+**Kit:** ModalShell (return/cancel) · FileDropzone (anexos + artefatos) · SelectField (tipo do artefato)
 
 ### WF-06 — Admin tipos (fora P0)
 

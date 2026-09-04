@@ -235,7 +235,61 @@ export async function listArtifacts(requestId: string, options?: { signal?: Abor
     options,
   );
   const data = unwrap(body);
-  return Array.isArray(data) ? data : data.items || [];
+  const items = Array.isArray(data) ? data : data.items || [];
+  return items.map(normalizeArtifact);
+}
+
+function normalizeArtifact(raw: Record<string, unknown> | RequestArtifact): RequestArtifact {
+  const row = raw as Record<string, unknown>;
+  return {
+    id: String(row.id ?? ""),
+    file_name: String(row.file_name || row.original_name || "artefato"),
+    content_type:
+      (row.content_type as string | null | undefined) ??
+      (row.mime_type as string | null | undefined) ??
+      null,
+    size_bytes: (row.size_bytes as number | null | undefined) ?? null,
+    kind:
+      (row.kind as string | null | undefined) ??
+      (row.artifact_kind as string | null | undefined) ??
+      null,
+    created_at: (row.created_at as string | null | undefined) ?? null,
+  };
+}
+
+export type UploadArtifactOptions = {
+  artifactKind?: string;
+  idempotencyKey?: string;
+};
+
+export async function uploadArtifact(
+  requestId: string,
+  file: File,
+  options?: UploadArtifactOptions,
+) {
+  const form = new FormData();
+  form.append("file", file, file.name);
+  form.append("artifact_kind", (options?.artifactKind || "generic").trim() || "generic");
+  const idempotencyKey = options?.idempotencyKey;
+  const response = await fetch(
+    `${API_BASE}/requests/${encodeURIComponent(requestId)}/artifacts`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "X-Delpi-Caller-App": DELPI_CALLER_APP,
+        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+        ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
+      },
+      body: form,
+    },
+  );
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Erro HTTP ${response.status}`);
+  }
+  const body = (await response.json()) as Envelope<Record<string, unknown>>;
+  return normalizeArtifact(unwrap(body));
 }
 
 export function attachmentDownloadUrl(attachmentId: string) {

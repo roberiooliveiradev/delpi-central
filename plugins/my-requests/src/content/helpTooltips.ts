@@ -51,7 +51,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   artifacts: {
     section:
-      "Artefatos gerados no processamento (evidências do atendente). Upload restrito a process/manage.",
+      "Artefatos gerados no processamento (ex.: PDF da NF). Quem tem process ou manage pode enviar via arrastar/selecionar e escolher o tipo (genérico ou PDF da NF); solicitantes só baixam.",
   },
 } as const;
 

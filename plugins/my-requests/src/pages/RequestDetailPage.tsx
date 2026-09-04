@@ -14,7 +14,7 @@ import { TimelinePanel } from "../components/TimelinePanel";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { InvoiceIssuancePayloadPanel } from "../features/invoice-issuance/ui/InvoiceIssuancePayloadPanel";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
-import { canCreateAnyRequest } from "../security/requestsAccess";
+import { canCreateAnyRequest, canProcessAnyRequest } from "../security/requestsAccess";
 import type { RequestDetail } from "../types/requests";
 import {
   DetailFields,
@@ -129,7 +129,10 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
       <TimelinePanel requestId={requestId} />
       <CommentsPanel requestId={requestId} />
       <AttachmentsPanel requestId={requestId} />
-      <ArtifactsPanel requestId={requestId} />
+      <ArtifactsPanel
+        requestId={requestId}
+        canUpload={canProcessAnyRequest(access)}
+      />
       {reasonKind ? (
         <ReasonConfirmModal
           open

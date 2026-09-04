@@ -48,3 +48,12 @@ export function canCreateAnyRequest(access: AppPermissions): boolean {
     access.canCreateRawMaterial
   );
 }
+
+/** Upload de artefato: process de qualquer tipo vertical ou manage. */
+export function canProcessAnyRequest(access: AppPermissions): boolean {
+  return (
+    access.canManage ||
+    access.canProcessInvoiceIssuance ||
+    access.canProcessRawMaterial
+  );
+}

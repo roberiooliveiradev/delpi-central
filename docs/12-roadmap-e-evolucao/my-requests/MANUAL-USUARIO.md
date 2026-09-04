@@ -40,7 +40,7 @@ Painéis:
 | Linha do tempo | Eventos (criação, transição, upload, comentário) |
 | Comentários | Thread da solicitação |
 | Anexos | Arquivos do solicitante — arraste/selecione no detalhe para enviar; baixe pelos links |
-| Artefatos | Evidências do processamento |
+| Artefatos | Evidências do processamento — processadores enviam (genérico ou PDF da NF); solicitantes só baixam |
 
 ## Permissões típicas
 
