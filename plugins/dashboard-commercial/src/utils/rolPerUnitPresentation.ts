@@ -5,13 +5,7 @@ import {
   formatDashboardMetricValue,
   resolveGoalPerformanceBadge,
 } from "./goalDisplay";
-import {
-  formatOperationalUnitCode,
-} from "./operationalUnitLabels";
-
-/** Mesmo texto retornado pela api-delpi quando a meta é só por unidade. */
-export const BRANCH_GOALS_FILTER_HINT =
-  "Metas cadastradas apenas por unidade (Santa Catarina e Espírito Santo). Selecione uma unidade no filtro.";
+import { formatOperationalUnitCode } from "./operationalUnitLabels";
 
 export type RolPerUnitKpiView = KpiGoalPresentation & {
   valueVariant: "default" | "per-unit";
@@ -30,17 +24,6 @@ function resolveConsolidatedRolValue(
     return null;
   }
   return values.reduce((sum, value) => sum + value, 0);
-}
-
-function resolveBranchGoalsFilterHint(
-  filial01: RolTargetData | null,
-  filial02: RolTargetData | null,
-): string {
-  return (
-    filial01?.goal_scope_hint?.trim() ||
-    filial02?.goal_scope_hint?.trim() ||
-    BRANCH_GOALS_FILTER_HINT
-  );
 }
 
 function resolvePerUnitPerformanceBadges(
@@ -85,6 +68,11 @@ export function buildRolPerUnitKpiView(
     dateEnd?: string | null;
     /** Nota IDD canônica do SI (`indicators[].score`). */
     iddScoreLabel?: string | null;
+    /**
+     * Payload consolidado (branch vazio) com meta SI já agregada via
+     * `branch_value_aggregation` — não somar metas no MFE.
+     */
+    consolidatedMetric?: RolTargetData | null;
   },
 ): RolPerUnitKpiView {
   const branch = (activeBranch ?? "").trim();
@@ -112,12 +100,37 @@ export function buildRolPerUnitKpiView(
     };
   }
 
-  const consolidatedRol = resolveConsolidatedRolValue(filial01, filial02);
+  const consolidatedMetric = options?.consolidatedMetric ?? null;
+  const consolidatedRol =
+    consolidatedMetric?.rol != null && !Number.isNaN(consolidatedMetric.rol)
+      ? consolidatedMetric.rol
+      : resolveConsolidatedRolValue(filial01, filial02);
+
+  // Visão consolidada: a meta vem só do payload SI (branch vazio), já agregado.
+  // Não inventar «selecione unidade» a partir das filiais 01/02.
+  if (consolidatedMetric != null) {
+    const presentation = buildKpiGoalPresentation(
+      contextLabel,
+      consolidatedMetric,
+      undefined,
+      {
+        realizedValue: consolidatedRol,
+        dateStart: options?.dateStart,
+        dateEnd: options?.dateEnd,
+        iddScoreLabel: siIddScoreLabel,
+      },
+    );
+    return {
+      ...presentation,
+      value: consolidatedRol != null ? formatCurrency(consolidatedRol) : "—",
+      valueVariant: "default",
+      goalPerformanceBadges: [],
+    };
+  }
 
   return {
     contextLabel,
-    value:
-      consolidatedRol != null ? formatCurrency(consolidatedRol) : "—",
+    value: consolidatedRol != null ? formatCurrency(consolidatedRol) : "—",
     valueVariant: "default",
     goalLabel: null,
     goalPrefix: null,
@@ -126,7 +139,7 @@ export function buildRolPerUnitKpiView(
     monthlyGoalPrefix: null,
     monthlyGoalHint: null,
     goalScopeBadge: null,
-    goalScopeHint: resolveBranchGoalsFilterHint(filial01, filial02),
+    goalScopeHint: null,
     goalPerformanceBadge: null,
     goalPerformanceBadges: [],
     iddScoreLabel: siIddScoreLabel ?? null,

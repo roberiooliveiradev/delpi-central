@@ -28,10 +28,13 @@ import type {
 type SectionErrors = {
   headOfficeRol?: string;
   branchRol?: string;
+  consolidatedRol?: string;
   headOfficeWegRol?: string;
   branchWegRol?: string;
+  consolidatedWegRol?: string;
   headOfficeNewBusinessRol?: string;
   branchNewBusinessRol?: string;
+  consolidatedNewBusinessRol?: string;
   closingRate?: string;
   salesOrderOtd?: string;
   newBusinessRol?: string;
@@ -40,10 +43,13 @@ type SectionErrors = {
 type UseCommercialDashboardResult = {
   headOfficeRol: RolTargetData | null;
   branchRol: RolTargetData | null;
+  consolidatedRol: RolTargetData | null;
   headOfficeWegRol: RolTargetData | null;
   branchWegRol: RolTargetData | null;
+  consolidatedWegRol: RolTargetData | null;
   headOfficeNewBusinessRol: RolTargetData | null;
   branchNewBusinessRol: RolTargetData | null;
+  consolidatedNewBusinessRol: RolTargetData | null;
   closingRate: ClosingRateData | null;
   salesOrderOtd: SalesOrderOtdData | null;
   newBusinessRol: NewBusinessRolPctData | null;
@@ -63,13 +69,18 @@ export function useCommercialDashboard(
 ): UseCommercialDashboardResult {
   const [headOfficeRol, setHeadOfficeRol] = useState<RolTargetData | null>(null);
   const [branchRol, setBranchRol] = useState<RolTargetData | null>(null);
+  const [consolidatedRol, setConsolidatedRol] = useState<RolTargetData | null>(null);
   const [headOfficeWegRol, setHeadOfficeWegRol] = useState<RolTargetData | null>(
     null
   );
   const [branchWegRol, setBranchWegRol] = useState<RolTargetData | null>(null);
+  const [consolidatedWegRol, setConsolidatedWegRol] =
+    useState<RolTargetData | null>(null);
   const [headOfficeNewBusinessRol, setHeadOfficeNewBusinessRol] =
     useState<RolTargetData | null>(null);
   const [branchNewBusinessRol, setBranchNewBusinessRol] =
+    useState<RolTargetData | null>(null);
+  const [consolidatedNewBusinessRol, setConsolidatedNewBusinessRol] =
     useState<RolTargetData | null>(null);
   const [closingRate, setClosingRate] = useState<ClosingRateData | null>(null);
   const [salesOrderOtd, setSalesOrderOtd] = useState<SalesOrderOtdData | null>(null);
@@ -143,6 +154,11 @@ export function useCommercialDashboard(
             (signal) => getNewBusinessRolPct(indicatorParams, signal),
             ...(needsBranchIdd
               ? [
+                  // Meta consolidada SI (branch omitido) — visão «Todas».
+                  (signal: AbortSignal) => getRolSummary(rolMetricParams, signal),
+                  (signal: AbortSignal) => getWegRolTarget(segmentRolParams, signal),
+                  (signal: AbortSignal) =>
+                    getNewBusinessRolTarget(segmentRolParams, signal),
                   (signal: AbortSignal) =>
                     fetchPerBranchMetricSlices(
                       (branch, branchSignal) =>
@@ -227,14 +243,20 @@ export function useCommercialDashboard(
 
           const branchIndex = index - handlers.length;
           if (branchIndex === 0) {
+            setConsolidatedRol(result.value as RolTargetData);
+          } else if (branchIndex === 1) {
+            setConsolidatedWegRol(result.value as RolTargetData);
+          } else if (branchIndex === 2) {
+            setConsolidatedNewBusinessRol(result.value as RolTargetData);
+          } else if (branchIndex === 3) {
             setClosingRateBranches(
               result.value as PerBranchMetricSlices<ClosingRateData>,
             );
-          } else if (branchIndex === 1) {
+          } else if (branchIndex === 4) {
             setSalesOrderOtdBranches(
               result.value as PerBranchMetricSlices<SalesOrderOtdData>,
             );
-          } else if (branchIndex === 2) {
+          } else if (branchIndex === 5) {
             setNewBusinessRolBranches(
               result.value as PerBranchMetricSlices<NewBusinessRolPctData>,
             );
@@ -243,6 +265,9 @@ export function useCommercialDashboard(
 
         if (!controller.signal.aborted) {
           if (!needsBranchIdd) {
+            setConsolidatedRol(null);
+            setConsolidatedWegRol(null);
+            setConsolidatedNewBusinessRol(null);
             setClosingRateBranches(null);
             setSalesOrderOtdBranches(null);
             setNewBusinessRolBranches(null);
@@ -284,10 +309,13 @@ export function useCommercialDashboard(
   return {
     headOfficeRol,
     branchRol,
+    consolidatedRol,
     headOfficeWegRol,
     branchWegRol,
+    consolidatedWegRol,
     headOfficeNewBusinessRol,
     branchNewBusinessRol,
+    consolidatedNewBusinessRol,
     closingRate,
     salesOrderOtd,
     newBusinessRol,
