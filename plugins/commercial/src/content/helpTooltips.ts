@@ -643,6 +643,25 @@ export const CM_HELP = {
       "Escolha quais colunas exibir e a ordem delas. A preferência fica neste navegador (junto com o tamanho da fonte).",
     collaboratorColumns:
       "Personalize as colunas do resumo por colaborador. Clique na linha para filtrar a lista Por oportunidade daquele vendedor.",
+    opportunityListColumns: {
+      ov: "Número da oportunidade de venda (OV). Clique abre o detalhe.",
+      rev: "Revisão da OV no Protheus (AD1_REVISA).",
+      customer: "Código do cliente da oportunidade no período.",
+      seller: "Vendedor (código ou nome) responsável pela OV.",
+      status: "Situação canônica da OV: Aberta, Ganha, Perdida ou Outra.",
+      stage: "Etapa atual do processo comercial da oportunidade.",
+      date: "Data de abertura da OV (AD1_DATA), usada na ordenação padrão.",
+      "proposal-doc":
+        "Atalho para abrir a proposta-documento (ADY) vinculada a esta OV, quando existir.",
+    },
+    collaboratorSummaryColumns: {
+      seller: "Vendedor/carteira com OVs no período. Clique filtra a lista Por oportunidade.",
+      open: "Quantidade de OVs abertas no período, pela data de abertura.",
+      won: "Quantidade de OVs ganhas no período, pela data de aceite.",
+      lost: "Quantidade de OVs perdidas no período, pela data de abertura.",
+      total: "Soma de abertas, ganhas e perdidas no resumo do período.",
+      age: "Média de idade em dias das OVs abertas do colaborador no período.",
+    },
     tableRowOpensDetail:
       "Clique na linha (ou na identidade) abre o detalhe. Controles internos com destino diferente não propagam o clique.",
     ovStatus: "Etapa atual da oportunidade comercial.",

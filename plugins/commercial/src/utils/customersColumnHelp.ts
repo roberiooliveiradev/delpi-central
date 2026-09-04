@@ -108,6 +108,26 @@ export const ANALYTICS_TEAM_COLUMN_HELP: Record<string, string> = {
   openValue: CM_HELP.analytics.teamColumns.openValue,
 };
 
+export const ANALYTICS_OPPORTUNITY_LIST_COLUMN_HELP: Record<string, string> = {
+  ov: CM_HELP.analytics.opportunityListColumns.ov,
+  rev: CM_HELP.analytics.opportunityListColumns.rev,
+  customer: CM_HELP.analytics.opportunityListColumns.customer,
+  seller: CM_HELP.analytics.opportunityListColumns.seller,
+  status: CM_HELP.analytics.opportunityListColumns.status,
+  stage: CM_HELP.analytics.opportunityListColumns.stage,
+  date: CM_HELP.analytics.opportunityListColumns.date,
+  "proposal-doc": CM_HELP.analytics.opportunityListColumns["proposal-doc"],
+};
+
+export const ANALYTICS_COLLABORATOR_SUMMARY_COLUMN_HELP: Record<string, string> = {
+  seller: CM_HELP.analytics.collaboratorSummaryColumns.seller,
+  open: CM_HELP.analytics.collaboratorSummaryColumns.open,
+  won: CM_HELP.analytics.collaboratorSummaryColumns.won,
+  lost: CM_HELP.analytics.collaboratorSummaryColumns.lost,
+  total: CM_HELP.analytics.collaboratorSummaryColumns.total,
+  age: CM_HELP.analytics.collaboratorSummaryColumns.age,
+};
+
 export const PROPOSALS_DOCUMENTS_COLUMN_HELP: Record<string, string> = {
   ov: CM_HELP.proposals.columns.ov,
 };

@@ -19,6 +19,14 @@ describe("OpportunityCollaboratorSummaryTable", () => {
     assert.match(table, /sortTableRows/);
     assert.match(table, /onSellerClick/);
     assert.match(table, /OPPORTUNITY_COLLABORATOR_COLUMNS_STORAGE_KEY/);
+    assert.match(table, /ANALYTICS_COLLABORATOR_SUMMARY_COLUMN_HELP/);
+    assert.match(table, /withColumnHelp/);
+  });
+
+  it("lista de OVs usa helps de coluna dedicados", () => {
+    const list = readFileSync(join(here, "CommercialProposalsTable.tsx"), "utf8");
+    assert.match(list, /ANALYTICS_OPPORTUNITY_LIST_COLUMN_HELP/);
+    assert.match(list, /withColumnHelp/);
   });
 
   it("página liga drill para visão oportunidade + seller", () => {

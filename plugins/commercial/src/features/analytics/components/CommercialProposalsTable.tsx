@@ -21,7 +21,7 @@ import type {
   CommercialProposalStatusCategory,
 } from "../../../types/analytics";
 import {
-  PROPOSALS_DOCUMENTS_COLUMN_HELP,
+  ANALYTICS_OPPORTUNITY_LIST_COLUMN_HELP,
   withColumnHelp,
 } from "../../../utils/customersColumnHelp";
 import { formatDisplayDate } from "../../../utils/dates";
@@ -245,7 +245,7 @@ export function CommercialProposalsTable({
     [basePath, detailSearch, hideCustomerColumn, hideSellerColumn, showOpenProposal],
   );
   const columns = useMemo(
-    () => filterColumns(withColumnHelp(baseColumns, PROPOSALS_DOCUMENTS_COLUMN_HELP)),
+    () => filterColumns(withColumnHelp(baseColumns, ANALYTICS_OPPORTUNITY_LIST_COLUMN_HELP)),
     [baseColumns, filterColumns],
   );
 

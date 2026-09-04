@@ -13,6 +13,10 @@ import {
 } from "../../../app/commercialUi";
 import { CM_HELP } from "../../../content/helpTooltips";
 import {
+  ANALYTICS_COLLABORATOR_SUMMARY_COLUMN_HELP,
+  withColumnHelp,
+} from "../../../utils/customersColumnHelp";
+import {
   nextTableSortState,
   sortTableRows,
   type TableSortDirection,
@@ -118,7 +122,10 @@ export function OpportunityCollaboratorSummaryTable({
 
   const baseColumns = useMemo(() => buildColumns(), []);
   const columns = useMemo(
-    () => filterColumns(baseColumns),
+    () =>
+      filterColumns(
+        withColumnHelp(baseColumns, ANALYTICS_COLLABORATOR_SUMMARY_COLUMN_HELP),
+      ),
     [baseColumns, filterColumns],
   );
   const sortedRows = useMemo(
