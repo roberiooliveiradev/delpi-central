@@ -1,6 +1,11 @@
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { exportTableFormat, formatOperationalUnitCode, type TableExportPayload } from "@delpi/plugin-ui/index";
 import { formatDisplayDate, getDeliveryOverdueDays } from "./dates";
+import {
+  DEFAULT_QUANTITY_DISPLAY_MODE,
+  type QuantityDisplayMode,
+  resolveDisplayQuantity,
+} from "./displayQuantity";
 import { getLineOpForecast } from "./opAllocation";
 import { getAllocatedStock } from "./stockAllocation";
 import { getLineStatus } from "./statusBadges";
@@ -8,8 +13,21 @@ import type { TableColumnDef, TableColumnKey } from "./tableColumns";
 
 type ExportCellValue = string | number | null;
 
-function itemExportValue(item: OpenOrdersTotvsItem, key: TableColumnKey): ExportCellValue {
+function displayQty(
+  quantity: number | null | undefined,
+  unit: string | null | undefined,
+  mode: QuantityDisplayMode,
+): number {
+  return resolveDisplayQuantity(quantity, unit, mode).value;
+}
+
+function itemExportValue(
+  item: OpenOrdersTotvsItem,
+  key: TableColumnKey,
+  mode: QuantityDisplayMode,
+): ExportCellValue {
   const previsao = getLineOpForecast(item);
+  const unit = item.unidade;
 
   switch (key) {
     case "nome_cliente":
@@ -27,13 +45,13 @@ function itemExportValue(item: OpenOrdersTotvsItem, key: TableColumnKey): Export
     case "codigo_cliente":
       return item.codigo_cliente || "";
     case "quantidade":
-      return item.quantidade ?? 0;
+      return displayQty(item.quantidade, unit, mode);
     case "entregue":
-      return item.entregue ?? 0;
+      return displayQty(item.entregue, unit, mode);
     case "saldo":
-      return item.saldo ?? 0;
+      return displayQty(item.saldo, unit, mode);
     case "no_estoque":
-      return getAllocatedStock(item);
+      return displayQty(getAllocatedStock(item), unit, mode);
     case "cobertura": {
       const allocated = getAllocatedStock(item);
       const saldo = item.saldo ?? 0;
@@ -67,6 +85,7 @@ function buildFilename(): string {
 function buildPayload(
   items: OpenOrdersTotvsItem[],
   columns: TableColumnDef[],
+  mode: QuantityDisplayMode,
 ): TableExportPayload {
   return {
     title: "Pedidos em aberto",
@@ -74,7 +93,7 @@ function buildPayload(
     rows: items.map((item) => {
       const record: Record<string, unknown> = {};
       for (const column of columns) {
-        record[column.key] = itemExportValue(item, column.key);
+        record[column.key] = itemExportValue(item, column.key, mode);
       }
       return record;
     }),
@@ -84,12 +103,13 @@ function buildPayload(
 export async function exportOpenOrdersExcel(
   items: OpenOrdersTotvsItem[],
   columns: TableColumnDef[],
+  mode: QuantityDisplayMode = DEFAULT_QUANTITY_DISPLAY_MODE,
 ): Promise<void> {
   if (items.length === 0 || columns.length === 0) {
     return;
   }
 
-  exportTableFormat(buildPayload(items, columns), "xlsx", {
+  exportTableFormat(buildPayload(items, columns, mode), "xlsx", {
     filename: buildFilename(),
   });
 }

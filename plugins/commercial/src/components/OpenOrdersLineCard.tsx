@@ -25,7 +25,12 @@ import { CustomerAvatar } from "../features/customers/components/CustomerAvatar"
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { formatDisplayDate, getDeliveryOverdueDays } from "../utils/dates";
 import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
-import { formatCurrency, formatQuantity } from "../utils/format";
+import { formatCurrency } from "../utils/format";
+import {
+  DEFAULT_QUANTITY_DISPLAY_MODE,
+  formatDisplayQuantity,
+  type QuantityDisplayMode,
+} from "../utils/displayQuantity";
 import { openOrdersColumnHelp } from "../utils/openOrdersColumnHelp";
 import {
   resolveLineCoverage,
@@ -43,6 +48,7 @@ type OpenOrdersLineCardProps = {
   visibleColumns: ReadonlyArray<{ key: TableColumnKey; label: string }>;
   hasAvatar?: boolean;
   basePath?: string;
+  quantityDisplayMode?: QuantityDisplayMode;
   onOpenDetail: (item: OpenOrdersTotvsItem) => void;
 };
 
@@ -65,7 +71,11 @@ function renderCardValue(
   key: TableColumnKey,
   item: OpenOrdersTotvsItem,
   hasAvatar: boolean,
-  options: { basePath?: string; onOpenDetail: (item: OpenOrdersTotvsItem) => void },
+  options: {
+    basePath?: string;
+    quantityDisplayMode: QuantityDisplayMode;
+    onOpenDetail: (item: OpenOrdersTotvsItem) => void;
+  },
 ): ReactNode {
   switch (key) {
     case "nome_cliente": {
@@ -167,15 +177,31 @@ function renderCardValue(
     case "codigo_cliente":
       return item.codigo_cliente || "—";
     case "quantidade":
-      return formatQuantity(item.quantidade);
+      return formatDisplayQuantity(
+        item.quantidade,
+        item.unidade,
+        options.quantityDisplayMode,
+      );
     case "entregue":
-      return formatQuantity(item.entregue);
+      return formatDisplayQuantity(
+        item.entregue,
+        item.unidade,
+        options.quantityDisplayMode,
+      );
     case "saldo":
-      return formatQuantity(item.saldo);
+      return formatDisplayQuantity(
+        item.saldo,
+        item.unidade,
+        options.quantityDisplayMode,
+      );
     case "no_estoque":
-      return formatQuantity(getAllocatedStock(item));
+      return formatDisplayQuantity(
+        getAllocatedStock(item),
+        item.unidade,
+        options.quantityDisplayMode,
+      );
     case "cobertura": {
-      const coverage = resolveLineCoverage(item);
+      const coverage = resolveLineCoverage(item, options.quantityDisplayMode);
       return (
         <div className="cm-open-orders-meter">
           <CommercialInlineMeter
@@ -309,12 +335,13 @@ export function OpenOrdersLineCard({
   visibleColumns,
   hasAvatar = false,
   basePath,
+  quantityDisplayMode = DEFAULT_QUANTITY_DISPLAY_MODE,
   onOpenDetail,
 }: OpenOrdersLineCardProps) {
   const openDetail = () => onOpenDetail(item);
   const customerLabel = item.nome_cliente?.trim() || "linha";
   const pedidoLabel = item.pedido?.trim() || "—";
-  const valueOptions = { basePath, onOpenDetail };
+  const valueOptions = { basePath, quantityDisplayMode, onOpenDetail };
 
   return (
     <CommercialInteractiveDataCard

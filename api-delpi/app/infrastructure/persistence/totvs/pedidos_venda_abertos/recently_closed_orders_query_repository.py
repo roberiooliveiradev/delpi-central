@@ -32,6 +32,11 @@ class RecentlyClosedOrdersQueryRepository(BaseRepository):
             CAST(C6.C6_QTDVEN AS FLOAT) AS quantidade,
             CAST(C6.C6_QTDENT AS FLOAT) AS entregue,
             CAST(0 AS FLOAT) AS saldo,
+            COALESCE(
+                NULLIF(RTRIM(LTRIM(C6.C6_UM)), ''),
+                RTRIM(LTRIM(B1.B1_UM)),
+                ''
+            ) AS unidade,
             CONVERT(
                 VARCHAR(10),
                 TRY_CONVERT(DATE, NULLIF(RTRIM(C5.C5_EMISSAO), ''), 112),
@@ -60,6 +65,9 @@ class RecentlyClosedOrdersQueryRepository(BaseRepository):
             ON SA1.A1_COD = C5.C5_CLIENTE
            AND SA1.A1_LOJA = C5.C5_LOJACLI
            AND SA1.D_E_L_E_T_ = ' '
+        LEFT JOIN SB1010 B1 WITH (NOLOCK)
+            ON B1.B1_COD = C6.C6_PRODUTO
+           AND B1.D_E_L_E_T_ = ''
         WHERE C6.D_E_L_E_T_ = ' '
           AND C5.C5_FILIAL IN ('01', '02')
           AND C6.C6_QTDENT > 0

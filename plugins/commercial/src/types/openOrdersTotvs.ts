@@ -25,6 +25,8 @@ export type OpenOrdersTotvsItem = {
   quantidade: number;
   entregue: number;
   saldo: number;
+  /** UM Protheus da linha (C6_UM; fallback B1_UM). Necessário para Milheiro↔Peças. */
+  unidade?: string | null;
   data_despacho: string | null;
   data_entrega: string | null;
   no_estoque: number;

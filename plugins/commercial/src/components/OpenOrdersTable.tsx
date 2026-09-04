@@ -56,7 +56,10 @@ import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { formatDisplayDate, getDeliveryOverdueDays } from "../utils/dates";
 import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
 import { exportOpenOrdersExcel } from "../utils/exportOpenOrdersExcel";
-import { formatCurrency, formatQuantity } from "../utils/format";
+import { formatCurrency } from "../utils/format";
+import {
+  formatDisplayQuantity,
+} from "../utils/displayQuantity";
 import { useQuantityDisplayMode } from "../hooks/useQuantityDisplayMode";
 import { openOrdersColumnHelp } from "../utils/openOrdersColumnHelp";
 import {
@@ -208,7 +211,7 @@ export function OpenOrdersTable({
     if (exportRows.length === 0 || exporting) return;
     try {
       setExporting(true);
-      await exportOpenOrdersExcel(exportRows, visibleColumns);
+      await exportOpenOrdersExcel(exportRows, visibleColumns, quantityDisplayMode);
     } finally {
       setExporting(false);
     }
@@ -317,12 +320,20 @@ export function OpenOrdersTable({
       pedido_cliente: (row) => row.pedido_cliente || "—",
       produto: (row) => row.produto || "—",
       codigo_cliente: (row) => row.codigo_cliente || "—",
-      quantidade: (row) => formatQuantity(row.quantidade),
-      entregue: (row) => formatQuantity(row.entregue),
-      saldo: (row) => formatQuantity(row.saldo),
-      no_estoque: (row) => formatQuantity(getAllocatedStock(row)),
+      quantidade: (row) =>
+        formatDisplayQuantity(row.quantidade, row.unidade, quantityDisplayMode),
+      entregue: (row) =>
+        formatDisplayQuantity(row.entregue, row.unidade, quantityDisplayMode),
+      saldo: (row) =>
+        formatDisplayQuantity(row.saldo, row.unidade, quantityDisplayMode),
+      no_estoque: (row) =>
+        formatDisplayQuantity(
+          getAllocatedStock(row),
+          row.unidade,
+          quantityDisplayMode,
+        ),
       cobertura: (row) => {
-        const coverage = resolveLineCoverage(row);
+        const coverage = resolveLineCoverage(row, quantityDisplayMode);
         return (
           <div className="cm-open-orders-meter">
             <CommercialInlineMeter
@@ -466,7 +477,7 @@ export function OpenOrdersTable({
             : undefined,
       render: (row) => renderers[column.key](row),
     }));
-  }, [basePath, customerAvatars, visibleColumns]);
+  }, [basePath, customerAvatars, quantityDisplayMode, visibleColumns]);
 
   return (
     <>
@@ -651,6 +662,7 @@ export function OpenOrdersTable({
                 item={row}
                 visibleColumns={visibleColumns}
                 basePath={basePath}
+                quantityDisplayMode={quantityDisplayMode}
                 hasAvatar={Boolean(
                   row.codigo_cadastro?.trim() &&
                     row.loja_cadastro?.trim() &&
@@ -676,6 +688,7 @@ export function OpenOrdersTable({
               completedRows={closedOrders.items}
               visibleColumns={visibleColumns}
               basePath={basePath}
+              quantityDisplayMode={quantityDisplayMode}
               focusStage={focusStage}
               customerAvatarKeys={
                 new Set(

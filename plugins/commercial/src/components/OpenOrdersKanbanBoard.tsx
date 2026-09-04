@@ -10,6 +10,10 @@ import { customerAvatarKey } from "../hooks/useOpenOrdersCustomerAvatars";
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { formatCurrency } from "../utils/format";
 import { formatDisplayDate } from "../utils/dates";
+import {
+  DEFAULT_QUANTITY_DISPLAY_MODE,
+  type QuantityDisplayMode,
+} from "../utils/displayQuantity";
 import { OpenOrdersLineCard } from "./OpenOrdersLineCard";
 import { tableColumnLabel, type TableColumnKey } from "../utils/tableColumns";
 
@@ -54,6 +58,7 @@ type OpenOrdersKanbanBoardProps = {
   visibleColumns: ReadonlyArray<{ key: TableColumnKey; label: string }>;
   customerAvatarKeys?: ReadonlySet<string>;
   basePath?: string;
+  quantityDisplayMode?: QuantityDisplayMode;
   onOpenDetail: (item: OpenOrdersTotvsItem) => void;
   /** Optional focus column id (deep link). */
   focusStage?: OpenOrderKanbanStageId | null;
@@ -78,6 +83,7 @@ export function OpenOrdersKanbanBoardView({
   visibleColumns,
   customerAvatarKeys,
   basePath,
+  quantityDisplayMode = DEFAULT_QUANTITY_DISPLAY_MODE,
   onOpenDetail,
   focusStage = null,
 }: OpenOrdersKanbanBoardProps) {
@@ -119,6 +125,7 @@ export function OpenOrdersKanbanBoardView({
                   visibleColumns={visibleColumns}
                   hasAvatar={hasAvatarForItem(item, customerAvatarKeys)}
                   basePath={basePath}
+                  quantityDisplayMode={quantityDisplayMode}
                   onOpenDetail={onOpenDetail}
                 />
               ))

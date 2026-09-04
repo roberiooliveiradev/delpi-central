@@ -30,4 +30,9 @@ describe("resolveDisplayQuantity", () => {
   it("formats with three decimal places", () => {
     expect(formatDisplayQuantity(1.2345, "MI", "catalog")).toBe("1,235 MI");
   });
+
+  it("omits unit suffix when UM is missing", () => {
+    expect(formatDisplayQuantity(10, "", "pieces")).toBe("10,000");
+    expect(formatDisplayQuantity(10, null, "catalog")).toBe("10,000");
+  });
 });

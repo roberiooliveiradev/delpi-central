@@ -1,12 +1,20 @@
 import type { OpenOrdersTotvsItem } from "../types/openOrdersTotvs";
 import { resolveOpVsPedidoPrazo } from "./dates";
+import {
+  DEFAULT_QUANTITY_DISPLAY_MODE,
+  type QuantityDisplayMode,
+  resolveDisplayQuantity,
+} from "./displayQuantity";
 import { formatQuantity } from "./format";
 import { getLineOpForecast } from "./opAllocation";
 import { getAllocatedStock } from "./stockAllocation";
 
 export type CoverageTone = "neutral" | "success" | "warning" | "danger";
 
-export function resolveLineCoverage(item: OpenOrdersTotvsItem): {
+export function resolveLineCoverage(
+  item: OpenOrdersTotvsItem,
+  mode: QuantityDisplayMode = DEFAULT_QUANTITY_DISPLAY_MODE,
+): {
   allocated: number;
   saldo: number;
   ratio: number;
@@ -23,12 +31,18 @@ export function resolveLineCoverage(item: OpenOrdersTotvsItem): {
   else if (ratio > 0) tone = "warning";
   else tone = "danger";
 
+  const unit = item.unidade;
+  const displayAllocated = resolveDisplayQuantity(allocated, unit, mode);
+  const displaySaldo = resolveDisplayQuantity(saldo, unit, mode);
+  const unitSuffix =
+    displaySaldo.unit && displaySaldo.unit !== "—" ? ` ${displaySaldo.unit}` : "";
+
   return {
     allocated,
     saldo,
     ratio,
     percentLabel: `${Math.round(ratio * 100)}%`,
-    quantityLabel: `${formatQuantity(allocated)} / ${formatQuantity(saldo)}`,
+    quantityLabel: `${formatQuantity(displayAllocated.value)} / ${formatQuantity(displaySaldo.value)}${unitSuffix}`,
     tone,
   };
 }

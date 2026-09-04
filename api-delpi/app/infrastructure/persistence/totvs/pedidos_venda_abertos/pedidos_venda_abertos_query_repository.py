@@ -9,7 +9,16 @@ from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 
 VIEW = "dbo.VW_PEDIDOS_VENDA_ABERTOS_COMPRADORES"
 
-_ITEMS_SELECT = """
+# UM da linha (C6); cadastro SB1 só como fallback — view não expõe unidade.
+_LINE_UNIT_SQL = """
+    COALESCE(
+        NULLIF(RTRIM(LTRIM(C6.C6_UM)), ''),
+        RTRIM(LTRIM(B1.B1_UM)),
+        ''
+    )
+""".strip()
+
+_ITEMS_SELECT = f"""
     v.nome_cliente,
     v.tipo_entidade,
     v.tipo_pedido,
@@ -24,6 +33,7 @@ _ITEMS_SELECT = """
     v.quantidade,
     v.entregue,
     v.saldo,
+    {_LINE_UNIT_SQL} AS unidade,
     CONVERT(VARCHAR(10), v.data_despacho, 23) AS data_despacho,
     CONVERT(VARCHAR(10), v.data_entrega, 23) AS data_entrega,
     v.no_estoque,
@@ -37,6 +47,14 @@ _ITEMS_FROM = f"""
       ON C5.C5_FILIAL = v.filial
      AND LTRIM(RTRIM(C5.C5_NUM)) = LTRIM(RTRIM(v.pedido))
      AND C5.D_E_L_E_T_ <> '*'
+    LEFT JOIN SC6010 C6 WITH (NOLOCK)
+      ON C6.C6_FILIAL = v.filial
+     AND LTRIM(RTRIM(C6.C6_NUM)) = LTRIM(RTRIM(v.pedido))
+     AND LTRIM(RTRIM(C6.C6_ITEM)) = LTRIM(RTRIM(v.linha))
+     AND C6.D_E_L_E_T_ <> '*'
+    LEFT JOIN SB1010 B1 WITH (NOLOCK)
+      ON B1.B1_COD = C6.C6_PRODUTO
+     AND B1.D_E_L_E_T_ = ''
 """
 
 
