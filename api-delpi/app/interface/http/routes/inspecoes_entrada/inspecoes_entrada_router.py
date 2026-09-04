@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+    PAGE_SIZE_QUERY,
+)
+
 
 from delpi_auth.authorization import require_any_permission
 
@@ -90,7 +95,7 @@ def get_inspecoes_entrada_resumo_route(
 def get_inspecoes_entrada_pendentes_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:
@@ -210,7 +215,7 @@ def get_inspecoes_entrada_rejeitadas_ensaiador_route(
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_rejeitadas_produto_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
-    limit: int = Query(default=50, ge=1, le=200),
+    limit: int = LIMIT_QUERY("limit_50_200"),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:
@@ -251,7 +256,7 @@ def get_inspecoes_entrada_rejeitadas_produto_route(
 def get_inspecoes_entrada_historico_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
     result: str | None = INSPECOES_ENTRADA_HISTORICO_RESULT_QUERY(),
     start_date: str | None = START_DATE_QUERY(),
     end_date: str | None = END_DATE_QUERY(),

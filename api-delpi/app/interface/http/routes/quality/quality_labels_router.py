@@ -4,6 +4,10 @@ from typing import Annotated, Any, Optional
 
 from app.interface.http.query_param_enums import BRANCH_CODE_VALUES, BRANCH_QUERY_OPTIONAL, QUALITY_LABEL_RESULT_VALUES
 from fastapi import APIRouter, Body, File, Form, Query, Response, UploadFile
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+)
+
 from pydantic import BaseModel, Field, field_validator
 
 from delpi_auth.authorization import require_any_permission
@@ -137,7 +141,7 @@ def _current_user_name() -> str:
 def search_ops(
     q: str = Query(..., min_length=1),
     branches: Optional[str] = None,
-    limit: int = Query(8, ge=1, le=20),
+    limit: int = LIMIT_QUERY("limit_8_20"),
 ):
     try:
         service = build_quality_labels_service()
@@ -161,7 +165,7 @@ def search_ops(
 def list_audit_events(
     search: Optional[str] = None,
     eventTypes: Optional[str] = None,
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = LIMIT_QUERY("limit_100_500"),
     offset: int = Query(0, ge=0),
 ):
     try:
@@ -339,7 +343,7 @@ def create_label(body: Annotated[CreateLabelBody, Body(...)]):
 def list_labels(
     search: Optional[str] = None,
     branches: Optional[str] = None,
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = LIMIT_QUERY("limit_50_200"),
     offset: int = Query(0, ge=0),
 ):
     try:

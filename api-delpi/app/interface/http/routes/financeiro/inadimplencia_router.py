@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter
+from app.interface.http.pagination_query import PAGE_SIZE_QUERY
 
 from delpi_auth.authorization import require_any_permission
 
@@ -29,8 +30,7 @@ from app.interface.http.routes.financeiro.inadimplencia_route_helpers import (
     NOVOS_NEGOCIOS_QUERY,
     ONLY_WITH_DELAYS_QUERY,
     PAGE_QUERY,
-    PAGE_SIZE_QUERY,
-    PERIOD_END_QUERY,
+        PERIOD_END_QUERY,
     PERIOD_START_QUERY,
     SEARCH_QUERY,
     SORT_BY_QUERY,
@@ -161,7 +161,7 @@ def get_financeiro_inadimplencia_clientes_route(
     start_date: Optional[str] = PERIOD_START_QUERY(),
     end_date: Optional[str] = PERIOD_END_QUERY(),
     page: int = PAGE_QUERY(),
-    page_size: int = PAGE_SIZE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
     sort_by: Optional[str] = SORT_BY_QUERY(),
     sort_dir: str = SORT_DIR_QUERY(),
     q: Optional[str] = SEARCH_QUERY(),
@@ -208,7 +208,7 @@ def get_financeiro_inadimplencia_titulos_route(
     delay_range: Optional[str] = DELAY_RANGE_QUERY(),
     q: Optional[str] = SEARCH_QUERY(),
     page: int = PAGE_QUERY(),
-    page_size: int = PAGE_SIZE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
     sort_by: Optional[str] = SORT_BY_QUERY(),
     sort_dir: str = SORT_DIR_QUERY(),
 ):

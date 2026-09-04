@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Query
+from fastapi import APIRouter, Body
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+)
+
 from fastapi.responses import Response
 
 from delpi_auth.authorization import require_any_permission
@@ -39,7 +43,7 @@ router = APIRouter(tags=["Propostas Comerciais"])
 )
 @require_any_permission(PROPOSTAS_COMERCIAIS_ACCESS)
 def list_propostas_comerciais_route(
-    limit: int = Query(100, ge=1, le=200, description="Quantidade máxima de propostas recentes"),
+    limit: int = LIMIT_QUERY("limit_100_200", description="Quantidade máxima de propostas recentes"),
 ):
     try:
         use_case = build_list_propostas_comerciais_use_case()

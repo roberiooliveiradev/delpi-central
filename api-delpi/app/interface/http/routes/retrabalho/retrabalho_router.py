@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter
+from app.interface.http.pagination_query import PAGE_SIZE_QUERY
 
 from delpi_auth.authorization import require_any_permission
 
@@ -40,8 +41,7 @@ from app.interface.http.routes.retrabalho.retrabalho_route_helpers import (
     ORDER_BY_RANKING_QUERY,
     ORDER_DIR_QUERY,
     PAGE_QUERY,
-    PAGE_SIZE_QUERY,
-    RECURSO_QUERY,
+        RECURSO_QUERY,
     build_retrabalho_detalhes_request,
     build_retrabalho_query_request,
     execute_retrabalho_route,
@@ -417,7 +417,7 @@ def get_retrabalhos_detalhes_route(
     centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
     codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
     page: int = PAGE_QUERY(),
-    page_size: int = PAGE_SIZE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY("page_50_100"),
     order_by: str = ORDER_BY_DETALHES_QUERY(),
     order_dir: str = ORDER_DIR_QUERY(),
 ):

@@ -1,6 +1,10 @@
 from typing import Optional
 
 from fastapi import APIRouter, Body, File, Path, Query, UploadFile
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -370,7 +374,7 @@ def search_active_customers_for_portfolio_route(
         description="Busca por código, loja ou nome (vazio = primeira página de ativos).",
     ),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
 ):
     """
     Clientes ativos no TOTVS (SA1).
@@ -985,7 +989,7 @@ def list_totvs_outbound_invoices_route(
         description="Period end (YYYY-MM-DD). Default: today.",
     ),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
     situation: Optional[str] = Query(
         "all",
         description="all | emitted | return. Soft-deleted cancelled invoices omitted.",
@@ -1088,7 +1092,7 @@ def list_cliente_notas_fiscais_saida_route(
         description="Fim do período (AAAA-MM-DD). Default: hoje.",
     ),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
     situation: Optional[str] = Query(
         "all",
         description="all | emitted | return (devolução). Canceladas soft-deleted não retornam.",

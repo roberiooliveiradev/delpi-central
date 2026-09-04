@@ -18,7 +18,6 @@ from app.application.dto.financeiro_inadimplencia.constantes import (
     DEFAULT_PAGE_SIZE,
     DEFAULT_SORT_DIR,
     DEFAULT_TITULOS_SORT_BY,
-    MAX_PAGE_SIZE,
 )
 from app.application.dto.financeiro_inadimplencia.mensal_request import (
     InadimplenciaMensalQueryRequest,
@@ -162,12 +161,10 @@ def PERIOD_END_QUERY():
 def PAGE_QUERY():
     return Query(DEFAULT_PAGE, ge=1, description="Page number (minimum 1).")
 def PAGE_SIZE_QUERY():
-    return Query(
-    DEFAULT_PAGE_SIZE,
-    ge=1,
-    le=MAX_PAGE_SIZE,
-    description=f"Tamanho da página (máximo {MAX_PAGE_SIZE}).",
-)
+    """Delegate to canonical pagination tier `page_20_100`."""
+    from app.interface.http.pagination_query import PAGE_SIZE_QUERY as _canonical
+    return _canonical("page_20_100")
+
 def SEARCH_QUERY():
     return Query(None, description="Text search filter.")
 def SORT_BY_QUERY():

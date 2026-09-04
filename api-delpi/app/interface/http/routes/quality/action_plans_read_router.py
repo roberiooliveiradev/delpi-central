@@ -3,6 +3,11 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Body, File, Form, Query, Request, UploadFile
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+    PAGE_SIZE_QUERY,
+)
+
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -561,7 +566,7 @@ def list_overdue_action_plans(
     branch_code: str | None = BRANCH_QUERY_OPTIONAL(),
     nonconformity_scope: str | None = NONCONFORMITY_SCOPE_QUERY(),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     try:
         repo = build_quality_action_plan_read_repository()
@@ -586,7 +591,7 @@ def list_action_plans_recurrence(
     nonconformity_scope: str | None = NONCONFORMITY_SCOPE_QUERY(),
     min_plans: int = Query(default=2, ge=2, le=100),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     try:
         repo = build_quality_action_plan_read_repository()
@@ -617,7 +622,7 @@ def search_action_plan_evidences(
     section: str | None = PAC_EVIDENCE_SECTION_QUERY(),
     evidence_type: str | None = PAC_EVIDENCE_TYPE_QUERY(),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     try:
         repo = build_quality_action_plan_read_repository()
@@ -647,7 +652,7 @@ def list_my_action_queue(
     overdue_only: bool = Query(default=False),
     include_completed: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     user_id = _current_user_id()
     if user_id == "unknown":
@@ -735,7 +740,7 @@ def create_action_plan(body: CreateActionPlanBody = Body(...)):
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def list_assignable_users(
     q: str | None = Query(default=None),
-    limit: int = Query(default=20, ge=1, le=20),
+    limit: int = LIMIT_QUERY("limit_20_20"),
 ):
     normalized = (q or "").strip()
     if normalized and len(normalized) < 2:
@@ -783,7 +788,7 @@ def list_action_plans(
     failure_mode: str | None = Query(default=None, max_length=300),
     overdue_only: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     try:
         repo = build_quality_action_plan_read_repository()
@@ -868,7 +873,7 @@ def promote_solution_pattern(plan_id: str):
 @require_any_permission(QUALITY_ACTION_PLANS_VALIDATE_EFFECTIVENESS_PERMISSIONS)
 def list_pending_effectiveness_reviews(
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
 ):
     try:
         result = build_list_pending_effectiveness_reviews_use_case().execute(
@@ -910,7 +915,7 @@ def get_action_plan_detail(plan_id: str):
 def list_plan_audit_log(
     plan_id: str,
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_50_100"),
 ):
     try:
         repo = build_quality_action_plan_read_repository()
@@ -935,7 +940,7 @@ def list_plan_audit_log(
 def list_plan_revisions(
     plan_id: str,
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
 ):
     try:
         repo = build_quality_action_plan_read_repository()

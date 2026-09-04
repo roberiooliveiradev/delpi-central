@@ -4,6 +4,10 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 from app.interface.http.query_param_enums import SORT_DIR_QUERY
 from fastapi.responses import FileResponse
 
@@ -91,7 +95,7 @@ def list_product_drawings(
     min_size_bytes: Optional[int] = Query(default=None, ge=0),
     max_size_bytes: Optional[int] = Query(default=None, ge=0),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=500),
+    page_size: int = PAGE_SIZE_QUERY("page_50_500"),
     sort: str = Query(
         default="product_code",
         description="product_code, filename, modified_at, size_bytes, revision ou file_kind.",

@@ -1,4 +1,9 @@
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+    PAGE_SIZE_QUERY,
+)
+
 
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
@@ -389,7 +394,7 @@ def get_commercial_rol_by_customer(
         description="Market filter: domestic (CFOP 5/6) or export (CFOP 7).",
         pattern="^(domestic|export)$",
     ),
-    limit: int = Query(20, ge=1, le=500),
+    limit: int = LIMIT_QUERY("limit_20_500"),
     include_others: bool = Query(True),
 ):
     try:
@@ -466,7 +471,7 @@ def get_commercial_rol_by_product(
         pattern="^(product|product_group)$",
         description="Aggregate by product code or product group (family).",
     ),
-    limit: int = Query(500, ge=1, le=500),
+    limit: int = LIMIT_QUERY("limit_500_500"),
 ):
     try:
         request = GetRolByProductRequest(
@@ -564,7 +569,7 @@ def list_commercial_proposals(
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     customer_codes: Optional[str] = Query(None, description="CSV de códigos TOTVS de clientes (filtro de carteira)."),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
     sort_by: Optional[str] = Query(
         None,
         description=(
@@ -939,7 +944,7 @@ def get_sales_order_otd_by_customer(
         None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
     ),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
+    page_size: int = PAGE_SIZE_QUERY("page_50_500"),
 ):
     try:
         request = GetSalesOrderOtdByCustomerRequest(
@@ -1133,7 +1138,7 @@ def get_sales_order_otd_series_by_customer(
         None, description="Comma-separated customer names to exclude (partial match, NOT LIKE)."
     ),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
+    page_size: int = PAGE_SIZE_QUERY("page_50_500"),
     top_customers: int = Query(
         DEFAULT_TOP_CUSTOMERS,
         ge=1,
@@ -1209,7 +1214,7 @@ def get_sales_order_otd_panel(
     ),
     status: Optional[str] = COMMERCIAL_OTD_STATUS_QUERY(),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=1000),
+    page_size: int = PAGE_SIZE_QUERY("page_20_1000"),
     sort_by: Optional[str] = Query(default=None),
     sort_dir: str = SORT_DIR_QUERY(),
     search: Optional[str] = Query(

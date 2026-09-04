@@ -5,6 +5,11 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+    PAGE_SIZE_QUERY,
+)
+
 
 from delpi_auth.authorization import require_any_permission
 
@@ -238,12 +243,7 @@ def get_production_unproductive_hours_items(
         pattern=_CODE_PATTERN,
     ),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(
-        default=50,
-        ge=1,
-        le=MAX_PAGE_SIZE,
-        description="Rows per page (max 200).",
-    ),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200", description="Rows per page (max 200)."),
     sort: str = Query(
         default=DEFAULT_ITEMS_SORT,
         description="Sort key for unproductive hours items.",
@@ -344,12 +344,7 @@ def get_production_unproductive_hours_ranking(
         enum=list(METRIC_VALUES),
         pattern="^(" + "|".join(METRIC_VALUES) + ")$",
     ),
-    limit: int = Query(
-        default=DEFAULT_RANKING_LIMIT,
-        ge=1,
-        le=MAX_RANKING_LIMIT,
-        description="Top N rows (max 50).",
-    ),
+    limit: int = LIMIT_QUERY("limit_ranking_10_50", description="Top N rows (max 50)."),
 ):
     try:
         period = _build_period(

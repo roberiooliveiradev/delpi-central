@@ -5,6 +5,10 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 from delpi_auth.authorization import require_any_permission
 
 from app.application.dto.production.production_order_sets_request import (
@@ -83,12 +87,7 @@ def get_production_order_sets_incomplete(
         ),
     ),
     page: int = Query(default=1, ge=1, description="Page number (1-based)."),
-    page_size: int = Query(
-        default=DEFAULT_PAGE_SIZE,
-        ge=1,
-        le=MAX_PAGE_SIZE,
-        description="Page size.",
-    ),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200", description="Page size."),
 ):
     try:
         request = IncompleteOrderSetsRequest.from_params(

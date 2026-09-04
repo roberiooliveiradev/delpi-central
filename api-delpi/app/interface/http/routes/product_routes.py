@@ -1,5 +1,11 @@
 # app/interface/http/routes/product_routes.py
 from fastapi import APIRouter, Query, Request
+from app.interface.http.pagination_query import (
+    HISTORY_LIMIT_QUERY,
+    LIMIT_QUERY,
+    PAGE_SIZE_QUERY,
+)
+
 from fastapi.responses import StreamingResponse, JSONResponse
 
 from typing import Optional
@@ -178,7 +184,7 @@ def search_products_route(
     description: Optional[str] = Query(None),
     customer_reference: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
+    page_size: int = PAGE_SIZE_QUERY("page_50_500"),
     sort: Optional[str]=Query(None),
     direction: Optional[str] = SORT_DIR_QUERY_OPTIONAL()
 ):
@@ -227,7 +233,7 @@ def search_products_by_supplier_part_number_route(
         description="Optional Protheus supplier code filter (SA5010.A5_FORNECE).",
     ),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
+    page_size: int = PAGE_SIZE_QUERY("page_50_500"),
 ):
     try:
         dto = SearchProductsBySupplierPartNumberRequest(
@@ -261,7 +267,7 @@ def search_products_by_supplier_part_number_route(
 @require_permission(API_DELPI_ACCESS)
 def list_exclusive_raw_materials_catalog(
     view: str = PRODUCT_EXCLUSIVITY_VIEW_QUERY(),
-    limit: Optional[int] = Query(default=None, ge=1, le=500),
+    limit: Optional[int] = LIMIT_QUERY("limit_optional_500"),
     offset: Optional[int] = Query(default=None, ge=0),
     max_depth: Optional[int] = Query(default=None, ge=1, le=100),
     finished_product_code: Optional[str] = Query(default=None),
@@ -852,7 +858,7 @@ def get_purchase_price_history(
     date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
     date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    history_limit: Optional[int] = Query(default=None, ge=1, le=200),
+    history_limit: Optional[int] = HISTORY_LIMIT_QUERY("history_limit_optional_200"),
 ):
     start_date, end_date = resolve_period_dates(
         start_date=start_date,
@@ -945,7 +951,7 @@ def get_raw_material_price_intelligence(
     date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
     date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    history_limit: Optional[int] = Query(default=None, ge=1, le=200),
+    history_limit: Optional[int] = HISTORY_LIMIT_QUERY("history_limit_optional_200"),
 ):
     start_date, end_date = resolve_period_dates(
         start_date=start_date,
@@ -1089,7 +1095,7 @@ def parents(
 def suppliers(
     code: str,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500)
+    page_size: int = PAGE_SIZE_QUERY("page_50_500")
 ):
 
     try:
@@ -1123,7 +1129,7 @@ def suppliers(
 def customers(
     code: str,
     page: Optional[int] = Query(1, ge=1),
-    page_size: Optional[int] = Query(50, ge=1, le=500)
+    page_size: Optional[int] = PAGE_SIZE_QUERY("page_50_500")
 ):
 
     try:
@@ -1157,7 +1163,7 @@ def customers(
 def inspection(
     code: str,
     page: int | None = Query(None, ge=1),
-    page_size: int | None = Query(None, ge=1, le=500),
+    page_size: int | None = PAGE_SIZE_QUERY("page_optional_500"),
     max_depth: int | None = Query(None, ge=1, le=15)
 ):
 
@@ -1194,7 +1200,7 @@ def guide(
     code: str,
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     page: int | None = Query(None, ge=1),
-    page_size: int | None = Query(None, ge=1, le=500),
+    page_size: int | None = PAGE_SIZE_QUERY("page_optional_500"),
     max_depth: int | None = Query(None, ge=1, le=15)
 ):
 
@@ -1231,7 +1237,7 @@ def guide(
 def internal_movements(
     code: str,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
+    page_size: int = PAGE_SIZE_QUERY("page_50_500"),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
@@ -1290,7 +1296,7 @@ def internal_movements(
 def stock(
     code: str,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
+    page_size: int = PAGE_SIZE_QUERY("page_50_500"),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     warehouse: Optional[str] = Query(
         None,
@@ -1338,7 +1344,7 @@ def stock(
 def inbound_invoice_items(
     code: str,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
+    page_size: int = PAGE_SIZE_QUERY("page_50_500"),
     issue_date_start: Optional[str] = Query(None),
     issue_date_end: Optional[str] = Query(None),
     supplier: Optional[str] = Query(None),
@@ -1379,7 +1385,7 @@ def inbound_invoice_items(
 def outbound_invoice_items(
     code: str,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500),
+    page_size: int = PAGE_SIZE_QUERY("page_50_500"),
     issue_date_start: Optional[str] = Query(None),
     issue_date_end: Optional[str] = Query(None),
     customer: Optional[str] = Query(None),
@@ -1420,7 +1426,7 @@ def outbound_invoice_items(
 def purchases(
     code: str,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=500)
+    page_size: int = PAGE_SIZE_QUERY("page_50_500")
 ):
 
     try:

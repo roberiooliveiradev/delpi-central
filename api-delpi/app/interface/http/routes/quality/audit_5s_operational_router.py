@@ -4,6 +4,10 @@ from datetime import date
 from typing import Any
 
 from fastapi import APIRouter, Body, File, Form, Query, UploadFile
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
 
@@ -1442,7 +1446,7 @@ def list_audit_5s_nonconformities_board(
     senso_order: int | None = Query(None, ge=1, le=5),
     search: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
     sort: str = AUDIT_5S_NC_SORT_QUERY(),
 ):
     denied = branch_access_error(branch)
@@ -1519,7 +1523,7 @@ def get_audit_5s_dashboard(
     senso_order: int | None = Query(None, ge=1, le=5),
     granularity: str = GRANULARITY_QUERY_MONTH_DWM(),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
 ):
     denied = branch_access_error(branch)
     if denied is not None:

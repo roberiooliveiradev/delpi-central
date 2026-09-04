@@ -57,3 +57,8 @@ def PAGE_20_100(*, description: str | None = None) -> Any:
 
 def PAGE_OPTIONAL_500(*, description: str | None = None) -> Any:
     return PAGE_SIZE_QUERY("page_optional_500", description=description)
+
+
+def DETAILS_LIMIT_QUERY(tier_id: str = "details_limit_20_100", *, description: str | None = None):
+    """Factory for ``details_limit`` Query params."""
+    return _query_for_tier(tier_id, description=description)

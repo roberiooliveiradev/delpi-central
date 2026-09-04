@@ -1,6 +1,10 @@
 from typing import Optional
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 
 from delpi_auth.authorization import require_permission
 
@@ -21,7 +25,7 @@ def search_customers_route(
     name: Optional[str] = Query(None, description="Nome ou parte do nome."),
     store: Optional[str] = Query(None, description="Loja do cliente."),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
 ):
     try:
         if not any(part.strip() for part in ((code or ""), (name or ""), (store or ""))):

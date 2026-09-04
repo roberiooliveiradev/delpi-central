@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Path, Query
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 
 from delpi_auth.authorization import require_any_permission
 
@@ -115,7 +119,7 @@ def get_process_inspection_plans_summary_route(
 def get_process_inspection_plans_orders_without_plan_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:
@@ -152,7 +156,7 @@ def get_process_inspection_plans_orders_without_plan_route(
 def get_process_inspection_plans_products_without_plan_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:
@@ -188,7 +192,7 @@ def get_process_inspection_plans_products_without_plan_route(
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_process_inspection_plans_products_route(
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     try:
         use_case = build_list_process_inspection_plans_products_use_case()

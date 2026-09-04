@@ -3,6 +3,10 @@
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 
 from app.interface.http.period_query_params import (
     END_DATE_QUERY,
@@ -346,7 +350,7 @@ def list_internal_ppm(
     date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
     date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     page: int = Query(None, ge=1),
-    page_size: int = Query(None, ge=1),
+    page_size: int = PAGE_SIZE_QUERY("page_optional_open"),
     product_prefix: Optional[str] = Query(
         None,
         description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
@@ -378,7 +382,7 @@ def list_external_ppm(
     date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
     date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     page: int = Query(None, ge=1),
-    page_size: int = Query(None, ge=1),
+    page_size: int = PAGE_SIZE_QUERY("page_optional_open"),
     product_prefix: Optional[str] = Query(
         None,
         description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",

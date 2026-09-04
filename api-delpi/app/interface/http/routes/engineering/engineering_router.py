@@ -3,6 +3,10 @@
 from typing import Optional
 
 from fastapi import APIRouter, Body, Query
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import (
@@ -118,7 +122,7 @@ def list_lmps_route(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
     page: Optional[int] = Query(None, ge=1),
-    page_size: Optional[int] = Query(None, ge=1),
+    page_size: Optional[int] = PAGE_SIZE_QUERY("page_optional_open"),
     include_qtd_pi: Optional[bool] = Query(
         None,
         description="Incluir contagem de PI via BOM (mais lento). Padrão: false.",
@@ -170,7 +174,7 @@ def list_lmps_dashboard_route(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
     page: Optional[int] = Query(1, ge=1),
-    page_size: Optional[int] = Query(50, ge=1, le=500),
+    page_size: Optional[int] = PAGE_SIZE_QUERY("page_50_500"),
 ):
     try:
         start_date, end_date = resolve_period_dates(
@@ -294,7 +298,7 @@ def lmps_dashboard_items_route(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
     page: Optional[int] = Query(1, ge=1),
-    page_size: Optional[int] = Query(50, ge=1, le=500),
+    page_size: Optional[int] = PAGE_SIZE_QUERY("page_50_500"),
 ):
     try:
         start_date, end_date = resolve_period_dates(
@@ -678,7 +682,7 @@ def list_mini_applicators_ferramentas_route(
     descricao: Optional[str] = Query(None),
     filial: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     page: Optional[int] = Query(1, ge=1),
-    page_size: Optional[int] = Query(50, ge=1, le=200),
+    page_size: Optional[int] = PAGE_SIZE_QUERY("page_50_200"),
     sort_by: Optional[str] = Query(None),
     sort_dir: Optional[str] = SORT_DIR_QUERY(),
     incluir_bloqueados: bool = Query(False),
@@ -746,7 +750,7 @@ def list_mini_applicators_pecas_reposicao_route(
     codigo: Optional[str] = Query(None),
     descricao: Optional[str] = Query(None),
     page: Optional[int] = Query(1, ge=1),
-    page_size: Optional[int] = Query(50, ge=1, le=200),
+    page_size: Optional[int] = PAGE_SIZE_QUERY("page_50_200"),
     sort_by: Optional[str] = Query(None),
     sort_dir: Optional[str] = SORT_DIR_QUERY(),
 ):

@@ -5,6 +5,11 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+    PAGE_SIZE_QUERY,
+)
+
 
 from delpi_auth.authorization import require_any_permission
 
@@ -246,12 +251,7 @@ def get_production_pcp_orders_summary(
 def get_production_pcp_orders_items(
     common: PcpOrdersCommonQuery = Depends(pcp_orders_common_query),
     page: int = Query(default=1, ge=1, description="Page number (1-based)."),
-    page_size: int = Query(
-        default=DEFAULT_PAGE_SIZE,
-        ge=1,
-        le=MAX_PAGE_SIZE,
-        description="Page size.",
-    ),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200", description="Page size."),
     sort: str = Query(
         default=DEFAULT_ITEMS_SORT,
         description=f"Sort: {', '.join(ITEMS_SORT_VALUES)}.",
@@ -309,12 +309,7 @@ def get_production_pcp_orders_ranking(
         description=f"Metric: {', '.join(METRIC_VALUES)}.",
         pattern="^(" + "|".join(METRIC_VALUES) + ")$",
     ),
-    limit: int = Query(
-        default=DEFAULT_RANKING_LIMIT,
-        ge=1,
-        le=MAX_RANKING_LIMIT,
-        description="Top-N limit.",
-    ),
+    limit: int = LIMIT_QUERY("limit_ranking_10_50", description="Top-N limit."),
 ):
     try:
         period = PcpOrdersPeriod.resolve(

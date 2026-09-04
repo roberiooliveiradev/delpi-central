@@ -9,7 +9,6 @@ from app.application.dto.third_party_materials.constantes import (
     DEFAULT_PAGE_SIZE,
     EXPORT_FORMAT_CSV,
     EXPORT_FORMAT_VALUES,
-    MAX_PAGE_SIZE,
 )
 from app.application.dto.third_party_materials.query_request import (
     ThirdPartyMaterialsQueryRequest,
@@ -113,13 +112,9 @@ def PAGE_QUERY():
 
 
 def PAGE_SIZE_QUERY():
-    return Query(
-        DEFAULT_PAGE_SIZE,
-        ge=1,
-        le=MAX_PAGE_SIZE,
-        description=f"Page size (maximum {MAX_PAGE_SIZE}).",
-    )
-
+    """Delegate to canonical pagination tier `page_20_100`."""
+    from app.interface.http.pagination_query import PAGE_SIZE_QUERY as _canonical
+    return _canonical("page_20_100")
 
 def EXPORT_FORMAT_QUERY():
     return Query(

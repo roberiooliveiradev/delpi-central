@@ -13,7 +13,6 @@ from app.interface.http.query_param_enums import (
 from app.application.dto.supplies.safety_stock_request import (
     DEFAULT_PAGE,
     DEFAULT_PAGE_SIZE,
-    MAX_PAGE_SIZE,
     SafetyStockConsumptionAnalysisItemsRequest,
     SafetyStockConsumptionAnalysisQueryRequest,
     SafetyStockItemDetailsRequest,
@@ -216,13 +215,10 @@ def INCLUDE_WITHOUT_SAFETY_STOCK_QUERY():
 def PAGE_QUERY():
     return Query(DEFAULT_PAGE, ge=1, description="Listing page number.")
 def PAGE_SIZE_QUERY():
-    return Query(
-    DEFAULT_PAGE_SIZE,
-    alias="pageSize",
-    ge=1,
-    le=MAX_PAGE_SIZE,
-    description=f"Registros por página (máximo {MAX_PAGE_SIZE}).",
-)
+    """Delegate to canonical pagination tier `page_50_200`."""
+    from app.interface.http.pagination_query import PAGE_SIZE_QUERY as _canonical
+    return _canonical("page_50_200")
+
 def SORT_BY_QUERY():
     return Query(
     "product_code",

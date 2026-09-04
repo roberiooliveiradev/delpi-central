@@ -5,6 +5,11 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+    PAGE_SIZE_QUERY,
+)
+
 from pydantic import BaseModel, Field
 
 from delpi_auth.authz_core import has_permission
@@ -167,7 +172,7 @@ def _gate_loaded(data: dict[str, Any]):
 def search_parties(
     party_type: str = INVOICE_ISSUANCE_PARTY_TYPE_QUERY(),
     query: str = Query(..., min_length=2),
-    limit: int = Query(20, ge=1, le=50),
+    limit: int = LIMIT_QUERY("limit_20_50"),
 ):
     try:
         items = build_search_parties_use_case().execute(
@@ -185,7 +190,7 @@ def search_parties(
 @require_any_permission(INVOICE_ISSUANCE_CREATE_PERMISSIONS)
 def search_products(
     query: str = Query(..., min_length=2),
-    limit: int = Query(20, ge=1, le=50),
+    limit: int = LIMIT_QUERY("limit_20_50"),
 ):
     try:
         items = build_search_products_use_case().execute(query=query, limit=limit)
@@ -201,7 +206,7 @@ def search_products(
 @require_any_permission(INVOICE_ISSUANCE_CREATE_PERMISSIONS)
 def search_carriers(
     query: str = Query(..., min_length=2),
-    limit: int = Query(20, ge=1, le=50),
+    limit: int = LIMIT_QUERY("limit_20_50"),
 ):
     try:
         items = build_search_carriers_use_case().execute(query=query, limit=limit)
@@ -289,7 +294,7 @@ def list_requests(
     invoice_type: str | None = INVOICE_ISSUANCE_INVOICE_TYPE_QUERY_OPTIONAL(),
     q: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
 ):
     denied = _gate_branch(branch)
     if denied is not None:

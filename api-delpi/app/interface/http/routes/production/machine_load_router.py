@@ -5,6 +5,10 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Body, Depends, Query
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 from pydantic import BaseModel, Field
 from delpi_auth.authorization import require_any_permission
 
@@ -291,12 +295,7 @@ def get_production_machine_load_work_centers(
 def get_production_machine_load_operations(
     common: MachineLoadCommonQuery = Depends(machine_load_common_query),
     page: int = Query(default=1, ge=1, description="Page number (1-based)."),
-    page_size: int = Query(
-        default=DEFAULT_PAGE_SIZE,
-        ge=1,
-        le=MAX_PAGE_SIZE,
-        description="Page size.",
-    ),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200", description="Page size."),
     sort: str = Query(
         default=DEFAULT_SORT,
         description=f"Sort: {', '.join(SORT_VALUES)}.",

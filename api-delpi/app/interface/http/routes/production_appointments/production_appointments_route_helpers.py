@@ -15,8 +15,6 @@ from app.application.dto.production_appointments.production_appointments_query_r
 from app.core.responses import error_response
 from app.domain.production.production_appointments.production_appointments_scope import (
     DEFAULT_PAGE,
-    DEFAULT_PAGE_SIZE,
-    MAX_PAGE_SIZE,
 )
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
@@ -127,9 +125,7 @@ def SERIES_GRANULARITY_QUERY():
 def PAGE_QUERY():
     return Query(DEFAULT_PAGE, ge=1, description="Listing page number.")
 def PAGE_SIZE_QUERY():
-    return Query(
-    DEFAULT_PAGE_SIZE,
-    ge=1,
-    le=MAX_PAGE_SIZE,
-    description=f"Registros por página (máximo {MAX_PAGE_SIZE}).",
-)
+    """Delegate to canonical pagination tier `page_50_200`."""
+    from app.interface.http.pagination_query import PAGE_SIZE_QUERY as _canonical
+    return _canonical("page_50_200")
+

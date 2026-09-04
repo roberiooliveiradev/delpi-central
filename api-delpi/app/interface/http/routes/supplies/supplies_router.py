@@ -1,4 +1,11 @@
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    DETAILS_LIMIT_QUERY,
+    LIMIT_QUERY,
+    PAGE_SIZE_QUERY,
+    TOP_LIMIT_QUERY,
+)
+
 from typing import Optional
 
 from app.interface.http.query_param_enums import (
@@ -75,7 +82,7 @@ def get_cpv(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
-    top_limit: int = Query(default=5, ge=1, le=20),
+    top_limit: int = TOP_LIMIT_QUERY("top_limit_5_20"),
 ):
     try:
         use_case = build_get_cpv_use_case()
@@ -121,8 +128,8 @@ def get_otd(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
-    top_limit: int = Query(default=5, ge=1, le=20),
-    details_limit: int = Query(default=20, ge=1, le=100),
+    top_limit: int = TOP_LIMIT_QUERY("top_limit_5_20"),
+    details_limit: int = DETAILS_LIMIT_QUERY("details_limit_20_100"),
 ):
     try:
         use_case = build_get_otd_use_case()
@@ -216,7 +223,7 @@ def get_supplies_purchase_order_otd_panel(
     end_date: Optional[str] = Query(None),
     status: Optional[str] = COMMERCIAL_OTD_STATUS_QUERY(),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=1000),
+    page_size: int = PAGE_SIZE_QUERY("page_20_1000"),
     sort_by: Optional[str] = Query(None),
     sort_dir: str = SORT_DIR_QUERY(),
 ):
@@ -295,7 +302,7 @@ def get_stock_value(
     location: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
-    top_limit: int = Query(default=10, ge=1, le=50),
+    top_limit: int = TOP_LIMIT_QUERY("top_limit_10_50"),
     summary_only: bool = Query(
         default=False,
         description="Quando true, retorna apenas o resumo consolidado (sem breakdown por filial/local/produto).",

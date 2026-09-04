@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 
 from delpi_auth.authorization import require_any_permission
 
@@ -31,7 +35,7 @@ def list_solution_patterns(
     failure_mode: str | None = Query(default=None),
     q: str | None = Query(default=None, description="Busca em título, categoria e modo de falha"),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     try:
         return api_delpi_success(

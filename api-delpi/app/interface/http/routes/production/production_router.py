@@ -1,4 +1,8 @@
 from fastapi import APIRouter, Path, Query
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
@@ -340,7 +344,7 @@ def get_production_otd(
     end_date: str | None = Query(default=None),
     status: str | None = PRODUCTION_OTD_STATUS_QUERY(),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=1000),
+    page_size: int = PAGE_SIZE_QUERY("page_20_1000"),
     sort_by: str | None = Query(default=None),
     sort_dir: str = SORT_DIR_QUERY(),
 ):
@@ -411,7 +415,7 @@ def get_production_oee(
     ),
     product_type: str | None = PRODUCT_TYPE_QUERY(),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=1000),
+    page_size: int = PAGE_SIZE_QUERY("page_20_1000"),
     sort_by: str | None = Query(default=None),
     sort_dir: str = SORT_DIR_QUERY(),
 ):
@@ -614,7 +618,7 @@ def get_eficiencia_fabril_dashboard(
     work_center: str | None = Query(default=None),
     status_ok_only: bool = Query(default=True),
     page: int = Query(default=1, ge=1),
-    page_size: int | None = Query(default=None, ge=1, le=500),
+    page_size: int | None = PAGE_SIZE_QUERY("page_optional_500"),
 ):
     start_date, end_date = resolve_period_dates(
         start_date=start_date,

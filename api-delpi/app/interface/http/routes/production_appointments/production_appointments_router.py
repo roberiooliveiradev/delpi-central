@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import PAGE_SIZE_QUERY
 
 from delpi_auth.authorization import require_any_permission
 
@@ -40,8 +41,7 @@ from app.interface.http.routes.production_appointments.production_appointments_r
     MOTHER_OP_QUERY,
     OP_QUERY,
     PAGE_QUERY,
-    PAGE_SIZE_QUERY,
-    PRODUCT_QUERY,
+        PRODUCT_QUERY,
     SEARCH_QUERY,
     WORK_CENTER_QUERY,
     build_query_request,
@@ -137,7 +137,7 @@ def list_appointments_route(
     search: Optional[str] = SEARCH_QUERY(),
     mother_op: bool = MOTHER_OP_QUERY(),
     page: int = PAGE_QUERY(),
-    page_size: int = PAGE_SIZE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     start_date, end_date = resolve_period_dates(
         start_date=start_date,
@@ -352,7 +352,7 @@ def by_op_route(
     search: Optional[str] = SEARCH_QUERY(),
     mother_op: bool = MOTHER_OP_QUERY(),
     page: int = PAGE_QUERY(),
-    page_size: int = PAGE_SIZE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     start_date, end_date = resolve_period_dates(
         start_date=start_date,
@@ -403,7 +403,7 @@ def child_ops_route(
     product: Optional[str] = PRODUCT_QUERY(),
     search: Optional[str] = SEARCH_QUERY(),
     page: int = PAGE_QUERY(),
-    page_size: int = PAGE_SIZE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     """Child OPs of the same family (sequence ≠ 001) with appointments in the period."""
     start_date, end_date = resolve_period_dates(

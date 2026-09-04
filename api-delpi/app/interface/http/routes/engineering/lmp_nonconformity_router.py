@@ -4,6 +4,10 @@ from typing import Annotated, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Path, Query
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 from pydantic import BaseModel, Field, field_validator
 
 from delpi_auth.authorization import require_any_permission
@@ -296,7 +300,7 @@ def list_lmp_nonconformities(
     date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
     date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     try:
         start_date, end_date = resolve_period_dates(

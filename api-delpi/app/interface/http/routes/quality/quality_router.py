@@ -1,4 +1,8 @@
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 
 from app.interface.http.period_query_params import (
     END_DATE_QUERY,
@@ -238,7 +242,7 @@ def list_nonconformity_route(
     item_code: Optional[str] = None,
     description: Optional[str] = None,
     page: int = Query(None, ge=1),
-    page_size: int = Query(None, ge=1),
+    page_size: int = PAGE_SIZE_QUERY("page_optional_open"),
 ):
     try:
         start_date, end_date = resolve_period_dates(

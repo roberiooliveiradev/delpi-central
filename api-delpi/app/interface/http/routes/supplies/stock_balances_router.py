@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 
 from delpi_auth.authorization import require_any_permission
 
@@ -152,12 +156,7 @@ def get_supplies_stock_balances_items(
         description="When true, only rows with B2_QATU > 0.",
     ),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(
-        default=50,
-        ge=1,
-        le=500,
-        description="Rows per page (max 500).",
-    ),
+    page_size: int = PAGE_SIZE_QUERY("page_50_500", description="Rows per page (max 500)."),
     sort: str = Query(
         default="stock_value_desc",
         description="Sort key for stock balance items.",

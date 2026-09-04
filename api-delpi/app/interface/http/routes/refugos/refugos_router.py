@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter
+from app.interface.http.pagination_query import PAGE_SIZE_QUERY
 
 from delpi_auth.authorization import require_any_permission
 
@@ -43,7 +44,6 @@ from app.interface.http.routes.refugos.refugos_route_helpers import (
     OP_QUERY,
     PA_QUERY,
     PAGE_QUERY,
-    PAGE_SIZE_QUERY,
     RECURSO_QUERY,
     build_refugos_query_request,
     build_refugos_registros_request,
@@ -380,7 +380,7 @@ def get_refugos_registros_route(
     motivo: Optional[str] = MOTIVO_QUERY(),
     recurso: Optional[str] = RECURSO_QUERY(),
     page: int = PAGE_QUERY(),
-    page_size: int = PAGE_SIZE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY("page_50_100"),
 ):
     start_date, end_date = resolve_period_dates(
         start_date=start_date,

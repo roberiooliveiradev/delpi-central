@@ -5,6 +5,11 @@ from typing import Any, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Query
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+    PAGE_SIZE_QUERY,
+)
+
 from pydantic import BaseModel, Field, field_validator
 
 from delpi_auth.authz_core import has_permission
@@ -191,7 +196,7 @@ def _gate_loaded_branch(data: dict[str, Any]):
 @require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
 def search_suppliers(
     query: str = Query(..., min_length=2),
-    limit: int = Query(20, ge=1, le=50),
+    limit: int = LIMIT_QUERY("limit_20_50"),
 ):
     try:
         items = build_search_suppliers_use_case().execute(query=query, limit=limit)
@@ -252,7 +257,7 @@ def list_requests(
     received_from: Optional[str] = Query(None),
     received_to: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
 ):
     try:
         if branch:

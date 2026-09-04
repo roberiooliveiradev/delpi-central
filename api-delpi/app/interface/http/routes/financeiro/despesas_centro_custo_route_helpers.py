@@ -14,12 +14,9 @@ from app.application.dto.financeiro_despesas_centro_custo.despesas_centro_custo_
     DEFAULT_PAGE_SIZE,
     DEFAULT_SORT_BY,
     DEFAULT_SORT_DIR,
-    MAX_PAGE_SIZE,
     DespesasCentroCustoLancamentosRequest,
 )
 from app.application.dto.financeiro_despesas_centro_custo.despesas_centro_custo_query_request import (
-    DEFAULT_RANKING_LIMIT,
-    MAX_RANKING_LIMIT,
     DespesasCentroCustoQueryRequest,
 )
 from app.core.responses import error_response
@@ -130,12 +127,10 @@ def SUPPLIER_CODE_QUERY():
 def SUPPLIER_STORE_QUERY():
     return Query(None, description="Supplier store.")
 def RANKING_LIMIT_QUERY():
-    return Query(
-    DEFAULT_RANKING_LIMIT,
-    ge=1,
-    le=MAX_RANKING_LIMIT,
-    description="Maximum ranking items.",
-)
+    """Delegate to canonical pagination tier `limit_ranking_10_50`."""
+    from app.interface.http.pagination_query import LIMIT_QUERY as _canonical
+    return _canonical("limit_ranking_10_50")
+
 def PAGE_QUERY():
     return Query(
     DEFAULT_PAGE,
@@ -143,12 +138,10 @@ def PAGE_QUERY():
     description="Listing page number (minimum 1).",
 )
 def PAGE_SIZE_QUERY():
-    return Query(
-    DEFAULT_PAGE_SIZE,
-    ge=1,
-    le=MAX_PAGE_SIZE,
-    description="Quantidade de registros por página (máximo 200).",
-)
+    """Delegate to canonical pagination tier `page_50_200`."""
+    from app.interface.http.pagination_query import PAGE_SIZE_QUERY as _canonical
+    return _canonical("page_50_200")
+
 def SEARCH_QUERY():
     return Query(None, description="Text search across document, order, product, notes and supplier.")
 def EXCLUDE_MP_PRODUCTS_QUERY():

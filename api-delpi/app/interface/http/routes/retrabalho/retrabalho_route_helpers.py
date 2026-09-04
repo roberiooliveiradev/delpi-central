@@ -19,11 +19,8 @@ from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.totvs.retrabalho.retrabalho_query_settings import (
     DEFAULT_PAGE,
     DEFAULT_PAGE_SIZE,
-    DEFAULT_RANKING_LIMIT,
     DEFAULT_SORT_BY,
     DEFAULT_SORT_DIR,
-    MAX_PAGE_SIZE,
-    MAX_RANKING_LIMIT,
 )
 from app.utils.logger import log_error
 
@@ -135,22 +132,17 @@ def CODIGO_OPERADOR_QUERY():
 def ORDER_BY_RANKING_QUERY():
     return RETRABALHO_ORDER_BY_RANKING_QUERY()
 def LIMIT_QUERY():
-    return Query(
-    DEFAULT_RANKING_LIMIT,
-    ge=1,
-    le=MAX_RANKING_LIMIT,
-    description="Maximum ranking items.",
-)
+    """Delegate to canonical pagination tier `limit_ranking_10_50`."""
+    from app.interface.http.pagination_query import LIMIT_QUERY as _canonical
+    return _canonical("limit_ranking_10_50")
+
 def PAGE_QUERY():
     return Query(DEFAULT_PAGE, ge=1, description="Listing page number.")
 def PAGE_SIZE_QUERY():
-    return Query(
-    DEFAULT_PAGE_SIZE,
-    alias="pageSize",
-    ge=1,
-    le=MAX_PAGE_SIZE,
-    description="Rows per page (maximum 100).",
-)
+    """Delegate to canonical pagination tier `page_50_100`."""
+    from app.interface.http.pagination_query import PAGE_SIZE_QUERY as _canonical
+    return _canonical("page_50_100")
+
 def ORDER_BY_DETALHES_QUERY():
     return RETRABALHO_ORDER_BY_DETALHES_QUERY()
 def ORDER_DIR_QUERY():

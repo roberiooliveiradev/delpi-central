@@ -1,6 +1,10 @@
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+)
+
 from delpi_auth.authorization import require_permission
 
 from app.application.dto.production.production_operational_request import (
@@ -36,7 +40,7 @@ def get_top_products(
     date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
     date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    limit: Optional[int] = Query(default=None, ge=1, le=200),
+    limit: Optional[int] = LIMIT_QUERY("limit_optional_200"),
 ):
     start_date, end_date = resolve_period_dates(
         start_date=start_date,

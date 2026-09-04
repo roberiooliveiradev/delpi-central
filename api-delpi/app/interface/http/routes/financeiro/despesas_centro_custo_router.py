@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter
+from app.interface.http.pagination_query import PAGE_SIZE_QUERY
 
 from delpi_auth.authorization import require_any_permission
 
@@ -28,8 +29,7 @@ from app.interface.http.routes.financeiro.despesas_centro_custo_route_helpers im
     COST_CENTER_QUERY,
     EXCLUDE_MP_PRODUCTS_QUERY,
     PAGE_QUERY,
-    PAGE_SIZE_QUERY,
-    PERIOD_END_QUERY,
+        PERIOD_END_QUERY,
     PERIOD_START_QUERY,
     RANKING_LIMIT_QUERY,
     SEARCH_QUERY,
@@ -249,7 +249,7 @@ def get_financeiro_despesas_centro_custo_lancamentos_route(
     supplier_store: Optional[str] = SUPPLIER_STORE_QUERY(),
     search: Optional[str] = SEARCH_QUERY(),
     page: int = PAGE_QUERY(),
-    page_size: int = PAGE_SIZE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
     sort_by: str = SORT_BY_QUERY(),
     sort_dir: str = SORT_DIR_QUERY(),
     exclude_mp_products: bool = EXCLUDE_MP_PRODUCTS_QUERY(),

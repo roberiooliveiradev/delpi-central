@@ -4,6 +4,10 @@ from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+)
+
 from pydantic import BaseModel, Field
 
 from delpi_auth.authz_core import has_permission
@@ -345,7 +349,7 @@ def list_pending_bookings(
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def list_my_bookings(
     branch: str = SCHEDULING_BRANCH_QUERY(),
-    limit: int = Query(100, ge=1, le=200),
+    limit: int = LIMIT_QUERY("limit_100_200"),
 ):
     branch_error = _branch_access_error(branch)
     if branch_error:

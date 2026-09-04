@@ -3,6 +3,10 @@
 from typing import Any
 
 from fastapi import APIRouter, Body, Query
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+)
+
 
 from app.application.dto.system.system_requests import (
     GetTableRequest,
@@ -67,7 +71,7 @@ router = APIRouter()
 def search_tables(
     description: str = Query(..., min_length=2, description="Descrição parcial ou completa da tabela"),
     page: int = Query(1, ge=1, description="Número da página"),
-    limit: int = Query(20, ge=1, le=200, description="Quantidade de registros por página"),
+    limit: int = LIMIT_QUERY("limit_20_200", description="Quantidade de registros por página"),
 ):
     log_info(
         f"Iniciando busca de tabelas com descrição semelhante a "
@@ -125,7 +129,7 @@ def table(tableName: str):
 def table_columns(
     tableName: str,
     page: int = Query(1, ge=1, description="Número da página"),
-    limit: int = Query(50, ge=1, le=200, description="Quantidade de registros por página"),
+    limit: int = LIMIT_QUERY("limit_50_200", description="Quantidade de registros por página"),
 ):
     log_info(
         f"Consultando colunas da tabela {tableName} "
@@ -252,7 +256,7 @@ def search_columns_global(
         description="Texto descritivo da coluna (ex: 'Amarração produto fornecedor')"
     ),
     page: int = Query(1, ge=1, description="Número da página"),
-    limit: int = Query(20, ge=1, le=200, description="Quantidade de registros por página"),
+    limit: int = LIMIT_QUERY("limit_20_200", description="Quantidade de registros por página"),
 ):
     log_info(
         f"Iniciando busca global de colunas por descrição '{description}' "
@@ -378,7 +382,7 @@ def get_connection_pool_stats():
 
 @router.get("/caller-stats", summary="Breakdown de requests por X-Delpi-Caller-App", operation_id="get_caller_stats")
 @require_any_permission(OBSERVABILITY_ACCESS)
-def get_caller_stats(limit: int = Query(25, ge=1, le=100)):
+def get_caller_stats(limit: int = LIMIT_QUERY("limit_25_100")):
     try:
         payload = get_caller_stats_summary(limit=limit)
         return api_delpi_success(
@@ -393,7 +397,7 @@ def get_caller_stats(limit: int = Query(25, ge=1, le=100)):
 
 @router.get("/observability-snapshot", summary="Snapshot unificado para comparador de deploy", operation_id="get_observability_snapshot")
 @require_any_permission(OBSERVABILITY_ACCESS)
-def get_observability_snapshot(limit: int = Query(25, ge=1, le=100)):
+def get_observability_snapshot(limit: int = LIMIT_QUERY("limit_25_100")):
     try:
         payload = build_observability_snapshot(limit=limit)
         return api_delpi_success(
@@ -423,7 +427,7 @@ def get_console_health():
 
 @router.get("/console-alerts", summary="Histórico recente de alertas do console", operation_id="get_console_alerts")
 @require_any_permission(OBSERVABILITY_ACCESS)
-def get_console_alerts(limit: int = Query(25, ge=1, le=100)):
+def get_console_alerts(limit: int = LIMIT_QUERY("limit_25_100")):
     try:
         payload = list_console_alert_history(limit=limit)
         return api_delpi_success(
@@ -472,7 +476,7 @@ def post_console_alerts_smoke(
 @router.get("/sql-health", summary="Telemetria SQL recente (ring buffer memória ou Redis)", operation_id="get_sql_health")
 @require_any_permission(SQL_HEALTH_ACCESS)
 def get_sql_health(
-    limit: int = Query(25, ge=1, le=100),
+    limit: int = LIMIT_QUERY("limit_25_100"),
     operation_id: str | None = Query(
         None,
         description="Filtra drill-down por operation id; use __none__ para amostras sem id.",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
+from app.interface.http.pagination_query import PAGE_SIZE_QUERY
 from fastapi.responses import StreamingResponse
 
 from delpi_auth.authorization import require_any_permission
@@ -33,8 +34,7 @@ from app.interface.http.routes.supplies.third_party_materials_route_helpers impo
     ISSUED_TO_QUERY,
     ONLY_WITH_BALANCE_QUERY,
     PAGE_QUERY,
-    PAGE_SIZE_QUERY,
-    PARTNER_CODE_QUERY,
+        PARTNER_CODE_QUERY,
     PARTNER_STORE_QUERY,
     PRODUCT_QUERY,
     RECEIPT_NUMBER_QUERY,
@@ -101,7 +101,7 @@ def get_supplies_third_party_materials_shipments(
     only_with_balance: bool = ONLY_WITH_BALANCE_QUERY(),
     include_test_products: bool = INCLUDE_TEST_PRODUCTS_QUERY(),
     page: int = PAGE_QUERY(),
-    page_size: int = PAGE_SIZE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY("page_20_100"),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:

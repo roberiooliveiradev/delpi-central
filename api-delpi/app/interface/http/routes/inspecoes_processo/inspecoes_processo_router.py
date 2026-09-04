@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+    PAGE_SIZE_QUERY,
+)
+
 
 from delpi_auth.authorization import require_any_permission
 
@@ -105,7 +110,7 @@ def get_inspecoes_processo_resumo_route(
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_ranking_ensaio_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
-    limit: int = Query(default=10, ge=1, le=50),
+    limit: int = LIMIT_QUERY("limit_10_50"),
     start_date: str | None = START_DATE_QUERY(),
     end_date: str | None = END_DATE_QUERY(),
     data_inicio: str | None = LEGACY_DATA_INICIO_SNAKE_QUERY(),
@@ -162,7 +167,7 @@ def get_inspecoes_processo_ranking_ensaio_route(
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_por_produto_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
-    limit: int = Query(default=10, ge=1, le=50),
+    limit: int = LIMIT_QUERY("limit_10_50"),
     start_date: str | None = START_DATE_QUERY(),
     end_date: str | None = END_DATE_QUERY(),
     data_inicio: str | None = LEGACY_DATA_INICIO_SNAKE_QUERY(),
@@ -219,7 +224,7 @@ def get_inspecoes_processo_por_produto_route(
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_por_operacao_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
-    limit: int = Query(default=10, ge=1, le=50),
+    limit: int = LIMIT_QUERY("limit_10_50"),
     start_date: str | None = START_DATE_QUERY(),
     end_date: str | None = END_DATE_QUERY(),
     data_inicio: str | None = LEGACY_DATA_INICIO_SNAKE_QUERY(),
@@ -276,7 +281,7 @@ def get_inspecoes_processo_por_operacao_route(
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_por_ensaiador_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
-    limit: int = Query(default=10, ge=1, le=50),
+    limit: int = LIMIT_QUERY("limit_10_50"),
     start_date: str | None = START_DATE_QUERY(),
     end_date: str | None = END_DATE_QUERY(),
     data_inicio: str | None = LEGACY_DATA_INICIO_SNAKE_QUERY(),
@@ -334,7 +339,7 @@ def get_inspecoes_processo_por_ensaiador_route(
 def get_inspecoes_processo_historico_route(
     branch: str = BRANCH_QUERY_REQUIRED(),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=25, ge=1, le=50),
+    page_size: int = PAGE_SIZE_QUERY("page_25_50"),
     ordem_producao: str | None = Query(default=None),
     codigo_produto: str | None = Query(default=None),
     resultado: str | None = INSPECTION_RESULT_QUERY(),
@@ -405,7 +410,7 @@ def get_inspecoes_processo_historico_detalhe_route(
     branch: str = BRANCH_QUERY_REQUIRED(),
     ordem_producao: str = Query(..., min_length=1),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=100, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_100_200"),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:
@@ -468,7 +473,7 @@ def get_inspecoes_processo_auditoria_apontamentos_route(
     ),
     inspecao_status: str = INSPECOES_PROCESSO_AUDITORIA_STATUS_QUERY(),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_50_100"),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:

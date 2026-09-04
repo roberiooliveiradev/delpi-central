@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, File, Form, Query, UploadFile
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -1856,7 +1860,7 @@ def list_capex_consolidation_details(
     required_date_from: str | None = Query(None),
     required_date_to: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
     sort_by: str = Query("updated_at"),
     sort_dir: str = Query("desc"),
 ):
@@ -1962,7 +1966,7 @@ def list_personnel_plans(
     unit_id: str | None = None,
     cost_center_id: str | None = None,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_50_100"),
 ):
     return _run(lambda: api_delpi_success(
         build_personnel_plan_use_cases().list_plans(
@@ -2077,7 +2081,7 @@ def list_personnel_review_queue(
     status: str | None = None,
     submitted_by: str | None = None,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    page_size: int = PAGE_SIZE_QUERY("page_50_100"),
 ):
     return _run(lambda: api_delpi_success(
         build_personnel_plan_use_cases().list_review_queue(

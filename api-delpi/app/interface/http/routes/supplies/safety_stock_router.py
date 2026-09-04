@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter
+from app.interface.http.pagination_query import PAGE_SIZE_QUERY
 
 from delpi_auth.authorization import require_any_permission
 
@@ -35,8 +36,7 @@ from app.interface.http.routes.supplies.safety_stock_route_helpers import (
     INCLUDE_BLOCKED_QUERY,
     INCLUDE_WITHOUT_SAFETY_STOCK_QUERY,
     PAGE_QUERY,
-    PAGE_SIZE_QUERY,
-    PRODUCT_GROUP_QUERY,
+        PRODUCT_GROUP_QUERY,
     SEARCH_QUERY,
     SORT_BY_QUERY,
     SORT_DIRECTION_QUERY,
@@ -172,7 +172,7 @@ def get_safety_stock_summary_route(
 def get_safety_stock_items_route(
     branch: str | None = BRANCH_QUERY(),
     page: int = PAGE_QUERY(),
-    page_size: int = PAGE_SIZE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
     search: Optional[str] = SEARCH_QUERY(),
     status: Optional[str] = STATUS_QUERY(),
     product_group: Optional[str] = PRODUCT_GROUP_QUERY(),
@@ -371,7 +371,7 @@ def get_safety_stock_consumption_analysis_summary_route(
 def get_safety_stock_consumption_analysis_items_route(
     branch: str | None = BRANCH_QUERY(),
     page: int = PAGE_QUERY(),
-    page_size: int = PAGE_SIZE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
     search: Optional[str] = SEARCH_QUERY(),
     analysis_status: Optional[str] = ANALYSIS_STATUS_QUERY(),
     product_group: Optional[str] = PRODUCT_GROUP_QUERY(),

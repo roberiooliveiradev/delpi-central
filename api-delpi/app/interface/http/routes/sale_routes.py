@@ -1,6 +1,10 @@
 # app/interface/http/routes/sale_routes.py
 
 from fastapi import APIRouter, Query, Request
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 from fastapi.responses import StreamingResponse, JSONResponse
 
 from typing import Optional
@@ -35,7 +39,7 @@ def list_sale_order_route(
     date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
     date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     page: int = Query(None, ge=1),
-    page_size: int = Query(None, ge=1),
+    page_size: int = PAGE_SIZE_QUERY("page_optional_open"),
 ):
     start_date, end_date = resolve_period_dates(
         start_date=start_date,

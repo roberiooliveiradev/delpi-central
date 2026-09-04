@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Body, File, Form, Query, UploadFile
+from app.interface.http.pagination_query import (
+    PAGE_SIZE_QUERY,
+)
+
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -214,7 +218,7 @@ def list_kaizen_records(
     date_start: str | None = LEGACY_DATE_START_QUERY(),
     date_end: str | None = LEGACY_DATE_END_QUERY(),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     try:
         start_date, end_date = resolve_period_dates(

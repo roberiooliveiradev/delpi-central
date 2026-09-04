@@ -271,6 +271,15 @@
       "le": 20,
       "optional": false,
       "description": "top_limit default=5 ge=1 le=20"
+    },
+    "details_limit_20_100": {
+      "id": "details_limit_20_100",
+      "param": "details_limit",
+      "default": 20,
+      "ge": 1,
+      "le": 100,
+      "optional": false,
+      "description": "details_limit default=20 ge=1 le=100"
     }
   }
 }

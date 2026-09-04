@@ -3,6 +3,11 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+    PAGE_SIZE_QUERY,
+)
+
 
 from delpi_auth.authorization import require_any_permission, require_auth
 
@@ -96,7 +101,7 @@ def list_supplies_purchase_request_lines_route(
     supplier_code: str | None = Query(None),
     order_number: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = PAGE_SIZE_QUERY("page_50_200"),
 ):
     branch_error = purchase_requests_branch_access_error(branch)
     if branch_error:
@@ -249,7 +254,7 @@ def get_supplies_purchase_request_lines_route(
 @require_auth()
 def list_supplies_purchase_request_recent_linked_orders_route(
     after_recno: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = LIMIT_QUERY("limit_100_500"),
 ):
     try:
         use_case = build_list_supplies_purchase_request_recent_linked_orders_use_case()
@@ -286,7 +291,7 @@ def list_supplies_purchase_request_recent_linked_orders_route(
 @require_auth()
 def list_supplies_purchase_request_recent_linked_receipts_route(
     after_recno: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = LIMIT_QUERY("limit_100_500"),
 ):
     try:
         use_case = build_list_supplies_purchase_request_recent_linked_receipts_use_case()

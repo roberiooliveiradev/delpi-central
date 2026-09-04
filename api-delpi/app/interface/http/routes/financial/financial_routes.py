@@ -1,4 +1,8 @@
 from fastapi import APIRouter, Query
+from app.interface.http.pagination_query import (
+    LIMIT_QUERY,
+)
+
 from typing import Optional
 
 from app.core.responses import error_response
@@ -97,7 +101,7 @@ def get_rol_invoices(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    limit: int = Query(DEFAULT_ROL_INVOICE_LIMIT, ge=1, le=DEFAULT_ROL_INVOICE_LIMIT),
+    limit: int = LIMIT_QUERY("limit_rol_8000"),
 ):
     try:
         dto = GetRolRequest(
@@ -135,11 +139,7 @@ def get_financial_purchase_freight_links(
     supplier: Optional[str] = Query(None),
     invoice_document: Optional[str] = Query(None),
     freight_document: Optional[str] = Query(None),
-    limit: int = Query(
-        DEFAULT_PURCHASE_FREIGHT_LINK_LIMIT,
-        ge=1,
-        le=DEFAULT_PURCHASE_FREIGHT_LINK_LIMIT,
-    ),
+    limit: int = LIMIT_QUERY("limit_freight_20000"),
 ):
     try:
         dto = PurchaseFreightLinksRequest(
