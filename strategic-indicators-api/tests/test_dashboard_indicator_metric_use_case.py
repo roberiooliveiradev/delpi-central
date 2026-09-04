@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicDepartmentCalculatedValue,
     StrategicIndicatorCalculatedValue,
+    StrategicIndicatorCatalogItem,
 )
 from si_app.application.use_cases.strategic_indicators.get_dashboard_indicator_metric_use_case import (
     GetDashboardIndicatorMetricUseCase,
@@ -276,3 +277,83 @@ def test_get_dashboard_indicator_meta_exact_triad_equal() -> None:
 
     assert result is not None
     assert_triad_invariants(case, result)
+
+def test_get_dashboard_indicator_meta_consolidated_monthly_curve_uses_rollup() -> None:
+    """Visão consolidada: META MÊS = soma refs 01+02; PARCIAL = 1× MTD (não meta da 01)."""
+    catalog_item = StrategicIndicatorCatalogItem(
+        indicator_id="commercial-rol",
+        department_id="commercial",
+        indicator_name="ROL",
+        weight_pct=20.0,
+        goal_label="Curva R$",
+        goal_value=0.0,
+        goal_periodicity="monthly",
+        goal_mode="monthly_curve",
+        monthly_targets=[],
+        scope_type="per_unit",
+        value_unit="currency",
+        branch_value_aggregation="sum",
+        branch_goals={
+            "01": {
+                "goal_value": 0.0,
+                "goal_periodicity": "monthly",
+                "goal_mode": "monthly_curve",
+                "monthly_targets": [
+                    {"month_number": 9, "target_value": 1_160_000.0},
+                ],
+            },
+            "02": {
+                "goal_value": 0.0,
+                "goal_periodicity": "monthly",
+                "goal_mode": "monthly_curve",
+                "monthly_targets": [
+                    {"month_number": 9, "target_value": 3_614_000.0},
+                ],
+            },
+        },
+    )
+    # calculated.goal_value simula cadastro "primário" só da 01 (bug antigo da TV).
+    calculated = _indicator(
+        indicator_id="commercial-rol",
+        department_id="commercial",
+        indicator_name="ROL",
+        goal_label="Curva R$",
+        goal_value=0.0,
+        goal_periodicity="monthly",
+        goal_mode="monthly_curve",
+        monthly_targets=[{"month_number": 9, "target_value": 1_160_000.0}],
+        value_unit="currency",
+        value=500_000.0,
+        unit_values={"01": 200_000.0, "02": 300_000.0},
+        branch_value_aggregation="sum",
+    )
+    snapshot_service = MagicMock()
+    snap = _snapshot(departments=[_department(indicators=[calculated])])
+    snap.catalog.indicators_catalog = [catalog_item]
+    snap.current.period = SimpleNamespace(
+        start_date="01-09-2026",
+        end_date="04-09-2026",
+        competence="2026-09",
+    )
+    snapshot_service.get_current_and_previous_snapshot.return_value = snap
+
+    use_case = GetDashboardIndicatorMetricUseCase(
+        snapshot_service=snapshot_service,
+        calculator=StrategicIndicatorsCalculator(),
+    )
+    result = use_case.execute(
+        indicator_id="commercial-rol",
+        kind="meta",
+        start_date="01-09-2026",
+        end_date="04-09-2026",
+        competence="2026-09",
+        branch=None,
+    )
+
+    assert result is not None
+    assert result["reference_goal"] == 4_774_000.0
+    assert result["goal_value"] == 4_774_000.0
+    assert result["comparable_goal"] == round(4_774_000.0 * 4 / 30, 2)
+    # Não pode ser só a meta parcial da filial 01
+    assert result["comparable_goal"] != round(1_160_000.0 * 4 / 30, 2)
+

@@ -5,9 +5,13 @@ from typing import Literal
 from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
     StrategicIndicatorsSnapshotService,
 )
+from si_app.domain.services.consolidated_branch_goal_rollup_service import (
+    ConsolidatedBranchGoalRollupService,
+)
 from si_app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )
+from si_app.shared.goal_scope import BRANCH_UNIT_CODES, normalize_goal_scope_branch
 from si_app.shared.numeric_parsing import to_optional_float
 
 MetricKind = Literal["realized", "meta"]
@@ -24,6 +28,9 @@ class GetDashboardIndicatorMetricUseCase:
     ) -> None:
         self._snapshot_service = snapshot_service
         self._calculator = calculator
+        self._branch_goal_rollup = ConsolidatedBranchGoalRollupService(
+            reference_resolver=calculator,
+        )
 
     def execute(
         self,
@@ -39,6 +46,7 @@ class GetDashboardIndicatorMetricUseCase:
         if not normalized_id:
             return None
 
+        view_branch = normalize_goal_scope_branch(branch)
         snapshot = self._snapshot_service.get_current_and_previous_snapshot(
             competence=competence,
             start_date=start_date,
@@ -129,9 +137,9 @@ class GetDashboardIndicatorMetricUseCase:
         goals: dict = {}
         comparable_goal = None
         reference_goal = None
-        goal_mode = "standard"
-        goal_periodicity = "monthly"
-        monthly_targets: list = []
+        value_unit = getattr(formatting_source, "value_unit", None)
+        indicator_id_for_goal = normalized_id
+
         if calculated is not None:
             goals = self._calculator.resolve_goals_payload_for_calculated(
                 calculated=calculated,
@@ -140,6 +148,66 @@ class GetDashboardIndicatorMetricUseCase:
                 end_date=period.end_date,
                 competence=period.competence,
             )
+
+        rolled = self._rollup_registered_goal_for_consolidated(
+            catalog_item=catalog_item,
+            calculated=calculated,
+            period=period,
+        )
+
+        if view_branch in BRANCH_UNIT_CODES:
+            comparable_goal = goals.get(view_branch) if goals else None
+            branch_fields = self._registered_goal_fields_for_branch(
+                catalog_item=catalog_item,
+                calculated=calculated,
+                branch_code=view_branch,
+            )
+            if branch_fields is not None:
+                goal_value = branch_fields["goal_value"]
+                reference_goal = self._calculator.resolve_reference_goal(
+                    goal_value=to_optional_float(branch_fields["goal_value"]),
+                    goal_periodicity=branch_fields["goal_periodicity"],
+                    goal_mode=branch_fields["goal_mode"],
+                    monthly_targets=branch_fields["monthly_targets"],
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                    competence=period.competence,
+                )
+                if comparable_goal is None:
+                    comparable_goal = self._comparable_from_registered_fields(
+                        fields=branch_fields,
+                        period=period,
+                        value_unit=value_unit,
+                        indicator_id=indicator_id_for_goal,
+                    )
+        else:
+            # Consolidado: usa rollup 01+02 / goals.consolidated — não a filial primária.
+            if rolled is not None:
+                goal_value = rolled["goal_value"]
+                reference_goal = self._calculator.resolve_reference_goal(
+                    goal_value=to_optional_float(rolled.get("goal_value")),
+                    goal_periodicity=rolled.get("goal_periodicity") or "monthly",
+                    goal_mode=rolled.get("goal_mode") or "standard",
+                    monthly_targets=rolled.get("monthly_targets") or [],
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                    competence=period.competence,
+                )
+            # Preferir comparable do rollup (1× MTD na soma das refs) para
+            # paridade com dashboard-goals; goals.consolidated pode divergir
+            # por arredondamento da soma dos comparables por filial.
+            if rolled is not None:
+                comparable_goal = self._comparable_from_registered_fields(
+                    fields=rolled,
+                    period=period,
+                    value_unit=value_unit,
+                    indicator_id=indicator_id_for_goal,
+                )
+            if comparable_goal is None and goals:
+                comparable_goal = goals.get("consolidated")
+
+        # Sem rollup de filiais: referência/comparable a partir do cadastro do indicador.
+        if rolled is None and reference_goal is None and calculated is not None:
             goal_mode = getattr(calculated, "goal_mode", "standard") or "standard"
             goal_periodicity = calculated.goal_periodicity or "monthly"
             monthly_targets = getattr(calculated, "monthly_targets", None) or []
@@ -154,9 +222,10 @@ class GetDashboardIndicatorMetricUseCase:
                 end_date=period.end_date,
                 competence=period.competence,
             )
-            if calculated.goal_value is not None or (
-                goal_mode or ""
-            ).strip().lower() == "monthly_curve":
+            if comparable_goal is None and (
+                calculated.goal_value is not None
+                or str(goal_mode).strip().lower() == "monthly_curve"
+            ):
                 comparable_goal = self._calculator.calculate_comparable_goal(
                     goal_value=float(calculated.goal_value or 0),
                     goal_periodicity=goal_periodicity,
@@ -165,12 +234,10 @@ class GetDashboardIndicatorMetricUseCase:
                     start_date=period.start_date,
                     end_date=period.end_date,
                     competence=period.competence,
-                    value_unit=getattr(calculated, "value_unit", None)
-                    or getattr(catalog_item, "value_unit", None),
-                    indicator_id=getattr(calculated, "indicator_id", None)
-                    or getattr(catalog_item, "indicator_id", None),
+                    value_unit=value_unit,
+                    indicator_id=indicator_id_for_goal,
                 )
-        else:
+        elif rolled is None and reference_goal is None and catalog_item is not None:
             catalog_mode = getattr(catalog_item, "goal_mode", "standard") or "standard"
             catalog_periodicity = getattr(catalog_item, "goal_periodicity", None) or "monthly"
             catalog_targets = getattr(catalog_item, "monthly_targets", None) or []
@@ -205,3 +272,84 @@ class GetDashboardIndicatorMetricUseCase:
             "goals": goals,
             "has_value": comparable_goal is not None,
         }
+
+    def _rollup_registered_goal_for_consolidated(
+        self,
+        *,
+        catalog_item,
+        calculated,
+        period,
+    ) -> dict | None:
+        branch_goals = getattr(catalog_item, "branch_goals", None) if catalog_item else None
+        if not branch_goals:
+            return None
+        indicator = {
+            "value_unit": getattr(calculated, "value_unit", None)
+            if calculated is not None
+            else getattr(catalog_item, "value_unit", None),
+            "branch_value_aggregation": getattr(calculated, "branch_value_aggregation", None)
+            if calculated is not None
+            else getattr(catalog_item, "branch_value_aggregation", None),
+        }
+        return self._branch_goal_rollup.rollup_branch_goals(
+            indicator=indicator,
+            branch_goals_by_code=dict(branch_goals),
+            start_date=period.start_date,
+            end_date=period.end_date,
+            competence=period.competence,
+        )
+
+    def _registered_goal_fields_for_branch(
+        self,
+        *,
+        catalog_item,
+        calculated,
+        branch_code: str,
+    ) -> dict | None:
+        branch_goals = getattr(catalog_item, "branch_goals", None) if catalog_item else None
+        if branch_goals and branch_goals.get(branch_code):
+            branch_goal = branch_goals[branch_code]
+            return {
+                "goal_value": branch_goal.get("goal_value"),
+                "goal_periodicity": branch_goal.get("goal_periodicity")
+                or getattr(catalog_item, "goal_periodicity", None)
+                or "monthly",
+                "goal_mode": branch_goal.get("goal_mode")
+                or getattr(catalog_item, "goal_mode", "standard")
+                or "standard",
+                "monthly_targets": branch_goal.get("monthly_targets")
+                or getattr(catalog_item, "monthly_targets", None)
+                or [],
+            }
+        if calculated is None:
+            return None
+        return {
+            "goal_value": calculated.goal_value,
+            "goal_periodicity": calculated.goal_periodicity or "monthly",
+            "goal_mode": getattr(calculated, "goal_mode", "standard") or "standard",
+            "monthly_targets": getattr(calculated, "monthly_targets", None) or [],
+        }
+
+    def _comparable_from_registered_fields(
+        self,
+        *,
+        fields: dict,
+        period,
+        value_unit: str | None,
+        indicator_id: str | None,
+    ) -> float | None:
+        goal_value = fields.get("goal_value")
+        goal_mode = fields.get("goal_mode") or "standard"
+        if goal_value is None and str(goal_mode).strip().lower() != "monthly_curve":
+            return None
+        return self._calculator.calculate_comparable_goal(
+            goal_value=float(goal_value or 0),
+            goal_periodicity=fields.get("goal_periodicity") or "monthly",
+            goal_mode=goal_mode,
+            monthly_targets=fields.get("monthly_targets") or [],
+            start_date=period.start_date,
+            end_date=period.end_date,
+            competence=period.competence,
+            value_unit=value_unit,
+            indicator_id=indicator_id,
+        )
