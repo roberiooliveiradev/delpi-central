@@ -20,7 +20,7 @@ Usuário → Papel(éis) Minha Delpi → permission codes → API / MFE
 | Código | Nome UI | Onde vale |
 |--------|---------|-----------|
 | `commercial.access` | Acessar Portal Comercial | Início, Meus pedidos, Minhas tarefas, follow-ups, Visão geral / OTD / OV, Propostas + PDF, **sala de interação (global)**, auditoria quando exposta; Minha Carteira só com **membership** ou `manage` |
-| `commercial.manage` | Administrar Portal Comercial | **Vê tudo** (todas as carteiras/clientes + salas), Administração (CRUD), filtro «Todas as carteiras», worklist `scope=team`, jobs ops |
+| `commercial.manage` | Administrar Portal Comercial | **Vê tudo** (todas as carteiras/clientes + salas), Administração (CRUD de carteiras, grupos e **políticas de SLA** em `/settings/sla-policies`), filtro «Todas as carteiras», worklist `scope=team`, jobs ops |
 | `commercial.billing.notify` | Receber notificação de faturamento | Destinatário da notificação «Pronto para faturar» — **não** libera telas admin nem escopo |
 
 **Home** e rotas de produto usam `commercial.access`. Administração e `/analytics/team` usam `commercial.manage`.
