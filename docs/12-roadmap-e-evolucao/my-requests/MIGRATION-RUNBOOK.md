@@ -1,6 +1,6 @@
 # Runbook — migração `invoice_issuance` → `my_requests` (E8)
 
-One-shot operacional. **Não** apaga o schema legado. Dual-run permanece até descomissionamento futuro.
+One-shot operacional. **Não** apaga o schema legado. Após E13 o MFE legado sai do Compose; schema/volume/lookups seguem a § Retenção abaixo.
 
 ## Pré-requisitos
 
@@ -89,3 +89,25 @@ Checklist anexos: para cada `request_attachments.storage_key`, o arquivo deve ex
 | anexos em disco | volume my-requests + `request_attachments` |
 
 Detalhe: playbook §20.2 · script: `requests-api/scripts/migrate_invoice_issuance_to_my_requests.py`.
+
+## Retenção pós-descomission (E13)
+
+| Recurso | Política |
+|---------|----------|
+| Schema `invoice_issuance` | **Retido** — sem `DROP` / sem `run_plugins_migrations.py reset` |
+| Volume `${DELPI_DATA_HOST_DIR}/invoice-issuance` | **Retido ≥ 90 dias** após apply validado em prod (anexos históricos / auditoria) |
+| Lookups api-delpi `/invoice-issuance/*` | **Mantidos** enquanto `requests-api` `ApiDelpiAdapter` consumir |
+| MFE Compose `invoice-issuance` | **Removido** (E13) — código no monorepo só como referência |
+| Permissões `invoice-issuance.*` | Coexistem até runbook IAM; mapa em PLAYBOOK §20.5 |
+
+## Mapa RBAC (resumo)
+
+| Legado | Canônico |
+|--------|----------|
+| `invoice-issuance.access` | `my-requests.access` |
+| `invoice-issuance.create` | `my-requests.invoice-issuance.create` |
+| `invoice-issuance.view.filial-*` | `my-requests.view.filial-*` |
+| `invoice-issuance.process` | `my-requests.invoice-issuance.process` |
+| `invoice-issuance.manage` | `my-requests.manage` |
+
+Não revogar permissões legadas neste runbook sem confirmação de IAM / suporte.

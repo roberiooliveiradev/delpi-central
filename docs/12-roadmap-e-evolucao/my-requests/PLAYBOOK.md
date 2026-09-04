@@ -1158,7 +1158,7 @@ Factories: [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/
 | **4 — Homologação** | Checklist P0 abaixo — operadores validam lado a lado |
 | **5 — Migração dados** | Script one-shot `invoice_issuance` → `my_requests` |
 | **6 — Cutover** | Guia procedimentos → my-requests; banner depreciação no legado |
-| **7 — Descomissionar** | Remover rotas api-delpi após janela (release major) |
+| **7 — Descomissionar** | E12 soft (menu+redirect) + E13 hard (MFE fora do Compose). Schema/volume/lookups retidos — ver `MIGRATION-RUNBOOK.md` § Retenção. Remoção de lookups api-delpi só em release major futura quando `ApiDelpiAdapter` for substituído. |
 
 ### 20.2 Mapeamento de dados (E8)
 
@@ -1185,11 +1185,24 @@ Factories: [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/
 | Notificação create | Core sino | outbox → Core |
 | Lookup parties/products | GET parties | adapter lookup |
 
-### 20.4 O que NÃO remover na fase inicial
+### 20.4 O que NÃO remover (pós-E13)
 
-- Plugin `invoice-issuance` intacto até E8.S2.
-- Schema `invoice_issuance` intacto até migração validada.
-- Permissões `invoice-issuance.*` intactas.
+- Schema Postgres `invoice_issuance` — **sem** `DROP SCHEMA` / `reset` em prod.
+- Volume host `${DELPI_DATA_HOST_DIR}/invoice-issuance` — retenção mínima **90 dias** após apply validado (ou até auditoria).
+- Rotas api-delpi de **lookup** (`/invoice-issuance/parties|products|carriers|…`) enquanto `ApiDelpiAdapter` no requests-api depender delas.
+- Código-fonte `plugins/invoice-issuance/` no monorepo (referência; Compose não sobe o MFE).
+
+### 20.5 Mapa RBAC legado → canônico (E13)
+
+| Legado `invoice-issuance.*` | Canônico `my-requests.*` |
+|----------------------------|--------------------------|
+| `invoice-issuance.access` | `my-requests.access` |
+| `invoice-issuance.create` | `my-requests.invoice-issuance.create` |
+| `invoice-issuance.view` / `.view.filial-01/02` | `my-requests.view.filial-01/02` (+ `view-all` se aplicável) |
+| `invoice-issuance.process` | `my-requests.invoice-issuance.process` |
+| `invoice-issuance.manage` | `my-requests.manage` |
+
+Revogação em massa no Core **não** faz parte deste playbook — exige runbook IAM dedicado após confirmar que ninguém depende das permissões legadas.
 
 ---
 

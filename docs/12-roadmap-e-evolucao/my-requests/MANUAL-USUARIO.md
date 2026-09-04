@@ -67,4 +67,5 @@ Quando o tipo é **raw-material-creation**, a tela Nova abre o formulário schem
 ## Limitações atuais
 
 - App legado `invoice-issuance`: MFE removido do Compose (E13); bookmarks redirecionam no gateway. Canônico = Minhas Solicitações.
-- Migração de histórico: `MIGRATION-RUNBOOK.md`; retenção de schema/volume documentada no runbook / PLAYBOOK fase 7
+- Migração de histórico: `MIGRATION-RUNBOOK.md`; retenção de schema/volume (≥ 90 dias) e mapa RBAC legado→canônico no mesmo runbook / PLAYBOOK §20.5.
+- Permissões `invoice-issuance.*` podem ainda existir no Core até runbook IAM; operadores novos usam só `my-requests.*`.
