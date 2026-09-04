@@ -1,0 +1,236 @@
+---
+description: Protocolo cognitivo obrigatório — decompor pedido, obter evidência, decidir com confiança e validar o objetivo antes de concluir
+alwaysApply: true
+---
+
+# Execução orientada por evidência
+
+## Princípio
+
+**Entender antes de decidir. Provar antes de alterar. Validar o objetivo antes de concluir.**
+
+Não iniciar implementação a partir da primeira interpretação plausível do pedido. Toda tarefa deve percorrer o fluxo:
+
+```text
+Pedido completo
+→ decomposição
+→ inventário
+→ evidências
+→ hipótese/causa ou objetivo técnico
+→ impacto transversal
+→ decisão
+→ implementação
+→ validação técnica
+→ validação contra o objetivo original
+```
+
+Esta regra é transversal e complementa `development-standards-index.mdc`, `centralized-rules-first.mdc`, `root-cause-generalized-fix.mdc`, `plan-construction.mdc` e `test-and-commit.mdc`.
+
+## 1. Decompor o pedido integralmente
+
+Antes de agir, identificar explicitamente, ainda que de forma compacta:
+
+- objetivo principal;
+- subobjetivos;
+- restrições e proibições;
+- dependências;
+- entregáveis;
+- critérios de aceite explícitos;
+- critérios de aceite implícitos indispensáveis ao objetivo.
+
+Pedidos longos ou com múltiplas solicitações **não podem ser reduzidos a uma única intenção**.
+
+Nenhum requisito material pode desaparecer silenciosamente durante análise, planejamento ou implementação. Para cada requisito relevante deve ocorrer exatamente um dos estados:
+
+```text
+ATENDIDO
+HERDADO_POR_SOLUCAO_TRANSVERSAL
+FORA_DO_ESCOPO_COM_JUSTIFICATIVA
+BLOQUEADO_COM_EVIDENCIA
+```
+
+## 2. Evidência antes de hipótese
+
+Classificar descobertas relevantes com um dos estados abaixo quando houver risco de confusão entre fato e inferência:
+
+```text
+CONFIRMADO_NO_CODIGO
+CONFIRMADO_NO_CONTRATO
+CONFIRMADO_EM_TESTE
+CONFIRMADO_EM_DOCUMENTACAO_CANONICA
+INFERENCIA
+HIPOTESE_A_VALIDAR
+LEGADO_OU_POSSIVELMENTE_OBSOLETO
+```
+
+Regras:
+
+- não apresentar inferência como fato;
+- não transformar hipótese em causa raiz sem seguir o pipeline real;
+- não assumir que nome de arquivo, classe ou método prova responsabilidade arquitetural;
+- documentação antiga não prevalece automaticamente sobre contrato e implementação vigente.
+
+## 3. Hierarquia de fontes de verdade
+
+Quando houver divergência, usar esta precedência como padrão:
+
+1. `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md`;
+2. regras `.cursor` aplicáveis;
+3. ADRs e contratos canônicos vigentes;
+4. schemas, OpenAPI, migrations e implementação real;
+5. testes automatizados atuais;
+6. documentação técnica vigente;
+7. planos e roadmaps ativos;
+8. documentação histórica;
+9. comentários e código legado.
+
+Se duas fontes relevantes divergirem, registrar explicitamente como **drift**. Não reconciliar contradições silenciosamente.
+
+## 4. Investigar antes de editar
+
+Antes de alterar comportamento existente:
+
+1. localizar o ponto de entrada;
+2. seguir o fluxo até a decisão relevante;
+3. identificar o módulo canônico;
+4. identificar produtores do contrato;
+5. identificar consumidores e transformadores;
+6. identificar fluxos irmãos;
+7. identificar testes existentes;
+8. identificar documentação e Ajuda afetadas.
+
+**Ler consumidores antes de alterar o produtor** quando contrato, metadata, DTO, evento, payload ou comportamento compartilhado estiver em jogo.
+
+## 5. Causa raiz exige cadeia de evidência
+
+Uma causa raiz só pode ser considerada confirmada quando houver evidência da cadeia:
+
+```text
+entrada
+→ decisão/comportamento incorreto
+→ módulo responsável
+→ consequência observada
+```
+
+Correlação não é causa. Sintoma não é causa. O primeiro `if` encontrado não é necessariamente a causa.
+
+Se a causa ainda não estiver comprovada, marcar como `HIPOTESE_A_VALIDAR` e continuar a investigação.
+
+## 6. Não perguntar o que o repositório pode responder
+
+Antes de solicitar esclarecimento ao usuário:
+
+1. revisar o pedido já fornecido e o contexto da conversa;
+2. consultar regras aplicáveis;
+3. consultar documentação canônica;
+4. consultar código, contratos e testes;
+5. consultar histórico/roadmap relevante quando necessário;
+6. somente então perguntar se a decisão continuar materialmente ambígua.
+
+Não pedir confirmação para fatos verificáveis no próprio repositório.
+
+Assertividade significa:
+
+```text
+alta confiança → decidir
+dado verificável → investigar
+ambiguidade irrelevante → assumir e registrar
+ambiguidade material → perguntar
+incerteza real → declarar
+```
+
+Evitar tanto perguntar tudo quanto inventar tudo.
+
+## 7. Menor mudança correta
+
+Preferir a **menor mudança arquiteturalmente correta**, não a menor quantidade de linhas alteradas.
+
+Uma alteração curta no local errado é pior que uma extensão corretamente ligada ao módulo canônico.
+
+## 8. Prova de integração
+
+Código criado não significa comportamento entregue.
+
+Toda nova regra ou serviço deve possuir evidência de integração no fluxo real:
+
+```text
+entrada real
+→ módulo canônico
+→ consumidor(es)
+→ saída observável
+```
+
+Teste unitário isolado de uma classe nova não comprova que a feature está ligada ao pipeline.
+
+## 9. Generalização e contraexemplos
+
+Toda correção ou regra nova relevante deve validar no mínimo:
+
+- o caso que motivou a mudança;
+- um caso irmão da mesma família;
+- um caso negativo que **não** deve ativar a regra.
+
+Não transformar exemplos do usuário em exceções hardcoded.
+
+## 10. Revisão adversarial antes de concluir
+
+Antes de declarar conclusão, revisar:
+
+```text
+Como esta solução pode estar errada mesmo com os testes passando?
+Que fluxo irmão posso ter esquecido?
+Que comportamento anterior pode ter regredido?
+Existe regra duplicada ou consumidor que bypassa o módulo canônico?
+Existe fonte mais nova contradizendo minha interpretação?
+```
+
+Verificar as respostas quando tecnicamente possível.
+
+## 11. Validar contra o objetivo original
+
+Antes da conclusão, retornar ao pedido inicial e conferir:
+
+```text
+OBJETIVO_ORIGINAL
+COMPORTAMENTO_ANTES
+COMPORTAMENTO_DEPOIS
+EVIDENCIA
+REQUISITOS_NAO_ATENDIDOS
+```
+
+**Testes verdes não substituem esta validação.**
+
+Se o objetivo perceptível do usuário não estiver comprovadamente atendido, a tarefa ainda não está concluída.
+
+## 12. Plano não é implementação
+
+Quando o usuário solicitar diagnóstico, análise, arquitetura, review ou plano:
+
+- não implementar silenciosamente;
+- não aproveitar para “já corrigir”;
+- produzir evidência, decisões e plano;
+- implementar somente quando o usuário solicitar execução.
+
+## Checklist obrigatório
+
+### Antes de implementar
+
+- [ ] Decompus o pedido completo?
+- [ ] Nenhum requisito material foi omitido?
+- [ ] Li as regras aplicáveis?
+- [ ] Separei fatos de inferências?
+- [ ] Inspecionei a implementação real?
+- [ ] Localizei o módulo canônico?
+- [ ] Mapeei produtores, consumidores e fluxos irmãos?
+- [ ] Confirmei causa raiz ou marquei hipótese como ainda não validada?
+- [ ] Identifiquei impacto transversal?
+
+### Antes de concluir
+
+- [ ] O pipeline real consome a alteração?
+- [ ] Caso positivo passa?
+- [ ] Caso negativo passa?
+- [ ] Caso irmão passa?
+- [ ] O objetivo original foi atingido e há evidência?
+- [ ] Algum requisito foi silenciosamente omitido?
+- [ ] Documentação/Ajuda está coerente quando aplicável?
