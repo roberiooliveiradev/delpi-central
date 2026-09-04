@@ -165,6 +165,16 @@ def test_classify_product_lookup_descricao_continua_operational():
     assert "technical_description" not in str(route.sub_intent or "")
 
 
+def test_classify_product_lookup_descriao_typo_continua_operational():
+    """Regressão: typo descrião (sem ç) ainda roteia product_lookup."""
+    route = ChatIntentRouterService.classify("qual a descrião do 10050078?")
+
+    assert route.decision == "operational_action"
+    assert route.intent == "operational_query"
+    assert route.sub_intent == "product_lookup"
+    assert route.resolved_params.get("productCode") == "10050078"
+
+
 
 def test_classify_crie_glossario_continua_text_task():
     from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService

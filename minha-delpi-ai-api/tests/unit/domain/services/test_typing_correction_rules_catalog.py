@@ -30,3 +30,17 @@ def test_normalize_estrutra_static_rule_from_catalog():
 
     assert "estrutura" in result
     assert "estrutra" not in result
+
+
+def test_normalize_descriao_typo_from_catalog():
+    """Regressão: descrião (falta ç) → descricao após strip + regra P14."""
+    configure_domain_infrastructure_ports()
+
+    for message in (
+        "qual a descrião do 10050078?",
+        "qual a descriao do 10050078?",
+    ):
+        result = ChatMessageNormalizationService.normalize_for_matching(message)
+        assert "descricao" in result, message
+        assert "descriao" not in result, message
+        assert "10050078" in result.replace(" ", "")

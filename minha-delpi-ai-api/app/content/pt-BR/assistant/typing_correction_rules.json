@@ -127,6 +127,14 @@
       "replacement": "descricao"
     },
     {
+      "pattern": "\\bdescrião\\b",
+      "replacement": "descricao"
+    },
+    {
+      "pattern": "\\bdescriao\\b",
+      "replacement": "descricao"
+    },
+    {
       "pattern": "\\bdescricao\\b",
       "replacement": "descricao"
     },
