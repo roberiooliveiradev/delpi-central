@@ -82,7 +82,15 @@
     "explique",
     "explicar",
     "resuma",
-    "resumir"
+    "resumir",
+    "curto",
+    "curta",
+    "curtos",
+    "curtas",
+    "conciso",
+    "concisa",
+    "concisos",
+    "concisas"
   ],
   "ambiguousTokens": [
     "bom",
