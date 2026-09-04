@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-03",
-  "baselineOperationCount": 696,
-  "operationCount": 696,
-  "coveredCount": 621,
+  "generatedAt": "2026-09-04",
+  "baselineOperationCount": 705,
+  "operationCount": 705,
+  "coveredCount": 630,
   "gapCount": 74,
   "exemptCount": 1,
   "byModule": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "commercial": {
-      "total": 22,
-      "covered": 22,
+      "total": 24,
+      "covered": 24,
       "gap": 0,
       "exempt": 0
     },
@@ -158,8 +158,8 @@
       "exempt": 0
     },
     "quality": {
-      "total": 146,
-      "covered": 145,
+      "total": 148,
+      "covered": 147,
       "gap": 1,
       "exempt": 0
     },
@@ -173,6 +173,12 @@
       "total": 21,
       "covered": 20,
       "gap": 1,
+      "exempt": 0
+    },
+    "request-lookups": {
+      "total": 5,
+      "covered": 5,
+      "gap": 0,
       "exempt": 0
     },
     "retrabalhos": {
@@ -321,6 +327,15 @@
       "path": "/commercial/rol/by-customer",
       "module": "commercial",
       "entity": "commercial_rol_by_customer",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_commercial_rol_by_product",
+      "method": "GET",
+      "path": "/commercial/rol/by-product",
+      "module": "commercial",
+      "entity": "commercial_rol_by_product",
       "shape": "paged_list",
       "status": "covered"
     },
@@ -4727,6 +4742,24 @@
       "status": "covered"
     },
     {
+      "operationId": "update_audit_5s_area",
+      "method": "PATCH",
+      "path": "/quality/audit-5s/areas/{area_id}",
+      "module": "quality",
+      "entity": "audit_5s_area",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "set_audit_5s_area_children",
+      "method": "PUT",
+      "path": "/quality/audit-5s/areas/{area_id}/children",
+      "module": "quality",
+      "entity": "audit_5s_area",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "list_audit_5s_audits",
       "method": "GET",
       "path": "/quality/audit-5s/audits",
@@ -5857,6 +5890,51 @@
       "path": "/reports/schedules/process-pending",
       "module": "reports",
       "entity": "report_schedule_batch",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "search_request_lookup_carriers",
+      "method": "GET",
+      "path": "/request-lookups/carriers",
+      "module": "request-lookups",
+      "entity": "invoice_issuance_carrier",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_request_lookup_open_sales_orders",
+      "method": "GET",
+      "path": "/request-lookups/open-sales-orders",
+      "module": "request-lookups",
+      "entity": "invoice_issuance_open_sales_order",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "search_request_lookup_parties",
+      "method": "GET",
+      "path": "/request-lookups/parties",
+      "module": "request-lookups",
+      "entity": "invoice_issuance_party",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "search_request_lookup_products",
+      "method": "GET",
+      "path": "/request-lookups/products",
+      "module": "request-lookups",
+      "entity": "invoice_issuance_product",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_request_lookup_warehouse_01_balance",
+      "method": "GET",
+      "path": "/request-lookups/products/{code}/warehouse-01-balance",
+      "module": "request-lookups",
+      "entity": "invoice_issuance_stock_balance",
       "shape": "scalar",
       "status": "covered"
     },

@@ -111,6 +111,15 @@ INVOICE_ISSUANCE_VIEW_FILIAL_02 = "invoice-issuance.view.filial-02"
 INVOICE_ISSUANCE_PROCESS = "invoice-issuance.process"
 INVOICE_ISSUANCE_MANAGE = "invoice-issuance.manage"
 
+# --- my-requests (lookups canônicos E17; coexistência com perms legadas) ---
+MY_REQUESTS_ACCESS = "my-requests.access"
+MY_REQUESTS_VIEW_ALL = "my-requests.view-all"
+MY_REQUESTS_MANAGE = "my-requests.manage"
+MY_REQUESTS_VIEW_FILIAL_01 = "my-requests.view.filial-01"
+MY_REQUESTS_VIEW_FILIAL_02 = "my-requests.view.filial-02"
+MY_REQUESTS_INVOICE_CREATE = "my-requests.invoice-issuance.create"
+MY_REQUESTS_INVOICE_PROCESS = "my-requests.invoice-issuance.process"
+
 # --- etiquetas da qualidade ---
 QUALITY_LABELS_VIEW = "quality-labels.view"
 QUALITY_LABELS_WRITE = "quality-labels.write"
@@ -634,6 +643,18 @@ INVOICE_ISSUANCE_PROCESS_PERMISSIONS = [
     INVOICE_ISSUANCE_PROCESS,
     INVOICE_ISSUANCE_MANAGE,
 ]
+
+REQUEST_LOOKUPS_PERMISSIONS = [
+    *INVOICE_ISSUANCE_CREATE_PERMISSIONS,
+    MY_REQUESTS_INVOICE_CREATE,
+    MY_REQUESTS_INVOICE_PROCESS,
+    MY_REQUESTS_MANAGE,
+]
+
+MY_REQUESTS_BRANCH_VIEW_PERMS = {
+    "01": MY_REQUESTS_VIEW_FILIAL_01,
+    "02": MY_REQUESTS_VIEW_FILIAL_02,
+}
 
 QUALITY_LABELS_READ_PERMISSIONS = [
     QUALITY_LABELS_VIEW,

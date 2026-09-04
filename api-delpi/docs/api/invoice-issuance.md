@@ -17,6 +17,8 @@ Plugin: `plugins/invoice-issuance` · Roadmap: [docs/12-roadmap-e-evolucao/invoi
 
 **Persistência:** schema Postgres `invoice_issuance` (migrations `V001`–`V004` em `api-delpi/migrations/plugins/invoice-issuance/`). Aplicar **somente** com `up` — nunca `reset` em produção.
 
+**Lookups canônicos (E17):** o Request Engine (`requests-api`) consome `GET /request-lookups/*` — ver [LOOKUPS-CANONICAL.md](../../../docs/12-roadmap-e-evolucao/my-requests/LOOKUPS-CANONICAL.md). As rotas de lookup abaixo sob `/invoice-issuance/*` ficam **deprecated** até E18 (mesmo payload/use case).
+
 ## Rotas
 
 | Método | Rota | `operationId` | Permissão |

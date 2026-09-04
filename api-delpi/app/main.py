@@ -68,6 +68,7 @@ from app.interface.http.routes.lancamento_notas_fiscais import (
     lancamento_notas_fiscais_router,
 )
 from app.interface.http.routes.invoice_issuance import invoice_issuance_router
+from app.interface.http.routes import request_lookups_router
 from app.interface.http.routes.planejamento_orcamentario import (
     planejamento_orcamentario_router,
 )
@@ -315,6 +316,7 @@ app.include_router(
 )
 app.include_router(lancamento_notas_fiscais_router.router)
 app.include_router(invoice_issuance_router.router)
+app.include_router(request_lookups_router.router)
 app.include_router(planejamento_orcamentario_router.router)
 app.include_router(product_drawing_routes.router, prefix="/products", tags=["products"])
 app.include_router(product_routes.router, prefix="/products", tags=["products"])

@@ -2,7 +2,7 @@
 
 > **Plugin:** `my-requests`  
 > **API:** `/apps/requests-api/v1`  
-> **Status:** E1–E15 entregues (ops gate documentado; UI live Ops ainda assina itens 1–2 em PARITY); próximo = E16 IAM + E17 lookups canônicos  
+> **Status:** E1–E17 entregues (ops + IAM runbook + lookups `/request-lookups`); UI live Ops ainda assina PARITY itens 1–2; próximo = E18 deprecar lookups legado / backlog tags  
 > **Referência legado:** [`invoice-issuance`](../invoice-issuance/README.md)
 
 ---
@@ -1158,7 +1158,7 @@ Factories: [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/
 | **4 — Homologação** | Checklist P0 abaixo — operadores validam lado a lado |
 | **5 — Migração dados** | Script one-shot `invoice_issuance` → `my_requests` |
 | **6 — Cutover** | Guia procedimentos → my-requests; banner depreciação no legado |
-| **7 — Descomissionar** | E12 soft (menu+redirect) + E13 hard (MFE fora do Compose). Schema/volume/lookups retidos — ver `MIGRATION-RUNBOOK.md` § Retenção. Remoção de lookups api-delpi só em release major futura quando `ApiDelpiAdapter` for substituído. |
+| **7 — Descomissionar** | E12 soft (menu+redirect) + E13 hard (MFE fora do Compose). Schema/volume retidos — ver `MIGRATION-RUNBOOK.md` § Retenção. Lookups canônicos `/request-lookups` (E17); remoção de `/invoice-issuance/*` lookups = E18. |
 
 ### 20.2 Mapeamento de dados (E8)
 
@@ -1189,7 +1189,7 @@ Factories: [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/
 
 - Schema Postgres `invoice_issuance` — **sem** `DROP SCHEMA` / `reset` em prod.
 - Volume host `${DELPI_DATA_HOST_DIR}/invoice-issuance` — retenção mínima **90 dias** após apply validado (ou até auditoria).
-- Rotas api-delpi de **lookup** (`/invoice-issuance/parties|products|carriers|…`) enquanto `ApiDelpiAdapter` no requests-api depender delas.
+- Rotas api-delpi de **lookup legado** (`/invoice-issuance/parties|…`) — deprecated após E17; canônico = `/request-lookups/*` (ver `LOOKUPS-CANONICAL.md`). Remoção = E18.
 - Código-fonte `plugins/invoice-issuance/` no monorepo (referência; Compose não sobe o MFE).
 
 ### 20.5 Mapa RBAC legado → canônico (E13)
@@ -1202,7 +1202,7 @@ Factories: [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/
 | `invoice-issuance.process` | `my-requests.invoice-issuance.process` |
 | `invoice-issuance.manage` | `my-requests.manage` |
 
-Revogação em massa no Core **não** faz parte deste playbook — exige runbook IAM dedicado após confirmar que ninguém depende das permissões legadas.
+Revogação em massa no Core **não** faz parte deste playbook — exige runbook IAM dedicado após confirmar que ninguém depende das permissões legadas: [`IAM-LEGACY-PERMISSIONS.md`](./IAM-LEGACY-PERMISSIONS.md).
 
 ---
 
@@ -1555,14 +1555,14 @@ flowchart LR
 | **E14** | WF-06 `/admin` RequestTypes read-only (`my-requests.manage`) | **entregue** |
 | **E15** | Gate PARITY + dry-run/`--apply` evidenciado; UI live itens 1–2 = Ops | **entregue** (docs); ver `PARITY-P0.md` |
 
-### E16–E17 — IAM + lookups (em curso)
+### E16–E17 — IAM + lookups
 
 | Etapa | Entrega | Nota |
 |-------|---------|------|
-| **E16** | Runbook IAM `invoice-issuance.*` → `my-requests.*` | sem revoke automático |
-| **E17** | Adapter sem path `/invoice-issuance/*` (paths canônicos) | rotas legadas retidas até E18 |
+| **E16** | Runbook IAM `invoice-issuance.*` → `my-requests.*` | **entregue** — `IAM-LEGACY-PERMISSIONS.md` |
+| **E17** | Adapter + router `/request-lookups/*` | **entregue** — legado `/invoice-issuance/*` lookups até E18 |
 
-Detalhe das receitas: planos Cursor E10–E15+.
+Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+.
 
 ---
 
@@ -1600,5 +1600,5 @@ Detalhe das receitas: planos Cursor E10–E15+.
 
 ---
 
-**Status:** `E1–E15 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
-**Próximo passo:** E16 runbook IAM → E17 lookups canônicos; depois backlog tags / deprecar rotas api-delpi (E18).
+**Status:** `E1–E17 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
+**Próximo passo:** E18 — deprecar/remover lookups `/invoice-issuance/*` na api-delpi após soak; backlog tags / CreatableMultiSelect; DROP schema após retenção.

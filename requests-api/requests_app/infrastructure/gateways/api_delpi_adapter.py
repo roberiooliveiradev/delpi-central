@@ -15,9 +15,10 @@ from requests_app.domain.ports.request_destination_port import (
 
 
 class ApiDelpiAdapter(RequestDestinationPort, OperationalLookupPort):
-    """Destination + TOTVS lookups via api-delpi invoice-issuance routes."""
+    """Destination + TOTVS lookups via api-delpi canonical /request-lookups routes."""
 
     adapter_name = "api_delpi"
+    _LOOKUP_PREFIX = "/request-lookups"
 
     def __init__(
         self,
@@ -98,7 +99,7 @@ class ApiDelpiAdapter(RequestDestinationPort, OperationalLookupPort):
         authorization: str | None = None,
     ) -> dict[str, Any]:
         return self._get(
-            "/invoice-issuance/parties",
+            f"{self._LOOKUP_PREFIX}/parties",
             params={"party_type": party_type, "query": query, "limit": limit},
             authorization=authorization,
         )
@@ -111,7 +112,7 @@ class ApiDelpiAdapter(RequestDestinationPort, OperationalLookupPort):
         authorization: str | None = None,
     ) -> dict[str, Any]:
         return self._get(
-            "/invoice-issuance/products",
+            f"{self._LOOKUP_PREFIX}/products",
             params={"query": query, "limit": limit},
             authorization=authorization,
         )
@@ -124,7 +125,7 @@ class ApiDelpiAdapter(RequestDestinationPort, OperationalLookupPort):
         authorization: str | None = None,
     ) -> dict[str, Any]:
         return self._get(
-            "/invoice-issuance/carriers",
+            f"{self._LOOKUP_PREFIX}/carriers",
             params={"query": query, "limit": limit},
             authorization=authorization,
         )
@@ -138,7 +139,7 @@ class ApiDelpiAdapter(RequestDestinationPort, OperationalLookupPort):
         authorization: str | None = None,
     ) -> dict[str, Any]:
         return self._get(
-            "/invoice-issuance/open-sales-orders",
+            f"{self._LOOKUP_PREFIX}/open-sales-orders",
             params={
                 "branch": branch,
                 "party_code": party_code,
@@ -156,7 +157,7 @@ class ApiDelpiAdapter(RequestDestinationPort, OperationalLookupPort):
     ) -> dict[str, Any]:
         code = str(product_code or "").strip()
         return self._get(
-            f"/invoice-issuance/products/{code}/warehouse-01-balance",
+            f"{self._LOOKUP_PREFIX}/products/{code}/warehouse-01-balance",
             params={"branch": branch},
             authorization=authorization,
         )

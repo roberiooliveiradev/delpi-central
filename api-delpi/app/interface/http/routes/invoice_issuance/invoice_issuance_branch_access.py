@@ -10,6 +10,10 @@ from app.application.security.api_delpi_permissions import (
     INVOICE_ISSUANCE_MANAGE,
     INVOICE_ISSUANCE_PROCESS,
     INVOICE_ISSUANCE_VIEW,
+    MY_REQUESTS_BRANCH_VIEW_PERMS,
+    MY_REQUESTS_INVOICE_PROCESS,
+    MY_REQUESTS_MANAGE,
+    MY_REQUESTS_VIEW_ALL,
 )
 from app.core.responses import error_response
 
@@ -29,6 +33,9 @@ def has_global_branch_access() -> bool:
         has_permission(user, INVOICE_ISSUANCE_VIEW)
         or has_permission(user, INVOICE_ISSUANCE_PROCESS)
         or has_permission(user, INVOICE_ISSUANCE_MANAGE)
+        or has_permission(user, MY_REQUESTS_VIEW_ALL)
+        or has_permission(user, MY_REQUESTS_INVOICE_PROCESS)
+        or has_permission(user, MY_REQUESTS_MANAGE)
     )
 
 
@@ -38,8 +45,12 @@ def branch_view_allowed(branch: str) -> bool:
     user = get_current_user()
     if user is None:
         return False
-    branch_perm = INVOICE_ISSUANCE_BRANCH_VIEW_PERMS.get(str(branch).strip())
-    return branch_perm is not None and has_permission(user, branch_perm)
+    code = str(branch).strip()
+    legacy = INVOICE_ISSUANCE_BRANCH_VIEW_PERMS.get(code)
+    if legacy is not None and has_permission(user, legacy):
+        return True
+    modern = MY_REQUESTS_BRANCH_VIEW_PERMS.get(code)
+    return modern is not None and has_permission(user, modern)
 
 
 def branch_access_error(branch: str):

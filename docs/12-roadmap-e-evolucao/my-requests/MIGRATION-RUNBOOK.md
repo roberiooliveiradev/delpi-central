@@ -100,7 +100,7 @@ Ver evidências e JSON em [PARITY-P0.md](./PARITY-P0.md) § **E15 verify**. Ambi
 |---------|----------|
 | Schema `invoice_issuance` | **Retido** — sem `DROP` / sem `run_plugins_migrations.py reset` |
 | Volume `${DELPI_DATA_HOST_DIR}/invoice-issuance` | **Retido ≥ 90 dias** após apply validado em prod (anexos históricos / auditoria) |
-| Lookups api-delpi `/invoice-issuance/*` | **Mantidos** enquanto `requests-api` `ApiDelpiAdapter` consumir |
+| Lookups api-delpi `/invoice-issuance/*` | **Deprecated** (E17) — canônico = `/request-lookups/*` ([LOOKUPS-CANONICAL.md](./LOOKUPS-CANONICAL.md)); legado retido até E18 |
 | MFE Compose `invoice-issuance` | **Removido** (E13) — código no monorepo só como referência |
 | Permissões `invoice-issuance.*` | Coexistem até runbook IAM; mapa em PLAYBOOK §20.5 |
 

@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 699,
+  "operation_count": 705,
   "operations": [
     {
       "method": "POST",
@@ -1173,7 +1173,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         },
@@ -1966,6 +1966,232 @@
     },
     {
       "method": "GET",
+      "path": "/commercial/proposals/collaborator-summary",
+      "operationId": "summarize_commercial_proposals_by_collaborator",
+      "summary": "Commercial proposal counts by collaborator",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "customer_codes",
+          "in": "query",
+          "required": false,
+          "description": "CSV of TOTVS customer codes (portfolio scope).",
+          "type": "string"
+        },
+        {
+          "name": "product_code",
+          "in": "query",
+          "required": false,
+          "description": "Product code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "product_group",
+          "in": "query",
+          "required": false,
+          "description": "Product group query parameter.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_proposal_collaborator_summary",
+        "shape": "playbook_report",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_codes": {
+            "locale": {
+              "en": {
+                "description": "Comma-separated TOTVS customer codes to include (portfolio filter).",
+                "label": "Customer codes"
+              },
+              "pt-BR": {
+                "description": "Lista CSV de códigos TOTVS de clientes a incluir (filtro de carteira).",
+                "label": "Códigos de clientes"
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "product_code": {
+            "locale": {
+              "en": {
+                "description": "Product code query parameter.",
+                "label": "Product code"
+              },
+              "pt-BR": {
+                "description": "Código do produto no Protheus (ex.: 90xxxxxx).",
+                "label": "Código do produto"
+              }
+            }
+          },
+          "product_group": {
+            "locale": {
+              "en": {
+                "description": "Product group query parameter.",
+                "label": "Product group"
+              },
+              "pt-BR": {
+                "description": "Grupo de produto no Protheus.",
+                "label": "Grupo de produto"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "SQL aggregation of commercial proposals (OV) by seller for the period filters. Open/lost use opening date (AD1_DATA); won uses acceptance date (AD1_DTASSI / AD1_DTFIM) — same semantics as the proposals list. No pagination; independent from the list status filter."
+    },
+    {
+      "method": "GET",
       "path": "/commercial/proposals/{proposal_number}",
       "operationId": "get_commercial_proposal",
       "summary": "Commercial proposal detail (sales order)",
@@ -2585,7 +2811,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=20 ge=1 le=500",
           "type": "integer",
           "default": 20
         },
@@ -2970,7 +3196,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=500 ge=1 le=500",
           "type": "integer",
           "default": 500
         }
@@ -4419,7 +4645,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "type": "integer",
           "default": 50
         }
@@ -4965,7 +5191,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=1000",
           "type": "integer",
           "default": 20
         },
@@ -6224,7 +6450,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "type": "integer",
           "default": 50
         },
@@ -7046,7 +7272,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         }
@@ -20032,7 +20258,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=None ge=1 le=None",
           "type": "integer"
         },
         {
@@ -20353,7 +20579,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "default": 50,
           "type": "integer"
         }
@@ -21702,7 +21928,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "default": 50,
           "type": "integer"
         }
@@ -23132,7 +23358,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -24818,7 +25044,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "default": 50,
           "type": "integer"
         },
@@ -25596,7 +25822,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "default": 50,
           "type": "integer"
         },
@@ -27113,7 +27339,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         },
@@ -27531,7 +27757,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Maximum ranking items.",
+          "description": "limit default=10 ge=1 le=50",
           "type": "integer",
           "default": 10
         },
@@ -27735,7 +27961,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Maximum ranking items.",
+          "description": "limit default=10 ge=1 le=50",
           "type": "integer",
           "default": 10
         },
@@ -28339,7 +28565,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         },
@@ -29029,7 +29255,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         },
@@ -30236,7 +30462,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=20000 ge=1 le=20000",
           "type": "integer",
           "default": 20000
         }
@@ -30616,7 +30842,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=8000 ge=1 le=8000",
           "type": "integer",
           "default": 8000
         }
@@ -33184,7 +33410,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         },
@@ -33697,7 +33923,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -34041,7 +34267,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -34300,7 +34526,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=100",
           "type": "integer",
           "default": 50
         }
@@ -34503,7 +34729,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=25 ge=1 le=50",
           "type": "integer",
           "default": 25
         },
@@ -34829,7 +35055,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=100 ge=1 le=200",
           "type": "integer",
           "default": 100
         }
@@ -34978,7 +35204,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=10 ge=1 le=50",
           "type": "integer",
           "default": 10
         },
@@ -35189,7 +35415,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=10 ge=1 le=50",
           "type": "integer",
           "default": 10
         },
@@ -35400,7 +35626,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=10 ge=1 le=50",
           "type": "integer",
           "default": 10
         },
@@ -35611,7 +35837,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=10 ge=1 le=50",
           "type": "integer",
           "default": 10
         },
@@ -36009,7 +36235,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=20 ge=1 le=50",
           "type": "integer",
           "default": 20
         }
@@ -36242,7 +36468,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=20 ge=1 le=50",
           "type": "integer",
           "default": 20
         }
@@ -36351,7 +36577,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=20 ge=1 le=50",
           "type": "integer",
           "default": 20
         }
@@ -36602,7 +36828,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         }
@@ -37626,7 +37852,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         }
@@ -38419,7 +38645,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=20 ge=1 le=50",
           "type": "integer",
           "default": 20
         }
@@ -38882,7 +39108,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         },
@@ -39113,7 +39339,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         }
@@ -40093,7 +40319,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         },
@@ -42314,7 +42540,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         },
@@ -45166,7 +45392,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=100",
           "type": "integer",
           "default": 50
         }
@@ -45430,7 +45656,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=100",
           "type": "integer",
           "default": 50
         }
@@ -46055,7 +46281,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -46189,7 +46415,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -46281,7 +46507,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -46619,7 +46845,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -46845,7 +47071,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -47173,7 +47399,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -47493,7 +47719,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -49110,7 +49336,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -49342,7 +49568,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         },
         {
@@ -49666,7 +49892,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -49886,7 +50112,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -50769,7 +50995,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=None ge=1 le=500",
           "type": "integer"
         }
       ],
@@ -51365,7 +51591,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         },
         {
@@ -51624,7 +51850,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         },
         {
@@ -51863,7 +52089,7 @@
           "required": false,
           "description": "Page size.",
           "type": "integer",
-          "default": 100
+          "default": 50
         },
         {
           "name": "sort",
@@ -52777,7 +53003,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=10 ge=1 le=100",
           "type": "integer",
           "default": 10
         },
@@ -53060,7 +53286,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=1000",
           "type": "integer",
           "default": 20
         },
@@ -54566,7 +54792,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -54728,7 +54954,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -54890,7 +55116,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -55072,7 +55298,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=1000",
           "type": "integer",
           "default": 20
         },
@@ -57537,7 +57763,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -58002,7 +58228,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=500",
           "type": "integer"
         }
       ],
@@ -59430,7 +59656,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -59573,7 +59799,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -59718,7 +59944,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "type": "integer",
           "default": 50
         }
@@ -60030,7 +60256,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "type": "integer",
           "default": 50
         },
@@ -60533,7 +60759,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=500",
           "type": "integer"
         },
         {
@@ -60830,7 +61056,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "type": "integer",
           "default": 50
         },
@@ -61679,7 +61905,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "default": 50,
           "type": "integer"
         }
@@ -62166,7 +62392,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=None ge=1 le=500",
           "type": "integer"
         },
         {
@@ -62334,7 +62560,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "type": "integer",
           "default": 50
         },
@@ -62556,7 +62782,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=None ge=1 le=500",
           "type": "integer"
         },
         {
@@ -62670,7 +62896,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "type": "integer",
           "default": 50
         },
@@ -63097,7 +63323,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "type": "integer",
           "default": 50
         },
@@ -63917,7 +64143,7 @@
           "name": "history_limit",
           "in": "query",
           "required": false,
-          "description": "History limit query parameter.",
+          "description": "history_limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -64106,7 +64332,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "type": "integer",
           "default": 50
         }
@@ -64240,7 +64466,7 @@
           "name": "history_limit",
           "in": "query",
           "required": false,
-          "description": "History limit query parameter.",
+          "description": "history_limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -64990,7 +65216,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "type": "integer",
           "default": 50
         },
@@ -65552,7 +65778,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=500",
           "type": "integer",
           "default": 50
         }
@@ -66148,7 +66374,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=None ge=1 le=200",
           "type": "integer"
         }
       ],
@@ -66430,7 +66656,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -67133,7 +67359,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=20 ge=1 le=20",
           "type": "integer",
           "default": 20
         }
@@ -67409,7 +67635,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         }
@@ -67548,7 +67774,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -68126,7 +68352,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -68339,7 +68565,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -68508,7 +68734,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -69038,7 +69264,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=100",
           "type": "integer",
           "default": 50
         }
@@ -70185,7 +70411,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         }
@@ -70672,7 +70898,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         }
@@ -73216,7 +73442,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         },
@@ -75184,7 +75410,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -78288,7 +78514,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         },
@@ -78441,7 +78667,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=100 ge=1 le=500",
           "type": "integer",
           "default": 100
         },
@@ -78860,7 +79086,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=8 ge=1 le=20",
           "type": "integer",
           "default": 8
         }
@@ -79344,7 +79570,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=None ge=1 le=None",
           "type": "integer"
         }
       ],
@@ -81002,7 +81228,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=None ge=1 le=None",
           "type": "integer"
         },
         {
@@ -81738,7 +81964,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=None ge=1 le=None",
           "type": "integer"
         },
         {
@@ -83842,7 +84068,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -84244,7 +84470,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Maximum ranking items.",
+          "description": "limit default=10 ge=1 le=50",
           "type": "integer",
           "default": 10
         }
@@ -84585,10 +84811,10 @@
           "default": 1
         },
         {
-          "name": "pageSize",
+          "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page (maximum 100).",
+          "description": "page_size default=50 ge=1 le=100",
           "type": "integer",
           "default": 50
         }
@@ -84753,7 +84979,7 @@
               }
             }
           },
-          "pageSize": {
+          "page_size": {
             "locale": {
               "en": {
                 "description": "Rows per page.",
@@ -86475,6 +86701,551 @@
     },
     {
       "method": "GET",
+      "path": "/request-lookups/carriers",
+      "operationId": "search_request_lookup_carriers",
+      "summary": "Search request-engine carriers",
+      "tags": [
+        "Request lookups"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "query",
+          "in": "query",
+          "required": true,
+          "description": "Free-text search (code, name or tax ID).",
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "limit default=20 ge=1 le=50",
+          "type": "integer",
+          "default": 20
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_carrier",
+        "shape": "paged_list",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Search request-engine carriers",
+            "description": "Look up TOTVS carriers (SA4) for Request Engine wizards via /request-lookups.",
+            "whenToUse": "Pick a carrier in my-requests wizards.",
+            "label": "Request lookup carriers"
+          },
+          "pt-BR": {
+            "summary": "Buscar transportadoras do Request Engine",
+            "description": "Consulta transportadoras (SA4) para wizards de Minhas Solicitações via /request-lookups.",
+            "whenToUse": "Escolher transportadora no wizard de my-requests.",
+            "label": "Transportadoras (request lookups)"
+          }
+        },
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "query": {
+            "locale": {
+              "en": {
+                "description": "Free-text search (code, name or tax ID).",
+                "label": "Query"
+              },
+              "pt-BR": {
+                "description": "Busca livre (código, nome ou CNPJ).",
+                "label": "Busca"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Escolher transportadora no wizard de my-requests.",
+          "description": "Consulta transportadoras (SA4) para wizards de Minhas Solicitações via /request-lookups.",
+          "label": "Transportadoras (request lookups)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Look up TOTVS carriers (SA4) for Request Engine wizards via /request-lookups."
+    },
+    {
+      "method": "GET",
+      "path": "/request-lookups/open-sales-orders",
+      "operationId": "list_request_lookup_open_sales_orders",
+      "summary": "List open sales orders for request lookups",
+      "tags": [
+        "Request lookups"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Protheus branch code (01 or 02).",
+          "type": "string",
+          "enum": [
+            "01",
+            "02"
+          ]
+        },
+        {
+          "name": "party_code",
+          "in": "query",
+          "required": true,
+          "description": "TOTVS customer or supplier code (SA1/SA2).",
+          "type": "string"
+        },
+        {
+          "name": "party_store",
+          "in": "query",
+          "required": true,
+          "description": "TOTVS store (loja) of the customer or supplier.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_open_sales_order",
+        "shape": "paged_list",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "List open sales orders for request lookups",
+            "description": "Open TOTVS sales-order lines for the selected customer. Same data as issuance; path is product-neutral.",
+            "whenToUse": "Pick open sales-order lines in the my-requests invoice wizard.",
+            "label": "Open sales orders (request lookups)"
+          },
+          "pt-BR": {
+            "summary": "Listar pedidos de venda em aberto (request lookups)",
+            "description": "Linhas de PV em aberto do cliente. Mesmos dados da emissão; path sem nome de produto legado.",
+            "whenToUse": "Marcar linhas de PV no wizard NF de my-requests.",
+            "label": "Pedidos em aberto (request lookups)"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "party_code": {
+            "locale": {
+              "en": {
+                "description": "TOTVS customer or supplier code (SA1/SA2).",
+                "label": "Party code"
+              },
+              "pt-BR": {
+                "description": "Código TOTVS do cliente ou fornecedor (SA1/SA2).",
+                "label": "Código do destinatário"
+              }
+            }
+          },
+          "party_store": {
+            "locale": {
+              "en": {
+                "description": "TOTVS store (loja) of the customer or supplier.",
+                "label": "Party store"
+              },
+              "pt-BR": {
+                "description": "Loja TOTVS do cliente ou fornecedor.",
+                "label": "Loja do destinatário"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Marcar linhas de PV no wizard NF de my-requests.",
+          "description": "Linhas de PV em aberto do cliente. Mesmos dados da emissão; path sem nome de produto legado.",
+          "label": "Pedidos em aberto (request lookups)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Open TOTVS sales-order lines for the selected customer. Same data as issuance; path is product-neutral."
+    },
+    {
+      "method": "GET",
+      "path": "/request-lookups/parties",
+      "operationId": "search_request_lookup_parties",
+      "summary": "Search request-engine parties",
+      "tags": [
+        "Request lookups"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "party_type",
+          "in": "query",
+          "required": true,
+          "description": "Recipient kind: customer (SA1) or supplier (SA2).",
+          "type": "string",
+          "enum": [
+            "customer",
+            "supplier"
+          ]
+        },
+        {
+          "name": "query",
+          "in": "query",
+          "required": true,
+          "description": "Free-text search (code, name or tax ID).",
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "limit default=20 ge=1 le=50",
+          "type": "integer",
+          "default": 20
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_party",
+        "shape": "paged_list",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Search request-engine parties",
+            "description": "Look up TOTVS customers (SA1) or suppliers (SA2) for Request Engine wizards. Canonical path /request-lookups.",
+            "whenToUse": "Resolve a recipient in my-requests without calling legacy /invoice-issuance paths.",
+            "label": "Request lookup parties"
+          },
+          "pt-BR": {
+            "summary": "Buscar destinatários do Request Engine",
+            "description": "Consulta clientes (SA1) ou fornecedores (SA2) para wizards de Minhas Solicitações. Path canônico /request-lookups.",
+            "whenToUse": "Resolver destinatário em my-requests sem path legado /invoice-issuance.",
+            "label": "Destinatários (request lookups)"
+          }
+        },
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "party_type": {
+            "locale": {
+              "en": {
+                "description": "Recipient kind: customer (SA1) or supplier (SA2).",
+                "label": "Party type"
+              },
+              "pt-BR": {
+                "description": "Cliente (SA1) ou fornecedor (SA2).",
+                "label": "Tipo de destinatário"
+              }
+            },
+            "enumLabels": {
+              "customer": {
+                "en": {
+                  "label": "Customer"
+                },
+                "pt-BR": {
+                  "label": "Cliente"
+                }
+              },
+              "supplier": {
+                "en": {
+                  "label": "Supplier"
+                },
+                "pt-BR": {
+                  "label": "Fornecedor"
+                }
+              }
+            }
+          },
+          "query": {
+            "locale": {
+              "en": {
+                "description": "Free-text search (code, name or tax ID).",
+                "label": "Query"
+              },
+              "pt-BR": {
+                "description": "Busca livre (código, nome ou CNPJ).",
+                "label": "Busca"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Resolver destinatário em my-requests sem path legado /invoice-issuance.",
+          "description": "Consulta clientes (SA1) ou fornecedores (SA2) para wizards de Minhas Solicitações. Path canônico /request-lookups.",
+          "label": "Destinatários (request lookups)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Look up TOTVS customers (SA1) or suppliers (SA2) for Request Engine wizards. Canonical path /request-lookups."
+    },
+    {
+      "method": "GET",
+      "path": "/request-lookups/products",
+      "operationId": "search_request_lookup_products",
+      "summary": "Search request-engine products",
+      "tags": [
+        "Request lookups"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "query",
+          "in": "query",
+          "required": true,
+          "description": "Free-text search (code, name or tax ID).",
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "limit default=20 ge=1 le=50",
+          "type": "integer",
+          "default": 20
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_product",
+        "shape": "paged_list",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Search request-engine products",
+            "description": "Look up SB1 items for Request Engine wizards via /request-lookups.",
+            "whenToUse": "Select products in my-requests specialized wizards.",
+            "label": "Request lookup products"
+          },
+          "pt-BR": {
+            "summary": "Buscar itens do Request Engine",
+            "description": "Consulta itens SB1 para wizards de Minhas Solicitações via /request-lookups.",
+            "whenToUse": "Selecionar produtos no wizard specialized de my-requests.",
+            "label": "Itens (request lookups)"
+          }
+        },
+        "params": {
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "query": {
+            "locale": {
+              "en": {
+                "description": "Free-text search (code, name or tax ID).",
+                "label": "Query"
+              },
+              "pt-BR": {
+                "description": "Busca livre (código, nome ou CNPJ).",
+                "label": "Busca"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Selecionar produtos no wizard specialized de my-requests.",
+          "description": "Consulta itens SB1 para wizards de Minhas Solicitações via /request-lookups.",
+          "label": "Itens (request lookups)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Look up SB1 items for Request Engine wizards via /request-lookups."
+    },
+    {
+      "method": "GET",
+      "path": "/request-lookups/products/{code}/warehouse-01-balance",
+      "operationId": "get_request_lookup_warehouse_01_balance",
+      "summary": "Warehouse 01 stock hint (request lookups)",
+      "tags": [
+        "Request lookups"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "code",
+          "in": "path",
+          "required": true,
+          "description": "Code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Protheus branch code (01 or 02).",
+          "type": "string",
+          "enum": [
+            "01",
+            "02"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "invoice_issuance_stock_balance",
+        "shape": "scalar",
+        "category": "financial",
+        "locale": {
+          "en": {
+            "summary": "Warehouse 01 stock hint (request lookups)",
+            "description": "Informative SB2 balance at warehouse 01 for Request Engine. Does not block submission.",
+            "whenToUse": "Show remaining quantity when the item writes off stock.",
+            "label": "Warehouse 01 balance (request lookups)"
+          },
+          "pt-BR": {
+            "summary": "Saldo informativo do almoxarifado 01 (request lookups)",
+            "description": "Saldo SB2 no local 01 para o Request Engine. Não bloqueia o envio.",
+            "whenToUse": "Mostrar quantidade disponível quando o item dá baixa de estoque.",
+            "label": "Saldo almoxarifado 01 (request lookups)"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "code": {
+            "locale": {
+              "en": {
+                "description": "Code query parameter.",
+                "label": "Code"
+              },
+              "pt-BR": {
+                "description": "Código do registro a filtrar.",
+                "label": "Código"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Mostrar quantidade disponível quando o item dá baixa de estoque.",
+          "description": "Saldo SB2 no local 01 para o Request Engine. Não bloqueia o envio.",
+          "label": "Saldo almoxarifado 01 (request lookups)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Informative SB2 balance at warehouse 01 for Request Engine. Does not block submission."
+    },
+    {
+      "method": "GET",
       "path": "/retrabalhos/colaboradores",
       "operationId": "get_retrabalhos_colaboradores",
       "summary": "List — Retrabalho horas improdutivas colaboradores",
@@ -86566,7 +87337,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Maximum ranking items.",
+          "description": "limit default=10 ge=1 le=50",
           "type": "integer",
           "default": 10
         }
@@ -86851,10 +87622,10 @@
           "default": 1
         },
         {
-          "name": "pageSize",
+          "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page (maximum 100).",
+          "description": "page_size default=50 ge=1 le=100",
           "type": "integer",
           "default": 50
         },
@@ -87076,7 +87847,7 @@
               }
             }
           },
-          "pageSize": {
+          "page_size": {
             "locale": {
               "en": {
                 "description": "Rows per page.",
@@ -87636,7 +88407,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Maximum ranking items.",
+          "description": "limit default=10 ge=1 le=50",
           "type": "integer",
           "default": 10
         }
@@ -88339,7 +89110,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=None ge=1 le=None",
           "type": "integer"
         }
       ],
@@ -88671,7 +89442,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=100 ge=1 le=200",
           "type": "integer",
           "default": 100
         }
@@ -89317,7 +90088,7 @@
           "name": "top_limit",
           "in": "query",
           "required": false,
-          "description": "Ranking limit query parameter.",
+          "description": "top_limit default=5 ge=1 le=20",
           "type": "integer",
           "default": 5
         }
@@ -89811,7 +90582,7 @@
           "name": "top_limit",
           "in": "query",
           "required": false,
-          "description": "Ranking limit query parameter.",
+          "description": "top_limit default=5 ge=1 le=20",
           "type": "integer",
           "default": 5
         },
@@ -89819,7 +90590,7 @@
           "name": "details_limit",
           "in": "query",
           "required": false,
-          "description": "Details limit query parameter.",
+          "description": "details_limit default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         }
@@ -90186,7 +90957,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=20 ge=1 le=1000",
           "type": "integer",
           "default": 20
         },
@@ -91178,7 +91949,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         }
@@ -91580,7 +92351,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=100 ge=1 le=500",
           "type": "integer",
           "default": 100
         }
@@ -91627,7 +92398,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=100 ge=1 le=500",
           "type": "integer",
           "default": 100
         }
@@ -91866,10 +92637,10 @@
           "default": 1
         },
         {
-          "name": "pageSize",
+          "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         },
@@ -92012,7 +92783,7 @@
               }
             }
           },
-          "pageSize": {
+          "page_size": {
             "locale": {
               "en": {
                 "description": "Rows per page.",
@@ -92538,10 +93309,10 @@
           "default": 1
         },
         {
-          "name": "pageSize",
+          "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "page_size default=50 ge=1 le=200",
           "type": "integer",
           "default": 50
         },
@@ -92724,7 +93495,7 @@
               }
             }
           },
-          "pageSize": {
+          "page_size": {
             "locale": {
               "en": {
                 "description": "Rows per page.",
@@ -94862,7 +95633,7 @@
           "name": "top_limit",
           "in": "query",
           "required": false,
-          "description": "Ranking limit query parameter.",
+          "description": "top_limit default=10 ge=1 le=50",
           "type": "integer",
           "default": 10
         },
@@ -95936,7 +96707,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Page size (maximum 100).",
+          "description": "page_size default=20 ge=1 le=100",
           "type": "integer",
           "default": 20
         }
@@ -97402,7 +98173,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=25 ge=1 le=100",
           "type": "integer",
           "default": 25
         }
@@ -97570,7 +98341,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=25 ge=1 le=100",
           "type": "integer",
           "default": 25
         }
@@ -97813,7 +98584,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=25 ge=1 le=100",
           "type": "integer",
           "default": 25
         }
@@ -97969,7 +98740,7 @@
           "name": "limit",
           "in": "query",
           "required": false,
-          "description": "Limit query parameter.",
+          "description": "limit default=25 ge=1 le=100",
           "type": "integer",
           "default": 25
         },

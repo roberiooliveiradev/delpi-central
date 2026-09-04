@@ -8529,6 +8529,91 @@
         }
       }
     },
+    "search_request_lookup_parties": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Search request-engine parties",
+          "description": "Look up TOTVS customers (SA1) or suppliers (SA2) for Request Engine wizards. Canonical path /request-lookups.",
+          "whenToUse": "Resolve a recipient in my-requests without calling legacy /invoice-issuance paths.",
+          "label": "Request lookup parties"
+        },
+        "pt-BR": {
+          "summary": "Buscar destinatários do Request Engine",
+          "description": "Consulta clientes (SA1) ou fornecedores (SA2) para wizards de Minhas Solicitações. Path canônico /request-lookups.",
+          "whenToUse": "Resolver destinatário em my-requests sem path legado /invoice-issuance.",
+          "label": "Destinatários (request lookups)"
+        }
+      }
+    },
+    "search_request_lookup_products": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Search request-engine products",
+          "description": "Look up SB1 items for Request Engine wizards via /request-lookups.",
+          "whenToUse": "Select products in my-requests specialized wizards.",
+          "label": "Request lookup products"
+        },
+        "pt-BR": {
+          "summary": "Buscar itens do Request Engine",
+          "description": "Consulta itens SB1 para wizards de Minhas Solicitações via /request-lookups.",
+          "whenToUse": "Selecionar produtos no wizard specialized de my-requests.",
+          "label": "Itens (request lookups)"
+        }
+      }
+    },
+    "list_request_lookup_open_sales_orders": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "List open sales orders for request lookups",
+          "description": "Open TOTVS sales-order lines for the selected customer. Same data as issuance; path is product-neutral.",
+          "whenToUse": "Pick open sales-order lines in the my-requests invoice wizard.",
+          "label": "Open sales orders (request lookups)"
+        },
+        "pt-BR": {
+          "summary": "Listar pedidos de venda em aberto (request lookups)",
+          "description": "Linhas de PV em aberto do cliente. Mesmos dados da emissão; path sem nome de produto legado.",
+          "whenToUse": "Marcar linhas de PV no wizard NF de my-requests.",
+          "label": "Pedidos em aberto (request lookups)"
+        }
+      }
+    },
+    "search_request_lookup_carriers": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Search request-engine carriers",
+          "description": "Look up TOTVS carriers (SA4) for Request Engine wizards via /request-lookups.",
+          "whenToUse": "Pick a carrier in my-requests wizards.",
+          "label": "Request lookup carriers"
+        },
+        "pt-BR": {
+          "summary": "Buscar transportadoras do Request Engine",
+          "description": "Consulta transportadoras (SA4) para wizards de Minhas Solicitações via /request-lookups.",
+          "whenToUse": "Escolher transportadora no wizard de my-requests.",
+          "label": "Transportadoras (request lookups)"
+        }
+      }
+    },
+    "get_request_lookup_warehouse_01_balance": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Warehouse 01 stock hint (request lookups)",
+          "description": "Informative SB2 balance at warehouse 01 for Request Engine. Does not block submission.",
+          "whenToUse": "Show remaining quantity when the item writes off stock.",
+          "label": "Warehouse 01 balance (request lookups)"
+        },
+        "pt-BR": {
+          "summary": "Saldo informativo do almoxarifado 01 (request lookups)",
+          "description": "Saldo SB2 no local 01 para o Request Engine. Não bloqueia o envio.",
+          "whenToUse": "Mostrar quantidade disponível quando o item dá baixa de estoque.",
+          "label": "Saldo almoxarifado 01 (request lookups)"
+        }
+      }
+    },
     "create_invoice_issuance_request": {
       "category": "financial",
       "locale": {
