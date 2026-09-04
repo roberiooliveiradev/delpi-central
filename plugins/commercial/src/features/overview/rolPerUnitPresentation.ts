@@ -8,9 +8,6 @@ import {
   resolveGoalPerformanceBadge,
 } from "./goalDisplay";
 
-export const BRANCH_GOALS_FILTER_HINT =
-  "Metas cadastradas apenas por unidade (Santa Catarina e Espírito Santo). Selecione uma unidade no filtro.";
-
 export type RolPerUnitKpiView = KpiGoalPresentation & {
   valueVariant: "default" | "per-unit";
   value: string;
@@ -30,17 +27,6 @@ function resolveConsolidatedRolValue(
     return null;
   }
   return values.reduce((sum, value) => sum + value, 0);
-}
-
-function resolveBranchGoalsFilterHint(
-  filial01: RolTargetData | null,
-  filial02: RolTargetData | null,
-): string {
-  return (
-    filial01?.goal_scope_hint?.trim() ||
-    filial02?.goal_scope_hint?.trim() ||
-    BRANCH_GOALS_FILTER_HINT
-  );
 }
 
 function resolvePerUnitPerformanceBadges(
@@ -123,15 +109,11 @@ export function buildRolPerUnitKpiView(
       ? consolidatedMetric.rol
       : resolveConsolidatedRolValue(filial01, filial02);
 
-  const hasConsolidatedGoalPayload =
-    consolidatedMetric != null &&
-    !consolidatedMetric.goal_scope_hint?.trim() &&
-    (Boolean(consolidatedMetric.has_goal) ||
-      (consolidatedMetric.comparable_goal != null &&
-        Number(consolidatedMetric.comparable_goal) > 0) ||
-      Boolean(consolidatedMetric.goal_label?.trim()));
-
-  if (hasConsolidatedGoalPayload) {
+  // Visão consolidada: a meta vem só do payload SI (branch vazio), já agregado
+  // via branch_value_aggregation. buildKpiGoalPresentation aplica hint vs número.
+  // Não inventar «selecione unidade» a partir das filiais 01/02 — isso mascarava
+  // meta consolidada válida e contradizia o método de cálculo do SI.
+  if (consolidatedMetric != null) {
     const presentation = buildKpiGoalPresentation(contextLabel, consolidatedMetric, undefined, {
       realizedValue: consolidatedRol,
       dateStart: options?.dateStart,
@@ -158,7 +140,7 @@ export function buildRolPerUnitKpiView(
     monthlyGoalPrefix: null,
     monthlyGoalHint: null,
     goalScopeBadge: null,
-    goalScopeHint: resolveBranchGoalsFilterHint(filial01, filial02),
+    goalScopeHint: null,
     goalPerformanceBadge: null,
     goalPerformanceBadges: [],
     iddScoreLabel: siIddScoreLabel ?? null,

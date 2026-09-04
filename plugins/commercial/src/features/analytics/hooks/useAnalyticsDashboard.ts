@@ -91,7 +91,7 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
     setLoading(true);
     setError(null);
 
-    const needsBranchIdd = !filters.branch;
+    const isConsolidatedView = !filters.branch?.trim();
     const segmentParams = {
       start_date: filters.start_date,
       end_date: filters.end_date,
@@ -106,6 +106,10 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
       customer_codes: filters.customer_codes,
     };
 
+    const settledValue = <T,>(
+      result: PromiseSettledResult<T> | undefined,
+    ): T | null => (result?.status === "fulfilled" ? result.value : null);
+
     void Promise.allSettled([
       getRolSummary({ ...rolParams, branch: "01" }, controller.signal),
       getRolSummary({ ...rolParams, branch: "02" }, controller.signal),
@@ -117,7 +121,9 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
       getSalesOrderOtd(filters, controller.signal),
       getNewBusinessRolPct(filters, controller.signal),
       getPortfolioBillingShare(filters, controller.signal),
-      ...(needsBranchIdd
+      // Meta consolidada SI (branch omitido) — sempre buscar na visão «Todas»;
+      // índices nomeados abaixo evitam regressão ao reordenar o allSettled.
+      ...(isConsolidatedView
         ? [
             getRolSummary(rolParams, controller.signal),
             getWegRolTarget(segmentParams, controller.signal),
@@ -145,49 +151,51 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
     ])
       .then((results) => {
         if (controller.signal.aborted) return;
-        setHeadOfficeRol(results[0].status === "fulfilled" ? results[0].value : null);
-        setBranchRol(results[1].status === "fulfilled" ? results[1].value : null);
-        setHeadOfficeWegRol(results[2].status === "fulfilled" ? results[2].value : null);
-        setBranchWegRol(results[3].status === "fulfilled" ? results[3].value : null);
-        setHeadOfficeNewBusinessRol(
-          results[4].status === "fulfilled" ? results[4].value : null,
-        );
-        setBranchNewBusinessRol(results[5].status === "fulfilled" ? results[5].value : null);
-        setClosingRate(results[6].status === "fulfilled" ? results[6].value : null);
-        setSalesOrderOtd(results[7].status === "fulfilled" ? results[7].value : null);
-        setNewBusinessRol(results[8].status === "fulfilled" ? results[8].value : null);
+        const [
+          rol01,
+          rol02,
+          weg01,
+          weg02,
+          nb01,
+          nb02,
+          closing,
+          otd,
+          newBusinessPct,
+          billingShare,
+          rolConsolidated,
+          wegConsolidated,
+          nbConsolidated,
+          closingBranches,
+          otdBranches,
+          nbBranches,
+        ] = results;
+
+        setHeadOfficeRol(settledValue(rol01));
+        setBranchRol(settledValue(rol02));
+        setHeadOfficeWegRol(settledValue(weg01));
+        setBranchWegRol(settledValue(weg02));
+        setHeadOfficeNewBusinessRol(settledValue(nb01));
+        setBranchNewBusinessRol(settledValue(nb02));
+        setClosingRate(settledValue(closing));
+        setSalesOrderOtd(settledValue(otd));
+        setNewBusinessRol(settledValue(newBusinessPct));
         setPortfolioBillingShare(
-          results[9].status === "fulfilled"
-            ? (results[9].value as PortfolioBillingShareData)
-            : null,
+          settledValue(billingShare) as PortfolioBillingShareData | null,
         );
-        if (needsBranchIdd) {
-          setConsolidatedRol(
-            results[10]?.status === "fulfilled" ? (results[10].value as RolTargetData) : null,
-          );
-          setConsolidatedWegRol(
-            results[11]?.status === "fulfilled" ? (results[11].value as RolTargetData) : null,
-          );
+        if (isConsolidatedView) {
+          setConsolidatedRol(settledValue(rolConsolidated) as RolTargetData | null);
+          setConsolidatedWegRol(settledValue(wegConsolidated) as RolTargetData | null);
           setConsolidatedNewBusinessRol(
-            results[12]?.status === "fulfilled" ? (results[12].value as RolTargetData) : null,
+            settledValue(nbConsolidated) as RolTargetData | null,
           );
-          const crBranches = results[13];
-          const otdBranches = results[14];
-          const nbBranches = results[15];
           setClosingRateBranches(
-            crBranches?.status === "fulfilled"
-              ? (crBranches.value as PerBranchMetricSlices<ClosingRateData>)
-              : null,
+            settledValue(closingBranches) as PerBranchMetricSlices<ClosingRateData> | null,
           );
           setSalesOrderOtdBranches(
-            otdBranches?.status === "fulfilled"
-              ? (otdBranches.value as PerBranchMetricSlices<SalesOrderOtdData>)
-              : null,
+            settledValue(otdBranches) as PerBranchMetricSlices<SalesOrderOtdData> | null,
           );
           setNewBusinessRolBranches(
-            nbBranches?.status === "fulfilled"
-              ? (nbBranches.value as PerBranchMetricSlices<NewBusinessRolPctData>)
-              : null,
+            settledValue(nbBranches) as PerBranchMetricSlices<NewBusinessRolPctData> | null,
           );
         } else {
           setConsolidatedRol(null);
