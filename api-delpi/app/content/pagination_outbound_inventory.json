@@ -1,0 +1,236 @@
+{
+  "version": "2026.09.04",
+  "count": 46,
+  "entries": [
+    {
+      "file": "app/application/dto/audit_5s/audit_5s_dashboard_response.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/dto/eficiencia_fabril/eficiencia_fabril_dashboard_response.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/dto/financeiro_despesas_centro_custo/despesas_centro_custo_lancamentos_response.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/dto/financeiro_inadimplencia/clientes_response.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/dto/financeiro_inadimplencia/titulos_response.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/dto/inspecoes_entrada/inspecoes_entrada_historico_response.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/dto/inspecoes_entrada/inspecoes_entrada_pendentes_response.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/dto/inspecoes_processo/inspecoes_processo_auditoria_apontamentos_response.py",
+      "classification": "build_has_next_pagination",
+      "targetShape": "has_next"
+    },
+    {
+      "file": "app/application/dto/inspecoes_processo/inspecoes_processo_historico_detalhe_response.py",
+      "classification": "build_has_next_pagination",
+      "targetShape": "has_next"
+    },
+    {
+      "file": "app/application/dto/inspecoes_processo/inspecoes_processo_historico_response.py",
+      "classification": "build_has_next_pagination",
+      "targetShape": "has_next"
+    },
+    {
+      "file": "app/application/dto/process_inspection_plans/process_inspection_plans_list_responses.py",
+      "classification": "build_pagination",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/services/paged_list_envelope_service.py",
+      "classification": "build_has_next_pagination",
+      "targetShape": "has_next"
+    },
+    {
+      "file": "app/application/use_cases/commercial/get_sales_order_otd_by_customer_use_case.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/use_cases/commercial/get_sales_order_otd_series_by_customer_use_case.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/use_cases/financial/get_purchase_freight_links_use_case.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/use_cases/financial/get_rol_invoices_use_case.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/use_cases/planejamento_orcamentario/budget_responsibility_use_cases.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/use_cases/planejamento_orcamentario/capex_consolidation_use_cases.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/use_cases/planejamento_orcamentario/capex_investment_use_cases.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/use_cases/planejamento_orcamentario/capex_plan_use_cases.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/use_cases/planejamento_orcamentario/personnel_plan_use_cases.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/use_cases/product/list_exclusive_raw_materials_catalog_use_case.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_allocation_gaps_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_consumption_by_item_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_consumption_top_items_by_work_center_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_consumption_top_items_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_consumption_top_items_validated_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_losses_records_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_losses_top_materials_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_orders_finished_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_orders_finished_without_consumption_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_orders_open_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_planned_vs_real_time_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_schedule_today_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_work_center_average_planned_time_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production/get_production_work_center_order_summary_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/production_appointments/production_appointments_use_cases.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/application/use_cases/purchases/get_purchases_top_products_use_case.py",
+      "classification": "build_operational_pagination",
+      "targetShape": "overfetch"
+    },
+    {
+      "file": "app/application/use_cases/quality_labels/quality_labels_service.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/domain/entities/pedidos_venda_abertos/customer_outbound_invoice.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/infrastructure/persistence/plugins/repositories/audit_5s/postgres_audit_5s_repository.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/infrastructure/persistence/plugins/repositories/kaizen/postgres_kaizen_repository.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/infrastructure/persistence/plugins/repositories/quality_action_plans/postgres_quality_action_plan_read_repository.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/infrastructure/persistence/plugins/repositories/quality_action_plans/postgres_quality_intelligence_repository.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/infrastructure/persistence/plugins/repositories/quality_action_plans/quality_action_plan_revision_mixin.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    },
+    {
+      "file": "app/interface/http/schemas/openapi_examples.py",
+      "classification": "inline_dict",
+      "targetShape": "paged_count"
+    }
+  ]
+}
