@@ -1,6 +1,3 @@
-/** Import direto do util (evita barrel MF/`remoteEntry` no vitest). */
-import { buildDataTableSearchText } from "../../../../../../plugin-ui/src/utils/dataTableSearch";
-
 import { formatChartColumnLabel } from "./chartAxisSelection";
 import type { FieldLabels } from "./presentationFieldLabels";
 
@@ -27,6 +24,36 @@ const FILTER_KEY_PRIORITY = [
 /** Acima deste limiar o 2º controle vira texto «contém» (evita lista infinita). */
 const EQUALITY_MAX_VALUES = 40;
 const EQUALITY_MIN_VALUES = 2;
+
+/**
+ * Haystack local espelhando o kit (`buildDataTableSearchText`) para células
+ * primitivas — sem importar `@delpi/plugin-ui` (Docker/MF não resolve path relativo).
+ */
+function buildRowSearchHaystack(
+  row: Record<string, unknown>,
+  columnKeys: readonly string[],
+): string {
+  return columnKeys
+    .map((key) => {
+      const value = row[key];
+
+      if (value == null || value === false) {
+        return "";
+      }
+
+      if (
+        typeof value === "string" ||
+        typeof value === "number" ||
+        typeof value === "boolean"
+      ) {
+        return String(value);
+      }
+
+      return "";
+    })
+    .join(" ")
+    .toLowerCase();
+}
 
 function scoreFilterKey(key: string): number {
   const lowered = key.toLowerCase();
@@ -130,13 +157,7 @@ export function applyTableSearchFilter(
     return safeRows;
   }
 
-  const searchColumns = columnKeys.map((key) => ({
-    render: (row: Record<string, unknown>) => row[key],
-  }));
-
-  return safeRows.filter((row) =>
-    buildDataTableSearchText(row, searchColumns).includes(needle),
-  );
+  return safeRows.filter((row) => buildRowSearchHaystack(row, columnKeys).includes(needle));
 }
 
 export type PresentationRowPipelineInput = {

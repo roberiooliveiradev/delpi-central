@@ -9,8 +9,11 @@ import { ChatRichTree } from "../presentation/ChatRichTree";
 import { ChatModal } from "../shared/modal/ChatModal";
 import "./ChatExpandModal.css";
 import type { ChartViewState } from "../presentation/chartViewState";
+import type {
+  RichTableViewState,
+  RichTreeViewState,
+} from "../presentation/richPresentationViewState";
 import { ChatPresentationExportButtons } from "../presentation/ChatPresentationExportButtons";
-import { treePresentationToClipboardText } from "../presentation/pipeline/treePresentationUtils";
 
 function copyKpiToClipboard(presentation: Extract<ChatPresentation, { type: "kpi" }>) {
   const lines = presentation.cards.map(
@@ -22,12 +25,16 @@ function copyKpiToClipboard(presentation: Extract<ChatPresentation, { type: "kpi
 export function ChatExpandModal({
   presentation,
   chartViewState,
+  tableViewState,
+  treeViewState,
   onClose,
   onDrillDown,
   onOpenCanvas,
 }: {
   presentation: ChatPresentation;
   chartViewState?: ChartViewState;
+  tableViewState?: RichTableViewState;
+  treeViewState?: RichTreeViewState;
   onClose: () => void;
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
@@ -35,6 +42,9 @@ export function ChatExpandModal({
   const chartRef = useRef<HTMLDivElement>(null);
   const title =
     "title" in presentation ? presentation.title : "Visualização";
+  /** Tabela/árvore já expõem busca+filtro+export na toolbar do corpo. */
+  const bodyOwnsFilterToolbar =
+    presentation.type === "table" || presentation.type === "tree";
 
   return (
     <ChatModal
@@ -49,19 +59,6 @@ export function ChatExpandModal({
           {title}
         </span>
         <div className="mdc-expand-modal__toolbar">
-          {presentation.type === "tree" ? (
-            <button
-              className="mdc-expand-modal__tool-btn mdc-chat-modal-tool-btn"
-              onClick={() =>
-                navigator.clipboard?.writeText(
-                  treePresentationToClipboardText(presentation),
-                )
-              }
-              title="Copiar árvore"
-            >
-              <Copy size={15} /> Copiar
-            </button>
-          ) : null}
           {presentation.type === "kpi" ? (
             <button
               className="mdc-expand-modal__tool-btn mdc-chat-modal-tool-btn"
@@ -71,11 +68,10 @@ export function ChatExpandModal({
               <Copy size={15} /> Copiar
             </button>
           ) : null}
-          {presentation.type === "table" ||
-          presentation.type === "chart" ||
-          presentation.type === "tree" ||
-          presentation.type === "kpi" ||
-          presentation.type === "dashboard" ? (
+          {!bodyOwnsFilterToolbar &&
+          (presentation.type === "chart" ||
+            presentation.type === "kpi" ||
+            presentation.type === "dashboard") ? (
             <ChatPresentationExportButtons
               presentation={presentation}
               buttonClassName="mdc-expand-modal__tool-btn"
@@ -95,8 +91,9 @@ export function ChatExpandModal({
         {presentation.type === "table" && (
           <ChatRichTable
             presentation={presentation}
-            hideToolbar
             hideTitle
+            expanded
+            initialViewState={tableViewState}
             onDrillDown={onDrillDown}
           />
         )}
@@ -119,8 +116,9 @@ export function ChatExpandModal({
         {presentation.type === "tree" && (
           <ChatRichTree
             presentation={presentation}
-            hideToolbar
             hideTitle
+            expanded
+            initialViewState={treeViewState}
             onDrillDown={onDrillDown}
           />
         )}
@@ -132,12 +130,16 @@ export function ChatExpandModal({
 export function ExpandButton({
   presentation,
   chartViewState,
+  tableViewState,
+  treeViewState,
   onDrillDown,
   onOpenCanvas,
   disabled = false,
 }: {
   presentation: ChatPresentation;
   chartViewState?: ChartViewState;
+  tableViewState?: RichTableViewState;
+  treeViewState?: RichTreeViewState;
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
   /** Evita abrir outro modal quando já está em contexto expandido. */
@@ -165,6 +167,8 @@ export function ExpandButton({
         <ChatExpandModal
           presentation={presentation}
           chartViewState={chartViewState}
+          tableViewState={tableViewState}
+          treeViewState={treeViewState}
           onClose={() => setOpen(false)}
           onDrillDown={onDrillDown}
           onOpenCanvas={onOpenCanvas}

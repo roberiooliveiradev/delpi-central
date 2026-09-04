@@ -11,6 +11,7 @@ import { ExpandButton } from "../canvas/ChatExpandModal";
 import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
 import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import { ChatRichSearchField } from "./ChatRichSearchField";
+import type { RichTreeViewState } from "./richPresentationViewState";
 import {
   countTreeNodes,
   filterTreeByQuery,
@@ -247,25 +248,41 @@ export function ChatRichTree({
   presentation,
   hideTitle = false,
   hideToolbar = false,
+  expanded = false,
+  initialViewState,
   onDrillDown,
 }: {
   presentation: TreePresentation;
   hideTitle?: boolean;
   hideToolbar?: boolean;
+  /** Modal expandido — mantém toolbar de busca. */
+  expanded?: boolean;
+  initialViewState?: RichTreeViewState;
   onDrillDown?: (query: string) => void;
 }) {
   const toolbarCopy = richPresentationToolbar();
   const { title, root } = presentation;
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialViewState?.searchQuery ?? "");
+  const skipSearchResetOnMountRef = useRef(Boolean(initialViewState));
   const totalNodeCount = useMemo(() => countTreeNodes(root), [root]);
 
   useEffect(() => {
+    if (skipSearchResetOnMountRef.current) {
+      skipSearchResetOnMountRef.current = false;
+      return;
+    }
+
     setSearchQuery("");
   }, [root, title]);
 
   const filteredRoot = useMemo(
     () => filterTreeByQuery(root, searchQuery),
     [root, searchQuery],
+  );
+
+  const treeViewState = useMemo(
+    (): RichTreeViewState => ({ searchQuery }),
+    [searchQuery],
   );
 
   const filteredPresentation = useMemo((): TreePresentation => {
@@ -291,16 +308,18 @@ export function ChatRichTree({
           total: searchActive ? visibleNodeCount : totalNodeCount,
         });
 
+  const showToolbar = !hideToolbar || expanded;
+
   return (
     <div
       className={[
         "mdc-rich-tree",
-        hideToolbar ? "mdc-rich-tree--embedded" : "",
+        hideToolbar && !expanded ? "mdc-rich-tree--embedded" : "",
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      {!hideToolbar ? (
+      {showToolbar ? (
         <div className="mdc-rich-tree__header">
           <span
             className="mdc-rich-tree__title"
@@ -322,7 +341,13 @@ export function ChatRichTree({
               copiedAriaLabel="Árvore copiada"
             />
             <ChatPresentationExportButtons presentation={filteredPresentation} />
-            <ExpandButton presentation={filteredPresentation} onDrillDown={onDrillDown} />
+            {!expanded ? (
+              <ExpandButton
+                presentation={presentation}
+                treeViewState={treeViewState}
+                onDrillDown={onDrillDown}
+              />
+            ) : null}
           </div>
         </div>
       ) : null}

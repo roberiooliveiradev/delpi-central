@@ -173,7 +173,6 @@ export function buildContextChipMenuActions(chip: ChatContextChip): TableRowMenu
       break;
     case "preference":
     case "tone":
-    case "format":
     case "email":
     case "textCorrection":
       actions.push({

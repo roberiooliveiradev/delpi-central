@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type { ChatPresentation } from "../../../data/api/chatTypes";
 import {
   formatRichToolbarTemplate,
@@ -18,6 +18,7 @@ import { recordPresentationTelemetry } from "./pipeline/presentationTelemetry";
 import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
 import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import { ChatRichSearchField } from "./ChatRichSearchField";
+import type { RichTableViewState } from "./richPresentationViewState";
 import { tablePresentationToMarkdown } from "../chatPresentation";
 import { ChatRichUxSelect } from "./chatRichUxSelect";
 import "./ChatRichSearchField.css";
@@ -43,15 +44,21 @@ export function ChatRichTable({
   presentation,
   hideTitle = false,
   hideToolbar = false,
+  expanded = false,
   embeddedInDashboard = false,
+  initialViewState,
   onDrillDown,
 }: {
   presentation: TablePresentation;
   hideTitle?: boolean;
-  /** Oculta cabeçalho com ações (ex.: dentro do modal expandido). */
+  /** Oculta cabeçalho com ações (ex.: painel embutido). */
   hideToolbar?: boolean;
+  /** Modal expandido — mantém toolbar de filtro (como ChatRichChart). */
+  expanded?: boolean;
   /** Toolbar compacta alinhada (painel de itens do dashboard). */
   embeddedInDashboard?: boolean;
+  /** Estado de busca/filtro preservado ao Expandir. */
+  initialViewState?: RichTableViewState;
   onDrillDown?: (query: string) => void;
 }) {
   const toolbarCopy = richPresentationToolbar();
@@ -60,15 +67,25 @@ export function ChatRichTable({
   const rows = Array.isArray(rawRows) ? rawRows : [];
   const columnKeys = useMemo(() => columns.map((column) => column.key), [columns]);
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilterKey, setCategoryFilterKey] = useState<string | null>(null);
-  const [categoryFilterValue, setCategoryFilterValue] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState(initialViewState?.searchQuery ?? "");
+  const [categoryFilterKey, setCategoryFilterKey] = useState<string | null>(
+    initialViewState?.categoryFilterKey ?? null,
+  );
+  const [categoryFilterValue, setCategoryFilterValue] = useState<string | null>(
+    initialViewState?.categoryFilterValue ?? null,
+  );
+  const skipFilterResetOnMountRef = useRef(Boolean(initialViewState));
   const [rowMenu, setRowMenu] = useState<{
     anchor: { point: { x: number; y: number } };
     actions: ReturnType<typeof buildTableRowMenuActions>;
   } | null>(null);
 
   useEffect(() => {
+    if (skipFilterResetOnMountRef.current) {
+      skipFilterResetOnMountRef.current = false;
+      return;
+    }
+
     setCategoryFilterKey(null);
     setCategoryFilterValue(null);
     setSearchQuery("");
@@ -87,6 +104,15 @@ export function ChatRichTable({
   const activeFilterOption = useMemo(
     () => categoryFilterOptions.find((option) => option.key === categoryFilterKey) ?? null,
     [categoryFilterKey, categoryFilterOptions],
+  );
+
+  const tableViewState = useMemo(
+    (): RichTableViewState => ({
+      searchQuery,
+      categoryFilterKey,
+      categoryFilterValue,
+    }),
+    [categoryFilterKey, categoryFilterValue, searchQuery],
   );
 
   const filteredRows = useMemo(
@@ -164,17 +190,19 @@ export function ChatRichTable({
           total: rows.length,
         });
 
+  const showToolbar = !hideToolbar || expanded;
+
   return (
     <div
       className={[
         "mdc-rich-table",
-        hideToolbar ? "mdc-rich-table--embedded" : "",
+        hideToolbar && !expanded ? "mdc-rich-table--embedded" : "",
         embeddedInDashboard ? "mdc-rich-table--dashboard" : "",
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      {!hideToolbar ? (
+      {showToolbar ? (
         <div className="mdc-rich-table__header">
           {hideTitle ? (
             <span className="mdc-rich-table__title" aria-hidden="true" />
@@ -258,7 +286,13 @@ export function ChatRichTable({
               presentation={filteredPresentation}
               tableRows={filteredRows}
             />
-            <ExpandButton presentation={filteredPresentation} onDrillDown={onDrillDown} />
+            {!expanded ? (
+              <ExpandButton
+                presentation={presentation}
+                tableViewState={tableViewState}
+                onDrillDown={onDrillDown}
+              />
+            ) : null}
           </div>
         </div>
       ) : null}

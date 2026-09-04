@@ -79,7 +79,8 @@ Nas toolbars de **`ChatRichTable`** e **`ChatRichTree`**:
 
 - **Busca** (campo na toolbar) restringe linhas/nós visíveis.
 - **Filtrar** (tabela/gráfico): todas as colunas; poucas categorias → lista; muitas → texto «contém».
-- **Copiar / CSV / Excel / PDF / Expandir** usam o dataset **já filtrado** (não o payload bruto da API).
+- **Copiar / CSV / Excel / PDF** usam o dataset **já filtrado**.
+- **Expandir** recebe o dataset completo + `tableViewState` / `treeViewState` (mesmo padrão do `chartViewState`) e reabre a toolbar com busca/filtro preservados.
 
 Textos: `presentation_vocabulary.json` → `richPresentationToolbar`.
 
