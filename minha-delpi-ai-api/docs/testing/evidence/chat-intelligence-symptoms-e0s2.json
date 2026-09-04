@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-09-04T16:47:00+00:00",
+  "phase": "E0.S2",
+  "note": "Reprodução offline dos sintomas (mesmo dataset do baseline). Live adminDebug complementar quando API disponível.",
+  "symptoms": [
+    {
+      "id": "search.pela-descricao-typo",
+      "message": "use api para pesquisar pela descrição top 50 termnais com pino na descrição",
+      "observed": {
+        "looksLikeProductSearch": true,
+        "missingProductCode": true,
+        "intentDecision": "operational_action",
+        "intentSubIntent": "product_lookup",
+        "clarifyPreview": "Para buscar descrição ou ficha do produto, informe o código..."
+      },
+      "rootCause": "DESCRIPTION in INTENTS_REQUIRING_CODE fires before tool phase; product search never runs",
+      "expectedAfterE1": {
+        "missingProductCode": false,
+        "toolPath": "/products/search"
+      }
+    },
+    {
+      "id": "search.liste-top-terminais-pino",
+      "message": "liste os top 50 terminais pino",
+      "observed": {
+        "looksLikeProductSearch": true,
+        "missingProductCode": false,
+        "intentDecision": "llm_fallback",
+        "intentSubIntent": ""
+      },
+      "rootCause": "Router falls to llm_fallback/no_clear_intent → TurnAnalysis may clarify despite search look",
+      "expectedAfterE1": {
+        "intentSubIntent": "product_search",
+        "toolPath": "/products/search",
+        "noClarifyDefault": true
+      }
+    },
+    {
+      "id": "normas.follow-up-without-focus",
+      "message": "a descrição esta dentro das normas?",
+      "observed": {
+        "missingProductCode": true,
+        "intentSubIntent": "technical_description_compliance_unavailable"
+      },
+      "rootCause": "Without session focus, DESCRIPTION missing-code competes with compliance; packing/identityFields needed for multi-turn",
+      "expectedAfterE2": {
+        "withPriorProductExcerpt": "OUTCOME_EVALUATE",
+        "missingProductCode": false
+      }
+    }
+  ],
+  "baselineRef": "docs/testing/evidence/chat-intelligence-baseline.json"
+}
