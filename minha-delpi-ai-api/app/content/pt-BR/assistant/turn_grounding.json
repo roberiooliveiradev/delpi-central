@@ -27,17 +27,41 @@
     "child_code",
     "id"
   ],
-  "referringTo": {
-    "labelTemplate": "{title} · {rowCount} itens",
-    "labelTemplateNoCount": "{title}",
-    "defaultTitle": "Último resultado"
+  "identityFieldKeys": {
+    "code": [
+      "code",
+      "productCode",
+      "product_code",
+      "B1_COD",
+      "b1_cod",
+      "id"
+    ],
+    "description": [
+      "description",
+      "descricao",
+      "descrição",
+      "B1_DESC",
+      "b1_desc",
+      "productDescription",
+      "product_description",
+      "name",
+      "nome"
+    ]
   },
-    "prompt": {
+  "prompt": {
     "lastResultHeading": "Último resultado em foco",
     "titleLine": "Título: {title}",
     "rowCountLine": "Quantidade: {rowCount}",
     "topKeysLine": "Códigos em foco: {topKeys}",
+    "identityCodeLine": "Código: {code}",
+    "identityDescriptionLine": "Descrição: {description}",
+    "identityPreviewLead": "Código: {code}\nDescrição: {description}",
     "narrateInstruction": "Responda em português brasileiro, de forma direta ao usuário. Não use raciocínio em inglês, meta-comentários sobre instruções nem chain-of-thought — vá direto à conclusão com os dados acima."
+  },
+  "referringTo": {
+    "labelTemplate": "{title} · {rowCount} itens",
+    "labelTemplateNoCount": "{title}",
+    "defaultTitle": "Último resultado"
   },
   "narrateAnswer": {
     "summaryIntro": "Com base no último resultado (**{title}**):",

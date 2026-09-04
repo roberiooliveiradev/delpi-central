@@ -352,6 +352,12 @@ class ChatTechnicalDescriptionComplianceService:
             excerpt = working.get("lastResultExcerpt")
 
             if isinstance(excerpt, dict):
+                identity = excerpt.get("identityFields")
+                if isinstance(identity, dict):
+                    identity_desc = str(identity.get("description") or "").strip()
+                    if identity_desc:
+                        return identity_desc
+
                 payload = excerpt.get("responsePreview") or excerpt.get("payload")
 
                 if isinstance(payload, dict):

@@ -61,6 +61,30 @@ class ChatTurnGroundingContentService:
         )
 
     @classmethod
+    def identity_field_keys(cls, field: str) -> tuple[str, ...]:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "identityFieldKeys") or {}
+        if not isinstance(node, dict):
+            return ()
+        raw = node.get(str(field or "").strip()) or []
+        if not isinstance(raw, list):
+            return ()
+        return tuple(str(item).strip() for item in raw if str(item).strip())
+
+    @classmethod
+    def identity_preview_lead(cls, *, code: str, description: str) -> str:
+        return str(
+            ChatAssistantContentService.format(
+                _BUNDLE,
+                "prompt",
+                "identityPreviewLead",
+                default="Código: {code}\nDescrição: {description}",
+                code=code,
+                description=description,
+            )
+            or ""
+        ).strip()
+
+    @classmethod
     def last_result_heading(cls) -> str:
         return str(
             ChatAssistantContentService.get(_BUNDLE, "prompt", "lastResultHeading", default="")
@@ -227,6 +251,31 @@ class ChatTurnGroundingContentService:
                         "topKeysLine",
                         default="Códigos em foco: {topKeys}",
                         topKeys=keys_text,
+                    )
+                )
+
+        identity = excerpt.get("identityFields")
+        if isinstance(identity, dict):
+            code = str(identity.get("code") or "").strip()
+            description = str(identity.get("description") or "").strip()
+            if code:
+                lines.append(
+                    ChatAssistantContentService.format(
+                        _BUNDLE,
+                        "prompt",
+                        "identityCodeLine",
+                        default="Código: {code}",
+                        code=code,
+                    )
+                )
+            if description:
+                lines.append(
+                    ChatAssistantContentService.format(
+                        _BUNDLE,
+                        "prompt",
+                        "identityDescriptionLine",
+                        default="Descrição: {description}",
+                        description=description,
                     )
                 )
 

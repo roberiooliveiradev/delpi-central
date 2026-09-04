@@ -47,7 +47,8 @@ class ChatLastResultExcerptService:
         row_count = cls._resolve_row_count(metadata)
         top_keys = cls._extract_top_keys(metadata)
         keys_by_component_type = cls._extract_keys_by_component_type(metadata)
-        preview = cls._build_preview(metadata)
+        identity_fields = cls._extract_identity_fields(metadata)
+        preview = cls._build_preview(metadata, identity_fields=identity_fields)
 
         excerpt: dict[str, Any] = {
             "operationId": operation_id or None,
@@ -62,6 +63,9 @@ class ChatLastResultExcerptService:
             "preview": preview or None,
             "messageId": str(message_id).strip() if message_id else None,
         }
+
+        if identity_fields:
+            excerpt["identityFields"] = identity_fields
 
         if keys_by_component_type:
             excerpt["keysByComponentType"] = keys_by_component_type
@@ -361,7 +365,12 @@ class ChatLastResultExcerptService:
         return None
 
     @classmethod
-    def _build_preview(cls, metadata: dict[str, Any]) -> str:
+    def _build_preview(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        identity_fields: dict[str, str] | None = None,
+    ) -> str:
         preview = str(metadata.get("responsePreview") or "").strip()
         humanized = metadata.get("humanizedSummary")
 
@@ -379,12 +388,84 @@ class ChatLastResultExcerptService:
                     f"{humanized_text}\n\n{preview}" if preview else humanized_text
                 )
 
+        identity = identity_fields if isinstance(identity_fields, dict) else {}
+        code = str(identity.get("code") or "").strip()
+        description = str(identity.get("description") or "").strip()
+
+        if code and description:
+            lead = ChatTurnGroundingContentService.identity_preview_lead(
+                code=code,
+                description=description,
+            )
+            if lead:
+                preview = f"{lead}\n\n{preview}" if preview else lead
+
         max_chars = ChatTurnGroundingContentService.max_preview_chars()
 
         if max_chars > 0 and len(preview) > max_chars:
             return f"{preview[:max_chars]}\n…"
 
         return preview
+
+    @classmethod
+    def _extract_identity_fields(cls, metadata: dict[str, Any]) -> dict[str, str]:
+        code_keys = {
+            key.lower()
+            for key in ChatTurnGroundingContentService.identity_field_keys("code")
+        }
+        description_keys = {
+            key.lower()
+            for key in ChatTurnGroundingContentService.identity_field_keys("description")
+        }
+        if not code_keys and not description_keys:
+            return {}
+
+        found: dict[str, str] = {}
+
+        def consider(obj: Any) -> None:
+            if not isinstance(obj, dict):
+                return
+            if "code" not in found:
+                for key, value in obj.items():
+                    if str(key).strip().lower() in code_keys:
+                        token = str(value or "").strip()
+                        if token:
+                            found["code"] = token
+                            break
+            if "description" not in found:
+                for key, value in obj.items():
+                    if str(key).strip().lower() in description_keys:
+                        token = str(value or "").strip()
+                        if token:
+                            found["description"] = token
+                            break
+
+        payload = cls._load_response_preview(metadata)
+        if isinstance(payload, dict):
+            consider(payload)
+            product = payload.get("product") or payload.get("data")
+            consider(product)
+            for collection_key in ("items", "rows", "data"):
+                collection = payload.get(collection_key)
+                if isinstance(collection, list) and collection:
+                    consider(collection[0])
+                    break
+
+        for table in metadata.get("tablePresentations") or []:
+            if not isinstance(table, dict):
+                continue
+            rows = table.get("rows") or []
+            if isinstance(rows, list) and rows:
+                consider(rows[0])
+                if found.get("code") and found.get("description"):
+                    break
+
+        data_answer = metadata.get("dataAnswer")
+        if isinstance(data_answer, dict):
+            summary = data_answer.get("summary")
+            consider(summary if isinstance(summary, dict) else data_answer)
+
+        return found
 
     @classmethod
     def _extract_top_keys(cls, metadata: dict[str, Any]) -> list[str]:

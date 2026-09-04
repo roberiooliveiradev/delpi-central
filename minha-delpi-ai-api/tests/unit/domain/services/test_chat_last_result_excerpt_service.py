@@ -1,6 +1,7 @@
 from app.domain.services.chat_last_result_excerpt_service import (
     ChatLastResultExcerptService,
 )
+import json
 
 
 def _structure_tool_metadata() -> dict:
@@ -98,6 +99,40 @@ def test_build_stock_excerpt_with_profile_and_preview():
     assert excerpt["rowCount"] == 3
     assert "10080047" in excerpt["topKeys"]
     assert "Estoque" in str(excerpt.get("preview") or "")
+
+
+def test_build_excerpt_identity_fields_and_identity_first_preview():
+    excerpt = ChatLastResultExcerptService.build(
+        [
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/10080047",
+                    "actionId": "product-get",
+                    "operationId": "get_product",
+                    "apiDelpiResponseMeta": {"entity": "product"},
+                    "humanizedSummary": {
+                        "titulo": "Insight genérico",
+                        "linhas": ["- ponto de atenção sem descrição"],
+                    },
+                    "responsePreview": json.dumps(
+                        {
+                            "code": "10080047",
+                            "B1_DESC": "TERMINAL PINO 6,3MM",
+                        }
+                    ),
+                },
+            }
+        ],
+    )
+
+    assert excerpt is not None
+    identity = excerpt.get("identityFields") or {}
+    assert identity.get("code") == "10080047"
+    assert "TERMINAL PINO" in str(identity.get("description") or "")
+    preview = str(excerpt.get("preview") or "")
+    assert preview.index("TERMINAL PINO") < preview.index("Insight")
 
 
 def test_build_prefers_primary_over_enrichment():
