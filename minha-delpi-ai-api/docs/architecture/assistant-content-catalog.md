@@ -36,7 +36,7 @@ Wrappers especializados (mantêm API estável):
 | `result_set_references.json` | Ordinais / result sets (E2.S2) | `ChatResultSetReferenceService` |
 | `prior_turn_facts.json` | Packing de fatos + capabilities brief (E2.S3) | `ChatPriorTurnFactsPackingService` |
 | `turn_understanding.json` | Decomposição multi-subtask (E3) | `ChatTurnUnderstandingService` |
-| `user_query_improvement.json` | Melhoria LLM gated da pergunta (typos) antes de intent/tools | `ChatUserQueryImprovementService`, `ChatUserQueryImprovementContentService` |
+| `user_query_improvement.json` | Melhoria LLM gated da pergunta (typos) no prep do turno — distinto do chip P14 no composer | `ChatUserQueryImprovementService`, `ChatUserQueryImprovementContentService` · ver [chat-intelligence-base](./chat-intelligence-base.md) § Melhoria de pergunta |
 | `conversational_intelligence.json` | Feature flags shadow/cutover | `ChatConversationalIntelligenceFlagService` |
 | `capability_registry.json` | Capabilities normalizadas skills/actions/RAG/web (E4) | `ChatCapabilityRegistryService`, `ChatCapabilityDiscoveryService` |
 | `operational_pagination.json` | Defaults/caps de `page_size`/`limit` outbound chat→api-delpi (tiers standard/hierarchical, markers de path, search/exclusive/top/refinement/recovery) | `ChatOperationalPaginationDefaultsService` |
