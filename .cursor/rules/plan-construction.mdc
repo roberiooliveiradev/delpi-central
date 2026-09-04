@@ -5,14 +5,15 @@ alwaysApply: true
 
 # Construção de planos (Delpi)
 
-Complementa `test-and-commit.mdc`. Aplica-se a CreatePlan, iteração de plano e entregas multi-commit.
+Complementa `test-and-commit.mdc` e **deve obedecer primeiro** a `evidence-driven-execution.mdc`. Aplica-se a CreatePlan, iteração de plano e entregas multi-commit.
 
 ## Checklist obrigatório (nesta ordem)
 
-1. **Diretrizes Cursor** — consultar `development-standards-index.mdc` (se existir) e as regras do domínio; o plano **não** pode contradizer regras ativas (`english-code-identifiers`, `feature-help-sync`, `plugins-reusable-components`, `plugins-overlay-positioning`, `centralized-rules-first`, etc.).
-2. **Inventário do existente** — mapear o que já há (kit `plugin-ui`, rotas, permissões, CSS, clones); preferir **estender** o módulo canônico a reinventar.
-3. **Pesquisa de mercado** — padrões/libs/UX de referência; travar P0 vs fora na tabela de decisões.
-4. **Fluxos + matriz transversal (obrigatório)** — não basta o happy path do sintoma. **Incluir satélite Ajuda** (`feature-help-sync.mdc`) quando a mudança for user-facing.
+1. **Decomposição do pedido + evidência** — aplicar `evidence-driven-execution.mdc`: identificar objetivo, subobjetivos, restrições, dependências, entregáveis e critérios de aceite; separar fatos, inferências e hipóteses. Nenhum requisito material pode desaparecer do plano.
+2. **Diretrizes Cursor** — consultar `development-standards-index.mdc` (se existir) e as regras do domínio; o plano **não** pode contradizer regras ativas (`english-code-identifiers`, `feature-help-sync`, `plugins-reusable-components`, `plugins-overlay-positioning`, `centralized-rules-first`, etc.).
+3. **Inventário do existente** — mapear o que já há (kit `plugin-ui`, rotas, permissões, CSS, clones); preferir **estender** o módulo canônico a reinventar. Ler produtores, consumidores e fluxos irmãos do contrato antes de travar solução.
+4. **Pesquisa de mercado** — padrões/libs/UX de referência; travar P0 vs fora na tabela de decisões. Distinguir claramente referência externa de decisão do repositório.
+5. **Fluxos + matriz transversal (obrigatório)** — não basta o happy path do sintoma. **Incluir satélite Ajuda** (`feature-help-sync.mdc`) quando a mudança for user-facing.
    Antes de travar etapas, **estudar e nomear** todos os consumidores do mesmo contrato
    (compose, edit, leitura/bolha, rascunho F5, reply, clip vs inline, undo, upload/rewrite,
    dedup de strip, gates, realtime, preview inbox, etc. — o que existir no domínio).
@@ -22,17 +23,19 @@ Complementa `test-and-commit.mdc`. Aplica-se a CreatePlan, iteração de plano e
    - diagrama mermaid dos caminhos que compartilham o módulo canônico.
    Caso de referência: imagem inline na Sala (compose/edit dock/bolha/F5/clip) —
    inventário incompleto gera regressão no fluxo omitido.
-5. **Wireframes de UI** — esboço textual, ASCII, seções de tela ou referência a `docs/**/WIREFRAMES.md` (layout, ações, vazios); UI branded respeita design system / `plugin-ui`.
-6. **Impacto transversal** — consumidores, aliases, RBAC, MFEs, APIs, docs, regressões; etapa explícita se a mudança espalha.
-7. **Estrutura do plano** — ver abaixo.
-8. **Protocolo de execução** — ver abaixo.
-9. **Sempre testar antes de commit** — unitários/build do escopo **antes** de cada commit (alinhado a `test-and-commit.mdc`).
+6. **Wireframes de UI** — esboço textual, ASCII, seções de tela ou referência a `docs/**/WIREFRAMES.md` (layout, ações, vazios); UI branded respeita design system / `plugin-ui`.
+7. **Impacto transversal** — consumidores, aliases, RBAC, MFEs, APIs, docs, regressões; etapa explícita se a mudança espalha.
+8. **Estrutura do plano** — ver abaixo.
+9. **Protocolo de execução** — ver abaixo.
+10. **Sempre testar antes de commit** — unitários/build do escopo **antes** de cada commit (alinhado a `test-and-commit.mdc`).
 
 ## Estrutura obrigatória do plano
 
 | Bloco | Conteúdo |
 |-------|----------|
 | Overview | 1–2 frases do resultado |
+| Leitura do pedido | Objetivo principal, subobjetivos, restrições, dependências e critérios de aceite |
+| Evidências e hipóteses | Fatos confirmados vs inferências/hipóteses ainda não validadas |
 | Decisões travadas | Tabela sem Option A/B / TBD |
 | Matriz de fluxos transversais | Tabela Fluxo × superfície × P0/herança/fora (+ satélites) |
 | Etapas `E1…En` | Agrupamento lógico |
@@ -53,14 +56,15 @@ Planos com etapas `E*.S*` devem documentar **cada subetapa** como receita execut
 | **Objetivo** | Uma frase do resultado da subetapa |
 | **Fazer** | Lista numerada: arquivos a criar/alterar (paths reais), métodos/contratos, JSON keys, wiring no pipeline |
 | **Não fazer** | Anti-padrões explícitos (patch local, `if path`, texto PT no Python, escopo da subetapa seguinte) |
-| **Teste** | Comando pytest/npm/gate exato + arquivo de teste |
-| **Pronto quando** | Critério verificável (assert, grep, comportamento) |
+| **Evidência** | O que comprova que a decisão da subetapa está correta no código/contrato/pipeline |
+| **Teste** | Comando pytest/npm/gate exato + arquivo de teste; quando aplicável incluir caso positivo, negativo e irmão |
+| **Pronto quando** | Critério verificável (assert, grep, comportamento) e vínculo com o objetivo original |
 | **Commit** | Mensagem PT sugerida (porquê, não lista de arquivos) |
 
 Planos de inteligência transversal devem incluir, quando couber:
 
 - **Protocolo de execução** no corpo (commit+push por subetapa, não agrupar).
-- **Etapa verify-final** (ex. `E9`): rebuild + fluxo live + tabela pass/fail; commit só se fix de regressão.
+- **Etapa verify-final** (ex. `E9`): rebuild + fluxo live + tabela pass/fail + revisão do objetivo original; commit só se fix de regressão.
 - **Satélites** na matriz de fluxos (send/stream/simulate, MFE, admin debug, modos fast/normal).
 
 Sem receita por subetapa = plano incompleto para execução delegada.
@@ -72,17 +76,20 @@ Quando o plano aprovado disser «cada **E*.S*** = commit + push»:
 1. Marcar subetapa `in_progress`.
 2. Implementar só o escopo da subetapa.
 3. **Testar/build** do pacote alterado.
-4. **Commit** (mensagem em PT, focando o *porquê*) + **push**.
-5. Não agrupar duas subetapas no mesmo commit.
-6. Subetapa de verify-final: commit **só** se houver fix de regressão.
+4. Verificar a evidência da subetapa e confirmar que o pipeline real consome a mudança.
+5. **Commit** (mensagem em PT, focando o *porquê*) + **push**.
+6. Não agrupar duas subetapas no mesmo commit.
+7. Subetapa de verify-final: commit **só** se houver fix de regressão.
 
 No fluxo cotidiano (sem esse protocolo no plano): commit **somente** se o usuário pedir — `test-and-commit.mdc`.
 
 ## O que NÃO fazer
 
-- Plano com alternativas abertas («A ou B», «opcional se…») — decidir e travar.
-- Pular inventário / regras Cursor / impacto e ir direto a código.
+- Plano com alternativas abertas («A ou B», «opcional se…») — decidir e travar quando houver evidência suficiente; se faltar evidência, registrar hipótese e etapa de validação em vez de inventar.
+- Pular decomposição do pedido / inventário / regras Cursor / impacto e ir direto a código.
 - Plano só do sintoma reportado sem inventariar fluxos irmãos (edit, bolha, rascunho, clip, …).
+- Omitir silenciosamente requisito material presente no pedido.
+- Tratar hipótese como fato ou causa raiz confirmada.
 - Commit sem testes do escopo.
 - Patch local que ignora módulo canônico já mapeado no inventário.
 - Feature user-facing no plano **sem** satélite/subetapa de Ajuda (`feature-help-sync.mdc`).
