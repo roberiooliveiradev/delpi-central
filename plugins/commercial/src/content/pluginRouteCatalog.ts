@@ -174,7 +174,7 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         label: "Oportunidades",
         viewId: "analytics_opportunities",
         requiredCap: "analytics",
-        keywords: ["oportunidades", "ov", "funil", "ciclo"],
+        keywords: ["oportunidades", "ov", "funil", "ciclo", "colaborador", "visão"],
       },
     ],
   },

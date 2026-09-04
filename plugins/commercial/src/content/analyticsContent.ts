@@ -70,7 +70,8 @@ export const ANALYTICS_CONTENT = {
   },
   oportunidades: {
     title: "Oportunidades",
-    subtitle: "Lista de OVs/propostas comerciais do período.",
+    subtitle:
+      "Visão Por colaborador ou Por oportunidade, com filtros do período. Personalize colunas, fonte e export na toolbar de cada tabela.",
     accountHint:
       "Oportunidades (OV) deste cliente. Clique na linha ou no número para abrir o detalhe.",
     detail:

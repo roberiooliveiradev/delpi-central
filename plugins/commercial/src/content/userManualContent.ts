@@ -121,8 +121,8 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           want: "Oportunidades (OV)",
-          where: "Início → Oportunidades — Por colaborador = resumo global do período (ganhas por aceite; lista Status não altera o resumo)",
-          how: "Lista global; clique abre a ficha",
+          where: "Início → Oportunidades",
+          how: "Visão: Por colaborador (resumo; clique filtra a lista) ou Por oportunidade (lista com Status/busca). Colunas/fonte/export na toolbar. Status da lista não altera o resumo.",
         },
         {
           want: "PDF / documento de proposta",
@@ -152,13 +152,21 @@ export const USER_MANUAL_CONTENT = {
         "Minhas tarefas — fila de follow-ups.",
         "Sala de interação — conversas internas.",
         "Administração — carteiras, equipe e grupos (gestores).",
-        "OTD, Oportunidades e Propostas — pelo Início ou drills; não ficam no menu de cima.",
+        "OTD, Oportunidades e Propostas — pelo Início ou drills; não ficam no menu de cima. Em Oportunidades, use Visão (colaborador | oportunidade) como na Minha Carteira.",
       ],
     },
     {
       id: "faq-access",
       title: "Dúvidas — acesso e o que eu vejo",
       faqs: [
+        {
+          q: "Como troco a Visão em Oportunidades?",
+          a: "No hero da página: Visão → Por colaborador ou Por oportunidade. A URL guarda ?view= para compartilhar. Clique num vendedor no resumo abre a lista filtrada daquele colaborador.",
+        },
+        {
+          q: "O Status da lista muda o resumo Por colaborador?",
+          a: "Não. O resumo usa só os filtros do hero (período, unidade, segmento, carteira…). Status e busca valem só na Visão Por oportunidade.",
+        },
         {
           q: "Não vejo Minha Carteira no menu",
           a: "Você tem acesso ao Portal, mas ainda não está vinculado a nenhuma carteira. Peça ao administrador do Comercial para incluí-lo como membro.",

@@ -51,7 +51,7 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Conversar com o time sobre um pedido | **Sala de interação** ou painel na ficha | Inbox ou “abrir sala” no pedido/conta/OV |
 | Ver indicadores do mês / ano | **Visão geral** | Ajuste período e unidade (SC/ES); KPIs e gráficos |
 | Ver pontualidade (OTD) | **Início** (launcher) ou drill na Visão geral → **OTD** | Página Pontualidade |
-| Ver oportunidades (OV) no período | **Início** → Oportunidades | Lista global; **Por colaborador** = resumo do período (ganhas por aceite; abertas/perdidas por abertura), independente do Status da lista |
+| Ver oportunidades (OV) no período | **Início** → Oportunidades | **Visão** no hero: Por colaborador (resumo; clique filtra) ou Por oportunidade (lista + Status/busca). Colunas/fonte/export na toolbar. Status da lista **não** altera o resumo. |
 | Gerar / revisar PDF de proposta | **Início** → **Propostas** | Documento ADY (não é a lista de OV) |
 | Trocar de carteira (se eu tiver mais de uma) | Menu do usuário (canto) / **Escopo** | Escolha a carteira ativa |
 | Saber o que significa um termo | **Ajuda** | Catálogo de termos (definição e onde aparece) |
@@ -90,7 +90,7 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Minha Carteira | Clientes da(s) sua(s) carteira(s) |
 | Administração | Só quem administra: carteiras, equipe, grupos |
 
-Telas extras (OTD, Oportunidades, Propostas) entram pelo **Início** ou por atalhos da Visão geral — não ocupam o menu de cima.
+Telas extras (OTD, Oportunidades, Propostas) entram pelo **Início** ou por atalhos da Visão geral — não ocupam o menu de cima. Em **Oportunidades**, o hero tem **Visão** (Por colaborador | Por oportunidade), no mesmo padrão da Minha Carteira.
 
 ### 3.2 Conta do cliente (após clicar em um cliente)
 
@@ -130,6 +130,12 @@ Não. Escopo = carteira(s). Período = filtros da **Visão geral** (ou da tela e
 
 **O filtro de clientes da Visão geral lista todos os clientes do TOTVS?**  
 Não. A lista vem das carteiras do recorte (ou de todas as carteiras ativas, se você não filtrar carteira). Vazio = todos os clientes daquele recorte.
+
+**Como troco a Visão em Oportunidades?**  
+No hero: **Visão** → Por colaborador ou Por oportunidade. A URL guarda `?view=` para compartilhar. Clique num vendedor no resumo abre a lista filtrada daquele colaborador. Use **Colunas** / fonte / export na toolbar de cada tabela.
+
+**O Status da lista muda o resumo Por colaborador?**  
+Não. O resumo usa só os filtros do hero (período, unidade, segmento, carteira…). Status e busca valem só na Visão Por oportunidade.
 
 ### Indicadores (Visão geral)
 

@@ -107,7 +107,12 @@ export const USER_MANUAL_TERM_CATALOG: readonly UserManualTermGroup[] = [
       {
         term: "Oportunidade (OV)",
         meaning: CM_HELP.analytics.opportunitiesPage,
-        applies: "Início → Oportunidades · Conta → Oportunidades",
+        applies: "Início → Oportunidades (Visão colaborador/oportunidade) · Conta → Oportunidades",
+      },
+      {
+        term: "Visão (Oportunidades)",
+        meaning: CM_HELP.analytics.opportunitiesView,
+        applies: "Início → Oportunidades — hero",
       },
       {
         term: "Proposta (documento)",

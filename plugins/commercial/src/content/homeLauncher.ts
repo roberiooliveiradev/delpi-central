@@ -115,7 +115,8 @@ export const HOME_LAUNCHER_CARDS: readonly HomeLauncherCard[] = [
   {
     id: "analytics_opportunities",
     title: "Oportunidades",
-    description: "Funil e ciclo das oportunidades de venda no período filtrado.",
+    description:
+      "Visão por colaborador ou por oportunidade: funil e ciclo das OVs no período filtrado.",
     viewId: "analytics_opportunities",
     requiredCap: "analytics",
     tier: "secondary",
