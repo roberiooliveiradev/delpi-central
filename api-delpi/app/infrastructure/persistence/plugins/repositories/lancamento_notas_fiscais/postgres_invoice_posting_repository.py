@@ -475,7 +475,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             SELECT {_REQUEST_COLUMNS}
               FROM {SCHEMA}.invoice_posting_requests
              WHERE {where_sql}
-             ORDER BY received_at ASC, created_at ASC
+             ORDER BY received_at DESC, created_at DESC
              LIMIT %s OFFSET %s
             """,
             tuple(params + [page_size, offset]),

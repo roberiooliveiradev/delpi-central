@@ -171,7 +171,7 @@ Resposta API: **409 Conflict**, corpo indicando `existing_request_id` (e status 
 
 ### 4.4 Fila
 
-- Ordenação padrão: `received_at ASC` (FIFO pelo recebimento físico).
+- Ordenação padrão da lista na UI: `received_at DESC, created_at DESC` (mais recentes primeiro). Conciliação automática permanece FIFO (`received_at ASC`).
 - Filtros mínimos: filial (travada pela rota); status (padrão **Aguardando lançamento**); fornecedor; número da nota; período de recebimento; período de emissão.
 - Sem prioridade manual na v1.
 
@@ -287,7 +287,7 @@ Envelope e `meta` seguem `api_delpi_success` / `route_contract_registry`. Transi
 - [x] Normalização de documento (9 dígitos apresentação/match) e série.
 - [x] Máquina de estados e motivos de bloqueio.
 - [x] Modelo conceitual em 3 entidades.
-- [x] Duplicidade e fila FIFO por `received_at`.
+- [x] Duplicidade; lista UI mais recentes primeiro; conciliação FIFO por `received_at`.
 - [x] API por ação (implementada) + MFE.
 - [x] Migrations do plugin (V001–V003); sem inventar campos Protheus além dos homologados.
 - [x] Documentação monorepo (README plugin, API, playbook, índices).

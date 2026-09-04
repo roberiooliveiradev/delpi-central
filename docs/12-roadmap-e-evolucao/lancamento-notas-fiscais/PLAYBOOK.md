@@ -22,7 +22,7 @@
 Excelência no LNF **não** é «cadastrar a nota no portal». É garantir que **toda NF de entrada recebida fisicamente**:
 
 1. Gere uma solicitação rastreável (quem, quando, filial, chave fiscal).
-2. Entre numa fila **FIFO** justa (`received_at`).
+2. Consulte a fila com as solicitações **mais recentes primeiro** (`received_at DESC`); a conciliação automática continua FIFO.
 3. Seja atendida com estados claros (pendente → em andamento → bloqueada → lançada).
 4. Feche sozinha quando o Protheus (`SF1`) confirmar o lançamento.
 5. Possa ser marcada **Já lançada** pelo atendente quando o match automático falhar — sem inventar status paralelo.
