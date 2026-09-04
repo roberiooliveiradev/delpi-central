@@ -3,10 +3,9 @@
 Espelho do checklist [PLAYBOOK.md §20.3](./PLAYBOOK.md). Suite automatizada:
 `requests-api/tests/parity/test_invoice_issuance_parity.py`.
 
-**Legado:** plugin `invoice-issuance` + rotas api-delpi `/invoice-issuance/*`  
-**Novo:** MFE `my-requests` + `requests-api` `/v1/*` (lookups via `ApiDelpiAdapter`)
-
-Dual-run: legado permanece intacto até cutover completo; E8 entregou script de migração + banner/guia de depreciação.
+**Legado (retido):** schema/volume `invoice_issuance` + rotas api-delpi `/invoice-issuance/*` (lookups até E17+)  
+**Canônico:** MFE `my-requests` + `requests-api` `/v1/*`  
+**Cutover:** soft E12 (menu + redirect) + hard E13 (MFE fora do Compose) — entregues.
 
 ## Matriz §20.3
 
@@ -35,37 +34,63 @@ Dual-run: legado permanece intacto até cutover completo; E8 entregou script de 
 | Dry-run migração em staging | Runbook pronto; apply fica a cargo do operador |
 | Rebuild sequential (plugin-ui → MFEs → requests-api) | **OK** (2026-09-03) |
 
+## E15 verify (2026-09-04) — evidência automatizada
+
+| Checagem | Resultado |
+|----------|-----------|
+| `pytest requests-api/tests/parity/ -q` | **15 passed** |
+| Dry-run migração (`delpi-requests-api`) | JSON sem erros; `legacy_requests=0`, `missing_attachment_files=[]` (ambiente local sem histórico legado) |
+| `--apply` migração (mesmo container) | No-op idempotente; `migrated=0`, `errors=[]` |
+| Health api-delpi | **200** |
+| Homologação UI live (wizard + fila + TOTVS) | **Pendente assinatura Ops** — ver gate abaixo itens 1–2 |
+
+### Migração aplicada (evidência)
+
+```json
+{
+  "legacy_requests": 0,
+  "already_migrated": 0,
+  "to_migrate": 0,
+  "migrated": 0,
+  "attachments_copied": 0,
+  "missing_attachment_files": [],
+  "errors": []
+}
+```
+
+Ambientes com histórico: repetir dry-run → `--apply` em staging e depois prod conforme [MIGRATION-RUNBOOK.md](./MIGRATION-RUNBOOK.md); colar o JSON aqui.
+
 ## Gaps live (não bloqueiam CI)
 
 | Gap | Motivo | Quando fechar |
 |-----|--------|---------------|
-| Dual-run UI lado a lado em staging | Exige operadores + stack TOTVS | Homologação operacional |
-| Lookups contra TOTVS real | Suite usa `InMemoryOperationalLookupAdapter` + golden de chaves; shape HTTP live fica no smoke api-delpi | Smoke ambiente com Protheus |
-| Apply migração de dados em prod | Script + runbook E8 prontos; dry-run obrigatório antes | Operação após staging |
-| Remoção do plugin legado | Soft E12 (menu + redirect); hard E13 pós-soak | Soft cutover em curso |
+| UI live wizard + fila + transitions | Exige operadores + stack TOTVS | Gate itens 1–2 (Ops) |
+| Lookups contra TOTVS real no browser | Suite usa memory/golden; smoke Protheus | Gate item 2 |
+| Apply migração com dados reais | Este ambiente tinha `legacy_requests=0` | Staging/prod com volume legado |
+| Remoção rotas lookup `/invoice-issuance/*` | Adapter ainda usa até E17 | E17+ |
 
-## Gate soft cutover (E12 — antes de prod)
-
-Assinar esta checklist **antes** de deploy em produção com `showInMenu: false` no manifesto `invoice-issuance` e redirect de bookmarks. Staging pode receber o soft cutover para soak.
+## Gate soft cutover / ops (E12–E15)
 
 | # | Item | Responsável | Feito |
 |---|------|-------------|-------|
-| 1 | Checklist §20.3 exercitado live (criar / fila / start→issue / return / cancel) no canônico my-requests | Ops | [ ] |
-| 2 | Smoke lookups TOTVS reais via wizard my-requests (`parties` / `products` / `carriers`) | Ops | [ ] |
-| 3 | Dry-run migração em staging sem `missing_attachment_files` críticos | Ops | [ ] |
-| 4 | (Recomendado) `--apply` migração em staging + amostragem de anexos | Ops | [ ] |
-| 5 | Comunicação: menu legado some; URL direta ainda abre o MFE legado até E13 | Produto | [ ] |
-| 6 | Confirmar que lookups api-delpi `/invoice-issuance/*` **permanecem** (adapter) | Dev | [ ] |
-
-Após o gate: soak com menu oculto → então E13 (Compose sem MFE legado). **Não** dropar schema nem remover paths de lookup na mesma janela.
+| 1 | Checklist §20.3 exercitado live (criar / fila / start→issue / return / cancel) no canônico my-requests | Ops | [ ] UI |
+| 2 | Smoke lookups TOTVS reais via wizard my-requests (`parties` / `products` / `carriers`) | Ops | [ ] UI |
+| 3 | Dry-run migração sem `missing_attachment_files` críticos | Ops/Dev | [x] 2026-09-04 (env local; 0 legado) |
+| 4 | `--apply` migração + amostragem de anexos | Ops/Dev | [x] 2026-09-04 no-op local; **reaplicar** se staging/prod tiverem dados |
+| 5 | Comunicação: menu oculto + redirect gateway; MFE fora do Compose (E12–E13) | Produto | [x] |
+| 6 | Lookups api-delpi disponíveis enquanto adapter precisar (E17 migra path) | Dev | [x] |
 
 ## Como rodar
 
 ```bash
 cd requests-api
 .venv/bin/python -m pytest tests/parity/ -q
-# ou
-pytest tests/parity/ -q
+
+docker exec delpi-requests-api \
+  python scripts/migrate_invoice_issuance_to_my_requests.py
+# apply (staging/prod após dry-run OK):
+docker exec delpi-requests-api \
+  python scripts/migrate_invoice_issuance_to_my_requests.py --apply
 ```
 
 ## Contrato de aliases (referência)
