@@ -65,6 +65,7 @@ class ChatTurnPreparationPreToolContextService:
         ingress_fast_path: bool,
         session_memory_service,
         turn_response_format: str | None = None,
+        response_mode: str | None = None,
     ) -> ChatTurnPreparationPreToolContextResult:
         direct_answer_bundle = ChatTurnPreparationDirectAnswerService.build_early_bundle(
             message=message,
@@ -97,6 +98,7 @@ class ChatTurnPreparationPreToolContextService:
             user_id=user_id,
             session_memory_service=session_memory_service,
             turn_response_format=turn_response_format,
+            response_mode=response_mode,
         )
 
         workspace_context = memory_context.workspace_context

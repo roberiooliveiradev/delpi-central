@@ -38,6 +38,7 @@ class ChatTurnPreparationMemoryContextService:
         user_id,
         session_memory_service,
         turn_response_format: str | None = None,
+        response_mode: str | None = None,
     ) -> ChatTurnPreparationMemoryContextResult:
         previous_agent_id = str(workspace_context.get("agentId") or "") or None
 
@@ -73,6 +74,10 @@ class ChatTurnPreparationMemoryContextService:
         working_memory_snapshot = cls._attach_session_capabilities(
             working_memory_snapshot,
             workspace_context=updated_workspace,
+        )
+        working_memory_snapshot = cls._attach_response_mode(
+            working_memory_snapshot,
+            response_mode=response_mode,
         )
         updated_workspace["workingMemory"] = working_memory_snapshot
 
@@ -179,5 +184,22 @@ class ChatTurnPreparationMemoryContextService:
 
         result = dict(snapshot)
         result["sessionCapabilities"] = capabilities
+
+        return result
+
+    @classmethod
+    def _attach_response_mode(
+        cls,
+        snapshot: dict,
+        *,
+        response_mode: str | None,
+    ) -> dict:
+        """Sem o modo no snapshot o teto do packing cairia sempre no default Normal."""
+        from app.domain.services.chat_response_mode_service import (
+            ChatResponseModeService,
+        )
+
+        result = dict(snapshot)
+        result["responseMode"] = ChatResponseModeService.normalize(response_mode)
 
         return result

@@ -5,6 +5,9 @@ from __future__ import annotations
 from app.domain.services.chat_prior_turn_facts_packing_service import (
     ChatPriorTurnFactsPackingService,
 )
+from app.domain.services.chat_response_mode_context_budget_service import (
+    ChatResponseModeContextBudgetService,
+)
 from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
 
 
@@ -121,3 +124,71 @@ def test_admin_debug_exposes_prior_turn_facts_packing_size():
     assert packing["chars"] > 0
     assert "identity" in packing["sections"]
     assert packing["truncated"] is False
+
+
+def _verbose_snapshot(response_mode: str) -> dict:
+    """Fatos longos o suficiente para estourar o teto de Rápida, não o de Pensador."""
+    snapshot = _snapshot()
+    snapshot["responseMode"] = response_mode
+    snapshot["operationalFocus"] = {
+        "period": "last_30_days",
+        "supplierCode": "F0001",
+        "customerCode": "C0001",
+    }
+    snapshot["resultSets"] = [
+        {
+            "id": f"rs-{set_index}",
+            "kind": "product",
+            "totalCount": 40,
+            "items": [
+                {
+                    "ordinal": index,
+                    "code": f"1008{set_index}{index:03d}",
+                    "label": (
+                        "TERMINAL PINO LATAO ESTANHADO PREMIUM SERIE LONGA "
+                        f"{index}"
+                    ),
+                }
+                for index in range(1, 8)
+            ],
+        }
+        for set_index in (1, 2)
+    ]
+
+    return snapshot
+
+
+def test_prior_turn_facts_truncate_in_fast_but_not_in_thinker():
+    """``responseMode`` no snapshot é o que tira o teto do default Normal."""
+    fast = ChatPriorTurnFactsPackingService.build(
+        _verbose_snapshot("fast"),
+        max_chars=ChatResponseModeContextBudgetService.prior_turn_facts_max_chars("fast"),
+    )
+    thinker = ChatPriorTurnFactsPackingService.build(
+        _verbose_snapshot("thinker"),
+        max_chars=ChatResponseModeContextBudgetService.prior_turn_facts_max_chars(
+            "thinker"
+        ),
+    )
+
+    assert fast.truncated is True
+    assert thinker.truncated is False
+    assert fast.chars < thinker.chars
+
+
+def test_prompt_block_respects_mode_cap_from_snapshot():
+    fast = ChatWorkingMemoryService.format_prompt_block(_verbose_snapshot("fast"))
+    thinker = ChatWorkingMemoryService.format_prompt_block(_verbose_snapshot("thinker"))
+
+    assert "Fatos do turno anterior:" in fast
+    assert "Fatos do turno anterior:" in thinker
+    assert len(fast) < len(thinker)
+
+
+def test_prompt_block_pre_tool_stage_is_tighter_than_synthesis():
+    synthesis = _verbose_snapshot("normal")
+    pre_tool = dict(synthesis, contextPackingStage="pre_tool")
+
+    assert len(
+        ChatWorkingMemoryService.format_prompt_block(pre_tool)
+    ) < len(ChatWorkingMemoryService.format_prompt_block(synthesis))

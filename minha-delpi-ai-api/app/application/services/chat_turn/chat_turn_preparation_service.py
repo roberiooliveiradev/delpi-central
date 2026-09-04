@@ -171,6 +171,7 @@ class ChatTurnPreparationService:
             ingress_fast_path=fast_path,
             session_memory_service=self.session_memory_service,
             turn_response_format=request.response_format,
+            response_mode=getattr(request, "response_mode", None),
         )
 
         workspace_context = pre_tool.workspace_context
