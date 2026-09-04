@@ -5,6 +5,7 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 | Documento | Conteúdo |
 |---|---|
 | [admin-minha-delpi-chat.md](./admin-minha-delpi-chat.md) | Roadmap detalhado por item (status, entregas, evidências). |
+| [admin-fluxos-revisao.md](./admin-fluxos-revisao.md) | **Set/2026:** revisão dos fluxos admin — manter / melhorar / remover da jornada (só doc). |
 | [melhorias-futuras.md](./melhorias-futuras.md) | Melhorias pós-roadmap admin (implementadas; RBAC core externo pendente). |
 | [inteligencia-chat-onda-1.md](./inteligencia-chat-onda-1.md) | Inteligência do chat — Onda 1 (concluída). |
 | [inteligencia-chat-onda-2.md](./inteligencia-chat-onda-2.md) | Inteligência do chat — Onda 2 (concluída). |

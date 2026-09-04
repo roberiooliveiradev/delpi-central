@@ -2,6 +2,8 @@
 
 A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo deve ficar em sua própria pasta, com componente e CSS próprios.
 
+**Revisão de fluxos (set/2026):** inventário e veredito manter / melhorar / remover da jornada — [`minha-delpi-ai-api/docs/roadmap/admin-fluxos-revisao.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/admin-fluxos-revisao.md) (documentação apenas; sem mudança de código naquela entrega).
+
 ## Estrutura
 
 - `shell/`: topbar única, sidebar em árvore, layout, status strip e alertas. Ver [admin-shell-navegacao.md](../../../docs/admin-shell-navegacao.md).

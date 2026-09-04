@@ -1,15 +1,16 @@
 # Playbook 11 — Admin UX: reorganização das abas
 
-> **Status (31/05/2026):** [Parcial — mockups 01–10 no MFE; refatoração 6 seções aguardando mockup 11](./STATUS_ROADMAP_MELHORIAS.md).
+> **Status (set/2026):** shell de **6 seções** + sidebar em árvore (`admin-v3-sidebar`) **já no MFE**. O diagnóstico abaixo de “10 abas planas” e os mockups 01–11 são **históricos** (contexto do ciclo maio/2026). Veredito atual de fluxos (manter / melhorar / remover): [`../../admin-fluxos-revisao.md`](../../admin-fluxos-revisao.md). Shell: [`plugins/minha-delpi-chat/docs/admin-shell-navegacao.md`](../../../../../plugins/minha-delpi-chat/docs/admin-shell-navegacao.md).
 
+> **Status (31/05/2026 — histórico):** [Parcial — mockups 01–10 no MFE; refatoração 6 seções aguardando mockup 11](../STATUS_ROADMAP_MELHORIAS.md).
 
-> **Status (maio/2026):** implementação das fases 1–4 **revertida** no MFE (`ea9eaf0e` — 10 abas planas estáveis). Novo ciclo: **estudo + mockups Markdown por aba** → implementação única no final. Ver [`11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md`](./11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md) e [`mockups/`](./11_admin_ux_reorganizacao_abas/mockups/README.md).
+> **Status (maio/2026 — histórico):** implementação das fases 1–4 **revertida** no MFE (`ea9eaf0e` — 10 abas planas estáveis). Novo ciclo: **estudo + mockups Markdown por aba** → implementação única no final. Ver [`11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md`](./11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md) e [`mockups/`](./11_admin_ux_reorganizacao_abas/mockups/README.md).
 
 ## Objetivo
 
 Reorganizar o painel administrativo do Minha DELPI Chat (`plugins/minha-delpi-chat`) para reduzir fragmentação, agrupar informações por jornada do administrador e alinhar a navegação aos padrões já usados no Portal e no Strategic Indicators.
 
-Hoje existem **10 abas de primeiro nível** em barra horizontal plana. O admin concentra curadoria, configuração, observabilidade, testes e governança — mas a estrutura atual mistura propósitos e esconde blocos importantes.
+**Contexto histórico deste playbook:** existiam **10 abas de primeiro nível** em barra horizontal plana. O admin concentrava curadoria, configuração, observabilidade, testes e governança — mas a estrutura misturava propósitos e escondia blocos importantes. **Estado atual:** as 6 seções (Painel, Conhecimento, Agentes, Qualidade, Plataforma, Governança) estão em produção no MFE; evolução de produto segue [`admin-fluxos-revisao.md`](../../admin-fluxos-revisao.md).
 
 ---
 

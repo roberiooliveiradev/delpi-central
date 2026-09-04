@@ -35,6 +35,7 @@ Uploads multipart devem enviar apenas o header de autorização; não defina man
 | Documento | Conteúdo |
 |-----------|----------|
 | [`../roadmap/admin-minha-delpi-chat.md`](../roadmap/admin-minha-delpi-chat.md) | Itens 1–15 do painel admin (concluídos) |
+| [`../roadmap/admin-fluxos-revisao.md`](../roadmap/admin-fluxos-revisao.md) | Revisão set/2026 — manter / melhorar / remover da jornada (só doc) |
 | [`../roadmap/agentes-gestao-melhorias.md`](../roadmap/agentes-gestao-melhorias.md) | Gestão de agentes — ondas 1–7 (concluídas) |
 | [`../roadmap/melhorias-futuras.md`](../roadmap/melhorias-futuras.md) | Melhorias pós-roadmap (concluídas; RBAC core pendente) |
 | [`../roadmap/README.md`](../roadmap/README.md) | Índice do roadmap (inteligência do chat, ondas 1–12) |

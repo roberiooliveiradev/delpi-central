@@ -14,4 +14,4 @@ Este pacote contém 11 playbooks de melhoria para o Minha DELPI Chat IA.
 8. [Playbook 08 — Segurança, permissões e confiança](08_seguranca_permissoes_confianca.md)
 9. [Playbook 09 — Dashboards, gráficos e apresentação rica](09_dashboards_graficos_apresentacao_rica.md)
 10. [Playbook 10 — Onboarding e adoção de usuários](10_onboarding_e_adoção_de_usuarios.md)
-11. [Playbook 11 — Admin UX: reorganização das abas](11_admin_ux_reorganizacao_abas.md)
+11. [Playbook 11 — Admin UX: reorganização das abas](11_admin_ux_reorganizacao_abas.md) — shell 6 seções no MFE; veredito de evolução: [admin-fluxos-revisao.md](../../admin-fluxos-revisao.md)

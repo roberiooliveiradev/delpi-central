@@ -6,6 +6,7 @@ Transformar o painel administrativo do Minha DELPI Chat em um centro operacional
 
 Documentos relacionados:
 
+- [Revisão de fluxos (set/2026)](./admin-fluxos-revisao.md) — manter / melhorar / remover da jornada
 - [Melhorias futuras](./melhorias-futuras.md)
 - [API Admin](../api/08-admin.md)
 
@@ -257,15 +258,17 @@ Itens 1–15 do roadmap admin (incluindo segurança operacional).
 
 ## Evoluções futuras
 
-Ver [melhorias-futuras.md](./melhorias-futuras.md): auditoria CSV/timeline, feedback no chat, health por tool, etc.
+Itens listados historicamente em [melhorias-futuras.md](./melhorias-futuras.md) (thumbs, `GET /admin/tools/health`, simulação com sessão/sandbox, etc.) estão **concluídos** no escopo do chat; permanece pendente externo: RBAC com perfis formais no `core-api`.
+
+Veredito atual de produto (manter / melhorar / remover da jornada): **[admin-fluxos-revisao.md](./admin-fluxos-revisao.md)** (set/2026 — documentação apenas).
 
 ---
 
 # Próxima ação recomendada
 
-1. Evoluir auditoria (CSV, timeline).
-2. Feedback do usuário final no chat (thumbs).
-3. Health dedicado por tool.
+1. Seguir o backlog em [admin-fluxos-revisao.md](./admin-fluxos-revisao.md) §6 (Studio de agente → Observe → fine-tune honesto → Ajuda in-app) — **só após decisão de implementar código**.
+2. Evoluir auditoria (CSV / timeline agrupada) quando priorizado.
+3. RBAC formal no `core-api` (fora deste repositório de chat).
 
 ---
 

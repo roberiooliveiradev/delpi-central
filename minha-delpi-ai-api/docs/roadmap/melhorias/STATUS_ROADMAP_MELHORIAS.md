@@ -62,7 +62,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [08 — Segurança](./playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md) | Concluído (MVP) | SQL safety, trust badges, confirmação escrita, `smoke_sql_safety.py` |
 | [09 — Gráficos](./playbooks_melhoria_minha_delpi_chat/09_dashboards_graficos_apresentacao_rica.md) | **Concluído** | [`playbook-09-apresentacao-rica.md`](../playbook-09-apresentacao-rica.md) F1–6 + PB ampliado F1–4 |
 | [10 — Onboarding](./playbooks_melhoria_minha_delpi_chat/10_onboarding_e_adoção_de_usuarios.md) | **Concluído (MVP)** | `ChatOnboardingService`, tour MFE, marcos, perfis; backlog: PDF/vídeo treinamento |
-| [11 — Admin UX](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | Parcial | 10 abas + DS workspace; refatoração 6 seções **aguardando** mockup 11 |
+| [11 — Admin UX](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | **Concluído (shell)** | 6 seções + sidebar no MFE (`admin-v3-sidebar`); diagnóstico “10 abas” é histórico. Veredito de evolução: [`../admin-fluxos-revisao.md`](../admin-fluxos-revisao.md) |
 
 ---
 
@@ -70,12 +70,12 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 
 | Arquivo | Status |
 |---------|--------|
-| [00_processo_refatoracao.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md) | Parcial — processo definido; PR global após mockup 11 |
+| [00_processo_refatoracao.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md) | Histórico — shell 6 seções já no MFE; ver [`admin-fluxos-revisao.md`](../admin-fluxos-revisao.md) |
 | [mockups/README.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/mockups/README.md) | Concluído |
 | [mockups/01–10](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/mockups/) | Concluído (incrementos no MFE + KPI strips) |
-| [mockups/11_painel_e_navegacao.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/mockups/11_painel_e_navegacao.md) | Aguardando aprovação produto |
+| [mockups/11_painel_e_navegacao.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/mockups/11_painel_e_navegacao.md) | Implementado no shell (`admin-v3-sidebar`); refinamentos de produto → [`admin-fluxos-revisao.md`](../admin-fluxos-revisao.md) |
 
-Itens explicitamente **fora do escopo** até mockup 11: drawer auditoria, layout 3 colunas simulação, gráficos interativos métricas, navegação em 6 seções.
+Navegação em 6 seções **já entregue**. Itens ainda opcionais de UX (drawer auditoria, layout 3 colunas simulação, gráficos interativos) seguem o backlog da revisão de fluxos, não bloqueiam o shell.
 
 ---
 
