@@ -2,7 +2,7 @@
 
 > **Plugin:** `my-requests`  
 > **API:** `/apps/requests-api/v1`  
-> **Status:** E1–E14 entregues — soft/hard cutover legado + admin RO; próximo = backlog (tags/CreatableMultiSelect) ou IAM de permissões legadas  
+> **Status:** E1–E15 entregues (ops gate documentado; UI live Ops ainda assina itens 1–2 em PARITY); próximo = E16 IAM + E17 lookups canônicos  
 > **Referência legado:** [`invoice-issuance`](../invoice-issuance/README.md)
 
 ---
@@ -1546,15 +1546,23 @@ flowchart LR
 | **E10** | FiltersKit + CompactPagination; ModalShell return/cancel; FileDropzone anexos | **entregue** |
 | **E11** | Param `q` mine/work-queue; FilterInputField; upload artefatos (process/manage) | **entregue** |
 
-### E12–E14 — Soft cutover → descomission → admin (em curso)
+### E12–E15 — Soft cutover → descomission → admin → ops
 
 | Etapa | Entrega | Nota |
 |-------|---------|------|
 | **E12** | Soft cutover: docs gate, `showInMenu: false`, redirect bookmarks | **entregue** |
-| **E13** | Hard descomission: Compose/scripts sem MFE legado; RBAC/retenção docs | **entregue** (lookups api-delpi mantidos) |
+| **E13** | Hard descomission: Compose/scripts sem MFE legado; RBAC/retenção docs | **entregue** |
 | **E14** | WF-06 `/admin` RequestTypes read-only (`my-requests.manage`) | **entregue** |
+| **E15** | Gate PARITY + dry-run/`--apply` evidenciado; UI live itens 1–2 = Ops | **entregue** (docs); ver `PARITY-P0.md` |
 
-Detalhe das receitas: planos Cursor E10/E11/E12+.
+### E16–E17 — IAM + lookups (em curso)
+
+| Etapa | Entrega | Nota |
+|-------|---------|------|
+| **E16** | Runbook IAM `invoice-issuance.*` → `my-requests.*` | sem revoke automático |
+| **E17** | Adapter sem path `/invoice-issuance/*` (paths canônicos) | rotas legadas retidas até E18 |
+
+Detalhe das receitas: planos Cursor E10–E15+.
 
 ---
 
@@ -1592,5 +1600,5 @@ Detalhe das receitas: planos Cursor E10/E11/E12+.
 
 ---
 
-**Status:** `E1–E14 ENTREGUES`  
-**Próximo passo:** backlog (CreatableMultiSelect/tags) ou runbook IAM de permissões `invoice-issuance.*`; gate live em `PARITY-P0.md` se ainda pendente em prod.
+**Status:** `E1–E15 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
+**Próximo passo:** E16 runbook IAM → E17 lookups canônicos; depois backlog tags / deprecar rotas api-delpi (E18).
