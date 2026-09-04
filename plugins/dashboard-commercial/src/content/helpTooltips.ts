@@ -36,11 +36,11 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
     next: "Avança uma página mantendo busca, ordenação e tamanho da lista.",
   },
   kpis: {
-    rol: "ROL (R$) no período. Com unidade Todas, exibe soma ou comparativo de Santa Catarina e Espírito Santo conforme o card.",
+    rol: "ROL (R$) versus meta SI no período. Com unidade Todas, realizado e meta agregam Santa Catarina + Espírito Santo pelo SI (não é soma inventada no MFE); mês parcial usa META PARCIAL uma vez sobre a meta do mês.",
     rolWeg:
-      "ROL (R$) de clientes WEG (código 000001) no período, por unidade. Metas via indicador commercial-rol-weg no SI.",
+      "ROL (R$) de clientes WEG (código 000001) versus meta SI (commercial-rol-weg). Em consolidado, meta e realizado agregam SC+ES pelo SI.",
     rolNewBusiness:
-      "ROL (R$) de clientes não-WEG (novos negócios) no período, por unidade. Metas via commercial-rol-new-business no SI.",
+      "ROL (R$) de clientes não-WEG (novos negócios) versus meta SI (commercial-rol-new-business). Em consolidado, meta e realizado agregam SC+ES pelo SI.",
     salesOrderOtd:
       "Percentual de linhas de pedido de venda no prazo (faturadas e não faturadas). Abra o painel OTD para ver linhas e evolução.",
     closingRate:
@@ -102,7 +102,7 @@ export const COMMERCIAL_HELP_TOOLTIPS = {
   },
   summary: {
     howToRead:
-      "ROL segue o indicador commercial-rol no SI. Com unidade Todas, ROL soma Santa Catarina e Espírito Santo; demais KPIs vêm consolidados da api-delpi.",
+      "ROL segue o indicador commercial-rol no SI. Com unidade Todas, realizado e meta agregam Santa Catarina + Espírito Santo pelo método do SI; demais KPIs vêm consolidados da api-delpi. Só aparece aviso para filtrar unidade se o SI não puder agregar a meta.",
   },
   detail: {
     pageSubtitle: "Detalhe da proposta comercial com cabeçalho AD1010 e histórico AIJ010.",

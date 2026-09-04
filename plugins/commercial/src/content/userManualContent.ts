@@ -228,7 +228,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "No consolidado (unidade Todas) a Visão geral mostra meta?",
-          a: "Sim. Realizado e meta somam Santa Catarina + Espírito Santo pelo método dos Indicadores Estratégicos (SI). Não é soma inventada no Portal. Se a agregação não for possível, aparece o aviso para filtrar uma unidade.",
+          a: "Sim. Realizado e meta agregam Santa Catarina + Espírito Santo pelo método dos Indicadores Estratégicos (SI): em R$ a META MÊS é a soma das metas do mês das filiais e a META PARCIAL aplica a fração do período uma vez; em % a meta consolidada é média. Não é soma inventada no Portal. Se a agregação não for possível, aparece o aviso para filtrar uma unidade.",
         },
         {
           q: "Posso somar carteira aberta com o ROL?",

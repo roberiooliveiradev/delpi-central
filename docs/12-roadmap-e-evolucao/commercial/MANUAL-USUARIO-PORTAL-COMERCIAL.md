@@ -150,7 +150,7 @@ Não. O resumo usa só os filtros compartilhados do hero (período, unidade, seg
 A meta do período é **proporcional aos dias** do intervalo. Mês incompleto não usa a meta cheia do mês.
 
 **No consolidado (unidade Todas) a Visão geral mostra meta?**  
-Sim. Realizado e meta somam Santa Catarina + Espírito Santo pelo método dos **Indicadores Estratégicos (SI)**. Não é soma inventada no Portal. Se a agregação não for possível, aparece o aviso para filtrar uma unidade.
+Sim. Realizado e meta agregam Santa Catarina + Espírito Santo pelo método dos **Indicadores Estratégicos (SI)**: em R$ a META MÊS é a soma das metas do mês das filiais e a META PARCIAL aplica a fração do período uma vez; em % a meta consolidada é média. Não é soma inventada no Portal. Se a agregação não for possível, aparece o aviso para filtrar uma unidade.
 
 **Posso somar “carteira aberta” com o ROL do mês?**  
 Não. São conceitos diferentes: ROL é faturamento no período; carteira aberta é snapshot do que ainda está em aberto **agora**.
