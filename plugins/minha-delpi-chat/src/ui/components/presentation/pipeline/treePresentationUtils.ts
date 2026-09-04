@@ -288,6 +288,62 @@ export function exportTreeToCsv(presentation: TreePresentation) {
   URL.revokeObjectURL(url);
 }
 
+export function treeNodeMatchesQuery(node: ChatTreeNode, needle: string): boolean {
+  const lowered = needle.toLowerCase();
+  const fragments = [
+    node.label,
+    node.id,
+    node.subtitle,
+    node.badge,
+    node.metaCaption,
+    formatTreeNodeMeta(node.meta),
+    ...Object.values(node.meta ?? {}).map((value) => String(value)),
+  ];
+
+  return fragments.some((fragment) =>
+    String(fragment ?? "")
+      .toLowerCase()
+      .includes(lowered),
+  );
+}
+
+/**
+ * Filtra a árvore preservando ancestrais de nós que batem na query.
+ * Query vazia devolve o root original. Sem matches → null.
+ */
+export function filterTreeByQuery(
+  root: ChatTreeNode,
+  query: string | null | undefined,
+): ChatTreeNode | null {
+  const needle = String(query ?? "").trim();
+
+  if (!needle) {
+    return root;
+  }
+
+  function filterNode(node: ChatTreeNode): ChatTreeNode | null {
+    const filteredChildren = (node.children ?? [])
+      .map((child) => filterNode(child))
+      .filter((child): child is ChatTreeNode => child != null);
+    const selfMatch = treeNodeMatchesQuery(node, needle);
+
+    if (!selfMatch && filteredChildren.length === 0) {
+      return null;
+    }
+
+    return {
+      ...node,
+      children: filteredChildren,
+    };
+  }
+
+  return filterNode(root);
+}
+
+export function countTreeNodes(node: ChatTreeNode): number {
+  return 1 + (node.children ?? []).reduce((total, child) => total + countTreeNodes(child), 0);
+}
+
 function sanitizeFilename(value: string): string {
   return value.replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "_").slice(0, 80) || "dados";
 }

@@ -67,6 +67,9 @@ import {
 } from "./pipeline/presentationCategoryFilter";
 import { normalizeChartPresentation } from "./pipeline/chartPresentationNormalize";
 import { ChatRichUxSelect } from "./chatRichUxSelect";
+import { ChatRichSearchField } from "./ChatRichSearchField";
+import { richPresentationToolbar } from "../../../content/presentationVocabulary";
+import "./ChatRichSearchField.css";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 
@@ -189,9 +192,20 @@ export function ChatRichChart({
     [config?.categoryColumns, data, fieldLabels],
   );
 
+  const activeCategoryFilterOption = useMemo(
+    () => categoryFilterOptions.find((option) => option.key === categoryFilterKey) ?? null,
+    [categoryFilterKey, categoryFilterOptions],
+  );
+
   const filteredData = useMemo(
-    () => applyCategoryFilter(data, categoryFilterKey, categoryFilterValue),
-    [categoryFilterKey, categoryFilterValue, data],
+    () =>
+      applyCategoryFilter(
+        data,
+        categoryFilterKey,
+        categoryFilterValue,
+        activeCategoryFilterOption?.mode ?? "equality",
+      ),
+    [activeCategoryFilterOption?.mode, categoryFilterKey, categoryFilterValue, data],
   );
 
   const axisDefaults = useMemo(
@@ -470,7 +484,7 @@ export function ChatRichChart({
                 {categoryFilterOptions.length > 0 ? (
                   <>
                     <ChatRichUxSelect
-                      label="Filtrar"
+                      label={richPresentationToolbar().filterColumnLabel}
                       title="Coluna para filtrar os dados"
                       value={categoryFilterKey ?? ""}
                       onChange={(key) => {
@@ -482,9 +496,27 @@ export function ChatRichChart({
                         label: option.label,
                       }))}
                     />
-                    {categoryFilterKey ? (
+                    {categoryFilterKey && activeCategoryFilterOption?.mode === "contains" ? (
+                      <ChatRichSearchField
+                        label={richPresentationToolbar().filterContainsLabel}
+                        onChange={(value) => {
+                          setCategoryFilterValue(value || null);
+                          if (value) {
+                            recordPresentationTelemetry("presentation_category_filter", {
+                              filterKey: categoryFilterKey,
+                              filterValue: value,
+                              chartType: activeChartType,
+                              mode: "contains",
+                            });
+                          }
+                        }}
+                        placeholder={richPresentationToolbar().filterContainsPlaceholder}
+                        value={categoryFilterValue ?? ""}
+                      />
+                    ) : null}
+                    {categoryFilterKey && activeCategoryFilterOption?.mode === "equality" ? (
                       <ChatRichUxSelect
-                        label="Valor"
+                        label={richPresentationToolbar().filterValueLabel}
                         title="Valor do filtro"
                         value={categoryFilterValue ?? ""}
                         onChange={(value) => {
@@ -494,13 +526,15 @@ export function ChatRichChart({
                               filterKey: categoryFilterKey,
                               filterValue: value,
                               chartType: activeChartType,
+                              mode: "equality",
                             });
                           }
                         }}
                         options={
-                          categoryFilterOptions
-                            .find((option) => option.key === categoryFilterKey)
-                            ?.values.map((value) => ({ value, label: value })) ?? []
+                          activeCategoryFilterOption.values.map((value) => ({
+                            value,
+                            label: value,
+                          })) ?? []
                         }
                       />
                     ) : null}

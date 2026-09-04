@@ -1,11 +1,15 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import type { ChatPresentation } from "../../../data/api/chatTypes";
+import {
+  formatRichToolbarTemplate,
+  richPresentationToolbar,
+} from "../../../content/presentationVocabulary";
 import { ExpandButton } from "../canvas/ChatExpandModal";
 import { buildTableRowMenuActions } from "./chatDrillDown";
 import { ChatTableRowMenu } from "../shared/menus/ChatTableRowMenu";
 import { formatCellValue, getAlignClass } from "./tableCellFormatting";
 import {
-  applyCategoryFilter,
+  applyPresentationRowPipeline,
   buildCategoryFilterOptions,
 } from "./pipeline/presentationCategoryFilter";
 import { formatChartColumnLabel } from "./pipeline/chartAxisSelection";
@@ -13,8 +17,10 @@ import { buildFieldLabelsFromTableColumns } from "./pipeline/presentationFieldLa
 import { recordPresentationTelemetry } from "./pipeline/presentationTelemetry";
 import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
 import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
+import { ChatRichSearchField } from "./ChatRichSearchField";
 import { tablePresentationToMarkdown } from "../chatPresentation";
 import { ChatRichUxSelect } from "./chatRichUxSelect";
+import "./ChatRichSearchField.css";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 
@@ -48,10 +54,13 @@ export function ChatRichTable({
   embeddedInDashboard?: boolean;
   onDrillDown?: (query: string) => void;
 }) {
+  const toolbarCopy = richPresentationToolbar();
   const { title, columns: rawColumns, rows: rawRows } = presentation;
   const columns = Array.isArray(rawColumns) ? rawColumns : [];
   const rows = Array.isArray(rawRows) ? rawRows : [];
+  const columnKeys = useMemo(() => columns.map((column) => column.key), [columns]);
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilterKey, setCategoryFilterKey] = useState<string | null>(null);
   const [categoryFilterValue, setCategoryFilterValue] = useState<string | null>(null);
   const [rowMenu, setRowMenu] = useState<{
@@ -62,6 +71,7 @@ export function ChatRichTable({
   useEffect(() => {
     setCategoryFilterKey(null);
     setCategoryFilterValue(null);
+    setSearchQuery("");
   }, [rows, title]);
 
   const fieldLabels = useMemo(
@@ -70,18 +80,32 @@ export function ChatRichTable({
   );
 
   const categoryFilterOptions = useMemo(
-    () =>
-      buildCategoryFilterOptions(
-        rows,
-        columns.map((column) => column.key),
-        fieldLabels,
-      ),
-    [columns, fieldLabels, rows],
+    () => buildCategoryFilterOptions(rows, columnKeys, fieldLabels),
+    [columnKeys, fieldLabels, rows],
+  );
+
+  const activeFilterOption = useMemo(
+    () => categoryFilterOptions.find((option) => option.key === categoryFilterKey) ?? null,
+    [categoryFilterKey, categoryFilterOptions],
   );
 
   const filteredRows = useMemo(
-    () => applyCategoryFilter(rows, categoryFilterKey, categoryFilterValue),
-    [categoryFilterKey, categoryFilterValue, rows],
+    () =>
+      applyPresentationRowPipeline(rows, {
+        searchQuery,
+        filterKey: categoryFilterKey,
+        filterValue: categoryFilterValue,
+        filterMode: activeFilterOption?.mode ?? "equality",
+        columnKeys,
+      }),
+    [
+      activeFilterOption?.mode,
+      categoryFilterKey,
+      categoryFilterValue,
+      columnKeys,
+      rows,
+      searchQuery,
+    ],
   );
 
   const sortedRows = useCallback(() => {
@@ -130,6 +154,16 @@ export function ChatRichTable({
     [columns, filteredRows, presentation],
   );
 
+  const footerLabel =
+    filteredRows.length !== rows.length
+      ? formatRichToolbarTemplate(toolbarCopy.footerTableFiltered, {
+          visible: filteredRows.length,
+          total: rows.length,
+        })
+      : formatRichToolbarTemplate(toolbarCopy.footerTableAll, {
+          total: rows.length,
+        });
+
   return (
     <div
       className={[
@@ -148,11 +182,18 @@ export function ChatRichTable({
             <span className="mdc-rich-table__title">{title}</span>
           )}
           <div className="mdc-rich-table__actions">
+            <ChatRichSearchField
+              className="mdc-rich-table__search"
+              label={toolbarCopy.searchAriaLabelTable}
+              onChange={setSearchQuery}
+              placeholder={toolbarCopy.searchPlaceholderTable}
+              value={searchQuery}
+            />
             {categoryFilterOptions.length > 0 ? (
               <>
                 <ChatRichUxSelect
                   className="mdc-rich-table__filter"
-                  label="Filtrar"
+                  label={toolbarCopy.filterColumnLabel}
                   value={categoryFilterKey ?? ""}
                   onChange={(nextKey) => {
                     setCategoryFilterKey(nextKey || null);
@@ -163,7 +204,26 @@ export function ChatRichTable({
                     label: option.label,
                   }))}
                 />
-                {categoryFilterKey ? (
+                {categoryFilterKey && activeFilterOption?.mode === "contains" ? (
+                  <ChatRichSearchField
+                    className="mdc-rich-table__filter-contains"
+                    label={toolbarCopy.filterContainsLabel}
+                    onChange={(value) => {
+                      setCategoryFilterValue(value || null);
+                      if (value) {
+                        recordPresentationTelemetry("presentation_category_filter", {
+                          filterKey: categoryFilterKey,
+                          filterValue: value,
+                          surface: "table",
+                          mode: "contains",
+                        });
+                      }
+                    }}
+                    placeholder={toolbarCopy.filterContainsPlaceholder}
+                    value={categoryFilterValue ?? ""}
+                  />
+                ) : null}
+                {categoryFilterKey && activeFilterOption?.mode === "equality" ? (
                   <ChatRichUxSelect
                     className="mdc-rich-table__filter"
                     label={formatChartColumnLabel(categoryFilterKey, fieldLabels)}
@@ -175,28 +235,21 @@ export function ChatRichTable({
                           filterKey: categoryFilterKey,
                           filterValue: value,
                           surface: "table",
+                          mode: "equality",
                         });
                       }
                     }}
-                    options={
-                      categoryFilterOptions
-                        .find((option) => option.key === categoryFilterKey)
-                        ?.values.map((value) => ({ value, label: value })) ?? []
-                    }
+                    options={activeFilterOption.values.map((value) => ({
+                      value,
+                      label: value,
+                    }))}
                   />
                 ) : null}
               </>
             ) : null}
             <ChatPresentationCopyButton
               getText={() =>
-                tablePresentationToMarkdown(
-                  {
-                    ...presentation,
-                    columns,
-                    rows: filteredRows,
-                  },
-                  { includeTitle: true },
-                )
+                tablePresentationToMarkdown(filteredPresentation, { includeTitle: true })
               }
               copyAriaLabel="Copiar tabela"
               copiedAriaLabel="Tabela copiada"
@@ -205,7 +258,7 @@ export function ChatRichTable({
               presentation={filteredPresentation}
               tableRows={filteredRows}
             />
-            <ExpandButton presentation={presentation} onDrillDown={onDrillDown} />
+            <ExpandButton presentation={filteredPresentation} onDrillDown={onDrillDown} />
           </div>
         </div>
       ) : null}
@@ -281,9 +334,7 @@ export function ChatRichTable({
       </div>
 
       {rows.length > 0 && (
-        <div className="mdc-rich-table__footer">
-          {rows.length} registro(s)
-        </div>
+        <div className="mdc-rich-table__footer">{footerLabel}</div>
       )}
 
       {rowMenu && onDrillDown ? (

@@ -1,16 +1,24 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TreeGuideRails } from "@delpi/plugin-ui/index";
 import type { ChatPresentation, ChatTreeNode } from "../../../data/api/chatTypes";
+import {
+  formatRichToolbarTemplate,
+  richPresentationToolbar,
+} from "../../../content/presentationVocabulary";
 import { buildTreePointMenuActions, type TableRowMenuAction } from "./chatDrillDown";
 import { ChatTableRowMenu, type TableRowMenuAnchor } from "../shared/menus/ChatTableRowMenu";
 import { ExpandButton } from "../canvas/ChatExpandModal";
 import { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
 import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
+import { ChatRichSearchField } from "./ChatRichSearchField";
 import {
+  countTreeNodes,
+  filterTreeByQuery,
   formatTreeNodeMeta,
   treePresentationToClipboardText,
 } from "./pipeline/treePresentationUtils";
 import "./ChatRichTree.css";
+import "./ChatRichSearchField.css";
 
 function TreeChevronIcon({ expanded }: { expanded: boolean }) {
   return (
@@ -67,27 +75,23 @@ const EMPHASIS_ROW_CLASS: Record<string, string> = {
   exclusive_mp: "mdc-rich-tree__row--exclusive-mp",
 };
 
-function countNodes(node: ChatTreeNode): number {
-  const children = node.children ?? [];
-
-  return 1 + children.reduce((total, child) => total + countNodes(child), 0);
-}
-
 function TreeNodeRow({
   node,
   depth,
   isLastSiblingPath,
   defaultExpanded,
+  forceExpanded = false,
   onDrillDown,
 }: {
   node: ChatTreeNode;
   depth: number;
   isLastSiblingPath: readonly boolean[];
   defaultExpanded: boolean;
+  forceExpanded?: boolean;
   onDrillDown?: (query: string) => void;
 }) {
   const hasChildren = Boolean(node.children?.length);
-  const [expanded, setExpanded] = useState(defaultExpanded || depth === 0);
+  const [expanded, setExpanded] = useState(defaultExpanded || depth === 0 || forceExpanded);
   const badgeClass = BADGE_COLORS[String(node.badge || "").toUpperCase()] ?? "";
   const emphasis = String(node.emphasis || "").trim();
   const emphasisClass = EMPHASIS_ROW_CLASS[emphasis] ?? "";
@@ -99,6 +103,12 @@ function TreeNodeRow({
     anchor: TableRowMenuAnchor;
     actions: TableRowMenuAction[];
   } | null>(null);
+
+  useEffect(() => {
+    if (forceExpanded) {
+      setExpanded(true);
+    }
+  }, [forceExpanded, node.id]);
 
   function openRowMenu(event: React.MouseEvent) {
     if (!onDrillDown || !menuActions.length) {
@@ -213,6 +223,7 @@ function TreeNodeRow({
               depth={depth + 1}
               isLastSiblingPath={[...isLastSiblingPath, index === node.children!.length - 1]}
               defaultExpanded={depth < 1}
+              forceExpanded={forceExpanded}
               onDrillDown={onDrillDown}
             />
           ))}
@@ -243,8 +254,43 @@ export function ChatRichTree({
   hideToolbar?: boolean;
   onDrillDown?: (query: string) => void;
 }) {
+  const toolbarCopy = richPresentationToolbar();
   const { title, root } = presentation;
-  const nodeCount = useMemo(() => countNodes(root), [root]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const totalNodeCount = useMemo(() => countTreeNodes(root), [root]);
+
+  useEffect(() => {
+    setSearchQuery("");
+  }, [root, title]);
+
+  const filteredRoot = useMemo(
+    () => filterTreeByQuery(root, searchQuery),
+    [root, searchQuery],
+  );
+
+  const filteredPresentation = useMemo((): TreePresentation => {
+    if (!filteredRoot || filteredRoot === root) {
+      return presentation;
+    }
+
+    return {
+      ...presentation,
+      root: filteredRoot,
+    };
+  }, [filteredRoot, presentation, root]);
+
+  const visibleNodeCount = filteredRoot ? countTreeNodes(filteredRoot) : 0;
+  const searchActive = Boolean(String(searchQuery).trim());
+  const footerLabel =
+    searchActive && visibleNodeCount !== totalNodeCount
+      ? formatRichToolbarTemplate(toolbarCopy.footerTreeFiltered, {
+          visible: visibleNodeCount,
+          total: totalNodeCount,
+        })
+      : formatRichToolbarTemplate(toolbarCopy.footerTreeAll, {
+          total: searchActive ? visibleNodeCount : totalNodeCount,
+        });
+
   return (
     <div
       className={[
@@ -263,30 +309,44 @@ export function ChatRichTree({
             {hideTitle ? null : title}
           </span>
           <div className="mdc-rich-tree__actions">
+            <ChatRichSearchField
+              className="mdc-rich-tree__search"
+              label={toolbarCopy.searchAriaLabelTree}
+              onChange={setSearchQuery}
+              placeholder={toolbarCopy.searchPlaceholderTree}
+              value={searchQuery}
+            />
             <ChatPresentationCopyButton
-              getText={() => treePresentationToClipboardText(presentation)}
+              getText={() => treePresentationToClipboardText(filteredPresentation)}
               copyAriaLabel="Copiar árvore"
               copiedAriaLabel="Árvore copiada"
             />
-            <ChatPresentationExportButtons presentation={presentation} />
-            <ExpandButton presentation={presentation} onDrillDown={onDrillDown} />
+            <ChatPresentationExportButtons presentation={filteredPresentation} />
+            <ExpandButton presentation={filteredPresentation} onDrillDown={onDrillDown} />
           </div>
         </div>
       ) : null}
 
       <div className="mdc-rich-tree__scroll">
-        <ul className="mdc-rich-tree__list">
-          <TreeNodeRow
-            node={root}
-            depth={0}
-            isLastSiblingPath={[]}
-            defaultExpanded
-            onDrillDown={onDrillDown}
-          />
-        </ul>
+        {filteredRoot ? (
+          <ul className="mdc-rich-tree__list">
+            <TreeNodeRow
+              node={filteredRoot}
+              depth={0}
+              isLastSiblingPath={[]}
+              defaultExpanded
+              forceExpanded={searchActive}
+              onDrillDown={onDrillDown}
+            />
+          </ul>
+        ) : (
+          <div className="mdc-rich-tree__empty" role="status">
+            —
+          </div>
+        )}
       </div>
 
-      <div className="mdc-rich-tree__footer">{nodeCount} nó(s)</div>
+      <div className="mdc-rich-tree__footer">{footerLabel}</div>
     </div>
   );
 }

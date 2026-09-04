@@ -1,0 +1,35 @@
+.mdc-rich-search-field.mdc-rich-search,
+.mdc-rich-search {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 9.5rem;
+  max-width: 14rem;
+  margin: 0;
+}
+
+.mdc-rich-search__label {
+  margin: 0;
+}
+
+.mdc-rich-search__control {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 1.85rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-sm, 4px);
+  background: var(--mdc-card-bg);
+  color: var(--mdc-text);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.mdc-rich-search__control:focus {
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.mdc-rich-search__control::placeholder {
+  color: var(--mdc-text-muted);
+}

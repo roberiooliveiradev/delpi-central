@@ -26,6 +26,22 @@
       "tree_hierarchy"
     ]
   },
+  "richPresentationToolbar": {
+    "searchLabel": "Buscar",
+    "searchPlaceholderTable": "Buscar na tabela…",
+    "searchPlaceholderTree": "Buscar na estrutura…",
+    "searchAriaLabelTable": "Buscar em todas as colunas da tabela",
+    "searchAriaLabelTree": "Buscar na árvore de estrutura",
+    "filterColumnLabel": "Filtrar",
+    "filterContainsLabel": "Contém",
+    "filterContainsPlaceholder": "Texto na coluna…",
+    "filterValueLabel": "Valor",
+    "footerTableFiltered": "{visible} de {total} registro(s)",
+    "footerTableAll": "{total} registro(s)",
+    "footerTreeFiltered": "{visible} de {total} nó(s)",
+    "footerTreeAll": "{total} nó(s)",
+    "exportReflectsFiltersHint": "Copiar e exportar usam só as linhas ou nós visíveis após busca e filtro."
+  },
   "sectionAvailability": {
     "absenceInsightPattern": "(ainda não cadastrad|não (?:há|ha|foi) retornad|sem operações|sem historico|sem histórico|não retornou|não há histórico|sem histórico recente|sem compras recentes)",
     "tableTitleTokens": {
@@ -245,7 +261,7 @@
     "tableLineUnitOne": "linha",
     "tableLineUnitMany": "linhas",
     "groupedSeries": "O gráfico compara séries lado a lado para facilitar a leitura de metas e valores.",
-    "controlsFallback": "Use os controles para alternar entre tabela, gráfico ou exportar os dados.",
+    "controlsFallback": "Use busca e filtro na toolbar; copiar/exportar refletem o que estiver visível. Alternar tabela, gráfico ou texto quando disponível.",
     "temporalDefault": "A série temporal destaca a evolução dos valores ao longo do período.",
     "temporalPeakOnly": "O maior valor ocorreu em {peakLabel}.",
     "temporalPeakAndLow": "O maior valor ocorreu em {peakLabel}; o menor, em {lowLabel}.",
@@ -278,7 +294,7 @@
     },
     "defaultChartLabel": "gráfico",
     "insufficientData": "Não há pontos suficientes para explicar este gráfico.",
-    "selectorHint": "Use os seletores acima para trocar eixo, filtrar por categoria ou alternar o tipo de gráfico — sem precisar enviar nova pergunta.",
+    "selectorHint": "Use os seletores acima para trocar eixo, filtrar por qualquer coluna (lista ou texto «contém») ou alternar o tipo de gráfico — sem precisar enviar nova pergunta.",
     "introWithReason": "Este {chartLabel} reúne {rowCount} ponto(s) e foi escolhido porque {reason}.",
     "introWithSelected": "Este {chartLabel} reúne {rowCount} ponto(s) (formato «{selected}»).",
     "introDefault": "Este {chartLabel} reúne {rowCount} ponto(s) dos dados consultados.",
@@ -307,7 +323,7 @@
     "kpiPanelEmpty": "**{panelTitle}:** indicadores de resumo do painel.",
     "chartPanelPrefix": "**{panelTitle}:** {chartExplain}",
     "tablePanel": "**{panelTitle}:** tabela com {rowCount} linha(s) — use a alternância Tabela/Gráfico/Texto no bloco de itens.",
-    "exportHint": "Exporte o painel em CSV ou abra «Explicar» em cada gráfico para detalhes dos eixos, sem enviar nova pergunta ao assistente."
+    "exportHint": "Exporte o painel em CSV (busca/filtro da tabela afetam o que sai) ou abra «Explicar» em cada gráfico para detalhes dos eixos, sem enviar nova pergunta ao assistente."
   },
   "tableRoles": {
     "defaultRole": "other",

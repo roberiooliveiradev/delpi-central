@@ -1,10 +1,16 @@
+/** Import direto do util (evita barrel MF/`remoteEntry` no vitest). */
+import { buildDataTableSearchText } from "../../../../../../plugin-ui/src/utils/dataTableSearch";
+
 import { formatChartColumnLabel } from "./chartAxisSelection";
 import type { FieldLabels } from "./presentationFieldLabels";
+
+export type CategoryFilterMode = "equality" | "contains";
 
 export type CategoryFilterOption = {
   key: string;
   label: string;
   values: string[];
+  mode: CategoryFilterMode;
 };
 
 const FILTER_KEY_PRIORITY = [
@@ -18,8 +24,9 @@ const FILTER_KEY_PRIORITY = [
   "status",
 ];
 
-const MAX_FILTER_VALUES = 40;
-const MIN_FILTER_VALUES = 2;
+/** Acima deste limiar o 2º controle vira texto «contém» (evita lista infinita). */
+const EQUALITY_MAX_VALUES = 40;
+const EQUALITY_MIN_VALUES = 2;
 
 function scoreFilterKey(key: string): number {
   const lowered = key.toLowerCase();
@@ -58,14 +65,20 @@ export function buildCategoryFilterOptions(
       ),
     ].sort((left, right) => left.localeCompare(right, "pt-BR"));
 
-    if (values.length < MIN_FILTER_VALUES || values.length > MAX_FILTER_VALUES) {
+    if (values.length < 1) {
       continue;
     }
+
+    const mode: CategoryFilterMode =
+      values.length >= EQUALITY_MIN_VALUES && values.length <= EQUALITY_MAX_VALUES
+        ? "equality"
+        : "contains";
 
     options.push({
       key,
       label: formatChartColumnLabel(key, fieldLabels),
-      values,
+      values: mode === "equality" ? values : [],
+      mode,
     });
   }
 
@@ -76,6 +89,7 @@ export function applyCategoryFilter(
   rows: Record<string, unknown>[] | undefined | null,
   filterKey: string | null,
   filterValue: string | null,
+  filterMode: CategoryFilterMode | null = "equality",
 ): Record<string, unknown>[] {
   const safeRows = Array.isArray(rows) ? rows : [];
 
@@ -83,5 +97,67 @@ export function applyCategoryFilter(
     return safeRows;
   }
 
-  return safeRows.filter((row) => String(row[filterKey] ?? "").trim() === filterValue);
+  const needle = filterValue.trim();
+  if (!needle) {
+    return safeRows;
+  }
+
+  if (filterMode === "contains") {
+    const lowered = needle.toLowerCase();
+
+    return safeRows.filter((row) =>
+      String(row[filterKey] ?? "")
+        .trim()
+        .toLowerCase()
+        .includes(lowered),
+    );
+  }
+
+  return safeRows.filter((row) => String(row[filterKey] ?? "").trim() === needle);
+}
+
+export function applyTableSearchFilter(
+  rows: Record<string, unknown>[] | undefined | null,
+  query: string | null | undefined,
+  columnKeys: readonly string[],
+): Record<string, unknown>[] {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const needle = String(query ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (!needle || !columnKeys.length) {
+    return safeRows;
+  }
+
+  const searchColumns = columnKeys.map((key) => ({
+    render: (row: Record<string, unknown>) => row[key],
+  }));
+
+  return safeRows.filter((row) =>
+    buildDataTableSearchText(row, searchColumns).includes(needle),
+  );
+}
+
+export type PresentationRowPipelineInput = {
+  searchQuery?: string | null;
+  filterKey?: string | null;
+  filterValue?: string | null;
+  filterMode?: CategoryFilterMode | null;
+  columnKeys: readonly string[];
+};
+
+/** Busca global AND filtro de coluna (igualdade ou contém). */
+export function applyPresentationRowPipeline(
+  rows: Record<string, unknown>[] | undefined | null,
+  input: PresentationRowPipelineInput,
+): Record<string, unknown>[] {
+  const afterSearch = applyTableSearchFilter(rows, input.searchQuery, input.columnKeys);
+
+  return applyCategoryFilter(
+    afterSearch,
+    input.filterKey ?? null,
+    input.filterValue ?? null,
+    input.filterMode ?? "equality",
+  );
 }

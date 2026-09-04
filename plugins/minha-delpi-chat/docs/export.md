@@ -73,6 +73,16 @@ runChatExport({
 
 Consumo legado ainda válido: `import { exportPresentation } from "./presentation/export"`.
 
+## Busca, filtro e export
+
+Nas toolbars de **`ChatRichTable`** e **`ChatRichTree`**:
+
+- **Busca** (campo na toolbar) restringe linhas/nós visíveis.
+- **Filtrar** (tabela/gráfico): todas as colunas; poucas categorias → lista; muitas → texto «contém».
+- **Copiar / CSV / Excel / PDF / Expandir** usam o dataset **já filtrado** (não o payload bruto da API).
+
+Textos: `presentation_vocabulary.json` → `richPresentationToolbar`.
+
 ## PDF — layout certificado DELPI
 
 **Todos** os PDFs do chat (tabela, gráfico, dashboard, desenho) usam o **mesmo** pipeline:

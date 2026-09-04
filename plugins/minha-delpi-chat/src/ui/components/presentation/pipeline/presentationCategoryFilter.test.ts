@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyCategoryFilter,
+  applyPresentationRowPipeline,
+  applyTableSearchFilter,
   buildCategoryFilterOptions,
 } from "./presentationCategoryFilter";
 
@@ -17,6 +19,7 @@ describe("presentationCategoryFilter", () => {
 
     expect(options.some((option) => option.key === "filial")).toBe(true);
     expect(options.find((option) => option.key === "filial")?.values).toEqual(["01", "02"]);
+    expect(options.find((option) => option.key === "filial")?.mode).toBe("equality");
   });
 
   it("filtra linhas por valor", () => {
@@ -32,7 +35,7 @@ describe("presentationCategoryFilter", () => {
   });
 
   it("usa rótulos da apresentação quando fieldLabels informado", () => {
-    const rows = [
+    const labeledRows = [
       { parent_code: "90260882", description: "Item A" },
       { parent_code: "50250258", description: "Item B" },
     ];
@@ -42,7 +45,7 @@ describe("presentationCategoryFilter", () => {
     };
 
     const options = buildCategoryFilterOptions(
-      rows,
+      labeledRows,
       ["parent_code", "description"],
       fieldLabels,
     );
@@ -53,5 +56,59 @@ describe("presentationCategoryFilter", () => {
     expect(options.find((option) => option.key === "description")?.label).toBe(
       "Descrição",
     );
+  });
+
+  it("usa modo contains quando a coluna tem muitos valores distintos", () => {
+    const manyRows = Array.from({ length: 45 }, (_, index) => ({
+      parent_code: `C${String(index).padStart(4, "0")}`,
+      type: index % 2 === 0 ? "PI" : "PA",
+    }));
+
+    const options = buildCategoryFilterOptions(manyRows, ["parent_code", "type"]);
+
+    expect(options.find((option) => option.key === "parent_code")?.mode).toBe("contains");
+    expect(options.find((option) => option.key === "parent_code")?.values).toEqual([]);
+    expect(options.find((option) => option.key === "type")?.mode).toBe("equality");
+  });
+
+  it("filtra por substring no modo contains", () => {
+    const filtered = applyCategoryFilter(
+      [
+        { description: "CHICOTE DE LIGACAO" },
+        { description: "CABO PVC" },
+      ],
+      "description",
+      "chicote",
+      "contains",
+    );
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]?.description).toBe("CHICOTE DE LIGACAO");
+  });
+
+  it("aplica busca global AND filtro de coluna", () => {
+    const pipelineRows = [
+      { code: "1008", description: "PROTETOR A", type: "MP" },
+      { code: "2008", description: "PROTETOR B", type: "PI" },
+      { code: "1009", description: "CABO", type: "MP" },
+    ];
+
+    const searched = applyTableSearchFilter(pipelineRows, "protetor", [
+      "code",
+      "description",
+      "type",
+    ]);
+    expect(searched).toHaveLength(2);
+
+    const combined = applyPresentationRowPipeline(pipelineRows, {
+      searchQuery: "protetor",
+      filterKey: "type",
+      filterValue: "MP",
+      filterMode: "equality",
+      columnKeys: ["code", "description", "type"],
+    });
+
+    expect(combined).toHaveLength(1);
+    expect(combined[0]?.code).toBe("1008");
   });
 });

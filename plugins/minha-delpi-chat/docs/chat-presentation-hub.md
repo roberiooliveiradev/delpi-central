@@ -49,6 +49,7 @@ Sem `renderPlan` (mensagens antigas): fallback legado permanece.
 | Stack plan, dedup, metadata policy, labels, telemetry | `presentation/pipeline/presentation*.ts` | 27 |
 | Chart axis, agregação, build-from-table | `presentation/pipeline/chart*.ts`, `buildChartPresentationFromTable.ts` | 29 |
 | Tree flatten/export, chart payload normalize, explain fallback | `presentation/pipeline/treePresentationUtils.ts`, `chartPresentationNormalize.ts`, `chartExplain.ts` | 30, 32 |
+| Busca/filtro tabela (todas colunas + contains) + busca árvore | `presentationCategoryFilter.ts`, `ChatRichTable`, `ChatRichTree`, `ChatRichSearchField` | — |
 | Formatação célula KPI/tabela | `presentation/tableCellFormatting.ts` | 34 |
 | Export CSV/XLSX/PNG e lousa markdown | `presentation/export/exportUtils.ts`, `chartPngExport.ts`, `chartCanvasMarkdown.ts`, `dashboardExportCsv.ts` | 38 |
 | Export PDF + dispatch central | `src/export/` (`runChatExport`, `pdf/delpiDocumentHtml.ts`) — ver [`export.md`](./export.md) | jun/2026 |

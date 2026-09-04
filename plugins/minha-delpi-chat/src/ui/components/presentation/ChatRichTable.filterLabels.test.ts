@@ -55,7 +55,11 @@ describe("ChatRichTable filter labels", () => {
     expect(labels).toContain("Código pai");
     expect(labels).toContain("Descrição pai");
     expect(labels).toContain("Componente");
+    expect(labels).toContain("Descrição");
     expect(labels).not.toContain("Parent Code");
     expect(labels).not.toContain("Component Code");
+    expect(options.every((option) => option.mode === "equality" || option.mode === "contains")).toBe(
+      true,
+    );
   });
 });

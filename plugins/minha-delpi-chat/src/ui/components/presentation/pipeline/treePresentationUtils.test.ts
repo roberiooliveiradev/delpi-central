@@ -4,7 +4,9 @@ import type { ChatTreeNode } from "../../data/api/chatTypes";
 
 import {
   collectTreeBlockSections,
+  countTreeNodes,
   expandTreeSegmentsToBlockTables,
+  filterTreeByQuery,
   formatTreeNodeMeta,
   treePresentationToBlockTables,
 } from "./treePresentationUtils";
@@ -118,5 +120,26 @@ describe("treePresentationUtils blocks", () => {
 
     expect(expanded).toHaveLength(3);
     expect(expanded.every((segment) => segment.kind === "table")).toBe(true);
+  });
+
+  it("filtra árvore por query preservando ancestrais", () => {
+    const filtered = filterTreeByQuery(buildSampleTree(), "10080006");
+
+    expect(filtered?.id).toBe("90260015");
+    expect(filtered?.children).toHaveLength(1);
+    expect(filtered?.children?.[0]?.id).toBe("50230219");
+    expect(filtered?.children?.[0]?.children).toHaveLength(1);
+    expect(filtered?.children?.[0]?.children?.[0]?.id).toBe("10080006");
+    expect(countTreeNodes(filtered!)).toBe(3);
+  });
+
+  it("devolve null quando a query não encontra nós", () => {
+    expect(filterTreeByQuery(buildSampleTree(), "zzzz-inexistente")).toBeNull();
+  });
+
+  it("devolve a árvore intacta com query vazia", () => {
+    const root = buildSampleTree();
+
+    expect(filterTreeByQuery(root, "  ")).toBe(root);
   });
 });
