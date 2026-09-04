@@ -1592,5 +1592,5 @@ Detalhe das receitas: planos Cursor E10/E11/E12+.
 
 ---
 
-**Status:** `E1–E11 ENTREGUES`  
-**Próximo passo:** E12 soft cutover (menu oculto + redirect); depois gate ops → E13 hard → E14 admin RO.
+**Status:** `E1–E14 ENTREGUES`  
+**Próximo passo:** backlog (CreatableMultiSelect/tags) ou runbook IAM de permissões `invoice-issuance.*`; gate live em `PARITY-P0.md` se ainda pendente em prod.
