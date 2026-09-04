@@ -21,6 +21,17 @@ def test_new_bff_routes_require_token():
         response = client.get(path)
         assert response.status_code == 401, path
         assert response.json().get("detail") == "Unauthorized"
+    post = client.post(
+        "/settings/sla-policies",
+        json={
+            "code": "X",
+            "name": "X",
+            "appliesTo": "task",
+            "durationHours": 8,
+        },
+    )
+    assert post.status_code == 401
+    assert post.json().get("detail") == "Unauthorized"
 
 
 def test_interaction_room_resolve_requires_token():

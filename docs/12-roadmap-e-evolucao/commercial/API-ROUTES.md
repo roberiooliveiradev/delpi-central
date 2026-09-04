@@ -296,15 +296,20 @@ MFE Portal **não** chama `GET /pedidos-venda-abertos/` (PVA) / billing-series /
 
 | Method | Path | operationId | Fase | Permissão | entity | shape |
 |--------|------|-------------|------|-----------|--------|-------|
-| GET/POST | `/settings/pipelines` | `list_pipelines` / `create_pipeline` | F6 | `commercial.settings.manage` | `pipeline` | list/scalar |
+| GET/POST | `/settings/pipelines` | `list_pipelines` / `create_pipeline` | F6 | `commercial.settings.manage` (futuro) | `pipeline` | list/scalar |
 | PATCH | `/settings/pipelines/{id}` | `update_pipeline` | F6 | settings.manage | `pipeline` | scalar |
 | GET/POST | `/settings/stages` | `list_pipeline_stages` / `create_pipeline_stage` | F6 | settings.manage | `pipeline_stage` | list/scalar |
 | PATCH | `/settings/stages/{id}` | `update_pipeline_stage` | F6 | settings.manage | `pipeline_stage` | scalar |
 | GET/POST/PATCH | `/settings/reasons` | `list_reasons` / `create_reason` / `update_reason` | F5 | settings.manage | `reference_reason` | … |
-| GET/POST/PATCH | `/settings/slas` | `list_sla_policies` / `create_sla_policy` / `update_sla_policy` | F5 | settings.manage | `sla_policy` | … |
+| GET | `/settings/sla-policies` | `list_sla_policies` | F5 | `commercial.access` (`include_inactive` exige `manage`) | `sla_policy` | list |
+| POST | `/settings/sla-policies` | `create_sla_policy` | F5 | `commercial.manage` | `sla_policy` | scalar |
+| PATCH | `/settings/sla-policies/{id}` | `update_sla_policy` | F5 | `commercial.manage` | `sla_policy` | scalar |
+| DELETE | `/settings/sla-policies/{id}` | `deactivate_sla_policy` | F5 | `commercial.manage` | `sla_policy` | scalar (soft `active=false`) |
 | GET/POST/PATCH | `/settings/segments` | `list_segments` / … | M5 | settings.manage | `reference_segment` | … |
 | GET/POST/PATCH | `/settings/customer-groups` | `list_customer_groups` / … | M5 | settings.manage | `reference_customer_group` | … |
 | GET/POST/PATCH | `/settings/product-families` | `list_product_families` / … | M5 | settings.manage | `reference_product_family` | … |
+
+> **SLA entregue:** path canônico `/settings/sla-policies` (não `/settings/slas`). Sem seed; tabela pode estar vazia até homologação de prazos.
 
 ### 3.16b Groups / team roster / profile (E5–E8 — entregue)
 
