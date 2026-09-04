@@ -12,17 +12,17 @@ export const SUPPLIES_HELP_TOOLTIPS = {
       "Início do período. KPIs e gráficos consideram movimentos e saldos a partir desta data.",
     dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Unidade TOTVS para CPV, OTD, estoque e economia. Vazio = consolidado; múltiplas unidades comparam o recorte selecionado.",
+      "Unidade TOTVS para CPV, OTD, estoque e economia. Vazio = consolidado: realizado e meta SI agregam as filiais; múltiplas unidades comparam o recorte. Só aparece aviso para filtrar unidade se o SI não puder agregar a meta.",
     location:
       "Código de localização de estoque (armazém). Vazio = todas as localizações no recorte de unidade.",
   },
   kpis: {
     cpvTotal:
-      "Custo dos Produtos Vendidos no período (movimentos SD3 classificados como CPV). Meta alinhada ao catálogo de Indicadores Estratégicos quando configurada.",
+      "Custo dos Produtos Vendidos no período (movimentos SD3 classificados como CPV) versus meta SI. Em consolidado, meta e realizado agregam pelo SI.",
     cpvRol:
-      "Participação do CPV sobre o ROL no mesmo período. Quanto menor, melhor quando a meta é de redução.",
+      "Participação do CPV sobre o ROL no mesmo período versus meta SI. Quanto menor, melhor quando a meta é de redução. Em consolidado, agregação pelo SI.",
     otdPurchases:
-      "Percentual de linhas recebidas no prazo (MP ou produtos com código iniciando em 3019; recebimento ≤ data prometida).",
+      "Percentual de linhas recebidas no prazo versus meta SI (MP ou produtos com código iniciando em 3019; recebimento ≤ data prometida). Em consolidado, agregação pelo SI.",
     stockValue:
       "Valor total do estoque (SB9) no recorte de unidade e localização selecionados.",
     inventoryTurnoverMonths:

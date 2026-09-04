@@ -10,21 +10,21 @@ export const HR_HELP_TOOLTIPS = {
     dateStart: "Início do período para os indicadores de RH.",
     dateEnd: "Fim do período. Deve ser igual ou posterior ao início.",
     branch:
-      "Unidade TOTVS. Vazio = média/consolidado das unidades; múltiplas unidades restringem o recorte.",
+      "Unidade TOTVS. Vazio = consolidado: realizado e meta SI agregam as filiais; múltiplas unidades restringem o recorte. Só aparece aviso para filtrar unidade se o SI não puder agregar a meta.",
   },
   kpis: {
     absenteeism:
-      "Percentual de absenteísmo no período. Com unidade Todas, exibe média das unidades com dado.",
+      "Percentual de absenteísmo versus meta SI. Com unidade Todas, realizado e meta agregam pelo SI (não é média inventada no MFE).",
     turnover:
-      "Percentual de turnover no período. Meta alinhada ao catálogo de Indicadores Estratégicos.",
+      "Percentual de turnover versus meta SI. Em consolidado, meta e realizado agregam pelo SI.",
     internalSatisfaction:
-      "Índice de satisfação interna consolidado no período (fonte configurada na API).",
+      "Índice de satisfação interna versus meta SI no período (fonte configurada na API). Em consolidado, agregação pelo SI.",
     activePdi:
-      "Quantidade de PDIs ativos no período (contagem, não percentual). Meta alinhada ao catálogo de Indicadores Estratégicos.",
+      "Quantidade de PDIs ativos no período (contagem) versus meta SI. Em consolidado, agregação pelo SI.",
     performanceReviews:
-      "Percentual de avaliações de desempenho finalizadas no período filtrado.",
+      "Percentual de avaliações de desempenho finalizadas versus meta SI. Em consolidado, agregação pelo SI.",
     trainingHours:
-      "Média de horas de treinamento por colaborador no período filtrado.",
+      "Média de horas de treinamento por colaborador versus meta SI. Em consolidado, agregação pelo SI.",
   },
   charts: {
     absenteeismTurnoverByBranch:

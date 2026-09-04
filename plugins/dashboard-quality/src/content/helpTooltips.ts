@@ -10,7 +10,7 @@ export const QUALITY_HELP_TOOLTIPS = {
     dateStart: "Início do período para PPM, kaizens e auditorias 5S.",
     dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Unidade TOTVS. Vazio = todas; múltiplas unidades restringem o recorte dos indicadores.",
+      "Unidade TOTVS. Vazio = consolidado: realizado e meta SI agregam as filiais; múltiplas unidades restringem o recorte. Só aparece aviso para filtrar unidade se o SI não puder agregar a meta.",
     ppmProductScope:
       "Recorte de PPM por família: filtra devoluções (QI2_ITEM) por prefixo — plugues 9048, componentes 9026. A produção do denominador permanece geral.",
     nonconformityType:
@@ -24,9 +24,9 @@ export const QUALITY_HELP_TOOLTIPS = {
   },
   kpis: {
     ppmInternal:
-      "Parts Per Million interno: devoluções internas por milhão de unidades produzidas no período.",
+      "Parts Per Million interno versus meta SI: devoluções internas por milhão de unidades produzidas. Com unidade Todas, realizado e meta agregam pelo SI.",
     ppmExternal:
-      "PPM externo: devoluções de clientes por milhão de unidades faturadas.",
+      "PPM externo versus meta SI: devoluções de clientes por milhão de unidades faturadas. Em consolidado, agregação pelo SI.",
     ppmInternalPlugs:
       "PPM interno de plugues: devoluções internas de produtos 9048* sobre a produção total do período.",
     ppmExternalPlugs:

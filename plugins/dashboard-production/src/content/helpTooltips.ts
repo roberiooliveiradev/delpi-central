@@ -7,7 +7,7 @@ export const DP_HELP_TOOLTIPS = {
     dateEnd:
       "Fim do período analisado. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Unidade TOTVS (Santa Catarina ou Espírito Santo). Vazio = consolidado: realizado e meta SI agregam as filiais (média em %/OTD; soma em valores absolutos quando o SI define sum).",
+      "Unidade TOTVS (Santa Catarina ou Espírito Santo). Vazio = consolidado: realizado e meta SI agregam as filiais (média em %/OTD; soma em valores absolutos quando o SI define sum). Só aparece aviso para filtrar unidade se o SI não puder agregar a meta.",
   },
   home: {
     directLabor:

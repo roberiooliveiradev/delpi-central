@@ -11,7 +11,7 @@ export const ENGINEERING_HELP_TOOLTIPS = {
       "Início do período para LMP e TRANSFORMA+. KPIs e gráficos usam propostas/melhorias a partir desta data.",
     dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Unidade TOTVS. Vazio = consolidado; múltiplas unidades restringem o recorte dos indicadores.",
+      "Unidade TOTVS. Vazio = consolidado: realizado e meta SI agregam as filiais; múltiplas unidades restringem o recorte. Só aparece aviso para filtrar unidade se o SI não puder agregar a meta.",
     listingType:
       "Classificação da listagem (LMP, Amostra ou Outro). Vazio = todos os tipos.",
     status:
@@ -19,13 +19,13 @@ export const ENGINEERING_HELP_TOOLTIPS = {
   },
   kpis: {
     lmpOnTime:
-      "Percentual de LMPs/propostas classificadas como dentro do prazo no período e unidade.",
+      "Percentual de LMPs/propostas dentro do prazo versus meta SI. Com unidade Todas, realizado e meta agregam pelo SI.",
     avgLeadTime:
       "Média de lead time útil (dias úteis) das propostas no recorte filtrado.",
     totalProposals:
       "Quantidade de propostas/LMPs/amostras consideradas no período.",
     transformaSavings:
-      "Ganhos brutos registrados no programa TRANSFORMA+ no período (planilha).",
+      "Ganhos brutos TRANSFORMA+ versus meta SI no período. Em consolidado, meta e realizado agregam pelo SI.",
     implementedSolutions:
       "Quantidade de soluções/melhorias implementadas no TRANSFORMA+.",
     averageRoi:

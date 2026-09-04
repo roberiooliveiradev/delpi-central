@@ -11,18 +11,19 @@ export const FINANCIAL_HELP_TOOLTIPS = {
       "Início do período. KPIs e gráficos usam o intervalo a partir desta data.",
     dateEnd: "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Unidade TOTVS para ROL, EBITDA, custos fixos e PMR. Vazio = consolidado; múltiplas unidades restringem o recorte exibido.",
+      "Unidade TOTVS para ROL, EBITDA, custos fixos e PMR. Vazio = consolidado: realizado e meta agregam SC+ES pelo SI; múltiplas unidades restringem o recorte. Só aparece aviso para filtrar unidade se o SI não puder agregar a meta.",
   },
   kpis: {
     rol:
-      "Receita Operacional Líquida no período (vendas SD2 menos devoluções, conforme regra do indicador).",
+      "Receita Operacional Líquida (R$) versus meta SI no período. Com unidade Todas, realizado e meta agregam Santa Catarina + Espírito Santo pelo SI (não é soma inventada no MFE).",
     ebitdaOverRol:
-      "Percentual de EBITDA sobre o ROL. Meta alinhada ao catálogo de Indicadores Estratégicos quando configurada.",
+      "Percentual de EBITDA sobre o ROL versus meta SI. Em consolidado, meta e realizado agregam SC+ES pelo SI.",
     fixedCostOverRol:
-      "Peso dos custos fixos sobre o ROL no período. Quanto menor, melhor quando a meta é de redução.",
+      "Peso dos custos fixos sobre o ROL no período versus meta SI. Quanto menor, melhor quando a meta é de redução. Em consolidado, agregação pelo SI.",
     pmrDays:
-      "Prazo Médio de Recebimento em dias: média ponderada entre emissão e recebimento dos títulos.",
-    rolDetail: "ROL líquida no período (vendas menos devoluções).",
+      "Prazo Médio de Recebimento em dias versus meta SI: média ponderada entre emissão e recebimento dos títulos. Em consolidado, agregação pelo SI.",
+    rolDetail:
+      "ROL líquida no período versus meta SI (vendas menos devoluções). Em consolidado, meta e realizado pelo SI.",
     ebitdaValue: "Valor absoluto de EBITDA no período.",
     fixedCostValue: "Valor absoluto de custos fixos no período.",
     pmr: "PMR em dias para o recorte de período e unidade.",

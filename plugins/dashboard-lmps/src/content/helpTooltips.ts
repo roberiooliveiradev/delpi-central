@@ -7,7 +7,7 @@ export const LMPS_HELP_TOOLTIPS = {
     dateEnd:
       "Fim do período. Deve ser igual ou posterior à data inicial.",
     branch:
-      "Unidade TOTVS da proposta. Permite selecionar várias; vazio = todas as unidades.",
+      "Unidade TOTVS da proposta. Vazio = consolidado: realizado e meta SI agregam as filiais; várias unidades restringem o recorte. Só aparece aviso para filtrar unidade se o SI não puder agregar a meta.",
     listingType:
       "Classificação da listagem (LMP, Amostra ou Outro). Permite múltipla seleção.",
     status:
@@ -32,11 +32,11 @@ export const LMPS_HELP_TOOLTIPS = {
   },
   kpis: {
     percentOnTime:
-      "Percentual de propostas classificadas como Pontual no período e filtros aplicados.",
+      "Percentual de propostas Pontual versus meta SI no período. Com unidade Todas, realizado e meta agregam pelo SI.",
     avgLeadTime:
       "Média de lead time útil (dias) das propostas no recorte filtrado.",
     totalProposals:
-      "Quantidade de propostas/OVs no período após filtros. Meta exibida quando configurada na API.",
+      "Quantidade de propostas/OVs no período após filtros.",
     ncStreak:
       "Dias corridos desde a última ocorrência de NC em LMPs (data em que o problema foi encontrado), e o maior intervalo histórico entre ocorrências (recorde). Sem NCs, a contagem usa a data da primeira OV no Protheus como referência. Independente dos filtros de período do dashboard.",
   },
