@@ -479,49 +479,51 @@ export function OpenOrdersTable({
         <CommercialDataListToolbar
           style={tableStyle}
           leading={
-            <HelpTooltip
-              content={CM_HELP.openOrders.layoutToggle}
-              ariaLabel="Ajuda: modo Tabela, Cards ou Board"
-              wrap
-              placement="bottom"
-            >
-              <SegmentToggle
-                prefix={UI_PREFIX}
-                size="sm"
-                ariaLabel="Modo de visualização"
-                idPrefix="open-orders-layout"
-                value={layout}
-                onChange={setLayout}
-                options={[
-                  { value: "table", label: "Tabela" },
-                  { value: "cards", label: "Cards" },
-                  { value: "board", label: "Board" },
-                ]}
-              />
-            </HelpTooltip>
-            <HelpTooltip
-              content={CM_HELP.openOrders.quantityDisplayMode}
-              ariaLabel="Ajuda: milheiro ou peças"
-              wrap
-              placement="bottom"
-            >
-              <SegmentToggle
-                prefix={UI_PREFIX}
-                size="sm"
-                ariaLabel={CM_HELP.openOrders.quantityDisplayMode}
-                idPrefix="open-orders-qty-display"
-                value={quantityDisplayMode}
-                onChange={(value) => {
-                  if (value === "catalog" || value === "pieces") {
-                    setQuantityDisplayMode(value);
-                  }
-                }}
-                options={[
-                  { value: "catalog", label: "Milheiro" },
-                  { value: "pieces", label: "Peças" },
-                ]}
-              />
-            </HelpTooltip>
+            <>
+              <HelpTooltip
+                content={CM_HELP.openOrders.layoutToggle}
+                ariaLabel="Ajuda: modo Tabela, Cards ou Board"
+                wrap
+                placement="bottom"
+              >
+                <SegmentToggle
+                  prefix={UI_PREFIX}
+                  size="sm"
+                  ariaLabel="Modo de visualização"
+                  idPrefix="open-orders-layout"
+                  value={layout}
+                  onChange={setLayout}
+                  options={[
+                    { value: "table", label: "Tabela" },
+                    { value: "cards", label: "Cards" },
+                    { value: "board", label: "Board" },
+                  ]}
+                />
+              </HelpTooltip>
+              <HelpTooltip
+                content={CM_HELP.openOrders.quantityDisplayMode}
+                ariaLabel="Ajuda: milheiro ou peças"
+                wrap
+                placement="bottom"
+              >
+                <SegmentToggle
+                  prefix={UI_PREFIX}
+                  size="sm"
+                  ariaLabel={CM_HELP.openOrders.quantityDisplayMode}
+                  idPrefix="open-orders-qty-display"
+                  value={quantityDisplayMode}
+                  onChange={(value) => {
+                    if (value === "catalog" || value === "pieces") {
+                      setQuantityDisplayMode(value);
+                    }
+                  }}
+                  options={[
+                    { value: "catalog", label: "Milheiro" },
+                    { value: "pieces", label: "Peças" },
+                  ]}
+                />
+              </HelpTooltip>
+            </>
           }
           hint={
             <HelpTooltip
