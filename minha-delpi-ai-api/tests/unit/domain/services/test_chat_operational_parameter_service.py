@@ -213,6 +213,37 @@ def test_missing_product_code_skipped_for_exclusive_catalog_question():
     assert not ChatOperationalParameterService.should_skip_tools(message)
 
 
+def test_missing_product_code_skipped_for_product_search_by_description():
+    message = (
+        "use api para pesquisar pela descrição top 50 termnais com pino na descrição"
+    )
+
+    assert (
+        ChatOperationalParameterService.resolve_missing_product_code_answer(message)
+        is None
+    )
+    assert not ChatOperationalParameterService.should_skip_tools(message)
+
+
+def test_missing_product_code_skipped_for_liste_top_terminais_pino():
+    message = "liste os top 50 terminais pino"
+
+    assert (
+        ChatOperationalParameterService.resolve_missing_product_code_answer(message)
+        is None
+    )
+    assert not ChatOperationalParameterService.should_skip_tools(message)
+
+
+def test_description_question_without_search_still_requires_code():
+    answer = ChatOperationalParameterService.resolve_missing_product_code_answer(
+        "qual a descrição do produto",
+    )
+
+    assert answer is not None
+    assert "código" in answer.lower()
+
+
 def test_operational_pipeline_should_optimize_for_exclusive_catalog():
     from app.domain.services.chat_operational_pipeline_service import (
         ChatOperationalPipelineService,

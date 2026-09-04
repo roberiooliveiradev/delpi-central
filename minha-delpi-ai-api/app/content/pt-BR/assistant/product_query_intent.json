@@ -625,7 +625,10 @@
       ]
     },
     "descriptionQuestion": {
-      "noneOf": [{ "technicalNormasDescriptionBlock": true }],
+      "noneOf": [
+        { "technicalNormasDescriptionBlock": true },
+        { "customPredicate": "productSearchQuestion" }
+      ],
       "anyOf": [
         { "pluralScopeLinked": "description" },
         { "termsFrom": "product_query_intent.description.terms" }

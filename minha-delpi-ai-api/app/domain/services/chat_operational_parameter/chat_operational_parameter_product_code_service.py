@@ -84,6 +84,21 @@ class ChatOperationalParameterProductCodeService:
         if ChatProductionOperationalIntentService.matches_rest_route(message):
             return None
 
+        # Busca por texto (/products/search) é discoverable — não pedir código.
+        from app.domain.services.chat_product_search_intent_service import (
+            ChatProductSearchIntentService,
+        )
+
+        if ChatProductSearchIntentService.looks_like_product_search(message):
+            return None
+
+        from app.domain.services.chat_technical_description_compliance_service import (
+            ChatTechnicalDescriptionComplianceService,
+        )
+
+        if ChatTechnicalDescriptionComplianceService.is_compliance_follow_up(message):
+            return None
+
         if ChatProductQueryIntentService.extract_product_code(message):
             return None
 

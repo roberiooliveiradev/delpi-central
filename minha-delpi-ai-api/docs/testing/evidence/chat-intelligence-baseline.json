@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-09-04T16:46:44.604470+00:00",
+  "generatedAt": "2026-09-04T16:53:14.130278+00:00",
   "harness": "chat_intelligence_baseline_harness",
   "fixture": "tests/fixtures/intelligence_baseline/routing_cases.json",
   "summary": {
     "total": 6,
-    "pass": 4,
-    "fail": 2,
+    "pass": 6,
+    "fail": 0,
     "metrics": {
-      "unexpectedClarificationCount": 2,
+      "unexpectedClarificationCount": 0,
       "productSearchLookHitRate": 1.0,
-      "offlinePassRate": 0.6667
+      "offlinePassRate": 1.0
     },
     "notes": "Baseline pré-cutover. Targets só após E0; fails esperados documentam o gap (search vs missing-code / clarify)."
   },
@@ -46,16 +46,13 @@
       },
       "actual": {
         "looksLikeProductSearch": true,
-        "missingProductCode": true,
-        "missingProductCodePreview": "Para buscar **descrição ou ficha** do produto, informe o **código** (ex.: 10080099) ou descreva a busca (grupo, tipo, te",
+        "missingProductCode": false,
+        "missingProductCodePreview": null,
         "intentDecision": "operational_action",
-        "intentSubIntent": "product_lookup"
+        "intentSubIntent": ""
       },
-      "status": "FAIL",
-      "errors": [
-        "missingProductCode mismatch",
-        "unexpected missingProductCode clarify"
-      ]
+      "status": "PASS",
+      "errors": []
     },
     {
       "caseId": "search.busque-produtos-grupo",
@@ -120,16 +117,13 @@
       },
       "actual": {
         "looksLikeProductSearch": false,
-        "missingProductCode": true,
-        "missingProductCodePreview": "Para buscar **descrição ou ficha** do produto, informe o **código** (ex.: 10080099) ou descreva a busca (grupo, tipo, te",
+        "missingProductCode": false,
+        "missingProductCodePreview": null,
         "intentDecision": "direct_answer",
         "intentSubIntent": "technical_description_compliance_unavailable"
       },
-      "status": "FAIL",
-      "errors": [
-        "missingProductCode mismatch",
-        "unexpected missingProductCode clarify"
-      ]
+      "status": "PASS",
+      "errors": []
     }
   ]
 }
