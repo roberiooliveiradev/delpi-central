@@ -45,22 +45,22 @@ def test_improve_clean_description_is_noop():
     assert result.message_for_intelligence == message.strip()
 
 
-def test_improve_unknown_typo_uses_llm_when_gated(monkeypatch):
+def test_improve_unknown_typo_uses_llm_when_gated():
+    """Irmão: typo fora das regras P14 (froenecedor) → LLM corrige."""
     configure_domain_infrastructure_ports()
-    gateway = _FakeGateway("qual a estrutura do 90260148?")
+    gateway = _FakeGateway("qual o fornecedor do 10050078?")
     ChatUserQueryImprovementService.configure(gateway)
 
-    # Force gate via broken stem present in JSON but not fixed by rules
     result = ChatUserQueryImprovementService.improve(
-        "qual a estrutra do 90260148?",
+        "qual o froenecedor do 10050078?",
         response_mode="fast",
         llm_gateway=gateway,
     )
 
-    # estrutra is in typing rules → may be rules_only; if rules fix it, ok
     assert result.applied is True
-    assert "90260148" in result.improved
-    assert "estrutura" in result.improved.lower() or result.source in {"rules", "llm"}
+    assert result.source == "llm"
+    assert "10050078" in result.improved
+    assert "fornecedor" in result.improved.lower()
 
 
 def test_improve_rejects_llm_that_drops_product_code(monkeypatch):

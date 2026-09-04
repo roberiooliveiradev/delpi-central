@@ -259,12 +259,16 @@ class ChatUserQueryImprovementService:
         *,
         product_code_hint: str | None = None,
     ) -> bool:
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-        if not normalized:
+        # Stems quebrados no texto pós-regras A (sem fuzzy): fuzzy de matching
+        # pode “corrigir” só para classify e deixar a mensagem de intel com typo.
+        accent_folded = ChatMessageNormalizationService.strip_accents(
+            str(message or "")
+        ).lower()
+        if not accent_folded.strip():
             return False
 
         for stem in _CONTENT.broken_operational_stems():
-            if stem and stem in normalized:
+            if stem and stem in accent_folded:
                 return True
 
         codes = _PRODUCT_CODE_RE.findall(message)
@@ -280,17 +284,21 @@ class ChatUserQueryImprovementService:
         # Código presente + possível verbo de cadastro “quebrado” residual
         # (ex.: stem descri* sem descricao completo após regras).
         has_cadastro_stem = any(
-            stem and stem in normalized for stem in _CONTENT.cadastro_verb_stems()
+            stem and stem in accent_folded for stem in _CONTENT.cadastro_verb_stems()
         )
         if not has_cadastro_stem:
             return False
 
-        if "descricao" in normalized or "estrutura" in normalized or "estoque" in normalized:
+        if (
+            "descricao" in accent_folded
+            or "estrutura" in accent_folded
+            or "estoque" in accent_folded
+        ):
             return False
 
         # Verbo/stem de cadastro sem forma canônica → ainda precisa LLM
         return any(
-            stem in normalized and stem not in {"produto", "cadastro", "cadastr"}
+            stem in accent_folded and stem not in {"produto", "cadastro", "cadastr"}
             for stem in _CONTENT.cadastro_verb_stems()
         )
 

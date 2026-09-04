@@ -47,6 +47,7 @@ INTENT_CASES = [
     ("validar pdf do desenho tecnico 90264130", ChatProductQueryIntent.ANALYSER),
     ("descrição do produto 10080047", ChatProductQueryIntent.DESCRIPTION),
     ("qual a descrição do 10.080.055", ChatProductQueryIntent.DESCRIPTION),
+    ("qual a descrião do 10080078?", ChatProductQueryIntent.DESCRIPTION),
     ("busque o estoque desse produto", ChatProductQueryIntent.STOCK),
     ("saldo disponível do item", ChatProductQueryIntent.STOCK),
     ("qual a estrutra do 90260148?", ChatProductQueryIntent.STRUCTURE),
@@ -2707,6 +2708,34 @@ HYBRID_ORCHESTRATION_CASES = [
             "I should ask for clarification."
         ),
         "expect_leak_fallback": True,
+    },
+]
+
+# Melhoria de pergunta (regras + LLM gated) — typo descrião / irmão / negativo.
+QUERY_IMPROVEMENT_CASES = [
+    {
+        "id": "descriao_typo_rules_product_lookup",
+        "message": "qual a descrião do 10050078?",
+        "expect_applied": True,
+        "expect_source": "rules",
+        "expect_sub_intent": "product_lookup",
+        "expect_product_code": "10050078",
+    },
+    {
+        "id": "clean_descricao_noop",
+        "message": "qual a descrição do 10050078?",
+        "expect_applied": False,
+        "expect_sub_intent": "product_lookup",
+        "expect_product_code": "10050078",
+    },
+    {
+        "id": "froenecedor_typo_llm_sibling",
+        "message": "qual o froenecedor do 10050078?",
+        "expect_applied": True,
+        "expect_source": "llm",
+        "mock_llm_reply": "qual o fornecedor do 10050078?",
+        "expect_improved_contains": "fornecedor",
+        "expect_product_code": "10050078",
     },
 ]
 

@@ -47,6 +47,7 @@ from tests.fixtures.chat_intelligence_regression_cases import (
     PAGINATION_REFINEMENT_SELECTION_CASES,
     PRESENTER_HUMANIZED_CASES,
     PRODUCT_CODE_CASES,
+    QUERY_IMPROVEMENT_CASES,
     SELECTION_CASES,
     SIMPLE_TURN_GATE_CASES,
     STOCK_REFINEMENT_SELECTION_CASES,
@@ -428,6 +429,45 @@ def test_hybrid_orchestration_regression(case):
         assert ChatLlmSynthesisLeakGuardService.needs_fallback(
             answer=case["leaked_answer"],
         )
+
+
+@pytest.mark.parametrize("case", QUERY_IMPROVEMENT_CASES)
+def test_query_improvement_regression(case):
+    from app.domain.services.chat_intent_router_service import ChatIntentRouterService
+    from app.domain.services.chat_user_query_improvement_service import (
+        ChatUserQueryImprovementService,
+    )
+
+    class _FakeGateway:
+        def __init__(self, reply: str) -> None:
+            self.reply = reply
+
+        def generate(self, messages: list[dict]) -> str:
+            return self.reply
+
+        def stream(self, messages: list[dict]):
+            yield self.reply
+
+    gateway = None
+    if case.get("mock_llm_reply"):
+        gateway = _FakeGateway(case["mock_llm_reply"])
+    ChatUserQueryImprovementService.configure(gateway)
+    improved = ChatUserQueryImprovementService.improve(
+        case["message"],
+        response_mode="fast",
+        llm_gateway=gateway,
+    )
+    assert improved.applied is case["expect_applied"]
+    if case.get("expect_source"):
+        assert improved.source == case["expect_source"]
+    if case.get("expect_improved_contains"):
+        assert case["expect_improved_contains"] in improved.message_for_intelligence.lower()
+
+    route = ChatIntentRouterService.classify(improved.message_for_intelligence)
+    if case.get("expect_sub_intent"):
+        assert route.sub_intent == case["expect_sub_intent"]
+    if case.get("expect_product_code"):
+        assert route.resolved_params.get("productCode") == case["expect_product_code"]
 
 
 @pytest.mark.parametrize("case", PRESENTER_HUMANIZED_CASES)
