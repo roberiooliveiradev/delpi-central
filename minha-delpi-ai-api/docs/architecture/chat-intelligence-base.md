@@ -1,6 +1,6 @@
 # Arquitetura — Inteligência no chat base
 
-**Status:** vigente (maio/2026)  
+**Status:** vigente (setembro/2026)  
 **Público:** desenvolvimento `minha-delpi-ai-api`, plugin `minha-delpi-chat`, gestão de agentes
 
 ---
@@ -17,6 +17,18 @@ O **chat** é onde a inteligência transversal evolui. **Agentes** são instânc
 | **Simulação / admin** | Mesmo pipeline, com rascunho ou sandbox |
 
 Melhorias de inteligência (comparação, insights, fast path operacional, resposta direta, contexto de ferramentas no histórico) devem ser implementadas na **camada base** e **herdadas** automaticamente por agentes, projetos e demais consumidores.
+
+### Inteligência conversacional (set/2026)
+
+| Peça | Papel |
+|------|--------|
+| `ChatClarificationPolicyService` | Clarify só se ambiguidade material e não discoverable (ex.: busca por texto não pede código) |
+| `ChatPriorTurnFactsPackingService` + `identityFields` / `resultSets` | Fatos tipados e ordinais sobrevivem ao turno N+1 |
+| `ChatTurnUnderstandingService` (shadow) | Decompõe mensagem composta em subtarefas |
+| `ChatCapabilityRegistryService` + `ChatCapabilityDiscoveryService` | Shortlist de capabilities sem free-pick de `operationId` |
+| `ChatTaskPlannerService` + `ChatExecutionOrchestrator` | TaskPlan shadow → cutover via `CHAT_TASK_PLANNER_ENABLED` |
+
+Flags: `conversational_intelligence.json` + env `CHAT_TURN_UNDERSTANDING_SHADOW` / `CHAT_TASK_PLANNER_ENABLED`. Evidence: `docs/testing/evidence/chat-intelligence-*.json`. Smokes: `scripts/smoke_conversation_coherence_long.py`.
 
 **Contrato api-delpi → chat (roadmap):** [`../roadmap/playbook-10-contrato-respostas-api-delpi.md`](../roadmap/playbook-10-contrato-respostas-api-delpi.md) — padronização de `meta`, OpenAPI e presenter por perfil; a api-delpi declara o dado, o chat base apresenta.
 

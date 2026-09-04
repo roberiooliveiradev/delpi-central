@@ -56,11 +56,15 @@
       "helpTopicId": null,
       "examples": [
         "Me fale do produto 10080001",
-        "Mostre a ficha do produto 10080001"
+        "Mostre a ficha do produto 10080001",
+        "Liste os top 50 terminais pino",
+        "Pesquise pela descrição TERM",
+        "A descrição está dentro das normas?"
       ],
       "howToUse": [
         "Selecione um agente com actions de produto.",
-        "Informe o código do produto."
+        "Informe o código do produto, ou peça busca por descrição/texto.",
+        "Em follow-ups, use «o segundo», «dele» ou «está nas normas?» com o resultado anterior."
       ],
       "relatedFeatures": [
         "stock_lookup",
