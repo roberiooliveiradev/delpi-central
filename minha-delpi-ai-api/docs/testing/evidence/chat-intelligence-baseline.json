@@ -1,0 +1,135 @@
+{
+  "generatedAt": "2026-09-04T16:46:44.604470+00:00",
+  "harness": "chat_intelligence_baseline_harness",
+  "fixture": "tests/fixtures/intelligence_baseline/routing_cases.json",
+  "summary": {
+    "total": 6,
+    "pass": 4,
+    "fail": 2,
+    "metrics": {
+      "unexpectedClarificationCount": 2,
+      "productSearchLookHitRate": 1.0,
+      "offlinePassRate": 0.6667
+    },
+    "notes": "Baseline pré-cutover. Targets só após E0; fails esperados documentam o gap (search vs missing-code / clarify)."
+  },
+  "cases": [
+    {
+      "caseId": "search.liste-top-terminais-pino",
+      "family": "product_search",
+      "message": "liste os top 50 terminais pino",
+      "expect": {
+        "requireProductSearchLook": true,
+        "looksLikeProductSearch": true,
+        "forbidClarifyViaMissingCode": true,
+        "missingProductCode": false
+      },
+      "actual": {
+        "looksLikeProductSearch": true,
+        "missingProductCode": false,
+        "missingProductCodePreview": null,
+        "intentDecision": "llm_fallback",
+        "intentSubIntent": ""
+      },
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "caseId": "search.pela-descricao-typo",
+      "family": "product_search",
+      "message": "use api para pesquisar pela descrição top 50 termnais com pino na descrição",
+      "expect": {
+        "requireProductSearchLook": true,
+        "looksLikeProductSearch": true,
+        "forbidClarifyViaMissingCode": true,
+        "missingProductCode": false
+      },
+      "actual": {
+        "looksLikeProductSearch": true,
+        "missingProductCode": true,
+        "missingProductCodePreview": "Para buscar **descrição ou ficha** do produto, informe o **código** (ex.: 10080099) ou descreva a busca (grupo, tipo, te",
+        "intentDecision": "operational_action",
+        "intentSubIntent": "product_lookup"
+      },
+      "status": "FAIL",
+      "errors": [
+        "missingProductCode mismatch",
+        "unexpected missingProductCode clarify"
+      ]
+    },
+    {
+      "caseId": "search.busque-produtos-grupo",
+      "family": "product_search",
+      "message": "busque produtos do grupo 1008",
+      "expect": {
+        "requireProductSearchLook": true,
+        "forbidClarifyViaMissingCode": true,
+        "missingProductCode": false
+      },
+      "actual": {
+        "looksLikeProductSearch": true,
+        "missingProductCode": false,
+        "missingProductCodePreview": null,
+        "intentDecision": "operational_action",
+        "intentSubIntent": "product_lookup"
+      },
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "caseId": "description.with-code",
+      "family": "description",
+      "message": "qual a descrição do produto 10080047",
+      "expect": {
+        "missingProductCode": false
+      },
+      "actual": {
+        "looksLikeProductSearch": false,
+        "missingProductCode": false,
+        "missingProductCodePreview": null,
+        "intentDecision": "operational_action",
+        "intentSubIntent": "product_lookup"
+      },
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "caseId": "stock.missing-code-should-clarify",
+      "family": "stock",
+      "message": "qual o estoque do produto",
+      "expect": {
+        "missingProductCode": true
+      },
+      "actual": {
+        "looksLikeProductSearch": false,
+        "missingProductCode": true,
+        "missingProductCodePreview": "Claro! Para consultar o **estoque**, informe o **código do produto** (ex.: 10080099). Exemplo: *estoque do produto 10080",
+        "intentDecision": "operational_action",
+        "intentSubIntent": "stock_lookup"
+      },
+      "status": "PASS",
+      "errors": []
+    },
+    {
+      "caseId": "normas.follow-up-phrase",
+      "family": "compliance",
+      "message": "a descrição esta dentro das normas?",
+      "expect": {
+        "missingProductCode": false,
+        "forbidClarifyViaMissingCode": true
+      },
+      "actual": {
+        "looksLikeProductSearch": false,
+        "missingProductCode": true,
+        "missingProductCodePreview": "Para buscar **descrição ou ficha** do produto, informe o **código** (ex.: 10080099) ou descreva a busca (grupo, tipo, te",
+        "intentDecision": "direct_answer",
+        "intentSubIntent": "technical_description_compliance_unavailable"
+      },
+      "status": "FAIL",
+      "errors": [
+        "missingProductCode mismatch",
+        "unexpected missingProductCode clarify"
+      ]
+    }
+  ]
+}

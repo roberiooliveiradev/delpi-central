@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "description": "Dataset offline de roteamento pré-LLM (baseline E0 + regressão pós-fix).",
+  "cases": [
+    {
+      "id": "search.liste-top-terminais-pino",
+      "family": "product_search",
+      "message": "liste os top 50 terminais pino",
+      "expect": {
+        "requireProductSearchLook": true,
+        "looksLikeProductSearch": true,
+        "forbidClarifyViaMissingCode": true,
+        "missingProductCode": false
+      }
+    },
+    {
+      "id": "search.pela-descricao-typo",
+      "family": "product_search",
+      "message": "use api para pesquisar pela descrição top 50 termnais com pino na descrição",
+      "expect": {
+        "requireProductSearchLook": true,
+        "looksLikeProductSearch": true,
+        "forbidClarifyViaMissingCode": true,
+        "missingProductCode": false
+      }
+    },
+    {
+      "id": "search.busque-produtos-grupo",
+      "family": "product_search",
+      "message": "busque produtos do grupo 1008",
+      "expect": {
+        "requireProductSearchLook": true,
+        "forbidClarifyViaMissingCode": true,
+        "missingProductCode": false
+      }
+    },
+    {
+      "id": "description.with-code",
+      "family": "description",
+      "message": "qual a descrição do produto 10080047",
+      "expect": {
+        "missingProductCode": false
+      }
+    },
+    {
+      "id": "stock.missing-code-should-clarify",
+      "family": "stock",
+      "message": "qual o estoque do produto",
+      "expect": {
+        "missingProductCode": true
+      }
+    },
+    {
+      "id": "normas.follow-up-phrase",
+      "family": "compliance",
+      "message": "a descrição esta dentro das normas?",
+      "expect": {
+        "missingProductCode": false,
+        "forbidClarifyViaMissingCode": true
+      }
+    }
+  ]
+}
