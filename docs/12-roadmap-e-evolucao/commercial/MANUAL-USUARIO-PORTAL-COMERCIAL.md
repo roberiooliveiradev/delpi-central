@@ -49,7 +49,7 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Preparar visita / call com cliente | **Minha Carteira** → cliente | Conta: abas Resumo, Pedidos, Histórico, Oportunidades, Contatos, Atividades |
 | Criar ou concluir follow-up | **Minhas tarefas** | Buckets (atrasadas / hoje / …); criar com prazo e responsável |
 | Conversar com o time sobre um pedido | **Sala de interação** ou painel na ficha | Inbox ou “abrir sala” no pedido/conta/OV |
-| Ver indicadores do mês / ano | **Visão geral** | Ajuste período e unidade (SC/ES); KPIs e gráficos |
+| Ver indicadores do mês / ano | **Visão geral** | Ajuste período e unidade (SC/ES); KPIs e gráficos. Na busca de caminhos do **Início**, «indicadores» / «dashboard» / «meta» também abrem a Visão geral |
 | Ver pontualidade (OTD) | **Início** (launcher) ou drill na Visão geral → **OTD** | Página Pontualidade |
 | Ver oportunidades (OV) no período | **Início** → Oportunidades | **Visão** no hero: Por colaborador (resumo; clique filtra) ou Por oportunidade (**Busca** e **Status** no hero). Colunas/fonte/export na toolbar. Status **não** altera o resumo. |
 | Gerar / revisar PDF de proposta | **Início** → **Propostas** | Documento ADY (não é a lista de OV) |
@@ -144,7 +144,7 @@ Não. O resumo usa só os filtros compartilhados do hero (período, unidade, seg
 ### Indicadores (Visão geral)
 
 **Onde vejo o ROL do mês?**  
-**Visão geral** — não no Início (o Início é para ação, não para placar completo).
+**Visão geral** — não no Início (o Início é para ação, não para placar completo). Na busca de caminhos do Início, digite **indicadores** (ou **dashboard** / **meta**) para abrir a Visão geral.
 
 **Por que a meta aparece “parcial”?**  
 A meta do período é **proporcional aos dias** do intervalo. Mês incompleto não usa a meta cheia do mês.

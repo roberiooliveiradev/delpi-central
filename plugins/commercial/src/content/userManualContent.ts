@@ -112,7 +112,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Indicadores do período",
           where: "Visão geral",
-          how: "Período, unidade SC/ES, KPIs e gráficos",
+          how: "Período, unidade SC/ES, KPIs e gráficos. No Início, a busca de caminhos também acha Visão geral com «indicadores», «dashboard» ou «meta».",
         },
         {
           want: "Pontualidade (OTD)",
@@ -220,7 +220,7 @@ export const USER_MANUAL_CONTENT = {
       faqs: [
         {
           q: "Onde vejo o ROL do mês?",
-          a: "Na Visão geral — não no Início (o Início é para ação, não para o placar completo).",
+          a: "Na Visão geral — não no Início (o Início é para ação, não para o placar completo). Na busca de caminhos do Início, digite «indicadores» (ou «dashboard» / «meta») para abrir a Visão geral.",
         },
         {
           q: "Por que a meta aparece parcial?",

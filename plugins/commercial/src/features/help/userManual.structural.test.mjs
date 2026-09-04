@@ -22,8 +22,15 @@ describe("user manual page", () => {
     assert.match(content, /painel ABC/);
     assert.match(content, /Administração → SLAs/);
     assert.match(content, /Onde configuro os SLAs/);
+    assert.match(content, /Onde vejo o ROL do mês/);
+    assert.match(content, /busca de caminhos do Início.*indicadores/);
+    assert.match(content, /Indicadores do período/);
+    assert.match(content, /busca de caminhos também acha Visão geral/);
     assert.match(content, /No consolidado \(unidade Todas\) a Visão geral mostra meta/);
-    assert.match(content, /agregação SC\+ES pelo SI|somam Santa Catarina \+ Espírito Santo pelo método/);
+    assert.match(
+      content,
+      /agregam Santa Catarina \+ Espírito Santo pelo método|agregação SC\+ES pelo SI/,
+    );
     assert.match(content, /Como vejo o histórico em quantidade/);
     assert.match(content, /Ponderar período parcial|exclui o bucket incompleto/);
     assert.match(content, /Milheiro \| Peças|1 MI = 1000 PC/);
