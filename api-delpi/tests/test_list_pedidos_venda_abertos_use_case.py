@@ -24,6 +24,7 @@ def test_list_pedidos_venda_abertos_normalizes_items_and_summary() -> None:
                 "quantidade": 10,
                 "entregue": 4,
                 "saldo": 6,
+                "unidade": "MI",
                 "data_despacho": "",
                 "data_entrega": "2026-06-09",
                 "no_estoque": 2,
@@ -49,6 +50,7 @@ def test_list_pedidos_venda_abertos_normalizes_items_and_summary() -> None:
     assert result.items[0]["data_despacho"] is None
     assert result.items[0]["data_entrega"] == "2026-06-09"
     assert result.items[0]["saldo"] == 6.0
+    assert result.items[0]["unidade"] == "MI"
     assert result.summary.total_linhas == 1
     assert result.summary.itens_estoque_parcial == 1
 
@@ -58,6 +60,7 @@ def test_list_pedidos_venda_abertos_normalizes_items_and_summary() -> None:
     assert payload["items"][0]["codigo_cliente"] == "PN-903"
     assert payload["items"][0]["codigo_cadastro"] == "10047758"
     assert payload["items"][0]["loja_cadastro"] == "11"
+    assert payload["items"][0]["unidade"] == "MI"
     assert payload["portfolio"]["empty"] is False
 
 
