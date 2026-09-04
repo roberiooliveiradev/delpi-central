@@ -888,6 +888,19 @@ Checklist rota nova: [`new-api-route-checklist.md`](./new-api-route-checklist.md
 
 Regressão: `tests/unit/domain/services/test_chat_presentation_view_intent_service.py`, `test_chat_presentation_decision_scores.py`, casos P1–P16 em `tests/fixtures/rich_presentation_cases.py`. Roadmap: [`../roadmap/playbook-09-apresentacao-rica.md`](../roadmap/playbook-09-apresentacao-rica.md).
 
+### Defaults de page_size outbound (chat → api-delpi)
+
+Fonte única: `operational_pagination.json` via `ChatOperationalPaginationDefaultsService`.
+
+| Tier / especial | Default | Onde aplica |
+|-----------------|---------|-------------|
+| `standard` | 50 | Listagens genéricas (`date_branch`, stock, LMP, metadata, …) |
+| `hierarchical` | 500 | Paths com markers `/structure` e `/parents` (JSON) |
+| Product search | 5 (cap mensagem 20) | `/products/search` |
+| Overrides por rota | ex. `limit: 500` | `operational_route_registry.queryDefaults` (acima do standard) |
+
+Pedido explícito do usuário / refinement de página vence o default; consolidação multi-página («traga tudo») continua em `CHAT_PAGINATION_*` abaixo — não confundir com o tamanho da **primeira** página.
+
 ### Consolidação paginada (total / completo / continuar) — maio/2026
 
 Quando a API retorna resposta parcial (`page`, `total`, `total_pages`), o chat pode buscar **várias páginas** e consolidar numa única resposta — em **qualquer formato** (tabela, árvore, gráfico ou texto).

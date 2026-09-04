@@ -127,8 +127,10 @@ GET /products/search?description=terminal&page=1&page_size=5
 ## 🔹 3. Estrutura do Produto (BOM)
 
 ```http
-GET /products/{code}/structure?max_depth=5&page=1&page_size=50
+GET /products/{code}/structure?max_depth=5&page=1&page_size=500
 ```
+
+Default de `page_size` no chat (outbound): **500** (tier hierárquico — `ChatOperationalPaginationDefaultsService`).
 
 ### 📌 Parâmetros
 
@@ -137,7 +139,7 @@ GET /products/{code}/structure?max_depth=5&page=1&page_size=50
 | code | string | ✔ | Produto raiz |
 | max_depth | int | ✖ | Profundidade da BOM |
 | page | int | ✖ | Página |
-| page_size | int | ✖ | Registros |
+| page_size | int | ✖ | Registros (default chat: 500) |
 
 ### 📗 Tabelas
 - SG1010
@@ -257,8 +259,10 @@ Agente:
 ## 🔹 5. Produtos Pais (Where Used)
 
 ```http
-GET /products/{code}/parents?max_depth=5&page=1&page_size=50
+GET /products/{code}/parents?max_depth=5&page=1&page_size=500
 ```
+
+Default de `page_size` no chat (outbound): **500** (tier hierárquico — mesmo serviço de paginação operacional).
 
 ### 📗 Tabelas
 - SG1010
