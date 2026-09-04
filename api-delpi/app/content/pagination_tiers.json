@@ -1,0 +1,276 @@
+{
+  "version": "2026.09.04",
+  "description": "Named pagination tiers for api-delpi Query params and clamps. Defaults preserve audited contracts.",
+  "tiers": {
+    "history_limit_optional_200": {
+      "id": "history_limit_optional_200",
+      "param": "history_limit",
+      "default": null,
+      "ge": 1,
+      "le": 200,
+      "optional": true,
+      "description": "history_limit default=None ge=1 le=200"
+    },
+    "infra_offset_50_1000": {
+      "id": "infra_offset_50_1000",
+      "param": "page_size",
+      "default": 50,
+      "ge": 1,
+      "le": 1000,
+      "optional": false,
+      "description": "Default for totvs.pagination when caller omits max; prefer route tier"
+    },
+    "limit_100_200": {
+      "id": "limit_100_200",
+      "param": "limit",
+      "default": 100,
+      "ge": 1,
+      "le": 200,
+      "optional": false,
+      "description": "limit default=100 ge=1 le=200"
+    },
+    "limit_100_500": {
+      "id": "limit_100_500",
+      "param": "limit",
+      "default": 100,
+      "ge": 1,
+      "le": 500,
+      "optional": false,
+      "description": "limit default=100 ge=1 le=500"
+    },
+    "limit_10_50": {
+      "id": "limit_10_50",
+      "param": "limit",
+      "default": 10,
+      "ge": 1,
+      "le": 50,
+      "optional": false,
+      "description": "limit default=10 ge=1 le=50"
+    },
+    "limit_20_20": {
+      "id": "limit_20_20",
+      "param": "limit",
+      "default": 20,
+      "ge": 1,
+      "le": 20,
+      "optional": false,
+      "description": "limit default=20 ge=1 le=20"
+    },
+    "limit_20_200": {
+      "id": "limit_20_200",
+      "param": "limit",
+      "default": 20,
+      "ge": 1,
+      "le": 200,
+      "optional": false,
+      "description": "limit default=20 ge=1 le=200"
+    },
+    "limit_20_50": {
+      "id": "limit_20_50",
+      "param": "limit",
+      "default": 20,
+      "ge": 1,
+      "le": 50,
+      "optional": false,
+      "description": "limit default=20 ge=1 le=50"
+    },
+    "limit_20_500": {
+      "id": "limit_20_500",
+      "param": "limit",
+      "default": 20,
+      "ge": 1,
+      "le": 500,
+      "optional": false,
+      "description": "limit default=20 ge=1 le=500"
+    },
+    "limit_25_100": {
+      "id": "limit_25_100",
+      "param": "limit",
+      "default": 25,
+      "ge": 1,
+      "le": 100,
+      "optional": false,
+      "description": "limit default=25 ge=1 le=100"
+    },
+    "limit_500_500": {
+      "id": "limit_500_500",
+      "param": "limit",
+      "default": 500,
+      "ge": 1,
+      "le": 500,
+      "optional": false,
+      "description": "limit default=500 ge=1 le=500"
+    },
+    "limit_50_200": {
+      "id": "limit_50_200",
+      "param": "limit",
+      "default": 50,
+      "ge": 1,
+      "le": 200,
+      "optional": false,
+      "description": "limit default=50 ge=1 le=200"
+    },
+    "limit_8_20": {
+      "id": "limit_8_20",
+      "param": "limit",
+      "default": 8,
+      "ge": 1,
+      "le": 20,
+      "optional": false,
+      "description": "limit default=8 ge=1 le=20"
+    },
+    "limit_freight_20000": {
+      "id": "limit_freight_20000",
+      "param": "limit",
+      "default": 20000,
+      "ge": 1,
+      "le": 20000,
+      "optional": false,
+      "description": "limit default=20000 ge=1 le=20000"
+    },
+    "limit_optional_200": {
+      "id": "limit_optional_200",
+      "param": "limit",
+      "default": null,
+      "ge": 1,
+      "le": 200,
+      "optional": true,
+      "description": "limit default=None ge=1 le=200"
+    },
+    "limit_optional_500": {
+      "id": "limit_optional_500",
+      "param": "limit",
+      "default": null,
+      "ge": 1,
+      "le": 500,
+      "optional": true,
+      "description": "limit default=None ge=1 le=500"
+    },
+    "limit_ranking_10_50": {
+      "id": "limit_ranking_10_50",
+      "param": "limit",
+      "default": 10,
+      "ge": 1,
+      "le": 50,
+      "optional": false,
+      "description": "limit default=10 ge=1 le=50"
+    },
+    "limit_rol_8000": {
+      "id": "limit_rol_8000",
+      "param": "limit",
+      "default": 8000,
+      "ge": 1,
+      "le": 8000,
+      "optional": false,
+      "description": "limit default=8000 ge=1 le=8000"
+    },
+    "page_100_200": {
+      "id": "page_100_200",
+      "param": "page_size",
+      "default": 100,
+      "ge": 1,
+      "le": 200,
+      "optional": false,
+      "description": "page_size default=100 ge=1 le=200"
+    },
+    "page_10_100": {
+      "id": "page_10_100",
+      "param": "page_size",
+      "default": 10,
+      "ge": 1,
+      "le": 100,
+      "optional": false,
+      "description": "page_size default=10 ge=1 le=100"
+    },
+    "page_20_100": {
+      "id": "page_20_100",
+      "param": "page_size",
+      "default": 20,
+      "ge": 1,
+      "le": 100,
+      "optional": false,
+      "description": "page_size default=20 ge=1 le=100"
+    },
+    "page_20_1000": {
+      "id": "page_20_1000",
+      "param": "page_size",
+      "default": 20,
+      "ge": 1,
+      "le": 1000,
+      "optional": false,
+      "description": "page_size default=20 ge=1 le=1000"
+    },
+    "page_25_50": {
+      "id": "page_25_50",
+      "param": "page_size",
+      "default": 25,
+      "ge": 1,
+      "le": 50,
+      "optional": false,
+      "description": "page_size default=25 ge=1 le=50"
+    },
+    "page_50_100": {
+      "id": "page_50_100",
+      "param": "page_size",
+      "default": 50,
+      "ge": 1,
+      "le": 100,
+      "optional": false,
+      "description": "page_size default=50 ge=1 le=100"
+    },
+    "page_50_200": {
+      "id": "page_50_200",
+      "param": "page_size",
+      "default": 50,
+      "ge": 1,
+      "le": 200,
+      "optional": false,
+      "description": "page_size default=50 ge=1 le=200"
+    },
+    "page_50_500": {
+      "id": "page_50_500",
+      "param": "page_size",
+      "default": 50,
+      "ge": 1,
+      "le": 500,
+      "optional": false,
+      "description": "page_size default=50 ge=1 le=500"
+    },
+    "page_optional_500": {
+      "id": "page_optional_500",
+      "param": "page_size",
+      "default": null,
+      "ge": 1,
+      "le": 500,
+      "optional": true,
+      "description": "page_size default=None ge=1 le=500"
+    },
+    "page_optional_open": {
+      "id": "page_optional_open",
+      "param": "page_size",
+      "default": null,
+      "ge": 1,
+      "le": null,
+      "optional": true,
+      "description": "page_size default=None ge=1 le=None"
+    },
+    "top_limit_10_50": {
+      "id": "top_limit_10_50",
+      "param": "top_limit",
+      "default": 10,
+      "ge": 1,
+      "le": 50,
+      "optional": false,
+      "description": "top_limit default=10 ge=1 le=50"
+    },
+    "top_limit_5_20": {
+      "id": "top_limit_5_20",
+      "param": "top_limit",
+      "default": 5,
+      "ge": 1,
+      "le": 20,
+      "optional": false,
+      "description": "top_limit default=5 ge=1 le=20"
+    }
+  }
+}
