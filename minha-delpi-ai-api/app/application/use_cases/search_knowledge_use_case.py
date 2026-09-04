@@ -141,6 +141,11 @@ class SearchKnowledgeUseCase:
             use_fts=self._fts_enabled(),
         )
 
+        # Embeddings off / falha: não diluir score keyword com peso vetorial 0
+        # (ex.: 0.3 * 0.4 = 0.12 < rag_context_min_score 0.35 → 0 sources).
+        if not vector_chunks:
+            return list(keyword_chunks[:limit])
+
         merged: dict[str, object] = {}
 
         for chunk in vector_chunks:

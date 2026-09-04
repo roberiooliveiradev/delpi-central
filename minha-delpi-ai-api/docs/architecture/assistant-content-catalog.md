@@ -55,6 +55,7 @@ Wrappers especializados (mantêm API estável):
 | Changelog integrado | `docs/changelog/2026-06-product-directives-chat.md` | Roteamento, apresentação, MFE filtros, modos Automático/Tabela/Texto |
 | `production_operational_intent.json` | Marcadores Playbook 15 — consumo, compras ranking, refugo, OPs, CT, empenho, planejado×real (`terms`, `excludeTerms`, `pathTokens`) | `ChatProductionOperationalIntentService`, `operational_route_registry.json` |
 | `intent_router.json` | Marcadores de roteamento (autoajuda, RAG, apresentação, web block, `shortContextReplyPatterns` / `limits`) | `ChatIntentRouterService`, `ChatIntentRouterContentService` |
+| `knowledge_search.json` | Stopwords FTS / limites de termos e boost de título no keyword RAG (embeddings off) | `postgres_knowledge_repository`, `keyword_similarity` |
 | `intent_disambiguation.json` | Clarificação de escopo operacional (chips + directAnswer) | `ChatIntentDisambiguationService` |
 | `product_overview_intent.json` | «Me fale do produto» e visão geral | `ChatProductOverviewIntentService` |
 | `error_handling.json` | Erros recuperáveis, chips, SQL tipado; **`missing_required_parameter`** + `validationFailureMarkers` | `ChatErrorHandlingClassifier`, `ChatTrustSignalsService` |
@@ -104,7 +105,7 @@ Wrappers especializados (mantêm API estável):
 | `analysis_intent_vocabulary.json` | Marcadores de análise/comparação | `ChatAnalysisIntentVocabularyService` |
 | `text_context_vocabulary.json` | Resolução de contexto textual (produto, filial, datas) | `ChatTextContextVocabularyService` |
 | `term_extraction_vocabulary.json` | Stopwords + `definitionPatterns` de pergunta de definição | `ChatTermExtractionVocabularyService` |
-| `technical_description_vocabulary.json` | Normas MP (1001–1025) + intermediários 50xx: grupos, campos, cores MP/4 letras, isolação CA–CV, marcadores de intent; consumíveis 1013/1050 para classificação no desenho | `ChatTechnicalDescriptionVocabularyService`, `ChatTechnicalDescriptionIntentService`, `ChatDrawingProductFamilyClassificationService` |
+| `technical_description_vocabulary.json` | Normas MP (1001–1025) + intermediários 50xx: grupos, campos, cores MP/4 letras, isolação CA–CV, marcadores de intent, **compliance follow-up** (avaliação descrição×normas; PA 90xx sem doc); consumíveis 1013/1050 para classificação no desenho | `ChatTechnicalDescriptionVocabularyService`, `ChatTechnicalDescriptionIntentService`, `ChatTechnicalDescriptionComplianceService`, `ChatDrawingProductFamilyClassificationService` |
 | `session_vocabulary.json` | Marcadores de mudança de assunto na sessão ativa | `ChatSessionVocabularyService` |
 | `operational_pipeline_vocabulary.json` | Termos operacionais vs. documentais no fast path | `ChatOperationalPipelineVocabularyService` |
 | `operational_group_by_refinement.json` | Rotas, dimensões e estratégia session/refetch para agrupamento de follow-up | `ChatOperationalGroupByRefinementService`, `ChatOperationalSessionDataRefinementService` |

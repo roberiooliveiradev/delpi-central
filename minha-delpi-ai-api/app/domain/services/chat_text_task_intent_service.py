@@ -257,6 +257,14 @@ class ChatTextTaskIntentService:
         if ChatIntentRouterHeuristicsService.looks_rag_document(message):
             return False
 
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
+        # F11: «como descrever…» / VDAR / intermediário 50xx precisa de RAG Normas.
+        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(message):
+            return False
+
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 
         normalized = (message or "").strip().lower()

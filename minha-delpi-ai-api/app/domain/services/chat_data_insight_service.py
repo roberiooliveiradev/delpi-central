@@ -317,6 +317,21 @@ class ChatDataInsightService:
             )
 
         aggregate_highlights = cls._highlights_from_single_row_aggregate(rows)
+        identity_highlights = cls._highlights_from_identity_fields(rows)
+
+        if identity_highlights:
+            # Cadastro/produto: descrição e código têm prioridade sobre métricas numéricas (ipi_rate=0).
+            commentary["profileKey"] = "generic_list"
+            commentary["highlights"] = identity_highlights
+            commentary["summaryLines"] = identity_highlights[:4]
+
+            if aggregate_highlights:
+                commentary["attention"] = aggregate_highlights[:2]
+
+            return ChatHumanizedDataResponseService.normalize(
+                commentary,
+                profile_key="generic_list",
+            )
 
         if aggregate_highlights and not summary_highlights:
             commentary["profileKey"] = "kpi_summary"
@@ -413,6 +428,93 @@ class ChatDataInsightService:
             commentary,
             profile_key=profile_key,
         )
+
+    @classmethod
+    def _highlights_from_identity_fields(
+        cls,
+        rows: list[dict[str, Any]],
+    ) -> list[str]:
+        """Uma linha de cadastro com descrição textual → lead factual (não ipi_rate=0)."""
+        from app.domain.services.chat_humanized_data_response_content_service import (
+            ChatHumanizedDataResponseContentService,
+        )
+
+        if len(rows) != 1 or not isinstance(rows[0], dict) or not rows[0]:
+            return []
+
+        row = rows[0]
+        row_by_upper = {str(key).strip().upper(): (key, value) for key, value in row.items()}
+
+        def _first_text(keys: list[str]) -> str:
+            for token in keys:
+                pair = row_by_upper.get(str(token).strip().upper())
+
+                if not pair:
+                    continue
+
+                text = str(pair[1] or "").strip()
+
+                if text and len(text) >= 3:
+                    return text
+
+            return ""
+
+        description_keys = [
+            str(token).strip()
+            for token in ChatHumanizedDataResponseContentService.list(
+                "identityRowFields",
+                "keys",
+            )
+            if str(token).strip()
+        ]
+        code_keys = [
+            str(token).strip()
+            for token in ChatHumanizedDataResponseContentService.list(
+                "identityRowFields",
+                "codeKeys",
+            )
+            if str(token).strip()
+        ]
+        group_keys = [
+            str(token).strip()
+            for token in ChatHumanizedDataResponseContentService.list(
+                "identityRowFields",
+                "groupKeys",
+            )
+            if str(token).strip()
+        ]
+
+        description = _first_text(description_keys)
+
+        if not description:
+            return []
+
+        code = _first_text(code_keys)
+        group = _first_text(group_keys)
+
+        if code and group:
+            line = ChatHumanizedDataResponseContentService.format(
+                "identityRowFields",
+                "lineWithGroup",
+                code=code,
+                group=group,
+                description=description,
+            )
+        elif code:
+            line = ChatHumanizedDataResponseContentService.format(
+                "identityRowFields",
+                "lineWithCode",
+                code=code,
+                description=description,
+            )
+        else:
+            line = ChatHumanizedDataResponseContentService.format(
+                "identityRowFields",
+                "lineDescriptionOnly",
+                description=description,
+            )
+
+        return [line] if str(line or "").strip() else []
 
     @classmethod
     def _highlights_from_single_row_aggregate(

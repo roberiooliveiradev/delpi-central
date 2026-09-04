@@ -2,7 +2,8 @@
 """Bateria live — interação humana simulada (famílias F01–F24, critérios R1–R8).
 
 Simula usuário real: typos, abreviações, PT casual, multi-turn na mesma sessão,
-superfícies comum vs agente. Julga por metadata/admin (não LLM-as-judge).
+superfícies comum vs agente. Julga por metadata/admin **e** pela prosa entregue
+(não só intent): conversa fluida, grounding RAG, chips coerentes.
 
 Uso (host):
   cd minha-delpi-ai-api && PYTHONPATH=. .venv/bin/python scripts/human_interaction_battery_live.py
@@ -17,7 +18,7 @@ Filtros:
   SMOKE_SKIP_OPTIONAL=1                  — pula casos optional (TV/PAC/desenho)
 
 Saída JSON: docs/testing/evidence/chat-human-interaction-battery.json
-Doc canônica: docs/testing/chat-ai-flow-families.md § 1.3
+Doc canônica: docs/testing/chat-ai-flow-families.md § 1.3 (julgar resposta + fluxo)
 """
 
 from __future__ import annotations
@@ -64,6 +65,21 @@ LEAK_RE = re.compile(
     r"\[especialista sql",
     re.I,
 )
+# Prosa que admite retrieve vazio — útil só quando a base realmente não tem o doc.
+EMPTY_RAG_PROSE_RE = re.compile(
+    # Admitir retrieve vazio — não confundir com «não consigo confirmar o campo X».
+    r"n[aã]o (tenho|encontrei|localizei)(\s+\w+){0,6}\s+(a\s+)?(norma|documenta[cç][aã]o|base|trecho|conte[uú]do)|"
+    r"n[aã]o consigo\s+(encontrar|localizar|recuperar|acessar|obter|consultar)|"
+    r"(base|consulta).{0,40}(n[aã]o retornou|n[aã]o (trouxe|devolveu)|sem (trechos|segmentos|conte[uú]do))|"
+    r"conte[uú]do detalhado.{0,40}n[aã]o (est[aá]|foi)|"
+    r"n[aã]o (est[aá]|fica) dispon[ií]vel.{0,30}(base|norma|pol[ií]tica|gloss[aã]rio)",
+    re.I,
+)
+ERP_CHIP_RE = re.compile(
+    r"ver estoque|verificar c[oó]digo|ampliar per[ií]odo|an[aá]lise completa|"
+    r"an[aá]lise produtiva|ver fornecedores|tentar por descri[cç][aã]o",
+    re.I,
+)
 
 
 @dataclass
@@ -79,12 +95,18 @@ class BatteryCase:
     reuse_session: bool = False
     optional: bool = False
     r_required: tuple[str, ...] = ("R1", "R2", "R4", "R8")
+    # Qualidade de prosa / grounding (além do roteamento)
+    require_rag_hits: bool = False
+    prose_markers: tuple[str, ...] = ()
+    forbid_empty_rag_prose: bool = False
+    judge_seed: bool = False
 
     status: str = "SKIP"
     detail: str = ""
     prose: str = ""
     ms: int = 0
     evidence: dict[str, Any] = field(default_factory=dict)
+    seed_notes: list[str] = field(default_factory=list)
 
 
 def _request(
@@ -238,6 +260,55 @@ def _data_answer_in_tools(msg: dict) -> bool:
     return bool(meta.get("dataAnswer") or meta.get("dataCommentary"))
 
 
+def _rag_hit_count(msg: dict) -> int:
+    admin = _admin(msg)
+    rag = admin.get("rag") if isinstance(admin.get("rag"), dict) else {}
+    for key in ("retrievedChunkCount", "retrievedSourceCount", "visibleSourceCount"):
+        try:
+            value = int(rag.get(key) or 0)
+        except (TypeError, ValueError):
+            value = 0
+        if value > 0:
+            return value
+    sources = rag.get("sources")
+    if isinstance(sources, list) and sources:
+        return len(sources)
+    text = str(rag.get("ragContextText") or "")
+    return 1 if len(text.strip()) >= 80 else 0
+
+
+def _suggestion_labels(msg: dict) -> list[str]:
+    meta = msg.get("metadata") if isinstance(msg.get("metadata"), dict) else {}
+    inter = meta.get("interactivity") if isinstance(meta.get("interactivity"), dict) else {}
+    suggestions = inter.get("suggestions") if isinstance(inter.get("suggestions"), list) else []
+    labels: list[str] = []
+    for item in suggestions:
+        if isinstance(item, dict):
+            label = str(item.get("label") or item.get("text") or "").strip()
+            if label:
+                labels.append(label)
+        elif isinstance(item, str) and item.strip():
+            labels.append(item.strip())
+    return labels
+
+
+def _assert_prose_quality(case: BatteryCase, prose: str, msg: dict, errors: list[str]) -> None:
+    """R4/R6: julgar a resposta entregue — não só decision/intent."""
+    if case.forbid_empty_rag_prose and prose and EMPTY_RAG_PROSE_RE.search(prose):
+        errors.append("prosa admite retrieve vazio (base deveria responder)")
+    if case.require_rag_hits and _rag_hit_count(msg) <= 0:
+        errors.append("RAG sem hits (retrievedChunkCount=0)")
+    low = prose.lower()
+    for marker in case.prose_markers:
+        if marker.lower() not in low:
+            errors.append(f"prosa sem marcador {marker!r}")
+    if case.expect in {"rag_internal", "rag_with_stock"} or case.forbid_empty_rag_prose:
+        labels = _suggestion_labels(msg)
+        erp_chips = [label for label in labels if ERP_CHIP_RE.search(label)]
+        if erp_chips:
+            errors.append(f"chips ERP em turno documental ({erp_chips[:3]})")
+
+
 def _r8_verdict(ms: int, mode: str, expect: str) -> str:
     if expect == "identity_fast":
         target = _LATENCY_IDENTITY_MS
@@ -286,7 +357,14 @@ def _build_evidence(case: BatteryCase, msg: dict, ms: int, errors: list[str]) ->
         },
         "R4": {
             "proseLen": len(_prose(msg)),
-            "verdict": "FAIL" if any("prosa" in e or "leak" in e or "guidance" in e for e in errors) else "PASS",
+            "ragHits": _rag_hit_count(msg),
+            "verdict": "FAIL"
+            if any(
+                token in e
+                for e in errors
+                for token in ("prosa", "leak", "guidance", "marcador", "retrieve", "RAG sem")
+            )
+            else "PASS",
         },
         "R5": {
             "presentationDecision": (
@@ -298,7 +376,10 @@ def _build_evidence(case: BatteryCase, msg: dict, ms: int, errors: list[str]) ->
         },
         "R6": {
             "seedCount": len(case.seed),
-            "verdict": "PASS" if not errors or case.expect.startswith("follow") else "PASS",
+            "seedNotes": list(case.seed_notes)[:6],
+            "verdict": "FAIL"
+            if any("seed" in e or "follow" in e or "chips ERP" in e for e in errors)
+            else "PASS",
         },
         "R7": {"surface": "send", "verdict": "N/A"},
         "R8": {
@@ -353,6 +434,24 @@ def _judge(case: BatteryCase, msg: dict, ms: int) -> None:
             errors.append(f"sem path stock ({paths})")
         if not tools:
             errors.append("sem tools")
+    elif expect == "product_path":
+        # Cadastro por código — GET /products/{code}; não normas nem menu de escopo.
+        route = _intent_route(msg)
+        decision = str(route.get("decision") or "")
+        sub = str(route.get("subIntent") or "")
+        if "technical_description" in sub or (
+            decision == "rag_internal" and "1008" in sub
+        ):
+            errors.append(f"normas em consulta cadastral (decision={decision} sub={sub})")
+        if decision == "rag_internal" and "technical" in sub:
+            errors.append("rag technical_description em cadastro por código")
+        if decision == "clarify_operational":
+            errors.append("clarify de escopo em descrição cadastral (deveria /products/)")
+        has_product = any("/products/" in p for p in paths)
+        if not has_product:
+            errors.append(f"sem /products/ ({decision}, {paths})")
+        if not prose:
+            errors.append("prosa vazia")
     elif expect == "structure_path":
         if not any("/structure" in p or "/analyser" in p for p in paths):
             errors.append(f"sem path structure ({paths})")
@@ -507,6 +606,51 @@ def _judge(case: BatteryCase, msg: dict, ms: int) -> None:
             errors.append("prosa curta/vazia")
         if LEAK_RE.search(prose):
             errors.append("leak")
+        _assert_prose_quality(case, prose, msg, errors)
+    elif expect == "normas_compliance_eval":
+        # Follow-up: descrição cadastral × normas (MP/50xx) — RAG on, sem ERP no turno.
+        route = _intent_route(msg)
+        admin = _admin(msg)
+        pipeline = admin.get("pipeline") if isinstance(admin.get("pipeline"), dict) else {}
+        decision = str(route.get("decision") or "")
+        sub = str(route.get("subIntent") or "")
+        if decision not in {"rag_internal", "rag_question", "direct_answer"}:
+            if decision == "operational_action":
+                errors.append("ERP no follow-up de compliance normas")
+            else:
+                errors.append(f"decision={decision!r} (esperado rag_internal compliance)")
+        if "unavailable" in sub:
+            errors.append("compliance unavailable em família com normas (MP/50xx)")
+        if pipeline.get("skipRag") is True and decision != "direct_answer":
+            errors.append("skipRag indevido em compliance com documentação")
+        if any("/products/" in p or "/stock" in p for p in paths):
+            errors.append(f"tool ERP no compliance ({paths})")
+        if not prose or len(prose) < 40:
+            errors.append("prosa curta/vazia")
+        if LEAK_RE.search(prose):
+            errors.append("leak")
+        _assert_prose_quality(case, prose, msg, errors)
+    elif expect == "normas_compliance_missing":
+        # PA 90xx (ou família sem doc): resposta honesta, sem inventar norma via RAG.
+        route = _intent_route(msg)
+        decision = str(route.get("decision") or "")
+        sub = str(route.get("subIntent") or "")
+        admin = _admin(msg)
+        pipeline = admin.get("pipeline") if isinstance(admin.get("pipeline"), dict) else {}
+        if decision == "rag_internal" and "unavailable" not in sub:
+            # Aceita se prosa admite ausência de norma (não inventa estrutura PA).
+            if not any(
+                marker in prose.lower()
+                for marker in ("não há", "nao ha", "produto acabado", "90")
+            ):
+                errors.append("RAG inventou norma de PA sem admitir ausência")
+        if any("/stock" in p for p in paths):
+            errors.append(f"ERP stock no compliance PA ({paths})")
+        if not prose or len(prose) < 40:
+            errors.append("prosa curta/vazia")
+        if LEAK_RE.search(prose):
+            errors.append("leak")
+        _assert_prose_quality(case, prose, msg, errors)
     elif expect == "rag_with_stock":
         route = _intent_route(msg)
         admin = _admin(msg)
@@ -519,6 +663,7 @@ def _judge(case: BatteryCase, msg: dict, ms: int) -> None:
                 errors.append("skipRag com estoque+política")
         if not prose:
             errors.append("prosa vazia")
+        _assert_prose_quality(case, prose, msg, errors)
 
     case.evidence = _build_evidence(case, msg, ms, errors)
     bits: list[str] = []
@@ -688,6 +833,7 @@ def _cases_catalog() -> list[BatteryCase]:
             "rag_internal",
             use_agent=True,
             r_required=("R1", "R2", "R4", "R8"),
+            # Base pode não ter o PDF — roteamento + sem chips ERP; prosa honesta ok.
         ),
         BatteryCase(
             "F07.glossary",
@@ -706,6 +852,9 @@ def _cases_catalog() -> list[BatteryCase]:
             "rag_internal",
             use_agent=True,
             r_required=("R1", "R2", "R4", "R8"),
+            require_rag_hits=True,
+            forbid_empty_rag_prose=True,
+            prose_markers=("1001", "norma"),
         ),
         BatteryCase(
             "F07.stock-policy",
@@ -715,6 +864,121 @@ def _cases_catalog() -> list[BatteryCase]:
             "rag_with_stock",
             use_agent=True,
             r_required=("R1", "R2", "R4", "R8"),
+        ),
+        BatteryCase(
+            "F07.follow-terminais",
+            "F07",
+            "follow-terminais-normas",
+            "terminais",
+            "rag_internal",
+            use_agent=True,
+            seed=["o que dizem as normas técnicas DELPI sobre matéria-prima?"],
+            reuse_session=True,
+            r_required=("R1", "R2", "R4", "R6", "R8"),
+            require_rag_hits=True,
+            forbid_empty_rag_prose=True,
+            prose_markers=("1008", "terminal"),
+            judge_seed=True,
+        ),
+        # F11 — descrição técnica (antes de text_task / ERP)
+        BatteryCase(
+            "F11.terminal",
+            "F11",
+            "descrever-terminal",
+            "como descrever um terminal?",
+            "rag_internal",
+            use_agent=True,
+            r_required=("R1", "R2", "R4", "R8"),
+            require_rag_hits=True,
+            forbid_empty_rag_prose=True,
+            prose_markers=("1008", "TERM"),
+        ),
+        BatteryCase(
+            "F11.vdar",
+            "F11",
+            "vdar-descricao",
+            "o que significa VDAR na descrição?",
+            "rag_internal",
+            use_agent=True,
+            r_required=("R1", "R2", "R4", "R8"),
+            require_rag_hits=True,
+            forbid_empty_rag_prose=True,
+            prose_markers=("VDAR",),
+        ),
+        BatteryCase(
+            "F11.cabo",
+            "F11",
+            "monte-descricao-cabo",
+            "como descrever um cabo PVC segundo as normas técnicas DELPI?",
+            "rag_internal",
+            use_agent=True,
+            r_required=("R1", "R2", "R4", "R8"),
+            require_rag_hits=True,
+            forbid_empty_rag_prose=True,
+            prose_markers=("1001", "CABO"),
+        ),
+        BatteryCase(
+            "F11.intermediario",
+            "F11",
+            "explique-intermediario",
+            "explique o código intermediário 50232222 CB1,50VERD-00255/06/06–6314–0111",
+            "rag_internal",
+            use_agent=True,
+            r_required=("R1", "R2", "R4", "R8"),
+            # Doc intermediário pode estar no RAG do agente; prosa deve segmentar 50xx.
+            forbid_empty_rag_prose=True,
+            prose_markers=("5023",),
+        ),
+        BatteryCase(
+            "F11.produto-cadastro",
+            "F11",
+            "descricao-produto-codigo",
+            "qual a descrição do produto 10080047",
+            "product_path",
+            use_agent=True,
+            r_required=("R1", "R2", "R4", "R8"),
+        ),
+        BatteryCase(
+            "F11.compliance-mp",
+            "F11",
+            "compliance-normas-mp",
+            "está dentro das normas?",
+            "normas_compliance_eval",
+            use_agent=True,
+            seed=["qual a descrição do produto 10080047"],
+            reuse_session=True,
+            r_required=("R1", "R4", "R6", "R8"),
+            forbid_empty_rag_prose=True,
+            require_rag_hits=True,
+            prose_markers=("norma", "1008"),
+        ),
+        BatteryCase(
+            "F11.compliance-intermediario",
+            "F11",
+            "compliance-normas-50xx",
+            "essa descrição está conforme as normas?",
+            "normas_compliance_eval",
+            use_agent=True,
+            seed=["qual a descrição do produto 50232222"],
+            reuse_session=True,
+            r_required=("R1", "R4", "R6", "R8"),
+            # Hedge de campo em trecho fino de intermediário ≠ admitir retrieve vazio total.
+            forbid_empty_rag_prose=False,
+            require_rag_hits=True,
+            # "conform" cobre conforme e conformidade (PT: conforme ∉ conformidade).
+            prose_markers=("conform", "50"),
+        ),
+        BatteryCase(
+            "F11.compliance-pa",
+            "F11",
+            "compliance-sem-norma-pa",
+            "está dentro das normas?",
+            "normas_compliance_missing",
+            use_agent=True,
+            seed=["qual a descrição do produto 90260140"],
+            reuse_session=True,
+            r_required=("R1", "R4", "R8"),
+            prose_markers=("acabado",),
         ),
         # F14 — follow-up
         BatteryCase(
@@ -831,7 +1095,33 @@ def _run_case(
     try:
         for seed_msg in case.seed:
             print(f"  seed: {seed_msg!r}", flush=True)
-            _send_turn(token, sid, seed_msg, agent_id=aid, response_mode=case.response_mode)
+            seed_payload, seed_ms = _send_turn(
+                token, sid, seed_msg, agent_id=aid, response_mode=case.response_mode
+            )
+            seed_prose = _prose(seed_payload)
+            note = f"{seed_ms}ms hits={_rag_hit_count(seed_payload)} len={len(seed_prose)}"
+            case.seed_notes.append(note)
+            if case.judge_seed:
+                seed_errors: list[str] = []
+                if case.require_rag_hits and _rag_hit_count(seed_payload) <= 0:
+                    seed_errors.append("seed sem RAG hits")
+                if case.forbid_empty_rag_prose and seed_prose and EMPTY_RAG_PROSE_RE.search(
+                    seed_prose
+                ):
+                    seed_errors.append("seed admite retrieve vazio")
+                if len(seed_prose) < 40:
+                    seed_errors.append("seed prosa curta")
+                if seed_errors:
+                    case.status = "FAIL"
+                    case.detail = " | ".join(seed_errors + [note])
+                    case.prose = seed_prose
+                    print(f"  [{case.status}] {case.detail}", flush=True)
+                    if case.prose:
+                        print(
+                            f"  prosa(seed): {case.prose.replace(chr(10), ' ')[:200]}",
+                            flush=True,
+                        )
+                    return token
         msg, ms = _send_turn(
             token, sid, case.message, agent_id=aid, response_mode=case.response_mode
         )

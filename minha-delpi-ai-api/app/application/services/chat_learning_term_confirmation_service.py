@@ -82,6 +82,14 @@ class ChatLearningTermConfirmationService:
         if not term:
             return None
 
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
+        # F11: «o que significa VDAR na descrição?» etc. → Normas/RAG, não glossário HITL.
+        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(message):
+            return None
+
         project_uuid = self._as_uuid(project_id)
         internal = self._meaning_discovery.glossary_service.lookup_internal(
             term,

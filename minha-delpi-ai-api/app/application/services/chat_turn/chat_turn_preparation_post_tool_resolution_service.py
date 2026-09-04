@@ -346,6 +346,23 @@ class ChatTurnPreparationPostToolResolutionService:
             skip_rag = True
             pipeline_stages.append("learning_term")
 
+        if not direct_answer:
+            from app.domain.services.chat_technical_description_compliance_service import (
+                ChatTechnicalDescriptionComplianceService,
+            )
+
+            compliance_direct = ChatTechnicalDescriptionComplianceService.try_build_direct_answer(
+                message,
+                previous_messages=history_source,
+                workspace_context=workspace_context,
+            )
+
+            if compliance_direct and compliance_direct.get("directAnswer"):
+                direct_answer = str(compliance_direct["directAnswer"])
+                skip_rag = True
+                if "technical_description_compliance" not in pipeline_stages:
+                    pipeline_stages.append("technical_description_compliance")
+
         if not direct_answer and routing_disambiguation_answer:
             direct_answer = routing_disambiguation_answer
             skip_rag = True
@@ -694,8 +711,40 @@ class ChatTurnPreparationPostToolResolutionService:
             ChatIntentRouterHeuristicsService,
         )
 
-        # F07: wording documental preserva RAG (puro ou misto com ERP).
-        if ChatIntentRouterHeuristicsService.looks_rag_document(message):
+        # F07/F11: wording documental, follow-up de tópico ou descrição técnica → RAG on.
+        # Compliance sem documentação (PA 90xx) mantém skip_rag + direct_answer.
+        from app.domain.services.chat_technical_description_compliance_service import (
+            ChatTechnicalDescriptionComplianceService,
+        )
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
+        compliance_short_circuit = bool(
+            direct_answer
+            and ChatTechnicalDescriptionComplianceService.is_compliance_follow_up(message)
+            and not ChatTechnicalDescriptionIntentService.requires_normas_knowledge(
+                message,
+                previous_messages=history_source,
+                workspace_context=workspace_context,
+            )
+        )
+
+        if (
+            not compliance_short_circuit
+            and (
+                ChatIntentRouterHeuristicsService.looks_rag_document(message)
+                or ChatIntentRouterHeuristicsService.looks_like_documental_topic_follow_up(
+                    message,
+                    history_source,
+                )
+                or ChatTechnicalDescriptionIntentService.requires_normas_knowledge(
+                    message,
+                    previous_messages=history_source,
+                    workspace_context=workspace_context,
+                )
+            )
+        ):
             skip_rag = False
 
         if response_mode_effect:

@@ -24,9 +24,11 @@ Ajuda a **criar**, **explicar** e **analisar** descrições no padrão DELPI:
 
 1. Identifique o grupo pelo prefixo (**CABO**, **TERM.**, **ISOLADOR**, **TUBO**, **TERMOENCOLHIVEL**, **PRENSA CABO**, **RESISTOR**, **TERMISTOR**, **ANILHA**, **ETIQUETA**, …).
 2. Compare com a **estrutura da norma** do grupo: campos, ordem, abreviações de cor, isolação, embalagem.
-3. Aponte conformidades, gaps e sugestão corrigida.
-4. Não confunda com consulta cadastral («qual a descrição do produto 10xxxxxx») — isso é API de produto.
-
+3. Aponte conformidades, gaps e sugestão corrigida; feche com veredito **conforme / parcial / não conforme**.
+4. Após «qual a descrição do produto X» (API), se perguntarem se está **conforme / dentro das normas**, use a descrição do último resultado + norma do grupo.
+5. Com trechos do grupo no contexto, **proibido** admitir base vazia («documentação não disponível», «não tenho a norma», «não tenho a norma específica para PINO»). Subtipos de 1008 estão no mesmo documento — use a seção do tipo ou a estrutura genérica.
+6. **Produto acabado (90xx):** não há norma de descrição nesta base — diga isso; não invente checklist de PA.
+7. Não confunda a **consulta cadastral** («qual a descrição do produto 10xxxxxx») com «como descrever» (norma) — a primeira é API; a segunda e o follow-up de conformidade usam Normas.
 ## Intermediários (50xx)
 
 Formato canônico (segmentos):

@@ -45,6 +45,50 @@ class ChatTechnicalDescriptionVocabularyService(ChatAssistantVocabularyService):
         return cls.terms("intermediateRagQuerySeeds")
 
     @classmethod
+    def compliance_follow_up_markers(cls) -> tuple[str, ...]:
+        return cls.terms("complianceFollowUpMarkers")
+
+    @classmethod
+    def compliance_kinds_with_documentation(cls) -> tuple[str, ...]:
+        return cls.terms("complianceKindsWithDocumentation")
+
+    @classmethod
+    def compliance_description_field_keys(cls) -> tuple[str, ...]:
+        return cls.terms("complianceDescriptionFieldKeys")
+
+    @classmethod
+    def compliance_answer(cls, key: str, **kwargs: Any) -> str:
+        template = str(cls.node("complianceAnswers", key) or "").strip()
+
+        if not template:
+            return ""
+
+        try:
+            return template.format(**kwargs)
+        except (KeyError, ValueError):
+            return template
+
+    @classmethod
+    def compliance_rag_query_lead(cls, *, family_kind: str | None = None) -> str:
+        kind = str(family_kind or "").strip().lower()
+
+        if kind == "intermediate":
+            lead = str(cls.node("complianceRagQueryLeadIntermediate") or "").strip()
+
+            if lead:
+                return lead
+
+        return str(cls.node("complianceRagQueryLead") or "").strip()
+
+    @classmethod
+    def compliance_description_rag_token_hints(cls) -> tuple[str, ...]:
+        return tuple(
+            str(token).strip()
+            for token in cls.terms("complianceDescriptionRagTokenHints")
+            if str(token).strip()
+        )
+
+    @classmethod
     def source_docs(cls) -> tuple[str, ...]:
         return cls.terms("sourceDocs")
 
@@ -132,6 +176,11 @@ class ChatTechnicalDescriptionVocabularyService(ChatAssistantVocabularyService):
             if not isinstance(keywords, list):
                 keywords = []
 
+            rag_seeds = item.get("ragQuerySeeds") or []
+
+            if not isinstance(rag_seeds, list):
+                rag_seeds = []
+
             groups.append(
                 {
                     "groupCode": str(item.get("groupCode") or "").strip(),
@@ -141,10 +190,36 @@ class ChatTechnicalDescriptionVocabularyService(ChatAssistantVocabularyService):
                         for keyword in keywords
                         if str(keyword).strip()
                     ),
+                    "ragQuerySeeds": tuple(
+                        str(seed).strip()
+                        for seed in rag_seeds
+                        if str(seed).strip()
+                    ),
                 }
             )
 
         return tuple(groups)
+
+    @classmethod
+    def group_rag_query_seeds(cls, group_code: str | None) -> tuple[str, ...]:
+        """Sementes FTS focadas no grupo — evita diluir retrieve com seeds genéricas."""
+        code = str(group_code or "").strip()
+
+        if not code:
+            return ()
+
+        for group in cls.material_groups():
+            if str(group.get("groupCode") or "").strip() != code:
+                continue
+
+            seeds = group.get("ragQuerySeeds") or ()
+
+            if isinstance(seeds, tuple) and seeds:
+                return seeds
+
+            break
+
+        return ()
 
     @classmethod
     def color_abbreviations(cls) -> dict[str, str]:

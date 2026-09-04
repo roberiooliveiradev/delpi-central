@@ -244,6 +244,13 @@
         "cabos pp com plug",
         "pp com plug",
         "cabo pp plug"
+      ],
+      "ragQuerySeeds": [
+        "Normas_Tecnicas_DELPI",
+        "1006 Cabos PP com Plug",
+        "grupo 1006",
+        "CABO PP",
+        "C/ PLUG"
       ]
     },
     {
@@ -254,6 +261,13 @@
         "cabos pp",
         "pp circular",
         "pp plano"
+      ],
+      "ragQuerySeeds": [
+        "Normas_Tecnicas_DELPI",
+        "1007 Cabos PP",
+        "grupo 1007",
+        "CABO PP CIRCULAR",
+        "CABO PP PLANO"
       ]
     },
     {
@@ -275,6 +289,15 @@
         "luva",
         "emenda",
         "bala"
+      ],
+      "ragQuerySeeds": [
+        "Normas_Tecnicas_DELPI",
+        "1008 Terminais",
+        "grupo 1008",
+        "Terminais Pino",
+        "TERM. PINO",
+        "TERM.",
+        "Prefixo fixo: TERM."
       ]
     },
     {
@@ -285,6 +308,13 @@
         "cabos",
         "fio",
         "fios"
+      ],
+      "ragQuerySeeds": [
+        "Normas_Tecnicas_DELPI",
+        "1001-1005 Cabos",
+        "grupos 1001 a 1005",
+        "CABO PVC",
+        "Prefixo do item (CABO)"
       ]
     },
     {
@@ -293,6 +323,12 @@
       "keywords": [
         "isolador",
         "isoladores"
+      ],
+      "ragQuerySeeds": [
+        "Normas_Tecnicas_DELPI",
+        "1009 Isoladores",
+        "grupo 1009",
+        "ISOLADOR"
       ]
     },
     {
@@ -301,6 +337,12 @@
       "keywords": [
         "inserto",
         "insertos"
+      ],
+      "ragQuerySeeds": [
+        "Normas_Tecnicas_DELPI",
+        "1009 Insertos",
+        "grupo 1009",
+        "INSERTO"
       ]
     },
     {
@@ -309,6 +351,13 @@
       "keywords": [
         "conector",
         "conectores"
+      ],
+      "ragQuerySeeds": [
+        "Normas_Tecnicas_DELPI",
+        "1009 Conectores",
+        "grupo 1009",
+        "CONECTOR",
+        "TIPO DE CONECTOR"
       ]
     },
     {
@@ -435,5 +484,94 @@
     "PRET",
     "ROXO",
     "VERM"
+  ],
+  "complianceFollowUpMarkers": [
+    "dentro das normas",
+    "dentro da norma",
+    "conforme as normas",
+    "conforme a norma",
+    "conforme as normas tecnicas",
+    "conforme as normas técnicas",
+    "esta conforme",
+    "está conforme",
+    "esta de acordo com as normas",
+    "está de acordo com as normas",
+    "segue as normas",
+    "segue a norma",
+    "respeita as normas",
+    "atende as normas",
+    "atende a norma",
+    "bate com as normas",
+    "bate com a norma",
+    "valida contra as normas",
+    "validar contra as normas",
+    "checar normas",
+    "checar a norma",
+    "conferir normas",
+    "conferir com as normas",
+    "esta padrao",
+    "está padrão",
+    "esta no padrao",
+    "está no padrão",
+    "descricao esta correta",
+    "descrição está correta",
+    "descricao esta certa",
+    "descrição está certa"
+  ],
+  "complianceKindsWithDocumentation": [
+    "raw_material",
+    "intermediate",
+    "consumable"
+  ],
+  "complianceDescriptionFieldKeys": [
+    "description",
+    "descricao",
+    "descrição",
+    "B1_DESC",
+    "b1_desc",
+    "productDescription",
+    "product_description",
+    "name",
+    "nome"
+  ],
+  "complianceAnswers": {
+    "finishedProduct": "O produto **{productCode}** é um **produto acabado** (família 90xx). As **Normas Técnicas DELPI** de descrição cobrem **matérias-primas (grupos 1001–1025)** e a nomenclatura de **intermediários (50xx)** — **não há** documento de descrição padronizada para produto acabado nesta base.\n\nPosso comparar a descrição cadastral com o que estiver no cadastro TOTVS, mas **não** validar conformidade normativa de PA. Para MP ou intermediário, consulte o código correspondente.",
+    "unknownFamily": "Identifiquei o código **{productCode}**, mas **não encontrei** documentação de normas de descrição aplicável a essa família nesta base. As normas atuais cobrem **MP 1001–1025** e **intermediários 50xx**.\n\nSe for matéria-prima ou intermediário, confirme o código; se for produto acabado, ainda não há norma de descrição para validar.",
+    "missingDescription": "Para avaliar se a descrição está conforme as normas, preciso da **descrição cadastral** (ou do código do produto já consultado nesta conversa).\n\nPeça antes «qual a descrição do produto …» ou cole a descrição a validar.",
+    "missingProductContext": "Para dizer se a descrição está dentro das normas, preciso do **código do produto** ou da **descrição** em foco.\n\nEx.: consulte a descrição de um item 10xxxx / 50xxxx e depois pergunte «está conforme as normas?»."
+  },
+  "complianceRagQueryLead": "avaliar se a descrição cadastral abaixo está conforme as Normas Técnicas DELPI estrutura de campos e exemplos",
+  "complianceRagQueryLeadIntermediate": "avaliar conformidade do código intermediário 50xx segmentos isolação bitola cor comprimento decape terminais isoladores Understanding DELPI Intermediate Product Codes",
+  "complianceDescriptionRagTokenHints": [
+    "TERM.",
+    "PINO",
+    "FORQUILHA",
+    "ILHOS",
+    "ILHÓS",
+    "TUBULAR",
+    "LINGUETA",
+    "FASTON",
+    "BANDEIRA",
+    "OLHAL",
+    "ANZOL",
+    "LUVA",
+    "EMENDA",
+    "CABO",
+    "PVC",
+    "EPR",
+    "SILICONE",
+    "TEFLON",
+    "ISOLADOR",
+    "TUBO",
+    "TERMOENCOLHIVEL",
+    "PRENSA",
+    "RESISTOR",
+    "TERMISTOR",
+    "ANILHA",
+    "ETIQUETA",
+    "AWG",
+    "MM2",
+    "ESTANHADO",
+    "ROHS"
   ]
 }

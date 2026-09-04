@@ -407,10 +407,29 @@ class ChatTurnPreparationToolRoutingService:
             ChatProductQueryIntentService,
         )
 
-        # F07: documental puro não dispara ERP (ex.: «compras» em política de compras).
+        # F07/F11: documental puro / follow-up / descrição técnica / compliance × normas.
+        from app.domain.services.chat_technical_description_compliance_service import (
+            ChatTechnicalDescriptionComplianceService,
+        )
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
         skip_tools_for_documental_rag = bool(
-            ChatIntentRouterHeuristicsService.looks_rag_document(message)
-            and not ChatProductQueryIntentService.extract_product_code(message)
+            ChatIntentRouterHeuristicsService.looks_like_documental_topic_follow_up(
+                message,
+                history_source,
+            )
+            or (
+                ChatIntentRouterHeuristicsService.looks_rag_document(message)
+                and not ChatProductQueryIntentService.extract_product_code(message)
+            )
+            or ChatTechnicalDescriptionIntentService.requires_normas_knowledge(
+                message,
+                previous_messages=history_source,
+                workspace_context=workspace_context,
+            )
+            or ChatTechnicalDescriptionComplianceService.is_compliance_follow_up(message)
         )
 
         return ChatTurnPreparationSkipToolFlags(

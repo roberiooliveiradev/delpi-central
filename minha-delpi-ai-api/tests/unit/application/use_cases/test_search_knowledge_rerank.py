@@ -103,3 +103,25 @@ def test_hybrid_search_falls_back_to_keyword_when_embedding_fails(monkeypatch):
 
     assert len(results) == 1
     assert "pedidos" in results[0]["content"]
+    # Score keyword puro (sem diluição híbrida 0.3) — passa min_score típico 0.35.
+    assert float(results[0]["score"] or 0) >= 0.35
+
+
+def test_hybrid_keyword_only_preserves_keyword_score(monkeypatch):
+    """Com vector vazio, score final = overlap keyword (não × CHAT_RAG_HYBRID_KEYWORD_WEIGHT)."""
+    _patch_rag_settings(
+        monkeypatch,
+        CHAT_RAG_HYBRID_ENABLED=True,
+        CHAT_RAG_RERANK_ENABLED=False,
+        CHAT_RAG_HYBRID_KEYWORD_WEIGHT=0.3,
+        CHAT_RAG_HYBRID_VECTOR_WEIGHT=0.7,
+        MAX_CONTEXT_CHUNKS=2,
+    )
+
+    use_case = SearchKnowledgeUseCase(FakeRepository(), RaisingEmbedding())
+    results = use_case.execute(
+        SearchKnowledgeRequest(query="pedidos abertos", limit=2, filters={}),
+    )
+
+    assert len(results) == 1
+    assert float(results[0]["score"] or 0) == 0.4

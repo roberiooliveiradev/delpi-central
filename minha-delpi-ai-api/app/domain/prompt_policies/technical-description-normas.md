@@ -20,11 +20,16 @@ A skill `technical-description-delpi` está ativa. Refine a resposta deste turno
 1. Segmente: família **50xx** → sequência → isolação+bitola → cor 4 letras → comprimento mm → decape E/D → terminais/isoladores E/D.
 2. Isolação: **CA** PVC, **CB** EPR, **CF** Silicone, **CT** Teflon, **CV** Especial.
 3. Entregue descrição técnica alinhada ao exemplo canônico do documento (não invente segmentos faltantes).
+4. Follow-up de conformidade 50xx: use a tabela de segmentos desta skill + RAG do doc de intermediários. Entregue veredito **conforme / parcial / não conforme**. **Não** abra nem feche com «não tenho informação», «não tenho a norma de MP» ou «não consigo validar com a documentação» — se um segmento for ambíguo, diga só qual (ex.: cor 4 letras / decape) e continue a análise dos demais.
 
-## Analisar
+## Analisar (descrição cadastral × normas)
 
-- Descrição de MP colada → valide contra a estrutura do grupo.
-- Código/descrição intermediária → valide segmentos e proponha correção campo a campo.
+- Após «qual a descrição do produto X», se o usuário perguntar se está **conforme / dentro das normas**, use a descrição do último resultado + RAG do grupo (MP 1001–1025 ou intermediário 50xx).
+- Valide campo a campo (prefixo, sequência, abreviações, exemplos). Aponte desvios e proponha a forma padronizada.
+- Entregue um **veredito claro**: conforme / parcialmente conforme / não conforme — com base nos trechos recuperados.
+- Se o RAG trouxe a estrutura do grupo (ex.: 1008 Terminais), **não** diga que «não tem documentação», «não tenho a norma», «não tenho a norma específica para PINO/FORQUILHA/…» ou que a base está vazia. O documento do grupo **já cobre os subtipos** (PINO, FORQUILHA, ILHÓS, LINGUETA, FASTON, OLHAL, LUVA, etc.): use a seção do subtipo ou a estrutura genérica do grupo.
+- Avalie com o que veio; se um campo específico não aparece no trecho, diga só esse campo (ex.: «ROHS não consta na estrutura da norma recuperada») — sem negar a existência da norma do grupo.- **Produto acabado (90xx):** não há norma de descrição nesta base — diga isso com clareza; **não invente** estrutura de PA.
+- Sem descrição em foco: peça o código/descrição antes de avaliar.
 
 ## Cadastro vs busca
 

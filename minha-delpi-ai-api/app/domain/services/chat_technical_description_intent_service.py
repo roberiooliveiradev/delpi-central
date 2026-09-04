@@ -24,12 +24,36 @@ class ChatTechnicalDescriptionIntentService:
     _MP_GROUP_RE = re.compile(r"\bgrupo\s+(10\d{2})\b")
 
     @classmethod
-    def requires_normas_knowledge(cls, message: str | None) -> bool:
+    def requires_normas_knowledge(
+        cls,
+        message: str | None,
+        *,
+        previous_messages: list | None = None,
+        workspace_context: dict | None = None,
+    ) -> bool:
         vocab = ChatTechnicalDescriptionVocabularyService
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if not normalized:
             return False
+
+        from app.domain.services.chat_technical_description_compliance_service import (
+            ChatTechnicalDescriptionComplianceService,
+            OUTCOME_EVALUATE,
+        )
+
+        if ChatTechnicalDescriptionComplianceService.is_compliance_follow_up(message):
+            assessment = ChatTechnicalDescriptionComplianceService.assess(
+                message,
+                previous_messages=previous_messages,
+                workspace_context=workspace_context,
+            )
+
+            return bool(
+                assessment
+                and assessment.outcome == OUTCOME_EVALUATE
+                and assessment.has_normas_documentation
+            )
 
         intermediate_query = cls._is_intermediate_nomenclature_query(normalized)
 
@@ -146,22 +170,26 @@ class ChatTechnicalDescriptionIntentService:
     def build_rag_query(cls, message: str | None) -> str:
         vocab = ChatTechnicalDescriptionVocabularyService
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-        parts = list(vocab.rag_query_seeds())
         intermediate = cls._is_intermediate_nomenclature_query(normalized)
         group = cls.resolve_material_group(normalized)
+        parts: list[str] = []
 
+        # Com grupo material resolvido: seeds focadas (FTS genérico diluía e
+        # trazia seção errada — ex.: conector/terminal no lugar de cabos 1001–1005).
         if intermediate or (group and str(group[0]).startswith("50")):
             parts.extend(vocab.intermediate_rag_query_seeds())
-
-        if group:
+        elif group:
             group_code, label, _keyword = group
-            parts.extend(
-                [
-                    f"grupo {group_code}",
-                    label,
-                    "objetivo abrangência estrutura campos",
-                ]
-            )
+            group_seeds = vocab.group_rag_query_seeds(group_code)
+
+            if group_seeds:
+                parts.extend(group_seeds)
+            else:
+                parts.append("Normas_Tecnicas_DELPI")
+
+            parts.extend([f"grupo {group_code}", label])
+        else:
+            parts.extend(vocab.rag_query_seeds())
 
         color = cls._first_color_abbreviation_in_text(normalized)
 

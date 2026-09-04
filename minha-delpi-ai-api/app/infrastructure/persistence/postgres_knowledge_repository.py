@@ -112,20 +112,35 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
         *,
         use_fts: bool = True,
     ) -> list[KnowledgeChunk]:
-        from app.domain.services.keyword_similarity import keyword_overlap_score, tokenize
+        from app.domain.services.keyword_similarity import (
+            keyword_overlap_score_significant,
+            significant_query_tokens,
+            tokenize,
+        )
 
         normalized_query = str(query or "").strip()
 
         if not normalized_query:
             return []
 
+        stopwords, max_fts_terms, title_boost = self._knowledge_search_config()
         rows = []
 
         if use_fts:
-            rows = self._search_keyword_chunks_fts(normalized_query, limit=limit, filters=filters)
+            rows = self._search_keyword_chunks_fts(
+                normalized_query,
+                limit=limit,
+                filters=filters,
+                stopwords=stopwords,
+                max_terms=max_fts_terms,
+            )
 
         if not rows:
-            terms = tokenize(normalized_query)[:8]
+            terms = significant_query_tokens(
+                normalized_query,
+                stopwords=stopwords,
+                max_terms=max_fts_terms,
+            ) or tokenize(normalized_query)[:8]
 
             if not terms:
                 return []
@@ -157,7 +172,17 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
         for chunk_model, document_model in rows:
             chunk = self._to_chunk_entity(chunk_model)
-            score = keyword_overlap_score(query, chunk.content or "")
+            score = keyword_overlap_score_significant(
+                query,
+                chunk.content or "",
+                stopwords=stopwords,
+            )
+            if title_boost > 0:
+                score += title_boost * keyword_overlap_score_significant(
+                    query,
+                    str(document_model.title or ""),
+                    stopwords=stopwords,
+                )
             scored.append(
                 (
                     score,
@@ -180,16 +205,52 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
         return [chunk for score, chunk in scored[:limit] if score > 0]
 
+    @staticmethod
+    def _knowledge_search_config() -> tuple[set[str], int, float]:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        stopwords = {
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list("knowledge_search", "ftsStopwords")
+            if str(item).strip()
+        }
+        max_terms = int(
+            ChatAssistantContentService.get_node("knowledge_search", "limits", "maxFtsTerms") or 8
+        )
+        title_boost = float(
+            ChatAssistantContentService.get_node(
+                "knowledge_search", "limits", "titleOverlapBoost"
+            )
+            or 0.35
+        )
+        return stopwords, max(1, max_terms), max(0.0, title_boost)
+
     def _search_keyword_chunks_fts(
         self,
         query: str,
         *,
         limit: int,
         filters: dict | None,
+        stopwords: set[str] | None = None,
+        max_terms: int = 8,
     ) -> list:
         from sqlalchemy import func
 
-        ts_query = func.plainto_tsquery("simple", query)
+        from app.domain.services.keyword_similarity import significant_query_tokens, tokenize
+
+        terms = significant_query_tokens(
+            query,
+            stopwords=stopwords,
+            max_terms=max_terms,
+        ) or tokenize(query)[: max(1, max_terms)]
+        if not terms:
+            return []
+
+        # OR dos termos significativos: AND exigia todas as palavras da pergunta
+        # (ex.: «matéria-prima») e zerava hits no doc certo.
+        ts_query = func.to_tsquery("simple", " | ".join(terms))
 
         db_query = (
             db.session.query(
@@ -208,12 +269,15 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
         db_query = self._apply_scope_filters(db_query, filters or {})
 
+        rank = func.ts_rank(
+            func.to_tsvector("simple", AiKnowledgeChunkModel.content),
+            ts_query,
+        )
         return (
-            db_query.order_by(AiKnowledgeChunkModel.created_at.desc())
-            .limit(max(limit * 4, limit))
+            db_query.order_by(rank.desc(), AiKnowledgeChunkModel.created_at.desc())
+            .limit(max(limit * 8, limit))
             .all()
         )
-
     def list_documents_with_chunk_count(
         self,
         limit: int = 100,

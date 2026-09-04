@@ -836,6 +836,11 @@
       "Quais apps tenho acesso?",
       "O que você pode fazer?"
     ],
+    "rag": [
+      "O que você pode fazer?",
+      "Pesquisar na web",
+      "Anexar arquivo"
+    ],
     "generic": [
       "O que você pode fazer?",
       "Consultar produto",

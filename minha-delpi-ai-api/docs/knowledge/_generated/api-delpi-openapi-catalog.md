@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 700 · **Gerado em:** 2026-09-04 10:48 UTC
+**Provider:** `api-delpi` · **Rotas:** 705 · **Gerado em:** 2026-09-04 15:49 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -825,6 +825,16 @@
 | `GET` | `/hr/branches` | `list_hr_branches` | Indicator — branches de rh |
 | `GET` | `/hr/performance-reviews-completion` | `get_hr_performance_reviews_completion` | Hr performance reviews completion |
 | `GET` | `/hr/snapshot` | `get_hr_snapshot` | Hr snapshot |
+
+## Request lookups (5)
+
+| Método | Path | operationId | Summary |
+|--------|------|-------------|---------|
+| `GET` | `/request-lookups/carriers` | `search_request_lookup_carriers` | Search Carriers |
+| `GET` | `/request-lookups/open-sales-orders` | `list_request_lookup_open_sales_orders` | List Open Sales Orders |
+| `GET` | `/request-lookups/parties` | `search_request_lookup_parties` | Search Parties |
+| `GET` | `/request-lookups/products` | `search_request_lookup_products` | Search Products |
+| `GET` | `/request-lookups/products/{code}/warehouse-01-balance` | `get_request_lookup_warehouse_01_balance` | Warehouse Balance |
 
 ## Suprimentos (8)
 

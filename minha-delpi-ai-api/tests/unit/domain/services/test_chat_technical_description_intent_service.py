@@ -50,6 +50,20 @@ def test_build_rag_query_includes_terminal_group():
     assert "1008" in query
     assert "terminais" in query
     assert "Normas_Tecnicas_DELPI" in query
+    assert "TERM." in query
+    # Seeds genéricas diluem FTS — com grupo resolvido usamos seeds focadas.
+    assert "estrutura da descrição campos exemplo" not in query
+
+
+def test_build_rag_query_cabo_prefers_group_section_seeds():
+    query = ChatTechnicalDescriptionIntentService.build_rag_query(
+        "como descrever um cabo PVC segundo as normas técnicas DELPI?"
+    )
+    assert "1001-1005" in query or "1001 a 1005" in query
+    assert "CABO PVC" in query
+    assert "Normas_Tecnicas_DELPI" in query
+    assert "estrutura da descrição campos exemplo" not in query
+    assert "objetivo abrangência estrutura campos" not in query
 
 
 def test_product_intent_not_description_for_normas_guidance():

@@ -87,3 +87,16 @@ def test_resolve_pending_confirmation_registers_candidate(monkeypatch):
     assert result is not None
     assert "OP" in result["directAnswer"]
     candidate_service.register_candidate.assert_called_once()
+
+
+def test_definition_question_defers_technical_description_to_rag():
+    """F11: «o que significa VDAR na descrição?» não vira glossário HITL."""
+    svc = ChatLearningTermConfirmationService(
+        meaning_discovery_service=_FakeMeaningDiscovery(),
+        candidate_service=Mock(),
+    )
+    result = svc._build_definition_question(
+        message="o que significa VDAR na descrição?",
+        project_id=None,
+    )
+    assert result is None

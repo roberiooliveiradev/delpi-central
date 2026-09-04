@@ -13,6 +13,10 @@ class ChatConversationContextService:
         return cls._message_field(message, "role", default)
 
     @classmethod
+    def message_content(cls, message, *, default: str = "") -> str:
+        return cls._message_field(message, "content", default)
+
+    @classmethod
     def message_metadata(cls, message) -> dict:
         return cls._message_metadata(message)
 

@@ -1709,6 +1709,10 @@
       { "termsAny": "priceTerms", "subIntent": "price_lookup" },
       { "probe": "fullAnalyserQuestion", "subIntent": "product_lookup" },
       {
+        "predicate": "descriptionQuestion",
+        "subIntent": "product_lookup"
+      },
+      {
         "predicate": "structureExclusivity",
         "subIntent": "structure_exclusivity_lookup"
       },
@@ -1724,6 +1728,7 @@
     ],
     "operationalAmbiguityExclusionPredicates": [
       "stockQuestion",
+      "descriptionQuestion",
       "billingRoute",
       "factoryStatus",
       "productionStatus",

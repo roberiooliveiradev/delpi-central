@@ -249,6 +249,102 @@ class ChatIntentRouterHeuristicsService:
         )
 
     @classmethod
+    def previous_assistant_was_documental_rag(cls, previous_messages: list | None) -> bool:
+        """Última resposta do assistente veio de consulta documental (F07 continuity)."""
+        if not previous_messages:
+            return False
+
+        from app.domain.services.chat_conversation_context_service import (
+            ChatConversationContextService,
+        )
+
+        for message in reversed(list(previous_messages)):
+            role = ChatConversationContextService.message_role(message).lower()
+            if role not in {"assistant", "ai"}:
+                continue
+
+            metadata = ChatConversationContextService.message_metadata(message)
+            admin = metadata.get("adminDebug") if isinstance(metadata.get("adminDebug"), dict) else {}
+            # API HTTP pode espelhar adminDebug na raiz do dict (não no entity ChatMessage).
+            if not admin and isinstance(message, dict):
+                top = message.get("adminDebug")
+                admin = top if isinstance(top, dict) else {}
+            route = admin.get("intentRoute") if isinstance(admin.get("intentRoute"), dict) else {}
+            if not route:
+                intel = (
+                    metadata.get("intelligence")
+                    if isinstance(metadata.get("intelligence"), dict)
+                    else {}
+                )
+                route = intel.get("intentRoute") if isinstance(intel.get("intentRoute"), dict) else {}
+
+            decision = str(route.get("decision") or "").strip().lower()
+            intent = str(route.get("intent") or "").strip().lower()
+            if decision in {"rag_internal", "rag_question"} or intent in {
+                "rag_question",
+                "rag",
+            }:
+                return True
+
+            content = ChatConversationContextService.message_content(message).lower()
+            if not content and isinstance(message, dict):
+                content = str(message.get("answer") or "").lower()
+            if any(
+                marker in content
+                for marker in (
+                    "normas técnicas",
+                    "base de conhecimento",
+                    "política",
+                    "glossário",
+                    "documentação autorizada",
+                )
+            ):
+                return True
+
+            return False
+
+        return False
+
+    @classmethod
+    def looks_like_documental_topic_follow_up(
+        cls,
+        message: str,
+        previous_messages: list | None = None,
+    ) -> bool:
+        """Resposta curta de tópico após turno RAG (ex.: «terminais» após normas)."""
+        if not cls.previous_assistant_was_documental_rag(previous_messages):
+            return False
+
+        normalized = " ".join(str(message or "").strip().lower().split())
+        if not normalized or len(normalized) > 64:
+            return False
+
+        if cls.looks_rag_document(normalized):
+            return True
+
+        if cls.looks_self_help(normalized) or cls.looks_conversation_meta(normalized):
+            return False
+
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        if ChatProductQueryIntentService.extract_product_code(normalized):
+            # código isolado após normas (ex.: 1008) ainda é follow-up documental
+            if normalized.isdigit() or len(normalized) <= 8:
+                return True
+            return False
+
+        words = normalized.split()
+        if len(words) > 6:
+            return False
+
+        if any(ch in normalized for ch in "?!。"):
+            return False
+
+        return True
+
+    @classmethod
     def looks_self_help(cls, message: str) -> bool:
         lowered = message.lower()
 

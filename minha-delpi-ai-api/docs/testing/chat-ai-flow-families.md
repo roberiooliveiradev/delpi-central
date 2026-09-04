@@ -168,10 +168,23 @@ Além dos gates de domínio (`smoke_chat_flow_families_f01_f04_f03.py`) e da ava
 | Typos operacionais | `estrutra`, `filail`, `estq` | F03, F01 |
 | Abreviações / casual | `o q vc pode fazer`, `ago/26`, `p produzir hj` | F02, F03 |
 | PT informal | `me fala … pf`, `qtos tem programado` | F01, F03 |
-| Multi-turn na **mesma sessão** | seed estoque → «somente filial 01»; ROL → «mês passado» | F14 |
+| Multi-turn na **mesma sessão** | seed estoque → «somente filial 01»; ROL → «mês passado»; normas → «terminais» | F14, F07 |
 | Superfície comum × agente | guidance sem agente vs tool com agente | F01, F03 |
 | Identity / small talk | `como vc se chama`, `bom dia` | F19 |
 | SQL authoring sem leak | `crie sql q liste…` | F04, F23 |
+
+**Julgar a conversa, não só a pergunta (obrigatório)**
+
+A bateria **não** termina no `decision`/`intent` (R1). O problema costuma aparecer no **fluxo seguinte**: prosa inútil, retrieve vazio, chips de ERP em turno documental, follow-up que perde o tópico.
+
+| Exigência | O que fazer |
+|-----------|-------------|
+| **Explanar a resposta** | Ler a prosa entregue (R4): responde à pergunta? PT-BR? Sem vazamento? Sem «não encontrei» quando a base **tem** o documento? |
+| **Conversa fluida** | Em multi-turn, julgar **seed + turno** (R6): o follow-up continua o assunto; chips coerentes; `skipRag`/`requiresRag` alinhados |
+| **Grounding** | Quando `require_rag_hits` / família F07 com doc indexado: `retrievedChunkCount > 0` e marcadores de conteúdo na prosa |
+| **FAIL explícito** | Rota certa + prosa vazia / inventada / chips ERP = **FAIL** (não «PASS de roteamento») |
+
+Anti-padrão: marcar PASS só porque `decision=rag_internal` enquanto a bolha diz «não tenho o conteúdo» e sugere «Ver estoque».
 
 **Script canônico:** `scripts/human_interaction_battery_live.py`
 
@@ -495,12 +508,22 @@ Para cada família: **esperado**, **roteiros**, **gaps**, **âncoras**.
 
 ### F07 — RAG / company-knowledge
 
-**Roteiros:** «o que diz a política de compras?», «explique o glossário de qualidade», «estoque segundo a política» (não deve virar só ERP).
+**Roteiros:** «o que diz a política de compras?», «explique o glossário de qualidade», «normas técnicas DELPI sobre matéria-prima?», follow-up «terminais», «estoque segundo a política» (não deve virar só ERP).
 
-**Esperado:** `decision=rag_internal` (ou operacional com `requiresRag` no misto); `skipRag=false`; sem ERP em consulta documental pura; skill `company-knowledge`.
+**Esperado (roteamento):** `decision=rag_internal` (ou operacional com `requiresRag` no misto); `skipRag=false`; sem ERP em consulta documental pura; skill `company-knowledge`; chips de follow-up **não** ERP («Ver estoque», «Ampliar período»).
 
-**Gaps residual:** base pode não ter o PDF de política/glossário (prosa «não encontrei» com RAG on ainda é PASS de roteamento); embeddings off → keyword only.
+**Esperado (prosa / conversa fluida — inegociável na bateria):**
 
+| Caso | Conteúdo | Critério |
+|------|----------|----------|
+| `F07.normas` | Doc `Normas_Tecnicas_DELPI.md` indexado | `require_rag_hits`; prosa cita grupos/norma; **FAIL** se «não tenho o conteúdo» |
+| `F07.follow-terminais` | Seed normas → «terminais» | Mesma sessão; julga seed+turno; prosa útil sobre **1008**; continuidade documental (`documental_follow_up`) |
+| `F07.policy` / `F07.glossary` | PDF pode estar ausente | Roteamento RAG on + sem chips ERP; prosa honesta «não encontrei» aceitável **só** se a base não tiver o doc |
+| `F07.stock-policy` | Misto | `/stock` + não `skipRag` por causa de «política» |
+
+**Não basta perguntar.** O avaliador (humano ou script) deve **explicar/verificar a resposta** e o turno seguinte — falha típica: R1 PASS e R4/R6 FAIL (retrieve diluído, ranking errado, follow-up `llm_fallback`).
+
+**Gaps residual:** política/glossário podem não estar indexados; embeddings off → keyword/FTS (`knowledge_search.json` + hybrid keyword-only).
 ---
 
 ### F08 — Web search
@@ -529,9 +552,13 @@ Para cada família: **esperado**, **roteiros**, **gaps**, **âncoras**.
 
 ### F11 — Descrição técnica
 
-**Roteiros:** «como descrever um terminal pino?», «o que significa VDAR?», «explique intermediário 5023…», «me fale do produto 10080001» (deve ser cadastro, **não** normas).
+**Roteiros:** «como descrever um terminal?», «o que significa VDAR na descrição?», «monte a descrição de um cabo…», «explique intermediário 5023…», «me fale do produto 10080001» (deve ser cadastro, **não** normas).
 
-**Gaps:** skill default ON pode interceptar cadastro; preflight bloqueia REST em normas.
+**Esperado:** `decision=rag_internal` + `requiresRag` + sub `technical_description*` **antes** de `text_task` e `operational_action`; query RAG enriquecida (`build_rag_query`); skill `technical-description-delpi` + fonte `Normas_Tecnicas_DELPI.md` / intermediários; chips de RAG (não ERP). Cadastro por código 10xxxxxx continua operacional.
+
+**Âncora:** `ChatTechnicalDescriptionIntentService.requires_normas_knowledge` promovido cedo em `ChatIntentRouterClassifyService` (prioridade sobre text_task/ERP).
+
+**Gaps:** skill default ON pode interceptar cadastro mal formulado; preflight bloqueia REST em normas.
 
 ---
 
@@ -671,10 +698,16 @@ Fonte: `app/content/pt-BR/skills/catalog.json` (7 skills).
 | F06.schema | schema SB1010 | ✓ | ✓ | ✓ | ✓ | — | — | — | — | — | PASS | PASS | `/schema` + `tablePresentations` (Colunas SX3); prosa `system_metadata` (columnCount); sem strip por path; sem «N registros»/X3_TAMANHO |
 | F06.indexes | indexes SB1010 | ✓ | ✓ | ✓ | ✓ | — | — | — | — | — | PASS | PASS | registry `systemTableIndexes` + terms indexes |
 | F06.addcol | add coluna desconhecida | ✓ | ✓ | — | ✓ | — | ✓ | — | ✓ | — | PASS | PASS | clarify show_sql; não inventar SA1 via LLM |
-| F07.policy | política compras RAG | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | documental > purchase_lookup; skip ERP; RAG on |
+| F07.policy | política compras RAG | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | documental > purchase_lookup; skip ERP; RAG on; prosa honesta se doc ausente |
 | F07.glossary | glossário qualidade RAG | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | não pedir período KPI; documental ≠ text_task |
-| F07.normas | normas matéria-prima | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | `rag_internal` + company-knowledge |
+| F07.normas | normas matéria-prima | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | hits RAG + prosa com grupos; FAIL se «não tenho conteúdo» |
 | F07.stock-policy | estoque + política | ✓ | ✓ | ✓ | ✓ | — | — | — | ✓ | — | PASS | PASS | `/stock` + preserva RAG (não só ERP) |
+| F07.follow-terminais | seed normas → «terminais» | ✓ | ✓ | — | ✓ | — | ✓ | — | ✓ | — | PASS | PASS | continuidade 1008; seed+turno; sem chips ERP |
+| F11.terminal | como descrever terminal | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | `technical_description_1008` antes de text_task/ERP |
+| F11.vdar | VDAR na descrição | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | não `operational_action` |
+| F11.cabo | monte descrição cabo | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | não `text_task` |
+| F11.intermediario | explique 50xx | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | segmentação intermediário |
+| F11.produto-cadastro | descrição produto 10… | ✓ | ✓ | — | ✓ | — | — | — | ✓ | — | PASS | PASS | `/products/` operacional, não normas |
 | F08.1 | pesquise na web | | | | | | | | | | | | |
 | F10.1 | analise desenho | | | | | | | | | | | | |
 | F11.1 | normas vs cadastro | | | | | | | | | | | | |

@@ -18,6 +18,120 @@ from app.domain.services.chat_intent_router.chat_intent_router_support_service i
 
 class ChatIntentRouterClassifyService:
     @classmethod
+    def _technical_description_route(
+        cls,
+        message: str,
+        *,
+        previous_messages: list[Any] | None = None,
+        workspace_context: dict | None = None,
+    ) -> IntentRouteResult | None:
+        """F11: descrição técnica MP/50xx → RAG Normas (antes de text_task/ERP)."""
+        from app.domain.services.chat_technical_description_compliance_service import (
+            ChatTechnicalDescriptionComplianceService,
+            OUTCOME_EVALUATE,
+            OUTCOME_MISSING_DOCS,
+            OUTCOME_NEED_CONTEXT,
+        )
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
+        compliance = ChatTechnicalDescriptionComplianceService.assess(
+            message,
+            previous_messages=previous_messages,
+            workspace_context=workspace_context,
+        )
+
+        if compliance and compliance.is_compliance_request:
+            if compliance.outcome == OUTCOME_EVALUATE:
+                params: dict[str, str] = {}
+
+                if compliance.product_code:
+                    params["productCode"] = compliance.product_code
+
+                if compliance.group_code:
+                    params["materialGroup"] = compliance.group_code
+
+                if compliance.family_kind:
+                    params["productFamilyKind"] = compliance.family_kind
+
+                return ChatIntentRouterSupportService.with_decision(
+                    IntentRouteResult(
+                        intent="rag_question",
+                        sub_intent="technical_description_compliance",
+                        confidence=0.9,
+                        requires_rag=True,
+                        requires_llm=True,
+                        priority_applied=7,
+                        flags=(
+                            "internal_document",
+                            "technical_description",
+                            "company_knowledge",
+                            "description_compliance",
+                        ),
+                        resolved_params=params or None,
+                    ),
+                    decision="rag_internal",
+                    reason="technical_description_compliance",
+                )
+
+            if compliance.outcome in {OUTCOME_MISSING_DOCS, OUTCOME_NEED_CONTEXT}:
+                # Direct answer no turn prep — sem RAG inventado.
+                return ChatIntentRouterSupportService.with_decision(
+                    IntentRouteResult(
+                        intent="rag_question",
+                        sub_intent="technical_description_compliance_unavailable",
+                        confidence=0.92,
+                        requires_rag=False,
+                        requires_llm=False,
+                        requires_tool=False,
+                        priority_applied=7,
+                        flags=(
+                            "technical_description",
+                            "normas_documentation_missing",
+                            "description_compliance",
+                        ),
+                        resolved_params=(
+                            {"productCode": compliance.product_code}
+                            if compliance.product_code
+                            else None
+                        ),
+                    ),
+                    decision="direct_answer",
+                    reason="technical_description_no_normas_docs",
+                )
+
+        if not ChatTechnicalDescriptionIntentService.requires_normas_knowledge(
+            message,
+            previous_messages=previous_messages,
+            workspace_context=workspace_context,
+        ):
+            return None
+
+        normalized = str(message or "").strip()
+        group = ChatTechnicalDescriptionIntentService.resolve_material_group(normalized)
+        sub = "technical_description"
+        params = None
+        if group:
+            sub = f"technical_description_{group[0]}"
+            params = {"materialGroup": group[0], "materialLabel": group[1]}
+
+        return ChatIntentRouterSupportService.with_decision(
+            IntentRouteResult(
+                intent="rag_question",
+                sub_intent=sub,
+                confidence=0.88,
+                requires_rag=True,
+                requires_llm=True,
+                priority_applied=7,
+                flags=("internal_document", "technical_description", "company_knowledge"),
+                resolved_params=params,
+            ),
+            decision="rag_internal",
+            reason="technical_description_normas",
+        )
+
+    @classmethod
     def classify(
         cls,
         message: str,
@@ -175,6 +289,15 @@ class ChatIntentRouterClassifyService:
                 decision="attachment_read",
                 reason="document_question_with_files",
             )
+
+        # F11: «como descrever…» / VDAR / intermediário 50xx — antes de text_task e ERP.
+        technical_route = cls._technical_description_route(
+            message,
+            previous_messages=history,
+            workspace_context=workspace_context,
+        )
+        if technical_route is not None:
+            return technical_route
 
         from app.domain.services.chat_host_surface_context_service import (
             ChatHostSurfaceContextService,
@@ -667,6 +790,26 @@ class ChatIntentRouterClassifyService:
                 ),
                 decision="utility_direct",
                 reason="utility_pattern",
+            )
+
+        # F07: «terminais» / «1008» após normas → continua RAG, não llm_fallback.
+        if ChatIntentRouterHeuristicsService.looks_like_documental_topic_follow_up(
+            normalized,
+            history,
+        ):
+            return ChatIntentRouterSupportService.with_decision(
+                IntentRouteResult(
+                    intent="rag_question",
+                    sub_intent="documental_follow_up",
+                    is_follow_up=True,
+                    confidence=0.8,
+                    requires_rag=True,
+                    requires_llm=True,
+                    priority_applied=8,
+                    flags=("internal_document", "documental_follow_up"),
+                ),
+                decision="rag_internal",
+                reason="documental_topic_follow_up",
             )
 
         return ChatIntentRouterSupportService.with_decision(

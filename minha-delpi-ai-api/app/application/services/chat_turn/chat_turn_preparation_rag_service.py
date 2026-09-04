@@ -119,6 +119,24 @@ class ChatTurnPreparationRagService:
 
         return ChatDrawingIntentService.is_drawing_analysis_request(message)
 
+    @staticmethod
+    def _last_user_message_text(previous_messages: list | None) -> str:
+        if not previous_messages:
+            return ""
+        from app.domain.services.chat_conversation_context_service import (
+            ChatConversationContextService,
+        )
+
+        for item in reversed(list(previous_messages)):
+            role = ChatConversationContextService.message_role(item).lower()
+            if role != "user":
+                continue
+            content = ChatConversationContextService.message_content(item)
+            if not content and isinstance(item, dict):
+                content = str(item.get("message") or "").strip()
+            return content
+        return ""
+
     @classmethod
     def build(
         cls,
@@ -151,7 +169,11 @@ class ChatTurnPreparationRagService:
         )
 
         technical_description_normas = (
-            ChatTechnicalDescriptionIntentService.requires_normas_knowledge(message)
+            ChatTechnicalDescriptionIntentService.requires_normas_knowledge(
+                message,
+                previous_messages=previous_messages,
+                workspace_context=workspace_context,
+            )
         )
         requires_documentary_rag = cls._requires_documentary_rag(
             message=message,
@@ -233,19 +255,43 @@ class ChatTurnPreparationRagService:
 
                 rag_min_score = resolve_chat_intelligence_runtime().rag_identity_question_min_score
             elif technical_description_normas:
-                rag_query = ChatTechnicalDescriptionIntentService.build_rag_query(message)
+                from app.domain.services.chat_technical_description_compliance_service import (
+                    ChatTechnicalDescriptionComplianceService,
+                )
+
+                compliance_query = ChatTechnicalDescriptionComplianceService.build_rag_query(
+                    message,
+                    previous_messages=previous_messages,
+                    workspace_context=workspace_context,
+                )
+                rag_query = (
+                    compliance_query
+                    or ChatTechnicalDescriptionIntentService.build_rag_query(message)
+                )
             elif cls._is_drawing_analysis_turn(message, tool_context):
                 from app.domain.services.chat_drawing_intent_service import (
                     ChatDrawingIntentService,
                 )
 
                 rag_query = ChatDrawingIntentService.build_rag_query(message)
-            elif semantic_memory_service.should_use_enriched_query(workspace_context):
-                rag_query = semantic_memory_service.resolve_rag_query(
-                    message,
-                    workspace_context=workspace_context,
-                    default_query=rag_query,
+            else:
+                from app.domain.services.chat_intent_router.chat_intent_router_heuristics_service import (
+                    ChatIntentRouterHeuristicsService,
                 )
+
+                if ChatIntentRouterHeuristicsService.looks_like_documental_topic_follow_up(
+                    message,
+                    previous_messages,
+                ):
+                    prior = cls._last_user_message_text(previous_messages)
+                    if prior and prior.strip().lower() != str(message or "").strip().lower():
+                        rag_query = f"{prior.strip()} {str(message or '').strip()}".strip()
+                elif semantic_memory_service.should_use_enriched_query(workspace_context):
+                    rag_query = semantic_memory_service.resolve_rag_query(
+                        message,
+                        workspace_context=workspace_context,
+                        default_query=rag_query,
+                    )
 
                 if "semantic_memory" not in pipeline_stages:
                     pipeline_stages.append("semantic_memory")

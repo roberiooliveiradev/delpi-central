@@ -46,6 +46,125 @@ def test_classify_ultimas_compras_com_codigo_continua_purchase():
     assert route.requires_rag is False
 
 
+def test_classify_terminais_follow_up_after_normas_is_rag():
+    history = [
+        {
+            "role": "user",
+            "content": "o que dizem as normas técnicas DELPI sobre matéria-prima?",
+        },
+        {
+            "role": "assistant",
+            "content": "As Normas Técnicas DELPI cobrem 1001–1025. 1008 — terminais.",
+            "metadata": {
+                "adminDebug": {
+                    "intentRoute": {
+                        "decision": "rag_internal",
+                        "intent": "rag_question",
+                    }
+                }
+            },
+        },
+    ]
+    route = ChatIntentRouterService.classify("terminais", previous_messages=history)
+
+    assert route.decision == "rag_internal"
+    assert route.requires_rag is True
+    assert route.is_follow_up is True
+    assert route.sub_intent == "documental_follow_up"
+
+
+def test_classify_terminais_follow_up_with_chat_message_entities():
+    """Histórico live vem como ChatMessage (não dict) — send/stream path."""
+    from datetime import datetime, timezone
+    from uuid import uuid4
+
+    from app.domain.entities.chat_message import ChatMessage
+
+    session_id = uuid4()
+    now = datetime.now(timezone.utc)
+    history = [
+        ChatMessage(
+            id=uuid4(),
+            session_id=session_id,
+            role="user",
+            content="o que dizem as normas técnicas DELPI sobre matéria-prima?",
+            metadata=None,
+            created_at=now,
+        ),
+        ChatMessage(
+            id=uuid4(),
+            session_id=session_id,
+            role="assistant",
+            content="As Normas Técnicas DELPI cobrem 1001–1025. 1008 — terminais.",
+            metadata={
+                "adminDebug": {
+                    "intentRoute": {
+                        "decision": "rag_internal",
+                        "intent": "rag_question",
+                    }
+                }
+            },
+            created_at=now,
+        ),
+    ]
+    route = ChatIntentRouterService.classify("terminais", previous_messages=history)
+
+    assert route.decision == "rag_internal"
+    assert route.requires_rag is True
+    assert route.sub_intent == "documental_follow_up"
+
+
+def test_classify_como_descrever_terminal_is_rag_technical_description():
+    route = ChatIntentRouterService.classify("como descrever um terminal?")
+
+    assert route.decision == "rag_internal"
+    assert route.requires_rag is True
+    assert route.intent == "rag_question"
+    assert str(route.sub_intent or "").startswith("technical_description")
+    assert (route.resolved_params or {}).get("materialGroup") == "1008"
+
+
+def test_classify_vdar_na_descricao_is_rag_not_operational():
+    route = ChatIntentRouterService.classify("o que significa VDAR na descrição?")
+
+    assert route.decision == "rag_internal"
+    assert route.requires_rag is True
+    assert route.intent == "rag_question"
+    assert "technical_description" in str(route.sub_intent or "")
+
+
+def test_classify_monte_descricao_cabo_is_rag_not_text_task():
+    route = ChatIntentRouterService.classify(
+        "monte a descrição de um cabo PVC 0,75mm2 preto"
+    )
+
+    assert route.decision == "rag_internal"
+    assert route.requires_rag is True
+    assert route.intent != "text_task"
+
+
+def test_classify_explique_intermediario_is_rag_not_text_task():
+    route = ChatIntentRouterService.classify(
+        "explique o código intermediário 50232222 CB1,50VERD-00255/06/06–6314–0111"
+    )
+
+    assert route.decision == "rag_internal"
+    assert route.requires_rag is True
+    assert route.intent != "text_task"
+
+
+def test_classify_product_lookup_descricao_continua_operational():
+    """«descrição do produto 10xxxxxx» é cadastro REST — não normas nem clarify."""
+    route = ChatIntentRouterService.classify("qual a descrição do produto 10080047")
+
+    assert route.decision == "operational_action"
+    assert route.ambiguous is False
+    assert route.intent == "operational_query"
+    assert route.requires_rag is False
+    assert "technical_description" not in str(route.sub_intent or "")
+
+
+
 def test_classify_crie_glossario_continua_text_task():
     from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
 

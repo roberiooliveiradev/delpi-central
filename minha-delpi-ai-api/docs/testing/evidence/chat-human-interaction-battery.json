@@ -1038,9 +1038,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 6454ms",
-    "ms": 6454,
-    "prose": "Não encontrei informações sobre a **política de compras** na documentação autorizada disponível no momento.\n\nPara eu conseguir ajudar, você pode:\n\n- **Anexar o documento** da política de compras aqui na conversa — eu leio e resumo o conteúdo para você;\n- **Reformular a pergunta** com mais detalhes (ex.: um tema específ",
+    "detail": "ok | 7010ms",
+    "ms": 7010,
+    "prose": "Não encontrei informações sobre a **política de compras** na base de conhecimento autorizada no momento.\n\nAlgumas possibilidades:\n\n- O documento pode ainda **não ter sido publicado** na base de conhecimento da plataforma.\n- A política pode estar registrada com **outro título** (ex.: \"Diretrizes de suprimentos\", \"Proces",
     "evidence": {
       "R1": {
         "intent": "rag_question",
@@ -1058,7 +1058,8 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 570,
+        "proseLen": 706,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -1067,6 +1068,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -1074,14 +1076,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 5649,
-        "wallMs": 6454,
+        "totalMs": 6160,
+        "wallMs": 7010,
         "mode": "normal",
         "timings": {
-          "preToolMs": 851,
-          "toolsMs": 18,
-          "ragMs": 77,
-          "llmMs": 4607
+          "preToolMs": 556,
+          "toolsMs": 22,
+          "ragMs": 71,
+          "llmMs": 5384
         },
         "verdict": "WARN"
       },
@@ -1105,9 +1107,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 16455ms",
-    "ms": 16455,
-    "prose": "Não encontrei um documento de glossário de qualidade específico na base de conhecimento autorizada no momento. O que posso oferecer é a explicação dos **principais termos de qualidade usados no módulo PAC da plataforma**, que fazem parte do dia a dia do tratamento de não conformidades:\n\n## Termos do módulo PAC Qualidad",
+    "detail": "ok | 10648ms",
+    "ms": 10648,
+    "prose": "Não encontrei um glossário de qualidade na documentação autorizada da base de conhecimento no momento, então não tenho como apresentar os termos oficiais da empresa sem inventar conteúdo.\n\nPosso ajudar de duas formas:\n\n- **Anexar o documento**: se você tiver o glossário em PDF, Word ou imagem, anexe aqui na conversa e ",
     "evidence": {
       "R1": {
         "intent": "rag_question",
@@ -1125,7 +1127,8 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 3006,
+        "proseLen": 790,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -1134,6 +1137,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -1141,16 +1145,16 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 15503,
-        "wallMs": 16455,
+        "totalMs": 9479,
+        "wallMs": 10648,
         "mode": "normal",
         "timings": {
-          "preToolMs": 1107,
-          "toolsMs": 19,
-          "ragMs": 48,
-          "llmMs": 14233
+          "preToolMs": 1396,
+          "toolsMs": 27,
+          "ragMs": 45,
+          "llmMs": 7890
         },
-        "verdict": "FAIL"
+        "verdict": "WARN"
       },
       "paths": [],
       "operationIds": []
@@ -1172,9 +1176,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 15387ms",
-    "ms": 15387,
-    "prose": "No momento, a base de conhecimento não retornou trechos do documento **Normas Técnicas DELPI**, então não tenho o conteúdo detalhado disponível para citar com segurança — e prefiro não inventar regras que não estejam na fonte autorizada.\n\nO que posso adiantar sobre o escopo dessa norma:\n\n- Ela cobre a **descrição padro",
+    "detail": "ok | 10326ms",
+    "ms": 10326,
+    "prose": "As **Normas Técnicas DELPI** (documento da Engenharia, elaborado por Robério Oliveira) têm como objetivo central **padronizar a descrição técnica de matérias-primas**, garantindo clareza e consistência no cadastro de materiais. As normas cobrem os grupos de MP de **1001 a 1025**, cada um com estrutura própria de descri",
     "evidence": {
       "R1": {
         "intent": "rag_question",
@@ -1192,7 +1196,8 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 955,
+        "proseLen": 1917,
+        "ragHits": 2,
         "verdict": "PASS"
       },
       "R5": {
@@ -1201,6 +1206,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -1208,16 +1214,16 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 14904,
-        "wallMs": 15387,
+        "totalMs": 9795,
+        "wallMs": 10326,
         "mode": "normal",
         "timings": {
-          "preToolMs": 615,
+          "preToolMs": 710,
           "toolsMs": 20,
-          "ragMs": 72,
-          "llmMs": 14106
+          "ragMs": 158,
+          "llmMs": 8811
         },
-        "verdict": "FAIL"
+        "verdict": "WARN"
       },
       "paths": [],
       "operationIds": []
@@ -1239,8 +1245,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 2365ms | paths=['/products/10080001/stock']",
-    "ms": 2365,
+    "detail": "ok | 3257ms | paths=['/products/10080001/stock']",
+    "ms": 3257,
     "prose": "O produto **10080001**\n\nSaldo disponível total: **2.677.615** un. em **8** posição(ões). Maior concentração na filial **02** (2.290.510 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado. - Empenho elevado pode bloquear novas saídas — confe",
     "evidence": {
       "R1": {
@@ -1262,6 +1268,7 @@
       },
       "R4": {
         "proseLen": 424,
+        "ragHits": 1,
         "verdict": "PASS"
       },
       "R5": {
@@ -1270,6 +1277,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -1277,14 +1285,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 1944,
-        "wallMs": 2365,
+        "totalMs": 2763,
+        "wallMs": 3257,
         "mode": "normal",
         "timings": {
-          "preToolMs": 432,
-          "toolsMs": 889,
-          "ragMs": 70,
-          "llmMs": 442
+          "preToolMs": 416,
+          "toolsMs": 1623,
+          "ragMs": 113,
+          "llmMs": 499
         },
         "verdict": "PASS"
       },
@@ -1296,6 +1304,647 @@
     "rRequired": [
       "R1",
       "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F07.follow-terminais",
+    "family": "F07",
+    "label": "follow-terminais-normas",
+    "message": "terminais",
+    "expect": "rag_internal",
+    "useAgent": true,
+    "seed": [
+      "o que dizem as normas técnicas DELPI sobre matéria-prima?"
+    ],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 19331ms",
+    "ms": 19331,
+    "prose": "As **Normas Técnicas DELPI** dedicam o **grupo 1008** aos terminais elétricos, com três normas de descrição padronizada:\n\n## 1. Terminais Olhal e Anzol\n\n**Estrutura da descrição (sequência obrigatória):**\n\n`[TERM.] [TIPO] [PARAFUSO] [DIÂMETRO INTERNO] [BITOLA DO CABO] [DIÂMETRO EXTERNO] [COMPRIMENTO] [BANHO] [ISOLAÇÃO]",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": "documental_follow_up",
+        "decision": "rag_internal",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 2306,
+        "ragHits": 3,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 1,
+        "seedNotes": [
+          "10003ms hits=2 len=1819"
+        ],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 18288,
+        "wallMs": 19331,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 2578,
+          "toolsMs": 20,
+          "ragMs": 97,
+          "llmMs": 15490
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R6",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F11.terminal",
+    "family": "F11",
+    "label": "descrever-terminal",
+    "message": "como descrever um terminal?",
+    "expect": "rag_internal",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 13877ms",
+    "ms": 13877,
+    "prose": "Terminais pertencem ao **grupo técnico 1008** e seguem um modelo padronizado de descrição, conforme o documento **Normas_Tecnicas_DELPI.md** (Engenharia DELPI). A estrutura geral é:\n\n**[TERM.] [TIPO] [DIMENSÕES/BITOLA] [BANHO] [ISOLAÇÃO] [EMBALAGEM] [OBSERVAÇÕES] [NORMAS/CERT.]**\n\n## Campos da descrição\n\n- **TERM.** — ",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": "technical_description_1008",
+        "decision": "rag_internal",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 1624,
+        "ragHits": 2,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "seedNotes": [],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 12778,
+        "wallMs": 13877,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 851,
+          "toolsMs": 18,
+          "ragMs": 96,
+          "llmMs": 11711
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F11.vdar",
+    "family": "F11",
+    "label": "vdar-descricao",
+    "message": "o que significa VDAR na descrição?",
+    "expect": "rag_internal",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 15332ms",
+    "ms": 15332,
+    "prose": "**VDAR** é o código de cor de 4 letras para **Verde-Amarelo** (bicolor) — a combinação típica de condutores de proteção/terra.\n\nContexto nas descrições DELPI:\n\n- Nos **produtos intermediários (família 50xx)**, a cor é informada com **4 letras**. Cores duplas são formadas pela junção das abreviações de cada cor: **VD** ",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": "technical_description",
+        "decision": "rag_internal",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 811,
+        "ragHits": 2,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "seedNotes": [],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 14512,
+        "wallMs": 15332,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 898,
+          "toolsMs": 18,
+          "ragMs": 95,
+          "llmMs": 13426
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F11.cabo",
+    "family": "F11",
+    "label": "monte-descricao-cabo",
+    "message": "como descrever um cabo PVC segundo as normas técnicas DELPI?",
+    "expect": "rag_internal",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 12684ms",
+    "ms": 12684,
+    "prose": "Segundo as **Normas Técnicas DELPI** (grupos 1001 a 1005), a descrição de um cabo PVC deve seguir uma sequência fixa de campos, usando exclusivamente dados do **datasheet** ou do **site do fornecedor**.\n\n## Estrutura da descrição (sequência obrigatória)\n\n| Campo | Descrição |\n|---|---|\n| **ITEM** | Prefixo do item (CAB",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": "technical_description_1001-1005",
+        "decision": "rag_internal",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 1333,
+        "ragHits": 2,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "seedNotes": [],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 12206,
+        "wallMs": 12684,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 415,
+          "toolsMs": 20,
+          "ragMs": 78,
+          "llmMs": 11599
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F11.intermediario",
+    "family": "F11",
+    "label": "explique-intermediario",
+    "message": "explique o código intermediário 50232222 CB1,50VERD-00255/06/06–6314–0111",
+    "expect": "rag_internal",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 21726ms",
+    "ms": 21726,
+    "prose": "O produto **50232222** —Esse código é um **intermediário da família 5023** (cabo com terminal e isolador): um cabo **EPR 1,5mm² verde**, com **255mm** de comprimento, decape de **6mm nas duas pontas**, terminal **6314** à esquerda e isolador **0111** à direita.\n\nSegue o detalhamento segmento a segmento, conforme o padr",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": "technical_description_50xx",
+        "decision": "rag_internal",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 1433,
+        "ragHits": 3,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "seedNotes": [],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 21231,
+        "wallMs": 21726,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 401,
+          "toolsMs": 13,
+          "ragMs": 95,
+          "llmMs": 20601
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F11.produto-cadastro",
+    "family": "F11",
+    "label": "descricao-produto-codigo",
+    "message": "qual a descrição do produto 10080047",
+    "expect": "product_path",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 2803ms | paths=['/products/10080047']",
+    "ms": 2803,
+    "prose": "Código **10080047** (grupo **1008**) — TERM. PINO RETO 20-14AWG COMP 19,90MM ESTANHADO S/ISOLACAO CARRETEL MACHO UL - ROHS\n\n**Pontos de atenção**\n\n- Valor zerado em **Package Quantity** (linha 1). - Valor zerado em **Media Quantity** (linha 1).",
+    "evidence": {
+      "R1": {
+        "intent": "operational_query",
+        "subIntent": "product_lookup",
+        "decision": "operational_action",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 1,
+        "paths": [
+          "/products/10080047"
+        ],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 244,
+        "ragHits": 0,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "seedNotes": [],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 2403,
+        "wallMs": 2803,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 671,
+          "toolsMs": 1239,
+          "ragMs": 8,
+          "llmMs": 395
+        },
+        "verdict": "PASS"
+      },
+      "paths": [
+        "/products/10080047"
+      ],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F11.compliance-mp",
+    "family": "F11",
+    "label": "compliance-normas-mp",
+    "message": "está dentro das normas?",
+    "expect": "normas_compliance_eval",
+    "useAgent": true,
+    "seed": [
+      "qual a descrição do produto 10080047"
+    ],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 76105ms",
+    "ms": 76105,
+    "prose": "**Parcialmente conforme**, com base nos trechos das Normas Técnicas DELPI (grupo 1008) disponíveis na minha base. A descrição segue a estrutura geral, mas há dois pontos que não consigo confirmar totalmente.\n\n## Análise da descrição\n\n**TERM. PINO RETO 20-14AWG COMP 19,90MM ESTANHADO S/ISOLACAO CARRETEL MACHO UL - ROHS*",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": "technical_description_compliance",
+        "decision": "rag_internal",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 1835,
+        "ragHits": 2,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 1,
+        "seedNotes": [
+          "3118ms hits=0 len=244"
+        ],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 74947,
+        "wallMs": 76105,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 8540,
+          "toolsMs": 20,
+          "ragMs": 100,
+          "llmMs": 66197
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R4",
+      "R6",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F11.compliance-intermediario",
+    "family": "F11",
+    "label": "compliance-normas-50xx",
+    "message": "essa descrição está conforme as normas?",
+    "expect": "normas_compliance_eval",
+    "useAgent": true,
+    "seed": [
+      "qual a descrição do produto 50232222"
+    ],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 76234ms",
+    "ms": 76234,
+    "prose": "**Em grande parte sim** — o código **50232222 CB14AMAR-00178/11/06-0000-1118** segue a estrutura documentada para intermediários, mas há pontos que merecem verificação.\n\n## Análise segmento por segmento\n\nConforme a norma de formação de códigos (páginas 3–14 do documento de códigos intermediários):\n\n| Segmento | Valor |",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": "technical_description_compliance",
+        "decision": "rag_internal",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 1640,
+        "ragHits": 2,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 1,
+        "seedNotes": [
+          "2587ms hits=0 len=191"
+        ],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 75700,
+        "wallMs": 76234,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 8926,
+          "toolsMs": 27,
+          "ragMs": 87,
+          "llmMs": 66585
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R4",
+      "R6",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F11.compliance-pa",
+    "family": "F11",
+    "label": "compliance-sem-norma-pa",
+    "message": "está dentro das normas?",
+    "expect": "normas_compliance_missing",
+    "useAgent": true,
+    "seed": [
+      "qual a descrição do produto 90260140"
+    ],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 6664ms",
+    "ms": 6664,
+    "prose": "O produto **90260140** é um **produto acabado** (família 90xx). As **Normas Técnicas DELPI** de descrição cobrem **matérias-primas (grupos 1001–1025)** e a nomenclatura de **intermediários (50xx)** — **não há** documento de descrição padronizada para produto acabado nesta base.\n\nPosso comparar a descrição cadastral com",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": "technical_description_compliance_unavailable",
+        "decision": "direct_answer",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 463,
+        "ragHits": 0,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 1,
+        "seedNotes": [
+          "2604ms hits=0 len=138"
+        ],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 5685,
+        "wallMs": 6664,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 5549,
+          "toolsMs": 21,
+          "ragMs": 8,
+          "llmMs": 20
+        },
+        "verdict": "WARN"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
       "R4",
       "R8"
     ]

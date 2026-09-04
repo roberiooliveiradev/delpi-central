@@ -92,12 +92,26 @@ class ChatFollowUpSuggestionService:
             outcome = "identity"
         elif (workspace_context or {}).get("textTaskCategory") and not tool_calls:
             outcome = "text"
+        elif cls._is_rag_knowledge_turn(
+            workspace_context=workspace_context,
+            tool_calls=tool_calls,
+            message=message,
+            previous_messages=previous_messages,
+        ):
+            outcome = "rag"
         else:
             outcome = cls.classify_outcome(
                 answer=answer,
                 tool_calls=tool_calls,
                 issues=issues,
             )
+            if outcome in {"empty", "generic", "product"} and cls._is_rag_knowledge_turn(
+                workspace_context=workspace_context,
+                tool_calls=tool_calls,
+                message=message,
+                previous_messages=previous_messages,
+            ):
+                outcome = "rag"
         chips = cls._chip_labels(outcome)
 
         if not chips:
@@ -201,6 +215,58 @@ class ChatFollowUpSuggestionService:
         return "generic"
 
     @classmethod
+    def _is_rag_knowledge_turn(
+        cls,
+        *,
+        workspace_context: dict | None,
+        tool_calls: list,
+        message: str,
+        previous_messages: list[Any] | None = None,
+    ) -> bool:
+        """Turno de company-knowledge / RAG — não sugerir chips de ERP vazio."""
+        from app.domain.services.chat_intent_router.chat_intent_router_heuristics_service import (
+            ChatIntentRouterHeuristicsService,
+        )
+
+        if any(
+            isinstance(call, dict)
+            and str(
+                (call.get("metadata") or {}).get("path")
+                or (call.get("arguments") or {}).get("path")
+                or ""
+            ).startswith("/")
+            for call in (tool_calls or [])
+        ):
+            # Há action HTTP; deixar classify_outcome decidir product/stock/etc.
+            if not ChatIntentRouterHeuristicsService.looks_rag_document(message):
+                return False
+
+        context = workspace_context or {}
+        route = context.get("intentRoute") if isinstance(context.get("intentRoute"), dict) else {}
+        decision = str(route.get("decision") or "").strip().lower()
+        intent = str(route.get("intent") or "").strip().lower()
+        if decision in {"rag_internal", "rag_question"} or intent in {
+            "rag_question",
+            "rag",
+        }:
+            return True
+
+        if ChatIntentRouterHeuristicsService.looks_rag_document(message):
+            return True
+
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
+        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(message):
+            return True
+
+        return ChatIntentRouterHeuristicsService.looks_like_documental_topic_follow_up(
+            message,
+            previous_messages,
+        )
+
+    @classmethod
     def assess_risk_level(
         cls,
         *,
@@ -239,7 +305,7 @@ class ChatFollowUpSuggestionService:
 
         context = workspace_context or {}
 
-        if outcome in {"generic", "empty", "error", "identity"}:
+        if outcome in {"generic", "empty", "error", "identity", "rag"}:
             return True
 
         if outcome in {"product", "stock", "sales", "warning"}:

@@ -349,6 +349,32 @@
       "REGISTROS": "Registros"
     }
   },
+  "identityRowFields": {
+    "keys": [
+      "DESCRIPTION",
+      "DESCRICAO",
+      "DESCRIÇÃO",
+      "B1_DESC",
+      "PRODUCT_DESCRIPTION",
+      "NAME",
+      "NOME"
+    ],
+    "codeKeys": [
+      "CODE",
+      "PRODUCT_CODE",
+      "B1_COD",
+      "PRODUCTCODE"
+    ],
+    "groupKeys": [
+      "GROUP_CODE",
+      "B1_GRUPO",
+      "GROUP",
+      "GRUPO"
+    ],
+    "lineWithCode": "Código **{code}** — {description}",
+    "lineDescriptionOnly": "{description}",
+    "lineWithGroup": "Código **{code}** (grupo **{group}**) — {description}"
+  },
   "emptyResult": {
     "forProductSuffix": " para o produto {code}",
     "generic": "Nenhum registro encontrado{forProduct}.",
