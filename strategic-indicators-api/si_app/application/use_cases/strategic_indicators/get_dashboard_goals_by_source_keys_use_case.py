@@ -25,6 +25,11 @@ from si_app.shared.goal_scope import (
     normalize_goal_scope_branch,
     resolve_goal_scope_hint_for_view,
 )
+from si_app.shared.consolidated_value_aggregation import (
+    aggregate_branch_goal_values,
+    is_source_consolidated_mode,
+    normalize_branch_value_aggregation,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -153,10 +158,12 @@ class GetDashboardGoalsBySourceKeysUseCase:
                 legacy_rol_branch_override(requested_key, branch) or branch
             )
             goal = self._resolve_goal_for_view(
+                indicator=indicator,
                 indicator_id=indicator_id,
                 item_view_branch=item_view_branch,
                 goals_by_indicator=goals_by_indicator,
                 branch_goals_by_indicator=branch_goals_by_indicator,
+                period=period,
             )
             goal_scope_hint = None
             if goal is None:
@@ -178,13 +185,15 @@ class GetDashboardGoalsBySourceKeysUseCase:
 
         return items
 
-    @staticmethod
     def _resolve_goal_for_view(
+        self,
         *,
+        indicator: dict,
         indicator_id: str,
         item_view_branch: str,
         goals_by_indicator: dict[str, dict],
         branch_goals_by_indicator: dict[str, dict[str, dict]],
+        period,
     ) -> dict | None:
         if item_view_branch:
             branch_goal = (branch_goals_by_indicator.get(indicator_id) or {}).get(
@@ -197,16 +206,116 @@ class GetDashboardGoalsBySourceKeysUseCase:
                 }
 
         resolved = goals_by_indicator.get(indicator_id)
-        if resolved is None:
+        if resolved is not None:
+            resolved_scope = normalize_goal_scope_branch(
+                resolved.get("goal_scope_branch")
+            )
+            if not item_view_branch or resolved_scope == item_view_branch:
+                return resolved
+            if item_view_branch and resolved_scope != item_view_branch:
+                return None
+
+        if item_view_branch:
             return None
 
-        resolved_scope = normalize_goal_scope_branch(
-            resolved.get("goal_scope_branch")
+        return self._aggregate_branch_goals_for_consolidated_view(
+            indicator=indicator,
+            indicator_id=indicator_id,
+            branch_goals_by_indicator=branch_goals_by_indicator,
+            period=period,
         )
-        if item_view_branch and resolved_scope != item_view_branch:
+
+    def _aggregate_branch_goals_for_consolidated_view(
+        self,
+        *,
+        indicator: dict,
+        indicator_id: str,
+        branch_goals_by_indicator: dict[str, dict[str, dict]],
+        period,
+    ) -> dict | None:
+        """Rollup 01+02 via branch_value_aggregation (mesmo critério do painel SI)."""
+        branch_value_aggregation = indicator.get("branch_value_aggregation")
+        if is_source_consolidated_mode(branch_value_aggregation):
             return None
 
-        return resolved
+        by_branch = branch_goals_by_indicator.get(indicator_id) or {}
+        branch_goals = [
+            by_branch[code]
+            for code in BRANCH_UNIT_CODES
+            if by_branch.get(code) and by_branch[code].get("goal_value") is not None
+        ]
+        if len(branch_goals) < 2:
+            return None
+
+        value_unit = indicator.get("value_unit")
+        raw_values = [float(goal["goal_value"]) for goal in branch_goals]
+        aggregated_value = aggregate_branch_goal_values(
+            raw_values,
+            branch_value_aggregation=branch_value_aggregation,
+            value_unit=value_unit,
+        )
+        if aggregated_value is None:
+            return None
+
+        template = branch_goals[0]
+        goal_periodicity = (template.get("goal_periodicity") or "monthly").strip() or "monthly"
+        goal_mode = (template.get("goal_mode") or "standard").strip() or "standard"
+        # Curva mensal: agrega comparable por filial (não a curva cadastral).
+        if goal_mode.lower() == "monthly_curve":
+            comparable_parts: list[float] = []
+            for goal in branch_goals:
+                part = self._calculator.calculate_comparable_goal(
+                    goal_value=float(goal["goal_value"]),
+                    goal_periodicity=(goal.get("goal_periodicity") or "monthly"),
+                    goal_mode=(goal.get("goal_mode") or "standard"),
+                    monthly_targets=goal.get("monthly_targets") or [],
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                    competence=period.competence,
+                    value_unit=value_unit,
+                    indicator_id=indicator.get("indicator_id"),
+                )
+                if part is not None:
+                    comparable_parts.append(float(part))
+            if len(comparable_parts) < 2:
+                return None
+            aggregated_comparable = aggregate_branch_goal_values(
+                comparable_parts,
+                branch_value_aggregation=branch_value_aggregation,
+                value_unit=value_unit,
+            )
+            if aggregated_comparable is None:
+                return None
+            # goal_value = soma/média das metas cadastradas; comparable já consolidado
+            # será recalculado em _serialize se modo standard — para curve, forçamos
+            # label a partir do template e deixamos serialize recalcular a partir do
+            # goal_value agregado (aproximação). Preferimos embutir comparable via
+            # monthly_targets vazios + standard após rollup do comparable.
+            return {
+                "goal_label": template.get("goal_label"),
+                "goal_value": aggregated_comparable,
+                "goal_periodicity": "monthly",
+                "goal_mode": "standard",
+                "goal_scope_branch": "",
+                "monthly_targets": [],
+                "aggregated_from_branches": True,
+            }
+
+        aggregation_mode = normalize_branch_value_aggregation(branch_value_aggregation)
+        label = template.get("goal_label")
+        if not label and aggregated_value is not None:
+            label = str(aggregated_value)
+
+        return {
+            "goal_label": label,
+            "goal_value": aggregated_value,
+            "goal_periodicity": goal_periodicity,
+            "goal_mode": goal_mode,
+            "goal_scope_branch": "",
+            "monthly_targets": template.get("monthly_targets") or [],
+            "aggregated_from_branches": True,
+            "branch_value_aggregation": aggregation_mode,
+        }
 
     def _serialize_item(
         self,

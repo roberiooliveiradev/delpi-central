@@ -21,7 +21,7 @@ Labels PT: Meta cadastrada / Meta do período / Meta mês (referência).
 | A | exact (mês fechado) | tríade igual; UI 1 linha «Meta» |
 | B | partial | cadastrada ≠ comparable; Meta parcial + Meta mês |
 | C | accumulated (YTD) | `goal_value` intacto; prefixo acumulada |
-| D | consolidado + `goal_scope_hint` | UI sem números de meta |
+| D | consolidado com metas 01+02 e `branch_value_aggregation` rollup | UI **com** números de meta (SI agrega); hint só se rollup impossível (<2 filiais ou `source_consolidated` sem meta `''`) |
 | E | chat | tríade nos highlights; ausente de `skipFieldKeys` |
 | F | TV valores iguais | 1 kpiMetric `value` |
 | G | TV `value` ≠ `goal_value` | métricas distintas; cadastrada = `goal_value` |
