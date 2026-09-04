@@ -34,10 +34,10 @@ def test_notifications_disabled_without_token() -> None:
 
 def test_request_portal_route() -> None:
     assert request_portal_route(branch_code="02", request_id="abc") == (
-        "/apps/invoice-issuance/filial-02?requestId=abc"
+        "/apps/my-requests/requests/abc"
     )
     assert request_portal_route(branch_code="01", request_id="abc") == (
-        "/apps/invoice-issuance/filial-01?requestId=abc"
+        "/apps/my-requests/requests/abc"
     )
 
 

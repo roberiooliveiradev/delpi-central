@@ -1216,22 +1216,6 @@ services:
     networks:
       - delpi-network
 
-  invoice-issuance:
-    <<: *plugin-ui-federated
-    build:
-      context: ../plugins
-      dockerfile: invoice-issuance/Dockerfile
-      target: production
-
-    container_name: delpi-invoice-issuance
-    restart: unless-stopped
-
-    environment:
-      TZ: ${TZ}
-
-    networks:
-      - delpi-network
-
   dashboard-engineering:
     <<: *plugin-ui-federated
     build:

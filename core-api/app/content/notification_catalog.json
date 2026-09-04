@@ -114,13 +114,13 @@
       "pluginId": "lancamento-notas-fiscais"
     },
     "invoice_issuance": {
-      "label": "Emissão de Notas Fiscais",
+      "label": "Emissão de Notas Fiscais (legado)",
       "notificationLabel": "Solicitações de emissão de NF",
       "icon": "file-text",
       "mutable": true,
       "kind": "app",
-      "sourceApps": ["invoice-issuance"],
-      "pluginId": "invoice-issuance"
+      "sourceApps": ["my-requests", "invoice-issuance"],
+      "pluginId": "my-requests"
     },
     "comite_etica_conduta": {
       "label": "Comitê de Ética e Conduta",

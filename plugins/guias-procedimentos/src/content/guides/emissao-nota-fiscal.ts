@@ -119,5 +119,5 @@ export const EMISSAO_NOTA_FISCAL_GUIDE: GuideDocument = {
     { id: "chk-peso", label: "Peso e volumes informados." },
   ],
   footerNotice:
-    "Em caso de dúvida sobre um caso específico, confirme as informações com o setor de Faturamento antes de enviar a solicitação. Use Minhas Solicitações em /apps/my-requests/new?type=invoice-issuance (o app legado /apps/invoice-issuance saiu do menu; bookmarks são redirecionados).",
+    "Em caso de dúvida sobre um caso específico, confirme as informações com o setor de Faturamento antes de enviar a solicitação. Use Minhas Solicitações em /apps/my-requests/new?type=invoice-issuance.",
 };

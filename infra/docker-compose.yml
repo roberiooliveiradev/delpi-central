@@ -1235,22 +1235,6 @@ services:
     networks:
       - delpi-network
 
-  invoice-issuance:
-    depends_on:
-      - plugin-ui
-    build:
-      context: ../plugins
-      dockerfile: invoice-issuance/Dockerfile
-
-    container_name: delpi-invoice-issuance
-    restart: unless-stopped
-
-    environment:
-      TZ: ${TZ}
-
-    networks:
-      - delpi-network
-
   dashboard-engineering:
     depends_on:
       - plugin-ui
@@ -2529,7 +2513,6 @@ services:
       - financeiro-centro-custo
       - financeiro-inadimplencia
       - lancamento-notas-fiscais
-      - invoice-issuance
       - dashboard-engineering
       - dashboard-hr
       - api-delpi-console

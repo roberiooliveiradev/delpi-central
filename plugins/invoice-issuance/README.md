@@ -2,17 +2,15 @@
 
 Microfrontend federado para **solicitar, acompanhar e concluir** a emissão de notas fiscais de saída: wizard guiado (destinatário TOTVS, itens, tipo, transporte e observação) e fila de atendimento do Faturamento.
 
-## Deprecação (soft cutover E12)
+## Deprecação (hard descomission E13)
 
 O fluxo **canônico** é **[Minhas Solicitações](/apps/my-requests)** (`plugins/my-requests` + `requests-api`).
 
-- Novas solicitações: `/apps/my-requests/new?type=invoice-issuance`
-- **Menu oculto** (`showInMenu: false`) — tile canônico = Minhas Solicitações
-- URL direta `/apps/invoice-issuance/*` ainda sobe o MFE (banner de aviso) até o hard descomission (E13)
-- Schema `invoice_issuance` e rotas api-delpi de **lookup** **não** foram removidos (adapter do requests-api)
-- Guia de procedimentos: `emissao-nota-fiscal` aponta para my-requests
-- Runbook de migração: [`MIGRATION-RUNBOOK.md`](../../docs/12-roadmap-e-evolucao/my-requests/MIGRATION-RUNBOOK.md)
-- Gate prod: [`PARITY-P0.md`](../../docs/12-roadmap-e-evolucao/my-requests/PARITY-P0.md) § Gate soft cutover
+- MFE **fora do Compose** / scripts sequential (código permanece no monorepo para referência)
+- Menu oculto desde E12; gateway redireciona bookmarks
+- Schema `invoice_issuance` e volume de anexos **retidos** (sem DROP); lookups api-delpi mantidos para `ApiDelpiAdapter`
+- Guia: `emissao-nota-fiscal` → my-requests
+- Runbook: [`MIGRATION-RUNBOOK.md`](../../docs/12-roadmap-e-evolucao/my-requests/MIGRATION-RUNBOOK.md)
 
 Documentação de roadmap: [docs/12-roadmap-e-evolucao/invoice-issuance/](../../docs/12-roadmap-e-evolucao/invoice-issuance/) · API: [invoice-issuance.md](../../api-delpi/docs/api/invoice-issuance.md).
 

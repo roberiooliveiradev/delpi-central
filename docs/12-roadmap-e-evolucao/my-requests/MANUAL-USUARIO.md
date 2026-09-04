@@ -66,5 +66,5 @@ Quando o tipo é **raw-material-creation**, a tela Nova abre o formulário schem
 
 ## Limitações atuais
 
-- App legado `invoice-issuance`: **fora do menu** (soft cutover E12); bookmarks `/apps/invoice-issuance/*` redirecionam no gateway para Minhas Solicitações (`/apps/my-requests` ou `/new?type=invoice-issuance`). Assets do MFE legado ainda sobem até E13.
-- Migração de histórico legado: ver `MIGRATION-RUNBOOK.md` (E8); gate prod em `PARITY-P0.md`
+- App legado `invoice-issuance`: MFE removido do Compose (E13); bookmarks redirecionam no gateway. Canônico = Minhas Solicitações.
+- Migração de histórico: `MIGRATION-RUNBOOK.md`; retenção de schema/volume documentada no runbook / PLAYBOOK fase 7

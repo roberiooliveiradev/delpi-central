@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 _SOURCE_APP = "invoice-issuance"
 _CATEGORY = "invoice_issuance"
-_APP_BASE = "/apps/invoice-issuance"
+_APP_BASE = "/apps/my-requests"
 
 
 def invoice_issuance_notifications_enabled() -> bool:
@@ -28,9 +28,9 @@ def invoice_issuance_notifications_enabled() -> bool:
 
 
 def request_portal_route(*, branch_code: str | None, request_id: str) -> str:
-    code = str(branch_code or "").strip()
-    filial = "filial-02" if code == "02" else "filial-01"
-    return f"{_APP_BASE}/{filial}?requestId={request_id}"
+    """Deep link canônico (E13): detalhe em my-requests (mesmo UUID pós-migração)."""
+    _ = branch_code
+    return f"{_APP_BASE}/requests/{request_id}"
 
 
 def _post_notification(payload: dict[str, Any]) -> bool:
