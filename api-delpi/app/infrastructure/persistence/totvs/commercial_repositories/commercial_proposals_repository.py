@@ -257,16 +257,21 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
         )
 
 
+
     def summarize_by_collaborator(
         self,
         request: SummarizeCommercialProposalsByCollaboratorRequest,
     ) -> dict:
-        """Aggregate OV counts by seller for the opening-date period (no page cap / status)."""
+        """Global period summary by seller (same status semantics as the proposals list).
+
+        - open/lost: opening date (AD1_DATA) in period
+        - won: acceptance date in period (AD1_DTASSI / AD1_DTFIM fallback)
+        Independent of the list Status dropdown; no page cap.
+        """
         qb = QueryBuilder()
         qb.raw("AD1.D_E_L_E_T_ = ''")
         if request.branch:
             qb.eq("AD1.AD1_FILIAL", request.branch)
-        qb.date_range("AD1.AD1_DATA", request.start_date, request.end_date)
         CommercialCustomerSegmentService.apply_segment_to_query_builder(
             qb,
             "AD1.AD1_CODCLI",
@@ -277,7 +282,6 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
             "AD1.AD1_CODCLI",
             request.customer_codes,
         )
-        # Reuse product filters via a lightweight shim with the same attribute names.
         list_like = type(
             "ListLike",
             (),
@@ -289,8 +293,29 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
         self._apply_product_filters(qb, list_like)
 
         where_clause, where_params = qb.build()
+        acceptance_expr = CommercialProposalAcceptanceDateService.sql_acceptance_date_for_alias(
+            "AD1"
+        )
+        start_p = qb.convert_date_to_protheus(request.start_date)
+        end_p = qb.convert_date_to_protheus(request.end_date)
         lost_sql = ", ".join(f"'{code}'" for code in sorted(LOST_STATUS_CODES))
         open_sql = "'1', '2', '3', '4', '5', '6', '7'"
+
+        period_params: list[object] = []
+        open_lost_date_sql = "1 = 1"
+        won_date_sql = "1 = 1"
+        if start_p is not None and end_p is not None:
+            open_lost_date_sql = "AD1.AD1_DATA BETWEEN ? AND ?"
+            won_date_sql = f"({acceptance_expr}) BETWEEN ? AND ?"
+            period_params = [start_p, end_p, start_p, end_p]
+        elif start_p is not None:
+            open_lost_date_sql = "AD1.AD1_DATA >= ?"
+            won_date_sql = f"({acceptance_expr}) >= ?"
+            period_params = [start_p, start_p]
+        elif end_p is not None:
+            open_lost_date_sql = "AD1.AD1_DATA <= ?"
+            won_date_sql = f"({acceptance_expr}) <= ?"
+            period_params = [end_p, end_p]
 
         sql = f"""
             WITH ovs_base AS (
@@ -301,29 +326,56 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
                     AD1.AD1_DATA,
                     AD1.AD1_STATUS,
                     AD1.AD1_VEND,
+                    {acceptance_expr} AS proposal_acceptance_date,
                     ROW_NUMBER() OVER (
                         PARTITION BY AD1.AD1_FILIAL, AD1.AD1_NROPOR
                         ORDER BY AD1.AD1_REVISA DESC
                     ) AS rn
                 FROM AD1010 AD1
                 WHERE {where_clause}
+                  AND (
+                        (
+                            {open_lost_date_sql}
+                            AND LTRIM(RTRIM(ISNULL(AD1.AD1_STATUS, ''))) IN ({open_sql}, {lost_sql})
+                        )
+                     OR (
+                            LTRIM(RTRIM(ISNULL(AD1.AD1_STATUS, ''))) = '{WON_STATUS_CODE}'
+                            AND ({acceptance_expr}) IS NOT NULL
+                            AND RTRIM(CAST(({acceptance_expr}) AS VARCHAR(20))) <> ''
+                            AND {won_date_sql}
+                        )
+                  )
             ),
             ovs_latest AS (
                 SELECT
-                    AD1_FILIAL,
-                    AD1_NROPOR,
                     AD1_DATA,
                     LTRIM(RTRIM(ISNULL(AD1_STATUS, ''))) AS status_code,
-                    LTRIM(RTRIM(ISNULL(AD1_VEND, ''))) AS seller_code
+                    LTRIM(RTRIM(ISNULL(AD1_VEND, ''))) AS seller_code,
+                    proposal_acceptance_date
                 FROM ovs_base
                 WHERE rn = 1
             )
             SELECT
                 L.seller_code AS seller_code,
                 MAX(LTRIM(RTRIM(ISNULL(SA3.A3_NOME, '')))) AS seller_name,
-                SUM(CASE WHEN L.status_code = '{WON_STATUS_CODE}' THEN 1 ELSE 0 END) AS won_count,
-                SUM(CASE WHEN L.status_code IN ({lost_sql}) THEN 1 ELSE 0 END) AS lost_count,
-                SUM(CASE WHEN L.status_code IN ({open_sql}) THEN 1 ELSE 0 END) AS open_count,
+                SUM(
+                    CASE
+                        WHEN L.status_code = '{WON_STATUS_CODE}' THEN 1
+                        ELSE 0
+                    END
+                ) AS won_count,
+                SUM(
+                    CASE
+                        WHEN L.status_code IN ({lost_sql}) THEN 1
+                        ELSE 0
+                    END
+                ) AS lost_count,
+                SUM(
+                    CASE
+                        WHEN L.status_code IN ({open_sql}) THEN 1
+                        ELSE 0
+                    END
+                ) AS open_count,
                 COUNT(1) AS total_count,
                 AVG(
                     CAST(
@@ -339,8 +391,9 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
             ORDER BY total_count DESC, seller_code ASC
         """
 
+        query_params = list(where_params) + period_params
         with self:
-            rows = self.execute_query(sql, where_params)
+            rows = self.execute_query(sql, tuple(query_params))
 
         items: list[dict] = []
         source_count = 0
@@ -364,6 +417,7 @@ class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositor
             "source_count": source_count,
             "truncated": False,
         }
+
 
     def get_proposal(
         self,

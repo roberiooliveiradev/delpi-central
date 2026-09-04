@@ -121,7 +121,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           want: "Oportunidades (OV)",
-          where: "Início → Oportunidades — tabela Por colaborador = totais do período (não segue o Status da lista)",
+          where: "Início → Oportunidades — Por colaborador = resumo global do período (ganhas por aceite; lista Status não altera o resumo)",
           how: "Lista global; clique abre a ficha",
         },
         {

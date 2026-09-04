@@ -34,7 +34,7 @@ Constante de domínio: `WON_STATUS_CODE = "9"` em `commercial_proposal_status.py
 
 A listagem `GET /commercial/proposals?status=won` filtra por **aceite** (`AD1_DTASSI`, fallback `AD1_DTFIM`) no período. A coluna **Fim** exibe essa mesma data. Filtro «todas» / «em aberto» continua por abertura (`AD1_DATA`).
 
-**Resumo por colaborador (Portal):** `GET /commercial/proposals/collaborator-summary` (`operationId`: `summarize_commercial_proposals_by_collaborator`) agrega abertas/ganhas/perdidas por `AD1_VEND` no universo de **abertura** (`AD1_DATA`), sem paginação e sem filtro de status da lista.
+**Resumo por colaborador (Portal):** `GET /commercial/proposals/collaborator-summary` (`operationId`: `summarize_commercial_proposals_by_collaborator`) agrega por `AD1_VEND` sem paginação: **abertas/perdidas** por `AD1_DATA` no período; **ganhas** por data de aceite (`AD1_DTASSI` / fallback `AD1_DTFIM`) — mesma semântica da listagem `status=won`. Independente do filtro Status da lista no MFE.
 
 **Listagem paginada (jun/2026):** `sort_by` / `sort_dir` ordenam no SQL; `search` filtra filial, número, descrição, status (código e rótulo), cliente, loja e estágio após deduplicar a última revisão. Serviço: `CommercialProposalListSearchService`. Documentação MFE: `plugins/dashboard-commercial/docs/PROPOSTAS-PERIODO.md`.
 

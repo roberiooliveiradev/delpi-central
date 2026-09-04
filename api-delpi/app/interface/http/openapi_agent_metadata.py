@@ -1069,10 +1069,9 @@ COMMERCIAL_PROPOSALS = agent_route(
 COMMERCIAL_PROPOSAL_COLLABORATOR_SUMMARY = agent_route(
     summary="Commercial proposal counts by collaborator",
     description=(
-        "SQL aggregation of commercial proposals (OV) by seller for the opening-date period "
-        "(AD1_DATA). Returns open/won/lost/total counts and average age without pagination. "
-        "Independent from the list status filter — use for the Por colaborador panel. "
-        "Not the same as the paginated proposals list."
+        "SQL aggregation of commercial proposals (OV) by seller for the period filters. "
+        "Open/lost use opening date (AD1_DATA); won uses acceptance date (AD1_DTASSI / AD1_DTFIM) — "
+        "same semantics as the proposals list. No pagination; independent from the list status filter."
     ),
     operation_id="summarize_commercial_proposals_by_collaborator",
 )

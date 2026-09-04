@@ -634,7 +634,7 @@ export const CM_HELP = {
     opportunitiesPage:
       "Lista global de oportunidades de venda (OV) no período. Use a Conta para ver só um cliente.",
     collaboratorSummary:
-      "Totais por vendedor no período (data de abertura). Não muda com o Status da lista — ganhas/abertas/perdidas vêm agregadas no SQL.",
+      "Resumo global do período com os filtros do hero. Abertas/perdidas pela data de abertura; ganhas pela data de aceite (mesmo critério da lista Ganhas). Não muda com o Status da lista.",
     opportunitiesList: "OVs do período. Clique na linha ou no número da OV para abrir o detalhe.",
     tableRowOpensDetail:
       "Clique na linha (ou na identidade) abre o detalhe. Controles internos com destino diferente não propagam o clique.",
@@ -651,7 +651,7 @@ export const CM_HELP = {
     searchOpportunities:
       "Filtra a lista por número da OV, código ou nome do cliente no período selecionado.",
     opportunityStatus:
-      "Filtra só a lista de OVs abaixo (abertas, ganhas, perdidas). Não altera a tabela Por colaborador, que sempre mostra o total do período por data de abertura.",
+      "Filtra só a lista de OVs abaixo. Não altera Por colaborador (resumo global do período: abertas/perdidas por abertura, ganhas por aceite).",
     columns: {
       order: "Número do pedido e item da linha avaliada no OTD.",
       branch: "Unidade operacional (Santa Catarina ou Espírito Santo) da linha.",

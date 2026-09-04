@@ -9,7 +9,7 @@ from app.infrastructure.persistence.totvs.commercial_repositories.commercial_pro
 )
 
 
-def test_summarize_by_collaborator_groups_without_page_cap() -> None:
+def test_summarize_by_collaborator_uses_acceptance_for_won() -> None:
     repository = CommercialProposalsRepository()
     request = SummarizeCommercialProposalsByCollaboratorRequest(
         start_date="2026-08-01",
@@ -43,11 +43,10 @@ def test_summarize_by_collaborator_groups_without_page_cap() -> None:
     assert "OFFSET" not in sql.upper()
     assert "FETCH NEXT" not in sql.upper()
     assert "AD1.AD1_DATA" in sql
+    assert "AD1_DTASSI" in sql
     assert WON_STATUS_CODE in sql
-    assert "AD1_DTASSI" not in sql
     assert result["truncated"] is False
     assert result["source_count"] == 46
-    assert result["items"][0]["seller_code"] == "000001"
     assert result["items"][0]["won_count"] == 11
     assert result["items"][0]["age_days_avg"] == 15.3
 

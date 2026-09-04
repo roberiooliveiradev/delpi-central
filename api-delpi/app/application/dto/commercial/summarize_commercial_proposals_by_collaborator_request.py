@@ -4,7 +4,10 @@ from typing import Optional
 
 @dataclass
 class SummarizeCommercialProposalsByCollaboratorRequest:
-    """Opening-date universe (AD1_DATA); never filtered by list status."""
+    """Period filters for collaborator summary (list Status is not applied).
+
+    Open/lost use AD1_DATA; won uses acceptance date — same semantics as the proposals list.
+    """
 
     branch: Optional[str] = None
     start_date: Optional[str] = None
