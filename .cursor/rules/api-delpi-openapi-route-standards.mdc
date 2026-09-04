@@ -19,7 +19,7 @@ O **OpenAPI da api-delpi** é a única fonte de verdade para TV, chat e Swagger.
 |--------|--------|
 | Path HTTP (`/process-inspection-plans/...`) | **inglês** kebab-case |
 | `operation_id` / `meta.entity` / campos `data` | **inglês** snake_case |
-| Query params (`branch`, `page`, `page_size`) | **inglês**; factories em `query_param_enums.py` |
+| Query params (`branch`, `page`, `page_size`) | **inglês**; enums em `query_param_enums.py`; **page_size/limit** via `pagination_query.py` + tier |
 | OpenAPI `summary`/`description` nativos | **inglês** (`locale.en`) |
 | `x-delpi.locale.pt-BR`, labels TV/chat, UI | **português** (e EN no par bilíngue) |
 
@@ -37,6 +37,7 @@ O **OpenAPI da api-delpi** é a única fonte de verdade para TV, chat e Swagger.
 | 5 | Summary/description nativos | **Inglês** no OpenAPI/Swagger — via `locale.en` no injector (`openapi_delpi_extension_injector`) |
 | 6 | Locale bilíngue | Entrada em `tv_route_audience.json` (`locale.en` + `locale.pt-BR`, `en.summary ≠ pt-BR.summary`) |
 | 7 | Params tipados | Domínio fechado → factory `*_QUERY()` de `query_param_enums.py` com **`enum=` + `pattern=`** (OpenAPI + **422 em runtime**); **nova instância por parâmetro** — não reutilizar o mesmo `Query()` |
+| 7b | Paginação | `page_size` / `limit` / `top_limit` / `history_limit` → `PAGE_SIZE_QUERY("tier")` / `LIMIT_QUERY(...)` (`pagination_query.py`); envelope → `PaginationEnvelopeBuilder`; gate `audit_pagination_tiers.py --check-complete` — ver [paginacao.md](../../api-delpi/docs/api/padroes-totvs/paginacao.md) |
 | 8 | Labels de params | Nome novo em `openapi_param_locale.json` (EN + pt-BR; datas com `"format": "date"`); injector hidrata description EN e format no Swagger |
 | 8b | Labels de enums | Domínio fechado (`Query(enum=…)`) → `enumLabels` bilíngues no mesmo JSON (`en` + `pt-BR` por valor); `sync_tv_data_param_catalog.py --check` cobre enums do catálogo TV |
 | 9 | Chat-critical | `**agent_route(...)` / `OpenApiAgentMetadataBuilder` — **não** duplicar `operation_id=` além do `**META` |
