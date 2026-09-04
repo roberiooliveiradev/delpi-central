@@ -1,5 +1,5 @@
 /**
- * Textos do hub Administração (Painel · Carteiras · Equipe · Grupos).
+ * Textos do hub Administração (Painel · Carteiras · Equipe · Grupos · SLAs).
  */
 export const ADMINISTRATION_CONTENT = {
   breadcrumbRoot: "Administração",
@@ -115,6 +115,20 @@ export const ADMINISTRATION_CONTENT = {
     openGroupWallOpening: "Abrindo mural…",
     openGroupWallError: "Não foi possível abrir o mural do grupo.",
     membersFacepileAria: "Membros do grupo {name}",
+  },
+  slas: {
+    navLabel: "SLAs",
+    eyebrow: "Administração",
+    title: "SLAs",
+    description:
+      "Políticas de prazo por domínio (tarefa, amostra, confirmação de pedido, etapa de oferta). Cadastre após homologar os prazos com as áreas.",
+    refresh: "Atualizar",
+    create: "Nova política",
+    emptyTitle: "Nenhuma política de SLA",
+    emptyDescription:
+      "Cadastre políticas depois que o Comercial homologar os prazos. Até lá a lista fica vazia.",
+    loading: "Carregando políticas de SLA.",
+    loadError: "Não foi possível carregar as políticas de SLA.",
   },
   metrics: {
     total: "Carteiras",

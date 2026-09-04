@@ -37,6 +37,7 @@ import { ProposalDetailPage } from "./features/proposals/ProposalDetailPage";
 import { ProposalsPage } from "./features/proposals/ProposalsPage";
 import { AdministrationHomePage } from "./features/administration/AdministrationHomePage";
 import { AdministrationGroupsPage } from "./features/administration/AdministrationGroupsPage";
+import { AdministrationSlasPage } from "./features/administration/AdministrationSlasPage";
 import { AdministrationTeamPage } from "./features/administration/AdministrationTeamPage";
 import { InteractionRoomWorkspace } from "./features/interaction-rooms/InteractionRoomWorkspace";
 import { UserManualPage } from "./features/help/UserManualPage";
@@ -285,6 +286,13 @@ function AppRoutes({
       {view === "administration_groups" ? (
         canManagePortfolios || isAdmin ? (
           <AdministrationGroupsPage basePath={basePath} />
+        ) : (
+          <NotFoundPage basePath={basePath} />
+        )
+      ) : null}
+      {view === "administration_slas" ? (
+        canManagePortfolios || isAdmin ? (
+          <AdministrationSlasPage basePath={basePath} />
         ) : (
           <NotFoundPage basePath={basePath} />
         )

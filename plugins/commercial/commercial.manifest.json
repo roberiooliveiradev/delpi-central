@@ -166,6 +166,14 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/commercial/administration/slas",
+      "label": "SLAs",
+      "permission": "commercial.manage",
+      "icon": "settings",
+      "order": 28,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/commercial/seller-portfolios",
       "label": "Carteiras",
       "permission": "commercial.manage",

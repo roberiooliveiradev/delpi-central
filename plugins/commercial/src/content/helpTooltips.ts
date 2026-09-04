@@ -753,6 +753,8 @@ export const CM_HELP = {
       "Resumo de cobertura das carteiras e atalhos para cadastro, transferência e membros.",
     portfolios: "CRUD de carteiras, organização, membros e transferência de clientes.",
     members: "Roster de pessoas com acesso às carteiras ativas do Portal.",
+    slasPage:
+      "Catálogo de políticas de SLA (prazos). Criar, editar e desativar políticas após homologação dos prazos com as áreas.",
     teamSearch: "Filtra a lista de pessoas por nome ou e-mail.",
     teamFilterGroup: "Mostra só membros do grupo operacional selecionado.",
     teamFilterPortfolio: "Mostra só pessoas com acesso à carteira selecionada.",

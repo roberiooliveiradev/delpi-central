@@ -23,6 +23,7 @@ export type PluginView =
   | "administration_portfolios"
   | "administration_team"
   | "administration_groups"
+  | "administration_slas"
   | "seller_portfolios"
   | "seller_portfolio_detail"
   | "user_profile"
@@ -290,6 +291,10 @@ export function resolvePluginRoute(
     return { view: "administration_groups", pathname: path, relativePath };
   }
 
+  if (relativePath === "administration/slas") {
+    return { view: "administration_slas", pathname: path, relativePath };
+  }
+
   const adminPortfolioDetail = /^administration\/seller-portfolios\/([^/]+)$/.exec(relativePath);
   if (adminPortfolioDetail) {
     const portfolioId = safeDecodeSegment(adminPortfolioDetail[1] ?? "");
@@ -511,6 +516,7 @@ const PLUGIN_VIEW_RELATIVE_PATHS: Record<BuildablePluginView, string> = {
   administration_portfolios: "administration/seller-portfolios",
   administration_team: "administration/team",
   administration_groups: "administration/groups",
+  administration_slas: "administration/slas",
   /** Alias legado — resolve para a aba Carteiras do hub. */
   seller_portfolios: "administration/seller-portfolios",
   interaction_rooms: "interaction-rooms",
@@ -724,6 +730,7 @@ export function resolveActiveNavId(
     view === "administration_portfolios" ||
     view === "administration_team" ||
     view === "administration_groups" ||
+    view === "administration_slas" ||
     view === "seller_portfolios" ||
     view === "seller_portfolio_detail"
   ) {

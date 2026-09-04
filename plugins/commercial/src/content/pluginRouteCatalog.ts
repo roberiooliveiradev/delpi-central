@@ -257,6 +257,13 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         requiredCap: "admin",
         keywords: ["grupos", "groups", "vendedores", "auxiliares"],
       },
+      {
+        id: "administration_slas",
+        label: "SLAs",
+        viewId: "administration_slas",
+        requiredCap: "admin",
+        keywords: ["sla", "slas", "prazo", "prazos", "política", "settings"],
+      },
     ],
   },
 ] as const;

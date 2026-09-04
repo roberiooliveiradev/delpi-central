@@ -9,21 +9,23 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const feature = join(root, "src/features/administration");
 const content = join(root, "src/content/administration.ts");
 
-describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
-  it("content tem labels das quatro abas", () => {
+describe("administration hub (Painel · Carteiras · Equipe · Grupos · SLAs)", () => {
+  it("content tem labels das cinco abas", () => {
     const source = readFileSync(content, "utf8");
     assert.match(source, /navLabel: "Painel"/);
     assert.match(source, /navLabel: "Carteiras"/);
     assert.match(source, /navLabel: "Equipe"/);
     assert.match(source, /navLabel: "Grupos"/);
+    assert.match(source, /navLabel: "SLAs"/);
   });
 
-  it("SubNav navega para as quatro views do hub", () => {
+  it("SubNav navega para as views do hub incluindo SLAs", () => {
     const source = readFileSync(join(feature, "AdministrationSubNav.tsx"), "utf8");
     assert.match(source, /CommercialUnderlineNav/);
     assert.match(source, /administration_portfolios/);
     assert.match(source, /administration_team/);
     assert.match(source, /administration_groups/);
+    assert.match(source, /administration_slas/);
     assert.match(source, /activeId=\{active\}/);
   });
 
@@ -104,24 +106,28 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos)", () => {
     );
   });
 
-  it("App roteia Painel, Carteiras, Equipe e Grupos", () => {
+  it("App roteia Painel, Carteiras, Equipe, Grupos e SLAs", () => {
     const app = readFileSync(join(root, "src/App.tsx"), "utf8");
     assert.match(app, /AdministrationHomePage/);
     assert.match(app, /AdministrationTeamPage/);
     assert.match(app, /AdministrationGroupsPage/);
+    assert.match(app, /AdministrationSlasPage/);
     assert.match(app, /view === "administration"/);
     assert.match(app, /view === "administration_portfolios"/);
     assert.match(app, /view === "administration_team"/);
     assert.match(app, /view === "administration_groups"/);
+    assert.match(app, /view === "administration_slas"/);
   });
 
-  it("pluginRoutes resolve team/members/groups", () => {
+  it("pluginRoutes resolve team/members/groups/slas", () => {
     const source = readFileSync(join(root, "src/app/pluginRoutes.ts"), "utf8");
     assert.match(source, /administration\/team/);
     assert.match(source, /administration\/members/);
     assert.match(source, /administration\/groups/);
+    assert.match(source, /administration\/slas/);
     assert.match(source, /administration_team/);
     assert.match(source, /administration_groups/);
+    assert.match(source, /administration_slas/);
   });
 
   it("lista de carteiras embute SubNav do hub", () => {

@@ -3,13 +3,14 @@ import { navigatePluginView } from "../../app/pluginNavigation";
 import type { PluginNavigationTarget } from "../../app/pluginRoutes";
 import { ADMINISTRATION_CONTENT } from "../../content/administration";
 
-export type AdministrationTabId = "panel" | "portfolios" | "team" | "groups";
+export type AdministrationTabId = "panel" | "portfolios" | "team" | "groups" | "slas";
 
 const TAB_TO_VIEW: Record<AdministrationTabId, PluginNavigationTarget> = {
   panel: "administration",
   portfolios: "administration_portfolios",
   team: "administration_team",
   groups: "administration_groups",
+  slas: "administration_slas",
 };
 
 type AdministrationSubNavProps = {
@@ -23,6 +24,7 @@ export function AdministrationSubNav({ basePath, active }: AdministrationSubNavP
     { id: "portfolios", label: ADMINISTRATION_CONTENT.portfolios.navLabel },
     { id: "team", label: ADMINISTRATION_CONTENT.team.navLabel },
     { id: "groups", label: ADMINISTRATION_CONTENT.groups.navLabel },
+    { id: "slas", label: ADMINISTRATION_CONTENT.slas.navLabel },
   ];
 
   return (
