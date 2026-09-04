@@ -187,7 +187,43 @@ export async function listAttachments(requestId: string, options?: { signal?: Ab
     options,
   );
   const data = unwrap(body);
-  return Array.isArray(data) ? data : data.items || [];
+  const items = Array.isArray(data) ? data : data.items || [];
+  return items.map(normalizeAttachment);
+}
+
+function normalizeAttachment(raw: Record<string, unknown> | RequestAttachment): RequestAttachment {
+  const row = raw as Record<string, unknown>;
+  return {
+    id: String(row.id ?? ""),
+    file_name: String(row.file_name || row.original_name || "anexo"),
+    content_type: (row.content_type as string | null | undefined) ?? (row.mime_type as string | null | undefined) ?? null,
+    size_bytes: (row.size_bytes as number | null | undefined) ?? null,
+    created_at: (row.created_at as string | null | undefined) ?? null,
+  };
+}
+
+export async function uploadAttachment(requestId: string, file: File, idempotencyKey?: string) {
+  const form = new FormData();
+  form.append("file", file, file.name);
+  const response = await fetch(
+    `${API_BASE}/requests/${encodeURIComponent(requestId)}/attachments`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "X-Delpi-Caller-App": DELPI_CALLER_APP,
+        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+        ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
+      },
+      body: form,
+    },
+  );
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Erro HTTP ${response.status}`);
+  }
+  const body = (await response.json()) as Envelope<Record<string, unknown>>;
+  return normalizeAttachment(unwrap(body));
 }
 
 export async function listArtifacts(requestId: string, options?: { signal?: AbortSignal }) {

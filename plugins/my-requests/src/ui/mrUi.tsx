@@ -2,6 +2,7 @@ import {
   createCompactPagination,
   createDashboardDetailFieldGrid,
   createDashboardEmptyState,
+  createDashboardFileDropzone,
   createDashboardFiltersKit,
   createDashboardFormActions,
   createDashboardLoadingState,
@@ -15,6 +16,7 @@ import {
   createHostContainedModalShell,
   createTimeline,
   emptyStateCardBemClasses,
+  fileDropzoneBemClasses,
   formActionsBemClasses,
   loadingStateCardBemClasses,
   pageHeaderTitleRowBemClasses,
@@ -124,4 +126,12 @@ export const MyRequestsModal = createHostContainedModalShell({
   prefix: MR_UI_PREFIX,
   portalScopeClassName: MR_PORTAL_SCOPE,
   containedLayout: "dialog",
+});
+
+export const MyRequestsFileDropzone = createDashboardFileDropzone({
+  classNames: fileDropzoneBemClasses(MR_UI_PREFIX, "file-dropzone"),
+  labels: {
+    title: "Arraste um arquivo ou clique para selecionar",
+    hint: "PDF ou imagem · máx. 25 MB",
+  },
 });

@@ -384,6 +384,29 @@ declare module "@delpi/plugin-ui/index" {
     containedLayout?: "fill" | "dialog";
     variant?: "default" | "wide" | "page";
   }): ComponentType<DashboardModalShellProps>;
+
+  export type FileDropzoneClassNames = Record<string, string>;
+  export type FileDropzoneLabels = { title: string; hint: string };
+  export type DashboardFileDropzoneProps = {
+    disabled?: boolean;
+    busy?: boolean;
+    multiple?: boolean;
+    accept?: string;
+    onFilesSelected: (files: File[]) => void;
+    labels?: Partial<FileDropzoneLabels>;
+    fieldLabel?: string;
+    ariaLabel?: string;
+  };
+
+  export function fileDropzoneBemClasses(
+    prefix: string,
+    block?: string,
+  ): FileDropzoneClassNames;
+
+  export function createDashboardFileDropzone(config: {
+    classNames: FileDropzoneClassNames;
+    labels: FileDropzoneLabels;
+  }): ComponentType<DashboardFileDropzoneProps>;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

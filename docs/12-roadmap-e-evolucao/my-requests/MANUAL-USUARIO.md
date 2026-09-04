@@ -39,7 +39,7 @@ Painéis:
 |--------|-----|
 | Linha do tempo | Eventos (criação, transição, upload, comentário) |
 | Comentários | Thread da solicitação |
-| Anexos | Arquivos do solicitante |
+| Anexos | Arquivos do solicitante — arraste/selecione no detalhe para enviar; baixe pelos links |
 | Artefatos | Evidências do processamento |
 
 ## Permissões típicas

@@ -47,7 +47,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   attachments: {
     section:
-      "Anexos enviados pelo solicitante (PDF/imagens etc.). Distintos dos artefatos de processamento.",
+      "Anexos do solicitante. Arraste ou selecione arquivos (PDF/imagem) para enviar; baixe pelos links da lista. Distintos dos artefatos de processamento.",
   },
   artifacts: {
     section:

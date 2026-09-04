@@ -8,6 +8,7 @@ import {
   MyRequestsFilterSelectField,
   MyRequestsFiltersRow,
   MyRequestsModal,
+  MyRequestsFileDropzone,
   MyRequestsSectionCard,
   TextField,
 } from "./mrUi";
@@ -33,6 +34,7 @@ describe("kit-first my-requests", () => {
     expect(typeof MyRequestsFilterSelectField).toBe("function");
     expect(typeof MyRequestsCompactPagination).toBe("function");
     expect(typeof MyRequestsModal).toBe("function");
+    expect(typeof MyRequestsFileDropzone).toBe("function");
   });
 
   it("não reintroduz chrome primitivo local (__btn / __panel / __table)", () => {

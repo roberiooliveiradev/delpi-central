@@ -62,6 +62,7 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 | `createDashboardFiltersKit` | `MyRequestsFiltersRow` / `FilterSelectField` | Mine + Fila |
 | `createCompactPagination` | `MyRequestsCompactPagination` | Mine + Fila |
 | `createHostContainedModalShell` | `MyRequestsModal` | Detalhe return/cancel |
+| `createDashboardFileDropzone` | `MyRequestsFileDropzone` | Upload anexos no detalhe |
 | `ActionButton` | — | Nav, ações, links de linha |
 | `DataTable` + `dataTableBemClasses` | `mrDataTableClassNames` | `/mine`, `/work-queue` |
 | `FieldLabel` | — | Comentários, observação NF |
@@ -71,7 +72,6 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 
 | Export / factory | Uso planejado | Etapa |
 |------------------|---------------|-------|
-| `createDashboardFileDropzone` | Upload de anexos no detalhe | E10.S3 |
 | `createDashboardCreatableMultiSelectField` | Tags / multi-seleção futura | backlog |
 | Schema form renderer (MFE `SchemaFormPage`) | `raw-material-creation` schema-driven | **entregue E7** |
 | `AnchoredPanelPortal` / menus | Menus flutuantes se surgirem | sob demanda |
@@ -91,7 +91,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 | Detalhe | `/requests/:id` | SectionCard, DetailFields, ActionBar→ActionButton, ModalShell (return/cancel), Timeline, painéis |
 | Payload NF | detalhe | SectionCard, DetailFields |
 | Comentários | detalhe | SectionCard, FieldLabel, NativeTextArea, ActionButton |
-| Anexos / Artefatos | detalhe | SectionCard, Empty, ActionButton(link) |
+| Anexos / Artefatos | detalhe | SectionCard, FileDropzone (anexos), Empty, ActionButton(link) |
 | Schema MP | `/new` type MP | SchemaFormPage + SectionCard + kit fields | **entregue E7** |
 
 ---
