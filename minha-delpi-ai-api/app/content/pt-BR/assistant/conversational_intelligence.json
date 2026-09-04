@@ -1,5 +1,5 @@
 {
-  "version": "2026.09.1",
+  "version": "2026.09.2",
   "featureFlags": {
     "turnUnderstandingShadow": true,
     "taskPlannerEnabled": false
@@ -7,5 +7,49 @@
   "envOverrides": {
     "turnUnderstandingShadow": "CHAT_TURN_UNDERSTANDING_SHADOW",
     "taskPlannerEnabled": "CHAT_TASK_PLANNER_ENABLED"
+  },
+  "taskPlanner": {
+    "maxStepsByMode": {
+      "fast": 1,
+      "normal": 4,
+      "thinker": 8
+    },
+    "maxReplanByMode": {
+      "fast": 0,
+      "normal": 1,
+      "thinker": 2
+    },
+    "defaults": {
+      "maxSteps": 4,
+      "maxReplan": 1,
+      "responseMode": "normal",
+      "parallelGroup": "reads",
+      "fallbackCapabilityId": "transform.reason",
+      "matchTopK": 3
+    },
+    "executionDisabledModes": ["fast"],
+    "priorCodeMarkers": [
+      "estoque",
+      "saldo",
+      "segundo",
+      "primeiro",
+      "terceiro",
+      "ultimo",
+      "desse",
+      "deste",
+      "dele",
+      "dela",
+      "normas"
+    ],
+    "capabilityTypePrefixes": {
+      "rag.": "rag",
+      "web.": "web",
+      "action.": "tool"
+    },
+    "subtaskTypeMap": {
+      "reasoning": "reason",
+      "action": "tool",
+      "lookup": "reason"
+    }
   }
 }

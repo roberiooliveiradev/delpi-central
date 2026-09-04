@@ -23,6 +23,27 @@ class ChatCapabilityRegistryService:
             return default
 
     @classmethod
+    def scoring_float(cls, key: str, default: float) -> float:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "scoring") or {}
+        if not isinstance(node, dict):
+            return default
+        try:
+            return float(node.get(key, default))
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def scoring_int(cls, key: str, default: int) -> int:
+        return int(cls.scoring_float(key, float(default)))
+
+    @classmethod
+    def discard_reason(cls, key: str, default: str) -> str:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "discardReasons") or {}
+        if not isinstance(node, dict):
+            return default
+        return str(node.get(key, default) or default).strip() or default
+
+    @classmethod
     def all_capabilities(cls) -> list[dict[str, Any]]:
         raw = ChatAssistantContentService.get_node(_BUNDLE, "capabilities") or []
         if not isinstance(raw, list):

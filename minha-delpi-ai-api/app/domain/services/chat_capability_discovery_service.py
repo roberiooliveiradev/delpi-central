@@ -47,7 +47,10 @@ class ChatCapabilityDiscoveryService:
                 discards.append(
                     {
                         "capabilityId": str(capability.get("capabilityId") or ""),
-                        "reason": "type_filtered",
+                        "reason": ChatCapabilityRegistryService.discard_reason(
+                            "typeFiltered",
+                            "type_filtered",
+                        ),
                     }
                 )
                 continue
@@ -57,12 +60,16 @@ class ChatCapabilityDiscoveryService:
                 discards.append(
                     {
                         "capabilityId": str(capability.get("capabilityId") or ""),
-                        "reason": "low_relevance",
+                        "reason": ChatCapabilityRegistryService.discard_reason(
+                            "lowRelevance",
+                            "low_relevance",
+                        ),
                     }
                 )
                 continue
 
-            scored.append((score, {**capability, "score": round(score, 3)}))
+            decimals = ChatCapabilityRegistryService.scoring_int("scoreDecimals", 3)
+            scored.append((score, {**capability, "score": round(score, decimals)}))
 
         scored.sort(key=lambda item: item[0], reverse=True)
         selected = tuple(item for _, item in scored[: max(1, limit)])
@@ -70,17 +77,32 @@ class ChatCapabilityDiscoveryService:
 
     @classmethod
     def _score(cls, normalized: str, capability: dict[str, Any]) -> float:
+        hit_weight = ChatCapabilityRegistryService.scoring_float("whenToUseWeight", 1.0)
+        penalty = ChatCapabilityRegistryService.scoring_float("whenNotPenalty", 1.5)
+        word_weight = ChatCapabilityRegistryService.scoring_float(
+            "descriptionWordWeight",
+            0.15,
+        )
+        min_word_chars = ChatCapabilityRegistryService.scoring_int(
+            "minDescriptionWordChars",
+            4,
+        )
         score = 0.0
+
         for term in capability.get("whenToUse") or []:
             token = str(term or "").strip().lower()
             if token and token in normalized:
-                score += 1.0
+                score += hit_weight
+
         for term in capability.get("whenNot") or []:
             token = str(term or "").strip().lower()
             if token and token in normalized:
-                score -= 1.5
+                score -= penalty
+
         description = str(capability.get("descriptionForModel") or "").lower()
+
         for word in normalized.split():
-            if len(word) >= 4 and word in description:
-                score += 0.15
+            if len(word) >= min_word_chars and word in description:
+                score += word_weight
+
         return score

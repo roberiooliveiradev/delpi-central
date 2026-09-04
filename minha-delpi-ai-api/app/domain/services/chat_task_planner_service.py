@@ -8,6 +8,9 @@ from typing import Any
 from app.domain.services.chat_capability_discovery_service import (
     ChatCapabilityDiscoveryService,
 )
+from app.domain.services.chat_task_planner_content_service import (
+    ChatTaskPlannerContentService,
+)
 from app.domain.services.chat_conversational_intelligence_flag_service import (
     ChatConversationalIntelligenceFlagService,
 )
@@ -64,9 +67,6 @@ class TaskPlan:
 
 
 class ChatTaskPlannerService:
-    _REPLAN_BY_MODE = {"fast": 0, "normal": 1, "thinker": 2}
-    _STEPS_BY_MODE = {"fast": 1, "normal": 4, "thinker": 8}
-
     @classmethod
     def build_from_understanding(
         cls,
@@ -75,9 +75,23 @@ class ChatTaskPlannerService:
         message: str,
         response_mode: str | None = None,
     ) -> TaskPlan:
-        mode = str(response_mode or "normal").strip().lower() or "normal"
-        max_steps = cls._STEPS_BY_MODE.get(mode, 4)
-        max_replan = cls._REPLAN_BY_MODE.get(mode, 1)
+        fallback_mode = ChatTaskPlannerContentService.default_text(
+            "responseMode",
+            default="normal",
+        )
+        mode = str(response_mode or fallback_mode).strip().lower() or fallback_mode
+        default_steps = ChatTaskPlannerContentService.default_int("maxSteps", 4)
+        default_replan = ChatTaskPlannerContentService.default_int("maxReplan", 1)
+        max_steps = ChatTaskPlannerContentService.mode_limit_int(
+            "maxStepsByMode",
+            mode,
+            default_steps,
+        )
+        max_replan = ChatTaskPlannerContentService.mode_limit_int(
+            "maxReplanByMode",
+            mode,
+            default_replan,
+        )
         discovery = ChatCapabilityDiscoveryService.discover(message)
         candidates = list(discovery.candidates)
         tasks: list[TaskPlanTask] = []
@@ -95,7 +109,14 @@ class ChatTaskPlannerService:
                     type=task_type,
                     capability_id=capability_id,
                     depends_on=depends,
-                    parallel_group="reads" if task_type == "tool" and not depends else None,
+                    parallel_group=(
+                        ChatTaskPlannerContentService.default_text(
+                            "parallelGroup",
+                            default="reads",
+                        )
+                        if task_type == "tool" and not depends
+                        else None
+                    ),
                 )
             )
 
@@ -105,7 +126,10 @@ class ChatTaskPlannerService:
                     id="t-1",
                     goal=understanding.user_goal,
                     type="reason",
-                    capability_id="transform.reason",
+                    capability_id=ChatTaskPlannerContentService.default_text(
+                        "fallbackCapabilityId",
+                        default="transform.reason",
+                    ),
                 )
             ]
 
@@ -145,7 +169,9 @@ class ChatTaskPlannerService:
     ) -> TaskPlan | None:
         if not ChatConversationalIntelligenceFlagService.task_planner_enabled():
             return None
-        if str(response_mode or "").strip().lower() == "fast":
+        disabled_modes = ChatTaskPlannerContentService.string_list("executionDisabledModes")
+
+        if str(response_mode or "").strip().lower() in disabled_modes:
             return None
         return cls.plan_shadow(
             message,
@@ -159,7 +185,10 @@ class ChatTaskPlannerService:
         goal: str,
         candidates: list[dict[str, Any]],
     ) -> str | None:
-        discovery = ChatCapabilityDiscoveryService.discover(goal, top_k=3)
+        discovery = ChatCapabilityDiscoveryService.discover(
+            goal,
+            top_k=ChatTaskPlannerContentService.default_int("matchTopK", 3),
+        )
         if discovery.candidates:
             return str(discovery.candidates[0].get("capabilityId") or "") or None
         if candidates:
@@ -168,22 +197,34 @@ class ChatTaskPlannerService:
 
     @classmethod
     def _map_type(cls, subtask_type: str, capability_id: str | None) -> str:
-        if capability_id and capability_id.startswith("rag."):
-            return "rag"
-        if capability_id and capability_id.startswith("web."):
-            return "web"
-        if capability_id and capability_id.startswith("action."):
-            return "tool"
-        if subtask_type == "reasoning":
-            return "reason"
-        if subtask_type == "action":
-            return "tool"
+        token = str(capability_id or "")
+
+        for prefix, mapped in ChatTaskPlannerContentService.string_map(
+            "capabilityTypePrefixes"
+        ).items():
+            if token.startswith(prefix):
+                return mapped
+
+        mapped_subtask = ChatTaskPlannerContentService.string_map("subtaskTypeMap").get(
+            str(subtask_type or "").strip().lower()
+        )
+
+        if mapped_subtask:
+            return mapped_subtask
+
         return "reason"
 
     @classmethod
     def _needs_prior_code(cls, goal: str) -> bool:
-        lowered = goal.lower()
+        from app.domain.services.chat_message_normalization_service import (
+            ChatMessageNormalizationService,
+        )
+
+        lowered = ChatMessageNormalizationService.normalize_for_matching(goal) or (
+            goal or ""
+        ).lower()
+
         return any(
             token in lowered
-            for token in ("estoque", "segundo", "primeiro", "desse", "dele", "normas")
+            for token in ChatTaskPlannerContentService.string_list("priorCodeMarkers")
         )

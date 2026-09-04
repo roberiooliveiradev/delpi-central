@@ -9,9 +9,19 @@
       "capabilityId": "action.product_search",
       "type": "action",
       "descriptionForModel": "Busca produtos por descrição, texto ou grupo via /products/search.",
-      "whenToUse": ["liste", "busque", "pesquise", "terminais", "produtos por descrição"],
-      "whenNot": ["estoque de um código já conhecido"],
-      "routeHints": ["/products/search"],
+      "whenToUse": [
+        "liste",
+        "busque",
+        "pesquise",
+        "terminais",
+        "produtos por descrição"
+      ],
+      "whenNot": [
+        "estoque de um código já conhecido"
+      ],
+      "routeHints": [
+        "/products/search"
+      ],
       "readWrite": "read",
       "parallelSafe": true,
       "risk": "low"
@@ -20,9 +30,17 @@
       "capabilityId": "action.product_stock",
       "type": "action",
       "descriptionForModel": "Consulta estoque de produto por código.",
-      "whenToUse": ["estoque", "saldo", "disponível"],
-      "whenNot": ["busca por descrição sem código"],
-      "routeHints": ["/products/{code}/stock"],
+      "whenToUse": [
+        "estoque",
+        "saldo",
+        "disponível"
+      ],
+      "whenNot": [
+        "busca por descrição sem código"
+      ],
+      "routeHints": [
+        "/products/{code}/stock"
+      ],
       "readWrite": "read",
       "parallelSafe": true,
       "risk": "low"
@@ -31,8 +49,14 @@
       "capabilityId": "action.product_description",
       "type": "action",
       "descriptionForModel": "Obtém cadastro/descrição do produto.",
-      "whenToUse": ["descrição", "cadastro", "ficha"],
-      "routeHints": ["/products/{code}"],
+      "whenToUse": [
+        "descrição",
+        "cadastro",
+        "ficha"
+      ],
+      "routeHints": [
+        "/products/{code}"
+      ],
       "readWrite": "read",
       "parallelSafe": true,
       "risk": "low"
@@ -41,7 +65,12 @@
       "capabilityId": "rag.company_knowledge",
       "type": "rag",
       "descriptionForModel": "Consulta base documental interna (normas, políticas, glossário).",
-      "whenToUse": ["normas", "política", "glossário", "documento interno"],
+      "whenToUse": [
+        "normas",
+        "política",
+        "glossário",
+        "documento interno"
+      ],
       "readWrite": "read",
       "parallelSafe": true,
       "risk": "low"
@@ -50,7 +79,11 @@
       "capabilityId": "web.search",
       "type": "web",
       "descriptionForModel": "Busca na web quando a base interna não cobre o tema.",
-      "whenToUse": ["na web", "internet", "pesquisa externa"],
+      "whenToUse": [
+        "na web",
+        "internet",
+        "pesquisa externa"
+      ],
       "readWrite": "read",
       "parallelSafe": false,
       "risk": "medium"
@@ -59,7 +92,11 @@
       "capabilityId": "skill.technical_description_compliance",
       "type": "skill",
       "descriptionForModel": "Avalia descrição cadastral contra Normas DELPI (F11).",
-      "whenToUse": ["dentro das normas", "conforme a norma", "descrição técnica"],
+      "whenToUse": [
+        "dentro das normas",
+        "conforme a norma",
+        "descrição técnica"
+      ],
       "readWrite": "read",
       "parallelSafe": true,
       "risk": "low"
@@ -68,10 +105,25 @@
       "capabilityId": "transform.reason",
       "type": "transform",
       "descriptionForModel": "Raciocínio/síntese sem nova tool.",
-      "whenToUse": ["resuma", "compare", "explique"],
+      "whenToUse": [
+        "resuma",
+        "compare",
+        "explique"
+      ],
       "readWrite": "read",
       "parallelSafe": true,
       "risk": "low"
     }
-  ]
+  ],
+  "scoring": {
+    "whenToUseWeight": 1.0,
+    "whenNotPenalty": 1.5,
+    "descriptionWordWeight": 0.15,
+    "minDescriptionWordChars": 4,
+    "scoreDecimals": 3
+  },
+  "discardReasons": {
+    "typeFiltered": "type_filtered",
+    "lowRelevance": "low_relevance"
+  }
 }
