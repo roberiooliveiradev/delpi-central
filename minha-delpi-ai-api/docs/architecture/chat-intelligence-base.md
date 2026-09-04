@@ -26,7 +26,7 @@ Melhorias de inteligência (comparação, insights, fast path operacional, respo
 | `ChatPriorTurnFactsPackingService` + `identityFields` / `resultSets` | Fatos tipados e ordinais sobrevivem ao turno N+1 |
 | `ChatTurnUnderstandingService` (shadow) | Decompõe mensagem composta em subtarefas |
 | `ChatCapabilityRegistryService` + `ChatCapabilityDiscoveryService` | Shortlist de capabilities sem free-pick de `operationId` |
-| `ChatTaskPlannerService` + `ChatExecutionOrchestrator` | TaskPlan shadow → cutover via `CHAT_TASK_PLANNER_ENABLED` |
+| `ChatTaskPlannerService` + `ChatTaskPlanExecutionBridgeService` → `ChatExecutionOrchestrator` | TaskPlan shadow → cutover (`CHAT_TASK_PLANNER_ENABLED`); orquestrador agenda capabilities (sem HTTP/RBAC bypass) e expõe `executionOrchestrator` / `replanCount` no adminDebug |
 
 Flags: `conversational_intelligence.json` + env `CHAT_TURN_UNDERSTANDING_SHADOW` / `CHAT_TASK_PLANNER_ENABLED`. Evidence: `docs/testing/evidence/chat-intelligence-*.json`. Smokes: `scripts/smoke_conversation_coherence_long.py`.
 

@@ -258,12 +258,22 @@ class ChatTurnPreparationService:
             previous_messages=history_source,
         )
         if execution_plan is not None and isinstance(workspace_context, dict):
+            from app.application.services.chat_turn.chat_task_plan_execution_bridge_service import (
+                ChatTaskPlanExecutionBridgeService,
+            )
+
+            bridge_payload = ChatTaskPlanExecutionBridgeService.run_scheduled(
+                execution_plan
+            )
             workspace_context = {
                 **workspace_context,
                 "activeTaskPlan": execution_plan.as_admin_debug(),
+                **bridge_payload,
             }
             if "task_plan_cutover" not in pipeline_stages:
                 pipeline_stages.append("task_plan_cutover")
+            if "task_plan_orchestrator" not in pipeline_stages:
+                pipeline_stages.append("task_plan_orchestrator")
 
         # Continuity reexec (revise/YoY) vence text_task «comparar» — não é redação pura.
         turn_grounding = (

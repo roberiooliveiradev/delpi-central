@@ -310,10 +310,13 @@ class ChatAdminDebugService:
             "evidenceRefs",
             "turnUnderstanding",
             "taskPlan",
+            "activeTaskPlan",
+            "executionOrchestrator",
             "capabilityCandidates",
             "capabilityDiscardReasons",
             "clarificationDecision",
             "replanCount",
+            "taskPlanCapabilityOrder",
             "shadowDiff",
             "contextPackingStats",
         ):
@@ -427,6 +430,16 @@ class ChatAdminDebugService:
                 else None,
                 "taskPlan": workspace_context.get("shadowTaskPlan")
                 if isinstance(workspace_context.get("shadowTaskPlan"), dict)
+                else None,
+                "activeTaskPlan": workspace_context.get("activeTaskPlan")
+                if isinstance(workspace_context.get("activeTaskPlan"), dict)
+                else None,
+                "executionOrchestrator": workspace_context.get("executionOrchestrator")
+                if isinstance(workspace_context.get("executionOrchestrator"), dict)
+                else None,
+                "replanCount": workspace_context.get("replanCount"),
+                "taskPlanCapabilityOrder": workspace_context.get("taskPlanCapabilityOrder")
+                if isinstance(workspace_context.get("taskPlanCapabilityOrder"), list)
                 else None,
                 "capabilityCandidates": workspace_context.get("capabilityCandidates")
                 if isinstance(workspace_context.get("capabilityCandidates"), list)
