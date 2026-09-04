@@ -147,6 +147,8 @@ export const CM_HELP = {
       "Clique na linha (exceto ações/links com destino próprio, como Cliente→Conta) abre o detalhe do item.",
     layoutToggle:
       "Alterna entre tabela, cards e board Kanban (colunas por etapa). A preferência fica salva neste navegador.",
+    quantityDisplayMode:
+      "Preferência visual compartilhada com a Conta (NF): milheiro (UM nativa) ou peças (só converte quando a UM é MI; 1 MI = 1000 PC). Não altera o contrato OTD/API.",
     kanbanBoard:
       "Visão somente leitura: cada coluna é uma etapa operacional. Clique no card abre o detalhe da linha (mesmos filtros da lista).",
     kanbanUpcoming:
@@ -310,6 +312,8 @@ export const CM_HELP = {
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingMetric:
       "R$ = valor (bruto ou líquido conforme Natureza). Qtd = quantidade fornecida no período (série e mix por produto). UMs mistas não são convertidas automaticamente.",
+    quantityDisplayMode:
+      "Milheiro mantém a UM da nota (ex.: MI). Peças converte só UM=MI (1 MI = 1000 PC) — só apresentação, sem mudar a API.",
     billingSeriesPeriod:
       "No hero (Faturamento, ABC e Ranking): recorte do período — hoje, semana, mês, mês passado, trimestre, ano, últimos 12 meses ou intervalo personalizado (só Faturamento/ABC).",
     billingSeriesGrain:

@@ -61,6 +61,8 @@ describe("CM_HELP matriz (C16)", () => {
       "customers.billingNature",
       "customers.billingMetric",
       "customers.billingTrendIncomplete",
+      "customers.quantityDisplayMode",
+      "openOrders.quantityDisplayMode",
       "customers.billingFilterCustomer",
       "customers.billingFilterProductGroup",
       "customers.billingFilterProduct",

@@ -57,6 +57,7 @@ import { formatDisplayDate, getDeliveryOverdueDays } from "../utils/dates";
 import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
 import { exportOpenOrdersExcel } from "../utils/exportOpenOrdersExcel";
 import { formatCurrency, formatQuantity } from "../utils/format";
+import { useQuantityDisplayMode } from "../hooks/useQuantityDisplayMode";
 import { openOrdersColumnHelp } from "../utils/openOrdersColumnHelp";
 import {
   findOpenOrderLine,
@@ -127,6 +128,8 @@ export function OpenOrdersTable({
 }: OpenOrdersTableProps) {
   const [exporting, setExporting] = useState(false);
   const deepLinkHandledRef = useRef(false);
+  const { mode: quantityDisplayMode, setMode: setQuantityDisplayMode } =
+    useQuantityDisplayMode();
   const { layout, setLayout } = usePersistedViewLayout({
     storageKey: OPEN_ORDERS_LAYOUT_STORAGE_KEY,
   });
@@ -493,6 +496,29 @@ export function OpenOrdersTable({
                   { value: "table", label: "Tabela" },
                   { value: "cards", label: "Cards" },
                   { value: "board", label: "Board" },
+                ]}
+              />
+            </HelpTooltip>
+            <HelpTooltip
+              content={CM_HELP.openOrders.quantityDisplayMode}
+              ariaLabel="Ajuda: milheiro ou peças"
+              wrap
+              placement="bottom"
+            >
+              <SegmentToggle
+                prefix={UI_PREFIX}
+                size="sm"
+                ariaLabel={CM_HELP.openOrders.quantityDisplayMode}
+                idPrefix="open-orders-qty-display"
+                value={quantityDisplayMode}
+                onChange={(value) => {
+                  if (value === "catalog" || value === "pieces") {
+                    setQuantityDisplayMode(value);
+                  }
+                }}
+                options={[
+                  { value: "catalog", label: "Milheiro" },
+                  { value: "pieces", label: "Peças" },
                 ]}
               />
             </HelpTooltip>
