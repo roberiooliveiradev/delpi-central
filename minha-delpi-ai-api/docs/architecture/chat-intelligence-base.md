@@ -27,6 +27,7 @@ Melhorias de inteligência (comparação, insights, fast path operacional, respo
 | `ChatTurnUnderstandingService` (shadow) | Decompõe mensagem composta em subtarefas |
 | `ChatCapabilityRegistryService` + `ChatCapabilityDiscoveryService` | Shortlist de capabilities sem free-pick de `operationId` |
 | `ChatTaskPlannerService` + `ChatTaskPlanExecutionBridgeService` → `ChatExecutionOrchestrator` | TaskPlan shadow → cutover (`CHAT_TASK_PLANNER_ENABLED`); orquestrador agenda capabilities (sem HTTP/RBAC bypass) e expõe `executionOrchestrator` / `replanCount` no adminDebug |
+| `ChatUserQueryImprovementService` | No início de `ChatTurnPreparationService.prepare`: regras P14 + LLM gated reescrevem a pergunta **só** para intent/tools/RAG (`message_for_intelligence`); bolha e audit preservam o original; `adminDebug.queryImprovement` |
 
 Flags: `conversational_intelligence.json` + env `CHAT_TURN_UNDERSTANDING_SHADOW` / `CHAT_TASK_PLANNER_ENABLED`. Evidence: `docs/testing/evidence/chat-intelligence-*.json`. Smokes: `scripts/smoke_conversation_coherence_long.py`.
 
@@ -68,6 +69,7 @@ Mapa de navegação — não substitui a tabela completa em [§ Serviços centra
 
 **Delegates do turno (pós-refactor):** `ChatTurnPreparationIngressService`, `ChatTurnPreparationDirectAnswerService`, `ChatTurnPreparationMemoryContextService`, `ChatTurnPreparationToolRoutingService`, `ChatTurnPreparationRagService`, `ChatTurnPreparationPostToolResolutionService`, `ChatTurnPreparationResultService`, `ChatTurnPreparationPreToolContextService` — todos consumidos por `ChatTurnPreparationService.prepare()`.
 
+**Melhoria de pergunta (set/2026):** antes do ingress/tools, `ChatUserQueryImprovementService` aplica (A) regras estáticas de [`typing_correction_rules.json`](../../app/content/pt-BR/assistant/typing_correction_rules.json) e, se o matching operacional ainda for fraco, (B) rewrite LLM gated via [`user_query_improvement.json`](../../app/content/pt-BR/assistant/user_query_improvement.json). Distinto do chip pré-envio do [Playbook 14](../roadmap/playbook-14-corretor-digitacao-chat.md) (composer / `POST /chat/typing-suggestions`): o improve de turno é silencioso e não exige aceite do usuário.
 **Delegates do presenter (jun/2026):** hosts utilitários em `presenters/` — `ExternalActionKpiChartPresenter`, `ExternalActionSqlPresenter`, `ExternalActionOperationalResponsePresenter`, `presentation_table_host_service` — acessados via facade `ExternalActionResultPresenter` + `ChatSchemaDrivenPresentationService`. **Sem** presenters por entidade (`product_*_presenter.py` removidos).
 
 ---
@@ -448,7 +450,7 @@ Perguntas curtas como «que horas são?», «que dia é hoje?», «qual o ano?»
 | Classificação | `classify(message)` por categoria (`current_time`, `current_date`, `current_datetime`, `current_weekday`, `current_year`) |
 | Resposta | Template PT-BR com hora/data reais (`CHAT_UTILITY_TIMEZONE`, default `America/Sao_Paulo`) quando `CHAT_UTILITY_DIRECT_ENABLED=true` |
 | Pipeline | **Sem RAG**, **sem** loop agentic, **sem** LLM; estágio `utility_direct` |
-| Typos | `ChatMessageNormalizationService` corrige antes do match — ex.: `que hors são?` → `que horas sao`, `estouque` → `estoque`. **UI (jun/2026):** [Playbook 14](../roadmap/playbook-14-corretor-digitacao-chat.md) — chip pré-envio no composer via `POST /chat/typing-suggestions`; changelog [2026-06-playbook-14](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md). |
+| Typos | `ChatMessageNormalizationService` corrige antes do match — ex.: `que hors são?` → `que horas sao`, `estouque` → `estoque`. **UI (jun/2026):** [Playbook 14](../roadmap/playbook-14-corretor-digitacao-chat.md) — chip pré-envio no composer via `POST /chat/typing-suggestions`; changelog [2026-06-playbook-14](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md). **Turno (set/2026):** `ChatUserQueryImprovementService` no prep — regras P14 + LLM gated; bolha = original; inteligência = `improvedMessage` (`adminDebug.queryImprovement`). |
 | Exclusões | Mensagens com contexto operacional (`producao`, `ordem`, `estoque`, …) não entram no atalho |
 
 Checklist manual: **U1–U9** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
