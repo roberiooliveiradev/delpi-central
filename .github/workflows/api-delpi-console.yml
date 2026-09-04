@@ -51,7 +51,14 @@ jobs:
             tests/test_console_alerts_service.py \
             tests/test_console_portal_notification_service.py \
             tests/test_system_console_alerts_routes.py \
+            tests/unit/domain/services/test_pagination_tier_service.py \
+            tests/unit/application/services/test_pagination_envelope_builder.py \
+            tests/unit/interface/http/test_pagination_query_inbound.py \
+            tests/unit/application/services/test_pagination_outbound_migration.py \
             -q
+
+      - name: Gate paginação centralizada
+        run: PYTHONPATH=. python scripts/audit_pagination_tiers.py --check-complete
 
   console-build:
     runs-on: ubuntu-latest
