@@ -137,7 +137,11 @@ def test_build_department_idd_extracts_department_and_branch():
     assert parameters["branch"] == "02"
 
 
-def test_build_supplies_stock_uses_json_literal_binding():
+def test_build_supplies_stock_uses_canonical_top_limit():
+    from app.domain.services.chat_operational_pagination_defaults_service import (
+        ChatOperationalPaginationDefaultsService,
+    )
+
     parameters = OperationalApiParameterBuilderService.build_supplies_stock(
         {
             "parametersSchema": [
@@ -147,8 +151,9 @@ def test_build_supplies_stock_uses_json_literal_binding():
         }
     )
 
-    assert parameters["top_limit"] == 10
-    assert parameters["limit"] == 10
+    expected = ChatOperationalPaginationDefaultsService.supplies_stock_top_limit()
+    assert parameters["top_limit"] == expected
+    assert parameters["limit"] == expected
 
 
 def test_build_sale_orders_pagination_and_dates():

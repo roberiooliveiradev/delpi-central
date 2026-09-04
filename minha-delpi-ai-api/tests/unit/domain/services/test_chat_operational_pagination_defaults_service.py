@@ -43,3 +43,28 @@ def test_special_defaults_loaded():
     assert ChatOperationalPaginationDefaultsService.auto_recovery_page_size_cap() == 100
     assert ChatOperationalPaginationDefaultsService.requested_page_size_cap() == 500
     assert ChatOperationalPaginationDefaultsService.agentic_example_page_size() == 50
+
+
+def test_product_search_limit_uses_canonical_defaults():
+    from app.application.services.external_actions.external_action_product_search_route_selection_service import (
+        ExternalActionProductSearchRouteSelectionService,
+    )
+
+    assert (
+        ExternalActionProductSearchRouteSelectionService.extract_search_limit(
+            "busque produtos terminais"
+        )
+        == ChatOperationalPaginationDefaultsService.product_search_default()
+    )
+    assert (
+        ExternalActionProductSearchRouteSelectionService.extract_search_limit(
+            "busque 8 produtos terminais"
+        )
+        == 8
+    )
+    assert (
+        ExternalActionProductSearchRouteSelectionService.extract_search_limit(
+            "busque 99 produtos terminais"
+        )
+        == ChatOperationalPaginationDefaultsService.product_search_message_cap()
+    )

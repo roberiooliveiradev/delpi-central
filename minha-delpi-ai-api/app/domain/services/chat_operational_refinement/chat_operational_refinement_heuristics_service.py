@@ -20,6 +20,9 @@ from app.domain.services.chat_route_context_service import (
 from app.domain.services.chat_operational_refinement.chat_operational_refinement_facade_access import (
     refinement_service,
 )
+from app.domain.services.chat_operational_pagination_defaults_service import (
+    ChatOperationalPaginationDefaultsService,
+)
 from app.domain.services.chat_operational_refinement.chat_operational_refinement_models import (
     OperationalRefinement,
     RecentPaginatedAction,
@@ -112,8 +115,9 @@ class ChatOperationalRefinementHeuristicsService:
                 continue
 
             value = int(match.group(1))
+            cap = ChatOperationalPaginationDefaultsService.requested_page_size_cap()
 
-            if 1 <= value <= 500:
+            if 1 <= value <= cap:
                 return value
 
         return None

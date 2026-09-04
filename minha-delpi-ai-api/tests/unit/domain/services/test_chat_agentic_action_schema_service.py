@@ -1,6 +1,9 @@
 from app.domain.services.chat_agentic_action_schema_service import (
     ChatAgenticActionSchemaService,
 )
+from app.domain.services.chat_operational_pagination_defaults_service import (
+    ChatOperationalPaginationDefaultsService,
+)
 
 
 def test_build_slim_action_includes_description_parameters_and_examples():
@@ -41,7 +44,7 @@ def test_build_slim_action_includes_description_parameters_and_examples():
         "parameters": {
             "code": "10080022",
             "branch": "02",
-            "page_size": 50,
+            "page_size": ChatOperationalPaginationDefaultsService.agentic_example_page_size(),
         }
     }
 

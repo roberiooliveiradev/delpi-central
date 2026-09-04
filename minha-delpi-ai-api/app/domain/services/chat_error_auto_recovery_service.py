@@ -10,6 +10,9 @@ from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_operational_pagination_defaults_service import (
+    ChatOperationalPaginationDefaultsService,
+)
 
 
 @lru_cache(maxsize=1)
@@ -189,9 +192,10 @@ class ChatErrorAutoRecoveryService:
                 parameters.pop(key, None)
 
             page_size = parameters.get("page_size")
+            cap = ChatOperationalPaginationDefaultsService.auto_recovery_page_size_cap()
 
-            if isinstance(page_size, int) and page_size < 100:
-                parameters["page_size"] = min(page_size * 2, 100)
+            if isinstance(page_size, int) and page_size < cap:
+                parameters["page_size"] = min(page_size * 2, cap)
 
         elif strategy == "retry_last":
             pass

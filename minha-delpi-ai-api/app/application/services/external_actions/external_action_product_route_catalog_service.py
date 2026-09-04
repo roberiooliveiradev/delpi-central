@@ -459,10 +459,16 @@ class ExternalActionProductRouteCatalogService:
             if lowered == "view":
                 parameters[name] = default_view
             elif lowered == "limit":
-                parameters[name] = requested_page_size or 10
+                parameters[name] = (
+                    requested_page_size
+                    or ChatOperationalPaginationDefaultsService.exclusive_catalog_limit()
+                )
             elif lowered == "offset":
                 page = requested_page or 1
-                page_size = requested_page_size or 10
+                page_size = (
+                    requested_page_size
+                    or ChatOperationalPaginationDefaultsService.exclusive_catalog_limit()
+                )
                 parameters[name] = (page - 1) * page_size
             elif lowered in {"finished_product_code", "finishedproductcode"} and product_code:
                 parameters[name] = product_code

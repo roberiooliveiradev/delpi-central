@@ -7,6 +7,9 @@ import re
 from typing import Any
 
 from app.domain.services.chat_domain_config_service import ChatDomainConfigService
+from app.domain.services.chat_operational_pagination_defaults_service import (
+    ChatOperationalPaginationDefaultsService,
+)
 
 
 class ChatAgenticActionSchemaService:
@@ -19,8 +22,6 @@ class ChatAgenticActionSchemaService:
         "branch": "01",
         "warehouse": "01",
         "page": 1,
-        "page_size": 50,
-        "top_limit": 10,
         "granularity": "month",
         "start_date": "2026-03-01",
         "end_date": "2026-03-31",
@@ -194,10 +195,22 @@ class ChatAgenticActionSchemaService:
 
         normalized_name = name.strip().lower()
 
+        if normalized_name in {"page_size", "pagesize"}:
+            return ChatOperationalPaginationDefaultsService.agentic_example_page_size()
+
+        if normalized_name in {"top_limit", "toplimit"}:
+            return ChatOperationalPaginationDefaultsService.supplies_stock_top_limit()
+
         if normalized_name in cls._PARAM_EXAMPLES:
             return cls._PARAM_EXAMPLES[normalized_name]
 
         snake_name = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name).lower()
+
+        if snake_name in {"page_size"}:
+            return ChatOperationalPaginationDefaultsService.agentic_example_page_size()
+
+        if snake_name in {"top_limit"}:
+            return ChatOperationalPaginationDefaultsService.supplies_stock_top_limit()
 
         if snake_name in cls._PARAM_EXAMPLES:
             return cls._PARAM_EXAMPLES[snake_name]

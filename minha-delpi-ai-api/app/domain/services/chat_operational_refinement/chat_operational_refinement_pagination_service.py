@@ -19,6 +19,9 @@ from app.domain.services.chat_route_context_service import (
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
 )
+from app.domain.services.chat_operational_pagination_defaults_service import (
+    ChatOperationalPaginationDefaultsService,
+)
 from app.domain.services.operational_route_registry_service import (
     OperationalRouteRegistryService,
 )
@@ -262,14 +265,17 @@ class ChatOperationalRefinementPaginationService:
         path = f"/products/{product_code}/{route_segment}"
         parameters.setdefault("code", product_code)
         parameters.setdefault("page", page or 1)
-        parameters.setdefault("page_size", page_size or 25)
+        fallback = ChatOperationalPaginationDefaultsService.refinement_context_fallback()
+        parameters.setdefault("page_size", page_size or fallback)
 
         return RecentPaginatedAction(
             action_id=str(snapshot.get("action_id") or "") if snapshot else "",
             path=str(snapshot.get("path") or path) if snapshot else path,
             parameters=parameters,
             page=page or refinement_service()._parameter_int(parameters, "page") or 1,
-            page_size=page_size or refinement_service()._parameter_int(parameters, "page_size") or 25,
+            page_size=page_size
+            or refinement_service()._parameter_int(parameters, "page_size")
+            or fallback,
             product_code=product_code,
             route_segment=route_segment,
         )

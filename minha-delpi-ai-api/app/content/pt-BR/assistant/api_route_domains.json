@@ -348,8 +348,7 @@
       "description": "Limite top para valor de estoque",
       "bindings": [
         {
-          "source": "literal",
-          "value": 10,
+          "source": "pagination.supplies_stock_top",
           "matchAliases": ["top_limit", "limit"]
         }
       ]

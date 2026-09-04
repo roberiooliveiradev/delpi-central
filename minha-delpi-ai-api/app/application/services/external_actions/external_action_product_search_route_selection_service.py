@@ -7,6 +7,9 @@ import re
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_operational_pagination_defaults_service import (
+    ChatOperationalPaginationDefaultsService,
+)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -178,13 +181,15 @@ class ExternalActionProductSearchRouteSelectionService:
 
     @staticmethod
     def extract_search_limit(value: str) -> int:
+        cap = ChatOperationalPaginationDefaultsService.product_search_message_cap()
+        default = ChatOperationalPaginationDefaultsService.product_search_default()
         match = re.search(
             r"\b(\d{1,2})\s+(?:exemplos?|produtos?|itens?|resultados?)",
             value,
         )
 
         if match:
-            return min(int(match.group(1)), 20)
+            return min(int(match.group(1)), cap)
 
         match = re.search(
             r"(?:exemplos?|produtos?|itens?|resultados?)\s+(\d{1,2})\b",
@@ -192,6 +197,6 @@ class ExternalActionProductSearchRouteSelectionService:
         )
 
         if match:
-            return min(int(match.group(1)), 20)
+            return min(int(match.group(1)), cap)
 
-        return 5
+        return default
