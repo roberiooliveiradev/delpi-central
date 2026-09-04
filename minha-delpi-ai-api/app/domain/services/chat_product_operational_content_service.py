@@ -109,25 +109,26 @@ class ChatProductOperationalContentService:
         )
 
     @classmethod
-    def _pagination_default_int(cls, key: str, default: int) -> int:
-        node = ChatAssistantContentService.get_node(_BUNDLE, "paginationDefaults", key)
-
-        try:
-            value = int(node)
-        except (TypeError, ValueError):
-            return default
-
-        return value if value >= 1 else default
-
-    @classmethod
     def standard_page_size(cls) -> int:
-        return cls._pagination_default_int("standardPageSize", 50)
+        from app.domain.services.chat_operational_pagination_defaults_service import (
+            ChatOperationalPaginationDefaultsService,
+        )
+
+        return ChatOperationalPaginationDefaultsService.standard()
 
     @classmethod
     def hierarchical_listing_page_size(cls) -> int:
-        """Teto default de page_size em /structure e /parents (listagem hierárquica)."""
-        return cls._pagination_default_int("hierarchicalListingPageSize", 500)
+        """Teto default de page_size em listagens hierárquicas (markers no JSON canônico)."""
+        from app.domain.services.chat_operational_pagination_defaults_service import (
+            ChatOperationalPaginationDefaultsService,
+        )
+
+        return ChatOperationalPaginationDefaultsService.hierarchical()
 
     @classmethod
     def drawing_analyser_page_size(cls) -> int:
-        return cls._pagination_default_int("drawingAnalyserPageSize", 50)
+        from app.domain.services.chat_operational_pagination_defaults_service import (
+            ChatOperationalPaginationDefaultsService,
+        )
+
+        return ChatOperationalPaginationDefaultsService.for_drawing_analyser()

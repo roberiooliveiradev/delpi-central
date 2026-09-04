@@ -11,6 +11,9 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_operational_refinement_service import (
     ChatOperationalRefinementService,
 )
+from app.domain.services.chat_operational_pagination_defaults_service import (
+    ChatOperationalPaginationDefaultsService,
+)
 from app.domain.services.chat_product_operational_content_service import (
     ChatProductOperationalContentService,
 )
@@ -273,13 +276,11 @@ class ExternalActionProductRouteCatalogService:
                     drawing_analysis_mode=drawing_analysis_mode,
                 ):
                     parameters[name] = (
-                        ChatProductOperationalContentService.drawing_analyser_page_size()
+                        ChatOperationalPaginationDefaultsService.for_drawing_analyser()
                     )
                 else:
                     parameters[name] = (
-                        ChatProductOperationalContentService.hierarchical_listing_page_size()
-                        if is_full_listing
-                        else ChatProductOperationalContentService.standard_page_size()
+                        ChatOperationalPaginationDefaultsService.resolve_for_path(path)
                     )
 
             elif lowered in {"max_depth", "maxdepth", "depth", "nivel", "levels"}:
