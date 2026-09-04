@@ -155,6 +155,12 @@ Sim. Realizado e meta somam Santa Catarina + Espírito Santo pelo método dos **
 **Posso somar “carteira aberta” com o ROL do mês?**  
 Não. São conceitos diferentes: ROL é faturamento no período; carteira aberta é snapshot do que ainda está em aberto **agora**.
 
+**Como vejo o histórico em quantidade (não em R$)?**  
+**Minha Carteira → Faturamento**: toggle **Métrica R$ | Qtd**. Série e mix por produto usam quantidade fornecida. UMs mistas não têm conversão automática.
+
+**A linha de tendência distorce no mês corrente?**  
+Por padrão a tendência **exclui** o bucket incompleto. Nos overlays do gráfico, «Ponderar período parcial» inclui o valor escalado pelo % do período já decorrido.
+
 **Como comparo com o ano passado?**  
 Na Visão geral / gráficos, use a opção de **comparar ano anterior** (quando disponível no gráfico).
 
@@ -168,6 +174,12 @@ O Portal aloca estoque em **ordem FIFO** entre as linhas. O saldo pode estar “
 
 **Pedido, OV e Proposta são a mesma coisa?**  
 Não — veja a tabela do §1. Pedido = operação; OV = oportunidade; Proposta = documento/PDF.
+
+**Posso ver quantidade em peças em vez de milheiro?**  
+Sim. Em **Meus pedidos** e na **Conta** (itens da NF) use **Milheiro | Peças**. Só converte quando a UM é MI (1 MI = 1000 PC) — só apresentação; o contrato da API não muda.
+
+**Onde vejo a data de colocação do pedido ou o lead time até o faturamento?**  
+Ainda **não**. Essas datas e o ciclo completo ficam para o **CRM** — nas tabelas atuais de OV/pedido não há data de colocação confiável homologada.
 
 **Recebi (ou não) aviso de “Pronto para faturar”.**  
 Quem recebe o aviso precisa da permissão de **notificação de faturamento**. Ser membro da carteira sozinho não garante o aviso.
@@ -313,6 +325,9 @@ Fonte na UI: **Ajuda** → **Catálogo de termos** (`plugins/commercial/src/cont
 | Mercado interno / externo | CFOP 5/6 = interno; CFOP 7 = exportação | Minha Carteira → Faturamento · ABC |
 | ABC de clientes | Ordenação por participação no período (Pareto); ≠ Ranking YoY | Minha Carteira → ABC |
 | Bruto / Líquido | Bruto = NF; líquido = fórmula ROL. Toggle na Minha Carteira | Natureza do faturamento |
+| Métrica R$ / Qtd | R$ = valor; Qtd = quantidade fornecida (série e mix) | Minha Carteira → Faturamento |
+| Tendência (parcial) | Exclui bucket incompleto por padrão; opção de ponderar | Gráficos Carteira / Conta |
+| Milheiro / Peças | Display: MI nativo ou ×1000 PC só se UM=MI | Meus pedidos · NF |
 | Share empresa | Faturamento do escopo ÷ faturamento da empresa no período | Visão geral · carteira |
 | Gap vs meta | Quanto falta para a meta ROL do período | Visão geral |
 | Carteira no tempo | Valor aberto por data de entrega (atrasado, este mês, 1–3 meses…) | Visão geral |

@@ -315,6 +315,22 @@ export const USER_MANUAL_TERM_CATALOG: readonly UserManualTermGroup[] = [
         applies: "ROL na Visão geral · Natureza na Minha Carteira",
       },
       {
+        term: "Métrica R$ / Qtd",
+        meaning:
+          "No Faturamento da Minha Carteira: R$ = valor (bruto/líquido); Qtd = quantidade fornecida na série e no mix. UMs mistas não são convertidas automaticamente.",
+        applies: "Minha Carteira → Faturamento",
+      },
+      {
+        term: "Tendência (período parcial)",
+        meaning: CM_HELP.customers.billingTrendIncomplete,
+        applies: "Gráficos com linha de tendência (Carteira / Conta)",
+      },
+      {
+        term: "Milheiro / Peças",
+        meaning: CM_HELP.customers.quantityDisplayMode,
+        applies: "Meus pedidos · Conta (itens da NF)",
+      },
+      {
         term: OVERVIEW_METRIC_BY_ID.portfolio_billing_share.label,
         meaning: OVERVIEW_METRIC_BY_ID.portfolio_billing_share.tooltip,
         applies: "Visão geral · Minha Carteira (com permissão)",

@@ -235,6 +235,14 @@ export const USER_MANUAL_CONTENT = {
           a: "Não. ROL é faturamento no período; carteira aberta é o que ainda está em aberto agora.",
         },
         {
+          q: "Como vejo o histórico em quantidade (não em R$)?",
+          a: "Minha Carteira → Faturamento: use o toggle Métrica R$ | Qtd. A série e o mix por produto passam a usar quantidade fornecida. UMs mistas aparecem sem conversão automática.",
+        },
+        {
+          q: "A linha de tendência distorce no mês corrente?",
+          a: "Por padrão a tendência exclui o bucket incompleto (ex.: mês em andamento). Nos overlays do gráfico, «Ponderar período parcial» inclui o valor escalado pelo % do período já decorrido.",
+        },
+        {
           q: "Cadê o GR / telão de vendas?",
           a: "É o app TV Dashboard, não uma tela dentro do Portal Comercial.",
         },
@@ -255,6 +263,14 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Qual a diferença entre data de entrega, despacho e previsão OP?",
           a: "Data de entrega é o compromisso da linha, interpretado pelo Incoterm: se o cliente busca (EXW ou FOB), é a data na expedição; se a Delpi entrega (CIF), é a data de saída da empresa. Despacho é a saída registrada da fábrica, quando houver. Previsão OP é a disponibilidade pela produção — o badge compara essa previsão com a data de entrega.",
+        },
+        {
+          q: "Posso ver quantidade em peças em vez de milheiro?",
+          a: "Sim. Em Meus pedidos e na Conta (itens da NF) use Milheiro | Peças. Só converte quando a UM é MI (1 MI = 1000 PC) — é só apresentação; o contrato da API não muda.",
+        },
+        {
+          q: "Onde vejo a data de colocação do pedido ou o lead time até o faturamento?",
+          a: "Ainda não. Essas datas e o ciclo completo ficam para o CRM — nas tabelas atuais de OV/pedido não há data de colocação confiável homologada.",
         },
         {
           q: "Não recebi aviso de Pronto para faturar",

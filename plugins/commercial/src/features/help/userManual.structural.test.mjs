@@ -24,6 +24,10 @@ describe("user manual page", () => {
     assert.match(content, /Onde configuro os SLAs/);
     assert.match(content, /No consolidado \(unidade Todas\) a Visão geral mostra meta/);
     assert.match(content, /agregação SC\+ES pelo SI|somam Santa Catarina \+ Espírito Santo pelo método/);
+    assert.match(content, /Como vejo o histórico em quantidade/);
+    assert.match(content, /Ponderar período parcial|exclui o bucket incompleto/);
+    assert.match(content, /Milheiro \| Peças|1 MI = 1000 PC/);
+    assert.match(content, /data de colocação do pedido|Backlog CRM|ficam para o CRM/);
     const catalog = readSrc("content/userManualTermCatalog.ts");
     assert.match(catalog, /export const USER_MANUAL_TERM_CATALOG/);
     assert.match(catalog, /term: \"EXW\"/);
@@ -32,6 +36,8 @@ describe("user manual page", () => {
     assert.match(catalog, /applies:/);
     assert.match(catalog, /Minha Carteira → ABC/);
     assert.match(catalog, /agregação SC\+ES pelo SI/);
+    assert.match(catalog, /Métrica R\$ \/ Qtd/);
+    assert.match(catalog, /Milheiro \/ Peças/);
     const page = readSrc("features/help/UserManualPage.tsx");
     assert.match(page, /USER_MANUAL_CONTENT/);
     assert.match(page, /glossaryGroups/);
