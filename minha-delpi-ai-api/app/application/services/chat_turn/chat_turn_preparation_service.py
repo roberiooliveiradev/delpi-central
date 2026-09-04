@@ -129,6 +129,24 @@ class ChatTurnPreparationService:
         history_source = history_source or previous_messages or []
         previous_messages = previous_messages or []
 
+        from app.domain.services.chat_user_query_improvement_service import (
+            ChatUserQueryImprovementService,
+        )
+
+        query_improvement = ChatUserQueryImprovementService.improve(
+            message,
+            response_mode=getattr(request, "response_mode", None),
+        )
+        message_for_intelligence = query_improvement.message_for_intelligence
+        if isinstance(workspace_context, dict):
+            workspace_context = {
+                **workspace_context,
+                "queryImprovement": query_improvement.as_metadata(),
+                "originalUserMessage": str(message or ""),
+            }
+        # Inteligência (intent/tools/RAG) usa a versão melhorada; bolha/audit = original.
+        message = message_for_intelligence
+
         ingress = ChatTurnPreparationIngressService.prepare(
             message=message,
             request=request,
@@ -152,6 +170,8 @@ class ChatTurnPreparationService:
         pipeline_timings = ingress.pipeline_timings
         pipeline_stages = list(ingress.pipeline_stages)
         fast_path = ingress.fast_path
+        if query_improvement.applied and "query_improvement" not in pipeline_stages:
+            pipeline_stages.append("query_improvement")
 
         pre_tool = ChatTurnPreparationPreToolContextService.build(
             message=message,

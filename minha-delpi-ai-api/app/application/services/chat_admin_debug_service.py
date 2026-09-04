@@ -421,6 +421,9 @@ class ChatAdminDebugService:
                 ),
             },
             "intentRoute": intent_route if isinstance(intent_route, dict) else None,
+            "queryImprovement": workspace_context.get("queryImprovement")
+            if isinstance(workspace_context.get("queryImprovement"), dict)
+            else None,
             "intelligence": {
                 "turnAnalysis": tool_context.get("turnAnalysis")
                 if isinstance(tool_context.get("turnAnalysis"), dict)
