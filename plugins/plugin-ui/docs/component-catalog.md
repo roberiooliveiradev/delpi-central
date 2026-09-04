@@ -976,6 +976,8 @@ Helpers: `readOnlyFieldKaizenBemClasses`, `readOnlyFieldPacBemClasses`, `createD
 
 Dropdown single-select com busca opcional. `SelectControl` é o trigger/painel reutilizável (ex.: diagram toolbar).
 
+**Scroll:** no painel portaled, só `.delpi-ui-select__list` tem `overflow: auto` (o painel usa `overflow: hidden` + `max-height`). Evita barra dupla.
+
 **Toolbar compacto:** `ToolbarSelectField` + `ToolbarSelectControl` — rótulo inline + densidade reduzida (`delpi-ui-toolbar-select*` em `styles.css`). Helpers: `selectControlToolbarBemClasses`, `DEFAULT_TOOLBAR_SELECT_LABELS`.
 
 Helpers: `selectControlBemClasses`, `selectFieldPacClasses`, `selectFieldTransformometroClasses`, `createDashboardSelectField`, `createDashboardSelectControl`.

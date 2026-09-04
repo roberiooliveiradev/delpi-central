@@ -120,9 +120,22 @@
   min-width: 12rem;
   width: max-content;
   max-width: min(480px, calc(100vw - 16px));
-  /* Painel portaled: cresce com o conteúdo até o teto (matchAnchorWidth no JS). */
+  /*
+   * Um único scroll: o painel só limita altura (overflow hidden).
+   * A superfície de overflow é `.delpi-ui-select__list` — painel+lista com
+   * overflow:auto aninhados geravam barra dupla (toolbar Filtrar, etc.).
+   */
   max-height: min(70vh, 480px);
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.delpi-ui-select__panel--portal .delpi-ui-select__search,
+[class*="-select__panel--portal"] .delpi-ui-select__search,
+[class*="-select__panel--portal"] [class*="-select__search"] {
+  flex: 0 0 auto;
 }
 
 .delpi-ui-select__search {
@@ -146,11 +159,21 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  /* Caber listas médias (presets de resolução, etc.) sem scroll precoce. */
-  max-height: min(60vh, 420px);
-  overflow: auto;
   display: grid;
   gap: 2px;
+  min-height: 0;
+  /* Scroll canônico do select (único overflow:auto). */
+  max-height: min(60vh, 420px);
+  overflow: auto;
+}
+
+/* No portal, a lista preenche o teto do painel — sem segundo max-height concorrente. */
+.delpi-ui-select__panel--portal .delpi-ui-select__list,
+[class*="-select__panel--portal"] .delpi-ui-select__list,
+[class*="-select__panel--portal"] [class*="-select__list"] {
+  max-height: none;
+  flex: 1 1 auto;
+  overflow: auto;
 }
 
 .delpi-ui-select__list li {
