@@ -298,7 +298,10 @@
       ]
     },
     "customersRoute": {
-      "termsFrom": "product_query_intent.customers.terms"
+      "termsFrom": "product_query_intent.customers.terms",
+      "noneOf": [
+        { "customPredicate": "openOrdersRoute" }
+      ]
     },
     "internalMovementsRoute": {
       "termsFrom": "product_query_intent.internalMovements.terms"
@@ -689,8 +692,11 @@
       "faturamento",
       "billing",
       "faturado",
+      "carteira de pedidos",
       "carteira",
+      "pedidos de venda em aberto",
       "pedidos em aberto",
+      "pedidos abertos",
       "pedido em aberto",
       "open-orders"
     ],
@@ -714,8 +720,11 @@
   },
   "openOrders": {
     "terms": [
+      "carteira de pedidos",
       "carteira",
+      "pedidos de venda em aberto",
       "pedidos em aberto",
+      "pedidos abertos",
       "pedido em aberto",
       "open-orders"
     ]
@@ -1330,7 +1339,12 @@
     "outboundTerms": ["saída", "saida", "outbound", "expedição", "expedicao"]
   },
   "customers": {
-    "terms": ["cliente", "customer"]
+    "terms": [
+      "clientes do produto",
+      "cliente do produto",
+      "clientes",
+      "customer"
+    ]
   },
   "internalMovements": {
     "terms": [

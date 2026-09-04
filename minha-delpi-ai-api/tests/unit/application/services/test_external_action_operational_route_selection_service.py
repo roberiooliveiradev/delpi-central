@@ -331,6 +331,51 @@ def test_operational_route_selection_picks_open_orders() -> None:
     assert selected["arguments"]["actionId"] == "open-orders"
 
 
+def test_operational_route_selection_open_orders_beats_customers_and_pricing_long() -> None:
+    """Mensagem longa com 'Preciso' + 'cliente' não pode virar customers/pricing."""
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "open-orders",
+                "method": "GET",
+                "path": "/products/{code}/sales/open-orders",
+                "operationId": "get_product_sales_open_orders",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+            {
+                "actionId": "customers",
+                "method": "GET",
+                "path": "/products/{code}/customers",
+                "operationId": "get_product_customers",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+            {
+                "actionId": "pricing",
+                "method": "GET",
+                "path": "/products/{code}/pricing",
+                "operationId": "get_product_pricing",
+                "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+    message = (
+        "Preciso entender a carteira de pedidos de venda em aberto do produto "
+        "10080047: liste os pedidos abertos com cliente, quantidade e datas "
+        "quando existirem, e diga se a concentração está mais na filial 01 ou 02."
+    )
+
+    selected = service.select(
+        message,
+        message,
+        allowed_action_ids=["open-orders", "customers", "pricing"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "open-orders"
+
+
 def test_operational_route_selection_picks_supplies_cpv() -> None:
     repository = _FakeRepository(
         [

@@ -1485,14 +1485,24 @@ def product_sales_summary(code: str):
     
 @router.get("/{code}/sales/open-orders", **PRODUCT_SALES_OPEN_ORDERS)
 @require_permission(API_DELPI_ACCESS)
-def product_sales_open_orders(code: str):
+def product_sales_open_orders(
+    code: str,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    page: int = Query(1, ge=1),
+    page_size: int = PAGE_SIZE_QUERY("page_50_500"),
+):
 
     try:
 
         use_case = build_get_product_sales_open_orders()
 
         result = use_case.execute(
-            GetProductSalesOpenOrdersRequest(code=code)
+            GetProductSalesOpenOrdersRequest(
+                code=code,
+                branch=branch,
+                page=page,
+                page_size=page_size,
+            )
         )
 
         return product_success(
@@ -1501,6 +1511,19 @@ def product_sales_open_orders(code: str):
             entity="product_open_orders",
             shape="paged_list",
             code=code,
+            fields={
+                "branch": "Filial",
+                "order_number": "Nº pedido",
+                "order_item": "Item",
+                "customer_code": "Cód. cliente",
+                "customer_store": "Loja",
+                "customer_name": "Cliente",
+                "open_quantity": "Qtd. em aberto",
+                "unit_price": "Preço unitário",
+                "open_value": "Valor em aberto",
+                "delivery_date": "Data entrega",
+                "issue_date": "Data emissão",
+            },
             message=f"Open sales orders for product {code} fetched successfully.",
         )
 

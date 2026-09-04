@@ -90,7 +90,11 @@
     "conciso",
     "concisa",
     "concisos",
-    "concisas"
+    "concisas",
+    "preciso",
+    "precisa",
+    "precisamos",
+    "precisaria"
   ],
   "ambiguousTokens": [
     "bom",

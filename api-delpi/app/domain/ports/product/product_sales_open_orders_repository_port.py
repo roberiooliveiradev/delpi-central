@@ -9,6 +9,10 @@ class ProductSalesOpenOrdersRepositoryPort(ABC):
     @abstractmethod
     def get_sales_open_orders(
         self,
-        code: str
+        code: str,
+        *,
+        branch: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
     ) -> ProductSalesOpenOrders:
         pass

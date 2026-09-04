@@ -658,11 +658,39 @@ def test_multi_row_list_prefers_numeric_total_not_shape_recommend():
     commentary = ChatDataInsightService._build_generic_commentary(metadata, data)
     assert isinstance(commentary, dict)
     highlights = " ".join(str(item) for item in (commentary.get("highlights") or []))
-    assert "35" in highlights.replace(".", "") or "planned_qty" in highlights.casefold()
+    assert "35" in highlights.replace(".", "")
+    assert "planned_qty" not in highlights.casefold()
+    assert "qtd" in highlights.casefold() or "planejada" in highlights.casefold()
     assert "formato dos dados sugere" not in highlights.casefold()
     assert commentary.get("recommendedVisual") in {"table", "kpi", "chart", "line", None} or True
     # shapeRecommend never in prose highlights
     assert "formato dos dados sugere" not in str(commentary.get("summaryLines") or []).casefold()
+
+
+def test_generic_commentary_skips_unit_price_keys_on_multi_row_list():
+    """Não somar last_price/registered_price em lista de clientes/fornecedores."""
+    metadata = {
+        "path": "/products/10080047/customers",
+        "tablePresentation": {
+            "type": "table",
+            "rows": [
+                {"customer_name": "A", "registered_price": 0.22},
+                {"customer_name": "B", "registered_price": 0.30},
+            ],
+        },
+    }
+    data = {
+        "items": [
+            {"customer_name": "A", "registered_price": 0.22},
+            {"customer_name": "B", "registered_price": 0.30},
+        ]
+    }
+
+    commentary = ChatDataInsightService._build_generic_commentary(metadata, data)
+    assert isinstance(commentary, dict)
+    blob = " ".join(str(item) for item in (commentary.get("highlights") or [])).casefold()
+    assert "registered_price" not in blob
+    assert "0,52" not in blob and "0.52" not in blob
 
 
 def test_system_table_schema_uses_summary_not_rowcount_or_x3_tamanho():

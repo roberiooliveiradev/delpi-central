@@ -1,23 +1,28 @@
 # app/application/use_cases/products/get_product_sales_open_orders_use_case.py
-from app.domain.ports.product.product_sales_open_orders_repository_port import ProductSalesOpenOrdersRepositoryPort
-from app.application.dto.product.get_product_sales_open_orders_request import GetProductSalesOpenOrdersRequest
+from app.application.dto.product.get_product_sales_open_orders_request import (
+    GetProductSalesOpenOrdersRequest,
+)
+from app.domain.ports.product.product_sales_open_orders_repository_port import (
+    ProductSalesOpenOrdersRepositoryPort,
+)
 
 
 class GetProductSalesOpenOrdersUseCase:
 
     def __init__(
         self,
-        repository: ProductSalesOpenOrdersRepositoryPort
+        repository: ProductSalesOpenOrdersRepositoryPort,
     ):
         self.repository = repository
 
     def execute(
         self,
-        dto: GetProductSalesOpenOrdersRequest
+        dto: GetProductSalesOpenOrdersRequest,
     ):
-
         result = self.repository.get_sales_open_orders(
-            code=dto.code
+            code=dto.code,
+            branch=dto.branch,
+            page=dto.page,
+            page_size=dto.page_size,
         )
-
-        return result.__dict__
+        return result.as_payload()

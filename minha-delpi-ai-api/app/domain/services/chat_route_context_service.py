@@ -125,14 +125,26 @@ class ChatRouteContextService:
                 "outbound",
             ),
         ),
-        ("customers", ("cliente do produto", "clientes do produto", "clientes do", "cliente", "customer")),
         (
             "open-orders",
             (
+                "carteira de pedidos",
                 "carteira",
+                "pedidos de venda em aberto",
                 "pedidos em aberto",
+                "pedidos abertos",
                 "pedido em aberto",
                 "open-orders",
+            ),
+        ),
+        (
+            "customers",
+            (
+                "cliente do produto",
+                "clientes do produto",
+                "clientes do",
+                "clientes",
+                "customer",
             ),
         ),
         (

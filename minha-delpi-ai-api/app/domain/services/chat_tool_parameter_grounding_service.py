@@ -73,6 +73,75 @@ class ChatToolParameterGroundingService:
                 target = cls._preferred_code_param_name(schema)
                 grounded[target] = product_code
 
+        return cls._retain_schema_parameters(
+            schema,
+            cls._normalize_code_aliases(schema, grounded),
+        )
+
+    @classmethod
+    def _retain_schema_parameters(
+        cls,
+        schema: list,
+        parameters: dict,
+    ) -> dict[str, Any]:
+        """Remove params fora do schema (ex.: branch em rota só com ``code``).
+
+        Follow-ups de filial/período reaproveitam lastAction e injetam filtros
+        que a action OpenAPI não declara — o validate falhava com Unknown parameter.
+        """
+        schema_names = {
+            str(parameter.get("name") or "").strip()
+            for parameter in schema
+            if isinstance(parameter, dict) and str(parameter.get("name") or "").strip()
+        }
+        if not schema_names:
+            return dict(parameters or {})
+        return {
+            key: value
+            for key, value in dict(parameters or {}).items()
+            if key in schema_names
+        }
+
+    @classmethod
+    def _normalize_code_aliases(
+        cls,
+        schema: list,
+        parameters: dict,
+    ) -> dict[str, Any]:
+        """Alinha aliases (productCode/code) ao nome do schema e remove extras.
+
+        Follow-ups reutilizam ``lastAction.params`` com ``productCode`` (memória),
+        enquanto rotas produto tipicamente exigem ``code`` no path — sem isso
+        o validate falha com ``Unknown parameter: productCode``.
+        """
+        grounded = dict(parameters or {})
+        schema_names = {
+            str(parameter.get("name") or "").strip()
+            for parameter in schema
+            if isinstance(parameter, dict) and str(parameter.get("name") or "").strip()
+        }
+        if not schema_names:
+            return grounded
+
+        alias_value = None
+        for name in ("code", "productCode", "product_code"):
+            value = grounded.get(name)
+            if value not in (None, ""):
+                alias_value = value
+                break
+
+        for name in list(grounded):
+            if name in cls._CODE_PARAM_NAMES and name not in schema_names:
+                grounded.pop(name, None)
+
+        preferred = cls._preferred_code_param_name(schema)
+        if (
+            alias_value not in (None, "")
+            and preferred in schema_names
+            and grounded.get(preferred) in (None, "")
+        ):
+            grounded[preferred] = alias_value
+
         return grounded
 
     @classmethod

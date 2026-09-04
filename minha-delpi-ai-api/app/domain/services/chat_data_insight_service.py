@@ -365,12 +365,17 @@ class ChatDataInsightService:
                 ]
 
                 if values:
+                    from app.domain.services.external_actions.external_action_column_label_service import (
+                        ExternalActionColumnLabelService,
+                    )
+
+                    field_label = ExternalActionColumnLabelService().label_for(key)
                     total = sum(values)
                     numeric_highlights.append(
                         ChatHumanizedDataResponseContentService.format(
                             "generic",
                             "numericTotal",
-                            field=key,
+                            field=field_label or key,
                             total=cls._format_number(total),
                         )
                     )

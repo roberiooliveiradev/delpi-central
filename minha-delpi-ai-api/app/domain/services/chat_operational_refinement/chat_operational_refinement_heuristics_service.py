@@ -157,12 +157,12 @@ class ChatOperationalRefinementHeuristicsService:
 
     @classmethod
     def extract_branch_code(cls, normalized: str) -> str | None:
-        match = VOCAB.BRANCH_RE.search(normalized)
+        """Filial única para filtro. «filial 01 ou 02» → None (sem filtro de filial)."""
+        from app.domain.services.chat_follow_up_turn_content_service import (
+            ChatFollowUpTurnContentService,
+        )
 
-        if not match:
-            return None
-
-        return str(match.group(1)).zfill(2)
+        return ChatFollowUpTurnContentService.extract_branch_code(normalized)
 
     @classmethod
     def extract_warehouse_code(cls, normalized: str) -> str | None:

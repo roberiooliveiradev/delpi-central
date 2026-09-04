@@ -1684,6 +1684,44 @@ def test_build_product_parameters_stock_uses_standard_page_size():
     assert parameters["page_size"] == 50
 
 
+def test_build_product_parameters_open_orders_skips_branch_on_01_or_02_compare():
+    """«filial 01 ou 02» não pode virar filtro branch=01 (esconde carteira da 02)."""
+    service = ExternalActionSelectionService(FakeRepository([]))
+
+    parameters = service._build_product_parameters(
+        {
+            "path": "/products/{code}/sales/open-orders",
+            "parametersSchema": [
+                {"name": "code"},
+                {"name": "branch"},
+                {"name": "page"},
+                {"name": "page_size"},
+            ],
+        },
+        "90262910",
+        message=(
+            "carteira de pedidos em aberto do produto 90262910: diga se a "
+            "concentração está mais na filial 01 ou 02"
+        ),
+    )
+
+    assert parameters["code"] == "90262910"
+    assert "branch" not in parameters
+
+    only_01 = service._build_product_parameters(
+        {
+            "path": "/products/{code}/sales/open-orders",
+            "parametersSchema": [
+                {"name": "code"},
+                {"name": "branch"},
+            ],
+        },
+        "90262910",
+        message="somente da filial 01, por favor?",
+    )
+    assert only_01.get("branch") == "01"
+
+
 def test_consumption_validated_top_limit_not_blocked_by_comparison_heuristic():
     service = ExternalActionSelectionService(
         FakeRepository(

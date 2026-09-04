@@ -42,3 +42,13 @@ def test_operational_typo_still_corrected_to_cost_term():
     assert "custo" in ChatMessageNormalizationService.normalize_for_matching(
         "qual o cust do produto"
     )
+
+
+@pytest.mark.parametrize("word", ["preciso", "precisa", "precisamos", "precisaria"])
+def test_preciso_survives_fuzzy_and_does_not_become_preco(word: str):
+    """Regressão: 'Preciso entender a carteira…' virava pricing via preco."""
+    text = f"{word} entender a carteira de pedidos"
+    normalized = ChatMessageNormalizationService.normalize_for_matching(text)
+    assert "preco" not in normalized
+    assert word in normalized
+    assert "carteira" in normalized

@@ -419,7 +419,12 @@
       "sequence",
       "sequen",
       "similarity_ratio",
-      "total_score"
+      "total_score",
+      "last_price",
+      "registered_price",
+      "sale_price",
+      "average_price",
+      "max_price"
     ],
     "metricLine": "**{label}**: **{value}**.",
     "labels": {

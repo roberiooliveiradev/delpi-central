@@ -20,6 +20,14 @@ def test_segment_from_message_generic_notas_fiscais_has_no_outbound_bias():
     assert ChatRouteContextService.segment_from_message("notas fiscais do 90260148") is None
 
 
+def test_segment_from_message_carteira_longa_prefers_open_orders_over_cliente():
+    message = (
+        "Preciso entender a carteira de pedidos de venda em aberto do produto "
+        "10080047: liste os pedidos abertos com cliente, quantidade e datas"
+    )
+    assert ChatRouteContextService.segment_from_message(message) == "open-orders"
+
+
 def test_follow_up_notas_fiscais_de_saida():
     assert ChatFollowUpIntentService.is_operational_follow_up("notas fiscais de saída")
 

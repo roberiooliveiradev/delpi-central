@@ -1,0 +1,112 @@
+{
+  "sessionId": "cde10385-4353-4a2c-86a8-a435494f9810",
+  "agentId": "4f9c225b-0414-40d3-a462-040889719b83",
+  "turns": [
+    {
+      "turnId": "T1-carteira-longa",
+      "message": "Preciso entender a carteira de pedidos de venda em aberto do produto 90262910: liste os pedidos abertos com cliente, quantidade e datas quando existirem, e diga se a concentração está mais na filial 01 ou 02. Quero uma leitura útil para atendimento, não só dump de campos técnicos.",
+      "ms": 5809,
+      "paths": [
+        "/products/90262910/sales/open-orders"
+      ],
+      "operationIds": [],
+      "prose": "O produto **90262910**\n\nTotal de **Preço unitário**: **1150.26**.",
+      "qualityNotes": [
+        "OK heurística básica"
+      ],
+      "clarificationDecision": null,
+      "turnUnderstanding": null,
+      "activeTaskPlan": null
+    },
+    {
+      "turnId": "T2-filial-follow",
+      "message": "e somente da filial 01, por favor?",
+      "ms": 15733,
+      "paths": [
+        "/products/90262910/sales/open-orders"
+      ],
+      "operationIds": [],
+      "prose": "Consulta filtrada pela filial 01.\n\nPara a **filial 01**, o produto **90262910** **não possui nenhum pedido de venda em aberto** no momento — a consulta não retornou registros.",
+      "qualityNotes": [
+        "OK heurística básica"
+      ],
+      "clarificationDecision": null,
+      "turnUnderstanding": null,
+      "activeTaskPlan": null
+    },
+    {
+      "turnId": "T3-atraso-otd-longo",
+      "message": "Considerando esses pedidos que estamos falando: quais estão mais atrasados em relação à data de entrega prometida, o que isso implica para OTD/atraso, e se não tiver indicador OTD desse produto me diga explicitamente o que falta em vez de inventar.",
+      "ms": 11259,
+      "paths": [],
+      "operationIds": [],
+      "prose": "**Nenhum dos dois itens está atrasado** — com base na versão dos dados (2026-07), ambas as entregas ainda estão no futuro, então não há atraso consolidado neste momento.\n\n## Situação dos itens (pedido 002635 — WEG CORDOBA ARGENTIN, filial 02)\n\n- **Item 01** — entrega prometida para **16/09/2026** (8 unidades): é o compromisso **mais próximo do vencimento**, portanto o primeiro a virar atraso caso não seja faturado a tempo.\n- **Item 02** — entrega prometida para **07/10/2026** (8 unidades): tem cerca de **3 semanas de folga** em relação ao item 01.\n\nOu seja, se a pergunta é \"qual está mais atrasado\", a resposta prática é: **nenhum está atrasado; o mais crítico é o item 01**, por ter a data de entrega mais próxima.\n\n## Implicação para OTD\n\n- Se o item 01 não for entregue até **16/09/2026**, ele passa a contar como atraso e derruba o OTD do período — e, como a carteira deste produto tem **um único pedido e um único cliente**, qualquer atraso representa **100% da carteira em atraso**. Não há diluição.\n- A concentração total na filial 02 e em um único cliente (WEG Cordoba) aumenta o risco: o OTD deste produto depende inteiramente do cumprimento dessas duas datas.\n\n## Sobre o indicador OTD\n\n**Não tenho um indicador OTD disponível para este produto.** O que falta para calculá-lo ou consultá-lo:\n\n- **Histórico de entregas realizadas** deste produto (pedidos já faturados/encerrados), com data prometida vs. data efetiva de entrega — a consulta atual retorna apenas pedidos **em aberto**, sem o passado necessário para medir desempenho.\n- **Um indicador OTD consolidado** na plataforma (por produto, cliente ou filial) — não há essa métrica disponível nas informações a que tenho acesso no momento.\n\nSe quiser, posso consultar o histórico de vendas/notas fiscais do produto 90262910 para tentar montar uma leitura de entregas passadas — mas o cálculo formal de OTD dependeria de termos a data efetiva de entrega de cada pedido, o que preciso verificar se está disponível.",
+      "qualityNotes": [
+        "OK heurística básica"
+      ],
+      "clarificationDecision": null,
+      "turnUnderstanding": null,
+      "activeTaskPlan": null
+    },
+    {
+      "turnId": "T4-ordinal",
+      "message": "detalha o segundo da lista pra mim",
+      "ms": 67111,
+      "paths": [],
+      "operationIds": [],
+      "prose": "Segue o detalhamento do **segundo item** da carteira:\n\n## Pedido 002635 — Item 02\n\n- **Produto:** 90262910\n- **Cliente:** WEG CORDOBA ARGENTIN (Argentina)\n- **Filial:** 02\n- **Quantidade:** 8 unidades\n- **Preço unitário:** R$ 1.150,26\n- **Valor total do item:** R$ 9.202,08 (8 × R$ 1.150,26)\n- **Entrega prometida:** 07/10/2026\n\n## Leitura para atendimento\n\n- É o item com **maior folga** da carteira: vence cerca de **3 semanas depois** do item 01 (16/09/2026), que é o compromisso mais crítico.\n- **Não está atrasado** — a data de entrega ainda está no futuro.\n- Como o pedido 002635 é o **único pedido em aberto** deste produto, este item representa **50% da carteira** (8 de 16 unidades).\n\nSe precisar de dados que não apareceram na consulta — como condição de pagamento, transportadora ou status de faturamento — me avise que verifico se há disponibilidade na plataforma.",
+      "qualityNotes": [
+        "OK heurística básica"
+      ],
+      "clarificationDecision": null,
+      "turnUnderstanding": null,
+      "activeTaskPlan": null
+    },
+    {
+      "turnId": "T5-estoque-cobertura",
+      "message": "Além disso, me fala o estoque atual desse mesmo produto e se a disponibilidade cobre a soma das quantidades em aberto que você listou nesta conversa. Se não der para somar com precisão, explique o limite dos dados.",
+      "ms": 8853,
+      "paths": [
+        "/products/90262910/sales/open-orders"
+      ],
+      "operationIds": [],
+      "prose": "Consulta filtrada pela filial 01. Período mantido: 01-09-2026 a 30-09-2026.\n\nO produto **90262910** —Tabela física Protheus: sufixo 010 (ex.: SB1010) e D_E_L_E_T_ = '' para registros ativos. Não vou inventar um número.",
+      "qualityNotes": [
+        "WARN T5 sem path de estoque"
+      ],
+      "clarificationDecision": null,
+      "turnUnderstanding": null,
+      "activeTaskPlan": null
+    },
+    {
+      "turnId": "T6-fornecedores",
+      "message": "e quais são os fornecedores desse item?",
+      "ms": 4151,
+      "paths": [
+        "/products/90262910/suppliers"
+      ],
+      "operationIds": [],
+      "prose": "O produto **90262910**\n\nTotal de **Lead time mín.**: **-8**.",
+      "qualityNotes": [
+        "OK heurística básica"
+      ],
+      "clarificationDecision": null,
+      "turnUnderstanding": null,
+      "activeTaskPlan": null
+    },
+    {
+      "turnId": "T7-resumo-executivo",
+      "message": "Fecha com um resumo executivo do que vimos nesta conversa sobre pedidos, estoque e risco de atendimento — no máximo 8 linhas, sem repetir tabela inteira nem jargão de API.",
+      "ms": 15961,
+      "paths": [],
+      "operationIds": [],
+      "prose": "**Resumo executivo — produto 90262910**\n\n- **Carteira em aberto:** 16 unidades em um único pedido (002635), cliente WEG Cordoba (Argentina), 100% concentrado na **filial 02**; filial 01 sem nenhum pedido.\n- **Prazos:** entregas em 16/09 e 07/10/2026 — nenhum atraso hoje; o item que vence em **16/09** é o mais crítico.\n- **Risco de atendimento:** pela concentração em um pedido e um cliente, qualquer atraso representa 100% da carteira e derruba o OTD do período.\n- **OTD:** não há indicador disponível — falta histórico de entregas realizadas para medir desempenho.\n- **Estoque:** não foi possível confirmar o saldo atual; sem esse dado, não dá para afirmar se a disponibilidade cobre as 16 unidades.\n- **Fornecedores:** a consulta não retornou uma lista confiável para este item.\n- **Recomendação:** confirmar o saldo de estoque e acompanhar de perto o faturamento do item com entrega em 16/09.",
+      "qualityNotes": [
+        "OK heurística básica"
+      ],
+      "clarificationDecision": null,
+      "turnUnderstanding": null,
+      "activeTaskPlan": null
+    }
+  ]
+}

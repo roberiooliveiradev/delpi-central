@@ -66,6 +66,15 @@ def test_filail_normalizes_and_extracts_branch():
     assert ChatFollowUpTurnContentService.extract_branch_code("rol filail 01 deste mês") == "01"
     assert ChatFollowUpTurnContentService.extract_branch_code("somente da filial 01") == "01"
     assert ChatFollowUpTurnContentService.extract_branch_code("somente da filial") is None
+    assert (
+        ChatFollowUpTurnContentService.extract_branch_code(
+            "concentração mais na filial 01 ou 02"
+        )
+        is None
+    )
+    assert ChatFollowUpTurnContentService.extract_branch_codes(
+        "concentração mais na filial 01 ou 02"
+    ) == ["01", "02"]
     assert ChatFollowUpTurnContentService.has_branch_trigger_without_code("somente da filial")
 
 

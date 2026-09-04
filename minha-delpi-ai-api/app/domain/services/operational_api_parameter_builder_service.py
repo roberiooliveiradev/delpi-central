@@ -99,9 +99,8 @@ class OperationalApiParameterBuilderService:
         if all_branches_match:
             branch = None
         else:
-            branch = branch_match.group(1) if branch_match else None
-            if branch is None:
-                branch = ChatFollowUpTurnContentService.extract_branch_code(message_for_match)
+            # Só filtra com exactamente uma filial; «01 ou 02» não vira branch=01.
+            branch = ChatFollowUpTurnContentService.extract_branch_code(message_for_match)
         route_parameters = action.get("parameters") if isinstance(action.get("parameters"), dict) else {}
         branch_default = route_parameters.get("branchDefault")
         if branch is None and branch_default:

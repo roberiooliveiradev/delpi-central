@@ -158,8 +158,11 @@ class ChatFollowUpTurnContentService:
 
     @classmethod
     def extract_branch_code(cls, text: str) -> str | None:
+        """Filial única para filtro. Várias (ex.: «01 ou 02») → None (sem filtro)."""
         codes = cls.extract_branch_codes(text)
-        return codes[0] if codes else None
+        if len(codes) != 1:
+            return None
+        return codes[0]
 
     @classmethod
     def extract_branch_codes(cls, text: str) -> list[str]:

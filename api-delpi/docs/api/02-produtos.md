@@ -378,7 +378,17 @@ Resumo de vendas do produto.
 
 ## GET /products/{code}/sales/open-orders
 
-Carteira de pedidos em aberto.
+Carteira de pedidos de venda em aberto do produto (linhas SC6 + totais).
+
+| Query | Default | Descrição |
+|---|---|---|
+| `branch` | (omitido) | `01` / `02` / `all` — filtro de filial |
+| `page` | `1` | Página |
+| `page_size` | (padrão do pacote) | Tamanho da página |
+
+**operationId:** `get_product_sales_open_orders` · **shape:** `paged_list` · **entity:** `product_open_orders`
+
+`data.items[]`: filial, OV, item, cliente, qtd/valor em aberto, datas. `data.summary`: `quantity`, `value`, `orders`.
 
 ---
 

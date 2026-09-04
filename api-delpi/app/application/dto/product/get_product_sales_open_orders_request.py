@@ -6,3 +6,6 @@ from dataclasses import dataclass
 class GetProductSalesOpenOrdersRequest:
 
     code: str
+    branch: str | None = None
+    page: int = 1
+    page_size: int = 50
