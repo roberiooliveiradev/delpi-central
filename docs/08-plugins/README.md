@@ -78,7 +78,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/customer-experience` | `customer-experience` | microfrontend | plugin | `/apps/customer-experience` | `delpi-customer-experience` |
 | `plugins/inspecoes-entrada` | `inspecoes-entrada` | microfrontend | plugin | `/apps/inspecoes-entrada` | `delpi-inspecoes-entrada` |
 | `plugins/lancamento-notas-fiscais` | `lancamento-notas-fiscais` | microfrontend | plugin | `/apps/lancamento-notas-fiscais` | `delpi-lancamento-notas-fiscais` |
-| `plugins/invoice-issuance` | `invoice-issuance` | microfrontend | plugin | `/apps/invoice-issuance` | `delpi-invoice-issuance` |
+| `plugins/invoice-issuance` | `invoice-issuance` | microfrontend (legado; menu oculto E12) | plugin | `/apps/invoice-issuance` | `delpi-invoice-issuance` |
 | `plugins/inspecoes-processo` | `inspecoes-processo` | microfrontend | plugin | `/apps/inspecoes-processo` | `delpi-inspecoes-processo` |
 | `plugins/controle-retrabalhos` | `controle-retrabalhos` | microfrontend | plugin | `/apps/controle-retrabalhos` | `delpi-controle-retrabalhos` |
 | `plugins/my-requests` | `my-requests` | microfrontend | plugin | `/apps/my-requests` | `delpi-my-requests` |

@@ -2,15 +2,17 @@
 
 Microfrontend federado para **solicitar, acompanhar e concluir** a emissão de notas fiscais de saída: wizard guiado (destinatário TOTVS, itens, tipo, transporte e observação) e fila de atendimento do Faturamento.
 
-## Deprecação (dual-run E8)
+## Deprecação (soft cutover E12)
 
-O fluxo **canônico** passou a ser **[Minhas Solicitações](/apps/my-requests)** (`plugins/my-requests` + `requests-api`).
+O fluxo **canônico** é **[Minhas Solicitações](/apps/my-requests)** (`plugins/my-requests` + `requests-api`).
 
 - Novas solicitações: `/apps/my-requests/new?type=invoice-issuance`
-- Este plugin permanece disponível em dual-run (banner de aviso na UI)
-- Schema `invoice_issuance` e rotas api-delpi **não** foram removidos nesta etapa
+- **Menu oculto** (`showInMenu: false`) — tile canônico = Minhas Solicitações
+- URL direta `/apps/invoice-issuance/*` ainda sobe o MFE (banner de aviso) até o hard descomission (E13)
+- Schema `invoice_issuance` e rotas api-delpi de **lookup** **não** foram removidos (adapter do requests-api)
 - Guia de procedimentos: `emissao-nota-fiscal` aponta para my-requests
-- Runbook de migração de dados: [`MIGRATION-RUNBOOK.md`](../../docs/12-roadmap-e-evolucao/my-requests/MIGRATION-RUNBOOK.md)
+- Runbook de migração: [`MIGRATION-RUNBOOK.md`](../../docs/12-roadmap-e-evolucao/my-requests/MIGRATION-RUNBOOK.md)
+- Gate prod: [`PARITY-P0.md`](../../docs/12-roadmap-e-evolucao/my-requests/PARITY-P0.md) § Gate soft cutover
 
 Documentação de roadmap: [docs/12-roadmap-e-evolucao/invoice-issuance/](../../docs/12-roadmap-e-evolucao/invoice-issuance/) · API: [invoice-issuance.md](../../api-delpi/docs/api/invoice-issuance.md).
 

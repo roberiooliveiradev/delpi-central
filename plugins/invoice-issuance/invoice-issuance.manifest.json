@@ -56,20 +56,20 @@
   "routes": [
     {
       "path": "/apps/invoice-issuance/filial-01",
-      "label": "Emissão de NF — Filial 01",
+      "label": "Emissão de NF — Filial 01 (legado)",
       "permission": "invoice-issuance.view.filial-01",
       "icon": "file-output",
       "order": 32,
-      "showInMenu": true,
+      "showInMenu": false,
       "menuGroup": "Financeiro"
     },
     {
       "path": "/apps/invoice-issuance/filial-02",
-      "label": "Emissão de NF — Filial 02",
+      "label": "Emissão de NF — Filial 02 (legado)",
       "permission": "invoice-issuance.view.filial-02",
       "icon": "file-output",
       "order": 33,
-      "showInMenu": true,
+      "showInMenu": false,
       "menuGroup": "Financeiro"
     }
   ],

@@ -66,5 +66,5 @@ Quando o tipo é **raw-material-creation**, a tela Nova abre o formulário schem
 
 ## Limitações atuais
 
-- App legado `invoice-issuance`: dual-run com banner de depreciação; canônico = Minhas Solicitações (`/apps/my-requests/new?type=invoice-issuance`)
-- Migração de histórico legado: ver `MIGRATION-RUNBOOK.md` (E8)
+- App legado `invoice-issuance`: **fora do menu** (soft cutover E12); canônico = Minhas Solicitações (`/apps/my-requests/new?type=invoice-issuance`). Bookmarks do legado redirecionam; URL direta ainda possível até E13.
+- Migração de histórico legado: ver `MIGRATION-RUNBOOK.md` (E8); gate prod em `PARITY-P0.md`

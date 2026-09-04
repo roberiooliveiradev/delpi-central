@@ -1,9 +1,9 @@
-/** Copy de depreciação — dual-run E8 (canônico = my-requests). */
+/** Copy de depreciação — soft cutover E12 (canônico = my-requests). */
 
 export const DEPRECATION_BANNER = {
   testId: "deprecation-banner",
   message:
-    "Este app legado permanece em dual-run. O fluxo canônico de emissão de NF é Minhas Solicitações.",
+    "Este app legado está fora do menu. Use Minhas Solicitações para emissão de NF (URL direta ainda funciona até o desligamento completo).",
   primaryHref: "/apps/my-requests",
   primaryLabel: "Abrir Minhas Solicitações",
   createHref: "/apps/my-requests/new?type=invoice-issuance",
