@@ -143,6 +143,9 @@ class ChatProductQueryIntentCodeService:
         pattern = ChatProductQueryIntentContentService.currency_like_token_pattern()
         prefix_pattern = ChatProductQueryIntentContentService.currency_prefix_before_pattern()
         markers = ChatProductQueryIntentContentService.currency_like_markers()
+        product_context = (
+            ChatProductQueryIntentContentService.product_code_context_prefix_pattern()
+        )
 
         prefix = text[max(0, match.start() - 12) : match.start()]
         if prefix_pattern and prefix_pattern.search(prefix):
@@ -153,8 +156,15 @@ class ChatProductQueryIntentCodeService:
             return True
 
         # 655.120,74 / 1.234.567 — formato monetário BR sem precisar de R$ no trecho.
+        # Máscara de produto (ex.: 10.080.055 após «produto») não é moeda.
         if pattern and pattern.match(token):
-            if "," in token or re.fullmatch(r"\d{1,3}(?:\.\d{3}){1,}(?:,\d{2})?", token):
+            if "," in token:
+                return True
+
+            if re.fullmatch(r"\d{1,3}(?:\.\d{3}){1,}", token):
+                context_prefix = text[max(0, match.start() - 48) : match.start()]
+                if product_context and product_context.search(context_prefix):
+                    return False
                 return True
 
         return False

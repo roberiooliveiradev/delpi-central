@@ -214,7 +214,7 @@ class OperationalRouteActionResolverService:
             if clarification is not None:
                 return clarification
 
-        action, parameters, reason = matching[0]
+        action, parameters, reason = self._prefer_branch_capable_match(matching)
 
         return {
             "name": "execute_external_action",
@@ -229,6 +229,36 @@ class OperationalRouteActionResolverService:
                 else {}
             ),
         }
+
+    @staticmethod
+    def _prefer_branch_capable_match(
+        matching: list[tuple[dict, dict, str]],
+    ) -> tuple[dict, dict, str]:
+        """Quando várias actions batem o mesmo path (ex.: ROL summary), preferir a que
+        carrega `branch` — evita head-office ganhar só por ordem em allowed_action_ids.
+        """
+        if len(matching) <= 1:
+            return matching[0]
+
+        with_branch = [
+            item
+            for item in matching
+            if str((item[1] or {}).get("branch") or "").strip()
+        ]
+
+        if not with_branch:
+            return matching[0]
+
+        for action, parameters, reason in with_branch:
+            names = {
+                str(param.get("name") or "").lower()
+                for param in (action.get("parametersSchema") or [])
+                if isinstance(param, dict)
+            }
+            if "branch" in names:
+                return action, parameters, reason
+
+        return with_branch[0]
 
     def _build_multiple_match_clarification(
         self,

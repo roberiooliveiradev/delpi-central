@@ -19,6 +19,7 @@ _PATTERN_FLAGS = {
     "exampleCodePrefix": re.IGNORECASE,
     "currencyLikeToken": re.IGNORECASE,
     "currencyPrefixBefore": re.IGNORECASE,
+    "productCodeContextPrefix": re.IGNORECASE,
     "decimalScalarToken": 0,
 }
 
@@ -68,6 +69,17 @@ class ChatProductQueryIntentContentService:
     def currency_prefix_before_pattern(cls) -> re.Pattern[str] | None:
         config = cls.currency_like_config()
         key = str(config.get("prefixBeforePatternKey") or "").strip()
+        if not key:
+            return None
+        try:
+            return cls.compile_pattern(key)
+        except KeyError:
+            return None
+
+    @classmethod
+    def product_code_context_prefix_pattern(cls) -> re.Pattern[str] | None:
+        config = cls.currency_like_config()
+        key = str(config.get("productContextPrefixPatternKey") or "productCodeContextPrefix").strip()
         if not key:
             return None
         try:

@@ -535,12 +535,13 @@ def test_execute_query_selects_sql_action():
     )
 
     selected = service.select_action(
-        "execute essa consulta no banco",
+        "execute essa consulta no banco: SELECT TOP 1 A1_COD FROM SA1010",
         allowed_action_ids=["sql-action"],
     )
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "sql-action"
+    assert "SA1010" in selected["arguments"]["body"]["sql"]
 
 
 def test_comparison_request_does_not_select_structure_action():

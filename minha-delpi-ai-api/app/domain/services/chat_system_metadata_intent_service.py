@@ -143,7 +143,13 @@ class ChatSystemMetadataIntentService:
 
     @classmethod
     def extract_table_search_description(cls, message: str) -> str | None:
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        # Matching leve (sem fuzzy/stem) para preservar plural do termo buscado
+        # (ex.: «produtos» não vira «produto»).
+        normalized = re.sub(
+            r"\s+",
+            " ",
+            ChatMessageNormalizationService.strip_accents(message or ""),
+        ).strip()
 
         patterns = ExternalActionResponseContentService.list(
             "actionSelection",
