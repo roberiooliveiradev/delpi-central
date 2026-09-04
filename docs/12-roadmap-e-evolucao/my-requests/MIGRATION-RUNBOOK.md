@@ -90,6 +90,10 @@ Checklist anexos: para cada `request_attachments.storage_key`, o arquivo deve ex
 
 Detalhe: playbook §20.2 · script: `requests-api/scripts/migrate_invoice_issuance_to_my_requests.py`.
 
+## Migração aplicada (registro)
+
+Ver evidências e JSON em [PARITY-P0.md](./PARITY-P0.md) § **E15 verify**. Ambientes com `legacy_requests > 0`: executar dry-run → `--apply` staging → prod e anexar o JSON naquela seção.
+
 ## Retenção pós-descomission (E13)
 
 | Recurso | Política |
