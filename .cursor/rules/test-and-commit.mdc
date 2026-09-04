@@ -5,6 +5,8 @@ alwaysApply: true
 
 # Teste e commit ao finalizar
 
+Complementa `evidence-driven-execution.mdc`: **testes verdes não substituem a validação do objetivo original**.
+
 ## Testes (obrigatório ao alterar código)
 
 Executar o que couber ao escopo antes de considerar a tarefa concluída:
@@ -21,6 +23,28 @@ Executar o que couber ao escopo antes de considerar a tarefa concluída:
 | Upload em disco | Volume no Compose + doc README — **`persistent-upload-storage.mdc`** |
 
 Corrigir falhas antes de entregar. Resumir no fim: testes executados (pass/fail).
+
+### Validação comportamental obrigatória
+
+Antes de declarar a tarefa concluída, além dos testes técnicos:
+
+1. confirmar que a alteração está ligada ao **pipeline real** e possui consumidor efetivo;
+2. validar o comportamento que motivou a mudança;
+3. quando houver regra/decisão nova, validar caso positivo + caso negativo + caso irmão;
+4. retornar ao pedido original e conferir objetivo, subobjetivos, restrições e critérios de aceite;
+5. registrar qualquer requisito não atendido em vez de omiti-lo silenciosamente.
+
+Usar a revisão:
+
+```text
+OBJETIVO_ORIGINAL
+COMPORTAMENTO_ANTES
+COMPORTAMENTO_DEPOIS
+EVIDENCIA
+REQUISITOS_NAO_ATENDIDOS
+```
+
+Pergunta adversarial obrigatória antes de finalizar: **“como esta solução pode continuar errada mesmo com os testes passando?”** Verificar a resposta quando tecnicamente possível.
 
 ### Ajuda in-app (inegociável se user-facing)
 
