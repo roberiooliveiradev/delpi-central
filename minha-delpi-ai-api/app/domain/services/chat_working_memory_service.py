@@ -252,6 +252,18 @@ class ChatWorkingMemoryService:
 
         lines: list[str] = []
 
+        from app.domain.services.chat_prior_turn_facts_packing_service import (
+            ChatPriorTurnFactsPackingService,
+        )
+
+        prior_turn_facts = ChatPriorTurnFactsPackingService.format_prompt_block(
+            snapshot,
+            max_chars=cls._prior_turn_facts_max_chars(snapshot),
+        )
+
+        if prior_turn_facts:
+            lines.append(prior_turn_facts)
+
         excerpt = snapshot.get("lastResultExcerpt")
 
         if isinstance(excerpt, dict) and excerpt:
@@ -392,6 +404,11 @@ class ChatWorkingMemoryService:
             return ""
 
         return "Memória ativa da conversa:\n" + "\n".join(lines)
+
+    @classmethod
+    def _prior_turn_facts_max_chars(cls, snapshot: dict) -> int | None:
+        """Teto do bloco de fatos — sem orçamento explícito, empacota livre."""
+        return None
 
     @classmethod
     def merge_conversation_context(cls, memory_block: str, conversation_context: str | None) -> str | None:

@@ -1,0 +1,34 @@
+{
+  "version": "2026.09.1",
+  "limits": {
+    "maxResultSetItems": 5,
+    "maxResultSets": 2,
+    "maxSkills": 6,
+    "maxTools": 6,
+    "maxLabelChars": 60,
+    "maxDescriptionChars": 90
+  },
+  "headings": {
+    "root": "Fatos do turno anterior:"
+  },
+  "lines": {
+    "identityWithDescription": "- Item em foco: {code} — {description}.",
+    "identityCodeOnly": "- Item em foco: {code}.",
+    "focusEntry": "- {label}: {value}.",
+    "lastActionLine": "- Última consulta: {action}.",
+    "resultSetHeading": "- Lista anterior ({total} itens):",
+    "resultSetItemWithLabel": "  {ordinal}. {code} — {label}",
+    "resultSetItem": "  {ordinal}. {code}",
+    "resultSetTruncated": "  … e mais {count} item(ns) na lista.",
+    "skillsLine": "- Skills ativas: {skills}.",
+    "toolsLine": "- Ferramentas em foco: {tools}."
+  },
+  "focusLabels": {
+    "productCode": "Produto",
+    "branch": "Filial",
+    "period": "Período",
+    "supplierCode": "Fornecedor",
+    "customerCode": "Cliente"
+  },
+  "truncationSuffix": "…"
+}
