@@ -16,6 +16,7 @@ Layout e componentes por tela (wireframes): [WIREFRAMES.md](./WIREFRAMES.md).
   - `/work-queue` — fila de trabalho
   - `/new` — criar
   - `/requests/:id` — detalhe
+  - `/admin` — tipos de solicitação (somente leitura; exige `my-requests.manage`)
 
 ## Minhas
 
@@ -28,6 +29,10 @@ Itens elegíveis ao seu perfil de processar/gerenciar. Mesma busca, filtros e pa
 ## Nova solicitação
 
 Escolha o **tipo** e a **filial**. Para **emissão de NF**, abra o wizard specialized (6 passos). Para **matéria-prima**, abra o formulário schema-driven (descrição, unidade, observações). Outros tipos usam o fluxo genérico.
+
+## Admin (tipos)
+
+Com `my-requests.manage`, a aba **Admin** lista os tipos cadastrados no Request Engine (código, nome, ativo, escopo de filial). É **somente leitura** — não edita workflow nem formulário nesta tela.
 
 ## Detalhe
 

@@ -2,7 +2,7 @@
 
 export const MY_REQUESTS_HELP_TOOLTIPS = {
   shell: {
-    nav: "Navegue entre Minhas (suas solicitações), Fila (itens a processar) e Nova (criar).",
+    nav: "Navegue entre Minhas (suas solicitações), Fila (itens a processar), Nova (criar) e Admin (tipos — só manage).",
   },
   mine: {
     section:
@@ -52,6 +52,10 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   artifacts: {
     section:
       "Artefatos gerados no processamento (ex.: PDF da NF). Quem tem process ou manage pode enviar via arrastar/selecionar e escolher o tipo (genérico ou PDF da NF); solicitantes só baixam.",
+  },
+  admin: {
+    section:
+      "Lista somente leitura dos tipos de solicitação (código, nome, ativo, escopo de filial). Exige my-requests.manage. Não edita workflow nem formulário nesta tela.",
   },
 } as const;
 

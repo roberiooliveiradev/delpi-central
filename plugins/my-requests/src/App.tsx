@@ -5,6 +5,7 @@ import {
   resolveInternalRoute,
   useMyRequestsRouterPath,
 } from "./hooks/useMyRequestsRouterPath";
+import { AdminTypesPage } from "./pages/AdminTypesPage";
 import { MinePage } from "./pages/MinePage";
 import { NewRequestPage } from "./pages/NewRequestPage";
 import { RequestDetailPage } from "./pages/RequestDetailPage";
@@ -52,6 +53,9 @@ export default function App({
       break;
     case "detail":
       page = <RequestDetailPage requestId={route.requestId!} />;
+      break;
+    case "admin":
+      page = <AdminTypesPage />;
       break;
     case "mine":
     case "home":

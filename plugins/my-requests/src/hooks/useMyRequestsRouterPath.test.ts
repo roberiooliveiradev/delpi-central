@@ -8,9 +8,10 @@ describe("resolveInternalRoute", () => {
     expect(resolveInternalRoute("/apps/my-requests/mine").name).toBe("mine");
   });
 
-  it("resolve fila, nova e detalhe", () => {
+  it("resolve fila, nova, admin e detalhe", () => {
     expect(resolveInternalRoute("/apps/my-requests/work-queue").name).toBe("work-queue");
     expect(resolveInternalRoute("/apps/my-requests/new").name).toBe("new");
+    expect(resolveInternalRoute("/apps/my-requests/admin").name).toBe("admin");
     const detail = resolveInternalRoute("/apps/my-requests/requests/abc-123");
     expect(detail).toEqual({ name: "detail", requestId: "abc-123" });
   });

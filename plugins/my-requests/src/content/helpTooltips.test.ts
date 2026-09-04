@@ -14,6 +14,7 @@ const REQUIRED_SECTIONS = [
   "comments",
   "attachments",
   "artifacts",
+  "admin",
 ] as const;
 
 describe("MY_REQUESTS_HELP_TOOLTIPS", () => {

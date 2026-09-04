@@ -18,7 +18,7 @@ export function useMyRequestsRouterPath(
 }
 
 export function resolveInternalRoute(pathname: string): {
-  name: "mine" | "work-queue" | "new" | "detail" | "home";
+  name: "mine" | "work-queue" | "new" | "detail" | "admin" | "home";
   requestId?: string;
 } {
   const normalized = pathname.replace(/\/+$/, "") || BASE;
@@ -27,6 +27,7 @@ export function resolveInternalRoute(pathname: string): {
   }
   if (normalized === `${BASE}/work-queue`) return { name: "work-queue" };
   if (normalized === `${BASE}/new`) return { name: "new" };
+  if (normalized === `${BASE}/admin`) return { name: "admin" };
   const detail = normalized.match(new RegExp(`^${BASE}/requests/([^/]+)$`));
   if (detail?.[1]) return { name: "detail", requestId: detail[1] };
   return { name: "home" };

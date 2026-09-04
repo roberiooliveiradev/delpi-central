@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ActionButton } from "@delpi/plugin-ui/index";
 
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import { MyRequestsFormActions, MyRequestsPageHeader } from "../ui/mrUi";
 
 type AppShellProps = {
@@ -12,6 +13,9 @@ type AppShellProps = {
 };
 
 export function AppShell({ title, subtitle, children, canCreate = false }: AppShellProps) {
+  const access = useRequestsPermissions();
+  const canManage = access.canManage;
+
   return (
     <div className="dashboard-my-requests dashboard-page">
       <MyRequestsPageHeader title={title} subtitle={subtitle} />
@@ -38,6 +42,15 @@ export function AppShell({ title, subtitle, children, canCreate = false }: AppSh
               variant="primary"
             >
               Nova
+            </ActionButton>
+          ) : null}
+          {canManage ? (
+            <ActionButton
+              href="/apps/my-requests/admin"
+              title={MY_REQUESTS_HELP_TOOLTIPS.admin.section}
+              variant="ghost"
+            >
+              Admin
             </ActionButton>
           ) : null}
         </MyRequestsFormActions>

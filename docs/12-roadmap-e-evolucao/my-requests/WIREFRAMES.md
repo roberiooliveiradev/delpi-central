@@ -86,6 +86,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 | Shell | * | PageHeader, FormActions, ActionButton |
 | Minhas | `/mine` | SectionCard, FiltersKit (incl. busca), CompactPagination, StateBanner, Loading, Empty, DataTable, StatusBadge, ActionButton(link) |
 | Fila | `/work-queue` | idem Mine |
+| Admin | `/admin` | SectionCard, DataTable, StatusBadge, StateBanner (gate manage) | **E14** |
 | Nova (genérico) | `/new` | SectionCard, SelectField×2, FormActions, ActionButton |
 | Wizard NF | `/new` → specialized | SectionCard, SegmentToggle, TextField, SelectField, FieldLabel, NativeTextArea, FormActions, ActionButton, StateBanner |
 | Detalhe | `/requests/:id` | SectionCard, DetailFields, ActionBar→ActionButton, ModalShell (return/cancel), Timeline, painéis |
@@ -106,7 +107,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 | `/new` + `invoice-issuance` | WF-04 | **entregue** | Wizard 6 passos |
 | `/new` + `raw-material-creation` | WF-07 | **entregue** | SchemaFormPage |
 | `/requests/:id` | WF-05 | **entregue** | Stack de SectionCards |
-| `/admin` | WF-06 | **E14** | RequestTypes read-only (`manage`) |
+| `/admin` | WF-06 | **entregue E14** | RequestTypes read-only (`manage`) |
 
 ---
 
@@ -230,9 +231,22 @@ Deep link: `/apps/my-requests/new?type=invoice-issuance` (também `type_code`) p
 **Regra:** botões = `allowed_actions` da API (render-only).  
 **Kit:** ModalShell (return/cancel) · FileDropzone (anexos + artefatos) · SelectField (tipo do artefato)
 
-### WF-06 — Admin tipos (E14)
+### WF-06 — Admin tipos (E14 — entregue)
 
-Lista `RequestTypes` **read-only** para quem tem `my-requests.manage` (código, nome, ativo, `branch_scope`). Sem CRUD de workflow/`form_schema` — ver PLAYBOOK §17.2 / §23 (CRUD completa continua fora).
+```text
+┌─ PageHeader: Admin — tipos de solicitação ──────────────────────────┐
+└─────────────────────────────────────────────────────────────────────┘
+┌─ Nav: [Minhas] [Fila] [Nova†] [Admin‡] ─────────────────────────────┐
+│ ‡ só com my-requests.manage                                         │
+└─────────────────────────────────────────────────────────────────────┘
+┌─ SectionCard «RequestTypes» ────────────────────────────────────────┐
+│ DataTable: Código │ Nome │ Ativo │ Escopo filial                    │
+│ Sem CRUD — leitura via GET /request-types                           │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Kit:** SectionCard · DataTable · StatusBadge · StateBanner (403 sem manage)  
+**Ajuda:** `helpTooltips.admin`
 
 ### WF-07 — Schema MP (E7 — entregue)
 

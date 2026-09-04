@@ -2,7 +2,7 @@
 
 > **Plugin:** `my-requests`  
 > **API:** `/apps/requests-api/v1`  
-> **Status:** E1–E11 entregues — próximo = E12 soft cutover (menu oculto + redirect); fase 7 hard = E13; WF-06 admin RO = E14  
+> **Status:** E1–E14 entregues — soft/hard cutover legado + admin RO; próximo = backlog (tags/CreatableMultiSelect) ou IAM de permissões legadas  
 > **Referência legado:** [`invoice-issuance`](../invoice-issuance/README.md)
 
 ---
@@ -1550,9 +1550,9 @@ flowchart LR
 
 | Etapa | Entrega | Nota |
 |-------|---------|------|
-| **E12** | Soft cutover: docs gate, `showInMenu: false`, redirect bookmarks | Prod só após gate live em `PARITY-P0.md` |
-| **E13** | Hard descomission: Compose/scripts sem MFE legado; RBAC/retenção docs | Pós-soak; **não** DROP schema; lookups api-delpi mantidos enquanto `ApiDelpiAdapter` precisar |
-| **E14** | WF-06 `/admin` RequestTypes read-only (`my-requests.manage`) | Sem CRUD |
+| **E12** | Soft cutover: docs gate, `showInMenu: false`, redirect bookmarks | **entregue** |
+| **E13** | Hard descomission: Compose/scripts sem MFE legado; RBAC/retenção docs | **entregue** (lookups api-delpi mantidos) |
+| **E14** | WF-06 `/admin` RequestTypes read-only (`my-requests.manage`) | **entregue** |
 
 Detalhe das receitas: planos Cursor E10/E11/E12+.
 
