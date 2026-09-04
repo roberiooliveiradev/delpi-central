@@ -136,3 +136,32 @@ def test_finalize_guards_english_cot_even_with_rag_tools():
     assert "let me structure" not in result.answer.lower()
     assert "the user is asking" not in result.answer.lower()
     assert result.answer.strip()
+
+
+def test_finalize_guards_portuguese_meta_planning_on_fast_synthesis():
+    """Regressão: Rápida + llm_synthesis_brief não pode entregar planejamento PT."""
+    leaked = (
+        "A pergunta é normativa sobre padrões de descrição técnica.\n\n"
+        "Skill ativa: technical-description-delpi\n\n"
+        "Contexto RAG: Normas_Tecnicas_DELPI.md (grupo 1008).\n\n"
+        "Instruções que estou seguindo:\n"
+        "- Não chamar API de produto, SQL ou catálogo neste modo\n\n"
+        "Terminais PINO\n"
+        "[ITEM] [TIPO DE TERMINAL] [BITOLA DO CABO]\n"
+        "Exemplo: TERM. PINO RETO 2,00MM2 COMP 10,00MM ESTANHADO C/ISOLACAO GRANEL REFORÇADO ROHS"
+    )
+    result = ChatTurnCompletionFinalizeService.finalize(
+        _turn(
+            answer=leaked,
+            tool_context={
+                "responseModeEffect": "llm_synthesis_brief",
+                "toolCalls": [],
+            },
+        )
+    )
+
+    assert result.answer != leaked
+    assert "skill ativa" not in result.answer.lower()
+    assert "contexto rag" not in result.answer.lower()
+    assert "Terminais PINO" in result.answer
+    assert "TERM. PINO" in result.answer

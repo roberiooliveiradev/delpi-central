@@ -373,7 +373,7 @@ Injetados em `docker-compose.dev.yml` e `docker-compose.yml` quando ausentes no 
 | `CHAT_RESPONSE_MODE_FAST_*` | 96 tok / ctx 512 | Modo Rápida (**só Ollama/local**) |
 | `CHAT_RESPONSE_MODE_NORMAL_*` | 1.5b, 256 tok, ctx 1536 | Modo Normal (**só Ollama/local**) |
 | `CHAT_RESPONSE_MODE_THINKER_*` | 3b, 512 tok, ctx 2048 | Modo Pensador (**só Ollama/local**) |
-| `CHAT_RESPONSE_MODE_CLOUD_*` | vazio (= JSON) | Override com `LLM_PROVIDER=openai_compatible`. Sem valor: `generationLimitsCloud` (Normal **2048** tok) |
+| `CHAT_RESPONSE_MODE_CLOUD_*` | vazio (= JSON) | Override com `LLM_PROVIDER=openai_compatible`. Sem valor: `generationLimitsCloud` (Rápida **1024**, Normal **2048** tok) |
 
 #### Outros limitadores (ainda valem com Kimi)
 

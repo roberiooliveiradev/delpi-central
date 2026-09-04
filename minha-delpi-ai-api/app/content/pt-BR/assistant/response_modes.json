@@ -165,7 +165,7 @@
   "generationLimitsCloud": {
     "fast": {
       "model": "qwen2.5:1.5b",
-      "maxTokens": 512,
+      "maxTokens": 1024,
       "numCtx": 8192,
       "temperature": 0.2
     },

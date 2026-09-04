@@ -601,6 +601,33 @@ def test_format_sql_authoring_strips_specialist_prompt_leak():
     assert "antes de qualquer outro" not in fixed.lower()
 
 
+def test_format_sql_authoring_answer_preserves_non_sql_body_after_pt_cot_strip():
+    """Regressão: CoT PT com menção a SQL não pode zerar resposta de normas/terminais."""
+    from app.domain.services.chat_advanced_sql_specialist.chat_advanced_sql_specialist_prose_formatting_service import (
+        ChatAdvancedSqlSpecialistProseFormattingService,
+    )
+
+    leaked = (
+        "A pergunta é normativa sobre padrões de descrição técnica.\n\n"
+        "Skill ativa: technical-description-delpi\n\n"
+        "Contexto RAG: Normas_Tecnicas_DELPI.md (grupo 1008).\n\n"
+        "Instruções que estou seguindo:\n"
+        "- Não chamar API de produto, SQL ou catálogo neste modo\n\n"
+        "Terminais PINO\n"
+        "[ITEM] [TIPO DE TERMINAL] [BITOLA DO CABO]\n"
+        "Exemplo: TERM. PINO RETO 2,00MM2 COMP 10,00MM ESTANHADO C/ISOLACAO GRANEL REFORÇADO ROHS"
+    )
+    fixed = ChatAdvancedSqlSpecialistProseFormattingService.format_sql_authoring_answer(
+        leaked
+    )
+
+    assert fixed
+    assert "Terminais PINO" in fixed
+    assert "TERM. PINO RETO" in fixed
+    assert "skill ativa" not in fixed.lower()
+    assert "contexto rag" not in fixed.lower()
+
+
 def test_plan_schema_prefetch_chains_sb1_columns_after_table_search():
     from app.domain.services.chat_sql_authoring_guidance_service import (
         ChatSqlAuthoringGuidanceService,

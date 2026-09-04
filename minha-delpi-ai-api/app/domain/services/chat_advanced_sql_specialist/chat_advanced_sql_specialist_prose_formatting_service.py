@@ -228,11 +228,18 @@ class ChatAdvancedSqlSpecialistProseFormattingService:
 
     @classmethod
     def _strip_instruction_leak_prose(cls, text: str) -> str:
-        """Remove eco do prompt do especialista SQL; preserva fence ```sql```."""
-        if not text or "```sql" not in text.lower():
-            if text and cls._paragraph_has_instruction_leak(text):
-                return ""
+        """Remove eco de instrução/CoT; preserva fence ```sql``` e prosa útil restante."""
+        if not text:
             return text
+
+        if "```sql" not in text.lower():
+            kept = [
+                p.strip()
+                for p in re.split(r"\n\s*\n", text)
+                if p.strip() and not cls._paragraph_has_instruction_leak(p)
+            ]
+            # Sem fence: se tudo for leak, devolve vazio para a guarda transversal decidir.
+            return "\n\n".join(kept).strip()
 
         parts: list[str] = []
         cursor = 0

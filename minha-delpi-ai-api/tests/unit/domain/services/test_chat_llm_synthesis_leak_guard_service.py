@@ -105,6 +105,29 @@ def test_needs_fallback_on_terminal_description_cot_leak():
     assert ChatLlmSynthesisLeakGuardService.needs_fallback(answer=leaked)
 
 
+def test_needs_fallback_on_portuguese_meta_planning_cot_leak():
+    """Regressão: modo Rápida + Kimi devolve planejamento PT (skill/RAG) como resposta."""
+    leaked = (
+        "A pergunta é normativa sobre padrões de descrição técnica.\n\n"
+        "Skill ativa: technical-description-delpi\n\n"
+        "Contexto RAG: trechos de Normas_Tecnicas_DELPI.md (grupo 1008 — terminais).\n\n"
+        "Instruções que estou seguindo:\n"
+        "- Pergunta genérica → grupo 1008 e subtipos\n"
+        "- Não chamar API de produto, SQL ou catálogo neste modo\n\n"
+        "Terminais PINO\n"
+        "[ITEM] [TIPO DE TERMINAL] [VARIANTE DO MODELO] [BITOLA DO CABO]\n"
+        "Exemplo: TERM. PINO RETO 2,00MM2 COMP 10,00MM ESTANHADO C/ISOLACAO GRANEL REFORÇADO ROHS"
+    )
+    assert ChatLlmSynthesisLeakGuardService.needs_fallback(answer=leaked)
+    guarded = ChatLlmSynthesisLeakGuardService.guard_answer(answer=leaked, fallback=None)
+    assert guarded != leaked
+    assert "skill ativa" not in guarded.lower()
+    assert "contexto rag" not in guarded.lower()
+    assert "instruções que estou seguindo" not in guarded.lower()
+    assert "Terminais PINO" in guarded
+    assert "TERM. PINO RETO" in guarded
+
+
 def test_needs_fallback_on_capabilities_cot_leak():
     """Regressão: Kimi/OpenRouter devolve CoT EN como resposta de capacidades."""
     leaked = (
