@@ -160,7 +160,17 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         label: "Visão geral",
         viewId: "overview",
         requiredCap: "analytics",
-        keywords: ["overview", "kpi", "rol", "gestão", "gestao"],
+        keywords: [
+          "overview",
+          "kpi",
+          "rol",
+          "gestão",
+          "gestao",
+          "indicadores",
+          "dashboard",
+          "meta",
+          "gap",
+        ],
       },
       {
         id: "analytics_otd",

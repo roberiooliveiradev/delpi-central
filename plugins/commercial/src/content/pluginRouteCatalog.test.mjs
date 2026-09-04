@@ -117,4 +117,31 @@ describe("pluginRouteCatalog", () => {
     const hits = collectSearchHits(sections, "oportunidades", 5);
     assert.equal(hits[0]?.id, "analytics_opportunities");
   });
+
+  it("fixture intent → route.id", () => {
+    const sections = resolveHubSections(allCaps);
+    const cases = [
+      ["indicadores", "overview"],
+      ["dashboard", "overview"],
+      ["meta", "overview"],
+      ["gap", "overview"],
+      ["ady", "proposals"],
+      ["interação", "interaction_rooms"],
+      ["otd", "analytics_otd"],
+      ["manual", "user_manual"],
+    ];
+    for (const [query, routeId] of cases) {
+      const hits = collectSearchHits(sections, query, 8);
+      assert.equal(
+        hits[0]?.id,
+        routeId,
+        `«${query}» deveria ranquear ${routeId} primeiro, got ${hits[0]?.id}`,
+      );
+      const filtered = filterRouteCatalog(sections, query);
+      assert.ok(
+        filtered.some((s) => s.routes.some((r) => r.id === routeId)),
+        `«${query}» deveria incluir ${routeId} no filtro`,
+      );
+    }
+  });
 });
