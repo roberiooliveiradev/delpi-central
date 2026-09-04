@@ -370,9 +370,12 @@ Injetados em `docker-compose.dev.yml` e `docker-compose.yml` quando ausentes no 
 | `CHAT_FAST_PATH_MAX_CHARS` | `48` | Igual dev |
 | `CHAT_DIRECT_RESPONSE_STREAM_*` | `4` chars / `0` ms | Sem delay artificial (prod antigo: 2/45) |
 | `CHAT_RESPONSE_MODES_ENABLED` | `true` | Seletor Rápida/Normal/Pensador |
-| `CHAT_RESPONSE_MODE_FAST_*` | 96 tok / ctx 512 | Modo Rápida |
-| `CHAT_RESPONSE_MODE_NORMAL_*` | 1.5b, 256 tok, ctx 1536 | Modo Normal |
-| `CHAT_RESPONSE_MODE_THINKER_*` | 3b, 512 tok, ctx 2048 | Modo Pensador |
+| `CHAT_RESPONSE_MODE_FAST_*` | 96 tok / ctx 512 | Modo Rápida (**só Ollama/local**) |
+| `CHAT_RESPONSE_MODE_NORMAL_*` | 1.5b, 256 tok, ctx 1536 | Modo Normal (**só Ollama/local**) |
+| `CHAT_RESPONSE_MODE_THINKER_*` | 3b, 512 tok, ctx 2048 | Modo Pensador (**só Ollama/local**) |
+| `CHAT_RESPONSE_MODE_CLOUD_*` | opcional | Override de teto com `LLM_PROVIDER=openai_compatible` (Kimi). Sem isso: `generationLimitsCloud` no JSON (Normal 2048 tok). |
+
+Com **Kimi/OpenRouter**, os `CHAT_RESPONSE_MODE_*_MAX_TOKENS` do Compose **não** aplicam (eram teto Ollama e geravam prosa vazia em RAG). Ajuste cloud via JSON ou `CHAT_RESPONSE_MODE_CLOUD_NORMAL_MAX_TOKENS`.
 
 Documentação: [`chat-response-modes.md`](../minha-delpi-ai-api/docs/architecture/chat-response-modes.md), changelog [`2026-06-playbook-19-prosa-latencia-analyser.md`](../minha-delpi-ai-api/docs/changelog/2026-06-playbook-19-prosa-latencia-analyser.md).
 

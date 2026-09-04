@@ -158,10 +158,17 @@ class ChatResponseModeContentService:
         return bool(node.get("skipProsePanelRules"))
 
     @classmethod
+    def _generation_limits_section(cls) -> str:
+        from app.domain.services.chat_domain_config_service import ChatDomainConfigService
+
+        profile = cls.context_budget_profile_for_provider(ChatDomainConfigService.llm_provider())
+        return "generationLimitsCloud" if profile == "cloud" else "generationLimits"
+
+    @classmethod
     def generation_limit_model(cls, mode: str, *, default: str) -> str:
         node = ChatAssistantContentService.get_node(
             _BUNDLE,
-            "generationLimits",
+            cls._generation_limits_section(),
             str(mode or "").strip().lower(),
         )
 
@@ -200,7 +207,7 @@ class ChatResponseModeContentService:
     @classmethod
     def generation_limit_int(cls, mode: str, field: str, *, default: int) -> int:
         return cls._node_int(
-            "generationLimits",
+            cls._generation_limits_section(),
             str(mode or "").strip().lower(),
             field,
             default=default,
@@ -209,7 +216,7 @@ class ChatResponseModeContentService:
     @classmethod
     def generation_limit_float(cls, mode: str, field: str, *, default: float) -> float:
         return cls._node_float(
-            "generationLimits",
+            cls._generation_limits_section(),
             str(mode or "").strip().lower(),
             field,
             default=default,

@@ -8,7 +8,7 @@ Relacionado: [`chat-intelligence-base.md`](./chat-intelligence-base.md), [`chat-
 
 ## Orçamento de contexto por modo (ago/2026)
 
-Além de `generationLimits`, o bundle declara `contextBudget` (perfil **local**, Ollama/RAM) e `contextBudgetCloud` (perfil **cloud**, `openai_compatible`/Kimi). Serviço canônico: `ChatResponseModeContextBudgetService` — expõe `profile: local|cloud` no `adminDebug.contextBudget`. Em cloud, o prompt é truncado no cliente pelo budget (`num_ctx` em `generationLimitsCloud` é informativo no metadata).
+Além de `generationLimits` (Ollama/local), o bundle declara `generationLimitsCloud` e `contextBudgetCloud` para `openai_compatible`/Kimi. Serviço: `ChatResponseModeContentService` + `ChatResponseModeService` — com Kimi, **ignora** `CHAT_RESPONSE_MODE_*_MAX_TOKENS` do Compose (legado Ollama 256/1536) e usa o JSON cloud (Normal **2048** tokens). Override cloud opcional: `CHAT_RESPONSE_MODE_CLOUD_NORMAL_MAX_TOKENS`.
 
 Multi-intent no mesmo turno: Rápida costuma executar 1 action e oferecer chip «também consultar»; Normal/Pensador sobem o teto. Leituras OpenAPI independentes no mesmo plano podem rodar em paralelo (`ChatToolContextParallelReadService` — ver `chat-intelligence-base.md` § Parallel reads).
 

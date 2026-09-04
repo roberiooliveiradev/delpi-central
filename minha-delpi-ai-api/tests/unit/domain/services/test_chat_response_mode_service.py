@@ -14,6 +14,7 @@ def test_normalize_aliases():
 
 
 def test_fast_mode_uses_smaller_limits(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "ollama")
     monkeypatch.setenv("CHAT_RESPONSE_MODE_FAST_MODEL", "qwen2.5:1.5b")
     monkeypatch.setenv("CHAT_RESPONSE_MODE_FAST_MAX_TOKENS", "256")
     config = ChatResponseModeService.resolve("fast")
@@ -37,7 +38,26 @@ def test_openai_compatible_modes_inherit_kimi_over_ollama_tags(monkeypatch):
     assert ChatResponseModeService.resolve("thinker").model == "moonshotai/kimi-k3"
 
 
+def test_openai_compatible_ignores_ollama_era_max_tokens_env(monkeypatch):
+    """Regressão: Compose Normal 256 tok + Kimi → prosa vazia (completion≈2)."""
+    monkeypatch.setenv("LLM_PROVIDER", "openai_compatible")
+    monkeypatch.delenv("LLM_TEXT_MODEL", raising=False)
+    monkeypatch.setenv("KIMI_MODEL", "moonshotai/kimi-k3")
+    monkeypatch.setenv("KIMI_BASE_URL", "https://openrouter.ai/api/v1")
+    monkeypatch.setenv("KIMI_API_KEY", "sk-or-test")
+    monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "256")
+    monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "1536")
+    monkeypatch.delenv("CHAT_RESPONSE_MODE_CLOUD_NORMAL_MAX_TOKENS", raising=False)
+    monkeypatch.delenv("CHAT_RESPONSE_MODE_CLOUD_NORMAL_NUM_CTX", raising=False)
+
+    config = ChatResponseModeService.resolve("normal")
+
+    assert config.max_tokens == 2048
+    assert config.num_ctx == 16384
+
+
 def test_thinker_mode_expands_context(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "ollama")
     monkeypatch.setenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", "4096")
     config = ChatResponseModeService.resolve("thinker")
     assert config.response_mode == "thinker"
@@ -133,6 +153,7 @@ def test_apply_turn_direct_answer_policy_overview_thinker_forces_llm():
 
 
 def test_normal_mode_default_limits_from_json(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "ollama")
     monkeypatch.delenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", raising=False)
     monkeypatch.delenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", raising=False)
     monkeypatch.delenv("CHAT_RESPONSE_MODE_NORMAL_TEMPERATURE", raising=False)
@@ -146,6 +167,7 @@ def test_normal_mode_default_limits_from_json(monkeypatch):
 
 
 def test_thinker_mode_default_limits_from_json(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "ollama")
     monkeypatch.delenv("CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS", raising=False)
     monkeypatch.delenv("CHAT_RESPONSE_MODE_THINKER_NUM_CTX", raising=False)
     monkeypatch.delenv("CHAT_RESPONSE_MODE_THINKER_TEMPERATURE", raising=False)
@@ -159,6 +181,7 @@ def test_thinker_mode_default_limits_from_json(monkeypatch):
 
 
 def test_normal_mode_uses_bounded_limits(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "ollama")
     monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_MAX_TOKENS", "320")
     monkeypatch.setenv("CHAT_RESPONSE_MODE_NORMAL_NUM_CTX", "1024")
     config = ChatResponseModeService.resolve("normal")
