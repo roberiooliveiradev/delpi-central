@@ -114,4 +114,5 @@ Ver evidências e JSON em [PARITY-P0.md](./PARITY-P0.md) § **E15 verify**. Ambi
 | `invoice-issuance.process` | `my-requests.invoice-issuance.process` |
 | `invoice-issuance.manage` | `my-requests.manage` |
 
-Não revogar permissões legadas neste runbook sem confirmação de IAM / suporte.
+Não revogar permissões legadas neste runbook sem confirmação de IAM / suporte.  
+Runbook dedicado: [IAM-LEGACY-PERMISSIONS.md](./IAM-LEGACY-PERMISSIONS.md).

@@ -71,6 +71,8 @@ Quando o tipo é **raw-material-creation**, a tela Nova abre o formulário schem
 
 ## Limitações atuais
 
-- App legado `invoice-issuance`: MFE removido do Compose (E13); bookmarks redirecionam no gateway. Canônico = Minhas Solicitações.
-- Migração de histórico: `MIGRATION-RUNBOOK.md`; retenção de schema/volume (≥ 90 dias) e mapa RBAC legado→canônico no mesmo runbook / PLAYBOOK §20.5.
-- Permissões `invoice-issuance.*` podem ainda existir no Core até runbook IAM; operadores novos usam só `my-requests.*`.
+- App legado `invoice-issuance`: MFE removido do Compose (E13); bookmarks redirecionam no gateway. Canônico = Minhas Solicitações — **não** há dual-run de menu.
+- Migração de histórico: ver `MIGRATION-RUNBOOK.md` + evidência em `PARITY-P0.md` (E15). Ambientes com dados legados devem reaplicar dry-run/`--apply`.
+- Homologação UI live (criar/fila/lookups TOTVS no browser): checklist Ops em `PARITY-P0.md` itens 1–2.
+- Permissões `invoice-issuance.*` podem ainda existir no Core até runbook IAM (`IAM-LEGACY-PERMISSIONS.md`); operadores novos usam só `my-requests.*`.
+- Lookups TOTVS ainda passam pela api-delpi (path canônico a partir de E17); schema/volume legado retidos ≥ 90 dias.
