@@ -84,6 +84,11 @@ export function buildRolPerUnitKpiView(
     dateEnd?: string | null;
     /** Nota IDD canônica do SI (`indicators[].score`). */
     iddScoreLabel?: string | null;
+    /**
+     * Payload consolidado (branch vazio) com meta SI já agregada via
+     * `branch_value_aggregation` — não somar metas no MFE.
+     */
+    consolidatedMetric?: RolTargetData | null;
   },
 ): RolPerUnitKpiView {
   const branch = (activeBranch ?? "").trim();
@@ -112,7 +117,35 @@ export function buildRolPerUnitKpiView(
     };
   }
 
-  const consolidatedRol = resolveConsolidatedRolValue(filial01, filial02);
+  const consolidatedMetric = options?.consolidatedMetric ?? null;
+  const consolidatedRol =
+    consolidatedMetric?.rol != null && !Number.isNaN(consolidatedMetric.rol)
+      ? consolidatedMetric.rol
+      : resolveConsolidatedRolValue(filial01, filial02);
+
+  const hasConsolidatedGoalPayload =
+    consolidatedMetric != null &&
+    !consolidatedMetric.goal_scope_hint?.trim() &&
+    (Boolean(consolidatedMetric.has_goal) ||
+      (consolidatedMetric.comparable_goal != null &&
+        Number(consolidatedMetric.comparable_goal) > 0) ||
+      Boolean(consolidatedMetric.goal_label?.trim()));
+
+  if (hasConsolidatedGoalPayload) {
+    const presentation = buildKpiGoalPresentation(contextLabel, consolidatedMetric, undefined, {
+      realizedValue: consolidatedRol,
+      dateStart: options?.dateStart,
+      dateEnd: options?.dateEnd,
+      iddScoreLabel: siIddScoreLabel,
+    });
+    return {
+      ...presentation,
+      value: consolidatedRol != null ? formatCurrency(consolidatedRol) : "—",
+      valueVariant: "default",
+      goalPerformanceBadges: [],
+      periodKindBadge,
+    };
+  }
 
   return {
     contextLabel,

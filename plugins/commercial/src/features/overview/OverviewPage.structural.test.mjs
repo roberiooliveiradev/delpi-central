@@ -14,6 +14,9 @@ describe("OverviewPage — paridade dashboard", () => {
     assert.match(source, /CommercialDashboardKpiCard/);
     assert.match(source, /buildRolPerUnitKpiView/);
     assert.match(source, /buildKpiGoalPresentationWithBranchIdd/);
+    assert.match(source, /consolidatedMetric:\s*dashboard\.consolidatedRol/);
+    assert.match(source, /consolidatedMetric:\s*dashboard\.consolidatedWegRol/);
+    assert.match(source, /consolidatedMetric:\s*dashboard\.consolidatedNewBusinessRol/);
     assert.match(source, /open_portfolio|openPortfolio/);
     assert.match(source, /portfolio_billing_share|portfolioBillingShare/);
     assert.match(source, /CM_HELP\.overview\.portfolioBillingShare/);

@@ -28,10 +28,14 @@ import {
 type AnalyticsDashboardState = {
   headOfficeRol: RolTargetData | null;
   branchRol: RolTargetData | null;
+  /** ROL + meta SI agregada (branch vazio) — só preenchido no consolidado. */
+  consolidatedRol: RolTargetData | null;
   headOfficeWegRol: RolTargetData | null;
   branchWegRol: RolTargetData | null;
+  consolidatedWegRol: RolTargetData | null;
   headOfficeNewBusinessRol: RolTargetData | null;
   branchNewBusinessRol: RolTargetData | null;
+  consolidatedNewBusinessRol: RolTargetData | null;
   closingRate: ClosingRateData | null;
   salesOrderOtd: SalesOrderOtdData | null;
   newBusinessRol: NewBusinessRolPctData | null;
@@ -51,11 +55,15 @@ type AnalyticsDashboardState = {
 export function useAnalyticsDashboard(filters: AnalyticsFilterParams): AnalyticsDashboardState {
   const [headOfficeRol, setHeadOfficeRol] = useState<RolTargetData | null>(null);
   const [branchRol, setBranchRol] = useState<RolTargetData | null>(null);
+  const [consolidatedRol, setConsolidatedRol] = useState<RolTargetData | null>(null);
   const [headOfficeWegRol, setHeadOfficeWegRol] = useState<RolTargetData | null>(null);
   const [branchWegRol, setBranchWegRol] = useState<RolTargetData | null>(null);
+  const [consolidatedWegRol, setConsolidatedWegRol] = useState<RolTargetData | null>(null);
   const [headOfficeNewBusinessRol, setHeadOfficeNewBusinessRol] =
     useState<RolTargetData | null>(null);
   const [branchNewBusinessRol, setBranchNewBusinessRol] = useState<RolTargetData | null>(null);
+  const [consolidatedNewBusinessRol, setConsolidatedNewBusinessRol] =
+    useState<RolTargetData | null>(null);
   const [closingRate, setClosingRate] = useState<ClosingRateData | null>(null);
   const [salesOrderOtd, setSalesOrderOtd] = useState<SalesOrderOtdData | null>(null);
   const [newBusinessRol, setNewBusinessRol] = useState<NewBusinessRolPctData | null>(null);
@@ -111,6 +119,9 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
       getPortfolioBillingShare(filters, controller.signal),
       ...(needsBranchIdd
         ? [
+            getRolSummary(rolParams, controller.signal),
+            getWegRolTarget(segmentParams, controller.signal),
+            getNewBusinessRolTarget(segmentParams, controller.signal),
             fetchPerBranchMetricSlices(
               (branch, branchSignal) =>
                 getClosingRate({ ...filters, branch }, branchSignal ?? controller.signal),
@@ -151,9 +162,18 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
             : null,
         );
         if (needsBranchIdd) {
-          const crBranches = results[10];
-          const otdBranches = results[11];
-          const nbBranches = results[12];
+          setConsolidatedRol(
+            results[10]?.status === "fulfilled" ? (results[10].value as RolTargetData) : null,
+          );
+          setConsolidatedWegRol(
+            results[11]?.status === "fulfilled" ? (results[11].value as RolTargetData) : null,
+          );
+          setConsolidatedNewBusinessRol(
+            results[12]?.status === "fulfilled" ? (results[12].value as RolTargetData) : null,
+          );
+          const crBranches = results[13];
+          const otdBranches = results[14];
+          const nbBranches = results[15];
           setClosingRateBranches(
             crBranches?.status === "fulfilled"
               ? (crBranches.value as PerBranchMetricSlices<ClosingRateData>)
@@ -170,6 +190,9 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
               : null,
           );
         } else {
+          setConsolidatedRol(null);
+          setConsolidatedWegRol(null);
+          setConsolidatedNewBusinessRol(null);
           setClosingRateBranches(null);
           setSalesOrderOtdBranches(null);
           setNewBusinessRolBranches(null);
@@ -237,10 +260,13 @@ export function useAnalyticsDashboard(filters: AnalyticsFilterParams): Analytics
   return {
     headOfficeRol,
     branchRol,
+    consolidatedRol,
     headOfficeWegRol,
     branchWegRol,
+    consolidatedWegRol,
     headOfficeNewBusinessRol,
     branchNewBusinessRol,
+    consolidatedNewBusinessRol,
     closingRate,
     salesOrderOtd,
     newBusinessRol,

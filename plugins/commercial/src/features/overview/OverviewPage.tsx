@@ -137,6 +137,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         activeBranch,
         {
           ...rolPresentationOptions,
+          consolidatedMetric: dashboard.consolidatedRol,
           iddScoreLabel: pickSiIddScoreLabel(
             siScoresById,
             COMMERCIAL_SI_INDICATOR_IDS.rol,
@@ -147,6 +148,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
       activeBranch,
       contextBase,
       dashboard.branchRol,
+      dashboard.consolidatedRol,
       dashboard.headOfficeRol,
       rolPresentationOptions,
       siScoresById,
@@ -163,6 +165,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         activeBranch,
         {
           ...rolPresentationOptions,
+          consolidatedMetric: dashboard.consolidatedWegRol,
           iddScoreLabel: pickSiIddScoreLabel(
             siScoresById,
             COMMERCIAL_SI_INDICATOR_IDS.rolWeg,
@@ -173,6 +176,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
       activeBranch,
       contextBase,
       dashboard.branchWegRol,
+      dashboard.consolidatedWegRol,
       dashboard.headOfficeWegRol,
       rolPresentationOptions,
       siScoresById,
@@ -189,6 +193,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         activeBranch,
         {
           ...rolPresentationOptions,
+          consolidatedMetric: dashboard.consolidatedNewBusinessRol,
           iddScoreLabel: pickSiIddScoreLabel(
             siScoresById,
             COMMERCIAL_SI_INDICATOR_IDS.rolNewBusiness,
@@ -199,6 +204,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
       activeBranch,
       contextBase,
       dashboard.branchNewBusinessRol,
+      dashboard.consolidatedNewBusinessRol,
       dashboard.headOfficeNewBusinessRol,
       rolPresentationOptions,
       siScoresById,
