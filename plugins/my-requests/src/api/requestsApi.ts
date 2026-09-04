@@ -19,6 +19,7 @@ export type RequestListQuery = {
   typeCode?: string;
   status?: string;
   branch?: string;
+  q?: string;
 };
 
 export function buildRequestListQueryParams(options?: RequestListQuery): string {
@@ -31,6 +32,8 @@ export function buildRequestListQueryParams(options?: RequestListQuery): string 
   if (status) params.set("status", status);
   const branch = options?.branch?.trim();
   if (branch) params.set("branch", branch);
+  const q = options?.q?.trim();
+  if (q && q.length >= 2) params.set("q", q);
   return params.toString();
 }
 

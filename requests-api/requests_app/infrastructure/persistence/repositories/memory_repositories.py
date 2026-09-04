@@ -128,9 +128,16 @@ class InMemoryRequestRepository(RequestRepositoryPort):
         type_code: str | None = None,
         status: str | None = None,
         branch_code: str | None = None,
+        q: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]:
+        from requests_app.domain.services.request_list_search import (
+            normalize_list_search_query,
+            request_matches_search,
+        )
+
+        search = normalize_list_search_query(q)
         items = [
             item
             for item in self._requests.values()
@@ -138,6 +145,14 @@ class InMemoryRequestRepository(RequestRepositoryPort):
             and (not type_code or item.type_code == type_code)
             and (not status or item.status == status)
             and (not branch_code or item.branch_code == branch_code)
+            and (
+                not search
+                or request_matches_search(
+                    request_number=item.request_number,
+                    payload=item.payload,
+                    q=search,
+                )
+            )
         ]
         items.sort(key=lambda row: row.created_at or _utcnow(), reverse=True)
         total = len(items)
@@ -151,9 +166,16 @@ class InMemoryRequestRepository(RequestRepositoryPort):
         status: str | None = None,
         branch_code: str | None = None,
         exclude_statuses: list[str] | None = None,
+        q: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]:
+        from requests_app.domain.services.request_list_search import (
+            normalize_list_search_query,
+            request_matches_search,
+        )
+
+        search = normalize_list_search_query(q)
         excluded = set(exclude_statuses or [])
         allowed_types = set(type_codes) if type_codes is not None else None
         items = []
@@ -165,6 +187,12 @@ class InMemoryRequestRepository(RequestRepositoryPort):
             if branch_code and item.branch_code != branch_code:
                 continue
             if item.status in excluded:
+                continue
+            if search and not request_matches_search(
+                request_number=item.request_number,
+                payload=item.payload,
+                q=search,
+            ):
                 continue
             items.append(item)
         items.sort(key=lambda row: row.created_at or _utcnow(), reverse=True)

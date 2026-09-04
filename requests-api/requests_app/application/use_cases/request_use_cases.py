@@ -197,6 +197,7 @@ class ListMyRequestsUseCase:
         type_code: str | None = None,
         status: str | None = None,
         branch_code: str | None = None,
+        q: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
@@ -214,6 +215,7 @@ class ListMyRequestsUseCase:
             type_code=type_code,
             status=status,
             branch_code=branch_code,
+            q=q,
             page=page,
             page_size=page_size,
         )
@@ -249,6 +251,7 @@ class ListWorkQueueRequestsUseCase:
         type_code: str | None = None,
         status: str | None = None,
         branch_code: str | None = None,
+        q: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
@@ -286,6 +289,7 @@ class ListWorkQueueRequestsUseCase:
             status=status,
             branch_code=branch_code,
             exclude_statuses=None if status else sorted(excluded),
+            q=q,
             page=page,
             page_size=page_size,
         )

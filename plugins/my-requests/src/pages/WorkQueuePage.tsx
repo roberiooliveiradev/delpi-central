@@ -23,6 +23,7 @@ import {
 import { mrDataTableClassNames, mrDataTableLabels } from "../ui/mrUiContracts";
 
 const INITIAL_FILTERS: RequestListFiltersState = {
+  q: "",
   typeCode: "",
   status: "",
   branch: "",
@@ -63,6 +64,7 @@ export function WorkQueuePage() {
       typeCode: filters.typeCode || undefined,
       status: filters.status || undefined,
       branch: filters.branch || undefined,
+      q: filters.q || undefined,
     })
       .then((data) => {
         setItems(data.items || []);
@@ -106,7 +108,7 @@ export function WorkQueuePage() {
   );
 
   const emptyMessage =
-    filters.typeCode || filters.status || filters.branch
+    filters.q || filters.typeCode || filters.status || filters.branch
       ? "Nenhuma solicitação para os filtros selecionados."
       : "Fila vazia no momento.";
 

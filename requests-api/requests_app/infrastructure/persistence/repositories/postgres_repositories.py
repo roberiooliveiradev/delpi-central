@@ -287,9 +287,15 @@ class PostgresRequestRepository(RequestRepositoryPort):
         type_code: str | None = None,
         status: str | None = None,
         branch_code: str | None = None,
+        q: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]:
+        from requests_app.domain.services.request_list_search import (
+            ilike_contains_pattern,
+            normalize_list_search_query,
+        )
+
         where = ["r.created_by_user_id = %s"]
         params: list[Any] = [user_id]
         if type_code:
@@ -301,6 +307,18 @@ class PostgresRequestRepository(RequestRepositoryPort):
         if branch_code:
             where.append("r.branch_code = %s")
             params.append(branch_code)
+        search = normalize_list_search_query(q)
+        if search:
+            pattern = ilike_contains_pattern(search)
+            where.append(
+                "("
+                "r.request_number ILIKE %s ESCAPE '\\' "
+                "OR COALESCE(r.payload->>'party_name', '') ILIKE %s ESCAPE '\\' "
+                "OR COALESCE(r.payload->>'party_code', '') ILIKE %s ESCAPE '\\' "
+                "OR COALESCE(r.payload->>'description', '') ILIKE %s ESCAPE '\\'"
+                ")"
+            )
+            params.extend([pattern, pattern, pattern, pattern])
         where_sql = " AND ".join(where)
         count_sql = f"""
         SELECT COUNT(*) AS total
@@ -337,9 +355,15 @@ class PostgresRequestRepository(RequestRepositoryPort):
         status: str | None = None,
         branch_code: str | None = None,
         exclude_statuses: list[str] | None = None,
+        q: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]:
+        from requests_app.domain.services.request_list_search import (
+            ilike_contains_pattern,
+            normalize_list_search_query,
+        )
+
         where = ["TRUE"]
         params: list[Any] = []
         if type_codes is not None:
@@ -356,6 +380,18 @@ class PostgresRequestRepository(RequestRepositoryPort):
         if exclude_statuses:
             where.append("NOT (r.status = ANY(%s))")
             params.append(exclude_statuses)
+        search = normalize_list_search_query(q)
+        if search:
+            pattern = ilike_contains_pattern(search)
+            where.append(
+                "("
+                "r.request_number ILIKE %s ESCAPE '\\' "
+                "OR COALESCE(r.payload->>'party_name', '') ILIKE %s ESCAPE '\\' "
+                "OR COALESCE(r.payload->>'party_code', '') ILIKE %s ESCAPE '\\' "
+                "OR COALESCE(r.payload->>'description', '') ILIKE %s ESCAPE '\\'"
+                ")"
+            )
+            params.extend([pattern, pattern, pattern, pattern])
         where_sql = " AND ".join(where)
         count_sql = f"""
         SELECT COUNT(*) AS total

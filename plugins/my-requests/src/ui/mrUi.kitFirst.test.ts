@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   MR_UI_PREFIX,
   MyRequestsCompactPagination,
+  MyRequestsFilterInputField,
   MyRequestsFilterSelectField,
   MyRequestsFiltersRow,
   MyRequestsModal,
@@ -32,6 +33,7 @@ describe("kit-first my-requests", () => {
     expect(typeof TextField).toBe("function");
     expect(typeof MyRequestsFiltersRow).toBe("function");
     expect(typeof MyRequestsFilterSelectField).toBe("function");
+    expect(typeof MyRequestsFilterInputField).toBe("function");
     expect(typeof MyRequestsCompactPagination).toBe("function");
     expect(typeof MyRequestsModal).toBe("function");
     expect(typeof MyRequestsFileDropzone).toBe("function");

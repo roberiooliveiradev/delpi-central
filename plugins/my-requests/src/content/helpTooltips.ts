@@ -6,11 +6,11 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   mine: {
     section:
-      "Lista as solicitações que você criou. Use os filtros de tipo, status e filial e a paginação. Abra o número para ver detalhe, timeline e ações permitidas.",
+      "Lista as solicitações que você criou. Use a busca (número, código, nome ou descrição), filtros de tipo/status/filial e a paginação. Abra o número para ver detalhe, timeline e ações permitidas.",
   },
   workQueue: {
     section:
-      "Fila operacional das solicitações elegíveis ao seu perfil. Filtre por tipo, status e filial; a API decide o escopo de processamento.",
+      "Fila operacional das solicitações elegíveis ao seu perfil. Busque por número/código/nome/descrição e filtre por tipo, status e filial; a API decide o escopo de processamento.",
   },
   new: {
     section:

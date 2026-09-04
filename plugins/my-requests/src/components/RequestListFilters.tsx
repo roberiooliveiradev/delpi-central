@@ -1,11 +1,17 @@
+import { useEffect, useState } from "react";
 import { ActionButton } from "@delpi/plugin-ui/index";
 
 import {
+  REQUEST_LIST_SEARCH_DEBOUNCE_MS,
   REQUEST_STATUS_FILTER_OPTIONS,
   type RequestListFiltersState,
 } from "../content/requestListFilters";
 import type { RequestTypeSummary } from "../types/requests";
-import { MyRequestsFilterSelectField, MyRequestsFiltersRow } from "../ui/mrUi";
+import {
+  MyRequestsFilterInputField,
+  MyRequestsFilterSelectField,
+  MyRequestsFiltersRow,
+} from "../ui/mrUi";
 
 type RequestListFiltersProps = {
   filters: RequestListFiltersState;
@@ -24,6 +30,22 @@ export function RequestListFilters({
   onChange,
   onClear,
 }: RequestListFiltersProps) {
+  const [searchDraft, setSearchDraft] = useState(filters.q);
+
+  useEffect(() => {
+    setSearchDraft(filters.q);
+  }, [filters.q]);
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      const next = searchDraft.trim();
+      const current = (filters.q || "").trim();
+      if (next === current) return;
+      onChange({ q: next, page: 1 });
+    }, REQUEST_LIST_SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(handle);
+  }, [searchDraft, filters.q, onChange]);
+
   const typeOptions = [
     { value: "", label: "Todos" },
     ...types.map((item) => ({ value: item.code, label: item.name })),
@@ -48,6 +70,14 @@ export function RequestListFilters({
         </ActionButton>
       }
     >
+      <MyRequestsFilterInputField
+        label="Busca"
+        type="search"
+        value={searchDraft}
+        onChange={setSearchDraft}
+        disabled={disabled}
+        placeholder="Número, código, nome…"
+      />
       <MyRequestsFilterSelectField
         label="Tipo"
         value={filters.typeCode}

@@ -109,6 +109,7 @@ const filtersKit = createDashboardFiltersKit({
 
 export const MyRequestsFiltersRow = filtersKit.FiltersRow;
 export const MyRequestsFilterSelectField = filtersKit.FilterSelectField;
+export const MyRequestsFilterInputField = filtersKit.FilterInputField;
 
 export const MyRequestsCompactPagination = createCompactPagination({
   prefix: MR_UI_PREFIX,

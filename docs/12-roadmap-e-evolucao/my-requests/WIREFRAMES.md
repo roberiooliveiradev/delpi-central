@@ -59,7 +59,7 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 | `createDashboardSelectField` | `SelectField` | Nova + wizard |
 | `createDashboardSegmentToggle` | `SegmentToggle` | Wizard (party type, frete) |
 | `createDashboardDetailFieldGrid` | `DetailFields` | Detalhe + payload NF |
-| `createDashboardFiltersKit` | `MyRequestsFiltersRow` / `FilterSelectField` | Mine + Fila |
+| `createDashboardFiltersKit` | `MyRequestsFiltersRow` / `FilterSelectField` / `FilterInputField` | Mine + Fila |
 | `createCompactPagination` | `MyRequestsCompactPagination` | Mine + Fila |
 | `createHostContainedModalShell` | `MyRequestsModal` | Detalhe return/cancel |
 | `createDashboardFileDropzone` | `MyRequestsFileDropzone` | Upload anexos no detalhe |
@@ -75,7 +75,7 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 | `createDashboardCreatableMultiSelectField` | Tags / multi-seleção futura | backlog |
 | Schema form renderer (MFE `SchemaFormPage`) | `raw-material-creation` schema-driven | **entregue E7** |
 | `AnchoredPanelPortal` / menus | Menus flutuantes se surgirem | sob demanda |
-| Busca texto (`search` API) | FilterInputField nas listas | backlog (API sem param) |
+| Busca texto (`q` API) | `FilterInputField` nas listas Mine/Fila | **entregue E11** |
 
 Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), wireframe abaixo, Ajuda se user-facing.
 
@@ -84,7 +84,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 | Tela | Rota | Componentes kit |
 |------|------|-----------------|
 | Shell | * | PageHeader, FormActions, ActionButton |
-| Minhas | `/mine` | SectionCard, FiltersKit, CompactPagination, StateBanner, Loading, Empty, DataTable, StatusBadge, ActionButton(link) |
+| Minhas | `/mine` | SectionCard, FiltersKit (incl. busca), CompactPagination, StateBanner, Loading, Empty, DataTable, StatusBadge, ActionButton(link) |
 | Fila | `/work-queue` | idem Mine |
 | Nova (genérico) | `/new` | SectionCard, SelectField×2, FormActions, ActionButton |
 | Wizard NF | `/new` → specialized | SectionCard, SegmentToggle, TextField, SelectField, FieldLabel, NativeTextArea, FormActions, ActionButton, StateBanner |
@@ -120,18 +120,19 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 ┌─ Nav: [Minhas] [Fila] [Nova†] ──────────────────────────────────────┐
 └─────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard «Lista» ───────────────────────────────────────────────┐
+│ FiltersKit: Busca · Tipo · Status · Filial · [Limpar]               │
 │ ⚠ StateBanner (se erro)                                             │
 │ │ ░░░ Loading │                                                     │
-│ ∅ Empty «Você ainda não criou…»                                     │
+│ ∅ Empty «Você ainda não criou…» / «filtros…»                        │
 │                                                                     │
 │ DataTable                                                           │
 │  Número (link) │ Tipo │ StatusBadge │ Filial                        │
 │  REQ-…042      │ NF   │ pending     │ 01                            │
+│ CompactPagination                                                   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Kit:** DataTable · StatusBadge · Empty/Loading/Banner · ActionButton link  
-**Previsto:** FiltersKit + CompactPagination (1.2)
+**Kit:** FiltersKit (FilterInputField + selects) · CompactPagination · DataTable · StatusBadge · Empty/Loading/Banner · ActionButton link
 
 ### WF-02 — Fila de trabalho (`/work-queue`)
 
@@ -141,13 +142,14 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 ┌─ Nav … ─────────────────────────────────────────────────────────────┐
 └─────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard «Pendências» ──────────────────────────────────────────┐
+│ FiltersKit (idem WF-01, incl. busca `q`)                            │
 │ DataTable (mesmas colunas WF-01)                                    │
 │ Clique no número → /requests/:id (allowed_actions no detalhe)       │
+│ CompactPagination                                                   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Kit:** idem WF-01  
-**Previsto:** Segment/chips por tipo + filtro filial (FiltersKit)
+**Kit:** idem WF-01
 
 ### WF-03 — Nova solicitação genérica (`/new`)
 
