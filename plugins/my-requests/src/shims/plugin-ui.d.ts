@@ -367,6 +367,23 @@ declare module "@delpi/plugin-ui/index" {
     ghostBtn?: string;
     withHints?: boolean;
   }): ComponentType<DashboardCompactPaginationProps>;
+
+  export type DashboardModalShellProps = {
+    open: boolean;
+    title: string;
+    description?: string;
+    footer?: ReactNode;
+    onClose: () => void;
+    children: ReactNode;
+    closeAriaLabel?: string;
+  };
+
+  export function createHostContainedModalShell(config: {
+    prefix: string;
+    portalScopeClassName: string;
+    containedLayout?: "fill" | "dialog";
+    variant?: "default" | "wide" | "page";
+  }): ComponentType<DashboardModalShellProps>;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

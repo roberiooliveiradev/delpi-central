@@ -31,7 +31,7 @@ Escolha o **tipo** e a **filial**. Para **emissão de NF**, abra o wizard specia
 
 ## Detalhe
 
-Mostra status, meta e **ações permitidas** (`allowed_actions`). Os botões refletem o WorkflowEngine — o MFE **não** decide sozinho se uma transição é válida.
+Mostra status, meta e **ações permitidas** (`allowed_actions`). Os botões refletem o WorkflowEngine — o MFE **não** decide sozinho se uma transição é válida. **Devolver** e **cancelar** pedem o motivo em um diálogo do app (não no prompt do navegador).
 
 Painéis:
 

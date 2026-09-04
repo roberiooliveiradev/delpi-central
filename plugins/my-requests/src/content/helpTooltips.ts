@@ -34,7 +34,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     section:
       "Detalhe da solicitação. Status e botões de ação vêm da API (`allowed_actions`) — o MFE não calcula a máquina de estados.",
     actions:
-      "Cada botão corresponde a uma transição liberada pelo WorkflowEngine para o seu perfil e status atual.",
+      "Cada botão corresponde a uma transição liberada pelo WorkflowEngine. Devolver e cancelar pedem o motivo em um diálogo (não use prompt do navegador).",
     invoicePayload:
       "Resumo do payload de emissão de NF (destinatário, tipo, itens) quando o type_code é invoice-issuance.",
   },

@@ -12,6 +12,7 @@ import {
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTextField,
+  createHostContainedModalShell,
   createTimeline,
   emptyStateCardBemClasses,
   formActionsBemClasses,
@@ -117,4 +118,10 @@ export const MyRequestsCompactPagination = createCompactPagination({
     next: "Próxima",
     navigationAriaLabel: "Paginação das solicitações",
   },
+});
+
+export const MyRequestsModal = createHostContainedModalShell({
+  prefix: MR_UI_PREFIX,
+  portalScopeClassName: MR_PORTAL_SCOPE,
+  containedLayout: "dialog",
 });

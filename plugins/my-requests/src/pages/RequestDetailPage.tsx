@@ -6,6 +6,10 @@ import { AppShell } from "../components/AppShell";
 import { ArtifactsPanel } from "../components/ArtifactsPanel";
 import { AttachmentsPanel } from "../components/AttachmentsPanel";
 import { CommentsPanel } from "../components/CommentsPanel";
+import {
+  ReasonConfirmModal,
+  type ReasonConfirmKind,
+} from "../components/ReasonConfirmModal";
 import { TimelinePanel } from "../components/TimelinePanel";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { InvoiceIssuancePayloadPanel } from "../features/invoice-issuance/ui/InvoiceIssuancePayloadPanel";
@@ -28,6 +32,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
   const [request, setRequest] = useState<RequestDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [reasonKind, setReasonKind] = useState<ReasonConfirmKind | null>(null);
 
   const reload = useCallback(
     async (signal?: AbortSignal) => {
@@ -45,39 +50,45 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
     return () => ac.abort();
   }, [reload]);
 
-  async function onAction(action: string) {
+  async function runTransition(
+    action: string,
+    options?: { returnReason?: string; cancelJustification?: string },
+  ) {
     if (!request) return;
     setBusy(true);
     setError(null);
     try {
-      let returnReason: string | undefined;
-      let cancelJustification: string | undefined;
-      if (action === "return") {
-        returnReason = window.prompt("Motivo da devolução") || undefined;
-        if (!returnReason) {
-          setBusy(false);
-          return;
-        }
-      }
-      if (action === "cancel") {
-        cancelJustification = window.prompt("Justificativa do cancelamento") || undefined;
-        if (!cancelJustification) {
-          setBusy(false);
-          return;
-        }
-      }
       const updated = await transitionRequest(request.id, action, {
         version: request.version,
         idempotencyKey: crypto.randomUUID(),
-        returnReason,
-        cancelJustification,
+        returnReason: options?.returnReason,
+        cancelJustification: options?.cancelJustification,
       });
       setRequest(updated);
+      setReasonKind(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha na transição");
     } finally {
       setBusy(false);
     }
+  }
+
+  async function onAction(action: string) {
+    if (!request) return;
+    if (action === "return" || action === "cancel") {
+      setReasonKind(action);
+      return;
+    }
+    await runTransition(action);
+  }
+
+  function onReasonConfirm(reason: string) {
+    if (!reasonKind) return;
+    if (reasonKind === "return") {
+      void runTransition("return", { returnReason: reason });
+      return;
+    }
+    void runTransition("cancel", { cancelJustification: reason });
   }
 
   return (
@@ -119,6 +130,17 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
       <CommentsPanel requestId={requestId} />
       <AttachmentsPanel requestId={requestId} />
       <ArtifactsPanel requestId={requestId} />
+      {reasonKind ? (
+        <ReasonConfirmModal
+          open
+          kind={reasonKind}
+          busy={busy}
+          onClose={() => {
+            if (!busy) setReasonKind(null);
+          }}
+          onConfirm={onReasonConfirm}
+        />
+      ) : null}
     </AppShell>
   );
 }
