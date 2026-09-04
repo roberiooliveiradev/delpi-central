@@ -12,6 +12,28 @@ import type {
 
 export const API_BASE = "/apps/requests-api/v1";
 
+export type RequestListQuery = {
+  signal?: AbortSignal;
+  page?: number;
+  pageSize?: number;
+  typeCode?: string;
+  status?: string;
+  branch?: string;
+};
+
+export function buildRequestListQueryParams(options?: RequestListQuery): string {
+  const params = new URLSearchParams();
+  if (options?.page) params.set("page", String(options.page));
+  if (options?.pageSize) params.set("page_size", String(options.pageSize));
+  const typeCode = options?.typeCode?.trim();
+  if (typeCode) params.set("type_code", typeCode);
+  const status = options?.status?.trim();
+  if (status) params.set("status", status);
+  const branch = options?.branch?.trim();
+  if (branch) params.set("branch", branch);
+  return params.toString();
+}
+
 export function unwrapEnvelope<T>(body: Envelope<T>): T {
   if (!body.success) {
     throw new Error(body.message || "Erro na API de Minhas Solicitações.");
@@ -33,15 +55,8 @@ export async function listRequestTypes(options?: { signal?: AbortSignal }) {
   return data.items || [];
 }
 
-export async function listMyRequests(options?: {
-  signal?: AbortSignal;
-  page?: number;
-  pageSize?: number;
-}) {
-  const params = new URLSearchParams();
-  if (options?.page) params.set("page", String(options.page));
-  if (options?.pageSize) params.set("page_size", String(options.pageSize));
-  const qs = params.toString();
+export async function listMyRequests(options?: RequestListQuery) {
+  const qs = buildRequestListQueryParams(options);
   const body = await httpGet<Envelope<RequestListResponse>>(
     `${API_BASE}/requests/mine${qs ? `?${qs}` : ""}`,
     options,
@@ -49,15 +64,8 @@ export async function listMyRequests(options?: {
   return unwrap(body);
 }
 
-export async function listWorkQueue(options?: {
-  signal?: AbortSignal;
-  page?: number;
-  pageSize?: number;
-}) {
-  const params = new URLSearchParams();
-  if (options?.page) params.set("page", String(options.page));
-  if (options?.pageSize) params.set("page_size", String(options.pageSize));
-  const qs = params.toString();
+export async function listWorkQueue(options?: RequestListQuery) {
+  const qs = buildRequestListQueryParams(options);
   const body = await httpGet<Envelope<RequestListResponse>>(
     `${API_BASE}/requests/work-queue${qs ? `?${qs}` : ""}`,
     options,

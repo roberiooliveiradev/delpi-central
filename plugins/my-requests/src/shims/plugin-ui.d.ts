@@ -337,6 +337,36 @@ declare module "@delpi/plugin-ui/index" {
     labels: { filtersAriaLabel: string };
     portalScopeClassName?: string;
   }): DashboardFiltersKit;
+
+  export type CompactPaginationLabels = {
+    info: (args: {
+      page: number;
+      totalPages: number;
+      total: number;
+      pageSize: number;
+    }) => string;
+    pageSizeLabel?: string;
+    previous: string;
+    next: string;
+    navigationAriaLabel: string;
+  };
+
+  export type DashboardCompactPaginationProps = {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages?: number;
+    onPageChange: (page: number) => void;
+    disabled?: boolean;
+  };
+
+  export function createCompactPagination(config: {
+    prefix: string;
+    labels: CompactPaginationLabels;
+    layout?: "grouped" | "flat";
+    ghostBtn?: string;
+    withHints?: boolean;
+  }): ComponentType<DashboardCompactPaginationProps>;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

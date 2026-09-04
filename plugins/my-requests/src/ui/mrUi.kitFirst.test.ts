@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { MR_UI_PREFIX, MyRequestsSectionCard, TextField } from "./mrUi";
+import { MR_UI_PREFIX, MyRequestsCompactPagination, MyRequestsFilterSelectField, MyRequestsFiltersRow, MyRequestsSectionCard, TextField } from "./mrUi";
 
 const SRC_ROOT = join(__dirname, "..");
 
@@ -21,6 +21,9 @@ describe("kit-first my-requests", () => {
     expect(MR_UI_PREFIX).toBe("my-requests");
     expect(typeof MyRequestsSectionCard).toBe("function");
     expect(typeof TextField).toBe("function");
+    expect(typeof MyRequestsFiltersRow).toBe("function");
+    expect(typeof MyRequestsFilterSelectField).toBe("function");
+    expect(typeof MyRequestsCompactPagination).toBe("function");
   });
 
   it("não reintroduz chrome primitivo local (__btn / __panel / __table)", () => {

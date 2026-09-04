@@ -19,11 +19,11 @@ Layout e componentes por tela (wireframes): [WIREFRAMES.md](./WIREFRAMES.md).
 
 ## Minhas
 
-Lista o que **você** criou. Clique no número para abrir o detalhe.
+Lista o que **você** criou. Filtre por tipo, status e filial; use a paginação. Clique no número para abrir o detalhe.
 
 ## Fila de trabalho
 
-Itens elegíveis ao seu perfil de processar/gerenciar. O escopo vem da API (não do frontend).
+Itens elegíveis ao seu perfil de processar/gerenciar. Mesmos filtros e paginação de Minhas. O escopo vem da API (não do frontend).
 
 ## Nova solicitação
 

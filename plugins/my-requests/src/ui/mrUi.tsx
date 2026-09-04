@@ -1,6 +1,8 @@
 import {
+  createCompactPagination,
   createDashboardDetailFieldGrid,
   createDashboardEmptyState,
+  createDashboardFiltersKit,
   createDashboardFormActions,
   createDashboardLoadingState,
   createDashboardPageHeader,
@@ -23,6 +25,7 @@ import {
 
 /** Prefixo BEM dual-class do MFE (pares com `.delpi-ui-*` no remote). */
 export const MR_UI_PREFIX = "my-requests";
+export const MR_PORTAL_SCOPE = "dashboard-my-requests";
 
 export const MyRequestsPageHeader = createDashboardPageHeader({
   layout: "titleRow",
@@ -93,4 +96,25 @@ export const DetailFields = createDashboardDetailFieldGrid({
   },
   valueFallback: "—",
   wrapLabels: true,
+});
+
+const filtersKit = createDashboardFiltersKit({
+  prefix: MR_UI_PREFIX,
+  labels: { filtersAriaLabel: "Filtros de solicitações" },
+  portalScopeClassName: MR_PORTAL_SCOPE,
+});
+
+export const MyRequestsFiltersRow = filtersKit.FiltersRow;
+export const MyRequestsFilterSelectField = filtersKit.FilterSelectField;
+
+export const MyRequestsCompactPagination = createCompactPagination({
+  prefix: MR_UI_PREFIX,
+  layout: "flat",
+  labels: {
+    info: ({ page, totalPages, total }) =>
+      `Página ${page} / ${totalPages} · ${total} solicitações`,
+    previous: "Anterior",
+    next: "Próxima",
+    navigationAriaLabel: "Paginação das solicitações",
+  },
 });

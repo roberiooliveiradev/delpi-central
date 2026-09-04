@@ -59,6 +59,8 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 | `createDashboardSelectField` | `SelectField` | Nova + wizard |
 | `createDashboardSegmentToggle` | `SegmentToggle` | Wizard (party type, frete) |
 | `createDashboardDetailFieldGrid` | `DetailFields` | Detalhe + payload NF |
+| `createDashboardFiltersKit` | `MyRequestsFiltersRow` / `FilterSelectField` | Mine + Fila |
+| `createCompactPagination` | `MyRequestsCompactPagination` | Mine + Fila |
 | `ActionButton` | — | Nav, ações, links de linha |
 | `DataTable` + `dataTableBemClasses` | `mrDataTableClassNames` | `/mine`, `/work-queue` |
 | `FieldLabel` | — | Comentários, observação NF |
@@ -68,13 +70,12 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 
 | Export / factory | Uso planejado | Etapa |
 |------------------|---------------|-------|
-| `createDashboardFiltersKit` | Filtros Tipo / Status / Filial / busca em Mine e Fila | pós-E6 (UX fila) |
-| `CompactPagination` | Paginação de listas | quando API page size > default |
-| `createDashboardFileDropzone` | Upload de anexos no detalhe | E3 UI upload (hoje list-only) |
-| `createHostContainedModalShell` | Confirmar return/cancel (substituir `window.prompt`) | polish |
+| `createDashboardFileDropzone` | Upload de anexos no detalhe | E10.S3 |
+| `createHostContainedModalShell` | Confirmar return/cancel (substituir `window.prompt`) | E10.S2 |
 | `createDashboardCreatableMultiSelectField` | Tags / multi-seleção futura | backlog |
 | Schema form renderer (MFE `SchemaFormPage`) | `raw-material-creation` schema-driven | **entregue E7** |
 | `AnchoredPanelPortal` / menus | Menus flutuantes se surgirem | sob demanda |
+| Busca texto (`search` API) | FilterInputField nas listas | backlog (API sem param) |
 
 Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), wireframe abaixo, Ajuda se user-facing.
 
@@ -83,7 +84,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 | Tela | Rota | Componentes kit |
 |------|------|-----------------|
 | Shell | * | PageHeader, FormActions, ActionButton |
-| Minhas | `/mine` | SectionCard, StateBanner, Loading, Empty, DataTable, StatusBadge, ActionButton(link) |
+| Minhas | `/mine` | SectionCard, FiltersKit, CompactPagination, StateBanner, Loading, Empty, DataTable, StatusBadge, ActionButton(link) |
 | Fila | `/work-queue` | idem Mine |
 | Nova (genérico) | `/new` | SectionCard, SelectField×2, FormActions, ActionButton |
 | Wizard NF | `/new` → specialized | SectionCard, SegmentToggle, TextField, SelectField, FieldLabel, NativeTextArea, FormActions, ActionButton, StateBanner |
