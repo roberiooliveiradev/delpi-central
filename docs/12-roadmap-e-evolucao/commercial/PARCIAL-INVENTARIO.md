@@ -72,7 +72,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 
 | ID | Tema | Status | Fontes |
 |----|------|--------|--------|
-| P-OFF-SLA | Etapas / SLA / área | **Backlog** | Playbook #3 |
+| P-OFF-SLA | Etapas / SLA / área | **Backlog** | Playbook #3 · API `GET /settings/sla-policies` (commercial-api) já existe; lista vazia até homologação. **Sem banner na UI** de Oportunidades — pendência só neste inventário / playbook. |
 | P-OFF-AGG | Agregações por colaborador | **Backlog** | MAPA §5.2 |
 | P-OFF-AGE | Idade + status canônicos | **Backlog** | MAPA |
 | P-OFF-FU | Follow-up dedicado OV | **Backlog** | MAPA |

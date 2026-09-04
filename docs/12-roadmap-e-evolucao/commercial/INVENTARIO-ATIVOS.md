@@ -186,7 +186,7 @@ Doc SI: `strategic-indicators-api/docs/COMMERCIAL_INDICATORS.md`.
 | Conta 360 | **parcial** | Check-up no Portal Comercial (+ PVA legado); sem timeline unificada |
 | Administração (carteiras) | **parcial** | CRUD na **commercial-api**; PVA legado até F2c |
 | Oportunidades / pipeline | **novo** | — |
-| Ofertas / propostas | **parcial** | Dois conceitos OV × proposta ativa; sem SLA de etapas |
+| Ofertas / propostas | **parcial** | Dois conceitos OV × proposta ativa; SLA de etapas em backlog (P-OFF-SLA) — contrato `GET /settings/sla-policies` sem alerta na tela de Oportunidades |
 | Forecast | **novo** | Metas via SI; forecast declarado ausente |
 | Pedidos e entregas | **parcial** | Lista aberta + OTD; sem confirmação/workflow |
 | Amostras | **novo** | — |

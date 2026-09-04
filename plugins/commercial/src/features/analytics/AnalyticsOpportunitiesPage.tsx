@@ -1,7 +1,6 @@
 import { ListChecks, RefreshCw, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { getSlaPolicies } from "../../api/slaPoliciesApi";
 import {
   CommercialActionButton,
   CommercialEmptyState,
@@ -57,7 +56,6 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
   const [view, setView] = useState<OpportunitiesView>(() => parseOpportunitiesView());
   const [items, setItems] = useState<CommercialProposal[]>([]);
   const [collab, setCollab] = useState<OpportunityCollaboratorSummaryRow[]>([]);
-  const [slaConfigured, setSlaConfigured] = useState(false);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState(() => readAnalyticsOpportunitySearch());
   const [statusFilter, setStatusFilter] = useState("");
@@ -138,22 +136,18 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     if (view !== "collaborator") return;
     const controller = new AbortController();
     setCollabLoading(true);
-    void Promise.all([
-      getOpportunityCollaboratorSummary(
-        { ...filters.apiParams },
-        controller.signal,
-      ).catch(() => null),
-      getSlaPolicies(controller.signal).catch(() => ({ items: [], configured: false })),
-    ]).then(([summary, sla]) => {
-      if (controller.signal.aborted) return;
-      if (summary) {
+    void getOpportunityCollaboratorSummary({ ...filters.apiParams }, controller.signal)
+      .then((summary) => {
+        if (controller.signal.aborted) return;
         setCollab(summary.items ?? []);
-      } else {
+      })
+      .catch(() => {
+        if (controller.signal.aborted) return;
         setCollab([]);
-      }
-      setSlaConfigured(Boolean(sla?.configured));
-      setCollabLoading(false);
-    });
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCollabLoading(false);
+      });
     return () => controller.abort();
   }, [
     view,
@@ -165,20 +159,6 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
     filters.apiParams.customer_codes,
     reloadKey,
   ]);
-
-  // SLA banner: load once for opportunity view too (lightweight)
-  useEffect(() => {
-    if (view !== "opportunity") return;
-    const controller = new AbortController();
-    void getSlaPolicies(controller.signal)
-      .then((sla) => {
-        if (!controller.signal.aborted) setSlaConfigured(Boolean(sla?.configured));
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setSlaConfigured(false);
-      });
-    return () => controller.abort();
-  }, [view, reloadKey]);
 
   return (
     <section className="cm-page-stack">
@@ -289,10 +269,6 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
           </FiltersRow>
         ) : null}
       </CommercialPageHero>
-
-      {!slaConfigured ? (
-        <CommercialEmptyState defaultMessage="SLA de etapa não configurado. Cadastre políticas em settings quando o Comercial homologar prazos." />
-      ) : null}
 
       {view === "collaborator" ? (
         <CommercialSectionCard
