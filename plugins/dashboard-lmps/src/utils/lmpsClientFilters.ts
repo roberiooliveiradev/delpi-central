@@ -1,5 +1,44 @@
 import type { LmpsDashboardSummary } from "../api/lmpApi";
 import type { LmpDashboardItem, LmpListingKind } from "../types/lmp";
+import type { DashboardGoalFields } from "./goalDisplay";
+
+const DASHBOARD_GOAL_FIELD_KEYS = [
+  "goal_label",
+  "goal_value",
+  "comparable_goal",
+  "reference_goal",
+  "target",
+  "has_goal",
+  "goal_aggregation",
+  "goal_mode",
+  "goal_period_kind",
+  "goal_period_partial",
+  "goal_scope_branch",
+  "goal_scope_label",
+  "goal_scope_hint",
+  "scope_type",
+  "performance_direction",
+  "value_unit",
+  "value_prefix",
+  "value_suffix",
+  "value_decimals",
+  "start_date",
+  "end_date",
+] as const satisfies ReadonlyArray<keyof DashboardGoalFields>;
+
+function pickDashboardGoalFields(
+  source?: DashboardGoalFields | null,
+): DashboardGoalFields {
+  if (!source) return {};
+  const picked: DashboardGoalFields = {};
+  for (const key of DASHBOARD_GOAL_FIELD_KEYS) {
+    const value = source[key];
+    if (value !== undefined) {
+      (picked as Record<string, unknown>)[key] = value;
+    }
+  }
+  return picked;
+}
 
 export type LmpsMultiFilterState = {
   branches: string[];
@@ -76,14 +115,11 @@ export function computeLmpsSummaryFromItems(
       : items.reduce((sum, item) => sum + (item.lead_time_util ?? 0), 0) / total;
 
   return {
+    ...pickDashboardGoalFields(fallback),
     total_lmps: total,
     total_items: total,
     percent_dentro_prazo: total === 0 ? 0 : (onTime / total) * 100,
     avg_lead_time: avgLead,
-    goal_label: fallback?.goal_label,
-    comparable_goal: fallback?.comparable_goal,
-    target: fallback?.target,
-    has_goal: fallback?.has_goal,
   };
 }
 

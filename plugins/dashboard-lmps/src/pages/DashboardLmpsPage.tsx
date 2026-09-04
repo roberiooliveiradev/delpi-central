@@ -42,7 +42,12 @@ import { buildLmpFallbackCharts, parseLmpDateNumber } from "../utils/lmpCharts";
 import {
   formatPeriodLabel,
 } from "../utils/dates";
-import { formatGoalSubtitle } from "../utils/goalDisplay";
+import {
+  buildKpiGoalPresentation,
+  formatDashboardMetricValue,
+  formatKpiGoalExportFragments,
+  joinKpiExportContext,
+} from "../utils/goalDisplay";
 import {
   LmpsExportButtons,
   buildDashboardExportContext,
@@ -459,15 +464,28 @@ export function DashboardLmpsPage({
       ? "Todas as unidades"
       : branches.map((branch) => formatOperationalUnitCode(branch)).join(", ");
 
+  const onTimeGoalPresentation = useMemo(
+    () =>
+      buildKpiGoalPresentation(periodLabel, displaySummary, undefined, {
+        realizedValue: displaySummary?.percent_dentro_prazo,
+        dateStart,
+        dateEnd,
+      }),
+    [dateEnd, dateStart, displaySummary, periodLabel],
+  );
+
   const kpiExportRows = useMemo(
     () => [
       {
         indicador: "% LMP Dentro do Prazo",
-        valor: `${(displaySummary?.percent_dentro_prazo ?? 0).toLocaleString("pt-BR", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}%`,
-        contexto: periodLabel,
+        valor: formatDashboardMetricValue(
+          displaySummary?.percent_dentro_prazo,
+          displaySummary,
+        ),
+        contexto: joinKpiExportContext(
+          periodLabel,
+          ...formatKpiGoalExportFragments(onTimeGoalPresentation),
+        ),
       },
       {
         indicador: "Total de Propostas",
@@ -480,7 +498,7 @@ export function DashboardLmpsPage({
         contexto: periodLabel,
       },
     ],
-    [displaySummary, periodLabel, totalPropostas],
+    [displaySummary, onTimeGoalPresentation, periodLabel, totalPropostas],
   );
 
   const dashboardExportContext = useMemo(
@@ -546,23 +564,11 @@ export function DashboardLmpsPage({
         <KpiCard
           title="% LMP Dentro do Prazo"
           titleHint={LMPS_HELP_TOOLTIPS.kpis.percentOnTime}
-          value={`${(displaySummary?.percent_dentro_prazo ?? 0).toLocaleString(
-            "pt-BR",
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          )}%`}
-          subtitle={formatGoalSubtitle(
-            periodLabel,
-            displaySummary,
-            (v) =>
-              `${v.toLocaleString("pt-BR", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}%`,
+          value={formatDashboardMetricValue(
             displaySummary?.percent_dentro_prazo,
+            displaySummary,
           )}
+          {...onTimeGoalPresentation}
           icon={<CircleGauge size={22} />}
         />
         <KpiCard
