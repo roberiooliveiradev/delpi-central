@@ -12,6 +12,7 @@ import {
   CommercialSegmentToggle,
   CommercialSelectField,
   CommercialTextField,
+  cmFiltersKit,
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/PortfolioScopeContext";
 import { ANALYTICS_CONTENT } from "../../content/analyticsContent";
@@ -51,6 +52,7 @@ type AnalyticsOpportunitiesPageProps = {
 
 export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesPageProps) {
   const { canViewProposals } = usePortfolioScope();
+  const { FiltersRow } = cmFiltersKit;
   const filters = useAnalyticsFilters();
   const [view, setView] = useState<OpportunitiesView>(() => parseOpportunitiesView());
   const [items, setItems] = useState<CommercialProposal[]>([]);
@@ -263,6 +265,29 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
           onCustomerCodes={filters.setCustomerCodes}
           onSellerIds={filters.setSellerIds}
         />
+        {view === "opportunity" ? (
+          <FiltersRow variant="extended">
+            <CommercialTextField
+              label="Busca"
+              hint={CM_HELP.analytics.searchOpportunities}
+              value={search}
+              onChange={setSearch}
+              placeholder="Número da OV, cliente…"
+            />
+            <CommercialSelectField
+              label="Status"
+              hint={CM_HELP.analytics.opportunityStatus}
+              value={statusFilter || "all"}
+              onChange={(value) => setStatusFilter(value === "all" ? "" : value)}
+              options={[
+                { value: "all", label: "Todos" },
+                { value: "open", label: "Abertas" },
+                { value: "won", label: "Ganhas" },
+                { value: "lost", label: "Perdidas" },
+              ]}
+            />
+          </FiltersRow>
+        ) : null}
       </CommercialPageHero>
 
       {!slaConfigured ? (
@@ -286,50 +311,28 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
       ) : null}
 
       {view === "opportunity" ? (
-        <>
-          <CommercialTextField
-            label="Busca"
-            hint={CM_HELP.analytics.searchOpportunities}
-            value={search}
-            onChange={setSearch}
-            placeholder="Número da OV, cliente…"
-          />
-          <CommercialSelectField
-            label="Status"
-            hint={CM_HELP.analytics.opportunityStatus}
-            value={statusFilter || "all"}
-            onChange={(value) => setStatusFilter(value === "all" ? "" : value)}
-            options={[
-              { value: "all", label: "Todos" },
-              { value: "open", label: "Abertas" },
-              { value: "won", label: "Ganhas" },
-              { value: "lost", label: "Perdidas" },
-            ]}
-          />
-
-          <CommercialSectionCard
-            title={`Oportunidades (${total.toLocaleString("pt-BR")})`}
-            hint={CM_HELP.analytics.opportunitiesList}
-          >
-            {loading ? <CommercialLoadingCard title="Carregando…" variant="panel" /> : null}
-            {error ? <CommercialEmptyState defaultMessage={error} /> : null}
-            {!loading && !error ? (
-              <CommercialProposalsTable
-                rows={items}
-                basePath={basePath}
-                detailSearch={buildAnalyticsOpportunityBackSearch()}
-                showOpenProposal={canViewProposals}
-                sortKey={sortKey}
-                sortDirection={sortDirection}
-                onSortChange={(columnKey) => {
-                  const next = nextTableSortState(sortKey, sortDirection, columnKey);
-                  setSortKey(next.sortKey);
-                  setSortDirection(next.sortDirection);
-                }}
-              />
-            ) : null}
-          </CommercialSectionCard>
-        </>
+        <CommercialSectionCard
+          title={`Oportunidades (${total.toLocaleString("pt-BR")})`}
+          hint={CM_HELP.analytics.opportunitiesList}
+        >
+          {loading ? <CommercialLoadingCard title="Carregando…" variant="panel" /> : null}
+          {error ? <CommercialEmptyState defaultMessage={error} /> : null}
+          {!loading && !error ? (
+            <CommercialProposalsTable
+              rows={items}
+              basePath={basePath}
+              detailSearch={buildAnalyticsOpportunityBackSearch()}
+              showOpenProposal={canViewProposals}
+              sortKey={sortKey}
+              sortDirection={sortDirection}
+              onSortChange={(columnKey) => {
+                const next = nextTableSortState(sortKey, sortDirection, columnKey);
+                setSortKey(next.sortKey);
+                setSortDirection(next.sortDirection);
+              }}
+            />
+          ) : null}
+        </CommercialSectionCard>
       ) : null}
     </section>
   );

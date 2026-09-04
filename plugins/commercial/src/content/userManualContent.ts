@@ -122,7 +122,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Oportunidades (OV)",
           where: "Início → Oportunidades",
-          how: "Visão: Por colaborador (resumo; clique filtra a lista) ou Por oportunidade (lista com Status/busca). Colunas/fonte/export na toolbar. Status da lista não altera o resumo.",
+          how: "Visão: Por colaborador (resumo; clique filtra a lista) ou Por oportunidade (Busca e Status no hero). Colunas/fonte/export na toolbar. Status não altera o resumo.",
         },
         {
           want: "PDF / documento de proposta",
@@ -165,7 +165,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "O Status da lista muda o resumo Por colaborador?",
-          a: "Não. O resumo usa só os filtros do hero (período, unidade, segmento, carteira…). Status e busca valem só na Visão Por oportunidade.",
+          a: "Não. O resumo usa só os filtros compartilhados do hero (período, unidade, segmento, carteira…). Busca e Status aparecem no hero só na Visão Por oportunidade e não afetam o resumo.",
         },
         {
           q: "Não vejo Minha Carteira no menu",

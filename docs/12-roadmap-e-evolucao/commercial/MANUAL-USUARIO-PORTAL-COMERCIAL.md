@@ -51,7 +51,7 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Conversar com o time sobre um pedido | **Sala de interação** ou painel na ficha | Inbox ou “abrir sala” no pedido/conta/OV |
 | Ver indicadores do mês / ano | **Visão geral** | Ajuste período e unidade (SC/ES); KPIs e gráficos |
 | Ver pontualidade (OTD) | **Início** (launcher) ou drill na Visão geral → **OTD** | Página Pontualidade |
-| Ver oportunidades (OV) no período | **Início** → Oportunidades | **Visão** no hero: Por colaborador (resumo; clique filtra) ou Por oportunidade (lista + Status/busca). Colunas/fonte/export na toolbar. Status da lista **não** altera o resumo. |
+| Ver oportunidades (OV) no período | **Início** → Oportunidades | **Visão** no hero: Por colaborador (resumo; clique filtra) ou Por oportunidade (**Busca** e **Status** no hero). Colunas/fonte/export na toolbar. Status **não** altera o resumo. |
 | Gerar / revisar PDF de proposta | **Início** → **Propostas** | Documento ADY (não é a lista de OV) |
 | Trocar de carteira (se eu tiver mais de uma) | Menu do usuário (canto) / **Escopo** | Escolha a carteira ativa |
 | Saber o que significa um termo | **Ajuda** | Catálogo de termos (definição e onde aparece) |
@@ -132,10 +132,10 @@ Não. Escopo = carteira(s). Período = filtros da **Visão geral** (ou da tela e
 Não. A lista vem das carteiras do recorte (ou de todas as carteiras ativas, se você não filtrar carteira). Vazio = todos os clientes daquele recorte.
 
 **Como troco a Visão em Oportunidades?**  
-No hero: **Visão** → Por colaborador ou Por oportunidade. A URL guarda `?view=` para compartilhar. Clique num vendedor no resumo abre a lista filtrada daquele colaborador. Use **Colunas** / fonte / export na toolbar de cada tabela.
+No hero: **Visão** → Por colaborador ou Por oportunidade. A URL guarda `?view=` para compartilhar. Clique num vendedor no resumo abre a lista filtrada daquele colaborador. Na Visão Por oportunidade, **Busca** e **Status** ficam no hero. Use **Colunas** / fonte / export na toolbar de cada tabela.
 
 **O Status da lista muda o resumo Por colaborador?**  
-Não. O resumo usa só os filtros do hero (período, unidade, segmento, carteira…). Status e busca valem só na Visão Por oportunidade.
+Não. O resumo usa só os filtros compartilhados do hero (período, unidade, segmento, carteira…). Busca e Status aparecem no hero só na Visão Por oportunidade e não afetam o resumo.
 
 ### Indicadores (Visão geral)
 
