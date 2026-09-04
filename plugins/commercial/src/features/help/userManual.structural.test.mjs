@@ -20,6 +20,8 @@ describe("user manual page", () => {
     assert.match(content, /Catálogo de termos/);
     assert.match(content, /Minha Carteira → ABC/);
     assert.match(content, /painel ABC/);
+    assert.match(content, /Administração → SLAs/);
+    assert.match(content, /Onde configuro os SLAs/);
     const catalog = readSrc("content/userManualTermCatalog.ts");
     assert.match(catalog, /export const USER_MANUAL_TERM_CATALOG/);
     assert.match(catalog, /term: \"EXW\"/);
@@ -38,6 +40,8 @@ describe("user manual page", () => {
     assert.match(links, /splitManualTextWithToolLinks/);
     assert.match(links, /Minha Carteira → ABC/);
     assert.match(links, /\?panel=abc/);
+    assert.match(links, /Administração → SLAs/);
+    assert.match(links, /administration_slas/);
   });
 
   it("App e manifesto expõem /help", () => {

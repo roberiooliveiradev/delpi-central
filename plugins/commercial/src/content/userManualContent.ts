@@ -135,6 +135,11 @@ export const USER_MANUAL_CONTENT = {
           how: "Só com permissão de administrar",
         },
         {
+          want: "Configurar prazos (SLA)",
+          where: "Administração → SLAs",
+          how: "Criar, editar ou desativar políticas de prazo (tarefa, amostra, confirmação, etapa de oferta). Soft deactivate — não apaga o histórico.",
+        },
+        {
           want: "Saber o que significa um termo",
           where: "Ajuda",
           how: "Catálogo de termos (definição e onde aparece)",
@@ -151,7 +156,7 @@ export const USER_MANUAL_CONTENT = {
         "Minha Carteira — clientes vinculados; painéis Faturamento (série + mix), ABC, Ranking e Clientes; clique no cliente abre a Conta.",
         "Minhas tarefas — fila de follow-ups.",
         "Sala de interação — conversas internas.",
-        "Administração — carteiras, equipe e grupos (gestores).",
+        "Administração — carteiras, equipe, grupos e SLAs (gestores).",
         "OTD, Oportunidades e Propostas — pelo Início ou drills; não ficam no menu de cima. Em Oportunidades, use Visão (colaborador | oportunidade) como na Minha Carteira.",
       ],
     },
@@ -178,6 +183,10 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Não vejo Administração",
           a: "Só quem tem permissão de administrar o Portal. O uso do dia a dia não precisa disso.",
+        },
+        {
+          q: "Onde configuro os SLAs?",
+          a: "Administração → SLAs. Cadastre políticas após homologar os prazos com as áreas. Desativar é soft (a política some dos novos cálculos; você pode reativar editando Ativa).",
         },
         {
           q: "O chip Escopo muda o mês do gráfico?",

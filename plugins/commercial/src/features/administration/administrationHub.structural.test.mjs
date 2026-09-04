@@ -37,8 +37,10 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos · SLAs)",
     assert.match(source, /active="panel"/);
     assert.match(source, /administration_team/);
     assert.match(source, /administration_groups/);
+    assert.match(source, /administration_slas/);
     assert.match(source, /openTeam/);
     assert.match(source, /openGroups/);
+    assert.match(source, /openSlas/);
   });
 
   it("Equipe consome team-roster + presença WS + diagrama grupos", () => {

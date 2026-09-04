@@ -8,7 +8,7 @@ export const ADMINISTRATION_CONTENT = {
     navLabel: "Painel",
     eyebrow: "Administração",
     title: "Painel",
-    description: "Carteiras, equipe e grupos operacionais.",
+    description: "Carteiras, equipe, grupos e políticas de SLA.",
     refresh: "Atualizar",
     loading: "Carregando resumo das carteiras.",
     loadError: "Não foi possível carregar o resumo da Administração.",
@@ -16,6 +16,7 @@ export const ADMINISTRATION_CONTENT = {
     openPortfolios: "Abrir Carteiras",
     openTeam: "Equipe",
     openGroups: "Grupos",
+    openSlas: "SLAs",
     /** @deprecated use openTeam */
     openMembers: "Equipe",
     newPortfolio: "Nova carteira",

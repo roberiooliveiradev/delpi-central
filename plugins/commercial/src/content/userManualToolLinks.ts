@@ -16,6 +16,7 @@ export const MANUAL_TOOL_TARGETS: readonly ManualToolTarget[] = [
   { label: "Manual do usuário", viewId: "help" },
   { label: "Minha Carteira → Faturamento", viewId: "customers", search: "?panel=billing" },
   { label: "Minha Carteira → ABC", viewId: "customers", search: "?panel=abc" },
+  { label: "Administração → SLAs", viewId: "administration_slas" },
   { label: "Minha Carteira", viewId: "customers" },
   { label: "Minhas tarefas", viewId: "my_tasks" },
   { label: "Meus pedidos", viewId: "open_orders" },

@@ -2,6 +2,7 @@ import { EmptyState, SectionCard } from "@delpi/plugin-ui/index";
 import {
   ArrowLeftRight,
   BriefcaseBusiness,
+  Clock,
   Plus,
   RefreshCw,
   UserRoundX,
@@ -215,6 +216,13 @@ export function AdministrationHomePage({ basePath }: AdministrationHomePageProps
             >
               <UsersRound size={16} strokeWidth={1.75} aria-hidden="true" />
               {copy.panel.openGroups}
+            </CommercialActionButton>
+            <CommercialActionButton
+              variant="ghost"
+              onClick={() => navigatePluginView("administration_slas", { basePath })}
+            >
+              <Clock size={16} strokeWidth={1.75} aria-hidden="true" />
+              {copy.panel.openSlas}
             </CommercialActionButton>
           </div>
         )}

@@ -31,4 +31,14 @@ describe("splitManualTextWithToolLinks", () => {
     assert.equal(parts[3]?.kind, "link");
     assert.equal(parts[3]?.value, "OTD");
   });
+
+  it("liga Administração → SLAs sem capturar só Administração", () => {
+    const parts = splitManualTextWithToolLinks(
+      "Configure em Administração → SLAs após homologar.",
+    );
+    assert.equal(parts[0]?.kind, "text");
+    assert.equal(parts[1]?.kind, "link");
+    assert.equal(parts[1]?.value, "Administração → SLAs");
+    assert.equal(parts[1]?.viewId, "administration_slas");
+  });
 });

@@ -64,6 +64,7 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Ver clientes sem vendedor / overlapping | **Administração** → Carteiras | Filtros “Sem cobertura” / overlapping |
 | Transferir vários clientes | Detalhe da carteira / bulk | Administrar |
 | Ver equipe online / grupos | **Administração** → Equipe / Grupos | Administrar |
+| Configurar prazos (SLA) | **Administração** → **SLAs** | Administrar — criar/editar/desativar (soft) políticas; lista pode estar vazia até homologar prazos |
 | Receber aviso “Pronto para faturar” | Preferências de notificação Minha Delpi | Permissão específica de faturamento |
 
 ### O que *não* fica neste Portal
@@ -88,7 +89,7 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 | Minhas tarefas | Worklist de follow-ups |
 | Meus pedidos | Bancada operacional |
 | Minha Carteira | Clientes da(s) sua(s) carteira(s) |
-| Administração | Só quem administra: carteiras, equipe, grupos |
+| Administração | Só quem administra: carteiras, equipe, grupos, SLAs |
 
 Telas extras (OTD, Oportunidades, Propostas) entram pelo **Início** ou por atalhos da Visão geral — não ocupam o menu de cima. Em **Oportunidades**, o hero tem **Visão** (Por colaborador | Por oportunidade), no mesmo padrão da Minha Carteira.
 
@@ -124,6 +125,9 @@ Sem vínculo de carteira, a lista pode vir **consolidada**. Com carteira, o Esco
 
 **Não vejo “Administração”.**  
 Só quem tem permissão de **administrar** o Portal. Uso do dia a dia não precisa disso.
+
+**Onde configuro os SLAs?**  
+**Administração** → **SLAs**. Cadastre políticas depois de homologar os prazos com as áreas. **Desativar** é soft (some dos novos cálculos; dá para reativar editando **Ativa**). Sem seed — a lista pode começar vazia.
 
 **O chip Escopo muda o mês do gráfico?**  
 Não. Escopo = carteira(s). Período = filtros da **Visão geral** (ou da tela em que você está).
@@ -247,7 +251,7 @@ Fonte na UI: **Ajuda** → **Catálogo de termos** (`plugins/commercial/src/cont
 | Conta | Visão integrada do cliente (pedidos, faturamento, OV, contatos) | Minha Carteira → cliente |
 | Minhas tarefas | Fila de follow-ups (atrasadas, hoje, depois) | Menu superior |
 | Sala de interação | Conversas internas ligadas a pedido, conta ou OV | Menu e painel na ficha |
-| Administração | Cadastro de carteiras, membros e transferências | Menu (quem administra) |
+| Administração | Cadastro de carteiras, membros, grupos e políticas de SLA | Menu (quem administra) |
 | Ajuda | Manual, FAQ e este catálogo | Menu superior |
 | SC / ES | Unidades Santa Catarina e Espírito Santo | Filtros |
 | Filtro de clientes | Um ou mais clientes do recorte (carteira ou carteiras ativas). Vazio = todos desse recorte | Visão geral · OTD · Oportunidades |
