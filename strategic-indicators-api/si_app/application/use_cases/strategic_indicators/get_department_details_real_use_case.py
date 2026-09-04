@@ -100,6 +100,7 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             },
             "units": self._build_units(
                 current_department,
+                catalog_by_indicator_id=catalog_by_indicator_id,
                 start_date=snapshot.current.period.start_date,
                 end_date=snapshot.current.period.end_date,
                 competence=snapshot.current.period.competence,
@@ -194,28 +195,20 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
         self,
         department,
         *,
+        catalog_by_indicator_id: dict | None = None,
         start_date: str | None,
         end_date: str | None,
         competence: str | None,
     ) -> list[dict]:
         unit_scores: dict[str, list[float]] = {}
         unit_ids: set[str] = set()
+        catalog = catalog_by_indicator_id or {}
 
         for indicator in department.indicators:
             if not indicator.unit_values:
                 continue
 
-            comparable_goal = self._calculator.calculate_comparable_goal(
-                goal_value=indicator.goal_value,
-                goal_periodicity=indicator.goal_periodicity,
-                goal_mode=getattr(indicator, "goal_mode", "standard"),
-                monthly_targets=getattr(indicator, "monthly_targets", None),
-                start_date=start_date,
-                end_date=end_date,
-                competence=competence,
-                value_unit=getattr(indicator, "value_unit", None),
-                indicator_id=getattr(indicator, "indicator_id", None),
-            )
+            catalog_item = catalog.get(getattr(indicator, "indicator_id", None))
 
             for unit_id, raw_value in indicator.unit_values.items():
                 unit_ids.add(unit_id)
@@ -223,6 +216,15 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
                 if raw_value is None:
                     unit_scores.setdefault(unit_id, []).append(0.0)
                     continue
+
+                comparable_goal = self._comparable_goal_for_unit(
+                    indicator=indicator,
+                    catalog_item=catalog_item,
+                    unit_id=unit_id,
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
 
                 unit_score = self._calculator.calculate_indicator_score(
                     performance_direction=getattr(
@@ -262,6 +264,45 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             )
 
         return units
+
+
+    def _comparable_goal_for_unit(
+        self,
+        *,
+        indicator,
+        catalog_item,
+        unit_id: str,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> float | None:
+        """Comparable da própria unidade (unit_goals / branch_goals), não meta primária."""
+        unit_goals = getattr(indicator, "unit_goals", None) or {}
+        if unit_id in unit_goals and unit_goals.get(unit_id) is not None:
+            return float(unit_goals[unit_id])
+
+        if catalog_item is not None and unit_id in ("01", "02"):
+            branch_comparable = self._calculator._comparable_goal_for_branch_view(
+                indicator=catalog_item,
+                branch_code=unit_id,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+            if branch_comparable is not None:
+                return float(branch_comparable)
+
+        return self._calculator.calculate_comparable_goal(
+            goal_value=indicator.goal_value,
+            goal_periodicity=indicator.goal_periodicity,
+            goal_mode=getattr(indicator, "goal_mode", "standard"),
+            monthly_targets=getattr(indicator, "monthly_targets", None),
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+            value_unit=getattr(indicator, "value_unit", None),
+            indicator_id=getattr(indicator, "indicator_id", None),
+        )
 
     def _resolve_unit_name(self, unit_id: str) -> str:
         if unit_id == "matrix":
