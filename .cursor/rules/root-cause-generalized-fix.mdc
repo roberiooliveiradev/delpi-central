@@ -9,18 +9,42 @@ alwaysApply: true
 
 **Sempre** diagnosticar a **causa raiz** antes de codar. **Sempre** entregar solução **generalista** no módulo canônico — nunca patch local que só fecha o sintoma de uma rota, tela ou conversa.
 
-Complementa: `centralized-rules-first.mdc`, `clean-code-architecture-guardrails.mdc`.
+Complementa: `evidence-driven-execution.mdc`, `centralized-rules-first.mdc`, `clean-code-architecture-guardrails.mdc`.
 
 ## Fluxo obrigatório
 
+```text
+1. Decompor o pedido e registrar o sintoma sem assumir a causa
+2. Reproduzir / inspecionar metadata ou contrato (renderPlan, toolCalls, pipeline)
+3. Seguir a cadeia real: entrada → decisão → módulo → consequência
+4. Classificar descobertas: confirmado vs inferência vs hipótese
+5. Formular causa raiz somente quando a cadeia estiver comprovada
+6. Localizar módulo canônico (tabela em centralized-rules-first.mdc)
+7. Generalizar (perfil JSON, shape OpenAPI, serviço transversal) — não if por path/entidade no chamador
+8. Alinhar API + MFE no mesmo contrato (metadata/renderPlan/suppressedKinds)
+9. Testar caso original + caso irmão + caso negativo
+10. Validar o comportamento final contra o objetivo original do usuário
 ```
-1. Reproduzir / inspecionar metadata ou contrato (renderPlan, toolCalls, pipeline)
-2. Formular causa raiz (descompasso de contrato, duplicação de camada, regra não ligada ao pipeline)
-3. Localizar módulo canônico (tabela em centralized-rules-first.mdc)
-4. Generalizar (perfil JSON, shape OpenAPI, serviço transversal) — não if por path/entidade no chamador
-5. Alinhar API + MFE no mesmo contrato (metadata/renderPlan/suppressedKinds)
-6. Teste de regressão que falha sem a regra (fixture canônico quando couber)
+
+## Regra de confirmação da causa raiz
+
+Uma causa raiz só pode ser declarada **CONFIRMADA** quando houver evidência da cadeia:
+
+```text
+entrada
+→ decisão/comportamento incorreto
+→ módulo responsável
+→ consequência observada
 ```
+
+Se algum elo não estiver demonstrado, tratar como `HIPOTESE_A_VALIDAR` e continuar a investigação.
+
+Não confundir:
+
+- correlação com causalidade;
+- primeiro `if` encontrado com módulo responsável;
+- documentação histórica com comportamento vigente;
+- teste isolado de classe com integração real no pipeline.
 
 ## O que é causa raiz vs. sintoma
 
@@ -37,7 +61,9 @@ Complementa: `centralized-rules-first.mdc`, `clean-code-architecture-guardrails.
 - Corrigir **só** a rota reportada (`if "/cost-impact"`, `stackTailPolicy` isolado sem regra transversal).
 - Patch no componente React quando o `renderPlan` ou o prune da API está errado.
 - Duplicar dedup/prune entre `Send*` e `Stream*` ou entre API e MFE.
-- Entregar sem teste que cobre **pelo menos** um caso além do bug reportado (generalização).
+- Declarar causa raiz apenas por leitura superficial de nome de arquivo, classe, método ou regex.
+- Tratar hipótese como fato para acelerar implementação.
+- Entregar sem teste do caso original, de **pelo menos** um caso irmão e de um caso negativo quando houver decisão semântica nova.
 - «Resolver» corte de popover/toolbar com `overflow: clip`, padding-fantasma ou abspos no scroll — **`plugins-overlay-positioning.mdc`**.
 
 ## O que fazer
@@ -59,7 +85,10 @@ Complementa: `centralized-rules-first.mdc`, `clean-code-architecture-guardrails.
 
 ## Checklist antes de merge
 
-- [ ] A causa raiz está documentada em 1 frase (PR ou comentário de commit)?
+- [ ] O pedido original foi decomposto e o sintoma separado da hipótese?
+- [ ] A causa raiz está documentada em 1 frase e sustentada por cadeia de evidência?
 - [ ] A correção vale para a **família** de casos, não só o exemplo do usuário?
 - [ ] API e MFE concordam no contrato (`metadata` / `renderPlan`)?
-- [ ] Teste de regressão no pacote do módulo canônico?
+- [ ] Teste cobre caso original + irmão + negativo quando aplicável?
+- [ ] O pipeline real consome a correção?
+- [ ] O objetivo perceptível do usuário foi revalidado após os testes?
