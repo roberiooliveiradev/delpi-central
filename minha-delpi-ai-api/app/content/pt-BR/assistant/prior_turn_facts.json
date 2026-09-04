@@ -24,8 +24,6 @@
     "toolsLine": "- Ferramentas em foco: {tools}."
   },
   "focusLabels": {
-    "productCode": "Produto",
-    "branch": "Filial",
     "period": "Período",
     "supplierCode": "Fornecedor",
     "customerCode": "Cliente"

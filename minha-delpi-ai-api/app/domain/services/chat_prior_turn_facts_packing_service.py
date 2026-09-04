@@ -61,7 +61,7 @@ class ChatPriorTurnFactsPackingService:
             sections.append(cls.SECTION_IDENTITY)
             lines.extend(identity_lines)
 
-        focus_lines = cls._focus_lines(snap, skip_product=bool(identity_lines))
+        focus_lines = cls._focus_lines(snap)
 
         if focus_lines:
             sections.append(cls.SECTION_FOCUS)
@@ -142,12 +142,8 @@ class ChatPriorTurnFactsPackingService:
         return [line] if line else []
 
     @classmethod
-    def _focus_lines(
-        cls,
-        snapshot: dict[str, Any],
-        *,
-        skip_product: bool,
-    ) -> list[str]:
+    def _focus_lines(cls, snapshot: dict[str, Any]) -> list[str]:
+        """Só o foco que **não** vira item de contexto (produto/filial/armazém)."""
         from app.domain.services.chat_snapshot_operational_focus import (
             ChatSnapshotOperationalFocus,
         )
@@ -161,9 +157,6 @@ class ChatPriorTurnFactsPackingService:
         lines: list[str] = []
 
         for key, label in labels.items():
-            if skip_product and key == "productCode":
-                continue
-
             value = str(focus.get(key) or "").strip()
 
             if not value:

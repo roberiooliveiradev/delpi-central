@@ -70,6 +70,10 @@ class ChatTurnPreparationMemoryContextService:
         if peer_context:
             updated_workspace["projectPeerSessionIds"] = peer_context.peer_session_ids
 
+        working_memory_snapshot = cls._attach_session_capabilities(
+            working_memory_snapshot,
+            workspace_context=updated_workspace,
+        )
         updated_workspace["workingMemory"] = working_memory_snapshot
 
         memory_prompt = ChatConversationMemoryService.format_prompt_block(
@@ -152,3 +156,28 @@ class ChatTurnPreparationMemoryContextService:
             conversation_context=conversation_context,
             pipeline_stage_additions=pipeline_stage_additions,
         )
+
+    @classmethod
+    def _attach_session_capabilities(
+        cls,
+        snapshot: dict,
+        *,
+        workspace_context: dict,
+    ) -> dict:
+        """Resumo de skills/actions ativas para o packing de fatos do turno."""
+        from app.domain.services.chat_prior_turn_facts_packing_service import (
+            ChatPriorTurnFactsPackingService,
+        )
+
+        capabilities = ChatPriorTurnFactsPackingService.build_session_capabilities(
+            skills=workspace_context.get("skills"),
+            tool_names=workspace_context.get("allowedActionIds"),
+        )
+
+        if not capabilities:
+            return snapshot
+
+        result = dict(snapshot)
+        result["sessionCapabilities"] = capabilities
+
+        return result
