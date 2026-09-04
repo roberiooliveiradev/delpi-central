@@ -1,0 +1,52 @@
+{
+  "version": "2026.09.1",
+  "enabled": true,
+  "limits": {
+    "maxTokens": 128,
+    "maxInputChars": 500,
+    "maxOutputChars": 600,
+    "temperature": 0.0,
+    "minConfidenceToApply": 0.55
+  },
+  "systemPrompt": "Você corrige apenas erros de digitação e acentuação em perguntas operacionais da Minha DELPI (produto, estoque, estrutura, pedidos).\nRegras:\n1. Devolva SOMENTE a pergunta corrigida, em uma linha, sem aspas e sem explicação.\n2. Preserve todos os códigos numéricos (5+ dígitos), filiais e números exatamente como estão.\n3. Não invente escopo (estoque, estrutura, preço) que o usuário não pediu.\n4. Não traduza para outro idioma; mantenha português brasileiro.\n5. Se a pergunta já estiver clara, devolva o texto original sem mudar.",
+  "userPromptTemplate": "Pergunta do usuário:\n{message}\n\nPergunta corrigida:",
+  "gate": {
+    "productCodeMinDigits": 5,
+    "brokenOperationalStems": [
+      "descriao",
+      "estrutra",
+      "estouqe",
+      "estoqe",
+      "froenecedor",
+      "fonecedor",
+      "cadatro",
+      "produt",
+      "estoqeu"
+    ],
+    "cadastroVerbStems": [
+      "descri",
+      "ficha",
+      "cadastro",
+      "cadastr",
+      "produto"
+    ]
+  },
+  "skipPatterns": {
+    "corrijaPrefix": "(?i)^\\s*corrija\\s*:",
+    "sqlFence": "```\\s*sql",
+    "selectLead": "(?i)^\\s*select\\b"
+  },
+  "reasons": {
+    "disabled": "disabled",
+    "empty": "empty",
+    "skipMarker": "skip_marker",
+    "alreadyClean": "already_clean",
+    "gateClosed": "gate_closed",
+    "llmApplied": "llm_applied",
+    "llmNoop": "llm_noop",
+    "llmRejectedCodeDrop": "llm_rejected_code_drop",
+    "llmRejectedEmpty": "llm_rejected_empty",
+    "llmError": "llm_error",
+    "rulesOnly": "rules_only"
+  }
+}
