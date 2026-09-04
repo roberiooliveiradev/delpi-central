@@ -636,11 +636,13 @@ export const CM_HELP = {
     opportunitiesView:
       "Alterna entre o resumo Por colaborador e a lista Por oportunidade. A escolha fica na URL (?view=) para compartilhar o recorte.",
     collaboratorSummary:
-      "Resumo global do período com os filtros do hero. Abertas/perdidas pela data de abertura; ganhas pela data de aceite (mesmo critério da lista Ganhas). Não muda com o Status da lista.",
+      "Resumo global do período com os filtros do hero. Abertas/perdidas pela data de abertura; ganhas pela data de aceite (mesmo critério da lista Ganhas). Não muda com o Status da lista. Clique no vendedor para abrir a lista Por oportunidade filtrada.",
     opportunitiesList:
       "OVs do período ordenadas no servidor (clique no cabeçalho). Clique na linha ou no número da OV para abrir o detalhe.",
     opportunitiesColumns:
       "Escolha quais colunas exibir e a ordem delas. A preferência fica neste navegador (junto com o tamanho da fonte).",
+    collaboratorColumns:
+      "Personalize as colunas do resumo por colaborador. Clique na linha para filtrar a lista Por oportunidade daquele vendedor.",
     tableRowOpensDetail:
       "Clique na linha (ou na identidade) abre o detalhe. Controles internos com destino diferente não propagam o clique.",
     ovStatus: "Etapa atual da oportunidade comercial.",

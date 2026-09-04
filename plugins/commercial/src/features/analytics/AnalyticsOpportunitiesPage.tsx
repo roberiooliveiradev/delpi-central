@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { getSlaPolicies } from "../../api/slaPoliciesApi";
 import {
   CommercialActionButton,
-  CommercialDataTable,
   CommercialEmptyState,
   CommercialLoadingCard,
   CommercialPageHero,
@@ -27,6 +26,7 @@ import { nextTableSortState, type TableSortDirection } from "../../utils/sortTab
 import { AnalyticsFilters } from "./components/AnalyticsFilters";
 import { AnalyticsDeepPagePath } from "./components/AnalyticsDeepPagePath";
 import { CommercialProposalsTable } from "./components/CommercialProposalsTable";
+import { OpportunityCollaboratorSummaryTable } from "./components/OpportunityCollaboratorSummaryTable";
 import { useAnalyticsFilters } from "./hooks/useAnalyticsFilters";
 import {
   buildAnalyticsOpportunityBackSearch,
@@ -274,35 +274,14 @@ export function AnalyticsOpportunitiesPage({ basePath }: AnalyticsOpportunitiesP
           title="Por colaborador"
           hint={CM_HELP.analytics.collaboratorSummary}
         >
-          {collabLoading ? (
-            <CommercialLoadingCard title="Carregando…" variant="panel" />
-          ) : null}
-          {!collabLoading && collab.length === 0 ? (
-            <CommercialEmptyState defaultMessage="Nenhum colaborador com oportunidades no período." />
-          ) : null}
-          {!collabLoading && collab.length > 0 ? (
-            <CommercialDataTable
-              rows={collab}
-              rowKey={(row) => row.sellerCode || "_"}
-              columns={[
-                {
-                  key: "seller",
-                  header: "Vendedor",
-                  render: (row) => row.sellerName || row.sellerCode || "—",
-                },
-                { key: "open", header: "Abertas", render: (row) => String(row.openCount) },
-                { key: "won", header: "Ganhas", render: (row) => String(row.wonCount) },
-                { key: "lost", header: "Perdidas", render: (row) => String(row.lostCount) },
-                { key: "total", header: "Total", render: (row) => String(row.totalCount) },
-                {
-                  key: "age",
-                  header: "Idade média (dias)",
-                  render: (row) =>
-                    row.ageDaysAvg == null ? "—" : row.ageDaysAvg.toLocaleString("pt-BR"),
-                },
-              ]}
-            />
-          ) : null}
+          <OpportunityCollaboratorSummaryTable
+            rows={collab}
+            loading={collabLoading}
+            onSellerClick={(sellerCode) => {
+              filters.setSellerIds([sellerCode]);
+              setView("opportunity");
+            }}
+          />
         </CommercialSectionCard>
       ) : null}
 
