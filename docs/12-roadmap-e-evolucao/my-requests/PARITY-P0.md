@@ -42,7 +42,7 @@ Dual-run: legado permanece intacto até cutover completo; E8 entregou script de 
 | Dual-run UI lado a lado em staging | Exige operadores + stack TOTVS | Homologação operacional |
 | Lookups contra TOTVS real | Suite usa `InMemoryOperationalLookupAdapter` + golden de chaves; shape HTTP live fica no smoke api-delpi | Smoke ambiente com Protheus |
 | Apply migração de dados em prod | Script + runbook E8 prontos; dry-run obrigatório antes | Operação após staging |
-| Remoção do plugin legado | Dual-run obrigatório | Soft = E12; hard Compose = E13 pós-soak |
+| Remoção do plugin legado | Soft E12 (menu + redirect); hard E13 pós-soak | Soft cutover em curso |
 
 ## Gate soft cutover (E12 — antes de prod)
 
