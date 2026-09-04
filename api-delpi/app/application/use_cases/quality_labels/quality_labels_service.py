@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 import secrets
 from typing import Any
 
@@ -187,12 +189,7 @@ class QualityLabelsService:
             item["publicUrl"] = build_public_url(row["public_token"])
         return {
             "items": items,
-            "pagination": {
-                "total": total,
-                "limit": limit,
-                "offset": offset,
-                "is_complete": offset + len(items) >= total,
-            },
+            "pagination": PaginationEnvelopeBuilder.overfetch(limit=limit, offset=offset, returned=0, is_complete=offset + len(items) >= total, total=total),
         }
 
     def get_label(self, *, label_id: str) -> dict[str, Any] | None:
@@ -257,12 +254,7 @@ class QualityLabelsService:
         return {
             "items": [self._audit_repository.to_payload(row) for row in rows],
             "summary": self._audit_repository.count_by_type(),
-            "pagination": {
-                "total": total,
-                "limit": limit,
-                "offset": offset,
-                "is_complete": offset + len(rows) >= total,
-            },
+            "pagination": PaginationEnvelopeBuilder.overfetch(limit=limit, offset=offset, returned=0, is_complete=offset + len(rows) >= total, total=total),
         }
 
     def read_qr(self, *, label_id: str) -> bytes | None:

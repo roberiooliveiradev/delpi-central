@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 import json
 from typing import Any
 
@@ -197,7 +199,12 @@ class QualityActionPlanRevisionMixin:
         if not resolved:
             return {
                 "items": [],
-                "pagination": {"page": page, "page_size": page_size, "total": 0, "total_pages": 1},
+                "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=0,
+                total_pages=1,
+            ),
             }
 
         count_row = self.fetch_one(
@@ -236,12 +243,12 @@ class QualityActionPlanRevisionMixin:
                 for row in rows
                 if row
             ],
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": max((total + page_size - 1) // page_size, 1),
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=total,
+                total_pages=max((total + page_size - 1) // page_size, 1),
+            ),
         }
 
     def get_plan_revision(self, plan_id: str, revision_number: int) -> dict[str, Any] | None:

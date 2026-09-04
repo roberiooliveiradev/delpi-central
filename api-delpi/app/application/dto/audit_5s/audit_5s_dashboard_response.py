@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
@@ -60,13 +62,14 @@ class Audit5sDashboardPagination:
             return 0
         return (self.total + self.page_size - 1) // self.page_size
 
+
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "page": self.page,
-            "page_size": self.page_size,
-            "total": self.total,
-            "total_pages": self.total_pages,
-        }
+        return PaginationEnvelopeBuilder.paged_count(
+            page=self.page,
+            page_size=self.page_size,
+            total=self.total,
+            total_pages=self.total_pages,
+        )
 
 
 @dataclass

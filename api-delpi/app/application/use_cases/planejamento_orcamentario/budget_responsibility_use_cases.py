@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from datetime import date
 from typing import Any
 
@@ -294,12 +296,13 @@ class BudgetResponsibilityUseCases:
         )
         return {
             "items": [_public_row(i) for i in items],
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "has_more": offset + len(items) < total,
-            },
+            "pagination": PaginationEnvelopeBuilder.build(
+                shape="paged_count",
+                page=page,
+                page_size=page_size,
+                total=total,
+                extra={"has_more": offset + len(items) < total},
+            ),
         }
 
     def get_responsibility(self, actor: BudgetActor, responsibility_id: str) -> dict[str, Any]:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 import json
 from datetime import datetime, timezone
 from typing import Any
@@ -281,12 +283,12 @@ class PostgresQualityActionPlanRepository(
 
         return {
             "items": [serialize_plan_row(row) for row in rows],
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": max((total + page_size - 1) // page_size, 1),
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=total,
+                total_pages=max((total + page_size - 1) // page_size, 1),
+            ),
         }
 
     def get_plan_detail(self, plan_id: str, *, include_history: bool = True) -> dict[str, Any] | None:
@@ -1244,12 +1246,12 @@ class PostgresQualityActionPlanRepository(
                 items.append(item)
         return {
             "items": items,
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": max((total + page_size - 1) // page_size, 1),
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=total,
+                total_pages=max((total + page_size - 1) // page_size, 1),
+            ),
         }
 
     def list_my_queue(
@@ -1426,12 +1428,12 @@ class PostgresQualityActionPlanRepository(
                 "overdue_actions": int((summary_row or {}).get("overdue_actions") or 0),
             },
             "items": items,
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": max((total + page_size - 1) // page_size, 1),
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=total,
+                total_pages=max((total + page_size - 1) // page_size, 1),
+            ),
         }
 
     def list_actions_due_within_days(self, *, days_ahead: int = 2) -> list[dict[str, Any]]:
@@ -1652,12 +1654,12 @@ class PostgresQualityActionPlanRepository(
 
         return {
             "items": items,
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": max((total + page_size - 1) // page_size, 1) if total else 1,
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=total,
+                total_pages=max((total + page_size - 1) // page_size, 1) if total else 1,
+            ),
         }
 
     def next_plan_code(self) -> str:
@@ -2237,12 +2239,12 @@ class PostgresQualityActionPlanRepository(
         if not resolved:
             return {
                 "items": [],
-                "pagination": {
-                    "page": page,
-                    "page_size": page_size,
-                    "total": 0,
-                    "total_pages": 1,
-                },
+                "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=0,
+                total_pages=1,
+            ),
             }
         plan_id = resolved
 
@@ -2298,12 +2300,12 @@ class PostgresQualityActionPlanRepository(
             )
         return {
             "items": items,
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": max((total + page_size - 1) // page_size, 1),
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=total,
+                total_pages=max((total + page_size - 1) // page_size, 1),
+            ),
         }
 
     def _plan_exists(self, plan_id: str) -> bool:
@@ -3112,12 +3114,12 @@ class PostgresQualityActionPlanRepository(
         )
         return {
             "items": [serialize_plan_row(row) for row in rows],
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": max((total + page_size - 1) // page_size, 1),
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=total,
+                total_pages=max((total + page_size - 1) // page_size, 1),
+            ),
         }
 
     @plugins_unit_of_work
@@ -3391,12 +3393,12 @@ class PostgresQualityActionPlanRepository(
         return {
             "items": items,
             "query": term,
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": max((total + page_size - 1) // page_size, 1) if total else 1,
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=total,
+                total_pages=max((total + page_size - 1) // page_size, 1) if total else 1,
+            ),
         }
 
     def list_evidences(self, plan_id: str, *, q: str | None = None) -> list[dict[str, Any]]:

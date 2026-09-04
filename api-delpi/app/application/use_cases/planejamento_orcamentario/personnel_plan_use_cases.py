@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from typing import Any
 
 from app.application.use_cases.planejamento_orcamentario.budget_planning_use_cases import (
@@ -567,12 +569,13 @@ class PersonnelPlanUseCases:
         )
         return {
             "items": [self._enrich_plan(i) for i in items],
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "has_more": (page * page_size) < total,
-            },
+            "pagination": PaginationEnvelopeBuilder.build(
+                shape="paged_count",
+                page=page,
+                page_size=page_size,
+                total=total,
+                extra={"has_more": (page * page_size) < total},
+            ),
         }
 
     def get_plan(self, actor: BudgetActor, plan_id: str) -> dict[str, Any]:
@@ -933,12 +936,13 @@ class PersonnelPlanUseCases:
         )
         return {
             "items": [self._enrich_plan(i) for i in items],
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "has_more": (page * page_size) < total,
-            },
+            "pagination": PaginationEnvelopeBuilder.build(
+                shape="paged_count",
+                page=page,
+                page_size=page_size,
+                total=total,
+                extra={"has_more": (page * page_size) < total},
+            ),
         }
 
     def get_review_detail(self, actor: BudgetActor, plan_id: str) -> dict[str, Any]:

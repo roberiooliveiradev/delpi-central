@@ -18,6 +18,8 @@ Fonte confirmada em sonda no TOTVS Delpi (ago/2026):
 
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 from app.domain.totvs.protheus_production_orders import (  # noqa: F401 (reexport de escopo)
     MOTHER_ORDER_KEY_PREFIX_LENGTH,
     MOTHER_ORDER_SEQUENCE,
@@ -35,9 +37,8 @@ VALID_MACHINE_LOAD_BRANCHES = frozenset({"01", "02"})
 DEFAULT_WINDOW_DAYS = 7
 MAX_WINDOW_DAYS = 90
 
-DEFAULT_PAGE_SIZE = 100
-MAX_PAGE_SIZE = 500
-
+DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_100_500", None)
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_100_500") or 0)
 SORT_SCHEDULE_ASC = "schedule_asc"
 SORT_SCHEDULE_DESC = "schedule_desc"
 SORT_DUE_DATE_ASC = "due_date_asc"

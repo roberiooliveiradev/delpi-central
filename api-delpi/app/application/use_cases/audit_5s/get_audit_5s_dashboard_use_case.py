@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 from datetime import date
 
 from app.application.dto.audit_5s.audit_5s_dashboard_response import (
@@ -28,7 +30,7 @@ VALID_STATUSES = (
 )
 VALID_GRANULARITIES = ("day", "week", "month")
 MAX_DATE_RANGE_DAYS = 366
-MAX_PAGE_SIZE = 100
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_20_100") or 100)
 
 
 class GetAudit5sDashboardUseCase:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from datetime import date
 from typing import Any
 
@@ -2943,11 +2945,11 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 "nc_by_status": [self._serialize_chart_row(row) for row in nc_by_status],
             },
             "items": [self._serialize_dashboard_item(row) for row in items],
-            "pagination": {
-                "page": request.page,
-                "page_size": request.page_size,
-                "total": total,
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=request.page,
+                page_size=request.page_size,
+                total=total,
+            ),
         }
 
     def list_nonconformities_board(
@@ -2998,12 +3000,12 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 "nc_pending": pending_count,
             },
             "items": page_items,
-            "pagination": {
-                "page": request.page,
-                "page_size": request.page_size,
-                "total": total,
-                "total_pages": max((total + request.page_size - 1) // request.page_size, 1),
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=request.page,
+                page_size=request.page_size,
+                total=total,
+                total_pages=max((total + request.page_size - 1) // request.page_size, 1),
+            ),
         }
 
     def _fetch_nc_board_registered_rows(

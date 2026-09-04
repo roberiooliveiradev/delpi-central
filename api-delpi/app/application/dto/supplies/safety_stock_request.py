@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 from dataclasses import dataclass
 
 from app.domain.services.supplies.safety_stock_classification_service import ALLOWED_STATUSES
@@ -15,10 +17,8 @@ from app.domain.totvs.protheus_branches import (
 VALID_BRANCHES = frozenset(PROTHEUS_BRANCH_CODES)
 VALID_BRANCH_SCOPES = frozenset(BRANCH_SCOPE_VALUES)
 DEFAULT_PAGE = 1
-DEFAULT_PAGE_SIZE = 50
-MAX_PAGE_SIZE = 200
-
-
+DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_50_200", None)
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_200") or 0)
 def _normalize_branch_scope_field(raw: str | None) -> str:
     try:
         return normalize_branch_scope(raw)

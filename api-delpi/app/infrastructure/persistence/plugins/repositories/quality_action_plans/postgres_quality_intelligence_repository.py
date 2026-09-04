@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from typing import Any
 
 from app.domain.services.quality_action_plans.case_similarity_embedding_service import (
@@ -507,12 +509,12 @@ class PostgresQualityIntelligenceRepository(PluginBaseRepository):
 
         return {
             "items": [self._serialize_pattern(row) for row in rows],
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": max((total + page_size - 1) // page_size, 1) if total else 1,
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=total,
+                total_pages=max((total + page_size - 1) // page_size, 1) if total else 1,
+            ),
         }
 
     def upsert_solution_pattern_from_plan(self, plan_id: str) -> dict[str, Any] | None:

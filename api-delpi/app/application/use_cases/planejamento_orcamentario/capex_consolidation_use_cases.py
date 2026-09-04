@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from datetime import date, datetime, timezone
 from typing import Any
 
@@ -422,12 +424,12 @@ class CapexConsolidationUseCases:
                     )
                 ),
                 "items": [],
-                "pagination": {
-                    "page": page,
-                    "page_size": page_size,
-                    "total": 0,
-                    "total_pages": 0,
-                },
+                "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=0,
+                total_pages=0,
+            ),
             }
 
         filters = self._normalize_filters(
@@ -471,12 +473,12 @@ class CapexConsolidationUseCases:
             },
             "filters": self._public_filters(filters),
             "items": items,
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": total_pages,
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=total,
+                total_pages=total_pages,
+            ),
         }
 
     def export_xlsx(

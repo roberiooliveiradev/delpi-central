@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -485,12 +487,13 @@ class CapexInvestmentUseCases:
         if allowed_pairs is not None and len(allowed_pairs) == 0:
             return {
                 "items": [],
-                "pagination": {
-                    "page": page,
-                    "page_size": page_size,
-                    "total": 0,
-                    "has_more": False,
-                },
+                "pagination": PaginationEnvelopeBuilder.build(
+                shape="paged_count",
+                page=page,
+                page_size=page_size,
+                total=0,
+                extra={"has_more": False},
+            ),
             }
 
         if cc_filter and not self._pair_authorized(
@@ -518,12 +521,13 @@ class CapexInvestmentUseCases:
         )
         return {
             "items": [_public_row(i) for i in items],
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "has_more": offset + len(items) < total,
-            },
+            "pagination": PaginationEnvelopeBuilder.build(
+                shape="paged_count",
+                page=page,
+                page_size=page_size,
+                total=total,
+                extra={"has_more": offset + len(items) < total},
+            ),
         }
 
     def update_investment(

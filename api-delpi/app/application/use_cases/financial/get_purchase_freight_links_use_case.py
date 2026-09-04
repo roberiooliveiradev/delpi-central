@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from typing import Any
 
 from app.application.dto.financial.purchase_freight_links_request import (
@@ -48,12 +50,7 @@ class GetPurchaseFreightLinksUseCase:
         result = {
             "branch": request.branch or "consolidated",
             "items": items,
-            "pagination": {
-                "limit": resolved_limit,
-                "offset": 0,
-                "returned": len(items),
-                "is_complete": not truncated,
-            },
+            "pagination": PaginationEnvelopeBuilder.overfetch(limit=resolved_limit, offset=0, returned=len(items), is_complete=not truncated),
             "summary": self._build_summary(items, request),
         }
 

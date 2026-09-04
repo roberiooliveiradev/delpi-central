@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 from datetime import datetime, timedelta
 from math import ceil
 
@@ -19,7 +21,7 @@ from app.domain.totvs.protheus_branches import (
     normalize_branch_scope,
 )
 
-_DEFAULT_PAGE_SIZE = 10
+_DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_10_100", None)
 _MAX_PAGE_SIZE = 100
 # Ranking operacional: só os N mais produzidos (não listagem completa).
 _TOP_LIMIT = 100

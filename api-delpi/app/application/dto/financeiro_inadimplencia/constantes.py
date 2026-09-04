@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 from dataclasses import dataclass
 
 
@@ -27,9 +29,8 @@ VALID_FAIXA_ATRASO_CODES = frozenset(FAIXA_ATRASO_BY_CODE.keys())
 VALID_TITULO_STATUS = frozenset({"all", "on_time", "late"})
 
 DEFAULT_PAGE = 1
-DEFAULT_PAGE_SIZE = 20
-MAX_PAGE_SIZE = 100
-
+DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_20_100", None)
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_20_100") or 0)
 MAX_PERIOD_MONTHS = 60
 
 DEFAULT_CLIENTES_SORT_BY = "late_amount"

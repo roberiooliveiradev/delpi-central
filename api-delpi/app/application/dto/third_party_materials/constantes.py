@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 from app.domain.totvs.protheus_third_party_materials import (
     API_SHIPMENT_STATUS_VALUES,
     DEFAULT_IGNORED_TEST_PRODUCTS,
 )
 
 DEFAULT_PAGE = 1
-DEFAULT_PAGE_SIZE = 20
-MAX_PAGE_SIZE = 100
+DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_20_100", None)
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_20_100") or 0)
 MAX_EXPORT_ROWS = 20_000
 
 EXPORT_FORMAT_CSV = "csv"

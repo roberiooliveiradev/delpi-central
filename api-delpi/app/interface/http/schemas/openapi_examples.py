@@ -1,3 +1,4 @@
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
 """Exemplos OpenAPI (códigos fictícios — prefixos PA/PI/MP)."""
 
 PRODUCT_STOCK_EXAMPLE = {
@@ -23,7 +24,12 @@ PRODUCT_STOCK_EXAMPLE = {
         "operationId": "get_product_stock",
         "entity": "product_stock",
         "shape": "paged_list",
-        "pagination": {"page": 1, "page_size": 50, "total": 1, "total_pages": 1},
+        "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=1,
+                page_size=50,
+                total=1,
+                total_pages=1,
+            ),
         "fields": {
             "available_quantity": "Saldo disponível (atual - empenhado - reservado)",
         },

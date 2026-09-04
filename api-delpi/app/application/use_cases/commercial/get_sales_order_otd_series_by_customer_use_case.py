@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from typing import Any, Optional
 
 from app.application.dto.commercial.get_sales_order_otd_series_by_customer_request import (
@@ -202,11 +204,12 @@ class GetSalesOrderOtdSeriesByCustomerUseCase:
             "granularity": cached.get("granularity"),
             "truncated": bool(cached.get("truncated")),
             "items": page_rows,
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "has_more": end_idx < total,
-            },
+            "pagination": PaginationEnvelopeBuilder.build(
+                shape="paged_count",
+                page=page,
+                page_size=page_size,
+                total=total,
+                extra={"has_more": end_idx < total},
+            ),
             "summary": summary_base,
         }

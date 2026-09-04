@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 import json
 from datetime import date, datetime
 from decimal import Decimal
@@ -180,12 +182,12 @@ class PostgresKaizenRepository(PluginBaseRepository):
 
         return {
             "items": [self._enrich_savings_validity(row) for row in rows],
-            "pagination": {
-                "page": page,
-                "page_size": page_size,
-                "total": total,
-                "total_pages": max((total + page_size - 1) // page_size, 1),
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=page,
+                page_size=page_size,
+                total=total,
+                total_pages=max((total + page_size - 1) // page_size, 1),
+            ),
         }
 
     # ------------------------------------------------------------------ indicadores (painel)

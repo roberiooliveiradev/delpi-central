@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 from datetime import date, timedelta
 from typing import Iterable
 
@@ -11,10 +13,8 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
 )
 
 DEFAULT_LOOKBACK_DAYS = 90
-MAX_PAGE_SIZE = 200
-DEFAULT_PAGE_SIZE = 50
-
-
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_200") or 0)
+DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_50_200", None)
 def default_date_range(
     *,
     date_from: str | None,

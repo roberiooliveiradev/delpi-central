@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from dataclasses import dataclass, field
 
 
@@ -44,23 +46,21 @@ class InadimplenciaPagination:
     total: int | None = None
     is_complete: bool | None = None
 
+
     def to_dict(self) -> dict:
         total = self.total if self.total is not None else self.total_items
-        is_complete = (
-            self.is_complete
-            if self.is_complete is not None
-            else (self.page >= self.total_pages if self.total_pages else True)
+        payload = PaginationEnvelopeBuilder.paged_count(
+            page=self.page,
+            page_size=self.page_size,
+            total=total,
+            total_pages=self.total_pages,
         )
-        return {
-            "page": self.page,
-            "page_size": self.page_size,
-            "total_items": self.total_items,
-            "total": total,
-            "total_pages": self.total_pages,
-            "has_next": self.has_next,
-            "has_previous": self.has_previous,
-            "is_complete": is_complete,
-        }
+        if self.is_complete is not None:
+            payload["is_complete"] = self.is_complete
+        payload["total_items"] = self.total_items
+        payload["has_next"] = self.has_next
+        payload["has_previous"] = self.has_previous
+        return payload
 
 
 @dataclass

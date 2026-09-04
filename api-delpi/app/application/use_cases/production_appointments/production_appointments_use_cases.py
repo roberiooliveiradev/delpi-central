@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 import math
 from typing import Any
 
@@ -104,13 +106,13 @@ class ListProductionAppointmentsUseCase:
                 is_complete=request.offset + len(items) >= total,
                 consolidated_across_branches=request.branch is None,
             ),
-            "pagination": {
-                "page": request.page,
-                "page_size": request.page_size,
-                "total": total,
-                "total_pages": _calc_total_pages(total, request.page_size),
-                "is_complete": request.offset + len(items) >= total,
-            },
+            "pagination": {**PaginationEnvelopeBuilder.build(
+                shape="paged_count",
+                page=request.page,
+                page_size=request.page_size,
+                total=total,
+                total_pages=_calc_total_pages(total, request.page_size),
+            ), "is_complete": request.offset + len(items) >= total},
         }
 
 
@@ -259,13 +261,13 @@ class ListProductionAppointmentsByOpUseCase:
                 is_complete=request.offset + len(items) >= total,
                 consolidated_across_branches=request.branch is None,
             ),
-            "pagination": {
-                "page": request.page,
-                "page_size": request.page_size,
-                "total": total,
-                "total_pages": _calc_total_pages(total, request.page_size),
-                "is_complete": request.offset + len(items) >= total,
-            },
+            "pagination": {**PaginationEnvelopeBuilder.build(
+                shape="paged_count",
+                page=request.page,
+                page_size=request.page_size,
+                total=total,
+                total_pages=_calc_total_pages(total, request.page_size),
+            ), "is_complete": request.offset + len(items) >= total},
         }
 
 
@@ -322,13 +324,13 @@ class ListProductionAppointmentsChildOpsUseCase:
                 is_complete=request.offset + len(items) >= total,
                 consolidated_across_branches=request.branch is None,
             ),
-            "pagination": {
-                "page": request.page,
-                "page_size": request.page_size,
-                "total": total,
-                "total_pages": _calc_total_pages(total, request.page_size),
-                "is_complete": request.offset + len(items) >= total,
-            },
+            "pagination": {**PaginationEnvelopeBuilder.build(
+                shape="paged_count",
+                page=request.page,
+                page_size=request.page_size,
+                total=total,
+                total_pages=_calc_total_pages(total, request.page_size),
+            ), "is_complete": request.offset + len(items) >= total},
         }
 
 

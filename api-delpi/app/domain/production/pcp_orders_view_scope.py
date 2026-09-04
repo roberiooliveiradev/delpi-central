@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 PCP_ORDERS_VIEW = "dbo.VW_PCP_ORDENS_PRODUCAO"
 
 VALID_PCP_ORDERS_BRANCHES = frozenset({"01", "02"})
@@ -28,9 +30,8 @@ DEFAULT_MONTHS_WINDOW = 12
 MAX_MONTHS_WINDOW = 24
 DEFAULT_RANKING_LIMIT = 10
 MAX_RANKING_LIMIT = 50
-DEFAULT_PAGE_SIZE = 50
-MAX_PAGE_SIZE = 200
-
+DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_50_200", None)
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_200") or 0)
 ITEMS_SORT_VALUES = (
     "delivery_desc",
     "delivery_asc",

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from typing import Any
 
 from app.application.dto.financial.get_rol_request import GetRolRequest
@@ -35,12 +37,7 @@ class GetRolInvoicesUseCase:
                 "taxes": round(sum(item["taxes"] for item in items), 2),
                 "rol": round(sum(item["rol"] for item in items), 2),
             },
-            "pagination": {
-                "limit": resolved_limit,
-                "offset": 0,
-                "returned": len(items),
-                "is_complete": not truncated,
-            },
+            "pagination": PaginationEnvelopeBuilder.overfetch(limit=resolved_limit, offset=0, returned=len(items), is_complete=not truncated),
         }
 
     @staticmethod

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 import calendar
 from datetime import date, datetime
 from typing import Any
@@ -17,8 +19,8 @@ from app.domain.quality.inspecoes_processo.inspecoes_processo_scope import (
 
 VALID_RESULTADOS = frozenset({"A", "R", "T"})
 DEFAULT_PAGE = 1
-DEFAULT_PAGE_SIZE = 25
-MAX_PAGE_SIZE = 50
+DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_25_50", None)
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_25_50") or 0)
 HISTORICO_LOOKBACK_MONTHS = 12
 
 

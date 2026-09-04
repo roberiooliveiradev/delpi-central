@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from typing import Any, Optional
 
 from app.application.dto.commercial.get_sales_order_otd_by_customer_request import (
@@ -52,12 +54,13 @@ class GetSalesOrderOtdByCustomerUseCase:
             "end_date": end_iso or request.end_date,
             "branch": request.branch,
             "items": page_rows,
-            "pagination": {
-                "page": request.page,
-                "page_size": request.page_size,
-                "total": total,
-                "has_more": end_idx < total,
-            },
+            "pagination": PaginationEnvelopeBuilder.build(
+                shape="paged_count",
+                page=request.page,
+                page_size=request.page_size,
+                total=total,
+                extra={"has_more": end_idx < total},
+            ),
             "summary": {
                 "items_count": len(page_rows),
                 "customers_count": total,

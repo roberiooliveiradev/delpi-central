@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 from dataclasses import dataclass
 
 from app.application.dto.financeiro_despesas_centro_custo.despesas_centro_custo_query_request import (
@@ -7,9 +9,8 @@ from app.application.dto.financeiro_despesas_centro_custo.despesas_centro_custo_
 )
 
 DEFAULT_PAGE = 1
-DEFAULT_PAGE_SIZE = 50
-MAX_PAGE_SIZE = 200
-
+DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_50_200", None)
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_200") or 0)
 DEFAULT_SORT_BY = "data_emissao"
 DEFAULT_SORT_DIR = "desc"
 

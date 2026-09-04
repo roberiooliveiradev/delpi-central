@@ -74,13 +74,14 @@ class EficienciaFabrilPagination:
             return 0
         return (self.total + self.page_size - 1) // self.page_size
 
+
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "page": self.page,
-            "page_size": self.page_size,
-            "total": self.total,
-            "total_pages": self.total_pages,
-        }
+        return PaginationEnvelopeBuilder.paged_count(
+            page=self.page,
+            page_size=self.page_size,
+            total=self.total,
+            total_pages=self.total_pages,
+        )
 
 
 @dataclass

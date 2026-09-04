@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 DESPESAS_CENTRO_CUSTO_VIEW = "dbo.vw_fin_despesas_centro_custo"
 
 # tipo_produto_lancamento na view — MP = matéria-prima (suprimentos).
@@ -11,9 +13,8 @@ MAX_FORNECEDORES_FILTROS = 500
 DEFAULT_RANKING_LIMIT = 10
 MAX_RANKING_LIMIT = 50
 
-DEFAULT_PAGE_SIZE = 50
-MAX_PAGE_SIZE = 200
-
+DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_50_200", None)
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_200") or 0)
 SEARCH_FIELDS = (
     "documento",
     "pedido",

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 from decimal import Decimal
 from typing import Any
 
@@ -15,10 +17,8 @@ from app.domain.quality.inspecoes_entrada.inspecoes_entrada_scope import (
     normalize_optional_branch,
 )
 
-DEFAULT_PAGE_SIZE = 50
-MAX_PAGE_SIZE = 200
-
-
+DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_50_200", None)
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_200") or 0)
 def _as_str(value: Any) -> str:
     if value is None:
         return ""

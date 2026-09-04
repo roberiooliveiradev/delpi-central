@@ -1,3 +1,4 @@
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
 from app.application.dto.product.exclusive_raw_material_catalog_request import (
     ExclusiveRawMaterialCatalogRequest,
 )
@@ -77,11 +78,7 @@ class ListExclusiveRawMaterialsCatalogUseCase:
                     returned_links=len(rows),
                     include_totals=include_summary,
                 ),
-                "pagination": {
-                    "limit": limit,
-                    "offset": offset,
-                    "returned": len(items),
-                },
+                "pagination": PaginationEnvelopeBuilder.overfetch(limit=limit, offset=offset, returned=len(items), is_complete=True),
             }
 
         if include_summary:
@@ -105,11 +102,7 @@ class ListExclusiveRawMaterialsCatalogUseCase:
                 returned_links=len(rows),
                 include_totals=include_summary,
             ),
-            "pagination": {
-                "limit": limit,
-                "offset": offset,
-                "returned": len(rows),
-            },
+            "pagination": PaginationEnvelopeBuilder.overfetch(limit=limit, offset=offset, returned=len(rows), is_complete=True),
         }
 
     @staticmethod

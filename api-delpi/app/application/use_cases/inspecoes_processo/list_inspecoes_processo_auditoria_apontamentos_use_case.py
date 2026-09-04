@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 from datetime import date, datetime
 from typing import Any
 
@@ -15,8 +17,8 @@ from app.domain.quality.inspecoes_processo.inspecoes_processo_scope import (
     normalize_optional_branch,
 )
 DEFAULT_PAGE = 1
-DEFAULT_PAGE_SIZE = 50
-MAX_PAGE_SIZE = 100
+DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_50_100", None)
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_100") or 0)
 ALLOWED_STATUS = frozenset(
     {"all", "nao_inspecionou", "inspecionou", "sem_cadastro"}
 )

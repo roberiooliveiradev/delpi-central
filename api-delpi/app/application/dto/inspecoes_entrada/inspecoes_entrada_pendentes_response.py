@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from dataclasses import dataclass
 
 
@@ -44,14 +46,14 @@ class InspecoesEntradaPendentesPagination:
     total: int
     total_pages: int
 
+
     def to_dict(self) -> dict:
-        return {
-            "page": self.page,
-            "page_size": self.page_size,
-            "total": self.total,
-            "total_pages": self.total_pages,
-            "is_complete": self.page >= self.total_pages if self.total_pages else True,
-        }
+        return PaginationEnvelopeBuilder.paged_count(
+            page=self.page,
+            page_size=self.page_size,
+            total=self.total,
+            total_pages=self.total_pages,
+        )
 
 
 @dataclass

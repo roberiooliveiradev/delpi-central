@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
@@ -101,10 +103,10 @@ class CustomerOutboundInvoicesPage:
         return {
             "summary": self.summary.to_dict(),
             "invoices": [invoice.to_dict() for invoice in self.invoices],
-            "pagination": {
-                "page": self.page,
-                "page_size": self.page_size,
-                "total": self.total,
-                "total_pages": self.total_pages,
-            },
+            "pagination": PaginationEnvelopeBuilder.paged_count(
+                page=self.page,
+                page_size=self.page_size,
+                total=self.total,
+                total_pages=self.total_pages,
+            ),
         }

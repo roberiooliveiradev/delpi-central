@@ -10,6 +10,8 @@ entrada em estoque. Ranking por CT permanece com todos os centros.
 
 from __future__ import annotations
 
+from app.domain.services.pagination_tier_service import PaginationTierService
+
 from app.domain.totvs.protheus_product_types import PRODUCT_TYPE_FINISHED_GOOD
 from app.domain.totvs.protheus_production_orders import MOTHER_ORDER_SEQUENCE
 
@@ -55,8 +57,8 @@ SHIPPING_PRODUCED_PRODUCT_TYPES: frozenset[str] = frozenset({"PA"})
 VALID_BRANCHES: frozenset[str] = frozenset({"01", "02"})
 
 DEFAULT_PAGE = 1
-DEFAULT_PAGE_SIZE = 50
-MAX_PAGE_SIZE = 200
+DEFAULT_PAGE_SIZE = PaginationTierService.require_int("page_50_200", None)
+MAX_PAGE_SIZE = int(PaginationTierService.max_size("page_50_200") or 0)
 MAX_BY_OP_LIMIT = 200
 DEFAULT_BY_OP_LIMIT = 50
 
