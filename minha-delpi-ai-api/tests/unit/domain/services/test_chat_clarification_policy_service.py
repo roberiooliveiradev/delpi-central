@@ -43,6 +43,18 @@ def test_turn_analysis_clarify_suppressed_for_search():
     assert decision.reason_code == "skipped_discoverable_search"
 
 
+def test_turn_analysis_clarify_kept_for_vague_message():
+    """O gate discoverable não pode desligar todo clarify da análise de turno."""
+    decision = ChatClarificationPolicyService.evaluate_turn_analysis_clarify(
+        "isso",
+        clarify_answer="Não ficou claro o que você precisa.",
+    )
+
+    assert decision.action == "clarify"
+    assert decision.reason_code == "clarify_turn_analysis"
+    assert decision.answer == "Não ficou claro o que você precisa."
+
+
 def test_discoverable_candidate_continues():
     decision = ChatClarificationPolicyService.decide(
         [

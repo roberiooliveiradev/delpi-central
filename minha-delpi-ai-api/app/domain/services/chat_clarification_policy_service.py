@@ -127,8 +127,24 @@ class ChatClarificationPolicyService:
         *,
         clarify_answer: str | None = None,
     ) -> ClarificationDecision:
-        """Gate pós-TurnAnalysis: clarify genérico não mata tools discoverable."""
-        decision = cls.decide([], message=message)
+        """Gate pós-TurnAnalysis: clarify genérico não mata tools discoverable.
+
+        A lista vazia cairia em ``continue_no_ambiguity`` e desligaria **todo**
+        clarify vindo da análise de turno; o candidato explícito mantém o gate
+        restrito ao caso discoverable (ex.: busca por descrição).
+        """
+        decision = cls.decide(
+            [
+                ClarificationCandidate(
+                    code="turn_analysis",
+                    material=True,
+                    discoverable=False,
+                    answer=clarify_answer,
+                )
+            ],
+            message=message,
+        )
+
         if decision.action == "continue":
             return decision
 
