@@ -270,3 +270,23 @@ def test_merge_last_action_params_immutable():
     merged = OperationalApiParameterBuilderService.merge_last_action_params(incoming, base)
     assert merged == {"branch": "01", "start_date": "01-08-2026"}
     assert base["branch"] == "all"
+
+
+def test_pagination_page_size_uses_canonical_standard():
+    from app.domain.services.chat_operational_pagination_defaults_service import (
+        ChatOperationalPaginationDefaultsService,
+    )
+
+    builder = OperationalApiParameterBuilderService()
+    parameters = builder.build_date_branch(
+        {
+            "parametersSchema": [
+                {"name": "page", "in": "query"},
+                {"name": "page_size", "in": "query"},
+            ],
+        },
+        "otd da filial 01",
+    )
+
+    assert parameters["page"] == 1
+    assert parameters["page_size"] == ChatOperationalPaginationDefaultsService.standard()

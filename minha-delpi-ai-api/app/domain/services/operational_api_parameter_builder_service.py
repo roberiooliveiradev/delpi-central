@@ -12,6 +12,9 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_operational_api_domain_service import (
     ChatOperationalApiDomainService,
 )
+from app.domain.services.chat_operational_pagination_defaults_service import (
+    ChatOperationalPaginationDefaultsService,
+)
 
 
 class OperationalApiParameterBuilderService:
@@ -439,7 +442,10 @@ class OperationalApiParameterBuilderService:
             return 1
 
         if source == "pagination.page_size":
-            return 50
+            return ChatOperationalPaginationDefaultsService.standard()
+
+        if source == "pagination.supplies_stock_top":
+            return ChatOperationalPaginationDefaultsService.supplies_stock_top_limit()
 
         if source == "granularity_inferred":
             return cls._infer_granularity(normalized, date_range, spec)

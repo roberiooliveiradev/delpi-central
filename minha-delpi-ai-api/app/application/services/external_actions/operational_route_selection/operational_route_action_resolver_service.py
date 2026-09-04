@@ -23,6 +23,9 @@ from app.domain.services.external_actions.external_action_response_content_servi
 from app.domain.services.operational_route_query_defaults_service import (
     OperationalRouteQueryDefaultsService,
 )
+from app.domain.services.chat_operational_pagination_defaults_service import (
+    ChatOperationalPaginationDefaultsService,
+)
 
 
 class OperationalRouteActionResolverService:
@@ -416,7 +419,7 @@ class OperationalRouteActionResolverService:
                 if lowered in {"page"}:
                     parameters[name] = 1
                 elif lowered in {"page_size", "pagesize", "limit"}:
-                    parameters[name] = 50
+                    parameters[name] = ChatOperationalPaginationDefaultsService.standard()
                 elif lowered == "status" and "/dashboard" in path:
                     parameters[name] = "Todos"
 
@@ -424,7 +427,10 @@ class OperationalRouteActionResolverService:
                 if "/dashboard" in path.lower():
                     parameters = {}
                 else:
-                    parameters = {"page": 1, "page_size": 50}
+                    parameters = {
+                        "page": 1,
+                        "page_size": ChatOperationalPaginationDefaultsService.standard(),
+                    }
 
             if merge_date_parameters:
                 return merge_date_parameters(action, message, parameters)
@@ -445,7 +451,7 @@ class OperationalRouteActionResolverService:
             parameters: dict = {
                 "supplier_part_number": part_number,
                 "page": 1,
-                "page_size": 50,
+                "page_size": ChatOperationalPaginationDefaultsService.standard(),
             }
             return self._catalog.filter_parameters_to_schema(action, parameters)
 

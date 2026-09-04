@@ -7,6 +7,9 @@ import re
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_operational_pagination_defaults_service import (
+    ChatOperationalPaginationDefaultsService,
+)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -193,7 +196,7 @@ class ChatSystemMetadataIntentService:
             elif lowered in {"page"}:
                 parameters[name] = 1
             elif lowered in {"page_size", "pagesize", "limit"}:
-                parameters[name] = 50
+                parameters[name] = ChatOperationalPaginationDefaultsService.standard()
             elif lowered == "description":
                 description = cls.extract_table_search_description(message)
 
