@@ -73,13 +73,24 @@ class ChatTurnAnalysisDispatchService:
         sub = str(result.sub_intent or "").strip().lower() or None
 
         if decision == "clarify":
+            from app.domain.services.chat_clarification_policy_service import (
+                ChatClarificationPolicyService,
+            )
+
             answer = result.direct_answer()
+            policy = ChatClarificationPolicyService.evaluate_turn_analysis_clarify(
+                message,
+                clarify_answer=answer,
+            )
+            if policy.action == "continue":
+                return None
+
             return ChatTurnAnalysisDispatch(
                 kind="clarify",
-                direct_answer=answer,
+                direct_answer=policy.answer or answer,
                 skip_rag=True,
                 skip_tools=True,
-                pipeline_stage="unclear_request",
+                pipeline_stage="turn_analysis_clarify",
             )
 
         if intent in {"identity", "assistant_identity"}:

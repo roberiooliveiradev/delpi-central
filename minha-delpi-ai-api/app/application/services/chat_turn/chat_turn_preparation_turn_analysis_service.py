@@ -266,8 +266,17 @@ class ChatTurnPreparationTurnAnalysisService:
             direct = dispatch.direct_answer
             skip_tools = bool(dispatch.skip_tools)
         elif result.decision == "clarify":
-            direct = result.direct_answer()
-            skip_tools = True
+            from app.domain.services.chat_clarification_policy_service import (
+                ChatClarificationPolicyService,
+            )
+
+            policy = ChatClarificationPolicyService.evaluate_turn_analysis_clarify(
+                message,
+                clarify_answer=result.direct_answer(),
+            )
+            if policy.action == "clarify":
+                direct = policy.answer or result.direct_answer()
+                skip_tools = True
 
         return ChatTurnPreparationTurnAnalysisOutcome(
             result=result,

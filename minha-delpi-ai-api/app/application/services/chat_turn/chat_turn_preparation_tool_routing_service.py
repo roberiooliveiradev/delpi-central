@@ -170,6 +170,17 @@ class ChatTurnPreparationToolRoutingService:
                     memory_snapshot=working_memory_snapshot,
                 )
             )
+            if missing_product_code_answer:
+                from app.domain.services.chat_clarification_policy_service import (
+                    ChatClarificationPolicyService,
+                )
+
+                clarification = ChatClarificationPolicyService.evaluate_missing_product_code(
+                    message,
+                    answer=missing_product_code_answer,
+                )
+                if clarification.action == "continue":
+                    missing_product_code_answer = None
 
         ambiguous_period_answer = (
             ChatOperationalParameterService.resolve_ambiguous_period_answer(

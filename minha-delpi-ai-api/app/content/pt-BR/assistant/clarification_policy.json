@@ -1,0 +1,22 @@
+{
+  "discoverableCodes": [
+    "product_search",
+    "inferable_filter",
+    "prior_api_fact",
+    "compliance_follow_up"
+  ],
+  "materialMissingCodes": [
+    "missing_product_code",
+    "missing_period",
+    "missing_date",
+    "ambiguous_artifact",
+    "unclear_request"
+  ],
+  "reasonCodes": {
+    "skipped_discoverable_search": "skipped_discoverable_search",
+    "skipped_discoverable": "skipped_discoverable",
+    "clarify_material_missing": "clarify_material_missing",
+    "clarify_turn_analysis": "clarify_turn_analysis",
+    "continue_no_ambiguity": "continue_no_ambiguity"
+  }
+}
