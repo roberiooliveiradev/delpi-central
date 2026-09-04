@@ -261,13 +261,14 @@ export function AdministrationSlasPage({ basePath }: AdministrationSlasPageProps
             </CommercialActionButton>
           }
         >
-          <div className="cm-administration-slas__form">
+          <div className="cm-administration-slas__form cm-form-grid">
             <CommercialTextField
               label={copy.fieldCode}
               hint={CM_HELP.administration.slasCode}
               value={form.code}
               onChange={(value) => setForm((prev) => ({ ...prev, code: value }))}
               disabled={saving}
+              fullWidth
             />
             <CommercialTextField
               label={copy.fieldName}
@@ -275,6 +276,7 @@ export function AdministrationSlasPage({ basePath }: AdministrationSlasPageProps
               value={form.name}
               onChange={(value) => setForm((prev) => ({ ...prev, name: value }))}
               disabled={saving}
+              fullWidth
             />
             <CommercialSelectField
               label={copy.fieldAppliesTo}
@@ -294,6 +296,7 @@ export function AdministrationSlasPage({ basePath }: AdministrationSlasPageProps
               value={form.durationHours}
               onChange={(value) => setForm((prev) => ({ ...prev, durationHours: value }))}
               disabled={saving}
+              fullWidth
             />
             <CommercialTextField
               label={copy.fieldCalendarCode}
@@ -301,6 +304,7 @@ export function AdministrationSlasPage({ basePath }: AdministrationSlasPageProps
               value={form.calendarCode}
               onChange={(value) => setForm((prev) => ({ ...prev, calendarCode: value }))}
               disabled={saving}
+              fullWidth
             />
             <CommercialSelectField
               label={copy.fieldActive}
@@ -315,9 +319,11 @@ export function AdministrationSlasPage({ basePath }: AdministrationSlasPageProps
               ]}
               disabled={saving}
             />
-            <CommercialActionButton onClick={() => void submitForm()} disabled={saving}>
-              {saving ? copy.saving : editingId ? copy.saveEdit : copy.saveCreate}
-            </CommercialActionButton>
+            <div className="cm-form-grid__full cm-form-grid__actions cm-administration-slas__form-actions">
+              <CommercialActionButton onClick={() => void submitForm()} disabled={saving}>
+                {saving ? copy.saving : editingId ? copy.saveEdit : copy.saveCreate}
+              </CommercialActionButton>
+            </div>
           </div>
         </CommercialSectionCard>
       ) : null}

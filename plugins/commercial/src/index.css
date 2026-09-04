@@ -1225,11 +1225,20 @@
 }
 
 .dashboard-commercial .cm-administration-slas__form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
   width: 100%;
-  max-width: 32rem;
+  min-width: 0;
+  /* 1 col mobile → 2 cols tablet → 3 cols desktop largo */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+.dashboard-commercial .cm-administration-slas__form > * {
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-administration-slas__form-actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .dashboard-commercial .cm-administration-slas__row-actions {
