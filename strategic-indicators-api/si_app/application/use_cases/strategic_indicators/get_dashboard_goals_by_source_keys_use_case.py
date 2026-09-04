@@ -260,40 +260,39 @@ class GetDashboardGoalsBySourceKeysUseCase:
         template = branch_goals[0]
         goal_periodicity = (template.get("goal_periodicity") or "monthly").strip() or "monthly"
         goal_mode = (template.get("goal_mode") or "standard").strip() or "standard"
-        # Curva mensal: agrega comparable por filial (não a curva cadastral).
+        # Curva mensal: agrega a meta de referência (Meta mês) por filial.
+        # Nunca embutir o comparable já rateado como goal_value + mode standard —
+        # o serialize recalcularia a fração MTD e aplicaria proporção em dobro.
         if goal_mode.lower() == "monthly_curve":
-            comparable_parts: list[float] = []
+            reference_parts: list[float] = []
             for goal in branch_goals:
-                part = self._calculator.calculate_comparable_goal(
-                    goal_value=float(goal["goal_value"]),
+                reference = self._calculator.resolve_reference_goal(
+                    goal_value=float(goal["goal_value"])
+                    if goal.get("goal_value") is not None
+                    else None,
                     goal_periodicity=(goal.get("goal_periodicity") or "monthly"),
-                    goal_mode=(goal.get("goal_mode") or "standard"),
+                    goal_mode=(goal.get("goal_mode") or "monthly_curve"),
                     monthly_targets=goal.get("monthly_targets") or [],
                     start_date=period.start_date,
                     end_date=period.end_date,
                     competence=period.competence,
-                    value_unit=value_unit,
-                    indicator_id=indicator.get("indicator_id"),
                 )
-                if part is not None:
-                    comparable_parts.append(float(part))
-            if len(comparable_parts) < 2:
+                if reference is not None:
+                    reference_parts.append(float(reference))
+            if len(reference_parts) < 2:
                 return None
-            aggregated_comparable = aggregate_branch_goal_values(
-                comparable_parts,
+            aggregated_reference = aggregate_branch_goal_values(
+                reference_parts,
                 branch_value_aggregation=branch_value_aggregation,
                 value_unit=value_unit,
             )
-            if aggregated_comparable is None:
+            if aggregated_reference is None:
                 return None
-            # goal_value = soma/média das metas cadastradas; comparable já consolidado
-            # será recalculado em _serialize se modo standard — para curve, forçamos
-            # label a partir do template e deixamos serialize recalcular a partir do
-            # goal_value agregado (aproximação). Preferimos embutir comparable via
-            # monthly_targets vazios + standard após rollup do comparable.
+            # standard + goal_value = Meta mês consolidada → serialize aplica
+            # comparable (META PARCIAL) uma única vez no período do filtro.
             return {
                 "goal_label": template.get("goal_label"),
-                "goal_value": aggregated_comparable,
+                "goal_value": aggregated_reference,
                 "goal_periodicity": "monthly",
                 "goal_mode": "standard",
                 "goal_scope_branch": "",
