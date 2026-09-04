@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-09-04T17:30:00+00:00",
+  "phase": "E10.S1",
+  "baselineRef": "docs/testing/evidence/chat-intelligence-baseline.json",
+  "abReportRef": "docs/testing/evidence/chat-intelligence-ab-report.json",
+  "symptomsRef": "docs/testing/evidence/chat-intelligence-symptoms-e0s2.json",
+  "delta": {
+    "baselinePass": 6,
+    "baselineFail": 0,
+    "notes": [
+      "E0 baseline: 4 PASS / 2 FAIL (search clarify + normas).",
+      "Após E1–E2: harness PASS=6 FAIL=0 (search sem missing-code; product_search subIntent).",
+      "E3–E6: understanding/plan/discovery/orchestrator com testes unitários + smokes A–F offline PASS."
+    ]
+  },
+  "smokes": {
+    "A": "PASS",
+    "B": "PASS",
+    "C": "PASS",
+    "D": "PASS",
+    "E": "PASS",
+    "F": "PASS"
+  },
+  "clarifyRate": {
+    "unexpectedMissingCodeOnDiscoverableSearch": 0
+  }
+}
