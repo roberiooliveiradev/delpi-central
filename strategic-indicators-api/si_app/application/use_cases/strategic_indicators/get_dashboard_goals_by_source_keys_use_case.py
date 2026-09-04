@@ -8,6 +8,9 @@ from si_app.application.services.strategic_indicators.period_resolution import (
 from si_app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )
+from si_app.domain.services.consolidated_branch_goal_rollup_service import (
+    ConsolidatedBranchGoalRollupService,
+)
 from si_app.domain.ports.strategic_indicators.indicator_goals_repository_port import (
     StrategicIndicatorsIndicatorGoalsRepositoryPort,
 )
@@ -20,15 +23,9 @@ from si_app.application.services.strategic_indicators.commercial_dashboard_sourc
     legacy_rol_branch_override,
 )
 from si_app.shared.goal_scope import (
-    BRANCH_UNIT_CODES,
     format_goal_scope_label,
     normalize_goal_scope_branch,
     resolve_goal_scope_hint_for_view,
-)
-from si_app.shared.consolidated_value_aggregation import (
-    aggregate_branch_goal_values,
-    is_source_consolidated_mode,
-    normalize_branch_value_aggregation,
 )
 
 logger = logging.getLogger(__name__)
@@ -48,6 +45,9 @@ class GetDashboardGoalsBySourceKeysUseCase:
         )
         self._goals_repository = goals_repository
         self._calculator = calculator or StrategicIndicatorsCalculator()
+        self._branch_goal_rollup = ConsolidatedBranchGoalRollupService(
+            reference_resolver=self._calculator,
+        )
 
     def execute(
         self,
@@ -218,103 +218,13 @@ class GetDashboardGoalsBySourceKeysUseCase:
         if item_view_branch:
             return None
 
-        return self._aggregate_branch_goals_for_consolidated_view(
+        return self._branch_goal_rollup.rollup_branch_goals(
             indicator=indicator,
-            indicator_id=indicator_id,
-            branch_goals_by_indicator=branch_goals_by_indicator,
-            period=period,
+            branch_goals_by_code=branch_goals_by_indicator.get(indicator_id) or {},
+            start_date=period.start_date,
+            end_date=period.end_date,
+            competence=period.competence,
         )
-
-    def _aggregate_branch_goals_for_consolidated_view(
-        self,
-        *,
-        indicator: dict,
-        indicator_id: str,
-        branch_goals_by_indicator: dict[str, dict[str, dict]],
-        period,
-    ) -> dict | None:
-        """Rollup 01+02 via branch_value_aggregation (mesmo critério do painel SI)."""
-        branch_value_aggregation = indicator.get("branch_value_aggregation")
-        if is_source_consolidated_mode(branch_value_aggregation):
-            return None
-
-        by_branch = branch_goals_by_indicator.get(indicator_id) or {}
-        branch_goals = [
-            by_branch[code]
-            for code in BRANCH_UNIT_CODES
-            if by_branch.get(code) and by_branch[code].get("goal_value") is not None
-        ]
-        if len(branch_goals) < 2:
-            return None
-
-        value_unit = indicator.get("value_unit")
-        raw_values = [float(goal["goal_value"]) for goal in branch_goals]
-        aggregated_value = aggregate_branch_goal_values(
-            raw_values,
-            branch_value_aggregation=branch_value_aggregation,
-            value_unit=value_unit,
-        )
-        if aggregated_value is None:
-            return None
-
-        template = branch_goals[0]
-        goal_periodicity = (template.get("goal_periodicity") or "monthly").strip() or "monthly"
-        goal_mode = (template.get("goal_mode") or "standard").strip() or "standard"
-        # Curva mensal: agrega a meta de referência (Meta mês) por filial.
-        # Nunca embutir o comparable já rateado como goal_value + mode standard —
-        # o serialize recalcularia a fração MTD e aplicaria proporção em dobro.
-        if goal_mode.lower() == "monthly_curve":
-            reference_parts: list[float] = []
-            for goal in branch_goals:
-                reference = self._calculator.resolve_reference_goal(
-                    goal_value=float(goal["goal_value"])
-                    if goal.get("goal_value") is not None
-                    else None,
-                    goal_periodicity=(goal.get("goal_periodicity") or "monthly"),
-                    goal_mode=(goal.get("goal_mode") or "monthly_curve"),
-                    monthly_targets=goal.get("monthly_targets") or [],
-                    start_date=period.start_date,
-                    end_date=period.end_date,
-                    competence=period.competence,
-                )
-                if reference is not None:
-                    reference_parts.append(float(reference))
-            if len(reference_parts) < 2:
-                return None
-            aggregated_reference = aggregate_branch_goal_values(
-                reference_parts,
-                branch_value_aggregation=branch_value_aggregation,
-                value_unit=value_unit,
-            )
-            if aggregated_reference is None:
-                return None
-            # standard + goal_value = Meta mês consolidada → serialize aplica
-            # comparable (META PARCIAL) uma única vez no período do filtro.
-            return {
-                "goal_label": template.get("goal_label"),
-                "goal_value": aggregated_reference,
-                "goal_periodicity": "monthly",
-                "goal_mode": "standard",
-                "goal_scope_branch": "",
-                "monthly_targets": [],
-                "aggregated_from_branches": True,
-            }
-
-        aggregation_mode = normalize_branch_value_aggregation(branch_value_aggregation)
-        label = template.get("goal_label")
-        if not label and aggregated_value is not None:
-            label = str(aggregated_value)
-
-        return {
-            "goal_label": label,
-            "goal_value": aggregated_value,
-            "goal_periodicity": goal_periodicity,
-            "goal_mode": goal_mode,
-            "goal_scope_branch": "",
-            "monthly_targets": template.get("monthly_targets") or [],
-            "aggregated_from_branches": True,
-            "branch_value_aggregation": aggregation_mode,
-        }
 
     def _serialize_item(
         self,
