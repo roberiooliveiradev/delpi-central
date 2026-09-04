@@ -369,6 +369,17 @@ export function resolveHubSections(
     .filter((section) => section.routes.length > 0);
 }
 
+/** Pesos do ranking da busca de caminhos (label > keywords > description > title > viewId). */
+const SEARCH_FIELD_WEIGHTS = {
+  label: 100,
+  keywords: 80,
+  description: 50,
+  title: 40,
+  viewId: 20,
+} as const;
+
+const SEARCH_PREFIX_BOOST = 10;
+
 function normalizeSearchText(value: string): string {
   return value
     .normalize("NFD")
@@ -377,17 +388,66 @@ function normalizeSearchText(value: string): string {
     .trim();
 }
 
-function routeMatches(route: HubRouteDef, sectionTitle: string, query: string): boolean {
-  if (!query) return true;
-  const haystack = [
-    sectionTitle,
-    route.label,
-    ...(route.keywords ?? []),
-    route.viewId,
-  ]
-    .map(normalizeSearchText)
-    .join(" ");
-  return haystack.includes(query);
+/** Tokens da query; ignora partículas de 1 caractere (ex.: «à» → «a»). */
+export function tokenizeQuery(query: string): string[] {
+  const normalized = normalizeSearchText(query);
+  if (!normalized) return [];
+  return normalized.split(/[^a-z0-9]+/u).filter((token) => token.length >= 2);
+}
+
+type RouteSearchField = {
+  weight: number;
+  text: string;
+};
+
+function buildRouteSearchIndex(
+  section: HubSectionDef,
+  route: HubRouteDef,
+): RouteSearchField[] {
+  return [
+    { weight: SEARCH_FIELD_WEIGHTS.label, text: normalizeSearchText(route.label) },
+    {
+      weight: SEARCH_FIELD_WEIGHTS.keywords,
+      text: normalizeSearchText((route.keywords ?? []).join(" ")),
+    },
+    {
+      weight: SEARCH_FIELD_WEIGHTS.description,
+      text: normalizeSearchText(section.description ?? ""),
+    },
+    { weight: SEARCH_FIELD_WEIGHTS.title, text: normalizeSearchText(section.title) },
+    { weight: SEARCH_FIELD_WEIGHTS.viewId, text: normalizeSearchText(route.viewId) },
+  ].filter((field) => field.text.length > 0);
+}
+
+function tokenFieldScore(field: RouteSearchField, token: string): number {
+  if (!field.text.includes(token)) return 0;
+  const words = field.text.split(/[^a-z0-9]+/u).filter(Boolean);
+  const isPrefix = words.some((word) => word.startsWith(token));
+  return field.weight + (isPrefix ? SEARCH_PREFIX_BOOST : 0);
+}
+
+/**
+ * Score de relevância da rota para a query.
+ * 0 = sem match. Todos os tokens (≥2 chars) precisam casar em algum campo (AND).
+ */
+export function scoreRouteMatch(
+  section: HubSectionDef,
+  route: HubRouteDef,
+  query: string,
+): number {
+  const tokens = tokenizeQuery(query);
+  if (tokens.length === 0) return 0;
+  const fields = buildRouteSearchIndex(section, route);
+  let total = 0;
+  for (const token of tokens) {
+    let best = 0;
+    for (const field of fields) {
+      best = Math.max(best, tokenFieldScore(field, token));
+    }
+    if (best === 0) return 0;
+    total += best;
+  }
+  return total;
 }
 
 export function filterRouteCatalog(
@@ -399,7 +459,9 @@ export function filterRouteCatalog(
   return sections
     .map((section) => ({
       ...section,
-      routes: section.routes.filter((route) => routeMatches(route, section.title, q)),
+      routes: section.routes.filter(
+        (route) => scoreRouteMatch(section, route, q) > 0,
+      ),
     }))
     .filter((section) => section.routes.length > 0);
 }
@@ -419,21 +481,25 @@ export function collectSearchHits(
 ): HubSearchHit[] {
   const q = normalizeSearchText(query);
   if (!q) return [];
-  const hits: HubSearchHit[] = [];
+  const ranked: Array<HubSearchHit & { score: number; order: number }> = [];
+  let order = 0;
   for (const section of sections) {
     for (const route of section.routes) {
-      if (!routeMatches(route, section.title, q)) continue;
-      hits.push({
+      const score = scoreRouteMatch(section, route, q);
+      if (score <= 0) continue;
+      ranked.push({
         id: route.id,
         label: route.label,
         groupLabel: section.title,
         viewId: route.viewId,
         search: route.search,
+        score,
+        order: order++,
       });
-      if (hits.length >= limit) return hits;
     }
   }
-  return hits;
+  ranked.sort((a, b) => b.score - a.score || a.order - b.order);
+  return ranked.slice(0, limit).map(({ score: _score, order: _order, ...hit }) => hit);
 }
 
 export function findHubRouteById(
