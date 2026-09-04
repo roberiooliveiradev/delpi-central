@@ -36,7 +36,7 @@ def test_clamp_requested_respects_cap():
 
 def test_special_defaults_loaded():
     assert ChatOperationalPaginationDefaultsService.product_search_default() == 5
-    assert ChatOperationalPaginationDefaultsService.product_search_message_cap() == 20
+    assert ChatOperationalPaginationDefaultsService.product_search_message_cap() == 50
     assert ChatOperationalPaginationDefaultsService.exclusive_catalog_limit() == 10
     assert ChatOperationalPaginationDefaultsService.supplies_stock_top_limit() == 10
     assert ChatOperationalPaginationDefaultsService.refinement_context_fallback() == 25

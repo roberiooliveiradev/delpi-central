@@ -54,6 +54,7 @@
       "assistant_identity",
       "meta_direct_answer"
     ],
+    "skipSubIntents": ["product_search"],
     "openOnReasons": ["no_clear_intent"],
     "openOnDecisions": ["llm_fallback"],
     "openOnLowConfidenceBelow": 0.7,

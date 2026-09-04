@@ -9,7 +9,7 @@
   },
   "productSearch": {
     "default": 5,
-    "messageCap": 20
+    "messageCap": 50
   },
   "exclusiveCatalogLimit": 10,
   "suppliesStockTopLimit": 10,

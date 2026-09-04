@@ -184,7 +184,7 @@ class ExternalActionProductSearchRouteSelectionService:
         cap = ChatOperationalPaginationDefaultsService.product_search_message_cap()
         default = ChatOperationalPaginationDefaultsService.product_search_default()
         match = re.search(
-            r"\b(\d{1,2})\s+(?:exemplos?|produtos?|itens?|resultados?)",
+            r"\btop\s+(\d{1,3})\b",
             value,
         )
 
@@ -192,7 +192,15 @@ class ExternalActionProductSearchRouteSelectionService:
             return min(int(match.group(1)), cap)
 
         match = re.search(
-            r"(?:exemplos?|produtos?|itens?|resultados?)\s+(\d{1,2})\b",
+            r"\b(\d{1,3})\s+(?:exemplos?|produtos?|itens?|resultados?)",
+            value,
+        )
+
+        if match:
+            return min(int(match.group(1)), cap)
+
+        match = re.search(
+            r"(?:exemplos?|produtos?|itens?|resultados?)\s+(\d{1,3})\b",
             value,
         )
 

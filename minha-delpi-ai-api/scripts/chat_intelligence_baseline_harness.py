@@ -80,6 +80,16 @@ def _eval_case(case: dict) -> dict:
         errors.append("unexpected missingProductCode clarify")
     if expected.get("requireProductSearchLook") and not looks_search:
         errors.append("expected product search look")
+    if "intentSubIntent" in expected:
+        if str(expected["intentSubIntent"]) != sub:
+            errors.append(
+                f"intentSubIntent mismatch expected={expected['intentSubIntent']!r} actual={sub!r}"
+            )
+    if "intentDecision" in expected:
+        if str(expected["intentDecision"]) != decision:
+            errors.append(
+                f"intentDecision mismatch expected={expected['intentDecision']!r} actual={decision!r}"
+            )
 
     return {
         "caseId": case.get("id"),

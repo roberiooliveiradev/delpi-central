@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T16:53:14.130278+00:00",
+  "generatedAt": "2026-09-04T16:55:32.805416+00:00",
   "harness": "chat_intelligence_baseline_harness",
   "fixture": "tests/fixtures/intelligence_baseline/routing_cases.json",
   "summary": {
@@ -22,14 +22,16 @@
         "requireProductSearchLook": true,
         "looksLikeProductSearch": true,
         "forbidClarifyViaMissingCode": true,
-        "missingProductCode": false
+        "missingProductCode": false,
+        "intentSubIntent": "product_search",
+        "intentDecision": "operational_action"
       },
       "actual": {
         "looksLikeProductSearch": true,
         "missingProductCode": false,
         "missingProductCodePreview": null,
-        "intentDecision": "llm_fallback",
-        "intentSubIntent": ""
+        "intentDecision": "operational_action",
+        "intentSubIntent": "product_search"
       },
       "status": "PASS",
       "errors": []
@@ -42,14 +44,16 @@
         "requireProductSearchLook": true,
         "looksLikeProductSearch": true,
         "forbidClarifyViaMissingCode": true,
-        "missingProductCode": false
+        "missingProductCode": false,
+        "intentSubIntent": "product_search",
+        "intentDecision": "operational_action"
       },
       "actual": {
         "looksLikeProductSearch": true,
         "missingProductCode": false,
         "missingProductCodePreview": null,
         "intentDecision": "operational_action",
-        "intentSubIntent": ""
+        "intentSubIntent": "product_search"
       },
       "status": "PASS",
       "errors": []
@@ -68,7 +72,7 @@
         "missingProductCode": false,
         "missingProductCodePreview": null,
         "intentDecision": "operational_action",
-        "intentSubIntent": "product_lookup"
+        "intentSubIntent": "product_search"
       },
       "status": "PASS",
       "errors": []

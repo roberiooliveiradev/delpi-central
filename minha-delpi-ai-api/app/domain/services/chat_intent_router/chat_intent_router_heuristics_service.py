@@ -219,6 +219,12 @@ class ChatIntentRouterHeuristicsService:
         from app.domain.services.chat_product_query_intent_service import (
             ChatProductQueryIntentService,
         )
+        from app.domain.services.chat_product_search_intent_service import (
+            ChatProductSearchIntentService,
+        )
+
+        if ChatProductSearchIntentService.looks_like_product_search(message):
+            return True
 
         return ChatProductQueryIntentService.has_actionable_product_route_intent(message)
 

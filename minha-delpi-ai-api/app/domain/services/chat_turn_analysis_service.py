@@ -56,6 +56,7 @@ class ChatTurnAnalysisService:
         *,
         response_mode: str | None,
         heuristic_intent: str | None = None,
+        heuristic_sub_intent: str | None = None,
         heuristic_decision: str | None = None,
         heuristic_reason: str | None = None,
         heuristic_confidence: float | None = None,
@@ -98,6 +99,15 @@ class ChatTurnAnalysisService:
             if str(item).strip()
         }
         if intent in skip_intents:
+            return False
+
+        skip_sub_intents = {
+            str(item).strip()
+            for item in (ChatTurnAnalysisContentService.gate_setting("skipSubIntents") or [])
+            if str(item).strip()
+        }
+        sub_intent = str(heuristic_sub_intent or "").strip()
+        if sub_intent and sub_intent in skip_sub_intents:
             return False
 
         reason = str(heuristic_reason or "").strip()

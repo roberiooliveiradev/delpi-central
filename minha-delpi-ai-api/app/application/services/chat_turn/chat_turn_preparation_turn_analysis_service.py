@@ -112,6 +112,7 @@ class ChatTurnPreparationTurnAnalysisService:
         if not ChatTurnAnalysisService.should_analyze(
             response_mode=response_mode,
             heuristic_intent=route.intent,
+            heuristic_sub_intent=getattr(route, "sub_intent", None),
             heuristic_decision=route.decision,
             heuristic_reason=route.reason,
             heuristic_confidence=route.confidence,

@@ -1,5 +1,6 @@
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_intent_router_service import ChatIntentRouterService
+from app.domain.services.chat_turn_analysis_service import ChatTurnAnalysisService
 
 
 def test_intent_router_content_bundles_have_router_terms():
@@ -358,6 +359,23 @@ def test_classify_schedule_production_promotes_operational_query():
         assert route.requires_tool is True, message
         assert route.decision != "llm_fallback", message
         assert route.reason in {"operational_sub_intent", "operational_keywords"}, message
+
+
+def test_classify_liste_top_terminais_pino_is_product_search():
+    route = ChatIntentRouterService.classify("liste os top 50 terminais pino")
+
+    assert route.intent == "operational_query"
+    assert route.sub_intent == "product_search"
+    assert route.decision == "operational_action"
+    assert route.requires_tool is True
+    assert ChatTurnAnalysisService.should_analyze(
+        response_mode="normal",
+        heuristic_intent=route.intent,
+        heuristic_sub_intent=route.sub_intent,
+        heuristic_decision=route.decision,
+        heuristic_reason=route.reason,
+        heuristic_confidence=route.confidence,
+    ) is False
 
 
 def test_classify_bare_programacao_stays_unclear_or_fallback():

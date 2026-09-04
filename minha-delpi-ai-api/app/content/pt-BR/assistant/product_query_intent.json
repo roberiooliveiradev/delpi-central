@@ -1712,6 +1712,10 @@
       { "termsAny": "priceTerms", "subIntent": "price_lookup" },
       { "probe": "fullAnalyserQuestion", "subIntent": "product_lookup" },
       {
+        "predicate": "productSearchQuestion",
+        "subIntent": "product_search"
+      },
+      {
         "predicate": "descriptionQuestion",
         "subIntent": "product_lookup"
       },

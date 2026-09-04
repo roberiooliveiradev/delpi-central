@@ -10,7 +10,9 @@
         "requireProductSearchLook": true,
         "looksLikeProductSearch": true,
         "forbidClarifyViaMissingCode": true,
-        "missingProductCode": false
+        "missingProductCode": false,
+        "intentSubIntent": "product_search",
+        "intentDecision": "operational_action"
       }
     },
     {
@@ -21,7 +23,9 @@
         "requireProductSearchLook": true,
         "looksLikeProductSearch": true,
         "forbidClarifyViaMissingCode": true,
-        "missingProductCode": false
+        "missingProductCode": false,
+        "intentSubIntent": "product_search",
+        "intentDecision": "operational_action"
       }
     },
     {

@@ -55,3 +55,12 @@ def test_looks_like_product_search_ignores_web_request():
     assert not ExternalActionProductSearchRouteSelectionService.looks_like_product_search(
         "pesquise na web sobre delpi conexoes eletricas"
     )
+
+
+def test_extract_search_limit_from_top_n():
+    assert (
+        ExternalActionProductSearchRouteSelectionService.extract_search_limit(
+            "liste os top 50 terminais pino"
+        )
+        == 50
+    )
