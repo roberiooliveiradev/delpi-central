@@ -272,9 +272,15 @@ class ExternalActionProductRouteCatalogService:
                     attachment_ids=attachment_ids,
                     drawing_analysis_mode=drawing_analysis_mode,
                 ):
-                    parameters[name] = 50
+                    parameters[name] = (
+                        ChatProductOperationalContentService.drawing_analyser_page_size()
+                    )
                 else:
-                    parameters[name] = 200 if is_full_listing else 50
+                    parameters[name] = (
+                        ChatProductOperationalContentService.hierarchical_listing_page_size()
+                        if is_full_listing
+                        else ChatProductOperationalContentService.standard_page_size()
+                    )
 
             elif lowered in {"max_depth", "maxdepth", "depth", "nivel", "levels"}:
                 if self.is_drawing_analyser_request(

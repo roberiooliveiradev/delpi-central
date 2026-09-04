@@ -1645,6 +1645,44 @@ def test_build_product_parameters_sets_analyser_view_full_for_drawing_analysis()
     assert parameters["view"] == "full"
 
 
+def test_build_product_parameters_parents_uses_hierarchical_page_size():
+    service = ExternalActionSelectionService(FakeRepository([]))
+
+    parameters = service._build_product_parameters(
+        {
+            "path": "/products/{code}/parents",
+            "parametersSchema": [
+                {"name": "code"},
+                {"name": "page_size"},
+                {"name": "page"},
+            ],
+        },
+        "10080438",
+        message="onde é usado 10080438",
+    )
+
+    assert parameters["page_size"] == 500
+    assert parameters["page"] == 1
+
+
+def test_build_product_parameters_stock_uses_standard_page_size():
+    service = ExternalActionSelectionService(FakeRepository([]))
+
+    parameters = service._build_product_parameters(
+        {
+            "path": "/products/{code}/stock",
+            "parametersSchema": [
+                {"name": "code"},
+                {"name": "page_size"},
+            ],
+        },
+        "10080438",
+        message="estoque do 10080438",
+    )
+
+    assert parameters["page_size"] == 50
+
+
 def test_consumption_validated_top_limit_not_blocked_by_comparison_heuristic():
     service = ExternalActionSelectionService(
         FakeRepository(

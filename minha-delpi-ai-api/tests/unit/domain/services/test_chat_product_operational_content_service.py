@@ -17,3 +17,9 @@ def test_join_list_pt_two_items():
     )
 
     assert joined == "estoque e onde o item é usado"
+
+
+def test_pagination_defaults_hierarchical_listing_is_500():
+    assert ChatProductOperationalContentService.standard_page_size() == 50
+    assert ChatProductOperationalContentService.hierarchical_listing_page_size() == 500
+    assert ChatProductOperationalContentService.drawing_analyser_page_size() == 50

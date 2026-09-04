@@ -10,7 +10,9 @@
       "sales": "vendas",
       "purchases": "compras",
       "suppliers": "fornecedores",
-      "pricing": "preços"
+      "pricing": "preços",
+      "inbound_invoice": "notas fiscais de entrada",
+      "outbound_invoice": "notas fiscais de saída"
     },
     "byPathFragment": {
       "/parents": "onde o item é usado",
@@ -19,14 +21,18 @@
       "/guide": "roteiro de produção",
       "/inspection": "plano de inspeção",
       "/sales": "vendas",
-      "/profile": "cadastro"
+      "/profile": "cadastro",
+      "/inbound-invoice": "notas fiscais de entrada",
+      "/outbound-invoice": "notas fiscais de saída"
     },
     "compositeShort": {
       "/stock": "estoque",
       "/parents": "onde o item é usado",
       "/structure": "estrutura (BOM)",
       "/guide": "roteiro",
-      "/inspection": "inspeção"
+      "/inspection": "inspeção",
+      "/inbound-invoice": "NF entrada",
+      "/outbound-invoice": "NF saída"
     }
   },
   "listJoin": {
@@ -34,10 +40,33 @@
     "many": "{head}, {last}"
   },
   "multiScope": {
-    "reasonTemplate": "A pergunta pede {scope} do produto {code} (consulta combinada com outras rotas na mesma mensagem)."
+    "reasonTemplate": "A pergunta pede {scope} do produto {code} (consulta combinada com outras rotas na mesma mensagem).",
+    "continueChipLabel": "Também consultar {scope}",
+    "continueQueryTemplate": "{scope} do produto {code}"
   },
   "composite": {
     "informedProductFallback": "informado"
+  },
+  "priceSourceDetection": {
+    "lastPurchaseTerms": [
+      "ultima compra",
+      "última compra",
+      "last_purchase",
+      "last purchase"
+    ],
+    "standardCostTerms": [
+      "custo padrao",
+      "custo padrão",
+      "standard_cost",
+      "standard cost"
+    ]
+  },
+  "costImpactAdjustmentPercent": {
+    "patterns": [
+      "(?:aumento|reajuste|subir|simul\\w*)\\s*(?:de\\s*)?([+-]?\\d+(?:[.,]\\d+)?)\\s*(?:%|percento|por\\s*cento)",
+      "([+-]?\\d+(?:[.,]\\d+)?)\\s*(?:%|percento|por\\s*cento)\\s*(?:de\\s*)?(?:aumento|reajuste|simul)",
+      "simul\\w*\\s*\\+?([+-]?\\d+(?:[.,]\\d+)?)\\s*(?:%|percento|por\\s*cento)"
+    ]
   },
   "pluralPhrasing": {
     "productReferenceTerms": [
@@ -138,7 +167,10 @@
     },
     "stock": {
       "titleDefault": "Estoque do produto",
+      "scopeIntro": "Posições de estoque por filial e armazém — saldo atual, disponível e empenhado.",
       "summaryWithCode": "Consultei o estoque do produto **{code}**: **{positions}** posição(ões)",
+      "summaryWithCodeAndDescription": "Consultei o estoque de **{description}** (**{code}**): **{positions}** posição(ões)",
+      "summaryNegativeAvailableNote": " O saldo disponível consolidado é **negativo** ({total} un.) — revise empenhos e reservas antes de confiar no número.",
       "summaryBranches": " em **{count}** filial(is) ({branches})",
       "summaryWarehouses": " e **{count}** armazém(ns) ({warehouses})",
       "summaryAvailableTotal": " No total, há **{total}** unidade(s) disponível(is) nesta consulta.",
@@ -169,7 +201,8 @@
       "scopeIntro": "Expedição e inspeção final do PA — quantidades expedidas e perdas no período consultado."
     },
     "structureExclusivity": {
-      "scopeIntro": "Estrutura vigente (BOM) com flag de matéria-prima exclusiva por componente."
+      "scopeIntro": "Estrutura vigente (BOM) com flag de matéria-prima exclusiva por componente.",
+      "scopeIntroNeutral": "Estrutura vigente (BOM) do produto consultado."
     },
     "factoryStatus": {
       "scopeIntro": "Visão integrada na fábrica — estrutura, estoque de MP, produção e expedição no mesmo panorama."
@@ -212,12 +245,12 @@
       "inspection": "Referências de inspeção retornadas para os itens da estrutura — detalhes de ensaio na tabela quando a API enviar.",
       "structure": "Composição do produto em árvore (PA → PI → MP). Expanda os nós para ver componentes e quantidades.",
       "attention": "Pontos que merecem validação comercial, de compras ou engenharia antes de usar este cadastro em decisão.",
-      "factoryScopeWithCode": "Status integrado na fábrica do produto {code} — estrutura, estoque de MP, produção e expedição.",
-      "factoryScopeGeneric": "Panorama fabril integrado retornado nesta consulta.",
-      "factoryHighlights": "Leitura rápida da situação consolidada antes dos blocos detalhados.",
-      "factoryStructure": "Composição e exclusividade de MPs — base para avaliar risco de falta.",
-      "factoryStock": "Saldo de matérias-primas frente à necessidade de 1 PA.",
-      "factoryProduction": "Produção (OPs e apontamentos) dentro da visão fabril.",
+      "factoryScopeWithCode": "Para o produto {code}, consolidei estrutura, estoque de matéria-prima, produção e expedição na mesma leitura.",
+      "factoryScopeGeneric": "Consolidei nesta resposta o panorama fabril completo do item consultado.",
+      "factoryHighlights": "Em seguida, os destaques que resumem o que mais importa nesta situação.",
+      "factoryStructure": "A composição e a exclusividade das MPs ajudam a avaliar risco de falta e dependência de fornecedor.",
+      "factoryStock": "O saldo de matérias-primas abaixo confronta o estoque disponível com o necessário para montar 1 PA.",
+      "factoryProduction": "As ordens e apontamentos de produção detalham o que já foi fabricado e o que ainda está em aberto na fábrica.",
       "factoryShipping": "Expedição e perdas de inspeção no intervalo consultado.",
       "factoryAttention": "Riscos operacionais que pedem ação entre compras, PCP e chão de fábrica.",
       "productionScopeWithCode": "Análise produtiva do produto {code} — PA, PI, OPs e apontamentos SH6010.",
@@ -231,12 +264,81 @@
       "shippingSummary": "Totais de quantidade expedida, perda e apontamentos no período.",
       "shippingMovements": "Detalhe por OP/recurso/CT retornado pela API.",
       "shippingAttention": "Perdas ou ausência de movimento que pedem validação com qualidade/expedição.",
+      "stockScopeWithCode": "Estoque do produto {code} — filiais, armazéns e saldos disponíveis.",
+      "stockScopeGeneric": "Posições de estoque retornadas nesta consulta.",
+      "stockHighlights": "Leitura rápida dos saldos antes do detalhamento por filial.",
+      "stockSummary": "Totais consolidados de filiais, armazéns e quantidades.",
+      "stockPositions": "Detalhe linha a linha por filial e armazém para auditoria.",
+      "stockTree": "Hierarquia filial → armazém para navegar saldos sem abrir a tabela.",
+      "stockAttention": "Situações de saldo negativo, empenho ou paginação que pedem conferência.",
       "structureExclusivityScopeWithCode": "Estrutura vigente do produto {code} com flag de MP exclusiva.",
       "structureExclusivityScopeGeneric": "BOM com exclusividade de matérias-primas nesta resposta.",
       "structureExclusivityHighlights": "Resumo de quantas MPs são exclusivas na composição.",
       "structureExclusivitySummary": "Contagens de componentes, intermediários e MPs exclusivas.",
-      "structureExclusivityComponents": "Lista plana de componentes com quantidade acumulada e flag exclusiva.",
-      "structureExclusivityAttention": "MPs exclusivas impactam compras e risco de falta — valide saldo."
+      "structureExclusivityComponents": "Árvore aninhada PA → PI → MP com quantidades, exclusividade e uso em outros PAs.",
+      "structureExclusivityAttention": "MPs exclusivas impactam compras e risco de falta — valide saldo.",
+      "mpPriceScopeWithCode": "Inteligência de preço da MP {code} — cadastro, variação e histórico de compras.",
+      "mpPriceScopeGeneric": "Análise de preço e compras da matéria-prima nesta resposta.",
+      "mpPriceHighlights": "Leitura rápida de variação, fornecedor dominante e cadastro defasado.",
+      "mpPriceSummary": "Indicadores consolidados de preço médio, compras e variação.",
+      "mpPriceHistory": "Última compra e histórico detalhado para auditoria linha a linha.",
+      "mpPricePanels": "KPI e gráfico de evolução de preço quando disponíveis.",
+      "mpPriceAttention": "Cadastro defasado ou concentração de fornecedor pedem validação com compras.",
+      "costImpactScopeWithCode": "Simulação de impacto de custo para a MP {code} nos PAs afetados.",
+      "costImpactScopeGeneric": "Simulação de impacto de custo retornada nesta consulta.",
+      "costImpactHighlights": "Resumo do impacto percentual e materiais mais sensíveis.",
+      "costImpactSummary": "Totais da simulação e parâmetros usados.",
+      "costImpactMaterials": "Lista de PAs/materiais impactados pela variação simulada.",
+      "costImpactPanels": "Painéis de KPI e gráfico do impacto simulado.",
+      "costImpactAttention": "Materiais com maior sensibilidade pedem revisão de precificação.",
+      "salePricingScopeWithCode": "Precificação e tabelas de venda do produto {code}.",
+      "salePricingScopeGeneric": "Precificação retornada nesta consulta.",
+      "salePricingHighlights": "Leitura rápida de preço vigente e margem.",
+      "salePricingSummary": "Resumo de preços e condições comerciais.",
+      "salePricingDetail": "Detalhe linha a linha das tabelas de preço.",
+      "salePricingPanels": "KPI e gráfico de composição de preço quando disponíveis.",
+      "salePricingAttention": "Divergências de tabela ou vigência pedem validação comercial.",
+      "structureScopeWithCode": "Estrutura (BOM) do produto {code} — composição hierárquica.",
+      "structureScopeGeneric": "Composição hierárquica do item consultado.",
+      "structureHighlights": "Resumo da profundidade e tipos de componente na estrutura.",
+      "structureProfile": "Dados cadastrais do item raiz da estrutura.",
+      "structureTree": "Árvore PA → PI → MP — visão principal para navegar a composição.",
+      "structureAttention": "Componentes críticos ou níveis profundos pedem validação com engenharia.",
+      "parentsScopeWithCode": "Onde o produto {code} é usado — produtos pai na hierarquia.",
+      "parentsScopeGeneric": "Produtos pai e aplicações deste item em outros cadastros.",
+      "lastPurchaseScopeWithCode": "Última NF de compra da matéria-prima {code} — resumo e detalhes para auditoria.",
+      "lastPurchaseScopeGeneric": "Última compra registrada nesta consulta.",
+      "lastPurchaseHighlights": "Leitura rápida de preço, fornecedor e condições da NF.",
+      "lastPurchaseSummary": "Resumo consolidado da última compra.",
+      "lastPurchaseDetail": "Detalhes linha a linha da NF de compra.",
+      "lastPurchasePanels": "KPI, gráfico e painel da última compra quando disponíveis.",
+      "lastPurchaseAttention": "Ausência de compra ou divergência de preço pedem validação com compras.",
+      "purchasePriceHistoryScopeWithCode": "Histórico de preços de compra da MP {code} — variação e NFs no período.",
+      "purchasePriceHistoryScopeGeneric": "Histórico de preço de compra retornado nesta consulta.",
+      "purchasePriceHistoryHighlights": "Leitura rápida de preço médio e variação recente.",
+      "purchasePriceHistorySummary": "Indicadores consolidados do histórico de compras.",
+      "purchasePriceHistoryDetail": "NFs de compra linha a linha para auditoria.",
+      "purchasePriceHistoryPanels": "KPI, gráfico de evolução e painel quando disponíveis.",
+      "purchasePriceHistoryAttention": "Concentração de fornecedor ou variação abrupta pedem validação.",
+      "purchaseBudgetHistoryScopeWithCode": "Orçamentos e pedidos (SC/PC) da MP {code} no período consultado.",
+      "purchaseBudgetHistoryScopeGeneric": "Histórico de orçamento de compra retornado nesta consulta.",
+      "purchaseBudgetHistoryHighlights": "Leitura rápida de SCs, PCs e registros no período.",
+      "purchaseBudgetHistorySummary": "Totais consolidados de solicitações e pedidos.",
+      "purchaseBudgetHistoryDetail": "SC e pedidos de compra linha a linha.",
+      "purchaseBudgetHistoryPanels": "KPI, gráfico por origem e painel quando disponíveis.",
+      "purchaseBudgetHistoryAttention": "Pedidos sem cotação ou SC antiga pedem follow-up com compras.",
+      "purchaseListScopeWithCode": "Pedidos de compra do produto {code} — listagem paginada para auditoria.",
+      "purchaseListScopeGeneric": "Listagem de pedidos de compra retornada nesta consulta.",
+      "purchaseListHighlights": "Leitura rápida do volume de pedidos e fornecedores na página.",
+      "purchaseListSummary": "Resumo da listagem de compras.",
+      "purchaseListDetail": "Pedidos de compra linha a linha.",
+      "purchaseListPanels": "KPI, gráfico por fornecedor e painel quando disponíveis.",
+      "purchaseListAttention": "Paginação ou pedidos sem preço pedem conferência com compras."
     }
+  },
+  "paginationDefaults": {
+    "standardPageSize": 50,
+    "hierarchicalListingPageSize": 500,
+    "drawingAnalyserPageSize": 50
   }
 }

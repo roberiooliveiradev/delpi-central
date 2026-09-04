@@ -107,3 +107,27 @@ class ChatProductOperationalContentService:
                 if isinstance(plural_terms, list) and str(item).strip()
             ),
         )
+
+    @classmethod
+    def _pagination_default_int(cls, key: str, default: int) -> int:
+        node = ChatAssistantContentService.get_node(_BUNDLE, "paginationDefaults", key)
+
+        try:
+            value = int(node)
+        except (TypeError, ValueError):
+            return default
+
+        return value if value >= 1 else default
+
+    @classmethod
+    def standard_page_size(cls) -> int:
+        return cls._pagination_default_int("standardPageSize", 50)
+
+    @classmethod
+    def hierarchical_listing_page_size(cls) -> int:
+        """Teto default de page_size em /structure e /parents (listagem hierárquica)."""
+        return cls._pagination_default_int("hierarchicalListingPageSize", 500)
+
+    @classmethod
+    def drawing_analyser_page_size(cls) -> int:
+        return cls._pagination_default_int("drawingAnalyserPageSize", 50)

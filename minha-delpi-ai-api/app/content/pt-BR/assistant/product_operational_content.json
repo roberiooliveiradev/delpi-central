@@ -335,5 +335,10 @@
       "purchaseListPanels": "KPI, gráfico por fornecedor e painel quando disponíveis.",
       "purchaseListAttention": "Paginação ou pedidos sem preço pedem conferência com compras."
     }
+  },
+  "paginationDefaults": {
+    "standardPageSize": 50,
+    "hierarchicalListingPageSize": 500,
+    "drawingAnalyserPageSize": 50
   }
 }
