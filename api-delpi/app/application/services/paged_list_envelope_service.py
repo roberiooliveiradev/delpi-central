@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
+
 
 def build_has_next_pagination(
     *,
@@ -12,11 +14,11 @@ def build_has_next_pagination(
     has_next: bool,
 ) -> dict[str, Any]:
     """Nested pagination when total is unknown (cursor / fetch_next+1)."""
-    return {
-        "page": page,
-        "page_size": page_size,
-        "is_complete": not bool(has_next),
-    }
+    return PaginationEnvelopeBuilder.has_next(
+        page=page,
+        page_size=page_size,
+        has_next=has_next,
+    )
 
 
 def build_paged_list_envelope(
@@ -27,7 +29,12 @@ def build_paged_list_envelope(
     items: list[dict[str, Any]],
     extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    total_pages = (total + page_size - 1) // page_size if total else 0
+    pagination = PaginationEnvelopeBuilder.paged_count(
+        page=page,
+        page_size=page_size,
+        total=total,
+    )
+    total_pages = pagination["total_pages"]
     payload: dict[str, Any] = {
         "items": items,
         "page": page,
@@ -36,13 +43,7 @@ def build_paged_list_envelope(
         "total": total,
         "total_pages": total_pages,
         "totalPages": total_pages,
-        "pagination": {
-            "page": page,
-            "page_size": page_size,
-            "total": total,
-            "total_pages": total_pages,
-            "is_complete": page >= total_pages if total_pages else True,
-        },
+        "pagination": pagination,
     }
     if extra:
         payload.update(extra)

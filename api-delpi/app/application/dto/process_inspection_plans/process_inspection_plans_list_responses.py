@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import math
+
+from app.application.services.pagination_envelope_builder import PaginationEnvelopeBuilder
 
 
 @dataclass
@@ -12,22 +13,25 @@ class ProcessInspectionPlansPagination:
     total_pages: int
 
     def to_dict(self) -> dict:
-        return {
-            "page": self.page,
-            "page_size": self.page_size,
-            "total": self.total,
-            "total_pages": self.total_pages,
-            "is_complete": self.page >= self.total_pages if self.total_pages else True,
-        }
+        return PaginationEnvelopeBuilder.paged_count(
+            page=self.page,
+            page_size=self.page_size,
+            total=self.total,
+            total_pages=self.total_pages,
+        )
 
 
 def build_pagination(*, page: int, page_size: int, total: int) -> ProcessInspectionPlansPagination:
-    total_pages = math.ceil(total / page_size) if page_size and total else 0
-    return ProcessInspectionPlansPagination(
+    payload = PaginationEnvelopeBuilder.paged_count(
         page=page,
         page_size=page_size,
         total=total,
-        total_pages=total_pages,
+    )
+    return ProcessInspectionPlansPagination(
+        page=payload["page"],
+        page_size=payload["page_size"],
+        total=payload["total"],
+        total_pages=payload["total_pages"],
     )
 
 
