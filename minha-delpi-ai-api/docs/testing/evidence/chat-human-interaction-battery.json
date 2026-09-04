@@ -9,8 +9,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 890ms",
-    "ms": 890,
+    "detail": "ok | 844ms",
+    "ms": 844,
     "prose": "**Agentes especializados**\n\nAtive um especialista no composer para usar APIs e skills da tarefa.\n\n**Como usar:**\n- No composer, toque em + (ou digite @) e abra a lista de agentes.\n- Para produto, estoque, indicadores ou SQL operacional, escolha Minha DELPI (ou o agente com essas actions).\n- Confirme que o nome do agent",
     "evidence": {
       "R1": {
@@ -30,6 +30,7 @@
       },
       "R4": {
         "proseLen": 513,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -38,6 +39,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -45,14 +47,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 623,
-        "wallMs": 890,
+        "totalMs": 587,
+        "wallMs": 844,
         "mode": "normal",
         "timings": {
-          "preToolMs": 293,
-          "toolsMs": 23,
-          "ragMs": 7,
-          "llmMs": 270
+          "preToolMs": 276,
+          "toolsMs": 22,
+          "ragMs": 8,
+          "llmMs": 250
         },
         "verdict": "PASS"
       },
@@ -76,8 +78,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 555ms",
-    "ms": 555,
+    "detail": "ok | 534ms",
+    "ms": 534,
     "prose": "**Para esta tarefa**\n\nAtive o agente da plataforma **Minha DELPI** (composer **+** ou **@**), ou outro da lista com actions de produto/estoque. Em seguida faça a pergunta operacional.\n\n**Agentes especializados**\n\nAtive um especialista no composer para usar APIs e skills da tarefa.\n\n**Como usar:**\n- No composer, toque e",
     "evidence": {
       "R1": {
@@ -97,6 +99,7 @@
       },
       "R4": {
         "proseLen": 698,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -105,6 +108,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -112,14 +116,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 348,
-        "wallMs": 555,
+        "totalMs": 342,
+        "wallMs": 534,
         "mode": "normal",
         "timings": {
-          "preToolMs": 199,
-          "toolsMs": 11,
-          "ragMs": 9,
-          "llmMs": 92
+          "preToolMs": 210,
+          "toolsMs": 10,
+          "ragMs": 7,
+          "llmMs": 84
         },
         "verdict": "PASS"
       },
@@ -143,8 +147,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 893ms",
-    "ms": 893,
+    "detail": "ok | 847ms",
+    "ms": 847,
     "prose": "**Dados operacionais exigem um agente**\n\nNo **chat comum** não acesso APIs da DELPI (estoque, produtos, OV/LMP, indicadores financeiros, SQL em produção…).\n\n**Neste modo ainda posso:**\n- Responder com **documentação e conhecimento** autorizado (RAG).\n- Ajudar com **textos**, revisão, e-mails, atas e traduções.\n- Analis",
     "evidence": {
       "R1": {
@@ -164,6 +168,7 @@
       },
       "R4": {
         "proseLen": 647,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -172,6 +177,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -179,14 +185,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 622,
-        "wallMs": 893,
+        "totalMs": 613,
+        "wallMs": 847,
         "mode": "normal",
         "timings": {
-          "preToolMs": 418,
-          "toolsMs": 11,
-          "ragMs": 9,
-          "llmMs": 115
+          "preToolMs": 424,
+          "toolsMs": 10,
+          "ragMs": 8,
+          "llmMs": 104
         },
         "verdict": "PASS"
       },
@@ -210,8 +216,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 2510ms",
-    "ms": 2510,
+    "detail": "ok | 2404ms",
+    "ms": 2404,
     "prose": "Você está no **chat comum** (sem agente ativo). Neste modo respondo com documentação autorizada, textos, anexos, pesquisa web, lousa, gráficos e orientação — e indico qual **agente especializado** ativar no menu **+** para consultas operacionais (estoque, produtos, indicadores…).\n\nPosso ajudar você nestes formatos:\n\n**",
     "evidence": {
       "R1": {
@@ -231,6 +237,7 @@
       },
       "R4": {
         "proseLen": 5357,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -239,6 +246,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -246,14 +254,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 1851,
-        "wallMs": 2510,
+        "totalMs": 1820,
+        "wallMs": 2404,
         "mode": "normal",
         "timings": {
-          "preToolMs": 997,
-          "toolsMs": 22,
-          "ragMs": 2,
-          "llmMs": 808
+          "preToolMs": 948,
+          "toolsMs": 21,
+          "ragMs": 3,
+          "llmMs": 823
         },
         "verdict": "PASS"
       },
@@ -277,8 +285,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 825ms",
-    "ms": 825,
+    "detail": "ok | 828ms",
+    "ms": 828,
     "prose": "**Dados operacionais exigem um agente**\n\nNo **chat comum** não acesso APIs da DELPI (estoque, produtos, OV/LMP, indicadores financeiros, SQL em produção…).\n\n**Neste modo ainda posso:**\n- Responder com **documentação e conhecimento** autorizado (RAG).\n- Ajudar com **textos**, revisão, e-mails, atas e traduções.\n- Analis",
     "evidence": {
       "R1": {
@@ -298,6 +306,7 @@
       },
       "R4": {
         "proseLen": 647,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -306,6 +315,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -313,14 +323,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 553,
-        "wallMs": 825,
+        "totalMs": 569,
+        "wallMs": 828,
         "mode": "normal",
         "timings": {
-          "preToolMs": 392,
-          "toolsMs": 20,
+          "preToolMs": 403,
+          "toolsMs": 19,
           "ragMs": 7,
-          "llmMs": 79
+          "llmMs": 82
         },
         "verdict": "PASS"
       },
@@ -344,9 +354,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 2077ms | paths=['/products/10080047/stock']",
-    "ms": 2077,
-    "prose": "O produto **10080047**\n\nSaldo disponível total: **23.814** un. em **5** posição(ões). Maior concentração na filial **02** (15.744 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado. - Empenho elevado pode bloquear novas saídas — conferir pe",
+    "detail": "ok | 2075ms | paths=['/products/10080047/stock']",
+    "ms": 2075,
+    "prose": "O produto **10080047**\n\nSaldo disponível total: **23.744** un. em **5** posição(ões). Maior concentração na filial **02** (15.744 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado. - Empenho elevado pode bloquear novas saídas — conferir pe",
     "evidence": {
       "R1": {
         "intent": "operational_query",
@@ -367,6 +377,7 @@
       },
       "R4": {
         "proseLen": 418,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -375,6 +386,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -382,14 +394,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 1707,
-        "wallMs": 2077,
+        "totalMs": 1668,
+        "wallMs": 2075,
         "mode": "normal",
         "timings": {
-          "preToolMs": 427,
-          "toolsMs": 730,
+          "preToolMs": 378,
+          "toolsMs": 757,
           "ragMs": 8,
-          "llmMs": 428
+          "llmMs": 417
         },
         "verdict": "PASS"
       },
@@ -417,8 +429,8 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 2542ms | paths=['/products/90260148/structure']",
-    "ms": 2542,
+    "detail": "ok | 2491ms | paths=['/products/90260148/structure']",
+    "ms": 2491,
     "prose": "Produto **90260148** — CHICOTE DE LIGACAO. A composição tem **2** componente(s) de nível 1.",
     "evidence": {
       "R1": {
@@ -440,6 +452,7 @@
       },
       "R4": {
         "proseLen": 91,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -448,6 +461,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -455,14 +469,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 2138,
-        "wallMs": 2542,
+        "totalMs": 2035,
+        "wallMs": 2491,
         "mode": "normal",
         "timings": {
-          "preToolMs": 540,
-          "toolsMs": 1078,
+          "preToolMs": 508,
+          "toolsMs": 1008,
           "ragMs": 8,
-          "llmMs": 420
+          "llmMs": 417
         },
         "verdict": "PASS"
       },
@@ -489,9 +503,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 16276ms | paths=['/financial/rol'] | br=['01']",
-    "ms": 16276,
-    "prose": "**ROL:** R$ 723.419,01\n\n**Receita bruta:** R$ 885.852,90",
+    "detail": "ok | 6045ms | paths=['/financial/rol'] | br=['01']",
+    "ms": 6045,
+    "prose": "**ROL:** R$ 723.419,01\n\n**Meta ROL (R$):** 1.076.000",
     "evidence": {
       "R1": {
         "intent": "operational_query",
@@ -513,7 +527,8 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 56,
+        "proseLen": 52,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -522,6 +537,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -529,16 +545,16 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 15438,
-        "wallMs": 16276,
+        "totalMs": 5221,
+        "wallMs": 6045,
         "mode": "normal",
         "timings": {
-          "preToolMs": 1177,
-          "toolsMs": 13520,
-          "ragMs": 8,
-          "llmMs": 640
+          "preToolMs": 1235,
+          "toolsMs": 3264,
+          "ragMs": 7,
+          "llmMs": 637
         },
-        "verdict": "FAIL"
+        "verdict": "WARN"
       },
       "paths": [
         "/financial/rol"
@@ -562,9 +578,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 14903ms | paths=['/financial/rol'] | br=['01']",
-    "ms": 14903,
-    "prose": "**ROL:** R$ 723.419,01\n\n**Receita bruta:** R$ 885.852,90",
+    "detail": "ok | 4695ms | paths=['/financial/rol'] | br=['01']",
+    "ms": 4695,
+    "prose": "**ROL:** R$ 723.419,01\n\n**Meta ROL (R$):** 1.076.000",
     "evidence": {
       "R1": {
         "intent": "operational_query",
@@ -586,7 +602,8 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 56,
+        "proseLen": 52,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -595,6 +612,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -602,16 +620,16 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 14148,
-        "wallMs": 14903,
+        "totalMs": 3973,
+        "wallMs": 4695,
         "mode": "normal",
         "timings": {
-          "preToolMs": 1281,
-          "toolsMs": 11971,
+          "preToolMs": 1261,
+          "toolsMs": 1806,
           "ragMs": 8,
-          "llmMs": 810
+          "llmMs": 820
         },
-        "verdict": "FAIL"
+        "verdict": "PASS"
       },
       "paths": [
         "/financial/rol"
@@ -635,9 +653,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 15018ms | paths=['/production/schedule/today']",
-    "ms": 15018,
-    "prose": "A distribuição por item está no gráfico e a lista completa na tabela abaixo:\n\nSe quiser, posso detalhar algum item específico da programação ou filtrar por filial, linha ou produto.",
+    "detail": "ok | 6086ms | paths=['/production/schedule/today']",
+    "ms": 6086,
+    "prose": "Total de **planned_qty**: **53927**. **Pontos de atenção**\n\n- A lista é extensa; considere filtros ou paginação para focar o que importa.",
     "evidence": {
       "R1": {
         "intent": "operational_query",
@@ -657,7 +675,8 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 181,
+        "proseLen": 137,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -666,6 +685,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -673,16 +693,16 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 14354,
-        "wallMs": 15018,
+        "totalMs": 5370,
+        "wallMs": 6086,
         "mode": "normal",
         "timings": {
-          "preToolMs": 855,
-          "toolsMs": 3570,
+          "preToolMs": 905,
+          "toolsMs": 3951,
           "ragMs": 8,
-          "llmMs": 9846
+          "llmMs": 416
         },
-        "verdict": "FAIL"
+        "verdict": "WARN"
       },
       "paths": [
         "/production/schedule/today"
@@ -708,9 +728,9 @@
     ],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 6968ms | paths=['/products/10080047/suppliers']",
-    "ms": 6968,
-    "prose": "O produto **10080047**\n\nTotal de **real_lead_time_sample_size**: **148**.",
+    "detail": "ok | 9386ms | paths=['/products/10080047/suppliers']",
+    "ms": 9386,
+    "prose": "O produto **10080047**\n\nTotal de **last_price**: **0.3**.",
     "evidence": {
       "R1": {
         "intent": "operational_query",
@@ -730,7 +750,8 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 73,
+        "proseLen": 57,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -739,6 +760,9 @@
       },
       "R6": {
         "seedCount": 1,
+        "seedNotes": [
+          "3565ms hits=0 len=244"
+        ],
         "verdict": "PASS"
       },
       "R7": {
@@ -746,14 +770,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 6350,
-        "wallMs": 6968,
+        "totalMs": 8807,
+        "wallMs": 9386,
         "mode": "normal",
         "timings": {
-          "preToolMs": 4734,
-          "toolsMs": 1160,
-          "ragMs": 7,
-          "llmMs": 372
+          "preToolMs": 6769,
+          "toolsMs": 1491,
+          "ragMs": 8,
+          "llmMs": 460
         },
         "verdict": "WARN"
       },
@@ -780,9 +804,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 18411ms",
-    "ms": 18411,
-    "prose": "Segue a consulta em SQL (somente leitura, sem executar no sistema). Ajuste o sufixo da tabela física Protheus (padrão …010) conforme o ambiente:\n\n```sql\nSELECT TOP 10\n    B1_COD   AS Codigo,\n    B1_DESC  AS Descricao,\n    B1_GRUPO AS Grupo\nFROM SB1010\nWHERE B1_GRUPO = '1008'\n  AND D_E_L_E_T_ = ' '\nORDER BY B1_COD;\n```\n",
+    "detail": "ok | 5968ms",
+    "ms": 5968,
+    "prose": "Segue a consulta em SQL (somente leitura, sem executar no sistema). Ajuste o sufixo da tabela física Protheus (padrão …010) conforme o ambiente:\n\n```sql\nSELECT TOP 10\n    P.B1_COD   AS CODIGO,\n    P.B1_DESC  AS DESCRICAO,\n    P.B1_GRUPO AS GRUPO\nFROM SB1010 P\nWHERE\n    P.D_E_L_E_T_ = ''\n    AND P.B1_GRUPO = '1008'\nORDE",
     "evidence": {
       "R1": {
         "intent": "rag_question",
@@ -800,7 +824,8 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 875,
+        "proseLen": 763,
+        "ragHits": 2,
         "verdict": "PASS"
       },
       "R5": {
@@ -809,6 +834,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -816,16 +842,16 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 18047,
-        "wallMs": 18411,
+        "totalMs": 5600,
+        "wallMs": 5968,
         "mode": "normal",
         "timings": {
-          "preToolMs": 286,
-          "toolsMs": 421,
-          "ragMs": 72,
-          "llmMs": 17231
+          "preToolMs": 327,
+          "toolsMs": 454,
+          "ragMs": 109,
+          "llmMs": 4668
         },
-        "verdict": "FAIL"
+        "verdict": "WARN"
       },
       "paths": [],
       "operationIds": []
@@ -846,11 +872,59 @@
     "useAgent": true,
     "seed": [],
     "responseMode": "normal",
-    "status": "FAIL",
-    "detail": "HTTP Error 429: TOO MANY REQUESTS",
-    "ms": 0,
-    "prose": "",
-    "evidence": {},
+    "status": "PASS",
+    "detail": "ok | 14024ms",
+    "ms": 14024,
+    "prose": "Segue a consulta em SQL (somente leitura, sem executar no sistema). Ajuste o sufixo da tabela física Protheus (padrão …010) conforme o ambiente:\n\n```sql\nSELECT TOP 100\n    SB1.B1_COD      AS COD_PRODUTO,\n    SB1.B1_DESC     AS DESCRICAO,\n    SB1.B1_TIPO     AS TIPO,\n    SB1.B1_GRUPO    AS GRUPO,\n    SB1.B1_UM       AS ",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": "sql_generate",
+        "decision": "sql_route",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 950,
+        "ragHits": 3,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "seedNotes": [],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 13233,
+        "wallMs": 14024,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 893,
+          "toolsMs": 2520,
+          "ragMs": 121,
+          "llmMs": 9661
+        },
+        "verdict": "FAIL"
+      },
+      "paths": [],
+      "operationIds": []
+    },
     "rRequired": [
       "R1",
       "R2",
@@ -867,11 +941,59 @@
     "useAgent": true,
     "seed": [],
     "responseMode": "normal",
-    "status": "FAIL",
-    "detail": "HTTP Error 429: TOO MANY REQUESTS",
-    "ms": 0,
-    "prose": "",
-    "evidence": {},
+    "status": "PASS",
+    "detail": "ok | 7756ms",
+    "ms": 7756,
+    "prose": "Segue a consulta em SQL (somente leitura, sem executar no sistema). Ajuste o sufixo da tabela física Protheus (padrão …010) conforme o ambiente:\n\n```sql\nSELECT TOP 10\n    B1_COD,\n    B1_DESC,\n    B1_GRUPO,\n    B1_UM\nFROM SB1010\nWHERE D_E_L_E_T_ = ''\n  AND B1_GRUPO = '1008'\nORDER BY B1_COD ASC;\n```\n\n**O que a consulta r",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": "sql_generate",
+        "decision": "sql_route",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 815,
+        "ragHits": 2,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "seedNotes": [],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 7339,
+        "wallMs": 7756,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 415,
+          "toolsMs": 808,
+          "ragMs": 92,
+          "llmMs": 5984
+        },
+        "verdict": "WARN"
+      },
+      "paths": [],
+      "operationIds": []
+    },
     "rRequired": [
       "R1",
       "R2",
@@ -889,9 +1011,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 18578ms | paths=['/financial/rol']",
-    "ms": 18578,
-    "prose": "**ROL:** R$ 4.455.783,89\n\n**Receita bruta:** R$ 5.114.477,00",
+    "detail": "ok | 8113ms | paths=['/financial/rol']",
+    "ms": 8113,
+    "prose": "**ROL:** R$ 4.455.783,89\n\n**Meta ROL (R$):** 4.690.000",
     "evidence": {
       "R1": {
         "intent": "operational_query",
@@ -911,7 +1033,8 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 60,
+        "proseLen": 54,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -920,6 +1043,7 @@
       },
       "R6": {
         "seedCount": 0,
+        "seedNotes": [],
         "verdict": "PASS"
       },
       "R7": {
@@ -927,16 +1051,16 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 17443,
-        "wallMs": 18578,
+        "totalMs": 7035,
+        "wallMs": 8113,
         "mode": "normal",
         "timings": {
           "preToolMs": 1731,
-          "toolsMs": 14606,
-          "ragMs": 10,
-          "llmMs": 997
+          "toolsMs": 4334,
+          "ragMs": 9,
+          "llmMs": 880
         },
-        "verdict": "FAIL"
+        "verdict": "WARN"
       },
       "paths": [
         "/financial/rol"
@@ -962,8 +1086,8 @@
     ],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 40986ms | paths=['/financial/rol', '/financial/rol'] | br=['01', '02']",
-    "ms": 40986,
+    "detail": "ok | 12740ms | paths=['/financial/rol', '/financial/rol'] | br=['01', '02']",
+    "ms": 12740,
     "prose": "Comparação entre filiais 01 e 02 no período 01-08-2026 a 31-08-2026.\n- **Receita bruta (filial 01):** R$ 885.852,90\n- **Receita bruta (filial 02):** R$ 4.228.624,10\n- **Variação:** queda de R$ 3.342.771,20 (-79.1%)\n**Próximos passos**\n- Voltar ao mês atual\n- Outra filial\n- Comparar filiais 01 e 02",
     "evidence": {
       "R1": {
@@ -989,6 +1113,7 @@
       },
       "R4": {
         "proseLen": 298,
+        "ragHits": 0,
         "verdict": "PASS"
       },
       "R5": {
@@ -997,6 +1122,9 @@
       },
       "R6": {
         "seedCount": 1,
+        "seedNotes": [
+          "4634ms hits=0 len=52"
+        ],
         "verdict": "PASS"
       },
       "R7": {
@@ -1004,14 +1132,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 40424,
-        "wallMs": 40986,
+        "totalMs": 12259,
+        "wallMs": 12740,
         "mode": "normal",
         "timings": {
-          "preToolMs": 386,
-          "toolsMs": 11307,
-          "ragMs": 7,
-          "llmMs": 28591
+          "preToolMs": 381,
+          "toolsMs": 1810,
+          "ragMs": 8,
+          "llmMs": 9957
         },
         "verdict": "FAIL"
       },
@@ -1038,9 +1166,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 7010ms",
-    "ms": 7010,
-    "prose": "Não encontrei informações sobre a **política de compras** na base de conhecimento autorizada no momento.\n\nAlgumas possibilidades:\n\n- O documento pode ainda **não ter sido publicado** na base de conhecimento da plataforma.\n- A política pode estar registrada com **outro título** (ex.: \"Diretrizes de suprimentos\", \"Proces",
+    "detail": "ok | 7093ms",
+    "ms": 7093,
+    "prose": "Não encontrei a **política de compras** na documentação autorizada disponível no momento. A base de conhecimento consultada não retornou nenhum trecho relacionado a esse tema.\n\nAlgumas opções para avançarmos:\n\n- **Reformular a pergunta** — se você busca um ponto específico (ex.: prazos de aprovação, alçadas de compra, ",
     "evidence": {
       "R1": {
         "intent": "rag_question",
@@ -1058,7 +1186,7 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 706,
+        "proseLen": 726,
         "ragHits": 0,
         "verdict": "PASS"
       },
@@ -1076,14 +1204,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 6160,
-        "wallMs": 7010,
+        "totalMs": 6517,
+        "wallMs": 7093,
         "mode": "normal",
         "timings": {
-          "preToolMs": 556,
-          "toolsMs": 22,
-          "ragMs": 71,
-          "llmMs": 5384
+          "preToolMs": 463,
+          "toolsMs": 18,
+          "ragMs": 47,
+          "llmMs": 5904
         },
         "verdict": "WARN"
       },
@@ -1107,9 +1235,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 10648ms",
-    "ms": 10648,
-    "prose": "Não encontrei um glossário de qualidade na documentação autorizada da base de conhecimento no momento, então não tenho como apresentar os termos oficiais da empresa sem inventar conteúdo.\n\nPosso ajudar de duas formas:\n\n- **Anexar o documento**: se você tiver o glossário em PDF, Word ou imagem, anexe aqui na conversa e ",
+    "detail": "ok | 23883ms",
+    "ms": 23883,
+    "prose": "Não encontrei um documento de glossário de qualidade na base de conhecimento autorizada no momento. Se a empresa possui um glossário específico (normas, siglas internas), você pode anexá-lo aqui na conversa que eu o explico com base no conteúdo.\n\nO que posso detalhar agora são os **termos de qualidade usados no módulo ",
     "evidence": {
       "R1": {
         "intent": "rag_question",
@@ -1127,7 +1255,7 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 790,
+        "proseLen": 1981,
         "ragHits": 0,
         "verdict": "PASS"
       },
@@ -1145,16 +1273,16 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 9479,
-        "wallMs": 10648,
+        "totalMs": 23004,
+        "wallMs": 23883,
         "mode": "normal",
         "timings": {
-          "preToolMs": 1396,
-          "toolsMs": 27,
-          "ragMs": 45,
-          "llmMs": 7890
+          "preToolMs": 951,
+          "toolsMs": 19,
+          "ragMs": 86,
+          "llmMs": 21860
         },
-        "verdict": "WARN"
+        "verdict": "FAIL"
       },
       "paths": [],
       "operationIds": []
@@ -1176,13 +1304,13 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 10326ms",
-    "ms": 10326,
-    "prose": "As **Normas Técnicas DELPI** (documento da Engenharia, elaborado por Robério Oliveira) têm como objetivo central **padronizar a descrição técnica de matérias-primas**, garantindo clareza e consistência no cadastro de materiais. As normas cobrem os grupos de MP de **1001 a 1025**, cada um com estrutura própria de descri",
+    "detail": "ok | 16608ms",
+    "ms": 16608,
+    "prose": "As **Normas Técnicas DELPI** padronizam como as matérias-primas devem ser descritas no cadastro, organizando os itens por **grupo técnico** (faixa 1001–1025). Cada grupo segue um mesmo padrão de documentação: **objetivo, abrangência, estrutura da descrição, campos obrigatórios e exemplos**, com controle de elaboração e",
     "evidence": {
       "R1": {
         "intent": "rag_question",
-        "subIntent": null,
+        "subIntent": "technical_description",
         "decision": "rag_internal",
         "verdict": "PASS"
       },
@@ -1196,7 +1324,7 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 1917,
+        "proseLen": 1787,
         "ragHits": 2,
         "verdict": "PASS"
       },
@@ -1214,16 +1342,16 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 9795,
-        "wallMs": 10326,
+        "totalMs": 16132,
+        "wallMs": 16608,
         "mode": "normal",
         "timings": {
-          "preToolMs": 710,
-          "toolsMs": 20,
-          "ragMs": 158,
-          "llmMs": 8811
+          "preToolMs": 401,
+          "toolsMs": 19,
+          "ragMs": 94,
+          "llmMs": 15526
         },
-        "verdict": "WARN"
+        "verdict": "FAIL"
       },
       "paths": [],
       "operationIds": []
@@ -1245,9 +1373,9 @@
     "seed": [],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 3257ms | paths=['/products/10080001/stock']",
-    "ms": 3257,
-    "prose": "O produto **10080001**\n\nSaldo disponível total: **2.677.615** un. em **8** posição(ões). Maior concentração na filial **02** (2.290.510 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado. - Empenho elevado pode bloquear novas saídas — confe",
+    "detail": "ok | 2366ms | paths=['/products/10080001/stock']",
+    "ms": 2366,
+    "prose": "O produto **10080001**\n\nSaldo disponível total: **2.677.573** un. em **8** posição(ões). Maior concentração na filial **02** (2.290.475 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado. - Empenho elevado pode bloquear novas saídas — confe",
     "evidence": {
       "R1": {
         "intent": "operational_query",
@@ -1285,14 +1413,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 2763,
-        "wallMs": 3257,
+        "totalMs": 1957,
+        "wallMs": 2366,
         "mode": "normal",
         "timings": {
-          "preToolMs": 416,
-          "toolsMs": 1623,
-          "ragMs": 113,
-          "llmMs": 499
+          "preToolMs": 448,
+          "toolsMs": 881,
+          "ragMs": 89,
+          "llmMs": 433
         },
         "verdict": "PASS"
       },
@@ -1320,9 +1448,9 @@
     ],
     "responseMode": "normal",
     "status": "PASS",
-    "detail": "ok | 19331ms",
-    "ms": 19331,
-    "prose": "As **Normas Técnicas DELPI** dedicam o **grupo 1008** aos terminais elétricos, com três normas de descrição padronizada:\n\n## 1. Terminais Olhal e Anzol\n\n**Estrutura da descrição (sequência obrigatória):**\n\n`[TERM.] [TIPO] [PARAFUSO] [DIÂMETRO INTERNO] [BITOLA DO CABO] [DIÂMETRO EXTERNO] [COMPRIMENTO] [BANHO] [ISOLAÇÃO]",
+    "detail": "ok | 19910ms",
+    "ms": 19910,
+    "prose": "A norma de **Terminais (grupo 1008)** das Normas Técnicas DELPI padroniza a descrição cadastral em três subgrupos, cada um com estrutura de campos própria:\n\n## 1. Terminais Olhal e Anzol\n\n**Estrutura da descrição (sequência obrigatória):**\n\n`[TERM.] [TIPO] [PARAFUSO] [DIÂMETRO INTERNO] [BITOLA DO CABO] [DIÂMETRO EXTERN",
     "evidence": {
       "R1": {
         "intent": "rag_question",
@@ -1340,7 +1468,7 @@
         "verdict": "PASS"
       },
       "R4": {
-        "proseLen": 2306,
+        "proseLen": 1903,
         "ragHits": 3,
         "verdict": "PASS"
       },
@@ -1351,7 +1479,7 @@
       "R6": {
         "seedCount": 1,
         "seedNotes": [
-          "10003ms hits=2 len=1819"
+          "12735ms hits=2 len=1751"
         ],
         "verdict": "PASS"
       },
@@ -1360,14 +1488,14 @@
         "verdict": "N/A"
       },
       "R8": {
-        "totalMs": 18288,
-        "wallMs": 19331,
+        "totalMs": 18978,
+        "wallMs": 19910,
         "mode": "normal",
         "timings": {
-          "preToolMs": 2578,
+          "preToolMs": 2681,
           "toolsMs": 20,
-          "ragMs": 97,
-          "llmMs": 15490
+          "ragMs": 91,
+          "llmMs": 16083
         },
         "verdict": "FAIL"
       },
@@ -1946,6 +2074,375 @@
     "rRequired": [
       "R1",
       "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F06.search",
+    "family": "F06",
+    "label": "tabela-produtos",
+    "message": "qual a tabela de produtos?",
+    "expect": "system_tables_search",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 1985ms | paths=['/system/tables/search']",
+    "ms": 1985,
+    "prose": "**139** tabela(s) encontradas no catálogo Protheus (SX2).\n\n### Resultado da consulta\n\n<!-- section:scope -->\n\nResultado da consulta: **50** registro(s) retornado(s). Resumo abaixo; tabelas e painéis trazem o detalhe linha a linha.\n\nPainéis e tabelas abaixo complementam este resumo.",
+    "evidence": {
+      "R1": {
+        "intent": "operational_query",
+        "subIntent": "system_metadata",
+        "decision": "operational_action",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 1,
+        "paths": [
+          "/system/tables/search"
+        ],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 282,
+        "ragHits": 0,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "seedNotes": [],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 1531,
+        "wallMs": 1985,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 535,
+          "toolsMs": 828,
+          "ragMs": 8,
+          "llmMs": 117
+        },
+        "verdict": "PASS"
+      },
+      "paths": [
+        "/system/tables/search"
+      ],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F06.schema",
+    "family": "F06",
+    "label": "schema-sb1010",
+    "message": "me mostre o schema da tabela SB1010",
+    "expect": "system_schema",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 3456ms | paths=['/system/tables/SB1010/schema']",
+    "ms": 3456,
+    "prose": "**SB1010** (SB1) — Descrição Genérica do Produto **318** colunas · **19** índices · **962** relacionamentos O detalhe aparece na **tabela** desta resposta.\n\nVisão consolidada dos dados retornados nesta consulta.\n\nSeções analisadas: Colunas (SX3), Índices (SIX), Relacionamentos (SX9), Metadados da tabela (SX2).",
+    "evidence": {
+      "R1": {
+        "intent": "operational_query",
+        "subIntent": "system_metadata",
+        "decision": "operational_action",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 1,
+        "paths": [
+          "/system/tables/SB1010/schema"
+        ],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 311,
+        "ragHits": 0,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "seedNotes": [],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 2745,
+        "wallMs": 3456,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 949,
+          "toolsMs": 1434,
+          "ragMs": 8,
+          "llmMs": 301
+        },
+        "verdict": "PASS"
+      },
+      "paths": [
+        "/system/tables/SB1010/schema"
+      ],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R3",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F06.columns",
+    "family": "F06",
+    "label": "colunas-sb1010",
+    "message": "quais colunas da tabela SB1010?",
+    "expect": "system_schema",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 3013ms | paths=['/system/tables/SB1010/columns']",
+    "ms": 3013,
+    "prose": "**318** registro(s) no catálogo de metadados.\n\n### Resultado da consulta\n\n<!-- section:scope -->\n\nResultado da consulta: **50** registro(s) retornado(s). Resumo abaixo; tabelas e painéis trazem o detalhe linha a linha.\n\nPainéis e tabelas abaixo complementam este resumo.",
+    "evidence": {
+      "R1": {
+        "intent": "operational_query",
+        "subIntent": "system_metadata",
+        "decision": "operational_action",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 1,
+        "paths": [
+          "/system/tables/SB1010/columns"
+        ],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 270,
+        "ragHits": 0,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "seedNotes": [],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 2456,
+        "wallMs": 3013,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 863,
+          "toolsMs": 1307,
+          "ragMs": 7,
+          "llmMs": 235
+        },
+        "verdict": "PASS"
+      },
+      "paths": [
+        "/system/tables/SB1010/columns"
+      ],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R3",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F06.indexes",
+    "family": "F06",
+    "label": "indexes-sb1010",
+    "message": "quais indexes da SB1010?",
+    "expect": "system_indexes",
+    "useAgent": true,
+    "seed": [],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 5803ms | paths=['/system/tables/SB1010/indexes']",
+    "ms": 5803,
+    "prose": "### Resultado da consulta\n\n<!-- section:scope -->\n\nResultado da consulta: **19** registro(s) retornado(s). Resumo abaixo; tabelas e painéis trazem o detalhe linha a linha.\n\nPainéis e tabelas abaixo complementam este resumo.",
+    "evidence": {
+      "R1": {
+        "intent": "operational_query",
+        "subIntent": "system_metadata",
+        "decision": "operational_action",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 1,
+        "paths": [
+          "/system/tables/SB1010/indexes"
+        ],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 223,
+        "ragHits": 0,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 0,
+        "seedNotes": [],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 4905,
+        "wallMs": 5803,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 1300,
+          "toolsMs": 3279,
+          "ragMs": 8,
+          "llmMs": 266
+        },
+        "verdict": "PASS"
+      },
+      "paths": [
+        "/system/tables/SB1010/indexes"
+      ],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R3",
+      "R4",
+      "R8"
+    ]
+  },
+  {
+    "caseId": "F06.addcol",
+    "family": "F06",
+    "label": "addcol-desconhecida",
+    "message": "adicione a coluna cidade nessa consulta",
+    "expect": "system_clarify_column",
+    "useAgent": true,
+    "seed": [
+      "crie um sql que liste produtos do grupo 1008 sem executar"
+    ],
+    "responseMode": "normal",
+    "status": "PASS",
+    "detail": "ok | 1301ms",
+    "ms": 1301,
+    "prose": "### Consulta SQL (elaboração)\n\nNão reconheci a coluna **cidade** na consulta ativa. Informe o nome técnico do campo (ex.: `B1_DESC`) ou peça o schema da tabela.\n\nConsulta SQL utilizada na pesquisa anterior:\n\n```sql\nSELECT A1_COD, A1_NOME\nFROM SA1010\nWHERE D_E_L_E_T_ = ''\n```\n\nPeça alterações em linguagem natural — por ",
+    "evidence": {
+      "R1": {
+        "intent": "rag_question",
+        "subIntent": "sql_generate",
+        "decision": "sql_route",
+        "verdict": "PASS"
+      },
+      "R2": {
+        "toolCount": 0,
+        "paths": [],
+        "verdict": "PASS"
+      },
+      "R3": {
+        "branches": [],
+        "verdict": "PASS"
+      },
+      "R4": {
+        "proseLen": 393,
+        "ragHits": 2,
+        "verdict": "PASS"
+      },
+      "R5": {
+        "presentationDecision": null,
+        "verdict": "PASS"
+      },
+      "R6": {
+        "seedCount": 1,
+        "seedNotes": [
+          "9954ms hits=2 len=883"
+        ],
+        "verdict": "PASS"
+      },
+      "R7": {
+        "surface": "send",
+        "verdict": "N/A"
+      },
+      "R8": {
+        "totalMs": 802,
+        "wallMs": 1301,
+        "mode": "normal",
+        "timings": {
+          "preToolMs": 545,
+          "toolsMs": 24,
+          "ragMs": 107,
+          "llmMs": 82
+        },
+        "verdict": "PASS"
+      },
+      "paths": [],
+      "operationIds": []
+    },
+    "rRequired": [
+      "R1",
+      "R2",
+      "R4",
+      "R6",
       "R8"
     ]
   }

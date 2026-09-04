@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+import urllib.error
 from pathlib import Path
 
 _SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "human_interaction_battery_live.py"
@@ -178,3 +179,21 @@ def test_judge_sql_authoring_fails_on_data_sql_path():
     mod._judge(case, msg, 2000)
     assert case.status == "FAIL"
     assert "/data/sql" in case.detail
+
+
+def test_rate_limit_helpers_classify_429():
+    mod = _load_module()
+    err = urllib.error.HTTPError("http://x", 429, "TOO MANY", hdrs=None, fp=None)  # type: ignore[arg-type]
+    assert mod._is_rate_limit_error(err)
+    assert mod._is_rate_limit_error(RuntimeError("HTTP Error 429: TOO MANY REQUESTS"))
+    assert not mod._is_rate_limit_error(RuntimeError("HTTP Error 500"))
+    assert mod._retry_after_seconds(err, 0) >= 1.0
+    assert mod._retry_after_seconds(err, 2) >= mod._retry_after_seconds(err, 0)
+
+
+def test_unauthorized_helper_classifies_401():
+    mod = _load_module()
+    err = urllib.error.HTTPError("http://x", 401, "UNAUTHORIZED", hdrs=None, fp=None)  # type: ignore[arg-type]
+    assert mod._is_unauthorized_error(err)
+    assert mod._is_unauthorized_error(RuntimeError("HTTP Error 401: UNAUTHORIZED"))
+    assert not mod._is_unauthorized_error(RuntimeError("HTTP Error 429"))

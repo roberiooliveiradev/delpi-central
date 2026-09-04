@@ -17,6 +17,12 @@ Filtros:
   SMOKE_FAMILY=F03,F14                   — só famílias listadas
   SMOKE_SKIP_OPTIONAL=1                  — pula casos optional (TV/PAC/desenho)
 
+Pacing (rate limit chat_messages, default 20/60s):
+  SMOKE_CASE_PAUSE=3                     — segundos entre casos (default 3)
+  SMOKE_TURN_PAUSE=1                     — segundos entre seed e turno
+  SMOKE_429_RETRIES=6                    — tentativas após HTTP 429
+  SMOKE_429_BASE_SLEEP=8                 — sleep inicial em 429 (exponencial, cap 65s)
+
 Saída JSON: docs/testing/evidence/chat-human-interaction-battery.json
 Doc canônica: docs/testing/chat-ai-flow-families.md § 1.3 (julgar resposta + fluxo)
 """
@@ -56,6 +62,64 @@ _CHAT = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").str
 _LATENCY_NORMAL_MS = 5000
 _LATENCY_FAST_MS = 3000
 _LATENCY_IDENTITY_MS = 8000
+
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+def _case_pause_seconds() -> float:
+    return max(0.0, _env_float("SMOKE_CASE_PAUSE", 3.0))
+
+
+def _turn_pause_seconds() -> float:
+    return max(0.0, _env_float("SMOKE_TURN_PAUSE", 1.0))
+
+
+def _429_retries() -> int:
+    return max(0, _env_int("SMOKE_429_RETRIES", 6))
+
+
+def _429_base_sleep() -> float:
+    return max(1.0, _env_float("SMOKE_429_BASE_SLEEP", 8.0))
+
+
+def _is_rate_limit_error(exc: BaseException) -> bool:
+    if isinstance(exc, urllib.error.HTTPError):
+        return int(getattr(exc, "code", 0) or 0) == 429
+    text = str(exc).lower()
+    return "429" in text or "too many requests" in text or "rate limit" in text
+
+
+def _retry_after_seconds(exc: BaseException, attempt: int) -> float:
+    """Sleep após 429: Retry-After se presente; senão backoff exponencial (cap 65s)."""
+    if isinstance(exc, urllib.error.HTTPError):
+        headers = getattr(exc, "headers", None)
+        if headers is not None:
+            raw = headers.get("Retry-After") or headers.get("retry-after")
+            if raw:
+                try:
+                    return max(1.0, float(raw))
+                except ValueError:
+                    pass
+    base = _429_base_sleep()
+    return min(65.0, base * (2 ** max(0, attempt)))
 
 AGENTE_RE = re.compile(r"agente|especialista|ative|composer", re.I)
 DADOS_RE = re.compile(r"dados consultados|j[aá] foram consultados", re.I)
@@ -109,25 +173,63 @@ class BatteryCase:
     seed_notes: list[str] = field(default_factory=list)
 
 
+def _is_unauthorized_error(exc: BaseException) -> bool:
+    if isinstance(exc, urllib.error.HTTPError):
+        return int(getattr(exc, "code", 0) or 0) == 401
+    text = str(exc).lower()
+    return "401" in text or "unauthorized" in text
+
+
 def _request(
     method: str,
     url: str,
     *,
     token: str | None = None,
+    auth: dict[str, str] | None = None,
     body: dict | None = None,
     timeout: int = 300,
 ) -> dict:
-    headers = {"Accept": "application/json"}
     data = None
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
     if body is not None:
-        headers["Content-Type"] = "application/json"
         data = json.dumps(body).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        raw = resp.read().decode("utf-8")
-        return json.loads(raw) if raw else {}
+    retries = _429_retries()
+    last_exc: BaseException | None = None
+    auth_refreshed = False
+    for attempt in range(retries + 1):
+        headers = {"Accept": "application/json"}
+        bearer = (auth or {}).get("token") if auth else None
+        if not bearer:
+            bearer = token
+        if bearer:
+            headers["Authorization"] = f"Bearer {bearer}"
+        if body is not None:
+            headers["Content-Type"] = "application/json"
+        req = urllib.request.Request(url, data=data, headers=headers, method=method)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                raw = resp.read().decode("utf-8")
+                return json.loads(raw) if raw else {}
+        except Exception as exc:  # noqa: BLE001 — 401/429 com retry; demais sobem
+            last_exc = exc
+            if (
+                _is_unauthorized_error(exc)
+                and auth is not None
+                and not auth_refreshed
+            ):
+                print("  (401 — renovando token Keycloak)", flush=True)
+                auth["token"] = _token()
+                auth_refreshed = True
+                continue
+            if not _is_rate_limit_error(exc) or attempt >= retries:
+                raise
+            sleep_s = _retry_after_seconds(exc, attempt)
+            print(
+                f"  (rate limit 429 — retry {attempt + 1}/{retries} em {sleep_s:.0f}s)",
+                flush=True,
+            )
+            time.sleep(sleep_s)
+    assert last_exc is not None
+    raise last_exc
 
 
 def _token() -> str:
@@ -1049,7 +1151,7 @@ def _cases_catalog() -> list[BatteryCase]:
 
 
 def _send_turn(
-    token: str,
+    auth: dict[str, str],
     session_id: str,
     message: str,
     *,
@@ -1067,7 +1169,7 @@ def _send_turn(
     payload = _request(
         "POST",
         f"{_BASE}{_CHAT}/sessions/{session_id}/messages",
-        token=token,
+        auth=auth,
         body=body,
     )
     ms = int((time.perf_counter() - t0) * 1000)
@@ -1075,28 +1177,30 @@ def _send_turn(
 
 
 def _run_case(
-    token: str,
+    auth: dict[str, str],
     agent_id: str | None,
     case: BatteryCase,
     session_cache: dict[str, str],
-) -> str:
+) -> None:
     print(f"\n→ [{case.case_id}] {case.message!r}", flush=True)
     aid = agent_id if case.use_agent else None
     cache_key = f"{aid or 'common'}:{case.case_id}" if case.reuse_session else f"{aid or 'common'}:ephemeral"
     sid = session_cache.get(cache_key) if case.reuse_session else None
-    if not sid:
-        body: dict[str, Any] = {"title": f"battery-{case.case_id}"[:60]}
-        if aid:
-            body["agentId"] = aid
-        session = _request("POST", f"{_BASE}{_CHAT}/sessions", token=token, body=body)
-        sid = str(session["id"])
-        if case.reuse_session:
-            session_cache[cache_key] = sid
     try:
+        if not sid:
+            body: dict[str, Any] = {"title": f"battery-{case.case_id}"[:60]}
+            if aid:
+                body["agentId"] = aid
+            session = _request(
+                "POST", f"{_BASE}{_CHAT}/sessions", auth=auth, body=body
+            )
+            sid = str(session["id"])
+            if case.reuse_session:
+                session_cache[cache_key] = sid
         for seed_msg in case.seed:
             print(f"  seed: {seed_msg!r}", flush=True)
             seed_payload, seed_ms = _send_turn(
-                token, sid, seed_msg, agent_id=aid, response_mode=case.response_mode
+                auth, sid, seed_msg, agent_id=aid, response_mode=case.response_mode
             )
             seed_prose = _prose(seed_payload)
             note = f"{seed_ms}ms hits={_rag_hit_count(seed_payload)} len={len(seed_prose)}"
@@ -1121,9 +1225,12 @@ def _run_case(
                             f"  prosa(seed): {case.prose.replace(chr(10), ' ')[:200]}",
                             flush=True,
                         )
-                    return token
+                    return
+            turn_pause = _turn_pause_seconds()
+            if turn_pause > 0:
+                time.sleep(turn_pause)
         msg, ms = _send_turn(
-            token, sid, case.message, agent_id=aid, response_mode=case.response_mode
+            auth, sid, case.message, agent_id=aid, response_mode=case.response_mode
         )
         _judge(case, msg, ms)
     except Exception as exc:  # noqa: BLE001
@@ -1134,7 +1241,6 @@ def _run_case(
         print(f"  prosa: {case.prose.replace(chr(10), ' ')[:200]}", flush=True)
     if not case.reuse_session:
         session_cache.pop(cache_key, None)
-    return token
 
 
 def _filter_cases(cases: list[BatteryCase]) -> list[BatteryCase]:
@@ -1211,8 +1317,8 @@ def main() -> int:
 
     print(f"base={_BASE}", flush=True)
     print("auth…", flush=True)
-    token = _token()
-    agent_id = _first_agent(token)
+    auth = {"token": _token()}
+    agent_id = _first_agent(auth["token"])
     print(f"agent={agent_id}", flush=True)
 
     cases = _filter_cases(_cases_catalog())
@@ -1221,8 +1327,11 @@ def main() -> int:
         return 2
 
     session_cache: dict[str, str] = {}
-    for case in cases:
-        token = _run_case(token, agent_id, case, session_cache)
+    case_pause = _case_pause_seconds()
+    for index, case in enumerate(cases):
+        if index > 0 and case_pause > 0:
+            time.sleep(case_pause)
+        _run_case(auth, agent_id, case, session_cache)
 
     passed = sum(1 for c in cases if c.status == "PASS")
     failed = sum(1 for c in cases if c.status == "FAIL")

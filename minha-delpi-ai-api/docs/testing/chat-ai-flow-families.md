@@ -22,7 +22,7 @@
 | Inventário + roteiros | ✅ pronto |
 | Unitários das regressões recentes (agente / SQL authoring / leak) | ✅ verdes (set/2026) |
 | Smoke domain + HTTP F01 / F04 / F03 | ✅ **18/18 PASS** (set/2026) — `scripts/smoke_chat_flow_families_f01_f04_f03.py` |
-| Bateria interação humana simulada (HTTP + R1–R8) | ✅ script `scripts/human_interaction_battery_live.py` — rodar em stack live |
+| Bateria interação humana simulada (HTTP + R1–R8) | ✅ **F01–F07 P0: 26/26 PASS** (set/2026) — `scripts/human_interaction_battery_live.py` (`SMOKE_FAMILY=F01,…,F09`; F05/F08/F09 ainda sem casos no catálogo). Harness: pacing `SMOKE_CASE_PAUSE` + retry 429 + refresh 401 |
 | Smoke live UI (demais famílias § 5) | ⏳ pendente |
 
 **Mitigações recentes (já no código — revalidar no live):**
@@ -202,6 +202,10 @@ SMOKE_ONLY=F03.2-typo-estrutra,F19-B2 python scripts/human_interaction_battery_l
 
 # Só famílias
 SMOKE_FAMILY=F01,F03,F14 python scripts/human_interaction_battery_live.py
+
+# Pacing (evita FAIL falso por HTTP 429 — `RATE_LIMIT_CHAT_MESSAGES` ~20/60s)
+SMOKE_CASE_PAUSE=3 SMOKE_TURN_PAUSE=1 SMOKE_429_RETRIES=6 \
+  SMOKE_FAMILY=F01,F02,F03,F04,F06,F07 python scripts/human_interaction_battery_live.py
 ```
 
 **Saída:** `docs/testing/evidence/chat-human-interaction-battery.json` — por caso: `status`, `ms`, `evidence.R1…R8`, `paths`, `operationIds`. Copiar trechos para a planilha § 5.
