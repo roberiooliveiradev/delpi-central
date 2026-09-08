@@ -1,0 +1,190 @@
+---
+description: Responsabilidade transversal canônica — APIs, contratos, OpenAPI, erros, paginação, idempotência, compatibilidade e integrações entre serviços/providers
+alwaysApply: false
+---
+
+# Plataforma — APIs, contratos e integrações
+
+## Responsabilidade
+
+Esta é a fonte transversal para qualquer mudança que crie ou evolua **HTTP API, OpenAPI, DTO, evento, webhook, SSE, manifest, client ou integração entre sistemas**.
+
+## Contrato antes da implementação
+
+Antes de alterar produtor/consumidor, definir:
+
+```text
+owner
+consumidores
+request
+response
+erros
+segurança
+idempotência
+paginação/limites
+compatibilidade
+observabilidade
+```
+
+Contrato não é “o JSON que aconteceu de sair hoje”; deve possuir semântica explícita e estável.
+
+## APIs HTTP
+
+Quando aplicável:
+
+- método HTTP coerente com semântica;
+- path orientado a recurso/capacidade, não implementação interna;
+- status code consistente;
+- schema de request/response documentado;
+- erros com código estável + mensagem segura;
+- `operationId` estável em OpenAPI;
+- parâmetros com `in`, required, type, format, enum e description;
+- exemplos só quando ajudam e não viram fonte paralela de contrato;
+- limites/paginação explicitados.
+
+## OpenAPI como fonte técnica
+
+Para APIs que expõem OpenAPI:
+
+```text
+implementação
+↔ OpenAPI válido
+↔ testes de contrato
+↔ consumidores/clientes
+```
+
+Não duplicar manualmente paths, parâmetros ou schemas em catálogo paralelo quando o OpenAPI já é a fonte técnica.
+
+Para actions do Chat AI, prevalece `openapi-first-universal-tool-routing.mdc`.
+
+## Erros
+
+Separar pelo menos:
+
+```text
+authentication
+authorization
+validation
+not found
+conflict
+rate limit
+downstream unavailable
+timeout
+internal error
+```
+
+Nunca devolver `200` com payload de erro para esconder falha quando o contrato não define isso explicitamente.
+
+Erro externo pode ser traduzido por adapter; não vazar stack trace, SQL, segredo ou detalhes internos ao cliente.
+
+## Idempotência e writes
+
+Operação de escrita sujeita a retry, duplicação de request ou reprocessamento deve definir estratégia explícita:
+
+- chave natural/unique constraint;
+- idempotency key;
+- deduplication key;
+- optimistic concurrency/version;
+- semântica idempotente comprovada.
+
+Não assumir que POST repetido é seguro.
+
+## Paginação, filtros e ordenação
+
+APIs de lista devem definir quando necessário:
+
+```text
+page/cursor
+pageSize máximo
+sort permitido
+filtros suportados
+total/count quando custo aceitável
+limite máximo de export/fan-out
+```
+
+Não carregar conjunto ilimitado apenas porque o frontend atual é pequeno.
+
+## Integrações externas/internas
+
+Todo client deve:
+
+1. usar adapter/client canônico;
+2. ter timeout explícito;
+3. classificar erros;
+4. retry apenas quando seguro;
+5. propagar correlation/trace context quando suportado;
+6. respeitar contrato e auth do downstream;
+7. limitar payload/paginação/concurrency.
+
+Detalhes: `http-integration-resilience.mdc`.
+
+## Evolução e compatibilidade
+
+Toda mudança material é classificada conforme `contract-evolution-backward-compatibility.mdc`:
+
+```text
+ADDITIVE
+BEHAVIORAL
+DEPRECATED
+BREAKING
+```
+
+Mudança breaking exige migração, coexistência quando necessária e rollback/roll-forward claro.
+
+## Contratos entre bounded contexts
+
+O consumidor não deve impor sua regra de negócio ao produtor. O produtor expõe dado/capacidade coerente com seu domínio; composição específica fica no contexto consumidor.
+
+Aplicar `platform-architecture-boundaries.mdc`.
+
+## Testes obrigatórios
+
+Conforme mudança:
+
+- schema/serialização;
+- required/type/enum/format;
+- status codes e códigos de erro;
+- auth/authz;
+- idempotência/duplicate request;
+- paginação/limites;
+- consumidor antigo × produtor novo quando coexistirem;
+- timeout/downstream failure;
+- OpenAPI válido e alinhado ao runtime;
+- negative tests para payload inválido.
+
+## Anti-padrões
+
+- DTO diferente em cada controller para o mesmo conceito.
+- Renomear campo e “corrigir o frontend junto” sem inventário de consumidores.
+- `operationId` instável por estética.
+- client HTTP criado dentro de use case/domain.
+- retry genérico de writes.
+- API retornando estrutura diferente conforme caminho interno não documentado.
+- endpoint criado apenas para contornar falta de composição no contexto correto.
+- contrato documentado só em README sem schema/teste quando OpenAPI existe.
+
+## Regras filhas/complementares
+
+- `contract-evolution-backward-compatibility.mdc`
+- `http-integration-resilience.mdc`
+- `api-delpi-openapi-route-standards.mdc`
+- `api-delpi-response-contract.mdc`
+- `new-api-route-checklist.mdc`
+
+## Evidência de conclusão
+
+```text
+CONTRACT_OWNER
+CHANGE_CLASS
+CONSUMERS
+OPENAPI_STATUS
+ERROR_MODEL
+IDEMPOTENCY
+LIMITS
+COMPATIBILITY
+CONTRACT_TESTS
+```
+
+## Critério de sucesso
+
+Produtor e consumidores conseguem evoluir por contrato explícito, observável e testado, sem dependência de detalhes internos nem mudança coordenada silenciosa.
