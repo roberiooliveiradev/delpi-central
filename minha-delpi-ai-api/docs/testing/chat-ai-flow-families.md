@@ -535,7 +535,7 @@ Até lá, um `PASS` do script é evidência parcial, não conclusão automática
 
 ## Antes de alterar código
 
-1. Ler `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md`.
+1. Ler `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`.
 2. Carregar `.cursor/rules/development-standards-index.mdc` e regras especializadas aplicáveis.
 3. Ler este protocolo.
 4. Identificar família/capability afetada.
