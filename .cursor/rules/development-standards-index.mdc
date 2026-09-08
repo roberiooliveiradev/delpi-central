@@ -67,6 +67,20 @@ pedido completo
 
 Regra especializada irrelevante ao pedido/arquivos atuais não deve entrar no contexto apenas por ser importante em outro domínio.
 
+## Autoridade de planos do Cursor
+
+`.cursor/plans/*.plan.md` é **estado de execução**, não documentação arquitetural e não fonte de verdade.
+
+Quando um plano existente contradizer regra, contrato, OpenAPI, arquitetura ou implementação atual:
+
+```text
+fonte canônica atual vence
+→ corrigir/remover a instrução superada do plano
+→ executar somente a versão revalidada
+```
+
+Plano concluído não deve permanecer como documentação técnica; histórico fica no Git. Aplicar `plan-construction.mdc`.
+
 ## Fontes canônicas do chat
 
 | Responsabilidade | Fonte |
@@ -84,7 +98,7 @@ Regra especializada irrelevante ao pedido/arquivos atuais não deve entrar no co
 | Apresentação | `schema-first-presentation-delivered.mdc` |
 | Limites de camada | `clean-architecture-chat-api.mdc` |
 
-**Documentos de roadmap, changelog, homologações datadas e evidence de execuções anteriores não são fonte de instrução arquitetural nem de critério de PASS.** Servem somente como histórico/evidência quando explicitamente consultados para esse fim.
+**Documentos de roadmap, changelog, homologações datadas e evidence de execuções anteriores não são fonte de instrução arquitetural nem de critério de PASS.** Se contiverem instrução técnica substituída, devem ser removidos do working tree; o histórico permanece no Git.
 
 ## Regra de ouro para APIs/actions
 
