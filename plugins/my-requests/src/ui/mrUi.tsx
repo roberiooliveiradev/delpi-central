@@ -6,6 +6,7 @@ import {
   createDashboardFiltersKit,
   createDashboardFormActions,
   createDashboardLoadingState,
+  createDashboardNavigationCard,
   createDashboardPageHeader,
   createDashboardSectionCard,
   createDashboardSegmentToggle,
@@ -19,6 +20,7 @@ import {
   fileDropzoneBemClasses,
   formActionsBemClasses,
   loadingStateCardBemClasses,
+  navigationCardBemClasses,
   pageHeaderTitleRowBemClasses,
   sectionCardPacBemClasses,
   selectFieldPacClasses,
@@ -44,6 +46,10 @@ export const MyRequestsSectionCard = createDashboardSectionCard({
   labels: {
     titleHelpAriaLabel: (title) => `Ajuda: ${title}`,
   },
+});
+
+export const MyRequestsNavigationCard = createDashboardNavigationCard({
+  classNames: navigationCardBemClasses(MR_UI_PREFIX),
 });
 
 export const MyRequestsFormActions = createDashboardFormActions({

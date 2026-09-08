@@ -56,6 +56,14 @@
   max-width: 36rem;
 }
 
+/* Layout only — chrome dos cards vem do kit NavigationCard */
+.dashboard-my-requests .my-requests-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--my-requests-section-gap);
+  align-items: stretch;
+}
+
 /* Lista de domínio (hits de lookup / comentários) — não é chrome do kit */
 .dashboard-my-requests .my-requests-domain-list {
   margin: 0;

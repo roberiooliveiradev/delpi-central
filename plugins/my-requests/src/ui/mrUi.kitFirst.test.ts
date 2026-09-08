@@ -10,6 +10,7 @@ import {
   MyRequestsFiltersRow,
   MyRequestsModal,
   MyRequestsFileDropzone,
+  MyRequestsNavigationCard,
   MyRequestsSectionCard,
   TextField,
 } from "./mrUi";
@@ -30,6 +31,7 @@ describe("kit-first my-requests", () => {
   it("expõe factories do plugin-ui com prefixo my-requests", () => {
     expect(MR_UI_PREFIX).toBe("my-requests");
     expect(typeof MyRequestsSectionCard).toBe("function");
+    expect(typeof MyRequestsNavigationCard).toBe("function");
     expect(typeof TextField).toBe("function");
     expect(typeof MyRequestsFiltersRow).toBe("function");
     expect(typeof MyRequestsFilterSelectField).toBe("function");
