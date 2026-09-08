@@ -151,3 +151,36 @@ describe("Overview URL filters + unit MultiSelect", () => {
     ).toEqual([{ period: "2026-09", otdPct: 90, otdPctPrior: 88 }]);
   });
 });
+
+describe("overview KPI presentation", () => {
+  it("builds commercial-like goal presentation with performance badge", async () => {
+    const { buildOverviewKpiPresentation } = await import("./overviewKpiPresentation");
+    const presentation = buildOverviewKpiPresentation(
+      {
+        id: "KPI-OTD",
+        viewId: "overview",
+        title: "OTD compras",
+        description: "Pontualidade",
+        temporalNature: "interval",
+        periodLabel: "2026-09-01 → 2026-09-08",
+        value: 92,
+        displayValue: "92,0%",
+        unit: "%",
+        meta: 98,
+        status: "available",
+        source: "api-delpi",
+      },
+      {
+        from: "2026-09-01",
+        to: "2026-09-08",
+        scopeLabel: "Consolidado (unidades liberadas)",
+        consolidated: true,
+      },
+    );
+    expect(presentation.goalLabel).toBeTruthy();
+    expect(presentation.goalPerformanceBadge?.statusLabel).toMatch(/meta/i);
+    expect(presentation.goalPerformanceBadge?.directionLabel).toMatch(/maior|menor/i);
+    expect(presentation.iddScoreLabel).toBeTruthy();
+    expect(presentation.contextLabel).toMatch(/Consolidado/);
+  });
+});

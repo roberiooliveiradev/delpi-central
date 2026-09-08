@@ -34,23 +34,14 @@ import { OverviewOtdSeriesChart } from "../features/overview/OverviewOtdSeriesCh
 import {
   mapOverviewFetchError,
   OVERVIEW_CONTENT,
-  temporalNatureLabel,
 } from "../features/overview/overviewContent";
+import { buildOverviewKpiPresentation } from "../features/overview/overviewKpiPresentation";
 import { resolvePeriodKindChip } from "../features/overview/periodPreset";
 import { useOverviewFilters } from "../features/overview/useOverviewFilters";
 
 type OverviewPageProps = {
   basePath: string;
 };
-
-function formatMeta(meta: number | null, unit: string | null): string | null {
-  if (meta == null) return null;
-  if (unit === "%") return `${meta.toFixed(1)}%`;
-  if (unit === "R$") {
-    return `R$ ${meta.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-  return String(meta);
-}
 
 const KPI_ICONS: Record<string, ReactNode> = {
   "KPI-OTD": <Timer size={22} strokeWidth={1.75} aria-hidden="true" />,
@@ -96,6 +87,16 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
   );
   const hasPartial = (data?.partialFailures.length ?? 0) > 0;
   const periodKindBadge = resolvePeriodKindChip(filters.period);
+  const kpiGoalContext = useMemo(
+    () => ({
+      from: filters.from,
+      to: filters.to,
+      scopeLabel: filters.scopeBadge,
+      branch: filters.apiParams.branch,
+      consolidated: !filters.apiParams.branch,
+    }),
+    [filters.apiParams.branch, filters.from, filters.scopeBadge, filters.to],
+  );
 
   const homeHref = buildPluginPath("home", basePath);
   const scopeBadge = filters.scopeBadge;
@@ -172,7 +173,11 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
           <ul className="sp-overview__grid sp-overview-kpi-grid" aria-label="KPIs da visão geral">
             {kpis.map((kpi) => (
               <li key={kpi.id}>
-                <OverviewKpiItem kpi={kpi} periodKindBadge={periodKindBadge} />
+                <OverviewKpiItem
+                  kpi={kpi}
+                  periodKindBadge={periodKindBadge}
+                  goalContext={kpiGoalContext}
+                />
               </li>
             ))}
           </ul>
@@ -217,26 +222,50 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
 function OverviewKpiItem({
   kpi,
   periodKindBadge,
+  goalContext,
 }: {
   kpi: OverviewKpiCard;
   periodKindBadge: "MTD" | "YTD" | null;
+  goalContext: {
+    from: string;
+    to: string;
+    scopeLabel: string;
+    branch?: string;
+    consolidated: boolean;
+  };
 }) {
   const unavailable = kpi.status === "unavailable";
-  const nature = temporalNatureLabel(kpi.temporalNature);
+  const presentation = buildOverviewKpiPresentation(kpi, goalContext);
   const showPeriodBadge =
     kpi.temporalNature === "interval" ? periodKindBadge ?? undefined : undefined;
+  const performance = presentation.goalPerformanceBadge;
+  const comparisonTone =
+    performance?.tone === "success"
+      ? "positive"
+      : performance?.tone === "warning"
+        ? "warning"
+        : null;
+
   return (
     <SuppliesKpiCard
       title={kpi.title}
       titleHint={kpi.description}
       value={unavailable ? OVERVIEW_CONTENT.unavailable : kpi.displayValue ?? "—"}
-      contextLabel={kpi.periodLabel}
-      goalPrefix={OVERVIEW_CONTENT.goalPrefix}
-      goalLabel={formatMeta(kpi.meta, kpi.unit) ?? undefined}
+      comparisonTone={comparisonTone}
+      contextLabel={
+        unavailable ? OVERVIEW_CONTENT.partialNote : presentation.contextLabel
+      }
+      goalPrefix={presentation.goalPrefix}
+      goalLabel={presentation.goalLabel}
+      goalHint={presentation.goalHint}
+      monthlyGoalLabel={presentation.monthlyGoalLabel}
+      monthlyGoalPrefix={presentation.monthlyGoalPrefix}
+      monthlyGoalHint={presentation.monthlyGoalHint}
       periodKindBadge={showPeriodBadge}
-      goalScopeBadge={nature}
-      goalScopeHint={OVERVIEW_CONTENT.natureScopeHint}
-      subtitle={unavailable ? OVERVIEW_CONTENT.partialNote : undefined}
+      goalScopeBadge={presentation.goalScopeBadge}
+      goalScopeHint={presentation.goalScopeHint}
+      goalPerformanceBadge={performance}
+      iddScoreLabel={presentation.iddScoreLabel}
       icon={KPI_ICONS[kpi.id] ?? <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />}
       className={unavailable ? "sp-overview__kpi--unavailable" : undefined}
     />

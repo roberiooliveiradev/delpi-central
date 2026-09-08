@@ -272,13 +272,30 @@ declare module "@delpi/plugin-ui/index" {
     title: string;
     titleHint?: string;
     value: string;
+    valueVariant?: "default" | "per-unit";
+    comparisonTone?: "positive" | "negative" | "warning" | null;
     contextLabel?: string;
     goalLabel?: string | null;
-    goalPrefix?: string;
-    goalHint?: string;
+    goalPrefix?: string | null;
+    goalHint?: string | null;
+    monthlyGoalLabel?: string | null;
+    monthlyGoalPrefix?: string | null;
+    monthlyGoalHint?: string | null;
     periodKindBadge?: string | null;
-    goalScopeBadge?: string | null;
-    goalScopeHint?: string;
+    goalScopeBadge?: { tone?: string; label: string } | null;
+    goalScopeHint?: string | null;
+    goalPerformanceBadge?: {
+      tone: "success" | "warning";
+      statusLabel: string;
+      directionLabel: string;
+    } | null;
+    goalPerformanceBadges?: Array<{
+      tone: "success" | "warning";
+      statusLabel: string;
+      directionLabel: string;
+    }>;
+    iddScoreLabel?: string | null;
+    goalVariant?: "default" | "per-unit";
     subtitle?: string;
     icon: ReactNode;
     footer?: ReactNode;
@@ -286,6 +303,31 @@ declare module "@delpi/plugin-ui/index" {
     className?: string;
     onClick?: () => void;
     "aria-label"?: string;
+  };
+
+  export type DashboardGoalFields = Record<string, unknown>;
+  export type PerformanceDirection = "higher_is_better" | "lower_is_better";
+  export function buildKpiGoalPresentation(
+    contextLabel: string,
+    goal?: DashboardGoalFields | null,
+    formatComparable?: (value: number) => string,
+    options?: Record<string, unknown>,
+  ): {
+    goalLabel: string | null;
+    goalPrefix: string | null;
+    goalHint: string | null;
+    monthlyGoalLabel: string | null;
+    monthlyGoalPrefix: string | null;
+    monthlyGoalHint: string | null;
+    goalScopeBadge: { tone?: string; label: string } | null;
+    goalScopeHint: string | null;
+    goalPerformanceBadge: {
+      tone: "success" | "warning";
+      statusLabel: string;
+      directionLabel: string;
+    } | null;
+    iddScoreLabel: string | null;
+    contextLabel: string;
   };
 
   export function createDashboardKpiCard(config: {
