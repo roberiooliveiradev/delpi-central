@@ -1,6 +1,6 @@
 ---
-description: Migrations de plugins — só up em prod; reset apaga dados (DROP SCHEMA)
-alwaysApply: true
+description: Migrations de plugins — carregar ao aplicar/resetar schema de plugin; em produção usar apenas up e nunca reset destrutivo
+alwaysApply: false
 ---
 
 # Migrations de plugins — nunca reset em produção
