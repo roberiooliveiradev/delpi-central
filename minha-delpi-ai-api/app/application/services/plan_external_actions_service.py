@@ -69,6 +69,14 @@ class PlanExternalActionsService:
                 or plan.clarify
                 or (plan.metadata or {}).get("rejectedOutsideTopK")
             ):
+                if not plan.is_empty and not plan.clarify:
+                    plan = self._enrich_plan_with_bound_arguments(
+                        message,
+                        plan,
+                        candidates,
+                        previous_messages=previous_messages,
+                        execution_context=execution_context,
+                    )
                 return plan
 
         return self._deterministic_plan(
@@ -77,6 +85,99 @@ class PlanExternalActionsService:
             previous_messages=previous_messages,
             execution_context=execution_context,
             limit=limit,
+        )
+
+    def _enrich_plan_with_bound_arguments(
+        self,
+        message: str,
+        plan: ActionPlan,
+        candidates: list[ActionCandidate],
+        *,
+        previous_messages: list | None,
+        execution_context: dict[str, Any] | None,
+    ) -> ActionPlan:
+        """Merge canonical `_bind_arguments` into LLM steps (fill missing required only)."""
+        by_id = {item.action_id: item for item in candidates if item.action_id}
+        ctx_params: dict[str, Any] = {}
+        if isinstance(execution_context, dict):
+            raw_params = execution_context.get("parameters")
+            if isinstance(raw_params, dict):
+                ctx_params = dict(raw_params)
+
+        enriched: list[ActionPlanStep] = []
+        for step in plan.steps:
+            candidate = by_id.get(step.action_id)
+            if candidate is None:
+                enriched.append(step)
+                continue
+
+            existing_args = dict(step.arguments or {})
+            existing_params = existing_args.get("parameters")
+            if not isinstance(existing_params, dict):
+                existing_params = {}
+            existing_body = (
+                existing_args.get("body")
+                if isinstance(existing_args.get("body"), dict)
+                else None
+            )
+            merged_context = {**ctx_params, **existing_params}
+
+            parameters, body, missing = self._bind_arguments(
+                message,
+                candidate.raw_action,
+                context_parameters=merged_context,
+                previous_messages=previous_messages,
+                context_body=existing_body,
+            )
+            if missing:
+                clarify = OpenApiToolRoutingContentService.get(
+                    "selectionReasons",
+                    "openapiFirstClarify",
+                )
+                from app.domain.services.external_actions.external_action_response_content_service import (
+                    ExternalActionResponseContentService,
+                )
+
+                clarify = ExternalActionResponseContentService.format(
+                    "selectionReasons",
+                    "missingRequiredParameter",
+                    default=clarify,
+                    parameter=", ".join(missing),
+                )
+                return ActionPlan(
+                    clarify=clarify,
+                    selection_mode=plan.selection_mode or "openapi_first",
+                    metadata={
+                        **dict(plan.metadata or {}),
+                        "missingParameters": missing,
+                        "actionId": step.action_id,
+                    },
+                )
+
+            arguments: dict[str, Any] = {
+                **existing_args,
+                "actionId": step.action_id,
+                "parameters": parameters,
+            }
+            if body is not None:
+                arguments["body"] = body
+            elif "body" in existing_args:
+                arguments["body"] = existing_args["body"]
+
+            enriched.append(
+                ActionPlanStep(
+                    action_id=step.action_id,
+                    arguments=arguments,
+                    reason=step.reason,
+                    confidence=step.confidence,
+                )
+            )
+
+        return ActionPlan(
+            steps=tuple(enriched),
+            clarify=plan.clarify,
+            selection_mode=plan.selection_mode or "openapi_first",
+            metadata=dict(plan.metadata or {}),
         )
 
     def _plan_from_payload(
@@ -306,6 +407,7 @@ class PlanExternalActionsService:
         *,
         context_parameters: dict[str, Any],
         previous_messages: list | None = None,
+        context_body: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], Any, list[str]]:
         parameters: dict[str, Any] = {}
         for key, value in (context_parameters or {}).items():
@@ -343,6 +445,7 @@ class PlanExternalActionsService:
                     parameters[name] = product_code
 
         # Date/branch via builder canônico — só aplica chaves presentes no schema OpenAPI.
+        # Include granularity so required series params are filled even when dates already exist.
         date_branch_names = {
             "branch",
             "start_date",
@@ -351,6 +454,7 @@ class PlanExternalActionsService:
             "date_end",
             "startDate",
             "endDate",
+            "granularity",
         } & schema_names
         if date_branch_names and not date_branch_names.issubset(parameters.keys()):
             from app.domain.services.operational_api_parameter_builder_service import (
@@ -401,8 +505,10 @@ class PlanExternalActionsService:
 
         if isinstance(body_schema, dict):
             required_body = cls._required_body_properties(body_schema)
-            body = {}
+            body = dict(context_body) if isinstance(context_body, dict) else {}
             for prop in required_body:
+                if prop in body and body.get(prop) is not None and str(body.get(prop)).strip():
+                    continue
                 example = examples.get(prop)
                 if example is not None and str(example).lower() in (message or "").lower():
                     body[prop] = example

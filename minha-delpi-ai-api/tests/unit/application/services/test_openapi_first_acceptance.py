@@ -461,3 +461,83 @@ def test_merge_execution_context_is_provider_agnostic():
     )
     assert ctx["parameters"]["id"] == "45871"
     assert ctx["providerKey"] == "logistics-example"
+
+
+def _candidate_from_action(action: dict[str, Any], *, score: float = 1.0) -> ActionCandidate:
+    from app.domain.models.action_descriptor import ActionCandidate
+
+    return ActionCandidate(
+        descriptor=ActionDescriptor.from_action_dict(action),
+        score=score,
+    )
+
+
+def test_llm_plan_binds_missing_granularity_for_series():
+    action = {
+        "actionId": "api_delpi.commercial.get_commercial_rol_series",
+        "operationId": "get_commercial_rol_series",
+        "method": "GET",
+        "path": "/commercial/rol/series",
+        "summary": "Commercial ROL series",
+        "description": "ROL monthly series",
+        "parametersSchema": [
+            {"name": "start_date", "in": "query", "required": True},
+            {"name": "end_date", "in": "query", "required": True},
+            {"name": "granularity", "in": "query", "required": True},
+        ],
+        "enabled": True,
+    }
+    action_id = action["actionId"]
+
+    def fake_llm(_message, _catalog):
+        return {
+            "steps": [
+                {
+                    "actionId": action_id,
+                    "arguments": {
+                        "parameters": {
+                            "start_date": "01-01-2026",
+                            "end_date": "31-03-2026",
+                        }
+                    },
+                }
+            ]
+        }
+
+    plan = PlanExternalActionsService(llm_planner=fake_llm).plan(
+        "série comercial de ROL no trimestre",
+        [_candidate_from_action(action)],
+    )
+    assert not plan.is_empty
+    params = plan.steps[0].arguments.get("parameters") or {}
+    assert params.get("granularity") == "month"
+    assert params.get("start_date") == "01-01-2026"
+    assert params.get("end_date") == "31-03-2026"
+
+
+def test_bind_does_not_invent_granularity_for_scalar_summary():
+    action = {
+        "actionId": "api_delpi.commercial.get_commercial_rol_summary",
+        "operationId": "get_commercial_rol_summary",
+        "method": "GET",
+        "path": "/commercial/rol/summary",
+        "summary": "Commercial ROL summary KPI",
+        "description": "Scalar ROL KPI",
+        "parametersSchema": [
+            {"name": "start_date", "in": "query", "required": True},
+            {"name": "end_date", "in": "query", "required": True},
+        ],
+        "enabled": True,
+    }
+    parameters, _body, missing = PlanExternalActionsService._bind_arguments(
+        "resumo de ROL do mês",
+        action,
+        context_parameters={
+            "start_date": "01-03-2026",
+            "end_date": "31-03-2026",
+        },
+    )
+    assert missing == []
+    assert "granularity" not in parameters
+    assert parameters["start_date"] == "01-03-2026"
+    assert parameters["end_date"] == "31-03-2026"
