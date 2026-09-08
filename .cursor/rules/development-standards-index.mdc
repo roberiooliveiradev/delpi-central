@@ -1,17 +1,33 @@
 ---
-description: Índice das diretrizes do repositório — consultar antes de implementar
+description: Índice das diretrizes do repositório — constituição mínima, prioridade e roteamento para regras especializadas
 alwaysApply: true
 ---
 
 # Diretrizes do repositório — índice
 
+## Constituição mínima global
+
+Somente estas regras devem permanecer com `alwaysApply: true`:
+
+```text
+development-standards-index.mdc
+evidence-driven-execution.mdc
+centralized-rules-first.mdc
+clean-code-architecture-guardrails.mdc
+english-code-identifiers.mdc
+```
+
+Todo o restante é **especializado** e deve ser carregado por relevância (`description`) ou por arquivos (`globs`).
+
+Regra de governança: `cursor-rules-governance.mdc`.
+
+**Não carregar o catálogo inteiro de `.cursor/rules` por padrão.** Mais regras irrelevantes no contexto reduzem foco e aumentam risco de contradição.
+
 ## Protocolo cognitivo obrigatório
 
-| Regra | Quando consultar |
-|-------|------------------|
-| `evidence-driven-execution.mdc` | **Sempre** — decompor pedido completo, separar fato de inferência, investigar antes de editar e validar objetivo original |
+`evidence-driven-execution.mdc` é a fonte canônica para decomposição, evidência, investigação, integração real e validação do objetivo original.
 
-Fluxo mental obrigatório:
+Fluxo mental:
 
 ```text
 Pedido completo
@@ -27,28 +43,49 @@ Pedido completo
 → validação do objetivo original
 ```
 
+## Como selecionar regras especializadas
+
+Antes de implementar, identificar o domínio da tarefa e carregar **somente** as regras aplicáveis.
+
+| Sinal da tarefa | Regras especializadas |
+|-----------------|-----------------------|
+| Bug/fix/regressão | `root-cause-generalized-fix.mdc` |
+| Plano/CreatePlan/multi-etapa | `plan-construction.mdc` |
+| Alteração de código/testes/commit | `test-and-commit.mdc` |
+| Feature/modificação user-facing | `feature-help-sync.mdc` |
+| Chat/LLM/RAG/agents/tools | `chat-intelligence-base.mdc`, `llm-stack-centralized.mdc` e regras específicas do subdomínio |
+| OpenAPI/actions/providers externos | `openapi-first-universal-tool-routing.mdc`, `operational-api-routing.mdc`, `new-api-route-checklist.mdc` |
+| Apresentação do chat | `schema-first-presentation-delivered.mdc`, `presentation-operational-decoupling.mdc` |
+| Conteúdo/regex/vocabulário do assistente | `assistant-content-json.mdc` |
+| SQL/TOTVS/performance | `sql-query-development.mdc` + regras TOTVS específicas |
+| Upload/storage/anexos | `persistent-upload-storage.mdc` |
+| Migrations | `migrations-immutable-checksum.mdc`; plugins: `plugins-migrations-no-reset-prod.mdc` |
+| Deploy/Docker/rebuild | `infra-sequential-container-startup.mdc` |
+| MFE com API própria | `mfe-own-api-no-direct-api-delpi.mdc`, `application-bounded-context-decoupling.mdc` |
+| Overlay/popover/toolbar | `plugins-overlay-positioning.mdc` |
+| Module Federation patch | `mf-federation-patch-safety.mdc` |
+
+Se uma regra especializada não for relevante ao pedido/arquivos atuais, **não deve ser trazida para o contexto apenas porque é importante em outro domínio**.
+
 ## Princípios transversais
 
-| Regra | Quando consultar |
-|-------|------------------|
+| Regra | Aplicação |
+|-------|-----------|
 | `english-code-identifiers.mdc` | Sempre — paths, arquivos, permissões e `operationId` em inglês; PT só em UI/locale/docs |
-| `feature-help-sync.mdc` | Feature/modificação user-facing → Ajuda in-app sincronizada |
-| `centralized-rules-first.mdc` | Qualquer fix — localizar módulo canônico antes de codar |
-| `root-cause-generalized-fix.mdc` | Qualquer bug/fix — causa raiz e solução generalista |
-| `plan-construction.mdc` | Plano multi-etapa |
-| `llm-stack-centralized.mdc` | Chat — stack LLM centralizada |
-| `infra-sequential-container-startup.mdc` | Deploy / docker up / rebuild |
+| `centralized-rules-first.mdc` | Sempre — localizar a fonte canônica antes de criar nova regra/serviço |
+| `clean-code-architecture-guardrails.mdc` | Sempre — impedir patch local, acoplamento e arquitetura divergente |
+| `evidence-driven-execution.mdc` | Sempre — fatos ≠ inferências; objetivo original deve ser validado |
 
 ## Chat / APIs / tools
 
 | Regra | Escopo |
 |-------|--------|
-| **`openapi-first-universal-tool-routing.mdc`** | **Canônica para tools/actions** — OpenAPI + Action Catalog/index + planner/validator genéricos; API externa sem código/registry por endpoint |
-| `operational-api-routing.mdc` | Compatibilidade e aplicação prática do roteamento operacional durante migração |
-| `new-api-route-checklist.mdc` | Checklist de rota/API exposta ao chat; import/index/policy/testes |
-| `chat-intelligence-base.mdc` | Inteligência transversal no chat base; agentes herdam |
+| **`openapi-first-universal-tool-routing.mdc`** | **Canônica para tools/actions** — OpenAPI + Action Catalog/index + retrieval/planner/validator genéricos; API externa sem código/registry por endpoint |
+| `operational-api-routing.mdc` | Compatibilidade e aplicação prática do roteamento durante migração |
+| `new-api-route-checklist.mdc` | Checklist de rota/API/action exposta ao chat |
+| `chat-intelligence-base.mdc` | Inteligência transversal do chat; agentes/projetos herdam |
 | `assistant-content-json.mdc` | Linguagem/UX/policies em JSON, sem duplicar OpenAPI |
-| `schema-first-presentation-delivered.mdc` | Apresentação schema-first; fallback genérico para action nova |
+| `schema-first-presentation-delivered.mdc` | Apresentação schema-first; fallback genérico |
 | `clean-architecture-chat-api.mdc` | Limites de camada na API do chat |
 
 ### Regra de ouro para API nova
@@ -86,13 +123,24 @@ Se exigir, consultar `openapi-first-universal-tool-routing.mdc` antes de impleme
 | `tv-dashboard-optional-data-filters.mdc` | Filtros opcionais em Dados |
 | `tv-dashboard-presentation-parity.mdc` | Editor ≡ apresentação |
 
+## Governança das próprias regras
+
+Ao criar/editar `.cursor/rules`:
+
+1. aplicar `cursor-rules-governance.mdc`;
+2. preferir estender a fonte canônica a criar regra sobreposta;
+3. manter `alwaysApply: true` somente na constituição mínima;
+4. usar `description`/`globs` para regras especializadas;
+5. executar `python scripts/audit_cursor_rules.py`;
+6. não concluir com referências quebradas, descrição duplicada ou orçamento global excedido.
+
 ## Ordem de prioridade em conflito
 
-1. `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md` + `evidence-driven-execution.mdc` para entendimento, evidência e decisão.
-2. Módulo canônico + contrato vigente.
-3. Para tools/actions: **OpenAPI importado + Action Catalog/index** prevalecem sobre registry/markers manuais.
-4. JSON declarativo para linguagem/policy/configuração transversal — nunca como duplicação de contrato OpenAPI.
-5. Ajuda in-app sincronizada quando aplicável.
-6. Teste de regressão no pacote alterado.
+1. `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md`.
+2. Constituição mínima global + regra especializada canônica do domínio.
+3. ADR/contrato/schema/OpenAPI/implementação vigente conforme `evidence-driven-execution.mdc`.
+4. Para tools/actions: **OpenAPI importado + Action Catalog/index** prevalecem sobre registry/markers manuais.
+5. JSON declarativo para linguagem/policy/configuração transversal — nunca como duplicação de contrato OpenAPI.
+6. Testes e validação do objetivo original.
 
 Conflitos entre fontes relevantes devem ser registrados como **drift**; não reconciliar contradições silenciosamente.
