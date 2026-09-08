@@ -9,6 +9,8 @@ declare module "@delpi/plugin-ui/index" {
     content: string;
     ariaLabel?: string;
     children?: ReactNode;
+    wrap?: boolean;
+    placement?: "top" | "bottom";
   }): ReactNode;
 
   export function ActionButton(props: {
@@ -176,6 +178,7 @@ declare module "@delpi/plugin-ui/index" {
   }): ComponentType<{
     title: string;
     description?: string;
+    hint?: string;
     icon?: ReactNode;
     routes: Array<{
       id: string;
@@ -204,7 +207,7 @@ declare module "@delpi/plugin-ui/index" {
   export function createDashboardHubChipRow(config: {
     prefix: string;
   }): ComponentType<{
-    label: string;
+    label: ReactNode;
     "aria-label"?: string;
     children: ReactNode;
   }>;

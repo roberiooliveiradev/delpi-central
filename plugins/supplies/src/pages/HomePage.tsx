@@ -17,6 +17,7 @@ import { navigatePluginView } from "../app/pluginNavigation";
 import type { PluginRoutableView } from "../app/pluginRoutes";
 import { useSuppliesSession } from "../app/SuppliesSessionContext";
 import {
+  HelpTooltip,
   SuppliesActionButton,
   SuppliesCatalogSearchBar,
   SuppliesEmptyState,
@@ -64,6 +65,15 @@ const SECTION_ICONS: Record<string, ReactNode> = {
   help: <BookOpen size={20} strokeWidth={1.75} aria-hidden="true" />,
 };
 
+const SECTION_HINTS: Record<string, string> = {
+  attention: SP_HELP.home.sections.attention,
+  analytics: SP_HELP.home.sections.analytics,
+  purchase_requests: SP_HELP.home.sections.purchase_requests,
+  operations: SP_HELP.home.sections.operations,
+  administration: SP_HELP.home.sections.administration,
+  help: SP_HELP.home.sections.help,
+};
+
 function isNavigationTarget(viewId: string): viewId is PluginRoutableView {
   return [
     "home",
@@ -81,6 +91,23 @@ function isNavigationTarget(viewId: string): viewId is PluginRoutableView {
     "administration",
     "help",
   ].includes(viewId);
+}
+
+function LabelWithHelp({
+  label,
+  help,
+  ariaLabel,
+}: {
+  label: string;
+  help: string;
+  ariaLabel: string;
+}) {
+  return (
+    <span className="sp-label-with-help">
+      <span>{label}</span>
+      <HelpTooltip content={help} ariaLabel={ariaLabel} placement="bottom" />
+    </span>
+  );
 }
 
 export function HomePage({ basePath }: HomePageProps) {
@@ -201,7 +228,7 @@ export function HomePage({ basePath }: HomePageProps) {
           <SuppliesSectionCard
             title={HOME.attentionTitle}
             subtitle={HOME.attentionSubtitle}
-            hint={SP_HELP.homeAttention}
+            hint={SP_HELP.home.attention}
             actions={
               <SuppliesActionButton variant="ghost" onClick={reloadAttention}>
                 {HOME.attentionRefresh}
@@ -216,6 +243,7 @@ export function HomePage({ basePath }: HomePageProps) {
                     className="sp-home-attention-card"
                     disabled={card.status === "unavailable"}
                     onClick={() => goToCard(card)}
+                    title={card.description}
                   >
                     <span className="sp-home-attention-card__title">{card.title}</span>
                     <span className="sp-home-attention-card__desc">{card.description}</span>
@@ -231,7 +259,11 @@ export function HomePage({ basePath }: HomePageProps) {
 
         {showQueueOk ? (
           <div className="sp-home-queue-ok" role="status">
-            <span>{HOME.attentionQueueOk}</span>
+            <LabelWithHelp
+              label={HOME.attentionQueueOk}
+              help={SP_HELP.home.queueOk}
+              ariaLabel={HOME.queueOkHelpAriaLabel}
+            />
           </div>
         ) : null}
 
@@ -240,36 +272,51 @@ export function HomePage({ basePath }: HomePageProps) {
         ) : null}
 
         {attentionError ? (
-          <SuppliesStateBanner variant="error">{HOME.attentionError}</SuppliesStateBanner>
+          <SuppliesStateBanner variant="error">{attentionError}</SuppliesStateBanner>
         ) : null}
 
         <SuppliesSectionCard
           title={HOME.pathsTitle}
           subtitle={HOME.pathsSubtitle}
-          hint={SP_HELP.shell.navHome}
+          hint={SP_HELP.home.paths}
         >
           <div className="sp-home-paths">
-            <SuppliesCatalogSearchBar
-              value={query}
-              onChange={setQuery}
-              hits={searchHits.map((hit) => ({
-                id: hit.id,
-                label: hit.label,
-                groupLabel: hit.groupLabel,
-              }))}
-              onSelectHit={(id) => {
-                const route = findHubRouteById(sections, id);
-                if (route) navigateRoute(route);
-              }}
-              placeholder={HOME.searchPlaceholder}
-              clearLabel={HOME.clearSearch}
-              emptyHitsLabel={HOME.searchEmpty}
-              aria-label={HOME.searchAriaLabel}
-            />
+            <div className="sp-home-search">
+              <div className="sp-home-search__label">
+                <LabelWithHelp
+                  label={HOME.searchLabel}
+                  help={SP_HELP.home.search}
+                  ariaLabel={HOME.searchHelpAriaLabel}
+                />
+              </div>
+              <SuppliesCatalogSearchBar
+                value={query}
+                onChange={setQuery}
+                hits={searchHits.map((hit) => ({
+                  id: hit.id,
+                  label: hit.label,
+                  groupLabel: hit.groupLabel,
+                }))}
+                onSelectHit={(id) => {
+                  const route = findHubRouteById(sections, id);
+                  if (route) navigateRoute(route);
+                }}
+                placeholder={HOME.searchPlaceholder}
+                clearLabel={HOME.clearSearch}
+                emptyHitsLabel={HOME.searchEmpty}
+                aria-label={HOME.searchAriaLabel}
+              />
+            </div>
 
             {visibleFavorites.length > 0 ? (
               <SuppliesHubChipRow
-                label={HOME.favoritesTitle}
+                label={
+                  <LabelWithHelp
+                    label={HOME.favoritesTitle}
+                    help={SP_HELP.home.favorites}
+                    ariaLabel={HOME.favoritesHelpAriaLabel}
+                  />
+                }
                 aria-label={HOME.favoritesTitle}
               >
                 {visibleFavorites.map((item) => (
@@ -295,7 +342,16 @@ export function HomePage({ basePath }: HomePageProps) {
             ) : null}
 
             {visibleRecents.length > 0 ? (
-              <SuppliesHubChipRow label={HOME.recentsTitle} aria-label={HOME.recentsTitle}>
+              <SuppliesHubChipRow
+                label={
+                  <LabelWithHelp
+                    label={HOME.recentsTitle}
+                    help={SP_HELP.home.recents}
+                    ariaLabel={HOME.recentsHelpAriaLabel}
+                  />
+                }
+                aria-label={HOME.recentsTitle}
+              >
                 {visibleRecents.map((item) => (
                   <SuppliesRouteChip
                     key={`${item.viewId}-${item.at}`}
@@ -320,6 +376,7 @@ export function HomePage({ basePath }: HomePageProps) {
                     key={section.id}
                     title={section.title}
                     description={section.description}
+                    hint={SECTION_HINTS[section.id]}
                     icon={SECTION_ICONS[section.id] ?? <Users size={20} aria-hidden="true" />}
                     routes={mapSectionRoutes(section)}
                   />

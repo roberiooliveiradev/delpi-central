@@ -147,6 +147,32 @@
   min-width: 0;
 }
 
+.dashboard-supplies-portal .sp-home-search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-home-search__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--sp-muted, #666666);
+}
+
+.dashboard-supplies-portal .sp-label-with-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dashboard-supplies-portal .sp-home-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
 .dashboard-supplies-portal .sp-home-sections-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Star } from "lucide-react";
 
+import { HelpTooltip } from "../help/HelpTooltip";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type SectionRouteItem = {
@@ -22,6 +23,7 @@ export type SectionRouteCardClassNames = {
   icon: string;
   titleBlock: string;
   title: string;
+  titleWithHelp: string;
   description: string;
   badge: string;
   routes: string;
@@ -37,6 +39,8 @@ export type SectionRouteCardProps = {
   icon?: ReactNode;
   badge?: string | number;
   description?: string;
+  /** Texto do HelpTooltip no título (mesmo padrão do SectionCard). */
+  hint?: string;
   routes: readonly SectionRouteItem[];
   classNames: SectionRouteCardClassNames;
   className?: string;
@@ -53,6 +57,7 @@ export function sectionRouteCardBemClasses(prefix: string): SectionRouteCardClas
     icon: pair(`${base}__icon`, `${ui}__icon`),
     titleBlock: pair(`${base}__title-block`, `${ui}__title-block`),
     title: pair(`${base}__title`, `${ui}__title`),
+    titleWithHelp: pair(`${base}__title-with-help`, `${ui}__title-with-help`),
     description: pair(`${base}__description`, `${ui}__description`),
     badge: pair(`${base}__badge`, `${ui}__badge`),
     routes: pair(`${base}__routes`, `${ui}__routes`),
@@ -76,6 +81,7 @@ export function SectionRouteCard({
   icon,
   badge,
   description,
+  hint,
   routes,
   classNames,
   className,
@@ -92,7 +98,14 @@ export function SectionRouteCard({
           </span>
         ) : null}
         <div className={classNames.titleBlock}>
-          <h3 className={classNames.title}>{title}</h3>
+          <h3 className={classNames.title}>
+            <span className={classNames.titleWithHelp}>
+              <span>{title}</span>
+              {hint ? (
+                <HelpTooltip content={hint} ariaLabel={`Ajuda: ${title}`} placement="bottom" />
+              ) : null}
+            </span>
+          </h3>
           {description ? <p className={classNames.description}>{description}</p> : null}
         </div>
         {badge != null && badge !== "" && badge !== 0 ? (

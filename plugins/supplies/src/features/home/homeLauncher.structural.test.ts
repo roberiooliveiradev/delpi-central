@@ -16,6 +16,20 @@ describe("Home launcher visual pattern", () => {
     expect(page).not.toMatch(/sp-home__fav/);
   });
 
+  it("cobre HelpTooltip nos blocos e labels do Início", () => {
+    const page = readFileSync(join(dir, "../../pages/HomePage.tsx"), "utf8");
+    const shell = readFileSync(join(dir, "../../app/PluginShell.tsx"), "utf8");
+    expect(page).toMatch(/SP_HELP\.home\.attention/);
+    expect(page).toMatch(/SP_HELP\.home\.paths/);
+    expect(page).toMatch(/SP_HELP\.home\.search/);
+    expect(page).toMatch(/SP_HELP\.home\.favorites/);
+    expect(page).toMatch(/SP_HELP\.home\.recents/);
+    expect(page).toMatch(/SECTION_HINTS/);
+    expect(page).toMatch(/LabelWithHelp/);
+    expect(shell).toMatch(/SP_HELP\.home\.heroAttention/);
+    expect(shell).toMatch(/SP_HELP\.home\.scopeBadge/);
+  });
+
   it("hero de saudação fica no PluginShell, não no título Início local", () => {
     const shell = readFileSync(join(dir, "../../app/PluginShell.tsx"), "utf8");
     const page = readFileSync(join(dir, "../../pages/HomePage.tsx"), "utf8");

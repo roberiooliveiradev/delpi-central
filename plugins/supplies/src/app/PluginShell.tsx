@@ -192,7 +192,16 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const heroHighlights = [
     {
       id: "attention",
-      label: heroCopy.highlights.attention,
+      label: (
+        <span className="sp-label-with-help">
+          <span>{heroCopy.highlights.attention}</span>
+          <HelpTooltip
+            content={SP_HELP.home.heroAttention}
+            ariaLabel={`Ajuda: ${heroCopy.highlights.attention}`}
+            placement="bottom"
+          />
+        </span>
+      ),
       value: attentionValue,
       tone:
         attentionReady && actionableAttention.length > 0
@@ -201,12 +210,30 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
     },
     {
       id: "units",
-      label: heroCopy.highlights.units,
+      label: (
+        <span className="sp-label-with-help">
+          <span>{heroCopy.highlights.units}</span>
+          <HelpTooltip
+            content={SP_HELP.home.heroUnits}
+            ariaLabel={`Ajuda: ${heroCopy.highlights.units}`}
+            placement="bottom"
+          />
+        </span>
+      ),
       value: session.allowedUnits.length > 0 ? String(session.allowedUnits.length) : "—",
     },
     {
       id: "overview",
-      label: heroCopy.highlights.overview,
+      label: (
+        <span className="sp-label-with-help">
+          <span>{heroCopy.highlights.overview}</span>
+          <HelpTooltip
+            content={SP_HELP.home.heroOverview}
+            ariaLabel={`Ajuda: ${heroCopy.highlights.overview}`}
+            placement="bottom"
+          />
+        </span>
+      ),
       value: caps.analytics
         ? heroCopy.highlights.overviewCta
         : heroCopy.highlights.overviewLocked,
@@ -260,21 +287,27 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
                 <>
                   {heroTitle}
                   <HelpTooltip
-                    content={SP_HELP.homeVsOverview}
+                    content={SP_HELP.home.vsOverview}
                     ariaLabel={heroCopy.helpAriaLabel}
                   />
                 </>
               }
               description={heroCopy.description}
               badge={
-                <SuppliesStatusBadge
-                  label={
-                    session.allowedUnits.length > 0
-                      ? `${heroCopy.scopeUnits}: ${unitsLabel}`
-                      : heroCopy.scopeEmpty
-                  }
-                  variant={session.allowedUnits.length > 0 ? "info" : "neutral"}
-                />
+                <span className="sp-home-hero-badge">
+                  <SuppliesStatusBadge
+                    label={
+                      session.allowedUnits.length > 0
+                        ? `${heroCopy.scopeUnits}: ${unitsLabel}`
+                        : heroCopy.scopeEmpty
+                    }
+                    variant={session.allowedUnits.length > 0 ? "info" : "neutral"}
+                  />
+                  <HelpTooltip
+                    content={SP_HELP.home.scopeBadge}
+                    ariaLabel={`Ajuda: ${heroCopy.scopeUnits}`}
+                  />
+                </span>
               }
               highlights={heroHighlights}
               actions={

@@ -94,6 +94,18 @@ describe("SectionRouteCard", () => {
     expect(svg?.getAttribute("fill")).toBe("currentColor");
   });
 
+  it("anexa HelpTooltip ao título quando hint é informado", () => {
+    render(
+      <SectionRouteCard
+        classNames={sectionRouteCardBemClasses("cm")}
+        title="Operações"
+        hint="Pedidos, entregas e estoques autorizados."
+        routes={[{ id: "inventory", label: "Estoque", onClick: () => undefined }]}
+      />,
+    );
+    expect(screen.getByLabelText("Ajuda: Operações")).toBeTruthy();
+  });
+
   it("mostra pin em rota kind create quando onPinClick existe", () => {
     const onPinClick = vi.fn();
     render(

@@ -50,6 +50,13 @@
   color: var(--delpi-ui-title, var(--delpi-ui-text, var(--text, #111111)));
 }
 
+.delpi-ui-section-route-card__title-with-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .delpi-ui-section-route-card__description {
   margin: 4px 0 0;
   font-size: 0.875rem;

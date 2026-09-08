@@ -20,6 +20,12 @@ describe("helpTooltips", () => {
     expect(SP_HELP.coexistence.length).toBeGreaterThan(20);
     expect(SP_HELP.homeVsOverview.length).toBeGreaterThan(20);
     expect(SP_HELP.homeAttention.length).toBeGreaterThan(20);
+    expect(SP_HELP.home.attention).toBe(SP_HELP.homeAttention);
+    expect(SP_HELP.home.paths.length).toBeGreaterThan(20);
+    expect(SP_HELP.home.search.length).toBeGreaterThan(20);
+    expect(SP_HELP.home.favorites.length).toBeGreaterThan(20);
+    expect(SP_HELP.home.recents.length).toBeGreaterThan(20);
+    expect(SP_HELP.home.sections.operations.length).toBeGreaterThan(20);
     expect(SP_HELP.overviewTemporal.length).toBeGreaterThan(20);
     expect(SP_HELP.forbiddenUnit.length).toBeGreaterThan(20);
     expect(SP_HELP.shell.navHome).toBeTruthy();
