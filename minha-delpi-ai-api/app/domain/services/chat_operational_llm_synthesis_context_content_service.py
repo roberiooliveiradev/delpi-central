@@ -277,7 +277,7 @@ class ChatOperationalLlmSynthesisContextContentService:
 
     @classmethod
     def max_normal_prose_chars(cls) -> int:
-        return cls.limit_int("maxNormalProseChars", 520)
+        return cls.limit_int("maxNormalProseChars", 1600)
 
     @classmethod
     def max_thinker_prose_chars(cls) -> int:

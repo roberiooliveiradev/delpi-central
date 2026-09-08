@@ -63,6 +63,8 @@ class ExternalActionKpiChartDetectionService:
             "production_cost",
             "effectiveness",
             "delivery",
+            "/rol",
+            "rol/",
         )
 
         if any(token in path for token in kpi_paths):
@@ -71,6 +73,17 @@ class ExternalActionKpiChartDetectionService:
         kpi_keys = ("value", "percentage", "current", "previous", "target", "meta")
         has_series = any(k in root for k in ("periods", "series", "history"))
         kpi_count = sum(1 for k in kpi_keys if k in root)
+
+        if has_series:
+            flags = ChatPresentationProfileService.flags(path, entity)
+            policy = str(
+                (ChatPresentationProfileService.resolve_profile(path, entity) or {}).get(
+                    "defaultViewPolicy"
+                )
+                or ""
+            ).strip().lower()
+            if "kpi" in flags or "chart" in flags or policy == "kpi_when_available":
+                return True
 
         if kpi_count >= 2 or (kpi_count >= 1 and has_series):
             return True

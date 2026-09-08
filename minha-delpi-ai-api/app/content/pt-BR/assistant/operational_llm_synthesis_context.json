@@ -25,7 +25,11 @@
     "select top ",
     "select * from",
     "from sb2",
-    "from sb1"
+    "from sb1",
+    "tabela física protheus",
+    "d_e_l_e_t_",
+    "sb1010",
+    "[especialista sql"
   ],
   "prosePanelRule": "A resposta combina **prosa consultiva** com **componentes visuais** no painel (tabela, árvore, KPI, gráfico ou dashboard). **Não** transcreva listas, tabelas GFM nem cadastro campo a campo — o painel exibe; você interpreta. Cite o componente principal (ex.: «conforme a tabela…», «conforme a árvore…») sem repetir as linhas.",
   "proseCompositionRule": "Composição visual: quando os fatos listarem **slots disponíveis**, intercale marcadores na prosa em vez de copiar dados. Formato: uma frase introdutória e, na linha seguinte, o marcador sozinho (`[[table]]`, `[[tree]]`, `[[chart]]`, `[[kpi]]`, `[[dashboard]]`; use `[[table:1]]` / `[[table:2]]` se houver várias tabelas). Não invente marcadores sem slot correspondente. Se a política for api_only, não emita marcadores — só lead curto.",
@@ -44,7 +48,7 @@
   "multiSourceCrossRule": "Há **várias rotas** nos fatos. Cruze as fontes (ex.: estoque × vendas), cite o que cada consulta mostrou e não invente dados de rotas não listadas.",
   "maxChars": 1200,
   "maxBriefProseChars": 220,
-  "maxNormalProseChars": 520,
+  "maxNormalProseChars": 1600,
   "maxThinkerProseChars": 2400,
   "maxHumanizedLines": 3,
   "maxHumanizedLinesWhenDecoupled": 2,

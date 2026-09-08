@@ -1186,7 +1186,8 @@
   "kpiCards": {
     "current": "Atual",
     "target": "Meta",
-    "previous": "Anterior"
+    "previous": "Anterior",
+    "emptyValue": "—"
   },
   "analyserTableTitles": {
     "guideWithCode": "Roteiro de produção — {code}",

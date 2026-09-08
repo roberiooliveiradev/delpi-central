@@ -30,6 +30,10 @@ class ChatPresentationScalarFieldCommentaryService:
         if not cls._has_numeric_metrics(payload):
             return False
 
+        # Board com indicadores/linhas aninhadas não é snapshot scalar campo-valor.
+        if cls._has_nested_collection(payload):
+            return False
+
         api_meta = cls._api_response_meta(metadata)
         shape = str(api_meta.get("shape") or "").strip().lower()
         configured_shapes = cls._configured_shapes()
@@ -336,6 +340,14 @@ class ChatPresentationScalarFieldCommentaryService:
         api_meta = metadata.get("apiDelpiResponseMeta")
 
         return api_meta if isinstance(api_meta, dict) else {}
+
+    @classmethod
+    def _has_nested_collection(cls, payload: dict[str, Any]) -> bool:
+        for key in ("indicators", "items", "rows", "children", "entries", "records"):
+            value = payload.get(key)
+            if isinstance(value, list) and value:
+                return True
+        return False
 
     @classmethod
     def _configured_shapes(cls) -> frozenset[str]:

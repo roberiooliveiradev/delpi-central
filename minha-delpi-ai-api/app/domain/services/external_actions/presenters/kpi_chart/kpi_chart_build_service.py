@@ -30,7 +30,12 @@ class ExternalActionKpiChartBuildService:
             ChatPresentationKpiAssemblyService,
         )
 
-        periods = root.get("periods") or root.get("series") or root.get("history")
+        periods = None
+        for key in ("periods", "series", "history"):
+            candidate = root.get(key)
+            if isinstance(candidate, list):
+                periods = candidate
+                break
 
         if isinstance(periods, list) and len(periods) >= 2:
             return {
@@ -43,6 +48,23 @@ class ExternalActionKpiChartBuildService:
                     "legend": True,
                 },
             }
+
+        if isinstance(periods, list) and len(periods) == 0:
+            empty_value = str(
+                presenter._host._presenter_text("kpiCards", "emptyValue") or "—"
+            ).strip() or "—"
+            empty_card = ChatPresentationKpiAssemblyService.metric_card(
+                label=presenter._host._presenter_text("kpiCards", "current"),
+                value=empty_value,
+                unit="",
+                color="#94a3b8",
+                key="current",
+            )
+            return ChatPresentationKpiAssemblyService.build(
+                title=presenter.kpi_title(path),
+                cards=[empty_card],
+                min_cards=1,
+            )
 
         value = root.get("value") or root.get("percentage") or root.get("current")
         target = root.get("target") or root.get("meta")

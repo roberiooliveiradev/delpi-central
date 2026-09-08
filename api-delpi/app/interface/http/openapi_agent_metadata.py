@@ -1116,8 +1116,10 @@ DASHBOARD_DEPARTMENT_INDICATORS = agent_route(
     summary="Department IDD with indicators (goals and realized)",
     description=(
         "Strategic Indicators department IDD plus each indicator with goals (metas) "
-        "and realized values. Use when the question asks for IDD of a department with "
-        "metas and realizado — not supplies inventory-turnover."
+        "and realized values. Use only when the question asks for departmental IDD "
+        "with metas/realizado (board IDD). Do not use for commercial ROL, revenue "
+        "series, closing-rate/conversion KPIs, or billing trends — prefer "
+        "/commercial/rol/series and related commercial KPI routes."
     ),
     operation_id="get_dashboard_department_indicators",
 )
@@ -1126,7 +1128,8 @@ DASHBOARD_DEPARTMENTS_INDICATORS = agent_route(
     summary="All departments with IDD, goals and realized per indicator",
     description=(
         "Lists every Strategic Indicators department with IDD and nested indicators "
-        "(goals/metas and realized). Use for a full IDD board across departments."
+        "(goals/metas and realized). Use for a full IDD board across departments. "
+        "Do not use as a substitute for commercial ROL or sales conversion series."
     ),
     operation_id="get_dashboard_departments_indicators",
 )

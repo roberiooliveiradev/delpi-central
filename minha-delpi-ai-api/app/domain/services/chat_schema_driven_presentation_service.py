@@ -943,6 +943,27 @@ class ChatSchemaDrivenPresentationService:
             if str(view).strip()
         ]
 
+        preferred = ChatPresentationProfileService.resolve_default_preferred_format(
+            path=path,
+            entity=entity,
+            has_tree=isinstance(bundle.tree, dict),
+            has_table=isinstance(bundle.table, dict),
+            has_chart=isinstance(bundle.chart, dict),
+            has_text=isinstance(bundle.text, dict),
+            has_kpi=isinstance(bundle.kpi, dict),
+        )
+        preferred_token = str(preferred or "").strip().lower()
+        by_view: dict[str, dict[str, Any] | None] = {
+            "text": bundle.text if isinstance(bundle.text, dict) else None,
+            "kpi": bundle.kpi if isinstance(bundle.kpi, dict) else None,
+            "chart": bundle.chart if isinstance(bundle.chart, dict) else None,
+            "line_chart": bundle.chart if isinstance(bundle.chart, dict) else None,
+            "table": bundle.table if isinstance(bundle.table, dict) else None,
+            "tree": bundle.tree if isinstance(bundle.tree, dict) else None,
+        }
+        if preferred_token in by_view and isinstance(by_view[preferred_token], dict):
+            return by_view[preferred_token]
+
         for view in view_order:
             if view == "text" and isinstance(bundle.text, dict):
                 return bundle.text
@@ -965,11 +986,11 @@ class ChatSchemaDrivenPresentationService:
         if isinstance(bundle.chart, dict):
             return bundle.chart
 
-        if isinstance(bundle.table, dict):
-            return bundle.table
-
         if isinstance(bundle.tree, dict):
             return bundle.tree
+
+        if isinstance(bundle.table, dict):
+            return bundle.table
 
         if isinstance(bundle.text, dict):
             return bundle.text

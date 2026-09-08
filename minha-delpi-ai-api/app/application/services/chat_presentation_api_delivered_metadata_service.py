@@ -143,15 +143,21 @@ class ChatPresentationApiDeliveredMetadataService:
         else:
             primary_presentation = (
                 primary
+                or tree_presentation
+                or kpi_presentation
+                or chart_presentation
                 or table_presentation
                 or text_presentation
-                or kpi_presentation
             )
 
         preferred_format = cls._resolve_preferred_format(
+            path=resolved_path,
+            entity=entity,
             session_format=session_format,
             has_text=bool(text_presentation),
             has_table=bool(table_presentation) or bool(composite_tables),
+            has_tree=bool(tree_presentation),
+            has_chart=bool(chart_presentation),
             has_kpi=bool(kpi_presentation),
         )
 
@@ -371,21 +377,26 @@ class ChatPresentationApiDeliveredMetadataService:
     @staticmethod
     def _resolve_preferred_format(
         *,
+        path: str | None = None,
+        entity: str | None = None,
         session_format: str,
         has_text: bool,
         has_table: bool,
+        has_tree: bool = False,
+        has_chart: bool = False,
         has_kpi: bool,
     ) -> str | None:
-        if session_format in {"text", "table", "tree", "chart", "canvas", "dashboard", "kpi"}:
-            return session_format
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
 
-        if has_table:
-            return "table"
-
-        if has_kpi:
-            return "kpi"
-
-        if has_text:
-            return "text"
-
-        return None
+        return ChatPresentationProfileService.resolve_default_preferred_format(
+            path=path,
+            session_format=session_format,
+            entity=entity,
+            has_tree=has_tree,
+            has_table=has_table,
+            has_chart=has_chart,
+            has_text=has_text,
+            has_kpi=has_kpi,
+        )

@@ -105,6 +105,8 @@
     "process_inspection_plans_product": "composite_detail",
     "lmp_dashboard": "kpi_dashboard",
     "lmp_dashboard_charts": "kpi_dashboard",
+    "dashboard_department_indicators": "kpi_dashboard",
+    "dashboard_departments_indicators": "kpi_dashboard",
     "sql_result": "sql",
     "protheus_table": "system",
     "protheus_column": "system",
@@ -329,6 +331,9 @@
       "audit_5s_summary",
       "commercial_rol_series",
       "commercial_rol_target",
+      "dashboard_department_idd",
+      "dashboard_department_indicators",
+      "dashboard_departments_indicators",
       "depreciation_pct",
       "direct_labor_cost_pct",
       "eficiencia_fabril_dashboard",
@@ -590,11 +595,11 @@
     },
     {
       "contains": "/dashboard/departments-indicators",
-      "profile": "playbook_report"
+      "profile": "kpi_dashboard"
     },
     {
       "contains": "/dashboard/department-indicators",
-      "profile": "playbook_report"
+      "profile": "kpi_dashboard"
     },
     {
       "contains": "/dashboard/department-idd",
