@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Audit canonical Minha DELPI AI guidance consumed by Cursor.
 
-The goal is intentionally narrow: canonical architecture/eval documents and Cursor
-rules must not reintroduce superseded routing/evaluation guidance. Historical
-records outside this allowlist are not treated as implementation instructions.
+Canonical architecture/evaluation sources must describe only the current model.
+Superseded technical guidance is removed from the working tree; Git history is the
+place for historical investigation. This gate prevents removed guidance from being
+reintroduced or referenced by canonical sources.
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ CANONICAL_FILES = (
     ".cursor/rules/clean-architecture-chat-api.mdc",
     ".cursor/rules/ai-intelligence-evaluation.mdc",
     ".cursor/rules/test-and-commit.mdc",
+    ".cursor/rules/plan-construction.mdc",
     "minha-delpi-ai-api/docs/README.md",
     "minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md",
     "minha-delpi-ai-api/docs/architecture/new-api-route-checklist.md",
@@ -44,19 +46,24 @@ REMOVED_DOCS = (
     "minha-delpi-ai-api/docs/roadmap/docie-desacoplamento-selecao-rotas-openapi.md",
     "minha-delpi-ai-api/docs/roadmap/audit-chat-base-familias-fluxos-set2026.md",
     "minha-delpi-ai-api/docs/architecture/chat-refactor-status-jun2026.md",
+    "minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-8.md",
+    "minha-delpi-ai-api/docs/roadmap/playbook-15-chat-integracao-producao-suprimentos.md",
+    "minha-delpi-ai-api/docs/roadmap/playbook-21-desacoplamento-refatoracao-completa-jun2026.md",
+    "minha-delpi-ai-api/docs/roadmap/playbook-22-schema-first-api-actions-jun2026.md",
+    "minha-delpi-ai-api/docs/roadmap/melhorias/playbook-follow-up-operacional-desacoplado-jun2026.md",
+    "minha-delpi-ai-api/docs/changelog/2026-06-product-directives-chat.md",
+    "minha-delpi-ai-api/docs/changelog/2026-06-presentation-delivered-pure.md",
 )
 
-# These strings are forbidden specifically in the canonical implementation/eval
-# sources. They either name superseded docs or teach the previous routing/eval model.
-FORBIDDEN = (
+REMOVED_DOC_NAMES = tuple(Path(path).name for path in REMOVED_DOCS)
+
+# Forbidden only in canonical implementation/evaluation sources. Terms naming an
+# anti-pattern are allowed when the canonical source explicitly forbids it; names
+# of removed documents are never allowed because they create dead/ambiguous links.
+FORBIDDEN_CANONICAL = (
     "R1–R8",
     "R1-R8",
     "operational_route_registry.json",
-    "docie-desacoplamento-selecao-rotas-openapi.md",
-    "prompt-refatoracao-motor-selecao-actions-openapi-first-set2026.md",
-    "audit-chat-base-familias-fluxos-set2026.md",
-    "chat-refactor-status-jun2026.md",
-    "use operational_route_registry.json",
 )
 
 R11_REQUIRED = (
@@ -82,10 +89,6 @@ OPENAPI_FIRST_REQUIRED = (
 )
 
 
-def _read(relative: str) -> str:
-    return (ROOT / relative).read_text(encoding="utf-8")
-
-
 def main() -> int:
     errors: list[str] = []
 
@@ -95,10 +98,15 @@ def main() -> int:
             errors.append(f"canonical file missing: {relative}")
             continue
         text = path.read_text(encoding="utf-8")
-        for forbidden in FORBIDDEN:
+        for forbidden in FORBIDDEN_CANONICAL:
             if forbidden in text:
                 errors.append(
                     f"{relative}: forbidden superseded guidance/reference: {forbidden!r}"
+                )
+        for removed_name in REMOVED_DOC_NAMES:
+            if removed_name in text:
+                errors.append(
+                    f"{relative}: references removed technical document: {removed_name!r}"
                 )
 
     for relative in REMOVED_DOCS:
