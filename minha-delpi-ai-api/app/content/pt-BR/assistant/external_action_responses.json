@@ -917,6 +917,26 @@
         "vendas do periodo"
       ]
     },
+    "commercialRol": {
+      "terms": [
+        "rol",
+        "indicadores comerciais",
+        "indicador comercial",
+        "kpi comercial",
+        "kpis comerciais",
+        "série de rol",
+        "serie de rol",
+        "rol /",
+        "rol/"
+      ],
+      "excludeTerms": [
+        "produto",
+        "estoque",
+        "estrutura",
+        "ov ",
+        "ordens de venda"
+      ]
+    },
     "transformaSummary": {
       "terms": [
         "resumo",
@@ -1233,6 +1253,10 @@
       "termsFrom": "external_action_responses.actionSelection.saleOrdersList.terms",
       "excludeTermsFrom": "external_action_responses.actionSelection.saleOrdersList.excludeTerms"
     },
+    "commercialRol": {
+      "termsFrom": "external_action_responses.actionSelection.commercialRol.terms",
+      "excludeTermsFrom": "external_action_responses.actionSelection.commercialRol.excludeTerms"
+    },
     "transformaQuestion": {
       "termsFrom": "external_action_responses.actionSelection.transformaQuestionTerms"
     },
@@ -1525,6 +1549,7 @@
     "lmpQuery": "A pergunta solicita consulta de LMP via OpenAPI.",
     "departmentKpi": "Indicador departamental reconhecido na pergunta.",
     "saleOrdersList": "A pergunta solicita listagem de ordens de venda.",
+    "commercialRol": "A pergunta solicita indicadores comerciais / ROL.",
     "exclusiveRawMaterialCatalog": "A pergunta solicita o catálogo global de matérias-primas exclusivas via OpenAPI.",
     "productDirectives": "A pergunta solicita diretivas do produto (referência do cliente ou código DELPI) com estrutura, fornecedores e última compra das MPs via OpenAPI.",
     "productionConsumptionTopItems": "A pergunta solicita ranking de itens mais consumidos na produção via OpenAPI.",

@@ -1803,6 +1803,33 @@
       }
     },
     {
+      "id": "commercialRolSeries",
+      "domain": "domainCommercial",
+      "priority": 135,
+      "match": {
+        "customPredicate": "commercialRol"
+      },
+      "route": {
+        "pathMarkers": [
+          "/commercial/rol/series",
+          "/commercial/rol/summary",
+          "/financial/rol"
+        ],
+        "operationIdMarkers": [
+          "get_commercial_rol_series",
+          "get_commercial_rol_summary",
+          "get_financial_rol"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "date_branch"
+      },
+      "presentation": {
+        "reasonKey": "commercialRol"
+      }
+    },
+    {
       "id": "engineeringTransformaSummary",
       "domain": "domainEngineering",
       "priority": 125,

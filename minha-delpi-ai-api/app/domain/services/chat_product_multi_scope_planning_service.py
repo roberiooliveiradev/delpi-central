@@ -239,6 +239,38 @@ class ChatProductMultiScopePlanningService:
         return all(scope == "open_orders" for scope in scopes)
 
     @classmethod
+    def missing_scopes_for_planned_actions(
+        cls,
+        message: str | None,
+        planned: list[dict] | None,
+    ) -> tuple[str, ...]:
+        """Escopos pedidos na mensagem que ainda não aparecem nos paths planejados."""
+        requested = cls.extract_requested_scopes(message)
+        if not requested:
+            return ()
+
+        paths = " ".join(
+            str((item.get("arguments") or {}).get("path") or item.get("path") or "")
+            for item in (planned or [])
+            if isinstance(item, dict)
+        ).lower()
+
+        missing: list[str] = []
+        for scope in requested:
+            _intent, segment = _SCOPE_TO_ROUTE.get(scope, (None, None))
+            markers = [m for m in (segment, scope.replace("_", "-"), scope) if m]
+            if scope == "profile":
+                markers.extend(["/products/{code}", "/analyser"])
+            if any(marker and marker in paths for marker in markers):
+                continue
+            # analyser cobre o bundle
+            if scope in cls.analyser_bundle_scopes() and "/analyser" in paths:
+                continue
+            missing.append(scope)
+
+        return tuple(missing)
+
+    @classmethod
     def _is_dedicated_playbook_route_question(cls, normalized: str) -> bool:
         """Rotas playbook com path próprio não entram em multi-scope genérico."""
         dedicated_checks = (

@@ -140,14 +140,26 @@ class ChatExternalActionOrchestrationService:
                 max_calls=max_calls,
             )
 
-            if cls._continuity_blocks_parallel_discovery(workspace_context):
-                return _return_planned(
-                    list(grounded_planned or []),
-                    memory_snapshot=memory_snapshot,
-                )
+            from app.domain.services.chat_product_multi_scope_planning_service import (
+                ChatProductMultiScopePlanningService,
+            )
 
-            if grounded_planned:
+            missing_scopes = ChatProductMultiScopePlanningService.missing_scopes_for_planned_actions(
+                selection_message,
+                grounded_planned,
+            )
+
+            if cls._continuity_blocks_parallel_discovery(workspace_context):
+                if not missing_scopes:
+                    return _return_planned(
+                        list(grounded_planned or []),
+                        memory_snapshot=memory_snapshot,
+                    )
+                # Pedido acrescenta escopos → não engolir discovery.
+
+            if grounded_planned and not missing_scopes:
                 return _return_planned(grounded_planned, memory_snapshot=memory_snapshot)
+            # Escopos novos (ex.: estrutura após estoque) → segue discovery/multi-scope.
 
         if forced_product_code and forced_intent:
             selected = selection_service.select_action_for_product(

@@ -262,6 +262,23 @@ def test_exclusive_sale_orders_list_turn():
     )
 
 
+def test_missing_scopes_for_planned_actions_detects_structure_gap():
+    planned = [
+        {
+            "arguments": {
+                "path": "/products/{code}/stock",
+                "parameters": {"code": "90260149"},
+            }
+        }
+    ]
+    missing = ChatProductMultiScopePlanningService.missing_scopes_for_planned_actions(
+        "inclui também a estrutura e o estoque do produto",
+        planned,
+    )
+    assert "structure" in missing
+    assert "stock" not in missing
+
+
 def test_se_disponivel_alone_does_not_add_stock_scope():
     scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
         "mostre o KPI e a série no tempo em gráfico se disponível",

@@ -110,6 +110,7 @@ def test_operational_route_registry_reason_keys_exist() -> None:
 def test_selection_reasons_keys_exist():
     keys = (
         "saleOrdersList",
+        "commercialRol",
         "transformaMais",
         "systemMetadata",
         "productSearchByGroup",
