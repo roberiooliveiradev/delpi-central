@@ -6,6 +6,10 @@ import { AppShell } from "../components/AppShell";
 import { RequestListFilters } from "../components/RequestListFilters";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
+  requestTypeLabel,
+  statusLabel,
+} from "../content/presentationLabels";
+import {
   REQUEST_LIST_PAGE_SIZE,
   type RequestListFiltersState,
 } from "../content/requestListFilters";
@@ -79,6 +83,12 @@ export function MinePage() {
 
   const totalPages = Math.max(1, Math.ceil(total / REQUEST_LIST_PAGE_SIZE) || 1);
 
+  const typeNameByCode = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of types) map.set(item.code, item.name);
+    return map;
+  }, [types]);
+
   const columns = useMemo<DataTableColumn<RequestSummary>[]>(
     () => [
       {
@@ -94,17 +104,25 @@ export function MinePage() {
           </ActionButton>
         ),
       },
-      { key: "type", header: "Tipo", render: (row) => row.type_code },
+      {
+        key: "type",
+        header: "Tipo",
+        render: (row) =>
+          requestTypeLabel(row.type_code, typeNameByCode.get(row.type_code)),
+      },
       {
         key: "status",
         header: "Status",
         render: (row) => (
-          <MyRequestsStatusBadge label={row.status_alias || row.status} variant="info" />
+          <MyRequestsStatusBadge
+            label={statusLabel(row.status, row.status_alias)}
+            variant="info"
+          />
         ),
       },
       { key: "branch", header: "Filial", render: (row) => row.branch_code || "—" },
     ],
-    [],
+    [typeNameByCode],
   );
 
   const emptyMessage =
@@ -114,7 +132,7 @@ export function MinePage() {
 
   return (
     <AppShell title="Minhas solicitações" canCreate={canCreateAnyRequest(access)}>
-      <MyRequestsSectionCard title="Lista">
+      <MyRequestsSectionCard title="Minhas solicitações">
         <div data-help="mine" title={MY_REQUESTS_HELP_TOOLTIPS.mine.section}>
           <RequestListFilters
             filters={filters}
