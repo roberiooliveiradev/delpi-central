@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionButton, FieldLabel, NativeTextAreaControl } from "@delpi/plugin-ui/index";
 
@@ -9,6 +10,7 @@ import {
   requiresBranchField,
   showsBranchField,
 } from "../../../domain/branchScope";
+import { branchAriaLabel, branchShortLabel } from "../../../domain/branchLabels";
 import {
   myRequestsPath,
   navigateMyRequestsPath,
@@ -17,7 +19,9 @@ import { useRequestsPermissions } from "../../../security/RequestsPermissionsCon
 import type { RequestTypeSummary } from "../../../types/requests";
 import {
   DetailFields,
+  MyRequestsAvatar,
   MyRequestsEmptyState,
+  MyRequestsEntityDirectoryPicker,
   MyRequestsFormActions,
   MyRequestsJourneyProgressBar,
   MyRequestsProgressTracker,
@@ -26,7 +30,12 @@ import {
   SegmentToggle,
   SelectField,
   TextField,
+  type EntityDirectoryOption,
 } from "../../../ui/mrUi";
+import {
+  carrierToOption,
+  partyToOption,
+} from "../domain/entityLookupMappers";
 import { buildReviewChecklist } from "../domain/reviewChecklist";
 import {
   buildStepCompletionMap,
@@ -56,7 +65,7 @@ import type {
   ProductHit,
 } from "../domain/types";
 import { WIZARD_STEPS } from "../domain/wizardSteps";
-import { searchCarriers, searchParties, searchProducts } from "../lookupsApi";
+import { useInvoiceLookupSearch } from "./useInvoiceLookupSearch";
 
 export { WIZARD_STEPS } from "../domain/wizardSteps";
 
@@ -96,7 +105,11 @@ export function InvoiceIssuanceWizard({
 }: InvoiceIssuanceWizardProps) {
   const access = useRequestsPermissions();
   const branchOptions = (access.branches.length ? access.branches : ["01", "02"]).map(
-    (code) => ({ value: code, label: code }),
+    (code) => ({
+      value: code,
+      label: branchShortLabel(code),
+      ariaLabel: branchAriaLabel(code),
+    }),
   );
   const showBranch = showsBranchField(requestType.branch_scope);
   const [branchCode, setBranchCode] = useState(
@@ -113,17 +126,12 @@ export function InvoiceIssuanceWizard({
   );
 
   const [partyType, setPartyType] = useState<PartyType>("customer");
-  const [partyQuery, setPartyQuery] = useState("");
-  const [partyHits, setPartyHits] = useState<Party[]>([]);
   const [party, setParty] = useState<Party | null>(null);
   const [invoiceType, setInvoiceType] = useState<InvoiceType>("sale");
   const [invoiceTypeOther, setInvoiceTypeOther] = useState("");
-  const [productQuery, setProductQuery] = useState("");
-  const [productHits, setProductHits] = useState<ProductHit[]>([]);
+  const [pendingProducts, setPendingProducts] = useState<EntityDirectoryOption[]>([]);
   const [items, setItems] = useState<IssuanceItem[]>([]);
   const [freightMode, setFreightMode] = useState<FreightMode>("cif");
-  const [carrierQuery, setCarrierQuery] = useState("");
-  const [carrierHits, setCarrierHits] = useState<Carrier[]>([]);
   const [carrier, setCarrier] = useState<Carrier | null>(null);
   const [weightKg, setWeightKg] = useState("1");
   const [volumeCount, setVolumeCount] = useState("1");
@@ -132,6 +140,7 @@ export function InvoiceIssuanceWizard({
   const [busy, setBusy] = useState(false);
 
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const lookups = useInvoiceLookupSearch(partyType);
 
   const draft = useMemo(
     () => ({
@@ -189,53 +198,111 @@ export function InvoiceIssuanceWizard({
     headingRef.current?.focus();
   }, [stepId]);
 
-  async function runPartySearch() {
-    setError(null);
-    try {
-      setPartyHits(await searchParties(partyType, partyQuery.trim()));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha na busca de destinatário");
-    }
-  }
-
-  async function runProductSearch() {
-    setError(null);
-    try {
-      setProductHits(await searchProducts(productQuery.trim()));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha na busca de produtos");
-    }
-  }
-
-  async function runCarrierSearch() {
-    setError(null);
-    try {
-      setCarrierHits(await searchCarriers(carrierQuery.trim()));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha na busca de transportadora");
-    }
-  }
-
   function selectParty(hit: Party) {
+    lookups.rememberParty(hit);
     setParty(hit);
     if (!returnToReview) {
       setStepId("invoiceType");
     }
   }
 
-  function addProduct(hit: ProductHit) {
-    const next: IssuanceItem = {
-      product_code: hit.code,
-      product_description: hit.description,
-      quantity: 1,
-      unit_price: 0,
-      stock_write_off: true,
-    };
-    setItems(applyDefaultStockWriteOff([...items, next], invoiceType));
+  function onPartyPickerChange(options: EntityDirectoryOption[]) {
+    setError(null);
+    if (options.length === 0) {
+      setParty(null);
+      return;
+    }
+    const hit = lookups.resolveParty(options[0].id);
+    if (!hit) {
+      setError("Não foi possível aplicar o destinatário selecionado. Busque novamente.");
+      return;
+    }
+    selectParty(hit);
+  }
+
+  function onCarrierPickerChange(options: EntityDirectoryOption[]) {
+    setError(null);
+    if (options.length === 0) {
+      setCarrier(null);
+      return;
+    }
+    const hit = lookups.resolveCarrier(options[0].id);
+    if (!hit) {
+      setError("Não foi possível aplicar a transportadora selecionada. Busque novamente.");
+      return;
+    }
+    lookups.rememberCarrier(hit);
+    setCarrier(hit);
+  }
+
+  function attachPendingProducts() {
+    setError(null);
+    if (pendingProducts.length === 0) return;
+    const existing = new Set(items.map((item) => item.product_code));
+    const toAdd: ProductHit[] = [];
+    for (const option of pendingProducts) {
+      if (existing.has(option.id)) continue;
+      const hit = lookups.resolveProduct(option.id);
+      if (!hit) {
+        setError("Não foi possível anexar um dos produtos selecionados. Busque novamente.");
+        return;
+      }
+      lookups.rememberProduct(hit);
+      toAdd.push(hit);
+      existing.add(hit.code);
+    }
+    if (toAdd.length > 0) {
+      setItems((prev) =>
+        applyDefaultStockWriteOff(
+          [
+            ...prev,
+            ...toAdd.map((hit) => ({
+              product_code: hit.code,
+              product_description: hit.description,
+              quantity: 1,
+              unit_price: 0,
+              stock_write_off: true,
+            })),
+          ],
+          invoiceType,
+        ),
+      );
+    }
+    setPendingProducts([]);
   }
 
   function removeItem(index: number) {
     setItems((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function renderEntityChip(args: {
+    entity: EntityDirectoryOption;
+    label: string;
+    disabled: boolean;
+    onRemove: () => void;
+    colorKey: string;
+  }) {
+    const { entity, label, disabled, onRemove, colorKey } = args;
+    return (
+      <span className="delpi-ui-tag-chip">
+        <MyRequestsAvatar
+          name={entity.label}
+          colorKey={colorKey}
+          size="sm"
+          previewable={false}
+        />
+        <span>{label}</span>
+        <button
+          type="button"
+          className="delpi-ui-tag-chip__remove"
+          disabled={disabled || busy}
+          aria-label={`Remover ${label}`}
+          onClick={onRemove}
+        >
+          <X size={14} aria-hidden="true" />
+        </button>
+      </span>
+    );
   }
 
   function goToStep(nextId: WizardStepId) {
@@ -324,7 +391,7 @@ export function InvoiceIssuanceWizard({
   }
 
   const subtitleParts = [
-    showBranch && branch ? `Filial ${branch}` : null,
+    showBranch && branch ? `Filial ${branchShortLabel(branch)}` : null,
     `Etapa ${currentIdx + 1} de ${WIZARD_STEPS.length}: ${stepMeta.label}`,
   ].filter(Boolean);
 
@@ -334,46 +401,46 @@ export function InvoiceIssuanceWizard({
         <SegmentToggle
           ariaLabel="Tipo de destinatário"
           value={partyType}
-          onChange={setPartyType}
+          onChange={(next) => {
+            setPartyType(next);
+            setParty(null);
+          }}
           options={[
             { value: "customer", label: "Cliente" },
             { value: "supplier", label: "Fornecedor" },
           ]}
         />
-        <TextField
-          label="Buscar destinatário"
-          hint={HELP.partySearch}
-          value={partyQuery}
-          onChange={setPartyQuery}
-          placeholder="código, nome ou CNPJ"
+        <MyRequestsEntityDirectoryPicker
+          value={party ? [partyToOption(party)] : []}
+          onChange={onPartyPickerChange}
+          searchEntities={lookups.searchPartyEntities}
+          maxSelected={1}
+          disabled={busy}
+          labels={{
+            title: "Destinatário",
+            hint: HELP.partySearch,
+            placeholder: "Digite código, nome ou CNPJ",
+            empty: "Nenhum destinatário encontrado.",
+            selectedAriaLabel: "Destinatário selecionado",
+          }}
+          renderOptionLeading={(entity) => (
+            <MyRequestsAvatar
+              name={entity.label}
+              colorKey={entity.id}
+              size="sm"
+              previewable={false}
+            />
+          )}
+          renderSelectedChip={({ entity, label, disabled, onRemove }) =>
+            renderEntityChip({
+              entity,
+              label,
+              disabled,
+              onRemove,
+              colorKey: entity.id,
+            })
+          }
         />
-        <MyRequestsFormActions>
-          <ActionButton type="button" variant="primary" onClick={runPartySearch} disabled={busy}>
-            Buscar
-          </ActionButton>
-        </MyRequestsFormActions>
-        {partyHits.length > 0 ? (
-          <ul className="my-requests-domain-list">
-            {partyHits.map((hit) => (
-              <li key={`${hit.party_code}-${hit.party_store}`}>
-                <ActionButton type="button" variant="link" onClick={() => selectParty(hit)}>
-                  {hit.party_code}/{hit.party_store} — {hit.party_name}
-                </ActionButton>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        {party ? (
-          <DetailFields
-            fields={[
-              { label: "Nome", value: party.party_name },
-              { label: "Tipo", value: partyTypeLabel(party.party_type) },
-              { label: "Código", value: party.party_code },
-              { label: "Loja", value: party.party_store },
-              { label: "CNPJ/CPF", value: party.tax_id || "—" },
-            ]}
-          />
-        ) : null}
       </div>
     );
   }
@@ -407,67 +474,100 @@ export function InvoiceIssuanceWizard({
   }
 
   function renderItemsStep() {
+    const attachedCodes = new Set(items.map((item) => item.product_code));
     return (
       <div className="my-requests-form-stack">
-        <TextField
-          label="Buscar produto"
-          hint={HELP.productSearch}
-          value={productQuery}
-          onChange={setProductQuery}
-          placeholder="código ou descrição"
+        <MyRequestsEntityDirectoryPicker
+          value={pendingProducts}
+          onChange={setPendingProducts}
+          searchEntities={async (query, limit, signal) => {
+            const hits = await lookups.searchProductEntities(query, limit, signal);
+            return hits.filter((hit) => !attachedCodes.has(hit.id));
+          }}
+          maxSelected={20}
+          disabled={busy}
+          labels={{
+            title: "Produtos",
+            hint: HELP.productSearch,
+            placeholder: "Digite código ou descrição",
+            empty: "Nenhum produto encontrado.",
+            emptySelected: "Nenhum resultado disponível — já selecionados ou anexados.",
+            selectedAriaLabel: "Produtos pendentes de anexar",
+          }}
+          renderOptionLeading={(entity) => (
+            <MyRequestsAvatar
+              name={entity.label}
+              colorKey={entity.id}
+              size="sm"
+              previewable={false}
+            />
+          )}
+          renderSelectedChip={({ entity, label, disabled, onRemove }) =>
+            renderEntityChip({
+              entity,
+              label,
+              disabled,
+              onRemove,
+              colorKey: entity.id,
+            })
+          }
         />
         <MyRequestsFormActions>
-          <ActionButton type="button" variant="primary" onClick={runProductSearch} disabled={busy}>
-            Buscar
+          <ActionButton
+            type="button"
+            variant="primary"
+            onClick={attachPendingProducts}
+            disabled={busy || pendingProducts.length === 0}
+          >
+            Adicionar selecionados ({pendingProducts.length})
           </ActionButton>
         </MyRequestsFormActions>
-        {productHits.length > 0 ? (
-          <ul className="my-requests-domain-list">
-            {productHits.map((hit) => (
-              <li key={hit.code}>
-                <ActionButton type="button" variant="link" onClick={() => addProduct(hit)}>
-                  {hit.code} — {hit.description}
-                </ActionButton>
-              </li>
-            ))}
-          </ul>
-        ) : null}
 
         {items.length === 0 ? (
           <MyRequestsEmptyState
             title="Nenhum item adicionado"
-            message="Busque um produto e selecione-o para incluir na nota."
+            message="Busque produtos, selecione-os e use Adicionar selecionados para incluir na nota."
           />
         ) : (
-          <ul className="my-requests-domain-list">
+          <ul className="my-requests-invoice-items">
             {items.map((item, index) => (
-              <li key={`${item.product_code}-${index}`}>
-                <strong>
+              <li key={`${item.product_code}-${index}`} className="my-requests-invoice-item">
+                <div className="my-requests-invoice-item__title">
                   {item.product_code} — {item.product_description}
-                </strong>
-                <TextField
-                  label="Quantidade"
-                  value={String(item.quantity)}
-                  onChange={(value) => {
-                    const quantity = Number(value);
-                    setItems((prev) =>
-                      prev.map((row, i) => (i === index ? { ...row, quantity } : row)),
-                    );
-                  }}
-                />
-                <TextField
-                  label="Preço unitário"
-                  value={String(item.unit_price)}
-                  onChange={(value) => {
-                    const unit_price = Number(value);
-                    setItems((prev) =>
-                      prev.map((row, i) => (i === index ? { ...row, unit_price } : row)),
-                    );
-                  }}
-                />
-                <ActionButton type="button" variant="ghost" onClick={() => removeItem(index)}>
-                  Remover
-                </ActionButton>
+                </div>
+                <div className="my-requests-invoice-item__row">
+                  <TextField
+                    label="Quantidade"
+                    value={String(item.quantity)}
+                    onChange={(value) => {
+                      const quantity = Number(value);
+                      setItems((prev) =>
+                        prev.map((row, i) => (i === index ? { ...row, quantity } : row)),
+                      );
+                    }}
+                  />
+                  <TextField
+                    label="Preço unitário"
+                    value={String(item.unit_price)}
+                    onChange={(value) => {
+                      const unit_price = Number(value);
+                      setItems((prev) =>
+                        prev.map((row, i) =>
+                          i === index ? { ...row, unit_price } : row,
+                        ),
+                      );
+                    }}
+                  />
+                  <div className="my-requests-invoice-item__remove">
+                    <ActionButton
+                      type="button"
+                      variant="ghost"
+                      onClick={() => removeItem(index)}
+                    >
+                      Remover
+                    </ActionButton>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
@@ -489,38 +589,37 @@ export function InvoiceIssuanceWizard({
           ]}
         />
         <FieldLabel label="Frete" hint={HELP.freight} />
-        <TextField
-          label="Transportadora (opcional)"
-          hint={HELP.carrierSearch}
-          value={carrierQuery}
-          onChange={setCarrierQuery}
-          placeholder="código ou nome"
+        <MyRequestsEntityDirectoryPicker
+          value={carrier ? [carrierToOption(carrier)] : []}
+          onChange={onCarrierPickerChange}
+          searchEntities={lookups.searchCarrierEntities}
+          maxSelected={1}
+          disabled={busy}
+          labels={{
+            title: "Transportadora (opcional)",
+            hint: HELP.carrierSearch,
+            placeholder: "Digite código ou nome",
+            empty: "Nenhuma transportadora encontrada.",
+            selectedAriaLabel: "Transportadora selecionada",
+          }}
+          renderOptionLeading={(entity) => (
+            <MyRequestsAvatar
+              name={entity.label}
+              colorKey={entity.id}
+              size="sm"
+              previewable={false}
+            />
+          )}
+          renderSelectedChip={({ entity, label, disabled, onRemove }) =>
+            renderEntityChip({
+              entity,
+              label,
+              disabled,
+              onRemove,
+              colorKey: entity.id,
+            })
+          }
         />
-        <MyRequestsFormActions>
-          <ActionButton type="button" variant="primary" onClick={runCarrierSearch} disabled={busy}>
-            Buscar
-          </ActionButton>
-        </MyRequestsFormActions>
-        {carrierHits.length > 0 ? (
-          <ul className="my-requests-domain-list">
-            {carrierHits.map((hit) => (
-              <li key={hit.carrier_code}>
-                <ActionButton type="button" variant="link" onClick={() => setCarrier(hit)}>
-                  {hit.carrier_code} — {hit.carrier_name}
-                </ActionButton>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        {carrier ? (
-          <DetailFields
-            fields={[
-              { label: "Código", value: carrier.carrier_code },
-              { label: "Nome", value: carrier.carrier_name },
-              { label: "CNPJ/CPF", value: carrier.tax_id || "—" },
-            ]}
-          />
-        ) : null}
       </div>
     );
   }
@@ -689,14 +788,18 @@ export function InvoiceIssuanceWizard({
     <AppShell title="Nova emissão de NF" subtitle={subtitleParts.join(" · ")} canCreate>
       <div className="my-requests-wizard-stack" data-help="invoice-wizard">
         {showBranch ? (
-          <SelectField
-            label="Filial"
-            hint={MY_REQUESTS_HELP_TOOLTIPS.new.branch}
-            value={branchCode}
-            onChange={setBranchCode}
-            options={branchOptions}
-            disabled={busy}
-          />
+          <div className="my-requests-wizard-branch">
+            <FieldLabel label="Filial" hint={MY_REQUESTS_HELP_TOOLTIPS.new.branch} />
+            <SegmentToggle
+              ariaLabel="Filial"
+              value={branchCode}
+              onChange={setBranchCode}
+              options={branchOptions}
+              disabled={busy}
+              widthMode="content"
+              size="md"
+            />
+          </div>
         ) : null}
 
         <MyRequestsJourneyProgressBar

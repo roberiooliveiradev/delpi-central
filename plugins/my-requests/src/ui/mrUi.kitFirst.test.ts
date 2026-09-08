@@ -13,6 +13,8 @@ import {
   MyRequestsJourneyProgressBar,
   MyRequestsNavigationCard,
   MyRequestsProgressTracker,
+  MyRequestsAvatar,
+  MyRequestsEntityDirectoryPicker,
   MyRequestsSectionCard,
   MyRequestsTopBar,
   TextField,
@@ -45,6 +47,8 @@ describe("kit-first my-requests", () => {
     expect(typeof MyRequestsFileDropzone).toBe("function");
     expect(typeof MyRequestsProgressTracker).toBe("function");
     expect(typeof MyRequestsJourneyProgressBar).toBe("function");
+    expect(typeof MyRequestsAvatar).toBe("function");
+    expect(typeof MyRequestsEntityDirectoryPicker).toBe("function");
   });
 
   it("não reintroduz chrome primitivo local (__btn / __panel / __table)", () => {

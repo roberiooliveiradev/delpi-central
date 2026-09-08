@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SignaturePad, scaleSignatureStrokes } from "./SignaturePad";
 import { RichTextEditor } from "../rich-text/RichTextEditor";
+import { EntityDirectoryPicker } from "../directory/EntityDirectoryPicker";
 import { UserDirectoryPicker } from "../directory/UserDirectoryPicker";
 
 describe("cipa shared exports", () => {
@@ -16,6 +17,10 @@ describe("cipa shared exports", () => {
 
   it("exports UserDirectoryPicker", () => {
     expect(typeof UserDirectoryPicker).toBe("function");
+  });
+
+  it("exports EntityDirectoryPicker", () => {
+    expect(typeof EntityDirectoryPicker).toBe("function");
   });
 });
 

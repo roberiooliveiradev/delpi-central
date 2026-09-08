@@ -18,8 +18,10 @@ import {
   createDashboardTextField,
   createDashboardTopBar,
   createHostContainedModalShell,
+  createInitialsAvatar,
   createTimeline,
   emptyStateCardBemClasses,
+  EntityDirectoryPicker,
   fileDropzoneBemClasses,
   formActionsBemClasses,
   loadingStateCardBemClasses,
@@ -29,6 +31,11 @@ import {
   selectFieldPacClasses,
   stateBannerBemClasses,
   textFieldPacClasses,
+} from "@delpi/plugin-ui/index";
+
+export type {
+  EntityDirectoryOption,
+  EntityDirectoryPickerProps,
 } from "@delpi/plugin-ui/index";
 
 /** Prefixo BEM dual-class do MFE (pares com `.delpi-ui-*` no remote). */
@@ -158,3 +165,8 @@ export const MyRequestsJourneyProgressBar = createDashboardJourneyProgressBar({
   prefix: MR_UI_PREFIX,
   defaultLabel: "Progresso da solicitação",
 });
+
+export const MyRequestsAvatar = createInitialsAvatar(MR_UI_PREFIX);
+
+/** Typeahead genérico do kit (avatar/chips via slots no consumidor). */
+export const MyRequestsEntityDirectoryPicker = EntityDirectoryPicker;

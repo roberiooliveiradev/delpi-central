@@ -5,7 +5,7 @@
 > **API:** `/apps/requests-api` (nunca api-delpi no browser)  
 > **UI kit:** `@delpi/plugin-ui` via Module Federation · factories em [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/src/ui/mrUi.tsx)  
 > **Regras:** `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`, `plan-construction.mdc`  
-> **Status:** E5–E22 (TopBar + PT-BR + Ajuda + wizard NF ProgressTracker + responsivo/progresso sequencial)
+> **Status:** E5–E23 (wizard NF ProgressTracker + responsivo + EntityDirectoryPicker avatar/badge)
 
 ## Convenções
 
@@ -242,7 +242,7 @@ Progresso da solicitação                                                  0%
 
 ┌─ SectionCard «Destinatário» ─────────────────────────────────────────────────┐
 │ ( ● Cliente | ○ Fornecedor )                                                 │
-│ Buscar destinatário [ código, nome ou CNPJ .................... ] [Buscar]   │
+│ EntityDirectoryPicker · typeahead ≥2 chars · chip com avatar                 │
 │                                                                              │
 │ [Voltar]                                                         [Próximo]   │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -265,7 +265,7 @@ Progresso da solicitação                                                  0%
 ├─────────────────────────────────────┤
 │ SectionCard «Destinatário»          │
 │ (Cliente|Fornecedor)                │
-│ Busca + [Buscar]                    │
+│ Typeahead + avatar chip             │
 │                                     │
 │ [Voltar]                            │
 │ [Próximo]                           │
@@ -283,24 +283,23 @@ Painel compacto aberto:
 ○ Conferência      Bloqueada
 ```
 
-#### 3.4.5 Etapa 1 — Destinatário (conteúdo; todos viewports)
+#### 3.4.5 Etapa 1 — Destinatário (conteúdo; todos viewports) — E23
 
 **Vazio**
 
 ```text
 ( ● Cliente | ○ Fornecedor )
-Buscar [············] [Buscar]
+EntityDirectoryPicker (maxSelected=1)
+  [ digite nome, código ou CNPJ… ]   ← typeahead ≥2 chars, debounce
+  (sem botão Buscar)
 [Voltar]  [Próximo desabilitado]
 ```
 
-**Com seleção** (autoavanço → Tipo NF; se returnToReview, permanece)
+**Com seleção** (chip + avatar; autoavanço → Tipo NF)
 
 ```text
-Hits: ACME · 001/01 · CNPJ…  [selecionar]
-Resumo DetailFields: Nome · Tipo · Código · Loja · CNPJ
+[🟢 AL] ACME Indústria · 001/01  [×]
 ```
-
-**390:** SegmentToggle e botões em largura total; lista de hits empilhada.
 
 #### 3.4.6 Etapa 2 — Tipo de NF
 
@@ -312,25 +311,27 @@ Se Outros: Descreva o tipo [············]
 
 **1024+:** select confortável. **390:** select + campo other full-width.
 
-#### 3.4.7 Etapa 3 — Itens
+#### 3.4.7 Etapa 3 — Itens — E23
 
 ```text
-Buscar produto [········] [Buscar]
-Hits (lista) — separado dos itens adicionados
-∅ Nenhum item  |  ou lista:
-  P1 — Produto A
-  Qtd [ 1 ]  Preço [ 10 ]  [Remover]
+EntityDirectoryPicker (multi, max 20)
+  [ digite código ou descrição… ]
+  chips pendentes: [🟢 P1 Produto A ×] [🟢 P2 … ×]
+  [Adicionar selecionados (N)]
+
+Itens anexados (editáveis):
+  P1 — Produto A · Qtd [1] · Preço [10] · [Remover]
+∅ Nenhum item se lista vazia
 [Voltar]  [Próximo]
 ```
 
-**1440/1024:** busca + lista em coluna única fluida. **768/390:** qty/price empilhados; Remover abaixo.
-
-#### 3.4.8 Etapa 4 — Transporte
+#### 3.4.8 Etapa 4 — Transporte — E23
 
 ```text
 ( ● CIF | ○ FOB )  [?]
-Transportadora (opcional) [········] [Buscar]
-Resumo DetailFields se selecionada
+EntityDirectoryPicker (maxSelected=1, opcional)
+  [ digite código ou nome… ]
+  chip: [🟢 T01 Transportadora XYZ ×]
 [Voltar]  [Próximo]   ← completo sem carrier
 ```
 

@@ -266,16 +266,12 @@ Isso evita que a interface "fuja" enquanto a pessoa ainda está revisando o que 
 │ Tipo de destinatário                                                      │
 │ ( ● Cliente | ○ Fornecedor )                                              │
 │                                                                            │
-│ Buscar destinatário                                                       │
-│ [ Código, nome ou CNPJ................................................. ]  │
-│ [Buscar]                                                                  │
+│ Destinatário (EntityDirectoryPicker · maxSelected=1)                      │
+│ [ Digite código, nome ou CNPJ… ]  ← typeahead ≥2 chars · debounce          │
+│ (sem botão Buscar)                                                        │
 │                                                                            │
-│ Resultados                                                                │
-│ ┌──────────────────────────────────────────────────────────────────────┐   │
-│ │ ACME Indústria Ltda.                                                 │   │
-│ │ Código 001234 · Loja 01 · CNPJ XX.XXX.XXX/XXXX-XX                   │   │
-│ │                                                     [Selecionar]     │   │
-│ └──────────────────────────────────────────────────────────────────────┘   │
+│ Chip selecionado                                                          │
+│ [🟢 AL] ACME Indústria · 001/01  [×]                                      │
 │                                                                            │
 │ [Voltar]                                                    [Próximo →]   │
 └────────────────────────────────────────────────────────────────────────────┘

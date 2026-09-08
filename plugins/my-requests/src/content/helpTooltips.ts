@@ -17,7 +17,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
       "Escolha um card para abrir o formulário do tipo desejado. A filial, quando necessária, aparece dentro do formulário. Você também pode abrir um tipo direto pelo link com ?type=.",
     type: "Tipo de solicitação disponível para o seu perfil.",
     branch:
-      "Informe a filial do pedido (01 = Santa Catarina, 02 = Espírito Santo). Alguns tipos exigem filial; outros não pedem.",
+      "Escolha a filial com os botões SC (Santa Catarina) ou ES (Espírito Santo). Alguns tipos exigem filial; outros não pedem.",
   },
   invoiceWizard: {
     section:
@@ -36,11 +36,11 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     review:
       "Revise cada seção antes de enviar. Use Alterar para corrigir e voltar à conferência.",
     partySearch:
-      "Busque o cliente ou fornecedor por código, nome ou CNPJ. Selecione o resultado correto na lista.",
+      "Digite ao menos 2 caracteres: a busca ocorre automaticamente. Selecione o destinatário no resultado; o chip com avatar confirma a escolha (apenas um).",
     productSearch:
-      "Busque o produto por código ou descrição e adicione-o à lista de itens da nota.",
+      "Digite ao menos 2 caracteres para buscar. Selecione um ou mais produtos (chips) e use Adicionar selecionados para incluí-los na nota.",
     carrierSearch:
-      "Busque a transportadora por código ou nome, se quiser informá-la. Este campo é opcional.",
+      "Digite ao menos 2 caracteres para buscar a transportadora (opcional). O chip com avatar confirma a escolha; remova-o se não precisar.",
   },
   rawMaterialForm: {
     section:

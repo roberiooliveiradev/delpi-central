@@ -1491,6 +1491,7 @@ Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
 | `RichTextLinkDialog` | Diálogo de inserir/editar link do editor (sem `window.prompt`) |
 | `RichTextSourceEditor` | Textarea da fonte (`assistMode: html \| plain`); autocomplete de tags/CSS só no modo HTML |
 | `RichTextToolbar` | Faixa de formatação reutilizável (tipografia, parágrafo, inserção de tabela via `TableInsertCatalogPanel`, botões Visual/HTML/Markdown) |
-| `UserDirectoryPicker` | Busca de usuários (callback `searchUsers`); `showSelectedList={false}` quando o consumidor renderiza a própria lista; `showEmail={false}` para listar só o nome; `maxSelected={1}` para single-select |
+| `EntityDirectoryPicker` | Typeahead genérico (`searchEntities`); opções `{ id, label, secondary? }`; debounce 280 ms · min 2 chars; `maxSelected={1}` single-replace; chips `.delpi-ui-tag-chip`; slots `renderOptionLeading` / `renderSelectedChip` |
+| `UserDirectoryPicker` | Fachada sobre `EntityDirectoryPicker` para usuários (`searchUsers`); `showSelectedList={false}` quando o consumidor renderiza a própria lista; `showEmail={false}` para listar só o nome; `maxSelected={1}` para single-select |
 
 CSS: `styles/cipa-shared.css` (classes `.delpi-ui-*`).

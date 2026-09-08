@@ -385,6 +385,9 @@ declare module "@delpi/plugin-ui/index" {
     onChange: (value: T) => void;
     ariaLabel: string;
     disabled?: boolean;
+    size?: "sm" | "md";
+    widthMode?: "fill" | "content";
+    direction?: "row" | "column";
   };
 
   export function createDashboardSegmentToggle(
@@ -530,6 +533,64 @@ declare module "@delpi/plugin-ui/index" {
     classNames: FileDropzoneClassNames;
     labels: FileDropzoneLabels;
   }): ComponentType<DashboardFileDropzoneProps>;
+
+  export type EntityDirectoryOption = {
+    id: string;
+    label: string;
+    secondary?: string;
+  };
+
+  export type EntityDirectoryPickerProps = {
+    value: EntityDirectoryOption[];
+    onChange: (entities: EntityDirectoryOption[]) => void;
+    searchEntities: (
+      query: string,
+      limit?: number,
+      signal?: AbortSignal,
+    ) => Promise<EntityDirectoryOption[]>;
+    disabled?: boolean;
+    showSelectedList?: boolean;
+    maxSelected?: number;
+    renderOptionLeading?: (entity: EntityDirectoryOption) => ReactNode;
+    renderSelectedChip?: (args: {
+      entity: EntityDirectoryOption;
+      label: string;
+      disabled: boolean;
+      onRemove: () => void;
+    }) => ReactNode;
+    labels?: {
+      title?: string;
+      hint?: string;
+      placeholder?: string;
+      searching?: string;
+      empty?: string;
+      emptySelected?: string;
+      selectedAriaLabel?: string;
+    };
+    className?: string;
+  };
+
+  export function EntityDirectoryPicker(props: EntityDirectoryPickerProps): ReactElement;
+
+  export function entityDirectoryLabel(entity: EntityDirectoryOption): string;
+
+  export type InitialsAvatarSize = "sm" | "md" | "lg";
+
+  export type DashboardInitialsAvatarProps = {
+    name: string;
+    colorKey?: string;
+    src?: string | null;
+    alt?: string;
+    size?: InitialsAvatarSize;
+    className?: string;
+    previewable?: boolean;
+    previewTitle?: string;
+    previewAriaLabel?: string;
+  };
+
+  export function createInitialsAvatar(
+    prefix: string,
+  ): ComponentType<DashboardInitialsAvatarProps>;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

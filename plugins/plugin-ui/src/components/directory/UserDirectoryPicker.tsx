@@ -1,6 +1,11 @@
-import { X } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
+
+import {
+  EntityDirectoryPicker,
+  type EntityDirectoryOption,
+  type EntityDirectoryPickerProps,
+} from "./EntityDirectoryPicker";
 
 export type DirectoryUserOption = {
   id: string;
@@ -50,18 +55,29 @@ export type UserDirectoryPickerProps = {
   className?: string;
 };
 
-function directoryUserLabel(user: DirectoryUserOption, showEmail: boolean): string {
+function toEntity(
+  user: DirectoryUserOption,
+  showEmail: boolean,
+): EntityDirectoryOption {
   const name = (user.name || "").trim() || user.email;
-  if (!showEmail || !user.email || user.email === name) {
-    return name;
-  }
-  return `${name} · ${user.email}`;
+  return {
+    id: user.id,
+    label: name,
+    secondary: showEmail && user.email && user.email !== name ? user.email : undefined,
+  };
 }
 
-function isAbortError(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
-  const name = "name" in error ? String((error as { name?: unknown }).name) : "";
-  return name === "AbortError";
+function fromEntity(
+  entity: EntityDirectoryOption,
+  sourceById: Map<string, DirectoryUserOption>,
+): DirectoryUserOption {
+  const known = sourceById.get(entity.id);
+  if (known) return known;
+  return {
+    id: entity.id,
+    name: entity.label,
+    email: entity.secondary || "",
+  };
 }
 
 export function UserDirectoryPicker({
@@ -77,148 +93,63 @@ export function UserDirectoryPicker({
   labels,
   className,
 }: UserDirectoryPickerProps) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<DirectoryUserOption[]>([]);
-  const [searching, setSearching] = useState(false);
-  /** Evita re-abortar a busca quando o pai passa `searchUsers` inline a cada render. */
-  const searchUsersRef = useRef(searchUsers);
-  searchUsersRef.current = searchUsers;
+  const sourceByIdRef = useRef(new Map<string, DirectoryUserOption>());
+  for (const user of value) {
+    sourceByIdRef.current.set(user.id, user);
+  }
 
-  useEffect(() => {
-    const normalized = query.trim();
-    if (normalized.length < 2) {
-      setResults([]);
-      setSearching(false);
-      return;
+  const searchEntities: EntityDirectoryPickerProps["searchEntities"] = async (
+    query,
+    limit,
+    signal,
+  ) => {
+    const users = await searchUsers(query, limit, signal);
+    for (const user of users) {
+      sourceByIdRef.current.set(user.id, user);
     }
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => {
-      setSearching(true);
-      void searchUsersRef
-        .current(normalized, 10, controller.signal)
-        .then((items) => {
-          if (!controller.signal.aborted) setResults(items);
-        })
-        .catch((error: unknown) => {
-          if (controller.signal.aborted || isAbortError(error)) return;
-          setResults([]);
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) setSearching(false);
-        });
-    }, 280);
-    return () => {
-      controller.abort();
-      window.clearTimeout(timeoutId);
-    };
-  }, [query]);
-
-  const selectedIds = new Set(value.map((item) => item.id));
-  const atLimit =
-    typeof maxSelected === "number" && maxSelected > 0 && value.length >= maxSelected;
-  const visibleResults = results.filter((user) => !selectedIds.has(user.id));
+    return users.map((user) => toEntity(user, showEmail));
+  };
 
   return (
-    <div className={["delpi-ui-user-directory-picker", className].filter(Boolean).join(" ")}>
-      <div className="delpi-ui-user-directory-picker__head">
-        <span className="delpi-ui-user-directory-picker__title">
-          {labels?.title || "Usuários"}
-        </span>
-        {labels?.hint ? (
-          <p className="delpi-ui-user-directory-picker__hint">{labels.hint}</p>
-        ) : null}
-      </div>
-      <input
-        className="delpi-ui-user-directory-picker__input"
-        value={query}
-        disabled={disabled}
-        placeholder={
-          labels?.placeholder ||
-          (showEmail ? "Buscar por nome ou e-mail" : "Buscar por nome")
-        }
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      {searching ? (
-        <p className="delpi-ui-user-directory-picker__status">Buscando…</p>
-      ) : null}
-      {!searching && query.trim().length >= 2 && visibleResults.length === 0 ? (
-        <p className="delpi-ui-user-directory-picker__status">
-          {results.length > 0
-            ? "Nenhum resultado disponível — já selecionados ou membros."
-            : "Nenhum usuário encontrado."}
-        </p>
-      ) : null}
-      {visibleResults.length > 0 ? (
-        <ul className="delpi-ui-user-directory-picker__results">
-          {visibleResults.map((user) => (
-            <li key={user.id}>
-              <button
-                type="button"
-                className={
-                  renderOptionLeading
-                    ? "delpi-ui-user-directory-picker__option delpi-ui-user-directory-picker__option--with-leading"
-                    : undefined
-                }
-                disabled={disabled || (atLimit && maxSelected !== 1)}
-                onClick={() => {
-                  if (selectedIds.has(user.id)) return;
-                  if (maxSelected === 1) {
-                    onChange([user]);
-                  } else if (atLimit) {
-                    return;
-                  } else {
-                    onChange([...value, user]);
-                  }
-                  setQuery("");
-                  setResults([]);
-                }}
-              >
-                {renderOptionLeading ? (
-                  <span className="delpi-ui-user-directory-picker__option-leading">
-                    {renderOptionLeading(user)}
-                  </span>
-                ) : null}
-                <span className="delpi-ui-user-directory-picker__option-label">
-                  {directoryUserLabel(user, showEmail)}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {showSelectedList && value.length > 0 ? (
-        <div
-          className="delpi-ui-tag-list delpi-ui-user-directory-picker__selected"
-          aria-label="Usuários selecionados"
-        >
-          {value.map((user) => {
-            const label = directoryUserLabel(user, showEmail);
-            const onRemove = () =>
-              onChange(value.filter((item) => item.id !== user.id));
-            if (renderSelectedChip) {
-              return (
-                <span key={user.id}>
-                  {renderSelectedChip({ user, label, disabled, onRemove })}
-                </span>
-              );
+    <EntityDirectoryPicker
+      value={value.map((user) => toEntity(user, showEmail))}
+      onChange={(entities) => {
+        onChange(entities.map((entity) => fromEntity(entity, sourceByIdRef.current)));
+      }}
+      searchEntities={searchEntities}
+      disabled={disabled}
+      showSelectedList={showSelectedList}
+      maxSelected={maxSelected}
+      renderOptionLeading={
+        renderOptionLeading
+          ? (entity) => {
+              const user = fromEntity(entity, sourceByIdRef.current);
+              return renderOptionLeading(user);
             }
-            return (
-              <span key={user.id} className="delpi-ui-tag-chip">
-                <span>{label}</span>
-                <button
-                  type="button"
-                  className="delpi-ui-tag-chip__remove"
-                  disabled={disabled}
-                  aria-label={`Remover ${label}`}
-                  onClick={onRemove}
-                >
-                  <X size={14} aria-hidden="true" />
-                </button>
-              </span>
-            );
-          })}
-        </div>
-      ) : null}
-    </div>
+          : undefined
+      }
+      renderSelectedChip={
+        renderSelectedChip
+          ? ({ entity, label, disabled: chipDisabled, onRemove }) =>
+              renderSelectedChip({
+                user: fromEntity(entity, sourceByIdRef.current),
+                label,
+                disabled: chipDisabled,
+                onRemove,
+              })
+          : undefined
+      }
+      labels={{
+        title: labels?.title || "Usuários",
+        hint: labels?.hint,
+        placeholder:
+          labels?.placeholder ||
+          (showEmail ? "Buscar por nome ou e-mail" : "Buscar por nome"),
+        empty: "Nenhum usuário encontrado.",
+        emptySelected: "Nenhum resultado disponível — já selecionados ou membros.",
+        selectedAriaLabel: "Usuários selecionados",
+      }}
+      className={className}
+    />
   );
 }

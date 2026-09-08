@@ -120,3 +120,65 @@
   margin: 0;
   padding-left: 1.1rem;
 }
+
+/* Wizard — seletor de filial (layout de página; chrome = SegmentToggle do kit) */
+.dashboard-my-requests .my-requests-wizard-branch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+/* Wizard — linhas de item densas (qty/preço/remover lado a lado) */
+.dashboard-my-requests .my-requests-invoice-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dashboard-my-requests .my-requests-invoice-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
+}
+
+.dashboard-my-requests .my-requests-invoice-item:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.dashboard-my-requests .my-requests-invoice-item__title {
+  font-weight: 600;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.dashboard-my-requests .my-requests-invoice-item__row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 7.5rem) minmax(7rem, 11rem) auto;
+  gap: 0.75rem 1rem;
+  align-items: end;
+}
+
+.dashboard-my-requests .my-requests-invoice-item__remove {
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 0.15rem;
+}
+
+@media (max-width: 640px) {
+  .dashboard-my-requests .my-requests-invoice-item__row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dashboard-my-requests .my-requests-invoice-item__remove {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    padding-bottom: 0;
+  }
+}
