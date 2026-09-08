@@ -65,6 +65,37 @@ class PlatformGuardrailsTest(unittest.TestCase):
         )
         self.assertEqual([item.rule for item in findings], ["MFE_PLUGIN_UI_OVERRIDE"])
 
+    def test_mfe_with_own_api_cannot_call_api_delpi_directly(self):
+        with patch.object(mod, "mfe_has_own_api", return_value=True):
+            findings = mod.scan_mfe_own_api_bypass(
+                "plugins/foo/src/api.ts",
+                {4: 'return fetch("/apps/api-delpi/products/123")'},
+            )
+        self.assertEqual([item.rule for item in findings], ["MFE_OWN_API_BYPASS"])
+
+    def test_mfe_without_own_api_can_call_api_delpi(self):
+        with patch.object(mod, "mfe_has_own_api", return_value=False):
+            findings = mod.scan_mfe_own_api_bypass(
+                "plugins/foo/src/api.ts",
+                {4: 'return fetch("/apps/api-delpi/products/123")'},
+            )
+        self.assertEqual(findings, [])
+
+    def test_mfe_own_api_gate_ignores_docs_and_shared_package(self):
+        with patch.object(mod, "mfe_has_own_api", return_value=True):
+            self.assertEqual(
+                mod.scan_mfe_own_api_bypass(
+                    "plugins/foo/README.md", {1: "GET /apps/api-delpi/products"}
+                ),
+                [],
+            )
+            self.assertEqual(
+                mod.scan_mfe_own_api_bypass(
+                    "plugins/plugin-ui/src/index.ts", {1: '"/apps/api-delpi/products"'}
+                ),
+                [],
+            )
+
     def test_jwt_verify_disabled_is_blocked_in_production(self):
         findings = mod.scan_jwt_verify_disabled(
             "some-api/app/auth.py",
