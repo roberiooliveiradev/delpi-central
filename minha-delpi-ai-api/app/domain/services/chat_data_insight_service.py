@@ -139,7 +139,11 @@ class ChatDataInsightService:
                 )
 
             if not commentary.get("derivedMetrics") and not skip_numeric:
-                commentary["derivedMetrics"] = cls._build_derived_metrics(rows=rows, shape=shape)
+                commentary["derivedMetrics"] = cls._build_derived_metrics(
+                    rows=rows,
+                    shape=shape,
+                    metadata=metadata,
+                )
         elif not commentary.get("visualHints"):
             from app.domain.services.chat_humanized_data_response_content_service import (
                 ChatHumanizedDataResponseContentService,
@@ -337,7 +341,11 @@ class ChatDataInsightService:
             commentary["profileKey"] = "kpi_summary"
             commentary["highlights"] = aggregate_highlights
             commentary["summaryLines"] = aggregate_highlights[:4]
-            commentary["derivedMetrics"] = cls._build_derived_metrics(rows=rows, shape=shape)
+            commentary["derivedMetrics"] = cls._build_derived_metrics(
+                rows=rows,
+                shape=shape,
+                metadata=metadata,
+            )
             return ChatHumanizedDataResponseService.normalize(
                 commentary,
                 profile_key="kpi_summary",
@@ -365,11 +373,16 @@ class ChatDataInsightService:
                 ]
 
                 if values:
-                    from app.domain.services.external_actions.external_action_column_label_service import (
-                        ExternalActionColumnLabelService,
+                    from app.domain.services.chat_field_label_resolution_pipeline_service import (
+                        ChatFieldLabelResolutionPipelineService,
                     )
 
-                    field_label = ExternalActionColumnLabelService().label_for(key)
+                    field_label = ChatFieldLabelResolutionPipelineService.label_from_metadata(
+                        metadata,
+                        key,
+                        path=str(metadata.get("path") or ""),
+                        enable_discovery=False,
+                    )
                     total = sum(values)
                     numeric_highlights.append(
                         ChatHumanizedDataResponseContentService.format(
@@ -427,7 +440,11 @@ class ChatDataInsightService:
         commentary["highlights"] = highlights
         commentary["attention"] = attention
         commentary["summaryLines"] = highlights[:4]
-        commentary["derivedMetrics"] = cls._build_derived_metrics(rows=rows, shape=shape)
+        commentary["derivedMetrics"] = cls._build_derived_metrics(
+            rows=rows,
+            shape=shape,
+            metadata=metadata,
+        )
 
         return ChatHumanizedDataResponseService.normalize(
             commentary,
@@ -1036,6 +1053,7 @@ class ChatDataInsightService:
         *,
         rows: list[dict[str, Any]] | None,
         shape: dict[str, Any],
+        metadata: dict[str, Any] | None = None,
     ) -> list[dict[str, str]]:
         from app.domain.services.chat_humanized_data_response_content_service import (
             ChatHumanizedDataResponseContentService,
@@ -1061,13 +1079,18 @@ class ChatDataInsightService:
 
             if values:
                 total = sum(values)
-                from app.domain.services.chat_presentation_field_label_resolution_service import (
-                    ChatPresentationFieldLabelResolutionService,
+                from app.domain.services.chat_field_label_resolution_pipeline_service import (
+                    ChatFieldLabelResolutionPipelineService,
                 )
 
                 metrics.append(
                     {
-                        "label": ChatPresentationFieldLabelResolutionService.resolve_label(key)
+                        "label": ChatFieldLabelResolutionPipelineService.label_from_metadata(
+                            metadata,
+                            key,
+                            path=str((metadata or {}).get("path") or ""),
+                            enable_discovery=False,
+                        )
                         or key,
                         "value": cls._format_number(total),
                     }

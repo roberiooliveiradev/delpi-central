@@ -753,3 +753,69 @@ def test_system_table_schema_uses_summary_not_rowcount_or_x3_tamanho():
     assert "tamanho" not in metric_blob
     assert "2703" not in metric_blob
     assert "média" not in metric_blob
+
+
+def test_insight_numeric_total_prefers_resolved_field_labels_bundle():
+    from app.composition.content_composer import configure_domain_infrastructure_ports
+
+    configure_domain_infrastructure_ports()
+
+    metadata = {
+        "path": "/sales/open-orders",
+        "resolvedFieldLabels": {
+            "labels": {
+                "last_price": "Últ. preço",
+                "unit_price": "Preço unitário",
+            },
+            "formats": {},
+            "sourceByKey": {
+                "last_price": "catalog",
+                "unit_price": "catalog",
+            },
+        },
+        "presentation": {
+            "type": "table",
+            "columns": [
+                {"key": "last_price", "label": "Últ. preço"},
+                {"key": "unit_price", "label": "Preço unitário"},
+            ],
+            "rows": [
+                {"last_price": 10.0, "unit_price": 8.0},
+                {"last_price": 20.0, "unit_price": 9.0},
+            ],
+        },
+    }
+    data = {
+        "items": [
+            {"last_price": 10.0, "unit_price": 8.0},
+            {"last_price": 20.0, "unit_price": 9.0},
+        ]
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+    assert isinstance(data_answer, dict)
+
+    blob = " ".join(
+        [
+            str((data_answer.get("summary") or {}).get("answer") or ""),
+            *[
+                str(item.get("text") if isinstance(item, dict) else item)
+                for item in (data_answer.get("facts") or [])
+            ],
+            *[
+                str(item.get("text") if isinstance(item, dict) else item)
+                for item in (data_answer.get("highlights") or [])
+            ],
+        ]
+    )
+    metrics = data_answer.get("derivedMetrics") or []
+    metric_labels = [
+        str(metric.get("label") or "")
+        for metric in metrics
+        if isinstance(metric, dict)
+    ]
+
+    assert "last_price" not in blob.casefold()
+    assert any("Últ. preço" in label or "Preço unitário" in label for label in metric_labels) or (
+        "últ. preço" in blob.casefold() or "preço unitário" in blob.casefold()
+    )
