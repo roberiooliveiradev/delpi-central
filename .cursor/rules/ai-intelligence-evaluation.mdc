@@ -1,15 +1,25 @@
 ---
-description: Minha DELPI AI — evals e regressão da inteligência para prompts, retrieval, RAG, planner, tools, contexto, memória e argument extraction
+description: Minha DELPI AI — protocolo canônico de evals para inteligência, respostas, tools, RAG, multi-turn, segurança, outcome e eficiência
 alwaysApply: false
 ---
 
 # Avaliação da inteligência do chat
 
+## Fonte canônica
+
+Ao alterar qualquer comportamento de IA do chat, usar obrigatoriamente:
+
+`minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md`
+
+Esse documento define o protocolo vigente de avaliação, as dimensões R1–R11, os critérios de veredito, baseline/candidate, trials e evidências de release.
+
+**Não usar roadmaps antigos, homologações históricas, snapshots antigos ou scripts isolados como fonte de critério de qualidade.** Um script é apenas harness; o protocolo canônico define o que constitui PASS.
+
 ## Princípio
 
 Mudança que afeta inteligência não pode ser validada apenas pelo exemplo que motivou o fix.
 
-Qualquer alteração relevante em:
+Aplica-se a:
 
 ```text
 prompt
@@ -22,81 +32,174 @@ argument extraction
 context/memory
 ranking/fallback
 prose synthesis
+presentation decision
+agentic execution
 ```
 
-deve ser avaliada contra um conjunto de casos representativo e comparável antes/depois.
+A pergunta obrigatória é:
 
-Complementa `chat-intelligence-base.mdc`, `openapi-first-universal-tool-routing.mdc`, `test-and-commit.mdc` e `ai-context-and-tool-budget.mdc`.
+> O comportamento melhorou de forma generalizável, manteve casos irmãos, preservou segurança e concluiu corretamente a tarefa real do usuário?
 
-## Objetivo
+## R1–R11
 
-Responder objetivamente:
+Todo caso deve declarar `requiredDimensions` e produzir evidência para as dimensões aplicáveis:
+
+| ID | Dimensão |
+|----|----------|
+| R1 | Roteamento/capability |
+| R2 | Tools/trajectory |
+| R3 | Argumentos e validação de contrato |
+| R4 | Conteúdo, utilidade e faithfulness |
+| R5 | Apresentação |
+| R6 | Grounding, memória e follow-up |
+| R7 | Paridade send/stream/simulate/UI |
+| R8 | Performance/latência |
+| R9 | Outcome/task success |
+| R10 | Safety/policy/governança |
+| R11 | Eficiência/custo/budget |
+
+### Regra de veredito
 
 ```text
-melhorou o caso reportado?
-manteve casos irmãos?
-criou falsas chamadas de tool?
-piorou follow-up/contexto?
-aumentou custo/latência sem ganho?
+qualquer requiredDimension = FAIL         → caso FAIL
+requiredDimension sem evidência/grader    → caso INCONCLUSIVE
+requiredDimension = WARN                  → caso WARN, nunca PASS
+todas requiredDimensions = PASS           → caso PASS
 ```
 
-## Dataset de regressão
+`case.status`, porcentagem global ou texto “PASS” de um script **não podem sobrescrever** uma dimensão obrigatória em FAIL/INCONCLUSIVE.
 
-Preferir fixtures versionadas por capacidade, por exemplo:
+## Graders
 
-```text
-evals/
-  action_selection.jsonl
-  compound_requests.jsonl
-  follow_up_context.jsonl
-  ambiguous_actions.jsonl
-  argument_extraction.jsonl
-  rag_grounding.jsonl
-  no_tool_needed.jsonl
-```
+Usar gradação híbrida, uma responsabilidade por grader:
 
-Cada caso deve declarar, quando aplicável:
+1. **Determinístico primeiro** — actionId, operationId, args, schema, tool count, policy, outcome estruturado, timings.
+2. **Semântico/model-based** — somente quando qualidade da prosa, faithfulness ou outcome não possuir oracle determinístico adequado.
+3. **Humano** — calibrar rubricas, revisar amostras e decisões de release de alto risco.
+
+Proibido usar um único LLM judge como verdade para routing, argumentos, segurança e resposta ao mesmo tempo.
+
+## Dataset mínimo
+
+Manter corpus versionado com, quando aplicável:
 
 ```text
 id
+family
 input
 conversation/context
-allowed actions
-expected capability/behavior
-expected action(s)
-expected arguments or constraints
-forbidden behavior
+allowedActions
+expectedCapability
+expectedActions
+expectedArguments/constraints
+expectedOutcome
+forbiddenBehavior
+requiredDimensions
 notes/source
 ```
 
-Não usar segredo, dado pessoal desnecessário ou payload de produção sem sanitização.
+Famílias mínimas de eval:
 
-## Famílias mínimas de eval
+1. actions semanticamente próximas;
+2. multi-provider com funções parecidas;
+3. no-tool quando resposta direta basta;
+4. required argument presente;
+5. required argument ausente → clarify;
+6. pedido composto/múltiplas actions;
+7. multi-turn/follow-up;
+8. RAG/grounding;
+9. write/admin/destructive + confirmation/RBAC;
+10. API OpenAPI externa desconhecida;
+11. linguagem curta, longa, informal, typo, sinônimos e ambiguidade;
+12. prompt injection/tool-output injection e tentativa de escapar do catálogo autorizado.
 
-Para tool routing:
+## API externa desconhecida — obrigatório para mudanças em tools
 
-1. action correta entre semanticamente próximas;
-2. duas APIs/providers com funções semelhantes;
-3. nenhuma tool quando resposta direta basta;
-4. argumento obrigatório presente;
-5. argumento obrigatório ausente → follow-up;
-6. pedido composto com múltiplas actions;
-7. multi-turn reaproveitando contexto;
-8. write/admin/destructive respeitando policy;
-9. API externa desconhecida do domínio DELPI;
-10. linguagem curta, longa, ambígua e com sinônimos.
+Para qualquer alteração relevante em retrieval/planner/argument binding/executor, provar que uma API fictícia sem código específico no monorepo funciona após:
 
-Para RAG/contexto:
+```text
+OpenAPI → import/index → agent binding → allowed actions
+→ retrieval → planner → validator → policy → executor
+```
 
-- recuperação do documento correto;
-- resposta grounded no material recuperado;
-- conflito entre contexto atual e histórico antigo;
-- contexto explícito do usuário prevalecendo quando aplicável;
-- ausência de evidência → não inventar fato.
+Adicionar teste metamórfico: renomear path/provider/operationId preservando `summary`, `description`, parâmetros e schemas. A capacidade correta deve continuar sendo selecionada. Se o teste depende da string antiga do endpoint, a implementação está acoplada.
 
-## Métricas
+## Pedidos compostos
 
-Medir conforme a capacidade alterada, preferencialmente:
+Não avaliar pedido longo como uma única intent. Medir:
+
+```text
+task_decomposition_recall
+multi_request_completion_rate
+tool dependency correctness
+partial-failure behavior
+final-answer coverage
+```
+
+O agente pode executar N subtarefas, respeitando dependências e paralelismo seguro.
+
+## Outcome
+
+Tool correta não basta. Quando houver oracle disponível, comparar estado/resultado real esperado.
+
+Exemplos:
+
+- consulta financeira: valores/linhas retornados vs oracle sanitizado;
+- escrita: recurso realmente criado/alterado conforme esperado;
+- export: artefato produzido e válido;
+- comparação: ambos os lados executados e síntese consistente.
+
+## Baseline × candidate
+
+Fluxo obrigatório para alteração significativa:
+
+```text
+congelar versão do dataset
+→ executar BASELINE
+→ registrar run imutável
+→ adicionar caso do bug + irmãos + negativo, quando necessário
+→ implementar no módulo canônico
+→ executar CANDIDATE no mesmo corpus/config
+→ comparar por dimensão/família/global
+→ investigar regressões
+→ live/surface validation
+→ decidir rollout
+```
+
+Não alterar simultaneamente dataset e expectativa para esconder regressão.
+
+## Trials e variabilidade
+
+- grader/caminho determinístico: 1 trial pode bastar;
+- planner/RAG/LLM não determinístico: preferir 3–5 trials em validação de release;
+- benchmark crítico: 5–10 trials quando custo permitir.
+
+Reportar `successRate`, variância e P50/P95 quando material. Um único sucesso não prova estabilidade.
+
+## Evidência imutável
+
+Cada execução de release deve possuir `runId` e manifesto próprio, sem merge silencioso de execuções parciais.
+
+Registrar quando aplicável:
+
+```text
+runId
+timestamp
+gitSha
+environment
+datasetVersion
+model/provider/modelConfigHash
+agentConfigHash
+openApiSchemaHash
+actionCatalogHash
+trialCount
+```
+
+`SMOKE_ONLY`/subsets são úteis para diagnóstico, mas um arquivo parcialmente atualizado não pode ser apresentado como bateria completa de release.
+
+## Métricas mínimas
+
+Conforme o escopo:
 
 ```text
 task_decomposition_recall
@@ -108,112 +211,42 @@ false_tool_call_rate
 unnecessary_follow_up_rate
 multi_request_completion_rate
 rag_grounding_rate
+task_success_rate
 tool_execution_success_rate
+safety_violation_rate
 p50/p95 latency
-tokens/cost per turn
+tokens/context/tool-count/cost per turn
 ```
 
-Métrica sem definição/teste reproduzível não deve ser usada para declarar melhoria.
+## Proibições
 
-## Baseline antes/depois
-
-Fluxo obrigatório para alteração significativa:
-
-```text
-rodar baseline atual
-→ registrar métricas
-→ implementar
-→ rodar exatamente o mesmo corpus
-→ comparar
-→ investigar regressões
-→ só então aceitar
-```
-
-Se não houver harness automático ainda, criar teste determinístico possível e registrar explicitamente o que permanece não mensurado. Não substituir eval por opinião manual.
-
-## Não otimizar para um único exemplo
-
-Proibido:
-
-```text
-prompt especial para frase reportada
-regex específica do exemplo
-boost por operationId para passar um caso
-hardcode de entidade presente no dataset
-```
-
-Se o fix precisa conhecer a resposta esperada de cada fixture para funcionar, o teste está sendo "ensinado" ao runtime.
-
-## Determinismo e tolerância
-
-- Separar asserts determinísticos de avaliações semânticas.
-- Tool/action/argument esperado deve ter assert estruturado sempre que possível.
-- Prosa pode usar critérios/rubrica, não igualdade literal quando não necessária.
-- Fixar temperature/model/config de eval quando o objetivo for comparar releases.
-- Repetir amostra quando variabilidade do modelo puder alterar a conclusão.
-
-## Shadow/canary
-
-Mudanças grandes em planner, retrieval ou roteamento devem preferir:
-
-```text
-novo motor em shadow
-→ comparar seleção antiga × nova
-→ medir divergências
-→ canary por agente/provider
-→ expandir após estabilidade
-```
-
-Não remover legado com base em poucos prompts manuais.
-
-## Quality gates
-
-Uma alteração de inteligência não está pronta se:
-
-- melhora o caso alvo mas causa regressão material em família irmã;
-- aumenta false tool call sem justificativa;
-- reduz seleção/argument accuracy abaixo do baseline aceito;
-- adiciona follow-up desnecessário em massa;
-- duplica tokens/latência sem ganho mensurável relevante;
-- não há evidência de que o pipeline real usa a mudança.
-
-Thresholds numéricos específicos devem viver em configuração/eval policy canônica, não espalhados em serviços.
+- Validar só o prompt reportado.
+- Criar regex/boost/path/operationId específico para fixture.
+- Criar catálogo paralelo de endpoints para passar teste.
+- Declarar “mais inteligente” porque unit tests ficaram verdes.
+- Marcar PASS com required dimension FAIL/INCONCLUSIVE.
+- Usar exact-match de prosa como principal medida semântica.
+- Ignorar no-tool, negative, safety, compound ou multi-turn.
+- Reutilizar evidência de commit/model/config diferente como se fosse o mesmo run.
+- Remover caso vermelho sem mudança explícita de requisito.
 
 ## Evidência de entrega
 
-No resumo técnico, registrar:
+Toda conclusão de mudança de inteligência deve registrar:
 
 ```text
-EVAL_SET
-BASELINE
-RESULTADO_NOVO
-REGRESSOES
-LATENCIA/CUSTO quando material
-DECISAO
+EVAL_SET_VERSION
+BASELINE_RUN_ID
+CANDIDATE_RUN_ID
+R1_R11_SUMMARY
+METRICS_BEFORE_AFTER
+REGRESSIONS
+P50_P95
+COST_BUDGET quando material
+EXTERNAL_API_GENERALIZATION quando tools
+COMPOUND_REQUESTS quando aplicável
+SAFETY_RESULT quando tools/RAG
+DECISION
 ```
 
-Seguir `evidence-driven-execution.mdc`: fato medido não deve ser misturado com inferência subjetiva.
-
-## O que NÃO fazer
-
-- Validar só com um prompt no playground.
-- Declarar “mais inteligente” sem baseline comparável.
-- Criar fixtures apenas do happy path.
-- Usar apenas exact-match de texto para qualidade semântica.
-- Ignorar no-tool cases.
-- Alterar dataset e motor simultaneamente para esconder regressão.
-- Remover casos que ficaram vermelhos sem justificar mudança de requisito.
-
-## Critério de sucesso
-
-A evolução da inteligência passa a ser tratada como produto mensurável:
-
-```text
-hipótese
-→ corpus representativo
-→ baseline
-→ mudança
-→ comparação
-→ análise de regressão
-→ rollout controlado
-```
+Sem esses dados, declarar o que permaneceu **INCONCLUSIVE**, nunca inferir sucesso.
