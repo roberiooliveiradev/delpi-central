@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audita governança, escopo e referências das regras Cursor do repositório."""
+"""Audita governança, escopo, hierarquia e referências das regras Cursor."""
 
 from __future__ import annotations
 
@@ -21,15 +21,27 @@ GLOBAL_ALLOWLIST = {
 }
 GLOBAL_BUDGET = len(GLOBAL_ALLOWLIST)
 
+# Donos transversais da engenharia. Permanecem não globais para preservar contexto.
+REQUIRED_TRANSVERSAL_RULES = {
+    "platform-architecture-boundaries.mdc",
+    "platform-security-identity-authorization.mdc",
+    "platform-api-contracts-integration.mdc",
+    "platform-data-persistence.mdc",
+    "platform-frontend-mfe-experience.mdc",
+    "platform-quality-testing.mdc",
+    "platform-delivery-runtime-operations.mdc",
+    "platform-reliability-observability.mdc",
+}
+
 REQUIRED_SPECIALIZED_RULES = {
-    # Fase 2 — guardrails transversais.
+    # Guardrails especializados críticos já existentes.
     "ai-external-tools-security.mdc",
     "ai-intelligence-evaluation.mdc",
     "ai-context-and-tool-budget.mdc",
     "http-integration-resilience.mdc",
     "observability-standards.mdc",
     "contract-evolution-backward-compatibility.mdc",
-    # Fase 3 — enforcement executável.
+    # Enforcement executável.
     "architecture-ci-enforcement.mdc",
 }
 
@@ -100,6 +112,13 @@ def main() -> int:
     descriptions: list[tuple[str, str]] = []
     global_rules: set[str] = set()
 
+    missing_transversal = REQUIRED_TRANSVERSAL_RULES - rule_names
+    if missing_transversal:
+        errors.append(
+            "responsabilidades transversais canônicas ausentes: "
+            + ", ".join(sorted(missing_transversal))
+        )
+
     missing_specialized = REQUIRED_SPECIALIZED_RULES - rule_names
     if missing_specialized:
         errors.append(
@@ -108,6 +127,12 @@ def main() -> int:
         )
 
     index_text = INDEX_PATH.read_text(encoding="utf-8") if INDEX_PATH.exists() else ""
+    for required_name in sorted(REQUIRED_TRANSVERSAL_RULES):
+        if required_name not in index_text:
+            errors.append(
+                f"{required_name}: responsabilidade transversal não referenciada em development-standards-index.mdc"
+            )
+
     for required_name in sorted(REQUIRED_SPECIALIZED_RULES):
         if required_name not in index_text:
             errors.append(
@@ -125,6 +150,10 @@ def main() -> int:
 
         if description:
             descriptions.append((path.name, description.casefold()))
+            if description.casefold().startswith("(legado)"):
+                errors.append(
+                    f"{path.name}: regra marcada como legado deve ser removida ou absorvida pela fonte canônica"
+                )
         elif not globs:
             warnings.append(
                 f"{path.name}: regra não global sem description/globs pode depender de invocação manual"
@@ -150,10 +179,20 @@ def main() -> int:
             if path.name not in GLOBAL_ALLOWLIST:
                 errors.append(f"{path.name}: regra global fora da allowlist canônica")
 
-        if path.name in REQUIRED_SPECIALIZED_RULES and always_apply:
+        if path.name in (REQUIRED_TRANSVERSAL_RULES | REQUIRED_SPECIALIZED_RULES) and always_apply:
             errors.append(
-                f"{path.name}: guardrail especializado deve permanecer alwaysApply=false"
+                f"{path.name}: responsabilidade/guardrail especializado deve permanecer alwaysApply=false"
             )
+
+        if path.name in REQUIRED_TRANSVERSAL_RULES:
+            if not description.startswith("Responsabilidade transversal canônica"):
+                errors.append(
+                    f"{path.name}: description deve identificar explicitamente a responsabilidade transversal canônica"
+                )
+            if globs:
+                errors.append(
+                    f"{path.name}: owner transversal não deve usar globs; seleção ocorre por responsabilidade/relevância"
+                )
 
         size = path.stat().st_size
         if size > MAX_RULE_BYTES and "governanceSizeJustification" not in frontmatter:
@@ -190,6 +229,10 @@ def main() -> int:
     print(f"- regras: {len(rule_paths)}")
     print(f"- globais: {len(global_rules)}/{GLOBAL_BUDGET}")
     print("- globais canônicas: " + ", ".join(sorted(global_rules)))
+    print(
+        "- responsabilidades transversais: "
+        + ", ".join(sorted(REQUIRED_TRANSVERSAL_RULES & rule_names))
+    )
     print(
         "- guardrails especializados obrigatórios: "
         + ", ".join(sorted(REQUIRED_SPECIALIZED_RULES & rule_names))
