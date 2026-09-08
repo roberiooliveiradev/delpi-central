@@ -2,8 +2,8 @@
 
 > **Plugin:** `my-requests`  
 > **API:** `/apps/requests-api/v1`  
-> **Status:** E1–E17 entregues (ops + IAM + lookups `/request-lookups`); UI live Ops ainda assina PARITY itens 1–2  
-> **Próximo:** E19 UX Nova por cards ([PROMPT-nova-solicitacao-type-cards.md](./PROMPT-nova-solicitacao-type-cards.md)); E18 deprecar lookups legado; backlog tags / Admin CRUD  
+> **Status:** E1–E19 entregues (ops + IAM + lookups + UX Nova cards); UI live Ops ainda assina PARITY itens 1–2  
+> **Próximo:** E18 deprecar lookups legado; backlog tags / Admin CRUD  
 > **Referência legado:** [`invoice-issuance`](../invoice-issuance/README.md)
 
 ---
@@ -1568,7 +1568,7 @@ flowchart LR
 | Etapa | Entrega | Nota |
 |-------|---------|------|
 | **E18** | Deprecar/remover lookups `/invoice-issuance/*` na api-delpi após soak | técnico; schema/volume retidos |
-| **E19** | UX `/new` por cards + unidade via `branch_scope` | brief: [`PROMPT-nova-solicitacao-type-cards.md`](./PROMPT-nova-solicitacao-type-cards.md) |
+| **E19** | UX `/new` por cards + unidade via `branch_scope` | **entregue** — [`PROMPT-nova-solicitacao-type-cards.md`](./PROMPT-nova-solicitacao-type-cards.md) |
 
 Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19.
 
@@ -1609,5 +1609,5 @@ Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19.
 
 ---
 
-**Status:** `E1–E17 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
-**Próximo passo:** **E19** — UX Nova por cards ([PROMPT-nova-solicitacao-type-cards.md](./PROMPT-nova-solicitacao-type-cards.md)); em paralelo/após soak: **E18** deprecar lookups `/invoice-issuance/*`; backlog tags / CreatableMultiSelect / Admin CRUD; DROP schema após retenção.
+**Status:** `E1–E19 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
+**Próximo passo:** **E18** — deprecar lookups `/invoice-issuance/*` após soak; backlog tags / CreatableMultiSelect / Admin CRUD; DROP schema após retenção.

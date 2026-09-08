@@ -28,9 +28,7 @@ Itens elegíveis ao seu perfil de processar/gerenciar. Mesma busca, filtros e pa
 
 ## Nova solicitação
 
-**Hoje:** escolha o **tipo** e a **filial** no formulário genérico; depois abra o wizard de NF ou o formulário de matéria-prima.
-
-**Alvo** ([prompt de implementação](./PROMPT-nova-solicitacao-type-cards.md)): escolha o tipo em **cards com ícone**; a **unidade/filial** (quando o tipo exige) aparece **dentro** do formulário daquele pedido — tipos sem multi-unidade não pedem filial.
+Escolha o **tipo** em um **card** (ícone + nome). O formulário abre na hora: wizard de NF, formulário de matéria-prima ou fluxo genérico. A **unidade/filial**, quando o tipo exige (`branch_scope`), aparece **dentro** do formulário — tipos sem multi-unidade não pedem filial. Deep link `/new?type=…` abre o formulário do tipo.
 
 ## Admin (tipos)
 

@@ -14,9 +14,10 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   new: {
     section:
-      "Escolha o tipo: emissão de NF abre o wizard; matéria-prima abre o formulário schema-driven; outros tipos usam o fluxo genérico. Deep link: /new?type=invoice-issuance. O app legado invoice-issuance saiu do menu (soft cutover); use sempre Minhas Solicitações.",
-    type: "Tipo cadastrado no Request Engine (workflow declarativo).",
-    branch: "Filial TOTVS do escopo da solicitação (01 = SC, 02 = ES).",
+      "Escolha o tipo em um card (ícone + nome). O formulário abre na hora: emissão de NF (wizard), matéria-prima (schema) ou fluxo genérico. A filial, quando o tipo exige, fica dentro do formulário. Deep link: /new?type=invoice-issuance abre o form direto.",
+    type: "Tipo cadastrado no Request Engine — um card por tipo disponível.",
+    branch:
+      "Filial TOTVS do escopo da solicitação (01 = SC, 02 = ES). Aparece só dentro do formulário do tipo, conforme branch_scope (obrigatória, opcional ou ausente).",
   },
   invoiceWizard: {
     section:

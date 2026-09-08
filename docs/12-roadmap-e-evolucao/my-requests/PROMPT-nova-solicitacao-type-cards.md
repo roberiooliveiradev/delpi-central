@@ -2,7 +2,7 @@
 
 > **Módulo:** Minhas Solicitações (`plugins/my-requests` + `requests-api`)  
 > **Superfície:** `/apps/my-requests/new`  
-> **Status:** prompt de produto/engenharia — **ainda não implementado**  
+> **Status:** prompt de produto/engenharia — **implementado (E19)**  
 > **Docs irmãs:** [WIREFRAMES.md](./WIREFRAMES.md) (WF-03) · [PLAYBOOK.md](./PLAYBOOK.md) · [MANUAL-USUARIO.md](./MANUAL-USUARIO.md) · [plugin README](../../../plugins/my-requests/README.md)
 
 Use este arquivo como **brief único** para um agente ou desenvolvedor implementar a UX de criação. Não improvisar fora deste escopo.
@@ -90,13 +90,13 @@ Deep link `?type=invoice-issuance`: pré-seleciona e **abre** o form do tipo (n�
 
 ## Critérios de pronto
 
-- [ ] `/new` mostra cards com ícone + nome; sem select de tipo/filial no shell.
-- [ ] Clique em NF abre wizard; clique em MP abre schema form.
-- [ ] Tipo com `branch_scope=none` não exibe seletor de unidade.
-- [ ] Tipo com `required` exige unidade antes do create (UI + API).
-- [ ] Deep link `?type=` continua funcionando (abre o form).
-- [ ] Ajuda in-app + Manual + WF-03 atualizados.
-- [ ] `npm test` / build do `plugins/my-requests` verdes no escopo.
+- [x] `/new` mostra cards com ícone + nome; sem select de tipo/filial no shell.
+- [x] Clique em NF abre wizard; clique em MP abre schema form.
+- [x] Tipo com `branch_scope=none` não exibe seletor de unidade.
+- [x] Tipo com `required` exige unidade antes do create (UI + API).
+- [x] Deep link `?type=` continua funcionando (abre o form).
+- [x] Ajuda in-app + Manual + WF-03 atualizados.
+- [x] `npm test` / build do `plugins/my-requests` verdes no escopo.
 
 ---
 
