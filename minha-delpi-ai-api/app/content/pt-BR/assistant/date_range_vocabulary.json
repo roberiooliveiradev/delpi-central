@@ -360,12 +360,25 @@
     "sabado": 5,
     "sab": 5
   },
+  "recentSoftPhrases": [
+    "recentes",
+    "recente",
+    "recentemente",
+    "mais recentes",
+    "mais recente"
+  ],
+  "recentSoftDefaultDays": 30,
   "temporalRangeMarkers": [
     "hoje",
     "hj",
     "ontem",
     "amanha",
     "anteontem",
+    "recentes",
+    "recente",
+    "recentemente",
+    "mais recentes",
+    "mais recente",
     "semana passada",
     "semana anterior",
     "semana retrasada",

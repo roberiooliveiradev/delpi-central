@@ -163,3 +163,19 @@ def test_has_temporal_reference_for_expanded_vocabulary(phrase: str):
 
     assert ChatTemporalIntentService.has_temporal_reference(message)
     assert ChatOperationalDateParameterService.has_temporal_reference(message)
+
+
+def test_recent_soft_phrase_resolves_default_window_and_skips_missing_period():
+    message = (
+        "Quero o ROL / indicadores comerciais recentes: mostre o número "
+        "principal (KPI), a série no tempo em gráfico se disponível."
+    )
+
+    resolved = ChatDateRangeIntentService.resolve(message, today=_REFERENCE)
+
+    assert resolved is not None
+    assert resolved.start_date == "11-05-2026"
+    assert resolved.end_date == "09-06-2026"
+    assert ChatOperationalDateParameterService.has_temporal_reference(message)
+    assert ChatOperationalDateParameterService.resolve_missing_date_answer(message) is None
+    assert ChatOperationalParameterService.resolve_missing_date_answer(message) is None

@@ -153,6 +153,33 @@ class ChatDateRangeIntentService:
                 reason=cls._reason("lastNDays", days=days),
             )
 
+        if _contains_any(normalized, ChatDateRangeVocabularyService.terms("recentSoftPhrases")):
+            from app.domain.services.chat_assistant_content_service import (
+                ChatAssistantContentService,
+            )
+
+            days = max(
+                1,
+                min(
+                    int(
+                        ChatAssistantContentService.get(
+                            "date_range_vocabulary",
+                            "recentSoftDefaultDays",
+                            default=30,
+                        )
+                        or 30
+                    ),
+                    366,
+                ),
+            )
+            start = reference - timedelta(days=days - 1)
+
+            return cls._from_dates(
+                start,
+                reference,
+                reason=cls._reason("recentSoft", days=days),
+            )
+
         if _contains_any(normalized, ChatDateRangeVocabularyService.terms("rollingLastWeekPhrases")):
             start = reference - timedelta(days=6)
 
