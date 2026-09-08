@@ -1,4 +1,8 @@
-"""Planner LLM estruturado OpenAPI-first — escolhe só entre top-K do catálogo."""
+"""Planner LLM estruturado OpenAPI-first — escolhe só entre top-K do catálogo.
+
+Sempre ativo no stack OpenAPI-first (mesmo gateway de prosa/chat). Fail-soft:
+erro/parse inválido → ``None`` e o planner determinístico assume.
+"""
 
 from __future__ import annotations
 
@@ -16,32 +20,14 @@ logger = logging.getLogger("minha-delpi-ai-api.openapi.planner")
 
 
 class OpenApiLlmActionPlannerService:
-    """Adapter ``(message, slim_catalog) -> plan dict`` para ``PlanExternalActionsService``.
-
-    Fail-soft: qualquer erro/parse inválido retorna ``None`` e o planner determinístico assume.
-    """
+    """Adapter ``(message, slim_catalog) -> plan dict`` para ``PlanExternalActionsService``."""
 
     def __init__(self, llm_gateway: LlmGatewayPort | None) -> None:
         self.llm_gateway = llm_gateway
 
     @classmethod
-    def is_enabled(cls) -> bool:
-        from app.infrastructure.config.settings import Settings
-
-        raw = str(getattr(Settings, "CHAT_OPENAPI_PLANNER_LLM_ENABLED", "") or "").strip().lower()
-        if raw in {"1", "true", "yes", "on"}:
-            return True
-        if raw in {"0", "false", "no", "off"}:
-            return False
-        node = OpenApiToolRoutingContentService.get_node("planner", "llmEnabled")
-        if node is None:
-            return False
-        return bool(node)
-
-    @classmethod
     def from_stack(cls) -> OpenApiLlmActionPlannerService | None:
-        if not cls.is_enabled():
-            return None
+        """Wire canônico: sempre usa ``make_llm_gateway()`` (prosa/chat)."""
         try:
             from app.composition.llm_composer import make_llm_gateway
 

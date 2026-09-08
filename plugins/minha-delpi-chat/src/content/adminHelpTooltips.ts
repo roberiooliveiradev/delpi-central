@@ -25,7 +25,7 @@ export const ADMIN_HELP = {
   tools:
     "Saúde da plataforma e catálogo OpenAPI. Importe o OpenAPI do provider, vincule as actions ao agente e pergunte em linguagem natural — o roteamento usa o contrato (retrieval + planner + validação). Pedidos compostos e follow-ups reutilizam o estado estruturado da action, sem cadastrar endpoint no registry. Testes de action ficam no Studio do agente.",
   intelligence:
-    "Políticas globais do pipeline (RAG, tools, orquestração). O roteamento de tools é OpenAPI-first por padrão (catálogo importado + retrieval/planner); o registry legado só entra se o modo for desligado explicitamente. Não confundir com métricas.",
+    "Políticas globais do pipeline (RAG, tools, orquestração). O roteamento de tools é OpenAPI-first (catálogo importado + retrieval + planner LLM no gateway de prosa/chat + validação). Pedidos compostos e follow-ups usam o estado estruturado da action. Não confundir com métricas.",
   security:
     "Proteção de entrada (scan / bloqueio). Eventos cruzam com a Auditoria.",
   audit:

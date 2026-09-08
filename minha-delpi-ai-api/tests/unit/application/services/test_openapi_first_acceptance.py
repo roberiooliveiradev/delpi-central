@@ -320,7 +320,7 @@ def test_case10_legacy_mode_off_aliases_to_openapi_on(monkeypatch, logistics_rep
     decision = OpenApiPlannerModeService.decide(provider_keys={"logistics-example"})
     assert decision.is_off is False
     assert decision.use_openapi_selection is True
-    bridge = OpenApiFirstSelectionBridgeService(logistics_repo)
+    bridge = OpenApiFirstSelectionBridgeService(logistics_repo, planner=PlanExternalActionsService(llm_planner=None))
     planned = bridge.plan_tool_calls(
         "Onde esta a remessa 45871?",
         allowed_action_ids=logistics_allowed_action_ids(logistics_actions),
@@ -406,7 +406,7 @@ def test_shadow_mode_aliases_to_on_and_compare_helper_still_works(
         "shadow",
     )
     assert OpenApiPlannerModeService.resolve_mode() == "on"
-    bridge = OpenApiFirstSelectionBridgeService(logistics_repo)
+    bridge = OpenApiFirstSelectionBridgeService(logistics_repo, planner=PlanExternalActionsService(llm_planner=None))
     openapi = bridge.plan_tool_calls(
         "Onde esta a remessa 45871?",
         allowed_action_ids=logistics_allowed_action_ids(logistics_actions),

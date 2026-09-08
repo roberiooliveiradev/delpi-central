@@ -59,6 +59,7 @@ class OpenApiFirstSelectionBridgeService:
         except Exception:
             llm_adapter = None
         self._planner = PlanExternalActionsService(
+            # Always-on: same prose/chat gateway. Fail-soft inside the adapter.
             llm_planner=llm_adapter if llm_adapter is not None else None,
         )
         return self._planner

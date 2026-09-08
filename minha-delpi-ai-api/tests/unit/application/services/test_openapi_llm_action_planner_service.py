@@ -22,6 +22,19 @@ class _FakeLlm:
         yield self.payload
 
 
+def test_from_stack_always_wires_gateway(monkeypatch):
+    """Planner LLM não tem flag off — from_stack sempre tenta o gateway canônico."""
+    sentinel = object()
+
+    monkeypatch.setattr(
+        "app.composition.llm_composer.make_llm_gateway",
+        lambda: sentinel,
+    )
+    adapter = OpenApiLlmActionPlannerService.from_stack()
+    assert adapter is not None
+    assert adapter.llm_gateway is sentinel
+
+
 def test_llm_planner_returns_structured_plan():
     llm = _FakeLlm(
         '{"steps":[{"actionId":"a1","arguments":{"parameters":{"code":"1"}},'

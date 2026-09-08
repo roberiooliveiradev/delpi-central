@@ -8,6 +8,9 @@ from app.application.services.decompose_external_action_requests_service import 
 from app.application.services.openapi_first_selection_bridge_service import (
     OpenApiFirstSelectionBridgeService,
 )
+from app.application.services.plan_external_actions_service import (
+    PlanExternalActionsService,
+)
 from app.domain.services.openapi_planner_mode_service import OpenApiPlannerModeDecision
 from app.infrastructure.config.settings import Settings
 
@@ -150,7 +153,7 @@ PURCHASE_ACTIONS = [
 
 def _plan(message: str, actions: list[dict]):
     repo = _CatalogRepository(actions)
-    bridge = OpenApiFirstSelectionBridgeService(repo)
+    bridge = OpenApiFirstSelectionBridgeService(repo, planner=PlanExternalActionsService(llm_planner=None))
     allowed = [str(item["actionId"]) for item in actions]
     return bridge.plan_tool_calls(
         message,
@@ -248,7 +251,7 @@ def test_compound_plans_multiple_distinct_actions():
 def test_multi_turn_prefers_previous_action_id_without_path_fragment():
     actions = STRUCTURE_ACTIONS
     repo = _CatalogRepository(actions)
-    bridge = OpenApiFirstSelectionBridgeService(repo)
+    bridge = OpenApiFirstSelectionBridgeService(repo, planner=PlanExternalActionsService(llm_planner=None))
     previous = [
         {
             "role": "assistant",

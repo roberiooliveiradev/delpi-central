@@ -87,6 +87,9 @@ def test_openapi_first_acceptance_tracking_with_path_param(monkeypatch):
     from app.application.services.openapi_first_selection_bridge_service import (
         OpenApiFirstSelectionBridgeService,
     )
+    from app.application.services.plan_external_actions_service import (
+        PlanExternalActionsService,
+    )
     from app.domain.services.openapi_planner_mode_service import OpenApiPlannerModeDecision
 
     monkeypatch.setattr(
@@ -95,7 +98,7 @@ def test_openapi_first_acceptance_tracking_with_path_param(monkeypatch):
     )
     actions = import_logistics_actions()
     repo = _LogisticsRepository(actions)
-    bridge = OpenApiFirstSelectionBridgeService(repo)
+    bridge = OpenApiFirstSelectionBridgeService(repo, planner=PlanExternalActionsService(llm_planner=None))
     selected_list = bridge.plan_tool_calls(
         "Onde esta a remessa 45871 e qual a previsao de entrega?",
         allowed_action_ids=logistics_allowed_action_ids(actions),
