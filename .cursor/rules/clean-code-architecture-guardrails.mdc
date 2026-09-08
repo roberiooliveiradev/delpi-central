@@ -1,5 +1,5 @@
 ---
-description: Guardrails obrigatórios de clean code e clean architecture — avisar antes de desviar
+description: Guardrails obrigatórios de clean code e clean architecture — avisar antes de desviar e respeitar as oito responsabilidades transversais
 alwaysApply: true
 ---
 
@@ -7,53 +7,150 @@ alwaysApply: true
 
 ## Compromisso
 
-**Nunca** entregar melhoria que não esteja alinhada a clean code e clean architecture deste repositório. **Sempre** avisar o usuário **antes ou durante** a implementação quando a solução proposta ou em curso estiver fugindo disso — não corrigir silenciosamente com patch local.
+Nunca entregar melhoria que contrarie clean code, clean architecture ou uma responsabilidade transversal canônica da Minha DELPI.
 
-Regras complementares (obrigatórias): `development-standards-index.mdc`, `english-code-identifiers.mdc`, `feature-help-sync.mdc`, `application-bounded-context-decoupling.mdc`, `root-cause-generalized-fix.mdc`, `centralized-rules-first.mdc`, `schema-first-presentation-delivered.mdc`, `chat-intelligence-base.mdc`, `clean-architecture-chat-api.mdc`, `new-api-route-checklist.mdc`, `api-delpi-openapi-route-standards.mdc` (rotas api-delpi).
+Antes de implementar, identificar as responsabilidades materiais em `development-standards-index.mdc`.
 
-## O que significa «alinhado» aqui
+## Oito guardrails transversais
+
+| Responsabilidade | Regra canônica |
+|---|---|
+| arquitetura e boundaries | `platform-architecture-boundaries.mdc` |
+| segurança/identidade/autorização | `platform-security-identity-authorization.mdc` |
+| APIs/contratos/integrações | `platform-api-contracts-integration.mdc` |
+| dados/persistência | `platform-data-persistence.mdc` |
+| frontend/MFE/experiência | `platform-frontend-mfe-experience.mdc` |
+| qualidade/testes/evidência | `platform-quality-testing.mdc` |
+| delivery/runtime/operações | `platform-delivery-runtime-operations.mdc` |
+| confiabilidade/observabilidade | `platform-reliability-observability.mdc` |
+
+Regra específica de domínio é filha desses guardrails e nunca os substitui.
+
+## O que significa “alinhado”
 
 | Princípio | Aplicação neste repo |
-|-----------|----------------------|
-| **Single responsibility** | Um serviço/módulo canônico por regra de negócio; use case só orquestra. |
-| **Dependências corretas** | Domain sem infra; MFE não importa JSON da API no build. |
-| **Uma fonte de verdade** | Sem duplicar flags, semântica ou `if` entre API e MFE para o mesmo comportamento. |
-| **Contrato explícito** | Metadata (`explicitSessionFormat`, `presentationDecision`, slots) com significado único e pipeline que **consome** o serviço até o fim. |
-| **Generalização** | Preferir extensão de serviço/perfil JSON a caso especial em componente ou agente. |
-| **Teste de regressão** | Regra nova ou bugfix → teste que falha sem a regra (ideal: qualidade vs. fixture/canônico). |
+|---|---|
+| SRP | um módulo/serviço com um motivo claro para mudar |
+| DIP | domain/application dependem de abstrações, não de framework/provider |
+| OCP | nova capacidade preferencialmente estende contratos/serviços canônicos |
+| uma fonte de verdade | sem regra/flag/DTO/autorização duplicados |
+| boundaries | bounded contexts por contrato; sem import de regra de negócio entre apps |
+| segurança | backend decide autorização; cliente nunca é autoridade |
+| dados | owner claro, migrations seguras, transação coerente |
+| testabilidade | regra testável sem ambiente inteiro quando possível |
+| operabilidade | falha observável, limitada e recuperável |
 
-## Sinais de alerta — avisar o usuário imediatamente
+## Sinais de alerta — avisar o usuário
 
-Interromper ou sinalizar com **«⚠ Desvio de clean architecture»** quando:
+Sinalizar **⚠ Desvio de clean architecture** quando a solução proposta exigir, sem justificativa arquitetural:
 
-1. **Serviço escrito mas não ligado ao pipeline** (ex.: `finalize_*` existe nos testes mas o use case não chama).
-2. **Mesmo conceito, dois significados** (ex.: `explicitSessionFormat` setado por text-first automático *e* por escolha do usuário).
-3. **Fix só no MFE** para comportamento que nasce na API (ou vice-versa) sem contrato metadata.
-4. **Patch pontual** em componente/use case/prompt quando existe módulo canônico na tabela de `centralized-rules-first.mdc`.
-5. **Teste que asserta comportamento errado** só para passar CI, em vez de corrigir a regra.
-6. **Lógica de apresentação/intenção duplicada** em `Send*` e `Stream*` sem extrair para serviço base.
-7. **Acoplamento por rota** — novo `*_presenter.py`, `visualBuilders`/`tableAssembly`, ramo legacy no pipeline, ou serviço `ChatOperational{Route}*` em vez de schema-driven + `profileKey` (ver `schema-first-presentation-delivered.mdc`).
-8. **Upload sem volume persistente** — `*_UPLOAD_DIR`, `*Storage.save`, `write_bytes` em disco sem bind mount no Compose → ver `persistent-upload-storage.mdc`.
-9. **Acoplamento entre apps** — regra de negócio / membership / use case compartilhado ou alterado no contexto errado (qualquer par de APIs/MFEs da Minha Delpi) → ver `application-bounded-context-decoupling.mdc`.
-10. **Feature user-facing sem sync de Ajuda** — Manual/tooltips/FAQ do módulo desatualizados → ver `feature-help-sync.mdc`.
+1. regra de domínio no controller/component;
+2. MFE reimplementando autorização/regra já decidida pela API;
+3. import de `domain`/`application` entre bounded contexts;
+4. acesso direto ao banco de outro app como integração;
+5. DTO/contrato paralelo ao OpenAPI/schema canônico;
+6. migration aplicada sendo reescrita;
+7. reset destrutivo de produção;
+8. componente/CSS compartilhável copiado por plugin;
+9. secret/token hardcoded ou logado;
+10. HTTP sem timeout ou retry inseguro;
+11. `print()`/erro engolido como observabilidade;
+12. teste alterado para aceitar o bug em vez de corrigir a causa;
+13. fix em múltiplos apps sem owner/contrato claro;
+14. feature user-facing sem estados de erro/loading/forbidden relevantes;
+15. deploy dependente de passo manual escondido ou alteração dentro do container.
 
-Formato do aviso (obrigatório quando aplicável):
+Formato:
 
-> **⚠ Desvio de clean architecture:** [o que está errado] → **canônico:** [módulo/serviço] → **risco:** [regressão duplicada / contrato ambíguo / etc.]
+> **⚠ Desvio de clean architecture:** [desvio] → **responsabilidade canônica:** [regra] → **risco:** [impacto]
 
-Só prosseguir com desvio após confirmação explícita do usuário ou refatoração para o módulo canônico.
+## Regras de camada
 
-## Checklist antes de implementar (não pular)
+### Backend
 
-- [ ] Identifiquei o **módulo canônico** (não o sintoma na UI/use case).
-- [ ] A regra fica **desacoplada** (serviço + perfil JSON + teste), não espalhada.
-- [ ] O **pipeline completo** chama o serviço (build → enrich → align → finalize).
-- [ ] **API e MFE** concordam no contrato (metadata); MFE não reimplementa decisão da API.
-- [ ] **Teste de regressão** cobre o bug ou a qualidade esperada (fixture/canônico quando couber).
-- [ ] Nenhum texto PT novo, regex (`re.compile`) nem constante/limite mágico fora de `assistant/*.json` (exceto loaders `*_content_service` / `*_patterns_service`).
-- [ ] Rota nova seguiu **`new-api-route-checklist.mdc`** (se aplicável).
-- [ ] Mudança user-facing: Ajuda do módulo sincronizada (**`feature-help-sync.mdc`**).
+```text
+domain
+↑
+application
+↑
+adapters/interfaces
+↑
+infrastructure/framework
+```
 
-## Anti-padrão documentado (jun/2026 — apresentação)
+Dependências apontam para dentro. Domain não importa Flask/FastAPI/SQLAlchemy/client HTTP/logger SDK.
 
-Regressão evitável: `ChatPresentationTextModeService.finalize_*` implementado + testado, mas text-first gravava `explicitSessionFormat` indevidamente e o MFE tinha fallback para segmentos visuais na aba Texto. **Lição:** implementação incompleta ou semântica duplicada **não** é «melhoria entregue» — é dívida que quebra modos Texto/Painel/Automático.
+### Frontend
+
+```text
+UI/component
+→ state/hooks
+→ client/adapter
+→ API dona do domínio
+```
+
+Regra de negócio/autorização efetiva não migra para frontend por conveniência.
+
+## Generalização correta
+
+Generalizar significa corrigir a regra no nível certo, não criar abstração genérica sem consumidores.
+
+Preferir:
+
+```text
+owner canônico
+→ contrato explícito
+→ implementação única
+→ consumidores
+→ testes positive/sibling/negative
+```
+
+Evitar:
+
+```text
+bug A → helper A
+bug B → helper B
+bug C → shared_utils_generic.py
+```
+
+sem ownership ou semântica estável.
+
+## Mudanças cross-cutting
+
+Quando uma feature tocar frontend + API + DB + deploy, aplicar todas as responsabilidades materiais. Não escolher uma única regra “principal” e ignorar segurança, dados ou operação.
+
+Exemplo:
+
+```text
+nova tela com write
+→ arquitetura
+→ segurança
+→ contrato
+→ dados
+→ frontend
+→ qualidade
+→ delivery/reliability se houver impacto runtime
+```
+
+## Chat AI
+
+O Chat AI possui especializações adicionais (`chat-intelligence-base.mdc`, `openapi-first-universal-tool-routing.mdc`, `ai-intelligence-evaluation.mdc`, `schema-first-presentation-delivered.mdc`), mas continua sujeito às oito responsabilidades da plataforma.
+
+Não permitir que regra específica de IA contorne RBAC, contrato, timeout, dados, CI ou observabilidade.
+
+## Checklist antes de implementar
+
+- [ ] Identifiquei owner e bounded context?
+- [ ] Identifiquei responsabilidades transversais materiais?
+- [ ] Dependências apontam para a camada correta?
+- [ ] Existe uma única fonte para regra/contrato/autorização?
+- [ ] Segurança e escopo são backend-first?
+- [ ] Dados/migrations/transações estão no owner correto?
+- [ ] UI reutiliza kit/padrões quando aplicável?
+- [ ] Positive + sibling + negative cobrem a mudança?
+- [ ] Runtime/reliability foram considerados quando materiais?
+- [ ] O objetivo original foi revalidado, não apenas o teste?
+
+## Regra final
+
+Se a solução mais rápida cria uma segunda fonte de verdade, cruza boundary incorreto ou torna produção menos segura/observável, ela não é uma solução aceitável sem decisão explícita do usuário e dívida documentada com plano de remoção.
