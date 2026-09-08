@@ -1,205 +1,204 @@
 # Minha DELPI — Checklist de Code Review
 
-> **Arquivo:** `docs/11-padroes-de-desenvolvimento/checklist-code-review.md`  
-> **Status:** documentação oficial  
-> **Produto:** Minha DELPI  
-> **Escopo:** checklist para revisão de código em Core API, API DELPI, Portal e plugins
+> **Status:** documentação oficial — setembro/2026  
+> **Escopo:** Core API, API DELPI, APIs de domínio, Portal, plugins/MFEs, jobs e infraestrutura.
+
+Este checklist deve ser aplicado junto de [responsabilidades-transversais.md](./responsabilidades-transversais.md). Nem todas as oito responsabilidades são materiais em todo PR, mas toda mudança relevante deve declarar quais foram avaliadas.
 
 ---
 
-## 1. Objetivo
+# 1. Arquitetura e boundaries
 
-Este documento define um checklist de code review para mudanças na Minha DELPI.
+- [ ] O bounded context/owner da regra está claro?
+- [ ] A mudança foi feita no contexto dono, não no consumidor/sintoma?
+- [ ] Domain/application não dependem de framework, DB, HTTP ou SDK externo?
+- [ ] Apps se integram por contrato, não por import de domain/use case do vizinho?
+- [ ] Não há acesso direto ao banco de outro bounded context?
+- [ ] `shared/` contém apenas código transversal sem regra de produto?
+- [ ] MFE com API própria não bypassa sua API/BFF?
+- [ ] Não surgiu segunda fonte de verdade para a mesma regra?
 
-Ele deve ser usado para revisar PRs e evitar regressões arquiteturais, problemas de segurança e inconsistências de documentação.
-
----
-
-## 2. Checklist geral
-
-- [ ] A mudança tem objetivo claro.
-- [ ] O código está no módulo correto.
-- [ ] Não mistura responsabilidades.
-- [ ] Não duplica regra existente.
-- [ ] Não adiciona dependência desnecessária.
-- [ ] Não expõe segredo.
-- [ ] Não quebra contratos existentes.
-- [ ] Documentação foi atualizada quando necessário.
-- [ ] Testes foram adicionados ou ajustados.
+Regra: `.cursor/rules/platform-architecture-boundaries.mdc`.
 
 ---
 
-## 3. Rotas HTTP
+# 2. Segurança, identidade e autorização
 
-- [ ] Rota tem método HTTP correto.
-- [ ] Nome da rota é orientado a recurso.
-- [ ] Rota valida entrada básica.
-- [ ] Rota chama use case.
-- [ ] Rota não contém SQL.
-- [ ] Rota não contém regra de negócio extensa.
-- [ ] Rota usa autenticação quando necessário.
-- [ ] Rota usa permissão quando necessário.
-- [ ] Erros seguem `{ errors: [...] }`.
-- [ ] Status HTTP está correto.
+- [ ] Backend valida autenticação e autorização efetiva?
+- [ ] JWT valida assinatura, issuer, audience e expiração conforme stack vigente?
+- [ ] Frontend não é a única barreira de permissão?
+- [ ] Escopo de filial/unidade/tenant é validado no backend quando aplicável?
+- [ ] Usuário autenticado sem permissão recebe deny correto?
+- [ ] Ações admin/destrutivas possuem proteção/auditoria adequada?
+- [ ] Não há token/secret/password/API key em código, query string ou logs?
+- [ ] Não existe bypass/superadmin ad hoc fora da governança canônica?
+- [ ] Negative tests de autorização foram adicionados quando a superfície mudou?
 
----
-
-## 4. Use cases
-
-- [ ] Nome é orientado a ação.
-- [ ] Possui método `execute`.
-- [ ] Recebe dependências no construtor.
-- [ ] Não acessa Flask diretamente.
-- [ ] Não retorna `jsonify`.
-- [ ] Não contém SQL direto.
-- [ ] Usa repository/port.
-- [ ] Valida regra de aplicação.
-- [ ] Coleta eventos quando necessário.
-- [ ] Não publica Socket.IO diretamente.
-- [ ] Não faz commit indevido.
-- [ ] Possui testes.
+Regra: `.cursor/rules/platform-security-identity-authorization.mdc`.
 
 ---
 
-## 5. Repositories
+# 3. APIs, contratos e integrações
 
-- [ ] Repository tem responsabilidade clara.
-- [ ] Não contém HTTP.
-- [ ] Não publica eventos.
-- [ ] Não decide autorização final.
-- [ ] Não faz commit surpresa.
-- [ ] Usa conexão/sessão correta.
-- [ ] SQL é parametrizado.
-- [ ] Paginação existe quando necessário.
-- [ ] TOTVS e `postgres-plugins` não foram misturados.
-- [ ] Métodos têm nomes claros.
+- [ ] Método/path representam corretamente a capacidade/recurso?
+- [ ] Request/response e erros têm contrato explícito?
+- [ ] OpenAPI está alinhado ao runtime quando existe?
+- [ ] `operationId` permanece estável ou a mudança foi tratada como breaking?
+- [ ] Status codes/códigos de erro são coerentes e não escondem falha em `200`?
+- [ ] Paginação/limites existem quando o volume pode crescer?
+- [ ] Writes sujeitos a repetição possuem idempotência quando necessária?
+- [ ] Consumers reais foram inventariados antes de mudança comportamental/breaking?
+- [ ] Client HTTP possui timeout e política de retry segura?
+- [ ] Contrato entre contexts não contém regra específica do consumidor?
 
----
-
-## 6. Unit of Work e transações
-
-- [ ] Transação tem fronteira clara.
-- [ ] Commit ocorre no lugar correto.
-- [ ] Rollback é tratado.
-- [ ] Eventos são publicados após commit.
-- [ ] Repositories compartilham sessão quando necessário.
-- [ ] Não há commit duplo sem justificativa.
-- [ ] Não há nested UoW desnecessário.
+Regras: `.cursor/rules/platform-api-contracts-integration.mdc`, `contract-evolution-backward-compatibility.mdc`.
 
 ---
 
-## 7. Eventos e Socket.IO
+# 4. Dados e persistência
 
-- [ ] Evento representa fato ocorrido.
-- [ ] `entity` está correto.
-- [ ] `action` está correto.
-- [ ] Payload é mínimo.
-- [ ] Payload não contém segredo.
-- [ ] Evento é coletado no use case.
-- [ ] Handler interno foi atualizado, se necessário.
-- [ ] Portal sabe reagir, se aplicável.
-- [ ] Cache RBAC é invalidado quando necessário.
+- [ ] O schema pertence ao bounded context correto?
+- [ ] PK/FK/UNIQUE/NOT NULL/CHECK refletem invariantes quando aplicável?
+- [ ] Índices foram avaliados a partir das queries reais?
+- [ ] SQL é parametrizado?
+- [ ] Repository não contém HTTP/autorização/regra de apresentação?
+- [ ] Transaction/UoW possui fronteira clara e sem commits-surpresa?
+- [ ] Race condition/idempotência/concurrency foram consideradas?
+- [ ] Alteração de schema possui nova migration?
+- [ ] Migration já versionada/aplicada não foi editada?
+- [ ] Produção não depende de reset destrutivo?
+- [ ] Upgrade/mixed version/rollback ou roll-forward foram considerados?
+- [ ] Upload/arquivo durável não depende de filesystem efêmero?
 
----
-
-## 8. RBAC e segurança
-
-- [ ] Backend valida permissão.
-- [ ] Frontend não é a única barreira.
-- [ ] Superadmin foi tratado corretamente.
-- [ ] Não é possível remover último superadmin.
-- [ ] Alterações RBAC invalidam cache.
-- [ ] Token não é colocado em query string.
-- [ ] JWT valida issuer e audience.
-- [ ] Dados sensíveis não vão para logs.
-- [ ] Secrets não foram commitados.
+Regra: `.cursor/rules/platform-data-persistence.mdc`.
 
 ---
 
-## 9. Plugin System
+# 5. Frontend, MFE e experiência
 
-- [ ] Manifesto segue schema.
-- [ ] `schemaVersion` está correto.
-- [ ] `id` é estável.
-- [ ] `version` segue SemVer.
-- [ ] `permissions.module` é igual ao plugin.
-- [ ] Rotas usam permissões declaradas.
-- [ ] `basePath` está coerente.
-- [ ] `entry` está coerente com Gateway.
-- [ ] Tipo do plugin está correto.
-- [ ] Alteração estrutural usa nova versão.
+- [ ] UI não reimplementa regra de negócio/autorização efetiva?
+- [ ] `@delpi/plugin-ui` foi reutilizado antes de criar componente local?
+- [ ] CSS do MFE não vaza para Portal/outros plugins?
+- [ ] Loading, empty, error e forbidden foram considerados?
+- [ ] Formulário preserva estado/erro recuperável e evita double submit quando necessário?
+- [ ] Tema claro/escuro funciona quando a mudança visual é material?
+- [ ] Layout foi validado em desktop e mobile?
+- [ ] Navegação por teclado/focus/labels/contraste foram considerados?
+- [ ] Module Federation/host containment continuam corretos?
+- [ ] Build do MFE passa?
+- [ ] Smoke federado no Portal foi feito quando a mudança pode divergir do standalone?
+- [ ] Ajuda/tooltips/manual foram sincronizados em feature user-facing?
 
----
-
-## 10. Portal Frontend
-
-- [ ] Não há plugin hardcoded sem necessidade.
-- [ ] Menu vem de `/me/apps`.
-- [ ] Token não é persistido indevidamente.
-- [ ] Erros são tratados pelo `code`.
-- [ ] Estado de loading/erro existe.
-- [ ] Permissão no frontend é apenas UX.
-- [ ] Backend continua protegendo ações.
-- [ ] Microfrontend usa contrato `mount`/`unmount` quando federado.
+Regra: `.cursor/rules/platform-frontend-mfe-experience.mdc`.
 
 ---
 
-## 11. API DELPI
+# 6. Qualidade, testes e evidência
 
-- [ ] Rota segue Clean Architecture.
-- [ ] Route chama composer/use case.
-- [ ] Use case depende de port.
-- [ ] Repository concreto está em infraestrutura.
-- [ ] TOTVS e `postgres-plugins` estão separados.
-- [ ] Endpoint protegido valida JWT.
-- [ ] Permissões operacionais são verificadas.
-- [ ] Respostas e erros estão documentados.
+- [ ] O objetivo/bug foi reproduzido ou baseline foi registrado quando possível?
+- [ ] A causa raiz, e não apenas o sintoma, foi corrigida?
+- [ ] Existe caso positivo?
+- [ ] Existe sibling para evitar overfitting?
+- [ ] Existe negativo para evitar falso positivo/bypass?
+- [ ] Contrato/integração foram testados quando unitário não prova wiring?
+- [ ] Teste não foi alterado apenas para aceitar comportamento errado?
+- [ ] Evidência corresponde ao commit/configuração atuais?
+- [ ] Gate vermelho foi classificado, não ignorado?
+- [ ] O objetivo original foi revalidado após os testes?
 
----
+Pergunta obrigatória:
 
-## 12. Banco e migrations
+> Como isto ainda pode estar errado mesmo com os testes passando?
 
-- [ ] Alteração de model possui migration.
-- [ ] Migration foi revisada.
-- [ ] Não há drop acidental.
-- [ ] Índices foram considerados.
-- [ ] FKs/constraints estão corretas.
-- [ ] Seeds não substituem migrations.
-- [ ] Dados existentes foram considerados.
-- [ ] Reset local não foi usado como solução de produção.
+Regra: `.cursor/rules/platform-quality-testing.mdc`.
 
 ---
 
-## 13. Documentação
+# 7. Delivery, runtime e operações
 
-- [ ] Documento afetado foi atualizado.
-- [ ] Novo endpoint foi documentado.
-- [ ] Novo manifesto foi documentado.
-- [ ] Nova variável de ambiente foi documentada.
-- [ ] Nova tabela foi documentada.
-- [ ] Nova permissão foi documentada.
-- [ ] Roadmap/pendências foram atualizados, se aplicável.
+- [ ] Configuração varia por ambiente sem hardcode de máquina/secret?
+- [ ] Docker/Compose continua reproduzível?
+- [ ] Health/readiness representam aplicação pronta, não só processo iniciado?
+- [ ] Gateway dev/prod foram avaliados quando a rota/proxy mudou?
+- [ ] Headers/auth/timeouts/body limits/SSE/WebSocket foram preservados quando aplicável?
+- [ ] Artefato implantado é o artefato testado?
+- [ ] Migration/deploy order é compatível com rolling deploy?
+- [ ] Rollback/roll-forward é conhecido para mudança de risco?
+- [ ] Feature flag/shadow/canary possui critério de promoção/remoção quando usado?
+- [ ] Não existe passo manual dentro do container que será perdido no rebuild?
 
----
-
-## 14. Checklist final antes de aprovar
-
-- [ ] Código compila/sobe localmente.
-- [ ] Testes relevantes passaram.
-- [ ] Logs não expõem dados sensíveis.
-- [ ] Nenhuma credencial foi adicionada.
-- [ ] Arquitetura foi respeitada.
-- [ ] Contratos públicos foram preservados.
-- [ ] Documentação está consistente.
-- [ ] PR está pequeno o suficiente para revisão segura.
+Regra: `.cursor/rules/platform-delivery-runtime-operations.mdc`.
 
 ---
 
-## 15. Documentos relacionados
+# 8. Confiabilidade e observabilidade
 
+- [ ] Fluxo crítico possui logs estruturados/correlation ID adequados?
+- [ ] Erros preservam código/causa observável sem vazar dados sensíveis?
+- [ ] Timeout explícito existe para dependências remotas?
+- [ ] Retry só ocorre quando seguro/idempotente?
+- [ ] 429/5xx/backoff são tratados sem retry storm?
+- [ ] Fan-out/payload/paginação/concurrency possuem limites?
+- [ ] Fallback/partial result não transforma falha em sucesso silencioso?
+- [ ] Métricas adicionadas têm semântica útil e cardinalidade controlada?
+- [ ] SLI/SLO/alerta/runbook foram considerados para fluxo crítico?
+- [ ] Redaction de tokens/secrets foi validada?
+
+Regra: `.cursor/rules/platform-reliability-observability.mdc`.
+
+---
+
+# 9. Plugin System e Core governance
+
+Quando aplicável:
+
+- [ ] Manifest segue schema/versão vigentes?
+- [ ] `id`, versão, basePath, entry e routes permanecem coerentes?
+- [ ] Permission codes declarados correspondem ao enforcement backend?
+- [ ] Não há colisão de rota/permissão/app?
+- [ ] Alteração de plugin não duplica governança que pertence ao Core API?
+- [ ] Menu/rotas do Portal seguem o contrato dinâmico vigente?
+
+---
+
+# 10. API DELPI / TOTVS
+
+Quando aplicável:
+
+- [ ] Route/controller só traduz HTTP e chama camada correta?
+- [ ] Use case depende de port/repository, não de detalhe TOTVS direto?
+- [ ] Query TOTVS segue regras de performance/semântica do domínio?
+- [ ] Contrato de resposta da API DELPI foi preservado?
+- [ ] Permission/authz são aplicadas no backend?
+- [ ] API DELPI não absorveu regra específica de outro bounded context?
+
+---
+
+# 11. Documentação
+
+- [ ] Fonte normativa afetada foi atualizada?
+- [ ] Novo contrato/variável/schema/permission está documentado onde é canônico?
+- [ ] Não foi criado documento concorrente para conceito já documentado?
+- [ ] Roadmap/changelog não está sendo usado como substituto de arquitetura vigente?
+- [ ] Links para arquivos removidos/renomeados foram atualizados?
+
+---
+
+# 12. Aprovação final
+
+- [ ] Responsabilidades transversais materiais foram declaradas/revisadas?
+- [ ] Nenhum requisito de segurança foi relaxado?
+- [ ] Nenhuma segunda fonte de verdade foi criada?
+- [ ] Testes/build/gates relevantes passaram?
+- [ ] Falhas externas ao diff foram classificadas com evidência?
+- [ ] O runtime real foi validado quando necessário?
+- [ ] PR/diff permanece revisável e com objetivo coerente?
+
+## Documentos relacionados
+
+- [responsabilidades-transversais.md](./responsabilidades-transversais.md)
 - [padrao-de-rota.md](./padrao-de-rota.md)
 - [padrao-de-use-case.md](./padrao-de-use-case.md)
 - [padrao-de-repository.md](./padrao-de-repository.md)
 - [padrao-de-erro.md](./padrao-de-erro.md)
 - [padrao-de-evento.md](./padrao-de-evento.md)
-- [README.md](./README.md)
