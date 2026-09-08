@@ -20,10 +20,10 @@ Varredura:
 | Compose `supplies` / `supplies-api` | Inexistente | CONFIRMADO_NO_CODIGO |
 | Gateway `/apps/supplies` | Inexistente | CONFIRMADO_NO_CODIGO |
 | SI / chat `departmentId: supplies` | Existe (domínio, não app) | CONFIRMADO_NO_CODIGO |
-| Fixture Portal `id: "supplies"`, `basePath: "/apps/supplies"`, `supplies.view` | Só teste `portal/src/ui/admin/rbac/rbacAccessTree.test.ts` | CONFIRMADO_NO_CODIGO — **não** é app |
-| Classe CSS `.dashboard-supplies` | Root do MFE **legado** `plugins/dashboard-supplies` | CONFIRMADO_NO_CODIGO |
+| Fixture Portal `id: "supplies"`, `basePath: "/apps/supplies"`, `supplies.view` | Só teste `portal/src/ui/admin/rbac/rbacAccessTree.test.ts` | CONFIRMADO_NO_CODIGO — não é app |
+| Classe CSS `.dashboard-supplies` | Root do MFE legado `plugins/dashboard-supplies` | CONFIRMADO_NO_CODIGO |
 
-A regra de plugins exige root `dashboard-{nome}`. Usar `.dashboard-supplies` no Portal **durante a coexistência** vazaria CSS entre dois MFEs no mesmo documento do portal.
+A regra de plugins exige root isolado. Usar `.dashboard-supplies` durante coexistência vazaria CSS entre dois MFEs no mesmo documento do portal.
 
 ## Decisão
 
@@ -37,18 +37,22 @@ A regra de plugins exige root `dashboard-{nome}`. Usar `.dashboard-supplies` no 
 | Prefixo BEM local | `sp-` |
 | Tokens | `--sp-*` mapeados para `--delpi-ui-*` |
 | `portalScopeClassName` | `dashboard-supplies-portal` |
+| Permission de entrada | **`supplies.portal.access`** |
 
-Permission de entrada do produto: `supplies.access` (não `supplies.view` da fixture). A fixture de teste do Portal deverá ser ajustada na fase E3 para não colidir semanticamente — **não** nesta etapa.
+A fixture `supplies.view` não é contrato do produto e deverá ser ajustada na fase de implementação.
+
+O catálogo de permission segue [ADR-007](./ADR-007-permission-minimization.md): permissions novas representam capacidades materiais, não CRUD técnico.
 
 ## Alternativas rejeitadas
 
 | Alternativa | Motivo |
 |-------------|--------|
 | id `dashboard-supplies` | Já é o cockpit legado |
-| id `supplies-portal` | Desnecessário; Comercial usou `commercial` |
-| CSS `.dashboard-supplies` no Portal | Colisão na coexistência |
+| id `supplies-portal` | Desnecessário; domínio técnico `supplies` já está livre |
+| CSS `.dashboard-supplies` | Colisão com legado |
 | Reusar prefixo `cm-` | Família visual sim; tokens/prefixo do Comercial não |
+| `supplies.access` | Contrato de dois segmentos; para novo plugin preferir `module.resource.action` |
 
 ## Consequência
 
-Documentos, Compose futuro, manifest e `index.css` do MFE usam **somente** `.dashboard-supplies-portal` como root. O legado permanece `.dashboard-supplies` até cutover.
+Documentos, futuro manifest, Compose e `index.css` usam `supplies`, `/apps/supplies`, `supplies-api`, `.dashboard-supplies-portal` e `supplies.portal.access`. O legado permanece inalterado até cutover.
