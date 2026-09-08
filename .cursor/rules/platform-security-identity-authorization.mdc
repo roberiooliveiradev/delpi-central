@@ -15,8 +15,38 @@ Esta é a fonte transversal para decisões de **autenticação, autorização, i
 2. Fluxo web preferencial: OAuth2/OIDC Authorization Code + PKCE.
 3. JWT identifica o usuário/contexto; **não é a fonte final da lista completa de permissões efetivas**.
 4. Assinatura, issuer, audience, expiração e demais claims obrigatórios devem ser validados no backend.
-5. Token nunca é confiado apenas porque veio do frontend.
-6. Refresh token/access token não devem ser persistidos ou logados de forma insegura.
+5. `KEYCLOAK_AUDIENCE` e `KEYCLOAK_ISSUER` de uma API protegida não podem ser tratados como opcionais de modo a desligar silenciosamente validações.
+6. Token nunca é confiado apenas porque veio do frontend.
+7. Refresh token/access token não devem ser persistidos ou logados de forma insegura.
+
+## Primitives compartilhadas
+
+Para APIs fora da Core API, a implementação transversal de AuthN/AuthZ deve partir de **`shared/delpi_auth`**:
+
+```text
+shared/delpi_auth/jwt_validator.py
+shared/delpi_auth/authorization.py
+shared/delpi_auth/middleware/
+shared/delpi_auth/service_token.py
+shared/delpi_auth/policy_engine.py
+```
+
+A Core API pode manter seus adapters/decorators próprios porque é o bounded context dono do RBAC e do Permission Resolver.
+
+Novas APIs **não** devem copiar/reimplementar genericamente:
+
+```text
+jwt.decode + JWKS validation
+require_auth
+require_permission
+require_any_permission
+require_all_permissions
+require_superadmin
+```
+
+Se um framework precisar de adapter específico, o adapter deve delegar à primitive compartilhada; não duplicar verificação de assinatura/claims nem regra de permission resolution.
+
+Implementações locais já existentes são dívida de migração, não template para nova API.
 
 ## Autorização efetiva
 
@@ -37,7 +67,22 @@ Proibido:
 - bypass de RBAC porque o usuário está autenticado;
 - rota administrativa protegida apenas por esconder botão;
 - lógica diferente de autorização em UI e API;
-- `superadmin` ad hoc sem fonte/trilha canônica.
+- `superadmin` ad hoc sem fonte/trilha canônica;
+- fail-open quando Core/Permission Resolver estiver indisponível.
+
+## Rotas públicas
+
+Não inferir que rota sem permission code é necessariamente vulnerável: health/readiness, callbacks e superfícies públicas explícitas podem existir.
+
+Por isso, um gate automático de cobertura de rota só deve ser ativado quando houver contrato explícito que diferencie:
+
+```text
+PROTECTED
+PUBLIC_INTENTIONAL
+SERVICE_TO_SERVICE
+```
+
+Até essa classificação existir de forma uniforme nos stacks, validar AuthZ por testes negativos e revisão de contrato — não por regex simplista de decorator.
 
 ## Permissões e escopo
 
@@ -76,17 +121,7 @@ Operações de escrita/admin/destrutivas exigem, conforme risco:
 
 ## Secrets e configuração
 
-Nunca versionar ou hardcodar:
-
-```text
-password
-client secret
-API key
-JWT
-token
-credential URL
-private key
-```
+Nunca versionar ou hardcodar password, client secret, API key, JWT, token, credential URL ou private key.
 
 Usar env/secret store/configuração de ambiente já adotada. Exemplos e `.env.example` devem usar placeholders inequivocamente não secretos.
 
@@ -116,12 +151,24 @@ coletar apenas necessário
 
 PII/segredos nunca devem ser adicionados a logs para “facilitar debug”. Usar redaction conforme `observability-standards.mdc`.
 
+## Gates executáveis atuais
+
+`architecture-ci-enforcement.mdc` / `scripts/ci/audit_platform_guardrails.py` bloqueiam no diff, entre outros:
+
+- `JWT_VERIFY_DISABLED`: desligar/condicionar `verify_signature`, `verify_aud` ou `verify_iss`;
+- `JWT_VALIDATOR_DUPLICATION`: novo `jwt.decode` local em API fora do canonical shared/Core;
+- `AUTHZ_PRIMITIVE_DUPLICATION`: redefinir primitives genéricas `require_*` em nova API;
+- secrets literais/logados pelos gates existentes.
+
+Esses gates impedem **nova dívida**; não provam que todas as rotas existentes possuem autorização correta.
+
 ## Testes obrigatórios
 
 Conforme mudança:
 
 - token ausente/inválido/expirado;
 - issuer/audience incorretos;
+- configuração ausente deve falhar de modo seguro quando claim é obrigatório;
 - usuário autenticado porém sem permissão;
 - escopo/filial não autorizado;
 - permissão positiva;
@@ -136,9 +183,10 @@ Antes de concluir:
 
 1. Um usuário autenticado mas não autorizado consegue executar isto diretamente pela API?
 2. O frontend consegue forjar uma autorização que o backend aceita?
-3. Algum token/secret pode aparecer em log, erro ou analytics?
-4. O mesmo recurso é protegido igualmente em todas as rotas equivalentes?
-5. Existe fail-open em indisponibilidade do resolver de permissões?
+3. Se audience/issuer estiver ausente ou incorreto, o token é rejeitado ou a validação é desligada?
+4. Algum token/secret pode aparecer em log, erro ou analytics?
+5. O mesmo recurso é protegido igualmente em todas as rotas equivalentes?
+6. Existe fail-open em indisponibilidade do resolver de permissões?
 
 ## Regras filhas/complementares
 
@@ -146,11 +194,13 @@ Antes de concluir:
 - `observability-standards.mdc` para redaction e auditoria observável.
 - `http-integration-resilience.mdc` para transporte resiliente.
 - `contract-evolution-backward-compatibility.mdc` para evolução de claims/contratos.
+- `architecture-ci-enforcement.mdc` para gates incrementais.
 
 ## Evidência de conclusão
 
 ```text
 AUTHN_MECHANISM
+JWT_ISSUER_AUDIENCE
 AUTHZ_SOURCE
 PERMISSION_SCOPE
 NEGATIVE_TESTS
