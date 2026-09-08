@@ -465,7 +465,7 @@ export const CM_HELP = {
     billingSeriesCustomer:
       "Filtra a série de faturamento da carteira a um ou mais clientes (código+loja).",
     billingSeriesAccount:
-      "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). Com «Comparar ano anterior», as colunas do ano anterior ficam lado a lado com o período atual.",
+      "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). Em Opções do gráfico, «Comparar ano anterior» coloca as colunas do ano anterior lado a lado com o período atual.",
     billingSeriesTrend:
       "Sobreposição da regressão linear sobre a série atual (não substitui o comparativo YoY).",
     billingSeriesDateStart: "Início do intervalo personalizado da série de faturamento.",

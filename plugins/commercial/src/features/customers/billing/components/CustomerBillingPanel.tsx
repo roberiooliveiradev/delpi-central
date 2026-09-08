@@ -89,8 +89,6 @@ export function CustomerBillingPanel({
         search={search}
         validationError={validationError}
         disabled={loading && !hasData}
-        comparePriorYear={comparePriorYear}
-        onComparePriorYearChange={setComparePriorYear}
         billingMetric={billingMetric}
         onBillingMetricChange={setBillingMetric}
         onPresetChange={setPreset}
@@ -106,6 +104,7 @@ export function CustomerBillingPanel({
         startDate={startDate}
         endDate={endDate}
         comparePriorYear={comparePriorYear}
+        onComparePriorYearChange={setComparePriorYear}
         billingMetric={billingMetric}
         enabled={chartEnabled}
       />

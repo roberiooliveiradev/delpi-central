@@ -50,6 +50,7 @@ type CustomerAccountBillingChartProps = {
   startDate: string;
   endDate: string;
   comparePriorYear: boolean;
+  onComparePriorYearChange: (value: boolean) => void;
   billingMetric?: PortfolioBillingMetric;
   /** Desliga fetch (aba oculta / validação de período). */
   enabled?: boolean;
@@ -78,7 +79,7 @@ function accountAsSeriesCustomer(codigo: string, loja: string): CustomerSummary 
 }
 
 /**
- * Série de faturamento/quantidade da Conta (Histórico) — período e YoY vêm dos filtros da aba.
+ * Série de faturamento/quantidade da Conta (Histórico) — período nos filtros; YoY nas Opções do gráfico.
  */
 export function CustomerAccountBillingChart({
   codigo,
@@ -86,6 +87,7 @@ export function CustomerAccountBillingChart({
   startDate,
   endDate,
   comparePriorYear,
+  onComparePriorYearChange,
   billingMetric = "value",
   enabled = true,
 }: CustomerAccountBillingChartProps) {
@@ -108,6 +110,14 @@ export function CustomerAccountBillingChart({
   const overlayOptions = useMemo((): ChartOverlayOption[] => {
     return [
       {
+        id: "yoy",
+        label: ANALYTICS_CONTENT.overview.comparePriorYear,
+        checked: comparePriorYear,
+        onChange: onComparePriorYearChange,
+        hint: CM_HELP.customerDetail.billingSeriesAccount,
+        hintAriaLabel: "Ajuda: comparar ano anterior",
+      },
+      {
         id: "trend",
         label: CUSTOMER_BILLING_CONTENT.showTrendLine,
         checked: showTrend,
@@ -128,7 +138,13 @@ export function CustomerAccountBillingChart({
         disabled: !showTrend,
       },
     ];
-  }, [incompleteBucketMode, setPreferences, showTrend]);
+  }, [
+    comparePriorYear,
+    incompleteBucketMode,
+    onComparePriorYearChange,
+    setPreferences,
+    showTrend,
+  ]);
 
   const customers = useMemo(
     () => [accountAsSeriesCustomer(codigo, loja)],

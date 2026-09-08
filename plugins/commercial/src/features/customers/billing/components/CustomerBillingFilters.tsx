@@ -1,4 +1,4 @@
-import { HelpTooltip, NativeCheckboxControl } from "@delpi/plugin-ui/index";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import {
   CommercialDateField,
@@ -10,7 +10,6 @@ import {
   CommercialStateBanner,
   CommercialTextField,
 } from "../../../../app/commercialUi";
-import { ANALYTICS_CONTENT } from "../../../../content/analyticsContent";
 import {
   BILLING_METRIC_CONTENT,
   type PortfolioBillingMetric,
@@ -30,8 +29,6 @@ type CustomerBillingFiltersProps = {
   search: string;
   validationError: string | null;
   disabled?: boolean;
-  comparePriorYear: boolean;
-  onComparePriorYearChange: (value: boolean) => void;
   billingMetric: PortfolioBillingMetric;
   onBillingMetricChange: (value: PortfolioBillingMetric) => void;
   onPresetChange: (value: CustomerBillingPeriodPreset) => void;
@@ -63,8 +60,6 @@ export function CustomerBillingFilters({
   search,
   validationError,
   disabled,
-  comparePriorYear,
-  onComparePriorYearChange,
   billingMetric,
   onBillingMetricChange,
   onPresetChange,
@@ -168,18 +163,6 @@ export function CustomerBillingFilters({
                 label: BILLING_METRIC_CONTENT.quantity.shortLabel,
               },
             ]}
-          />
-        </div>
-        <div className="cm-customer-billing-filters__yoy cm-field">
-          <NativeCheckboxControl
-            id="customer-billing-yoy"
-            checked={comparePriorYear}
-            onChange={onComparePriorYearChange}
-            label={ANALYTICS_CONTENT.overview.comparePriorYear}
-            hint={CM_HELP.customerDetail.billingSeriesAccount}
-            hintPlacement="tooltip"
-            hintAriaLabel="Ajuda: comparar ano anterior"
-            disabled={disabled}
           />
         </div>
       </CommercialFilterBarShell>

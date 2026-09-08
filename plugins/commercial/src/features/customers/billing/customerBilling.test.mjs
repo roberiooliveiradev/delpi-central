@@ -161,9 +161,9 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(filters, /CUSTOMER_BILLING_CONTENT/);
     assert.match(filters, /CommercialSegmentToggle/);
     assert.match(filters, /CommercialDateField/);
-    assert.match(filters, /comparePriorYear/);
-    assert.match(filters, /NativeCheckboxControl/);
-    assert.match(filters, /cm-customer-billing-filters__yoy/);
+    assert.doesNotMatch(filters, /comparePriorYear/);
+    assert.doesNotMatch(filters, /NativeCheckboxControl/);
+    assert.doesNotMatch(filters, /cm-customer-billing-filters__yoy/);
     assert.match(filters, /CommercialFilterBarShell/);
     assert.doesNotMatch(filters, /exclusão lógica/);
     assert.doesNotMatch(filters, /cm-nav-row|ActionButton/);
@@ -192,12 +192,12 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(panel, /billingMetric/);
     assert.match(filters, /onBillingMetricChange/);
     assert.match(filters, /customer-billing-metric/);
-    assert.match(filters, /hintPlacement="tooltip"/);
+    assert.doesNotMatch(filters, /hintPlacement="tooltip"/);
     assert.match(chart, /metric:\s*billingMetric/);
     assert.match(chart, /Quantidade fornecida/);
   });
 
-  it("painel Conta Histórico expõe YoY no summary", () => {
+  it("painel Conta Histórico expõe YoY nas Opções do gráfico", () => {
     const panel = readSrc(
       "features/customers/billing/components/CustomerBillingPanel.tsx",
     );
@@ -206,12 +206,16 @@ describe("CustomerDetailPage billing (fonte)", () => {
       "features/customers/billing/components/CustomerAccountBillingChart.tsx",
     );
     assert.match(panel, /comparePriorYear/);
+    assert.match(panel, /onComparePriorYearChange/);
     assert.match(panel, /priorSummary/);
     assert.match(panel, /CustomerAccountBillingChart/);
     assert.match(hook, /shiftPeriodRangeByYears/);
     assert.match(hook, /comparePriorYear/);
     assert.match(chart, /useCustomerBillingSeries/);
     assert.match(chart, /comparePriorYear/);
+    assert.match(chart, /id:\s*"yoy"/);
+    assert.match(chart, /onComparePriorYearChange/);
+    assert.match(chart, /ChartOverlayOptionsPopover/);
     assert.match(chart, /MultiTypeSeriesChart|ChartViewShell/);
     assert.doesNotMatch(chart, /AreaChart/);
   });
