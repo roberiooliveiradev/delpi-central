@@ -1,6 +1,6 @@
 ---
-description: Migrations SQL imutáveis após aplicadas — nunca editar arquivo já versionado/aplicado
-alwaysApply: true
+description: Migrations SQL — carregar ao criar/alterar migrations, schema, DDL ou investigar checksum divergente; arquivos aplicados são imutáveis
+alwaysApply: false
 ---
 
 # Migrations — imutabilidade (checksum)
@@ -30,7 +30,7 @@ Incidente jul/2026: edição do `COMMENT` em `V039__beneficio_calculo_categoria.
 ## Checklist antes de tocar em `**/migrations/**`
 
 - [ ] O arquivo já está no remoto ou já foi aplicado? → **não editar**; criar `V0NN` novo.
-- [ ] DDL only quando a regra do pacote exigir (ex.: Transformômetro — sem `UPDATE`/backfill).
+- [ ] DDL only quando a regra do pacote exigir (ex.: Transformômetro — sem `UPDATE`/backfill`).
 - [ ] Após deploy: `migrations_runner status` / `up`; se API em restart, olhar logs de checksum primeiro.
 
 ## Escopo
