@@ -2,91 +2,200 @@
 
 Arquitetura: `MFE → supplies-api → api-delpi | purchase-requests-api | SI | Core`.
 
-Envelope: `{ success, message, data, meta }` alinhado ao Playbook 10.  
-Auth: JWT Keycloak. Permission checada no BFF.
+Envelope alvo: `{ success, message, data, meta }`.  
+AuthN: JWT Keycloak.  
+AuthZ: **permissions efetivas resolvidas pelo Core API**, nunca lista de permissions dos claims JWT.
 
-Status: `EXISTENTE` (hoje noutro backend) · `COMPOSICAO_BFF` · `NOVO_PROPOSTO` · `BLOQUEADO` · `LEGADO`
-
----
-
-## A. Rotas novas da supplies-api (produto)
-
-| Method | Path | operationId | Owner | Auth | Permission | Request | Response | Fonte | Cache | Paginação | Filtros | Erros | Consumidor | Status |
-|--------|------|-------------|-------|------|------------|---------|----------|-------|-------|-----------|---------|-------|------------|--------|
-| GET | `/health` | `get_supplies_api_health` | supplies-api | público | — | — | `{status}` | local | no | no | — | 5xx | k8s/compose | NOVO_PROPOSTO |
-| GET | `/ready` | `get_supplies_api_ready` | supplies-api | público | — | — | deps | PG+http | no | no | — | 503 | compose | NOVO_PROPOSTO |
-| GET | `/me/capabilities` | `get_supplies_capabilities` | supplies-api | JWT | `supplies.access` (ou alias) | — | `{ capabilities, allowedUnits }` | Core perms + catálogo unidades | no | no | — | 401 | MFE shell | NOVO_PROPOSTO |
-| GET | `/home/attention` | `get_supplies_home_attention` | supplies-api | JWT | access | branch? | cards alerta | composição | curto | no | branch | 403 filial | WF-01 | COMPOSICAO_BFF |
-| GET | `/analytics/overview` | `get_supplies_overview` | supplies-api | JWT | analytics.view | período, branch | 6–8 KPIs + meta SI | api-delpi + SI | curto | no | branch dates | 403 | WF-02 | COMPOSICAO_BFF |
-| GET | `/purchase-requests` | `list_portal_purchase_requests` | supplies-api | JWT | purchase-requests.view | query contrato SC | lista | **PR-api C1** / PG C2 | no | sim | contrato 0.2 | 403 fail-closed | WF-04 | COMPOSICAO_BFF |
-| GET | `/purchase-requests/{branch}/{number}` | `get_portal_purchase_request` | idem | JWT | view | — | detalhe | PR-api | no | — | — | 404 | WF-04 | COMPOSICAO_BFF |
-| GET | `/inventory/stock-value` | `get_portal_stock_value` | supplies-api | JWT | inventory **ou** analytics | query | data | `get_supplies_stock_value` | conforme api-delpi | — | branch location | 403 | WF-15 | COMPOSICAO_BFF |
-| GET | `/safety-stock/summary` | `get_portal_safety_stock_summary` | supplies-api | JWT | inventory.view | query ESTSEG | data | `get_supplies_safety_stock_summary` | — | — | filial | 403 | WF-16 | COMPOSICAO_BFF |
-| GET | `/safety-stock/items` | `list_portal_safety_stock_items` | idem | JWT | inventory.view | query | paged | api-delpi | — | sim | — | 403 | WF-16 | COMPOSICAO_BFF |
-| GET | `/suppliers/{code}/{store}` | `get_portal_supplier_360` | supplies-api | JWT | suppliers.view | branch? | composição | SA2 + OTD + PCs + qualidade HTTP | curto | — | — | 404 | WF-10 | COMPOSICAO_BFF |
-| GET | `/products/{code}` | `get_portal_product_360` | supplies-api | JWT | products.view | branch | composição | products\* + safety-stock | curto | — | — | 404 | WF-13 | COMPOSICAO_BFF |
-| GET | `/products/{code}/where-used` | `get_portal_product_where_used` | supplies-api | JWT | products.view | — | parents | `get_product_parents` | — | — | — | 404 | WF-14 | COMPOSICAO_BFF |
-| GET/PATCH | `/me/preferences` | `get/patch_supplies_preferences` | supplies-api | JWT | access | body | prefs | PG | no | — | — | 422 | WF-01 | NOVO_PROPOSTO |
-| POST | `/tasks` | `create_supply_task` | supplies-api | JWT | access | body | task | PG | no | — | — | 422 | WF-03 | NOVO_PROPOSTO |
-| GET | `/tasks` | `list_supply_tasks` | supplies-api | JWT | access | — | paged | PG | no | sim | status | — | WF-03 | NOVO_PROPOSTO |
-
-Demais BFF 1:1 (CPV, OTD, giro, savings, PO-OTD, consumption-analysis, stock-balances, price-history, product purchases): mesmo padrão — **COMPOSICAO_BFF**, operationId `get_portal_*` espelhando o TOTVS, permission da cap, filtros iguais aos atuais.
-
-Admin mappings/scopes: proxy C1 para purchase-requests-api `/admin/*` com `supplies.manage`.
+Status: `EXISTENTE` · `COMPOSICAO_BFF` · `NOVO_PROPOSTO` · `BLOQUEADO` · `LEGADO`.
 
 ---
 
-## B. Reuso api-delpi (não criar SQL gêmeo)
+## 1. Política de autorização
 
-| Operação | operationId | Domínio | Fonte TOTVS | Uso Portal | Já suficiente? | Gap |
-|----------|-------------|---------|-------------|------------|----------------|-----|
-| CPV | `get_supplies_cpv` | analytics | SD3 | Overview, WF-20 | Sim | — |
-| Giro | `get_supplies_inventory_turnover` | analytics | CPV×SB9 | Overview | Sim | — |
-| Savings | `get_supplies_negotiation_savings_summary` | negotiations | Sheets | WF-18 | Sim p/ leitura | edição planilha externa |
-| OTD | `get_supplies_otd` | deliveries | recebimentos | WF-02/11 | Sim gerencial | vs BI atraso |
-| User email | `get_protheus_user_by_email_route` | mapping | SYS_USR | Admin SC | Sim | oid instável (inventory `stable: false`) |
-| PO OTD | `get_supplies_purchase_order_otd` | PO | SC7/SD1 | WF-05/07 | Sim API | sem MFE |
-| PO OTD panel | `get_supplies_purchase_order_otd_panel` | PO | | WF-07 | Sim API | UI |
-| PO OTD series | `get_supplies_purchase_order_otd_series` | PO | | charts | Sim | UI |
-| SC lines | `list_supplies_purchase_request_lines` | SC | SC1 | via PR-api | Sim | escopo CC no PR-api |
-| SC by number | `get_supplies_purchase_request_lines` | SC | SC1 | detalhe | Sim | |
-| Open coverage | `get_supplies_purchase_requests_open_coverage` | PCP/SC | SC1 ESTSEG | não tomar PCP | Sim p/ PCP | Portal não é dono |
-| Linked orders | `list_supplies_purchase_request_recent_linked_orders` | SC | SC7 | detalhe SC | Sim | |
-| Linked receipts | `list_supplies_purchase_request_recent_linked_receipts` | SC | SD1 | detalhe SC | Sim | |
-| Requesters | `list_supplies_purchase_request_requesters_*` | SC | SYS_USR | filtros | Sim | oid instável |
-| ESTSEG * | `get_supplies_safety_stock_*` (8 ops) | inventory | SB* SC* SD* | WF-16/17 | Sim | |
-| Stock balances | `get_supplies_stock_balances_items/summary` | inventory | SB2 | WF-15 | Sim | vs BI estoque |
-| Stock value | `get_supplies_stock_value` | analytics | SB9 | WF-15/02 | Sim | |
-| Third party * | `get_supplies_third_party_materials_*` | beneficiamento | SB6 | **não** no Portal | Sim p/ outro app | FORA_DO_ESCOPO |
-| Last purchase | `get_product_last_purchase` | product | SD1 | 360 | Sim | |
-| Purchases | `get_product_purchases` | product | | 360 | Sim | |
-| Price history | `get_product_purchase_price_history` | product | | WF-19 | Sim | |
-| Budget history | `get_product_purchase_budget_history` | product | | P2 | Sim | |
-| Suppliers of item | `get_product_suppliers` | product | SA5 | 360 | Sim | |
-| Stock item | `get_product_stock` | product | SB2 | 360 | Sim | |
-| Parents | `get_product_parents` | product | estrutura | WF-14 | Sim | vs BI |
-| RM intelligence | `get_product_raw_material_*` | product | | 360 P1 | Sim | |
-| Search part number | `search_products_by_supplier_part_number` | product | | busca Hub P1 | Sim | |
-| Exclusive RM catalog | `list_exclusive_raw_materials_catalog` | product | | P2 | Sim | |
-| Top products | `get_purchases_top_products` | purchases | | Overview P1 | Sim | |
-| Product search | `search_products` | product | SB1 | WF-12 | Sim | |
-| Freight links | `get_financial_purchase_freight_links` | financial | SF8 | DEEP_LINK não BFF próprio | Sim | não duplicar |
-| SI supplies_* | get_si_indicator_supplies_* | SI via api-delpi/SI | snapshots | Overview | Sim | via SI-api preferencialmente |
+O BFF resolve authorization em quatro camadas:
 
-**ENDPOINT_NOVO TOTVS:** somente se E1/E9/E8 provar gap (importações, alçadas UI, regra do BI). Checklist `new-api-route-checklist.mdc` + inglês.
+```text
+capability
+  AND unit scope quando houver dado TOTVS
+  AND resource scope / ownership
+  AND business rule
+```
+
+Não espelhar CRUD em permission codes. Ver [ADR-007](./adr/ADR-007-permission-minimization.md).
+
+Capabilities canônicas P0/P1:
+
+- `supplies.portal.access`
+- `supplies.purchase-requests.access`
+- `supplies.operations.access`
+- `supplies.analytics.access`
+- `supplies.administration.manage`
+- `supplies.purchase-requests.view-all`
+- `supplies.purchase-requests.export`
+- `supplies.unit.filial-{TOTVS}`
+
+Qualquer regra `ANY_OF`/`ALL_OF` deve ser explícita no contrato; não usar “ou” informal.
 
 ---
 
-## C. Erros padrão BFF
+## 2. Rotas da supplies-api
+
+| Method | Path | operationId | Capability | Unit? | Resource rule | Fonte | Status |
+|---|---|---|---|---|---|---|---|
+| GET | `/health` | `get_supplies_api_health` | público | não | — | local | NOVO_PROPOSTO |
+| GET | `/ready` | `get_supplies_api_ready` | público | não | — | PG + deps HTTP | NOVO_PROPOSTO |
+| GET | `/me/capabilities` | `get_supplies_capabilities` | `supplies.portal.access` | não | effective permissions do Core | Core + catálogo units | NOVO_PROPOSTO |
+| GET | `/home/attention` | `get_supplies_home_attention` | `supplies.portal.access` | quando card usa TOTVS | omitir cards sem capability/recurso | composição | COMPOSICAO_BFF |
+| GET | `/analytics/overview` | `get_supplies_overview` | `supplies.analytics.access` | sim | branch ∈ allowedUnits | api-delpi + SI | COMPOSICAO_BFF |
+| GET | `/purchase-requests` | `list_portal_purchase_requests` | `supplies.purchase-requests.access` | sim | escopo CC fail-closed; view-all só amplia CC | PR-api C1 / PG C2 | COMPOSICAO_BFF |
+| GET | `/purchase-requests/{branch}/{number}` | `get_portal_purchase_request` | `supplies.purchase-requests.access` | sim | SC deve pertencer ao escopo efetivo | PR-api C1 / PG C2 | COMPOSICAO_BFF |
+| GET | `/inventory/stock-value` | `get_portal_stock_value` | `supplies.operations.access` **ou política formal `ANY_OF(operations,analytics)`** | sim | branch permitida | api-delpi `get_supplies_stock_value` | COMPOSICAO_BFF |
+| GET | `/inventory/stock-balances` | `list_portal_stock_balances` | `supplies.operations.access` | sim | branch permitida | api-delpi stock-balances | COMPOSICAO_BFF |
+| GET | `/inventory/turnover` | `get_portal_inventory_turnover` | `supplies.analytics.access` | sim | branch permitida | api-delpi inventory-turnover | COMPOSICAO_BFF |
+| GET | `/safety-stock/summary` | `get_portal_safety_stock_summary` | `supplies.operations.access` | sim | branch permitida | api-delpi safety-stock | COMPOSICAO_BFF |
+| GET | `/safety-stock/items` | `list_portal_safety_stock_items` | `supplies.operations.access` | sim | branch permitida | api-delpi safety-stock | COMPOSICAO_BFF |
+| GET | `/safety-stock/items/{code}` | `get_portal_safety_stock_item` | `supplies.operations.access` | sim | item no recorte | api-delpi safety-stock detail | COMPOSICAO_BFF |
+| GET | `/safety-stock/consumption-analysis/summary` | `get_portal_consumption_analysis_summary` | `supplies.operations.access` | sim | branch permitida | api-delpi | COMPOSICAO_BFF |
+| GET | `/safety-stock/consumption-analysis/items` | `list_portal_consumption_analysis_items` | `supplies.operations.access` | sim | branch permitida | api-delpi | COMPOSICAO_BFF |
+| GET | `/purchase-orders` | `list_portal_purchase_orders` | `supplies.operations.access` | sim | branch permitida | api-delpi PO-OTD/panel | COMPOSICAO_BFF |
+| GET | `/purchase-orders/{branch}/{number}` | `get_portal_purchase_order` | `supplies.operations.access` | sim | PC no recorte | api-delpi PO/receipts | COMPOSICAO_BFF |
+| GET | `/deliveries/late` | `list_portal_late_deliveries` | `supplies.operations.access` | sim | branch permitida | api-delpi PO-OTD panel | COMPOSICAO_BFF |
+| GET | `/analytics/otd` | `get_portal_otd` | `supplies.analytics.access` | sim | branch permitida | api-delpi `get_supplies_otd` | COMPOSICAO_BFF |
+| GET | `/analytics/cpv` | `get_portal_cpv` | `supplies.analytics.access` | sim | branch permitida | api-delpi `get_supplies_cpv` | COMPOSICAO_BFF |
+| GET | `/analytics/savings` | `get_portal_savings` | `supplies.analytics.access` | sim | branch permitida | api-delpi + SI | COMPOSICAO_BFF |
+| GET | `/suppliers` | `search_portal_suppliers` | `supplies.operations.access` | conforme fonte | restringir ao recorte possível | api-delpi / gap SA2 search | BLOQUEADO se busca SA2 faltar |
+| GET | `/suppliers/{code}/{store}` | `get_portal_supplier_360` | `supplies.operations.access` | sim para blocos TOTVS | fornecedor/branch no escopo | api-delpi + Qualidade + PG | COMPOSICAO_BFF |
+| POST | `/suppliers/{code}/{store}/notes` | `create_supplier_note` | `supplies.operations.access` | sim | fornecedor no escopo; auditoria | PG | NOVO_PROPOSTO |
+| PATCH | `/suppliers/{code}/{store}/notes/{note_id}` | `update_supplier_note` | `supplies.operations.access` | sim | ownership/política de equipe + escopo fornecedor | PG | NOVO_PROPOSTO |
+| GET | `/products` | `search_portal_products` | `supplies.operations.access` | conforme recorte | — | api-delpi products | COMPOSICAO_BFF |
+| GET | `/products/{code}` | `get_portal_product_360` | `supplies.operations.access` | sim para estoque/ESTSEG | branch/item no escopo | api-delpi | COMPOSICAO_BFF |
+| GET | `/products/{code}/where-used` | `get_portal_product_where_used` | `supplies.operations.access` | não/derivado da fonte | — | `get_product_parents` | COMPOSICAO_BFF |
+| GET | `/products/{code}/price-history` | `get_portal_product_price_history` | `supplies.operations.access` | sim quando aplicável | item no escopo | api-delpi | COMPOSICAO_BFF |
+| GET | `/me/preferences` | `get_supplies_preferences` | `supplies.portal.access` | não | próprio usuário | PG | NOVO_PROPOSTO |
+| PATCH | `/me/preferences` | `patch_supplies_preferences` | `supplies.portal.access` | default_branch deve estar em allowedUnits | próprio usuário | PG | NOVO_PROPOSTO |
+| GET | `/tasks` | `list_supply_tasks` | `supplies.portal.access` | conforme refs | próprio usuário/equipe permitida | PG | NOVO_PROPOSTO |
+| POST | `/tasks` | `create_supply_task` | `supplies.portal.access` + capability do recurso referenciado | sim se ref TOTVS | validar ref + ownership | PG | NOVO_PROPOSTO |
+| PATCH | `/tasks/{task_id}` | `update_supply_task` | `supplies.portal.access` + capability do recurso referenciado | sim se ref TOTVS | ownership/equipe + ref autorizada | PG | NOVO_PROPOSTO |
+| GET | `/administration/purchase-request-scopes` | `list_purchase_request_scopes` | `supplies.administration.manage` | sim | unidades administradas | PR-api C1 / PG C2 | COMPOSICAO_BFF |
+| PATCH | `/administration/purchase-request-scopes/{id}` | `update_purchase_request_scope` | `supplies.administration.manage` | sim | unidade administrada + auditoria | PR-api C1 / PG C2 | COMPOSICAO_BFF |
+
+### Export de SC
+
+A exportação permanece permission separada enquanto houver necessidade de controlar saída de dados em massa:
+
+```text
+supplies.purchase-requests.access
+AND supplies.purchase-requests.export
+AND unit scope
+AND CC scope/view-all
+```
+
+Se homologação provar que export não exige segregação distinta, ADR-007 permite condensar posteriormente.
+
+---
+
+## 3. Authz do `/me/capabilities`
+
+Resposta conceitual:
+
+```json
+{
+  "capabilities": {
+    "portal": true,
+    "purchaseRequests": true,
+    "operations": true,
+    "analytics": false,
+    "administration": false,
+    "purchaseRequestsViewAll": true,
+    "purchaseRequestsExport": false
+  },
+  "allowedUnits": ["01"]
+}
+```
+
+Fonte:
+
+```text
+JWT válido
+→ Core /me
+→ effective permissions
+→ aliases temporários + permissions canônicas
+→ capabilities + allowedUnits
+```
+
+Não derivar permissions finais de claims do JWT.
+
+---
+
+## 4. Reuso api-delpi — não criar SQL gêmeo
+
+| Operação | operationId | Uso Portal | Gap |
+|---|---|---|---|
+| CPV | `get_supplies_cpv` | Overview/indicadores | — |
+| Giro | `get_supplies_inventory_turnover` | Overview | — |
+| Savings | `get_supplies_negotiation_savings_summary` | analytics/savings | edição continua externa |
+| OTD | `get_supplies_otd` | analytics/OTD | comparar BI atraso |
+| PO OTD | `get_supplies_purchase_order_otd` | pedidos/entregas | UI nova |
+| PO OTD panel | `get_supplies_purchase_order_otd_panel` | atrasos | UI nova |
+| PO OTD series | `get_supplies_purchase_order_otd_series` | charts | UI nova |
+| SC lines | `list_supplies_purchase_request_lines` | via PR-api/C2 | escopo CC permanece fora da api-delpi |
+| Linked orders/receipts | família purchase-request | detalhe SC | — |
+| Safety stock | `get_supplies_safety_stock_*` | WF-16/17 | — |
+| Stock balances | `get_supplies_stock_balances_items/summary` | inventory | comparar BI estoque |
+| Stock value | `get_supplies_stock_value` | inventory/overview | — |
+| Last purchase | `get_product_last_purchase` | produto 360 | — |
+| Purchases | `get_product_purchases` | produto 360 | — |
+| Price history | `get_product_purchase_price_history` | preço | — |
+| Suppliers of item | `get_product_suppliers` | produto 360 | — |
+| Stock item | `get_product_stock` | produto 360 | — |
+| Parents | `get_product_parents` | onde usado | comparar BI |
+| Product search | `search_products` | busca | — |
+| Freight links | `get_financial_purchase_freight_links` | deep link | Financeiro continua owner |
+
+Nova rota TOTVS somente após prova de gap e checklist canônico.
+
+---
+
+## 5. Composição resiliente
+
+Rotas compostas como `/analytics/overview`, `/suppliers/{code}/{store}` e `/products/{code}` devem declarar:
+
+- timeout por dependência;
+- budget global;
+- fan-out paralelo quando seguro;
+- política de cache/stale;
+- falha parcial explícita;
+- correlation id;
+- bloco/metadata `unavailable` quando dependência auxiliar falhar.
+
+Exemplo permitido:
+
+```text
+CPV OK + OTD OK + stock timeout + SI OK
+→ 200 parcial
+→ stock indisponível sinalizado
+→ restante da página utilizável
+```
+
+Exceções:
+
+- falha de authz nunca vira partial success;
+- recurso principal inexistente continua 404;
+- falha do Core para comprovar autorização deve ser fail-closed.
+
+---
+
+## 6. Erros padrão BFF
 
 | HTTP | Uso |
-|------|-----|
-| 401 | JWT inválido |
-| 403 | cap ou filial |
-| 404 | fornecedor/item/SC |
-| 409 | task idempotente / conflito |
-| 422 | query/body |
-| 502/504 | gateway TOTVS timeout |
-| 429 | se gateway/rate-limit existir — respeitar |
+|---|---|
+| 401 | identidade/token inválido |
+| 403 | capability, unidade ou recurso negado |
+| 404 | recurso inexistente |
+| 409 | conflito/idempotência |
+| 422 | query/body inválido |
+| 502/504 | downstream indisponível/timeout quando a operação não puder ser parcial |
+| 503 | serviço de autorização/dependência crítica indisponível |
+| 429 | rate-limit existente |
 
-Paginação: herdada das rotas TOTVS (`page`, `page_size` tiers).
+Paginação mantém contrato do downstream quando compatível; qualquer mudança deve ser classificada conforme `contract-evolution-backward-compatibility.mdc`.
