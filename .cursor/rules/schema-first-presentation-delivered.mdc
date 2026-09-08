@@ -1,13 +1,13 @@
 ---
-description: Apresentação schema-first as-delivered — proibir acoplamento por rota/entidade
-alwaysApply: true
+description: Chat/apresentação — schema-first as-delivered, renderPlan e presentationDecision; carregar ao alterar tabelas, gráficos, presenters ou metadata visual
+alwaysApply: false
 ---
 
 # Apresentação delivered puro (Playbook 22)
 
 ## Princípio
 
-**Uma rota nova = OpenAPI + schema-driven.** O pipeline de metadata **não** tem ramo legacy nem presenter por entidade.
+**Uma action nova = OpenAPI + schema-driven.** O pipeline de metadata **não** tem ramo legacy nem presenter por entidade.
 
 ```text
 ChatPresentationMetadataPipelineService
@@ -20,45 +20,46 @@ ChatPresentationMetadataPipelineService
 
 Doc canônica: `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure-jun2026.md`.
 
+Provider OpenAPI externo deve produzir resposta útil **sem** `x-delpi` e sem perfil dedicado. Vendor extensions e perfis especiais são enriquecimento opcional, não pré-requisito de plugabilidade.
+
 ## O que NÃO fazer
 
 - Criar `*_presenter.py` por rota, entidade ou path (`product_*`, `entity_route`, `playbook_report_presenter`, …).
 - Adicionar `visualBuilders`, `tableAssembly`, `textBuilder`, `stackPlan` rico em `presentation_profiles.json`.
 - Reintroduzir `ChatPresentationVisualBundleService`, `TableAssemblyService`, `HumanizedNarrativeService`, `CompositeVisualBuilder` ou ramo `else` no pipeline.
 - `if "/products/"` / `if kpi` / `if entity ==` em use case, presenter ou MFE para apresentação.
-- Serviço de domínio nomeado pela rota (`ChatOperationalStockRouteService`) — usar `profileKey` + JSON + serviço transversal.
+- Serviço de domínio nomeado pela rota (`ChatOperationalStockRouteService`) — usar regra transversal/schema/profileKey somente quando realmente necessário.
 - Multi-tabela tier A (`tablePresentations` com `role: profile|list|guide`) no pipeline — tabela genérica única.
 - Fix de formato (tabela vs gráfico) só no MFE — `presentationDecision` na API.
-- Expandir `presentation_profiles.json` para rota nova sem `x-delpi` no OpenAPI (exceção: perfis especiais em `entityProfiles` + `pathRules` pontuais).
-- Duplicar em `entityProfiles` entradas cobertas por `openapiReplaceableProfileKeys` — gate `audit_openapi_profile_pruning.py --check`.
+- Tornar `presentation_profiles.json`, `x-delpi` ou presenter especializado requisito para uma API OpenAPI externa funcionar.
+- Duplicar em `entityProfiles` entradas cobertas por metadata OpenAPI — gate `audit_openapi_profile_pruning.py --check` quando aplicável.
 - Forçar `layoutMode: stack` automático em perfis `as_delivered` — stack só com pedido «visão integrada» ou `layoutMode` já `stack` na decisão.
 
 ## O que fazer
 
 | Necessidade | Módulo canônico |
 |-------------|-----------------|
-| Nova action | `OpenApiActionImporter` + allowed actions do agente |
+| Nova action | OpenAPI importado + Action Catalog + allowed actions do agente |
 | Tabela / KPI / chart / árvore | `ChatSchemaDrivenPresentationService` |
-| Labels de coluna | `meta.fields` da API + `column_labels.json` |
+| Labels de coluna | schema/metadata da API + `column_labels.json` apenas como vocabulário/UX complementar |
 | Comentário / dataAnswer | `ChatDataInsightEnrichmentService` + `ChatOperationalDataCommentaryService` |
-| Formato Automático | `ChatPresentationViewIntentService` + `openapiShapeDefaults` / perfis especiais JSON |
+| Formato Automático | `ChatPresentationViewIntentService` + shape/schema + perfis especiais opcionais |
 | Formato explícito (toolbar) | `ChatToolContextFormatService` → `build_bundle` schema-driven |
-| SQL | `ExternalActionSqlPresenter` (exceção legítima) |
+| SQL | `ExternalActionSqlPresenter` (exceção legítima quando transversal) |
 | Prosa LLM vs template | `ChatPresentationProseDeliveryService` no **turn completion** |
 | Data-only no pipeline | `ChatPresentationDataOnlyProseService.apply_pipeline` (pós-`finalize`) |
-| Nova rota api-delpi | `new-api-route-checklist.mdc` + Playbook 22 + `audit_openapi_profile_pruning.py --check` + `sync_openapi_route_contract_shapes.py --check` |
+| Nova rota api-delpi | `new-api-route-checklist.mdc` + gates OpenAPI específicos da api-delpi |
 
 ## Checklist antes de merge
 
 - [ ] Pipeline passa só por `ChatPresentationApiDeliveredMetadataService`?
-- [ ] Nenhum presenter novo por entidade?
+- [ ] Nenhum presenter novo por entidade/rota para viabilizar action?
 - [ ] Nenhuma chave `visualBuilders` / `tableAssembly` nova no JSON?
-- [ ] Teste com fixture payload real?
-- [ ] Grep zero: `visual_bundle`, `table_assembly`, `composite_visual`, `entity_route_dispatch`?
-- [ ] `audit_openapi_profile_pruning.py --check` verde (sem `entityProfiles` substituível duplicado)?
-- [ ] `audit_openapi_delpi_metadata.py --check` verde (x-delpi em todas as operações)?
-- [ ] `audit_path_entity_fallback_pruning.py --check` verde?
+- [ ] Teste com fixture payload real e fallback genérico?
+- [ ] Grep zero: `visual_bundle`, `table_assembly`, `composite_visual`, `entity_route_dispatch` para código novo?
+- [ ] Para api-delpi, gates específicos de metadata/shape permanecem verdes?
+- [ ] Para provider externo, teste prova resposta útil sem `x-delpi`/perfil especializado?
 
 ## Em conflito com Playbook 12 / 09
 
-Playbook 12 (tier A declarativo) e stack rico do Playbook 09 são **históricos** para o pipeline de metadata. Em dúvida, seguir **Playbook 22** e `presentation-delivered-pure-jun2026.md`.
+Playbook 12 (tier A declarativo) e stack rico do Playbook 09 são **históricos** para o pipeline de metadata. Em dúvida, seguir **Playbook 22**, `presentation-delivered-pure-jun2026.md` e `openapi-first-universal-tool-routing.mdc`.
