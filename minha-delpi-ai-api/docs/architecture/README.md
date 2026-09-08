@@ -1,164 +1,94 @@
-# Arquitetura — minha-delpi-ai-api
+# Arquitetura — Minha DELPI AI API
 
-> **Público:** backend, revisores de PR, agentes Cursor  
-> **Princípio:** o **chat base** concentra a inteligência transversal; agentes adicionam prompt, skills e actions.
+**Status:** vigente  
+**Público:** backend, revisores e agentes Cursor
 
----
+Este diretório contém somente fontes arquiteturais atuais. Implementação deve começar pelo documento principal e pelas regras `.cursor` aplicáveis, não por playbooks ou changelogs datados.
 
-## Documento principal
+## Leitura principal
 
-**Leitura obrigatória:** [`chat-intelligence-base.md`](./chat-intelligence-base.md)
+| Ordem | Fonte | Responsabilidade |
+|------:|-------|------------------|
+| 1 | [`chat-intelligence-base.md`](./chat-intelligence-base.md) | Pipeline transversal do chat, contexto, tools, RAG, segurança e apresentação |
+| 2 | [`new-api-route-checklist.md`](./new-api-route-checklist.md) | Nova API/Action OpenAPI |
+| 3 | [`assistant-content-catalog.md`](./assistant-content-catalog.md) | Conteúdo declarativo do assistente sem duplicar contrato técnico |
+| 4 | [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md) | Protocolo canônico R1–R11 |
+| 5 | [`../flows/README.md`](../flows/README.md) | Fluxos operacionais vigentes |
 
-Contém o mapa completo de serviços (~200 entradas), roteamento api-delpi, streaming, apresentação rica, memória, web search e checklist para novas features.
-
-**Mapas de fluxo (operacional):** [`../flows/README.md`](../flows/README.md) — HTTP, turno send/stream, inteligência, tools/RAG, operacional, domínios, workspace/admin e higiene de código.
-
----
-
-## Índice por domínio
-
-### Pipeline e turno
-
-| Documento | Assunto |
-|-----------|---------|
-| [../flows/README.md](../flows/README.md) | **Hub de fluxos** — matriz completa + índice |
-| [chat-intelligence-base.md](./chat-intelligence-base.md) | Pipeline send/stream, serviços centrais, roteamento |
-| [chat-pre-llm-layers.md](./chat-pre-llm-layers.md) | Fases ingresso → resolução → montagem LLM |
-| [intent-routing.md](./intent-routing.md) | `ChatIntentRouterService`, intents, metadata |
-| [session-memory.md](./session-memory.md) | Memória de sessão, assertividade, projeto compartilhado |
-
-### Apresentação e conteúdo
-
-| Documento | Assunto |
-|-----------|---------|
-| [**presentation-delivered-pure-jun2026.md**](./presentation-delivered-pure-jun2026.md) | **Pipeline ativo** — schema-first, anti-acoplamento |
-| [new-api-route-checklist.md](./new-api-route-checklist.md) | **Nova rota** — HTTP, registry, perfil, CI |
-| [chat-assistant-content-presentation.md](./chat-assistant-content-presentation.md) | `presentationDecision`, `renderPlan`, MFE |
-| [assistant-content-catalog.md](./assistant-content-catalog.md) | Bundles JSON e serviços loader |
-| [product-operational-content.md](./product-operational-content.md) | Escopos de produto, plural, estoque |
-| [presenter-content-migration-audit.md](./presenter-content-migration-audit.md) | Auditoria migração presenter → JSON |
-| [humanized-narrative-stack-jun2026.md](./humanized-narrative-stack-jun2026.md) | **Histórico** — stack narrativo (removido do pipeline) |
-| [vocabulary-centralization-jun2026.md](./vocabulary-centralization-jun2026.md) | Vocabulário SQL e intent centralizado |
-
-### Capacidades transversais
-
-| Documento | Assunto |
-|-----------|---------|
-| [email-writing.md](./email-writing.md) | E-mail corporativo (intent, guard, chips) |
-| [text-correction.md](./text-correction.md) | Correção de texto, typos, composer |
-| [continuous-learning.md](./continuous-learning.md) | Aprendizado contínuo (planejado) |
-
-### Decisões e baseline
-
-| Documento | Assunto |
-|-----------|---------|
-| [adr/README.md](./adr/README.md) | ADRs aceitos (chat base, send/stream, JSON, ports) |
-| [clean-architecture-baseline.json](./clean-architecture-baseline.json) | Baseline auditoria CI |
-| [presentation-refactor-baseline-jun2026.json](./presentation-refactor-baseline-jun2026.json) | Baseline apresentação declarativa |
-
----
-
-## Modelo de camadas
+## Arquitetura do turno
 
 ```text
-interfaces/http/routes/     Handlers finos — delegam a use cases via composition
-        │
-        ▼
-composition/*_composer    Composition root (make_send_chat_message, …)
-        │
-        ▼
-application/
-  use_cases/              SendChatMessage, StreamChatMessage, ExecuteExternalAction…
-  services/               ChatTurnPreparation*, ChatToolContext*, stream…
-        │
-        ▼
-domain/
-  services/               Intent, presenter, SQL, memória, identidade…
-  prompt_policies/        Instruções Markdown injetadas no LLM
-  ports/                  Contratos (LlmGateway, repos, AssistantContent…)
-        │
-        ▼
-infrastructure/           Postgres, Ollama/vLLM, HTTP api-delpi, loaders JSON
+mensagem
+→ preparação + workspace context
+→ entendimento/decomposição
+→ contexto/memória estruturados
+→ direct / no-tool / Actions / RAG / mixed
+→ allowed Actions + Action Catalog
+→ retrieval top-K
+→ planner estruturado
+→ OpenAPI validation
+→ RBAC/policy/confirmation
+→ executor genérico
+→ RAG quando necessário
+→ schema-driven presentation
+→ síntese
+→ metadata/observabilidade
+→ send/stream
 ```
 
-**Regra de ouro:** melhorias de inteligência vão em `domain/services` ou `application/services` compartilhados — **nunca** só no prompt de um agente ou só no use case.
-
-Playbook detalhado: [`../roadmap/playbook-11-clean-architecture-chat-api.md`](../roadmap/playbook-11-clean-architecture-chat-api.md).  
-Organização dos ~600 services: [`../roadmap/playbook-20-organizacao-services-chat.md`](../roadmap/playbook-20-organizacao-services-chat.md).
-
----
-
-## Fluxo de um turno (resumo)
+## Actions OpenAPI
 
 ```text
-POST /chat/sessions/{id}/messages/stream
-  │
-  ├─► ChatTurnSideEffectsService (efeitos iniciais)
-  ├─► ChatSimpleTurnGateService? → resposta direta, sem activity
-  ├─► ChatTurnPreparationService.prepare()
-  │     ├─ workspace (agente, projeto, capabilities)
-  │     ├─ intent / direct answer / pending (missing_product_code, missing_date)
-  │     ├─ tools + ExternalActionSelectionService
-  │     ├─ RAG
-  │     └─ flags skipRag, analysisMode, fastPath
-  ├─► ChatTurnLlmAssemblyService (prompt + LLM se necessário)
-  ├─► ChatTurnCompletionService (metadata, memória, adminDebug)
-  └─► SSE: user_persisted → activity → playback → done
+OpenAPI provider
+→ import/index
+→ Action Catalog
+→ agent binding + allowed_action_ids
+→ retrieval/planner/validator
+→ policy/RBAC/confirmation
+→ generic HTTP executor
+→ schema-driven presentation
 ```
 
-Send síncrono usa os **mesmos** serviços de preparação e conclusão — ver [ADR 002](./adr/002-send-stream-turn-parity.md).
+Nova API não exige intent, marker, selector, registry técnico paralelo, parameter strategy ou presenter por endpoint.
 
----
+## Apresentação
 
-## Onde implementar cada tipo de mudança
+```text
+response schema + payload + metadata
+→ ChatSchemaDrivenPresentationService
+→ presentationDecision
+→ renderPlan
+→ MFE render-only
+```
 
-| Mudança | Camada canônica | Não duplicar em |
-|---------|-----------------|-----------------|
-| Nova intenção / roteamento | `domain/services/*IntentService` | use case, prompt agente |
-| Nova rota api-delpi (completa) | [new-api-route-checklist.md](./new-api-route-checklist.md) | endpoint isolado sem perfil/registry |
-| Seleção de action existente | `ExternalActionSelectionService` + `api_route_domains.json` | heurística no MFE |
-| Formato Automático (tabela/gráfico) | `ChatPresentationViewIntentService` + perfis JSON | MFE, prompt agente |
-| Texto PT para usuário | `app/content/pt-BR/assistant/*.json` | Python/TS literal |
-| Título/coluna de tabela | `presenter_content.json` + presenter | system_prompt |
-| Policy LLM global | `domain/prompt_policies/*.md` | agente individual |
-| Novo visual na resposta | `ExternalActionResultPresenter` + metadata | componente MFE isolado |
-| Skip de tools | `ChatTurnPreparationToolRoutingService` | flags só no frontend |
+Perfis e extensões proprietárias são enriquecimento opcional. O fallback genérico deve funcionar para API externa desconhecida.
 
-Mapa Cursor: `.cursor/rules/centralized-rules-first.mdc`.
+## Camadas
 
----
+| Camada | Responsabilidade |
+|--------|------------------|
+| `domain` | modelos, regras e ports sem infrastructure/interfaces |
+| `application` | orquestração de turno, retrieval, planner, RAG, policies e use cases |
+| `infrastructure` | persistence, OpenAPI importer/index, LLM, HTTP/auth |
+| `interfaces/http` | endpoints REST/SSE finos |
+| `composition` | wiring/DI |
+| `content/pt-BR` | linguagem/UX/config declarativa |
 
-## Sub-sistemas (entrada no código)
+## Regras Cursor relacionadas
 
-| Sub-sistema | Serviço principal | Doc |
-|-------------|-------------------|-----|
-| Turno send/stream | `ChatTurnPreparationService` | [chat-intelligence-base § Turno](./chat-intelligence-base.md) |
-| Tools & actions | `ChatToolContextService` | [chat-intelligence-base § Roteamento](./chat-intelligence-base.md) |
-| Presenter | `ExternalActionResultPresenter` | [chat-assistant-content-presentation](./chat-assistant-content-presentation.md) |
-| Conteúdo JSON | `ChatAssistantContentService` | [assistant-content-catalog](./assistant-content-catalog.md) |
-| SQL avançado | `ChatAdvancedSqlSpecialistService` | [chat-intelligence-base § SQL](./chat-intelligence-base.md) |
-| Anexos & OCR | `ChatDocumentVisionService` | [roadmap onda 13](../roadmap/inteligencia-chat-onda-13-skill-visao-documentos-ocr.md) |
-| Memória | `ChatConversationMemoryService` | [session-memory](./session-memory.md) |
-| HTTP modular | `interfaces/http/routes/chat/` | [ADR 005](./adr/005-http-routes-modular-facade.md) |
+- `.cursor/rules/chat-intelligence-base.mdc`
+- `.cursor/rules/clean-architecture-chat-api.mdc`
+- `.cursor/rules/openapi-first-universal-tool-routing.mdc`
+- `.cursor/rules/schema-first-presentation-delivered.mdc`
+- `.cursor/rules/presentation-operational-decoupling.mdc`
+- `.cursor/rules/ai-intelligence-evaluation.mdc`
+- `.cursor/rules/ai-external-tools-security.mdc`
+- `.cursor/rules/ai-context-and-tool-budget.mdc`
 
----
+## Evals
 
-## ADRs
+Mudanças de inteligência usam baseline × candidate e R1–R11. Mudanças no motor de tools exigem API externa desconhecida + teste metamórfico.
 
-| ADR | Decisão |
-|-----|---------|
-| [001](./adr/001-chat-base-intelligence.md) | Inteligência no chat base |
-| [002](./adr/002-send-stream-turn-parity.md) | Paridade send/stream |
-| [003](./adr/003-assistant-content-json.md) | Textos em JSON |
-| [004](./adr/004-repository-ports-composition-root.md) | Ports e composition root |
-| [005](./adr/005-http-routes-modular-facade.md) | HTTP modular |
-| [006](./adr/006-hardcoded-pt-strings-baseline-gate.md) | Gate CI strings PT |
+## Política documental
 
----
-
-## Referências externas
-
-- Contrato api-delpi → chat: [`../roadmap/playbook-10-contrato-respostas-api-delpi.md`](../roadmap/playbook-10-contrato-respostas-api-delpi.md)
-- **Nova rota (checklist):** [new-api-route-checklist.md](./new-api-route-checklist.md)
-- Auditoria rotas: [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md)
-- Guia desenvolvedor: [`../development/guia-desenvolvimento.md`](../development/guia-desenvolvimento.md)
+Documento de arquitetura que descreva pipeline substituído deve ser removido do working tree depois que qualquer decisão ainda válida for absorvida pela fonte canônica. Histórico técnico permanece no Git, não em arquivos indexáveis pelo Cursor.
