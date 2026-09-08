@@ -8,6 +8,9 @@ from fastapi import APIRouter, Query, Request
 from production_pulse_app.application.services.work_center_catalog_service import (
     WorkCenterCatalogUnavailableError,
 )
+from production_pulse_app.application.services.device_firmware_link_service import (
+    DeviceFirmwareLinkService,
+)
 from production_pulse_app.application.services.device_binding_service import (
     BindingNotFoundError,
     DeviceBindingService,
@@ -30,10 +33,14 @@ from production_pulse_app.core.responses import error, success
 from production_pulse_app.domain.errors import (
     BindingValidationError,
     CommandNotSupportedError,
+    ContentCodedError,
     DeviceValidationError,
 )
 from production_pulse_app.infrastructure.content.device_api_messages_content_service import (
     http_error_message,
+)
+from production_pulse_app.infrastructure.content.firmware_ota_messages_content_service import (
+    firmware_ota_http_message,
 )
 from production_pulse_app.domain.services.device_serialization_service import parse_device_id
 from production_pulse_app.interface.http.content_coded_error_response import content_coded_error_response
@@ -58,6 +65,7 @@ from production_pulse_app.interface.http.schemas.device_schemas import (
 router = APIRouter(prefix="/devices", tags=["Devices"])
 _service = DeviceService()
 _binding_service = DeviceBindingService()
+_firmware_link_service = DeviceFirmwareLinkService()
 _poll_service = DevicePollService()
 _probe_service = DeviceProbeService()
 _command_service = DeviceCommandService()
@@ -403,6 +411,39 @@ async def delete_device(request: Request, device_id: UUID):
     try:
         data = _service.delete_device(parse_device_id(str(device_id)), actor_sub=_actor_sub(request))
         return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.put("/{device_id}/firmware-link")
+async def put_device_firmware_link(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="manage")
+    if denied is not None:
+        return denied
+    body = await _optional_json_body(request) or {}
+    firmware_key = body.get("firmwareKey", body.get("firmware_key"))
+    # Explicit null clears; missing key treated as clear for replace UX
+    if "firmwareKey" not in body and "firmware_key" not in body:
+        firmware_key = None
+    try:
+        data = _firmware_link_service.set_link(
+            parse_device_id(str(device_id)),
+            firmware_key=firmware_key,
+            actor_sub=_actor_sub(request),
+        )
+        return success(data)
+    except ContentCodedError as exc:
+        payload = error(
+            firmware_ota_http_message(exc.code),
+            code=exc.code,
+            status_code=422,
+        )
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse(
+            status_code=payload.pop("_status_code", 422),
+            content=payload,
+        )
     except Exception as exc:
         return _json_error(exc)
 

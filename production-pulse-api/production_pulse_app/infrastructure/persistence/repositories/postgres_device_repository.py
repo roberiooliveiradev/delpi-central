@@ -136,6 +136,32 @@ class PostgresDeviceRepository:
             raise DeviceNotFoundError(str(device_id))
         return dict(row)
 
+    def set_firmware_key(
+        self,
+        device_id: UUID,
+        *,
+        firmware_key: str | None,
+        actor_sub: str | None = None,
+    ) -> dict[str, Any]:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.devices
+                    SET firmware_key = %s,
+                        updated_by = %s,
+                        updated_at = NOW()
+                    WHERE id = %s
+                    RETURNING {_DEVICE_COLUMNS}
+                    """,
+                    (firmware_key, actor_sub, device_id),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        if row is None:
+            raise DeviceNotFoundError(str(device_id))
+        return dict(row)
+
     def create(
         self,
         *,

@@ -26,6 +26,7 @@ def device_row_to_api(
         "driverKey": row["driver_key"],
         "roleKey": row["role_key"],
         "firmwareKey": row.get("firmware_key") or row["driver_key"],
+        "assignedFirmwareKey": row.get("firmware_key"),
         "installedFirmwareVersion": row.get("installed_firmware_version"),
         "targetFirmwareVersion": row.get("target_firmware_version"),
         "firmwareReportedAt": row.get("firmware_reported_at"),
