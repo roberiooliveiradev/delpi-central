@@ -575,6 +575,8 @@ def main() -> int:
     for index, case in enumerate(CASES):
         if index:
             time.sleep(_PAUSE)
+        # Refresh token before each case to avoid mid-battery 401 (Keycloak TTL).
+        token = _token()
         print("=" * 72, flush=True)
         print(f"CASE {case['id']}", flush=True)
         print(f"MSG  {case['message'][:120]}…", flush=True)
@@ -588,12 +590,34 @@ def main() -> int:
             evaluated["sessionId"] = sid
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")[:500]
-            evaluated = {
-                "id": case["id"],
-                "passed": False,
-                "errors": [f"HTTP {exc.code}: {body}"],
-                "latency": {"wallMs": None, "bottleneckStage": "http_error"},
-            }
+            # One retry on 401 after refreshing the access token.
+            if exc.code == 401:
+                try:
+                    token = _token()
+                    sid = _create_session(token, agent_id, f"live-complex-{case['id']}-retry")
+                    if case.get("seed"):
+                        _send(token, sid, agent_id, str(case["seed"]))
+                        time.sleep(max(1.0, _PAUSE / 2))
+                    response, wall_ms = _send(token, sid, agent_id, str(case["message"]))
+                    evaluated = _eval_case(case, response, wall_ms)
+                    evaluated["sessionId"] = sid
+                    evaluated["tokenRetry"] = True
+                except Exception as retry_exc:  # noqa: BLE001 — smoke live
+                    evaluated = {
+                        "id": case["id"],
+                        "passed": False,
+                        "errors": [
+                            f"HTTP 401 then retry failed: {type(retry_exc).__name__}: {retry_exc}"
+                        ],
+                        "latency": {"wallMs": None, "bottleneckStage": "http_error"},
+                    }
+            else:
+                evaluated = {
+                    "id": case["id"],
+                    "passed": False,
+                    "errors": [f"HTTP {exc.code}: {body}"],
+                    "latency": {"wallMs": None, "bottleneckStage": "http_error"},
+                }
         except Exception as exc:  # noqa: BLE001 — smoke live
             evaluated = {
                 "id": case["id"],
