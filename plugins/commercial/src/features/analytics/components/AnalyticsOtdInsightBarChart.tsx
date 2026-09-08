@@ -4,6 +4,7 @@ import {
   ChartViewShell,
   RANKING_TYPES,
   runTabularExport,
+  StableResponsiveContainer,
   usePersistedChartPreferences,
 } from "@delpi/plugin-ui/index";
 import {
@@ -13,7 +14,6 @@ import {
   Cell,
   Pie,
   PieChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -301,7 +301,7 @@ export function AnalyticsOtdInsightBarChart({
           className="cm-chart-wrap cm-otd-insight-chart"
           style={{ width: "100%", height: horizontalHeight }}
         >
-          <ResponsiveContainer>
+          <StableResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
               layout="vertical"
@@ -361,7 +361,7 @@ export function AnalyticsOtdInsightBarChart({
                 ))}
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+          </StableResponsiveContainer>
         </div>
       ) : null}
 
@@ -370,7 +370,7 @@ export function AnalyticsOtdInsightBarChart({
           className="cm-chart-wrap cm-otd-insight-chart cm-otd-insight-chart--vertical"
           style={{ width: "100%", height: verticalHeight }}
         >
-          <ResponsiveContainer>
+          <StableResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
               margin={{ top: 8, right: 12, left: 4, bottom: 8 }}
@@ -430,7 +430,7 @@ export function AnalyticsOtdInsightBarChart({
                 ))}
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+          </StableResponsiveContainer>
         </div>
       ) : null}
 
@@ -439,7 +439,7 @@ export function AnalyticsOtdInsightBarChart({
           className="cm-chart-wrap cm-otd-insight-chart cm-otd-insight-chart--pie"
           style={{ width: "100%", minHeight: pieHeight }}
         >
-          <ResponsiveContainer width="100%" height={Math.max(220, pieHeight * 0.55)}>
+          <StableResponsiveContainer width="100%" height={Math.max(220, pieHeight * 0.55)}>
             <PieChart>
               <Tooltip
                 content={
@@ -470,7 +470,7 @@ export function AnalyticsOtdInsightBarChart({
                 ))}
               </Pie>
             </PieChart>
-          </ResponsiveContainer>
+          </StableResponsiveContainer>
           <InsightPieLegend data={data} formatValue={formatValue} />
         </div>
       ) : null}

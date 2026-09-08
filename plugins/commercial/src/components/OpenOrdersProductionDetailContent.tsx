@@ -7,6 +7,7 @@ import {
   HintAction,
   SectionHintLabel,
   runTabularExport,
+  StableResponsiveContainer,
 } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -16,7 +17,6 @@ import {
   Cell,
   Legend,
   ReferenceLine,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -478,7 +478,7 @@ export function OpenOrdersProductionDetailContent({
             </div>
             {coverageStacked[0].estoqueQty > 0 || coverageStacked[0].produzirQty > 0 ? (
               <div className="cm-open-orders-detail__chart-host cm-open-orders-detail__chart-host--compact">
-                <ResponsiveContainer width="100%" height={112}>
+                <StableResponsiveContainer width="100%" height={112}>
                   <BarChart
                     data={coverageStacked}
                     layout="vertical"
@@ -531,7 +531,7 @@ export function OpenOrdersProductionDetailContent({
                     <Bar dataKey="estoque" stackId="cov" fill="#16a34a" radius={[4, 0, 0, 4]} />
                     <Bar dataKey="produzir" stackId="cov" fill="#d97706" radius={[0, 4, 4, 0]} />
                   </BarChart>
-                </ResponsiveContainer>
+                </StableResponsiveContainer>
               </div>
             ) : (
               <p className="cm-open-orders-detail__muted">Sem saldo a cobrir nesta linha.</p>
@@ -609,7 +609,7 @@ export function OpenOrdersProductionDetailContent({
             </div>
             {prazoCompare.length > 0 ? (
               <div className="cm-open-orders-detail__chart-host cm-open-orders-detail__chart-host--compact">
-                <ResponsiveContainer width="100%" height={132}>
+                <StableResponsiveContainer width="100%" height={132}>
                   <BarChart
                     data={prazoCompare}
                     margin={{ top: 12, right: 12, left: 4, bottom: 4 }}
@@ -646,7 +646,7 @@ export function OpenOrdersProductionDetailContent({
                       ))}
                     </Bar>
                   </BarChart>
-                </ResponsiveContainer>
+                </StableResponsiveContainer>
               </div>
             ) : (
               <p className="cm-open-orders-detail__muted">Sem datas de entrega ou previsão OP.</p>
