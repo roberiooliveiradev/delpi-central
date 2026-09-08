@@ -24,6 +24,8 @@ describe("PluginShell TopBar collapse", () => {
     expect(source).toMatch(/ShellTopBarSecondary/);
     expect(source).toMatch(/ShellTopBarActions/);
     expect(source).toMatch(/SuppliesPageHero/);
+    expect(source).toMatch(/searchTriggerRef/);
+    expect(source).toMatch(/anchorRef=\{searchTriggerRef\}/);
   });
 
   it("não duplica Ajuda nas actions (só na nav)", () => {
@@ -31,6 +33,7 @@ describe("PluginShell TopBar collapse", () => {
     expect(slots).not.toMatch(/helpActionLabel/);
     expect(slots).not.toMatch(/navigatePluginView\("help"/);
     expect(slots).toMatch(/SuppliesTopBarSearchTrigger/);
+    expect(slots).toMatch(/searchTriggerRef/);
     expect(slots).toMatch(/HelpTooltip/);
   });
 

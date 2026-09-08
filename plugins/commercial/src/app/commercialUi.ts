@@ -19,6 +19,7 @@ import {
   createDashboardSectionRouteCard,
   createDashboardCatalogSearchBar,
   createDashboardCommandPalette,
+  createDashboardTopBarSearchTrigger,
   createDashboardHubChipRow,
   createDashboardRouteChip,
   createDashboardScopeChipBar,
@@ -186,6 +187,9 @@ export const CommercialRouteChip = createDashboardRouteChip({ prefix: UI_PREFIX 
 export const CommercialCommandPalette = createDashboardCommandPalette({
   prefix: UI_PREFIX,
   portalScopeClassName: CM_PORTAL_SCOPE,
+});
+export const CommercialTopBarSearchTrigger = createDashboardTopBarSearchTrigger({
+  prefix: UI_PREFIX,
 });
 export const CommercialTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
 export const CommercialActionButton = ActionButton;

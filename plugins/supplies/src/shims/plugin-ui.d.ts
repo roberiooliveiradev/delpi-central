@@ -79,14 +79,17 @@ declare module "@delpi/plugin-ui/index" {
 
   export function createDashboardTopBarSearchTrigger(config: {
     prefix: string;
-  }): ComponentType<{
-    onOpen: () => void;
-    label: string;
-    shortcutLabel: string;
-    "aria-label": string;
-    title?: string;
-    className?: string;
-  }>;
+  }): React.ForwardRefExoticComponent<
+    {
+      onOpen: () => void;
+      label: string;
+      shortcutLabel: string;
+      "aria-label": string;
+      title?: string;
+      className?: string;
+      expanded?: boolean;
+    } & React.RefAttributes<HTMLButtonElement>
+  >;
 
   export function createDashboardCommandPalette(config: {
     prefix: string;
@@ -95,13 +98,13 @@ declare module "@delpi/plugin-ui/index" {
     open: boolean;
     onClose: () => void;
     title: string;
+    anchorRef: React.RefObject<HTMLElement | null>;
     value: string;
     onChange: (value: string) => void;
     hits?: ReadonlyArray<{ id: string; label: string; groupLabel?: string }>;
     onSelectHit: (id: string) => void;
     placeholder?: string;
     emptyHitsLabel?: string;
-    closeAriaLabel?: string;
     "aria-label"?: string;
   }>;
 

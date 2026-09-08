@@ -318,6 +318,14 @@ export {
   type TopBarProps,
 } from "./TopBar";
 export {
+  TopBarSearchTrigger,
+  createDashboardTopBarSearchTrigger,
+  topBarSearchTriggerBemClasses,
+  type DashboardTopBarSearchTriggerProps,
+  type TopBarSearchTriggerClassNames,
+  type TopBarSearchTriggerProps,
+} from "./TopBarSearchTrigger";
+export {
   ProgressTracker,
   createDashboardProgressTracker,
   progressTrackerBemClasses,

@@ -57,12 +57,17 @@ export const USER_MANUAL_CONTENT = {
     {
       id: "want",
       title: "Quero… → vá em…",
-      intro: "Use esta tabela como mapa. Atalhos também estão no Início (favoritos e busca).",
+      intro: "Use esta tabela como mapa. Atalhos também estão no Início e no botão Buscar da barra superior (Ctrl/Cmd+K).",
       links: [
         {
           want: "Ver o que precisa de atenção hoje",
           where: "Início",
           how: "Eventos, highlights e atalhos do launcher",
+        },
+        {
+          want: "Abrir uma área sem percorrer o menu",
+          where: "Barra superior → Buscar",
+          how: "Botão Buscar ou Ctrl/Cmd+K; mesmo catálogo do Início",
         },
         {
           want: "Ver atrasos de entrega",
@@ -151,6 +156,7 @@ export const USER_MANUAL_CONTENT = {
       title: "Mapa das telas",
       bullets: [
         "Início — hub: eventos + caminhos (favoritos, recentes, busca).",
+        "Barra superior — Buscar (Ctrl/Cmd+K) abre a mesma busca de caminhos em qualquer tela; favoritos ficam ao lado.",
         "Visão geral — placar do período (ROL, meta, conversão, carteira aberta…).",
         "Meus pedidos — bancada operacional; URL compartilhável com filtros.",
         "Minha Carteira — clientes vinculados; painéis Faturamento (série + mix), ABC, Ranking e Clientes; clique no cliente abre a Conta.",
@@ -220,7 +226,11 @@ export const USER_MANUAL_CONTENT = {
       faqs: [
         {
           q: "Onde vejo o ROL do mês?",
-          a: "Na Visão geral — não no Início (o Início é para ação, não para o placar completo). Na busca de caminhos do Início, digite «indicadores» (ou «dashboard» / «meta») para abrir a Visão geral.",
+          a: "Na Visão geral — não no Início (o Início é para ação, não para o placar completo). Na busca de caminhos (Início ou botão Buscar / Ctrl/Cmd+K), digite «indicadores» (ou «dashboard» / «meta») para abrir a Visão geral.",
+        },
+        {
+          q: "Onde fica a busca rápida do portal?",
+          a: "No botão Buscar da barra superior (em qualquer tela) ou com Ctrl/Cmd+K. É o mesmo catálogo da busca do Início, em um popover ancorado à barra.",
         },
         {
           q: "Por que a meta aparece parcial?",

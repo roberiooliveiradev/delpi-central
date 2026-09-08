@@ -23,7 +23,9 @@ describe("user manual page", () => {
     assert.match(content, /Administração → SLAs/);
     assert.match(content, /Onde configuro os SLAs/);
     assert.match(content, /Onde vejo o ROL do mês/);
-    assert.match(content, /busca de caminhos do Início.*indicadores/);
+    assert.match(content, /busca de caminhos.*indicadores/);
+    assert.match(content, /popover ancorado à barra/);
+    assert.match(content, /Barra superior → Buscar/);
     assert.match(content, /Indicadores do período/);
     assert.match(content, /busca de caminhos também acha Visão geral/);
     assert.match(content, /No consolidado \(unidade Todas\) a Visão geral mostra meta/);

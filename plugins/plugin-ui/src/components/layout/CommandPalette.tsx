@@ -1,4 +1,9 @@
-import { useEffect, useMemo, type ComponentType } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  type RefObject,
+} from "react";
 
 import {
   CatalogSearchBar,
@@ -6,16 +11,12 @@ import {
   type CatalogSearchBarClassNames,
   type CatalogSearchHit,
 } from "./CatalogSearchBar";
-import {
-  ModalShell,
-  createHostContainedModalShell,
-  modalShellBemClasses,
-  type DashboardModalShellProps,
-  type ModalShellClassNames,
-} from "../feedback/ModalShell";
+import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type CommandPaletteClassNames = {
-  modal: ModalShellClassNames;
+  panel: string;
+  header: string;
   search: CatalogSearchBarClassNames;
   body: string;
 };
@@ -24,6 +25,8 @@ export type CommandPaletteProps = {
   open: boolean;
   onClose: () => void;
   title: string;
+  /** Âncora do pill/trigger na TopBar (obrigatório para o popover). */
+  anchorRef: RefObject<HTMLElement | null>;
   value: string;
   onChange: (value: string) => void;
   hits?: readonly CatalogSearchHit[];
@@ -31,31 +34,31 @@ export type CommandPaletteProps = {
   placeholder?: string;
   emptyHitsLabel?: string;
   clearLabel?: string;
-  closeAriaLabel?: string;
   classNames: CommandPaletteClassNames;
-  /** Injected host-contained modal (preferred). Falls back to ModalShell + portal props. */
-  Modal?: ComponentType<DashboardModalShellProps>;
   portalScopeClassName?: string;
-  portalTarget?: Element | null;
   "aria-label"?: string;
 };
 
 export function commandPaletteBemClasses(prefix: string): CommandPaletteClassNames {
+  const base = `${prefix}-command-palette`;
+  const ui = "delpi-ui-command-palette";
   return {
-    modal: modalShellBemClasses(prefix),
+    panel: delpiUiClass(base, ui),
+    header: delpiUiClass(`${base}__header`, `${ui}__header`),
     search: catalogSearchBarBemClasses(prefix),
-    body: `${prefix}-command-palette__body delpi-ui-command-palette__body`,
+    body: delpiUiClass(`${base}__body`, `${ui}__body`),
   };
 }
 
 /**
- * Command palette (Ctrl+K). Atalho fica no shell do MFE.
- * Preferir `createDashboardCommandPalette` com host contained.
+ * Command palette (Ctrl+K) — popover ancorado via AnchoredPanelPortal.
+ * Atalho e âncora ficam no shell do MFE.
  */
 export function CommandPalette({
   open,
   onClose,
   title,
+  anchorRef,
   value,
   onChange,
   hits = [],
@@ -63,93 +66,69 @@ export function CommandPalette({
   placeholder,
   emptyHitsLabel,
   clearLabel,
-  closeAriaLabel,
   classNames,
-  Modal,
   portalScopeClassName,
-  portalTarget,
   "aria-label": ariaLabel,
 }: CommandPaletteProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [open, onClose]);
+    const frame = window.requestAnimationFrame(() => {
+      const input = panelRef.current?.querySelector<HTMLInputElement>(
+        "input[type='search'], input",
+      );
+      input?.focus();
+      input?.select();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [open]);
 
   const handleSelect = (id: string) => {
     onSelectHit(id);
     onClose();
   };
 
-  const body = (
-    <div className={classNames.body}>
-      <CatalogSearchBar
-        classNames={classNames.search}
-        value={value}
-        onChange={onChange}
-        hits={hits}
-        onSelectHit={handleSelect}
-        placeholder={placeholder}
-        emptyHitsLabel={emptyHitsLabel}
-        clearLabel={clearLabel}
-        aria-label={ariaLabel ?? placeholder ?? title}
-      />
-    </div>
-  );
-
-  if (Modal) {
-    return (
-      <Modal
-        open={open}
-        title={title}
-        onClose={onClose}
-        closeAriaLabel={closeAriaLabel}
-        initialFocusSelector="input[type='search'], input"
-        containedLayout="dialog"
-      >
-        {body}
-      </Modal>
-    );
-  }
-
   return (
-    <ModalShell
+    <AnchoredPanelPortal
       open={open}
-      title={title}
-      onClose={onClose}
-      classNames={classNames.modal}
-      closeAriaLabel={closeAriaLabel}
-      initialFocusSelector="input[type='search'], input"
+      anchorRef={anchorRef}
+      panelRef={panelRef}
+      className={classNames.panel}
+      variant="bare"
+      role="dialog"
+      aria-label={ariaLabel ?? title}
+      preferredPlacement="bottom"
+      horizontalAlign="end"
+      gap={6}
       portalScopeClassName={portalScopeClassName}
-      portalTarget={portalTarget}
-      containedInPortalTarget={Boolean(portalScopeClassName || portalTarget)}
-      containedLayout="dialog"
+      onDismiss={onClose}
     >
-      {body}
-    </ModalShell>
+      <div className={classNames.body}>
+        <div className={classNames.header}>{title}</div>
+        <CatalogSearchBar
+          classNames={classNames.search}
+          value={value}
+          onChange={onChange}
+          hits={hits}
+          onSelectHit={handleSelect}
+          placeholder={placeholder}
+          emptyHitsLabel={emptyHitsLabel}
+          clearLabel={clearLabel}
+          aria-label={ariaLabel ?? placeholder ?? title}
+        />
+      </div>
+    </AnchoredPanelPortal>
   );
 }
 
-export type DashboardCommandPaletteProps = Omit<CommandPaletteProps, "classNames" | "Modal">;
+export type DashboardCommandPaletteProps = Omit<CommandPaletteProps, "classNames">;
 
 export function createDashboardCommandPalette(config: {
   prefix: string;
   portalScopeClassName: string;
-  closeAriaLabel?: string;
 }) {
   const classNames = commandPaletteBemClasses(config.prefix);
-  const Modal = createHostContainedModalShell({
-    prefix: config.prefix,
-    portalScopeClassName: config.portalScopeClassName,
-    containedLayout: "dialog",
-    closeAriaLabel: config.closeAriaLabel,
-  });
 
   return function DashboardCommandPalette(props: DashboardCommandPaletteProps) {
     const merged = useMemo(() => classNames, []);
@@ -157,8 +136,7 @@ export function createDashboardCommandPalette(config: {
       <CommandPalette
         {...props}
         classNames={merged}
-        Modal={Modal}
-        closeAriaLabel={props.closeAriaLabel ?? config.closeAriaLabel}
+        portalScopeClassName={props.portalScopeClassName ?? config.portalScopeClassName}
       />
     );
   };

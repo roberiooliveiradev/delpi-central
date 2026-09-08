@@ -1,25 +1,28 @@
 import type { RefObject } from "react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
 
-import { SP_HELP } from "../content/helpTooltips";
+import { CommercialTopBarSearchTrigger } from "./commercialUi";
 import { SHELL_NAV_CONTENT } from "../content/shellNav";
-import { SuppliesTopBarSearchTrigger } from "./suppliesUi";
+import { ShellFavoritesStrip } from "./ShellFavoritesStrip";
 
 type ShellTopBarSecondaryProps = {
+  basePath: string;
   onOpenPalette: () => void;
   searchTriggerRef: RefObject<HTMLButtonElement | null>;
   paletteOpen?: boolean;
 };
 
-/** Slot secondary — busca Ctrl+K (kit), igual Comercial. */
+/**
+ * Slot secondary da TopBar — busca (Command Palette popover) + favoritos.
+ */
 export function ShellTopBarSecondary({
+  basePath,
   onOpenPalette,
   searchTriggerRef,
   paletteOpen = false,
 }: ShellTopBarSecondaryProps) {
   return (
-    <div className="sp-shell-secondary">
-      <SuppliesTopBarSearchTrigger
+    <div className="cm-shell-secondary">
+      <CommercialTopBarSearchTrigger
         ref={searchTriggerRef}
         onOpen={onOpenPalette}
         expanded={paletteOpen}
@@ -28,18 +31,7 @@ export function ShellTopBarSecondary({
         aria-label={SHELL_NAV_CONTENT.searchAriaLabel}
         title={SHELL_NAV_CONTENT.searchTitle}
       />
-    </div>
-  );
-}
-
-/**
- * Slot actions — hint de coexistência apenas.
- * Ajuda fica só na nav (padrão Comercial; sem CTA duplicado).
- */
-export function ShellTopBarActions() {
-  return (
-    <div className="sp-shell-actions">
-      <HelpTooltip content={SP_HELP.coexistence} ariaLabel="Ajuda: Portal vs apps antigos" />
+      <ShellFavoritesStrip basePath={basePath} />
     </div>
   );
 }

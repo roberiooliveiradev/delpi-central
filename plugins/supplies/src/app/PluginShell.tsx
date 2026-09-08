@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   BarChart3,
   BookOpen,
@@ -93,6 +93,7 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const session = useSuppliesSession();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
+  const searchTriggerRef = useRef<HTMLButtonElement>(null);
   const [userFirstName, setUserFirstName] = useState<string | null>(null);
   const [attentionCards, setAttentionCards] = useState<HomeAttentionCard[]>([]);
   const [attentionReady, setAttentionReady] = useState(false);
@@ -240,7 +241,13 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
               : item.label,
             onSelect: () => navigatePluginView(NAV_TARGET[item.id], { basePath }),
           }))}
-          secondary={<ShellTopBarSecondary onOpenPalette={() => setPaletteOpen(true)} />}
+          secondary={
+            <ShellTopBarSecondary
+              searchTriggerRef={searchTriggerRef}
+              paletteOpen={paletteOpen}
+              onOpenPalette={() => setPaletteOpen(true)}
+            />
+          }
           actions={<ShellTopBarActions />}
         />
 
@@ -295,6 +302,7 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
           setPaletteOpen(false);
           setPaletteQuery("");
         }}
+        anchorRef={searchTriggerRef}
         title={HUB_CONTENT.palette.title}
         value={paletteQuery}
         onChange={setPaletteQuery}
@@ -306,7 +314,6 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
         onSelectHit={onSelectPaletteHit}
         placeholder={HUB_CONTENT.palette.placeholder}
         emptyHitsLabel={HUB_CONTENT.palette.empty}
-        closeAriaLabel={HUB_CONTENT.palette.closeAriaLabel}
         aria-label="Busca do Portal Suprimentos"
       />
     </div>

@@ -291,6 +291,14 @@ button.cm-shell-user__portfolio:focus-visible {
   transform: rotate(180deg);
 }
 
+/* TopBar secondary — busca (kit) + favoritos */
+.dashboard-commercial .cm-shell-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
 /* TopBar — favoritos (gatilho + popover) */
 .cm-shell-favorites {
   display: inline-flex;

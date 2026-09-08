@@ -74,6 +74,8 @@ describe("home hub stack", () => {
     assert.match(ui, /CommercialHubChipRow/);
     assert.match(ui, /CommercialRouteChip/);
     assert.match(ui, /CommercialCommandPalette/);
+    assert.match(ui, /CommercialTopBarSearchTrigger/);
+    assert.match(ui, /createDashboardTopBarSearchTrigger/);
   });
 
   it("PluginShell abre CommandPalette com Ctrl/Cmd+K", () => {
@@ -81,5 +83,24 @@ describe("home hub stack", () => {
     assert.match(shell, /CommercialCommandPalette/);
     assert.match(shell, /metaKey \|\| event\.ctrlKey/);
     assert.match(shell, /HUB_CONTENT\.palette/);
+    assert.match(shell, /ShellTopBarSecondary/);
+    assert.match(shell, /onOpenPalette=\{\(\) => setPaletteOpen\(true\)\}/);
+    assert.match(shell, /anchorRef=\{searchTriggerRef\}/);
+    assert.match(shell, /searchTriggerRef/);
+  });
+
+  it("secondary da TopBar compõe busca kit + favoritos", () => {
+    const secondary = readSrc("app/ShellTopBarSecondary.tsx");
+    const shellCss = readSrc("styles/shell.css");
+    const help = readSrc("content/helpTooltips.ts");
+    assert.match(secondary, /CommercialTopBarSearchTrigger/);
+    assert.match(secondary, /ShellFavoritesStrip/);
+    assert.match(secondary, /searchTriggerRef/);
+    assert.match(secondary, /SHELL_NAV_CONTENT\.searchLabel/);
+    assert.match(secondary, /onOpen=\{onOpenPalette\}/);
+    assert.match(shellCss, /\.cm-shell-secondary/);
+    assert.doesNotMatch(shellCss, /\.delpi-ui-topbar-search/);
+    assert.match(help, /botão Buscar da barra superior/);
+    assert.match(help, /popover ancorado/);
   });
 });

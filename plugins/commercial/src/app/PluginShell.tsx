@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   BarChart3,
   BookOpen,
@@ -49,7 +49,7 @@ import {
   CommercialViewTransition,
 } from "./commercialUi";
 import { ShellUserPortfolioMenu } from "./ShellUserPortfolioMenu";
-import { ShellFavoritesStrip } from "./ShellFavoritesStrip";
+import { ShellTopBarSecondary } from "./ShellTopBarSecondary";
 
 type PluginShellProps = {
   view: PluginView;
@@ -123,6 +123,7 @@ export function PluginShell({
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
+  const searchTriggerRef = useRef<HTMLButtonElement>(null);
   const homeMetrics = useHomeHeroMetricsOptional()?.metrics;
 
   useEffect(() => {
@@ -401,7 +402,14 @@ export function PluginShell({
               navigatePluginView(item.id, { basePath });
             },
           }))}
-          secondary={<ShellFavoritesStrip basePath={basePath} />}
+          secondary={
+            <ShellTopBarSecondary
+              basePath={basePath}
+              searchTriggerRef={searchTriggerRef}
+              paletteOpen={paletteOpen}
+              onOpenPalette={() => setPaletteOpen(true)}
+            />
+          }
           actions={
             <ShellUserPortfolioMenu basePath={basePath} displayName={userDisplayName} />
           }
@@ -457,6 +465,7 @@ export function PluginShell({
           setPaletteOpen(false);
           setPaletteQuery("");
         }}
+        anchorRef={searchTriggerRef}
         title={HUB_CONTENT.palette.title}
         value={paletteQuery}
         onChange={setPaletteQuery}
@@ -468,7 +477,6 @@ export function PluginShell({
         onSelectHit={onSelectPaletteHit}
         placeholder={HUB_CONTENT.palette.placeholder}
         emptyHitsLabel={HUB_CONTENT.palette.empty}
-        closeAriaLabel={HUB_CONTENT.palette.closeAriaLabel}
         aria-label={CM_HELP.home.palette}
       />
     </div>

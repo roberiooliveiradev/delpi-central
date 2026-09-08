@@ -12,7 +12,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 |---------|----------------------|
 | actions | ActionButton, BackLink, IconButton, ClearFiltersButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
-| layout | TopBar, UnderlineNav, PageHeader, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard… |
+| layout | TopBar, TopBarSearchTrigger, UnderlineNav, PageHeader, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard… |
 | feedback | EmptyState, **EmptyGuidance**, ModalShell, DrawerShell, ScreenLoading, InlineLoadingProgress, **AlertQueue**, **ScopeChipBar**, **WorklistItem**… |
 | forms | SelectField, DateField, MultiSelectField… |
 | data | DataTable, DataTableSection, CompactPagination, ConfigurablePresentationTable, **Timeline** (`ActivityTimeline` alias)… |
@@ -184,19 +184,22 @@ const CommercialRouteChip = createDashboardRouteChip({ prefix: "cm" });
 
 ## `CommandPalette`
 
-Modal de busca global (Ctrl/Cmd+K no shell do MFE). Preferir
-`createDashboardCommandPalette` com `createHostContainedModalShell` para não
-cobrir a sidebar do portal.
+Popover de busca global ancorado ao pill «Buscar» da TopBar (Ctrl/Cmd+K no shell).
+Usa `AnchoredPanelPortal` — **não** ModalShell. Preferir
+`createDashboardCommandPalette({ prefix, portalScopeClassName })`.
 
 ```tsx
 const CommercialCommandPalette = createDashboardCommandPalette({
   prefix: "cm",
   portalScopeClassName: "dashboard-commercial",
 });
+const searchTriggerRef = useRef<HTMLButtonElement>(null);
 
+<CommercialTopBarSearchTrigger ref={searchTriggerRef} onOpen={() => setOpen(true)} … />
 <CommercialCommandPalette
   open={open}
   onClose={close}
+  anchorRef={searchTriggerRef}
   title="Buscar no Portal Comercial"
   value={query}
   onChange={setQuery}
@@ -207,10 +210,10 @@ const CommercialCommandPalette = createDashboardCommandPalette({
 />
 ```
 
-Props principais: `open`, `onClose`, `title`, `value`, `onChange`, `hits`,
-`onSelectHit`, `placeholder`, `emptyHitsLabel`, `closeAriaLabel`.
+Props principais: `open`, `onClose`, `anchorRef`, `title`, `value`, `onChange`, `hits`,
+`onSelectHit`, `placeholder`, `emptyHitsLabel`.
 
-CSS: `styles/command-palette.css`.
+CSS: `styles/command-palette.css` (`.delpi-ui-command-palette*`).
 
 ---
 
@@ -237,6 +240,26 @@ const CommercialPagePath = createDashboardPagePath({
 
 Props principais: `back`, `items`, `current`, `maxVisibleItems`, `size` (`sm`/`md`),
 `ariaLabel` e `className`.
+
+---
+
+## `TopBarSearchTrigger`
+
+Pill «Buscar» + atalho (`kbd`) para o slot `secondary` da TopBar. Abre a Command Palette
+do MFE via `onOpen` — **não** embute busca. CSS: `.delpi-ui-topbar-search*` em
+`styles/top-bar.css`. Labels PT vêm do MFE.
+
+```tsx
+const CommercialTopBarSearchTrigger = createDashboardTopBarSearchTrigger({ prefix: "cm" });
+
+<CommercialTopBarSearchTrigger
+  onOpen={() => setPaletteOpen(true)}
+  label="Buscar"
+  shortcutLabel="Ctrl+K"
+  aria-label="Abrir busca do Portal Comercial"
+  title="Buscar caminhos (Ctrl+K)"
+/>
+```
 
 ---
 

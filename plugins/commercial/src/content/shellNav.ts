@@ -41,6 +41,10 @@ export const SHELL_NAV_CONTENT = {
   collapseLabel: "Recolher navegação",
   expandLabel: "Expandir navegação",
   menuLabel: "Menu de navegação",
+  searchLabel: "Buscar",
+  searchTitle: "Buscar caminhos e funcionalidades (Ctrl+K)",
+  searchAriaLabel: "Abrir busca do Portal Comercial",
+  searchShortcutLabel: "Ctrl+K",
   scopeLabel: "Escopo",
   scopeHelpAriaLabel: "Ajuda: Escopo",
   /** Item efêmero na Conta fora da carteira (não entra em SHELL_NAV_ITEMS). */

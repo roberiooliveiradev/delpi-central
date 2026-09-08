@@ -46,11 +46,12 @@ export const CM_HELP = {
     kpiClosing: "Taxa de conversão de propostas no mês (ganhas ÷ propostas).",
     kpiOtd: "On-time delivery de linhas de pedido de venda no mês.",
     shortcuts:
-      "Caminhos por seção (Operação, Gestão à vista, Documentos, Administração). Busque, fixe favoritos ou use Ctrl/Cmd+K. Objetivo: chegar à ação em até dois cliques.",
+      "Caminhos por seção (Operação, Gestão à vista, Documentos, Administração). Busque no Início, no botão Buscar da barra superior ou com Ctrl/Cmd+K; fixe favoritos. Objetivo: chegar à ação em até dois cliques.",
     search:
       "Filtra seções e rotas do catálogo (rótulo e palavras-chave). A URL guarda ?q= para compartilhar o filtro.",
     favorites: "Atalhos fixados por você (persistidos na conta). Clique na estrela em uma rota para adicionar ou remover.",
-    palette: "Busca rápida do portal (Ctrl/Cmd+K). Mesmo catálogo do Início, em modal contido no app.",
+    palette:
+      "Busca rápida do portal: botão Buscar na barra superior ou Ctrl/Cmd+K. Mesmo catálogo do Início, em popover ancorado à barra.",
     analytics:
       "Atalhos internos para Gestão e Propostas no Portal Comercial (sem deep link para MFEs irmãos).",
     scope:
