@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Lint CI DOCIE — integridade do legado durante migração OpenAPI-first."""
+"""Lint de integridade para acoplamentos operacionais ainda detectáveis pelo CI.
+
+Este script não define arquitetura de routing. A orientação canônica para qualquer
+violação é OpenAPI + Action Catalog + retrieval/planner/validator genéricos.
+"""
 
 from __future__ import annotations
 
@@ -19,25 +23,28 @@ from app.domain.services.operational_route_registry_lint_service import (
 )
 
 
-_LEGACY_ROUTING_GUIDANCE = "path api-delpi hardcoded — use operational_route_registry.json"
 _OPENAPI_FIRST_GUIDANCE = (
     "path/provider específico hardcoded no motor genérico — use OpenAPI importado + "
-    "Action Catalog/index + retrieval/planner/validator; não adicionar registry por endpoint"
+    "Action Catalog/index + retrieval/planner/validator; não crie catálogo técnico por endpoint"
 )
 
 
-def _align_diagnostic_with_openapi_first(message: str) -> str:
-    """Mantém o lint legado, mas não recomenda crescimento do registry como correção."""
-    return str(message).replace(_LEGACY_ROUTING_GUIDANCE, _OPENAPI_FIRST_GUIDANCE)
+def _normalize_architecture_guidance(message: str) -> str:
+    """Impede que diagnostics internos antigos recomendem uma arquitetura não canônica."""
+    text = str(message)
+    if "path api-delpi hardcoded" in text:
+        prefix = text.split("path api-delpi hardcoded", 1)[0]
+        return f"{prefix}{_OPENAPI_FIRST_GUIDANCE}"
+    return text
 
 
-def _align_report_guidance(report: object) -> None:
+def _normalize_report_guidance(report: object) -> None:
     errors = getattr(report, "errors", None)
     warnings = getattr(report, "warnings", None)
     if isinstance(errors, list):
-        errors[:] = [_align_diagnostic_with_openapi_first(item) for item in errors]
+        errors[:] = [_normalize_architecture_guidance(item) for item in errors]
     if isinstance(warnings, list):
-        warnings[:] = [_align_diagnostic_with_openapi_first(item) for item in warnings]
+        warnings[:] = [_normalize_architecture_guidance(item) for item in warnings]
 
 
 def main() -> int:
@@ -56,7 +63,7 @@ def main() -> int:
 
     configure_domain_infrastructure_ports()
     report = OperationalRouteRegistryLintService.run(package_root=ROOT)
-    _align_report_guidance(report)
+    _normalize_report_guidance(report)
 
     if args.json:
         print(
