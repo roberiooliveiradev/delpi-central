@@ -11,8 +11,11 @@
 - Fail-closed sem fallback registry; `autoTierC` só em CI.
 - Retrieval híbrido + planner com scoring de especificidade + decomposição compound + estado multi-turno por `actionId`/`executionContext`.
 - Validator com type/enum/format; manifesto semântico inclui sensitivity.
+- Facade `ExternalActionSelectionService.select_action` redireciona para OpenAPI-first quando `mode=on` (Fase 9).
+- Path-token discovery / markers desligados no caminho `mode=on`.
+- Planner LLM opcional (`CHAT_OPENAPI_PLANNER_LLM_ENABLED` / `planner.llmEnabled`, default off — fail-soft para determinístico).
 - Aceite: logistics + ACME component_cost + structure-excel / last-purchase / budget-history / price-intelligence.
-- Dívida residual documentada: LLM planner opcional (hook existe), Fase 9 remoção físicas do código legado/markers ainda presentes para `mode=off`.
+- Dívida residual: remoção física dos módulos legado (`ExternalActionRegistryDispatch*`, markerPools) quando `mode=off` deixar de ser necessário.
 
 ---
 

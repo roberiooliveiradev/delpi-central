@@ -41,7 +41,14 @@ class ExternalActionSelectionSupportService:
             if action_id in allowed:
                 by_id[action_id] = action
 
-        markers = ExternalActionCandidateDiscoveryService.resolve_path_markers(message)
+        markers = []
+        from app.domain.services.openapi_planner_mode_service import (
+            OpenApiPlannerModeService,
+        )
+
+        # Fase 9: markers de path não entram no discovery quando OpenAPI-first está on.
+        if OpenApiPlannerModeService.resolve_mode() != "on":
+            markers = ExternalActionCandidateDiscoveryService.resolve_path_markers(message)
         list_actions = getattr(self.repository, "list_actions", None)
         if markers and callable(list_actions):
             for action in list_actions():
@@ -211,6 +218,13 @@ class ExternalActionSelectionSupportService:
         allowed_action_ids: list[str],
         method: str = "GET",
     ) -> list[dict]:
+        """LEGACY — prefer OpenAPI retrieval. Mantido só para mode=off / readiness."""
+        from app.domain.services.openapi_planner_mode_service import (
+            OpenApiPlannerModeService,
+        )
+
+        if OpenApiPlannerModeService.resolve_mode() == "on":
+            return []
         token = str(path_token or "").lower().strip()
         op_token = str(operation_token or "").lower().strip()
         allowed = {str(item) for item in allowed_action_ids}

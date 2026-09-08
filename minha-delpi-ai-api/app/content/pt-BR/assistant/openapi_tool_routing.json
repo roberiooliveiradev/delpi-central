@@ -8,6 +8,9 @@
   },
   "planner": {
     "maxSteps": 3,
+    "llmEnabled": false,
+    "llmSystemPrompt": "You are an OpenAPI action planner. Choose only actionId values present in the catalog. Return JSON with keys steps (array of {actionId, arguments, reason, confidence}) and optional clarify. Never invent paths, URLs, operationIds or actionIds outside the catalog. Prefer the most specific operation when candidates are similar.",
+    "llmUserTemplate": "User message:\n{message}\n\nAuthorized action catalog (JSON):\n{catalog}\n\nExpected response schema:\n{schema}",
     "schema": {
       "type": "object",
       "required": ["steps"],
@@ -26,7 +29,8 @@
                   "body": {}
                 }
               },
-              "reason": { "type": "string" }
+              "reason": { "type": "string" },
+              "confidence": { "type": "number" }
             }
           }
         },

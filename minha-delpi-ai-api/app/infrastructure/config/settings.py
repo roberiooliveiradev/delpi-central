@@ -369,6 +369,9 @@ class Settings:
     # OpenAPI-first is the default selection source (Action Catalog).
     # off/shadow/canary remain for emergency rollback / observation only.
     CHAT_OPENAPI_PLANNER_MODE = os.getenv("CHAT_OPENAPI_PLANNER_MODE", "on").strip().lower()
+    CHAT_OPENAPI_PLANNER_LLM_ENABLED = os.getenv(
+        "CHAT_OPENAPI_PLANNER_LLM_ENABLED", "false"
+    ).strip().lower()
     CHAT_OPENAPI_PLANNER_PROVIDER_KEYS = os.getenv(
         "CHAT_OPENAPI_PLANNER_PROVIDER_KEYS", ""
     ).strip()

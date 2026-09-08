@@ -58,18 +58,22 @@ class ExternalActionSelectionService:
         preferred_action_id = None
 
         if previous_messages and resolved_intent == ChatProductQueryIntent.STOCK:
-            from app.domain.services.operational_route_registry_service import (
-                OperationalRouteRegistryService,
-            )
-
-            stock_path_fragment = (
-                OperationalRouteRegistryService.route_path_marker_for_segment("stock")
-                or "/stock"
-            )
             preferred_action_id = self._support.resolve_previous_external_action_id(
                 previous_messages,
-                path_fragment=stock_path_fragment,
             )
+            if not preferred_action_id:
+                from app.domain.services.operational_route_registry_service import (
+                    OperationalRouteRegistryService,
+                )
+
+                stock_path_fragment = (
+                    OperationalRouteRegistryService.route_path_marker_for_segment("stock")
+                    or "/stock"
+                )
+                preferred_action_id = self._support.resolve_previous_external_action_id(
+                    previous_messages,
+                    path_fragment=stock_path_fragment,
+                )
 
         return self._select_product_action(
             message,
@@ -93,6 +97,21 @@ class ExternalActionSelectionService:
         raw_message: str | None = None,
         memory_snapshot: dict | None = None,
     ) -> dict | None:
+        # Fase 9: com OpenAPI-first ativo, não usar registry/markers mesmo via facade.
+        from app.domain.services.openapi_planner_mode_service import (
+            OpenApiPlannerModeService,
+        )
+
+        if OpenApiPlannerModeService.resolve_mode() == "on":
+            selected = self._select_via_openapi_first(
+                message,
+                allowed_action_ids=allowed_action_ids or [],
+                previous_messages=previous_messages,
+                memory_snapshot=memory_snapshot,
+            )
+            if selected is not None:
+                return selected
+
         return self._dispatch.dispatch(
             message,
             allowed_action_ids=allowed_action_ids or [],
@@ -101,6 +120,58 @@ class ExternalActionSelectionService:
             raw_message=raw_message,
             memory_snapshot=memory_snapshot,
         )
+
+    def _select_via_openapi_first(
+        self,
+        message: str,
+        *,
+        allowed_action_ids: list[str],
+        previous_messages: list | None,
+        memory_snapshot: dict | None,
+    ) -> dict | None:
+        from app.application.services.openapi_first_selection_bridge_service import (
+            OpenApiFirstSelectionBridgeService,
+        )
+        from app.domain.services.openapi_planner_mode_service import (
+            OpenApiPlannerModeDecision,
+        )
+
+        workspace_context = None
+        if isinstance(memory_snapshot, dict):
+            workspace_context = {"workingMemory": memory_snapshot}
+        bridge = OpenApiFirstSelectionBridgeService(
+            self.repository,
+            semantic_ranker=self.semantic_ranker,
+        )
+        planned = bridge.plan_tool_calls(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            workspace_context=workspace_context,
+            mode_decision=OpenApiPlannerModeDecision(
+                mode="on",
+                use_openapi_selection=True,
+                run_shadow_compare=False,
+                canary_matched=False,
+            ),
+        )
+        for item in planned or []:
+            if not isinstance(item, dict):
+                continue
+            if str(item.get("name") or "") != "execute_external_action":
+                continue
+            arguments = dict(item.get("arguments") or {})
+            action_id = str(arguments.get("actionId") or "").strip()
+            if not action_id:
+                continue
+            return {
+                "actionId": action_id,
+                "arguments": arguments,
+                "reason": item.get("reason"),
+                "metadata": dict(item.get("metadata") or {}),
+                "selectionMode": "openapi_first",
+            }
+        return None
 
     def select_pagination_refinement(
         self,

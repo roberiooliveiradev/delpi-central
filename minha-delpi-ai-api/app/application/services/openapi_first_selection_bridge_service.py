@@ -41,8 +41,27 @@ class OpenApiFirstSelectionBridgeService:
             repository,
             semantic_ranker=semantic_ranker,
         )
-        self.planner = planner or PlanExternalActionsService()
+        self._planner_override = planner
+        self._planner: PlanExternalActionsService | None = planner
         self.validator = validator or ValidateActionArgumentsService()
+
+    @property
+    def planner(self) -> PlanExternalActionsService:
+        if self._planner is not None:
+            return self._planner
+        llm_adapter = None
+        try:
+            from app.application.services.openapi_llm_action_planner_service import (
+                OpenApiLlmActionPlannerService,
+            )
+
+            llm_adapter = OpenApiLlmActionPlannerService.from_stack()
+        except Exception:
+            llm_adapter = None
+        self._planner = PlanExternalActionsService(
+            llm_planner=llm_adapter if llm_adapter is not None else None,
+        )
+        return self._planner
 
     def plan_tool_calls(
         self,

@@ -60,16 +60,15 @@ def test_logistics_import_produces_tracking_and_cancel_actions():
     assert "/shipments/{id}/tracking" in str(tracking["path"])
 
 
-def test_legacy_selection_does_not_bind_shipment_path_param():
-    """Gap evidence: even if semantic fallback picks tracking, id is missing."""
-    actions = import_logistics_actions(resolve_refs=False)
-    # Force lexical/semantic-friendly text into summaries for candidate ranking.
+def test_select_action_facade_uses_openapi_first_and_binds_shipment_id(monkeypatch):
+    """Fase 9: facade select_action com mode=on não depende do registry."""
+    monkeypatch.setattr(
+        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
+        "on",
+    )
+    actions = import_logistics_actions()
     for action in actions:
-        if action.get("operationId") == "get_shipment_tracking":
-            action["selectionScore"] = 0.95
-            action["selectionLexicalMatched"] = True
-        else:
-            action["selectionScore"] = 0.1
+        action["enabled"] = True
 
     service = ExternalActionSelectionService(_LogisticsRepository(actions))
     selected = service.select_action(
@@ -77,15 +76,10 @@ def test_legacy_selection_does_not_bind_shipment_path_param():
         allowed_action_ids=logistics_allowed_action_ids(actions),
     )
 
-    # Registry has no logistics routes — selection may be None or incomplete.
-    if selected is None:
-        return
-
-    assert selected.get("name") == "execute_external_action"
-    parameters = (selected.get("arguments") or {}).get("parameters") or {}
-    assert "id" not in parameters, (
-        "Legacy path unexpectedly bound shipment id — gap closed earlier than expected"
-    )
+    assert selected is not None
+    assert selected.get("selectionMode") == "openapi_first"
+    assert selected["arguments"]["actionId"]
+    assert (selected["arguments"].get("parameters") or {}).get("id") == "45871"
 
 
 def test_openapi_first_acceptance_tracking_with_path_param(monkeypatch):
