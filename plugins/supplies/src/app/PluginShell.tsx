@@ -270,6 +270,7 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
           }))}
           secondary={
             <ShellTopBarSecondary
+              basePath={basePath}
               searchTriggerRef={searchTriggerRef}
               paletteOpen={paletteOpen}
               onOpenPalette={() => setPaletteOpen(true)}

@@ -1,26 +1,27 @@
-import { HelpTooltip } from "@delpi/plugin-ui/index";
 import type { RefObject } from "react";
 import { useEffect, useState } from "react";
 
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
-import { SP_HELP } from "../content/helpTooltips";
 import { SHELL_NAV_CONTENT } from "../content/shellNav";
 import {
   buildSelfProfileSearch,
   buildUserProfilePath,
 } from "../features/users/UserProfilePage";
 import { navigatePluginPath } from "./pluginNavigation";
+import { ShellFavoritesStrip } from "./ShellFavoritesStrip";
 import { useSuppliesSession } from "./SuppliesSessionContext";
 import { SuppliesAvatar, SuppliesTopBarSearchTrigger } from "./suppliesUi";
 
 type ShellTopBarSecondaryProps = {
+  basePath: string;
   searchTriggerRef: RefObject<HTMLButtonElement | null>;
   paletteOpen?: boolean;
   onOpenPalette: () => void;
 };
 
-/** Slot secondary — busca Ctrl+K (kit), igual Comercial. */
+/** Slot secondary — busca Ctrl+K + Favoritos (padrão Comercial). */
 export function ShellTopBarSecondary({
+  basePath,
   searchTriggerRef,
   paletteOpen = false,
   onOpenPalette,
@@ -36,6 +37,7 @@ export function ShellTopBarSecondary({
         title={SHELL_NAV_CONTENT.searchTitle}
         expanded={paletteOpen}
       />
+      <ShellFavoritesStrip basePath={basePath} />
     </div>
   );
 }
@@ -45,8 +47,8 @@ type ShellTopBarActionsProps = {
 };
 
 /**
- * Slot actions — avatar+nome → perfil self + hint de coexistência.
- * Ajuda fica só na nav (padrão Comercial).
+ * Slot actions — avatar+nome → perfil self.
+ * Ajuda fica só na nav; coexistência fica no Manual (padrão Comercial).
  */
 export function ShellTopBarActions({ basePath }: ShellTopBarActionsProps) {
   const session = useSuppliesSession();
@@ -90,7 +92,6 @@ export function ShellTopBarActions({ basePath }: ShellTopBarActionsProps) {
           <span className="sp-shell-user__name delpi-ui-topbar-collapse-label">{label}</span>
         </a>
       ) : null}
-      <HelpTooltip content={SP_HELP.coexistence} ariaLabel="Ajuda: Portal vs apps antigos" />
     </div>
   );
 }

@@ -195,6 +195,8 @@ export const HUB_CONTENT = {
     favoritesTitle: "Favoritos",
     favoritesHelpAriaLabel: "Ajuda: favoritos",
     favoritesEmpty: "Nenhum favorito ainda. Use a estrela nos caminhos.",
+    favoritesMenuOpenAriaLabel: "Abrir favoritos",
+    favoritesMenuCloseAriaLabel: "Fechar favoritos",
     queueOkHelpAriaLabel: "Ajuda: atenção em dia",
     pinLabel: "Favoritar",
     unpinLabel: "Remover dos favoritos",
@@ -271,6 +273,14 @@ export function findHubRouteById(
   for (const section of sections) {
     const match = section.routes.find((route) => route.id === routeId);
     if (match) return match;
+  }
+  return undefined;
+}
+
+export function hubRouteLabelByView(viewId: string): string | undefined {
+  for (const section of HUB_SECTIONS) {
+    const match = section.routes.find((route) => route.viewId === viewId);
+    if (match) return match.label;
   }
   return undefined;
 }

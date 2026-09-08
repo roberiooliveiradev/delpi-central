@@ -3,7 +3,7 @@
  * Runtime: Module Federation. Vitest: pluginUiTestAliases → fonte do kit.
  */
 declare module "@delpi/plugin-ui/index" {
-  import type { ComponentType, MouseEventHandler, ReactNode } from "react";
+  import type { ComponentType, MouseEventHandler, ReactNode, RefObject } from "react";
 
   export function HelpTooltip(props: {
     content: string;
@@ -11,6 +11,28 @@ declare module "@delpi/plugin-ui/index" {
     children?: ReactNode;
     wrap?: boolean;
     placement?: "top" | "bottom";
+  }): ReactNode;
+
+  export function AnchoredPanelPortal(props: {
+    open: boolean;
+    anchorRef: RefObject<HTMLElement | null>;
+    panelRef: RefObject<HTMLDivElement | null>;
+    className?: string;
+    variant?: "shape" | "bare";
+    role?: string;
+    "aria-label"?: string;
+    preferredPlacement?: string;
+    gap?: number;
+    portalScopeClassName?: string;
+    onDismiss?: () => void;
+    children?: ReactNode;
+  }): ReactNode;
+
+  export function ContextMenuItem(props: {
+    label: string;
+    icon?: ComponentType<{ size?: number; strokeWidth?: number; "aria-hidden"?: boolean | "true" }>;
+    onSelect?: () => void;
+    disabled?: boolean;
   }): ReactNode;
 
   export function ActionButton(props: {

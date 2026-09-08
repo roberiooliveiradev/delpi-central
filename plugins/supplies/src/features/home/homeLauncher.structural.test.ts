@@ -26,6 +26,8 @@ describe("Home launcher visual pattern", () => {
     expect(page).toMatch(/SP_HELP\.home\.recents/);
     expect(page).toMatch(/SECTION_HINTS/);
     expect(page).toMatch(/LabelWithHelp/);
+    expect(page).toMatch(/toggleHomeFavorite/);
+    expect(page).toMatch(/onPinClick/);
     expect(shell).toMatch(/SP_HELP\.home\.heroAttention/);
     expect(shell).toMatch(/SP_HELP\.home\.scopeBadge/);
   });

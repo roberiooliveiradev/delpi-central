@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
+  loadHomeFavoritesFromStorage,
+  resetHomeFavoritesStoreForTests,
+  toggleHomeFavorite,
+} from "../../app/homeFavoritesStore";
+import {
   filterFavoritesByCaps,
   readFavorites,
   toggleFavorite,
@@ -38,6 +43,7 @@ function installStorageMock() {
 describe("home localStorage", () => {
   beforeEach(() => {
     installStorageMock();
+    resetHomeFavoritesStoreForTests();
   });
 
   it("stores and filters recents by capability", () => {
@@ -62,5 +68,13 @@ describe("home localStorage", () => {
       operations: false,
     });
     expect(filtered.map((item) => item.viewId)).toEqual(["my_tasks"]);
+  });
+
+  it("sincroniza store com localStorage para a TopBar", () => {
+    loadHomeFavoritesFromStorage();
+    toggleHomeFavorite({ viewId: "overview", label: "Visão geral" });
+    expect(readFavorites().map((item) => item.viewId)).toEqual(["overview"]);
+    toggleHomeFavorite({ viewId: "overview", label: "Visão geral" });
+    expect(readFavorites()).toHaveLength(0);
   });
 });

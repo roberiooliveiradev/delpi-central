@@ -28,13 +28,15 @@ describe("PluginShell TopBar collapse", () => {
     expect(source).toMatch(/anchorRef=\{searchTriggerRef\}/);
   });
 
-  it("não duplica Ajuda nas actions (só na nav)", () => {
+  it("não duplica Ajuda nas actions; Favoritos na secondary (padrão Comercial)", () => {
     const slots = readFileSync(join(dir, "ShellTopBarSlots.tsx"), "utf8");
     expect(slots).not.toMatch(/helpActionLabel/);
     expect(slots).not.toMatch(/navigatePluginView\("help"/);
+    expect(slots).not.toMatch(/HelpTooltip/);
+    expect(slots).not.toMatch(/SP_HELP\.coexistence/);
     expect(slots).toMatch(/SuppliesTopBarSearchTrigger/);
+    expect(slots).toMatch(/ShellFavoritesStrip/);
     expect(slots).toMatch(/searchTriggerRef/);
-    expect(slots).toMatch(/HelpTooltip/);
     expect(slots).toMatch(/sp-shell-user/);
     expect(slots).toMatch(/buildUserProfilePath/);
   });

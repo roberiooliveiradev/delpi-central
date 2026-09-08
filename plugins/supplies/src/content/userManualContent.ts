@@ -84,6 +84,11 @@ export const USER_MANUAL_CONTENT = {
           how: "Só no próprio perfil; administradores podem ler outros usuários, sem editar prefs",
         },
         {
+          want: "Fixar atalhos que uso sempre",
+          where: "Favoritos (estrela na TopBar ou nos caminhos)",
+          how: "Clique na estrela de um caminho no Início; abra a lista pelo botão Favoritos ao lado da busca",
+        },
+        {
           want: "Ver estoque de segurança (ESTSEG)",
           where: "Estoque de segurança",
           how: "Déficit e cobertura — não é o saldo físico",

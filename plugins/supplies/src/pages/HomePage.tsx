@@ -39,10 +39,13 @@ import {
 import { toHubCapabilities } from "../features/home/homeCatalog";
 import {
   filterFavoritesByCaps,
-  readFavorites,
-  toggleFavorite,
   type HomeFavoriteItem,
 } from "../features/home/homeFavorites";
+import {
+  loadHomeFavoritesFromStorage,
+  subscribeHomeFavorites,
+  toggleHomeFavorite,
+} from "../app/homeFavoritesStore";
 import {
   filterRecentsByCaps,
   pushRecentView,
@@ -125,9 +128,13 @@ export function HomePage({ basePath }: HomePageProps) {
   const [recents, setRecents] = useState<RecentHubView[]>(() =>
     typeof window !== "undefined" ? readRecentViews() : [],
   );
-  const [favorites, setFavorites] = useState<HomeFavoriteItem[]>(() =>
-    typeof window !== "undefined" ? readFavorites() : [],
-  );
+  const [favorites, setFavorites] = useState<HomeFavoriteItem[]>([]);
+
+  useEffect(() => subscribeHomeFavorites(setFavorites), []);
+
+  useEffect(() => {
+    loadHomeFavoritesFromStorage();
+  }, []);
 
   const reloadAttention = useCallback(() => {
     setReloadKey((value) => value + 1);
@@ -192,9 +199,7 @@ export function HomePage({ basePath }: HomePageProps) {
   );
 
   const onToggleFavorite = useCallback((route: HubRouteDef) => {
-    setFavorites((current) =>
-      toggleFavorite({ viewId: route.viewId, label: route.label }, current),
-    );
+    toggleHomeFavorite({ viewId: route.viewId, label: route.label });
   }, []);
 
   const mapSectionRoutes = useCallback(
@@ -328,12 +333,10 @@ export function HomePage({ basePath }: HomePageProps) {
                       navigateRoute({ viewId: item.viewId, label: item.label })
                     }
                     onRemove={() =>
-                      setFavorites((current) =>
-                        toggleFavorite(
-                          { viewId: item.viewId, label: item.label },
-                          current,
-                        ),
-                      )
+                      toggleHomeFavorite({
+                        viewId: item.viewId,
+                        label: item.label,
+                      })
                     }
                     removeLabel={HOME.unpinLabel}
                   />
