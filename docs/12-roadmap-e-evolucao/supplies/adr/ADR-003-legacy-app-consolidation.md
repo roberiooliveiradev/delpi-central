@@ -2,56 +2,106 @@
 
 | Campo | Valor |
 |-------|--------|
-| Status | Aceito (estratégia) · **nenhum cutover nesta etapa** |
+| Status | Aceito (estratégia) · nenhum cutover nesta etapa |
 | Data | 2026-09-08 |
-| Relacionados | [INVENTARIO-ATIVOS.md](../INVENTARIO-ATIVOS.md), [HOMOLOGACAO-PARIDADE.md](../HOMOLOGACAO-PARIDADE.md), [CUTOVER-RUNBOOK.md](../CUTOVER-RUNBOOK.md) |
+| Relacionados | [ADR-002](./ADR-002-purchase-requests-api.md), [ADR-005](./ADR-005-external-bi-core-dump.md), [HOMOLOGACAO-PARIDADE.md](../HOMOLOGACAO-PARIDADE.md), [CUTOVER-RUNBOOK.md](../CUTOVER-RUNBOOK.md) |
 
 ---
 
 ## Contexto
 
-A experiência atual está espalhada em MFEs nativos, um BFF, KPIs SI/TV, planilha IDD e **seis apps evidentes só na RBAC do Product Owner** (sem manifesto no git).
+A experiência atual está espalhada em MFEs nativos, BFF próprio de Solicitações, KPIs SI/TV, planilha IDD e seis apps/BIs evidenciados pelo Product Owner que ainda precisam de dump do Core.
 
-Remover qualquer um agora quebraria favoritos, launcher e deep links.
+Remover qualquer ativo sem paridade pode quebrar launcher, favoritos, deep links, filtros e processos não visíveis no git.
 
 ## Decisão
 
-Modelo obrigatório (igual F2c Comercial, adaptado):
+Modelo obrigatório:
 
 ```text
 COEXISTÊNCIA
-  → IMPLEMENTAR EQUIVALENTE NO PORTAL
-  → VALIDAR PARIDADE
-  → HOMOLOGAR (owner Suprimentos + QA)
-  → REDIRECT / ALIAS
-  → OCULTAR LAUNCHER LEGADO
-  → PERÍODO DE SEGURANÇA
-  → REMOVER SOMENTE COM ESTE ADR ATUALIZADO + RUNBOOK
+→ IMPLEMENTAR EQUIVALENTE / INTEGRAR
+→ VALIDAR DADOS E FUNCIONALIDADE
+→ HOMOLOGAR
+→ TARGET NOVO SAUDÁVEL
+→ RBAC CANÔNICO VALIDADO
+→ REDIRECT / ALIAS
+→ OCULTAR LAUNCHER LEGADO
+→ OBSERVAR TELEMETRIA
+→ REMOVER SOMENTE COM CRITÉRIOS COMPROVADOS
 ```
+
+Para Purchase Requests há uma restrição adicional:
+
+```text
+C1 composição
+→ C2 ownership do schema/jobs + reconciliação
+→ paridade final
+→ C3 cutover/desligamento
+```
+
+C3 nunca ocorre antes de C2.
 
 ### Destino por família
 
-| Ativo | Decisão Portal | Cutover |
-|-------|----------------|---------|
-| `dashboard-supplies` | **DEPRECIAR_APOS_PARIDADE** | Após Visão Geral + páginas CPV/OTD/estoque/giro/savings |
-| `purchase-requests` MFE | **DEPRECIAR_APOS_PARIDADE** | Após C3 do ADR-002 |
-| `purchase-requests-api` | **DEPRECIAR_APOS_PARIDADE** | Após C3 |
-| `estoque-seguranca` | **DEPRECIAR_APOS_PARIDADE** | Após Estoque de Segurança + Análise de consumo no Portal |
-| `materiais-terceiros` | **FORA_DO_ESCOPO** (beneficiamento de **cliente**, não compra) | Permanece app próprio; deep link opcional |
-| `inspecoes-entrada` | **INTEGRAR** (projeção no Fornecedor 360) | Processo continua na Qualidade |
-| Frete (`financial/freight`) | **DEEP_LINK** | Financeiro permanece dono |
-| SI departamento `supplies` | **INTEGRAR** | SI continua dono de meta/realizado |
-| TV `supplies_*` | **INTEGRAR** | TV continua dono da tela nativa |
-| Sheets IDD / savings | **INTEGRAR** via api-delpi já existente; meta canônica = SI | Planilha não vira segunda fonte de meta |
-| 6 BIs do PO | **LEGADO_A_VALIDAR** até dump Core (ADR-005) | Sem URL no git, sem redirect inventado |
+| Ativo | Decisão Portal | Condição de cutover |
+|---|---|---|
+| `dashboard-supplies` | DEPRECIAR_APOS_PARIDADE | Overview + focos + dados/performance homologados |
+| `purchase-requests` MFE | DEPRECIAR_APOS_PARIDADE | C2 concluído + paridade final + C3 |
+| `purchase-requests-api` | DEPRECIAR_APOS_PARIDADE | supplies-api assume estado/jobs e reconcilia antes do desligamento |
+| `estoque-seguranca` | DEPRECIAR_APOS_PARIDADE | estoque segurança + consumo homologados |
+| `materiais-terceiros` | FORA_DO_ESCOPO | permanece contexto próprio |
+| `inspecoes-entrada` | INTEGRAR | Qualidade continua owner |
+| Financeiro/frete | DEEP_LINK / projeção controlada | Financeiro continua owner |
+| Strategic Indicators | INTEGRAR | SI continua owner de metas |
+| TV `supplies_*` | INTEGRAR | TV continua owner da superfície |
+| Sheets IDD/savings | INTEGRAR leitura | edição/origem permanece até decisão funcional |
+| 6 BIs do PO | LEGADO_A_VALIDAR apenas durante E1 | antes do GO deve virar estado final permitido |
+
+## Estados permitidos dos BIs no GO
+
+```text
+PARIDADE_HOMOLOGADA
+MANTER_EXTERNO
+DEEP_LINK
+FORA_DO_ESCOPO_COM_ACEITE
+```
+
+`LEGADO_A_VALIDAR` não é permitido no `GATE-CUTOVER`.
+
+## Redirect e launcher
+
+Redirect só é ativado depois de:
+
+- target novo saudável;
+- manifest registrado;
+- permissions canônicas provisionadas;
+- `/me/apps` e `/me/routes` validados;
+- smoke pela URL nova;
+- paridade assinada.
+
+Alias no BFF não substitui provisionamento de acesso no Core.
+
+## Remoção
+
+Não remover código apenas por decurso de tempo. Cada legado precisa declarar:
+
+```text
+owner
+replacement
+startDate
+knownConsumers
+telemetry
+removalCriteria
+rollback
+```
+
+A remoção exige atualização deste ADR para estado executado + evidência de critérios cumpridos.
 
 ## Não fazer
 
-- Remover plugin, Compose, manifesto ou permissão nesta documentação.
-- Redirect para path que ainda não existe.
-- Tratar Power BI como «inexistente» só porque não está em `plugins/`.
-- Unificar `materiais-terceiros` no Portal só porque o path api-delpi é `/supplies/third-party-materials`.
-
-## Atualização deste ADR
-
-Quando um ativo completar paridade, registrar data, checklist e runbook executado. Remoção de código exige autorização explícita do PO + atualização deste ADR para **executado**.
+- redirect para path ainda não congelado;
+- remover permission legada no mesmo instante do primeiro flip;
+- tratar ausência no git como ausência operacional;
+- deprecar app sem comparação quantitativa quando houver dado equivalente;
+- chegar ao GO com BI ainda `LEGADO_A_VALIDAR`.
