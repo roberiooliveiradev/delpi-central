@@ -1,125 +1,231 @@
 # MANIFEST-DRAFT — Portal Suprimentos
 
-> **Status:** contrato documental pré-implementação. Não registrar no Core nesta etapa.
+> **Status:** contrato documental pré-implementação · **E1.S4 freeze 2026-09-08**. Não registrar no Core nesta etapa.
 
 Objetivo: congelar identidade, rotas e permissions antes do scaffold do MFE.
 
 ---
 
-## 1. Identidade
+## 1. Validação contra runtime Core (E1.S4)
+
+| Checagem | Evidência | Resultado |
+|---|---|---|
+| `schemaVersion` suportado | `ManifestVersionResolver.SUPPORTED_VERSIONS` = só `"1.0.0"` | **congelado `1.0.0`** (draft anterior `2.0.0` era DRIFT) |
+| Schema JSON | `core-api/app/infrastructure/plugins/schemas/delpi.manifest.schema.json` — `schemaVersion` const `1.0.0` | alinhado |
+| Manifest irmão | `plugins/commercial/commercial.manifest.json` | `1.0.0`, launcher + rotas internas, `ui.renderMode=federated`; **sem** bloco `backend` obrigatório |
+| Catálogo permissions | ADR-007 — 7 capabilities/exceções + 2 units | sem CRUD |
+
+`GATE-DOC-MANIFEST` documental: **PASS** para registro futuro na E3 (ainda **não** registrar agora).
+
+---
+
+## 2. Identidade
 
 | Campo | Valor |
 |---|---|
-| schemaVersion | `2.0.0` |
+| schemaVersion | **`1.0.0`** |
 | id | `supplies` |
 | name | `Portal Suprimentos` |
 | type | `microfrontend` |
-| version inicial | `0.1.0` proposta |
+| version | `0.1.0` |
 | basePath | `/apps/supplies` |
-| entry | `/apps/supplies/assets/remoteEntry.js` proposta |
-| backend.required | `true` |
-| backend.serviceName | `supplies-api` |
-| backend.baseUrl | `/apps/supplies-api` |
+| entry | `/apps/supplies/assets/remoteEntry.js` |
+| icon | a definir no scaffold (ex. `package-icon`) |
+| ui.renderMode | `federated` |
 
-A versão/path final deve ser validada contra o schema/runtime real do Core antes da implementação.
+### Backend (opcional no schema; recomendado no draft)
 
----
+Quando o registrador aceitar o objeto `backend`:
 
-## 2. Permission catalog P0/P1
+| Campo | Valor |
+|---|---|
+| required | `true` |
+| serviceName | `supplies-api` |
+| baseUrl | `/apps/supplies-api` |
+| validateJwt | `true` |
 
-Catálogo deliberadamente mínimo conforme ADR-007.
-
-| Permission | Finalidade | Status |
-|---|---|---|
-| `supplies.portal.access` | entrar no Portal, Home, Ajuda, busca, preferências | canônica |
-| `supplies.purchase-requests.access` | jornada SC dentro do escopo autorizado | canônica |
-| `supplies.operations.access` | compras operacionais, pedidos, fornecedor/produto/estoque, follow-ups/notas | canônica |
-| `supplies.analytics.access` | Overview, KPIs e análises | canônica |
-| `supplies.administration.manage` | administração/configurações/mappings/scopes | canônica |
-| `supplies.purchase-requests.view-all` | bypass de CC dentro da unidade | canônica/exceção |
-| `supplies.purchase-requests.export` | exportação de SC enquanto risco/auditoria justificar segregação | canônica/exceção |
-| `supplies.unit.filial-01` | unidade SC | canônica |
-| `supplies.unit.filial-02` | unidade ES | canônica |
-
-Não declarar no manifest P0 permissions CRUD como `tasks.view/write`, `supplier-notes.write`, `products.view`, `inventory.view` etc. sem nova decisão fundamentada.
+Não inventar campos fora do schema 1.0.0. Se o Core de produção rejeitar `backend`, omitir no JSON de registro e manter o contrato HTTP na supplies-api / Compose.
 
 ---
 
-## 3. Routes draft
+## 3. Permission catalog P0/P1 (mínimo ADR-007)
 
-O Portal possui uma rota launcher principal. Rotas internas são controladas pelo MFE/capabilities; se o schema/Core exigir rotas adicionais registradas, congelar a matriz abaixo antes do registro.
+| Permission | Finalidade | module | Status |
+|---|---|---|---|
+| `supplies.portal.access` | entrar no Portal, Home, Ajuda, busca, preferências | `supplies` | canônica |
+| `supplies.purchase-requests.access` | jornada SC no escopo autorizado | `supplies` | canônica |
+| `supplies.operations.access` | PC, entregas, fornecedor/produto/estoque, follow-ups/notas | `supplies` | canônica |
+| `supplies.analytics.access` | Overview, KPIs e análises | `supplies` | canônica |
+| `supplies.administration.manage` | admin/mappings/scopes/settings | `supplies` | canônica |
+| `supplies.purchase-requests.view-all` | bypass de CC dentro da unidade | `supplies` | canônica/exceção |
+| `supplies.purchase-requests.export` | exportação SC com segregação | `supplies` | canônica/exceção |
+| `supplies.unit.filial-01` | unidade SC | `supplies` | canônica |
+| `supplies.unit.filial-02` | unidade ES | `supplies` | canônica |
 
-| UI route | Permission funcional | Menu | Status |
+**Proibido no P0:** `tasks.view/write`, `supplier-notes.write`, `products.view`, `inventory.view`, `approvals.manage` sem evidência ADR-007.
+
+---
+
+## 4. Routes draft
+
+Launcher obrigatório no manifest. Rotas internas seguem o padrão Comercial (registradas no Core com `showInMenu` conforme UX).
+
+| UI route | Permission | showInMenu | Status |
 |---|---|---:|---|
-| `/apps/supplies` | `supplies.portal.access` | sim | P0 |
-| `/apps/supplies/overview` | `supplies.analytics.access` | interno | P0 |
-| `/apps/supplies/my-tasks` | `supplies.portal.access` + authz por recurso | interno | P0 |
-| `/apps/supplies/purchase-requests` | `supplies.purchase-requests.access` | interno | P0 |
-| `/apps/supplies/purchase-orders` | `supplies.operations.access` | interno | P0 |
-| `/apps/supplies/deliveries` | `supplies.operations.access` | interno | P0 |
-| `/apps/supplies/suppliers` | `supplies.operations.access` | interno | P0 |
-| `/apps/supplies/products` | `supplies.operations.access` | interno | P0 |
-| `/apps/supplies/inventory` | `supplies.operations.access` | interno | P0 |
-| `/apps/supplies/safety-stock` | `supplies.operations.access` | interno | P0 |
-| `/apps/supplies/negotiations` | `supplies.analytics.access` | interno | P0/P1 |
-| `/apps/supplies/indicators` | `supplies.analytics.access` | interno | P0/P1 |
-| `/apps/supplies/administration` | `supplies.administration.manage` | interno | P0/P1 |
-| `/apps/supplies/help` | `supplies.portal.access` | interno | P0 |
-| `/apps/supplies/imports` | a decidir após E1.S1 | não antes do dump | BLOQUEADO |
-| `/apps/supplies/approvals` | a decidir após prova de workflow/segregação | não antes da validação | BLOQUEADO |
+| `/apps/supplies` | `supplies.portal.access` | true | P0 |
+| `/apps/supplies/overview` | `supplies.analytics.access` | false | P0 |
+| `/apps/supplies/my-tasks` | `supplies.portal.access` | false | P0 |
+| `/apps/supplies/purchase-requests` | `supplies.purchase-requests.access` | false | P0 |
+| `/apps/supplies/purchase-orders` | `supplies.operations.access` | false | P0 |
+| `/apps/supplies/deliveries` | `supplies.operations.access` | false | P0 |
+| `/apps/supplies/suppliers` | `supplies.operations.access` | false | P0 |
+| `/apps/supplies/products` | `supplies.operations.access` | false | P0 |
+| `/apps/supplies/inventory` | `supplies.operations.access` | false | P0 |
+| `/apps/supplies/safety-stock` | `supplies.operations.access` | false | P0 |
+| `/apps/supplies/negotiations` | `supplies.analytics.access` | false | P0/P1 |
+| `/apps/supplies/indicators` | `supplies.analytics.access` | false | P0/P1 |
+| `/apps/supplies/administration` | `supplies.administration.manage` | false | P0/P1 |
+| `/apps/supplies/help` | `supplies.portal.access` | false | P0 |
+| `/apps/supplies/imports` | — | — | **BLOQUEADO** (E1.S1: BI sem id no Core local; sem dump prod) |
+| `/apps/supplies/approvals` | — | — | **BLOQUEADO** (P-06: workflow não comprovado) |
+
+Authz de rota no MFE é UX; barreira real = supplies-api + Core effective permissions.
 
 ---
 
-## 4. Aliases legados
+## 5. Aliases legados
 
-Aliases não são permissions canônicas do manifest novo. Servem para coexistência e migração:
+Aliases **não** são permissions canônicas do manifest novo. Servem para coexistência BFF:
 
-- `dashboard-supplies.view` → analytics;
-- `purchase-requests.access` → purchase-requests;
-- `purchase-requests.view-all` → view-all;
-- `purchase-requests.export` → export;
-- `purchase-requests.admin` → administration;
-- `purchase-requests.unit.filial-01/02` → units;
-- `estoque-seguranca.access` → operations;
-- `estoque-seguranca.view.filial-sc/es` → units.
+- `dashboard-supplies.view` → `supplies.analytics.access`
+- `purchase-requests.access` → `supplies.purchase-requests.access`
+- `purchase-requests.view-all` → `supplies.purchase-requests.view-all`
+- `purchase-requests.export` → `supplies.purchase-requests.export`
+- `purchase-requests.admin` → `supplies.administration.manage`
+- `purchase-requests.unit.filial-01/02` → `supplies.unit.filial-01/02`
+- `estoque-seguranca.access` → `supplies.operations.access`
+- `estoque-seguranca.view.filial-sc/es` → units
 
-Aliases no BFF **não fazem o Portal aparecer em `/me/apps`**. A fase de coexistência deve provisionar as permissions canônicas nos papéis/grupos corretos do Core.
-
----
-
-## 5. Backend/authz
-
-- JWT validado para identidade;
-- effective permissions resolvidas pelo Core API;
-- unit scope pelo ADR-006;
-- permission minimization pelo ADR-007;
-- backend é a barreira real de segurança;
-- MFE só usa capabilities para UX.
+Aliases no BFF **não** fazem o Portal aparecer em `/me/apps`. Coexistência (E3.S5) **deve** provisionar as permissions canônicas nos papéis/grupos.
 
 ---
 
-## 6. Segurança e observabilidade
+## 6. JSON mínimo alinhado ao schema 1.0.0
 
-Draft deve declarar, conforme schema real vigente:
+Documento de referência para E3 (não registrar agora):
 
-- JWT validation;
-- HTTPS/gateway;
-- CSP/iframe conforme contrato;
-- health/ready;
-- log estruturado;
-- request/correlation id;
-- métricas do serviço.
+```json
+{
+  "schemaVersion": "1.0.0",
+  "id": "supplies",
+  "name": "Portal Suprimentos",
+  "description": "Hub operacional e analítico de Suprimentos.",
+  "icon": "package-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/supplies",
+  "entry": "/apps/supplies/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "supplies.portal.access",
+      "name": "Acessar Portal Suprimentos",
+      "description": "Entrar no Portal, Home, Ajuda, busca e preferências próprias.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.purchase-requests.access",
+      "name": "Solicitações de Compras",
+      "description": "Jornada SC no escopo autorizado.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.operations.access",
+      "name": "Operações de compras",
+      "description": "Pedidos, entregas, fornecedores, produtos e estoques.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.analytics.access",
+      "name": "Analytics de Suprimentos",
+      "description": "Overview, KPIs e análises.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.administration.manage",
+      "name": "Administrar Portal Suprimentos",
+      "description": "Mappings, scopes e settings.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.purchase-requests.view-all",
+      "name": "Ver todas as SC da unidade",
+      "description": "Bypass de CC dentro das units autorizadas.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.purchase-requests.export",
+      "name": "Exportar Solicitações de Compras",
+      "description": "Exportação em massa com auditoria.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.unit.filial-01",
+      "name": "Suprimentos — Filial 01",
+      "description": "Unidade SC (01).",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.unit.filial-02",
+      "name": "Suprimentos — Filial 02",
+      "description": "Unidade ES (02).",
+      "module": "supplies"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/supplies",
+      "label": "Portal Suprimentos",
+      "permission": "supplies.portal.access",
+      "icon": "package-icon",
+      "order": 30,
+      "showInMenu": true
+    }
+  ],
+  "backend": {
+    "required": true,
+    "serviceName": "supplies-api",
+    "baseUrl": "/apps/supplies-api",
+    "validateJwt": true
+  },
+  "ui": {
+    "renderMode": "federated"
+  }
+}
+```
 
-Não copiar campos de exemplo do manifesto oficial se o Core runtime não os suporta. Antes do E3, validar draft contra schema/registrador real.
+Rotas internas adicionais entram no mesmo array na E3 conforme §4.
 
 ---
 
-## 7. Gate
+## 7. Backend/authz (comportamento, não só manifest)
+
+- JWT = identidade;
+- effective permissions = Core `/me`;
+- unit scope = ADR-006;
+- minimization = ADR-007;
+- backend = barreira real; MFE só UX de capabilities;
+- não copiar `flask_auth.py` nem fallback FastAPI (ADR-001).
+
+---
+
+## 8. Gate
 
 `GATE-DOC-MANIFEST` passa quando:
 
-- schema runtime real foi verificado;
-- nenhuma permission canônica redundante/CRUD permanece;
-- rota launcher e permissions não colidem;
-- `/me/apps` e `/me/routes` de coexistência estão planejados;
-- aliases têm estratégia de remoção.
+- [x] schema runtime real verificado (`1.0.0`);
+- [x] nenhuma permission CRUD no catálogo canônico;
+- [x] rota launcher + permissions sem colisão;
+- [x] `/me/apps` e `/me/routes` de coexistência planejados (E3.S5 + aliases §5);
+- [x] aliases têm estratégia de remoção pós-cutover;
+
+Registro live no Core = **E3.S4**, não E1.
