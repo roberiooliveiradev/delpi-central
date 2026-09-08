@@ -14,6 +14,7 @@ import {
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTextField,
+  createDashboardTopBar,
   createHostContainedModalShell,
   createTimeline,
   emptyStateCardBemClasses,
@@ -50,6 +51,10 @@ export const MyRequestsSectionCard = createDashboardSectionCard({
 
 export const MyRequestsNavigationCard = createDashboardNavigationCard({
   classNames: navigationCardBemClasses(MR_UI_PREFIX),
+});
+
+export const MyRequestsTopBar = createDashboardTopBar({
+  prefix: MR_UI_PREFIX,
 });
 
 export const MyRequestsFormActions = createDashboardFormActions({

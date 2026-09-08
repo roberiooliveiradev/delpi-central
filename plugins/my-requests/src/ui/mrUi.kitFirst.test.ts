@@ -12,6 +12,7 @@ import {
   MyRequestsFileDropzone,
   MyRequestsNavigationCard,
   MyRequestsSectionCard,
+  MyRequestsTopBar,
   TextField,
 } from "./mrUi";
 
@@ -32,6 +33,7 @@ describe("kit-first my-requests", () => {
     expect(MR_UI_PREFIX).toBe("my-requests");
     expect(typeof MyRequestsSectionCard).toBe("function");
     expect(typeof MyRequestsNavigationCard).toBe("function");
+    expect(typeof MyRequestsTopBar).toBe("function");
     expect(typeof TextField).toBe("function");
     expect(typeof MyRequestsFiltersRow).toBe("function");
     expect(typeof MyRequestsFilterSelectField).toBe("function");
