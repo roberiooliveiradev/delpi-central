@@ -33,11 +33,11 @@ Owner: `platform-architecture-boundaries.mdc`
 - `presentation-operational-decoupling.mdc`
 - `schema-first-presentation-delivered.mdc`
 
-Racional: essas regras definem ownership, fonte de verdade, direção de dependências ou divisão de responsabilidades dentro de um contexto.
+Racional: ownership, fonte de verdade, direção de dependências e divisão de responsabilidades.
 
 **Gate implementado:** `MFE_OWN_API_BYPASS` deriva o bounded context pela existência de `plugins/<app>` + `<app>-api` e bloqueia novo acesso direto do MFE a `/apps/api-delpi`.
 
-**Gap ainda aberto:** imports entre bounded contexts backend precisam de modelagem por estrutura/ports antes de virar gate; não manter allowlist manual de cada par de apps sem necessidade.
+**Gap ainda aberto:** imports backend entre bounded contexts precisam de modelagem por ports/adapters antes de bloquear CI; não criar allowlist manual de cada par de apps sem necessidade.
 
 ## 2. Segurança, identidade e autorização
 
@@ -47,30 +47,43 @@ Owner: `platform-security-identity-authorization.mdc`
 
 ### Gates implementados
 
-- `JWT_VERIFY_DISABLED` — bloqueia nova desativação ou condicionamento opcional de assinatura/audience/issuer;
-- `JWT_VALIDATOR_DUPLICATION` — bloqueia novo `jwt.decode` local em API de domínio fora de `shared/delpi_auth`/Core;
-- `AUTHZ_PRIMITIVE_DUPLICATION` — bloqueia nova cópia local das primitives genéricas `require_auth`, `require_permission`, `require_any_permission`, `require_all_permissions` e `require_superadmin`.
+- `JWT_VERIFY_DISABLED` — bloqueia downgrade de assinatura/audience/issuer;
+- `JWT_VALIDATOR_DUPLICATION` — bloqueia novo `jwt.decode` local em API de domínio;
+- `AUTHZ_PRIMITIVE_DUPLICATION` — bloqueia cópia de primitives genéricas `require_*`;
+- `FASTAPI_WRITE_AUTHZ_EVIDENCE_REQUIRED` — write FastAPI novo/alterado precisa evidenciar onde a autorização ocorre;
+- `FASTAPI_PUBLIC_ROUTE_AUTH_DRIFT` — `/public/...` não pode divergir do contrato real do `auth_middleware`;
+- `FASTAPI_AUTHZ_PARSE_ERROR` — fonte alterada que não pode ser analisada não é aprovada silenciosamente.
 
-### Dívida P0 confirmada no runtime compartilhado
+### P0 de JWT — corrigido
 
-`shared/delpi_auth/jwt_validator.py` ainda:
-
-```text
-- torna verificação de audience dependente da existência de KEYCLOAK_AUDIENCE;
-- não passa KEYCLOAK_ISSUER ao jwt.decode.
-```
-
-O padrão normativo é fail-closed para assinatura + issuer + audience + expiração. Essa dívida precisa de correção controlada após auditar variáveis de ambiente e consumidores; o comportamento atual não pode ser copiado para serviços novos.
-
-### Gap ainda aberto
-
-A plataforma possui múltiplos stacks válidos de proteção de rotas (`shared/delpi_auth`, decorators Core, dependencies, service token e policies). Não criar regex “sem `@require_permission` = vulnerável”. Primeiro materializar classificação uniforme:
+`shared/delpi_auth/jwt_validator.py` foi endurecido para fail-closed:
 
 ```text
-PROTECTED | PUBLIC_INTENTIONAL | SERVICE_TO_SERVICE
+KEYCLOAK_AUDIENCE obrigatório
+KEYCLOAK_ISSUER obrigatório
+assinatura validada
+issuer validado
+audience validada
+algoritmos explícitos
+configuração inválida não vira refresh/retry de JWKS
 ```
 
-Depois implementar detector por stack com casos públicos/health legítimos.
+A configuração foi auditada em `docker-compose.dev.yml`, `docker-compose.yml`, `.env.dev.example` e `.env.prod.example` antes da mudança. O teste dedicado roda no `Architecture Enforcement`.
+
+### Modelo atual de AuthZ FastAPI
+
+Para writes, o gate reconhece os padrões reais da plataforma:
+
+```text
+decorator canônico
+OU guarda explícita no handler
+OU contexto do usuário entregue ao application/use case que autoriza
+OU rota pública efetivamente declarada no middleware
+```
+
+Isso evita impor `@require_permission` a bounded contexts que corretamente mantêm autorização contextual no application layer.
+
+**Gap restante:** reads (`GET`) ainda não têm exigência equivalente de business AuthZ. Primeiro separar authenticated-only, permission-protected, resource-scoped, public e service-to-service.
 
 ## 3. APIs, contratos e integrações
 
@@ -86,7 +99,31 @@ Owner: `platform-api-contracts-integration.mdc`
 
 Racional: identidade/semântica de operações, request/response, parâmetros, evolução e integração por contrato.
 
-**Próximo gap:** aproveitar schemas/OpenAPI reais para detectar operação sem `operationId`, duplicidade de `operationId` e mudanças breaking quando o produtor possui contrato estável. Evitar regex de documentação.
+### Gates OpenAPI/FastAPI implementados
+
+- `OPENAPI_OPERATION_ID_REQUIRED`;
+- `OPENAPI_OPERATION_ID_DUPLICATE`;
+- `OPENAPI_CHANGE_CLASS_INVALID`;
+- `OPENAPI_BREAKING_UNCLASSIFIED`;
+- `FASTAPI_OPERATION_ID_REQUIRED`;
+- `FASTAPI_OPERATION_ID_DUPLICATE`;
+- `FASTAPI_ROUTE_PARSE_ERROR`.
+
+Breaking estrutural atualmente detectado em snapshot OpenAPI versionado:
+
+```text
+operação removida
+operationId alterado
+parâmetro obrigatório novo
+parâmetro opcional → obrigatório
+parâmetro local via $ref que introduz required
+requestBody opcional → obrigatório
+resposta 2xx documentada removida
+```
+
+O parser FastAPI também cobre o padrão `APIRouter(prefix="...")` + `@router.<method>("")`, evitando falso negativo em rota de prefixo puro.
+
+**Gap restante:** compatibilidade profunda de schemas compartilhados (`type`, enum narrowing, required aninhado, `oneOf/allOf/anyOf`, `$ref` externo e schema usado em request+response) exige resolver estrutural mais completo antes de virar gate.
 
 ## 4. Dados e persistência
 
@@ -125,9 +162,9 @@ Racional: composição visual, integração federada, design system, estados, ac
 
 **Gates implementados:**
 
-- `MFE_GLOBAL_CSS` — bloqueia novos seletores globais perigosos em CSS de MFE;
-- `MFE_PLUGIN_UI_OVERRIDE` — bloqueia estilização local de `.delpi-ui-*`;
-- `MFE_OWN_API_BYPASS` — preserva o BFF/API dona quando o plugin possui API própria.
+- `MFE_GLOBAL_CSS`;
+- `MFE_PLUGIN_UI_OVERRIDE`;
+- `MFE_OWN_API_BYPASS`.
 
 ## 6. Qualidade, testes e evidência
 
@@ -141,9 +178,19 @@ Owner: `platform-quality-testing.mdc`
 - `root-cause-generalized-fix.mdc`
 - `test-and-commit.mdc`
 
-Racional: processo de investigação, planejamento, evidência, regressão, CI, documentação de entrega e Definition of Done.
+Racional: investigação, planejamento, evidência, regressão, CI, documentação e Definition of Done.
 
-O `Architecture Enforcement` executa o scanner Phase 3 e `scripts/ci/audit_platform_guardrails.py`, ambos com testes próprios. O `Cursor Rules Governance` valida também ownership das regras via `responsibility-map.json`.
+`Architecture Enforcement` executa:
+
+```text
+audit_architecture_phase3.py
+audit_platform_guardrails.py
+audit_openapi_contracts.py
+audit_fastapi_authz.py
+shared/delpi_auth/tests/test_jwt_validator.py
+```
+
+Todos os auditores possuem testes próprios. `Cursor Rules Governance` valida ownership via `responsibility-map.json`.
 
 ## 7. Delivery, runtime e operações
 
@@ -152,7 +199,7 @@ Owner: `platform-delivery-runtime-operations.mdc`
 - `infra-sequential-container-startup.mdc`
 - `plugins-frontend-build.mdc`
 
-**Gap identificado:** existem várias práticas operacionais em `docs/02-infraestrutura` e scripts, mas poucos gates comuns de health/readiness/rollback. Só promover a gate quando houver contrato determinístico compartilhado entre stacks.
+**Gap identificado:** health/readiness/rollback possuem documentação e scripts, mas ainda faltam contratos comuns suficientemente determinísticos para gates transversais seguros.
 
 ## 8. Confiabilidade e observabilidade
 
@@ -164,7 +211,7 @@ Owner: `platform-reliability-observability.mdc`
 
 Racional: limites, latência, timeout/retry, degradação, logs, métricas, tracing e capacidade.
 
-O scanner Phase 3 já bloqueia novas chamadas HTTP Python detectáveis sem timeout, retry inseguro de writes e exposição óbvia de secrets.
+O scanner Phase 3 bloqueia novas chamadas HTTP Python detectáveis sem timeout, retry inseguro de writes e exposição óbvia de secrets.
 
 ---
 
@@ -178,31 +225,24 @@ O scanner Phase 3 já bloqueia novas chamadas HTTP Python detectáveis sem timeo
 - visual design system governa **tokens/CSS/tema/responsividade**;
 - page excellence governa **composição e qualidade da página**.
 
-Se a mesma proibição aparecer substantivamente nos três, manter a formulação detalhada apenas na regra dona e referenciar nas outras.
-
 ### `migrations-immutable-checksum` × `plugins-migrations-no-reset-prod`
 
-- uma protege imutabilidade da migration versionada;
-- outra protege operação de produção contra reset destrutivo.
+Uma protege imutabilidade de migration; outra protege operação de produção contra reset destrutivo.
 
 ### `api-delpi-openapi-route-standards` × `api-delpi-response-contract`
 
-- uma governa metadata/qualidade de operação OpenAPI;
-- outra governa envelope/semântica de resposta da API DELPI.
+Uma governa metadata/qualidade da operação; outra governa envelope/semântica da resposta.
 
 ## Candidatos a consolidação futura
 
 ### `presentation-operational-decoupling` × `schema-first-presentation-delivered`
-
 Há sobreposição relevante. Antes de fundir, inventariar referências e preservar gates. **Não criar terceira regra de apresentação.**
 
 ### `new-api-route-checklist` × regras OpenAPI específicas
-
-O checklist deve continuar ponto de entrada operacional, mas contrato detalhado vive na regra técnica dona.
+O checklist continua ponto de entrada operacional; contrato detalhado fica na regra técnica dona.
 
 ### regras `tv-dashboard-*`
-
-Revisar após estabilização. Regra criada por incidente não deve permanecer indefinidamente se o conhecimento puder migrar para owner transversal ou documentação do domínio.
+Revisar após estabilização. Regra criada por incidente não deve permanecer indefinidamente se conhecimento puder migrar para owner transversal ou documentação do domínio.
 
 ---
 
@@ -210,21 +250,23 @@ Revisar após estabilização. Regra criada por incidente não deve permanecer i
 
 ## Implementados
 
-1. migrations imutáveis — `IMMUTABLE_MIGRATION_MUTATION`;
-2. MFE sem CSS global — `MFE_GLOBAL_CSS`;
-3. MFE sem override do kit — `MFE_PLUGIN_UI_OVERRIDE`;
-4. MFE com API própria sem bypass — `MFE_OWN_API_BYPASS`;
-5. JWT sem downgrade de signature/audience/issuer — `JWT_VERIFY_DISABLED`;
-6. centralização de validator JWT — `JWT_VALIDATOR_DUPLICATION`;
-7. centralização de primitives AuthZ — `AUTHZ_PRIMITIVE_DUPLICATION`;
-8. HTTP/retry/secrets — gates existentes do Architecture Enforcement.
+1. migrations imutáveis;
+2. CSS global/override de `plugin-ui` em MFE;
+3. boundary MFE → BFF próprio;
+4. JWT fail-closed e prevenção de downgrade/duplicação;
+5. centralização de primitives AuthZ;
+6. ownership de autorização para writes FastAPI;
+7. coerência de rotas públicas FastAPI;
+8. `operationId` explícito/único;
+9. breaking estrutural OpenAPI selecionado;
+10. HTTP timeout/retry/secrets.
 
 ## Próximos, após modelagem segura
 
-1. corrigir dívida P0 de issuer/audience no `shared/delpi_auth` com rollout controlado;
-2. classificar rotas `PROTECTED | PUBLIC_INTENTIONAL | SERVICE_TO_SERVICE` para então medir cobertura AuthZ;
-3. boundaries backend entre contexts por imports/ports permitidos;
-4. contratos OpenAPI: `operationId`, schema drift e breaking changes com parser real;
+1. ampliar drift de rota pública para qualquer método HTTP sem ampliar ainda business AuthZ de GET;
+2. classificar reads para decidir cobertura AuthZ de GET;
+3. boundaries backend entre contexts por imports/ports;
+4. compatibilidade profunda de schema OpenAPI;
 5. MFE federation/build usando helpers vigentes como contrato;
 6. delivery: health/readiness/rollback quando houver convenção comum verificável.
 
