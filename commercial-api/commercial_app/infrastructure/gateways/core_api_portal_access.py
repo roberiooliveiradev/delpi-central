@@ -324,3 +324,195 @@ class CoreApiPortalAccessPort(PortalAccessPort):
                 break
             page += 1
         return collected
+
+    def _service_headers(self, *, accept: str = "application/json") -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {self._service_token}",
+            "X-Delpi-Service-Token": self._service_token,
+            "Accept": accept,
+        }
+
+    def get_person_profile(self, user_id: str) -> dict[str, Any] | None:
+        """Lê person-profile canônico na core (S2S). None se indisponível/sem config."""
+        uid = (user_id or "").strip()
+        if not uid or not self.configured():
+            return None
+        try:
+            response = httpx.get(
+                f"{self._base_url}/integrations/person-profiles/{uid}",
+                headers=self._service_headers(),
+                timeout=self._timeout,
+            )
+        except Exception:
+            logger.exception("core_api_person_profile_get_failed user_id=%s", uid)
+            return None
+        if response.status_code >= 400:
+            logger.warning(
+                "core_api_person_profile_get_rejected status=%s user_id=%s",
+                response.status_code,
+                uid,
+            )
+            return None
+        try:
+            payload: Any = response.json()
+        except ValueError:
+            logger.warning("core_api_person_profile_get_invalid_json user_id=%s", uid)
+            return None
+        return payload if isinstance(payload, dict) else None
+
+    def get_person_profile_photo(
+        self,
+        user_id: str,
+    ) -> tuple[bytes, str, str] | None:
+        """Baixa foto canônica da core (S2S). Retorna (content, content_type, file_name)."""
+        uid = (user_id or "").strip()
+        if not uid or not self.configured():
+            return None
+        try:
+            response = httpx.get(
+                f"{self._base_url}/integrations/person-profiles/{uid}/photo",
+                headers=self._service_headers(accept="*/*"),
+                timeout=self._timeout,
+            )
+        except Exception:
+            logger.exception("core_api_person_profile_photo_failed user_id=%s", uid)
+            return None
+        if response.status_code == 404:
+            return None
+        if response.status_code >= 400:
+            logger.warning(
+                "core_api_person_profile_photo_rejected status=%s user_id=%s",
+                response.status_code,
+                uid,
+            )
+            return None
+        content_type = (
+            response.headers.get("content-type") or "application/octet-stream"
+        ).split(";")[0].strip()
+        file_name = "photo.bin"
+        disposition = response.headers.get("content-disposition") or ""
+        if "filename=" in disposition:
+            file_name = disposition.split("filename=", 1)[1].strip().strip('"') or file_name
+        return response.content, content_type, file_name
+
+    @staticmethod
+    def _user_bearer_headers(authorization: str) -> dict[str, str]:
+        token = (authorization or "").strip()
+        if token.lower().startswith("bearer "):
+            token = token[7:].strip()
+        if not token:
+            raise ValueError("Authorization do usuário ausente para espelho na core.")
+        return {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+        }
+
+    def mirror_person_profile(
+        self,
+        *,
+        authorization: str,
+        job_title: str | None,
+        phone_e164: str | None,
+        mobile_e164: str | None,
+        whatsapp_e164: str | None,
+    ) -> None:
+        """Espelha PATCH /me/person-profile com JWT do titular."""
+        if not self._base_url:
+            raise RuntimeError("CORE_API_BASE_URL não configurada para espelho de perfil.")
+        headers = {
+            **self._user_bearer_headers(authorization),
+            "Content-Type": "application/json",
+        }
+        try:
+            response = httpx.patch(
+                f"{self._base_url}/me/person-profile",
+                headers=headers,
+                json={
+                    "job_title": job_title,
+                    "phone_e164": phone_e164,
+                    "mobile_e164": mobile_e164,
+                    "whatsapp_e164": whatsapp_e164,
+                },
+                timeout=self._timeout,
+            )
+        except Exception as exc:
+            logger.exception("core_api_person_profile_mirror_failed")
+            raise RuntimeError(
+                "Não foi possível sincronizar o perfil com o Portal."
+            ) from exc
+        if response.status_code >= 400:
+            logger.warning(
+                "core_api_person_profile_mirror_rejected status=%s body=%s",
+                response.status_code,
+                response.text[:300],
+            )
+            raise RuntimeError(
+                "Não foi possível sincronizar o perfil com o Portal."
+            )
+
+    def mirror_person_profile_photo(
+        self,
+        *,
+        authorization: str,
+        original_name: str,
+        content: bytes,
+        mime_type: str | None,
+    ) -> None:
+        """Espelha PUT /me/person-profile/photo com JWT do titular."""
+        if not self._base_url:
+            raise RuntimeError("CORE_API_BASE_URL não configurada para espelho de perfil.")
+        headers = self._user_bearer_headers(authorization)
+        files = {
+            "file": (
+                original_name or "photo.bin",
+                content,
+                mime_type or "application/octet-stream",
+            )
+        }
+        try:
+            response = httpx.put(
+                f"{self._base_url}/me/person-profile/photo",
+                headers=headers,
+                files=files,
+                timeout=self._timeout,
+            )
+        except Exception as exc:
+            logger.exception("core_api_person_profile_photo_mirror_failed")
+            raise RuntimeError(
+                "Não foi possível sincronizar a foto com o Portal."
+            ) from exc
+        if response.status_code >= 400:
+            logger.warning(
+                "core_api_person_profile_photo_mirror_rejected status=%s body=%s",
+                response.status_code,
+                response.text[:300],
+            )
+            raise RuntimeError(
+                "Não foi possível sincronizar a foto com o Portal."
+            )
+
+    def mirror_delete_person_profile_photo(self, *, authorization: str) -> None:
+        """Espelha DELETE /me/person-profile/photo com JWT do titular."""
+        if not self._base_url:
+            raise RuntimeError("CORE_API_BASE_URL não configurada para espelho de perfil.")
+        headers = self._user_bearer_headers(authorization)
+        try:
+            response = httpx.delete(
+                f"{self._base_url}/me/person-profile/photo",
+                headers=headers,
+                timeout=self._timeout,
+            )
+        except Exception as exc:
+            logger.exception("core_api_person_profile_photo_delete_mirror_failed")
+            raise RuntimeError(
+                "Não foi possível sincronizar a remoção da foto com o Portal."
+            ) from exc
+        if response.status_code >= 400:
+            logger.warning(
+                "core_api_person_profile_photo_delete_mirror_rejected status=%s body=%s",
+                response.status_code,
+                response.text[:300],
+            )
+            raise RuntimeError(
+                "Não foi possível sincronizar a remoção da foto com o Portal."
+            )

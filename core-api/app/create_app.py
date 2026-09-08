@@ -23,6 +23,9 @@ from app.interfaces.http.notifications_controller import (
     integrations_notifications_bp,
 )
 from app.interfaces.http.integrations_directory_controller import integrations_directory_bp
+from app.interfaces.http.integrations_person_profiles_controller import (
+    integrations_person_profiles_bp,
+)
 from app.interfaces.http.presence_controller import admin_presence_bp
 from app.interfaces.http.app_usage_controller import admin_app_usage_bp
 from app.interfaces.http.admin_statistics_controller import admin_statistics_bp
@@ -95,6 +98,7 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(admin_notifications_bp)
     app.register_blueprint(integrations_notifications_bp)
     app.register_blueprint(integrations_directory_bp)
+    app.register_blueprint(integrations_person_profiles_bp)
     app.register_blueprint(admin_presence_bp)
     app.register_blueprint(admin_app_usage_bp)
     app.register_blueprint(admin_statistics_bp)

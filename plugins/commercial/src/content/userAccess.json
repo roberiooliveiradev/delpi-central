@@ -33,7 +33,7 @@
     "portfolioMembers": "Membros",
     "portfolioOpen": "Abrir carteira",
     "aboutTitle": "Sobre",
-    "aboutBody": "Perfil do Portal Comercial. Nome e e-mail vêm do diretório Minha Delpi; foto, cargo e contatos (telefone, celular e WhatsApp) são da extensão Commercial.",
+    "aboutBody": "Perfil do Portal Comercial. Nome e e-mail vêm do diretório Minha Delpi; foto, cargo e contatos usam o perfil da plataforma (Portal) com prioridade — a extensão Comercial fica como fallback e espelha alterações feitas aqui.",
     "changePhoto": "Trocar foto",
     "enlargePhoto": "Ampliar foto de {name}",
     "removePhoto": "Remover foto",

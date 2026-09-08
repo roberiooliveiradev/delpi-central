@@ -59,7 +59,7 @@ export const CM_HELP = {
   },
   users: {
     profile:
-      "Perfil do usuário no Portal Comercial: nome e e-mail do diretório; foto, cargo e contatos editáveis no próprio perfil.",
+      "Perfil do usuário no Portal Comercial: nome e e-mail do diretório; foto, cargo e contatos com precedência do perfil da plataforma (Portal). Sem dados no Portal, usa a extensão Comercial.",
     jobTitle: "Cargo exibido no Comercial. Não sincroniza RH nesta fase.",
     phoneE164:
       "Telefone fixo no formato E.164 (+ e DDI), ex.: +551133334444. Usado no atalho Ligar.",

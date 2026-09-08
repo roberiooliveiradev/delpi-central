@@ -284,3 +284,185 @@ def test_user_profile_self_edit_and_photo(tmp_path: Path) -> None:
 
     cleared = uc.delete_photo(actor_user_id="u1", user_id="u1")
     assert cleared["has_photo"] is False
+
+
+class FakePersonProfileGateway:
+    def __init__(self) -> None:
+        self.profiles: dict[str, dict] = {}
+        self.photos: dict[str, tuple[bytes, str, str]] = {}
+        self.mirrored_profiles: list[dict] = []
+        self.mirrored_photos: list[dict] = []
+        self.deleted_photos: list[str] = []
+        self.fail_mirror = False
+
+    def lookup_directory_users(self, user_ids):
+        return {}
+
+    def get_person_profile(self, user_id: str):
+        return self.profiles.get(user_id)
+
+    def get_person_profile_photo(self, user_id: str):
+        return self.photos.get(user_id)
+
+    def mirror_person_profile(self, **kwargs):
+        if self.fail_mirror:
+            raise RuntimeError("Não foi possível sincronizar o perfil com o Portal.")
+        self.mirrored_profiles.append(kwargs)
+
+    def mirror_person_profile_photo(self, **kwargs):
+        if self.fail_mirror:
+            raise RuntimeError("Não foi possível sincronizar a foto com o Portal.")
+        self.mirrored_photos.append(kwargs)
+
+    def mirror_delete_person_profile_photo(self, **kwargs):
+        if self.fail_mirror:
+            raise RuntimeError(
+                "Não foi possível sincronizar a remoção da foto com o Portal."
+            )
+        self.deleted_photos.append(kwargs.get("authorization") or "")
+
+
+def test_user_profile_core_precedence_over_commercial(tmp_path: Path) -> None:
+    repo = InMemoryUserProfileRepo()
+    storage = UserProfileStorage(base_dir=str(tmp_path))
+    gateway = FakePersonProfileGateway()
+    repo.upsert_profile_fields(
+        user_id="u1",
+        job_title="Local Title",
+        phone_e164="+551100000000",
+        mobile_e164=None,
+        whatsapp_e164=None,
+    )
+    gateway.profiles["u1"] = {
+        "user_id": "u1",
+        "job_title": "Core Title",
+        "phone_e164": None,
+        "mobile_e164": "+5511999999999",
+        "whatsapp_e164": None,
+        "has_photo": True,
+    }
+    gateway.photos["u1"] = (b"core-bytes", "image/png", "core.png")
+    uc = ManageUserProfileUseCase(
+        repository=repo,
+        storage=storage,
+        directory_gateway=gateway,  # type: ignore[arg-type]
+    )
+    payload = uc.get_profile(user_id="u1")
+    assert payload["job_title"] == "Core Title"
+    assert payload["phone_e164"] == "+551100000000"
+    assert payload["mobile_e164"] == "+5511999999999"
+    assert payload["has_photo"] is True
+    photo = uc.get_photo_file(user_id="u1")
+    assert photo.content == b"core-bytes"
+
+
+def test_user_profile_fallback_when_core_empty(tmp_path: Path) -> None:
+    repo = InMemoryUserProfileRepo()
+    storage = UserProfileStorage(base_dir=str(tmp_path))
+    gateway = FakePersonProfileGateway()
+    repo.upsert_profile_fields(
+        user_id="u1",
+        job_title="Local Only",
+        phone_e164="+551122223333",
+        mobile_e164=None,
+        whatsapp_e164=None,
+    )
+    gateway.profiles["u1"] = {
+        "user_id": "u1",
+        "job_title": None,
+        "phone_e164": None,
+        "mobile_e164": None,
+        "whatsapp_e164": None,
+        "has_photo": False,
+    }
+    uc = ManageUserProfileUseCase(
+        repository=repo,
+        storage=storage,
+        directory_gateway=gateway,  # type: ignore[arg-type]
+    )
+    payload = uc.get_profile(user_id="u1")
+    assert payload["job_title"] == "Local Only"
+    assert payload["phone_e164"] == "+551122223333"
+
+
+def test_user_profile_fallback_when_core_down(tmp_path: Path) -> None:
+    repo = InMemoryUserProfileRepo()
+    storage = UserProfileStorage(base_dir=str(tmp_path))
+
+    class DownGateway(FakePersonProfileGateway):
+        def get_person_profile(self, user_id: str):
+            return None
+
+    repo.upsert_profile_fields(
+        user_id="u1",
+        job_title="Local",
+        phone_e164=None,
+        mobile_e164=None,
+        whatsapp_e164=None,
+    )
+    uc = ManageUserProfileUseCase(
+        repository=repo,
+        storage=storage,
+        directory_gateway=DownGateway(),  # type: ignore[arg-type]
+    )
+    payload = uc.get_profile(user_id="u1")
+    assert payload["job_title"] == "Local"
+
+
+def test_user_profile_dual_write_mirrors_core(tmp_path: Path) -> None:
+    repo = InMemoryUserProfileRepo()
+    storage = UserProfileStorage(base_dir=str(tmp_path))
+    gateway = FakePersonProfileGateway()
+    uc = ManageUserProfileUseCase(
+        repository=repo,
+        storage=storage,
+        directory_gateway=gateway,  # type: ignore[arg-type]
+    )
+    uc.update_profile(
+        actor_user_id="u1",
+        user_id="u1",
+        job_title="Synced",
+        phone_e164="+551133334444",
+        authorization="Bearer user-token",
+    )
+    assert len(gateway.mirrored_profiles) == 1
+    assert gateway.mirrored_profiles[0]["job_title"] == "Synced"
+    assert gateway.mirrored_profiles[0]["authorization"] == "Bearer user-token"
+
+    uc.upload_photo(
+        actor_user_id="u1",
+        user_id="u1",
+        original_name="me.png",
+        content=b"\x89PNG\r\n\x1a\n" + b"0" * 20,
+        mime_type="image/png",
+        authorization="Bearer user-token",
+    )
+    assert len(gateway.mirrored_photos) == 1
+
+    uc.delete_photo(
+        actor_user_id="u1",
+        user_id="u1",
+        authorization="Bearer user-token",
+    )
+    assert len(gateway.deleted_photos) == 1
+
+
+def test_user_profile_dual_write_failure_is_not_silent(tmp_path: Path) -> None:
+    repo = InMemoryUserProfileRepo()
+    storage = UserProfileStorage(base_dir=str(tmp_path))
+    gateway = FakePersonProfileGateway()
+    gateway.fail_mirror = True
+    uc = ManageUserProfileUseCase(
+        repository=repo,
+        storage=storage,
+        directory_gateway=gateway,  # type: ignore[arg-type]
+    )
+    with pytest.raises(RuntimeError, match="Portal"):
+        uc.update_profile(
+            actor_user_id="u1",
+            user_id="u1",
+            job_title="X",
+            authorization="Bearer t",
+        )
+    assert repo.get("u1") is not None
+    assert repo.get("u1").job_title == "X"
