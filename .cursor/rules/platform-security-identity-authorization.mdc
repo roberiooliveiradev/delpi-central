@@ -13,15 +13,15 @@ Esta é a fonte transversal para decisões de **autenticação, autorização, i
 
 1. Keycloak é o Identity Provider da plataforma.
 2. Fluxo web preferencial: OAuth2/OIDC Authorization Code + PKCE.
-3. JWT identifica o usuário/contexto; **não é a fonte final da lista completa de permissões efetivas**.
-4. Assinatura, issuer, audience, expiração e demais claims obrigatórios devem ser validados no backend.
-5. `KEYCLOAK_AUDIENCE` e `KEYCLOAK_ISSUER` de uma API protegida não podem ser tratados como opcionais de modo a desligar silenciosamente validações.
-6. Token nunca é confiado apenas porque veio do frontend.
-7. Refresh token/access token não devem ser persistidos ou logados de forma insegura.
+3. JWT identifica usuário/contexto; **não é a fonte final das permissões efetivas**.
+4. Assinatura, issuer, audience, expiração e claims obrigatórios são validados no backend.
+5. `KEYCLOAK_AUDIENCE` e `KEYCLOAK_ISSUER` de API protegida são obrigatórios; ausência não pode desligar validações silenciosamente.
+6. Token não é confiado apenas porque veio do frontend.
+7. Refresh/access token não devem ser persistidos ou logados de forma insegura.
 
 ## Primitives compartilhadas
 
-Para APIs fora da Core API, a implementação transversal de AuthN/AuthZ deve partir de **`shared/delpi_auth`**:
+Para APIs fora da Core API, AuthN/AuthZ transversal parte de **`shared/delpi_auth`**:
 
 ```text
 shared/delpi_auth/jwt_validator.py
@@ -31,26 +31,11 @@ shared/delpi_auth/service_token.py
 shared/delpi_auth/policy_engine.py
 ```
 
-A Core API pode manter seus adapters/decorators próprios porque é o bounded context dono do RBAC e do Permission Resolver.
+A Core API pode manter adapters/decorators próprios porque é o bounded context dono do RBAC e Permission Resolver.
 
-Novas APIs **não** devem copiar/reimplementar genericamente:
-
-```text
-jwt.decode + JWKS validation
-require_auth
-require_permission
-require_any_permission
-require_all_permissions
-require_superadmin
-```
-
-Se um framework precisar de adapter específico, o adapter deve delegar à primitive compartilhada; não duplicar verificação de assinatura/claims nem regra de permission resolution.
-
-Implementações locais já existentes são dívida de migração, não template para nova API.
+Novas APIs não devem reimplementar genericamente `jwt.decode + JWKS`, `require_auth`, `require_permission`, `require_any_permission`, `require_all_permissions` ou `require_superadmin`. Adapter de framework deve delegar ao shared; implementação local existente é dívida de migração, não template.
 
 ## Autorização efetiva
-
-A decisão de acesso deve ocorrer no backend e usar a governança canônica da plataforma.
 
 ```text
 JWT válido
@@ -64,83 +49,83 @@ JWT válido
 Proibido:
 
 - confiar em `is_admin`, `permissions[]` ou equivalente do frontend como autorização final;
-- bypass de RBAC porque o usuário está autenticado;
+- bypass de RBAC porque usuário está autenticado;
 - rota administrativa protegida apenas por esconder botão;
-- lógica diferente de autorização em UI e API;
-- `superadmin` ad hoc sem fonte/trilha canônica;
+- lógica divergente entre UI e API;
+- `superadmin` ad hoc;
 - fail-open quando Core/Permission Resolver estiver indisponível.
+
+## Ownership de autorização em writes FastAPI
+
+Novo write (`POST`, `PUT`, `PATCH`, `DELETE`) deve deixar claro **onde a decisão de acesso acontece**. Modelos aceitos:
+
+```text
+A. decorator canônico de acesso no handler
+B. guarda explícita de permission/access no handler
+C. handler entrega o contexto do usuário ao application/use case, que autoriza
+D. rota é pública intencional e o auth_middleware realmente a libera
+```
+
+O modelo C é importante: Clean Architecture permite que autorização contextual de recurso pertença ao application/use case. Portanto, não duplicar permission code no controller apenas para aparência.
+
+Mas a entrega de `request.state.user` não é autorização por si só. O application/use case deve realmente validar acesso/escopo e possuir teste negativo. Passar usuário para chamada irrelevante para satisfazer CI é violação arquitetural.
+
+`@require_auth` é aceitável quando o contrato daquele write exige apenas identidade autenticada; se houver privilégio/ownership/escopo, autenticação sozinha não basta.
 
 ## Rotas públicas
 
-Não inferir que rota sem permission code é necessariamente vulnerável: health/readiness, callbacks e superfícies públicas explícitas podem existir.
+Rota pública é contrato explícito, não convenção de nome. `/public/...` só é pública se o `auth_middleware` do bounded context realmente a liberar.
 
-Por isso, um gate automático de cobertura de rota só deve ser ativado quando houver contrato explícito que diferencie:
+O gate `FASTAPI_PUBLIC_ROUTE_AUTH_DRIFT` verifica essa coerência para rotas alteradas. Não adicionar `/public` para contornar autorização.
+
+Health/readiness, callbacks e superfícies públicas legítimas continuam permitidos quando explicitamente modelados e testados.
+
+## Reads e service-to-service
+
+A exigência automática de evidence de autorização de negócio ainda se limita a writes. Leituras podem ser:
 
 ```text
-PROTECTED
-PUBLIC_INTENTIONAL
-SERVICE_TO_SERVICE
+authenticated-only
+permission-protected
+resource-scoped
+public intentional
+service-to-service
 ```
 
-Até essa classificação existir de forma uniforme nos stacks, validar AuthZ por testes negativos e revisão de contrato — não por regex simplista de decorator.
+Antes de aplicar o mesmo gate a GET, inventariar os padrões reais e evitar falsos positivos. Integração service-to-service deve usar mecanismo autenticado apropriado, sem reutilizar token de usuário indiscriminadamente nem segredo hardcoded.
 
-## Permissões e escopo
-
-Permissões devem ser:
-
-- estáveis e semanticamente claras;
-- verificadas no recurso correto;
-- consistentes com manifest/rotas quando aplicável;
-- restritivas por padrão;
-- combinadas com escopo de filial/unidade/tenant quando o domínio exigir.
-
-Não transformar filtro de UI em mecanismo de segurança. A API deve rejeitar recurso fora do escopo mesmo se o cliente nunca exibir essa opção.
-
-## Service-to-service
-
-Integrações internas devem usar mecanismo autenticado apropriado ao contrato vigente. Não reutilizar token de usuário indiscriminadamente quando a chamada representa identidade de serviço, nem usar segredo estático hardcoded como atalho.
-
-Ao propagar contexto do usuário, deixar explícito:
+Ao propagar contexto:
 
 ```text
 quem autenticou
-em nome de quem a chamada ocorre
+em nome de quem ocorre a chamada
 qual serviço tomou a decisão de autorização
 ```
 
+## Permissões e escopo
+
+Permissões devem ser estáveis, claras, verificadas no recurso correto, consistentes com manifest/rotas quando aplicável, restritivas por padrão e combinadas com filial/unidade/tenant quando necessário.
+
+Filtro de UI não é segurança. API rejeita recurso fora do escopo mesmo se cliente não mostrar a opção.
+
 ## Ações sensíveis
 
-Operações de escrita/admin/destrutivas exigem, conforme risco:
+Conforme risco, escrita/admin/destrutiva exige:
 
-- permissão explícita;
+- permissão/ownership explícito;
 - validação de escopo;
-- confirmação de intenção quando UX exigir;
-- idempotência onde necessário;
+- confirmação de intenção na UX quando necessária;
+- idempotência;
 - audit log com ator, operação, alvo e resultado;
 - nenhum segredo/dado sensível no evento.
 
-## Secrets e configuração
+## Secrets e web security
 
-Nunca versionar ou hardcodar password, client secret, API key, JWT, token, credential URL ou private key.
+Nunca versionar/hardcodar password, client secret, API key, JWT, token, credential URL ou private key. Usar env/secret store; exemplos usam placeholders.
 
-Usar env/secret store/configuração de ambiente já adotada. Exemplos e `.env.example` devem usar placeholders inequivocamente não secretos.
-
-## Web security
-
-Conforme superfície:
-
-- HTTPS no gateway;
-- CORS restritivo;
-- CSP/headers adequados;
-- cookies com flags corretas quando usados;
-- proteção CSRF quando autenticação baseada em cookie/session exigir;
-- validação e escaping de input/output;
-- upload tratado como conteúdo não confiável;
-- rate limit em superfícies de abuso conforme risco.
+Conforme superfície: HTTPS no gateway, CORS restritivo, CSP/headers, cookies seguros, CSRF quando aplicável, validação/escaping, upload não confiável e rate limit por risco.
 
 ## Dados sensíveis
-
-Aplicar minimização:
 
 ```text
 coletar apenas necessário
@@ -149,61 +134,68 @@ coletar apenas necessário
 → reter pelo tempo necessário
 ```
 
-PII/segredos nunca devem ser adicionados a logs para “facilitar debug”. Usar redaction conforme `observability-standards.mdc`.
+PII/segredos não entram em logs. Aplicar redaction de `observability-standards.mdc`.
 
 ## Gates executáveis atuais
 
-`architecture-ci-enforcement.mdc` / `scripts/ci/audit_platform_guardrails.py` bloqueiam no diff, entre outros:
+`Architecture Enforcement` cobre:
 
-- `JWT_VERIFY_DISABLED`: desligar/condicionar `verify_signature`, `verify_aud` ou `verify_iss`;
-- `JWT_VALIDATOR_DUPLICATION`: novo `jwt.decode` local em API fora do canonical shared/Core;
-- `AUTHZ_PRIMITIVE_DUPLICATION`: redefinir primitives genéricas `require_*` em nova API;
-- secrets literais/logados pelos gates existentes.
+```text
+JWT_VERIFY_DISABLED
+JWT_VALIDATOR_DUPLICATION
+AUTHZ_PRIMITIVE_DUPLICATION
+FASTAPI_WRITE_AUTHZ_EVIDENCE_REQUIRED
+FASTAPI_PUBLIC_ROUTE_AUTH_DRIFT
+FASTAPI_AUTHZ_PARSE_ERROR
+SECRET_IN_LOG / SECRET_LITERAL
+```
 
-Esses gates impedem **nova dívida**; não provam que todas as rotas existentes possuem autorização correta.
+Esses gates impedem nova dívida; não provam sozinhos autorização correta de toda rota existente.
 
 ## Testes obrigatórios
 
 Conforme mudança:
 
 - token ausente/inválido/expirado;
-- issuer/audience incorretos;
-- configuração ausente deve falhar de modo seguro quando claim é obrigatório;
-- usuário autenticado porém sem permissão;
+- issuer/audience incorretos e configuração ausente fail-closed;
+- usuário autenticado sem permissão/ownership;
 - escopo/filial não autorizado;
 - permissão positiva;
-- tentativa de bypass por payload/header/UI;
+- bypass por payload/header/UI;
+- write com application-level AuthZ testado em caso negativo;
+- rota pública validada como realmente pública;
 - redaction de segredo;
 - ação sensível auditada;
 - confirmação/idempotência quando aplicável.
 
 ## Perguntas adversariais
 
-Antes de concluir:
+1. Usuário autenticado mas não autorizado executa isso pela API?
+2. Onde exatamente a decisão AuthZ ocorre: handler, policy ou application/use case?
+3. O frontend consegue forjar autorização?
+4. Audience/issuer ausente ou incorreto é rejeitado?
+5. `/public` do router e middleware concordam?
+6. Token/secret aparece em log/erro/analytics?
+7. Há fail-open se Permission Resolver falhar?
 
-1. Um usuário autenticado mas não autorizado consegue executar isto diretamente pela API?
-2. O frontend consegue forjar uma autorização que o backend aceita?
-3. Se audience/issuer estiver ausente ou incorreto, o token é rejeitado ou a validação é desligada?
-4. Algum token/secret pode aparecer em log, erro ou analytics?
-5. O mesmo recurso é protegido igualmente em todas as rotas equivalentes?
-6. Existe fail-open em indisponibilidade do resolver de permissões?
+## Regras complementares
 
-## Regras filhas/complementares
-
-- `ai-external-tools-security.mdc` para tools/LLM externos.
-- `observability-standards.mdc` para redaction e auditoria observável.
-- `http-integration-resilience.mdc` para transporte resiliente.
-- `contract-evolution-backward-compatibility.mdc` para evolução de claims/contratos.
-- `architecture-ci-enforcement.mdc` para gates incrementais.
+- `ai-external-tools-security.mdc`
+- `observability-standards.mdc`
+- `http-integration-resilience.mdc`
+- `contract-evolution-backward-compatibility.mdc`
+- `architecture-ci-enforcement.mdc`
 
 ## Evidência de conclusão
 
 ```text
 AUTHN_MECHANISM
 JWT_ISSUER_AUDIENCE
+AUTHZ_OWNER
 AUTHZ_SOURCE
 PERMISSION_SCOPE
 NEGATIVE_TESTS
+PUBLIC_ROUTE_CONTRACT
 SENSITIVE_DATA_HANDLING
 AUDIT_RESULT
 SECRETS_CHECK
