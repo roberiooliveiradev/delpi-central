@@ -1,130 +1,198 @@
 # Perfis e permissões — Portal Suprimentos
 
-> Papéis Minha Delpi **agrupam** codes. O MFE não autoriza por nome de cargo.  
+> Papéis Minha DELPI **agrupam** permissions; o MFE não autoriza por nome de cargo.  
 > **Unidades:** eixo próprio — [ADR-006](./adr/ADR-006-unit-permissions.md).  
-> Codes de unidade: `filial-01` / `filial-02` (exceção já adotada no repo); futuras = `filial-{codigo_totvs}`.
+> **Minimização:** não espelhar CRUD em permissions — [ADR-007](./adr/ADR-007-permission-minimization.md).
 
 ---
 
-## Princípio — dois eixos (não misturar)
+## 1. Princípio — capabilities mínimas + unidade + escopo de recurso
 
 ```text
-Usuário → Papel(éis) → codes A (o quê) + codes B (onde) → API / MFE
+usuário
+  → permissions efetivas resolvidas pelo Core API
+  → capability de negócio (o quê)
+  → unidade (onde)
+  → ownership / escopo do recurso
+  → regra de negócio
+  → ação autorizada
 ```
 
-| Eixo | Pergunta | Família de codes | Infla quando nasce… |
-|------|----------|------------------|---------------------|
-| **A — capability** | O que pode fazer no Portal? | `supplies.access`, `*.view`, `*.export`, `manage` | …uma **feature** nova de risco |
-| **B — unidade** | Em quais sites TOTVS vê dado? | `supplies.unit.filial-{TOTVS}` | …uma **unidade** nova |
+O JWT Keycloak identifica o usuário; **não é fonte canônica da lista completa de permissions**. O backend deve resolver as permissions efetivas pelo Core API e aplicar autorização server-side.
+
+| Dimensão | Pergunta | Exemplo | Quando cresce |
+|---|---|---|---|
+| **A — capability** | Qual responsabilidade material o usuário possui? | `supplies.operations.access` | só quando nasce fronteira real de risco/segregação |
+| **B — unidade** | Em quais unidades TOTVS pode operar/ver dados? | `supplies.unit.filial-01` | quando nasce uma unidade |
+| **C — recurso** | Sobre quais registros pode agir? | próprio usuário, equipe, CC, fornecedor referenciado | por regra de negócio/dados, não por permission code |
 
 ```text
-pode_ler_dado = eixo_A AND eixo_B
+permitido = capability AND unit_scope AND resource_scope AND business_rule
 ```
 
-O Comercial condensou capabilities porque carteira resolve o recorte de **cliente**. Suprimentos recorta **unidade TOTVS**: isso **não** se resolve copiando `filial-sc` em cada tela (padrão rejeitado do ESTSEG legado).
-
-Justificativa para fragmentar o eixo A: risco de dado (solicitante ≠ analista ≠ export).  
-**Não** fragmentar o eixo A por site.
+**Regra central:** permission representa capacidade relevante de negócio, segurança ou governança — não botão, aba, endpoint ou verbo CRUD.
 
 ---
 
-## Eixo B — catálogo de unidades (tipo único)
+## 2. Eixo B — catálogo de unidades
 
-Uma permission por unidade. Rótulo PT só na UI.
+Uma permission por unidade. Rótulo PT-BR só na UI.
 
 | Código TOTVS | Permission | Label UI | Status |
-|--------------|------------|----------|--------|
+|---|---|---|---|
 | `01` | `supplies.unit.filial-01` | Santa Catarina (SC) | canônico |
 | `02` | `supplies.unit.filial-02` | Espírito Santo (ES) | canônico |
-| `XX` | `supplies.unit.filial-XX` | (nome da unidade) | quando o TOTVS ganhar filial |
+| `XX` | `supplies.unit.filial-XX` | nome da unidade | quando a filial existir |
 
-**Nova unidade:** 1 linha neste catálogo + 1 permission no manifest `supplies` + atribuição nos papéis. **Nenhuma** capability do eixo A muda.
+Nova unidade = 1 entrada no catálogo + 1 permission no manifest + atribuição aos papéis. Nenhuma capability funcional muda.
 
-Fonte de verdade futura (E2): JSON de catálogo na `supplies-api` (código, permission, label). Rotas e o filtro de filial **consomem** o catálogo — sem `if branch == "01"` espalhado.
-
-### Regras do eixo B
+### Regras
 
 | Situação | Comportamento |
-|----------|----------------|
-| Tem capability, **zero** unit | Fail-closed: sem dado TOTVS (Home/Ajuda com `access` ok) |
-| Uma unit | Dado só daquela filial; filtro travado ou único valor |
-| Várias units | União; consolidado = só essas unidades (não a empresa toda) |
-| `branch` na query fora do conjunto | **403** no BFF (nunca só ocultar no MFE) |
-| `supplies.manage` | Não libera unidade. Papel Admin recebe units à parte |
-| Superadmin | Bypass de unidade com auditoria |
-| `purchase-requests.view-all` | Bypass de **CC**, não de unidade |
+|---|---|
+| Capability sem nenhuma unit | Fail-closed para dado TOTVS; shell/Ajuda ainda podem abrir com `supplies.portal.access` |
+| Uma unit | somente aquela filial |
+| Várias units | união somente das unidades autorizadas |
+| `branch` fora do conjunto | 403 no BFF |
+| Administração | não concede unidade automaticamente |
+| Superadmin | bypass somente conforme política canônica do Core e com auditoria |
+| `purchase-requests.view-all` | bypass de centro de custo, nunca de unidade |
+
+`allowedUnits` é derivado de **permissions efetivas do Core**, não de claims de permission no JWT.
 
 ---
 
-## Eixo A — catálogo de capabilities (sem coluna de filial)
+## 3. Eixo A — catálogo mínimo de capabilities
 
-| Capability | Permission | Comprador | Analista | Gestor | Admin |
-|------------|------------|:---------:|:--------:|:------:|:-----:|
-| Entrar no Portal (shell, busca, help) | `supplies.access` | ✓ | ✓ | ✓ | ✓ |
-| Administração / settings | `supplies.manage` | — | — | opt | ✓ |
-| Overview e KPIs | `supplies.analytics.view` | opt | ✓ | ✓ | ✓ |
-| Solicitações (escopo CC) | `supplies.purchase-requests.view` | ✓ | opt | opt | ✓ |
-| Bypass CC **dentro da unidade** | `supplies.purchase-requests.view-all` | ✓ típico | — | opt | ✓ |
-| Exportar SC | `supplies.purchase-requests.export` | opt | opt | opt | ✓ |
-| Pedidos / entregas / OTD operacional | `supplies.purchase-orders.view` | ✓ | opt | ✓ | ✓ |
-| Fornecedores / 360 | `supplies.suppliers.view` | ✓ | opt | ✓ | ✓ |
-| Produtos / 360 / onde-usado | `supplies.products.view` | ✓ | opt | ✓ | ✓ |
-| Controle estoque + ESTSEG + consumo | `supplies.inventory.view` | ✓ | opt | ✓ | ✓ |
-| Negociações / savings | `supplies.negotiations.view` | opt | ✓ | ✓ | ✓ |
-| Worklist / alertas | coberto por `access` + caps de recurso | ✓ | ✓ | ✓ | ✓ |
+Catálogo alvo P0/P1:
 
-Unidade **não aparece nesta tabela**. Quem vê SC, ESTSEG ou CPV de qual site é só o eixo B.
+| Capability | Permission | Uso |
+|---|---|---|
+| Entrar no Portal / Home / Ajuda / busca / preferências próprias | `supplies.portal.access` | base do produto |
+| Solicitações de Compras no escopo permitido | `supplies.purchase-requests.access` | lista, detalhe e jornada SC |
+| Operação de compras | `supplies.operations.access` | pedidos, entregas, fornecedores, produtos, estoque, ESTSEG, follow-ups e notas operacionais |
+| Análises e indicadores | `supplies.analytics.access` | Overview, KPIs, CPV, OTD gerencial, giro, savings |
+| Administração | `supplies.administration.manage` | mappings, scopes, settings homologados |
+| Ver todas as SC do CC dentro da unidade | `supplies.purchase-requests.view-all` | exceção de escopo já existente |
+| Exportar SC | `supplies.purchase-requests.export` | saída em massa; manter separado enquanto houver risco/auditoria diferenciados |
 
-Admin de mapping CC: `supplies.manage` (não criar `supplies.purchase-requests.admin`).
+### Capabilities que NÃO serão criadas por padrão
 
----
+Não criar automaticamente:
 
-## Como montar um papel (exemplos)
+```text
+supplies.tasks.view
+supplies.tasks.write
+supplies.tasks.create
+supplies.tasks.complete
+supplies.suppliers.notes.write
+supplies.inventory.view
+supplies.products.view
+supplies.suppliers.view
+```
 
-| Papel | Eixo A | Eixo B |
-|-------|--------|--------|
-| Suprimentos — Comprador SC | access + PR.view + view-all + PO + suppliers + products + inventory | `unit.filial-01` |
-| Suprimentos — Analista SC e ES | access + analytics + negotiations | `unit.filial-01` **e** `unit.filial-02` |
-| Suprimentos — Solicitante ES | access + PR.view (sem view-all) | `unit.filial-02` |
-| Suprimentos — Gestor multi | Analista + inventory + suppliers + products | todas as units do catálogo vigente |
-| Suprimentos — Admin | eixo A completo + manage | units que administra (em geral todas) |
+se a mesma segurança puder ser obtida com `operations.access` + unidade + ownership/escopo de recurso.
 
-Comprador ES no Core: ainda **HIPOTESE_A_VALIDAR** (E1.S2). O **modelo** já o admite: mesmo eixo A do comprador + só `filial-02`.
+Uma nova permission só é criada se houver diferença comprovada de público, risco, segregação de função, administração, exportação sensível, operação em massa ou delegação independente.
 
 ---
 
-## Aliases obrigatórios (coexistência)
+## 4. Tasks e follow-ups
 
-| Legado (não apagar) | Resolve para |
-|---------------------|----------------|
-| `dashboard-supplies.view` | eixo A `analytics.view` (**não** concede unidade) |
-| `purchase-requests.access` | eixo A `purchase-requests.view` |
-| `purchase-requests.view-all` | eixo A `view-all` |
-| `purchase-requests.export` | eixo A `export` |
-| `purchase-requests.admin` | eixo A `manage` |
-| `purchase-requests.unit.filial-01` | eixo B `unit.filial-01` |
-| `purchase-requests.unit.filial-02` | eixo B `unit.filial-02` |
-| `estoque-seguranca.access` | eixo A `inventory.view` |
-| `estoque-seguranca.view.filial-sc` | eixo B `unit.filial-01` |
-| `estoque-seguranca.view.filial-es` | eixo B `unit.filial-02` |
-| `idd-suprimentos.access` | eixo A `analytics.view` **após** dump Core |
+P0 não separa leitura/escrita de tasks por permission.
 
-Quem hoje tem só `dashboard-supplies.view` **sem** unit legado: no cutover o papel precisa **ganhar** `supplies.unit.filial-*` explícito (senão fail-closed). Registrar na E3 / cutover de papéis — não “inventar consolidado universal”.
+```text
+supplies.portal.access
++ acesso à capability do recurso referenciado
++ unit permitida
++ ownership/regra de equipe
+→ listar/criar/editar/concluir follow-up permitido
+```
 
-Resolução no BFF: `has(canônico) OR has(alias)` **dentro do mesmo eixo**.
+Exemplo: uma task ligada a PC da filial 02 não pode ser criada/concluída por usuário sem acesso à filial 02 ou sem acesso operacional ao PC, mesmo que a task esteja atribuída a ele.
+
+Se no futuro existir necessidade real de usuário consultar tasks sem poder operá-las, reavaliar via ADR-007.
 
 ---
 
-## Proibido
+## 5. Notas de fornecedor
 
-- `supplies.inventory.view.filial-01` e qualquer `{feature}.{ação}.filial-*` novo
-- Recriar `filial-sc` / `filial-es` como canônico
-- `if role == comprador` ou `if unidade == SC` no MFE
-- Copiar code PT do PO (`controle-estoque-sc.access`) para contrato novo
-- Tratar `manage` como “vê todas as filiais”
+Na P0, nota interna faz parte da jornada operacional do fornecedor:
+
+```text
+supplies.operations.access
+AND unidade autorizada
+AND fornecedor no escopo
+```
+
+Não criar `supplies.suppliers.notes.write` apenas porque existe POST/PATCH.
+
+Separar a permission somente se a homologação provar que o público que consulta fornecedor é materialmente maior que o público autorizado a registrar notas.
 
 ---
 
-## Codes do PO (não canônicos)
+## 6. Administração e segregação de função
 
-`importados.access`, `onde-e-usado.access`, `matriz_atraso-fornecedores.access`, `alcada-compras.access`, `controle-estoque-sc.access`, `idd-suprimentos.access`: **CONFIRMADO_POR_EVIDENCIA_DO_PRODUCT_OWNER**. Após dump: mapear para eixo A (e o site da pessoa continua no eixo B). O sufixo `-sc` do BI **não** vira permission nova — unidade já está no eixo B.
+`supplies.administration.manage` permanece separada porque altera configuração/escopo e possui risco diferente do uso normal.
+
+A futura jornada de alçadas só ganhará permission própria, por exemplo `supplies.approvals.manage`, se executar aprovação/rejeição ou outra ação de risco segregado. Apenas consultar informação de alçada não justifica novo code.
+
+---
+
+## 7. Matriz de decisão para permission nova
+
+Antes de criar qualquer permission, preencher:
+
+| Capability candidata | Operações | Mesmo público? | Mesmo risco? | Ownership resolve? | Unit scope resolve? | Permission nova? | Justificativa |
+|---|---|---:|---:|---:|---:|---:|---|
+
+Se uma capability existente + unidade + ownership preservar a segurança, a nova permission é redundante e não deve ser criada.
+
+---
+
+## 8. Papéis exemplificativos
+
+| Papel | Capabilities | Eixo B |
+|---|---|---|
+| Comprador SC | portal + operations + purchase-requests + view-all | `filial-01` |
+| Analista SC/ES | portal + analytics; operations somente se necessário | `filial-01` + `filial-02` |
+| Solicitante ES | portal + purchase-requests, sem view-all | `filial-02` |
+| Gestor multi | portal + analytics + operations | units atribuídas |
+| Admin | portal + administration + capabilities necessárias | units administradas |
+
+Comprador ES no Core continua **HIPOTESE_A_VALIDAR**; o modelo não exige novas permissions funcionais para ele, apenas composição de papel + `filial-02`.
+
+---
+
+## 9. Aliases de coexistência
+
+Aliases preservam compatibilidade no BFF, mas **não substituem provisionamento do novo app no Core**. Para o Portal aparecer em `/me/apps` e `/me/routes`, os papéis precisam receber as permissions canônicas do `supplies` durante a coexistência.
+
+| Legado | Compatibilidade alvo |
+|---|---|
+| `dashboard-supplies.view` | `supplies.analytics.access` |
+| `purchase-requests.access` | `supplies.purchase-requests.access` |
+| `purchase-requests.view-all` | `supplies.purchase-requests.view-all` |
+| `purchase-requests.export` | `supplies.purchase-requests.export` |
+| `purchase-requests.admin` | `supplies.administration.manage` |
+| `purchase-requests.unit.filial-01` | `supplies.unit.filial-01` |
+| `purchase-requests.unit.filial-02` | `supplies.unit.filial-02` |
+| `estoque-seguranca.access` | `supplies.operations.access` |
+| `estoque-seguranca.view.filial-sc` | `supplies.unit.filial-01` |
+| `estoque-seguranca.view.filial-es` | `supplies.unit.filial-02` |
+| `idd-suprimentos.access` | `supplies.analytics.access` somente após confirmação no Core |
+
+Os códigos evidenciados pelo Product Owner (`importados.access`, `onde-e-usado.access`, `matriz_atraso-fornecedores.access`, `alcada-compras.access`, `controle-estoque-sc.access`, `idd-suprimentos.access`) permanecem **CONFIRMADO_POR_EVIDENCIA_DO_PRODUCT_OWNER** até dump do Core.
+
+---
+
+## 10. Proibido
+
+- espelhar CRUD em permission codes;
+- criar permission por botão, modal, aba ou endpoint;
+- `supplies.{feature}.{action}.filial-*` novo;
+- recriar `filial-sc` / `filial-es` como canônico;
+- `if role == comprador` ou `if unidade == SC` no MFE;
+- tratar administração como acesso automático a todas as unidades;
+- confiar em permissions/is_superadmin do JWT como autorização final;
+- usar alias no BFF como substituto de provisionamento RBAC no Core.
