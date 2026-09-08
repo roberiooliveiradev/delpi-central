@@ -1,31 +1,28 @@
-# Minha DELPI Chat (plugin)
+# Minha DELPI Chat
 
 Microfrontend React do **Minha DELPI Chat**, carregado pelo Portal via Module Federation.
 
-## Documentação
+## Fontes técnicas vigentes
 
-| Área | Caminho |
-|------|---------|
-| **Documentação técnica (API)** | [../../minha-delpi-ai-api/docs/README.md](../../minha-delpi-ai-api/docs/README.md) |
-| API backend (HTTP) | [../../minha-delpi-ai-api/docs/api/README.md](../../minha-delpi-ai-api/docs/api/README.md) |
-| Modelo conceitual (chat, skills, actions…) | [../../minha-delpi-ai-api/docs/api/12-modelo-conceitual.md](../../minha-delpi-ai-api/docs/api/12-modelo-conceitual.md) |
-| Inteligência no chat base (agentes herdam) | [../../minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md](../../minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md) |
-| Skills (API) | [../../minha-delpi-ai-api/docs/api/11-skills.md](../../minha-delpi-ai-api/docs/api/11-skills.md) |
-| Admin (componentes) | [src/ui/components/admin/README.md](src/ui/components/admin/README.md) |
-| **Refatoração frontend (roadmap)** | [docs/frontend-refactor-roadmap.md](docs/frontend-refactor-roadmap.md) |
-| Estrutura de componentes | [docs/component-structure.md](docs/component-structure.md) |
-| **Exportação (CSV/XLSX/PDF/PNG)** | [docs/export.md](docs/export.md) |
-| CSS apresentação rica | [docs/rich-presentation-css.md](docs/rich-presentation-css.md) |
-| Roadmap admin | [../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
-| Gestão de agentes | [../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
-| Projetos colaborativos (futuro) | [../../minha-delpi-ai-api/docs/roadmap/projetos-colaborativos-futuro.md](../../minha-delpi-ai-api/docs/roadmap/projetos-colaborativos-futuro.md) |
-| Changelog workspace (jun/2026) | [../../minha-delpi-ai-api/docs/changelog/2026-06-workspace-projetos-agentes-ui.md](../../minha-delpi-ai-api/docs/changelog/2026-06-workspace-projetos-agentes-ui.md) |
-| Status da plataforma | [../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md](../../docs/12-roadmap-e-evolucao/minha-delpi-chat/status-atual.md) |
+| Área | Fonte |
+|------|-------|
+| Arquitetura do chat | [chat-intelligence-base.md](../../minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md) |
+| Actions OpenAPI | [04-actions-openapi.md](../../minha-delpi-ai-api/docs/api/04-actions-openapi.md) |
+| Nova API/action | [new-api-route-checklist.md](../../minha-delpi-ai-api/docs/architecture/new-api-route-checklist.md) |
+| Evals R1–R11 | [chat-ai-flow-families.md](../../minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md) |
+| API HTTP | [api/README.md](../../minha-delpi-ai-api/docs/api/README.md) |
+| Modelo conceitual | [12-modelo-conceitual.md](../../minha-delpi-ai-api/docs/api/12-modelo-conceitual.md) |
+| Skills | [11-skills.md](../../minha-delpi-ai-api/docs/api/11-skills.md) |
+| Admin do plugin | [src/ui/components/admin/README.md](src/ui/components/admin/README.md) |
+| Exportação | [docs/export.md](docs/export.md) |
+| Estrutura frontend | [docs/component-structure.md](docs/component-structure.md) |
+
+Roadmaps e changelogs não são fonte de arquitetura para este plugin.
 
 ## Identificação
 
 | Campo | Valor |
-|-------|--------|
+|-------|-------|
 | Manifesto | `delpi.manifest.json` |
 | `basePath` | `/apps/minha-delpi-chat` |
 | API | `/apps/minha-delpi-ai/api` |
@@ -38,120 +35,101 @@ npm install
 npm run dev
 ```
 
-Build para o gateway:
+Build:
 
 ```bash
 npm run build
 ```
 
-O Nginx serve `dist/` em `/apps/minha-delpi-chat/assets/`.
+O gateway serve os assets do MFE em `/apps/minha-delpi-chat/assets/`.
 
-## Estrutura do código
+## Estrutura principal
 
 ```text
 src/
-  export/            # Módulo canônico: runChatExport, PDF certificado DELPI (ver docs/export.md)
-  data/api/          # chatApi.ts, adminApi.ts, tipos
-  state/             # chatStreamHandoff.ts, chatMessageDelivery.ts
-  state/hooks/       # useChatSession, useChatAdmin, …
-  ui/
-    pages/           # ChatPage, ChatAdminPage, ChatAgentsPage
-    components/      # chat, admin (abas modulares)
-    components/shared/  # primitivos overlay, composer, menus — ver docs/frontend-refactor-roadmap.md
-    components/presentation/  # ChatRich* (tabela, gráfico, KPI, árvore, dashboard)
-    components/composer/      # ChatInput, mention menu, selectors de formato/modo
-    components/message/       # ChatAssistantContent, registry, segmentos
-    components/workspace/     # WorkspaceFileCard, dropzone, ingest CSS
+  export/
+  data/api/
+  state/
+  state/hooks/
+  ui/pages/
+  ui/components/
+  ui/components/presentation/
+  ui/components/composer/
+  ui/components/message/
+  ui/components/workspace/
 ```
 
-Ver roadmap: [docs/frontend-refactor-roadmap.md](docs/frontend-refactor-roadmap.md) · mapa de pastas: [docs/component-structure.md](docs/component-structure.md).
+## Responsabilidade do frontend
 
-## Experiência do usuário (chat)
+O MFE é cliente da inteligência da API. Ele deve:
 
-- Sessões com pin, arquivo e renomear
-- Mensagens com streaming, fontes, tool calls e anexos (cards na timeline com `readingStatus`; edição de anexos ao **reenviar** pergunta com preview em card/modal)
-- Log de atividade em tempo real (SSE `activity`) com três pontos pulsando durante o carregamento
-- Tabelas/gráficos/árvore/KPI via **`ChatAssistantContent`** — ver [Apresentação no chat](../../minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md)
-- **Exportação:** tabelas, gráficos, árvores, KPIs e dashboards — **CSV**, **Excel** e **PDF** via módulo [`src/export/`](docs/export.md) (`ChatPresentationExportButtons` + `runChatExport`); gráficos mantêm **PNG**; **PDF** usa layout certificado DELPI (logo, cabeçalho e rodapé — mesmo visual do relatório de desenho); desenho técnico exporta PDF/MD/CSV/XLSX com `ChatDrawingExportButtons`
-- **Lousa (canvas):** card inline na conversa com prévia do markdown + modal para editar/salvar; comando «coloque na lousa/canvas» após uma resposta do assistente
-- Playback da resposta após persistência no servidor (efeito de digitação sem perder texto ao recarregar)
-- **Handoff stream → histórico:** ao concluir o turno, `chatStreamHandoff` insere a mensagem do assistente na timeline antes de desmontar a bolha de streaming (evita piscar / placeholder `generating` vazio); `loadMessages` em background sincroniza com o servidor
-- **Feedback** (thumbs up/down) em respostas do assistente
-- Agentes, projetos, fontes e anexos por contexto
-- **Projetos:** criar (nome + ícone), settings modal, «Gerenciar projeto», arrastar conversas soltas para projetos na sidebar
-- **Agentes:** ícones Lucide (modal com busca + atalhos) no builder
-- **Composer:** badges de contexto (`ChatComposerContextBadges`); menus `@` e `+` ancorados no caret
-- **Modais:** botões de fechar/ação padronizados (`chat-modal.css`)
-- **Corretor de digitação (Playbook 14):** chip pré-envio para typos operacionais (`estouque` → `estoque`); aceitar ou manter original; textos em `message_composer.json` (sync: `npm run sync:message-composer-content`)
-- Notificações (sino) quando habilitado na Core API
+- enviar mensagens e consumir send/stream;
+- renderizar `presentationDecision`/`renderPlan`;
+- exibir tabelas, gráficos, árvores, KPIs e demais segmentos declarados;
+- preservar estados de loading, activity, playback e feedback;
+- aplicar a UI de agentes, projetos, fontes, anexos e admin;
+- não recriar routing, RBAC, policy ou decisão operacional localmente.
 
-### Gestão de agentes (plugin)
+Fluxo de apresentação:
 
-Fluxo: **Lista de agentes** → **Builder** (configurar) → **Skills** (comportamento) / **Actions** (OpenAPI).
-
-| Recurso | Descrição |
-|---------|-----------|
-| Builder | Instruções, visibilidade, **quebra-gelos** (antes de Skills; placeholders `{{productCode}}`), **publicar** rascunho, preview, stats colapsáveis, duplicar |
-| Skills | Comportamentos de prompt por agente (ex.: Especialista SQL, company-knowledge); badge de execução SQL quando action `/data/sql` habilitada |
-| Actions | Providers OpenAPI, rotas, teste e logs |
-| Compartilhar | Busca de usuário (sem UUID manual); editar papel viewer/editor |
-| Transferir | Dono pode transferir propriedade |
-| Export / Import | JSON portável da configuração + actions |
-| Duplicate | `copyActions` e `copySources` opcionais |
-| Lista | Métricas de uso (7 dias), inativos, badges de papel |
-| Preview | Simulação com rascunho (`POST /chat/agents/preview` ou `.../{id}/preview`) antes de publicar |
-| Publicar | `POST /chat/agents/{id}/publish` — visitantes só veem versão publicada |
-
-Detalhes: [roadmap agentes](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md).
-
-## Apresentação rica (desenvolvimento)
-
-| Tópico | Onde |
-|--------|------|
-| Arquitetura API + MFE | [`chat-assistant-content-presentation.md`](../../minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md) |
-| Corretor de digitação (composer) | [Playbook 14](../../minha-delpi-ai-api/docs/roadmap/playbook-14-corretor-digitacao-chat.md) · [changelog](../../minha-delpi-ai-api/docs/changelog/2026-06-playbook-14-corretor-digitacao-composer.md) |
-| Workspace projetos/agentes (jun/2026) | [changelog](../../minha-delpi-ai-api/docs/changelog/2026-06-workspace-projetos-agentes-ui.md) |
-| Playbook 09 (decisão de formato) | [`playbook-09-apresentacao-rica.md`](../../minha-delpi-ai-api/docs/roadmap/playbook-09-apresentacao-rica.md) |
-| Novo componente visual | `registerAssistantSegmentRenderer` em `src/ui/components/assistantContentRegistry.tsx` |
-| Segmentos / layout | `assistantContentSegments.ts`, `assistantContentLayout.ts`, `assistantContentVisualFormats.ts` |
-| Entrada única na UI | `ChatMessageList` → `ChatAssistantContent` (não usar `ChatRichPresentation` — removido) |
-
-## Painel administrativo
-
-Acesso via botão **Admin** na UI (requer `minha-delpi.chat.admin`).
-
-Navegação em **6 seções** (sub-abas por seção). No topo deve aparecer `admin-v2-6secoes` ao lado do título — se ainda vir 10 abas planas (Conhecimento, Métricas, Diretrizes…), o MFE no Docker está desatualizado:
-
-```bash
-cd infra
-docker compose -f docker-compose.dev.yml up --build -d minha-delpi-chat
+```text
+API: schema-driven presentation
+→ presentationDecision
+→ renderPlan
+→ ChatAssistantContent
+→ renderizadores registrados no MFE
 ```
 
-Depois: hard refresh no browser (Ctrl+Shift+R).
+O frontend não deve conhecer path/provider/operationId para decidir a apresentação de uma Action.
 
-| Seção | Sub-abas | Função |
-|-------|----------|--------|
-| Painel | — | KPIs e atalhos |
-| Conhecimento | Documentos, Diretrizes, Comportamentos | Base global, skills |
-| Agentes | Especialização, Simulação | Agentes e sandbox |
-| Qualidade | Métricas, Avaliações | Observabilidade e feedback |
-| Plataforma | Ferramentas, Inteligência | Tools/LLM e toggles do pipeline |
-| Governança | Segurança, Auditoria | RBAC, scan, trilha |
+## Experiência do chat
 
-## Permissões (manifesto)
+- sessões e histórico;
+- streaming SSE/activity/playback;
+- agentes, projetos, fontes e anexos;
+- Actions OpenAPI autorizadas pelo agente;
+- RAG e pesquisa web quando habilitados;
+- lousa/canvas;
+- feedback de respostas;
+- apresentação estruturada e exportação;
+- painel administrativo.
 
-Consulte `delpi.manifest.json`. Principais:
+## Gestão de agentes
 
-- `minha-delpi.chat.access` — uso geral
-- `minha-delpi.chat.ask` — enviar mensagens
-- `minha-delpi.chat.admin` — painel administrativo
-- `minha-delpi.chat.tools.manage` — agentes e actions próprios
+Fluxo:
 
-O frontend usa `GET /chat/capabilities` e `GET /admin/rbac/summary`; não infere permissões só pelo JWT.
+```text
+Lista de agentes
+→ Builder
+→ Skills / Knowledge / Actions
+→ Preview
+→ Publicação
+```
+
+Actions são operations importadas de providers OpenAPI. O MFE administra configuração/binding; o backend mantém seleção, validação, policy e execução.
+
+## Permissões
+
+Consulte `delpi.manifest.json`. Principais permissões incluem:
+
+- `minha-delpi.chat.access`
+- `minha-delpi.chat.ask`
+- `minha-delpi.chat.admin`
+- `minha-delpi.chat.tools.manage`
+
+O frontend usa capabilities/RBAC efetivos da plataforma e não deriva autorização completa apenas do JWT.
 
 ## Clientes HTTP
 
-- `chatApi.ts` — rotas `/chat/*`
-- `adminApi.ts` — rotas `/admin/*`
+- `chatApi.ts` — `/chat/*`
+- `adminApi.ts` — `/admin/*`
 
-Base: `const API_BASE_URL = "/apps/minha-delpi-ai/api"`.
+Base pública da API:
+
+```text
+/apps/minha-delpi-ai/api
+```
+
+## Regra de implementação
+
+Mudança de comportamento inteligente deve ser implementada no chat base e validada pelo protocolo R1–R11. Mudança apenas visual permanece no MFE, respeitando `renderPlan` e o design system.
