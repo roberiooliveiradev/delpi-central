@@ -1,9 +1,19 @@
 from flask import Blueprint, g, jsonify, request
 
+from app.application.services.capability_resolution_service import (
+    CapabilityResolutionService,
+)
 from app.application.services.preferences_service import PreferencesService
 from app.interfaces.http.auth_decorators import require_permission
 
 me_bp = Blueprint("me", __name__)
+
+
+@me_bp.get("/me/capabilities")
+@require_permission("supplies.portal.access")
+def get_capabilities():
+    service = CapabilityResolutionService()
+    return jsonify(service.resolve(g.current_user)), 200
 
 
 @me_bp.get("/me/preferences")

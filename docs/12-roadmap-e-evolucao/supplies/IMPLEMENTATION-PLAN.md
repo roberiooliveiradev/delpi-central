@@ -1,7 +1,7 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
-> **Status:** plano executável revisado · set/2026 · **não implementar sem autorização explícita**  
-> **Readiness atual:** **E1 concluída (GATE-E1 + GATE-ARCH PASS)** · próximo = E2 após autorização · GATE-AUTHZ/RBAC pendentes  
+> **Status:** plano executável revisado · set/2026 · **E2 concluída** · MFE/E3 não iniciar sem autorização explícita  
+> **Readiness atual:** **E1 + E2 + GATE-AUTHZ PASS** · próximo = E3 após autorização · GATE-RBAC pendente  
 > Referências: ADR-001..ADR-007, `plan-construction.mdc`, `evidence-driven-execution.mdc`.
 
 ---
@@ -711,22 +711,22 @@ todos:
     dependsOn: [e1-s3-kpi-freeze, e1-s4-manifest-rbac]
 
   - id: e2-s1-flask-scaffold
-    status: pending
+    status: completed
     dependsOn: [e1-s5-architecture-freeze]
   - id: e2-s2-core-first-authz
-    status: pending
+    status: completed
     dependsOn: [e2-s1-flask-scaffold]
   - id: e2-s3-errors-observability
-    status: pending
+    status: completed
     dependsOn: [e2-s2-core-first-authz]
   - id: e2-s4-sql-schema
-    status: pending
+    status: completed
     dependsOn: [e2-s1-flask-scaffold]
   - id: e2-s5-delpi-gateway
-    status: pending
+    status: completed
     dependsOn: [e2-s2-core-first-authz]
   - id: e2-s6-capabilities
-    status: pending
+    status: completed
     dependsOn: [e2-s2-core-first-authz]
 
   - id: e3-s1-mfe-scaffold
