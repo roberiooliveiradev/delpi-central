@@ -1,0 +1,190 @@
+---
+description: Enforcement arquitetural no CI — gates incrementais contra hardcode de rota/provider, crescimento do registry legado, HTTP sem timeout, retry inseguro e secrets
+alwaysApply: false
+---
+
+# Fase 3 — enforcement arquitetural executável
+
+## Princípio
+
+Diretriz crítica deve possuir gate automatizado quando houver sinal estático confiável.
+
+Fonte executável:
+
+```text
+scripts/ci/audit_architecture_phase3.py
+.github/workflows/architecture-enforcement.yml
+scripts/ci/architecture_phase3_exceptions.json
+```
+
+O gate é **incremental/diff-aware**:
+
+```text
+legado existente
+→ pode permanecer durante migração
+
+nova regressão
+→ bloqueia CI
+```
+
+Isso permite reduzir dívida monotonicamente sem exigir big bang.
+
+Complementa `openapi-first-universal-tool-routing.mdc`, `ai-external-tools-security.mdc`, `http-integration-resilience.mdc`, `observability-standards.mdc` e `contract-evolution-backward-compatibility.mdc`.
+
+## Gates obrigatórios
+
+### `CHAT_ROUTE_HARDCODE`
+
+Bloquear novo conhecimento específico de endpoint/provider no motor genérico de actions, por exemplo:
+
+```python
+if "/products/" in path:
+    ...
+
+if action_id.startswith("api_delpi."):
+    ...
+```
+
+Canônico:
+
+```text
+OpenAPI importado
+→ Action Catalog/index
+→ retrieval/planner/validator genéricos
+```
+
+### `LEGACY_REGISTRY_GROWTH`
+
+`operational_route_registry.json` é legado de migração.
+
+Em `routes` manuais, o CI não deve aceitar normalmente:
+
+- novo route id;
+- novo `pathMarkers`;
+- novo `operationIdMarkers`;
+- novo `excludePathMarkers`;
+- novo `routeSegment`;
+- novo `pathSuffix`/`pathExactEnd`;
+- mudança/adicionamento de `method` técnico;
+- nova `parameters.strategy` específica.
+
+Remover dependência técnica é permitido. `autoTierCRoutes` não é contado como crescimento manual por este gate.
+
+### `HTTP_TIMEOUT_REQUIRED`
+
+Nova chamada/client HTTP Python detectável deve declarar `timeout` explicitamente.
+
+Bloquear também `timeout=None`.
+
+O gate cobre os clients diretos mais comuns (`requests`, `httpx`, `aiohttp`). Wrappers próprios continuam obrigados a seguir `http-integration-resilience.mdc`, mesmo quando análise estática não consegue provar o timeout.
+
+### `UNSAFE_WRITE_RETRY`
+
+Nova configuração `Retry(allowed_methods=...)` não pode incluir POST/PUT/PATCH/DELETE por padrão.
+
+Se uma escrita é comprovadamente idempotente e precisa de retry, registrar exceção arquitetural temporária ou evoluir o gate/contrato para representar essa garantia de forma canônica — nunca simplesmente desativar o scanner.
+
+### `SECRET_IN_LOG`
+
+Bloquear nova passagem óbvia de token, API key, senha, secret, Authorization, cookie ou credential para logger/`print`/`console.*` sem redaction explícita.
+
+Metadata segura como `token_count`, `token_usage`, `token_type` não é tratada como segredo.
+
+### `SECRET_LITERAL`
+
+Bloquear novos padrões óbvios de:
+
+- chave privada;
+- credencial embutida em URL;
+- API key/client secret/password/access token/refresh token literal em código/config de produção.
+
+Fixtures/testes/docs são excluídos deste scanner específico. O gate não substitui secret scanning dedicado do GitHub/infra.
+
+## Exceções
+
+Exceção não pode ser comentário inline, wildcard ou `# noqa` genérico.
+
+Arquivo canônico:
+
+```text
+scripts/ci/architecture_phase3_exceptions.json
+```
+
+Cada exceção exige:
+
+```json
+{
+  "rule": "RULE_ID",
+  "path": "caminho/exato.py",
+  "fingerprint": "fingerprint emitido pelo CI",
+  "owner": "responsável",
+  "reason": "justificativa arquitetural concreta",
+  "reviewBy": "YYYY-MM-DD"
+}
+```
+
+Regras:
+
+- fingerprint é específico da violação;
+- `reason` deve explicar por que o canônico não pode ser aplicado ainda;
+- `reviewBy` expirado falha o CI;
+- exceção deve ter caminho de remoção;
+- não reutilizar fingerprint para outro caso.
+
+## Evolução dos gates
+
+Scanner estático deve priorizar baixo falso positivo e sinais arquiteturais verificáveis.
+
+Quando um anti-padrão relevante não puder ser detectado com segurança:
+
+```text
+não inventar regex frágil
+→ adicionar teste/metric/eval apropriado
+→ ou melhorar o scanner com AST/contrato
+```
+
+Os gates devem evoluir junto com novos clients/padrões canônicos.
+
+## Compatibilidade com legado
+
+Não reescrever toda a plataforma apenas para o gate ficar verde.
+
+Se o gate revelar violação antiga fora do diff:
+
+- registrar dívida/migração quando relevante;
+- manter o scanner incremental;
+- remover o legado por fases;
+- nunca criar baseline que autorize novas ocorrências indiscriminadamente.
+
+## Execução local
+
+Antes de concluir mudança relevante:
+
+```bash
+python -m unittest scripts/ci/test_audit_architecture_phase3.py -v
+python scripts/ci/audit_architecture_phase3.py --check --base <commit-base>
+```
+
+No GitHub, `Architecture Enforcement` resolve automaticamente a base de PR/push.
+
+## O que NÃO fazer
+
+- Alterar o scanner para aceitar um endpoint específico recém-criado.
+- Adicionar wildcard de exceção.
+- Mover hardcode Python para `operational_route_registry.json` para enganar o gate.
+- Colocar `timeout=999999` apenas para satisfazer o scanner sem SLO.
+- Marcar write como retry-safe sem idempotência real.
+- Redigir segredo somente depois de enviá-lo ao logger.
+- Desabilitar workflow porque o gate encontrou regressão real.
+
+## Critério de sucesso
+
+A arquitetura passa a possuir pressão automática na direção correta:
+
+```text
+novo diff
+→ scanner determinístico
+→ regressão arquitetural bloqueada
+→ exceção explícita e temporária quando inevitável
+→ dívida legada só pode estabilizar ou diminuir
+```
