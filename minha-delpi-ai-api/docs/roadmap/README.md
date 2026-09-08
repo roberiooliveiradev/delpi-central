@@ -1,6 +1,6 @@
 # Roadmap — Minha DELPI AI
 
-Este diretório registra evolução e planejamento. **Roadmap não é fonte canônica de arquitetura nem de critério de testes.**
+Este diretório contém somente planejamento que ainda é válido para evolução futura. **Roadmap não é fonte canônica de arquitetura nem de critério de testes.**
 
 Para implementar no estado atual, consultar primeiro:
 
@@ -21,14 +21,29 @@ Para implementar no estado atual, consultar primeiro:
 | [`melhorias-futuras.md`](./melhorias-futuras.md) | Backlog de melhorias futuras explicitamente não implementadas. |
 | [`melhorias/BACKLOG_ROADMAP.md`](./melhorias/BACKLOG_ROADMAP.md) | Backlog priorizado quando aplicável. |
 
-## Regra para documentos concluídos/datados
+## Política de limpeza documental
 
-Arquivos de ondas, playbooks concluídos e changelogs podem permanecer como registro de decisões/entregas, mas:
+Documento técnico concluído, substituído ou contraditório **não permanece no repositório como guia histórico**.
 
-- não devem ser usados pelo Cursor como instrução atual;
-- não prevalecem sobre arquitetura/docs/regras vigentes;
-- não devem ser copiados para novas implementações sem validação no código atual;
-- se contradisserem fonte vigente, a fonte antiga deve ser corrigida/removida, não conciliada silenciosamente.
+```text
+decisão antiga útil apenas para auditoria
+→ histórico do Git
+
+decisão ainda válida
+→ incorporar na fonte canônica atual
+
+documento substituído/contraditório
+→ remover do working tree
+```
+
+Regras:
+
+- não manter playbook concluído que ensine arquitetura diferente da vigente;
+- não manter redirecionamento, aviso “legado”, “histórico” ou “use o novo” como substituto da remoção;
+- não deixar links para documentos removidos;
+- não duplicar a arquitetura vigente em vários roadmaps;
+- decisões ainda válidas devem ser absorvidas pelas fontes canônicas antes da remoção do documento antigo;
+- Git history é a fonte para investigação histórica, não o working tree indexável pelo Cursor.
 
 ## Antes de iniciar uma implementação
 
