@@ -1,5 +1,5 @@
 ---
-description: Enforcement arquitetural no CI — gates incrementais contra hardcode de rota/provider, catálogo técnico paralelo, HTTP sem timeout, retry inseguro e secrets
+description: Enforcement arquitetural no CI — gates incrementais da plataforma contra hardcodes, migrations mutadas, CSS MFE global, override do plugin-ui, JWT inseguro, HTTP/retry e secrets
 alwaysApply: false
 ---
 
@@ -7,47 +7,30 @@ alwaysApply: false
 
 ## Princípio
 
-Diretriz crítica deve possuir gate automatizado quando houver sinal estático confiável.
+Diretriz crítica deve possuir gate automatizado quando houver **sinal estático confiável e baixo risco de falso positivo**.
 
 Fontes executáveis:
 
 ```text
 scripts/ci/audit_architecture_phase3.py
+scripts/ci/audit_platform_guardrails.py
+scripts/ci/test_audit_architecture_phase3.py
+scripts/ci/test_audit_platform_guardrails.py
 .github/workflows/architecture-enforcement.yml
 scripts/ci/architecture_phase3_exceptions.json
 ```
 
-O gate é diff-aware: nova regressão bloqueia CI; remoção de dívida é sempre permitida.
+Os gates são diff-aware quando há dívida histórica: nova regressão bloqueia CI; remoção de dívida é permitida.
 
-## Gates
+## Gates do motor Chat AI / integrações
 
 ### `CHAT_ROUTE_HARDCODE`
 
-Bloqueia conhecimento específico de endpoint/provider no motor genérico, por exemplo:
-
-```python
-if "/products/" in path:
-    ...
-if action_id.startswith("api_delpi."):
-    ...
-```
-
-Canônico: OpenAPI → Action Catalog → retrieval/planner/validator.
+Bloqueia conhecimento específico de endpoint/provider no motor genérico. Canônico: OpenAPI → Action Catalog → retrieval/planner/validator.
 
 ### Catálogo técnico paralelo de endpoints
 
-O CI deve impedir crescimento de estruturas manuais que recriem contrato de routing por endpoint, como:
-
-```text
-pathMarkers
-operationIdMarkers
-routeSegment
-pathSuffix/pathExactEnd
-method técnico duplicado
-parameters.strategy específica da rota
-```
-
-O identificador interno do scanner pode manter compatibilidade com versões anteriores do gate, mas **a arquitetura vigente não considera esse catálogo uma opção de implementação**. Novo endpoint entra pelo OpenAPI/Action Catalog.
+Impede crescimento de estruturas manuais que recriem contrato de routing por endpoint. Novo endpoint entra por OpenAPI/Action Catalog.
 
 ### `HTTP_TIMEOUT_REQUIRED`
 
@@ -65,15 +48,74 @@ Bloqueia token, API key, password, Authorization, cookie ou credential óbvio en
 
 Bloqueia padrões óbvios de private key, credencial em URL e secrets literais em código/config de produção.
 
+## Gates transversais da plataforma
+
+### `IMMUTABLE_MIGRATION_MUTATION`
+
+Migration SQL versionada no padrão `**/migrations/**/VNN__*.sql` pode ser **adicionada**, mas não modificada, renomeada ou removida depois de versionada.
+
+Canônico:
+
+```text
+schema precisa mudar
+→ nova migration
+→ upgrade testável
+→ rollout/rollback coerente
+```
+
+Não editar migration antiga para “corrigir checksum” ou alinhar ambiente.
+
+### `MFE_GLOBAL_CSS`
+
+Bloqueia novo seletor CSS global em MFE (`body`, `html`, `:root` isolado, `#root`, `*`) que possa vazar para o Portal/ outros plugins.
+
+Permitido: seletor explicitamente escopado, por exemplo `:root[data-theme="dark"] .dashboard-foo`.
+
+### `MFE_PLUGIN_UI_OVERRIDE`
+
+Bloqueia estilização de classes `.delpi-ui-*` dentro do CSS do MFE.
+
+Canônico:
+
+```text
+bug/novo comportamento do componente compartilhado
+→ plugins/plugin-ui
+→ CSS canônico do kit
+→ MFE usa tokens + layout de página
+```
+
+Variáveis `--delpi-ui-*` continuam permitidas no root escopado do plugin.
+
+### `JWT_VERIFY_DISABLED`
+
+Bloqueia nova configuração explícita que desabilite verificação de assinatura/certificado JWT em código de produção, como `verify_signature=False`.
+
+Esse gate **não substitui** testes de autorização nem validação completa de issuer/audience. Ele cobre somente um sinal estático inequívoco.
+
+## O que ainda NÃO deve virar regex genérica
+
+Não criar gate simplista para “toda rota precisa ter `@require_permission`”, porque o monorepo possui múltiplos stacks válidos: decorators locais, `shared/delpi_auth`, dependencies, service tokens e políticas de aplicação.
+
+Para AuthZ e boundaries entre apps:
+
+```text
+inventariar stacks/padrões reais
+→ modelar contratos/allowlists arquiteturais mínimos
+→ testar detector contra positivo + exceções legítimas
+→ somente então bloquear CI
+```
+
+Health/readiness, rotas públicas explícitas e integrações service-to-service não devem virar falsos positivos.
+
 ## Exceções
 
-Arquivo:
+O scanner Phase 3 possui exceções temporárias em:
 
 `scripts/ci/architecture_phase3_exceptions.json`
 
 Cada exceção exige rule, path exato, fingerprint, owner, reason e `reviewBy`.
 
-Wildcards, `# noqa` genérico e exceção sem data de revisão são proibidos.
+Os novos guardrails transversais foram desenhados para sinais determinísticos e **não possuem bypass genérico**. Se surgir caso legítimo não modelado, corrigir a regra de detecção de forma geral + adicionar teste; não inserir ignore por arquivo como primeira resposta.
 
 ## Evolução dos gates
 
@@ -81,7 +123,10 @@ Quando um anti-padrão não puder ser detectado com confiança:
 
 ```text
 não criar regex frágil
-→ adicionar teste/eval/AST/contrato adequado
+→ estudar padrões reais do repo
+→ adicionar AST/contrato/manifest/allowlist semântica
+→ positive + legitimate-negative tests
+→ ativar gate diff-aware
 ```
 
 Nunca enfraquecer scanner apenas para o diff atual passar.
@@ -90,25 +135,31 @@ Nunca enfraquecer scanner apenas para o diff atual passar.
 
 ```bash
 python -m unittest scripts/ci/test_audit_architecture_phase3.py -v
+python -m unittest scripts/ci/test_audit_platform_guardrails.py -v
 python scripts/ci/audit_architecture_phase3.py --check --base <commit-base>
+python scripts/ci/audit_platform_guardrails.py --check --base <commit-base>
 ```
 
 ## O que NÃO fazer
 
-- Alterar scanner para aceitar endpoint recém-criado.
+- Alterar scanner para aceitar o caso recém-criado sem generalização.
 - Adicionar wildcard de exceção.
 - Mover hardcode Python para JSON técnico por endpoint.
 - Colocar timeout absurdo só para satisfazer o gate.
 - Marcar write retry-safe sem idempotência real.
-- Logar secret e tentar redigir somente depois.
+- Editar migration aplicada/versionada.
+- Corrigir `plugin-ui` por override local `.delpi-ui-*`.
+- Adicionar `body/:root/#root/*` global em MFE.
+- Desabilitar assinatura JWT para “fazer autenticação funcionar”.
 - Desabilitar workflow porque detectou regressão.
 
 ## Critério de sucesso
 
 ```text
 novo diff
-→ scanner determinístico
+→ responsabilidade transversal identificada
+→ scanner determinístico quando possível
 → regressão bloqueada
-→ exceção específica/temporária somente quando inevitável
-→ arquitetura não acumula novo acoplamento
+→ dívida existente não cresce
+→ arquitetura converge para os owners canônicos
 ```
