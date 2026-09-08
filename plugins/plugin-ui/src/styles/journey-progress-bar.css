@@ -9,7 +9,8 @@
   flex-direction: column;
   gap: 0.45rem;
   width: 100%;
-  max-width: 40rem;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   color: var(--delpi-ui-text, var(--text, #111111));
 }
@@ -19,17 +20,20 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .delpi-ui-journey-progress__label {
   font-size: 0.9rem;
   font-weight: 650;
+  min-width: 0;
 }
 
 .delpi-ui-journey-progress__value {
   font-size: 0.9rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
 }
 
 .delpi-ui-journey-progress__track {
@@ -57,4 +61,14 @@
   margin: 0;
   font-size: 0.8rem;
   color: var(--delpi-ui-muted, var(--text-muted, #666666));
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-journey-progress {
+    gap: 0.35rem;
+  }
+
+  .delpi-ui-journey-progress__track {
+    height: 0.5rem;
+  }
 }
