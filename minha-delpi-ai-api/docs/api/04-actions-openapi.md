@@ -1,26 +1,32 @@
 # 04 — Actions OpenAPI por agente
 
-Actions externas são providers OpenAPI globais vinculados a agentes. O chat comum não deve executar actions externas. O fluxo correto é:
+**Status:** vigente  
+**Arquitetura:** OpenAPI-first universal  
+**Checklist:** [`../architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md)  
+**Evals:** [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
 
-**Provider api-delpi:** após deploy da API, rode `scripts/sync_api_delpi_openapi.py` (reimport + embeddings + catálogo em `docs/knowledge/_generated/`) e mantenha o documento RAG [`../knowledge/api-delpi-rotas-agente.md`](../knowledge/api-delpi-rotas-agente.md) indexado.
+Actions externas são operations importadas de providers OpenAPI e vinculadas explicitamente a agentes. O chat comum não executa essas actions sem agente/capability autorizada.
 
 ```text
-Agente -> Provider/API -> Rotas/actions importadas do OpenAPI -> Permissões por agente
+Provider OpenAPI
+→ import/index
+→ Action Catalog
+→ agent binding
+→ allowed actions
+→ retrieval/planner
+→ OpenAPI validator
+→ policy/confirmation
+→ executor HTTP genérico
+→ schema-driven presentation
 ```
 
-## Roteamento OpenAPI-first (universal)
+## Regra de plugabilidade
 
-Para APIs externas (fora do monorepo), o caminho canônico é:
+Uma API externa nunca vista pelo repositório deve funcionar após importar/indexar e vincular ao agente **sem** cadastrar markers, intents, selectors, parameter strategies ou presenters por endpoint.
 
-1. Importar o OpenAPI do provider (refs `$ref` resolvidos no import).
-2. Vincular actions permitidas ao agente (`allowed_action_ids`).
-3. Perguntar em linguagem natural — **sem** cadastrar `pathMarkers` / `parameterStrategy` por endpoint.
+O contrato técnico da operation vem do OpenAPI/Action Catalog.
 
-Com `CHAT_OPENAPI_PLANNER_MODE=on` (default), a seleção **sempre** usa retrieval híbrido + planner + validação contra o schema do Action Catalog. Plano vazio → esclarecimento fail-closed (`openapiFirstNoMatch`), **sem** cair no registry.
-
-O `operational_route_registry.json` permanece só para políticas SQL/refinamento, playbook predicates e rollback (`mode=off`). `autoTierCRoutes` saiu do runtime e vive em `operational_route_registry_autotierc.ci.json` (CI/gerador).
-
-Escrita/destrutiva continua exigindo confirmação (`ChatWriteConfirmationService`). Roadmap: [`../roadmap/openapi-first-universal-tool-routing.md`](../roadmap/openapi-first-universal-tool-routing.md).
+---
 
 ## Tipos principais
 
@@ -55,7 +61,7 @@ Escrita/destrutiva continua exigindo confirmação (`ChatWriteConfirmationServic
   "operationId": "get_product_stock",
   "method": "GET",
   "path": "/products/{code}/stock",
-  "summary": "Consulta produto por código",
+  "summary": "Consulta estoque de um produto",
   "description": "...",
   "tags": ["products"],
   "parametersSchema": [],
@@ -74,99 +80,73 @@ Escrita/destrutiva continua exigindo confirmação (`ChatWriteConfirmationServic
   "id": "uuid",
   "agentId": "uuid",
   "providerKey": "api-delpi",
-  "providerName": "API DELPI",
-  "providerType": "openapi",
-  "baseUrl": "https://...",
-  "openApiUrl": "https://.../openapi.json",
-  "privacyPolicyUrl": "https://...",
   "enabled": true,
   "allowRead": true,
   "allowWrite": false,
   "allowAdmin": false,
   "requiresConfirmationForWrite": true,
-  "actionCount": 96,
-  "createdAt": "datetime",
-  "updatedAt": "datetime"
+  "actionCount": 96
 }
 ```
-
-## Auth modes
-
-| `authMode` | Comportamento |
-|---|---|
-| `none` | Não adiciona autenticação à chamada externa. |
-| `user_token` | Repassa o `Authorization` do usuário para a API externa. Use para APIs internas que validam permissões do usuário, como API DELPI. |
-| `api_key` | Usa `authConfig` para montar header de autenticação. |
-
-Exemplo `api_key`:
-
-```json
-{
-  "authMode": "api_key",
-  "authConfig": {
-    "headerName": "Authorization",
-    "scheme": "bearer",
-    "apiKey": "token-ou-chave"
-  }
-}
-```
-
-## Sensitivity
-
-| Sensitivity | Uso |
-|---|---|
-| `read` | Rotas de leitura. |
-| `sql` | Rotas que executam SQL somente leitura. |
-| `export` | Exportações/arquivos. |
-| `write` | Escrita. |
-| `admin` | Operações administrativas. |
-| `destructive` | Operações destrutivas. |
 
 ---
 
+## Autenticação do provider
+
+| `authMode` | Comportamento |
+|---|---|
+| `none` | Sem header de autenticação adicional. |
+| `user_token` | Propaga o token do usuário para API compatível com a identidade DELPI. |
+| `api_key` | Usa segredo configurado no provider para montar o header. |
+
+Segredos de provider não entram em prompt, resposta ou logs.
+
+---
+
+## Sensitivity
+
+| Valor | Uso |
+|------|-----|
+| `read` | Leitura |
+| `sql` | Consulta SQL autorizada |
+| `export` | Exportação/arquivo |
+| `write` | Escrita |
+| `admin` | Operação administrativa |
+| `destructive` | Operação destrutiva |
+
+Sensitivity é combinada com agent binding, RBAC/policy e confirmation. O modelo não pode relaxar essas regras.
+
+---
+
+# Endpoints
+
 ## GET `/chat/action-providers`
 
-Lista providers globais disponíveis.
+Lista providers globais visíveis ao usuário autorizado.
 
-### Permissão
+**Permissão:** `minha-delpi.chat.access`
 
-`minha-delpi.chat.access`
-
-### Resposta `200`
-
-`ChatActionProvider[]`
+**Resposta:** `ChatActionProvider[]`
 
 ---
 
 ## GET `/chat/actions`
 
-Lista actions/rotas importadas.
+Lista actions importadas.
 
-### Permissão
+**Permissão:** `minha-delpi.chat.access`
 
-`minha-delpi.chat.access`
+Query opcional: `providerKey` ou `provider_key`.
 
-### Query params
-
-| Parâmetro | Tipo | Descrição |
-|---|---|---|
-| `providerKey` | `string` | Filtra rotas de um provider. Também aceita `provider_key`. |
-
-### Resposta `200`
-
-`ChatActionCatalogItem[]`
+**Resposta:** `ChatActionCatalogItem[]`
 
 ---
 
 ## POST `/chat/agents/{agentId}/providers/create`
 
-Cria provider, importa schema e vincula ao agente em um único fluxo.
+Cria provider, importa schema e vincula ao agente.
 
-### Permissão
-
-`minha-delpi.chat.tools.manage`; se o agente é oficial/system, exige `minha-delpi.chat.admin` ou superadmin.
-
-### Body
+**Permissão:** `minha-delpi.chat.tools.manage`; agentes oficiais/system exigem também autorização administrativa aplicável.
 
 ```json
 {
@@ -175,7 +155,6 @@ Cria provider, importa schema e vincula ao agente em um único fluxo.
   "type": "openapi",
   "baseUrl": "https://minhadelpi.com.br/apps/api-delpi",
   "openApiUrl": "https://minhadelpi.com.br/apps/api-delpi/openapi.json",
-  "privacyPolicyUrl": "https://...",
   "authMode": "user_token",
   "authConfig": {},
   "enabled": true,
@@ -186,9 +165,9 @@ Cria provider, importa schema e vincula ao agente em um único fluxo.
 }
 ```
 
-Também aceita `schema`, `schemaJson` ou `schema_json` para importação inline.
+Também pode aceitar schema inline conforme o contrato do endpoint.
 
-### Resposta `201`
+Resposta típica `201`:
 
 ```json
 {
@@ -208,27 +187,13 @@ Também aceita `schema`, `schemaJson` ou `schema_json` para importação inline.
 
 Lista providers vinculados ao agente.
 
-### Permissão
-
-`minha-delpi.chat.access`
-
-### Resposta `200`
-
-`ChatAgentActionProvider[]`
+**Permissão:** `minha-delpi.chat.access`
 
 ---
 
 ## PUT `/chat/agents/{agentId}/providers`
 
-Cria ou atualiza vínculo entre agente e provider existente.
-
-**Configuração de ambiente:** use este endpoint (ou `scripts/upsert_agent_provider.py`) para habilitar/desabilitar `api-delpi` / `api-externa` no agente. **Não** use migration Alembic com `UPDATE` em `ai_chat_agent_action_providers` — o head de schema não deve carregar dados operacionais.
-
-### Permissão
-
-`minha-delpi.chat.tools.manage`; agente oficial/system exige `chat.admin` ou superadmin.
-
-### Body
+Cria/atualiza o binding entre agente e provider existente.
 
 ```json
 {
@@ -241,39 +206,21 @@ Cria ou atualiza vínculo entre agente e provider existente.
 }
 ```
 
-### Resposta `200`
-
-```json
-{
-  "saved": true
-}
-```
+Configuração operacional deve ser feita por API/script administrativo, não por migration de schema com dados de ambiente.
 
 ---
 
 ## GET `/chat/agents/{agentId}/providers/{providerKey}`
 
-Detalha provider vinculado ao agente, incluindo schema salvo.
-
-### Permissão
-
-`minha-delpi.chat.access`
-
-### Resposta `200`
-
-`ChatActionProvider`
+Detalha provider vinculado ao agente, incluindo schema/configuração permitida.
 
 ---
 
 ## PATCH `/chat/agents/{agentId}/providers/{providerKey}`
 
-Atualiza configurações do provider/API.
+Atualiza configuração do provider.
 
-### Permissão
-
-`minha-delpi.chat.tools.manage`; agente oficial/system exige `chat.admin` ou superadmin.
-
-### Body
+Campos típicos:
 
 ```json
 {
@@ -287,30 +234,18 @@ Atualiza configurações do provider/API.
 }
 ```
 
-### Resposta `200`
-
-`ChatActionProvider`
-
 ---
 
 ## POST `/chat/agents/{agentId}/providers/{providerKey}/import`
 
-Atualiza/importa rotas a partir da URL OpenAPI configurada.
-
-### Modos
+Importa/reimporta o OpenAPI configurado e atualiza o Action Catalog/index.
 
 | Query | Resposta | Comportamento |
 |-------|----------|---------------|
-| (padrão) | `200` | Import síncrono legado (import + embed conforme config) |
-| `?async=true` | `202` | Enfileira job; embeddings em fase separada |
+| padrão | `200` | import síncrono |
+| `?async=true` | `202` | job assíncrono |
 
-Playbook: [`playbook-16-openapi-import-async-e-readiness-operacional.md`](../roadmap/playbook-16-openapi-import-async-e-readiness-operacional.md).
-
-### Permissão
-
-`minha-delpi.chat.tools.manage`; agente oficial/system exige `chat.admin` ou superadmin.
-
-### Resposta `202` (`async=true`)
+Resposta assíncrona típica:
 
 ```json
 {
@@ -318,13 +253,12 @@ Playbook: [`playbook-16-openapi-import-async-e-readiness-operacional.md`](../roa
   "providerKey": "api-delpi",
   "status": "queued",
   "phase": "queued",
-  "phaseLabel": "Na fila",
-  "progress": { "done": 0, "total": 0, "unit": "actions" },
+  "progress": {"done": 0, "total": 0, "unit": "actions"},
   "pollUrl": "/chat/providers/api-delpi/import/jobs/uuid"
 }
 ```
 
-### Resposta `200` (síncrono)
+Resposta síncrona típica:
 
 ```json
 {
@@ -334,73 +268,31 @@ Playbook: [`playbook-16-openapi-import-async-e-readiness-operacional.md`](../roa
 }
 ```
 
+O import deve produzir dados suficientes para retrieval/planning a partir de summary/description/tags/params/body/response schema.
+
 ---
 
 ## GET `/chat/providers/{providerKey}/import/jobs/{jobId}`
 
-Status do job de import (poll a cada 1–2s na UI).
-
-### Permissão
-
-`minha-delpi.chat.access`
-
-### Resposta `200`
-
-Mesmo formato do corpo `202` acima, com `progress.done` / `progress.total` atualizados por fase.
+Consulta progresso do job de import.
 
 ---
 
 ## GET `/chat/providers/{providerKey}/import/jobs/latest`
 
-Último job do provider (badge de indexação em background no builder).
-
-### Permissão
-
-`minha-delpi.chat.access`
-
-### Resposta
-
-`200` — último job; `404` — nenhum job registrado.
+Retorna o último job conhecido do provider ou `404` se não existir.
 
 ---
 
 ## GET `/chat/agents/{agentId}/actions`
 
-Lista overrides de actions configurados para o agente.
-
-### Permissão
-
-`minha-delpi.chat.access`
-
-### Resposta `200`
-
-```json
-[
-  {
-    "id": "uuid",
-    "agentId": "uuid",
-    "providerKey": "api-delpi",
-    "actionId": "api_delpi.health.root_health_get",
-    "enabled": true,
-    "sensitivity": "read",
-    "requiresConfirmation": false,
-    "createdAt": "datetime",
-    "updatedAt": "datetime"
-  }
-]
-```
+Lista overrides/actions do agente.
 
 ---
 
 ## PUT `/chat/agents/{agentId}/actions`
 
-Cria ou atualiza override de action no agente.
-
-### Permissão
-
-`minha-delpi.chat.tools.manage`; agente oficial/system exige `chat.admin` ou superadmin.
-
-### Body
+Cria/atualiza configuração de uma action no agente.
 
 ```json
 {
@@ -412,41 +304,21 @@ Cria ou atualiza override de action no agente.
 }
 ```
 
-### Resposta `200`
-
-```json
-{
-  "ok": true
-}
-```
-
 ---
 
 ## POST `/chat/agents/{agentId}/providers/{providerKey}/actions/{actionId}/test`
 
-Executa teste direto de uma rota/action.
-
-### Permissão
-
-`minha-delpi.chat.access`
-
-### Body
+Executa teste administrativo direto da action autorizada.
 
 ```json
 {
-  "pathParams": {
-    "code": "PRD001"
-  },
-  "query": {
-    "limit": "10"
-  },
-  "body": {
-    "sql": "select * from tabela limit 10"
-  }
+  "pathParams": {"code": "PRD001"},
+  "query": {"limit": "10"},
+  "body": {}
 }
 ```
 
-### Resposta `200`
+Resposta típica:
 
 ```json
 {
@@ -459,64 +331,65 @@ Executa teste direto de uma rota/action.
 }
 ```
 
+O endpoint de teste não autoriza bypass de RBAC/policy/sensitivity.
+
 ---
 
 ## GET `/chat/agents/{agentId}/providers/{providerKey}/actions/{actionId}/logs`
 
-Lista logs de teste de uma rota/action.
+Lista logs de teste da action conforme permissões. Logs devem aplicar redaction de secrets/tokens e limites de payload.
 
-### Permissão
+---
 
-`minha-delpi.chat.access`
+# Seleção em linguagem natural
 
-### Query params
+Após import + binding:
 
-| Parâmetro | Tipo | Default |
-|---|---|---|
-| `limit` | `number` | `20` |
-
-### Resposta `200`
-
-```json
-[
-  {
-    "id": "uuid",
-    "providerKey": "api-delpi",
-    "actionId": "api_delpi.health.root_health_get",
-    "method": "GET",
-    "url": "https://...",
-    "requestPayload": {},
-    "statusCode": 200,
-    "ok": true,
-    "durationMs": 22,
-    "responsePreview": "{...}",
-    "errorMessage": null,
-    "createdAt": "datetime"
-  }
-]
+```text
+mensagem
+→ decomposição quando composta
+→ allowed actions
+→ retrieval top-K
+→ planner
+→ OpenAPI validation
+→ policy/confirmation
+→ execution
 ```
 
-## Rotas operacionais declarativas (legado / rollback)
+Regras:
 
-Com OpenAPI-first ativo (`mode=on`), **não** cadastre rota nova no registry para seleção. O caminho canônico é OpenAPI importado + actions no agente.
+- específica vs genérica é resolvida semanticamente;
+- planner só escolhe candidates autorizadas;
+- required ausente gera clarify;
+- nenhuma URL arbitrária pode ser produzida/executada pelo LLM;
+- providers equivalentes não recebem bias por nome/prefixo;
+- follow-up usa contexto estruturado;
+- resposta não depende de presenter por endpoint.
 
-O `operational_route_registry.json` ainda cobre políticas (`fallbackPolicies`, SQL readiness, playbook predicates) e o pipeline legado quando `CHAT_OPENAPI_PLANNER_MODE=off`.
+---
 
-### Checklist para nova rota GET (legado `mode=off`)
+# Testes obrigatórios
 
-1. **OpenAPI** — path, `operationId` e parâmetros estáveis no provider (sempre obrigatório).
-2. **Agente** — provider habilitado; action em `allowed_action_ids`.
-3. **Seleção** — com `mode=on`, nada além disso; o planner usa o schema.
-4. **Registry (só se `mode=off`)** — entrada em `routes[]` com match/parameters/presentation.
-5. **Teste** — fixture OpenAPI externa desconhecida + caso DELPI irmão/negativo.
+Mudanças neste fluxo seguem R1–R11.
 
-### Multi-provider (mesmo path, actionIds diferentes)
+Quando o motor de actions for alterado, provar:
 
-Quando dois providers expõem o mesmo path (ex.: `api_delpi.*` e `api_externa.*`), a seleção **não** usa bias por prefixo. Desempate pela **ordem das actions no agente** (`allowed_action_ids`). Configure a ordem dos providers/actions no agente conforme a preferência operacional.
+1. actions semanticamente próximas;
+2. multi-provider;
+3. no-tool;
+4. args/required/type/enum;
+5. API externa desconhecida;
+6. teste metamórfico de path/operationId;
+7. pedido composto;
+8. multi-turn;
+9. safety/policy;
+10. outcome/task success;
+11. performance/efficiency.
 
-### Referências
+Referências vigentes:
 
-- OpenAPI-first: `openapi_tool_routing.json`, `RetrieveActionCandidatesService`, `PlanExternalActionsService`
-- Registry (legado/policies): `app/content/pt-BR/assistant/operational_route_registry.json`
-- autoTierC (CI only): `operational_route_registry_autotierc.ci.json`
-- Roadmap: `docs/roadmap/openapi-first-universal-tool-routing.md`
+- [`../architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md)
+- [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)
+- [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
+- `.cursor/rules/openapi-first-universal-tool-routing.mdc`
+- `.cursor/rules/ai-intelligence-evaluation.mdc`
