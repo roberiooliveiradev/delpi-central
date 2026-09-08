@@ -22,6 +22,7 @@ export const MANUAL_TOOL_TARGETS: readonly ManualToolTarget[] = [
   { label: "Produtos", viewId: "products" },
   { label: "Entregas", viewId: "deliveries" },
   { label: "Estoque", viewId: "inventory" },
+  { label: "OTD", viewId: "analytics_otd" },
   { label: "Início", viewId: "home" },
   { label: "Ajuda", viewId: "help" },
 ] as const;

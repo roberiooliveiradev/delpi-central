@@ -4,6 +4,7 @@ export const SUPPLIES_BASE_PATH = "/apps/supplies";
 export type PluginView =
   | "home"
   | "overview"
+  | "analytics_otd"
   | "my_tasks"
   | "purchase_requests"
   | "purchase_orders"
@@ -56,6 +57,7 @@ export function normalizeBasePath(basePath?: string): string {
 
 const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   overview: "overview",
+  "analytics/otd": "analytics_otd",
   "my-tasks": "my_tasks",
   "purchase-requests": "purchase_requests",
   "purchase-orders": "purchase_orders",
@@ -73,6 +75,7 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
 export const PLUGIN_VIEW_RELATIVE_PATHS: Record<PluginRoutableView, string> = {
   home: "",
   overview: "overview",
+  analytics_otd: "analytics/otd",
   my_tasks: "my-tasks",
   purchase_requests: "purchase-requests",
   purchase_orders: "purchase-orders",
@@ -151,6 +154,7 @@ export function resolveActiveNavId(view: PluginView): PluginNavId | null {
     case "home":
       return "home";
     case "overview":
+    case "analytics_otd":
     case "negotiations":
     case "indicators":
       return "overview";

@@ -62,11 +62,13 @@ export const SP_HELP = {
   overviewFiltersFrom: "Data inicial do recorte analítico compartilhado na URL.",
   overviewFiltersTo: "Data final do recorte analítico compartilhado na URL.",
   overviewFiltersBranch:
-    "Filial liberada no seu escopo, ou consolidado (todas as liberadas). Filial fora do escopo é bloqueada pela API.",
+    "Unidades liberadas no seu escopo (Santa Catarina e/ou Espírito Santo). Vazio ou ambas = consolidado. Unidade fora do escopo é bloqueada pela API.",
   overviewOtdChart:
-    "Série mensal de OTD de pedidos de compra. Usa o mesmo filtro de filial e período da Visão geral.",
+    "Série de OTD de pedidos de compra. Usa o mesmo filtro de unidade e período da Visão geral. Abra OTD para ver os velocímetros.",
   overviewCompareChart:
     "Barras valor × meta só para KPIs de intervalo que já vieram no overview — não inventa série CPV/Savings.",
+  otdAnalyticsPage:
+    "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas (atrasos do dia).",
   purchaseRequests:
     "Lista linhas de SC no escopo de centro de custo e filial. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação CSV exige permissão separada.",
   userProfile:

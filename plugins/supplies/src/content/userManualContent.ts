@@ -71,12 +71,17 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Ver indicadores do período",
           where: "Visão geral",
-          how: "Filtros de período e filial no topo; KPIs, gráfico OTD e comparativo valor×meta",
+          how: "Filtros de período e Unidade (MultiSelect Santa Catarina / Espírito Santo); KPIs, gráfico OTD e comparativo valor×meta",
+        },
+        {
+          want: "Ver OTD com velocímetro",
+          where: "OTD",
+          how: "Velocímetros por unidade e série no tempo; mesmos filtros da Visão geral. Diferente de Entregas (atrasos do dia)",
         },
         {
           want: "Compartilhar o mesmo recorte da Visão geral",
           where: "Visão geral",
-          how: "A URL guarda filial e datas — copie o link com o filtro ativo",
+          how: "A URL guarda unidade(s) e datas — copie o link com o filtro ativo",
         },
         {
           want: "Abrir solicitações de compras (SC)",
@@ -131,6 +136,7 @@ export const USER_MANUAL_CONTENT = {
       bullets: [
         "Início — atenção, busca, favoritos e caminhos por capability.",
         "Visão geral — cockpit de KPIs do período (não é a tela inicial).",
+        "OTD — velocímetros de pontualidade e evolução; abra pelo Início, catálogo Análises ou CTA da Visão geral.",
         "Solicitações de compras — lista/detalhe no escopo CC+filial; exportação CSV com permissão separada.",
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
@@ -152,6 +158,10 @@ export const USER_MANUAL_CONTENT = {
           a: "Não. OTD mede pontualidade no período. Atrasos do dia aparecem em Entregas / operação — não use um como substituto do outro.",
         },
         {
+          q: "Qual a diferença entre Visão geral e a página OTD?",
+          a: "A Visão geral é o placar de KPIs do período (com série OTD). A página OTD mostra velocímetros por unidade (Santa Catarina / Espírito Santo) e a evolução no tempo. Ambas usam o mesmo filtro de Unidade e período.",
+        },
+        {
           q: "Os indicadores do Sheets são os mesmos do Portal?",
           a: "Não automaticamente. O Portal usa indicadores homologados nas fichas e na Visão geral; planilhas externas podem divergir até a paridade.",
         },
@@ -169,15 +179,15 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Por que um card da Visão geral aparece indisponível?",
-          a: "Uma fonte auxiliar falhou. Os demais indicadores continuam utilizáveis; atualize o período/filial ou tente de novo.",
+          a: "Uma fonte auxiliar falhou. Os demais indicadores continuam utilizáveis; atualize o período/unidade ou tente de novo.",
         },
         {
           q: "O que mostra o gráfico OTD na Visão geral?",
-          a: "A evolução mensal do OTD de pedidos de compra no mesmo filtro de filial e período dos KPIs. Se a série falhar, o restante da página continua utilizável.",
+          a: "A evolução do OTD de pedidos de compra no mesmo filtro de Unidade e período dos KPIs, com granularidade e exportação. Os velocímetros ficam na página OTD. Se a série falhar, o restante da página continua utilizável.",
         },
         {
-          q: "Como filtro filial e período na Visão geral?",
-          a: "Use o preset (este mês, trimestre…) ou as datas De/Até e a filial no topo. O link da página guarda o recorte para compartilhar.",
+          q: "Como filtro Unidade e período na Visão geral?",
+          a: "Use o preset (este mês, trimestre…) ou as datas De/Até e o MultiSelect Unidade (Santa Catarina / Espírito Santo). Vazio ou ambas = consolidado. O link da página guarda o recorte para compartilhar.",
         },
         {
           q: "Por que recebi 403?",

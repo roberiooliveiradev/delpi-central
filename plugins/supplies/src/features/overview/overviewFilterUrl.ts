@@ -1,10 +1,11 @@
+import { parsePeriodPresetId, type PeriodPresetId } from "./periodPreset";
 import {
-  parsePeriodPresetId,
-  type PeriodPresetId,
-} from "./periodPreset";
+  parseSuppliesBranchCsv,
+  serializeSuppliesBranchCsv,
+} from "./suppliesBranchFilters";
 
 export type OverviewFilterUrlState = {
-  branch: string;
+  branches: string[];
   from: string;
   to: string;
   period: PeriodPresetId | null;
@@ -19,12 +20,12 @@ function readSearchParams(): URLSearchParams {
 
 export function readOverviewFiltersFromUrl(): Partial<OverviewFilterUrlState> {
   const params = readSearchParams();
-  const branch = (params.get("branch") ?? "").trim();
+  const branchRaw = (params.get("branch") ?? "").trim();
   const from = (params.get("from") ?? "").trim();
   const to = (params.get("to") ?? "").trim();
   const period = parsePeriodPresetId(params.get("period"));
   return {
-    branch: branch || "",
+    branches: parseSuppliesBranchCsv(branchRaw),
     from: ISO_DATE.test(from) ? from : "",
     to: ISO_DATE.test(to) ? to : "",
     period,
@@ -34,7 +35,8 @@ export function readOverviewFiltersFromUrl(): Partial<OverviewFilterUrlState> {
 export function writeOverviewFiltersToUrl(state: OverviewFilterUrlState): void {
   if (typeof window === "undefined") return;
   const params = new URLSearchParams(window.location.search);
-  if (state.branch) params.set("branch", state.branch);
+  const branchCsv = serializeSuppliesBranchCsv(state.branches);
+  if (branchCsv) params.set("branch", branchCsv);
   else params.delete("branch");
   if (state.from) params.set("from", state.from);
   else params.delete("from");
@@ -50,7 +52,8 @@ export function writeOverviewFiltersToUrl(state: OverviewFilterUrlState): void {
 
 export function buildOverviewQueryString(state: OverviewFilterUrlState): string {
   const params = new URLSearchParams();
-  if (state.branch) params.set("branch", state.branch);
+  const branchCsv = serializeSuppliesBranchCsv(state.branches);
+  if (branchCsv) params.set("branch", branchCsv);
   if (state.from) params.set("from", state.from);
   if (state.to) params.set("to", state.to);
   if (state.period && state.period !== "custom") params.set("period", state.period);

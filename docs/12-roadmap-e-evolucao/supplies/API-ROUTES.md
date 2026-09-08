@@ -48,6 +48,7 @@ Qualquer regra `ANY_OF`/`ALL_OF` deve ser explícita no contrato; não usar “o
 | GET | `/home/attention` | `get_supplies_home_attention` | `supplies.portal.access` | quando card usa TOTVS | omitir cards sem capability/recurso | composição | **IMPLEMENTADO** |
 | GET | `/analytics/overview` | `get_supplies_overview` | `supplies.analytics.access` | sim | branch ∈ allowedUnits | api-delpi + SI | **IMPLEMENTADO** |
 | GET | `/analytics/otd/series` | `get_supplies_otd_series` | `supplies.analytics.access` | sim | branch ∈ allowedUnits | api-delpi `get_supplies_purchase_order_otd_series` | **IMPLEMENTADO** |
+| GET | `/analytics/otd` | `get_portal_otd` | `supplies.analytics.access` | sim | branch ∈ allowedUnits | api-delpi `get_supplies_otd` + SI | **IMPLEMENTADO** |
 | GET | `/purchase-requests` | `list_portal_purchase_requests` | `supplies.purchase-requests.access` | sim | escopo CC fail-closed; view-all só amplia CC | PR-api C1 / PG C2 | **IMPLEMENTADO_C1** |
 | GET | `/purchase-requests/{branch}/{number}` | `get_portal_purchase_request` | `supplies.purchase-requests.access` | sim | SC deve pertencer ao escopo efetivo | PR-api C1 / PG C2 | **IMPLEMENTADO_C1** |
 | GET | `/purchase-requests/export` | `export_portal_purchase_requests` | `access` + `export` + unit | sim | CC via PR-api | PR-api list hop | **IMPLEMENTADO_C1** |
@@ -62,7 +63,6 @@ Qualquer regra `ANY_OF`/`ALL_OF` deve ser explícita no contrato; não usar “o
 | GET | `/purchase-orders` | `list_portal_purchase_orders` | `supplies.operations.access` | sim | branch permitida | api-delpi PO-OTD/panel | COMPOSICAO_BFF |
 | GET | `/purchase-orders/{branch}/{number}` | `get_portal_purchase_order` | `supplies.operations.access` | sim | PC no recorte | api-delpi PO/receipts | COMPOSICAO_BFF |
 | GET | `/deliveries/late` | `list_portal_late_deliveries` | `supplies.operations.access` | sim | branch permitida | api-delpi PO-OTD panel | COMPOSICAO_BFF |
-| GET | `/analytics/otd` | `get_portal_otd` | `supplies.analytics.access` | sim | branch permitida | api-delpi `get_supplies_otd` | COMPOSICAO_BFF |
 | GET | `/analytics/cpv` | `get_portal_cpv` | `supplies.analytics.access` | sim | branch permitida | api-delpi `get_supplies_cpv` | COMPOSICAO_BFF |
 | GET | `/analytics/savings` | `get_portal_savings` | `supplies.analytics.access` | sim | branch permitida | api-delpi + SI | COMPOSICAO_BFF |
 | GET | `/suppliers` | `search_portal_suppliers` | `supplies.operations.access` | conforme fonte | restringir ao recorte possível | api-delpi / gap SA2 search | BLOQUEADO se busca SA2 faltar |

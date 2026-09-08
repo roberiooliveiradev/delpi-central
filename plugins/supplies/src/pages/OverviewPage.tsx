@@ -76,9 +76,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
   const hasPartial = (data?.partialFailures.length ?? 0) > 0;
 
   const homeHref = buildPluginPath("home", basePath);
-  const scopeBadge = filters.branch
-    ? OVERVIEW_CONTENT.scopeBadgeBranch(filters.branch)
-    : OVERVIEW_CONTENT.scopeBadgeAll;
+  const scopeBadge = filters.scopeBadge;
 
   return (
     <div className="sp-page-stack sp-overview">
@@ -124,12 +122,12 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
           period={filters.period}
           from={filters.from}
           to={filters.to}
-          branch={filters.branch}
-          unitOptions={units}
+          branches={filters.branches}
+          unitOptions={filters.unitOptions}
           onPeriod={filters.setPeriod}
           onFrom={filters.setFrom}
           onTo={filters.setTo}
-          onBranch={filters.setBranch}
+          onBranches={filters.setBranches}
         />
       </SuppliesPageHero>
 
@@ -166,6 +164,20 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
       <SuppliesSectionCard
         title={OVERVIEW_CONTENT.otdChartTitle}
         hint={OVERVIEW_CONTENT.otdChartHint}
+        actions={
+          <SuppliesActionButton
+            type="button"
+            variant="default"
+            onClick={() =>
+              navigatePluginView("analytics_otd", {
+                basePath,
+                search: typeof window !== "undefined" ? window.location.search : undefined,
+              })
+            }
+          >
+            {OVERVIEW_CONTENT.openOtdLabel}
+          </SuppliesActionButton>
+        }
       >
         <OverviewOtdSeriesChart filters={filters.apiParams} />
       </SuppliesSectionCard>

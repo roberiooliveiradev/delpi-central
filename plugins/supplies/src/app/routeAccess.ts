@@ -6,6 +6,7 @@ export function requiredCapabilityForView(
 ): keyof SuppliesCapabilityFlags | "none" {
   switch (view) {
     case "overview":
+    case "analytics_otd":
     case "negotiations":
     case "indicators":
       return "analytics";

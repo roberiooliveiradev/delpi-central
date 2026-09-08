@@ -16,6 +16,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { UserManualPage } from "./features/help/UserManualPage";
+import { OtdAnalyticsPage } from "./features/analytics/OtdAnalyticsPage";
 import { PurchaseRequestsPage } from "./features/purchase-requests/PurchaseRequestsPage";
 import { UserProfilePage } from "./features/users/UserProfilePage";
 
@@ -143,6 +144,8 @@ function AppRoutes({
     content = <HomePage basePath={basePath} />;
   } else if (view === "overview") {
     content = <OverviewPage basePath={basePath} />;
+  } else if (view === "analytics_otd") {
+    content = <OtdAnalyticsPage basePath={basePath} />;
   } else if (view === "help") {
     content = <UserManualPage basePath={basePath} />;
   } else if (view === "purchase_requests") {

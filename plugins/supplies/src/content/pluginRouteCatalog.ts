@@ -59,11 +59,18 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
         keywords: ["overview", "kpi", "visao"],
       },
       {
+        id: "analytics_otd",
+        label: "OTD",
+        viewId: "analytics_otd",
+        requiredCap: "analytics",
+        keywords: ["otd", "pontualidade", "velocimetro"],
+      },
+      {
         id: "negotiations",
         label: "Negociações",
         viewId: "negotiations",
         requiredCap: "analytics",
-        keywords: ["negociacao", "otd"],
+        keywords: ["negociacao", "economia"],
       },
       {
         id: "indicators",

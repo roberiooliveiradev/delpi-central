@@ -4,7 +4,7 @@
 > **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)**  
 > **Modo de entrega:** **uma página por vez até DoD** — não abrir a próxima enquanto a atual não estiver fechada  
 > **Página em foco:** **Solicitações de compras (WF-04)** — revalidar DoD C1  
-> **Última fechada:** **Visão geral (WF-02)** — DoD fechado  
+> **Última fechada:** **OTD analytics (WF-OTD-A)** + polish Overview **WF-02R** — DoD fechado  
 > **Fila após SC:** Pedidos de compra (E7) → Entregas → …  
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies`  
 > **API:** `supplies-api` · gateway `/apps/supplies-api/`  
@@ -26,7 +26,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | **E2 (supplies-api foundation)** | **concluída 2026-09-08** — Flask, GATE-AUTHZ, schema `supplies`, gateway api-delpi, `/me/capabilities` |
 | **E3 (MFE + RBAC coexistência)** | **concluída 2026-09-08** — `plugins/supplies`, client BFF-only, shell capability-driven, manifest Core, papéis canônicos |
 | **E4 (Home + Ajuda inicial)** | **concluída 2026-09-08** — `/home/attention`, Home capability-driven, Manual/Quero→onde/FAQ/glossário |
-| **E5 (Overview)** | **concluída 2026-09-08** — overview + série OTD + MFE kit (FilterBar/ChartViewShell); **WF-02 FECHADA** |
+| **E5 (Overview)** | **concluída 2026-09-08** — overview + série OTD + MFE kit; **WF-02 FECHADA**; polish **WF-02R** + **WF-OTD-A** (gauges `/analytics/otd`) |
 | **E6 (SC C1)** | **concluída 2026-09-08** — BFF `/purchase-requests*` → PR-api; lista/detalhe/export no Portal; evidência C2 |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** (fail-closed na fronteira; não usa claims JWT) |
@@ -36,7 +36,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | KPIs Overview P0 | **7 CONFIRMADOS**; cobertura/PO-LATE fora do Overview |
 | Manifest draft | **`schemaVersion 1.0.0`** registrado no Core local |
 | P-13 | **FECHADO** — Core `/me.id` UUID |
-| Implementação MFE | **modo página-a-página** · **Início + Visão geral fechados** · foco = **SC**; E7+ só após fechar a fila |
+| Implementação MFE | **modo página-a-página** · **Início + Visão geral + OTD analytics fechados** · foco = **SC**; E7+ só após fechar a fila |
 
 ### Gates
 
@@ -55,7 +55,8 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | # | Página | Rota | Estado |
 |---|---|---|---|
 | 1 | **Início** | `/apps/supplies` | **FECHADA (DoD)** |
-| 2 | **Visão geral** | `/overview` | **FECHADA (DoD)** |
+| 2 | **Visão geral** | `/overview` | **FECHADA (DoD)** · **WF-02R** |
+| — | **OTD analytics** | `/analytics/otd` | **FECHADA (DoD)** · **WF-OTD-A** (satélite analytics; ≠ WF-11) |
 | 3 | Solicitações de compras | `/purchase-requests` | **EM FOCO** — revalidar DoD C1 |
 | 4 | Pedidos de compra | `/purchase-orders` | placeholder → E7 |
 | 5 | Entregas | `/deliveries` | placeholder → E7 |
@@ -80,7 +81,9 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 2. Depois **E7 Pedidos de compra** (uma de cada vez).
 3. E7+ continua exigindo autorização explícita do Product Owner **e** página anterior fechada na fila.
 
-**Visão geral (WF-02) — DoD fechado:** BFF `/analytics/overview` + `/analytics/otd/series`, PageHero + FilterBar kit + URL sync, 7 KPIs, ChartViewShell OTD + comparativo valor×meta, Ajuda, testes API+MFE.
+**Visão geral (WF-02 / WF-02R) — DoD fechado:** BFF `/analytics/overview` + `/analytics/otd/series`, PageHero + FilterBar MultiSelect Unidade (SC/ES) + URL sync, 7 KPIs, ChartViewShell OTD completo + CTA «Abrir OTD», comparativo valor×meta, Ajuda, testes API+MFE.
+
+**OTD analytics (WF-OTD-A) — DoD fechado:** BFF `GET /analytics/otd`, página `/analytics/otd` com SpeedometerGauge por unidade + série, filtros compartilhados com Overview, Ajuda Quero→onde/FAQ.
 
 **Início (WF-01) — DoD fechado:** BFF `/home/attention`, PageHero + hub kit, Favoritos TopBar (localStorage P0), helps, loading/error/partial/empty, AuthZ portal, testes API+MFE.
 

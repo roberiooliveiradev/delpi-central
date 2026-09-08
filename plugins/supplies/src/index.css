@@ -471,6 +471,41 @@
   line-height: 1.45;
 }
 
+.dashboard-supplies-portal .sp-otd-analytics__gauges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .dashboard-supplies-portal .sp-otd-analytics__gauges {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.dashboard-supplies-portal .sp-otd-analytics__gauge-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  text-align: center;
+}
+
+.dashboard-supplies-portal .sp-otd-analytics__gauge-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.dashboard-supplies-portal .sp-otd-analytics__gauge-period,
+.dashboard-supplies-portal .sp-otd-analytics__gauge-meta {
+  margin: 0;
+  color: var(--sp-text-muted);
+  font-size: 0.85rem;
+}
+
 /* TopBar slots — layout only; pill Buscar vem do kit (TopBarSearchTrigger) */
 .dashboard-supplies-portal .sp-shell-secondary,
 .dashboard-supplies-portal .sp-shell-actions {

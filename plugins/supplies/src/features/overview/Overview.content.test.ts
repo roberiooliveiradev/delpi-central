@@ -8,12 +8,15 @@ import {
   temporalNatureLabel,
   todayIso,
 } from "./overviewContent";
-import {
-  buildOverviewQueryString,
-  readOverviewFiltersFromUrl,
-  writeOverviewFiltersToUrl,
-} from "./overviewFilterUrl";
+import { buildOverviewQueryString } from "./overviewFilterUrl";
 import { resolvePeriodPreset } from "./periodPreset";
+import {
+  formatOperationalUnitCode,
+  parseSuppliesBranchCsv,
+  resolveApiBranch,
+  serializeSuppliesBranchCsv,
+  suppliesUnitOptions,
+} from "./suppliesBranchFilters";
 
 describe("Overview content", () => {
   it("exposes temporal nature labels for all KPI natures", () => {
@@ -24,6 +27,7 @@ describe("Overview content", () => {
     expect(OVERVIEW_CONTENT.description).toMatch(/Início/i);
     expect(OVERVIEW_CONTENT.indicatorsTitle).toBe("Indicadores");
     expect(OVERVIEW_CONTENT.otdChartTitle).toMatch(/OTD/i);
+    expect(OVERVIEW_CONTENT.branchLabel).toBe("Unidade");
   });
 
   it("defaults period to first day of month through today", () => {
@@ -84,11 +88,11 @@ describe("Overview period presets", () => {
   });
 });
 
-describe("Overview URL filters", () => {
-  it("builds shareable query string and omits custom period", () => {
+describe("Overview URL filters + unit MultiSelect", () => {
+  it("builds shareable query with branch CSV codes", () => {
     expect(
       buildOverviewQueryString({
-        branch: "01",
+        branches: ["01"],
         from: "2026-09-01",
         to: "2026-09-08",
         period: "this_month",
@@ -96,7 +100,15 @@ describe("Overview URL filters", () => {
     ).toBe("?branch=01&from=2026-09-01&to=2026-09-08&period=this_month");
     expect(
       buildOverviewQueryString({
-        branch: "",
+        branches: ["01", "02"],
+        from: "2026-09-01",
+        to: "2026-09-08",
+        period: "custom",
+      }),
+    ).toBe("?branch=01%2C02&from=2026-09-01&to=2026-09-08");
+    expect(
+      buildOverviewQueryString({
+        branches: [],
         from: "2026-09-01",
         to: "2026-09-08",
         period: "custom",
@@ -104,15 +116,18 @@ describe("Overview URL filters", () => {
     ).toBe("?from=2026-09-01&to=2026-09-08");
   });
 
-  it("parses period from query helpers without DOM", () => {
-    expect(buildOverviewQueryString({
-      branch: "02",
-      from: "2026-01-01",
-      to: "2026-03-31",
-      period: "this_quarter",
-    })).toContain("period=this_quarter");
-    // readOverviewFiltersFromUrl is DOM-bound; query builder is the unit under test in node.
-    expect(typeof readOverviewFiltersFromUrl).toBe("function");
-    expect(typeof writeOverviewFiltersToUrl).toBe("function");
+  it("labels units as Santa Catarina and Espírito Santo", () => {
+    expect(formatOperationalUnitCode("01")).toBe("Santa Catarina");
+    expect(formatOperationalUnitCode("02")).toBe("Espírito Santo");
+    const options = suppliesUnitOptions(["01", "02"]);
+    expect(options.map((o) => o.label)).toEqual(["Santa Catarina", "Espírito Santo"]);
+  });
+
+  it("resolves API branch single vs consolidated", () => {
+    expect(resolveApiBranch(["01"], ["01", "02"])).toBe("01");
+    expect(resolveApiBranch(["01", "02"], ["01", "02"])).toBeUndefined();
+    expect(resolveApiBranch([], ["01", "02"])).toBeUndefined();
+    expect(parseSuppliesBranchCsv("01,02")).toEqual(["01", "02"]);
+    expect(serializeSuppliesBranchCsv(["01", "02"])).toBe("01,02");
   });
 });

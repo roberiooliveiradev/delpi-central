@@ -350,6 +350,21 @@ declare module "@delpi/plugin-ui/index" {
     type?: string;
   }>;
 
+  export function createDashboardMultiSelectField(config: {
+    prefix: string;
+    portalScopeClassName?: string;
+    labels: Record<string, unknown>;
+  }): ComponentType<{
+    label: string;
+    selectedValues: string[];
+    onChange: (value: string[]) => void;
+    options: Array<{ value: string; label: string }>;
+    emptyLabel?: string;
+    searchable?: boolean;
+    hint?: string;
+    className?: string;
+  }>;
+
   export function createDashboardSegmentToggle(prefix: string): ComponentType<{
     ariaLabel?: string;
     idPrefix?: string;
@@ -358,6 +373,19 @@ declare module "@delpi/plugin-ui/index" {
     onChange: (value: string) => void;
     options: Array<{ value: string; label: string }>;
   }>;
+
+  export const OPERATIONAL_UNIT_FIELD_LABEL: string;
+  export const OPERATIONAL_UNIT_COLUMN_LABEL: string;
+  export const OPERATIONAL_UNIT_OPTIONS: Array<{ value: string; label: string }>;
+  export function formatOperationalUnitCode(
+    code: string | null | undefined,
+    fallback?: string,
+  ): string;
+  export function formatOperationalUnitsFilterLabel(
+    branches: readonly string[],
+    options?: { allSelectedCount?: number },
+  ): string | null;
+  export function normalizeOperationalUnitCode(value: string | null | undefined): string;
 
   export function ChartViewShell(props: {
     prefix?: string;
@@ -382,6 +410,44 @@ declare module "@delpi/plugin-ui/index" {
     formatY?: (value: number) => string;
     formatTooltipValue?: (value: number) => string;
     showLegend?: boolean;
+  }): ReactNode;
+
+  export function ChartTypeSegmentToggle(props: Record<string, unknown>): ReactNode;
+  export function usePersistedChartPreferences(config: Record<string, unknown>): {
+    preferences: { chartType?: string; seriesFills?: Record<string, string> };
+    setPreferences: (next: Record<string, unknown>) => void;
+    setChartType: (value: string) => void;
+  };
+  export const TIME_MULTI_SERIES_TYPES: readonly string[];
+  export function runTabularExport(input: Record<string, unknown>): void;
+  export function createDashboardChartToolbarKit(config: {
+    prefix: string;
+    labels: Record<string, unknown>;
+  }): {
+    ChartToolbar: ComponentType<Record<string, unknown>>;
+    ChartGranularityToggle: ComponentType<{
+      value: string;
+      onChange: (value: string) => void;
+      options: Array<{ value: string; label: string }>;
+      modes?: string[];
+      idPrefix?: string;
+    }>;
+  };
+  export function createDashboardTabularExportButtons(config: {
+    prefix: string;
+    groupAriaLabel?: string;
+  }): ComponentType<{
+    compact?: boolean;
+    disabled?: boolean;
+    onExport: (format: string) => void;
+  }>;
+  export function SpeedometerGauge(props: {
+    prefix?: string;
+    size?: number;
+    value?: number | null;
+    goal?: number | null;
+    showZonesLegend?: boolean;
+    tip?: string;
   }): ReactNode;
 }
 

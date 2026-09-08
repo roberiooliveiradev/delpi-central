@@ -15,19 +15,25 @@ describe("Overview structural", () => {
     expect(page).toContain("SuppliesSectionCard");
     expect(page).toContain("OverviewOtdSeriesChart");
     expect(page).toContain("OverviewCompareChart");
+    expect(page).toContain("analytics_otd");
+    expect(page).toContain("openOtdLabel");
     expect(page).not.toContain("<select");
     expect(page).not.toContain('type="date"');
 
     const filters = readFileSync(join(here, "OverviewFilters.tsx"), "utf8");
     expect(filters).toContain("SuppliesFilterBarShell");
     expect(filters).toContain("SuppliesDateField");
-    expect(filters).toContain("SuppliesSelectField");
+    expect(filters).toContain("SuppliesMultiSelectField");
     expect(filters).toContain("SuppliesSegmentToggle");
+    expect(filters).not.toContain("SuppliesSelectField");
 
     const otd = readFileSync(join(here, "OverviewOtdSeriesChart.tsx"), "utf8");
     expect(otd).toContain("ChartViewShell");
     expect(otd).toContain("getOtdSeries");
     expect(otd).toContain("MultiTypeSeriesChart");
+    expect(otd).toContain("ChartTypeSegmentToggle");
+    expect(otd).toContain("SuppliesChartGranularityToggle");
+    expect(otd).toContain("runTabularExport");
 
     const compare = readFileSync(join(here, "OverviewCompareChart.tsx"), "utf8");
     expect(compare).toContain("ChartViewShell");

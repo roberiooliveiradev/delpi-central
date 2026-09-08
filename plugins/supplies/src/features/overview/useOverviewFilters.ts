@@ -5,10 +5,14 @@ import {
   readOverviewFiltersFromUrl,
   writeOverviewFiltersToUrl,
 } from "./overviewFilterUrl";
+import { resolvePeriodPreset, type PeriodPresetId } from "./periodPreset";
 import {
-  resolvePeriodPreset,
-  type PeriodPresetId,
-} from "./periodPreset";
+  formatSuppliesScopeBadge,
+  resolveApiBranch,
+  resolveEffectiveUnits,
+  suppliesUnitOptions,
+} from "./suppliesBranchFilters";
+import { OVERVIEW_CONTENT } from "./overviewContent";
 
 export type OverviewApiParams = {
   branch?: string;
@@ -37,23 +41,18 @@ export function useOverviewFilters(allowedUnits: readonly string[]) {
           to: fromUrl.to || todayIso(),
         };
 
-  const [branch, setBranchState] = useState(() => {
-    if (fromUrl.branch && allowedUnits.includes(fromUrl.branch)) {
-      return fromUrl.branch;
-    }
-    return fromUrl.branch || "";
-  });
+  const [branches, setBranchesState] = useState<string[]>(() => fromUrl.branches ?? []);
   const [from, setFromState] = useState(initialRange.from);
   const [to, setToState] = useState(initialRange.to);
   const [period, setPeriodState] = useState<PeriodPresetId>(initialPreset);
 
-  const setBranch = useCallback(
-    (value: string) => {
-      if (value && allowedUnits.length > 0 && !allowedUnits.includes(value)) {
-        setBranchState("");
+  const setBranches = useCallback(
+    (next: string[]) => {
+      if (!allowedUnits.length) {
+        setBranchesState(next);
         return;
       }
-      setBranchState(value);
+      setBranchesState(next.filter((code) => allowedUnits.includes(code)));
     },
     [allowedUnits],
   );
@@ -78,38 +77,51 @@ export function useOverviewFilters(allowedUnits: readonly string[]) {
   }, []);
 
   useEffect(() => {
-    writeOverviewFiltersToUrl({ branch, from, to, period });
-  }, [branch, from, to, period]);
+    writeOverviewFiltersToUrl({ branches, from, to, period });
+  }, [branches, from, to, period]);
 
   useEffect(() => {
     if (!allowedUnits.length) return;
-    if (branch && !allowedUnits.includes(branch)) {
-      setBranchState("");
-      return;
-    }
-    if (!branch && fromUrl.branch && allowedUnits.includes(fromUrl.branch)) {
-      setBranchState(fromUrl.branch);
-    }
-  }, [allowedUnits, branch, fromUrl.branch]);
+    setBranchesState((prev) => {
+      const filtered = prev.filter((code) => allowedUnits.includes(code));
+      if (filtered.length === prev.length) return prev;
+      return filtered;
+    });
+  }, [allowedUnits]);
+
+  const unitOptions = useMemo(() => suppliesUnitOptions(allowedUnits), [allowedUnits]);
 
   const apiParams: OverviewApiParams = useMemo(
     () => ({
-      branch: branch || undefined,
+      branch: resolveApiBranch(branches, allowedUnits),
       from,
       to,
     }),
-    [branch, from, to],
+    [allowedUnits, branches, from, to],
+  );
+
+  const effectiveUnits = useMemo(
+    () => resolveEffectiveUnits(branches, allowedUnits),
+    [allowedUnits, branches],
+  );
+
+  const scopeBadge = useMemo(
+    () => formatSuppliesScopeBadge(branches, allowedUnits, OVERVIEW_CONTENT.scopeBadgeAll),
+    [allowedUnits, branches],
   );
 
   return {
-    branch,
+    branches,
     from,
     to,
     period,
-    setBranch,
+    setBranches,
     setFrom,
     setTo,
     setPeriod,
     apiParams,
+    unitOptions,
+    effectiveUnits,
+    scopeBadge,
   };
 }

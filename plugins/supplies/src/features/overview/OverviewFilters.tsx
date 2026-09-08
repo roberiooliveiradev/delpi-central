@@ -1,40 +1,38 @@
 import {
   SuppliesDateField,
   SuppliesFilterBarShell,
+  SuppliesMultiSelectField,
   SuppliesSectionHintLabel,
   SuppliesSegmentToggle,
-  SuppliesSelectField,
   spFiltersKit,
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
 import { OVERVIEW_CONTENT } from "./overviewContent";
-import {
-  PERIOD_PRESET_OPTIONS,
-  type PeriodPresetId,
-} from "./periodPreset";
+import { PERIOD_PRESET_OPTIONS, type PeriodPresetId } from "./periodPreset";
+import { SUPPLIES_UNIT_FIELD_LABEL } from "./suppliesBranchFilters";
 
 type OverviewFiltersProps = {
   period: PeriodPresetId;
   from: string;
   to: string;
-  branch: string;
-  unitOptions: readonly string[];
+  branches: string[];
+  unitOptions: ReadonlyArray<{ value: string; label: string }>;
   onPeriod: (value: PeriodPresetId) => void;
   onFrom: (value: string) => void;
   onTo: (value: string) => void;
-  onBranch: (value: string) => void;
+  onBranches: (value: string[]) => void;
 };
 
 export function OverviewFilters({
   period,
   from,
   to,
-  branch,
+  branches,
   unitOptions,
   onPeriod,
   onFrom,
   onTo,
-  onBranch,
+  onBranches,
 }: OverviewFiltersProps) {
   const { FiltersRow } = spFiltersKit;
 
@@ -75,13 +73,14 @@ export function OverviewFilters({
           onChange={onTo}
           hint={SP_HELP.overviewFiltersTo}
         />
-        <SuppliesSelectField
-          label={OVERVIEW_CONTENT.branchLabel}
-          value={branch}
-          onChange={onBranch}
-          options={unitOptions.map((unit) => ({ value: unit, label: unit }))}
-          allowEmpty
+        <SuppliesMultiSelectField
+          className="sp-overview-unit-filter"
+          label={SUPPLIES_UNIT_FIELD_LABEL}
+          selectedValues={branches}
+          onChange={onBranches}
+          options={[...unitOptions]}
           emptyLabel={OVERVIEW_CONTENT.branchAll}
+          searchable
           hint={SP_HELP.overviewFiltersBranch}
         />
       </FiltersRow>

@@ -19,11 +19,13 @@ describe("userManual content", () => {
     expect(want?.links?.some((row) => /SC|solicita/i.test(row.want))).toBe(true);
     expect(want?.links?.some((row) => /ESTSEG|segurança/i.test(row.want))).toBe(true);
     expect(want?.links?.some((row) => /filial padrão|densidade/i.test(row.want))).toBe(true);
+    expect(want?.links?.some((row) => /OTD|velocímetro/i.test(row.want))).toBe(true);
 
     const faq = USER_MANUAL_CONTENT.sections.find((section) => section.id === "faq");
     const questions = (faq?.faqs ?? []).map((item) => item.q).join(" ");
     expect(questions).toMatch(/estoque/i);
     expect(questions).toMatch(/OTD/i);
+    expect(questions).toMatch(/Visão geral.*OTD|OTD.*Visão geral/i);
     expect(questions).toMatch(/Sheets|indicadores/i);
     expect(questions).toMatch(/403/);
     expect(questions).toMatch(/filial padrão|densidade/i);
@@ -36,6 +38,7 @@ describe("userManual content", () => {
       expect(terms).toContain(required);
     }
     expect(MANUAL_TOOL_TARGETS.some((target) => target.label === "Visão geral")).toBe(true);
+    expect(MANUAL_TOOL_TARGETS.some((target) => target.viewId === "analytics_otd")).toBe(true);
     expect(MANUAL_TOOL_TARGETS.some((target) => target.viewId === "purchase_requests")).toBe(
       true,
     );

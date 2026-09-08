@@ -2,13 +2,16 @@ import {
   ActionButton,
   HelpTooltip,
   SectionHintLabel,
+  SpeedometerGauge,
   createDashboardCatalogSearchBar,
+  createDashboardChartToolbarKit,
   createDashboardCommandPalette,
   createDashboardDateField,
   createDashboardEmptyState,
   createDashboardFiltersKit,
   createDashboardHubChipRow,
   createDashboardLoadingActivityCard,
+  createDashboardMultiSelectField,
   createDashboardPageHero,
   createDashboardPagePath,
   createDashboardRouteChip,
@@ -18,6 +21,7 @@ import {
   createDashboardSelectField,
   createDashboardStateBanner,
   createDashboardStatusBadge,
+  createDashboardTabularExportButtons,
   createDashboardTopBar,
   createDashboardTopBarSearchTrigger,
   createDashboardViewTransition,
@@ -30,8 +34,10 @@ import {
   sectionRouteCardBemClasses,
   selectFieldPacClasses,
   stateBannerBemClasses,
+  type SpeedometerGaugeProps,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ComponentProps } from "react";
+
 
 export const UI_PREFIX = "sp";
 export const SP_PORTAL_SCOPE = "dashboard-supplies-portal";
@@ -138,7 +144,43 @@ export const SuppliesDateField = createDashboardDateField({
   classNames: dateFieldBemClasses(UI_PREFIX),
 });
 
+export const SuppliesMultiSelectField = createDashboardMultiSelectField({
+  prefix: UI_PREFIX,
+  portalScopeClassName: SP_PORTAL_SCOPE,
+  labels: {
+    emptyLabel: "Todas",
+    searchPlaceholder: "Buscar…",
+    selectVisible: "Selecionar visíveis",
+    clear: "Limpar",
+    emptyOptions: "Nenhuma opção encontrada.",
+    multipleSelected: (count: number) => `${count} selecionado(s)`,
+  },
+});
+
 export const SuppliesSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
 export const SuppliesSectionHintLabel = SectionHintLabel;
+
+const suppliesChartToolbarKit = createDashboardChartToolbarKit({
+  prefix: UI_PREFIX,
+  labels: {
+    groupAriaLabel: "Agrupamento do gráfico",
+    exportSeries: "Exportar série",
+    exportSeriesAriaLabel: "Exportar série do gráfico em CSV",
+  },
+});
+
+export const SuppliesChartGranularityToggle =
+  suppliesChartToolbarKit.ChartGranularityToggle;
+
+export const SuppliesTabularExportButtons = createDashboardTabularExportButtons({
+  prefix: UI_PREFIX,
+  groupAriaLabel: "Exportar dados",
+});
+
+export function SuppliesSpeedometerGauge(
+  props: Omit<SpeedometerGaugeProps, "prefix">,
+) {
+  return createElement(SpeedometerGauge, { ...props, prefix: UI_PREFIX });
+}
 
 export { HelpTooltip };

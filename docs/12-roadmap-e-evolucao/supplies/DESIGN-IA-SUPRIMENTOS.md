@@ -2,7 +2,7 @@
 
 > Padrão de navegação do Portal Comercial, adaptado ao domínio Suprimentos.  
 > Root CSS: `.dashboard-supplies-portal` · prefixo `sp-` · tokens `--sp-*` → `--delpi-ui-*`.  
-> **Entrega:** uma página por vez até DoD (README § Protocolo). **Início + Visão geral fechados** · foco atual: **Solicitações de compras**.
+> **Entrega:** uma página por vez até DoD (README § Protocolo). **Início + Visão geral + OTD analytics fechados** · foco atual: **Solicitações de compras**.
 
 ---
 
@@ -31,6 +31,7 @@
 PORTAL SUPRIMENTOS
 Início                         /
 Visão Geral                    /overview
+OTD (analytics)                /analytics/otd
 Minhas Atividades              /my-tasks
 
 COMPRAS
@@ -75,7 +76,8 @@ Rotas novas usam identificadores em inglês. URLs PT só permanecem como aliases
 |---|---|---|---|
 | Shell | chrome | TopBar, nav, Ctrl+K, estados | Shell comum |
 | Início | `/` | hub ação/descoberta | WF-01 |
-| Visão geral | `/overview` | placar KPI + OTD/comparativo (≠ Início) · **FECHADA** | WF-02 |
+| Visão geral | `/overview` | placar KPI + série OTD rica + CTA (≠ Início) · **FECHADA** · WF-02R | WF-02 |
+| OTD analytics | `/analytics/otd` | velocímetros SC/ES + série · **FECHADA** · ≠ `/suppliers/otd` | WF-OTD-A |
 | Ajuda | `/help` | Manual / Quero→onde / FAQ | WF-HELP |
 | Perfil | `/users/:userId` | identidade + prefs do plugin | WF-USER |
 

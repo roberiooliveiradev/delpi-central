@@ -24,7 +24,8 @@ Espelham o Portal Comercial: shell + hub + Ajuda + perfil — **não** são jorn
 |---|---|---|---|---|
 | Shell comum | chrome TopBar / nav / busca / Favoritos / avatar | — | `supplies.portal.access` | entregue E3 + Favoritos TopBar |
 | WF-01 | Início (hub) | `/apps/supplies` | `supplies.portal.access` | **FECHADA (DoD)** |
-| WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | **FECHADA (DoD)** |
+| WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | **FECHADA (DoD)** · polish **WF-02R** |
+| WF-OTD-A | OTD analytics | `/analytics/otd` | `supplies.analytics.access` | **FECHADA (DoD)** |
 | **WF-HELP** | Ajuda / Manual | `/help` | `supplies.portal.access` | esqueleto E4; completo E14 |
 | **WF-USER** | Perfil usuário | `/users/:userId` | self: portal · outros: admin | **implementado** (E4.S4) |
 
@@ -68,28 +69,108 @@ Não criar permissions de leitura/escrita separadas só porque a UI possui GET/P
 
 | Campo | Conteúdo |
 |---|---|
-| Objetivo | cockpit dos **7 KPIs P0** ([KPI-FICHAS](./KPI-FICHAS.md)) + série OTD |
+| Objetivo | cockpit dos **7 KPIs P0** ([KPI-FICHAS](./KPI-FICHAS.md)) + série OTD com ChartViewShell completo + CTA para WF-OTD-A |
 | Rota | `/overview` |
 | Capability | `supplies.analytics.access` |
-| Unit | obrigatória para dados TOTVS; consolidado = only allowedUnits |
+| Unit | MultiSelect Unidade (Santa Catarina / Espírito Santo); URL `branch` CSV códigos; consolidado = omit/`01,02` |
 | KPIs | OTD, STOCK-VALUE, TURNOVER, CPV, SAVINGS, SC-OPEN, CRITICAL-MP |
 | Filtros | preset período + `from`/`to` + `branch` · URL shareable |
-| Gráficos | OTD mensal (`GET /analytics/otd/series`) · comparativo valor×meta (KPIs interval) |
-| Fora P0 | KPI-PO-LATE (atrasos), cobertura, price-var, série CPV/Savings dedicada |
+| Gráficos | OTD (`GET /analytics/otd/series`) com granularity/tipo/export · comparativo valor×meta (KPIs interval) |
+| Fora P0 | Speedometer no Overview; KPI-PO-LATE; série CPV/Savings dedicada; seller/segmento/cliente |
 | UX temporal | cada card mostra snapshot/estado/intervalo |
-| Drill | páginas de foco quando existirem (sem CTA para placeholder) |
+| Drill | CTA «Abrir OTD» → `/analytics/otd` preservando query |
 | Partial | KPI auxiliar / série OTD podem ficar unavailable |
-| Status | **FECHADA (DoD)** |
+| Status | **FECHADA (DoD)** · delta visual **WF-02R** |
+
+### WF-HERO-OV — densidades do hero (Overview)
 
 ```text
-┌─ PagePath: Início › Visão geral ────────────────────────────────────────────┐
-┌─ PageHero compact: título + HelpTooltip + badge escopo + [Atualizar] ───────┐
-│    FilterBar: [Preset período] [De] [Até] [Filial ▾]                        │
-┌─ SectionCard «Indicadores» ─────────────────────────────────────────────────┐
-│    grid 7 SuppliesKpiCard (available | unavailable + partial)               │
-┌─ SectionCard «OTD no tempo» → ChartViewShell (série mensal) ────────────────┐
-┌─ SectionCard «Comparativo no período» → barras valor×meta ──────────────────┘
+┌─ TopBar sp ─ Início · Visão geral† · … · [Buscar] [Favoritos] [Ajuda] [avatar] ─┐
+┌─ PagePath: Início › Visão geral ────────────────────────────────────────────────┐
+┌─ PageHero compact ──────────────────────────────────────────────────────────────┐
+│ Portal Suprimentos                                                              │
+│ Visão geral (?)     [badge: Santa Catarina | Consolidado | SC, ES]  [Atualizar]│
+│ Indicadores do período no seu escopo. O Início é ação — não use isto como fila. │
+│ ┌─ FilterBar embutido ────────────────────────────────────────────────────────┐ │
+│ │ Período rápido (?): [Este mês] [Mês passado] [Trimestre] [Ano] [12m] [Pers.]│ │
+│ │ [De ···] [Até ···] [Unidade ▾ MultiSelect]                                  │ │
+│ │   painel: Buscar… · [Selecionar visíveis] [Limpar]                          │ │
+│ │   ☑/☐ Santa Catarina (01) · ☑/☐ Espírito Santo (02) — só allowedUnits      │ │
+│ └─────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+### WF-02R — ASCII happy path
+
+```text
+┌─ (WF-HERO-OV) ──────────────────────────────────────────────────────────────────┐
+
+┌─ ⚠ StateBanner partial (se partialFailures) ─ "Alguns indicadores falharam…" ──┐
+
+┌─ SectionCard «Indicadores» (?) natureza temporal ───────────────────────────────┐
+│  grid até 7 SuppliesKpiCard (available | unavailable + partial)                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ SectionCard «OTD no tempo» (?) ─────────────────────────── [Abrir OTD →] ──────┐
+│  ChartViewShell: granularidade Dia/Semana/Mês · tipo · export CSV/XLSX          │
+│  MultiTypeSeriesChart (série OTD %) · Empty/Error/Loading locais                │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ SectionCard «Comparativo no período» (?) ──────────────────────────────────────┐
+│  Barras Valor × Meta só KPIs temporalNature=interval + available                │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## WF-OTD-A — OTD analytics
+
+| Campo | Conteúdo |
+|---|---|
+| Objetivo | Velocímetros OTD valor×meta + evolução temporal (paridade visual Comercial OTD **sem** painel de linhas) |
+| Rota | `/apps/supplies/analytics/otd` · viewId `analytics_otd` |
+| Capability | `supplies.analytics.access` |
+| Entrada | Catálogo/Início Análises · CTA Overview · deep link URL |
+| Fontes | `GET /analytics/otd` (agregado) + `GET /analytics/otd/series` |
+| Kit | PagePath, PageHero, FilterBar MultiSelect (reuso Overview), SpeedometerGauge, ChartViewShell |
+| Unidade | mesmos MultiSelect SC/ES do Overview; títulos dos gauges = Santa Catarina / Espírito Santo |
+| **Não traz** | DataTable linhas; ranking fornecedor; WF-11 `/suppliers/otd`; seller |
+| Status | **FECHADA (DoD)** |
+
+### WF-HERO-OTD
+
+```text
+┌─ TopBar sp (igual) ─────────────────────────────────────────────────────────────┐
+┌─ PagePath: Início › Visão geral › OTD    (back = Visão geral se veio do CTA)     │
+┌─ PageHero compact ──────────────────────────────────────────────────────────────┐
+│ Portal Suprimentos                                                              │
+│ OTD — pontualidade de compras (?)   [badge escopo]   [Abrir Visão geral][Atualizar]│
+│ Velocímetros e evolução no recorte. Atrasos do dia ficam em Entregas (ops).     │
+│ ┌─ FilterBar (mesmo contrato URL que Overview) ───────────────────────────────┐ │
+│ │ Período rápido · De · Até · Unidade (MultiSelect SC/ES)                     │ │
+│ └─────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ASCII — consolidado (2 unidades)
+
+```text
+┌─ (WF-HERO-OTD) ─────────────────────────────────────────────────────────────────┐
+
+┌─ SectionCard «Pontualidade no período» (?) ─────────────────────────────────────┐
+│  Legenda zonas do kit (showZonesLegend)                                         │
+│   ┌─ Santa Catarina ────────────┐   ┌─ Espírito Santo ────────────┐             │
+│   │  SpeedometerGauge size≈280  │   │  SpeedometerGauge size≈280  │             │
+│   │  value = otdPct · goal SI   │   │  value = otdPct · goal SI   │             │
+│   └─────────────────────────────┘   └─────────────────────────────┘             │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ SectionCard «OTD no tempo» (?) ────────────────────────────────────────────────┐
+│  ChartViewShell (prefs `supplies:analytics-otd:otd-series`)                     │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**≠** WF-11 `/suppliers/otd` (OTD por fornecedor — fila ops).
 
 ---
 

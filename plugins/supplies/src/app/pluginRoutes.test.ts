@@ -16,7 +16,9 @@ const portalOnly = {
 describe("pluginRoutes", () => {
   it("resolves canonical english paths", () => {
     expect(resolvePluginRoute("/apps/supplies/purchase-requests").view).toBe("purchase_requests");
+    expect(resolvePluginRoute("/apps/supplies/analytics/otd").view).toBe("analytics_otd");
     expect(buildPluginPath("safety_stock")).toBe("/apps/supplies/safety-stock");
+    expect(buildPluginPath("analytics_otd")).toBe("/apps/supplies/analytics/otd");
   });
 
   it("returns not_found for unknown paths", () => {
