@@ -87,6 +87,41 @@ declare module "@delpi/plugin-ui/index" {
 
   export function sectionCardPacBemClasses(prefix: string): Record<string, string>;
 
+  export type NavigationCardDensity = "default" | "featured";
+
+  export type NavigationCardClassNames = {
+    root: string;
+    rootHorizontal: string;
+    rootFeatured: string;
+    rootFeaturedHorizontal: string;
+    icon: string;
+    body: string;
+    eyebrow: string;
+    title: string;
+    description: string;
+    meta: string;
+  };
+
+  export type DashboardNavigationCardProps = {
+    title: string;
+    onClick: () => void;
+    icon?: ReactNode;
+    eyebrow?: string;
+    description?: string;
+    meta?: string;
+    disabled?: boolean;
+    orientation?: "vertical" | "horizontal";
+    density?: NavigationCardDensity;
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardNavigationCard(config: {
+    classNames: NavigationCardClassNames;
+  }): ComponentType<DashboardNavigationCardProps>;
+
+  export function navigationCardBemClasses(prefix: string): NavigationCardClassNames;
+
   export type DashboardEmptyStateProps = {
     title?: string;
     message?: string;
