@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+"""Audita governança, escopo e referências das regras Cursor do repositório."""
+
+from __future__ import annotations
+
+import re
+import sys
+from collections import Counter
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+RULES_DIR = REPO_ROOT / ".cursor" / "rules"
+
+GLOBAL_ALLOWLIST = {
+    "development-standards-index.mdc",
+    "evidence-driven-execution.mdc",
+    "centralized-rules-first.mdc",
+    "clean-code-architecture-guardrails.mdc",
+    "english-code-identifiers.mdc",
+}
+GLOBAL_BUDGET = len(GLOBAL_ALLOWLIST)
+MAX_RULE_BYTES = 20_000
+REFERENCE_RE = re.compile(r"(?:`|\b)([A-Za-z0-9_.-]+\.mdc)(?:`|\b)")
+
+
+def parse_frontmatter(path: Path) -> tuple[dict[str, str], str, list[str]]:
+    text = path.read_text(encoding="utf-8")
+    errors: list[str] = []
+    if not text.startswith("---\n"):
+        return {}, text, ["frontmatter ausente"]
+
+    try:
+        _, raw_frontmatter, body = text.split("---", 2)
+    except ValueError:
+        return {}, text, ["frontmatter sem fechamento ---"]
+
+    data: dict[str, str] = {}
+    for raw_line in raw_frontmatter.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if ":" not in line:
+            errors.append(f"linha de frontmatter inválida: {raw_line!r}")
+            continue
+        key, value = line.split(":", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key in data:
+            errors.append(f"chave duplicada no frontmatter: {key}")
+        data[key] = value
+
+    return data, body, errors
+
+
+def main() -> int:
+    if not RULES_DIR.is_dir():
+        print(f"ERRO: diretório não encontrado: {RULES_DIR}", file=sys.stderr)
+        return 2
+
+    rule_paths = sorted(RULES_DIR.glob("*.mdc"))
+    rule_names = {path.name for path in rule_paths}
+    errors: list[str] = []
+    warnings: list[str] = []
+    descriptions: list[tuple[str, str]] = []
+    global_rules: set[str] = set()
+
+    for path in rule_paths:
+        frontmatter, body, parse_errors = parse_frontmatter(path)
+        for error in parse_errors:
+            errors.append(f"{path.name}: {error}")
+
+        description = frontmatter.get("description", "").strip()
+        globs = frontmatter.get("globs", "").strip()
+        always_apply_raw = frontmatter.get("alwaysApply")
+
+        if description:
+            descriptions.append((path.name, description.casefold()))
+        elif not globs:
+            warnings.append(
+                f"{path.name}: regra não global sem description/globs pode depender de invocação manual"
+            )
+
+        if always_apply_raw is None:
+            errors.append(f"{path.name}: alwaysApply ausente")
+            always_apply = False
+        elif always_apply_raw not in {"true", "false"}:
+            errors.append(
+                f"{path.name}: alwaysApply deve ser true|false, recebido {always_apply_raw!r}"
+            )
+            always_apply = False
+        else:
+            always_apply = always_apply_raw == "true"
+
+        if always_apply:
+            global_rules.add(path.name)
+            if globs:
+                errors.append(
+                    f"{path.name}: alwaysApply=true + globs é proibido; o glob é ignorado no modo global"
+                )
+            if path.name not in GLOBAL_ALLOWLIST:
+                errors.append(
+                    f"{path.name}: regra global fora da allowlist canônica"
+                )
+
+        size = path.stat().st_size
+        if size > MAX_RULE_BYTES and "governanceSizeJustification" not in frontmatter:
+            errors.append(
+                f"{path.name}: {size} bytes excede {MAX_RULE_BYTES}; reduzir ou declarar governanceSizeJustification"
+            )
+
+        for referenced_name in sorted(set(REFERENCE_RE.findall(body))):
+            if referenced_name not in rule_names:
+                errors.append(
+                    f"{path.name}: referência a regra inexistente: {referenced_name}"
+                )
+
+    if len(global_rules) > GLOBAL_BUDGET:
+        errors.append(
+            f"orçamento global excedido: {len(global_rules)} regras globais; máximo {GLOBAL_BUDGET}"
+        )
+
+    missing_global = GLOBAL_ALLOWLIST - global_rules
+    if missing_global:
+        errors.append(
+            "constituição global incompleta: " + ", ".join(sorted(missing_global))
+        )
+
+    description_counts = Counter(description for _, description in descriptions)
+    duplicated_descriptions = {
+        description for description, count in description_counts.items() if count > 1
+    }
+    for description in sorted(duplicated_descriptions):
+        owners = sorted(name for name, value in descriptions if value == description)
+        errors.append(
+            "description duplicada em regras: " + ", ".join(owners)
+        )
+
+    print("Cursor rules audit")
+    print(f"- regras: {len(rule_paths)}")
+    print(f"- globais: {len(global_rules)}/{GLOBAL_BUDGET}")
+    print("- globais canônicas: " + ", ".join(sorted(global_rules)))
+
+    for warning in warnings:
+        print(f"WARN: {warning}")
+
+    if errors:
+        print(f"\nFALHOU: {len(errors)} problema(s)", file=sys.stderr)
+        for error in errors:
+            print(f"- {error}", file=sys.stderr)
+        return 1
+
+    print("OK: governança das regras Cursor válida")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
