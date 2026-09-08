@@ -35,10 +35,17 @@ Cadastro de **hardware** na rede (ESP, gateway, futuro Modbus).
 | `last_error` | `text` | Timeout/offline |
 | `created_at` / `updated_at` | `timestamptz` | |
 | `created_by` / `updated_by` | `varchar(64)` | `sub` JWT |
+| `firmware_source` | `text` | Sketch `.ino` opcional (cópia no detalhe) — **não** é canal OTA |
+| `firmware_key` | `varchar(64)` | **P4** — família OTA (default alinhada ao `driver_key`) |
+| `installed_firmware_version` | `varchar(32)` | **P4** — última versão reportada pelo chip |
+| `target_firmware_version` | `varchar(32)` | **P4** — alvo desejado (nullable) |
+| `firmware_reported_at` | `timestamptz` | **P4** — quando o status reportou a versão |
 
 **Unique:** `(branch, ip_address)`.
 
 **Índices:** `(branch, role_key)`, `(branch, enabled)`.
+
+**OTA (P4):** ver tabelas `firmwares` / jobs / targets abaixo e [FIRMWARE-OTA-P4.md](./FIRMWARE-OTA-P4.md).
 
 ---
 
@@ -115,6 +122,23 @@ Auditoria — só comandos expostos pelo `driver_key`.
 
 ---
 
+### `firmwares` / `firmware_update_jobs` / `firmware_update_targets` (P4 — V010)
+
+Catálogo versionado de binários OTA + campanhas (manual ou agendada) + status por device.  
+Migration: `V010__firmware_ota.sql`. Detalhe de regras: [FIRMWARE-OTA-P4.md §5](./FIRMWARE-OTA-P4.md).
+
+| Entidade | Papel |
+|----------|-------|
+| `firmwares` | Uma linha = uma versão (`firmware_key` + `version` + `artifact_path` + `artifact_sha256`) |
+| `firmware_update_jobs` | Campanha `manual` \| `scheduled` (`filter` JSONB, `scheduled_at`) |
+| `firmware_update_targets` | Status OTA por device; unique parcial: no máx. um target aberto por device |
+
+Colunas OTA em `devices` (V010): `firmware_key`, `installed_firmware_version`, `target_firmware_version`, `firmware_reported_at`.
+
+`devices.firmware_source` (texto sketch) **não** participa do pipeline OTA.
+
+---
+
 ## Registry de drivers (JSON na API)
 
 Ver exemplos em [ESPECIFICACAO-PLUGIN.md §5](./ESPECIFICACAO-PLUGIN.md) — contador, gauge multi-métrica (rpm + °C), telemetria futura.
@@ -127,6 +151,9 @@ Ver exemplos em [ESPECIFICACAO-PLUGIN.md §5](./ESPECIFICACAO-PLUGIN.md) — con
 devices 1 ── 0..1 device_bindings (vigente)
 devices 1 ── * readings
 devices 1 ── * device_commands
+devices 1 ── * firmware_update_targets (P4)
+firmwares 1 ── * firmware_update_jobs (P4)
+firmware_update_jobs 1 ── * firmware_update_targets (P4)
 
 anchor lógico (CT | máquina | equipamento | área) 1 ── * bindings
 work_center TOTVS (SHB010) ── opcional ──► device_bindings (atalho)

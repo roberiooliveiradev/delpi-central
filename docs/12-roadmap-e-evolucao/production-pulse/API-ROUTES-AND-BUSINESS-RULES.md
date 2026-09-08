@@ -5,7 +5,7 @@
 
 **Base gateway:** `/apps/production-pulse-api`  
 **Envelope:** `{ success, message, data, meta? }`  
-**Auth:** JWT em todas as rotas exceto `GET /health`
+**Auth:** JWT em todas as rotas exceto `GET /health` e o canal **P4** `/device-ota/*` (auth por `X-Device-Token` — planejado)
 
 ---
 
@@ -57,15 +57,16 @@
 | `GET` | `/devices/{id}/live` | `devices.view` | Lê chip **sem** gravar reading; aplica continuity; status R9–R12 |
 | `POST` | `/devices/{id}/poll` | `devices.view` | Lê + atualiza estado (R47); insert reading se R46 (ou sempre se comando/restore) — R14 evoluído |
 | `POST` | `/devices/poll-all` | `devices.manage` | Poll em massa (só com binding); query `branch`, `role` |
-| `GET` | `/devices/{id}/readings` | `devices.view` | Histórico; query `from`, `to`, `metric`, `page`, `pageSize` (máx 500), `sampleIntervalMs` (R45) |
+| `GET` | `/devices/{id}/readings` | `devices.view` | Histórico; query `from`, `to`, `metric`, `page`, `pageSize` (máx 500), `sampleIntervalMs` (R45), `resolution=raw\|hour\|day` (R50, default `raw`) |
 
-**Poll OK (R14 + continuidade):**
+**Poll OK (R14 + continuidade + P3):**
 
 1. Driver `read`  
 2. Se métrica monotônica caiu **sem** comando recente → restore hardware/`set` ou offset software (R37)  
 3. Floor ≥ `counterSet.min` (R36)  
 4. `delta_metrics` para `monotonic:true` (R16)  
-5. Insert `readings` + atualiza `last_seen_at` / `last_metrics`
+5. Atualiza `last_seen_at` / `last_metrics` (R47)  
+6. Insert `readings` **somente** se R46 (mudança/heartbeat) ou caminho de restore materializado; comandos → R48  
 
 **Live:** mesmos passos de continuity/floor **sem** insert (exceto se no futuro enrich só em memória).
 
@@ -106,6 +107,23 @@
 Drivers novos (`esp8266_temp_v1`, …) **não** exigem rota nova: usam as mesmas de devices/poll/operator; só registry + `DeviceDriver`.
 
 Detalhe: [API-MFE-DEVICE-EVOLUTION.md](./API-MFE-DEVICE-EVOLUTION.md) · [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md).
+
+### 2.1 Firmware OTA (P4 — não implementadas)
+
+> Spec: [FIRMWARE-OTA-P4.md](./FIRMWARE-OTA-P4.md) · Roadmap § P4
+
+| Método | Path | Permissão / auth | Regra / efeito |
+|--------|------|------------------|----------------|
+| `GET` | `/firmwares` | `devices.view` | Catálogo por `firmwareKey` / `driverKey` |
+| `POST` | `/firmwares` | `devices.manage` | Publica versão + artefato (R60) |
+| `GET` | `/firmwares/{id}` | `devices.view` | Detalhe + sha256 |
+| `GET`/`POST` | `/firmware-update-jobs` | view / manage | Campanhas manual ou `scheduled` (R53–R54) |
+| `POST` | `/firmware-update-jobs/{id}/cancel` | `devices.manage` | Cancela targets abertos |
+| `GET` | `/firmware-update-jobs/{id}/targets` | `devices.view` | Status por device |
+| `GET` | `/firmware-update-summary` | `devices.view` | KPIs frota (R57) |
+| `GET` | `/device-ota/check` | `X-Device-Token` | ESP: update autorizado? (R52) |
+| `GET` | `/device-ota/artifacts/{artifactToken}` | token curto | Stream binário (R58) |
+| `POST` | `/device-ota/report` | `X-Device-Token` | Resultado OTA (R56) |
 
 ---
 
@@ -197,6 +215,22 @@ Numeração estável. Implementação deve citar o id da regra em teste quando p
 | **R51** | MFE: spans longos preferem rollup; R45 permanece para raw denso. | ✅ S5 |
 
 Poll response `meta.readingPersisted` + `meta.persistReason` (S2).
+
+### 3.7 Firmware OTA (P4 — planejado)
+
+> Spec: [FIRMWARE-OTA-P4.md](./FIRMWARE-OTA-P4.md) · Roadmap § P4
+
+| Id | Regra | Status |
+|----|--------|--------|
+| **R52** | Download OTA só com target autorizado (publish sozinho não libera). | 📋 |
+| **R53** | Job `scheduled` autoriza só após `scheduled_at`. | 📋 |
+| **R54** | Disparo manual cria job `trigger=manual` e autoriza targets. | 📋 |
+| **R55** | No máximo um target OTA aberto por device. | 📋 |
+| **R56** | `installedFirmwareVersion` só via report/probe — MFE não inventa. | 📋 |
+| **R57** | Summary: updated / updating / failed coerentes com targets. | 📋 |
+| **R58** | Check envia `artifactSha256`; chip verifica quando capaz. | 📋 |
+| **R59** | `firmware_source` (texto sketch) fora do pipeline OTA. | 📋 |
+| **R60** | Nova família = `firmwareKey` + `driver_key` no registry — sem tipo PT hardcoded no MFE. | 📋 |
 
 ---
 

@@ -74,6 +74,17 @@ class Settings:
     # Preenchido após instanciação (env ou content JSON).
     PP_POLL_SCHEDULER_TICK_MS: int | None = None
 
+    PP_FIRMWARE_UPLOAD_DIR: str = _get_env(
+        "PP_FIRMWARE_UPLOAD_DIR",
+        default="/app/data/production-pulse/firmwares",
+    )
+    PP_FIRMWARE_MAX_BYTES: int = int(
+        _get_env("PP_FIRMWARE_MAX_BYTES", default=str(8 * 1024 * 1024)) or str(8 * 1024 * 1024)
+    )
+    PP_FIRMWARE_ARTIFACT_TOKEN_TTL_SECONDS: int = int(
+        _get_env("PP_FIRMWARE_ARTIFACT_TOKEN_TTL_SECONDS", default="600") or "600"
+    )
+
 
 def _optional_positive_int(raw: str | None) -> int | None:
     if raw is None or raw == "":

@@ -49,3 +49,7 @@ Factory reset: `POST /api/factory-reset` (auth) ou hold **D5+D1** por 10 s. Não
 Sem `delay` no LED — animação via `millis()` no `loop`.
 
 No Production Pulse: cadastro com Wi‑Fi/debounce/token; «Testar conexão» e Salvar (modo A) usam `/api/config` e `/api/status`.
+
+### OTA (P4 — planejado)
+
+Este sketch **ainda não** implementa Over-the-Air. O plano canônico (catálogo `firmwares`, campanhas manual/agendada, pull com `X-Device-Token`) está em [FIRMWARE-OTA-P4.md](../../FIRMWARE-OTA-P4.md). A versão reportada em `/api/status` (`firmwareVersion`) alimentará `installed_firmware_version` quando o canal `/device-ota/*` existir.

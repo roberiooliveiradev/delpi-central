@@ -1,9 +1,9 @@
 # P3 — Persistência de telemetria (padrão de mercado)
 
-> **Status:** implementação em curso (set/2026) — **S1–S3 ✅**; S4–S6 pendentes  
+> **Status:** implementação **S0–S5 ✅** no código (set/2026); **S6 verify** pendente  
 > **Roadmap:** [ROADMAP.md § P3](./ROADMAP.md#p3--persistência-de-telemetria-padrão-de-mercado)  
-> **Regras alvo:** R46–R51 em [API-ROUTES-AND-BUSINESS-RULES.md](./API-ROUTES-AND-BUSINESS-RULES.md)  
-> **Problema motivador:** poll rápido grava **toda** leitura (R14 atual), inclusive `delta = 0` → dezenas de milhares de linhas / device em poucos dias; histórico e Postgres sofrem; o **valor** do contador em `last_metrics` **não** é corrompido por isso.
+> **Regras:** R46–R51 em [API-ROUTES-AND-BUSINESS-RULES.md](./API-ROUTES-AND-BUSINESS-RULES.md) (marcadas ✅)  
+> **Problema motivador (pré-P3):** poll rápido gravava **toda** leitura, inclusive `delta = 0` → volume explosivo; o **valor** do contador em `last_metrics` **não** era corrompido por isso.
 
 ---
 
@@ -23,15 +23,28 @@ Fontes típicas: AWS IoT SiteWise (tiers), Timescale continuous aggregates, exce
 
 ---
 
-## 2. Diagnóstico no Pulse (hoje)
+## 2. Diagnóstico no Pulse
+
+### Antes de P3 (histórico — motivou a mudança)
 
 | Camada | Comportamento |
 |--------|----------------|
 | `DevicePollService.poll_and_persist` | Sempre `readings.insert` após poll OK |
-| `GET /live` | Não grava (correto) |
-| Scheduler | Respeita `poll_interval_ms` (pode ser &lt; 1 s) → volume explosivo |
-| Retenção | **Nenhuma** — tabela cresce sem teto |
-| Gráfico MFE | `sampleIntervalMs` (R45) mitiga **leitura**; não reduz **escrita** |
+| Scheduler | `poll_interval_ms` curto → volume explosivo |
+| Retenção | Nenhuma |
+| Gráfico MFE | `sampleIntervalMs` (R45) mitigava só **leitura** |
+
+### Depois de P3.S1–S5 (código vigente)
+
+| Camada | Comportamento |
+|--------|----------------|
+| Persist policy | Insert só com mudança ≥ deadband **ou** heartbeat (`telemetry_persistence.json`) |
+| `GET /live` | Não grava (inalterado) |
+| Meta poll | `meta.readingPersisted` (skip observável) |
+| Retenção | Purge raw por `rawRetentionDays` (`DeviceReadingRetentionService`) |
+| Rollups | `readings_rollups` + `GET /readings?resolution=raw\|hour\|day` |
+| MFE | `historyTimeRange` escolhe `resolution` (R51) |
+| Pendente | **P3.S6** — verify volume + regressão contador em homologação |
 
 ---
 
@@ -149,16 +162,17 @@ flowchart TD
 - WebSocket push de telemetria  
 - Compressão swinging-door avançada  
 - UI admin de “editar retenção por device” (só global JSON no P3; override device = depois)  
-- Alterar firmware ESP  
+- Alterar firmware ESP / OTA (ver [FIRMWARE-OTA-P4.md](./FIRMWARE-OTA-P4.md)) 
 
 ---
 
 ## 9. Critérios de pronto (pacote)
 
-- [ ] Poll 200 ms com counter estável → ≤ ~2–3 inserts/min (heartbeat 30 s), não 5/s  
-- [ ] Golpe / comando → insert imediato  
-- [ ] `last_metrics` e operador refletem valor ao vivo mesmo com skip  
-- [ ] Raw &gt; 90 d removido pelo job (homologação com dados de teste)  
-- [ ] Histórico “12 meses” lê rollup sem estourar pageSize  
-- [ ] Regras R46–R51 documentadas no canônico de rotas  
-- [ ] Testes de regressão de continuity/provenance **inalterados** em comportamento de valor
+- [x] Poll estável → insert só com mudança/heartbeat (pytest policy + poll)  
+- [x] Golpe / comando → insert imediato (R48)  
+- [x] `last_metrics` e operador refletem valor ao vivo mesmo com skip (R47)  
+- [x] Purge raw + rollups + `resolution` + MFE R51 no código  
+- [x] Regras R46–R51 documentadas no canônico de rotas  
+- [ ] **S6:** Poll 200 ms 5 min → volume ≤ ~2–3 inserts/min (heartbeat 30 s) em homologação  
+- [ ] **S6:** Raw &gt; 90 d removido (dados de teste) + histórico “12 meses” sem estourar pageSize  
+- [ ] **S6:** Continuity/provenance regressão de **valor** OK no contador piloto

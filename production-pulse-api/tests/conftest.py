@@ -61,6 +61,9 @@ def plugins_db_env(monkeypatch, ensure_migrations):
 
     with plugins_connection() as conn:
         with conn.cursor() as cur:
+            cur.execute("DELETE FROM production_pulse.firmware_update_targets")
+            cur.execute("DELETE FROM production_pulse.firmware_update_jobs")
+            cur.execute("DELETE FROM production_pulse.firmwares")
             cur.execute("DELETE FROM production_pulse.readings_rollups")
             cur.execute("DELETE FROM production_pulse.readings")
             cur.execute("DELETE FROM production_pulse.device_bindings")

@@ -19,8 +19,9 @@
 | **E6.S2 — Verify live ESP piloto** | ⏳ **Pendente** | WSL não alcança `192.168.20.2`; checklist UI §3–5 |
 | P1 (gauge, KPI delta, reset HW, thresholds) | ✅ Feito | commits em `main` pós-MVP |
 | **E7 — Alinhamento `.cursor` (conteúdo + kit)** | ✅ **Concluído** | E7.S0–S5 em `main` |
-| **E8 — Layout responsivo (formulários + superfícies)** | 🔄 **Em curso** | E8.S0–S3 ✅ commit `11378d221`; S4 verify pendente |
-| **P3 — Persistência telemetria (mercado)** | 🔄 **Em curso** | S1–S3 ✅; S4–S6 pendentes — [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md) |
+| **E8 — Layout responsivo (formulários + superfícies)** | 🔄 **Em curso** | E8.S0–S3/S5 ✅; **S4 verify** pendente |
+| **P3 — Persistência telemetria (mercado)** | 🔄 **Em curso** | S0–S5 ✅ no código; **S6 verify** pendente — [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md) |
+| **P4 — Firmware OTA (gestão de frota)** | 📋 **Spec** | Tabelas + pull OTA + disparo/agenda — [FIRMWARE-OTA-P4.md](./FIRMWARE-OTA-P4.md) |
 
 Smoke dev: `bash ./scripts/homologacao/check-production-pulse.sh`  
 Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-production-pulse.sh` — ver [HOMOLOGACAO-E6-S2.md](./HOMOLOGACAO-E6-S2.md).
@@ -736,9 +737,126 @@ Cada **P3.S1–S5** = implementar → testar → **commit + push** separado. P3.
 
 ---
 
+## P4 — Firmware OTA (gestão de frota)
+
+> **Spec canônica:** [FIRMWARE-OTA-P4.md](./FIRMWARE-OTA-P4.md)  
+> **Motivo:** escala fabril — publicar firmware uma vez e atualizar N ESPs do mesmo tipo sem USB; campanha **manual** ou **agendada**; KPIs de frota.  
+> **Arquitetura:** **pull autorizado** (ESP consulta + baixa); API orquestra jobs/targets e serve artefato tokenizado.
+
+### Overview
+
+Catálogo `firmwares` (família + versão + binário) → job `manual`/`scheduled` → targets por device → canal `/device-ota/*` com `X-Device-Token` → report → summary KPIs.
+
+### Decisões travadas (P4)
+
+| Tema | Decisão |
+|------|---------|
+| Pull vs push | Pull autorizado (R52) |
+| Disparo | Botão **ou** `scheduled_at` — mesmo modelo de job (R53–R54) |
+| Tipo de device | `firmware_key` + `driver_key` (EN); UI PT só em `display_name` / helps |
+| `firmware_source` | Continua sketch texto; **não** é OTA (R59) |
+| Storage | Volume API + sha256; sem S3 obrigatório no MVP |
+| RBAC | manage publica/dispara; view vê status; operator não OTA |
+
+### Matriz de fluxos (P4)
+
+| Fluxo | Superfície | Caminho | P4 |
+|-------|------------|---------|-----|
+| Publicar binário | Admin | `POST /firmwares` | S2 |
+| Disparo agora | Botão | job `manual` | S3 |
+| Agenda | Admin | job `scheduled` | S3 |
+| Check + flash | ESP | `/device-ota/*` | S4 + S6 |
+| KPI frota | Painel | `/firmware-update-summary` | S5 |
+
+### Etapas
+
+#### P4.S0 — Spec + regras canônicas ✅ (doc)
+
+- **Objetivo:** Travas, schema alvo e R52–R60 publicadas.
+- **Fazer:** Manter [FIRMWARE-OTA-P4.md](./FIRMWARE-OTA-P4.md); links ROADMAP/README/SCHEMA/API-ROUTES.
+- **Não fazer:** migration/código OTA nesta subetapa.
+- **Pronto quando:** links cruzados + regras no canônico de rotas.
+- **Commit:** docs desta entrega.
+
+#### P4.S1 — Schema + colunas device
+
+- **Objetivo:** Tables `firmwares`, `firmware_update_jobs`, `firmware_update_targets` + colunas OTA em `devices`.
+- **Fazer:** Migration nova `V0xx__firmware_ota.sql`; atualizar SCHEMA.md; repos stubs.
+- **Não fazer:** mutar V006; misturar sketch `firmware_source` com binário.
+- **Teste:** migrate up idempotente; pytest schema smoke.
+- **Pronto quando:** SCHEMA e migration alinhados à spec §5.
+- **Commit:** `feat(production-pulse): schema OTA firmwares e jobs`
+
+#### P4.S2 — Catálogo firmwares (API)
+
+- **Objetivo:** CRUD/publish de artefatos com sha256.
+- **Fazer:** rotas `/firmwares`; storage volume; content mensagens; testes upload/list.
+- **Não fazer:** disparar update automático no publish (R52).
+- **Teste:** pytest publish + unique `(firmware_key, version)`.
+- **Pronto quando:** artefato recuperável só por id admin (não URL pública aberta).
+- **Commit:** `feat(production-pulse): catálogo de firmwares OTA`
+
+#### P4.S3 — Jobs manual + agendado
+
+- **Objetivo:** Campanhas com targets e autorização no tempo certo.
+- **Fazer:** `POST /firmware-update-jobs`; scheduler tick para `scheduled`; cancel; R53–R55.
+- **Não fazer:** OTA pelo Chat; push TCP.
+- **Teste:** pytest manual imediato; scheduled antes/depois de `scheduled_at`; um target aberto por device.
+- **Pronto quando:** botão e agenda cobertos.
+- **Commit:** `feat(production-pulse): campanhas OTA manual e agendada`
+
+#### P4.S4 — Canal device OTA
+
+- **Objetivo:** check / download tokenizado / report.
+- **Fazer:** `/device-ota/check`, `/artifacts/{token}`, `/report`; auth `X-Device-Token`.
+- **Não fazer:** JWT de usuário no ESP.
+- **Teste:** pytest token inválido 401; target não autorizado 404/422; report atualiza `installed_firmware_version`.
+- **Pronto quando:** fluxo lab com fixture binária.
+- **Commit:** `feat(production-pulse): canal device-ota pull autorizado`
+
+#### P4.S5 — MFE frota + helps
+
+- **Objetivo:** Catálogo, disparo/agenda, KPIs, detalhe versão instalada×disponível.
+- **Fazer:** páginas/tabs admin; `PP_HELP`; WIREFRAMES OTA; summary strip.
+- **Não fazer:** ramificar UI por nome PT de tipo — usar `firmwareKey`/`driverKey`.
+- **Teste:** vitest client + estrutural; build MFE.
+- **Pronto quando:** card frota (total/updated/updating/failed) + botão disparo.
+- **Commit:** `feat(production-pulse): UI gestão OTA e KPIs de frota`
+
+#### P4.S6 — Firmware ESP + verify lab
+
+- **Objetivo:** Sketch com check periódico + Update + report; homologar 1 device.
+- **Fazer:** evoluir `firmware/esp8266_counter_v1` (ou família lab); checklist HOMOLOGACAO OTA.
+- **Não fazer:** URL hardcoded de produção no binário.
+- **Teste:** flash lab 1.x → 1.y sem USB; falha reportada.
+- **Pronto quando:** checklist pass + R52–R60 ✅ no canônico.
+- **Commit:** `feat(production-pulse): OTA no firmware ESP de referência` (+ docs verify)
+
+### Critérios de pronto (P4)
+
+- [x] P4.S0 — docs/regras
+- [ ] P4.S1 — schema
+- [ ] P4.S2 — catálogo
+- [ ] P4.S3 — jobs manual/agenda
+- [ ] P4.S4 — canal device
+- [ ] P4.S5 — MFE + helps
+- [ ] P4.S6 — firmware + verify
+
+### Fora do escopo (P4)
+
+- Push bruto; PKI code-signing corporativo (P4b); S3 obrigatório; Chat como disparo; substituir registry por tipos PT
+
+### Protocolo de execução (P4)
+
+P4.S0 = docs. **S1–S5** = implementar → testar → commit separado. S6 = firmware + verify (commit de sketch + fixes).
+
+---
+
 ## Fora do escopo (MVP)
 
-- Chat/agente, cockpit PCP embed, WebSocket, **alertas/metas operador (P2)**, **persistência seletiva/rollups (P3)**, sync TOTVS apontamento, Modbus/MQTT
+- Chat/agente, cockpit PCP embed, WebSocket, **alertas/metas operador (P2)**, sync TOTVS apontamento, Modbus/MQTT  
+- **P3.S6 / E6.S2 / E8.S4** = verifies pendentes (código P3.S0–S5 e E8.S0–S5 já no repo)  
+- **Firmware OTA (P4)** — spec pronta; implementação após verifies prioritários ou em paralelo conforme capacidade
 
 ---
 
@@ -746,6 +864,7 @@ Cada **P3.S1–S5** = implementar → testar → **commit + push** separado. P3.
 
 - [README.md](./README.md)
 - [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md)
+- [FIRMWARE-OTA-P4.md](./FIRMWARE-OTA-P4.md)
 - [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md)
 - [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md)
 - [SCHEMA.md](./SCHEMA.md)
