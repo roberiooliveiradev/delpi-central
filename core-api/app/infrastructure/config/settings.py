@@ -1,6 +1,8 @@
 # app/infrastructure/config/settings.py
 
 import os
+from urllib.parse import quote_plus
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -74,8 +76,9 @@ class Config:
     DB_USER = os.getenv("DB_USER")
     DB_PASSWORD = os.getenv("DB_PASSWORD")
 
+    # Password/user must be URL-encoded so characters like "@" do not break the URI host.
     SQLALCHEMY_DATABASE_URI = (
-        f"postgresql://{DB_USER}:{DB_PASSWORD}"
+        f"postgresql://{quote_plus(DB_USER or '')}:{quote_plus(DB_PASSWORD or '')}"
         f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
 
