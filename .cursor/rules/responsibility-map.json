@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "policy": "Cada regra .mdc não-global e não-owner transversal deve possuir exatamente um owner primário. Referências cruzadas são permitidas, ownership primário duplicado não.",
+  "owners": {
+    "platform-architecture-boundaries.mdc": [
+      "application-bounded-context-decoupling.mdc",
+      "assistant-content-json.mdc",
+      "chat-intelligence-base.mdc",
+      "clean-architecture-chat-api.mdc",
+      "llm-stack-centralized.mdc",
+      "mfe-own-api-no-direct-api-delpi.mdc",
+      "presentation-operational-decoupling.mdc",
+      "schema-first-presentation-delivered.mdc"
+    ],
+    "platform-security-identity-authorization.mdc": [
+      "ai-external-tools-security.mdc"
+    ],
+    "platform-api-contracts-integration.mdc": [
+      "api-delpi-openapi-route-standards.mdc",
+      "api-delpi-response-contract.mdc",
+      "contract-evolution-backward-compatibility.mdc",
+      "new-api-route-checklist.mdc",
+      "openapi-first-universal-tool-routing.mdc",
+      "operational-api-routing.mdc",
+      "tv-dashboard-optional-data-filters.mdc"
+    ],
+    "platform-data-persistence.mdc": [
+      "migrations-immutable-checksum.mdc",
+      "persistent-upload-storage.mdc",
+      "plugins-migrations-no-reset-prod.mdc",
+      "si-consolidated-department-idd.mdc",
+      "sql-query-development.mdc",
+      "totvs-product-patterns.mdc",
+      "totvs-warehouse-cost-standards.mdc",
+      "tv-dashboard-persist-local-edits.mdc"
+    ],
+    "platform-frontend-mfe-experience.mdc": [
+      "chat-prose-rendering.mdc",
+      "feature-help-sync.mdc",
+      "mf-federation-patch-safety.mdc",
+      "mfe-modal-host-contained.mdc",
+      "notification-catalog-preferences.mdc",
+      "plugin-mfe-page-excellence.mdc",
+      "plugins-overlay-positioning.mdc",
+      "plugins-reusable-components.mdc",
+      "plugins-visual-design-system.mdc",
+      "tv-dashboard-editor-pasteboard.mdc",
+      "tv-dashboard-presentation-parity.mdc"
+    ],
+    "platform-quality-testing.mdc": [
+      "ai-intelligence-evaluation.mdc",
+      "architecture-ci-enforcement.mdc",
+      "cursor-rules-governance.mdc",
+      "plan-construction.mdc",
+      "plugins-documentation.mdc",
+      "root-cause-generalized-fix.mdc",
+      "test-and-commit.mdc"
+    ],
+    "platform-delivery-runtime-operations.mdc": [
+      "infra-sequential-container-startup.mdc",
+      "plugins-frontend-build.mdc"
+    ],
+    "platform-reliability-observability.mdc": [
+      "ai-context-and-tool-budget.mdc",
+      "http-integration-resilience.mdc",
+      "observability-standards.mdc"
+    ]
+  }
+}
