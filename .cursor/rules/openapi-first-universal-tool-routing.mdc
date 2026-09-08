@@ -1,6 +1,6 @@
 ---
-description: Roteamento universal de tools/actions — OpenAPI importado e catálogo indexado são a fonte de verdade técnica; sem registry por endpoint
-alwaysApply: true
+description: Chat/tools/actions — OpenAPI-first universal, Action Catalog, retrieval, planner, validator, policies e providers externos; carregar em mudanças de tool routing
+alwaysApply: false
 ---
 
 # OpenAPI-first — roteamento universal de tools/actions
