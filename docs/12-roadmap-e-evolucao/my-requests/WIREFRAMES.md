@@ -78,11 +78,11 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 
 | Export / factory | Uso planejado | Etapa |
 |------------------|---------------|-------|
-| `createDashboardProgressTracker` | Jornada linear do wizard NF: concluída/atual/futura/erro/bloqueada | **E21 P0 — criar no plugin-ui se continuar ausente** |
-| `JourneyProgressBar` / `ProgressSummaryBar` | Percentual geral da jornada; sem semântica de loading | **E21 P0 — criar no plugin-ui se continuar ausente** |
-| `ReviewSummaryCard` | Conferência final com resumo + `Alterar` | **E21 P0 — criar ou reutilizar equivalente do catálogo** |
-| `SelectionSummaryCard` | Destinatário/transportadora selecionados | **E21 P1 — criar somente se não houver equivalente** |
-| `WizardStepLayout` | Header/body/footer de etapa | **E21 P1 — opcional; só com reuso real** |
+| `createDashboardProgressTracker` | Jornada linear do wizard NF: concluída/atual/futura/erro/bloqueada | **entregue E21** (`MyRequestsProgressTracker`) |
+| `JourneyProgressBar` / `ProgressSummaryBar` | Percentual geral da jornada; sem semântica de loading | **entregue E21** (`MyRequestsJourneyProgressBar`) |
+| `ReviewSummaryCard` | Conferência final com resumo + `Alterar` | **E21:** composição `SectionCard` + `DetailFields` + `Alterar` (sem card novo) |
+| `SelectionSummaryCard` | Destinatário/transportadora selecionados | **E21:** `DetailFields` + ações (sem card novo) |
+| `WizardStepLayout` | Header/body/footer de etapa | **E21:** `SectionCard` + `FormActions` (sem layout novo) |
 | `createDashboardCreatableMultiSelectField` | Tags / multi-seleção futura | backlog |
 | Schema form renderer (MFE `SchemaFormPage`) | `raw-material-creation` schema-driven | **entregue E7** |
 | `AnchoredPanelPortal` / menus | Menus flutuantes se surgirem | sob demanda |
@@ -101,7 +101,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), a
 | Fila | `/work-queue` | idem Mine |
 | Admin | `/admin` | SectionCard, DataTable, StatusBadge, StateBanner (gate manage) | **E14 + E20 labels** |
 | Nova (genérico) | `/new` | SectionCard + grid `NavigationCard` (sem Filial no shell); filial só no form do tipo |
-| Wizard NF | `/new` → specialized | **E21 alvo:** ProgressTracker, JourneyProgressBar, SectionCard, SegmentToggle, TextField, SelectField, DataTable quando aplicável, ReviewSummaryCard, HelpTooltip, FormActions, ActionButton, StateBanner |
+| Wizard NF | `/new` → specialized | **entregue E21:** ProgressTracker, JourneyProgressBar, SectionCard, SegmentToggle, TextField, SelectField, FormActions (footer), ActionButton, StateBanner, DetailFields (seleção/conferência) |
 | Detalhe | `/requests/:id` | SectionCard, DetailFields, ActionBar→ActionButton (label PT), ModalShell (return/cancel), Timeline, painéis |
 | Payload NF | detalhe | SectionCard, DetailFields |
 | Comentários | detalhe | SectionCard, FieldLabel, NativeTextArea, ActionButton |
@@ -117,7 +117,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), a
 | `/apps/my-requests` → `/mine` | WF-01 | **entregue** | Lista DataTable |
 | `/work-queue` | WF-02 | **entregue** | Fila processador |
 | `/new` | WF-03 | **entregue E19** | Grid NavigationCard; filial no form |
-| `/new` + `invoice-issuance` | WF-04 | **base entregue; redesign E21 especificado** | Wizard 6 passos + progress tracker + Conferência editável |
+| `/new` + `invoice-issuance` | WF-04 | **entregue E21** | Wizard 6 passos + ProgressTracker + JourneyProgressBar + Conferência com Alterar |
 | `/new` + `raw-material-creation` | WF-07 | **entregue** | SchemaFormPage |
 | `/requests/:id` | WF-05 | **entregue** | Stack de SectionCards |
 | `/admin` | WF-06 | **entregue E14** | RequestTypes read-only (`manage`) |
@@ -198,7 +198,7 @@ ProgressTracker = navegação e estado das etapas
 JourneyProgressBar = resumo percentual da completude
 SectionCard = conteúdo da etapa atual
 FormActions = apenas ações Voltar / Próximo / Salvar / Enviar
-ReviewSummaryCard = Conferência final
+Conferência = SectionCard + DetailFields + Alterar (sem ReviewSummaryCard dedicado)
 ```
 
 Estados do tracker:

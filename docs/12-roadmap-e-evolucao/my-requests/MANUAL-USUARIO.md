@@ -64,7 +64,14 @@ Quem tem permissão de administrar vê o catálogo de tipos (código, nome, ativ
 
 ## Wizard de emissão de NF
 
-Seis etapas: destinatário → tipo de NF → itens → frete → adicionais → conferência. Na conferência, confira o checklist antes de enviar. Buscas de cliente/fornecedor/produto usam o serviço do módulo (não é preciso sair do app).
+Seis etapas: destinatário → tipo de NF → itens → frete → adicionais → conferência.
+
+- A barra de progresso e o rastreador de etapas mostram o que já foi preenchido. Etapas futuras ficam bloqueadas até a anterior estar pronta; etapas concluídas podem ser reabertas.
+- Ao selecionar o destinatário, o fluxo avança automaticamente para o tipo de NF.
+- Na conferência, revise cada bloco e use **Alterar** para corrigir e voltar. Não há checklist técnico na tela — só o resumo amigável antes de **Enviar**.
+- O rascunho fica só na sessão atual (recarregar a página perde o preenchimento).
+
+Buscas de cliente/fornecedor/produto/transportadora usam o serviço do módulo (não é preciso sair do app). A transportadora é opcional.
 
 ## Formulário de matéria-prima
 

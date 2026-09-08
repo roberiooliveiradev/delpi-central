@@ -2,7 +2,7 @@
 
 > **Plugin:** `my-requests`  
 > **API:** `/apps/requests-api/v1`  
-> **Status:** E1–E20 entregues (ops + IAM + lookups + UX Nova cards + TopBar/PT-BR/Ajuda); UI live Ops ainda assina PARITY itens 1–2  
+> **Status:** E1–E21 entregues (ops + IAM + lookups + UX Nova cards + TopBar/PT-BR/Ajuda + wizard NF ProgressTracker); UI live Ops ainda assina PARITY itens 1–2  
 > **Próximo:** E18 deprecar lookups legado; backlog tags / Admin CRUD  
 > **Referência legado:** [`invoice-issuance`](../invoice-issuance/README.md)
 
@@ -1139,7 +1139,7 @@ Resumo das superfícies P0:
 | WF-01 | `/mine` | DataTable, StatusBadge, SectionCard |
 | WF-02 | `/work-queue` | DataTable |
 | WF-03 | `/new` | SelectField, ActionButton |
-| WF-04 | wizard NF | SegmentToggle, TextField, SelectField, FormActions |
+| WF-04 | wizard NF | ProgressTracker, JourneyProgressBar, SegmentToggle, TextField, SelectField, FormActions (footer), SectionCard/DetailFields na conferência |
 | WF-05 | `/requests/:id` | DetailFields, ActionBar, Timeline, painéis |
 | WF-07 | MP schema | SchemaFormPage + TextField/SelectField | **entregue** |
 
@@ -1570,8 +1570,9 @@ flowchart LR
 | **E18** | Deprecar/remover lookups `/invoice-issuance/*` na api-delpi após soak | técnico; schema/volume retidos |
 | **E19** | UX `/new` por cards + unidade via `branch_scope` | **entregue** — [`PROMPT-nova-solicitacao-type-cards.md`](./PROMPT-nova-solicitacao-type-cards.md) |
 | **E20** | TopBar canônica + labels PT-BR + Ajuda user-facing | **entregue** — [`PROMPT-ui-excelencia-topbar-ptbr-help.md`](./PROMPT-ui-excelencia-topbar-ptbr-help.md) |
+| **E21** | Wizard NF: ProgressTracker + JourneyProgressBar + unlock + Conferência Alterar | **entregue** — [`DESIGN-wizard-emissao-nf.md`](./DESIGN-wizard-emissao-nf.md) |
 
-Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19 / E20.
+Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19 / E20 / E21.
 
 ---
 
@@ -1611,5 +1612,5 @@ Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19 / E20.
 
 ---
 
-**Status:** `E1–E20 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
+**Status:** `E1–E21 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
 **Próximo passo:** **E18** — deprecar lookups `/invoice-issuance/*` após soak; backlog tags / CreatableMultiSelect / Admin CRUD; DROP schema após retenção.

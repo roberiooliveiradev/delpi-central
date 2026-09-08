@@ -3,7 +3,7 @@
 > **Produto:** Minhas Solicitações  
 > **Fluxo:** `invoice-issuance`  
 > **Rota:** `/apps/my-requests/new?type=invoice-issuance`  
-> **Status:** especificação visual/UX — **a implementar**  
+> **Status:** especificação visual/UX — **implementado (E21)**  
 > **UI kit:** `@delpi/plugin-ui` via Module Federation  
 > **Wireframe mestre:** [WIREFRAMES.md](./WIREFRAMES.md) — WF-04  
 > **Prompt transversal de UI:** [PROMPT-ui-excelencia-topbar-ptbr-help.md](./PROMPT-ui-excelencia-topbar-ptbr-help.md)
@@ -817,22 +817,22 @@ Validar:
 
 ## 19. Definition of Done
 
-- [ ] Não existe mais stepper baseado em seis `ActionButton` soltos.
-- [ ] Progress Tracker mostra concluída/atual/futura/erro/bloqueada.
-- [ ] Barra de progresso geral atualiza automaticamente pela completude.
-- [ ] Próxima etapa só libera após validação necessária.
-- [ ] Etapas preenchidas podem ser reabertas e alteradas.
-- [ ] Dados não são perdidos ao navegar entre etapas.
-- [ ] Mobile tem representação compacta das etapas.
-- [ ] Conferência possui resumo por seção + `Alterar`.
-- [ ] Checklist técnico não aparece na UI.
-- [ ] Componentes transversais novos ficam no `plugin-ui`.
-- [ ] Zero CSS de componentes do kit no MFE.
-- [ ] Ajuda contextual sincronizada.
-- [ ] PT-BR completo.
-- [ ] Acessibilidade por teclado e screen reader considerada.
-- [ ] Testes do `plugin-ui` e `my-requests` verdes.
-- [ ] Build verde.
+- [x] Não existe mais stepper baseado em seis `ActionButton` soltos.
+- [x] Progress Tracker mostra concluída/atual/futura/erro/bloqueada.
+- [x] Barra de progresso geral atualiza automaticamente pela completude.
+- [x] Próxima etapa só libera após validação necessária.
+- [x] Etapas preenchidas podem ser reabertas e alteradas.
+- [x] Dados não são perdidos ao navegar entre etapas.
+- [x] Mobile tem representação compacta das etapas.
+- [x] Conferência possui resumo por seção + `Alterar`.
+- [x] Checklist técnico não aparece na UI.
+- [x] Componentes transversais novos ficam no `plugin-ui`.
+- [x] Zero CSS de componentes do kit no MFE.
+- [x] Ajuda contextual sincronizada.
+- [x] PT-BR completo.
+- [x] Acessibilidade por teclado e screen reader considerada.
+- [x] Testes do `plugin-ui` e `my-requests` verdes.
+- [x] Build verde.
 - [ ] Smoke visual no Portal federado concluído.
 
 ---
