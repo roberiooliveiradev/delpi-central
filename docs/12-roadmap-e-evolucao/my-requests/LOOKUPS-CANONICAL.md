@@ -1,17 +1,17 @@
-# Lookups canônicos (E17) — inventário e contrato
+# Lookups canônicos (E17–E18) — inventário e contrato
 
-**Status:** E17.S2 entregue — `ApiDelpiAdapter` consome `GET /request-lookups/*`.  
-Rotas legadas `/invoice-issuance/parties|…` permanecem até E18 (soak).
+**Status:** E18 entregue — lookups legado `/invoice-issuance/*` **removidos**.  
+Canônico único: `GET /request-lookups/*` (`ApiDelpiAdapter` + router api-delpi).
 
-## Inventário legado (ainda no ar)
+## Inventário legado (removido em E18)
 
-| Método port | Path legado api-delpi | `operationId` legado | Shape |
-|-------------|----------------------|----------------------|-------|
-| `search_parties` | `GET /invoice-issuance/parties` | `search_invoice_issuance_parties` | paged_list / party |
-| `search_products` | `GET /invoice-issuance/products` | `search_invoice_issuance_products` | paged_list / product |
-| `search_carriers` | `GET /invoice-issuance/carriers` | `search_invoice_issuance_carriers` | paged_list / carrier |
-| `list_open_sales_orders` | `GET /invoice-issuance/open-sales-orders` | `list_invoice_issuance_open_sales_orders` | paged_list |
-| `get_warehouse_01_balance` | `GET /invoice-issuance/products/{code}/warehouse-01-balance` | `get_invoice_issuance_warehouse_01_balance` | scalar |
+| Método port | Path legado (removido) | `operationId` legado (removido) |
+|-------------|------------------------|----------------------------------|
+| `search_parties` | `GET /invoice-issuance/parties` | `search_invoice_issuance_parties` |
+| `search_products` | `GET /invoice-issuance/products` | `search_invoice_issuance_products` |
+| `search_carriers` | `GET /invoice-issuance/carriers` | `search_invoice_issuance_carriers` |
+| `list_open_sales_orders` | `GET /invoice-issuance/open-sales-orders` | `list_invoice_issuance_open_sales_orders` |
+| `get_warehouse_01_balance` | `GET /invoice-issuance/products/{code}/warehouse-01-balance` | `get_invoice_issuance_warehouse_01_balance` |
 
 Código canônico: [`api_delpi_adapter.py`](../../../requests-api/requests_app/infrastructure/gateways/api_delpi_adapter.py) (`_LOOKUP_PREFIX = "/request-lookups"`).  
 Router: [`request_lookups_router.py`](../../../api-delpi/app/interface/http/routes/request_lookups_router.py).  
@@ -35,9 +35,8 @@ Exposição MFE: `GET /apps/requests-api/v1/request-types/invoice-issuance/looku
 
 - `pytest requests-api/tests/parity/ -q` (shapes via `InMemoryOperationalLookupAdapter`)
 - `pytest requests-api/tests/test_api_delpi_adapter_lookups_paths.py -q` — zero path `/invoice-issuance/` nos lookups
-- `pytest api-delpi/tests/test_request_lookups_routes.py -q`
+- `pytest api-delpi/tests/test_request_lookups_routes.py tests/test_invoice_issuance_contracts.py -q`
 
-## Fora deste doc (E18+)
+## Fora deste doc
 
-- Remover ou marcar deprecated as rotas lookup sob `/invoice-issuance/`
-- DROP schema / volume após retenção
+- DROP schema `invoice_issuance` / volume host após retenção ([MIGRATION-RUNBOOK.md](./MIGRATION-RUNBOOK.md))
