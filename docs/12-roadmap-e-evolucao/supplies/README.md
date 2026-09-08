@@ -1,110 +1,160 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (set/2026):** documentação e plano **concluídos** · **implementação produtiva não iniciada**  
+> **Status (set/2026):** baseline de produto e arquitetura concluída · **implementação produtiva não iniciada**  
+> **Readiness:** **BLOQUEADO PARA IMPLEMENTAÇÃO até conclusão de E1 + gates P0**  
 > **Nome ao usuário:** **Portal Suprimentos**  
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies`  
 > **API:** `supplies-api` · gateway `/apps/supplies-api/`  
-> **Classe CSS root:** `.dashboard-supplies-portal` (não colidir com o legado `.dashboard-supplies`)
+> **Classe CSS root:** `.dashboard-supplies-portal`
 
-O **Portal Suprimentos** é o hub operacional, analítico e gerencial do domínio de Suprimentos na Minha DELPI. Substitui progressivamente a experiência fragmentada (vários BIs, plugins, Sheets e filtros diferentes) por jornadas coesas, no mesmo padrão arquitetural e visual do [Portal Comercial](../commercial/README.md).
+O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de Suprimentos na Minha DELPI. Substitui progressivamente a experiência fragmentada por jornadas coesas, preservando bounded contexts, RBAC central, paridade e rollback.
 
-**Esta pasta é contrato de produto e arquitetura.** Não autoriza cutover, remoção de plugins nem implementação sem pedido explícito do Product Owner.
+**Esta pasta é contrato de produto/arquitetura. Não autoriza implementação, cutover ou remoção de legados sem pedido explícito do Product Owner.**
 
-## Identidade congelada
+---
 
-| Superfície | Valor | Colisão? |
-|------------|-------|----------|
-| Plugin id | `supplies` | Só fixture de teste (`rbacAccessTree.test.ts`) — **não** há app real |
-| basePath MFE | `/apps/supplies` | Livre |
-| API | `supplies-api` · `/apps/supplies-api` | Livre (pacote inexistente) |
-| CSS root | `.dashboard-supplies-portal` | **Obrigatório** — `.dashboard-supplies` já é o MFE legado |
-| Prefixo tokens | `--sp-*` → `--delpi-ui-*` | Livre |
-| Departamento SI / chat | `supplies` | Reuso intencional do domínio, não do app |
+## 1. Readiness atual
 
-ADRs: [ADR-001](./adr/ADR-001-supplies-api.md) · [ADR-004](./adr/ADR-004-plugin-identity-and-css-root.md)
+| Item | Estado |
+|---|---|
+| Baseline de produto | concluída |
+| Arquitetura alvo | concluída |
+| RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
+| Authz Core-first | decisão congelada; implementação compartilhada ainda precisa de gate |
+| Framework supplies-api | Flask pela precedência das instruções oficiais |
+| BIs externos | pendentes de dump Core E1.S1 |
+| Papéis SC/ES | comprador ES ainda pendente E1.S2 |
+| KPIs | parte ainda requer homologação E1.S3 |
+| Manifest draft | obrigatório antes do scaffold |
+| Implementação | não iniciada |
 
-## Arquitetura alvo
+### Bloqueios P0 antes de E2
+
+- **GATE-AUTHZ:** permissions efetivas resolvidas pelo Core; nenhuma autorização nova confia em claims de permission do JWT.
+- **GATE-E1:** dump dos BIs externos, papéis e fichas KPI pendentes.
+- **GATE-ARCH:** ADRs e manifest draft revisados/aceitos.
+- **GATE-RBAC:** catálogo mínimo + provisionamento de coexistência definido.
+
+---
+
+## 2. Identidade congelada
+
+| Superfície | Valor |
+|---|---|
+| Plugin id | `supplies` |
+| basePath MFE | `/apps/supplies` |
+| API | `supplies-api` · `/apps/supplies-api` |
+| Framework API | **Flask** conforme instrução oficial vigente |
+| CSS root | `.dashboard-supplies-portal` |
+| Prefixo tokens | `--sp-*` → `--delpi-ui-*` |
+| Permission de entrada | `supplies.portal.access` |
+
+ADRs principais: [ADR-001](./adr/ADR-001-supplies-api.md) · [ADR-004](./adr/ADR-004-plugin-identity-and-css-root.md) · [ADR-006](./adr/ADR-006-unit-permissions.md) · [ADR-007](./adr/ADR-007-permission-minimization.md).
+
+---
+
+## 3. Arquitetura alvo
 
 ```text
 Browser
   → Minha DELPI Portal
-    → plugins/supplies  (MFE · nunca chama api-delpi)
+    → plugins/supplies
       → supplies-api
-          ├── PostgreSQL próprio (estado Delpi)
-          ├── Core API (RBAC / me / apps)
-          ├── purchase-requests-api (HTTP, até absorção)
-          ├── strategic-indicators-api (HTTP)
-          ├── contexto Qualidade / Financeiro (HTTP, projeção)
-          └── api-delpi → TOTVS (SQL canônico)
+          ├── Core API /me (effective permissions)
+          ├── PostgreSQL próprio (estado Minha DELPI)
+          ├── purchase-requests-api (C1, até absorção C2)
+          ├── strategic-indicators-api
+          ├── contextos irmãos quando autorizado
+          └── api-delpi → TOTVS
 ```
 
-## Documentos
+Regras:
+
+- MFE nunca chama api-delpi direto;
+- JWT identifica/autentica; Core resolve permissions efetivas;
+- autorização = capability + unidade + resource scope/ownership + business rule;
+- SQL/regra TOTVS permanecem na api-delpi;
+- estado do produto pertence à supplies-api;
+- capabilities não devem espelhar CRUD.
+
+---
+
+## 4. Documentos
 
 | Documento | Conteúdo |
-|-----------|----------|
-| **[00-DIAGNOSTICO.md](./00-DIAGNOSTICO.md)** | Como Suprimentos trabalha hoje; dores; gaps |
-| **[INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md)** | Apps, BIs, APIs, Sheets, decisões Portal |
-| **[PERSONA-EXPERIENCE-MAP.md](./PERSONA-EXPERIENCE-MAP.md)** | Persona × filial × app × permissão × alvo |
-| **[DUPLICIDADES-E-SOBREPOSICOES.md](./DUPLICIDADES-E-SOBREPOSICOES.md)** | OTD×atraso, estoques, Sheets×SI, onde-usado |
-| **[MATRIZ-BOUNDARIES.md](./MATRIZ-BOUNDARIES.md)** | Owner por capacidade |
-| **[PLAYBOOK-MODULO-SUPRIMENTOS.md](./PLAYBOOK-MODULO-SUPRIMENTOS.md)** | Playbook mestre |
-| **[PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)** | Fronteira TOTVS × BFF |
-| **[DESIGN-IA-SUPRIMENTOS.md](./DESIGN-IA-SUPRIMENTOS.md)** | Arquitetura de informação e kit |
-| **[WIREFRAMES.md](./WIREFRAMES.md)** | WF-01–WF-21 |
-| **[PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)** | RBAC capability-driven + aliases |
-| **[API-ROUTES.md](./API-ROUTES.md)** | Catálogo supplies-api + reuso api-delpi |
-| **[DATA-MODEL.md](./DATA-MODEL.md)** | Postgres Delpi (sem espelho TOTVS) |
-| **[KPI-FICHAS.md](./KPI-FICHAS.md)** | Fichas dos indicadores centrais |
-| **[INTEGRACOES.md](./INTEGRACOES.md)** | Gateways, filiais, observabilidade |
-| **[HELP-AND-ONBOARDING.md](./HELP-AND-ONBOARDING.md)** | Manual, FAQ, glossário, satélite Ajuda |
-| **[IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)** | Plano E1–E20 com receita E\*.S\* |
-| **[HOMOLOGACAO-PARIDADE.md](./HOMOLOGACAO-PARIDADE.md)** | Checklist por ativo legado |
-| **[CUTOVER-RUNBOOK.md](./CUTOVER-RUNBOOK.md)** | Coexistência → redirect → unregister |
-| **[DECISOES_FUNCIONAIS_PENDENTES.md](./DECISOES_FUNCIONAIS_PENDENTES.md)** | Só o que o repositório não resolve |
+|---|---|
+| [00-DIAGNOSTICO.md](./00-DIAGNOSTICO.md) | cenário atual e dores |
+| [INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md) | ativos e decisões |
+| [PERSONA-EXPERIENCE-MAP.md](./PERSONA-EXPERIENCE-MAP.md) | personas × apps × permissions |
+| [DUPLICIDADES-E-SOBREPOSICOES.md](./DUPLICIDADES-E-SOBREPOSICOES.md) | overlaps e drifts |
+| [MATRIZ-BOUNDARIES.md](./MATRIZ-BOUNDARIES.md) | ownership |
+| [PLAYBOOK-MODULO-SUPRIMENTOS.md](./PLAYBOOK-MODULO-SUPRIMENTOS.md) | playbook mestre |
+| [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md) | fronteira BFF × TOTVS |
+| [DESIGN-IA-SUPRIMENTOS.md](./DESIGN-IA-SUPRIMENTOS.md) | IA/UX |
+| [WIREFRAMES.md](./WIREFRAMES.md) | wireframes |
+| [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) | RBAC mínimo + unidade + aliases |
+| [MANIFEST-DRAFT.md](./MANIFEST-DRAFT.md) | contrato futuro do plugin |
+| [API-ROUTES.md](./API-ROUTES.md) | contratos BFF |
+| [DATA-MODEL.md](./DATA-MODEL.md) | estado Postgres |
+| [KPI-FICHAS.md](./KPI-FICHAS.md) | indicadores |
+| [INTEGRACOES.md](./INTEGRACOES.md) | HTTP, authz, observabilidade |
+| [HELP-AND-ONBOARDING.md](./HELP-AND-ONBOARDING.md) | Ajuda |
+| [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md) | plano executável; deve obedecer C1→C2→C3 |
+| [HOMOLOGACAO-PARIDADE.md](./HOMOLOGACAO-PARIDADE.md) | paridade mensurável |
+| [CUTOVER-RUNBOOK.md](./CUTOVER-RUNBOOK.md) | target-first, redirect-last |
+| [DECISOES_FUNCIONAIS_PENDENTES.md](./DECISOES_FUNCIONAIS_PENDENTES.md) | pendências reais |
 
 ### ADRs
 
 | ADR | Decisão |
-|-----|---------|
-| [ADR-001-supplies-api.md](./adr/ADR-001-supplies-api.md) | Criar `supplies-api` como BFF do Portal |
-| [ADR-002-purchase-requests-api.md](./adr/ADR-002-purchase-requests-api.md) | Absorção progressiva pela `supplies-api` |
-| [ADR-003-legacy-app-consolidation.md](./adr/ADR-003-legacy-app-consolidation.md) | Coexistência e depreciação dos MFEs/BIs |
-| [ADR-004-plugin-identity-and-css-root.md](./adr/ADR-004-plugin-identity-and-css-root.md) | `supplies` + CSS `.dashboard-supplies-portal` |
-| [ADR-005-external-bi-core-dump.md](./adr/ADR-005-external-bi-core-dump.md) | BIs do PO ausentes do git — validar no Core |
-| [ADR-006-unit-permissions.md](./adr/ADR-006-unit-permissions.md) | Unidade ortogonal (`supplies.unit.filial-{TOTVS}`) — não inflar capabilities |
+|---|---|
+| ADR-001 | supplies-api, Flask, authz Core-first |
+| ADR-002 | absorção progressiva purchase-requests-api C0→C3 |
+| ADR-003 | coexistência/cutover |
+| ADR-004 | identidade do plugin/CSS |
+| ADR-005 | BIs externos precisam de dump Core |
+| ADR-006 | unidade ortogonal |
+| ADR-007 | minimização de permissions |
 
-## Decisões travadas (resumo)
+---
 
-1. Plugin `supplies` + `supplies-api` + `/apps/supplies`.
-2. MFE **nunca** chama `api-delpi` direto.
-3. `purchase-requests-api` **permanece** na coexistência e é **absorvida** após paridade (não fica BC irmão eterno do Portal).
-4. SQL TOTVS permanece na **api-delpi**. Estado Delpi (tarefas, notas, alertas, preferências, e depois escopos CC) na **supplies-api**.
-5. Home ≠ Visão Geral. Capability-driven, sem `if role == comprador`.
-6. Multi-unidade: eixo B `supplies.unit.filial-{TOTVS}` (hoje `01` SC e `02` ES; futuras sem inflar o eixo A). Aliases `filial-sc`/`filial-es` só no legado. `manage` ≠ todas as unidades.
-7. Cutover só após paridade homologada. Nenhum app removido nesta etapa.
+## 5. Decisões travadas
 
-## Próximos gates (quando o PO autorizar execução)
+1. `supplies` + `supplies-api` + `/apps/supplies`.
+2. supplies-api em Flask enquanto a instrução oficial vigente assim determinar.
+3. MFE fala apenas com supplies-api.
+4. Authz real usa effective permissions do Core; não claims de permission do JWT.
+5. RBAC usa **menor catálogo suficiente**, não CRUD por permission.
+6. Unidade é eixo ortogonal `supplies.unit.filial-{TOTVS}`.
+7. `purchase-requests-api`: C0 coexistência → C1 composição → C2 ownership/jobs → paridade final → C3 cutover.
+8. Home ≠ Overview.
+9. Kit-first e CSS isolado.
+10. Cutover só após paridade e BIs externos classificados.
+
+---
+
+## 6. Gates
 
 | Gate | Critério |
-|------|----------|
-| **GATE-E1** | Dump Core dos BIs externos + fichas KPI assinadas nas pendências |
-| **GATE-ARCH** | ADRs aceitos pelo PO |
-| **GATE-API** | `supplies-api` no Compose, grep zero `api-delpi` no MFE |
-| **GATE-MFE** | Shell kit-first, CSS `.dashboard-supplies-portal` |
-| **GATE-FEATURE** | Feature = contrato + RBAC + Ajuda + testes |
-| **GATE-PARITY** | Portal ≥ capacidade legada necessária |
-| **GATE-CUTOVER** | Redirects + aliases + rollback homologados |
+|---|---|
+| **GATE-AUTHZ** | Core-first comprovado; fail-closed; testes positivo/negativo/filial |
+| **GATE-E1** | BIs + papéis + KPIs fechados ou explicitamente bloqueados |
+| **GATE-ARCH** | ADRs + Manifest Draft revisados |
+| **GATE-RBAC** | permissions canônicas + migração de papéis + `/me/apps`/`/me/routes` planejados |
+| **GATE-API** | supplies-api saudável e MFE sem api-delpi direto |
+| **GATE-MFE** | shell kit-first e CSS isolado |
+| **GATE-FEATURE** | contrato + authz + Ajuda + testes |
+| **GATE-C2** | ownership SC/jobs reconciliado antes de C3 |
+| **GATE-PARITY** | dados/funcionalidades comparados com evidência quantitativa |
+| **GATE-CUTOVER** | todos os legados/BIs em estado final + target saudável + RBAC + rollback |
 
-## Fora desta pasta
+---
 
-- Implementação de MFE/API/Compose/Gateway/RBAC/migrations.
-- Remoção de `dashboard-supplies`, `purchase-requests`, `estoque-seguranca`.
-- Escrita no TOTVS.
+## 7. Fora de escopo nesta documentação
 
-## Referências de padrão (não copiar regra comercial)
-
-- [Portal Comercial](../commercial/README.md)
-- [Checklist novo MFE](../../05-plugin-system/novo-plugin-mfe-checklist.md)
-- [Catálogo plugin-ui](../../../plugins/plugin-ui/docs/component-catalog.md)
-- Contrato SC: [solicitacoes-compras/01-contrato-api.md](../solicitacoes-compras/01-contrato-api.md)
-- ESTSEG: [api-delpi/docs/api/estoque-seguranca.md](../../../api-delpi/docs/api/estoque-seguranca.md)
+- implementação produtiva;
+- escrita no TOTVS;
+- remoção de legados;
+- ativação de redirects;
+- mudança de RBAC real;
+- migrations produtivas.
