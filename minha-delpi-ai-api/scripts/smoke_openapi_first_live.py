@@ -9,12 +9,11 @@ Modos:
   SMOKE_OPENAPI_PHASE=inprocess|http|all  (default all)
   SMOKE_BASE_URL=http://localhost
   SMOKE_USER / SMOKE_PASSWORD
-  CHAT_OPENAPI_PLANNER_MODE no container (http phase): shadow|canary|on
 
 Fases:
   1) inprocess — fixture logística no processo (selectionMode=openapi_first)
-  2) http — chat live via gateway (requer mode≠off no container para path novo;
-     com mode=off ainda valida regressão DELPI e health)
+  2) http — chat live via gateway (OpenAPI-first é o default da API; override
+     opcional só via env CHAT_OPENAPI_PLANNER_MODE se precisar de shadow/off)
 """
 
 from __future__ import annotations
@@ -273,7 +272,9 @@ def phase_http() -> list[str]:
 
     # Descobre mode efetivo no container via endpoint de status se existir;
     # fallback: inferir do adminDebug do turno.
-    container_mode = os.environ.get("CHAT_OPENAPI_PLANNER_MODE", "off").strip().lower()
+    container_mode = (
+        os.environ.get("CHAT_OPENAPI_PLANNER_MODE") or "on (Settings default)"
+    ).strip()
     print(f"info  CHAT_OPENAPI_PLANNER_MODE (host env hint)={container_mode}")
 
     try:
