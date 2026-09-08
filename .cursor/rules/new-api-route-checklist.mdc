@@ -1,182 +1,213 @@
 ---
-description: Checklist obrigatório ao criar ou alterar rotas api-delpi expostas ao chat
+description: Checklist obrigatório ao criar ou alterar rotas de API expostas ao chat — OpenAPI-first e multi-provider
 alwaysApply: true
 ---
 
-# Nova rota api-delpi — checklist
+# Nova rota/API exposta ao chat — checklist
 
 ## Princípio
 
-Rota exposta ao chat = entrega em **três pacotes** alinhados a clean architecture:
+Rota exposta ao chat = contrato OpenAPI completo + import/index + governança + execução genérica + apresentação schema-driven + testes.
 
-1. **api-delpi** — contrato HTTP + `meta`
-2. **minha-delpi-ai-api** — roteamento + apresentação + pipeline
-3. **Testes/gates** — regressão antes do merge
+**Não** significa criar registry/intenção/selector específico por endpoint.
 
-Não entregar só o endpoint. Ver também: `development-standards-index.mdc`, `api-delpi-response-contract.mdc`, **`api-delpi-openapi-route-standards.mdc`** (OpenAPI/locale/enums), `operational-api-routing.mdc`, `clean-architecture-chat-api.mdc`.
+Regra canônica: `openapi-first-universal-tool-routing.mdc`.
 
-Doc canônica: `api-delpi/docs/api/openapi-bilingue-catalogo-canonico.md` § **Como construir uma rota futura**.
+Ver também: `development-standards-index.mdc`, `api-delpi-response-contract.mdc`, `api-delpi-openapi-route-standards.mdc`, `operational-api-routing.mdc`, `clean-architecture-chat-api.mdc`.
 
 ---
 
-## 1. api-delpi (`api-delpi/`)
+## 1. Provider/API — contrato OpenAPI
+
+Para `api-delpi/`, manter os padrões internos abaixo. Para providers externos, o requisito arquitetural é um OpenAPI válido e acessível + autenticação configurada.
 
 | # | Entrega | Onde |
 |---|---------|------|
-| 0 | Path / `operationId` / entity / query params em **inglês** (PT só em locale/UI) | router + contrato — anti-padrão: path PT em rota nova |
-| 1 | `api_delpi_success(..., operation_id=...)` | router |
-| 2 | `route_contract_registry.py` — `entity` + `shape` | application |
-| 3 | `operation_id` = OpenAPI = meta | **decorator** + envelope + registry (mesmo id) |
-| 4 | Chat-critical: `openapi_agent_metadata.agent_route()` | interface/http — **sem** `operation_id=` duplicado com `**META` |
-| 5 | Permissão em `api_delpi_permissions.py` | security |
-| 6 | Smoke: `meta.operationId` + `meta.entity` | `api-delpi/tests/` (+ inventário `route_test_coverage.json`) |
-| 7 | **Upload multipart/binário:** volume persistente no Compose | `persistent-upload-storage.mdc` |
-| 8 | Locale EN + pt-BR (`en.summary ≠ pt-BR.summary`) | `tv_route_audience.json` |
-| 9 | Domínio fechado → `enum=` + `pattern=` (runtime **422**) | `query_param_enums.py` — `enum` sozinho **não** valida em runtime |
-| 10 | Param novo → labels bilíngues | `openapi_param_locale.json` + `sync_tv_data_param_catalog.py --write` |
-| 10b | Enum novo → `enumLabels` EN+pt-BR | mesmo JSON; `--check` falha se valor do catálogo TV ficar sem tradução |
-| 11 | Baseline + catálogo TV | `sync_openapi_baseline.py` + `generate_tv_data_routes_from_openapi.py --check` |
-| 12 | Smoke Nível A + inventário | `operationId` em `tests/**/*.py`; `audit_route_test_coverage.py --write && --check` (CI: `--check-complete`) — `playbook-route-test-coverage-100.md` |
-| 13 | **Valoração R$ / `B2_CM1`:** custo do almoxarifado `01` (nunca média de locais) | `totvs-warehouse-cost-standards.mdc` + [padroes-totvs/armazem-custo.md](../api-delpi/docs/api/padroes-totvs/armazem-custo.md) |
-| 14 | **Padrões TOTVS do produto:** consultar biblioteca antes de inventar convenção; se regra nova for transversal, **enriquecer** a lib | `totvs-product-patterns.mdc` (§ usar / enriquecer) + [padroes-totvs/README.md](../api-delpi/docs/api/padroes-totvs/README.md) |
+| 0 | Path / `operationId` / entity / query params em inglês para rota nova da api-delpi | router + contrato |
+| 1 | `operationId` estável e único | OpenAPI/provider |
+| 2 | `summary` e `description` semanticamente úteis | OpenAPI/provider |
+| 3 | parâmetros com nome, localização, required e schema corretos | OpenAPI/provider |
+| 4 | request body/schema completo quando houver | OpenAPI/provider |
+| 5 | response schema/descriptions úteis | OpenAPI/provider |
+| 6 | sensitivity/policy enriquecida por metadata/provider config quando necessário | provider/chat governance |
+| 7 | autenticação do provider configurada (`none`, `user_token`, `api_key`, etc.) | provider config |
+| 8 | smoke direto da operação | testes do provider ou teste de integração |
 
-Shapes: `playbook_report`, `paged_list`, `scalar`, `composite_analysis`, `hierarchy` — ver playbook-10 § 4.3.
+### Específico da api-delpi
 
-### OpenAPI / catálogo (resumo)
+Quando a rota pertence à `api-delpi`, manter também os contratos já canônicos:
 
-- Summary nativo **EN**; PT em `x-delpi.locale.pt-BR`.
-- Default UX de filial (`"01"`) só em `tv_param_ux_defaults.json` — não no `Query` se consolidado = vazio.
-- Gates: `audit_openapi_operation_ids.py --check`, parity TV `--strict-auto-ids`, `sync_tv_data_param_catalog.py --check`.
+- `api_delpi_success(..., operation_id=...)`;
+- `route_contract_registry.py` para `entity` + `shape` quando aplicável ao contrato interno;
+- `operation_id` coerente entre decorator/OpenAPI/meta;
+- `openapi_agent_metadata.agent_route()` nas rotas chat-critical;
+- permissão em `api_delpi_permissions.py`;
+- locale EN + pt-BR conforme `api-delpi-openapi-route-standards.mdc`;
+- enums/patterns com validação runtime;
+- baselines/gates internos da api-delpi;
+- uploads persistentes conforme `persistent-upload-storage.mdc`;
+- padrões TOTVS conforme regras específicas.
 
-Detalhe: **`api-delpi-openapi-route-standards.mdc`**.
-
-### Rotas com upload de arquivo
-
-Se a rota aceita `UploadFile`, `multipart` ou grava em `*_UPLOAD_DIR`:
-
-1. Volume `${DELPI_DATA_HOST_DIR}/<subdir>` → path do container em **prod e dev** compose.
-2. Documentar em `infra/README-ambiente.md` e `env.local.example`.
-3. Smoke pós-`force-recreate`: metadado no banco **e** arquivo no host.
-
-**Proibido:** persistir anexo de usuário só no filesystem efêmero do container ou em `/tmp`.
+Esses itens enriquecem/validam a **api-delpi**, mas **não podem ser requisito para providers externos**.
 
 ---
 
-## 2. Chat — roteamento (`minha-delpi-ai-api/`)
+## 2. Chat — importação e indexação
 
-| # | Entrega | Onde (camada) |
-|---|---------|---------------|
-| 1 | Registry operacional | `operational_route_registry.json` + `generate_operational_route_registry.py --check` |
-| 2 | Domínio/intenção nova | `api_route_domains.json` (domain via vocabulary) |
-| 3 | Seleção de action | `ExternalActionRouteSelectionService` (application) — **sem** `if path` em use case |
-| 4 | Execução HTTP | `ExecuteExternalActionUseCase` + gateway (application/infrastructure) |
-| 5 | Regressão de intenção | `chat_intelligence_regression_cases.py` ou `production_operational_regression_cases.py` |
+Após a rota existir no OpenAPI:
 
----
+1. Importar/reimportar o provider.
+2. Persistir/atualizar `ChatActionCatalogItem` ou equivalente normalizado.
+3. Garantir documento semântico/embedding com metadata suficiente da operação.
+4. Vincular provider/action ao agente.
+5. Confirmar `allowed_action_ids` no turno.
 
-## 3. Chat — apresentação (schema-first — delivered puro)
+A indexação deve aproveitar, quando disponíveis:
 
-**Regra obrigatória:** `schema-first-presentation-delivered.mdc`. **Não** criar presenter por entidade nem `visualBuilders` / `tableAssembly`.
-
-### Perfil mínimo (não por path isolado)
-
-| Dados | Ajuste em JSON | Pipeline |
-|-------|----------------|----------|
-| Listagem | `pathRules` + `chartPolicy: skip` | tabela genérica schema-driven |
-| KPI / série | `chartPolicy: auto` | `ChatSchemaDrivenPresentationService.build_kpi/chart` |
-| Hierarquia | `tree_hierarchy` em pathRules | árvore genérica ou `ChatProductStructurePresentationService` |
-| Qualquer rota nova | OpenAPI `meta.entity` + `meta.fields` | **sem** presenter dedicado |
-
-### Arquivos JSON (obrigatório)
-
-- `presentation_profiles.json` — `entityProfiles`, `pathRules`, `chartPolicy`, `commentaryProfileKey` (**não** `visualBuilders` / `tableAssembly`)
-- `column_labels.json` — rótulos; preferir `meta.fields` da API
-- `presentation_vocabulary.json` — scoring Automático (se nova heurística)
-
-### Pipeline canônico
-
-```
-ExecuteExternalAction
-  → ChatPresentationMetadataPipelineService.build
-  → ChatPresentationApiDeliveredMetadataService.build
-       → ChatSchemaDrivenPresentationService
-       → ChatDataInsightEnrichmentService
-       → ChatPresentationDecisionService.enrich_metadata
-       → ChatPresentationRenderPipelineService.finalize
-  → MFE render-only
+```text
+provider
+operationId
+method
+path
+summary
+description
+tags
+parameters + descriptions + schemas
+requestBody
+responseSchema
+examples úteis
 ```
 
-**MFE:** `chatPresentation.ts` — consome `renderPlan` / `presentationDecision`; **não** redecide formato.
+**Proibido:** exigir `operational_route_registry.json` apenas para a action ficar descobrível.
 
 ---
 
-## 4. Gates CI (antes do merge)
+## 3. Chat — seleção e parâmetros
 
-```bash
-cd minha-delpi-ai-api
-.venv/bin/python scripts/audit_presentation_coverage.py --check-profiles
-.venv/bin/python scripts/generate_operational_route_registry.py --check
-pytest tests/unit/domain/services/test_chat_presentation_view_intent_service.py -q
-# api-delpi alterado:
-pytest api-delpi/tests/ -q -k "<operation_id ou smoke>"
-python api-delpi/scripts/audit_openapi_operation_ids.py --check
-python3 scripts/generate_tv_data_routes_from_openapi.py --check
-python3 scripts/check_tv_openapi_catalog_parity.py --check --strict-auto-ids
-python3 scripts/sync_tv_data_param_catalog.py --check
-cd api-delpi && python scripts/audit_route_test_coverage.py --write \
-  && python scripts/audit_route_test_coverage.py --check \
-  && python scripts/audit_route_test_coverage.py --check-complete
+Pipeline esperado:
+
+```text
+pedido
+→ decomposição quando composto
+→ retrieval top-K de actions autorizadas
+→ planner estruturado
+→ argument extraction pelo schema OpenAPI
+→ validação determinística
+→ policy/confirmation
+→ ExecuteExternalActionUseCase
 ```
 
-`--check-profiles` falha: tier A com `generic`, contrato **entitySet × perfil** quebrado, path sem entity em perfil proibido.  
-`--check-complete` falha: alguma operação OpenAPI sem menção do `operationId` em `tests/**/*.py` (exceto `exempt`).
+Checklist:
+
+- [ ] seleção funciona sem `if path`/provider;
+- [ ] nenhuma action fora de `allowed_action_ids` pode ser escolhida;
+- [ ] parâmetro obrigatório ausente gera follow-up, não valor inventado;
+- [ ] tipos/enums/body são validados contra o OpenAPI;
+- [ ] write/admin/destructive respeitam confirmation/policy;
+- [ ] provider externo funciona sem código/JSON por endpoint.
+
+### Registry legado
+
+`operational_route_registry.json` é compatibilidade de migração.
+
+Não adicionar `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` manual por rota nova quando o OpenAPI já contém a informação técnica equivalente.
+
+Exceção exige justificativa arquitetural explícita de policy/vocabulário transversal que o OpenAPI padrão não representa.
 
 ---
 
-## 5. Teste mínimo de apresentação
+## 4. Chat — apresentação
 
-Payload representativo + modo **Automático**:
+**Regra obrigatória:** `schema-first-presentation-delivered.mdc`.
 
-- listagem → `presentationDecision.selected` = `table` (ou `text` se narrativa-first do perfil)
-- KPI/série → `kpi` / `line_chart`
+Toda action nova deve possuir fallback genérico:
+
+```text
+responseSchema + payload runtime + metadata
+→ ChatSchemaDrivenPresentationService
+→ perfil especializado opcional
+```
+
+Não criar presenter por entidade/rota para simplesmente tornar a action utilizável.
+
+Perfis/labels podem melhorar UX, mas não devem duplicar contrato técnico do OpenAPI.
 
 ---
 
-## Dashboard MFE multi-filial (api-delpi + manifest)
+## 5. Testes obrigatórios
 
-Quando o plugin tem rotas `/sc` e `/es` (ou filiais TOTVS `01`/`02`):
+Para nova rota/action, cobrir:
 
-| # | Entrega | Onde |
-|---|---------|------|
-| 1 | Permissões granulares + mapa `{MODULO}_BRANCH_VIEW_PERMS` | `api_delpi_permissions.py` |
-| 2 | Gate `branch_access_error(filial)` em **toda** rota com parâmetro filial | router do módulo |
-| 3 | Manifest: declarar `.view.filial-*` e amarrar **cada** rota do menu à permissão da filial | `*.manifest.json` |
-| 4 | `.view` genérico opcional (legado — ambas filiais) | permissions + gate no router |
-| 5 | Teste unitário do gate + smoke 403 + meta | `api-delpi/tests/test_*_branch_access.py`, `test_*_routes.py` |
+1. importação do OpenAPI;
+2. action no catálogo;
+3. retrieval pela linguagem natural;
+4. seleção correta entre actions próximas;
+5. extração de path/query/body;
+6. validação de required/type/enum;
+7. execução pelo gateway genérico;
+8. policy/confirmation quando aplicável;
+9. apresentação fallback schema-driven;
+10. caso negativo que não deve selecionar a rota.
 
-Referência: `retrabalho_branch_access.py`, `eficiencia-fabril.manifest.json`, `inspecoes_entrada_router.py`.
+Para evolução do motor, incluir fixture de **API externa fictícia** sem qualquer código no monorepo.
 
-**Proibido:** permissões filiais só no manifest/menu sem enforcement na API — o MFE não é barreira de segurança.
+---
 
-### Documentação (obrigatório)
+## 6. Gates CI
 
-Ver **`plugins-documentation.mdc`**: README do plugin, doc API, índices `06-modulos` / `10-referencia` / `08-plugins`, pasta roadmap se view TOTVS.
+Manter gates atuais da api-delpi quando ela for alterada e adicionar/fortalecer gates arquiteturais do chat para impedir novos acoplamentos, por exemplo:
+
+```text
+if "/products/" in path
+if "factory-status" in path
+action_id.startswith("api_delpi.")
+```
+
+O crescimento manual de `pathMarkers` / `operationIdMarkers` deve ser tratado como regressão arquitetural salvo exceção documentada.
+
+Os baselines locais (`openapi_baseline.json`, geradores de autoTierC etc.) podem continuar como fixtures/gates de compatibilidade, mas não podem ser requisito de runtime para provider externo.
+
+---
+
+## 7. Pedidos compostos e multi-turn
+
+Nova action deve participar do pipeline base de decomposição/contexto.
+
+Pedidos como:
+
+```text
+consulte estoque, última compra e pedidos em aberto
+```
+
+podem exigir múltiplas tools.
+
+Refinamentos como:
+
+```text
+e em agosto?
+mostre os próximos 20
+agora deste outro item
+```
+
+devem reutilizar contexto estruturado da action anterior, não novo selector por path.
 
 ---
 
 ## O que NÃO fazer
 
-- Path / `operationId` / query / `meta.entity` em português em rota **nova** (legado `/inspecoes-*` não é modelo a copiar).
-- Endpoint sem contrato `meta.entity` / `meta.fields` quando o chat precisa apresentar dados.
-- Presenter Python por rota, `visualBuilders`, `tableAssembly` ou stack rico no pipeline.
-- Tabela vs gráfico no MFE, prompt de agente ou `Send*`/`Stream*` duplicado.
-- Texto PT em Python/TS — `assistant-content-json.mdc`.
-- Serviço de decisão implementado mas **não** ligado ao pipeline (`clean-code-architecture-guardrails.mdc`).
+- Endpoint novo → registry manual por obrigação.
+- `if path` / `if operationId` / `if provider` em use case genérico.
+- Selector/service específico de API externa.
+- Duplicar OpenAPI em `assistant/*.json`.
+- Presenter Python por rota/entidade para viabilizar resposta básica.
+- URL arbitrária gerada pelo LLM.
+- Prompt do agente como única fonte de roteamento/policy.
+- Big bang removendo o legado sem shadow/paridade/rollback.
 
 ## Referências
 
-- `api-delpi/docs/api/openapi-bilingue-catalogo-canonico.md` — **como construir rotas futuras**
+- `.cursor/rules/openapi-first-universal-tool-routing.mdc`
+- `.cursor/rules/operational-api-routing.mdc`
 - `.cursor/rules/api-delpi-openapi-route-standards.mdc`
-- `minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md`
-- `minha-delpi-ai-api/docs/roadmap/playbook-15-rotas-operacionais-sem-sql.md`
+- `minha-delpi-ai-api/docs/api/04-actions-openapi.md`
 - `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md`
