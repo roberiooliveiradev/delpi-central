@@ -26,3 +26,4 @@ from .usage_session import UsageSession
 from .user_consent import UserConsent
 from .user_notification_preference import UserNotificationPreference
 from .user_portal_tour_progress import UserPortalTourProgress, PortalTourQuestEvent
+from .user_person_profile import UserPersonProfile

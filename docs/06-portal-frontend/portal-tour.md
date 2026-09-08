@@ -5,7 +5,7 @@
 
 Getting started **opt-in** e **não linear** para explorar a Minha DELPI. Exibido por versão; pode ser adiado (**Agora não** → `dismissed`) ou reiniciado em **Meu Perfil**.
 
-Versão: `2026-08-portal-v7-notification-channels`.
+Versão: `2026-09-portal-v8-person-profile`.
 
 ---
 

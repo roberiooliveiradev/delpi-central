@@ -16,7 +16,7 @@ import {
 } from "./portalTourPersistence.ts";
 
 const CATALOG: PortalTourCatalogResponse = {
-  tourVersion: "2026-08-portal-v7-notification-channels",
+  tourVersion: "2026-09-portal-v8-person-profile",
   quests: [],
   requiredQuestIds: [
     "open-apps",
@@ -39,7 +39,7 @@ function progress(
   partial: Partial<PortalTourProgressResponse>,
 ): PortalTourProgressResponse {
   return {
-    tourVersion: "2026-08-portal-v7-notification-channels",
+    tourVersion: "2026-09-portal-v8-person-profile",
     status: "exploring",
     completedQuestIds: [],
     startedAt: null,

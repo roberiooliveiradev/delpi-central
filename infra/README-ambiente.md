@@ -488,6 +488,7 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 | `COMMERCIAL_AVATAR_UPLOAD_DIR` | `/app/data/commercial-avatars` | `${DELPI_DATA_HOST_DIR}/commercial-avatars` |
 | `COMMERCIAL_ATTACHMENT_UPLOAD_DIR` | `/app/data/commercial-attachments` | `${DELPI_DATA_HOST_DIR}/commercial-attachments` |
 | `COMMERCIAL_USER_AVATAR_UPLOAD_DIR` | `/app/data/commercial-user-avatars` | `${DELPI_DATA_HOST_DIR}/commercial-user-avatars` |
+| `CORE_USER_AVATAR_UPLOAD_DIR` | `/app/data/core-user-avatars` | `${DELPI_DATA_HOST_DIR}/core-user-avatars` |
 | `KAIZEN_EVIDENCE_UPLOAD_DIR` | `/app/data/kaizen-evidences` | `${DELPI_DATA_HOST_DIR}/kaizen-evidences` |
 | `GUIAS_PROCEDIMENTOS_UPLOAD_DIR` | `/app/data/guias-procedimentos` | `${DELPI_DATA_HOST_DIR}/guias-procedimentos` |
 | `MURAL_ACESSOS_UPLOAD_DIR` | `/app/data/mural-acessos` | `${DELPI_DATA_HOST_DIR}/mural-acessos` |

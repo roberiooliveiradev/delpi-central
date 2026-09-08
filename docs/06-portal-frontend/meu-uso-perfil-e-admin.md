@@ -40,6 +40,18 @@ portal/src/
 
 **Perfil:** seção em `MyProfile.tsx` com `HomePanelHeader` + `UserUsagePanel variant="profile"`.
 
+## Foto, cargo e contatos (Meu Perfil)
+
+| Peça | Path / contrato |
+|------|-----------------|
+| UI | `portal/src/ui/profile/PersonProfileEditor.tsx` em `/profile` `#profile-info` |
+| API | `GET/PATCH /core-api/me/person-profile` · `GET/PUT/DELETE /core-api/me/person-profile/photo` |
+| Campos | `job_title`, `phone_e164`, `mobile_e164`, `whatsapp_e164`, `has_photo` |
+| Storage | volume `CORE_USER_AVATAR_UPLOAD_DIR` (`core-user-avatars`) |
+| AuthZ | só o titular |
+
+Nome e e-mail continuam read-only (Keycloak → Core). Cargo/contatos/foto **não** sincronizam RH nesta fase. O avatar do menu lateral usa a mesma foto quando existir.
+
 ---
 
 ## UX e estados

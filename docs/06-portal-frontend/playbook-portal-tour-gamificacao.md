@@ -1,7 +1,7 @@
 # Playbook — Gamificação do tour do portal
 
 > **Código:** `portal/src/tour/` · **Doc base:** [portal-tour.md](./portal-tour.md)  
-> **Versão do tour:** `2026-08-portal-v7-notification-channels` · **Playbook gamificação:** v1 (jun/2026) · UX opt-in (set/2026)
+> **Versão do tour:** `2026-09-portal-v8-person-profile` · **Playbook gamificação:** v1 (jun/2026) · UX opt-in (set/2026)
 
 Roadmap da experiência gamificada. Getting started é **opt-in** (faixa na home / card) — **sem** widget estilo chat nem auto-open.
 

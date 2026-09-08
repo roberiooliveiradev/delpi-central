@@ -713,6 +713,14 @@ a.sidebar-footer-item {
   aspect-ratio: 1;
   line-height: 1;
   padding: 0;
+  overflow: hidden;
+}
+
+.avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .avatar.small {

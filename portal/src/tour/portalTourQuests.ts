@@ -401,17 +401,19 @@ export function getPortalTourQuests({
     {
       id: "page-profile-info",
       title: "Dados da conta",
-      hint: "Nome, e-mail e status de superadmin.",
+      hint: "Nome, e-mail, foto, cargo e contatos no Meu Perfil.",
       steps: [
         "Abra Meu Perfil pelo menu da sidebar.",
-        "Revise nome, e-mail e identificador.",
-        "Confira se sua conta está ativa.",
+        "Revise nome e e-mail (vêm da conta corporativa).",
+        "Envie ou altere sua foto e informe o cargo.",
+        "Preencha telefone/celular e marque qual também é WhatsApp, se quiser.",
       ],
       unlockHint: "Menu de perfil → Meu Perfil.",
       scope: "profile",
       category: "profile",
       optional: true,
-      actionSelector: '[data-tour="profile-info"], [data-tour="profile-summary-card"]',
+      actionSelector:
+        '[data-tour="profile-info"], [data-tour="profile-person"], [data-tour="profile-summary-card"]',
       highlightSelector: '[data-tour="profile-info"]',
       isAvailable: () =>
         isProfileRoute() && hasVisibleTarget('[data-tour="profile-info"]'),

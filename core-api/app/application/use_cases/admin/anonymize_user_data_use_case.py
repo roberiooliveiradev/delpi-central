@@ -68,11 +68,25 @@ class AnonymizeUserDataUseCase:
         usage_events_removed = purge_usage_tracking_data(self._uow, user_id=uid)
         self._uow.portal_tour.delete_progress(str(uid))
 
+        from app.application.use_cases.manage_person_profile_use_case import (
+            ManagePersonProfileUseCase,
+        )
+
+        person_profile_purged = ManagePersonProfileUseCase(
+            repository=self._uow.person_profiles,
+        ).purge_for_user(user_id=uid)
+
         self._uow.commit()
 
         logger.info(
-            "lgpd_user_anonymized user_id=%s actor=%s audits=%d notifs=%d consents=%d usage=%d",
-            uid, actor_uid, audit_count, notif_count, consent_count, usage_events_removed,
+            "lgpd_user_anonymized user_id=%s actor=%s audits=%d notifs=%d consents=%d usage=%d person_profile=%s",
+            uid,
+            actor_uid,
+            audit_count,
+            notif_count,
+            consent_count,
+            usage_events_removed,
+            person_profile_purged,
         )
 
         return {
@@ -82,4 +96,5 @@ class AnonymizeUserDataUseCase:
             "notificationsRemoved": notif_count,
             "consentsRemoved": consent_count,
             "usageEventsRemoved": usage_events_removed,
+            "personProfilePurged": person_profile_purged,
         }

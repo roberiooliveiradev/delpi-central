@@ -220,7 +220,8 @@ export function ConsentModal({ onAccepted }: ConsentModalProps) {
                   </thead>
                   <tbody>
                     <tr><td>Nome, e-mail corporativo</td><td>Identificação e autenticação</td></tr>
-                    <tr><td>Cargo, departamento, filial</td><td>Controle de permissões (RBAC)</td></tr>
+                    <tr><td>Cargo, foto e contatos do Meu Perfil</td><td>Apresentação e contato no portal (editável pelo titular)</td></tr>
+                    <tr><td>Grupos, papéis e filiais (RBAC)</td><td>Controle de permissões</td></tr>
                     <tr><td>Data de nascimento</td><td>Notificações de aniversário</td></tr>
                     <tr><td>Logs de acesso</td><td>Auditoria de segurança</td></tr>
                     <tr><td>Preferências e consentimentos</td><td>Conformidade legal</td></tr>

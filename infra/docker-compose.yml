@@ -128,6 +128,8 @@ services:
       APP_USAGE_HISTORY_DAYS: ${APP_USAGE_HISTORY_DAYS:-30}
       REDIS_URL: ${REDIS_URL:-}
 
+      CORE_USER_AVATAR_UPLOAD_DIR: ${CORE_USER_AVATAR_UPLOAD_DIR:-/app/data/core-user-avatars}
+
       KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID}
       KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
       KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM}
@@ -135,6 +137,8 @@ services:
     depends_on:
       - postgres-core
       - keycloak
+    volumes:
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/core-user-avatars:/app/data/core-user-avatars
     networks:
       - delpi-network
 

@@ -37,8 +37,8 @@ import { hasActiveImportantNotificationAttention } from "../components/notificat
 import {
   isImportantNotificationSnoozed,
 } from "../utils/importantNotificationSnooze";
-import {
-  DELPI_CLOSE_APP_LAUNCHER_EVENT,
+import { useMyPersonProfilePhotoUrl } from "../ui/profile/useMyPersonProfilePhotoUrl";
+import { DELPI_CLOSE_APP_LAUNCHER_EVENT,
   DELPI_OPEN_APP_LAUNCHER_EVENT,
 } from "../utils/appLauncher";
 import { DELPI_SIDEBAR_EXPAND_EVENT, isPortalSidebarEdgeHoldPoint, PORTAL_SIDEBAR_EDGE_AUTO_HIDE_MS, PORTAL_SIDEBAR_EDGE_HOLD_MS, resolvePortalSidebarEdgeHoldWidth, resolvePortalSidebarEdgeWidth } from "../utils/sidebar";
@@ -93,6 +93,8 @@ export const Sidebar = () => {
     markAllNotificationsRead,
     reloadNotifications,
   } = useContext(AuthContext);
+
+  const { photoUrl: profilePhotoUrl } = useMyPersonProfilePhotoUrl();
 
   const { markNotificationRead, handleDelete, handleToggleImportant } = useNotificationActions();
 
@@ -875,7 +877,17 @@ export const Sidebar = () => {
                 ref={userTriggerRef}
                 onClick={() => setUserOpen((open) => !open)}
               >
-                <div className="avatar small">{initials}</div>
+                <div className="avatar small">
+                  {profilePhotoUrl ? (
+                    <img
+                      src={profilePhotoUrl}
+                      alt=""
+                      className="avatar__img"
+                    />
+                  ) : (
+                    initials
+                  )}
+                </div>
                 <span>{user?.name}</span>
                 <ChevronDown size={16} />
               </div>

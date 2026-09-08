@@ -49,7 +49,7 @@ def test_get_portal_tour_progress_preserves_dismissed():
     uow = MagicMock()
     uow.portal_tour.get_progress.return_value = PortalTourProgressDTO(
         user_id=user_id,
-        tour_version="2026-08-portal-v7-notification-channels",
+        tour_version="2026-09-portal-v8-person-profile",
         status="dismissed",
         completed_quest_ids=["open-apps"],
         started_at=now,

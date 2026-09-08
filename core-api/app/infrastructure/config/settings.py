@@ -70,6 +70,11 @@ class Config:
         minimum=1,
     )
 
+    CORE_USER_AVATAR_UPLOAD_DIR = os.getenv(
+        "CORE_USER_AVATAR_UPLOAD_DIR",
+        "/app/data/core-user-avatars",
+    ).strip() or "/app/data/core-user-avatars"
+
     DB_HOST = os.getenv("DB_HOST")
     DB_PORT = os.getenv("DB_PORT")
     DB_NAME = os.getenv("DB_NAME")

@@ -118,8 +118,16 @@ export const PrivacyPolicyPage = () => {
                 <td>Identificação e autenticação no sistema</td>
               </tr>
               <tr>
-                <td>Cargo, departamento, filial</td>
-                <td>Personalização de acesso e controle de permissões (RBAC)</td>
+                <td>Cargo informado no Meu Perfil</td>
+                <td>Identificação profissional no portal (editável pelo titular; não sincroniza RH nesta fase)</td>
+              </tr>
+              <tr>
+                <td>Foto de perfil, telefone, celular e WhatsApp</td>
+                <td>Apresentação no portal e contato opcional entre colegas (editável pelo titular)</td>
+              </tr>
+              <tr>
+                <td>Grupos, papéis e filiais (RBAC)</td>
+                <td>Personalização de acesso e controle de permissões</td>
               </tr>
               <tr>
                 <td>Data de nascimento</td>

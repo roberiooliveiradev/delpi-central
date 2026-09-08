@@ -13,6 +13,24 @@ export interface MeResponse {
   is_superadmin?: boolean;
 }
 
+export type PersonProfileResponse = {
+  user_id: string;
+  job_title: string | null;
+  phone_e164: string | null;
+  mobile_e164: string | null;
+  whatsapp_e164: string | null;
+  has_photo: boolean;
+  photo_url: string | null;
+  updated_at: string | null;
+};
+
+export type PatchPersonProfileBody = {
+  job_title?: string | null;
+  phone_e164?: string | null;
+  mobile_e164?: string | null;
+  whatsapp_e164?: string | null;
+};
+
 export type AppRenderMode =
   | "embedded"
   | "external"
@@ -326,6 +344,7 @@ export interface PrivacyInfo {
 export interface DataExportResponse {
   exportDate: string;
   profile: Record<string, unknown>;
+  personProfile?: Record<string, unknown>;
   consents: Record<string, unknown>[];
   notifications: Record<string, unknown>[];
   usageEvents: Record<string, unknown>[];
@@ -716,6 +735,36 @@ export class CoreApi {
     return this.client.get<UserUsageStatistics>(
       `/core-api/me/usage?periodDays=${periodDays}`,
     );
+  }
+
+  getMyPersonProfile() {
+    return this.client.get<PersonProfileResponse>("/core-api/me/person-profile");
+  }
+
+  patchMyPersonProfile(body: PatchPersonProfileBody) {
+    return this.client.patch<PersonProfileResponse>(
+      "/core-api/me/person-profile",
+      body,
+    );
+  }
+
+  uploadMyPersonProfilePhoto(file: File) {
+    const form = new FormData();
+    form.append("file", file);
+    return this.client.putFormData<PersonProfileResponse>(
+      "/core-api/me/person-profile/photo",
+      form,
+    );
+  }
+
+  deleteMyPersonProfilePhoto() {
+    return this.client.delete<PersonProfileResponse>(
+      "/core-api/me/person-profile/photo",
+    );
+  }
+
+  getMyPersonProfilePhotoBlob() {
+    return this.client.getBlob("/core-api/me/person-profile/photo");
   }
 
   dispatchNotifications(payload: DispatchNotificationsPayload) {

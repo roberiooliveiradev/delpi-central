@@ -29,6 +29,10 @@ type ApiClientOptions = {
   onUnauthorized?: () => void | Promise<void>;
 };
 
+type RequestExtra = {
+  skipJsonContentType?: boolean;
+};
+
 export class ApiClient {
   private baseUrl: string;
   private getToken: () => string | undefined;
@@ -48,17 +52,19 @@ export class ApiClient {
 
   private async doFetch(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    extra: RequestExtra = {},
   ): Promise<Response> {
     const token = this.getToken();
+    const headers: Record<string, string> = {
+      ...(extra.skipJsonContentType ? {} : { "Content-Type": "application/json" }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...((options.headers as Record<string, string>) || {}),
+    };
 
     return fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(options.headers || {}),
-      },
+      headers,
     });
   }
 
@@ -94,7 +100,8 @@ export class ApiClient {
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
-    hasRetried = false
+    hasRetried = false,
+    extra: RequestExtra = {},
   ): Promise<T> {
     if (!hasRetried && !this.getToken() && this.refreshTokenFn) {
       try {
@@ -114,7 +121,7 @@ export class ApiClient {
       }
     }
 
-    const response = await this.doFetch(endpoint, options);
+    const response = await this.doFetch(endpoint, options, extra);
 
     if (response.status === 401) {
       if (!hasRetried && this.refreshTokenFn) {
@@ -122,7 +129,7 @@ export class ApiClient {
           const refreshed = await this.refreshTokenFn();
 
           if (refreshed) {
-            return this.request<T>(endpoint, options, true);
+            return this.request<T>(endpoint, options, true, extra);
           }
         } catch {
           // segue para unauthorized controlado
@@ -169,6 +176,57 @@ export class ApiClient {
       method: "PUT",
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
+  }
+
+  public putFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+    return this.request<T>(
+      endpoint,
+      {
+        method: "PUT",
+        body: formData,
+      },
+      false,
+      { skipJsonContentType: true },
+    );
+  }
+
+  public async getBlob(endpoint: string): Promise<Blob> {
+    if (!this.getToken() && this.refreshTokenFn) {
+      const refreshed = await this.refreshTokenFn();
+      if (!refreshed) {
+        if (this.onUnauthorized) await this.onUnauthorized();
+        throw new HttpError(401, "Unauthorized");
+      }
+    }
+
+    const response = await this.doFetch(
+      endpoint,
+      { method: "GET" },
+      { skipJsonContentType: true },
+    );
+
+    if (response.status === 401) {
+      if (this.refreshTokenFn) {
+        const refreshed = await this.refreshTokenFn();
+        if (refreshed) {
+          const retry = await this.doFetch(
+            endpoint,
+            { method: "GET" },
+            { skipJsonContentType: true },
+          );
+          if (retry.ok) return retry.blob();
+          if (!retry.ok) return this.parseError(retry);
+        }
+      }
+      if (this.onUnauthorized) await this.onUnauthorized();
+      throw new HttpError(401, "Unauthorized");
+    }
+
+    if (!response.ok) {
+      return this.parseError(response);
+    }
+
+    return response.blob();
   }
 
   public patch<T>(endpoint: string, body?: any): Promise<T> {

@@ -102,7 +102,7 @@ def test_sync_portal_tour_progress_accepts_dismissed(uow):
     user_id = str(uuid4())
     uow.portal_tour.get_progress.return_value = PortalTourProgressDTO(
         user_id=user_id,
-        tour_version="2026-08-portal-v7-notification-channels",
+        tour_version="2026-09-portal-v8-person-profile",
         status="exploring",
         completed_quest_ids=["open-apps"],
         started_at=datetime.utcnow(),
@@ -111,7 +111,7 @@ def test_sync_portal_tour_progress_accepts_dismissed(uow):
     )
     uow.portal_tour.upsert_progress.return_value = PortalTourProgressDTO(
         user_id=user_id,
-        tour_version="2026-08-portal-v7-notification-channels",
+        tour_version="2026-09-portal-v8-person-profile",
         status="dismissed",
         completed_quest_ids=["open-apps"],
         started_at=datetime.utcnow(),
@@ -121,7 +121,7 @@ def test_sync_portal_tour_progress_accepts_dismissed(uow):
 
     SyncPortalTourProgressUseCase(uow).execute(
         user_id,
-        tour_version="2026-08-portal-v7-notification-channels",
+        tour_version="2026-09-portal-v8-person-profile",
         status="dismissed",
         completed_quest_ids=["open-apps"],
     )
@@ -177,7 +177,7 @@ def test_sync_preserves_completed_quests_across_tour_version_bump(uow):
     )
     uow.portal_tour.upsert_progress.return_value = PortalTourProgressDTO(
         user_id=user_id,
-        tour_version="2026-08-portal-v7-notification-channels",
+        tour_version="2026-09-portal-v8-person-profile",
         status="exploring",
         completed_quest_ids=["open-apps", "pin-app"],
         started_at=datetime.utcnow(),
@@ -187,7 +187,7 @@ def test_sync_preserves_completed_quests_across_tour_version_bump(uow):
 
     SyncPortalTourProgressUseCase(uow).execute(
         user_id,
-        tour_version="2026-08-portal-v7-notification-channels",
+        tour_version="2026-09-portal-v8-person-profile",
         status="exploring",
         completed_quest_id="page-notifications-important",
     )

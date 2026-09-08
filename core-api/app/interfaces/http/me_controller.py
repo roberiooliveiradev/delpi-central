@@ -762,6 +762,137 @@ def get_my_usage_statistics():
 
 
 # ==========================================================
+# PERSON PROFILE (photo / job_title / contacts)
+# ==========================================================
+
+def _person_profile_user_id(user) -> UUID:
+    return UUID(str(user.id))
+
+
+def _manage_person_profile(uow):
+    from app.application.use_cases.manage_person_profile_use_case import (
+        ManagePersonProfileUseCase,
+    )
+
+    return ManagePersonProfileUseCase(repository=uow.person_profiles)
+
+
+@me_bp.route("/me/person-profile", methods=["GET"])
+@require_auth()
+def get_my_person_profile():
+    user = g.current_user
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            data = _manage_person_profile(uow).get_profile(
+                user_id=_person_profile_user_id(user),
+            )
+        return jsonify(data), 200
+    except Exception:
+        logger.exception("get_person_profile_failed")
+        return api_error("person_profile_failed", "Erro ao carregar perfil.", status=500)
+
+
+@me_bp.route("/me/person-profile", methods=["PATCH"])
+@require_auth()
+def patch_my_person_profile():
+    user = g.current_user
+    body = request.get_json(silent=True) or {}
+    uid = _person_profile_user_id(user)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            data = _manage_person_profile(uow).update_profile(
+                actor_user_id=uid,
+                user_id=uid,
+                job_title=body.get("job_title"),
+                phone_e164=body.get("phone_e164"),
+                mobile_e164=body.get("mobile_e164"),
+                whatsapp_e164=body.get("whatsapp_e164"),
+            )
+            uow.commit()
+        return jsonify(data), 200
+    except PermissionError as exc:
+        return api_error("forbidden", str(exc), status=403)
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=422)
+    except Exception:
+        logger.exception("patch_person_profile_failed")
+        return api_error("person_profile_failed", "Erro ao atualizar perfil.", status=500)
+
+
+@me_bp.route("/me/person-profile/photo", methods=["GET"])
+@require_auth()
+def get_my_person_profile_photo():
+    from flask import send_file
+
+    user = g.current_user
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            photo = _manage_person_profile(uow).get_photo_file(
+                user_id=_person_profile_user_id(user),
+            )
+        return send_file(
+            photo.path,
+            mimetype=photo.content_type,
+            download_name=photo.file_name,
+            as_attachment=False,
+        )
+    except LookupError as exc:
+        return api_error("not_found", str(exc), status=404)
+    except Exception:
+        logger.exception("get_person_profile_photo_failed")
+        return api_error("person_profile_photo_failed", "Erro ao carregar foto.", status=500)
+
+
+@me_bp.route("/me/person-profile/photo", methods=["PUT"])
+@require_auth()
+def put_my_person_profile_photo():
+    user = g.current_user
+    upload = request.files.get("file")
+    if upload is None or not upload.filename:
+        return api_error("validation_error", "Arquivo obrigatório (campo file).", status=422)
+    content = upload.read()
+    uid = _person_profile_user_id(user)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            data = _manage_person_profile(uow).upload_photo(
+                actor_user_id=uid,
+                user_id=uid,
+                original_name=upload.filename or "photo.bin",
+                content=content,
+                mime_type=upload.mimetype,
+            )
+            uow.commit()
+        return jsonify(data), 200
+    except PermissionError as exc:
+        return api_error("forbidden", str(exc), status=403)
+    except ValueError as exc:
+        return api_error("validation_error", str(exc), status=422)
+    except Exception:
+        logger.exception("put_person_profile_photo_failed")
+        return api_error("person_profile_photo_failed", "Erro ao enviar foto.", status=500)
+
+
+@me_bp.route("/me/person-profile/photo", methods=["DELETE"])
+@require_auth()
+def delete_my_person_profile_photo():
+    user = g.current_user
+    uid = _person_profile_user_id(user)
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            data = _manage_person_profile(uow).delete_photo(
+                actor_user_id=uid,
+                user_id=uid,
+            )
+            uow.commit()
+        return jsonify(data), 200
+    except PermissionError as exc:
+        return api_error("forbidden", str(exc), status=403)
+    except Exception:
+        logger.exception("delete_person_profile_photo_failed")
+        return api_error("person_profile_photo_failed", "Erro ao remover foto.", status=500)
+
+
+# ==========================================================
 # LGPD — DATA EXPORT (PORTABILITY)
 # ==========================================================
 

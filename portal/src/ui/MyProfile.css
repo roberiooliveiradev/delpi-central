@@ -306,7 +306,7 @@
 .profile-info {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 16px;
 }
 
 .profile-info-strip {
@@ -317,6 +317,208 @@
     minmax(120px, 1.25fr)
     minmax(96px, 0.75fr);
   gap: 10px;
+}
+
+.profile-person {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 4px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.profile-person__state {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.profile-person__banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.profile-person__banner--error {
+  background: color-mix(in srgb, var(--danger, #dc2626) 12%, var(--surface));
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--danger, #dc2626) 28%, var(--border));
+}
+
+.profile-person__banner--ok {
+  background: color-mix(in srgb, var(--success, #16a34a) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--success, #16a34a) 28%, var(--border));
+}
+
+.profile-person__link-btn {
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-weight: 650;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.profile-person__photo-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.profile-person__avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface-2));
+}
+
+.profile-person__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-person__avatar-initials {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.profile-person__photo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.profile-person__section-label,
+.profile-person__field > span,
+.profile-person__label-row {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-muted);
+}
+
+.profile-person__label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-person__btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-person__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-person__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.profile-person__btn--primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.profile-person__btn--danger {
+  color: var(--danger, #dc2626);
+}
+
+.profile-person__file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.profile-person__fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profile-person__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profile-person__field input[type="text"],
+.profile-person__field input[type="tel"] {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.profile-person__checks {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+
+.profile-person__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  min-height: 44px;
+}
+
+.profile-person__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profile-person__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 42ch;
+}
+
+@media (max-width: 900px) {
+  .profile-person__fields {
+    grid-template-columns: 1fr;
+  }
 }
 
 .profile-field {

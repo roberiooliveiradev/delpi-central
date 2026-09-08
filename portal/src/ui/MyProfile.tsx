@@ -31,6 +31,7 @@ import {
 import { UserUsagePanel } from "./usage/UserUsagePanel";
 import { USER_USAGE_LABELS } from "./usage/userUsageLabels";
 import { useMyUsageStats } from "./usage/useMyUsageStats";
+import { PersonProfileEditor } from "./profile/PersonProfileEditor";
 
 import "./MyProfile.css";
 
@@ -348,7 +349,7 @@ export const MyProfile = () => {
         >
           <HomePanelHeader
             title="Informações da conta"
-            hint="Dados básicos do usuário"
+            hint="Dados básicos, foto, cargo e contatos"
           />
 
           <div className="profile-info">
@@ -367,6 +368,8 @@ export const MyProfile = () => {
                 badge={user?.is_superadmin ? "yes" : "no"}
               />
             </div>
+
+            <PersonProfileEditor userName={user?.name} />
           </div>
         </motion.section>
 

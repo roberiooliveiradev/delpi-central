@@ -28,7 +28,9 @@ Tour **não linear** e **opt-in**:
 - progresso sincroniza com a **Core API** e cache local;
 - a exploração **não trava** menus nem apps.
 
-Versão atual do tour: `2026-08-portal-v7-notification-channels` (`PORTAL_TOUR_VERSION` / `CURRENT_PORTAL_TOUR_VERSION`).
+Versão atual do tour: `2026-09-portal-v8-person-profile` (`PORTAL_TOUR_VERSION` / `CURRENT_PORTAL_TOUR_VERSION`).
+
+O desafio opcional **Dados da conta** (`page-profile-info`) cobre nome/e-mail read-only e a edição de **foto, cargo e contatos** no Meu Perfil.
 
 ---
 

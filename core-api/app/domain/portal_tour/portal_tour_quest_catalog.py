@@ -15,10 +15,10 @@ O restante é aprofundamento opcional (just-in-time).
 from dataclasses import dataclass
 
 
-CURRENT_PORTAL_TOUR_VERSION = "2026-08-portal-v7-notification-channels"
+CURRENT_PORTAL_TOUR_VERSION = "2026-09-portal-v8-person-profile"
 # Versão anterior: default de introduced_in para desafios já existentes.
-# Só desafios novos devem passar introduced_in_version=CURRENT_PORTAL_TOUR_VERSION.
-LEGACY_PORTAL_TOUR_VERSION = "2026-06-portal-v6-explore"
+# Só desafios novos ou atualizados materialmente devem passar introduced_in_version=CURRENT_PORTAL_TOUR_VERSION.
+LEGACY_PORTAL_TOUR_VERSION = "2026-08-portal-v7-notification-channels"
 
 ADMIN_PERMISSION = "rbac.manage"
 
@@ -239,10 +239,11 @@ def get_portal_tour_quest_catalog() -> list[PortalTourQuestDefinition]:
         _quest(
             id="page-profile-info",
             title="Dados da conta",
-            hint="Nome, e-mail e status de superadmin.",
+            hint="Nome, e-mail, foto, cargo e contatos no Meu Perfil.",
             category="profile",
             scope="profile",
             optional=True,
+            introduced_in_version=CURRENT_PORTAL_TOUR_VERSION,
         ),
         _quest(
             id="page-profile-rbac",

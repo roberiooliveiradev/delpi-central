@@ -42,6 +42,9 @@ from app.infrastructure.persistence.sqlalchemy.plugin_permission_repository impo
 
 from app.infrastructure.persistence.sqlalchemy.audit_repository import SqlAlchemyAuditRepository
 from app.infrastructure.persistence.sqlalchemy.consent_repository import SqlAlchemyConsentRepository
+from app.infrastructure.persistence.sqlalchemy.person_profile_repository import (
+    SqlAlchemyPersonProfileRepository,
+)
 
 class SqlAlchemyUnitOfWork:
     def __init__(self):
@@ -103,6 +106,11 @@ class SqlAlchemyUnitOfWork:
         # LGPD Consents
         # =========================
         self.consents = SqlAlchemyConsentRepository(self.session)
+
+        # =========================
+        # Person profile (photo / job / contacts)
+        # =========================
+        self.person_profiles = SqlAlchemyPersonProfileRepository(self.session)
 
         # ======================================================
         # Aliases (compatibilidade com código antigo)

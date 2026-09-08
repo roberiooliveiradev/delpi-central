@@ -24,6 +24,14 @@ class ExportUserDataUseCase:
             "lastLoginAt": user.last_login_at.isoformat() if user.last_login_at else None,
         }
 
+        from app.application.use_cases.manage_person_profile_use_case import (
+            ManagePersonProfileUseCase,
+        )
+
+        person_profile = ManagePersonProfileUseCase(
+            repository=self._uow.person_profiles,
+        ).get_profile(user_id=uid)
+
         from app.infrastructure.db.models.notification import Notification
         notifs_q = (
             session.query(Notification)
@@ -156,6 +164,7 @@ class ExportUserDataUseCase:
         return {
             "exportDate": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
             "profile": profile,
+            "personProfile": person_profile,
             "consents": consents_data,
             "notifications": notifications,
             "usageEvents": usage_events,
