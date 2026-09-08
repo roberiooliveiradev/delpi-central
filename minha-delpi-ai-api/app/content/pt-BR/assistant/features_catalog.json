@@ -35,7 +35,7 @@
       "title": "Consulta de produto",
       "category": "operational",
       "status": "available",
-      "summary": "Ficha e dados principais de produtos no ERP.",
+      "summary": "Ficha e dados principais de produtos no ERP — inclusive vários aspectos numa só pergunta.",
       "requiresAgent": true,
       "requiredActions": [
         "/cpv",
@@ -60,17 +60,22 @@
         "Mostre a ficha do produto 10080001",
         "Liste os top 50 terminais pino",
         "Pesquise pela descrição TERM",
-        "A descrição está dentro das normas?"
+        "A descrição está dentro das normas?",
+        "Visão integrada do 90260149 com estrutura e estoque",
+        "Estrutura, saldo e pedidos em aberto do 90260149 numa resposta só"
       ],
       "howToUse": [
         "Selecione um agente com actions de produto.",
         "Informe o código do produto, ou peça busca por descrição/texto.",
-        "Em follow-ups, use «o segundo», «dele» ou «está nas normas?» com o resultado anterior."
+        "Em follow-ups, use «o segundo», «dele» ou «está nas normas?» com o resultado anterior.",
+        "Peça vários aspectos na mesma pergunta (ex.: estrutura + estoque + pedidos em aberto, ou visão integrada + saldo): o chat consulta as rotas necessárias e consolida prosa com painéis (tabela, árvore, KPI) na mesma resposta.",
+        "Um «resumo executivo» junto com pedido operacional não cancela as consultas — a prosa resume o que os painéis mostram."
       ],
       "relatedFeatures": [
         "stock_lookup",
         "sales_lookup",
-        "rag"
+        "rag",
+        "chart"
       ]
     },
     {

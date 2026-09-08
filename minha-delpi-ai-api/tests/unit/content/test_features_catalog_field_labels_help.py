@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 
-def test_features_catalog_documents_field_label_source():
+def _catalog() -> dict:
     path = (
         Path(__file__).resolve().parents[3]
         / "app"
@@ -11,7 +11,11 @@ def test_features_catalog_documents_field_label_source():
         / "assistant"
         / "features_catalog.json"
     )
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_features_catalog_documents_field_label_source():
+    payload = _catalog()
     features = {item["id"]: item for item in payload["features"]}
 
     overview = features["capabilities_overview"]
@@ -25,3 +29,17 @@ def test_features_catalog_documents_field_label_source():
     assert "rótulos" in overview_help or "rotulos" in overview_help
     assert "catálogo" in chart_help or "catalogo" in chart_help
     assert chart.get("howToUse")
+
+
+def test_features_catalog_documents_consolidated_multi_scope_product_lookup():
+    payload = _catalog()
+    features = {item["id"]: item for item in payload["features"]}
+    product = features["product_lookup"]
+    help_text = " ".join(product.get("howToUse") or []).casefold()
+    examples = " ".join(product.get("examples") or []).casefold()
+
+    assert "vários aspectos" in help_text or "varios aspectos" in help_text
+    assert "consolida" in help_text
+    assert "painel" in help_text or "painéis" in help_text or "paineis" in help_text
+    assert "visão integrada" in examples or "visao integrada" in examples
+    assert "estrutura" in examples and "estoque" in examples
