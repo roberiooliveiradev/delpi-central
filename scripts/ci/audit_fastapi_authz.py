@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-"""Gate diff-aware de autorização para writes FastAPI da Minha DELPI.
+"""Gate diff-aware de autorização para rotas FastAPI da Minha DELPI.
 
 Escopo deliberadamente conservador:
-- somente APIs FastAPI top-level `api-delpi` ou `<app>-api`;
-- somente POST/PUT/PATCH/DELETE novos ou alterados;
-- GET/HEAD/OPTIONS ficam fora até a classificação de leitura estar madura.
+- APIs FastAPI top-level `api-delpi` ou `<app>-api`;
+- coerência `/public/...` × auth_middleware para qualquer método alterado;
+- evidence de business AuthZ obrigatória apenas em POST/PUT/PATCH/DELETE;
+- GET/HEAD/OPTIONS ainda não recebem business AuthZ obrigatório até a classificação
+  de leitura estar madura.
 
-Um write passa quando existe evidência estrutural de pelo menos um destes modelos:
+Um write protegido passa quando existe evidência estrutural de pelo menos um destes modelos:
 1. decorator de acesso canônico (`require_*`, `policy`);
 2. autorização no application/use case, com contexto de usuário efetivamente entregue;
 3. guarda de acesso explícita dentro do handler;
 4. rota pública cujo prefixo/exato está realmente liberado no auth_middleware do app.
 
 O objetivo não é provar toda a autorização por análise estática. O objetivo é impedir
-que novos writes sensíveis nasçam sem qualquer evidência de ownership de acesso.
+que novos writes sensíveis nasçam sem qualquer evidência de ownership de acesso e que
+rotas nomeadas `/public/...` divirjam da política real do middleware.
 """
 
 from __future__ import annotations
@@ -441,7 +444,7 @@ def scan_fastapi_authz_source(
     findings: list[Violation] = []
 
     for route in routes:
-        if route.method not in WRITE_METHODS or not route_touched(route, changed_lines):
+        if not route_touched(route, changed_lines):
             continue
 
         looks_public = route.path == "/public" or route.path.startswith("/public/")
@@ -459,6 +462,8 @@ def scan_fastapi_authz_source(
         if is_public:
             continue
 
+        if route.method not in WRITE_METHODS:
+            continue
         if has_access_decorator(route.function):
             continue
         if has_explicit_guard_call(route.function):
@@ -528,10 +533,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"- {finding.format()}")
 
     if findings and args.check:
-        print("FALHOU: write FastAPI sem ownership de autorização detectado", file=sys.stderr)
+        print("FALHOU: regressão de rota pública ou write FastAPI sem ownership de autorização detectado", file=sys.stderr)
         return 1
 
-    print("OK: nenhum novo write FastAPI sem evidência de autorização")
+    print("OK: nenhuma nova regressão de rota pública/AuthZ em write FastAPI")
     return 0
 
 
