@@ -64,20 +64,20 @@ class PlanExternalActionsService:
 
         if isinstance(llm_payload, dict):
             plan = self._plan_from_payload(llm_payload, top_k_ids=top_k_ids, limit=limit)
+            if plan.clarify and plan.is_empty:
+                return plan
             if not plan.is_empty:
-                if not plan.clarify:
-                    plan = self._enrich_plan_with_bound_arguments(
-                        message,
-                        plan,
-                        candidates,
-                        previous_messages=previous_messages,
-                        execution_context=execution_context,
-                    )
-                return plan
-            if plan.clarify:
-                return plan
-            # Empty LLM plan (including all steps rejected outside top-K) falls
-            # through to the deterministic binder/ranker.
+                enriched = self._enrich_plan_with_bound_arguments(
+                    message,
+                    plan,
+                    candidates,
+                    previous_messages=previous_messages,
+                    execution_context=execution_context,
+                )
+                # If the LLM chose an action but binding cannot satisfy required
+                # args, prefer the deterministic ranker for this subtask.
+                if not (enriched.clarify and enriched.is_empty):
+                    return enriched
 
         return self._deterministic_plan(
             message,

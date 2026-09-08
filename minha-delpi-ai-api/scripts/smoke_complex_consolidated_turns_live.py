@@ -82,8 +82,14 @@ CASES: list[dict[str, Any]] = [
         "expect_prose": True,
         "expect_min_tools": 2,
         "expect_min_rich_surfaces": 1,
-        "expect_path_markers": ["/structure", "/stock", "/open-orders", "/sales", "/products/"],
-        "expect_path_groups": [["/structure"], ["/stock"], ["/open-orders", "/sales"]],
+        "expect_path_markers": ["/structure", "/stock", "/open-orders", "/sales", "/products/", "/analyser"],
+        # Aceita analyser como cobertura de ficha+BOM quando o plano consolidar.
+        "expect_path_groups": [
+            ["/structure", "/analyser"],
+            ["/stock", "/analyser", "/products/"],
+            ["/open-orders", "/sales"],
+        ],
+        "expect_min_path_groups": 2,
         "forbid_sql_fence": True,
     },
     {

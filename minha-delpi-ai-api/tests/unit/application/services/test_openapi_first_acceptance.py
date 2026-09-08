@@ -159,7 +159,7 @@ def test_case4_additional_body_property_rejected(logistics_actions):
         )
 
 
-def test_case5_llm_action_outside_topk_rejected(logistics_actions, logistics_repo):
+def test_case5_llm_action_outside_topk_falls_back_to_deterministic(logistics_actions, logistics_repo):
     msg = "Onde esta a remessa 45871?"
     candidates = RetrieveActionCandidatesService(logistics_repo).retrieve(
         msg,
@@ -180,7 +180,8 @@ def test_case5_llm_action_outside_topk_rejected(logistics_actions, logistics_rep
 
     plan = PlanExternalActionsService(llm_planner=fake_llm).plan(msg, candidates)
     assert "totally.unknown.action" not in [s.action_id for s in plan.steps]
-    assert "totally.unknown.action" in (plan.metadata.get("rejectedOutsideTopK") or [])
+    assert not plan.is_empty
+    assert plan.steps[0].action_id in {c.action_id for c in candidates}
 
 
 def test_case6_two_providers_scoped_to_allowed(logistics_actions, logistics_repo):
