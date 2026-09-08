@@ -1,6 +1,6 @@
 ---
-description: Inicialização segura de containers — scripts sequenciais dev/prod (OOM, MF)
-alwaysApply: true
+description: Infra/Docker — carregar ao subir stack, deployar, rebuildar containers, investigar OOM ou ordenar plugin-ui/MFEs
+alwaysApply: false
 ---
 
 # Infra — inicialização segura de containers
