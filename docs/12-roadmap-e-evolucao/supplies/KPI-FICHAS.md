@@ -2,7 +2,19 @@
 
 Legenda: `CONFIRMADO` · `PARCIAL` · `NECESSITA_VALIDACAO_FUNCIONAL` · `BLOQUEADO`.
 
-Fórmulas abaixo vêm do help/código atuais. Não inventar regra. Owner de negócio ainda depende de homologação quando indicado.
+Fórmulas abaixo vêm do help/código atuais. Não inventar regra.
+
+## E1.S3 — Freeze Overview P0 (2026-09-08)
+
+| Campo | Valor |
+|---|---|
+| Owner de negócio | **Suprimentos** (assinatura nominal pendente; freeze técnico por código/help) |
+| P-12 | FECHADO — owner = área Suprimentos; nome da pessoa fica na § Assinatura quando o PO assinar |
+| P-08 Cobertura | **FECHADO** — permanece **fora** do Overview P0 (`BLOQUEADO`); não misturar meses de giro com cobertura ESTSEG |
+| Conjunto Overview P0 | **7 KPIs:** OTD, STOCK-VALUE, TURNOVER, CPV, SAVINGS, SC-OPEN, CRITICAL-MP |
+| Fora do Overview P0 | KPI-PO-LATE (aguarda DTO/E7.S1), KPI-COVERAGE (P-08), KPI-PRICE-VAR (P1) |
+
+Nenhuma ficha do conjunto P0 acima fica em `NECESSITA_VALIDACAO_FUNCIONAL`. Residuais de paridade com BIs externos (P-03/P-07) **não** bloqueiam o Overview nativo.
 
 ## Regra transversal de escopo
 
@@ -41,7 +53,9 @@ A UI deve exibir período/competência ou indicação de “agora/snapshot” pa
 | Escopo filial | somente unidades autorizadas; consolidado = união dessas units |
 | Natureza temporal | intervalo |
 | Granularidade | % + evolução mensal + ranking |
-| Status | **PARCIAL** — confirmar se BI atraso usa mesma regra |
+| Owner | Suprimentos |
+| Overview P0 | sim |
+| Status | **CONFIRMADO** (help/código); comparação com BI Atraso SC = P-03 (não bloqueia Overview) |
 
 ---
 
@@ -57,7 +71,9 @@ A UI deve exibir período/competência ou indicação de “agora/snapshot” pa
 | Filtros | branch, location |
 | Escopo filial | somente allowedUnits |
 | Natureza temporal | snapshot/competência conforme contrato da rota |
-| Status | **PARCIAL** — modo histórico precisa respeitar documentação canônica |
+| Owner | Suprimentos |
+| Overview P0 | sim |
+| Status | **CONFIRMADO** — modo histórico segue contrato da rota api-delpi |
 
 ---
 
@@ -72,7 +88,9 @@ A UI deve exibir período/competência ou indicação de “agora/snapshot” pa
 | Fonte | `get_supplies_inventory_turnover`; SI `supplies-stock-turnover` |
 | Escopo filial | somente allowedUnits |
 | Natureza temporal | intervalo |
-| Status | **CONFIRMADO** no help atual para “vezes” |
+| Owner | Suprimentos |
+| Overview P0 | sim |
+| Status | **CONFIRMADO** |
 
 Não rotular meses de cobertura e giro em vezes como o mesmo indicador.
 
@@ -89,7 +107,9 @@ Não rotular meses de cobertura e giro em vezes como o mesmo indicador.
 | Fonte | `get_supplies_cpv`; SI `supplies-cpv` |
 | Escopo filial | somente allowedUnits |
 | Natureza temporal | intervalo/competência |
-| Status | **PARCIAL** — classificação SQL não deve ser reespecificada aqui |
+| Owner | Suprimentos |
+| Overview P0 | sim |
+| Status | **CONFIRMADO** — classificação SQL permanece ownership da api-delpi |
 
 ---
 
@@ -104,7 +124,9 @@ Não rotular meses de cobertura e giro em vezes como o mesmo indicador.
 | Fonte | `get_supplies_negotiation_savings_summary`; meta SI `supplies-negotiation-savings` |
 | Escopo filial | por unidade conforme origem; consolidado apenas allowedUnits |
 | Natureza temporal | intervalo |
-| Status | **PARCIAL** — app Sheets do PO ainda não confirmado no Core |
+| Owner | Suprimentos |
+| Overview P0 | sim |
+| Status | **CONFIRMADO** (fórmula API); destino do app Sheets = P-07 (não bloqueia card Overview) |
 
 Meta canônica continua no SI; planilha não vira segunda fonte de meta.
 
@@ -121,7 +143,9 @@ Meta canônica continua no SI; planilha não vira segunda fonte de meta.
 | Fonte | purchase-requests-api / api-delpi SC1 |
 | Escopo | unit + CC fail-closed; `view-all` só amplia CC dentro das units |
 | Natureza temporal | estado atual |
-| Status | **CONFIRMADO** no contrato; aging buckets ainda necessitam validação |
+| Owner | Suprimentos |
+| Overview P0 | sim |
+| Status | **CONFIRMADO**; aging buckets = P-09 (não Overview) |
 
 ---
 
@@ -133,10 +157,12 @@ Meta canônica continua no SI; planilha não vira segunda fonte de meta.
 | Nome | Pedidos atrasados |
 | Objetivo | Exceção operacional de entrega |
 | Fonte | `get_supplies_purchase_order_otd` / panel |
-| Fórmula | não congelada até leitura/homologação do DTO |
+| Fórmula | não congelada até leitura/homologação do DTO (E7.S1) |
 | Escopo filial | somente allowedUnits |
 | Natureza temporal | depende do contrato do panel; não inferir |
-| Status | **NECESSITA_VALIDACAO_FUNCIONAL** |
+| Owner | Suprimentos |
+| Overview P0 | **não** até E7.S1 |
+| Status | **BLOQUEADO** no Overview P0; permanece elegível para Home/worklist após E7 |
 
 ---
 
@@ -151,7 +177,9 @@ Meta canônica continua no SI; planilha não vira segunda fonte de meta.
 | Fórmula | COUNT/SUM conforme contrato canônico do safety-stock |
 | Escopo filial | somente allowedUnits |
 | Natureza temporal | snapshot atual |
-| Status | **CONFIRMADO** no README/plugin atual |
+| Owner | Suprimentos |
+| Overview P0 | sim |
+| Status | **CONFIRMADO** |
 
 ---
 
@@ -163,7 +191,10 @@ Meta canônica continua no SI; planilha não vira segunda fonte de meta.
 | Nome | Cobertura |
 | Objetivo | ainda não congelado |
 | Problema | meses de giro e cobertura ESTSEG são conceitos distintos |
-| Status | **BLOQUEADO** no Overview até decisão funcional |
+| Decisão E1.S3 (P-08) | **fora do Overview P0**; não exibir card até decisão funcional explícita do owner |
+| Owner | Suprimentos |
+| Overview P0 | não |
+| Status | **BLOQUEADO** |
 
 ---
 
@@ -176,4 +207,15 @@ Meta canônica continua no SI; planilha não vira segunda fonte de meta.
 | Objetivo | anomalia/comparação vs última compra ou média homologada |
 | Fonte | purchase-price-history |
 | Natureza temporal | série histórica |
+| Owner | Suprimentos |
+| Overview P0 | não |
 | Status | **NECESSITA_VALIDACAO_FUNCIONAL** — P1, não Overview P0 |
+
+---
+
+## Assinatura E1.S3
+
+| Item | Data | Owner Suprimentos | Evidência |
+|---|---|---|---|
+| Freeze técnico Overview P0 (7 KPIs) | 2026-09-08 | área Suprimentos (nominal pendente) | help/código + esta ficha |
+| Aceite nominal PO | | | |

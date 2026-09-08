@@ -11,11 +11,11 @@ Só o que o repositório não responde. Não bloqueia o desenho, mas pode bloque
 | P-05 | Existe processo de importação/TOTVS já mapeado? | WF-08 | **BLOQUEADO_COM_EVIDENCIA** — app não no Core local; nenhuma rota nativa confirmada no monorepo | E1.S1 |
 | P-06 | Alçada é consulta ou workflow de aprovação? | permission/SoD futura | **BLOQUEADO_COM_EVIDENCIA** — sem app no Core local; não criar `approvals.manage` | E1.S1 + E20.S3 |
 | P-07 | Quem edita IDD/Sheets e o app deve permanecer? | manter externo vs integrar | **BLOQUEADO_COM_EVIDENCIA** — app não no Core local; leitura savings via api-delpi não resolve editor | E1.S1 |
-| P-08 | Cobertura = meses de giro ou cobertura ESTSEG? | KPI bloqueado | aberto (E1.S3) | E1.S3 |
+| P-08 | Cobertura = meses de giro ou cobertura ESTSEG? | KPI bloqueado | **FECHADO** — fora do Overview P0 (`BLOQUEADO`); ver KPI-FICHAS E1.S3 | E1.S3 |
 | P-09 | Threshold aging SC/PC | worklist | aberto | homologação antes de nomear buckets |
 | P-10 | Estratégia/janela de transição C2 | reconciliação SC | aberto | E6.S4 + E16 |
 | P-11 | Quais campos de Qualidade podem aparecer no Supplier 360? | RBAC cruzado | aberto | E9 |
-| P-12 | Owner formal de cada KPI | status final das fichas | aberto (E1.S3) | E1.S3 |
+| P-12 | Owner formal de cada KPI | status final das fichas | **FECHADO** — owner = área Suprimentos; aceite nominal PO pendente na Assinatura | E1.S3 |
 | P-13 | Identificador canônico de usuário persistido no schema supplies | data model | aberto | antes de E2.S4 |
 
 ## Decisões fechadas pelo PO / arquitetura
