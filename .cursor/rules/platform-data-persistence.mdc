@@ -1,0 +1,145 @@
+---
+description: Responsabilidade transversal canônica — ownership de dados, schema, migrations, transações, constraints, índices, retenção, consistência e acesso a banco
+alwaysApply: false
+---
+
+# Plataforma — dados, persistência e migrations
+
+## Responsabilidade
+
+Esta é a fonte transversal para mudanças em **bancos, schemas, migrations, repositories, unit of work, cache persistente, arquivos duráveis e ownership de dados**.
+
+## Ownership de dados
+
+Cada bounded context é dono do seu modelo persistente.
+
+Proibido usar tabela de outro serviço como contrato de integração normal. Integração entre contextos ocorre por API/evento conforme `platform-architecture-boundaries.mdc`.
+
+## Modelagem
+
+Schema deve refletir invariantes do domínio também no banco quando aplicável:
+
+- PK/FK coerentes;
+- `NOT NULL` quando ausência não é válida;
+- `UNIQUE` para identidade/idempotência real;
+- `CHECK` quando regra simples pertence ao dado;
+- tipos adequados a precisão/semântica;
+- timestamps/timezone consistentes;
+- índices baseados em padrão real de consulta.
+
+Não usar string genérica para tudo nem confiar só na validação do frontend.
+
+## Migrations
+
+Migrations versionadas e/ou aplicadas são imutáveis. Evolução ocorre por **nova migration** conforme `migrations-immutable-checksum.mdc`.
+
+Produção:
+
+- nunca reset destrutivo como rotina;
+- evitar operação longa/blocking sem plano;
+- avaliar rolling deploy e mixed versions;
+- preferir expand-and-contract para mudanças breaking;
+- backfill grande deve ser separado/observável quando necessário;
+- rollback deve considerar compatibilidade com schema já aplicado.
+
+Plugins seguem também `plugins-migrations-no-reset-prod.mdc`.
+
+## Transações
+
+Transação deve refletir uma unidade de consistência do caso de uso.
+
+- não abrir transação no domain;
+- repository não deve fazer commits ocultos que quebram atomicidade esperada;
+- múltiplas escritas relacionadas usam Unit of Work/transação coerente;
+- chamada HTTP externa dentro de transação DB só com justificativa forte;
+- side effect pós-commit deve ser desenhado para falha parcial/idempotência quando relevante.
+
+## Repository e query
+
+Repository encapsula persistência, não regra de negócio.
+
+Evitar:
+
+- N+1 previsível;
+- `SELECT *` em hot path sem necessidade;
+- paginação ilimitada;
+- query dinâmica sem parâmetros;
+- regra de domínio espalhada em SQL de controllers;
+- cache que muda semântica sem invalidation explícita.
+
+Para SQL/TOTVS aplicar também `sql-query-development.mdc` e regras específicas do domínio quando houver.
+
+## Concorrência
+
+Quando duas requests podem disputar o mesmo recurso, definir estratégia:
+
+```text
+unique constraint
+optimistic lock/version
+select for update quando justificado
+idempotency key
+deduplication
+```
+
+Não resolver race condition apenas com `if exists` sem garantia transacional.
+
+## Dados sensíveis e retenção
+
+Persistir apenas o necessário. Para PII/dados sensíveis:
+
+- limitar acesso;
+- definir retenção quando material;
+- não copiar dados para tabelas/logs auxiliares sem necessidade;
+- criptografia/mascaramento conforme risco e infraestrutura vigente;
+- delete/archive deve respeitar integridade e auditoria.
+
+## Arquivos e uploads
+
+Arquivo que precisa sobreviver a restart/deploy não pode depender de filesystem efêmero do container. Aplicar `persistent-upload-storage.mdc`.
+
+## Testes obrigatórios
+
+Conforme mudança:
+
+- migration em banco vazio;
+- upgrade a partir do schema anterior;
+- constraints/invariantes;
+- transaction rollback em falha;
+- concorrência/idempotência quando aplicável;
+- repository query com filtros/paginação;
+- compatibilidade de mixed version quando deploy exigir;
+- persistência após restart para uploads/arquivos quando relevante.
+
+## Perguntas adversariais
+
+1. Esta migration pode travar uma tabela relevante em produção?
+2. Uma versão antiga da aplicação ainda funciona após o schema novo?
+3. Duas requests simultâneas conseguem criar estado inválido?
+4. O banco está sendo usado como API entre contextos?
+5. Existe dado persistido sem owner/retention claros?
+
+## Regras filhas/complementares
+
+- `migrations-immutable-checksum.mdc`
+- `plugins-migrations-no-reset-prod.mdc`
+- `persistent-upload-storage.mdc`
+- `sql-query-development.mdc`
+- `contract-evolution-backward-compatibility.mdc`
+
+## Evidência de conclusão
+
+```text
+DATA_OWNER
+SCHEMA_CHANGE
+MIGRATION_STRATEGY
+TRANSACTION_BOUNDARY
+CONSTRAINTS
+INDEX_IMPACT
+CONCURRENCY_STRATEGY
+ROLLBACK_OR_ROLLFORWARD
+TESTS
+```
+
+## Critério de sucesso
+
+Dados permanecem íntegros, pertencem a um owner claro e podem evoluir em produção sem reset destrutivo, corrida silenciosa ou dependência direta entre bancos de contextos diferentes.
