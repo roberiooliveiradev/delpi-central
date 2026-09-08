@@ -60,13 +60,29 @@
   max-width: 36rem;
 }
 
-/* Wizard NF — 100% da largura útil; conforto tipográfico ~60rem */
-.dashboard-my-requests .my-requests-wizard-stack {
+/* Coluna central do conteúdo (header + páginas) — TopBar permanece full-bleed */
+.dashboard-my-requests .my-requests-content-column {
   display: flex;
   flex-direction: column;
   gap: var(--my-requests-section-gap);
   width: 100%;
   max-width: min(60rem, 100%);
+  margin-inline: auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-my-requests .my-requests-page-stack {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Wizard NF — ocupa a coluna central (sem max-width 36rem dos forms curtos) */
+.dashboard-my-requests .my-requests-wizard-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--my-requests-section-gap);
+  width: 100%;
   min-width: 0;
   box-sizing: border-box;
 }

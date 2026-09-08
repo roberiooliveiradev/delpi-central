@@ -14,6 +14,15 @@ from requests_app.domain.ports.request_destination_port import (
 )
 
 
+def _as_bearer_authorization(authorization: str | None) -> str | None:
+    auth = str(authorization or "").strip()
+    if not auth:
+        return None
+    if auth.lower().startswith("bearer "):
+        return auth
+    return f"Bearer {auth}"
+
+
 class ApiDelpiAdapter(RequestDestinationPort, OperationalLookupPort):
     """Destination + TOTVS lookups via api-delpi canonical /request-lookups routes."""
 
@@ -34,8 +43,9 @@ class ApiDelpiAdapter(RequestDestinationPort, OperationalLookupPort):
     def _headers(self, authorization: str | None = None) -> dict[str, str]:
         headers = {"Accept": "application/json", "X-Delpi-Caller-App": self._caller_app}
         apply_internal_service_headers(headers)
-        if authorization:
-            headers["Authorization"] = authorization
+        bearer = _as_bearer_authorization(authorization)
+        if bearer:
+            headers["Authorization"] = bearer
         return headers
 
     def _get(
@@ -45,10 +55,38 @@ class ApiDelpiAdapter(RequestDestinationPort, OperationalLookupPort):
         params: dict[str, Any] | None = None,
         authorization: str | None = None,
     ) -> dict[str, Any]:
+        from requests_app.application.errors import ApplicationError
+
         clean = {k: v for k, v in (params or {}).items() if v is not None}
-        with httpx.Client(base_url=self._base_url, timeout=self._timeout) as client:
-            response = client.get(path, params=clean, headers=self._headers(authorization))
-        response.raise_for_status()
+        try:
+            with httpx.Client(base_url=self._base_url, timeout=self._timeout) as client:
+                response = client.get(path, params=clean, headers=self._headers(authorization))
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            status = int(exc.response.status_code)
+            if status in {401, 403}:
+                raise ApplicationError(
+                    code="lookup_upstream_unauthorized",
+                    status_code=status,
+                    detail="Não foi possível autenticar a busca no serviço de dados.",
+                ) from exc
+            if status == 422:
+                raise ApplicationError(
+                    code="payload_invalid",
+                    status_code=422,
+                    detail="Parâmetros inválidos na busca.",
+                ) from exc
+            raise ApplicationError(
+                code="lookup_upstream_error",
+                status_code=502,
+                detail="Falha ao consultar destinatários/produtos. Tente novamente.",
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise ApplicationError(
+                code="lookup_upstream_unavailable",
+                status_code=503,
+                detail="Serviço de busca indisponível no momento.",
+            ) from exc
         body = response.json()
         if isinstance(body, dict) and "data" in body:
             data = body.get("data")

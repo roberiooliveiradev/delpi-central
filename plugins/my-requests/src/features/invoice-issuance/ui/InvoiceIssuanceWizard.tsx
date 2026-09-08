@@ -687,7 +687,7 @@ export function InvoiceIssuanceWizard({
 
   return (
     <AppShell title="Nova emissão de NF" subtitle={subtitleParts.join(" · ")} canCreate>
-      <div className="my-requests-wizard-stack" data-help="invoice-wizard" title={HELP.section}>
+      <div className="my-requests-wizard-stack" data-help="invoice-wizard">
         {showBranch ? (
           <SelectField
             label="Filial"
@@ -699,12 +699,11 @@ export function InvoiceIssuanceWizard({
           />
         ) : null}
 
-        <div title={HELP.progress}>
-          <MyRequestsJourneyProgressBar
-            value={percent}
-            summary={`${completed} de ${WIZARD_STEPS.length} etapas concluídas`}
-          />
-        </div>
+        <MyRequestsJourneyProgressBar
+          value={percent}
+          summary={`${completed} de ${WIZARD_STEPS.length} etapas concluídas`}
+          ariaLabel={HELP.progress}
+        />
 
         <MyRequestsProgressTracker
           steps={stepStates}

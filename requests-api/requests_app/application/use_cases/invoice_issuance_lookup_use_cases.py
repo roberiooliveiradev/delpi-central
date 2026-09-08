@@ -2,10 +2,27 @@ from __future__ import annotations
 
 from typing import Any
 
+from delpi_auth.request_context import get_request_authorization
+
 from requests_app.application.errors import ApplicationError
 from requests_app.application.security.requests_permissions import actor_for
 from requests_app.domain.ports import RequestTypeRepositoryPort
 from requests_app.domain.ports.operational_lookup_port import OperationalLookupPort
+
+
+def _authorization_for_upstream(user) -> str | None:
+    """Prefer the inbound Bearer header; fall back to raw access_token with Bearer prefix."""
+    incoming = get_request_authorization()
+    if incoming and str(incoming).strip():
+        auth = str(incoming).strip()
+        return auth if auth.lower().startswith("bearer ") else f"Bearer {auth}"
+    token = getattr(user, "access_token", None) or getattr(user, "token", None)
+    if not token:
+        return None
+    raw = str(token).strip()
+    if not raw:
+        return None
+    return raw if raw.lower().startswith("bearer ") else f"Bearer {raw}"
 
 
 class InvoiceIssuanceLookupUseCases:
@@ -26,8 +43,7 @@ class InvoiceIssuanceLookupUseCases:
         actor = actor_for(user, request_type)
         if not (actor.has_create or actor.has_process or actor.has_manage or actor.has_access):
             raise ApplicationError(code="lookup_forbidden", status_code=403)
-        token = getattr(user, "access_token", None) or getattr(user, "token", None)
-        return str(token) if token else None
+        return _authorization_for_upstream(user)
 
     def search_parties(self, *, user, party_type: str, query: str, limit: int = 20) -> dict[str, Any]:
         auth = self._authorize(user)

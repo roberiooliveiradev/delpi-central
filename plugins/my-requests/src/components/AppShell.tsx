@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { ClipboardList, ListChecks, PlusCircle, Settings } from "lucide-react";
 
-import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   myRequestsPath,
   navigateMyRequestsPath,
@@ -31,14 +30,12 @@ export function AppShell({ title, subtitle, children, canCreate = false }: AppSh
       id: "mine",
       label: "Minhas solicitações",
       icon: <ClipboardList size={18} aria-hidden />,
-      title: `Minhas solicitações. ${MY_REQUESTS_HELP_TOOLTIPS.mine.section}`,
       onSelect: () => navigateMyRequestsPath(myRequestsPath("mine")),
     },
     {
       id: "work_queue",
       label: "Fila de trabalho",
       icon: <ListChecks size={18} aria-hidden />,
-      title: `Fila de trabalho. ${MY_REQUESTS_HELP_TOOLTIPS.workQueue.section}`,
       onSelect: () => navigateMyRequestsPath(myRequestsPath("work-queue")),
     },
     ...(showCreate
@@ -47,7 +44,6 @@ export function AppShell({ title, subtitle, children, canCreate = false }: AppSh
             id: "new",
             label: "Nova solicitação",
             icon: <PlusCircle size={18} aria-hidden />,
-            title: `Nova solicitação. ${MY_REQUESTS_HELP_TOOLTIPS.new.section}`,
             onSelect: () => navigateMyRequestsPath(myRequestsPath("new")),
           },
         ]
@@ -58,7 +54,6 @@ export function AppShell({ title, subtitle, children, canCreate = false }: AppSh
             id: "admin",
             label: "Administração",
             icon: <Settings size={18} aria-hidden />,
-            title: `Administração. ${MY_REQUESTS_HELP_TOOLTIPS.admin.section}`,
             onSelect: () => navigateMyRequestsPath(myRequestsPath("admin")),
           },
         ]
@@ -77,8 +72,10 @@ export function AppShell({ title, subtitle, children, canCreate = false }: AppSh
         portalScopeClassName={MR_PORTAL_SCOPE}
         items={items}
       />
-      <MyRequestsPageHeader title={title} subtitle={subtitle} />
-      <div className="my-requests-page-stack">{children}</div>
+      <div className="my-requests-content-column">
+        <MyRequestsPageHeader title={title} subtitle={subtitle} />
+        <div className="my-requests-page-stack">{children}</div>
+      </div>
     </div>
   );
 }
