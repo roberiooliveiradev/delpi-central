@@ -407,9 +407,11 @@ def validate_openapi_document(
     return findings
 
 
-def _literal_string(node: ast.AST | None) -> str | None:
-    if isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value.strip():
-        return node.value.strip()
+def _literal_string(node: ast.AST | None, *, allow_empty: bool = False) -> str | None:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        value = node.value.strip()
+        if value or allow_empty:
+            return value
     return None
 
 
@@ -425,8 +427,8 @@ def fastapi_routes_from_source(source: str) -> list[FastApiRoute]:
             method = decorator.func.attr.lower()
             if method not in HTTP_METHODS or not decorator.args:
                 continue
-            route_path = _literal_string(decorator.args[0])
-            if not route_path or not route_path.startswith("/"):
+            route_path = _literal_string(decorator.args[0], allow_empty=True)
+            if route_path is None or (route_path != "" and not route_path.startswith("/")):
                 continue
             operation_id: str | None = None
             for keyword in decorator.keywords:
