@@ -1,68 +1,40 @@
 ---
-description: Nova rota/API/action exposta ao chat — checklist OpenAPI-first, import/index, governança, execução genérica, apresentação e testes
+description: Nova rota/API/action exposta ao chat — checklist OpenAPI-first atual, import/index, governança, execução genérica, apresentação e evals R1–R11
 alwaysApply: false
 ---
 
-# Nova rota/API exposta ao chat — checklist
+# Nova rota/API/action exposta ao chat — checklist
 
 ## Princípio
 
-Rota exposta ao chat = contrato OpenAPI completo + import/index + governança + execução genérica + apresentação schema-driven + testes.
+Nova operation utilizável pelo chat = contrato OpenAPI completo + import/index + agent binding + governança + execução genérica + apresentação schema-driven + avaliação.
 
-**Não** significa criar registry/intenção/selector específico por endpoint.
+**Não** criar intent, selector, marker, strategy ou catálogo técnico por endpoint.
 
-Regra canônica: `openapi-first-universal-tool-routing.mdc`.
+Regra canônica de routing: `openapi-first-universal-tool-routing.mdc`.
+Regra canônica de eval: `ai-intelligence-evaluation.mdc` + `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md`.
 
-Ver também: `development-standards-index.mdc`, `api-delpi-response-contract.mdc`, `api-delpi-openapi-route-standards.mdc`, `operational-api-routing.mdc`, `clean-architecture-chat-api.mdc`.
+## 1. Contrato do provider
 
----
+Para qualquer provider:
 
-## 1. Provider/API — contrato OpenAPI
+- `operationId` estável e único;
+- `summary` e `description` semanticamente úteis;
+- tags úteis quando disponíveis;
+- parâmetros com `in`, `required`, description e schema corretos;
+- request body completo;
+- response schemas/descriptions úteis;
+- autenticação configurada fora do prompt;
+- sensitivity/policy quando necessário;
+- teste direto da operação.
 
-Para `api-delpi/`, manter os padrões internos abaixo. Para providers externos, o requisito arquitetural é um OpenAPI válido e acessível + autenticação configurada.
+Para `api-delpi`, manter também seus contratos internos (`api_delpi_success`, metadata/entity/shape, permissões e padrões TOTVS) sem torná-los requisito de providers externos.
 
-| # | Entrega | Onde |
-|---|---------|------|
-| 0 | Path / `operationId` / entity / query params em inglês para rota nova da api-delpi | router + contrato |
-| 1 | `operationId` estável e único | OpenAPI/provider |
-| 2 | `summary` e `description` semanticamente úteis | OpenAPI/provider |
-| 3 | parâmetros com nome, localização, required e schema corretos | OpenAPI/provider |
-| 4 | request body/schema completo quando houver | OpenAPI/provider |
-| 5 | response schema/descriptions úteis | OpenAPI/provider |
-| 6 | sensitivity/policy enriquecida por metadata/provider config quando necessário | provider/chat governance |
-| 7 | autenticação do provider configurada (`none`, `user_token`, `api_key`, etc.) | provider config |
-| 8 | smoke direto da operação | testes do provider ou teste de integração |
+## 2. Importação/indexação
 
-### Específico da api-delpi
-
-Quando a rota pertence à `api-delpi`, manter também os contratos já canônicos:
-
-- `api_delpi_success(..., operation_id=...)`;
-- `route_contract_registry.py` para `entity` + `shape` quando aplicável ao contrato interno;
-- `operation_id` coerente entre decorator/OpenAPI/meta;
-- `openapi_agent_metadata.agent_route()` nas rotas chat-critical;
-- permissão em `api_delpi_permissions.py`;
-- locale EN + pt-BR conforme `api-delpi-openapi-route-standards.mdc`;
-- enums/patterns com validação runtime;
-- baselines/gates internos da api-delpi;
-- uploads persistentes conforme `persistent-upload-storage.mdc`;
-- padrões TOTVS conforme regras específicas.
-
-Esses itens enriquecem/validam a **api-delpi**, mas **não podem ser requisito para providers externos**.
-
----
-
-## 2. Chat — importação e indexação
-
-Após a rota existir no OpenAPI:
-
-1. Importar/reimportar o provider.
-2. Persistir/atualizar `ChatActionCatalogItem` ou equivalente normalizado.
-3. Garantir documento semântico/embedding com metadata suficiente da operação.
-4. Vincular provider/action ao agente.
-5. Confirmar `allowed_action_ids` no turno.
-
-A indexação deve aproveitar, quando disponíveis:
+1. Importar/reimportar o OpenAPI.
+2. Atualizar o `ChatActionCatalogItem` ou equivalente persistido.
+3. Gerar documento semântico/index usando o próprio contrato:
 
 ```text
 provider
@@ -78,136 +50,111 @@ responseSchema
 examples úteis
 ```
 
-**Proibido:** exigir `operational_route_registry.json` apenas para a action ficar descobrível.
+4. Vincular provider/action ao agente.
+5. Confirmar `allowed_action_ids` efetivos no turno.
 
----
+A action deve ficar descobrível sem duplicar seu contrato em JSON do assistente.
 
-## 3. Chat — seleção e parâmetros
+## 3. Seleção e argumentos
 
-Pipeline esperado:
+Pipeline obrigatório:
 
 ```text
 pedido
-→ decomposição quando composto
+→ decomposição se composto
 → retrieval top-K de actions autorizadas
 → planner estruturado
-→ argument extraction pelo schema OpenAPI
-→ validação determinística
-→ policy/confirmation
+→ OpenAPI argument extraction/validation
+→ policy/RBAC/confirmation
 → ExecuteExternalActionUseCase
 ```
 
-Checklist:
+Validar:
 
-- [ ] seleção funciona sem `if path`/provider;
-- [ ] nenhuma action fora de `allowed_action_ids` pode ser escolhida;
-- [ ] parâmetro obrigatório ausente gera follow-up, não valor inventado;
-- [ ] tipos/enums/body são validados contra o OpenAPI;
-- [ ] write/admin/destructive respeitam confirmation/policy;
-- [ ] provider externo funciona sem código/JSON por endpoint.
+- action correta entre candidates próximas;
+- nenhuma action fora de `allowed_action_ids`;
+- path/query/body construídos a partir do schema;
+- required/type/enum/format;
+- argumento ausente → clarify específico;
+- argumento presente não é perguntado novamente;
+- write/admin/destructive respeitam confirmação;
+- provider externo funciona sem alteração de código/config técnica por endpoint.
 
-### Registry legado
+## 4. Apresentação
 
-`operational_route_registry.json` é compatibilidade de migração.
-
-Não adicionar `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` manual por rota nova quando o OpenAPI já contém a informação técnica equivalente.
-
-Exceção exige justificativa arquitetural explícita de policy/vocabulário transversal que o OpenAPI padrão não representa.
-
----
-
-## 4. Chat — apresentação
-
-**Regra obrigatória:** `schema-first-presentation-delivered.mdc`.
-
-Toda action nova deve possuir fallback genérico:
+Toda action deve possuir fallback genérico:
 
 ```text
 responseSchema + payload runtime + metadata
 → ChatSchemaDrivenPresentationService
-→ perfil especializado opcional
+→ renderPlan
 ```
 
-Não criar presenter por entidade/rota para simplesmente tornar a action utilizável.
+Perfil, rótulos ou enriquecimento especializado são opcionais. Não criar presenter dedicado apenas para tornar uma action utilizável.
 
-Perfis/labels podem melhorar UX, mas não devem duplicar contrato técnico do OpenAPI.
+## 5. Avaliação obrigatória
 
----
+Toda nova action ou mudança relevante no motor deve seguir R1–R11 do protocolo canônico.
 
-## 5. Testes obrigatórios
+Cobrir no mínimo:
 
-Para nova rota/action, cobrir:
+1. importação/indexação;
+2. retrieval natural-language;
+3. action correta entre operações semanticamente próximas;
+4. argumentos corretos;
+5. required ausente;
+6. caso negativo/no-tool quando aplicável;
+7. execução genérica;
+8. outcome/task success;
+9. safety/policy;
+10. apresentação;
+11. performance/eficiência;
+12. follow-up/multi-turn se a operation participar de continuidade.
 
-1. importação do OpenAPI;
-2. action no catálogo;
-3. retrieval pela linguagem natural;
-4. seleção correta entre actions próximas;
-5. extração de path/query/body;
-6. validação de required/type/enum;
-7. execução pelo gateway genérico;
-8. policy/confirmation quando aplicável;
-9. apresentação fallback schema-driven;
-10. caso negativo que não deve selecionar a rota.
+Mudança no motor de routing exige ainda:
 
-Para evolução do motor, incluir fixture de **API externa fictícia** sem qualquer código no monorepo.
+- API fictícia desconhecida do projeto;
+- teste metamórfico renomeando path/provider/operationId e preservando semântica/schema;
+- pedido composto quando a capacidade puder coexistir com outras actions.
 
----
+## 6. CI e arquitetura
 
-## 6. Gates CI
+Executar gates relevantes, incluindo `Architecture Enforcement`, testes da API/provider, regressões do chat e apresentação.
 
-Manter gates atuais da api-delpi quando ela for alterada e adicionar/fortalecer gates arquiteturais do chat para impedir novos acoplamentos, por exemplo:
+O diff não pode introduzir:
 
 ```text
-if "/products/" in path
-if "factory-status" in path
-action_id.startswith("api_delpi.")
+if path/provider/operationId
+selector específico por API
+catálogo paralelo de endpoints
+marker/strategy por endpoint
+URL arbitrária de LLM
+secret em log/config
+HTTP novo sem timeout/policy de retry
 ```
 
-O crescimento manual de `pathMarkers` / `operationIdMarkers` deve ser tratado como regressão arquitetural salvo exceção documentada.
+## 7. Checklist de PR
 
-Os baselines locais (`openapi_baseline.json`, geradores de autoTierC etc.) podem continuar como fixtures/gates de compatibilidade, mas não podem ser requisito de runtime para provider externo.
+- [ ] contrato OpenAPI completo;
+- [ ] import/index realizado;
+- [ ] agent binding/allowed actions validados;
+- [ ] retrieval/planner genérico encontra a operation;
+- [ ] argumentos validados pelo OpenAPI;
+- [ ] RBAC/policy/confirmation preservados;
+- [ ] executor HTTP genérico usado;
+- [ ] fallback schema-driven funciona;
+- [ ] positive + sibling + negative;
+- [ ] R1–R11 exigidos pelo caso foram avaliados;
+- [ ] outcome real foi validado quando existe oracle;
+- [ ] API externa desconhecida comprovada quando o motor mudou;
+- [ ] baseline × candidate comparado em mudança de inteligência;
+- [ ] architecture enforcement verde.
 
----
+## Anti-padrões
 
-## 7. Pedidos compostos e multi-turn
-
-Nova action deve participar do pipeline base de decomposição/contexto.
-
-Pedidos como:
-
-```text
-consulte estoque, última compra e pedidos em aberto
-```
-
-podem exigir múltiplas tools.
-
-Refinamentos como:
-
-```text
-e em agosto?
-mostre os próximos 20
-agora deste outro item
-```
-
-devem reutilizar contexto estruturado da action anterior, não novo selector por path.
-
----
-
-## O que NÃO fazer
-
-- Endpoint novo → registry manual por obrigação.
-- `if path` / `if operationId` / `if provider` em use case genérico.
-- Selector/service específico de API externa.
-- Duplicar OpenAPI em `assistant/*.json`.
-- Presenter Python por rota/entidade para viabilizar resposta básica.
-- URL arbitrária gerada pelo LLM.
-- Prompt do agente como única fonte de roteamento/policy.
-- Big bang removendo o legado sem shadow/paridade/rollback.
-
-## Referências
-
-- `.cursor/rules/openapi-first-universal-tool-routing.mdc`
-- `.cursor/rules/operational-api-routing.mdc`
-- `.cursor/rules/api-delpi-openapi-route-standards.mdc`
-- `minha-delpi-ai-api/docs/api/04-actions-openapi.md`
-- `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md`
+- Endpoint novo → novo bloco de roteamento manual.
+- Copiar `path`, `operationId` ou schema para conteúdo do assistente.
+- Criar regex/boost só para uma frase de teste.
+- Mudar fixture esperada para esconder falha de seleção.
+- Validar apenas que a tool chamou; ignorar resultado/outcome.
+- Declarar release com evidence parcial ou de outra configuração.
