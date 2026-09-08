@@ -70,7 +70,6 @@ class ChatPresentationAutomaticScoreService:
         data_shape: dict[str, Any] | None,
         available_views: list[str] | None = None,
         user_message: str | None = None,
-        path: str | None = None,
         entity: str | None = None,
         openapi_shape: str | None = None,
     ) -> dict[str, int]:
@@ -107,17 +106,16 @@ class ChatPresentationAutomaticScoreService:
             available_views=available_views,
         )
 
-        lowered_path = str(path or "").strip().lower()
         resolved_entity = str(entity or "").strip().lower()
+        resolved_openapi_shape = str(openapi_shape or "").strip().lower()
+        hierarchy_signal = (
+            bool(shape.get("hasHierarchy"))
+            or recommended == "tree"
+            or resolved_openapi_shape in ChatPresentationVocabularyService.hierarchy_shapes()
+            or resolved_entity in ChatPresentationVocabularyService.hierarchy_entities()
+        )
 
-        if (
-            "tree" in (available_views or [])
-            and (
-                "/parents" in lowered_path
-                or "/structure" in lowered_path
-                or resolved_entity in {"product_parents", "product_structure"}
-            )
-        ):
+        if "tree" in (available_views or []) and hierarchy_signal:
             scores["tree"] += 45
             scores["table"] = max(0, int(scores.get("table") or 0) - 15)
 
@@ -247,7 +245,6 @@ class ChatPresentationAutomaticScoreService:
             if isinstance(decision.get("availableViews"), list)
             else None,
             user_message=user_message,
-            path=path or None,
             entity=entity,
             openapi_shape=openapi_shape or None,
         )
