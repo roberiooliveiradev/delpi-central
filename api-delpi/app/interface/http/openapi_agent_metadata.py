@@ -21,10 +21,13 @@ PRODUCT_DETAIL = agent_route(
 )
 
 PRODUCT_SUMMARY = agent_route(
-    summary="Resumo do produto (cadastro + estoque + preços)",
+    summary="Resumo leve do produto (cadastro + amostra de estoque + preços)",
     description=(
         "Consolida cadastro, amostra de estoque por filial e tabela de preços em uma consulta leve. "
-        "Use para visão geral rápida do item quando não precisa de BOM, roteiro ou analisador completo."
+        "Use somente para visão geral rápida quando o usuário NÃO pediu BOM/estrutura, roteiro, "
+        "inspeção, analisador completo nem visão integrada com vários blocos. "
+        "Se pedir ficha analítica ampla, estrutura, roteiro ou visão integrada, prefira /analyser "
+        "ou as rotas granulares /structure, /guide, /stock."
     ),
     operation_id="get_product_summary",
 )
@@ -145,7 +148,9 @@ PRODUCT_STRUCTURE = agent_route(
     summary="Estrutura (BOM) do produto",
     description=(
         "Lista a estrutura / lista de materiais (BOM) de um produto a partir do código. "
-        "Use para árvore de componentes, itens filhos e explosão de estrutura."
+        "Use para árvore de componentes, itens filhos, explosão de estrutura e pedidos de "
+        "estrutura/BOM sem pedir exclusividade de matérias-primas. "
+        "Não usar quando o usuário pedir apenas exclusividade de MPs — aí use /structure/exclusivity."
     ),
     operation_id="get_product_structure",
 )
@@ -162,10 +167,12 @@ PRODUCT_STRUCTURE_EXCEL = agent_route(
 )
 
 PRODUCT_STRUCTURE_EXCLUSIVITY = agent_route(
-    summary="Estrutura do produto com exclusividade de matérias-primas",
+    summary="Exclusividade de matérias-primas na estrutura",
     description=(
         "Abre a BOM vigente multinível e marca MPs exclusivas (presentes em apenas um PA válido). "
-        "Use para estrutura com exclusividade, MPs exclusivas e quantidade acumulada por componente."
+        "Use SOMENTE quando o usuário pedir exclusividade, MP exclusiva, matéria-prima exclusiva "
+        "ou exclusividade de componentes. "
+        "Para estrutura/BOM comum (árvore, componentes, explosão) sem exclusividade, use /structure."
     ),
     operation_id="get_product_structure_exclusivity",
 )
@@ -177,7 +184,7 @@ EXCLUSIVE_RAW_MATERIALS_CATALOG = agent_route(
         "sem informar código de produto na pergunta. "
         "Use view=by_material para «quais matérias-primas são exclusivas?» e "
         "view=by_finished_product para «quais produtos têm MP exclusiva?». "
-        "Para estrutura detalhada de um PA específico, prefira /structure/exclusivity."
+        "Para BOM/estrutura de um PA específico sem foco em exclusividade, prefira /structure."
     ),
     operation_id="list_exclusive_raw_materials_catalog",
 )
@@ -288,12 +295,13 @@ PRODUCT_STOCK = agent_route(
 )
 
 PRODUCT_ANALYSER = agent_route(
-    summary="Analisador completo do produto",
+    summary="Analisador completo / visão integrada do produto",
     description=(
-        "Consolida cadastro, estrutura, roteiro e inspeção. Default view=full. "
-        "Use view=summary para amostra leve. Para intenção pontual prefira rotas granulares: "
-        "/stock (estoque), /structure (BOM), /guide (roteiro), /inspection (qualidade), "
-        "/summary (cadastro+estoque+preços) ou /factory-status (visão fabril integrada)."
+        "Consolida cadastro, estrutura (BOM), roteiro e inspeção numa ficha analítica ampla. "
+        "Default view=full. Use para visão integrada, ficha completa, análise completa do produto, "
+        "ou quando o usuário pede juntos cadastro/ficha + estrutura + roteiro (e opcionalmente estoque). "
+        "Para intenção pontual prefira rotas granulares: /stock (estoque), /structure (BOM), "
+        "/guide (roteiro), /inspection (qualidade) ou /summary (só cadastro+estoque+preços leve)."
     ),
     operation_id="get_product_analyser",
 )

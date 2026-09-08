@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 705 · **Gerado em:** 2026-09-08 10:47 UTC
+**Provider:** `api-delpi` · **Rotas:** 705 · **Gerado em:** 2026-09-08 15:29 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -912,7 +912,7 @@
 | `GET` | `/products/exclusive-raw-materials/catalog` | `list_exclusive_raw_materials_catalog` | Exclusive raw materials catalog |
 | `GET` | `/products/search` | `search_products` | Search products |
 | `GET` | `/products/{code}` | `get_product_detail` | Dados cadastrais do product |
-| `GET` | `/products/{code}/analyser` | `get_product_analyser` | Product analyser |
+| `GET` | `/products/{code}/analyser` | `get_product_analyser` | Full product analyser / integrated view |
 | `GET` | `/products/{code}/cost-impact-simulation` | `get_product_cost_impact_simulation` | Product cost impact simulation |
 | `GET` | `/products/{code}/customers` | `get_product_customers` | Clientes do product |
 | `GET` | `/products/{code}/drawing` | `get_product_drawing` | Product drawing |
@@ -937,10 +937,10 @@
 | `GET` | `/products/{code}/sales/open-orders` | `get_product_sales_open_orders` | Product sales open orders |
 | `GET` | `/products/{code}/shipping-status` | `get_product_shipping_status` | Product shipping status |
 | `GET` | `/products/{code}/stock` | `get_product_stock` | Product stock |
-| `GET` | `/products/{code}/structure` | `get_product_structure` | Product structure |
+| `GET` | `/products/{code}/structure` | `get_product_structure` | Product structure (BOM) |
 | `GET` | `/products/{code}/structure/excel` | `get_product_structure_excel` | Product structure excel |
-| `GET` | `/products/{code}/structure/exclusivity` | `get_product_structure_exclusivity` | Product structure exclusivity |
-| `GET` | `/products/{code}/summary` | `get_product_summary` | Product summary |
+| `GET` | `/products/{code}/structure/exclusivity` | `get_product_structure_exclusivity` | Raw-material exclusivity in product structure |
+| `GET` | `/products/{code}/summary` | `get_product_summary` | Light product summary (cadastro + sample stock + prices) |
 | `GET` | `/products/{code}/suppliers` | `get_product_suppliers` | Product suppliers |
 
 ## sales (1)

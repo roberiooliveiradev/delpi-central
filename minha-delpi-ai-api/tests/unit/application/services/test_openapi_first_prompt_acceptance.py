@@ -106,8 +106,59 @@ STRUCTURE_ACTIONS = [
         "structure",
         "/products/{code}/structure",
         "get_product_structure",
-        summary="Get product structure",
-        description="Hierarchical JSON BOM structure",
+        summary="Estrutura (BOM) do produto",
+        description=(
+            "Lista a estrutura / lista de materiais (BOM). Use para árvore de componentes "
+            "sem exclusividade de matérias-primas."
+        ),
+    ),
+    _action(
+        "structure-exclusivity",
+        "/products/{code}/structure/exclusivity",
+        "get_product_structure_exclusivity",
+        summary="Exclusividade de matérias-primas na estrutura",
+        description=(
+            "Use SOMENTE quando o usuário pedir exclusividade ou MP exclusiva. "
+            "Para BOM comum use /structure."
+        ),
+    ),
+]
+
+
+PRODUCT_VIEW_ACTIONS = [
+    _action(
+        "summary",
+        "/products/{code}/summary",
+        "get_product_summary",
+        summary="Resumo leve do produto (cadastro + amostra de estoque + preços)",
+        description=(
+            "Use somente para visão geral rápida quando NÃO pediu BOM, roteiro, "
+            "analisador completo nem visão integrada."
+        ),
+    ),
+    _action(
+        "analyser",
+        "/products/{code}/analyser",
+        "get_product_analyser",
+        summary="Analisador completo / visão integrada do produto",
+        description=(
+            "Consolida cadastro, estrutura, roteiro e inspeção. Use para visão integrada, "
+            "ficha completa ou cadastro + estrutura + roteiro juntos."
+        ),
+    ),
+    _action(
+        "stock",
+        "/products/{code}/stock",
+        "get_product_stock",
+        summary="Estoque do produto",
+        description="Saldo e posições de estoque do produto",
+    ),
+    _action(
+        "structure",
+        "/products/{code}/structure",
+        "get_product_structure",
+        summary="Estrutura (BOM) do produto",
+        description="BOM / árvore de componentes sem exclusividade",
     ),
 ]
 
@@ -255,6 +306,22 @@ def test_compound_signal_wants_multi_action_without_joiner():
 
 def test_small_talk_does_not_want_multi_action():
     assert not DecomposeExternalActionRequestsService.wants_multi_action("oi")
+
+
+def test_integrated_view_prefers_analyser_over_summary():
+    planned = _plan(
+        "Me dá uma visão integrada do produto 90260149: ficha, estrutura e roteiro.",
+        PRODUCT_VIEW_ACTIONS,
+    )
+    assert _first_action_id(planned) == "analyser"
+
+
+def test_plain_structure_prefers_bom_not_exclusivity():
+    planned = _plan(
+        "traga a estrutura de bom/componentes do produto 90260149",
+        STRUCTURE_ACTIONS,
+    )
+    assert _first_action_id(planned) == "structure"
 
 
 def test_compound_plans_multiple_distinct_actions():

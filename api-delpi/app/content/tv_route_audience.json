@@ -2494,14 +2494,16 @@
     "get_product_analyser": {
       "locale": {
         "en": {
-          "summary": "Product analyser",
-          "description": "Product analyser.",
+          "summary": "Full product analyser / integrated view",
+          "description": "Consolidates cadastro, BOM structure, routing guide and inspection into one wide analytical sheet (default view=full). Use for visão integrada, ficha completa, análise completa, or when the user asks together for cadastro/ficha + estrutura + roteiro (optionally estoque). For a single intent prefer granular routes: /stock, /structure, /guide, /inspection or /summary (light cadastro+estoque+preços only).",
+          "whenToUse": "Use for integrated/complete product view with structure and routing together — not for a light summary-only glance.",
           "label": "Product analyser"
         },
         "pt-BR": {
-          "label": "Analisador completo do produto",
-          "summary": "Analisador completo do produto",
-          "description": "Análise composta: «Analisador completo do produto»."
+          "label": "Analisador completo / visão integrada do produto",
+          "summary": "Analisador completo / visão integrada do produto",
+          "description": "Consolida cadastro, estrutura (BOM), roteiro e inspeção numa ficha analítica ampla. Use para visão integrada, ficha completa ou quando o usuário pede juntos cadastro/ficha + estrutura + roteiro.",
+          "whenToUse": "Use para visão integrada ou ficha completa com estrutura e roteiro; não use só para resumo leve."
         }
       },
       "category": "products"
@@ -2901,14 +2903,16 @@
     "get_product_structure": {
       "locale": {
         "en": {
-          "summary": "Product structure",
-          "description": "Product structure.",
+          "summary": "Product structure (BOM)",
+          "description": "Lists the product BOM / material list from the code. Use for árvore de componentes, child items, estrutura/BOM explosion without exclusividade de matérias-primas. Do not use when the user asks only for exclusividade/MP exclusiva — then use /structure/exclusivity.",
+          "whenToUse": "Use for plain BOM/structure/component tree; not for exclusivity-only requests.",
           "label": "Product structure"
         },
         "pt-BR": {
           "label": "Estrutura (BOM) do produto",
           "summary": "Estrutura (BOM) do produto",
-          "description": "Visão hierárquica de «Estrutura (BOM) do produto»."
+          "description": "Lista a estrutura / lista de materiais (BOM). Use para árvore de componentes sem exclusividade de matérias-primas. Não usar quando o usuário pedir apenas exclusividade de MPs.",
+          "whenToUse": "Use para BOM/estrutura comum; não use só para exclusividade."
         }
       },
       "category": "products"
@@ -2949,14 +2953,16 @@
     "get_product_structure_exclusivity": {
       "locale": {
         "en": {
-          "summary": "Product structure exclusivity",
-          "description": "Product structure exclusivity.",
-          "label": "Product structure exclusivity"
+          "summary": "Raw-material exclusivity in product structure",
+          "description": "Opens the multi-level BOM and marks exclusive MPs (present in only one valid finished good). Use ONLY when the user asks exclusividade, MP exclusiva, matéria-prima exclusiva or component exclusivity. For plain estrutura/BOM (tree, components, explosion) without exclusivity, use /structure.",
+          "whenToUse": "Use only for exclusivity of raw materials; not for a plain BOM request.",
+          "label": "Structure exclusivity"
         },
         "pt-BR": {
-          "label": "Estrutura do produto com exclusividade de matérias-primas",
-          "summary": "Estrutura do produto com exclusividade de matérias-primas",
-          "description": "Relatório operacional: «Estrutura do produto com exclusividade de matérias-primas»."
+          "label": "Exclusividade de matérias-primas na estrutura",
+          "summary": "Exclusividade de matérias-primas na estrutura",
+          "description": "Marca MPs exclusivas na BOM. Use SOMENTE quando o usuário pedir exclusividade ou MP exclusiva. Para BOM comum use /structure.",
+          "whenToUse": "Use só para exclusividade de MPs; não use para estrutura/BOM comum."
         }
       },
       "category": "products"
@@ -2964,14 +2970,16 @@
     "get_product_summary": {
       "locale": {
         "en": {
-          "summary": "Product summary",
-          "description": "Product summary.",
+          "summary": "Light product summary (cadastro + sample stock + prices)",
+          "description": "Light consolidation of cadastro, sample stock by branch and price table. Use only for a quick overview when the user did NOT ask for BOM/estrutura, roteiro, inspection, full analyser or visão integrada with several blocks. If they ask for wide analytical sheet, structure, routing or integrated view, prefer /analyser or granular /structure, /guide, /stock.",
+          "whenToUse": "Use only for a light overview without BOM, routing or integrated multi-block view.",
           "label": "Product summary"
         },
         "pt-BR": {
-          "label": "Resumo do produto (cadastro + estoque + preços)",
-          "summary": "Resumo do produto (cadastro + estoque + preços)",
-          "description": "Consulta operacional: «Resumo do produto (cadastro + estoque + preços)»."
+          "label": "Resumo leve do produto (cadastro + amostra de estoque + preços)",
+          "summary": "Resumo leve do produto (cadastro + amostra de estoque + preços)",
+          "description": "Consulta leve de cadastro, amostra de estoque e preços. Use somente quando NÃO pediu BOM, roteiro, analisador completo nem visão integrada.",
+          "whenToUse": "Use só para visão geral rápida sem BOM/roteiro/visão integrada."
         }
       },
       "category": "products"
