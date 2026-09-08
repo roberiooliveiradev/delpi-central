@@ -543,6 +543,43 @@ def test_bind_does_not_invent_granularity_for_scalar_summary():
     assert parameters["end_date"] == "31-03-2026"
 
 
+def test_llm_empty_rejected_falls_back_to_deterministic():
+    from app.domain.models.action_descriptor import ActionCandidate, ActionDescriptor
+
+    action = {
+        "actionId": "stock",
+        "operationId": "get_product_stock",
+        "method": "GET",
+        "path": "/products/{code}/stock",
+        "summary": "Estoque do produto",
+        "description": "Saldo de estoque",
+        "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+        "enabled": True,
+    }
+
+    def fake_llm(_message, _catalog):
+        return {
+            "steps": [
+                {
+                    "actionId": "totally.unknown",
+                    "arguments": {"parameters": {"code": "90260149"}},
+                }
+            ]
+        }
+
+    plan = PlanExternalActionsService(llm_planner=fake_llm).plan(
+        "estoque do produto 90260149",
+        [
+            ActionCandidate(
+                descriptor=ActionDescriptor.from_action_dict(action),
+                score=1.0,
+            )
+        ],
+    )
+    assert not plan.clarify
+    assert plan.steps[0].action_id == "stock"
+
+
 def test_deterministic_skips_sibling_missing_required():
     """Lower-ranked action missing required args must not abort a valid first step."""
     from app.domain.models.action_descriptor import ActionCandidate, ActionDescriptor

@@ -193,6 +193,53 @@ class ChatAgenticToolLoopService:
                         parameters["code"] = focus_code
                         tool_arguments["parameters"] = parameters
 
+                    action_row = None
+                    for row in catalog_schemas or []:
+                        if (
+                            isinstance(row, dict)
+                            and str(row.get("actionId") or "").strip() == action_id
+                        ):
+                            action_row = row
+                            break
+                    if (
+                        not isinstance(action_row, dict)
+                        or not (
+                            action_row.get("parametersSchema")
+                            or action_row.get("parameters_schema")
+                        )
+                    ) and self.external_action_repository is not None:
+                        try:
+                            payload = self.external_action_repository.get_action_for_execution(
+                                action_id
+                            )
+                        except Exception:
+                            payload = None
+                        if isinstance(payload, dict) and isinstance(payload.get("action"), dict):
+                            action_row = payload["action"]
+                    if isinstance(action_row, dict) and (
+                        action_row.get("parametersSchema") or action_row.get("parameters_schema")
+                    ):
+                        from app.application.services.plan_external_actions_service import (
+                            PlanExternalActionsService,
+                        )
+
+                        bound_params, bound_body, _missing = (
+                            PlanExternalActionsService._bind_arguments(
+                                message,
+                                action_row,
+                                context_parameters=parameters,
+                                previous_messages=previous_messages,
+                                context_body=(
+                                    tool_arguments.get("body")
+                                    if isinstance(tool_arguments.get("body"), dict)
+                                    else None
+                                ),
+                            )
+                        )
+                        tool_arguments["parameters"] = bound_params
+                        if bound_body is not None:
+                            tool_arguments["body"] = bound_body
+
                 try:
                     result = self.execute_tool_use_case.execute(
                         ExecuteToolRequest(

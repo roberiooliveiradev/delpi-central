@@ -64,12 +64,8 @@ class PlanExternalActionsService:
 
         if isinstance(llm_payload, dict):
             plan = self._plan_from_payload(llm_payload, top_k_ids=top_k_ids, limit=limit)
-            if (
-                not plan.is_empty
-                or plan.clarify
-                or (plan.metadata or {}).get("rejectedOutsideTopK")
-            ):
-                if not plan.is_empty and not plan.clarify:
+            if not plan.is_empty:
+                if not plan.clarify:
                     plan = self._enrich_plan_with_bound_arguments(
                         message,
                         plan,
@@ -78,6 +74,10 @@ class PlanExternalActionsService:
                         execution_context=execution_context,
                     )
                 return plan
+            if plan.clarify:
+                return plan
+            # Empty LLM plan (including all steps rejected outside top-K) falls
+            # through to the deterministic binder/ranker.
 
         return self._deterministic_plan(
             message,

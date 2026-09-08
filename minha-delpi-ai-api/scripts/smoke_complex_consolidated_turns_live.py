@@ -113,8 +113,8 @@ CASES: list[dict[str, Any]] = [
         "expect_prose": True,
         "expect_min_tools": 1,
         "expect_min_rich_surfaces": 1,
-        "expect_path_markers": ["/structure", "/stock", "/products/"],
-        "expect_path_groups": [["/structure"], ["/stock", "/products/"]],
+        "expect_path_markers": ["/structure", "/stock", "/products/", "/analyser"],
+        "expect_path_groups": [["/structure", "/analyser"], ["/stock", "/products/"]],
         "forbid_sql_fence": True,
     },
 ]
