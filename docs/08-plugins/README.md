@@ -34,7 +34,6 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 - `./scripts/ci/build-eficiencia-fabril.sh` — lint + build do plugin Eficiência Fabril.
 - `./scripts/ci/build-auditoria-5s.sh` — lint + build do plugin Auditoria 5S.
 - `./scripts/ci/build-central-agendamento.sh` — lint + build do plugin Central de Agendamento.
-- `./scripts/ci/build-pedidos-venda-abertos.sh` — lint + build do plugin Pedidos de Venda em Aberto.
 
 **Homologação:**
 
@@ -71,7 +70,6 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/dashboard-lmps` | `dashboard-lmps` | microfrontend | plugin | `/apps/dashboard-lmps` | `delpi-dashboard-lmps` |
 | `plugins/dashboard-quality` | `dashboard-quality` | microfrontend | plugin | `/apps/dashboard-quality` | `delpi-dashboard-quality` |
 | `plugins/eficiencia-fabril` | `eficiencia-fabril` | microfrontend | plugin | `/apps/eficiencia-fabril` | `delpi-eficiencia-fabril` |
-| `plugins/pedidos-venda-abertos` | `pedidos-venda-abertos` | microfrontend | plugin | `/apps/pedidos-venda-abertos` | `delpi-pedidos-venda-abertos` |
 | `plugins/commercial` | `commercial` | microfrontend | plugin | `/apps/commercial` | `delpi-commercial` |
 | `plugins/auditoria-5s` | `auditoria-5s` | microfrontend | plugin | `/apps/auditoria-5s` | `delpi-auditoria-5s` |
 | `plugins/kaizometro` | `kaizometro` | microfrontend | plugin | `/apps/kaizometro` | `delpi-kaizometro` |
@@ -94,7 +92,6 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/mural-acessos` | `mural-acessos` | microfrontend | plugin | `/apps/mural-acessos` | `delpi-mural-acessos` |
 | `plugins/reports` | `reports` | microfrontend | plugin | `/apps/reports` | `delpi-reports` |
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
-| `plugins/propostas-comerciais` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
 | `plugins/cultura-delpi` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
 | `plugins/transformometro` | `transformometro` | microfrontend | plugin | `/apps/transformometro` | `delpi-transformometro` |
 | `plugins/helpdesk` | (ver manifesto) | — | — | — | Pode ser externo / legado |

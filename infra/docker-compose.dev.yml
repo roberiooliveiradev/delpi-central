@@ -725,22 +725,6 @@ services:
     networks:
       - delpi-network
 
-  pedidos-venda-abertos:
-    <<: *plugin-ui-federated
-    build:
-      context: ../plugins
-      dockerfile: pedidos-venda-abertos/Dockerfile
-      target: production
-
-    container_name: delpi-pedidos-venda-abertos
-    restart: unless-stopped
-
-    environment:
-      TZ: ${TZ}
-
-    networks:
-      - delpi-network
-
   commercial:
     <<: *plugin-ui-federated
     build:
@@ -749,22 +733,6 @@ services:
       target: production
 
     container_name: delpi-commercial
-    restart: unless-stopped
-
-    environment:
-      TZ: ${TZ}
-
-    networks:
-      - delpi-network
-
-  propostas-comerciais:
-    <<: *plugin-ui-federated
-    build:
-      context: ../plugins
-      dockerfile: propostas-comerciais/Dockerfile
-      target: production
-
-    container_name: delpi-propostas-comerciais
     restart: unless-stopped
 
     environment:

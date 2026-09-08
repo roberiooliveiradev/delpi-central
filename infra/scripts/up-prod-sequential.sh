@@ -123,9 +123,7 @@ FASE_MFE=(
   auditoria-5s
   inspecoes-entrada
   inspecoes-processo
-  pedidos-venda-abertos
   commercial
-  propostas-comerciais
   financeiro-centro-custo
   financeiro-inadimplencia
   lancamento-notas-fiscais

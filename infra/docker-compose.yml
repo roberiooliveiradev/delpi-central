@@ -723,22 +723,6 @@ services:
     networks:
       - delpi-network
 
-  pedidos-venda-abertos:
-    depends_on:
-      - plugin-ui
-    build:
-      context: ../plugins
-      dockerfile: pedidos-venda-abertos/Dockerfile
-
-    container_name: delpi-pedidos-venda-abertos
-    restart: unless-stopped
-
-    environment:
-      TZ: ${TZ}
-
-    networks:
-      - delpi-network
-
   commercial:
     depends_on:
       - plugin-ui
@@ -748,22 +732,6 @@ services:
       target: production
 
     container_name: delpi-commercial
-    restart: unless-stopped
-
-    environment:
-      TZ: ${TZ}
-
-    networks:
-      - delpi-network
-
-  propostas-comerciais:
-    depends_on:
-      - plugin-ui
-    build:
-      context: ../plugins
-      dockerfile: propostas-comerciais/Dockerfile
-
-    container_name: delpi-propostas-comerciais
     restart: unless-stopped
 
     environment:
@@ -2503,8 +2471,6 @@ services:
       - cultura-delpi
       - codigo-etica
       - guias-procedimentos
-      - pedidos-venda-abertos
-      - propostas-comerciais
       - auditoria-5s
       - kaizometro
       - quality-action-plans

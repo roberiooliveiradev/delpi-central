@@ -8,7 +8,7 @@
 
 Este documento lista o que **já existe** no monorepo para o domínio Comercial e o que ainda é lacuna. Serve para evitar reimplementação.
 
-**Destino de produto:** o **Portal Comercial** é a UX canônica (páginas nativas). Plugins irmãos **coexistem** (decisão 5C); F2c só após Comercial ≥ PVA + pedido.
+**Destino de produto:** o **Portal Comercial** é a UX canônica (páginas nativas). `dashboard-commercial` permanece legado coexistente até Gestão nativa. PVA e propostas-comerciais MFE foram **retirados** (F2c).
 
 ---
 
@@ -18,12 +18,10 @@ Este documento lista o que **já existe** no monorepo para o domínio Comercial 
 |---|---|---|---|---|
 | `commercial` | **Portal Comercial** | `/apps/commercial` | UX canônica (ops + Gestão + Propostas ADY) | commercial-api + api-delpi |
 | `dashboard-commercial` | Dashboard Comercial | `/apps/dashboard-commercial` | Legado coexistente (referência até Gestão nativa) | api-delpi `/commercial/*` |
-| `pedidos-venda-abertos` | Portal do Vendedor | `/apps/pedidos-venda-abertos` | Legado coexistente (F2c adiado) | api-delpi |
-| `propostas-comerciais` | Propostas Comerciais | `/apps/propostas-comerciais` | Legado coexistente (referência até ADY nativo) | api-delpi `/propostas-comerciais/*` |
+
+**Removidos (set/2026):** MFEs `pedidos-venda-abertos` e `propostas-comerciais` (containers + código). Deep links → redirects F2c. Ver [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md).
 
 **Existem:** `plugins/commercial/`, `commercial-api/` (F0–F2b harden em `main`).
-
-**Depreciação planejada (após homologação § 2.1.1):** `pedidos-venda-abertos` — [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md).
 
 ### Telas observadas
 
@@ -31,15 +29,13 @@ Este documento lista o que **já existe** no monorepo para o domínio Comercial 
 |---|---|
 | `commercial` | Home, open-orders, customers, seller-portfolios, **gestao/***, **propostas** (consolidação) |
 | `dashboard-commercial` | Dashboard, detalhe proposta OV, OTD (legado) |
-| `pedidos-venda-abertos` | Pedidos, clientes, detalhe, config (legado) |
-| `propostas-comerciais` | Lista, detalhe, PDF (legado) |
 
 Docs locais:
 
 - `plugins/commercial/README.md`
 - `plugins/dashboard-commercial/docs/`
-- `docs/12-roadmap-e-evolucao/pedidos-venda-abertos/`
-- `docs/12-roadmap-e-evolucao/propostas-comerciais/`
+- Docs históricos (não há mais MFE): `docs/12-roadmap-e-evolucao/pedidos-venda-abertos/`, `docs/12-roadmap-e-evolucao/propostas-comerciais/`
+- Cutover: [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)
 
 ---
 

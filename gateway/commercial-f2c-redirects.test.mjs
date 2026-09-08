@@ -9,18 +9,13 @@ const root = dirname(fileURLToPath(import.meta.url));
 const include = "include /etc/nginx/snippets/commercial-f2c-redirects.conf;";
 
 describe("redirects F2c do gateway", () => {
-  it("mantém o snippet disponível, mas desativado até o flip do runbook", () => {
+  it("ativa o snippet nos nginx canônicos (MFEs legados removidos)", () => {
     for (const config of ["nginx.conf", "nginx.dev.conf"]) {
       const text = readFileSync(join(root, config), "utf8");
-      assert.doesNotMatch(
-        text,
-        new RegExp(`^\\s*${include.replaceAll(".", "\\.")}`, "m"),
-        `${config} não deve incluir redirects F2c ativos antes do cutover RBAC`,
-      );
       assert.match(
         text,
-        /commercial-f2c-redirects\.conf/,
-        `${config} deve documentar o snippet comentado para o flip`,
+        new RegExp(`^\\s*${include.replaceAll(".", "\\.")}`, "m"),
+        `${config} deve incluir redirects F2c ativos`,
       );
     }
   });
@@ -38,6 +33,10 @@ describe("redirects F2c do gateway", () => {
       snippet,
       /return 302 \/apps\/commercial\/customers\/\$1\/\$2;/,
     );
+    assert.match(snippet, /location = \/apps\/propostas-comerciais \{/);
+    assert.match(snippet, /return 302 \/apps\/commercial\/proposals;/);
+    assert.match(snippet, /\/apps\/pedidos-venda-abertos\/assets\//);
+    assert.match(snippet, /\/apps\/propostas-comerciais\/assets\//);
   });
 
   it("copia o diretório de snippets nas imagens dev e prod", () => {
