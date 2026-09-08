@@ -9,53 +9,110 @@ alwaysApply: true
 
 O **chat** é o núcleo de inteligência da plataforma. **Agentes** são chats com camadas adicionais (prompt, skills, actions, especialização RAG). **Projetos**, simulação admin e demais fluxos **herdam** o pipeline do chat — não reimplementam.
 
+Para tools/actions, a inteligência base é **OpenAPI-first e multi-provider**. Regra canônica: `openapi-first-universal-tool-routing.mdc`.
+
 ## Onde implementar melhorias
 
-| Camada | Responsabilidade | Exemplos no código |
-|--------|-------------------|-------------------|
-| **Chat base** | Intenção, pipeline, tools, policies, contexto, apresentação | `ChatIntelligencePipelineService`, `ChatToolContextService`, `ChatPresentationApiDeliveredMetadataService`, `ChatSchemaDrivenPresentationService`, `ExternalActionSelectionService`, `prompt_policies/*.md` |
-| **Agente** | Identidade, allowed actions, skills, escopo RAG | `system_prompt`, `metadata.skills`, providers/actions do agente |
+| Camada | Responsabilidade | Exemplos |
+|--------|------------------|----------|
+| **Chat base** | Intenção, decomposição, contexto, retrieval de actions, planner, policies, apresentação | serviços em `application/services/` + `domain/services/` |
+| **Action Catalog/index** | Operações OpenAPI normalizadas, documentos semânticos, embeddings | catálogo/importer/provider infrastructure |
+| **Agente** | Identidade, allowed actions, skills, escopo RAG, policies por vínculo | `system_prompt`, `metadata.skills`, providers/actions do agente |
 | **Projeto** | Agrupamento, prompt de projeto, agente default | `ChatWorkspaceContextService`, `projectPrompt` |
-| **Use cases** | Orquestração fina (stream/send/simulate) | Apenas **consumir** o pipeline base; sem lógica de inteligência duplicada |
+| **Use cases** | Orquestração fina send/stream/simulate | apenas consumir pipeline base |
 
-## Contexto vs. «entidades» (jun/2026)
+## Tools/actions — regra obrigatória
 
-- **UI e prompt:** só `userContextItems` + chips kind `context` (`ChatUserContextItemService`).
-- **Foco operacional interno:** só `operationalFocus` (cache via `sync_operational_focus` / `ChatSnapshotOperationalFocus`) — não duplicar produto/filial em `memory_type=entity` nem chips `product`/`branch`.
-- **Resolução de código:** `resolve_product_code` prioriza itens de contexto antes do histórico.
-- **Snapshot:** não usar `lastEntities` nem `activeEntities` — só `operationalFocus`.
+Nova API ou operação deve entrar por:
 
-## Regras centralizadas (obrigatório)
+```text
+OpenAPI
+→ import/index
+→ Action Catalog
+→ vínculo ao agente
+→ allowed_action_ids
+→ retrieval/planner/validator genéricos
+→ executor
+```
 
-Ver `development-standards-index.mdc`, `centralized-rules-first.mdc`, `chat-prose-rendering.mdc`. **Proibido** patch local (if no componente, string fixa, reveal/markdown ad hoc). Estender sempre o módulo canônico + teste de regressão.
+Não ensinar cada endpoint ao chat por `if`, selector específico ou registry manual.
+
+O agente **filtra** actions e adiciona contexto; ele não deve carregar a lógica transversal de descoberta/argument binding no prompt.
+
+## Pedidos longos
+
+Pedidos com múltiplos objetivos não podem ser achatados para uma única intenção.
+
+```text
+pedido completo
+→ decomposição em subtarefas
+→ candidates/actions por subtarefa
+→ plano de tools
+→ execução
+→ síntese
+```
+
+Manter rastreabilidade dos requisitos conforme `evidence-driven-execution.mdc`.
+
+## Contexto vs entidades
+
+- UI e prompt: `userContextItems` + chips kind `context`.
+- Foco operacional interno: `operationalFocus`.
+- Resolução de identificadores deve priorizar contexto explícito antes do histórico.
+- Multi-turn de tools deve preservar contexto estruturado de execução (action, argumentos, resultados, paginação, período) em vez de reintroduzir selectors por path.
+
+## Regras centralizadas
+
+Ver `development-standards-index.mdc`, `centralized-rules-first.mdc`, `openapi-first-universal-tool-routing.mdc`, `chat-prose-rendering.mdc`.
+
+**Proibido** patch local em componente, prompt, use case ou JSON por endpoint quando o comportamento é transversal.
 
 ## O que NÃO fazer
 
-- Lógica de comparação, insights, seleção operacional ou resposta direta **só** no prompt de um agente.
-- Ajustes pontuais de UI/streaming fora de `assistantProseRendering.ts` ou pipeline base da API.
-- Agente de plataforma ou default de projeto sem escolha explícita do usuário — usar `ChatWorkspaceAgentActivationService` / `chatAgentActivation.ts`.
-- Reintroduzir `lastEntities` / `activeEntities`, seção «Entidades» na UI ou gravar produto/filial só em `upsert_entity` sem `context_item`.
-- Copiar o mesmo `if` em `SendChatMessageUseCase` e `StreamChatMessageUseCase` sem extrair para serviço base.
-- Presenter por entidade (`product_*_presenter.py`), visual bundle, table assembly ou stack rico no pipeline — ver `schema-first-presentation-delivered.mdc`.
-- Bypass do pipeline em preview/simulate sem `previous_messages` quando o histórico importa.
+- Lógica de comparação, insights, seleção operacional ou resposta direta só no prompt de um agente.
+- Ajustes pontuais de UI/streaming fora do pipeline/renderers canônicos.
+- Agente default ativado sem escolha explícita quando a regra vigente exigir ativação controlada.
+- Reintroduzir estruturas legadas de contexto quando `operationalFocus`/context items já resolvem.
+- Copiar o mesmo `if` em Send/Stream.
+- Presenter por entidade/rota para viabilizar action.
+- Bypass do pipeline em preview/simulate sem histórico/contexto equivalente.
+- `if "/products/" in path`, bias `api_delpi.` ou selector por provider no motor genérico.
+- Duplicar OpenAPI em `assistant/*.json`.
+- Exigir `operational_route_registry.json` para cada endpoint novo.
+- Planner escolher `operationId` fora das actions permitidas.
 
 ## O que fazer
 
-1. Alterar ou estender serviços em `minha-delpi-ai-api/app/application/services/` e `app/domain/services/` usados por **todos** os chats.
-2. Novas policies em `app/domain/prompt_policies/`; registrar em `PromptPolicyService` quando for modo global (ex.: `analysis_mode`).
-3. Testes em `tests/unit/` do pacote base + casos em `tests/fixtures/chat_intelligence_regression_cases.py`.
-4. Documentar em `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure-jun2026.md` quando alterar apresentação.
-5. **Textos de `reason`, activity SSE e direct answers** nos delegates de route selection / turn prep → `assistant/*.json` (regra `assistant-content-json.mdc`); nunca hardcoded em lotes de clean architecture.
+1. Melhorias transversais vão para serviços base usados por todos os chats.
+2. Metadata técnica de action vem do OpenAPI/Action Catalog.
+3. Linguagem/policy/configuração vai para JSON canônico, sem copiar contrato.
+4. Retrieval deve operar sobre actions autorizadas e devolver top-K para o planner.
+5. Planner produz seleção/argumentos estruturados; validador determinístico confere contra o OpenAPI.
+6. Novas policies globais entram em módulos canônicos.
+7. Testes base + regressões de inteligência; para tool routing, incluir fixture de API externa desconhecida.
+8. Migrações grandes usam shadow/canary/rollback antes de remover legado.
 
-## Pipeline (referência)
+## Pipeline de referência
 
-```
-Mensagem → ChatIntelligencePipelineService → ChatToolContextService → Prompt + LLM
-                ↑ histórico / análise              ↑ agente só filtra actions/skills
+```text
+Mensagem
+→ preparação/decomposição/contexto
+→ allowed tools/actions
+→ retrieval top-K
+→ planner estruturado
+→ validação/policy
+→ execução
+→ interpretação/apresentação
+→ síntese
 ```
 
 Agentes **adicionam** contexto e restrições; a **inteligência transversal** evolui no chat base.
 
-## Nova rota api-delpi
+## Nova rota/API
 
-Índice: **`development-standards-index.mdc`**. Checklist: **`new-api-route-checklist.mdc`**.
+Índice: `development-standards-index.mdc`.
+
+Regras obrigatórias:
+
+- `openapi-first-universal-tool-routing.mdc`
+- `new-api-route-checklist.mdc`
