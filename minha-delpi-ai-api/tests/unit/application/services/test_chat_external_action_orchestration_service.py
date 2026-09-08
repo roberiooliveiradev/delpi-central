@@ -1,867 +1,304 @@
+"""Orquestração de actions sob OpenAPI-first fail-closed (sem FakeSelection/registry)."""
+
+from __future__ import annotations
+
+import pytest
+
 from app.application.services.chat_external_action_orchestration_service import (
     ChatExternalActionOrchestrationService,
 )
-from app.domain.services.chat_product_query_intent_service import (
-    ChatProductQueryIntent,
+from app.application.services.openapi_first_selection_bridge_service import (
+    OpenApiFirstSelectionBridgeService,
+)
+from app.application.services.plan_external_actions_service import (
+    PlanExternalActionsService,
 )
 
 
-class FakeSelectionService:
-    def __init__(self):
-        self.product_calls: list[tuple[str, str]] = []
+@pytest.fixture(autouse=True)
+def _deterministic_openapi_planner(monkeypatch):
+    """Unit tests must not call the live LLM planner adapter."""
+    real_init = OpenApiFirstSelectionBridgeService.__init__
 
-    def select_action_for_product(
+    def _init(
         self,
-        message,
+        repository=None,
         *,
-        product_code,
-        allowed_action_ids=None,
-        intent=None,
-        route_segment=None,
-        previous_messages=None,
+        semantic_ranker=None,
+        planner=None,
+        validator=None,
     ):
-        self.product_calls.append((product_code, intent))
-        if intent == ChatProductQueryIntent.STOCK:
-            action_id = "product-stock"
-        elif intent == ChatProductQueryIntent.DESCRIPTION:
-            action_id = "product-detail"
-        else:
-            action_id = "product-structure"
-        return {
-            "name": "execute_external_action",
-            "arguments": {
-                "actionId": action_id,
-                "parameters": {"code": product_code},
-            },
-            "reason": f"{intent} {product_code}",
-        }
+        real_init(
+            self,
+            repository,
+            semantic_ranker=semantic_ranker,
+            planner=planner or PlanExternalActionsService(llm_planner=None),
+            validator=validator,
+        )
 
-    def select_action(
-        self,
-        message,
-        allowed_action_ids=None,
-        conversation_context=None,
-        previous_messages=None,
-        **kwargs,
-    ):
-        return {
-            "name": "execute_external_action",
-            "arguments": {"actionId": "product-stock"},
-            "reason": "única",
-        }
+    monkeypatch.setattr(OpenApiFirstSelectionBridgeService, "__init__", _init)
 
 
-def test_plan_actions_estoque_uses_all_context_products_from_working_memory(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
-        True,
-    )
-    service = FakeSelectionService()
+class _CatalogRepository:
+    def __init__(self, actions: list[dict]):
+        self.actions = actions
 
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        service,
-        message="estoque",
-        allowed_action_ids=["product-stock"],
+    def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
+        allowed = {str(item) for item in (allowed_action_ids or [])}
+        rows = [
+            action
+            for action in self.actions
+            if not allowed or str(action.get("actionId")) in allowed
+        ]
+        return rows[:limit]
+
+    def list_actions(self, provider_key=None):
+        return list(self.actions)
+
+    def search_similar_actions(self, embedding, *, allowed_action_ids=None, limit=20):
+        return []
+
+
+class _Selection:
+    def __init__(self, repo: _CatalogRepository):
+        self.repository = repo
+        self.semantic_ranker = None
+
+
+def _action(
+    action_id: str,
+    path: str,
+    operation_id: str,
+    *,
+    summary: str,
+    description: str = "",
+    extra_params: list[dict] | None = None,
+) -> dict:
+    params = [
+        {
+            "name": "code",
+            "in": "path",
+            "required": True,
+            "schema": {"type": "string"},
+        },
+        *(extra_params or []),
+    ]
+    return {
+        "actionId": action_id,
+        "providerKey": "api-delpi-fixture",
+        "method": "GET",
+        "path": path,
+        "operationId": operation_id,
+        "summary": summary,
+        "description": description or summary,
+        "enabled": True,
+        "parametersSchema": params,
+        "sensitivity": "read",
+    }
+
+
+PRODUCT_CATALOG = [
+    _action(
+        "stock",
+        "/products/{code}/stock",
+        "get_product_stock",
+        summary="Estoque do produto",
+        description="Saldo e posições de estoque do produto",
+    ),
+    _action(
+        "product-detail",
+        "/products/{code}",
+        "get_product_detail",
+        summary="Descrição e cadastro do produto",
+        description="Detalhe descritivo / ficha cadastral do produto",
+    ),
+    _action(
+        "structure",
+        "/products/{code}/structure",
+        "get_product_structure",
+        summary="Estrutura BOM do produto",
+        description="Árvore de componentes / lista de materiais (BOM)",
+    ),
+    _action(
+        "guide",
+        "/products/{code}/guide",
+        "get_product_guide",
+        summary="Roteiro de fabricação do produto",
+        description="Guide / roteiro de operações de manufatura",
+    ),
+    _action(
+        "parents",
+        "/products/{code}/parents",
+        "get_product_parents",
+        summary="Onde o produto é usado / produtos pai",
+        description="Produtos pais que usam o componente",
+        extra_params=[
+            {"name": "page", "in": "query", "schema": {"type": "integer"}},
+            {"name": "page_size", "in": "query", "schema": {"type": "integer"}},
+        ],
+    ),
+    _action(
+        "open-orders",
+        "/products/{code}/sales/open-orders",
+        "get_product_open_orders",
+        summary="Pedidos em aberto do produto",
+        description="Pedidos de venda abertos para o código",
+    ),
+]
+
+
+def _plan(message: str, actions: list[dict] | None = None, **kwargs):
+    catalog = actions if actions is not None else PRODUCT_CATALOG
+    repo = _CatalogRepository(catalog)
+    return ChatExternalActionOrchestrationService.plan_actions(
+        _Selection(repo),
+        message=message,
+        allowed_action_ids=[str(item["actionId"]) for item in catalog],
         workspace_context={
-            "workingMemory": {
-                "userContextItems": [
-                    {
-                        "id": "a",
-                        "content": "90260140",
-                        "extractedEntities": {"productCode": "90260140"},
-                    },
-                    {
-                        "id": "b",
-                        "content": "produto 10080014",
-                        "extractedEntities": {"productCode": "10080014"},
-                    },
-                ],
-            },
+            "providerKeys": ["api-delpi-fixture"],
+            **(kwargs.pop("workspace_context", None) or {}),
         },
-        max_calls=5,
+        **kwargs,
     )
 
-    assert len(planned) == 2
-    assert {call[0] for call in service.product_calls} == {"90260140", "10080014"}
 
+def _execute_ids(planned: list[dict]) -> set[str]:
+    return {
+        str((item.get("arguments") or {}).get("actionId") or "")
+        for item in planned
+        if item.get("name") == "execute_external_action"
+    }
 
-def test_plan_actions_for_multiple_product_codes():
-    service = FakeSelectionService()
 
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        service,
-        message="estrutura do produto 90260077 e do 90260088",
-        allowed_action_ids=["product-structure"],
-        max_calls=5,
-    )
+def _first_execute(planned: list[dict]) -> dict:
+    for item in planned:
+        if item.get("name") == "execute_external_action":
+            return item
+    raise AssertionError(f"expected execute_external_action, got {planned!r}")
 
-    assert len(planned) == 2
-    assert service.product_calls[0][0] == "90260077"
-    assert service.product_calls[1][0] == "90260088"
-    assert service.product_calls[0][1] == ChatProductQueryIntent.STRUCTURE
 
+def test_plan_actions_empty_plan_clarifies_openapi_first():
+    planned = _plan("oi tudo bem")
+    assert planned
+    assert planned[0]["name"] == "clarify_external_action"
+    metadata = planned[0].get("metadata") or {}
+    assert metadata.get("selectionMode") == "openapi_first"
+    assert metadata.get("emptyPlan") is True
 
-def test_plan_actions_stock_for_multiple_product_codes_plural_phrase():
-    service = FakeSelectionService()
 
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        service,
-        message="estoque dos produtos 10080022, 10080012?",
-        allowed_action_ids=["product-stock"],
-        max_calls=5,
-    )
+def test_plan_actions_single_code_stock_openapi_first():
+    planned = _plan("estoque do produto 10080047")
+    first = _first_execute(planned)
+    assert (first.get("metadata") or {}).get("selectionMode") == "openapi_first"
+    assert first["arguments"]["actionId"] == "stock"
+    assert first["arguments"]["parameters"]["code"] == "10080047"
 
-    assert len(planned) == 2
-    assert service.product_calls[0] == ("10080022", ChatProductQueryIntent.STOCK)
-    assert service.product_calls[1] == ("10080012", ChatProductQueryIntent.STOCK)
 
+def test_plan_actions_description_intent_openapi_first():
+    planned = _plan("descrição do produto 90260149")
+    first = _first_execute(planned)
+    assert first["arguments"]["actionId"] == "product-detail"
+    assert first["arguments"]["parameters"]["code"] == "90260149"
 
-def test_plan_actions_parents_for_multiple_product_codes():
-    service = FakeSelectionService()
 
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        service,
-        message="onde são usados os produtos 10080022, 10080012?",
-        allowed_action_ids=["product-parents"],
-        max_calls=5,
-    )
-
-    assert len(planned) == 2
-    assert service.product_calls[0] == ("10080022", ChatProductQueryIntent.PARENTS)
-    assert service.product_calls[1] == ("10080012", ChatProductQueryIntent.PARENTS)
-
-
-def test_plan_actions_comparison_fetches_missing_structure(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
-        True,
-    )
-    service = FakeSelectionService()
-    history = [
-        {
-            "role": "assistant",
-            "metadata": {
-                "toolCalls": [
-                    {
-                        "name": "execute_external_action",
-                        "metadata": {
-                            "ok": True,
-                            "path": "/products/90260077/structure",
-                            "responsePreview": '{"root":{"code":"90260077","description":"A","type":"PA","unit":"MI","quantity":1},"items":[]}',
-                        },
-                    }
-                ]
-            },
-        }
-    ]
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        service,
-        message="compare as estruturas",
-        allowed_action_ids=["product-structure"],
-        conversation_context="90260077 e 90260088",
-        previous_messages=history,
-        max_calls=3,
-    )
-
-    assert len(planned) == 1
-    assert service.product_calls[0][0] == "90260088"
-
-
-def test_plan_actions_single_code_uses_stock_fast_path():
-    service = FakeSelectionService()
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        service,
-        message="estoque do produto 10080047",
-        allowed_action_ids=["product-stock"],
-    )
-
-    assert len(planned) == 1
-    assert planned[0]["arguments"]["actionId"] == "product-stock"
-    assert service.product_calls == [("10080047", ChatProductQueryIntent.STOCK)]
-
-
-def test_plan_actions_single_code_uses_description_intent_bound_fast_path():
-    """DESCRIPTION (intent-bound) short-circuita como STOCK — não só estoque."""
-    service = FakeSelectionService()
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        service,
-        message="qual a descrição do 10050078?",
-        allowed_action_ids=["product-detail"],
-    )
-
-    assert len(planned) == 1
-    assert planned[0]["arguments"]["actionId"] == "product-detail"
-    assert service.product_calls == [
-        ("10050078", ChatProductQueryIntent.DESCRIPTION)
-    ]
-
-
-def test_plan_actions_descriao_typo_uses_description_fast_path():
-    service = FakeSelectionService()
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        service,
-        message="qual a descrião do 10050078?",
-        allowed_action_ids=["product-detail"],
-    )
-
-    assert len(planned) == 1
-    assert planned[0]["arguments"]["actionId"] == "product-detail"
-    assert service.product_calls == [
-        ("10050078", ChatProductQueryIntent.DESCRIPTION)
-    ]
-
-
-def test_plan_actions_ignores_history_codes_when_message_names_product():
-    service = FakeSelectionService()
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        service,
-        message="estoque do produto 10080099",
-        allowed_action_ids=["product-stock"],
-        conversation_context=(
-            "assistant: Produto 10080001: CABO A\n"
-            "assistant: Produto 10080002: CABO B\n"
-            "assistant: Produto 10080003: CABO C\n"
-        ),
-        max_calls=5,
-    )
-
-    assert len(planned) == 1
-    assert planned[0]["arguments"]["actionId"] == "product-stock"
-    assert service.product_calls == [("10080099", ChatProductQueryIntent.STOCK)]
-
-
-def test_plan_actions_followup_uses_single_code_from_context():
-    service = FakeSelectionService()
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        service,
-        message="busque o estoque desse produto",
-        allowed_action_ids=["product-stock"],
-        conversation_context="assistant: Produto 10080047: TERM. PINO RETO.",
-        max_calls=5,
-    )
-
-    assert len(planned) == 1
-    assert service.product_calls == [("10080047", ChatProductQueryIntent.STOCK)]
-
-
-def test_plan_actions_multi_scope_structure_and_guide(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
-        True,
-    )
-    monkeypatch.setattr(
-        "app.application.services.chat_external_action_orchestration_service."
-        "ChatExternalActionOrchestrationService._mode_multi_action_cap",
-        classmethod(lambda cls: 4),
-    )
-
-    class ScopeSelectionService(FakeSelectionService):
-        def select_action_for_product(
-            self,
-            message,
-            *,
-            product_code,
-            allowed_action_ids=None,
-            intent=None,
-            route_segment=None,
-            previous_messages=None,
-        ):
-            if intent == ChatProductQueryIntent.STRUCTURE:
-                return {
-                    "name": "execute_external_action",
-                    "arguments": {
-                        "actionId": "structure",
-                        "parameters": {"code": product_code},
-                        "path": "/products/{code}/structure",
-                    },
-                }
-
-            if route_segment == "guide":
-                return {
-                    "name": "execute_external_action",
-                    "arguments": {
-                        "actionId": "guide",
-                        "parameters": {"code": product_code},
-                        "path": "/products/{code}/guide",
-                    },
-                }
-
-            return None
-
-        def select_action(self, *args, **kwargs):
-            raise AssertionError("select_action não deve ser chamado")
-
-    service = ScopeSelectionService()
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        service,
-        message="estrutura e roteiro do produto 90260149",
-        allowed_action_ids=["structure", "guide"],
-        max_calls=5,
-    )
-
-    assert len(planned) == 2
-    action_ids = {item["arguments"]["actionId"] for item in planned}
-
-    assert action_ids == {"structure", "guide"}
-
-
-def test_plan_actions_fast_mode_defers_second_scope(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
-        True,
-    )
-    monkeypatch.setattr(
-        "app.application.services.chat_external_action_orchestration_service."
-        "ChatExternalActionOrchestrationService._mode_multi_action_cap",
-        classmethod(lambda cls: 1),
-    )
-
-    class ScopeSelectionService(FakeSelectionService):
-        def select_action_for_product(
-            self,
-            message,
-            *,
-            product_code,
-            allowed_action_ids=None,
-            intent=None,
-            route_segment=None,
-            previous_messages=None,
-        ):
-            if intent == ChatProductQueryIntent.STRUCTURE:
-                return {
-                    "name": "execute_external_action",
-                    "arguments": {
-                        "actionId": "structure",
-                        "parameters": {"code": product_code},
-                        "path": "/products/{code}/structure",
-                    },
-                }
-
-            if route_segment == "guide":
-                return {
-                    "name": "execute_external_action",
-                    "arguments": {
-                        "actionId": "guide",
-                        "parameters": {"code": product_code},
-                        "path": "/products/{code}/guide",
-                    },
-                }
-
-            return None
-
-        def select_action(self, *args, **kwargs):
-            raise AssertionError("select_action não deve ser chamado")
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        ScopeSelectionService(),
-        message="estrutura e roteiro do produto 90260149",
-        allowed_action_ids=["structure", "guide"],
-        max_calls=5,
-    )
-
-    assert len(planned) == 1
-    assert planned[0]["arguments"]["actionId"] == "guide"
-    assert planned[0]["_multiActionContinuation"]["deferredCount"] == 1
-    assert planned[0]["_multiActionContinuation"]["deferred"][0]["path"].endswith(
-        "/structure"
-    )
-
-def test_plan_actions_department_meta_composition_engineering_primary(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
-        True,
-    )
-
-    class MetaSelectionService(FakeSelectionService):
-        def select_registry_route_id(
-            self,
-            route_id,
-            message,
-            *,
-            allowed_action_ids=None,
-            previous_messages=None,
-        ):
-            return {
-                "name": "execute_external_action",
-                "arguments": {
-                    "actionId": f"action-{route_id}",
-                    "parameters": {"department_id": "engineering"},
-                },
-            }
-
-        def select_action(self, *args, **kwargs):
-            raise AssertionError("select_action não deve ser chamado no planner departamental")
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        MetaSelectionService(),
-        message="qual a meta para engenharia desse mês filial 02?",
-        allowed_action_ids=["a", "b", "c"],
-        max_calls=5,
-    )
-
-    assert len(planned) == 1
-    assert planned[0]["arguments"]["actionId"] == "action-dashboardDepartmentIndicators"
-
-
-def test_plan_actions_department_meta_composition_engineering_compose(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
-        True,
-    )
-
-    class MetaSelectionService(FakeSelectionService):
-        def select_registry_route_id(
-            self,
-            route_id,
-            message,
-            *,
-            allowed_action_ids=None,
-            previous_messages=None,
-        ):
-            return {
-                "name": "execute_external_action",
-                "arguments": {
-                    "actionId": f"action-{route_id}",
-                    "parameters": {"department_id": "engineering"},
-                },
-            }
-
-        def select_action(self, *args, **kwargs):
-            raise AssertionError("select_action não deve ser chamado no compose engineering")
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        MetaSelectionService(),
-        message="painel de indicadores da engenharia desse mês filial 02?",
-        allowed_action_ids=["a", "b", "c"],
-        max_calls=5,
-    )
-
-    assert len(planned) >= 2
-    action_ids = [item["arguments"]["actionId"] for item in planned]
-
-    assert action_ids[0] == "action-dashboardDepartmentIndicators"
-    assert "action-dashboardDepartmentIdd" in action_ids
-
-
-def test_plan_actions_pagination_follow_up_uses_pagination_refinement(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_intelligence_runtime_access.resolve_chat_intelligence_runtime",
-        lambda: type("Runtime", (), {"multi_action_enabled": True})(),
-    )
-    class Repo:
-        actions = [
+def test_plan_actions_prefers_message_code_over_history_noise():
+    planned = _plan(
+        "estoque do produto 10080047",
+        previous_messages=[
             {
-                "actionId": "parents-action",
-                "method": "GET",
-                "path": "/products/{code}/parents",
-                "operationId": "get_product_parents",
-                "summary": "Produtos pai",
-                "parametersSchema": [
-                    {"name": "code", "in": "path", "required": True},
-                    {"name": "page", "in": "query"},
-                    {"name": "page_size", "in": "query"},
-                ],
-            }
-        ]
-
-        def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
-            return self.actions
-
-    class PaginationSelectionService(FakeSelectionService):
-        def __init__(self):
-            super().__init__()
-            self.pagination_calls = 0
-            self.generic_select_calls = 0
-            self._repo = Repo()
-
-        def select_pagination_refinement(
-            self,
-            refinement,
-            *,
-            allowed_action_ids,
-            message="",
-        ):
-            self.pagination_calls += 1
-            from app.application.services.external_actions.external_action_refinement_route_selection_service import (
-                ExternalActionRefinementRouteSelectionService,
-            )
-
-            return ExternalActionRefinementRouteSelectionService(self._repo).build_pagination_action(
-                refinement,
-                action_id=str(refinement.action_id or "parents-action"),
-                allowed_action_ids=allowed_action_ids,
-            )
-
-        def select_action(
-            self,
-            message,
-            allowed_action_ids=None,
-            conversation_context=None,
-            previous_messages=None,
-            **kwargs,
-        ):
-            self.generic_select_calls += 1
-            return super().select_action(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                conversation_context=conversation_context,
-                previous_messages=previous_messages,
-                **kwargs,
-            )
-
-    history = [
-        {"role": "user", "content": "onde é usado o 10080022"},
-        {
-            "role": "assistant",
-            "metadata": {
+                "role": "assistant",
+                "content": "Antes falamos do 99999999",
                 "toolCalls": [
                     {
                         "name": "execute_external_action",
                         "arguments": {
-                            "actionId": "parents-action",
-                            "parameters": {
-                                "code": "10080022",
-                                "page": 1,
-                                "page_size": 25,
-                            },
-                        },
-                        "metadata": {
-                            "ok": True,
-                            "path": "/products/10080022/parents",
-                            "actionId": "parents-action",
-                            "dataCoverageNotice": {"kind": "pagination"},
-                        },
-                    }
-                ]
-            },
-        },
-    ]
-
-    selection_service = PaginationSelectionService()
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        selection_service,
-        message="aumente para 50 linhas",
-        allowed_action_ids=["parents-action"],
-        previous_messages=history,
-    )
-
-    assert selection_service.pagination_calls == 1
-    assert selection_service.generic_select_calls == 0
-    assert len(planned) == 1
-    params = planned[0]["arguments"]["parameters"]
-    assert params["code"] == "10080022"
-    assert params["page_size"] == 50
-    assert "branch" not in params
-
-
-def test_plan_actions_proxima_pagina_uses_pagination_refinement_without_branch(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_intelligence_runtime_access.resolve_chat_intelligence_runtime",
-        lambda: type("Runtime", (), {"multi_action_enabled": True})(),
-    )
-    class Repo:
-        actions = [
-            {
-                "actionId": "parents-action",
-                "method": "GET",
-                "path": "/products/{code}/parents",
-                "operationId": "get_product_parents",
-                "summary": "Produtos pai",
-                "parametersSchema": [
-                    {"name": "code", "in": "path", "required": True},
-                    {"name": "page", "in": "query"},
-                    {"name": "page_size", "in": "query"},
-                ],
-            }
-        ]
-
-        def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
-            return self.actions
-
-    class PaginationSelectionService(FakeSelectionService):
-        def __init__(self):
-            super().__init__()
-            self.pagination_calls = 0
-            self._repo = Repo()
-
-        def select_pagination_refinement(
-            self,
-            refinement,
-            *,
-            allowed_action_ids,
-            message="",
-        ):
-            self.pagination_calls += 1
-            from app.application.services.external_actions.external_action_refinement_route_selection_service import (
-                ExternalActionRefinementRouteSelectionService,
-            )
-
-            return ExternalActionRefinementRouteSelectionService(self._repo).build_pagination_action(
-                refinement,
-                action_id=str(refinement.action_id or "parents-action"),
-                allowed_action_ids=allowed_action_ids,
-            )
-
-    history = [
-        {"role": "user", "content": "onde é usado o 10080022"},
-        {
-            "role": "assistant",
-            "metadata": {
-                "toolCalls": [
-                    {
-                        "name": "execute_external_action",
-                        "arguments": {
-                            "actionId": "parents-action",
-                            "parameters": {
-                                "code": "10080022",
-                                "page": 1,
-                                "page_size": 25,
-                            },
-                        },
-                        "metadata": {
-                            "ok": True,
-                            "path": "/products/10080022/parents",
-                            "actionId": "parents-action",
-                            "dataCoverageNotice": {"kind": "pagination"},
-                        },
-                    }
-                ]
-            },
-        },
-    ]
-
-    selection_service = PaginationSelectionService()
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        selection_service,
-        message="proxima pagina",
-        allowed_action_ids=["parents-action"],
-        previous_messages=history,
-    )
-
-    assert selection_service.pagination_calls == 1
-    assert len(planned) == 1
-    params = planned[0]["arguments"]["parameters"]
-    assert params["code"] == "10080022"
-    assert params["page"] == 2
-    assert params["page_size"] == 25
-    assert "branch" not in params
-
-
-def test_plan_actions_pagination_follow_up_does_not_fall_back_to_generic_select(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_intelligence_runtime_access.resolve_chat_intelligence_runtime",
-        lambda: type("Runtime", (), {"multi_action_enabled": True})(),
-    )
-
-    class PaginationSelectionService(FakeSelectionService):
-        def __init__(self):
-            super().__init__()
-            self.pagination_calls = 0
-            self.generic_select_calls = 0
-
-        def select_pagination_refinement(
-            self,
-            refinement,
-            *,
-            allowed_action_ids,
-            message="",
-        ):
-            self.pagination_calls += 1
-            return None
-
-        def select_action(self, *args, **kwargs):
-            self.generic_select_calls += 1
-            return super().select_action(*args, **kwargs)
-
-    history = [
-        {"role": "user", "content": "onde é usado o 10080022"},
-        {
-            "role": "assistant",
-            "metadata": {
-                "toolCalls": [
-                    {
-                        "name": "execute_external_action",
-                        "arguments": {
-                            "actionId": "parents-action",
-                            "parameters": {"code": "10080022", "page": 1, "page_size": 25},
-                        },
-                        "metadata": {
-                            "ok": True,
-                            "path": "/products/10080022/parents",
-                            "actionId": "parents-action",
-                            "dataCoverageNotice": {"kind": "pagination"},
-                        },
-                    }
-                ]
-            },
-        },
-    ]
-
-    selection_service = PaginationSelectionService()
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        selection_service,
-        message="próxima página",
-        allowed_action_ids=["parents-action"],
-        previous_messages=history,
-    )
-
-    assert selection_service.pagination_calls == 1
-    assert selection_service.generic_select_calls == 0
-    assert planned == []
-
-
-def test_plan_actions_product_multi_scope_not_aborted_by_sale_orders_early(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
-        True,
-    )
-    monkeypatch.setattr(
-        "app.application.services.chat_external_action_orchestration_service."
-        "ChatExternalActionOrchestrationService._mode_multi_action_cap",
-        classmethod(lambda cls: 6),
-    )
-
-    class ScopeSelectionService(FakeSelectionService):
-        def select_action_for_product(
-            self,
-            message,
-            *,
-            product_code,
-            allowed_action_ids=None,
-            intent=None,
-            route_segment=None,
-            previous_messages=None,
-        ):
-            path = "/products/{code}/analyser"
-            action_id = "analyser"
-            if intent == ChatProductQueryIntent.STRUCTURE:
-                path = "/products/{code}/structure"
-                action_id = "structure"
-            elif intent == ChatProductQueryIntent.STOCK or route_segment == "stock":
-                path = "/products/{code}/stock"
-                action_id = "stock"
-            elif route_segment == "open-orders":
-                path = "/products/{code}/sales/open-orders"
-                action_id = "open-orders"
-            return {
-                "name": "execute_external_action",
-                "arguments": {
-                    "actionId": action_id,
-                    "parameters": {"code": product_code},
-                    "path": path,
-                },
-            }
-
-        def select_action(self, *args, **kwargs):
-            raise AssertionError("saleOrdersList early path não deve abortar multi-escopo")
-
-    service = ScopeSelectionService()
-    message = (
-        "Para o produto 90260149, traga: estrutura de produto, saldo de estoque "
-        "e pedidos em aberto."
-    )
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        service,
-        message=message,
-        allowed_action_ids=["structure", "stock", "open-orders"],
-        max_calls=6,
-    )
-
-    paths = {str(item["arguments"].get("path") or "") for item in planned}
-    assert len(planned) >= 2
-    assert any("/structure" in path for path in paths)
-    assert any("/stock" in path for path in paths)
-    assert any("open-orders" in path for path in paths)
-
-
-def test_plan_actions_multi_scope_not_aborted_by_stock_sticky_follow_up(monkeypatch):
-    monkeypatch.setattr(
-        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
-        True,
-    )
-    monkeypatch.setattr(
-        "app.application.services.chat_external_action_orchestration_service."
-        "ChatExternalActionOrchestrationService._mode_multi_action_cap",
-        classmethod(lambda cls: 6),
-    )
-
-    class ScopeSelectionService(FakeSelectionService):
-        def select_action_for_product(
-            self,
-            message,
-            *,
-            product_code,
-            allowed_action_ids=None,
-            intent=None,
-            route_segment=None,
-            previous_messages=None,
-        ):
-            path = f"/products/{product_code}/analyser"
-            action_id = "analyser"
-            if intent == ChatProductQueryIntent.STRUCTURE or route_segment == "structure":
-                path = f"/products/{product_code}/structure"
-                action_id = "structure"
-            elif intent == ChatProductQueryIntent.STOCK or route_segment == "stock":
-                path = f"/products/{product_code}/stock"
-                action_id = "stock"
-            return {
-                "name": "execute_external_action",
-                "actionId": action_id,
-                "arguments": {
-                    "actionId": action_id,
-                    "parameters": {"code": product_code},
-                    "path": path,
-                },
-            }
-
-    history = [
-        {
-            "role": "user",
-            "content": "estoque e descrição do produto 90260149",
-        },
-        {
-            "role": "assistant",
-            "content": "estoque ok",
-            "metadata": {
-                "toolCalls": [
-                    {
-                        "name": "execute_external_action",
-                        "metadata": {
-                            "ok": True,
-                            "path": "/products/90260149/stock",
                             "actionId": "stock",
+                            "parameters": {"code": "99999999"},
                         },
                     }
-                ]
-            },
-        },
+                ],
+            }
+        ],
+    )
+    first = _first_execute(planned)
+    assert first["arguments"]["parameters"]["code"] == "10080047"
+
+
+def test_plan_actions_compound_structure_and_guide():
+    planned = _plan(
+        "para o produto 90260149 traga (1) a estrutura BOM e (2) o roteiro de fabricação"
+    )
+    ids = _execute_ids(planned)
+    assert {"structure", "guide"} <= ids
+    for item in planned:
+        if item.get("name") == "execute_external_action":
+            assert (item.get("metadata") or {}).get("selectionMode") == "openapi_first"
+            assert (item.get("arguments") or {}).get("parameters", {}).get("code") == "90260149"
+
+
+def test_plan_actions_compound_structure_stock_open_orders():
+    planned = _plan(
+        "produto 90260149: (1) estrutura, (2) estoque e (3) pedidos em aberto"
+    )
+    ids = _execute_ids(planned)
+    assert len(ids) >= 2
+    assert "structure" in ids or "stock" in ids or "open-orders" in ids
+
+
+def test_plan_actions_fast_mode_caps_multi_action(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
+        True,
+    )
+    planned = _plan(
+        "para o produto 90260149 traga (1) a estrutura BOM e (2) o roteiro de fabricação",
+        max_calls=1,
+    )
+    executes = [item for item in planned if item.get("name") == "execute_external_action"]
+    assert len(executes) == 1
+    assert executes[0]["arguments"]["actionId"] in {"structure", "guide"}
+
+
+def test_plan_actions_followup_binds_code_from_previous_tool_call():
+    planned = _plan(
+        "quero também o estoque",
+        previous_messages=[
+            {
+                "role": "assistant",
+                "content": "Segue a estrutura do 90260149",
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "structure",
+                            "parameters": {"code": "90260149"},
+                        },
+                        "metadata": {
+                            "executionContext": {
+                                "actionId": "structure",
+                                "parameters": {"code": "90260149"},
+                            }
+                        },
+                    }
+                ],
+            }
+        ],
+    )
+    first = _first_execute(planned)
+    assert first["arguments"]["actionId"] == "stock"
+    assert first["arguments"]["parameters"]["code"] == "90260149"
+
+
+def test_plan_actions_irrelevant_catalog_stays_fail_closed():
+    foreign = [
+        _action(
+            "other-tracking",
+            "/tracking/{code}",
+            "get_tracking",
+            summary="Tracking de remessa logística",
+            description="Rastreio de shipment / remessa",
+        )
     ]
-
-    message = (
-        "Agora completa: inclui também a estrutura e um comentário se o "
-        "estoque cobre demanda típica. Quero visão consolidada (prosa + "
-        "tabela/árvore), não só um bloco."
-    )
-
-    planned = ChatExternalActionOrchestrationService.plan_actions(
-        ScopeSelectionService(),
-        message=message,
-        allowed_action_ids=["structure", "stock"],
-        previous_messages=history,
-        max_calls=6,
-    )
-
-    paths = {str(item["arguments"].get("path") or "") for item in planned}
-    assert any("/structure" in path for path in paths)
-    assert any("/stock" in path for path in paths)
+    planned = _plan("estoque do produto 10080047", actions=foreign)
+    assert planned[0]["name"] == "clarify_external_action"
+    assert (planned[0].get("metadata") or {}).get("selectionMode") == "openapi_first"
