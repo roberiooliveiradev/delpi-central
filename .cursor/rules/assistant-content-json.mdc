@@ -1,6 +1,6 @@
 ---
-description: Python só com lógica; conteúdo declarativo em assistant/*.json, sem duplicar contratos OpenAPI
-alwaysApply: true
+description: Minha DELPI AI — conteúdo declarativo do assistente em JSON; carregar ao alterar textos, regex, thresholds, vocabulário, policies ou assistant/*.json
+alwaysApply: false
 ---
 
 # Conteúdo do assistente — catálogo JSON
