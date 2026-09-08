@@ -11,6 +11,15 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RULES_DIR = REPO_ROOT / ".cursor" / "rules"
 INDEX_PATH = RULES_DIR / "development-standards-index.mdc"
+TRANSVERSAL_DOC_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "11-padroes-de-desenvolvimento"
+    / "responsabilidades-transversais.md"
+)
+TRANSVERSAL_DOCS_INDEX_PATH = (
+    REPO_ROOT / "docs" / "11-padroes-de-desenvolvimento" / "README.md"
+)
 
 GLOBAL_ALLOWLIST = {
     "development-standards-index.mdc",
@@ -119,6 +128,15 @@ def main() -> int:
             + ", ".join(sorted(missing_transversal))
         )
 
+    unexpected_platform_rules = {
+        name for name in rule_names if name.startswith("platform-")
+    } - REQUIRED_TRANSVERSAL_RULES
+    if unexpected_platform_rules:
+        errors.append(
+            "regras platform-* fora das oito responsabilidades canônicas: "
+            + ", ".join(sorted(unexpected_platform_rules))
+        )
+
     missing_specialized = REQUIRED_SPECIALIZED_RULES - rule_names
     if missing_specialized:
         errors.append(
@@ -137,6 +155,30 @@ def main() -> int:
         if required_name not in index_text:
             errors.append(
                 f"{required_name}: guardrail obrigatório não referenciado em development-standards-index.mdc"
+            )
+
+    if not TRANSVERSAL_DOC_PATH.exists():
+        errors.append(
+            "documentação canônica das responsabilidades ausente: "
+            + str(TRANSVERSAL_DOC_PATH.relative_to(REPO_ROOT))
+        )
+        transversal_doc_text = ""
+    else:
+        transversal_doc_text = TRANSVERSAL_DOC_PATH.read_text(encoding="utf-8")
+
+    for required_name in sorted(REQUIRED_TRANSVERSAL_RULES):
+        if required_name not in transversal_doc_text:
+            errors.append(
+                f"{required_name}: responsabilidade transversal não documentada em responsabilidades-transversais.md"
+            )
+
+    if not TRANSVERSAL_DOCS_INDEX_PATH.exists():
+        errors.append("docs/11-padroes-de-desenvolvimento/README.md ausente")
+    else:
+        docs_index_text = TRANSVERSAL_DOCS_INDEX_PATH.read_text(encoding="utf-8")
+        if "responsabilidades-transversais.md" not in docs_index_text:
+            errors.append(
+                "docs/11-padroes-de-desenvolvimento/README.md não indexa responsabilidades-transversais.md"
             )
 
     for path in rule_paths:
@@ -236,6 +278,10 @@ def main() -> int:
     print(
         "- guardrails especializados obrigatórios: "
         + ", ".join(sorted(REQUIRED_SPECIALIZED_RULES & rule_names))
+    )
+    print(
+        "- documentação transversal: "
+        + ("OK" if TRANSVERSAL_DOC_PATH.exists() else "AUSENTE")
     )
 
     for warning in warnings:
