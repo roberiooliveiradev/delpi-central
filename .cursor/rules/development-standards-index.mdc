@@ -1,5 +1,5 @@
 ---
-description: Índice das diretrizes do repositório — constituição mínima, prioridade e roteamento para regras especializadas
+description: Índice das diretrizes do repositório — constituição mínima, responsabilidades transversais, prioridade e roteamento para regras especializadas
 alwaysApply: true
 ---
 
@@ -17,11 +17,20 @@ clean-code-architecture-guardrails.mdc
 english-code-identifiers.mdc
 ```
 
-Todo o restante é especializado e deve ser carregado apenas por relevância (`description`) ou `globs`.
+Todo o restante é especializado e deve ser carregado por relevância (`description`) ou `globs`.
+
+**Não carregar o catálogo inteiro de `.cursor/rules` por padrão.** O fluxo correto é:
+
+```text
+pedido
+→ evidência/objetivo
+→ responsabilidade transversal aplicável
+→ regra técnica filha necessária
+→ implementação
+→ validação
+```
 
 Regra de governança: `cursor-rules-governance.mdc`.
-
-**Não carregar o catálogo inteiro de `.cursor/rules` por padrão.** Contexto irrelevante reduz foco e aumenta risco de contradição.
 
 ## Protocolo cognitivo obrigatório
 
@@ -34,44 +43,85 @@ pedido completo
 → arquitetura vigente
 → causa/objetivo
 → consumidores/impacto
+→ responsabilidade transversal
 → regra especializada aplicável
 → implementação canônica
 → casos irmãos/negativos
 → validação do objetivo original
 ```
 
-## Seleção de regras especializadas
+# 8 responsabilidades transversais canônicas
 
-| Sinal da tarefa | Regras especializadas |
-|-----------------|-----------------------|
+Estas regras são os **donos transversais** da engenharia da Minha DELPI. Elas não são globais para preservar orçamento de contexto, mas devem ser carregadas sempre que o tema correspondente for material.
+
+| Responsabilidade | Fonte canônica | Regras técnicas filhas/exemplos |
+|---|---|---|
+| **1. Arquitetura e boundaries** | `platform-architecture-boundaries.mdc` | `application-bounded-context-decoupling.mdc`, `mfe-own-api-no-direct-api-delpi.mdc` |
+| **2. Segurança, identidade e autorização** | `platform-security-identity-authorization.mdc` | `ai-external-tools-security.mdc`, auth/RBAC/Keycloak conforme código e docs canônicos |
+| **3. APIs, contratos e integrações** | `platform-api-contracts-integration.mdc` | `contract-evolution-backward-compatibility.mdc`, `http-integration-resilience.mdc`, `api-delpi-openapi-route-standards.mdc`, `api-delpi-response-contract.mdc` |
+| **4. Dados e persistência** | `platform-data-persistence.mdc` | `migrations-immutable-checksum.mdc`, `plugins-migrations-no-reset-prod.mdc`, `persistent-upload-storage.mdc`, `sql-query-development.mdc` |
+| **5. Frontend, MFE e experiência** | `platform-frontend-mfe-experience.mdc` | `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`, `plugin-mfe-page-excellence.mdc`, `plugins-overlay-positioning.mdc`, `mf-federation-patch-safety.mdc` |
+| **6. Qualidade, testes e evidência** | `platform-quality-testing.mdc` | `test-and-commit.mdc`, `root-cause-generalized-fix.mdc`, `architecture-ci-enforcement.mdc` |
+| **7. Delivery, runtime e operações** | `platform-delivery-runtime-operations.mdc` | `infra-sequential-container-startup.mdc`, builds, gateway, deploy/migrations conforme escopo |
+| **8. Confiabilidade e observabilidade** | `platform-reliability-observability.mdc` | `observability-standards.mdc`, `http-integration-resilience.mdc`, budgets/limites conforme domínio |
+
+## Como selecionar responsabilidades
+
+Uma tarefa pode exigir mais de uma responsabilidade, mas carregar somente as materiais.
+
+| Sinal da tarefa | Responsabilidade(s) primeiro |
+|---|---|
+| criar app/API/MFE, mover regra, compartilhar código, integração entre apps | **1 Arquitetura** |
+| login, JWT, Keycloak, permission, RBAC, filial/tenant, admin, secret | **2 Segurança** |
+| rota, DTO, OpenAPI, evento, webhook, client HTTP, compatibilidade | **3 APIs/Contratos** |
+| schema, repository, transaction, migration, SQL, upload persistente | **4 Dados** |
+| React, Portal, MFE, CSS, componente, acessibilidade, responsividade | **5 Frontend** |
+| bug, regressão, teste, CI, evidência, Definition of Done | **6 Qualidade** |
+| Docker, Compose, gateway, env, health, deploy, rollback | **7 Delivery/Runtime** |
+| logs, métricas, tracing, SLO, timeout, retry, circuit, capacidade | **8 Confiabilidade** |
+
+### Regra de composição
+
+Exemplo: “criar uma tela nova que grava dados via nova API” não é só frontend.
+
+```text
+1 Arquitetura
++ 2 Segurança
++ 3 Contratos
++ 4 Dados
++ 5 Frontend
++ 6 Qualidade
+(+ 7/8 se houver mudança operacional/reliability)
+```
+
+O Cursor deve raciocinar por responsabilidades, mas **não precisa carregar todos os arquivos filhos** se o detalhe não for relevante ao diff.
+
+## Seleção de regras especializadas por cenário
+
+| Sinal da tarefa | Regras especializadas adicionais |
+|---|---|
 | Bug/fix/regressão | `root-cause-generalized-fix.mdc` |
 | Plano/CreatePlan/multi-etapa | `plan-construction.mdc` |
 | Alteração de código/testes/commit | `test-and-commit.mdc` |
 | Feature user-facing | `feature-help-sync.mdc` |
 | Chat/LLM/RAG/agents/tools | `chat-intelligence-base.mdc`, `llm-stack-centralized.mdc` + subdomínio |
 | Inteligência/prompt/retrieval/planner/RAG/contexto | `ai-intelligence-evaluation.mdc`, `ai-context-and-tool-budget.mdc` |
-| OpenAPI/actions/providers externos | `openapi-first-universal-tool-routing.mdc`, `operational-api-routing.mdc`, `new-api-route-checklist.mdc`, `ai-external-tools-security.mdc` |
-| HTTP/gateway/provider | `http-integration-resilience.mdc`, `observability-standards.mdc` |
-| Contrato OpenAPI/DTO/evento/manifest/SSE | `contract-evolution-backward-compatibility.mdc` |
-| Logs/métricas/tracing | `observability-standards.mdc` |
-| Roteamento genérico/actions/HTTP/retry/logging sensível | `architecture-ci-enforcement.mdc` + regra técnica correspondente |
+| OpenAPI/actions/providers externos do chat | `openapi-first-universal-tool-routing.mdc`, `operational-api-routing.mdc`, `new-api-route-checklist.mdc`, `ai-external-tools-security.mdc` |
 | Apresentação do chat | `schema-first-presentation-delivered.mdc`, `presentation-operational-decoupling.mdc` |
-| Conteúdo/regex/vocabulário | `assistant-content-json.mdc` |
+| Conteúdo/regex/vocabulário do chat | `assistant-content-json.mdc` |
 | SQL/TOTVS/performance | `sql-query-development.mdc` + regra TOTVS aplicável |
-| Upload/storage/anexos | `persistent-upload-storage.mdc` |
-| Migrations | `migrations-immutable-checksum.mdc`; plugins: `plugins-migrations-no-reset-prod.mdc` |
-| Deploy/Docker/rebuild | `infra-sequential-container-startup.mdc` |
-| MFE com API própria | `mfe-own-api-no-direct-api-delpi.mdc`, `application-bounded-context-decoupling.mdc` |
 | Overlay/popover/toolbar | `plugins-overlay-positioning.mdc` |
 | Module Federation patch | `mf-federation-patch-safety.mdc` |
+| Notificações/preferências | `notification-catalog-preferences.mdc` |
+| Domínio específico (TV Dashboard, indicadores etc.) | regra do domínio apenas após responsabilidade transversal aplicável |
 
-Regra especializada irrelevante ao pedido/arquivos atuais não deve entrar no contexto apenas por ser importante em outro domínio.
+Regra especializada de aplicação **não substitui** a responsabilidade transversal. Ela detalha uma exceção/contrato do domínio dentro dos guardrails gerais.
 
 ## Autoridade de planos do Cursor
 
-`.cursor/plans/*.plan.md` é **estado de execução**, não documentação arquitetural e não fonte de verdade.
+`.cursor/plans/*.plan.md` é estado de execução, não documentação arquitetural e não fonte de verdade.
 
-Quando um plano existente contradizer regra, contrato, OpenAPI, arquitetura ou implementação atual:
+Quando um plano contradizer regra, contrato, arquitetura ou implementação atual:
 
 ```text
 fonte canônica atual vence
@@ -79,28 +129,27 @@ fonte canônica atual vence
 → executar somente a versão revalidada
 ```
 
-Plano concluído não deve permanecer como documentação técnica; histórico fica no Git. Aplicar `plan-construction.mdc`.
+Plano concluído não permanece como documentação técnica; histórico fica no Git. Aplicar `plan-construction.mdc`.
 
-## Fontes canônicas do chat
+# Chat AI — especialização sobre as responsabilidades transversais
 
-| Responsabilidade | Fonte |
-|------------------|-------|
-| Arquitetura base do chat | `chat-intelligence-base.mdc` + `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md` |
-| Tools/actions | **`openapi-first-universal-tool-routing.mdc`** |
+O Chat AI possui regras adicionais porque combina IA, tools e apresentação dinâmica. Elas **não substituem** segurança, contratos, qualidade, confiabilidade ou arquitetura da plataforma.
+
+| Responsabilidade do chat | Fonte |
+|---|---|
+| Arquitetura base | `chat-intelligence-base.mdc` + `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md` |
+| Tools/actions | `openapi-first-universal-tool-routing.mdc` |
 | Aplicação operacional do routing | `operational-api-routing.mdc` |
 | Nova API/action | `new-api-route-checklist.mdc` |
-| Evals/inteligência | **`ai-intelligence-evaluation.mdc` + `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md`** |
+| Evals/inteligência | `ai-intelligence-evaluation.mdc` + `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md` |
 | Segurança tools externas | `ai-external-tools-security.mdc` |
 | Context/tool budgets | `ai-context-and-tool-budget.mdc` |
-| Resiliência HTTP | `http-integration-resilience.mdc` |
-| Observabilidade | `observability-standards.mdc` |
-| Evolução de contratos | `contract-evolution-backward-compatibility.mdc` |
 | Apresentação | `schema-first-presentation-delivered.mdc` |
 | Limites de camada | `clean-architecture-chat-api.mdc` |
 
-**Documentos de roadmap, changelog, homologações datadas e evidence de execuções anteriores não são fonte de instrução arquitetural nem de critério de PASS.** Se contiverem instrução técnica substituída, devem ser removidos do working tree; o histórico permanece no Git.
+Documentos de roadmap, changelog, homologações datadas e evidence de execuções anteriores não são fonte de instrução arquitetural nem de critério de PASS.
 
-## Regra de ouro para APIs/actions
+## Regra de ouro para APIs/actions do chat
 
 ```text
 OpenAPI válido
@@ -115,16 +164,7 @@ OpenAPI válido
 → eval R1–R11
 ```
 
-Nova API/operation não deve exigir:
-
-```text
-if path/provider/operationId
-selector específico
-intent específica por endpoint
-marker/strategy por endpoint
-catálogo técnico paralelo
-presenter obrigatório
-```
+Nova API/operation não deve exigir `if path/provider/operationId`, selector específico, intent por endpoint, marker/strategy, catálogo técnico paralelo ou presenter obrigatório.
 
 ## Regra de ouro para mudanças de inteligência
 
@@ -140,52 +180,40 @@ dataset versionado
 → decisão
 ```
 
-Um script ou teste isolado que imprime PASS não substitui o protocolo canônico. Required dimension FAIL/INCONCLUSIVE impede PASS do caso.
+# Enforcement executável
 
-## Enforcement executável
-
-`architecture-ci-enforcement.mdc` + `.github/workflows/architecture-enforcement.yml` bloqueiam regressões detectáveis no diff, como:
-
-```text
-hardcode de endpoint/provider no motor genérico
-crescimento de catálogo técnico paralelo de endpoints
-HTTP Python novo sem timeout explícito
-retry de escrita sem idempotência garantida
-segredo em log/print/console
-segredo literal óbvio em código/config
-```
+`architecture-ci-enforcement.mdc` + `.github/workflows/architecture-enforcement.yml` bloqueiam regressões detectáveis no diff. Gates existentes não devem ser enfraquecidos para acomodar implementação nova.
 
 A pressão arquitetural é monotônica: não introduzir nova dívida para preservar comportamento antigo.
 
-Exceções do scanner são específicas por fingerprint, owner, justificativa e `reviewBy`; wildcard é proibido.
+## Princípios transversais permanentes
 
-## Princípios transversais
+- uma fonte de verdade por conceito: `centralized-rules-first.mdc`;
+- fatos medidos ≠ inferências: `evidence-driven-execution.mdc`;
+- clean code/architecture: `clean-code-architecture-guardrails.mdc`;
+- identifiers técnicos em inglês: `english-code-identifiers.mdc`;
+- segurança nunca é relaxada para conveniência;
+- regra específica de app nunca pode contrariar responsabilidade transversal canônica.
 
-- `centralized-rules-first.mdc`: uma fonte de verdade por conceito.
-- `clean-code-architecture-guardrails.mdc`: sem patch local/acoplamento divergente.
-- `evidence-driven-execution.mdc`: fatos medidos ≠ inferências.
-- `english-code-identifiers.mdc`: identifiers técnicos em inglês; PT em UI/locale/docs.
-- Segurança/policy nunca é relaxada para melhorar conveniência ou score de eval.
-
-## Governança das regras
+# Governança das regras
 
 Ao criar/editar `.cursor/rules`:
 
-1. aplicar `cursor-rules-governance.mdc`;
-2. estender fonte canônica antes de criar regra nova;
-3. manter `alwaysApply: true` somente na constituição mínima;
-4. usar `description`/`globs` nas especializadas;
+1. identificar qual das 8 responsabilidades é dona do conceito;
+2. estender a regra transversal ou uma filha existente antes de criar nova regra;
+3. nova regra específica deve ser referenciada pelo índice/owner adequado quando material;
+4. manter `alwaysApply: true` somente na constituição mínima;
 5. executar `python scripts/audit_cursor_rules.py`;
 6. não concluir com referências quebradas, descrição duplicada ou orçamento global excedido.
 
 ## Ordem de prioridade em conflito
 
 1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`.
-2. Constituição mínima + regra especializada canônica atual.
-3. ADR/contrato/schema/OpenAPI/implementação vigente conforme `evidence-driven-execution.mdc`.
-4. Para tools/actions: OpenAPI importado + Action Catalog/index.
-5. Para qualidade de IA: protocolo R1–R11 em `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md`.
+2. Constituição mínima global.
+3. Uma das **8 responsabilidades transversais canônicas** aplicáveis.
+4. Regra especializada do domínio/tecnologia.
+5. ADR/contrato/schema/OpenAPI/implementação vigente conforme `evidence-driven-execution.mdc`.
 6. Segurança/policy.
 7. Gates CI + testes/evals do estado atual.
 
-Se uma fonte histórica contradiz uma fonte canônica vigente, **não reconciliar silenciosamente e não seguir a histórica**; remover ou corrigir o drift documental.
+Se uma fonte histórica contradiz uma fonte canônica vigente, não reconciliar silenciosamente nem seguir a histórica; corrigir/remover o drift documental.
