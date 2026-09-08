@@ -57,7 +57,14 @@ AUTHZ_PRIMITIVE_RE = re.compile(
 MFE_SHARED_EXCLUSIONS = {"plugin-ui", "tv-dashboard-presentation", "vite", "docker"}
 PRODUCTION_CODE_EXTENSIONS = {".py", ".js", ".jsx", ".ts", ".tsx"}
 MFE_CODE_EXTENSIONS = {".js", ".jsx", ".ts", ".tsx"}
-SKIP_SECURITY_PARTS = ("/tests/", "/test/", "/fixtures/", "/docs/", "/.cursor/")
+SKIP_SECURITY_PARTS = (
+    "/tests/",
+    "/test/",
+    "/fixtures/",
+    "/docs/",
+    "/.cursor/",
+    "/scripts/ci/test_",
+)
 AUTH_CANONICAL_PREFIXES = ("shared/delpi_auth/", "core-api/")
 
 
