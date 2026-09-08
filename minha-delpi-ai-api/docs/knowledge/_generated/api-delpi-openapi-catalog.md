@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 705 · **Gerado em:** 2026-09-04 15:49 UTC
+**Provider:** `api-delpi` · **Rotas:** 705 · **Gerado em:** 2026-09-08 10:47 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -830,11 +830,11 @@
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
-| `GET` | `/request-lookups/carriers` | `search_request_lookup_carriers` | Search Carriers |
-| `GET` | `/request-lookups/open-sales-orders` | `list_request_lookup_open_sales_orders` | List Open Sales Orders |
-| `GET` | `/request-lookups/parties` | `search_request_lookup_parties` | Search Parties |
-| `GET` | `/request-lookups/products` | `search_request_lookup_products` | Search Products |
-| `GET` | `/request-lookups/products/{code}/warehouse-01-balance` | `get_request_lookup_warehouse_01_balance` | Warehouse Balance |
+| `GET` | `/request-lookups/carriers` | `search_request_lookup_carriers` | Search request-engine carriers |
+| `GET` | `/request-lookups/open-sales-orders` | `list_request_lookup_open_sales_orders` | List open sales orders for request lookups |
+| `GET` | `/request-lookups/parties` | `search_request_lookup_parties` | Search request-engine parties |
+| `GET` | `/request-lookups/products` | `search_request_lookup_products` | Search request-engine products |
+| `GET` | `/request-lookups/products/{code}/warehouse-01-balance` | `get_request_lookup_warehouse_01_balance` | Warehouse 01 stock hint (request lookups) |
 
 ## Suprimentos (8)
 

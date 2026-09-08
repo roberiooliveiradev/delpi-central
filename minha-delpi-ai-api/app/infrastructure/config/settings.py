@@ -366,6 +366,14 @@ class Settings:
         os.getenv("CHAT_AGENTIC_SCHEMA_MAX_PARAMETERS", "10")
     )
 
+    # OpenAPI-first is the default selection source (Action Catalog).
+    # off/shadow/canary remain for emergency rollback / observation only.
+    CHAT_OPENAPI_PLANNER_MODE = os.getenv("CHAT_OPENAPI_PLANNER_MODE", "on").strip().lower()
+    CHAT_OPENAPI_PLANNER_PROVIDER_KEYS = os.getenv(
+        "CHAT_OPENAPI_PLANNER_PROVIDER_KEYS", ""
+    ).strip()
+    CHAT_OPENAPI_PLANNER_AGENT_IDS = os.getenv("CHAT_OPENAPI_PLANNER_AGENT_IDS", "").strip()
+
     CHAT_RAG_RERANK_ENABLED = (
         os.getenv("CHAT_RAG_RERANK_ENABLED", "true").lower() == "true"
     )

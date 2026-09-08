@@ -57,9 +57,10 @@ def test_dispatch_order_matches_registry() -> None:
         "domainRoutes",
         "intentBoundRoutes",
         "sqlFallback",
-        "autoTierCRoutes",
         "semanticFallback",
     ]
+    assert OperationalRouteRegistryService.auto_tier_c_routes() == []
+    assert len(OperationalRouteRegistryService.ci_auto_tier_c_routes()) > 0
 
 
 def test_operational_routes_phase_runs_before_domain_routes() -> None:
@@ -160,7 +161,8 @@ def test_intent_bound_routes_run_after_domain_routes() -> None:
     route_selection.select_intent_bound_route.assert_called_once()
 
 
-def test_auto_tier_c_routes_run_before_semantic_fallback() -> None:
+def test_auto_tier_c_phase_removed_from_runtime_dispatch() -> None:
+    """OpenAPI Action Catalog replaces autoTierC in runtime dispatchOrder."""
     route_selection = MagicMock()
     route_selection.select_operational_registry.return_value = None
     route_selection.select_department_kpi.return_value = None
@@ -170,6 +172,10 @@ def test_auto_tier_c_routes_run_before_semantic_fallback() -> None:
     route_selection.select_auto_tier_c.return_value = {
         "name": "execute_external_action",
         "arguments": {"actionId": "health", "parameters": {}},
+    }
+    route_selection.select_generic.return_value = {
+        "name": "execute_external_action",
+        "arguments": {"actionId": "semantic", "parameters": {}},
     }
 
     service = ExternalActionRegistryDispatchPhaseService(route_selection)
@@ -183,6 +189,6 @@ def test_auto_tier_c_routes_run_before_semantic_fallback() -> None:
     )
 
     assert selected is not None
-    assert selected["arguments"]["actionId"] == "health"
-    route_selection.select_auto_tier_c.assert_called_once()
-    route_selection.select_generic.assert_not_called()
+    assert selected["arguments"]["actionId"] == "semantic"
+    route_selection.select_auto_tier_c.assert_not_called()
+    route_selection.select_generic.assert_called_once()

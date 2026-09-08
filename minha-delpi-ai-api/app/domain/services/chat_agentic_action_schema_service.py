@@ -35,13 +35,21 @@ class ChatAgenticActionSchemaService:
     }
 
     @classmethod
-    def build_slim_action(cls, action: dict[str, Any]) -> dict[str, Any]:
+    def build_slim_action(
+        cls,
+        action: dict[str, Any],
+        *,
+        prefer_openapi_examples: bool = False,
+    ) -> dict[str, Any]:
         action_id = str(action.get("actionId") or "").strip()
 
         if not action_id:
             return {}
 
-        parameters = cls._build_slim_parameters(action)
+        parameters = cls._build_slim_parameters(
+            action,
+            prefer_openapi_examples=prefer_openapi_examples,
+        )
         example_arguments = cls._build_example_arguments(parameters)
 
         return {
@@ -52,6 +60,51 @@ class ChatAgenticActionSchemaService:
             "parameters": parameters,
             "exampleArguments": example_arguments,
         }
+
+    @classmethod
+    def collect_openapi_examples(cls, action: dict[str, Any]) -> dict[str, Any]:
+        """Mapa name→example só a partir do contrato OpenAPI (sem _PARAM_EXAMPLES)."""
+        examples: dict[str, Any] = {}
+        for parameter in action.get("parametersSchema") or action.get("parameters_schema") or []:
+            if not isinstance(parameter, dict):
+                continue
+            name = str(parameter.get("name") or "").strip()
+            if not name:
+                continue
+            value = cls._resolve_parameter_example(
+                parameter,
+                name,
+                prefer_openapi_examples=True,
+            )
+            if value is not None:
+                examples[name] = value
+
+        body_schema = action.get("requestBodySchema") or action.get("request_body_schema")
+        if isinstance(body_schema, dict):
+            schema = cls._extract_json_schema(body_schema)
+            props = schema.get("properties") if isinstance(schema.get("properties"), dict) else {}
+            for name, prop in props.items():
+                if not isinstance(prop, dict):
+                    continue
+                if prop.get("example") is not None:
+                    examples[str(name)] = prop.get("example")
+                elif prop.get("default") is not None:
+                    examples[str(name)] = prop.get("default")
+            if schema.get("example") and isinstance(schema.get("example"), dict):
+                for key, value in schema["example"].items():
+                    examples.setdefault(str(key), value)
+        return examples
+
+    @classmethod
+    def _extract_json_schema(cls, body_schema: dict[str, Any]) -> dict[str, Any]:
+        content = body_schema.get("content")
+        if isinstance(content, dict):
+            for media in content.values():
+                if isinstance(media, dict) and isinstance(media.get("schema"), dict):
+                    return media["schema"]
+        if isinstance(body_schema.get("schema"), dict):
+            return body_schema["schema"]
+        return body_schema
 
     @classmethod
     def format_planner_catalog(cls, entries: list[dict[str, Any]]) -> str:
@@ -73,7 +126,12 @@ class ChatAgenticActionSchemaService:
         return cls._truncate(merged, cls._DESCRIPTION_MAX_CHARS)
 
     @classmethod
-    def _build_slim_parameters(cls, action: dict[str, Any]) -> list[dict[str, Any]]:
+    def _build_slim_parameters(
+        cls,
+        action: dict[str, Any],
+        *,
+        prefer_openapi_examples: bool = False,
+    ) -> list[dict[str, Any]]:
         raw_parameters = action.get("parametersSchema") or action.get("parameters_schema") or []
 
         if not isinstance(raw_parameters, list):
@@ -105,7 +163,11 @@ class ChatAgenticActionSchemaService:
                     cls._PARAM_DESCRIPTION_MAX_CHARS,
                 )
 
-            example = cls._resolve_parameter_example(parameter, name)
+            example = cls._resolve_parameter_example(
+                parameter,
+                name,
+                prefer_openapi_examples=prefer_openapi_examples,
+            )
 
             if example is not None:
                 entry["example"] = example
@@ -165,7 +227,13 @@ class ChatAgenticActionSchemaService:
         return "string"
 
     @classmethod
-    def _resolve_parameter_example(cls, parameter: dict[str, Any], name: str) -> Any:
+    def _resolve_parameter_example(
+        cls,
+        parameter: dict[str, Any],
+        name: str,
+        *,
+        prefer_openapi_examples: bool = False,
+    ) -> Any:
         if parameter.get("example") is not None:
             return parameter.get("example")
 
@@ -192,6 +260,9 @@ class ChatAgenticActionSchemaService:
 
         if parameter.get("default") is not None:
             return parameter.get("default")
+
+        if prefer_openapi_examples:
+            return None
 
         normalized_name = name.strip().lower()
 

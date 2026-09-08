@@ -1,0 +1,312 @@
+{
+  "baseUrl": "http://delpi-gateway",
+  "responseMode": "normal",
+  "productCode": "90260149",
+  "agentId": "4f9c225b-0414-40d3-a462-040889719b83",
+  "passed": true,
+  "failCount": 0,
+  "caseCount": 4,
+  "latencySummary": {
+    "wallsMs": [
+      28020,
+      137784,
+      27935,
+      49023
+    ],
+    "avgWallMs": 60690,
+    "maxWallMs": 137784,
+    "minWallMs": 27935,
+    "bottleneckCounts": {
+      "llmMs": 4
+    }
+  },
+  "results": [
+    {
+      "id": "C1-analyser-integrado",
+      "passed": true,
+      "errors": [],
+      "proseChars": 437,
+      "prosePreview": "O produto **90260149 — CHICOTE EPR SINGELO 235MM** é um item fabricado (tipo **PA**, grupo **9026**) com estrutura e roteiro cadastrados, mas com dois pontos de atenção importantes: **plano de inspeção não cadastrado** e **bloqueio «2»** ativo, que precisam ser validados antes de",
+      "kinds": [
+        "dashboard",
+        "field_labels",
+        "markdown",
+        "prose_structured",
+        "stack",
+        "table",
+        "text",
+        "tree"
+      ],
+      "richSurfaces": [
+        "dashboard",
+        "stack",
+        "table",
+        "tree"
+      ],
+      "toolCount": 2,
+      "okToolCount": 2,
+      "paths": [
+        "/products/90260149/analyser",
+        "/products/90260149/stock"
+      ],
+      "pipelineStages": [
+        "ingress",
+        "turn_grounding",
+        "turn_understanding_shadow",
+        "task_plan_shadow",
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "hasResolvedFieldLabels": true,
+      "latency": {
+        "wallMs": 28020,
+        "stages": {
+          "preToolMs": 726,
+          "toolsMs": 1257,
+          "postToolMs": 53,
+          "ragMs": 22,
+          "llmMs": 15110,
+          "totalMs": 17170
+        },
+        "toolsBreakdown": {
+          "selectionMs": 692,
+          "wave1Ms": 184,
+          "criticMs": 2,
+          "wave2Ms": 0,
+          "assembleMs": 142,
+          "agenticExtendMs": 219,
+          "finalizeAfterToolsMs": 15
+        },
+        "selectionBreakdown": {
+          "selectionNativeMs": 131,
+          "selectionRouterMs": 4,
+          "selectionPlanMs": 281
+        },
+        "preToolBreakdown": {},
+        "bottleneckStage": "llmMs",
+        "bottleneckMs": 15110,
+        "skipRag": true,
+        "fastPath": false,
+        "toolCountAdmin": 2
+      },
+      "sessionId": "e201301b-f734-4280-85e3-0dd6130481e6"
+    },
+    {
+      "id": "C2-estrutura-estoque-pedidos",
+      "passed": true,
+      "errors": [],
+      "proseChars": 452,
+      "prosePreview": "Tabela física Protheus: sufixo 010 (ex.: SB1010) e D_E_L_E_T_ = '' para registros ativos. \n\n**Resumo executivo — produto 90260149 (CHICOTE EPR SINGELO 235MM)**\n\n- **Estrutura (BOM):** 6 componentes de nível 1, todos intermediários (PI), que se desdobram em 8 matérias-primas disti",
+      "kinds": [
+        "chart",
+        "field_labels",
+        "markdown",
+        "prose_structured",
+        "stack",
+        "table",
+        "text",
+        "tree"
+      ],
+      "richSurfaces": [
+        "chart",
+        "stack",
+        "table",
+        "tree"
+      ],
+      "toolCount": 3,
+      "okToolCount": 3,
+      "paths": [
+        "/products/90260149/structure",
+        "/products/90260149/stock",
+        "/products/90260149/sales/open-orders"
+      ],
+      "pipelineStages": [
+        "ingress",
+        "turn_grounding",
+        "turn_understanding_shadow",
+        "task_plan_shadow",
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "hasResolvedFieldLabels": true,
+      "latency": {
+        "wallMs": 137784,
+        "stages": {
+          "preToolMs": 1722,
+          "toolsMs": 1634,
+          "postToolMs": 69,
+          "ragMs": 12,
+          "llmMs": 129536,
+          "totalMs": 132975
+        },
+        "toolsBreakdown": {
+          "selectionMs": 913,
+          "wave1Ms": 207,
+          "criticMs": 0,
+          "wave2Ms": 0,
+          "assembleMs": 200,
+          "agenticExtendMs": 296,
+          "finalizeAfterToolsMs": 16
+        },
+        "selectionBreakdown": {
+          "selectionNativeMs": 169,
+          "selectionRouterMs": 19,
+          "selectionPlanMs": 429,
+          "selectionCandidateDbMs": 16
+        },
+        "preToolBreakdown": {},
+        "bottleneckStage": "llmMs",
+        "bottleneckMs": 129536,
+        "skipRag": true,
+        "fastPath": false,
+        "toolCountAdmin": 3
+      },
+      "sessionId": "2c011df3-c0e5-4698-ae79-fb2a72c1f169"
+    },
+    {
+      "id": "C3-kpi-serie-comercial",
+      "passed": true,
+      "errors": [],
+      "proseChars": 161,
+      "prosePreview": "Consultei os indicadores comerciais (ROL) da plataforma, mas **a consulta não retornou registros** — não há dados de série nem KPI para exibir no recorte padrão.",
+      "kinds": [
+        "field_labels",
+        "markdown",
+        "prose_structured",
+        "stack",
+        "text"
+      ],
+      "richSurfaces": [
+        "stack"
+      ],
+      "toolCount": 1,
+      "okToolCount": 1,
+      "paths": [
+        "/commercial/rol/series"
+      ],
+      "pipelineStages": [
+        "ingress",
+        "turn_grounding",
+        "turn_understanding_shadow",
+        "task_plan_shadow",
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "hasResolvedFieldLabels": true,
+      "latency": {
+        "wallMs": 27935,
+        "stages": {
+          "preToolMs": 2734,
+          "toolsMs": 2246,
+          "postToolMs": 60,
+          "ragMs": 13,
+          "llmMs": 21883,
+          "totalMs": 26938
+        },
+        "toolsBreakdown": {
+          "selectionMs": 1648,
+          "wave1Ms": 56,
+          "wave1HttpMs": 28,
+          "wave1PresentationMs": 6,
+          "criticMs": 83,
+          "wave2Ms": 0,
+          "assembleMs": 75,
+          "agenticExtendMs": 354,
+          "finalizeAfterToolsMs": 27
+        },
+        "selectionBreakdown": {
+          "selectionNativeMs": 340,
+          "selectionRouterMs": 44,
+          "selectionPlanMs": 996,
+          "selectionDispatchMs": 0,
+          "selectionCandidateDbMs": 41
+        },
+        "preToolBreakdown": {},
+        "bottleneckStage": "llmMs",
+        "bottleneckMs": 21883,
+        "skipRag": true,
+        "fastPath": false,
+        "toolCountAdmin": 1
+      },
+      "sessionId": "f837d728-aee6-44a3-8003-f610e55e5fcb"
+    },
+    {
+      "id": "C4-multi-ask-followup",
+      "passed": true,
+      "errors": [],
+      "proseChars": 448,
+      "prosePreview": "**Visão consolidada — produto 90260149 (CHICOTE EPR SINGELO 235MM): estrutura com 6 componentes de nível 1 e estoque zerado, ou seja, qualquer demanda ficaria descoberta neste momento.**\n\n## Estrutura (BOM)\n\nA composição do produto tem **6 componentes de nível 1**, organizados em",
+      "kinds": [
+        "chart",
+        "field_labels",
+        "markdown",
+        "prose_structured",
+        "stack",
+        "table",
+        "tree"
+      ],
+      "richSurfaces": [
+        "chart",
+        "stack",
+        "table",
+        "tree"
+      ],
+      "toolCount": 2,
+      "okToolCount": 2,
+      "paths": [
+        "/products/90260149/structure",
+        "/products/90260149/stock"
+      ],
+      "pipelineStages": [
+        "ingress",
+        "turn_grounding",
+        "turn_understanding_shadow",
+        "task_plan_shadow",
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "hasResolvedFieldLabels": true,
+      "latency": {
+        "wallMs": 49023,
+        "stages": {
+          "preToolMs": 5935,
+          "toolsMs": 1494,
+          "postToolMs": 44,
+          "ragMs": 11,
+          "llmMs": 40127,
+          "totalMs": 47613
+        },
+        "toolsBreakdown": {
+          "selectionMs": 945,
+          "wave1Ms": 60,
+          "criticMs": 0,
+          "wave2Ms": 0,
+          "assembleMs": 217,
+          "agenticExtendMs": 240,
+          "finalizeAfterToolsMs": 30
+        },
+        "selectionBreakdown": {
+          "selectionNativeMs": 138,
+          "selectionRouterMs": 17,
+          "selectionPlanMs": 542,
+          "selectionCandidateDbMs": 15
+        },
+        "preToolBreakdown": {},
+        "bottleneckStage": "llmMs",
+        "bottleneckMs": 40127,
+        "skipRag": true,
+        "fastPath": false,
+        "toolCountAdmin": 2
+      },
+      "sessionId": "cf2f68d1-7759-45f1-baef-a63444d0d844"
+    }
+  ]
+}

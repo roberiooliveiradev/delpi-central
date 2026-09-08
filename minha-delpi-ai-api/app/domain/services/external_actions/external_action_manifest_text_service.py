@@ -23,6 +23,10 @@ class ExternalActionManifestTextService:
         settings = cls._settings()
         parts: list[str] = []
 
+        provider = cls._provider_label(action)
+        if provider:
+            parts.append(f"{settings['providerLabel']}: {provider}")
+
         method = str(action.get("method") or "").upper().strip()
         if method:
             parts.append(method)
@@ -63,6 +67,14 @@ class ExternalActionManifestTextService:
         if param_parts:
             parts.append(f"{settings['paramsLabel']}: {' ; '.join(param_parts)}")
 
+        body_parts = cls._request_body_parts(action, settings)
+        if body_parts:
+            parts.append(f"{settings['bodyLabel']}: {' ; '.join(body_parts)}")
+
+        example_parts = cls._example_parts(action, settings)
+        if example_parts:
+            parts.append(f"{settings['examplesLabel']}: {' ; '.join(example_parts)}")
+
         return_parts = cls._return_parts(action, settings)
         if return_parts:
             parts.append(f"{settings['returnsLabel']}: {' ; '.join(return_parts)}")
@@ -83,6 +95,10 @@ class ExternalActionManifestTextService:
 
         settings = cls._settings()
         parts: list[str] = []
+
+        provider = cls._provider_label(action)
+        if provider:
+            parts.append(provider)
 
         path = str(action.get("path") or "").strip()
         if path:
@@ -118,6 +134,9 @@ class ExternalActionManifestTextService:
 
         # Só nomes de params + enums (não description em inglês).
         for chunk in cls._parameter_lexical_tokens(action, settings):
+            parts.append(chunk)
+
+        for chunk in cls._request_body_lexical_tokens(action, settings):
             parts.append(chunk)
 
         delpi = action.get("delpiMetadata")
@@ -193,6 +212,7 @@ class ExternalActionManifestTextService:
             "maxParameters": _int("maxParameters", 24),
             "maxEnumValues": _int("maxEnumValues", 16),
             "maxFieldNames": _int("maxFieldNames", 24),
+            "maxBodyProperties": _int("maxBodyProperties", 16),
             "paramsLabel": _label("paramsLabel", "params"),
             "enumsLabel": _label("enumsLabel", "enums"),
             "returnsLabel": _label("returnsLabel", "returns"),
@@ -200,7 +220,20 @@ class ExternalActionManifestTextService:
             "shapeLabel": _label("shapeLabel", "shape"),
             "fieldsLabel": _label("fieldsLabel", "fields"),
             "whenToUseLabel": _label("whenToUseLabel", "whenToUse"),
+            "providerLabel": _label("providerLabel", "provider"),
+            "requiredLabel": _label("requiredLabel", "required"),
+            "optionalLabel": _label("optionalLabel", "optional"),
+            "bodyLabel": _label("bodyLabel", "body"),
+            "examplesLabel": _label("examplesLabel", "examples"),
         }
+
+    @classmethod
+    def _provider_label(cls, action: dict) -> str:
+        name = str(action.get("providerName") or action.get("provider_name") or "").strip()
+        key = str(action.get("providerKey") or action.get("provider_key") or "").strip()
+        if name and key and name.lower() != key.lower():
+            return f"{name} ({key})"
+        return name or key
 
     @classmethod
     def _parameter_parts(cls, action: dict, settings: dict[str, Any]) -> list[str]:
@@ -226,11 +259,24 @@ class ExternalActionManifestTextService:
                 continue
 
             chunks = [name]
+            if param.get("required"):
+                chunks.append(str(settings["requiredLabel"]))
+            else:
+                chunks.append(str(settings["optionalLabel"]))
+
+            location = str(param.get("in") or "").strip()
+            if location:
+                chunks.append(location)
+
             description = str(param.get("description") or "").strip()
             if description:
                 chunks.append(description)
 
             schema_node = param.get("schema") if isinstance(param.get("schema"), dict) else {}
+            schema_type = str(schema_node.get("type") or "").strip()
+            if schema_type:
+                chunks.append(schema_type)
+
             enum_values = schema_node.get("enum") if isinstance(schema_node, dict) else None
             if isinstance(enum_values, list) and enum_values:
                 rendered = [
@@ -241,9 +287,124 @@ class ExternalActionManifestTextService:
                 if rendered:
                     chunks.append(f"{enums_label}={'|'.join(rendered)}")
 
+            example = param.get("example")
+            if example is None and isinstance(schema_node, dict):
+                example = schema_node.get("example")
+            if example is not None and str(example).strip():
+                chunks.append(str(example).strip())
+
             parts.append(" ".join(chunks))
 
         return parts
+
+    @classmethod
+    def _request_body_parts(cls, action: dict, settings: dict[str, Any]) -> list[str]:
+        body = action.get("requestBodySchema")
+        if body is None:
+            body = action.get("request_body_schema")
+        if not isinstance(body, dict):
+            return []
+
+        parts: list[str] = []
+        if body.get("required"):
+            parts.append(str(settings["requiredLabel"]))
+
+        schema = cls._json_content_schema(body)
+        if not isinstance(schema, dict):
+            return parts
+
+        properties = schema.get("properties")
+        required = {
+            str(item)
+            for item in (schema.get("required") or [])
+            if str(item).strip()
+        }
+        max_props = int(settings["maxBodyProperties"])
+        if isinstance(properties, dict):
+            for index, (name, prop_schema) in enumerate(properties.items()):
+                if index >= max_props:
+                    break
+                token = str(name).strip()
+                if not token:
+                    continue
+                chunks = [token]
+                if token in required:
+                    chunks.append(str(settings["requiredLabel"]))
+                if isinstance(prop_schema, dict):
+                    prop_type = str(prop_schema.get("type") or "").strip()
+                    if prop_type:
+                        chunks.append(prop_type)
+                    description = str(prop_schema.get("description") or "").strip()
+                    if description:
+                        chunks.append(description)
+                parts.append(" ".join(chunks))
+
+        return parts
+
+    @classmethod
+    def _request_body_lexical_tokens(
+        cls,
+        action: dict,
+        settings: dict[str, Any],
+    ) -> list[str]:
+        body = action.get("requestBodySchema")
+        if body is None:
+            body = action.get("request_body_schema")
+        if not isinstance(body, dict):
+            return []
+
+        schema = cls._json_content_schema(body)
+        if not isinstance(schema, dict):
+            return []
+
+        tokens: list[str] = []
+        properties = schema.get("properties")
+        max_props = int(settings["maxBodyProperties"])
+        if isinstance(properties, dict):
+            for index, name in enumerate(properties.keys()):
+                if index >= max_props:
+                    break
+                token = str(name).strip()
+                if token:
+                    tokens.append(token)
+        return tokens
+
+    @classmethod
+    def _example_parts(cls, action: dict, settings: dict[str, Any]) -> list[str]:
+        parts: list[str] = []
+        max_params = int(settings["maxParameters"])
+
+        for param in action.get("parametersSchema") or action.get("parameters_schema") or []:
+            if len(parts) >= max_params:
+                break
+            if not isinstance(param, dict):
+                continue
+            name = str(param.get("name") or "").strip()
+            schema_node = param.get("schema") if isinstance(param.get("schema"), dict) else {}
+            example = param.get("example")
+            if example is None and isinstance(schema_node, dict):
+                example = schema_node.get("example")
+            if not name or example is None or not str(example).strip():
+                continue
+            parts.append(f"{name}={str(example).strip()}")
+
+        return parts
+
+    @classmethod
+    def _json_content_schema(cls, body: dict[str, Any]) -> dict[str, Any] | None:
+        content = body.get("content")
+        if not isinstance(content, dict):
+            return None
+        json_content = content.get("application/json")
+        if not isinstance(json_content, dict):
+            for value in content.values():
+                if isinstance(value, dict) and isinstance(value.get("schema"), dict):
+                    json_content = value
+                    break
+        if not isinstance(json_content, dict):
+            return None
+        schema = json_content.get("schema")
+        return schema if isinstance(schema, dict) else None
 
     @classmethod
     def _return_parts(cls, action: dict, settings: dict[str, Any]) -> list[str]:

@@ -10,7 +10,13 @@ HTTP_METHODS = {"get", "post", "put", "patch", "delete"}
 
 class OpenApiActionImporter:
     def import_actions(self, provider_key: str, schema: dict) -> list[dict]:
-        paths = schema.get("paths") or {}
+        from app.infrastructure.openapi.openapi_ref_resolver import OpenApiRefResolver
+
+        if not isinstance(schema, dict):
+            raise ValueError("OpenAPI schema must contain paths object")
+
+        materialized = OpenApiRefResolver.resolve_document(schema)
+        paths = materialized.get("paths") or {}
 
         if not isinstance(paths, dict):
             raise ValueError("OpenAPI schema must contain paths object")

@@ -171,9 +171,12 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
                         "operationId": action.get("operation_id"),
                         "tags": action.get("tags"),
                         "parametersSchema": action.get("parameters_schema"),
+                        "requestBodySchema": action.get("request_body_schema"),
                         "responseSchema": action.get("response_schema"),
                         "delpiMetadata": action.get("delpi_metadata"),
                         "whenToUse": action.get("when_to_use"),
+                        "providerKey": provider.provider_key,
+                        "providerName": provider.name,
                     }
                 )
 
@@ -464,7 +467,8 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
         }
 
     def _action_to_dict(self, action: ExternalActionModel) -> dict:
-        return {
+        provider = getattr(action, "provider", None)
+        payload = {
             "id": str(action.id),
             "actionId": action.action_id,
             "operationId": action.operation_id,
@@ -481,3 +485,11 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
             "enabled": action.enabled,
             "deprecated": action.deprecated,
         }
+        if provider is not None:
+            provider_key = getattr(provider, "provider_key", None)
+            provider_name = getattr(provider, "name", None)
+            if provider_key:
+                payload["providerKey"] = provider_key
+            if provider_name:
+                payload["providerName"] = provider_name
+        return payload

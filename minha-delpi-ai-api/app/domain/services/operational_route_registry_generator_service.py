@@ -318,7 +318,7 @@ class OperationalRouteRegistryGeneratorService:
 
         stored_by_operation = {
             str(route.get("operationId") or "").strip(): route
-            for route in OperationalRouteRegistryService.auto_tier_c_routes()
+            for route in OperationalRouteRegistryService.ci_auto_tier_c_routes()
             if str(route.get("operationId") or "").strip()
         }
 
@@ -366,7 +366,7 @@ class OperationalRouteRegistryGeneratorService:
 
         stored_by_operation = {
             str(route.get("operationId") or "").strip(): route
-            for route in OperationalRouteRegistryService.auto_tier_c_routes()
+            for route in OperationalRouteRegistryService.ci_auto_tier_c_routes()
             if str(route.get("operationId") or "").strip()
         }
 
@@ -472,43 +472,31 @@ class OperationalRouteRegistryGeneratorService:
         registry_path: Path | None = None,
         openapi_baseline_path: Path | None = None,
     ) -> AutoTierCGenerationReport:
-        path = registry_path or cls.default_registry_path()
-        generated = cls.generate_routes(openapi_baseline_path=openapi_baseline_path)
-        payload = json.loads(path.read_text(encoding="utf-8"))
-
-        if not isinstance(payload, dict):
-            raise ValueError(f"Registry inválido: {path}")
-
-        payload["autoTierCRoutesMeta"] = cls.build_meta(
-            generated,
-            openapi_baseline_path=openapi_baseline_path,
+        from app.domain.services.operational_route_registry_service import (
+            OperationalRouteRegistryService,
+            invalidate_operational_route_registry_cache,
         )
-        payload["autoTierCRoutes"] = generated
 
-        if "autoTierCRoutes" not in (payload.get("dispatchOrder") or []):
-            order = payload.get("dispatchOrder")
+        # CI-only artifact — não grava no registry de runtime.
+        path = registry_path or OperationalRouteRegistryService.ci_auto_tier_c_path()
+        generated = cls.generate_routes(openapi_baseline_path=openapi_baseline_path)
+        payload = {
+            "version": OperationalRouteRegistryService.version(),
+            "note": (
+                "CI-only autoTierC mirror of api-delpi OpenAPI baseline. "
+                "Not loaded for chat action selection."
+            ),
+            "autoTierCRoutesMeta": cls.build_meta(
+                generated,
+                openapi_baseline_path=openapi_baseline_path,
+            ),
+            "autoTierCRoutes": generated,
+        }
 
-            if isinstance(order, list):
-                updated: list[str] = []
-
-                for phase in order:
-                    updated.append(str(phase))
-
-                    if str(phase).strip() == "sqlFallback":
-                        updated.append("autoTierCRoutes")
-
-                if "autoTierCRoutes" not in updated:
-                    updated.append("autoTierCRoutes")
-
-                payload["dispatchOrder"] = updated
-
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
-        )
-
-        from app.domain.services.operational_route_registry_service import (
-            invalidate_operational_route_registry_cache,
         )
 
         invalidate_operational_route_registry_cache()

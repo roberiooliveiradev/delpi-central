@@ -15,6 +15,8 @@ def test_manifest_includes_params_enums_and_returns():
             "description": "On-time delivery detail",
             "operationId": "get_production_otd",
             "tags": ["production"],
+            "providerKey": "api-delpi",
+            "providerName": "API DELPI",
             "parametersSchema": [
                 {
                     "name": "status",
@@ -49,6 +51,8 @@ def test_manifest_includes_params_enums_and_returns():
     assert "GET" in text
     assert "/production/otd" in text
     assert "get_production_otd" in text
+    assert "provider:" in text
+    assert "API DELPI" in text
     assert "params:" in text
     assert "status" in text
     assert "enums=late|on_time|all" in text
@@ -56,6 +60,23 @@ def test_manifest_includes_params_enums_and_returns():
     assert "entity=production_otd" in text
     assert "shape=playbook_report" in text
     assert "fields=late_ops,otd_pct" in text
+
+
+def test_manifest_includes_required_body_and_examples_for_logistics():
+    from tests.support.openapi_logistics_fixtures import find_logistics_action
+
+    tracking = find_logistics_action("get_shipment_tracking")
+    text = ExternalActionManifestTextService.build(tracking)
+    assert "required" in text
+    assert "id" in text
+    assert "45871" in text or "examples:" in text
+    assert "Logistics" in text or "logistics" in text
+
+    cancel = find_logistics_action("cancel_shipment")
+    cancel_text = ExternalActionManifestTextService.build(cancel)
+    assert "body:" in cancel_text
+    assert "reason" in cancel_text
+    assert "required" in cancel_text
 
 
 def test_manifest_respects_max_chars_from_json():

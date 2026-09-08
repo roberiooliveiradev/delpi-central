@@ -67,7 +67,7 @@ def main() -> int:
     get_coverage = OperationalRouteRegistryGeneratorService.validate_get_auto_coverage(
         openapi_baseline_path=args.baseline,
     )
-    stored = OperationalRouteRegistryService.auto_tier_c_routes()
+    stored = OperationalRouteRegistryService.ci_auto_tier_c_routes()
     synced, drift_errors = OperationalRouteRegistryGeneratorService.compare_generated_to_stored(
         stored,
         generated,
@@ -92,7 +92,7 @@ def main() -> int:
         get_coverage = OperationalRouteRegistryGeneratorService.validate_get_auto_coverage(
             openapi_baseline_path=args.baseline,
         )
-        stored = OperationalRouteRegistryService.auto_tier_c_routes()
+        stored = OperationalRouteRegistryService.ci_auto_tier_c_routes()
         synced = True
         drift_errors = []
         report["storedCount"] = len(stored)

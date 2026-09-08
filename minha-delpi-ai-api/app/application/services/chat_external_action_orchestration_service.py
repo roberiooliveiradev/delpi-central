@@ -88,6 +88,9 @@ class ChatExternalActionOrchestrationService:
             if isinstance(working, dict):
                 memory_snapshot = working
 
+        openapi_decision = None
+        openapi_planned: list[dict] = []
+
         def _return_planned(
             planned: list[dict],
             *,
@@ -124,7 +127,111 @@ class ChatExternalActionOrchestrationService:
                     planned,
                 )
 
+            if (
+                openapi_decision is not None
+                and openapi_decision.run_shadow_compare
+                and openapi_planned is not None
+            ):
+                from app.application.services.openapi_first_selection_bridge_service import (
+                    OpenApiFirstSelectionBridgeService,
+                )
+
+                shadow = OpenApiFirstSelectionBridgeService.compare_shadow(
+                    legacy_planned=planned,
+                    openapi_planned=openapi_planned,
+                )
+                for item in planned:
+                    if not isinstance(item, dict):
+                        continue
+                    meta = dict(item.get("metadata") or {})
+                    meta["openapiShadow"] = shadow
+                    meta["selectionMode"] = meta.get("selectionMode") or "legacy"
+                    item["metadata"] = meta
+
             return planned
+
+        try:
+            from app.application.services.openapi_first_selection_bridge_service import (
+                OpenApiFirstSelectionBridgeService,
+            )
+            from app.domain.services.openapi_planner_mode_service import (
+                OpenApiPlannerModeService,
+            )
+
+            provider_keys: set[str] = set()
+            if isinstance(workspace_context, dict):
+                for key in workspace_context.get("providerKeys") or []:
+                    if str(key).strip():
+                        provider_keys.add(str(key).strip())
+            for action_id in allowed_action_ids or []:
+                text = str(action_id)
+                if "." in text:
+                    provider_keys.add(text.split(".", 1)[0])
+
+            agent_id = None
+            if isinstance(workspace_context, dict):
+                agent_id = (
+                    workspace_context.get("agentId")
+                    or workspace_context.get("activeAgentId")
+                    or workspace_context.get("contextAgentId")
+                )
+
+            openapi_decision = OpenApiPlannerModeService.decide(
+                provider_keys=provider_keys,
+                agent_id=str(agent_id) if agent_id else None,
+            )
+            if openapi_decision.use_openapi_selection or openapi_decision.run_shadow_compare:
+                bridge = OpenApiFirstSelectionBridgeService(
+                    getattr(selection_service, "repository", None),
+                    semantic_ranker=getattr(selection_service, "semantic_ranker", None),
+                )
+                openapi_planned = bridge.plan_tool_calls(
+                    selection_message,
+                    allowed_action_ids=allowed_action_ids,
+                    previous_messages=previous_messages,
+                    workspace_context=workspace_context,
+                    mode_decision=openapi_decision,
+                )
+                # Fail-closed: com OpenAPI ativo não cai no registry/markers.
+                if openapi_decision.use_openapi_selection:
+                    if openapi_planned:
+                        return _return_planned(
+                            openapi_planned,
+                            memory_snapshot=memory_snapshot,
+                        )
+                    from app.domain.services.openapi_tool_routing_content_service import (
+                        OpenApiToolRoutingContentService,
+                    )
+
+                    clarify = OpenApiToolRoutingContentService.get(
+                        "selectionReasons",
+                        "openapiFirstNoMatch",
+                    )
+                    return _return_planned(
+                        [
+                            {
+                                "name": "clarify_external_action",
+                                "arguments": {"message": clarify},
+                                "reason": clarify,
+                                "directAnswer": clarify,
+                                "metadata": {
+                                    "selectionMode": "openapi_first",
+                                    "emptyPlan": True,
+                                },
+                            }
+                        ],
+                        memory_snapshot=memory_snapshot,
+                    )
+        except Exception:
+            # Com modo on, não engolir erro para cair no legado.
+            from app.domain.services.openapi_planner_mode_service import (
+                OpenApiPlannerModeService as _Mode,
+            )
+
+            if _Mode.resolve_mode() == "on":
+                raise
+            openapi_decision = None
+            openapi_planned = []
 
         if isinstance(workspace_context, dict):
             from app.domain.services.chat_grounded_capability_planning_service import (

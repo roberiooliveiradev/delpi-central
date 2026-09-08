@@ -16,4 +16,11 @@ describe("adminHelpTooltips", () => {
     expect(blob).not.toMatch(/\/admin\//);
     expect(blob).not.toMatch(/operationId/i);
   });
+
+  it("descreve OpenAPI-first sem pathMarkers", () => {
+    expect(ADMIN_HELP.tools).toMatch(/OpenAPI/i);
+    expect(ADMIN_HELP.tools).toMatch(/roteamento|schema|contrato/i);
+    expect(ADMIN_HELP.tools).toMatch(/registry|endpoint/i);
+    expect(ADMIN_HELP.intelligence).toMatch(/OpenAPI-first/i);
+  });
 });

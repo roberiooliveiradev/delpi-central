@@ -39,7 +39,7 @@ def test_get_auto_coverage_is_complete_in_registry() -> None:
 
 def test_stored_auto_tier_c_matches_generator() -> None:
     generated = OperationalRouteRegistryGeneratorService.generate_routes()
-    stored = OperationalRouteRegistryService.auto_tier_c_routes()
+    stored = OperationalRouteRegistryService.ci_auto_tier_c_routes()
     ok, errors = OperationalRouteRegistryGeneratorService.compare_generated_to_stored(
         stored,
         generated,
@@ -96,7 +96,7 @@ def test_manual_registry_covers_product_routes_not_auto_tier_c() -> None:
 
 
 def test_route_by_operation_id_resolves_auto_entry() -> None:
-    stored = OperationalRouteRegistryService.auto_tier_c_routes()
+    stored = OperationalRouteRegistryService.ci_auto_tier_c_routes()
 
     assert stored
     sample = stored[0]

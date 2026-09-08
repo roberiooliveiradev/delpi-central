@@ -12,6 +12,9 @@ from app.domain.services.external_actions.external_action_execution_policy impor
 from app.domain.services.external_actions.external_action_result_presenter import (
     ExternalActionResultPresenter,
 )
+from app.application.services.validate_action_arguments_service import (
+    ValidateActionArgumentsService,
+)
 
 
 class ExecuteExternalActionUseCase:
@@ -39,6 +42,7 @@ class ExecuteExternalActionUseCase:
         self.repository = repository
         self.gateway = gateway
         self.policy = policy
+        self.argument_validator = ValidateActionArgumentsService(policy)
         self.audit_repository = audit_repository
         self.presenter = ExternalActionResultPresenter()
 
@@ -70,7 +74,11 @@ class ExecuteExternalActionUseCase:
         arguments = self._ground_parameters(action, arguments, pipeline_parameters)
 
         try:
-            self.policy.validate(provider, action, arguments)
+            arguments = self.argument_validator.validate(
+                provider=provider,
+                action=action,
+                arguments=arguments,
+            )
         except ExternalActionValidationError as exc:
             return self._validation_failure_result(
                 provider=provider,

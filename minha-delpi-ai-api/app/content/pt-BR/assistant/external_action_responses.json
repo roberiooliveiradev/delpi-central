@@ -86,13 +86,19 @@
       "maxParameters": 24,
       "maxEnumValues": 16,
       "maxFieldNames": 24,
+      "maxBodyProperties": 16,
       "paramsLabel": "params",
       "enumsLabel": "enums",
       "returnsLabel": "returns",
       "entityLabel": "entity",
       "shapeLabel": "shape",
       "fieldsLabel": "fields",
-      "whenToUseLabel": "whenToUse"
+      "whenToUseLabel": "whenToUse",
+      "providerLabel": "provider",
+      "requiredLabel": "required",
+      "optionalLabel": "optional",
+      "bodyLabel": "body",
+      "examplesLabel": "examples"
     },
     "siblingDisambiguation": [
       {

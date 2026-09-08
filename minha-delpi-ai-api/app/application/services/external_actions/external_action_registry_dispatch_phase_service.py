@@ -499,6 +499,12 @@ class ExternalActionRegistryDispatchPhaseService:
         ):
             return None
 
+        from app.domain.services.openapi_planner_mode_service import OpenApiPlannerModeService
+
+        # Runtime OpenAPI-first (`on`) não consulta autoTierC/baseline — só legado.
+        if OpenApiPlannerModeService.resolve_mode() == "on":
+            return None
+
         return self._route_selection.select_auto_tier_c(
             ctx.message,
             ctx.allowed_action_ids,

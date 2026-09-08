@@ -1284,7 +1284,25 @@ class ChatSchemaDrivenPresentationService:
             if isinstance(candidate, dict) and candidate:
                 return [candidate]
 
+        # OpenAPI without x-delpi: flat object of scalars → single generic row.
+        if cls._looks_like_flat_record(root):
+            return [root]
+
         return []
+
+    @classmethod
+    def _looks_like_flat_record(cls, root: dict[str, Any]) -> bool:
+        if not root:
+            return False
+        scalar_count = 0
+        for value in root.values():
+            if isinstance(value, (dict, list)):
+                return False
+            if value is None:
+                continue
+            if isinstance(value, (str, int, float, bool)):
+                scalar_count += 1
+        return scalar_count >= 1
 
     @classmethod
     def _extract_sql_resultset_rows(cls, root: dict[str, Any]) -> list[dict[str, Any]]:

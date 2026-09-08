@@ -1,8 +1,13 @@
-"""Catálogo declarativo de rotas operacionais (DOCIE — Fase 0)."""
+"""Catálogo declarativo de rotas operacionais (legado/policies + CI autoTierC).
+
+Runtime de seleção de actions: Action Catalog OpenAPI (Postgres).
+`autoTierCRoutes` vive só em `operational_route_registry_autotierc.ci.json` (gate CI api-delpi).
+"""
 
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
@@ -10,11 +15,29 @@ from app.domain.services.chat_assistant_content_service import ChatAssistantCont
 
 def invalidate_operational_route_registry_cache() -> None:
     _registry_content.cache_clear()
+    _autotierc_ci_content.cache_clear()
 
 
 @lru_cache(maxsize=1)
 def _registry_content() -> dict[str, Any]:
     return ChatAssistantContentService.load_bundle("operational_route_registry")
+
+
+@lru_cache(maxsize=1)
+def _autotierc_ci_content() -> dict[str, Any]:
+    path = (
+        Path(__file__).resolve().parents[2]
+        / "content"
+        / "pt-BR"
+        / "assistant"
+        / "operational_route_registry_autotierc.ci.json"
+    )
+    if not path.is_file():
+        return {}
+    import json
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return payload if isinstance(payload, dict) else {}
 
 
 class OperationalRouteRegistryService:
@@ -29,7 +52,12 @@ class OperationalRouteRegistryService:
         if not isinstance(order, list):
             return []
 
-        return [str(item).strip() for item in order if str(item).strip()]
+        # autoTierC removido do runtime — Action Catalog OpenAPI é a fonte.
+        return [
+            str(item).strip()
+            for item in order
+            if str(item).strip() and str(item).strip() != "autoTierCRoutes"
+        ]
 
     @classmethod
     def manual_routes(cls) -> list[dict[str, Any]]:
@@ -42,12 +70,26 @@ class OperationalRouteRegistryService:
 
     @classmethod
     def auto_tier_c_routes(cls) -> list[dict[str, Any]]:
-        routes = _registry_content().get("autoTierCRoutes")
+        """Runtime: sempre vazio. Seleção usa OpenAPI Action Catalog."""
+        return []
 
+    @classmethod
+    def ci_auto_tier_c_routes(cls) -> list[dict[str, Any]]:
+        """Somente CI / gerador — espelho do baseline api-delpi."""
+        routes = _autotierc_ci_content().get("autoTierCRoutes")
         if not isinstance(routes, list):
             return []
-
         return [route for route in routes if isinstance(route, dict)]
+
+    @classmethod
+    def ci_auto_tier_c_path(cls) -> Path:
+        return (
+            Path(__file__).resolve().parents[2]
+            / "content"
+            / "pt-BR"
+            / "assistant"
+            / "operational_route_registry_autotierc.ci.json"
+        )
 
     @classmethod
     def routes(cls) -> list[dict[str, Any]]:
@@ -61,12 +103,13 @@ class OperationalRouteRegistryService:
 
     @classmethod
     def route_by_operation_id(cls, operation_id: str) -> dict[str, Any] | None:
+        """Legacy lookup — CI autoTierC only (not used for OpenAPI selection)."""
         target = str(operation_id or "").strip()
 
         if not target:
             return None
 
-        for route in cls.auto_tier_c_routes():
+        for route in cls.ci_auto_tier_c_routes():
             if str(route.get("operationId") or "").strip() == target:
                 return route
 

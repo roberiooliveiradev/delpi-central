@@ -8,6 +8,20 @@ Actions externas são providers OpenAPI globais vinculados a agentes. O chat com
 Agente -> Provider/API -> Rotas/actions importadas do OpenAPI -> Permissões por agente
 ```
 
+## Roteamento OpenAPI-first (universal)
+
+Para APIs externas (fora do monorepo), o caminho canônico é:
+
+1. Importar o OpenAPI do provider (refs `$ref` resolvidos no import).
+2. Vincular actions permitidas ao agente (`allowed_action_ids`).
+3. Perguntar em linguagem natural — **sem** cadastrar `pathMarkers` / `parameterStrategy` por endpoint.
+
+Com `CHAT_OPENAPI_PLANNER_MODE=on` (default), a seleção **sempre** usa retrieval híbrido + planner + validação contra o schema do Action Catalog. Plano vazio → esclarecimento fail-closed (`openapiFirstNoMatch`), **sem** cair no registry.
+
+O `operational_route_registry.json` permanece só para políticas SQL/refinamento, playbook predicates e rollback (`mode=off`). `autoTierCRoutes` saiu do runtime e vive em `operational_route_registry_autotierc.ci.json` (CI/gerador).
+
+Escrita/destrutiva continua exigindo confirmação (`ChatWriteConfirmationService`). Roadmap: [`../roadmap/openapi-first-universal-tool-routing.md`](../roadmap/openapi-first-universal-tool-routing.md).
+
 ## Tipos principais
 
 ### `ChatActionProvider`
@@ -482,28 +496,19 @@ Lista logs de teste de uma rota/action.
 ]
 ```
 
-## Rotas operacionais declarativas (DOCIE)
+## Rotas operacionais declarativas (legado / rollback)
 
-Depois de importar o OpenAPI e vincular actions ao agente, rotas de **produto**, **produção**, **comercial** e **system** usam o catálogo declarativo `operational_route_registry.json` — não é necessário alterar Python para expor uma rota GET já presente no provider.
+Com OpenAPI-first ativo (`mode=on`), **não** cadastre rota nova no registry para seleção. O caminho canônico é OpenAPI importado + actions no agente.
 
-### Checklist para nova rota GET
+O `operational_route_registry.json` ainda cobre políticas (`fallbackPolicies`, SQL readiness, playbook predicates) e o pipeline legado quando `CHAT_OPENAPI_PLANNER_MODE=off`.
 
-1. **OpenAPI** — path, `operationId` e parâmetros estáveis no provider.
-2. **Agente** — provider habilitado; action aparece em `allowed_action_ids` do turno.
-3. **Registry** — nova entrada em `routes[]` com:
-   - `match` (`customPredicate`, `termsFrom`, `allOf`/`noneOf` — ver `OperationalRouteMatcherService`)
-   - `route.pathMarkers` / `operationIdMarkers`
-   - `parameters.strategy` (`product_code`, `date_branch`, `exclusive_catalog`, …)
-   - `presentation.reasonKey` existente em `external_action_responses.json` → `selectionReasons`
-4. **Teste** — caso em `test_external_action_operational_route_selection_service.py` ou `chat_intelligence_regression_cases.py`.
-5. **Markers sem shadow** — evite `pathMarkers` curtos tipo `/search` sozinhos. Prefira `pathMarkers: ["/products/"]` + `pathSuffix: "/search"` (ou `pathExactEnd` / `excludePathMarkers`). O lint `_lint_path_marker_shadow` falha se catch-alls `domainProductSearch` sombrearem ≥2 famílias OpenAPI.
+### Checklist para nova rota GET (legado `mode=off`)
 
-### Hierarquia de seleção (jul/2026)
-
-1. Hint explícito de `routeSegment` na mensagem + código de produto → `select_by_route_segment` **antes** do loop vocabulary.
-2. Facetas `product` / `requiresProductIdentifier` no vocabulary **antes** de `domainProductSearch`.
-3. Resolver exige afinidade de path (`/products/…` para strategy `product_code` / search de produto).
-4. `productSearchQuestion` não casa quando há segmento operacional (`hasProductOperationalRouteSegment`).
+1. **OpenAPI** — path, `operationId` e parâmetros estáveis no provider (sempre obrigatório).
+2. **Agente** — provider habilitado; action em `allowed_action_ids`.
+3. **Seleção** — com `mode=on`, nada além disso; o planner usa o schema.
+4. **Registry (só se `mode=off`)** — entrada em `routes[]` com match/parameters/presentation.
+5. **Teste** — fixture OpenAPI externa desconhecida + caso DELPI irmão/negativo.
 
 ### Multi-provider (mesmo path, actionIds diferentes)
 
@@ -511,6 +516,7 @@ Quando dois providers expõem o mesmo path (ex.: `api_delpi.*` e `api_externa.*`
 
 ### Referências
 
-- Registry: `app/content/pt-BR/assistant/operational_route_registry.json`
-- Motor: `ExternalActionOperationalRouteSelectionService`
-- Roadmap: `docs/roadmap/docie-desacoplamento-selecao-rotas-openapi.md`
+- OpenAPI-first: `openapi_tool_routing.json`, `RetrieveActionCandidatesService`, `PlanExternalActionsService`
+- Registry (legado/policies): `app/content/pt-BR/assistant/operational_route_registry.json`
+- autoTierC (CI only): `operational_route_registry_autotierc.ci.json`
+- Roadmap: `docs/roadmap/openapi-first-universal-tool-routing.md`

@@ -663,7 +663,7 @@ class OperationalRouteRegistryLintService:
         seen_operations: set[str] = set()
         allowed = ChatOperationalApiDomainService.parameter_strategy_ids()
 
-        for route in OperationalRouteRegistryService.auto_tier_c_routes():
+        for route in OperationalRouteRegistryService.ci_auto_tier_c_routes():
             route_id = str(route.get("id") or "").strip()
             operation_id = str(route.get("operationId") or "").strip()
 
@@ -746,7 +746,7 @@ class OperationalRouteRegistryLintService:
             )
 
         generated = OperationalRouteRegistryGeneratorService.generate_routes()
-        stored = OperationalRouteRegistryService.auto_tier_c_routes()
+        stored = OperationalRouteRegistryService.ci_auto_tier_c_routes()
         ok, drift_errors = OperationalRouteRegistryGeneratorService.compare_generated_to_stored(
             stored,
             generated,

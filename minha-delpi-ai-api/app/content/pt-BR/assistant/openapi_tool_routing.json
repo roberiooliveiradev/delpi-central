@@ -1,0 +1,68 @@
+{
+  "retrieval": {
+    "topK": 8,
+    "vectorWeight": 0.55,
+    "lexicalWeight": 0.45,
+    "minCombinedScore": 0.08,
+    "candidatePoolLimit": 120
+  },
+  "planner": {
+    "maxSteps": 3,
+    "schema": {
+      "type": "object",
+      "required": ["steps"],
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["actionId", "arguments"],
+            "properties": {
+              "actionId": { "type": "string" },
+              "arguments": {
+                "type": "object",
+                "properties": {
+                  "parameters": { "type": "object" },
+                  "body": {}
+                }
+              },
+              "reason": { "type": "string" }
+            }
+          }
+        },
+        "clarify": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "modes": {
+    "default": "on",
+    "allowed": ["off", "shadow", "canary", "on"]
+  },
+  "selectionReasons": {
+    "openapiFirstPlan": "Plano OpenAPI-first: action escolhida pelo catálogo autorizado e schema.",
+    "openapiFirstClarify": "Não foi possível executar: falta informação obrigatória no contrato OpenAPI.",
+    "openapiFirstRejectedOutsideTopK": "Action fora do top-K recuperado — rejeitada pelo planner OpenAPI-first.",
+    "openapiFirstWriteNeedsConfirm": "Action de escrita exige confirmação explícita do usuário.",
+    "openapiFirstShadowDivergence": "Seleção legado e OpenAPI-first divergiram (modo shadow).",
+    "openapiFirstNoMatch": "Não encontrei uma action autorizada no catálogo OpenAPI para este pedido. Reformule ou vincule a operation ao agente."
+  },
+  "gate": {
+    "forbiddenPathSubstringPatterns": [
+      "if\\s+[\"']/",
+      "pathMarkers",
+      "_INTENT_PATH_HINTS"
+    ],
+    "newCoreGlobs": [
+      "app/application/services/retrieve_action_candidates_service.py",
+      "app/application/services/plan_external_actions_service.py",
+      "app/application/services/validate_action_arguments_service.py",
+      "app/application/services/openapi_first_selection_bridge_service.py",
+      "app/domain/services/openapi_planner_mode_service.py"
+    ],
+    "legacyAllowlistGlobs": [
+      "app/application/services/external_actions/**",
+      "app/domain/services/operational_route_*.py",
+      "app/content/pt-BR/assistant/operational_route_registry.json"
+    ]
+  }
+}

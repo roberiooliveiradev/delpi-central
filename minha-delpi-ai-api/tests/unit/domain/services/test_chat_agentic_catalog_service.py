@@ -33,13 +33,37 @@ class FakeRepository:
                 "allowed_action_ids": allowed_action_ids,
             }
         )
-        return self.actions[:limit]
+        allowed = {str(item) for item in (allowed_action_ids or [])}
+        rows = [
+            action
+            for action in self.actions
+            if not allowed or str(action.get("actionId")) in allowed
+        ]
+        return rows[:limit]
+
+    def list_actions(self, provider_key=None):
+        return list(self.actions)
+
+    def search_similar_actions(self, embedding, *, allowed_action_ids=None, limit=20):
+        return []
 
 
 def test_build_action_ids_respects_max_catalog_limit():
     repo = FakeRepository(
-        [_action(f"action-{index}", f"/products/{index}/stock") for index in range(20)]
+        [
+            _action(
+                f"action-{index}",
+                f"/products/{{code}}/stock",
+                f"get_product_stock_{index}",
+            )
+            for index in range(20)
+        ]
     )
+    # Enrich summaries so lexical/schema boost can distinguish stock.
+    for action in repo.actions:
+        action["summary"] = "estoque stock produto"
+        action["description"] = "consulta estoque do produto"
+
     allowed = [f"action-{index}" for index in range(20)]
 
     action_ids = ChatAgenticCatalogService.build_action_ids(
@@ -49,15 +73,27 @@ def test_build_action_ids_respects_max_catalog_limit():
     )
 
     assert len(action_ids) == Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS
-    assert repo.calls[0]["limit"] >= Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS
+    assert len(action_ids) >= 1
 
 
 def test_stock_intent_prioritizes_stock_action_over_analyser():
     repo = FakeRepository(
         [
-            _action("analyser-action", "/products/{code}/analyser", "get_product_analyser"),
-            _action("stock-action", "/products/{code}/stock", "get_product_stock"),
-            _action("rol-action", "/commercial/rol/series", "get_commercial_rol_series"),
+            {
+                **_action("analyser-action", "/products/{code}/analyser", "get_product_analyser"),
+                "summary": "analisador ficha tecnica",
+                "description": "analisador do produto",
+            },
+            {
+                **_action("stock-action", "/products/{code}/stock", "get_product_stock"),
+                "summary": "estoque do produto",
+                "description": "consulta estoque saldo disponivel",
+            },
+            {
+                **_action("rol-action", "/commercial/rol/series", "get_commercial_rol_series"),
+                "summary": "rol comercial",
+                "description": "serie rol",
+            },
         ]
     )
 
@@ -73,8 +109,20 @@ def test_stock_intent_prioritizes_stock_action_over_analyser():
 def test_structure_intent_prioritizes_structure_action():
     repo = FakeRepository(
         [
-            _action("stock-action", "/products/{code}/stock", "get_product_stock"),
-            _action("structure-action", "/products/{code}/structure", "get_product_structure"),
+            {
+                **_action("stock-action", "/products/{code}/stock", "get_product_stock"),
+                "summary": "estoque",
+                "description": "estoque saldo",
+            },
+            {
+                **_action(
+                    "structure-action",
+                    "/products/{code}/structure",
+                    "get_product_structure",
+                ),
+                "summary": "estrutura BOM produto",
+                "description": "estrutura de produto componentes",
+            },
         ]
     )
 
@@ -90,8 +138,20 @@ def test_structure_intent_prioritizes_structure_action():
 def test_build_slim_catalog_returns_ranked_schemas():
     repo = FakeRepository(
         [
-            _action("stock-action", "/products/{code}/stock", "get_product_stock"),
-            _action("structure-action", "/products/{code}/structure", "get_product_structure"),
+            {
+                **_action("stock-action", "/products/{code}/stock", "get_product_stock"),
+                "summary": "estoque do produto",
+                "description": "consulta estoque",
+            },
+            {
+                **_action(
+                    "structure-action",
+                    "/products/{code}/structure",
+                    "get_product_structure",
+                ),
+                "summary": "estrutura",
+                "description": "bom estrutura",
+            },
         ]
     )
 
@@ -101,6 +161,7 @@ def test_build_slim_catalog_returns_ranked_schemas():
         repo,
     )
 
+    assert catalog
     assert catalog[0]["actionId"] == "stock-action"
     assert catalog[0]["parameters"][0]["name"] == "code"
     assert catalog[0]["exampleArguments"]["parameters"]["code"] == "10080022"

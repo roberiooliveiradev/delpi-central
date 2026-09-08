@@ -1,0 +1,260 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Logistics Example API",
+    "version": "1.0.0",
+    "description": "Fictional third-party logistics API for OpenAPI-first acceptance tests."
+  },
+  "paths": {
+    "/shipments/{id}": {
+      "get": {
+        "operationId": "get_shipment",
+        "summary": "Get shipment details",
+        "description": "Returns shipment header data for a given shipment identifier.",
+        "tags": ["shipments"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Shipment found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Shipment"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/{id}/tracking": {
+      "get": {
+        "operationId": "get_shipment_tracking",
+        "summary": "Get shipment tracking and ETA",
+        "description": "Returns current location, status and estimated delivery date for a shipment. Use when the user asks where a remessa is or the previsao de entrega.",
+        "tags": ["shipments", "tracking"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tracking payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentTracking"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/warehouses/{id}/stock": {
+      "get": {
+        "operationId": "get_warehouse_stock",
+        "summary": "Warehouse stock levels",
+        "description": "Lists stock quantities for a warehouse.",
+        "tags": ["warehouses", "stock"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Warehouse identifier",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sku",
+            "in": "query",
+            "required": false,
+            "description": "Optional SKU filter",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "sku": { "type": "string" },
+                          "quantity": { "type": "number" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders": {
+      "get": {
+        "operationId": "list_orders",
+        "summary": "List logistics orders",
+        "description": "Lists orders filtered by branch and date range.",
+        "tags": ["orders"],
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "description": "Branch code (two digits)",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{2}$"
+            }
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "description": "Period start (ISO date)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "description": "Period end (ISO date)",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Order"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shipments/{id}/cancel": {
+      "post": {
+        "operationId": "cancel_shipment",
+        "summary": "Cancel a shipment",
+        "description": "Cancels an open shipment. Destructive write operation.",
+        "tags": ["shipments"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ShipmentId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["reason"],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "description": "Cancellation reason"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cancellation accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "cancelled": { "type": "boolean" },
+                    "id": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "ShipmentId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Shipment / remessa identifier",
+        "schema": {
+          "type": "string",
+          "example": "45871"
+        }
+      }
+    },
+    "schemas": {
+      "Shipment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "type": "string" },
+          "destination": { "type": "string" }
+        }
+      },
+      "ShipmentTracking": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "location": { "type": "string" },
+          "status": { "type": "string" },
+          "eta": { "type": "string", "format": "date" }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "orderId": { "type": "string" },
+          "branch": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date" }
+        }
+      }
+    }
+  }
+}
