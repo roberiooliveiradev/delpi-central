@@ -414,9 +414,10 @@ def test_facts_use_resolved_field_labels_not_snake_keys():
 def test_facts_without_bundle_label_fall_back_without_discovery():
     metadata = {
         "ok": True,
-        "path": "/data/sql",
-        "actionId": "run_sql",
-        "humanizedSummary": {
+        "path": "/custom/report",
+        "presentation": {
+            "type": "table",
+            "title": "Relatório",
             "rows": [{"totally_unknown_metric_xyz": 7}],
         },
     }
