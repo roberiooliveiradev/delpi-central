@@ -7,159 +7,168 @@
 
 ## Como Suprimentos trabalha hoje
 
-Não existe um portal. O usuário entra na Minha DELPI e escolhe **vários apps** no launcher, com filtros, filiais e vocabulários diferentes.
+Não existe um portal unificado. O usuário entra na Minha DELPI e escolhe vários apps no launcher, com filtros, filiais e vocabulários diferentes.
 
 ```text
 Usuário de Suprimentos
-  ├── Dashboard Suprimentos          (KPIs CPV/OTD/estoque/giro/savings)
-  ├── Solicitações de Compras        (SC operacional + escopo CC)
-  ├── Estoque de Segurança           (saldo × ESTSEG + simulação)
-  ├── Análise - Importações          (evidência PO · não está no git)
-  ├── Onde o item é usado - BI       (evidência PO · não está no git)
-  ├── Atraso de Fornecedores - SC    (evidência PO · não está no git)
-  ├── Alçada de Compras - BI         (evidência PO · não está no git)
-  ├── Controle de Estoques - SC - BI (evidência PO · não está no git)
-  ├── Indicadores Sheets / IDD       (evidência PO · planilha também no dashboard)
-  ├── Strategic Indicators           (metas departamento supplies)
-  ├── Chat Minha DELPI               (produto, parents, purchases)
-  └── Apps adjacentes                (Inspeções de Entrada, Frete, PCP)
+  ├── Dashboard Suprimentos
+  ├── Solicitações de Compras
+  ├── Estoque de Segurança
+  ├── Análise - Importações                  (evidência PO)
+  ├── Onde o item é usado - BI              (evidência PO)
+  ├── Atraso de Fornecedores - SC - BI      (evidência PO)
+  ├── Alçada de Compras - BI                (evidência PO)
+  ├── Controle de Estoques - SC - BI        (evidência PO)
+  ├── Indicadores de Suprimentos - Sheets   (evidência PO)
+  ├── Strategic Indicators
+  ├── Chat Minha DELPI
+  └── Apps adjacentes: Qualidade, Financeiro, PCP
 ```
 
-**CONFIRMADO_NO_CODIGO:** os três primeiros + SI + chat + adjacentes.  
-**CONFIRMADO_POR_EVIDENCIA_DO_PRODUCT_OWNER:** os seis nomes de BI/Sheets.  
-**Ausência no git dos seis códigos `*.access`:** CONFIRMADO_NO_CODIGO.
+Os três MFEs nativos, SI, chat e integrações adjacentes estão confirmados no código. Os seis apps/BIs externos foram confirmados por evidência do Product Owner, mas ainda precisam de dump do Core para contrato técnico.
 
 ---
 
 ## Personas
 
-Não há seed de papéis «Comprador» / «Analista de Suprimentos» na Core do monorepo. Papéis são dinâmicos. O agrupamento abaixo combina evidência do PO + permissões dos manifests.
+Papéis são dinâmicos e não devem ser usados como regra de autorização no MFE.
 
-| Persona | Filial na evidência | O que faz hoje | Classificação |
-|---------|---------------------|----------------|---------------|
-| Analista de Suprimentos | SC e ES (perfis separados) | Dashboard + Importações | PO + código dashboard |
-| Comprador | SC (evidência); ES **não evidenciado** | BIs operacionais (atraso, alçada, estoque, onde-usado) | PO |
-| Solicitante / gestor de CC | Inferido pelo módulo SC | Vê só seus CCs | Código purchase-requests |
-| Admin de compras | Inferido | Mapping Protheus, escopos, notificações | Código `purchase-requests.admin` |
-| Gestor / diretoria | Inferido | SI + TV + dashboard KPIs | Código SI/TV/dashboard |
-| Qualidade (entrada) | Ambas filiais | Inspeções — **não** é persona do Portal | Código inspecoes-entrada |
+| Persona | Evidência | Uso atual |
+|---|---|---|
+| Analista de Suprimentos | SC e ES | Dashboard + Importações |
+| Comprador | SC evidenciado; ES a validar | BIs operacionais + ESTSEG |
+| Solicitante/gestor CC | inferido pelo módulo SC | Solicitações dentro do escopo |
+| Admin compras | inferido pelo módulo SC | mapping/scopes/notificações |
+| Gestor | inferido | dashboard/SI/TV |
 
-Diferença SC × ES é **estrutural** (TOTVS `01`/`02`), não cosmética. Permissões de filial já existem, mas com **nomes divergentes** (`filial-01/02` vs `filial-sc/es`). Ver DRIFT em [DUPLICIDADES](./DUPLICIDADES-E-SOBREPOSICOES.md).
-
-Comprador ES: **não** aparece na evidência do PO. `HIPOTESE_A_VALIDAR` se o papel existe no Core prod.
+O Portal alvo será capability-driven, com unit scope independente.
 
 ---
 
-## Apps nativos (plugins/)
+## Apps nativos
 
-| App | basePath | Permissão de entrada | Backend |
-|-----|----------|----------------------|---------|
-| Dashboard Suprimentos | `/apps/dashboard-supplies` | `dashboard-supplies.view` | api-delpi `/supplies/*` **direto** |
+| App | basePath | Permission atual | Backend atual |
+|---|---|---|---|
+| Dashboard Suprimentos | `/apps/dashboard-supplies` | `dashboard-supplies.view` | api-delpi direto |
 | Solicitações de Compras | `/apps/purchase-requests` | `purchase-requests.access` | purchase-requests-api → api-delpi |
-| Estoque de Segurança | `/apps/estoque-seguranca` | `estoque-seguranca.access` | api-delpi `/supplies/safety-stock/*` **direto** |
-| Materiais de Terceiros | `/apps/materiais-terceiros` | `materiais-terceiros.access` | api-delpi (beneficiamento SB6) |
-
-`docs/08-plugins/README.md` **omite** `purchase-requests` na tabela principal. **DRIFT** documentação × Compose.
+| Estoque de Segurança | `/apps/estoque-seguranca` | `estoque-seguranca.access` + filial | api-delpi safety-stock direto |
+| Materiais de Terceiros | `/apps/materiais-terceiros` | legado próprio | fora do escopo de compras |
 
 ---
 
 ## BIs / iframe / Sheets
 
 | Nome | No git? | Equivalente parcial |
-|------|---------|---------------------|
-| Análise - Importações | Não | Nenhum MFE |
-| Onde o item é usado - BI | Não | `GET /products/{code}/parents` + chat |
-| Atraso de Fornecedores - SC | Não | Seção ranking da página OTD |
-| Alçada de Compras | Não | Campo `C7_APROV` no contrato SC (sem UI) |
-| Controle de Estoques - SC | Não | Dashboard `/stock` + ESTSEG + `stock-balances` |
-| Indicadores Sheets | Perm `idd-suprimentos.access` ausente; planilha **integrada** em savings | SI + `negotiation-savings` |
+|---|---:|---|
+| Análise - Importações | não | nenhum MFE nativo identificado |
+| Onde o item é usado - BI | não | `get_product_parents` |
+| Atraso de Fornecedores - SC | não | OTD/panel/ranking existentes |
+| Alçada de Compras | não | campos TOTVS; workflow não comprovado |
+| Controle de Estoques - SC | não | dashboard stock + ESTSEG + stock-balances |
+| Indicadores Sheets | integração parcial | savings via Sheets + SI |
+
+Nenhum desses seis pode ser depreciado apenas por existir equivalente parcial.
 
 ---
 
 ## APIs
 
-| API | Papel hoje |
-|-----|------------|
-| **api-delpi** | Dona do SQL TOTVS `/supplies/*`, `/products/*` compra/estoque/pais, frete links |
-| **purchase-requests-api** | Único BFF de compras; schema `purchase_requests` |
-| **strategic-indicators-api** | Metas/realizado dept. `supplies` |
-| **financial-api** | Frete das compras (SF8/SF1) |
-| **production-control-api** | Consome `open-coverage` (não é dono) |
-| **tv-dashboard-api** | Telas nativas `supplies_stock_value`, `supplies_stock_alert` |
-| **minha-delpi-ai-api** | Tools domínio supplies |
-| **supplies-api** | **Não existe** |
+| API | Papel atual/alvo |
+|---|---|
+| api-delpi | SQL/regra canônica TOTVS |
+| purchase-requests-api | SC, escopo CC e jobs até C2 |
+| strategic-indicators-api | metas/indicadores |
+| financial-api | frete/financeiro |
+| Qualidade | inspeções e rejeições |
+| minha-delpi-ai-api | chat/tools |
+| supplies-api | ainda inexistente; futura API do Portal |
 
 ---
 
-## Dados (TOTVS)
+## Dores principais
 
-| Área | Tabelas |
-|------|---------|
-| SC / PC / entrada | SC1, SC7, SD1, CTT, SYS_USR |
-| Estoque segurança | SB1, SBZ, SB2, SC7, SC1, SD4, SD3, SA5, SA2, SD1 |
-| CPV | SD3 classificado como CPV |
-| Valor estoque | SB9 (help do dashboard) |
-| OTD compras | Linhas MP ou código `3019*`; recebimento ≤ prometida |
-| Savings | Google Sheets IDD (não tabela Protheus) |
-| Terceiros | SB6 / `VW_PD3_BENEF_RETORNOS` |
-| Frete | SF8010, SF1010 |
-| Inspeção | views `vw_minha_delpi_inspecoes_entrada_*` |
-
----
-
-## Dores de fragmentação
-
-1. **Launcher de pedaços** — o trabalho diário exige 5–8 apps.
-2. **Filtros diferentes** — dashboard usa `branch` consolidado; SC exige filial; ESTSEG usa `filial-sc/es`.
-3. **Mesmo conceito, duas telas** — atraso (BI vs OTD); estoque (BI vs dashboard vs ESTSEG); indicadores (Sheets vs SI).
-4. **Onde-usado isolado** do saldo, ESTSEG e última compra.
-5. **Sem Fornecedor 360** nem Produto 360 nativos.
-6. **Sem worklist** do comprador (aging SC/PC, follow-up) além da lista de SC por CC.
-7. **MFEs maduros chamam api-delpi direto** — incompatível com Portal + API própria.
-8. **BIs invisíveis no git** — risco de cutover cego.
+1. Trabalho fragmentado em vários apps/BIs.
+2. Filtros e nomenclaturas de filial inconsistentes.
+3. Conceitos sobrepostos: atraso/OTD, estoque/ESTSEG/giro, Sheets/SI.
+4. Item e fornecedor sem visão 360.
+5. Ausência de worklist/follow-up nativo.
+6. MFEs legados chamam api-delpi direto, incompatível com novo Portal com API própria.
+7. BIs externos não estão documentados no monorepo.
+8. Catálogos históricos de permission são heterogêneos e podem induzir inflação de RBAC.
+9. Há drift entre a regra oficial de authz Core-first e implementações legadas que podem confiar em claims JWT.
+10. Há drift de framework: instrução oficial Flask × APIs departamentais recentes em FastAPI.
 
 ---
 
-## Duplicidades (resumo)
+## Decisões corretivas para o Portal
 
-Ver [DUPLICIDADES-E-SOBREPOSICOES.md](./DUPLICIDADES-E-SOBREPOSICOES.md).
+### Authz
 
-| Par | Relação |
-|-----|---------|
-| BI atraso × OTD dashboard | Complementar / possivelmente especializado SC — **não** declarado duplicado até dump |
-| BI estoque × dashboard `/stock` × ESTSEG | Conceitos diferentes (físico/valor vs segurança vs giro) |
-| Sheets IDD × SI savings | Duas superfícies; meta canônica deve ser SI |
-| Chat parents × BI onde-usado | Mesma pergunta de negócio, superfícies distintas |
+```text
+JWT = identidade
+Core /me = effective permissions
+backend = autorização real
+```
+
+Nenhuma decisão nova de acesso deve depender de `claims.permissions` ou `claims.is_superadmin` como fonte final.
+
+### RBAC
+
+Aplicar ADR-007:
+
+```text
+menor catálogo suficiente
++ unit scope
++ resource scope / ownership
++ regra de negócio
+```
+
+Não criar permission por botão, endpoint ou verbo CRUD.
+
+### Unidade
+
+Eixo B único:
+
+```text
+supplies.unit.filial-01
+supplies.unit.filial-02
+```
+
+Nova filial não replica permissions por feature.
+
+### Framework
+
+`supplies-api` = Flask enquanto a instrução oficial vigente assim determinar.
+
+### Purchase Requests
+
+```text
+C0 coexistência
+→ C1 composição
+→ C2 ownership/jobs + reconciliação
+→ paridade final
+→ C3 cutover
+```
 
 ---
 
-## Gaps (não existem hoje no Portal unificado)
-
-- Home de ação + Overview gerencial no mesmo produto.
-- Pedidos de compra como jornada (há OTD de PC na api-delpi, sem MFE dedicado).
-- Importações, alçadas, scorecard de fornecedor.
-- Notas internas / tarefas / alertas persistidos (exceto notificações de SC).
-- Capability-driven hub (hoje cada app é um launcher item).
-- Ajuda única do domínio (cada MFE tem helps locais).
-
----
-
-## Riscos
+## Riscos e mitigação
 
 | Risco | Mitigação |
-|-------|-----------|
-| Depreciar BI sem paridade | ADR-005 + dump Core |
-| Absorver SC com falha de fail-closed | ADR-002 C1 gateway antes de C2 |
-| CSS colidir com dashboard legado | ADR-004 `.dashboard-supplies-portal` |
-| Copiar TOTVS para Postgres | DATA-MODEL: só estado Delpi |
-| Acoplar Qualidade/Financeiro/PCP | MATRIZ-BOUNDARIES: HTTP projeção / deep link |
-| Inventar fórmula de KPI | Fichas + status NECESSITA_VALIDACAO |
-| Permission PT nova | Aliases; catálogo novo em inglês |
+|---|---|
+| Depreciar BI sem paridade | ADR-005 + dump Core + homologação mensurável |
+| C3 antes de C2 | IMPLEMENTATION-PLAN + ADR-002 |
+| Authz por JWT claims | GATE-AUTHZ |
+| Inflar permissions | ADR-007 |
+| Alias BFF sem acesso no launcher | provisionamento RBAC + `/me/apps`/`/me/routes` |
+| CSS colidir com dashboard legado | `.dashboard-supplies-portal` |
+| Copiar TOTVS para Postgres | DATA-MODEL: somente estado Minha DELPI |
+| Acoplar contextos irmãos | MATRIZ-BOUNDARIES |
+| Inventar KPI | KPI-FICHAS + homologação |
+| Cutover apontar para target instável | target-first / redirect-last |
 
 ---
 
-## Oportunidade do Portal
+## Oportunidade
 
-Unir **trabalho do dia** (SC, atrasos, ESTSEG, follow-up) com **gestão** (OTD, CPV, giro, savings, SI) e **360** (fornecedor e item), no padrão visual do Comercial, sem roubar SQL da api-delpi nem processo da Qualidade.
-
-Isso é exatamente o que o Comercial já provou: coexistir → paridade → redirect → remover.
+Unificar necessidade → SC → PC → entrega → estoque → fornecedor em uma experiência única, preservando ownership dos contextos e reduzindo a fragmentação sem criar um novo monólito departamental.
