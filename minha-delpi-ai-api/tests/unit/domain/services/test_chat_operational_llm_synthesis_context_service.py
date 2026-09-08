@@ -372,3 +372,74 @@ def test_build_facts_addon_multi_source_signals_truncation():
 
     assert tool_context.get("synthesisFactsBudgetChars") == 900
     assert tool_context.get("synthesisFactsTruncated") is True
+
+
+def test_facts_use_resolved_field_labels_not_snake_keys():
+    metadata = {
+        "ok": True,
+        "path": "/sales/open-orders",
+        "resolvedFieldLabels": {
+            "labels": {
+                "last_price": "Últ. preço",
+                "unit_price": "Preço unitário",
+            },
+            "formats": {},
+            "sourceByKey": {
+                "last_price": "catalog",
+                "unit_price": "catalog",
+            },
+        },
+        "presentation": {
+            "type": "table",
+            "title": "Pedidos",
+            "rows": [
+                {
+                    "last_price": 12.5,
+                    "unit_price": 10.0,
+                    "order_number": "OV-1",
+                }
+            ],
+        },
+    }
+
+    lines = ChatOperationalLlmSynthesisContextService.collect_fact_lines(_tool_calls(metadata))
+    joined = "\n".join(lines)
+
+    assert "Últ. preço" in joined
+    assert "Preço unitário" in joined
+    assert "last_price:" not in joined
+    assert "unit_price:" not in joined
+
+
+def test_facts_without_bundle_label_fall_back_without_discovery():
+    metadata = {
+        "ok": True,
+        "path": "/data/sql",
+        "actionId": "run_sql",
+        "humanizedSummary": {
+            "rows": [{"totally_unknown_metric_xyz": 7}],
+        },
+    }
+
+    lines = ChatOperationalLlmSynthesisContextService.collect_fact_lines(_tool_calls(metadata))
+    joined = "\n".join(lines)
+
+    assert "7" in joined
+    # Sem bundle: humanize ou key, mas não inventa discovery LLM.
+    assert "totally_unknown_metric_xyz: 7" in joined or "Totally Unknown Metric Xyz: 7" in joined
+
+
+def test_facts_kpi_sibling_keeps_metric_labels():
+    metadata = {
+        "ok": True,
+        "path": "/commercial/rol",
+        "kpiPresentation": {
+            "metrics": [
+                {"label": "ROL acumulado", "value": "1.234"},
+            ]
+        },
+    }
+
+    lines = ChatOperationalLlmSynthesisContextService.collect_fact_lines(_tool_calls(metadata))
+
+    assert any("ROL acumulado: 1.234" in line for line in lines)

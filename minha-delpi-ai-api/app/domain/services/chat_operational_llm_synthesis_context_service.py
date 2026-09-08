@@ -759,7 +759,7 @@ class ChatOperationalLlmSynthesisContextService:
                     if not isinstance(row, dict):
                         continue
 
-                    line = cls._format_table_row_fact(row)
+                    line = cls._format_table_row_fact(row, metadata=metadata)
 
                     if not line:
                         continue
@@ -843,20 +843,81 @@ class ChatOperationalLlmSynthesisContextService:
         return facts
 
     @classmethod
-    def _format_table_row_fact(cls, row: dict[str, Any]) -> str:
+    def _format_table_row_fact(
+        cls,
+        row: dict[str, Any],
+        *,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
         campo = str(row.get("campo") or row.get("field") or "").strip()
         valor = row.get("valor", row.get("value"))
 
         if campo and str(valor or "").strip():
             return f"{campo}: {valor}"
 
+        label_map = cls._label_map_from_metadata(metadata)
         parts = [
-            f"{key}: {value}"
+            f"{cls._label_for_fact_key(key, label_map)}: {value}"
             for key, value in row.items()
             if str(value or "").strip()
         ]
 
         return "; ".join(parts[:4]) if parts else ""
+
+    @classmethod
+    def _label_map_from_metadata(cls, metadata: dict[str, Any] | None) -> dict[str, str]:
+        from app.domain.services.chat_field_label_resolution_pipeline_service import (
+            ChatFieldLabelResolutionPipelineService,
+        )
+
+        bundle = ChatFieldLabelResolutionPipelineService.bundle_from_metadata(metadata)
+        labels = dict(bundle.labels)
+
+        if not isinstance(metadata, dict):
+            return labels
+
+        for table in cls._iter_table_presentations(metadata):
+            columns = table.get("columns")
+            if not isinstance(columns, list):
+                continue
+            for column in columns:
+                if not isinstance(column, dict):
+                    continue
+                key = str(column.get("key") or "").strip()
+                label = str(column.get("label") or "").strip()
+                if key and label and key not in labels:
+                    labels[key] = label
+
+        chart = metadata.get("chartPresentation")
+        if isinstance(chart, dict):
+            config = chart.get("config")
+            if isinstance(config, dict):
+                field_labels = config.get("fieldLabels")
+                if isinstance(field_labels, dict):
+                    for key, label in field_labels.items():
+                        token = str(key or "").strip()
+                        text = str(label or "").strip()
+                        if token and text and token not in labels:
+                            labels[token] = text
+
+        return labels
+
+    @classmethod
+    def _label_for_fact_key(cls, key: str, label_map: dict[str, str]) -> str:
+        token = str(key or "").strip()
+        if not token:
+            return ""
+        labeled = str(label_map.get(token) or "").strip()
+        if labeled:
+            return labeled
+        from app.domain.services.external_actions.external_action_column_label_service import (
+            ExternalActionColumnLabelService,
+        )
+
+        return ExternalActionColumnLabelService().label_for(
+            token,
+            enable_discovery=False,
+        ) or token
 
     @classmethod
     def _iter_table_presentations(cls, metadata: dict[str, Any]):
@@ -883,10 +944,11 @@ class ChatOperationalLlmSynthesisContextService:
 
         facts: list[str] = []
         max_rows = ChatOperationalLlmSynthesisContextContentService.limit_int("maxSqlRows", 5)
+        label_map = cls._label_map_from_metadata(metadata)
 
         for row in rows[:max_rows]:
             parts = [
-                f"{key}: {value}"
+                f"{cls._label_for_fact_key(key, label_map)}: {value}"
                 for key, value in row.items()
                 if str(value or "").strip()
             ]
