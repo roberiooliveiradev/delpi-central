@@ -1,65 +1,80 @@
 ---
-description: Chat/apresentação — schema-first as-delivered, renderPlan e presentationDecision; carregar ao alterar tabelas, gráficos, presenters ou metadata visual
+description: Chat/apresentação — schema-driven, renderPlan e presentationDecision; carregar ao alterar tabelas, gráficos ou metadata visual
 alwaysApply: false
 ---
 
-# Apresentação delivered puro (Playbook 22)
+# Apresentação schema-driven
 
 ## Princípio
 
-**Uma action nova = OpenAPI + schema-driven.** O pipeline de metadata **não** tem ramo legacy nem presenter por entidade.
+Uma Action nova deve produzir apresentação útil a partir do contrato e do payload, sem presenter por endpoint e sem metadata proprietária obrigatória.
 
 ```text
-ChatPresentationMetadataPipelineService
-  → ChatPresentationApiDeliveredMetadataService  (único)
-       → ChatSchemaDrivenPresentationService
-       → ChatDataInsightEnrichmentService
-       → ChatPresentationDecisionService
-       → ChatPresentationRenderPipelineService.finalize
+responseSchema + payload runtime + metadata disponível
+→ ChatSchemaDrivenPresentationService
+→ presentationDecision
+→ renderPlan
+→ MFE render-only
 ```
 
-Doc canônica: `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure-jun2026.md`.
+Fonte arquitetural: `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md`.
+Checklist de nova Action: `minha-delpi-ai-api/docs/architecture/new-api-route-checklist.md`.
 
-Provider OpenAPI externo deve produzir resposta útil **sem** `x-delpi` e sem perfil dedicado. Vendor extensions e perfis especiais são enriquecimento opcional, não pré-requisito de plugabilidade.
+Provider OpenAPI externo deve produzir resposta útil sem `x-delpi` e sem perfil dedicado. Vendor extensions, labels e perfis especiais são enriquecimentos opcionais.
+
+## Responsabilidades
+
+| Necessidade | Fonte canônica |
+|-------------|----------------|
+| Shape/fields/contrato | response schema do OpenAPI + payload runtime |
+| Tabela/KPI/chart/árvore/texto | `ChatSchemaDrivenPresentationService` |
+| Escolha de vista | `presentationDecision` na API |
+| Plano de renderização | `renderPlan` |
+| Renderização | MFE render-only |
+| Labels/vocabulário | conteúdo transversal, sem duplicar schema |
+| Comentário/insight | serviços transversais de data insight |
+
+## Invariantes
+
+- API externa funciona sem presenter dedicado.
+- MFE não redecide regra de negócio nem rota.
+- Perfil especializado é opcional e não pode ser condição para a Action funcionar.
+- Formato solicitado pelo usuário reutiliza o resultado existente quando possível.
+- Estrutura visual não pode depender de `if path/provider/operationId`.
+- Um mesmo payload não deve gerar múltiplas representações redundantes sem intenção explícita.
 
 ## O que NÃO fazer
 
-- Criar `*_presenter.py` por rota, entidade ou path (`product_*`, `entity_route`, `playbook_report_presenter`, …).
-- Adicionar `visualBuilders`, `tableAssembly`, `textBuilder`, `stackPlan` rico em `presentation_profiles.json`.
-- Reintroduzir `ChatPresentationVisualBundleService`, `TableAssemblyService`, `HumanizedNarrativeService`, `CompositeVisualBuilder` ou ramo `else` no pipeline.
-- `if "/products/"` / `if kpi` / `if entity ==` em use case, presenter ou MFE para apresentação.
-- Serviço de domínio nomeado pela rota (`ChatOperationalStockRouteService`) — usar regra transversal/schema/profileKey somente quando realmente necessário.
-- Multi-tabela tier A (`tablePresentations` com `role: profile|list|guide`) no pipeline — tabela genérica única.
-- Fix de formato (tabela vs gráfico) só no MFE — `presentationDecision` na API.
-- Tornar `presentation_profiles.json`, `x-delpi` ou presenter especializado requisito para uma API OpenAPI externa funcionar.
-- Duplicar em `entityProfiles` entradas cobertas por metadata OpenAPI — gate `audit_openapi_profile_pruning.py --check` quando aplicável.
-- Forçar `layoutMode: stack` automático em perfis `as_delivered` — stack só com pedido «visão integrada» ou `layoutMode` já `stack` na decisão.
+- Criar `*_presenter.py` por rota, entidade ou path para viabilizar Action.
+- Criar ramo paralelo de apresentação por endpoint.
+- `if "/products/"`, `if operationId`, `if provider` ou `if entity == ...` para selecionar layout específico da rota.
+- Tornar `presentation_profiles.json`, `x-delpi` ou metadata DELPI requisito de plugabilidade.
+- Duplicar response schema em JSON do assistente.
+- Corrigir tabela vs gráfico somente no MFE.
+- Reintroduzir stack/visual customizado como default universal sem evidência do payload/intenção.
 
-## O que fazer
+## Testes
 
-| Necessidade | Módulo canônico |
-|-------------|-----------------|
-| Nova action | OpenAPI importado + Action Catalog + allowed actions do agente |
-| Tabela / KPI / chart / árvore | `ChatSchemaDrivenPresentationService` |
-| Labels de coluna | schema/metadata da API + `column_labels.json` apenas como vocabulário/UX complementar |
-| Comentário / dataAnswer | `ChatDataInsightEnrichmentService` + `ChatOperationalDataCommentaryService` |
-| Formato Automático | `ChatPresentationViewIntentService` + shape/schema + perfis especiais opcionais |
-| Formato explícito (toolbar) | `ChatToolContextFormatService` → `build_bundle` schema-driven |
-| SQL | `ExternalActionSqlPresenter` (exceção legítima quando transversal) |
-| Prosa LLM vs template | `ChatPresentationProseDeliveryService` no **turn completion** |
-| Data-only no pipeline | `ChatPresentationDataOnlyProseService.apply_pipeline` (pós-`finalize`) |
-| Nova rota api-delpi | `new-api-route-checklist.mdc` + gates OpenAPI específicos da api-delpi |
+Mudanças de apresentação seguem `ai-intelligence-evaluation.mdc` e R1–R11 quando afetam inteligência.
+
+Cobrir conforme o caso:
+
+- payload tabular;
+- escalar/KPI;
+- série/gráfico;
+- árvore/hierarquia;
+- payload desconhecido/fallback;
+- pedido explícito de formato;
+- API externa sem `x-delpi`/perfil;
+- paridade send/stream/simulate quando aplicável;
+- ausência de perda de dado relevante no `renderPlan`.
 
 ## Checklist antes de merge
 
-- [ ] Pipeline passa só por `ChatPresentationApiDeliveredMetadataService`?
-- [ ] Nenhum presenter novo por entidade/rota para viabilizar action?
-- [ ] Nenhuma chave `visualBuilders` / `tableAssembly` nova no JSON?
-- [ ] Teste com fixture payload real e fallback genérico?
-- [ ] Grep zero: `visual_bundle`, `table_assembly`, `composite_visual`, `entity_route_dispatch` para código novo?
-- [ ] Para api-delpi, gates específicos de metadata/shape permanecem verdes?
-- [ ] Para provider externo, teste prova resposta útil sem `x-delpi`/perfil especializado?
-
-## Em conflito com Playbook 12 / 09
-
-Playbook 12 (tier A declarativo) e stack rico do Playbook 09 são **históricos** para o pipeline de metadata. Em dúvida, seguir **Playbook 22**, `presentation-delivered-pure-jun2026.md` e `openapi-first-universal-tool-routing.mdc`.
+- [ ] Fallback schema-driven funciona?
+- [ ] Nenhum presenter novo por endpoint foi necessário?
+- [ ] `presentationDecision` continua na API?
+- [ ] MFE permanece render-only?
+- [ ] Provider externo sem metadata proprietária continua útil?
+- [ ] Não há duplicação de response schema em conteúdo JSON?
+- [ ] R5/R7/R9 e demais dimensões aplicáveis foram avaliadas?
