@@ -1493,6 +1493,53 @@ Regra: **% sempre da API** (`progress.pct`) — MFE não calcula.
 
 **Implementação E5:** copiar para `plugins/production-pulse/src/content/helpTooltips.ts` · ligar `FieldLabel hint={…}` e `SectionHintLabel` em todo formulário e seção · checklist em [HELP-CONTENT § E5](./HELP-CONTENT.md#checklist-e5-helps).
 
+| Namespace | Qtd chaves | Exemplos |
+|-----------|------------|----------|
+| `ota.*` | 8+ | catálogo, campanha, agenda, KPI frota, atualizar este device |
+
+---
+
+## WF-PP-OTA-01 — Painel: KPI strip OTA
+
+```text
+┌─ Painel ─────────────────────────────────────────────────────────┐
+│ Hero …  [Firmwares ?]  [Campanhas OTA ?]                         │
+│                                                                  │
+│ ┌ KPI frota OTA ──────────────────────────────────────────────┐ │
+│ │ Devices │ Atualizados │ Em update │ Falhas  (? PP_HELP.ota) │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│ … lista devices …                                                │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+## WF-PP-OTA-02 — `/firmwares` catálogo
+
+```text
+┌─ Firmwares OTA ──────────────────────────────────────────────────┐
+│ Publicar: firmwareKey · versão · notas · [arquivo .bin] [Salvar] │
+│                                                                  │
+│ Tabela: família | versão | publicado | sha curto | tamanho       │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+## WF-PP-OTA-03 — `/firmware-jobs` campanhas
+
+```text
+┌─ Campanhas OTA ──────────────────────────────────────────────────┐
+│ Firmware · versão · agora|agendar · só desatualizados · [Criar] │
+│ Lista jobs + targets (status) · [Cancelar]                       │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+## WF-PP-OTA-04 — Detalhe · aba Firmware
+
+```text
+┌─ Firmware ───────────────────────────────────────────────────────┐
+│ Instalada × disponível · [Atualizar este device]                 │
+│ ▼ Sketch de referência (firmware_source) — colapsável            │
+└──────────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## Checklist implementação frontend (E5)

@@ -98,6 +98,7 @@ export {
 } from "../components/data/filtersUi";
 export {
   PpFormFieldShell,
+  PpFirmwareFileField,
   PpNativeInlineTextField,
   PpNativeSelectField,
   PpNativeSwitchField,

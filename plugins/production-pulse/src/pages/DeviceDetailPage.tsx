@@ -60,6 +60,7 @@ export function DeviceDetailPage({
     pollNow,
     resetCounter,
     factoryReset,
+    reloadDevice,
   } = useDeviceDetail({
     deviceId,
     enabled: permissions.canViewDevices,
@@ -221,7 +222,13 @@ export function DeviceDetailPage({
         <DeviceCommandsTab deviceId={deviceId} refreshToken={commandsRefreshToken} />
       ) : null}
 
-      {tab === "firmware" ? <DeviceFirmwareTab firmwareSource={device.firmwareSource} /> : null}
+      {tab === "firmware" ? (
+        <DeviceFirmwareTab
+          device={device}
+          canManage={permissions.canManageDevices}
+          onUpdated={() => void reloadDevice()}
+        />
+      ) : null}
 
       <ResetCounterModal
         open={resetOpen}

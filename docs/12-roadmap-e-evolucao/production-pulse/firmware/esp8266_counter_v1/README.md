@@ -11,8 +11,8 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 | `GET` | `/` | não | Página somente leitura: código do controlador + contagem |
 | `GET` | `/api/contador` | **não** (única API pública) | `{"contador": N}` |
 | `GET` | `/api/status` | `X-Device-Token` se `apiToken` setado | Identidade + contador + health: `firmwareVersion`, `uptimeMs`, `freeHeap`, `rssi`, `wifiConnected` |
-| `GET` | `/api/config` | idem | `ssid`, `debounceMs`, `passwordSet`, `apiTokenSet`, `wifiConfigured` — **sem** secrets |
-| `POST` | `/api/config` | idem (aberto se token vazio) | body parcial EN: `ssid`, `password`, `debounceMs`, `apiToken` |
+| `GET` | `/api/config` | idem | `ssid`, `debounceMs`, `passwordSet`, `apiTokenSet`, `otaBaseUrl`, `branch`, `wifiConfigured` — **sem** secrets Wi‑Fi/token |
+| `POST` | `/api/config` | idem (aberto se token vazio) | body parcial EN: `ssid`, `password`, `debounceMs`, `apiToken`, `otaBaseUrl`, `branch` |
 | `POST` | `/api/incrementar` | idem | +1 |
 | `POST` | `/api/decrementar` | idem | −1 |
 | `POST` | `/api/reset` | idem | zera |
@@ -28,7 +28,7 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 
 ### Config persistida (EEPROM)
 
-`ssid`, `password`, `apiToken`, `debounceMs`. Defaults de fábrica: `YOUR_SSID` / `YOUR_PASSWORD`, debounce 100 ms, token vazio.
+`ssid`, `password`, `apiToken`, `debounceMs`, `otaBaseUrl`, `branch`. Defaults de fábrica: `YOUR_SSID` / `YOUR_PASSWORD`, debounce 100 ms, token vazio, `otaBaseUrl` vazio, `branch`=`01`. Magic `0x50505302` — flash novo limpa EEPROM antiga.
 
 O código do controlador é `ESP-` + `ESP.getChipId()` em hex — estável após reboot.
 
@@ -50,6 +50,13 @@ Sem `delay` no LED — animação via `millis()` no `loop`.
 
 No Production Pulse: cadastro com Wi‑Fi/debounce/token; «Testar conexão» e Salvar (modo A) usam `/api/config` e `/api/status`.
 
-### OTA (P4 — planejado)
+### OTA (P4 — implementado)
 
-Este sketch **ainda não** implementa Over-the-Air. O plano canônico (catálogo `firmwares`, campanhas manual/agendada, pull com `X-Device-Token`) está em [FIRMWARE-OTA-P4.md](../../FIRMWARE-OTA-P4.md). A versão reportada em `/api/status` (`firmwareVersion`) alimentará `installed_firmware_version` quando o canal `/device-ota/*` existir.
+Pull autorizado contra a Production Pulse API ([FIRMWARE-OTA-P4.md](../../FIRMWARE-OTA-P4.md)):
+
+1. Configure `otaBaseUrl` (ex.: `http://<host>/apps/production-pulse-api`) e `branch` via `POST /api/config` — **sem** URL de produção hardcoded no binário.
+2. A cada ~10 min (primeiro check ~1 min após boot), se Wi‑Fi OK, heap ≥ 20 KB e token setado: `GET {otaBaseUrl}/device-ota/check?controllerCode=…&branch=…` com `X-Device-Token`.
+3. Se `updateAvailable`, baixa `GET …/device-ota/artifacts/{artifactToken}` e aplica com `Updater`; reporta `downloading` → `applying` → `updated|failed` em `POST /device-ota/report`.
+4. Após `updated`, o chip reinicia; a nova `firmwareVersion` em `/api/status` confirma o flash.
+
+Checklist lab: [HOMOLOGACAO-OTA-P4.md](../../HOMOLOGACAO-OTA-P4.md).

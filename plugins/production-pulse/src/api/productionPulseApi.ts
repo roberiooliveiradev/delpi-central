@@ -1,4 +1,4 @@
-import { httpGet, httpJson, PRODUCTION_PULSE_API_BASE } from "./httpClient";
+import { httpGet, httpJson, PRODUCTION_PULSE_API_BASE, getAccessToken } from "./httpClient";
 import type { DeviceListItem, DeviceSummary } from "../types/device";
 import type { DeviceCommandAudit, DeviceReading, LivePollResult, PaginatedItems } from "../types/detail";
 import type {
@@ -289,6 +289,143 @@ export async function executeOperatorCommand(
   const payload = await httpJson<ApiEnvelope<OperatorCommandResult>>(
     "POST",
     `${PRODUCTION_PULSE_API_BASE}/operator/devices/${deviceId}/commands/${encodeURIComponent(commandKey)}`,
+  );
+  return payload.data;
+}
+
+export type FirmwareCatalogItem = {
+  id: string;
+  firmwareKey: string;
+  driverKey: string;
+  version: string;
+  displayName: string;
+  artifactSha256: string;
+  artifactSizeBytes: number;
+  releaseNotes: string | null;
+  minCompatibleVersion: string | null;
+  publishedAt: string | null;
+  createdAt: string | null;
+};
+
+export type FirmwareUpdateJob = {
+  id: string;
+  firmwareId: string;
+  branch: string;
+  trigger: "manual" | "scheduled";
+  scheduledAt: string | null;
+  status: string;
+  filter: Record<string, unknown>;
+  createdAt: string | null;
+};
+
+export type FirmwareUpdateTarget = {
+  id: string;
+  jobId: string;
+  deviceId: string;
+  status: string;
+  fromVersion: string | null;
+  toVersion: string | null;
+  errorCode: string | null;
+};
+
+export type FirmwareUpdateSummary = {
+  branch: string;
+  firmwareKey: string | null;
+  total: number;
+  updated: number;
+  updating: number;
+  failed: number;
+};
+
+export async function fetchFirmwares(params: {
+  firmwareKey?: string;
+  driverKey?: string;
+  signal?: AbortSignal;
+} = {}): Promise<FirmwareCatalogItem[]> {
+  const searchParams = new URLSearchParams();
+  if (params.firmwareKey) searchParams.set("firmwareKey", params.firmwareKey);
+  if (params.driverKey) searchParams.set("driverKey", params.driverKey);
+  const suffix = searchParams.toString();
+  const payload = await httpGet<ApiEnvelope<{ items: FirmwareCatalogItem[] }>>(
+    `${PRODUCTION_PULSE_API_BASE}/firmwares${suffix ? `?${suffix}` : ""}`,
+    { signal: params.signal },
+  );
+  return payload.data.items;
+}
+
+export async function publishFirmware(form: FormData): Promise<FirmwareCatalogItem> {
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "X-Delpi-Caller-App": "production-pulse",
+  };
+  const token = getAccessToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const response = await fetch(`${PRODUCTION_PULSE_API_BASE}/firmwares`, {
+    method: "POST",
+    headers,
+    body: form,
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    let message = `Erro HTTP ${response.status}`;
+    try {
+      const body = JSON.parse(text) as { error?: { message?: string } };
+      message = body.error?.message ?? message;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(message);
+  }
+  const payload = (await response.json()) as ApiEnvelope<FirmwareCatalogItem>;
+  return payload.data;
+}
+
+export async function fetchFirmwareUpdateJobs(branch?: string): Promise<FirmwareUpdateJob[]> {
+  const query = branch ? `?branch=${encodeURIComponent(branch)}` : "";
+  const payload = await httpGet<ApiEnvelope<{ items: FirmwareUpdateJob[] }>>(
+    `${PRODUCTION_PULSE_API_BASE}/firmware-update-jobs${query}`,
+  );
+  return payload.data.items;
+}
+
+export async function createFirmwareUpdateJob(body: {
+  firmwareId: string;
+  branch: string;
+  trigger: "manual" | "scheduled";
+  scheduledAt?: string;
+  filter?: Record<string, unknown>;
+}): Promise<FirmwareUpdateJob> {
+  const payload = await httpJson<ApiEnvelope<FirmwareUpdateJob>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/firmware-update-jobs`,
+    body,
+  );
+  return payload.data;
+}
+
+export async function fetchFirmwareUpdateTargets(jobId: string): Promise<FirmwareUpdateTarget[]> {
+  const payload = await httpGet<ApiEnvelope<{ items: FirmwareUpdateTarget[] }>>(
+    `${PRODUCTION_PULSE_API_BASE}/firmware-update-jobs/${jobId}/targets`,
+  );
+  return payload.data.items;
+}
+
+export async function cancelFirmwareUpdateJob(jobId: string): Promise<FirmwareUpdateJob> {
+  const payload = await httpJson<ApiEnvelope<FirmwareUpdateJob>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/firmware-update-jobs/${jobId}/cancel`,
+  );
+  return payload.data;
+}
+
+export async function fetchFirmwareUpdateSummary(
+  branch: string,
+  firmwareKey?: string,
+): Promise<FirmwareUpdateSummary> {
+  const params = new URLSearchParams({ branch });
+  if (firmwareKey) params.set("firmwareKey", firmwareKey);
+  const payload = await httpGet<ApiEnvelope<FirmwareUpdateSummary>>(
+    `${PRODUCTION_PULSE_API_BASE}/firmware-update-summary?${params}`,
   );
   return payload.data;
 }

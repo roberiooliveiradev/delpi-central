@@ -108,9 +108,9 @@ Drivers novos (`esp8266_temp_v1`, …) **não** exigem rota nova: usam as mesmas
 
 Detalhe: [API-MFE-DEVICE-EVOLUTION.md](./API-MFE-DEVICE-EVOLUTION.md) · [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md).
 
-### 2.1 Firmware OTA (P4 — não implementadas)
+### 2.1 Firmware OTA (P4 — implementado)
 
-> Spec: [FIRMWARE-OTA-P4.md](./FIRMWARE-OTA-P4.md) · Roadmap § P4
+> Spec: [FIRMWARE-OTA-P4.md](./FIRMWARE-OTA-P4.md) · Roadmap § P4 · Migration `V010__firmware_ota.sql`
 
 | Método | Path | Permissão / auth | Regra / efeito |
 |--------|------|------------------|----------------|
@@ -216,21 +216,21 @@ Numeração estável. Implementação deve citar o id da regra em teste quando p
 
 Poll response `meta.readingPersisted` + `meta.persistReason` (S2).
 
-### 3.7 Firmware OTA (P4 — planejado)
+### 3.7 Firmware OTA (P4)
 
 > Spec: [FIRMWARE-OTA-P4.md](./FIRMWARE-OTA-P4.md) · Roadmap § P4
 
 | Id | Regra | Status |
 |----|--------|--------|
-| **R52** | Download OTA só com target autorizado (publish sozinho não libera). | 📋 |
-| **R53** | Job `scheduled` autoriza só após `scheduled_at`. | 📋 |
-| **R54** | Disparo manual cria job `trigger=manual` e autoriza targets. | 📋 |
-| **R55** | No máximo um target OTA aberto por device. | 📋 |
-| **R56** | `installedFirmwareVersion` só via report/probe — MFE não inventa. | 📋 |
-| **R57** | Summary: updated / updating / failed coerentes com targets. | 📋 |
-| **R58** | Check envia `artifactSha256`; chip verifica quando capaz. | 📋 |
-| **R59** | `firmware_source` (texto sketch) fora do pipeline OTA. | 📋 |
-| **R60** | Nova família = `firmwareKey` + `driver_key` no registry — sem tipo PT hardcoded no MFE. | 📋 |
+| **R52** | Download OTA só com target autorizado (publish sozinho não libera). | ✅ |
+| **R53** | Job `scheduled` autoriza só após `scheduled_at`. | ✅ |
+| **R54** | Disparo manual cria job `trigger=manual` e autoriza targets. | ✅ |
+| **R55** | No máximo um target OTA aberto por device. | ✅ |
+| **R56** | `installedFirmwareVersion` só via report/probe — MFE não inventa. | ✅ |
+| **R57** | Summary: updated / updating / failed coerentes com targets. | ✅ |
+| **R58** | Check envia `artifactSha256`; chip verifica quando capaz. | ✅ |
+| **R59** | `firmware_source` (texto sketch) fora do pipeline OTA. | ✅ |
+| **R60** | Nova família = `firmwareKey` + `driver_key` no registry — sem tipo PT hardcoded no MFE. | ✅ |
 
 ---
 

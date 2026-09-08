@@ -12,6 +12,7 @@ BFF dedicado ao plugin **Pulso de Produção** (IoT industrial). O MFE consome *
 - Catálogo CT via gateway → api-delpi `GET /production/appointments/work-centers`
 - Rotas operador (`/operator/*`) com RBAC `production-pulse.operator`
 - Status online/offline com grace **2× `poll_interval_ms`** (piso 2 s / teto 600 s — `onlineGraceMs` no content)
+- Firmware OTA: catálogo (`/firmwares`), campanhas (`/firmware-update-jobs`), canal device (`/device-ota/*` + `X-Device-Token`), volume `PP_FIRMWARE_UPLOAD_DIR`
 
 Dispositivo piloto dev: `http://192.168.20.2/` (ESP8266 contador).
 
@@ -128,7 +129,8 @@ PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts/homologacao/check-produ
 PP_LIVE_ESP=1 pytest tests/test_esp8266_counter_driver_live.py -q
 ```
 
-Checklist UI completo: [HOMOLOGACAO-E6-S2.md](../docs/12-roadmap-e-evolucao/production-pulse/HOMOLOGACAO-E6-S2.md).
+Checklist UI completo: [HOMOLOGACAO-E6-S2.md](../docs/12-roadmap-e-evolucao/production-pulse/HOMOLOGACAO-E6-S2.md).  
+OTA: [HOMOLOGACAO-OTA-P4.md](../docs/12-roadmap-e-evolucao/production-pulse/HOMOLOGACAO-OTA-P4.md) · [FIRMWARE-OTA-P4.md](../docs/12-roadmap-e-evolucao/production-pulse/FIRMWARE-OTA-P4.md).
 
 ## Documentação
 

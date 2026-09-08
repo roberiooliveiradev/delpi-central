@@ -33,8 +33,18 @@ def _safe_segment(value: str, *, max_len: int = 64) -> str:
 
 class FirmwareArtifactStorage:
     def __init__(self, base_dir: str | None = None, max_bytes: int | None = None) -> None:
-        self.base_dir = Path(base_dir or settings.PP_FIRMWARE_UPLOAD_DIR)
-        self.max_bytes = max_bytes if max_bytes is not None else settings.PP_FIRMWARE_MAX_BYTES
+        self._base_dir_override = base_dir
+        self._max_bytes_override = max_bytes
+
+    @property
+    def base_dir(self) -> Path:
+        return Path(self._base_dir_override or settings.PP_FIRMWARE_UPLOAD_DIR)
+
+    @property
+    def max_bytes(self) -> int:
+        if self._max_bytes_override is not None:
+            return self._max_bytes_override
+        return settings.PP_FIRMWARE_MAX_BYTES
 
     def save(
         self,

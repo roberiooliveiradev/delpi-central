@@ -233,7 +233,11 @@ class DevicePollService:
                 delta_metrics=delta_metrics,
             )
 
-        device = self._devices.record_poll_success(device_id, metrics=canonical)
+        device = self._devices.record_poll_success(
+            device_id,
+            metrics=canonical,
+            installed_firmware_version=self._extract_firmware_version(reading),
+        )
         payload_meta = {
             **meta,
             "readingPersisted": decision.should_persist,
@@ -480,6 +484,17 @@ class DevicePollService:
             if key in identity and identity.get(key) is not None:
                 health[key] = identity[key]
         return health
+
+    @staticmethod
+    def _extract_firmware_version(reading: Any) -> str | None:
+        meta = getattr(reading, "meta", None)
+        if not isinstance(meta, dict):
+            return None
+        value = meta.get("firmwareVersion")
+        if value is None:
+            return None
+        text = str(value).strip()
+        return text or None
 
     def _read_from_driver(self, device: dict[str, Any]):
         try:

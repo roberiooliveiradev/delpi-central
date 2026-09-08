@@ -13,6 +13,9 @@ from production_pulse_app.application.services.device_poll_service import (
 from production_pulse_app.application.services.device_reading_retention_service import (
     DeviceReadingRetentionService,
 )
+from production_pulse_app.application.services.firmware_update_job_service import (
+    FirmwareUpdateJobService,
+)
 from production_pulse_app.config import settings
 from production_pulse_app.domain.services.device_poll_schedule_service import compute_next_poll_at
 from production_pulse_app.infrastructure.content.device_validation_content_service import (
@@ -49,6 +52,7 @@ class DevicePollSchedulerService:
         self._poll_service = poll_service or DevicePollService()
         self._devices = device_repository or PostgresDeviceRepository()
         self._retention = retention_service or DeviceReadingRetentionService()
+        self._firmware_jobs = FirmwareUpdateJobService()
         self._max_concurrent = max_concurrent_polls or settings.PP_POLL_MAX_CONCURRENT
         self._tick_seconds = (
             tick_seconds if tick_seconds is not None else resolve_scheduler_tick_seconds()
@@ -98,6 +102,7 @@ class DevicePollSchedulerService:
 
     async def _tick(self) -> None:
         await self._maybe_purge_raw()
+        await self._maybe_authorize_ota_jobs()
         due_devices = await asyncio.to_thread(self._devices.list_due_for_scheduled_poll)
         for device in due_devices:
             device_id = device["id"]
@@ -106,6 +111,14 @@ class DevicePollSchedulerService:
                     continue
                 self._in_flight.add(device_id)
             asyncio.create_task(self._poll_device(device), name=f"poll-{device_id}")
+
+    async def _maybe_authorize_ota_jobs(self) -> None:
+        try:
+            authorized = await asyncio.to_thread(self._firmware_jobs.authorize_due_scheduled)
+            if authorized:
+                logger.info("Authorized %s scheduled OTA job(s).", authorized)
+        except Exception:
+            logger.exception("Firmware OTA scheduled authorization failed.")
 
     async def _maybe_purge_raw(self) -> None:
         interval_s = purge_interval_ms() / 1000.0

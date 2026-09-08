@@ -1,6 +1,9 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266HTTPClient.h>
+#include <WiFiClient.h>
+#include <Updater.h>
 #include <EEPROM.h>
 #include <string.h>
 
@@ -10,9 +13,9 @@
 static const char* DEFAULT_WIFI_SSID = "YOUR_SSID";
 static const char* DEFAULT_WIFI_PASSWORD = "YOUR_PASSWORD";
 static const unsigned long DEFAULT_DEBOUNCE_MS = 100;
-static const char* FIRMWARE_VERSION = "esp8266_counter_v1.1.0";
+static const char* FIRMWARE_VERSION = "esp8266_counter_v1.2.0";
 static const uint16_t EEPROM_SIZE = 512;
-static const uint32_t CONFIG_MAGIC = 0x50505301;  // "PPS\x01"
+static const uint32_t CONFIG_MAGIC = 0x50505302;  // "PPS\x02" — inclui OTA base URL
 
 #define BT_MAIS  D5
 #define BT_MENOS D1
@@ -23,6 +26,8 @@ struct DeviceConfig {
   char password[65];
   char apiToken[65];
   uint32_t debounceMs;
+  char otaBaseUrl[129];  // ex.: http://host/apps/production-pulse-api (sem trailing slash)
+  char branch[8];        // filial EN "01" / "02"
 };
 
 DeviceConfig cfg;
@@ -44,6 +49,8 @@ unsigned long ledLastToggleMs = 0;
 bool ledLit = false;
 bool authErrorLatched = false;
 unsigned long authErrorUntilMs = 0;
+unsigned long lastOtaCheckMs = 0;
+bool otaInProgress = false;
 static const unsigned long WIFI_BACKOFF_MAX_MS = 30000;
 static const unsigned long WIFI_BOOT_WAIT_MS = 15000;
 static const unsigned long FACTORY_HOLD_MS = 10000;
@@ -51,6 +58,9 @@ static const unsigned long LED_CONNECTING_MS = 500;
 static const unsigned long LED_ONLINE_PULSE_MS = 2000;
 static const unsigned long LED_AUTH_ERROR_MS = 100;
 static const unsigned long AUTH_ERROR_HOLD_MS = 5000;
+static const unsigned long OTA_CHECK_INTERVAL_MS = 600000;  // 10 min
+static const unsigned long OTA_FIRST_CHECK_MS = 60000;      // 1 min após boot
+static const uint32_t OTA_MIN_FREE_HEAP = 20000;
 
 enum LedState {
   LED_CONNECTING = 0,
@@ -117,12 +127,17 @@ void loadConfigFromEeprom() {
     strncpy(cfg.password, DEFAULT_WIFI_PASSWORD, sizeof(cfg.password) - 1);
     cfg.apiToken[0] = '\0';
     cfg.debounceMs = DEFAULT_DEBOUNCE_MS;
+    cfg.otaBaseUrl[0] = '\0';
+    strncpy(cfg.branch, "01", sizeof(cfg.branch) - 1);
     saveConfigToEeprom();
     return;
   }
   cfg = loaded;
   if (cfg.debounceMs == 0 || cfg.debounceMs > 60000UL) {
     cfg.debounceMs = DEFAULT_DEBOUNCE_MS;
+  }
+  if (cfg.branch[0] == '\0') {
+    strncpy(cfg.branch, "01", sizeof(cfg.branch) - 1);
   }
 }
 
@@ -200,6 +215,193 @@ bool extractJsonULong(const String& body, const char* key, unsigned long& value)
   return true;
 }
 
+bool extractJsonBool(const String& body, const char* key, bool& value) {
+  String needle = String("\"") + key + "\"";
+  int idx = body.indexOf(needle);
+  if (idx < 0) {
+    return false;
+  }
+  int colon = body.indexOf(':', idx + needle.length());
+  if (colon < 0) {
+    return false;
+  }
+  int start = colon + 1;
+  while (start < (int)body.length() && (body[start] == ' ' || body[start] == '\t')) {
+    start++;
+  }
+  if (body.substring(start, start + 4) == "true") {
+    value = true;
+    return true;
+  }
+  if (body.substring(start, start + 5) == "false") {
+    value = false;
+    return true;
+  }
+  return false;
+}
+
+bool otaConfigured() {
+  return cfg.otaBaseUrl[0] != '\0' && apiTokenConfigured() && cfg.branch[0] != '\0';
+}
+
+String otaBaseTrimmed() {
+  String base = String(cfg.otaBaseUrl);
+  while (base.endsWith("/")) {
+    base.remove(base.length() - 1);
+  }
+  return base;
+}
+
+bool httpExchange(
+  const String& method,
+  const String& url,
+  const String& body,
+  int& statusCode,
+  String& responseBody
+) {
+  WiFiClient client;
+  HTTPClient http;
+  http.setTimeout(20000);
+  if (!http.begin(client, url)) {
+    return false;
+  }
+  http.addHeader("X-Device-Token", String(cfg.apiToken));
+  http.addHeader("Accept", "application/json");
+  if (method == "POST") {
+    http.addHeader("Content-Type", "application/json");
+    statusCode = http.POST(body);
+  } else {
+    statusCode = http.GET();
+  }
+  responseBody = http.getString();
+  http.end();
+  return statusCode > 0;
+}
+
+bool reportOtaStatus(
+  const String& targetId,
+  const String& status,
+  const String& errorCode,
+  const String& installedVersion
+) {
+  if (!otaConfigured()) {
+    return false;
+  }
+  String url = otaBaseTrimmed() + "/device-ota/report";
+  String payload = "{";
+  payload += "\"controllerCode\":\"" + jsonEscape(codigoControlador) + "\",";
+  payload += "\"branch\":\"" + jsonEscape(String(cfg.branch)) + "\",";
+  if (targetId.length() > 0) {
+    payload += "\"targetId\":\"" + jsonEscape(targetId) + "\",";
+  }
+  payload += "\"status\":\"" + jsonEscape(status) + "\"";
+  if (errorCode.length() > 0) {
+    payload += ",\"errorCode\":\"" + jsonEscape(errorCode) + "\"";
+  }
+  if (installedVersion.length() > 0) {
+    payload += ",\"installedFirmwareVersion\":\"" + jsonEscape(installedVersion) + "\"";
+  }
+  payload += "}";
+  int code = 0;
+  String resp;
+  if (!httpExchange("POST", url, payload, code, resp)) {
+    return false;
+  }
+  return code >= 200 && code < 300;
+}
+
+bool applyOtaBinary(const String& artifactUrl, const String& targetId, const String& version) {
+  reportOtaStatus(targetId, "downloading", "", "");
+  WiFiClient client;
+  HTTPClient http;
+  http.setTimeout(120000);
+  if (!http.begin(client, artifactUrl)) {
+    reportOtaStatus(targetId, "failed", "http_begin_failed", "");
+    return false;
+  }
+  http.addHeader("X-Device-Token", String(cfg.apiToken));
+  int code = http.GET();
+  if (code != HTTP_CODE_OK) {
+    http.end();
+    reportOtaStatus(targetId, "failed", "download_http_" + String(code), "");
+    return false;
+  }
+  int contentLength = http.getSize();
+  WiFiClient* stream = http.getStreamPtr();
+  reportOtaStatus(targetId, "applying", "", "");
+  if (!Update.begin(contentLength > 0 ? (size_t)contentLength : UPDATE_SIZE_UNKNOWN)) {
+    http.end();
+    reportOtaStatus(targetId, "failed", "update_begin_failed", "");
+    return false;
+  }
+  size_t written = Update.writeStream(*stream);
+  http.end();
+  if (contentLength > 0 && written != (size_t)contentLength) {
+    Update.end(false);
+    reportOtaStatus(targetId, "failed", "download_incomplete", "");
+    return false;
+  }
+  if (!Update.end(true) || !Update.isFinished()) {
+    reportOtaStatus(targetId, "failed", "update_end_failed", "");
+    return false;
+  }
+  reportOtaStatus(targetId, "updated", "", version);
+  delay(200);
+  ESP.restart();
+  return true;
+}
+
+void maybeCheckOta() {
+  if (otaInProgress || !otaConfigured()) {
+    return;
+  }
+  if (WiFi.status() != WL_CONNECTED) {
+    return;
+  }
+  if (ESP.getFreeHeap() < OTA_MIN_FREE_HEAP) {
+    return;
+  }
+  unsigned long now = millis();
+  unsigned long dueAt = lastOtaCheckMs == 0 ? OTA_FIRST_CHECK_MS : OTA_CHECK_INTERVAL_MS;
+  if (lastOtaCheckMs != 0 && (now - lastOtaCheckMs) < dueAt) {
+    return;
+  }
+  if (lastOtaCheckMs == 0 && now < OTA_FIRST_CHECK_MS) {
+    return;
+  }
+  lastOtaCheckMs = now;
+  otaInProgress = true;
+
+  String url = otaBaseTrimmed() + "/device-ota/check?controllerCode=" + codigoControlador
+    + "&branch=" + String(cfg.branch);
+  int code = 0;
+  String resp;
+  if (!httpExchange("GET", url, "", code, resp) || code != HTTP_CODE_OK) {
+    otaInProgress = false;
+    return;
+  }
+
+  bool available = false;
+  if (!extractJsonBool(resp, "updateAvailable", available) || !available) {
+    otaInProgress = false;
+    return;
+  }
+
+  String token = extractJsonString(resp, "artifactToken");
+  String targetId = extractJsonString(resp, "targetId");
+  String version = extractJsonString(resp, "version");
+  if (token.length() == 0) {
+    reportOtaStatus(targetId, "failed", "missing_artifact_token", "");
+    otaInProgress = false;
+    return;
+  }
+
+  String artifactUrl = otaBaseTrimmed() + "/device-ota/artifacts/" + token
+    + "?controllerCode=" + codigoControlador + "&branch=" + String(cfg.branch);
+  applyOtaBinary(artifactUrl, targetId, version);
+  otaInProgress = false;
+}
+
 long parseContadorDoBody() {
   if (!server.hasArg("plain")) {
     return -1;
@@ -253,6 +455,8 @@ void enviarConfig() {
     "\"passwordSet\":" + String(passwordConfigured() ? "true" : "false") + ","
     "\"apiTokenSet\":" + String(apiTokenConfigured() ? "true" : "false") + ","
     "\"debounceMs\":" + String(cfg.debounceMs) + ","
+    "\"otaBaseUrl\":\"" + jsonEscape(String(cfg.otaBaseUrl)) + "\","
+    "\"branch\":\"" + jsonEscape(String(cfg.branch)) + "\","
     "\"wifiConfigured\":" + String(wifiOk ? "true" : "false") +
     "}";
   server.send(200, "application/json", json);
@@ -307,6 +511,20 @@ void aplicarConfigPost() {
     touched = true;
   }
 
+  String newOtaBase = extractJsonString(body, "otaBaseUrl");
+  if (body.indexOf("\"otaBaseUrl\"") >= 0) {
+    strncpy(cfg.otaBaseUrl, newOtaBase.c_str(), sizeof(cfg.otaBaseUrl) - 1);
+    cfg.otaBaseUrl[sizeof(cfg.otaBaseUrl) - 1] = '\0';
+    touched = true;
+  }
+
+  String newBranch = extractJsonString(body, "branch");
+  if (newBranch.length() > 0) {
+    strncpy(cfg.branch, newBranch.c_str(), sizeof(cfg.branch) - 1);
+    cfg.branch[sizeof(cfg.branch) - 1] = '\0';
+    touched = true;
+  }
+
   if (!touched) {
     enviarCors();
     server.send(400, "application/json", "{\"error\":\"no_fields\"}");
@@ -341,6 +559,8 @@ void restoreFactoryConfig() {
   strncpy(cfg.password, DEFAULT_WIFI_PASSWORD, sizeof(cfg.password) - 1);
   cfg.apiToken[0] = '\0';
   cfg.debounceMs = DEFAULT_DEBOUNCE_MS;
+  cfg.otaBaseUrl[0] = '\0';
+  strncpy(cfg.branch, "01", sizeof(cfg.branch) - 1);
   saveConfigToEeprom();
 }
 
@@ -637,6 +857,7 @@ void loop() {
   MDNS.update();
   server.handleClient();
   checkFactoryResetHold();
+  maybeCheckOta();
   processarBotao(BT_MAIS, estadoMais, leituraAnteriorMais, tempoMais, +1);
   processarBotao(BT_MENOS, estadoMenos, leituraAnteriorMenos, tempoMenos, -1);
 }

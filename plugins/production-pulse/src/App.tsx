@@ -5,6 +5,8 @@ import { useProductionPulseRouterPath } from "./hooks/useProductionPulseRouterPa
 import { useShortViewport } from "./hooks/useShortViewport";
 import { useViewportBucket } from "./hooks/useViewportBucket";
 import { PanelPage } from "./pages/PanelPage";
+import { FirmwaresPage } from "./pages/FirmwaresPage";
+import { FirmwareJobsPage } from "./pages/FirmwareJobsPage";
 import { DeviceFormPage } from "./pages/DeviceFormPage";
 import { DeviceDetailPage } from "./pages/DeviceDetailPage";
 import { OperatorPage } from "./pages/operator/OperatorPage";
@@ -67,6 +69,10 @@ export default function App({
     >
       {route.kind === "panel" ? (
         <PanelPage search={search} permissions={permissionFlags} />
+      ) : route.kind === "firmwares" ? (
+        <FirmwaresPage permissions={permissionFlags} />
+      ) : route.kind === "firmwareJobs" ? (
+        <FirmwareJobsPage branch={route.branch} permissions={permissionFlags} />
       ) : route.kind === "deviceNew" ? (
         <DeviceFormPage
           mode="create"

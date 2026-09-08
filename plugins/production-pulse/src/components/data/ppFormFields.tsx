@@ -191,3 +191,35 @@ export function PpNativeSwitchField({
     </PpFormFieldShell>
   );
 }
+
+export type PpFirmwareFileFieldProps = {
+  id: string;
+  label: string;
+  hint?: string;
+  accept?: string;
+  disabled?: boolean;
+  onChange: (file: File | null) => void;
+};
+
+/** Upload de artefato OTA — input file só neste gateway (kit). */
+export function PpFirmwareFileField({
+  id,
+  label,
+  hint,
+  accept = ".bin,.elf,.hex,application/octet-stream",
+  disabled,
+  onChange,
+}: PpFirmwareFileFieldProps) {
+  return (
+    <PpFormFieldShell id={id} label={label} hint={hint} span>
+      <input
+        id={id}
+        type="file"
+        accept={accept}
+        disabled={disabled}
+        className="pp-native-file"
+        onChange={(event) => onChange(event.target.files?.[0] ?? null)}
+      />
+    </PpFormFieldShell>
+  );
+}

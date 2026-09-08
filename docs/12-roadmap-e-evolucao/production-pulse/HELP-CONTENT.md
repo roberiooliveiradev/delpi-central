@@ -73,6 +73,16 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 | Filial vazia | `panel.emptyFilial` | `EmptyGuidance` |
 | Filtro vazio | `panel.emptyFilters` | `EmptyState` |
 
+### OTA (P4) — `PP_HELP.ota` + `FirmwareOtaKpiStrip`
+
+| Elemento | Chave |
+|----------|-------|
+| Atalho Firmwares / OTA no hero | `ota.openCatalog` / `ota.openJobs` |
+| KPI frota (total/updated/updating/failed) | `ota.*` (ver `helpTooltips.ts`) |
+| Catálogo / campanhas / detalhe «Atualizar este» | `ota.catalog*` / `ota.jobs*` / `ota.device*` |
+
+Wireframes: WF-PP-OTA-01…04 em [WIREFRAMES.md](./WIREFRAMES.md). Homologação: [HOMOLOGACAO-OTA-P4.md](./HOMOLOGACAO-OTA-P4.md).
+
 ### Agrupado (`DeviceGroupedByPlacement`)
 
 Cabeçalho de grupo: `placement_label` + `AnchorTypeBadge` — helps dos badges em `badges.anchor*`.

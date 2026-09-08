@@ -16,9 +16,11 @@ O MFE **não** chama a api-delpi diretamente.
 | Path | Descrição |
 |------|-----------|
 | `/apps/production-pulse` | Painel — KPI, filtros URL-sync, lista ou agrupado por posto/máquina/equipamento |
+| `/apps/production-pulse/firmwares` | Catálogo OTA — publicar binários por família/versão |
+| `/apps/production-pulse/firmware-jobs` | Campanhas OTA — disparo manual ou agendado |
 | `/apps/production-pulse/devices/new` | Cadastro de dispositivo + amarração |
 | `/apps/production-pulse/devices/{id}/edit` | Edição |
-| `/apps/production-pulse/devices/{id}` | Detalhe (overview, histórico, comandos) |
+| `/apps/production-pulse/devices/{id}` | Detalhe (overview, histórico, comandos, firmware/OTA) |
 | `/apps/production-pulse/operator` | Hub operador — escolha de posto/máquina/equipamento |
 | `/apps/production-pulse/operator/placements/{key}` | Picker quando há mais de um device no local |
 | `/apps/production-pulse/operator/devices/{id}` | Superfície operador (`counter_pad` ou `gauge_readout`) |

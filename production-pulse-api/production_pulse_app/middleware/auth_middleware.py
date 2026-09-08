@@ -2,7 +2,7 @@ from delpi_auth.middleware.fastapi_auth import jwt_middleware as _base_jwt_middl
 from fastapi import Request
 
 PUBLIC_EXACT: frozenset[str] = frozenset({"/health"})
-PUBLIC_PREFIXES: tuple[str, ...] = ()
+PUBLIC_PREFIXES: tuple[str, ...] = ("/device-ota/",)
 
 
 def _strip_root_path(request: Request) -> str:

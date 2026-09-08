@@ -136,7 +136,8 @@ export const PP_HELP = {
     tabOverview: "Status ao vivo, amarração vigente e métricas atuais do device.",
     tabHistory: "Gráfico e tabela de leituras ao longo do tempo.",
     tabCommands: "Auditoria de comandos enviados ao hardware (zerar, +/−).",
-    tabFirmware: "Sketch .ino cadastrado — leitura e cópia para gravar no dispositivo.",
+    tabFirmware:
+      "Versão OTA instalada/alvo e sketch .ino cadastrado (cópia para gravação manual).",
     firmwareEmpty: "Nenhum código .ino cadastrado. Edite o dispositivo e cole o sketch.",
     firmwareCopy: "Copiar código",
     firmwareCopied: "Copiado",
@@ -181,6 +182,25 @@ export const PP_HELP = {
       "Queda no poll sem comando recente do pad: a plataforma restaura o valor persistido (SET no chip ou offset lógico). Diminuir/Limpar via API não disparam restore.",
     coverageIncomplete:
       "Pode haver lacunas se o device ficou offline ou o poll falhou.",
+  },
+
+  ota: {
+    openCatalog: "Catálogo de firmwares publicados para atualização OTA.",
+    openJobs: "Campanhas de atualização — disparo imediato ou agendado.",
+    catalogHero: "Publique binários por família/versão. Publicar sozinho não atualiza devices.",
+    publishForm: "Envia o artefato .bin e metadados. Requer permissão de gestão.",
+    catalogList: "Versões disponíveis por família de firmware.",
+    catalogEmpty: "Nenhuma versão publicada ainda.",
+    jobsHero: "Dispare atualização agora ou agende. O ESP baixa quando autorizado.",
+    jobCreate: "Escolha o firmware e o modo de disparo (agora ou data/hora).",
+    jobsList: "Campanhas da filial e status.",
+    jobsEmpty: "Nenhuma campanha criada.",
+    targetsList: "Status por dispositivo na campanha selecionada.",
+    deviceVersionCard:
+      "Versão reportada pelo chip e alvo da última campanha. Sketch .ino é independente do OTA.",
+    noPublishedFirmware: "Não há firmware publicado para esta família.",
+    deviceJobCreated: "Campanha criada. O device aplicará no próximo check OTA.",
+    deviceJobFailed: "Não foi possível criar a campanha OTA.",
   },
 
   modals: {

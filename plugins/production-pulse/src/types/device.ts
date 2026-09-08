@@ -47,6 +47,10 @@ export type DeviceListItem = {
   ipAddress: string;
   controllerCode: string | null;
   firmwareSource: string | null;
+  firmwareKey?: string | null;
+  installedFirmwareVersion?: string | null;
+  targetFirmwareVersion?: string | null;
+  firmwareReportedAt?: string | null;
   wifiSsid?: string | null;
   debounceMs?: number | null;
   apiTokenSet?: boolean;

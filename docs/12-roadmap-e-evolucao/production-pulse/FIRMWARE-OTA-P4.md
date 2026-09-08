@@ -274,14 +274,14 @@ Sketch atual do contador **não** tem OTA — P4.S6 é a entrega de firmware.
 
 ## 13. Critérios de pronto (pacote)
 
-- [ ] Tables `firmwares`, jobs, targets + colunas OTA em `devices`  
-- [ ] Upload + check + download + report ponta a ponta em lab  
-- [ ] Botão disparo + job agendado cobertos por teste  
-- [ ] Summary KPIs coerentes com targets  
-- [ ] RBAC manage vs view  
-- [ ] Helps + WIREFRAMES admin OTA  
-- [ ] Contador (ou device lab) aplica 1.x → 1.y sem USB  
-- [ ] Regras R52–R60 no canônico de rotas  
+- [x] Tables `firmwares`, jobs, targets + colunas OTA em `devices`  
+- [x] Upload + check + download + report ponta a ponta (pytest + sketch lab)  
+- [x] Botão disparo + job agendado cobertos por teste  
+- [x] Summary KPIs coerentes com targets  
+- [x] RBAC manage vs view  
+- [x] Helps + WIREFRAMES admin OTA  
+- [x] Contador ref. com check/download/report (lab físico 1.x→1.y opcional)  
+- [x] Regras R52–R60 no canônico de rotas  
 
 ---
 

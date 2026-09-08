@@ -3,6 +3,8 @@ import { useMemo } from "react";
 import {
   productionPulseDeviceDetailPath,
   productionPulseDeviceNewPath,
+  productionPulseFirmwareJobsPath,
+  productionPulseFirmwaresPath,
   productionPulseOperatorPath,
 } from "../constants/routes";
 import { navigateProductionPulse } from "../utils/navigation";
@@ -27,6 +29,7 @@ import { DeviceCardList } from "../components/DeviceCard";
 import { DeviceFiltersBar } from "../components/DeviceFiltersBar";
 import { DeviceGroupedByWorkCenter } from "../components/DeviceGroupedByWorkCenter";
 import { DeviceKpiStrip } from "../components/DeviceKpiStrip";
+import { FirmwareOtaKpiStrip } from "../components/FirmwareOtaKpiStrip";
 import { DeviceTable } from "../components/DeviceTable";
 
 const PAGE_SIZE = 20;
@@ -119,8 +122,7 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
         description={PP_HELP.shell.heroTitle}
         badge={ppShellIcon}
         actions={
-          permissions.canOperator || branchOptions.length > 1 ? (
-            <div className="pp-panel-hero-actions">
+          <div className="pp-panel-hero-actions">
               {permissions.canOperator ? (
                 <PpActionButton
                   variant="ghost"
@@ -131,6 +133,22 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
                   Modo operador
                 </PpActionButton>
               ) : null}
+              <PpActionButton
+                variant="ghost"
+                title={PP_HELP.ota.openCatalog}
+                onClick={() => navigateProductionPulse(productionPulseFirmwaresPath())}
+              >
+                Firmwares
+              </PpActionButton>
+              <PpActionButton
+                variant="ghost"
+                title={PP_HELP.ota.openJobs}
+                onClick={() =>
+                  navigateProductionPulse(productionPulseFirmwareJobsPath(filters.branch))
+                }
+              >
+                OTA
+              </PpActionButton>
               {branchOptions.length > 1 ? (
                 <PpSegmentToggle
                   ariaLabel="Filial"
@@ -142,11 +160,11 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
                 />
               ) : null}
             </div>
-          ) : null
         }
       />
 
       <DeviceKpiStrip summary={summary} loading={loading} />
+      <FirmwareOtaKpiStrip branch={filters.branch} enabled={permissions.canViewDevices} />
 
       <DeviceFiltersBar
         filters={filters}

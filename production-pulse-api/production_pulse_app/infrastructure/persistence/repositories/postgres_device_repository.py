@@ -24,7 +24,8 @@ _DEVICE_COLUMNS = """
     id, branch, name, ip_address, controller_code, firmware_source, wifi_ssid, debounce_ms,
     device_api_token, driver_key, role_key, enabled,
     poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
-    last_metrics, last_error, created_at, updated_at, created_by, updated_by
+    last_metrics, last_error, created_at, updated_at, created_by, updated_by,
+    firmware_key, installed_firmware_version, target_firmware_version, firmware_reported_at
 """
 
 _DEVICE_LIST_COLUMNS = """
@@ -33,7 +34,8 @@ _DEVICE_LIST_COLUMNS = """
         AS device_api_token,
     driver_key, role_key, enabled,
     poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
-    last_metrics, last_error, created_at, updated_at, created_by, updated_by
+    last_metrics, last_error, created_at, updated_at, created_by, updated_by,
+    firmware_key, installed_firmware_version, target_firmware_version, firmware_reported_at
 """
 
 
@@ -92,6 +94,48 @@ class PostgresDeviceRepository:
                 )
                 return cur.fetchone()
 
+    def get_by_controller_code(
+        self, *, branch: str, controller_code: str
+    ) -> dict[str, Any] | None:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_DEVICE_COLUMNS}
+                    FROM production_pulse.devices
+                    WHERE branch = %s AND controller_code = %s
+                    LIMIT 1
+                    """,
+                    (branch, controller_code),
+                )
+                row = cur.fetchone()
+                return dict(row) if row else None
+
+    def record_installed_firmware_version(
+        self,
+        device_id: UUID,
+        *,
+        version: str,
+    ) -> dict[str, Any]:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.devices
+                    SET installed_firmware_version = %s,
+                        firmware_reported_at = NOW(),
+                        updated_at = NOW()
+                    WHERE id = %s
+                    RETURNING {_DEVICE_COLUMNS}
+                    """,
+                    (version, device_id),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        if row is None:
+            raise DeviceNotFoundError(str(device_id))
+        return dict(row)
+
     def create(
         self,
         *,
@@ -117,9 +161,10 @@ class PostgresDeviceRepository:
                         INSERT INTO production_pulse.devices (
                             branch, name, ip_address, controller_code, firmware_source,
                             wifi_ssid, debounce_ms, device_api_token,
-                            driver_key, role_key, enabled, poll_interval_ms, created_by, updated_by
+                            driver_key, role_key, enabled, poll_interval_ms,
+                            firmware_key, created_by, updated_by
                         )
-                        VALUES (%s, %s, %s::inet, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s::inet, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING {_DEVICE_COLUMNS}
                         """,
                         (
@@ -135,6 +180,7 @@ class PostgresDeviceRepository:
                             role_key,
                             enabled,
                             poll_interval_ms,
+                            driver_key,
                             actor_sub,
                             actor_sub,
                         ),
@@ -184,6 +230,7 @@ class PostgresDeviceRepository:
                             role_key = %s,
                             enabled = %s,
                             poll_interval_ms = %s,
+                            firmware_key = COALESCE(firmware_key, %s),
                             updated_by = %s,
                             updated_at = NOW()
                         WHERE id = %s
@@ -202,6 +249,7 @@ class PostgresDeviceRepository:
                             role_key,
                             enabled,
                             poll_interval_ms,
+                            driver_key,
                             actor_sub,
                             device_id,
                         ),
@@ -243,6 +291,10 @@ class PostgresDeviceRepository:
             "role_key": "role_key",
             "enabled": "enabled",
             "poll_interval_ms": "poll_interval_ms",
+            "firmware_key": "firmware_key",
+            "target_firmware_version": "target_firmware_version",
+            "installed_firmware_version": "installed_firmware_version",
+            "firmware_reported_at": "firmware_reported_at",
         }
         set_parts: list[str] = []
         params: list[Any] = []
@@ -290,21 +342,31 @@ class PostgresDeviceRepository:
         device_id: UUID,
         *,
         metrics: dict[str, Any],
+        installed_firmware_version: str | None = None,
     ) -> dict[str, Any]:
+        sets = [
+            "last_seen_at = NOW()",
+            "last_poll_attempt_at = NOW()",
+            "last_metrics = %s",
+            "last_error = NULL",
+            "updated_at = NOW()",
+        ]
+        params: list[Any] = [Json(metrics)]
+        if installed_firmware_version:
+            sets.append("installed_firmware_version = %s")
+            sets.append("firmware_reported_at = NOW()")
+            params.append(installed_firmware_version)
+        params.append(device_id)
         with plugins_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     f"""
                     UPDATE production_pulse.devices
-                    SET last_seen_at = NOW(),
-                        last_poll_attempt_at = NOW(),
-                        last_metrics = %s,
-                        last_error = NULL,
-                        updated_at = NOW()
+                    SET {", ".join(sets)}
                     WHERE id = %s
                     RETURNING {_DEVICE_COLUMNS}
                     """,
-                    (Json(metrics), device_id),
+                    params,
                 )
                 row = cur.fetchone()
             conn.commit()

@@ -31,6 +31,8 @@ export function parseOperatorAnchorFilter(
 
 export type ProductionPulseRouteKind =
   | "panel"
+  | "firmwares"
+  | "firmwareJobs"
   | "operatorHub"
   | "operatorPicker"
   | "operatorDevice"
@@ -41,6 +43,8 @@ export type ProductionPulseRouteKind =
 
 export type ProductionPulseRoute =
   | { kind: "panel" }
+  | { kind: "firmwares" }
+  | { kind: "firmwareJobs"; branch: string }
   | { kind: "operatorHub"; branch: string; anchorType: OperatorAnchorFilter; search: string }
   | { kind: "operatorPicker"; placementKey: string; branch: string }
   | { kind: "operatorDevice"; deviceId: string; branch: string; placementKey?: string }
@@ -63,6 +67,14 @@ export function parseProductionPulseRoute(pathname: string, search = ""): Produc
 
   if (normalized === PRODUCTION_PULSE_BASE_PATH) {
     return { kind: "panel" };
+  }
+
+  if (normalized === `${PRODUCTION_PULSE_BASE_PATH}/firmwares`) {
+    return { kind: "firmwares" };
+  }
+
+  if (normalized === `${PRODUCTION_PULSE_BASE_PATH}/firmware-jobs`) {
+    return { kind: "firmwareJobs", branch: query.get("branch") ?? "01" };
   }
 
   if (normalized === PRODUCTION_PULSE_OPERATOR_BASE) {
@@ -143,6 +155,14 @@ export function productionPulseDeviceDetailPath(
 ): string {
   const query = tab === "overview" ? "" : `?tab=${encodeURIComponent(tab)}`;
   return `${PRODUCTION_PULSE_BASE_PATH}/devices/${deviceId}${query}`;
+}
+
+export function productionPulseFirmwaresPath(): string {
+  return `${PRODUCTION_PULSE_BASE_PATH}/firmwares`;
+}
+
+export function productionPulseFirmwareJobsPath(branch = "01"): string {
+  return `${PRODUCTION_PULSE_BASE_PATH}/firmware-jobs?branch=${encodeURIComponent(branch)}`;
 }
 
 export function productionPulseOperatorPath(

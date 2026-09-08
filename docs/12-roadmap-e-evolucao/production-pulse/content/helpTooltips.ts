@@ -3,12 +3,17 @@
  * Copiar para `plugins/production-pulse/src/content/helpTooltips.ts` no scaffold E5.S1.
  */
 export const PP_HELP = {
+  apiErrors: {
+    apiUnavailable: "API Pulso de Produção indisponível. Tente novamente em instantes.",
+  },
+
   shell: {
     heroTitle:
       "Monitoramento de dispositivos IoT na filial: contadores, sensores de rotação, temperatura e demais métricas.",
     heroFilial: "Filial operacional dos dispositivos e sensores cadastrados.",
     pollAll:
       "Solicita leitura imediata em todos os dispositivos ativos da filial. Requer permissão de gestão.",
+    breadcrumbRoot: "Pulso de Produção",
     backToPanel: "Volta ao painel principal de dispositivos.",
     modeOperator: "Abre a visão simplificada para tablet no chão de fábrica.",
   },
@@ -35,7 +40,8 @@ export const PP_HELP = {
       "Busca por nome do device, rótulo do objeto (placement) ou endereço IP.",
     filterGroupBy:
       "Na vista agrupada, define se os devices aparecem por posto, máquina, equipamento ou área.",
-    viewList: "Tabela flat com todos os dispositivos e filtros ativos.",
+    viewTable: "Tabela com colunas — ideal para comparar muitos devices de uma vez.",
+    viewCards: "Cards com nome, objeto, métrica e ações — mais legível em telas menores.",
     viewGrouped: "Seções colapsáveis agrupadas pelo objeto operacional escolhido.",
     colName: "Nome do dispositivo IoT (ESP ou gateway) — identificação técnica na rede.",
     colPlacement:
@@ -47,6 +53,12 @@ export const PP_HELP = {
     colStatus: "Online se houve poll recente com sucesso; offline se timeout ou erro.",
     colLastSeen: "Momento da última comunicação bem-sucedida com o hardware.",
     rowPoll: "Lê o device agora e atualiza a métrica exibida.",
+    rowPollAction: "Atualizar",
+    cardOpenDetail: "Ver detalhe",
+    pollNoticeTitle: "Dispositivo não respondeu",
+    pollNoticeClose: "Fechar",
+    retryLoad: "Tentar novamente",
+    clearFilters: "Limpar filtros",
     rowReset:
       "Zera o contador físico (somente devices contador). Operação auditada.",
     emptyFilial:
@@ -68,7 +80,24 @@ export const PP_HELP = {
     ip:
       "Endereço IPv4 fixo do hardware na rede industrial. Deve ser alcançável pela API.",
     controllerCode:
-      "Identidade do chip no firmware (página do ESP /api/status). «Testar conexão» preenche automaticamente quando o device responde.",
+      "Identidade do chip no firmware (página do ESP /api/status). «Testar conexão» preenche automaticamente quando o device responde. Na LAN, o mDNS usa este código (ex.: esp-00a1b2c3.local).",
+    wifiSsid:
+      "Nome da rede Wi-Fi gravada no chip (EEPROM). Enviado ao dispositivo no Salvar.",
+    wifiPassword:
+      "Senha da rede Wi-Fi. Write-only: em branco = não altera a senha já gravada no chip. Nunca é armazenada no Postgres.",
+    debounceMs:
+      "Tempo de debounce dos botões no ESP (ms). Em branco no cadastro = default do firmware.",
+    apiToken:
+      "Segredo compartilhado plataforma↔chip (header X-Device-Token). Protege status, config e comandos; só a contagem (GET /api/contador) fica pública. Em branco = não altera o token já gravado.",
+    apiTokenSetHint:
+      "Já existe token neste cadastro. Deixe em branco para manter, ou informe um novo / use «Gerar token».",
+    generateApiTokenAction: "Gerar token",
+    deviceConfigPushFailed:
+      "Cadastro salvo, mas não foi possível enviar a configuração ao dispositivo. Verifique IP, energia e token.",
+    deviceConfigPushOk: "Configuração enviada ao dispositivo.",
+    deviceConfigPushSkipped: "Cadastro salvo. Nenhuma configuração de chip para enviar.",
+    firmwareSource:
+      "Cole aqui o sketch Arduino (.ino) deste dispositivo. Sem limite de tamanho. Fica disponível na aba Firmware do detalhe, pronto para copiar.",
     driver:
       "Protocolo/firmware instalado no device. Define quais métricas são lidas e se há comandos (+/−/zerar).",
     driverPreview:
@@ -79,6 +108,8 @@ export const PP_HELP = {
       "Desligado — para de pollar e some do hub operador; histórico é preservado.",
     testConnection:
       "Testa comunicação HTTP com o device sem gravar histórico. No cadastro novo usa test-probe (IP + driver); na edição, test no device salvo.",
+    testConnectionAction: "Testar conexão",
+    testConnectionLoading: "Testando…",
     anchorType:
       "Tipo de objeto onde o sensor está: posto PCP (CT), máquina, equipamento, área ou avulso.",
     anchorWorkCenter:
@@ -105,21 +136,44 @@ export const PP_HELP = {
     tabOverview: "Status ao vivo, amarração vigente e métricas atuais do device.",
     tabHistory: "Gráfico e tabela de leituras ao longo do tempo.",
     tabCommands: "Auditoria de comandos enviados ao hardware (zerar, +/−).",
+    tabFirmware:
+      "Versão OTA instalada/alvo e sketch .ino cadastrado (cópia para gravação manual).",
+    firmwareEmpty: "Nenhum código .ino cadastrado. Edite o dispositivo e cole o sketch.",
+    firmwareCopy: "Copiar código",
+    firmwareCopied: "Copiado",
+    firmwareCopyFailed: "Não foi possível copiar. Selecione o texto e copie manualmente.",
     liveMetrics:
-      "Valores lidos na última comunicação. Atualize com «Atualizar agora» se necessário.",
+      "Valores lidos na última comunicação. A tela atualiza sozinha no ritmo do intervalo de poll do dispositivo.",
+    chipHealth:
+      "Telemetria do chip via GET /api/status (versão, uptime, RSSI, heap). Atualiza ao usar «Atualizar agora».",
+    chipHealthTitle: "Saúde do chip",
+    chipHealthVersion: "Firmware",
+    chipHealthUptime: "Uptime",
+    chipHealthRssi: "Wi-Fi RSSI",
+    chipHealthHeap: "Heap livre",
+    chipHealthWifi: "Wi-Fi",
+    chipHealthWifiOnline: "Conectado",
+    chipHealthWifiOffline: "Desconectado",
     bindingCard:
       "Objeto operacional onde o sensor está instalado. CT TOTVS aparece aqui quando vinculado.",
     chartDelta:
       "Variação entre leituras consecutivas — relevante para contadores de golpe.",
     chartSeries:
-      "Evolução temporal de cada métrica (rpm, °C, golpes) conforme o driver.",
+      "Evolução temporal de cada métrica (rpm, °C, golpes) conforme o driver. O eixo X adapta a granularidade ao intervalo (segundos, minutos, horas).",
+    historyRangePresets:
+      "Atalhos de período (1 min → 12 meses, este mês). Acima de 7 dias o gráfico usa agregação horária; acima de 90 dias, diária. A tabela continua com leituras raw paginadas. O histórico só recarrega em «Atualizar agora»/comando — não a cada tick live. Livre usa data/hora manual.",
     readingsTable:
-      "Histórico paginado de polls e comandos gravados no banco (raw). Períodos longos no gráfico usam rollups hour/day.",
+      "Histórico paginado de polls e comandos gravados no banco (resolução raw). Raw antigo pode ser purgado pela retenção; o gráfico longo usa rollups.",
     commandsTable:
       "Quem executou cada comando, quando e se o hardware respondeu com sucesso.",
     pollNow: "Força leitura imediata e grava no histórico.",
+    pollNowAction: "Atualizar agora",
+    pollNowLoading: "Atualizando…",
     resetCounter:
       "Zera o contador no ESP. Use com cuidado — ação registrada em auditoria.",
+    factoryReset:
+      "Restaura Wi-Fi/token/debounce no chip (EEPROM) e reinicia. Histórico no banco não é apagado.",
+    factoryResetAction: "Factory reset",
     deactivate:
       "Desativa o device (soft delete). Para polling; não apaga histórico.",
     delta:
@@ -130,20 +184,43 @@ export const PP_HELP = {
       "Pode haver lacunas se o device ficou offline ou o poll falhou.",
   },
 
+  ota: {
+    openCatalog: "Catálogo de firmwares publicados para atualização OTA.",
+    openJobs: "Campanhas de atualização — disparo imediato ou agendado.",
+    catalogHero: "Publique binários por família/versão. Publicar sozinho não atualiza devices.",
+    publishForm: "Envia o artefato .bin e metadados. Requer permissão de gestão.",
+    catalogList: "Versões disponíveis por família de firmware.",
+    catalogEmpty: "Nenhuma versão publicada ainda.",
+    jobsHero: "Dispare atualização agora ou agende. O ESP baixa quando autorizado.",
+    jobCreate: "Escolha o firmware e o modo de disparo (agora ou data/hora).",
+    jobsList: "Campanhas da filial e status.",
+    jobsEmpty: "Nenhuma campanha criada.",
+    targetsList: "Status por dispositivo na campanha selecionada.",
+    deviceVersionCard:
+      "Versão reportada pelo chip e alvo da última campanha. Sketch .ino é independente do OTA.",
+    noPublishedFirmware: "Não há firmware publicado para esta família.",
+    deviceJobCreated: "Campanha criada. O device aplicará no próximo check OTA.",
+    deviceJobFailed: "Não foi possível criar a campanha OTA.",
+  },
+
   modals: {
     resetTitle: "Confirma zerar o contador físico deste device?",
     resetBody:
       "O valor no hardware volta a zero. A operação fica registrada com seu usuário.",
+    factoryResetTitle: "Restaurar configuração de fábrica do chip?",
+    factoryResetBody:
+      "Apaga Wi-Fi, token e debounce no EEPROM do ESP e reinicia o controlador. O contador em memória zera. O histórico no Production Pulse permanece. O token no cadastro também será limpo.",
+    factoryResetConfirm: "Restaurar fábrica",
     clearOperatorTitle: "Zerar contador para 0?",
     clearOperatorBody: "Confirme apenas se a contagem atual estiver incorreta.",
     testOk: "Conexão OK. Métricas retornadas pelo driver.",
     testFail:
       "Não foi possível alcançar o device. Verifique IP, cabo, Wi‑Fi ou firewall.",
     testTitle: "Testar conexão",
-    testLoading: "Testando conexão…",
-    testClose: "Fechar",
+    testLoading: "Testando comunicação com o device…",
     testLatencyPrefix: "Latência",
     testControllerCodePrefix: "Código do controlador",
+    testClose: "Fechar",
     deactivateTitle: "Desativar este dispositivo?",
     deactivateBody:
       "Para leituras automáticas. O cadastro e o histórico permanecem consultáveis.",
@@ -158,6 +235,8 @@ export const PP_HELP = {
     hubFilterEquipment: "Somente equipamentos (ventilador, motor, bomba…).",
     hubSearch:
       "Busca por nome do posto, máquina, equipamento ou código CT.",
+    hubSearchClear: "Limpar busca",
+    hubSearchAria: "Busca por posto, máquina ou equipamento",
     hubCardMeta:
       "Quantidade de sensores/contadores no local e quantos estão online.",
     pickerTitle: "Este local tem mais de um device — escolha qual usar.",
@@ -173,11 +252,16 @@ export const PP_HELP = {
     counterClear:
       "Zera o contador. Pedirá confirmação antes de enviar ao device.",
     gaugeValue: "Leitura atual do sensor — atualiza automaticamente a cada poucos segundos.",
+    gaugeThresholdWarn:
+      "Valor acima do limite de atenção definido no driver — verifique o processo.",
+    gaugeThresholdDanger:
+      "Valor acima do limite crítico — risco operacional; ação imediata recomendada.",
     gaugeRefresh: "Força nova leitura sem esperar o ciclo automático.",
     changePlacement: "Volta à lista de locais para escolher outro posto ou equipamento.",
     offlineBanner:
       "Sem comunicação com o device. Comandos ficam desabilitados até reconectar.",
     adminLink: "Abre o painel administrativo completo (se você tiver permissão).",
+    brandEyebrowPrefix: "PULSO",
   },
 
   badges: {
