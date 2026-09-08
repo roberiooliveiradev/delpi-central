@@ -1,177 +1,295 @@
-# Checklist — nova rota api-delpi exposta ao chat
+# Checklist — nova API/action exposta ao chat
 
-> **Público:** backend api-delpi + minha-delpi-ai-api  
-> **Cursor:** espelhado em `.cursor/rules/new-api-route-checklist.mdc` e índice `development-standards-index.mdc`  
-> **Princípio:** rota nova = contrato HTTP + roteamento no chat + perfil de apresentação + gates CI — não só endpoint.
+**Status:** vigente  
+**Público:** `api-delpi`, `minha-delpi-ai-api`, integradores de providers OpenAPI  
+**Regras Cursor:** `new-api-route-checklist.mdc`, `openapi-first-universal-tool-routing.mdc`  
+**Evals:** [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
 
----
+## Princípio
 
-## Visão geral
+Uma operation nova fica disponível ao agente por meio do próprio contrato OpenAPI e do Action Catalog.
 
 ```text
-api-delpi (HTTP + meta)
-    ↓
-OpenAPI import + ExternalActionRouteSelectionService
-    ↓
-ExecuteExternalActionUseCase
-    ↓
-ChatPresentationApiDeliveredMetadataService (schema-first)
-    ↓
-metadata.presentationDecision + renderPlan → MFE (render-only)
+Provider/API
+→ OpenAPI
+→ import/index
+→ Action Catalog
+→ agent binding + allowed actions
+→ retrieval top-K
+→ structured planner
+→ OpenAPI argument validator
+→ RBAC/policy/confirmation
+→ generic HTTP executor
+→ schema-driven presentation
+→ eval R1–R11
 ```
 
-**Doc:** [presentation-delivered-pure-jun2026.md](./presentation-delivered-pure-jun2026.md) · Regra Cursor: `schema-first-presentation-delivered.mdc`.
-
-Referências cruzadas:
-
-| Documento | Escopo |
-|-----------|--------|
-| [playbook-10-contrato-respostas-api-delpi.md](../roadmap/playbook-10-contrato-respostas-api-delpi.md) | Envelope, `meta.entity`, `meta.shape` |
-| [playbook-15-rotas-operacionais-sem-sql.md](../roadmap/playbook-15-rotas-operacionais-sem-sql.md) | Rotas operacionais PB15 |
-| [playbook-22-schema-first-api-actions-jun2026.md](../roadmap/playbook-22-schema-first-api-actions-jun2026.md) | North star actions + apresentação |
-| [presentation-delivered-pure-jun2026.md](./presentation-delivered-pure-jun2026.md) | Pipeline ativo — anti-acoplamento |
-| [assistant-content-catalog.md](./assistant-content-catalog.md) | Bundles JSON |
-| [api-delpi/docs/api/](../api/) | Endpoints HTTP |
+Não existe etapa de cadastro técnico paralelo da rota no chat.
 
 ---
 
-## 1. api-delpi
+## 1. Provider/API
 
-| # | Entrega | Arquivo / camada |
-|---|---------|------------------|
-| 1 | Resposta de sucesso | `api_delpi_success(data, operation_id=...)` em `route_response_helpers.py` |
-| 2 | Contrato semântico | `route_contract_registry.py` — `entity` + `shape` |
-| 3 | OpenAPI alinhado | `operation_id` idêntico no decorator e no registry |
-| 4 | Chat-critical | `openapi_agent_metadata.agent_route()` |
-| 5 | RBAC | `api_delpi_permissions.py` — sem strings literais no router |
-| 6 | `x-delpi` no OpenAPI | `route_contract_registry` → `openapi_delpi_extension_injector` (automático no `custom_openapi`) |
-| 7 | Teste | Smoke em `api-delpi/tests/` — `meta.operationId`, `meta.entity`, `x-delpi` |
+O contrato deve declarar adequadamente:
 
-**Shapes comuns:** `playbook_report`, `paged_list`, `scalar`, `composite_analysis`, `hierarchy` (playbook-10 § 4.3).
+- `operationId` estável e único;
+- método e path;
+- `summary` e `description` semanticamente úteis;
+- tags quando úteis;
+- path/query/header parameters com description, required e schema;
+- request body/schema;
+- response schema/descriptions;
+- exemplos quando agregarem informação;
+- autenticação/configuração do provider;
+- sensitivity/policy quando aplicável.
 
----
+### api-delpi
 
-## 2. Chat — roteamento e seleção
+A `api-delpi` mantém seus contratos internos adicionais:
 
-| # | Entrega | Onde |
-|---|---------|------|
-| 1 | Catálogo operacional | `operational_route_registry.json` |
-| 2 | Sincronização | `scripts/generate_operational_route_registry.py --check` |
-| 3 | Domínio novo | `api_route_domains.json` (`pathMarkers`, `parameterStrategies`) |
-| 4 | Seleção | `ExternalActionRouteSelectionService` (application) |
-| 5 | Execução HTTP | `ExecuteExternalActionUseCase` + gateway |
-| 6 | Regressão de intenção | `chat_intelligence_regression_cases.py` ou `production_operational_regression_cases.py` |
+- `api_delpi_success(..., operation_id=...)`;
+- metadata `entity`/`shape` quando aplicável;
+- RBAC canônico;
+- `openapi_agent_metadata` nas rotas chat-critical;
+- padrões TOTVS e testes próprios.
 
-**Proibido:** `if "/products/"` ou `if kpi` em use case ou MFE para escolher action.
+Essas extensões enriquecem a experiência DELPI, mas **não são pré-requisito de plugabilidade para APIs externas**.
 
 ---
 
-## 3. Chat — apresentação schema-first (delivered puro)
+## 2. Importação e Action Catalog
 
-**Proibido:** presenter por entidade, `visualBuilders`, `tableAssembly`, stack rico no pipeline.
+Depois do deploy/publicação do OpenAPI:
 
-### 3.1 Semântica → ajuste mínimo em JSON
+1. importar/reimportar provider;
+2. resolver schemas/refs aceitos pela policy de segurança;
+3. persistir/atualizar Action Catalog;
+4. gerar documento semântico/index;
+5. vincular provider/actions ao agente;
+6. verificar `allowed_action_ids` efetivos.
 
-| Semântica | Ajuste | Pipeline |
-|-----------|--------|----------|
-| Listagem (`items[]`) | `pathRules` + `chartPolicy: skip` | tabela genérica |
-| KPI / série | `chartPolicy: auto` | `ChatSchemaDrivenPresentationService` |
-| Hierarquia | perfil `tree_hierarchy` em pathRules | árvore schema-driven |
+O documento semântico deve aproveitar o contrato real:
 
-### 3.2 Arquivos JSON (obrigatório)
+```text
+operationId
+summary
+description
+tags
+method/path como metadata técnica
+parameters + descriptions + schemas
+request body
+response schema
+examples
+```
 
-| Arquivo | O que registrar |
-|---------|-----------------|
-| `presentation_profiles.json` | `entityProfiles`, `pathRules`, `chartPolicy`, `commentaryProfileKey` — **não** `visualBuilders` / `tableAssembly` |
-| `column_labels.json` | Rótulos; preferir `meta.fields` da API |
-| `presentation_vocabulary.json` | Scoring Automático (se nova heurística) |
-
-### 3.3 Pipeline canônico (código)
-
-1. `ChatPresentationMetadataPipelineService.build` → delega a `ChatPresentationApiDeliveredMetadataService`
-2. `ChatSchemaDrivenPresentationService` — primary + bundle (table/kpi/chart/tree)
-3. `ChatDataInsightEnrichmentService` — `dataAnswer` / `dataCommentary`
-4. `ChatPresentationDecisionService.enrich_metadata`
-5. `ChatPresentationRenderPipelineService.finalize` → `renderPlan`
-6. MFE render-only (`chatPresentation.ts`)
-
-Serviços auxiliares: `ChatPresentationFieldNormalizationService`, `ChatPresentationViewIntentService`, `ExternalActionSqlPresenter` / `ExternalActionKpiChartPresenter` (exceções legítimas).
-
-Detalhe do contrato metadata: [chat-assistant-content-presentation.md](./chat-assistant-content-presentation.md).
-
-### 3.4 Contratos entitySet × perfil
-
-`entitySetProfileContracts` em `presentation_profiles.json` define famílias de entidades (ex.: `playbookOperational` → `playbook_report`) e perfis **proibidos** (ex.: `kpi_series` em listagem).
-
-Validação: `ChatPresentationCoverageService.find_entity_set_profile_gaps()`.
+Não copiar esses fatos para JSON manual de endpoints.
 
 ---
 
-## 4. Gates CI
+## 3. Seleção
+
+A seleção deve funcionar por significado e contrato:
+
+```text
+mensagem/subtarefa
+→ candidates autorizadas
+→ hybrid retrieval
+→ top-K
+→ planner estruturado
+```
+
+Critérios:
+
+- específica vence genérica quando o pedido exige a capability específica;
+- no-tool vence quando tool não é necessária;
+- provider prefix não é critério de score;
+- planner não pode escolher action fora do top-K/autorizadas;
+- path e operationId são identificadores da action selecionada, não heurística de intenção hardcoded.
+
+---
+
+## 4. Argumentos
+
+O binding é OpenAPI-first.
+
+Validar:
+
+- `pathParams`;
+- query params;
+- headers permitidos;
+- request body;
+- required;
+- type;
+- enum;
+- format;
+- additional properties conforme schema;
+- coerência de datas/identificadores.
+
+Argumento obrigatório ausente:
+
+```text
+schema diz required
++ contexto não contém valor confiável
+→ pending/clarify específico
+```
+
+Nunca inventar valor para evitar pergunta ao usuário.
+
+---
+
+## 5. Segurança e governança
+
+Antes da execução:
+
+- provider habilitado;
+- action habilitada;
+- action em `allowed_action_ids`;
+- autorização do usuário preservada;
+- sensitivity permitida;
+- write/admin/destructive com confirmation quando exigido;
+- URL final derivada exclusivamente do provider/action autorizados;
+- nenhuma instrução de tool/RAG pode alterar policy;
+- secrets não entram em prompt/log/resposta.
+
+Seguir `ai-external-tools-security.mdc` e `http-integration-resilience.mdc`.
+
+---
+
+## 6. Execução
+
+Usar o caminho genérico:
+
+```text
+ExecuteExternalActionUseCase
+→ execution policy
+→ HTTP gateway/provider auth
+→ normalized result
+```
+
+Não criar client/selector/executor específico para cada API plugada, salvo adapter realmente necessário por protocolo diferente de HTTP/OpenAPI e explicitamente arquitetado.
+
+---
+
+## 7. Apresentação
+
+Fallback obrigatório:
+
+```text
+responseSchema + payload runtime + metadata
+→ ChatSchemaDrivenPresentationService
+→ presentationDecision/renderPlan
+→ MFE render-only
+```
+
+Perfis, labels e enriquecimentos especializados são opcionais.
+
+Uma API externa sem `x-delpi` ou perfil dedicado ainda deve gerar resposta utilizável.
+
+---
+
+## 8. Pedidos compostos e multi-turn
+
+A action participa do pipeline base de decomposição/contexto.
+
+Exemplo:
+
+```text
+consulte estoque, última compra e fornecedores; depois escreva um resumo
+```
+
+Deve virar subtarefas, dependências e plano de execução, não uma intent única.
+
+Follow-up:
+
+```text
+e no mês passado?
+agora deste outro produto
+mostre em tabela
+```
+
+reutiliza estado estruturado da conversa/resultado, não substring do último endpoint.
+
+---
+
+## 9. Testes obrigatórios
+
+Seguir R1–R11 do protocolo canônico.
+
+Para uma nova action:
+
+- import/index;
+- discovery/retrieval;
+- sibling semelhante;
+- negative/no-tool quando aplicável;
+- argumentos presentes;
+- argumento required ausente;
+- execution/policy;
+- outcome/task success;
+- apresentação;
+- performance/efficiency;
+- follow-up quando aplicável.
+
+Para mudança do motor de tools:
+
+- API externa fictícia desconhecida;
+- teste metamórfico com paths/operationIds diferentes e semântica equivalente;
+- multi-provider;
+- pedido composto;
+- prompt/tool-output injection;
+- action não autorizada;
+- write sem confirmação.
+
+---
+
+## 10. Gates
+
+Executar os testes do provider/API e os gates do repositório, incluindo:
 
 ```bash
-cd minha-delpi-ai-api
-
-# Perfis + contratos entitySet
-.venv/bin/python scripts/audit_presentation_coverage.py --check-profiles
-
-# Registry operacional
-.venv/bin/python scripts/generate_operational_route_registry.py --check
-
-# DOCIE (registry + path ifs)
-.venv/bin/python scripts/lint_operational_route_registry.py --check
-.venv/bin/python scripts/audit_presentation_path_ifs.py --check
-
-# Regressão apresentação Automático
-.venv/bin/python -m pytest tests/unit/domain/services/test_chat_presentation_view_intent_service.py -q
+python scripts/ci/audit_architecture_phase3.py --check --base <base>
+python scripts/audit_clean_architecture.py
+pytest tests/unit -q
 ```
 
-`--check-profiles` falha quando:
+Além dos testes específicos de OpenAPI/import/planner/validator/presentation alterados.
 
-- rota tier A resolve perfil `generic`;
-- entidade quebra contrato `entitySetProfileContracts`;
-- path sem `meta.entity` cai em perfil proibido (quando `validatePathWithoutEntity: true`).
+O CI deve bloquear novo:
 
-Homologação manual: [presentation-homologation-jun2026.md](../testing/presentation-homologation-jun2026.md).
-
----
-
-## 5. Teste mínimo de apresentação
-
-Fixture ou teste unitário com payload representativo e **sem** preferência explícita do usuário:
-
-| Cenário | `presentationDecision.selected` esperado |
-|---------|------------------------------------------|
-| Listagem (OPs, NF, movimentos) | `table` (ou `text` se perfil narrativa-first) |
-| KPI / série | `kpi`, `line_chart` ou tipo chart adequado |
-| Ranking agregado (filial × métrica) | chart pode vencer — `viewIntent: ranking` |
-
-Exemplo: `tests/unit/domain/services/test_chat_presentation_view_intent_service.py`.
+```text
+if path/provider/operationId no motor genérico
+catálogo técnico paralelo por endpoint
+retry inseguro de escrita
+HTTP sem timeout
+secret em log/config
+```
 
 ---
+
+## 11. Checklist de PR
+
+- [ ] OpenAPI completo e semanticamente útil.
+- [ ] Import/index atualiza Action Catalog.
+- [ ] Agent binding/allowed actions corretos.
+- [ ] Retrieval encontra a action por linguagem natural.
+- [ ] Actions próximas são distinguidas corretamente.
+- [ ] Argumentos validados contra schema.
+- [ ] Missing required gera clarify.
+- [ ] RBAC/policy/confirmation preservados.
+- [ ] Executor genérico usado.
+- [ ] Fallback schema-driven funciona sem extensão proprietária obrigatória.
+- [ ] R1–R11 required estão PASS.
+- [ ] Outcome real validado quando há oracle.
+- [ ] API externa desconhecida passa se o motor foi alterado.
+- [ ] Compound/multi-turn avaliados quando aplicável.
+- [ ] Architecture Enforcement verde.
 
 ## Anti-padrões
 
-| Erro | Consequência |
-|------|--------------|
-| Endpoint sem `entityProfiles` especial | Perfil derivado OpenAPI quando `x-delpi` + shape; catch-all de path proibido (gate pruning) |
-| Gráfico default no MFE ou prompt de agente | Divergência send/stream; regressão Automático |
-| Texto PT hardcoded em Python | Viola ADR 003 e gate de strings |
-| Serviço de decisão não ligado ao pipeline | Implementação «morta» — ver guardrails clean architecture |
-| `pathRules` genérica antes da específica | Perfil errado quando `meta.entity` ausente |
-
----
-
-## Checklist rápido (PR)
-
-- [ ] api-delpi: `api_delpi_success` + registry + teste meta
-- [ ] `operational_route_registry.json` + `--check`
-- [ ] `entityProfiles` só se perfil **não** substituível por `openapiShapeDefaults` (stock, analyser, …)
-- [ ] `audit_openapi_profile_pruning.py --check` verde
-- [ ] `audit_openapi_delpi_metadata.py --check` verde
-- [ ] `audit_path_entity_fallback_pruning.py --check` verde
-- [ ] `pathRules` específica antes de catch-all do domínio
-- [ ] Títulos/colunas em JSON
-- [ ] Regressão intenção + apresentação Automático
-- [ ] `--check-profiles` verde
-- [ ] Send e stream usam o mesmo pipeline de metadata
+- cadastrar rota manualmente no chat para torná-la descobrível;
+- marker por path/operationId;
+- parameter strategy por endpoint que replica o OpenAPI;
+- selector/service específico para provider;
+- presenter obrigatório por rota;
+- regex/boost para frase de fixture;
+- validar apenas path/tool e ignorar outcome;
+- alterar expected do teste para esconder regressão.
