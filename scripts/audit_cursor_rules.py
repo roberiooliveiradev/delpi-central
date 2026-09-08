@@ -22,12 +22,15 @@ GLOBAL_ALLOWLIST = {
 GLOBAL_BUDGET = len(GLOBAL_ALLOWLIST)
 
 REQUIRED_SPECIALIZED_RULES = {
+    # Fase 2 — guardrails transversais.
     "ai-external-tools-security.mdc",
     "ai-intelligence-evaluation.mdc",
     "ai-context-and-tool-budget.mdc",
     "http-integration-resilience.mdc",
     "observability-standards.mdc",
     "contract-evolution-backward-compatibility.mdc",
+    # Fase 3 — enforcement executável.
+    "architecture-ci-enforcement.mdc",
 }
 
 MAX_RULE_BYTES = 20_000
@@ -149,7 +152,7 @@ def main() -> int:
 
         if path.name in REQUIRED_SPECIALIZED_RULES and always_apply:
             errors.append(
-                f"{path.name}: guardrail da fase 2 deve permanecer especializado (alwaysApply=false)"
+                f"{path.name}: guardrail especializado deve permanecer alwaysApply=false"
             )
 
         size = path.stat().st_size
@@ -188,7 +191,7 @@ def main() -> int:
     print(f"- globais: {len(global_rules)}/{GLOBAL_BUDGET}")
     print("- globais canônicas: " + ", ".join(sorted(global_rules)))
     print(
-        "- guardrails fase 2: "
+        "- guardrails especializados obrigatórios: "
         + ", ".join(sorted(REQUIRED_SPECIALIZED_RULES & rule_names))
     )
 
