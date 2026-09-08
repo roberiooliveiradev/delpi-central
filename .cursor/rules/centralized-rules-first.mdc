@@ -1,5 +1,5 @@
 ---
-description: Sempre estender regras centralizadas; proibir patches locais e ifs duplicados
+description: Sempre estender regras centralizadas; proibir patches locais, duplicação de contrato e ifs por endpoint
 alwaysApply: true
 ---
 
@@ -7,61 +7,89 @@ alwaysApply: true
 
 ## Princípio
 
-**Nunca** corrigir sintoma com ajuste pontual em componente, use case ou prompt de agente. **Sempre** localizar o módulo canônico da regra, estendê-lo e cobrir com teste de regressão. Fluxo completo: **`root-cause-generalized-fix.mdc`**.
+**Nunca** corrigir sintoma com ajuste pontual em componente, use case, prompt de agente ou JSON de endpoint. **Sempre** localizar o módulo canônico da regra, estendê-lo e cobrir com teste de regressão. Fluxo completo: `root-cause-generalized-fix.mdc`.
 
-## Mapa canônico (referência rápida)
+## Mapa canônico — referência rápida
 
 | Domínio | Módulo canônico | Não duplicar em |
 |---------|-----------------|-----------------|
-| Pipeline / intenção / tools / RAG / direct answer | `minha-delpi-ai-api` → serviços em `application/services/` + `domain/services/` (`ChatTurnPreparation*`, `ChatIntentRouterService`, `ChatAssistantIdentityService`) | `SendChatMessageUseCase`, `StreamChatMessageUseCase`, prompt de agente |
-| Stack LLM (texto / embed / visão) | `LLM_PROVIDER` + `llm_stack_config` → `make_llm_gateway` / `make_embedding_gateway` / `make_vision_llm_gateway` (`llm-stack-centralized.mdc`) | `http://ollama:11434` em use case, `Settings.OLLAMA_*` para escolher motor, `_stage_ollama_vlm` novo |
+| Pipeline / intenção / tools / RAG / direct answer | `minha-delpi-ai-api` → serviços em `application/services/` + `domain/services/` | `SendChatMessageUseCase`, `StreamChatMessageUseCase`, prompt de agente |
+| **Tools/actions OpenAPI** | **OpenAPI importado + Action Catalog/index + planner/validator genéricos**; regra `openapi-first-universal-tool-routing.mdc` | `operational_route_registry.json` por endpoint, `if path`, selector por provider, prompt de agente |
+| Stack LLM | `LLM_PROVIDER` + `llm_stack_config` → factories canônicas | URL/modelo hardcoded em use case |
 | Skip de tools por intenção | `ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags` + `should_skip_tools` | `build_tool_context` inline, flags só no frontend |
-| Ativação de agente (chat comum vs agente) | API: `ChatWorkspaceAgentActivationService` + `ChatWorkspaceContextService` · MFE: `chatAgentActivation.ts` | `default_agent_id` de projeto na rota, `setContextAgentId` ad hoc |
-| Textos PT (status, activity, respostas) | `app/content/pt-BR/assistant/*.json` | strings em Python/TS |
-| Regex, limites, thresholds, vocabulário | `assistant/*.json` → `*ContentService` / `*PatternsService` | `re.compile` e constantes em `chat_*_service.py` |
-| Prosa/markdown/título/streaming do assistente | `plugins/minha-delpi-chat` → `assistantProseRendering.ts` + `chatMarkdown.ts` | `ChatMessageList`, `ChatAssistantContent`, hooks com `if` próprio |
-| Apresentação rica (tabela/gráfico/stack) | API: `ChatPresentationApiDeliveredMetadataService` → `ChatSchemaDrivenPresentationService` → `ChatPresentationDecisionService` · MFE: `chatPresentation.ts` (render-only) | `if '/analyser'` no use case, presenter por entidade, `visualBuilders`/`tableAssembly`, serviço paralelo de normalização |
-| Cobertura / incompletude / consolidado operacional | API: flags em `summary` + `pagination` · Chat: `ChatOperationalResultCompletenessService`, `ChatDataCoverageNoticeService`, `ChatOperationalSummarySemanticsService` · Textos: `data_coverage.json` | presenters (`linhas`, markdown), `presentation.incompleteNotice`, strings PT em Python |
-| Dicas visuais (tabela/árvore) | `ChatPresentationVisualUiHintService` → `presentationDecision.recommendations` | `tableVisualizationHint` em presenter/markdown |
-| Formato Automático (tabela vs gráfico) | `ChatPresentationDataShapeAnalyzer` (`viewIntent`) + `ChatPresentationViewIntentService` + perfis em `presentation_profiles.json` | Scoring ou default de chart só no MFE; catch-all de path sem `entityProfiles` |
-| Nova rota api-delpi (contrato + perfil + CI) | **`new-api-route-checklist.mdc`** + `operational_route_registry.json` | Endpoint só na api-delpi sem registry, contrato entitySet ou gate `--check-profiles` |
-| Veredito factual / coerência síntese LLM | `operational_factual_verdict.json` + `ChatOperationalFactualVerdictService` (por `profileKey`) | Serviço `*RouteName*` ou `if path` em enrichment/quality |
-| Suficiência pós-retrieve / follow-up de evidência | `operational_sufficiency_critic.json` + `ChatOperationalSufficiencyCriticService` (+ ContentService); entry em `ChatToolContextService` | Prompt de agente, `Send*`/`Stream*` inline, agentic planner free-pick de `operationId` |
-| Vazamento de instrução na síntese LLM | `llm_synthesis_delivery.json` + `ChatLlmSynthesisLeakGuardService` (finalize meta, operacional, web) | `ChatCapabilitiesLeak*`, `ChatOperationalLeak*`, filtro só no MFE, `if` no use case |
-| Prosa template vs lead `dataAnswer` | `presentation_profiles` → `dataAnswerLeadAlignment` + `ChatPresentationProseDeliveryService` | Heurística de markdown no `ChatRichPresentationTextService` |
-| Overlay / toolbar / popover (corte, scroll fantasma) | **`plugins-overlay-positioning.mdc`** → `AnchoredPanelPortal` + `resolveAnchoredPanelCoords` | `overflow: clip`, padding-fantasma, abspos+transform dentro de scroll |
+| Ativação de agente | `ChatWorkspaceAgentActivationService` + `ChatWorkspaceContextService` | `default_agent_id` ad hoc |
+| Textos PT / UX / vocabulário | `app/content/pt-BR/assistant/*.json` | strings em Python/TS |
+| **Contrato técnico de API** | **OpenAPI + Action Catalog** | `assistant/*.json`, `pathMarkers`, `operationIdMarkers` manuais |
+| Regex, limites, thresholds configuráveis | `assistant/*.json` → loaders canônicos | `re.compile` e constantes mágicas em serviços |
+| Prosa/markdown/streaming | `plugins/minha-delpi-chat` → renderers canônicos | componentes/hooks com if próprio |
+| Apresentação rica | API schema-driven + MFE render-only | presenter por rota/entidade, `if '/analyser'` |
+| Cobertura/incompletude operacional | serviços canônicos de completeness/coverage | presenters/markdown locais |
+| Formato Automático | analyzers + profiles canônicos | scoring só no MFE |
+| Nova rota/API exposta ao chat | `new-api-route-checklist.mdc` + `openapi-first-universal-tool-routing.mdc` | endpoint + registry manual obrigatório |
+| Veredito factual | serviço/profile canônico | serviço `*RouteName*` ou `if path` |
+| Suficiência pós-retrieve | critic/service canônico | prompt de agente, planner free-pick de `operationId` |
+| Vazamento de instrução | `ChatLlmSynthesisLeakGuardService` + markers canônicos | filtros locais |
+| Overlay / toolbar / popover | `plugins-overlay-positioning.mdc` | clip/padding/abspos paliativo |
 
-## Desacoplamento vs. centralização
+## OpenAPI-first é centralização de contrato
 
-- **Desacoplamento:** separar camadas (presenter / pipeline / MFE) e contratos (`metadata`, perfil JSON); código transversal sem nome de rota.
-- **Centralização:** uma fonte de verdade (DRY) — necessária, mas **não substitui** perfil declarativo nem serviço transversal.
-- **Anti-padrão:** `ChatOperational{RouteName}Service` para comportamento que deveria ser `profileKey` + JSON + serviço genérico.
+Para tools/actions, centralização significa:
 
-Ver definição completa: `presentation-operational-decoupling.mdc`.
+```text
+OpenAPI
+→ Action Catalog persistido/indexado
+→ allowed_action_ids/policies
+→ retrieval/planner/validator genéricos
+→ executor
+```
+
+Não significa substituir if Python por uma segunda tabela manual de endpoints em JSON.
+
+`operational_route_registry.json` é legado de compatibilidade/migração. Pode ser preservado até paridade, mas não deve crescer como procedimento normal de onboarding de APIs.
+
+## Desacoplamento vs centralização
+
+- **Desacoplamento:** separar domínio, aplicação, infraestrutura, contrato, UI e provider.
+- **Centralização:** uma única fonte de verdade por conceito.
+- **OpenAPI:** fonte técnica das operações.
+- **JSON assistente:** fonte de linguagem/policy/configuração transversal.
+- **Anti-padrão:** duplicar `path`, `operationId`, parâmetros ou schemas em JSON do assistente.
+
+## API externa como teste arquitetural
+
+Qualquer mudança no motor de tools deve responder:
+
+> Uma API OpenAPI externa, sem código no monorepo, funcionaria após importar/indexar e vincular ao agente?
+
+Se a resposta for “não, precisa editar selector/registry/intenção por endpoint”, a solução ainda está acoplada.
 
 ## O que NÃO fazer
 
-- `setStreamingStatus("…")` ou `<h3>{texto}</h3>` para contornar markdown quebrado.
-- `getPresentationTitle` + `stripLeadingMarkdownTitle` copiados em novo componente.
-- `hasMarkdownSyntax` + reveal incremental reimplementados fora de `assistantProseRendering`.
-- Novo `if (quem é vc)` em use case em vez de `resolve_skip_tool_flags` / `ChatAssistantIdentityService`.
-- Serviço de domínio nomeado pela rota para regra configurável por perfil — usar `operational_factual_verdict.json` + `ChatOperationalFactualVerdictService`.
-- Serviço `*CapabilitiesLeak*` / `*OperationalLeak*` / `*WebSearchLeak*` — usar `ChatLlmSynthesisLeakGuardService` + markers no JSON da família.
-- Novo `*_presenter.py` por rota ou entidade — usar `ChatSchemaDrivenPresentationService` (regra `schema-first-presentation-delivered.mdc`).
-- Fix só no agente ou só na UI quando o comportamento é transversal ao chat base.
-- Paliativo visual de overlay (`overflow: clip`, padding-fantasma, toolbar abspos no scroll) — ver **`plugins-overlay-positioning.mdc`**.
+- Novo `if (quem é vc)` em use case em vez de módulo canônico.
+- Novo presenter por rota/entidade.
+- Fix só no agente ou só na UI quando transversal.
+- `if "/products/" in path`, `if provider == "api-delpi"`, prefix bias ou selector por API no motor genérico.
+- Criar `pathMarkers`/`operationIdMarkers` como procedimento padrão de rota nova.
+- Copiar OpenAPI para `assistant/*.json`.
+- Permitir planner escolher action fora do catálogo permitido.
+- Criar `*LogisticsRouteService`, `*CrmRouteService`, `*HrRouteService` para providers plugados.
 
 ## O que fazer
 
-1. Identificar a regra de negócio (ex.: «prosa simples não é título», «identidade pula tools»).
-2. Implementar **uma vez** no módulo canônico da tabela acima.
-3. Consumir via API exportada (`resolveAssistantRenderableMarkdown`, `resolve_skip_tool_flags`, etc.).
-4. Adicionar teste em `assistantProseRendering.test.ts`, `test_turn_preparation_tool_routing.py` ou `chat_intelligence_regression_cases.py`.
-5. Se a regra for nova categoria, **criar** função/serviço central — não espalhar.
+1. Identificar a regra real e o módulo canônico.
+2. Para API/action, enriquecer primeiro o OpenAPI/importer/Action Catalog quando faltar metadata técnica.
+3. Para linguagem/policy, enriquecer JSON canônico, sem duplicar contrato.
+4. Implementar comportamento transversal uma vez.
+5. Ligar todos os consumidores ao módulo canônico.
+6. Cobrir caso positivo, irmão, negativo e, quando tools estiverem envolvidas, fixture de API externa desconhecida.
+7. Em migração grande, usar shadow/canary/rollback antes de remover legado.
 
 ## Checklist antes de merge
 
 - [ ] Existe um único ponto de verdade para a regra?
+- [ ] Metadata técnica de action veio do OpenAPI/Action Catalog?
+- [ ] JSON novo evita duplicar OpenAPI?
 - [ ] Nenhum consumidor novo bypassa o módulo canônico?
-- [ ] Teste de regressão cobre o bug que motivou a mudança?
-- [ ] Overlay/toolbar: sem clip/padding paliativo — **`plugins-overlay-positioning.mdc`**?
+- [ ] Nova API externa funcionaria sem editar core por endpoint?
+- [ ] Teste de regressão cobre caso positivo, irmão e negativo?
+- [ ] Mudança de tools respeita `allowed_action_ids`, sensitivity e confirmation?
