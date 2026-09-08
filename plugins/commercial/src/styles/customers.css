@@ -471,8 +471,7 @@
   margin-top: 4px;
 }
 
-.dashboard-commercial .cm-customer-orders__mobile,
-.dashboard-commercial .cm-customer-orders-preview__mobile,
+/* Toolbar de quantidade (milheiro/peças) — não confundir com superfícies __mobile. */
 .dashboard-commercial .cm-customer-order-lines__display-mode {
   display: flex;
   flex-wrap: wrap;
@@ -498,6 +497,9 @@
   letter-spacing: 0.01em;
 }
 
+/* Desktop: só tabela. Mobile (≤768px): só cards — ver media query abaixo. */
+.dashboard-commercial .cm-customer-orders__mobile,
+.dashboard-commercial .cm-customer-orders-preview__mobile,
 .dashboard-commercial .cm-customer-order-lines__mobile,
 .dashboard-commercial .cm-customer-invoices__mobile,
 .dashboard-commercial .cm-customer-invoice-items__mobile {

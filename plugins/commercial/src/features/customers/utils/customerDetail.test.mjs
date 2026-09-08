@@ -621,6 +621,43 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(attention, /navigateCustomerOrderDetail/);
   });
 
+  it("desktop/mobile de pedidos: cards escondidos no desktop (não no display-mode)", () => {
+    const css = readSrc("styles/customers.css");
+    const table = readSrc("features/customers/components/CustomerOrdersTable.tsx");
+    const preview = readSrc("features/customers/components/CustomerOpenOrdersPreview.tsx");
+    const lines = readSrc("features/customers/components/CustomerOrderLines.tsx");
+
+    // Positive: dual surface (tabela + cards) existe no TSX.
+    assert.match(table, /cm-customer-orders__desktop/);
+    assert.match(table, /cm-customer-orders__mobile/);
+    assert.match(preview, /cm-customer-orders-preview__desktop/);
+    assert.match(preview, /cm-customer-orders-preview__mobile/);
+
+    // Sibling: família Conta esconde __mobile no desktop e mostra em ≤768px.
+    const desktopHide = css.match(
+      /\.cm-customer-orders__mobile[\s\S]*?\.cm-customer-invoice-items__mobile\s*\{\s*display:\s*none;/,
+    );
+    assert.ok(desktopHide, "superfícies __mobile da Conta devem ter display:none no desktop");
+    assert.match(desktopHide[0], /cm-customer-orders-preview__mobile/);
+    assert.match(desktopHide[0], /cm-customer-order-lines__mobile/);
+    assert.match(desktopHide[0], /cm-customer-invoices__mobile/);
+    assert.match(
+      css,
+      /@media \(max-width: 768px\)[\s\S]*cm-customer-orders__mobile[\s\S]*display:\s*grid/,
+    );
+
+    // Negative: toolbar display-mode não pode compartilhar o flex com __mobile.
+    assert.match(lines, /cm-customer-order-lines__display-mode/);
+    assert.match(
+      css,
+      /\.cm-customer-order-lines__display-mode\s*\{\s*display:\s*flex;/,
+    );
+    assert.doesNotMatch(
+      css,
+      /cm-customer-orders__mobile[\s\S]*cm-customer-order-lines__display-mode\s*\{\s*display:\s*flex;/,
+    );
+  });
+
   it("navegacao a partir da tabela de clientes", () => {
     const table = readSrc("features/customers/components/CustomersTable.tsx");
     const card = readSrc("features/customers/components/CustomerListCard.tsx");
