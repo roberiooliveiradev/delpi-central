@@ -87,18 +87,36 @@ class OpenApiFirstSelectionBridgeService:
         )
         subtasks = DecomposeExternalActionRequestsService.decompose(message)
         plans: list[ActionPlan] = []
+        actions_by_id: dict[str, dict[str, Any]] = {}
+        for action in catalog_actions or []:
+            action_id = str(action.get("actionId") or "").strip()
+            if action_id:
+                actions_by_id[action_id] = dict(action)
+
         rolling_context = dict(execution_context or {})
+        compound_fragments = len(subtasks) > 1
+        # Compound decompose already split the user intent — prefer deterministic
+        # binder/ranker per fragment (LLM free-pick on fragments drops siblings).
+        fragment_planner = (
+            PlanExternalActionsService(llm_planner=None)
+            if compound_fragments
+            else self.planner
+        )
         for subtask in subtasks:
             candidates = self.retriever.retrieve(
                 subtask.text,
                 allowed_action_ids=allowed_action_ids,
                 catalog_actions=catalog_actions,
             )
-            plan = self.planner.plan(
+            for candidate in candidates:
+                if candidate.action_id:
+                    actions_by_id[candidate.action_id] = candidate.raw_action
+            plan = fragment_planner.plan(
                 subtask.text,
                 candidates,
                 previous_messages=previous_messages,
                 execution_context=rolling_context,
+                max_steps=1 if compound_fragments else None,
             )
             plans.append(plan)
             # Propagate resolved args across independent read subtasks (compound DAG).
@@ -110,21 +128,16 @@ class OpenApiFirstSelectionBridgeService:
                     arguments=step.arguments,
                 )
         plan = self._merge_subtask_plans(plans)
-        actions_by_id: dict[str, dict[str, Any]] = {}
-        for action in catalog_actions or []:
-            action_id = str(action.get("actionId") or "").strip()
-            if action_id:
-                actions_by_id[action_id] = dict(action)
-        # Re-retrieve once for metadata enrichment of chosen ids.
         for step in plan.steps:
-            if step.action_id in actions_by_id:
-                continue
-            for candidate in self.retriever.retrieve(
-                message,
+            resolved = self._resolve_action_dict(
+                step.action_id,
+                actions_by_id=actions_by_id,
                 allowed_action_ids=allowed_action_ids,
                 catalog_actions=catalog_actions,
-            ):
-                actions_by_id[candidate.action_id] = candidate.raw_action
+                message=message,
+            )
+            if resolved:
+                actions_by_id[step.action_id] = resolved
 
         planned = self._plan_to_tool_calls(
             plan,
@@ -269,6 +282,65 @@ class OpenApiFirstSelectionBridgeService:
             }
             results.append(payload)
         return results
+
+    def _resolve_action_dict(
+        self,
+        action_id: str,
+        *,
+        actions_by_id: dict[str, dict[str, Any]],
+        allowed_action_ids: list[str] | None,
+        catalog_actions: list[dict[str, Any]] | None,
+        message: str,
+    ) -> dict[str, Any] | None:
+        """Ensure validate/execute see full OpenAPI parametersSchema for the step."""
+        action_id = str(action_id or "").strip()
+        if not action_id:
+            return None
+
+        current = actions_by_id.get(action_id)
+        if isinstance(current, dict) and (
+            current.get("parametersSchema")
+            or current.get("parameters_schema")
+            or current.get("path")
+        ):
+            return current
+
+        for action in catalog_actions or []:
+            if str(action.get("actionId") or "").strip() == action_id:
+                return dict(action)
+
+        repo = self.repository
+        if repo is not None and hasattr(repo, "get_action_for_execution"):
+            try:
+                payload = repo.get_action_for_execution(action_id)
+            except Exception:
+                payload = None
+            if isinstance(payload, dict):
+                nested = payload.get("action")
+                if isinstance(nested, dict) and nested.get("actionId"):
+                    return dict(nested)
+
+        if repo is not None and hasattr(repo, "find_candidate_actions"):
+            try:
+                rows = repo.find_candidate_actions(
+                    action_id,
+                    limit=5,
+                    allowed_action_ids=[action_id],
+                )
+            except Exception:
+                rows = []
+            for row in rows or []:
+                if str(row.get("actionId") or "").strip() == action_id:
+                    return dict(row)
+
+        for candidate in self.retriever.retrieve(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            catalog_actions=catalog_actions,
+        ):
+            if candidate.action_id == action_id:
+                return candidate.raw_action
+        return current if isinstance(current, dict) else None
 
     @classmethod
     def _merge_subtask_plans(cls, plans: list[ActionPlan]) -> ActionPlan:
