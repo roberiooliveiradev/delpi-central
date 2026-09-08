@@ -23,6 +23,15 @@ describe("PluginShell TopBar collapse", () => {
     expect(source).toMatch(/SHELL_NAV_CONTENT\.menuLabel/);
     expect(source).toMatch(/ShellTopBarSecondary/);
     expect(source).toMatch(/ShellTopBarActions/);
+    expect(source).toMatch(/SuppliesPageHero/);
+  });
+
+  it("não duplica Ajuda nas actions (só na nav)", () => {
+    const slots = readFileSync(join(dir, "ShellTopBarSlots.tsx"), "utf8");
+    expect(slots).not.toMatch(/helpActionLabel/);
+    expect(slots).not.toMatch(/navigatePluginView\("help"/);
+    expect(slots).toMatch(/SuppliesTopBarSearchTrigger/);
+    expect(slots).toMatch(/HelpTooltip/);
   });
 
   it("exporta modo hamburger com trigger overflow", () => {

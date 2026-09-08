@@ -116,37 +116,8 @@
   border: 0;
 }
 
-.dashboard-supplies-portal .sp-home__hero {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.dashboard-supplies-portal .sp-home__eyebrow {
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--sp-accent);
-}
-
-.dashboard-supplies-portal .sp-home__description {
-  margin: 0;
-  color: var(--sp-text-muted);
-  max-width: 40rem;
-}
-
-.dashboard-supplies-portal .sp-home__onboarding,
-.dashboard-supplies-portal .sp-home__route-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.dashboard-supplies-portal .sp-home__chip,
-.dashboard-supplies-portal .sp-home__route {
+/* Chip reutilizado em Overview / Manual */
+.dashboard-supplies-portal .sp-home__chip {
   appearance: none;
   border: 1px solid var(--sp-border);
   background: var(--sp-surface);
@@ -157,54 +128,47 @@
   cursor: pointer;
 }
 
-.dashboard-supplies-portal .sp-home__chip:hover,
-.dashboard-supplies-portal .sp-home__route:hover {
+.dashboard-supplies-portal .sp-home__chip:hover {
   border-color: color-mix(in srgb, var(--sp-accent) 45%, var(--sp-border));
 }
 
-.dashboard-supplies-portal .sp-home__paths-head {
+/* Início — padrão Comercial (hero no shell + stack Eventos/Caminhos) */
+.dashboard-supplies-portal .sp-home-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-grid-gap, 16px);
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-home-paths {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-home-sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-grid-gap, 16px);
+  align-items: start;
+}
+
+.dashboard-supplies-portal .sp-home-queue-ok {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-}
-
-.dashboard-supplies-portal .sp-home__paths-head h2,
-.dashboard-supplies-portal .sp-home__section h3 {
-  margin: 0 0 0.25rem;
-  color: var(--sp-title);
-}
-
-.dashboard-supplies-portal .sp-home__paths-head p,
-.dashboard-supplies-portal .sp-home__section p {
-  margin: 0;
-  color: var(--sp-text-muted);
-}
-
-.dashboard-supplies-portal .sp-home__search input {
-  min-height: 44px;
-  min-width: min(100%, 16rem);
-  padding: 0.5rem 0.75rem;
+  gap: 8px 12px;
+  padding: 10px 14px;
   border: 1px solid var(--sp-border);
   border-radius: 10px;
   background: var(--sp-surface);
   color: var(--sp-text);
+  font-size: 0.875rem;
 }
 
-.dashboard-supplies-portal .sp-home__section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.dashboard-supplies-portal .sp-home__attention h2 {
-  margin: 0 0 0.75rem;
-  color: var(--sp-title);
-}
-
-.dashboard-supplies-portal .sp-home__attention-list {
+.dashboard-supplies-portal .sp-home-attention-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
   gap: 0.75rem;
@@ -213,7 +177,7 @@
   list-style: none;
 }
 
-.dashboard-supplies-portal .sp-home__attention-card {
+.dashboard-supplies-portal .sp-home-attention-card {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -222,7 +186,7 @@
   width: 100%;
   appearance: none;
   border: 1px solid var(--sp-border);
-  background: var(--sp-surface);
+  background: color-mix(in srgb, var(--sp-text) 3%, var(--sp-surface));
   color: var(--sp-text);
   border-radius: 12px;
   padding: 0.9rem 1rem;
@@ -230,60 +194,30 @@
   cursor: pointer;
 }
 
-.dashboard-supplies-portal .sp-home__attention-card:disabled {
+.dashboard-supplies-portal .sp-home-attention-card:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--sp-accent) 40%, var(--sp-border));
+}
+
+.dashboard-supplies-portal .sp-home-attention-card:disabled {
   opacity: 0.65;
   cursor: not-allowed;
 }
 
-.dashboard-supplies-portal .sp-home__attention-title {
+.dashboard-supplies-portal .sp-home-attention-card__title {
   font-weight: 600;
   color: var(--sp-title);
 }
 
-.dashboard-supplies-portal .sp-home__attention-desc {
+.dashboard-supplies-portal .sp-home-attention-card__desc {
   color: var(--sp-text-muted);
   font-size: 0.9rem;
   line-height: 1.4;
 }
 
-.dashboard-supplies-portal .sp-home__attention-count {
+.dashboard-supplies-portal .sp-home-attention-card__count {
   margin-top: 0.25rem;
   font-size: 0.85rem;
   color: var(--sp-text-muted);
-}
-
-.dashboard-supplies-portal .sp-home__shortcuts {
-  display: grid;
-  gap: 1rem;
-  margin: 1rem 0;
-}
-
-.dashboard-supplies-portal .sp-home__shortcuts h3 {
-  margin: 0 0 0.35rem;
-  color: var(--sp-title);
-  font-size: 1rem;
-}
-
-.dashboard-supplies-portal .sp-home__muted {
-  margin: 0;
-  color: var(--sp-text-muted);
-}
-
-.dashboard-supplies-portal .sp-home__route-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.15rem;
-}
-
-.dashboard-supplies-portal .sp-home__fav {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: var(--sp-accent);
-  cursor: pointer;
-  min-width: 44px;
-  min-height: 44px;
-  font-size: 1.1rem;
 }
 
 .dashboard-supplies-portal .sp-user-manual__hero {
@@ -536,74 +470,13 @@
   opacity: 0.72;
 }
 
-/* TopBar slots — alinhado ao shell Comercial (pills secondary/actions) */
+/* TopBar slots — layout only; pill Buscar vem do kit (TopBarSearchTrigger) */
 .dashboard-supplies-portal .sp-shell-secondary,
 .dashboard-supplies-portal .sp-shell-actions {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   min-width: 0;
-}
-
-.dashboard-supplies-portal .sp-shell-secondary__search,
-.dashboard-supplies-portal .sp-shell-actions__help {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0;
-  min-height: 44px;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--sp-text) 4%, transparent);
-  color: var(--sp-text);
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.2;
-  cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease;
-}
-
-.dashboard-supplies-portal .sp-shell-secondary__search:hover,
-.dashboard-supplies-portal .sp-shell-actions__help:hover {
-  background: color-mix(in srgb, var(--sp-accent) 12%, transparent);
-  border-color: color-mix(in srgb, var(--sp-accent) 28%, transparent);
-}
-
-.dashboard-supplies-portal .sp-shell-secondary__search:focus-visible,
-.dashboard-supplies-portal .sp-shell-actions__help:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--sp-accent) 70%, transparent);
-  outline-offset: 2px;
-}
-
-.dashboard-supplies-portal .sp-shell-secondary__kbd {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.1rem 0.35rem;
-  border: 1px solid var(--sp-border);
-  border-radius: 6px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--sp-text-muted);
-  background: var(--sp-surface);
-}
-
-@media (max-width: 720px) {
-  .dashboard-supplies-portal .sp-shell-secondary__search-label,
-  .dashboard-supplies-portal .sp-shell-secondary__kbd,
-  .dashboard-supplies-portal .sp-shell-actions__help span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
 }
 
 /* Solicitações de compras (E6 C1) */

@@ -40,8 +40,24 @@ export const SHELL_NAV_CONTENT = {
   expandLabel: "Expandir navegação",
   menuLabel: "Menu de navegação",
   searchLabel: "Buscar",
+  searchShortcutLabel: "Ctrl+K",
   searchTitle: "Buscar áreas do Portal (Ctrl+K)",
   searchAriaLabel: "Abrir busca do Portal Suprimentos",
-  helpActionLabel: "Ajuda",
-  helpActionAriaLabel: "Abrir Ajuda do Portal Suprimentos",
+  homeHero: {
+    eyebrow: "Portal Suprimentos",
+    ariaLabel: "Saudação",
+    description:
+      "Acompanhe a atenção do dia e abra as funcionalidades — indicadores do período ficam na Visão geral.",
+    scopeUnits: "Filiais no escopo",
+    scopeEmpty: "Sem filial liberada",
+    helpAriaLabel: "Ajuda: Início",
+    highlights: {
+      attention: "Atenção",
+      attentionClear: "Em dia",
+      units: "Filiais",
+      overview: "Visão geral",
+      overviewCta: "Abrir",
+      overviewLocked: "Sem acesso",
+    },
+  },
 } as const;

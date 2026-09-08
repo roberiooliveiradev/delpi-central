@@ -8,7 +8,10 @@ import {
   Package,
   ShoppingCart,
 } from "lucide-react";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
+import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
+import { getHomeAttention, type HomeAttentionCard } from "../api/homeAttention";
 import { SP_HELP } from "../content/helpTooltips";
 import {
   collectSearchHits,
@@ -26,7 +29,15 @@ import { navigatePluginView } from "./pluginNavigation";
 import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
 import { ShellTopBarActions, ShellTopBarSecondary } from "./ShellTopBarSlots";
 import { useSuppliesSession } from "./SuppliesSessionContext";
-import { SP_PORTAL_SCOPE, SuppliesCommandPalette, SuppliesTopBar, SuppliesViewTransition } from "./suppliesUi";
+import {
+  SP_PORTAL_SCOPE,
+  SuppliesActionButton,
+  SuppliesCommandPalette,
+  SuppliesPageHero,
+  SuppliesStatusBadge,
+  SuppliesTopBar,
+  SuppliesViewTransition,
+} from "./suppliesUi";
 
 type PluginShellProps = {
   view: PluginView;
@@ -64,6 +75,13 @@ const NAV_TARGET: Record<PluginNavId, Parameters<typeof navigatePluginView>[0]> 
   help: "help",
 };
 
+function greetingForNow(date = new Date()): string {
+  const hour = date.getHours();
+  if (hour < 12) return "Bom dia";
+  if (hour < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   if (target.isContentEditable) return true;
@@ -75,6 +93,9 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const session = useSuppliesSession();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
+  const [userFirstName, setUserFirstName] = useState<string | null>(null);
+  const [attentionCards, setAttentionCards] = useState<HomeAttentionCard[]>([]);
+  const [attentionReady, setAttentionReady] = useState(false);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -88,6 +109,33 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [paletteOpen]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchMeProfile(controller.signal)
+      .then((profile) => setUserFirstName(firstNameFromDisplay(profile.name)))
+      .catch(() => {
+        if (!controller.signal.aborted) setUserFirstName(null);
+      });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    if (view !== "home") return;
+    const controller = new AbortController();
+    setAttentionReady(false);
+    void getHomeAttention(controller.signal)
+      .then((payload) => {
+        setAttentionCards(Array.isArray(payload.cards) ? payload.cards : []);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setAttentionCards([]);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setAttentionReady(true);
+      });
+    return () => controller.abort();
+  }, [view]);
 
   const caps = session.capabilities;
   const items = resolveShellNavItems({
@@ -126,6 +174,43 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
 
   const activeId = resolveActiveNavId(view);
   const density = session.preferences?.tableDensity ?? "comfortable";
+  const showGreeting = view === "home";
+  const heroCopy = SHELL_NAV_CONTENT.homeHero;
+  const greeting = greetingForNow();
+  const heroTitle = userFirstName ? `${greeting}, ${userFirstName}` : greeting;
+  const actionableAttention = attentionCards.filter((card) => card.status !== "unavailable");
+  const attentionValue = attentionReady
+    ? actionableAttention.length > 0
+      ? `${actionableAttention.length}`
+      : heroCopy.highlights.attentionClear
+    : "—";
+  const unitsLabel =
+    session.allowedUnits.length > 0
+      ? session.allowedUnits.join(", ")
+      : heroCopy.scopeEmpty;
+  const heroHighlights = [
+    {
+      id: "attention",
+      label: heroCopy.highlights.attention,
+      value: attentionValue,
+      tone:
+        attentionReady && actionableAttention.length > 0
+          ? ("warning" as const)
+          : ("neutral" as const),
+    },
+    {
+      id: "units",
+      label: heroCopy.highlights.units,
+      value: session.allowedUnits.length > 0 ? String(session.allowedUnits.length) : "—",
+    },
+    {
+      id: "overview",
+      label: heroCopy.highlights.overview,
+      value: caps.analytics
+        ? heroCopy.highlights.overviewCta
+        : heroCopy.highlights.overviewLocked,
+    },
+  ];
 
   return (
     <div
@@ -156,8 +241,49 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
             onSelect: () => navigatePluginView(NAV_TARGET[item.id], { basePath }),
           }))}
           secondary={<ShellTopBarSecondary onOpenPalette={() => setPaletteOpen(true)} />}
-          actions={<ShellTopBarActions basePath={basePath} />}
+          actions={<ShellTopBarActions />}
         />
+
+        {showGreeting ? (
+          <SuppliesViewTransition transitionKey="home-hero" tone="page">
+            <SuppliesPageHero
+              aria-label={heroCopy.ariaLabel}
+              eyebrow={heroCopy.eyebrow}
+              title={
+                <>
+                  {heroTitle}
+                  <HelpTooltip
+                    content={SP_HELP.homeVsOverview}
+                    ariaLabel={heroCopy.helpAriaLabel}
+                  />
+                </>
+              }
+              description={heroCopy.description}
+              badge={
+                <SuppliesStatusBadge
+                  label={
+                    session.allowedUnits.length > 0
+                      ? `${heroCopy.scopeUnits}: ${unitsLabel}`
+                      : heroCopy.scopeEmpty
+                  }
+                  variant={session.allowedUnits.length > 0 ? "info" : "neutral"}
+                />
+              }
+              highlights={heroHighlights}
+              actions={
+                caps.analytics ? (
+                  <SuppliesActionButton
+                    variant="primary"
+                    onClick={() => navigatePluginView("overview", { basePath })}
+                  >
+                    {heroCopy.highlights.overview}
+                  </SuppliesActionButton>
+                ) : undefined
+              }
+            />
+          </SuppliesViewTransition>
+        ) : null}
+
         <SuppliesViewTransition transitionKey={view} tone="page">
           {children}
         </SuppliesViewTransition>

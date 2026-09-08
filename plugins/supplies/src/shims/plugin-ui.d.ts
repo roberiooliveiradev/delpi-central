@@ -11,6 +11,15 @@ declare module "@delpi/plugin-ui/index" {
     children?: ReactNode;
   }): ReactNode;
 
+  export function ActionButton(props: {
+    children: ReactNode;
+    variant?: "primary" | "secondary" | "ghost" | "danger";
+    onClick?: () => void;
+    disabled?: boolean;
+    type?: "button" | "submit" | "reset";
+    className?: string;
+  }): ReactNode;
+
   export function emptyStateCardBemClasses(prefix: string): {
     root: string;
     withTitle: boolean;
@@ -21,6 +30,10 @@ declare module "@delpi/plugin-ui/index" {
     error: string;
     success: string;
   };
+
+  export function sectionCardPacBemClasses(prefix: string): Record<string, string>;
+  export function sectionRouteCardBemClasses(prefix: string): Record<string, string>;
+  export function catalogSearchBarBemClasses(prefix: string): Record<string, string>;
 
   export function createDashboardEmptyState(config: {
     classNames: { root: string; withTitle: boolean };
@@ -64,6 +77,17 @@ declare module "@delpi/plugin-ui/index" {
     secondary?: ReactNode;
   }>;
 
+  export function createDashboardTopBarSearchTrigger(config: {
+    prefix: string;
+  }): ComponentType<{
+    onOpen: () => void;
+    label: string;
+    shortcutLabel: string;
+    "aria-label": string;
+    title?: string;
+    className?: string;
+  }>;
+
   export function createDashboardCommandPalette(config: {
     prefix: string;
     portalScopeClassName: string;
@@ -98,6 +122,90 @@ declare module "@delpi/plugin-ui/index" {
     transitionKey: string;
     tone?: "page" | "panel";
     children: ReactNode;
+  }>;
+
+  export function createDashboardPageHero(config: { prefix: string }): ComponentType<{
+    eyebrow?: ReactNode;
+    title: ReactNode;
+    description?: ReactNode;
+    badge?: ReactNode;
+    actions?: ReactNode;
+    highlights?: Array<{
+      id: string;
+      label: ReactNode;
+      value: ReactNode;
+      tone?: "neutral" | "warning" | "danger";
+    }>;
+    density?: "comfortable" | "compact";
+    "aria-label"?: string;
+    children?: ReactNode;
+  }>;
+
+  export function createDashboardSectionCard(config: {
+    classNames: Record<string, string>;
+    labels: {
+      titleHelpAriaLabel: (title: string) => string;
+      expandAriaLabel: (title: string) => string;
+      collapseAriaLabel: (title: string) => string;
+    };
+  }): ComponentType<{
+    title: string;
+    subtitle?: string;
+    hint?: string;
+    children: ReactNode;
+    actions?: ReactNode;
+  }>;
+
+  export function createDashboardSectionRouteCard(config: {
+    classNames: Record<string, string>;
+  }): ComponentType<{
+    title: string;
+    description?: string;
+    icon?: ReactNode;
+    routes: Array<{
+      id: string;
+      label: string;
+      onClick: () => void;
+      pinned?: boolean;
+      onPinClick?: () => void;
+      pinLabel?: string;
+      unpinLabel?: string;
+    }>;
+  }>;
+
+  export function createDashboardCatalogSearchBar(config: {
+    classNames: Record<string, string>;
+  }): ComponentType<{
+    value: string;
+    onChange: (value: string) => void;
+    hits?: ReadonlyArray<{ id: string; label: string; groupLabel?: string }>;
+    onSelectHit: (id: string) => void;
+    placeholder?: string;
+    clearLabel?: string;
+    emptyHitsLabel?: string;
+    "aria-label"?: string;
+  }>;
+
+  export function createDashboardHubChipRow(config: {
+    prefix: string;
+  }): ComponentType<{
+    label: string;
+    "aria-label"?: string;
+    children: ReactNode;
+  }>;
+
+  export function createDashboardRouteChip(config: { prefix: string }): ComponentType<{
+    label: string;
+    tone?: "pinned" | "recent" | "default";
+    leadingIcon?: ReactNode;
+    onNavigate: () => void;
+    onRemove?: () => void;
+    removeLabel?: string;
+  }>;
+
+  export function createDashboardStatusBadge(config: { prefix: string }): ComponentType<{
+    label: string;
+    variant?: "neutral" | "info" | "success" | "warning" | "danger";
   }>;
 
   export type KpiCardLabels = {
