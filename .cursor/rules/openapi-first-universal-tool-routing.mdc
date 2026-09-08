@@ -1,0 +1,272 @@
+---
+description: Roteamento universal de tools/actions — OpenAPI importado e catálogo indexado são a fonte de verdade técnica; sem registry por endpoint
+alwaysApply: true
+---
+
+# OpenAPI-first — roteamento universal de tools/actions
+
+## Princípio canônico
+
+O chat deve conseguir usar **qualquer provider OpenAPI**, inclusive APIs externas ao monorepo, sem criar código, intent, presenter ou registry específico para cada endpoint.
+
+Fonte de verdade:
+
+```text
+OpenAPI importado
+  → catálogo persistido de actions
+  → documento semântico + embeddings
+  → actions permitidas ao agente
+  → retrieval top-K
+  → planner estruturado
+  → validação determinística contra o OpenAPI
+  → policy/confirmation
+  → executor HTTP genérico
+  → interpretação/apresentação schema-driven
+```
+
+Responsabilidades:
+
+- **OpenAPI**: quais operações existem e como chamá-las (`operationId`, method, path, parameters, body, schemas, security, responses).
+- **Action Catalog/index**: representação normalizada e pesquisável das operações importadas.
+- **LLM/planner**: interpretar o pedido, decompor objetivos, escolher entre actions permitidas e propor argumentos.
+- **Validador determinístico**: garantir required/type/enum/format/path/query/body antes da execução.
+- **Policy engine**: autorizar read/write/admin/destructive e exigir confirmação quando aplicável.
+- **JSON do assistente**: vocabulário corporativo, linguagem, UX, policies e overrides transversais; **não** duplicar catálogo técnico de endpoints.
+- **Executor**: executar somente action importada, habilitada e autorizada. Nunca URL arbitrária inventada pelo LLM.
+
+## Invariante de plugabilidade
+
+Uma API nova deve poder entrar por:
+
+```text
+provider + openApiUrl/schema
+→ importação/indexação
+→ vínculo ao agente
+→ policies/permissões
+→ uso pelo chat
+```
+
+Uma API externa **não pode depender** de:
+
+- source code local do provider;
+- `api-delpi` no monorepo;
+- `route_contract_registry.py` do provider;
+- `openapi_baseline.json` versionado no monorepo para funcionar em runtime;
+- `pathMarkers` / `operationIdMarkers` adicionados manualmente;
+- intent/selector/parameterStrategy específico por endpoint;
+- presenter específico para produzir resposta útil.
+
+Se conectar uma API OpenAPI válida exige editar o core do chat para cada operação, a arquitetura ainda não está generalista.
+
+## Descoberta e seleção de actions
+
+O runtime deve filtrar primeiro por governança:
+
+```text
+provider enabled
++ vínculo agente/provider enabled
++ action enabled
++ allowed_action_ids
++ sensitivity/policy
+```
+
+Depois, recuperar poucas candidates semanticamente relevantes usando metadata real do OpenAPI, preferencialmente com estratégia híbrida:
+
+```text
+vector similarity + lexical/metadata filters
+```
+
+O documento semântico da action deve aproveitar, quando disponíveis:
+
+- provider name/key;
+- `operationId`;
+- method/path;
+- summary/description;
+- tags;
+- parâmetros: nome, localização, descrição, required, schema;
+- request body e descrições de schema;
+- response schema/descriptions/examples úteis.
+
+O planner recebe **top-K**, não centenas de endpoints indistintamente.
+
+## Planner estruturado
+
+A seleção final deve produzir contrato estruturado equivalente a:
+
+```json
+{
+  "actionId": "provider.operation",
+  "operationId": "operation",
+  "arguments": {},
+  "confidence": 0.0,
+  "reason": "..."
+}
+```
+
+`reason` ao usuário segue `assistant-content-json.mdc`; o contrato de execução não depende de texto livre.
+
+O planner não pode escolher action fora das candidates autorizadas.
+
+## Argument binding OpenAPI-first
+
+Regra padrão:
+
+```text
+mensagem + contexto + schema da action escolhida
+→ extração estruturada de argumentos
+→ validação/coerção determinística
+→ execução
+```
+
+Não criar `parameterStrategy` novo para cada endpoint ou provider.
+
+Estratégia nomeada só é aceitável quando for comprovadamente **transversal**, reutilizável entre providers e não representar simples duplicação do schema OpenAPI.
+
+Se faltar argumento obrigatório que não possa ser obtido com segurança do contexto, pedir ao usuário. **Nunca inventar valor obrigatório.**
+
+## Pedidos compostos
+
+Pedidos longos não podem ser reduzidos a uma única intenção.
+
+```text
+Pedido
+→ decomposição em subtarefas
+→ candidates por subtarefa
+→ plano/DAG de tools
+→ execução paralela quando independente
+→ síntese
+```
+
+Cada requisito material deve permanecer rastreável conforme `evidence-driven-execution.mdc`.
+
+## Multi-turn
+
+Refinamentos como "e a previsão?", "agora deste outro produto", "em agosto?" e "mostre os próximos 20" devem reutilizar contexto estruturado de execução, por exemplo:
+
+```text
+selectedProvider
+selectedAction
+resolvedEntities
+resolvedArguments
+lastToolResults
+pagination
+timeRange
+```
+
+Não resolver continuidade criando paths ou route segments específicos por endpoint quando o schema/metadata da action anterior bastar.
+
+## Registry operacional legado
+
+`operational_route_registry.json` é **compatibilidade/migração**, não fonte canônica de existência de endpoints.
+
+Enquanto existir:
+
+- entradas manuais existentes podem ser preservadas até haver paridade comprovada;
+- `autoTierCRoutes`/baseline podem continuar como fixture/gate legado, não requisito de runtime para provider externo;
+- **não adicionar** nova entrada manual apenas para ensinar `path`, `operationId` ou parâmetros que já existem no OpenAPI;
+- exceção manual exige evidência de uma policy/vocabulário corporativo que o OpenAPI padrão não representa e deve evitar replicar metadata técnica;
+- a evolução deve reduzir monotonicamente dependência de `pathMarkers`, `operationIdMarkers`, `routeSegment` e strategies por endpoint.
+
+## Apresentação
+
+Action nova deve funcionar mesmo sem perfil dedicado:
+
+```text
+responseSchema + payload runtime + metadata
+→ interpretação genérica
+→ schema-driven presentation
+→ perfil especializado opcional
+```
+
+Perfil especializado melhora UX, mas não pode ser pré-requisito de execução ou de resposta útil.
+
+## Segurança
+
+- Nunca executar URL/path arbitrário inventado pelo LLM.
+- Executar somente action importada e autorizada.
+- Validar parâmetros e body contra o contrato antes da chamada.
+- Respeitar `allowRead`, `allowWrite`, `allowAdmin`, sensitivity e confirmação.
+- Nunca logar token, API key ou segredo.
+- Auth do provider (`none`, `user_token`, `api_key`, futuros modos) fica na infraestrutura/provider config, não no prompt.
+
+## Observabilidade mínima
+
+Registrar metadata segura da decisão, quando aplicável:
+
+```text
+selectionMode
+providerKey
+candidateCount
+selectedActionId
+operationId
+semanticScore
+plannerConfidence
+validationStatus
+fallbackUsed
+```
+
+Métricas desejáveis:
+
+```text
+action_selection_success_rate
+action_selection_fallback_rate
+planner_invalid_arguments_rate
+missing_required_argument_rate
+legacy_vs_new_divergence_rate
+tool_execution_success_rate
+```
+
+## Testes obrigatórios para evolução do motor
+
+Cobrir no mínimo:
+
+1. fixture de API externa desconhecida do domínio DELPI;
+2. path param extraído da linguagem natural;
+3. query params conforme schema;
+4. argumento obrigatório ausente → pergunta, não invenção;
+5. duas actions semanticamente próximas;
+6. dois providers com operações semelhantes, sem bias por prefixo;
+7. write/admin/destructive respeitando confirmação;
+8. pedido composto com múltiplas actions;
+9. multi-turn preservando entidade/argumentos;
+10. regressão das actions atuais da api-delpi.
+
+## Gates arquiteturais
+
+Novos diffs não devem introduzir conhecimento de endpoint no core, por exemplo:
+
+```python
+if "/products/" in path
+if "factory-status" in path
+if action_id.startswith("api_delpi.")
+```
+
+Também não devem aumentar manualmente catálogo paralelo de `pathMarkers` / `operationIdMarkers` sem exceção arquitetural documentada.
+
+## O que NÃO fazer
+
+- Criar `*LogisticsRouteService`, `*CrmRouteService`, `*HrRouteService` para APIs plugadas.
+- Criar selector por provider.
+- Duplicar OpenAPI em `assistant/*.json`.
+- Exigir `operational_route_registry.json` para cada endpoint novo.
+- Usar nome/prefixo do provider como bias de ranking.
+- Permitir planner free-pick de `operationId` fora do catálogo permitido.
+- Substituir hardcode Python por hardcode JSON por endpoint.
+- Remover legado em big bang sem shadow/paridade/rollback.
+
+## Migração
+
+Mudanças grandes devem ser incrementais:
+
+```text
+semantic action document
+→ retrieval universal
+→ planner estruturado
+→ validator OpenAPI
+→ shadow legacy vs novo
+→ canary por provider/agente
+→ redução do registry
+→ aceite com API externa
+```
+
+Ver também: `operational-api-routing.mdc`, `new-api-route-checklist.mdc`, `chat-intelligence-base.mdc`, `centralized-rules-first.mdc`, `assistant-content-json.mdc`.
