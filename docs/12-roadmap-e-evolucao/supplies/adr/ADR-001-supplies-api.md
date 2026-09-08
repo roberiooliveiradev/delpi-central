@@ -5,69 +5,100 @@
 | Status | Aceito (documentação) · **não implementado** |
 | Data | 2026-09-08 |
 | Contexto | Portal Suprimentos (`supplies`) — Minha DELPI |
-| Relacionados | [ADR-002](./ADR-002-purchase-requests-api.md), [ADR-004](./ADR-004-plugin-identity-and-css-root.md), [PLAYBOOK-01](../PLAYBOOK-01-fronteiras-api-delpi.md), [MATRIZ-BOUNDARIES.md](../MATRIZ-BOUNDARIES.md) |
+| Relacionados | [ADR-002](./ADR-002-purchase-requests-api.md), [ADR-004](./ADR-004-plugin-identity-and-css-root.md), [ADR-006](./ADR-006-unit-permissions.md), [ADR-007](./ADR-007-permission-minimization.md), [PLAYBOOK-01](../PLAYBOOK-01-fronteiras-api-delpi.md) |
 
 ---
 
 ## Contexto
 
-O domínio de Suprimentos já possui:
+O domínio de Suprimentos já possui MFEs que chamam `api-delpi` direto, um bounded context Delpi para Solicitações de Compras, KPIs em Strategic Indicators e dezenas de rotas TOTVS `/supplies/*` e `/products/*`.
 
-- MFEs que chamam **api-delpi direto** (`dashboard-supplies`, `estoque-seguranca`, `materiais-terceiros`);
-- um bounded context Delpi maduro (`purchase-requests-api` + schema `purchase_requests`);
-- KPIs no Strategic Indicators (`departmentId: supplies`);
-- dezenas de rotas TOTVS `/supplies/*` e `/products/*` na api-delpi.
-
-O produto-alvo é um **portal departamental** (padrão Comercial / Transformômetro / Maintenance): shell único, workflows Delpi, BFF de composição. Manter o MFE falando com api-delpi viola `.cursor/rules/mfe-own-api-no-direct-api-delpi.mdc` assim que o Portal tiver API própria.
+O produto-alvo é um portal departamental com shell único, workflows Delpi e BFF de composição. Com API própria, o MFE não pode continuar acessando `api-delpi` diretamente.
 
 Não existe pacote `supplies-api` no monorepo. **CONFIRMADO_NO_CODIGO.**
 
+### DRIFT-FRAMEWORK-01
+
+Há um conflito entre fontes do repositório:
+
+- instruções oficiais do GPT Arquiteto: backend padrão **Python + Flask**;
+- APIs departamentais recentes como `commercial-api` e `purchase-requests-api`: FastAPI.
+
+Pela precedência do projeto, **a supplies-api adotará Flask**, salvo revisão futura explícita das instruções oficiais ou ADR de autoridade superior. `commercial-api` pode ser usado como referência de Clean Architecture, composição, gateways e ownership, mas não como precedência de framework.
+
+### DRIFT-AUTHZ-01
+
+O JWT Keycloak não é fonte canônica da lista completa de permissions. A supplies-api deve resolver permissions efetivas pelo Core API (`/me` ou mecanismo compartilhado equivalente) antes de autorizar capabilities/unidades.
+
+Qualquer middleware Flask compartilhado que ainda leia `claims.permissions`/`claims.is_superadmin` é referência de compatibilidade legada, não padrão para a nova API.
+
 ## Decisão
 
-1. Criar o pacote **`supplies-api/`** no monorepo, Clean Architecture, Postgres próprio (schema `supplies` em `postgres-plugins`), OpenAPI próprio, container Compose, `ROOT_PATH=/apps/supplies-api`.
-2. O MFE `plugins/supplies` **só** chama `supplies-api`. Zero `apiDelpiUrl` / `API_DELPI_BASE` / `/apps/api-delpi`.
-3. Leituras TOTVS permanecem na **api-delpi**. A `supplies-api` consome via **gateway HTTP** (`DelpiApiClient`), aplica RBAC/filial/escopo **antes** de devolver ao MFE.
-4. Estado criado pela Minha DELPI (tarefas, follow-ups, notas de fornecedor, alertas, preferências, settings, auditoria funcional) vive na `supplies-api`. **Não** persistir cópia de SC1/SC7/SB2.
-5. Naming técnico em **inglês**; ao usuário o produto chama-se **Portal Suprimentos**.
-6. Core API continua dona só de governança (apps, permissions, grupos, favoritos). Sem regra de Suprimentos na Core.
+1. Criar **`supplies-api/`** em **Flask**, Clean Architecture, Postgres próprio (schema `supplies` em `postgres-plugins`), OpenAPI próprio, container Compose e `ROOT_PATH=/apps/supplies-api`.
+2. O MFE `plugins/supplies` chama somente `supplies-api`. Zero `/apps/api-delpi` no browser.
+3. Leituras TOTVS permanecem na `api-delpi`. A supplies-api usa gateway HTTP e não replica SQL/regra ERP.
+4. Estado Minha DELPI (preferências, tasks/follow-ups, notas, settings, auditoria funcional e, após C2, estado de Solicitações) pertence à supplies-api.
+5. Core API continua dona de governança: apps, permissions, grupos, favoritos e resolução efetiva de RBAC.
+6. Autorização server-side segue:
+
+```text
+JWT válido
+  → identidade
+  → Core API /me
+  → effective permissions
+  → capability + unit + resource scope + business rule
+```
+
+7. Permission catalog segue ADR-007: menor conjunto suficiente; não espelhar CRUD.
+8. Naming técnico novo em inglês; UI em PT-BR.
+
+## GATE-AUTHZ
+
+A E2 não pode prosseguir enquanto a implementação escolhida não provar:
+
+- JWT validado corretamente;
+- permissions efetivas obtidas do Core;
+- `is_superadmin` não confiado a claim não canônica;
+- indisponibilidade do Core tratada de forma fail-closed para autorização nova;
+- testes de positivo, negativo e filial cruzada.
 
 ## Consequências
 
 ### Positivas
 
-- Fronteira clara TOTVS × produto Delpi.
-- Mesmo padrão do Portal Comercial (`commercial-api`).
-- Espaço para worklist, alertas e Fornecedor 360 complementar sem inflar a api-delpi.
+- fronteira clara TOTVS × produto Delpi;
+- authz coerente com a constituição do projeto;
+- reduz risco de drift entre APIs;
+- espaço para composição e estado próprio sem inflar api-delpi.
 
-### Negativas / custos
+### Custos
 
-- Dual-read e coexistência com MFEs que ainda chamam api-delpi.
-- Absorção posterior de `purchase-requests-api` (ADR-002).
-- Compose + gateway + volume de upload (se houver anexos de follow-up).
-
-### Não decisões
-
-- Escrita no TOTVS (SC/PC/ESTSEG).
-- Destino final de BIs externos (ADR-005).
-- Runtime `type: module`.
+- coexistência temporária com MFEs legados;
+- necessidade de consolidar o middleware Flask de authz antes/na E2;
+- absorção progressiva de `purchase-requests-api` conforme ADR-002.
 
 ## Alternativas rejeitadas
 
 | Alternativa | Motivo |
-|-------------|--------|
-| MFE chama api-delpi «só para KPI/read» | Proibido pela regra de bounded context |
-| Colocar workflows Delpi na api-delpi | Viola missão da api-delpi (já rejeitado no Comercial) |
-| Portal só com deep links, sem API | Vira launcher; não unifica jornada nem escopo |
-| Reusar `purchase-requests-api` como API do Portal inteiro | SRP invertido: SC não é dona de CPV/OTD/estoque/SI |
+|---|---|
+| MFE chamar api-delpi só para leitura | viola boundary do MFE com API própria |
+| Workflows de Suprimentos na api-delpi | ownership incorreto |
+| Portal apenas com deep links | não unifica jornada nem escopo |
+| Reusar purchase-requests-api como API do Portal inteiro | SC não é dona de estoque/OTD/SI |
+| Adotar FastAPI apenas por copiar commercial-api | conflita com instrução oficial vigente |
+| Autorizar por claims de permission do JWT | conflita com regra Core-first |
 
-## Plano mínimo (quando autorizado)
+## Plano mínimo quando autorizado
 
-1. Scaffold health + JWT + envelope `{ success, message, data, meta }`.
-2. Gateway api-delpi com timeout explícito e `X-Delpi-Caller-App: supplies-api`.
-3. BFF dos KPIs já existentes (`/supplies/cpv|otd|stock-value|inventory-turnover|negotiation-savings/summary`).
-4. Só então estado Delpi (DATA-MODEL).
+1. Scaffold Flask + `/health` + `/ready`.
+2. Auth middleware Core-first + testes de autorização.
+3. Envelope e tratamento padronizado de erros.
+4. Gateway api-delpi com timeout e caller.
+5. Primeiro BFF somente após `GATE-AUTHZ` verde.
+6. Estado Delpi depois dos contratos de leitura básicos.
 
 ## Referências
 
-- Comercial: `docs/12-roadmap-e-evolucao/commercial/adr/ADR-001-commercial-api.md`
-- Regras: `mfe-own-api-no-direct-api-delpi.mdc`, `application-bounded-context-decoupling.mdc`
+- instruções oficiais: `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md`
+- regras: `mfe-own-api-no-direct-api-delpi.mdc`, `application-bounded-context-decoupling.mdc`
+- referência arquitetural (não de framework): `commercial-api/`
