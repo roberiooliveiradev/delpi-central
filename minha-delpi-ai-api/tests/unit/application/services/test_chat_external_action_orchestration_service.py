@@ -21,11 +21,12 @@ class FakeSelectionService:
         previous_messages=None,
     ):
         self.product_calls.append((product_code, intent))
-        action_id = (
-            "product-stock"
-            if intent == ChatProductQueryIntent.STOCK
-            else "product-structure"
-        )
+        if intent == ChatProductQueryIntent.STOCK:
+            action_id = "product-stock"
+        elif intent == ChatProductQueryIntent.DESCRIPTION:
+            action_id = "product-detail"
+        else:
+            action_id = "product-structure"
         return {
             "name": "execute_external_action",
             "arguments": {
@@ -179,6 +180,39 @@ def test_plan_actions_single_code_uses_stock_fast_path():
     assert len(planned) == 1
     assert planned[0]["arguments"]["actionId"] == "product-stock"
     assert service.product_calls == [("10080047", ChatProductQueryIntent.STOCK)]
+
+
+def test_plan_actions_single_code_uses_description_intent_bound_fast_path():
+    """DESCRIPTION (intent-bound) short-circuita como STOCK — não só estoque."""
+    service = FakeSelectionService()
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        service,
+        message="qual a descrição do 10050078?",
+        allowed_action_ids=["product-detail"],
+    )
+
+    assert len(planned) == 1
+    assert planned[0]["arguments"]["actionId"] == "product-detail"
+    assert service.product_calls == [
+        ("10050078", ChatProductQueryIntent.DESCRIPTION)
+    ]
+
+
+def test_plan_actions_descriao_typo_uses_description_fast_path():
+    service = FakeSelectionService()
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        service,
+        message="qual a descrião do 10050078?",
+        allowed_action_ids=["product-detail"],
+    )
+
+    assert len(planned) == 1
+    assert planned[0]["arguments"]["actionId"] == "product-detail"
+    assert service.product_calls == [
+        ("10050078", ChatProductQueryIntent.DESCRIPTION)
+    ]
 
 
 def test_plan_actions_ignores_history_codes_when_message_names_product():
@@ -684,3 +718,68 @@ def test_plan_actions_pagination_follow_up_does_not_fall_back_to_generic_select(
     assert selection_service.pagination_calls == 1
     assert selection_service.generic_select_calls == 0
     assert planned == []
+
+
+def test_plan_actions_product_multi_scope_not_aborted_by_sale_orders_early(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
+        True,
+    )
+    monkeypatch.setattr(
+        "app.application.services.chat_external_action_orchestration_service."
+        "ChatExternalActionOrchestrationService._mode_multi_action_cap",
+        classmethod(lambda cls: 6),
+    )
+
+    class ScopeSelectionService(FakeSelectionService):
+        def select_action_for_product(
+            self,
+            message,
+            *,
+            product_code,
+            allowed_action_ids=None,
+            intent=None,
+            route_segment=None,
+            previous_messages=None,
+        ):
+            path = "/products/{code}/analyser"
+            action_id = "analyser"
+            if intent == ChatProductQueryIntent.STRUCTURE:
+                path = "/products/{code}/structure"
+                action_id = "structure"
+            elif intent == ChatProductQueryIntent.STOCK or route_segment == "stock":
+                path = "/products/{code}/stock"
+                action_id = "stock"
+            elif route_segment == "open-orders":
+                path = "/products/{code}/sales/open-orders"
+                action_id = "open-orders"
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": action_id,
+                    "parameters": {"code": product_code},
+                    "path": path,
+                },
+            }
+
+        def select_action(self, *args, **kwargs):
+            raise AssertionError("saleOrdersList early path não deve abortar multi-escopo")
+
+    service = ScopeSelectionService()
+    message = (
+        "Para o produto 90260149, traga: estrutura de produto, saldo de estoque "
+        "e pedidos em aberto."
+    )
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        service,
+        message=message,
+        allowed_action_ids=["structure", "stock", "open-orders"],
+        max_calls=6,
+    )
+
+    paths = {str(item["arguments"].get("path") or "") for item in planned}
+    assert len(planned) >= 2
+    assert any("/structure" in path for path in paths)
+    assert any("/stock" in path for path in paths)
+    assert any("open-orders" in path for path in paths)

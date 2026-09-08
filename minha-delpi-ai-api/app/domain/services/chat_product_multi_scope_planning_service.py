@@ -230,6 +230,14 @@ class ChatProductMultiScopePlanningService:
         return False
 
     @classmethod
+    def is_exclusive_open_orders_or_sale_orders_list_turn(cls, message: str | None) -> bool:
+        """Listagem de OV só é early-path quando não há outros escopos de produto."""
+        scopes = cls.extract_requested_scopes(message)
+        if not scopes:
+            return True
+        return all(scope == "open_orders" for scope in scopes)
+
+    @classmethod
     def _is_dedicated_playbook_route_question(cls, normalized: str) -> bool:
         """Rotas playbook com path próprio não entram em multi-scope genérico."""
         dedicated_checks = (

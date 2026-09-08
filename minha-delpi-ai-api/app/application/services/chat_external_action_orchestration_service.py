@@ -332,16 +332,26 @@ class ChatExternalActionOrchestrationService:
         if OperationalRouteMatcherService.looks_like_sale_orders_list_question(
             normalized
         ):
-            selected = selection_service.select_action(
-                selection_message,
-                allowed_action_ids=allowed_action_ids,
-                conversation_context=conversation_context,
-                previous_messages=previous_messages,
-                raw_message=raw_message,
-                memory_snapshot=memory_snapshot,
+            from app.domain.services.chat_product_multi_scope_planning_service import (
+                ChatProductMultiScopePlanningService,
             )
 
-            return _return_planned([selected] if selected else [], memory_snapshot=memory_snapshot)
+            if ChatProductMultiScopePlanningService.is_exclusive_open_orders_or_sale_orders_list_turn(
+                selection_message,
+            ):
+                selected = selection_service.select_action(
+                    selection_message,
+                    allowed_action_ids=allowed_action_ids,
+                    conversation_context=conversation_context,
+                    previous_messages=previous_messages,
+                    raw_message=raw_message,
+                    memory_snapshot=memory_snapshot,
+                )
+
+                return _return_planned(
+                    [selected] if selected else [],
+                    memory_snapshot=memory_snapshot,
+                )
 
         from app.domain.services.chat_operational_refinement_service import (
             ChatOperationalRefinementService,

@@ -207,3 +207,12 @@ def test_extract_scopes_includes_open_orders():
     assert "structure" in scopes
     assert "stock" in scopes
     assert "open_orders" in scopes
+
+
+def test_exclusive_sale_orders_list_turn():
+    assert ChatProductMultiScopePlanningService.is_exclusive_open_orders_or_sale_orders_list_turn(
+        "pedidos em aberto do produto 10080047",
+    )
+    assert not ChatProductMultiScopePlanningService.is_exclusive_open_orders_or_sale_orders_list_turn(
+        "estrutura, estoque e pedidos em aberto do produto 90260149",
+    )
