@@ -66,6 +66,13 @@ jobs:
       - name: Instalar dependências
         run: pip install -r requirements.txt
 
+      - name: Testes score semântico OpenAPI-first
+        run: |
+          PYTHONPATH=. pytest \
+            tests/unit/domain/services/test_chat_presentation_decision_scores.py \
+            tests/unit/domain/services/test_chat_presentation_automatic_score_semantic_hierarchy.py \
+            -q
+
       - name: Gate perfis OpenAPI × presentation_profiles
         run: PYTHONPATH=. python scripts/audit_presentation_coverage.py --check-profiles
 
