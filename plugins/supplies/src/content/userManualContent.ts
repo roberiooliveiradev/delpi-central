@@ -52,7 +52,7 @@ export const USER_MANUAL_CONTENT = {
     {
       term: "Perfil do Portal vs perfil Minha DELPI",
       meaning:
-        "O avatar na TopBar abre o perfil do Portal Suprimentos (filial padrão, densidade, units). O /profile do host Minha DELPI é a identidade global — não edita preferências deste Portal.",
+        "O avatar na TopBar mostra a foto do Meu Perfil (Core) e abre o perfil do Portal Suprimentos (filial padrão, densidade, units). Foto, cargo e contatos editam-se em /profile do host; preferências deste Portal editam-se no perfil do plugin.",
     },
   ],
   scopeNote:
@@ -141,7 +141,7 @@ export const USER_MANUAL_CONTENT = {
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
         "Administração — mappings e configurações.",
-        "Perfil — avatar na TopBar; preferências do Portal (filial padrão e densidade); distinto do /profile do host.",
+        "Perfil — avatar na TopBar (foto da Core); preferências do Portal (filial padrão e densidade); foto/cargo/contatos no /profile do host.",
         "Ajuda — este manual, FAQ e glossário.",
       ],
     },
@@ -199,7 +199,11 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Qual a diferença entre o perfil do Portal e o /profile da Minha DELPI?",
-          a: "O perfil do plugin guarda preferências e acesso deste Portal (units, capabilities, filial padrão, densidade). O /profile do host é a conta global — não edita prefs de Suprimentos.",
+          a: "O perfil do plugin mostra a identidade global (foto, cargo e contatos da Core, só leitura) e guarda preferências deste Portal (units, capabilities, filial padrão, densidade). Foto/cargo/contatos editam-se em /profile do host; prefs de Suprimentos editam-se no avatar do plugin.",
+        },
+        {
+          q: "Alterei a foto no Meu Perfil e o Suprimentos não mudou?",
+          a: "A TopBar e o perfil do Portal recarregam da Core ao salvar no Meu Perfil (mesmo navegador). Se ainda estiver antiga, atualize a página do Portal Suprimentos.",
         },
         {
           q: "Ainda vejo os apps antigos no launcher",

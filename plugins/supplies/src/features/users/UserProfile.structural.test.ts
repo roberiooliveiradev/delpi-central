@@ -23,6 +23,8 @@ describe("UserProfile", () => {
     const api = readFileSync(join(dir, "../../api/userProfileApi.ts"), "utf8");
     expect(app).toMatch(/UserProfilePage/);
     expect(page).toMatch(/preferencesTitle/);
+    expect(page).toMatch(/useMyPersonProfile/);
+    expect(page).toMatch(/jobTitleLabel/);
     expect(api).toMatch(/suppliesApiUrl\(`\/users\//);
     expect(api).not.toMatch(/purchase-requests-api/);
   });

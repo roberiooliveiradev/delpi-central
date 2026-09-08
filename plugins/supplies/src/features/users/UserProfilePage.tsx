@@ -15,6 +15,7 @@ import {
   SUPPLIES_BASE_PATH,
 } from "../../app/pluginRoutes";
 import { useSuppliesSession } from "../../app/SuppliesSessionContext";
+import { useMyPersonProfile } from "../../app/useMyPersonProfile";
 import {
   SuppliesActionButton,
   SuppliesAvatar,
@@ -47,6 +48,8 @@ function readReturnTo(): { href: string; label: string } {
 
 export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
   const session = useSuppliesSession();
+  const isSelf = Boolean(session.userId && session.userId === userId);
+  const { profile: personProfile, photoUrl } = useMyPersonProfile(isSelf);
   const [profile, setProfile] = useState<SuppliesUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -218,7 +221,11 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
           <div className="sp-user-profile__grid">
             <SuppliesSectionCard title={C.identityTitle} subtitle={C.identitySubtitle}>
               <div className="sp-user-profile__identity">
-                <SuppliesAvatar name={profile.name} size="lg" />
+                <SuppliesAvatar
+                  name={profile.name}
+                  src={isSelf ? photoUrl : null}
+                  size="lg"
+                />
                 <dl>
                   <div>
                     <dt>{C.nameLabel}</dt>
@@ -228,6 +235,26 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
                     <dt>{C.emailLabel}</dt>
                     <dd>{profile.email || "—"}</dd>
                   </div>
+                  {isSelf ? (
+                    <>
+                      <div>
+                        <dt>{C.jobTitleLabel}</dt>
+                        <dd>{personProfile?.job_title?.trim() || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt>{C.phoneLabel}</dt>
+                        <dd>{personProfile?.phone_e164?.trim() || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt>{C.mobileLabel}</dt>
+                        <dd>{personProfile?.mobile_e164?.trim() || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt>{C.whatsappLabel}</dt>
+                        <dd>{personProfile?.whatsapp_e164?.trim() || "—"}</dd>
+                      </div>
+                    </>
+                  ) : null}
                 </dl>
               </div>
               <p className="sp-user-profile__note">{C.hostProfileNote}</p>

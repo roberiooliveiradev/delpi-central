@@ -204,10 +204,11 @@ Padrão Comercial (`WF-USER`), adaptado ao domínio Suprimentos (sem carteiras/O
 | Objetivo | identidade + preferências do Portal Suprimentos + atalhos por capability |
 | Rota | `/apps/supplies/users/:userId` (EN; SPA — mesmo padrão Comercial, fora do menu launcher) |
 | Capability | self: `supplies.portal.access` · outro usuário: `supplies.administration.manage` |
-| Fonte | Core identidade + `GET/PATCH /users/{id}/profile` (BFF) + `/me/preferences` |
-| Conteúdo | avatar (Portal/Core quando disponível) · filiais `allowedUnits` · capabilities · preferências (tema, `default_branch` ∈ allowedUnits) · atalhos Início / Overview† / SC† / Ajuda |
-| Edição | preferências só no **próprio** perfil; admin não altera prefs de terceiros na P0 |
-| Não traz | cargo comercial, carteiras, volume de foto dedicado (P0); perfil global Minha DELPI continua em `/profile` do shell |
+| Fonte | Core `/me` + `/me/person-profile` (+ `/photo`) · BFF `GET/PATCH /users/{id}/profile` + `/me/preferences` |
+| Conteúdo | avatar Core quando self · cargo/contatos Core read-only · filiais `allowedUnits` · capabilities · preferências · atalhos Início / Overview† / SC† / Ajuda |
+| Edição | preferências só no **próprio** perfil; admin não altera prefs de terceiros na P0; foto/cargo/contatos só em `/profile` do host |
+| Sync host | CustomEvent `DELPI_PERSON_PROFILE_CHANGED` (Portal) → TopBar/WF-USER recarregam da Core |
+| Não traz | volume de foto no plugin; cargo comercial / carteiras |
 
 ```text
 ┌─ PagePath: Portal / Usuário / {nome} ───────────────────────────────────────┐

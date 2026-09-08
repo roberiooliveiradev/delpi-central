@@ -72,7 +72,7 @@ export const SP_HELP = {
   purchaseRequests:
     "Lista linhas de SC no escopo de centro de custo e filial. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação CSV exige permissão separada.",
   userProfile:
-    "Perfil do Portal Suprimentos: identidade Minha DELPI, atalhos por capability e preferências (filial padrão e densidade). Diferente do /profile global do Portal host.",
+    "Perfil do Portal Suprimentos: identidade Minha DELPI (foto, cargo e contatos da Core, só leitura), atalhos por capability e preferências (filial padrão e densidade). Edite foto/cargo/contatos em /profile do Portal host.",
   userProfilePrefs:
     "Filial padrão e densidade de tabelas valem só neste Portal. Só você edita o próprio perfil; administradores podem ler outros usuários.",
   forbiddenUnit:

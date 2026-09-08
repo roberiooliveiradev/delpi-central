@@ -10,6 +10,7 @@ import {
 import { navigatePluginPath } from "./pluginNavigation";
 import { ShellFavoritesStrip } from "./ShellFavoritesStrip";
 import { useSuppliesSession } from "./SuppliesSessionContext";
+import { useMyPersonProfile } from "./useMyPersonProfile";
 import { SuppliesAvatar, SuppliesTopBarSearchTrigger } from "./suppliesUi";
 
 type ShellTopBarSecondaryProps = {
@@ -48,11 +49,13 @@ type ShellTopBarActionsProps = {
 
 /**
  * Slot actions — avatar+nome → perfil self.
+ * Foto vem da Core (person-profile); prefs do Portal ficam em /users/:id.
  * Ajuda fica só na nav; coexistência fica no Manual (padrão Comercial).
  */
 export function ShellTopBarActions({ basePath }: ShellTopBarActionsProps) {
   const session = useSuppliesSession();
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const { photoUrl } = useMyPersonProfile(Boolean(session.userId));
 
   useEffect(() => {
     const controller = new AbortController();
@@ -88,7 +91,7 @@ export function ShellTopBarActions({ basePath }: ShellTopBarActionsProps) {
             navigatePluginPath(href);
           }}
         >
-          <SuppliesAvatar name={label} size="sm" />
+          <SuppliesAvatar name={label} src={photoUrl} size="sm" />
           <span className="sp-shell-user__name delpi-ui-topbar-collapse-label">{label}</span>
         </a>
       ) : null}

@@ -33,6 +33,8 @@ describe("helpTooltips", () => {
     expect(SP_HELP.overviewFiltersBranch.length).toBeGreaterThan(20);
     expect(SP_HELP.otdAnalyticsPage.length).toBeGreaterThan(20);
     expect(SP_HELP.forbiddenUnit.length).toBeGreaterThan(20);
+    expect(SP_HELP.userProfile.length).toBeGreaterThan(20);
+    expect(SP_HELP.userProfilePrefs.length).toBeGreaterThan(20);
     expect(SP_HELP.shell.navHome).toBeTruthy();
     expect(SP_HELP.shell.navOverview).toBeTruthy();
   });

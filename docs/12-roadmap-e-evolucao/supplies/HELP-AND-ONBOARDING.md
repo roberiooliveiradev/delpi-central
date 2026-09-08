@@ -35,6 +35,7 @@ Herdar textos já canônicos de:
 - 403: «sem permissão para esta filial / este módulo».
 - FAQ: diferença estoque × estoque de segurança; OTD × atraso; Overview × página OTD; Sheets × indicadores; filtros/URL.
 - Onde alterar filial padrão / densidade de tabelas (perfil do plugin — WF-USER), sem confundir com `/profile` do Portal.
+- Foto, cargo e contatos: fonte Core (`/me/person-profile`); edição só no Meu Perfil do host; TopBar/WF-USER sincronizam via CustomEvent.
 
 ## Sync por feature
 
