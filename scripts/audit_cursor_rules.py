@@ -21,9 +21,11 @@ GLOBAL_ALLOWLIST = {
 GLOBAL_BUDGET = len(GLOBAL_ALLOWLIST)
 MAX_RULE_BYTES = 20_000
 REFERENCE_RE = re.compile(r"(?:`|\b)([A-Za-z0-9_.-]+\.mdc)(?:`|\b)")
+TOP_LEVEL_KEY_RE = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*):(?:\s*(.*))?$")
 
 
 def parse_frontmatter(path: Path) -> tuple[dict[str, str], str, list[str]]:
+    """Parseia o subconjunto YAML usado nas regras, incluindo listas multilinha."""
     text = path.read_text(encoding="utf-8")
     errors: list[str] = []
     if not text.startswith("---\n"):
@@ -35,19 +37,39 @@ def parse_frontmatter(path: Path) -> tuple[dict[str, str], str, list[str]]:
         return {}, text, ["frontmatter sem fechamento ---"]
 
     data: dict[str, str] = {}
+    current_key: str | None = None
+    list_values: dict[str, list[str]] = {}
+
     for raw_line in raw_frontmatter.splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
+        if not raw_line.strip() or raw_line.lstrip().startswith("#"):
             continue
-        if ":" not in line:
+
+        if raw_line[:1].isspace():
+            stripped = raw_line.strip()
+            if stripped.startswith("-") and current_key:
+                value = stripped[1:].strip().strip('"').strip("'")
+                list_values.setdefault(current_key, []).append(value)
+                continue
+            errors.append(f"linha YAML indentada não suportada: {raw_line!r}")
+            continue
+
+        match = TOP_LEVEL_KEY_RE.match(raw_line)
+        if not match:
             errors.append(f"linha de frontmatter inválida: {raw_line!r}")
+            current_key = None
             continue
-        key, value = line.split(":", 1)
-        key = key.strip()
-        value = value.strip().strip('"').strip("'")
-        if key in data:
+
+        key = match.group(1)
+        value = (match.group(2) or "").strip().strip('"').strip("'")
+        if key in data or key in list_values:
             errors.append(f"chave duplicada no frontmatter: {key}")
         data[key] = value
+        current_key = key
+
+    for key, values in list_values.items():
+        if data.get(key):
+            errors.append(f"{key}: não misturar valor inline e lista multilinha")
+        data[key] = ",".join(values)
 
     return data, body, errors
 
@@ -98,9 +120,7 @@ def main() -> int:
                     f"{path.name}: alwaysApply=true + globs é proibido; o glob é ignorado no modo global"
                 )
             if path.name not in GLOBAL_ALLOWLIST:
-                errors.append(
-                    f"{path.name}: regra global fora da allowlist canônica"
-                )
+                errors.append(f"{path.name}: regra global fora da allowlist canônica")
 
         size = path.stat().st_size
         if size > MAX_RULE_BYTES and "governanceSizeJustification" not in frontmatter:
@@ -131,9 +151,7 @@ def main() -> int:
     }
     for description in sorted(duplicated_descriptions):
         owners = sorted(name for name, value in descriptions if value == description)
-        errors.append(
-            "description duplicada em regras: " + ", ".join(owners)
-        )
+        errors.append("description duplicada em regras: " + ", ".join(owners))
 
     print("Cursor rules audit")
     print(f"- regras: {len(rule_paths)}")
