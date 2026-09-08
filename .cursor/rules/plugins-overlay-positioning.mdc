@@ -1,7 +1,7 @@
 ---
 description: Overlays/toolbars/popovers — portal + coords (flip/clamp); proibir gambiarra CSS de clip/padding
 globs: plugins/**/*
-alwaysApply: true
+alwaysApply: false
 ---
 
 # Overlays e toolbars flutuantes — posicionamento canônico
