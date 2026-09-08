@@ -52,3 +52,65 @@ class CoreApiHttpGateway:
             raise CoreApiUnavailableError("Invalid Core API response")
 
         return data
+
+    def lookup_directory_users(
+        self,
+        *,
+        access_token: str,
+        user_ids: list[str],
+    ) -> dict[str, dict[str, str]]:
+        """Best-effort directory lookup with the caller's Bearer (admin reading others)."""
+        ordered: list[str] = []
+        seen: set[str] = set()
+        for raw in user_ids:
+            user_id = str(raw or "").strip()
+            if not user_id or user_id in seen:
+                continue
+            seen.add(user_id)
+            ordered.append(user_id)
+        if not ordered:
+            return {}
+
+        url = urljoin(self.base_url, "integrations/directory/users/lookup")
+        try:
+            response = requests.post(
+                url,
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                json={"ids": ordered},
+                timeout=self.timeout,
+            )
+        except requests.RequestException:
+            logger.exception("core_api_directory_lookup_failed")
+            return {}
+
+        if response.status_code >= 400:
+            return {}
+
+        try:
+            payload = response.json()
+        except ValueError:
+            return {}
+
+        items = payload.get("items") if isinstance(payload, dict) else None
+        if not isinstance(items, list):
+            return {}
+
+        result: dict[str, dict[str, str]] = {}
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            user_id = str(item.get("id") or "").strip()
+            if not user_id:
+                continue
+            name = str(item.get("name") or item.get("display_name") or "").strip()
+            email = str(item.get("email") or "").strip()
+            result[user_id] = {
+                "id": user_id,
+                "name": name or user_id,
+                "email": email,
+            }
+        return result
