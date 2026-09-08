@@ -234,6 +234,29 @@ def test_compound_decomposes_into_multiple_subtasks():
     assert len(subtasks) >= 2
 
 
+def test_numbered_list_decomposes_into_multiple_subtasks():
+    message = (
+        "Para o produto 90260149, traga numa resposta só: (1) estrutura de bom, "
+        "(2) saldo de estoque atual e (3) pedidos em aberto."
+    )
+    subtasks = DecomposeExternalActionRequestsService.decompose(message)
+    assert len(subtasks) >= 2
+    assert any("estrutura" in item.text.lower() for item in subtasks)
+    assert any("estoque" in item.text.lower() for item in subtasks)
+
+
+def test_compound_signal_wants_multi_action_without_joiner():
+    message = (
+        "Me dá uma visão integrada do produto 90260149: ficha, estrutura e estoque."
+    )
+    assert DecomposeExternalActionRequestsService.wants_multi_action(message)
+    assert len(DecomposeExternalActionRequestsService.decompose(message)) == 1
+
+
+def test_small_talk_does_not_want_multi_action():
+    assert not DecomposeExternalActionRequestsService.wants_multi_action("oi")
+
+
 def test_compound_plans_multiple_distinct_actions():
     message = (
         "Veja a última compra do 10080001 e tambem mostre o histórico de orçamento"

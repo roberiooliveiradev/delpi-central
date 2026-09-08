@@ -231,7 +231,7 @@ class PlanExternalActionsService:
             DecomposeExternalActionRequestsService,
         )
 
-        return len(DecomposeExternalActionRequestsService.decompose(normalized)) > 1
+        return DecomposeExternalActionRequestsService.wants_multi_action(normalized)
 
     @classmethod
     def _message_matches_action(cls, normalized: str, action: dict[str, Any]) -> bool:
