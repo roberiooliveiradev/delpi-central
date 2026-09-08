@@ -129,7 +129,6 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
                   <PpActionButton
                     variant="ghost"
                     className="pp-panel-operator-link"
-                    title={PP_HELP.shell.modeOperator}
                     onClick={() => navigateProductionPulse(productionPulseOperatorPath(filters.branch))}
                   >
                     Modo operador
@@ -139,7 +138,6 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
               <PpHintAction hint={PP_HELP.ota.openCatalog} ariaLabel="Ajuda: Firmwares">
                 <PpActionButton
                   variant="ghost"
-                  title={PP_HELP.ota.openCatalog}
                   onClick={() => navigateProductionPulse(productionPulseFirmwaresPath())}
                 >
                   Firmwares
@@ -148,7 +146,6 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
               <PpHintAction hint={PP_HELP.ota.openJobs} ariaLabel="Ajuda: OTA">
                 <PpActionButton
                   variant="ghost"
-                  title={PP_HELP.ota.openJobs}
                   onClick={() =>
                     navigateProductionPulse(productionPulseFirmwareJobsPath(filters.branch))
                   }

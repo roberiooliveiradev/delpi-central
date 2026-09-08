@@ -90,7 +90,6 @@ export function FirmwareLinksPage({
             <PpHintAction hint={PP_HELP.shell.backToPanel} ariaLabel="Ajuda: Painel">
               <PpActionButton
                 variant="ghost"
-                title={PP_HELP.shell.backToPanel}
                 onClick={() => navigateProductionPulse(PRODUCTION_PULSE_BASE_PATH)}
               >
                 Painel
@@ -99,7 +98,6 @@ export function FirmwareLinksPage({
             <PpHintAction hint={PP_HELP.ota.openCatalog} ariaLabel="Ajuda: Firmwares">
               <PpActionButton
                 variant="ghost"
-                title={PP_HELP.ota.openCatalog}
                 onClick={() => navigateProductionPulse(productionPulseFirmwaresPath())}
               >
                 Firmwares
@@ -108,7 +106,6 @@ export function FirmwareLinksPage({
             <PpHintAction hint={PP_HELP.ota.openJobs} ariaLabel="Ajuda: Campanhas OTA">
               <PpActionButton
                 variant="secondary"
-                title={PP_HELP.ota.openJobs}
                 onClick={() => navigateProductionPulse(productionPulseFirmwareJobsPath(branch))}
               >
                 Campanhas OTA
@@ -117,7 +114,6 @@ export function FirmwareLinksPage({
             <PpHintAction hint={PP_HELP.otaLinks.refresh} ariaLabel="Ajuda: Atualizar conexões">
               <PpActionButton
                 variant="primary"
-                title={PP_HELP.otaLinks.refresh}
                 onClick={() => void reload()}
                 disabled={loading}
               >

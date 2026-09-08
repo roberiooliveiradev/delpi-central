@@ -41,7 +41,6 @@ export function OperatorBrandBar({
                   onClick={() =>
                     navigateProductionPulse(`${PRODUCTION_PULSE_BASE_PATH}?branch=${branch}`)
                   }
-                  title={PP_HELP.operator.adminLink}
                 >
                   Painel admin
                 </PpActionButton>

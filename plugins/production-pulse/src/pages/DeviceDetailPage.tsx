@@ -174,7 +174,6 @@ export function DeviceDetailPage({
                 <PpActionButton
                   variant="ghost"
                   className="pp-hero-brand-btn"
-                  title={PP_HELP.detail.editDevice}
                   onClick={() => navigateProductionPulse(productionPulseDeviceEditPath(deviceId))}
                 >
                   Editar
@@ -185,7 +184,6 @@ export function DeviceDetailPage({
               <PpActionButton
                 variant="ghost"
                 className="pp-hero-brand-btn"
-                title={PP_HELP.detail.pollNow}
                 onClick={() => void pollNow()}
                 disabled={refreshing}
               >

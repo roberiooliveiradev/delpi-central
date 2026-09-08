@@ -119,7 +119,6 @@ export function FirmwareJobsPage({ branch, permissions }: FirmwareJobsPageProps)
             <PpHintAction hint={PP_HELP.shell.backToPanel} ariaLabel="Ajuda: Painel">
               <PpActionButton
                 variant="ghost"
-                title={PP_HELP.shell.backToPanel}
                 onClick={() => navigateProductionPulse(PRODUCTION_PULSE_BASE_PATH)}
               >
                 Painel
@@ -128,7 +127,6 @@ export function FirmwareJobsPage({ branch, permissions }: FirmwareJobsPageProps)
             <PpHintAction hint={PP_HELP.ota.openCatalog} ariaLabel="Ajuda: Firmwares">
               <PpActionButton
                 variant="secondary"
-                title={PP_HELP.ota.openCatalog}
                 onClick={() => navigateProductionPulse(productionPulseFirmwaresPath())}
               >
                 Firmwares

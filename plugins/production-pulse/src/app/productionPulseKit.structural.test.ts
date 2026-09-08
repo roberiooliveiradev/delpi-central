@@ -115,7 +115,13 @@ describe("production-pulse kit contracts", () => {
     for (const rel of heroPages) {
       const source = readRelative(rel);
       expect(source, rel).toMatch(/PpHintAction/);
-      expect(source, rel).toMatch(/title=\{PP_HELP\./);
+      expect(source, rel).toMatch(/hint=\{PP_HELP\./);
+      const hintBlocks = source.match(/<PpHintAction\b[\s\S]*?<\/PpHintAction>/g) ?? [];
+      expect(hintBlocks.length, rel).toBeGreaterThan(0);
+      for (const block of hintBlocks) {
+        // HintAction já exibe o balão — title= nativo duplica o tooltip do browser.
+        expect(block, rel).not.toMatch(/\btitle=\{/);
+      }
     }
     expect(readRelative("content/helpTooltips.ts")).toMatch(/openLinks:/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/editDevice:/);

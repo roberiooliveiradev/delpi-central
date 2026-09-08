@@ -73,7 +73,6 @@ export function GaugeReadoutSurface({
               variant="ghost"
               className="pp-operator-hero-btn"
               onClick={goBack}
-              title={PP_HELP.operator.changePlacement}
             >
               Trocar posto
             </PpActionButton>

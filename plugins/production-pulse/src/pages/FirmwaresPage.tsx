@@ -101,7 +101,6 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
             <PpHintAction hint={PP_HELP.shell.backToPanel} ariaLabel="Ajuda: Painel">
               <PpActionButton
                 variant="ghost"
-                title={PP_HELP.shell.backToPanel}
                 onClick={() => navigateProductionPulse(PRODUCTION_PULSE_BASE_PATH)}
               >
                 Painel
@@ -110,7 +109,6 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
             <PpHintAction hint={PP_HELP.ota.openJobs} ariaLabel="Ajuda: Campanhas">
               <PpActionButton
                 variant="secondary"
-                title={PP_HELP.ota.openJobs}
                 onClick={() => navigateProductionPulse(productionPulseFirmwareJobsPath())}
               >
                 Campanhas
@@ -119,7 +117,6 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
             <PpHintAction hint={PP_HELP.ota.openLinks} ariaLabel="Ajuda: Amarração IoT">
               <PpActionButton
                 variant="primary"
-                title={PP_HELP.ota.openLinks}
                 onClick={() => navigateProductionPulse(productionPulseFirmwareLinksPath())}
               >
                 Amarração IoT
