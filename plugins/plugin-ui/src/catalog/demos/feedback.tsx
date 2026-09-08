@@ -17,6 +17,8 @@ import {
   loadingActivityBemClasses,
   InlineLoadingProgress,
   inlineLoadingProgressBemClasses,
+  JourneyProgressBar,
+  journeyProgressBarBemClasses,
   LoadingState,
   loadingStatePanelBemClasses,
   ScreenLoading,
@@ -43,6 +45,7 @@ const confirmCn = confirmModalBemClasses(PUC_PREFIX);
 const drawerCn = drawerShellBemClasses(PUC_PREFIX);
 const loadingActivityCn = loadingActivityBemClasses(PUC_PREFIX);
 const inlineLoadingProgressCn = inlineLoadingProgressBemClasses(PUC_PREFIX);
+const journeyProgressCn = journeyProgressBarBemClasses(PUC_PREFIX);
 const screenLoadingCn = screenLoadingBemClasses(PUC_PREFIX);
 const stateBoxCn = stateBoxBemClasses(PUC_PREFIX);
 const infoStateCn = infoStateBemClasses(PUC_PREFIX);
@@ -398,6 +401,27 @@ export const feedbackCatalogEntries: CatalogEntryDraft[] = [
             onAction={() => undefined}
             icon={<Activity size={22} />}
             classNames={infoStateCn}
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "feedback.JourneyProgressBar",
+    family: "feedback",
+    exportName: "JourneyProgressBar",
+    title: "JourneyProgressBar",
+    description: "Completude de jornada humana (não loading).",
+    demos: [
+      {
+        id: "default",
+        label: "33% · 2 de 6",
+        render: () => (
+          <JourneyProgressBar
+            value={33}
+            label="Progresso da solicitação"
+            summary="2 de 6 etapas concluídas"
+            classNames={journeyProgressCn}
           />
         ),
       },

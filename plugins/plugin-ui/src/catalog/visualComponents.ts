@@ -88,6 +88,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Faixa sticky de navegação (padrão admin-navbar): compõe UnderlineNav + slot actions; flush por padrão.",
   }),
+  vc("layout", "ProgressTracker", {
+    addedAt: "2026-09-08",
+    description:
+      "Tracker linear de jornada (complete/current/available/locked/error) com modo compacto; não é loading.",
+  }),
   vc("layout", "PageHero", {
     addedAt: "2026-08-06",
     description:
@@ -184,6 +189,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     changeNote: "Badge + pulse; tons dark/light/brand; raios opcionais",
   }),
   vc("feedback", "LoadingActivityCard"),
+  vc("feedback", "JourneyProgressBar", {
+    addedAt: "2026-09-08",
+    description:
+      "Barra de completude de jornada humana (0–100) com summary; não usar InlineLoadingProgress para isso.",
+  }),
   vc("feedback", "StateBanner"),
   vc("feedback", "StateBox", {
     addedAt: "2026-07-24",

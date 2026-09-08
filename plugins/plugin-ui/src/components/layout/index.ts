@@ -318,6 +318,17 @@ export {
   type TopBarProps,
 } from "./TopBar";
 export {
+  ProgressTracker,
+  createDashboardProgressTracker,
+  progressTrackerBemClasses,
+  type DashboardProgressTrackerProps,
+  type ProgressTrackerClassNames,
+  type ProgressTrackerDensity,
+  type ProgressTrackerProps,
+  type ProgressTrackerStep,
+  type ProgressTrackerStepState,
+} from "./ProgressTracker";
+export {
   PageHero,
   createDashboardPageHero,
   pageHeroBemClasses,

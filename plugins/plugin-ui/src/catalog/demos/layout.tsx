@@ -51,6 +51,8 @@ import {
   panelCardBemClasses,
   PreviewDetailCard,
   previewDetailCardBemClasses,
+  ProgressTracker,
+  progressTrackerBemClasses,
   SectionBlock,
   sectionBlockBemClasses,
   SectionCard,
@@ -84,6 +86,7 @@ const detailGridCn = detailFieldGridBemClasses(PUC_PREFIX);
 const formGridCn = formGridBemClasses(PUC_PREFIX);
 const formActionsCn = formActionsBemClasses(PUC_PREFIX);
 const sectionBlockCn = sectionBlockBemClasses(PUC_PREFIX);
+const progressTrackerCn = progressTrackerBemClasses(PUC_PREFIX);
 
 function UnderlineNavDemo({ mode }: { mode: "navigation" | "tabs" }) {
   const [activeId, setActiveId] = useState("overview");
@@ -837,6 +840,33 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
           <div style={{ width: 120, height: 48, border: "1px dashed var(--puc-border)" }}>
             <FitText>87,4%</FitText>
           </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.ProgressTracker",
+    family: "layout",
+    exportName: "ProgressTracker",
+    title: "ProgressTracker",
+    description: "Etapas de jornada com estados complete/current/locked.",
+    demos: [
+      {
+        id: "default",
+        label: "Horizontal",
+        render: () => (
+          <ProgressTracker
+            classNames={progressTrackerCn}
+            interactive
+            currentStepId="items"
+            ariaLabel="Etapas de exemplo"
+            steps={[
+              { id: "recipient", label: "Destinatário", state: "complete" },
+              { id: "invoiceType", label: "Tipo de NF", state: "complete" },
+              { id: "items", label: "Itens", state: "current" },
+              { id: "freight", label: "Transporte", state: "locked" },
+            ]}
+          />
         ),
       },
     ],

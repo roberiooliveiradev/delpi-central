@@ -27,6 +27,16 @@ export {
   type InlineLoadingProgressProps,
 } from "./InlineLoadingProgress";
 export {
+  JourneyProgressBar,
+  ProgressSummaryBar,
+  clampJourneyProgressValue,
+  createDashboardJourneyProgressBar,
+  createDashboardProgressSummaryBar,
+  journeyProgressBarBemClasses,
+  type JourneyProgressBarClassNames,
+  type JourneyProgressBarProps,
+} from "./JourneyProgressBar";
+export {
   ScreenLoading,
   createDashboardScreenLoading,
   screenLoadingBemClasses,
