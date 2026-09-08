@@ -26,4 +26,15 @@ Container Compose: `delpi-supplies`. Subir com scripts sequenciais (`--fase mfe 
 
 ## Registro no Core
 
-Ver `scripts/register-manifest.sh` (E3.S4). Homologação usa o mesmo script com `BASE_URL`.
+O manifesto canônico é [`supplies.manifest.json`](./supplies.manifest.json) (`schemaVersion: 1.0.0`). Registro **não** concede acesso aos usuários — isso é RBAC (E3.S5).
+
+```bash
+# Dev local (token via infra/.env.local — ver docs/10-guias-operacionais/registrar-plugin-dev-local.md)
+export TOKEN="$(bash infra/scripts/get-dev-token.sh)"
+bash plugins/supplies/scripts/register-manifest.sh
+
+# Homologação — mesmo artefato
+BASE_URL="https://<hml-host>" TOKEN="<jwt-apps.manage>" bash plugins/supplies/scripts/register-manifest.sh
+```
+
+Atualizar manifesto já registrado: `PUT $BASE_URL/core-api/admin/apps/supplies/manifest` com o mesmo JSON (guia [registrar-plugin.md](../../docs/10-guias-operacionais/registrar-plugin.md)).

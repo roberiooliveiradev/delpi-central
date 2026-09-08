@@ -1,0 +1,190 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "supplies",
+  "name": "Portal Suprimentos",
+  "description": "Hub operacional e analítico de Suprimentos.",
+  "icon": "package-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/supplies",
+  "entry": "/apps/supplies/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "supplies.portal.access",
+      "name": "Acessar Portal Suprimentos",
+      "description": "Entrar no Portal, Home, Ajuda, busca e preferências próprias.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.purchase-requests.access",
+      "name": "Solicitações de Compras",
+      "description": "Jornada SC no escopo autorizado.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.operations.access",
+      "name": "Operações de compras",
+      "description": "Pedidos, entregas, fornecedores, produtos e estoques.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.analytics.access",
+      "name": "Analytics de Suprimentos",
+      "description": "Overview, KPIs e análises.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.administration.manage",
+      "name": "Administrar Portal Suprimentos",
+      "description": "Mappings, scopes e settings.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.purchase-requests.view-all",
+      "name": "Ver todas as SC da unidade",
+      "description": "Bypass de CC dentro das units autorizadas.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.purchase-requests.export",
+      "name": "Exportar Solicitações de Compras",
+      "description": "Exportação em massa com auditoria.",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.unit.filial-01",
+      "name": "Suprimentos — Filial 01",
+      "description": "Unidade SC (01).",
+      "module": "supplies"
+    },
+    {
+      "code": "supplies.unit.filial-02",
+      "name": "Suprimentos — Filial 02",
+      "description": "Unidade ES (02).",
+      "module": "supplies"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/supplies",
+      "label": "Portal Suprimentos",
+      "permission": "supplies.portal.access",
+      "icon": "package-icon",
+      "order": 30,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/supplies/overview",
+      "label": "Visão geral",
+      "permission": "supplies.analytics.access",
+      "icon": "bar-chart-2",
+      "order": 31,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/supplies/my-tasks",
+      "label": "Minhas tarefas",
+      "permission": "supplies.portal.access",
+      "icon": "clipboard-list",
+      "order": 32,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/supplies/purchase-requests",
+      "label": "Solicitações de compras",
+      "permission": "supplies.purchase-requests.access",
+      "icon": "shopping-cart",
+      "order": 33,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/supplies/purchase-orders",
+      "label": "Pedidos de compra",
+      "permission": "supplies.operations.access",
+      "icon": "package",
+      "order": 34,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/supplies/deliveries",
+      "label": "Entregas",
+      "permission": "supplies.operations.access",
+      "icon": "truck",
+      "order": 35,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/supplies/suppliers",
+      "label": "Fornecedores",
+      "permission": "supplies.operations.access",
+      "icon": "building-2",
+      "order": 36,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/supplies/products",
+      "label": "Produtos",
+      "permission": "supplies.operations.access",
+      "icon": "boxes",
+      "order": 37,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/supplies/inventory",
+      "label": "Estoque",
+      "permission": "supplies.operations.access",
+      "icon": "warehouse",
+      "order": 38,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/supplies/safety-stock",
+      "label": "Estoque de segurança",
+      "permission": "supplies.operations.access",
+      "icon": "shield",
+      "order": 39,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/supplies/negotiations",
+      "label": "Negociações",
+      "permission": "supplies.analytics.access",
+      "icon": "handshake",
+      "order": 40,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/supplies/indicators",
+      "label": "Indicadores",
+      "permission": "supplies.analytics.access",
+      "icon": "gauge",
+      "order": 41,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/supplies/administration",
+      "label": "Administração",
+      "permission": "supplies.administration.manage",
+      "icon": "settings",
+      "order": 42,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/supplies/help",
+      "label": "Ajuda",
+      "permission": "supplies.portal.access",
+      "icon": "circle-help",
+      "order": 43,
+      "showInMenu": false
+    }
+  ],
+  "backend": {
+    "required": true,
+    "serviceName": "supplies-api",
+    "baseUrl": "/apps/supplies-api",
+    "validateJwt": true
+  },
+  "ui": {
+    "renderMode": "federated"
+  }
+}
