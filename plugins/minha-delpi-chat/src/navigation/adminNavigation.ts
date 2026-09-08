@@ -57,6 +57,7 @@ export type AdminSubTab =
   | "simulation"
   | "metrics"
   | "evaluations"
+  | "improve"
   | "tools"
   | "intelligence"
   | "response"
@@ -115,6 +116,7 @@ const SUB_SLUG: Record<AdminSubTab, string> = {
   simulation: "simulation",
   metrics: "metrics",
   evaluations: "evaluations",
+  improve: "improve",
   tools: "tools",
   intelligence: "intelligence",
   response: "response-modes",
@@ -141,6 +143,8 @@ const SLUG_TO_SUB: Record<string, AdminSubTab> = {
   metricas: "metrics",
   evaluations: "evaluations",
   avaliacoes: "evaluations",
+  improve: "improve",
+  "melhoria-continua": "improve",
   tools: "tools",
   ferramentas: "tools",
   intelligence: "intelligence",
@@ -199,10 +203,11 @@ export const ADMIN_SECTIONS: AdminSectionItem[] = [
   {
     key: "quality",
     label: "Qualidade",
-    description: "Métricas operacionais e avaliações de resposta.",
+    description: "Métricas, melhoria contínua e avaliações de resposta.",
     icon: BarChart3,
     subTabs: [
       { key: "metrics", label: "Métricas" },
+      { key: "improve", label: "Melhoria contínua" },
       { key: "evaluations", label: "Avaliações" },
     ],
   },

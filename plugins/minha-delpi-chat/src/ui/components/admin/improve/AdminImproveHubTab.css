@@ -1,0 +1,42 @@
+.mdc-admin-improve {
+  display: grid;
+  gap: var(--mdc-space-4);
+  min-width: 0;
+}
+
+.mdc-admin-improve__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-improve__card {
+  display: grid;
+  gap: 0.65rem;
+  align-content: start;
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, var(--mdc-card-bg) 94%, transparent);
+}
+
+.mdc-admin-improve__card h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--mdc-title);
+}
+
+.mdc-admin-improve__card p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-improve__card .mdc-admin-btn {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}

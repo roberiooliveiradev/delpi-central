@@ -31,6 +31,20 @@ describe("adminNavigation", () => {
     ).toBe("/apps/minha-delpi-chat/admin/quality/metrics/overview");
   });
 
+  it("monta e parseia hub Melhoria contínua (improve)", () => {
+    expect(buildAdminHref({ section: "quality", subTab: "improve" })).toBe(
+      "/apps/minha-delpi-chat/admin/quality/improve",
+    );
+    expect(parseAdminPathSegments(["quality", "improve"])).toEqual({
+      section: "quality",
+      subTab: "improve",
+    });
+    expect(parseAdminPathSegments(["qualidade", "melhoria-continua"])).toEqual({
+      section: "quality",
+      subTab: "improve",
+    });
+  });
+
   it("parseia segmentos EN e PT de conhecimento", () => {
     expect(parseAdminPathSegments(["knowledge", "guidelines"])).toEqual({
       section: "knowledge",

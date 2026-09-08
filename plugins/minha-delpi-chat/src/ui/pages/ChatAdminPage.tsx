@@ -4,6 +4,7 @@ import { AdminAuditTab } from "../components/admin/audit/AdminAuditTab";
 import { AdminAgentsTab } from "../components/admin/agents/AdminAgentsTab";
 import { AdminSecurityTab } from "../components/admin/security/AdminSecurityTab";
 import { AdminEvaluationsTab } from "../components/admin/evaluations/AdminEvaluationsTab";
+import { AdminImproveHubTab } from "../components/admin/improve/AdminImproveHubTab";
 import { AdminGuidelinesTab } from "../components/admin/guidelines/AdminGuidelinesTab";
 import { AdminKnowledgeTab } from "../components/admin/knowledge/AdminKnowledgeTab";
 import { AdminLearningTab } from "../components/admin/learning/AdminLearningTab";
@@ -240,6 +241,10 @@ export function ChatAdminPage({
               onNavigate={navigateTo}
               page={nav.page}
             />
+          ) : null}
+
+          {nav.section === "quality" && nav.subTab === "improve" ? (
+            <AdminImproveHubTab />
           ) : null}
 
           {nav.section === "quality" && nav.subTab === "evaluations" ? (

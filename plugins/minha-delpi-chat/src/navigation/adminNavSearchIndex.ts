@@ -242,6 +242,13 @@ export const ADMIN_NAV_CONTENT_INDEX: AdminNavContentEntry[] = [
     "feedback sugestão melhoria conhecimento diretriz llm score",
   ),
   entry(
+    "quality-improve",
+    { section: "quality", subTab: "improve" },
+    "Qualidade · Melhoria contínua",
+    "Hub HITL",
+    "avaliações candidatos aprendizagem feedback thumbs melhoria contínua hitl",
+  ),
+  entry(
     "platform-tools",
     { section: "platform", subTab: "tools" },
     "Plataforma · Ferramentas",
