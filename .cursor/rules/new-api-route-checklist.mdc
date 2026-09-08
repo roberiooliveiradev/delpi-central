@@ -7,7 +7,7 @@ alwaysApply: false
 
 ## Princípio
 
-Nova operation utilizável pelo chat = contrato OpenAPI completo + import/index + agent binding + governança + execução genérica + apresentação schema-driven + avaliação.
+Nova operation utilizável pelo chat = contrato OpenAPI completo + import/index no **Action Catalog** + agent binding + governança + execução genérica + apresentação schema-driven + avaliação.
 
 **Não** criar intent, selector, marker, strategy ou catálogo técnico por endpoint.
 
@@ -33,7 +33,7 @@ Para `api-delpi`, manter também seus contratos internos (`api_delpi_success`, m
 ## 2. Importação/indexação
 
 1. Importar/reimportar o OpenAPI.
-2. Atualizar o `ChatActionCatalogItem` ou equivalente persistido.
+2. Atualizar o **Action Catalog** (`ChatActionCatalogItem` ou equivalente persistido).
 3. Gerar documento semântico/index usando o próprio contrato:
 
 ```text
@@ -62,7 +62,7 @@ Pipeline obrigatório:
 ```text
 pedido
 → decomposição se composto
-→ retrieval top-K de actions autorizadas
+→ retrieval top-K de actions autorizadas no Action Catalog
 → planner estruturado
 → OpenAPI argument extraction/validation
 → policy/RBAC/confirmation
@@ -136,7 +136,7 @@ HTTP novo sem timeout/policy de retry
 ## 7. Checklist de PR
 
 - [ ] contrato OpenAPI completo;
-- [ ] import/index realizado;
+- [ ] import/index no Action Catalog realizado;
 - [ ] agent binding/allowed actions validados;
 - [ ] retrieval/planner genérico encontra a operation;
 - [ ] argumentos validados pelo OpenAPI;
