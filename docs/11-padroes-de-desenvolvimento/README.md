@@ -1,8 +1,18 @@
 # Padrões de desenvolvimento
 
-> **Status:** documentação oficial (maio/2026)
+> **Status:** documentação oficial — revisada em setembro/2026
 
-Convenções para contribuir na **Core API** (Flask) e alinhamento com **API DELPI** (FastAPI) e Portal.
+Convenções transversais para contribuir no monorepo **Minha DELPI**.
+
+## Fonte normativa principal
+
+Antes de decisões arquiteturais ou alterações relevantes, aplicar:
+
+1. [instrucoes-oficiais-gpt-arquiteto-delpi-central.md](./instrucoes-oficiais-gpt-arquiteto-delpi-central.md) — constituição arquitetural do projeto;
+2. `.cursor/rules/development-standards-index.mdc` — roteamento das regras especializadas;
+3. contratos, schemas, OpenAPI, ADRs e implementação vigente do domínio afetado.
+
+A pasta `docs/14-documentacao-geral/` contém material de referência migrado da antiga raiz documental e **não substitui** estas fontes normativas nem contratos vigentes.
 
 ---
 
@@ -10,6 +20,7 @@ Convenções para contribuir na **Core API** (Flask) e alinhamento com **API DEL
 
 | Padrão | Arquivo |
 |---|---|
+| Instruções arquiteturais oficiais | [instrucoes-oficiais-gpt-arquiteto-delpi-central.md](./instrucoes-oficiais-gpt-arquiteto-delpi-central.md) |
 | Rotas HTTP | [padrao-de-rota.md](./padrao-de-rota.md) |
 | Use cases | [padrao-de-use-case.md](./padrao-de-use-case.md) |
 | Repositories / ports | [padrao-de-repository.md](./padrao-de-repository.md) |
