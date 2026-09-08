@@ -141,15 +141,23 @@ Registro: `POST /core-api/admin/apps/register` com `apps.manage` ou superadmin.
 
 ### Fase 5 — Chat e indicadores estratégicos 📋
 
+A integração com o Minha DELPI AI segue exclusivamente o pipeline OpenAPI-first vigente.
+
 | Entrega | Detalhe |
 |---------|---------|
-| Registry operacional | `operational_route_registry.json` |
-| Domínio rota | `api_route_domains.json` |
-| Perfil apresentação | `presentation_profiles.json` |
-| Casos regressão | `chat_intelligence_regression_cases.py` |
+| Contrato OpenAPI | `operationId`, summary/description, parâmetros e response schema completos |
+| Import/index | Reimportar provider e atualizar Action Catalog/index |
+| Governança | Agent binding, `allowed_action_ids`, RBAC/policy/sensitivity |
+| Seleção | Retrieval top-K + planner genérico, sem cadastro técnico por endpoint |
+| Argumentos | Validação OpenAPI de path/query/body/required/type/enum/format |
+| Apresentação | Fallback schema-driven; enriquecimento especializado é opcional |
+| Evals | Positive + sibling + negative + R1–R11 aplicáveis |
+| Generalização | Se o motor mudar, API externa desconhecida + teste metamórfico |
 | Exposição SI (se aplicável) | KPIs agregados |
 
-Seguir [new-api-route-checklist.mdc](../../../.cursor/rules/new-api-route-checklist.mdc) quando iniciar integração chat.
+Seguir [new-api-route-checklist.mdc](../../../.cursor/rules/new-api-route-checklist.mdc) e [`minha-delpi-ai-api/docs/architecture/new-api-route-checklist.md`](../../../minha-delpi-ai-api/docs/architecture/new-api-route-checklist.md) quando iniciar a integração do chat.
+
+**Não criar** registry de rota, domínio manual, markers, selector por provider ou presenter obrigatório para disponibilizar essas operations ao chat.
 
 ---
 
