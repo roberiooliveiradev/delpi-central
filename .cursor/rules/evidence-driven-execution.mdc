@@ -74,7 +74,7 @@ Regras:
 
 Quando houver divergência, usar esta precedência como padrão:
 
-1. `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md`;
+1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`;
 2. regras `.cursor` aplicáveis;
 3. ADRs e contratos canônicos vigentes;
 4. schemas, OpenAPI, migrations e implementação real;
