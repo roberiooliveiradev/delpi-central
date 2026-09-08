@@ -12,6 +12,11 @@ import {
 } from "../components/ReasonConfirmModal";
 import { TimelinePanel } from "../components/TimelinePanel";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  formatDateTimePtBr,
+  requestTypeLabel,
+  statusLabel,
+} from "../content/presentationLabels";
 import { InvoiceIssuancePayloadPanel } from "../features/invoice-issuance/ui/InvoiceIssuancePayloadPanel";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import { canCreateAnyRequest, canProcessAnyRequest } from "../security/requestsAccess";
@@ -67,7 +72,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
       setRequest(updated);
       setReasonKind(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha na transição");
+      setError(err instanceof Error ? err.message : "Não foi possível aplicar a ação.");
     } finally {
       setBusy(false);
     }
@@ -106,10 +111,20 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
             <>
               <DetailFields
                 fields={[
-                  { label: "Tipo", value: request.type_code },
-                  { label: "Status", value: request.status_alias || request.status },
+                  {
+                    label: "Tipo",
+                    value: requestTypeLabel(request.type_code),
+                  },
+                  {
+                    label: "Status",
+                    value: statusLabel(request.status, request.status_alias),
+                  },
                   { label: "Filial", value: request.branch_code || "—" },
                   { label: "Solicitante", value: request.created_by_name },
+                  {
+                    label: "Criada em",
+                    value: formatDateTimePtBr(request.created_at),
+                  },
                 ]}
               />
               <div title={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}>

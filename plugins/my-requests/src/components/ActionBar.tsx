@@ -1,5 +1,6 @@
 import { ActionButton } from "@delpi/plugin-ui/index";
 
+import { actionButtonVariant, actionLabel } from "../content/presentationLabels";
 import type { AllowedAction } from "../types/requests";
 import { MyRequestsEmptyState, MyRequestsFormActions } from "../ui/mrUi";
 
@@ -20,11 +21,11 @@ export function ActionBar({ actions, busy = false, onAction }: ActionBarProps) {
         <ActionButton
           key={action}
           type="button"
-          variant="primary"
+          variant={actionButtonVariant(action)}
           disabled={busy}
           onClick={() => onAction(action)}
         >
-          {action}
+          {actionLabel(action)}
         </ActionButton>
       ))}
     </MyRequestsFormActions>

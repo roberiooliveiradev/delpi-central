@@ -1,5 +1,9 @@
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { DetailFields, MyRequestsSectionCard } from "../../../ui/mrUi";
+import {
+  freightModeLabel,
+  invoiceTypeLabel,
+} from "../domain/status";
 
 type InvoiceIssuancePayloadPanelProps = {
   payload: Record<string, unknown>;
@@ -7,6 +11,8 @@ type InvoiceIssuancePayloadPanelProps = {
 
 export function InvoiceIssuancePayloadPanel({ payload }: InvoiceIssuancePayloadPanelProps) {
   const items = Array.isArray(payload.items) ? payload.items : [];
+  const invoiceType = String(payload.invoice_type || "");
+  const freightMode = String(payload.freight_mode || "");
   return (
     <MyRequestsSectionCard title="Dados da emissão">
       <div data-help="invoice-payload" title={MY_REQUESTS_HELP_TOOLTIPS.detail.invoicePayload}>
@@ -16,8 +22,14 @@ export function InvoiceIssuancePayloadPanel({ payload }: InvoiceIssuancePayloadP
               label: "Destinatário",
               value: `${String(payload.party_name || "—")} (${String(payload.party_code || "")}/${String(payload.party_store || "")})`,
             },
-            { label: "Tipo NF", value: String(payload.invoice_type || "—") },
-            { label: "Frete", value: String(payload.freight_mode || "—") },
+            {
+              label: "Tipo NF",
+              value: invoiceType ? invoiceTypeLabel(invoiceType) : "—",
+            },
+            {
+              label: "Frete",
+              value: freightMode ? freightModeLabel(freightMode) : "—",
+            },
             { label: "Itens", value: String(items.length) },
           ]}
         />
