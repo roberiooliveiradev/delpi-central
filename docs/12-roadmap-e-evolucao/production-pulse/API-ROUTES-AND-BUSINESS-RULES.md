@@ -47,6 +47,7 @@
 |--------|------|-----------|----------------|
 | `GET` | `/devices/{id}/binding` | `devices.view` | Vigente ou `null` |
 | `PUT` | `/devices/{id}/binding` | `devices.manage` | 1 vigente por device (R1); valida R27–R32; fecha anterior |
+| `PUT` | `/devices/{id}/firmware-link` | `devices.manage` | Vincula IoT a **uma** família (`firmwareKey` \| null); 1:1 replace |
 | `DELETE` | `/devices/{id}/binding` | `devices.manage` | Encerra vigente → device vira rascunho (R5) |
 | `GET` | `/devices/{id}/bindings/history` | `devices.view` | Histórico paginado |
 
