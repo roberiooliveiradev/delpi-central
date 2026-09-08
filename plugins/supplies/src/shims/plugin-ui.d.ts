@@ -288,6 +288,101 @@ declare module "@delpi/plugin-ui/index" {
     labels: KpiCardLabels;
     cardModifier?: string;
   }): ComponentType<DashboardKpiCardProps>;
+
+  export function SectionHintLabel(props: {
+    label: string;
+    hint: string;
+    className?: string;
+  }): ReactNode;
+
+  export function createFilterBarShell(config: {
+    prefix: string;
+    withGrid?: boolean;
+    block?: string;
+    embeddedByDefault?: boolean;
+    defaultAriaLabel?: string;
+  }): ComponentType<{
+    ariaLabel?: string;
+    embedded?: boolean;
+    leading?: ReactNode;
+    children?: ReactNode;
+  }>;
+
+  export function createDashboardFiltersKit(config: {
+    prefix: string;
+    portalScopeClassName?: string;
+    labels?: { filtersAriaLabel?: string };
+  }): {
+    FiltersRow: ComponentType<{
+      variant?: string;
+      children?: ReactNode;
+    }>;
+  };
+
+  export function selectFieldPacClasses(prefix: string): {
+    field: Record<string, string>;
+    control: Record<string, string>;
+  };
+
+  export function dateFieldBemClasses(prefix: string): Record<string, string>;
+
+  export function createDashboardSelectField(config: {
+    field: Record<string, string>;
+    control: Record<string, string>;
+    labels: Record<string, unknown>;
+  }): ComponentType<{
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    options: Array<{ value: string; label: string }>;
+    allowEmpty?: boolean;
+    emptyLabel?: string;
+    hint?: string;
+  }>;
+
+  export function createDashboardDateField(config: {
+    classNames: Record<string, string>;
+  }): ComponentType<{
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    hint?: string;
+    type?: string;
+  }>;
+
+  export function createDashboardSegmentToggle(prefix: string): ComponentType<{
+    ariaLabel?: string;
+    idPrefix?: string;
+    size?: string;
+    value: string;
+    onChange: (value: string) => void;
+    options: Array<{ value: string; label: string }>;
+  }>;
+
+  export function ChartViewShell(props: {
+    prefix?: string;
+    children?: ReactNode;
+    granularity?: ReactNode;
+    typeToggle?: ReactNode;
+    overlays?: ReactNode;
+    seriesColors?: ReactNode;
+    exportActions?: ReactNode;
+    granularityLabel?: string;
+    typeToggleLabel?: string;
+    overlaysLabel?: string;
+    seriesColorsLabel?: string;
+  }): ReactNode;
+
+  export function MultiTypeSeriesChart(props: {
+    data: ReadonlyArray<Record<string, unknown>>;
+    categoryKey: string;
+    series: ReadonlyArray<{ dataKey: string; name: string; fill: string }>;
+    chartType: string;
+    height?: number;
+    formatY?: (value: number) => string;
+    formatTooltipValue?: (value: number) => string;
+    showLegend?: boolean;
+  }): ReactNode;
 }
 
 declare module "@delpi/plugin-ui/styles";

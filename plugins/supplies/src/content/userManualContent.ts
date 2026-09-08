@@ -71,7 +71,12 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Ver indicadores do período",
           where: "Visão geral",
-          how: "Ou fichas de indicadores — números live entram nas próximas jornadas",
+          how: "Filtros de período e filial no topo; KPIs, gráfico OTD e comparativo valor×meta",
+        },
+        {
+          want: "Compartilhar o mesmo recorte da Visão geral",
+          where: "Visão geral",
+          how: "A URL guarda filial e datas — copie o link com o filtro ativo",
         },
         {
           want: "Abrir solicitações de compras (SC)",
@@ -165,6 +170,14 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Por que um card da Visão geral aparece indisponível?",
           a: "Uma fonte auxiliar falhou. Os demais indicadores continuam utilizáveis; atualize o período/filial ou tente de novo.",
+        },
+        {
+          q: "O que mostra o gráfico OTD na Visão geral?",
+          a: "A evolução mensal do OTD de pedidos de compra no mesmo filtro de filial e período dos KPIs. Se a série falhar, o restante da página continua utilizável.",
+        },
+        {
+          q: "Como filtro filial e período na Visão geral?",
+          a: "Use o preset (este mês, trimestre…) ou as datas De/Até e a filial no topo. O link da página guarda o recorte para compartilhar.",
         },
         {
           q: "Por que recebi 403?",

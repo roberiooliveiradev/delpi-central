@@ -46,7 +46,8 @@ Qualquer regra `ANY_OF`/`ALL_OF` deve ser explícita no contrato; não usar “o
 | GET | `/ready` | `get_supplies_api_ready` | público | não | — | PG + deps HTTP | NOVO_PROPOSTO |
 | GET | `/me/capabilities` | `get_supplies_capabilities` | `supplies.portal.access` | não | effective permissions do Core | Core + catálogo units | NOVO_PROPOSTO |
 | GET | `/home/attention` | `get_supplies_home_attention` | `supplies.portal.access` | quando card usa TOTVS | omitir cards sem capability/recurso | composição | **IMPLEMENTADO** |
-| GET | `/analytics/overview` | `get_supplies_overview` | `supplies.analytics.access` | sim | branch ∈ allowedUnits | api-delpi + SI | COMPOSICAO_BFF |
+| GET | `/analytics/overview` | `get_supplies_overview` | `supplies.analytics.access` | sim | branch ∈ allowedUnits | api-delpi + SI | **IMPLEMENTADO** |
+| GET | `/analytics/otd/series` | `get_supplies_otd_series` | `supplies.analytics.access` | sim | branch ∈ allowedUnits | api-delpi `get_supplies_purchase_order_otd_series` | **IMPLEMENTADO** |
 | GET | `/purchase-requests` | `list_portal_purchase_requests` | `supplies.purchase-requests.access` | sim | escopo CC fail-closed; view-all só amplia CC | PR-api C1 / PG C2 | **IMPLEMENTADO_C1** |
 | GET | `/purchase-requests/{branch}/{number}` | `get_portal_purchase_request` | `supplies.purchase-requests.access` | sim | SC deve pertencer ao escopo efetivo | PR-api C1 / PG C2 | **IMPLEMENTADO_C1** |
 | GET | `/purchase-requests/export` | `export_portal_purchase_requests` | `access` + `export` + unit | sim | CC via PR-api | PR-api list hop | **IMPLEMENTADO_C1** |

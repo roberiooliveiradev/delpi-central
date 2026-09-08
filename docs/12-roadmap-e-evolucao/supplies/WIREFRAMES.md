@@ -24,7 +24,7 @@ Espelham o Portal Comercial: shell + hub + Ajuda + perfil — **não** são jorn
 |---|---|---|---|---|
 | Shell comum | chrome TopBar / nav / busca / Favoritos / avatar | — | `supplies.portal.access` | entregue E3 + Favoritos TopBar |
 | WF-01 | Início (hub) | `/apps/supplies` | `supplies.portal.access` | **FECHADA (DoD)** |
-| WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | **EM FOCO** — revalidar DoD |
+| WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | **FECHADA (DoD)** |
 | **WF-HELP** | Ajuda / Manual | `/help` | `supplies.portal.access` | esqueleto E4; completo E14 |
 | **WF-USER** | Perfil usuário | `/users/:userId` | self: portal · outros: admin | **implementado** (E4.S4) |
 
@@ -68,15 +68,28 @@ Não criar permissions de leitura/escrita separadas só porque a UI possui GET/P
 
 | Campo | Conteúdo |
 |---|---|
-| Objetivo | cockpit dos **7 KPIs P0** ([KPI-FICHAS](./KPI-FICHAS.md)) |
+| Objetivo | cockpit dos **7 KPIs P0** ([KPI-FICHAS](./KPI-FICHAS.md)) + série OTD |
 | Rota | `/overview` |
 | Capability | `supplies.analytics.access` |
 | Unit | obrigatória para dados TOTVS; consolidado = only allowedUnits |
 | KPIs | OTD, STOCK-VALUE, TURNOVER, CPV, SAVINGS, SC-OPEN, CRITICAL-MP |
-| Fora P0 | KPI-PO-LATE (atrasos), cobertura, price-var |
+| Filtros | preset período + `from`/`to` + `branch` · URL shareable |
+| Gráficos | OTD mensal (`GET /analytics/otd/series`) · comparativo valor×meta (KPIs interval) |
+| Fora P0 | KPI-PO-LATE (atrasos), cobertura, price-var, série CPV/Savings dedicada |
 | UX temporal | cada card mostra snapshot/estado/intervalo |
-| Drill | páginas de foco quando existirem |
-| Partial | KPI auxiliar pode ficar unavailable |
+| Drill | páginas de foco quando existirem (sem CTA para placeholder) |
+| Partial | KPI auxiliar / série OTD podem ficar unavailable |
+| Status | **FECHADA (DoD)** |
+
+```text
+┌─ PagePath: Início › Visão geral ────────────────────────────────────────────┐
+┌─ PageHero compact: título + HelpTooltip + badge escopo + [Atualizar] ───────┐
+│    FilterBar: [Preset período] [De] [Até] [Filial ▾]                        │
+┌─ SectionCard «Indicadores» ─────────────────────────────────────────────────┐
+│    grid 7 SuppliesKpiCard (available | unavailable + partial)               │
+┌─ SectionCard «OTD no tempo» → ChartViewShell (série mensal) ────────────────┐
+┌─ SectionCard «Comparativo no período» → barras valor×meta ──────────────────┘
+```
 
 ---
 

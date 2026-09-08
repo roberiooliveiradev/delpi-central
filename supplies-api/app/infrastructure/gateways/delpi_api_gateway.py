@@ -64,6 +64,15 @@ class DelpiApiGateway:
             "Authorization": f"Bearer {access_token}",
             "X-Delpi-Caller-App": self.caller_app,
         }
+        try:
+            from flask import g, has_request_context
+
+            if has_request_context():
+                request_id = getattr(g, "request_id", None)
+                if request_id:
+                    headers["X-Request-Id"] = str(request_id)
+        except ImportError:
+            pass
 
         try:
             response = requests.request(

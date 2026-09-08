@@ -152,3 +152,26 @@ class SuppliesDelpiReads:
             )
         )
         return data if isinstance(data, dict) else {}
+
+    def get_purchase_order_otd_series(
+        self,
+        *,
+        access_token: str,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+        granularity: str = "month",
+    ) -> dict[str, Any]:
+        data = unwrap_delpi_envelope(
+            self.gateway.get(
+                "/supplies/purchase-order-otd/series",
+                access_token=access_token,
+                params=self._params(
+                    branch=branch,
+                    start_date=start_date,
+                    end_date=end_date,
+                    extra={"granularity": granularity},
+                ),
+            )
+        )
+        return data if isinstance(data, dict) else {}

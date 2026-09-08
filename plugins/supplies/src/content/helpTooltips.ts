@@ -57,6 +57,16 @@ export const SP_HELP = {
   homeAttention: HOME_HELP.attention,
   overviewTemporal:
     "Cada card tem natureza temporal própria: intervalo (OTD, CPV, economia), snapshot (estoque, críticos) ou estado atual (SC pendentes). Início não substitui este painel.",
+  overviewFiltersPeriod:
+    "Atalhos de período (este mês, trimestre, ano…). Ao mudar datas manualmente, o preset vira Personalizado.",
+  overviewFiltersFrom: "Data inicial do recorte analítico compartilhado na URL.",
+  overviewFiltersTo: "Data final do recorte analítico compartilhado na URL.",
+  overviewFiltersBranch:
+    "Filial liberada no seu escopo, ou consolidado (todas as liberadas). Filial fora do escopo é bloqueada pela API.",
+  overviewOtdChart:
+    "Série mensal de OTD de pedidos de compra. Usa o mesmo filtro de filial e período da Visão geral.",
+  overviewCompareChart:
+    "Barras valor × meta só para KPIs de intervalo que já vieram no overview — não inventa série CPV/Savings.",
   purchaseRequests:
     "Lista linhas de SC no escopo de centro de custo e filial. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação CSV exige permissão separada.",
   userProfile:

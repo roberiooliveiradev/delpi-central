@@ -2,7 +2,7 @@
 
 > **Status:** plano executável revisado · set/2026 · **E1–E6 concluídas** · E7+ não iniciar sem autorização explícita  
 > **Readiness atual:** **E1–E6 + E4.S4 perfil + GATE-AUTHZ + GATE-RBAC PASS (local)**  
-> **Modo:** **uma página por vez** · **Início fechado** · **foco = Visão geral (WF-02)** · E7 só após fechar a fila até Pedidos  
+> **Modo:** **uma página por vez** · **Início + Visão geral fechados** · **foco = SC (WF-04)** · E7 só após fechar a fila até Pedidos  
 > Referências: ADR-001..ADR-007, `plan-construction.mdc`, `evidence-driven-execution.mdc`, README § Protocolo página-a-página.
 
 ---
@@ -54,8 +54,8 @@ escolher 1 página da fila
 | # | Página | Etapa canônica | Estado |
 |---|---|---|---|
 | 1 | Início | E4 + polish shell/Favoritos/helps | **FECHADA (DoD)** |
-| 2 | Visão geral | E5 | **EM FOCO** — revalidar DoD |
-| 3 | Solicitações de compras | E6 C1 | revalidar DoD |
+| 2 | Visão geral | E5 + série OTD + kit FilterBar/Chart | **FECHADA (DoD)** |
+| 3 | Solicitações de compras | E6 C1 | **EM FOCO** — revalidar DoD |
 | 4 | Pedidos de compra | E7.S* | aguardando |
 | 5 | Entregas | E7.S* | aguardando |
 | … | demais | E8+ | fila |

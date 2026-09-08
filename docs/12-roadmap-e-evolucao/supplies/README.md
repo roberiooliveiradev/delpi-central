@@ -3,10 +3,9 @@
 > **Status (set/2026):** baseline + **E1–E6 concluídas (2026-09-08)** · MFE `plugins/supplies` + GATE-RBAC local  
 > **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)**  
 > **Modo de entrega:** **uma página por vez até DoD** — não abrir a próxima enquanto a atual não estiver fechada  
-> **Página em foco:** **Visão geral (WF-02)** — revalidar DoD  
-> **Última fechada:** **Início (WF-01)** — DoD fechado  
-> **Fila após Overview:** Solicitações de compras (revalidar DoD C1) → Pedidos de compra (E7) → …  
-> **Nome ao usuário:** **Portal Suprimentos**  
+> **Página em foco:** **Solicitações de compras (WF-04)** — revalidar DoD C1  
+> **Última fechada:** **Visão geral (WF-02)** — DoD fechado  
+> **Fila após SC:** Pedidos de compra (E7) → Entregas → …  
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies`  
 > **API:** `supplies-api` · gateway `/apps/supplies-api/`  
 > **Classe CSS root:** `.dashboard-supplies-portal`
@@ -27,7 +26,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | **E2 (supplies-api foundation)** | **concluída 2026-09-08** — Flask, GATE-AUTHZ, schema `supplies`, gateway api-delpi, `/me/capabilities` |
 | **E3 (MFE + RBAC coexistência)** | **concluída 2026-09-08** — `plugins/supplies`, client BFF-only, shell capability-driven, manifest Core, papéis canônicos |
 | **E4 (Home + Ajuda inicial)** | **concluída 2026-09-08** — `/home/attention`, Home capability-driven, Manual/Quero→onde/FAQ/glossário |
-| **E5 (Overview)** | **concluída 2026-09-08** — `/analytics/overview` (7 KPIs P0 + partial), página Visão geral |
+| **E5 (Overview)** | **concluída 2026-09-08** — overview + série OTD + MFE kit (FilterBar/ChartViewShell); **WF-02 FECHADA** |
 | **E6 (SC C1)** | **concluída 2026-09-08** — BFF `/purchase-requests*` → PR-api; lista/detalhe/export no Portal; evidência C2 |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** (fail-closed na fronteira; não usa claims JWT) |
@@ -37,7 +36,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | KPIs Overview P0 | **7 CONFIRMADOS**; cobertura/PO-LATE fora do Overview |
 | Manifest draft | **`schemaVersion 1.0.0`** registrado no Core local |
 | P-13 | **FECHADO** — Core `/me.id` UUID |
-| Implementação MFE | **modo página-a-página** · **Início fechado** · foco = **Visão geral**; SC C1 e perfil entregues; E7+ só após fechar a fila |
+| Implementação MFE | **modo página-a-página** · **Início + Visão geral fechados** · foco = **SC**; E7+ só após fechar a fila |
 
 ### Gates
 
@@ -56,8 +55,8 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | # | Página | Rota | Estado |
 |---|---|---|---|
 | 1 | **Início** | `/apps/supplies` | **FECHADA (DoD)** |
-| 2 | **Visão geral** | `/overview` | **EM FOCO** — revalidar DoD |
-| 3 | Solicitações de compras | `/purchase-requests` | E6 C1 entregue; revalidar DoD |
+| 2 | **Visão geral** | `/overview` | **FECHADA (DoD)** |
+| 3 | Solicitações de compras | `/purchase-requests` | **EM FOCO** — revalidar DoD C1 |
 | 4 | Pedidos de compra | `/purchase-orders` | placeholder → E7 |
 | 5 | Entregas | `/deliveries` | placeholder → E7 |
 | 6 | Demais ops/analíticos/admin | ver WIREFRAMES | fila após E7 |
@@ -77,9 +76,11 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ### Próximo passo operacional
 
-1. **Revalidar Visão geral (WF-02)** contra o DoD.
-2. Depois **SC**, depois **E7 Pedidos de compra** (uma de cada vez).
+1. **Revalidar Solicitações de compras (WF-04)** contra o DoD C1.
+2. Depois **E7 Pedidos de compra** (uma de cada vez).
 3. E7+ continua exigindo autorização explícita do Product Owner **e** página anterior fechada na fila.
+
+**Visão geral (WF-02) — DoD fechado:** BFF `/analytics/overview` + `/analytics/otd/series`, PageHero + FilterBar kit + URL sync, 7 KPIs, ChartViewShell OTD + comparativo valor×meta, Ajuda, testes API+MFE.
 
 **Início (WF-01) — DoD fechado:** BFF `/home/attention`, PageHero + hub kit, Favoritos TopBar (localStorage P0), helps, loading/error/partial/empty, AuthZ portal, testes API+MFE.
 

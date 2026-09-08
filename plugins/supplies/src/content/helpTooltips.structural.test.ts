@@ -27,6 +27,9 @@ describe("helpTooltips", () => {
     expect(SP_HELP.home.recents.length).toBeGreaterThan(20);
     expect(SP_HELP.home.sections.operations.length).toBeGreaterThan(20);
     expect(SP_HELP.overviewTemporal.length).toBeGreaterThan(20);
+    expect(SP_HELP.overviewFiltersPeriod.length).toBeGreaterThan(20);
+    expect(SP_HELP.overviewOtdChart.length).toBeGreaterThan(20);
+    expect(SP_HELP.overviewCompareChart.length).toBeGreaterThan(20);
     expect(SP_HELP.forbiddenUnit.length).toBeGreaterThan(20);
     expect(SP_HELP.shell.navHome).toBeTruthy();
     expect(SP_HELP.shell.navOverview).toBeTruthy();

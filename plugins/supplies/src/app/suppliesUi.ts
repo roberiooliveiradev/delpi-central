@@ -1,9 +1,12 @@
 import {
   ActionButton,
   HelpTooltip,
+  SectionHintLabel,
   createDashboardCatalogSearchBar,
   createDashboardCommandPalette,
+  createDashboardDateField,
   createDashboardEmptyState,
+  createDashboardFiltersKit,
   createDashboardHubChipRow,
   createDashboardLoadingActivityCard,
   createDashboardPageHero,
@@ -11,16 +14,21 @@ import {
   createDashboardRouteChip,
   createDashboardSectionCard,
   createDashboardSectionRouteCard,
+  createDashboardSegmentToggle,
+  createDashboardSelectField,
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTopBar,
   createDashboardTopBarSearchTrigger,
   createDashboardViewTransition,
+  createFilterBarShell,
   createInitialsAvatar,
   catalogSearchBarBemClasses,
+  dateFieldBemClasses,
   emptyStateCardBemClasses,
   sectionCardPacBemClasses,
   sectionRouteCardBemClasses,
+  selectFieldPacClasses,
   stateBannerBemClasses,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ComponentProps } from "react";
@@ -94,5 +102,43 @@ const SuppliesPageHeroBase = createDashboardPageHero({ prefix: UI_PREFIX });
 export function SuppliesPageHero(props: ComponentProps<typeof SuppliesPageHeroBase>) {
   return createElement(SuppliesPageHeroBase, { density: "compact", ...props });
 }
+
+export const SuppliesFilterBarShell = createFilterBarShell({
+  prefix: UI_PREFIX,
+  withGrid: true,
+  defaultAriaLabel: "Filtros",
+});
+
+export const spFiltersKit = createDashboardFiltersKit({
+  prefix: UI_PREFIX,
+  portalScopeClassName: SP_PORTAL_SCOPE,
+  labels: {
+    filtersAriaLabel: "Filtros",
+  },
+});
+
+const { field: spSelectFieldClasses, control: spSelectControlClasses } =
+  selectFieldPacClasses(UI_PREFIX);
+
+export const SuppliesSelectField = createDashboardSelectField({
+  field: spSelectFieldClasses,
+  control: spSelectControlClasses,
+  labels: {
+    placeholder: "Selecione…",
+    emptyLabel: "Todos",
+    control: {
+      searchPlaceholder: "Buscar…",
+      emptyOptions: "Nenhuma opção encontrada.",
+      searchAriaLabel: (label?: string) => (label ? `Buscar em ${label}` : "Buscar opções"),
+    },
+  },
+});
+
+export const SuppliesDateField = createDashboardDateField({
+  classNames: dateFieldBemClasses(UI_PREFIX),
+});
+
+export const SuppliesSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
+export const SuppliesSectionHintLabel = SectionHintLabel;
 
 export { HelpTooltip };

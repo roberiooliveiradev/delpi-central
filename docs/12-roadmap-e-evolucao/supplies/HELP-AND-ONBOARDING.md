@@ -27,11 +27,12 @@ Herdar textos já canônicos de:
 
 - O que é o Portal vs apps antigos (coexistência).
 - Início vs Visão geral.
-- Como filtrar filial (Overview + preferência de filial padrão no perfil).
+- Como filtrar filial e período na Visão geral (FilterBar + URL shareable) + preferência de filial padrão no perfil.
+- Gráfico OTD mensal e comparativo valor×meta (sem série inventada).
 - Onde ver SC, ESTSEG, item, fornecedor.
 - O que cada KPI do Overview significa (link fichas, linguagem de negócio).
 - 403: «sem permissão para esta filial / este módulo».
-- FAQ: diferença estoque × estoque de segurança; OTD × atraso; Sheets × indicadores.
+- FAQ: diferença estoque × estoque de segurança; OTD × atraso; Sheets × indicadores; filtros/URL Overview.
 - Onde alterar filial padrão / densidade de tabelas (perfil do plugin — WF-USER), sem confundir com `/profile` do Portal.
 
 ## Sync por feature
