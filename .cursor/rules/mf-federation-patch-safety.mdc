@@ -1,6 +1,6 @@
 ---
-description: Patch MF React — sem ReDoS; validar vite build do plugin-ui antes de entregar
-alwaysApply: true
+description: Module Federation/Vite React patch — carregar ao alterar federationReactProxyFix, federation patch/version ou investigar build travado/rendering chunks
+alwaysApply: false
 ---
 
 # Module Federation — segurança do patch React
