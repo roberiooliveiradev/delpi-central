@@ -8,6 +8,8 @@ on:
       - "**/*.jsx"
       - "**/*.ts"
       - "**/*.tsx"
+      - "**/*.css"
+      - "**/*.sql"
       - "**/*.yml"
       - "**/*.yaml"
       - "**/*.json"
@@ -18,6 +20,8 @@ on:
       - "scripts/ci/audit_architecture_phase3.py"
       - "scripts/ci/test_audit_architecture_phase3.py"
       - "scripts/ci/architecture_phase3_exceptions.json"
+      - "scripts/ci/audit_platform_guardrails.py"
+      - "scripts/ci/test_audit_platform_guardrails.py"
       - ".github/workflows/architecture-enforcement.yml"
   push:
     branches:
@@ -28,6 +32,8 @@ on:
       - "**/*.jsx"
       - "**/*.ts"
       - "**/*.tsx"
+      - "**/*.css"
+      - "**/*.sql"
       - "**/*.yml"
       - "**/*.yaml"
       - "**/*.json"
@@ -38,6 +44,8 @@ on:
       - "scripts/ci/audit_architecture_phase3.py"
       - "scripts/ci/test_audit_architecture_phase3.py"
       - "scripts/ci/architecture_phase3_exceptions.json"
+      - "scripts/ci/audit_platform_guardrails.py"
+      - "scripts/ci/test_audit_platform_guardrails.py"
       - ".github/workflows/architecture-enforcement.yml"
 
 permissions:
@@ -57,8 +65,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Test architecture gate
+      - name: Test Phase 3 architecture gate
         run: python -m unittest scripts/ci/test_audit_architecture_phase3.py -v
+
+      - name: Test transversal platform guardrails
+        run: python -m unittest scripts/ci/test_audit_platform_guardrails.py -v
 
       - name: Resolve comparison base
         id: base
@@ -77,3 +88,6 @@ jobs:
 
       - name: Enforce Phase 3 architecture gates
         run: python scripts/ci/audit_architecture_phase3.py --check --base "${{ steps.base.outputs.sha }}"
+
+      - name: Enforce transversal platform guardrails
+        run: python scripts/ci/audit_platform_guardrails.py --check --base "${{ steps.base.outputs.sha }}"
