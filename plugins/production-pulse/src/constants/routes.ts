@@ -33,6 +33,7 @@ export type ProductionPulseRouteKind =
   | "panel"
   | "firmwares"
   | "firmwareJobs"
+  | "firmwareLinks"
   | "operatorHub"
   | "operatorPicker"
   | "operatorDevice"
@@ -45,6 +46,7 @@ export type ProductionPulseRoute =
   | { kind: "panel" }
   | { kind: "firmwares" }
   | { kind: "firmwareJobs"; branch: string }
+  | { kind: "firmwareLinks"; branch: string; firmwareKey?: string }
   | { kind: "operatorHub"; branch: string; anchorType: OperatorAnchorFilter; search: string }
   | { kind: "operatorPicker"; placementKey: string; branch: string }
   | { kind: "operatorDevice"; deviceId: string; branch: string; placementKey?: string }
@@ -75,6 +77,14 @@ export function parseProductionPulseRoute(pathname: string, search = ""): Produc
 
   if (normalized === `${PRODUCTION_PULSE_BASE_PATH}/firmware-jobs`) {
     return { kind: "firmwareJobs", branch: query.get("branch") ?? "01" };
+  }
+
+  if (normalized === `${PRODUCTION_PULSE_BASE_PATH}/firmware-links`) {
+    return {
+      kind: "firmwareLinks",
+      branch: query.get("branch") ?? "01",
+      firmwareKey: query.get("firmwareKey") ?? undefined,
+    };
   }
 
   if (normalized === PRODUCTION_PULSE_OPERATOR_BASE) {
@@ -163,6 +173,18 @@ export function productionPulseFirmwaresPath(): string {
 
 export function productionPulseFirmwareJobsPath(branch = "01"): string {
   return `${PRODUCTION_PULSE_BASE_PATH}/firmware-jobs?branch=${encodeURIComponent(branch)}`;
+}
+
+export function productionPulseFirmwareLinksPath(opts?: {
+  branch?: string;
+  firmwareKey?: string;
+}): string {
+  const params = new URLSearchParams();
+  params.set("branch", opts?.branch ?? "01");
+  if (opts?.firmwareKey?.trim()) {
+    params.set("firmwareKey", opts.firmwareKey.trim());
+  }
+  return `${PRODUCTION_PULSE_BASE_PATH}/firmware-links?${params}`;
 }
 
 export function productionPulseOperatorPath(

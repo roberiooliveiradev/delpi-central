@@ -48,6 +48,7 @@ export type DeviceListItem = {
   controllerCode: string | null;
   firmwareSource: string | null;
   firmwareKey?: string | null;
+  assignedFirmwareKey?: string | null;
   installedFirmwareVersion?: string | null;
   targetFirmwareVersion?: string | null;
   firmwareReportedAt?: string | null;

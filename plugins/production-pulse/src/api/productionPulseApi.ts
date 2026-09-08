@@ -429,3 +429,15 @@ export async function fetchFirmwareUpdateSummary(
   );
   return payload.data;
 }
+
+export async function putDeviceFirmwareLink(
+  deviceId: string,
+  firmwareKey: string | null,
+): Promise<DeviceListItem> {
+  const payload = await httpJson<ApiEnvelope<DeviceListItem>>(
+    "PUT",
+    `${PRODUCTION_PULSE_API_BASE}/devices/${deviceId}/firmware-link`,
+    { firmwareKey },
+  );
+  return payload.data;
+}

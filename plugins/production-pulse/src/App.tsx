@@ -7,6 +7,7 @@ import { useViewportBucket } from "./hooks/useViewportBucket";
 import { PanelPage } from "./pages/PanelPage";
 import { FirmwaresPage } from "./pages/FirmwaresPage";
 import { FirmwareJobsPage } from "./pages/FirmwareJobsPage";
+import { FirmwareLinksPage } from "./pages/FirmwareLinksPage";
 import { DeviceFormPage } from "./pages/DeviceFormPage";
 import { DeviceDetailPage } from "./pages/DeviceDetailPage";
 import { OperatorPage } from "./pages/operator/OperatorPage";
@@ -73,6 +74,12 @@ export default function App({
         <FirmwaresPage permissions={permissionFlags} />
       ) : route.kind === "firmwareJobs" ? (
         <FirmwareJobsPage branch={route.branch} permissions={permissionFlags} />
+      ) : route.kind === "firmwareLinks" ? (
+        <FirmwareLinksPage
+          branch={route.branch}
+          highlightFirmwareKey={route.firmwareKey}
+          permissions={permissionFlags}
+        />
       ) : route.kind === "deviceNew" ? (
         <DeviceFormPage
           mode="create"

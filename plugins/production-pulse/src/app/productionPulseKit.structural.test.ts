@@ -81,10 +81,13 @@ describe("production-pulse kit contracts", () => {
   it("OTA: rotas, helps, páginas kit-first e KPI de frota no painel", () => {
     expect(readRelative("constants/routes.ts")).toMatch(/firmwares/);
     expect(readRelative("constants/routes.ts")).toMatch(/firmware-jobs/);
+    expect(readRelative("constants/routes.ts")).toMatch(/firmware-links/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/ota:\s*\{/);
     expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/PpFirmwareFileField/);
+    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/productionPulseFirmwareLinksPath/);
     expect(readRelative("pages/FirmwareJobsPage.tsx")).toMatch(/PpNativeSelectField/);
     expect(readRelative("pages/PanelPage.tsx")).toMatch(/FirmwareOtaKpiStrip/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/fetchDevices/);
     expect(readRelative("components/detail/DeviceFirmwareTab.tsx")).toMatch(
       /createFirmwareUpdateJob/,
     );

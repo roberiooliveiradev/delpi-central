@@ -19,6 +19,7 @@ import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import {
   PRODUCTION_PULSE_BASE_PATH,
   productionPulseFirmwareJobsPath,
+  productionPulseFirmwareLinksPath,
 } from "../constants/routes";
 import { PP_HELP } from "../content/helpTooltips";
 import { navigateProductionPulse } from "../utils/navigation";
@@ -75,7 +76,12 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
       setDisplayName("");
       setReleaseNotes("");
       setFile(null);
-      await reload();
+      navigateProductionPulse(
+        productionPulseFirmwareLinksPath({
+          firmwareKey,
+          branch: "01",
+        }),
+      );
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Falha ao publicar firmware.");
     } finally {
@@ -102,6 +108,12 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
               onClick={() => navigateProductionPulse(productionPulseFirmwareJobsPath())}
             >
               Campanhas
+            </PpActionButton>
+            <PpActionButton
+              variant="primary"
+              onClick={() => navigateProductionPulse(productionPulseFirmwareLinksPath())}
+            >
+              Amarração IoT
             </PpActionButton>
           </>
         }

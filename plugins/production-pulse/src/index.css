@@ -1914,3 +1914,60 @@
   width: 100%;
 }
 
+/* Page layout — firmware ↔ IoT links (domínio, não kit) */
+.pp-ota-links-columns {
+  display: grid;
+  gap: var(--pp-section-gap);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 769px) {
+  .pp-ota-links-columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.pp-list-plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pp-list-plain li {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--pp-border);
+  color: var(--pp-text);
+  font-size: var(--pp-font-md);
+}
+
+.pp-firmware-link-canvas {
+  height: min(70vh, 640px);
+  width: 100%;
+  border: 1px solid var(--pp-border);
+  border-radius: var(--pp-card-radius);
+  background: var(--pp-canvas);
+}
+
+.pp-firmware-link-canvas .react-flow__node {
+  font-size: var(--pp-font-sm);
+}
+
+.pp-firmware-node,
+.pp-device-node {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--pp-border);
+  background: var(--pp-surface);
+  color: var(--pp-text);
+  min-width: 140px;
+}
+
+.pp-firmware-node {
+  border-color: var(--pp-accent);
+}
+
+.pp-device-node--linked {
+  border-color: var(--pp-success);
+}
+
+

@@ -11,6 +11,24 @@ import {
 } from "./routes";
 
 describe("parseProductionPulseRoute", () => {
+  it("maps firmwares, firmware-jobs and firmware-links", () => {
+    expect(parseProductionPulseRoute("/apps/production-pulse/firmwares").kind).toBe("firmwares");
+    expect(parseProductionPulseRoute("/apps/production-pulse/firmware-jobs", "?branch=02")).toEqual({
+      kind: "firmwareJobs",
+      branch: "02",
+    });
+    expect(
+      parseProductionPulseRoute(
+        "/apps/production-pulse/firmware-links",
+        "?branch=01&firmwareKey=esp8266_counter_v1",
+      ),
+    ).toEqual({
+      kind: "firmwareLinks",
+      branch: "01",
+      firmwareKey: "esp8266_counter_v1",
+    });
+  });
+
   it("maps panel root", () => {
     expect(parseProductionPulseRoute("/apps/production-pulse").kind).toBe("panel");
   });
