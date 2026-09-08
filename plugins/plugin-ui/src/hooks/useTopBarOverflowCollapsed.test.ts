@@ -19,6 +19,7 @@ describe("resolveTopBarMeasureNeededWidth", () => {
       configurable: true,
     });
     const row = document.createElement("div");
+    row.className = "delpi-ui-topbar__row--measure";
     Object.defineProperty(row, "scrollWidth", {
       value: 520,
       configurable: true,

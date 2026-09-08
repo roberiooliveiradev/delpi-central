@@ -179,10 +179,16 @@ describe("TopBar", () => {
 
     const root = container.firstElementChild as HTMLElement;
     const measure = container.querySelector(".delpi-ui-topbar__measure") as HTMLElement;
+    const measureRow = measure?.querySelector(
+      ".delpi-ui-topbar__row--measure",
+    ) as HTMLElement;
     expect(measure).toBeTruthy();
+    expect(measureRow).toBeTruthy();
 
     Object.defineProperty(root, "clientWidth", { value: 400, configurable: true });
-    Object.defineProperty(measure, "scrollWidth", { value: 640, configurable: true });
+    // Medição canônica: row intrínseca (não scrollWidth do wrapper 100%).
+    Object.defineProperty(measureRow, "scrollWidth", { value: 640, configurable: true });
+    Object.defineProperty(measureRow, "offsetWidth", { value: 640, configurable: true });
     await act(async () => {
       callback?.([], {} as ResizeObserver);
     });
@@ -191,5 +197,59 @@ describe("TopBar", () => {
     expect(screen.queryByRole("navigation")).toBeNull();
     expect(screen.getByRole("button", { name: "Menu de navegação" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Recolher navegação" })).toBeNull();
+  });
+
+  it("hamburger overflow: reexpande quando a row intrínseca cabe com folga", async () => {
+    let callback: ResizeObserverCallback | null = null;
+    vi.stubGlobal(
+      "ResizeObserver",
+      vi.fn(function ResizeObserverStub(this: ResizeObserver, cb: ResizeObserverCallback) {
+        callback = cb;
+        this.observe = vi.fn();
+        this.disconnect = vi.fn();
+        this.unobserve = vi.fn();
+      }),
+    );
+
+    const { container } = render(
+      <TopBar
+        classNames={topBarBemClasses("cm")}
+        navClassNames={underlineNavBemClasses("cm")}
+        activeId="home"
+        collapsible
+        collapseMode="hamburger"
+        collapseTrigger="overflow"
+        menuLabel="Menu de navegação"
+        items={[
+          { id: "home", label: "Início", onSelect: vi.fn() },
+          { id: "rooms", label: "Sala de interação", onSelect: vi.fn() },
+        ]}
+        secondary={<span>Favoritos</span>}
+        actions={<span>Usuário</span>}
+      />,
+    );
+
+    const root = container.firstElementChild as HTMLElement;
+    const measureRow = container.querySelector(
+      ".delpi-ui-topbar__row--measure",
+    ) as HTMLElement;
+
+    Object.defineProperty(root, "clientWidth", { value: 400, configurable: true });
+    Object.defineProperty(measureRow, "scrollWidth", { value: 640, configurable: true });
+    Object.defineProperty(measureRow, "offsetWidth", { value: 640, configurable: true });
+    await act(async () => {
+      callback?.([], {} as ResizeObserver);
+    });
+    expect(root.className).toContain("delpi-ui-topbar--collapsed");
+
+    Object.defineProperty(root, "clientWidth", { value: 1200, configurable: true });
+    Object.defineProperty(measureRow, "scrollWidth", { value: 520, configurable: true });
+    Object.defineProperty(measureRow, "offsetWidth", { value: 520, configurable: true });
+    await act(async () => {
+      callback?.([], {} as ResizeObserver);
+    });
+
+    expect(root.className).not.toContain("delpi-ui-topbar--collapsed");
+    expect(screen.getByRole("navigation")).toBeTruthy();
   });
 });

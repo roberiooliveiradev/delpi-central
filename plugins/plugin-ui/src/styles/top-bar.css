@@ -87,14 +87,21 @@
   pointer-events: none;
 }
 
+/* Sem min-width:100% — senão needed ≈ available quando cabe e a histerese
+   do overflow nunca reexpande o hamburger (TopBar trava colapsada). */
 .delpi-ui-topbar__row--measure {
   flex-wrap: nowrap;
   width: max-content;
-  min-width: 100%;
+  min-width: 0;
+  justify-content: flex-start;
 }
 
 .delpi-ui-topbar__row--measure .delpi-ui-topbar__nav {
   flex: 0 0 auto;
+}
+
+.delpi-ui-topbar__row--measure .delpi-ui-topbar__nav .delpi-ui-underline-nav {
+  width: max-content;
 }
 
 .delpi-ui-topbar__row--measure .delpi-ui-underline-nav__scroller {

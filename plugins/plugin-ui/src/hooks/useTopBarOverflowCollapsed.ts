@@ -14,13 +14,17 @@ export type UseTopBarOverflowCollapsedOptions = {
 /**
  * Largura intrínseca da row (`max-content`), não do wrapper `width: 100%`.
  *
- * O wrapper `.delpi-ui-topbar__measure` com `overflow: hidden` reporta
- * `scrollWidth ≈ clientWidth` quando o conteúdo cabe — folga ~0 e a
- * histerese trava o hamburger. A row filha mantém a largura real.
+ * Contrato CSS (obrigatório): `.delpi-ui-topbar__row--measure` sem
+ * `min-width: 100%` — senão needed ≥ available sempre que cabe e a
+ * histerese trava o hamburger. Ver `topBarMeasureRow.structural.test.mjs`.
  */
 export function resolveTopBarMeasureNeededWidth(measureEl: HTMLElement): number {
-  const content = measureEl.firstElementChild;
-  if (content instanceof HTMLElement) {
+  const content =
+    measureEl.querySelector<HTMLElement>(".delpi-ui-topbar__row--measure") ??
+    (measureEl.firstElementChild instanceof HTMLElement
+      ? measureEl.firstElementChild
+      : null);
+  if (content) {
     return Math.max(content.scrollWidth, content.offsetWidth);
   }
   return measureEl.scrollWidth;
