@@ -1,7 +1,7 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
 > **Status:** plano executável revisado · set/2026 · **não implementar sem autorização explícita**  
-> **Readiness atual:** BLOQUEADO até E1 + gates P0  
+> **Readiness atual:** **E1 concluída (GATE-E1 + GATE-ARCH PASS)** · próximo = E2 após autorização · GATE-AUTHZ/RBAC pendentes  
 > Referências: ADR-001..ADR-007, `plan-construction.mdc`, `evidence-driven-execution.mdc`.
 
 ---
@@ -54,15 +54,19 @@ Passa somente quando:
 
 ### GATE-E1
 
-- dump dos BIs externos concluído;
+**PASS (2026-09-08)** quando:
+
+- dump dos BIs externos concluído (local documentado; prod residual para cutover);
 - papéis SC/ES mapeados;
 - KPIs P0 homologados ou explicitamente bloqueados.
 
 ### GATE-ARCH
 
+**PASS (2026-09-08)** quando:
+
 - ADRs 001–007 revisados;
-- `MANIFEST-DRAFT.md` validado contra runtime real;
-- catálogo de permissions mínimo aprovado.
+- `MANIFEST-DRAFT.md` validado contra runtime real (`schemaVersion 1.0.0`);
+- catálogo de permissions mínimo aprovado (ADR-007).
 
 ### GATE-RBAC
 
@@ -153,7 +157,26 @@ Passa somente quando:
 
 ## E1.S5 — Freeze arquitetural
 
-**Pronto quando:** GATE-E1 + GATE-ARCH.
+**Objetivo:** declarar GATE-E1 + GATE-ARCH e liberar o caminho documental para E2.
+
+**Feito em 2026-09-08:**
+
+| Gate | Veredito | Evidência |
+|---|---|---|
+| GATE-E1 | **PASS** | ADR-005 dump local; PERFIS E1.S2; KPI-FICHAS E1.S3 (7 KPIs) |
+| GATE-ARCH | **PASS** | ADRs 001–007; MANIFEST-DRAFT `1.0.0` dry-run vs schema Core |
+
+**Residuais explícitos (não reabrem E1):**
+
+- Dump Core **produção** dos 6 BIs — obrigatório antes de `GATE-CUTOVER` (P-01/P-03/P-04/P-07).
+- Smoke `/me` de personas supplies — E3.S5 (Core local sem apps supplies).
+- Aceite nominal PO nas fichas KPI — Assinatura em KPI-FICHAS.
+- GATE-AUTHZ / código Flask — E2.S2.
+- P-13 — antes de E2.S4.
+
+**Pronto quando:** GATE-E1 + GATE-ARCH — **atingido**.
+
+**Não fazer nesta subetapa:** scaffold Flask; marcar GATE-AUTHZ/GATE-RBAC verdes.
 
 ---
 
@@ -672,19 +695,19 @@ Não aceitar “teste: unit”, “pytest stock” ou equivalente vago.
 ```yaml
 todos:
   - id: e1-s1-core-bi-dump
-    status: pending
+    status: completed
     dependsOn: []
   - id: e1-s2-real-roles
-    status: pending
+    status: completed
     dependsOn: []
   - id: e1-s3-kpi-freeze
-    status: pending
+    status: completed
     dependsOn: []
   - id: e1-s4-manifest-rbac
-    status: pending
+    status: completed
     dependsOn: [e1-s1-core-bi-dump, e1-s2-real-roles]
   - id: e1-s5-architecture-freeze
-    status: pending
+    status: completed
     dependsOn: [e1-s3-kpi-freeze, e1-s4-manifest-rbac]
 
   - id: e2-s1-flask-scaffold

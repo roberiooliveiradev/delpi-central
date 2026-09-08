@@ -1,7 +1,7 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (set/2026):** baseline de produto e arquitetura concluída · **implementação produtiva não iniciada**  
-> **Readiness:** **BLOQUEADO PARA IMPLEMENTAÇÃO até conclusão de E1 + gates P0**  
+> **Status (set/2026):** baseline + **E1 concluída (2026-09-08)** · implementação produtiva **não iniciada**  
+> **Readiness:** **E1 + GATE-ARCH OK** · próximo = **E2 após autorização explícita** · GATE-AUTHZ/GATE-RBAC ainda pendentes (E2/E3)  
 > **Nome ao usuário:** **Portal Suprimentos**  
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies`  
 > **API:** `supplies-api` · gateway `/apps/supplies-api/`  
@@ -19,21 +19,31 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 |---|---|
 | Baseline de produto | concluída |
 | Arquitetura alvo | concluída |
+| **E1 (descoberta + freeze)** | **concluída 2026-09-08** |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
-| Authz Core-first | decisão congelada; implementação compartilhada ainda precisa de gate |
+| Authz Core-first | decisão congelada; **GATE-AUTHZ = E2.S2** |
 | Framework supplies-api | Flask pela precedência das instruções oficiais |
-| BIs externos | pendentes de dump Core E1.S1 |
-| Papéis SC/ES | comprador ES ainda pendente E1.S2 |
-| KPIs | parte ainda requer homologação E1.S3 |
-| Manifest draft | obrigatório antes do scaffold |
-| Implementação | não iniciada |
+| BIs externos | dump **local** 0/6 documentado (ADR-005); **dump prod** obrigatório antes do cutover |
+| Papéis SC/ES | matriz legado→canônico em PERFIS; P-02 fechado para desenho; smoke prod = E3.S5 |
+| KPIs Overview P0 | **7 CONFIRMADOS**; cobertura/PO-LATE fora do Overview |
+| Manifest draft | **`schemaVersion 1.0.0`** validado vs schema Core |
+| Implementação | não iniciada — aguarda autorização para E2 |
 
-### Bloqueios P0 antes de E2
+### Gates
 
-- **GATE-AUTHZ:** permissions efetivas resolvidas pelo Core; nenhuma autorização nova confia em claims de permission do JWT.
-- **GATE-E1:** dump dos BIs externos, papéis e fichas KPI pendentes.
-- **GATE-ARCH:** ADRs e manifest draft revisados/aceitos.
-- **GATE-RBAC:** catálogo mínimo + provisionamento de coexistência definido.
+| Gate | Estado E1.S5 |
+|---|---|
+| **GATE-E1** | **PASS** (dump local + papéis + KPIs; residual: dump Core **prod** antes do cutover) |
+| **GATE-ARCH** | **PASS** (ADRs 001–007 + Manifest 1.0.0 + ADR-007) |
+| **GATE-AUTHZ** | pendente E2.S2 |
+| **GATE-RBAC** | pendente E3.S5 (provisionamento coexistência) |
+
+### O que ainda bloqueia E2
+
+1. **Autorização explícita** do Product Owner / arquiteto para iniciar scaffold.
+2. **P-13** (id de usuário no schema) — só bloqueia **E2.S4** migrations, não E2.S1–S3.
+
+Dump Core de produção **não** bloqueia scaffold Flask; bloqueia decisão final de redirects/BIs no cutover.
 
 ---
 
@@ -138,8 +148,8 @@ Regras:
 | Gate | Critério |
 |---|---|
 | **GATE-AUTHZ** | Core-first; fail-closed na fronteira; não copiar `flask_auth.py` nem fallback FastAPI; testes positivo/negativo/filial |
-| **GATE-E1** | BIs + papéis + KPIs fechados ou explicitamente bloqueados |
-| **GATE-ARCH** | ADRs + Manifest Draft revisados |
+| **GATE-E1** | **PASS** (2026-09-08) — dump local + papéis + KPIs; residual dump prod antes do cutover |
+| **GATE-ARCH** | **PASS** (2026-09-08) — ADRs + Manifest Draft `1.0.0` |
 | **GATE-RBAC** | permissions canônicas + migração de papéis + `/me/apps`/`/me/routes` planejados |
 | **GATE-API** | supplies-api saudável e MFE sem api-delpi direto |
 | **GATE-MFE** | shell kit-first e CSS isolado |
