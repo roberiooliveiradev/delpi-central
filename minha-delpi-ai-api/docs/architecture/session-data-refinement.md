@@ -1,46 +1,46 @@
 # Refinamento de dados da sessão (formato e agrupamento)
 
-**Status:** implementado (jun/2026)  
-**Parent:** [chat-assistant-content-presentation.md](./chat-assistant-content-presentation.md), [chat-intelligence-base.md](./chat-intelligence-base.md)
+**Escopo:** follow-ups sobre resultado operacional já obtido  
+**Arquitetura pai:** [chat-intelligence-base.md](./chat-intelligence-base.md)
 
-Follow-ups do usuário sobre o **último resultado operacional** podem ser resolvidos de duas formas, sem duplicar lógica em use case ou MFE:
+Este fluxo trata refinamento de **dados já presentes na sessão** ou reconsulta da **mesma Action/capability**, não descoberta manual de endpoint. Seleção de Actions continua regida pelo pipeline OpenAPI-first.
+
+Follow-ups do usuário sobre o último resultado operacional podem ser resolvidos de duas formas:
 
 | Estratégia | Quando | Exemplo |
 |------------|--------|---------|
-| **session** | Payload retido na conversa contém as colunas necessárias | TOP 50 por item → «consumo por unidade» |
-| **refetch** | Coluna ausente ou ranking global no período | TOP 50 → «agrupar por grupo de produto» |
-
----
+| **session** | Payload retido contém as colunas necessárias | TOP 50 por item → «consumo por unidade» |
+| **refetch** | Coluna ausente ou o agrupamento precisa do dataset completo | TOP 50 → «agrupar por grupo de produto» |
 
 ## Pipeline pré-turno
 
 Ordem em `ChatToolContextPreTurnService._resolve_paginated_shortcuts`:
 
-```
+```text
 1. ChatPaginatedExternalActionService.resolve_format_refinement_turn
 2. ChatPaginatedExternalActionService.resolve_group_by_session_refinement_turn
-3. Paginação / consolidação / recuperação de erro
+3. paginação / consolidação / recuperação de erro
 ```
 
-Se (1) ou (2) retornam sucesso, o turno **não** dispara nova seleção de rota.
+Se um refinamento puder reutilizar com segurança o resultado existente, não deve disparar nova descoberta de Action.
 
----
+## Responsabilidades
 
-## Módulos canônicos
+| Responsabilidade | Módulo/config |
+|------------------|---------------|
+| Dimensões de agrupamento | `operational_group_by_refinement.json` |
+| Decisão session vs refetch | `ChatOperationalSessionDataRefinementService` |
+| Agregação tabular | `ChatTabularDataAggregationService` |
+| Atalho in-memory | `ChatOperationalGroupBySessionRefinementService` |
+| Recuperação do payload da sessão | `ChatPresentationFormatRefinementService` |
+| Reconsulta quando necessária | `ChatOperationalRefinementService.plan_operational_group_by_follow_ups` |
+| Aviso de amostra retida | `data_coverage.json` + metadata `sessionDataRefinement` |
 
-| Responsabilidade | Módulo | Config |
-|------------------|--------|--------|
-| Vocabulário + rotas + dimensões | `ChatOperationalGroupByRefinementService` | `operational_group_by_refinement.json` |
-| Decisão session vs refetch | `ChatOperationalSessionDataRefinementService` | dimensão: `strategy`, `localCategoryField`, `refetchGroupBy` |
-| Agregação tabular | `ChatTabularDataAggregationService` | — |
-| Atalho pré-turno (session) | `ChatOperationalGroupBySessionRefinementService` | — |
-| Recuperar payload da sessão | `ChatPresentationFormatRefinementService` | mesmo contrato do refinamento de formato |
-| Refetch operacional | `ChatOperationalRefinementService.plan_operational_group_by_follow_ups` → `operational_group_by_refinement` | api-delpi: `production_consumption_top_items_group_by.json` |
-| Cobertura «amostra retida» | `data_coverage.json` → `sessionAggregateSample` | metadata `sessionDataRefinement` |
+A configuração de refinamento descreve **como transformar/reconsultar um resultado já conhecido**. Ela não substitui OpenAPI/Action Catalog e não deve ensinar ao motor qual endpoint selecionar para uma intenção nova.
 
----
+## Perfil de dimensão
 
-## Perfil de dimensão (`operational_group_by_refinement.json`)
+Exemplo:
 
 ```json
 {
@@ -55,22 +55,20 @@ Se (1) ou (2) retornam sucesso, o turno **não** dispara nova seleção de rota.
 
 | Campo | Valores | Significado |
 |-------|---------|-------------|
-| `strategy` | `local` \| `refetch` \| `auto` | `auto`: tenta local se a coluna existir nas linhas retidas |
-| `localCategoryField` | chave da linha | Eixo de agrupamento in-memory |
-| `localMetricFields` | lista | Métricas somadas |
-| `refetchGroupBy` | param API | Valor de `group_by` na reconsulta |
+| `strategy` | `local` \| `refetch` \| `auto` | `auto`: tenta local se a coluna existir |
+| `localCategoryField` | chave da linha | eixo do agrupamento in-memory |
+| `localMetricFields` | lista | métricas agregadas |
+| `refetchGroupBy` | parâmetro suportado pela Action | agrupamento usado na reconsulta |
 
----
+## Estender uma dimensão
 
-## Estender para nova rota ou dimensão
+1. Validar o contrato real da Action e o payload retido.
+2. Adicionar a dimensão à configuração canônica de refinamento, sem duplicar schema OpenAPI.
+3. Se houver reconsulta, usar somente parâmetros aceitos pelo schema da Action.
+4. Atualizar labels de UI somente quando necessário.
+5. Cobrir session, refetch, argumento inválido e resultado parcial nos testes.
+6. Validar follow-up em R6 e outcome em R9; incluir demais dimensões R1–R11 aplicáveis.
 
-1. **Chat:** entrada em `operational_group_by_refinement.json` → `routes[]` + `dimensions[]`.
-2. **API (se refetch):** dimensão em `api-delpi/app/content/production_consumption_top_items_group_by.json`.
-3. **Colunas UI:** perfil em `column_labels.json`.
-4. **Testes:** `test_chat_operational_session_data_refinement_service.py`, `test_chat_operational_group_by_session_refinement_service.py`.
+## Metadata
 
----
-
-## Metadata (session)
-
-`sessionDataRefinement` + `dataCoverageNotice` (`sessionAggregateSample`) deixam claro que o agrupamento é sobre a **amostra retida**.
+`sessionDataRefinement` + `dataCoverageNotice` devem deixar explícito quando um agrupamento é calculado apenas sobre a amostra retida.
