@@ -1,5 +1,5 @@
 ---
-description: Roteamento centralizado de actions api-delpi no chat — sem if por path no use case
+description: Roteamento centralizado de actions OpenAPI no chat — OpenAPI-first, multi-provider e sem regra nova por endpoint
 alwaysApply: true
 ---
 
@@ -7,39 +7,115 @@ alwaysApply: true
 
 ## Princípio
 
-Chamadas à api-delpi **não** acoplam lógica por tipo (produto, KPI, LMP, SQL) no chamador:
+O roteamento de tools/actions é **OpenAPI-first** e deve funcionar para qualquer provider habilitado no agente, inclusive APIs externas ao monorepo.
 
+Fluxo canônico alvo:
+
+```text
+Pedido / subtarefas
+→ allowed actions do agente
+→ retrieval semântico/híbrido sobre Action Catalog importado do OpenAPI
+→ planner estruturado
+→ validação determinística dos argumentos contra OpenAPI
+→ policy/confirmation
+→ ExecuteExternalActionUseCase
+→ HttpExternalActionGateway
 ```
-Intent/heurística → OperationalApiRouteSpec → ExternalActionRouteSelectionService → ExecuteExternalActionUseCase
-```
+
+Regra canônica completa: **`openapi-first-universal-tool-routing.mdc`**.
+
+## Fonte de verdade
+
+- OpenAPI importado + catálogo persistido: operação, método, path, parâmetros, body, schemas e descriptions.
+- Agente/provider/action binding: quais actions estão habilitadas e autorizadas.
+- JSON do assistente: vocabulário corporativo, UX, policies e compatibilidade — **não** catálogo paralelo de endpoints.
+
+`operational_route_registry.json` é legado de compatibilidade/migração. Não é requisito arquitetural para adicionar nova operação.
 
 ## Onde implementar
 
 | Camada | Responsabilidade |
 |--------|------------------|
-| Vocabulário | `api_route_domains.json` — domínios, `pathMarkers`, `parameterStrategy` |
-| Domain | `OperationalApiRouteSpec`, `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
-| Application | `ExternalActionSelectionService`, `ExternalActionRouteSelectionService` |
-| Infrastructure | `HttpExternalActionGateway` |
+| Import/index | Normalizar OpenAPI em Action Catalog e documento semântico/embeddings |
+| Domain | Contratos de action candidate/plan, validação e policies sem dependência de provider específico |
+| Application | Retrieval, planejamento, validação, seleção e execução genérica |
+| Infrastructure | OpenAPI import, vector/lexical search, LLM adapter, HTTP gateway e autenticação de provider |
 
-## Checklist (roteamento)
+Enquanto o legado existir, `OperationalApiRouteSpec`, `OperationalRouteRegistryService` e delegates atuais podem continuar funcionando, mas novas integrações não devem ampliar o acoplamento manual por endpoint.
 
-1. Domínio ou parâmetro novo → `api_route_domains.json` primeiro.
-2. Factory em `OperationalApiRouteSpec` se spec nova.
-3. Entrada em `operational_route_registry.json` + `--check`.
-4. Regressão: mensagem → `operationId` em fixtures de inteligência.
+## Checklist — rota/API nova
 
-## Apresentação (após rota HTTP existir)
+1. OpenAPI válido com `operationId`, summary/description, parâmetros e schemas úteis.
+2. Importar/reimportar provider e atualizar Action Catalog + embeddings.
+3. Vincular provider/action ao agente e configurar policies/permissões.
+4. Confirmar que a action aparece em `allowed_action_ids` no turno.
+5. Validar descoberta por linguagem natural via retrieval/planner genérico.
+6. Validar extração e validação de argumentos pelo schema OpenAPI.
+7. Validar execução pelo `ExecuteExternalActionUseCase`/gateway genérico.
+8. Validar fallback de apresentação schema-driven.
+9. Cobrir caso positivo, caso irmão e caso negativo.
+10. Para provider externo: provar funcionamento **sem alteração de Python/JSON por endpoint**.
 
-Seguir **`new-api-route-checklist.mdc`** § 3–5 — roteamento **não** substitui perfil de apresentação.
+## Registry legado
+
+Não adicionar entrada manual em `operational_route_registry.json` somente porque uma rota nova existe.
+
+Entrada/override manual só é aceitável se representar algo que o OpenAPI padrão não expressa, por exemplo policy/vocabulário corporativo transversal temporário. Deve haver justificativa explícita e plano de remoção quando for compatibilidade.
+
+Proibido usar registry para duplicar:
+
+- `path`;
+- `operationId`;
+- lista de parâmetros;
+- schema de request/response;
+- selector específico de provider;
+- `parameterStrategy` exclusivo de um endpoint quando o OpenAPI já descreve o argumento.
+
+## Pedidos longos e múltiplas actions
+
+Pedidos com vários objetivos devem ser decompostos. Não reduzir a uma única intent/action.
+
+```text
+pedido completo
+→ subtarefas
+→ candidates por subtarefa
+→ plano de tools
+→ execução com dependências/paralelismo
+→ síntese
+```
+
+Seguir `evidence-driven-execution.mdc`.
+
+## Apresentação
+
+Roteamento não deve depender de presenter dedicado.
+
+```text
+responseSchema + payload + metadata
+→ schema-driven presentation
+→ perfil especializado opcional
+```
+
+Seguir `schema-first-presentation-delivered.mdc`.
 
 ## O que NÃO fazer
 
-- `if "/products/"` / `if kpi` em use cases ou MFE.
-- Duplicar `_build_date_branch_parameters` fora de `OperationalApiParameterBuilderService`.
-- Bypass de `execute_external_action` em preview/simulate sem metadata equivalente.
-- Entregar action selecionável sem presenter/perfil (`entityProfiles`).
+- `if "/products/"` / `if kpi` / `if provider == ...` em use case/selector genérico.
+- Bias por prefixo `api_delpi.` / `api_externa.`.
+- Criar selector ou service por API externa.
+- Adicionar `pathMarkers` / `operationIdMarkers` para toda rota nova.
+- Duplicar OpenAPI em `assistant/*.json`.
+- Permitir que o LLM execute URL arbitrária fora do catálogo autorizado.
+- Bypass de `execute_external_action` em preview/simulate sem metadata/policies equivalentes.
+- Entregar action selecionável sem fallback de apresentação genérico.
 
-## Metadata
+## Migração
 
-`toolCalls[].metadata.apiRouteDomain` classifica o path (`product`, `department_kpi`, `supplies_kpi`, …).
+Preservar o fluxo legado até haver paridade comprovada. Preferir shadow mode, métricas de divergência e canary por agente/provider antes de remover registry/delegates antigos.
+
+Referências:
+
+- `openapi-first-universal-tool-routing.mdc`
+- `new-api-route-checklist.mdc`
+- `chat-intelligence-base.mdc`
+- `assistant-content-json.mdc`
