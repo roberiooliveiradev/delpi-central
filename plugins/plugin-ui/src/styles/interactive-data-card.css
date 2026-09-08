@@ -42,38 +42,6 @@
   min-width: 0;
 }
 
-@media (max-width: 768px) {
-  /* Label | valor na mesma linha — densifica leitura no mobile (padrão portal). */
-  .delpi-ui-interactive-data-card__field {
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 10px;
-    padding-block: 6px;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--delpi-ui-border, var(--border, #e6e6e6)) 85%, transparent);
-  }
-
-  .delpi-ui-interactive-data-card__field:last-of-type {
-    border-bottom: 0;
-    padding-bottom: 0;
-  }
-
-  .delpi-ui-interactive-data-card__field-label {
-    flex: 0 1 42%;
-    max-width: 42%;
-  }
-
-  .delpi-ui-interactive-data-card__title,
-  .delpi-ui-interactive-data-card__meta,
-  .delpi-ui-interactive-data-card__value {
-    flex: 1 1 auto;
-    min-width: 0;
-    text-align: end;
-    overflow-wrap: anywhere;
-  }
-}
-
 .delpi-ui-interactive-data-card__field-label {
   display: inline-flex;
   align-items: center;
@@ -140,4 +108,51 @@
 .delpi-ui-interactive-data-card--interactive:focus-visible .delpi-ui-interactive-data-card__open-hint {
   opacity: 1;
   transform: translateX(0);
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-interactive-data-card {
+    gap: 0;
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  /* Label | valor densos — menos padding vertical e gutter menor. */
+  .delpi-ui-interactive-data-card__field {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding-block: 4px;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--delpi-ui-border, var(--border, #e6e6e6)) 85%, transparent);
+  }
+
+  .delpi-ui-interactive-data-card__field:last-of-type {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .delpi-ui-interactive-data-card__field-label {
+    flex: 0 1 auto;
+    max-width: 38%;
+    font-size: 0.6875rem;
+  }
+
+  .delpi-ui-interactive-data-card__title,
+  .delpi-ui-interactive-data-card__meta,
+  .delpi-ui-interactive-data-card__value {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: end;
+    overflow-wrap: anywhere;
+  }
+
+  .delpi-ui-interactive-data-card__title {
+    font-size: 0.9375rem;
+  }
+
+  .delpi-ui-interactive-data-card__actions {
+    margin-top: 6px;
+  }
 }

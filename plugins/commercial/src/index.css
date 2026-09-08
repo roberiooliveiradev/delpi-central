@@ -2543,10 +2543,6 @@
 }
 
 @media (max-width: 768px) {
-  .dashboard-commercial.dashboard-page {
-    padding: 16px;
-  }
-
   .dashboard-commercial .cm-responsive-records__desktop {
     display: none;
   }

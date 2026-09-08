@@ -371,3 +371,32 @@
     max-width: none;
   }
 }
+
+@media (max-width: 768px) {
+  .delpi-ui-filters-row {
+    gap: 8px;
+    margin-bottom: var(--delpi-ui-section-gap-mobile, 12px);
+    padding: 10px;
+  }
+
+  .delpi-ui-filters-row--compact {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .delpi-ui-filter-box {
+    gap: var(--delpi-ui-field-stack-gap-mobile, 6px);
+  }
+
+  .delpi-ui-filter-bar [class$="-field"] {
+    gap: var(--delpi-ui-field-stack-gap-mobile, 6px);
+  }
+
+  .delpi-ui-filter-box input:not([type="checkbox"]):not([type="radio"]),
+  .delpi-ui-filter-box select,
+  .delpi-ui-filter-bar [class$="-field"] input:not([type="checkbox"]):not([type="radio"]),
+  .delpi-ui-filter-bar [class$="-field"] select {
+    min-height: var(--delpi-ui-control-height-mobile, 40px);
+    padding: 6px 10px;
+  }
+}

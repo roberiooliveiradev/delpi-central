@@ -22,3 +22,16 @@
   border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
 }
+
+@media (max-width: 768px) {
+  .delpi-ui-card,
+  .delpi-ui-chart-card,
+  .delpi-ui-kpi-card,
+  .delpi-ui-table-section,
+  .delpi-ui-section-card,
+  .delpi-ui-detail-card,
+  .delpi-ui-loading-activity {
+    padding: var(--delpi-ui-card-padding-mobile, 12px);
+    border-radius: var(--delpi-ui-radius-mobile, 14px);
+  }
+}

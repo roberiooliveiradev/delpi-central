@@ -88,3 +88,14 @@
 .delpi-ui-section-card__body {
   min-width: 0;
 }
+
+@media (max-width: 768px) {
+  .delpi-ui-section-card__header {
+    gap: 8px;
+    margin-bottom: var(--delpi-ui-section-header-gap-mobile, 10px);
+  }
+
+  .delpi-ui-section-card__subtitle {
+    margin-top: 4px;
+  }
+}

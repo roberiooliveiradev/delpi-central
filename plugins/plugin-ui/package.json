@@ -15,7 +15,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:mobile-spacing": "node scripts/measure-mobile-list-spacing.mjs"
   },
   "dependencies": {
     "@originjs/vite-plugin-federation": "^1.4.1",

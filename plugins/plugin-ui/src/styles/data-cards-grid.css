@@ -30,3 +30,14 @@
   align-items: center;
   gap: 8px;
 }
+
+@media (max-width: 768px) {
+  .delpi-ui-data-cards-grid {
+    gap: 8px;
+  }
+
+  .delpi-ui-data-cards-sort-bar {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+}

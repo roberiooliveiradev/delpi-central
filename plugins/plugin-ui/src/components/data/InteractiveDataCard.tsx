@@ -11,6 +11,7 @@ export type InteractiveDataCardField = {
   hint?: string;
   value: ReactNode;
   valueTone?: InteractiveDataCardValueTone;
+  /** false = ocultar; true = forçar exibir mesmo se valor vazio; omitido = omitir placeholders. */
   present?: boolean;
 };
 
@@ -66,6 +67,23 @@ function valueToneClass(
   return classNames.meta;
 }
 
+/** Placeholders que só ocupam espaço no card mobile (ex.: «Valor aberto» vazio). */
+export function isPlaceholderCardValue(value: ReactNode): boolean {
+  if (value == null || value === false) return true;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed === "" || trimmed === "—" || trimmed === "-";
+  }
+  if (typeof value === "number") return Number.isNaN(value);
+  return false;
+}
+
+function isFieldVisible(field: InteractiveDataCardField): boolean {
+  if (field.present === false) return false;
+  if (field.present === true) return true;
+  return !isPlaceholderCardValue(field.value);
+}
+
 export function InteractiveDataCard({
   fields = [],
   children,
@@ -77,7 +95,7 @@ export function InteractiveDataCard({
   className,
   classNames,
 }: InteractiveDataCardProps) {
-  const visibleFields = fields.filter((field) => field.present !== false);
+  const visibleFields = fields.filter(isFieldVisible);
   const rootClass = [
     classNames.root,
     interactive ? classNames.interactive : null,

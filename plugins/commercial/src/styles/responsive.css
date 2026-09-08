@@ -61,8 +61,20 @@
 }
 
 @media (max-width: 768px) {
+  .dashboard-commercial {
+    --cm-page-padding: 12px;
+    --cm-section-gap: 12px;
+    --cm-grid-gap: 10px;
+    --delpi-ui-section-gap: 12px;
+    --delpi-ui-grid-gap: 8px;
+    --delpi-ui-card-padding-mobile: 12px;
+    --delpi-ui-section-header-gap-mobile: 10px;
+    --delpi-ui-field-stack-gap-mobile: 6px;
+  }
+
   .dashboard-commercial.dashboard-page {
-    padding: 12px;
+    padding: var(--cm-page-padding);
+    gap: var(--cm-section-gap);
   }
 
   .cm-module-chrome {

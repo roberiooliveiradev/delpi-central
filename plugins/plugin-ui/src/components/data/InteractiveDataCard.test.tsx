@@ -51,6 +51,26 @@ describe("InteractiveDataCard", () => {
     expect(hint?.classList.contains("delpi-ui-interactive-data-card__open-hint")).toBe(true);
   });
 
+  it("omite campos com valor placeholder e respeita present=true", () => {
+    render(
+      <InteractiveDataCard
+        classNames={classNames}
+        ariaLabel="Linha"
+        fields={[
+          { id: "open", label: "Valor aberto", value: "—" },
+          { id: "empty", label: "Vazio", value: "" },
+          { id: "forced", label: "Forçado", value: "—", present: true },
+          { id: "ok", label: "Pedido", value: "103538" },
+        ]}
+      />,
+    );
+
+    expect(screen.queryByText("Valor aberto")).toBeNull();
+    expect(screen.queryByText("Vazio")).toBeNull();
+    expect(screen.getByText("Forçado")).toBeTruthy();
+    expect(screen.getByText("103538")).toBeTruthy();
+  });
+
   it("ativa com clique e teclado quando onActivate é informado", () => {
     const onActivate = vi.fn();
     render(

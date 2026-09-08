@@ -42,13 +42,23 @@ describe("lista operacional — responsividade mobile (≤768)", () => {
     expect(css).toMatch(/overflow-x:\s*auto/);
   });
 
-  it("InteractiveDataCard usa label|valor em linha no mobile", () => {
+  it("InteractiveDataCard usa label|valor densos no mobile", () => {
     const css = readCss("interactive-data-card.css");
     expect(css).toMatch(
       /@media \(max-width:\s*768px\)[\s\S]*\.delpi-ui-interactive-data-card__field[\s\S]*flex-direction:\s*row/,
     );
     expect(css).toMatch(
-      /@media \(max-width:\s*768px\)[\s\S]*\.delpi-ui-interactive-data-card__field[\s\S]*justify-content:\s*space-between/,
+      /@media \(max-width:\s*768px\)[\s\S]*\.delpi-ui-interactive-data-card__field[\s\S]*padding-block:\s*4px/,
+    );
+    expect(css).toMatch(
+      /@media \(max-width:\s*768px\)[\s\S]*\.delpi-ui-interactive-data-card\s*\{[\s\S]*padding:\s*10px/,
+    );
+  });
+
+  it("card-shell densifica padding no mobile", () => {
+    const css = readCss("card-shell.css");
+    expect(css).toMatch(
+      /@media \(max-width:\s*768px\)[\s\S]*\.delpi-ui-card[\s\S]*padding:\s*var\(--delpi-ui-card-padding-mobile,\s*12px\)/,
     );
   });
 });
