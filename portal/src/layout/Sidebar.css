@@ -21,7 +21,12 @@
   flex-direction: column;
   justify-content: space-between;
   padding: 20px;
-  transition: all 0.35s ease;
+  /* Sem width/padding/border: animações de layout empurram .main-area
+     e disparam loop Recharts (#185) nos MFEs. */
+  transition:
+    background-color 0.35s ease,
+    box-shadow 0.35s ease,
+    color 0.35s ease;
   position: relative;
   z-index: 40;
   overflow: visible;
