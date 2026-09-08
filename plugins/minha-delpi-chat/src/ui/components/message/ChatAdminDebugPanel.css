@@ -62,7 +62,42 @@
 .mdc-chat-admin-debug__toolbar {
   padding: var(--mdc-space-3) var(--mdc-space-3) var(--mdc-space-2);
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.mdc-chat-admin-debug__advanced {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.mdc-chat-admin-debug__copy-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mdc-chat-admin-debug__copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--mdc-control-border);
+  background: var(--mdc-control-bg);
+  color: var(--mdc-text);
+  border-radius: var(--mdc-radius-sm);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease;
 }
 
 .mdc-chat-admin-debug__content {
@@ -111,20 +146,6 @@
   word-break: break-word;
   color: var(--mdc-text);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-
-.mdc-chat-admin-debug__copy-btn {
-  border: 1px solid var(--mdc-control-border);
-  background: var(--mdc-control-bg);
-  color: var(--mdc-text);
-  border-radius: var(--mdc-radius-sm);
-  padding: 0.35rem 0.65rem;
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition:
-    border-color 0.16s ease,
-    background 0.16s ease,
-    color 0.16s ease;
 }
 
 .mdc-chat-admin-debug__copy-btn:hover {

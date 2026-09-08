@@ -1,5 +1,14 @@
-import { Bug } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Bug, ExternalLink } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+
+import { buildAdminAuditHrefWithTrace } from "../../../navigation/adminAuditDeepLink";
+import { navigateChatHref } from "../../../navigation/chatNavigation";
+import {
+  extractAdminDebugTraceId,
+  readAdminDebugAdvanced,
+  shouldShowRawDebugJson,
+  writeAdminDebugAdvanced,
+} from "./adminDebugAdvanced";
 import "./ChatAdminDebugPanel.css";
 
 type ChatAdminDebugPanelProps = {
@@ -458,9 +467,18 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
   const trustSignals = Array.isArray(debug?.trustSignals)
     ? (debug?.trustSignals as Array<Record<string, unknown>>)
     : [];
+  const traceId = useMemo(() => extractAdminDebugTraceId(debug), [debug]);
   const [open, setOpen] = useState(false);
+  const [advanced, setAdvanced] = useState(() => readAdminDebugAdvanced());
+
+  useEffect(() => {
+    writeAdminDebugAdvanced(advanced);
+  }, [advanced]);
 
   if (!debug) return null;
+
+  const showRawJson = shouldShowRawDebugJson(advanced);
+  const auditHref = buildAdminAuditHrefWithTrace(traceId);
 
   return (
     <section className="mdc-chat-admin-debug" aria-label="Diagnóstico (admin)">
@@ -507,9 +525,36 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
           ) : null}
           <div className="mdc-chat-admin-debug__toolbar">
             <CopyButton value={json} />
+            <button
+              type="button"
+              className="mdc-chat-admin-debug__copy-btn"
+              disabled={!traceId}
+              title={
+                traceId
+                  ? "Abrir auditoria filtrada por este trace"
+                  : "TraceId ausente neste diagnóstico"
+              }
+              onClick={() => {
+                if (!traceId) {
+                  return;
+                }
+                navigateChatHref(auditHref);
+              }}
+            >
+              <ExternalLink size={14} aria-hidden="true" />
+              Abrir na auditoria
+            </button>
+            <label className="mdc-chat-admin-debug__advanced">
+              <input
+                type="checkbox"
+                checked={advanced}
+                onChange={(event) => setAdvanced(event.target.checked)}
+              />
+              JSON avançado
+            </label>
           </div>
 
-          <pre className="mdc-chat-admin-debug__body">{json}</pre>
+          {showRawJson ? <pre className="mdc-chat-admin-debug__body">{json}</pre> : null}
         </div>
       </details>
     </section>
