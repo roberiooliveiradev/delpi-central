@@ -10,6 +10,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RULES_DIR = REPO_ROOT / ".cursor" / "rules"
+INDEX_PATH = RULES_DIR / "development-standards-index.mdc"
 
 GLOBAL_ALLOWLIST = {
     "development-standards-index.mdc",
@@ -19,6 +20,16 @@ GLOBAL_ALLOWLIST = {
     "english-code-identifiers.mdc",
 }
 GLOBAL_BUDGET = len(GLOBAL_ALLOWLIST)
+
+REQUIRED_SPECIALIZED_RULES = {
+    "ai-external-tools-security.mdc",
+    "ai-intelligence-evaluation.mdc",
+    "ai-context-and-tool-budget.mdc",
+    "http-integration-resilience.mdc",
+    "observability-standards.mdc",
+    "contract-evolution-backward-compatibility.mdc",
+}
+
 MAX_RULE_BYTES = 20_000
 REFERENCE_RE = re.compile(r"(?:`|\b)([A-Za-z0-9_.-]+\.mdc)(?:`|\b)")
 TOP_LEVEL_KEY_RE = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*):(?:\s*(.*))?$")
@@ -86,6 +97,20 @@ def main() -> int:
     descriptions: list[tuple[str, str]] = []
     global_rules: set[str] = set()
 
+    missing_specialized = REQUIRED_SPECIALIZED_RULES - rule_names
+    if missing_specialized:
+        errors.append(
+            "guardrails especializados obrigatórios ausentes: "
+            + ", ".join(sorted(missing_specialized))
+        )
+
+    index_text = INDEX_PATH.read_text(encoding="utf-8") if INDEX_PATH.exists() else ""
+    for required_name in sorted(REQUIRED_SPECIALIZED_RULES):
+        if required_name not in index_text:
+            errors.append(
+                f"{required_name}: guardrail obrigatório não referenciado em development-standards-index.mdc"
+            )
+
     for path in rule_paths:
         frontmatter, body, parse_errors = parse_frontmatter(path)
         for error in parse_errors:
@@ -122,6 +147,11 @@ def main() -> int:
             if path.name not in GLOBAL_ALLOWLIST:
                 errors.append(f"{path.name}: regra global fora da allowlist canônica")
 
+        if path.name in REQUIRED_SPECIALIZED_RULES and always_apply:
+            errors.append(
+                f"{path.name}: guardrail da fase 2 deve permanecer especializado (alwaysApply=false)"
+            )
+
         size = path.stat().st_size
         if size > MAX_RULE_BYTES and "governanceSizeJustification" not in frontmatter:
             errors.append(
@@ -157,6 +187,10 @@ def main() -> int:
     print(f"- regras: {len(rule_paths)}")
     print(f"- globais: {len(global_rules)}/{GLOBAL_BUDGET}")
     print("- globais canônicas: " + ", ".join(sorted(global_rules)))
+    print(
+        "- guardrails fase 2: "
+        + ", ".join(sorted(REQUIRED_SPECIALIZED_RULES & rule_names))
+    )
 
     for warning in warnings:
         print(f"WARN: {warning}")
