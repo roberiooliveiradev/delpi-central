@@ -7,7 +7,7 @@ alwaysApply: false
 
 ## Responsabilidade
 
-Esta é a fonte transversal para qualquer mudança que crie ou evolua **HTTP API, OpenAPI, DTO, evento, webhook, SSE, manifest, client ou integração entre sistemas**.
+Fonte transversal para qualquer mudança que crie ou evolua **HTTP API, OpenAPI, DTO, evento, webhook, SSE, manifest, client ou integração entre sistemas**.
 
 ## Contrato antes da implementação
 
@@ -26,25 +26,22 @@ compatibilidade
 observabilidade
 ```
 
-Contrato não é “o JSON que aconteceu de sair hoje”; deve possuir semântica explícita e estável.
+Contrato não é “o JSON que saiu hoje”; deve possuir semântica explícita e estável.
 
 ## APIs HTTP
 
 Quando aplicável:
 
-- método HTTP coerente com semântica;
-- path orientado a recurso/capacidade, não implementação interna;
+- método HTTP coerente;
+- path orientado a recurso/capacidade;
 - status code consistente;
 - schema de request/response documentado;
 - erros com código estável + mensagem segura;
-- `operationId` estável em OpenAPI;
+- `operationId` estável;
 - parâmetros com `in`, required, type, format, enum e description;
-- exemplos só quando ajudam e não viram fonte paralela de contrato;
-- limites/paginação explicitados.
+- limites/paginação explícitos.
 
 ## OpenAPI como fonte técnica
-
-Para APIs que expõem OpenAPI:
 
 ```text
 implementação
@@ -53,31 +50,35 @@ implementação
 ↔ consumidores/clientes
 ```
 
-Não duplicar manualmente paths, parâmetros ou schemas em catálogo paralelo quando o OpenAPI já é a fonte técnica.
-
-Para actions do Chat AI, prevalece `openapi-first-universal-tool-routing.mdc`.
+Não duplicar manualmente paths, parâmetros ou schemas em catálogo paralelo quando OpenAPI já é fonte técnica. Para actions do Chat AI, prevalece `openapi-first-universal-tool-routing.mdc`.
 
 ### Identidade de operação
 
 `operationId` é identidade técnica estável, não rótulo cosmético.
 
-Regras:
-
 ```text
 1 operação HTTP → 1 operationId explícito
 operationId não vazio
-operationId único dentro do contrato/bounded context
+operationId único no contrato/bounded context
 sem auto-id de framework como contrato público
-renomear operationId = mudança breaking
+renomear operationId = breaking
 ```
 
-Em FastAPI novo/alterado, declarar `operation_id="..."` literalmente no decorator. O auditor `scripts/ci/audit_openapi_contracts.py` bloqueia nova rota sem identidade explícita e duplicidade introduzida no mesmo `<app>-api`/`api-delpi`.
+Em FastAPI novo/alterado, declarar `operation_id="..."` literalmente. O auditor entende também `APIRouter(prefix="/x")` com `@router.<method>("")`; path local vazio não escapa do gate.
 
 ### OpenAPI versionado e breaking change
 
-Quando JSON/YAML OpenAPI versionado remover uma operação `(method, path)` ou trocar o `operationId` da mesma operação, o CI considera breaking.
+O CI já classifica como breaking, em JSON/YAML OpenAPI versionado, os seguintes sinais estruturais inequívocos:
 
-A classificação explícita usa extensão OpenAPI válida em `info`:
+- operação `(method, path)` removida;
+- `operationId` alterado;
+- parâmetro obrigatório adicionado;
+- parâmetro antes opcional que passa a obrigatório;
+- parâmetro local referenciado por `$ref` em `components/parameters` quando introduz required novo;
+- `requestBody` que passa a `required: true`;
+- resposta 2xx documentada removida.
+
+Breaking consciente deve registrar em `info`:
 
 ```yaml
 version: <nova-versão>
@@ -86,9 +87,24 @@ x-delpi-contract-change-from: <versão-base-exata>
 x-delpi-contract-change-reason: <motivo concreto>
 ```
 
-A versão-base deve coincidir com o contrato anterior e a nova `info.version` deve ser diferente. Metadata antiga não pode autorizar quebra futura.
+A versão-base deve coincidir com `info.version` do contrato anterior e a nova versão deve ser diferente. Metadata antiga não autoriza quebra futura.
 
-Classificar não substitui migração: ainda é obrigatório aplicar `contract-evolution-backward-compatibility.mdc`, inventariar consumidores e definir coexistência/rollback quando necessário.
+Classificar não substitui migração: aplicar `contract-evolution-backward-compatibility.mdc`, inventariar consumidores e definir coexistência/rollback.
+
+### Limite atual da análise de schema
+
+Não inferir automaticamente como breaking, ainda, mudanças profundas em componentes compartilhados quando o contexto não está resolvido, por exemplo:
+
+```text
+type em schema reutilizado
+narrowing de enum
+required aninhado
+oneOf / allOf / anyOf
+schema usado simultaneamente em request e response
+$ref externo/remoto
+```
+
+Esses casos continuam exigindo contract test/revisão até existir resolver estrutural com baixo falso positivo.
 
 ## Erros
 
@@ -106,13 +122,11 @@ timeout
 internal error
 ```
 
-Nunca devolver `200` com payload de erro para esconder falha quando o contrato não define isso explicitamente.
-
-Erro externo pode ser traduzido por adapter; não vazar stack trace, SQL, segredo ou detalhes internos ao cliente.
+Não devolver `200` para esconder erro quando contrato não define isso. Adapter traduz erro externo sem vazar stack trace, SQL, segredo ou detalhe interno.
 
 ## Idempotência e writes
 
-Operação de escrita sujeita a retry, duplicação de request ou reprocessamento deve definir estratégia explícita:
+Write sujeito a retry/duplicação/reprocessamento deve definir uma estratégia real:
 
 - chave natural/unique constraint;
 - idempotency key;
@@ -120,11 +134,11 @@ Operação de escrita sujeita a retry, duplicação de request ou reprocessament
 - optimistic concurrency/version;
 - semântica idempotente comprovada.
 
-Não assumir que POST repetido é seguro.
+POST repetido não é seguro por presunção.
 
 ## Paginação, filtros e ordenação
 
-APIs de lista devem definir quando necessário:
+APIs de lista definem, quando necessário:
 
 ```text
 page/cursor
@@ -135,7 +149,7 @@ total/count quando custo aceitável
 limite máximo de export/fan-out
 ```
 
-Não carregar conjunto ilimitado apenas porque o frontend atual é pequeno.
+Não carregar conjunto ilimitado só porque o frontend atual é pequeno.
 
 ## Integrações externas/internas
 
@@ -149,11 +163,11 @@ Todo client deve:
 6. respeitar contrato e auth do downstream;
 7. limitar payload/paginação/concurrency.
 
-Detalhes: `http-integration-resilience.mdc`.
+Detalhes em `http-integration-resilience.mdc`.
 
 ## Evolução e compatibilidade
 
-Toda mudança material é classificada conforme `contract-evolution-backward-compatibility.mdc`:
+Toda mudança material é classificada como:
 
 ```text
 ADDITIVE
@@ -162,19 +176,15 @@ DEPRECATED
 BREAKING
 ```
 
-Mudança breaking exige migração, coexistência quando necessária e rollback/roll-forward claro.
+Breaking exige migração, coexistência quando necessária e rollback/roll-forward claro.
 
 ## Contratos entre bounded contexts
 
-O consumidor não deve impor sua regra de negócio ao produtor. O produtor expõe dado/capacidade coerente com seu domínio; composição específica fica no contexto consumidor.
-
-Aplicar `platform-architecture-boundaries.mdc`.
+Consumidor não impõe sua regra de negócio ao produtor. Produtor expõe dado/capacidade coerente com seu domínio; composição específica fica no contexto consumidor. Aplicar `platform-architecture-boundaries.mdc`.
 
 ## Enforcement executável
 
-O workflow `Architecture Enforcement` executa `scripts/ci/audit_openapi_contracts.py` em modo diff-aware.
-
-Gates atuais:
+`Architecture Enforcement` executa `scripts/ci/audit_openapi_contracts.py` em modo diff-aware.
 
 ```text
 OPENAPI_OPERATION_ID_REQUIRED
@@ -183,9 +193,10 @@ OPENAPI_CHANGE_CLASS_INVALID
 OPENAPI_BREAKING_UNCLASSIFIED
 FASTAPI_OPERATION_ID_REQUIRED
 FASTAPI_OPERATION_ID_DUPLICATE
+FASTAPI_ROUTE_PARSE_ERROR
 ```
 
-Escopo atual é deliberadamente conservador. Não inferir breaking de schema complexo por regex. Evoluir para required/type/enum/request/response apenas com resolução estrutural de `$ref` e testes de falso positivo.
+O gate bloqueia nova dívida sem exigir snapshot manual de todas as APIs. FastAPI source continua sendo fonte do OpenAPI runtime onde não há snapshot versionado.
 
 ## Testes obrigatórios
 
@@ -197,28 +208,27 @@ Conforme mudança:
 - auth/authz;
 - idempotência/duplicate request;
 - paginação/limites;
-- consumidor antigo × produtor novo quando coexistirem;
+- consumidor antigo × produtor novo;
 - timeout/downstream failure;
 - OpenAPI válido e alinhado ao runtime;
 - `operationId` explícito e único;
-- classificação de breaking quando aplicável;
+- breaking classificado quando aplicável;
 - negative tests para payload inválido.
 
 ## Anti-padrões
 
-- DTO diferente em cada controller para o mesmo conceito.
+- DTO diferente em cada controller para mesmo conceito.
 - Renomear campo e “corrigir o frontend junto” sem inventário de consumidores.
-- `operationId` instável por estética.
-- depender do `operationId` automático do framework.
-- reutilizar um `operationId` para outra rota.
-- remover operação de snapshot OpenAPI sem classificar/migrar consumidores.
-- client HTTP criado dentro de use case/domain.
+- `operationId` instável ou auto-gerado como contrato público.
+- reutilizar `operationId` para outra rota.
+- remover operação/parâmetro/resposta documentada sem classificar impacto.
+- client HTTP dentro de use case/domain.
 - retry genérico de writes.
 - API retornando estrutura diferente conforme caminho interno não documentado.
-- endpoint criado apenas para contornar falta de composição no contexto correto.
-- contrato documentado só em README sem schema/teste quando OpenAPI existe.
+- endpoint criado só para contornar composição no contexto correto.
+- contrato documentado apenas em README quando OpenAPI existe.
 
-## Regras filhas/complementares
+## Regras complementares
 
 - `contract-evolution-backward-compatibility.mdc`
 - `http-integration-resilience.mdc`
@@ -235,6 +245,7 @@ CHANGE_CLASS
 CONSUMERS
 OPENAPI_STATUS
 OPERATION_ID_STATUS
+BREAKING_ANALYSIS
 ERROR_MODEL
 IDEMPOTENCY
 LIMITS
@@ -244,4 +255,4 @@ CONTRACT_TESTS
 
 ## Critério de sucesso
 
-Produtor e consumidores conseguem evoluir por contrato explícito, observável e testado, sem dependência de detalhes internos nem mudança coordenada silenciosa.
+Produtor e consumidores evoluem por contrato explícito, observável e testado, sem dependência de detalhes internos nem mudança coordenada silenciosa.
