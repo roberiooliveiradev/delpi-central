@@ -65,7 +65,7 @@ def delete_item(item_id: str):
         findings = mod.scan_fastapi_authz_source("orders-api/app/routes.py", source, {5})
         self.assertEqual([item.rule for item in findings], ["FASTAPI_WRITE_AUTHZ_EVIDENCE_REQUIRED"])
 
-    def test_get_without_route_authz_is_out_of_scope_for_now(self):
+    def test_get_without_business_authz_is_out_of_scope_for_now(self):
         source = '''
 from fastapi import APIRouter
 router = APIRouter(prefix="/items")
@@ -167,6 +167,44 @@ def write(body):
             generic_public=False,
         )
         self.assertEqual([item.rule for item in findings], ["FASTAPI_PUBLIC_ROUTE_AUTH_DRIFT"])
+
+    def test_public_looking_get_not_released_by_middleware_is_also_blocked_as_drift(self):
+        source = '''
+from fastapi import APIRouter
+router = APIRouter(prefix="/public/catalog")
+
+@router.get("", operation_id="public_catalog")
+def read():
+    return service.read()
+'''
+        findings = mod.scan_fastapi_authz_source(
+            "orders-api/app/routes.py",
+            source,
+            {5},
+            public_prefixes={"/public/forms/"},
+            public_exacts={"/health"},
+            generic_public=False,
+        )
+        self.assertEqual([item.rule for item in findings], ["FASTAPI_PUBLIC_ROUTE_AUTH_DRIFT"])
+
+    def test_public_get_allowed_when_middleware_contract_matches(self):
+        source = '''
+from fastapi import APIRouter
+router = APIRouter(prefix="/public/catalog")
+
+@router.get("", operation_id="public_catalog")
+def read():
+    return service.read()
+'''
+        findings = mod.scan_fastapi_authz_source(
+            "orders-api/app/routes.py",
+            source,
+            {5},
+            public_prefixes={"/public/catalog/"},
+            public_exacts={"/health"},
+            generic_public=False,
+        )
+        self.assertEqual(findings, [])
 
     def test_public_contract_extracts_constants_and_generic_startswith(self):
         source = '''
