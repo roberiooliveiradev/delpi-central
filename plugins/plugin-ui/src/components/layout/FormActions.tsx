@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
@@ -14,6 +14,15 @@ export type FormActionsProps = {
   align?: FormActionsAlign;
   className?: string;
   classNames: FormActionsClassNames;
+};
+
+/** Espaçamento default entre CTAs (Voltar/Próximo, Cancelar/Salvar, …). */
+export const FORM_ACTIONS_GAP_PX = 24;
+
+const formActionsGapStyle: CSSProperties = {
+  gap: FORM_ACTIONS_GAP_PX,
+  columnGap: FORM_ACTIONS_GAP_PX,
+  rowGap: 12,
 };
 
 export function formActionsBemClasses(prefix: string): FormActionsClassNames {
@@ -42,7 +51,15 @@ export function FormActions({
     .filter(Boolean)
     .join(" ");
 
-  return <div className={rootClass}>{children}</div>;
+  return (
+    <div
+      className={rootClass}
+      style={formActionsGapStyle}
+      data-form-actions-gap={FORM_ACTIONS_GAP_PX}
+    >
+      {children}
+    </div>
+  );
 }
 
 export type DashboardFormActionsProps = Omit<FormActionsProps, "classNames">;

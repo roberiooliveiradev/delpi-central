@@ -29,8 +29,22 @@ describe("FormActions", () => {
       </FormActions>,
     );
 
-    const root = container.firstElementChild;
+    const root = container.firstElementChild as HTMLElement;
     expect(root?.className).toContain("pac-form-actions");
     expect(root?.className).toContain("pac-form-actions--end");
+  });
+
+  it("aplica gap inline entre CTAs (não depende só do CSS remoto)", () => {
+    const { container } = render(
+      <FormActions align="end" classNames={formActionsPacClasses("pac")}>
+        <button type="button">Voltar</button>
+        <button type="button">Próximo</button>
+      </FormActions>,
+    );
+
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.getAttribute("data-form-actions-gap")).toBe("24");
+    expect(root.style.gap).toBe("24px");
+    expect(root.style.columnGap).toBe("24px");
   });
 });
