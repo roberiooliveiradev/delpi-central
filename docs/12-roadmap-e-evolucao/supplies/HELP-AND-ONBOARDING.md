@@ -29,7 +29,7 @@ Herdar textos já canônicos de:
 - O que cada KPI do Overview significa (link fichas, linguagem de negócio).
 - 403: «sem permissão para esta filial / este módulo».
 - FAQ: diferença estoque × estoque de segurança; OTD × atraso; Sheets × indicadores.
-- Onde alterar tema / filial padrão (perfil do plugin — WF-USER), sem confundir com `/profile` do Portal.
+- Onde alterar filial padrão / densidade de tabelas (perfil do plugin — WF-USER), sem confundir com `/profile` do Portal.
 
 ## Sync por feature
 
