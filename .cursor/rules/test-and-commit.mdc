@@ -11,18 +11,23 @@ Complementa `evidence-driven-execution.mdc`: **testes verdes não substituem a v
 
 Executar o que couber ao escopo antes de considerar a tarefa concluída:
 
-| Pacote | Comando típico |
-|--------|----------------|
+| Pacote/tema | Comando ou regra típica |
+|-------------|------------------------|
 | `minha-delpi-ai-api` | `.venv/bin/python -m pytest tests/unit/... -q` |
+| Inteligência do chat | Baseline/evals conforme **`ai-intelligence-evaluation.mdc`**; comparar antes/depois em mudanças de prompt/retrieval/RAG/planner/contexto |
+| Context/tool budget | Validar qualidade + tokens/latência conforme **`ai-context-and-tool-budget.mdc`** |
+| Tools/API externa | Segurança conforme **`ai-external-tools-security.mdc`** + resiliência conforme **`http-integration-resilience.mdc`** |
+| Contrato alterado | Compatibilidade/consumidores/rollback conforme **`contract-evolution-backward-compatibility.mdc`** |
+| Observabilidade | Correlation/redaction/eventos conforme **`observability-standards.mdc`** |
 | `api-delpi` | `pytest api-delpi/tests/ -q` |
 | Query SQL (`api-delpi`) | Medir latência/repetição (console Saúde SQL); `pytest tests/test_*_sql.py -q` no container |
 | MFE chat | `npm run build` ou `npm test` em `plugins/minha-delpi-chat` |
 | Gates apresentação | `scripts/audit_presentation_coverage.py --check-profiles` |
-| Nova rota | Ver gates em **`new-api-route-checklist.mdc`** § 4 |
+| Nova rota | Ver gates em **`new-api-route-checklist.mdc`** |
 | Cobertura de rotas api-delpi | `cd api-delpi && python scripts/audit_route_test_coverage.py --write && --check` (meta: `--check-complete`) |
 | Upload em disco | Volume no Compose + doc README — **`persistent-upload-storage.mdc`** |
 
-Corrigir falhas antes de entregar. Resumir no fim: testes executados (pass/fail).
+Corrigir falhas antes de entregar. Resumir no fim: testes/evals/gates executados (pass/fail).
 
 ### Validação comportamental obrigatória
 
@@ -45,6 +50,18 @@ REQUISITOS_NAO_ATENDIDOS
 ```
 
 Pergunta adversarial obrigatória antes de finalizar: **“como esta solução pode continuar errada mesmo com os testes passando?”** Verificar a resposta quando tecnicamente possível.
+
+Para alterações de inteligência, acrescentar:
+
+```text
+EVAL_SET
+BASELINE
+RESULTADO_NOVO
+REGRESSOES
+LATENCIA/CUSTO quando material
+```
+
+Não declarar “mais inteligente” por um único caso manual.
 
 ### Ajuda in-app (inegociável se user-facing)
 
