@@ -1,0 +1,142 @@
+---
+description: Responsabilidade transversal canônica — arquitetura, bounded contexts, ownership, dependências, shared code e limites entre Core, APIs, MFEs e plugins
+alwaysApply: false
+---
+
+# Plataforma — arquitetura e boundaries
+
+## Responsabilidade
+
+Esta é a fonte transversal para decidir **onde uma regra deve viver, quem é dono dela e quais dependências são permitidas** na Minha DELPI.
+
+Antes de alterar mais de um app/API/MFE para resolver o mesmo comportamento, responder:
+
+```text
+qual bounded context é dono?
+qual contrato cruza a fronteira?
+qual camada pode depender de qual?
+existe regra de negócio vazando para shared/UI/infra?
+```
+
+## Invariantes
+
+1. Cada app/API/MFE possui ownership explícito do seu domínio.
+2. `domain` não depende de framework, HTTP, banco, logger ou SDK de provider.
+3. `application` orquestra casos de uso e depende de ports/abstrações.
+4. `infrastructure/adapters` implementam HTTP, DB, filas, providers e frameworks.
+5. UI não reimplementa regra de negócio já decidida pela API.
+6. Dois bounded contexts se integram por contrato explícito; não por import de domain/use case do vizinho.
+7. `shared/` contém somente capacidades transversais neutras; nunca regra de produto, KPI, workflow ou membership de um app.
+8. Banco de outro bounded context não é API.
+
+## Fronteiras da plataforma
+
+```text
+Portal / MFE
+    ↓ contrato HTTP/evento
+API dona do contexto
+    ↓ ports
+infra/adapters
+    ↓
+DB / Core API / api-delpi / provider externo
+```
+
+Core API continua dona de governança transversal da plataforma: apps, manifests, rotas, permissões e auditoria. APIs de domínio não duplicam essa governança localmente.
+
+## Decisão de ownership
+
+| Necessidade | Dono correto |
+|---|---|
+| regra de negócio de um módulo | API/domain do módulo |
+| autenticação/identidade compartilhada | middleware/lib transversal existente |
+| autorização efetiva da plataforma | Core API / resolver canônico |
+| dado TOTVS genérico | api-delpi ou adapter do contexto conforme contrato vigente |
+| composição específica de um produto | API dona do produto |
+| componente visual reutilizável | `@delpi/plugin-ui` |
+| utilidade técnica sem semântica de produto | `shared/` |
+
+## Integração entre apps
+
+Permitido:
+
+- HTTP/evento com contrato estável;
+- adapter anti-corruption quando modelos diferem;
+- bibliotecas neutras compartilhadas;
+- composição no contexto consumidor.
+
+Proibido:
+
+- importar `domain`/`application` de outro app;
+- consultar tabela de outro serviço como integração normal;
+- dual-write da mesma regra em dois contextos;
+- MFE bypassar sua API/BFF para buscar dado de outro contexto quando existe API dona;
+- alterar o produtor com semântica específica do consumidor.
+
+## Mudanças multi-contexto
+
+Antes de editar múltiplos serviços:
+
+1. inventariar produtor, consumidores e owner;
+2. classificar se o problema é contrato ou regra de domínio;
+3. preservar compatibilidade conforme `contract-evolution-backward-compatibility.mdc`;
+4. usar `application-bounded-context-decoupling.mdc` para detalhes de acoplamento entre apps;
+5. validar positive + sibling + negative em ambos os lados do contrato.
+
+## Shared code
+
+Uma extração para `shared/` só é válida se:
+
+```text
+2+ consumidores reais
++ sem regra de negócio específica
++ API pequena e estável
++ ownership/manutenção claros
++ testes próprios
+```
+
+Não extrair abstração prematuramente apenas para reduzir duplicação textual.
+
+## Sinais de desvio
+
+- mesmo conceito tem implementações diferentes em APIs irmãs;
+- regra de filial/escopo aparece no MFE e na API;
+- `shared/` conhece nomes de módulos/KPIs/workflows;
+- um fix exige editar 3 apps sem mudança de contrato explícita;
+- controller contém regra de negócio;
+- use case instancia client/DB diretamente;
+- domain importa Flask/FastAPI/SQLAlchemy/React.
+
+Nesses casos, aplicar `clean-code-architecture-guardrails.mdc` e `root-cause-generalized-fix.mdc` antes de patch local.
+
+## Testes mínimos
+
+Conforme a mudança:
+
+- unitário do domínio/use case sem framework;
+- contrato entre bounded contexts;
+- consumidor com provider fake/stub;
+- integração do adapter real quando necessário;
+- teste negativo de bypass/ownership quando a regressão for arquitetural.
+
+## Evidência de conclusão
+
+```text
+OWNER
+BOUNDARY
+CONTRACT
+DEPENDENCY_DIRECTION
+CONSUMERS
+TESTS
+CROSS_CONTEXT_CHANGES
+```
+
+## Regras filhas
+
+- `application-bounded-context-decoupling.mdc`
+- `mfe-own-api-no-direct-api-delpi.mdc`
+- `clean-code-architecture-guardrails.mdc`
+- `contract-evolution-backward-compatibility.mdc`
+
+## Critério de sucesso
+
+A solução correta deve permitir evoluir um contexto sem exigir conhecimento interno dos vizinhos e sem duplicar regra de negócio fora do seu owner.
