@@ -10,8 +10,9 @@ Antes de decisões arquiteturais ou alterações relevantes, aplicar:
 
 1. [instrucoes-oficiais-gpt-arquiteto-delpi-central.md](./instrucoes-oficiais-gpt-arquiteto-delpi-central.md) — constituição arquitetural do projeto;
 2. [responsabilidades-transversais.md](./responsabilidades-transversais.md) — oito responsabilidades canônicas de engenharia;
-3. `.cursor/rules/development-standards-index.mdc` — roteamento executável das regras;
-4. contratos, schemas, OpenAPI, ADRs e implementação vigente do domínio afetado.
+3. [inventario-regras-cursor.md](./inventario-regras-cursor.md) — ownership das regras especializadas e gaps de enforcement;
+4. `.cursor/rules/development-standards-index.mdc` — roteamento executável das regras;
+5. contratos, schemas, OpenAPI, ADRs e implementação vigente do domínio afetado.
 
 A pasta `docs/14-documentacao-geral/` contém material de referência e não substitui estas fontes normativas nem contratos vigentes.
 
@@ -32,6 +33,8 @@ A pasta `docs/14-documentacao-geral/` contém material de referência e não sub
 
 Detalhes, limites e exemplos de composição: [responsabilidades-transversais.md](./responsabilidades-transversais.md).
 
+Ownership e inventário das regras filhas: [inventario-regras-cursor.md](./inventario-regras-cursor.md).
+
 ---
 
 ## Documentos
@@ -40,6 +43,7 @@ Detalhes, limites e exemplos de composição: [responsabilidades-transversais.md
 |---|---|
 | Instruções arquiteturais oficiais | [instrucoes-oficiais-gpt-arquiteto-delpi-central.md](./instrucoes-oficiais-gpt-arquiteto-delpi-central.md) |
 | Responsabilidades transversais | [responsabilidades-transversais.md](./responsabilidades-transversais.md) |
+| Inventário das regras Cursor | [inventario-regras-cursor.md](./inventario-regras-cursor.md) |
 | Rotas HTTP | [padrao-de-rota.md](./padrao-de-rota.md) |
 | Use cases | [padrao-de-use-case.md](./padrao-de-use-case.md) |
 | Repositories / ports | [padrao-de-repository.md](./padrao-de-repository.md) |
@@ -67,7 +71,7 @@ Detalhes, limites e exemplos de composição: [responsabilidades-transversais.md
 instruções oficiais
 → constituição global .cursor
 → responsabilidade transversal aplicável
-→ regra especializada
+→ regra especializada classificada no responsibility-map
 → contrato/ADR/schema/OpenAPI/implementação vigente
 ```
 
