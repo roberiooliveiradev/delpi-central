@@ -1,6 +1,6 @@
 ---
-description: Stack LLM canônico — um seletor, três eixos; sem chamada direta a Ollama
-alwaysApply: true
+description: Chat/IA — stack LLM canônico, seleção de provider, embeddings e visão; carregar ao alterar LLM, RAG, tools ou visão
+alwaysApply: false
 ---
 
 # Stack LLM centralizado
