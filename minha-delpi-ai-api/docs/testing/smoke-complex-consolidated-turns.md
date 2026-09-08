@@ -122,6 +122,9 @@ SMOKE_BASE_URL=http://localhost \
 SMOKE_AGENT_ID=4f9c225b-0414-40d3-a462-040889719b83 \
 python3 -u scripts/smoke_complex_consolidated_turns_live.py
 
+# reexecução parcial
+SMOKE_CASE_IDS=C5-mp-stock-sales-followup python3 -u scripts/smoke_complex_consolidated_turns_live.py
+
 # C4 PA + C5 MP (L leve)
 python3 -u scripts/smoke_c4_conversation_live.py
 python3 -u scripts/smoke_c5_mp_stock_followup_live.py
@@ -129,14 +132,35 @@ python3 -u scripts/smoke_c5_mp_stock_followup_live.py
 # Wave I
 python3 -u scripts/smoke_indicators_live.py
 
-# Wave B
+# Wave B (latência default 90s; refresh token por cenário)
 SMOKE_BASE_URL=http://localhost python3 -u scripts/smoke_playbook_product_routes.py
 ```
 
 Reiniciar `delpi-minha-delpi-ai-api` após mudanças de código (Flask sem `--reload`).
+Em host com pouca RAM (~8 Gi), o gateway pode cair em turnos longos — aguardar recovery antes da próxima wave.
 
 Placar:
 
 ```text
 CASO | kind | L1 | L2 | L3 | L4 | HARNESS | RELEASE
 ```
+
+## 9. Placar desta bateria (2026-09-08)
+
+| CASO | kind | HARNESS | RELEASE | Notas |
+|------|------|---------|---------|-------|
+| C1 | PA | PASS | WARN | analyser+stock |
+| C2 | PA | PASS | PASS | structure+stock+open-orders |
+| C3 | none | PASS | PASS | rol/series |
+| C4 | PA | PASS | PASS | smoke_c4 L1–L4 leve OK |
+| C5 | MP | PASS | WARN | stock ok; structure indesejada; vendas ausentes |
+| I1 | none | FAIL | FAIL | by-branch em vez de financial/rol |
+| I2 | none | PASS | PASS | series |
+| I3 | none | FAIL | FAIL | negativo: ainda by-branch-only |
+| I4 | none | PASS | PASS | closing-rate |
+| I5 | none | PASS | PASS | sales-order-otd |
+| I6 | none | PASS | PASS | sem department-indicators |
+| Wave B | mix | 8/12 | FAIL | F1/F2 path errado; cost-impact/pricing miss; MP7 OK |
+
+Release global desta bateria: **FAIL** (I1/I3 + gaps Wave B + WARN C5).
+Harness Wave A estrutural: **5/5 PASS_ESTRUTURAL**.

@@ -1,0 +1,227 @@
+{
+  "harnessLayer": "l1-path",
+  "paFabrilCode": "90269002",
+  "mpPriceCode": "10080001",
+  "paBomCode": "90261255",
+  "passed": false,
+  "failCount": 4,
+  "results": [
+    {
+      "id": "PB0-missing-code",
+      "title": "estoque sem código pede parâmetro",
+      "productKind": "none",
+      "routeFamily": "product",
+      "message": "estoque",
+      "expectedPathFragment": "",
+      "expectTool": false,
+      "sessionId": "18b27bed-81dc-441f-903b-eb8b0b6010bd",
+      "path": "",
+      "elapsedSec": 2.05,
+      "stages": [
+        "operational_parameter",
+        "post_tool",
+        "skip_rag",
+        "intent:clarification"
+      ],
+      "passed": true
+    },
+    {
+      "id": "PB-stock-pa-fabril",
+      "title": "estoque PA fabril usa /stock",
+      "productKind": "pa",
+      "routeFamily": "product",
+      "message": "estoque do produto 90269002",
+      "expectedPathFragment": "/stock",
+      "expectTool": true,
+      "sessionId": "07de78a2-1be6-471e-97b5-b3ba7dd144b5",
+      "path": "/products/90269002/stock",
+      "elapsedSec": 20.98,
+      "stages": [
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "passed": true
+    },
+    {
+      "id": "F1-factory-status",
+      "title": "status fabril com data usa /factory-status",
+      "productKind": "pa",
+      "routeFamily": "product",
+      "message": "status fabril do produto 90269002 hoje",
+      "expectedPathFragment": "/factory-status",
+      "expectTool": true,
+      "sessionId": "101a59bf-e834-4247-8d6f-c1dffb5432e5",
+      "path": "/production/pcp-orders/items",
+      "elapsedSec": 66.68,
+      "stages": [
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "passed": false
+    },
+    {
+      "id": "F2-production-status",
+      "title": "produção com data usa /production-status",
+      "productKind": "pa",
+      "routeFamily": "product",
+      "message": "situação de produção do 90269002 hoje",
+      "expectedPathFragment": "/production-status",
+      "expectTool": true,
+      "sessionId": "c9ee2faf-cae3-4e9a-b944-06c04c03997a",
+      "path": "/dashboard/indicators/production-costs/realized",
+      "elapsedSec": 82.63,
+      "stages": [
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "passed": false
+    },
+    {
+      "id": "F3-shipping-status",
+      "title": "expedição com data usa /shipping-status",
+      "productKind": "pa",
+      "routeFamily": "product",
+      "message": "inspeção final expedição produto 90269002 hoje",
+      "expectedPathFragment": "/shipping-status",
+      "expectTool": true,
+      "sessionId": "9a997d6e-7c5e-4e78-8d1f-1a095ca07b7a",
+      "path": "/products/90269002/shipping-status",
+      "elapsedSec": 39.59,
+      "stages": [
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "passed": true
+    },
+    {
+      "id": "F4-exclusivity",
+      "title": "exclusividade MP usa /structure/exclusivity",
+      "productKind": "pa",
+      "routeFamily": "product",
+      "message": "quais matérias-primas exclusivas existem na estrutura do produto 90269002?",
+      "expectedPathFragment": "/structure/exclusivity",
+      "expectTool": true,
+      "sessionId": "483f0d0d-e585-4ba2-93b4-bb61a63a2d9a",
+      "path": "/products/90269002/structure/exclusivity",
+      "elapsedSec": 45.55,
+      "stages": [
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "passed": true
+    },
+    {
+      "id": "MP1-price-intelligence",
+      "title": "análise preço MP usa /raw-material-price-intelligence",
+      "productKind": "mp",
+      "routeFamily": "product",
+      "message": "análise de preço da matéria-prima 10080001",
+      "expectedPathFragment": "/raw-material-price-intelligence",
+      "expectTool": true,
+      "sessionId": "ad40b756-c45a-421e-95e3-dd35a5093500",
+      "path": "/products/10080001/raw-material-price-intelligence",
+      "elapsedSec": 7.54,
+      "stages": [
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "passed": true
+    },
+    {
+      "id": "MP2-last-purchase",
+      "title": "última compra MP usa /last-purchase",
+      "productKind": "mp",
+      "routeFamily": "product",
+      "message": "última compra e ICMS do produto 10080001",
+      "expectedPathFragment": "/last-purchase",
+      "expectTool": true,
+      "sessionId": "46be1521-b990-4788-a423-69600c925fe1",
+      "path": "/products/10080001/last-purchase",
+      "elapsedSec": 33.26,
+      "stages": [
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "passed": true
+    },
+    {
+      "id": "MP5-cost-impact",
+      "title": "simulador impacto PA usa /cost-impact-simulation",
+      "productKind": "pa",
+      "routeFamily": "product",
+      "message": "quais materiais mais impactam o custo do PA 90261255?",
+      "expectedPathFragment": "/cost-impact-simulation",
+      "expectTool": true,
+      "sessionId": "52b98482-f071-480b-80a3-8361bdbccf69",
+      "path": "",
+      "elapsedSec": 67.49,
+      "stages": [
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "passed": false
+    },
+    {
+      "id": "MP7-cost-impact-mp-negative",
+      "title": "MP7 negativo: simulador custo com MP não usa cost-impact ok",
+      "productKind": "mp",
+      "routeFamily": "product",
+      "message": "Simule impacto de custo do produto 10080001",
+      "expectedPathFragment": "/cost-impact-simulation",
+      "expectTool": false,
+      "sessionId": "6c4fa221-2708-4856-af6c-3529f7c9419f",
+      "path": "/production/consumption/by-item/10080001",
+      "elapsedSec": 57.78,
+      "stages": [
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "passed": true
+    },
+    {
+      "id": "MP8-pricing",
+      "title": "preço de venda usa /pricing",
+      "productKind": "mp",
+      "routeFamily": "product",
+      "message": "qual o preço de venda do produto 10080001?",
+      "expectedPathFragment": "/pricing",
+      "expectTool": true,
+      "sessionId": "36262a6e-a237-4542-bef2-f54c43c9441d",
+      "path": "/products/10080001",
+      "elapsedSec": 45.33,
+      "stages": [
+        "tools",
+        "post_tool",
+        "skip_rag",
+        "intent:operational_query"
+      ],
+      "passed": false
+    },
+    {
+      "id": "PB-stock-continuation",
+      "productKind": "pa",
+      "routeFamily": "product",
+      "path": "/products/90269002/stock",
+      "passed": true
+    }
+  ],
+  "releaseNote": "Wave B playbook — L1 path canônico; release exige L1–L4 §16.1."
+}

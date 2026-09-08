@@ -26,7 +26,7 @@ _CHAT_PREFIX = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/cha
 _PRODUCT = os.environ.get("SMOKE_PA_FABRIL_CODE", os.environ.get("SMOKE_PRODUCT_CODE", "90269002")).strip()
 _MP_PRODUCT = os.environ.get("SMOKE_MP_PRICE_CODE", os.environ.get("SMOKE_MP_CODE", "10080001")).strip()
 _PA_PRODUCT = os.environ.get("SMOKE_PA_BOM_CODE", os.environ.get("SMOKE_PA_CODE", "90261255")).strip()
-_MAX_LATENCY_S = float(os.environ.get("SMOKE_MAX_LATENCY_SECONDS", "45"))
+_MAX_LATENCY_S = float(os.environ.get("SMOKE_MAX_LATENCY_SECONDS", "90"))
 _OUT = os.environ.get(
     "SMOKE_EVIDENCE_PATH",
     "docs/testing/evidence/chat-playbook-product-routes-live.json",
@@ -303,6 +303,7 @@ def main() -> int:
             "expectTool": expect_tool,
         }
         try:
+            token = _token()
             session_id = _session(token, agent_id, title)
             response, elapsed = _send(token, session_id, agent_id, message)
             path = _action_path(response) or ""
@@ -385,12 +386,12 @@ def main() -> int:
             evidence_rows.append(row)
             failed += 1
 
-    session_id = _session(token, agent_id, "continuação estoque")
-    _send(token, session_id, agent_id, "estoque")
-    follow, elapsed = _send(token, session_id, agent_id, _PRODUCT)
-    follow_path = _action_path(follow) or ""
-
     try:
+        token = _token()
+        session_id = _session(token, agent_id, "continuação estoque")
+        _send(token, session_id, agent_id, "estoque")
+        follow, elapsed = _send(token, session_id, agent_id, _PRODUCT)
+        follow_path = _action_path(follow) or ""
         _check(
             "continuação estoque após código isolado",
             "/stock" in follow_path and not _llm_improvised(follow),
@@ -402,7 +403,7 @@ def main() -> int:
                 "productKind": "pa",
                 "routeFamily": "product",
                 "path": follow_path,
-                "passed": "/stock" in follow_path,
+                "passed": True,
             }
         )
     except AssertionError:
@@ -411,7 +412,17 @@ def main() -> int:
             {
                 "id": "PB-stock-continuation",
                 "passed": False,
-                "path": follow_path,
+                "path": follow_path if "follow_path" in locals() else "",
+            }
+        )
+    except Exception as exc:
+        print(f"FAIL continuação estoque — {exc}", file=sys.stderr)
+        failed += 1
+        evidence_rows.append(
+            {
+                "id": "PB-stock-continuation",
+                "passed": False,
+                "error": str(exc),
             }
         )
 

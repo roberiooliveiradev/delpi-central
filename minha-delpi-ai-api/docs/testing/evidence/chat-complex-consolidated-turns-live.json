@@ -8,24 +8,19 @@
   "period": "agosto 2026",
   "agentId": "4f9c225b-0414-40d3-a462-040889719b83",
   "harnessLayer": "structural",
-  "passed": false,
-  "failCount": 1,
+  "passed": true,
+  "failCount": 0,
   "caseCount": 5,
   "releaseNote": "passed=true means PASS_ESTRUTURAL only. Release requires L1–L4 per docs/testing/smoke-complex-consolidated-turns.md and chat-ai-flow-families.md §16.1.",
   "latencySummary": {
     "wallsMs": [
-      48765,
-      49072,
-      55786,
-      74294,
-      33331
+      91986
     ],
-    "avgWallMs": 52249,
-    "maxWallMs": 74294,
-    "minWallMs": 33331,
+    "avgWallMs": 91986,
+    "maxWallMs": 91986,
+    "minWallMs": 91986,
     "bottleneckCounts": {
-      "toolsMs": 3,
-      "llmMs": 2
+      "toolsMs": 1
     }
   },
   "results": [
@@ -334,89 +329,101 @@
     },
     {
       "id": "C5-mp-stock-sales-followup",
-      "passed": false,
-      "errors": [
-        "tools ok=0 < 1",
-        "nenhum kind esperado ['dashboard', 'kpi', 'stack', 'table']; got=[]",
-        "nenhum path de tool",
-        "path groups cobertos=0 < 1; paths=[] groups=[['/stock', '/products/']]",
-        "rich surfaces=[] < 1"
-      ],
+      "passed": true,
+      "errors": [],
       "productKind": "mp",
       "productCode": "10080022",
       "routeFamily": "product",
-      "proseChars": 1219,
-      "prosePreview": "Para comentar se o estoque cobre a demanda típica e trazer vendas recentes do **10080022**, eu precisaria dos dados de consumo/saídas do item — e **não tenho essa informação disponível no momento**.\n\n## O que dá para afirmar com os dados em mãos\n\n- **Disponível total:** 17.962 un",
-      "kinds": [],
-      "richSurfaces": [],
-      "toolCount": 0,
-      "okToolCount": 0,
-      "paths": [],
+      "proseChars": 1312,
+      "prosePreview": "O produto **10080022** segue com **17.962 unidades disponíveis** em 6 posições, mas não consegui trazer nesta consulta o resumo de vendas/saídas — sem esse dado, não tenho como quantificar a demanda típica do item.\n\n## Estoque (consulta atualizada)\n\n- **Saldo disponível total:** ",
+      "kinds": [
+        "field_labels",
+        "markdown",
+        "prose_structured",
+        "stack",
+        "table",
+        "text"
+      ],
+      "richSurfaces": [
+        "stack",
+        "table"
+      ],
+      "toolCount": 2,
+      "okToolCount": 2,
+      "paths": [
+        "/products/10080022/structure",
+        "/products/10080022/stock"
+      ],
       "pipelineStages": [
         "ingress",
         "turn_grounding",
         "turn_understanding_shadow",
         "task_plan_shadow",
-        "text_task",
+        "tools",
         "post_tool",
         "skip_rag",
-        "intent:text_task"
+        "intent:operational_query"
       ],
-      "hasResolvedFieldLabels": false,
+      "hasResolvedFieldLabels": true,
       "latency": {
-        "wallMs": 33331,
+        "wallMs": 91986,
         "stages": {
-          "preToolMs": 5704,
-          "toolsMs": 44,
-          "postToolMs": 132,
-          "ragMs": 17,
-          "llmMs": 26578,
-          "totalMs": 32477
+          "preToolMs": 10093,
+          "toolsMs": 41227,
+          "postToolMs": 68,
+          "ragMs": 12,
+          "llmMs": 30792,
+          "totalMs": 82194
         },
         "toolsBreakdown": {
-          "selectionMs": 0,
-          "wave1Ms": 0,
+          "selectionMs": 40657,
+          "wave1Ms": 82,
           "criticMs": 0,
           "wave2Ms": 0,
-          "assembleMs": 0,
-          "agenticExtendMs": 0,
-          "finalizeAfterToolsMs": 44
+          "assembleMs": 140,
+          "agenticExtendMs": 318,
+          "finalizeAfterToolsMs": 27
         },
-        "selectionBreakdown": {},
+        "selectionBreakdown": {
+          "selectionNativeMs": 180,
+          "selectionRouterMs": 15,
+          "selectionPlanMs": 40118,
+          "selectionCandidateDbMs": 13
+        },
         "preToolBreakdown": {},
-        "bottleneckStage": "llmMs",
-        "bottleneckMs": 26578,
+        "bottleneckStage": "toolsMs",
+        "bottleneckMs": 41227,
         "skipRag": true,
         "fastPath": false,
-        "toolCountAdmin": 0
+        "toolCountAdmin": 2
       },
-      "sessionId": "a66ff971-c326-4c66-bd4e-0a97214cb0db"
+      "sessionId": "66d0d8a0-07c4-46bf-a696-85b2a39b607a"
     }
   ],
   "qualitativeReview": {
     "protocolRef": "docs/testing/chat-ai-flow-families.md#161-live--surface--camadas-l1l4-obrigatório-em-pedido-composto-e-ui",
     "smokeDocRef": "docs/testing/smoke-complex-consolidated-turns.md",
     "reviewedAt": "2026-09-08",
-    "note": "Harness reported passed=true for 4/4. Qualitative L1–L4 review (DB+UI) does NOT equal release PASS. Do not cite this file alone as excellence.",
+    "note": "Harness PASS_ESTRUTURAL ≠ release. Scorecard abaixo usa harness + smokes C4/C5 dedicados + indicators live desta bateria (2026-09-08).",
     "releaseVerdict": "FAIL",
     "scorecard": {
       "C1-analyser-integrado": {
         "L1": "PASS",
-        "L2": "FAIL",
-        "L3": "PASS_PARTIAL",
-        "L4": "FAIL",
-        "harness": "PASS",
-        "release": "FAIL",
-        "notes": "Prose denied stock while /stock ok with available=0"
-      },
-      "C2-estrutura-estoque-pedidos": {
-        "L1": "PASS",
         "L2": "PASS_PARTIAL",
-        "L3": "WARN",
+        "L3": "PASS",
         "L4": "PASS_PARTIAL",
         "harness": "PASS",
         "release": "WARN",
-        "notes": "Stock coverage OK; explicitSessionFormat=text; open-orders weak"
+        "notes": "analyser+stock; cobertura de subtarefas OK estruturalmente"
+      },
+      "C2-estrutura-estoque-pedidos": {
+        "L1": "PASS",
+        "L2": "PASS",
+        "L3": "PASS",
+        "L4": "PASS",
+        "harness": "PASS",
+        "release": "PASS",
+        "notes": "structure+stock+open-orders"
       },
       "C3-kpi-serie-comercial": {
         "L1": "PASS",
@@ -425,19 +432,61 @@
         "L4": "PASS",
         "harness": "PASS",
         "release": "PASS",
-        "notes": "ROL-only empty-state; no IDD fan-out"
+        "notes": "commercial/rol/series; sem department-indicators"
       },
       "C4-multi-ask-followup": {
-        "L1": "FAIL",
-        "L2": "FAIL",
-        "L3": "FAIL",
-        "L4": "FAIL",
+        "L1": "PASS",
+        "L2": "PASS",
+        "L3": "PASS",
+        "L4": "PASS",
         "harness": "PASS",
+        "release": "PASS",
+        "notes": "smoke_c4: seed /stock; FU structure+stock; markdown ok; cobertura zerado"
+      },
+      "C5-mp-stock-sales-followup": {
+        "L1": "PASS_PARTIAL",
+        "L2": "WARN",
+        "L3": "PASS",
+        "L4": "WARN",
+        "harness": "PASS",
+        "release": "WARN",
+        "notes": "stock ok; chamou /structure apesar do pedido; vendas/saídas ausentes (prosa declara)"
+      },
+      "I1-financial-rol": {
+        "L1": "FAIL",
+        "harness": "FAIL",
         "release": "FAIL",
-        "notes": "Seed /summary not /stock; tree children label —; duplicate Estrutura panels; no coverage fact"
+        "notes": "roteou /commercial/rol/by-branch em vez de /financial/rol"
+      },
+      "I2-commercial-rol-series": {
+        "L1": "PASS",
+        "harness": "PASS",
+        "release": "PASS",
+        "notes": "series"
+      },
+      "I3-neg-by-branch-only": {
+        "L1": "FAIL",
+        "harness": "FAIL",
+        "release": "FAIL",
+        "notes": "negativo detectou by-branch-only (produto ainda falha)"
+      },
+      "I4-closing-rate": {
+        "L1": "PASS",
+        "harness": "PASS",
+        "release": "PASS"
+      },
+      "I5-sales-order-otd": {
+        "L1": "PASS",
+        "harness": "PASS",
+        "release": "PASS"
+      },
+      "I6-neg-department-indicators": {
+        "L1": "PASS",
+        "harness": "PASS",
+        "release": "PASS",
+        "notes": "rol/summary sem department-indicators"
       }
     },
-    "releaseScore": "1 PASS (C3), 1 WARN (C2), 2 FAIL (C1,C4) — not 4/4",
-    "staleWarning": "Structural harness re-ran after this review; re-validate L1–L4 before release."
+    "releaseScore": "Wave A harness 5/5 estrutural; release WARN em C1/C5. Wave I 4/6 (I1/I3 FAIL by-branch). Wave B ver evidence playbook."
   }
 }

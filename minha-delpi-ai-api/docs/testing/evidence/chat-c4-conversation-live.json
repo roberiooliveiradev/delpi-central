@@ -1,31 +1,34 @@
 {
-  "sessionId": "96ce316f-a02d-47d9-9b25-01f251033456",
+  "sessionId": "d24f8248-9f79-4c31-b53e-293170e5c367",
+  "productKind": "pa",
+  "productCode": "90260149",
+  "routeFamily": "product",
   "turns": [
     {
       "label": "seed",
-      "wallMs": 79837,
+      "wallMs": 37661,
       "paths": [
         "/products/90260149",
         "/products/90260149/stock"
       ],
-      "proseChars": 714,
+      "proseChars": 208,
       "tree": "no tree (ok if table-only)",
       "dashboard": "no structure duplication",
       "markdown": "markdown block structure ok",
-      "prosePreview": "O produto **90260149** é o **CHICOTE EPR SINGELO 235MM**, do grupo **9026**, e está **sem estoque disponível** no momento — o saldo total é **0 unidade** em 1 posição, o que não cobre uma demanda típica.\n\n## Cadastro\n\n- **Código:** 90260149 (grupo 9026)\n- **Descrição:** CHICOTE E"
+      "prosePreview": "O produto **90260149** é o **CHICOTE EPR SINGELO 235MM**, do grupo **9026**, e o estoque está **zerado**: saldo disponível total de **0 unidades** em 1 posição, sem quantidade atual no armazém e sem reservas."
     },
     {
       "label": "followup",
-      "wallMs": 72757,
+      "wallMs": 90768,
       "paths": [
         "/products/90260149/structure",
         "/products/90260149/stock"
       ],
-      "proseChars": 1310,
+      "proseChars": 1327,
       "tree": "no tree (ok if table-only)",
       "dashboard": "no structure duplication",
       "markdown": "markdown block structure ok",
-      "prosePreview": "O produto **90260149** — **CHICOTE EPR SINGELO 235MM** — está **sem estoque disponível** (saldo total **0 un.**), ou seja, **não cobre uma demanda típica** com o saldo atual. Abaixo, a visão consolidada.\n\n## Estrutura (BOM)\n\nA composição tem **6 componentes de nível 1**, organiza"
+      "prosePreview": "O produto **90260149** — **CHICOTE EPR SINGELO 235MM** — tem estrutura enxuta em 2 níveis e está com **estoque zerado**, o que **não cobre uma demanda típica**: qualquer necessidade de produção ou venda depende de fabricação ou reposição antes do atendimento.\n\n## Estrutura (BOM)\n"
     }
   ],
   "failures": [],

@@ -1,0 +1,110 @@
+{
+  "baseUrl": "http://localhost",
+  "branch": "01",
+  "period": "agosto 2026",
+  "agentId": "4f9c225b-0414-40d3-a462-040889719b83",
+  "routeFamily": "indicator",
+  "harnessLayer": "l1-l4-light",
+  "passed": false,
+  "failCount": 2,
+  "caseCount": 6,
+  "releaseNote": "Wave I indicators. Release still requires full L1–L4 review per §16.1.",
+  "results": [
+    {
+      "id": "I1-financial-rol",
+      "sessionId": "bf46d198-9e64-4b15-9e84-c176f322dcaa",
+      "routeFamily": "indicator",
+      "productKind": "none",
+      "wallMs": 34977,
+      "paths": [
+        "/commercial/rol/by-branch"
+      ],
+      "proseChars": 40,
+      "prosePreview": "Total de **Receita bruta**: **5114477**.",
+      "errors": [
+        "L1: nenhum path canônico ['/financial/rol']; got=['/commercial/rol/by-branch']",
+        "L1: único path é by-branch (proibido para ROL filial): ['/commercial/rol/by-branch']"
+      ],
+      "passed": false,
+      "negative": false
+    },
+    {
+      "id": "I2-commercial-rol-series",
+      "sessionId": "e78f6bc9-f415-4cc9-9c4b-a27cc19dd82c",
+      "routeFamily": "indicator",
+      "productKind": "none",
+      "wallMs": 35532,
+      "paths": [
+        "/commercial/rol/series"
+      ],
+      "proseChars": 140,
+      "prosePreview": "Total de **ROL matriz**: **723419.01**. **Pontos de atenção**\n\n- A lista é extensa; considere filtros ou paginação para focar o que importa.",
+      "errors": [],
+      "passed": true,
+      "negative": false
+    },
+    {
+      "id": "I3-neg-by-branch-only",
+      "sessionId": "e3e33f60-fa4c-4459-96b9-02b1d2fe36ad",
+      "routeFamily": "indicator",
+      "productKind": "none",
+      "wallMs": 34731,
+      "paths": [
+        "/commercial/rol/by-branch"
+      ],
+      "proseChars": 40,
+      "prosePreview": "Total de **Receita bruta**: **5114477**.",
+      "errors": [
+        "L1: nenhum path canônico ['/financial/rol']; got=['/commercial/rol/by-branch']",
+        "L1: único path é by-branch (proibido para ROL filial): ['/commercial/rol/by-branch']"
+      ],
+      "passed": false,
+      "negative": true
+    },
+    {
+      "id": "I4-closing-rate",
+      "sessionId": "6b5bc657-e174-49fd-aaf1-45ea5de9adab",
+      "routeFamily": "indicator",
+      "productKind": "none",
+      "wallMs": 27134,
+      "paths": [
+        "/commercial/closing-rate"
+      ],
+      "proseChars": 433,
+      "prosePreview": "A taxa de conversão de vendas da filial **01** em **agosto/2026** foi de **22,58%**, superando a meta de **10%** definida para o período. \n\n- **Taxa de fechamento:** 22,58%\n- **Propostas no período:** 31\n- **Meta do período:** 10%\n\n**Leitura:** resultado confortavelmente acima da",
+      "errors": [],
+      "passed": true,
+      "negative": false
+    },
+    {
+      "id": "I5-sales-order-otd",
+      "sessionId": "d2e23961-042c-4e64-851c-089ccaf8313a",
+      "routeFamily": "indicator",
+      "productKind": "none",
+      "wallMs": 21971,
+      "paths": [
+        "/commercial/sales-order-otd"
+      ],
+      "proseChars": 419,
+      "prosePreview": "O OTD de pedidos de venda da filial 01 em agosto/2026 foi de **98,46%**, acima da meta de **95%** — resultado positivo, com folga de cerca de 3,5 pontos percentuais. \n\n- **OTD pedidos:** 98,46%\n- **Meta do período:** 95%\n- **Total de itens avaliados:** 1.297\n\nOu seja, praticament",
+      "errors": [],
+      "passed": true,
+      "negative": false
+    },
+    {
+      "id": "I6-neg-department-indicators",
+      "sessionId": "5ef28d2a-b3b0-48c9-bc2e-b0fd721f5980",
+      "routeFamily": "indicator",
+      "productKind": "none",
+      "wallMs": 19454,
+      "paths": [
+        "/commercial/rol/summary"
+      ],
+      "proseChars": 64,
+      "prosePreview": "**ROL realizado:** R$ 4.455.783,89\n\n**Meta ROL (R$):** 4.690.000",
+      "errors": [],
+      "passed": true,
+      "negative": true
+    }
+  ]
+}
