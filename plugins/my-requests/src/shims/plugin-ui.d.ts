@@ -122,6 +122,47 @@ declare module "@delpi/plugin-ui/index" {
 
   export function navigationCardBemClasses(prefix: string): NavigationCardClassNames;
 
+  export type UnderlineNavItem = {
+    id: string;
+    label: ReactNode;
+    icon?: ReactNode;
+    count?: number;
+    title?: string;
+    controlId?: string;
+    tabId?: string;
+    onSelect?: () => void;
+  };
+
+  export type TopBarCollapseMode = "rail" | "hamburger";
+  export type TopBarCollapseTrigger = "manual" | "overflow";
+
+  export type DashboardTopBarProps = {
+    items: UnderlineNavItem[];
+    activeId: string;
+    secondary?: ReactNode;
+    actions?: ReactNode;
+    bleed?: boolean;
+    sticky?: boolean;
+    surface?: boolean;
+    collapsible?: boolean;
+    collapseMode?: TopBarCollapseMode;
+    collapseTrigger?: TopBarCollapseTrigger;
+    storageKey?: string;
+    collapsed?: boolean;
+    defaultCollapsed?: boolean;
+    onCollapsedChange?: (collapsed: boolean) => void;
+    collapseLabel?: string;
+    expandLabel?: string;
+    menuLabel?: string;
+    portalScopeClassName?: string;
+    className?: string;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardTopBar(config: {
+    prefix: string;
+  }): ComponentType<DashboardTopBarProps>;
+
   export type DashboardEmptyStateProps = {
     title?: string;
     message?: string;
