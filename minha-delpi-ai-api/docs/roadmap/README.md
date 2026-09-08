@@ -1,63 +1,44 @@
-# Roadmap — Minha DELPI Chat
+# Roadmap — Minha DELPI AI
 
-Documentação de evolução do painel administrativo e da API `minha-delpi-ai-api`.
+Este diretório registra evolução e planejamento. **Roadmap não é fonte canônica de arquitetura nem de critério de testes.**
+
+Para implementar no estado atual, consultar primeiro:
+
+| Responsabilidade | Fonte vigente |
+|------------------|---------------|
+| Arquitetura do chat | [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) |
+| Nova API/action | [`../architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md) |
+| Actions OpenAPI | [`../api/04-actions-openapi.md`](../api/04-actions-openapi.md) |
+| Evals da IA | [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md) |
+| Desenvolvimento | [`../development/guia-desenvolvimento.md`](../development/guia-desenvolvimento.md) |
+| Regras Cursor | `.cursor/rules/development-standards-index.mdc` |
+
+## Roadmaps ativos
 
 | Documento | Conteúdo |
-|---|---|
-| [admin-minha-delpi-chat.md](./admin-minha-delpi-chat.md) | Roadmap detalhado por item (status, entregas, evidências). |
-| [admin-fluxos-revisao.md](./admin-fluxos-revisao.md) | **Set/2026:** revisão dos fluxos admin — manter / melhorar / remover da jornada (só doc). |
-| [melhorias-futuras.md](./melhorias-futuras.md) | Melhorias pós-roadmap admin (implementadas; RBAC core externo pendente). |
-| [inteligencia-chat-onda-1.md](./inteligencia-chat-onda-1.md) | Inteligência do chat — Onda 1 (concluída). |
-| [inteligencia-chat-onda-2.md](./inteligencia-chat-onda-2.md) | Inteligência do chat — Onda 2 (concluída). |
-| [inteligencia-chat-onda-3.md](./inteligencia-chat-onda-3.md) | Inteligência do chat — Onda 3 (concluída). |
-| [inteligencia-chat-onda-4.md](./inteligencia-chat-onda-4.md) | Inteligência do chat — Onda 4 (concluída). |
-| [inteligencia-chat-onda-5.md](./inteligencia-chat-onda-5.md) | Inteligência do chat — Onda 5 (concluída). |
-| [inteligencia-chat-onda-6.md](./inteligencia-chat-onda-6.md) | Inteligência do chat — Onda 6 (concluída: modelo 1.5b + pipeline + regressão). |
-| [inteligencia-chat-onda-7.md](./inteligencia-chat-onda-7.md) | Inteligência do chat — Onda 7 (concluída: templates, OpenAPI, regressão, calibração RAG, homologação latência). |
-| [inteligencia-chat-onda-8.md](./inteligencia-chat-onda-8.md) | Inteligência do chat — Onda 8 (concluída: sub-rotas structure/parents, despacho por intent, scoring dedicado). |
-| [apresentacao-rica-chat-onda-9.md](./apresentacao-rica-chat-onda-9.md) | Inteligência do chat — Onda 9 (concluída: tabelas ricas, gráficos, cards KPI, canvas expandível, export XLSX/PDF/PNG). |
-| [inteligencia-chat-onda-10.md](./inteligencia-chat-onda-10.md) | Inteligência do chat — Onda 10 (concluída: novas rotas api-delpi, 100% route selection, títulos contextuais, vocabulário expandido). |
-| [inteligencia-chat-onda-11-paridade-assistentes.md](./inteligencia-chat-onda-11-paridade-assistentes.md) | **Onda 11 (concluída):** paridade ChatGPT/Gemini — roteamento determinístico, velocidade, assertividade; interações básicas PT-BR. |
-| [inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) | **Onda 12 (parcial/MVP):** skill `drawing-analysis-delpi` — [playbook](./melhorias/playbook_skill_analise_desenhos_delpi.md) · [desacoplamento](./melhorias/playbook_skill_desenho_desacoplamento.md). |
-| [inteligencia-chat-onda-13-skill-visao-documentos-ocr.md](./inteligencia-chat-onda-13-skill-visao-documentos-ocr.md) | **Onda 13 (MVP):** skill `document-vision-delpi` — [playbook OCR/visão](./melhorias/playbook_skill_visao_documentos_ocr_delpi.md); [extração PDF chat base](../architecture/chat-pdf-document-extraction.md). |
-| [inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md](./inteligencia-chat-onda-14-ocr-hierarquico-desenhos.md) | **Onda 14 (parcial):** OCR hierárquico — carimbo 13/13 ✅; BOM/cotas/CI ⬜ — [playbook](./melhorias/playbook_ocr_hierarquico_desenhos_delpi.md). |
-| [../changelog/2026-05-inteligencia-chat-entregas.md](../changelog/2026-05-inteligencia-chat-entregas.md) | **Maio/2026:** SQL produção (G1–G3), download fontes/anexos, bundle agente, Normas global, catálogo api-delpi, utility/small talk. |
-| [../changelog/2026-06-playbook-inteligencia.md](../changelog/2026-06-playbook-inteligencia.md) | **Jun/2026:** playbook inteligência — typos, gate de turno simples, fallback honesto, preferências de sessão, métricas de eficiência, feedback, starters, streaming humanizado, avisar/contornar erros. |
-| [../changelog/2026-06-playbook-14-corretor-digitacao-composer.md](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md) | **Jun/2026:** Playbook 14 — chip de correção de digitação no composer, endpoint `typing-suggestions`, telemetria `typing_correction_*`. |
-| [api-delpi-chat-intelligence-audit.md](./api-delpi-chat-intelligence-audit.md) | Auditoria maio/2026: cobertura api-delpi, heurísticas de seleção, typos, regressão e backlog. |
-| [audit-chat-base-familias-fluxos-set2026.md](./audit-chat-base-familias-fluxos-set2026.md) | **Redirecionamento** → [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md) (canônico testes IA) |
-| [playbook-04-autoajuda-chat.md](./playbook-04-autoajuda-chat.md) | **Playbook 04:** autoajuda — manual vivo do chat (catálogo, ajuda contextual, regressão A1–A12). |
-| [playbook-05-anexos-lousa.md](./playbook-05-anexos-lousa.md) | **Playbook 05:** anexos e lousa — welcome, chips, ambiguidade, metadata de versão (L1–L12). |
-| [apresentacao-dados-generalizada-jun2026.md](./apresentacao-dados-generalizada-jun2026.md) | **Jun/2026 (onda 1 concluída):** apresentação generalizada — 130 rotas, preferência UI, perfis declarativos, markdown canônico, chips. |
-| [playbook-12-apresentacao-declarativa-refatoracao.md](./playbook-12-apresentacao-declarativa-refatoracao.md) | **Playbook 12 (onda 2 — em andamento):** refatoração declarativa — `role` em tabelas, registry de bundles, table assembly, section availability, MFE alinhado à API. |
-| [playbook-14-corretor-digitacao-chat.md](./playbook-14-corretor-digitacao-chat.md) | **Playbook 14 (concluído):** corretor de digitação no composer — chip + `POST /chat/typing-suggestions`; [changelog jun/2026](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md). |
-| [playbook-15-rotas-operacionais-sem-sql.md](./playbook-15-rotas-operacionais-sem-sql.md) | **Playbook 15 (concluído):** 15 rotas api-delpi + chat base; [api-delpi](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-producao-consumo-compras-perdas-op.md) + [13-producao-operacional](../../../api-delpi/docs/api/13-producao-operacional.md). |
-| [playbook-15-anexo-catalogo-exclusividade-mp.md](./playbook-15-anexo-catalogo-exclusividade-mp.md) | **Anexo Playbook 15:** catálogo MP exclusiva × PA — [api-delpi](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-catalogo-exclusividade-mp.md). |
-| [playbook-16-openapi-import-async-e-readiness-operacional.md](./playbook-16-openapi-import-async-e-readiness-operacional.md) | **Playbook 16:** import OpenAPI async + progresso UI + readiness pós-deploy (3 camadas API → catálogo → agente). |
-| [playbook-17-importacao-arquivos-e-fontes-unificada.md](./playbook-17-importacao-arquivos-e-fontes-unificada.md) | **Playbook 17 (MVP concluído):** kit `WorkspaceFileDropzone`/`Card`, policy API, polling sessão; backlog: orchestrator + poll cross-família. |
-| [playbook-chat-preco-mp-simulador-custos-pa.md](./playbook-chat-preco-mp-simulador-custos-pa.md) | Integração chat preço MP + simulador PA (Fase 0 do Playbook 15). |
-| [playbook-11-clean-architecture-chat-api.md](./playbook-11-clean-architecture-chat-api.md) | **Playbook 11:** clean architecture — revisão, roadmap por fases, checklist de PR, baseline de auditoria. |
-| [playbook-20-organizacao-services-chat.md](./playbook-20-organizacao-services-chat.md) | **Playbook 20:** organização dos services (`domain/services`, `application/services`) — taxonomia, código morto, convenções, auditoria. |
-| [playbook-24-llm-provider-pluggable-jul2026.md](./playbook-24-llm-provider-pluggable-jul2026.md) | **Playbook 24 (concluído jul/2026):** provedores LLM plugáveis — Ollama padrão; texto/embeddings/VLM/fine-tuning por env; override por agente (P0–P5). [Changelog](../changelog/2026-07-playbook-24-llm-provider-pluggable.md). |
-| [prompt-refatoracao-motor-selecao-actions-openapi-first-set2026.md](./prompt-refatoracao-motor-selecao-actions-openapi-first-set2026.md) | **Set/2026 — prompt mestre executável:** refatoração do motor de Actions para OpenAPI-first universal, hybrid retrieval, planner estruturado, validação de argumentos, multi-turno, compound requests, evals, shadow/canary e remoção progressiva do registry técnico. |
-| [openapi-first-universal-tool-routing.md](./openapi-first-universal-tool-routing.md) | **Set/2026 (entregue):** OpenAPI-first canônico — retrieval + planner + validação; default `mode=on` fail-closed; autoTierC só em CI; registry legado para policies/rollback. |
-| [docie-desacoplamento-selecao-rotas-openapi.md](./docie-desacoplamento-selecao-rotas-openapi.md) | **DOCIE histórico/transição:** mapa de acoplamentos api-delpi e evolução declarativa anterior; para a arquitetura universal usar o prompt mestre e o plano OpenAPI-first acima. |
-| [../architecture/adr/README.md](../architecture/adr/README.md) | **ADRs** do chat — decisões de camadas, JSON, ports e CI (Fase 6). |
-| [playbook-06-erros-resultados-vazios.md](./playbook-06-erros-resultados-vazios.md) | **Playbook 06:** erros e vazios — classificação, templates, chips de recuperação (E1–E15). |
-| [playbook-07-interatividade-botoes.md](./playbook-07-interatividade-botoes.md) | **Playbook 07:** interatividade — consolidação de chips, Mais opções, apresentação (I1–I15). |
-| [melhorias/README.md](./melhorias/README.md) | Playbooks pós-Onda 11: status, smokes e índice. |
-| [melhorias/BACKLOG_ROADMAP.md](./melhorias/BACKLOG_ROADMAP.md) | Backlog ativo priorizado (admin 11, anexos, heatmap, onboarding). |
-| [../testing/smoke-system-metadata-homologacao.md](../testing/smoke-system-metadata-homologacao.md) | Homologação `/system` (SX2). |
-| [../changelog/2026-05-contexto-memoria-assertividade.md](../changelog/2026-05-contexto-memoria-assertividade.md) | **Maio/2026:** memória de turno, score de assertividade, chips com produto, correções presenter/estrutura. |
-| [../changelog/2026-05-melhorias-playbooks.md](../changelog/2026-05-melhorias-playbooks.md) | **Maio/2026:** referências/follow-up, contextChips UI, modo textual admin, chips pós-texto. |
-| [rag-context-min-score-calibracao.md](./rag-context-min-score-calibracao.md) | Calibração `RAG_CONTEXT_MIN_SCORE` e checklist de latência. |
-| [notificacoes-minha-delpi.md](./notificacoes-minha-delpi.md) | Notificações de plataforma: broadcast, integrações e UI no chat. |
-| [agentes-gestao-melhorias.md](./agentes-gestao-melhorias.md) | Gestão de agentes — melhorias (ondas 1–7 concluídas). |
+|-----------|----------|
+| [`openapi-first-universal-tool-routing.md`](./openapi-first-universal-tool-routing.md) | Arquitetura vigente e critérios de aceite do roteamento universal de Actions. |
+| [`melhorias-futuras.md`](./melhorias-futuras.md) | Backlog de melhorias futuras explicitamente não implementadas. |
+| [`melhorias/BACKLOG_ROADMAP.md`](./melhorias/BACKLOG_ROADMAP.md) | Backlog priorizado quando aplicável. |
 
-## Regra operacional
+## Regra para documentos concluídos/datados
 
-Antes de criar funcionalidades, alterar layout, endpoints, migrations ou comportamento do agente, consultar estes documentos e a documentação da API em `docs/api/`.
+Arquivos de ondas, playbooks concluídos e changelogs podem permanecer como registro de decisões/entregas, mas:
 
-**Testes de IA do chat (canônico):** [`chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md) — toda alteração de inteligência, fluxo, skill ou apresentação deve mapear família Fxx, roteiros § 3, critérios R1–R8 e planilha § 5 (governança § 0).
+- não devem ser usados pelo Cursor como instrução atual;
+- não prevalecem sobre arquitetura/docs/regras vigentes;
+- não devem ser copiados para novas implementações sem validação no código atual;
+- se contradisserem fonte vigente, a fonte antiga deve ser corrigida/removida, não conciliada silenciosamente.
 
-**Inteligência do chat:** ondas 1–11 concluídas ([paridade ChatGPT/Gemini + interações básicas PT-BR](./inteligencia-chat-onda-11-paridade-assistentes.md)). Entregas adicionais maio/2026: [changelog](../changelog/2026-05-inteligencia-chat-entregas.md). **Onda 12 (backlog):** [análise de desenhos PDF](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md). Onda 10 entregou novas rotas na api-delpi (`/products/{code}`, `/products/{code}/summary`), títulos contextuais no presenter, vocabulário expandido para detecção de intent, fix na seleção de OVs, e alcançou 100% de acerto em suite de 36 cenários reais. Onda 9 entregou apresentação rica de dados: tabelas interativas com sort/CSV, gráficos Recharts com toggle tabela↔gráfico, cards KPI com tendência, canvas expandível com exportação XLSX/PDF/PNG.
+## Antes de iniciar uma implementação
+
+```text
+instruções oficiais
+→ development-standards-index.mdc
+→ regra especializada
+→ arquitetura/API vigentes
+→ protocolo de eval R1–R11
+→ código/contrato atual
+```
+
+Para mudanças de inteligência, o fluxo obrigatório é baseline → implementação → candidate → R1–R11 → live/surface validation.
