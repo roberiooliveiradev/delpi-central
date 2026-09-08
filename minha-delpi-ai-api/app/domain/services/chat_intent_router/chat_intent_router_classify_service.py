@@ -432,10 +432,21 @@ class ChatIntentRouterClassifyService:
         from app.domain.services.chat_presentation_format_refinement_service import (
             ChatPresentationFormatRefinementService,
         )
+        from app.domain.services.chat_presentation_format_refinement_intent_service import (
+            ChatPresentationFormatRefinementIntentService,
+        )
 
         if ChatIntentRouterHeuristicsService.looks_presentation(normalized):
-            if ChatPresentationFormatRefinementService.looks_like_format_refinement(
-                normalized
+            primary_operational = (
+                ChatPresentationFormatRefinementIntentService._looks_like_primary_operational_fetch(
+                    normalized,
+                )
+            )
+            if (
+                not primary_operational
+                and ChatPresentationFormatRefinementService.looks_like_format_refinement(
+                    normalized
+                )
             ):
                 return ChatIntentRouterSupportService.with_decision(
                     IntentRouteResult(
@@ -453,22 +464,23 @@ class ChatIntentRouterClassifyService:
                     reason="presentation_format_refinement",
                 )
 
-            return ChatIntentRouterSupportService.with_decision(
-                IntentRouteResult(
-                    intent="presentation_task",
-                    sub_intent=ChatIntentRouterHeuristicsService.presentation_sub_intent(
-                        normalized
+            if not primary_operational:
+                return ChatIntentRouterSupportService.with_decision(
+                    IntentRouteResult(
+                        intent="presentation_task",
+                        sub_intent=ChatIntentRouterHeuristicsService.presentation_sub_intent(
+                            normalized
+                        ),
+                        confidence=0.86,
+                        requires_tool=False,
+                        requires_llm=True,
+                        priority_applied=8,
+                        flags=("presentation_task",),
                     ),
-                    confidence=0.86,
-                    requires_tool=False,
-                    requires_llm=True,
-                    priority_applied=8,
-                    flags=("presentation_task",),
-                ),
-                decision="presentation",
-                reason="chart_or_table_request",
-            )
-
+                    decision="presentation",
+                    reason="chart_or_table_request",
+                )
+            # Pedido operacional com preferência de formato → segue roteamento de tools.
         memory_entities = ChatIntentRouterEntityResolutionService.resolve_entities_from_memory(
             normalized,
             previous_messages=history,
@@ -645,6 +657,21 @@ class ChatIntentRouterClassifyService:
                     reason="documental_wording",
                 )
 
+        from app.domain.services.chat_date_range_intent_service import (
+            ChatDateRangeIntentService,
+        )
+        from app.domain.services.chat_product_route_predicate_service import (
+            ChatProductRoutePredicateService,
+        )
+
+        commercial_rol = ChatProductRoutePredicateService.matches(
+            "commercialRol",
+            normalized,
+        )
+        period_metric = ChatDateRangeIntentService.looks_like_period_metric_question(
+            normalized,
+        )
+
         if (
             operational_optimize
             or ChatIntentRouterHeuristicsService.looks_operational(normalized)
@@ -652,11 +679,16 @@ class ChatIntentRouterClassifyService:
             or operational_follow_up
             or memory_anchored_operational
             or ChatIntentRouterHeuristicsService.operational_sub_intent(normalized)
+            or commercial_rol
+            or period_metric
         ):
             sub = ChatIntentRouterHeuristicsService.operational_sub_intent(normalized)
 
             if not sub and department_kpi:
                 sub = "department_kpi"
+
+            if not sub and (commercial_rol or period_metric):
+                sub = "period_metric"
 
             if is_follow_up and not sub:
                 sub = ChatFollowUpIntentService.follow_up_type(normalized)
@@ -684,7 +716,11 @@ class ChatIntentRouterClassifyService:
                     "department_kpi_keywords"
                     if department_kpi and not ambiguous
                     else "operational_sub_intent"
-                    if sub and not ambiguous
+                    if sub and not ambiguous and not commercial_rol
+                    else "commercial_rol"
+                    if commercial_rol and not ambiguous
+                    else "period_metric"
+                    if period_metric and not ambiguous
                     else "operational_keywords"
                     if not ambiguous
                     else "ambiguous_operational_scope"

@@ -125,10 +125,46 @@ class ChatPresentationFormatRefinementIntentService:
         ):
             return True
 
+        if cls._looks_like_primary_operational_fetch(lowered):
+            return False
+
         if cls._has_imperative_format_intent(lowered):
             return True
 
         if cls._has_refinement_context(lowered):
+            return True
+
+        return False
+
+    @classmethod
+    def _looks_like_primary_operational_fetch(cls, lowered: str) -> bool:
+        """Pedido novo de dados (KPI/ROL/multi-escopo) com preferência de formato — não é refinamento."""
+        from app.domain.services.chat_date_range_intent_service import (
+            ChatDateRangeIntentService,
+        )
+        from app.domain.services.chat_message_normalization_service import (
+            ChatMessageNormalizationService,
+        )
+        from app.domain.services.chat_product_multi_scope_planning_service import (
+            ChatProductMultiScopePlanningService,
+        )
+        from app.domain.services.chat_product_route_predicate_service import (
+            ChatProductRoutePredicateService,
+        )
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(lowered)
+
+        if ChatProductRoutePredicateService.matches("commercialRol", normalized):
+            return True
+
+        if ChatDateRangeIntentService.looks_like_period_metric_question(normalized):
+            return True
+
+        scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(normalized)
+        if len(scopes) >= 2:
+            return True
+
+        if ChatProductMultiScopePlanningService.blocks_intent_bound_fast_path(normalized):
             return True
 
         return False

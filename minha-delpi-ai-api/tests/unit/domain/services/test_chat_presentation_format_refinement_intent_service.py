@@ -48,3 +48,23 @@ def test_no_prior_operation_skips_loose_keywords():
 
     assert intent.is_refinement is True
     assert intent.requested_format == "chart"
+
+
+def test_commercial_rol_with_kpi_chart_is_not_format_refinement():
+    message = (
+        "Quero o ROL / indicadores comerciais recentes: mostre o número "
+        "principal (KPI), a série no tempo em gráfico se disponível, e uma "
+        "leitura em prosa do que está acontecendo — tudo na mesma resposta."
+    )
+
+    assert (
+        ChatPresentationFormatRefinementIntentService.looks_like_format_refinement(
+            message,
+        )
+        is False
+    )
+    intent = ChatPresentationFormatRefinementIntentService.resolve(
+        message,
+        has_prior_operation=False,
+    )
+    assert intent.is_refinement is False

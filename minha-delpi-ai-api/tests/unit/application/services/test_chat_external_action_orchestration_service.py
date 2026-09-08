@@ -783,3 +783,85 @@ def test_plan_actions_product_multi_scope_not_aborted_by_sale_orders_early(monke
     assert any("/structure" in path for path in paths)
     assert any("/stock" in path for path in paths)
     assert any("open-orders" in path for path in paths)
+
+
+def test_plan_actions_multi_scope_not_aborted_by_stock_sticky_follow_up(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
+        True,
+    )
+    monkeypatch.setattr(
+        "app.application.services.chat_external_action_orchestration_service."
+        "ChatExternalActionOrchestrationService._mode_multi_action_cap",
+        classmethod(lambda cls: 6),
+    )
+
+    class ScopeSelectionService(FakeSelectionService):
+        def select_action_for_product(
+            self,
+            message,
+            *,
+            product_code,
+            allowed_action_ids=None,
+            intent=None,
+            route_segment=None,
+            previous_messages=None,
+        ):
+            path = f"/products/{product_code}/analyser"
+            action_id = "analyser"
+            if intent == ChatProductQueryIntent.STRUCTURE or route_segment == "structure":
+                path = f"/products/{product_code}/structure"
+                action_id = "structure"
+            elif intent == ChatProductQueryIntent.STOCK or route_segment == "stock":
+                path = f"/products/{product_code}/stock"
+                action_id = "stock"
+            return {
+                "name": "execute_external_action",
+                "actionId": action_id,
+                "arguments": {
+                    "actionId": action_id,
+                    "parameters": {"code": product_code},
+                    "path": path,
+                },
+            }
+
+    history = [
+        {
+            "role": "user",
+            "content": "estoque e descrição do produto 90260149",
+        },
+        {
+            "role": "assistant",
+            "content": "estoque ok",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/90260149/stock",
+                            "actionId": "stock",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    message = (
+        "Agora completa: inclui também a estrutura e um comentário se o "
+        "estoque cobre demanda típica. Quero visão consolidada (prosa + "
+        "tabela/árvore), não só um bloco."
+    )
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        ScopeSelectionService(),
+        message=message,
+        allowed_action_ids=["structure", "stock"],
+        previous_messages=history,
+        max_calls=6,
+    )
+
+    paths = {str(item["arguments"].get("path") or "") for item in planned}
+    assert any("/structure" in path for path in paths)
+    assert any("/stock" in path for path in paths)

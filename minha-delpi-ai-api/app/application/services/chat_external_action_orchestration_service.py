@@ -438,7 +438,23 @@ class ChatExternalActionOrchestrationService:
             previous_messages=previous_messages,
         )
 
-        if operational_follow_ups:
+        from app.domain.services.chat_product_multi_scope_planning_service import (
+            ChatProductMultiScopePlanningService,
+        )
+
+        sticky_follow_up_ok = bool(operational_follow_ups) and not (
+            ChatProductMultiScopePlanningService.blocks_intent_bound_fast_path(
+                selection_message,
+            )
+            or any(
+                scope != "stock"
+                for scope in ChatProductMultiScopePlanningService.extract_requested_scopes(
+                    selection_message,
+                )
+            )
+        )
+
+        if sticky_follow_up_ok:
             limit = cls._resolve_max_calls(max_calls)
             planned: list[dict] = []
 

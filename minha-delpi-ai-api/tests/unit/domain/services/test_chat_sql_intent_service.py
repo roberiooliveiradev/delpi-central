@@ -55,3 +55,13 @@ def test_totvs_table_code_still_detects_sql_context():
     assert ChatSqlIntentService._has_sql_context(
         "liste produtos da sb1010 filial 01"
     ) is True
+
+
+def test_presentation_tabela_alone_is_not_sql_context():
+    message = (
+        "Agora completa: inclui também a estrutura e um comentário se o "
+        "estoque cobre demanda típica. Quero visão consolidada (prosa + "
+        "tabela/árvore), não só um bloco."
+    )
+    assert ChatSqlIntentService._has_sql_context(message) is False
+    assert ChatSqlIntentService.router_sub_intent(message) is None
