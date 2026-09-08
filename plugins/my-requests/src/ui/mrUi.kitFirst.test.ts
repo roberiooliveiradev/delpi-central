@@ -10,7 +10,9 @@ import {
   MyRequestsFiltersRow,
   MyRequestsModal,
   MyRequestsFileDropzone,
+  MyRequestsJourneyProgressBar,
   MyRequestsNavigationCard,
+  MyRequestsProgressTracker,
   MyRequestsSectionCard,
   MyRequestsTopBar,
   TextField,
@@ -41,6 +43,8 @@ describe("kit-first my-requests", () => {
     expect(typeof MyRequestsCompactPagination).toBe("function");
     expect(typeof MyRequestsModal).toBe("function");
     expect(typeof MyRequestsFileDropzone).toBe("function");
+    expect(typeof MyRequestsProgressTracker).toBe("function");
+    expect(typeof MyRequestsJourneyProgressBar).toBe("function");
   });
 
   it("não reintroduz chrome primitivo local (__btn / __panel / __table)", () => {

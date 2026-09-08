@@ -1,31 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionButton, FieldLabel, NativeTextAreaControl } from "@delpi/plugin-ui/index";
 
 import { createRequest } from "../../../api/requestsApi";
 import { AppShell } from "../../../components/AppShell";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../../../content/helpTooltips";
-import { useRequestsPermissions } from "../../../security/RequestsPermissionsContext";
-import {
-  MyRequestsFormActions,
-  MyRequestsSectionCard,
-  MyRequestsStateBanner,
-  SegmentToggle,
-  SelectField,
-  TextField,
-} from "../../../ui/mrUi";
-import { buildReviewChecklist } from "../domain/reviewChecklist";
-import { applyDefaultStockWriteOff } from "../domain/stockWriteOff";
-import { INVOICE_TYPE_LABELS, reviewChecklistLabel } from "../domain/status";
-import type {
-  Carrier,
-  FreightMode,
-  InvoiceType,
-  IssuanceItem,
-  Party,
-  PartyType,
-  ProductHit,
-} from "../domain/types";
-import { searchCarriers, searchParties, searchProducts } from "../lookupsApi";
 import {
   branchCodeForCreate,
   requiresBranchField,
@@ -35,16 +13,63 @@ import {
   myRequestsPath,
   navigateMyRequestsPath,
 } from "../../../hooks/myRequestsNavigation";
+import { useRequestsPermissions } from "../../../security/RequestsPermissionsContext";
 import type { RequestTypeSummary } from "../../../types/requests";
+import {
+  DetailFields,
+  MyRequestsEmptyState,
+  MyRequestsFormActions,
+  MyRequestsJourneyProgressBar,
+  MyRequestsProgressTracker,
+  MyRequestsSectionCard,
+  MyRequestsStateBanner,
+  SegmentToggle,
+  SelectField,
+  TextField,
+} from "../../../ui/mrUi";
+import { buildReviewChecklist } from "../domain/reviewChecklist";
+import {
+  buildStepCompletionMap,
+  canOpenStep,
+  completedStepCount,
+  computeStepStates,
+  isStepComplete,
+  progressPercent,
+  resolveNextStepAfterEdit,
+  type WizardStepId,
+} from "../domain/stepCompletion";
+import { applyDefaultStockWriteOff } from "../domain/stockWriteOff";
+import {
+  FREIGHT_MODE_LABELS,
+  INVOICE_TYPE_LABELS,
+  freightModeLabel,
+  invoiceTypeLabel,
+  partyTypeLabel,
+} from "../domain/status";
+import type {
+  Carrier,
+  FreightMode,
+  InvoiceType,
+  IssuanceItem,
+  Party,
+  PartyType,
+  ProductHit,
+} from "../domain/types";
+import { WIZARD_STEPS } from "../domain/wizardSteps";
+import { searchCarriers, searchParties, searchProducts } from "../lookupsApi";
 
-export const WIZARD_STEPS = [
-  { id: "recipient", label: "Destinatário" },
-  { id: "invoiceType", label: "Tipo de NF" },
-  { id: "items", label: "Itens" },
-  { id: "freight", label: "Transporte" },
-  { id: "extras", label: "Adicionais" },
-  { id: "review", label: "Conferência" },
-] as const;
+export { WIZARD_STEPS } from "../domain/wizardSteps";
+
+const HELP = MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard;
+
+const STEP_HELP: Record<WizardStepId, string> = {
+  recipient: HELP.recipient,
+  invoiceType: HELP.invoiceType,
+  items: HELP.items,
+  freight: HELP.freight,
+  extras: HELP.extras,
+  review: HELP.review,
+};
 
 type InvoiceIssuanceWizardProps = {
   requestType: RequestTypeSummary;
@@ -52,6 +77,17 @@ type InvoiceIssuanceWizardProps = {
   lockedBranch?: string;
   onCancel?: () => void;
 };
+
+function stepIndex(stepId: WizardStepId): number {
+  return WIZARD_STEPS.findIndex((step) => step.id === stepId);
+}
+
+function formatMoney(value: number): string {
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
 
 export function InvoiceIssuanceWizard({
   requestType,
@@ -69,7 +105,13 @@ export function InvoiceIssuanceWizard({
   const branch = showBranch
     ? branchCode || branchOptions[0]?.value || ""
     : "";
-  const [step, setStep] = useState(0);
+
+  const [stepId, setStepId] = useState<WizardStepId>("recipient");
+  const [returnToReview, setReturnToReview] = useState(false);
+  const [compactDensity, setCompactDensity] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768,
+  );
+
   const [partyType, setPartyType] = useState<PartyType>("customer");
   const [partyQuery, setPartyQuery] = useState("");
   const [partyHits, setPartyHits] = useState<Party[]>([]);
@@ -89,6 +131,22 @@ export function InvoiceIssuanceWizard({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  const draft = useMemo(
+    () => ({
+      party,
+      invoiceType,
+      invoiceTypeOther,
+      items,
+      freightMode,
+      weightKg,
+      volumeCount,
+    }),
+    [party, invoiceType, invoiceTypeOther, items, freightMode, weightKg, volumeCount],
+  );
+
+  const completion = useMemo(() => buildStepCompletionMap(draft), [draft]);
   const checklist = useMemo(
     () =>
       buildReviewChecklist({
@@ -103,12 +161,40 @@ export function InvoiceIssuanceWizard({
     [party, items, invoiceType, invoiceTypeOther, freightMode, weightKg, volumeCount],
   );
 
+  const stepStates = useMemo(
+    () =>
+      computeStepStates({
+        currentStepId: stepId,
+        completion,
+      }),
+    [stepId, completion],
+  );
+
+  const completed = completedStepCount(completion);
+  const percent = progressPercent(completion);
+  const currentComplete = isStepComplete(stepId, draft);
+  const reviewReady = Object.values(checklist).every(Boolean);
+  const stepMeta = WIZARD_STEPS.find((step) => step.id === stepId) ?? WIZARD_STEPS[0];
+  const currentIdx = stepIndex(stepId);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 768px)");
+    const sync = () => setCompactDensity(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, [stepId]);
+
   async function runPartySearch() {
     setError(null);
     try {
       setPartyHits(await searchParties(partyType, partyQuery.trim()));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha no lookup");
+      setError(err instanceof Error ? err.message : "Falha na busca de destinatário");
     }
   }
 
@@ -117,7 +203,7 @@ export function InvoiceIssuanceWizard({
     try {
       setProductHits(await searchProducts(productQuery.trim()));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha no lookup");
+      setError(err instanceof Error ? err.message : "Falha na busca de produtos");
     }
   }
 
@@ -126,7 +212,14 @@ export function InvoiceIssuanceWizard({
     try {
       setCarrierHits(await searchCarriers(carrierQuery.trim()));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha no lookup");
+      setError(err instanceof Error ? err.message : "Falha na busca de transportadora");
+    }
+  }
+
+  function selectParty(hit: Party) {
+    setParty(hit);
+    if (!returnToReview) {
+      setStepId("invoiceType");
     }
   }
 
@@ -139,6 +232,47 @@ export function InvoiceIssuanceWizard({
       stock_write_off: true,
     };
     setItems(applyDefaultStockWriteOff([...items, next], invoiceType));
+  }
+
+  function removeItem(index: number) {
+    setItems((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function goToStep(nextId: WizardStepId) {
+    if (!canOpenStep(nextId, completion)) return;
+    setStepId(nextId);
+  }
+
+  function openForEdit(target: WizardStepId) {
+    setReturnToReview(true);
+    setStepId(target);
+  }
+
+  function goBack() {
+    if (currentIdx <= 0) {
+      onCancel?.();
+      return;
+    }
+    setStepId(WIZARD_STEPS[currentIdx - 1].id);
+  }
+
+  function goForward() {
+    if (!currentComplete) return;
+    if (returnToReview) {
+      const next = resolveNextStepAfterEdit({
+        editedStepId: stepId,
+        completion,
+        returnToReview: true,
+      });
+      setStepId(next);
+      if (next === "review") {
+        setReturnToReview(false);
+      }
+      return;
+    }
+    if (currentIdx < WIZARD_STEPS.length - 1) {
+      setStepId(WIZARD_STEPS[currentIdx + 1].id);
+    }
   }
 
   async function submit() {
@@ -189,274 +323,459 @@ export function InvoiceIssuanceWizard({
     }
   }
 
-  const stepMeta = WIZARD_STEPS[step];
+  const subtitleParts = [
+    showBranch && branch ? `Filial ${branch}` : null,
+    `Etapa ${currentIdx + 1} de ${WIZARD_STEPS.length}: ${stepMeta.label}`,
+  ].filter(Boolean);
 
-  return (
-    <AppShell
-      title="Nova emissão de NF"
-      subtitle={
-        showBranch && branch
-          ? `Filial ${branch} · passo ${step + 1}/${WIZARD_STEPS.length}: ${stepMeta.label}`
-          : `passo ${step + 1}/${WIZARD_STEPS.length}: ${stepMeta.label}`
-      }
-      canCreate
-    >
-      <MyRequestsSectionCard title="Emissão de nota fiscal">
-        <div
-          data-help="invoice-wizard"
-          title={
-            MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard.stepsById[stepMeta.id] ||
-            MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard.section
+  function renderRecipientStep() {
+    return (
+      <div className="my-requests-form-stack">
+        <SegmentToggle
+          ariaLabel="Tipo de destinatário"
+          value={partyType}
+          onChange={setPartyType}
+          options={[
+            { value: "customer", label: "Cliente" },
+            { value: "supplier", label: "Fornecedor" },
+          ]}
+        />
+        <TextField
+          label="Buscar destinatário"
+          hint={HELP.partySearch}
+          value={partyQuery}
+          onChange={setPartyQuery}
+          placeholder="código, nome ou CNPJ"
+        />
+        <MyRequestsFormActions>
+          <ActionButton type="button" variant="primary" onClick={runPartySearch} disabled={busy}>
+            Buscar
+          </ActionButton>
+        </MyRequestsFormActions>
+        {partyHits.length > 0 ? (
+          <ul className="my-requests-domain-list">
+            {partyHits.map((hit) => (
+              <li key={`${hit.party_code}-${hit.party_store}`}>
+                <ActionButton type="button" variant="link" onClick={() => selectParty(hit)}>
+                  {hit.party_code}/{hit.party_store} — {hit.party_name}
+                </ActionButton>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {party ? (
+          <DetailFields
+            fields={[
+              { label: "Nome", value: party.party_name },
+              { label: "Tipo", value: partyTypeLabel(party.party_type) },
+              { label: "Código", value: party.party_code },
+              { label: "Loja", value: party.party_store },
+              { label: "CNPJ/CPF", value: party.tax_id || "—" },
+            ]}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
+  function renderInvoiceTypeStep() {
+    return (
+      <div className="my-requests-form-stack">
+        <SelectField
+          label="Tipo de NF"
+          hint={HELP.invoiceType}
+          value={invoiceType}
+          onChange={(value) => {
+            const next = value as InvoiceType;
+            setInvoiceType(next);
+            setItems((prev) => applyDefaultStockWriteOff(prev, next));
+          }}
+          options={Object.entries(INVOICE_TYPE_LABELS).map(([value, label]) => ({
+            value,
+            label,
+          }))}
+        />
+        {invoiceType === "other" ? (
+          <TextField
+            label="Descreva o tipo"
+            value={invoiceTypeOther}
+            onChange={setInvoiceTypeOther}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
+  function renderItemsStep() {
+    return (
+      <div className="my-requests-form-stack">
+        <TextField
+          label="Buscar produto"
+          hint={HELP.productSearch}
+          value={productQuery}
+          onChange={setProductQuery}
+          placeholder="código ou descrição"
+        />
+        <MyRequestsFormActions>
+          <ActionButton type="button" variant="primary" onClick={runProductSearch} disabled={busy}>
+            Buscar
+          </ActionButton>
+        </MyRequestsFormActions>
+        {productHits.length > 0 ? (
+          <ul className="my-requests-domain-list">
+            {productHits.map((hit) => (
+              <li key={hit.code}>
+                <ActionButton type="button" variant="link" onClick={() => addProduct(hit)}>
+                  {hit.code} — {hit.description}
+                </ActionButton>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {items.length === 0 ? (
+          <MyRequestsEmptyState
+            title="Nenhum item adicionado"
+            message="Busque um produto e selecione-o para incluir na nota."
+          />
+        ) : (
+          <ul className="my-requests-domain-list">
+            {items.map((item, index) => (
+              <li key={`${item.product_code}-${index}`}>
+                <strong>
+                  {item.product_code} — {item.product_description}
+                </strong>
+                <TextField
+                  label="Quantidade"
+                  value={String(item.quantity)}
+                  onChange={(value) => {
+                    const quantity = Number(value);
+                    setItems((prev) =>
+                      prev.map((row, i) => (i === index ? { ...row, quantity } : row)),
+                    );
+                  }}
+                />
+                <TextField
+                  label="Preço unitário"
+                  value={String(item.unit_price)}
+                  onChange={(value) => {
+                    const unit_price = Number(value);
+                    setItems((prev) =>
+                      prev.map((row, i) => (i === index ? { ...row, unit_price } : row)),
+                    );
+                  }}
+                />
+                <ActionButton type="button" variant="ghost" onClick={() => removeItem(index)}>
+                  Remover
+                </ActionButton>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
+
+  function renderFreightStep() {
+    return (
+      <div className="my-requests-form-stack">
+        <SegmentToggle
+          ariaLabel="Modo de frete"
+          value={freightMode}
+          onChange={setFreightMode}
+          options={[
+            { value: "cif", label: FREIGHT_MODE_LABELS.cif },
+            { value: "fob", label: FREIGHT_MODE_LABELS.fob },
+          ]}
+        />
+        <FieldLabel label="Frete" hint={HELP.freight} />
+        <TextField
+          label="Transportadora (opcional)"
+          hint={HELP.carrierSearch}
+          value={carrierQuery}
+          onChange={setCarrierQuery}
+          placeholder="código ou nome"
+        />
+        <MyRequestsFormActions>
+          <ActionButton type="button" variant="primary" onClick={runCarrierSearch} disabled={busy}>
+            Buscar
+          </ActionButton>
+        </MyRequestsFormActions>
+        {carrierHits.length > 0 ? (
+          <ul className="my-requests-domain-list">
+            {carrierHits.map((hit) => (
+              <li key={hit.carrier_code}>
+                <ActionButton type="button" variant="link" onClick={() => setCarrier(hit)}>
+                  {hit.carrier_code} — {hit.carrier_name}
+                </ActionButton>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {carrier ? (
+          <DetailFields
+            fields={[
+              { label: "Código", value: carrier.carrier_code },
+              { label: "Nome", value: carrier.carrier_name },
+              { label: "CNPJ/CPF", value: carrier.tax_id || "—" },
+            ]}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
+  function renderExtrasStep() {
+    return (
+      <div className="my-requests-form-stack">
+        <TextField label="Peso (kg)" value={weightKg} onChange={setWeightKg} />
+        <TextField label="Volumes" value={volumeCount} onChange={setVolumeCount} />
+        <div>
+          <FieldLabel label="Observação (opcional)" htmlFor="mr-nf-observation" />
+          <NativeTextAreaControl
+            id="mr-nf-observation"
+            value={observation}
+            onChange={setObservation}
+            rows={3}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  function renderReviewStep() {
+    const totalQty = items.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    return (
+      <div className="my-requests-form-stack">
+        <MyRequestsSectionCard
+          title="Destinatário"
+          actions={
+            <ActionButton type="button" variant="ghost" onClick={() => openForEdit("recipient")}>
+              Alterar
+            </ActionButton>
           }
         >
-          {showBranch ? (
-            <div className="my-requests-form-stack">
-              <SelectField
-                label="Filial"
-                hint={MY_REQUESTS_HELP_TOOLTIPS.new.branch}
-                value={branchCode}
-                onChange={setBranchCode}
-                options={branchOptions}
-                disabled={busy}
-              />
-            </div>
-          ) : null}
-          <MyRequestsFormActions>
-            {WIZARD_STEPS.map((item, index) => (
-              <ActionButton
-                key={item.id}
-                type="button"
-                variant={index === step ? "primary" : "ghost"}
-                disabled={busy}
-                onClick={() => setStep(index)}
-              >
-                {index + 1}. {item.label}
-              </ActionButton>
-            ))}
-          </MyRequestsFormActions>
+          <DetailFields
+            fields={[
+              { label: "Nome", value: party?.party_name || "—" },
+              {
+                label: "Tipo",
+                value: party ? partyTypeLabel(party.party_type) : "—",
+              },
+              {
+                label: "Código / Loja",
+                value: party ? `${party.party_code} / ${party.party_store}` : "—",
+              },
+              { label: "CNPJ/CPF", value: party?.tax_id || "—" },
+            ]}
+          />
+        </MyRequestsSectionCard>
 
-          {error ? (
-            <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
-          ) : null}
+        <MyRequestsSectionCard
+          title="Tipo de nota fiscal"
+          actions={
+            <ActionButton type="button" variant="ghost" onClick={() => openForEdit("invoiceType")}>
+              Alterar
+            </ActionButton>
+          }
+        >
+          <DetailFields
+            fields={[
+              {
+                label: "Tipo",
+                value:
+                  invoiceType === "other"
+                    ? `${invoiceTypeLabel(invoiceType)} — ${invoiceTypeOther || "—"}`
+                    : invoiceTypeLabel(invoiceType),
+              },
+            ]}
+          />
+        </MyRequestsSectionCard>
 
-          {step === 0 ? (
-            <div className="my-requests-form-stack">
-              <SegmentToggle
-                ariaLabel="Tipo de destinatário"
-                value={partyType}
-                onChange={setPartyType}
-                options={[
-                  { value: "customer", label: "Cliente" },
-                  { value: "supplier", label: "Fornecedor" },
-                ]}
-              />
-              <TextField
-                label="Buscar destinatário"
-                hint={MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard.partySearch}
-                value={partyQuery}
-                onChange={setPartyQuery}
-                placeholder="código, nome ou CNPJ"
-              />
-              <MyRequestsFormActions>
-                <ActionButton type="button" variant="primary" onClick={runPartySearch}>
-                  Buscar
-                </ActionButton>
-              </MyRequestsFormActions>
-              <ul className="my-requests-domain-list">
-                {partyHits.map((hit) => (
-                  <li key={`${hit.party_code}-${hit.party_store}`}>
-                    <ActionButton type="button" variant="link" onClick={() => setParty(hit)}>
-                      {hit.party_code}/{hit.party_store} — {hit.party_name}
-                    </ActionButton>
-                  </li>
-                ))}
-              </ul>
-              {party ? (
-                <p>
-                  Selecionado: <strong>{party.party_name}</strong> ({party.party_code}/
-                  {party.party_store})
-                </p>
-              ) : null}
-            </div>
+        <MyRequestsSectionCard
+          title="Itens"
+          actions={
+            <ActionButton type="button" variant="ghost" onClick={() => openForEdit("items")}>
+              Alterar
+            </ActionButton>
+          }
+        >
+          <DetailFields
+            fields={[
+              {
+                label: "Resumo",
+                value: `${items.length} ${items.length === 1 ? "item" : "itens"} · quantidade total ${totalQty}`,
+                wide: true,
+              },
+            ]}
+          />
+          {items.length > 0 ? (
+            <ul className="my-requests-domain-list">
+              {items.map((item, index) => (
+                <li key={`${item.product_code}-${index}`}>
+                  {item.product_code} · {item.product_description} · {item.quantity} ·{" "}
+                  {formatMoney(Number(item.unit_price))}
+                </li>
+              ))}
+            </ul>
           ) : null}
+        </MyRequestsSectionCard>
 
-          {step === 1 ? (
-            <div className="my-requests-form-stack">
-              <SelectField
-                label="Tipo de NF"
-                value={invoiceType}
-                onChange={(value) => {
-                  const next = value as InvoiceType;
-                  setInvoiceType(next);
-                  setItems((prev) => applyDefaultStockWriteOff(prev, next));
-                }}
-                options={Object.entries(INVOICE_TYPE_LABELS).map(([value, label]) => ({
-                  value,
-                  label,
-                }))}
-              />
-              {invoiceType === "other" ? (
-                <TextField
-                  label="Descreva o tipo"
-                  value={invoiceTypeOther}
-                  onChange={setInvoiceTypeOther}
-                />
-              ) : null}
-            </div>
-          ) : null}
+        <MyRequestsSectionCard
+          title="Transporte"
+          actions={
+            <ActionButton type="button" variant="ghost" onClick={() => openForEdit("freight")}>
+              Alterar
+            </ActionButton>
+          }
+        >
+          <DetailFields
+            fields={[
+              { label: "Frete", value: freightModeLabel(freightMode) },
+              {
+                label: "Transportadora",
+                value: carrier
+                  ? `${carrier.carrier_code} — ${carrier.carrier_name}`
+                  : "Não informada",
+              },
+            ]}
+          />
+        </MyRequestsSectionCard>
 
-          {step === 2 ? (
-            <div className="my-requests-form-stack">
-              <TextField
-                label="Buscar item"
-                value={productQuery}
-                onChange={setProductQuery}
-              />
-              <MyRequestsFormActions>
-                <ActionButton type="button" variant="primary" onClick={runProductSearch}>
-                  Buscar produtos
-                </ActionButton>
-              </MyRequestsFormActions>
-              <ul className="my-requests-domain-list">
-                {productHits.map((hit) => (
-                  <li key={hit.code}>
-                    <ActionButton type="button" variant="link" onClick={() => addProduct(hit)}>
-                      {hit.code} — {hit.description}
-                    </ActionButton>
-                  </li>
-                ))}
-              </ul>
-              <ul className="my-requests-domain-list">
-                {items.map((item, index) => (
-                  <li key={`${item.product_code}-${index}`}>
-                    {item.product_code}
-                    <TextField
-                      label="Quantidade"
-                      value={String(item.quantity)}
-                      onChange={(value) => {
-                        const quantity = Number(value);
-                        setItems((prev) =>
-                          prev.map((row, i) => (i === index ? { ...row, quantity } : row)),
-                        );
-                      }}
-                    />
-                    <TextField
-                      label="Preço unitário"
-                      value={String(item.unit_price)}
-                      onChange={(value) => {
-                        const unit_price = Number(value);
-                        setItems((prev) =>
-                          prev.map((row, i) => (i === index ? { ...row, unit_price } : row)),
-                        );
-                      }}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+        <MyRequestsSectionCard
+          title="Informações adicionais"
+          actions={
+            <ActionButton type="button" variant="ghost" onClick={() => openForEdit("extras")}>
+              Alterar
+            </ActionButton>
+          }
+        >
+          <DetailFields
+            fields={[
+              { label: "Peso (kg)", value: weightKg },
+              { label: "Volumes", value: volumeCount },
+              { label: "Observação", value: observation || "—", wide: true },
+            ]}
+          />
+        </MyRequestsSectionCard>
+      </div>
+    );
+  }
 
-          {step === 3 ? (
-            <div className="my-requests-form-stack">
-              <SegmentToggle
-                ariaLabel="Modo de frete"
-                value={freightMode}
-                onChange={setFreightMode}
-                options={[
-                  { value: "cif", label: "CIF" },
-                  { value: "fob", label: "FOB" },
-                ]}
-              />
-              <TextField
-                label="Transportadora (opcional)"
-                value={carrierQuery}
-                onChange={setCarrierQuery}
-              />
-              <MyRequestsFormActions>
-                <ActionButton type="button" variant="primary" onClick={runCarrierSearch}>
-                  Buscar transportadora
-                </ActionButton>
-              </MyRequestsFormActions>
-              <ul className="my-requests-domain-list">
-                {carrierHits.map((hit) => (
-                  <li key={hit.carrier_code}>
-                    <ActionButton type="button" variant="link" onClick={() => setCarrier(hit)}>
-                      {hit.carrier_code} — {hit.carrier_name}
-                    </ActionButton>
-                  </li>
-                ))}
-              </ul>
-              {carrier ? <p>Selecionada: {carrier.carrier_name}</p> : null}
-            </div>
-          ) : null}
+  function renderStepBody() {
+    switch (stepId) {
+      case "recipient":
+        return renderRecipientStep();
+      case "invoiceType":
+        return renderInvoiceTypeStep();
+      case "items":
+        return renderItemsStep();
+      case "freight":
+        return renderFreightStep();
+      case "extras":
+        return renderExtrasStep();
+      case "review":
+        return renderReviewStep();
+      default:
+        return null;
+    }
+  }
 
-          {step === 4 ? (
-            <div className="my-requests-form-stack">
-              <TextField label="Peso (kg)" value={weightKg} onChange={setWeightKg} />
-              <TextField label="Volumes" value={volumeCount} onChange={setVolumeCount} />
-              <div>
-                <FieldLabel label="Observação" htmlFor="mr-nf-observation" />
-                <NativeTextAreaControl
-                  id="mr-nf-observation"
-                  value={observation}
-                  onChange={setObservation}
-                  rows={3}
-                />
-              </div>
-            </div>
-          ) : null}
+  const showNext = stepId !== "review" && !returnToReview;
+  const showContinue = stepId !== "review" && returnToReview;
+  const showSubmit = stepId === "review";
 
-          {step === 5 ? (
-            <div className="my-requests-form-stack">
-              <ul className="my-requests-domain-list">
-                {Object.entries(checklist).map(([key, ok]) => (
-                  <li key={key}>
-                    {ok ? "✓" : "○"} {reviewChecklistLabel(key)}
-                  </li>
-                ))}
-              </ul>
-              <MyRequestsFormActions>
-                <ActionButton
-                  type="button"
-                  variant="primary"
-                  disabled={busy || !Object.values(checklist).every(Boolean)}
-                  onClick={submit}
-                >
-                  Enviar solicitação
-                </ActionButton>
-              </MyRequestsFormActions>
-            </div>
-          ) : null}
+  return (
+    <AppShell title="Nova emissão de NF" subtitle={subtitleParts.join(" · ")} canCreate>
+      <div className="my-requests-form-stack" data-help="invoice-wizard" title={HELP.section}>
+        {showBranch ? (
+          <SelectField
+            label="Filial"
+            hint={MY_REQUESTS_HELP_TOOLTIPS.new.branch}
+            value={branchCode}
+            onChange={setBranchCode}
+            options={branchOptions}
+            disabled={busy}
+          />
+        ) : null}
 
-          <MyRequestsFormActions>
-            {onCancel ? (
-              <ActionButton type="button" variant="ghost" onClick={onCancel}>
-                Voltar
-              </ActionButton>
-            ) : null}
-            {step > 0 ? (
-              <ActionButton
-                type="button"
-                variant="ghost"
-                disabled={busy}
-                onClick={() => setStep((s) => s - 1)}
-              >
-                Anterior
-              </ActionButton>
-            ) : null}
-            {step < WIZARD_STEPS.length - 1 ? (
+        <div title={HELP.progress}>
+          <MyRequestsJourneyProgressBar
+            value={percent}
+            summary={`${completed} de ${WIZARD_STEPS.length} etapas concluídas`}
+          />
+        </div>
+
+        <MyRequestsProgressTracker
+          steps={stepStates}
+          currentStepId={stepId}
+          interactive
+          density={compactDensity ? "compact" : "default"}
+          ariaLabel="Etapas da emissão de nota fiscal"
+          compactSummary={`Etapa atual: ${stepMeta.label}. ${completed} de ${WIZARD_STEPS.length} concluídas.`}
+          onStepChange={(id) => goToStep(id as WizardStepId)}
+        />
+
+        {error ? <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner> : null}
+
+        <MyRequestsSectionCard title={stepMeta.label} hint={STEP_HELP[stepId]}>
+          <h2
+            ref={headingRef}
+            tabIndex={-1}
+            style={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              padding: 0,
+              margin: -1,
+              overflow: "hidden",
+              clip: "rect(0, 0, 0, 0)",
+              whiteSpace: "nowrap",
+              border: 0,
+            }}
+          >
+            {stepMeta.label}
+          </h2>
+
+          {renderStepBody()}
+
+          <MyRequestsFormActions align="end">
+            <ActionButton type="button" variant="ghost" disabled={busy} onClick={goBack}>
+              Voltar
+            </ActionButton>
+            {showNext ? (
               <ActionButton
                 type="button"
                 variant="primary"
-                disabled={busy}
-                onClick={() => setStep((s) => s + 1)}
+                disabled={busy || !currentComplete}
+                onClick={goForward}
               >
                 Próximo
               </ActionButton>
             ) : null}
+            {showContinue ? (
+              <ActionButton
+                type="button"
+                variant="primary"
+                disabled={busy || !currentComplete}
+                onClick={goForward}
+              >
+                Continuar
+              </ActionButton>
+            ) : null}
+            {showSubmit ? (
+              <ActionButton
+                type="button"
+                variant="primary"
+                disabled={busy || !reviewReady}
+                onClick={submit}
+              >
+                Enviar
+              </ActionButton>
+            ) : null}
           </MyRequestsFormActions>
-        </div>
-      </MyRequestsSectionCard>
+        </MyRequestsSectionCard>
+      </div>
     </AppShell>
   );
 }

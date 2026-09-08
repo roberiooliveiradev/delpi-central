@@ -35,6 +35,22 @@ describe("MY_REQUESTS_HELP_TOOLTIPS", () => {
     expect(MY_REQUESTS_HELP_TOOLTIPS.rawMaterialForm.section.length).toBeGreaterThan(20);
     expect(MY_REQUESTS_HELP_TOOLTIPS.admin.section).not.toMatch(/my-requests\.manage/);
     expect(MY_REQUESTS_HELP_TOOLTIPS.detail.section).not.toMatch(/allowed_actions/);
-    expect(MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard.stepsById.recipient.length).toBeGreaterThan(10);
+    for (const key of [
+      "progress",
+      "recipient",
+      "invoiceType",
+      "items",
+      "freight",
+      "extras",
+      "review",
+      "partySearch",
+      "productSearch",
+      "carrierSearch",
+    ] as const) {
+      expect(MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard[key].length).toBeGreaterThan(10);
+      expect(MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard[key]).not.toMatch(
+        /lookup|requests-api|WorkflowEngine|operationId/i,
+      );
+    }
   });
 });

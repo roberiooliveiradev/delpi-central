@@ -22,18 +22,25 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   invoiceWizard: {
     section:
       "Passo a passo para pedir emissão de nota fiscal: destinatário, tipo, itens, frete, dados extras e conferência antes de enviar.",
+    progress:
+      "O percentual e as etapas mostram o que já foi preenchido. Etapas concluídas podem ser reabertas; as futuras ficam bloqueadas até a anterior estar pronta.",
+    recipient: "Informe quem receberá a nota fiscal: cliente ou fornecedor.",
+    invoiceType:
+      "Escolha o tipo da nota. Se for «Outros», descreva o motivo em poucas palavras.",
+    items:
+      "Inclua os produtos da nota. Busque o item, ajuste quantidade e preço, e remova o que não precisar.",
+    freight:
+      "CIF: a empresa cuida do frete. FOB: o destinatário assume o frete. A transportadora é opcional.",
+    extras:
+      "Informe peso e volumes. A observação é opcional e ajuda quem vai emitir a nota.",
+    review:
+      "Revise cada seção antes de enviar. Use Alterar para corrigir e voltar à conferência.",
     partySearch:
       "Busque o cliente ou fornecedor por código, nome ou CNPJ. Selecione o resultado correto na lista.",
-    steps:
-      "Avance pelas etapas. Na conferência, confira o checklist antes de enviar a solicitação.",
-    stepsById: {
-      recipient: "Selecione o destinatário (cliente ou fornecedor) da nota.",
-      invoiceType: "Informe o tipo da nota fiscal. Se for «Outros», descreva o motivo.",
-      items: "Inclua os produtos com quantidade e preço.",
-      freight: "Escolha CIF ou FOB e, se quiser, a transportadora.",
-      extras: "Informe peso, volumes e observações úteis ao atendimento.",
-      review: "Confira o checklist e envie quando tudo estiver marcado.",
-    },
+    productSearch:
+      "Busque o produto por código ou descrição e adicione-o à lista de itens da nota.",
+    carrierSearch:
+      "Busque a transportadora por código ou nome, se quiser informá-la. Este campo é opcional.",
   },
   rawMaterialForm: {
     section:

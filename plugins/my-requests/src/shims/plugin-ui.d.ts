@@ -77,7 +77,10 @@ declare module "@delpi/plugin-ui/index" {
   export type DashboardSectionCardProps = {
     title: string;
     subtitle?: string;
+    hint?: string;
     children?: ReactNode;
+    actions?: ReactNode;
+    className?: string;
   };
 
   export function createDashboardSectionCard(config: {
@@ -86,6 +89,50 @@ declare module "@delpi/plugin-ui/index" {
   }): ComponentType<DashboardSectionCardProps>;
 
   export function sectionCardPacBemClasses(prefix: string): Record<string, string>;
+
+  export type ProgressTrackerStepState =
+    | "complete"
+    | "current"
+    | "available"
+    | "locked"
+    | "error";
+
+  export type ProgressTrackerDensity = "default" | "compact";
+
+  export type ProgressTrackerStep = {
+    id: string;
+    label: string;
+    state: ProgressTrackerStepState;
+    statusLabel?: string;
+  };
+
+  export type DashboardProgressTrackerProps = {
+    steps: ProgressTrackerStep[];
+    currentStepId: string;
+    interactive?: boolean;
+    onStepChange?: (stepId: string) => void;
+    ariaLabel?: string;
+    density?: ProgressTrackerDensity;
+    compactSummary?: string;
+    className?: string;
+  };
+
+  export function createDashboardProgressTracker(config: {
+    prefix: string;
+  }): ComponentType<DashboardProgressTrackerProps>;
+
+  export type DashboardJourneyProgressBarProps = {
+    value: number;
+    label?: string;
+    summary?: string;
+    ariaLabel?: string;
+    className?: string;
+  };
+
+  export function createDashboardJourneyProgressBar(config?: {
+    prefix?: string;
+    defaultLabel?: string;
+  }): ComponentType<DashboardJourneyProgressBarProps>;
 
   export type NavigationCardDensity = "default" | "featured";
 

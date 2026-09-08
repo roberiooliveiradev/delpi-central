@@ -5,9 +5,11 @@ import {
   createDashboardFileDropzone,
   createDashboardFiltersKit,
   createDashboardFormActions,
+  createDashboardJourneyProgressBar,
   createDashboardLoadingState,
   createDashboardNavigationCard,
   createDashboardPageHeader,
+  createDashboardProgressTracker,
   createDashboardSectionCard,
   createDashboardSegmentToggle,
   createDashboardSelectField,
@@ -146,4 +148,13 @@ export const MyRequestsFileDropzone = createDashboardFileDropzone({
     title: "Arraste um arquivo ou clique para selecionar",
     hint: "PDF ou imagem · máx. 25 MB",
   },
+});
+
+export const MyRequestsProgressTracker = createDashboardProgressTracker({
+  prefix: MR_UI_PREFIX,
+});
+
+export const MyRequestsJourneyProgressBar = createDashboardJourneyProgressBar({
+  prefix: MR_UI_PREFIX,
+  defaultLabel: "Progresso da solicitação",
 });
