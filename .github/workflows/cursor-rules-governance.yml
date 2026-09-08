@@ -7,6 +7,7 @@ on:
       - ".cursor/plans/**"
       - "scripts/audit_cursor_rules.py"
       - "scripts/audit_chat_ai_canonical_docs.py"
+      - "scripts/audit_documentation_structure.py"
       - "minha-delpi-ai-api/docs/README.md"
       - "minha-delpi-ai-api/docs/architecture/**"
       - "minha-delpi-ai-api/docs/api/04-actions-openapi.md"
@@ -15,7 +16,7 @@ on:
       - "minha-delpi-ai-api/docs/flows/**"
       - "minha-delpi-ai-api/docs/roadmap/**"
       - "minha-delpi-ai-api/docs/changelog/**"
-      - "docs/12-roadmap-e-evolucao/**"
+      - "docs/**"
       - ".github/workflows/cursor-rules-governance.yml"
   push:
     branches:
@@ -25,6 +26,7 @@ on:
       - ".cursor/plans/**"
       - "scripts/audit_cursor_rules.py"
       - "scripts/audit_chat_ai_canonical_docs.py"
+      - "scripts/audit_documentation_structure.py"
       - "minha-delpi-ai-api/docs/README.md"
       - "minha-delpi-ai-api/docs/architecture/**"
       - "minha-delpi-ai-api/docs/api/04-actions-openapi.md"
@@ -33,7 +35,7 @@ on:
       - "minha-delpi-ai-api/docs/flows/**"
       - "minha-delpi-ai-api/docs/roadmap/**"
       - "minha-delpi-ai-api/docs/changelog/**"
-      - "docs/12-roadmap-e-evolucao/**"
+      - "docs/**"
       - ".github/workflows/cursor-rules-governance.yml"
 
 permissions:
@@ -56,3 +58,6 @@ jobs:
 
       - name: Audit canonical Chat AI guidance
         run: python scripts/audit_chat_ai_canonical_docs.py
+
+      - name: Audit documentation structure
+        run: python scripts/audit_documentation_structure.py
