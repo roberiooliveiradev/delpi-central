@@ -17,6 +17,14 @@ sys.modules[spec.name] = mod
 spec.loader.exec_module(mod)
 
 
+def spec_with_operation(operation: dict, version: str = "1.0.0") -> dict:
+    return {
+        "openapi": "3.0.3",
+        "info": {"title": "X", "version": version},
+        "paths": {"/items": {"get": {"operationId": "list_items", **operation}}},
+    }
+
+
 class OpenApiContractGuardrailsTest(unittest.TestCase):
     def test_openapi_operation_id_is_required(self):
         document = {
@@ -92,6 +100,74 @@ class OpenApiContractGuardrailsTest(unittest.TestCase):
         }
         findings = mod.validate_openapi_document("x/openapi.json", current, base)
         self.assertEqual([item.rule for item in findings], ["OPENAPI_BREAKING_UNCLASSIFIED"])
+
+    def test_required_query_parameter_added_is_breaking(self):
+        base = spec_with_operation({"parameters": []})
+        current = spec_with_operation(
+            {
+                "parameters": [
+                    {"name": "branch", "in": "query", "required": True, "schema": {"type": "string"}}
+                ]
+            },
+            version="1.1.0",
+        )
+        findings = mod.validate_openapi_document("x/openapi.json", current, base)
+        self.assertEqual([item.rule for item in findings], ["OPENAPI_BREAKING_UNCLASSIFIED"])
+        self.assertIn("parâmetro obrigatório adicionado", findings[0].message)
+
+    def test_optional_query_parameter_added_is_additive(self):
+        base = spec_with_operation({"parameters": []})
+        current = spec_with_operation(
+            {
+                "parameters": [
+                    {"name": "search", "in": "query", "required": False, "schema": {"type": "string"}}
+                ]
+            },
+            version="1.1.0",
+        )
+        findings = mod.validate_openapi_document("x/openapi.json", current, base)
+        self.assertEqual(findings, [])
+
+    def test_required_parameter_local_ref_is_resolved(self):
+        base = spec_with_operation({"parameters": []})
+        current = spec_with_operation(
+            {"parameters": [{"$ref": "#/components/parameters/Branch"}]},
+            version="1.1.0",
+        )
+        current["components"] = {
+            "parameters": {
+                "Branch": {
+                    "name": "branch",
+                    "in": "query",
+                    "required": True,
+                    "schema": {"type": "string"},
+                }
+            }
+        }
+        findings = mod.validate_openapi_document("x/openapi.json", current, base)
+        self.assertEqual([item.rule for item in findings], ["OPENAPI_BREAKING_UNCLASSIFIED"])
+
+    def test_request_body_becoming_required_is_breaking(self):
+        base = spec_with_operation(
+            {"requestBody": {"required": False, "content": {"application/json": {"schema": {"type": "object"}}}}}
+        )
+        current = spec_with_operation(
+            {"requestBody": {"required": True, "content": {"application/json": {"schema": {"type": "object"}}}}},
+            version="1.1.0",
+        )
+        findings = mod.validate_openapi_document("x/openapi.json", current, base)
+        self.assertEqual([item.rule for item in findings], ["OPENAPI_BREAKING_UNCLASSIFIED"])
+        self.assertIn("requestBody passou a obrigatório", findings[0].message)
+
+    def test_documented_success_response_removal_is_breaking(self):
+        base = spec_with_operation({"responses": {"200": {"description": "ok"}, "404": {"description": "not found"}}})
+        current = spec_with_operation(
+            {"responses": {"204": {"description": "no content"}, "404": {"description": "not found"}}},
+            version="1.1.0",
+        )
+        findings = mod.validate_openapi_document("x/openapi.json", current, base)
+        self.assertEqual([item.rule for item in findings], ["OPENAPI_BREAKING_UNCLASSIFIED"])
+        self.assertIn("resposta 2xx removida", findings[0].message)
 
     def test_fastapi_changed_route_requires_literal_operation_id(self):
         source = '''\nfrom fastapi import APIRouter\nrouter = APIRouter()\n\n@router.get("/items")\nasync def list_items():\n    return []\n'''
