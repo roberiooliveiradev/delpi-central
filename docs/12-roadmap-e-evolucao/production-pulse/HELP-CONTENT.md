@@ -80,6 +80,7 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 | Campos publish/campanha | `ota.firmwareKey`, `ota.version`, `ota.jobTrigger`, … |
 | Amarração `/firmware-links` | `otaLinks.hero`, `refresh`, `canvas`, `oneFirmwarePerDevice` |
 | KPI frota | `ota.openCatalog` / `ota.jobsHero` (titleHint) |
+| Botões do hero (painel/OTA/detalhe) | `PpHintAction` + `shell.backToPanel`, `ota.openCatalog` / `openJobs` / `openLinks`, `otaLinks.refresh`, `detail.editDevice` / `pollNow`, `shell.modeOperator`, `operator.adminLink` |
 
 Wireframes: WF-PP-OTA-01…05. Homologação: [HOMOLOGACAO-OTA-P4.md](./HOMOLOGACAO-OTA-P4.md).
 

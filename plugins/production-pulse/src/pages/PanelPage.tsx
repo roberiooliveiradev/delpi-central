@@ -14,6 +14,7 @@ import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import { PP_HELP } from "../content/helpTooltips";
 import {
   PpActionButton,
+  PpHintAction,
   PpPageHero,
   PpPagination,
   PpSegmentToggle,
@@ -124,31 +125,37 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
         actions={
           <div className="pp-panel-hero-actions">
               {permissions.canOperator ? (
+                <PpHintAction hint={PP_HELP.shell.modeOperator} ariaLabel="Ajuda: Modo operador">
+                  <PpActionButton
+                    variant="ghost"
+                    className="pp-panel-operator-link"
+                    title={PP_HELP.shell.modeOperator}
+                    onClick={() => navigateProductionPulse(productionPulseOperatorPath(filters.branch))}
+                  >
+                    Modo operador
+                  </PpActionButton>
+                </PpHintAction>
+              ) : null}
+              <PpHintAction hint={PP_HELP.ota.openCatalog} ariaLabel="Ajuda: Firmwares">
                 <PpActionButton
                   variant="ghost"
-                  className="pp-panel-operator-link"
-                  title={PP_HELP.shell.modeOperator}
-                  onClick={() => navigateProductionPulse(productionPulseOperatorPath(filters.branch))}
+                  title={PP_HELP.ota.openCatalog}
+                  onClick={() => navigateProductionPulse(productionPulseFirmwaresPath())}
                 >
-                  Modo operador
+                  Firmwares
                 </PpActionButton>
-              ) : null}
-              <PpActionButton
-                variant="ghost"
-                title={PP_HELP.ota.openCatalog}
-                onClick={() => navigateProductionPulse(productionPulseFirmwaresPath())}
-              >
-                Firmwares
-              </PpActionButton>
-              <PpActionButton
-                variant="ghost"
-                title={PP_HELP.ota.openJobs}
-                onClick={() =>
-                  navigateProductionPulse(productionPulseFirmwareJobsPath(filters.branch))
-                }
-              >
-                OTA
-              </PpActionButton>
+              </PpHintAction>
+              <PpHintAction hint={PP_HELP.ota.openJobs} ariaLabel="Ajuda: OTA">
+                <PpActionButton
+                  variant="ghost"
+                  title={PP_HELP.ota.openJobs}
+                  onClick={() =>
+                    navigateProductionPulse(productionPulseFirmwareJobsPath(filters.branch))
+                  }
+                >
+                  OTA
+                </PpActionButton>
+              </PpHintAction>
               {branchOptions.length > 1 ? (
                 <PpSegmentToggle
                   ariaLabel="Filial"

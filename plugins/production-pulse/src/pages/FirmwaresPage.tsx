@@ -8,6 +8,7 @@ import {
 import {
   PpActionButton,
   PpFirmwareFileField,
+  PpHintAction,
   PpNativeTextAreaField,
   PpNativeTextField,
   PpPageHero,
@@ -97,24 +98,33 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
         description={PP_HELP.ota.catalogHero}
         actions={
           <>
-            <PpActionButton
-              variant="ghost"
-              onClick={() => navigateProductionPulse(PRODUCTION_PULSE_BASE_PATH)}
-            >
-              Painel
-            </PpActionButton>
-            <PpActionButton
-              variant="secondary"
-              onClick={() => navigateProductionPulse(productionPulseFirmwareJobsPath())}
-            >
-              Campanhas
-            </PpActionButton>
-            <PpActionButton
-              variant="primary"
-              onClick={() => navigateProductionPulse(productionPulseFirmwareLinksPath())}
-            >
-              Amarração IoT
-            </PpActionButton>
+            <PpHintAction hint={PP_HELP.shell.backToPanel} ariaLabel="Ajuda: Painel">
+              <PpActionButton
+                variant="ghost"
+                title={PP_HELP.shell.backToPanel}
+                onClick={() => navigateProductionPulse(PRODUCTION_PULSE_BASE_PATH)}
+              >
+                Painel
+              </PpActionButton>
+            </PpHintAction>
+            <PpHintAction hint={PP_HELP.ota.openJobs} ariaLabel="Ajuda: Campanhas">
+              <PpActionButton
+                variant="secondary"
+                title={PP_HELP.ota.openJobs}
+                onClick={() => navigateProductionPulse(productionPulseFirmwareJobsPath())}
+              >
+                Campanhas
+              </PpActionButton>
+            </PpHintAction>
+            <PpHintAction hint={PP_HELP.ota.openLinks} ariaLabel="Ajuda: Amarração IoT">
+              <PpActionButton
+                variant="primary"
+                title={PP_HELP.ota.openLinks}
+                onClick={() => navigateProductionPulse(productionPulseFirmwareLinksPath())}
+              >
+                Amarração IoT
+              </PpActionButton>
+            </PpHintAction>
           </>
         }
       />

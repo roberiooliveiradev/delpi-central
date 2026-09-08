@@ -4,6 +4,7 @@ import { fetchDevices, fetchFirmwares } from "../api/productionPulseApi";
 import { FirmwareDeviceLinkCanvas } from "../components/FirmwareDeviceLinkCanvas";
 import {
   PpActionButton,
+  PpHintAction,
   PpNativeSelectField,
   PpPageHero,
   PpSectionCard,
@@ -86,32 +87,43 @@ export function FirmwareLinksPage({
         description={PP_HELP.otaLinks.hero}
         actions={
           <>
-            <PpActionButton
-              variant="ghost"
-              onClick={() => navigateProductionPulse(PRODUCTION_PULSE_BASE_PATH)}
-            >
-              Painel
-            </PpActionButton>
-            <PpActionButton
-              variant="ghost"
-              onClick={() => navigateProductionPulse(productionPulseFirmwaresPath())}
-            >
-              Firmwares
-            </PpActionButton>
-            <PpActionButton
-              variant="secondary"
-              onClick={() => navigateProductionPulse(productionPulseFirmwareJobsPath(branch))}
-            >
-              Campanhas OTA
-            </PpActionButton>
-            <PpActionButton
-              variant="primary"
-              title={PP_HELP.otaLinks.refresh}
-              onClick={() => void reload()}
-              disabled={loading}
-            >
-              Atualizar conexões
-            </PpActionButton>
+            <PpHintAction hint={PP_HELP.shell.backToPanel} ariaLabel="Ajuda: Painel">
+              <PpActionButton
+                variant="ghost"
+                title={PP_HELP.shell.backToPanel}
+                onClick={() => navigateProductionPulse(PRODUCTION_PULSE_BASE_PATH)}
+              >
+                Painel
+              </PpActionButton>
+            </PpHintAction>
+            <PpHintAction hint={PP_HELP.ota.openCatalog} ariaLabel="Ajuda: Firmwares">
+              <PpActionButton
+                variant="ghost"
+                title={PP_HELP.ota.openCatalog}
+                onClick={() => navigateProductionPulse(productionPulseFirmwaresPath())}
+              >
+                Firmwares
+              </PpActionButton>
+            </PpHintAction>
+            <PpHintAction hint={PP_HELP.ota.openJobs} ariaLabel="Ajuda: Campanhas OTA">
+              <PpActionButton
+                variant="secondary"
+                title={PP_HELP.ota.openJobs}
+                onClick={() => navigateProductionPulse(productionPulseFirmwareJobsPath(branch))}
+              >
+                Campanhas OTA
+              </PpActionButton>
+            </PpHintAction>
+            <PpHintAction hint={PP_HELP.otaLinks.refresh} ariaLabel="Ajuda: Atualizar conexões">
+              <PpActionButton
+                variant="primary"
+                title={PP_HELP.otaLinks.refresh}
+                onClick={() => void reload()}
+                disabled={loading}
+              >
+                Atualizar conexões
+              </PpActionButton>
+            </PpHintAction>
           </>
         }
       />

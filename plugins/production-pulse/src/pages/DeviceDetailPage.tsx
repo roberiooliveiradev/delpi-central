@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import {
   PpActionButton,
+  PpHintAction,
   PpPageHero,
   PpStateBox,
   PpUnderlineNav,
@@ -169,22 +170,28 @@ export function DeviceDetailPage({
           <div className="pp-device-detail__hero-actions">
             <DeviceStatusBadge status={device.status} />
             {permissions.canManageDevices ? (
+              <PpHintAction hint={PP_HELP.detail.editDevice} ariaLabel="Ajuda: Editar">
+                <PpActionButton
+                  variant="ghost"
+                  className="pp-hero-brand-btn"
+                  title={PP_HELP.detail.editDevice}
+                  onClick={() => navigateProductionPulse(productionPulseDeviceEditPath(deviceId))}
+                >
+                  Editar
+                </PpActionButton>
+              </PpHintAction>
+            ) : null}
+            <PpHintAction hint={PP_HELP.detail.pollNow} ariaLabel="Ajuda: Atualizar agora">
               <PpActionButton
                 variant="ghost"
                 className="pp-hero-brand-btn"
-                onClick={() => navigateProductionPulse(productionPulseDeviceEditPath(deviceId))}
+                title={PP_HELP.detail.pollNow}
+                onClick={() => void pollNow()}
+                disabled={refreshing}
               >
-                Editar
+                {refreshing ? PP_HELP.detail.pollNowLoading : PP_HELP.detail.pollNowAction}
               </PpActionButton>
-            ) : null}
-            <PpActionButton
-              variant="ghost"
-              className="pp-hero-brand-btn"
-              onClick={() => void pollNow()}
-              disabled={refreshing}
-            >
-              {refreshing ? PP_HELP.detail.pollNowLoading : PP_HELP.detail.pollNowAction}
-            </PpActionButton>
+            </PpHintAction>
           </div>
         }
       />

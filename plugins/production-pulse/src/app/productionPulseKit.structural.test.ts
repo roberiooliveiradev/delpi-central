@@ -100,6 +100,28 @@ describe("production-pulse kit contracts", () => {
     );
   });
 
+  it("botões do hero usam PpHintAction + PP_HELP (sem ação órfã)", () => {
+    const heroPages = [
+      "pages/PanelPage.tsx",
+      "pages/FirmwaresPage.tsx",
+      "pages/FirmwareJobsPage.tsx",
+      "pages/FirmwareLinksPage.tsx",
+      "pages/DeviceDetailPage.tsx",
+      "components/operator/OperatorBrandBar.tsx",
+      "components/operator/CounterPadSurface.tsx",
+      "components/operator/GaugeReadoutSurface.tsx",
+      "pages/operator/OperatorDevicePicker.tsx",
+    ];
+    for (const rel of heroPages) {
+      const source = readRelative(rel);
+      expect(source, rel).toMatch(/PpHintAction/);
+      expect(source, rel).toMatch(/title=\{PP_HELP\./);
+    }
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/openLinks:/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/editDevice:/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/PpHintAction = HintAction/);
+  });
+
   it("botões do hero usam classe de domínio pp-hero-brand-btn com tokens de marca", () => {
     const css = readRelative("index.css");
     const detail = readRelative("pages/DeviceDetailPage.tsx");

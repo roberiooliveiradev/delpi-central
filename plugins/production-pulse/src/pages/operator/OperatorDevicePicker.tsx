@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { fetchOperatorPlacementDevices } from "../../api/productionPulseApi";
-import { PpActionButton, PpStateBox } from "../../app/productionPulseUi";
+import { PpActionButton, PpHintAction, PpStateBox } from "../../app/productionPulseUi";
 import { OperatorBrandBar } from "../../components/operator/OperatorBrandBar";
 import { OperatorDevicePickCard } from "../../components/operator/OperatorDevicePickCard";
 import {
@@ -88,14 +88,16 @@ export function OperatorDevicePicker({
         title={placementLabel}
         subtitle={PP_HELP.operator.pickerTitle}
         trailing={
-          <PpActionButton
-            variant="ghost"
-            className="pp-operator-hero-btn"
-            onClick={() => navigateOperatorPlacementHub(branch)}
-            title={PP_HELP.operator.changePlacement}
-          >
-            Trocar posto
-          </PpActionButton>
+          <PpHintAction hint={PP_HELP.operator.changePlacement} ariaLabel="Ajuda: Trocar posto">
+            <PpActionButton
+              variant="ghost"
+              className="pp-operator-hero-btn"
+              onClick={() => navigateOperatorPlacementHub(branch)}
+              title={PP_HELP.operator.changePlacement}
+            >
+              Trocar posto
+            </PpActionButton>
+          </PpHintAction>
         }
       />
 

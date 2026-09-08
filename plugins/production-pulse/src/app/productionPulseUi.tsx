@@ -19,6 +19,7 @@ import {
   createStateBoxPanel,
   FieldLabel,
   fileDropzoneBemClasses,
+  HintAction,
   PageHero,
   pageHeroBemClasses,
   sectionCardPacBemClasses,
@@ -53,6 +54,7 @@ export const PpStateBox = createStateBoxPanel({
 });
 
 export const PpActionButton = ActionButton;
+export const PpHintAction = HintAction;
 export const PpPagePath = createDashboardPagePath({
   prefix: PREFIX,
   portalScopeClassName: PP_PORTAL_SCOPE,

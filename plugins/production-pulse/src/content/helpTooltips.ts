@@ -169,6 +169,7 @@ export const PP_HELP = {
     pollNow: "Força leitura imediata e grava no histórico.",
     pollNowAction: "Atualizar agora",
     pollNowLoading: "Atualizando…",
+    editDevice: "Abre o formulário para alterar IP, driver, Wi‑Fi, token e amarração.",
     resetCounter:
       "Zera o contador no ESP. Use com cuidado — ação registrada em auditoria.",
     factoryReset:
@@ -187,6 +188,7 @@ export const PP_HELP = {
   ota: {
     openCatalog: "Catálogo de firmwares publicados para atualização OTA.",
     openJobs: "Campanhas de atualização — disparo imediato ou agendado.",
+    openLinks: "Canvas para amarrar cada IoT a um único firmware da família.",
     catalogHero:
       "Publique binários por família/versão. Depois amarre cada IoT a um firmware para poder atualizar.",
     publishForm: "Envia o artefato .bin e metadados. Requer permissão de gestão.",
