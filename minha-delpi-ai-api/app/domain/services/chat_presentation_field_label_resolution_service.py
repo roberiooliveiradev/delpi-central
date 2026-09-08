@@ -2,12 +2,14 @@
 
 Delega resolução e formatação a `ExternalActionColumnLabelService` — consumidores
 devem preferir este módulo em novos código; APIs legadas permanecem no serviço de colunas.
+Para bundle com `sourceByKey`, usar `ChatFieldLabelResolutionPipelineService.resolve`.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
+from app.domain.entities.field_label_bundle import FieldLabelBundle
 from app.domain.services.external_actions.external_action_column_label_service import (
     ExternalActionColumnLabelService,
 )
@@ -31,6 +33,32 @@ class ChatPresentationFieldLabelResolutionService:
             path=path,
             profile_name=profile_name,
             schema_labels=schema_labels,
+            enable_discovery=enable_discovery,
+        )
+
+    @classmethod
+    def resolve_bundle(
+        cls,
+        keys: list[str],
+        *,
+        path: str = "",
+        profile_name: str | None = None,
+        schema_labels: dict[str, str] | None = None,
+        schema_formats: dict[str, str] | None = None,
+        openapi_labels: dict[str, str] | None = None,
+        enable_discovery: bool = True,
+    ) -> FieldLabelBundle:
+        from app.domain.services.chat_field_label_resolution_pipeline_service import (
+            ChatFieldLabelResolutionPipelineService,
+        )
+
+        return ChatFieldLabelResolutionPipelineService.resolve(
+            keys,
+            path=path,
+            profile_name=profile_name,
+            schema_labels=schema_labels,
+            schema_formats=schema_formats,
+            openapi_labels=openapi_labels,
             enable_discovery=enable_discovery,
         )
 
@@ -111,7 +139,8 @@ class ChatPresentationFieldLabelResolutionService:
         for key, value in items:
             rows.append(
                 {
-                    "campo": label_map.get(key) or cls.resolve_label(key, schema_labels=schema_labels),
+                    "campo": label_map.get(key)
+                    or cls.resolve_label(key, schema_labels=schema_labels),
                     "valor": format_value(key, value, schema_formats=schema_formats),
                 }
             )

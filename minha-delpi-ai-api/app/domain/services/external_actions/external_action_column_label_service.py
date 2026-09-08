@@ -231,38 +231,60 @@ class ExternalActionColumnLabelService:
         enable_discovery: bool = True,
     ) -> dict[str, str]:
         """Cascata canônica R17: catálogo → humanize → discovery (web+LLM)."""
+        return self.resolve_field_label_bundle(
+            keys,
+            path=path,
+            profile_name=profile_name,
+            schema_labels=schema_labels,
+            enable_discovery=enable_discovery,
+        ).labels
+
+    def resolve_field_label_bundle(
+        self,
+        keys: list[str],
+        *,
+        path: str = "",
+        profile_name: str | None = None,
+        schema_labels: dict[str, str] | None = None,
+        schema_formats: dict[str, str] | None = None,
+        enable_discovery: bool = True,
+        openapi_labels: dict[str, str] | None = None,
+    ):
+        """Resolve labels + formats com `sourceByKey` (meta|openapi|catalog|profile|discovery|humanize)."""
+        from app.domain.entities.field_label_bundle import FieldLabelBundle
+
         ordered: list[str] = []
         seen: set[str] = set()
 
         for raw in keys:
             token = str(raw or "").strip()
-
             if not token or token in seen:
                 continue
-
             seen.add(token)
             ordered.append(token)
 
         if not ordered:
-            return {}
+            return FieldLabelBundle()
 
-        profile_hints = self.column_label_hints(profile_name) if profile_name else {}
         label_map: dict[str, str] = {}
+        source_by_key: dict[str, str] = {}
         pending_discovery: list[str] = []
+        profile_hints = self.column_label_hints(profile_name) if profile_name else {}
 
         for key in ordered:
-            catalog = self._resolve_catalog_label(
+            label, source = self._resolve_catalog_label_with_source(
                 key,
                 profile_name=profile_name,
                 schema_labels=schema_labels,
+                openapi_labels=openapi_labels,
             )
-
-            if catalog:
-                label_map[key] = catalog
+            if label:
+                label_map[key] = label
+                source_by_key[key] = source or "catalog"
                 continue
-
             pending_discovery.append(key)
             label_map[key] = self._humanize_field_key(key)
+            source_by_key[key] = "humanize"
 
         if enable_discovery and pending_discovery:
             catalog_fields = (_column_labels_content().get("fields") or {})
@@ -273,12 +295,67 @@ class ExternalActionColumnLabelService:
                 profile_labels=profile_hints,
                 fields=catalog_fields,
             )
-
             for key, label in discovered.items():
                 if str(label or "").strip():
                     label_map[key] = str(label).strip()
+                    source_by_key[key] = "discovery"
 
-        return label_map
+        formats: dict[str, str] = {}
+        for key in ordered:
+            fmt = self.resolve_field_format(key, schema_formats=schema_formats)
+            if fmt:
+                formats[key] = fmt
+
+        return FieldLabelBundle(
+            labels=label_map,
+            formats=formats,
+            source_by_key=source_by_key,
+        )
+
+    def _resolve_catalog_label_with_source(
+        self,
+        key: str,
+        *,
+        profile_name: str | None = None,
+        schema_labels: dict[str, str] | None = None,
+        openapi_labels: dict[str, str] | None = None,
+    ) -> tuple[str | None, str | None]:
+        token = str(key or "").strip()
+        if not token:
+            return None, None
+
+        if profile_name:
+            hinted = self.column_label_hints(profile_name).get(token)
+            if str(hinted or "").strip():
+                return str(hinted).strip(), "profile"
+
+        if schema_labels:
+            schema_label = schema_labels.get(token)
+            if isinstance(schema_label, str) and schema_label.strip():
+                openapi_hit = (
+                    isinstance(openapi_labels, dict)
+                    and str(openapi_labels.get(token) or "").strip() == schema_label.strip()
+                )
+                return schema_label.strip(), "openapi" if openapi_hit else "meta"
+
+        if openapi_labels:
+            openapi_label = openapi_labels.get(token)
+            if isinstance(openapi_label, str) and openapi_label.strip():
+                return openapi_label.strip(), "openapi"
+
+        content = _column_labels_content()
+        fields = content.get("fields") or {}
+        configured = fields.get(token)
+        if isinstance(configured, str) and configured.strip():
+            return configured.strip(), "catalog"
+
+        snake_key = self._snake_case_key(token)
+        if snake_key != token:
+            configured = fields.get(snake_key)
+            if isinstance(configured, str) and configured.strip():
+                return configured.strip(), "catalog"
+
+        return None, None
 
     @classmethod
     def is_catalog_field_resolved(
