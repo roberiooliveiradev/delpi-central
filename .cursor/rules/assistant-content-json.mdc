@@ -1,36 +1,35 @@
 ---
-description: Minha DELPI AI — conteúdo declarativo do assistente em JSON; carregar ao alterar textos, regex, thresholds, vocabulário, policies ou assistant/*.json
+description: Minha DELPI AI — conteúdo declarativo do assistente em JSON; textos, regex, thresholds, vocabulário e policies sem duplicar OpenAPI
 alwaysApply: false
 ---
 
-# Conteúdo do assistente — catálogo JSON
+# Conteúdo do assistente — JSON
 
 ## Princípio
 
-**Arquivos Python** (`domain/`, `application/`, use cases, presenters) contêm **lógica pura**: orquestração, comparação, parsing aplicado, decisão de fluxo e algoritmos que **não** são configuração declarativa.
+`assistant/*.json` contém conteúdo linguístico/configurável e policies transversais. Não é catálogo técnico de APIs.
 
-**Conteúdo linguístico/configurável** fica em `minha-delpi-ai-api/app/content/pt-BR/assistant/*.json`, carregado por serviço de conteúdo — não como literais espalhados no código.
+Para Actions OpenAPI, a fonte técnica é:
 
-Mas existe uma fronteira obrigatória:
-
-> `assistant/*.json` NÃO é catálogo técnico paralelo de APIs.
-
-Para actions/providers OpenAPI, a fonte de verdade técnica é o **OpenAPI importado + Action Catalog persistido/indexado**. Não copiar para JSON aquilo que o contrato já declara.
+```text
+OpenAPI importado
+→ Action Catalog/index
+```
 
 Regra canônica: `openapi-first-universal-tool-routing.mdc`.
 
 ## O que pertence ao JSON
 
-| No JSON | Exemplos |
-|---------|----------|
-| Textos PT-BR ao usuário | títulos, mensagens, `reason`, activity SSE, erros amigáveis |
-| Regex/padrões corporativos | OCR, intenção, BOM, definição de termo, safety guard |
-| Constantes/limites de policy/UX | thresholds, tolerâncias, caps, rankings genéricos |
-| Vocabulário declarativo | sinônimos, rótulos, termos empresariais, chaves de memória |
-| Policies transversais | fallback, confirmação, interpretação corporativa que não exista no OpenAPI padrão |
-| Overrides temporários | compatibilidade documentada e com plano de remoção |
+| Conteúdo | Exemplos |
+|----------|----------|
+| Copy PT-BR | títulos, mensagens, activities, erros amigáveis |
+| Vocabulário corporativo | sinônimos, aliases e termos empresariais reutilizáveis |
+| Regex/padrões configuráveis | OCR, safety, definição de termo |
+| Thresholds/limites | caps e tolerâncias transversais |
+| Policies/UX | confirmação, fallback linguístico, preferências |
+| Presentation hints | labels/perfis opcionais que não duplicam schema |
 
-## O que NÃO pertence ao JSON quando já vem do OpenAPI
+## O que NÃO pertence ao JSON
 
 Não duplicar manualmente:
 
@@ -38,41 +37,38 @@ Não duplicar manualmente:
 path
 operationId
 HTTP method
-lista de parâmetros
+parameters
 required/optional
-tipos/enums/formats
+types/enums/formats
 request body schema
 response schema
-summary/description técnico da operação
-tags usados apenas para replicar o contrato
+technical summary/description já presente no OpenAPI
 ```
 
-Também não criar por endpoint novo, salvo exceção arquitetural comprovada:
+Também não criar por endpoint:
 
 ```text
 pathMarkers
 operationIdMarkers
 routeSegment
-parameterStrategy específico
-prioridade manual de endpoint
-selector por provider
+parameterStrategy
+manual endpoint priority
+provider selector
 ```
 
-Se a mesma informação pode ser lida do `ChatActionCatalogItem`/OpenAPI importado, o JSON não deve virar segunda fonte de verdade.
+Se o fato pode ser lido do Action Catalog/OpenAPI, não deve existir segunda fonte no conteúdo do assistente.
 
-## Fronteira: vocabulário corporativo vs contrato técnico
+## Vocabulário vs contrato
 
-Exemplo válido:
+Válido:
 
 ```json
-{
-  "aliases": ["última compra", "último recebimento comercial"]
-}
+{"aliases": ["última compra", "último pedido ao fornecedor"]}
 ```
 
-quando isso representa linguagem corporativa reutilizável.
+quando representa linguagem corporativa transversal.
 
-Exemplo inválido:
+Inválido:
 
 ```json
 {
@@ -82,100 +78,58 @@ Exemplo inválido:
 }
 ```
 
-se esses dados já estão no OpenAPI.
+quando apenas copia o OpenAPI.
 
-O vocabulário deve ajudar o entendimento do usuário; não reimplementar o catálogo da API.
+## Regex e thresholds
 
-## Única exceção de `re.compile` no Python
+Loaders canônicos podem compilar/cachear regex vindas do JSON.
 
-Loaders canônicos (`ChatAssistantContentService`, `*ContentService`, `*PatternsService`) podem ler JSON, compilar com cache e expor para os serviços de domínio.
+Serviços de domínio não devem espalhar `re.compile`, listas de sinônimos ou números mágicos quando forem configuração.
 
-Proibido `re.compile` / constantes mágicas em serviço de regra de negócio quando forem configuração/vocabulário.
-
-Permanece no código: algoritmos de formatação/parsing e regras verdadeiramente algorítmicas. Valores configuráveis vêm do JSON.
+Permanece no código aquilo que é algoritmo/regra de domínio e não configuração editorial.
 
 ## Onde colocar
 
-| Tipo | Arquivo / serviço |
-|------|-------------------|
-| Genérico do assistente | `assistant/*.json` + `ChatAssistantContentService` |
-| Desenho / OCR / validação | `drawing_stamp.json`, `drawing_validation.json` → loaders canônicos |
-| Document vision | `document_vision.json` |
-| Aprendizagem / glossário | `learning_content.json` |
-| SQL/actions — textos/policies | `external_action_responses.json` |
-| Produto operacional — linguagem/UX | `product_operational_content.json` |
-| Apresentação | `presenter_content.json`, `column_labels.json`, `presentation_vocabulary.json`, `presentation_profiles.json` |
-| Erros recuperáveis | `error_handling.json` |
-| Contrato de actions | **OpenAPI + Action Catalog**, não `assistant/*.json` |
+| Tipo | Fonte |
+|------|-------|
+| Texto/UX genérico | `assistant/*.json` + content service |
+| Drawing/OCR | bundles próprios + loaders canônicos |
+| Document vision | bundle próprio |
+| Learning/glossário | bundle próprio |
+| Tool response copy/policy | `external_action_responses.json` quando realmente linguístico/transversal |
+| Presentation labels/vocabulary | bundles de apresentação |
+| Contrato de Actions | **OpenAPI + Action Catalog** |
 
-Catálogo completo: `minha-delpi-ai-api/docs/architecture/assistant-content-catalog.md`.
+## Route selection/tools
 
-## API no código
+Aplicar simultaneamente:
 
-```python
-# ❌ Evitar — texto, regex ou limite no serviço de domínio
-_CONFIRMATION_THRESHOLD = 0.5
-_PATTERN = re.compile(r"\\b(90\\d{6})\\b")
-return {"titulo": "Estoque do produto"}
-
-# ✅ Preferir — JSON + loader; serviço só aplica lógica
-ChatDrawingPatternsService.component_code().search(text)
-ChatLearningContentService.setting_float("confirmationThreshold", 0.5)
-ChatAssistantContentService.format("presenter_content", "generic", "emptyItemsQuery")
+```text
+linguagem/policy/config transversal → JSON
+contrato técnico/discovery da action → OpenAPI + index
 ```
 
-## Route selection / tools
-
-Serviços de seleção e turn prep seguem duas regras simultâneas:
-
-1. **Texto/vocabulário/policy** → JSON + loader.
-2. **Contrato técnico da action** → OpenAPI importado + Action Catalog.
-
-| Conteúdo | Fonte correta |
-|----------|---------------|
-| `reason` de `execute_external_action` | `external_action_responses.json` / conteúdo genérico |
-| Activity SSE | `stream.json` |
-| Direct answer | `turn_preparation.json` |
-| `operationId`, path, params, body/schema | OpenAPI / Action Catalog |
-| descoberta semântica da action | documento indexado gerado do OpenAPI |
-
-**Proibido** introduzir `reason="A pergunta solicita..."` ou `message="Procurando..."` em delegates novos — usar JSON de conteúdo.
-
-Também é proibido resolver rota nova apenas adicionando cópia técnica dela a `operational_route_registry.json`.
-
-## Registry operacional legado
-
-`operational_route_registry.json` deve ser tratado como compatibilidade/migração conforme `openapi-first-universal-tool-routing.mdc`.
-
-Enquanto existir:
-
-- preservar entradas atuais quando necessárias à paridade;
-- evitar crescimento manual por endpoint;
-- migrar conhecimento técnico para o OpenAPI/Action Catalog;
-- manter em JSON apenas vocabulário/policy/override que não seja simples réplica do contrato;
-- registrar justificativa quando uma exceção manual permanecer.
+A descoberta semântica deve usar documento gerado do contrato importado, não uma lista manual de endpoints.
 
 ## O que NÃO fazer
 
-- Copiar a mesma frase, regex ou limite em dois serviços sem JSON compartilhado.
-- Título/KPI/erro API só no `system_prompt` do agente.
-- `re.compile(...)` em `chat_*_service.py` de domínio, salvo loaders canônicos.
-- Duplicar OpenAPI em JSON para cada nova rota.
-- Criar `pathMarkers`/`operationIdMarkers` como procedimento padrão de onboarding de API.
-- Importar JSON da API no build Docker do MFE; usar contratos/metadata entregues pela API.
+- Copiar frase/regex/threshold em vários serviços.
+- Colocar copy apenas no system prompt do agente.
+- `re.compile` de configuração dentro de service de negócio.
+- Duplicar OpenAPI em JSON.
+- Criar markers/strategies como onboarding normal de API.
+- Resolver bug de routing adicionando endpoint conhecido ao vocabulário técnico.
+- Mover hardcode Python para JSON para passar gate/teste.
 
-## O que fazer — nova feature
+## Nova feature
 
-1. Separar claramente **conteúdo** de **contrato técnico**.
-2. Se for linguagem/policy/configuração: escolher bundle JSON canônico.
-3. Se for metadata de API/action: enriquecer o OpenAPI/importer/Action Catalog.
+1. Separar conteúdo de contrato técnico.
+2. Linguagem/policy/config → bundle canônico existente ou novo somente se responsabilidade nova.
+3. Metadata/action contract → OpenAPI/importer/Action Catalog.
 4. Estender loader canônico quando necessário.
-5. Serviço de domínio consome abstração, sem strings/config espalhadas.
-6. Adicionar teste unitário e atualizar `assistant-content-catalog.md` quando o catálogo mudar.
-7. Se a mudança for em tool routing, validar também API externa desconhecida conforme `openapi-first-universal-tool-routing.mdc`.
+5. Cobrir com testes.
+6. Mudança de routing segue `ai-intelligence-evaluation.mdc`; se afetar tools, provar API externa desconhecida.
 
-## Revisão antes de merge
+## Revisão de PR
 
-Se o diff em `app/domain/` ou `app/application/` adiciona string PT com pontuação, regex, threshold/limite mágico ou lista de vocabulário → mover para JSON ou justificar.
-
-Se o diff em `assistant/*.json` adiciona `path`, `operationId`, parâmetros ou markers específicos de endpoint → verificar primeiro se isso está duplicando OpenAPI. Se estiver, a mudança deve ser rejeitada e feita no contrato/index/planner genérico.
+Se `assistant/*.json` adiciona path, operationId, args, schema ou marker específico de endpoint, presumir drift arquitetural e rejeitar salvo prova explícita de que o dado é linguagem/policy transversal e não replica contrato.
