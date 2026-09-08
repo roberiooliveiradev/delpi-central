@@ -38,8 +38,9 @@ Substituir o `SelectField` de **Tipo** (+ Filial no shell genérico) por um **gr
 | 3 | Unidade/filial: **só** dentro do form do tipo, se `branch_scope` ≠ `none`. |
 | 4 | `branch_scope=required` → campo/passo obrigatório + gate API; `optional` → campo opcional; `none` → sem UI de unidade e sem exigir `branch_code`. |
 | 5 | Ícones: mapa MFE `code → LucideIcon` **ou** metadado opcional no tipo (`ui`/`icon`); label = `name` (sem `(code)` na UI). |
+| 5b | **Kit canônico do card:** `createDashboardNavigationCard` + `navigationCardBemClasses` via `mrUi` (`MyRequestsNavigationCard`). **Não** usar `SectionRouteCard` (lista de rotas internas) nem card BEM solto no MFE. Grid: CSS utilitário do kit / layout já usado em hubs (`travel-expenses` / `commercial`) — sem inventar BEM `type-card`. |
 | 6 | Validação canônica permanece na **requests-api** (validators specialized + schema); MFE não inventa regra de negócio. |
-| 7 | Novo tipo = seed/registry + feature se `specialized`; **não** `if (code === …)` de regra no shell de cards. |
+| 7 | Novo tipo = seed/registry + feature se `specialized`; shell abre form por **`presentation_mode`** (`specialized` \| `schema_driven` \| genérico) — **não** `if (code === …)` no grid. |
 | 8 | Sync Ajuda (`helpTooltips`) + Manual + WF-03 no **mesmo** entregável (`feature-help-sync`). |
 
 ---
@@ -61,16 +62,16 @@ Deep link `?type=invoice-issuance`: pré-seleciona e **abre** o form do tipo (n�
 
 ## Fazer (receita)
 
-1. **UI `/new`:** grid de cards kit-first (dual-class / factory do `mrUi` ou componente do `@delpi/plugin-ui` adequado — não inventar BEM `dashboard-my-requests__type-card` solto).
+1. **UI `/new`:** grid de `MyRequestsNavigationCard` (factory `createDashboardNavigationCard` em `mrUi.tsx`) — um card por tipo (`title` = `name`, `icon` Lucide, `onClick` abre form).
 2. Remover do shell: `SelectField` Tipo e `SelectField` Filial e o botão “Abrir formulário…” como passo intermediário obrigatório.
 3. **Mover filial** para dentro de:
-   - `InvoiceIssuanceWizard` (já tem noção de filial — alinhar a `branch_scope` do tipo);
+   - `InvoiceIssuanceWizard` (já tem noção de filial — alinhar a `branch_scope` do tipo; hoje `lockedBranch` vem do shell);
    - `SchemaFormPage` / schema do tipo quando `required`\|`optional`;
    - create genérico: só pede/envia `branchCode` se `branch_scope` exigir.
 4. Respeitar `allowedUnits` / branches do `RequestsPermissionsContext` **dentro** do form, não no grid.
-5. Empty/loading/error do catálogo com padrões do kit (`StateBanner` / empty).
-6. Testes: deep link abre form; tipo `none` não mostra unidade; tipo `required` bloqueia submit sem filial; regressão kit-first.
-7. Atualizar: este prompt (status), WF-03, MANUAL § Nova, `helpTooltips` `new.*`.
+5. Empty/loading/error do catálogo com padrões do kit (`StateBanner` / empty / loading).
+6. Testes: deep link **abre** form; tipo `none` não mostra unidade; tipo `required` bloqueia submit sem filial; regressão kit-first; shell sem `if (code === …)`.
+7. Atualizar: este prompt (status → implementado), WF-03 (remover bloco “Atual”), MANUAL § Nova, `helpTooltips` `new.*`.
 
 ---
 
@@ -81,6 +82,7 @@ Deep link `?type=invoice-issuance`: pré-seleciona e **abre** o form do tipo (n�
 - Um form monólito com `if (typeCode === …)` para todos os campos.
 - Validação só no front.
 - Card misturando “tipo” e “unidade” na mesma escolha.
+- `SectionRouteCard` / KPI card / primitivo `button`+CSS local como substituto do NavigationCard.
 - Chamar api-delpi no MFE.
 - Alterar Portal Suprimentos / `docs/.../supplies` — domínio diferente.
 
@@ -104,11 +106,12 @@ Deep link `?type=invoice-issuance`: pré-seleciona e **abre** o form do tipo (n�
 Implemente a UX de Nova solicitação em plugins/my-requests conforme
 docs/12-roadmap-e-evolucao/my-requests/PROMPT-nova-solicitacao-type-cards.md.
 
-Substitua o Select de Tipo (+ Filial no shell) por cards com ícones a partir
-de listRequestTypes(). Clique no card abre o formulário do tipo
-(specialized | schema_driven). Unidade/filial só dentro do form, segundo
-branch_scope (required | optional | none). Mantenha deep link ?type=.
-Kit-first (@delpi/plugin-ui / mrUi). Validação na requests-api.
+Substitua o Select de Tipo (+ Filial no shell) por grid de NavigationCard
+(createDashboardNavigationCard via mrUi) a partir de listRequestTypes().
+Clique no card abre o formulário do tipo por presentation_mode
+(specialized | schema_driven | genérico). Unidade/filial só dentro do form,
+segundo branch_scope (required | optional | none). Deep link ?type= deve
+abrir o form (não só pré-selecionar). Kit-first. Validação na requests-api.
 Sync helpTooltips + MANUAL-USUARIO + WIREFRAMES WF-03 no mesmo PR.
 Não toque no Portal Suprimentos. Não invente enum de tipos no MFE.
 ```

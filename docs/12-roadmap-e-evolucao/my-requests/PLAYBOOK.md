@@ -2,7 +2,8 @@
 
 > **Plugin:** `my-requests`  
 > **API:** `/apps/requests-api/v1`  
-> **Status:** E1–E17 entregues (ops + IAM runbook + lookups `/request-lookups`); UI live Ops ainda assina PARITY itens 1–2; próximo = E18 deprecar lookups legado / backlog tags  
+> **Status:** E1–E17 entregues (ops + IAM + lookups `/request-lookups`); UI live Ops ainda assina PARITY itens 1–2  
+> **Próximo:** E19 UX Nova por cards ([PROMPT-nova-solicitacao-type-cards.md](./PROMPT-nova-solicitacao-type-cards.md)); E18 deprecar lookups legado; backlog tags / Admin CRUD  
 > **Referência legado:** [`invoice-issuance`](../invoice-issuance/README.md)
 
 ---
@@ -1562,7 +1563,14 @@ flowchart LR
 | **E16** | Runbook IAM `invoice-issuance.*` → `my-requests.*` | **entregue** — `IAM-LEGACY-PERMISSIONS.md` |
 | **E17** | Adapter + router `/request-lookups/*` | **entregue** — legado `/invoice-issuance/*` lookups até E18 |
 
-Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+.
+### E18–E19 — Limpeza legado + UX Nova
+
+| Etapa | Entrega | Nota |
+|-------|---------|------|
+| **E18** | Deprecar/remover lookups `/invoice-issuance/*` na api-delpi após soak | técnico; schema/volume retidos |
+| **E19** | UX `/new` por cards + unidade via `branch_scope` | brief: [`PROMPT-nova-solicitacao-type-cards.md`](./PROMPT-nova-solicitacao-type-cards.md) |
+
+Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19.
 
 ---
 
@@ -1602,4 +1610,4 @@ Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+.
 ---
 
 **Status:** `E1–E17 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
-**Próximo passo:** E18 — deprecar/remover lookups `/invoice-issuance/*` na api-delpi após soak; backlog tags / CreatableMultiSelect; UX Nova por cards ([PROMPT-nova-solicitacao-type-cards.md](./PROMPT-nova-solicitacao-type-cards.md)); DROP schema após retenção.
+**Próximo passo:** **E19** — UX Nova por cards ([PROMPT-nova-solicitacao-type-cards.md](./PROMPT-nova-solicitacao-type-cards.md)); em paralelo/após soak: **E18** deprecar lookups `/invoice-issuance/*`; backlog tags / CreatableMultiSelect / Admin CRUD; DROP schema após retenção.

@@ -73,6 +73,7 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 | Export / factory | Uso planejado | Etapa |
 |------------------|---------------|-------|
 | `createDashboardCreatableMultiSelectField` | Tags / multi-seleção futura | backlog |
+| `createDashboardNavigationCard` | Grid de tipos em `/new` (E19) | **prompt** — ver WF-03 |
 | Schema form renderer (MFE `SchemaFormPage`) | `raw-material-creation` schema-driven | **entregue E7** |
 | `AnchoredPanelPortal` / menus | Menus flutuantes se surgirem | sob demanda |
 | Busca texto (`q` API) | `FilterInputField` nas listas Mine/Fila | **entregue E11** |
@@ -87,7 +88,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 | Minhas | `/mine` | SectionCard, FiltersKit (incl. busca), CompactPagination, StateBanner, Loading, Empty, DataTable, StatusBadge, ActionButton(link) |
 | Fila | `/work-queue` | idem Mine |
 | Admin | `/admin` | SectionCard, DataTable, StatusBadge, StateBanner (gate manage) | **E14** |
-| Nova (genérico) | `/new` | SectionCard, SelectField×2, FormActions, ActionButton |
+| Nova (genérico) | `/new` | **Hoje:** SectionCard, SelectField×2, FormActions. **Alvo E19:** SectionCard + grid `NavigationCard` (sem Filial no shell) |
 | Wizard NF | `/new` → specialized | SectionCard, SegmentToggle, TextField, SelectField, FieldLabel, NativeTextArea, FormActions, ActionButton, StateBanner |
 | Detalhe | `/requests/:id` | SectionCard, DetailFields, ActionBar→ActionButton, ModalShell (return/cancel), Timeline, painéis |
 | Payload NF | detalhe | SectionCard, DetailFields |
@@ -103,7 +104,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 |------|-----------|--------|-------|
 | `/apps/my-requests` → `/mine` | WF-01 | **entregue** | Lista DataTable |
 | `/work-queue` | WF-02 | **entregue** | Fila processador |
-| `/new` | WF-03 | **entregue** | Select tipo/filial |
+| `/new` | WF-03 | **entregue** + **alvo E19** | Hoje Select; alvo cards + branch no form |
 | `/new` + `invoice-issuance` | WF-04 | **entregue** | Wizard 6 passos |
 | `/new` + `raw-material-creation` | WF-07 | **entregue** | SchemaFormPage |
 | `/requests/:id` | WF-05 | **entregue** | Stack de SectionCards |
@@ -185,7 +186,7 @@ Unidade/filial só **dentro** do form do tipo (`branch_scope`: `required` | `opt
 
 Se tipo = `invoice-issuance` → abre **WF-04** (não POST genérico).
 
-Deep link: `/apps/my-requests/new?type=invoice-issuance` (também `type_code`) pré-seleciona o tipo. Bookmarks `/apps/invoice-issuance/*` redirecionam no gateway para my-requests (E12 soft cutover; assets do MFE legado exclusos até E13).
+Deep link: `/apps/my-requests/new?type=invoice-issuance` (também `type_code`) — **alvo E19:** abre o form do tipo (não só pré-seleciona o select). Bookmarks `/apps/invoice-issuance/*` redirecionam no gateway para my-requests (E12 soft cutover; MFE legado fora do Compose desde E13).
 
 ### WF-04 — Wizard emissão NF (6 passos)
 
@@ -296,11 +297,13 @@ flowchart TB
   PH --> NAV
   NAV --> Mine[WF-01 DataTable]
   NAV --> Queue[WF-02 DataTable]
-  NAV --> New[WF-03 SelectField]
-  New -->|type invoice-issuance| Wiz[WF-04 Wizard]
+  NAV --> New[WF-03 NavigationCards]
+  New -->|presentation_mode specialized| Wiz[WF-04 Wizard]
+  New -->|schema_driven| Schema[WF-07 SchemaForm]
   Mine --> Det[WF-05 Detail stack]
   Queue --> Det
   Wiz -->|POST requests| Det
+  Schema -->|POST requests| Det
 ```
 
 ---
