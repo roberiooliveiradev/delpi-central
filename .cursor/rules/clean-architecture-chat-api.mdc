@@ -1,79 +1,90 @@
 ---
-description: Minha DELPI AI API — Clean Architecture, limites de camadas, send/stream, tools/actions e apresentação do chat
+description: Minha DELPI AI API — Clean Architecture, limites de camadas, send/stream, actions OpenAPI e apresentação
 alwaysApply: false
 ---
 
-# Clean Architecture — minha-delpi-ai-api (chat)
+# Clean Architecture — minha-delpi-ai-api
 
-Guardrails gerais (avisar ao desviar): `clean-code-architecture-guardrails.mdc`.
+Guardrails gerais: `clean-code-architecture-guardrails.mdc`.
 
 ## Dependências
 
-- `domain` **não** importa `app.infrastructure.*` nem `app.interfaces.*`.
-- `interfaces` **não** instancia `Postgres*Repository` — só `composition.make_*`.
-- Textos PT-BR para usuário **e** configuração declarativa (regex, limites, thresholds) vivem em `app/content/pt-BR/assistant/*.json`; Python só com lógica + loaders canônicos.
-- Metadata técnica de actions (`operationId`, method, path, params, schemas) vem do **OpenAPI importado + Action Catalog**, não de JSON paralelo por endpoint.
+- `domain` não importa `infrastructure` nem `interfaces`.
+- `interfaces` não instancia repository/gateway concreto; usa composition root.
+- Texto/configuração declarativa ficam em conteúdo canônico.
+- Metadata técnica de actions vem do OpenAPI + Action Catalog.
+- Domain/application não conhecem provider/path específico para routing genérico.
 
-## Onde colocar código novo
+## Camadas
 
 | Mudança | Camada |
 |---------|--------|
-| Intenção, contratos de candidates/plans, validação, presenter, normalização campo | `domain/services` + domain models/ports |
-| Orquestração de turno, RAG, retrieval de tools, planner, policies, SSE | `application/services` + use case fino |
-| Postgres, LLM, HTTP providers, OpenAPI import/index, loader JSON | `infrastructure` |
-| Endpoint REST | `interfaces/http` (handler fino) |
+| Regras/contratos de candidate/plan/validation | domain/models/ports/services |
+| Orquestração de turno, retrieval, planner, RAG, policies | application/services/use cases |
+| Persistence, OpenAPI importer/index, LLM, HTTP/auth | infrastructure |
+| Endpoint REST/SSE | interfaces/http finas |
+| Wiring/DI | composition |
 
-## Send / Stream
+## Send / Stream / Simulate
 
-- Pré-LLM: `ChatTurnPreparationService` (único).
-- Pós-LLM: `ChatTurnCompletionService` (alvo — não duplicar nos use cases).
-- Inteligência: `ChatIntelligencePipelineService` (único).
-- Preview/simulate devem consumir o mesmo pipeline/base quando o comportamento precisa de paridade.
+A mesma regra semântica deve ser compartilhada.
 
-## API operacional / tools
+- preparação de turno: serviço base comum;
+- intelligence/routing: serviço base comum;
+- completion/presentation: serviço base comum;
+- stream adiciona apenas transporte/checkpoints/activity;
+- simulate acrescenta sandbox/debug autorizado, não uma inteligência alternativa.
 
-Fluxo canônico:
+## Actions OpenAPI
 
 ```text
-OpenAPI importado
+OpenAPI
 → Action Catalog/index
-→ allowed actions do agente
+→ allowed actions
 → retrieval top-K
-→ planner estruturado
-→ validação OpenAPI
-→ policy/confirmation
+→ structured planner
+→ OpenAPI validator
+→ RBAC/policy/confirmation
 → ExecuteExternalActionUseCase
-→ gateway HTTP genérico
+→ generic HTTP gateway
 ```
+
+Não criar spec/catalog/selector técnico paralelo por endpoint.
 
 Regra canônica: `openapi-first-universal-tool-routing.mdc`.
 
-`OperationalApiRouteSpec`, `api_route_domains.json` e `operational_route_registry.json` são compatibilidade/migração enquanto existirem; **não** são requisito para integrar nova API/operation.
+## Apresentação
 
-## Apresentação (delivered puro — jun/2026)
+```text
+response schema + payload + metadata
+→ schema-driven presentation
+→ presentationDecision/renderPlan
+→ MFE render-only
+```
 
-- Pipeline: `ChatPresentationApiDeliveredMetadataService.build` (único caminho via `ChatPresentationMetadataPipelineService`).
-- Schema-driven: `ChatSchemaDrivenPresentationService` + `ExternalActionResultPresenter.finish_schema_first_primary`.
-- SQL/KPI: `ExternalActionSqlPresenter`, `ExternalActionKpiChartPresenter` (exceções legítimas quando realmente transversais).
-- Decisão Automático: `ChatPresentationViewIntentService` + `ChatPresentationDecisionService.enrich_metadata`.
-- Comentário: `ChatDataInsightEnrichmentService` → `dataAnswer` / `dataCommentary`.
-- Formato explícito: `ChatToolContextFormatService` → `build_bundle` schema-driven.
-- Perfis: `presentation_profiles.json` — comportamento de UX; **não** duplicar contrato técnico do OpenAPI.
-- Regra obrigatória: `schema-first-presentation-delivered.mdc`.
-- Nova rota/API: checklist `new-api-route-checklist.mdc`.
+Perfil especializado é opcional. API externa deve funcionar sem presenter dedicado.
 
 ## Ports
 
-- Conteúdo: `AssistantContentPort` → adapter de infrastructure via composição.
-- Config: `AppConfigPort` → adapter de infrastructure via composição.
-- Action catalog/search/planner/validator devem depender de ports, não de provider concreto.
+- content/config por ports quando cruzar fronteira de camada;
+- action catalog/search/planner/validator dependem de abstrações, não adapter/provider concreto;
+- HTTP/auth/LLM/vector store são adapters de infrastructure.
+
+## Evals
+
+Mudança de inteligência segue `ai-intelligence-evaluation.mdc` + `docs/testing/chat-ai-flow-families.md`.
+
+Não declarar concluído sem baseline/candidate e required dimensions aplicáveis.
 
 ## PR checklist
 
-1. Domain sem import de infra?
-2. Texto/configuração declarativa nova no lugar canônico, sem duplicar OpenAPI?
-3. Send/stream/simulate usam o mesmo serviço base para a mesma regra?
-4. Nova inteligência possui teste/caso de regressão e prova de integração no pipeline real?
-5. Tool/action nova funciona via import/index/binding sem selector/registry específico?
-6. Apresentação possui fallback schema-driven sem presenter obrigatório?
-7. Playbook/arquitetura afetados foram sincronizados quando necessário?
+1. Domain sem infra/interfaces?
+2. Uma única fonte de verdade por conceito?
+3. OpenAPI/Action Catalog são fonte técnica das actions?
+4. Send/stream/simulate compartilham a regra?
+5. API externa funciona sem selector/config técnico por endpoint?
+6. RBAC/policy/confirmation preservados?
+7. Apresentação possui fallback schema-driven?
+8. Evals R1–R11 relevantes executados?
+9. Outcome real e safety avaliados quando aplicável?
+10. Architecture Enforcement verde?
