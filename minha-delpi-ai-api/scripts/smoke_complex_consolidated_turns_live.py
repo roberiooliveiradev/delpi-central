@@ -39,7 +39,11 @@ _USER = os.environ.get("SMOKE_USER", "rober").strip()
 _PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
 _CHAT = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 _MODE = os.environ.get("SMOKE_RESPONSE_MODE", "normal").strip() or "normal"
-_PRODUCT = os.environ.get("SMOKE_PRODUCT_CODE", "90260149").strip()
+_PA = os.environ.get("SMOKE_PA_CODE", os.environ.get("SMOKE_PRODUCT_CODE", "90260149")).strip()
+_MP = os.environ.get("SMOKE_MP_CODE", "10080022").strip()
+_PRODUCT = _PA  # compat legado no evidence root
+_BRANCH = os.environ.get("SMOKE_BRANCH", "01").strip() or "01"
+_PERIOD = os.environ.get("SMOKE_PERIOD", "agosto 2026").strip() or "agosto 2026"
 _PAUSE = float(os.environ.get("SMOKE_CASE_PAUSE", "4"))
 _AGENT_ID = os.environ.get("SMOKE_AGENT_ID", "").strip()
 _OUT = os.environ.get(
@@ -58,80 +62,142 @@ _PRODUCT_PATH_PREFS = (
     "/rol",
     "/commercial",
     "/kpi",
+    "/financial",
 )
 
 
-CASES: list[dict[str, Any]] = [
-    {
-        "id": "C1-analyser-integrado",
-        "message": (
-            f"Me dá uma visão integrada do produto {_PRODUCT}: ficha/cadastro, "
-            f"estrutura (árvore se houver), roteiro e estoque. Quero prosa clara "
-            f"mais os painéis necessários (tabela/KPI/árvore), sem omitir o que "
-            f"eu pedi."
-        ),
-        "expect_any_kinds": ["table", "kpi", "tree", "dashboard", "stack"],
-        "expect_prose": True,
-        "expect_min_tools": 1,
-        "expect_min_rich_surfaces": 1,
-        "expect_path_markers": ["/analyser", "/structure", "/stock", "/products/"],
-        "expect_path_groups": [["/analyser"], ["/structure", "/stock"]],
-        "forbid_sql_fence": True,
-    },
-    {
-        "id": "C2-estrutura-estoque-pedidos",
-        "message": (
-            f"Para o produto {_PRODUCT}, traga numa resposta só: (1) estrutura de "
-            f"bom/componentes, (2) saldo de estoque atual e (3) pedidos de venda "
-            f"em aberto se existirem. Consolide com tabelas e um resumo executivo; "
-            f"se faltar algum bloco, diga explicitamente o que faltou."
-        ),
-        "expect_any_kinds": ["table", "kpi", "tree", "dashboard"],
-        "expect_prose": True,
-        "expect_min_tools": 2,
-        "expect_min_rich_surfaces": 1,
-        "expect_path_markers": ["/structure", "/stock", "/open-orders", "/sales", "/products/", "/analyser"],
-        # Aceita analyser como cobertura de ficha+BOM quando o plano consolidar.
-        "expect_path_groups": [
-            ["/structure", "/analyser"],
-            ["/stock", "/analyser", "/products/"],
-            ["/open-orders", "/sales"],
-        ],
-        "expect_min_path_groups": 2,
-        "forbid_sql_fence": True,
-    },
-    {
-        "id": "C3-kpi-serie-comercial",
-        "message": (
-            "Quero o ROL / indicadores comerciais recentes: mostre o número "
-            "principal (KPI), a série no tempo em gráfico se disponível, e uma "
-            "leitura em prosa do que está acontecendo — tudo na mesma resposta."
-        ),
-        "expect_any_kinds": ["kpi", "chart", "table", "dashboard", "stack"],
-        "expect_prose": True,
-        "expect_min_tools": 1,
-        "expect_min_rich_surfaces": 1,
-        "expect_path_markers": ["/rol", "/commercial", "/kpi", "/sales", "/billing", "/financial"],
-        "forbid_sql_fence": True,
-        "forbid_path_markers": ["/stock"],
-    },
-    {
-        "id": "C4-multi-ask-followup",
-        "seed": f"estoque e descrição do produto {_PRODUCT}",
-        "message": (
-            "Agora completa: inclui também a estrutura e um comentário se o "
-            "estoque cobre demanda típica. Quero visão consolidada (prosa + "
-            "tabela/árvore), não só um bloco."
-        ),
-        "expect_any_kinds": ["table", "tree", "kpi", "dashboard", "stack"],
-        "expect_prose": True,
-        "expect_min_tools": 1,
-        "expect_min_rich_surfaces": 1,
-        "expect_path_markers": ["/structure", "/stock", "/products/", "/analyser"],
-        "expect_path_groups": [["/structure", "/analyser"], ["/stock", "/products/"]],
-        "forbid_sql_fence": True,
-    },
-]
+def _build_cases() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": "C1-analyser-integrado",
+            "productKind": "pa",
+            "productCode": _PA,
+            "routeFamily": "product",
+            "message": (
+                f"Me dá uma visão integrada do produto {_PA}: ficha/cadastro, "
+                f"estrutura (árvore se houver), roteiro e estoque. Quero prosa clara "
+                f"mais os painéis necessários (tabela/KPI/árvore), sem omitir o que "
+                f"eu pedi."
+            ),
+            "expect_any_kinds": ["table", "kpi", "tree", "dashboard", "stack"],
+            "expect_prose": True,
+            "expect_min_tools": 1,
+            "expect_min_rich_surfaces": 1,
+            "expect_path_markers": ["/analyser", "/structure", "/stock", "/products/"],
+            "expect_path_groups": [["/analyser"], ["/structure", "/stock"]],
+            "forbid_sql_fence": True,
+        },
+        {
+            "id": "C2-estrutura-estoque-pedidos",
+            "productKind": "pa",
+            "productCode": _PA,
+            "routeFamily": "product",
+            "message": (
+                f"Para o produto {_PA}, traga numa resposta só: (1) estrutura de "
+                f"bom/componentes, (2) saldo de estoque atual e (3) pedidos de venda "
+                f"em aberto se existirem. Consolide com tabelas e um resumo executivo; "
+                f"se faltar algum bloco, diga explicitamente o que faltou."
+            ),
+            "expect_any_kinds": ["table", "kpi", "tree", "dashboard"],
+            "expect_prose": True,
+            "expect_min_tools": 2,
+            "expect_min_rich_surfaces": 1,
+            "expect_path_markers": [
+                "/structure",
+                "/stock",
+                "/open-orders",
+                "/sales",
+                "/products/",
+                "/analyser",
+            ],
+            "expect_path_groups": [
+                ["/structure", "/analyser"],
+                ["/stock", "/analyser", "/products/"],
+                ["/open-orders", "/sales"],
+            ],
+            "expect_min_path_groups": 2,
+            "forbid_sql_fence": True,
+        },
+        {
+            "id": "C3-kpi-serie-comercial",
+            "productKind": "none",
+            "productCode": None,
+            "routeFamily": "indicator",
+            "message": (
+                f"Quero o ROL / indicadores comerciais recentes ({_PERIOD}): mostre o "
+                f"número principal (KPI), a série no tempo em gráfico se disponível, e "
+                f"uma leitura em prosa do que está acontecendo — tudo na mesma resposta."
+            ),
+            "expect_any_kinds": ["kpi", "chart", "table", "dashboard", "stack"],
+            "expect_prose": True,
+            "expect_min_tools": 1,
+            "expect_min_rich_surfaces": 1,
+            "expect_path_markers": [
+                "/rol",
+                "/commercial",
+                "/kpi",
+                "/sales",
+                "/billing",
+                "/financial",
+            ],
+            "forbid_sql_fence": True,
+            "forbid_path_markers": ["/stock"],
+            "forbid_any_path_markers": [
+                "/department-indicators",
+                "/departments-indicators",
+                "/department-idd",
+            ],
+        },
+        {
+            "id": "C4-multi-ask-followup",
+            "productKind": "pa",
+            "productCode": _PA,
+            "routeFamily": "product",
+            "seed": f"estoque e descrição do produto {_PA}",
+            "message": (
+                "Agora completa: inclui também a estrutura e um comentário se o "
+                "estoque cobre demanda típica. Quero visão consolidada (prosa + "
+                "tabela/árvore), não só um bloco."
+            ),
+            "expect_any_kinds": ["table", "tree", "kpi", "dashboard", "stack"],
+            "expect_prose": True,
+            "expect_min_tools": 1,
+            "expect_min_rich_surfaces": 1,
+            "expect_path_markers": ["/structure", "/stock", "/products/", "/analyser"],
+            "expect_path_groups": [["/structure", "/analyser"], ["/stock", "/products/"]],
+            "forbid_sql_fence": True,
+        },
+        {
+            "id": "C5-mp-stock-sales-followup",
+            "productKind": "mp",
+            "productCode": _MP,
+            "routeFamily": "product",
+            "seed": f"estoque e descrição do produto {_MP}",
+            "message": (
+                f"Consulta de novo o estoque do produto {_MP} e um resumo de "
+                "vendas/saídas recentes (tool de vendas ou movimentação). Comenta "
+                "se o saldo cobre a demanda típica. Não use estrutura BOM — só "
+                "estoque e vendas."
+            ),
+            "expect_any_kinds": ["table", "kpi", "dashboard", "stack"],
+            "expect_prose": True,
+            "expect_min_tools": 1,
+            "expect_min_rich_surfaces": 1,
+            "expect_path_markers": ["/stock", "/sales", "/products/"],
+            "expect_path_groups": [["/stock", "/products/"]],
+            "forbid_sql_fence": True,
+        },
+    ]
+
+
+CASES: list[dict[str, Any]] = _build_cases()
+_CASE_IDS = {
+    part.strip()
+    for part in os.environ.get("SMOKE_CASE_IDS", "").split(",")
+    if part.strip()
+}
+if _CASE_IDS:
+    CASES = [case for case in CASES if case.get("id") in _CASE_IDS]
 
 
 def _request(
@@ -504,8 +570,10 @@ def _eval_case(case: dict[str, Any], response: dict, wall_ms: int) -> dict[str, 
         for group in path_groups:
             if any(str(marker).lower() in joined for marker in group):
                 matched_groups += 1
-        # Para pedidos compostos, exigir pelo menos 2 grupos cobertos quando há ≥2 grupos.
-        min_groups = min(2, len(path_groups)) if len(path_groups) >= 2 else 1
+        if case.get("expect_min_path_groups") is not None:
+            min_groups = int(case["expect_min_path_groups"])
+        else:
+            min_groups = min(2, len(path_groups)) if len(path_groups) >= 2 else 1
         if matched_groups < min_groups:
             errors.append(
                 f"path groups cobertos={matched_groups} < {min_groups}; "
@@ -521,10 +589,20 @@ def _eval_case(case: dict[str, Any], response: dict, wall_ms: int) -> dict[str, 
             for path in paths
         ) and not any(
             marker in joined
-            for marker in ("/rol", "/commercial", "/kpi", "/billing", "/sales")
+            for marker in ("/rol", "/commercial", "/kpi", "/billing", "/sales", "/financial")
             if marker not in {str(item).lower() for item in forbid_paths}
         ):
             errors.append(f"paths só com marcadores proibidos {forbid_paths}: {paths}")
+
+    forbid_any = case.get("forbid_any_path_markers") or []
+    if forbid_any and paths:
+        hits = [
+            path
+            for path in paths
+            if any(str(marker).lower() in path.lower() for marker in forbid_any)
+        ]
+        if hits:
+            errors.append(f"paths proibidos presentes {forbid_any}: {hits}")
 
     rich_surfaces = kinds & {"table", "kpi", "chart", "tree", "dashboard", "stack"}
     min_rich = int(case.get("expect_min_rich_surfaces") or 1)
@@ -537,6 +615,9 @@ def _eval_case(case: dict[str, Any], response: dict, wall_ms: int) -> dict[str, 
         "id": case["id"],
         "passed": not errors,
         "errors": errors,
+        "productKind": case.get("productKind"),
+        "productCode": case.get("productCode"),
+        "routeFamily": case.get("routeFamily"),
         "proseChars": len(prose),
         "prosePreview": prose[:280],
         "kinds": sorted(kinds),
@@ -578,7 +659,10 @@ def _print_latency(latency: dict[str, Any]) -> None:
 
 
 def main() -> int:
-    print(f"base={_BASE} mode={_MODE} product={_PRODUCT}", flush=True)
+    print(
+        f"base={_BASE} mode={_MODE} pa={_PA} mp={_MP} branch={_BRANCH} period={_PERIOD!r}",
+        flush=True,
+    )
     token = _token()
     agent_id = _first_agent(token)
     print(f"agent={agent_id}", flush=True)
@@ -673,7 +757,11 @@ def main() -> int:
     evidence = {
         "baseUrl": _BASE,
         "responseMode": _MODE,
-        "productCode": _PRODUCT,
+        "productCode": _PA,
+        "paCode": _PA,
+        "mpCode": _MP,
+        "branch": _BRANCH,
+        "period": _PERIOD,
         "agentId": agent_id,
         "harnessLayer": "structural",
         "passed": failed == 0,
@@ -696,7 +784,7 @@ def main() -> int:
     if not os.path.isabs(out_path):
         out_path = os.path.join(os.getcwd(), out_path)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    # Preserve prior qualitativeReview when re-running structural harness.
+    # Preserve prior qualitativeReview / merge partial case re-runs.
     if os.path.isfile(out_path):
         try:
             with open(out_path, encoding="utf-8") as prev_handle:
@@ -706,6 +794,20 @@ def main() -> int:
                 evidence["qualitativeReview"]["staleWarning"] = (
                     "Structural harness re-ran after this review; re-validate L1–L4 before release."
                 )
+            if _CASE_IDS and isinstance(previous.get("results"), list):
+                by_id = {
+                    str(row.get("id")): row
+                    for row in previous["results"]
+                    if isinstance(row, dict) and row.get("id")
+                }
+                for row in results:
+                    by_id[str(row.get("id"))] = row
+                merged = list(by_id.values())
+                evidence["results"] = merged
+                evidence["caseCount"] = len(merged)
+                evidence["failCount"] = sum(1 for row in merged if not row.get("passed"))
+                evidence["passed"] = evidence["failCount"] == 0
+                evidence["partialRerunCaseIds"] = sorted(_CASE_IDS)
         except (OSError, json.JSONDecodeError):
             pass
     with open(out_path, "w", encoding="utf-8") as handle:

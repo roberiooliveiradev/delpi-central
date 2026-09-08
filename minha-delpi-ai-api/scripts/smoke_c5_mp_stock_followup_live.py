@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Live smoke — only the C4 conversation texts (seed + follow-up).
+"""Live smoke — C5 MP conversation (stock + coverage/sales, no BOM required).
 
-Evaluates L1–L4 lightly against metadata (not just structural kinds).
+Evaluates L1–L4 lightly. Fixture: SMOKE_MP_CODE (default 10080022).
+Does NOT require /structure.
 """
 
 from __future__ import annotations
@@ -23,22 +24,24 @@ _USER = os.environ.get("SMOKE_USER", "rober").strip()
 _PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
 _CHAT = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 _MODE = os.environ.get("SMOKE_RESPONSE_MODE", "normal").strip() or "normal"
-_PRODUCT = os.environ.get(
-    "SMOKE_PA_CODE", os.environ.get("SMOKE_PRODUCT_CODE", "90260149")
-).strip()
+_MP = os.environ.get("SMOKE_MP_CODE", "10080022").strip()
 _AGENT_ID = os.environ.get(
     "SMOKE_AGENT_ID", "4f9c225b-0414-40d3-a462-040889719b83"
 ).strip()
 _OUT = os.environ.get(
     "SMOKE_EVIDENCE_PATH",
-    "docs/testing/evidence/chat-c4-conversation-live.json",
+    "docs/testing/evidence/chat-c5-mp-stock-followup-live.json",
 ).strip()
 
-SEED = f"estoque e descrição do produto {_PRODUCT}"
+SEED = f"estoque e descrição do produto {_MP}"
 FOLLOWUP = (
-    "Agora completa: inclui também a estrutura e um comentário se o estoque "
-    "cobre demanda típica. Quero visão consolidada (prosa + tabela/árvore), "
-    "não só um bloco."
+    f"Consulta de novo o estoque do produto {_MP} e um resumo de vendas/saídas "
+    "recentes (tool de vendas ou movimentação). Comenta se o saldo cobre a "
+    "demanda típica. Não use estrutura BOM — só estoque e vendas."
+)
+
+_INLINE_MD_BLOCK_RE = re.compile(
+    r"(?<=[^\n#])[ \t]*#{1,6}[ \t]+\S|(?<=[.!?:;])[ \t]+(?:[-*+][ \t]+\S|\d+\.[ \t]+\S)"
 )
 
 
@@ -117,48 +120,8 @@ def _paths(meta: dict, payload: dict | None = None) -> list[str]:
     return out
 
 
-def _tree_ok(meta: dict, payload: dict | None = None) -> tuple[bool, str]:
-    tool_calls = []
-    if isinstance(payload, dict):
-        tool_calls = payload.get("toolCalls") or []
-    if not tool_calls and isinstance(meta, dict):
-        tool_calls = meta.get("toolCalls") or []
-    for tc in tool_calls:
-        m = tc.get("metadata") if isinstance(tc, dict) else None
-        if not isinstance(m, dict):
-            continue
-        tree = m.get("treePresentation")
-        if not isinstance(tree, dict):
-            continue
-        root = tree.get("root") if isinstance(tree.get("root"), dict) else {}
-        children = root.get("children") or []
-        if not children:
-            continue
-        bad = [
-            c
-            for c in children
-            if isinstance(c, dict)
-            and (
-                str(c.get("id") or "") in {"", "unknown"}
-                or str(c.get("label") or "") in {"", "—"}
-            )
-        ]
-        if bad:
-            return False, f"tree has {len(bad)}/{len(children)} unknown/dash children"
-        return True, f"tree ok ({len(children)} children)"
-    return True, "no tree (ok if table-only)"
-
-
-_INLINE_MD_BLOCK_RE = re.compile(
-    r"(?<=[^\n#])[ \t]*#{1,6}[ \t]+\S|(?<=[.!?:;])[ \t]+(?:[-*+][ \t]+\S|\d+\.[ \t]+\S)"
-)
-
-
 def _markdown_structure_ok(content: str) -> tuple[bool, str]:
-    """L3: ATX headings / list markers must not sit mid-line after non-whitespace."""
-    text = str(content or "")
-    # Ignore fenced code when scanning.
-    scrubbed = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~", "", text)
+    scrubbed = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~", "", str(content or ""))
     match = _INLINE_MD_BLOCK_RE.search(scrubbed)
     if match:
         start = max(0, match.start() - 24)
@@ -167,47 +130,13 @@ def _markdown_structure_ok(content: str) -> tuple[bool, str]:
     return True, "markdown block structure ok"
 
 
-def _dashboard_structure_dup(meta: dict, payload: dict | None = None) -> tuple[bool, str]:
-    tool_calls = []
-    if isinstance(payload, dict):
-        tool_calls = payload.get("toolCalls") or []
-    if not tool_calls and isinstance(meta, dict):
-        tool_calls = meta.get("toolCalls") or []
-    for tc in tool_calls:
-        m = tc.get("metadata") if isinstance(tc, dict) else None
-        if not isinstance(m, dict):
-            continue
-        dash = m.get("dashboardPresentation")
-        if not isinstance(dash, dict):
-            continue
-        panels = dash.get("panels") or []
-        tree_n = 0
-        table_n = 0
-        for panel in panels:
-            if not isinstance(panel, dict):
-                continue
-            title = str(panel.get("title") or "").lower()
-            pid = str(panel.get("id") or "").lower()
-            pres = panel.get("presentation") if isinstance(panel.get("presentation"), dict) else {}
-            is_struct = pid == "structure" or "estrutura" in title or "bom" in title
-            if not is_struct:
-                continue
-            if pres.get("type") == "tree":
-                tree_n += 1
-            if pres.get("type") == "table":
-                table_n += 1
-        if tree_n and table_n:
-            return False, f"dashboard duplicates structure tree+table ({tree_n}/{table_n})"
-    return True, "no structure duplication"
-
-
 def main() -> int:
     token = _token()
     session = _http_json(
         "POST",
         f"{_BASE}{_CHAT}/sessions",
         token=token,
-        body={"agentId": _AGENT_ID, "title": "smoke-c4-conversation"},
+        body={"agentId": _AGENT_ID, "title": "smoke-c5-mp-stock"},
     )
     session_id = str((session or {}).get("id") or "").strip()
     if not session_id:
@@ -216,8 +145,8 @@ def main() -> int:
 
     results: dict[str, Any] = {
         "sessionId": session_id,
-        "productKind": "pa",
-        "productCode": _PRODUCT,
+        "productKind": "mp",
+        "productCode": _MP,
         "routeFamily": "product",
         "turns": [],
     }
@@ -260,10 +189,6 @@ def main() -> int:
             if content:
                 break
         paths = _paths(meta, payload if isinstance(payload, dict) else None)
-        tree_ok, tree_msg = _tree_ok(meta, payload if isinstance(payload, dict) else None)
-        dash_ok, dash_msg = _dashboard_structure_dup(
-            meta, payload if isinstance(payload, dict) else None
-        )
         md_ok, md_msg = _markdown_structure_ok(content)
         low = content.lower()
         turn = {
@@ -271,8 +196,6 @@ def main() -> int:
             "wallMs": wall,
             "paths": paths,
             "proseChars": len(content.strip()),
-            "tree": tree_msg,
-            "dashboard": dash_msg,
             "markdown": md_msg,
             "prosePreview": content.strip()[:280],
         }
@@ -287,10 +210,9 @@ def main() -> int:
             if any("/summary" in p for p in paths) and not any("/stock" in p for p in paths):
                 failures.append("L1 seed: /summary without /stock")
         if label == "followup":
-            if not tree_ok:
-                failures.append(f"L3 followup: {tree_msg}")
-            if not dash_ok:
-                failures.append(f"L3 followup: {dash_msg}")
+            if not any("/stock" in p or "/sales" in p for p in paths):
+                failures.append("L1 followup: missing /stock or /sales")
+            # Structure is optional — do not require; only warn if seed lacked stock.
             denies = (
                 "não tenho o estoque",
                 "nao tenho o estoque",
@@ -299,13 +221,8 @@ def main() -> int:
             )
             if any(d in low for d in denies):
                 failures.append("L2 followup: prose denies stock presence")
-            if "cobre" not in low and "estoque" not in low:
-                failures.append("L4 followup: missing coverage/stock commentary")
-            has_structure_path = any(
-                "/analyser" in p or "/structure" in p for p in paths
-            )
-            if not has_structure_path:
-                failures.append("L1 followup: missing structure/analyser")
+            if "cobre" not in low and "estoque" not in low and "venda" not in low:
+                failures.append("L4 followup: missing coverage/stock/sales commentary")
 
     results["failures"] = failures
     results["passed"] = not failures
@@ -320,7 +237,7 @@ def main() -> int:
         for item in failures:
             print(f"  - {item}", flush=True)
         return 1
-    print("PASS L1–L4 (C4 conversation texts)", flush=True)
+    print("PASS L1–L4 (C5 MP stock/sales texts)", flush=True)
     return 0
 
 

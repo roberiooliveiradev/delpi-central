@@ -1,0 +1,32 @@
+{
+  "sessionId": "94e65254-3fc4-4708-8f48-a52d63287748",
+  "productKind": "mp",
+  "productCode": "10080022",
+  "routeFamily": "product",
+  "turns": [
+    {
+      "label": "seed",
+      "wallMs": 120448,
+      "paths": [
+        "/products/10080022",
+        "/products/10080022/stock"
+      ],
+      "proseChars": 1283,
+      "markdown": "markdown block structure ok",
+      "prosePreview": "O produto **10080022** é um terminal olhal — **TERM. OLHAL M5 5,30MM 1,00-2,50MM2 8,00MM COMP 19,80MM NU S/ISOLACAO FITADO UL ROHS**, do grupo **1008** — e seu estoque soma **17.962 unidades disponíveis** em 6 posições, com um ponto de atenção: uma posição está com saldo disponív"
+    },
+    {
+      "label": "followup",
+      "wallMs": 106290,
+      "paths": [
+        "/products/10080022/structure",
+        "/products/10080022/stock"
+      ],
+      "proseChars": 1214,
+      "markdown": "markdown block structure ok",
+      "prosePreview": "O produto **10080022** —O **estoque** segue com **17.962 unidades disponíveis** em 6 posições; já o **resumo de vendas/saídas recentes não está disponível nesta sessão** — não tenho como consultar o histórico de saídas deste item no momento.\n\n## Estoque\n\n- Saldo físico total: **7"
+    }
+  ],
+  "failures": [],
+  "passed": true
+}

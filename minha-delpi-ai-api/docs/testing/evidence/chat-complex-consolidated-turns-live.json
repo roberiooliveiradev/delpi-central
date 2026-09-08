@@ -1,25 +1,31 @@
 {
-  "baseUrl": "http://delpi-gateway",
+  "baseUrl": "http://localhost",
   "responseMode": "normal",
   "productCode": "90260149",
+  "paCode": "90260149",
+  "mpCode": "10080022",
+  "branch": "01",
+  "period": "agosto 2026",
   "agentId": "4f9c225b-0414-40d3-a462-040889719b83",
-  "passed": true,
-  "failCount": 0,
-  "caseCount": 4,
+  "harnessLayer": "structural",
+  "passed": false,
+  "failCount": 1,
+  "caseCount": 5,
+  "releaseNote": "passed=true means PASS_ESTRUTURAL only. Release requires L1–L4 per docs/testing/smoke-complex-consolidated-turns.md and chat-ai-flow-families.md §16.1.",
   "latencySummary": {
     "wallsMs": [
-      86132,
-      85722,
-      54429,
-      179080
+      48765,
+      49072,
+      55786,
+      74294,
+      33331
     ],
-    "avgWallMs": 101340,
-    "maxWallMs": 179080,
-    "minWallMs": 54429,
+    "avgWallMs": 52249,
+    "maxWallMs": 74294,
+    "minWallMs": 33331,
     "bottleneckCounts": {
-      "llmMs": 2,
-      "toolsMs": 1,
-      "preToolMs": 1
+      "toolsMs": 3,
+      "llmMs": 2
     }
   },
   "results": [
@@ -27,8 +33,11 @@
       "id": "C1-analyser-integrado",
       "passed": true,
       "errors": [],
-      "proseChars": 1154,
-      "prosePreview": "O produto **90260149** — **CHICOTE EPR SINGELO 235MM** — é um item do tipo **PA** (produto acabado), grupo **9026**. A consulta consolidada cruzou cadastro, estrutura e roteiro, e o panorama geral é este:\n\n**Estrutura (árvore)** — A composição de nível 1 tem **6 itens**, todos ma",
+      "productKind": "pa",
+      "productCode": "90260149",
+      "routeFamily": "product",
+      "proseChars": 1331,
+      "prosePreview": "O produto **90260149** — **CHICOTE EPR SINGELO 235MM** — é um item do tipo **PA** (produto acabado), grupo **9026**, com estrutura e roteiro cadastrados, mas com dois pontos de atenção importantes: **plano de inspeção não cadastrado** e **bloqueio «2»** ativo, que precisam ser va",
       "kinds": [
         "dashboard",
         "field_labels",
@@ -44,9 +53,11 @@
         "table",
         "tree"
       ],
-      "toolCount": 2,
-      "okToolCount": 2,
+      "toolCount": 4,
+      "okToolCount": 4,
       "paths": [
+        "/products/90260149/analyser",
+        "/products/90260149/stock",
         "/products/90260149/analyser",
         "/products/90260149/stock"
       ],
@@ -62,45 +73,48 @@
       ],
       "hasResolvedFieldLabels": true,
       "latency": {
-        "wallMs": 86132,
+        "wallMs": 48765,
         "stages": {
-          "preToolMs": 755,
-          "toolsMs": 8519,
-          "postToolMs": 52,
-          "ragMs": 15,
-          "llmMs": 52689,
-          "totalMs": 62033
+          "preToolMs": 1122,
+          "toolsMs": 23358,
+          "postToolMs": 53,
+          "ragMs": 13,
+          "llmMs": 18876,
+          "totalMs": 43424
         },
         "toolsBreakdown": {
-          "selectionMs": 8024,
-          "wave1Ms": 129,
-          "criticMs": 3,
+          "selectionMs": 22619,
+          "wave1Ms": 297,
+          "criticMs": 0,
           "wave2Ms": 0,
-          "assembleMs": 114,
-          "agenticExtendMs": 233,
-          "finalizeAfterToolsMs": 14
+          "assembleMs": 166,
+          "agenticExtendMs": 256,
+          "finalizeAfterToolsMs": 17
         },
         "selectionBreakdown": {
-          "selectionNativeMs": 130,
-          "selectionRouterMs": 4,
-          "selectionPlanMs": 7582,
-          "selectionCandidateDbMs": 21
+          "selectionNativeMs": 144,
+          "selectionRouterMs": 1,
+          "selectionPlanMs": 22143,
+          "selectionCandidateDbMs": 22
         },
         "preToolBreakdown": {},
-        "bottleneckStage": "llmMs",
-        "bottleneckMs": 52689,
+        "bottleneckStage": "toolsMs",
+        "bottleneckMs": 23358,
         "skipRag": true,
         "fastPath": false,
-        "toolCountAdmin": 2
+        "toolCountAdmin": 4
       },
-      "sessionId": "45f6b159-4db8-4b04-8acd-958c8f811c4c"
+      "sessionId": "5b738d70-55dd-4f8b-9f3d-68be66bdd157"
     },
     {
       "id": "C2-estrutura-estoque-pedidos",
       "passed": true,
       "errors": [],
-      "proseChars": 1781,
-      "prosePreview": "**Produto 90260149 — CHICOTE EPR SINGELO 235MM**: visão consolidada abaixo, com estrutura e estoque confirmados e um ponto de atenção importante — o saldo disponível está **zerado**. ## Resumo executivo\n\n- **Estrutura (BOM):** 6 componentes de nível 1, todos intermediários (PI), ",
+      "productKind": "pa",
+      "productCode": "90260149",
+      "routeFamily": "product",
+      "proseChars": 1992,
+      "prosePreview": "Aqui está a visão consolidada do produto **90260149 — CHICOTE EPR SINGELO 235MM**, com estrutura, estoque e pedidos de venda em aberto.\n\n## Resumo executivo\n\n- **Estrutura (BOM):** composição com **6 componentes de nível 1**, organizados em **2 níveis** abaixo do produto acabado ",
       "kinds": [
         "chart",
         "field_labels",
@@ -117,12 +131,13 @@
         "table",
         "tree"
       ],
-      "toolCount": 3,
-      "okToolCount": 3,
+      "toolCount": 4,
+      "okToolCount": 4,
       "paths": [
         "/products/90260149/structure",
         "/products/90260149/stock",
-        "/products/90260149/sales/open-orders"
+        "/products/90260149/sales/open-orders",
+        "/products/90260149/structure"
       ],
       "pipelineStages": [
         "ingress",
@@ -136,55 +151,60 @@
       ],
       "hasResolvedFieldLabels": true,
       "latency": {
-        "wallMs": 85722,
+        "wallMs": 49072,
         "stages": {
-          "preToolMs": 1619,
-          "toolsMs": 2382,
-          "postToolMs": 71,
+          "preToolMs": 1693,
+          "toolsMs": 3715,
+          "postToolMs": 78,
           "ragMs": 13,
-          "llmMs": 77514,
-          "totalMs": 81600
+          "llmMs": 38641,
+          "totalMs": 44142
         },
         "toolsBreakdown": {
-          "selectionMs": 1726,
-          "wave1Ms": 195,
+          "selectionMs": 2826,
+          "wave1Ms": 336,
           "criticMs": 0,
           "wave2Ms": 0,
-          "assembleMs": 163,
-          "agenticExtendMs": 280,
+          "assembleMs": 224,
+          "agenticExtendMs": 312,
           "finalizeAfterToolsMs": 16
         },
         "selectionBreakdown": {
-          "selectionNativeMs": 163,
-          "selectionRouterMs": 15,
-          "selectionPlanMs": 1234,
-          "selectionCandidateDbMs": 62
+          "selectionNativeMs": 268,
+          "selectionRouterMs": 31,
+          "selectionPlanMs": 2084,
+          "selectionCandidateDbMs": 90
         },
         "preToolBreakdown": {},
         "bottleneckStage": "llmMs",
-        "bottleneckMs": 77514,
+        "bottleneckMs": 38641,
         "skipRag": true,
         "fastPath": false,
-        "toolCountAdmin": 3
+        "toolCountAdmin": 4
       },
-      "sessionId": "763b3861-568d-49e2-aaed-5d272fbbc54b"
+      "sessionId": "dd07026f-5a55-4c77-ac95-3bacf22d06fe"
     },
     {
       "id": "C3-kpi-serie-comercial",
       "passed": true,
       "errors": [],
-      "proseChars": 175,
-      "prosePreview": "Consultei o indicador comercial (ROL) na plataforma, mas **a consulta não retornou registros** — não há dados de série temporal nem valor de KPI para exibir no recorte padrão.",
+      "productKind": "none",
+      "productCode": null,
+      "routeFamily": "indicator",
+      "proseChars": 140,
+      "prosePreview": "Total de **ROL matriz**: **723419.01**. **Pontos de atenção**\n\n- A lista é extensa; considere filtros ou paginação para focar o que importa.",
       "kinds": [
+        "chart",
         "field_labels",
-        "kpi",
         "prose_structured",
         "stack",
+        "table",
         "text"
       ],
       "richSurfaces": [
-        "kpi",
-        "stack"
+        "chart",
+        "stack",
+        "table"
       ],
       "toolCount": 1,
       "okToolCount": 1,
@@ -203,64 +223,69 @@
       ],
       "hasResolvedFieldLabels": true,
       "latency": {
-        "wallMs": 54429,
+        "wallMs": 55786,
         "stages": {
-          "preToolMs": 2943,
-          "toolsMs": 30577,
-          "postToolMs": 55,
-          "ragMs": 11,
-          "llmMs": 19794,
-          "totalMs": 53383
+          "preToolMs": 4089,
+          "toolsMs": 48537,
+          "postToolMs": 126,
+          "ragMs": 13,
+          "llmMs": 1696,
+          "totalMs": 54464
         },
         "toolsBreakdown": {
-          "selectionMs": 30020,
-          "wave1Ms": 56,
-          "wave1HttpMs": 30,
-          "wave1PresentationMs": 5,
-          "criticMs": 76,
+          "selectionMs": 35349,
+          "wave1Ms": 12384,
+          "wave1HttpMs": 12329,
+          "wave1PresentationMs": 11,
+          "criticMs": 0,
           "wave2Ms": 0,
-          "assembleMs": 69,
-          "agenticExtendMs": 329,
-          "finalizeAfterToolsMs": 25
+          "assembleMs": 128,
+          "agenticExtendMs": 616,
+          "finalizeAfterToolsMs": 58
         },
         "selectionBreakdown": {
-          "selectionNativeMs": 342,
-          "selectionRouterMs": 45,
-          "selectionPlanMs": 29244,
-          "selectionCandidateDbMs": 43
+          "selectionNativeMs": 433,
+          "selectionRouterMs": 53,
+          "selectionPlanMs": 34555,
+          "selectionCandidateDbMs": 50
         },
         "preToolBreakdown": {},
         "bottleneckStage": "toolsMs",
-        "bottleneckMs": 30577,
+        "bottleneckMs": 48537,
         "skipRag": true,
         "fastPath": false,
         "toolCountAdmin": 1
       },
-      "sessionId": "d0e61ce1-0afb-41f8-b832-c72bfe505109"
+      "sessionId": "0a9c469f-6e5b-4f99-a775-fd9658b6609c"
     },
     {
       "id": "C4-multi-ask-followup",
       "passed": true,
       "errors": [],
-      "proseChars": 1603,
-      "prosePreview": "O produto **90260149 — CHICOTE EPR SINGELO 235MM** é um PA (produto acabado) do grupo **9026**, e consolidei abaixo descrição, estrutura e os pontos de atenção — com uma ressalva importante sobre o estoque, explicada ao final. ## Descrição geral\n\n- **Código:** 90260149 (grupo 902",
+      "productKind": "pa",
+      "productCode": "90260149",
+      "routeFamily": "product",
+      "proseChars": 1606,
+      "prosePreview": "Visão consolidada do produto **90260149** — **CHICOTE EPR SINGELO 235MM**: o item tem estrutura ativa com 6 componentes de nível 1, mas o estoque está **zerado**, ou seja, **não cobre** uma demanda típica com o saldo atual.\n\n## Estrutura (BOM)\n\nA composição do produto tem **6 com",
       "kinds": [
-        "dashboard",
+        "chart",
         "field_labels",
-        "markdown",
         "prose_structured",
         "stack",
+        "table",
         "tree"
       ],
       "richSurfaces": [
-        "dashboard",
+        "chart",
         "stack",
+        "table",
         "tree"
       ],
       "toolCount": 2,
-      "okToolCount": 1,
+      "okToolCount": 2,
       "paths": [
-        "/products/90260149/analyser"
+        "/products/90260149/structure",
+        "/products/90260149/stock"
       ],
       "pipelineStages": [
         "ingress",
@@ -274,41 +299,100 @@
       ],
       "hasResolvedFieldLabels": true,
       "latency": {
-        "wallMs": 179080,
+        "wallMs": 74294,
         "stages": {
-          "preToolMs": 111116,
-          "toolsMs": 27736,
-          "postToolMs": 71,
-          "ragMs": 11,
-          "llmMs": 39404,
-          "totalMs": 178341
+          "preToolMs": 10965,
+          "toolsMs": 52183,
+          "postToolMs": 40,
+          "ragMs": 10,
+          "llmMs": 10343,
+          "totalMs": 73542
         },
         "toolsBreakdown": {
-          "selectionMs": 17346,
-          "wave1Ms": 0,
+          "selectionMs": 51690,
+          "wave1Ms": 71,
           "criticMs": 0,
           "wave2Ms": 0,
-          "assembleMs": 41,
-          "agenticExtendMs": 10318,
-          "finalizeAfterToolsMs": 30
+          "assembleMs": 180,
+          "agenticExtendMs": 211,
+          "finalizeAfterToolsMs": 29
         },
         "selectionBreakdown": {
-          "selectionNativeMs": 127,
+          "selectionNativeMs": 129,
           "selectionRouterMs": 17,
-          "selectionPlanMs": 16920,
-          "selectionCandidateDbMs": 36
+          "selectionPlanMs": 51230,
+          "selectionCandidateDbMs": 14
         },
         "preToolBreakdown": {},
-        "bottleneckStage": "preToolMs",
-        "bottleneckMs": 111116,
+        "bottleneckStage": "toolsMs",
+        "bottleneckMs": 52183,
         "skipRag": true,
         "fastPath": false,
         "toolCountAdmin": 2
       },
-      "sessionId": "b40bd3f3-b7f9-4f79-becd-0a2bf9e7ab54"
+      "sessionId": "7845b017-f0f8-4ad8-8a73-31336ee4b737"
+    },
+    {
+      "id": "C5-mp-stock-sales-followup",
+      "passed": false,
+      "errors": [
+        "tools ok=0 < 1",
+        "nenhum kind esperado ['dashboard', 'kpi', 'stack', 'table']; got=[]",
+        "nenhum path de tool",
+        "path groups cobertos=0 < 1; paths=[] groups=[['/stock', '/products/']]",
+        "rich surfaces=[] < 1"
+      ],
+      "productKind": "mp",
+      "productCode": "10080022",
+      "routeFamily": "product",
+      "proseChars": 1219,
+      "prosePreview": "Para comentar se o estoque cobre a demanda típica e trazer vendas recentes do **10080022**, eu precisaria dos dados de consumo/saídas do item — e **não tenho essa informação disponível no momento**.\n\n## O que dá para afirmar com os dados em mãos\n\n- **Disponível total:** 17.962 un",
+      "kinds": [],
+      "richSurfaces": [],
+      "toolCount": 0,
+      "okToolCount": 0,
+      "paths": [],
+      "pipelineStages": [
+        "ingress",
+        "turn_grounding",
+        "turn_understanding_shadow",
+        "task_plan_shadow",
+        "text_task",
+        "post_tool",
+        "skip_rag",
+        "intent:text_task"
+      ],
+      "hasResolvedFieldLabels": false,
+      "latency": {
+        "wallMs": 33331,
+        "stages": {
+          "preToolMs": 5704,
+          "toolsMs": 44,
+          "postToolMs": 132,
+          "ragMs": 17,
+          "llmMs": 26578,
+          "totalMs": 32477
+        },
+        "toolsBreakdown": {
+          "selectionMs": 0,
+          "wave1Ms": 0,
+          "criticMs": 0,
+          "wave2Ms": 0,
+          "assembleMs": 0,
+          "agenticExtendMs": 0,
+          "finalizeAfterToolsMs": 44
+        },
+        "selectionBreakdown": {},
+        "preToolBreakdown": {},
+        "bottleneckStage": "llmMs",
+        "bottleneckMs": 26578,
+        "skipRag": true,
+        "fastPath": false,
+        "toolCountAdmin": 0
+      },
+      "sessionId": "a66ff971-c326-4c66-bd4e-0a97214cb0db"
     }
   ],
-  "harnessLayer": "structural",
   "qualitativeReview": {
     "protocolRef": "docs/testing/chat-ai-flow-families.md#161-live--surface--camadas-l1l4-obrigatório-em-pedido-composto-e-ui",
     "smokeDocRef": "docs/testing/smoke-complex-consolidated-turns.md",
@@ -353,7 +437,7 @@
         "notes": "Seed /summary not /stock; tree children label —; duplicate Estrutura panels; no coverage fact"
       }
     },
-    "releaseScore": "1 PASS (C3), 1 WARN (C2), 2 FAIL (C1,C4) — not 4/4"
-  },
-  "releaseNote": "passed=true means PASS_ESTRUTURAL only. Release requires L1–L4 per docs/testing/smoke-complex-consolidated-turns.md and chat-ai-flow-families.md §16.1."
+    "releaseScore": "1 PASS (C3), 1 WARN (C2), 2 FAIL (C1,C4) — not 4/4",
+    "staleWarning": "Structural harness re-ran after this review; re-validate L1–L4 before release."
+  }
 }
