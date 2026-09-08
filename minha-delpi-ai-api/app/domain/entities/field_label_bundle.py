@@ -72,6 +72,7 @@ class FieldLabelBundle:
         extra: Mapping[str, str] | None,
         *,
         source: str = "presentation",
+        overwrite: bool = True,
     ) -> FieldLabelBundle:
         if not extra:
             return self
@@ -81,6 +82,8 @@ class FieldLabelBundle:
             token = str(key or "").strip()
             label = str(value or "").strip()
             if not token or not label:
+                continue
+            if not overwrite and token in labels:
                 continue
             labels[token] = label
             sources[token] = source

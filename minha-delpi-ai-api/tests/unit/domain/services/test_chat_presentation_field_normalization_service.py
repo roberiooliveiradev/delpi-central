@@ -286,3 +286,59 @@ def test_normalize_metadata_normalizes_kpi_and_dashboard_panels():
         metadata["dashboardPresentation"]["panels"][0]["presentation"]["cards"][0]["dataType"]
         == "currency"
     )
+
+
+def test_normalize_metadata_writes_resolved_field_labels_bundle():
+    from app.composition.content_composer import configure_domain_infrastructure_ports
+    from app.domain.services.external_actions.external_action_column_label_service import (
+        invalidate_column_label_cache,
+    )
+
+    configure_domain_infrastructure_ports()
+    invalidate_column_label_cache()
+
+    metadata = {
+        "path": "/sales/open-orders",
+        "presentation": {
+            "type": "table",
+            "title": "Pedidos",
+            "columns": [
+                {"key": "last_price"},
+                {"key": "unit_price"},
+                {"key": "meta_only_field"},
+            ],
+            "rows": [
+                {
+                    "last_price": 10.5,
+                    "unit_price": 9.0,
+                    "meta_only_field": "x",
+                }
+            ],
+        },
+    }
+
+    ChatPresentationFieldNormalizationService.normalize_metadata(
+        metadata,
+        path="/sales/open-orders",
+        schema_labels={"meta_only_field": "Campo da meta"},
+        enable_discovery=False,
+    )
+
+    bundle = metadata.get("resolvedFieldLabels") or {}
+    labels = bundle.get("labels") or {}
+    sources = bundle.get("sourceByKey") or {}
+
+    assert labels["last_price"] == "Últ. preço"
+    assert labels["unit_price"] == "Preço unitário"
+    assert labels["meta_only_field"] == "Campo da meta"
+    assert sources["last_price"] == "catalog"
+    assert sources["meta_only_field"] == "meta"
+
+    columns = {
+        column["key"]: column["label"]
+        for column in metadata["presentation"]["columns"]
+        if isinstance(column, dict)
+    }
+    assert columns["last_price"] == labels["last_price"]
+    assert columns["unit_price"] == labels["unit_price"]
+    assert columns["meta_only_field"] == labels["meta_only_field"]

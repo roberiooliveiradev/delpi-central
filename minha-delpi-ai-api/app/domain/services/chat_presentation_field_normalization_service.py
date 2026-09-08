@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.entities.field_label_bundle import FieldLabelBundle
+from app.domain.services.chat_field_label_resolution_pipeline_service import (
+    ChatFieldLabelResolutionPipelineService,
+)
 from app.domain.services.external_actions.external_action_column_label_service import (
     ExternalActionColumnLabelService,
 )
@@ -22,6 +26,8 @@ class ChatPresentationFieldNormalizationService:
         path: str = "",
         schema_labels: dict[str, str] | None = None,
         schema_formats: dict[str, str] | None = None,
+        openapi_labels: dict[str, str] | None = None,
+        enable_discovery: bool = True,
     ) -> None:
         if not isinstance(metadata, dict):
             return
@@ -29,6 +35,19 @@ class ChatPresentationFieldNormalizationService:
         entity = cls._resolve_entity_token(metadata)
         if entity and not str(metadata.get("entity") or "").strip():
             metadata["entity"] = entity
+
+        field_keys = cls.collect_field_keys(metadata)
+        bundle = ChatFieldLabelResolutionPipelineService.resolve(
+            field_keys,
+            path=path,
+            schema_labels=schema_labels,
+            schema_formats=schema_formats,
+            openapi_labels=openapi_labels,
+            enable_discovery=enable_discovery,
+        )
+        metadata["resolvedFieldLabels"] = bundle.as_metadata()
+        resolved_labels = dict(bundle.labels)
+        resolved_formats = dict(bundle.formats)
 
         for key in (
             "presentation",
@@ -49,6 +68,8 @@ class ChatPresentationFieldNormalizationService:
                     schema_labels=schema_labels,
                     schema_formats=schema_formats,
                     entity=entity,
+                    resolved_labels=resolved_labels,
+                    resolved_formats=resolved_formats,
                 )
 
         table_presentations = metadata.get("tablePresentations")
@@ -61,6 +82,8 @@ class ChatPresentationFieldNormalizationService:
                     schema_labels=schema_labels,
                     schema_formats=schema_formats,
                     entity=entity,
+                    resolved_labels=resolved_labels,
+                    resolved_formats=resolved_formats,
                 )
                 for presentation in table_presentations
                 if isinstance(presentation, dict)
@@ -81,6 +104,126 @@ class ChatPresentationFieldNormalizationService:
             path=path,
             entity=str(metadata.get("entity") or "").strip() or None,
         )
+
+        cls._sync_resolved_bundle_from_presentations(metadata)
+
+    @classmethod
+    def collect_field_keys(cls, metadata: dict[str, Any]) -> list[str]:
+        keys: list[str] = []
+        seen: set[str] = set()
+
+        def _add(token: str) -> None:
+            value = str(token or "").strip()
+            if not value or value.startswith("_") or value in seen:
+                return
+            seen.add(value)
+            keys.append(value)
+
+        def _walk_presentation(presentation: Any) -> None:
+            if not isinstance(presentation, dict):
+                return
+            columns = presentation.get("columns")
+            if isinstance(columns, list):
+                for column in columns:
+                    if isinstance(column, dict):
+                        _add(str(column.get("key") or ""))
+            rows = presentation.get("rows")
+            if isinstance(rows, list):
+                for row in rows[:3]:
+                    if isinstance(row, dict):
+                        for raw_key, value in row.items():
+                            if isinstance(value, (list, dict)):
+                                continue
+                            _add(str(raw_key))
+            config = presentation.get("config")
+            if isinstance(config, dict):
+                for chart_key in cls._collect_chart_field_keys(presentation, config):
+                    _add(chart_key)
+                field_labels = config.get("fieldLabels")
+                if isinstance(field_labels, dict):
+                    for raw_key in field_labels:
+                        _add(str(raw_key))
+            panels = presentation.get("panels")
+            if isinstance(panels, list):
+                for panel in panels:
+                    if isinstance(panel, dict):
+                        _walk_presentation(panel.get("presentation"))
+
+        for key in (
+            "presentation",
+            "tablePresentation",
+            "chartPresentation",
+            "treePresentation",
+            "kpiPresentation",
+            "dashboardPresentation",
+            "profileTablePresentation",
+            "inspectionTablePresentation",
+        ):
+            _walk_presentation(metadata.get(key))
+
+        tables = metadata.get("tablePresentations")
+        if isinstance(tables, list):
+            for presentation in tables:
+                _walk_presentation(presentation)
+
+        return keys
+
+    @classmethod
+    def _sync_resolved_bundle_from_presentations(cls, metadata: dict[str, Any]) -> None:
+        bundle = FieldLabelBundle.from_metadata(metadata)
+        presentation_labels: dict[str, str] = {}
+
+        def _collect(presentation: Any) -> None:
+            if not isinstance(presentation, dict):
+                return
+            columns = presentation.get("columns")
+            if isinstance(columns, list):
+                for column in columns:
+                    if not isinstance(column, dict):
+                        continue
+                    key = str(column.get("key") or "").strip()
+                    label = str(column.get("label") or "").strip()
+                    if key and label:
+                        presentation_labels[key] = label
+            config = presentation.get("config")
+            if isinstance(config, dict):
+                field_labels = config.get("fieldLabels")
+                if isinstance(field_labels, dict):
+                    for key, label in field_labels.items():
+                        token = str(key or "").strip()
+                        text = str(label or "").strip()
+                        if token and text:
+                            presentation_labels[token] = text
+            panels = presentation.get("panels")
+            if isinstance(panels, list):
+                for panel in panels:
+                    if isinstance(panel, dict):
+                        _collect(panel.get("presentation"))
+
+        for key in (
+            "presentation",
+            "tablePresentation",
+            "chartPresentation",
+            "dashboardPresentation",
+            "profileTablePresentation",
+            "inspectionTablePresentation",
+        ):
+            _collect(metadata.get(key))
+
+        tables = metadata.get("tablePresentations")
+        if isinstance(tables, list):
+            for presentation in tables:
+                _collect(presentation)
+
+        if not presentation_labels:
+            return
+
+        merged = bundle.merge_labels(
+            presentation_labels,
+            source="presentation",
+            overwrite=False,
+        )
+        metadata["resolvedFieldLabels"] = merged.as_metadata()
 
     @classmethod
     def _resolve_entity_token(cls, metadata: dict[str, Any]) -> str | None:
@@ -108,6 +251,8 @@ class ChatPresentationFieldNormalizationService:
         schema_labels: dict[str, str] | None = None,
         schema_formats: dict[str, str] | None = None,
         entity: str | None = None,
+        resolved_labels: dict[str, str] | None = None,
+        resolved_formats: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         if not isinstance(presentation, dict):
             return presentation
@@ -121,6 +266,7 @@ class ChatPresentationFieldNormalizationService:
                 schema_labels=schema_labels,
                 schema_formats=schema_formats,
                 entity=entity,
+                resolved_labels=resolved_labels,
             )
 
         if presentation_type == "chart":
@@ -129,6 +275,8 @@ class ChatPresentationFieldNormalizationService:
                 path=path,
                 schema_labels=schema_labels,
                 schema_formats=schema_formats,
+                resolved_labels=resolved_labels,
+                resolved_formats=resolved_formats,
             )
 
         if presentation_type == "dashboard":
@@ -137,6 +285,8 @@ class ChatPresentationFieldNormalizationService:
                 path=path,
                 schema_labels=schema_labels,
                 schema_formats=schema_formats,
+                resolved_labels=resolved_labels,
+                resolved_formats=resolved_formats,
             )
 
         if presentation_type == "kpi":
@@ -157,11 +307,13 @@ class ChatPresentationFieldNormalizationService:
         schema_labels: dict[str, str] | None,
         schema_formats: dict[str, str] | None,
         entity: str | None = None,
+        resolved_labels: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """preferredColumns = hints de ordem/rótulo; colunas vêm do payload (não allowlist)."""
         rows = presentation.get("rows") or []
         first_row = next((row for row in rows if isinstance(row, dict)), None)
         raw_columns = presentation.get("columns") or []
+        bundle_labels = resolved_labels or {}
 
         existing_label_by_key: dict[str, str] = {}
         present_keys: list[str] = []
@@ -239,7 +391,11 @@ class ChatPresentationFieldNormalizationService:
         normalized_columns: list[dict[str, str]] = []
 
         for key in ordered_keys:
-            label = preferred_labels.get(key) or existing_label_by_key.get(key)
+            label = (
+                preferred_labels.get(key)
+                or existing_label_by_key.get(key)
+                or bundle_labels.get(key)
+            )
             normalized_columns.append(
                 cls._column_labels.enrich_column_def(
                     key,
@@ -269,10 +425,14 @@ class ChatPresentationFieldNormalizationService:
         path: str = "",
         schema_labels: dict[str, str] | None,
         schema_formats: dict[str, str] | None,
+        resolved_labels: dict[str, str] | None = None,
+        resolved_formats: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         config = dict(presentation.get("config") or {})
         field_labels = dict(config.get("fieldLabels") or {})
         field_formats = dict(config.get("fieldFormats") or {})
+        bundle_labels = resolved_labels or {}
+        bundle_formats = resolved_formats or {}
         keys = cls._collect_chart_field_keys(presentation, config)
 
         for key in sorted(keys):
@@ -280,13 +440,13 @@ class ChatPresentationFieldNormalizationService:
                 continue
 
             if key not in field_labels:
-                field_labels[key] = cls._column_labels.label_for(
+                field_labels[key] = bundle_labels.get(key) or cls._column_labels.label_for(
                     key,
                     schema_labels=schema_labels,
                     path=path,
                 )
 
-            field_format = cls._column_labels.resolve_field_format(
+            field_format = bundle_formats.get(key) or cls._column_labels.resolve_field_format(
                 key,
                 schema_formats=schema_formats,
             )
@@ -310,6 +470,8 @@ class ChatPresentationFieldNormalizationService:
         path: str,
         schema_labels: dict[str, str] | None,
         schema_formats: dict[str, str] | None,
+        resolved_labels: dict[str, str] | None = None,
+        resolved_formats: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         panels = presentation.get("panels")
 
@@ -324,6 +486,8 @@ class ChatPresentationFieldNormalizationService:
                     path=path,
                     schema_labels=schema_labels,
                     schema_formats=schema_formats,
+                    resolved_labels=resolved_labels,
+                    resolved_formats=resolved_formats,
                 ),
             }
             if isinstance(panel, dict)
