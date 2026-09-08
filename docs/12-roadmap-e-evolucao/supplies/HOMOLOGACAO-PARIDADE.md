@@ -107,16 +107,16 @@ DEEP_LINK
 FORA_DO_ESCOPO_COM_ACEITE
 ```
 
-Tabela a preencher após E1.S1:
+Tabela após E1.S1 (dump Core **local** 2026-09-08; produção ainda pendente):
 
 | App/BI | id/path real | Regra/fonte confirmada? | Destino | Evidência | Owner aceite | Status |
 |---|---|---:|---|---|---|---|
-| Análise - Importações | | | | | | LEGADO_A_VALIDAR |
-| Onde o item é usado - BI | | | | | | LEGADO_A_VALIDAR |
-| Atraso de Fornecedores - SC - BI | | | | | | LEGADO_A_VALIDAR |
-| Alçada de Compras - BI | | | | | | LEGADO_A_VALIDAR |
-| Controle de Estoques - SC - BI | | | | | | LEGADO_A_VALIDAR |
-| Indicadores de Suprimentos - Sheets | | | | | | LEGADO_A_VALIDAR |
+| Análise - Importações | não encontrado (Core local) | não | — | ADR-005 E1.S1 SQL 0 rows | pendente dump prod | LEGADO_A_VALIDAR |
+| Onde o item é usado - BI | não encontrado (Core local) | não | — | ADR-005 E1.S1; API nativa `get_product_parents` não prova paridade | pendente dump prod | LEGADO_A_VALIDAR |
+| Atraso de Fornecedores - SC - BI | não encontrado (Core local) | não | — | ADR-005 E1.S1; OTD nativo ainda não comparado | pendente dump prod | LEGADO_A_VALIDAR |
+| Alçada de Compras - BI | não encontrado (Core local) | não | — | ADR-005 E1.S1; workflow vs consulta aberto (P-06) | pendente dump prod | LEGADO_A_VALIDAR |
+| Controle de Estoques - SC - BI | não encontrado (Core local) | não | — | ADR-005 E1.S1 | pendente dump prod | LEGADO_A_VALIDAR |
+| Indicadores de Suprimentos - Sheets | não encontrado (Core local) | não | — | ADR-005 E1.S1; savings API ≠ prova de remoção do app | pendente dump prod | LEGADO_A_VALIDAR |
 
 ---
 

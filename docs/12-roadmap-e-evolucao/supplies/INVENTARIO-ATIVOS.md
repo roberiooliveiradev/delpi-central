@@ -1,6 +1,6 @@
 # Inventário de ativos — Portal Suprimentos
 
-> **Data:** 2026-09-08 · **Status:** baseline de inventário; BIs externos ainda dependem de E1.S1.
+> **Data:** 2026-09-08 · **Status:** baseline de inventário; E1.S1 dump **local** concluído (0/6 no Core Docker); dump **produção** ainda pendente.
 
 Legenda de decisão: `INCORPORAR` · `INTEGRAR` · `DEEP_LINK` · `MANTER_EXTERNO` · `DEPRECIAR_APOS_PARIDADE` · `LEGADO_A_VALIDAR` · `FORA_DO_ESCOPO`.
 
@@ -41,12 +41,14 @@ Novas permissions só nascem com justificativa de risco/segregação conforme AD
 
 | Ativo | Permission observada | Estado técnico | Sobreposição parcial | Decisão atual | Próxima ação |
 |---|---|---|---|---|---|
-| Análise - Importações | `importados.access` | não localizado no git | nenhuma nativa confirmada | LEGADO_A_VALIDAR | E1.S1 |
-| Onde o item é usado - BI | `onde-e-usado.access` | não localizado no git | `get_product_parents` | LEGADO_A_VALIDAR | E1.S1 + E10 |
-| Atraso de Fornecedores - SC - BI | `matriz_atraso-fornecedores.access` | não localizado no git | OTD / PO panel | LEGADO_A_VALIDAR | E1.S1 + E7 |
-| Alçada de Compras - BI | `alcada-compras.access` | não localizado no git | campos TOTVS; workflow não comprovado | LEGADO_A_VALIDAR | E1.S1; backlog E20.S3 |
-| Controle de Estoques - SC - BI | `controle-estoque-sc.access` | não localizado no git | stock + ESTSEG | LEGADO_A_VALIDAR | E1.S1 + E8 |
-| Indicadores de Suprimentos - Sheets | `idd-suprimentos.access` | permission não localizada; integração Sheets existe | dashboard + SI | LEGADO_A_VALIDAR | E1.S1 + E11 |
+| Análise - Importações | `importados.access` | git ausente; Core local 2026-09-08 = não encontrado | nenhuma nativa confirmada | LEGADO_A_VALIDAR | dump Core **prod**; sem redirect |
+| Onde o item é usado - BI | `onde-e-usado.access` | git ausente; Core local 2026-09-08 = não encontrado | `get_product_parents` | LEGADO_A_VALIDAR | dump prod + E10 paridade |
+| Atraso de Fornecedores - SC - BI | `matriz_atraso-fornecedores.access` | git ausente; Core local 2026-09-08 = não encontrado | OTD / PO panel | LEGADO_A_VALIDAR | dump prod + E7.S1 |
+| Alçada de Compras - BI | `alcada-compras.access` | git ausente; Core local 2026-09-08 = não encontrado | campos TOTVS; workflow não comprovado | LEGADO_A_VALIDAR | dump prod; backlog E20.S3 |
+| Controle de Estoques - SC - BI | `controle-estoque-sc.access` | git ausente; Core local 2026-09-08 = não encontrado | stock + ESTSEG | LEGADO_A_VALIDAR | dump prod + E8 |
+| Indicadores de Suprimentos - Sheets | `idd-suprimentos.access` | git ausente; Core local 2026-09-08 = não encontrado; leitura Sheets via api-delpi existe | dashboard + SI | LEGADO_A_VALIDAR | dump prod + confirmar editor (P-07) |
+
+Evidência do dump local: [ADR-005 § E1.S1](./adr/ADR-005-external-bi-core-dump.md).
 
 ### Gate
 

@@ -65,3 +65,39 @@ Consultar `C7_APROV` não equivale automaticamente a workflow de aprovação. Se
 - tratar screenshot como contrato canônico completo;
 - registrar redirect para path desconhecido;
 - chegar ao cutover com qualquer BI ainda `LEGADO_A_VALIDAR`.
+
+---
+
+## E1.S1 — Registro de dump (2026-09-08)
+
+| Campo | Valor |
+|---|---|
+| Data | 2026-09-08 |
+| Ambiente | Core local Docker (`delpi-postgres-core` / DB `delpi_core`) |
+| Método | SQL em `permissions` + `apps` (+ filtro `type = iframe`) |
+| Core prod / restore `delpi_core.dump` | **indisponível** neste workspace (`/mnt/d/delpi-backups` e dumps locais ausentes) |
+| Resultado agregado | **0/6** permissions dos codes do PO; **0** apps `iframe`; stack local com 4 MFEs, 35 permissions, 1 role |
+
+### Resultado por app
+
+| Nome UI (PO) | Permission buscada | id/path no Core local | Classificação E1.S1 |
+|---|---|---|---|
+| Análise - Importações | `importados.access` | não encontrado | LEGADO_A_VALIDAR (dump local negativo; PO confirma existência operacional) |
+| Onde o item é usado - BI | `onde-e-usado.access` | não encontrado | LEGADO_A_VALIDAR |
+| Atraso de Fornecedores - SC - BI | `matriz_atraso-fornecedores.access` | não encontrado | LEGADO_A_VALIDAR |
+| Alçada de Compras - BI | `alcada-compras.access` | não encontrado | LEGADO_A_VALIDAR |
+| Controle de Estoques - SC - BI | `controle-estoque-sc.access` | não encontrado | LEGADO_A_VALIDAR |
+| Indicadores de Suprimentos - Sheets | `idd-suprimentos.access` | não encontrado | LEGADO_A_VALIDAR |
+
+**Não** classificar como `LEGADO_OU_POSSIVELMENTE_OBSOLETO`: ausência no Core **local incompleto** ≠ ausência em produção. Próximo passo obrigatório antes do cutover: repetir o mesmo SQL/admin no Core de produção (ou restore autorizado de `delpi_core.dump`).
+
+SQL de referência usado:
+
+```sql
+SELECT code, name, module FROM permissions
+WHERE code = ANY(ARRAY[
+  'importados.access','onde-e-usado.access','matriz_atraso-fornecedores.access',
+  'alcada-compras.access','controle-estoque-sc.access','idd-suprimentos.access'
+]);
+SELECT id, name, type, base_path FROM apps WHERE type = 'iframe';
+```
