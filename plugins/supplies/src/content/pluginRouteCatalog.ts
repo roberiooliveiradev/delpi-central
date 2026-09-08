@@ -165,6 +165,26 @@ export const HUB_SECTIONS: readonly HubSectionDef[] = [
 ];
 
 export const HUB_CONTENT = {
+  productName: "Portal Suprimentos",
+  home: {
+    eyebrow: "Portal Suprimentos",
+    title: "Início",
+    description:
+      "Ação e descoberta no seu escopo. Indicadores do período ficam na Visão geral.",
+    helpAriaLabel: "Ajuda: Início vs Visão geral",
+    attentionTitle: "Atenção",
+    attentionEmpty: "Nenhum atalho de atenção disponível para o seu acesso.",
+    attentionError: "Não foi possível carregar a atenção. Os caminhos abaixo continuam disponíveis.",
+    pathsTitle: "Caminhos e funcionalidades",
+    pathsSubtitle: "Abra as áreas liberadas para você.",
+    pathsEmpty: "Nenhuma funcionalidade disponível para o seu acesso.",
+    searchPlaceholder: "Buscar caminhos…",
+    searchEmpty: "Nenhum caminho encontrado",
+    recentsTitle: "Últimos acessos",
+    favoritesTitle: "Favoritos",
+    favoritesEmpty: "Nenhum favorito ainda. Use a estrela nos caminhos.",
+    onboardingTitle: "Comece por aqui",
+  },
   palette: {
     title: "Ir para",
     placeholder: "Buscar área do Portal Suprimentos",
@@ -172,6 +192,15 @@ export const HUB_CONTENT = {
     closeAriaLabel: "Fechar busca",
   },
 } as const;
+
+/** Ordem de atalhos do onboarding (máx. 3 na UI). */
+const ONBOARDING_ROUTE_IDS = [
+  "purchase_requests",
+  "overview",
+  "safety_stock",
+  "my_tasks",
+  "help",
+] as const;
 
 export function resolveHubSections(
   capabilities: HubCapabilities,
@@ -185,6 +214,39 @@ export function resolveHubSections(
       ),
     }))
     .filter((section) => section.routes.length > 0);
+}
+
+/** Seções do grid do Início — omitem o atalho «Início» (já estamos nele). */
+export function resolveHomePathSections(
+  capabilities: HubCapabilities,
+  sections: readonly HubSectionDef[] = HUB_SECTIONS,
+): HubSectionDef[] {
+  return resolveHubSections(capabilities, sections)
+    .map((section) => ({
+      ...section,
+      routes: section.routes.filter((route) => route.id !== "home"),
+    }))
+    .filter((section) => section.routes.length > 0);
+}
+
+export function pickOnboardingShortcuts(
+  capabilities: HubCapabilities,
+  limit = 3,
+): HubRouteDef[] {
+  const sections = resolveHomePathSections(capabilities);
+  const byId = new Map<string, HubRouteDef>();
+  for (const section of sections) {
+    for (const route of section.routes) {
+      byId.set(route.id, route);
+    }
+  }
+  const picked: HubRouteDef[] = [];
+  for (const id of ONBOARDING_ROUTE_IDS) {
+    const route = byId.get(id);
+    if (route) picked.push(route);
+    if (picked.length >= limit) break;
+  }
+  return picked;
 }
 
 export function findHubRouteById(
