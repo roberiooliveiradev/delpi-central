@@ -44,6 +44,14 @@ class ExternalActionSelectionDispatchService:
         raw_message: str | None = None,
         memory_snapshot: dict | None = None,
     ) -> dict | None:
+        from app.domain.services.openapi_planner_mode_service import (
+            OpenApiPlannerModeService,
+        )
+
+        # Fail-closed: dispatch registry não corre com OpenAPI-first ativo.
+        if OpenApiPlannerModeService.resolve_mode() == "on":
+            return None
+
         sql_source = str(raw_message or message).strip()
 
         if ExternalActionSelectionPreflightService.blocks_selection(

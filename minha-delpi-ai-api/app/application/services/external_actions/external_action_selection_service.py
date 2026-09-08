@@ -51,6 +51,24 @@ class ExternalActionSelectionService:
         if not code or ChatAnalysisIntentService.looks_like_path_placeholder(code):
             return None
 
+        from app.domain.services.openapi_planner_mode_service import (
+            OpenApiPlannerModeService,
+        )
+
+        if OpenApiPlannerModeService.resolve_mode() == "on":
+            # OpenAPI-first: seleção pelo catálogo; código vai no message/contexto.
+            enriched = f"{message} {code}".strip()
+            return self._select_via_openapi_first(
+                enriched,
+                allowed_action_ids=allowed_action_ids or [],
+                previous_messages=previous_messages,
+                memory_snapshot={
+                    "executionContext": {
+                        "parameters": {"code": code, "productCode": code},
+                    }
+                },
+            )
+
         resolved_intent = intent or ChatProductQueryIntentService.detect(message)
         resolved_segment = route_segment or ChatRouteContextService.resolve_product_route_segment(
             message
@@ -103,14 +121,12 @@ class ExternalActionSelectionService:
         )
 
         if OpenApiPlannerModeService.resolve_mode() == "on":
-            selected = self._select_via_openapi_first(
+            return self._select_via_openapi_first(
                 message,
                 allowed_action_ids=allowed_action_ids or [],
                 previous_messages=previous_messages,
                 memory_snapshot=memory_snapshot,
             )
-            if selected is not None:
-                return selected
 
         return self._dispatch.dispatch(
             message,
@@ -249,6 +265,18 @@ class ExternalActionSelectionService:
         previous_messages: list | None = None,
     ) -> dict | None:
         """Resolve action pelo id do registry (compose multi-rota departamental)."""
+        from app.domain.services.openapi_planner_mode_service import (
+            OpenApiPlannerModeService,
+        )
+
+        if OpenApiPlannerModeService.resolve_mode() == "on":
+            return self._select_registry_route_via_openapi(
+                route_id,
+                message,
+                allowed_action_ids=allowed_action_ids or [],
+                previous_messages=previous_messages,
+            )
+
         return self._route_selection.select_registry_route_id(
             route_id,
             message,
@@ -256,6 +284,68 @@ class ExternalActionSelectionService:
             candidates_loader=self._list_allowed_candidates,
             build_date_branch_parameters=self._build_date_branch_parameters,
             previous_messages=previous_messages,
+        )
+
+    def _select_registry_route_via_openapi(
+        self,
+        route_id: str,
+        message: str,
+        *,
+        allowed_action_ids: list[str],
+        previous_messages: list | None,
+    ) -> dict | None:
+        """Usa só metadados técnicos da rota (path/operationId) + Action Catalog."""
+        from app.domain.services.operational_route_registry_service import (
+            OperationalRouteRegistryService,
+        )
+
+        route = OperationalRouteRegistryService.route_by_id(str(route_id or "").strip())
+        if not isinstance(route, dict):
+            return None
+
+        route_node = route.get("route") if isinstance(route.get("route"), dict) else {}
+        path_markers = [
+            str(item).strip().lower()
+            for item in (route_node.get("pathMarkers") or [])
+            if str(item).strip()
+        ]
+        operation_markers = [
+            str(item).strip().lower()
+            for item in (route_node.get("operationIdMarkers") or [])
+            if str(item).strip()
+        ]
+        path_suffix = str(route_node.get("pathSuffix") or "").strip().lower()
+
+        list_actions = getattr(self.repository, "list_actions", None)
+        if not callable(list_actions):
+            return None
+
+        allowed = {str(item) for item in allowed_action_ids}
+        matched_ids: list[str] = []
+        for action in list_actions():
+            action_id = str(action.get("actionId") or "").strip()
+            if not action_id or (allowed and action_id not in allowed):
+                continue
+            path = str(action.get("path") or "").lower()
+            operation_id = str(action.get("operationId") or "").lower()
+            if path_suffix and path_suffix in path:
+                matched_ids.append(action_id)
+                continue
+            if any(marker in path for marker in path_markers):
+                matched_ids.append(action_id)
+                continue
+            if any(marker in operation_id for marker in operation_markers):
+                matched_ids.append(action_id)
+
+        if not matched_ids:
+            return None
+
+        # Prefer single matched action; otherwise let OpenAPI planner disambiguate.
+        return self._select_via_openapi_first(
+            message,
+            allowed_action_ids=matched_ids,
+            previous_messages=previous_messages,
+            memory_snapshot=None,
         )
 
     def _select_product_for_refinement(

@@ -40,7 +40,8 @@
   },
   "modes": {
     "default": "on",
-    "allowed": ["off", "shadow", "canary", "on"]
+    "allowed": ["off", "shadow", "canary", "on"],
+    "legacyOffNote": "mode=off is LEGACY_PENDING_REMOVAL — registry dispatch only for emergency rollback."
   },
   "decomposition": {
     "maxSubtasks": 4,
