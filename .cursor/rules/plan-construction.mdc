@@ -1,6 +1,6 @@
 ---
-description: Método de construção e execução de planos multi-etapa (E*.S*, pesquisa, wireframes, impacto, test→commit)
-alwaysApply: true
+description: Planejamento/CreatePlan — método E*.S*, pesquisa, matriz transversal, wireframes, impacto, testes e protocolo de execução multi-etapa
+alwaysApply: false
 ---
 
 # Construção de planos (Delpi)
