@@ -119,3 +119,14 @@ export function parsePeriodPresetId(raw: string | null | undefined): PeriodPrese
     ? (raw as PeriodPresetId)
     : null;
 }
+
+/** MTD/YTD chip for DashboardKpiCard — mirrors Commercial resolvePeriodKindChip. */
+export type PeriodKindChip = "MTD" | "YTD";
+
+export function resolvePeriodKindChip(
+  preset: PeriodPresetId | null | undefined,
+): PeriodKindChip | null {
+  if (preset === "this_month" || preset === "last_month") return "MTD";
+  if (preset === "this_year" || preset === "last_12_months") return "YTD";
+  return null;
+}

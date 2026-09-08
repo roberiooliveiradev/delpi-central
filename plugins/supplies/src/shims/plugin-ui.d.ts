@@ -274,6 +274,11 @@ declare module "@delpi/plugin-ui/index" {
     value: string;
     contextLabel?: string;
     goalLabel?: string | null;
+    goalPrefix?: string;
+    goalHint?: string;
+    periodKindBadge?: string | null;
+    goalScopeBadge?: string | null;
+    goalScopeHint?: string;
     subtitle?: string;
     icon: ReactNode;
     footer?: ReactNode;
@@ -413,12 +418,35 @@ declare module "@delpi/plugin-ui/index" {
   }): ReactNode;
 
   export function ChartTypeSegmentToggle(props: Record<string, unknown>): ReactNode;
+  export function ChartOverlayOptionsPopover(props: Record<string, unknown>): ReactNode;
+  export function ChartSeriesColorsPopover(props: Record<string, unknown>): ReactNode;
+  export function applySeriesFillPreferences(
+    series: ReadonlyArray<{ dataKey: string; name: string; fill: string }>,
+    fills?: Record<string, string>,
+  ): Array<{ dataKey: string; name: string; fill: string }>;
+  export function useChartGranularitySelection(
+    dateStart?: string,
+    dateEnd?: string,
+    options?: { resolveAutoGranularity?: (suggested: string) => string },
+  ): { granularity: string; setGranularity: (value: string) => void };
   export function usePersistedChartPreferences(config: Record<string, unknown>): {
-    preferences: { chartType?: string; seriesFills?: Record<string, string> };
-    setPreferences: (next: Record<string, unknown>) => void;
+    preferences: {
+      chartType?: string;
+      comparePriorYear?: boolean;
+      seriesFills?: Record<string, string>;
+    };
+    setPreferences: (
+      next:
+        | Record<string, unknown>
+        | ((prev: Record<string, unknown>) => Record<string, unknown>),
+    ) => void;
     setChartType: (value: string) => void;
   };
   export const TIME_MULTI_SERIES_TYPES: readonly string[];
+  export const PERIOD_COMPARE_TYPES: readonly string[];
+  export type ChartGranularity = string;
+  export type ChartOverlayOption = Record<string, unknown>;
+  export type MultiTypeSeriesSpec = { dataKey: string; name: string; fill: string };
   export function runTabularExport(input: Record<string, unknown>): void;
   export function createDashboardChartToolbarKit(config: {
     prefix: string;

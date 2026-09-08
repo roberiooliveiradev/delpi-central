@@ -9,7 +9,7 @@ import {
   todayIso,
 } from "./overviewContent";
 import { buildOverviewQueryString } from "./overviewFilterUrl";
-import { resolvePeriodPreset } from "./periodPreset";
+import { resolvePeriodPreset, resolvePeriodKindChip } from "./periodPreset";
 import {
   formatOperationalUnitCode,
   parseSuppliesBranchCsv,
@@ -17,6 +17,7 @@ import {
   serializeSuppliesBranchCsv,
   suppliesUnitOptions,
 } from "./suppliesBranchFilters";
+import { mergeSeriesWithPriorYear, shiftPeriodRangeByYears } from "./periodShift";
 
 describe("Overview content", () => {
   it("exposes temporal nature labels for all KPI natures", () => {
@@ -129,5 +130,24 @@ describe("Overview URL filters + unit MultiSelect", () => {
     expect(resolveApiBranch([], ["01", "02"])).toBeUndefined();
     expect(parseSuppliesBranchCsv("01,02")).toEqual(["01", "02"]);
     expect(serializeSuppliesBranchCsv(["01", "02"])).toBe("01,02");
+  });
+
+  it("maps period presets to MTD/YTD chips", () => {
+    expect(resolvePeriodKindChip("this_month")).toBe("MTD");
+    expect(resolvePeriodKindChip("this_year")).toBe("YTD");
+    expect(resolvePeriodKindChip("this_quarter")).toBeNull();
+    expect(resolvePeriodKindChip("custom")).toBeNull();
+  });
+
+  it("shifts period range for YoY overlay", () => {
+    expect(shiftPeriodRangeByYears({ from: "2026-09-01", to: "2026-09-30" }, -1)).toEqual({
+      from: "2025-09-01",
+      to: "2025-09-30",
+    });
+    expect(
+      mergeSeriesWithPriorYear([{ period: "2026-09", otdPct: 90 }], [{ otdPct: 88 }], (p) => ({
+        otdPctPrior: p?.otdPct ?? null,
+      })),
+    ).toEqual([{ period: "2026-09", otdPct: 90, otdPctPrior: 88 }]);
   });
 });

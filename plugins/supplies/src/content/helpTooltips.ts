@@ -64,9 +64,9 @@ export const SP_HELP = {
   overviewFiltersBranch:
     "Unidades liberadas no seu escopo (Santa Catarina e/ou Espírito Santo). Vazio ou ambas = consolidado. Unidade fora do escopo é bloqueada pela API.",
   overviewOtdChart:
-    "Série de OTD de pedidos de compra. Usa o mesmo filtro de unidade e período da Visão geral. Abra OTD para ver os velocímetros.",
+    "Série de OTD de pedidos de compra com ChartViewShell completo (granularidade, tipo, YoY, cores e exportação). Usa o mesmo filtro de unidade e período da Visão geral. Abra OTD para ver os velocímetros.",
   overviewCompareChart:
-    "Barras valor × meta só para KPIs de intervalo que já vieram no overview — não inventa série CPV/Savings.",
+    "Barras valor × meta só para KPIs de intervalo que já vieram no overview — com tipo, cores e exportação; não inventa série CPV/Savings.",
   otdAnalyticsPage:
     "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas (atrasos do dia).",
   purchaseRequests:

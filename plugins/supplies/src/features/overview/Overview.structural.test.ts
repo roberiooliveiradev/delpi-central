@@ -13,6 +13,11 @@ describe("Overview structural", () => {
     expect(page).toContain("SuppliesPageHero");
     expect(page).toContain("OverviewFilters");
     expect(page).toContain("SuppliesSectionCard");
+    expect(page).toContain("SuppliesSectionHintLabel");
+    expect(page).toContain("SuppliesKpiCard");
+    expect(page).toContain("periodKindBadge");
+    expect(page).toContain("sp-overview-kpi-grid");
+    expect(page).toContain("sp-gestao-charts-grid");
     expect(page).toContain("OverviewOtdSeriesChart");
     expect(page).toContain("OverviewCompareChart");
     expect(page).toContain("analytics_otd");
@@ -32,11 +37,19 @@ describe("Overview structural", () => {
     expect(otd).toContain("getOtdSeries");
     expect(otd).toContain("MultiTypeSeriesChart");
     expect(otd).toContain("ChartTypeSegmentToggle");
+    expect(otd).toContain("ChartOverlayOptionsPopover");
+    expect(otd).toContain("ChartSeriesColorsPopover");
+    expect(otd).toContain("applySeriesFillPreferences");
+    expect(otd).toContain("useChartGranularitySelection");
     expect(otd).toContain("SuppliesChartGranularityToggle");
     expect(otd).toContain("runTabularExport");
+    expect(otd).toContain("comparePriorYear");
 
     const compare = readFileSync(join(here, "OverviewCompareChart.tsx"), "utf8");
     expect(compare).toContain("ChartViewShell");
+    expect(compare).toContain("ChartTypeSegmentToggle");
+    expect(compare).toContain("ChartSeriesColorsPopover");
+    expect(compare).toContain("PERIOD_COMPARE_TYPES");
     expect(compare).toContain("temporalNature === \"interval\"");
   });
 

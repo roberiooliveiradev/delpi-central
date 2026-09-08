@@ -1,6 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
-import { BarChart3, RefreshCw } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  AlertTriangle,
+  BarChart3,
+  Boxes,
+  Package,
+  Percent,
+  RefreshCw,
+  ShoppingCart,
+  Timer,
+  Wallet,
+} from "lucide-react";
 
 import { getOverview, type OverviewKpiCard, type OverviewResponse } from "../api/overview";
 import { navigatePluginView } from "../app/pluginNavigation";
@@ -14,6 +23,7 @@ import {
   SuppliesPageHero,
   SuppliesPagePath,
   SuppliesSectionCard,
+  SuppliesSectionHintLabel,
   SuppliesStateBanner,
   SuppliesStatusBadge,
 } from "../app/suppliesUi";
@@ -26,6 +36,7 @@ import {
   OVERVIEW_CONTENT,
   temporalNatureLabel,
 } from "../features/overview/overviewContent";
+import { resolvePeriodKindChip } from "../features/overview/periodPreset";
 import { useOverviewFilters } from "../features/overview/useOverviewFilters";
 
 type OverviewPageProps = {
@@ -40,6 +51,16 @@ function formatMeta(meta: number | null, unit: string | null): string | null {
   }
   return String(meta);
 }
+
+const KPI_ICONS: Record<string, ReactNode> = {
+  "KPI-OTD": <Timer size={22} strokeWidth={1.75} aria-hidden="true" />,
+  "KPI-STOCK-VALUE": <Boxes size={22} strokeWidth={1.75} aria-hidden="true" />,
+  "KPI-TURNOVER": <Package size={22} strokeWidth={1.75} aria-hidden="true" />,
+  "KPI-CPV": <Percent size={22} strokeWidth={1.75} aria-hidden="true" />,
+  "KPI-SAVINGS": <Wallet size={22} strokeWidth={1.75} aria-hidden="true" />,
+  "KPI-SC-OPEN": <ShoppingCart size={22} strokeWidth={1.75} aria-hidden="true" />,
+  "KPI-CRITICAL-MP": <AlertTriangle size={22} strokeWidth={1.75} aria-hidden="true" />,
+};
 
 export function OverviewPage({ basePath }: OverviewPageProps) {
   const session = useSuppliesSession();
@@ -74,6 +95,7 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
     [kpis],
   );
   const hasPartial = (data?.partialFailures.length ?? 0) > 0;
+  const periodKindBadge = resolvePeriodKindChip(filters.period);
 
   const homeHref = buildPluginPath("home", basePath);
   const scopeBadge = filters.scopeBadge;
@@ -96,20 +118,17 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
       <SuppliesPageHero
         eyebrow={OVERVIEW_CONTENT.eyebrow}
         title={
-          <>
-            {OVERVIEW_CONTENT.title}{" "}
-            <HelpTooltip
-              content={SP_HELP.overviewTemporal}
-              ariaLabel={OVERVIEW_CONTENT.helpAriaLabel}
-            />
-          </>
+          <SuppliesSectionHintLabel
+            label={OVERVIEW_CONTENT.title}
+            hint={SP_HELP.overviewTemporal}
+          />
         }
         description={OVERVIEW_CONTENT.description}
         badge={<SuppliesStatusBadge label={scopeBadge} variant="info" />}
         actions={
           <SuppliesActionButton
             type="button"
-            variant="default"
+            variant="ghost"
             onClick={() => setReloadKey((value) => value + 1)}
           >
             <RefreshCw size={16} strokeWidth={1.75} aria-hidden="true" />{" "}
@@ -131,81 +150,94 @@ export function OverviewPage({ basePath }: OverviewPageProps) {
         />
       </SuppliesPageHero>
 
-      {loading ? (
-        <SuppliesLoadingCard title={OVERVIEW_CONTENT.loadingKpisTitle} variant="panel" />
-      ) : null}
       {error ? <SuppliesStateBanner variant="error">{error}</SuppliesStateBanner> : null}
       {!loading && !error && hasPartial ? (
         <SuppliesStateBanner>{OVERVIEW_CONTENT.partialNote}</SuppliesStateBanner>
       ) : null}
 
-      {!loading && !error && availableCount === 0 ? (
-        <SuppliesEmptyState
-          title={OVERVIEW_CONTENT.empty}
-          message={OVERVIEW_CONTENT.description}
-        />
-      ) : null}
-
-      {!loading && !error && kpis.length > 0 ? (
-        <SuppliesSectionCard
-          title={OVERVIEW_CONTENT.indicatorsTitle}
-          hint={OVERVIEW_CONTENT.indicatorsHint}
-        >
-          <ul className="sp-overview__grid">
+      <SuppliesSectionCard
+        title={OVERVIEW_CONTENT.indicatorsTitle}
+        hint={OVERVIEW_CONTENT.indicatorsHint}
+      >
+        {loading ? (
+          <SuppliesLoadingCard title={OVERVIEW_CONTENT.loadingKpisTitle} variant="panel" />
+        ) : null}
+        {!loading && !error && availableCount === 0 ? (
+          <SuppliesEmptyState
+            title={OVERVIEW_CONTENT.empty}
+            message={OVERVIEW_CONTENT.description}
+          />
+        ) : null}
+        {!loading && !error && kpis.length > 0 ? (
+          <ul className="sp-overview__grid sp-overview-kpi-grid" aria-label="KPIs da visão geral">
             {kpis.map((kpi) => (
               <li key={kpi.id}>
-                <OverviewKpiItem kpi={kpi} />
+                <OverviewKpiItem kpi={kpi} periodKindBadge={periodKindBadge} />
               </li>
             ))}
           </ul>
-        </SuppliesSectionCard>
-      ) : null}
-
-      <SuppliesSectionCard
-        title={OVERVIEW_CONTENT.otdChartTitle}
-        hint={OVERVIEW_CONTENT.otdChartHint}
-        actions={
-          <SuppliesActionButton
-            type="button"
-            variant="default"
-            onClick={() =>
-              navigatePluginView("analytics_otd", {
-                basePath,
-                search: typeof window !== "undefined" ? window.location.search : undefined,
-              })
-            }
-          >
-            {OVERVIEW_CONTENT.openOtdLabel}
-          </SuppliesActionButton>
-        }
-      >
-        <OverviewOtdSeriesChart filters={filters.apiParams} />
+        ) : null}
       </SuppliesSectionCard>
 
-      {!loading && !error ? (
+      <div className="sp-gestao-charts-grid">
         <SuppliesSectionCard
-          title={OVERVIEW_CONTENT.compareTitle}
-          hint={OVERVIEW_CONTENT.compareHint}
+          title={OVERVIEW_CONTENT.otdChartTitle}
+          hint={OVERVIEW_CONTENT.otdChartHint}
+          actions={
+            <SuppliesActionButton
+              type="button"
+              variant="ghost"
+              onClick={() =>
+                navigatePluginView("analytics_otd", {
+                  basePath,
+                  search: typeof window !== "undefined" ? window.location.search : undefined,
+                })
+              }
+            >
+              {OVERVIEW_CONTENT.openOtdLabel}
+            </SuppliesActionButton>
+          }
         >
-          <OverviewCompareChart kpis={kpis} />
+          <OverviewOtdSeriesChart filters={filters.apiParams} />
         </SuppliesSectionCard>
-      ) : null}
+
+        {!loading && !error ? (
+          <SuppliesSectionCard
+            title={OVERVIEW_CONTENT.compareTitle}
+            hint={OVERVIEW_CONTENT.compareHint}
+          >
+            <OverviewCompareChart kpis={kpis} />
+          </SuppliesSectionCard>
+        ) : null}
+      </div>
     </div>
   );
 }
 
-function OverviewKpiItem({ kpi }: { kpi: OverviewKpiCard }) {
+function OverviewKpiItem({
+  kpi,
+  periodKindBadge,
+}: {
+  kpi: OverviewKpiCard;
+  periodKindBadge: "MTD" | "YTD" | null;
+}) {
   const unavailable = kpi.status === "unavailable";
   const nature = temporalNatureLabel(kpi.temporalNature);
+  const showPeriodBadge =
+    kpi.temporalNature === "interval" ? periodKindBadge ?? undefined : undefined;
   return (
     <SuppliesKpiCard
       title={kpi.title}
       titleHint={kpi.description}
       value={unavailable ? OVERVIEW_CONTENT.unavailable : kpi.displayValue ?? "—"}
-      contextLabel={`${nature} · ${kpi.periodLabel}`}
-      goalLabel={formatMeta(kpi.meta, kpi.unit)}
+      contextLabel={kpi.periodLabel}
+      goalPrefix={OVERVIEW_CONTENT.goalPrefix}
+      goalLabel={formatMeta(kpi.meta, kpi.unit) ?? undefined}
+      periodKindBadge={showPeriodBadge}
+      goalScopeBadge={nature}
+      goalScopeHint={OVERVIEW_CONTENT.natureScopeHint}
       subtitle={unavailable ? OVERVIEW_CONTENT.partialNote : undefined}
-      icon={<BarChart3 size={18} strokeWidth={1.75} aria-hidden="true" />}
+      icon={KPI_ICONS[kpi.id] ?? <BarChart3 size={22} strokeWidth={1.75} aria-hidden="true" />}
       className={unavailable ? "sp-overview__kpi--unavailable" : undefined}
     />
   );

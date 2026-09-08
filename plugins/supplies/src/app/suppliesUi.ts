@@ -34,6 +34,7 @@ import {
   sectionRouteCardBemClasses,
   selectFieldPacClasses,
   stateBannerBemClasses,
+  useChartGranularitySelection,
   type SpeedometerGaugeProps,
 } from "@delpi/plugin-ui/index";
 import { createElement, type ComponentProps } from "react";
@@ -183,4 +184,4 @@ export function SuppliesSpeedometerGauge(
   return createElement(SpeedometerGauge, { ...props, prefix: UI_PREFIX });
 }
 
-export { HelpTooltip };
+export { HelpTooltip, useChartGranularitySelection };

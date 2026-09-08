@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  ChartOverlayOptionsPopover,
+  ChartSeriesColorsPopover,
   ChartTypeSegmentToggle,
   ChartViewShell,
   MultiTypeSeriesChart,
   TIME_MULTI_SERIES_TYPES,
+  applySeriesFillPreferences,
   runTabularExport,
   usePersistedChartPreferences,
+  type ChartGranularity,
+  type ChartOverlayOption,
+  type MultiTypeSeriesSpec,
 } from "@delpi/plugin-ui/index";
 
 import { getOtdSeries } from "../../api/otdSeries";
@@ -16,9 +22,11 @@ import {
   SuppliesStateBanner,
   SuppliesTabularExportButtons,
   SP_PORTAL_SCOPE,
+  useChartGranularitySelection,
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
 import { mapOverviewFetchError, OVERVIEW_CONTENT } from "./overviewContent";
+import { mergeSeriesWithPriorYear, shiftPeriodRangeByYears } from "./periodShift";
 import type { OverviewApiParams } from "./useOverviewFilters";
 
 type OverviewOtdSeriesChartProps = {
@@ -26,9 +34,7 @@ type OverviewOtdSeriesChartProps = {
   storageKey?: string;
 };
 
-const CHART_HEIGHT = 280;
-
-type ChartGranularity = "day" | "week" | "month";
+const CHART_HEIGHT = 320;
 
 const GRANULARITY_OPTIONS: { value: ChartGranularity; label: string }[] = [
   { value: "day", label: "Dia" },
@@ -36,46 +42,110 @@ const GRANULARITY_OPTIONS: { value: ChartGranularity; label: string }[] = [
   { value: "month", label: "Mês" },
 ];
 
+type OtdChartPoint = {
+  period: string;
+  otdPct: number;
+  otdPctPrior?: number | null;
+};
+
 export function OverviewOtdSeriesChart({
   filters,
   storageKey = "supplies:overview:otd-series",
 }: OverviewOtdSeriesChartProps) {
-  const [granularity, setGranularity] = useState<ChartGranularity>("month");
-  const { preferences, setChartType } = usePersistedChartPreferences({
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    filters.from,
+    filters.to,
+    {
+      resolveAutoGranularity: (suggested) =>
+        suggested === "year" ? "month" : (suggested as ChartGranularity),
+    },
+  );
+  const { preferences, setPreferences, setChartType } = usePersistedChartPreferences({
     storageKey,
-    defaults: { chartType: "line" },
+    defaults: { chartType: "line", comparePriorYear: false },
     allowedChartTypes: TIME_MULTI_SERIES_TYPES,
   });
+  const yoyActive = Boolean(preferences.comparePriorYear);
   const chartType = preferences.chartType ?? "line";
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [partialNote, setPartialNote] = useState<string | null>(null);
-  const [points, setPoints] = useState<Array<{ period: string; otdPct: number }>>([]);
+  const [points, setPoints] = useState<OtdChartPoint[]>([]);
+
+  const overlayOptions = useMemo((): ChartOverlayOption[] => {
+    return [
+      {
+        id: "yoy",
+        label: OVERVIEW_CONTENT.comparePriorYear,
+        summaryLabel: OVERVIEW_CONTENT.comparePriorYear,
+        checked: yoyActive,
+        onChange: (checked) => setPreferences({ comparePriorYear: checked }),
+        hint: OVERVIEW_CONTENT.comparePriorYearHint,
+        hintAriaLabel: "Ajuda: comparar ano anterior",
+      },
+    ];
+  }, [setPreferences, yoyActive]);
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
     setPartialNote(null);
-    getOtdSeries(
+
+    const currentPromise = getOtdSeries(
       {
         branch: filters.branch,
         from: filters.from,
         to: filters.to,
-        granularity,
+        granularity: granularity as "day" | "week" | "month",
       },
       controller.signal,
-    )
-      .then((payload) => {
-        const next = (payload.points ?? [])
+    );
+
+    const priorRange =
+      yoyActive && filters.from && filters.to
+        ? shiftPeriodRangeByYears({ from: filters.from, to: filters.to }, -1)
+        : null;
+
+    const priorPromise = priorRange
+      ? getOtdSeries(
+          {
+            branch: filters.branch,
+            from: priorRange.from,
+            to: priorRange.to,
+            granularity: granularity as "day" | "week" | "month",
+          },
+          controller.signal,
+        )
+      : Promise.resolve(null);
+
+    void Promise.all([currentPromise, priorPromise])
+      .then(([currentPayload, priorPayload]) => {
+        if (controller.signal.aborted) return;
+        const current = (currentPayload.points ?? [])
           .filter((point) => point.otdPct != null && Number.isFinite(point.otdPct))
           .map((point) => ({
             period: point.period,
             otdPct: Number(point.otdPct),
           }));
+        const prior = (priorPayload?.points ?? [])
+          .filter((point) => point.otdPct != null && Number.isFinite(point.otdPct))
+          .map((point) => ({
+            period: point.period,
+            otdPct: Number(point.otdPct),
+          }));
+        const next: OtdChartPoint[] = yoyActive
+          ? mergeSeriesWithPriorYear(current, prior, (priorPoint) => ({
+              otdPctPrior: priorPoint?.otdPct ?? null,
+            }))
+          : current;
         setPoints(next);
-        if ((payload.partialFailures?.length ?? 0) > 0) {
+        const failures = [
+          ...(currentPayload.partialFailures ?? []),
+          ...(priorPayload?.partialFailures ?? []),
+        ];
+        if (failures.length > 0) {
           setPartialNote(OVERVIEW_CONTENT.partialNote);
         }
       })
@@ -88,18 +158,31 @@ export function OverviewOtdSeriesChart({
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
-    return () => controller.abort();
-  }, [filters.branch, filters.from, filters.to, granularity]);
 
-  const series = useMemo(
-    () => [
+    return () => controller.abort();
+  }, [filters.branch, filters.from, filters.to, granularity, yoyActive]);
+
+  const baseSeries = useMemo((): MultiTypeSeriesSpec[] => {
+    const list: MultiTypeSeriesSpec[] = [
       {
         dataKey: "otdPct",
         name: OVERVIEW_CONTENT.otdSeriesLabel,
         fill: "var(--delpi-chart-series-1, #2563eb)",
       },
-    ],
-    [],
+    ];
+    if (yoyActive) {
+      list.push({
+        dataKey: "otdPctPrior",
+        name: OVERVIEW_CONTENT.otdSeriesPriorLabel,
+        fill: "var(--delpi-chart-series-2, #94a3b8)",
+      });
+    }
+    return list;
+  }, [yoyActive]);
+
+  const series = useMemo(
+    () => applySeriesFillPreferences(baseSeries, preferences.seriesFills),
+    [baseSeries, preferences.seriesFills],
   );
 
   const formatPct = (value: number) =>
@@ -124,12 +207,14 @@ export function OverviewOtdSeriesChart({
       {!loading && !error && points.length > 0 ? (
         <ChartViewShell
           prefix="sp"
-          granularityLabel="Granularidade"
-          typeToggleLabel="Tipo"
+          granularityLabel={OVERVIEW_CONTENT.chartGranularityLabel}
+          typeToggleLabel={OVERVIEW_CONTENT.chartTypeLabel}
+          overlaysLabel={OVERVIEW_CONTENT.chartOverlaysLabel}
+          seriesColorsLabel={OVERVIEW_CONTENT.chartSeriesColorsLabel}
           granularity={
             <SuppliesChartGranularityToggle
               value={granularity}
-              onChange={(value) => setGranularity(value as ChartGranularity)}
+              onChange={setGranularity}
               options={GRANULARITY_OPTIONS}
               modes={["day", "week", "month"]}
               idPrefix="supplies-otd-granularity"
@@ -145,23 +230,66 @@ export function OverviewOtdSeriesChart({
               portalScopeClassName={SP_PORTAL_SCOPE}
             />
           }
+          overlays={
+            <ChartOverlayOptionsPopover
+              idPrefix="supplies-otd-overlays"
+              portalScopeClassName={SP_PORTAL_SCOPE}
+              panelTitle={OVERVIEW_CONTENT.chartOverlaysPanelTitle}
+              emptySummaryLabel={OVERVIEW_CONTENT.chartOverlaysEmpty}
+              options={overlayOptions}
+            />
+          }
+          seriesColors={
+            <ChartSeriesColorsPopover
+              idPrefix="supplies-otd-colors"
+              portalScopeClassName={SP_PORTAL_SCOPE}
+              series={series}
+              values={preferences.seriesFills}
+              summaryLabel={OVERVIEW_CONTENT.chartSeriesColorsEmpty}
+              panelTitle={OVERVIEW_CONTENT.chartSeriesColorsPanelTitle}
+              triggerAriaLabel={OVERVIEW_CONTENT.chartSeriesColorsTriggerAria}
+              resetLabel={OVERVIEW_CONTENT.chartSeriesColorsReset}
+              onChange={(dataKey, color) =>
+                setPreferences((prev) => ({
+                  ...prev,
+                  seriesFills: { ...(prev.seriesFills ?? {}), [dataKey]: color },
+                }))
+              }
+              onReset={() => setPreferences((prev) => ({ ...prev, seriesFills: undefined }))}
+            />
+          }
           exportActions={
             <SuppliesTabularExportButtons
               compact
               disabled={points.length === 0 || loading}
               onExport={(format) => {
+                const columns = [
+                  { key: "period", label: "Período" },
+                  { key: "otdPct", label: OVERVIEW_CONTENT.otdSeriesLabel },
+                ];
+                if (yoyActive) {
+                  columns.push({
+                    key: "otdPctPrior",
+                    label: OVERVIEW_CONTENT.otdSeriesPriorLabel,
+                  });
+                }
                 runTabularExport({
                   kind: "table",
                   format,
                   payload: {
                     title: OVERVIEW_CONTENT.otdChartTitle,
-                    columns: [
-                      { key: "period", label: "Período" },
-                      { key: "otdPct", label: OVERVIEW_CONTENT.otdSeriesLabel },
-                    ],
+                    columns,
                     rows: points.map((point) => ({
                       period: point.period,
                       otdPct: formatPct(point.otdPct),
+                      ...(yoyActive
+                        ? {
+                            otdPctPrior:
+                              point.otdPctPrior == null
+                                ? "—"
+                                : formatPct(Number(point.otdPctPrior)),
+                          }
+                        : {}),
                     })),
                   },
                 });
