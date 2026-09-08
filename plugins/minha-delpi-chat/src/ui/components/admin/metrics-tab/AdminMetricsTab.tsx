@@ -60,6 +60,7 @@ import { AdminPresentationMetrics } from "./AdminPresentationMetrics";
 import { AdminSessionMemoryMetrics } from "./AdminSessionMemoryMetrics";
 import { AdminTextTaskMetrics } from "./AdminTextTaskMetrics";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
+import { syncMetricsHoursToUrl } from "../../../../navigation/adminUrlQuery";
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { ChatAdminNativeSelectField } from "../shared/chatAdminFormFields";
 import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
@@ -649,6 +650,10 @@ export function AdminMetricsTab({
   const costBreakdown = advanced?.costBreakdown24h ?? [];
   const windowLabel = metricsSummary.windowHours ?? metricsHours;
 
+  useEffect(() => {
+    syncMetricsHoursToUrl(metricsHours);
+  }, [metricsHours]);
+
   async function handleSaveCostTable(entries: AdminLlmCostTableEntry[]) {
     if (!getAccessToken) {
       return;
@@ -670,7 +675,7 @@ export function AdminMetricsTab({
         className="mdc-admin-metrics-tab__header"
         eyebrow="Qualidade"
         title="Observabilidade do Minha DELPI Chat"
-        description="Visão geral com fila de atenção; use a sidebar para drill-down por família (APIs de summary permanecem)."
+        description="Visão geral com fila de atenção; use a sidebar para drill-down. A janela (hours) fica na URL."
         helpHint={ADMIN_HELP.metrics}
         actions={
           <div className="mdc-admin-metrics-tab__header-actions">

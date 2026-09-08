@@ -11,6 +11,9 @@ import type {
   KnowledgeDocumentsState,
   KnowledgeIngestionActions,
 } from "./knowledgeTypes";
+import { syncKnowledgeFiltersToUrl } from "../../../../navigation/adminUrlQuery";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+import { useEffect } from "react";
 
 import "./AdminKnowledgeTab.css";
 
@@ -73,12 +76,33 @@ export function AdminKnowledgeTab({
     rbac?.capabilities.canReindexKnowledgeDocuments,
   );
 
+  useEffect(() => {
+    syncKnowledgeFiltersToUrl({
+      search: documentSearch,
+      status: documentStatus,
+      category: documentCategory,
+      namespace: documentNamespace,
+      domain: documentDomain,
+      tag: documentTag,
+      sourceType: documentSourceType,
+    });
+  }, [
+    documentSearch,
+    documentStatus,
+    documentCategory,
+    documentNamespace,
+    documentDomain,
+    documentTag,
+    documentSourceType,
+  ]);
+
   return (
     <section className="mdc-admin-knowledge">
       <AdminTabHeader
         eyebrow="Conhecimento"
         title="Base de conhecimento"
-        description="Documentos globais do chat, ingestão e curadoria. Anexos de conversa não entram nesta base."
+        description="Documentos globais do chat, ingestão e curadoria. Anexos de conversa não entram nesta base. Filtros ficam na URL para compartilhar."
+        helpHint={ADMIN_HELP.documents}
         summary={
           <KnowledgeSummaryStrip
             summary={documentSummary}

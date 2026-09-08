@@ -173,7 +173,7 @@ O admin Delpi já tem as **peças**; a IA ainda parece **inventário de playbook
 | **Plataforma (knobs)** | Presets (Rápido / Equilibrado / Máxima qualidade) + “Avançado”; reutilizar `chatIntelligenceSettingMeta` |
 | **Debug na conversa** | Trace resumido (timings + rota + tools) + “abrir no admin”; raw JSON só avançado |
 | **Ajuda** | Manual/tooltips do admin (curador × plataforma × auditor) — `feature-help-sync` |
-| **Deep link / query** | Filtros de documentos, auditoria e métricas na URL |
+| **Deep link / query** | Filtros de documentos, auditoria e métricas (`hours`) na URL — **entregue (onda 8)** |
 | **Kit UI** | Dual-class em header/KPI entregue; convergência do restante de `admin/shared` → `@delpi/plugin-ui` |
 | **Docs** | Este arquivo é a fonte do veredito; Playbook 11 / roadmap admin apontam para cá |
 
@@ -210,6 +210,7 @@ Ordem canônica e status (set/2026 — implementação):
 | 5 | **Kit UI / higiene** — dual-class `AdminTabHeader`/`AdminKpiCard`; remoção `AdminSectionNav`/`AdminSubTabNav`/`adminShellTypes`; sem `initialTab` legado | **Entregue (MVP)**; convergência total `admin/shared` → kit = backlog |
 | 6 | RBAC perfis formais no `core-api` | Fora deste bounded context |
 | 7 | **Painel — fila de atenção** — `buildAttentionQueue` + CTAs para seções | **Entregue (MVP)**; custo anômalo = backlog (sem baseline) |
+| 8 | **Deep link query** — `adminUrlQuery` (docs/auditoria/`hours`); rewrite EN preserva search | **Entregue** |
 
 Regras de qualquer onda futura de código:
 

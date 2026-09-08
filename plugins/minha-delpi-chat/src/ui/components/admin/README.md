@@ -55,6 +55,7 @@ Módulos em `src/navigation/`:
 | Arquivo | Papel |
 |---------|--------|
 | `adminNavigation.ts` | Seções, slugs EN (+ alias PT), `AdminNavState`, href/parse |
+| `adminUrlQuery.ts` | Query EN ↔ filtros (docs, auditoria, `hours` métricas); replaceState sem popstate |
 | `adminNavPages.ts` | Páginas do 3º nível (`slug` EN + `aliases`) |
 | `adminNavTree.ts` | Árvore e filtro da sidebar |
 | `adminNavSearchIndex.ts` | Textos indexados por tela/bloco |

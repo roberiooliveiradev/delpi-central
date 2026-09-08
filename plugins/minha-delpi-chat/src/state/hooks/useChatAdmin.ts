@@ -31,6 +31,11 @@ import type {
   AdminMetricsSummary,
   UpdateKnowledgeDocumentMetadataPayload,
 } from "../../data/api/adminTypes";
+import {
+  parseKnowledgeFiltersFromSearch,
+  parseMetricsHoursFromSearch,
+  syncMetricsHoursToUrl,
+} from "../../navigation/adminUrlQuery";
 
 type UseChatAdminOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -38,6 +43,9 @@ type UseChatAdminOptions = {
 
 type DocumentStatusFilter = "all" | "active" | "inactive";
 
+function readInitialKnowledgeFilters() {
+  return parseKnowledgeFiltersFromSearch();
+}
 const EMPTY_DOCUMENT_SUMMARY = {
   total: 0,
   active: 0,
@@ -82,19 +90,22 @@ const EMPTY_FACETS: AdminKnowledgeCuratorialFacets = {
 };
 
 export function useChatAdmin(options: UseChatAdminOptions = {}) {
+  const initialKnowledge = readInitialKnowledgeFilters();
   const [llmStatus, setLlmStatus] = useState<AdminLlmStatus | null>(null);
   const [metricsSummary, setMetricsSummary] = useState<AdminMetricsSummary | null>(null);
-  const [metricsHours, setMetricsHours] = useState(24);
+  const [metricsHours, setMetricsHoursState] = useState(() => parseMetricsHoursFromSearch());
   const [documentsResponse, setDocumentsResponse] =
     useState<AdminKnowledgeDocumentsResponse>(DEFAULT_DOCUMENTS_RESPONSE);
   const [guidelines, setGuidelines] = useState<AdminGuideline[]>([]);
-  const [documentSearch, setDocumentSearch] = useState("");
-  const [documentStatus, setDocumentStatus] = useState<DocumentStatusFilter>("all");
-  const [documentCategory, setDocumentCategory] = useState("");
-  const [documentNamespace, setDocumentNamespace] = useState("");
-  const [documentDomain, setDocumentDomain] = useState("");
-  const [documentTag, setDocumentTag] = useState("");
-  const [documentSourceType, setDocumentSourceType] = useState("");
+  const [documentSearch, setDocumentSearch] = useState(initialKnowledge.search);
+  const [documentStatus, setDocumentStatus] = useState<DocumentStatusFilter>(
+    initialKnowledge.status,
+  );
+  const [documentCategory, setDocumentCategory] = useState(initialKnowledge.category);
+  const [documentNamespace, setDocumentNamespace] = useState(initialKnowledge.namespace);
+  const [documentDomain, setDocumentDomain] = useState(initialKnowledge.domain);
+  const [documentTag, setDocumentTag] = useState(initialKnowledge.tag);
+  const [documentSourceType, setDocumentSourceType] = useState(initialKnowledge.sourceType);
   const [documentFacets, setDocumentFacets] =
     useState<AdminKnowledgeCuratorialFacets>(EMPTY_FACETS);
   const [documentOffset, setDocumentOffset] = useState(0);
@@ -225,6 +236,11 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
   const updateDocumentDomain = useCallback((value: string) => {
     setDocumentDomain(value);
     setDocumentOffset(0);
+  }, []);
+
+  const setMetricsHours = useCallback((hours: number) => {
+    setMetricsHoursState(hours);
+    syncMetricsHoursToUrl(hours);
   }, []);
 
   const updateDocumentTag = useCallback((value: string) => {

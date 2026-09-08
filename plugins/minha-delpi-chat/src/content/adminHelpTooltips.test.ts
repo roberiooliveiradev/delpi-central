@@ -6,7 +6,9 @@ describe("adminHelpTooltips", () => {
   it("cobre as seções principais do admin", () => {
     expect(ADMIN_HELP.overview.length).toBeGreaterThan(20);
     expect(ADMIN_HELP.overview).toMatch(/fila de atenção/i);
-    expect(ADMIN_HELP.metrics).toMatch(/drill-down|atenção/i);
+    expect(ADMIN_HELP.metrics).toMatch(/drill-down|atenção|URL|hours/i);
+    expect(ADMIN_HELP.audit).toMatch(/URL|filtro/i);
+    expect(ADMIN_HELP.documents).toMatch(/URL|filtro/i);
     expect(ADMIN_HELP.specialization).toMatch(/Studio/i);
     expect(ADMIN_HELP.fineTuneExportOnly).toMatch(/export/i);
   });

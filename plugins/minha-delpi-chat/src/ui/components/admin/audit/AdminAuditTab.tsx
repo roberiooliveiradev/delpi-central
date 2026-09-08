@@ -21,7 +21,12 @@ import { AuditPagination } from "./AuditPagination";
 import { AuditSummaryStrip } from "./AuditSummaryStrip";
 import { AuditTablePanel } from "./AuditTablePanel";
 import { AuditTimelinePanel } from "./AuditTimelinePanel";
-import { DEFAULT_AUDIT_FILTERS, type AuditFilters } from "./auditTypes";
+import { type AuditFilters } from "./auditTypes";
+import {
+  parseAuditFiltersFromSearch,
+  syncAuditFiltersToUrl,
+} from "../../../../navigation/adminUrlQuery";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 
 import "./AdminAuditTab.css";
 
@@ -93,7 +98,9 @@ function formatJson(value: unknown): string {
 }
 
 export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
-  const [filters, setFilters] = useState<AuditFilters>(DEFAULT_AUDIT_FILTERS);
+  const [filters, setFilters] = useState<AuditFilters>(() =>
+    parseAuditFiltersFromSearch(),
+  );
   const [response, setResponse] = useState<AdminAuditLogsResponse | null>(null);
   const [timelineDays, setTimelineDays] = useState<AdminAuditTimelineDay[]>([]);
   const [selectedLog, setSelectedLog] = useState<AdminAuditLogDetailResponse | null>(null);
@@ -153,8 +160,17 @@ export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
       return;
     }
 
-    void loadLogs(DEFAULT_AUDIT_FILTERS, 0);
+    syncAuditFiltersToUrl(filters);
+    void loadLogs(filters, 0);
+    // Intencional: hidrata da URL uma vez; mudanças seguintes passam por setFilters + sync.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount + capability
   }, [canView, loadLogs]);
+
+  function applyFilters(nextFilters: AuditFilters) {
+    setFilters(nextFilters);
+    syncAuditFiltersToUrl(nextFilters);
+    void loadLogs(nextFilters, 0);
+  }
 
   async function handleSelectLog(log: AdminAuditLog) {
     setError(null);
@@ -197,12 +213,10 @@ export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
   }
 
   function handleFilterByTrace(traceId: string) {
-    const nextFilters = {
+    applyFilters({
       ...filters,
       traceId,
-    };
-    setFilters(nextFilters);
-    void loadLogs(nextFilters, 0);
+    });
   }
 
   if (!canView) {
@@ -249,6 +263,7 @@ export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
         eyebrow="Governança"
         title="Eventos administrativos"
         description="Consulte, filtre e exporte ações registradas pelo Minha DELPI Chat para rastreabilidade operacional."
+        helpHint={ADMIN_HELP.audit}
         summary={
           <AuditSummaryStrip
             logs={logs}
@@ -273,9 +288,14 @@ export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
 
       <AuditFiltersPanel
         filters={filters}
-        onChange={setFilters}
+        onChange={(next) => {
+          setFilters(next);
+          syncAuditFiltersToUrl(next);
+        }}
         canExport={canExport}
-        reloadAuditLogs={(nextFilters) => loadLogs(nextFilters, 0)}
+        reloadAuditLogs={async (nextFilters) => {
+          applyFilters(nextFilters);
+        }}
         exportAuditLogs={handleExport}
         exportAuditLogsCsv={handleExportCsv}
       />

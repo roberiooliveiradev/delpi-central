@@ -25,6 +25,10 @@ import {
   buildAdminHref,
   normalizeAdminNav,
 } from "../../navigation/adminNavigation";
+import {
+  clearAdminFilterQuery,
+  withCurrentAdminSearch,
+} from "../../navigation/adminUrlQuery";
 import { navigateChatHref, resolveChatLocation } from "../../navigation/chatNavigation";
 import { useChatAdmin } from "../../state/hooks/useChatAdmin";
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
@@ -76,7 +80,7 @@ export function ChatAdminPage({
       : buildAdminHref(nav);
     const currentPath = resolveChatLocation().split(/[?#]/)[0] ?? "";
     if (currentPath !== canonical) {
-      navigateChatHref(canonical, { replace: true });
+      navigateChatHref(withCurrentAdminSearch(canonical), { replace: true });
     }
   }, [nav, initialAgentId]);
 
@@ -96,6 +100,7 @@ export function ChatAdminPage({
   const navigateTo = useCallback((next: AdminNavState) => {
     const normalized = normalizeAdminNav(next);
     setNav(normalized);
+    clearAdminFilterQuery();
     navigateChatHref(buildAdminHref(normalized));
   }, []);
 

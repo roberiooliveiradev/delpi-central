@@ -70,6 +70,18 @@ Integração com rotas do chat: `src/navigation/chatRoutes.ts` (`kind: "admin"`)
 
 Revisão do bundle: `admin-v3-en-paths` em `adminShellRevision.ts`.
 
+### Query (filtros compartilháveis)
+
+Módulo: `src/navigation/adminUrlQuery.ts` — keys EN; `replaceState` **sem** `popstate`.
+
+| Superfície | Keys |
+|------------|------|
+| Documentos | `q`, `status`, `category`, `namespace`, `domain`, `tag`, `sourceType` |
+| Auditoria | `q`, `context`, `action`, `userId`, `traceId`, `dateFrom`, `dateTo` |
+| Métricas | `hours` (`24` omitido; `168` / `720`) |
+
+Troca de seção via sidebar limpa a query (`clearAdminFilterQuery`). Rewrite de path PT→EN preserva `search`/`hash`.
+
 ---
 
 ## Árvore da sidebar
