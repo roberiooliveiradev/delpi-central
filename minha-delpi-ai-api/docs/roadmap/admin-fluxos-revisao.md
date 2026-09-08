@@ -212,7 +212,13 @@ Ordem canônica e status (set/2026 — implementação):
 | 6 | RBAC perfis formais no `core-api` | Fora deste bounded context |
 | 7 | **Painel — fila de atenção** — `buildAttentionQueue` + CTAs para seções | **Entregue (MVP)**; custo anômalo = backlog (sem baseline) |
 | 8 | **Deep link query** — `adminUrlQuery` (docs/auditoria/`hours`); rewrite EN preserva search | **Entregue** |
-| 9+ | Presets · debug avançado · skills/Studio · HITL hub · Studio deepen · kit/Manual | **Planejado** — ver [admin-fluxos-plano-implementacao-restante.md](./admin-fluxos-plano-implementacao-restante.md) |
+| 9 | **Presets de inteligência** — Rápido / Equilibrado / Máxima + Avançado | **Entregue** |
+| 10 | **Debug avançado** — JSON atrás de `mdcAdminDebugAdvanced` + CTA Abrir auditoria (`traceId`) | **Entregue** |
+| 11 | **Skills × Studio** — callout + helpHint + CTA Abrir Studio | **Entregue** |
+| 12 | **HITL hub** — Qualidade → `improve` (avaliações / candidatos / feedback) | **Entregue** |
+| 13 | **Studio deepen** — CTA Studio reforçado + jornada no README admin | **Entregue** |
+| 14 | **Kit dual-class** DataTable/SummaryStrip + **Manual** por persona no Painel | **Entregue** |
+| — | RBAC formal core-api · custo anômalo · traces UI · seletor LLM | Fora / backlog |
 
 Regras de qualquer onda futura de código:
 

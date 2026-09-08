@@ -25,6 +25,7 @@ import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { AdminRbacPanel } from "../rbac/AdminRbacPanel";
 import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 import { AdminAttentionQueue } from "./AdminAttentionQueue";
+import { AdminManualPanel } from "./AdminManualPanel";
 import { buildAttentionQueue } from "./attentionQueue";
 
 import "./AdminOverviewTab.css";
@@ -187,6 +188,7 @@ export function AdminOverviewTab({
     { label: "Diretrizes", nav: { section: "knowledge", subTab: "guidelines" } },
     { label: "Simulação", nav: { section: "agents", subTab: "simulation" } },
     { label: "Inteligência", nav: { section: "platform", subTab: "intelligence" } },
+    { label: "Melhoria contínua", nav: { section: "quality", subTab: "improve" } },
     { label: "Auditoria", nav: { section: "governance", subTab: "audit" } },
   ];
 
@@ -233,6 +235,8 @@ export function AdminOverviewTab({
           ))}
         </div>
       </article>
+
+      <AdminManualPanel onOpen={openNav} />
 
       <AdminRbacPanel rbac={rbac} />
     </section>
