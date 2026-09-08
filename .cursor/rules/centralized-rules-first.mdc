@@ -1,5 +1,5 @@
 ---
-description: Sempre estender regras centralizadas; proibir patches locais, duplicação de contrato e ifs por endpoint
+description: Sempre localizar a responsabilidade transversal e a fonte canônica antes de alterar; proibir patches locais, duplicação de regra e contratos paralelos
 alwaysApply: true
 ---
 
@@ -7,42 +7,88 @@ alwaysApply: true
 
 ## Princípio
 
-**Nunca** corrigir sintoma com ajuste pontual em componente, use case, prompt de agente ou JSON de endpoint. Localize o módulo canônico, corrija a regra real e cubra a generalização com regressão.
+**Nunca** corrigir sintoma com ajuste pontual antes de identificar:
 
-## Mapa canônico
+```text
+responsabilidade transversal
+→ owner do conceito
+→ fonte canônica
+→ consumidores
+→ contrato
+→ implementação
+```
 
-| Domínio | Fonte/módulo canônico | Não duplicar em |
-|---------|------------------------|-----------------|
+Patch local só é aceitável quando o comportamento é realmente local e não contradiz owner/contrato transversal.
+
+# Mapa canônico da plataforma
+
+| Conceito | Fonte canônica | Não duplicar em |
+|---|---|---|
+| ownership, bounded contexts, dependências | `platform-architecture-boundaries.mdc` | imports entre domains/apps, helpers de negócio em `shared/` |
+| Keycloak/JWT/RBAC/autorização/secrets | `platform-security-identity-authorization.mdc` | frontend, middleware ad hoc, bypass local |
+| APIs/OpenAPI/DTO/eventos/integrações | `platform-api-contracts-integration.mdc` | README paralelo, client/controller com contrato próprio |
+| DB/schema/migrations/transações | `platform-data-persistence.mdc` | controller, script manual, banco de outro contexto |
+| React/Portal/MFE/design system/acessibilidade | `platform-frontend-mfe-experience.mdc` | componente/CSS duplicado por plugin |
+| testes/evidência/Definition of Done | `platform-quality-testing.mdc` | smoke isolado, opinião manual, expected alterado para passar |
+| Docker/gateway/deploy/config/runtime | `platform-delivery-runtime-operations.mdc` | comando manual não versionado, config escondida no container |
+| logs/métricas/tracing/SLO/retries/degradação | `platform-reliability-observability.mdc` | `print`, timeout arbitrário, retry local sem política |
+
+Regra específica de app/tecnologia é **filha** de uma dessas responsabilidades; nunca pode contrariá-la.
+
+## Fluxo obrigatório
+
+```text
+pedido/bug
+→ localizar owner transversal
+→ localizar owner de domínio
+→ corrigir fonte canônica
+→ ligar consumidores reais
+→ positive + sibling + negative
+→ validar objetivo original
+```
+
+## Duplicação de regra
+
+Sinais de duplicação proibida:
+
+- mesma autorização em API e MFE;
+- mesmo DTO definido de formas divergentes em produtor e consumidor;
+- componente compartilhável copiado em plugins;
+- mesma migration/regra de integridade implementada em script manual;
+- mesma regra de domínio em duas APIs;
+- timeout/retry diferentes por client sem justificativa;
+- logs com formatos e redaction diferentes para o mesmo fluxo.
+
+Quando houver 2+ implementações do mesmo conceito, primeiro decidir **qual é o owner**, depois migrar consumidores; não criar terceira abstração.
+
+# Chat AI — especialização
+
+O Chat AI adiciona regras próprias sobre as responsabilidades da plataforma.
+
+| Conceito | Fonte canônica | Não duplicar em |
+|---|---|---|
 | Pipeline/intenção/tools/RAG/direct answer | `minha-delpi-ai-api` domain/application services | send/stream use case, prompt de agente |
 | Tools/actions | OpenAPI importado + Action Catalog/index + retrieval/planner/validator | catálogo paralelo por endpoint, `if path`, selector provider |
-| Evals da IA | `ai-intelligence-evaluation.mdc` + `docs/testing/chat-ai-flow-families.md` | roadmaps, smoke isolado, opinião manual |
+| Evals da IA | `ai-intelligence-evaluation.mdc` + `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md` | roadmaps, smoke isolado, opinião manual |
 | Stack LLM | `LLM_PROVIDER` + config/factories canônicas | URL/modelo hardcoded |
-| Ativação de agente | `ChatWorkspaceAgentActivationService` + workspace context | `default_agent_id` ad hoc |
-| Texto/UX/vocabulário | `app/content/pt-BR/assistant/*.json` | string PT em Python/TS |
-| Contrato técnico API | OpenAPI + Action Catalog | assistant JSON, markers, schema duplicado |
-| Regex/threshold transversal | conteúdo/config canônico | constantes espalhadas em serviços |
+| Conteúdo/vocabulário | `app/content/pt-BR/assistant/*.json` | string PT em Python/TS quando existe content layer |
 | Apresentação | API schema-driven + MFE render-only | presenter/if por rota |
-| Nova API/action | `new-api-route-checklist.mdc` + `openapi-first-universal-tool-routing.mdc` | endpoint-specific routing/config |
-| Veredito factual | serviço/profile/oracle canônico | `if path` ou nome da rota |
-| Segurança de tools | policy/RBAC/confirmation + `ai-external-tools-security.mdc` | prompt do agente |
-| Observabilidade | `observability-standards.mdc` | logs improvisados/segredos |
+| Nova API/action | `new-api-route-checklist.mdc` + `openapi-first-universal-tool-routing.mdc` | routing/config endpoint-specific |
 
 ## Tools/actions: uma única fonte técnica
 
 ```text
 OpenAPI
 → Action Catalog persistido/indexado
-→ allowed_action_ids + policies
+→ allowed actions + policies
 → retrieval/planner/validator genéricos
-→ executor HTTP autorizado
+→ executor autorizado
 → schema-driven presentation
 ```
 
 Não substituir hardcode Python por JSON que repita path, operationId, parâmetros ou schema.
 
 ## Evals: uma única fonte de qualidade
-
-Mudança de inteligência segue:
 
 ```text
 protocolo R1–R11
@@ -56,47 +102,53 @@ protocolo R1–R11
 
 Um script que imprime PASS não é autoridade se uma dimensão obrigatória estiver FAIL/INCONCLUSIVE.
 
-## API externa como teste arquitetural
+# Shared code
 
-Qualquer mudança no motor de tools deve responder:
+Antes de criar utilitário/pacote compartilhado:
 
-> Uma API OpenAPI externa, sem código no monorepo, funciona após import/index + agent binding, sem editar o core por endpoint?
+```text
+2+ consumidores reais?
+sem regra de negócio?
+contrato pequeno e estável?
+owner claro?
+testes próprios?
+```
 
-Mudanças no motor exigem fixture de API desconhecida e teste metamórfico conforme `ai-intelligence-evaluation.mdc`.
+Se não, manter no bounded context dono. `shared/` não é destino para código “que não sabemos onde colocar”.
 
-## O que NÃO fazer
+# Mudança transversal
 
-- Novo `if` no use case para a frase reportada.
-- Novo presenter por rota/entidade.
-- Fix só no agente/UI quando transversal.
-- `if path/provider/operationId` no motor genérico.
-- Bias por prefixo do provider.
-- Criar marker/strategy/catálogo técnico por endpoint.
-- Copiar OpenAPI para JSON do assistente.
-- Permitir planner escolher action fora das candidates autorizadas.
-- Criar service por API plugada.
+Se a correção exigir alterar mais de um app, verificar primeiro se existe:
+
+- contrato a evoluir;
+- ownership errado;
+- abstração compartilhada ausente;
+- regra duplicada;
+- dependência invertida.
+
+Não editar múltiplos consumidores para sincronizar comportamento sem estabilizar a fonte canônica.
+
+# O que NÃO fazer
+
+- Novo `if` no use case para caso reportado quando regra é transversal.
+- Fix só no frontend para problema de contrato/domínio.
+- Bypass local de RBAC.
+- DTO/erro diferente por controller para o mesmo conceito.
+- MFE importar domain/use case de app irmão.
+- SQL/migration manual fora do ownership do dado.
+- CSS/componente do kit duplicado no MFE.
+- Timeout/retry/logging ad hoc quando existe regra transversal.
 - Alterar fixture/expected output para esconder regressão.
-- Usar documentação histórica como instrução de implementação quando há fonte canônica vigente.
+- Usar roadmap/changelog histórico como instrução vigente contra fonte canônica.
 
-## O que fazer
+# Checklist antes de merge
 
-1. Identificar a responsabilidade e a fonte canônica.
-2. Para API/action, enriquecer OpenAPI/importer/Action Catalog quando faltar metadata técnica.
-3. Para linguagem/policy, enriquecer configuração transversal sem duplicar contrato.
-4. Implementar comportamento transversal uma vez.
-5. Ligar todos os consumidores ao ponto canônico.
-6. Cobrir positivo + irmão + negativo; tools também com API externa desconhecida quando o motor mudar.
-7. Medir outcome, segurança e eficiência, não apenas rota/tool.
-8. Para mudanças de alto risco, usar shadow/canary com critério mensurável de promoção.
-
-## Checklist antes de merge
-
-- [ ] Existe um único ponto de verdade para a regra?
-- [ ] Metadata técnica veio do OpenAPI/Action Catalog?
-- [ ] Nenhum catálogo técnico paralelo foi criado?
-- [ ] Nenhum consumidor novo bypassa o módulo canônico?
-- [ ] API externa desconhecida continua plugável?
-- [ ] Positive/sibling/negative estão cobertos?
-- [ ] R1–R11 obrigatórios foram avaliados?
-- [ ] Outcome/task success foi verificado quando aplicável?
-- [ ] RBAC/sensitivity/confirmation foram preservados?
+- [ ] Identifiquei uma das 8 responsabilidades transversais aplicáveis?
+- [ ] Existe um único owner/fonte de verdade para a regra?
+- [ ] Consumidores usam contrato, não internals?
+- [ ] Segurança/autorização continuam backend-first?
+- [ ] Dados pertencem ao contexto correto?
+- [ ] UI reutiliza componentes/design system canônicos?
+- [ ] Positive/sibling/negative cobrem a mudança?
+- [ ] Delivery/reliability foram avaliados se materiais?
+- [ ] Nenhuma nova fonte paralela foi criada?
