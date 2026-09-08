@@ -41,7 +41,9 @@ Owner: `platform-security-identity-authorization.mdc`
 
 - `ai-external-tools-security.mdc`
 
-**Gap identificado:** a plataforma possui documentação forte de Keycloak/RBAC, porém poucas regras especializadas gerais de AuthN/AuthZ fora do Chat AI. A responsabilidade transversal criada passa a ser a fonte obrigatória para todas as APIs; próximos gates devem cobrir ausência/bypass de autorização em novas rotas quando o sinal estático for confiável.
+**Gap ainda aberto:** a plataforma possui documentação forte de Keycloak/RBAC, porém múltiplos stacks válidos de enforcement (`shared/delpi_auth`, decorators locais, dependencies, service token e serviços de policy). Não criar regex genérica de rota sem `@require_permission` antes de modelar essas variantes.
+
+**Gate já implementado:** `JWT_VERIFY_DISABLED` bloqueia nova desativação explícita da verificação de assinatura/certificado JWT em código de produção.
 
 ## 3. APIs, contratos e integrações
 
@@ -72,6 +74,8 @@ Owner: `platform-data-persistence.mdc`
 
 Racional: schema, migration, persistência durável, consulta e invariantes de dados.
 
+**Gate já implementado:** `IMMUTABLE_MIGRATION_MUTATION` permite nova `VNN__*.sql`, mas bloqueia modificação, rename ou remoção de migration SQL já versionada.
+
 ## 5. Frontend, MFE e experiência
 
 Owner: `platform-frontend-mfe-experience.mdc`
@@ -90,6 +94,11 @@ Owner: `platform-frontend-mfe-experience.mdc`
 
 Racional: composição visual, integração federada, design system, estados, acessibilidade e comportamento de UI.
 
+**Gates já implementados:**
+
+- `MFE_GLOBAL_CSS` bloqueia novos seletores globais perigosos em CSS de MFE;
+- `MFE_PLUGIN_UI_OVERRIDE` bloqueia estilização local de classes `.delpi-ui-*`, preservando `plugins/plugin-ui` como owner do CSS do kit.
+
 ## 6. Qualidade, testes e evidência
 
 Owner: `platform-quality-testing.mdc`
@@ -103,6 +112,8 @@ Owner: `platform-quality-testing.mdc`
 - `test-and-commit.mdc`
 
 Racional: processo de investigação, planejamento, evidência, regressão, CI, documentação de entrega e Definition of Done.
+
+O `Architecture Enforcement` executa o scanner Phase 3 e `scripts/ci/audit_platform_guardrails.py`, ambos com testes próprios.
 
 ## 7. Delivery, runtime e operações
 
@@ -122,6 +133,8 @@ Owner: `platform-reliability-observability.mdc`
 - `observability-standards.mdc`
 
 Racional: limites, latência, timeout/retry, degradação, logs, métricas, tracing e capacidade.
+
+O scanner Phase 3 já bloqueia novas chamadas HTTP Python detectáveis sem timeout, retry inseguro de writes e exposição óbvia de secrets.
 
 ---
 
@@ -171,16 +184,23 @@ São específicas e pequenas, porém devem ser revisadas quando o TV Dashboard e
 
 # Gaps prioritários para enforcement
 
-Ordem recomendada:
+## Implementados
 
-1. **AuthZ backend-first:** detectar nova rota protegida apenas por UI ou sem middleware/permission check quando a arquitetura do pacote tornar isso verificável.
-2. **Boundaries entre apps:** bloquear import de `domain`/`application` entre bounded contexts irmãos e acesso direto indevido de MFE a API vizinha.
-3. **Migrations:** bloquear alteração de migration já versionada e padrões destrutivos novos em produção.
-4. **Contratos:** validar OpenAPI/operationId/response contract e mudanças breaking sem classificação/migração quando automatizável.
-5. **MFE:** detectar CSS global perigoso, cópia/override de `plugin-ui`, build/config de federation fora do padrão.
-6. **Reliability:** ampliar o gate existente de timeout/retry para clients compartilhados e novos serviços além do motor do Chat AI.
+1. **Migrations imutáveis** — `IMMUTABLE_MIGRATION_MUTATION`.
+2. **MFE sem CSS global novo** — `MFE_GLOBAL_CSS`.
+3. **MFE sem override do kit** — `MFE_PLUGIN_UI_OVERRIDE`.
+4. **JWT sem verificação explicitamente desabilitada** — `JWT_VERIFY_DISABLED`.
+5. **HTTP/retry/secrets** — gates já existentes do Architecture Enforcement.
 
-Gates devem ser incrementais/diff-aware quando existe dívida histórica. Não tornar CI vermelho por todo o legado para depois criar exceções genéricas.
+## Próximos, após modelagem segura
+
+1. **AuthZ backend-first:** modelar os mecanismos válidos por stack e permitir rotas públicas/health/service-token explicitamente antes de bloquear ausência de autorização.
+2. **Boundaries entre apps:** modelar bounded contexts e imports permitidos para bloquear import de `domain`/`application` entre apps irmãos e bypass HTTP indevido.
+3. **Contratos:** aproveitar OpenAPI/schema existentes para detectar drift e mudanças breaking sem classificação, evitando regex textual.
+4. **MFE federation/build:** ampliar gates a configuração de federation apenas com base nos helpers/contratos vigentes.
+5. **Delivery:** health/readiness, rollback e configuração devem ganhar gates quando houver sinal determinístico comum entre stacks.
+
+Gates permanecem incrementais/diff-aware quando existe dívida histórica. Não tornar CI vermelho por todo o passado para depois criar exceções genéricas.
 
 # Regra de manutenção
 
