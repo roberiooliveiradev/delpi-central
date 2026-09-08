@@ -330,6 +330,11 @@ declare module "@delpi/plugin-ui/index" {
     contextLabel: string;
   };
 
+  /** Formata `indicators[].score` do SI para o rótulo «Nota IDD». */
+  export function resolveIndicatorIddScoreLabelFromSi(
+    score: number | null | undefined,
+  ): string | null;
+
   export function createDashboardKpiCard(config: {
     prefix: string;
     labels: KpiCardLabels;

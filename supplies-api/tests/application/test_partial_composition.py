@@ -35,7 +35,7 @@ def test_partial_one_kpi_down_keeps_others():
     pr = MagicMock()
     pr.count_open_requests.return_value = 4
     si = MagicMock()
-    si.goals_by_kpi.return_value = {}
+    si.metrics_by_kpi.return_value = {}
 
     result = OverviewCompositionService(
         delpi_reads=reads,
@@ -64,7 +64,7 @@ def test_partial_si_failure_does_not_drop_kpis():
     pr = MagicMock()
     pr.count_open_requests.return_value = 0
     si = MagicMock()
-    si.goals_by_kpi.side_effect = StrategicIndicatorsGatewayError("si down")
+    si.metrics_by_kpi.side_effect = StrategicIndicatorsGatewayError("si down")
 
     result = OverviewCompositionService(
         delpi_reads=reads,
@@ -75,3 +75,4 @@ def test_partial_si_failure_does_not_drop_kpis():
     assert all(kpi["status"] == "available" for kpi in result["kpis"])
     assert any(item["source"] == "si" for item in result["partialFailures"])
     assert all(kpi["meta"] is None for kpi in result["kpis"])
+    assert all(kpi["iddScore"] is None for kpi in result["kpis"])

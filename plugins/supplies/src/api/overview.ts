@@ -15,6 +15,8 @@ export type OverviewKpiCard = {
   displayValue: string | null;
   unit: string | null;
   meta: number | null;
+  /** Nota IDD canônica do SI (`score`); null quando SI não enviou. */
+  iddScore: number | null;
   status: OverviewKpiStatus;
   source: string;
 };

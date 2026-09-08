@@ -239,19 +239,12 @@ function OverviewKpiItem({
   const showPeriodBadge =
     kpi.temporalNature === "interval" ? periodKindBadge ?? undefined : undefined;
   const performance = presentation.goalPerformanceBadge;
-  const comparisonTone =
-    performance?.tone === "success"
-      ? "positive"
-      : performance?.tone === "warning"
-        ? "warning"
-        : null;
 
   return (
     <SuppliesKpiCard
       title={kpi.title}
       titleHint={kpi.description}
       value={unavailable ? OVERVIEW_CONTENT.unavailable : kpi.displayValue ?? "—"}
-      comparisonTone={comparisonTone}
       contextLabel={
         unavailable ? OVERVIEW_CONTENT.partialNote : presentation.contextLabel
       }

@@ -3,43 +3,75 @@
   box-sizing: border-box;
 }
 
+/* Tokens alinhados ao Portal Comercial (--cm-* → --delpi-ui-* nos cards KPI). */
 .dashboard-supplies-portal {
   --sp-page-padding: 24px;
   --sp-section-gap: 24px;
   --sp-grid-gap: 16px;
+  --sp-brand: var(--secundary, #003866);
   --sp-accent: var(--primary, #089bdb);
-  --sp-title: var(--secundary, #003866);
+  --sp-title: var(--sp-brand);
   --sp-text: var(--text, #111111);
   --sp-text-muted: var(--text-muted, rgba(17, 17, 17, 0.68));
   --sp-surface: var(--surface, #ffffff);
+  --sp-surface-elevated: color-mix(in srgb, var(--sp-surface) 92%, #fff);
+  --sp-surface-soft: color-mix(in srgb, var(--sp-brand) 3.5%, var(--sp-surface));
+  --sp-surface-muted: var(--surface-muted, #f6f8fa);
   --sp-border: var(--border, #e6e6e6);
   --sp-danger: var(--danger, #b42318);
+  --sp-success: var(--success, #067647);
+  --sp-warning: #b54708;
   --delpi-ui-accent: var(--sp-accent);
-  --delpi-ui-title: var(--sp-title);
+  /* Valor do KPI no claro: navy brand (paridade Comercial). */
+  --delpi-ui-title: var(--sp-brand);
   --delpi-ui-surface: var(--sp-surface);
+  --delpi-ui-surface-elevated: var(--sp-surface-elevated);
+  --delpi-ui-surface-soft: var(--sp-surface-soft);
   --delpi-ui-text: var(--sp-text);
   --delpi-ui-text-muted: var(--sp-text-muted);
   --delpi-ui-border: var(--sp-border);
   --delpi-ui-muted: var(--sp-text-muted);
   --delpi-ui-danger: var(--sp-danger);
+  --delpi-ui-success: var(--sp-success);
+  --delpi-ui-warning: var(--sp-warning);
   --delpi-ui-section-gap: var(--sp-section-gap);
   --delpi-ui-grid-gap: var(--sp-grid-gap);
   --delpi-ui-page-padding: var(--sp-page-padding);
 }
 
-:root[data-theme="dark"] .dashboard-supplies-portal {
-  --sp-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
-  --sp-text: rgba(255, 255, 255, 0.88);
-  --sp-text-muted: rgba(255, 255, 255, 0.72);
+/*
+ * Modo escuro: mesma regra do Comercial — navy não serve como tinta;
+ * brand/title usam --primary (sem clarear com branco / ciano pastel).
+ * Surface dos cards: mix surface-2 (paridade com commercial/index.css).
+ */
+:root[data-theme="dark"] .dashboard-supplies-portal,
+.theme-dark .dashboard-supplies-portal {
+  --sp-brand: var(--primary, #089bdb);
+  --sp-accent: var(--primary, #089bdb);
+  --sp-title: var(--sp-brand);
+  --sp-text: rgba(255, 255, 255, 0.94);
+  --sp-text-muted: rgba(255, 255, 255, 0.78);
   --sp-surface: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
-  --sp-border: rgba(255, 255, 255, 0.1);
+  --sp-surface-elevated: color-mix(in srgb, var(--sp-surface) 88%, #fff);
+  --sp-surface-soft: color-mix(in srgb, var(--primary, #089bdb) 10%, var(--sp-surface));
+  --sp-surface-muted: color-mix(in srgb, var(--surface-2, #1b2030) 70%, #0b0e14);
+  --sp-border: rgba(255, 255, 255, 0.14);
+  --sp-danger: #f87171;
+  --sp-success: #4ade80;
+  --sp-warning: #fdba74;
   --delpi-ui-accent: var(--sp-accent);
-  --delpi-ui-title: var(--sp-title);
+  /* Valor do KPI: texto branco (paridade Comercial) — não herda brand/azul. */
+  --delpi-ui-title: var(--sp-text);
   --delpi-ui-surface: var(--sp-surface);
+  --delpi-ui-surface-elevated: var(--sp-surface-elevated);
+  --delpi-ui-surface-soft: var(--sp-surface-soft);
   --delpi-ui-text: var(--sp-text);
   --delpi-ui-text-muted: var(--sp-text-muted);
   --delpi-ui-border: var(--sp-border);
   --delpi-ui-muted: var(--sp-text-muted);
+  --delpi-ui-danger: var(--sp-danger);
+  --delpi-ui-success: var(--sp-success);
+  --delpi-ui-warning: var(--sp-warning);
 }
 
 .dashboard-supplies-portal.dashboard-page {

@@ -44,7 +44,9 @@ def test_overview_positive_seven_kpis():
     pr = MagicMock()
     pr.count_open_requests.return_value = 12
     si = MagicMock()
-    si.goals_by_kpi.return_value = {"KPI-OTD": 98.0}
+    si.metrics_by_kpi.return_value = {
+        "KPI-OTD": {"goal": 98.0, "score": 6.57},
+    }
 
     service = OverviewCompositionService(
         delpi_reads=reads,
@@ -77,10 +79,12 @@ def test_overview_positive_seven_kpis():
         "KPI-CRITICAL-MP",
     ]
     assert all(kpi["status"] == "available" for kpi in result["kpis"])
-    assert next(k for k in result["kpis"] if k["id"] == "KPI-OTD")["value"] == 95.0
+    otd = next(k for k in result["kpis"] if k["id"] == "KPI-OTD")
+    assert otd["value"] == 95.0
     assert next(k for k in result["kpis"] if k["id"] == "KPI-SC-OPEN")["value"] == 12.0
-    assert next(k for k in result["kpis"] if k["id"] == "KPI-OTD")["meta"] == 98.0
-    assert next(k for k in result["kpis"] if k["id"] == "KPI-OTD")["temporalNature"] == "interval"
+    assert otd["meta"] == 98.0
+    assert otd["iddScore"] == 6.57
+    assert otd["temporalNature"] == "interval"
     assert next(k for k in result["kpis"] if k["id"] == "KPI-CRITICAL-MP")["temporalNature"] == (
         "snapshot"
     )
@@ -95,7 +99,7 @@ def test_overview_sibling_consolidated_two_units():
     pr = MagicMock()
     pr.count_open_requests.side_effect = [5, 7]
     si = MagicMock()
-    si.goals_by_kpi.return_value = {}
+    si.metrics_by_kpi.return_value = {}
 
     result = OverviewCompositionService(
         delpi_reads=reads,
@@ -175,7 +179,7 @@ def test_http_overview_positive(mock_resolve, mock_validate):
     pr = MagicMock()
     pr.count_open_requests.return_value = 1
     si = MagicMock()
-    si.goals_by_kpi.return_value = {}
+    si.metrics_by_kpi.return_value = {}
 
     with patch(
         "app.interfaces.http.routes.analytics_routes.OverviewCompositionService",

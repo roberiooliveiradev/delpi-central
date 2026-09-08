@@ -153,7 +153,14 @@ describe("Overview URL filters + unit MultiSelect", () => {
 });
 
 describe("overview KPI presentation", () => {
-  it("builds commercial-like goal presentation with performance badge", async () => {
+  const ctx = {
+    from: "2026-09-01",
+    to: "2026-09-08",
+    scopeLabel: "Consolidado (unidades liberadas)",
+    consolidated: true,
+  };
+
+  it("positive: uses SI iddScore (not local recalc) and goal badges", async () => {
     const { buildOverviewKpiPresentation } = await import("./overviewKpiPresentation");
     const presentation = buildOverviewKpiPresentation(
       {
@@ -167,20 +174,62 @@ describe("overview KPI presentation", () => {
         displayValue: "92,0%",
         unit: "%",
         meta: 98,
+        iddScore: 6.57,
         status: "available",
         source: "api-delpi",
       },
-      {
-        from: "2026-09-01",
-        to: "2026-09-08",
-        scopeLabel: "Consolidado (unidades liberadas)",
-        consolidated: true,
-      },
+      ctx,
     );
     expect(presentation.goalLabel).toBeTruthy();
     expect(presentation.goalPerformanceBadge?.statusLabel).toMatch(/meta/i);
     expect(presentation.goalPerformanceBadge?.directionLabel).toMatch(/maior|menor/i);
-    expect(presentation.iddScoreLabel).toBeTruthy();
+    expect(presentation.iddScoreLabel).toBe("6,57");
     expect(presentation.contextLabel).toMatch(/Consolidado/);
+  });
+
+  it("sibling: formats another SI score for stock KPI", async () => {
+    const { buildOverviewKpiPresentation } = await import("./overviewKpiPresentation");
+    const presentation = buildOverviewKpiPresentation(
+      {
+        id: "KPI-STOCK-VALUE",
+        viewId: "overview",
+        title: "Estoque",
+        description: "Valor",
+        temporalNature: "interval",
+        periodLabel: "…",
+        value: 1_000_000,
+        displayValue: "R$ 1.000.000,00",
+        unit: "R$",
+        meta: 1_200_000,
+        iddScore: 8.2,
+        status: "available",
+        source: "api-delpi",
+      },
+      ctx,
+    );
+    expect(presentation.iddScoreLabel).toBe("8,20");
+  });
+
+  it("negative: without SI score does not invent local IDD", async () => {
+    const { buildOverviewKpiPresentation } = await import("./overviewKpiPresentation");
+    const presentation = buildOverviewKpiPresentation(
+      {
+        id: "KPI-OTD",
+        viewId: "overview",
+        title: "OTD compras",
+        description: "Pontualidade",
+        temporalNature: "interval",
+        periodLabel: "…",
+        value: 92,
+        displayValue: "92,0%",
+        unit: "%",
+        meta: 98,
+        iddScore: null,
+        status: "available",
+        source: "api-delpi",
+      },
+      ctx,
+    );
+    expect(presentation.iddScoreLabel).toBeNull();
   });
 });

@@ -1,5 +1,6 @@
 import {
   buildKpiGoalPresentation,
+  resolveIndicatorIddScoreLabelFromSi,
   type DashboardGoalFields,
   type PerformanceDirection,
 } from "@delpi/plugin-ui/index";
@@ -94,10 +95,15 @@ export function buildOverviewKpiPresentation(
     return value.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
   };
 
+  // Comercial: Nota IDD vem do SI (`score`). Passar iddScoreLabel explícito
+  // evita o fallback local resolveIddScoreLabel(realizado, meta).
+  const iddScoreLabel = resolveIndicatorIddScoreLabelFromSi(kpi.iddScore);
+
   return buildKpiGoalPresentation(contextLabel, goal, formatComparable, {
     showGoal: goal != null && kpi.status === "available",
     realizedValue: kpi.status === "available" ? kpi.value : null,
     dateStart: ctx.from,
     dateEnd: ctx.to,
+    iddScoreLabel,
   });
 }

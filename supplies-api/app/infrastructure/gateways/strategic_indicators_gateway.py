@@ -22,20 +22,34 @@ class StrategicIndicatorsGatewayError(RuntimeError):
     pass
 
 
+def _as_optional_float(raw: Any) -> float | None:
+    if raw is None:
+        return None
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None
+
+
 class StrategicIndicatorsGateway:
-    """Reads SI metas via api-delpi dashboard department-indicators (platform path)."""
+    """Reads SI metas + IDD scores via api-delpi department-indicators (platform path)."""
 
     def __init__(self, delpi: DelpiApiGateway | None = None) -> None:
         self.delpi = delpi or DelpiApiGateway()
 
-    def goals_by_kpi(
+    def metrics_by_kpi(
         self,
         *,
         access_token: str,
         branch: str | None,
         start_date: str | None,
         end_date: str | None,
-    ) -> dict[str, float | None]:
+    ) -> dict[str, dict[str, float | None]]:
+        """
+        Returns per KPI:
+        - goal: SI `goal_value` (meta operacional)
+        - score: SI `score` (Nota IDD canônica — não recalcular no MFE)
+        """
         params: dict[str, Any] = {"department_id": "supplies"}
         if branch:
             params["branch"] = branch
@@ -63,12 +77,28 @@ class StrategicIndicatorsGateway:
                 if isinstance(row, dict) and row.get("indicator_id"):
                     by_id[str(row["indicator_id"])] = row
 
-        goals: dict[str, float | None] = {}
+        metrics: dict[str, dict[str, float | None]] = {}
         for kpi_id, indicator_id in SI_INDICATOR_BY_KPI.items():
             row = by_id.get(indicator_id) or {}
-            score = row.get("score")
-            try:
-                goals[kpi_id] = float(score) if score is not None else None
-            except (TypeError, ValueError):
-                goals[kpi_id] = None
-        return goals
+            metrics[kpi_id] = {
+                "goal": _as_optional_float(row.get("goal_value")),
+                "score": _as_optional_float(row.get("score")),
+            }
+        return metrics
+
+    def goals_by_kpi(
+        self,
+        *,
+        access_token: str,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> dict[str, float | None]:
+        """Backward-compatible: only SI goal_value per KPI."""
+        metrics = self.metrics_by_kpi(
+            access_token=access_token,
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        return {kpi_id: row.get("goal") for kpi_id, row in metrics.items()}

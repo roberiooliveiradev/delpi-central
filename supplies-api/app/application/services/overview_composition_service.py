@@ -165,9 +165,9 @@ class OverviewCompositionService:
         token = user.access_token or ""
         partial_failures: list[dict[str, str]] = []
 
-        si_goals: dict[str, float | None] = {}
+        si_metrics: dict[str, dict[str, float | None]] = {}
         try:
-            si_goals = self.strategic_indicators.goals_by_kpi(
+            si_metrics = self.strategic_indicators.metrics_by_kpi(
                 access_token=token,
                 branch=branches[0] if mode == "single" else None,
                 start_date=start,
@@ -278,7 +278,9 @@ class OverviewCompositionService:
                 if nature in {"snapshot", "state"}
                 else period_label
             )
-            meta_value = si_goals.get(kpi_id)
+            si_row = si_metrics.get(kpi_id) or {}
+            meta_value = si_row.get("goal")
+            idd_score = si_row.get("score")
             kpis.append(
                 {
                     "id": kpi_id,
@@ -293,6 +295,7 @@ class OverviewCompositionService:
                     else None,
                     "unit": definition["unit"],
                     "meta": meta_value,
+                    "iddScore": idd_score,
                     "status": "available" if available else "unavailable",
                     "source": definition["source"],
                 }

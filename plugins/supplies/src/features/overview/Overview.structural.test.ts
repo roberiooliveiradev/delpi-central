@@ -19,6 +19,7 @@ describe("Overview structural", () => {
     expect(page).toContain("buildOverviewKpiPresentation");
     expect(page).toContain("goalPerformanceBadge");
     expect(page).toContain("iddScoreLabel");
+    expect(page).not.toContain("comparisonTone");
     expect(page).toContain("sp-overview-kpi-grid");
     expect(page).toContain("sp-gestao-charts-grid");
     expect(page).toContain("OverviewOtdSeriesChart");
