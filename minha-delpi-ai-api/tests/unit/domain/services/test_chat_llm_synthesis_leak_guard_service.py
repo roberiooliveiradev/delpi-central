@@ -222,3 +222,38 @@ def test_looks_like_english_operational_stock_prose_triggers_fallback():
     assert guarded == fallback
     assert "key facts" not in guarded.lower()
     assert "sales complement" not in guarded.lower()
+
+
+def test_operational_guard_strips_sql_fence_keeps_prose():
+    answer = (
+        "O produto **90260149** tem saldo nas filiais 01 e 02.\n\n"
+        "```sql\n"
+        "SELECT B2_FILIAL, B2_QATU FROM SB2010 WHERE B2_COD = '90260149'\n"
+        "```\n\n"
+        "Concentração maior na filial 01."
+    )
+    assert ChatLlmSynthesisLeakGuardService.looks_like_operational_sql_fence_leak(answer)
+    guarded = ChatLlmSynthesisLeakGuardService.guard_operational_answer(
+        answer=answer,
+        fallback="Fallback estoque.",
+    )
+    assert "```sql" not in guarded.lower()
+    assert "select " not in guarded.lower()
+    assert "90260149" in guarded
+    assert "filial" in guarded.lower()
+
+
+def test_sql_authoring_format_preserves_fence():
+    from app.domain.services.chat_advanced_sql_specialist_service import (
+        ChatAdvancedSqlSpecialistService,
+    )
+
+    raw = (
+        "Segue a consulta pedida:\n\n"
+        "```sql\n"
+        "SELECT A1_COD, A1_NOME FROM SA1010 WHERE D_E_L_E_T_ = ''\n"
+        "```"
+    )
+    formatted = ChatAdvancedSqlSpecialistService.format_sql_authoring_answer(raw)
+    assert "```sql" in formatted.lower()
+    assert "select a1_cod" in formatted.lower()

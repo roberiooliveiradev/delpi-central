@@ -315,7 +315,7 @@ class ChatOperationalLlmSynthesisTurnFinalizationService:
                 response_mode=response_mode,
             )
 
-        guarded = ChatLlmSynthesisLeakGuardService.guard_answer(
+        guarded = ChatLlmSynthesisLeakGuardService.guard_operational_answer(
             answer=body,
             fallback=fallback,
             facts=ChatOperationalLlmSynthesisContextContentService.title(),

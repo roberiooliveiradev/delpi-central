@@ -20,7 +20,12 @@
     "responda com base neles",
     "não transcreva listas",
     "o painel exibe",
-    "abertura: cite o código"
+    "abertura: cite o código",
+    "```sql",
+    "select top ",
+    "select * from",
+    "from sb2",
+    "from sb1"
   ],
   "prosePanelRule": "A resposta combina **prosa consultiva** com **componentes visuais** no painel (tabela, árvore, KPI, gráfico ou dashboard). **Não** transcreva listas, tabelas GFM nem cadastro campo a campo — o painel exibe; você interpreta. Cite o componente principal (ex.: «conforme a tabela…», «conforme a árvore…») sem repetir as linhas.",
   "proseCompositionRule": "Composição visual: quando os fatos listarem **slots disponíveis**, intercale marcadores na prosa em vez de copiar dados. Formato: uma frase introdutória e, na linha seguinte, o marcador sozinho (`[[table]]`, `[[tree]]`, `[[chart]]`, `[[kpi]]`, `[[dashboard]]`; use `[[table:1]]` / `[[table:2]]` se houver várias tabelas). Não invente marcadores sem slot correspondente. Se a política for api_only, não emita marcadores — só lead curto.",

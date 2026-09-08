@@ -141,6 +141,75 @@ class ChatLlmSynthesisLeakGuardService:
         return hits >= max(1, min_hits)
 
     @classmethod
+    def strip_markdown_sql_fences(cls, answer: str | None) -> str:
+        """Remove fences ```sql … ``` da prosa operacional (não usado no authoring SQL)."""
+        text = str(answer or "")
+        if not text.strip():
+            return ""
+
+        pattern = ChatLlmSynthesisDeliveryContentService.operational_sql_fence_strip_pattern()
+        try:
+            stripped = re.sub(pattern, "", text, flags=re.IGNORECASE).strip()
+        except re.error:
+            return text.strip()
+
+        cleaned = re.sub(r"\n{3,}", "\n\n", stripped).strip()
+        return cleaned
+
+    @classmethod
+    def looks_like_operational_sql_fence_leak(cls, answer: str | None) -> bool:
+        text = str(answer or "").strip()
+        if not text:
+            return False
+
+        lowered = text.lower()
+        compact = cls.compact_for_match(text)
+        for marker in ChatLlmSynthesisDeliveryContentService.operational_sql_fence_leak_markers():
+            if cls._contains_marker(
+                haystack=lowered, haystack_compact=compact, marker=marker
+            ):
+                return True
+        return False
+
+    @classmethod
+    def guard_operational_answer(
+        cls,
+        *,
+        answer: str,
+        fallback: str | None,
+        facts: str | None = None,
+        leak_markers: Iterable[str] = (),
+        placeholder_markers: Iterable[str] = (),
+        required_substrings: Iterable[str] = (),
+    ) -> str:
+        """Guarda de síntese operacional: remove fence SQL antes do guard genérico."""
+        stripped = cls.strip_markdown_sql_fences(answer)
+        merged_markers = cls.merge_markers(
+            leak_markers,
+            ChatLlmSynthesisDeliveryContentService.operational_sql_fence_leak_markers(),
+        )
+
+        if stripped and stripped != str(answer or "").strip():
+            # Fence removida — se sobrou prosa útil sem leak, entrega stripped.
+            if not cls.needs_fallback(
+                answer=stripped,
+                facts=facts,
+                leak_markers=merged_markers,
+                placeholder_markers=placeholder_markers,
+                required_substrings=required_substrings,
+            ):
+                return stripped
+
+        return cls.guard_answer(
+            answer=stripped or answer,
+            fallback=fallback,
+            facts=facts,
+            leak_markers=merged_markers,
+            placeholder_markers=placeholder_markers,
+            required_substrings=required_substrings,
+        )
+
+    @classmethod
     def try_recover_portuguese_body(cls, answer: str) -> str | None:
         """Se CoT EN vier antes da prosa PT, mantém só o corpo em português."""
         text = str(answer or "")

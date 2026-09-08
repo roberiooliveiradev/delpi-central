@@ -163,5 +163,10 @@
     "alert level: critical",
     "average price:"
   ],
-  "englishAnswerMinMarkerHits": 2
+  "englishAnswerMinMarkerHits": 2,
+  "operationalSqlFenceLeakMarkers": [
+    "```sql",
+    "```SQL"
+  ],
+  "operationalSqlFenceStripPattern": "```(?:sql)?\\s*[\\s\\S]*?```"
 }

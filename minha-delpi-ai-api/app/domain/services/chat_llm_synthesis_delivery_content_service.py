@@ -80,3 +80,24 @@ class ChatLlmSynthesisDeliveryContentService:
             )
             or ""
         ).strip()
+
+    @classmethod
+    def operational_sql_fence_leak_markers(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(
+                _BUNDLE, "operationalSqlFenceLeakMarkers"
+            )
+            if str(item).strip()
+        )
+
+    @classmethod
+    def operational_sql_fence_strip_pattern(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "operationalSqlFenceStripPattern",
+                default=r"```(?:sql)?\s*[\s\S]*?```",
+            )
+            or r"```(?:sql)?\s*[\s\S]*?```"
+        )
