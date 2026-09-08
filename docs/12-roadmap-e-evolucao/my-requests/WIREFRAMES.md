@@ -5,7 +5,7 @@
 > **API:** `/apps/requests-api` (nunca api-delpi no browser)  
 > **UI kit:** `@delpi/plugin-ui` via Module Federation · factories em [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/src/ui/mrUi.tsx)  
 > **Regras:** `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`, `plan-construction.mdc`  
-> **Status:** E5–E21 (TopBar canônica + PT-BR + Ajuda + redesign do wizard NF; kit-first)
+> **Status:** E5–E22 (TopBar + PT-BR + Ajuda + wizard NF ProgressTracker + responsivo/progresso sequencial)
 
 ## Convenções
 
@@ -117,7 +117,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), a
 | `/apps/my-requests` → `/mine` | WF-01 | **entregue** | Lista DataTable |
 | `/work-queue` | WF-02 | **entregue** | Fila processador |
 | `/new` | WF-03 | **entregue E19** | Grid NavigationCard; filial no form |
-| `/new` + `invoice-issuance` | WF-04 | **entregue E21** | Wizard 6 passos + ProgressTracker + JourneyProgressBar + Conferência com Alterar |
+| `/new` + `invoice-issuance` | WF-04 | **entregue E21; responsivo E22** | Wizard 6 passos + ProgressTracker + JourneyProgressBar + Conferência; layout fluido + progresso sequencial |
 | `/new` + `raw-material-creation` | WF-07 | **entregue** | SchemaFormPage |
 | `/requests/:id` | WF-05 | **entregue** | Stack de SectionCards |
 | `/admin` | WF-06 | **entregue E14** | RequestTypes read-only (`manage`) |
@@ -184,315 +184,228 @@ Unidade/filial só **dentro** do form do tipo (`branch_scope`: `required` | `opt
 
 Deep link: `/apps/my-requests/new?type=invoice-issuance` (também `type_code`) **abre** o form do tipo. Bookmarks `/apps/invoice-issuance/*` redirecionam no gateway para my-requests (E12–E13).
 
-### WF-04 — Wizard emissão NF (6 passos) — redesign E21
+### WF-04 — Wizard emissão NF (6 passos) — E21 + responsivo E22
 
 > **Especificação detalhada:** [DESIGN-wizard-emissao-nf.md](./DESIGN-wizard-emissao-nf.md).  
-> **Referências de mercado documentadas no design:** Atlassian Progress Tracker · IBM Carbon Progress Indicator · GOV.UK Question Pages + Check Answers.
+> **Breakpoints canônicos E22:** 1440 · 1024 · 768 · 390.  
+> **Progresso (E22):** apenas o **prefixo sequencial** conta para `%` e checkmarks (defaults de tipo/frete/peso **não** antecipam etapas futuras).
 
 #### 3.4.1 Princípio
 
-O wizard deve deixar de usar os seis passos como `FormActions`/`ActionButton` e adotar:
-
 ```text
 ProgressTracker = navegação e estado das etapas
-JourneyProgressBar = resumo percentual da completude
+JourneyProgressBar = resumo percentual da completude (prefixo sequencial)
 SectionCard = conteúdo da etapa atual
-FormActions = apenas ações Voltar / Próximo / Salvar / Enviar
-Conferência = SectionCard + DetailFields + Alterar (sem ReviewSummaryCard dedicado)
+FormActions = apenas Voltar / Próximo / Continuar / Enviar
+Conferência = SectionCard + DetailFields + Alterar
+Layout = 100% da largura útil da página (wizard-stack fluido)
 ```
 
 Estados do tracker:
 
 ```text
-✓ complete   = etapa concluída e editável
+✓ complete   = etapa no prefixo sequencial válido (editável)
 ● current    = etapa aberta agora
-○ available  = próxima etapa já liberada
-○ locked     = etapa futura ainda bloqueada
-! error      = etapa que precisa de correção
+○ available  = próxima liberada (index ≤ maxUnlocked)
+○ locked     = futura bloqueada (não focável)
+! error      = precisa correção
 ```
 
-A barra de progresso avança automaticamente conforme a completude real. O índice visual atual não é a fonte do percentual.
+#### 3.4.2 Matriz viewport × chrome
 
-#### 3.4.2 Desktop — etapa Destinatário
+| Viewport | TopBar | Tracker | Form | Footer |
+|----------|--------|---------|------|--------|
+| **1440** | itens + labels | horizontal labels; wrap suave sem scroll-x | stack 100% até ~60rem | Voltar + CTA alinhados end |
+| **1024** | idem | horizontal (pode wrap 2 linhas) | 100% útil | end |
+| **768** | colapsa / hamburger | `density=compact` + disclosure | 100%; padding ↓ | botões flex full-width (kit) |
+| **390** | hamburger | compact obrigatório | full-bleed; itens empilhados | Voltar / Próximo 100% |
+
+#### 3.4.3 Shell — 1440 / 1024 (Destinatário vazio)
 
 ```text
-┌─ MyRequestsTopBar ───────────────────────────────────────────────────────────┐
+┌─ TopBar ─────────────────────────────────────────────────────────────────────┐
 │ Minhas solicitações | Fila de trabalho | Nova solicitação | Administração  │
 └──────────────────────────────────────────────────────────────────────────────┘
 ┌─ PageHeader ─────────────────────────────────────────────────────────────────┐
-│ Nova emissão de nota fiscal                                                 │
-│ Filial 01 · Etapa 1 de 6                                                    │
+│ Nova emissão de NF                                                           │
+│ Filial 01 · Etapa 1 de 6: Destinatário                                       │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-Progresso da solicitação                                                17%
-█████░░░░░░░░░░░░░░░░░░░░░░░░░░░
+Filial [ 01 v ]
+
+Progresso da solicitação                                                  0%
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 0 de 6 etapas concluídas
 
 ● Destinatário ── ○ Tipo de NF ── ○ Itens ── ○ Transporte ── ○ Adicionais ── ○ Conferência
+   atual            locked          locked     locked           locked           locked
 
 ┌─ SectionCard «Destinatário» ─────────────────────────────────────────────────┐
-│ Informe quem receberá a nota fiscal.                                  [?]   │
-│                                                                              │
-│ Tipo de destinatário                                                         │
 │ ( ● Cliente | ○ Fornecedor )                                                 │
+│ Buscar destinatário [ código, nome ou CNPJ .................... ] [Buscar]   │
 │                                                                              │
-│ Buscar destinatário                                                          │
-│ [ Código, nome ou CNPJ.................................................... ] │
-│ [Buscar]                                                                     │
-│                                                                              │
-│ Resultados                                                                   │
-│ ┌──────────────────────────────────────────────────────────────────────────┐ │
-│ │ ACME Indústria Ltda.                                                     │ │
-│ │ Código 001234 · Loja 01 · CNPJ XX.XXX.XXX/XXXX-XX                       │ │
-│ │                                                        [Selecionar]      │ │
-│ └──────────────────────────────────────────────────────────────────────────┘ │
-│                                                                              │
-│ [Voltar]                                                       [Próximo →]  │
+│ [Voltar]                                                         [Próximo]   │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Comportamento:** selecionar um destinatário válido marca a etapa como concluída e libera a próxima. Autoavanço da tela é opcional somente nesse tipo de decisão única e explícita; etapas com múltiplos campos devem apenas habilitar `Próximo` após validação.
-
-#### 3.4.3 Desktop — etapas já preenchidas editáveis
+#### 3.4.4 Shell — 768 / 390 (compact)
 
 ```text
-Progresso da solicitação                                                33%
-██████████░░░░░░░░░░░░░░░░░░░░░░
-2 de 6 etapas concluídas
-
-✓ Destinatário ── ✓ Tipo de NF ── ● Itens ── ○ Transporte ── ○ Adicionais ── ○ Conferência
-   editável          editável        atual       bloqueada       bloqueada       bloqueada
+┌─ TopBar colapsada ──────────────────┐
+│ ☰  Minhas solicitações              │
+├─────────────────────────────────────┤
+│ Nova emissão de NF                  │
+│ Filial 01 · Etapa 1 de 6            │
+│ Filial [ 01 v ]                     │
+│ Progresso                      0%   │
+│ ░░░░░░░░░░░░░░░░░░░░░               │
+│ 0 de 6 etapas concluídas            │
+│ Etapa atual: Destinatário           │
+│ [Ver etapas ▾]                      │
+├─────────────────────────────────────┤
+│ SectionCard «Destinatário»          │
+│ (Cliente|Fornecedor)                │
+│ Busca + [Buscar]                    │
+│                                     │
+│ [Voltar]                            │
+│ [Próximo]                           │
+└─────────────────────────────────────┘
 ```
 
-Regras:
-
-- clicar em etapa concluída reabre os dados preenchidos;
-- não perder valores ao voltar;
-- salvar alteração revalida a etapa;
-- se uma alteração impactar outra etapa, invalidar apenas dependências reais;
-- etapas futuras bloqueadas não são clicáveis;
-- browser back/forward deve preservar estado coerente.
-
-#### 3.4.4 Mobile
-
-Não comprimir seis labels horizontalmente.
+Painel compacto aberto:
 
 ```text
-┌──────────────────────────────┐
-│ TopBar colapsada             │
-├──────────────────────────────┤
-│ Nova emissão de NF           │
-│ Filial 01 · Etapa 3 de 6     │
-│                              │
-│ Progresso               33%  │
-│ █████░░░░░░░░░░░░            │
-│ 2 de 6 concluídas            │
-│                              │
-│ Etapa atual: Itens           │
-│ [Ver etapas preenchidas ▾]   │
-├──────────────────────────────┤
-│ Conteúdo da etapa            │
-│ campos / resultados          │
-│ validações                   │
-├──────────────────────────────┤
-│ [Voltar]        [Próximo]    │
-└──────────────────────────────┘
+● Destinatário     Atual
+○ Tipo de NF       Bloqueada
+○ Itens            Bloqueada
+○ Transporte       Bloqueada
+○ Adicionais       Bloqueada
+○ Conferência      Bloqueada
 ```
 
-Painel compacto de etapas:
+#### 3.4.5 Etapa 1 — Destinatário (conteúdo; todos viewports)
+
+**Vazio**
 
 ```text
-✓ Destinatário        [Alterar]
-✓ Tipo de NF          [Alterar]
-● Itens               Atual
-○ Transporte          Bloqueada
-○ Adicionais          Bloqueada
-○ Conferência         Bloqueada
+( ● Cliente | ○ Fornecedor )
+Buscar [············] [Buscar]
+[Voltar]  [Próximo desabilitado]
 ```
 
-O modo compacto deve pertencer ao componente compartilhado `ProgressTracker`, não a uma implementação paralela no MFE.
-
-#### 3.4.5 Etapa 1 — Destinatário
+**Com seleção** (autoavanço → Tipo NF; se returnToReview, permanece)
 
 ```text
-Cliente / Fornecedor
-→ busca
-→ resultados
-→ selecionar
-→ SelectionSummaryCard do selecionado
-→ concluir etapa
-→ liberar Tipo de NF
+Hits: ACME · 001/01 · CNPJ…  [selecionar]
+Resumo DetailFields: Nome · Tipo · Código · Loja · CNPJ
 ```
 
-**Kit:** `SegmentToggle`, `TextField`, `ActionButton`, loading/empty/error, `HelpTooltip`.  
-**Proposto:** `SelectionSummaryCard` se nenhum card atual tiver semântica adequada.
+**390:** SegmentToggle e botões em largura total; lista de hits empilhada.
 
 #### 3.4.6 Etapa 2 — Tipo de NF
 
 ```text
-Tipo de nota fiscal
-[SelectField ou escolha visual adequada do kit]
-
-Se "Outro":
-[Descreva o tipo...................................]
+Tipo de NF [ Venda                    v ]
+Se Outros: Descreva o tipo [············]
+[Voltar]  [Próximo]
 ```
 
-Critério de conclusão: tipo válido; quando `other`, descrição obrigatória preenchida.
+**1024+:** select confortável. **390:** select + campo other full-width.
 
 #### 3.4.7 Etapa 3 — Itens
 
 ```text
-Buscar item
-[........................................................] [Buscar]
-
-Resultados de busca
-...
-
-Itens adicionados
-┌────────┬────────────────────┬────────────┬──────────────┬─────────┐
-│ Código │ Descrição          │ Quantidade │ Preço unit.  │ Ações   │
-├────────┼────────────────────┼────────────┼──────────────┼─────────┤
-│ 100100 │ Produto A          │ [ 4 ]      │ [ R$ ... ]   │ [x]     │
-└────────┴────────────────────┴────────────┴──────────────┴─────────┘
+Buscar produto [········] [Buscar]
+Hits (lista) — separado dos itens adicionados
+∅ Nenhum item  |  ou lista:
+  P1 — Produto A
+  Qtd [ 1 ]  Preço [ 10 ]  [Remover]
+[Voltar]  [Próximo]
 ```
 
-Preferir `DataTable`/componente do kit para lista densa. Remoção com `IconButton tone="danger"` se aplicável. Números e moeda em PT-BR.
-
-Critério de conclusão: pelo menos um item válido + campos obrigatórios de cada item válidos.
+**1440/1024:** busca + lista em coluna única fluida. **768/390:** qty/price empilhados; Remover abaixo.
 
 #### 3.4.8 Etapa 4 — Transporte
 
 ```text
-Modo de frete
-( CIF | FOB ) [?]
-
-Transportadora (opcional quando permitido)
-[........................................................] [Buscar]
-
-SelectionSummaryCard — transportadora selecionada
+( ● CIF | ○ FOB )  [?]
+Transportadora (opcional) [········] [Buscar]
+Resumo DetailFields se selecionada
+[Voltar]  [Próximo]   ← completo sem carrier
 ```
 
-`CIF`/`FOB` podem permanecer como siglas, acompanhadas de help em linguagem de negócio.
-
-#### 3.4.9 Etapa 5 — Informações adicionais
+#### 3.4.9 Etapa 5 — Adicionais
 
 ```text
-Peso (kg)          [................]
-Volumes            [................]
-Observação         [...............................................]
-                   [...............................................]
+Peso (kg) [····]
+Volumes   [····]
+Observação (opcional)
+[ text area .............. ]
+[Voltar]  [Próximo]
 ```
-
-Usar `FieldLabel`/hint; campos opcionais devem ser identificados como `(opcional)` quando aplicável.
 
 #### 3.4.10 Etapa 6 — Conferência
 
-A Conferência deixa de ser checklist de chaves técnicas e vira revisão por seções.
+```text
+┌ Destinatário              [Alterar] ┐  DetailFields
+┌ Tipo de nota fiscal       [Alterar] ┐
+┌ Itens                     [Alterar] ┐  + lista resumida
+┌ Transporte                [Alterar] ┐
+┌ Informações adicionais    [Alterar] ┐
+[Voltar]  [Enviar]
+```
+
+**390:** cada bloco SectionCard full-width; Alterar no header; Enviar full-width.
+
+**Após Alterar:** `returnToReview` → edita etapa → [Continuar] volta à Conferência se ainda completa.
+
+#### 3.4.11 Progresso sequencial (E22)
 
 ```text
-┌─ SectionCard «Conferência» ──────────────────────────────────────────────────┐
-│ Revise os dados antes de enviar a solicitação.                         [?]  │
-│                                                                            │
-│ ✓ Destinatário                                                [Alterar]    │
-│   ACME Indústria Ltda.                                                     │
-│   Cliente · Código 001234 · Loja 01                                       │
-│                                                                            │
-│ ✓ Tipo de nota fiscal                                        [Alterar]    │
-│   Venda                                                                    │
-│                                                                            │
-│ ✓ Itens                                                     [Alterar]      │
-│   3 itens · quantidade total 12                                            │
-│   100100 · Produto A · 4 UN · R$ ...                                      │
-│   100200 · Produto B · 8 UN · R$ ...                                      │
-│                                                                            │
-│ ✓ Transporte                                                 [Alterar]     │
-│   CIF · Transportadora XYZ                                                  │
-│                                                                            │
-│ ✓ Informações adicionais                                    [Alterar]     │
-│   Peso 120 kg · 4 volumes · observação ...                                  │
-│                                                                            │
-│ [Voltar]                                             [Enviar solicitação]   │
-└────────────────────────────────────────────────────────────────────────────┘
+percentual = (maior k com etapas 0..k-1 todas isStepComplete) / 6 × 100
 ```
 
-`Alterar` abre a etapa correspondente com os valores atuais. Ao concluir a edição iniciada pela Conferência, retornar para a Conferência.
+- Destinatário vazio + defaults sale/cif/peso → **0%**, sem ✓ em Tipo/Frete/Adicionais.
+- Após party + sale → prefixo 2 → ~33% (Destinatário + Tipo).
+- Invalidar Tipo (`other` sem texto) → % volta ao prefixo válido (só Destinatário).
 
-#### 3.4.11 Modelo de progresso
+Não usar `stepAtual/6` nem contar flags futuras fora do prefixo.
 
-O MFE pode manter um view model de apresentação do wizard, sem criar state machine paralela de domínio:
-
-```ts
-type WizardStepState = "complete" | "current" | "available" | "locked" | "error";
-
-type WizardStepViewModel = {
-  id: string;
-  label: string;
-  state: WizardStepState;
-  completion?: number;
-};
-```
-
-Primeira implementação recomendada:
+#### 3.4.12 Desktop — jornada parcial (Itens)
 
 ```text
-percentual = número de etapas válidas / 6 × 100
+Progresso                                                         33%
+██████████░░░░░░░░░░░░░░░░░░░░░░
+2 de 6 etapas concluídas
+
+✓ Destinatário ── ✓ Tipo de NF ── ● Itens ── ○ Transporte ── ○ Adicionais ── ○ Conferência
 ```
 
-Não usar simplesmente `stepAtual / 6`, pois voltar e invalidar uma etapa precisa recalcular a completude.
+Regras: reabrir complete; dados preservados; locked não clicável; F5 perde rascunho (in-memory).
 
-#### 3.4.12 Componentes novos no `plugin-ui`
+#### 3.4.13 Componentes kit (E21 entregue; E22 polish)
 
-Criar somente após nova checagem do catálogo vigente:
+| Componente | Status |
+|------------|--------|
+| `ProgressTracker` | entregue E21; polish wrap/compact/dark E22 |
+| `JourneyProgressBar` | entregue E21; polish E22 |
+| Review/Selection/WizardStepLayout | **não** criar — composição SectionCard + DetailFields |
 
-1. **`ProgressTracker` / `createDashboardProgressTracker` — P0**  
-   Estados `complete/current/available/locked/error`, interativo opcional, keyboard, desktop/mobile e aria.
-2. **`JourneyProgressBar` / `ProgressSummaryBar` — P0**  
-   `value 0..100`, label, summary `N de 6 etapas concluídas`, sem semântica de loading.
-3. **`ReviewSummaryCard` — P0**  
-   título, pares label/valor, status opcional e ação `Alterar`.
-4. **`SelectionSummaryCard` — P1**  
-   resumo de entidade selecionada; criar somente se `NavigationCard`/`WorklistItem`/outro componente atual não servir sem distorção.
-5. **`WizardStepLayout` — P1 opcional**  
-   só extrair se `SectionCard + FormActions` não forem suficientes e houver reuso transversal real.
-6. **`InlineValidationSummary` — P2 opcional**  
-   apenas se múltiplas pendências de etapa justificarem; não criar se mensagens inline + `StateBanner` resolverem.
+Zero CSS chrome do kit no MFE; layout de página só em `index.css` (`.my-requests-wizard-stack`).
 
-**Regra:** qualquer novo componente visual transversal nasce em `plugins/plugin-ui`, com CSS canônico `delpi-ui-*`, testes, demo e catálogo. Zero CSS espelho em `my-requests`.
+#### 3.4.14 Ajuda
 
-#### 3.4.13 Ajuda obrigatória
+`helpTooltips.invoiceWizard`: section, progress, recipient, invoiceType, items, freight, extras, review, partySearch, productSearch, carrierSearch.
 
-Cobertura mínima em `helpTooltips.invoiceWizard`:
+#### 3.4.15 Acessibilidade
 
-```text
-section
-progress
-recipient
-invoiceType
-items
-freight
-extras
-review
-partySearch
-productSearch
-carrierSearch
-```
+- `aria-label` / `aria-current="step"` / locked não tabbable  
+- progressbar valuemin/max/now  
+- foco no heading ao mudar etapa  
+- sem scroll-x em 390  
+- FormActions touch ≥44px (kit)
 
-Ajuda em linguagem de usuário; não citar `lookup`, `requests-api`, `WorkflowEngine`, state machine ou detalhes internos.
-
-#### 3.4.14 Acessibilidade
-
-- tracker com `aria-label`;
-- etapa atual com semântica equivalente a `aria-current="step"`;
-- etapas bloqueadas não focáveis;
-- etapas concluídas editáveis por teclado;
-- barra com `role="progressbar"` e valores aria;
-- foco vai para heading da etapa ao navegar;
-- erro não depende apenas de cor;
-- mobile sem scroll horizontal involuntário.
-
-**API:** lookups `GET …/request-types/invoice-issuance/lookups/*` · create `POST /v1/requests`  
-**Ajuda:** `helpTooltips.invoiceWizard`  
-**Design detalhado:** [DESIGN-wizard-emissao-nf.md](./DESIGN-wizard-emissao-nf.md)
+**API:** lookups + `POST /v1/requests` · **Ajuda:** `invoiceWizard` · **Design:** [DESIGN-wizard-emissao-nf.md](./DESIGN-wizard-emissao-nf.md)
 
 ### WF-05 — Detalhe (`/requests/:id`)
 
