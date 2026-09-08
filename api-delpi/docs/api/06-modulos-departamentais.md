@@ -106,17 +106,12 @@ Documentação completa: [lancamento-notas-fiscais.md](./lancamento-notas-fiscai
 
 ### Emissão de Notas Fiscais — `/invoice-issuance`
 
-Fila de solicitações de emissão de NF de saída (Postgres plugins + lookups TOTVS SA1/SA2/SB1).  
-Plugin: `invoice-issuance`.  
+Fila de solicitações de emissão de NF de saída (Postgres plugins). Lookups TOTVS SA1/SA2/SB1/SA4 via **`/request-lookups`** (E18).  
+Plugin legado: `invoice-issuance` (MFE fora do Compose). Canônico: `my-requests`.  
 **Permissões:** `invoice-issuance.access|create|view|process|manage` (não só `api-delpi.access`).
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| GET | `/invoice-issuance/parties` | Busca cliente (SA1) ou fornecedor (SA2), inclusive CNPJ. |
-| GET | `/invoice-issuance/products` | Busca itens SB1. |
-| GET | `/invoice-issuance/products/{code}/warehouse-01-balance` | Saldo informativo almoxarifado 01. |
-| GET | `/invoice-issuance/open-sales-orders` | PV em aberto do cliente na filial (sem membership). |
-| GET | `/invoice-issuance/carriers` | Busca transportadora SA4 (`A4_NREDUZ`). |
 | POST | `/invoice-issuance/requests` | Criar solicitação. |
 | GET | `/invoice-issuance/requests` | Fila paginada. |
 | GET | `/invoice-issuance/requests/{id}` | Detalhe + timeline + `allowed_actions`. |
@@ -126,6 +121,14 @@ Plugin: `invoice-issuance`.
 | POST | `/invoice-issuance/requests/{id}/return` | Devolver (motivo). |
 | POST | `/invoice-issuance/requests/{id}/issue` | Marcar emitida. |
 | POST | `/invoice-issuance/requests/{id}/cancel` | Cancelar. |
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/request-lookups/parties` | Busca cliente (SA1) ou fornecedor (SA2), inclusive CNPJ. |
+| GET | `/request-lookups/products` | Busca itens SB1. |
+| GET | `/request-lookups/products/{code}/warehouse-01-balance` | Saldo informativo almoxarifado 01. |
+| GET | `/request-lookups/open-sales-orders` | PV em aberto do cliente na filial (sem membership). |
+| GET | `/request-lookups/carriers` | Busca transportadora SA4 (`A4_NREDUZ`). |
 
 Documentação completa: [invoice-issuance.md](./invoice-issuance.md) · playbook: [PLAYBOOK.md](../../../docs/12-roadmap-e-evolucao/invoice-issuance/PLAYBOOK.md).
 

@@ -140,15 +140,11 @@ Legenda de permissões:
 
 ### Emissão de Notas Fiscais (`/invoice-issuance`)
 
-> Permissões do plugin `invoice-issuance.*` — ver [invoice-issuance.md](./invoice-issuance.md).
+> Permissões do plugin `invoice-issuance.*` — ver [invoice-issuance.md](./invoice-issuance.md).  
+> Lookups TOTVS: [`/request-lookups`](../../../docs/12-roadmap-e-evolucao/my-requests/LOOKUPS-CANONICAL.md) (E18).
 
 | Método | Endpoint | Perm. |
 |---|---|---|
-| GET | `/invoice-issuance/parties` | create |
-| GET | `/invoice-issuance/products` | create |
-| GET | `/invoice-issuance/products/{code}/warehouse-01-balance` | create |
-| GET | `/invoice-issuance/open-sales-orders` | create |
-| GET | `/invoice-issuance/carriers` | create |
 | POST | `/invoice-issuance/requests` | create |
 | GET | `/invoice-issuance/requests` | II read |
 | GET | `/invoice-issuance/requests/{id}` | II read |
@@ -158,6 +154,16 @@ Legenda de permissões:
 | POST | `/invoice-issuance/requests/{id}/return` | process/manage |
 | POST | `/invoice-issuance/requests/{id}/issue` | process/manage |
 | POST | `/invoice-issuance/requests/{id}/cancel` | create† / process / manage |
+
+### Request lookups (`/request-lookups`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/request-lookups/parties` | II create / my-requests NF |
+| GET | `/request-lookups/products` | II create / my-requests NF |
+| GET | `/request-lookups/products/{code}/warehouse-01-balance` | II create / my-requests NF |
+| GET | `/request-lookups/open-sales-orders` | II create / my-requests NF |
+| GET | `/request-lookups/carriers` | II create / my-requests NF |
 
 ---
 

@@ -17,17 +17,12 @@ Plugin: `plugins/invoice-issuance` · Roadmap: [docs/12-roadmap-e-evolucao/invoi
 
 **Persistência:** schema Postgres `invoice_issuance` (migrations `V001`–`V004` em `api-delpi/migrations/plugins/invoice-issuance/`). Aplicar **somente** com `up` — nunca `reset` em produção.
 
-**Lookups canônicos (E17):** o Request Engine (`requests-api`) consome `GET /request-lookups/*` — ver [LOOKUPS-CANONICAL.md](../../../docs/12-roadmap-e-evolucao/my-requests/LOOKUPS-CANONICAL.md). As rotas de lookup abaixo sob `/invoice-issuance/*` ficam **deprecated** até E18 (mesmo payload/use case).
+**Lookups canônicos (E18):** o Request Engine (`requests-api`) consome `GET /request-lookups/*` — ver [LOOKUPS-CANONICAL.md](../../../docs/12-roadmap-e-evolucao/my-requests/LOOKUPS-CANONICAL.md). As rotas de lookup sob `/invoice-issuance/*` foram **removidas**; CRUD/transições abaixo permanecem para retenção/referência.
 
 ## Rotas
 
 | Método | Rota | `operationId` | Permissão |
 |--------|------|---------------|-----------|
-| GET | `/invoice-issuance/parties` | `search_invoice_issuance_parties` | create/process/manage |
-| GET | `/invoice-issuance/products` | `search_invoice_issuance_products` | create/process/manage |
-| GET | `/invoice-issuance/products/{code}/warehouse-01-balance` | `get_invoice_issuance_warehouse_01_balance` | create/process/manage |
-| GET | `/invoice-issuance/open-sales-orders` | `list_invoice_issuance_open_sales_orders` | create/process/manage |
-| GET | `/invoice-issuance/carriers` | `search_invoice_issuance_carriers` | create/process/manage |
 | POST | `/invoice-issuance/requests` | `create_invoice_issuance_request` | create/process/manage |
 | GET | `/invoice-issuance/requests` | `list_invoice_issuance_requests` | qualquer read* |
 | GET | `/invoice-issuance/requests/{id}` | `get_invoice_issuance_request` | qualquer read* |
@@ -42,11 +37,7 @@ Plugin: `plugins/invoice-issuance` · Roadmap: [docs/12-roadmap-e-evolucao/invoi
 † `create`: somente própria em `pending`  
 ‡ `process`: em `in_progress`
 
-Query `parties`: `party_type=customer|supplier`, `query` (mín. 2 caracteres — código, nome ou CNPJ). Bloqueados (`MSBLQL=1`) vêm na lista mas não são selecionáveis no MFE.
-
-Query `open-sales-orders`: `branch` (`01`/`02`), `party_code` e `party_store` do **cliente** (SA1). Retorna pedidos agrupados com linhas em saldo (`saldo > 0`) só da filial do wizard. Sem membership comercial / PVA.
-
-Query `carriers`: `query` (mín. 2 caracteres — código `A4_COD`, nome reduzido `A4_NREDUZ`, razão `A4_NOME` ou CNPJ). Nome de uso = `A4_NREDUZ`. A `SA4` Delpi não tem `MSBLQL` — só `D_E_L_E_T_`. Transportadora é opcional.
+Lookups (parties/products/carriers/PV/saldo): usar **`/request-lookups/*`** (mesmo payload/use case TOTVS). Query `parties`: `party_type=customer|supplier`, `query` (mín. 2). Query `open-sales-orders`: `branch`, `party_code`, `party_store`. Query `carriers`: `query` (mín. 2).
 
 Query `requests`: `branch` obrigatório (`01`/`02`); `status` (`open` = pending/in_progress/returned); `invoice_type`; `q`.
 
