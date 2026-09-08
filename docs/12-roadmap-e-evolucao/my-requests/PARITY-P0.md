@@ -67,7 +67,6 @@ Ambientes com histórico: repetir dry-run → `--apply` em staging e depois prod
 | UI live wizard + fila + transitions | Exige operadores + stack TOTVS | Gate itens 1–2 (Ops) |
 | Lookups contra TOTVS real no browser | Suite usa memory/golden; smoke Protheus | Gate item 2 |
 | Apply migração com dados reais | Este ambiente tinha `legacy_requests=0` | Staging/prod com volume legado |
-| Remoção rotas lookup `/invoice-issuance/*` | Adapter ainda usa até E17 | E17+ |
 
 ## Gate soft cutover / ops (E12–E15)
 

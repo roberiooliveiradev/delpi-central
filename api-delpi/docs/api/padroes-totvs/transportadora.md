@@ -1,6 +1,6 @@
 # Transportadoras (SA4)
 
-Cadastro de transportadoras no Protheus. Usado na solicitação de emissão de NF (`/invoice-issuance/carriers`).
+Cadastro de transportadoras no Protheus. Usado na solicitação de emissão de NF (`GET /request-lookups/carriers`).
 
 | Campo | Significado Delpi |
 |-------|-------------------|

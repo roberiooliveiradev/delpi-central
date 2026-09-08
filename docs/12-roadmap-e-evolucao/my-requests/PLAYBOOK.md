@@ -2,8 +2,8 @@
 
 > **Plugin:** `my-requests`  
 > **API:** `/apps/requests-api/v1`  
-> **Status:** E1–E22 entregues (ops + IAM + lookups + UX Nova + TopBar/Ajuda + wizard NF ProgressTracker + responsivo/progresso sequencial); UI live Ops ainda assina PARITY itens 1–2  
-> **Próximo:** E18 deprecar lookups legado; backlog tags / Admin CRUD  
+> **Status:** E1–E23 + E18 entregues (ops + IAM + lookups canônicos + UX Nova + TopBar/Ajuda + wizard NF ProgressTracker/responsivo + EntityDirectoryPicker); UI live Ops ainda assina PARITY itens 1–2  
+> **Próximo:** Ops PARITY live; backlog tags / CreatableMultiSelect / Admin CRUD; DROP schema após retenção  
 > **Referência legado:** [`invoice-issuance`](../invoice-issuance/README.md)
 
 ---
@@ -1561,13 +1561,8 @@ flowchart LR
 | Etapa | Entrega | Nota |
 |-------|---------|------|
 | **E16** | Runbook IAM `invoice-issuance.*` → `my-requests.*` | **entregue** — `IAM-LEGACY-PERMISSIONS.md` |
-| **E17** | Adapter + router `/request-lookups/*` | **entregue** — legado `/invoice-issuance/*` lookups até E18 |
-
-### E18–E20 — Limpeza legado + UX Nova + excelência UI
-
-| Etapa | Entrega | Nota |
-|-------|---------|------|
-| **E18** | Deprecar/remover lookups `/invoice-issuance/*` na api-delpi após soak | técnico; schema/volume retidos |
+| **E17** | Adapter + router `/request-lookups/*` | **entregue** — [LOOKUPS-CANONICAL.md](./LOOKUPS-CANONICAL.md) |
+| **E18** | Remover lookups `/invoice-issuance/*` na api-delpi | **entregue** — canônico único `/request-lookups` |
 | **E19** | UX `/new` por cards + unidade via `branch_scope` | **entregue** — [`PROMPT-nova-solicitacao-type-cards.md`](./PROMPT-nova-solicitacao-type-cards.md) |
 | **E20** | TopBar canônica + labels PT-BR + Ajuda user-facing | **entregue** — [`PROMPT-ui-excelencia-topbar-ptbr-help.md`](./PROMPT-ui-excelencia-topbar-ptbr-help.md) |
 | **E21** | Wizard NF: ProgressTracker + JourneyProgressBar + unlock + Conferência Alterar | **entregue** — [`DESIGN-wizard-emissao-nf.md`](./DESIGN-wizard-emissao-nf.md) |
