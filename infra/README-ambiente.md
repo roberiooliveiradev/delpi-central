@@ -842,6 +842,14 @@ Gateway dev proxy: **`172.17.0.1:8025`** (bridge Docker → serviço em `network
 
 Homologação LAN: `curl -sf http://localhost/apps/production-pulse-api/health` e, com ESP na rede, poll HTTP a partir do container/host conforme [ADR-002](../docs/12-roadmap-e-evolucao/production-pulse/ADR-002-poll-scheduler-and-lan.md). Variáveis em `infra/env.production-pulse.example`.
 
+#### Binários OTA (P4)
+
+| Variável | Path no container | Host (`DELPI_DATA_HOST_DIR`) |
+|---|---|---|
+| `PP_FIRMWARE_UPLOAD_DIR` | `/app/data/production-pulse/firmwares` | `${DELPI_DATA_HOST_DIR}/production-pulse/firmwares` |
+
+Metadado em schema `production_pulse.firmwares`; recreate de `delpi-production-pulse-api` **não** apaga artefatos no host.
+
 ### CIPA (atas / assinaturas / SIPAT)
 
 | Path no container | Host (`DELPI_DATA_HOST_DIR`) |
