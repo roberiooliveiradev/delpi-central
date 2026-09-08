@@ -73,7 +73,7 @@ Documento irmão (instrutores): [TREINAMENTO-PORTAL-COMERCIAL-1H.md](./TREINAMEN
 |-------------|----------------|
 | Telão / GR de Vendas na TV | **TV Dashboard** (outro app; sem atalho no Portal) |
 | Cockpit antigo só de KPIs | Pode existir **Dashboard Comercial** no menu — o dia a dia canônico é o **Portal** |
-| Portal do Vendedor antigo | Pode coexistir no menu; prefira **Meus pedidos** no Portal |
+| Portal do Vendedor antigo | **Removido** do menu (F2c). Favoritos antigos redirecionam para **Meus pedidos** / Portal |
 
 ---
 

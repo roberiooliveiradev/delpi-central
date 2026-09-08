@@ -2,10 +2,10 @@
 
 **Contrato vivo** — define o que fica em cada serviço e como evitar duplicação de SQL TOTVS / CRM Delpi.
 
-**Status:** ago/2026 — consolidação nativa em curso ([GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md)).  
+**Status:** set/2026 — **F2c executado**; consolidação nativa em curso ([GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) · [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)).  
 **Referência de padrão:** [maintenance/PLAYBOOK-01-fronteiras-api-delpi.md](../maintenance/PLAYBOOK-01-fronteiras-api-delpi.md).
 
-O MFE legado `pedidos-venda-abertos` **coexiste** (decisão 5C); F2c só após o Portal superar o PVA. A UX canônica é o **Portal Comercial** (`plugins/commercial`) — páginas nativas, zero hosteamento.
+A UX canônica é o **Portal Comercial** (`plugins/commercial`) — páginas nativas, zero hosteamento. MFEs `pedidos-venda-abertos` e `propostas-comerciais` foram **removidos** (F2c); deep links redirecionam no gateway. Único irmão legado ainda no Compose: `dashboard-commercial`.
 
 ---
 
@@ -16,14 +16,15 @@ O MFE legado `pedidos-venda-abertos` **coexiste** (decisão 5C); F2c só após o
 | **api-delpi** | Única implementação de SQL Protheus; KPIs e listagens TOTVS; contrato `{ success, message, data, meta }`; OpenAPI + `route_contract_registry` |
 | **commercial-api** | CRUD operacional Postgres; workflows CRM; orquestração; **gateways HTTP** para TOTVS via api-delpi |
 | **MFE Portal Comercial (`plugins/commercial`)** | **Única UX de produto** a consolidar: páginas **nativas**; estado Delpi + **escopo de carteira** via commercial-api; reads TOTVS de Conta/open-orders/billing/NF **só via BFF** commercial — **nunca SQL**; KPIs `/commercial/*` podem ir direto à api-delpi |
-| **MFEs irmãos** (`dashboard-commercial`, `propostas-comerciais`, PVA) | **Legado coexistente** — podem chamar api-delpi; **não** são hosteados nem deep-link como entrega do Portal Comercial |
+| **MFE irmão** (`dashboard-commercial`) | **Legado coexistente** — referência analítica até Gestão nativa; **não** é entrega do Portal Comercial |
+| **Paths api-delpi** `/pedidos-venda-abertos/*`, `/propostas-comerciais/*` | Contrato TOTVS **puro** (SQL); consumidos via **BFF** commercial-api — **não** há mais MFE PVA/propostas |
 
 ```text
 Browser Portal Comercial (páginas nativas)
   → commercial-api → Postgres (carteira / Meu dia / avatar)
-  → api-delpi → SQL Server (TOTVS: KPIs, OV, ADY, pedidos)
+  → commercial-api → api-delpi → SQL Server (TOTVS: KPIs, OV, ADY, pedidos)
 
-Browser MFEs irmãos (legado coexistente)
+Browser dashboard-commercial (legado)
   → api-delpi → TOTVS
 ```
 
@@ -113,12 +114,12 @@ Transição F2: dual-read/dual-write permitido **só** até cutover. Após cutov
 ### Plano de migração
 
 ```text
-1. Scaffold commercial-api + schema Postgres + volume avatars
-2. Dual-read/dual-write (feature flag) — comparar contagens de portfolios/customers
-3. MFE pedidos-venda-abertos aponta TODAS as rotas Delpi (GET sellers + writes + avatars) para commercial-api
-4. Deprecar na api-delpi o conjunto completo § 3.2 (não só POST/PATCH/DELETE)
-5. Não apagar migrations antigas aplicadas; schema antigo read-only até limpeza aprovada
-6. Nunca `reset` de schema em produção (plugins-migrations-no-reset-prod)
+1. Scaffold commercial-api + schema Postgres + volume avatars          ✅
+2. Dual-read/dual-write (feature flag) — comparar contagens           ✅
+3. Portal Comercial usa commercial-api para sellers + avatars         ✅
+4. Deprecar na api-delpi o conjunto § 3.2 (código legado pode restar) ✅ / residual
+5. F2c: remover MFEs PVA + propostas + redirects gateway              ✅ set/2026
+6. Não apagar migrations antigas; nunca `reset` em prod
 ```
 
 Anexos/avatars: volume `${DELPI_DATA_HOST_DIR}/commercial-avatars` (ou equivalente) nos **dois** composes — regra `persistent-upload-storage.mdc`.

@@ -64,11 +64,11 @@ Chip **Escopo** no chrome = identidade da sessão (carteira própria / equipe / 
 
 ### 2.4 Ecossistema (deixar explícito no início)
 
-| É Portal Comercial | Não é Portal (coexiste no menu Minha Delpi) |
-|--------------------|-----------------------------------------------|
-| MFE `commercial` + `commercial-api` | `dashboard-commercial` (cockpit legado) |
-| Páginas nativas; dados TOTVS via **BFF** | `pedidos-venda-abertos` (Portal do Vendedor) |
-| GR de Vendas / TV = **tv-dashboard** (sem atalho no Portal) | `propostas-comerciais` (legado ADY) |
+| É Portal Comercial | Não é Portal (pode coexistir no menu Minha Delpi) |
+|--------------------|-----------------------------------------------------|
+| MFE `commercial` + `commercial-api` | `dashboard-commercial` (cockpit legado — referência) |
+| Páginas nativas; dados TOTVS via **BFF** | Apps PVA / propostas MFE **removidos** (F2c) — deep links redirecionam |
+| GR de Vendas / TV = **tv-dashboard** (sem atalho no Portal) | — |
 
 ### 2.5 Status por área (o que ensinar vs. mencionar)
 
@@ -123,7 +123,7 @@ Ajuste fino conforme a sala: se **só vendedores**, enxugue Admin (T8) e alongue
 
 | Dúvida | Resposta curta |
 |--------|----------------|
-| É o mesmo que o Dashboard Comercial / Portal do Vendedor? | **Não.** Coexistem no menu; o Portal é a UX nativa a evoluir. |
+| É o mesmo que o Dashboard Comercial / Portal do Vendedor? | **Não.** O Portal é a UX canônica. Dashboard Comercial ainda pode aparecer no menu (legado). Portal do Vendedor foi **substituído** (redirects). |
 | Por que não vejo Administração? | Falta `commercial.manage`. |
 | Escopo muda o período dos gráficos? | Não. Escopo = **carteira(s)**; período fica na Visão geral / filtros locais. |
 | Preciso de VPN / Protheus aberto? | Não na UI; o BFF busca TOTVS no servidor. |
@@ -425,7 +425,7 @@ Enviar aos participantes:
 
 - Configurar Keycloak / papéis Minha Delpi do zero (só mencionar os 3 codes).
 - Treinar TV Dashboard / Gestão à vista na TV.
-- Treinar plugins `dashboard-commercial`, `pedidos-venda-abertos`, `propostas-comerciais` como produto principal.
+- Treinar plugins `dashboard-commercial` como produto principal, ou MFEs PVA/propostas (removidos).
 - Detalhe de APIs, migrations, WebSocket.
 - Backlog: confirmação de pedidos, reunião Diretoria, forecast, AI carve, mapa territorial (E7).
 

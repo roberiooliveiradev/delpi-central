@@ -13,7 +13,7 @@
 | `api-delpi` | TOTVS HTTP (`/commercial/*`, …); filtro opcional **`customer_codes`** (sem `portfolio_id` / membership) |
 | MFEs irmãos | Permanecem no menu; **não** hostear/deep-link como entrega |
 
-**Proibido:** iframe / Module Federation / deep link obrigatório para `dashboard-commercial`, `propostas-comerciais` ou PVA.
+**Proibido:** iframe / Module Federation / deep link obrigatório para `dashboard-commercial`. MFEs PVA/propostas já removidos (F2c); deep links legados redirecionam.
 
 ## Nav alvo (top bar)
 

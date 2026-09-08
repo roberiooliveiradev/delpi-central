@@ -136,7 +136,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Controle de Retrabalhos | `/apps/api-delpi/retrabalhos/*` (TOTVS view BI RT) |
 | Estoque de Segurança | `/apps/api-delpi/supplies/safety-stock/*` (TOTVS SBZ/SB2/SC7/SD4/SD3; UI: monitoramento + `/analise-consumo`) — [README](../../plugins/estoque-seguranca/README.md) · [API](../../api-delpi/docs/api/estoque-seguranca.md) |
 | Materiais de Terceiros | `/apps/api-delpi/supplies/third-party-materials/*` (TOTVS SB6 / VW_PD3_BENEF_RETORNOS) — [README](../../plugins/materiais-terceiros/README.md) · [API](../../api-delpi/docs/api/materiais-terceiros.md) |
-| Portal Comercial | `/apps/commercial-api/*` + `/apps/api-delpi/pedidos-venda-abertos/*`, `/commercial/*`, `/commercial-proposals/*`, `/products/*` e `/production/*` — [README](../../plugins/commercial/README.md) · [wireframes](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) |
+| Portal Comercial | BFF `/apps/commercial-api/*` (+ proxy TOTVS api-delpi). MFEs PVA/propostas removidos (F2c). [README](../../plugins/commercial/README.md) · [F2c](../12-roadmap-e-evolucao/commercial/F2C-CUTOVER-RUNBOOK.md) · [wireframes](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Central de Agendamento | `/apps/api-delpi/scheduling/*` |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |

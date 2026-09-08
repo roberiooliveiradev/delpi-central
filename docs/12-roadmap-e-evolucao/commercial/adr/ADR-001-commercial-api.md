@@ -2,16 +2,16 @@
 
 | Campo | Valor |
 |-------|--------|
-| Status | Aceito (documental) |
-| Data | 2026-08-05 |
+| Status | Aceito · **F2 / F2c cumpridos** (estado Delpi em commercial-api; MFEs PVA/propostas removidos set/2026) |
+| Data | 2026-08-05 (ADR) · atualização 2026-09 |
 | Contexto | Portal Comercial (`commercial`) — Minha DELPI |
-| Relacionados | [PLAYBOOK-01-fronteiras-api-delpi.md](../PLAYBOOK-01-fronteiras-api-delpi.md), [PLAYBOOK-MODULO-COMERCIAL.md](../PLAYBOOK-MODULO-COMERCIAL.md) |
+| Relacionados | [PLAYBOOK-01-fronteiras-api-delpi.md](../PLAYBOOK-01-fronteiras-api-delpi.md), [PLAYBOOK-MODULO-COMERCIAL.md](../PLAYBOOK-MODULO-COMERCIAL.md), [ADR-002](./ADR-002-deprecar-pedidos-venda-abertos.md), [F2C-CUTOVER-RUNBOOK.md](../F2C-CUTOVER-RUNBOOK.md) |
 
 ---
 
 ## Contexto
 
-O domínio Comercial já possui três plugins MFE e dezenas de rotas read-only TOTVS na **api-delpi**. O Portal do Vendedor (`pedidos-venda-abertos`) introduziu estado **Delpi** (carteira de vendedores e avatars) no Postgres de plugins **servido pela api-delpi**, incluindo GETs e escritas.
+O domínio Comercial tinha plugins MFE analíticos e dezenas de rotas read-only TOTVS na **api-delpi**. O Portal do Vendedor (`pedidos-venda-abertos`) introduziu estado **Delpi** (carteira de vendedores e avatars) no Postgres de plugins **servido pela api-delpi**. (Pós-F2c: MFEs PVA/propostas removidos; estado Delpi vive na commercial-api.)
 
 O produto-alvo inclui workflows de CRM (oportunidades, follow-ups, forecast, amostras, confirmação de pedidos) que **não** são SQL Protheus. Manter esse estado na api-delpi misturaria:
 
@@ -23,10 +23,10 @@ O produto-alvo inclui workflows de CRM (oportunidades, follow-ups, forecast, amo
 1. Criar o pacote **`commercial-api/`** no monorepo, Clean Architecture, Postgres próprio (schema `commercial` ou equivalente em `postgres-plugins`), OpenAPI próprio, container Compose.
 2. **Migrar** para a commercial-api (fase F2) **todas** as rotas de `pedidos-venda-abertos` cujo estado canônico é Delpi (Postgres / avatar) — **leituras e escritas** de seller portfolio e customer avatar. Critério: se não é SQL/view TOTVS, sai da api-delpi.
 3. Manter **somente** leituras SQL TOTVS na api-delpi (pedidos abertos, ops, search/enrichment, billing-series, NF); commercial-api consome enrichment via **gateway HTTP** (`DelpiApiClient`) quando precisar compor.
-4. MFEs analíticos existentes continuam chamando api-delpi para KPIs/propostas/pedidos TOTVS; o **Portal Comercial** chama commercial-api para **carteira e avatar** (GET e CRUD) e api-delpi para reads TOTVS de pedidos.
+4. O **Portal Comercial** chama commercial-api para **carteira, avatar e BFF TOTVS**; `dashboard-commercial` (legado) pode chamar api-delpi para KPIs. MFEs PVA/propostas **não** existem mais (F2c).
 5. Naming técnico em **inglês**; ao usuário o produto chama-se **Portal Comercial** (pt-BR).
-6. Shell/`type: module` (`plugins/commercial`) **só** após runtime plugin×módulo 1.1.0 se necessário para composição — o app Portal Comercial pode iniciar como plugin com as telas de paridade; F1–F2 não bloqueiam.
-7. **Depreciação** de `pedidos-venda-abertos`: somente após paridade funcional no Portal Comercial (playbook § 2.1.1 / fase F2c). Até lá o plugin legado permanece ativo.
+6. Shell/`type: module` (`plugins/commercial`) **só** após runtime plugin×módulo 1.1.0 se necessário — F1–F2 não bloqueiam.
+7. **Depreciação / remoção** de `pedidos-venda-abertos` (e propostas MFE): ADR-002 + F2c — **executado** set/2026.
 
 ## Consequências
 
@@ -39,17 +39,20 @@ O produto-alvo inclui workflows de CRM (oportunidades, follow-ups, forecast, amo
 
 ### Negativas / custos
 
-- Dual-read/cutover na F2 (trabalho de migração e homologação).
-- Durante a transição, `pedidos-venda-abertos` pode apontar carteira para commercial-api **ou** o usuário migra direto ao Portal Comercial — cutover de UI é F2b/F2c.
-- Deprecação do plugin legado exige checklist de paridade; remoção de código é ADR separado.
+- Dual-read/cutover na F2 (trabalho de migração e homologação) — **concluído**.
+- Remoção dos MFEs legados (F2c) exige redirects + unregister Core — ver runbook.
 
 ### Não decisões (fora deste ADR)
 
 - Escrita no TOTVS (pedido/proposta).
-- Remoção imediata de `pedidos-venda-abertos` (só após F2c / § 2.1.1).
-- Destino final de `dashboard-commercial` / `propostas-comerciais` (permanecem por enquanto).
+- Destino final de `dashboard-commercial` (permanece até Gestão nativa).
 - Política final de rentabilidade / IA / WEG.
 - Fonte definitiva de segmentos/famílias WEG (ADR futuro).
+
+### Cumprimento pós-ADR
+
+- F2 (estado Delpi em commercial-api): **cumprido**.
+- F2c (remoção MFEs + redirects): **cumprido** set/2026 — [F2C-CUTOVER-RUNBOOK.md](../F2C-CUTOVER-RUNBOOK.md).
 
 ## Alternativas rejeitadas
 

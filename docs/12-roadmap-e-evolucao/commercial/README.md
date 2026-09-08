@@ -1,13 +1,13 @@
 # Portal Comercial — documentação
 
-> **Status:** Wave G+ em `main` + **consolidação nativa** (Gestão / Propostas ADY / elevar operacional) — ver [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) · **E1–E6 carteiras** (multi-membro + mercado) entregue — ver [WIREFRAMES.md](./WIREFRAMES.md) WF-05R · [HOMOLOGACAO-CARTEIRAS-MULTI.md](./HOMOLOGACAO-CARTEIRAS-MULTI.md) · **Refino visual + IA** (Início launcher, Overview BI, C16/C17) entregue — [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md)  
+> **Status (set/2026):** Wave G+ + consolidação nativa em curso · **F2c executado** (MFEs PVA e propostas-comerciais removidos; redirects ativos) — [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) · [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) · carteiras multi-membro [WIREFRAMES.md](./WIREFRAMES.md) WF-05R · [HOMOLOGACAO-CARTEIRAS-MULTI.md](./HOMOLOGACAO-CARTEIRAS-MULTI.md) · refino visual [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md)  
 > **Nome ao usuário:** **Portal Comercial**  
 > **Id técnico:** `commercial` · **basePath:** `/apps/commercial`  
 > **API:** `commercial-api` · gateway `/apps/commercial-api/`
 
-O **Portal Comercial** é a UX canônica a evoluir: carteira (compartilhada N membros), pedidos, Meu dia, **Gestão à vista** (páginas nativas) e **Propostas documento**. Reads TOTVS na **api-delpi**; estado Delpi na **commercial-api**. **Zero hosteamento** de MFEs irmãos.
+O **Portal Comercial** é a UX canônica: carteira (N membros), pedidos, Meu dia, **Gestão à vista**, **Propostas documento (ADY)** e Sala. Reads TOTVS na **api-delpi** (via BFF); estado Delpi na **commercial-api**. **Zero hosteamento** de outros MFEs.
 
-Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais` **coexistem** no menu (decisão 5C); remoção só no futuro. F2c cutover **não** é pré-requisito da consolidação — runbook: **[F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)** (inclui smoke multi-membro / `V005`).
+**Legado:** apenas `dashboard-commercial` permanece coexistente (referência até Gestão nativa fechar). Os MFEs `pedidos-venda-abertos` e `propostas-comerciais` foram **retirados** do Compose e do código; deep links redirecionam para `/apps/commercial/*` ([F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)).
 
 ## Documentos
 
@@ -21,12 +21,12 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | **[IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)** | Status executável F0–F2 + consolidação nativa |
 | **[DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md)** | Design de IA / navegação / princípios UX |
 | **[UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md)** | UX polish + tarefas P0–P2 **entregues**; P3 reminder backlog |
-| **[ROADMAP-INTERACTION-ROOM.md](./ROADMAP-INTERACTION-ROOM.md)** | Sala de interação — layout Teams / fill / composer markdown (**Backlog**) |
+| **[ROADMAP-INTERACTION-ROOM.md](./ROADMAP-INTERACTION-ROOM.md)** | Sala de interação — layout Teams / fill / composer markdown (**entregue** E1–E7; ver roadmap) |
 | **[PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)** | Papéis Minha Delpi × permission codes (Wave G + E5.1) |
 | **[HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md)** | Checklist / smoke Wave G+ (P0 + P1) |
 | **[HOMOLOGACAO-CARTEIRAS-MULTI.md](./HOMOLOGACAO-CARTEIRAS-MULTI.md)** | Smoke MVP multi-membro (E5.2) + comandos de regressão |
 | **[HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md)** | Checklist de paridade (assinatura Comercial/QA) |
-| **[F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)** | Ocultar PVA + redirects + smoke multi-membro (`V005`) |
+| **[F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)** | **F2c executado** — remoção MFEs + redirects + comandos prod |
 | **[KPI-FICHAS.md](./KPI-FICHAS.md)** | Fichas KPI (F0) — Onda A C1 (baseline código; assinatura formal opcional) |
 | **[KPI-HOMOLOGACAO-ONDA-A.md](./KPI-HOMOLOGACAO-ONDA-A.md)** | Workshop homologação ROL / carteira / hit rate |
 | **[API-ROUTES.md](./API-ROUTES.md)** | Catálogo commercial-api + api-delpi |
@@ -45,24 +45,24 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | **[adr/ADR-002-deprecar-pedidos-venda-abertos.md](./adr/ADR-002-deprecar-pedidos-venda-abertos.md)** | ADR — depreciação Portal do Vendedor |
 | **[GAV-TV-FEED.md](./GAV-TV-FEED.md)** | Fontes Overview → TV Dashboard (GR); Comercial só Link |
 
-## Estado da implementação (ago/2026)
+## Estado da implementação (set/2026)
 
 | Entrega | Estado |
 |---------|--------|
 | `commercial-api/` (health, JWT, portfolios, avatars, proxy search/enrich) | **Entregue** |
-| `plugins/commercial/` (home, open-orders, customers, detail, seller-portfolios) | **Entregue** (paridade F2b harden) |
+| `plugins/commercial/` (home, open-orders, customers, detail, seller-portfolios, proposals, overview) | **Entregue** (paridade F2b + ADY nativo) |
 | **E5 multi-membro** — `V005`, lista full-page, detalhe `/seller-portfolios/:id`, org, escopo | **Entregue** — [WIREFRAMES.md](./WIREFRAMES.md) · [HOMOLOGACAO-CARTEIRAS-MULTI.md](./HOMOLOGACAO-CARTEIRAS-MULTI.md) |
 | **E6 mercado** — overlapping, carga, timeline, badge Conta, bulk+Excel | **Entregue** — [WIREFRAMES.md](./WIREFRAMES.md) WF-05R · [API-ROUTES.md](./API-ROUTES.md) |
 | Wave G+ — Meu dia CRM / Conta follow-up / Home gestão / UnderlineNav | **Entregue** (P0+P1; M2 parcial `V003`) |
 | UX polish Home + Meu dia (PageHero, anti-redundância) | **Entregue** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 1 |
-| Tasks: observação UI · responsável · anexos | **Backlog** P0–P2 — mesmo doc § 3 |
+| Tasks: observação UI · responsável · anexos | **Entregue** P0–P2 — mesmo doc § 3; P3 reminder backlog |
 | Compose + gateway + volume `commercial-avatars` | **Entregue** |
 | `COMMERCIAL_PORTFOLIO_SOURCE=commercial` (default Compose) | **Entregue** — ops: backfill/reconcile |
-| Homologação Comercial § 2.1.1 | **Pendente** (assinatura Comercial/QA) |
+| Homologação Comercial § 2.1.1 (assinatura QA) | **Pendente** (checklist técnico [x]; assinatura Comercial/QA) |
 | **Consolidação nativa** (Gestão + ADY + elevar ops) | **Em curso** — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) |
-| F2c (ocultar PVA + redirects) | **Adiado** — só após Comercial ≥ PVA + pedido; checklist [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) |
-| **E7** mapa · AI carve · rotate leads · inbox e-mail | **Backlog futuro** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 6 (sem implementação neste ciclo) |
-| **Sala de interação** — fill, chips, drawer, composer markdown | **Backlog** — [ROADMAP-INTERACTION-ROOM.md](./ROADMAP-INTERACTION-ROOM.md) (E1–E8; sem implementação neste ciclo de docs) |
+| **F2c** (remover PVA + propostas MFE + redirects) | **Executado** (set/2026) — [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) |
+| **E7** mapa · AI carve · rotate leads · inbox e-mail | **Backlog futuro** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 6 |
+| **Sala de interação** — fill, chips, drawer, composer markdown | **Entregue** (E1–E7) — [ROADMAP-INTERACTION-ROOM.md](./ROADMAP-INTERACTION-ROOM.md) |
 | Dívida E6 — gap «sem cobertura» + agregação TOTVS no `load-summary` | **Entregue** — universo = clientes com pedido aberto; `filter=uncovered` + métricas no load-summary |
 | **Refino visual + IA** — Início apps\|eventos, Overview BI, filtro carteira, Equipe→Admin, Conta Opp, CM_HELP, C17 row→detalhe | **Entregue** — [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) § Homologação |
 | **Onda A cockpit C1** — presets período, carteira aberta, série hit rate, fichas | **Entregue** (baseline) — [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) § 4 · [KPI-FICHAS.md](./KPI-FICHAS.md) |
@@ -71,6 +71,7 @@ Plugins `pedidos-venda-abertos`, `dashboard-commercial` e `propostas-comerciais`
 | **B-fecho docs** — matriz rotas×WF + README/GESTAO/helps + polish carteira≠PCP | **Entregue** — [WIREFRAMES.md](./WIREFRAMES.md) matriz · [HELP-COVERAGE.md](./HELP-COVERAGE.md) |
 | **Ata alinhamento 2** — inventário meta/rename/confirmação/sala/Diretoria/MyVEG; GR→TV | **Entregue (docs)** — [ATA-ALINHAMENTO-AGO2026-2.md](./ATA-ALINHAMENTO-AGO2026-2.md) |
 | **Inventário Parcial + W0** — meta SI, labels, rename, filtros Conta, OTD copy, favoritos | **Existe** (W0) + revisão código + **§ Bloqueado por `.cursor`** — [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) |
+| **Próximo produto** — Ondas C–E (SLA operacional, FNE, confirmação) | **Backlog** — [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) § 4 · [PARCIAL-INVENTARIO.md](./PARCIAL-INVENTARIO.md) |
 
 Helps do MFE (incl. chip **Escopo** = identidade da sessão, não filtro) vivem em `plugins/commercial/src/content/helpTooltips.ts`. Catálogo ao usuário (definição + onde aparece): Ajuda `/help` · `userManualTermCatalog.ts`.
 
@@ -88,23 +89,23 @@ README do plugin: [`plugins/commercial/README.md`](../../../plugins/commercial/R
 
 ```text
 Portal Comercial (páginas nativas)
-  → commercial-api → Postgres (carteira N:N / Meu dia / avatars)
-  → api-delpi → TOTVS (pedidos, KPIs, OTD, OV, ADY)
+  → commercial-api → Postgres (carteira N:N / Meu dia / avatars / sala)
+  → commercial-api → api-delpi → TOTVS (pedidos, KPIs, OTD, OV, ADY)
 
-MFEs irmãos (legado coexistente)
+dashboard-commercial (legado coexistente)
   → api-delpi → TOTVS
 ```
 
-**HTTPS:** clients usam paths relativos; `commercial-api` com `redirect_slashes=False` (evita Mixed Content atrás do TLS). Pedidos TOTVS na api-delpi usam barra final em `pedidos-venda-abertos/`.
+**HTTPS:** clients usam paths relativos; `commercial-api` com `redirect_slashes=False` (evita Mixed Content atrás do TLS). Paths TOTVS na api-delpi (ex. `pedidos-venda-abertos/`, `propostas-comerciais/`) permanecem como contrato BFF — **não** como app MFE.
 
 ## Ativos existentes
 
 | Plugin | Papel | Destino |
 |--------|--------|---------|
-| `commercial` | **Portal Comercial** (entrada canônica da paridade) | Ativo |
-| `dashboard-commercial` | Cockpit KPIs / OTD / OV (legado coexistente) | Referência até Gestão nativa |
-| `pedidos-venda-abertos` | Portal do Vendedor | **Ativo** (coexiste; cutover F2c adiado) |
-| `propostas-comerciais` | Propostas ADY + PDF (legado) | Referência até Propostas nativas |
+| `commercial` | **Portal Comercial** (UX canônica) | **Ativo** |
+| `dashboard-commercial` | Cockpit KPIs / OTD / OV (legado) | Referência até Gestão nativa |
+| `pedidos-venda-abertos` | Portal do Vendedor | **Removido** (F2c) — redirects → `/apps/commercial/*` |
+| `propostas-comerciais` | Propostas ADY legado | **Removido** (F2c) — redirects → `/apps/commercial/proposals` |
 
 ## Fases
 
@@ -114,8 +115,9 @@ MFEs irmãos (legado coexistente)
 | F2b | Paridade UX operacional | **Concluído** (port PVA → commercial) |
 | **E5.1** | Carteiras multi-membro (lista + detalhe + org + escopo) | **Concluído** (MVP) |
 | **Consolidação nativa** | Gestão + Propostas ADY + elevar ops | **Em curso** — [GESTAO-A-VISTA.md](./GESTAO-A-VISTA.md) |
-| F2c | Depreciar PVA | **Adiado** (só após Comercial superar + pedido) — [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) |
-| P3 CRM | Reminder/checklist avançado | **Bloqueado** até consolidação |
+| **F2c** | Remover MFEs PVA + propostas; redirects | **Executado** (set/2026) — [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) |
+| Ondas C–E | SLA ofertas, FNE, confirmação, sensíveis | **Próximo** — [ATA-MAPA-NECESSIDADES.md](./ATA-MAPA-NECESSIDADES.md) |
+| P3 CRM | Reminder/checklist avançado | **Bloqueado** / backlog |
 | F3–F4 | Runtime módulo | Fora do escopo atual |
 
 ## Referências
@@ -123,4 +125,5 @@ MFEs irmãos (legado coexistente)
 - [Checklist novo MFE](../../05-plugin-system/novo-plugin-mfe-checklist.md)
 - [Registrar plugin](../../10-guias-operacionais/registrar-plugin.md)
 - [Infra ambiente](../../../infra/README-ambiente.md) (volume avatars)
-- Legado PVA: [pedidos-venda-abertos](../pedidos-venda-abertos/README.md)
+- Histórico PVA (docs): [pedidos-venda-abertos](../pedidos-venda-abertos/README.md)
+- Cutover: [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)

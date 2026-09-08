@@ -1,12 +1,12 @@
 # PLAYBOOK — Portal Comercial (Minha DELPI)
 
-> **Status:** playbook oficial do repositório  
-> **Data:** 5 de agosto de 2026  
+> **Status:** playbook oficial do repositório · **atualização set/2026: F2c executado**  
+> **Data original:** 5 de agosto de 2026  
 > **Nome ao usuário (pt-BR):** **Portal Comercial**  
 > **Identificador técnico:** `commercial`  
 > **Caminho:** `docs/12-roadmap-e-evolucao/commercial/PLAYBOOK-MODULO-COMERCIAL.md`  
 > **Fonte funcional:** consolidação reunião 30/07/2026 + Demandas de TI + inventário do monorepo  
-> **Complementos:** [INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md) · [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md) · [API-ROUTES.md](./API-ROUTES.md) · [DATA-MODEL.md](./DATA-MODEL.md) · [WIREFRAMES.md](./WIREFRAMES.md) · [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)
+> **Complementos:** [INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md) · [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md) · [API-ROUTES.md](./API-ROUTES.md) · [DATA-MODEL.md](./DATA-MODEL.md) · [WIREFRAMES.md](./WIREFRAMES.md) · [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md) · [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)
 
 ---
 
@@ -16,7 +16,9 @@ Este playbook é o plano mestre de **produto, arquitetura e implementação** do
 
 O nome **Portal Comercial** (pt-BR) sinaliza ao usuário que a aplicação **abrange várias funcionalidades** do domínio comercial (carteira, pedidos, análises, CRM, etc.), não um único relatório.
 
-Não autoriza implementação indiscriminada. Prioriza fases com gates. É uma **nova aplicação** da Minha DELPI. O plugin `pedidos-venda-abertos` (Portal do Vendedor) será **depreciado somente após paridade funcional completa** no Portal Comercial — ver § 2.1.
+Não autoriza implementação indiscriminada. Prioriza fases com gates. É uma **nova aplicação** da Minha DELPI.
+
+> **F2c (set/2026) — executado:** MFEs `pedidos-venda-abertos` e `propostas-comerciais` removidos; redirects no gateway. A § 2.1 abaixo permanece como **histórico do processo** de cutover; estado vigente = [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) + [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md).
 
 ### 1.1 Pilares funcionais
 
@@ -87,26 +89,20 @@ Fonte: síntese da reunião Comercial (jul/2026) + Demandas de TI.
 | Nome no launcher e manifests (pt-BR) | **Portal Comercial** |
 | Escopo de produto | Hub de várias capacidades comerciais |
 
-**Ordem de produto (obrigatória):**
+> **Estado vigente (set/2026):** F2c **executado** — sem MFE PVA/propostas no Compose; UX canônica = Portal; paths TOTVS na api-delpi permanecem via BFF. Texto abaixo = processo histórico até o cutover.
 
-1. **Implementar primeiro** no Portal Comercial (UI + `commercial-api` + reads api-delpi) **todas** as funcionalidades hoje cobertas por `pedidos-venda-abertos` (carteira, pedidos em aberto, check-up cliente, config de vendedores, avatars, etc.).
-2. Manter `pedidos-venda-abertos` **ativo e suportado** em paralelo até o gate de paridade.
-3. **Depreciar** `pedidos-venda-abertos` (ocultar do launcher / marcar deprecated / comunicar cutover) **somente** quando a checklist de paridade (§ 2.1.1) estiver 100% homologada.
-4. Remoção definitiva do código/manifest fica em ADR posterior — depreciação ≠ delete imediato.
+**Ordem de produto (obrigatória — histórica até F2c):**
 
-**Não autorizado antes da paridade:**
+1. **Implementar primeiro** no Portal Comercial (UI + `commercial-api` + reads api-delpi) **todas** as funcionalidades cobertas pelo Portal do Vendedor (carteira, pedidos em aberto, check-up cliente, config de vendedores, avatars, etc.).
+2. Manter o MFE legado **ativo** em paralelo até o gate de paridade.
+3. **Depreciar** (ocultar launcher / redirects / comunicar) **somente** com checklist § 2.1.1 100% homologada.
+4. Remoção definitiva do código = ADR-002 + execução F2c ([F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)).
 
-- Remover, desregistrar ou esconder `pedidos-venda-abertos` do launcher.
-- Alterar `id` / `basePath` de `pedidos-venda-abertos` para forçar migração.
-- Inventar runtime de módulo só para o Comercial.
-- Remover `dashboard-commercial` ou `propostas-comerciais` neste playbook (permanecem compostos / coexistentes até decisão própria).
+**Pós-F2c:**
 
-**Autorizado:**
-
-- Entregar o Portal Comercial como entrada principal do domínio.
-- Absorver UX e jornadas do Portal do Vendedor **dentro** do Portal Comercial (reimplementação no módulo, não fork do código do plugin antigo).
-- Rotas de composição para dashboard/propostas enquanto fizer sentido.
-- Acesso direto a `pedidos-venda-abertos` **até** o cutover de depreciação.
+- Removidos do monorepo/Compose: `pedidos-venda-abertos`, `propostas-comerciais` (MFE).
+- `dashboard-commercial` permanece como referência analítica até Gestão nativa.
+- Aliases RBAC legados podem existir até limpeza de perfis.
 
 #### 2.1.1 Gate de paridade — `pedidos-venda-abertos` → Portal Comercial
 
@@ -167,12 +163,12 @@ Baseline detalhada: [INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md).
 
 | Ativo | Estado | Reuso |
 |-------|--------|-------|
-| `dashboard-commercial` | Em uso — ROL, OTD, conversão, propostas OV | Cockpit; compor no shell |
+| `dashboard-commercial` | Em uso — ROL, OTD, conversão, propostas OV | Referência até Gestão nativa |
 | `/commercial/*` api-delpi | ~19 GETs TOTVS | Permanecem |
-| `pedidos-venda-abertos` | Portal do Vendedor + carteira | **Fonte de paridade** — ativo até cutover; estado Delpi → `commercial-api`; UX refeita no Portal Comercial |
-| `propostas-comerciais` | Lista/detalhe/PDF | Compor (permanece) |
+| Paths `/pedidos-venda-abertos/*` (api-delpi) | SQL TOTVS | Via BFF commercial-api — **sem** MFE PVA (F2c) |
+| Paths `/propostas-comerciais/*` (api-delpi) | ADY + PDF | Via BFF — MFE propostas **removido** (F2c) |
 | SI comercial | Metas | Continua |
-| `commercial` (**Portal Comercial**) / `commercial-api` | **Inexistentes** | Criar — priorizar paridade com pedidos |
+| `commercial` / `commercial-api` | **Ativos** — UX canônica | Contínuo |
 | Runtime módulo 1.1.0 | Spec ok; código pendente | Bloqueia só shell F3–F4 |
 
 ---
@@ -184,18 +180,13 @@ flowchart TB
   U[Usuario] --> P[Portal]
   P --> C[Core API / me apps / RBAC]
   P --> M[Portal Comercial commercial]
-  M --> DC[dashboard-commercial]
-  M --> PV[pedidos-venda-abertos ate cutover]
-  M --> PC[propostas-comerciais]
+  M --> DC[dashboard-commercial legado]
   M --> CW[Views nativas Portal Comercial]
   M --> TV[tv-dashboard]
   M --> CHAT[minha-delpi-chat]
 
   DC --> AD[api-delpi]
-  PV --> AD
-  PC --> AD
   CW --> CA[commercial-api]
-  CW --> AD
   CA --> AD
   DC --> SI[strategic-indicators-api]
 
@@ -207,9 +198,9 @@ flowchart TB
 ### 4.1 Fluxo HTTP híbrido
 
 ```text
-MFE analítico existente  → api-delpi → TOTVS
-MFE workspace / CRUD     → commercial-api → Postgres
-                         → commercial-api → api-delpi → TOTVS
+MFE dashboard-commercial (legado)  → api-delpi → TOTVS
+MFE Portal Comercial               → commercial-api → Postgres
+                                   → commercial-api → api-delpi → TOTVS
 ```
 
 ### 4.2 Pacotes alvo
@@ -217,10 +208,10 @@ MFE workspace / CRUD     → commercial-api → Postgres
 | Pacote | Papel |
 |--------|--------|
 | `commercial-api/` | Backend dedicado |
-| `plugins/commercial/` | App **Portal Comercial** (shell + views de carteira/pedidos/CRM) |
+| `plugins/commercial/` | App **Portal Comercial** (shell + views) |
 | `plugins/plugin-ui` | Kit visual compartilhado |
-| `pedidos-venda-abertos` | Legado ativo até gate § 2.1.1; depois depreciado |
-| `dashboard-commercial`, `propostas-comerciais` | Permanecem; compostos quando útil |
+| `plugins/dashboard-commercial` | Legado analítico até Gestão nativa |
+| MFEs PVA / propostas | **Removidos** (F2c set/2026) — docs históricos em `docs/12-roadmap-e-evolucao/{pedidos-venda-abertos,propostas-comerciais}/` |
 
 Referência de scaffold: `transformometro-api` + [novo-plugin-mfe-checklist.md](../../05-plugin-system/novo-plugin-mfe-checklist.md).
 
@@ -297,8 +288,8 @@ Legenda de **Estado:** `existente` · `parcial` · `novo` · `outro domínio` ·
 | MOD-014 | Aliases `/apps/commercial/*` | P0 | novo |
 | MOD-015 | Acesso direto legado + contextual Portal Comercial | P0 | existente / novo |
 | MOD-016 | Rotas novas só para gaps (após paridade pedidos) | P0 | novo |
-| MOD-018 | Paridade funcional vs `pedidos-venda-abertos` (§ 2.1.1) | P0 | novo |
-| MOD-019 | Depreciação de `pedidos-venda-abertos` **após** paridade | P0 | novo (só pós-gate) |
+| MOD-018 | Paridade funcional vs Portal do Vendedor (§ 2.1.1) | P0 | **feito** (F2b) |
+| MOD-019 | Depreciação / remoção MFEs PVA (+ propostas) | P0 | **feito** (F2c set/2026) |
 | MOD-009–011, 017 | Telemetria, flags, favoritos, label destino | P1 | novo |
 
 ### 7.2 Cockpit gerencial
@@ -493,7 +484,7 @@ flowchart LR
 | **F1** | Scaffold `commercial-api`, Compose, health, OpenAPI, auth | Smoke health + JWT |
 | **F2** | Migrar **todas** rotas Delpi de `pedidos-venda-abertos` (GET sellers + CRUD + avatars) para `commercial-api` | Dual-read OK → cutover API; § 3.2 deprecado na api-delpi |
 | **F2b** | Entregar no **Portal Comercial** (`plugins/commercial`) a **paridade UX** do Portal do Vendedor (pedidos, carteira, check-up, admin) | Checklist § 2.1.1 100% ✅ |
-| **F2c** | Depreciar `pedidos-venda-abertos` (launcher / comunicação / redirects) | Só após F2b; ADR de cutover |
+| **F2c** | Remover MFEs PVA + propostas; redirects gateway | **Executado** set/2026 — [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) |
 | **F3** | Runtime plugin×módulo plataforma (Core + Portal) | Fixture module compõe plugin real |
 | **F4** | Compor dashboard / propostas no Portal Comercial (quando runtime pronto) | Sem regressão das rotas originais desses apps |
 | **F5** | Worklist: tasks, activities, timeline, audit, outbox | Task own/team com auditoria |
@@ -501,7 +492,7 @@ flowchart LR
 | **F7** | Samples + order confirmation + exceções entrega | Caso com SLA e timeline |
 | **F8+** | Rentabilidade, GAV, territórios, WEG, IA | Política + dados maduros |
 
-**Prioridade:** F1 → F2 → **F2b** (lógica e telas no Portal Comercial) **antes** de expandir CRM avançado (F5+) além do necessário à paridade. **F2c** nunca antecipa F2b.
+**Prioridade histórica:** F1 → F2 → **F2b** antes de CRM avançado. **F2c executado** (set/2026).
 
 **Cockpit analítico** evolui em paralelo em `dashboard-commercial` + api-delpi.
 

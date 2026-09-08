@@ -85,9 +85,9 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [commercial/adr/ADR-001-commercial-api.md](./commercial/adr/ADR-001-commercial-api.md) | ADR — API própria e migração do CRUD |
 | [commercial/adr/ADR-002-deprecar-pedidos-venda-abertos.md](./commercial/adr/ADR-002-deprecar-pedidos-venda-abertos.md) | ADR — depreciação do Portal do Vendedor |
 
-### Pedidos de Venda em Aberto
+### Pedidos de Venda em Aberto (histórico)
 
-> **Legado até F2c** — entrada canônica de paridade: [Portal Comercial](./commercial/README.md).
+> **F2c executado (set/2026)** — MFE removido. Entrada canônica: [Portal Comercial](./commercial/README.md). Docs abaixo = arquivo.
 
 | Arquivo | Conteúdo |
 |---|---|

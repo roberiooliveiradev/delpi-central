@@ -5,7 +5,7 @@ Checklist viva derivada do playbook [§ 2.1.1](./PLAYBOOK-MODULO-COMERCIAL.md#21
 **Donos:** Comercial + QA  
 **Gate de depreciação:** checklist abaixo + registro na tabela; F2c executado em ago/2026 ([F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)).
 
-**Estado técnico (engenharia, ago/2026):** paridade F2b no MFE `plugins/commercial`; cutover F2c (redirects + menu oculto) aplicado no código / ambiente local.
+**Estado técnico (engenharia, set/2026):** paridade F2b no MFE `plugins/commercial`; **F2c executado** — MFEs removidos + redirects **ativos** no gateway ([F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)). Assinatura formal Comercial/QA ainda pode ficar pendente na tabela abaixo.
 
 ---
 
@@ -19,9 +19,9 @@ Checklist viva derivada do playbook [§ 2.1.1](./PLAYBOOK-MODULO-COMERCIAL.md#21
 | Detalhe / check-up do cliente | `/apps/commercial/customers/:codigo/:loja` (pedidos + faturamento/NF + avatar) | [x] |
 | Configuração de vendedores e carteiras (admin) | `/apps/commercial/seller-portfolios` via `commercial-api` | [x] |
 | Avatar de cliente | GET/PUT/DELETE `/apps/commercial-api/customers/{code}/{store}/avatar` | [x] |
-| Deep links `codigo`+`loja` | Rotas commercial; redirects PVA no snippet (desativados no nginx até flip RBAC) | [x] |
+| Deep links `codigo`+`loja` | Rotas commercial; redirects PVA **ativos** no gateway | [x] |
 | Permissões (access / admin) mapeadas | `commercial.accounts.view` / `commercial.seller-portfolios.manage` (+ aliases) | [x] |
-| Favoritos / URLs antigas | Snippet `commercial-f2c-redirects.conf` pronto; include nginx **comentado** até cutover | [x] |
+| Favoritos / URLs antigas | Snippet `commercial-f2c-redirects.conf` **incluído** nos nginx canônicos | [x] |
 
 ---
 
@@ -71,14 +71,15 @@ Checklist viva derivada do playbook [§ 2.1.1](./PLAYBOOK-MODULO-COMERCIAL.md#21
 |------|----------|-------------|-----------|-------------|
 | 2026-08-06 | local/dev | Engenharia | ❌ F2c prematuro — rollback | Commercial open-orders sem paridade UX (KPIs/Excel/previsão OP); PVA restaurado no menu |
 | 2026-08-06 | local/dev | Engenharia (plano F2c) | revertido | Cutover técnico desfeito até fechar gap |
+| 2026-09 | monorepo + Compose | Engenharia | ✅ F2c | MFEs removidos; redirects ativos — [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) |
 
 ---
 
 ## Comunicação (cutover)
 
 Entrada canônica do domínio: **Portal Comercial** (`/apps/commercial`).  
-URLs antigas de `/apps/pedidos-venda-abertos/*` redirecionam automaticamente **após** o flip F2c (include do snippet no gateway + RBAC `commercial.*`).  
-Permissões legadas `pedidos-venda-abertos.access` / `.admin` continuam válidas como aliases.
+URLs antigas de `/apps/pedidos-venda-abertos/*` e `/apps/propostas-comerciais/*` **redirecionam** (snippet ativo no gateway).  
+Permissões legadas `pedidos-venda-abertos.access` / `.admin` podem permanecer como aliases até limpeza de perfis.
 
 ---
 

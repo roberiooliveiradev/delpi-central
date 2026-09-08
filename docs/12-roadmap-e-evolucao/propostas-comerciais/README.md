@@ -1,8 +1,10 @@
-# Propostas Comerciais — plugin Minha DELPI
+# Propostas Comerciais — documentação histórica
 
-Consulta **read-only** de propostas comerciais **ativas** no Protheus/TOTVS, com detalhe operacional, emissão de PDF e revisão editável antes da exportação.
+Consulta **read-only** de propostas comerciais **ativas** no Protheus/TOTVS (ADY), com detalhe e PDF.
 
-**Status:** MVP em produção (2026-06) — listagem, detalhe, PDF e fallback de **prospect** (`SUS010`) quando não há cliente em `SA1010`.
+> **Status (set/2026):** MFE **removido** do monorepo (F2c). UX canônica = Portal Comercial `/apps/commercial/proposals`. Paths api-delpi `/propostas-comerciais/*` **permanecem** via BFF. Redirects: [F2C-CUTOVER-RUNBOOK.md](../commercial/F2C-CUTOVER-RUNBOOK.md).
+
+Os documentos abaixo são **arquivo histórico** da especificação do plugin antigo.
 
 ---
 
@@ -56,26 +58,21 @@ Envelope padrão (JSON): `{ success, message, data, meta }`. PDF retorna `applic
 
 | Peça | Caminho |
 |------|---------|
-| Plugin MFE | `plugins/propostas-comerciais/` |
-| README operacional | [plugins/propostas-comerciais/README.md](../../../plugins/propostas-comerciais/README.md) |
+| MFE (removido F2c) | — · UX: `/apps/commercial/proposals` |
+| Docs históricos | esta pasta |
 | Controller HTTP | `api-delpi/app/interface/http/propostas_comerciais_controller.py` |
 | Queries TOTVS | `api-delpi/app/infrastructure/totvs/propostas_comerciais/queries.py` |
 | Formatter canônico | `api-delpi/app/domain/propostas_comerciais/services/proposta_comercial_formatter.py` |
 | PDF (ReportLab) | `api-delpi/app/infrastructure/pdf/propostas_comerciais/proposta_comercial_pdf_renderer.py` |
 | Testes | `api-delpi/tests/test_propostas_comerciais.py` |
-| Registro de plugin | [registrar-plugin.md](../../10-guias-operacionais/registrar-plugin.md) |
-| Manifesto (contrato) | [manifesto-plugin.md](../../05-plugin-system/manifesto-plugin.md) |
+| Cutover | [F2C-CUTOVER-RUNBOOK.md](../commercial/F2C-CUTOVER-RUNBOOK.md) |
 
 ---
 
-## Acesso rápido (após implantação)
+## Acesso rápido (pós-F2c)
 
 ```text
-http://localhost/apps/propostas-comerciais/
-```
-
-Smoke de assets:
-
-```bash
-curl -sI http://localhost/apps/propostas-comerciais/assets/remoteEntry.js | head -5
+http://localhost/apps/commercial/proposals
+# deep link legado redireciona:
+# http://localhost/apps/propostas-comerciais/ → Portal
 ```

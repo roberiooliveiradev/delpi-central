@@ -401,7 +401,7 @@ A (fichas) → B (cockpit) → C (ofertas) → D (pedidos/entrega) → E (sensí
 | §19 | Inventário rotativo `#000697` | **Sem app** | Consultar chamado e cronograma |
 | §20 | Devoluções `#000688` | **Sem app** | Verificar status; treinar após liberação (Laércio) |
 | §21 | Boletos Vendas | **Sem app** (≠ [financeiro-inadimplencia](../../../plugins/financeiro-inadimplencia/README.md)) | Spec FIN-007–008 |
-| — | MFEs irmãos comerciais | [dashboard-commercial](../../../plugins/dashboard-commercial/README.md), [pedidos-venda-abertos](../../../plugins/pedidos-venda-abertos/README.md), [propostas-comerciais](../../../plugins/propostas-comerciais/README.md) | Coexistem; UX canônica = Portal (§7.2) |
+| — | MFEs irmãos comerciais | [dashboard-commercial](../../../plugins/dashboard-commercial/README.md) | Coexiste (referência); PVA/propostas MFE **removidos** (F2c) — docs históricos em `docs/12-roadmap-e-evolucao/{pedidos-venda-abertos,propostas-comerciais}/` |
 | — | CIPA / PAC / Transformômetro | [cipa](../../../plugins/cipa/README.md), [quality-action-plans](../../../plugins/quality-action-plans/README.md), [transformometro](../../../plugins/transformometro/README.md) | **Fora** do escopo da ata comercial (não confundir nomes) |
 
 Detalhe de reuso: **§7**.
@@ -453,8 +453,8 @@ Outros MFEs e `*-api` já cobrem partes da ata. O Portal Comercial **não** impo
 | Metas / IDD | `strategic-indicators` + `strategic-indicators-api` | `/apps/strategic-indicators` | **HTTP via BFF** (metas no Overview; ≠ FCT declarado, removido) | [strategic-indicators](../../../plugins/strategic-indicators/README.md) |
 | Consultas assistidas por IA (§4) | `minha-delpi-chat` + `minha-delpi-ai-api` | `/apps/minha-delpi-chat` | **Fora** do MFE commercial; membership/carteira só via commercial-api | [minha-delpi-chat](../../../plugins/minha-delpi-chat/README.md) · [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) |
 | ROL / OTD / OV legado | `dashboard-commercial` | `/apps/dashboard-commercial` | **Referência legado** | [dashboard-commercial](../../../plugins/dashboard-commercial/README.md) |
-| Propostas ADY legado | `propostas-comerciais` | `/apps/propostas-comerciais` | **Referência legado** (Portal `/proposals`) | [propostas-comerciais](../../../plugins/propostas-comerciais/README.md) |
-| Portal do Vendedor | `pedidos-venda-abertos` | `/apps/pedidos-venda-abertos` | **Referência legado** → deprecar pós F2c | [pedidos-venda-abertos](../../../plugins/pedidos-venda-abertos/README.md) · [ADR-002](./adr/ADR-002-deprecar-pedidos-venda-abertos.md) |
+| Propostas ADY (TOTVS) | paths api-delpi + Portal `/proposals` | `/apps/commercial/proposals` | **Nativo no Portal** (MFE propostas removido F2c) | [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) · docs históricos `propostas-comerciais/` |
+| Portal do Vendedor | — (removido) | redirects → `/apps/commercial/*` | **F2c executado** | [ADR-002](./adr/ADR-002-deprecar-pedidos-venda-abertos.md) · docs históricos `pedidos-venda-abertos/` |
 | Melhoria de processo / ROI | `transformometro` + `transformometro-api` | `/apps/transformometro` | **Fora** — `ganho_capacidade` ≠ ocupação fábrica PCP | [transformometro](../../../plugins/transformometro/README.md) |
 | Inadimplência | `financeiro-inadimplencia` | `/apps/financeiro-inadimplencia` | **Fora** de boletos emitidos por Vendas (§21) | [financeiro-inadimplencia](../../../plugins/financeiro-inadimplencia/README.md) |
 
@@ -463,7 +463,7 @@ Portal Comercial ──BFF──▶ commercial-api ──▶ api-delpi / SI
        │
        ├── HTTP ▶ metas SI · production/* (factory-status na ficha)
        ├── GR / GAV TV ▶ tv-dashboard (app próprio; sem atalho no Comercial)
-       └── Referência ▶ dashboard-commercial / propostas-comerciais / PVA
+       └── Referência ▶ dashboard-commercial (legado) · PVA/propostas MFE removidos (F2c)
 ```
 
 ### 7.3 Onde NÃO há app ainda (confirmado no monorepo)

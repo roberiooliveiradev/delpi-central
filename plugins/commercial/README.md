@@ -4,9 +4,11 @@ Microfrontend federado do domínio comercial. Reúne, no próprio Portal Comerci
 as bancadas e fichas de Minha carteira, Conta 360, pedidos, OP, oportunidades OV,
 propostas, Visão geral e Administração.
 
-> Norte: [GESTAO-A-VISTA.md](../../docs/12-roadmap-e-evolucao/commercial/GESTAO-A-VISTA.md) · Perfis: [PERFIS-E-PERMISSOES.md](../../docs/12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) · Wireframes: [WIREFRAMES.md](../../docs/12-roadmap-e-evolucao/commercial/WIREFRAMES.md) (WF-02R / WF-02R-D) · Excelência lista+detalhe: [playbook-mfe-page-excellence.md](../../docs/05-plugin-system/playbook-mfe-page-excellence.md) · Ata × inventário: [ATA-MAPA-NECESSIDADES.md](../../docs/12-roadmap-e-evolucao/commercial/ATA-MAPA-NECESSIDADES.md) · **Ata alinhamento 2:** [ATA-ALINHAMENTO-AGO2026-2.md](../../docs/12-roadmap-e-evolucao/commercial/ATA-ALINHAMENTO-AGO2026-2.md)
+> Norte: [GESTAO-A-VISTA.md](../../docs/12-roadmap-e-evolucao/commercial/GESTAO-A-VISTA.md) · Perfis: [PERFIS-E-PERMISSOES.md](../../docs/12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) · Wireframes: [WIREFRAMES.md](../../docs/12-roadmap-e-evolucao/commercial/WIREFRAMES.md) (WF-02R / WF-02R-D) · Excelência lista+detalhe: [playbook-mfe-page-excellence.md](../../docs/05-plugin-system/playbook-mfe-page-excellence.md) · Ata × inventário: [ATA-MAPA-NECESSIDADES.md](../../docs/12-roadmap-e-evolucao/commercial/ATA-MAPA-NECESSIDADES.md) · **Ata alinhamento 2:** [ATA-ALINHAMENTO-AGO2026-2.md](../../docs/12-roadmap-e-evolucao/commercial/ATA-ALINHAMENTO-AGO2026-2.md) · **F2c:** [F2C-CUTOVER-RUNBOOK.md](../../docs/12-roadmap-e-evolucao/commercial/F2C-CUTOVER-RUNBOOK.md)
 
-Plugins irmãos (`pedidos-venda-abertos`, `dashboard-commercial`, `propostas-comerciais`) **coexistem** no menu. O `commercial` não usa iframe, remote, componente, URL nem fallback de interface de outro MFE: suas páginas são nativas e consomem apenas contratos HTTP.
+O MFE `commercial` não usa iframe, remote, componente, URL nem fallback de interface de outro MFE: páginas nativas via HTTP (`commercial-api` + api-delpi só no BFF).
+
+**F2c (set/2026):** MFEs `pedidos-venda-abertos` e `propostas-comerciais` removidos. Deep links antigos redirecionam no gateway. Único irmão legado ainda no Compose: `dashboard-commercial` (referência analítica até Gestão nativa).
 
 ### Gaps P0 (ata alinhamento 2)
 

@@ -1,7 +1,7 @@
 # Homologação — Wave G / G+ (Portal Comercial)
 
-> UI Overview + Meu dia CRM + shell UnderlineNav + Home hero/gestão · **sem F2c**  
-> Docs: [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) · [WIREFRAMES.md](./WIREFRAMES.md) (WF-00 / 01R / 06R)
+> UI Overview + Meu dia CRM + shell UnderlineNav + Home hero/gestão · **histórico:** planejada sem F2c (F2c veio depois, set/2026)  
+> Docs: [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) · [WIREFRAMES.md](./WIREFRAMES.md) (WF-00 / 01R / 06R) · [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)
 
 ## Pré-requisitos (gate ops)
 
@@ -14,7 +14,7 @@
 
 | # | Caso | Resultado |
 |---|------|-----------|
-| 1 | PVA ainda no launcher (sem redirect F2c) | |
+| 1 | *(histórico Wave G)* PVA no launcher sem F2c — **obsoleto:** F2c executado set/2026 | N/A pós-F2c |
 | 2 | Shell: **UnderlineNav** (não pills de ActionButton); badge Meu dia = overdue+hoje | |
 | 3 | Início: hero saudação + chips + AlertQueue + KPIs operacionais (`allSettled`) | |
 | 4 | Nav: Início, Meu dia (se worklist), Pedidos, Carteira; Carteiras só admin | |
@@ -62,7 +62,7 @@ curl -sS http://localhost/apps/commercial-api/health
 
 | Gap | Severidade | Nota |
 |-----|------------|------|
-| F2c / SavedViewChips / purge CSS espelho | Baixa | Fora desta wave |
+| F2c / SavedViewChips / purge CSS espelho | — | **F2c feito** set/2026; SavedViewChips / CSS espelho = residual |
 | Observação (`description`) na UI do Meu dia | — | **Feito** P0 (ago/2026) |
 | Filtro por tipo + tipos e-mail/visita | — | **Feito** P0 |
 | Responsável / reassign multi-user | — | **Feito** P1 (ago/2026): create assignee + `reassign` + `scope=team` |
@@ -82,4 +82,4 @@ UX polish Home/Meu dia (ago/2026) documentado em [UX-E-TASKS-EVOLUTION.md](./UX-
 | Comercial | | | |
 | QA / Tech | | | |
 
-F2c **não** aplicado. Matriz: [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md).
+**Nota:** na época desta wave, F2c estava fora de escopo. **F2c foi executado em set/2026** — [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md). Matriz atual: [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md).

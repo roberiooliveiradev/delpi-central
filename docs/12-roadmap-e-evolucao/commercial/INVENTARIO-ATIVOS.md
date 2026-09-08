@@ -97,27 +97,27 @@ Não há exceção para “só GET”: se a fonte canônica não é TOTVS, a rot
 
 ### 3.2 Estado Delpi (Postgres / avatar) — **canônico em commercial-api**
 
-Inclui **CRUD e leituras** cujo dado canônico é Delpi (não TOTVS). Na api-delpi ficam **deprecated** até F2c:
+Inclui **CRUD e leituras** cujo dado canônico é Delpi (não TOTVS). Na api-delpi ficam **deprecated** (código residual possível):
 
 | operationId | Method + path | Observação |
 |---|---|---|
-| `get_my_seller_portfolio` | `GET /pedidos-venda-abertos/sellers/me` | Read Postgres → migrar |
-| `list_seller_portfolios` | `GET /pedidos-venda-abertos/sellers` | Read Postgres → migrar |
-| `get_seller_portfolio` | `GET /pedidos-venda-abertos/sellers/{seller_id}` | Read Postgres → migrar |
-| `create_seller_portfolio` | `POST /pedidos-venda-abertos/sellers` | Write Postgres |
-| `update_seller_portfolio` | `PATCH /pedidos-venda-abertos/sellers/{seller_id}` | Write Postgres |
-| `deactivate_seller_portfolio` | `DELETE /pedidos-venda-abertos/sellers/{seller_id}` | Soft deactivate |
-| `replace_seller_customers` | `PUT /pedidos-venda-abertos/sellers/{seller_id}/customers` | Replace set |
-| `add_seller_customer` | `POST /pedidos-venda-abertos/sellers/{seller_id}/customers` | |
-| `remove_seller_customer` | `DELETE /pedidos-venda-abertos/sellers/{seller_id}/customers` | |
-| `transfer_seller_customers` | `POST /pedidos-venda-abertos/sellers/{seller_id}/customers/transfer` | |
-| `get_customer_avatar` | `GET .../customers/{codigo}/{loja}/avatar` | Arquivo + metadado Delpi |
-| `upsert_customer_avatar` | `PUT .../customers/{codigo}/{loja}/avatar` | Volume persistente |
-| `delete_customer_avatar` | `DELETE .../customers/{codigo}/{loja}/avatar` | |
+| `get_my_seller_portfolio` | `GET /pedidos-venda-abertos/sellers/me` | Read Postgres → migrado |
+| `list_seller_portfolios` | `GET /pedidos-venda-abertos/sellers` | Read Postgres → migrado |
+| `get_seller_portfolio` | `GET /pedidos-venda-abertos/sellers/{seller_id}` | Read Postgres → migrado |
+| `create_seller_portfolio` | `POST /pedidos-venda-abertos/sellers` | Write Postgres → migrado |
+| `update_seller_portfolio` | `PATCH /pedidos-venda-abertos/sellers/{seller_id}` | Write Postgres → migrado |
+| `deactivate_seller_portfolio` | `DELETE /pedidos-venda-abertos/sellers/{seller_id}` | Soft deactivate → migrado |
+| `replace_seller_customers` | `PUT /pedidos-venda-abertos/sellers/{seller_id}/customers` | Replace set → migrado |
+| `add_seller_customer` | `POST /pedidos-venda-abertos/sellers/{seller_id}/customers` | → migrado |
+| `remove_seller_customer` | `DELETE /pedidos-venda-abertos/sellers/{seller_id}/customers` | → migrado |
+| `transfer_seller_customers` | `POST /pedidos-venda-abertos/sellers/{seller_id}/customers/transfer` | → migrado |
+| `get_customer_avatar` | `GET .../customers/{codigo}/{loja}/avatar` | → commercial-api |
+| `upsert_customer_avatar` | `PUT .../customers/{codigo}/{loja}/avatar` | Volume persistente commercial |
+| `delete_customer_avatar` | `DELETE .../customers/{codigo}/{loja}/avatar` | → commercial-api |
 
-Após F2 cutover: MFE **Portal Comercial** chama `commercial-api` (`/apps/commercial-api/seller-portfolios*`, avatars) para **todas** as rotas da tabela acima. Search/enrichment TOTVS: proxy na commercial-api → api-delpi; billing-series e NF: MFE chama api-delpi direto.
+**Canônico:** MFE Portal Comercial chama `commercial-api` (`/apps/commercial-api/seller-portfolios*`, avatars). Search/enrichment/billing/NF TOTVS: via BFF commercial-api → api-delpi.
 
-Permissões: `commercial.accounts.view` / `commercial.seller-portfolios.manage` (aliases: `pedidos-venda-abertos.access` / `.admin`). Rotas api-delpi `/sellers*` e avatars Delpi: **deprecated** (código pode permanecer até F2c).
+Permissões: `commercial.accounts.view` / `commercial.seller-portfolios.manage` (aliases legados PVA possíveis). Rotas api-delpi `/sellers*` e avatars Delpi: **deprecated**.
 
 ---
 
@@ -179,8 +179,8 @@ Doc SI: `strategic-indicators-api/docs/COMMERCIAL_INDICATORS.md`.
 |---|---|---|
 | Meu dia / worklist | **novo** | Sem fila central |
 | Prospects | **novo** | Sem domínio próprio |
-| Conta 360 | **parcial** | Check-up no Portal Comercial (+ PVA legado); sem timeline unificada |
-| Administração (carteiras) | **parcial** | CRUD na **commercial-api**; PVA legado até F2c |
+| Conta 360 | **parcial** | Check-up no Portal Comercial; residual CRM (forecast/SLA oferta) |
+| Administração (carteiras) | **parcial** | CRUD na **commercial-api** (canônico pós-F2/F2c) |
 | Oportunidades / pipeline | **novo** | — |
 | Ofertas / propostas | **parcial** | Dois conceitos OV × proposta ativa; **Settings SLA** na Administração (CRUD); adoção em etapas/alertas ainda backlog (P-OFF-SLA parcial) |
 | Forecast | **novo** | Metas via SI; forecast declarado ausente |

@@ -1,10 +1,10 @@
-# Pedidos de Venda em Aberto — plugin Minha DELPI
+# Pedidos de Venda em Aberto — documentação histórica
 
-Consulta operacional read-only de pedidos de venda em aberto para vendedores, consumindo a view TOTVS `dbo.VW_PEDIDOS_VENDA_ABERTOS_COMPRADORES` via **api-delpi**.
+Consulta operacional read-only de pedidos de venda em aberto (view TOTVS via **api-delpi**).
 
-**Status:** Fase 3 concluída (2026-06-09) — dashboard operacional MVP.
+> **Status (set/2026):** MFE **removido** do monorepo (F2c). UX canônica = [Portal Comercial](../commercial/README.md). Paths TOTVS `/pedidos-venda-abertos/*` na api-delpi **permanecem** (BFF commercial-api). Redirects: [F2C-CUTOVER-RUNBOOK.md](../commercial/F2C-CUTOVER-RUNBOOK.md) · [ADR-002](../commercial/adr/ADR-002-deprecar-pedidos-venda-abertos.md).
 
-> **Sucessor / cutover F2c:** [Portal Comercial](../commercial/README.md) (`commercial`) é a entrada canônica. Este plugin está **depreciado** (menu oculto); URLs antigas redirecionam — [runbook](../commercial/F2C-CUTOVER-RUNBOOK.md) · [ADR-002](../commercial/adr/ADR-002-deprecar-pedidos-venda-abertos.md).
+Os documentos abaixo são **arquivo histórico** da especificação e do roadmap do plugin antigo.
 
 ---
 
@@ -53,8 +53,10 @@ Consulta operacional read-only de pedidos de venda em aberto para vendedores, co
 
 ---
 
-## Acesso rápido (após implantação)
+## Acesso rápido (pós-F2c)
 
 ```text
-http://localhost/apps/pedidos-venda-abertos/
+http://localhost/apps/commercial/open-orders
+# deep link legado redireciona:
+# http://localhost/apps/pedidos-venda-abertos/ → Portal
 ```
