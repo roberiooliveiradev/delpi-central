@@ -2,7 +2,9 @@
 
 A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo deve ficar em sua própria pasta, com componente e CSS próprios.
 
-**Revisão de fluxos:** [`admin-fluxos-revisao.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/admin-fluxos-revisao.md) — Studio / Observe / fine-tune / Ajuda (MVP set/2026).
+**Revisão de fluxos:** [`admin-fluxos-revisao.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/admin-fluxos-revisao.md) — Studio / Observe / fine-tune / Ajuda / EN / fila / deep link (ondas 1–8).
+
+**Plano do restante do BC:** [`admin-fluxos-plano-implementacao-restante.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/admin-fluxos-plano-implementacao-restante.md) (ondas 9+).
 
 Ajuda in-app: `src/content/adminHelpTooltips.ts` via `AdminTabHeader.helpHint`.
 

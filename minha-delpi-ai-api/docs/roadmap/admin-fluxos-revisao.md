@@ -5,6 +5,7 @@
 
 **Documentos relacionados**
 
+- [admin-fluxos-plano-implementacao-restante.md](./admin-fluxos-plano-implementacao-restante.md) — **plano executável** do restante do BC (ondas 9+)
 - [admin-minha-delpi-chat.md](./admin-minha-delpi-chat.md) — roadmap histórico itens 1–15
 - [melhorias-futuras.md](./melhorias-futuras.md) — pós-roadmap (thumbs, health, simulação avançada — já entregues; RBAC core pendente)
 - [Playbook 11 — Admin UX](./melhorias/playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) — diagnóstico histórico de 10 abas; shell de 6 seções já no código
@@ -211,6 +212,7 @@ Ordem canônica e status (set/2026 — implementação):
 | 6 | RBAC perfis formais no `core-api` | Fora deste bounded context |
 | 7 | **Painel — fila de atenção** — `buildAttentionQueue` + CTAs para seções | **Entregue (MVP)**; custo anômalo = backlog (sem baseline) |
 | 8 | **Deep link query** — `adminUrlQuery` (docs/auditoria/`hours`); rewrite EN preserva search | **Entregue** |
+| 9+ | Presets · debug avançado · skills/Studio · HITL hub · Studio deepen · kit/Manual | **Planejado** — ver [admin-fluxos-plano-implementacao-restante.md](./admin-fluxos-plano-implementacao-restante.md) |
 
 Regras de qualquer onda futura de código:
 
