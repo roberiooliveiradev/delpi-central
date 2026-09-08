@@ -1,3 +1,5 @@
+import { configureHttpClient } from "./api/httpClient";
+
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
@@ -5,7 +7,9 @@ export type AppProps = {
   search?: string;
 };
 
-export default function App({}: AppProps) {
+export default function App({ getAccessToken }: AppProps) {
+  configureHttpClient(() => getAccessToken?.());
+
   return (
     <div className="dashboard-supplies-portal dashboard-page">
       <h1>Portal Suprimentos</h1>
