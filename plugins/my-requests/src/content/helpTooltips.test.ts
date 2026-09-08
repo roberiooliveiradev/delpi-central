@@ -24,7 +24,7 @@ describe("MY_REQUESTS_HELP_TOOLTIPS", () => {
     }
   });
 
-  it("textos principais não vazios", () => {
+  it("textos principais não vazios e sem jargão técnico óbvio", () => {
     expect(MY_REQUESTS_HELP_TOOLTIPS.mine.section.length).toBeGreaterThan(20);
     expect(MY_REQUESTS_HELP_TOOLTIPS.workQueue.section.length).toBeGreaterThan(20);
     expect(MY_REQUESTS_HELP_TOOLTIPS.new.section.length).toBeGreaterThan(20);
@@ -33,5 +33,8 @@ describe("MY_REQUESTS_HELP_TOOLTIPS", () => {
     expect(MY_REQUESTS_HELP_TOOLTIPS.timeline.section.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard.section.length).toBeGreaterThan(20);
     expect(MY_REQUESTS_HELP_TOOLTIPS.rawMaterialForm.section.length).toBeGreaterThan(20);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.admin.section).not.toMatch(/my-requests\.manage/);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.detail.section).not.toMatch(/allowed_actions/);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard.stepsById.recipient.length).toBeGreaterThan(10);
   });
 });

@@ -4,6 +4,10 @@ import { DataTable, type DataTableColumn } from "@delpi/plugin-ui/index";
 import { listRequestTypes } from "../api/requestsApi";
 import { AppShell } from "../components/AppShell";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  branchScopeLabel,
+  presentationModeLabel,
+} from "../content/presentationLabels";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import { canCreateAnyRequest } from "../security/requestsAccess";
 import type { RequestTypeSummary } from "../types/requests";
@@ -55,20 +59,25 @@ export function AdminTypesPage() {
       },
       {
         key: "branch",
-        header: "Escopo filial",
-        render: (row) => row.branch_scope || "—",
+        header: "Filial",
+        render: (row) => branchScopeLabel(row.branch_scope),
+      },
+      {
+        key: "presentation",
+        header: "Formulário",
+        render: (row) => presentationModeLabel(row.presentation_mode),
       },
     ],
     [],
   );
 
   return (
-    <AppShell title="Admin — tipos de solicitação" canCreate={canCreateAnyRequest(access)}>
-      <MyRequestsSectionCard title="RequestTypes">
+    <AppShell title="Tipos de solicitação" canCreate={canCreateAnyRequest(access)}>
+      <MyRequestsSectionCard title="Catálogo de tipos">
         <div data-help="admin" title={MY_REQUESTS_HELP_TOOLTIPS.admin.section}>
           {!access.canManage ? (
             <MyRequestsStateBanner variant="error">
-              Você precisa da permissão my-requests.manage para ver esta tela.
+              Você não tem permissão para administrar tipos de solicitação.
             </MyRequestsStateBanner>
           ) : null}
           {access.canManage && error ? (

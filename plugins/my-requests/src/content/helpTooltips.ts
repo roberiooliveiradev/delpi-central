@@ -1,62 +1,71 @@
-/** Textos de Ajuda in-app — domínio my-requests (fonte canônica no MFE). */
+/** Textos de Ajuda in-app — linguagem de usuário (fonte canônica no MFE). */
 
 export const MY_REQUESTS_HELP_TOOLTIPS = {
   shell: {
-    nav: "Navegue entre Minhas (suas solicitações), Fila (itens a processar), Nova (criar) e Admin (tipos — só manage).",
+    nav: "Use o menu superior para ir às suas solicitações, à fila de atendimento, criar uma nova ou (se autorizado) ver os tipos cadastrados.",
   },
   mine: {
     section:
-      "Lista as solicitações que você criou. Use a busca (número, código, nome ou descrição), filtros de tipo/status/filial e a paginação. Abra o número para ver detalhe, timeline e ações permitidas.",
+      "Aqui ficam as solicitações que você abriu. Filtre por tipo, status ou filial e clique no número para acompanhar o andamento e as ações disponíveis.",
   },
   workQueue: {
     section:
-      "Fila operacional das solicitações elegíveis ao seu perfil. Busque por número/código/nome/descrição e filtre por tipo, status e filial; a API decide o escopo de processamento.",
+      "Lista o que está na sua fila para atender. Filtre o que precisa e abra a solicitação para iniciar, devolver, concluir ou registrar a emissão.",
   },
   new: {
     section:
-      "Escolha o tipo em um card (ícone + nome). O formulário abre na hora: emissão de NF (wizard), matéria-prima (schema) ou fluxo genérico. A filial, quando o tipo exige, fica dentro do formulário. Deep link: /new?type=invoice-issuance abre o form direto.",
-    type: "Tipo cadastrado no Request Engine — um card por tipo disponível.",
+      "Escolha um card para abrir o formulário do tipo desejado. A filial, quando necessária, aparece dentro do formulário. Você também pode abrir um tipo direto pelo link com ?type=.",
+    type: "Tipo de solicitação disponível para o seu perfil.",
     branch:
-      "Filial TOTVS do escopo da solicitação (01 = SC, 02 = ES). Aparece só dentro do formulário do tipo, conforme branch_scope (obrigatória, opcional ou ausente).",
+      "Informe a filial do pedido (01 = Santa Catarina, 02 = Espírito Santo). Alguns tipos exigem filial; outros não pedem.",
   },
   invoiceWizard: {
     section:
-      "Wizard specialized de emissão de NF: destinatário, tipo, itens, frete, adicionais e conferência. Lookups e create vão só para requests-api.",
+      "Passo a passo para pedir emissão de nota fiscal: destinatário, tipo, itens, frete, dados extras e conferência antes de enviar.",
     partySearch:
-      "Busque destinatário (cliente/fornecedor) via lookup TOTVS proxied pela requests-api.",
-    steps: "Seis etapas alinhadas ao fluxo legado de emissão, sem state machine no frontend.",
+      "Busque o cliente ou fornecedor por código, nome ou CNPJ. Selecione o resultado correto na lista.",
+    steps:
+      "Avance pelas etapas. Na conferência, confira o checklist antes de enviar a solicitação.",
+    stepsById: {
+      recipient: "Selecione o destinatário (cliente ou fornecedor) da nota.",
+      invoiceType: "Informe o tipo da nota fiscal. Se for «Outros», descreva o motivo.",
+      items: "Inclua os produtos com quantidade e preço.",
+      freight: "Escolha CIF ou FOB e, se quiser, a transportadora.",
+      extras: "Informe peso, volumes e observações úteis ao atendimento.",
+      review: "Confira o checklist e envie quando tudo estiver marcado.",
+    },
   },
   rawMaterialForm: {
     section:
-      "Formulário schema-driven de criação de matéria-prima: campos vêm do form_schema do RequestType. Create só via requests-api.",
+      "Preencha os campos do formulário de matéria-prima e envie. A filial aparece quando o tipo exige.",
     fields: "Descrição e unidade são obrigatórios; observações são opcionais.",
   },
   detail: {
     section:
-      "Detalhe da solicitação. Status e botões de ação vêm da API (`allowed_actions`) — o MFE não calcula a máquina de estados.",
+      "Resumo da solicitação: tipo, status, filial e solicitante. As ações possíveis aparecem como botões conforme o andamento atual.",
     actions:
-      "Cada botão corresponde a uma transição liberada pelo WorkflowEngine. Devolver e cancelar pedem o motivo em um diálogo (não use prompt do navegador).",
+      "Use os botões para avançar o atendimento. Devolver e cancelar pedem um motivo antes de confirmar.",
     invoicePayload:
-      "Resumo do payload de emissão de NF (destinatário, tipo, itens) quando o type_code é invoice-issuance.",
+      "Resumo dos dados da emissão (destinatário, tipo de NF, frete e itens) quando a solicitação é de nota fiscal.",
   },
   timeline: {
     section:
-      "Eventos auditáveis (criação, transição, upload, comentário). Complementa o histórico de status.",
+      "Histórico do que aconteceu nesta solicitação: criação, mudanças de etapa, comentários e envios de arquivo.",
   },
   comments: {
-    section: "Thread de comentários da solicitação. Visível a quem pode ver o detalhe.",
+    section: "Converse sobre a solicitação com quem acompanha o atendimento.",
   },
   attachments: {
     section:
-      "Anexos do solicitante. Arraste ou selecione arquivos (PDF/imagem) para enviar; baixe pelos links da lista. Distintos dos artefatos de processamento.",
+      "Anexe PDFs ou imagens que ajudem a entender o pedido. Quem acompanha a solicitação pode baixar os arquivos.",
   },
   artifacts: {
     section:
-      "Artefatos gerados no processamento (ex.: PDF da NF). Quem tem process ou manage pode enviar via arrastar/selecionar e escolher o tipo (genérico ou PDF da NF); solicitantes só baixam.",
+      "Arquivos gerados no atendimento (por exemplo, PDF da nota). Quem atende pode enviar; quem só solicitou normalmente só baixa.",
   },
   admin: {
     section:
-      "Lista somente leitura dos tipos de solicitação (código, nome, ativo, escopo de filial). Exige my-requests.manage. Não edita workflow nem formulário nesta tela.",
+      "Consulta dos tipos de solicitação (nome, ativo e se pedem filial). É só leitura — alterações de fluxo ficam com a administração do sistema.",
   },
 } as const;
 

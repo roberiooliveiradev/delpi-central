@@ -12,6 +12,7 @@ import { RequestDetailPage } from "./pages/RequestDetailPage";
 import { WorkQueuePage } from "./pages/WorkQueuePage";
 import { RequestsPermissionsProvider } from "./security/RequestsPermissionsContext";
 import { buildAccessFromPermissions } from "./security/requestsAccess";
+import { MyRequestsStateBanner } from "./ui/mrUi";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -36,9 +37,10 @@ export default function App({
   if (!access.canAccess) {
     return (
       <div className="dashboard-my-requests dashboard-page">
-        <p className="dashboard-my-requests__error">
-          Você não possui permissão para abrir Minhas Solicitações.
-        </p>
+        <MyRequestsStateBanner variant="error">
+          Você não tem permissão para abrir Minhas Solicitações. Peça acesso ao
+          administrador do portal.
+        </MyRequestsStateBanner>
       </div>
     );
   }
