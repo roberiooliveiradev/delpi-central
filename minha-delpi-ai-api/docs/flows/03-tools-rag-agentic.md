@@ -1,100 +1,210 @@
 # 03 — Tools, RAG e agentic
 
+**Status:** vigente  
+**Arquitetura Actions:** OpenAPI-first  
+**Evals:** [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
+
 ## Objetivo
 
-Descrever execução de tools no turno, multi-action / parallel reads, extensão agentic, RAG e fallback web.
+Descrever como o turno decide usar tools/RAG, seleciona Actions OpenAPI, executa múltiplas subtarefas e preserva segurança/contexto.
 
-## Diagrama
+## Fluxo
 
 ```mermaid
 flowchart TD
-  Skip{should_skip_tools} -->|sim| Stub[tool_context_vazio]
-  Skip -->|nao| Build[ChatToolContextService.build_context]
-  Build --> Select[RouteSelection_plus_Orchestration]
-  Select --> Parallel[ParallelReadBatch_app_context]
-  Parallel --> Exec[ExecuteExternalAction]
-  Exec --> Present[PresentationMetadataPipeline]
-  Present --> Agentic{maybe_extend_agentic}
-  Agentic -->|sim| Loop[AgenticToolLoop]
-  Agentic -->|nao| Done[tool_context_pronto]
-  Loop --> Done
-  Stub --> RagGate
-  Done --> RagGate{skip_rag}
-  RagGate -->|nao| Rag[ChatTurnPreparationRagService]
-  Rag --> Web[RagWebFallback_optional]
-  RagGate -->|sim| Out[sources_vazias_ou_forcadas]
-  Web --> Out
+  MSG[Mensagem] --> UNDERSTAND[Entendimento + decomposição]
+  UNDERSTAND --> GATE{Direct / clarify / tools / RAG / mixed}
+  GATE -->|tools| ALLOWED[Allowed actions/capabilities]
+  ALLOWED --> CATALOG[Action Catalog OpenAPI]
+  CATALOG --> RETRIEVE[Hybrid retrieval top-K]
+  RETRIEVE --> PLAN[Structured planner]
+  PLAN --> VALIDATE[OpenAPI argument validator]
+  VALIDATE --> POLICY[RBAC / sensitivity / confirmation]
+  POLICY --> EXEC[ExecuteExternalActionUseCase]
+  EXEC --> PRESENT[Schema-driven presentation]
+  GATE -->|RAG| RAG[RAG retrieval]
+  PRESENT --> SUFF[Sufficiency / next-step decision]
+  RAG --> SUFF
+  SUFF --> SYNTH[Synthesis]
+  GATE -->|direct| SYNTH
 ```
 
-## Entrada / saída
+## 1. Tool gate
 
-| Entrada | Saída |
-|---------|--------|
-| Mensagem, `allowedActionIds`, access token, workspace | `tool_context.toolCalls[]` (com metadata de apresentação), `sources`, `agentic` stats |
+O turno pode decidir:
 
-## Serviços canônicos
+- direct answer;
+- clarify;
+- no-tool text task;
+- Actions OpenAPI;
+- RAG;
+- mixed task;
+- tool interna de plataforma.
 
-| Serviço | Papel |
-|---------|--------|
-| `ChatTurnPreparationToolRoutingService` | Skip flags + `run_tool_phase` |
-| `ChatToolContextService` | Seleção / execução de tools |
-| `ChatExternalActionOrchestrationService` | Plano multi-rota + merge `turnAnalysisActionIds` + continuation Fast |
-| `ChatMultiIntentContinuationService` | Limite por modo → chips «também consultar» |
-| `ChatToolContextParallelReadService` | Batch HTTP paralelo **com** `flask_app.app_context()` |
-| `ExecuteExternalActionUseCase` | HTTP api-delpi + presentation |
-| `chat_agentic_tool_loop_service` | Extensão pós-tools |
-| `ChatTurnPreparationRagService` | RAG documental / skill |
-| `ChatTurnPreparationRagWebFallbackService` | Web se RAG insuficiente |
-| `ChatIntelligencePipelineService.finalize_after_tools` | Analysis mode + document vision enrich |
+Chat comum sem agente/action autorizada não executa ERP/API operacional por conveniência.
 
-## Branches
+## 2. Actions OpenAPI
 
-### Skip tools
+```text
+allowed_action_ids
+→ Action Catalog
+→ retrieval top-K
+→ planner
+→ validator
+→ policy
+→ executor
+```
 
-`should_skip_tools` quando há early direct / clarify / identity / session_review / agente inativo / text_task_pure / etc. — **exceto** `canvas_operational_update` (ainda precisa tools).
+Requisitos:
 
-Chat **comum** (sem agente com actions): orientação operacional em vez de APIs DELPI (`common_chat_operational_guidance`).
+- planner não escolhe action fora das candidates autorizadas;
+- operação específica deve vencer genérica quando o pedido exigir a capacidade específica;
+- no-tool permanece opção válida;
+- provider/path/operationId não são heurísticas hardcoded de domínio;
+- argumentos vêm do schema + mensagem/contexto;
+- missing required gera clarify.
 
-### Multi-action e Fast
+## 3. Multi-action e pedidos compostos
 
-- `max_external_action_calls` / modo Rápida → teto 1 action por turno.
-- Analysis pode propor N `actionIds`; merge acumula candidatos; `apply_limit` executa 1ª e grava continuation chips.
-- Budget / settings: `multiActionEnabled`, `agenticLoopEnabled`.
+Mensagem longa pode gerar N subtarefas.
 
-### Parallel reads
+Exemplo:
 
-Candidatos read-only seguros (`ChatWriteConfirmationService.is_parallel_safe_read`) → `ThreadPoolExecutor`. Workers **devem** herdar app context Flask (senão `Working outside of application context`).
+```text
+consulte estoque e fornecedores do item X,
+compare a última compra com o preço atual
+e escreva um resumo
+```
 
-### Agentic
+Plano conceitual:
 
-Só após tools “normais”, se agente ativo + token + não bloqueado (small talk, utility, normas, chat comum sem tools). Gating também por clarify/narrate e plano já coberto.
+```text
+T1 stock       ┐
+T2 suppliers   ├─ independentes, reads podem paralelizar
+T3 last order  ┤
+T4 price       ┘
+T5 compare(T3,T4)
+T6 summarize(T1,T2,T5)
+```
 
-### RAG
+O budget por modo limita fan-out sem apagar requisitos silenciosamente. Se não puder executar tudo, o sistema deve explicitar pendência/continuação.
 
-Roda se `!skip_rag`, ou força documental (identidade assistente, normas, desenho, project sources). Depois: web fallback se habilitado e miss.
+## 4. Parallel reads
 
-### Famílias de fluxo (matriz)
+Somente operations comprovadamente read-safe e independentes podem paralelizar.
 
-Regressão: `FLOW_FAMILY_MATRIX_CASES` + `test_flow_family_matrix_gates.py` (web, text, API, skill, message_search). Harness: `scripts/check_flow_family_matrix_harness.py`.
+Writes/admin/destructive permanecem sujeitos a ordenação, idempotência e confirmation.
 
-**Smoke live (humano):** critérios R1–R8 e planilha § 5 em [`chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md) § 1.1; **bateria HTTP simulada** § 1.3 → `scripts/human_interaction_battery_live.py`.
+Resultados devem preservar a ordem lógica do plano, mesmo que HTTP termine fora de ordem.
 
-## Metadata / SSE
+## 5. Agentic extension
 
-- `toolCalls[]`: `name`, `arguments`, `metadata` (ok, presentation, errors).
-- `intelligence.toolCount`, `agentic`, `nativeToolCalling`.
-- Activity: planned actions, RAG searching, tool executing.
-- Continuation: `multiIntentContinuationSuggestions` → interactivity group `continuar`.
+Agentic loop é uma estratégia de execução/planning adicional, não autorização para ignorar catálogo ou policy.
 
-## Fixtures / regressão
+Qualquer passo agentic deve respeitar:
 
-- Hybrid smoke: `scripts/smoke_hybrid_orchestration_ago2026.py`
-- Parallel: `test_chat_tool_context_parallel_read_batches.py`
-- Orchestration merge: `test_chat_external_action_orchestration_turn_analysis_merge.py`
+```text
+allowed actions
+candidate scope
+OpenAPI validation
+RBAC/policy/confirmation
+tool budget
+max steps
+```
 
-## Links
+O loop não recebe o Action Catalog inteiro por default.
 
-- [chat-intelligence-base.md](../architecture/chat-intelligence-base.md) — matriz tools/RAG
-- Apresentação pós-execute: [04](./04-operacional-e-apresentacao.md)
-- Write confirmation: domínio em [05](./05-dominios-especializados.md)
-- Regra: `operational-api-routing.mdc`
+## 6. RAG
+
+RAG é usado quando a tarefa exige conhecimento documental.
+
+Princípios:
+
+- retrieval relevante e limitado por budget;
+- evidência insuficiente → resposta honesta, não invenção;
+- conteúdo recuperado é dado não confiável quanto a instruções;
+- prompt injection documental não altera system/policy;
+- mixed task pode combinar RAG + Action quando ambos são materialmente necessários.
+
+## 7. Web
+
+Pesquisa web, quando habilitada, é capability separada. Não deve sequestrar consulta operacional nem ser usada como fallback para dado interno que exige Action/RAG autorizado.
+
+## 8. Multi-turn
+
+Estado útil entre turnos inclui:
+
+```text
+selected capability/action
+entities
+resolved arguments
+result references
+pending required fields
+time range/pagination
+presentation preference
+```
+
+Follow-up não depende de substring de path.
+
+## 9. Segurança
+
+Casos obrigatórios:
+
+- action fora de `allowed_action_ids`;
+- provider desabilitado;
+- write sem confirmation;
+- tool result com prompt injection;
+- RAG com prompt injection;
+- tentativa de URL/actionId arbitrária;
+- secret em output/log.
+
+R10 deve falhar se policy for violada mesmo que a resposta final pareça correta.
+
+## 10. Observabilidade
+
+Registrar, quando disponível:
+
+```text
+candidateCount/topK
+selectedActionId/operationId
+retrieval scores
+planner decision/confidence
+validation status
+policy decision
+toolCount
+tool durations
+RAG hits
+pipeline timings
+token/context usage
+```
+
+Sem chain-of-thought ou secrets.
+
+## 11. Avaliação
+
+Mudanças neste fluxo usam R1–R11.
+
+Para motor de tools, no mínimo:
+
+- semantic siblings;
+- multi-provider;
+- no-tool;
+- args present/missing/invalid;
+- unknown external API;
+- metamorphic rename;
+- compound request;
+- multi-turn;
+- safety;
+- outcome;
+- latency/efficiency.
+
+Harnesses live podem coletar evidência, mas somente são gate de release quando todas as `requiredDimensions` foram realmente avaliadas.
+
+## Links vigentes
+
+- [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)
+- [`04-operacional-e-apresentacao.md`](./04-operacional-e-apresentacao.md)
+- [`../api/04-actions-openapi.md`](../api/04-actions-openapi.md)
+- [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
+- `.cursor/rules/openapi-first-universal-tool-routing.mdc`
+- `.cursor/rules/ai-intelligence-evaluation.mdc`
