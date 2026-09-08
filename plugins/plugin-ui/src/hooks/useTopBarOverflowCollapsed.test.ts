@@ -2,7 +2,10 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { RefObject } from "react";
 
-import { useTopBarOverflowCollapsed } from "./useTopBarOverflowCollapsed";
+import {
+  TOPBAR_OVERFLOW_EXPAND_HYSTERESIS_PX,
+  useTopBarOverflowCollapsed,
+} from "./useTopBarOverflowCollapsed";
 
 afterEach(cleanup);
 
@@ -32,16 +35,37 @@ describe("useTopBarOverflowCollapsed", () => {
 
   function createMeasureHost(needed: number, available: number) {
     const host = document.createElement("div");
-    Object.defineProperty(host, "clientWidth", { value: available, configurable: true });
+    Object.defineProperty(host, "clientWidth", {
+      value: available,
+      configurable: true,
+      writable: true,
+    });
     document.body.appendChild(host);
 
     const measure = document.createElement("div");
-    Object.defineProperty(measure, "scrollWidth", { value: needed, configurable: true });
+    Object.defineProperty(measure, "scrollWidth", {
+      value: needed,
+      configurable: true,
+      writable: true,
+    });
     host.appendChild(measure);
 
     return {
       measureRef: { current: measure } as RefObject<HTMLDivElement>,
       host,
+      measure,
+      setAvailable: (next: number) => {
+        Object.defineProperty(host, "clientWidth", {
+          value: next,
+          configurable: true,
+        });
+      },
+      setNeeded: (next: number) => {
+        Object.defineProperty(measure, "scrollWidth", {
+          value: next,
+          configurable: true,
+        });
+      },
     };
   }
 
@@ -75,5 +99,44 @@ describe("useTopBarOverflowCollapsed", () => {
     );
     expect(result.current.collapsed).toBe(false);
     expect(observe).not.toHaveBeenCalled();
+  });
+
+  it("não reexpande com folga menor que a histerese", () => {
+    const host = createMeasureHost(520, 400);
+    const { result } = renderHook(() =>
+      useTopBarOverflowCollapsed(host.measureRef, { enabled: true }),
+    );
+    act(() => {
+      callback?.([], {} as ResizeObserver);
+    });
+    expect(result.current.collapsed).toBe(true);
+
+    // Folga de 10px (< 24): still collapsed
+    host.setAvailable(530);
+    host.setNeeded(520);
+    act(() => {
+      callback?.([], {} as ResizeObserver);
+    });
+    expect(result.current.collapsed).toBe(true);
+    expect(TOPBAR_OVERFLOW_EXPAND_HYSTERESIS_PX).toBe(24);
+  });
+
+  it("reexpande quando a folga é ≥ histerese", () => {
+    const host = createMeasureHost(520, 400);
+    const { result } = renderHook(() =>
+      useTopBarOverflowCollapsed(host.measureRef, { enabled: true }),
+    );
+    act(() => {
+      callback?.([], {} as ResizeObserver);
+    });
+    expect(result.current.collapsed).toBe(true);
+
+    // Folga de 30px (≥ 24): expand
+    host.setAvailable(550);
+    host.setNeeded(520);
+    act(() => {
+      callback?.([], {} as ResizeObserver);
+    });
+    expect(result.current.collapsed).toBe(false);
   });
 });
