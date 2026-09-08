@@ -69,6 +69,20 @@ export async function httpGet<T>(url: string, options: RequestOptions = {}): Pro
   return response.json() as Promise<T>;
 }
 
+export async function httpGetBlob(url: string, options: RequestOptions = {}): Promise<Blob> {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: buildHeaders(false),
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+
+  return response.blob();
+}
+
 export async function httpPatch<T>(
   url: string,
   body?: JsonBody,

@@ -16,6 +16,7 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { UserManualPage } from "./features/help/UserManualPage";
+import { PurchaseRequestsPage } from "./features/purchase-requests/PurchaseRequestsPage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -30,10 +31,6 @@ const PLACEHOLDER: Partial<
   my_tasks: {
     title: "Minhas tarefas",
     description: "A fila de acompanhamento será composta nas jornadas seguintes.",
-  },
-  purchase_requests: {
-    title: "Solicitações de compras",
-    description: "Lista e detalhe de SC entram na jornada C1.",
   },
   purchase_orders: {
     title: "Pedidos de compra",
@@ -133,6 +130,8 @@ function AppRoutes({
     content = <OverviewPage basePath={basePath} />;
   } else if (view === "help") {
     content = <UserManualPage basePath={basePath} />;
+  } else if (view === "purchase_requests") {
+    content = <PurchaseRequestsPage basePath={basePath} />;
   } else {
     const placeholder = PLACEHOLDER[view];
     content = placeholder ? (

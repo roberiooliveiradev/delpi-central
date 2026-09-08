@@ -71,7 +71,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Abrir solicitações de compras (SC)",
           where: "Solicitações de compras",
-          how: "Lista no seu escopo de centro de custo e filial",
+          how: "Lista e detalhe no escopo de CC/filial; exportação CSV se tiver permissão",
         },
         {
           want: "Ver estoque de segurança (ESTSEG)",
@@ -111,7 +111,7 @@ export const USER_MANUAL_CONTENT = {
       bullets: [
         "Início — atenção, busca, favoritos e caminhos por capability.",
         "Visão geral — cockpit de KPIs do período (não é a tela inicial).",
-        "Solicitações de compras — SC no escopo autorizado.",
+        "Solicitações de compras — lista/detalhe no escopo CC+filial; exportação CSV com permissão separada.",
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
         "Administração — mappings e configurações.",
@@ -137,6 +137,14 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Onde vejo o significado de cada KPI da Visão geral?",
           a: "Nas fichas de indicadores e na Visão geral. Cada card mostra se o valor é intervalo, snapshot ou estado atual — não misture com o Início.",
+        },
+        {
+          q: "Por que a lista de SC vem vazia?",
+          a: "Sem centros de custo liberados e sem visão ampla, o Portal mantém fail-closed (zero registros). Peça escopo de CC ou a capability de visão ampla ao administrador.",
+        },
+        {
+          q: "Por que não vejo Exportar CSV?",
+          a: "A exportação exige a permissão de exportação além do acesso às solicitações. Ter só a lista não libera o download.",
         },
         {
           q: "Por que um card da Visão geral aparece indisponível?",
