@@ -54,7 +54,11 @@ Antes de implementar, identificar o domínio da tarefa e carregar **somente** as
 | Alteração de código/testes/commit | `test-and-commit.mdc` |
 | Feature/modificação user-facing | `feature-help-sync.mdc` |
 | Chat/LLM/RAG/agents/tools | `chat-intelligence-base.mdc`, `llm-stack-centralized.mdc` e regras específicas do subdomínio |
-| OpenAPI/actions/providers externos | `openapi-first-universal-tool-routing.mdc`, `operational-api-routing.mdc`, `new-api-route-checklist.mdc` |
+| Mudança de inteligência/prompt/retrieval/planner/RAG | `ai-intelligence-evaluation.mdc`, `ai-context-and-tool-budget.mdc` |
+| OpenAPI/actions/providers externos | `openapi-first-universal-tool-routing.mdc`, `ai-external-tools-security.mdc`, `operational-api-routing.mdc`, `new-api-route-checklist.mdc` |
+| Integração HTTP/gateway/provider | `http-integration-resilience.mdc`, `observability-standards.mdc` |
+| Alteração de contrato OpenAPI/DTO/evento/manifest/SSE | `contract-evolution-backward-compatibility.mdc` |
+| Logs/métricas/tracing/correlation | `observability-standards.mdc` |
 | Apresentação do chat | `schema-first-presentation-delivered.mdc`, `presentation-operational-decoupling.mdc` |
 | Conteúdo/regex/vocabulário do assistente | `assistant-content-json.mdc` |
 | SQL/TOTVS/performance | `sql-query-development.mdc` + regras TOTVS específicas |
@@ -81,6 +85,11 @@ Se uma regra especializada não for relevante ao pedido/arquivos atuais, **não 
 | Regra | Escopo |
 |-------|--------|
 | **`openapi-first-universal-tool-routing.mdc`** | **Canônica para tools/actions** — OpenAPI + Action Catalog/index + retrieval/planner/validator genéricos; API externa sem código/registry por endpoint |
+| `ai-external-tools-security.mdc` | Segurança de providers externos, SSRF, prompt injection indireta, secrets e policy de execução |
+| `ai-intelligence-evaluation.mdc` | Evals antes/depois para prompts, retrieval, RAG, planner, tools e contexto |
+| `ai-context-and-tool-budget.mdc` | Budgets de histórico, RAG, tool schemas/results, top-K e fan-out |
+| `http-integration-resilience.mdc` | Timeouts, retries seguros, idempotência, 429/5xx, circuit breaker e limites |
+| `observability-standards.mdc` | Logs estruturados, correlation, métricas/tracing e metadata das decisões |
 | `operational-api-routing.mdc` | Compatibilidade e aplicação prática do roteamento durante migração |
 | `new-api-route-checklist.mdc` | Checklist de rota/API/action exposta ao chat |
 | `chat-intelligence-base.mdc` | Inteligência transversal do chat; agentes/projetos herdam |
@@ -93,9 +102,12 @@ Se uma regra especializada não for relevante ao pedido/arquivos atuais, **não 
 ```text
 OpenAPI válido
 → importar/indexar
+→ validar segurança/rede
 → vincular ao agente
 → policies/permissões
-→ usar
+→ retrieval/planner/validator
+→ executar com resiliência
+→ observar/medir
 ```
 
 Adicionar nova API/operation **não deve exigir**:
@@ -110,6 +122,21 @@ presenter obrigatório
 ```
 
 Se exigir, consultar `openapi-first-universal-tool-routing.mdc` antes de implementar.
+
+## Fase 2 — guardrails transversais
+
+As regras abaixo são canônicas por responsabilidade e não devem ser copiadas para regras de domínio:
+
+| Responsabilidade | Regra canônica |
+|------------------|----------------|
+| Segurança LLM ↔ tools ↔ APIs externas | `ai-external-tools-security.mdc` |
+| Qualidade/regressão da inteligência | `ai-intelligence-evaluation.mdc` |
+| Context/token/tool budgets | `ai-context-and-tool-budget.mdc` |
+| Resiliência HTTP | `http-integration-resilience.mdc` |
+| Observabilidade | `observability-standards.mdc` |
+| Evolução/depreciação de contratos | `contract-evolution-backward-compatibility.mdc` |
+
+Não transformar esses temas em `alwaysApply: true`; devem entrar quando o domínio correspondente estiver em jogo.
 
 ## Frontend (plugins MFE + kit)
 
@@ -140,7 +167,8 @@ Ao criar/editar `.cursor/rules`:
 2. Constituição mínima global + regra especializada canônica do domínio.
 3. ADR/contrato/schema/OpenAPI/implementação vigente conforme `evidence-driven-execution.mdc`.
 4. Para tools/actions: **OpenAPI importado + Action Catalog/index** prevalecem sobre registry/markers manuais.
-5. JSON declarativo para linguagem/policy/configuração transversal — nunca como duplicação de contrato OpenAPI.
-6. Testes e validação do objetivo original.
+5. Segurança/policy nunca é relaxada para melhorar seleção ou conveniência.
+6. JSON declarativo para linguagem/policy/configuração transversal — nunca como duplicação de contrato OpenAPI.
+7. Testes, evals e validação do objetivo original.
 
 Conflitos entre fontes relevantes devem ser registrados como **drift**; não reconciliar contradições silenciosamente.
