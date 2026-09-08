@@ -15,7 +15,7 @@ from app.domain.services.external_actions.external_action_response_content_servi
 class ExternalActionCandidateDiscoveryService:
     @classmethod
     def match_filter_rule(cls, query: str) -> dict | None:
-        normalized = str(query or "").lower()
+        normalized = ChatMessageNormalizationService.normalize_for_matching(query)
         rules = ExternalActionResponseContentService.object_list(
             "actionSelection",
             "candidateDiscovery",
@@ -26,7 +26,12 @@ class ExternalActionCandidateDiscoveryService:
             terms = rule.get("anyOfTerms") or []
             if not isinstance(terms, list):
                 continue
-            if any(str(term).lower() in normalized for term in terms if str(term).strip()):
+            if any(
+                ChatMessageNormalizationService.normalize_for_matching(str(term))
+                in normalized
+                for term in terms
+                if str(term).strip()
+            ):
                 return rule
 
         return None
