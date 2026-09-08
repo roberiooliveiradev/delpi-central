@@ -1159,7 +1159,7 @@ Factories: [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/
 | **4 — Homologação** | Checklist P0 abaixo — operadores validam lado a lado |
 | **5 — Migração dados** | Script one-shot `invoice_issuance` → `my_requests` |
 | **6 — Cutover** | Guia procedimentos → my-requests; banner depreciação no legado |
-| **7 — Descomissionar** | E12 soft (menu+redirect) + E13 hard (MFE fora do Compose). Schema/volume retidos — ver `MIGRATION-RUNBOOK.md` § Retenção. Lookups canônicos `/request-lookups` (E17); remoção de `/invoice-issuance/*` lookups = E18. |
+| **7 — Descomissionar** | E12 soft (menu+redirect) + E13 hard (MFE fora do Compose). Schema/volume retidos — ver `MIGRATION-RUNBOOK.md` § Retenção. Lookups canônicos `/request-lookups` (E17–E18; lookups `/invoice-issuance/*` removidos). |
 
 ### 20.2 Mapeamento de dados (E8)
 
@@ -1190,7 +1190,7 @@ Factories: [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/
 
 - Schema Postgres `invoice_issuance` — **sem** `DROP SCHEMA` / `reset` em prod.
 - Volume host `${DELPI_DATA_HOST_DIR}/invoice-issuance` — retenção mínima **90 dias** após apply validado (ou até auditoria).
-- Rotas api-delpi de **lookup legado** (`/invoice-issuance/parties|…`) — deprecated após E17; canônico = `/request-lookups/*` (ver `LOOKUPS-CANONICAL.md`). Remoção = E18.
+- Rotas api-delpi de **lookup legado** (`/invoice-issuance/parties|…`) — **removidas (E18)**; canônico = `/request-lookups/*` (ver `LOOKUPS-CANONICAL.md`).
 - Código-fonte `plugins/invoice-issuance/` no monorepo (referência; Compose não sobe o MFE).
 
 ### 20.5 Mapa RBAC legado → canônico (E13)
@@ -1556,7 +1556,7 @@ flowchart LR
 | **E14** | WF-06 `/admin` RequestTypes read-only (`my-requests.manage`) | **entregue** |
 | **E15** | Gate PARITY + dry-run/`--apply` evidenciado; UI live itens 1–2 = Ops | **entregue** (docs); ver `PARITY-P0.md` |
 
-### E16–E17 — IAM + lookups
+### E16–E23 — IAM + lookups + UX
 
 | Etapa | Entrega | Nota |
 |-------|---------|------|
@@ -1567,8 +1567,9 @@ flowchart LR
 | **E20** | TopBar canônica + labels PT-BR + Ajuda user-facing | **entregue** — [`PROMPT-ui-excelencia-topbar-ptbr-help.md`](./PROMPT-ui-excelencia-topbar-ptbr-help.md) |
 | **E21** | Wizard NF: ProgressTracker + JourneyProgressBar + unlock + Conferência Alterar | **entregue** — [`DESIGN-wizard-emissao-nf.md`](./DESIGN-wizard-emissao-nf.md) |
 | **E22** | Wizard NF responsivo + progresso sequencial + wireframes etapa×viewport | **entregue** — WF-04 em [`WIREFRAMES.md`](./WIREFRAMES.md) |
+| **E23** | Wizard NF EntityDirectoryPicker (avatar/badge/typeahead) | **entregue** — WF-04 etapas Destinatário/Itens/Transporte |
 
-Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19 / E20 / E21 / E22.
+Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E18–E23.
 
 ---
 
@@ -1608,5 +1609,5 @@ Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19 / E20 / E21 / E2
 
 ---
 
-**Status:** `E1–E22 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
-**Próximo passo:** **E18** — deprecar lookups `/invoice-issuance/*` após soak; backlog tags / CreatableMultiSelect / Admin CRUD; DROP schema após retenção.
+**Status:** `E1–E23 + E18 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
+**Próximo passo:** Ops PARITY live; backlog tags / CreatableMultiSelect / Admin CRUD; DROP schema após retenção.

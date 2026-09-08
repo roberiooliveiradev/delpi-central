@@ -77,7 +77,7 @@ Ambientes com histórico: repetir dry-run → `--apply` em staging e depois prod
 | 3 | Dry-run migração sem `missing_attachment_files` críticos | Ops/Dev | [x] 2026-09-04 (env local; 0 legado) |
 | 4 | `--apply` migração + amostragem de anexos | Ops/Dev | [x] 2026-09-04 no-op local; **reaplicar** se staging/prod tiverem dados |
 | 5 | Comunicação: menu oculto + redirect gateway; MFE fora do Compose (E12–E13) | Produto | [x] |
-| 6 | Lookups api-delpi disponíveis enquanto adapter precisar (E17 migra path) | Dev | [x] |
+| 6 | Lookups canônicos `/request-lookups` (E17–E18; legado `/invoice-issuance/*` lookups removidos) | Dev | [x] |
 
 ## Como rodar
 
