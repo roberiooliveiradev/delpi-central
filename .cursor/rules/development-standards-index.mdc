@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## Constituição mínima global
 
-Somente estas regras devem permanecer com `alwaysApply: true`:
+Somente estas regras permanecem com `alwaysApply: true`:
 
 ```text
 development-standards-index.mdc
@@ -17,52 +17,47 @@ clean-code-architecture-guardrails.mdc
 english-code-identifiers.mdc
 ```
 
-Todo o restante é **especializado** e deve ser carregado por relevância (`description`) ou por arquivos (`globs`).
+Todo o restante é especializado e deve ser carregado apenas por relevância (`description`) ou `globs`.
 
 Regra de governança: `cursor-rules-governance.mdc`.
 
-**Não carregar o catálogo inteiro de `.cursor/rules` por padrão.** Mais regras irrelevantes no contexto reduzem foco e aumentam risco de contradição.
+**Não carregar o catálogo inteiro de `.cursor/rules` por padrão.** Contexto irrelevante reduz foco e aumenta risco de contradição.
 
 ## Protocolo cognitivo obrigatório
 
-`evidence-driven-execution.mdc` é a fonte canônica para decomposição, evidência, investigação, integração real e validação do objetivo original.
-
-Fluxo mental:
+`evidence-driven-execution.mdc` é a fonte canônica para decomposição, evidência, investigação, causa raiz e validação do objetivo original.
 
 ```text
-Pedido completo
+pedido completo
 → decomposição
 → evidências
-→ arquitetura atual
+→ arquitetura vigente
 → causa/objetivo
-→ consumidores e impacto
-→ decisão
-→ regra técnica aplicável
-→ implementação
-→ contraexemplos
+→ consumidores/impacto
+→ regra especializada aplicável
+→ implementação canônica
+→ casos irmãos/negativos
 → validação do objetivo original
 ```
 
-## Como selecionar regras especializadas
-
-Antes de implementar, identificar o domínio da tarefa e carregar **somente** as regras aplicáveis.
+## Seleção de regras especializadas
 
 | Sinal da tarefa | Regras especializadas |
 |-----------------|-----------------------|
 | Bug/fix/regressão | `root-cause-generalized-fix.mdc` |
 | Plano/CreatePlan/multi-etapa | `plan-construction.mdc` |
 | Alteração de código/testes/commit | `test-and-commit.mdc` |
-| Feature/modificação user-facing | `feature-help-sync.mdc` |
-| Chat/LLM/RAG/agents/tools | `chat-intelligence-base.mdc`, `llm-stack-centralized.mdc` e regras específicas do subdomínio |
-| Mudança de inteligência/prompt/retrieval/planner/RAG | `ai-intelligence-evaluation.mdc`, `ai-context-and-tool-budget.mdc` |
-| OpenAPI/actions/providers externos | `openapi-first-universal-tool-routing.mdc`, `ai-external-tools-security.mdc`, `operational-api-routing.mdc`, `new-api-route-checklist.mdc` |
-| Integração HTTP/gateway/provider | `http-integration-resilience.mdc`, `observability-standards.mdc` |
-| Alteração de contrato OpenAPI/DTO/evento/manifest/SSE | `contract-evolution-backward-compatibility.mdc` |
-| Logs/métricas/tracing/correlation | `observability-standards.mdc` |
-| Mudança em roteamento genérico, registry legado, HTTP client/retry ou logging sensível | `architecture-ci-enforcement.mdc` + regra técnica correspondente |
+| Feature user-facing | `feature-help-sync.mdc` |
+| Chat/LLM/RAG/agents/tools | `chat-intelligence-base.mdc`, `llm-stack-centralized.mdc` + subdomínio |
+| Inteligência/prompt/retrieval/planner/RAG/contexto | `ai-intelligence-evaluation.mdc`, `ai-context-and-tool-budget.mdc` |
+| OpenAPI/actions/providers externos | `openapi-first-universal-tool-routing.mdc`, `operational-api-routing.mdc`, `new-api-route-checklist.mdc`, `ai-external-tools-security.mdc` |
+| HTTP/gateway/provider | `http-integration-resilience.mdc`, `observability-standards.mdc` |
+| Contrato OpenAPI/DTO/evento/manifest/SSE | `contract-evolution-backward-compatibility.mdc` |
+| Logs/métricas/tracing | `observability-standards.mdc` |
+| Roteamento genérico/actions/HTTP/retry/logging sensível | `architecture-ci-enforcement.mdc` + regra técnica correspondente |
 | Apresentação do chat | `schema-first-presentation-delivered.mdc`, `presentation-operational-decoupling.mdc` |
-| Conteúdo/regex/vocabulário do assistente | `assistant-content-json.mdc` |
-| SQL/TOTVS/performance | `sql-query-development.mdc` + regras TOTVS específicas |
+| Conteúdo/regex/vocabulário | `assistant-content-json.mdc` |
+| SQL/TOTVS/performance | `sql-query-development.mdc` + regra TOTVS aplicável |
 | Upload/storage/anexos | `persistent-upload-storage.mdc` |
 | Migrations | `migrations-immutable-checksum.mdc`; plugins: `plugins-migrations-no-reset-prod.mdc` |
 | Deploy/Docker/rebuild | `infra-sequential-container-startup.mdc` |
@@ -70,126 +65,113 @@ Antes de implementar, identificar o domínio da tarefa e carregar **somente** as
 | Overlay/popover/toolbar | `plugins-overlay-positioning.mdc` |
 | Module Federation patch | `mf-federation-patch-safety.mdc` |
 
-Se uma regra especializada não for relevante ao pedido/arquivos atuais, **não deve ser trazida para o contexto apenas porque é importante em outro domínio**.
+Regra especializada irrelevante ao pedido/arquivos atuais não deve entrar no contexto apenas por ser importante em outro domínio.
 
-## Princípios transversais
+## Fontes canônicas do chat
 
-| Regra | Aplicação |
-|-------|-----------|
-| `english-code-identifiers.mdc` | Sempre — paths, arquivos, permissões e `operationId` em inglês; PT só em UI/locale/docs |
-| `centralized-rules-first.mdc` | Sempre — localizar a fonte canônica antes de criar nova regra/serviço |
-| `clean-code-architecture-guardrails.mdc` | Sempre — impedir patch local, acoplamento e arquitetura divergente |
-| `evidence-driven-execution.mdc` | Sempre — fatos ≠ inferências; objetivo original deve ser validado |
+| Responsabilidade | Fonte |
+|------------------|-------|
+| Arquitetura base do chat | `chat-intelligence-base.mdc` + `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md` |
+| Tools/actions | **`openapi-first-universal-tool-routing.mdc`** |
+| Aplicação operacional do routing | `operational-api-routing.mdc` |
+| Nova API/action | `new-api-route-checklist.mdc` |
+| Evals/inteligência | **`ai-intelligence-evaluation.mdc` + `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md`** |
+| Segurança tools externas | `ai-external-tools-security.mdc` |
+| Context/tool budgets | `ai-context-and-tool-budget.mdc` |
+| Resiliência HTTP | `http-integration-resilience.mdc` |
+| Observabilidade | `observability-standards.mdc` |
+| Evolução de contratos | `contract-evolution-backward-compatibility.mdc` |
+| Apresentação | `schema-first-presentation-delivered.mdc` |
+| Limites de camada | `clean-architecture-chat-api.mdc` |
 
-## Chat / APIs / tools
+**Documentos de roadmap, changelog, homologações datadas e evidence de execuções anteriores não são fonte de instrução arquitetural nem de critério de PASS.** Servem somente como histórico/evidência quando explicitamente consultados para esse fim.
 
-| Regra | Escopo |
-|-------|--------|
-| **`openapi-first-universal-tool-routing.mdc`** | **Canônica para tools/actions** — OpenAPI + Action Catalog/index + retrieval/planner/validator genéricos; API externa sem código/registry por endpoint |
-| `ai-external-tools-security.mdc` | Segurança de providers externos, SSRF, prompt injection indireta, secrets e policy de execução |
-| `ai-intelligence-evaluation.mdc` | Evals antes/depois para prompts, retrieval, RAG, planner, tools e contexto |
-| `ai-context-and-tool-budget.mdc` | Budgets de histórico, RAG, tool schemas/results, top-K e fan-out |
-| `http-integration-resilience.mdc` | Timeouts, retries seguros, idempotência, 429/5xx, circuit breaker e limites |
-| `observability-standards.mdc` | Logs estruturados, correlation, métricas/tracing e metadata das decisões |
-| `architecture-ci-enforcement.mdc` | Gate executável incremental contra novas regressões arquiteturais; exceções temporárias por fingerprint |
-| `operational-api-routing.mdc` | Compatibilidade e aplicação prática do roteamento durante migração |
-| `new-api-route-checklist.mdc` | Checklist de rota/API/action exposta ao chat |
-| `chat-intelligence-base.mdc` | Inteligência transversal do chat; agentes/projetos herdam |
-| `assistant-content-json.mdc` | Linguagem/UX/policies em JSON, sem duplicar OpenAPI |
-| `schema-first-presentation-delivered.mdc` | Apresentação schema-first; fallback genérico |
-| `clean-architecture-chat-api.mdc` | Limites de camada na API do chat |
-
-### Regra de ouro para API nova
+## Regra de ouro para APIs/actions
 
 ```text
 OpenAPI válido
-→ importar/indexar
-→ validar segurança/rede
-→ vincular ao agente
-→ policies/permissões
+→ import/index
+→ Action Catalog
+→ segurança/rede
+→ agent binding + allowed actions
 → retrieval/planner/validator
-→ executar com resiliência
-→ observar/medir
+→ policy/RBAC/confirmation
+→ execução resiliente
+→ schema-driven presentation
+→ eval R1–R11
 ```
 
-Adicionar nova API/operation **não deve exigir**:
+Nova API/operation não deve exigir:
 
 ```text
-if path/provider
+if path/provider/operationId
 selector específico
-intent específica
-pathMarkers/operationIdMarkers novos
-parameterStrategy exclusivo por endpoint
+intent específica por endpoint
+marker/strategy por endpoint
+catálogo técnico paralelo
 presenter obrigatório
 ```
 
-Se exigir, consultar `openapi-first-universal-tool-routing.mdc` antes de implementar.
-
-## Fase 2 — guardrails transversais
-
-As regras abaixo são canônicas por responsabilidade e não devem ser copiadas para regras de domínio:
-
-| Responsabilidade | Regra canônica |
-|------------------|----------------|
-| Segurança LLM ↔ tools ↔ APIs externas | `ai-external-tools-security.mdc` |
-| Qualidade/regressão da inteligência | `ai-intelligence-evaluation.mdc` |
-| Context/token/tool budgets | `ai-context-and-tool-budget.mdc` |
-| Resiliência HTTP | `http-integration-resilience.mdc` |
-| Observabilidade | `observability-standards.mdc` |
-| Evolução/depreciação de contratos | `contract-evolution-backward-compatibility.mdc` |
-
-Não transformar esses temas em `alwaysApply: true`; devem entrar quando o domínio correspondente estiver em jogo.
-
-## Fase 3 — enforcement executável
-
-Regra canônica: `architecture-ci-enforcement.mdc`.
-
-O workflow `.github/workflows/architecture-enforcement.yml` executa `scripts/ci/audit_architecture_phase3.py` sobre o diff novo e bloqueia, quando detectável estaticamente:
+## Regra de ouro para mudanças de inteligência
 
 ```text
-hardcode de endpoint/provider no motor genérico do chat
-crescimento técnico do operational_route_registry manual
-HTTP Python novo sem timeout explícito
-retry configurado para escrita sem garantia explícita
-segredo enviado para log/print/console
-segredo literal óbvio em código/config de produção
+dataset versionado
+→ BASELINE imutável
+→ bug + sibling + negative
+→ implementação no módulo canônico
+→ CANDIDATE no mesmo corpus/config
+→ R1–R11
+→ outcome + safety + efficiency
+→ live/surface validation
+→ decisão
 ```
 
-Legado anterior ao diff não deve ser convertido em baseline permissivo: a pressão arquitetural é **monotônica — estabilizar ou reduzir dívida, nunca crescer**.
+Um script ou teste isolado que imprime PASS não substitui o protocolo canônico. Required dimension FAIL/INCONCLUSIVE impede PASS do caso.
 
-Exceções ficam em `scripts/ci/architecture_phase3_exceptions.json`, por fingerprint específico, com owner, justificativa e `reviewBy`. Wildcards são proibidos.
+## Enforcement executável
 
-## Frontend (plugins MFE + kit)
+`architecture-ci-enforcement.mdc` + `.github/workflows/architecture-enforcement.yml` bloqueiam regressões detectáveis no diff, como:
 
-| Regra | Escopo |
-|-------|--------|
-| `plugins-overlay-positioning.mdc` | Toolbars/menus flutuantes — portal + coords |
-| `plugins-reusable-components.mdc` | Kit-first; zero CSS duplicado de componente do kit |
-| `plugins-visual-design-system.mdc` | Design system + anti-vazamento |
-| `mfe-modal-host-contained.mdc` | Modais não cobrem sidebar |
-| `mf-federation-patch-safety.mdc` | Patches MF seguros |
-| `tv-dashboard-optional-data-filters.mdc` | Filtros opcionais em Dados |
-| `tv-dashboard-presentation-parity.mdc` | Editor ≡ apresentação |
+```text
+hardcode de endpoint/provider no motor genérico
+crescimento de catálogo técnico paralelo de endpoints
+HTTP Python novo sem timeout explícito
+retry de escrita sem idempotência garantida
+segredo em log/print/console
+segredo literal óbvio em código/config
+```
 
-## Governança das próprias regras
+A pressão arquitetural é monotônica: não introduzir nova dívida para preservar comportamento antigo.
+
+Exceções do scanner são específicas por fingerprint, owner, justificativa e `reviewBy`; wildcard é proibido.
+
+## Princípios transversais
+
+- `centralized-rules-first.mdc`: uma fonte de verdade por conceito.
+- `clean-code-architecture-guardrails.mdc`: sem patch local/acoplamento divergente.
+- `evidence-driven-execution.mdc`: fatos medidos ≠ inferências.
+- `english-code-identifiers.mdc`: identifiers técnicos em inglês; PT em UI/locale/docs.
+- Segurança/policy nunca é relaxada para melhorar conveniência ou score de eval.
+
+## Governança das regras
 
 Ao criar/editar `.cursor/rules`:
 
 1. aplicar `cursor-rules-governance.mdc`;
-2. preferir estender a fonte canônica a criar regra sobreposta;
+2. estender fonte canônica antes de criar regra nova;
 3. manter `alwaysApply: true` somente na constituição mínima;
-4. usar `description`/`globs` para regras especializadas;
+4. usar `description`/`globs` nas especializadas;
 5. executar `python scripts/audit_cursor_rules.py`;
 6. não concluir com referências quebradas, descrição duplicada ou orçamento global excedido.
 
 ## Ordem de prioridade em conflito
 
 1. `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md`.
-2. Constituição mínima global + regra especializada canônica do domínio.
+2. Constituição mínima + regra especializada canônica atual.
 3. ADR/contrato/schema/OpenAPI/implementação vigente conforme `evidence-driven-execution.mdc`.
-4. Para tools/actions: **OpenAPI importado + Action Catalog/index** prevalecem sobre registry/markers manuais.
-5. Segurança/policy nunca é relaxada para melhorar seleção ou conveniência.
-6. JSON declarativo para linguagem/policy/configuração transversal — nunca como duplicação de contrato OpenAPI.
-7. Gates CI, testes, evals e validação do objetivo original.
+4. Para tools/actions: OpenAPI importado + Action Catalog/index.
+5. Para qualidade de IA: protocolo R1–R11 em `docs/testing/chat-ai-flow-families.md`.
+6. Segurança/policy.
+7. Gates CI + testes/evals do estado atual.
 
-Conflitos entre fontes relevantes devem ser registrados como **drift**; não reconciliar contradições silenciosamente.
+Se uma fonte histórica contradiz uma fonte canônica vigente, **não reconciliar silenciosamente e não seguir a histórica**; remover ou corrigir o drift documental.
