@@ -2,7 +2,7 @@
 
 > **Módulo:** Minhas Solicitações (`plugins/my-requests` + `requests-api`)  
 > **Superfície:** **todas** as telas e subfluxos do plugin  
-> **Status:** prompt de produto/engenharia — **a implementar**  
+> **Status:** prompt de produto/engenharia — **implementado (E20)**  
 > **Referência visual principal:** `plugins/commercial` (Portal Comercial)  
 > **UI kit obrigatório:** `@delpi/plugin-ui` via Module Federation  
 > **Docs irmãs:** [WIREFRAMES.md](./WIREFRAMES.md) · [MANUAL-USUARIO.md](./MANUAL-USUARIO.md) · [PLAYBOOK.md](./PLAYBOOK.md) · [plugin README](../../../plugins/my-requests/README.md)

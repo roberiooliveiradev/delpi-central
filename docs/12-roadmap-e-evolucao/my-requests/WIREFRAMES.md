@@ -5,7 +5,7 @@
 > **API:** `/apps/requests-api` (nunca api-delpi no browser)  
 > **UI kit:** `@delpi/plugin-ui` via Module Federation · factories em [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/src/ui/mrUi.tsx)  
 > **Regras:** `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`, `plan-construction.mdc`  
-> **Status:** E5 shell + E6 vertical invoice-issuance (kit-first)
+> **Status:** E5–E20 (TopBar canônica + PT-BR + Ajuda; kit-first)
 
 ## Convenções
 
@@ -25,15 +25,15 @@
 **Chrome comum (todas as telas):**
 
 ```text
+┌─ MyRequestsTopBar (createDashboardTopBar) ──────────────────────────┐
+│ [Minhas] [Fila] [Nova†] [Admin†]     · collapse hamburger / overflow │
+└─────────────────────────────────────────────────────────────────────┘
 ┌─ MyRequestsPageHeader ──────────────────────────────────────────────┐
-│ Título                                                              │
+│ Título da tela                                                      │
 │ Subtitle (opcional)                                                 │
 └─────────────────────────────────────────────────────────────────────┘
-┌─ MyRequestsFormActions (nav) ───────────────────────────────────────┐
-│ [Minhas] [Fila] [Nova†]                                             │
-└─────────────────────────────────────────────────────────────────────┘
 ┌─ my-requests-page-stack ────────────────────────────────────────────┐
-│ (conteúdo da rota — SectionCards)                                   │
+│ (conteúdo da rota — SectionCards; labels PT-BR via presentationLabels)│
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -47,8 +47,10 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 
 | Export / factory | Alias MFE | Onde |
 |------------------|-----------|------|
-| `createDashboardPageHeader` | `MyRequestsPageHeader` | AppShell |
-| `createDashboardFormActions` | `MyRequestsFormActions` | Nav, ActionBar, wizard, forms |
+| `createDashboardTopBar` | `MyRequestsTopBar` | AppShell (nav do módulo) |
+| `createDashboardPageHeader` | `MyRequestsPageHeader` | AppShell (título contextual) |
+| `createDashboardFormActions` | `MyRequestsFormActions` | ActionBar, wizard, forms (não nav) |
+| `createDashboardNavigationCard` | `MyRequestsNavigationCard` | Grid de tipos em `/new` |
 | `createDashboardSectionCard` | `MyRequestsSectionCard` | Todas as seções |
 | `createDashboardStateBanner` | `MyRequestsStateBanner` | Erros |
 | `createDashboardEmptyState` | `MyRequestsEmptyState` | Listas/painéis vazios |
@@ -73,7 +75,6 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 | Export / factory | Uso planejado | Etapa |
 |------------------|---------------|-------|
 | `createDashboardCreatableMultiSelectField` | Tags / multi-seleção futura | backlog |
-| `createDashboardNavigationCard` | Grid de tipos em `/new` | **entregue E19** |
 | Schema form renderer (MFE `SchemaFormPage`) | `raw-material-creation` schema-driven | **entregue E7** |
 | `AnchoredPanelPortal` / menus | Menus flutuantes se surgirem | sob demanda |
 | Busca texto (`q` API) | `FilterInputField` nas listas Mine/Fila | **entregue E11** |
@@ -84,13 +85,13 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 
 | Tela | Rota | Componentes kit |
 |------|------|-----------------|
-| Shell | * | PageHeader, FormActions, ActionButton |
+| Shell | * | TopBar, PageHeader |
 | Minhas | `/mine` | SectionCard, FiltersKit (incl. busca), CompactPagination, StateBanner, Loading, Empty, DataTable, StatusBadge, ActionButton(link) |
 | Fila | `/work-queue` | idem Mine |
-| Admin | `/admin` | SectionCard, DataTable, StatusBadge, StateBanner (gate manage) | **E14** |
+| Admin | `/admin` | SectionCard, DataTable, StatusBadge, StateBanner (gate manage) | **E14 + E20 labels** |
 | Nova (genérico) | `/new` | SectionCard + grid `NavigationCard` (sem Filial no shell); filial só no form do tipo |
 | Wizard NF | `/new` → specialized | SectionCard, SegmentToggle, TextField, SelectField (incl. Filial se `branch_scope`), FieldLabel, NativeTextArea, FormActions, ActionButton, StateBanner |
-| Detalhe | `/requests/:id` | SectionCard, DetailFields, ActionBar→ActionButton, ModalShell (return/cancel), Timeline, painéis |
+| Detalhe | `/requests/:id` | SectionCard, DetailFields, ActionBar→ActionButton (label PT), ModalShell (return/cancel), Timeline, painéis |
 | Payload NF | detalhe | SectionCard, DetailFields |
 | Comentários | detalhe | SectionCard, FieldLabel, NativeTextArea, ActionButton |
 | Anexos / Artefatos | detalhe | SectionCard, FileDropzone (anexos + artefatos se process/manage), SelectField (kind), Empty, ActionButton(link) |
@@ -215,8 +216,8 @@ Deep link: `/apps/my-requests/new?type=invoice-issuance` (também `type_code`) *
 ┌─ PageHeader: REQ-2026-000042 ───────────────────────────────────────┐
 └─────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard «Solicitação» ─────────────────────────────────────────┐
-│ DetailFields: Tipo · Status · Filial · Solicitante                  │
-│ FormActions / ActionBar: [start] [return] [issue] … (API only)      │
+│ DetailFields: Tipo · Status · Filial · Solicitante · Criada em      │
+│ ActionBar: [Iniciar…] [Devolver…] … (label PT; código API intacto)  │
 └─────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard «Dados da emissão» † type=invoice-issuance ────────────┐
 │ DetailFields destinatário/tipo/frete · lista itens                  │
@@ -227,29 +228,29 @@ Deep link: `/apps/my-requests/new?type=invoice-issuance` (também `type_code`) *
 └─────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard «Anexos» ── FileDropzone · links ActionButton ─────────┐
 └─────────────────────────────────────────────────────────────────────┘
-┌─ SectionCard «Artefatos» ── Select kind† · FileDropzone† · links ───┐
-│ † upload só se process/manage                                       │
+┌─ SectionCard «Arquivos do atendimento» ── Select kind† · Dropzone† ─┐
+│ † upload só se process/manage · kind em PT-BR                       │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 **Regra:** botões = `allowed_actions` da API (render-only).  
 **Kit:** ModalShell (return/cancel) · FileDropzone (anexos + artefatos) · SelectField (tipo do artefato)
 
-### WF-06 — Admin tipos (E14 — entregue)
+### WF-06 — Admin tipos (E14 — entregue; labels E20)
 
 ```text
-┌─ PageHeader: Admin — tipos de solicitação ──────────────────────────┐
+┌─ TopBar: … [Admin†] ────────────────────────────────────────────────┐
 └─────────────────────────────────────────────────────────────────────┘
-┌─ Nav: [Minhas] [Fila] [Nova†] [Admin‡] ─────────────────────────────┐
-│ ‡ só com my-requests.manage                                         │
+┌─ PageHeader: Tipos de solicitação ──────────────────────────────────┐
 └─────────────────────────────────────────────────────────────────────┘
-┌─ SectionCard «RequestTypes» ────────────────────────────────────────┐
-│ DataTable: Código │ Nome │ Ativo │ Escopo filial                    │
+┌─ SectionCard «Catálogo de tipos» ───────────────────────────────────┐
+│ DataTable: Código │ Nome │ Ativo │ Filial │ Formulário              │
 │ Sem CRUD — leitura via GET /request-types                           │
+│ Sem permissão → banner amigável (sem código de permissão cru)       │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Kit:** SectionCard · DataTable · StatusBadge · StateBanner (403 sem manage)  
+**Kit:** SectionCard · DataTable · StatusBadge · StateBanner  
 **Ajuda:** `helpTooltips.admin`
 
 ### WF-07 — Schema MP (E7 — entregue)
@@ -275,13 +276,14 @@ Deep link: `/apps/my-requests/new?type=invoice-issuance` (também `type_code`) *
 ```mermaid
 flowchart TB
   subgraph shell [AppShell kit]
+    TB[MyRequestsTopBar]
     PH[MyRequestsPageHeader]
-    NAV[FormActions + ActionButton nav]
   end
-  PH --> NAV
-  NAV --> Mine[WF-01 DataTable]
-  NAV --> Queue[WF-02 DataTable]
-  NAV --> New[WF-03 NavigationCards]
+  TB --> PH
+  PH --> Mine[WF-01 DataTable]
+  PH --> Queue[WF-02 DataTable]
+  PH --> New[WF-03 NavigationCards]
+  PH --> Admin[WF-06 Admin]
   New -->|presentation_mode specialized| Wiz[WF-04 Wizard]
   New -->|schema_driven| Schema[WF-07 SchemaForm]
   Mine --> Det[WF-05 Detail stack]

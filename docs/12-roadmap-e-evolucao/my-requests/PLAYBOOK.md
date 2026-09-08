@@ -2,7 +2,7 @@
 
 > **Plugin:** `my-requests`  
 > **API:** `/apps/requests-api/v1`  
-> **Status:** E1–E19 entregues (ops + IAM + lookups + UX Nova cards); UI live Ops ainda assina PARITY itens 1–2  
+> **Status:** E1–E20 entregues (ops + IAM + lookups + UX Nova cards + TopBar/PT-BR/Ajuda); UI live Ops ainda assina PARITY itens 1–2  
 > **Próximo:** E18 deprecar lookups legado; backlog tags / Admin CRUD  
 > **Referência legado:** [`invoice-issuance`](../invoice-issuance/README.md)
 
@@ -1563,14 +1563,15 @@ flowchart LR
 | **E16** | Runbook IAM `invoice-issuance.*` → `my-requests.*` | **entregue** — `IAM-LEGACY-PERMISSIONS.md` |
 | **E17** | Adapter + router `/request-lookups/*` | **entregue** — legado `/invoice-issuance/*` lookups até E18 |
 
-### E18–E19 — Limpeza legado + UX Nova
+### E18–E20 — Limpeza legado + UX Nova + excelência UI
 
 | Etapa | Entrega | Nota |
 |-------|---------|------|
 | **E18** | Deprecar/remover lookups `/invoice-issuance/*` na api-delpi após soak | técnico; schema/volume retidos |
 | **E19** | UX `/new` por cards + unidade via `branch_scope` | **entregue** — [`PROMPT-nova-solicitacao-type-cards.md`](./PROMPT-nova-solicitacao-type-cards.md) |
+| **E20** | TopBar canônica + labels PT-BR + Ajuda user-facing | **entregue** — [`PROMPT-ui-excelencia-topbar-ptbr-help.md`](./PROMPT-ui-excelencia-topbar-ptbr-help.md) |
 
-Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19.
+Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19 / E20.
 
 ---
 
@@ -1599,6 +1600,7 @@ Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19.
 ## Apêndice B — Referências
 
 - [Prompt — Nova por cards + branch_scope](./PROMPT-nova-solicitacao-type-cards.md)
+- [Prompt — UI excelência TopBar / PT-BR / Ajuda](./PROMPT-ui-excelencia-topbar-ptbr-help.md)
 - [invoice-issuance API](../../../api-delpi/docs/api/invoice-issuance.md)
 - [invoice-issuance README plugin](../../../plugins/invoice-issuance/README.md)
 - [maintenance-api ARCHITECTURE](../../../maintenance-api/docs/ARCHITECTURE.md)
@@ -1609,5 +1611,5 @@ Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19.
 
 ---
 
-**Status:** `E1–E19 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
+**Status:** `E1–E20 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
 **Próximo passo:** **E18** — deprecar lookups `/invoice-issuance/*` após soak; backlog tags / CreatableMultiSelect / Admin CRUD; DROP schema após retenção.

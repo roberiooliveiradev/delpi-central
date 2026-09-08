@@ -4,75 +4,87 @@ Espelho da Ajuda in-app (`plugins/my-requests/src/content/helpTooltips.ts`).
 
 ## O que é
 
-**Minhas Solicitações** centraliza pedidos operacionais (emissão de NF, criação de MP, etc.) em um único app. O motor de workflow e as permissões ficam na **requests-api**; a tela só mostra o que a API libera. A interface usa o kit visual compartilhado do portal (`plugin-ui`) — botões, tabelas e cards seguem o mesmo padrão dos demais módulos.
+**Minhas Solicitações** reúne pedidos do dia a dia (emissão de nota fiscal, criação de matéria-prima e outros tipos) em um único lugar. Você acompanha o andamento, conversa por comentários e envia arquivos — tudo com a mesma aparência dos demais módulos do portal.
 
-Layout e componentes por tela (wireframes): [WIREFRAMES.md](./WIREFRAMES.md).
+Layout por tela: [WIREFRAMES.md](./WIREFRAMES.md).
+
+## Menu superior (TopBar)
+
+No topo do módulo você encontra:
+
+| Item | Para quê |
+|------|----------|
+| **Minhas solicitações** | O que você abriu |
+| **Fila de trabalho** | O que está na sua fila para atender |
+| **Nova solicitação** | Abrir um pedido novo (se o seu perfil puder criar) |
+| **Tipos / Admin** | Consultar tipos cadastrados (somente quem administra) |
+
+Em telas estreitas o menu pode recolher em ícone de menu (hamburger), como no Portal Comercial.
 
 ## Onde encontrar
 
 - Tile no portal: **Minhas Solicitações** → `/apps/my-requests`
-- Rotas internas:
-  - `/mine` — suas solicitações
-  - `/work-queue` — fila de trabalho
-  - `/new` — criar
-  - `/requests/:id` — detalhe
-  - `/admin` — tipos de solicitação (somente leitura; exige `my-requests.manage`)
+- Atalhos internos: Minhas, Fila, Nova, Detalhe (pelo número), Administração
 
-## Minhas
+## Minhas solicitações
 
-Lista o que **você** criou. Use a **busca** (número da solicitação, código/nome do destinatário ou descrição — mínimo 2 caracteres), filtre por tipo, status e filial; use a paginação. Clique no número para abrir o detalhe.
+Lista o que **você** criou. Use a busca (número, destinatário ou descrição), filtre por tipo, status e filial e avance pelas páginas. Clique no **número** para abrir o detalhe. Tipos e status aparecem com nomes amigáveis.
 
 ## Fila de trabalho
 
-Itens elegíveis ao seu perfil de processar/gerenciar. Mesma busca, filtros e paginação de Minhas. O escopo vem da API (não do frontend).
+O que está elegível para o seu atendimento. Mesmos filtros e paginação. Abra a solicitação para iniciar, devolver, concluir ou registrar a emissão, conforme os botões disponíveis.
 
 ## Nova solicitação
 
-Escolha o **tipo** em um **card** (ícone + nome). O formulário abre na hora: wizard de NF, formulário de matéria-prima ou fluxo genérico. A **unidade/filial**, quando o tipo exige (`branch_scope`), aparece **dentro** do formulário — tipos sem multi-unidade não pedem filial. Deep link `/new?type=…` abre o formulário do tipo.
+Escolha o **tipo** em um **card** (ícone, nome e breve descrição). O formulário abre na hora:
 
-## Admin (tipos)
+- emissão de NF — passo a passo (wizard);
+- matéria-prima — campos do formulário do tipo;
+- outros — fluxo genérico.
 
-Com `my-requests.manage`, a aba **Admin** lista os tipos cadastrados no Request Engine (código, nome, ativo, escopo de filial). É **somente leitura** — não edita workflow nem formulário nesta tela.
+A **filial**, quando o tipo exige, aparece **dentro** do formulário (01 = Santa Catarina, 02 = Espírito Santo). Tipos sem multi-unidade não pedem filial. Link direto com `?type=…` abre o formulário do tipo.
 
 ## Detalhe
 
-Mostra status, meta e **ações permitidas** (`allowed_actions`). Os botões refletem o WorkflowEngine — o MFE **não** decide sozinho se uma transição é válida. **Devolver** e **cancelar** pedem o motivo em um diálogo do app (não no prompt do navegador).
+Mostra tipo, status, filial, solicitante e data. Os **botões de ação** mudam conforme o andamento — só aparecem as opções liberadas para você naquele momento. **Devolver** e **cancelar** pedem um motivo em uma janela do app.
 
 Painéis:
 
 | Painel | Uso |
 |--------|-----|
-| Linha do tempo | Eventos (criação, transição, upload, comentário) |
-| Comentários | Thread da solicitação |
-| Anexos | Arquivos do solicitante — arraste/selecione no detalhe para enviar; baixe pelos links |
-| Artefatos | Evidências do processamento — processadores enviam (genérico ou PDF da NF); solicitantes só baixam |
+| Dados da emissão | Resumo da NF (quando for esse tipo) |
+| Linha do tempo | Histórico do que aconteceu |
+| Comentários | Conversa sobre o pedido |
+| Anexos | Arquivos que você envia com o pedido |
+| Arquivos do atendimento | Evidências do atendimento (ex.: PDF da nota) — quem atende pode enviar; solicitantes costumam só baixar |
 
-## Permissões típicas
+## Administração (tipos)
 
-- `my-requests.access` — abrir o app
-- `my-requests.view.filial-01` / `.filial-02` — escopo de filial
-- `my-requests.view-all` / `.manage` — visão ampliada / admin
-- `my-requests.invoice-issuance.create` / `.process` — tipo NF
-- `my-requests.raw-material-creation.create` / `.process` — tipo MP
-
-## Notificações
-
-Atualizações podem aparecer no sino do portal na categoria **Minhas Solicitações** (`my_requests`). Ajuste em Preferências de notificação.
+Quem tem permissão de administrar vê o catálogo de tipos (código, nome, ativo, se pedem filial e como o formulário é apresentado). É **somente consulta** nesta tela.
 
 ## Wizard de emissão de NF
 
-Quando o tipo é **invoice-issuance**, a tela Nova abre o wizard specialized (6 passos: destinatário → tipo → itens → frete → adicionais → conferência). Lookups e criação usam apenas `/apps/requests-api` (nunca api-delpi no browser).
-
-No detalhe, solicitações NF mostram o painel **Dados da emissão** além das ações `allowed_actions`.
+Seis etapas: destinatário → tipo de NF → itens → frete → adicionais → conferência. Na conferência, confira o checklist antes de enviar. Buscas de cliente/fornecedor/produto usam o serviço do módulo (não é preciso sair do app).
 
 ## Formulário de matéria-prima
 
-Quando o tipo é **raw-material-creation**, a tela Nova abre o formulário schema-driven (campos vindos do `form_schema` do tipo: descrição, unidade UN/KG/M, observações). A criação usa apenas `/apps/requests-api`.
+Preencha descrição, unidade e observações (conforme o tipo) e envie. A filial aparece quando o tipo exige.
 
-## Limitações atuais
+## Sem acesso
 
-- App legado `invoice-issuance`: MFE removido do Compose (E13); bookmarks redirecionam no gateway. Canônico = Minhas Solicitações — **não** há dual-run de menu.
-- Migração de histórico: ver `MIGRATION-RUNBOOK.md` + evidência em `PARITY-P0.md` (E15). Ambientes com dados legados devem reaplicar dry-run/`--apply`.
-- Homologação UI live (criar/fila/lookups TOTVS no browser): checklist Ops em `PARITY-P0.md` itens 1–2.
-- Permissões `invoice-issuance.*` podem ainda existir no Core até runbook IAM (`IAM-LEGACY-PERMISSIONS.md`); operadores novos usam só `my-requests.*`.
-- Lookups TOTVS: requests-api → api-delpi `/request-lookups/*` (E17); path legado `/invoice-issuance/*` de lookups deprecated até E18. Schema/volume legado retidos ≥ 90 dias.
+Se o portal abrir a mensagem de que você não tem permissão, peça acesso ao administrador do portal.
+
+## Notificações
+
+Atualizações podem aparecer no sino do portal na categoria **Minhas Solicitações**. Ajuste em Preferências de notificação.
+
+---
+
+## Notas de suporte (técnicas)
+
+- API do browser: somente `/apps/requests-api`.
+- Permissões típicas: `my-requests.access`, `view.filial-*`, `view-all` / `manage`, `*.create` / `*.process` por tipo.
+- Labels amigáveis: `src/content/presentationLabels.ts` (códigos enviados à API permanecem canônicos).
+- App legado `invoice-issuance`: removido do Compose; canônico = este módulo.
+- Lookups TOTVS e IAM legado: ver `LOOKUPS-CANONICAL.md` e `IAM-LEGACY-PERMISSIONS.md`.
+- Homologação UI live (Ops): `PARITY-P0.md` itens 1–2.
