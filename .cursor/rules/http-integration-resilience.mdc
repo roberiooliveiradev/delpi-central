@@ -1,0 +1,213 @@
+---
+description: Integrações HTTP — timeouts, retries, backoff, idempotência, 429/5xx, circuit breaker, cancelamento, paginação e limites de payload
+alwaysApply: false
+---
+
+# Resiliência de integrações HTTP
+
+## Princípio
+
+Toda chamada HTTP entre serviços ou para API externa deve falhar de forma previsível, limitada e observável.
+
+Não existe integração "simples" que justifique ausência de timeout, classificação de erro ou política de retry.
+
+Complementa `ai-external-tools-security.mdc`, `observability-standards.mdc` e `contract-evolution-backward-compatibility.mdc`.
+
+## Timeouts obrigatórios
+
+Toda chamada deve definir explicitamente, conforme o client disponível:
+
+```text
+connect timeout
+read timeout
+total/request timeout
+```
+
+Proibido depender de timeout infinito/default desconhecido.
+
+Timeout deve refletir o SLO do chamador e não ser aumentado indefinidamente para mascarar lentidão no downstream.
+
+## Retry
+
+Retry só é permitido quando a operação é segura para repetição.
+
+Regra padrão:
+
+| Método/operação | Retry automático |
+|----------------|------------------|
+| GET / HEAD | permitido para falhas transitórias, com limite |
+| PUT | somente se contrato/idempotência forem comprovados |
+| DELETE | somente se semântica idempotente estiver comprovada |
+| POST / PATCH | **não** por padrão; exigir idempotency key ou contrato explícito |
+
+Retry deve usar:
+
+```text
+limite de tentativas
+exponential backoff
+jitter
+respeito a Retry-After quando aplicável
+```
+
+Não fazer retry imediato em loop.
+
+## Erros transitórios vs permanentes
+
+Classificar antes de repetir:
+
+```text
+408/timeout → potencialmente transitório
+429 → transitório com Retry-After/rate-limit policy
+502/503/504 → potencialmente transitório
+400/401/403/404/409/422 → não repetir automaticamente salvo contrato explícito
+```
+
+A semântica do provider prevalece quando documentada, mas a exceção deve ser explícita e testada.
+
+## Idempotência
+
+Operação de escrita sujeita a retry deve possuir mecanismo determinístico, por exemplo `Idempotency-Key`, correlation/request key ou chave natural garantida pelo contrato.
+
+A chave deve:
+
+- ser estável entre tentativas da mesma operação lógica;
+- mudar para uma nova intenção do usuário;
+- não conter segredo;
+- ser persistida quando necessário para sobreviver a retry/restart.
+
+Nunca gerar uma idempotency key nova em cada retry da mesma operação.
+
+## Circuit breaker e degradação
+
+Para dependência remota instável ou de alto tráfego, considerar circuit breaker quando houver evidência de cascata/falhas repetidas.
+
+Estados esperados:
+
+```text
+closed → chamadas normais
+open → falha rápida por janela controlada
+half-open → poucas probes
+```
+
+Não adicionar circuit breaker por moda; usar quando reduz pressão no downstream e melhora comportamento do sistema.
+
+## Concorrência e cancelamento
+
+- Propagar cancelamento quando a request/turn foi cancelado e o client suportar.
+- Não continuar chamando tools externas após o turno ter sido abandonado sem necessidade arquitetural explícita.
+- Limitar concorrência por provider/host quando fan-out puder saturar a API.
+- Pedidos compostos podem executar em paralelo apenas actions independentes e dentro de budget.
+
+Ver `ai-context-and-tool-budget.mdc`.
+
+## Paginação
+
+Não paginar indefinidamente em background.
+
+Definir:
+
+```text
+page size máximo
+número máximo de páginas por operação automática
+limite total de items/bytes
+essa paginação é necessária ao objetivo?
+```
+
+Se o usuário pedir tudo e o volume for alto, preferir confirmação/streaming/export apropriado a carregar milhares de registros no LLM.
+
+## Limites de payload
+
+Clientes/gateways devem considerar limites para:
+
+```text
+request bytes
+response bytes
+download/upload size
+JSON depth/items
+compressed body/decompression bomb
+```
+
+Ultrapassar limite deve gerar erro controlado ou fluxo específico; nunca memória ilimitada.
+
+## Rate limit
+
+Quando receber 429:
+
+1. respeitar `Retry-After` se válido;
+2. limitar retry;
+3. registrar provider/action e rate-limit event;
+4. não transformar 429 em tempestade de chamadas paralelas.
+
+Se rate limit for previsível, implementar throttling/concurrency control no client/gateway compartilhado.
+
+## Erro ao usuário
+
+Separar:
+
+```text
+falha transitória de provider
+falha de autenticação/autorização
+contrato inválido
+argumento inválido
+rate limit
+timeout
+indisponibilidade
+```
+
+Mensagem amigável não deve esconder metadata útil para observabilidade nem vazar detalhe sensível.
+
+## Observabilidade
+
+Registrar quando aplicável:
+
+```text
+provider/service
+operationId/route logical name
+attempt
+retryReason
+httpStatus
+durationMs
+timeoutType
+circuitState
+responseBytes
+rateLimited
+```
+
+Não logar secrets/body sensível por padrão.
+
+## Testes obrigatórios
+
+Cobrir conforme o fluxo:
+
+- timeout de conexão/leitura;
+- 429 com `Retry-After`;
+- 503 seguido de sucesso em GET;
+- POST sem idempotência não repetido;
+- POST com idempotency key repetido com mesma chave;
+- retry limitado;
+- cancelamento interrompendo fan-out;
+- limite de páginas/payload;
+- circuit breaker quando implementado.
+
+## O que NÃO fazer
+
+- `timeout=None` ou client sem timeout explícito.
+- retry genérico para qualquer exception.
+- retry de POST/PATCH por padrão.
+- sleep fixo sem jitter em várias instâncias.
+- engolir erro remoto e retornar sucesso vazio.
+- fan-out ilimitado para "ganhar velocidade".
+- carregar todas as páginas de uma API no contexto do LLM por padrão.
+
+## Critério de sucesso
+
+Uma dependência lenta, limitada ou parcialmente indisponível deve causar degradação controlada, não cascata:
+
+```text
+falha remota
+→ timeout/classificação
+→ retry seguro e limitado quando permitido
+→ circuit/degradação quando necessário
+→ erro observável
+→ recuperação sem duplicar escrita
+```
