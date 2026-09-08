@@ -1,6 +1,6 @@
 ---
-description: Inteligência do chat na camada base; agentes e projetos herdam, não duplicam
-alwaysApply: true
+description: Minha DELPI AI/chat — inteligência base, agentes/projetos herdando pipeline, contexto, decomposição e tools; carregar em mudanças do chat
+alwaysApply: false
 ---
 
 # Chat base — inteligência herdada
