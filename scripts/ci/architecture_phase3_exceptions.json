@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "policy": "Exceções são temporárias, específicas por fingerprint e exigem owner, reason e reviewBy. Não usar wildcard.",
+  "exceptions": []
+}
