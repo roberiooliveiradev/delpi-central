@@ -1540,6 +1540,18 @@ Regra: **% sempre da API** (`progress.pct`) — MFE não calcula.
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+## WF-PP-OTA-05 — `/firmware-links` amarração visual
+
+```text
+┌─ Amarração Firmware ↔ IoT ───────────────────────────────────────┐
+│ Filial [01]  [Atualizar conexões ?]  [Campanhas]  [Firmwares]    │
+│ Canvas: [FW]──solid──►[IoT] · tracejada=via driver               │
+│ 1 IoT = 1 firmware (nova seta substitui)                         │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+Helps: `PP_HELP.otaLinks.*`
+
 ---
 
 ## Checklist implementação frontend (E5)

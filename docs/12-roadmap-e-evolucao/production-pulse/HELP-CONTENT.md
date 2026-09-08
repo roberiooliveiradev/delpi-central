@@ -73,15 +73,15 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 | Filial vazia | `panel.emptyFilial` | `EmptyGuidance` |
 | Filtro vazio | `panel.emptyFilters` | `EmptyState` |
 
-### OTA (P4) — `PP_HELP.ota` + `FirmwareOtaKpiStrip`
+### OTA (P4) — `PP_HELP.ota` + `PP_HELP.otaLinks` + canvas
 
 | Elemento | Chave |
 |----------|-------|
-| Atalho Firmwares / OTA no hero | `ota.openCatalog` / `ota.openJobs` |
-| KPI frota (total/updated/updating/failed) | `ota.*` (ver `helpTooltips.ts`) |
-| Catálogo / campanhas / detalhe «Atualizar este» | `ota.catalog*` / `ota.jobs*` / `ota.device*` |
+| Campos publish/campanha | `ota.firmwareKey`, `ota.version`, `ota.jobTrigger`, … |
+| Amarração `/firmware-links` | `otaLinks.hero`, `refresh`, `canvas`, `oneFirmwarePerDevice` |
+| KPI frota | `ota.openCatalog` / `ota.jobsHero` (titleHint) |
 
-Wireframes: WF-PP-OTA-01…04 em [WIREFRAMES.md](./WIREFRAMES.md). Homologação: [HOMOLOGACAO-OTA-P4.md](./HOMOLOGACAO-OTA-P4.md).
+Wireframes: WF-PP-OTA-01…05. Homologação: [HOMOLOGACAO-OTA-P4.md](./HOMOLOGACAO-OTA-P4.md).
 
 ### Agrupado (`DeviceGroupedByPlacement`)
 

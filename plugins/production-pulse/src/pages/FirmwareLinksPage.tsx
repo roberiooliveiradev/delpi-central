@@ -83,7 +83,7 @@ export function FirmwareLinksPage({
       <PpPageHero
         title="Amarração Firmware ↔ IoT"
         badge={ppShellIcon}
-        description={PP_HELP.ota.openCatalog}
+        description={PP_HELP.otaLinks.hero}
         actions={
           <>
             <PpActionButton
@@ -104,17 +104,23 @@ export function FirmwareLinksPage({
             >
               Campanhas OTA
             </PpActionButton>
-            <PpActionButton variant="primary" onClick={() => void reload()} disabled={loading}>
+            <PpActionButton
+              variant="primary"
+              title={PP_HELP.otaLinks.refresh}
+              onClick={() => void reload()}
+              disabled={loading}
+            >
               Atualizar conexões
             </PpActionButton>
           </>
         }
       />
 
-      <PpSectionCard title="Filial">
+      <PpSectionCard title="Filial" hint={PP_HELP.otaLinks.branch}>
         <PpNativeSelectField
           id="ota-links-branch"
           label="Filial"
+          hint={PP_HELP.otaLinks.branch}
           value={branch}
           onChange={setBranch}
           options={[
@@ -128,7 +134,7 @@ export function FirmwareLinksPage({
         <PpStateBox
           variant="empty"
           title="Publicação"
-          message={notice}
+          message={notice || PP_HELP.otaLinks.afterPublish}
           action={
             <PpActionButton variant="ghost" onClick={() => setNotice(null)}>
               Fechar
@@ -144,8 +150,10 @@ export function FirmwareLinksPage({
       ) : (
         <PpSectionCard
           title={`Canvas · ${families.length} firmwares · ${devices.length} IoTs`}
-          hint={PP_HELP.ota.catalogList}
+          hint={PP_HELP.otaLinks.canvas}
         >
+          <p className="pp-muted">{PP_HELP.otaLinks.oneFirmwarePerDevice}</p>
+          <p className="pp-muted">{PP_HELP.otaLinks.legend}</p>
           <FirmwareDeviceLinkCanvas
             families={families}
             devices={devices}

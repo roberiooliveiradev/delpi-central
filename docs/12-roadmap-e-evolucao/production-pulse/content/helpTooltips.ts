@@ -187,12 +187,22 @@ export const PP_HELP = {
   ota: {
     openCatalog: "Catálogo de firmwares publicados para atualização OTA.",
     openJobs: "Campanhas de atualização — disparo imediato ou agendado.",
-    catalogHero: "Publique binários por família/versão. Publicar sozinho não atualiza devices.",
+    catalogHero:
+      "Publique binários por família/versão. Depois amarre cada IoT a um firmware para poder atualizar.",
     publishForm: "Envia o artefato .bin e metadados. Requer permissão de gestão.",
+    firmwareKey: "Identificador da família (EN). Devices usam o mesmo valor para OTA.",
+    driverKey: "Driver do registry compatível com os IoTs desta família.",
+    version: "Versão semântica do binário (ex.: 1.3.0).",
+    displayName: "Nome amigável na UI (pode ser em português).",
+    file: "Arquivo .bin compilado para o ESP. O sha256 é calculado no servidor.",
+    releaseNotes: "Notas opcionais da versão para operadores/admin.",
     catalogList: "Versões disponíveis por família de firmware.",
     catalogEmpty: "Nenhuma versão publicada ainda.",
     jobsHero: "Dispare atualização agora ou agende. O ESP baixa quando autorizado.",
     jobCreate: "Escolha o firmware e o modo de disparo (agora ou data/hora).",
+    jobFirmware: "Versão publicada que será enviada aos IoTs elegíveis.",
+    jobTrigger: "Manual autoriza na hora; agendado espera a data/hora.",
+    jobScheduledAt: "Data e hora local em que a campanha autoriza os targets.",
     jobsList: "Campanhas da filial e status.",
     jobsEmpty: "Nenhuma campanha criada.",
     targetsList: "Status por dispositivo na campanha selecionada.",
@@ -201,6 +211,19 @@ export const PP_HELP = {
     noPublishedFirmware: "Não há firmware publicado para esta família.",
     deviceJobCreated: "Campanha criada. O device aplicará no próximo check OTA.",
     deviceJobFailed: "Não foi possível criar a campanha OTA.",
+  },
+
+  otaLinks: {
+    hero: "Ligue cada IoT a um único firmware. Sem vínculo, a campanha OTA não encontra o device pela família.",
+    branch: "Filial dos IoTs exibidos no canvas.",
+    refresh: "Recarrega firmwares e devices do servidor e remonta as setas.",
+    canvas: "Arraste do firmware (esquerda) para o IoT. Seta sólida = vínculo explícito.",
+    connect: "Cria ou substitui o vínculo (1 IoT = 1 firmware).",
+    disconnect: "Delete na seta sólida remove o vínculo explícito.",
+    inherited: "Seta tracejada: IoT ainda herda a família pelo driver — só leitura.",
+    oneFirmwarePerDevice: "Cada IoT só pode ter um firmware; conectar outro substitui o anterior.",
+    afterPublish: "Após publicar, amarre os IoTs aqui para habilitar atualização remota.",
+    legend: "Sólida = explícita · Tracejada = via driver_key.",
   },
 
   modals: {

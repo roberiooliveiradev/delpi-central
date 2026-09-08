@@ -137,6 +137,7 @@ export function FirmwareJobsPage({ branch, permissions }: FirmwareJobsPageProps)
             <PpNativeSelectField
               id="ota-job-firmware"
               label="Firmware"
+              hint={PP_HELP.ota.jobFirmware}
               value={firmwareId}
               onChange={setFirmwareId}
               options={firmwareOptions}
@@ -146,6 +147,7 @@ export function FirmwareJobsPage({ branch, permissions }: FirmwareJobsPageProps)
             <PpNativeSelectField
               id="ota-job-trigger"
               label="Disparo"
+              hint={PP_HELP.ota.jobTrigger}
               value={trigger}
               onChange={(value) => setTrigger(value as "manual" | "scheduled")}
               options={[
@@ -157,6 +159,7 @@ export function FirmwareJobsPage({ branch, permissions }: FirmwareJobsPageProps)
             <PpNativeTextField
               id="ota-job-scheduled"
               label="Agendar para"
+              hint={PP_HELP.ota.jobScheduledAt}
               type="datetime-local"
               value={scheduledAt}
               onChange={setScheduledAt}

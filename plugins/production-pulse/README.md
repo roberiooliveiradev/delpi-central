@@ -18,6 +18,7 @@ O MFE **não** chama a api-delpi diretamente.
 | `/apps/production-pulse` | Painel — KPI, filtros URL-sync, lista ou agrupado por posto/máquina/equipamento |
 | `/apps/production-pulse/firmwares` | Catálogo OTA — publicar binários por família/versão |
 | `/apps/production-pulse/firmware-jobs` | Campanhas OTA — disparo manual ou agendado |
+| `/apps/production-pulse/firmware-links` | Amarração visual firmware ↔ IoTs (1 IoT = 1 firmware) |
 | `/apps/production-pulse/devices/new` | Cadastro de dispositivo + amarração |
 | `/apps/production-pulse/devices/{id}/edit` | Edição |
 | `/apps/production-pulse/devices/{id}` | Detalhe (overview, histórico, comandos, firmware/OTA) |

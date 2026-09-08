@@ -83,7 +83,10 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("constants/routes.ts")).toMatch(/firmware-jobs/);
     expect(readRelative("constants/routes.ts")).toMatch(/firmware-links/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/ota:\s*\{/);
-    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/PpFirmwareFileField/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/otaLinks:\s*\{/);
+    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/PP_HELP\.ota\.firmwareKey/);
+    expect(readRelative("pages/FirmwareJobsPage.tsx")).toMatch(/PP_HELP\.ota\.jobTrigger/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PP_HELP\.otaLinks/);
     expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/productionPulseFirmwareLinksPath/);
     expect(readRelative("pages/FirmwareJobsPage.tsx")).toMatch(/PpNativeSelectField/);
     expect(readRelative("pages/PanelPage.tsx")).toMatch(/FirmwareOtaKpiStrip/);

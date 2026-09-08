@@ -125,18 +125,21 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
             <PpNativeTextField
               id="ota-firmware-key"
               label="Família (firmwareKey)"
+              hint={PP_HELP.ota.firmwareKey}
               value={firmwareKey}
               onChange={setFirmwareKey}
             />
             <PpNativeTextField
               id="ota-driver-key"
               label="Driver"
+              hint={PP_HELP.ota.driverKey}
               value={driverKey}
               onChange={setDriverKey}
             />
             <PpNativeTextField
               id="ota-version"
               label="Versão"
+              hint={PP_HELP.ota.version}
               value={version}
               onChange={setVersion}
               placeholder="1.3.0"
@@ -144,6 +147,7 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
             <PpNativeTextField
               id="ota-display-name"
               label="Nome exibido"
+              hint={PP_HELP.ota.displayName}
               value={displayName}
               onChange={setDisplayName}
               placeholder="Leitor de máquina"
@@ -151,11 +155,13 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
             <PpFirmwareFileField
               id="ota-file"
               label="Arquivo .bin"
+              hint={PP_HELP.ota.file}
               onChange={setFile}
             />
             <PpNativeTextAreaField
               id="ota-notes"
               label="Notas"
+              hint={PP_HELP.ota.releaseNotes}
               value={releaseNotes}
               onChange={setReleaseNotes}
               span
