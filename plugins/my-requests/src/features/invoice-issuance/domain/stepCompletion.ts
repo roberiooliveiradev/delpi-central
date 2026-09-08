@@ -71,6 +71,21 @@ export function buildStepCompletionMap(draft: WizardDraft): StepCompletionMap {
   };
 }
 
+/**
+ * Longest sequential prefix of steps that are field-complete.
+ * Future steps with defaults (sale/cif/weight) do not count until unlocked in order.
+ */
+export function computeSequentialCompletedCount(
+  completion: StepCompletionMap,
+): number {
+  let count = 0;
+  for (const id of STEP_IDS) {
+    if (!completion[id]) break;
+    count += 1;
+  }
+  return count;
+}
+
 export function computeMaxUnlockedIndex(completion: StepCompletionMap): number {
   let max = 0;
   for (let i = 0; i < STEP_IDS.length - 1; i += 1) {
@@ -82,12 +97,22 @@ export function computeMaxUnlockedIndex(completion: StepCompletionMap): number {
 }
 
 export function progressPercent(completion: StepCompletionMap): number {
-  const done = STEP_IDS.filter((id) => completion[id]).length;
+  const done = computeSequentialCompletedCount(completion);
   return Math.round((done / STEP_IDS.length) * 100);
 }
 
 export function completedStepCount(completion: StepCompletionMap): number {
-  return STEP_IDS.filter((id) => completion[id]).length;
+  return computeSequentialCompletedCount(completion);
+}
+
+function allPreviousComplete(
+  completion: StepCompletionMap,
+  index: number,
+): boolean {
+  for (let i = 0; i < index; i += 1) {
+    if (!completion[STEP_IDS[i]]) return false;
+  }
+  return true;
 }
 
 export function computeStepStates(input: {
@@ -104,7 +129,10 @@ export function computeStepStates(input: {
       state = "error";
     } else if (step.id === input.currentStepId) {
       state = "current";
-    } else if (input.completion[step.id]) {
+    } else if (
+      input.completion[step.id] &&
+      allPreviousComplete(input.completion, index)
+    ) {
       state = "complete";
     } else if (index <= maxUnlocked) {
       state = "available";

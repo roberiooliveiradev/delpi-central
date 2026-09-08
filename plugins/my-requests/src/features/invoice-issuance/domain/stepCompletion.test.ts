@@ -4,6 +4,7 @@ import {
   buildStepCompletionMap,
   canOpenStep,
   computeMaxUnlockedIndex,
+  computeSequentialCompletedCount,
   computeStepStates,
   isStepComplete,
   progressPercent,
@@ -48,11 +49,34 @@ describe("stepCompletion", () => {
     expect(isStepComplete("recipient", draft({ party }))).toBe(true);
   });
 
+  it("defaults sem destinatário não contam progresso nem checkmarks futuros", () => {
+    const empty = buildStepCompletionMap(draft());
+    expect(empty.recipient).toBe(false);
+    expect(empty.invoiceType).toBe(true);
+    expect(empty.freight).toBe(true);
+    expect(empty.extras).toBe(true);
+    expect(computeSequentialCompletedCount(empty)).toBe(0);
+    expect(progressPercent(empty)).toBe(0);
+    expect(computeMaxUnlockedIndex(empty)).toBe(0);
+
+    const states = computeStepStates({
+      currentStepId: "recipient",
+      completion: empty,
+    });
+    expect(states.find((s) => s.id === "recipient")?.state).toBe("current");
+    expect(states.find((s) => s.id === "invoiceType")?.state).toBe("locked");
+    expect(states.find((s) => s.id === "freight")?.state).toBe("locked");
+    expect(states.find((s) => s.id === "extras")?.state).toBe("locked");
+    expect(states.every((s) => s.state !== "complete")).toBe(true);
+  });
+
   it("desbloqueia etapas em sequência e bloqueia futuras", () => {
     const withRecipient = buildStepCompletionMap(draft({ party }));
     expect(withRecipient.recipient).toBe(true);
     expect(withRecipient.invoiceType).toBe(true);
     expect(withRecipient.items).toBe(false);
+    expect(computeSequentialCompletedCount(withRecipient)).toBe(2);
+    expect(progressPercent(withRecipient)).toBe(33);
     expect(computeMaxUnlockedIndex(withRecipient)).toBe(2);
     expect(canOpenStep("items", withRecipient)).toBe(true);
     expect(canOpenStep("freight", withRecipient)).toBe(false);
@@ -100,7 +124,8 @@ describe("stepCompletion", () => {
       }),
     );
     expect(brokenType.invoiceType).toBe(false);
-    expect(progressPercent(brokenType)).toBeLessThan(100);
+    expect(computeSequentialCompletedCount(brokenType)).toBe(1);
+    expect(progressPercent(brokenType)).toBe(17);
     expect(canOpenStep("items", brokenType)).toBe(false);
   });
 
