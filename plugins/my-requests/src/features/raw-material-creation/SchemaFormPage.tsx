@@ -79,7 +79,7 @@ export function SchemaFormPage({ requestType, lockedBranch, onCancel }: SchemaFo
       });
       window.location.assign(`/apps/my-requests/requests/${created.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao criar");
+      setError(err instanceof Error ? err.message : "Não foi possível criar a solicitação.");
       setBusy(false);
     }
   }
@@ -88,7 +88,7 @@ export function SchemaFormPage({ requestType, lockedBranch, onCancel }: SchemaFo
     return (
       <AppShell title={requestType.name} canCreate>
         <MyRequestsSectionCard title="Formulário">
-          <MyRequestsLoadingState message="Tipo sem form_schema configurado." />
+          <MyRequestsLoadingState message="Este tipo ainda não tem formulário configurado. Fale com o administrador." />
           {onCancel ? (
             <MyRequestsFormActions>
               <ActionButton type="button" variant="ghost" onClick={onCancel}>

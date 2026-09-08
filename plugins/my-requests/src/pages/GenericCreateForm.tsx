@@ -51,7 +51,7 @@ export function GenericCreateForm({ requestType, onCancel }: GenericCreateFormPr
       });
       window.location.assign(`/apps/my-requests/requests/${created.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao criar");
+      setError(err instanceof Error ? err.message : "Não foi possível criar a solicitação.");
       setBusy(false);
     }
   }

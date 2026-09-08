@@ -36,7 +36,7 @@ export function NewRequestPage() {
         if (preferred) {
           const match = findTypeForDeepLink(items, preferred);
           if (match) setActiveType(match);
-          else setError(`Tipo não encontrado: ${preferred}`);
+          else setError("Não encontramos esse tipo de solicitação. Escolha um card na lista.");
         }
       })
       .catch((err: Error) => {
@@ -68,9 +68,10 @@ export function NewRequestPage() {
     if (openMode === "specialized") {
       return (
         <AppShell title={activeType.name} canCreate>
-          <MyRequestsSectionCard title="Tipo specialized">
+          <MyRequestsSectionCard title="Formulário indisponível">
             <MyRequestsStateBanner variant="error">
-              Não há formulário specialized registrado para «{activeType.code}».
+              Este tipo («{activeType.name}») ainda não tem formulário disponível
+              nesta versão. Escolha outro tipo ou fale com o administrador.
             </MyRequestsStateBanner>
             <MyRequestsFormActions>
               <ActionButton type="button" variant="ghost" onClick={closeForm}>
@@ -103,6 +104,10 @@ export function NewRequestPage() {
                   <MyRequestsNavigationCard
                     key={type.code}
                     title={type.name}
+                    description={
+                      type.description?.trim() ||
+                      MY_REQUESTS_HELP_TOOLTIPS.new.type
+                    }
                     icon={<Icon size={22} aria-hidden />}
                     onClick={() => openType(type)}
                     aria-label={`Abrir ${type.name}`}
