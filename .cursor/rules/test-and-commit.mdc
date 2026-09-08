@@ -1,66 +1,102 @@
 ---
-description: Alterações de código — executar testes/build/gates antes de concluir; commit somente quando solicitado explicitamente
+description: Alterações de código — validar pelas responsabilidades transversais materiais antes de concluir; commit somente quando solicitado explicitamente
 alwaysApply: false
 ---
 
-# Teste e commit ao finalizar
+# Teste e conclusão
 
-Complementa `evidence-driven-execution.mdc`: testes verdes não substituem validação do objetivo original.
+Complementa `evidence-driven-execution.mdc` e `platform-quality-testing.mdc`: testes verdes não substituem validação do objetivo original.
 
-## Testes obrigatórios por escopo
+## Definition of Done transversal
 
-| Tema | Regra/comando |
-|------|---------------|
-| Enforcement arquitetural | `architecture-ci-enforcement.mdc`; `python -m unittest scripts/ci/test_audit_architecture_phase3.py -v` + `python scripts/ci/audit_architecture_phase3.py --check --base <base>` |
-| `minha-delpi-ai-api` | `pytest tests/unit/... -q` conforme escopo |
-| Inteligência do chat | **`ai-intelligence-evaluation.mdc` + `docs/testing/chat-ai-flow-families.md`** |
-| Context/tool budget | `ai-context-and-tool-budget.mdc` |
-| Tools/API externa | `ai-external-tools-security.mdc` + `http-integration-resilience.mdc` |
-| Contrato | `contract-evolution-backward-compatibility.mdc` |
-| Observabilidade | `observability-standards.mdc` |
-| api-delpi | testes do domínio/contrato alterado |
-| SQL/TOTVS | testes + medição de latência/cache conforme regra SQL |
-| MFE | build/testes relevantes |
-| Apresentação | gates/testes schema-driven aplicáveis |
-| Nova API/action | `new-api-route-checklist.mdc` |
+Antes de concluir uma alteração, identificar quais responsabilidades foram materiais e provar as aplicáveis:
 
-## Mudança de inteligência — Definition of Done
+| Responsabilidade | Evidência mínima quando material |
+|---|---|
+| Arquitetura | owner/boundary corretos; dependências na direção certa; nenhum bypass entre contexts |
+| Segurança | auth/authz backend; negative test; secrets/redaction; audit quando sensível |
+| APIs/contratos | schema/OpenAPI/DTO/erro alinhados; compatibilidade e contract tests |
+| Dados | migration/constraints/transação/concorrência validadas |
+| Frontend/MFE | build; estados relevantes; responsividade/acessibilidade/tema quando visual |
+| Qualidade | positive + sibling + negative; objetivo original revalidado |
+| Delivery/runtime | config/build/container/gateway/deploy/rollback quando alterados |
+| Reliability | timeout/retry/metrics/logs/correlation/degradação quando alterados |
 
-Antes de implementar:
+Não marcar responsabilidade como “não aplicável” apenas para reduzir trabalho; a decisão deve seguir o diff e o risco real.
+
+## Testes por camada
+
+Preferir a menor camada que prova a regra e complementar quando wiring/runtime importam:
+
+```text
+unit
+→ component
+→ contract
+→ integration
+→ end-to-end/smoke
+→ live quando necessário
+```
+
+Um E2E não substitui teste unitário de regra determinística; unitário não prova integração real.
+
+## Bugfix/regressão
+
+Obrigatório quando reproduzível:
+
+```text
+reprodução/baseline
+→ causa raiz
+→ positive
+→ sibling
+→ negative
+→ objetivo original
+```
+
+Aplicar `root-cause-generalized-fix.mdc`.
+
+## Gates por escopo
+
+| Tema | Regra/gate |
+|---|---|
+| Regras Cursor | `cursor-rules-governance.mdc`; `python scripts/audit_cursor_rules.py` |
+| Enforcement arquitetural | `architecture-ci-enforcement.mdc`; testes/scanner correspondentes |
+| Contratos | `platform-api-contracts-integration.mdc` + `contract-evolution-backward-compatibility.mdc` |
+| Segurança | `platform-security-identity-authorization.mdc` |
+| Dados/migrations | `platform-data-persistence.mdc` |
+| MFE/Portal | `platform-frontend-mfe-experience.mdc` + build/testes relevantes |
+| Docker/gateway/deploy | `platform-delivery-runtime-operations.mdc` |
+| Reliability/HTTP/logs | `platform-reliability-observability.mdc` |
+| SQL/TOTVS | `sql-query-development.mdc` + regra TOTVS aplicável |
+| Feature user-facing | `feature-help-sync.mdc` |
+
+## Chat AI — requisitos adicionais
+
+Mudança de inteligência segue `ai-intelligence-evaluation.mdc` + protocolo canônico R1–R11.
+
+Antes:
 
 ```text
 fixar dataset/config
-→ executar BASELINE
+→ BASELINE
 → reproduzir bug
-→ garantir case alvo + sibling + negative
+→ target + sibling + negative
 ```
 
 Depois:
 
 ```text
 CANDIDATE no mesmo corpus/config
-→ avaliar requiredDimensions R1–R11
+→ requiredDimensions R1–R11
 → outcome/safety/efficiency
 → trials quando não determinístico
 → live/surface validation
 → architecture enforcement
 ```
 
-Regras de veredito:
-
-```text
-required dimension FAIL         → caso FAIL
-required dimension sem evidência → INCONCLUSIVE
-required dimension WARN         → caso WARN
-somente todas PASS               → caso PASS
-```
-
-Um smoke que imprime PASS não substitui essa composição.
-
-Para mudança no motor de tools, incluir:
+Mudança em tools inclui, quando aplicável:
 
 - API externa desconhecida;
-- teste metamórfico de path/provider/operationId;
+- teste metamórfico;
 - semantic siblings;
 - no-tool;
 - compound request;
@@ -72,53 +108,70 @@ Para mudança no motor de tools, incluir:
 
 Sempre confirmar:
 
-1. alteração ligada ao pipeline real;
+1. alteração ligada ao pipeline/runtime real;
 2. comportamento original corrigido;
-3. positivo + irmão + negativo;
+3. positive + sibling + negative;
 4. nenhum requisito material perdido;
-5. regressões registradas, mesmo quando externas ao diff;
-6. causa raiz corrigida no módulo canônico.
+5. regressões registradas;
+6. causa raiz corrigida no owner canônico;
+7. evidência corresponde ao commit/configuração atuais.
 
-Pergunta adversarial obrigatória:
+Pergunta adversarial:
 
 > Como esta solução pode continuar errada mesmo com os testes passando?
 
-## Evidência final para IA
+Se a resposta revelar risco material e testável, criar o teste antes de concluir.
+
+## Falhas externas ao diff
+
+Não esconder workflow vermelho por ser “pré-existente”. Classificar claramente:
 
 ```text
-EVAL_SET_VERSION
-BASELINE_RUN_ID
-CANDIDATE_RUN_ID
-R1_R11_SUMMARY
-METRICS_BEFORE_AFTER
-REGRESSIONS
-P50_P95
-COST_BUDGET quando material
-EXTERNAL_API_GENERALIZATION quando tools
-COMPOUND_REQUESTS quando aplicável
-SAFETY_RESULT
-ARCHITECTURE_ENFORCEMENT
-DECISION
+CAUSADA_PELO_DIFF
+PREEXISTENTE_CONFIRMADA
+INFRA/AMBIENTE
+INCONCLUSIVE
 ```
 
-Não declarar “mais inteligente” com um prompt manual, evidence parcial ou run de configuração diferente.
+A entrega pode ser considerada correta no seu escopo somente quando os gates diretamente relacionados passam e a falha externa está comprovadamente separada; nunca declarar “CI todo verde” se não estiver.
 
-## Enforcement arquitetural
+## Enforcement
 
-Se o scanner falhar:
+Se scanner/gate falhar:
 
-- corrigir o módulo/contrato canônico;
-- não mover hardcode para JSON técnico;
+- corrigir módulo/contrato canônico;
+- não mover hardcode para config paralela;
 - não enfraquecer scanner para o caso novo;
-- exceção somente com fingerprint/owner/reason/reviewBy conforme regra de enforcement.
+- exceção só conforme política explícita do gate.
 
 ## Ajuda in-app
 
 Mudança user-facing segue `feature-help-sync.mdc` antes de ser considerada concluída.
+
+## Evidência final
+
+Resumir conforme escopo:
+
+```text
+OBJECTIVE
+RESPONSIBILITIES_APPLIED
+FILES_OR_COMPONENTS
+TESTS
+CONTRACTS
+SECURITY_NEGATIVE
+MIGRATION_DATA quando aplicável
+BUILD_RUNTIME quando aplicável
+RELIABILITY_OBSERVABILITY quando aplicável
+KNOWN_REGRESSIONS
+CI_GATES
+DECISION
+```
+
+Para IA, incluir também baseline/candidate, R1–R11, métricas, trials e generalização externa quando materiais.
 
 ## Commit
 
 - Criar commit somente quando o usuário pedir explicitamente.
 - Não commitar credenciais/.env sensível.
 - Não criar commit vazio.
-- Resumir testes/evals/gates executados e seus resultados.
+- Resumir testes/gates e seus resultados.
