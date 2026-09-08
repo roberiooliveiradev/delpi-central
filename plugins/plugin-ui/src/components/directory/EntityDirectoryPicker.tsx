@@ -2,6 +2,8 @@ import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
+import { HelpTooltip } from "../help/HelpTooltip";
+
 export type EntityDirectoryOption = {
   id: string;
   label: string;
@@ -39,6 +41,7 @@ export type EntityDirectoryPickerProps = {
   }) => ReactNode;
   labels?: {
     title?: string;
+    /** Ajuda no título via HelpTooltip (não renderiza parágrafo sob o título). */
     hint?: string;
     placeholder?: string;
     searching?: string;
@@ -116,16 +119,26 @@ export function EntityDirectoryPicker({
   const atLimit =
     typeof maxSelected === "number" && maxSelected > 0 && value.length >= maxSelected;
   const visibleResults = results.filter((entity) => !selectedIds.has(entity.id));
+  const title = labels?.title || "Entidades";
+  const hint = (labels?.hint || "").trim();
 
   return (
     <div className={["delpi-ui-user-directory-picker", className].filter(Boolean).join(" ")}>
       <div className="delpi-ui-user-directory-picker__head">
         <span className="delpi-ui-user-directory-picker__title">
-          {labels?.title || "Entidades"}
+          {hint ? (
+            <HelpTooltip
+              content={hint}
+              ariaLabel={`Ajuda: ${title}`}
+              wrap
+              placement="bottom"
+            >
+              <span className="delpi-ui-field-label__text">{title}</span>
+            </HelpTooltip>
+          ) : (
+            title
+          )}
         </span>
-        {labels?.hint ? (
-          <p className="delpi-ui-user-directory-picker__hint">{labels.hint}</p>
-        ) : null}
       </div>
       <input
         className="delpi-ui-user-directory-picker__input"

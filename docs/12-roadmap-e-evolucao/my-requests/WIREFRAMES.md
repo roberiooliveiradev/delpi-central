@@ -396,7 +396,7 @@ Zero CSS chrome do kit no MFE; layout de página só em `index.css` (`.my-reques
 
 #### 3.4.14 Ajuda
 
-`helpTooltips.invoiceWizard`: section, progress, recipient, invoiceType, items, freight, extras, review, partySearch, productSearch, carrierSearch.
+`helpTooltips.invoiceWizard`: section, progress, recipient, invoiceType, items, freight, extras, review, partySearch, productSearch, carrierSearch, partyType, itemQuantity, itemUnitPrice, weightKg, volumeCount, observation.
 
 #### 3.4.15 Acessibilidade
 

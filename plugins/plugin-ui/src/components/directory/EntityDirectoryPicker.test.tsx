@@ -221,4 +221,24 @@ describe("EntityDirectoryPicker", () => {
       expect(screen.getByTestId("lead-p3")).toBeTruthy();
     });
   });
+
+  it("expõe ajuda no título via HelpTooltip sem parágrafo de hint", () => {
+    render(
+      <EntityDirectoryPicker
+        value={[]}
+        onChange={() => {}}
+        searchEntities={searchEntities}
+        labels={{
+          title: "Produtos",
+          hint: "Digite ao menos 2 caracteres para buscar.",
+          placeholder: "Buscar",
+        }}
+      />,
+    );
+
+    const title = screen.getByText("Produtos");
+    expect(title.className).toContain("delpi-ui-field-label__text");
+    expect(title.getAttribute("aria-describedby")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-user-directory-picker__hint")).toBeNull();
+  });
 });

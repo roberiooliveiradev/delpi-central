@@ -66,7 +66,7 @@ Quem tem permissão de administrar vê o catálogo de tipos (código, nome, ativ
 
 Seis etapas: destinatário → tipo de NF → itens → frete → adicionais → conferência.
 
-- Digite ao menos 2 caracteres nas buscas de destinatário, produto e transportadora: a lista aparece sozinha (não há botão Buscar). Chips com avatar confirmam a seleção.
+- Digite ao menos 2 caracteres nas buscas de destinatário, produto e transportadora: a lista aparece sozinha (não há botão Buscar). Chips com avatar confirmam a seleção. Passe o mouse no título do campo (Destinatário, Produtos, Transportadora, Filial, etc.) para ver a ajuda.
 - Destinatário e transportadora: no máximo um chip. Produtos: selecione vários e use **Adicionar selecionados**.
 - A barra de progresso e o rastreador de etapas avançam **na ordem**: o percentual só sobe depois que as etapas anteriores estão prontas (valores padrão de tipo/frete/peso não antecipam o progresso). Em telas menores, o rastreador fica compacto com «Ver etapas».
 - Etapas futuras ficam bloqueadas até a anterior estar pronta; etapas concluídas podem ser reabertas.

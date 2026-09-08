@@ -25,4 +25,16 @@ describe("InvoiceIssuanceWizard E23 pickers", () => {
     expect(source).toContain("my-requests-invoice-item__row");
     expect(source).not.toMatch(/label=\"Filial\"[\s\S]*SelectField/);
   });
+
+  it("liga HelpTooltip/hints nos campos do wizard", () => {
+    expect(source).toContain("HELP.partyType");
+    expect(source).toContain("HELP.itemQuantity");
+    expect(source).toContain("HELP.itemUnitPrice");
+    expect(source).toContain("HELP.weightKg");
+    expect(source).toContain("HELP.volumeCount");
+    expect(source).toContain("HELP.observation");
+    expect(source).toContain("hint: HELP.partySearch");
+    expect(source).toContain("hint: HELP.productSearch");
+    expect(source).toContain("hint: HELP.carrierSearch");
+  });
 });

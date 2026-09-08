@@ -36,11 +36,20 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     review:
       "Revise cada seção antes de enviar. Use Alterar para corrigir e voltar à conferência.",
     partySearch:
-      "Digite ao menos 2 caracteres: a busca ocorre automaticamente. Selecione o destinatário no resultado; o chip com avatar confirma a escolha (apenas um).",
+      "Digite ao menos 2 caracteres: a busca ocorre automaticamente. Selecione o destinatário no resultado; o chip com avatar confirma a escolha (apenas um). O CNPJ/CPF aparece ao lado do código/loja.",
     productSearch:
       "Digite ao menos 2 caracteres para buscar. Selecione um ou mais produtos (chips) e use Adicionar selecionados para incluí-los na nota.",
     carrierSearch:
       "Digite ao menos 2 caracteres para buscar a transportadora (opcional). O chip com avatar confirma a escolha; remova-o se não precisar.",
+    partyType:
+      "Cliente ou fornecedor conforme o cadastro no ERP. A troca limpa o destinatário selecionado.",
+    itemQuantity: "Quantidade do item na nota. Use valor maior que zero.",
+    itemUnitPrice:
+      "Preço unitário em reais. Pode ficar zero se o valor for definido depois na emissão.",
+    weightKg: "Peso bruto total da carga em quilogramas.",
+    volumeCount: "Número de volumes (caixas, pallets, etc.) da remessa.",
+    observation:
+      "Texto livre opcional para quem for emitir a nota (instruções, referências, observações).",
   },
   rawMaterialForm: {
     section:

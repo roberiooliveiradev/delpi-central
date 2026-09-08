@@ -23,8 +23,22 @@ describe("entityLookupMappers", () => {
     expect(partyToOption(party)).toEqual({
       id: "001|01",
       label: "ACME Indústria",
-      secondary: "001/01",
+      secondary: "123 · 001/01",
     });
+  });
+
+  it("prioriza CNPJ formatado no secondary do party", () => {
+    const party = {
+      party_type: "customer" as const,
+      party_code: "000001",
+      party_store: "06",
+      party_name: "WEG AMAZONIA SA",
+      tax_id: "84499477000606",
+      blocked: false,
+    };
+    expect(partyToOption(party).secondary).toBe(
+      "84.499.477/0006-06 · 000001/06",
+    );
   });
 
   it("mapeia product com id = code", () => {

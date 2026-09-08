@@ -36,6 +36,7 @@ import {
   carrierToOption,
   partyToOption,
 } from "../domain/entityLookupMappers";
+import { formatTaxId } from "../domain/formatTaxId";
 import { buildReviewChecklist } from "../domain/reviewChecklist";
 import {
   buildStepCompletionMap,
@@ -398,18 +399,21 @@ export function InvoiceIssuanceWizard({
   function renderRecipientStep() {
     return (
       <div className="my-requests-form-stack">
-        <SegmentToggle
-          ariaLabel="Tipo de destinatário"
-          value={partyType}
-          onChange={(next) => {
-            setPartyType(next);
-            setParty(null);
-          }}
-          options={[
-            { value: "customer", label: "Cliente" },
-            { value: "supplier", label: "Fornecedor" },
-          ]}
-        />
+        <div>
+          <FieldLabel label="Tipo de destinatário" hint={HELP.partyType} />
+          <SegmentToggle
+            ariaLabel="Tipo de destinatário"
+            value={partyType}
+            onChange={(next) => {
+              setPartyType(next);
+              setParty(null);
+            }}
+            options={[
+              { value: "customer", label: "Cliente" },
+              { value: "supplier", label: "Fornecedor" },
+            ]}
+          />
+        </div>
         <MyRequestsEntityDirectoryPicker
           value={party ? [partyToOption(party)] : []}
           onChange={onPartyPickerChange}
@@ -465,6 +469,7 @@ export function InvoiceIssuanceWizard({
         {invoiceType === "other" ? (
           <TextField
             label="Descreva o tipo"
+            hint={HELP.invoiceType}
             value={invoiceTypeOther}
             onChange={setInvoiceTypeOther}
           />
@@ -538,6 +543,7 @@ export function InvoiceIssuanceWizard({
                 <div className="my-requests-invoice-item__row">
                   <TextField
                     label="Quantidade"
+                    hint={HELP.itemQuantity}
                     value={String(item.quantity)}
                     onChange={(value) => {
                       const quantity = Number(value);
@@ -548,6 +554,7 @@ export function InvoiceIssuanceWizard({
                   />
                   <TextField
                     label="Preço unitário"
+                    hint={HELP.itemUnitPrice}
                     value={String(item.unit_price)}
                     onChange={(value) => {
                       const unit_price = Number(value);
@@ -579,16 +586,18 @@ export function InvoiceIssuanceWizard({
   function renderFreightStep() {
     return (
       <div className="my-requests-form-stack">
-        <SegmentToggle
-          ariaLabel="Modo de frete"
-          value={freightMode}
-          onChange={setFreightMode}
-          options={[
-            { value: "cif", label: FREIGHT_MODE_LABELS.cif },
-            { value: "fob", label: FREIGHT_MODE_LABELS.fob },
-          ]}
-        />
-        <FieldLabel label="Frete" hint={HELP.freight} />
+        <div>
+          <FieldLabel label="Frete" hint={HELP.freight} />
+          <SegmentToggle
+            ariaLabel="Modo de frete"
+            value={freightMode}
+            onChange={setFreightMode}
+            options={[
+              { value: "cif", label: FREIGHT_MODE_LABELS.cif },
+              { value: "fob", label: FREIGHT_MODE_LABELS.fob },
+            ]}
+          />
+        </div>
         <MyRequestsEntityDirectoryPicker
           value={carrier ? [carrierToOption(carrier)] : []}
           onChange={onCarrierPickerChange}
@@ -627,10 +636,24 @@ export function InvoiceIssuanceWizard({
   function renderExtrasStep() {
     return (
       <div className="my-requests-form-stack">
-        <TextField label="Peso (kg)" value={weightKg} onChange={setWeightKg} />
-        <TextField label="Volumes" value={volumeCount} onChange={setVolumeCount} />
+        <TextField
+          label="Peso (kg)"
+          hint={HELP.weightKg}
+          value={weightKg}
+          onChange={setWeightKg}
+        />
+        <TextField
+          label="Volumes"
+          hint={HELP.volumeCount}
+          value={volumeCount}
+          onChange={setVolumeCount}
+        />
         <div>
-          <FieldLabel label="Observação (opcional)" htmlFor="mr-nf-observation" />
+          <FieldLabel
+            label="Observação (opcional)"
+            htmlFor="mr-nf-observation"
+            hint={HELP.observation}
+          />
           <NativeTextAreaControl
             id="mr-nf-observation"
             value={observation}
@@ -665,7 +688,7 @@ export function InvoiceIssuanceWizard({
                 label: "Código / Loja",
                 value: party ? `${party.party_code} / ${party.party_store}` : "—",
               },
-              { label: "CNPJ/CPF", value: party?.tax_id || "—" },
+              { label: "CNPJ/CPF", value: formatTaxId(party?.tax_id) || "—" },
             ]}
           />
         </MyRequestsSectionCard>

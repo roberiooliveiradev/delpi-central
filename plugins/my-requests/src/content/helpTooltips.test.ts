@@ -46,6 +46,12 @@ describe("MY_REQUESTS_HELP_TOOLTIPS", () => {
       "partySearch",
       "productSearch",
       "carrierSearch",
+      "partyType",
+      "itemQuantity",
+      "itemUnitPrice",
+      "weightKg",
+      "volumeCount",
+      "observation",
     ] as const) {
       expect(MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard[key].length).toBeGreaterThan(10);
       expect(MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard[key]).not.toMatch(
