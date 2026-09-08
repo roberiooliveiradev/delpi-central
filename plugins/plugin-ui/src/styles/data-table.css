@@ -46,7 +46,7 @@ table.delpi-ui-table {
   color: var(--delpi-ui-text, var(--text, #111111));
   --delpi-ui-table-cell-pad-y: 9px;
   --delpi-ui-table-cell-pad-x: 14px;
-  --delpi-ui-table-numeric-pad-x: 18px;
+  --delpi-ui-table-numeric-pad-x: 20px;
   --delpi-ui-table-numeric-min-width: 6.5rem;
   --delpi-ui-table-header-pad-y: 10px;
 }
@@ -201,7 +201,14 @@ table.delpi-ui-table:not(.delpi-ui-table--grid-preview) th .delpi-ui-table__sort
   color: rgba(255, 255, 255, 0.72);
 }
 
-.delpi-ui-table__col--numeric {
+/*
+ * Padding numérico precisa vencer o shorthand em
+ * `table.delpi-ui-table th, td { padding: … }` (especificidade 0,1,2).
+ * `.delpi-ui-table__col--numeric` sozinho (0,1,0) era ignorado → colunas
+ * right-aligned coladas nas vizinhas (headers "SaldoUM", "Valor abertoAtraso").
+ */
+table.delpi-ui-table th.delpi-ui-table__col--numeric,
+table.delpi-ui-table td.delpi-ui-table__col--numeric {
   text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -215,7 +222,7 @@ table.delpi-ui-table:not(.delpi-ui-table--grid-preview) th .delpi-ui-table__sort
   width: 1%;
 }
 
-.delpi-ui-table__col--numeric .delpi-ui-table__sort-button {
+table.delpi-ui-table th.delpi-ui-table__col--numeric .delpi-ui-table__sort-button {
   justify-content: flex-end;
   padding-inline: var(--delpi-ui-table-numeric-pad-x, 20px);
 }
@@ -223,6 +230,13 @@ table.delpi-ui-table:not(.delpi-ui-table--grid-preview) th .delpi-ui-table__sort
 table.delpi-ui-table th[data-align="right"],
 table.delpi-ui-table td[data-align="right"] {
   text-align: right;
+}
+
+/* align=right sem col--numeric (só data-align) também precisa de respiro horizontal */
+table.delpi-ui-table th[data-align="right"]:not(.delpi-ui-table__col--numeric),
+table.delpi-ui-table td[data-align="right"]:not(.delpi-ui-table__col--numeric) {
+  padding-inline: var(--delpi-ui-table-numeric-pad-x, 20px);
+  box-sizing: border-box;
 }
 
 table.delpi-ui-table th[data-align="center"],

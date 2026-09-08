@@ -26,8 +26,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.dashboard-commercial .cm-portfolio-billing-filters .cm-filter-bar,
-.dashboard-commercial .cm-portfolio-billing-filters .delpi-ui-filter-bar {
+.dashboard-commercial .cm-portfolio-billing-filters .cm-filter-bar {
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
@@ -479,22 +478,6 @@
   gap: 0.65rem;
   margin-bottom: 0.65rem;
   min-width: 0;
-}
-
-/* Nested order lines: more horizontal room between headers/cells for reading. */
-.dashboard-commercial .cm-customer-order-lines table.delpi-ui-table {
-  --delpi-ui-table-cell-pad-x: 1.15rem;
-  --delpi-ui-table-numeric-pad-x: 1.35rem;
-  --delpi-ui-table-numeric-min-width: 7.25rem;
-  --delpi-ui-table-header-pad-y: 0.75rem;
-}
-
-.dashboard-commercial
-  .cm-customer-order-lines
-  table.delpi-ui-table:not(.delpi-ui-table--grid-preview)
-  th {
-  text-transform: none;
-  letter-spacing: 0.01em;
 }
 
 /* Desktop: só tabela. Mobile (≤768px): só cards — ver media query abaixo. */
