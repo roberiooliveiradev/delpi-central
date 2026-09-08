@@ -1,5 +1,5 @@
 ---
-description: Governança das regras .cursor — escopo mínimo, sem sobreposição, orçamento de contexto e auditoria obrigatória
+description: Governança das regras .cursor — oito responsabilidades transversais, escopo mínimo, sem sobreposição, orçamento de contexto e auditoria obrigatória
 globs: .cursor/rules/*.mdc,.cursor/rules/**/*.mdc,scripts/audit_cursor_rules.py
 alwaysApply: false
 ---
@@ -8,23 +8,21 @@ alwaysApply: false
 
 ## Objetivo
 
-As regras existem para aumentar a assertividade do agente, não para transformar todo turno em um prompt monolítico.
+As regras existem para aumentar assertividade sem transformar todo turno em prompt monolítico.
 
-Antes de criar, ampliar ou tornar global uma regra, preservar simultaneamente:
+Toda regra nova ou alteração deve preservar:
 
 ```text
-relevância
+responsabilidade clara
 + fonte canônica única
 + baixo ruído de contexto
 + ausência de contradição
 + verificabilidade
 ```
 
-## Orçamento de regras globais
+# Constituição global
 
-`alwaysApply: true` é reservado à constituição mínima do repositório.
-
-Allowlist canônica:
+`alwaysApply: true` é reservado a:
 
 ```text
 development-standards-index.mdc
@@ -34,86 +32,118 @@ clean-code-architecture-guardrails.mdc
 english-code-identifiers.mdc
 ```
 
-Qualquer outra regra deve usar `alwaysApply: false` e uma destas estratégias:
+Qualquer outra regra permanece `alwaysApply: false`.
 
-1. **Apply Intelligently** — `description` clara e sem `globs`, quando a relevância depende do tipo de tarefa.
-2. **Specific Files** — `globs` precisos, quando o domínio pode ser identificado pelos arquivos em contexto.
-3. **Manual** — sem `description`/`globs`, apenas para procedimento raro e explicitamente invocado.
+# Oito owners transversais
 
-**Proibido:** `alwaysApply: true` junto de `globs`; em Cursor o glob é ignorado nesse modo e a regra vira global.
+A plataforma possui exatamente estes pontos de entrada transversais:
+
+```text
+platform-architecture-boundaries.mdc
+platform-security-identity-authorization.mdc
+platform-api-contracts-integration.mdc
+platform-data-persistence.mdc
+platform-frontend-mfe-experience.mdc
+platform-quality-testing.mdc
+platform-delivery-runtime-operations.mdc
+platform-reliability-observability.mdc
+```
+
+Eles são **owners de responsabilidade**, não regras globais. São selecionados por relevância da tarefa.
+
+Regra técnica específica deve ser filha de um desses owners ou de uma especialização de domínio claramente indexada.
 
 ## Antes de criar regra nova
 
-Executar nesta ordem:
+Executar:
 
 ```text
-buscar regra existente
-→ identificar responsabilidade canônica
-→ decidir EXTENDER_EXISTENTE | NOVA_RESPONSABILIDADE
-→ verificar sobreposição
-→ definir modo de carregamento
-→ adicionar exemplos/anti-padrões/gates necessários
-→ atualizar índice quando a regra for ponto de entrada arquitetural
-→ executar audit_cursor_rules.py
+1. qual das 8 responsabilidades é dona?
+2. já existe regra filha para o detalhe?
+3. posso estender owner/filha existente?
+4. nova regra realmente possui responsabilidade distinta?
+5. qual é o modo de carregamento?
+6. quais anti-padrões/gates provam conformidade?
+7. o índice precisa ser atualizado?
+8. audit_cursor_rules.py passa?
 ```
 
-Não criar uma regra nova apenas porque uma instrução precisa ser reforçada. Se a responsabilidade já existe, fortalecer a fonte canônica.
+Criar regra nova é última opção, não mecanismo de reforço textual.
+
+## Modos de aplicação
+
+1. **Apply Intelligently** — `description` clara sem `globs` quando relevância é semântica.
+2. **Specific Files** — `globs` precisos quando arquivo identifica o domínio.
+3. **Manual** — apenas procedimento raro, explicitamente invocado.
+
+Proibido `alwaysApply: true` + `globs`.
 
 ## Responsabilidade única
 
-Cada `.mdc` deve responder claramente:
+Cada `.mdc` deve responder:
 
 - qual problema governa;
-- quando deve ser carregada;
+- quando é carregada;
+- qual owner transversal a enquadra;
 - qual fonte/contrato é canônico;
-- o que ela proíbe;
+- o que proíbe;
 - como provar conformidade.
 
-Evitar repetir em várias regras o protocolo completo de evidência, testes, Ajuda ou clean architecture. Referenciar a regra canônica em vez de copiar grandes blocos.
+Evitar copiar protocolo de evidência, testes, segurança ou clean architecture. Referenciar a fonte dona.
+
+# Não manter regra legado
+
+Arquivo `.mdc` substituído **não permanece como redirect** do tipo “legado → use outra regra”.
+
+Fluxo correto:
+
+```text
+absorver conhecimento ainda válido
+→ atualizar referências
+→ remover regra antiga
+→ histórico permanece no Git
+```
+
+Isso evita que busca semântica do Cursor carregue orientação superada.
 
 ## Hierarquia e drift
 
-A precedência continua sendo a definida em `evidence-driven-execution.mdc`.
-
-Se duas regras ativas prescreverem comportamentos incompatíveis:
+Se duas regras prescreverem comportamento incompatível:
 
 ```text
 NÃO reconciliar silenciosamente
-→ registrar DRIFT_DE_REGRA
-→ identificar a responsabilidade correta
-→ atualizar/remover a orientação obsoleta
-→ manter apenas uma fonte canônica
+→ DRIFT_DE_REGRA
+→ identificar owner transversal
+→ identificar fonte vigente
+→ atualizar/remover orientação obsoleta
+→ manter uma fonte canônica
 ```
+
+Regra específica de app nunca vence segurança, boundaries, contrato ou qualidade transversal apenas por possuir glob mais específico.
 
 ## Tamanho e foco
 
-- Preferir regras curtas e focadas.
-- Regra extensa deve conter somente conhecimento realmente necessário ao seu domínio.
-- Conteúdo de referência volumoso deve ficar em documentação canônica e ser referenciado pela regra.
-- Não copiar playbooks inteiros para `.mdc`.
-- Se duas regras precisam repetir a mesma seção substantiva, considerar extrair a responsabilidade para uma única regra.
+- regra longa só contém decisão necessária à execução;
+- referência volumosa vai para documentação canônica;
+- não copiar playbook inteiro para `.mdc`;
+- repetição substantiva entre regras indica ownership mal definido;
+- owner transversal deve ser estável; detalhes voláteis ficam em regras filhas/docs/contratos.
 
 ## Mudança de `alwaysApply`
 
-Tornar uma regra global exige evidência de que ela é necessária em praticamente todo tipo de tarefa do repositório.
+Tornar regra global exige provar utilidade em praticamente qualquer tarefa.
 
-Não são justificativas suficientes:
+“É importante”, “já causou bug” ou “não pode ser esquecido” não justificam globalidade.
 
-```text
-"é importante"
-"não pode ser esquecida"
-"já causou um bug"
-```
+Pergunta:
 
-Pergunta obrigatória:
+> Esta regra melhora uma tarefa completamente fora do seu domínio?
 
-> Esta regra melhora uma conversa sobre um domínio completamente diferente, ou apenas consome contexto?
+Se não, continua especializada.
 
-Se a segunda opção for plausível, não deve ser global.
+# Gates
 
-## Gates
-
-Antes de concluir alteração em `.cursor/rules`:
+Executar antes de concluir alteração em regras:
 
 ```bash
 python scripts/audit_cursor_rules.py
@@ -121,31 +151,37 @@ python scripts/audit_cursor_rules.py
 
 O auditor deve falhar para, no mínimo:
 
-- frontmatter ausente/inválido;
-- `alwaysApply` ausente ou não booleano;
-- regra global fora da allowlist;
-- `alwaysApply: true` combinado com `globs`;
+- frontmatter inválido;
+- `alwaysApply` inválido;
+- global fora da allowlist;
+- global + globs;
+- uma das 8 responsabilidades ausente/não indexada/global;
+- owner transversal com glob;
+- owner sem identificação explícita na description;
+- regra marcada como legado;
 - referência a `.mdc` inexistente;
 - descrição duplicada;
-- regras excessivamente grandes sem justificativa explícita;
-- constituição global acima do orçamento definido.
+- tamanho acima do limite sem justificativa;
+- constituição global incompleta/excedida.
 
 ## O que NÃO fazer
 
-- Marcar regra de SQL, MFE, migrations, chat, OpenAPI ou infra como global só para garantir lembrança.
-- Criar cópia de uma regra com nome diferente.
-- Transformar `development-standards-index.mdc` em cópia integral das regras especializadas.
-- Espalhar a mesma proibição por cinco arquivos para “dar mais peso”.
-- Criar regra sem modo de aplicação deliberado.
-- Alterar `.cursor/rules` sem rodar o auditor.
+- criar 9ª responsabilidade transversal sem provar que nenhuma das 8 é owner apropriado;
+- tornar SQL/MFE/chat/migration/infra global;
+- copiar regra com outro nome;
+- criar redirect legado;
+- transformar índice em cópia integral das regras;
+- espalhar mesma proibição em vários arquivos;
+- alterar regras sem auditor.
 
 ## Critério de sucesso
 
-Ao iniciar uma tarefa, o agente deve receber:
+Para cada tarefa, o agente recebe:
 
 ```text
-constituição mínima global
-+ somente regras especializadas relevantes ao trabalho atual
+constituição mínima
++ 1..N responsabilidades transversais materiais
++ apenas regras filhas necessárias
 ```
 
-Nunca o catálogo completo de regras por padrão.
+com uma hierarquia determinística e sem fontes concorrentes.
