@@ -1,0 +1,151 @@
+---
+description: Governança das regras .cursor — escopo mínimo, sem sobreposição, orçamento de contexto e auditoria obrigatória
+globs: .cursor/rules/*.mdc,.cursor/rules/**/*.mdc,scripts/audit_cursor_rules.py
+alwaysApply: false
+---
+
+# Governança das regras Cursor
+
+## Objetivo
+
+As regras existem para aumentar a assertividade do agente, não para transformar todo turno em um prompt monolítico.
+
+Antes de criar, ampliar ou tornar global uma regra, preservar simultaneamente:
+
+```text
+relevância
++ fonte canônica única
++ baixo ruído de contexto
++ ausência de contradição
++ verificabilidade
+```
+
+## Orçamento de regras globais
+
+`alwaysApply: true` é reservado à constituição mínima do repositório.
+
+Allowlist canônica:
+
+```text
+development-standards-index.mdc
+evidence-driven-execution.mdc
+centralized-rules-first.mdc
+clean-code-architecture-guardrails.mdc
+english-code-identifiers.mdc
+```
+
+Qualquer outra regra deve usar `alwaysApply: false` e uma destas estratégias:
+
+1. **Apply Intelligently** — `description` clara e sem `globs`, quando a relevância depende do tipo de tarefa.
+2. **Specific Files** — `globs` precisos, quando o domínio pode ser identificado pelos arquivos em contexto.
+3. **Manual** — sem `description`/`globs`, apenas para procedimento raro e explicitamente invocado.
+
+**Proibido:** `alwaysApply: true` junto de `globs`; em Cursor o glob é ignorado nesse modo e a regra vira global.
+
+## Antes de criar regra nova
+
+Executar nesta ordem:
+
+```text
+buscar regra existente
+→ identificar responsabilidade canônica
+→ decidir EXTENDER_EXISTENTE | NOVA_RESPONSABILIDADE
+→ verificar sobreposição
+→ definir modo de carregamento
+→ adicionar exemplos/anti-padrões/gates necessários
+→ atualizar índice quando a regra for ponto de entrada arquitetural
+→ executar audit_cursor_rules.py
+```
+
+Não criar uma regra nova apenas porque uma instrução precisa ser reforçada. Se a responsabilidade já existe, fortalecer a fonte canônica.
+
+## Responsabilidade única
+
+Cada `.mdc` deve responder claramente:
+
+- qual problema governa;
+- quando deve ser carregada;
+- qual fonte/contrato é canônico;
+- o que ela proíbe;
+- como provar conformidade.
+
+Evitar repetir em várias regras o protocolo completo de evidência, testes, Ajuda ou clean architecture. Referenciar a regra canônica em vez de copiar grandes blocos.
+
+## Hierarquia e drift
+
+A precedência continua sendo a definida em `evidence-driven-execution.mdc`.
+
+Se duas regras ativas prescreverem comportamentos incompatíveis:
+
+```text
+NÃO reconciliar silenciosamente
+→ registrar DRIFT_DE_REGRA
+→ identificar a responsabilidade correta
+→ atualizar/remover a orientação obsoleta
+→ manter apenas uma fonte canônica
+```
+
+## Tamanho e foco
+
+- Preferir regras curtas e focadas.
+- Regra extensa deve conter somente conhecimento realmente necessário ao seu domínio.
+- Conteúdo de referência volumoso deve ficar em documentação canônica e ser referenciado pela regra.
+- Não copiar playbooks inteiros para `.mdc`.
+- Se duas regras precisam repetir a mesma seção substantiva, considerar extrair a responsabilidade para uma única regra.
+
+## Mudança de `alwaysApply`
+
+Tornar uma regra global exige evidência de que ela é necessária em praticamente todo tipo de tarefa do repositório.
+
+Não são justificativas suficientes:
+
+```text
+"é importante"
+"não pode ser esquecida"
+"já causou um bug"
+```
+
+Pergunta obrigatória:
+
+> Esta regra melhora uma conversa sobre um domínio completamente diferente, ou apenas consome contexto?
+
+Se a segunda opção for plausível, não deve ser global.
+
+## Gates
+
+Antes de concluir alteração em `.cursor/rules`:
+
+```bash
+python scripts/audit_cursor_rules.py
+```
+
+O auditor deve falhar para, no mínimo:
+
+- frontmatter ausente/inválido;
+- `alwaysApply` ausente ou não booleano;
+- regra global fora da allowlist;
+- `alwaysApply: true` combinado com `globs`;
+- referência a `.mdc` inexistente;
+- descrição duplicada;
+- regras excessivamente grandes sem justificativa explícita;
+- constituição global acima do orçamento definido.
+
+## O que NÃO fazer
+
+- Marcar regra de SQL, MFE, migrations, chat, OpenAPI ou infra como global só para garantir lembrança.
+- Criar cópia de uma regra com nome diferente.
+- Transformar `development-standards-index.mdc` em cópia integral das regras especializadas.
+- Espalhar a mesma proibição por cinco arquivos para “dar mais peso”.
+- Criar regra sem modo de aplicação deliberado.
+- Alterar `.cursor/rules` sem rodar o auditor.
+
+## Critério de sucesso
+
+Ao iniciar uma tarefa, o agente deve receber:
+
+```text
+constituição mínima global
++ somente regras especializadas relevantes ao trabalho atual
+```
+
+Nunca o catálogo completo de regras por padrão.
