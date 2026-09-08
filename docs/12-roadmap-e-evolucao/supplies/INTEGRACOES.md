@@ -17,6 +17,13 @@ MFE supplies
 
 O JWT Keycloak identifica e autentica. **Authorization efetiva vem do Core API**; não confiar em `permissions`/`is_superadmin` dos claims como decisão final.
 
+Não copiar os middlewares compartilhados:
+
+- `shared/delpi_auth/middleware/flask_auth.py` — AuthZ a partir de claims;
+- `shared/delpi_auth/middleware/fastapi_auth.py` — Core `/me` com fallback `rbac_lookup_unavailable_using_token_claims` / `_rbac_from_claims` e possível stale cache.
+
+Detalhe e GATE-AUTHZ: [ADR-001](./adr/ADR-001-supplies-api.md).
+
 ## 2. Authz
 
 Fluxo canônico:
@@ -30,7 +37,7 @@ JWT válido
 → business rule
 ```
 
-Falha do Core ao comprovar autorização de uma operação protegida = fail-closed. Cache/stale só pode ser usado se o mecanismo compartilhado da plataforma tiver política canônica explícita.
+Falha do Core ao comprovar autorização de uma operação protegida = fail-closed **na fronteira da supplies-api** (503/401), não “seguir autenticado e esperar o decorator”. Cache/stale só pode ser usado se o mecanismo compartilhado da plataforma tiver política canônica explícita **e** a E2 a citar nos testes do GATE-AUTHZ.
 
 ## 3. Observabilidade
 

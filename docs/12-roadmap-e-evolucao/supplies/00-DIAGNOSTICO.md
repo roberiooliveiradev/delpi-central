@@ -158,7 +158,7 @@ C0 coexistência
 |---|---|
 | Depreciar BI sem paridade | ADR-005 + dump Core + homologação mensurável |
 | C3 antes de C2 | IMPLEMENTATION-PLAN + ADR-002 |
-| Authz por JWT claims | GATE-AUTHZ |
+| Authz por JWT claims ou fallback FastAPI sem Core | GATE-AUTHZ + ADR-001 DRIFT-AUTHZ-01 |
 | Inflar permissions | ADR-007 |
 | Alias BFF sem acesso no launcher | provisionamento RBAC + `/me/apps`/`/me/routes` |
 | CSS colidir com dashboard legado | `.dashboard-supplies-portal` |

@@ -47,8 +47,10 @@ Passa somente quando:
 - JWT validado;
 - effective permissions vêm do Core;
 - nenhuma autorização nova usa `claims.permissions`/`claims.is_superadmin` como fonte final;
-- Core indisponível = fail-closed para decisão nova;
+- Core indisponível = fail-closed **na fronteira** da supplies-api (não só em alguns decorators);
 - testes positivo, negativo e filial cruzada verdes.
+
+**Não copiar:** `shared/delpi_auth/middleware/flask_auth.py` nem o fallback FastAPI `rbac_lookup_unavailable_using_token_claims` / `_rbac_from_claims` (ADR-001 DRIFT-AUTHZ-01).
 
 ### GATE-E1
 
@@ -171,9 +173,13 @@ pytest supplies-api/tests/interface/http/test_health.py -q
 
 ## E2.S2 — AuthN/AuthZ Core-first
 
-**Fazer:** validar JWT; resolver effective permissions no Core; fail-closed; request context.
+**Objetivo:** JWT identifica; Core `/me` autoriza; Core fora = 503/401 na fronteira.
 
-**Não fazer:** confiar em permissions/is_superadmin do JWT.
+**Fazer:** middleware Flask próprio da supplies-api; request context; testes positivo/negativo/filial.
+
+**Não fazer:** copiar `flask_auth.py`; copiar `fastapi_auth.py` (`rbac_lookup_unavailable_using_token_claims`, `_rbac_from_claims`, stale cache como AuthZ nova); confiar em `claims.permissions` / `claims.is_superadmin`.
+
+**Evidência:** ADR-001 DRIFT-AUTHZ-01 + INTEGRACOES §2.
 
 **Testes futuros:**
 
@@ -183,6 +189,8 @@ pytest supplies-api/tests/security/test_unit_authorization.py -q
 ```
 
 **Pronto quando:** GATE-AUTHZ.
+
+**Commit:** `feat(supplies-api): autorizar pelo Core, não por claims JWT`
 
 ## E2.S3 — Envelope, erros e observabilidade
 
@@ -505,7 +513,11 @@ pytest supplies-api/tests/application/test_settings_catalog.py -q
 
 # E14 — Help/onboarding completo
 
-Manual, FAQ, glossário, tooltips e Quero→onde para todas as features entregues.
+## E14.S1 — Help/onboarding completo
+
+**Objetivo:** Manual, FAQ, glossário, tooltips e Quero→onde para todas as features entregues (`feature-help-sync`).
+
+**Não fazer:** cutover; texto PT em Python/TS fora dos catálogos de Ajuda.
 
 ```bash
 cd plugins/supplies && npm test -- help
@@ -515,9 +527,11 @@ cd plugins/supplies && npm test -- help
 
 # E15 — Paridade inicial C1
 
-Comparar dashboard, SC, ESTSEG e demais jornadas implementadas quantitativamente.
+## E15.S1 — Paridade inicial C1
 
-**Não fazer:** cutover.
+Comparar dashboard, SC, ESTSEG e demais jornadas implementadas quantitativamente (`HOMOLOGACAO-PARIDADE.md`).
+
+**Não fazer:** cutover; C2.
 
 ---
 
@@ -529,7 +543,11 @@ Preparar leitura do schema existente sem quebrar PR-api.
 
 ## E16.S2 — Migrar ownership/jobs
 
-Jobs de notificações/cursors passam à supplies-api de forma controlada.
+**Objetivo:** um único writer no schema `purchase_requests`.
+
+**Fazer:** jobs de notificações/cursors passam à supplies-api Flask; desligar writers da `purchase-requests-api` (FastAPI) **antes** dos jobs Flask gravarem.
+
+**Não fazer:** dual-write Flask + FastAPI no mesmo schema; C3 nesta subetapa.
 
 ## E16.S3 — Reconciliação
 
@@ -549,9 +567,11 @@ Somente bug/security enquanto coexistência final ocorre.
 
 # E17 — Paridade final pós-C2
 
+## E17.S1 — Paridade final pós-C2
+
 Reexecutar `HOMOLOGACAO-PARIDADE.md` com C2 ativo.
 
-BIs externos precisam estar em estado final permitido.
+BIs externos precisam estar em estado final permitido (nenhum `LEGADO_A_VALIDAR` no GO).
 
 **Pronto quando:** GATE-PARITY.
 
@@ -591,15 +611,27 @@ Não remover código no mesmo instante do primeiro redirect. Esperar critérios 
 
 # E20 — Evoluções futuras atomizadas
 
-Cada feature vira subetapa própria somente após aprovação:
+Cada feature vira subetapa própria somente após aprovação. Não agrupar quatro produtos numa mesma subetapa. Não bloqueia E21.
 
-- E20.S1 supplier-scorecard;
-- E20.S2 supplier-concentration;
-- E20.S3 purchase-approvals (se workflow comprovado);
-- E20.S4 imports (se contrato comprovado);
-- E20.S5 slow-moving/obsolescence.
+## E20.S1 — supplier-scorecard
 
-Não agrupar quatro produtos numa mesma subetapa.
+Somente após evidência de contrato e aceite.
+
+## E20.S2 — supplier-concentration
+
+Somente após evidência de contrato e aceite.
+
+## E20.S3 — purchase-approvals
+
+Somente se workflow comprovado.
+
+## E20.S4 — imports
+
+Somente se contrato comprovado.
+
+## E20.S5 — slow-moving / obsolescence
+
+Somente após evidência de contrato e aceite.
 
 ---
 
@@ -617,7 +649,7 @@ Confirmar que experiência fragmentada foi substituída sem tomar ownership inde
 
 ## 5. Critérios de pronto por subetapa
 
-Toda E*.S* de implementação deve conter no PR/tarefa:
+`plan-construction.mdc` exige os 7 campos **neste arquivo**, em cada `#### E*.S*`, antes de executar a etapa — não só no PR:
 
 ```text
 Objetivo
@@ -627,8 +659,9 @@ Evidência
 Teste com comando e arquivo exatos
 Pronto quando
 Commit sugerido
-DependsOn
 ```
+
+YAML §6 é 1:1 com esses headings (`eN-sM-slug`). Subetapa sem os 7 campos = incompleta para execução delegada: completar o bloco **aqui** no início da etapa, depois copiar o mesmo bloco no PR.
 
 Não aceitar “teste: unit”, “pytest stock” ou equivalente vago.
 
@@ -689,61 +722,174 @@ todos:
     status: pending
     dependsOn: [e3-s4-manifest-hml]
 
-  - id: e4-home-help
-    status: pending
-    dependsOn: [e3-s5-rbac-coexistence, e2-s5-delpi-gateway]
-  - id: e5-overview
-    status: pending
-    dependsOn: [e4-home-help, e1-s3-kpi-freeze]
-  - id: e6-purchase-requests-c1
+  - id: e4-s1-route-catalog
     status: pending
     dependsOn: [e3-s5-rbac-coexistence]
-  - id: e7-purchase-orders
+  - id: e4-s2-home-attention
     status: pending
-    dependsOn: [e2-s5-delpi-gateway]
-  - id: e8-inventory-safety-stock
+    dependsOn: [e4-s1-route-catalog, e2-s5-delpi-gateway, e2-s6-capabilities]
+  - id: e4-s3-help-skeleton
     status: pending
-    dependsOn: [e2-s5-delpi-gateway]
-  - id: e9-supplier-360
-    status: pending
-    dependsOn: [e7-purchase-orders, e2-s4-alembic]
-  - id: e10-product-360
-    status: pending
-    dependsOn: [e8-inventory-safety-stock]
-  - id: e11-negotiations
-    status: pending
-    dependsOn: [e5-overview]
-  - id: e12-my-tasks
-    status: pending
-    dependsOn: [e2-s4-alembic, e6-purchase-requests-c1, e7-purchase-orders]
-  - id: e13-administration
-    status: pending
-    dependsOn: [e6-purchase-requests-c1]
-  - id: e14-help-complete
-    status: pending
-    dependsOn: [e9-supplier-360, e10-product-360, e12-my-tasks, e13-administration]
-  - id: e15-initial-parity
-    status: pending
-    dependsOn: [e5-overview, e6-purchase-requests-c1, e8-inventory-safety-stock, e14-help-complete]
+    dependsOn: [e4-s1-route-catalog]
 
-  - id: e16-purchase-requests-c2
+  - id: e5-s1-overview-bff
     status: pending
-    dependsOn: [e15-initial-parity, e6-purchase-requests-c1, e13-administration]
-  - id: e17-final-parity
+    dependsOn: [e4-s2-home-attention, e1-s3-kpi-freeze, e2-s5-delpi-gateway]
+  - id: e5-s2-overview-page
     status: pending
-    dependsOn: [e16-purchase-requests-c2]
-  - id: e18-cutover-prep
+    dependsOn: [e5-s1-overview-bff, e3-s3-shell]
+
+  - id: e6-s1-pr-gateway
     status: pending
-    dependsOn: [e17-final-parity]
-  - id: e19-cutover-c3
+    dependsOn: [e3-s5-rbac-coexistence, e2-s2-core-first-authz]
+  - id: e6-s2-pr-list-detail
     status: pending
-    dependsOn: [e18-cutover-prep]
-  - id: e20-future-features
+    dependsOn: [e6-s1-pr-gateway, e3-s2-bff-only]
+  - id: e6-s3-pr-export
     status: pending
-    dependsOn: [e17-final-parity]
-  - id: e21-final-verify
+    dependsOn: [e6-s2-pr-list-detail]
+  - id: e6-s4-c2-evidence
     status: pending
-    dependsOn: [e19-cutover-c3]
+    dependsOn: [e6-s1-pr-gateway]
+
+  - id: e7-s1-po-otd-dtos
+    status: pending
+    dependsOn: [e2-s5-delpi-gateway, e1-s3-kpi-freeze]
+  - id: e7-s2-po-bff
+    status: pending
+    dependsOn: [e7-s1-po-otd-dtos]
+  - id: e7-s3-po-ui
+    status: pending
+    dependsOn: [e7-s2-po-bff, e3-s2-bff-only]
+
+  - id: e8-s1-inventory-bff
+    status: pending
+    dependsOn: [e2-s5-delpi-gateway]
+  - id: e8-s2-safety-stock-bff
+    status: pending
+    dependsOn: [e2-s5-delpi-gateway]
+  - id: e8-s3-inventory-ui
+    status: pending
+    dependsOn: [e8-s1-inventory-bff, e8-s2-safety-stock-bff, e3-s2-bff-only]
+
+  - id: e9-s1-supplier-360-bff
+    status: pending
+    dependsOn: [e7-s2-po-bff, e2-s4-alembic]
+  - id: e9-s2-supplier-notes
+    status: pending
+    dependsOn: [e9-s1-supplier-360-bff]
+  - id: e9-s3-supplier-360-ui
+    status: pending
+    dependsOn: [e9-s2-supplier-notes, e3-s2-bff-only]
+
+  - id: e10-s1-product-360-bff
+    status: pending
+    dependsOn: [e8-s1-inventory-bff]
+  - id: e10-s2-product-360-ui
+    status: pending
+    dependsOn: [e10-s1-product-360-bff, e3-s2-bff-only]
+
+  - id: e11-s1-savings-si
+    status: pending
+    dependsOn: [e5-s1-overview-bff]
+  - id: e11-s2-negotiations-ui
+    status: pending
+    dependsOn: [e11-s1-savings-si, e3-s2-bff-only]
+
+  - id: e12-s1-tasks-migration
+    status: pending
+    dependsOn: [e2-s4-alembic]
+  - id: e12-s2-tasks-api
+    status: pending
+    dependsOn: [e12-s1-tasks-migration, e6-s2-pr-list-detail, e7-s2-po-bff]
+  - id: e12-s3-tasks-ui
+    status: pending
+    dependsOn: [e12-s2-tasks-api, e3-s2-bff-only]
+
+  - id: e13-s1-admin-scopes
+    status: pending
+    dependsOn: [e6-s1-pr-gateway]
+  - id: e13-s2-settings-audit
+    status: pending
+    dependsOn: [e13-s1-admin-scopes, e2-s4-alembic]
+
+  - id: e14-s1-help-complete
+    status: pending
+    dependsOn:
+      - e4-s3-help-skeleton
+      - e9-s3-supplier-360-ui
+      - e10-s2-product-360-ui
+      - e11-s2-negotiations-ui
+      - e12-s3-tasks-ui
+      - e13-s2-settings-audit
+
+  - id: e15-s1-initial-parity
+    status: pending
+    dependsOn:
+      - e5-s2-overview-page
+      - e6-s3-pr-export
+      - e8-s3-inventory-ui
+      - e14-s1-help-complete
+
+  - id: e16-s1-schema-expand
+    status: pending
+    dependsOn: [e15-s1-initial-parity, e6-s4-c2-evidence]
+  - id: e16-s2-ownership-jobs
+    status: pending
+    dependsOn: [e16-s1-schema-expand]
+  - id: e16-s3-reconciliation
+    status: pending
+    dependsOn: [e16-s2-ownership-jobs]
+  - id: e16-s4-freeze-pr-api
+    status: pending
+    dependsOn: [e16-s3-reconciliation]
+
+  - id: e17-s1-final-parity
+    status: pending
+    dependsOn: [e16-s4-freeze-pr-api]
+
+  - id: e18-s1-close-redirects
+    status: pending
+    dependsOn: [e17-s1-final-parity]
+  - id: e18-s2-telemetry-rollback
+    status: pending
+    dependsOn: [e18-s1-close-redirects]
+  - id: e18-s3-target-smoke
+    status: pending
+    dependsOn: [e18-s2-telemetry-rollback]
+
+  - id: e19-s1-staging
+    status: pending
+    dependsOn: [e18-s3-target-smoke]
+  - id: e19-s2-production
+    status: pending
+    dependsOn: [e19-s1-staging]
+  - id: e19-s3-observe-remove
+    status: pending
+    dependsOn: [e19-s2-production]
+
+  - id: e20-s1-supplier-scorecard
+    status: pending
+    dependsOn: [e17-s1-final-parity]
+  - id: e20-s2-supplier-concentration
+    status: pending
+    dependsOn: [e17-s1-final-parity]
+  - id: e20-s3-purchase-approvals
+    status: pending
+    dependsOn: [e17-s1-final-parity]
+  - id: e20-s4-imports
+    status: pending
+    dependsOn: [e17-s1-final-parity]
+  - id: e20-s5-slow-moving
+    status: pending
+    dependsOn: [e17-s1-final-parity]
+
+  - id: e21-s1-pipeline-real
+    status: pending
+    dependsOn: [e19-s2-production]
+  - id: e21-s2-original-objective
+    status: pending
+    dependsOn: [e21-s1-pipeline-real]
 ```
 
 ### Consistência causal obrigatória
@@ -759,6 +905,8 @@ C1 → C2 → PARIDADE FINAL → C3
 ```
 
 Nunca C3 antes de C2.
+
+E20.S* não bloqueia E21 (evoluções futuras após paridade final).
 
 ---
 

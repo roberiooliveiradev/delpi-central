@@ -15,7 +15,7 @@
 | D5 | path legado `/analise-consumo` PT vs naming novo EN | english-code-identifiers | deep links | alias/redirect para `/safety-stock/consumption-analysis` |
 | D6 | savings Sheets vs SI | SI = meta; Sheets = origem atual do realizado | duas superfícies | uma ficha KPI, ownership separado |
 | D7 | instrução oficial Flask vs APIs recentes FastAPI | instrução oficial | risco de copiar framework errado | supplies-api = Flask, ADR-001 |
-| D8 | middleware Flask legado pode confiar em claims vs Core-first | instrução oficial/Core | risco de authz incorreta | GATE-AUTHZ antes de E2 |
+| D8 | `flask_auth.py` lê claims; `fastapi_auth.py` segue sem Core (`rbac_lookup_unavailable_using_token_claims`) | instrução oficial/Core | copiar qualquer um dos dois quebra GATE-AUTHZ | ADR-001 DRIFT-AUTHZ-01; não reutilizar na E2 |
 
 ---
 

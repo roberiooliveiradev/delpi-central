@@ -39,7 +39,7 @@ Permanecer para sempre com duas APIs de produto no mesmo departamento geraria:
 |------|---------------|--------------------|
 | **C0 coexistência** | MFE `purchase-requests` inalterado. Portal faz **deep link** `/apps/purchase-requests` até paridade de lista. `supplies-api` **não** duplica escopo CC. | `purchase-requests-api` |
 | **C1 composição** | `supplies-api` expõe BFF `/purchase-requests*` que **gateway HTTP** para `purchase-requests-api` (não para api-delpi). MFE Portal consome só supplies-api. | `purchase-requests-api` |
-| **C2 migração de schema** | Mover schema `purchase_requests` para ownership da `supplies-api` (mesmo Postgres; **não** copiar TOTVS). Jobs de notificação passam a rodar na supplies-api. Dual-read + reconciliação de contagens. | transição |
+| **C2 migração de schema** | Mover schema `purchase_requests` para ownership da `supplies-api` (mesmo Postgres; **não** copiar TOTVS). Jobs de notificação passam a rodar na supplies-api Flask. **Um único writer** no schema: desligar jobs/gravações da `purchase-requests-api` antes dos da Flask. Dual-read + reconciliação de contagens. | transição |
 | **C3 cutover** | MFE `purchase-requests` oculto + redirects. `purchase-requests-api` desligada após smoke. Permissões antigas viram **aliases**. | `supplies-api` |
 
 Critério para avançar C1→C2: paridade da lista/detalhe/export/admin no Portal + testes de fail-closed + filial.

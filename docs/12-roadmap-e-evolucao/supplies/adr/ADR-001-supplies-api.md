@@ -30,7 +30,16 @@ Pela precedência do projeto, **a supplies-api adotará Flask**, salvo revisão 
 
 O JWT Keycloak não é fonte canônica da lista completa de permissions. A supplies-api deve resolver permissions efetivas pelo Core API (`/me` ou mecanismo compartilhado equivalente) antes de autorizar capabilities/unidades.
 
-Qualquer middleware Flask compartilhado que ainda leia `claims.permissions`/`claims.is_superadmin` é referência de compatibilidade legada, não padrão para a nova API.
+Há **dois** middlewares compartilhados — nenhum é padrão para a API nova. **CONFIRMADO_NO_CODIGO.**
+
+| Arquivo | Comportamento | Risco se copiado |
+|---|---|---|
+| `shared/delpi_auth/middleware/flask_auth.py` | monta o usuário com `claims.permissions` e `claims.is_superadmin` | AuthZ final no JWT |
+| `shared/delpi_auth/middleware/fastapi_auth.py` | busca Core `/me`; se falhar, loga `rbac_lookup_unavailable_using_token_claims` e segue com `_rbac_from_claims` (`permissions=[]`, `rbac_unavailable=True`); se houver cache, pode devolver stale (`rbac_lookup_failed_using_stale_cache`) | request autenticado continua sem Core comprovado; fail-closed só existe se **todo** endpoint protegido passar por `require_permission` / `PolicyEngine` (`shared/delpi_auth/authorization.py`) |
+
+`_rbac_from_claims` **não** copia a lista de permissions do JWT (zera). O evento de log sugere o contrário. Copiar o middleware FastAPI sem os decorators de permission, ou tratar `require_auth()` como autorização, **não** é fail-closed.
+
+Consumidor irmão do mesmo fallback: `commercial-api/.../realtime_routes.py`.
 
 ## Decisão
 
@@ -59,8 +68,10 @@ A E2 não pode prosseguir enquanto a implementação escolhida não provar:
 - JWT validado corretamente;
 - permissions efetivas obtidas do Core;
 - `is_superadmin` não confiado a claim não canônica;
-- indisponibilidade do Core tratada de forma fail-closed para autorização nova;
+- indisponibilidade do Core tratada de forma fail-closed **na fronteira da supplies-api** (não só em alguns decorators);
 - testes de positivo, negativo e filial cruzada.
+
+**Não copiar** `flask_auth.py` nem o fallback FastAPI (`rbac_lookup_unavailable_using_token_claims` / `_rbac_from_claims` / stale cache) como implementação da E2. Referência de composição: Clean Architecture do `commercial-api`. Referência de AuthZ: este ADR + Core `/me`.
 
 ## Consequências
 
@@ -74,7 +85,7 @@ A E2 não pode prosseguir enquanto a implementação escolhida não provar:
 ### Custos
 
 - coexistência temporária com MFEs legados;
-- necessidade de consolidar o middleware Flask de authz antes/na E2;
+- necessidade de authz Flask Core-first próprio (não reutilizar `flask_auth.py` nem o fallback FastAPI) antes/na E2;
 - absorção progressiva de `purchase-requests-api` conforme ADR-002.
 
 ## Alternativas rejeitadas
@@ -87,6 +98,7 @@ A E2 não pode prosseguir enquanto a implementação escolhida não provar:
 | Reusar purchase-requests-api como API do Portal inteiro | SC não é dona de estoque/OTD/SI |
 | Adotar FastAPI apenas por copiar commercial-api | conflita com instrução oficial vigente |
 | Autorizar por claims de permission do JWT | conflita com regra Core-first |
+| Copiar `flask_auth.py` ou o fallback FastAPI `_rbac_from_claims` | DRIFT-AUTHZ-01; não é fail-closed na fronteira |
 
 ## Plano mínimo quando autorizado
 
@@ -102,3 +114,4 @@ A E2 não pode prosseguir enquanto a implementação escolhida não provar:
 - instruções oficiais: `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md`
 - regras: `mfe-own-api-no-direct-api-delpi.mdc`, `application-bounded-context-decoupling.mdc`
 - referência arquitetural (não de framework): `commercial-api/`
+- evidência AuthZ: `shared/delpi_auth/middleware/flask_auth.py`, `shared/delpi_auth/middleware/fastapi_auth.py`, `shared/delpi_auth/authorization.py`

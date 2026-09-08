@@ -137,7 +137,7 @@ Regras:
 
 | Gate | Critério |
 |---|---|
-| **GATE-AUTHZ** | Core-first comprovado; fail-closed; testes positivo/negativo/filial |
+| **GATE-AUTHZ** | Core-first; fail-closed na fronteira; não copiar `flask_auth.py` nem fallback FastAPI; testes positivo/negativo/filial |
 | **GATE-E1** | BIs + papéis + KPIs fechados ou explicitamente bloqueados |
 | **GATE-ARCH** | ADRs + Manifest Draft revisados |
 | **GATE-RBAC** | permissions canônicas + migração de papéis + `/me/apps`/`/me/routes` planejados |
