@@ -1,130 +1,143 @@
 # Testes — minha-delpi-ai-api
 
-> **Suíte automatizada:** `tests/unit/` (pytest)  
-> **Regressão de inteligência:** `tests/fixtures/chat_intelligence_regression_cases.py`  
-> **Canônico famílias F01–F24 + R1–R8:** [`chat-ai-flow-families.md`](./chat-ai-flow-families.md)
+## Fonte canônica de avaliação da IA
+
+**[`chat-ai-flow-families.md`](./chat-ai-flow-families.md)** é a única fonte de critérios para avaliar inteligência do chat.
+
+Ela define:
+
+- famílias F01–F24/F25+;
+- dimensões **R1–R11**;
+- graders determinísticos/semânticos/humanos;
+- baseline × candidate;
+- multiple trials;
+- outcome/task success;
+- safety/governance;
+- efficiency/cost;
+- API externa desconhecida e teste metamórfico;
+- pedidos longos/compostos;
+- evidência imutável de release;
+- protocolo obrigatório para o Cursor.
+
+Roadmaps, changelogs, perguntas datadas e arquivos de evidence anteriores **não definem PASS**.
 
 ---
 
-## Canônico — testes de IA do chat
+## Camadas de teste
 
-| Documento | Conteúdo |
-|-----------|----------|
-| [**chat-ai-flow-families.md**](./chat-ai-flow-families.md) | **Obrigatório em PR de inteligência/fluxo** — famílias F01–F24, critérios R1–R8, roteiros PT-BR, governança § 0, planilha § 5 |
-| [evidence/](./evidence/) | Saídas JSON de baterias live (ex.: `chat-human-interaction-battery.json`) |
-
-### Scripts live (famílias)
-
-| Script | Escopo |
-|--------|--------|
-| `scripts/human_interaction_battery_live.py` | Bateria HTTP — typos, multi-turn, R1–R8 |
-| `scripts/smoke_chat_flow_families_f01_f04_f03.py` | Gates domínio + HTTP F01/F03/F04 |
-| `scripts/eval_packages_a_d_human_live.py` | Pacotes A–D (guidance, compare, dataAnswer) |
-| `scripts/smoke_new_intent_user_simulation.py` | SQL execute, new_intent, deixis «isso» |
-
-```bash
-docker exec -e SMOKE_BASE_URL=http://delpi-gateway -w /app delpi-minha-delpi-ai-api \
-  python scripts/human_interaction_battery_live.py
+```text
+unit/contract
+→ offline eval baseline/candidate
+→ live send
+→ stream/simulate quando aplicável
+→ UI manual quando necessário
+→ release decision R1–R11
 ```
 
----
-
-## Automatizados
+### Unitários
 
 ```bash
-# Tudo
+cd minha-delpi-ai-api
 pytest tests/unit -q
-
-# Regressão inteligência (amostra crítica)
 pytest tests/unit/domain/services/test_chat_intelligence_regression.py -q
-
-# Seleção de actions
 pytest tests/unit/application/services/test_external_action_selection_service.py -q
-
-# Inventário / escopo de fontes do projeto (jun/2026)
-pytest tests/unit/domain/services/test_chat_project_sources_intent_service.py \
-  tests/unit/application/use_cases/test_search_knowledge_scope_boost.py -q
-
-# Clean architecture
 python scripts/audit_clean_architecture.py
 ```
 
-### Fixtures importantes
-
-| Arquivo | Conteúdo |
-|---------|----------|
-| `chat_intelligence_regression_cases.py` | Casos SIMPLE_TURN, UNCLEAR, DATA_INTERPRETATION, DATE_RANGE, **PROJECT_SOURCES_INTENT**… |
-| `rich_presentation_cases.py` | Apresentação rica P1–P16 |
-| `api_delpi_responses/` | Payloads mock de rotas api-delpi |
+Fixtures de regressão devem conter positive + sibling + negative e não podem ensinar path/operationId esperado ao runtime.
 
 ---
 
-## Smokes (scripts)
+## Harnesses live
 
-Executar **dentro do container** com DB e LLM:
+| Script | Uso |
+|--------|-----|
+| `scripts/human_interaction_battery_live.py` | Interação humana simulada, typos e multi-turn |
+| `scripts/smoke_chat_flow_families_f01_f04_f03.py` | Gates rápidos de famílias críticas |
+| `scripts/eval_packages_a_d_human_live.py` | Guidance/compare/dataAnswer |
+| `scripts/smoke_new_intent_user_simulation.py` | SQL/new intent/deixis |
+| smokes especializados | Contrato específico da feature/surface |
+
+Exemplo:
 
 ```bash
-docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
-  python scripts/smoke_identity_rag.py <user_id> <session_id> "quem te criou?"
-
-docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
-  python scripts/smoke_gpt_instructions_improvements.py [user_id] [session_id]
-
-docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
-  python scripts/smoke_playbook_product_routes.py
+docker exec -e SMOKE_BASE_URL=http://delpi-gateway \
+  -w /app delpi-minha-delpi-ai-api \
+  python scripts/human_interaction_battery_live.py
 ```
 
-| Script | Escopo |
-|--------|--------|
-| `smoke_identity_rag.py` | Identidade + filtro RAG |
-| `smoke_gpt_instructions_improvements.py` | SQL produção, Normas, G1–G14 |
-| `smoke_playbook_product_routes.py` | Rotas produto + sessão ativa |
-| `smoke_web_search_planning.py` | Planejamento web search |
-| `validate_stream_incremental_persistence_e2e.py` | Persistência incremental stream |
-
-Cenários E2E declarativos: `app/content/pt-BR/assistant/smoke_e2e_scenarios.json`.
+**Regra:** scripts são harnesses. Um `PASS` do script só é gate de release quando as `requiredDimensions` do caso foram realmente avaliadas conforme R1–R11.
 
 ---
 
-## Homologação manual
+## Evidence de release
 
-| Documento | Conteúdo |
-|-----------|----------|
-| [smoke-operacional-manual.md](./smoke-operacional-manual.md) | **Principal** — U1–U9, G1–G3, N1–N4, #70–79, persistência stream |
-| [perguntas-teste-chat-jun2026.md](./perguntas-teste-chat-jun2026.md) | Perguntas por categoria |
-| [../knowledge/treinamento-agente-interacoes-jun2026.md](../knowledge/treinamento-agente-interacoes-jun2026.md) | Treinamento ao vivo — 6 interações |
-| [smoke-operational-intelligence-e2e.md](./smoke-operational-intelligence-e2e.md) | E2E operacional |
-| [smoke-api-delpi-domain-routing.md](./smoke-api-delpi-domain-routing.md) | Domínios de rota |
-| [smoke-system-metadata-homologacao.md](./smoke-system-metadata-homologacao.md) | Metadados `/system` |
-| [homologacao-apresentacao-rag-assertividade-jun2026.md](./homologacao-apresentacao-rag-assertividade-jun2026.md) | RAG + apresentação |
-| [presentation-homologation-jun2026.md](./presentation-homologation-jun2026.md) | Modos de apresentação |
-| [homologacao-docie-produto-pb15-jun2026.md](./homologacao-docie-produto-pb15-jun2026.md) | DOCIE — produto + PB15 |
+Runs relevantes devem ser imutáveis:
 
----
-
-## Memória e assertividade
-
-```bash
-# Script dedicado (quando disponível no repo)
-scripts/run_memory_context_validation.sh
+```text
+docs/testing/evidence/runs/
+  <timestamp>_<gitSha>_<runId>/
+    manifest.json
+    cases.json
+    summary.json
 ```
 
-Casos: `MEMORY_CONTEXT_REGRESSION_CASES`, `CONTEXT_ASSERTIVENESS_CASES` em fixtures.
+O manifest deve registrar pelo menos:
 
-Doc: [architecture/session-memory.md](../architecture/session-memory.md).
+```text
+runId
+timestamp
+gitSha
+environment
+datasetVersion
+model/provider/config hash
+agent config hash
+OpenAPI schema hash
+Action Catalog hash
+trialCount
+```
+
+Execuções com `SMOKE_ONLY`/`SMOKE_FAMILY` são parciais e não substituem uma bateria completa.
 
 ---
 
-## Após alterar api-delpi
+## Mudança de inteligência
 
-1. `scripts/sync_api_delpi_openapi.py`
-2. Regressão selection + presenter
-3. Revisar [api-delpi-chat-intelligence-audit.md](../roadmap/api-delpi-chat-intelligence-audit.md)
-4. Smoke manual de rotas afetadas
+Fluxo obrigatório:
+
+1. congelar dataset/config;
+2. rodar baseline;
+3. registrar bug + sibling + negative;
+4. implementar causa raiz;
+5. rodar candidate no mesmo corpus;
+6. comparar R1–R11 e métricas;
+7. executar live/surface tests;
+8. rodar architecture enforcement;
+9. declarar `PASS`, `FAIL` ou `INCONCLUSIVE` com evidência.
+
+Para mudança em tools/actions, incluir API externa fictícia desconhecida e teste metamórfico.
 
 ---
 
-## Referências
+## Mudança em api-delpi
 
-- Guia dev: [development/guia-desenvolvimento.md](../development/guia-desenvolvimento.md)
-- Pipeline: [architecture/chat-intelligence-base.md](../architecture/chat-intelligence-base.md)
+1. validar contrato/OpenAPI da api-delpi;
+2. `scripts/sync_api_delpi_openapi.py`;
+3. confirmar Action Catalog/index atualizado;
+4. testar retrieval/planner/arguments pelo OpenAPI;
+5. validar outcome + apresentação;
+6. executar evals R1–R11 relevantes;
+7. provar que nenhuma regra técnica por endpoint foi adicionada ao core do chat.
+
+Checklist arquitetural: [`../architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md).
+
+---
+
+## Referências vigentes
+
+- [Protocolo canônico R1–R11](./chat-ai-flow-families.md)
+- [Arquitetura de inteligência](../architecture/chat-intelligence-base.md)
+- [Nova API/action](../architecture/new-api-route-checklist.md)
+- [Actions OpenAPI](../api/04-actions-openapi.md)
+- `.cursor/rules/ai-intelligence-evaluation.mdc`
+- `.cursor/rules/openapi-first-universal-tool-routing.mdc`
