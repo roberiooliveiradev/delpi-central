@@ -319,3 +319,40 @@ def test_should_skip_agentic_after_successful_kpi_presentation():
         "qual o valor total de estoque da empresa",
         tool_context=tool_context,
     )
+
+
+def test_should_skip_agentic_when_openapi_compound_plan_already_complete():
+    tool_context = {
+        "toolCalls": [
+            {
+                "name": "execute_external_action",
+                "arguments": {"actionId": "structure", "parameters": {"code": "90260149"}},
+                "metadata": {"selectionMode": "openapi_first", "actionId": "structure"},
+            },
+            {
+                "name": "execute_external_action",
+                "arguments": {"actionId": "stock", "parameters": {"code": "90260149"}},
+                "metadata": {"selectionMode": "openapi_first", "actionId": "stock"},
+            },
+        ],
+    }
+    assert ChatOperationalParameterService.should_skip_agentic_loop(
+        "estrutura e estoque do 90260149",
+        tool_context=tool_context,
+    )
+
+
+def test_should_not_skip_agentic_for_single_openapi_step():
+    tool_context = {
+        "toolCalls": [
+            {
+                "name": "execute_external_action",
+                "arguments": {"actionId": "stock", "parameters": {"code": "90260149"}},
+                "metadata": {"selectionMode": "openapi_first", "actionId": "stock"},
+            },
+        ],
+    }
+    assert not ChatOperationalParameterService.should_skip_agentic_loop(
+        "estoque do 90260149 com detalhe extra",
+        tool_context=tool_context,
+    )

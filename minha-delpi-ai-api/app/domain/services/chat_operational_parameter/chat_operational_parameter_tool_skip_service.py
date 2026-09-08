@@ -97,6 +97,9 @@ class ChatOperationalParameterToolSkipService:
             if ChatTurnModeService.should_skip_agentic(turn_mode):
                 return True
 
+            if cls._openapi_compound_plan_covers_request(tool_context):
+                return True
+
             analysis = tool_context.get("turnAnalysis")
             if isinstance(analysis, dict):
                 decision = str(analysis.get("decision") or "").strip().lower()
@@ -196,6 +199,43 @@ class ChatOperationalParameterToolSkipService:
                 return True
 
         return False
+
+    @classmethod
+    def _openapi_compound_plan_covers_request(cls, tool_context: dict) -> bool:
+        """Skip costly agentic extend when OpenAPI-first already planned ≥N distinct steps."""
+        from app.domain.services.openapi_tool_routing_content_service import (
+            OpenApiToolRoutingContentService,
+        )
+
+        min_steps = OpenApiToolRoutingContentService.int_setting(
+            "agenticGate",
+            "skipWhenOpenApiCompoundMinDistinctSteps",
+            default=2,
+        )
+        if min_steps <= 0:
+            return False
+
+        distinct_action_ids: set[str] = set()
+        for call in tool_context.get("toolCalls") or []:
+            if not isinstance(call, dict):
+                continue
+            if str(call.get("name") or "").strip() != "execute_external_action":
+                continue
+            meta = call.get("metadata") if isinstance(call.get("metadata"), dict) else {}
+            if str(meta.get("selectionMode") or "").strip() != "openapi_first":
+                continue
+            if meta.get("ok") is False:
+                continue
+            action_id = str(
+                meta.get("actionId")
+                or (call.get("arguments") or {}).get("actionId")
+                or (call.get("arguments") or {}).get("action_id")
+                or ""
+            ).strip()
+            if action_id:
+                distinct_action_ids.add(action_id)
+
+        return len(distinct_action_ids) >= min_steps
 
     @classmethod
     def _tool_calls_cover_action_ids(
