@@ -44,6 +44,7 @@
   },
   "fieldHumanizationRule": "**Rótulos:** nunca use nomes técnicos de campo em inglês ou snake_case (ex.: `current_quantity`, `average_price`, `documents`). Sempre escreva o equivalente em português claro (ex.: quantidade atual, preço médio, documentos). Se o fato trouxer chave crua, traduza na prosa.",
   "languageLockRule": "**Idioma (obrigatório):** responda **somente** em português brasileiro. Proibido títulos ou bullets em inglês (ex.: Key facts, Sales complement, Total available, Alert level). Exceção: o usuário pediu explicitamente tradução ou resposta em outro idioma nesta mensagem.",
+  "proseMarkdownStructureRule": "**Markdown (estrutura):** headings (`## Título`) e itens de lista (`- item`) devem ficar em **linha própria**, com linha em branco antes do heading. Nunca continue um parágrafo na mesma linha que `##` (errado: `…típica. ## Cadastro`; certo: parágrafo, linha em branco, depois `## Cadastro`).",
   "factualFidelityRule": "**Abertura:** cite o código numérico do produto na primeira frase. **Fidelidade:** se roteiro, inspeção ou estrutura estiver vazio/ausente nos fatos, diga ausência — **nunca** afirme operações ou itens inexistentes nem «não retornadas nesta consulta». **Vereditos Sim/Não:** quando os fatos trouxerem resposta direta (ex.: MPs exclusivas = 0), reproduza o veredito sem contradizê-lo.",
   "multiSourceCrossRule": "Há **várias rotas** nos fatos. Cruze as fontes (ex.: estoque × vendas), cite o que cada consulta mostrou e não invente dados de rotas não listadas.",
   "coverageJudgmentSignals": [

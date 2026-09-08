@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -124,6 +125,24 @@ def _tree_ok(meta: dict, payload: dict | None = None) -> tuple[bool, str]:
     return True, "no tree (ok if table-only)"
 
 
+_INLINE_MD_BLOCK_RE = re.compile(
+    r"(?<=[^\n#])[ \t]*#{1,6}[ \t]+\S|(?<=[.!?:;])[ \t]+(?:[-*+][ \t]+\S|\d+\.[ \t]+\S)"
+)
+
+
+def _markdown_structure_ok(content: str) -> tuple[bool, str]:
+    """L3: ATX headings / list markers must not sit mid-line after non-whitespace."""
+    text = str(content or "")
+    # Ignore fenced code when scanning.
+    scrubbed = re.sub(r"```[\s\S]*?```|~~~[\s\S]*?~~~", "", text)
+    match = _INLINE_MD_BLOCK_RE.search(scrubbed)
+    if match:
+        start = max(0, match.start() - 24)
+        end = min(len(scrubbed), match.end() + 24)
+        return False, f"inline markdown block near {scrubbed[start:end]!r}"
+    return True, "markdown block structure ok"
+
+
 def _dashboard_structure_dup(meta: dict, payload: dict | None = None) -> tuple[bool, str]:
     tool_calls = []
     if isinstance(payload, dict):
@@ -215,6 +234,7 @@ def main() -> int:
         dash_ok, dash_msg = _dashboard_structure_dup(
             meta, payload if isinstance(payload, dict) else None
         )
+        md_ok, md_msg = _markdown_structure_ok(content)
         low = content.lower()
         turn = {
             "label": label,
@@ -223,11 +243,14 @@ def main() -> int:
             "proseChars": len(content.strip()),
             "tree": tree_msg,
             "dashboard": dash_msg,
+            "markdown": md_msg,
             "prosePreview": content.strip()[:280],
         }
         results["turns"].append(turn)
         print(json.dumps(turn, ensure_ascii=False, indent=2), flush=True)
 
+        if not md_ok:
+            failures.append(f"L3 {label}: {md_msg}")
         if label == "seed":
             if not any("/stock" in p for p in paths):
                 failures.append("L1 seed: missing /stock path")

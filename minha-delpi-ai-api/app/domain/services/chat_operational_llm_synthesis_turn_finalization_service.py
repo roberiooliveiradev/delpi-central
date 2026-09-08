@@ -58,12 +58,16 @@ class ChatOperationalLlmSynthesisTurnFinalizationService:
             )
 
             if fallback:
-                return cls._finalize_body(
-                    fallback,
-                    message=message,
+                return cls._deliver_persisted_answer(
+                    cls._finalize_body(
+                        fallback,
+                        message=message,
+                        tool_calls=tool_calls,
+                        response_mode=normalized_mode,
+                        response_mode_effect=effect,
+                    ),
                     tool_calls=tool_calls,
                     response_mode=normalized_mode,
-                    response_mode_effect=effect,
                 )
 
         if cls._should_try_commentary_before_enrich(normalized_mode, raw_answer, message, tool_calls):
@@ -74,12 +78,16 @@ class ChatOperationalLlmSynthesisTurnFinalizationService:
             )
 
             if fallback:
-                return cls._finalize_body(
-                    fallback,
-                    message=message,
+                return cls._deliver_persisted_answer(
+                    cls._finalize_body(
+                        fallback,
+                        message=message,
+                        tool_calls=tool_calls,
+                        response_mode=normalized_mode,
+                        response_mode_effect=effect,
+                    ),
                     tool_calls=tool_calls,
                     response_mode=normalized_mode,
-                    response_mode_effect=effect,
                 )
 
         body = ChatPresentationProseDeliveryService.resolve_llm_synthesis_answer_fallback(
@@ -129,7 +137,7 @@ class ChatOperationalLlmSynthesisTurnFinalizationService:
                     response_mode_effect=effect,
                 )
 
-        return cls._apply_prose_composition(
+        return cls._deliver_persisted_answer(
             cls._substitute_safe_generic_fallback(
                 cls._guard_instruction_leak(
                     body,
@@ -148,19 +156,25 @@ class ChatOperationalLlmSynthesisTurnFinalizationService:
         )
 
     @classmethod
-    def _apply_prose_composition(
+    def _deliver_persisted_answer(
         cls,
         body: str,
         *,
         tool_calls: list | None,
         response_mode: str,
     ) -> str:
+        """Normalize Markdown block structure once, then apply prose composition."""
+        from app.domain.services.chat_assistant_markdown_structure_service import (
+            ChatAssistantMarkdownStructureService,
+        )
         from app.domain.services.chat_presentation_llm_composition_service import (
             ChatPresentationLlmCompositionService,
         )
 
+        normalized = ChatAssistantMarkdownStructureService.normalize_delivered_markdown(body)
+
         return ChatPresentationLlmCompositionService.apply_to_tool_calls(
-            body,
+            normalized,
             tool_calls,
             response_mode=response_mode,
         )

@@ -214,6 +214,18 @@ class ChatOperationalLlmSynthesisContextService:
             if cross_rule:
                 result = f"{result}\n\n{cross_rule}" if result else f"\n\n{cross_rule}"
 
+        if cls._should_append_prose_rules(tool_calls, response_mode):
+            markdown_structure = (
+                ChatOperationalLlmSynthesisContextContentService.prose_markdown_structure_rule()
+            )
+
+            if markdown_structure:
+                result = (
+                    f"{result}\n\n{markdown_structure}"
+                    if result
+                    else f"\n\n{markdown_structure}"
+                )
+
         # Idioma por último — modelos cloud tendem a priorizar a instrução final.
         language_lock = ChatOperationalLlmSynthesisContextContentService.language_lock_rule()
 

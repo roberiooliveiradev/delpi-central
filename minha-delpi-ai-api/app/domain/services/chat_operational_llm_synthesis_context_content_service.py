@@ -83,6 +83,17 @@ class ChatOperationalLlmSynthesisContextContentService:
         ).strip()
 
     @classmethod
+    def prose_markdown_structure_rule(cls) -> str:
+        return str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "proseMarkdownStructureRule",
+                default="",
+            )
+            or ""
+        ).strip()
+
+    @classmethod
     def factual_fidelity_rule(cls) -> str:
         return str(
             ChatAssistantContentService.get(_BUNDLE, "factualFidelityRule", default="")

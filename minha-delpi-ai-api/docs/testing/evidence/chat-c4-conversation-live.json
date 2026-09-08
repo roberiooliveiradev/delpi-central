@@ -1,29 +1,31 @@
 {
-  "sessionId": "e74a42eb-6389-4c94-a9e6-b9a9b8407958",
+  "sessionId": "96ce316f-a02d-47d9-9b25-01f251033456",
   "turns": [
     {
       "label": "seed",
-      "wallMs": 22542,
+      "wallMs": 79837,
       "paths": [
         "/products/90260149",
         "/products/90260149/stock"
       ],
-      "proseChars": 492,
+      "proseChars": 714,
       "tree": "no tree (ok if table-only)",
       "dashboard": "no structure duplication",
-      "prosePreview": "O produto **90260149** é o **CHICOTE EPR SINGELO 235MM**, pertencente ao grupo **9026**. A consulta retornou o cadastro e a posição de estoque, detalhados abaixo. \n\n**Estoque — ponto de atenção:** o saldo disponível total é **0 unidade** em 1 posição consultada. Ou seja, o item e"
+      "markdown": "markdown block structure ok",
+      "prosePreview": "O produto **90260149** é o **CHICOTE EPR SINGELO 235MM**, do grupo **9026**, e está **sem estoque disponível** no momento — o saldo total é **0 unidade** em 1 posição, o que não cobre uma demanda típica.\n\n## Cadastro\n\n- **Código:** 90260149 (grupo 9026)\n- **Descrição:** CHICOTE E"
     },
     {
       "label": "followup",
-      "wallMs": 65092,
+      "wallMs": 72757,
       "paths": [
         "/products/90260149/structure",
         "/products/90260149/stock"
       ],
-      "proseChars": 1433,
+      "proseChars": 1310,
       "tree": "no tree (ok if table-only)",
       "dashboard": "no structure duplication",
-      "prosePreview": "O produto **90260149** — **CHICOTE EPR SINGELO 235MM** — está **sem estoque disponível** (saldo total **0 un.**) e, com esse saldo zerado, **o estoque não cobre uma demanda típica**: qualquer necessidade de produção ou venda dependeria de reposição ou produção antes do atendiment"
+      "markdown": "markdown block structure ok",
+      "prosePreview": "O produto **90260149** — **CHICOTE EPR SINGELO 235MM** — está **sem estoque disponível** (saldo total **0 un.**), ou seja, **não cobre uma demanda típica** com o saldo atual. Abaixo, a visão consolidada.\n\n## Estrutura (BOM)\n\nA composição tem **6 componentes de nível 1**, organiza"
     }
   ],
   "failures": [],
