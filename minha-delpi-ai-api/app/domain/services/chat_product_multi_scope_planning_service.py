@@ -310,10 +310,29 @@ class ChatProductMultiScopePlanningService:
                 product_code=code,
                 allowed_action_ids=allowed_action_ids,
                 intent=ChatProductQueryIntent.ANALYSER,
+                route_segment="analyser",
                 previous_messages=previous_messages,
             )
             if selected:
                 planned.append(selected)
+            else:
+                # Sem action analyser: expande o bundle em rotas individuais.
+                bundle = cls.analyser_bundle_scopes()
+                for scope in scopes:
+                    if scope not in bundle:
+                        continue
+                    if len(planned) >= max(1, min(int(max_calls), 12)):
+                        break
+                    expanded = cls._select_scope_action(
+                        selection_service,
+                        message=message,
+                        product_code=code,
+                        scope=scope,
+                        allowed_action_ids=allowed_action_ids,
+                        previous_messages=previous_messages,
+                    )
+                    if expanded:
+                        planned.append(expanded)
 
             limit = max(1, min(int(max_calls), 12))
             for scope in companions:

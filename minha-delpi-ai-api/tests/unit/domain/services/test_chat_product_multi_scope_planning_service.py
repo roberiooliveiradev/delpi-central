@@ -34,6 +34,8 @@ class FakeScopeSelectionService:
             path = "/products/{code}/sales/open-orders"
         elif route_segment == "stock":
             path = "/products/{code}/stock"
+        elif route_segment == "analyser" or intent == ChatProductQueryIntent.ANALYSER:
+            path = "/products/{code}/analyser"
 
         return {
             "name": "execute_external_action",
@@ -185,6 +187,48 @@ def test_plan_fetches_analyser_plus_stock_for_visao_integrada():
     paths = {str(item["arguments"].get("path") or "") for item in planned}
     assert any("/analyser" in path for path in paths)
     assert any("/stock" in path for path in paths)
+
+
+def test_plan_fetches_expands_bundle_when_analyser_action_missing():
+    class NoAnalyserService(FakeScopeSelectionService):
+        def select_action_for_product(
+            self,
+            message,
+            *,
+            product_code,
+            allowed_action_ids=None,
+            intent=None,
+            route_segment=None,
+            previous_messages=None,
+        ):
+            if intent == ChatProductQueryIntent.ANALYSER:
+                return None
+            return super().select_action_for_product(
+                message,
+                product_code=product_code,
+                allowed_action_ids=allowed_action_ids,
+                intent=intent,
+                route_segment=route_segment,
+                previous_messages=previous_messages,
+            )
+
+    planned = ChatProductMultiScopePlanningService.plan_product_scope_fetches(
+        NoAnalyserService(),
+        message=(
+            "visão integrada do produto 90260149: ficha, estrutura, roteiro e estoque"
+        ),
+        product_code="90260149",
+        allowed_action_ids=["a1"],
+    )
+
+    paths = {str(item["arguments"].get("path") or "") for item in planned}
+    assert any("/stock" in path for path in paths)
+    assert any(
+        marker in path
+        for path in paths
+        for marker in ("/structure", "/guide", "/products/{code}")
+    )
+    assert len(planned) >= 2
 
 
 def test_blocks_fast_path_when_visao_integrada_has_stock_companion():

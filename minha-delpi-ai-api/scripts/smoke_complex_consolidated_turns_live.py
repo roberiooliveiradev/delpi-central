@@ -97,7 +97,7 @@ CASES: list[dict[str, Any]] = [
         "expect_prose": True,
         "expect_min_tools": 1,
         "expect_min_rich_surfaces": 1,
-        "expect_path_markers": ["/rol", "/commercial", "/kpi", "/sales", "/billing"],
+        "expect_path_markers": ["/rol", "/commercial", "/kpi", "/sales", "/billing", "/financial"],
         "forbid_sql_fence": True,
         "forbid_path_markers": ["/stock"],
     },
