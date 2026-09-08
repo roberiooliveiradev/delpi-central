@@ -12,6 +12,42 @@ export type UseTopBarOverflowCollapsedOptions = {
 };
 
 /**
+ * Largura intrínseca da row (`max-content`), não do wrapper `width: 100%`.
+ *
+ * O wrapper `.delpi-ui-topbar__measure` com `overflow: hidden` reporta
+ * `scrollWidth ≈ clientWidth` quando o conteúdo cabe — folga ~0 e a
+ * histerese trava o hamburger. A row filha mantém a largura real.
+ */
+export function resolveTopBarMeasureNeededWidth(measureEl: HTMLElement): number {
+  const content = measureEl.firstElementChild;
+  if (content instanceof HTMLElement) {
+    return Math.max(content.scrollWidth, content.offsetWidth);
+  }
+  return measureEl.scrollWidth;
+}
+
+export function shouldKeepTopBarOverflowCollapsed(options: {
+  needed: number;
+  available: number;
+  previouslyCollapsed: boolean;
+  tolerancePx?: number;
+  expandHysteresisPx?: number;
+}): boolean {
+  const {
+    needed,
+    available,
+    previouslyCollapsed,
+    tolerancePx = 2,
+    expandHysteresisPx = TOPBAR_OVERFLOW_EXPAND_HYSTERESIS_PX,
+  } = options;
+  if (needed > available + tolerancePx) return true;
+  if (previouslyCollapsed && needed > available - expandHysteresisPx) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * Collapses when the measure row needs more width than the TopBar host.
  * Used for responsive hamburger mode (no manual toggle / localStorage).
  *
@@ -42,18 +78,24 @@ export function useTopBarOverflowCollapsed(
       const host = measureEl.parentElement;
       if (!host) return;
       const available = host.clientWidth;
-      const needed = measureEl.scrollWidth;
-      setCollapsed((prev) => {
-        if (needed > available + tolerancePx) return true;
-        if (prev && needed > available - expandHysteresisPx) return true;
-        return false;
-      });
+      const needed = resolveTopBarMeasureNeededWidth(measureEl);
+      setCollapsed((prev) =>
+        shouldKeepTopBarOverflowCollapsed({
+          needed,
+          available,
+          previouslyCollapsed: prev,
+          tolerancePx,
+          expandHysteresisPx,
+        }),
+      );
     };
 
     check();
 
     const ro = new ResizeObserver(check);
     ro.observe(measureEl);
+    const content = measureEl.firstElementChild;
+    if (content instanceof Element) ro.observe(content);
     const host = measureEl.parentElement;
     if (host) ro.observe(host);
 
