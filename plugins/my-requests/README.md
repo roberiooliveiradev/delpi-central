@@ -8,6 +8,7 @@ Microfrontend federado do módulo **Minhas Solicitações**.
 - **Proibido** chamar api-delpi no browser
 - Ações no detalhe: render-only de `allowed_actions` (sem state machine no TS)
 - Ajuda: `src/content/helpTooltips.ts` · Manual: [MANUAL-USUARIO.md](../../docs/12-roadmap-e-evolucao/my-requests/MANUAL-USUARIO.md)
+- **Prompt (Nova por cards):** [PROMPT-nova-solicitacao-type-cards.md](../../docs/12-roadmap-e-evolucao/my-requests/PROMPT-nova-solicitacao-type-cards.md) — alvo UX: cards de tipo; unidade dentro do form conforme `branch_scope`
 
 ## UI — kit-first (`@delpi/plugin-ui`)
 

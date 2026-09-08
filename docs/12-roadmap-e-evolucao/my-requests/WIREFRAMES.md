@@ -154,6 +154,25 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), w
 
 ### WF-03 — Nova solicitação genérica (`/new`)
 
+> **Alvo (prompt):** [PROMPT-nova-solicitacao-type-cards.md](./PROMPT-nova-solicitacao-type-cards.md) — cards de tipo; filial **não** no shell.  
+> **Hoje (entregue):** Select Tipo + Filial (abaixo) até a implementação do prompt.
+
+**Alvo:**
+
+```text
+┌─ PageHeader: Nova solicitação ──────────────────────────────────────┐
+└─────────────────────────────────────────────────────────────────────┘
+┌─ SectionCard «Escolha o tipo» ──────────────────────────────────────┐
+│ Grid de cards (ícone + name):                                       │
+│ [🧾 Emissão de NF]  [🧪 Criação de matéria-prima]  …               │
+│ Clique → abre form do tipo (wizard / schema). Sem Filial aqui.      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+Unidade/filial só **dentro** do form do tipo (`branch_scope`: `required` | `optional` | `none`).
+
+**Atual (até cutover do prompt):**
+
 ```text
 ┌─ PageHeader: Nova solicitação ──────────────────────────────────────┐
 └─────────────────────────────────────────────────────────────────────┘

@@ -1590,6 +1590,7 @@ Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+.
 
 ## Apêndice B — Referências
 
+- [Prompt — Nova por cards + branch_scope](./PROMPT-nova-solicitacao-type-cards.md)
 - [invoice-issuance API](../../../api-delpi/docs/api/invoice-issuance.md)
 - [invoice-issuance README plugin](../../../plugins/invoice-issuance/README.md)
 - [maintenance-api ARCHITECTURE](../../../maintenance-api/docs/ARCHITECTURE.md)
@@ -1601,4 +1602,4 @@ Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+.
 ---
 
 **Status:** `E1–E17 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
-**Próximo passo:** E18 — deprecar/remover lookups `/invoice-issuance/*` na api-delpi após soak; backlog tags / CreatableMultiSelect; DROP schema após retenção.
+**Próximo passo:** E18 — deprecar/remover lookups `/invoice-issuance/*` na api-delpi após soak; backlog tags / CreatableMultiSelect; UX Nova por cards ([PROMPT-nova-solicitacao-type-cards.md](./PROMPT-nova-solicitacao-type-cards.md)); DROP schema após retenção.
