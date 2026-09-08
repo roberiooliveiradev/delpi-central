@@ -1,109 +1,99 @@
 # Duplicidades e sobreposições — Suprimentos
 
-> Correlação ≠ identidade de regra. Sem dump do BI, **não** declarar duplicata perfeita.
+> Correlação ≠ identidade de regra. Sem dump/contrato do BI, não declarar duplicata perfeita.
 
 ---
 
 ## DRIFTs transversais
 
 | ID | Fontes | Prevalece | Impacto | Ação |
-|----|--------|-----------|---------|------|
-| D1 | `purchase-requests.unit.filial-01/02` vs `estoque-seguranca.view.filial-sc/es` vs `inspecoes-entrada.view.filial-01/02` | Portal: **eixo B** `supplies.unit.filial-{TOTVS}` (ADR-006); legado vira alias | UX e papéis inconsistentes até cutover | Não criar `{feature}.filial-sc`; nova unidade = um code só |
-| D2 | `docs/08-plugins/README.md` omite `purchase-requests` vs Compose ativo | Compose + manifesto | Inventário oficial incompleto | Atualizar README plugins na E3 |
-| D3 | Playbook Comercial ainda cita codes granulares vs `PERFIS` com 3 codes | PERFIS + manifest commercial | Não copiar o playbook desatualizado | Seguir condensação **com** justificativa extra para Suprimentos (filial + SC) |
-| D4 | Fixture `supplies.view` vs catálogo alvo `supplies.access` | ADR-004 + padrão commercial.access | Colisão semântica no teste | Ajustar fixture E3 |
-| D5 | Path `/analise-consumo` PT vs regra EN em rota nova | english-code-identifiers | Alias no cutover | Path novo `/consumption-analysis` |
-| D6 | Savings: Sheets IDD (realizado) vs SI (meta/realizado snapshot) | SI = meta canônica; Sheets = origem do realizado de economia via api-delpi | Duas superfícies, uma ficha | KPI-SAVINGS |
+|---|---|---|---|---|
+| D1 | `purchase-requests.unit.filial-01/02` vs `estoque-seguranca.view.filial-sc/es` | eixo B `supplies.unit.filial-{TOTVS}` | papéis inconsistentes até migração | aliases + RBAC canônico no Core |
+| D2 | inventário oficial incompleto vs ativos reais | código/manifest/Compose/runtime | documentação defasada | atualizar inventário na implementação |
+| D3 | exemplos históricos com permissions mais granulares | ADR-007 | risco de inflar RBAC | usar menor catálogo suficiente |
+| D4 | fixture `supplies.view` vs permission canônica do novo Portal | ADR-004 + ADR-007 | fixture não pode ditar contrato | ajustar para `supplies.portal.access` na E3 |
+| D5 | path legado `/analise-consumo` PT vs naming novo EN | english-code-identifiers | deep links | alias/redirect para `/safety-stock/consumption-analysis` |
+| D6 | savings Sheets vs SI | SI = meta; Sheets = origem atual do realizado | duas superfícies | uma ficha KPI, ownership separado |
+| D7 | instrução oficial Flask vs APIs recentes FastAPI | instrução oficial | risco de copiar framework errado | supplies-api = Flask, ADR-001 |
+| D8 | middleware Flask legado pode confiar em claims vs Core-first | instrução oficial/Core | risco de authz incorreta | GATE-AUTHZ antes de E2 |
 
 ---
 
-## 24.1 Atraso de Fornecedores BI × Dashboard OTD
+## Atraso de Fornecedores BI × Dashboard OTD
 
-| Dimensão | Dashboard `/otd` | BI «Atraso de Fornecedores - SC» |
-|----------|------------------|----------------------------------|
-| Universo | Linhas elegíveis MP **ou** código `3019*` | **Desconhecido** (não no git) |
-| Fonte | api-delpi `get_supplies_otd` + ranking na própria página | Core/Power BI? |
-| Regra atraso | Recebimento **depois** da data prometida | Desconhecida |
-| Data prometida | Help: recebimento ≤ prometida = on-time | Desconhecida |
-| Recebimento | Linhas recebidas no período | Desconhecida |
-| Fornecedor | Chart `lateSuppliers` + amostra entregas | Provável matriz |
-| Filial | Filtro `branch` (consolidado possível) | Nome do app: **SC** |
-| Período | start/end / competência | Desconhecido |
-| Granularidade | % OTD + linhas on-time/late + ranking | Possível matriz fornecedor×tempo |
-| Export | PDF/tabular cliente | Desconhecido |
-| Detalhe / histórico | Seção na OTD, não rota própria | Desconhecido |
+| Dimensão | Dashboard `/otd` | BI Atraso SC |
+|---|---|---|
+| Universo | MP ou `3019*` conforme regra atual | desconhecido |
+| Fonte | api-delpi `get_supplies_otd` | desconhecida |
+| Regra atraso | recebimento depois da prometida | desconhecida |
+| Filial | branch/consolidado autorizado | nome sugere SC |
+| Período | start/end/competência | desconhecido |
+| Granularidade | KPI + série + ranking | desconhecida |
 
-**Veredito:** **complementar / possivelmente especializado (SC)**, não «duplicado comprovado».  
-Há também `get_supplies_purchase_order_otd` / `panel` / `series` na api-delpi **sem MFE dedicado**. **CONFIRMADO_NO_CODIGO.** O Portal WF-07 deve consumir essas ops **antes** de inventar SQL.
+**Veredito:** complementar/possivelmente especializado até E1.S1. Não declarar duplicata.
 
-**HIPOTESE_A_VALIDAR (E1.S1 + E9):** se o BI for só ranking de atraso SC, a página OTD+panel pode ser paridade; se for matriz com regras diferentes (ex. só SC7 aberto), são produtos distintos — BI permanece MANTER_EXTERNO até ficha.
+O Portal deve preferir `purchase-order-otd` / `panel` / `series` existentes antes de propor SQL novo.
 
 ---
 
-## 24.2 Controle de Estoques BI × Dashboard `/stock` × ESTSEG
+## Controle de Estoques BI × Dashboard × ESTSEG
 
-Separar conceitos (não misturar no mesmo KPI):
+| Conceito | Dashboard stock | ESTSEG | BI Estoque SC |
+|---|---|---|---|
+| estoque físico/qty | sim | saldo usado na regra | desconhecido |
+| valor | sim | não é foco | desconhecido |
+| giro | página própria | não | desconhecido |
+| cobertura | auxiliar/definição própria | projeção/consumo | desconhecido |
+| ESTSEG | não | canônico | desconhecido |
+| projeção | não | sim | desconhecido |
 
-| Conceito | Dashboard `/stock` | ESTSEG plugin | BI Controle Estoques SC | `stock-balances` API |
-|----------|--------------------|---------------|-------------------------|----------------------|
-| Estoque físico / qtd | Sim (qty + locations) | Saldo 01+98+99 vs ESTSEG | ? | Sim items/summary |
-| Valor | SB9 valor | Não é o foco | ? | Parcial |
-| Local / armazém | Filtro `location` | Locais na regra de déficit | ? | Sim |
-| Giro | Página **outra** (`/inventory-turnover`) | Não | ? | Não |
-| Cobertura | Giro em **meses** (auxiliar) | Projeção SC7/SD4 no detalhe | ? | Não |
-| Estoque de segurança | Não | **Canônico** BZ_ESTSEG | Nome do app PO mistura «análise estoque» | Não |
-| Projeção / ruptura | Não | Extrato + simulação consumo | ? | Não |
-
-**Veredito:** **não são o mesmo produto**. Dashboard = valor gerencial. ESTSEG = planejamento de MP. BI SC = **LEGADO_A_VALIDAR**. Portal ganha duas rotas (WF-15 controle, WF-16 segurança) + Produto 360 que **compõe** os três.
+**Veredito:** não são o mesmo produto. Portal mantém jornadas distintas e compõe no Produto 360 quando fizer sentido.
 
 ---
 
-## 24.3 Indicadores Sheets × Strategic Indicators
+## Indicadores Sheets × Strategic Indicators
 
-| | Sheets IDD (PO + composer) | SI `supplies-*` |
-|--|----------------------------|-----------------|
-| CPV / OTD / giro / valor | Dashboard calcula no TOTVS e compara meta SI | Snapshot oficial meta×realizado |
-| Savings | **Origem do lançamento** = planilha (`get_supplies_negotiation_savings_summary`) | Indicador `supplies-negotiation-savings` |
-| Permissão | `dashboard-supplies.view` no git; `idd-suprimentos.access` só no PO | Perms SI |
+- fórmula TOTVS: api-delpi;
+- meta canônica: Strategic Indicators;
+- realizado de savings atual: Sheets via api-delpi;
+- Portal não cria segunda meta nem copia planilha para Postgres.
 
-**Fonte de verdade:**
-
-- **Fórmula TOTVS** (CPV, OTD, estoque, giro) = api-delpi.  
-- **Meta** = strategic-indicators-api.  
-- **Economia lançada** = Sheets via api-delpi (não copiar para Postgres).  
-- **Não** manter segunda meta canônica na planilha.
-
-Se o app «Indicadores de Suprimentos - Sheets» for só a planilha crua, decisão pós-dump: **MANTER_EXTERNO** (edição) + Portal **INTEGRAR** leitura já existente.
+Destino do app Sheets depende de E1.S1/P-07.
 
 ---
 
-## 24.4 Onde o item é usado
+## Onde o item é usado
 
-| Superfície | Contrato | Owner |
-|------------|----------|-------|
-| Chat / produto | `GET /products/{code}/parents` `get_product_parents` | api-delpi |
-| Também | `/{code}/structure`, exclusivity, raw-material-set-shortages | api-delpi |
-| Plugin dedicado | **Não** | — |
-| BI PO | desconhecido | Core? |
+`get_product_parents` é capability nativa reutilizável. Isso não prova paridade do BI externo.
 
-**Decisão:** Portal Produto 360 **consome** `parents` via supplies-api BFF. **Não** duplicar SQL. BI externo = deep link até dump. Chat continua usando o mesmo contrato.
+Decisão:
+
+```text
+Portal Produto 360
+→ supplies-api
+→ api-delpi get_product_parents
+```
+
+Sem SQL duplicado. BI só muda de estado após comparação.
 
 ---
 
-## 24.5 Outras sobreposições
+## Outras sobreposições
 
 | Par | Relação |
-|-----|---------|
-| `purchase-order-otd` API × página OTD dashboard | API mais rica **sem UI** — Portal deve usar panel/series |
-| TV `supplies_stock_alert` × ESTSEG déficit | Provável especialização TV; não absorver TV no MFE |
-| Safety-stock suppliers + price-history × `/products/{code}/suppliers` + `purchase-price-history` | Família irmã; BFF do 360 escolhe o envelope mais completo **sem** juntar regras divergentes sem ficha |
-| Frete financeiro × custo do item | Complementar; Portal não rateia |
+|---|---|
+| PO-OTD API × OTD dashboard | API mais rica sem UI; reutilizar contratos existentes |
+| TV stock alert × ESTSEG | superfície especializada; não absorver TV |
+| Safety-stock price history × product price history | família irmã; compor sem mudar semântica |
+| Frete financeiro × custo de item | complementar; Financeiro continua owner |
+| Qualidade × Supplier 360 | projeção controlada; processo continua na Qualidade |
 
 ---
 
-## 24.6 O que NÃO está duplicado (falso positivo)
+## Falsos positivos
 
-- `materiais-terceiros` (SB6 cliente) ≠ estoque de MP de compra.
-- Inspeções de entrada ≠ alçada de compras.
-- CPV (custo vendido) ≠ valor de estoque.
-- `C7_APROV` (grupo de alçada no PC) ≠ status operacional da SC (`C1_APROV`).
+- materiais-terceiros ≠ estoque de MP de compra;
+- inspeções de entrada ≠ alçada;
+- CPV ≠ valor de estoque;
+- `C7_APROV` ≠ status operacional da SC;
+- vários endpoints sobre o mesmo recurso ≠ várias permissions obrigatórias.
