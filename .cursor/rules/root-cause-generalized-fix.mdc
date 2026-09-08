@@ -1,6 +1,6 @@
 ---
-description: Causa raiz primeiro; solução generalista no módulo canônico — nunca patch por rota/sintoma
-alwaysApply: true
+description: Bugs/fixes — investigar causa raiz, generalizar no módulo canônico e validar caso original + irmão + negativo
+alwaysApply: false
 ---
 
 # Causa raiz e correção generalista
@@ -72,8 +72,10 @@ Não confundir:
 |-------------|------------------|
 | Painel consolidado duplica KPI/tabela | `ChatPresentationStructureDedupService` + `ChatPresentationRenderPlanService` + tail policy por shape `composite_analysis` |
 | MFE renderiza visual suprimido | `presentationMetadataReaders.ts` — consumir `suppressedKinds` e `renderPlan` |
-| Regra nova por família de rotas | `presentation_profiles.json` / `api_route_domains.json` + serviço transversal |
+| Regra nova por família de actions | OpenAPI/Action Catalog quando for metadata técnica; `presentation_profiles.json`/policy JSON apenas para UX/regra transversal |
 | Texto/limite/regex | `assistant/*.json` + loader (`assistant-content-json.mdc`) |
+
+Para tools/actions, seguir `openapi-first-universal-tool-routing.mdc`: não generalizar criando novo catálogo paralelo de paths/operationIds.
 
 ## Caso de referência (painel consolidado, jul/2026)
 
