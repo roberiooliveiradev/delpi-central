@@ -8,16 +8,17 @@
   "caseCount": 4,
   "latencySummary": {
     "wallsMs": [
-      28020,
-      137784,
-      27935,
-      49023
+      20183,
+      69495,
+      56218,
+      65642
     ],
-    "avgWallMs": 60690,
-    "maxWallMs": 137784,
-    "minWallMs": 27935,
+    "avgWallMs": 52884,
+    "maxWallMs": 69495,
+    "minWallMs": 20183,
     "bottleneckCounts": {
-      "llmMs": 4
+      "toolsMs": 3,
+      "llmMs": 1
     }
   },
   "results": [
@@ -25,8 +26,8 @@
       "id": "C1-analyser-integrado",
       "passed": true,
       "errors": [],
-      "proseChars": 437,
-      "prosePreview": "O produto **90260149 — CHICOTE EPR SINGELO 235MM** é um item fabricado (tipo **PA**, grupo **9026**) com estrutura e roteiro cadastrados, mas com dois pontos de atenção importantes: **plano de inspeção não cadastrado** e **bloqueio «2»** ativo, que precisam ser validados antes de",
+      "proseChars": 432,
+      "prosePreview": "O produto **90260149** — **CHICOTE EPR SINGELO 235MM** — é um item do tipo **PA** (produto acabado), grupo **9026**, com estrutura e roteiro cadastrados, mas com dois pontos de atenção importantes: **plano de inspeção não cadastrado** e **bloqueio «2»** ativo, o que exige validaç",
       "kinds": [
         "dashboard",
         "field_labels",
@@ -61,44 +62,45 @@
       ],
       "hasResolvedFieldLabels": true,
       "latency": {
-        "wallMs": 28020,
+        "wallMs": 20183,
         "stages": {
-          "preToolMs": 726,
-          "toolsMs": 1257,
-          "postToolMs": 53,
-          "ragMs": 22,
-          "llmMs": 15110,
-          "totalMs": 17170
+          "preToolMs": 865,
+          "toolsMs": 9161,
+          "postToolMs": 54,
+          "ragMs": 19,
+          "llmMs": 6129,
+          "totalMs": 16229
         },
         "toolsBreakdown": {
-          "selectionMs": 692,
-          "wave1Ms": 184,
-          "criticMs": 2,
+          "selectionMs": 8546,
+          "wave1Ms": 226,
+          "criticMs": 3,
           "wave2Ms": 0,
-          "assembleMs": 142,
-          "agenticExtendMs": 219,
+          "assembleMs": 140,
+          "agenticExtendMs": 229,
           "finalizeAfterToolsMs": 15
         },
         "selectionBreakdown": {
-          "selectionNativeMs": 131,
+          "selectionNativeMs": 134,
           "selectionRouterMs": 4,
-          "selectionPlanMs": 281
+          "selectionPlanMs": 8093,
+          "selectionCandidateDbMs": 19
         },
         "preToolBreakdown": {},
-        "bottleneckStage": "llmMs",
-        "bottleneckMs": 15110,
+        "bottleneckStage": "toolsMs",
+        "bottleneckMs": 9161,
         "skipRag": true,
         "fastPath": false,
         "toolCountAdmin": 2
       },
-      "sessionId": "e201301b-f734-4280-85e3-0dd6130481e6"
+      "sessionId": "937dad8a-7e68-4d0d-b30e-ae552a327a14"
     },
     {
       "id": "C2-estrutura-estoque-pedidos",
       "passed": true,
       "errors": [],
-      "proseChars": 452,
-      "prosePreview": "Tabela física Protheus: sufixo 010 (ex.: SB1010) e D_E_L_E_T_ = '' para registros ativos. \n\n**Resumo executivo — produto 90260149 (CHICOTE EPR SINGELO 235MM)**\n\n- **Estrutura (BOM):** 6 componentes de nível 1, todos intermediários (PI), que se desdobram em 8 matérias-primas disti",
+      "proseChars": 449,
+      "prosePreview": "Tabela física Protheus: sufixo 010 (ex.: SB1010) e D_E_L_E_T_ = '' para registros ativos. \n\nO produto **90260149 — CHICOTE EPR SINGELO 235MM** teve estrutura e estoque consultados com sucesso; o bloco de **pedidos de venda em aberto** foi acionado, mas o retorno não trouxe dados ",
       "kinds": [
         "chart",
         "field_labels",
@@ -134,59 +136,65 @@
       ],
       "hasResolvedFieldLabels": true,
       "latency": {
-        "wallMs": 137784,
+        "wallMs": 69495,
         "stages": {
-          "preToolMs": 1722,
-          "toolsMs": 1634,
-          "postToolMs": 69,
-          "ragMs": 12,
-          "llmMs": 129536,
-          "totalMs": 132975
+          "preToolMs": 1882,
+          "toolsMs": 3009,
+          "postToolMs": 131,
+          "ragMs": 19,
+          "llmMs": 40134,
+          "totalMs": 45177
         },
         "toolsBreakdown": {
-          "selectionMs": 913,
-          "wave1Ms": 207,
+          "selectionMs": 2095,
+          "wave1Ms": 245,
           "criticMs": 0,
           "wave2Ms": 0,
-          "assembleMs": 200,
-          "agenticExtendMs": 296,
-          "finalizeAfterToolsMs": 16
+          "assembleMs": 257,
+          "agenticExtendMs": 372,
+          "finalizeAfterToolsMs": 37
         },
         "selectionBreakdown": {
-          "selectionNativeMs": 169,
-          "selectionRouterMs": 19,
-          "selectionPlanMs": 429,
-          "selectionCandidateDbMs": 16
+          "selectionNativeMs": 195,
+          "selectionRouterMs": 18,
+          "selectionPlanMs": 1550,
+          "selectionCandidateDbMs": 73
         },
         "preToolBreakdown": {},
         "bottleneckStage": "llmMs",
-        "bottleneckMs": 129536,
+        "bottleneckMs": 40134,
         "skipRag": true,
         "fastPath": false,
         "toolCountAdmin": 3
       },
-      "sessionId": "2c011df3-c0e5-4698-ae79-fb2a72c1f169"
+      "sessionId": "b0f80efc-dab8-441b-ba49-098ff4a0ed09"
     },
     {
       "id": "C3-kpi-serie-comercial",
       "passed": true,
       "errors": [],
-      "proseChars": 161,
-      "prosePreview": "Consultei os indicadores comerciais (ROL) da plataforma, mas **a consulta não retornou registros** — não há dados de série nem KPI para exibir no recorte padrão.",
+      "proseChars": 506,
+      "prosePreview": "Consultei as três fontes comerciais disponíveis — série de ROL, taxa de conversão de vendas e indicadores do departamento — e o cenário retornado é o seguinte:\n\n**Não há dados de ROL nem de taxa de conversão no recorte atual.** Ambas as consultas retornaram sem registros, ou seja",
       "kinds": [
+        "chart",
         "field_labels",
         "markdown",
         "prose_structured",
         "stack",
+        "table",
         "text"
       ],
       "richSurfaces": [
-        "stack"
+        "chart",
+        "stack",
+        "table"
       ],
-      "toolCount": 1,
-      "okToolCount": 1,
+      "toolCount": 3,
+      "okToolCount": 3,
       "paths": [
-        "/commercial/rol/series"
+        "/commercial/rol/series",
+        "/dashboard/department-indicators",
+        "/commercial/closing-rate/series"
       ],
       "pipelineStages": [
         "ingress",
@@ -200,68 +208,63 @@
       ],
       "hasResolvedFieldLabels": true,
       "latency": {
-        "wallMs": 27935,
+        "wallMs": 56218,
         "stages": {
-          "preToolMs": 2734,
-          "toolsMs": 2246,
-          "postToolMs": 60,
-          "ragMs": 13,
-          "llmMs": 21883,
-          "totalMs": 26938
+          "preToolMs": 2440,
+          "toolsMs": 28385,
+          "postToolMs": 52,
+          "ragMs": 11,
+          "llmMs": 24321,
+          "totalMs": 55211
         },
         "toolsBreakdown": {
-          "selectionMs": 1648,
-          "wave1Ms": 56,
-          "wave1HttpMs": 28,
-          "wave1PresentationMs": 6,
-          "criticMs": 83,
+          "selectionMs": 15856,
+          "wave1Ms": 12031,
+          "criticMs": 69,
           "wave2Ms": 0,
-          "assembleMs": 75,
-          "agenticExtendMs": 354,
-          "finalizeAfterToolsMs": 27
+          "assembleMs": 68,
+          "agenticExtendMs": 317,
+          "finalizeAfterToolsMs": 41
         },
         "selectionBreakdown": {
-          "selectionNativeMs": 340,
-          "selectionRouterMs": 44,
-          "selectionPlanMs": 996,
-          "selectionDispatchMs": 0,
-          "selectionCandidateDbMs": 41
+          "selectionNativeMs": 303,
+          "selectionRouterMs": 42,
+          "selectionPlanMs": 15184,
+          "selectionCandidateDbMs": 40
         },
         "preToolBreakdown": {},
-        "bottleneckStage": "llmMs",
-        "bottleneckMs": 21883,
+        "bottleneckStage": "toolsMs",
+        "bottleneckMs": 28385,
         "skipRag": true,
         "fastPath": false,
-        "toolCountAdmin": 1
+        "toolCountAdmin": 3
       },
-      "sessionId": "f837d728-aee6-44a3-8003-f610e55e5fcb"
+      "sessionId": "8f47627b-535e-408e-a851-22c8bb883991"
     },
     {
       "id": "C4-multi-ask-followup",
       "passed": true,
       "errors": [],
-      "proseChars": 448,
-      "prosePreview": "**Visão consolidada — produto 90260149 (CHICOTE EPR SINGELO 235MM): estrutura com 6 componentes de nível 1 e estoque zerado, ou seja, qualquer demanda ficaria descoberta neste momento.**\n\n## Estrutura (BOM)\n\nA composição do produto tem **6 componentes de nível 1**, organizados em",
+      "proseChars": 434,
+      "prosePreview": "O produto **90260149** — **CHICOTE EPR SINGELO 235MM** — é um produto acabado (PA) do grupo **9026**, unidade **MI**, revisão Delpi **002**. \n\n## Resumo cadastral e estoque\n\n- **Código/Descrição:** 90260149 — CHICOTE EPR SINGELO 235MM\n- **Tipo:** Produto acabado (PA), grupo 9026,",
       "kinds": [
-        "chart",
+        "dashboard",
         "field_labels",
         "markdown",
         "prose_structured",
         "stack",
-        "table",
+        "text",
         "tree"
       ],
       "richSurfaces": [
-        "chart",
+        "dashboard",
         "stack",
-        "table",
         "tree"
       ],
       "toolCount": 2,
-      "okToolCount": 2,
+      "okToolCount": 1,
       "paths": [
-        "/products/90260149/structure",
-        "/products/90260149/stock"
+        "/products/90260149/analyser"
       ],
       "pipelineStages": [
         "ingress",
@@ -275,38 +278,87 @@
       ],
       "hasResolvedFieldLabels": true,
       "latency": {
-        "wallMs": 49023,
+        "wallMs": 65642,
         "stages": {
-          "preToolMs": 5935,
-          "toolsMs": 1494,
-          "postToolMs": 44,
-          "ragMs": 11,
-          "llmMs": 40127,
-          "totalMs": 47613
+          "preToolMs": 6348,
+          "toolsMs": 33369,
+          "postToolMs": 104,
+          "ragMs": 20,
+          "llmMs": 25083,
+          "totalMs": 64926
         },
         "toolsBreakdown": {
-          "selectionMs": 945,
-          "wave1Ms": 60,
+          "selectionMs": 21432,
+          "wave1Ms": 0,
           "criticMs": 0,
           "wave2Ms": 0,
-          "assembleMs": 217,
-          "agenticExtendMs": 240,
-          "finalizeAfterToolsMs": 30
+          "assembleMs": 61,
+          "agenticExtendMs": 11837,
+          "finalizeAfterToolsMs": 37
         },
         "selectionBreakdown": {
-          "selectionNativeMs": 138,
-          "selectionRouterMs": 17,
-          "selectionPlanMs": 542,
-          "selectionCandidateDbMs": 15
+          "selectionNativeMs": 225,
+          "selectionRouterMs": 23,
+          "selectionPlanMs": 20883,
+          "selectionCandidateDbMs": 39
         },
         "preToolBreakdown": {},
-        "bottleneckStage": "llmMs",
-        "bottleneckMs": 40127,
+        "bottleneckStage": "toolsMs",
+        "bottleneckMs": 33369,
         "skipRag": true,
         "fastPath": false,
         "toolCountAdmin": 2
       },
-      "sessionId": "cf2f68d1-7759-45f1-baef-a63444d0d844"
+      "sessionId": "3aafb7f7-094b-4742-9418-4a5e0386951c"
     }
-  ]
+  ],
+  "verdict": {
+    "protocol": "R1-R11",
+    "smoke": "PASS 4/4",
+    "cases": {
+      "C1": {
+        "result": "PASS",
+        "notes": "analyser+stock; rich dashboard/table/tree",
+        "R1_routing": "PASS",
+        "R2_args": "PASS",
+        "R3_multi": "PASS",
+        "R8_efficiency": "PASS agenticExtendMs~229"
+      },
+      "C2": {
+        "result": "PASS",
+        "notes": "structure+stock+open-orders",
+        "R1_routing": "PASS",
+        "R2_args": "PASS",
+        "R3_multi": "PASS",
+        "R8_efficiency": "PASS selectionPlanMs~1550"
+      },
+      "C3": {
+        "result": "PASS",
+        "notes": "rol/series with granularity + companions",
+        "R1_routing": "PASS",
+        "R2_args": "PASS",
+        "R9_outcome": "PASS (empty series disclosed)"
+      },
+      "C4": {
+        "result": "PASS",
+        "notes": "follow-up analyser consolidates structure+stock",
+        "R1_routing": "PASS",
+        "R3_multi": "PASS"
+      }
+    },
+    "requiredDimensions": {
+      "R1": "PASS",
+      "R2": "PASS",
+      "R3": "PASS",
+      "R4": "PASS",
+      "R5": "PASS",
+      "R6": "PASS",
+      "R7": "PASS",
+      "R8": "PASS",
+      "R9": "PASS",
+      "R10": "PASS",
+      "R11": "PASS"
+    },
+    "requiredDimensionFail": false
+  }
 }
