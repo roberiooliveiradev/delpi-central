@@ -20,7 +20,7 @@ import {
 
 const PERSON_PROFILE_HINTS = {
   photo:
-    "Clique na foto para ampliar. No modal, use Trocar foto para enviar outra. Sem foto, clique para adicionar. JPEG, PNG, WebP ou GIF até 2 MB.",
+    "Clique na foto para ampliar. No modal, use Trocar foto ou Remover imagem. Sem foto, clique para adicionar. JPEG, PNG, WebP ou GIF até 2 MB.",
   jobTitle:
     "Cargo informado por você no portal. Não sincroniza com RH ou Keycloak nesta fase.",
   contacts:
@@ -288,17 +288,7 @@ export function PersonProfileEditor({ userName }: PersonProfileEditorProps) {
             </button>
           </div>
 
-          {hasPhoto ? (
-            <button
-              type="button"
-              className="profile-person__btn profile-person__btn--danger profile-person__btn--remove"
-              onClick={() => void onRemovePhoto()}
-              disabled={photoBusy}
-            >
-              <Trash2 size={15} aria-hidden="true" />
-              Remover imagem
-            </button>
-          ) : (
+          {hasPhoto ? null : (
             <p className="profile-person__photo-hint">Clique na área da foto para enviar</p>
           )}
         </div>
@@ -425,6 +415,15 @@ export function PersonProfileEditor({ userName }: PersonProfileEditorProps) {
               className="profile-person__lightbox-img"
             />
             <div className="profile-person__lightbox-actions">
+              <button
+                type="button"
+                className="profile-person__btn profile-person__btn--danger"
+                onClick={() => void onRemovePhoto()}
+                disabled={photoBusy}
+              >
+                <Trash2 size={16} aria-hidden="true" />
+                Remover imagem
+              </button>
               <button
                 type="button"
                 className="profile-person__btn"

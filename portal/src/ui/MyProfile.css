@@ -536,12 +536,6 @@
   background: color-mix(in srgb, var(--danger, #dc2626) 8%, var(--surface));
 }
 
-.profile-person__btn--remove {
-  width: 100%;
-  min-height: 36px;
-  font-size: 12px;
-}
-
 .profile-person__file {
   position: absolute;
   width: 1px;
@@ -694,7 +688,19 @@
 
 .profile-person__lightbox-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 480px) {
+  .profile-person__lightbox-actions {
+    justify-content: stretch;
+  }
+
+  .profile-person__lightbox-actions .profile-person__btn {
+    flex: 1 1 auto;
+  }
 }
 
 @media (max-width: 900px) {
@@ -704,11 +710,7 @@
 
   .profile-person__photo-stack {
     width: 100%;
-    align-items: stretch;
-  }
-
-  .profile-person__avatar-wrap {
-    align-self: flex-start;
+    align-items: center;
   }
 }
 
