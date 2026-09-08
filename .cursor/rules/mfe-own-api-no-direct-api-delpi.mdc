@@ -1,7 +1,7 @@
 ---
 description: MFE com API própria nunca chama api-delpi direto — só via BFF do bounded context
 globs: plugins/**/*,*-api/**/*,commercial-api/**/*,tv-dashboard-api/**/*,transformometro-api/**/*
-alwaysApply: true
+alwaysApply: false
 ---
 
 # MFE + API própria — sem chamada direta à api-delpi
