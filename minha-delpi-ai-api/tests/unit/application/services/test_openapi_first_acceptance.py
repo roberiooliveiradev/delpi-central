@@ -310,24 +310,25 @@ def test_case9_execution_context_preserves_id(logistics_actions, logistics_repo)
     assert plan.steps[0].arguments["parameters"]["id"] == "45871"
 
 
-def test_case10_legacy_mode_off_does_not_use_openapi_path(monkeypatch, logistics_repo, logistics_actions):
-    """Rollback explícito: mode=off ainda existe, mas não é o default."""
+def test_case10_legacy_mode_off_aliases_to_openapi_on(monkeypatch, logistics_repo, logistics_actions):
+    """off/shadow viram on — pipeline de registry não volta."""
     monkeypatch.setattr(
         "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
         "off",
     )
+    assert OpenApiPlannerModeService.resolve_mode() == "on"
     decision = OpenApiPlannerModeService.decide(provider_keys={"logistics-example"})
-    assert decision.is_off
+    assert decision.is_off is False
+    assert decision.use_openapi_selection is True
     bridge = OpenApiFirstSelectionBridgeService(logistics_repo)
-    assert (
-        bridge.plan_tool_calls(
-            "Onde esta a remessa 45871?",
-            allowed_action_ids=logistics_allowed_action_ids(logistics_actions),
-            catalog_actions=logistics_actions,
-            mode_decision=decision,
-        )
-        == []
+    planned = bridge.plan_tool_calls(
+        "Onde esta a remessa 45871?",
+        allowed_action_ids=logistics_allowed_action_ids(logistics_actions),
+        catalog_actions=logistics_actions,
+        mode_decision=decision,
     )
+    assert planned
+    assert planned[0]["arguments"]["parameters"]["id"] == "45871"
 
 
 def test_fail_closed_on_empty_plan_does_not_use_registry(monkeypatch, logistics_actions, logistics_repo):
@@ -397,22 +398,20 @@ def test_orchestration_on_mode_returns_tracking(monkeypatch, logistics_actions, 
     assert (planned[0]["arguments"].get("parameters") or {}).get("id") == "45871"
 
 
-def test_shadow_keeps_legacy_action_and_stores_compare(monkeypatch, logistics_actions, logistics_repo):
+def test_shadow_mode_aliases_to_on_and_compare_helper_still_works(
+    monkeypatch, logistics_actions, logistics_repo
+):
     monkeypatch.setattr(
         "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
         "shadow",
     )
+    assert OpenApiPlannerModeService.resolve_mode() == "on"
     bridge = OpenApiFirstSelectionBridgeService(logistics_repo)
     openapi = bridge.plan_tool_calls(
         "Onde esta a remessa 45871?",
         allowed_action_ids=logistics_allowed_action_ids(logistics_actions),
         catalog_actions=logistics_actions,
-        mode_decision=OpenApiPlannerModeDecision(
-            mode="shadow",
-            use_openapi_selection=False,
-            run_shadow_compare=True,
-            canary_matched=False,
-        ),
+        mode_decision=OpenApiPlannerModeService.decide(),
     )
     legacy = [
         {
@@ -424,6 +423,7 @@ def test_shadow_keeps_legacy_action_and_stores_compare(monkeypatch, logistics_ac
         legacy_planned=legacy,
         openapi_planned=openapi,
     )
+    assert openapi
     assert shadow["diverged"] is True
     assert shadow["selectionMode"] == "shadow"
 

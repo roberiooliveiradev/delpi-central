@@ -40,8 +40,9 @@
   },
   "modes": {
     "default": "on",
-    "allowed": ["off", "shadow", "canary", "on"],
-    "legacyOffNote": "mode=off is LEGACY_PENDING_REMOVAL — registry dispatch only for emergency rollback."
+    "allowed": ["on", "canary"],
+    "legacyAliases": ["off", "shadow"],
+    "legacyOffNote": "off/shadow are accepted as aliases of on — registry selection pipeline removed."
   },
   "decomposition": {
     "maxSubtasks": 4,

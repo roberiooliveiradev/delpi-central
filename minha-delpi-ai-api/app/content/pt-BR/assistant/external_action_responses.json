@@ -221,7 +221,10 @@
     "readPolicy": {
       "blockDestructive": true,
       "preferSafeMethod": "GET",
-      "blockedSensitivities": ["destructive", "write"],
+      "blockedSensitivities": [
+        "destructive",
+        "write"
+      ],
       "tieBreak": "next_safe",
       "clarifyOnNoSafeRival": true
     },
@@ -560,24 +563,6 @@
               "pattern": "%data%"
             }
           ]
-        }
-      ],
-      "markerPools": [
-        {
-          "id": "productionOrdersCatalog",
-          "anyOfTermKeys": [
-            "productionOtdDetailProductionContextTerms",
-            "productionPcpOrdersOpsTerms",
-            "productionOtdDetailTerms"
-          ],
-          "pathMarkersKey": "routeSuggestionPoolPathMarkers.productionOrdersCatalog"
-        },
-        {
-          "id": "productionDomain",
-          "anyOfTermKeys": [
-            "candidatePathPrioritization.productionTerms"
-          ],
-          "pathMarkersKey": "routeSuggestionPoolPathMarkers.production"
         }
       ]
     },
@@ -1539,7 +1524,7 @@
       ]
     }
   },
-    "selectionReasons": {
+  "selectionReasons": {
     "reviseLastQuery": "Reexecução da última consulta com filtros atualizados (filial/período) a partir do follow-up.",
     "reviseLastQueryBaseline": "Reexecução do período de referência para comparação YoY.",
     "reviseLastQueryPriorPeriod": "Consulta do mesmo intervalo no ano anterior (comparação YoY).",

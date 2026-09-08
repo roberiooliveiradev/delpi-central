@@ -1,6 +1,6 @@
 # OpenAPI-first — roteamento universal de Actions
 
-**Status:** arquitetura vigente (Fase 9: facades fail-closed com `mode=on`; registry só policies/`mode=off` rollback)  
+**Status:** arquitetura vigente — seleção só OpenAPI-first; `off`/`shadow` são aliases de `on`; pipeline `RegistryDispatch`/`markerPools` removido; registry permanece para policies SQL  
 **Escopo:** `minha-delpi-ai-api` + providers OpenAPI  
 **Checklist:** [`../architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md)  
 **Evals:** [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)

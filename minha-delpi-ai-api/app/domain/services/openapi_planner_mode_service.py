@@ -1,4 +1,4 @@
-"""Resolução de CHAT_OPENAPI_PLANNER_MODE (off|shadow|canary|on)."""
+"""Resolução de CHAT_OPENAPI_PLANNER_MODE (on|canary; off/shadow = alias de on)."""
 
 from __future__ import annotations
 
@@ -18,11 +18,12 @@ class OpenApiPlannerModeDecision:
 
     @property
     def is_off(self) -> bool:
-        return self.mode == "off"
+        return False
 
 
 class OpenApiPlannerModeService:
     _ALLOWED = frozenset({"off", "shadow", "canary", "on"})
+    _LEGACY_ALIASES = frozenset({"off", "shadow"})
 
     @classmethod
     def resolve_mode(cls) -> str:
@@ -33,6 +34,9 @@ class OpenApiPlannerModeService:
             default = OpenApiToolRoutingContentService.get("modes", "default", default="on")
             raw = str(default or "on").strip().lower()
         if raw not in cls._ALLOWED:
+            return "on"
+        # Registry selection removido — off/shadow não reativam o legado.
+        if raw in cls._LEGACY_ALIASES:
             return "on"
         return raw
 
@@ -60,22 +64,6 @@ class OpenApiPlannerModeService:
         mode = cls.resolve_mode()
         providers = {str(item).strip() for item in (provider_keys or []) if str(item).strip()}
         agent = str(agent_id or "").strip()
-
-        if mode == "off":
-            return OpenApiPlannerModeDecision(
-                mode=mode,
-                use_openapi_selection=False,
-                run_shadow_compare=False,
-                canary_matched=False,
-            )
-
-        if mode == "shadow":
-            return OpenApiPlannerModeDecision(
-                mode=mode,
-                use_openapi_selection=False,
-                run_shadow_compare=True,
-                canary_matched=False,
-            )
 
         if mode == "on":
             return OpenApiPlannerModeDecision(

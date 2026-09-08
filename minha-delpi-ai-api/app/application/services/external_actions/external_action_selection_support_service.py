@@ -25,10 +25,6 @@ class ExternalActionSelectionSupportService:
         allowed_action_ids: list[str],
         limit: int,
     ) -> list[dict]:
-        from app.domain.services.external_actions.external_action_candidate_discovery_service import (
-            ExternalActionCandidateDiscoveryService,
-        )
-
         allowed = {str(item) for item in allowed_action_ids}
         by_id: dict[str, dict] = {}
 
@@ -41,32 +37,7 @@ class ExternalActionSelectionSupportService:
             if action_id in allowed:
                 by_id[action_id] = action
 
-        markers = []
-        from app.domain.services.openapi_planner_mode_service import (
-            OpenApiPlannerModeService,
-        )
-
-        # Fase 9: markers de path não entram no discovery quando OpenAPI-first está on.
-        if OpenApiPlannerModeService.resolve_mode() != "on":
-            markers = ExternalActionCandidateDiscoveryService.resolve_path_markers(message)
-        list_actions = getattr(self.repository, "list_actions", None)
-        if markers and callable(list_actions):
-            for action in list_actions():
-                action_id = str(action.get("actionId") or "")
-                if action_id not in allowed or action_id in by_id:
-                    continue
-                path = str(action.get("path") or "").lower()
-                operation_id = str(action.get("operationId") or "").lower()
-                if any(
-                    marker.lower() in path or marker.lower() in operation_id
-                    for marker in markers
-                ):
-                    by_id[action_id] = action
-
-        results = list(by_id.values())
-        if markers:
-            return results[: max(limit, 120)]
-        return results[:limit]
+        return list(by_id.values())[:limit]
 
     def rank_candidates(
         self,
@@ -218,48 +189,9 @@ class ExternalActionSelectionSupportService:
         allowed_action_ids: list[str],
         method: str = "GET",
     ) -> list[dict]:
-        """LEGACY — prefer OpenAPI retrieval. Mantido só para mode=off / readiness."""
-        from app.domain.services.openapi_planner_mode_service import (
-            OpenApiPlannerModeService,
-        )
-
-        if OpenApiPlannerModeService.resolve_mode() == "on":
-            return []
-        token = str(path_token or "").lower().strip()
-        op_token = str(operation_token or "").lower().strip()
-        allowed = {str(item) for item in allowed_action_ids}
-
-        if not allowed or (not token and not op_token):
-            return []
-
-        matches: list[dict] = []
-        list_actions = getattr(self.repository, "list_actions", None)
-
-        if not callable(list_actions):
-            return []
-
-        for action in list_actions():
-            if str(action.get("actionId")) not in allowed:
-                continue
-
-            if str(action.get("method") or "").upper() != method.upper():
-                continue
-
-            path = str(action.get("path") or "").lower()
-            operation_id = str(action.get("operationId") or "").lower()
-
-            if token and token in path:
-                matches.append(action)
-                continue
-
-            if op_token and op_token in operation_id:
-                matches.append(action)
-                continue
-
-            if token and token.replace("-", "_") in operation_id:
-                matches.append(action)
-
-        return matches
+        """LEGACY stub — path-token lookup removido do motor de seleção."""
+        del path_token, operation_token, allowed_action_ids, method
+        return []
 
     def find_catalog_actions_by_path_token(
         self,

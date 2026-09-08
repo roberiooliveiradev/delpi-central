@@ -1,13 +1,11 @@
-"""Fase 9 — facades não caem no registry com mode=on."""
+"""Fase 9 — seleção só via OpenAPI-first (dispatch registry removido)."""
 
 from __future__ import annotations
 
-from app.application.services.external_actions.external_action_selection_dispatch_service import (
-    ExternalActionSelectionDispatchService,
-)
 from app.application.services.external_actions.external_action_selection_service import (
     ExternalActionSelectionService,
 )
+from app.domain.services.openapi_planner_mode_service import OpenApiPlannerModeService
 from tests.support.openapi_logistics_fixtures import (
     import_logistics_actions,
     logistics_allowed_action_ids,
@@ -33,25 +31,18 @@ class _Repo:
         return []
 
 
-def test_dispatch_returns_none_when_openapi_mode_on(monkeypatch):
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "on",
-    )
-    actions = import_logistics_actions()
-    for action in actions:
-        action["enabled"] = True
-    service = ExternalActionSelectionService(_Repo(actions))
-    assert (
-        service._dispatch.dispatch(
-            "Onde esta a remessa 45871?",
-            allowed_action_ids=logistics_allowed_action_ids(actions),
+def test_legacy_modes_alias_to_on(monkeypatch):
+    for raw in ("off", "shadow", "on"):
+        monkeypatch.setattr(
+            "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
+            raw,
         )
-        is None
-    )
+        assert OpenApiPlannerModeService.resolve_mode() == "on"
+        decision = OpenApiPlannerModeService.decide()
+        assert decision.use_openapi_selection is True
 
 
-def test_select_action_fail_closed_does_not_use_dispatch(monkeypatch):
+def test_select_action_uses_openapi_without_dispatch(monkeypatch):
     monkeypatch.setattr(
         "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
         "on",
@@ -60,12 +51,8 @@ def test_select_action_fail_closed_does_not_use_dispatch(monkeypatch):
     for action in actions:
         action["enabled"] = True
 
-    class BoomDispatch(ExternalActionSelectionDispatchService):
-        def dispatch(self, *args, **kwargs):
-            raise AssertionError("registry dispatch must not run with mode=on")
-
     service = ExternalActionSelectionService(_Repo(actions))
-    service._dispatch = BoomDispatch(service._route_selection, service._support)
+    assert not hasattr(service, "_dispatch")
     selected = service.select_action(
         "Onde esta a remessa 45871 e qual a previsao de entrega?",
         allowed_action_ids=logistics_allowed_action_ids(actions),
@@ -78,7 +65,7 @@ def test_select_action_fail_closed_does_not_use_dispatch(monkeypatch):
 def test_select_action_for_product_uses_openapi(monkeypatch):
     monkeypatch.setattr(
         "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "on",
+        "off",  # alias → on
     )
     actions = [
         {

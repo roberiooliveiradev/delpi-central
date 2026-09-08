@@ -1,5 +1,4 @@
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
-from app.domain.services.chat_route_context_service import ChatRouteContextService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
@@ -12,9 +11,6 @@ from app.application.services.external_actions.external_action_product_search_ro
 )
 from app.application.services.external_actions.external_action_selection_support_service import (
     ExternalActionSelectionSupportService,
-)
-from app.application.services.external_actions.external_action_selection_dispatch_service import (
-    ExternalActionSelectionDispatchService,
 )
 
 
@@ -29,10 +25,6 @@ class ExternalActionSelectionService:
             repository,
             semantic_ranker=semantic_ranker,
         )
-        self._dispatch = ExternalActionSelectionDispatchService(
-            self._route_selection,
-            self._support,
-        )
 
     def select_action_for_product(
         self,
@@ -46,63 +38,22 @@ class ExternalActionSelectionService:
         drawing_analysis_mode: bool = False,
         attachment_ids: list | None = None,
     ) -> dict | None:
+        del intent, route_segment, drawing_analysis_mode, attachment_ids
         code = ChatProductQueryIntentService.normalize_product_code(product_code)
 
         if not code or ChatAnalysisIntentService.looks_like_path_placeholder(code):
             return None
 
-        from app.domain.services.openapi_planner_mode_service import (
-            OpenApiPlannerModeService,
-        )
-
-        if OpenApiPlannerModeService.resolve_mode() == "on":
-            # OpenAPI-first: seleção pelo catálogo; código vai no message/contexto.
-            enriched = f"{message} {code}".strip()
-            return self._select_via_openapi_first(
-                enriched,
-                allowed_action_ids=allowed_action_ids or [],
-                previous_messages=previous_messages,
-                memory_snapshot={
-                    "executionContext": {
-                        "parameters": {"code": code, "productCode": code},
-                    }
-                },
-            )
-
-        resolved_intent = intent or ChatProductQueryIntentService.detect(message)
-        resolved_segment = route_segment or ChatRouteContextService.resolve_product_route_segment(
-            message
-        )
-        preferred_action_id = None
-
-        if previous_messages and resolved_intent == ChatProductQueryIntent.STOCK:
-            preferred_action_id = self._support.resolve_previous_external_action_id(
-                previous_messages,
-            )
-            if not preferred_action_id:
-                from app.domain.services.operational_route_registry_service import (
-                    OperationalRouteRegistryService,
-                )
-
-                stock_path_fragment = (
-                    OperationalRouteRegistryService.route_path_marker_for_segment("stock")
-                    or "/stock"
-                )
-                preferred_action_id = self._support.resolve_previous_external_action_id(
-                    previous_messages,
-                    path_fragment=stock_path_fragment,
-                )
-
-        return self._select_product_action(
-            message,
-            code,
+        enriched = f"{message} {code}".strip()
+        return self._select_via_openapi_first(
+            enriched,
             allowed_action_ids=allowed_action_ids or [],
-            intent=resolved_intent,
-            route_segment=resolved_segment,
-            preferred_action_id=preferred_action_id,
             previous_messages=previous_messages,
-            drawing_analysis_mode=drawing_analysis_mode,
-            attachment_ids=attachment_ids,
+            memory_snapshot={
+                "executionContext": {
+                    "parameters": {"code": code, "productCode": code},
+                }
+            },
         )
 
     def select_action(
@@ -115,25 +66,11 @@ class ExternalActionSelectionService:
         raw_message: str | None = None,
         memory_snapshot: dict | None = None,
     ) -> dict | None:
-        # Fase 9: com OpenAPI-first ativo, não usar registry/markers mesmo via facade.
-        from app.domain.services.openapi_planner_mode_service import (
-            OpenApiPlannerModeService,
-        )
-
-        if OpenApiPlannerModeService.resolve_mode() == "on":
-            return self._select_via_openapi_first(
-                message,
-                allowed_action_ids=allowed_action_ids or [],
-                previous_messages=previous_messages,
-                memory_snapshot=memory_snapshot,
-            )
-
-        return self._dispatch.dispatch(
+        del conversation_context, raw_message
+        return self._select_via_openapi_first(
             message,
             allowed_action_ids=allowed_action_ids or [],
-            conversation_context=conversation_context,
             previous_messages=previous_messages,
-            raw_message=raw_message,
             memory_snapshot=memory_snapshot,
         )
 
@@ -264,25 +201,11 @@ class ExternalActionSelectionService:
         allowed_action_ids: list[str] | None = None,
         previous_messages: list | None = None,
     ) -> dict | None:
-        """Resolve action pelo id do registry (compose multi-rota departamental)."""
-        from app.domain.services.openapi_planner_mode_service import (
-            OpenApiPlannerModeService,
-        )
-
-        if OpenApiPlannerModeService.resolve_mode() == "on":
-            return self._select_registry_route_via_openapi(
-                route_id,
-                message,
-                allowed_action_ids=allowed_action_ids or [],
-                previous_messages=previous_messages,
-            )
-
-        return self._route_selection.select_registry_route_id(
+        """Resolve action via metadados técnicos da rota + Action Catalog (OpenAPI-first)."""
+        return self._select_registry_route_via_openapi(
             route_id,
             message,
             allowed_action_ids=allowed_action_ids or [],
-            candidates_loader=self._list_allowed_candidates,
-            build_date_branch_parameters=self._build_date_branch_parameters,
             previous_messages=previous_messages,
         )
 
