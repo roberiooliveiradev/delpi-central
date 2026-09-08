@@ -285,3 +285,195 @@
   min-height: 44px;
   font-size: 1.1rem;
 }
+
+.dashboard-supplies-portal .sp-user-manual__hero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.dashboard-supplies-portal .sp-user-manual__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--sp-accent);
+}
+
+.dashboard-supplies-portal .sp-user-manual__subtitle,
+.dashboard-supplies-portal .sp-user-manual__scope-note {
+  margin: 0;
+  color: var(--sp-text-muted);
+  line-height: 1.5;
+  max-width: 46rem;
+}
+
+.dashboard-supplies-portal .sp-user-manual__scope-note {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--sp-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sp-accent) 6%, var(--sp-surface));
+  color: var(--sp-text);
+}
+
+.dashboard-supplies-portal .sp-user-manual__layout {
+  display: grid;
+  grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.dashboard-supplies-portal .sp-user-manual__toc {
+  position: sticky;
+  top: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--sp-border);
+  border-radius: 10px;
+  background: var(--sp-surface);
+}
+
+.dashboard-supplies-portal .sp-user-manual__toc-title {
+  margin: 0 0 0.65rem;
+  font-weight: 600;
+  color: var(--sp-title);
+}
+
+.dashboard-supplies-portal .sp-user-manual__toc ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dashboard-supplies-portal .sp-user-manual__toc-link {
+  appearance: none;
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sp-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 0.4rem 0.5rem;
+  min-height: 44px;
+}
+
+.dashboard-supplies-portal .sp-user-manual__toc-link:hover {
+  background: color-mix(in srgb, var(--sp-accent) 8%, var(--sp-surface));
+  color: var(--sp-accent);
+}
+
+.dashboard-supplies-portal .sp-user-manual__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.dashboard-supplies-portal .sp-user-manual__section {
+  scroll-margin-top: 1.25rem;
+}
+
+.dashboard-supplies-portal .sp-user-manual__section h2 {
+  margin: 0 0 0.75rem;
+  color: var(--sp-title);
+  font-size: 1.1rem;
+}
+
+.dashboard-supplies-portal .sp-user-manual__concepts,
+.dashboard-supplies-portal .sp-user-manual__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dashboard-supplies-portal .sp-user-manual__concepts li,
+.dashboard-supplies-portal .sp-user-manual__list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--sp-border);
+  border-radius: 10px;
+  background: var(--sp-surface);
+  line-height: 1.45;
+}
+
+.dashboard-supplies-portal .sp-user-manual__tool-link {
+  color: var(--sp-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dashboard-supplies-portal .sp-user-manual__table-wrap {
+  overflow-x: auto;
+}
+
+.dashboard-supplies-portal .sp-user-manual__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.dashboard-supplies-portal .sp-user-manual__table th,
+.dashboard-supplies-portal .sp-user-manual__table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--sp-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.dashboard-supplies-portal .sp-user-manual__table th {
+  color: var(--sp-title);
+  font-weight: 600;
+}
+
+.dashboard-supplies-portal .sp-user-manual__faq,
+.dashboard-supplies-portal .sp-user-manual__glossary {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dashboard-supplies-portal .sp-user-manual__faq-item,
+.dashboard-supplies-portal .sp-user-manual__glossary-item {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--sp-border);
+  border-radius: 10px;
+  background: var(--sp-surface);
+}
+
+.dashboard-supplies-portal .sp-user-manual__faq-item dt,
+.dashboard-supplies-portal .sp-user-manual__glossary-item dt {
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+  color: var(--sp-title);
+}
+
+.dashboard-supplies-portal .sp-user-manual__faq-item dd,
+.dashboard-supplies-portal .sp-user-manual__glossary-item dd {
+  margin: 0;
+  color: var(--sp-text-muted);
+  line-height: 1.45;
+}
+
+@media (max-width: 768px) {
+  .dashboard-supplies-portal .sp-user-manual__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-supplies-portal .sp-user-manual__toc {
+    position: static;
+  }
+}

@@ -11,10 +11,10 @@ import { SuppliesSessionProvider, useSuppliesSession } from "./app/SuppliesSessi
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
 import { SuppliesStateBanner } from "./app/suppliesUi";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
-import { HelpPage } from "./pages/HelpPage";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
+import { UserManualPage } from "./features/help/UserManualPage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -133,7 +133,7 @@ function AppRoutes({
   if (view === "home") {
     content = <HomePage basePath={basePath} />;
   } else if (view === "help") {
-    content = <HelpPage basePath={basePath} />;
+    content = <UserManualPage basePath={basePath} />;
   } else {
     const placeholder = PLACEHOLDER[view];
     content = placeholder ? (

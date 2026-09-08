@@ -1,7 +1,7 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (set/2026):** baseline + **E1–E3 concluídas (2026-09-08)** · MFE `plugins/supplies` + GATE-RBAC local  
-> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = **E4 (Home + Ajuda)**  
+> **Status (set/2026):** baseline + **E1–E4 concluídas (2026-09-08)** · MFE `plugins/supplies` + GATE-RBAC local  
+> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = **E5 (Overview)**  
 > **Nome ao usuário:** **Portal Suprimentos**  
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies`  
 > **API:** `supplies-api` · gateway `/apps/supplies-api/`  
@@ -22,6 +22,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | **E1 (descoberta + freeze)** | **concluída 2026-09-08** |
 | **E2 (supplies-api foundation)** | **concluída 2026-09-08** — Flask, GATE-AUTHZ, schema `supplies`, gateway api-delpi, `/me/capabilities` |
 | **E3 (MFE + RBAC coexistência)** | **concluída 2026-09-08** — `plugins/supplies`, client BFF-only, shell capability-driven, manifest Core, papéis canônicos |
+| **E4 (Home + Ajuda inicial)** | **concluída 2026-09-08** — `/home/attention`, Home capability-driven, Manual/Quero→onde/FAQ/glossário |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** (fail-closed na fronteira; não usa claims JWT) |
 | Framework supplies-api | Flask — pacote `supplies-api/` no monorepo |
@@ -30,7 +31,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | KPIs Overview P0 | **7 CONFIRMADOS**; cobertura/PO-LATE fora do Overview |
 | Manifest draft | **`schemaVersion 1.0.0`** registrado no Core local |
 | P-13 | **FECHADO** — Core `/me.id` UUID |
-| Implementação MFE | **iniciada** — scaffold + shell E3; Home attention = E4 |
+| Implementação MFE | **Home E4** — attention BFF + catálogo; Overview = E5 |
 
 ### Gates
 
@@ -44,9 +45,9 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ### Próximo
 
-**E4** (Home `/home/attention` + Ajuda esqueleto completo) — somente com autorização explícita.
+**E5** (Overview BFF/KPIs live) — somente com autorização explícita.
 
-Dump Core de produção **não** bloqueia E4; bloqueia decisão final de redirects/BIs no cutover.
+Dump Core de produção **não** bloqueia E5 de composição; bloqueia decisão final de redirects/BIs no cutover.
 
 ---
 
@@ -153,7 +154,7 @@ Regras:
 | **GATE-AUTHZ** | Core-first; fail-closed na fronteira; **PASS E2.S2** |
 | **GATE-E1** | **PASS** (2026-09-08) — dump local + papéis + KPIs; residual dump prod antes do cutover |
 | **GATE-ARCH** | **PASS** (2026-09-08) — ADRs + Manifest Draft `1.0.0` |
-| **GATE-RBAC** | permissions canônicas + migração de papéis + `/me/apps`/`/me/routes` planejados |
+| **GATE-RBAC** | permissions canônicas + papéis de coexistência + `/me`/`/me/apps` (rotas embutidas) |
 | **GATE-API** | supplies-api saudável e MFE sem api-delpi direto |
 | **GATE-MFE** | shell kit-first e CSS isolado |
 | **GATE-FEATURE** | contrato + authz + Ajuda + testes |
