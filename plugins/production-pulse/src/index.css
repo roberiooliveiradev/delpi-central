@@ -1970,4 +1970,10 @@
   border-color: var(--pp-success);
 }
 
+.pp-muted {
+  color: var(--pp-text-muted);
+  font-size: var(--pp-font-sm);
+  margin: 0 0 0.75rem;
+}
+
 

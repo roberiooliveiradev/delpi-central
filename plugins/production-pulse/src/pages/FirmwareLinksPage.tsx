@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import {
-  fetchDevices,
-  fetchFirmwares,
-  type FirmwareCatalogItem,
-} from "../api/productionPulseApi";
+import { fetchDevices, fetchFirmwares } from "../api/productionPulseApi";
+import { FirmwareDeviceLinkCanvas } from "../components/FirmwareDeviceLinkCanvas";
 import {
   PpActionButton,
   PpNativeSelectField,
@@ -21,6 +18,7 @@ import {
 } from "../constants/routes";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
+import { uniqueFirmwareFamilies } from "../utils/firmwareLinkGraph";
 import { navigateProductionPulse } from "../utils/navigation";
 
 type FirmwareLinksPageProps = {
@@ -29,48 +27,32 @@ type FirmwareLinksPageProps = {
   permissions: ProductionPulsePermissionFlags;
 };
 
-function uniqueFirmwareFamilies(items: FirmwareCatalogItem[]): FirmwareCatalogItem[] {
-  const byKey = new Map<string, FirmwareCatalogItem>();
-  for (const item of items) {
-    const prev = byKey.get(item.firmwareKey);
-    if (!prev) {
-      byKey.set(item.firmwareKey, item);
-      continue;
-    }
-    const prevAt = prev.publishedAt ? Date.parse(prev.publishedAt) : 0;
-    const nextAt = item.publishedAt ? Date.parse(item.publishedAt) : 0;
-    if (nextAt >= prevAt) byKey.set(item.firmwareKey, item);
-  }
-  return [...byKey.values()].sort((a, b) => a.firmwareKey.localeCompare(b.firmwareKey));
-}
-
 export function FirmwareLinksPage({
   branch: initialBranch,
   highlightFirmwareKey,
   permissions,
 }: FirmwareLinksPageProps) {
   const [branch, setBranch] = useState(initialBranch || "01");
-  const [firmwares, setFirmwares] = useState<FirmwareCatalogItem[]>([]);
+  const [firmwaresRaw, setFirmwaresRaw] = useState<
+    Awaited<ReturnType<typeof fetchFirmwares>>
+  >([]);
   const [devices, setDevices] = useState<DeviceListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(
     highlightFirmwareKey
-      ? `Firmware ${highlightFirmwareKey} publicado — ligue os IoTs abaixo.`
+      ? `Firmware ${highlightFirmwareKey} publicado — ligue os IoTs no canvas.`
       : null,
   );
 
-  const families = useMemo(() => uniqueFirmwareFamilies(firmwares), [firmwares]);
+  const families = useMemo(() => uniqueFirmwareFamilies(firmwaresRaw), [firmwaresRaw]);
 
   const reload = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [fw, devs] = await Promise.all([
-        fetchFirmwares(),
-        fetchDevices({ branch }),
-      ]);
-      setFirmwares(fw);
+      const [fw, devs] = await Promise.all([fetchFirmwares(), fetchDevices({ branch })]);
+      setFirmwaresRaw(fw);
       setDevices(devs);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao carregar conexões.");
@@ -144,7 +126,7 @@ export function FirmwareLinksPage({
 
       {notice ? (
         <PpStateBox
-          variant="success"
+          variant="empty"
           title="Publicação"
           message={notice}
           action={
@@ -160,47 +142,17 @@ export function FirmwareLinksPage({
       ) : error ? (
         <PpStateBox variant="error" title="Erro" message={error} />
       ) : (
-        <div className="pp-ota-links-columns">
-          <PpSectionCard title={`Firmwares (${families.length})`} hint={PP_HELP.ota.catalogList}>
-            {families.length === 0 ? (
-              <PpStateBox variant="empty" title="Nenhum firmware" message={PP_HELP.ota.catalogEmpty} />
-            ) : (
-              <ul className="pp-list-plain">
-                {families.map((item) => (
-                  <li key={item.firmwareKey}>
-                    <strong>{item.firmwareKey}</strong>
-                    <span>
-                      {" "}
-                      · {item.displayName || item.version} · driver {item.driverKey}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </PpSectionCard>
-          <PpSectionCard title={`IoTs filial ${branch} (${devices.length})`}>
-            {devices.length === 0 ? (
-              <PpStateBox
-                variant="empty"
-                title="Nenhum device"
-                message="Cadastre dispositivos nesta filial para amarrar ao firmware."
-              />
-            ) : (
-              <ul className="pp-list-plain">
-                {devices.map((device) => (
-                  <li key={device.id}>
-                    <strong>{device.name}</strong>
-                    <span>
-                      {" "}
-                      · {device.ipAddress} · FW{" "}
-                      {device.assignedFirmwareKey || `(via driver) ${device.driverKey}`}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </PpSectionCard>
-        </div>
+        <PpSectionCard
+          title={`Canvas · ${families.length} firmwares · ${devices.length} IoTs`}
+          hint={PP_HELP.ota.catalogList}
+        >
+          <FirmwareDeviceLinkCanvas
+            families={families}
+            devices={devices}
+            canManage={permissions.canManageDevices}
+            onLinked={() => void reload()}
+          />
+        </PpSectionCard>
       )}
     </div>
   );

@@ -88,6 +88,8 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareJobsPage.tsx")).toMatch(/PpNativeSelectField/);
     expect(readRelative("pages/PanelPage.tsx")).toMatch(/FirmwareOtaKpiStrip/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/fetchDevices/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/FirmwareDeviceLinkCanvas/);
+    expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/@xyflow\/react/);
     expect(readRelative("components/detail/DeviceFirmwareTab.tsx")).toMatch(
       /createFirmwareUpdateJob/,
     );
