@@ -1,6 +1,12 @@
 /** Evento para reexpandir a sidebar do portal (ex.: MFE detectou menu recolhido). */
 export const DELPI_SIDEBAR_EXPAND_EVENT = "DELPI_SIDEBAR_EXPAND";
 
+export {
+  PORTAL_SIDEBAR_DESKTOP_SLIDE_MS,
+  shouldUseSidebarDesktopSlide,
+  resolveSidebarDesktopSlideClassNames,
+} from "./sidebarDesktopSlide";
+
 const SIDEBAR_EDGE_HOTSPOT_SELECTOR = ".sidebar-edge-hotspot";
 
 export const PORTAL_SIDEBAR_EDGE_HOLD_MS = 500;

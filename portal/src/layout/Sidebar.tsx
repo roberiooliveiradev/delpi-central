@@ -49,6 +49,7 @@ import {
 import { isLaunchableApp } from "../utils/launchableApps";
 import { isLauncherAppContextActive } from "../components/appLauncherAppearance";
 import { useSidebarMobileSwipeOpen } from "./useSidebarMobileSwipeOpen";
+import { useSidebarDesktopSlide } from "./useSidebarDesktopSlide";
 
 const SIDEBAR_EDGE_LABEL_DESKTOP = "Abrir menu lateral";
 const SIDEBAR_EDGE_LABEL_MOBILE = "Abrir menu";
@@ -203,21 +204,33 @@ export const Sidebar = () => {
       );
   }, []);
 
-  const openSidebarFromEdge = useCallback(() => {
-    if (edgeAutoHideTimerRef.current) {
-      clearTimeout(edgeAutoHideTimerRef.current);
-      edgeAutoHideTimerRef.current = null;
-    }
-    setCollapsed(false);
-    setShowEdgeExpand(false);
-  }, []);
-
   const clearEdgeAutoHideTimer = useCallback(() => {
     if (edgeAutoHideTimerRef.current) {
       clearTimeout(edgeAutoHideTimerRef.current);
       edgeAutoHideTimerRef.current = null;
     }
   }, []);
+
+  const clearEdgeUiBeforeExpand = useCallback(() => {
+    clearEdgeAutoHideTimer();
+    setShowEdgeExpand(false);
+  }, [clearEdgeAutoHideTimer]);
+
+  const {
+    collapseSidebar,
+    expandSidebar,
+    onSidebarTransitionEnd,
+    slideClassNames,
+    showPanelContent,
+    showEdgeHotspot,
+  } = useSidebarDesktopSlide({
+    collapsed,
+    setCollapsed,
+    isNarrowViewport,
+    onBeforeExpand: clearEdgeUiBeforeExpand,
+  });
+
+  const openSidebarFromEdge = expandSidebar;
 
   const scheduleEdgeAutoHide = useCallback(() => {
     clearEdgeAutoHideTimer();
@@ -594,7 +607,7 @@ export const Sidebar = () => {
           type="button"
           className="sidebar-mobile-backdrop"
           aria-label="Fechar menu lateral"
-          onClick={() => setCollapsed(true)}
+          onClick={collapseSidebar}
         />
       ) : null}
 
@@ -606,7 +619,7 @@ export const Sidebar = () => {
         />
       ) : null}
 
-      {collapsed ? (
+      {showEdgeHotspot ? (
         <button
           ref={expandControlRef}
           type="button"
@@ -634,12 +647,14 @@ export const Sidebar = () => {
         className={[
           "sidebar",
           collapsed ? "collapsed" : "",
+          ...slideClassNames,
           isSwipeDragging ? "is-swipe-dragging" : "",
           isCompactSidebar ? "sidebar--compact" : "",
         ]
           .filter(Boolean)
           .join(" ")}
         ref={containerRef}
+        onTransitionEnd={onSidebarTransitionEnd}
         style={
           swipeOffsetPx > 0
             ? ({
@@ -648,7 +663,7 @@ export const Sidebar = () => {
             : undefined
         }
       >
-        {!collapsed && (
+        {showPanelContent && (
           <>
             <div className="sidebar-header">
               <div
@@ -671,7 +686,7 @@ export const Sidebar = () => {
 
               <button
                 className="collapse-btn"
-                onClick={() => setCollapsed(true)}
+                onClick={collapseSidebar}
                 type="button"
               >
                 <ChevronLeft size={18} />

@@ -42,6 +42,16 @@ describe("sidebarTransition (structural)", () => {
     }
   });
 
+  it("regra .sidebar desktop anima transform (slide sem mexer no flex)", () => {
+    const transitions = [...desktop.matchAll(/transition\s*:\s*([^;]+);/g)].map(
+      (m) => m[1],
+    );
+    assert.ok(
+      transitions.some((value) => /\btransform\b/.test(value)),
+      "desktop deve permitir transition de transform",
+    );
+  });
+
   it("irmão: .collapse-btn pode continuar com transition: all", () => {
     assert.match(css, /\.collapse-btn\s*\{[^}]*transition\s*:\s*all\b/s);
   });
@@ -49,5 +59,11 @@ describe("sidebarTransition (structural)", () => {
   it("mobile drawer ainda pode usar transform", () => {
     assert.match(css, /@media\s*\(max-width:\s*1024px\)/);
     assert.match(css, /transform:\s*translateX/);
+  });
+
+  it("desktop exit/enter usam overlay com transform (não width)", () => {
+    assert.match(css, /@media\s*\(min-width:\s*1025px\)/);
+    assert.match(css, /\.is-desktop-exit/);
+    assert.match(css, /\.is-desktop-enter/);
   });
 });

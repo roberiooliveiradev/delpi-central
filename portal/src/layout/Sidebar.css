@@ -22,14 +22,16 @@
   justify-content: space-between;
   padding: 20px;
   /* Sem width/padding/border: animações de layout empurram .main-area
-     e disparam loop Recharts (#185) nos MFEs. */
+     e disparam loop Recharts (#185) nos MFEs. Slide visual = transform. */
   transition:
     background-color 0.35s ease,
     box-shadow 0.35s ease,
-    color 0.35s ease;
+    color 0.35s ease,
+    transform 0.3s ease;
   position: relative;
   z-index: 40;
   overflow: visible;
+  transform: translateX(0);
 }
 
 .sidebar.collapsed {
@@ -39,6 +41,49 @@
   padding: 0;
   border: none;
   overflow: hidden;
+}
+
+/* Desktop: overlay desliza após o flex já ter colapsado (um único resize). */
+@media (min-width: 1025px) {
+  .sidebar.collapsed.is-desktop-exit {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100dvh;
+    width: 300px;
+    min-width: 300px;
+    max-width: 300px;
+    padding: 20px;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+    z-index: 50;
+    transform: translateX(0);
+    box-shadow: var(--shadow);
+    pointer-events: none;
+  }
+
+  .sidebar.collapsed.is-desktop-exit.is-desktop-exit-leaving {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.is-desktop-enter {
+    transform: translateX(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition:
+      background-color 0.35s ease,
+      box-shadow 0.35s ease,
+      color 0.35s ease;
+  }
+
+  .sidebar.is-desktop-enter,
+  .sidebar.collapsed.is-desktop-exit,
+  .sidebar.collapsed.is-desktop-exit.is-desktop-exit-leaving {
+    transform: none;
+  }
 }
 
 .sidebar-mobile-backdrop {
