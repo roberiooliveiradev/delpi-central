@@ -1,0 +1,33 @@
+name: Cursor Rules Governance
+
+on:
+  pull_request:
+    paths:
+      - ".cursor/rules/**"
+      - "scripts/audit_cursor_rules.py"
+      - ".github/workflows/cursor-rules-governance.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".cursor/rules/**"
+      - "scripts/audit_cursor_rules.py"
+      - ".github/workflows/cursor-rules-governance.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Audit Cursor rules
+        run: python scripts/audit_cursor_rules.py
