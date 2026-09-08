@@ -223,9 +223,11 @@ a.delpi-ui-action-btn--link:visited {
 
 .delpi-ui-form-actions {
   display: flex;
-  gap: 12px;
+  /* Espaçamento via margem irmã (mais confiável visualmente que gap sozinho). */
+  gap: 0;
   flex-wrap: wrap;
   align-items: center;
+  row-gap: 12px;
 }
 
 .delpi-ui-form-actions--end {
@@ -234,23 +236,30 @@ a.delpi-ui-action-btn--link:visited {
 
 /* Segurança: ActionButtons irmãos fora de form-actions não ficam colados */
 .delpi-ui-action-btn + .delpi-ui-action-btn {
-  margin-inline-start: 12px;
+  margin-inline-start: 16px;
 }
 
 .delpi-ui-form-actions > .delpi-ui-action-btn + .delpi-ui-action-btn,
 .delpi-ui-form-actions--end > .delpi-ui-action-btn + .delpi-ui-action-btn {
-  margin-inline-start: 0;
+  margin-inline-start: 16px;
 }
 
 @media (max-width: 768px) {
   .delpi-ui-form-actions,
   .delpi-ui-form-actions--end {
     width: 100%;
+    column-gap: 12px;
   }
 
   .delpi-ui-form-actions > *,
   .delpi-ui-form-actions--end > * {
     flex: 1 1 auto;
     justify-content: center;
+  }
+
+  /* Com flex:1 o margin ainda separa os CTAs no mobile */
+  .delpi-ui-form-actions > .delpi-ui-action-btn + .delpi-ui-action-btn,
+  .delpi-ui-form-actions--end > .delpi-ui-action-btn + .delpi-ui-action-btn {
+    margin-inline-start: 12px;
   }
 }
