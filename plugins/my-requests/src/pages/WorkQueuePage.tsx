@@ -13,6 +13,10 @@ import {
   REQUEST_LIST_PAGE_SIZE,
   type RequestListFiltersState,
 } from "../content/requestListFilters";
+import {
+  myRequestsPath,
+  navigateMyRequestsPath,
+} from "../hooks/myRequestsNavigation";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import { canCreateAnyRequest } from "../security/requestsAccess";
 import type { RequestSummary, RequestTypeSummary } from "../types/requests";
@@ -96,9 +100,12 @@ export function WorkQueuePage() {
         header: "Número",
         render: (row) => (
           <ActionButton
-            href={`/apps/my-requests/requests/${row.id}`}
+            type="button"
             title={`Abrir ${row.request_number}`}
             variant="link"
+            onClick={() =>
+              navigateMyRequestsPath(myRequestsPath({ requestId: row.id }))
+            }
           >
             {row.request_number}
           </ActionButton>

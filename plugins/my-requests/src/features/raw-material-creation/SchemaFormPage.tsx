@@ -9,6 +9,10 @@ import {
   requiresBranchField,
   showsBranchField,
 } from "../../domain/branchScope";
+import {
+  myRequestsPath,
+  navigateMyRequestsPath,
+} from "../../hooks/myRequestsNavigation";
 import { useRequestsPermissions } from "../../security/RequestsPermissionsContext";
 import type { RequestTypeSummary } from "../../types/requests";
 import {
@@ -77,7 +81,7 @@ export function SchemaFormPage({ requestType, lockedBranch, onCancel }: SchemaFo
         idempotencyKey: crypto.randomUUID(),
         payload,
       });
-      window.location.assign(`/apps/my-requests/requests/${created.id}`);
+      navigateMyRequestsPath(myRequestsPath({ requestId: created.id }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível criar a solicitação.");
       setBusy(false);

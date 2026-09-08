@@ -2,6 +2,10 @@ import type { ReactNode } from "react";
 import { ClipboardList, ListChecks, PlusCircle, Settings } from "lucide-react";
 
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  myRequestsPath,
+  navigateMyRequestsPath,
+} from "../hooks/myRequestsNavigation";
 import { resolveTopBarActiveId } from "../hooks/resolveTopBarActiveId";
 import { useMyRequestsRouterPath } from "../hooks/useMyRequestsRouterPath";
 import { canCreateAnyRequest } from "../security/requestsAccess";
@@ -14,10 +18,6 @@ type AppShellProps = {
   children: ReactNode;
   canCreate?: boolean;
 };
-
-function navigate(href: string) {
-  window.location.assign(href);
-}
 
 export function AppShell({ title, subtitle, children, canCreate = false }: AppShellProps) {
   const access = useRequestsPermissions();
@@ -32,14 +32,14 @@ export function AppShell({ title, subtitle, children, canCreate = false }: AppSh
       label: "Minhas solicitações",
       icon: <ClipboardList size={18} aria-hidden />,
       title: `Minhas solicitações. ${MY_REQUESTS_HELP_TOOLTIPS.mine.section}`,
-      onSelect: () => navigate("/apps/my-requests/mine"),
+      onSelect: () => navigateMyRequestsPath(myRequestsPath("mine")),
     },
     {
       id: "work_queue",
       label: "Fila de trabalho",
       icon: <ListChecks size={18} aria-hidden />,
       title: `Fila de trabalho. ${MY_REQUESTS_HELP_TOOLTIPS.workQueue.section}`,
-      onSelect: () => navigate("/apps/my-requests/work-queue"),
+      onSelect: () => navigateMyRequestsPath(myRequestsPath("work-queue")),
     },
     ...(showCreate
       ? [
@@ -48,7 +48,7 @@ export function AppShell({ title, subtitle, children, canCreate = false }: AppSh
             label: "Nova solicitação",
             icon: <PlusCircle size={18} aria-hidden />,
             title: `Nova solicitação. ${MY_REQUESTS_HELP_TOOLTIPS.new.section}`,
-            onSelect: () => navigate("/apps/my-requests/new"),
+            onSelect: () => navigateMyRequestsPath(myRequestsPath("new")),
           },
         ]
       : []),
@@ -59,7 +59,7 @@ export function AppShell({ title, subtitle, children, canCreate = false }: AppSh
             label: "Administração",
             icon: <Settings size={18} aria-hidden />,
             title: `Administração. ${MY_REQUESTS_HELP_TOOLTIPS.admin.section}`,
-            onSelect: () => navigate("/apps/my-requests/admin"),
+            onSelect: () => navigateMyRequestsPath(myRequestsPath("admin")),
           },
         ]
       : []),

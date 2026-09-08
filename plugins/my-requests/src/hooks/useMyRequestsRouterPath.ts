@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 
 const BASE = "/apps/my-requests";
 
@@ -6,15 +6,32 @@ export function useMyRequestsRouterPath(
   pathnameFromHost?: string,
   searchFromHost?: string,
 ): { pathname: string; search: string } {
-  return useMemo(() => {
-    if (typeof window === "undefined") {
-      return { pathname: pathnameFromHost || BASE, search: searchFromHost || "" };
-    }
-    return {
-      pathname: pathnameFromHost || window.location.pathname || BASE,
-      search: searchFromHost ?? window.location.search ?? "",
+  const [routeEpoch, setRouteEpoch] = useState(0);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncFromBrowser = () => {
+      setRouteEpoch((value) => value + 1);
     };
-  }, [pathnameFromHost, searchFromHost]);
+
+    window.addEventListener("popstate", syncFromBrowser);
+    return () => window.removeEventListener("popstate", syncFromBrowser);
+  }, []);
+
+  void routeEpoch;
+
+  if (typeof window !== "undefined" && window.location?.pathname) {
+    return {
+      pathname: window.location.pathname || BASE,
+      search: window.location.search ?? "",
+    };
+  }
+
+  return {
+    pathname: pathnameFromHost || BASE,
+    search: searchFromHost || "",
+  };
 }
 
 export function resolveInternalRoute(pathname: string): {

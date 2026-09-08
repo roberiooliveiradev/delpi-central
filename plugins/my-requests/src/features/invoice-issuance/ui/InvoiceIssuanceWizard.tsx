@@ -31,6 +31,10 @@ import {
   requiresBranchField,
   showsBranchField,
 } from "../../../domain/branchScope";
+import {
+  myRequestsPath,
+  navigateMyRequestsPath,
+} from "../../../hooks/myRequestsNavigation";
 import type { RequestTypeSummary } from "../../../types/requests";
 
 export const WIZARD_STEPS = [
@@ -178,7 +182,7 @@ export function InvoiceIssuanceWizard({
           })),
         },
       });
-      window.location.assign(`/apps/my-requests/requests/${created.id}`);
+      navigateMyRequestsPath(myRequestsPath({ requestId: created.id }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível criar a solicitação.");
       setBusy(false);
