@@ -7,6 +7,13 @@
 > **UI kit obrigatório:** `@delpi/plugin-ui` via Module Federation  
 > **Docs irmãs:** [WIREFRAMES.md](./WIREFRAMES.md) · [MANUAL-USUARIO.md](./MANUAL-USUARIO.md) · [PLAYBOOK.md](./PLAYBOOK.md) · [plugin README](../../../plugins/my-requests/README.md)
 
+### Evidências E20 (S0–S9)
+
+- Código: `MyRequestsTopBar` + `presentationLabels` + `helpTooltips` user-facing; ActionBar/listas/detalhe/painéis/admin consomem labels.
+- Testes/build: `cd plugins/my-requests && npm test && npm run typecheck && npm run build` — verde (39 testes).
+- Rebuild MFE: `./infra/scripts/up-dev-sequential.sh --fase mfe --build my-requests` — `delpi-my-requests` recriado.
+- Smoke visual §30 (claro/escuro/desktop/mobile): validar no Portal federado após rebuild — TopBar collapse, labels PT, Ajuda por tela.
+
 Use este arquivo como **brief único de implementação** para elevar toda a experiência do plugin **Minhas Solicitações**. O trabalho não se limita às telas dos prints: deve revisar o shell, todas as rotas, formulários especializados/genéricos, detalhe e todos os painéis internos.
 
 ---
