@@ -380,24 +380,23 @@
 .profile-person__photo-stack {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  width: max-content;
-  max-width: 100%;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }
 
 .profile-person__avatar-wrap {
   position: relative;
-  width: 112px;
-  height: 112px;
+  width: 144px;
+  height: 144px;
 }
 
 .profile-person__avatar {
   position: relative;
-  width: 112px;
-  height: 112px;
+  width: 144px;
+  height: 144px;
   padding: 0;
-  border-radius: 28px;
+  border-radius: 32px;
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -430,7 +429,7 @@
 }
 
 .profile-person__avatar-initials {
-  font-size: 32px;
+  font-size: 40px;
   font-weight: 700;
   color: var(--primary);
 }
@@ -486,7 +485,8 @@
   margin: 0;
   font-size: 12px;
   color: var(--text-muted);
-  max-width: 18ch;
+  text-align: center;
+  max-width: 22ch;
 }
 
 .profile-person__section-label,
