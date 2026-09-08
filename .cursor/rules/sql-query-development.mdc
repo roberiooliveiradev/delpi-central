@@ -1,6 +1,6 @@
 ---
-description: SQL TOTVS/SQL Server — melhores práticas, medição de peso/latência e alívio de carga
-alwaysApply: true
+description: SQL TOTVS/SQL Server — carregar ao criar/revisar queries, repositórios, cache, índices, performance ou Saúde SQL
+alwaysApply: false
 ---
 
 # Desenvolvimento de queries SQL
