@@ -556,6 +556,11 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(lines, /navigateAnalyticsOpportunityDetail/);
     assert.match(lines, /Ver OV \{proposalNumber\}/);
     assert.match(lines, /buildOpenOrdersContextSearch/);
+    assert.match(lines, /useQuantityDisplayMode/);
+    assert.match(lines, /formatQuantity|resolveDisplayQuantity/);
+    assert.match(lines, /key:\s*"unit"/);
+    assert.match(lines, /Milheiro/);
+    assert.match(lines, /Peças/);
     assert.match(header, /canViewProposals/);
     assert.match(header, /Propostas gerais/);
     assert.doesNotMatch(header, /Ver pedidos/);

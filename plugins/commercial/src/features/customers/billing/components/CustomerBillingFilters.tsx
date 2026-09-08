@@ -177,6 +177,8 @@ export function CustomerBillingFilters({
             onChange={onComparePriorYearChange}
             label={ANALYTICS_CONTENT.overview.comparePriorYear}
             hint={CM_HELP.customerDetail.billingSeriesAccount}
+            hintPlacement="tooltip"
+            hintAriaLabel="Ajuda: comparar ano anterior"
             disabled={disabled}
           />
         </div>

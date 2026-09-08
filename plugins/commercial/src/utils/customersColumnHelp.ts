@@ -30,6 +30,7 @@ export const CUSTOMER_ORDER_LINES_COLUMN_HELP: Record<string, string> = {
   ordered: CM_HELP.customerDetail.orderLinesColumns.ordered,
   delivered: CM_HELP.customerDetail.orderLinesColumns.delivered,
   balance: CM_HELP.customerDetail.orderLinesColumns.balance,
+  unit: CM_HELP.customerDetail.orderLinesColumns.unit,
   delivery: CM_HELP.customerDetail.orderLinesColumns.delivery,
   "open-value": CM_HELP.customerDetail.orderLinesColumns.openValue,
   delay: CM_HELP.customerDetail.orderLinesColumns.delay,

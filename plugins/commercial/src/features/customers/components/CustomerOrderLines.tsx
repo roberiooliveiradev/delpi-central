@@ -4,12 +4,21 @@ import {
   CommercialDataRecordCard,
   CommercialDataTable,
   CommercialEntityLink,
+  CommercialSectionHintLabel,
+  CommercialSegmentToggle,
+  cmDataTableClassNames,
 } from "../../../app/commercialUi";
+import { CM_HELP } from "../../../content/helpTooltips";
+import { useQuantityDisplayMode } from "../../../hooks/useQuantityDisplayMode";
 import {
   CUSTOMER_ORDER_LINES_COLUMN_HELP,
   withColumnHelp,
 } from "../../../utils/customersColumnHelp";
-import { formatCurrency } from "../../../utils/format";
+import { formatCurrency, formatQuantity } from "../../../utils/format";
+import {
+  formatDisplayQuantity,
+  resolveDisplayQuantity,
+} from "../../../utils/displayQuantity";
 import { formatDisplayDate, getDeliveryOverdueDays, isDeliveryOverdue } from "../../../utils/dates";
 import { tableColumnLabel } from "../../../utils/tableColumns";
 import type { OpenOrdersTotvsItem } from "../../../types/openOrdersTotvs";
@@ -32,6 +41,7 @@ import { buildOpenOrdersContextSearch } from "../../../utils/openOrdersDeepLink"
 import { getLineOpForecast } from "../../../utils/opAllocation";
 import { buildOrderOpportunityContextSearch } from "../utils/customerAccountActions";
 
+const numericColClass = cmDataTableClassNames.colNumeric;
 type CustomerOrderLinesProps = {
   lines: readonly OpenOrdersTotvsItem[];
   orderKey: string;
@@ -57,6 +67,7 @@ export function CustomerOrderLines({
   canViewAnalytics,
   returnNav,
 }: CustomerOrderLinesProps) {
+  const { mode, setMode } = useQuantityDisplayMode();
   const regionId = `cm-order-lines-${orderKey.replace(/\|/g, "-")}`;
   const rows = Array.from(lines);
   const rowKey = (line: OpenOrdersTotvsItem, index: number) =>
@@ -66,6 +77,11 @@ export function CustomerOrderLines({
     if (!returnNav) return path;
     return buildHrefWithReturn(path, returnNav, basePath);
   };
+  const formatLineQty = (qty: number | null | undefined, unit: string | null | undefined) =>
+    formatQuantity(resolveDisplayQuantity(qty, unit, mode).value);
+  const formatLineUnit = (qty: number | null | undefined, unit: string | null | undefined) =>
+    resolveDisplayQuantity(qty, unit, mode).unit;
+
   const actions = (line: OpenOrdersTotvsItem) => {
     const canOpenOrder = Boolean(
       line.filial?.trim() && line.pedido?.trim() && line.linha?.trim(),
@@ -186,19 +202,28 @@ export function CustomerOrderLines({
       key: "ordered",
       header: "Pedida",
       align: "right",
-      render: (line) => toFiniteNumber(line.quantidade).toLocaleString("pt-BR"),
+      className: numericColClass,
+      render: (line) => formatLineQty(line.quantidade, line.unidade),
     },
     {
       key: "delivered",
       header: "Entregue",
       align: "right",
-      render: (line) => toFiniteNumber(line.entregue).toLocaleString("pt-BR"),
+      className: numericColClass,
+      render: (line) => formatLineQty(line.entregue, line.unidade),
     },
     {
       key: "balance",
       header: "Saldo",
       align: "right",
-      render: (line) => toFiniteNumber(line.saldo).toLocaleString("pt-BR"),
+      className: numericColClass,
+      render: (line) => formatLineQty(line.saldo, line.unidade),
+    },
+    {
+      key: "unit",
+      header: "UM",
+      className: numericColClass,
+      render: (line) => formatLineUnit(line.quantidade, line.unidade),
     },
     {
       key: "delivery",
@@ -209,6 +234,7 @@ export function CustomerOrderLines({
       key: "open-value",
       header: "Valor aberto",
       align: "right",
+      className: numericColClass,
       render: (line) => formatCurrency(toFiniteNumber(line.valor_aberto)),
     },
     { key: "delay", header: "Atraso", render: lineOverdueLabel },
@@ -222,6 +248,25 @@ export function CustomerOrderLines({
       role="region"
       aria-label="Linhas do pedido"
     >
+      <div className="cm-customer-order-lines__display-mode">
+        <CommercialSectionHintLabel
+          label="Exibir quantidade"
+          hint={CM_HELP.customers.quantityDisplayMode}
+        />
+        <CommercialSegmentToggle
+          ariaLabel={CM_HELP.customers.quantityDisplayMode}
+          idPrefix={`order-lines-qty-${orderKey.replace(/\|/g, "-")}`}
+          value={mode}
+          widthMode="content"
+          onChange={(value) => {
+            if (value === "catalog" || value === "pieces") setMode(value);
+          }}
+          options={[
+            { value: "catalog", label: "Milheiro" },
+            { value: "pieces", label: "Peças" },
+          ]}
+        />
+      </div>
       <div className="cm-customer-order-lines__desktop">
         <CommercialDataTable
           rows={rows}
@@ -235,13 +280,29 @@ export function CustomerOrderLines({
           <CommercialDataRecordCard
             key={rowKey(line, index)}
             title={line.produto?.trim() || "Produto não informado"}
-            subtitle={`Entrega ${formatDisplayDate(line.data_entrega)}`}
+            subtitle={`Entrega ${formatDisplayDate(line.data_entrega)} · UM ${formatLineUnit(line.quantidade, line.unidade)}`}
             status={lineOverdueLabel(line)}
             fields={[
-              { id: "ordered", label: "Pedida", value: toFiniteNumber(line.quantidade).toLocaleString("pt-BR") },
-              { id: "delivered", label: "Entregue", value: toFiniteNumber(line.entregue).toLocaleString("pt-BR") },
-              { id: "balance", label: "Saldo", value: toFiniteNumber(line.saldo).toLocaleString("pt-BR") },
-              { id: "open-value", label: "Valor aberto", value: formatCurrency(toFiniteNumber(line.valor_aberto)) },
+              {
+                id: "ordered",
+                label: "Pedida",
+                value: formatDisplayQuantity(line.quantidade, line.unidade, mode),
+              },
+              {
+                id: "delivered",
+                label: "Entregue",
+                value: formatDisplayQuantity(line.entregue, line.unidade, mode),
+              },
+              {
+                id: "balance",
+                label: "Saldo",
+                value: formatDisplayQuantity(line.saldo, line.unidade, mode),
+              },
+              {
+                id: "open-value",
+                label: "Valor aberto",
+                value: formatCurrency(toFiniteNumber(line.valor_aberto)),
+              },
             ]}
             context={actions(line)}
           />

@@ -502,9 +502,13 @@ export const CM_HELP = {
     },
     orderLinesColumns: {
       product: "Código do produto da linha do pedido.",
-      ordered: "Quantidade pedida na linha.",
-      delivered: "Quantidade já entregue/faturada.",
-      balance: "Saldo ainda em aberto na linha.",
+      ordered:
+        "Quantidade pedida na linha (3 casas). Com Peças, converte só UM=MI (1 MI = 1000 PC).",
+      delivered:
+        "Quantidade já entregue/faturada (3 casas; mesma conversão Milheiro/Peças).",
+      balance:
+        "Saldo ainda em aberto na linha (3 casas; mesma conversão Milheiro/Peças).",
+      unit: "Unidade de medida da linha (ex.: MI, PC). Em Peças, MI vira PC na exibição.",
       delivery: OPEN_ORDER_DELIVERY_DATE_HELP,
       openValue: "Valor em aberto da linha.",
       delay: "Indicador de atraso da linha em relação à entrega prometida.",

@@ -270,7 +270,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Posso ver quantidade em peças em vez de milheiro?",
-          a: "Sim. Em Meus pedidos e na Conta (itens da NF) use Milheiro | Peças. Só converte quando a UM é MI (1 MI = 1000 PC) — é só apresentação; o contrato da API não muda.",
+          a: "Sim. Em Meus pedidos, Minha Carteira / Conta (linhas do pedido) e itens da NF use Milheiro | Peças. Só converte quando a UM é MI (1 MI = 1000 PC) — é só apresentação; o contrato da API não muda. Quantidades usam 3 casas decimais.",
         },
         {
           q: "Onde vejo a data de colocação do pedido ou o lead time até o faturamento?",

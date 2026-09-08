@@ -176,7 +176,7 @@ O Portal aloca estoque em **ordem FIFO** entre as linhas. O saldo pode estar “
 Não — veja a tabela do §1. Pedido = operação; OV = oportunidade; Proposta = documento/PDF.
 
 **Posso ver quantidade em peças em vez de milheiro?**  
-Sim. Em **Meus pedidos** e na **Conta** (itens da NF) use **Milheiro | Peças**. Só converte quando a UM é MI (1 MI = 1000 PC) — só apresentação; o contrato da API não muda.
+Sim. Em **Meus pedidos**, **Minha Carteira / Conta** (linhas do pedido) e **itens da NF** use **Milheiro | Peças**. Só converte quando a UM é MI (1 MI = 1000 PC) — só apresentação; o contrato da API não muda. Quantidades usam 3 casas decimais.
 
 **Onde vejo a data de colocação do pedido ou o lead time até o faturamento?**  
 Ainda **não**. Essas datas e o ciclo completo ficam para o **CRM** — nas tabelas atuais de OV/pedido não há data de colocação confiável homologada.

@@ -473,6 +473,31 @@
 
 .dashboard-commercial .cm-customer-orders__mobile,
 .dashboard-commercial .cm-customer-orders-preview__mobile,
+.dashboard-commercial .cm-customer-order-lines__display-mode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem;
+  margin-bottom: 0.65rem;
+  min-width: 0;
+}
+
+/* Nested order lines: more horizontal room between headers/cells for reading. */
+.dashboard-commercial .cm-customer-order-lines table.delpi-ui-table {
+  --delpi-ui-table-cell-pad-x: 1.15rem;
+  --delpi-ui-table-numeric-pad-x: 1.35rem;
+  --delpi-ui-table-numeric-min-width: 7.25rem;
+  --delpi-ui-table-header-pad-y: 0.75rem;
+}
+
+.dashboard-commercial
+  .cm-customer-order-lines
+  table.delpi-ui-table:not(.delpi-ui-table--grid-preview)
+  th {
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
 .dashboard-commercial .cm-customer-order-lines__mobile,
 .dashboard-commercial .cm-customer-invoices__mobile,
 .dashboard-commercial .cm-customer-invoice-items__mobile {

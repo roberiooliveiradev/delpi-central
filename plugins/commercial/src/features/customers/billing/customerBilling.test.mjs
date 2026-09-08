@@ -192,6 +192,7 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(panel, /billingMetric/);
     assert.match(filters, /onBillingMetricChange/);
     assert.match(filters, /customer-billing-metric/);
+    assert.match(filters, /hintPlacement="tooltip"/);
     assert.match(chart, /metric:\s*billingMetric/);
     assert.match(chart, /Quantidade fornecida/);
   });
