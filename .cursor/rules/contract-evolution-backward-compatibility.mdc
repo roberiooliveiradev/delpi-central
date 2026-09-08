@@ -1,0 +1,249 @@
+---
+description: Evolução de contratos — classificar mudanças OpenAPI/DTO/eventos/manifests/SSE/schema, preservar compatibilidade, deprecar e migrar sem big bang
+alwaysApply: false
+---
+
+# Evolução de contratos e backward compatibility
+
+## Princípio
+
+Contrato consumido não deve mudar de forma implícita.
+
+Toda alteração material em:
+
+```text
+OpenAPI
+request/response DTO
+evento/webhook
+manifest/plugin contract
+SSE/toolCalls/metadata
+DB schema exposto a outro serviço
+headers/códigos de erro
+```
+
+deve ser classificada antes da implementação.
+
+Complementa `evidence-driven-execution.mdc`, `application-bounded-context-decoupling.mdc`, `api-delpi-response-contract.mdc` e `openapi-first-universal-tool-routing.mdc`.
+
+## Classificação obrigatória
+
+Usar uma destas classes:
+
+```text
+ADDITIVE
+BEHAVIORAL
+DEPRECATED
+BREAKING
+```
+
+### ADDITIVE
+
+Exemplos:
+
+- novo campo opcional;
+- nova rota/action;
+- novo enum apenas quando consumidores toleram valor desconhecido;
+- nova metadata ignorável por clientes antigos.
+
+Ainda exige testes de consumidores quando a suposição de tolerância for relevante.
+
+### BEHAVIORAL
+
+Contrato estrutural pode não mudar, mas a semântica muda:
+
+- ordenação diferente;
+- filtro default novo;
+- regra de escopo alterada;
+- campo com mesmo tipo e significado novo;
+- timeout/paginação default alterados.
+
+Mudança comportamental deve ser tratada como risco de compatibilidade, não como refactor interno.
+
+### DEPRECATED
+
+Contrato permanece funcional por janela explícita enquanto consumidores migram.
+
+Deve possuir:
+
+```text
+replacement
+owner
+data de início ou versão
+evidência de consumidores
+critério de remoção
+```
+
+### BREAKING
+
+Exemplos:
+
+- remover/renomear campo consumido;
+- mudar tipo;
+- tornar opcional → obrigatório;
+- alterar path/operationId usado como identidade;
+- remover enum/ação;
+- mudar envelope;
+- trocar significado sem compatibilidade.
+
+Exige estratégia de migração antes de implementação.
+
+## Inventário de consumidores
+
+Antes de alterar produtor, pesquisar consumidores reais:
+
+```text
+MFE
+BFF/API
+chat/action catalog
+jobs/scripts
+webhooks/event handlers
+tests/fixtures
+third-party integration
+docs operacionais
+```
+
+Não assumir “ninguém usa” porque não há import direto; dependência pode ser HTTP, evento ou contrato persistido.
+
+Seguir `evidence-driven-execution.mdc`: confirmar no código/contrato quando possível.
+
+## Estratégias permitidas
+
+Para evitar quebra:
+
+```text
+adição compatível
+campo/rota alias temporário
+versionamento explícito
+expand-and-contract
+dual-read temporário
+shadow/canary
+feature flag
+adapter anti-corruption
+```
+
+Escolher a alternativa menos acoplada e com caminho claro de remoção.
+
+## Expand-and-contract
+
+Mudança breaking preferencialmente segue:
+
+```text
+1. EXPAND: produtor aceita/entrega formato antigo + novo
+2. MIGRATE: consumidores passam ao novo
+3. VERIFY: telemetria/testes confirmam ausência do legado
+4. CONTRACT: remover compatibilidade
+```
+
+Não pular direto para CONTRACT porque o consumidor principal já foi atualizado.
+
+## OpenAPI e actions
+
+`operationId` é identidade técnica e deve ser estável.
+
+Ao alterar action usada pelo chat:
+
+- reimportar/reindexar catálogo quando metadata/schema mudar;
+- preservar actionId/operationId se a semântica for a mesma;
+- se houver replacement, garantir migração dos bindings/allowed actions;
+- não manter duplicação manual em registry como estratégia permanente de compatibilidade.
+
+Ver `openapi-first-universal-tool-routing.mdc`.
+
+## Eventos
+
+Eventos devem evoluir de modo tolerante:
+
+- consumidores ignoram campos extras quando possível;
+- produtor não remove campo ainda consumido;
+- versão de evento apenas quando necessária;
+- replay/idempotência continuam válidos após evolução;
+- dual publish temporário exige prazo de remoção.
+
+## Banco de dados
+
+Migration nova pode ser aditiva enquanto aplicação antiga ainda roda.
+
+Evitar sequência insegura:
+
+```text
+deploy migration removendo coluna
+→ instância antiga ainda depende dela
+```
+
+Preferir expand-and-contract também em schema.
+
+Migrations já aplicadas continuam imutáveis conforme `migrations-immutable-checksum.mdc`.
+
+## Depreciação
+
+Não criar legado sem prazo/critério.
+
+Toda compatibilidade temporária deve declarar no código/doc apropriado:
+
+```text
+por que existe
+quem ainda consome
+como medir uso
+quando pode sair
+```
+
+Se não é possível medir uso, criar observabilidade antes da remoção. Ver `observability-standards.mdc`.
+
+## Testes obrigatórios
+
+Conforme a alteração:
+
+- produtor novo + consumidor antigo;
+- produtor antigo + consumidor novo quando coexistência ocorrer;
+- ausência/presença de campo novo;
+- alias/versionamento;
+- deprecation path;
+- rollback;
+- reimportação de OpenAPI/action catalog;
+- mixed-version durante rolling deploy.
+
+## Rollback
+
+Mudança de contrato deve responder:
+
+> Se eu voltar a aplicação para a versão anterior enquanto migration/config nova permanece, ela ainda sobe e funciona?
+
+Se não, documentar ordem operacional segura e mecanismo de rollback/roll-forward.
+
+## O que NÃO fazer
+
+- Renomear campo e atualizar só o consumidor conhecido.
+- Alterar `operationId` por estética.
+- Reutilizar campo existente com semântica diferente.
+- Remover rota deprecated sem evidência de uso zero/migração completa.
+- Versionar endpoint para qualquer mudança pequena sem necessidade.
+- Manter dual-write/alias para sempre.
+- Tratar alteração de default como “não breaking” sem avaliar consumidores.
+
+## Evidência de entrega
+
+Registrar para mudança material:
+
+```text
+CLASSIFICACAO
+CONSUMIDORES
+COMPATIBILITY_STRATEGY
+MIGRATION_PATH
+TESTES
+ROLLBACK
+REMOVAL_CRITERIA se houver legado
+```
+
+## Critério de sucesso
+
+A plataforma deve conseguir evoluir com versões coexistindo temporariamente:
+
+```text
+mudança classificada
+→ consumidores conhecidos
+→ expansão compatível
+→ migração observável
+→ remoção comprovada
+```
+
+sem big bang e sem contrato fantasma mantido indefinidamente.
