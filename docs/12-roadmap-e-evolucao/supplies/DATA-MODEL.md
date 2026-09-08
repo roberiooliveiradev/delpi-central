@@ -21,20 +21,16 @@ A autorização de leitura/escrita sobre entidades deste schema segue [ADR-007](
 
 ---
 
-## 2. Identidade de usuário
+## 2. Identidade de usuário (P-13 — FECHADO E2.S4)
 
-Persistir o identificador canônico resolvido pelo Core sempre que a plataforma disponibilizar um `user_id` estável. O `sub` Keycloak pode ser armazenado como external identity/trace quando necessário, mas **não misturar silenciosamente Core user id e Keycloak sub na mesma coluna**.
+| Campo | Valor |
+|---|---|
+| `canonical_user_id_source` | Core API `GET /me` → campo `id` (UUID do usuário Delpi) |
+| column type | `UUID` |
+| mapping strategy | JWT `sub` só em `keycloak_sub` (audit/trace); PK/FK de domínio = `user_id` Core |
+| rollback/migration strategy | migration SQL versionada imutável; não reescrever V001; correção = V00N nova |
 
-Antes da primeira migration, E2 deve fechar:
-
-```text
-canonical_user_id_source
-column type
-mapping strategy
-rollback/migration strategy
-```
-
-Até essa decisão, exemplos abaixo usam `actor_user_id`/`assignee_user_id` semanticamente, sem congelar o tipo físico.
+**Não** usar Keycloak `sub` como PK. **Não** misturar os dois identificadores na mesma coluna.
 
 ---
 

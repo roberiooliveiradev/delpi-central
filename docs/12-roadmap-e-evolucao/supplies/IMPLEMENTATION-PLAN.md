@@ -224,9 +224,9 @@ pytest supplies-api/tests/interface/http/test_error_contract.py -q
 pytest supplies-api/tests/observability/test_request_context.py -q
 ```
 
-## E2.S4 — Alembic schema `supplies`
+## E2.S4 — SQL schema `supplies`
 
-Criar somente preferences P0. Nada de clone TOTVS.
+Criar somente preferences P0 via `migrations/V001__*.sql` (padrão plugins). Nada de clone TOTVS. Nada de Alembic.
 
 **Teste futuro:**
 
@@ -719,7 +719,7 @@ todos:
   - id: e2-s3-errors-observability
     status: pending
     dependsOn: [e2-s2-core-first-authz]
-  - id: e2-s4-alembic
+  - id: e2-s4-sql-schema
     status: pending
     dependsOn: [e2-s1-flask-scaffold]
   - id: e2-s5-delpi-gateway
@@ -797,7 +797,7 @@ todos:
 
   - id: e9-s1-supplier-360-bff
     status: pending
-    dependsOn: [e7-s2-po-bff, e2-s4-alembic]
+    dependsOn: [e7-s2-po-bff, e2-s4-sql-schema]
   - id: e9-s2-supplier-notes
     status: pending
     dependsOn: [e9-s1-supplier-360-bff]
@@ -821,7 +821,7 @@ todos:
 
   - id: e12-s1-tasks-migration
     status: pending
-    dependsOn: [e2-s4-alembic]
+    dependsOn: [e2-s4-sql-schema]
   - id: e12-s2-tasks-api
     status: pending
     dependsOn: [e12-s1-tasks-migration, e6-s2-pr-list-detail, e7-s2-po-bff]
@@ -834,7 +834,7 @@ todos:
     dependsOn: [e6-s1-pr-gateway]
   - id: e13-s2-settings-audit
     status: pending
-    dependsOn: [e13-s1-admin-scopes, e2-s4-alembic]
+    dependsOn: [e13-s1-admin-scopes, e2-s4-sql-schema]
 
   - id: e14-s1-help-complete
     status: pending

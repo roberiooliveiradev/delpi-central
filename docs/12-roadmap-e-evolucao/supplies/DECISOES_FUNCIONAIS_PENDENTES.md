@@ -16,7 +16,7 @@ Só o que o repositório não responde. Não bloqueia o desenho, mas pode bloque
 | P-10 | Estratégia/janela de transição C2 | reconciliação SC | aberto | E6.S4 + E16 |
 | P-11 | Quais campos de Qualidade podem aparecer no Supplier 360? | RBAC cruzado | aberto | E9 |
 | P-12 | Owner formal de cada KPI | status final das fichas | **FECHADO** — owner = área Suprimentos; aceite nominal PO pendente na Assinatura | E1.S3 |
-| P-13 | Identificador canônico de usuário persistido no schema supplies | data model | aberto | antes de E2.S4 |
+| P-13 | Identificador canônico de usuário persistido no schema supplies | data model | **FECHADO** — Core `/me.id` UUID; `keycloak_sub` opcional; ver DATA-MODEL §2 | E2.S4 |
 
 ## Decisões fechadas pelo PO / arquitetura
 
@@ -31,4 +31,4 @@ Só o que o repositório não responde. Não bloqueia o desenho, mas pode bloque
 
 - P-01/P-03/P-04/P-07 não podem chegar ao cutover ainda como `LEGADO_A_VALIDAR`.
 - P-06 só cria `supplies.approvals.manage` se houver aprovação/rejeição real ou segregação material.
-- P-13 precisa estar fechado antes da primeira migration que persista referência de usuário.
+- P-13 fechado: Core `/me.id` (UUID) é o identificador persistido.

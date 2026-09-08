@@ -13,4 +13,6 @@ def health():
 
 @health_bp.get("/ready")
 def ready():
-    return jsonify(ReadyCheckUseCase().execute()), 200
+    result = ReadyCheckUseCase().execute()
+    status = 200 if result.get("ready") else 503
+    return jsonify(result), status
