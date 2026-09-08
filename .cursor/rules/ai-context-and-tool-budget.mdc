@@ -1,0 +1,243 @@
+---
+description: Minha DELPI AI — budgets de contexto, histórico, RAG, tools, payloads e tokens; top-K, dedup, compressão e fan-out controlado
+alwaysApply: false
+---
+
+# Budgets de contexto e tools
+
+## Princípio
+
+Mais contexto não significa mais inteligência.
+
+O chat deve entregar ao modelo **o mínimo suficiente e relevante** para resolver o turno, preservando informação crítica sem enviar histórico, documentos, tools ou payloads ilimitados.
+
+Complementa `chat-intelligence-base.mdc`, `openapi-first-universal-tool-routing.mdc`, `ai-intelligence-evaluation.mdc` e `http-integration-resilience.mdc`.
+
+## Fontes que competem pelo contexto
+
+Todo turno pode consumir budget com:
+
+```text
+system/developer instructions
+mensagem atual
+histórico recente
+memória/contexto estruturado
+RAG/documentos
+skills
+Action Catalog/tool schemas
+tool results
+anexos/imagens
+resumos intermediários
+```
+
+Cada fonte deve justificar sua inclusão pelo objetivo do turno.
+
+## Tools/actions
+
+Nunca enviar todas as actions do provider ao planner se retrieval puder reduzir o espaço.
+
+Fluxo canônico:
+
+```text
+actions autorizadas
+→ retrieval híbrido/semântico
+→ top-K pequeno e configurável
+→ planner
+```
+
+Top-K deve ser grande o suficiente para manter recall, mas pequeno o suficiente para evitar colisão semântica, custo e latência.
+
+Alterar K exige eval conforme `ai-intelligence-evaluation.mdc`.
+
+## OpenAPI
+
+Não enviar o `openapi.json` inteiro ao LLM em cada turno.
+
+Usar:
+
+```text
+Action Catalog normalizado
++ schema apenas das candidates relevantes
++ fields necessários para argument planning
+```
+
+Descriptions/examples excessivos devem ser resumidos/normalizados no índice, preservando semântica útil sem duplicação.
+
+## Histórico de conversa
+
+Histórico não cresce indefinidamente.
+
+Prioridade recomendada:
+
+```text
+mensagem atual
+→ contexto explícito/estruturado ainda ativo
+→ turnos recentes necessários
+→ resumo confiável do passado relevante
+→ resto omitido
+```
+
+Não remover fato ainda necessário apenas porque é antigo; mover informação persistente relevante para contexto estruturado/resumo apropriado.
+
+## Multi-turn estruturado
+
+Preferir estado compacto a replay completo de mensagens/tool payloads:
+
+```text
+selectedProvider
+selectedAction
+resolvedEntities
+resolvedArguments
+timeRange
+pagination
+lastToolResultSummary
+pendingTasks
+```
+
+Evitar guardar response gigante quando um resumo estruturado e referências bastam.
+
+## RAG
+
+Retrieval documental deve aplicar:
+
+```text
+ranking
+threshold/relevance
+chunk dedup
+source diversity quando útil
+limite de chunks/bytes/tokens
+```
+
+Não incluir documento inteiro porque um chunk bateu semanticamente.
+
+Quando a resposta depende de trecho não recuperado, aumentar retrieval de forma controlada ou fazer segunda busca; não inflar todo turno por padrão.
+
+## Tool results
+
+Payload operacional deve ser filtrado antes de voltar ao LLM quando houver volume alto.
+
+Preservar:
+
+```text
+campos necessários à pergunta
+metadata de paginação/completude
+agregados úteis
+identificadores para follow-up
+proveniência
+```
+
+Não despejar milhares de linhas quando o usuário pediu um KPI/resumo.
+
+Se houver truncamento, o modelo deve saber que o resultado é parcial.
+
+## Pedidos compostos
+
+Para múltiplas subtarefas:
+
+- cada subtarefa recupera suas próprias candidates;
+- executar em paralelo somente quando independente;
+- limitar número de tools simultâneas e total por turno;
+- reutilizar resultados quando duas subtarefas pedem o mesmo dado;
+- não repetir a mesma action apenas porque dois planners chegaram a ela.
+
+## Anexos e conteúdo grande
+
+Antes de colocar arquivo/texto bruto no contexto:
+
+1. identificar objetivo;
+2. extrair/segmentar conteúdo relevante;
+3. limitar bytes/tokens;
+4. usar resumo/index quando apropriado;
+5. manter referência ao original para drill-down.
+
+Não base64-encodar binário no prompt quando houver mecanismo de arquivo/visão apropriado.
+
+## Configuração
+
+Budgets devem ser centralizados e configuráveis, por exemplo:
+
+```text
+maxToolCandidates
+maxToolCallsPerTurn
+maxParallelTools
+maxHistoryTurns
+maxRagChunks
+maxRagTokens
+maxToolResultItems
+maxToolResultBytes
+maxTotalContextTokens
+```
+
+Os nomes reais devem seguir a arquitetura vigente; não duplicar o mesmo limite em Python, JSON e env.
+
+## Degradação sob pressão de budget
+
+Quando o limite for atingido, priorizar:
+
+```text
+instruções e policy
+→ pergunta atual
+→ schema da action escolhida
+→ contexto explícito
+→ evidência RAG/tool necessária
+→ histórico secundário
+```
+
+Se a remoção tornar a tarefa insegura ou impossível, fazer follow-up em vez de inventar.
+
+## Observabilidade
+
+Medir conforme aplicável:
+
+```text
+inputTokens/outputTokens
+contextTokensBySource
+retrievedChunks
+candidateCount
+toolCallsCount
+parallelToolPeak
+toolResultBytes
+historyTurnsIncluded
+truncationOccurred
+```
+
+Usar `observability-standards.mdc`; não logar conteúdo sensível só para medir tamanho.
+
+## Evals obrigatórios
+
+Mudança de budget deve comparar, quando material:
+
+```text
+qualidade/accuracy
+recall de action/RAG
+false tool calls
+follow-ups desnecessários
+latência
+tokens/custo
+```
+
+Não reduzir tokens celebrando economia se a taxa de conclusão cai de forma material.
+
+## O que NÃO fazer
+
+- enviar todas as tools ao LLM por padrão;
+- enviar OpenAPI inteiro por turno;
+- replay ilimitado de histórico;
+- guardar tool response completa para sempre no contexto;
+- usar `top_k=100` para compensar retrieval ruim;
+- fan-out ilimitado em pedido composto;
+- truncar silenciosamente resultado;
+- duplicar o mesmo conteúdo em system prompt + RAG + memória + tool schema.
+
+## Critério de sucesso
+
+O contexto do modelo deve ser **seletivo, explicável e mensurável**:
+
+```text
+pedido
+→ selecionar informação necessária
+→ respeitar budgets
+→ preservar evidência crítica
+→ medir qualidade/custo
+→ ajustar por eval, não por sensação
+```
