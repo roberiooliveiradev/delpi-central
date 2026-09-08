@@ -1,6 +1,6 @@
 ---
-description: Ajuda in-app obrigatória em toda feature/modificação — fluxo generalista inegociável
-alwaysApply: true
+description: Ajuda in-app obrigatória em toda feature/modificação user-facing — carregar quando houver mudança visível ao usuário
+alwaysApply: false
 ---
 
 # Ajuda do produto — sync inegociável
