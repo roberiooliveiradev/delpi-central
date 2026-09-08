@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
+  getAdminLearningSummary,
   getAdminMetricsSummary,
   getAdminRbacSummary,
   getAdminSecuritySummary,
@@ -8,6 +9,7 @@ import {
   getAdminResponseEvaluationSummary,
 } from "../../../../data/api/adminApi";
 import type {
+  AdminLearningSummary,
   AdminMetricsSummary,
   AdminRbacSummary,
   AdminResponseEvaluationSummary,
@@ -22,6 +24,8 @@ import { navigateChatHref } from "../../../../navigation/chatNavigation";
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { AdminRbacPanel } from "../rbac/AdminRbacPanel";
 import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+import { AdminAttentionQueue } from "./AdminAttentionQueue";
+import { buildAttentionQueue } from "./attentionQueue";
 
 import "./AdminOverviewTab.css";
 
@@ -55,6 +59,7 @@ export function AdminOverviewTab({
   const [security, setSecurity] = useState<AdminSecuritySummary | null>(null);
   const [evaluations, setEvaluations] = useState<AdminResponseEvaluationSummary | null>(null);
   const [toolHealth, setToolHealth] = useState<AdminToolHealthResponse | null>(null);
+  const [learning, setLearning] = useState<AdminLearningSummary | null>(null);
   const [metrics, setMetrics] = useState<AdminMetricsSummary | null>(metricsSummary ?? null);
   const [loading, setLoading] = useState(false);
 
@@ -69,16 +74,23 @@ export function AdminOverviewTab({
       setLoading(true);
 
       try {
-        const [rbacResult, securityResult, evaluationsResult, healthResult, metricsResult] =
-          await Promise.all([
-            getAdminRbacSummary({ getAccessToken }),
-            getAdminSecuritySummary(24, { getAccessToken }),
-            getAdminResponseEvaluationSummary({ getAccessToken }),
-            getAdminToolHealth({ getAccessToken }),
-            metricsSummary
-              ? Promise.resolve(metricsSummary)
-              : getAdminMetricsSummary(24, { getAccessToken }),
-          ]);
+        const [
+          rbacResult,
+          securityResult,
+          evaluationsResult,
+          healthResult,
+          learningResult,
+          metricsResult,
+        ] = await Promise.all([
+          getAdminRbacSummary({ getAccessToken }),
+          getAdminSecuritySummary(24, { getAccessToken }),
+          getAdminResponseEvaluationSummary({ getAccessToken }),
+          getAdminToolHealth({ getAccessToken }),
+          getAdminLearningSummary({ getAccessToken }, { hours: 24 }),
+          metricsSummary
+            ? Promise.resolve(metricsSummary)
+            : getAdminMetricsSummary(24, { getAccessToken }),
+        ]);
 
         if (cancelled) {
           return;
@@ -88,6 +100,7 @@ export function AdminOverviewTab({
         setSecurity(securityResult);
         setEvaluations(evaluationsResult);
         setToolHealth(healthResult);
+        setLearning(learningResult);
         setMetrics(metricsResult);
       } catch {
         if (!cancelled) {
@@ -95,6 +108,7 @@ export function AdminOverviewTab({
           setSecurity(null);
           setEvaluations(null);
           setToolHealth(null);
+          setLearning(null);
         }
       } finally {
         if (!cancelled) {
@@ -109,6 +123,18 @@ export function AdminOverviewTab({
       cancelled = true;
     };
   }, [getAccessToken, metricsSummary]);
+
+  const attentionItems = useMemo(
+    () =>
+      buildAttentionQueue({
+        toolHealth,
+        security,
+        learning,
+        evaluations,
+        metrics,
+      }),
+    [toolHealth, security, learning, evaluations, metrics],
+  );
 
   const toolIssues =
     toolHealth?.items?.filter((item) => item.status !== "ok").length ?? 0;
@@ -174,11 +200,13 @@ export function AdminOverviewTab({
       <AdminTabHeader
         eyebrow="Painel"
         title="Como está o chat?"
-        description="Resumo operacional das últimas 24 horas. Clique nos cards para ir à seção."
+        description="Resumo operacional das últimas 24 horas. Clique nos cards ou na fila de atenção para ir à seção."
         helpHint={ADMIN_HELP.overview}
       />
 
       {loading ? <p className="mdc-chat-muted">Atualizando indicadores...</p> : null}
+
+      <AdminAttentionQueue items={attentionItems} onOpen={openNav} />
 
       <div className="mdc-admin-overview-tab__cards">
         {cards.map((card) => (

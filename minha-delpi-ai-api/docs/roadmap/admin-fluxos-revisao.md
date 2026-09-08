@@ -166,7 +166,7 @@ O admin Delpi já tem as **peças**; a IA ainda parece **inventário de playbook
 | Tema | Direção |
 |------|---------|
 | **Jornada de agente (P0)** | Uma ficha (Studio): identidade + knowledge + tools/skills + especialização RAG; especialização admin e logs de Ferramentas deixam de ser produtos separados |
-| **Painel** | Fila de atenção (saúde vermelha, bloqueios 24h, candidatos pendentes, evals falhos, custo anômalo) |
+| **Painel** | Fila de atenção acionável no overview (MVP); custo anômalo sem baseline API = backlog |
 | **Qualidade / Métricas** | Overview + custo/LLM + traces + drill-down de skills especializadas; **manter** APIs `GET /admin/metrics/*/summary` |
 | **Improve HITL** | Entrada única na IA para avaliações + aprendizagem + thumbs (tabelas podem permanecer) |
 | **Comportamentos vs skills por agente** | Deixar explícito global × agente |
@@ -209,6 +209,7 @@ Ordem canônica e status (set/2026 — implementação):
 | 4b | **Aliases EN** de paths do admin (build canônico EN; parse dual PT+EN; rewrite suave) | **Entregue** |
 | 5 | **Kit UI / higiene** — dual-class `AdminTabHeader`/`AdminKpiCard`; remoção `AdminSectionNav`/`AdminSubTabNav`/`adminShellTypes`; sem `initialTab` legado | **Entregue (MVP)**; convergência total `admin/shared` → kit = backlog |
 | 6 | RBAC perfis formais no `core-api` | Fora deste bounded context |
+| 7 | **Painel — fila de atenção** — `buildAttentionQueue` + CTAs para seções | **Entregue (MVP)**; custo anômalo = backlog (sem baseline) |
 
 Regras de qualquer onda futura de código:
 

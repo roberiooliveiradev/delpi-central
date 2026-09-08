@@ -726,14 +726,23 @@ export function AdminMetricsTab({
 
           <aside className="mdc-admin-metrics-tab__intel-callout" role="status">
             <p>
-              <strong>Fila de atenção:</strong> taxa de erro{" "}
+              <strong>Fila de atenção:</strong> a lista acionável fica no{" "}
+              <strong>Painel</strong>. Aqui: taxa de erro{" "}
               {formatPercent(metricsSummary.errorRate24h)} ·{" "}
               {formatNumber(
                 qualityIssues.filter((issue) => issue.status !== "resolved").length,
               )}{" "}
-              issue(s) de qualidade aberta(s) · use a sidebar para drill-down por família de
-              métrica.
+              issue(s) de qualidade aberta(s) · use a sidebar para drill-down.
             </p>
+            {onNavigate ? (
+              <button
+                type="button"
+                className="mdc-chat-ws-outline-btn"
+                onClick={() => onNavigate({ section: "overview" })}
+              >
+                Abrir fila no Painel
+              </button>
+            ) : null}
           </aside>
           <div className="mdc-admin-kpi-grid">
         <article className="mdc-admin-kpi-card">

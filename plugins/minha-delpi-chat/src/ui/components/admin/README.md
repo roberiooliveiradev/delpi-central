@@ -9,7 +9,7 @@ Ajuda in-app: `src/content/adminHelpTooltips.ts` via `AdminTabHeader.helpHint`.
 ## Estrutura
 
 - `shell/`: topbar única, sidebar em árvore, layout, status strip e alertas. Ver [admin-shell-navegacao.md](../../../docs/admin-shell-navegacao.md).
-- `overview/`: painel inicial (KPIs, RBAC, navegação rápida).
+- `overview/`: painel inicial (fila de atenção, KPIs, RBAC, navegação rápida).
 - `metrics-tab/`: resumo operacional e métricas avançadas (janela, custo, série).
 - `knowledge/`: base global de conhecimento e pré-visualização de pipeline.
 - `guidelines/`: diretrizes globais de comportamento.

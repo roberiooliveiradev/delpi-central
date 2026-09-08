@@ -5,7 +5,7 @@
 
 export const ADMIN_HELP = {
   overview:
-    "Resumo operacional: saúde, erros recentes e atalhos para Conhecimento, Agentes, Qualidade e Governança. Endereços do console usam segmentos em inglês (ex.: quality/metrics); atalhos antigos em português continuam abrindo a mesma tela.",
+    "Resumo operacional e fila de atenção (ferramentas com falha, bloqueios, candidatos pendentes, regressão falhando, taxa de erro). Endereços do console usam segmentos em inglês (ex.: quality/metrics); atalhos antigos em português continuam abrindo a mesma tela.",
   documents:
     "Base global de conhecimento: upload, metadados curadoriais, reindexação e teste RAG por documento.",
   guidelines:
