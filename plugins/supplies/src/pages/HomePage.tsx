@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 
 import {
-  getHomeAttention,
   type HomeAttentionCard,
 } from "../api/homeAttention";
 import { navigatePluginView } from "../app/pluginNavigation";
@@ -22,6 +21,7 @@ import {
   SuppliesCatalogSearchBar,
   SuppliesEmptyState,
   SuppliesHubChipRow,
+  SuppliesLoadingCard,
   SuppliesRouteChip,
   SuppliesSectionCard,
   SuppliesSectionRouteCard,
@@ -46,6 +46,11 @@ import {
   subscribeHomeFavorites,
   toggleHomeFavorite,
 } from "../app/homeFavoritesStore";
+import {
+  loadHomeAttention,
+  subscribeHomeAttention,
+  type HomeAttentionState,
+} from "../app/homeAttentionStore";
 import {
   filterRecentsByCaps,
   pushRecentView,
@@ -121,45 +126,33 @@ export function HomePage({ basePath }: HomePageProps) {
   );
   const sections = useMemo(() => resolveHomePathSections(hubCaps), [hubCaps]);
   const [query, setQuery] = useState("");
-  const [attentionCards, setAttentionCards] = useState<HomeAttentionCard[]>([]);
-  const [attentionLoading, setAttentionLoading] = useState(true);
-  const [attentionError, setAttentionError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [attention, setAttention] = useState<HomeAttentionState>(() => ({
+    loading: true,
+    error: null,
+    cards: [],
+    partialFailures: [],
+  }));
   const [recents, setRecents] = useState<RecentHubView[]>(() =>
     typeof window !== "undefined" ? readRecentViews() : [],
   );
   const [favorites, setFavorites] = useState<HomeFavoriteItem[]>([]);
 
   useEffect(() => subscribeHomeFavorites(setFavorites), []);
+  useEffect(() => subscribeHomeAttention(setAttention), []);
 
   useEffect(() => {
     loadHomeFavoritesFromStorage();
   }, []);
 
   const reloadAttention = useCallback(() => {
-    setReloadKey((value) => value + 1);
+    void loadHomeAttention();
   }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-    setAttentionLoading(true);
-    setAttentionError(null);
-    getHomeAttention(controller.signal)
-      .then((payload) => {
-        setAttentionCards(Array.isArray(payload.cards) ? payload.cards : []);
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        setAttentionCards([]);
-        setAttentionError(
-          error instanceof Error ? error.message : HOME.attentionError,
-        );
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setAttentionLoading(false);
-      });
+    void loadHomeAttention(controller.signal);
     return () => controller.abort();
-  }, [reloadKey]);
+  }, []);
 
   const visibleRecents = useMemo(
     () => filterRecentsByCaps(recents, hubCaps),
@@ -221,10 +214,16 @@ export function HomePage({ basePath }: HomePageProps) {
     navigateRoute({ viewId: card.viewId, label: card.title });
   };
 
+  const attentionCards = attention.cards;
+  const attentionLoading = attention.loading;
+  const attentionError = attention.error;
   const attentionReady = !attentionLoading;
   const hasAttention = attentionCards.length > 0;
   const showAttentionPanel = attentionReady && !attentionError && hasAttention;
   const showQueueOk = attentionReady && !attentionError && !hasAttention;
+  const partialMessages = attention.partialFailures
+    .map((item) => item.message?.trim())
+    .filter((value): value is string => Boolean(value));
 
   return (
     <section className="sp-page-stack sp-home-layout" aria-label="Início">
@@ -240,6 +239,9 @@ export function HomePage({ basePath }: HomePageProps) {
               </SuppliesActionButton>
             }
           >
+            {partialMessages.length > 0 ? (
+              <SuppliesStateBanner>{HOME.attentionPartial}</SuppliesStateBanner>
+            ) : null}
             <ul className="sp-home-attention-list">
               {attentionCards.map((card) => (
                 <li key={card.id}>
@@ -273,11 +275,16 @@ export function HomePage({ basePath }: HomePageProps) {
         ) : null}
 
         {attentionLoading ? (
-          <SuppliesStateBanner>{HOME.attentionLoading}</SuppliesStateBanner>
+          <SuppliesLoadingCard title={HOME.attentionLoading} variant="panel" />
         ) : null}
 
         {attentionError ? (
-          <SuppliesStateBanner variant="error">{attentionError}</SuppliesStateBanner>
+          <div className="sp-home-attention-error">
+            <SuppliesStateBanner variant="error">{HOME.attentionError}</SuppliesStateBanner>
+            <SuppliesActionButton variant="ghost" onClick={reloadAttention}>
+              {HOME.attentionRefresh}
+            </SuppliesActionButton>
+          </div>
         ) : null}
 
         <SuppliesSectionCard

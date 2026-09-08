@@ -12,6 +12,7 @@ describe("Home launcher visual pattern", () => {
     expect(page).toMatch(/SuppliesCatalogSearchBar/);
     expect(page).toMatch(/SuppliesHubChipRow/);
     expect(page).toMatch(/SuppliesSectionCard/);
+    expect(page).toMatch(/SuppliesLoadingCard/);
     expect(page).toMatch(/sp-home-sections-grid/);
     expect(page).not.toMatch(/sp-home__fav/);
   });

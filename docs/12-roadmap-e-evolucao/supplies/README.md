@@ -3,8 +3,9 @@
 > **Status (set/2026):** baseline + **E1–E6 concluídas (2026-09-08)** · MFE `plugins/supplies` + GATE-RBAC local  
 > **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)**  
 > **Modo de entrega:** **uma página por vez até DoD** — não abrir a próxima enquanto a atual não estiver fechada  
-> **Página em foco:** **Início (WF-01)** — fechar DoD (shell/Favoritos/helps já alinhados ao Comercial)  
-> **Fila após o Início:** Visão geral → Solicitações de compras (revalidar DoD C1) → Pedidos de compra (E7) → …  
+> **Página em foco:** **Visão geral (WF-02)** — revalidar DoD  
+> **Última fechada:** **Início (WF-01)** — DoD fechado  
+> **Fila após Overview:** Solicitações de compras (revalidar DoD C1) → Pedidos de compra (E7) → …  
 > **Nome ao usuário:** **Portal Suprimentos**  
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies`  
 > **API:** `supplies-api` · gateway `/apps/supplies-api/`  
@@ -36,7 +37,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | KPIs Overview P0 | **7 CONFIRMADOS**; cobertura/PO-LATE fora do Overview |
 | Manifest draft | **`schemaVersion 1.0.0`** registrado no Core local |
 | P-13 | **FECHADO** — Core `/me.id` UUID |
-| Implementação MFE | **modo página-a-página** · foco = **Início**; SC C1 e perfil entregues; E7+ só após fechar páginas anteriores na fila |
+| Implementação MFE | **modo página-a-página** · **Início fechado** · foco = **Visão geral**; SC C1 e perfil entregues; E7+ só após fechar a fila |
 
 ### Gates
 
@@ -54,8 +55,8 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 | # | Página | Rota | Estado |
 |---|---|---|---|
-| 1 | **Início** | `/apps/supplies` | **EM FOCO** — fechar DoD |
-| 2 | Visão geral | `/overview` | E5 entregue; revalidar DoD antes de avançar |
+| 1 | **Início** | `/apps/supplies` | **FECHADA (DoD)** |
+| 2 | **Visão geral** | `/overview` | **EM FOCO** — revalidar DoD |
 | 3 | Solicitações de compras | `/purchase-requests` | E6 C1 entregue; revalidar DoD |
 | 4 | Pedidos de compra | `/purchase-orders` | placeholder → E7 |
 | 5 | Entregas | `/deliveries` | placeholder → E7 |
@@ -76,9 +77,11 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 ### Próximo passo operacional
 
-1. **Fechar Início (WF-01)** contra o DoD — checklist de aceite com PO se necessário.
-2. Só então **revalidar Visão geral**, depois **SC**, depois **E7 Pedidos de compra** (uma de cada vez).
+1. **Revalidar Visão geral (WF-02)** contra o DoD.
+2. Depois **SC**, depois **E7 Pedidos de compra** (uma de cada vez).
 3. E7+ continua exigindo autorização explícita do Product Owner **e** página anterior fechada na fila.
+
+**Início (WF-01) — DoD fechado:** BFF `/home/attention`, PageHero + hub kit, Favoritos TopBar (localStorage P0), helps, loading/error/partial/empty, AuthZ portal, testes API+MFE.
 
 Dump Core de produção **não** bloqueia a fila de páginas; bloqueia decisão final de redirects/BIs no cutover.
 

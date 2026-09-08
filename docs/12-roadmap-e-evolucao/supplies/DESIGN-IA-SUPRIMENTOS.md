@@ -2,7 +2,7 @@
 
 > Padrão de navegação do Portal Comercial, adaptado ao domínio Suprimentos.  
 > Root CSS: `.dashboard-supplies-portal` · prefixo `sp-` · tokens `--sp-*` → `--delpi-ui-*`.  
-> **Entrega:** uma página por vez até DoD (README § Protocolo). Foco atual: **Início**.
+> **Entrega:** uma página por vez até DoD (README § Protocolo). **Início fechado** · foco atual: **Visão geral**.
 
 ---
 
@@ -20,7 +20,7 @@
 - `allowedUnits` é derivado das permissions efetivas do Core, não de claims do JWT.
 - Nav não se duplica por SC/ES.
 - Deep pages ficam fora da top nav.
-- Favoritos/recentes seguem mecanismos canônicos do Portal/Comercial quando disponíveis (TopBar Favoritos + estrela nos caminhos).
+- Favoritos/recentes: TopBar Favoritos + estrela nos caminhos; **P0 = localStorage do navegador** (paridade UX Comercial); sync Core/conta = evolução futura documentada.
 - Modais host-contained.
 
 ---
@@ -149,9 +149,9 @@ Proibido CSS global do MFE (`body`, `:root`, `*`, `.delpi-ui-*`).
 ## 7. Busca, favoritos, recentes e alertas
 
 - Busca do Hub: catálogo de rotas + busca de fornecedor/item somente quando contratos existirem.
-- Favoritos: Core/Portal.
-- Recentes: padrão Comercial enquanto não houver serviço canônico melhor.
-- Alertas Home P0: composição on-read; persistência só com evidência de necessidade.
+- Favoritos: **P0 localStorage** (TopBar + estrelas no Início); sync Core/Portal = pós-P0.
+- Recentes: localStorage (padrão Comercial enquanto não houver serviço canônico).
+- Alertas/atenção Home P0: BFF `GET /home/attention` on-read; contagens live podem ficar `null` até fontes TOTVS; partialFailures não derrubam o hub.
 
 ---
 

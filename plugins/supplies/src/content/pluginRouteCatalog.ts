@@ -180,6 +180,8 @@ export const HUB_CONTENT = {
     attentionRefresh: "Atualizar",
     attentionQueueOk: "Atenção em dia — nenhum atalho pendente no momento.",
     attentionOpenPaths: "Ver caminhos",
+    attentionPartial:
+      "Parte das fontes de atenção falhou. Os atalhos abaixo continuam utilizáveis.",
     pathsTitle: "Caminhos e funcionalidades",
     pathsSubtitle: "Abra as áreas liberadas para você.",
     pathsEmpty: "Nenhuma funcionalidade disponível para o seu acesso.",

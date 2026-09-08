@@ -90,6 +90,20 @@ declare module "@delpi/plugin-ui/index" {
     className?: string;
   }>;
 
+  export function createDashboardLoadingActivityCard(config: {
+    prefix: string;
+    labels: {
+      remainingProgress: (remainingPercent: number) => string;
+      progressAriaDeterminate: (remainingPercent: number) => string;
+      progressAriaIndeterminate: string;
+    };
+  }): ComponentType<{
+    title: string;
+    description?: string;
+    variant?: "panel" | "inline" | "page";
+    className?: string;
+  }>;
+
   export function createDashboardTopBar(config: { prefix: string }): ComponentType<{
     items: Array<{
       id: string;

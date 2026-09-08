@@ -11,7 +11,6 @@ import {
 import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
-import { getHomeAttention, type HomeAttentionCard } from "../api/homeAttention";
 import { SP_HELP } from "../content/helpTooltips";
 import {
   collectSearchHits,
@@ -26,6 +25,11 @@ import {
   TOP_BAR_COLLAPSE_TRIGGER,
 } from "../content/topBarCollapseConfig";
 import { navigatePluginView } from "./pluginNavigation";
+import {
+  loadHomeAttention,
+  subscribeHomeAttention,
+  type HomeAttentionState,
+} from "./homeAttentionStore";
 import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
 import { ShellTopBarActions, ShellTopBarSecondary } from "./ShellTopBarSlots";
 import { useSuppliesSession } from "./SuppliesSessionContext";
@@ -95,8 +99,14 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const [paletteQuery, setPaletteQuery] = useState("");
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
   const [userFirstName, setUserFirstName] = useState<string | null>(null);
-  const [attentionCards, setAttentionCards] = useState<HomeAttentionCard[]>([]);
-  const [attentionReady, setAttentionReady] = useState(false);
+  const [attention, setAttention] = useState<HomeAttentionState>(() => ({
+    loading: false,
+    error: null,
+    cards: [],
+    partialFailures: [],
+  }));
+
+  useEffect(() => subscribeHomeAttention(setAttention), []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -124,17 +134,7 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   useEffect(() => {
     if (view !== "home") return;
     const controller = new AbortController();
-    setAttentionReady(false);
-    void getHomeAttention(controller.signal)
-      .then((payload) => {
-        setAttentionCards(Array.isArray(payload.cards) ? payload.cards : []);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setAttentionCards([]);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setAttentionReady(true);
-      });
+    void loadHomeAttention(controller.signal);
     return () => controller.abort();
   }, [view]);
 
@@ -179,12 +179,15 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
   const heroCopy = SHELL_NAV_CONTENT.homeHero;
   const greeting = greetingForNow();
   const heroTitle = userFirstName ? `${greeting}, ${userFirstName}` : greeting;
-  const actionableAttention = attentionCards.filter((card) => card.status !== "unavailable");
-  const attentionValue = attentionReady
-    ? actionableAttention.length > 0
-      ? `${actionableAttention.length}`
-      : heroCopy.highlights.attentionClear
-    : "—";
+  const actionableAttention = attention.cards.filter((card) => card.status !== "unavailable");
+  const attentionReady = !attention.loading && !attention.error;
+  const attentionValue = attention.loading
+    ? "—"
+    : attention.error
+      ? "—"
+      : actionableAttention.length > 0
+        ? `${actionableAttention.length}`
+        : heroCopy.highlights.attentionClear;
   const unitsLabel =
     session.allowedUnits.length > 0
       ? session.allowedUnits.join(", ")

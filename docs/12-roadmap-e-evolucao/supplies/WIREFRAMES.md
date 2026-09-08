@@ -23,8 +23,8 @@ Espelham o Portal Comercial: shell + hub + Ajuda + perfil — **não** são jorn
 | WF | Página | Rota | Capability | Status doc |
 |---|---|---|---|---|
 | Shell comum | chrome TopBar / nav / busca / Favoritos / avatar | — | `supplies.portal.access` | entregue E3 + Favoritos TopBar |
-| WF-01 | Início (hub) | `/apps/supplies` | `supplies.portal.access` | **EM FOCO** — fechar DoD |
-| WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | entregue E5; revalidar após WF-01 |
+| WF-01 | Início (hub) | `/apps/supplies` | `supplies.portal.access` | **FECHADA (DoD)** |
+| WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | **EM FOCO** — revalidar DoD |
 | **WF-HELP** | Ajuda / Manual | `/help` | `supplies.portal.access` | esqueleto E4; completo E14 |
 | **WF-USER** | Perfil usuário | `/users/:userId` | self: portal · outros: admin | **implementado** (E4.S4) |
 

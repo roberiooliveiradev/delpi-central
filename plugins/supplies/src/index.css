@@ -180,7 +180,11 @@
   align-items: start;
 }
 
-.dashboard-supplies-portal .sp-home-queue-ok {
+.dashboard-supplies-portal .sp-home-attention-error {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: start;
+}
   display: flex;
   flex-wrap: wrap;
   align-items: center;

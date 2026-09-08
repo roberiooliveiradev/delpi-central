@@ -5,6 +5,7 @@ import {
   createDashboardCommandPalette,
   createDashboardEmptyState,
   createDashboardHubChipRow,
+  createDashboardLoadingActivityCard,
   createDashboardPageHero,
   createDashboardPagePath,
   createDashboardRouteChip,
@@ -78,6 +79,16 @@ export const SuppliesRouteChip = createDashboardRouteChip({ prefix: UI_PREFIX })
 export const SuppliesStatusBadge = createDashboardStatusBadge({ prefix: UI_PREFIX });
 export const SuppliesActionButton = ActionButton;
 export const SuppliesAvatar = createInitialsAvatar(UI_PREFIX);
+
+export const SuppliesLoadingCard = createDashboardLoadingActivityCard({
+  prefix: UI_PREFIX,
+  labels: {
+    remainingProgress: (remainingPercent: number) => `Faltam ${remainingPercent}%`,
+    progressAriaDeterminate: (remainingPercent: number) =>
+      `Carregamento: faltam ${remainingPercent} por cento`,
+    progressAriaIndeterminate: "Carregamento em andamento",
+  },
+});
 
 const SuppliesPageHeroBase = createDashboardPageHero({ prefix: UI_PREFIX });
 export function SuppliesPageHero(props: ComponentProps<typeof SuppliesPageHeroBase>) {

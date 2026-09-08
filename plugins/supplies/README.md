@@ -39,7 +39,16 @@ BASE_URL="https://<hml-host>" TOKEN="<jwt-apps.manage>" bash plugins/supplies/sc
 
 Atualizar manifesto já registrado: `PUT $BASE_URL/core-api/admin/apps/supplies/manifest` com o mesmo JSON (guia [registrar-plugin.md](../../docs/10-guias-operacionais/registrar-plugin.md)).
 
-## RBAC de coexistência
+## Superfícies principais
+
+| Página | Notas |
+|---|---|
+| **Início** | DoD fechado — hub + `GET /home/attention` + Favoritos TopBar (localStorage P0) |
+| Visão geral | Próximo foco — revalidar DoD |
+| SC | E6 C1 |
+| Perfil | `/users/:userId` |
+| Ajuda | `/help` |
+
 
 ```bash
 export TOKEN="$(bash infra/scripts/get-dev-token.sh)"
