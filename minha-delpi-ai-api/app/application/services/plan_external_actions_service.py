@@ -270,6 +270,10 @@ class PlanExternalActionsService:
                 previous_messages=previous_messages,
             )
             if missing:
+                # Do not abort an already-valid multi-step selection because a
+                # lower-ranked sibling lacks required args.
+                if selected:
+                    continue
                 clarify = OpenApiToolRoutingContentService.get(
                     "selectionReasons",
                     "openapiFirstClarify",

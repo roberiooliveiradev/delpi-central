@@ -541,3 +541,46 @@ def test_bind_does_not_invent_granularity_for_scalar_summary():
     assert "granularity" not in parameters
     assert parameters["start_date"] == "01-03-2026"
     assert parameters["end_date"] == "31-03-2026"
+
+
+def test_deterministic_skips_sibling_missing_required():
+    """Lower-ranked action missing required args must not abort a valid first step."""
+    from app.domain.models.action_descriptor import ActionCandidate, ActionDescriptor
+
+    good = {
+        "actionId": "stock",
+        "operationId": "get_product_stock",
+        "method": "GET",
+        "path": "/products/{code}/stock",
+        "summary": "Estoque do produto",
+        "description": "Saldo de estoque atual",
+        "parametersSchema": [
+            {"name": "code", "in": "path", "required": True},
+        ],
+        "enabled": True,
+    }
+    bad = {
+        "actionId": "supplier-history",
+        "operationId": "get_supplier_history",
+        "method": "GET",
+        "path": "/supplies/safety-stock/items/{code}/suppliers/{supplier_code}/purchase-price-history",
+        "summary": "Histórico de preço fornecedor estoque",
+        "description": "Purchase price history saldo estoque",
+        "parametersSchema": [
+            {"name": "code", "in": "path", "required": True},
+            {"name": "supplier_code", "in": "path", "required": True},
+            {"name": "supplierStore", "in": "query", "required": True},
+        ],
+        "enabled": True,
+    }
+    candidates = [
+        ActionCandidate(descriptor=ActionDescriptor.from_action_dict(good), score=2.0),
+        ActionCandidate(descriptor=ActionDescriptor.from_action_dict(bad), score=1.5),
+    ]
+    plan = PlanExternalActionsService(llm_planner=None).plan(
+        "numa resposta só o saldo de estoque atual do produto 90260149",
+        candidates,
+        max_steps=2,
+    )
+    assert not plan.clarify
+    assert [s.action_id for s in plan.steps] == ["stock"]

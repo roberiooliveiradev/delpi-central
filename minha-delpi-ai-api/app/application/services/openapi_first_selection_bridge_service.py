@@ -225,6 +225,9 @@ class OpenApiFirstSelectionBridgeService:
                 arguments=step.arguments,
             )
             if error is not None:
+                # Keep already-validated compound steps; skip only the bad sibling.
+                if results:
+                    continue
                 clarify = str(error)
                 return [
                     {
