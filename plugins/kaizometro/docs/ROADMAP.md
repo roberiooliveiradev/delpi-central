@@ -2,9 +2,9 @@
 
 Documentação canônica do roadmap:
 
-**[docs/12-roadmap-e-volucao/kaizometro/ROADMAP.md](../../../docs/12-roadmap-e-volucao/kaizometro/ROADMAP.md)**
+**[docs/12-roadmap-e-evolucao/kaizometro/ROADMAP.md](../../../docs/12-roadmap-e-evolucao/kaizometro/ROADMAP.md)**
 
-Status rápido: [status-atual.md](../../../docs/12-roadmap-e-volucao/kaizometro/status-atual.md)
+Status rápido: [status-atual.md](../../../docs/12-roadmap-e-evolucao/kaizometro/status-atual.md)
 
 ## Resumo das fases
 
