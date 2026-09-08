@@ -15,6 +15,18 @@ spec.loader.exec_module(mod)
 
 
 class FastApiAuthzGuardrailsTest(unittest.TestCase):
+    def test_empty_local_path_is_composed_with_router_prefix(self):
+        source = '''
+from fastapi import APIRouter
+router = APIRouter(prefix="/items")
+
+@router.post("", operation_id="create_item")
+def create_item(body):
+    return service.create(body)
+'''
+        routes = mod.route_contracts(source)
+        self.assertEqual([(route.method, route.path) for route in routes], [("post", "/items")])
+
     def test_write_with_permission_decorator_is_allowed(self):
         source = '''
 from fastapi import APIRouter
