@@ -1,0 +1,188 @@
+---
+description: Responsabilidade transversal canônica — confiabilidade, observabilidade, SLOs, logs, métricas, tracing, degradação, capacidade e recuperação de falhas
+alwaysApply: false
+---
+
+# Plataforma — confiabilidade e observabilidade
+
+## Responsabilidade
+
+Esta é a fonte transversal para garantir que serviços e integrações **falhem de forma controlada, sejam diagnosticáveis e operem dentro de limites conhecidos**.
+
+## Princípio
+
+Fluxo crítico deve responder operacionalmente:
+
+```text
+o que aconteceu?
+onde falhou?
+quanto demorou?
+qual dependência participou?
+qual versão/configuração estava ativa?
+qual foi o impacto?
+como o sistema degradou/recuperou?
+```
+
+Sem depender de `print()` improvisado nem expor dados sensíveis.
+
+## Sinais de confiabilidade
+
+Para fluxo material, identificar quando aplicável:
+
+- traffic;
+- success/error rate;
+- latency p50/p95/p99;
+- saturation/concurrency;
+- timeout/retry/rate limit;
+- queue/backlog;
+- dependency health;
+- domain outcome/quality quando mensurável.
+
+## SLI/SLO
+
+Nem toda feature precisa de SLO formal, mas toda capacidade crítica deve ter expectativa mensurável.
+
+Quando o impacto justificar, definir:
+
+```text
+SLI
+SLO/target
+janela
+alert threshold
+owner/runbook
+```
+
+Não escolher threshold apenas porque “parece bom”; usar baseline/capacidade/necessidade do usuário.
+
+## Logs
+
+Aplicar `observability-standards.mdc`:
+
+- eventos estruturados;
+- correlation/request ID;
+- operação/serviço/status/duração;
+- error class/código estável;
+- redaction antes do sink;
+- sem JWT/API key/body sensível por padrão.
+
+## Tracing
+
+Fluxo distribuído deve preservar contexto entre Portal/MFE → API/BFF → serviço/downstream quando infraestrutura suportar.
+
+Domain/application não dependem diretamente de SDK de tracing; instrumentação entra por middleware/adapters/composition.
+
+## Métricas
+
+Métrica deve ter semântica e ação possíveis. Evitar cardinalidade explosiva com userId, raw URL, conversationId ou mensagem livre como label.
+
+Ao criar métrica usada para gate/rollout, documentar definição antes de comparar versões.
+
+## Dependências remotas
+
+Aplicar `http-integration-resilience.mdc`:
+
+```text
+timeout explícito
+→ classificação de erro
+→ retry seguro e limitado
+→ backoff/jitter
+→ circuit/degradação quando justificado
+→ recuperação observável
+```
+
+Falha de downstream não deve causar cascata ilimitada, retry storm ou sucesso falso.
+
+## Degradação
+
+Quando dependência não essencial falhar, considerar fallback/partial result **somente se a semântica continuar correta e explícita**.
+
+Proibido:
+
+- retornar vazio como se fosse sucesso;
+- esconder dado stale sem indicar política;
+- usar cache antigo sem TTL/semântica conhecida;
+- transformar timeout em default de negócio silencioso.
+
+## Capacidade e budgets
+
+Antes de fan-out, export, query pesada ou processamento em massa, definir limites:
+
+- concurrency;
+- page/items/bytes;
+- timeout total;
+- memória;
+- filas/backpressure;
+- cache/TTL quando aplicável.
+
+Não aumentar timeout indefinidamente para “resolver” saturação.
+
+## Alertas
+
+Alertar sobre condição que exige ação, não sobre toda exceção individual.
+
+Um alerta útil deve apontar para:
+
+```text
+serviço/fluxo
+condição
+impacto
+owner
+runbook ou primeira ação
+```
+
+## Falhas e recuperação
+
+Para fluxo crítico, responder:
+
+1. O que acontece se o downstream ficar lento?
+2. O que acontece se ficar indisponível?
+3. Retry pode duplicar escrita?
+4. Existe backpressure/circuit breaker onde necessário?
+5. Após recuperação, há fila/reprocessamento inconsistente?
+6. O operador consegue distinguir causa interna de externa?
+
+## Testes obrigatórios
+
+Conforme mudança:
+
+- timeout;
+- 429/Retry-After;
+- 5xx transitório;
+- write não repetido sem idempotência;
+- propagação de correlation ID;
+- redaction de secrets;
+- erro não convertido em sucesso silencioso;
+- fallback/partial explicitamente sinalizado;
+- limite de concurrency/payload quando material;
+- métrica/evento crítico emitido com semântica estável.
+
+## Rollout
+
+Shadow/canary/feature flag deve registrar variante ativa e possuir critério quantitativo de promoção/rollback. Comparação sem identificação da variante é evidência inválida.
+
+## Regras filhas/complementares
+
+- `observability-standards.mdc`
+- `http-integration-resilience.mdc`
+- `platform-delivery-runtime-operations.mdc`
+- `platform-quality-testing.mdc`
+- `architecture-ci-enforcement.mdc`
+
+## Evidência de conclusão
+
+```text
+CRITICAL_FLOW
+SLI_SLO quando aplicável
+LATENCY
+ERROR_RATE
+DEPENDENCY_FAILURE_BEHAVIOR
+RETRY_IDEMPOTENCY
+CORRELATION
+REDACTION
+LIMITS
+ALERT_RUNBOOK quando aplicável
+```
+
+## Critério de sucesso
+
+Falhas deixam sinais suficientes para diagnóstico, respeitam budgets e degradam de maneira controlada sem cascata, duplicação silenciosa ou exposição de segredo.
