@@ -5,11 +5,11 @@ alwaysApply: true
 
 # Diretrizes do repositório — índice
 
-## Protocolo cognitivo obrigatório (antes de qualquer outra regra)
+## Protocolo cognitivo obrigatório
 
 | Regra | Quando consultar |
 |-------|------------------|
-| `evidence-driven-execution.mdc` | **Sempre** — decompor o pedido completo, separar fato de inferência, investigar antes de editar, validar causa/objetivo com evidência e revisar contra o pedido original antes de concluir |
+| `evidence-driven-execution.mdc` | **Sempre** — decompor pedido completo, separar fato de inferência, investigar antes de editar e validar objetivo original |
 
 Fluxo mental obrigatório:
 
@@ -27,52 +27,72 @@ Pedido completo
 → validação do objetivo original
 ```
 
-## Princípios transversais (sempre)
+## Princípios transversais
 
 | Regra | Quando consultar |
 |-------|------------------|
-| `english-code-identifiers.mdc` | **Sempre** — paths, arquivos, permissões, `operationId` em inglês; PT só em UI/locale/docs |
-| `feature-help-sync.mdc` | **Inegociável** — feature/modificação user-facing → atualizar Ajuda in-app (+ links/espelho) no mesmo entregável |
+| `english-code-identifiers.mdc` | Sempre — paths, arquivos, permissões e `operationId` em inglês; PT só em UI/locale/docs |
+| `feature-help-sync.mdc` | Feature/modificação user-facing → Ajuda in-app sincronizada |
 | `centralized-rules-first.mdc` | Qualquer fix — localizar módulo canônico antes de codar |
-| `root-cause-generalized-fix.mdc` | **Qualquer bug/fix** — causa raiz, solução generalista, alinhar contrato API+MFE |
-| `plugins-overlay-positioning.mdc` | **Overlay / toolbar / popover** — portal + coords; **proibido** clip/padding/abspos paliativo |
-| `plugins-reusable-components.mdc` | UI MFE — `@delpi/plugin-ui`; zero CSS de componente do kit no MFE |
-| `plugins-visual-design-system.mdc` | Tokens, layout, anti-vazamento CSS, claro/escuro |
-| `plan-construction.mdc` | CreatePlan / multi-etapa — matriz de fluxos + **receita por `E*.S*`** (objetivo, fazer, não fazer, teste, pronto, commit) |
-| `llm-stack-centralized.mdc` | Chat — texto/embed/visão; troca de motor via `LLM_PROVIDER` (hoje Kimi; Ollama só se o seletor for `ollama`) |
+| `root-cause-generalized-fix.mdc` | Qualquer bug/fix — causa raiz e solução generalista |
+| `plan-construction.mdc` | Plano multi-etapa |
+| `llm-stack-centralized.mdc` | Chat — stack LLM centralizada |
 | `infra-sequential-container-startup.mdc` | Deploy / docker up / rebuild |
+
+## Chat / APIs / tools
+
+| Regra | Escopo |
+|-------|--------|
+| **`openapi-first-universal-tool-routing.mdc`** | **Canônica para tools/actions** — OpenAPI + Action Catalog/index + planner/validator genéricos; API externa sem código/registry por endpoint |
+| `operational-api-routing.mdc` | Compatibilidade e aplicação prática do roteamento operacional durante migração |
+| `new-api-route-checklist.mdc` | Checklist de rota/API exposta ao chat; import/index/policy/testes |
+| `chat-intelligence-base.mdc` | Inteligência transversal no chat base; agentes herdam |
+| `assistant-content-json.mdc` | Linguagem/UX/policies em JSON, sem duplicar OpenAPI |
+| `schema-first-presentation-delivered.mdc` | Apresentação schema-first; fallback genérico para action nova |
+| `clean-architecture-chat-api.mdc` | Limites de camada na API do chat |
+
+### Regra de ouro para API nova
+
+```text
+OpenAPI válido
+→ importar/indexar
+→ vincular ao agente
+→ policies/permissões
+→ usar
+```
+
+Adicionar nova API/operation **não deve exigir**:
+
+```text
+if path/provider
+selector específico
+intent específica
+pathMarkers/operationIdMarkers novos
+parameterStrategy exclusivo por endpoint
+presenter obrigatório
+```
+
+Se exigir, consultar `openapi-first-universal-tool-routing.mdc` antes de implementar.
 
 ## Frontend (plugins MFE + kit)
 
 | Regra | Escopo |
 |-------|--------|
-| `plugins-overlay-positioning.mdc` | Toolbars/menus flutuantes — `AnchoredPanelPortal` + `resolveAnchoredPanelCoords` |
-| `plugins-reusable-components.mdc` | Kit-first; dual-class; zero CSS kit no MFE |
+| `plugins-overlay-positioning.mdc` | Toolbars/menus flutuantes — portal + coords |
+| `plugins-reusable-components.mdc` | Kit-first; zero CSS duplicado de componente do kit |
 | `plugins-visual-design-system.mdc` | Design system + anti-vazamento |
-| `mfe-modal-host-contained.mdc` | Modais não cobrem sidebar do portal |
-| `mf-federation-patch-safety.mdc` | Patch React MF — sem ReDoS |
-| `tv-dashboard-optional-data-filters.mdc` | Filtros Dados: «Não definido aqui» em params opcionais (todas as rotas) |
-| `tv-dashboard-presentation-parity.mdc` | Editor ≡ apresentação (palco / projeção) |
-
-## Fluxo rápido (UI flutuante / “cortou na borda”)
-
-```
-Bug overlay/toolbar cortada ou scroll fantasma
-  → plugins-overlay-positioning (nunca clip/padding)
-  → AnchoredPanelPortal / MessageThreadActionsBar
-  → teste coords + rebuild plugin-ui (remote) antes do MFE
-```
-
-## Chat / API
-
-Ver regras `chat-intelligence-base`, `llm-stack-centralized`, `schema-first-presentation-delivered`, `assistant-content-json`, `new-api-route-checklist`, `operational-api-routing` (quando o escopo for chat/api-delpi).
+| `mfe-modal-host-contained.mdc` | Modais não cobrem sidebar |
+| `mf-federation-patch-safety.mdc` | Patches MF seguros |
+| `tv-dashboard-optional-data-filters.mdc` | Filtros opcionais em Dados |
+| `tv-dashboard-presentation-parity.mdc` | Editor ≡ apresentação |
 
 ## Ordem de prioridade em conflito
 
-1. `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md` + `evidence-driven-execution.mdc` para entendimento, evidência e decisão
-2. Módulo canônico + contrato (API manda metadata; MFE render-only quando couber)
-3. Perfis/JSON declarativos e portais do kit antes de `if`/CSS paliativo
-4. Ajuda in-app do módulo dono sincronizada (`feature-help-sync.mdc`) — sem “deixar pra depois”
-5. Teste de regressão no pacote alterado
+1. `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md` + `evidence-driven-execution.mdc` para entendimento, evidência e decisão.
+2. Módulo canônico + contrato vigente.
+3. Para tools/actions: **OpenAPI importado + Action Catalog/index** prevalecem sobre registry/markers manuais.
+4. JSON declarativo para linguagem/policy/configuração transversal — nunca como duplicação de contrato OpenAPI.
+5. Ajuda in-app sincronizada quando aplicável.
+6. Teste de regressão no pacote alterado.
 
 Conflitos entre fontes relevantes devem ser registrados como **drift**; não reconciliar contradições silenciosamente.
