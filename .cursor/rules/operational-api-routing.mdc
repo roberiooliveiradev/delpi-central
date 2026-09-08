@@ -1,6 +1,6 @@
 ---
-description: Roteamento centralizado de actions OpenAPI no chat — OpenAPI-first, multi-provider e sem regra nova por endpoint
-alwaysApply: true
+description: Chat/actions OpenAPI — roteamento operacional multi-provider, retrieval, planner, validator e migração do registry legado
+alwaysApply: false
 ---
 
 # Roteamento centralizado de APIs operacionais
