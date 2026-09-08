@@ -15,7 +15,7 @@ import {
 } from "../../../ui/mrUi";
 import { buildReviewChecklist } from "../domain/reviewChecklist";
 import { applyDefaultStockWriteOff } from "../domain/stockWriteOff";
-import { INVOICE_TYPE_LABELS } from "../domain/status";
+import { INVOICE_TYPE_LABELS, reviewChecklistLabel } from "../domain/status";
 import type {
   Carrier,
   FreightMode,
@@ -180,7 +180,7 @@ export function InvoiceIssuanceWizard({
       });
       window.location.assign(`/apps/my-requests/requests/${created.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao criar");
+      setError(err instanceof Error ? err.message : "Não foi possível criar a solicitação.");
       setBusy(false);
     }
   }
@@ -197,8 +197,14 @@ export function InvoiceIssuanceWizard({
       }
       canCreate
     >
-      <MyRequestsSectionCard title="Wizard de emissão">
-        <div data-help="invoice-wizard" title={MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard.section}>
+      <MyRequestsSectionCard title="Emissão de nota fiscal">
+        <div
+          data-help="invoice-wizard"
+          title={
+            MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard.stepsById[stepMeta.id] ||
+            MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard.section
+          }
+        >
           {showBranch ? (
             <div className="my-requests-form-stack">
               <SelectField
@@ -401,7 +407,7 @@ export function InvoiceIssuanceWizard({
               <ul className="my-requests-domain-list">
                 {Object.entries(checklist).map(([key, ok]) => (
                   <li key={key}>
-                    {ok ? "✓" : "○"} {key}
+                    {ok ? "✓" : "○"} {reviewChecklistLabel(key)}
                   </li>
                 ))}
               </ul>

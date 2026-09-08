@@ -1,4 +1,11 @@
-import type { AllowedAction, FreightMode, InvoiceType, IssuanceStatus, PartyType } from "./types";
+import type {
+  AllowedAction,
+  ChecklistFlags,
+  FreightMode,
+  InvoiceType,
+  IssuanceStatus,
+  PartyType,
+} from "./types";
 
 export const STATUS_LABELS: Record<IssuanceStatus, string> = {
   pending: "Aguardando atendimento",
@@ -69,6 +76,20 @@ export function partyTypeLabel(value: string): string {
 
 export function freightModeLabel(value: string): string {
   return FREIGHT_MODE_LABELS[value as FreightMode] ?? value.toUpperCase();
+}
+
+export const REVIEW_CHECKLIST_LABELS: Record<keyof ChecklistFlags | string, string> = {
+  recipient: "Destinatário selecionado",
+  item_codes: "Itens com código",
+  quantity_price: "Quantidade e preço válidos",
+  stock_write_off: "Itens prontos para baixa",
+  invoice_type: "Tipo de NF informado",
+  freight_mode: "Modo de frete informado",
+  weight_volumes: "Peso e volumes informados",
+};
+
+export function reviewChecklistLabel(key: string): string {
+  return REVIEW_CHECKLIST_LABELS[key] ?? key;
 }
 
 export function historyEventLabel(eventType: string): string {
