@@ -1,0 +1,158 @@
+---
+description: Responsabilidade transversal canônica — frontend, Portal, MFEs, acessibilidade, design system, estado, integração com APIs e experiência consistente
+alwaysApply: false
+---
+
+# Plataforma — frontend, MFE e experiência
+
+## Responsabilidade
+
+Esta é a fonte transversal para qualquer mudança em **Portal React, microfrontends, componentes compartilhados, tema, responsividade, acessibilidade, estados de tela e integração UI/API**.
+
+## Invariantes
+
+1. UI apresenta e coleta intenção; regra de negócio permanece no backend/contexto dono.
+2. MFE com API própria consome sua API/BFF, não `api-delpi` diretamente.
+3. Componentes reutilizáveis vêm de `@delpi/plugin-ui` antes de criar cópia local.
+4. CSS de MFE não pode vazar para shell/outros plugins.
+5. Claro/escuro, desktop/mobile e teclado não são pós-ajuste; fazem parte do contrato de UI.
+6. Autorização visual não substitui autorização backend.
+7. Loading, empty, error, forbidden e partial states devem ser tratados explicitamente quando possíveis.
+
+## Arquitetura frontend
+
+Separar responsabilidades:
+
+```text
+page/component → composição visual
+hooks/state     → estado/orquestração de UI
+client/adapter  → HTTP/normalização de contrato
+backend         → regra de negócio/autorização efetiva
+```
+
+Evitar component/page com fetch, parsing de permissão, regra de domínio e renderização misturados.
+
+## MFEs
+
+Para plugins federados:
+
+- seguir Module Federation/configuração canônica;
+- compartilhar React conforme helper vigente;
+- não importar internals de outro MFE;
+- comunicação com host por contratos públicos;
+- modal/overlay respeita container/shell;
+- build standalone não pode mascarar quebra federada.
+
+Aplicar `mf-federation-patch-safety.mdc`, `mfe-modal-host-contained.mdc` e `plugins-overlay-positioning.mdc` quando relevantes.
+
+## Design system
+
+Antes de criar componente:
+
+1. procurar export em `@delpi/plugin-ui`;
+2. se duplicável/2+ consumidores, evoluir o kit;
+3. CSS do componente compartilhado fica no kit;
+4. MFE usa tokens/layout de página, não override estrutural do kit.
+
+Aplicar `plugins-reusable-components.mdc` e `plugins-visual-design-system.mdc`.
+
+## Acessibilidade
+
+Toda interação deve considerar:
+
+- semântica HTML correta;
+- label/aria quando necessário;
+- navegação por teclado;
+- focus visível;
+- contraste e estados não dependentes só de cor;
+- target touch adequado;
+- modal/dialog com foco e escape coerentes;
+- conteúdo essencial não dependente de hover.
+
+## Responsividade
+
+Tela deve funcionar sem conteúdo essencial cortado:
+
+- grids responsivos;
+- tabela com estratégia mobile/scroll intencional;
+- toolbar empilhável;
+- gráficos responsivos;
+- sem `min-width` arbitrário em page shell;
+- validar ao menos desktop e viewport mobile representativo.
+
+## Estados de experiência
+
+Para cada fetch/ação relevante considerar:
+
+```text
+initial/loading
+success
+empty
+validation error
+forbidden
+downstream error
+retry/recovery
+partial data quando o contrato permitir
+```
+
+Não mostrar spinner infinito nem sucesso vazio após erro silencioso.
+
+## Formulários
+
+- validação UX pode antecipar erro, mas backend valida de novo;
+- mensagens devem indicar como corrigir;
+- impedir double submit em writes quando necessário;
+- preservar dados digitados após erro recuperável;
+- ações destrutivas usam confirmação coerente ao risco.
+
+## Permissões e menu
+
+UI pode esconder/desabilitar capacidade não permitida para melhorar UX, mas a API continua a autoridade. Rotas/menu/manifest devem refletir permission codes vigentes; não inventar permissão local no MFE.
+
+## Ajuda e conteúdo
+
+Mudança user-facing deve manter ajuda/tooltips/manual coerentes conforme `feature-help-sync.mdc`. Textos PT-BR permanecem em conteúdo/localização apropriados, não espalhados em lógica técnica quando já existe mecanismo canônico.
+
+## Testes mínimos
+
+Conforme mudança:
+
+- unitário de state/hook quando há lógica;
+- interação do componente crítico;
+- contrato do client/adapter;
+- loading/empty/error/forbidden;
+- permission visibility quando aplicável;
+- build do MFE;
+- smoke federado no Portal quando integração/Module Federation mudou;
+- claro/escuro e mobile em mudança visual material;
+- keyboard/focus para interação crítica.
+
+## Regras filhas/complementares
+
+- `plugins-reusable-components.mdc`
+- `plugins-visual-design-system.mdc`
+- `plugin-mfe-page-excellence.mdc`
+- `plugins-frontend-build.mdc`
+- `plugins-overlay-positioning.mdc`
+- `mfe-modal-host-contained.mdc`
+- `mf-federation-patch-safety.mdc`
+- `mfe-own-api-no-direct-api-delpi.mdc`
+- `feature-help-sync.mdc`
+
+## Evidência de conclusão
+
+```text
+UI_OWNER
+SHARED_COMPONENT_DECISION
+API_BOUNDARY
+STATES_COVERED
+ACCESSIBILITY
+RESPONSIVE_VALIDATION
+THEME_VALIDATION
+BUILD_TESTS
+FEDERATED_SMOKE quando aplicável
+```
+
+## Critério de sucesso
+
+A feature deve parecer parte nativa da Minha DELPI, respeitar boundaries, funcionar nas superfícies relevantes e não exigir CSS/componente/regra de negócio duplicados por plugin.
