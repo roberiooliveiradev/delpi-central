@@ -37,6 +37,8 @@ FEDERATED_PLUGINS = {
     "financeiro-inadimplencia",
     "strategic-indicators",
     "customer-experience",
+    "commercial",
+    "supplies",
     "cultura-delpi",
     "central-agendamento",
     "quality-labels",

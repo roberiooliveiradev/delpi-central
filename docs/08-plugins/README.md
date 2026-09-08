@@ -71,6 +71,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/dashboard-quality` | `dashboard-quality` | microfrontend | plugin | `/apps/dashboard-quality` | `delpi-dashboard-quality` |
 | `plugins/eficiencia-fabril` | `eficiencia-fabril` | microfrontend | plugin | `/apps/eficiencia-fabril` | `delpi-eficiencia-fabril` |
 | `plugins/commercial` | `commercial` | microfrontend | plugin | `/apps/commercial` | `delpi-commercial` |
+| `plugins/supplies` | `supplies` | microfrontend | plugin | `/apps/supplies` | `delpi-supplies` |
 | `plugins/auditoria-5s` | `auditoria-5s` | microfrontend | plugin | `/apps/auditoria-5s` | `delpi-auditoria-5s` |
 | `plugins/kaizometro` | `kaizometro` | microfrontend | plugin | `/apps/kaizometro` | `delpi-kaizometro` |
 | `plugins/customer-experience` | `customer-experience` | microfrontend | plugin | `/apps/customer-experience` | `delpi-customer-experience` |
@@ -271,6 +272,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Mural de Acessos | [Plugin README](../../plugins/mural-acessos/README.md) · [API](../../api-delpi/docs/api/mural-acessos.md) · [público `/p/mural-acessos/menu/{token}`](../../plugins/public-hub/README.md) |
 | Delpi Reports | [Plugin README](../../plugins/reports/README.md) · [Roadmap](../12-roadmap-e-evolucao/delpi-reports/README.md) |
 | Portal Comercial | [Plugin README](../../plugins/commercial/README.md) · [Wireframes e rotas](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) · [Perfis e permissões](../12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) |
+| Portal Suprimentos | [Plugin README](../../plugins/supplies/README.md) · [Roadmap](../12-roadmap-e-evolucao/supplies/README.md) |
 | Portal Financeiro | [Plugin README](../../plugins/financial/README.md) · [API](../../financial-api/README.md) · [Spec](../12-roadmap-e-evolucao/financial/README.md) |
 | Despesas de Viagem | [Plugin README](../../plugins/travel-expenses/README.md) · [API](../../travel-expenses-api/README.md) · [Playbook](../12-roadmap-e-evolucao/travel-expenses/PLAYBOOK.md) · [Wireframes](../12-roadmap-e-evolucao/travel-expenses/WIREFRAMES.md) |
 | Pulso de Produção | [Plugin README](../../plugins/production-pulse/README.md) · [API](../../production-pulse-api/README.md) · [Roadmap](../12-roadmap-e-evolucao/production-pulse/ROADMAP.md) · [Homologação ESP](../12-roadmap-e-evolucao/production-pulse/HOMOLOGACAO-E6-S2.md) · [Wireframes](../12-roadmap-e-evolucao/production-pulse/WIREFRAMES.md) |

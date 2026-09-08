@@ -740,6 +740,23 @@ services:
     networks:
       - delpi-network
 
+  supplies:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: supplies/Dockerfile
+      target: production
+
+    container_name: delpi-supplies
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   auditoria-5s:
     depends_on:
       - plugin-ui

@@ -741,6 +741,22 @@ services:
     networks:
       - delpi-network
 
+  supplies:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: supplies/Dockerfile
+      target: production
+
+    container_name: delpi-supplies
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   auditoria-5s:
     <<: *plugin-ui-federated
     build:

@@ -1,0 +1,79 @@
+.dashboard-supplies-portal,
+.dashboard-supplies-portal * {
+  box-sizing: border-box;
+}
+
+.dashboard-supplies-portal {
+  --sp-page-padding: 24px;
+  --sp-section-gap: 24px;
+  --sp-grid-gap: 16px;
+  --sp-accent: var(--primary, #089bdb);
+  --sp-title: var(--secundary, #003866);
+  --sp-text: var(--text, #111111);
+  --sp-text-muted: var(--text-muted, rgba(17, 17, 17, 0.68));
+  --sp-surface: var(--surface, #ffffff);
+  --sp-border: var(--border, #e6e6e6);
+  --sp-danger: var(--danger, #b42318);
+  --delpi-ui-accent: var(--sp-accent);
+  --delpi-ui-title: var(--sp-title);
+  --delpi-ui-surface: var(--sp-surface);
+  --delpi-ui-text: var(--sp-text);
+  --delpi-ui-text-muted: var(--sp-text-muted);
+  --delpi-ui-border: var(--sp-border);
+  --delpi-ui-muted: var(--sp-text-muted);
+  --delpi-ui-danger: var(--sp-danger);
+  --delpi-ui-section-gap: var(--sp-section-gap);
+  --delpi-ui-grid-gap: var(--sp-grid-gap);
+  --delpi-ui-page-padding: var(--sp-page-padding);
+}
+
+:root[data-theme="dark"] .dashboard-supplies-portal {
+  --sp-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
+  --sp-text: rgba(255, 255, 255, 0.88);
+  --sp-text-muted: rgba(255, 255, 255, 0.72);
+  --sp-surface: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
+  --sp-border: rgba(255, 255, 255, 0.1);
+  --delpi-ui-accent: var(--sp-accent);
+  --delpi-ui-title: var(--sp-title);
+  --delpi-ui-surface: var(--sp-surface);
+  --delpi-ui-text: var(--sp-text);
+  --delpi-ui-text-muted: var(--sp-text-muted);
+  --delpi-ui-border: var(--sp-border);
+  --delpi-ui-muted: var(--sp-text-muted);
+}
+
+.dashboard-supplies-portal.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  max-width: none;
+  padding: var(--sp-page-padding);
+  gap: var(--sp-section-gap);
+  color: var(--sp-text);
+  background-color: var(--app-canvas, var(--bg, #ffffff));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--sp-accent) 5%, var(--app-canvas, var(--bg, #ffffff))),
+    var(--app-canvas, var(--bg, #ffffff)) 280px
+  );
+}
+
+.dashboard-supplies-portal button,
+.dashboard-supplies-portal input,
+.dashboard-supplies-portal select {
+  font: inherit;
+}
+
+.dashboard-supplies-portal button:focus-visible,
+.dashboard-supplies-portal a:focus-visible {
+  outline: 2px solid var(--sp-accent);
+  outline-offset: 2px;
+}
+
+.dashboard-supplies-portal h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  color: var(--sp-title);
+}
