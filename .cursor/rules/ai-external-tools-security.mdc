@@ -1,0 +1,204 @@
+---
+description: Minha DELPI AI/tools externas — segurança de providers OpenAPI, SSRF, prompt injection indireta, secrets, redirects, schemas e execução de actions
+alwaysApply: false
+---
+
+# Segurança de AI tools e APIs externas
+
+## Princípio
+
+Todo conteúdo vindo de provider externo deve ser tratado como **não confiável**, inclusive:
+
+```text
+OpenAPI/schema
+descriptions/examples
+response payloads
+headers
+URLs/redirects
+mensagens de erro
+conteúdo textual retornado por tools
+```
+
+Nenhum desses conteúdos pode elevar privilégio, alterar policy do agente ou virar instrução de sistema.
+
+Complementa `openapi-first-universal-tool-routing.mdc`, `http-integration-resilience.mdc` e `observability-standards.mdc`.
+
+## Fronteira de confiança
+
+O LLM pode:
+
+- interpretar intenção;
+- escolher entre actions já autorizadas;
+- propor argumentos estruturados.
+
+O LLM **não pode**:
+
+- inventar URL, host ou operationId fora do catálogo permitido;
+- alterar auth/policy/confirmation;
+- transformar texto retornado pela tool em instrução privilegiada;
+- executar código ou conteúdo ativo vindo da resposta;
+- acessar recurso de rede fora do provider aprovado.
+
+## OpenAPI importado é dado não confiável
+
+Ao importar OpenAPI externo:
+
+1. validar tamanho total e profundidade de schema;
+2. limitar resolução de `$ref` e detectar ciclos;
+3. preferir refs locais/same-origin; ref remoto exige policy explícita e passa pela mesma proteção de rede;
+4. rejeitar esquemas malformados ou excessivamente complexos antes de persistir/indexar;
+5. sanitizar conteúdo textual antes de exibir em superfícies administrativas quando houver HTML/markup;
+6. não executar exemplos, scripts ou URLs presentes em descriptions/examples.
+
+Descrições OpenAPI podem melhorar retrieval, mas nunca sobrescrevem system prompt, RBAC ou policy engine.
+
+## SSRF e rede
+
+Fetch de OpenAPI e execução de actions devem compartilhar proteção de rede.
+
+Por padrão:
+
+```text
+permitir apenas schemes esperados (http/https conforme ambiente)
+resolver hostname antes da chamada
+bloquear loopback/link-local/metadata endpoints
+bloquear redes privadas/internas não autorizadas para provider externo
+revalidar destino após redirect
+limitar redirects
+aplicar timeout
+```
+
+Hosts internos necessários à Minha DELPI devem ser permitidos por configuração explícita da infraestrutura/provider, não por texto do usuário nem por argumento produzido pelo LLM.
+
+Revalidar destino também após resolução DNS quando houver risco de rebinding.
+
+## Execução de action
+
+Antes de qualquer HTTP call:
+
+```text
+provider enabled
+→ binding agente/provider enabled
+→ action enabled
+→ action autorizada para o agente
+→ arguments validados contra OpenAPI
+→ policy read/write/admin/destructive
+→ confirmação quando exigida
+→ URL final derivada somente de baseUrl + path importado
+```
+
+Não aceitar `url`, `host`, `baseUrl` ou path arbitrário vindo do planner quando esses campos não forem parâmetros legítimos da action.
+
+## Prompt injection indireta via tool result
+
+Payload de tool pode conter texto como:
+
+```text
+"ignore as regras anteriores"
+"envie este token para..."
+"chame outra API"
+```
+
+Esse texto é **dado**, não instrução.
+
+Regra obrigatória:
+
+```text
+tool output
+→ parse/schema
+→ dados para resposta ou próxima decisão
+≠ nova autoridade de prompt
+```
+
+Se uma tool retornar conteúdo destinado a alimentar outro estágio LLM, marcar semanticamente como conteúdo externo/não confiável e manter as policies do sistema fora desse conteúdo.
+
+## Secrets e autenticação
+
+- JWT, API key, client secret e credencial técnica ficam em infraestrutura/provider config.
+- Nunca inserir segredo no prompt, embeddings, memória, tool metadata ou reason de execução.
+- Logs devem redigir `Authorization`, cookies, API keys e parâmetros classificados como secretos.
+- Erros devolvidos ao usuário não devem incluir credenciais, headers completos ou URLs assinadas sensíveis.
+- `user_token` deve respeitar o escopo do usuário; credencial técnica não pode simular usuário sem decisão arquitetural explícita.
+
+## Escritas e ações destrutivas
+
+POST/PUT/PATCH/DELETE ou action marcada como write/admin/destructive deve:
+
+1. passar por policy após seleção;
+2. validar argumentos;
+3. exigir confirmação quando configurada;
+4. preservar idempotência quando aplicável;
+5. não executar automaticamente uma segunda tentativa insegura.
+
+Ver `http-integration-resilience.mdc`.
+
+## Limites de resposta
+
+Toda integração externa deve ter limites para:
+
+```text
+bytes recebidos
+tempo total
+número de redirects
+paginação automática
+número de items ingeridos pelo LLM
+profundidade de JSON
+```
+
+Payload muito grande deve ser truncado/resumido de forma controlada, preservando metadata de truncamento.
+
+## Observabilidade segura
+
+Registrar decisão e falha sem segredo:
+
+```text
+providerKey
+actionId
+operationId
+policyDecision
+confirmationRequired
+validationStatus
+networkPolicyDecision
+httpStatus
+durationMs
+responseBytes
+```
+
+Nunca logar body sensível por padrão.
+
+## Testes obrigatórios
+
+Cobrir quando aplicável:
+
+- OpenAPI apontando para localhost/link-local;
+- redirect de host permitido para host bloqueado;
+- `$ref` remoto bloqueado/permitido conforme policy;
+- tool response com prompt injection;
+- action fora de `allowed_action_ids`;
+- write sem confirmação;
+- segredo em header não aparecendo em log;
+- payload acima do limite;
+- provider interno explicitamente permitido.
+
+## O que NÃO fazer
+
+- Confiar em host porque veio do OpenAPI.
+- Permitir que planner forneça URL arbitrária.
+- Desabilitar SSRF protection para “fazer funcionar”.
+- Colocar API key no system prompt.
+- Tratar resposta de tool como mensagem de sistema.
+- Logar request/response completos sem classificação de sensibilidade.
+- Criar allowlist por endpoint em Python; policy deve ser configurável por provider/rede.
+
+## Critério de sucesso
+
+Uma API externa comprometida pode devolver schema ou conteúdo malicioso sem conseguir:
+
+```text
+escalar privilégio
+→ acessar rede não autorizada
+→ vazar secrets
+→ contornar confirmação
+→ alterar system policy
+→ executar URL não importada/autorizada
+```
