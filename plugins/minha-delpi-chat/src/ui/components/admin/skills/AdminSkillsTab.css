@@ -24,6 +24,32 @@
   align-items: center;
 }
 
+.mdc-admin-skills__studio-callout {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-card-bg));
+}
+
+.mdc-admin-skills__studio-callout p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--mdc-text);
+}
+
+.mdc-admin-skills__studio-link {
+  border: 0;
+  background: transparent;
+  color: var(--mdc-primary);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
 .mdc-admin-skills__list-panel {
   display: grid;
   gap: 0.75rem;

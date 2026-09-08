@@ -1,5 +1,5 @@
 import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
-import { Plus, RefreshCw, Sparkles, Trash2 } from "lucide-react";
+import { ExternalLink, Plus, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
@@ -9,6 +9,9 @@ import {
   updateAdminChatSkill,
 } from "../../../../data/api/adminApi";
 import type { AdminChatSkill, AdminRbacSummary } from "../../../../data/api/adminTypes";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+import { buildChatAgentHref } from "../../../../navigation/chatRoutes";
+import { navigateChatHref } from "../../../../navigation/chatNavigation";
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
 import { ChatAdminNativeTextAreaField } from "../shared/chatAdminFormFields";
 import { useConfirmDialog } from "../../shared";
@@ -231,7 +234,8 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
         className="mdc-admin-skills__toolbar"
         eyebrow="Conhecimento"
         title="Comportamentos"
-        description="Cadastre comportamentos de prompt reutilizáveis. Cada agente escolhe quais habilidades estão ativas; a execução de APIs continua nas ações."
+        description="Catálogo global de skills de prompt. Skills e actions por agente são editadas no Studio — não neste CRUD."
+        helpHint={ADMIN_HELP.behaviors}
         summary={
           <SkillsSummaryStrip
             summary={summary}
@@ -252,6 +256,14 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
               <RefreshCw size={15} aria-hidden="true" className={isLoading ? "is-spinning" : ""} />
               <span>Atualizar</span>
             </button>
+            <button
+              type="button"
+              className="mdc-chat-ws-toolbar-btn"
+              onClick={() => navigateChatHref(buildChatAgentHref(null))}
+            >
+              <ExternalLink size={15} aria-hidden="true" />
+              <span>Abrir Studio</span>
+            </button>
             {canManage ? (
               <button
                 type="button"
@@ -265,6 +277,21 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
           </div>
         }
       />
+
+      <aside className="mdc-admin-skills__studio-callout" aria-label="Skills globais versus Studio">
+        <p>
+          Este catálogo define comportamentos <strong>globais</strong> reutilizáveis. Para
+          ativar skills em um agente, editar prompt ou actions, use o{" "}
+          <button
+            type="button"
+            className="mdc-admin-skills__studio-link"
+            onClick={() => navigateChatHref(buildChatAgentHref(null))}
+          >
+            Studio do agente
+          </button>
+          .
+        </p>
+      </aside>
 
       <div className="mdc-admin-skills__layout mdc-admin-split">
         <aside className="mdc-admin-split__aside mdc-admin-panel mdc-admin-skills__list-panel">
