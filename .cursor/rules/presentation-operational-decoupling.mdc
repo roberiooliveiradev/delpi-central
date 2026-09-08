@@ -1,6 +1,6 @@
 ---
-description: Desacoplamento apresentação × narrativa × cobertura operacional — sempre canônico
-alwaysApply: true
+description: Chat/apresentação operacional — desacoplamento entre estrutura visual, narrativa, cobertura, metadata e renderização MFE
+alwaysApply: false
 ---
 
 # Apresentação operacional desacoplada
