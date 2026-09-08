@@ -1,6 +1,6 @@
 ---
-description: Clean Architecture — camadas e checklist do minha-delpi-ai-api (chat)
-alwaysApply: true
+description: Minha DELPI AI API — Clean Architecture, limites de camadas, send/stream, tools/actions e apresentação do chat
+alwaysApply: false
 ---
 
 # Clean Architecture — minha-delpi-ai-api (chat)
@@ -12,50 +12,68 @@ Guardrails gerais (avisar ao desviar): `clean-code-architecture-guardrails.mdc`.
 - `domain` **não** importa `app.infrastructure.*` nem `app.interfaces.*`.
 - `interfaces` **não** instancia `Postgres*Repository` — só `composition.make_*`.
 - Textos PT-BR para usuário **e** configuração declarativa (regex, limites, thresholds) vivem em `app/content/pt-BR/assistant/*.json`; Python só com lógica + loaders canônicos.
+- Metadata técnica de actions (`operationId`, method, path, params, schemas) vem do **OpenAPI importado + Action Catalog**, não de JSON paralelo por endpoint.
 
 ## Onde colocar código novo
 
 | Mudança | Camada |
 |---------|--------|
-| Intenção, roteamento, presenter, normalização campo | `domain/services` |
-| Orquestração de turno, RAG, tools, SSE | `application/services` + use case fino |
-| Postgres, LLM, HTTP api-delpi, loader JSON | `infrastructure` |
-| Endpoint REST | `interfaces/http` (handler < 40 linhas) |
+| Intenção, contratos de candidates/plans, validação, presenter, normalização campo | `domain/services` + domain models/ports |
+| Orquestração de turno, RAG, retrieval de tools, planner, policies, SSE | `application/services` + use case fino |
+| Postgres, LLM, HTTP providers, OpenAPI import/index, loader JSON | `infrastructure` |
+| Endpoint REST | `interfaces/http` (handler fino) |
 
 ## Send / Stream
 
 - Pré-LLM: `ChatTurnPreparationService` (único).
 - Pós-LLM: `ChatTurnCompletionService` (alvo — não duplicar nos use cases).
 - Inteligência: `ChatIntelligencePipelineService` (único).
+- Preview/simulate devem consumir o mesmo pipeline/base quando o comportamento precisa de paridade.
 
-## API operacional
+## API operacional / tools
 
-- Spec: `OperationalApiRouteSpec` + `api_route_domains.json`.
-- Seleção: `ExternalActionRouteSelectionService`.
-- Execução: `ExecuteExternalActionUseCase` + gateway HTTP.
+Fluxo canônico:
+
+```text
+OpenAPI importado
+→ Action Catalog/index
+→ allowed actions do agente
+→ retrieval top-K
+→ planner estruturado
+→ validação OpenAPI
+→ policy/confirmation
+→ ExecuteExternalActionUseCase
+→ gateway HTTP genérico
+```
+
+Regra canônica: `openapi-first-universal-tool-routing.mdc`.
+
+`OperationalApiRouteSpec`, `api_route_domains.json` e `operational_route_registry.json` são compatibilidade/migração enquanto existirem; **não** são requisito para integrar nova API/operation.
 
 ## Apresentação (delivered puro — jun/2026)
 
 - Pipeline: `ChatPresentationApiDeliveredMetadataService.build` (único caminho via `ChatPresentationMetadataPipelineService`).
 - Schema-driven: `ChatSchemaDrivenPresentationService` + `ExternalActionResultPresenter.finish_schema_first_primary`.
-- SQL/KPI: `ExternalActionSqlPresenter`, `ExternalActionKpiChartPresenter` (exceções legítimas).
+- SQL/KPI: `ExternalActionSqlPresenter`, `ExternalActionKpiChartPresenter` (exceções legítimas quando realmente transversais).
 - Decisão Automático: `ChatPresentationViewIntentService` + `ChatPresentationDecisionService.enrich_metadata`.
 - Comentário: `ChatDataInsightEnrichmentService` → `dataAnswer` / `dataCommentary`.
 - Formato explícito: `ChatToolContextFormatService` → `build_bundle` schema-driven.
-- Perfis: `presentation_profiles.json` — `pathRules`, `chartPolicy`; **não** `visualBuilders` / `tableAssembly`.
-- Regra obrigatória: **`schema-first-presentation-delivered.mdc`**.
-- Nova rota: checklist **`new-api-route-checklist.mdc`**.
+- Perfis: `presentation_profiles.json` — comportamento de UX; **não** duplicar contrato técnico do OpenAPI.
+- Regra obrigatória: `schema-first-presentation-delivered.mdc`.
+- Nova rota/API: checklist `new-api-route-checklist.mdc`.
 
-## Ports (Fase 2)
+## Ports
 
-- Conteúdo: `AssistantContentPort` → `InfrastructureAssistantContentAdapter` via `configure_domain_infrastructure_ports()`.
-- Config: `AppConfigPort` → `InfrastructureAppConfigAdapter` (mesmo wiring).
+- Conteúdo: `AssistantContentPort` → adapter de infrastructure via composição.
+- Config: `AppConfigPort` → adapter de infrastructure via composição.
+- Action catalog/search/planner/validator devem depender de ports, não de provider concreto.
 
 ## PR checklist
 
 1. Domain sem import de infra?
-2. Texto novo só em JSON?
-3. Send/stream usam o mesmo serviço para a mesma regra?
-4. Teste ou caso em `chat_intelligence_regression_cases.py`?
-5. Rota nova: **`new-api-route-checklist.mdc`** + gates `--check-profiles`?
-6. Playbook: `docs/roadmap/playbook-11-clean-architecture-chat-api.md`
+2. Texto/configuração declarativa nova no lugar canônico, sem duplicar OpenAPI?
+3. Send/stream/simulate usam o mesmo serviço base para a mesma regra?
+4. Nova inteligência possui teste/caso de regressão e prova de integração no pipeline real?
+5. Tool/action nova funciona via import/index/binding sem selector/registry específico?
+6. Apresentação possui fallback schema-driven sem presenter obrigatório?
+7. Playbook/arquitetura afetados foram sincronizados quando necessário?
