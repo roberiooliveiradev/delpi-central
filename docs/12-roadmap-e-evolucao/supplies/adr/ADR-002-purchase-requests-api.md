@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|--------|
-| Status | Aceito (documentação) · **não implementado** |
+| Status | Aceito · **C1 implementado (E6)** · C2/C3 não iniciados |
 | Data | 2026-09-08 |
 | Contexto | Painel Solicitações de Compras já é BC próprio; o Portal precisa de uma API de produto |
 | Relacionados | [ADR-001](./ADR-001-supplies-api.md), [ADR-003](./ADR-003-legacy-app-consolidation.md), contrato [01-contrato-api.md](../../solicitacoes-compras/01-contrato-api.md) |

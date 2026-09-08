@@ -1,7 +1,7 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
-> **Status:** plano executável revisado · set/2026 · **E1–E5 concluídas** · E6+ não iniciar sem autorização explícita  
-> **Readiness atual:** **E1–E5 + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = **E6** · **E4.S4 perfil** planejado (não bloqueia E6)  
+> **Status:** plano executável revisado · set/2026 · **E1–E6 concluídas** · E7+ não iniciar sem autorização explícita
+> **Readiness atual:** **E1–E6 + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = **E7** · **E4.S4 perfil** planejado (não bloqueia E7)
 > Referências: ADR-001..ADR-007, `plan-construction.mdc`, `evidence-driven-execution.mdc`.
 
 ---
@@ -390,12 +390,15 @@ cd plugins/supplies && npm test -- Overview
 
 # E6 — Solicitações de Compras C1
 
+> **Concluída 2026-09-08** — gateway BFF + lista/detalhe/export + evidência C2 documental.
+
 ## E6.S1 — Gateway purchase-requests-api
 
 Preservar CC fail-closed.
 
 ```bash
 pytest supplies-api/tests/infrastructure/gateways/test_purchase_requests_gateway.py -q
+pytest supplies-api/tests/interface/http/test_purchase_requests_bff.py -q
 ```
 
 ## E6.S2 — Lista/detalhe SC
@@ -415,6 +418,8 @@ pytest supplies-api/tests/security/test_purchase_request_export.py -q
 ## E6.S4 — Evidência para C2
 
 Medir rows, jobs, cursors, subscriptions e estratégia de reconciliação.
+
+Evidência: [evidence/e6-s4-c2-migration-evidence.md](./evidence/e6-s4-c2-migration-evidence.md).
 
 ---
 

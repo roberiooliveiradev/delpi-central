@@ -47,8 +47,9 @@ Qualquer regra `ANY_OF`/`ALL_OF` deve ser explícita no contrato; não usar “o
 | GET | `/me/capabilities` | `get_supplies_capabilities` | `supplies.portal.access` | não | effective permissions do Core | Core + catálogo units | NOVO_PROPOSTO |
 | GET | `/home/attention` | `get_supplies_home_attention` | `supplies.portal.access` | quando card usa TOTVS | omitir cards sem capability/recurso | composição | COMPOSICAO_BFF |
 | GET | `/analytics/overview` | `get_supplies_overview` | `supplies.analytics.access` | sim | branch ∈ allowedUnits | api-delpi + SI | COMPOSICAO_BFF |
-| GET | `/purchase-requests` | `list_portal_purchase_requests` | `supplies.purchase-requests.access` | sim | escopo CC fail-closed; view-all só amplia CC | PR-api C1 / PG C2 | COMPOSICAO_BFF |
-| GET | `/purchase-requests/{branch}/{number}` | `get_portal_purchase_request` | `supplies.purchase-requests.access` | sim | SC deve pertencer ao escopo efetivo | PR-api C1 / PG C2 | COMPOSICAO_BFF |
+| GET | `/purchase-requests` | `list_portal_purchase_requests` | `supplies.purchase-requests.access` | sim | escopo CC fail-closed; view-all só amplia CC | PR-api C1 / PG C2 | **IMPLEMENTADO_C1** |
+| GET | `/purchase-requests/{branch}/{number}` | `get_portal_purchase_request` | `supplies.purchase-requests.access` | sim | SC deve pertencer ao escopo efetivo | PR-api C1 / PG C2 | **IMPLEMENTADO_C1** |
+| GET | `/purchase-requests/export` | `export_portal_purchase_requests` | `access` + `export` + unit | sim | CC via PR-api | PR-api list hop | **IMPLEMENTADO_C1** |
 | GET | `/inventory/stock-value` | `get_portal_stock_value` | `supplies.operations.access` **ou política formal `ANY_OF(operations,analytics)`** | sim | branch permitida | api-delpi `get_supplies_stock_value` | COMPOSICAO_BFF |
 | GET | `/inventory/stock-balances` | `list_portal_stock_balances` | `supplies.operations.access` | sim | branch permitida | api-delpi stock-balances | COMPOSICAO_BFF |
 | GET | `/inventory/turnover` | `get_portal_inventory_turnover` | `supplies.analytics.access` | sim | branch permitida | api-delpi inventory-turnover | COMPOSICAO_BFF |
