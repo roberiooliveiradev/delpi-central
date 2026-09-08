@@ -1,6 +1,6 @@
 import { configureHttpClient } from "./api/httpClient";
 import { PluginShell } from "./app/PluginShell";
-import { canAccessView } from "./app/routeAccess";
+import { canAccessUserProfile, canAccessView } from "./app/routeAccess";
 import {
   normalizeBasePath,
   resolvePluginRoute,
@@ -17,6 +17,7 @@ import { OverviewPage } from "./pages/OverviewPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { UserManualPage } from "./features/help/UserManualPage";
 import { PurchaseRequestsPage } from "./features/purchase-requests/PurchaseRequestsPage";
+import { UserProfilePage } from "./features/users/UserProfilePage";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -105,12 +106,26 @@ function AppRoutes({
     );
   }
 
-  const { view } = route;
+  const { view, userId } = route;
 
   if (view === "not_found") {
     return (
       <PluginShell view={view} basePath={basePath}>
         <NotFoundPage basePath={basePath} />
+      </PluginShell>
+    );
+  }
+
+  if (view === "user_profile") {
+    const targetId = userId || "";
+    const allowed = canAccessUserProfile(targetId, session);
+    return (
+      <PluginShell view={allowed ? view : "forbidden"} basePath={basePath}>
+        {allowed ? (
+          <UserProfilePage basePath={basePath} userId={targetId} />
+        ) : (
+          <ForbiddenPage basePath={basePath} />
+        )}
       </PluginShell>
     );
   }

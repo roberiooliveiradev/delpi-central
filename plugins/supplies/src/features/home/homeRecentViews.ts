@@ -1,4 +1,4 @@
-import type { PluginNavigationTarget } from "../../app/pluginRoutes";
+import type { PluginRoutableView } from "../../app/pluginRoutes";
 import type { HubCapabilities } from "../../content/pluginRouteCatalog";
 import { HUB_SECTIONS } from "../../content/pluginRouteCatalog";
 
@@ -6,7 +6,7 @@ const STORAGE_KEY = "supplies.home.recents.v1";
 const MAX_RECENTS = 5;
 
 export type RecentHubView = {
-  viewId: PluginNavigationTarget;
+  viewId: PluginRoutableView;
   label: string;
   at: number;
 };

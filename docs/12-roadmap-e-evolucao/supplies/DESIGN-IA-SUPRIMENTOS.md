@@ -103,13 +103,13 @@ Não criar navigation gates por permissions CRUD como `tasks.view`/`tasks.write`
 TopBar kit (createDashboardTopBar)
   · collapseMode=hamburger · collapseTrigger=overflow  (igual Comercial)
   · secondary: busca Ctrl+K
-  · actions: Ajuda + hint coexistência (perfil self → E4.S4)
+  · actions: avatar+nome → perfil self + hint coexistência (Ajuda só na nav)
 UnderlineNav embutida na TopBar (itens por capability)
 PagePath nas internas
 PageHero no Início (e Overview)
 ```
 
-† itens de nav por capability. Help no slot actions + rota `/help`. Entrada ao perfil: atalho no shell quando E4.S4 (padrão Comercial: avatar → `/users/:userId`).
+† itens de nav por capability. Ajuda na nav + rota `/help`. Entrada ao perfil: avatar/nome na TopBar → `/users/:userId` (E4.S4).
 
 ---
 

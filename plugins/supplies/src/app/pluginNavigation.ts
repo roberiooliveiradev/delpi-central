@@ -1,7 +1,8 @@
 import {
   buildPluginPath,
+  buildUserProfileHref,
   normalizePathname,
-  type PluginNavigationTarget,
+  type PluginRoutableView,
 } from "./pluginRoutes";
 
 export function navigatePluginPath(
@@ -26,9 +27,17 @@ export function navigatePluginPath(
 }
 
 export function navigatePluginView(
-  view: PluginNavigationTarget,
+  view: PluginRoutableView,
   options?: { basePath?: string; search?: string; replace?: boolean },
 ): void {
   const target = buildPluginPath(view, options?.basePath, options?.search);
+  navigatePluginPath(target, { replace: options?.replace });
+}
+
+export function navigateUserProfile(
+  userId: string,
+  options?: { basePath?: string; search?: string; replace?: boolean },
+): void {
+  const target = buildUserProfileHref(userId, options?.basePath, options?.search);
   navigatePluginPath(target, { replace: options?.replace });
 }

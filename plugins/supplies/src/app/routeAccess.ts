@@ -23,10 +23,20 @@ export function requiredCapabilityForView(
     case "home":
     case "my_tasks":
     case "help":
+    case "user_profile":
       return "portal";
     default:
       return "none";
   }
+}
+
+export function canAccessUserProfile(
+  targetUserId: string,
+  session: { userId: string | null; capabilities: SuppliesCapabilityFlags },
+): boolean {
+  if (!session.capabilities.portal) return false;
+  if (session.userId && session.userId === targetUserId) return true;
+  return Boolean(session.capabilities.administration);
 }
 
 export function canAccessView(view: PluginView, capabilities: SuppliesCapabilityFlags): boolean {

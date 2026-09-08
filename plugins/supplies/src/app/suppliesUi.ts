@@ -15,6 +15,7 @@ import {
   createDashboardTopBar,
   createDashboardTopBarSearchTrigger,
   createDashboardViewTransition,
+  createInitialsAvatar,
   catalogSearchBarBemClasses,
   emptyStateCardBemClasses,
   sectionCardPacBemClasses,
@@ -76,6 +77,7 @@ export const SuppliesHubChipRow = createDashboardHubChipRow({ prefix: UI_PREFIX 
 export const SuppliesRouteChip = createDashboardRouteChip({ prefix: UI_PREFIX });
 export const SuppliesStatusBadge = createDashboardStatusBadge({ prefix: UI_PREFIX });
 export const SuppliesActionButton = ActionButton;
+export const SuppliesAvatar = createInitialsAvatar(UI_PREFIX);
 
 const SuppliesPageHeroBase = createDashboardPageHero({ prefix: UI_PREFIX });
 export function SuppliesPageHero(props: ComponentProps<typeof SuppliesPageHeroBase>) {

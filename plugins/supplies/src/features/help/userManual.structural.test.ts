@@ -18,6 +18,7 @@ describe("userManual content", () => {
     const want = USER_MANUAL_CONTENT.sections.find((section) => section.id === "want");
     expect(want?.links?.some((row) => /SC|solicita/i.test(row.want))).toBe(true);
     expect(want?.links?.some((row) => /ESTSEG|segurança/i.test(row.want))).toBe(true);
+    expect(want?.links?.some((row) => /filial padrão|densidade/i.test(row.want))).toBe(true);
 
     const faq = USER_MANUAL_CONTENT.sections.find((section) => section.id === "faq");
     const questions = (faq?.faqs ?? []).map((item) => item.q).join(" ");
@@ -25,6 +26,8 @@ describe("userManual content", () => {
     expect(questions).toMatch(/OTD/i);
     expect(questions).toMatch(/Sheets|indicadores/i);
     expect(questions).toMatch(/403/);
+    expect(questions).toMatch(/filial padrão|densidade/i);
+    expect(questions).toMatch(/\/profile|Minha DELPI/i);
   });
 
   it("exposes glossary terms and tool link targets", () => {

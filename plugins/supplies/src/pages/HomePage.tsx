@@ -14,7 +14,7 @@ import {
   type HomeAttentionCard,
 } from "../api/homeAttention";
 import { navigatePluginView } from "../app/pluginNavigation";
-import type { PluginNavigationTarget } from "../app/pluginRoutes";
+import type { PluginRoutableView } from "../app/pluginRoutes";
 import { useSuppliesSession } from "../app/SuppliesSessionContext";
 import {
   SuppliesActionButton,
@@ -64,7 +64,7 @@ const SECTION_ICONS: Record<string, ReactNode> = {
   help: <BookOpen size={20} strokeWidth={1.75} aria-hidden="true" />,
 };
 
-function isNavigationTarget(viewId: string): viewId is PluginNavigationTarget {
+function isNavigationTarget(viewId: string): viewId is PluginRoutableView {
   return [
     "home",
     "overview",

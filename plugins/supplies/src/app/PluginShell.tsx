@@ -248,7 +248,7 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
               onOpenPalette={() => setPaletteOpen(true)}
             />
           }
-          actions={<ShellTopBarActions />}
+          actions={<ShellTopBarActions basePath={basePath} />}
         />
 
         {showGreeting ? (

@@ -24,7 +24,7 @@ Espelham o Portal Comercial: shell + hub + Ajuda + perfil — **não** são jorn
 | WF-01 | Início (hub) | `/apps/supplies` | `supplies.portal.access` | entregue E4 |
 | WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | entregue E5 |
 | **WF-HELP** | Ajuda / Manual | `/help` | `supplies.portal.access` | esqueleto E4; completo E14 |
-| **WF-USER** | Perfil usuário | `/users/:userId` | self: portal · outros: admin | **planejado** (não bloqueia E6) |
+| **WF-USER** | Perfil usuário | `/users/:userId` | self: portal · outros: admin | **implementado** (E4.S4) |
 
 Preferências pessoais (tema, filial padrão) **não** são página separada: ficam no **WF-USER** + `GET/PATCH /me/preferences` (Comercial também não tem `/preferences` dedicado).
 
@@ -123,7 +123,7 @@ Padrão Comercial (`WF-USER`), adaptado ao domínio Suprimentos (sem carteiras/O
 ┌─ Acesso: capabilities sessão + units (só self ou admin) ────────────────────┘
 ```
 
-† conforme capability. BFF: [API-ROUTES](./API-ROUTES.md). Roadmap: **E4.S4** (não bloqueia E6).
+† conforme capability. BFF: [API-ROUTES](./API-ROUTES.md). Roadmap: **E4.S4 concluída**.
 
 ---
 

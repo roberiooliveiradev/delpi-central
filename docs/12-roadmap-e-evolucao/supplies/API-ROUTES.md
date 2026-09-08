@@ -74,8 +74,8 @@ Qualquer regra `ANY_OF`/`ALL_OF` deve ser explícita no contrato; não usar “o
 | GET | `/products/{code}/price-history` | `get_portal_product_price_history` | `supplies.operations.access` | sim quando aplicável | item no escopo | api-delpi | COMPOSICAO_BFF |
 | GET | `/me/preferences` | `get_supplies_preferences` | `supplies.portal.access` | não | próprio usuário | PG | NOVO_PROPOSTO |
 | PATCH | `/me/preferences` | `patch_supplies_preferences` | `supplies.portal.access` | default_branch deve estar em allowedUnits | próprio usuário | PG | NOVO_PROPOSTO |
-| GET | `/users/{id}/profile` | `get_supplies_user_profile` | self: `supplies.portal.access` · outro: `supplies.administration.manage` | não | self ou admin | Core + PG prefs | NOVO_PROPOSTO |
-| PATCH | `/users/{id}/profile` | `patch_supplies_user_profile` | self only + `supplies.portal.access` | default_branch ∈ allowedUnits | só próprio usuário na P0 | PG prefs | NOVO_PROPOSTO |
+| GET | `/users/{id}/profile` | `get_supplies_user_profile` | self: `supplies.portal.access` · outro: `supplies.administration.manage` | não | self ou admin | Core + PG prefs | **IMPLEMENTADO** |
+| PATCH | `/users/{id}/profile` | `patch_supplies_user_profile` | self only + `supplies.portal.access` | default_branch ∈ allowedUnits | só próprio usuário na P0 | PG prefs | **IMPLEMENTADO** |
 | GET | `/tasks` | `list_supply_tasks` | `supplies.portal.access` | conforme refs | próprio usuário/equipe permitida | PG | NOVO_PROPOSTO |
 | POST | `/tasks` | `create_supply_task` | `supplies.portal.access` + capability do recurso referenciado | sim se ref TOTVS | validar ref + ownership | PG | NOVO_PROPOSTO |
 | PATCH | `/tasks/{task_id}` | `update_supply_task` | `supplies.portal.access` + capability do recurso referenciado | sim se ref TOTVS | ownership/equipe + ref autorizada | PG | NOVO_PROPOSTO |

@@ -2,11 +2,11 @@
  * Destinos citáveis no Manual → rotas do Portal Suprimentos.
  * Labels mais longos primeiro (match guloso no texto).
  */
-import type { PluginNavigationTarget } from "../app/pluginRoutes";
+import type { PluginRoutableView } from "../app/pluginRoutes";
 
 export type ManualToolTarget = {
   label: string;
-  viewId: PluginNavigationTarget;
+  viewId: PluginRoutableView;
   search?: string;
 };
 
@@ -31,7 +31,7 @@ export type ManualTextPart =
   | {
       kind: "link";
       value: string;
-      viewId: PluginNavigationTarget;
+      viewId: PluginRoutableView;
       search?: string;
     };
 

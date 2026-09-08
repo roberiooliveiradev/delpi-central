@@ -1,7 +1,7 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
 > **Status:** plano executável revisado · set/2026 · **E1–E6 concluídas** · E7+ não iniciar sem autorização explícita
-> **Readiness atual:** **E1–E6 + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = **E7** · **E4.S4 perfil** planejado (não bloqueia E7)
+> **Readiness atual:** **E1–E6 + E4.S4 perfil + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = **E7**
 > Referências: ADR-001..ADR-007, `plan-construction.mdc`, `evidence-driven-execution.mdc`.
 
 ---
@@ -358,6 +358,8 @@ cd plugins/supplies && npm test -- UserProfile
 ```
 
 **Pronto quando:** perfil self utilizável; admin lê terceiros; prefs no mesmo lugar que o Comercial (perfil do plugin).
+
+**Status:** **concluída** (BFF + MFE `/users/:userId` + avatar TopBar + Ajuda).
 
 **Não bloqueia:** E6 SC C1.
 

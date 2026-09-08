@@ -16,6 +16,7 @@ export type PluginView =
   | "indicators"
   | "administration"
   | "help"
+  | "user_profile"
   | "forbidden"
   | "not_found";
 
@@ -30,10 +31,14 @@ export type PluginNavId =
 
 export type PluginNavigationTarget = Exclude<PluginView, "forbidden" | "not_found">;
 
+/** Views navegáveis pelo shell/hub (perfil usa buildUserProfileHref). */
+export type PluginRoutableView = Exclude<PluginNavigationTarget, "user_profile">;
+
 export type ResolvedPluginRoute = {
   view: PluginView;
   pathname: string;
   relativePath: string;
+  userId?: string;
 };
 
 export function normalizePathname(pathname: string): string {
@@ -65,7 +70,7 @@ const RELATIVE_TO_VIEW: Record<string, PluginView> = {
   help: "help",
 };
 
-export const PLUGIN_VIEW_RELATIVE_PATHS: Record<PluginNavigationTarget, string> = {
+export const PLUGIN_VIEW_RELATIVE_PATHS: Record<PluginRoutableView, string> = {
   home: "",
   overview: "overview",
   my_tasks: "my-tasks",
@@ -98,6 +103,15 @@ export function resolvePluginRoute(
   }
 
   const relativePath = path.slice(base.length + 1);
+  const userMatch = /^users\/([^/]+)$/.exec(relativePath);
+  if (userMatch?.[1]) {
+    return {
+      view: "user_profile",
+      pathname: path,
+      relativePath,
+      userId: decodeURIComponent(userMatch[1]),
+    };
+  }
   const view = RELATIVE_TO_VIEW[relativePath];
   if (!view) {
     return { view: "not_found", pathname: path, relativePath };
@@ -105,8 +119,21 @@ export function resolvePluginRoute(
   return { view, pathname: path, relativePath };
 }
 
+export function buildUserProfileHref(
+  userId: string,
+  basePath?: string,
+  search?: string,
+): string {
+  const base = normalizeBasePath(basePath);
+  const path = `${base}/users/${encodeURIComponent(userId)}`;
+  if (!search) return path;
+  const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
+  if (normalizedSearch === "?") return path;
+  return `${path}${normalizedSearch}`;
+}
+
 export function buildPluginPath(
-  view: PluginNavigationTarget,
+  view: PluginRoutableView,
   basePath?: string,
   search?: string,
 ): string {
@@ -142,6 +169,8 @@ export function resolveActiveNavId(view: PluginView): PluginNavId | null {
       return "administration";
     case "help":
       return "help";
+    case "user_profile":
+      return null;
     default:
       return null;
   }

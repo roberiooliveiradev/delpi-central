@@ -13,12 +13,24 @@ declare module "@delpi/plugin-ui/index" {
 
   export function ActionButton(props: {
     children: ReactNode;
-    variant?: "primary" | "secondary" | "ghost" | "danger";
+    variant?: "default" | "primary" | "ghost" | "link";
     onClick?: () => void;
     disabled?: boolean;
-    type?: "button" | "submit" | "reset";
+    type?: "button" | "submit";
     className?: string;
+    href?: string;
+    title?: string;
   }): ReactNode;
+
+  export function createInitialsAvatar(prefix: string): ComponentType<{
+    name: string;
+    colorKey?: string;
+    src?: string | null;
+    size?: "sm" | "md" | "lg";
+    href?: string;
+    onNavigate?: () => void;
+    className?: string;
+  }>;
 
   export function emptyStateCardBemClasses(prefix: string): {
     root: string;

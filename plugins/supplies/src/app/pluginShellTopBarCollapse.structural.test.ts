@@ -35,6 +35,8 @@ describe("PluginShell TopBar collapse", () => {
     expect(slots).toMatch(/SuppliesTopBarSearchTrigger/);
     expect(slots).toMatch(/searchTriggerRef/);
     expect(slots).toMatch(/HelpTooltip/);
+    expect(slots).toMatch(/sp-shell-user/);
+    expect(slots).toMatch(/buildUserProfilePath/);
   });
 
   it("exporta modo hamburger com trigger overflow", () => {

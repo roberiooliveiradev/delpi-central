@@ -60,4 +60,9 @@ export const SHELL_NAV_CONTENT = {
       overviewLocked: "Sem acesso",
     },
   },
+  userMenu: {
+    nameFallback: "Usuário",
+    profileTitle: "Abrir meu perfil no Portal Suprimentos",
+    profileAriaLabel: "Abrir perfil",
+  },
 } as const;

@@ -33,7 +33,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | KPIs Overview P0 | **7 CONFIRMADOS**; cobertura/PO-LATE fora do Overview |
 | Manifest draft | **`schemaVersion 1.0.0`** registrado no Core local |
 | P-13 | **FECHADO** — Core `/me.id` UUID |
-| Implementação MFE | **SC lista/detalhe E6**; perfil plugin (**E4.S4** planejado, padrão Comercial); operações = E7 |
+| Implementação MFE | **SC lista/detalhe E6**; perfil plugin (**E4.S4 concluída**, padrão Comercial); operações = E7 |
 
 ### Gates
 
@@ -49,7 +49,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 
 **E7** (Operações: pedidos e entregas) — somente com autorização explícita.
 
-**E4.S4** (Perfil `/users/:userId`, padrão Comercial) está **documentado/planejado** e **não bloqueia** E7.
+**E4.S4** (Perfil `/users/:userId`, padrão Comercial) está **concluída** e **não bloqueia** E7.
 
 Dump Core de produção **não** bloqueia E7; bloqueia decisão final de redirects/BIs no cutover.
 

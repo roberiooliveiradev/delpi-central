@@ -1,4 +1,4 @@
-import type { PluginNavigationTarget } from "../app/pluginRoutes";
+import type { PluginRoutableView } from "../app/pluginRoutes";
 
 export type HubCapability =
   | "always"
@@ -10,7 +10,7 @@ export type HubCapability =
 export type HubRouteDef = {
   id: string;
   label: string;
-  viewId: PluginNavigationTarget;
+  viewId: PluginRoutableView;
   requiredCap: HubCapability;
   keywords?: readonly string[];
 };

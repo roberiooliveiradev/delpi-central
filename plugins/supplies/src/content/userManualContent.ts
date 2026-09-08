@@ -49,6 +49,11 @@ export const USER_MANUAL_CONTENT = {
       meaning:
         "Dados TOTVS respeitam as filiais liberadas para você (01 Santa Catarina, 02 Espírito Santo). Pedir outra filial não abre módulo sem capability.",
     },
+    {
+      term: "Perfil do Portal vs perfil Minha DELPI",
+      meaning:
+        "O avatar na TopBar abre o perfil do Portal Suprimentos (filial padrão, densidade, units). O /profile do host Minha DELPI é a identidade global — não edita preferências deste Portal.",
+    },
   ],
   scopeNote:
     "Sem permissão (403): você não tem acesso a esta filial ou a este módulo. Peça o acesso canônico do Portal — aliases antigos sozinhos não abrem o app.",
@@ -72,6 +77,11 @@ export const USER_MANUAL_CONTENT = {
           want: "Abrir solicitações de compras (SC)",
           where: "Solicitações de compras",
           how: "Lista e detalhe no escopo de CC/filial; exportação CSV se tiver permissão",
+        },
+        {
+          want: "Alterar filial padrão ou densidade das tabelas",
+          where: "Perfil (avatar na TopBar)",
+          how: "Só no próprio perfil; administradores podem ler outros usuários, sem editar prefs",
         },
         {
           want: "Ver estoque de segurança (ESTSEG)",
@@ -115,6 +125,7 @@ export const USER_MANUAL_CONTENT = {
         "Operações — pedidos, entregas, fornecedores, produtos, estoque e ESTSEG.",
         "Indicadores / Negociações — recorte analítico quando liberado.",
         "Administração — mappings e configurações.",
+        "Perfil — avatar na TopBar; preferências do Portal (filial padrão e densidade); distinto do /profile do host.",
         "Ajuda — este manual, FAQ e glossário.",
       ],
     },
@@ -153,6 +164,14 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Por que recebi 403?",
           a: "Falta capability do módulo ou filial no seu escopo. Peça o acesso canônico do Portal ao administrador.",
+        },
+        {
+          q: "Onde altero a filial padrão ou a densidade das tabelas?",
+          a: "No perfil do Portal Suprimentos: clique no avatar/nome na TopBar. Não existe página /preferences separada. O /profile do host Minha DELPI é outra tela (identidade global).",
+        },
+        {
+          q: "Qual a diferença entre o perfil do Portal e o /profile da Minha DELPI?",
+          a: "O perfil do plugin guarda preferências e acesso deste Portal (units, capabilities, filial padrão, densidade). O /profile do host é a conta global — não edita prefs de Suprimentos.",
         },
         {
           q: "Ainda vejo os apps antigos no launcher",
