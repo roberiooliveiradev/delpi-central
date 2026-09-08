@@ -332,6 +332,11 @@ def _extract_latency(msg: dict, wall_ms: int) -> dict[str, Any]:
             )
             if selection.get(key) is not None
         },
+        "preToolBreakdown": (
+            timings.get("preToolBreakdown")
+            if isinstance(timings.get("preToolBreakdown"), dict)
+            else {}
+        ),
         "bottleneckStage": bottleneck[0],
         "bottleneckMs": bottleneck[1],
         "skipRag": bool(pipeline.get("skipRag")) if pipeline else None,

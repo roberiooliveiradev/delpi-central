@@ -64,6 +64,7 @@ class ChatTurnAnalysisService:
         has_direct_answer: bool = False,
         turn_analysis_enabled: bool = True,
         tools_already_skipped: bool = False,
+        message: str | None = None,
     ) -> bool:
         if not turn_analysis_enabled:
             return False
@@ -110,6 +111,12 @@ class ChatTurnAnalysisService:
         if sub_intent and sub_intent in skip_sub_intents:
             return False
 
+        if cls._should_skip_grounded_multi_scope(
+            message,
+            heuristic_confidence=heuristic_confidence,
+        ):
+            return False
+
         reason = str(heuristic_reason or "").strip()
         decision = str(heuristic_decision or "").strip()
         open_reasons = {
@@ -139,6 +146,51 @@ class ChatTurnAnalysisService:
         if heuristic_confidence is not None and float(heuristic_confidence) < threshold:
             if intent in {"mixed_task", "llm_general", "operational_query"}:
                 return True
+
+        return False
+
+    @classmethod
+    def _should_skip_grounded_multi_scope(
+        cls,
+        message: str | None,
+        *,
+        heuristic_confidence: float | None,
+    ) -> bool:
+        """Plano operacional multi-escopo já claro → evita LLM de turn analysis no prep."""
+        enabled = ChatTurnAnalysisContentService.gate_setting(
+            "skipWhenGroundedMultiScope",
+            True,
+        )
+        if enabled is False or enabled in (0, "0", "false", "False"):
+            return False
+
+        text = str(message or "").strip()
+        if not text:
+            return False
+
+        try:
+            min_confidence = float(
+                ChatTurnAnalysisContentService.gate_setting(
+                    "skipMultiScopeMinConfidence",
+                    0.55,
+                )
+            )
+        except (TypeError, ValueError):
+            min_confidence = 0.55
+
+        if heuristic_confidence is not None and float(heuristic_confidence) < min_confidence:
+            return False
+
+        from app.domain.services.chat_product_multi_scope_planning_service import (
+            ChatProductMultiScopePlanningService,
+        )
+
+        scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(text)
+        if len(scopes) >= 2:
+            return True
+
+        if ChatProductMultiScopePlanningService.blocks_intent_bound_fast_path(text):
+            return True
 
         return False
 

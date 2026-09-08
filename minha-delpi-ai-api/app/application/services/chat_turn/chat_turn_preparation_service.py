@@ -381,6 +381,9 @@ class ChatTurnPreparationService:
             or skip_tool_flags.skip_tools_for_session_review
             or skip_tool_flags.skip_tools_for_grounded_narrate
         )
+        from app.application.services.chat_pipeline_timings import ChatPipelineTimings
+
+        ChatPipelineTimings.mark_current("turn_analysis_start")
         turn_analysis_outcome = ChatTurnPreparationTurnAnalysisService.maybe_analyze(
             message=message,
             request=request,
@@ -390,6 +393,7 @@ class ChatTurnPreparationService:
             has_direct_answer=has_early_direct,
             tools_already_skipped=tools_already_skipped,
         )
+        ChatPipelineTimings.mark_current("turn_analysis_done")
         if turn_analysis_outcome.result is not None:
             workspace_context = dict(workspace_context)
             meta = turn_analysis_outcome.result.to_metadata()

@@ -58,6 +58,8 @@
     "openOnReasons": ["no_clear_intent"],
     "openOnDecisions": ["llm_fallback"],
     "openOnLowConfidenceBelow": 0.7,
-    "disabledResponseModes": ["fast"]
+    "disabledResponseModes": ["fast"],
+    "skipWhenGroundedMultiScope": true,
+    "skipMultiScopeMinConfidence": 0.55
   }
 }

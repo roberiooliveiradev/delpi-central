@@ -120,6 +120,7 @@ class ChatTurnPreparationTurnAnalysisService:
             has_direct_answer=False,
             turn_analysis_enabled=enabled,
             tools_already_skipped=tools_already_skipped,
+            message=message,
         ):
             return ChatTurnPreparationTurnAnalysisOutcome(
                 result=None,

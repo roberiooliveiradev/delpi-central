@@ -150,3 +150,16 @@ def test_pipeline_timings_bind_and_wave_records_extras():
     assert breakdown["wave2HttpMs"] == 7
     assert breakdown["wave2PresentationMs"] == 9
     assert timings.span_ms("start", "tools_selection_done") is not None
+
+
+def test_pipeline_timings_exposes_turn_analysis_pretool_breakdown():
+    timings = ChatPipelineTimings()
+    timings.mark("turn_analysis_start")
+    time.sleep(0.001)
+    timings.mark("turn_analysis_done")
+    timings.mark("pre_tool_done")
+
+    payload = timings.to_dict()
+    breakdown = payload.get("preToolBreakdown") or {}
+    assert breakdown.get("turnAnalysisMs") is not None
+    assert breakdown["turnAnalysisMs"] >= 0

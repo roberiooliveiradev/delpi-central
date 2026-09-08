@@ -103,6 +103,11 @@ class ChatPipelineTimings:
             "llmMs": self.span_ms("rag_done", "llm_done"),
             "totalMs": total_ms,
         }
+        turn_analysis_ms = self.span_ms("turn_analysis_start", "turn_analysis_done")
+        if turn_analysis_ms is not None:
+            payload["preToolBreakdown"] = {
+                "turnAnalysisMs": turn_analysis_ms,
+            }
         breakdown = self.tools_breakdown()
 
         if any(value is not None for value in breakdown.values()):

@@ -114,6 +114,31 @@ def test_gate_opens_on_no_clear_intent_normal():
     )
 
 
+def test_gate_skips_grounded_multi_scope_product_plan():
+    message = (
+        "Para o produto 90260149, traga estrutura, estoque e pedidos em aberto."
+    )
+    assert not ChatTurnAnalysisService.should_analyze(
+        response_mode="normal",
+        heuristic_intent="operational_query",
+        heuristic_decision="execute_tools",
+        heuristic_reason="product_multi_scope",
+        heuristic_confidence=0.9,
+        message=message,
+    )
+
+
+def test_gate_still_opens_ambiguous_without_multi_scope():
+    assert ChatTurnAnalysisService.should_analyze(
+        response_mode="normal",
+        heuristic_intent="llm_general",
+        heuristic_decision="llm_fallback",
+        heuristic_reason="no_clear_intent",
+        heuristic_confidence=0.4,
+        message="o que você acha disso?",
+    )
+
+
 def test_parse_clarify_becomes_narrate_when_grounded():
     raw = '{"decision":"clarify","clarifyKey":"default","reason":"vague"}'
     result = ChatTurnAnalysisService.parse(raw, grounding_status="grounded")
