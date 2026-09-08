@@ -162,7 +162,8 @@ export function AdminToolsTab({
         <AdminTabHeader
           eyebrow="Plataforma"
           title="Inteligência do chat"
-          description="Políticas globais do pipeline (roteamento, RAG, tools). Métricas ficam em Qualidade."
+          description="Presets Rápido / Equilibrado / Máxima qualidade, ou Avançado para knobs. Métricas ficam em Qualidade."
+          helpHint={ADMIN_HELP.intelligence}
         />
         <ChatIntelligenceSettingsPanel getAccessToken={getAccessToken} />
       </section>

@@ -1,5 +1,5 @@
 import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import {
   getAdminChatIntelligenceSettings,
@@ -21,8 +21,17 @@ import {
   type SettingQualityImpact,
   type SettingSpeedImpact,
 } from "./chatIntelligenceSettingMeta";
+import {
+  applyIntelligencePreset,
+  detectIntelligencePreset,
+  INTELLIGENCE_PRESET_LABELS,
+  INTELLIGENCE_PRESETS,
+  type IntelligencePresetKey,
+} from "./chatIntelligencePresets";
 
 import "./ChatIntelligenceSettingsPanel.css";
+
+const ADVANCED_STORAGE_KEY = "mdcAdminIntelligenceAdvanced";
 
 type ChatIntelligenceSettingsPanelProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -184,6 +193,12 @@ export function ChatIntelligenceSettingsPanel({
   const [isSaving, setIsSaving] = useState(false);
   const [isReindexing, setIsReindexing] = useState(false);
   const [reindexResult, setReindexResult] = useState<string | null>(null);
+  const [advanced, setAdvanced] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+    return window.localStorage.getItem(ADVANCED_STORAGE_KEY) === "1";
+  });
 
   useEffect(() => {
     if (!getAccessToken) {
@@ -195,6 +210,18 @@ export function ChatIntelligenceSettingsPanel({
       .catch(() => setSettings(null));
   }, [getAccessToken]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    window.localStorage.setItem(ADVANCED_STORAGE_KEY, advanced ? "1" : "0");
+  }, [advanced]);
+
+  const detectedPreset = useMemo(
+    () => (settings ? detectIntelligencePreset(settings) : "custom"),
+    [settings],
+  );
+
   if (!getAccessToken || !settings) {
     return null;
   }
@@ -203,11 +230,17 @@ export function ChatIntelligenceSettingsPanel({
     setSettings({ ...settings!, [key]: checked });
   }
 
+  function applyPreset(key: IntelligencePresetKey) {
+    const { defaults, source, ...payload } = settings!;
+    const nextPayload = applyIntelligencePreset(payload, key);
+    setSettings({ ...nextPayload, defaults, source });
+  }
+
   async function handleSave() {
     setIsSaving(true);
 
     try {
-      const { defaults: _defaults, source: _source, ...payload } = settings;
+      const { defaults: _defaults, source: _source, ...payload } = settings!;
       const saved = await saveAdminChatIntelligenceSettings(
         payload as AdminChatIntelligenceSettingsPayload,
         { getAccessToken },
@@ -408,31 +441,72 @@ export function ChatIntelligenceSettingsPanel({
       ? "Configuração salva na administração"
       : "Usando padrões iniciais do servidor (Docker)";
 
+  const showKnobs = advanced || detectedPreset === "custom";
+
   return (
     <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide mdc-chat-intelligence-panel">
       <h3>Inteligência do chat</h3>
       <p className="mdc-chat-intelligence-panel__intro">
-        Cada opção abaixo altera o pipeline de RAG, seleção de actions ou orquestração
-        do LLM. As alterações salvas aqui <strong>prevalecem</strong> sobre o arquivo
-        <code> .env</code> do servidor — o Docker só define o padrão na primeira
-        subida. Use os badges de velocidade e qualidade para decidir o que ativar em
-        produção.
+        Escolha um preset (Rápido, Equilibrado ou Máxima qualidade) ou ative{" "}
+        <strong>Avançado</strong> para ajustar knobs individuais. As alterações salvas{" "}
+        <strong>prevalecem</strong> sobre o <code>.env</code> do servidor. Não confundir com
+        métricas.
       </p>
       <p className="mdc-chat-intelligence-panel__source">{sourceLabel}</p>
 
-      <div className="mdc-chat-intelligence-panel__sections">
-        {CHAT_INTELLIGENCE_SECTIONS.map((section) => (
-          <section key={section.id} className="mdc-chat-intelligence-section">
-            <header className="mdc-chat-intelligence-section__header">
-              <h4>{section.title}</h4>
-              <p>{section.description}</p>
-            </header>
-            <div className="mdc-chat-intelligence-section__grid">
-              {sectionContent[section.id]}
-            </div>
-          </section>
-        ))}
+      <div className="mdc-chat-intelligence-panel__presets" role="group" aria-label="Presets">
+        {INTELLIGENCE_PRESETS.map((preset) => {
+          const active = detectedPreset === preset.key;
+          return (
+            <button
+              key={preset.key}
+              type="button"
+              className={
+                active
+                  ? "mdc-chat-intelligence-preset is-active"
+                  : "mdc-chat-intelligence-preset"
+              }
+              aria-pressed={active}
+              onClick={() => applyPreset(preset.key)}
+            >
+              {INTELLIGENCE_PRESET_LABELS[preset.key]}
+            </button>
+          );
+        })}
+        {detectedPreset === "custom" ? (
+          <span className="mdc-chat-intelligence-preset-custom">Personalizado</span>
+        ) : null}
       </div>
+
+      <div className="mdc-chat-intelligence-panel__advanced">
+        <AdminFormCheckbox
+          title="Avançado"
+          hint="Mostra todos os knobs de RAG, actions e orquestração."
+          checked={advanced}
+          onChange={(event) => setAdvanced(event.target.checked)}
+        />
+      </div>
+
+      {showKnobs ? (
+        <div className="mdc-chat-intelligence-panel__sections">
+          {CHAT_INTELLIGENCE_SECTIONS.map((section) => (
+            <section key={section.id} className="mdc-chat-intelligence-section">
+              <header className="mdc-chat-intelligence-section__header">
+                <h4>{section.title}</h4>
+                <p>{section.description}</p>
+              </header>
+              <div className="mdc-chat-intelligence-section__grid">
+                {sectionContent[section.id]}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <p className="mdc-chat-muted mdc-chat-intelligence-panel__compact-hint">
+          Knobs detalhados ocultos. Ative Avançado para editar um a um, ou escolha outro
+          preset.
+        </p>
+      )}
 
       <div className="mdc-admin-metrics-tab__intelligence-actions">
         <button
