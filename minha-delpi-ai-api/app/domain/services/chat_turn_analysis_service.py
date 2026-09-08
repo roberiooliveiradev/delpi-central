@@ -168,6 +168,31 @@ class ChatTurnAnalysisService:
         if not text:
             return False
 
+        from app.domain.services.chat_product_multi_scope_planning_service import (
+            ChatProductMultiScopePlanningService,
+        )
+
+        scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(text)
+        grounded_plan = len(scopes) >= 2 or (
+            ChatProductMultiScopePlanningService.blocks_intent_bound_fast_path(text)
+        )
+        if not grounded_plan:
+            from app.domain.services.chat_product_route_predicate_service import (
+                ChatProductRoutePredicateService,
+            )
+            from app.domain.services.chat_message_normalization_service import (
+                ChatMessageNormalizationService,
+            )
+
+            normalized = ChatMessageNormalizationService.normalize_for_matching(text)
+            if ChatProductRoutePredicateService.matches("commercialRol", normalized):
+                return True
+            return False
+
+        # Plano multi-escopo já determinístico — não exigir confiança alta.
+        if heuristic_confidence is None:
+            return True
+
         try:
             min_confidence = float(
                 ChatTurnAnalysisContentService.gate_setting(
@@ -178,21 +203,11 @@ class ChatTurnAnalysisService:
         except (TypeError, ValueError):
             min_confidence = 0.55
 
-        if heuristic_confidence is not None and float(heuristic_confidence) < min_confidence:
+        # Só insiste em analysis se a confiança for *muito* baixa e ambígua.
+        if float(heuristic_confidence) < min(0.35, min_confidence):
             return False
 
-        from app.domain.services.chat_product_multi_scope_planning_service import (
-            ChatProductMultiScopePlanningService,
-        )
-
-        scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(text)
-        if len(scopes) >= 2:
-            return True
-
-        if ChatProductMultiScopePlanningService.blocks_intent_bound_fast_path(text):
-            return True
-
-        return False
+        return True
 
     @classmethod
     def safe_clarify(

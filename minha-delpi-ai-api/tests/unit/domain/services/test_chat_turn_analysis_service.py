@@ -126,6 +126,28 @@ def test_gate_skips_grounded_multi_scope_product_plan():
         heuristic_confidence=0.9,
         message=message,
     )
+    assert not ChatTurnAnalysisService.should_analyze(
+        response_mode="normal",
+        heuristic_intent="llm_general",
+        heuristic_decision="llm_fallback",
+        heuristic_reason="no_clear_intent",
+        heuristic_confidence=0.4,
+        message=message,
+    )
+
+
+def test_gate_skips_commercial_rol_plan():
+    message = (
+        "Quero o ROL / indicadores comerciais recentes: mostre o KPI e a série."
+    )
+    assert not ChatTurnAnalysisService.should_analyze(
+        response_mode="normal",
+        heuristic_intent="llm_general",
+        heuristic_decision="llm_fallback",
+        heuristic_reason="no_clear_intent",
+        heuristic_confidence=0.4,
+        message=message,
+    )
 
 
 def test_gate_still_opens_ambiguous_without_multi_scope():
