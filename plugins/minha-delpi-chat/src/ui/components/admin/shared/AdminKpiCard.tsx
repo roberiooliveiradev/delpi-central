@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { delpiUiClass } from "@delpi/plugin-ui/index";
 
 type AdminKpiCardProps = {
   title: string;
@@ -11,6 +12,9 @@ type AdminKpiCardProps = {
   disabled?: boolean;
 };
 
+/**
+ * KPI do admin — dual-class com `delpi-ui-kpi-card` (kit), sem exigir ícone do SimpleKpiCard.
+ */
 export function AdminKpiCard({
   title,
   value,
@@ -22,7 +26,10 @@ export function AdminKpiCard({
   disabled = false,
 }: AdminKpiCardProps) {
   const className = [
-    wide ? "mdc-admin-kpi-card mdc-admin-kpi-card--wide" : "mdc-admin-kpi-card",
+    delpiUiClass(
+      wide ? "mdc-admin-kpi-card mdc-admin-kpi-card--wide" : "mdc-admin-kpi-card",
+      wide ? "delpi-ui-kpi-card delpi-ui-kpi-card--wide" : "delpi-ui-kpi-card",
+    ),
     active ? "is-active" : "",
     onClick ? "is-clickable" : "",
   ]

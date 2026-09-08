@@ -13,7 +13,7 @@ import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
 import { AdminShellStatusStrip } from "../components/admin/shell/AdminShellStatusStrip";
 import { AdminShellLayout } from "../components/admin/shell/AdminShellLayout";
 import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
-import type { AdminLegacyTab, AdminNavState } from "../../navigation/adminNavigation";
+import type { AdminNavState } from "../../navigation/adminNavigation";
 import { AdminSkillsTab } from "../components/admin/skills/AdminSkillsTab";
 import { AdminSimulateTab } from "../components/admin/simulate/AdminSimulateTab";
 import { AdminToolsTab } from "../components/admin/tools/AdminToolsTab";
@@ -21,12 +21,11 @@ import { getAdminRbacSummary } from "../../data/api/adminApi";
 import type { AdminRbacSummary } from "../../data/api/adminTypes";
 import { testAdminRag } from "../../data/api/adminApi";
 import {
+  buildAdminAgentHref,
   buildAdminHref,
-  legacyTabToNav,
   normalizeAdminNav,
-  warnLegacyAdminTab,
 } from "../../navigation/adminNavigation";
-import { navigateChatHref } from "../../navigation/chatNavigation";
+import { navigateChatHref, resolveChatLocation } from "../../navigation/chatNavigation";
 import { useChatAdmin } from "../../state/hooks/useChatAdmin";
 import { ChatAnimatedPanel } from "../components/shared/ChatAnimatedPanel";
 
@@ -35,24 +34,16 @@ import "./ChatAdminPage.css";
 type ChatAdminPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   initialAgentId?: string | null;
-  /** @deprecated Preferir initialNav */
-  initialTab?: AdminLegacyTab;
   initialNav?: AdminNavState;
   onBack: () => void;
 };
 
 function resolveInitialNav(
   initialNav?: AdminNavState,
-  initialTab?: AdminLegacyTab,
   initialAgentId?: string | null,
 ): AdminNavState {
   if (initialNav) {
     return normalizeAdminNav(initialNav);
-  }
-
-  if (initialTab) {
-    warnLegacyAdminTab(initialTab);
-    return legacyTabToNav(initialTab);
   }
 
   if (initialAgentId) {
@@ -65,20 +56,29 @@ function resolveInitialNav(
 export function ChatAdminPage({
   getAccessToken,
   initialAgentId,
-  initialTab,
   initialNav,
   onBack,
 }: ChatAdminPageProps) {
   const admin = useChatAdmin({ getAccessToken });
   const [nav, setNav] = useState<AdminNavState>(() =>
-    resolveInitialNav(initialNav, initialTab, initialAgentId),
+    resolveInitialNav(initialNav, initialAgentId),
   );
   const [adminRbac, setAdminRbac] = useState<AdminRbacSummary | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => {
-    setNav(resolveInitialNav(initialNav, initialTab, initialAgentId));
-  }, [initialNav, initialTab, initialAgentId]);
+    setNav(resolveInitialNav(initialNav, initialAgentId));
+  }, [initialNav, initialAgentId]);
+
+  useEffect(() => {
+    const canonical = initialAgentId
+      ? buildAdminAgentHref(initialAgentId)
+      : buildAdminHref(nav);
+    const currentPath = resolveChatLocation().split(/[?#]/)[0] ?? "";
+    if (currentPath !== canonical) {
+      navigateChatHref(canonical, { replace: true });
+    }
+  }, [nav, initialAgentId]);
 
   useEffect(() => {
     async function loadAdminRbac() {

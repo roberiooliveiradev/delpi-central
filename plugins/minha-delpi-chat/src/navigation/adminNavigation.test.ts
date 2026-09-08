@@ -25,23 +25,32 @@ describe("adminNavigation", () => {
     });
   });
 
-  it("monta href de qualidade/métricas", () => {
+  it("monta href canônico EN de qualidade/métricas", () => {
     expect(
       buildAdminHref({ section: "quality", subTab: "metrics" }),
-    ).toBe("/apps/minha-delpi-chat/admin/qualidade/metricas/visao-geral");
+    ).toBe("/apps/minha-delpi-chat/admin/quality/metrics/overview");
   });
 
-  it("parseia segmentos de conhecimento", () => {
+  it("parseia segmentos EN e PT de conhecimento", () => {
+    expect(parseAdminPathSegments(["knowledge", "guidelines"])).toEqual({
+      section: "knowledge",
+      subTab: "guidelines",
+    });
     expect(parseAdminPathSegments(["conhecimento", "diretrizes"])).toEqual({
       section: "knowledge",
       subTab: "guidelines",
     });
   });
 
-  it("monta e parseia a sub-aba de aprendizagem com página padrão", () => {
+  it("monta e parseia aprendizagem com página padrão (EN + alias PT)", () => {
     expect(buildAdminHref({ section: "knowledge", subTab: "learning" })).toBe(
-      "/apps/minha-delpi-chat/admin/conhecimento/aprendizagem/pipeline",
+      "/apps/minha-delpi-chat/admin/knowledge/learning/pipeline",
     );
+    expect(parseAdminPathSegments(["knowledge", "learning"])).toEqual({
+      section: "knowledge",
+      subTab: "learning",
+      page: "pipeline",
+    });
     expect(parseAdminPathSegments(["conhecimento", "aprendizagem"])).toEqual({
       section: "knowledge",
       subTab: "learning",
@@ -49,14 +58,14 @@ describe("adminNavigation", () => {
     });
   });
 
-  it("monta e parseia página interna de aprendizagem", () => {
+  it("monta EN e parseia alias PT de página interna", () => {
     expect(
       buildAdminHref({
         section: "knowledge",
         subTab: "learning",
         page: "vocabulary",
       }),
-    ).toBe("/apps/minha-delpi-chat/admin/conhecimento/aprendizagem/vocabulario");
+    ).toBe("/apps/minha-delpi-chat/admin/knowledge/learning/vocabulary");
 
     expect(
       parseAdminPathSegments(["conhecimento", "aprendizagem", "memoria"]),
@@ -65,16 +74,26 @@ describe("adminNavigation", () => {
       subTab: "learning",
       page: "memory",
     });
+    expect(
+      parseAdminPathSegments(["knowledge", "learning", "memory"]),
+    ).toEqual({
+      section: "knowledge",
+      subTab: "learning",
+      page: "memory",
+    });
   });
 
-  it("trata /admin/agentes sem sub-aba como painel", () => {
+  it("trata /admin/agents e /admin/agentes sem sub-aba como painel", () => {
+    expect(parseAdminPathSegments(["agents"])).toEqual({
+      section: "overview",
+    });
     expect(parseAdminPathSegments(["agentes"])).toEqual({
       section: "overview",
     });
   });
 
   it("ignora sub-aba desconhecida", () => {
-    expect(parseAdminPathSegments(["qualidade", "inexistente"])).toEqual({
+    expect(parseAdminPathSegments(["quality", "inexistente"])).toEqual({
       section: "overview",
     });
   });
@@ -88,23 +107,29 @@ describe("chatRoutes admin", () => {
     });
   });
 
-  it("parseia /admin/agentes incompleto como painel", () => {
-    expect(parseChatRoute("/apps/minha-delpi-chat/admin/agentes")).toEqual({
+  it("parseia /admin/agents incompleto como painel", () => {
+    expect(parseChatRoute("/apps/minha-delpi-chat/admin/agents")).toEqual({
       kind: "admin",
       nav: { section: "overview" },
     });
   });
 
-  it("parseia plataforma/inteligencia", () => {
+  it("parseia plataforma/inteligencia (PT) e platform/intelligence (EN)", () => {
     expect(
       parseChatRoute("/apps/minha-delpi-chat/admin/plataforma/inteligencia"),
     ).toEqual({
       kind: "admin",
       nav: { section: "platform", subTab: "intelligence" },
     });
+    expect(
+      parseChatRoute("/apps/minha-delpi-chat/admin/platform/intelligence"),
+    ).toEqual({
+      kind: "admin",
+      nav: { section: "platform", subTab: "intelligence" },
+    });
   });
 
-  it("parseia agente admin por uuid legado e canônico", () => {
+  it("parseia agente admin por uuid legado PT e canônico EN", () => {
     expect(
       parseChatRoute(`/apps/minha-delpi-chat/admin/agentes/${AGENT_ID}`),
     ).toEqual({
@@ -116,6 +141,9 @@ describe("chatRoutes admin", () => {
       kind: "admin-agent",
       agentId: AGENT_ID,
     });
+    expect(buildAdminAgentHref(AGENT_ID)).toBe(
+      `/apps/minha-delpi-chat/admin/agents/specialization/${AGENT_ID}`,
+    );
   });
 
   it("monta href do painel", () => {

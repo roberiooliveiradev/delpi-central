@@ -24,7 +24,10 @@ function isAgentIdSegment(value: string): boolean {
   return UUID_RE.test(decodeURIComponent(value).trim());
 }
 
-/** @deprecated Abas planas legadas — use AdminSection + AdminSubTab */
+/**
+ * @deprecated Abas planas pré-shell v3. Preferir `AdminNavState` / rotas `/admin/<section>/<sub>`.
+ * Mantido só para mapear bookmarks antigos em testes.
+ */
 export type AdminLegacyTab =
   | "knowledge"
   | "metrics"
@@ -76,39 +79,92 @@ export type AdminSectionItem = {
   subTabs: Array<{ key: AdminSubTab; label: string }>;
 };
 
+/** Slugs canônicos EN (english-code-identifiers). */
 const SECTION_SLUG: Record<AdminSection, string> = {
-  overview: "painel",
-  knowledge: "conhecimento",
-  agents: "agentes",
-  quality: "qualidade",
-  platform: "plataforma",
-  governance: "governanca",
+  overview: "overview",
+  knowledge: "knowledge",
+  agents: "agents",
+  quality: "quality",
+  platform: "platform",
+  governance: "governance",
 };
 
-const SLUG_TO_SECTION: Record<string, AdminSection> = Object.fromEntries(
-  Object.entries(SECTION_SLUG).map(([section, slug]) => [slug, section as AdminSection]),
-) as Record<string, AdminSection>;
+/** PT legado + EN → seção (parse dual). */
+const SLUG_TO_SECTION: Record<string, AdminSection> = {
+  overview: "overview",
+  painel: "overview",
+  knowledge: "knowledge",
+  conhecimento: "knowledge",
+  agents: "agents",
+  agentes: "agents",
+  quality: "quality",
+  qualidade: "quality",
+  platform: "platform",
+  plataforma: "platform",
+  governance: "governance",
+  governanca: "governance",
+};
 
+/** Slugs canônicos EN. */
 const SUB_SLUG: Record<AdminSubTab, string> = {
-  documents: "documentos",
-  guidelines: "diretrizes",
-  behaviors: "comportamentos",
-  learning: "aprendizagem",
-  specialization: "especializacao",
-  simulation: "simulacao",
-  metrics: "metricas",
-  evaluations: "avaliacoes",
-  tools: "ferramentas",
-  intelligence: "inteligencia",
-  response: "modos-resposta",
-  vision: "visao",
-  security: "seguranca",
-  audit: "auditoria",
+  documents: "documents",
+  guidelines: "guidelines",
+  behaviors: "behaviors",
+  learning: "learning",
+  specialization: "specialization",
+  simulation: "simulation",
+  metrics: "metrics",
+  evaluations: "evaluations",
+  tools: "tools",
+  intelligence: "intelligence",
+  response: "response-modes",
+  vision: "vision",
+  security: "security",
+  audit: "audit",
 };
 
-const SLUG_TO_SUB: Record<string, AdminSubTab> = Object.fromEntries(
-  Object.entries(SUB_SLUG).map(([sub, slug]) => [slug, sub as AdminSubTab]),
-) as Record<string, AdminSubTab>;
+/** PT legado + EN → sub-aba. */
+const SLUG_TO_SUB: Record<string, AdminSubTab> = {
+  documents: "documents",
+  documentos: "documents",
+  guidelines: "guidelines",
+  diretrizes: "guidelines",
+  behaviors: "behaviors",
+  comportamentos: "behaviors",
+  learning: "learning",
+  aprendizagem: "learning",
+  specialization: "specialization",
+  especializacao: "specialization",
+  simulation: "simulation",
+  simulacao: "simulation",
+  metrics: "metrics",
+  metricas: "metrics",
+  evaluations: "evaluations",
+  avaliacoes: "evaluations",
+  tools: "tools",
+  ferramentas: "tools",
+  intelligence: "intelligence",
+  inteligencia: "intelligence",
+  "response-modes": "response",
+  "modos-resposta": "response",
+  vision: "vision",
+  visao: "vision",
+  security: "security",
+  seguranca: "security",
+  audit: "audit",
+  auditoria: "audit",
+};
+
+const AGENTS_SECTION_SLUGS = new Set(["agents", "agentes"]);
+const SPECIALIZATION_SUB_SLUGS = new Set(["specialization", "especializacao"]);
+
+export function isAdminAgentsSectionSlug(slug: string | undefined): boolean {
+  return Boolean(slug && AGENTS_SECTION_SLUGS.has(slug));
+}
+
+export function isAdminSpecializationSubSlug(slug: string | undefined): boolean {
+  return Boolean(slug && SPECIALIZATION_SUB_SLUGS.has(slug));
+}
 
 export const ADMIN_SECTIONS: AdminSectionItem[] = [
   {
@@ -211,6 +267,7 @@ export function normalizeAdminNav(
   return { section, subTab, page };
 }
 
+/** @deprecated Preferir `AdminNavState` direto. */
 export function legacyTabToNav(tab: AdminLegacyTab): AdminNavState {
   switch (tab) {
     case "knowledge":
@@ -238,15 +295,6 @@ export function legacyTabToNav(tab: AdminLegacyTab): AdminNavState {
   }
 }
 
-export function warnLegacyAdminTab(tab: AdminLegacyTab) {
-  if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-    console.warn(
-      `[minha-delpi-chat] AdminTab legado "${tab}" — use rotas /admin/<seção>/<sub-aba>.`,
-      legacyTabToNav(tab),
-    );
-  }
-}
-
 export function getAdminSectionItem(section: AdminSection): AdminSectionItem {
   return ADMIN_SECTIONS.find((item) => item.key === section) ?? ADMIN_SECTIONS[0];
 }
@@ -258,7 +306,7 @@ export function parseAdminPathSegments(segments: string[]): AdminNavState | null
 
   const [first, second] = segments;
 
-  if (first === "agentes" && second && isAgentIdSegment(second)) {
+  if (isAdminAgentsSectionSlug(first) && second && isAgentIdSegment(second)) {
     return null;
   }
 
@@ -310,5 +358,5 @@ export function buildAdminHref(nav: AdminNavState): string {
 }
 
 export function buildAdminAgentHref(agentId: string): string {
-  return `${CHAT_BASE_PATH}/admin/agentes/especializacao/${encodeURIComponent(agentId)}`;
+  return `${CHAT_BASE_PATH}/admin/${SECTION_SLUG.agents}/${SUB_SLUG.specialization}/${encodeURIComponent(agentId)}`;
 }

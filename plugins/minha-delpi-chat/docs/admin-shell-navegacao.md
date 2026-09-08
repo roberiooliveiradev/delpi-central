@@ -23,9 +23,9 @@ Complementa o [Playbook 11](../../../minha-delpi-ai-api/docs/roadmap/melhorias/p
 | `AdminShellTopbar` | `src/ui/components/admin/shell/AdminShellTopbar.tsx` | Uma única barra superior; breadcrumb via `getAdminNavBreadcrumb` |
 | `AdminShellLayout` | `src/ui/components/admin/shell/AdminShellLayout.tsx` | Flex sidebar + main; botão **Menu do admin** em viewport &lt;1024px |
 | `AdminSidebar` | `src/ui/components/admin/shell/AdminSidebar.tsx` | Busca, resultados de conteúdo, árvore expansível |
-| Revisão visível | `adminShellRevision.ts` | Ex.: `admin-v3-sidebar` — confirma deploy do bundle |
+| Revisão visível | `adminShellRevision.ts` | Ex.: `admin-v3-en-paths` — confirma deploy do bundle |
 
-**Removidos do fluxo principal:** `AdminSectionNav`, `AdminSubTabNav` (barras horizontais duplicadas).
+**Removidos:** `AdminSectionNav`, `AdminSubTabNav`, `adminShellTypes` (abas planas / tipos legados).
 
 Orquestração: `src/ui/pages/ChatAdminPage.tsx` → `navigateTo` + `buildAdminHref`.
 
@@ -43,28 +43,32 @@ type AdminNavState = {
 };
 ```
 
-| Nível | Exemplo | Slug na URL |
-|-------|---------|-------------|
-| Seção | Conhecimento | `conhecimento` |
-| Sub-aba | Aprendizagem | `aprendizagem` |
-| Página | Vocabulário | `vocabulario` |
+| Nível | Exemplo | Slug canônico (EN) | Alias PT |
+|-------|---------|--------------------|----------|
+| Seção | Conhecimento | `knowledge` | `conhecimento` |
+| Sub-aba | Aprendizagem | `learning` | `aprendizagem` |
+| Página | Vocabulário | `vocabulary` | `vocabulario` |
 
 ### URLs
 
-| Rota | `AdminNavState` |
-|------|-----------------|
-| `/apps/minha-delpi-chat/admin` | `{ section: "overview" }` |
-| `/apps/minha-delpi-chat/admin/qualidade/metricas` | `{ section: "quality", subTab: "metrics" }` |
-| `/apps/minha-delpi-chat/admin/conhecimento/aprendizagem/vocabulario` | `{ section: "knowledge", subTab: "learning", page: "vocabulary" }` |
-| `/apps/minha-delpi-chat/admin/agentes/especializacao/:uuid` | Rota especial `admin-agent` (fora do slug de sub-aba) |
+Slugs **canônicos em inglês** (`buildAdminHref`). Slugs PT antigos continuam no **parse** (alias). Ao abrir um path PT, o shell faz `replaceState` para o canônico EN.
+
+| Rota (EN) | Alias PT (ainda parseia) | `AdminNavState` |
+|-----------|--------------------------|-----------------|
+| `/apps/minha-delpi-chat/admin` | — | `{ section: "overview" }` |
+| `/apps/minha-delpi-chat/admin/quality/metrics/overview` | `…/qualidade/metricas/visao-geral` | `{ section: "quality", subTab: "metrics", page: "overview" }` |
+| `/apps/minha-delpi-chat/admin/knowledge/learning/vocabulary` | `…/conhecimento/aprendizagem/vocabulario` | `{ section: "knowledge", subTab: "learning", page: "vocabulary" }` |
+| `/apps/minha-delpi-chat/admin/agents/specialization/:uuid` | `…/agentes/especializacao/:uuid` | Rota `admin-agent` |
 
 Funções em `src/navigation/adminNavigation.ts`:
 
-- `buildAdminHref(nav)` — monta path
-- `parseAdminPathSegments(segments)` — interpreta segmentos após `/admin/`
+- `buildAdminHref(nav)` — monta path EN
+- `parseAdminPathSegments(segments)` — interpreta EN + aliases PT
 - `normalizeAdminNav(partial)` — preenche sub-aba padrão e página padrão quando aplicável
 
 Integração com rotas do chat: `src/navigation/chatRoutes.ts` (`kind: "admin"`).
+
+Revisão do bundle: `admin-v3-en-paths` em `adminShellRevision.ts`.
 
 ---
 
@@ -83,13 +87,13 @@ Conhecimento ▾
        ├─ Vocabulário
        ├─ Memória
        ├─ Regressão
-       └─ Ajuste fino
+       └─ Dataset de treino
 Agentes ▾ …
 ```
 
 ### Páginas aninhadas (3º nível)
 
-Configuração em `src/navigation/adminNavPages.ts` → `ADMIN_NESTED_PAGES`.
+Configuração em `src/navigation/adminNavPages.ts` → `ADMIN_NESTED_PAGES` (`slug` EN + `aliases` PT).
 
 Hoje apenas **Aprendizagem** declara páginas; novas sub-abas com abas internas seguem o mesmo padrão:
 

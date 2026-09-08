@@ -1,6 +1,8 @@
 import {
   buildAdminAgentHref,
   buildAdminHref,
+  isAdminAgentsSectionSlug,
+  isAdminSpecializationSubSlug,
   parseAdminPathSegments,
   type AdminLegacyTab,
   type AdminNavState,
@@ -196,9 +198,10 @@ export function parseChatRoute(pathname?: string | null): ChatRoute {
       return { kind: "agent", agentId: normalizedAgentId };
     }
     case "admin": {
-      if (sectionSegments[0] === "agentes") {
-        const specializationIndex =
-          sectionSegments[1] === "especializacao" ? 2 : 1;
+      if (isAdminAgentsSectionSlug(sectionSegments[0])) {
+        const specializationIndex = isAdminSpecializationSubSlug(sectionSegments[1])
+          ? 2
+          : 1;
         const agentSegment = sectionSegments[specializationIndex];
 
         if (agentSegment && isChatAgentRouteId(decodeURIComponent(agentSegment))) {

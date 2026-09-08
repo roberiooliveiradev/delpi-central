@@ -39,17 +39,16 @@
 | `llm-stack-centralized` | Motor = `LLM_PROVIDER` (hoje tipicamente `openai_compatible` / Kimi). Não inventar seletor paralelo no admin que ignore o stack. |
 | `assistant-content-json` | Copy PT de API (reasons, activity, erros) em JSON; UI do admin em catálogo do plugin quando houver Ajuda. |
 | `feature-help-sync` | Qualquer mudança user-facing futura do admin exige Ajuda in-app no mesmo entregável. **Hoje não há** Manual/tooltips do console admin. |
-| `english-code-identifiers` | Paths/códigos **novos** em inglês; slugs PT atuais (`conhecimento`, `metricas`, …) são legado — alias EN em onda futura, sem rewrite destrutivo. |
-| `plugins-reusable-components` / `plugins-visual-design-system` | Preferir kit `@delpi/plugin-ui`; admin ainda tem DS próprio em `admin/shared/` (Playbook 12) — convergência gradual. |
+| `english-code-identifiers` | Paths canônicos do admin em **inglês**; slugs PT permanecem como **alias** no parse (`adminNavigation` / `adminNavPages`). |
+| `plugins-reusable-components` / `plugins-visual-design-system` | Preferir kit `@delpi/plugin-ui`; admin usa dual-class em `AdminTabHeader` / `AdminKpiCard` — convergência gradual do restante de `admin/shared/`. |
 | `plugin-mfe-page-excellence` | P0 URL/deep link → P1 valor operacional → P2 higiene/Ajuda. |
 | `application-bounded-context-decoupling` | Regra do admin do chat fica em `minha-delpi-ai-api` + `plugins/minha-delpi-chat`; não acoplar core/portal. |
 | `evidence-driven-execution` / `centralized-rules-first` | Corrigir no módulo canônico; não patch pontual por aba. |
 
 **Drift documentado (já existente no código)**
 
-- Slugs de URL do admin em português (`adminNavigation.ts`).
-- Sem `helpTooltips` / Manual do admin (só `ChatHelpPanel` do assistente).
-- Primitivos admin locais em vez do kit federado.
+- Primitivos admin locais ainda cobrem tabela/summary strip (além do dual-class já aplicado em header/KPI).
+- Manual longo por persona (curador × plataforma × auditor) ainda não — só tooltips `?`.
 
 ---
 
@@ -69,7 +68,7 @@ Conhecimento
        ├─ Vocabulário
        ├─ Memória
        ├─ Regressão
-       └─ Ajuste fino
+       └─ Dataset de treino
 Agentes
   ├─ Especialização
   └─ Simulação
@@ -175,7 +174,7 @@ O admin Delpi já tem as **peças**; a IA ainda parece **inventário de playbook
 | **Debug na conversa** | Trace resumido (timings + rota + tools) + “abrir no admin”; raw JSON só avançado |
 | **Ajuda** | Manual/tooltips do admin (curador × plataforma × auditor) — `feature-help-sync` |
 | **Deep link / query** | Filtros de documentos, auditoria e métricas na URL |
-| **Kit UI** | Convergência gradual `admin/shared` → `@delpi/plugin-ui` |
+| **Kit UI** | Dual-class em header/KPI entregue; convergência do restante de `admin/shared` → `@delpi/plugin-ui` |
 | **Docs** | Este arquivo é a fonte do veredito; Playbook 11 / roadmap admin apontam para cá |
 
 ### 5.3 Remover da jornada padrão (não apagar API nesta fase)
@@ -206,8 +205,9 @@ Ordem canônica e status (set/2026 — implementação):
 | 1 | **Studio de agente** — especialização no builder + catálogo admin + logs de action no Studio | **Entregue (MVP)** |
 | 2 | **Observe** — métricas com visão geral + drill-down na sidebar | **Entregue (MVP)** |
 | 3 | **Fine-tune honesto** — `fineTuningMode` / `supportsLocalFineTuneDeploy` + copy Dataset de treino | **Entregue (MVP)** |
-| 4 | **Ajuda in-app** do admin (`adminHelpTooltips` + `AdminTabHeader.helpHint`) | **Entregue (MVP)**; aliases EN de paths = backlog |
-| 5 | Kit UI / higiene `AdminLegacyTab` | Backlog |
+| 4 | **Ajuda in-app** do admin (`adminHelpTooltips` + `AdminTabHeader.helpHint`) | **Entregue** |
+| 4b | **Aliases EN** de paths do admin (build canônico EN; parse dual PT+EN; rewrite suave) | **Entregue** |
+| 5 | **Kit UI / higiene** — dual-class `AdminTabHeader`/`AdminKpiCard`; remoção `AdminSectionNav`/`AdminSubTabNav`/`adminShellTypes`; sem `initialTab` legado | **Entregue (MVP)**; convergência total `admin/shared` → kit = backlog |
 | 6 | RBAC perfis formais no `core-api` | Fora deste bounded context |
 
 Regras de qualquer onda futura de código:

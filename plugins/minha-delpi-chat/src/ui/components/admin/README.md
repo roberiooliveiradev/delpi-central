@@ -54,13 +54,15 @@ Módulos em `src/navigation/`:
 
 | Arquivo | Papel |
 |---------|--------|
-| `adminNavigation.ts` | Seções, slugs PT, `AdminNavState`, href/parse |
-| `adminNavPages.ts` | Páginas do 3º nível (ex. aprendizagem) |
+| `adminNavigation.ts` | Seções, slugs EN (+ alias PT), `AdminNavState`, href/parse |
+| `adminNavPages.ts` | Páginas do 3º nível (`slug` EN + `aliases`) |
 | `adminNavTree.ts` | Árvore e filtro da sidebar |
 | `adminNavSearchIndex.ts` | Textos indexados por tela/bloco |
 | `adminNavSearch.ts` | União busca navegação + hits de conteúdo |
 
-Revisão do bundle: `shell/adminShellRevision.ts` (ex. `admin-v3-sidebar`).
+Revisão do bundle: `shell/adminShellRevision.ts` (ex. `admin-v3-en-paths`).
+
+Primitivos com dual-class do kit: `AdminTabHeader`, `AdminKpiCard` (`delpi-ui-page-header` / `delpi-ui-kpi-card`).
 
 ## Roadmap de UI
 
