@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
-import { Camera, Trash2 } from "lucide-react";
+import { Camera, Expand, Trash2, X } from "lucide-react";
 
 import { AuthContext } from "../../state/AuthContext";
 import { ApiClient, HttpError } from "../../data/apiClient";
@@ -8,6 +8,7 @@ import {
   type PersonProfileResponse,
 } from "../../data/coreApi";
 import { HelpTooltip } from "../../components/HelpTooltip";
+import { notifyPersonProfilePhotoChanged } from "./personProfilePhotoEvents";
 import {
   resolveWhatsappE164,
   resolveWhatsappSource,
@@ -16,7 +17,7 @@ import {
 
 const PERSON_PROFILE_HINTS = {
   photo:
-    "Envie JPEG, PNG, WebP ou GIF até 2 MB. A foto aparece no menu e no Meu Perfil. Não sincroniza com o Keycloak.",
+    "Clique na foto para enviar ou trocar. Use expandir para ver em tamanho maior. JPEG, PNG, WebP ou GIF até 2 MB.",
   jobTitle:
     "Cargo informado por você no portal. Não sincroniza com RH ou Keycloak nesta fase.",
   contacts:
@@ -25,15 +26,12 @@ const PERSON_PROFILE_HINTS = {
 
 type PersonProfileEditorProps = {
   userName?: string;
-  onPhotoChanged?: () => void;
 };
 
-export function PersonProfileEditor({
-  userName,
-  onPhotoChanged,
-}: PersonProfileEditorProps) {
+export function PersonProfileEditor({ userName }: PersonProfileEditorProps) {
   const { getAccessToken, refreshToken } = useContext(AuthContext);
   const fileInputId = useId();
+  const lightboxTitleId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const coreApi = useMemo(
@@ -55,6 +53,7 @@ export function PersonProfileEditor({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [profile, setProfile] = useState<PersonProfileResponse | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const [jobTitle, setJobTitle] = useState("");
   const [phoneE164, setPhoneE164] = useState("");
@@ -89,6 +88,8 @@ export function PersonProfileEditor({
         } catch {
           setPreviewUrl(null);
         }
+      } else {
+        setLightboxOpen(false);
       }
     },
     [coreApi, revokePreview],
@@ -125,6 +126,20 @@ export function PersonProfileEditor({
       setWhatsappSource(null);
     }
   }, [mobileE164, whatsappSource]);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLightboxOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [lightboxOpen]);
 
   const initials = useMemo(() => {
     if (!userName) return "?";
@@ -169,7 +184,7 @@ export function PersonProfileEditor({
       const data = await coreApi.uploadMyPersonProfilePhoto(file);
       await applyProfile(data);
       setSuccess("Foto atualizada.");
-      onPhotoChanged?.();
+      notifyPersonProfilePhotoChanged();
     } catch (err) {
       const message =
         err instanceof HttpError ? err.message : "Não foi possível enviar a foto.";
@@ -188,7 +203,7 @@ export function PersonProfileEditor({
       const data = await coreApi.deleteMyPersonProfilePhoto();
       await applyProfile(data);
       setSuccess("Foto removida.");
-      onPhotoChanged?.();
+      notifyPersonProfilePhotoChanged();
     } catch (err) {
       const message =
         err instanceof HttpError ? err.message : "Não foi possível remover a foto.";
@@ -201,6 +216,8 @@ export function PersonProfileEditor({
   if (loading) {
     return <p className="profile-person__state">Carregando foto, cargo e contatos…</p>;
   }
+
+  const hasPhoto = Boolean(profile?.has_photo && previewUrl);
 
   return (
     <div className="profile-person" data-tour="profile-person">
@@ -218,54 +235,76 @@ export function PersonProfileEditor({
         </div>
       ) : null}
 
-      <div className="profile-person__photo-row" data-tour="profile-person-photo">
-        <div className="profile-person__avatar" aria-hidden={!previewUrl}>
-          {previewUrl ? (
-            <img src={previewUrl} alt="" className="profile-person__avatar-img" />
-          ) : (
-            <span className="profile-person__avatar-initials">{initials}</span>
-          )}
+      <div className="profile-person__photo-block" data-tour="profile-person-photo">
+        <div className="profile-person__label-row profile-person__photo-heading">
+          <span className="profile-person__section-label">Foto do perfil</span>
+          <HelpTooltip content={PERSON_PROFILE_HINTS.photo} />
         </div>
-        <div className="profile-person__photo-actions">
-          <div className="profile-person__label-row">
-            <span className="profile-person__section-label">Foto</span>
-            <HelpTooltip content={PERSON_PROFILE_HINTS.photo} />
-          </div>
-          <div className="profile-person__btn-row">
+
+        <div className="profile-person__photo-stack">
+          <div className="profile-person__avatar-wrap">
             <button
               type="button"
-              className="profile-person__btn"
+              className="profile-person__avatar"
               onClick={onPickPhoto}
               disabled={photoBusy}
+              aria-label={hasPhoto ? "Trocar foto do perfil" : "Adicionar foto do perfil"}
             >
-              <Camera size={16} aria-hidden="true" />
-              {profile?.has_photo ? "Alterar foto" : "Enviar foto"}
+              {hasPhoto ? (
+                <img
+                  src={previewUrl!}
+                  alt=""
+                  className="profile-person__avatar-img"
+                />
+              ) : (
+                <span className="profile-person__avatar-initials">{initials}</span>
+              )}
+              <span className="profile-person__avatar-overlay" aria-hidden="true">
+                <Camera size={22} strokeWidth={1.75} />
+                <span>{hasPhoto ? "Trocar" : "Adicionar"}</span>
+              </span>
             </button>
-            {profile?.has_photo ? (
+
+            {hasPhoto ? (
               <button
                 type="button"
-                className="profile-person__btn profile-person__btn--danger"
-                onClick={() => void onRemovePhoto()}
-                disabled={photoBusy}
+                className="profile-person__expand"
+                onClick={() => setLightboxOpen(true)}
+                aria-label="Expandir foto"
+                title="Expandir"
               >
-                <Trash2 size={16} aria-hidden="true" />
-                Remover
+                <Expand size={16} aria-hidden="true" />
               </button>
             ) : null}
           </div>
-          <input
-            id={fileInputId}
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            className="profile-person__file"
-            onChange={(e) => void onPhotoSelected(e.target.files?.[0] ?? null)}
-          />
+
+          {hasPhoto ? (
+            <button
+              type="button"
+              className="profile-person__btn profile-person__btn--danger profile-person__btn--remove"
+              onClick={() => void onRemovePhoto()}
+              disabled={photoBusy}
+            >
+              <Trash2 size={15} aria-hidden="true" />
+              Remover imagem
+            </button>
+          ) : (
+            <p className="profile-person__photo-hint">Clique na área da foto para enviar</p>
+          )}
         </div>
+
+        <input
+          id={fileInputId}
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="profile-person__file"
+          onChange={(e) => void onPhotoSelected(e.target.files?.[0] ?? null)}
+        />
       </div>
 
       <div className="profile-person__fields" data-tour="profile-person-contacts">
-        <label className="profile-person__field">
+        <label className="profile-person__field profile-person__field--wide">
           <span className="profile-person__label-row">
             <span>Cargo</span>
             <HelpTooltip content={PERSON_PROFILE_HINTS.jobTitle} />
@@ -344,6 +383,51 @@ export function PersonProfileEditor({
           {saving ? "Salvando…" : "Salvar contatos e cargo"}
         </button>
       </div>
+
+      {lightboxOpen && hasPhoto ? (
+        <div
+          className="profile-person__lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={lightboxTitleId}
+          onClick={() => setLightboxOpen(false)}
+        >
+          <div
+            className="profile-person__lightbox-panel"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="profile-person__lightbox-toolbar">
+              <h3 id={lightboxTitleId} className="profile-person__lightbox-title">
+                Foto do perfil
+              </h3>
+              <button
+                type="button"
+                className="profile-person__lightbox-close"
+                onClick={() => setLightboxOpen(false)}
+                aria-label="Fechar"
+              >
+                <X size={18} aria-hidden="true" />
+              </button>
+            </div>
+            <img
+              src={previewUrl!}
+              alt={userName ? `Foto de ${userName}` : "Foto do perfil"}
+              className="profile-person__lightbox-img"
+            />
+            <div className="profile-person__lightbox-actions">
+              <button
+                type="button"
+                className="profile-person__btn"
+                onClick={onPickPhoto}
+                disabled={photoBusy}
+              >
+                <Camera size={16} aria-hidden="true" />
+                Trocar foto
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

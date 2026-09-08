@@ -2,16 +2,18 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import { AuthContext } from "../../state/AuthContext";
 import { ApiClient } from "../../data/apiClient";
 import { CoreApi } from "../../data/coreApi";
+import { DELPI_PERSON_PROFILE_PHOTO_CHANGED_EVENT } from "./personProfilePhotoEvents";
 
 /**
  * Loads the authenticated user's person-profile photo as an object URL.
- * Returns null when there is no photo or on error.
+ * Reloads when the photo is changed elsewhere in the portal (profile editor).
  */
 export function useMyPersonProfilePhotoUrl() {
   const { getAccessToken, refreshToken } = useContext(AuthContext);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [hasPhoto, setHasPhoto] = useState(false);
   const objectUrlRef = useRef<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const coreApi = useMemo(
     () =>
@@ -34,8 +36,10 @@ export function useMyPersonProfilePhotoUrl() {
   }, []);
 
   const reload = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     try {
       const profile = await coreApi.getMyPersonProfile();
+      if (requestId !== requestIdRef.current) return;
       const nextHasPhoto = Boolean(profile.has_photo);
       setHasPhoto(nextHasPhoto);
       if (!nextHasPhoto) {
@@ -44,11 +48,13 @@ export function useMyPersonProfilePhotoUrl() {
         return;
       }
       const blob = await coreApi.getMyPersonProfilePhotoBlob();
+      if (requestId !== requestIdRef.current) return;
       revokeCurrent();
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
       setPhotoUrl(url);
     } catch {
+      if (requestId !== requestIdRef.current) return;
       revokeCurrent();
       setHasPhoto(false);
       setPhotoUrl(null);
@@ -58,9 +64,23 @@ export function useMyPersonProfilePhotoUrl() {
   useEffect(() => {
     void reload();
     return () => {
+      requestIdRef.current += 1;
       revokeCurrent();
     };
   }, [reload, revokeCurrent]);
+
+  useEffect(() => {
+    const onChanged = () => {
+      void reload();
+    };
+    window.addEventListener(DELPI_PERSON_PROFILE_PHOTO_CHANGED_EVENT, onChanged);
+    return () => {
+      window.removeEventListener(
+        DELPI_PERSON_PROFILE_PHOTO_CHANGED_EVENT,
+        onChanged,
+      );
+    };
+  }, [reload]);
 
   return { photoUrl, hasPhoto, reload };
 }
