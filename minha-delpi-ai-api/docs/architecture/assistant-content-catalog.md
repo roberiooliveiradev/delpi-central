@@ -1,220 +1,155 @@
-# Catálogo de conteúdo do assistente (JSON)
+# Catálogo de conteúdo do assistente
 
-Todos os textos exibidos ao usuário ou usados em respostas diretas devem ficar em `app/content/pt-BR/assistant/*.json`, carregados via `ContentService` ou `ChatAssistantContentService`.
+**Status:** vigente  
+**Regra Cursor:** `.cursor/rules/assistant-content-json.mdc`
 
-**Regra do repositório (Cursor):** `.cursor/rules/assistant-content-json.mdc` — novas implementações devem seguir este padrão; não introduzir textos soltos em Python/TS.
+## Princípio
 
-## Loader genérico
+`app/content/pt-BR/assistant/*.json` contém **linguagem, UX, vocabulário, thresholds e policies transversais**.
 
-`ChatAssistantContentService` (`app/domain/services/chat_assistant_content_service.py`):
+Não é catálogo técnico de APIs.
 
-| Método | Uso |
-|--------|-----|
-| `get(bundle, *path)` | String em caminho aninhado |
-| `format(bundle, *path, **values)` | Template `{placeholder}` |
-| `list(bundle, *path)` | Lista de termos (intenção, marcadores) |
-| `get_mapping(bundle, *path)` | Objeto chave → string |
-| `get_node(bundle, *path)` | Nó arbitrário (dict/list) |
-| `title_for_path(bundle, path, path_key=…)` | Título por fragmento de URL |
-| `get_error_type` / `get_error_reasons` | Tipos em `error_handling.json` |
+```text
+conteúdo linguístico/configurável → assistant/*.json
+contrato técnico de Actions       → OpenAPI + Action Catalog
+```
 
-`bundle` = nome do arquivo sem extensão (ex.: `web_search` → `assistant/web_search.json`).
+## Loader canônico
 
-Wrappers especializados (mantêm API estável):
+`ChatAssistantContentService` e wrappers especializados carregam conteúdo sem espalhar strings/configuração por serviços de domínio.
 
-- `ExternalActionResponseContentService` → `external_action_responses.json`
-- `ChatProductOperationalContentService` → `product_operational_content.json`
+Operações típicas: `get`, `format`, `list`, `get_mapping` e `get_node`.
 
-## Arquivos por domínio
+Wrappers podem existir quando agregam API semântica estável para um domínio de conteúdo.
 
-| Arquivo | Domínio | Serviços principais |
-|---------|---------|-------------------|
-| `external_action_responses.json` | **`domainPredicates`** + **`systemPredicates`** + **`productSearchPredicates`** + `actionSelection` (incl. **`manifestText`**, **`siblingDisambiguation`**) + `selectionReasons` + `security.confirmMarkers` / `writeIntentMarkers` / `confirmPattern` | `ChatProductRoutePredicateService`, `ExternalActionResponseContentService`, `ExternalActionManifestTextService`, `ExternalActionCandidatePrioritizationService`, `ChatWriteConfirmationService` |
-| `operational_route_registry.json` | Policies legadas (SQL readiness, predicados, ~84 rotas manuais de compat). **Não** é fonte de seleção com OpenAPI-first (`CHAT_OPENAPI_PLANNER_MODE=on` default) | `OperationalRouteRegistryService`, SQL fallback policies |
-| `operational_route_registry_autotierc.ci.json` | Espelho CI das 422 rotas autoTierC do baseline api-delpi — **não** carregado no runtime de seleção | `OperationalRouteRegistryService.ci_auto_tier_c_routes`, `generate_operational_route_registry.py --check` |
-| `openapi_tool_routing.json` | Retrieval híbrido (topK, pesos), schema do planner, modes (default **on**), reasons OpenAPI-first, config do gate CI | `OpenApiToolRoutingContentService`, `RetrieveActionCandidatesService`, `PlanExternalActionsService`, `OpenApiPlannerModeService`, `scripts/audit_openapi_first_routing.py` |
-| `product_query_intent.json` | Marcadores de intenção operacional; **`intentProbes`** declarativos + pipeline detect/refine; **`routePredicates`**, **`playbookPredicates`**, **`subIntentPredicates`**, **`intentDetectPipeline`**, **`intentRefinementPipeline`**, **`singleScopeIntentMap`**; **`router.operationalSubIntentPipeline`**, **`router.operationalAmbiguityExclusionPredicates`** (DOCIE Fase 11–17) | `ChatProductQueryIntentService`, `ChatProductQueryIntentDetectionService`, `ChatProductRoutePredicateService`, `ChatOperationalSubIntentService`, `ChatOperationalAmbiguityService`, `OperationalRouteMatcherService` |
-| `clarification_policy.json` | Política material vs discoverable (E1.S3) | `ChatClarificationPolicyService` |
-| `result_set_references.json` | Ordinais / result sets (E2.S2) | `ChatResultSetReferenceService` |
-| `prior_turn_facts.json` | Packing de fatos + capabilities brief (E2.S3) | `ChatPriorTurnFactsPackingService` |
-| `turn_understanding.json` | Decomposição multi-subtask (E3) | `ChatTurnUnderstandingService` |
-| `user_query_improvement.json` | Melhoria LLM gated da pergunta (typos) no prep do turno — distinto do chip P14 no composer | `ChatUserQueryImprovementService`, `ChatUserQueryImprovementContentService` · ver [chat-intelligence-base](./chat-intelligence-base.md) § Melhoria de pergunta |
-| `conversational_intelligence.json` | Feature flags shadow/cutover | `ChatConversationalIntelligenceFlagService` |
-| `capability_registry.json` | Capabilities normalizadas skills/actions/RAG/web (E4) | `ChatCapabilityRegistryService`, `ChatCapabilityDiscoveryService` |
-| `operational_pagination.json` | Defaults/caps de `page_size`/`limit` outbound chat→api-delpi (tiers standard/hierarchical, markers de path, search/exclusive/top/refinement/recovery) | `ChatOperationalPaginationDefaultsService` |
-| `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE; `paginationDefaults` espelha/delega ao canônico `operational_pagination` | `ChatProductOperationalContentService`, plural, multi-scope, catálogo de rotas produto |
-| `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
-| `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
-| `api_route_domains.json` | Domínios de rota operacional; **`parameterStrategies`** declarativas (bindings, patterns, granularity) | `ChatOperationalApiDomainService`, `OperationalApiParameterBuilderService` |
-| `presentation_profiles.json` | Perfil `directives` — pathRules / chartPolicy (stack via `renderPlan` no MFE) | `ChatPresentationProfileService` |
-| `response_modes.json` | Modos Rápida/Normal/Pensador (rótulos, aliases, `pipelineEffects`, **`fastCommentaryDirect`**, **`normalCommentaryDirect`**, **`commentaryLead`**, budgets LLM, **`generationLimits`**, **`contextBudget`** (histórico/RAG/tool/search por modo), **`latencyTargetsSec`**, **`latencyDegradation`**) | `ChatResponseModeContentService`, `ChatResponseModeContextBudgetService`, `ChatLatencyBudgetService`, `ChatOperationalCommentaryLeadContentService`, `ChatResponseModeService`, `ChatOperationalLlmSynthesisBriefDirectService` |
-| `operational_narrative_synthesis.json` | Gate LLM narrativo (perfis evidence-first, policies por modo, termos factuais estreitos) | `ChatOperationalNarrativeSynthesisContentService`, `ChatOperationalNarrativeSynthesisService` |
-| `operational_factual_verdict.json` | Vereditos factuais por `profileKey` (coerência LLM, fatos, guardrails) | `ChatOperationalFactualVerdictContentService`, `ChatOperationalFactualVerdictService` |
-| `operational_sufficiency_critic.json` | Critic pós-wave-1: planos `when`/`then` (`followUpRouteIds` / `clarifyKey`), reasons, clarifyCatalog; opcional `llm_assist` enum | `ChatOperationalSufficiencyCriticContentService`, `ChatOperationalSufficiencyCriticService` |
-| `llm_synthesis_delivery.json` | Lead composto, **`safeFallbackAnswer`**, **`commonLeakMarkers`** (incl. CoT/EN) da guarda transversal | `ChatLlmSynthesisDeliveryContentService`, `ChatLlmSynthesisLeakGuardService` |
-| `turn_analysis.json` | Prompt/schema/gate da análise estruturada de turno (`clarify`/`execute`/`narrate`) | `ChatTurnAnalysisContentService`, `ChatTurnAnalysisService` |
-| `turn_grounding.json` | Caps e textos do grounding (`lastResultExcerpt`, triggers expand/insight/fan-out, statuses) | `ChatTurnGroundingContentService`, `ChatTurnGroundingService` |
-| `follow_up_turn.json` | Follow-up grounded: decisions revise/challenge/clarify/narrate, typos de filial, topic switch, prompts e faithfulness | `ChatFollowUpTurnContentService`, `ChatFollowUpTurnInterpretationService` |
-| `entity_capability_catalog.json` | Capacidades por domínio (`routeId`, scopes, limits fan-out) | `ChatEntityCapabilityCatalogService`, `ChatGroundedCapabilityPlanningService` |
-| `unclear_requests.json` | Pedidos ambíguos + família **`ambiguous_domain`** (programação, qualidade, custo…) | `ChatUnclearRequestService` |
-| `operational_llm_synthesis_context.json` | Budget de fatos no prompt LLM (`maxChars`, `maxProfileTableRows`, limites de linhas/tabela/SQL); **`leakMarkers`**; **`answerEnrichment`** (dedupe, alucinação, fidelidade) | `ChatOperationalLlmSynthesisContextContentService`, `ChatOperationalLlmSynthesisContextService`, `ChatOperationalLlmSynthesisAnswerEnrichmentService`, `ChatOperationalLlmSynthesisTurnFinalizationService` |
-| `presentation_prose_delivery.json` | Modos prosa template × LLM × direct; chaves metadata do contrato | `ChatPresentationProseDeliveryContentService`, `ChatPresentationProseDeliveryService` |
-| `response_mode_synthesis_quality.json` | Critérios smoke/regressão da síntese LLM (similaridade vs template, contexto, deflexão, **`gaps`** declarativos, **`coherenceChecks`**, **`turnFinalization`**, escada de modos) | `ChatResponseModeSynthesisQualityContentService`, `ChatResponseModeSynthesisQualityService` |
-| `column_labels.json` | Perfis `directivesRawMaterials`, `directivesSuppliers`, `directivesLastPurchase` (detect por `/directives/`) | `ExternalActionColumnLabelService`, `ChatPresentationFieldNormalizationService` |
-| Changelog integrado | `docs/changelog/2026-06-product-directives-chat.md` | Roteamento, apresentação, MFE filtros, modos Automático/Tabela/Texto |
-| `production_operational_intent.json` | Marcadores Playbook 15 — consumo, compras ranking, refugo, OPs, CT, empenho, planejado×real (`terms`, `excludeTerms`, `pathTokens`) | `ChatProductionOperationalIntentService`, `operational_route_registry.json` |
-| `intent_router.json` | Marcadores de roteamento (autoajuda, RAG, apresentação, web block, `shortContextReplyPatterns` / `limits`) | `ChatIntentRouterService`, `ChatIntentRouterContentService` |
-| `knowledge_search.json` | Stopwords FTS / limites de termos e boost de título no keyword RAG (embeddings off) | `postgres_knowledge_repository`, `keyword_similarity` |
-| `intent_disambiguation.json` | Clarificação de escopo operacional (chips + directAnswer) | `ChatIntentDisambiguationService` |
-| `product_overview_intent.json` | «Me fale do produto» e visão geral | `ChatProductOverviewIntentService` |
-| `error_handling.json` | Erros recuperáveis, chips, SQL tipado; **`missing_required_parameter`** + `validationFailureMarkers` | `ChatErrorHandlingClassifier`, `ChatTrustSignalsService` |
-| `conversation_state.json` | Task types da sessão + `patterns` (tópico, continuação, correção, sensível) + `clearContextPhrases` | `ChatConversationStateService` |
-| `fast_path.json` | Hints que bloqueiam fast-path (`knowledgeHint`, operacional, refinement) | `ChatFastPathService` |
-| `agentic_planner.json` | System/user templates do planejador agentic + foco operacional | `ChatAgenticToolLoopService` |
-| `conversation_message_search.json` | Triggers de busca na sessão + `sessionReviewTriggers` (meta-conversa) + cues de correção | `ChatConversationMessageSearchService` |
-| `sql_execution_errors.json` | Ponte tipos SQL → `error_handling.types` | `ChatSqlExecutionErrorInterpretationService` |
-| `data_coverage.json` | Avisos parcial/paginação/profundidade | `ChatDataCoverageNoticeService` |
-| `structure_comparison.json` | Comparação BOM/ficha | `ChatStructureComparisonService` |
-| `memory_ux.json` | Memória de sessão (barra + introspecção) | `ChatMemoryUxService` |
-| `memory_intent.json` | Durabilidade/semântica/episódica/UX + `contextSafety`, `preference` (revoke/labels), `sessionClear`, `entityTracker` | `ChatMemoryIntentContentService` |
-| `user_context_items.json` | Limits, marker e patterns de contexto livre do usuário | `ChatUserContextItemsContentService` |
-| `email_intent.json` | Markers/subtypes/tom/audiência/subject + `quality` (frases artificiais, assinatura) | `ChatEmailIntentContentService` |
-| `text_quality.json` | Patterns de assinatura/compromisso inventados e compare de anexos | `ChatTextQualityContentService` |
-| `web_search.json` | Resposta direta e follow-up; `querySecurity` (redação); **`llmSynthesis.leakMarkers`**; **`synthesisNotes`** (anexo/produto/compare/tabela) | `ChatWebSearch*`, `ChatWebSearchQuerySecurityService`, `ChatWebSearchIntegrationService` |
-| `platform_tools.json` | Resposta direta de tools internas (`get_allowed_routes`, `get_allowed_apps`, `get_current_user`) | `ChatPlatformToolsContentService`, `ChatPlatformToolDirectAnswerService` |
-| `drawing_validation.json` | Relatório, checklist, rótulos de status (`statusPresentation`), campos do markdown (`reportFields`, seção `dimensions`), export CSV/PDF/XLSX (`export`), regras de consolidação (`presentation`), gate assertivo (`validationLayers.pdfDependentTemplateKeys` inclui `total_length`), padrão `patterns.productDescriptionLengthMm`, **rótulos UX de tabelas Protheus** (`protheusTableLabels` — espelho curto de `api-delpi/.../allowed_tables.json`) | `ChatDrawingValidationContentService`, `ChatDrawingValidationPresentationService`, `ChatDrawingValidationOrchestrationService`, `ChatDrawingReportExportService`, `ChatDrawingBomQuantityAssertivenessService` |
-| `drawing_query_intent.json` | Marcadores de intent de análise de desenho (PDF, conformidade, BOM), respostas diretas e fallback LLM (`llmFallback` → `drawing-report-llm-fallback.md`) | `ChatDrawingIntentService` |
-| `drawing_stamp.json` | Rótulos de carimbo, regiões, **`layoutAnalysis`** (XY-Cut), exclusões cliente/BOM, clarificações, gate nativo (Onda 14), padrões de cota/decape, **`bomColumnHeaders`** / **`bomColumnInference`** / **`bomRowRefinement`** / **`bomComparison`** (15.8) | `ChatDrawingStampExtractionService`, `ChatDrawingPageLayoutAnalysisService`, `ChatDrawingDimensionsExtractionService`, `ChatDrawingPatternsService`, `ChatDrawingBomTableInterpretationService`, `ChatDrawingBomComparisonService` |
-| `document_vision.json` | Intent OCR, VLM (`prompts.ocr` / `ocrDrawingRegions` / `ocrPartialHint`, caps `maxImages`/`drawingRegions`/`includeOverview`, `sectionMarkers` CARIMBO/BOM/PAGINA), `pdfExtraction` (fusão, perfis `generic`/`drawing_delpi`, **`attachmentIndex`**, **`processIsolation`** — OCR em processo filho para segfault Pillow/fitz não matar SSE); **`pdfExtraction.tableStructure`** + **`rowParsing`** (15.8.2b, genérico) — limites PDF index: [chat-workspace-file-extraction-limits.md](./chat-workspace-file-extraction-limits.md) §3 | `ChatDocumentVisionContentService`, `DocumentVisionOcrProcessRunner`, `ChatDocumentVisionTurnService`, `ChatDocumentVisionVlmPayloadService`, `ChatPdfDocumentExtractionService`, `ChatPdfTableStructureService`, `ChatDocumentVisionSkillService` |
-| `user_context.json` | Respostas diretas sobre perfil e papéis; `llmSynthesis` (`leakMarkers`, lead) para prosa LLM | `ChatUserContextService`, `ChatUserProfileContentService`, `ChatUserProfileLlmSynthesisService` |
-| `capabilities.json` | Catálogo de capacidades; `llmSynthesis` (`leakMarkers`, lead) para prosa LLM | `ChatCapabilitiesService`, `ChatCapabilitiesContentService` |
-| `identity.json` | Identidade do assistente; `llmSynthesis` (`leakMarkers`, lead) para prosa LLM | `ChatAssistantIdentityService`, `ChatAssistantIdentityContentService` |
-| `data_interpretation.json` | Marcadores e título padrão de interpretação de dados | `ChatDataInterpretationAnswerService` |
-| `humanized_data_response.json` | Templates de resumo, alertLevel, limitações, próximas ações, camadas de leitura e `commentaryProfiles` (Playbook 13 / W1b) | `ChatHumanizedDataResponseContentService`, `ChatHumanizedDataResponseService`, `ChatOperationalCommentaryProfileService` |
-| `stream.json` | Status SSE + fases de atividade + desenho + `activity.structureComparison` / `paginationConsolidationPage` | `ContentService.stream`, `ChatStreamActivityService` |
-| `tool_context.json` | Roteador, paginação (`fullFetchPatterns`), drawing no tool context, erros de ferramenta | `ChatToolContextContentService`, `ChatToolContextSelectionService`, `ChatToolContextPreTurnService` |
-| `turn_preparation.json` | Respostas diretas da preparação de turno (ex.: interpretação sem dados; **`directAnswers.projectSources`** — inventário de fontes do projeto; **`historySummary`** — prompt e fatos preservados na compactação) | `ChatTurnPreparationContentService`, `ChatTurnPreparationDirectAnswerService`, `ChatProjectSourcesIntentService`, `ChatHistorySummaryContentService`, `ChatHistorySummaryService` |
-| `operational_parameters.json` | Parâmetros faltantes (`missingProductCode`, `missingDateByContext`, OV, filial) | `ChatOperationalParameterService`, `ChatOperationalDateParameterService` |
-| `operational_follow_up_routing.json` | Follow-up operacional: escopo de produto, herança de data playbook, segmentos, gate capabilities | `ChatOperationalFollowUpRoutingService` |
-| `interactivity.json` | Chips, refinamentos, disponibilidade (`hideUnavailableSuggestions`, labels operacionais/SQL) | `ChatInteractivityContentService`, `ChatInteractivitySuggestionAvailabilityService`, `ChatInteractivitySuggestionService` |
-| `selection_pending.json` | Prompt/labels/caps do contrato `selectionPending`; kinds `catalog_route` (slide) e `score_gap_route` (rota) | `ChatCatalogSelectionPendingService` |
-| `small_talk.json` | Conversa leve | `ChatSmallTalkService` |
-| `utility_answers.json` | Hora, data | `ChatUtilityDirectAnswerService` |
-| `onboarding.json` | Onboarding | `ChatOnboardingService` |
-| `attachments.json` | Welcome/chips pós-upload (PB05), preview de leitura, **`ingestUi`**, **`fileExtraction`** (limites CSV/XLSX, timeout antiword, hints legado) — ver [chat-workspace-file-extraction-limits.md](./chat-workspace-file-extraction-limits.md) | API `ChatAttachmentContentService`; MFE `workspaceFileIngestContent.ts` + `sync:attachments-content` |
-| `message_composer.json` | Composer (corretor de digitação P14; `corrijaPrefixPattern`) | MFE `messageComposerContent.ts` + `POST /chat/typing-suggestions` |
-| `typing_correction_rules.json` | Typos operacionais estáticos (normalização + sugestões P14) | `ChatMessageNormalizationService.configure_static_rules` |
-| `typing_correction_lexicon.json` | Vocabulário operacional para fuzzy P14-5 | `ChatTypingCorrectionFuzzyLexiconService.configure` |
-| `text_correction_spell_check.json` | Preflight LanguageTool na skill de correção textual | `ChatTextCorrectionSpellContentService` |
-| `capabilities.json` | Capacidades | `ChatCapabilitiesService` |
-| `column_labels.json` | Colunas de tabelas, perfil KV do produto, tabelas fixas do presenter | `ExternalActionColumnLabelService`, `ExternalActionResultPresenter` |
-| `personality_playbook.json` | Tom, feedback, **`drawingFollowUpChips`** / **`drawingFollowUpQueries`** (incl. «Reextrair BOM do PDF», 15.8.5) | `ChatPersonalityContentService`, `ChatDrawingFollowUpService` |
-| `sql_intent_vocabulary.json` | Marcadores SQL (intenção, refinamento, produção, analisador) — seção **`shared`** para termos reutilizados | `ChatSqlIntentVocabularyService` → vários `ChatSql*` |
-| `tv_dashboard_copilot_intent.json` | Surface/confirmação do Copiloto TV (`surfaceTokens`, frases leves, `hostPrompt`, `selectionReason` / `applySelectionReason`, `catalogUnavailable`, `directAnswer`) — **sem** catálogo de ops (vem do BFF) | `ChatTvDashboardCopilotIntentService`, `ChatHostSurfaceContextService`, `ChatTvDashboardPlatformToolSelectionService`, `ChatPlatformToolDirectAnswerService` |
-| `analysis_intent_vocabulary.json` | Marcadores de análise/comparação | `ChatAnalysisIntentVocabularyService` |
-| `text_context_vocabulary.json` | Resolução de contexto textual (produto, filial, datas) | `ChatTextContextVocabularyService` |
-| `term_extraction_vocabulary.json` | Stopwords + `definitionPatterns` de pergunta de definição | `ChatTermExtractionVocabularyService` |
-| `technical_description_vocabulary.json` | Normas MP (1001–1025) + intermediários 50xx: grupos, campos, cores MP/4 letras, isolação CA–CV, marcadores de intent, **compliance follow-up** (avaliação descrição×normas; PA 90xx sem doc); consumíveis 1013/1050 para classificação no desenho | `ChatTechnicalDescriptionVocabularyService`, `ChatTechnicalDescriptionIntentService`, `ChatTechnicalDescriptionComplianceService`, `ChatDrawingProductFamilyClassificationService` |
-| `session_vocabulary.json` | Marcadores de mudança de assunto na sessão ativa | `ChatSessionVocabularyService` |
-| `operational_pipeline_vocabulary.json` | Termos operacionais vs. documentais no fast path | `ChatOperationalPipelineVocabularyService` |
-| `operational_group_by_refinement.json` | Rotas, dimensões e estratégia session/refetch para agrupamento de follow-up | `ChatOperationalGroupByRefinementService`, `ChatOperationalSessionDataRefinementService` |
-| `presentation_vocabulary.json` | Dedup estrutura/BOM, **`decisionReasons`**, insights, Playbook 12 (`tableRoles`, `tierAPipelineCases`), **`automaticScoreMarkers`** (listagem vs ranking no Automático) | `ChatPresentationVocabularyService` |
-| `date_range_vocabulary.json` | Meses, frases de período, métricas temporais e `patterns` | `ChatDateRangeVocabularyService` |
-| `operational_refinement.json` | Termos e `patterns` de refinamento (filial, paginação, profundidade, reset estoque) | `ChatOperationalRefinementContentService`, `ChatOperationalRefinementVocabulary` |
-| `reference_resolution.json` | Regex de referência vaga (esse produto, isso, anexo…) | `ChatReferenceResolutionContentService` |
-| `department_meta_composition.json` | Triggers + `byDepartment` (primary/compose routeIds) para multi-rota de meta/indicadores departamentais (Playbook 25) | `ChatDepartmentMetaCompositionPlanningService` |
-| `canvas_transform_vocabulary.json` | Termos e templates de transformação na lousa | `ChatCanvasTransformVocabularyService` |
-| `presentation_profiles.json` | `entityProfiles`, **`entitySetProfileContracts`**, `entitySets`, `pathRules`, `chartPolicy`, `commentaryProfileKey` — **não** adicionar `visualBuilders` / `tableAssembly` (removidos do runtime) | `ChatPresentationProfileService`, `ChatPresentationCoverageService` |
-| `ChatOperationalResponseProfileService` | Roteamento `meta.entity` → perfil/presenter OpenAPI | path hardcoded em presenters |
-| `presenter_content.json` → `schemaDriven` | Narrativa mínima para rotas tier C/B sem builder dedicado | `ChatSchemaDrivenPresentationService` |
-| `presenter_content.json` → `humanizedNarrative` | Panorama, leitura rápida, destaques, prefixos de atenção e conclusão do enriquecimento genérico | `ChatPresentationHumanizedNarrativeService`, `ChatPresentationStackOrderService` |
-| `presentation_profiles.json` → `humanizedNarrative` | `skip` ou `enrich` por perfil — **legado**; comentário ativo via `ChatDataInsightEnrichmentService` | `ChatPresentationProfileService` |
-| `presenter_content.json` → `stackMarkdownMarkers` + `stackSectionFraming` | Headers/regex de seção + framing | `ChatPresentationStackMarkdownContentService` / `ChatPresentationStackMarkdownService` |
-| `presenter_content.json` → `routes.salePricing` | Narrativa de precificação: panorama, leitura, atenção, conclusão, KPI | `ExternalActionProductPricingPresenter` |
-| `presenter_content.json` → `generic.treeOutlineHeader` / `treeOutlineTruncated` | Cabeçalho e truncamento do outline ASCII em modo Texto (estrutura/BOM) | `ChatPresentationTreeMarkdownService` |
-| `presenter_content.json` → `compositeVisualSpecs` | Spec declarativa do quartet KPI/árvore/gráfico/dashboard por perfil (Playbook 12 R6) | `ChatPresentationCompositeVisualBuilder`, `ChatPresentationProfileCompositeVisualService` |
+## O que pertence aos bundles JSON
 
-## Vocabulário compartilhado (dicionários PT)
+| Categoria | Exemplos |
+|-----------|----------|
+| Copy PT-BR | títulos, mensagens, erros, activities |
+| Vocabulário corporativo | aliases, sinônimos, termos internos |
+| Regex configurável | OCR, safety, intent lexical |
+| Thresholds/caps | limites de contexto, score, paginação UX |
+| Policies transversais | fallback, confirmação, comportamento UX |
+| Presentation hints | labels/perfis opcionais |
+| Prompt/config LLM | templates e limites não secretos |
 
-Termos e frases de **intenção/heurística** ficam em bundles `*_vocabulary.json`. Vários serviços Python leem o **mesmo** JSON via subclasses de `ChatAssistantVocabularyService`:
+## O que não pertence aos bundles JSON
 
-| Método | Uso |
-|--------|-----|
-| `terms(*path)` | Lista de marcadores em caminho aninhado |
-| `merge_terms(*paths)` | Une listas do mesmo bundle sem duplicar (ex.: `shared` + seção específica) |
-| `text` / `format` | Template com `{placeholder}` |
-| `synonym_map` | Objeto chave → lista de aliases |
-| `node` / `mapping` | Nó arbitrário ou mapa chave→string |
+Não duplicar fatos já presentes no OpenAPI/Action Catalog:
 
-**Padrão:** definir termos canônicos uma vez em `shared.*`; métodos de conveniência no loader (ex.: `incremental_authoring_terms()`) compõem `shared` + chaves específicas. Regex, SQL e heurísticas numéricas permanecem no Python.
+```text
+path
+operationId
+HTTP method
+parameters
+required
+type/enum/format
+request body schema
+response schema
+technical summary/description
+```
 
-**Novo domínio:** criar `assistant/<dominio>_vocabulary.json`, subclass com `BUNDLE = "<dominio>_vocabulary"`, consumir só via loader — não copiar listas entre serviços.
+Também não criar configuração técnica por endpoint para ensinar routing:
 
-## Migração (jun/2026) — já centralizado
+```text
+pathMarkers
+operationIdMarkers
+routeSegment
+parameterStrategy
+manual endpoint priority
+provider selector
+```
 
-- Stream activity: `stream.activity.phaseGroups`, `drawingStages`
-- SQL execution errors → `error_handling.types` via `sql_execution_errors.errorTypeToHandling`
-- Cobertura de dados → `data_coverage.json`
-- Comparação de estrutura (insufficient data) → `structure_comparison.json`
-- Memória UX → `memory_ux.json`
-- Web search direct answer → `web_search.json` (antes em `product_operational_content.webSearch`)
-- Web search follow-up (links, resumo, parâmetros, comparação) → `web_search.followUp`
-- Validação de desenho (relatório, templates de checklist, conclusões) → `drawing_validation.json`
-- Apresentação do relatório de desenho (rótulos de status, consolidação de itens repetidos, expansão item a item em BOM/50xx, árvore SG1010, roteiro completo, **tabela Cotas × estrutura**, labels de export) → `drawing_validation.json` (`statusPresentation`, `reportFields`, `export`, `presentation`, `validationLayers`) + `ChatDrawingValidationPresentationService`; MFE render-only consome `drawingAnalysisExport.statusLabels` / `exportLabels` e suprime apresentação duplicada do `/analyser`. Changelog: [`changelog/2026-06-drawing-cotas-estrutura-relatorio.md`](changelog/2026-06-drawing-cotas-estrutura-relatorio.md)
-- Parâmetros do `/analyser` em turno de desenho (`view=full` obrigatório; sem `view=summary` nem paginação parcial) → `ChatDrawingAnalyserParameterService` (application: `ExternalActionProductRouteCatalogService.build_product_parameters`, `ChatExternalActionOrchestrationService`, `ChatToolContextSelectionService`)
-- Exportação do relatório de desenho (tabelas estruturadas `tables[]` para PDF/CSV/XLSX; PDF via layout certificado DELPI com logo) → `ChatDrawingValidationPresentationService.build_export_tables` + `ChatDrawingReportExportService`; MFE: `src/export/pdf/` (canônico), `drawingAnalysisPrint.ts` (wrapper desenho), `drawingAnalysisExport.ts` — ver `plugins/minha-delpi-chat/docs/export.md`
-- Intent de análise de desenho (gatilhos, vocabulário com anexo, códigos explícitos sem PDF, direct answers, biblioteca não encontrada) → `drawing_query_intent.json`
-- SSE de busca na biblioteca → `stream.json` → `activity.drawingStages.fetch_library_pdf`
-- Contexto de usuário (perfil, papéis, permissões, grupos) → `user_context.json`
-- Guarda de vazamento na síntese LLM → `llm_synthesis_delivery.json` (`commonLeakMarkers`) ∪ `leakMarkers` em `user_context`, `capabilities`, `identity`, `operational_llm_synthesis_context`, `web_search`
-- Interpretação de dados (marcadores genéricos) → `data_interpretation.json`
-- Detalhe de linha da última tabela (drill-down MFE) → `data_interpretation.rowDetail` + `analysis_intent_vocabulary.rowDetailRequestTerms` → `ChatPresentationRowDetailAnswerService`
-- Títulos de lista no presenter → `presenter_content.titlesByPathFragment`
-- KPI por fragmento de path → `presenter_content.kpiPathMatchers` + `kpiTitles`
-- Analyser (destaques, atenção, PMR, pais, compras) → `presenter_content.analyserMarkdown` + `analyser_insights.json`
-- Intenção de consulta de produto (estoque, vendas, pais, resumo, playbook) → `product_query_intent.json` (`routePredicates`, `playbookPredicates`, `subIntentPredicates`); regex de pais em `parents.regexPatterns`; plural via matcher `pluralScopeLinked`
-- Resumos de texto de parents/estrutura → `presenter_content.routeNarratives`
-- Visão geral do produto → `product_overview_intent.json`
-- Presenter genérico (vazio operacional, erros API, paginação, analyser) → `presenter_content.generic`, `operationalEmpty`, `apiErrors`, `pagination`, `analyserCollections`
-- Apresentações por rota (roteiro, inspeção, OV, LMP, busca, estrutura, SX2) → `presenter_content.routePresentations`
-- Field labels do presenter (aliases de produto/preço/estoque, perfil KV, componentes da estrutura) → `column_labels.fields` + `column_labels.presenter`
-- Ordem/rótulo preferido de colunas tabulares (hints — **não** whitelist; payload da API define o que aparece) → `column_labels.tableProfiles` + `ExternalActionColumnLabelService.resolve_columns_for_items`
-- Humanização centralizada (tabular + KV) — **R21 playbook-12** → `ChatPresentationFieldLabelResolutionService` + `resolve_field_labels` + `format_field_value`
-- Descoberta de rótulo ausente (web + LLM, pós-vocabulário) — **R16 playbook-12** → `column_labels.columnLabelDiscovery` + `PresentationColumnLabelDiscoveryPort` → `ChatPresentationColumnLabelDiscoveryService`
-- ~~`column_labels.presenter.fixedTableColumns`~~ **deprecated jun/2026** — migrado para `tableProfiles`; ver Playbook 12 § R15
-- KPI genérico, títulos de detalhe de produto, gráficos (estrutura/estoque) e resumo compacto do analyser → `presenter_content.genericKpi`, `productDetailTitles`, `charts`, `analyserCompact`
-- Narrativas de visão geral, perfil analyser, insights, roteiro (markdown), SX2 e títulos de apresentação → `presenter_content.productOverview`, `analyserProfile`, `analyserInsights`, `guideItemNarrative`, `systemTablesNarrative`
-- Linhas de lista por rota (roteiro preview, LMP, OV, estrutura, busca) → `presenter_content.routePresentations.*`; cronograma SQL → `external_action_responses.productionSchedule`
-- Dict fallback, preview de coleção e inspeção plana (características + limites de teste) → `presenter_content.generic`, `routePresentations.inspection`
-- Varredura final do presenter (estoque/fornecedor em `_present_items`, títulos stock/parents/structure, SQL/chart/KPI/erro API) → `presenter_content` + `product_operational_content`; ver [presenter-content-migration-audit.md](./presenter-content-migration-audit.md)
-- **Vocabulário SQL/temporal/sessão/web (jun/2026)** → bundles `*_vocabulary.json`, loaders `ChatAssistantVocabularyService`; ver [vocabulary-centralization-jun2026.md](./vocabulary-centralization-jun2026.md)
+## Bundles principais
 
-## DOCIE — gates CI (jun/2026)
+A lista abaixo é por **responsabilidade de conteúdo**, não por endpoint.
 
-| Script | Gate |
-|--------|------|
-| `scripts/lint_operational_route_registry.py --check` | Registry + vocabulário + cobertura tier C |
-| `scripts/generate_operational_route_registry.py --check` | `autoTierCRoutes` sincronizado com OpenAPI baseline |
-| `scripts/audit_presentation_path_ifs.py --check` | Apresentação entity-first (Fase 19) |
-| `scripts/audit_presentation_coverage.py --check-profiles` | Tier A sem `generic`; **contratos entitySet × perfil**; path vs catch-all |
+| Bundle | Responsabilidade |
+|--------|------------------|
+| `clarification_policy.json` | clarify material vs discoverable |
+| `turn_understanding.json` | configuração da decomposição do turno |
+| `conversational_intelligence.json` | flags/config de inteligência conversacional |
+| `capability_registry.json` | linguagem/config de capabilities, sem replicar contrato de Actions |
+| `response_modes.json` | modos fast/normal/thinker, budgets e alvos |
+| `turn_analysis.json` | schema/prompt/config de análise do turno |
+| `turn_grounding.json` | caps/statuses de grounding |
+| `follow_up_turn.json` | linguagem/policies de follow-up |
+| `intent_router.json` | vocabulário/config transversal do router |
+| `unclear_requests.json` | mensagens/chips de ambiguidade |
+| `error_handling.json` | erros recuperáveis e UX |
+| `llm_synthesis_delivery.json` | entrega/safety de síntese |
+| `presentation_prose_delivery.json` | prosa da apresentação |
+| `presentation_profiles.json` | enriquecimento visual opcional |
+| `column_labels.json` | labels de UI |
+| `stream.json` | textos/activity SSE |
+| `web_search.json` | configuração/UX de web search |
+| `document_vision.json` | OCR/visão documental |
+| `drawing_validation.json` / `drawing_stamp.json` | regras/config da skill de desenho |
+| `memory_intent.json` / `memory_ux.json` | comportamento/UX de memória |
+| `capabilities.json` | catálogo UX de capacidades disponíveis |
 
-Workflow: `.github/workflows/minha-delpi-ai-api-docie.yml`. Regenerar tier C após reimport OpenAPI: `generate_operational_route_registry.py --write`.
+A existência de um bundle não autoriza duplicar schema técnico de uma Action.
 
-**Nova rota:** checklist completo em [new-api-route-checklist.md](./new-api-route-checklist.md).
+## Actions OpenAPI
 
-## Pendente (baixa prioridade)
+Discovery/selection segue:
 
-1. Colunas dinâmicas em listagens genéricas continuam via `label_for` + `_COLUMN_TYPE_MAP`
-2. Regex temporais pontuais (`_TODAY_PATTERNS` em `ChatTemporalIntentService`) e tokens de apresentação adjacentes — ver pendências em [vocabulary-centralization-jun2026.md](./vocabulary-centralization-jun2026.md)
+```text
+OpenAPI importado
+→ Action Catalog/index
+→ allowed actions
+→ retrieval
+→ planner
+→ OpenAPI validator
+```
 
-## Como adicionar conteúdo
+JSON pode enriquecer linguagem corporativa ou policy transversal, mas não pode ser condição para uma API externa ser plugável.
 
-1. Editar o JSON em `app/content/pt-BR/assistant/`.
-2. No serviço: `ChatAssistantContentService.get("meu_bundle", "secao", "chave")`.
-3. Teste unitário mínimo que valida a chave existe.
-4. Atualizar esta tabela e, se for domínio grande, `product-operational-content.md` ou doc específica.
-5. MFE: importar o mesmo JSON quando o texto for compartilhado (padrão `operationalPresentationContent.ts`).
+## Regex e thresholds
 
-## Cache
+Quando regex/threshold é configuração:
 
-`invalidate_assistant_content_cache(bundle)` ou `ContentService.clear_cache()` após alterar JSON em runtime de testes.
+```text
+JSON
+→ loader canônico
+→ serviço aplica algoritmo
+```
+
+Evitar `re.compile`, listas de sinônimos e números mágicos dispersos em domain/application quando são editáveis/configuráveis.
+
+## Presentation
+
+Presentation hints podem viver em JSON, porém:
+
+- fallback schema-driven é obrigatório;
+- profile dedicado não é requisito para Action nova;
+- MFE renderiza `renderPlan`, não redefine regra de negócio.
+
+## Checklist para nova chave/bundle
+
+1. A responsabilidade já existe em algum bundle?
+2. É linguagem/config/policy ou contrato técnico?
+3. Se for contrato técnico, deve ir para OpenAPI/importer/Action Catalog.
+4. Se for conteúdo, usar loader canônico.
+5. Evitar duplicação entre bundles.
+6. Adicionar teste do loader/comportamento.
+7. Se afetar inteligência, executar protocolo R1–R11.
+
+## Anti-padrões
+
+- endpoint novo → nova entrada técnica no JSON;
+- path/opId/args copiados do OpenAPI;
+- regex criada só para frase de fixture;
+- provider name usado como ranking manual;
+- policy de segurança escondida apenas em prompt;
+- string PT-BR duplicada em vários serviços;
+- hardcode Python migrado para hardcode JSON para passar CI.
+
+## Referências
+
+- [`chat-intelligence-base.md`](./chat-intelligence-base.md)
+- [`new-api-route-checklist.md`](./new-api-route-checklist.md)
+- [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
+- `.cursor/rules/assistant-content-json.mdc`
+- `.cursor/rules/openapi-first-universal-tool-routing.mdc`
