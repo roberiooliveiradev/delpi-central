@@ -4,57 +4,123 @@
 
 ```text
 MFE supplies
-  GET/POST /apps/supplies-api/*
-    Authorization: Bearer
-    X-Request-Id (propaga)
-      → supplies-api
-          → Core /me (cache curto de perms se o padrão da lib existir; senão a cada request)
-          → api-delpi (timeout explícito, caller supplies-api)
-          → purchase-requests-api (C1)
-          → strategic-indicators-api
-          → opcional inspecoes-entrada HTTP (projeção 360)
+  → /apps/supplies-api/*
+      Authorization: Bearer
+      X-Request-Id
+        → supplies-api
+            → Core /me (effective permissions)
+            → api-delpi
+            → purchase-requests-api (C1)
+            → strategic-indicators-api
+            → contexto Qualidade, quando autorizado
 ```
 
-## 2. Observabilidade
+O JWT Keycloak identifica e autentica. **Authorization efetiva vem do Core API**; não confiar em `permissions`/`is_superadmin` dos claims como decisão final.
 
-Alinhar `observability-standards.mdc` (quando a E2 implementar):
+## 2. Authz
 
-- Correlation / request id em log estruturado JSON (`request_id`, `user_sub`, `branch`, `operation_id`).
-- **Nunca** logar `Authorization`, cookies, body de mapping com PII além do necessário.
-- Métricas: latência BFF, latência gateway, taxa 403 filial, taxa 502 TOTVS, cache hit se houver.
-- Tracing opcional no padrão já usado por commercial-api.
+Fluxo canônico:
 
-## 3. HTTP resilience
+```text
+JWT válido
+→ resolver effective permissions no Core
+→ capability mínima (ADR-007)
+→ allowedUnits (ADR-006)
+→ ownership/resource scope
+→ business rule
+```
 
-- Timeout em **todo** client HTTP (api-delpi, SI, PR-api, Core).
-- Retry só GET idempotente; sem retry em POST tasks.
-- Circuit/breaker se o pacote irmão já tiver padrão; senão fail fast + 502.
-- Cancelamento: respeitar disconnect do cliente no stream se houver (P2).
+Falha do Core ao comprovar autorização de uma operação protegida = fail-closed. Cache/stale só pode ser usado se o mecanismo compartilhado da plataforma tiver política canônica explícita.
 
-## 4. Segurança
+## 3. Observabilidade
 
-- JWT validado em todas as rotas autenticadas (health/ready públicos).
-- Autorização no backend (caps + filial + fail-closed SC).
-- Rate-limit: gateway da plataforma (não inventar no MFE).
-- SSRF: só hosts internos Compose (api-delpi, SI), allowlist.
-- Uploads futuros: volume persistente + tipos MIME + tamanho.
+Alinhar `observability-standards.mdc`:
 
-## 5. Multi-unidade no fio
+- request/correlation id em todos os hops;
+- log estruturado com `request_id`, `user_id`, `branch`, `operation_id`, downstream e duração;
+- nunca logar Authorization, cookies, secrets ou payload sensível integral;
+- métricas: latência BFF, downstream, 403 por capability/unidade, 502/504, partial response, cache hit/stale;
+- tracing quando houver padrão canônico compartilhado.
 
-Query `branch` validada contra o **catálogo de unidades** ∩ units do JWT (`supplies.unit.filial-{TOTVS}`), não contra um enum hardcoded eterno de dois sites. 403 se fora do conjunto. Omitir `branch` = união das units permitidas. Nova filial TOTVS não exige permission nova em CPV/ESTSEG/SC — só o code de unidade. Ver [ADR-006](./adr/ADR-006-unit-permissions.md).
+## 4. HTTP resilience
 
-## 6. Notificações
+Todo client HTTP deve ter timeout explícito.
 
-Hoje: catálogo Core `purchase_requests` (PO linked + receipt).  
-C2: jobs na supplies-api, **mesma** categoria Core (não criar canal paralelo sem `feature-help-sync`).
+- retry somente em operação idempotente e quando política permitir;
+- nenhum retry cego em POST/PATCH;
+- circuit breaker somente se já houver padrão compartilhado ou evidência que o justifique;
+- cancelamento/disconnect quando aplicável;
+- `X-Delpi-Caller-App: supplies-api` nas chamadas internas que seguem esse contrato.
 
-## 7. Chat / OpenAPI
+## 5. Composição e falha parcial
 
-Nova rota **só** na api-delpi se gap TOTVS. Depois import Action Catalog. Portal não é dono de tool routing.
+BFFs compostos (`/analytics/overview`, Supplier 360, Product 360) devem ter budget global e timeout por dependência.
 
-## 8. Compose / Gateway (quando E2/E3)
+Política base:
 
-- Serviço `supplies-api` + `supplies` (`<<: *plugin-ui-federated`).
-- `location ^~ /apps/supplies-api/` no nginx (espelho commercial-api / purchase-requests-api).
-- Assets: location genérica já cobre `/apps/supplies/assets/`.
-- Startup sequencial (`infra-sequential-container-startup.mdc`).
+```text
+falha de bloco auxiliar
+→ resposta parcial utilizável
+→ bloco marcado unavailable
+→ erro observável
+
+falha de authz ou recurso principal
+→ não mascarar como partial success
+```
+
+Exemplo:
+
+```text
+CPV OK
+OTD OK
+stock timeout
+SI OK
+→ 200 parcial + stock unavailable
+```
+
+A forma exata de metadata deve ser congelada no contrato antes da implementação.
+
+## 6. Multi-unidade
+
+`allowedUnits` é derivado das **permissions efetivas do Core** intersectadas com o catálogo `supplies.unit.filial-{TOTVS}`.
+
+- branch fora do conjunto → 403;
+- branch omitido → união somente das units autorizadas;
+- consolidado nunca significa empresa inteira implicitamente;
+- nova filial exige um code de unidade, não permission por tela.
+
+## 7. Strategic Indicators
+
+Metas e snapshots continuam no SI. O Portal pode compor leitura, mas deve respeitar o recorte de unidades autorizado ao usuário.
+
+Quando o SI oferecer consolidado corporativo e o usuário tiver somente subconjunto de units, a supplies-api não deve expor o consolidado irrestrito como se estivesse autorizado.
+
+## 8. Qualidade e Financeiro
+
+- Qualidade: projeção no Supplier 360 somente com autorização do contexto de Qualidade; processo continua fora de Suprimentos.
+- Financeiro/frete: deep link ou projeção controlada; regra financeira permanece no owner.
+
+## 9. Notificações
+
+Hoje, notificações de Solicitações pertencem ao fluxo existente de `purchase-requests-api`. Na C2, jobs migram para supplies-api mantendo categoria/contrato enquanto consumidores ainda dependem dele.
+
+Não criar canal paralelo sem necessidade.
+
+## 10. Chat / OpenAPI
+
+Nova rota TOTVS só nasce na api-delpi quando houver gap comprovado. Se a nova operation for utilizável pelo chat, seguir import/index e governança OpenAPI-first. Portal Suprimentos não assume tool routing.
+
+## 11. Compose / Gateway quando autorizado
+
+Deploy seguro:
+
+```text
+supplies-api saudável
+→ gateway conhece target sem redirect legado
+→ MFE supplies saudável
+→ manifest + RBAC
+→ smoke URL nova
+→ somente depois redirects de cutover
+```
+
+Usar scripts sequenciais canônicos. Não ativar redirect para target ainda não homologado.
