@@ -2,11 +2,18 @@
 
 A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo deve ficar em sua própria pasta, com componente e CSS próprios.
 
-**Revisão de fluxos:** [`admin-fluxos-revisao.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/admin-fluxos-revisao.md) — Studio / Observe / fine-tune / Ajuda / EN / fila / deep link (ondas 1–8).
+**Revisão de fluxos:** [`admin-fluxos-revisao.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/admin-fluxos-revisao.md) — ondas 1–14 (Studio, Observe, presets, debug, HITL, Manual…).
 
-**Plano do restante do BC:** [`admin-fluxos-plano-implementacao-restante.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/admin-fluxos-plano-implementacao-restante.md) (ondas 9+).
+**Plano do restante do BC:** [`admin-fluxos-plano-implementacao-restante.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/admin-fluxos-plano-implementacao-restante.md).
 
-Ajuda in-app: `src/content/adminHelpTooltips.ts` via `AdminTabHeader.helpHint`.
+Ajuda in-app: `src/content/adminHelpTooltips.ts` via `AdminTabHeader.helpHint`. Manual por persona: `src/content/adminManualContent.ts` (Painel).
+
+## Jornada canônica de especialização
+
+1. **Descoberta** — Admin → Agentes → Especialização (catálogo + atalho RAG).
+2. **Edição principal** — CTA **Abrir Studio** (lista de agentes ou agente selecionado) → ficha completa (identidade, prompt, skills, actions, logs de action).
+3. **Comportamentos globais** — Conhecimento → Comportamentos (CRUD global) + CTA Studio; skills *por agente* só no Studio.
+4. **Não** tratar o editor admin de especialização como substituto do Studio.
 
 ## Estrutura
 
@@ -17,6 +24,7 @@ Ajuda in-app: `src/content/adminHelpTooltips.ts` via `AdminTabHeader.helpHint`.
 - `guidelines/`: diretrizes globais de comportamento.
 - `skills/`: catálogo global de comportamentos/skills — sub-aba Conhecimento.
 - `learning/`: aprendizagem contínua (candidatos, vocabulário, memória, regressão, ajuste fino).
+- `improve/`: hub HITL Melhoria contínua (Qualidade → `improve`).
 - `shared/`: design system + primitivos (`AdminTabHeader`, `AdminSummaryStrip`, `AdminMetricSection`, `AdminKpiCard`, `AdminRankedList`, `AdminDataTable`, `admin-primitives.css`).
 - `simulate/`: simulação do agente.
 - `evaluations/`: avaliação de respostas.
@@ -65,7 +73,7 @@ Módulos em `src/navigation/`:
 
 Revisão do bundle: `shell/adminShellRevision.ts` (ex. `admin-v3-en-paths`).
 
-Primitivos com dual-class do kit: `AdminTabHeader`, `AdminKpiCard` (`delpi-ui-page-header` / `delpi-ui-kpi-card`).
+Primitivos com dual-class do kit: `AdminTabHeader`, `AdminKpiCard`, `AdminDataTable`, `AdminSummaryStrip` (`delpi-ui-page-header` / `delpi-ui-kpi-card` / `delpi-ui-table*` / `delpi-ui-kpi-grid`).
 
 ## Roadmap de UI
 
@@ -82,7 +90,7 @@ Após alterações no admin, validar em tema escuro (1440px):
 | Painel | — | KPIs, links rápidos |
 | Conhecimento | Documentos, Diretrizes, Comportamentos, Aprendizagem (5 páginas na sidebar) | `AdminTabHeader`, filtros KPI, listas; aprendizagem sem barra de abas no header |
 | Agentes | Especialização, Simulação | Nome legível, badge, UUID em `<code>`, gráfico de uso |
-| Qualidade | Métricas, Avaliações | Blocos `AdminMetricSection`, tabelas legíveis |
+| Qualidade | Métricas, Melhoria contínua, Avaliações | Hub HITL + blocos `AdminMetricSection` |
 | Plataforma | Ferramentas, Inteligência | Strip de saúde, catálogo de ações |
 | Governança | Segurança, Auditoria | Scan, tabela + paginação `AdminDataTable` |
 

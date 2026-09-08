@@ -2,7 +2,7 @@ import { BarChart3, ExternalLink } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getChatAgentStats } from "../../../../data/api/chatApi";
-import { buildChatAgentConfigHref } from "../../../../navigation/chatRoutes";
+import { buildChatAgentConfigHref, buildChatAgentHref } from "../../../../navigation/chatRoutes";
 import { navigateChatHref } from "../../../../navigation/chatNavigation";
 import { buildAdminAgentHref } from "../../../../navigation/adminNavigation";
 import type { ChatAgentStats } from "../../../../data/api/chatTypes";
@@ -124,6 +124,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
 
   function openAgentBuilder() {
     if (!selectedAgentId) {
+      navigateChatHref(buildChatAgentHref(null));
       return;
     }
 
@@ -136,7 +137,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
         className="mdc-admin-agents__toolbar"
         eyebrow="Agentes"
         title="Especialização (catálogo)"
-        description="Catálogo de agentes oficiais e atalho para especialização RAG. A ficha completa (identidade, prompt, skills e actions) fica no Studio do agente."
+        description="Descoberta e atalho RAG/tools. A edição principal (identidade, prompt, skills e actions) é no Studio — use Abrir Studio (lista ou agente selecionado)."
         helpHint={ADMIN_HELP.specialization}
         summary={
           <AgentsSummaryStrip
@@ -159,11 +160,10 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
             <button
               type="button"
               className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
-              disabled={!selectedAgentId}
               onClick={openAgentBuilder}
             >
               <ExternalLink size={15} aria-hidden="true" />
-              <span>Abrir Studio</span>
+              <span>{selectedAgentId ? "Abrir Studio" : "Abrir lista no Studio"}</span>
             </button>
           </div>
         }
