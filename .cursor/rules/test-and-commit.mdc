@@ -1,6 +1,6 @@
 ---
-description: Testes ao concluir código; commit apenas quando o usuário pedir
-alwaysApply: true
+description: Alterações de código — executar testes/build/gates antes de concluir; commit somente quando solicitado explicitamente
+alwaysApply: false
 ---
 
 # Teste e commit ao finalizar
