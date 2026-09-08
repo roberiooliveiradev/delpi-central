@@ -32,6 +32,8 @@ pedido
 
 Regra de governança: `cursor-rules-governance.mdc`.
 
+Mapa executável de ownership das regras especializadas: `.cursor/rules/responsibility-map.json`. Toda regra não-global e não-owner transversal deve aparecer **exatamente uma vez** nesse mapa.
+
 ## Protocolo cognitivo obrigatório
 
 `evidence-driven-execution.mdc` é a fonte canônica para decomposição, evidência, investigação, causa raiz e validação do objetivo original.
@@ -201,17 +203,18 @@ Ao criar/editar `.cursor/rules`:
 
 1. identificar qual das 8 responsabilidades é dona do conceito;
 2. estender a regra transversal ou uma filha existente antes de criar nova regra;
-3. nova regra específica deve ser referenciada pelo índice/owner adequado quando material;
-4. manter `alwaysApply: true` somente na constituição mínima;
-5. executar `python scripts/audit_cursor_rules.py`;
-6. não concluir com referências quebradas, descrição duplicada ou orçamento global excedido.
+3. nova regra específica deve ser registrada em `responsibility-map.json` com exatamente um owner primário;
+4. atualizar `docs/11-padroes-de-desenvolvimento/inventario-regras-cursor.md` quando a regra for durável;
+5. manter `alwaysApply: true` somente na constituição mínima;
+6. executar `python scripts/audit_cursor_rules.py`;
+7. não concluir com regra órfã, ownership duplicado, referência quebrada, descrição duplicada ou orçamento global excedido.
 
 ## Ordem de prioridade em conflito
 
 1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`.
 2. Constituição mínima global.
 3. Uma das **8 responsabilidades transversais canônicas** aplicáveis.
-4. Regra especializada do domínio/tecnologia.
+4. Regra especializada do domínio/tecnologia classificada no `responsibility-map.json`.
 5. ADR/contrato/schema/OpenAPI/implementação vigente conforme `evidence-driven-execution.mdc`.
 6. Segurança/policy.
 7. Gates CI + testes/evals do estado atual.
