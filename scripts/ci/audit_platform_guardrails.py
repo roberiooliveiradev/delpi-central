@@ -12,8 +12,12 @@ Regras:
   pertence a plugins/plugin-ui.
 - MFE_OWN_API_BYPASS: se plugins/<app> possui <app>-api no monorepo, seu código de
   frontend não pode introduzir chamada direta a /apps/api-delpi.
-- JWT_VERIFY_DISABLED: código de produção não pode desabilitar verificação de
-  assinatura/certificado de JWT explicitamente.
+- JWT_VERIFY_DISABLED: código de produção não pode desabilitar ou condicionar
+  verificação de assinatura/audience/issuer explicitamente.
+- JWT_VALIDATOR_DUPLICATION: nova API não pode criar validação JWT paralela com
+  jwt.decode; usar shared/delpi_auth.
+- AUTHZ_PRIMITIVE_DUPLICATION: nova API não pode redefinir primitives genéricas
+  require_auth/require_permission/... fora do shared/Core canônico.
 
 Uso:
   python scripts/ci/audit_platform_guardrails.py --check --base <sha>
@@ -36,18 +40,25 @@ GLOBAL_CSS_RE = re.compile(r"^\s*(?::root|body|html|#root|\*)\s*\{")
 PLUGIN_UI_CLASS_RE = re.compile(r"\.delpi-ui-[A-Za-z0-9_-]+")
 API_DELPI_GATEWAY_RE = re.compile(r"(?:^|[\"'`])/?apps/api-delpi(?:/|[\"'`])", re.IGNORECASE)
 JWT_VERIFY_DISABLED_RE = re.compile(
-    r"(?:verify_signature|verify|verify_cert|verify_ssl)\s*[=:]\s*(?:False|false|0)",
+    r"(?:verify_signature|verify_aud|verify_iss|verify_exp|verify_nbf|verify_iat)"
+    r"[\"']?\s*[=:]\s*(?:False|false|0)",
     re.IGNORECASE,
 )
-JWT_OPTIONS_DISABLED_RE = re.compile(
-    r"[\"']verify_signature[\"']\s*:\s*(?:False|false|0)",
+JWT_VERIFY_CONDITIONAL_RE = re.compile(
+    r"[\"'](?:verify_aud|verify_iss|verify_signature)[\"']\s*:\s*bool\s*\(",
     re.IGNORECASE,
+)
+JWT_DIRECT_DECODE_RE = re.compile(r"\bjwt\.decode\s*\(")
+AUTHZ_PRIMITIVE_RE = re.compile(
+    r"^\s*(?:async\s+)?def\s+"
+    r"(require_auth|require_permission|require_any_permission|require_all_permissions|require_superadmin)\s*\("
 )
 
 MFE_SHARED_EXCLUSIONS = {"plugin-ui", "tv-dashboard-presentation", "vite", "docker"}
 PRODUCTION_CODE_EXTENSIONS = {".py", ".js", ".jsx", ".ts", ".tsx"}
 MFE_CODE_EXTENSIONS = {".js", ".jsx", ".ts", ".tsx"}
 SKIP_SECURITY_PARTS = ("/tests/", "/test/", "/fixtures/", "/docs/", "/.cursor/")
+AUTH_CANONICAL_PREFIXES = ("shared/delpi_auth/", "core-api/")
 
 
 @dataclass(frozen=True)
@@ -240,21 +251,67 @@ def is_production_code(path: str) -> bool:
     return not any(part in normalized for part in SKIP_SECURITY_PARTS)
 
 
+def is_api_python(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    parts = normalized.split("/")
+    if not parts or not normalized.endswith(".py"):
+        return False
+    root = parts[0]
+    return root in {"api-delpi", "core-api"} or root.endswith("-api")
+
+
+def is_auth_canonical_path(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    return normalized.startswith(AUTH_CANONICAL_PREFIXES)
+
+
 def scan_jwt_verify_disabled(path: str, lines: dict[int, str]) -> list[Violation]:
     if not is_production_code(path):
         return []
     findings: list[Violation] = []
     for line_no, line in lines.items():
-        lowered = line.lower()
-        if "jwt" not in lowered and "verify_signature" not in lowered:
-            continue
-        if JWT_VERIFY_DISABLED_RE.search(line) or JWT_OPTIONS_DISABLED_RE.search(line):
+        if JWT_VERIFY_DISABLED_RE.search(line) or JWT_VERIFY_CONDITIONAL_RE.search(line):
             findings.append(
                 Violation(
                     "JWT_VERIFY_DISABLED",
                     path,
                     line_no,
-                    "verificação de JWT/certificado foi desabilitada em código de produção",
+                    "verificação de assinatura/audience/issuer JWT foi desabilitada ou condicionada por configuração opcional",
+                )
+            )
+    return findings
+
+
+def scan_jwt_validator_duplication(path: str, lines: dict[int, str]) -> list[Violation]:
+    if not is_api_python(path) or is_auth_canonical_path(path) or path.startswith("core-api/"):
+        return []
+    findings: list[Violation] = []
+    for line_no, line in lines.items():
+        if JWT_DIRECT_DECODE_RE.search(line):
+            findings.append(
+                Violation(
+                    "JWT_VALIDATOR_DUPLICATION",
+                    path,
+                    line_no,
+                    "nova validação JWT local detectada; use/adapte shared/delpi_auth em vez de manter validator paralelo",
+                )
+            )
+    return findings
+
+
+def scan_authz_primitive_duplication(path: str, lines: dict[int, str]) -> list[Violation]:
+    if not is_api_python(path) or is_auth_canonical_path(path) or path.startswith("core-api/"):
+        return []
+    findings: list[Violation] = []
+    for line_no, line in lines.items():
+        match = AUTHZ_PRIMITIVE_RE.search(line)
+        if match:
+            findings.append(
+                Violation(
+                    "AUTHZ_PRIMITIVE_DUPLICATION",
+                    path,
+                    line_no,
+                    f"primitive genérica {match.group(1)} redefinida localmente; reutilize shared/delpi_auth ou adapte sem duplicar política",
                 )
             )
     return findings
@@ -266,6 +323,8 @@ def collect(base: str) -> list[Violation]:
         findings.extend(scan_mfe_css(path, lines))
         findings.extend(scan_mfe_own_api_bypass(path, lines))
         findings.extend(scan_jwt_verify_disabled(path, lines))
+        findings.extend(scan_jwt_validator_duplication(path, lines))
+        findings.extend(scan_authz_primitive_duplication(path, lines))
     return findings
 
 
