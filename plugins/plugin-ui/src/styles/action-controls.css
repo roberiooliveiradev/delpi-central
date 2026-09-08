@@ -229,6 +229,8 @@ a.delpi-ui-action-btn--link:visited {
   gap: var(--delpi-ui-form-actions-gap, 24px);
   column-gap: var(--delpi-ui-form-actions-gap, 24px);
   row-gap: 12px;
+  /* Separação do conteúdo acima (campo → Voltar/Próximo). */
+  margin-block-start: var(--delpi-ui-form-actions-block-start, 24px);
 }
 
 .delpi-ui-form-actions--end {
@@ -251,6 +253,7 @@ a.delpi-ui-action-btn--link:visited {
   .delpi-ui-form-actions--end {
     width: 100%;
     --delpi-ui-form-actions-gap: 16px;
+    --delpi-ui-form-actions-block-start: 16px;
   }
 
   .delpi-ui-form-actions > *,

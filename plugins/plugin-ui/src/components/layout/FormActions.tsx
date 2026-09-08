@@ -19,10 +19,14 @@ export type FormActionsProps = {
 /** Espaçamento default entre CTAs (Voltar/Próximo, Cancelar/Salvar, …). */
 export const FORM_ACTIONS_GAP_PX = 24;
 
+/** Separação vertical do conteúdo acima (campo/lista → barra de ações). */
+export const FORM_ACTIONS_BLOCK_START_PX = 24;
+
 const formActionsGapStyle: CSSProperties = {
   gap: FORM_ACTIONS_GAP_PX,
   columnGap: FORM_ACTIONS_GAP_PX,
   rowGap: 12,
+  marginBlockStart: FORM_ACTIONS_BLOCK_START_PX,
 };
 
 export function formActionsBemClasses(prefix: string): FormActionsClassNames {
@@ -56,6 +60,7 @@ export function FormActions({
       className={rootClass}
       style={formActionsGapStyle}
       data-form-actions-gap={FORM_ACTIONS_GAP_PX}
+      data-form-actions-block-start={FORM_ACTIONS_BLOCK_START_PX}
     >
       {children}
     </div>

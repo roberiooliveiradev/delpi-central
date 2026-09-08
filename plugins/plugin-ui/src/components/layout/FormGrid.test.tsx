@@ -47,4 +47,17 @@ describe("FormActions", () => {
     expect(root.style.gap).toBe("24px");
     expect(root.style.columnGap).toBe("24px");
   });
+
+  it("separa a barra de ações do conteúdo acima (margin-block-start)", () => {
+    const { container } = render(
+      <FormActions align="end" classNames={formActionsPacClasses("pac")}>
+        <button type="button">Voltar</button>
+        <button type="button">Próximo</button>
+      </FormActions>,
+    );
+
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.getAttribute("data-form-actions-block-start")).toBe("24");
+    expect(root.style.marginBlockStart).toBe("24px");
+  });
 });

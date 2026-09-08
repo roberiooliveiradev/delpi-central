@@ -13,4 +13,10 @@ describe("action-controls FormActions spacing", () => {
       /\.delpi-ui-form-actions\s*>\s*\.delpi-ui-action-btn\s*\+\s*\.delpi-ui-action-btn[\s\S]*?margin-inline-start:\s*0/,
     );
   });
+
+  it("define margem superior canônica entre conteúdo e barra de ações", () => {
+    expect(css).toMatch(
+      /\.delpi-ui-form-actions\s*\{[^}]*margin-block-start:\s*var\(--delpi-ui-form-actions-block-start,\s*24px\)/,
+    );
+  });
 });
