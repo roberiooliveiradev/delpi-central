@@ -1,0 +1,253 @@
+---
+description: Observabilidade — logs estruturados, correlation/request IDs, métricas, tracing, redaction e metadata de decisões em APIs, chat, tools e integrações
+alwaysApply: false
+---
+
+# Padrão transversal de observabilidade
+
+## Princípio
+
+Fluxo importante deve ser diagnosticável sem reproduzir o problema às cegas e sem depender de log textual ad hoc.
+
+Observabilidade deve permitir responder:
+
+```text
+o que aconteceu?
+onde falhou?
+quanto demorou?
+qual decisão foi tomada?
+qual dependência participou?
+qual versão/configuração estava ativa?
+```
+
+Sem expor secrets ou conteúdo sensível desnecessário.
+
+Complementa `evidence-driven-execution.mdc`, `ai-external-tools-security.mdc`, `http-integration-resilience.mdc` e `ai-intelligence-evaluation.mdc`.
+
+## Logs estruturados
+
+Preferir eventos estruturados a frases livres.
+
+Campos comuns quando disponíveis:
+
+```text
+timestamp
+level
+service
+environment
+requestId/correlationId
+userIdHash ou subject técnico quando permitido
+operation
+status
+durationMs
+errorClass
+```
+
+Não criar formato diferente por serviço se já houver logger/middleware canônico.
+
+## Correlation e rastreabilidade
+
+Uma request distribuída deve preservar identificador de correlação entre:
+
+```text
+Portal/MFE
+→ API/BFF
+→ api-delpi/serviço interno
+→ provider externo/tool
+```
+
+Reutilizar header/contexto canônico existente. Não gerar novo correlation id em cada hop quando já existe um válido.
+
+Para jobs/eventos, usar identificador equivalente de execução/mensagem.
+
+## Chat / LLM / tools
+
+Para decisões de inteligência, registrar metadata segura suficiente para explicar o caminho, conforme aplicável:
+
+```text
+conversationId/turnId
+agentId
+model/provider de LLM
+selectionMode
+candidateCount
+providerKey
+selectedActionId
+operationId
+semanticScore
+plannerConfidence
+validationStatus
+policyDecision
+fallbackUsed
+toolCount
+latency por estágio
+token usage
+```
+
+Não logar chain-of-thought, system prompt completo, JWT, API key ou documentos privados inteiros.
+
+O objetivo é explicar **a decisão observável**, não capturar raciocínio privado do modelo.
+
+## Métricas
+
+Toda nova capacidade crítica deve definir métricas acionáveis, não apenas contadores decorativos.
+
+Categorias:
+
+```text
+traffic
+success/error rate
+latency p50/p95/p99
+saturation/concurrency
+retry/rate-limit
+domain-specific quality
+```
+
+Para chat/tools, exemplos:
+
+```text
+action_selection_success_rate
+action_selection_fallback_rate
+tool_execution_success_rate
+missing_required_argument_rate
+false_tool_call_rate
+planner_invalid_arguments_rate
+legacy_vs_new_divergence_rate
+```
+
+Definição da métrica deve ser estável e testável antes de ser usada como gate.
+
+## Tracing
+
+Quando houver tracing distribuído disponível, spans devem representar etapas reais do pipeline, por exemplo:
+
+```text
+chat.turn
+chat.retrieval
+chat.planner
+chat.tool.validation
+chat.tool.execute
+http.downstream
+sql.query
+```
+
+Propagar contexto de trace pelos adapters sem acoplar domain/application a SDK específico; usar ports/middleware/composition quando necessário.
+
+## Erros
+
+Erro deve preservar:
+
+```text
+classe/código estável
+operação
+correlation id
+causa técnica interna quando segura
+status externo relevante
+```
+
+A resposta ao usuário pode ser amigável; o evento técnico deve continuar diagnosticável.
+
+Não usar `except Exception: pass`, retorno vazio ou log genérico que apague a causa.
+
+## Redaction e dados sensíveis
+
+Nunca registrar por padrão:
+
+```text
+Authorization
+JWT
+API keys
+cookies
+passwords
+client secrets
+signed URLs completas
+payloads/documentos sensíveis
+prompt completo com dados pessoais
+```
+
+Quando body for necessário para diagnóstico, preferir:
+
+```text
+shape/schema
+bytes
+counts
+hash estável quando apropriado
+campos explicitamente allowlisted
+```
+
+Redaction deve ocorrer antes do sink de log, não apenas na UI de observabilidade.
+
+## Cardinalidade
+
+Evitar labels de métrica com cardinalidade explosiva:
+
+```text
+userId
+conversationId
+raw URL com IDs
+error message livre
+product code por request
+```
+
+Esses valores podem existir em logs/traces controlados, mas não como labels de série temporal sem justificativa.
+
+## SLO e alertas
+
+Para fluxo crítico novo, identificar quando aplicável:
+
+```text
+SLI
+SLO/target
+threshold de alerta
+runbook ou owner
+```
+
+Não alertar em toda exceção individual; alertas devem representar condição operacional que exige ação.
+
+## Mudanças de comportamento
+
+Feature flag, shadow mode, canary ou rollout deve registrar a variante ativa para permitir comparação:
+
+```text
+engineVersion
+featureFlag
+variant
+legacy/new
+```
+
+Sem isso, métricas antes/depois podem misturar populações e produzir conclusão falsa.
+
+## Testes/gates
+
+Quando alterar observabilidade:
+
+- testar propagação de correlation id;
+- testar redaction de segredo;
+- testar nome/código estável do evento crítico;
+- testar que erro não vira sucesso silencioso;
+- validar ausência de labels de alta cardinalidade adicionadas sem necessidade;
+- validar que métricas usadas por eval/rollout têm definição documentada.
+
+## O que NÃO fazer
+
+- `print()` como observabilidade de produção.
+- Logar body completo “temporariamente”.
+- Criar métricas sem owner/semântica.
+- Colocar userId/conversationId como label Prometheus por padrão.
+- Duplicar logger/tracing SDK dentro de domain.
+- Logar chain-of-thought.
+- Perder correlation id ao chamar outro serviço.
+
+## Critério de sucesso
+
+Um incidente deve poder ser reconstruído por eventos/metadados seguros:
+
+```text
+entrada
+→ estágio/decisão
+→ dependência
+→ duração/status
+→ fallback/retry
+→ resultado
+```
+
+sem vazar credenciais ou exigir adivinhação da causa.
