@@ -1,1076 +1,384 @@
 # Arquitetura — Inteligência no chat base
 
-**Status:** vigente (setembro/2026)  
-**Público:** desenvolvimento `minha-delpi-ai-api`, plugin `minha-delpi-chat`, gestão de agentes
+**Status:** vigente  
+**Escopo:** `minha-delpi-ai-api`, `plugins/minha-delpi-chat`, agentes, projetos e skills  
+**Evals canônicos:** [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
 
----
+## 1. Princípio
 
-## Princípio
-
-O **chat** é onde a inteligência transversal evolui. **Agentes** são instâncias de chat com mais habilidades, contextos e actions — não um motor paralelo.
-
-| Conceito | Papel |
-|----------|--------|
-| **Chat (sessão)** | Pipeline de mensagens, histórico, tools, RAG, LLM |
-| **Agente** | `system_prompt`, skills, actions permitidas, especialização de conhecimento |
-| **Projeto** | Prompt de projeto, agente padrão, agrupamento de sessões; `shareConversationContext` **desabilitado** até [projetos colaborativos](../roadmap/projetos-colaborativos-futuro.md) |
-| **Simulação / admin** | Mesmo pipeline, com rascunho ou sandbox |
-
-Melhorias de inteligência (comparação, insights, fast path operacional, resposta direta, contexto de ferramentas no histórico) devem ser implementadas na **camada base** e **herdadas** automaticamente por agentes, projetos e demais consumidores.
-
-### Inteligência conversacional (set/2026)
-
-| Peça | Papel |
-|------|--------|
-| `ChatClarificationPolicyService` | Clarify só se ambiguidade material e não discoverable (ex.: busca por texto não pede código) |
-| `ChatPriorTurnFactsPackingService` + `identityFields` / `resultSets` | Fatos tipados e ordinais sobrevivem ao turno N+1 |
-| `ChatTurnUnderstandingService` (shadow) | Decompõe mensagem composta em subtarefas |
-| `ChatCapabilityRegistryService` + `ChatCapabilityDiscoveryService` | Shortlist de capabilities sem free-pick de `operationId` |
-| `ChatTaskPlannerService` + `ChatTaskPlanExecutionBridgeService` → `ChatExecutionOrchestrator` | TaskPlan shadow → cutover (`CHAT_TASK_PLANNER_ENABLED`); orquestrador agenda capabilities (sem HTTP/RBAC bypass) e expõe `executionOrchestrator` / `replanCount` no adminDebug |
-| `ChatUserQueryImprovementService` | No início de `ChatTurnPreparationService.prepare`: regras P14 + LLM gated reescrevem a pergunta **só** para intent/tools/RAG (`message_for_intelligence`); bolha e audit preservam o original; `adminDebug.queryImprovement` |
-
-Flags: `conversational_intelligence.json` + env `CHAT_TURN_UNDERSTANDING_SHADOW` / `CHAT_TASK_PLANNER_ENABLED`. Evidence: `docs/testing/evidence/chat-intelligence-*.json`. Smokes: `scripts/smoke_conversation_coherence_long.py`.
-
-**Contrato api-delpi → chat (roadmap):** [`../roadmap/playbook-10-contrato-respostas-api-delpi.md`](../roadmap/playbook-10-contrato-respostas-api-delpi.md) — padronização de `meta`, OpenAPI e presenter por perfil; a api-delpi declara o dado, o chat base apresenta.
-
-**North star apresentação (jun/2026):** [`presentation-delivered-pure-jun2026.md`](./presentation-delivered-pure-jun2026.md) — pipeline único as-delivered; Playbook 22. Playbook 12 (tier A declarativo) é **histórico**.
-
-**Status refatoração W1–W3:** [`chat-refactor-status-jun2026.md`](./chat-refactor-status-jun2026.md) — entregas, backlog arquitetural adiado e foco atual (bugs + qualidade de resposta).
-
-**Clean architecture (roadmap):** [`../roadmap/playbook-11-clean-architecture-chat-api.md`](../roadmap/playbook-11-clean-architecture-chat-api.md) — revisão de camadas, débitos, fases 0–6 e baseline [`clean-architecture-baseline.json`](./clean-architecture-baseline.json).
-
-**Organização dos services:** [`../roadmap/playbook-20-organizacao-services-chat.md`](../roadmap/playbook-20-organizacao-services-chat.md) — taxonomia domain/application, código morto, convenções; auditoria `scripts/audit_service_inventory.py`.
-
-**ADRs:** [`adr/README.md`](./adr/README.md) — decisões aceitas (chat base, paridade send/stream, JSON, ports, HTTP modular, gate de conteúdo).
-
-**Stack LLM (texto / embed / visão):** [`llm-stack.md`](./llm-stack.md) — seletor `LLM_PROVIDER`; hoje Kimi; Ollama só se o seletor for `ollama`.
-
----
-
-## Índice de sub-sistemas
-
-Mapa de navegação — não substitui a tabela completa em [§ Serviços centrais](#serviços-centrais). Código principal em `app/domain/services/`, `app/application/services/`, use cases em `app/application/use_cases/`.
-
-| Sub-sistema | Responsabilidade | Entrada no código | Docs / ADR |
-|-------------|------------------|-------------------|------------|
-| **Turno send/stream** | Preparação, LLM, conclusão unificados | `app/application/services/chat_turn/` · `SendChatMessageUseCase` · `StreamChatMessageUseCase` | [ADR 002](./adr/002-send-stream-turn-parity.md) · [`chat-pre-llm-layers.md`](./chat-pre-llm-layers.md) |
-| **Pipeline pré-tool** | Intenção, direct answer, memória, canvas | `ChatIntelligencePipelineService` · `ChatTurnPreparationService` + delegates `chat_turn_preparation_*` | [ADR 001](./adr/001-chat-base-intelligence.md) |
-| **Tools & actions** | Seleção, execução, contexto para LLM | `ChatToolContextService` + `chat_tool_context_*` · `ExternalActionSelectionService` + `external_action_*_route_selection_*` | [`operational-api-routing`](../../.cursor/rules/operational-api-routing.mdc) |
-| **Presenter & UI de dados** | Schema-first + metadata mínima | `ChatPresentationApiDeliveredMetadataService` · `ChatSchemaDrivenPresentationService` · `ExternalActionResultPresenter` | [`presentation-delivered-pure-jun2026.md`](./presentation-delivered-pure-jun2026.md) · [ADR 003](./adr/003-assistant-content-json.md) |
-| **Conteúdo JSON** | Bundles PT-BR editáveis | `app/content/pt-BR/assistant/*.json` · `*ContentService` | [`assistant-content-catalog.md`](./assistant-content-catalog.md) · [vocabulário jun/2026](./vocabulary-centralization-jun2026.md) · [ADR 006](./adr/006-hardcoded-pt-strings-baseline-gate.md) |
-| **SQL avançado** | Authoring, schema, execução (com agente) | `ChatAdvancedSqlSpecialistService` · `ChatSql*Service` | Skill `sql-assistant` · policies `sql-*.md` |
-| **Anexos & lousa** | Welcome, OCR, canvas | `ChatAttachment*Service` · `ChatCanvas*Service` · `ChatDocumentVisionService` · **`ChatPdfDocumentExtractionService`** | [`playbook-05-anexos-lousa.md`](../roadmap/playbook-05-anexos-lousa.md) · [**extração PDF**](./chat-pdf-document-extraction.md) |
-| **Memória & contexto** | Snapshot, assertividade, projeto | `ChatConversationMemoryService` · `ChatWorkingMemoryService` · `ChatUserContextItemService` | [`session-memory.md`](./session-memory.md) |
-| **Intent & respostas diretas** | Identidade, small talk, gate simples | `ChatIntentRouterService` · `ChatSimpleTurnGateService` · `ChatAssistantIdentityService` | [`intent-routing.md`](./intent-routing.md) |
-| **HTTP & composição** | Rotas finas, DI | `interfaces/http/routes/chat/` · `composition/*_composer.py` | [ADR 004](./adr/004-repository-ports-composition-root.md) · [ADR 005](./adr/005-http-routes-modular-facade.md) |
-| **Stack LLM** | Seletor único texto/embed/visão | `llm_stack_config` · `make_llm_gateway` / `make_embedding_gateway` / `make_vision_llm_gateway` | [`llm-stack.md`](./llm-stack.md) · [`llm-provider-switch.md`](../operations/llm-provider-switch.md) |
-| **Admin & qualidade** | Métricas, feedback, relatório semanal | `ChatQualityUnifiedMetricsService` · `GenerateWeeklyQualityReportUseCase` | `GET/POST /admin/metrics/*` · `GET/POST /admin/reports/quality/*` |
-| **Auditoria CI** | God files, domain→infra, conteúdo | `scripts/audit_clean_architecture.py` · `test_no_hardcoded_pt_strings.py` | [`clean-architecture-baseline.json`](./clean-architecture-baseline.json) |
-
-**Delegates do turno (pós-refactor):** `ChatTurnPreparationIngressService`, `ChatTurnPreparationDirectAnswerService`, `ChatTurnPreparationMemoryContextService`, `ChatTurnPreparationToolRoutingService`, `ChatTurnPreparationRagService`, `ChatTurnPreparationPostToolResolutionService`, `ChatTurnPreparationResultService`, `ChatTurnPreparationPreToolContextService` — todos consumidos por `ChatTurnPreparationService.prepare()`.
-
-**Melhoria de pergunta (set/2026):** antes do ingress/tools, `ChatUserQueryImprovementService` aplica (A) regras estáticas de [`typing_correction_rules.json`](../../app/content/pt-BR/assistant/typing_correction_rules.json) e, se o matching operacional ainda for fraco, (B) rewrite LLM gated via [`user_query_improvement.json`](../../app/content/pt-BR/assistant/user_query_improvement.json). Distinto do chip pré-envio do [Playbook 14](../roadmap/playbook-14-corretor-digitacao-chat.md) (composer / `POST /chat/typing-suggestions`): o improve de turno é silencioso e não exige aceite do usuário.
-**Delegates do presenter (jun/2026):** hosts utilitários em `presenters/` — `ExternalActionKpiChartPresenter`, `ExternalActionSqlPresenter`, `ExternalActionOperationalResponsePresenter`, `presentation_table_host_service` — acessados via facade `ExternalActionResultPresenter` + `ChatSchemaDrivenPresentationService`. **Sem** presenters por entidade (`product_*_presenter.py` removidos).
-
----
-
-**SQL avançado:** o chat base elabora/revisa/explica (skill + advisors); **execução e metadados Protheus** (`POST /data/sql`, `/system/tables/*`) são responsabilidade do **agente** com actions habilitadas — a base não dispara essas chamadas sem `actionsEnabled`.
-
-### Modos de resposta (rápida / normal / pensador)
-
-O composer envia `responseMode` (`fast` | `normal` | `thinker`) em cada mensagem. `ChatResponseModeService` resolve modelo e limites (`LlmGenerationConfig`); `llm_request_context` propaga o preset a **todas** as chamadas LLM do turno (tools, RAG synthesis, stream). Catálogo: `GET /chat/response-modes`. Configuração: variáveis `CHAT_RESPONSE_MODE_*` em `infra/.env`.
-
-**Matriz completa, gate de product overview e metadata:** [`chat-response-modes.md`](./chat-response-modes.md).
-
-### Matriz de fluxos × tools / RAG / budget (ago/2026)
-
-Todos os fluxos passam pelo mesmo `ChatTurnPreparationService` + `contextBudget` por modo. Famílias canônicas:
-
-| Família | Exemplos | Tools | RAG documental | Budget |
-|---------|----------|-------|----------------|--------|
-| **Web** | `pesquise na web…` | `web_search`; **bloqueia** `execute_external_action` no turno | skip se síntese web basta | histórico/síntese pelo modo; latency **não** corta tool web |
-| **Text task** | correção, e-mail, tradução pura | skip tools | skip | histórico pelo modo (`conversationEvidence` em correção de ordem) |
-| **Operacional / API** | estoque, KPI, OpenAPI, SQL | `execute_external_action` (com agente) | skip se tool ok; sem tapa-buraco em miss | `toolContextMaxChars` + `maxMultiActionsPerTurn` |
-| **Skills** | `companyKnowledge`, desenho, SQL authoring | só **habilitam** caminhos | `preserves_rag_on_fast_path` **não** mascara miss de tool | RAG skill usa budget do modo |
-| **Message search / session review** | «o que eu pedi», «o que me diz sobre a conversa?» | skip tools (`session_review`); evidência via `ChatConversationMessageSearchService` | skip doc | `messageSearch*` do modo |
-| **Clarify / multi-intent** | ambíguo; estrutura+roteiro | chips / 1ª action no fast; **reads paralelas** (E4.S3) no Pensador/Normal | skip | modo limita multi-actions |
-
-Regressão: `FLOW_FAMILY_MATRIX_CASES` + `test_flow_family_matrix_gates.py` (≥1 caso web, text, API, skill, message_search). Harness CLI: `scripts/check_flow_family_matrix_harness.py`.
-
-**Follow-up operacional ≠ memória sozinha:** `operationalFocus` / entidades na memória **não** transformam qualquer mensagem em `operational_query`. Só follow-up operacional explícito, keywords operacionais ou reply curto de parâmetro (`shortContextReplyPatterns`). Meta-conversa → `session_review` + skip tools.
-
-### Parallel reads (E4.S3)
-
-`ChatToolContextParallelReadService` + `ChatToolContextExecutionService`: lotes consecutivos de `execute_external_action` **read-safe** (`ChatWriteConfirmationService.is_parallel_safe_read` — GET/HEAD ou sensitivity `read`/`sql`/`export`) rodam em `ThreadPoolExecutor`; writes e tools não-external ficam seriais; pós-processo (stream finished, SQL recovery, paginação) preserva a **ordem do plano**. Caps em `tool_context.json` → `execution.parallelRead*`.---
-
-## Pipeline base
+A inteligência transversal vive no **chat base**. Agentes adicionam especialização, skills, conhecimento e actions autorizadas; não possuem um motor paralelo de routing/memória/apresentação.
 
 ```text
-Mensagem do usuário
-  → Segurança (input)
-  → ChatWorkspaceContextService (projeto + agente + capabilities)
-  → ChatIntelligencePipelineService
-        · decisão operacional / análise
-        · contexto de conversa (incl. previews de tools no histórico)
-  → ChatToolContextService (seleção e execução de tools/actions)
-        · finalize: modo análise, supressão de direct answer
-  → RAG (escopo agente/projeto/anexos)
-  → ChatPromptBuilderService + prompt_policies
-  → LLM (stream ou send)
+Chat base
+  ├─ entendimento/decomposição
+  ├─ memória/contexto
+  ├─ capabilities
+  ├─ tools/actions
+  ├─ RAG
+  ├─ LLM
+  ├─ apresentação
+  └─ observabilidade/evals
+
+Agente
+  ├─ prompt/config
+  ├─ skills
+  ├─ knowledge scopes
+  └─ allowed actions/policies
 ```
 
-**Camadas antes do LLM (modelo completo, short-circuit, implementação por fases):** [`chat-pre-llm-layers.md`](./chat-pre-llm-layers.md).
-
-### Chat comum × skill desenho (fronteira)
-
-O **chat comum** não conhece BOM, QTD, SG1010, decape, intermediário 50xx nem checklist DELPI. Esses conceitos existem **somente** quando a skill `drawing-analysis-delpi` está ativa (enrichment / `drawingAnalysisMode`).
-
-| Camada | Vocabulário | Exemplos de serviço |
-|--------|-------------|-------------------|
-| **Chat base / visão genérica** | região, tabela, célula, texto, legível | `ChatPdfDocumentExtractionService`, `ChatDocumentVisionService`, **`ChatPdfTableStructureService`** (15.8) |
-| **Skill desenho** | BOM, QTD, SG1010, cotas, crítico/pending | `ChatDrawingPdfExtractionService`, `ChatDrawingValidationOrchestrationService`, **`ChatDrawingBomTableInterpretationService`** (15.8) |
-
-Contrato neutro: `documentVision.tables[]`. Contrato skill: `bomRows`, `drawingAnalysis`, `validationScopes`. Playbook: [15.8 § 0](../roadmap/melhorias/playbook_bom_colunar_visao_skill_desenho.md).
-
-**Render-only (Fase A — jun/2026):** quando `drawingAnalysis` / `drawingAnalysisExport` estão no tool context, o checklist já foi decidido pelo pipeline (`ChatDrawingValidationOrchestrationService`). O LLM recebe `drawing-analysis-render-only.md` via `PromptPolicyService` e **não reclassifica** `items[]` — só narrativa, plano de ação e normas (RAG). Follow-ups sem novo PDF reidratam o último `drawingAnalysis` com `ChatDrawingLlmPresentationService`. Playbook: [desacoplamento skill](../roadmap/melhorias/playbook_skill_desenho_desacoplamento.md) Fase A ✅.
-
-**Ajuste interativo pós-revisão (Onda 16 — Fase 16.1 ✅ jul/2026):** mensagens como «foi revisado, o problema não é verdadeiro, gere novo relatório» aplicam `drawingAnalysisOverrides` via `ChatDrawingReportAdjustmentTurnService` e regeneram `drawingAnalysisExport` sem reanálise do PDF. Roadmap: [playbook ajuste interativo](../roadmap/melhorias/playbook_ajuste_relatorio_desenho_interativo.md).
-
-**RAG normativo (Fase D — jun/2026):** com checklist de desenho **e** trechos RAG no turno, `PromptPolicyService` injeta `drawing-analysis-rag-normative.md` — normas explicam requisitos; **status** permanece só em `drawingAnalysis.items[]`.
-
-**Conversão de unidades (jun/2026):** pipeline `ChatDrawingProductUnitConversionService` + policy `drawing-analysis-unit-conversion.md`; query RAG enriquecida em turnos de desenho (`ChatDrawingIntentService.build_rag_query`). Limitações e roadmap: [`chat-drawing-skill-limitations.md`](./chat-drawing-skill-limitations.md).
-
-**Visão separada (Fase E — jun/2026):** `document-vision-delpi-skill.md` cobre OCR/descrição visual apenas; validação técnica e checklist ficam em `drawing-analysis-delpi` + pipeline `ChatDrawing*`.
-
-Serviços `ChatDrawing*` e parse BOM legado (`ChatDocumentVisionBomService`) são **consumidos só pelo fluxo de desenho** — não expandir semântica DELPI para turn prep genérico, intent `attachment_document` ou prompt global.
-
-### Serviços centrais
-
-| Serviço | Função |
-|---------|--------|
-| `ChatIntelligencePipelineService` | Orquestra decisões pré/pós-tools compartilhadas |
-| `ChatIntentRouterService` | Roteamento de intenção (Playbook 02): `classify`, `resolve_executed`; intents `self_help`, `web_search`, `sql_task`, `mixed_task`, `presentation_task`; `metadata.intentRouting` + `adminDebug.intentRoute`; ver [`intent-routing.md`](./intent-routing.md) |
-| `ChatIntentRouterMetricsService` | `intentRouterMetrics` e espelho `intentRouting` na mensagem do assistente |
-| `ChatActivePendingService` | Pendências ativas (`metadata.activePending`); resolução como `clarification`; filial/sim; snapshot de roteamento no feedback `routing_*`; `context.originalMessage` + `resumeMessage` |
-| `ChatActiveQuerySessionService` | Sessão de consulta ativa (`metadata.activeQuery`); `compose_selection_message`; continuação com resposta curta até mudança de assunto (jun/2026) |
-| `ChatOperationalDateParameterService` | Parâmetros temporais obrigatórios em rotas de playbook; pending `missing_date`; merge `reference_date` / intervalo (jun/2026) |
-| `ChatOnboardingService` | Playbook 10 — cards/tour no catálogo, modo treinamento («me ensine a usar»), estágio `onboarding_training` |
-| `ChatOnboardingMilestoneService` | Marcos leves de adoção — `milestoneCelebrations` e `onboardingMilestonesAchieved` no metadata do assistente |
-| `ChatAttachmentPreviewService` | Preview de leitura, `readingStatus` com `documentVision`, snapshots em `metadata.attachments` (Playbook 07) |
-| `ChatAttachmentResponseService` | Enriquece upload/listagem com `readingStatus` e `preview` consistente (Playbook 07) |
-| `ChatAttachmentImageOcrService` | OCR opcional em imagens (`CHAT_ATTACHMENT_IMAGE_OCR_ENABLED`) |
-| **`ChatPdfDocumentExtractionService`** | **Orquestrador genérico de PDF** (embedded + pypdf + fusão + tabelas por anotação); perfis `generic` / `drawing_delpi` — ver [chat-pdf-document-extraction.md](./chat-pdf-document-extraction.md) |
-| `ChatPdfEmbeddedTextService` | PyMuPDF: texto nativo + anotações ODA/CAD com bbox |
-| `ChatPdfTextFusionService` | Fusão multi-fonte (prioriza embedded/anotações sobre pypdf) |
-| `ChatPdfAnnotationTableService` | Linhas tabulares a partir de bbox de anotações |
-| **`ChatPdfTableStructureService`** | Tabelas genéricas + `rowParsing` (15.8); sem semântica BOM |
-| **`TableCellRefinementPort`** / **`ChatPdfTableCellRefinementService`** | Re-OCR célula; skill orquestra (15.8) |
-| `ChatPdfBomSourceService` | **Skill/legado** — fontes texto parse BOM |
-| `ChatDrawingRegionalScopeService` | **Skill** — escopo BOM/cotas/carimbo — [changelog jun/2026](../changelog/2026-06-drawing-bom-pa-families.md) |
-| `ChatDocumentVisionSkillService` | Ativação canônica da skill `document-vision-delpi` (anexo, intent `attachment_document`, enriquecimento de desenho) |
-| `ChatDocumentVisionTurnService` | Orquestração de OCR por turno (application); consumido por tool context |
-| `ChatDocumentVisionService` | Motor visão PDF/imagem (estágio native via `ChatPdf*` + Tesseract/VLM); anexos (`documentVision`) e `drawing-analysis-delpi` |
-| OCR hierárquico desenhos (Onda 14) | **Skill/layout** — `ChatDrawingRegionService` + `ChatDrawingStampExtractionService` — [playbook](../roadmap/melhorias/playbook_ocr_hierarquico_desenhos_delpi.md) |
-| `ChatDrawingPdfBomExtractionService` | **Skill** — BOM DELPI a partir de visão genérica + interpretação |
-| `ChatDrawingIntermediateCodeService` | Coleta e deduplicação OCR de códigos intermediários `50xx` |
-| `ChatDrawingPdfProductContextService` | Resolve `productCode` (carimbo → arquivo → BOM) |
-| `ChatDrawingPdfExtractionService` | **Fachada DELPI** — carimbo, BOM, cotas, metadados; delega leitura a `ChatPdf*` |
-| `ChatDrawingAnalyserParameterService` | Força `view=full` em `GET /products/{code}/analyser` em turnos de análise de desenho (`drawing_analysis_mode` ou intent `drawing-analysis-delpi`); evita `meta.sections[].truncated` e banner de cobertura parcial |
-| `ChatDrawingAnalyserPayloadService` | Desembrulho canônico do payload `/analyser` para validação (`external_action_data`, `authorizedResult` quando preview truncado) — [Onda 15](../roadmap/melhorias/playbook_validacao_desenhos_delpi_roadmap.md) Fase 15.0 |
-| `ChatDrawingValidationOrchestrationService` | Checklist PDF × API × normas; orquestra serviços de validação — [playbook validação](../roadmap/melhorias/playbook_validacao_desenhos_delpi_roadmap.md) |
-| `ChatDrawingLibraryService` | Busca PDF na biblioteca api-delpi (`GET /products/{code}/drawing/pdf`) quando análise de desenho sem anexo e com código explícito; cache em `drawing-library-cache` |
-| `ChatDrawingProductCodeResolutionService.resolve_explicit_codes_without_attachment` | Sem anexo: códigos só da mensagem ou `userContextItems` — sem herança do histórico |
-| `ChatDrawingValidationPresentationService` | Markdown do relatório DELPI (árvore SG1010, roteiro, divergências por item, export) — consome `drawing_validation.json` |
-| `ChatDrawingLlmPresentationService` | Hidratação de `drawingAnalysis` em follow-ups + policy render-only para LLM (Fase A desacoplamento) |
-| `ChatDocumentVisionBomService` | **Skill (legado)** — heurística linha → `bomRows`; substituir por interpretação colunar 15.8 |
-| **`ChatDrawingBomTableInterpretationService`** | Mapeia `tables[]` → `bomRows`; inferência colunar (15.8) |
-| **`ChatDrawingBomVisionRefinementService`** | Loop refinamento; `TableCellRefinementPort`; merge idempotente (15.8) |
-| **`ChatDrawingBomComparisonService`** | Comparação PDF × SG1010; modo estruturado `bomComparison` (15.8.4) |
-| **`ChatDrawingValidationAssertivenessMetricsService`** | Gate batch assertividade 95% (15.8.6) |
-| **`ChatDrawingFollowUpService`** | Chips pós-análise; «Reextrair BOM do PDF» condicional (15.8.5) |
-| `ChatDrawingBomQuantityAssertivenessService` | **Skill** — ruído OCR QTD; crítico vs pending |
-| `ChatDocumentVisionTitleBlockService` | Carimbo `titleBlock` (bbox heurístico + `fields.code/rev`) — Onda 13 |
-| `ChatDocumentVisionTablesService` | Tabelas `tables[]` (markdown/TSV heurístico, estágio `table_heuristic`) — Onda 13 |
-| Backends visão | `native`, `tesseract`, `docling`, `paddleocr` (profile vision), `ollama_vlm` (Ollama `/api/chat` + imagens) |
-| Persistência anexo | `attachment.metadata.documentVision` após indexação (`IndexChatAttachmentUseCase`), turno `attachment_document` e OCR de desenho (`enrich_drawing_extract`); `readingStatus` alinhado em upload, mensagem do usuário e patch pós-turno |
-| `ChatAgentMiniDashboardService` | Mini dashboard + recomendações em `GET /chat/agents/{id}/stats` (gráficos Fase 4) |
-| `ChatConversationContextService` | Texto de histórico + dados de `toolCalls` em metadata |
-| `ChatAnalysisIntentService` | Detecção de comparação / insights; `is_data_interpretation_request` e `is_data_reference_without_tool_data` para follow-ups sobre dados já consultados |
-| `ChatDataInterpretationAnswerService` | Resposta direta nos follow-ups (#74–78): monta markdown a partir de `humanizedSummary` das tool calls recentes, sem nova API/SQL |
-| `ChatTechnicalDescriptionIntentService` | «Como descrever terminal/cabo/intermediário 50xx?», campos da descrição → RAG Normas + Intermediate Codes, sem API de catálogo |
-| `ChatTechnicalDescriptionVocabularyService` | Bundle `technical_description_vocabulary.json` (grupos, cores, CA–CV) |
-| `ChatDrawingProductFamilyClassificationService` | Classifica PI/MP/consumível no pipeline de desenho a partir do mesmo vocabulário |
-| `ChatCanvasIntentService` | Pedido de enviar ou **atualizar** conteúdo na lousa (cópia, append, merge com API; não confunde com Canva.com) |
-| `ChatCanvasContentService` | Monta markdown da lousa: última resposta útil, `canvasOpen` do histórico, merge com tools |
-| `ChatAttachmentWelcomeService` | Welcome ao anexar + preview de leitura (Playbook 05) |
-| `ChatAttachmentContentService` | Vocabulário de anexos/lousa em `attachments.json` (welcome, preview, chips, ambiguidade) |
-| `ChatAttachmentFollowUpService` | Chips «Com o anexo» e `attachmentSummaries` |
-| `ChatAttachmentLargeFileService` | Aviso e chips para arquivos extensos |
-| `ChatCanvasAmbiguityService` | Desambigua «coloque isso na lousa» |
-| `ChatCanvasSessionMetadataService` | Metadata `canvas` / `canvasVersion` por operação |
-| `ChatAgentProfileService` | Perfil dinâmico do agente ativo (`name`, `description`, `systemPrompt`) para identidade e small talk |
-| `ChatAssistantIdentityService` | «Quem é você?» — resposta direta dinâmica (sem RAG/LLM no default) |
-| `ChatMetaDirectAnswerService` | Perguntas compostas meta («quem sou eu, o que consigo fazer, quem é você?») em seções |
-| `ExternalActionColumnLabelService` | Rótulos PT-BR de colunas (`column_labels.json` + OpenAPI `title`) no presenter |
-| `ChatToolContextService` | Execução de tools; aceita `previous_messages` para herdar análise; **pós-wave-1** aplica `ChatOperationalSufficiencyCriticService` (follow-up `routeId` / chips) |
-| `ChatExternalActionOrchestrationService` | Planeja várias actions OpenAPI (ex.: dois códigos de produto) |
-| `ChatOperationalSufficiencyCriticService` | Critic declarativo pós-retrieve (`operational_sufficiency_critic.json`): evidência insuficiente → follow-up registry ou HITL — sem LLM escolher `operationId` |
-| `ChatProductMultiScopePlanningService` | Pergunta com 2+ escopos no mesmo produto (estrutura + roteiro, etc.): várias rotas `/products/{code}/…` ou analyser quando integrada/completa |
-| `ChatAssistantContentService` | Loader genérico de `app/content/pt-BR/assistant/*.json` — ver [catálogo de conteúdo](./assistant-content-catalog.md) |
-| `ChatProductOperationalContentService` | Wrapper de `product_operational_content.json` — escopos, plural, presenter estoque, presentation |
-| `ChatProductPluralPhrasingService` | Frases no plural («estoque dos produtos X, Y», «onde são usados»): consome termos do JSON; rótulos de intro multi-código |
-| `ChatCompositeDirectAnswerService` | Resposta direta composta: intro humanizada multi-rota (`multiProductRouteIntro`), `multiProductCodesIntro`, `###` por consulta, erros em lista |
-| `ChatOperationalPipelineService` | Fast path operacional (desligado em modo análise e em Normas/descrição técnica) |
-| `ChatSqlOperationalIntentService` | Perguntas SQL analíticas sem rota REST (produção, estoque agregado, vendas/ranking) |
-| `ChatSqlProductionQueryService` | Template SC2010 + execução `/data/sql` ou resposta direta com SQL |
-| `ChatSqlInventoryQueryService` | Template SB2010+SB1010 (estoque abaixo do mínimo) + `/data/sql` |
-| `ChatSqlQueryRefinementService` | Follow-up multi-turn: add/remove colunas, filtro de filial e exibir SQL anterior |
-| `ChatSqlAuthoringGuidanceService` | Authoring SQL interativo; prefetch `/system/tables/*` **somente com agente/actions**; chips de follow-up |
-| `ChatAdvancedSqlSpecialistService` | Copiloto SQL avançado: modos, dialeto, workspace, supplement; prefetch gated por `actionsEnabled` |
-| `ChatSqlSchemaDiscoveryService` | Tabelas/colunas candidatas, metadados de `/system/tables/*`, snapshot unificado |
-| `ChatSqlSemanticSchemaMapperService` | Termos de negócio → padrões de coluna/tabela (Playbook §15) |
-| `ChatSqlRelationshipResolverService` | FK declarada, inferência Protheus, risco de duplicidade em joins (§16–18) |
-| `ChatSqlDialectResolverService` | Dialeto SQL (default `CHAT_DEFAULT_SQL_DIALECT`, detecção na mensagem) |
-| `ChatSqlPerformanceAdvisorService` | Alertas de performance (SELECT *, DISTINCT, paginação, funções em WHERE) |
-| `ChatSqlReviewService` | Checklist de revisão para SQL colada |
-| `ChatSqlMemoryWorkspaceService` | Memória da query ativa na sessão (edição incremental) |
-| `ChatSqlResultAnalyzerService` | Interpretação pós-execução: contagem, vazio, insights, recuperação |
-| `ChatSqlVisualizationAdvisorService` | Recomendação de gráfico/tabela/KPI/lousa (Playbook §40) |
-| `ChatSqlOptimizationAdvisorService` | Índices, EXPLAIN (quando aplicável) e refatoração (Playbook §35–38) |
-| `ChatSqlQueryPatternAdvisorService` | Padrões CTE/window/comparação de períodos (Playbook §25–31) |
-| `ChatAdvancedSqlMetricsService` | Métricas `sqlAdvancedMetrics` + `GET /admin/metrics/sql-advanced/summary` |
-| `ChatFeedbackContextService` | Snapshot técnico no feedback (intent, tool, RAG/web/memória, apresentação, `sqlMode`/`sqlDialect`) |
-| `ChatResponseMetadataService` | `responseMetadata` por resposta + espelho em `adminDebug.responseQuality` |
-| `ChatFeedbackAdminMetricsService` | Agregação admin (`GET /admin/metrics/feedback/summary`), alertas e audit `chat.feedback.submitted` |
-| `ChatQualityUnifiedMetricsService` | Visão unificada adoção/eficiência/segurança (`GET /admin/metrics/quality/unified`) |
-| `ChatWeeklyQualityReportService` | Relatório semanal markdown + persistência (`POST /admin/reports/quality/weekly/generate`) |
-| `ChatFeedbackIssueService` | Issues automáticas a partir de alertas recorrentes (`ai_chat_quality_issues`) |
-| `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico, Normas ou **cópia simples** para lousa) |
-| `ExternalActionRouteSelectionService` | Seleção unificada de action + parâmetros a partir de `OperationalApiRouteSpec` (produto, KPI, suprimentos, …) |
-| `ChatOperationalApiDomainService` | Classifica path em domínio (`api_route_domains.json`) — metadata `apiRouteDomain` na execução |
-| `OperationalApiParameterBuilderService` | Monta query/body por `parameterStrategy` (`date_branch`, `product_code`, …) |
-| `ChatDepartmentKpiIntentService` | KPIs departamentais (`/commercial`, `/financial`, `/production`, `/hr`, `/quality`, `/system`) |
-| `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, OV, etc.); guards de tools/agentic |
-| `ChatOperationalRefinementService` | Follow-up operacional (estoque, KPI/suprimentos com filial) reutilizando contexto do histórico |
-| `ChatRouteContextService` | Herança de segmento OpenAPI (`/stock`, `/purchases`, `/supplies/cpv`, KPIs departamentais) entre turnos |
-| `ChatDateRangeIntentService` | Períodos em linguagem natural («mês passado», «rol do mês de março», últimos N dias, intervalo `DD/MM/YYYY`) → `start_date`/`end_date` em `DD-MM-YYYY` (KPIs, suprimentos, listagem de OV); ambiguidade de ano pede confirmação |
-| `ChatPaginationConsolidationService` | Consolidação automática de rotas paginadas quando o usuário pede total/completo ou confirma continuação |
-| `ChatPaginatedExternalActionService` | Orquestra múltiplas chamadas API por turno e merge de payloads paginados |
-| `ChatStreamActivityService` | Log de atividade em streaming SSE (`event: activity`) — fases **Pensar**, **Planejar novos passos**, consultas API, RAG, falhas e ausência de dados; `entry_id` estável para atualizar a mesma linha no painel |
-| `ChatCapabilitiesService` | Perguntas «consegue…?» / capacidades sem chamar API à toa |
-| `AssistantCapabilitiesRegistry` | Catálogo `features_catalog.json`, busca, disponibilidade e «o que mudou?» (autoajuda Fase 2) |
-| `ChatAssistantCatalogService` | Payload do painel de ajuda (`GET /chat/assistant/catalog`, Fase 4–5: agente, `userContext`, filtro por permissão de tools) |
-| `AssistantCapabilitiesCatalogGenerator` | Sincroniza `features_catalog.json` com actions/skills — KPIs, produto, match por path mais específico (`pathRulesVersion` 2026.06.02) |
-| `ChatTextTaskIntentService` | Tarefas textuais puras (correção, e-mail, resumo) — estágio `text_task`, sem tools/RAG |
-| Correção de texto | [`text-correction.md`](./text-correction.md) — `ChatTextCorrectionIntentService`, validador, chips |
-| `ChatEmailIntentService` | Subintenções de e-mail (`email_create`, `email_formalize`, …) — estágio `email_writing` |
-| `ChatEmailQualityValidator` | Checklist pós-geração (frases artificiais, assinatura, prazos, assunto fraco) → `emailQuality` |
-| `ChatEmailAnswerGuardService` | Sanitização soft (assinatura inventada, frases artificiais) antes de persistir |
-| `ChatEmailPromptSupplementService` | Contexto no prompt (destinatário, tom, DELPI/IA, preferências) |
-| `ChatEmailPreferenceService` | Preferências de e-mail na sessão (`emailWriting` persistido, `emailPreferences` no metadata/chips) |
-| `ChatEmailTurnService` | Orquestra suplemento de prompt, guard e metadata de follow-up |
-| `ChatEmailOperationalComposerService` | E-mail a partir de consulta autorizada (turno misto / follow-up) + `emailDataSource` |
-| `ChatEmailFollowUpService` | Chips `emailFollowUpSuggestions` + `textTask` após rascunho de e-mail |
-| `ChatHelpErrorFollowUpService` | Chips de autoajuda após erro operacional (`helpErrorFollowUpSuggestions`, fallback) |
-| `ChatErrorHandlingClassifier` | Classifica tipo de erro/vazio (Playbook 06) |
-| `ChatErrorHandlingService` | Metadata `errorHandling` + `errorRecoveryFollowUpSuggestions` + enrich |
-| `ChatErrorHandlingTelemetryService` | Log `error_handling type=…` |
-| `ChatInteractivitySuggestionService` | Consolida chips em `metadata.interactivity` (Playbook 07) |
-| `ChatInteractivityQueryResolver` | Preenche `{{productCode}}` e entidades do snapshot |
-| `ChatInteractivityPreferenceService` | Ranking por uso (`interactivityUsage` na sessão) |
-| `ChatPresentationInteractivityService` | Chips pós-tabela/gráfico/árvore |
-| `ChatInteractivityTelemetryService` | Log de sugestões primárias e grupos no overflow |
-| `ChatInteractivityAdminMetricsService` | Auditoria `interactivityMetrics` + CTR (`GET /admin/metrics/interactivity/summary`) |
-| `ChatTypingCorrectionAdminMetricsService` | Auditoria `typingCorrectionMetrics` + eventos `chat.typing_correction.event` (`GET /admin/metrics/typing-correction/summary`) |
-| `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |
-| `ChatProjectSourcesIntentService` | Inventário, conteúdo por nome de arquivo ou **slot** («primeiro arquivo»); frases em `turn_preparation.json` |
-| `ChatProjectSourcesDirectAnswerService` | Lista fontes via `ListProjectSourcesUseCase` — **sem RAG**; estágio `project_sources_inventory` |
-| `ChatProjectSourcesInventoryService` | Snapshot `lastProjectSourcesInventory` no `contextSnapshot` pós-inventário |
-| `ChatProjectSourceSlotResolverService` | Resolve ordinal/nome parcial → `projectSourceId` para RAG filtrado |
-| `ChatHelpAdoptionService` | Log estruturado de adoção do painel `?` e autoajuda (`help-events`: painel, `self_help_*`) |
-| `ChatHelpSelfHelpTelemetryService` | Metadata `helpSelfHelp` + log `self_help_requested` em respostas diretas de ajuda |
-| `ChatGuidedFlowService` | Fluxos guiados e cards interativos (`guidedFlow`, `guidedFlowCards`) — interatividade Fase 5 |
-| `ExternalActionResultPresenter` | `humanizedSummary` explícito para listas vazias; estoque com `linhas` (resumo) + `linhas_detalhe` (modo Texto); `chartPresentation` com tipos ampliados |
-| ~~`ChatPresentationHumanizedNarrativeService`~~ | **Removido** (Playbook 22). Flag de perfil `humanizedNarrative` + `ChatOperationalDataCommentaryService` / `dataAnswer` substituem; histórico: [`humanized-narrative-stack-jun2026.md`](./humanized-narrative-stack-jun2026.md) |
-| `ChatOperationalDataCommentaryService` | Análise/comentário de dados operacionais por perfil (`factory_status`, `stock`, `production_status`, `shipping_status`) — textos em `presenter_content.json` → `compositeAnalysisInsights`; **não** duplicar em presenters nem agentes. Roadmap: [`playbook-13-respostas-humanizadas-dados.md`](../roadmap/playbook-13-respostas-humanizadas-dados.md) |
-| `ChatHumanizedDataResponseService` | Normaliza interpretação (`dataCommentary` → evolui para `dataAnswer`) — Playbook 13 P1 |
-| `ChatHumanizedDataResponseContentService` | Bundle `humanized_data_response.json` (templates, alertas, próximas ações) |
-| `ChatDataInsightService` | **Planejado P1** — interpretação estruturada por shape + perfil; alimenta narrativa e decisão; não renderiza visuais |
-| `ChatOperationalCommentaryEnrichmentService` | Liga `dataCommentary` ao metadata pós-tool (`humanizedSummary`, `textPresentation`, contexto LLM) |
-| `ChatChartTypeSelectionService` | Escolhe `chartType` (bar, line, horizontal_bar, donut, grouped_bar, …) a partir dos dados e da pergunta |
-| `ChatSimpleTurnGateService` | Gate de turno simples (identidade, saudação, agradecimento, hora/data, capacidades, «não entendi») — decide, **antes** de qualquer atividade técnica, que o turno não deve exibir etapas no streaming |
-| `ChatUnclearRequestService` | Fallback honesto: pedidos vagos sem referente («faz isso», «arruma», «isso») recebem pedido de esclarecimento — sem inventar intenção nem chamar ferramentas |
-| `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, «como vc s chama»→«como voce se chama», «oq vc faz», «num entendi»→«nao entendi», …) |
-| `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
-| `PromptPolicyService` | Policies globais em `domain/prompt_policies/*.md` (sem fallback PT em Python); cabeçalhos RAG/tool via `stream.json` |
-| `ChatWorkingMemoryService` | Snapshot pré/pós-turno: follow-up, referências; foco operacional via `ChatUserContextItemService.sync_operational_focus` |
-| `ChatUserContextItemService` | Contexto do usuário (`userContextItems`), classificação, prompt «Contexto adicionado…», prioridade em `resolve_product_code` |
-| `ChatConversationMemoryService` | Orquestrador playbook memória (Fases 1–6): ver [`session-memory.md`](./session-memory.md) |
-| `ChatSemanticMemoryService` | Fase 5: enriquece query RAG; registra `semanticMemoryHits` |
-| `ChatEpisodicMemoryService` | Fase 6: episódios no `contextSnapshot` (recall / gravação / exclusão) |
-| `ChatSessionMemoryService` | Overlay em `ai_chat_session_memory` (reload da sessão) |
-| `ChatProjectSettingsService` | Flags em `metadata` do projeto (`shareConversationContext`) |
-| `ChatProjectConversationContextService` | Com share ativo: resumo de até 5 conversas irmãs + overlay de memória; estágio `project_shared_context` |
-| `ChatBehaviorInstructionService` | Instruções de comportamento da sessão injetadas no contexto operacional |
-| `ChatContextAssertivenessService` | Score 0–100 e flags (`follow_up_entity_reused`, `humanized_none_fields`, …) |
-| `ChatContextMetadataService` | Grava `contextSnapshot`, `contextAssertiveness` e espelha em `adminDebug` |
-
-Use cases (`SendChatMessageUseCase`, `StreamChatMessageUseCase`, `AdminAgentSimulateUseCase`) **não** devem acumular regras de inteligência — apenas passam histórico e flags ao pipeline.
-
-Documentação dedicada: [`email-writing.md`](./email-writing.md) (escrita de e-mails corporativos).
-
-### Memória e assertividade
-
-1. **Pré-turno** — `ChatConversationMemoryService.build_pre_turn` + overlay `ChatSessionMemoryService`; memória semântica/episódica (Fases 5–6) no mesmo snapshot.
-2. **Turno** — `ChatSemanticMemoryService` enriquece RAG quando `semanticMemoryRequested`; blocos no prompt via `format_prompt_block`.
-3. **Pós-turno** — `ChatContextMetadataService` + episódios (`ChatEpisodicMemoryService`); sync em `ai_chat_session_memory`.
-4. **Admin** — `adminDebug.memory` inclui `semanticMemory` e `episodicMemory`.
-5. **Regressão** — `MEMORY_CONTEXT_REGRESSION_CASES` (M1–M17): `scripts/run_memory_context_validation.sh`; assertividade: `CONTEXT_ASSERTIVENESS_CASES` e smokes em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
-
-A preparação compartilhada do turno (tools, RAG, flags `skipRag` / `fastPath`) está em **`ChatTurnPreparationService`** (`app/application/services/chat_turn/chat_turn_preparation_service.py`), usada por send e stream — ver [índice de sub-sistemas](#índice-de-sub-sistemas) e [ADR 002](./adr/002-send-stream-turn-parity.md).
-
-Montagem pré-LLM (web search, metadata, prompt): **`ChatTurnLlmAssemblyService`**. Efeitos colaterais no início do turno: **`ChatTurnSideEffectsService`**. Stream: **`ChatStreamTurnPrepareService`**, **`ChatStreamSessionTitleService`**, **`ChatStreamUserMessageService`**.
-
-A conclusão pós-LLM (metadata, persistência, auditoria, memória de sessão) está em **`ChatTurnCompletionService`** (`app/application/services/chat_turn/`), orquestrador fino com delegates:
-
-| Delegate | Responsabilidade |
-|----------|------------------|
-| `ChatTurnCompletionFinalizeService` | Guards (email/correção), SQL, canvas, prosa autorizada |
-| `ChatTurnCompletionIntelligenceService` | Bloco `intelligence`, latência, tokens/custo |
-| `ChatTurnCompletionMetadataService` | Metadata transversal (intent, presentation, interactivity, …) |
-| `ChatTurnCompletionAuditService` | Log admin/audit pós-turno |
-
-Compartilhado por send e stream — ver [ADR 002](./adr/002-send-stream-turn-parity.md).
-
-### Identidade do assistente (maio/2026)
-
-Perguntas como «quem é você», «quem te criou», «o que você é» (não confundir com «quem sou eu» / perfil do usuário):
-
-| Etapa | Comportamento |
-|-------|----------------|
-| Classificação | `ChatAssistantIdentityService.is_assistant_identity_question` / `classify` (categorias: `who`, `origin`, `role`, `what`, `limits`, `usage`) |
-| Síntese LLM | `ChatMetaLlmTurnPreparationService` injeta `build_direct_answer` em `toolContext.metaSynthesisFacts` + policy `chat-assistant-identity.md` — **sem RAG**, prosa pelo modelo; o system prompt **omite** o wall de skills (ex.: e-mail `[Seu nome]`) |
-| Atalho legado | `build_direct_answer` direto quando `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED=true` **e** a rota meta LLM não está ativa |
-| RAG (modo legado) | `build_rag_query`, `RAG_IDENTITY_QUESTION_MIN_SCORE`, filtro `is_identity_relevant_chunk` (rejeita `Normas_Tecnicas_*` mesmo com “DELPI” no trecho) |
-
-Com síntese LLM ativa, o modelo recebe fatos canônicos (nome do agente, papel, limites) e compõe a resposta — evita alucinação de origem/stack sem consulta pesada.
-
-### Perfil do usuário («quem sou eu»)
-
-| Etapa | Comportamento |
-|-------|----------------|
-| Intenção | `ChatUserProfileIntentService` — termos em `user_context.json` → `identityTerms` (inclui 1ª pessoa: «o que eu posso fazer aqui?») |
-| Precedência | 1ª pessoa de acesso **sem** «você/vc/agente» → só perfil; composto só com os dois sujeitos |
-| Fonte | `GET {CORE_API_BASE_URL}/me` + `me/access-profile` via `ChatUserContextService.build_synthesis_facts` (perfil canônico rotulado; permissões/apps não são a identidade) |
-| Turno | `ChatMetaLlmTurnPreparationService` — estágio `meta_llm_synthesis` / `identity_llm_synthesis`, sem resposta direta |
-| Síntese LLM | `ChatMetaLlmSynthesisService` — fatos rotulados em `toolContext.metaSynthesisFacts` + policy `chat-user-profile.md`; guarda pós-LLM (`ChatLlmSynthesisLeakGuardService`) se placeholder, nome ausente ou lead copiado |
-| Prompt | compacto (`skip_skill_policy_sections`) + `ChatUserProfileContentService` (`promptContext`, `llmSynthesis`) + PII no contexto quando titular |
-| Chips | `followUpChips.identity` (não estoque/produto) |
-| Consentimento | `GET {CORE_API_BASE_URL}/me/consents` — com `LGPD_REQUIRE_AI_CONSENT=true`, PII entra no prompt LLM **só** em perguntas sobre o próprio usuário |
-
-### Capacidades («o que você pode fazer?»)
-
-| Etapa | Comportamento |
-|-------|----------------|
-| Intenção | `ChatCapabilitiesService.is_capabilities_question` — 2ª pessoa / catálogo da sessão; **não** «o que eu posso fazer aqui?» (isso é perfil) |
-| Fonte | `ChatCapabilitiesService.build_direct_answer` / `resolve_capability_answer` — catálogo da sessão (skills, actions, exemplos); **não** Core `/me` |
-| Síntese LLM | Mesmo pipeline meta — fatos do catálogo em `metaSynthesisFacts` + policy `chat-capabilities.md`; **chat comum e agente** (sem gate `operational_tools_enabled` na rota) |
-| Direct legado | `pre_capability_answer` **não** vira resposta final em pergunta isolada; `capabilities` **não** está em `preserveDirectAnswerStages` |
-
-Gap G4 (template sombreando o LLM) está **corrigido**: o contrato único é fatos da API + prosa do modelo.
-
-### Perguntas meta compostas
-
-Mensagens que misturam perfil + capacidades + identidade do assistente (`ChatMetaDirectAnswerService.detect_intents`) recebem **um** bloco com seções `##` em `metaSynthesisSections`; o LLM responde em prosa única sem atalhos isolados por domínio.
-
-### Guarda de vazamento na síntese LLM
-
-Se o modelo copiar lead, diretriz ou bloco interno, `ChatLlmSynthesisLeakGuardService` troca pela prosa template: cartão de perfil, catálogo de capacidades, identidade do assistente, comentário operacional ou resumo extractivo da busca web. Markers: `llm_synthesis_delivery.json` (`commonLeakMarkers`) ∪ JSON da família (`leakMarkers`). O finalize dispara em `metaLlmSynthesis`; o perfil delega. **Não** criar serviço por tipo de pergunta.
-
-**Smokes:** `scripts/smoke_identity_profile.py`, `scripts/smoke_meta_llm_responses.py`.
-
-**Testes:** `test_chat_meta_llm_synthesis_service.py`, `test_chat_llm_synthesis_leak_guard_service.py`, `test_chat_turn_completion_finalize_meta_guard.py`, `test_chat_meta_llm_turn_preparation_service.py`, `test_chat_turn_preparation_response_mode.py`.
-
-### Small talk (maio/2026)
-
-Saudações, despedidas, agradecimentos, confirmações e interações sociais curtas → `ChatSmallTalkService.build_direct_answer` com padrões em `small_talk.json` (fonte única via `ChatSmallTalkPatternService`): **sem RAG**, **sem** loop agentic, **sem** LLM. Catálogo inspirado em expressões conversacionais PT-BR ([cumprimentos/despedidas](https://philipebrazuca.com/pt-br/cumprimentos-e-despedidas-em-portugues/), intents de [atendimento BR](https://huggingface.co/datasets/RichardSakaguchiMS/brazilian-customer-service-conversations)). Categorias: `greeting`, `wellbeing`, `thanks`, `apology`, `praise`, `farewell`, `ack`, `laughter`.
-
-Typos de saudação (`bo dia`, `bao dia`) são normalizados em `ChatMessageNormalizationService` antes do match.
-
-### Gate de turno simples e fallback honesto (jun/2026)
-
-Playbook de inteligência (seções 4-8, 11, 28). Corrige a experiência artificial em que perguntas simples disparavam etapas técnicas visíveis («contexto da sessão carregado», «histórico pronto», «intenção e rota OpenAPI», «planejando ferramentas») antes de qualquer resposta.
-
-| Etapa | Comportamento |
-|-------|----------------|
-| Detecção | `ChatSimpleTurnGateService.evaluate` / `is_simple_turn` — fonte única; reaproveita identidade, small talk, utilidades, capacidades e `ChatUnclearRequestService`; aplica guarda de termos operacionais/anexo/lousa/web (não vira turno simples se a mensagem citar produto, estoque, SQL, gráfico, etc.) |
-| Streaming | `StreamChatMessageUseCase` avalia o gate **antes** de emitir a primeira atividade; em turno simples, `_on_stream_activity` é suprimido (nenhuma etapa técnica no painel). A resposta direta continua sendo montada pelos serviços existentes. |
-| Send | Não emite atividade; herda a resposta direta normalmente. |
-| Fallback honesto | `ChatUnclearRequestService` classifica pedidos vagos curtos (`action`, `fix`, `reference`) e devolve esclarecimento de `unclear_requests.json`; estágio `unclear_request`, intent `clarification/unclear`, `skip_rag`, **sem** tools/LLM |
-
-O gate **não altera a resposta** — apenas classifica e controla a visibilidade das etapas; no pior caso, um turno simples mostra brevemente uma etapa técnica, nunca uma resposta errada.
-
-Com `llmProseEverywhere: true`, estágios em `presentation_prose_delivery.json` → `preserveDirectAnswerStages` (`small_talk`, `utility_direct`) **mantêm** a resposta direta canônica — `ChatResponseModeService.apply_turn_direct_answer_policy` retorna `simple_direct` sem chamar o LLM.
-
-Conteúdo: `assistant/unclear_requests.json`. Testes: `test_chat_simple_turn_gate_service.py`, `test_chat_unclear_request_service.py`, casos `SIMPLE_TURN_GATE_CASES` / `UNCLEAR_REQUEST_CASES` em `chat_intelligence_regression_cases.py`.
-
-### Preferências de sessão e métricas de eficiência (jun/2026)
-
-Playbook de inteligência (seções 16, 30, 31). Complementa a base de memória/preferências já existente.
-
-**Preferências (§16)** — `ChatBehaviorInstructionService` + `ChatUserPreferenceManagerService`:
-
-| Preferência | Detecção | Efeito |
-|-------------|----------|--------|
-| «sempre em txt» / «responda em texto» | `responseFormat: text` (escopo sessão) | Label «Respostas em texto puro» no bloco de preferências + ack |
-| «não use ferramentas sem eu pedir» | `toolsPolicy: on_request` (inerentemente persistente) | Label «Não usar ferramentas sem pedir» injetado no prompt; o agente operacional respeita a política |
-| «volte ao normal» / «esqueça essa preferência» | `_REVOKE_RE` (apply_to_snapshot + ack) | Limpa todas as preferências de sessão e confirma o retorno ao padrão |
-
-**Métricas de eficiência (§30)** — `ChatFeedbackContextService._efficiency_flags` deriva por resposta os campos `directAnswer`, `fallback`, `toolSkipped`, `ragSkipped`, `llmSkipped`, `simpleTurn`, expostos em `responseMetadata` e espelhados em `adminDebug.responseQuality`. Agregação em janela: `ChatIntentRouterMetricsService.aggregate_snapshots` soma `simpleTurnCount`, `fallbackCount`, `directAnswerCount` (depende de `requiresLlm` no snapshot do roteador). **Latência de perguntas simples:** `PostgresAdminMetricsRepository._message_metrics_window` calcula `simpleTurnLatencyAvgMs`/`simpleTurnCount` a partir do `intentRouting` no audit metadata (fonte única `ChatIntentRouterMetricsService.is_simple_turn_snapshot`), expostos em `advanced` e em `ChatQualityUnifiedMetricsService.efficiency`.
-
-**Starters do chat comum (§25)** — `assistant/onboarding.json` (`starterCards`) abre amplo: capacidades, corrigir texto, escrever e-mail, consultar dados, analisar documento, pesquisar na web (não começa com «Ver estoque»). Os `profilePresets` por perfil (engenharia, compras, comercial, diretoria, administrativo) e os icebreakers de agente seguem operacionais.
-
-**Streaming humanizado (§24)** — as etapas continuam visíveis (o usuário precisa saber que o chat está trabalhando e que a resposta está evoluindo), mas o **headline** (`message`) de cada activity é redigido de forma natural e tranquilizadora — sem jargão («rota OpenAPI», «API DELPI», «RAG», «fast path», caminhos crus). O conteúdo técnico fica no campo `detail` (painel expandido / admin). Exemplos: «Entendendo o seu pedido...», «Vendo a melhor forma de te ajudar...», «Buscando as informações que você pediu...», «Procurando nas informações de apoio...». Pontos de edição: `ChatStreamActivityService` (plan/tools/rag/finish), `ChatTurnPreparationService` (think/rag), `StreamChatMessageUseCase` (prepare/agentic) e `assistant/stream.json`.
-
-**Feedback (§31)** — novos motivos em `personality_playbook.json`: `simple_question_missed`, `unnecessary_tool`, `too_slow`, `technical_diagnostic_shown`, `unclear_not_admitted` e correção de `chip_irrelevant` (referenciado em `feedbackPrimaryReasonIds`, antes ausente do array). Regenerar MFE: `python scripts/generate_chat_feedback_reasons_ts.py --write`.
-
-**Contorno de erros no streaming (§26/§27)** — além de **avisar** a falha no log, o chat tenta **contornar**:
-- **Loop agentic (`ChatAgenticToolLoopService`)** — quando uma ferramenta falha (exceção **ou** metadata `ok=False` / HTTP não-2xx, via `_looks_like_failure`), a falha é resumida (`_summarize_failure`) e acumulada em `failures`. O planejador (`_plan_tools`) recebe a lista de falhas e é instruído a **não repetir** a consulta que falhou e tentar uma **abordagem alternativa** (outra action, outros parâmetros, busca por descrição, ampliar filtros). Payload de erro **não** vira «resultado autorizado» para o LLM. Se nenhum passo produz contexto mas houve falhas, as `toolCalls` falhas são propagadas para a camada §27 (`ChatErrorHandlingService`) enriquecer a resposta com motivos + chips de recuperação, em vez de o erro passar despercebido.
-- **Chips de recuperação (`error_handling.json` → `chipQueries`)** — rótulos que antes caíam no fallback (enviavam o próprio texto como query) agora têm query útil: «Buscar por descrição», «Mostrar SQL», «Executar consulta», «Interpretar resultado», «Corrigir consulta», «Ver schema», «Ver schema completo».
-- Camadas pré-existentes mantidas: recuperação automática de coluna SQL inválida (`ChatSqlRecoveryService`), reexecução sob demanda (`fetch_error_recovery_from_history`) e `errorAutoRecovery` (`ChatErrorAutoRecoveryService`).
-
-Testes: `test_chat_user_preference_manager_service.py`, `test_chat_feedback_efficiency_metrics.py`, `test_chat_feedback_content_service.py`.
-
-### Perguntas utilitárias — hora, data, ano (maio/2026)
-
-Perguntas curtas como «que horas são?», «que dia é hoje?», «qual o ano?» → `ChatUtilityDirectAnswerService` com padrões em `utility_answers.json`:
-
-| Etapa | Comportamento |
-|-------|----------------|
-| Classificação | `classify(message)` por categoria (`current_time`, `current_date`, `current_datetime`, `current_weekday`, `current_year`) |
-| Resposta | Template PT-BR com hora/data reais (`CHAT_UTILITY_TIMEZONE`, default `America/Sao_Paulo`) quando `CHAT_UTILITY_DIRECT_ENABLED=true` |
-| Pipeline | **Sem RAG**, **sem** loop agentic, **sem** LLM; estágio `utility_direct` |
-| Typos | `ChatMessageNormalizationService` corrige antes do match — ex.: `que hors são?` → `que horas sao`, `estouque` → `estoque`. **UI (jun/2026):** [Playbook 14](../roadmap/playbook-14-corretor-digitacao-chat.md) — chip pré-envio no composer via `POST /chat/typing-suggestions`; changelog [2026-06-playbook-14](../changelog/2026-06-playbook-14-corretor-digitacao-composer.md). **Turno (set/2026):** `ChatUserQueryImprovementService` no prep — regras P14 + LLM gated; bolha = original; inteligência = `improvedMessage` (`adminDebug.queryImprovement`). |
-| Exclusões | Mensagens com contexto operacional (`producao`, `ordem`, `estoque`, …) não entram no atalho |
-
-Checklist manual: **U1–U9** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
-
-Testes: `test_chat_utility_direct_answer_service.py`, `test_chat_utility_stream.py`, `test_chat_message_normalization_service.py`.
-
-### Rótulos PT-BR das rotas api-delpi (maio/2026)
-
-Actions OpenAPI do provider **api-delpi** exibem rótulos humanizados via `ChatActionLabelService` + `labels/api_paths.json` (~85 rotas alinhadas ao código em `api-delpi/app/main.py`):
-
-- Inclui: `/commercial/proposals`, `/production/otd` (resumo + OPs SC2010), `/production/oee` (resumo + apontamentos SH6010), `/production/oee/appointments/{appointment_id}` (roteiro, estrutura, tempos), `/production/oee/series`, `/production/otd/series`, `/production/eficiencia-fabril/*`, `/system/tables/{tablename}/schema|indexes|relations`
-- Removidas rotas fantasma (`/commercial/billing`, `/chat/*`, subrotas inexistentes de produto)
-
-`capabilities.json` (`pathRules`, `commonExamples`) reflete o mesmo catálogo. Regenerar OpenAPI opcional: `scripts/sync_api_delpi_openapi.py`.
-
-Testes: `test_chat_action_label_service.py`, `test_content_service.py`.
-
-### Perguntas meta compostas (maio/2026)
-
-Mensagens que misturam perfil do usuário, capacidades da plataforma e identidade do assistente (ex.: *«me diga quem sou eu e o que você pode fazer, quem é você?»*) → `ChatMetaLlmTurnPreparationService` monta seções de fatos (`##`) em `metaSynthesisSections`; o LLM responde em prosa única. Atalhos isolados (`pre_capability_answer`, identity/profile direct) não vencem quando a rota meta está ativa.
-
-### Lousa / canvas — cópia, append e merge operacional (maio/2026)
-
-| Tipo de pedido | Exemplo | Comportamento |
-|----------------|---------|---------------|
-| **Cópia simples** | «coloque na lousa» | Copia a **última resposta útil** do assistente (ignora confirmações «Coloquei … na lousa») |
-| **Append de chat** | «acrescente isso na lousa» | Merge do markdown já na lousa (`metadata.canvasOpen` do histórico) + última resposta útil |
-| **Append operacional** | «acrescente na lousa a descrição do produto 10080049» | Executa action OpenAPI → merge na lousa existente; **não** bloqueia tools |
-
-Detalhes:
-
-- `ChatCanvasIntentService.is_canvas_operational_update_request` libera `ExternalActionSelectionService` e `ChatExternalActionOrchestrationService` (só cópia simples bloqueia actions).
-- `ChatCanvasContentService.build_update_from_tools` usa `textPresentation.markdown` (ou tabela) das tool calls bem-sucedidas.
-- Exige `capabilities.canvas !== false` no agente; evento SSE `canvas_open` e `metadata.canvasOpen` na mensagem assistant.
-
-Testes: `test_chat_canvas_intent_service.py`, `test_chat_canvas_content_service.py`, `test_chat_canvas_stream_and_send.py`.
-
-### Rótulos de colunas em português (maio/2026)
-
-Tabelas operacionais usam `ExternalActionColumnLabelService`: prioridade OpenAPI `title` → `column_labels.json` → humanize do nome técnico. Evita headers crus (`order_number`, `X3_CAMPO`) na UI quando há tradução cadastrada.
-
-### Pesquisa web — planejamento (maio/2026)
-
-| Camada | Comportamento |
-|--------|----------------|
-| `ChatWebSearchPlanningService` | Modo `quick` (≤3 queries) ou `deep` (até 6); variantes «manual oficial», `site:marca` (WEG, Siemens, …) |
-| `ChatWebSearchIntentService.resolve` | Expõe `plannedQueries`, `searchMode`, `preferOfficial` nos argumentos da tool |
-| `WebSearchHttpGateway` | Executa queries planejadas antes do retry EN; grava `searchMode` no payload |
-| MFE | `ChatWebSearchResearchPanel` exibe modo e preferência por fontes oficiais |
-
-Smoke: `scripts/smoke_web_search_planning.py`. Requer `CHAT_WEB_SEARCH_ENABLED=true` e provider configurado para E2E real.
-
-### Pesquisa web — avaliação de fontes (maio/2026)
-
-| Camada | Comportamento |
-|--------|----------------|
-| `ChatWebSearchSourceEvaluationService` | Classifica URL (`manufacturer`, `government`, `forum`, …), pontua e reordena `results` |
-| `WebSearchTool` | Chama `enrich_payload` após busca bem-sucedida |
-| `ChatWebSearchDirectAnswerService` | Injeta avisos de confiabilidade no markdown quando aplicável |
-| `ChatWebSearchResearchActivityService` | Propaga `confidence`, `warnings`, `excludedSources` e metadados por site |
-| MFE | Painel de pesquisa com tag «oficial», rótulo de confiança e observações |
-
-Testes: `test_chat_web_search_source_evaluation_service.py`, `test_chat_web_search_research_activity_service.py` (propagação).
-
-### Pesquisa web — integração anexo / ERP (maio/2026)
-
-| Camada | Comportamento |
-|--------|----------------|
-| `ChatWebSearchIntegrationService` | Detecta híbrido anexo+web ou produto+web; queries extras; libera companion operacional |
-| `ChatWebSearchIntentService` | `integrationMode` nos argumentos; não bloqueia actions quando há produto interno |
-| `WebSearchTool` / síntese / resposta direta | Metadata e notas «não substituir dado interno» |
-| MFE | Painel indica modo (`produto + web`, `anexo + web`, etc.) |
-
-Testes: `test_chat_web_search_integration_service.py`.
-
-### Pesquisa web — UX pós-pesquisa (maio/2026)
-
-| Camada | Comportamento |
-|--------|----------------|
-| `ChatWebSearchFollowUpService` | `webSearchFollowUpSuggestions` no metadata (playbook `webSearchFollowUpChips`) |
-| MFE | Cards de fontes web, badges «oficial», chips «Após pesquisa web» |
-
-Testes: `test_chat_web_search_follow_up_service.py`.
-
-### Pesquisa web — cruzamento ERP (maio/2026)
-
-| Camada | Comportamento |
-|--------|----------------|
-| `ChatWebSearchErpCrossReferenceService` | Após ERP + `web_search` no mesmo turno, anexa bloco comparativo e `erpCrossReference` no payload |
-| `ChatToolContextService` | Propaga `webSources` mesmo quando a resposta direta veio do ERP |
-
-Testes: `test_chat_web_search_erp_cross_reference_service.py`.
-
-### Listagem de OV vs vendas de produto (maio/2026)
-
-| Situação | Rota correta | Erro comum |
-|----------|--------------|------------|
-| «listar ov de 01/04/2026 a 30/04/2026» | `GET /sales` (`list_sale_orders`) com `date_start` / `date_end` | Tratar datas como códigos de produto (`01042026`) e chamar `/products/{code}/sales` |
-| Resumo de vendas de um produto | `GET /products/{code}/sales` | Confundir com listagem de OVs |
-
-`ChatAnalysisIntentService.extract_all_product_codes` ignora tokens de data `DD/MM/YYYY`. Apresentação de OVs usa tabela (`preferredFormat: table`); coluna `order_number` rotulada como **OV**.
-
-**Skill `company-knowledge`:** necessária para incluir documentos globais no escopo RAG. Agentes sem skill explícita herdam o default quando `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL=true`.
-
-**Validação rápida:**
-
-```bash
-docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
-  python scripts/smoke_identity_rag.py <user_id> <session_id> "quem te criou?"
+Correções transversais devem ser implementadas uma vez na camada base e herdadas por send, stream, simulate, agentes e projetos.
+
+---
+
+## 2. Pipeline do turno
+
+```text
+mensagem original
+→ segurança/input normalization
+→ workspace context (usuário, projeto, agente, capabilities)
+→ query improvement não destrutivo para inteligência
+→ entendimento/decomposição do pedido
+→ memória/contexto estruturado
+→ decisão direct-answer / no-tool / tools / RAG / mixed
+→ tool planning/execution quando necessário
+→ RAG quando necessário
+→ síntese LLM ou resposta determinística
+→ apresentação/renderPlan
+→ persistência/metadata/observabilidade
+→ resposta send ou stream
 ```
 
-Testes: `test_chat_turn_preparation_identity_rag.py`, `test_chat_assistant_identity_rag_filter.py`, `test_chat_assistant_identity_stream_and_send.py`, `test_chat_admin_debug_service.py`.
-
-### Inventário de fontes do projeto (jun/2026)
-
-Perguntas **meta** sobre o acervo do projeto («o que tem nas suas fontes?», «liste as fontes», «quantas fontes») não são bem atendidas por RAG semântico (embedding busca trechos, não inventário de arquivos). Globais indexadas podiam ocupar o top‑K e gerar `ragSourceCount: 0` na UI (fontes ocultas) mesmo com contexto injetado no prompt.
-
-| Camada | Comportamento |
-|--------|----------------|
-| `ChatProjectSourcesIntentService` | `inventoryPhrases` → resposta direta; conteúdo/slot → `include_global=false` + filtro por `documentId` |
-| `ChatProjectSourcesDirectAnswerService` | `ListProjectSourcesUseCase` — inventário; persiste `pendingProjectSourcesInventory` |
-| `ChatProjectSourcesInventoryService` | `lastProjectSourcesInventory` no `contextSnapshot` (pós-turno via `ChatContextMetadataService`) |
-| `ChatProjectSourceSlotResolverService` | «primeiro arquivo», ordinais, nome parcial → entrada do inventário |
-| `ChatTextTaskIntentService` | Não classifica resumo de arquivo com slot + inventário como `text_task` |
-| `ChatKnowledgeScopeService` | Com `project_id`: `scope_priority: "project_source"`; restrito quando a mensagem pede fontes do projeto |
-| `SearchKnowledgeUseCase` | Boost no rerank (`CHAT_RAG_SCOPE_PRIORITY_BOOST`, default `0.2`) para chunks do escopo prioritário |
-| `RagContextService` | Expõe `retrievedSourceCount`, `visibleSourceCount`, `retrievedChunkCount` (antes/depois de `filter_client_visible_sources`) |
-| Pipeline inventário | `ingress` → `direct_answer` → `project_sources_inventory` → **`skip_rag`** |
-| Pipeline conteúdo slot | Turno 2+: `project_sources_content` → RAG com `chunk_filter` por `documentId` (não `text_task`) |
-
-**Variável:** `CHAT_RAG_SCOPE_PRIORITY_BOOST` (default `0.2`).
-
-**Metadata (inteligência + admin):** `ragRetrievedCount`, `ragVisibleSourceCount`, `ragRetrievedChunkCount`; `ragSourceCount` permanece = visível (retrocompat). Em `adminDebug.rag`, `sourcesNote` explica quando globais foram recuperadas mas ocultas na UI.
-
-**Testes:** `test_chat_project_sources_intent_service.py`, `test_chat_project_source_slot_resolver_service.py`, `test_chat_project_sources_slot_rag.py`, `test_search_knowledge_scope_boost.py`, `test_turn_preparation_tool_routing.py`; casos em `PROJECT_SOURCES_INTENT_CASES` e `TRAINING_AGENT_INTERACTION_INDEX` (interação 6).
+O texto original do usuário deve permanecer disponível para audit/UX; rewrites internos não substituem a intenção explicitamente expressa.
 
 ---
 
-## O que o agente adiciona (e só isso)
-
-1. **Prompt** — personalidade e instruções (`system_prompt`).
-2. **Skills** — policies extras (`metadata.skills`).
-3. **Actions** — subset de rotas OpenAPI (`allowedActionIds` / providers).
-4. **RAG** — filtros de especialização (tags, categorias, namespaces).
-5. **Limites** — `max_tool_calls`, confirmação de escrita, capabilities.
-
-O agente **não substitui** detecção de intenção, pipeline operacional ou modo análise comparativa.
-
-**Base global de conhecimento:** agentes sem skill explícita `company-knowledge` herdam `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` (documentos em [`../knowledge/domains/global/`](../knowledge/domains/global/): `normas-tecnicas-delpi.md`, `gpt-instructions.md`, `O_ARQUITETO_DO_CODIGO.md`).
-
-### Descrição técnica de MP e intermediários — Normas DELPI (maio/2026 · ampliada jul/2026)
-
-Perguntas de **como escrever/analisar** descrições técnicas (não confundir com «qual a descrição do produto 10080047»):
-
-| Etapa | Comportamento |
-|-------|----------------|
-| `ChatTechnicalDescriptionIntentService` | Detecta orientação normativa («como descrever terminal», «código intermediário 50xx», «o que significa CB/PRET») |
-| `ChatTechnicalDescriptionVocabularyService` | Grupos 1001–1025 + **50xx**, cores MP/4 letras, isolação CA–CV, consumíveis 1013/1050 |
-| `ChatTurnPreparationService` | `build_rag_query` enriquecido (Normas e/ou Intermediate Product Codes) |
-| `ExternalActionSelectionService` | Retorna `None` — **sem** busca REST de catálogo |
-| `ChatOperationalPipelineService` | Fast path operacional **desligado** |
-| `ChatOperationalParameterService` | **Pula loop agentic** (resposta documental via RAG + 1 LLM) |
-| Policy | `technical-description-normas.md` + skill `technical-description-delpi-skill.md` |
-| Desenho | Mesmo vocabulário → `ChatDrawingProductFamilyClassificationService` (não reclassifica checklist; só alimenta o pipeline) |
-
-Fontes RAG: `docs/knowledge/domains/global/normas-tecnicas-delpi.md` (`scope: global`); intermediários em `Understanding DELPI Intermediate Product Codes.md` (escopo agente / gpt-instructions). Skill `company-knowledge` necessária para Normas MP (default herdado).
-
-Testes: `test_chat_technical_description_intent_service.py`, `test_chat_drawing_product_family_classification_service.py`, `test_select_action_skips_catalog_for_technical_description_guidance`.
-
-Checklist manual: **N1–N14** (+ intermediários **N15–N17**) em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
-
-API skills: [`../api/11-skills.md`](../api/11-skills.md).
-
-### SQL operacional — produção do dia (maio/2026, vocabulário jun/2026)
-
-Perguntas como «quais produtos serão produzidos hoje?» exigem **SQL analítico** (SC2010), não catálogo REST:
-
-| Serviço | Função |
-|---------|--------|
-| `ChatSqlOperationalIntentService` | Marca intenção SQL de produção (vocabulário `sql_intent_vocabulary.json`) |
-| `ChatSqlProductionQueryService` | Template SQL; fast path; breakdown **por filial** |
-| `ChatSqlQueryRefinementService` | Refinamento multi-turn; motivos em `external_action_responses.sqlQueryRefinement` |
-| `ChatSqlDynamicColumnRefinementService` | Agrupar/filtrar por coluna do SELECT ativo |
-| `ChatSqlProductionSchedulePresentationService` | Narrativa/insights SC2010 (`productionSchedule.narrative`) |
-| `ChatToolContextService` | Executa SQL sem RAG quando aplicável |
-
-Bloqueios: não usar `/products/search`; action fixa em `/data/sql` (não KPI departamental «production»).
-
-Doc consolidada: [`vocabulary-centralization-jun2026.md`](./vocabulary-centralization-jun2026.md).
-
-Checklist: **G1–G3** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md); smoke `scripts/smoke_gpt_instructions_improvements.py`.
-
-### Anexos — reenvio, relatório DELPI e status com visão (jun/2026)
-
-Changelog: [`../changelog/2026-06-chat-anexos-desenho-ux.md`](../changelog/2026-06-chat-anexos-desenho-ux.md).
-
-**Extração de PDF (chat base, jun/2026):** qualquer anexo PDF usa `ChatPdfDocumentExtractionService` (embedded PyMuPDF + anotações ODA + fusão + pypdf). A skill de desenho aplica parse DELPI em cima do `fullText`. Doc: [`chat-pdf-document-extraction.md`](./chat-pdf-document-extraction.md).
-
-**BOM e famílias PA (jun/2026):** escopo regional, fontes suplementares e PA `7026`/`8000`/`8001`. Changelog: [`2026-06-drawing-bom-pa-families.md`](../changelog/2026-06-drawing-bom-pa-families.md).
-
-| Entrega | Detalhe |
-|---------|---------|
-| Reenvio | MFE permite editar anexos ao reenviar pergunta (card + modal de preview) |
-| Desenho | Relatório `drawingAnalysisExport` substitui resposta direta e persiste como `answer` quando `/analyser` OK |
-| Analyser em desenho | `ChatDrawingAnalyserParameterService` garante `view=full` (estrutura/roteiro/inspeção completos; sem aviso «Visão composta parcial») |
-| Status | `index_failed` + `documentVision.legible` → «Legível por visão» via `ChatAttachmentPreviewService` + `attachments.json` |
-| Timeline | Patch de `metadata.attachments` ao concluir turno; MFE recarrega mensagens após stream |
-
-### Download de fontes e anexos (maio/2026)
-
-| Endpoint | Escopo |
-|----------|--------|
-| `GET /chat/attachments/{id}/download` | Anexos da conversa |
-| `GET /chat/sources/{id}/download` | Fontes de agente, projeto, notas de texto |
-
-UI: botões no painel de conhecimento do agente, fontes do projeto e chips de anexo na mensagem (plugin `minha-delpi-chat`).
-
-Doc HTTP: [`../api/05-projetos-fontes-anexos-artefatos.md`](../api/05-projetos-fontes-anexos-artefatos.md).
-
-### Bundle exportável do agente (maio/2026)
-
-Pasta [`../knowledge/domains/agents/minha-delpi-chat/`](../knowledge/domains/agents/minha-delpi-chat/) — reimportação em lote com nomes normalizados + `manifest.json`.
-
-Script: `scripts/export_agent_knowledge_bundle.py --agent-key minha-delpi-chat`. Normalização: `AgentKnowledgeFilenameService`.
-
-Changelog consolidado: [`../changelog/2026-05-inteligencia-chat-entregas.md`](../changelog/2026-05-inteligencia-chat-entregas.md).
-
----
-
-## Roteamento automático (api-delpi)
-
-### DOCIE — seleção declarativa de rotas (jun/2026)
-
-Motor canônico para fast paths operacionais:
-
-| Componente | Papel |
-|------------|-------|
-| `operational_route_registry.json` | Catálogo declarativo (`dispatchOrder`, rotas manuais, **`autoTierCRoutes`**, `intentBinding`, `customPredicate`) |
-| `OperationalRouteRegistryGeneratorService` | Gera `autoTierCRoutes` a partir do OpenAPI baseline (Fase 20) |
-| `ExternalActionOperationalRouteSelectionService` | Motor registry — produto, PB15, suprimentos KPI, dashboards produção (v2026.06.8+) |
-| `OperationalRouteMatcherService` | Predicados JSON + allowlist `customPredicate` |
-| `product_query_intent.json` | Vocabulário único de intenção produto (substitui `productRouteRanking.*`) |
-| `ExternalActionOperationalRouteSelectionService.select_product_with_code` | Rotas de produto com código via registry (substitui ranking legado) |
-
-Ordem no dispatch: refinamentos de sessão → **registry** (`dispatchOrder`: operacional → domínios → intent-bound → **sqlFallback** → **autoTierCRoutes** → semântico).
-
-Documentação completa: [`../roadmap/docie-desacoplamento-selecao-rotas-openapi.md`](../roadmap/docie-desacoplamento-selecao-rotas-openapi.md).
-
-Gates CI (workflow `.github/workflows/minha-delpi-ai-api-docie.yml`):
-
-- `scripts/lint_operational_route_registry.py --check`
-- `scripts/generate_operational_route_registry.py --check`
-- `scripts/audit_presentation_path_ifs.py --check`
-
-O `ExternalActionSelectionService` resolve a action **antes** do LLM quando o fast path operacional está ativo. Ordem resumida:
-
-1. Pedidos de **comparação/insights** → sem action (modo análise).
-2. **Descrição técnica / Normas** («como descrever terminal») → sem action; RAG global `Normas_Tecnicas_DELPI.md`.
-3. **SQL produção do dia** («produzidos hoje», programação SC2010) → `POST /data/sql` via fast path; não `/products/search`.
-4. **OV / LMP / Transforma Mais / metadados Protheus** (tabelas/colunas).
-5. **Suprimentos** (CPV, OTD, giro, valor total de estoque) — sem código de produto.
-6. **Produto por código** (estoque, estrutura, pais, descrição cadastral, …) por intent.
-7. **Drill-down por descrição** — «Mais informações sobre {descrição}» após árvore/tabela de estrutura: `ChatProductDescriptionResolutionService` resolve o código no histórico (`presentation`/`treePresentation`); se não achar, roteia para `GET /products/search`. Tokens de especificação técnica (`6,30X0,80`, `1,00-2,60`) **não** viram código de produto.
-8. **Busca por grupo ou descrição** → `GET /products/search` (prioridade sobre analyser quando há «grupo X»).
-9. **KPI departamental** via `ChatDepartmentKpiIntentService`.
-10. Fallback semântico (se ranker configurado) — **bloqueado** quando a intenção é produto (estoque/estrutura/etc.) **sem código** (`ChatOperationalParameterService`).
-
-### Parâmetro obrigatório (estoque sem código) — maio/2026
-
-Perguntas como «estoque do produto» (sem código) **não** disparam API nem loop agentic:
-
-| Etapa | Comportamento |
-|-------|----------------|
-| `ChatOperationalParameterService` | Detecta intent STOCK/STRUCTURE/PARENTS/DESCRIPTION/ANALYSER/SUMMARY sem código |
-| `ChatTurnPreparationService` | `direct_answer` canônico (`operational_parameters.json`), `skip_rag`, **sem** `build_tool_context` |
-| `ExternalActionSelectionService` | Retorna `None` (evita fallback semântico → ROL comercial) |
-| `ChatAgenticToolLoopService` | Não executa se `should_skip_agentic_loop` |
-| `ChatActivePendingService` | Grava `activePending.kind=missing_product_code` com `context.originalMessage` |
-
-Com código (`10080099`), o fluxo normal seleciona `GET /products/{code}/stock`.
-
-**Importante (jun/2026):** consultas de **produto** com «estoque» **não** devem cair em `missing_date` / `period_metric` — `ChatOperationalDateParameterService` exclui intents de produto antes de métricas agregadas.
-
-### Data obrigatória e sessão ativa — jun/2026
-
-Rotas cujo OpenAPI declara `reference_date`, `date_start`, `date_end` (ou equivalentes) **sem default** no chat:
-
-| Etapa | Comportamento |
-|-------|----------------|
-| `ChatOperationalDateParameterService.resolve_missing_date_answer` | Pergunta data/período (`missingDateByContext` em `operational_parameters.json`) |
-| `ExternalActionRouteSelectionService.select_product` | Não seleciona action se schema exige data e parâmetros temporais vazios |
-| Resposta curta | «hoje», «semana passada», `01/06/2026` → `ChatActivePendingService.try_resolve` monta `resumeMessage` |
-| `ChatActiveQuerySessionService.compose_selection_message` | Recompõe pergunta original + resposta (pending ou sessão ativa) |
-| `ChatExternalActionOrchestrationService` | Planeja actions com `selection_message` (não só a última linha do usuário) |
-
-**Sessão ativa (`metadata.activeQuery`):** após consulta operacional bem-sucedida, o assistente guarda `subIntent`, `originalMessage` e `expectedParam`. Enquanto o usuário enviar **só parâmetros** (códigos, datas, filial), o chat repete o mesmo tipo de consulta. Mudança explícita de assunto («estrutura», «pesquisa web», KPI agregado) encerra a continuação.
-
-Playbooks cobertos: `/factory-status`, `/production-status`, `/shipping-status`; apresentação dedicada também para `/structure/exclusivity`.
-
-Changelog detalhado: [`../changelog/2026-06-playbook-rotas-sessao-ativa-parametros.md`](../changelog/2026-06-playbook-rotas-sessao-ativa-parametros.md).
-
-Smoke: `scripts/smoke_playbook_product_routes.py`.
-
-Testes: `test_chat_operational_date_parameter_service.py`, `test_chat_active_query_session_service.py`, `DATE_RANGE_SELECTION_CASES` em `chat_intelligence_regression_cases.py`.
-
-### Loop agentic e router LLM — defaults conservadores
-
-**Perfis dev/prod (admin):** [`../knowledge/chat-intelligence-settings-profiles.md`](../knowledge/chat-intelligence-settings-profiles.md).
-
-| Variável | Default | Motivo |
-|----------|---------|--------|
-| `CHAT_AGENTIC_LOOP_ENABLED` | `false` | Evita 2ª/3ª inferência e disparo de actions irrelevantes (ex. KPIs ROL) |
-| `CHAT_TOOL_ROUTER_ENABLED` | `false` | Roteamento determinístico (`ExternalActionSelectionService`) já cobre o caso |
-| `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` | `12` | Loop agentic: catálogo via `ChatAgenticCatalogService` + `find_candidate_actions`, ranqueado por intent |
-
-Habilitar agentic/router só em sandbox ou com agente com **poucas** actions bem descritas.
-
-**Catálogo agentic (11.3.1):** com `CHAT_AGENTIC_LOOP_ENABLED=true`, `ChatAgenticCatalogService` monta no máximo `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` (default 12) a partir de `find_candidate_actions`, reordenando por intent (`/stock`, `/structure`, …). O planner LLM **só** pode escolher actions desse catálogo; metadados em `toolCalls[].metadata.agentic` / `intelligence.agentic` (`catalogSize`, `catalogMaxActions`).
-
-**Grounding + slots (ago/2026):** antes de `policy.validate`, `ChatToolParameterGroundingService` preenche `code` a partir de `operationalFocus` / `userContextItems` (contexto via `ChatToolGroundingContextService`). Actions cujo required não é groundable **neste** turno são omitidas do catálogo agentic. Falhas `missing_required_parameter` entram em `invalid_action_ids` e **não** são reexecutadas no passo seguinte. Textos do planejador: `agentic_planner.json`.
-
-**Plano de controle do turno:** `ChatTurnModeService` resolve `consume_prior` | `ask_slot` | `execute_tools` | `llm_narrate`. Em `consume_prior` / `ask_slot`, `ChatResponseModeService` preserva `directAnswer` (sem síntese LLM externa) e o loop agentic é pulado. Follow-up de desenho (`drawing_analysis` / `drawing_report_adjustment`) e `unclear_request` estão em `preserveDirectAnswerStages`.
-
-**Orquestração híbrida (ago/2026):**
-
-| Camada | Papel |
-|--------|--------|
-| Heurística rápida | Unclear (`ambiguous_domain`), schedule via `operational_sub_intent`, estoque+código — **sem** LLM de análise |
-| `ChatTurnAnalysisService` | JSON `clarify` \| `execute` \| `narrate` + `skillsToLoad` + `actionIds` (gate Normal/Pensador; `CHAT_TURN_ANALYSIS_ENABLED`) |
-| `ChatSkillCompositionService` | Skills **enabled** no agente ≠ **carregadas** no prompt do turno |
-| Merge multi-rota | `ChatExternalActionOrchestrationService` mescla `turnAnalysisActionIds` sem descartar por `matches_rest_route` single |
-| Leak CoT | `ChatLlmSynthesisLeakGuardService` + `safeFallbackAnswer`; gateway não promove `reasoning` CoT |
-| Agentic | Pula em clarify/narrate ou plano já coberto; `stepsRun` = tentativas reais |
-
-No mesmo turno: se a análise rodou, `ChatToolRouterService.suggest` **não** empilha outra LLM. Preview/simulate reutilizam o mesmo serviço. Smoke: `scripts/smoke_hybrid_orchestration_ago2026.py`.
-
-**Schemas enxutos (11.3.2):** cada action do catálogo é serializada por `ChatAgenticActionSchemaService` (método, path, descrição curta, parâmetros com `example` e `exampleArguments`) antes do prompt do planner — evita mandar o OpenAPI completo e orienta argumentos (`code`, `branch`, datas, paginação). Limite: `CHAT_AGENTIC_SCHEMA_MAX_PARAMETERS` (default 10).
-
-**Native tool calling piloto (11.3.3):** `ChatNativeToolCallingService` só ativa quando (1) `CHAT_NATIVE_TOOL_CALLING_ENABLED=true`, (2) admin `nativeToolCallingEnabled=true` e (3) agente com `metadata.intelligence.nativeToolCallingEnabled=true`. Rotas api-delpi permanecem heurísticas.
-
-**Timings no admin (11.3.4):** `metadata.intelligence.timings` (`ragMs`, `toolsMs`, `llmMs`, `totalMs`) é copiado para `adminDebug.intelligence` e exibido no painel «Diagnóstico (admin)» do plugin.
-
-### Multi-action e histórico (maio/2026)
-
-`ChatAnalysisIntentService.extract_product_codes_for_action_planning` planeja consultas paralelas **somente** com códigos da mensagem atual. Se o usuário já informou um código («estoque do produto 10080099»), códigos citados só no histórico **não** disparam N chamadas. Follow-ups («estoque desse produto») continuam resolvendo **um** código via contexto.
-
-`CHAT_OPERATIONAL_SLIM_USER_CONTEXT` (default `true`): em modo operacional, o prompt LLM não inclui o bloco completo de perfil RBAC (reduz tokens), exceto perguntas sobre o **usuário** («quem sou eu»).
-
-### Interpretação de dados operacionais (follow-up) — maio/2026
-
-Após uma consulta operacional bem-sucedida (estoque, roteiro, estrutura, inspeção, KPI, SQL), mensagens como «explique os dados acima», «resume», «traduz isso» ou «não entendi»:
-
-| Etapa | Comportamento |
-|-------|----------------|
-| `ChatAnalysisIntentService.is_data_interpretation_request` | Detecta referência a dados já mostrados; ativa `analysis_mode` |
-| `ChatTurnPreparationService` | `skip_tools_for_data_interpretation` quando há `humanizedSummary` recente; `skipRag`; suprime bloco `/me` (perfil RBAC) |
-| `ChatDataInterpretationAnswerService.build_answer` | **Fast path:** resposta direta a partir do último `humanizedSummary` (`titulo` + `linhas`) — sem LLM |
-| `ExternalActionResultPresenter` | Gera resumo humanizado por rota (`/guide`, `/stock`, `/structure`, …) antes de heurística SQL genérica |
-| `ChatConversationContextService` | Reidrata contexto de análise; evita título genérico «Consulta SQL» quando há resumo substantivo |
-| Policy | `chat-data-interpretation.md` — fallback LLM só com contexto de dados já obtidos |
-| Sem histórico (#79) | `is_data_reference_without_tool_data` → resposta canônica pedindo consulta prévia; **não** dispara SQL |
-
-Evita o erro «Empty body — SQL not provided» ao confundir interpretação com nova consulta analítica.
-
-Checklist manual: **#70–79** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
-
-Testes: `test_chat_data_interpretation_answer_service.py`, `test_chat_analysis_intent_service.py`, casos `DATA_INTERPRETATION_*` em `chat_intelligence_regression_cases.py`.
-
-### Refinamento operacional (follow-up de estoque) — maio/2026
-
-Após uma consulta de estoque bem-sucedida, mensagens como «filtre filial 02» ou «somente armazém 99»:
-
-| Etapa | Comportamento |
-|-------|----------------|
-| `ChatOperationalRefinementService` | Detecta refinamento; recupera código/rota do histórico; extrai filial/armazém |
-| `ChatRouteContextService` | Mapeia segmentos de path e lote recente de tools para `resolve_product_route_segment` |
-| `ExternalActionSelectionService` | Reexecuta `get_product_stock` com `branch`/`warehouse` nos parâmetros |
-| `ChatIntelligencePipelineService` | Liga `operational_optimize` e `skip_rag` mesmo sem código na mensagem atual |
-
-Evita RAG irrelevante (ex. anexo SQL) e mantém o contexto da conversa em vez de tratar o follow-up como pergunta nova.
-
-### Regras críticas (produtos)
-
-| Situação | Rota correta | Erro comum |
-|----------|--------------|------------|
-| «Busque 3 produtos do **grupo 1008**» | `GET /products/search` + `group_code=1008`, `page_size=3` | Tratar `1008` como `{code}` no `/analyser` |
-| «Resumo do produto 10080047» | `GET /products/{code}/summary` | Cair no `/analyser` |
-| «Mostre vendas do produto …» | `GET /products/{code}/sales` (**api-delpi** habilitado no agente) | Estoque/busca api-externa quando api-delpi está off |
-| «Faturamento do produto …» | `GET /products/{code}/sales/billing` | Usar `/sales` genérico |
-| «Valor total de estoque da empresa» | `GET /supplies/stock-value` | `GET /products/{code}/stock` |
-| «Compare as estruturas» | Orquestração multi-fetch | Uma única action ou só histórico |
-
-O dígito após «grupo» **não** é código de produto (`ChatProductQueryIntentService._is_group_code_numeric_token`).
-
-### Perguntas de capacidade
-
-«Consegue buscar por grupo?», «coonsegue…» → `ChatCapabilitiesService.is_capability_inquiry`: resposta direta com método/rota, **sem** `execute_external_action`.
-
-### Streaming — log de atividade, persistência incremental e carregamento (maio/2026)
-
-Turnos em `POST .../messages/stream` expõem progresso antes do texto final:
-
-| Camada | Comportamento |
-|--------|----------------|
-| **Persistência** | Com `CHAT_PERSIST_BEFORE_PLAYBACK=true` (default): `create_message(user)` **antes** do prepare → SSE `user_persisted` (envio normal **e** `resend/stream`); após tools/RAG, placeholder assistant (`delivery=generating`) → `assistant_pending`; resposta final → `playback` + `done`. Commits em checkpoints via `ChatStreamCheckpointService` + `chat_sse_stream_service`. |
-| **API** | Após `user_persisted`, `status` «Conectado…»; o prepare roda em thread com `app_context` Flask; eventos `activity` durante carga de sessão, tools e RAG. |
-| **SSE** | Comentário `: connected` + keepalive após `status`/`activity` (`X-Accel-Buffering: no`). Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, modo legado emite `token` até `done` (sem `user_persisted` / `playback`). |
-| **Plugin** | `onUserPersisted` troca ids `optimistic-*` pelo `messageId` real; `ChatThinkingDots`; log **uma linha por fase** (`compactActivityLogForDisplay`); `flushSync` no `onActivity`. |
-| **Resposta** | Com playback: texto animado (`useStreamingTextReveal` / `naturalTextReveal`) a partir do evento `playback`; durante o prepare não substitui o painel de etapas. Ao `done`, o MFE faz handoff otimista (`chatStreamHandoff` → `finalizeAssistantTurn`) para não piscar ao trocar bolha de streaming pela mensagem persistida. |
-
-Serviços: `ChatTurnPreparationService` (`on_stream_activity`), `stream_chat_message_use_case`, `ChatStreamCheckpointService`, `chat_sse_stream_service`, `ChatStreamingActivityPanel`, `streamingActivityLog.ts`.
-
-Validação: `scripts/validate_stream_incremental_persistence_e2e.py`, [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md) (seção **Persistência incremental no stream**).
-
-### Apresentação rica — `ChatAssistantContent` (jun/2026)
-
-Documentação detalhada: [`chat-assistant-content-presentation.md`](./chat-assistant-content-presentation.md).
-
-Quando `toolCalls[].metadata` traz visuais (`presentation`, `tablePresentation`, `treePresentation`, `chartPresentation`, `textPresentation`):
-
-| Camada | Regra |
-|--------|--------|
-| **API** | `enrich_metadata` define `presentationDecision.layoutMode` (`stack` se ≥ 2 views) e `visualOrder`. Qualquer rota com visuais complementares: `ChatRichPresentationTextService` compacta `textPresentation` (sem repetir tabela/árvore/cadastro no markdown) e `should_prefer_authorized_answer_over_llm` + `resolve_authorized_persisted_answer` usam o texto autorizado da tool em `message.content` (chat comum, agentes, admin). Analyser: cadastro/roteiro em `tablePresentations`, BOM em árvore, insights em texto (`ChatProductAnalyserDivergenceService`). Perfil `summary_then_evidence`: narrativa no chat sem `storyPresentation`; embed markdown (tabela/árvore/gráfico/composição) **somente** com `explicitSessionFormat: "text"` — ver [changelog modos jun/2026](../changelog/2026-06-summary-then-evidence-modos-apresentacao.md). |
-| **Plugin** | **`ChatAssistantContent`** (único renderizador; `ChatRichPresentation` removido): analyser/1 rota — barra global de formato; **2+ rotas** do mesmo produto — seções numeradas com toolbar e filtro **por bloco** (`presentationMultiRoute.ts`, `AssistantContentRouteSection.tsx`). Ver [apresentação multi-rota](./chat-assistant-content-presentation.md#consulta-multi-rota-do-mesmo-produto-jun2026). Em stack automático, `stripRichUiRedundantProseFromMarkdown` evita prosa duplicando componentes. |
-| **Markdown** | `shouldSuppressMarkdownForPresentation` e `stripRedundantProfileTableFromMarkdown` evitam duplicar ficha tabular no texto. Modo Automático/Painel: sem tabelas GFM nem composição em fence no `textPresentation`. |
-
-Pedido explícito «em texto» / «só texto» (`_FORMAT_TEXT_HINTS`) não compacta o `directAnswer`.
-
-### Playbook 09 — decisão de formato (jun/2026)
-
-Prioridade no modo **Automático:** preferência explícita do usuário → perfil JSON (`presentation_profiles.json`) → `viewIntent` (forma dos dados) → marcadores de mensagem (`presentation_vocabulary.json`) → score (`presentationDecision.scores`).
-
-| Serviço | Papel |
-|---------|--------|
-| `ChatPresentationMetadataPipelineService` | Orquestra build de metadata pós-`ExecuteExternalAction` (application) |
-| `ChatPresentationProfileService` | Resolve perfil por `meta.entity` / path; contratos `entitySetProfileContracts` |
-| `ChatPresentationDataShapeAnalyzer` | Forma tabular + **`viewIntent`** (`auditable_list`, `ranking`, `temporal_series`, …) |
-| `ChatPresentationViewIntentService` | Automático: prefere tabela vs gráfico (shape + perfil + mensagem) |
-| `ChatPresentationDecisionService` | Preenche `metadata.presentationDecision` (`selected`, `fallback`, `reason`, `availableViews`, `layoutMode`, `visualOrder`, `scores`) |
-| `ChatPresentationOperationalDecisionService` | Overrides operacionais por perfil (estoque, pricing, árvore, listas) |
-| `ChatPresentationInsightService` | Gera `insight` curto para o MFE |
-| `ChatPresentationChartPolicyService` | Limita pontos/fatias e agrupa «Outros» em rosca/pizza |
-| `ChatPresentationRecommendationService` | Sugestões de formato alternativo (`decision.recommendations` → chips) |
-| `ChatPresentationCoverageService` | Matriz OpenAPI × perfil; gate `find_entity_set_profile_gaps` |
-
-**MFE:** render-only — consome `presentationDecision`; não reimplementa heurística de formato.
-
-Checklist rota nova: [`new-api-route-checklist.md`](./new-api-route-checklist.md).
-
-Regressão: `tests/unit/domain/services/test_chat_presentation_view_intent_service.py`, `test_chat_presentation_decision_scores.py`, casos P1–P16 em `tests/fixtures/rich_presentation_cases.py`. Roadmap: [`../roadmap/playbook-09-apresentacao-rica.md`](../roadmap/playbook-09-apresentacao-rica.md).
-
-### Defaults de page_size outbound (chat → api-delpi)
-
-Fonte única: `operational_pagination.json` via `ChatOperationalPaginationDefaultsService`.
-
-| Tier / especial | Default | Onde aplica |
-|-----------------|---------|-------------|
-| `standard` | 50 | Listagens genéricas (`date_branch`, stock, LMP, metadata, …) |
-| `hierarchical` | 500 | Paths com markers `/structure` e `/parents` (JSON) |
-| Product search | 5 (cap mensagem 20) | `/products/search` |
-| Overrides por rota | ex. `limit: 500` | `operational_route_registry.queryDefaults` (acima do standard) |
-
-Pedido explícito do usuário / refinement de página vence o default; consolidação multi-página («traga tudo») continua em `CHAT_PAGINATION_*` abaixo — não confundir com o tamanho da **primeira** página.
-
-### Consolidação paginada (total / completo / continuar) — maio/2026
-
-Quando a API retorna resposta parcial (`page`, `total`, `total_pages`), o chat pode buscar **várias páginas** e consolidar numa única resposta — em **qualquer formato** (tabela, árvore, gráfico ou texto).
-
-| Gatilho | Exemplos | Comportamento |
-|---------|----------|---------------|
-| **Total/completo** | «traga tudo», «listagem completa», «tabela completa», «registros completos» | Após a 1ª página, busca páginas restantes até `CHAT_PAGINATION_MAX_PAGES_PER_TURN` |
-| **Follow-up após parcial** | «árvore completa», «tabela completa», «completo» (mesma conversa) | Reutiliza a última action paginada do histórico; refaz consulta + consolida |
-| **Continuação** | «sim, continue», «continuar», «sim» (com estado pendente) | Retoma de `metadata.toolCalls[].paginationConsolidation` |
-| **Limite por turno** | — | Ao atingir o limite, pergunta se deve continuar; confirmação do usuário dispara novo lote |
-
-| Etapa | Serviço / campo |
-|-------|-----------------|
-| Detecção de intenção | `ChatPaginationConsolidationService.looks_like_full_fetch_request` / `looks_like_continue_fetch_request` |
-| Plano de páginas | `build_fetch_plan`, `build_continue_plan`, `collect_last_paginated_reference` |
-| Execução | `ChatPaginatedExternalActionService` (`maybe_consolidate`, `fetch_full_from_history`, `fetch_continue_plan`) |
-| Integração | `ChatToolContextService` — atalho **antes** da seleção normal de tools |
-| Estado persistido | `toolCalls[].metadata.paginationConsolidation` (`fetchedPages`, `mergedCount`, `apiTotal`, `completed`, `consolidatedPayload`) |
-| Formato | `_resolve_consolidation_format` — pedido explícito («em tabela») ou herança do `preferredFormat` do turno anterior |
-
-Variáveis:
-
-| Variável | Default |
-|----------|---------|
-| `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` |
-| `CHAT_PAGINATION_MAX_PAGES_PER_TURN` | `5` (máx. 8) |
-
-Testes: `test_chat_pagination_consolidation_service.py`, `test_chat_paginated_external_action_service.py`, cenários em `test_chat_tool_context_service_direct_response.py`.
-
-### Paridade ChatGPT/Gemini (roteamento e velocidade) — maio/2026
-
-Pesquisa e plano de produto (28/mai/2026): decisão de rota **antes** do LLM, catálogo pequeno se usar loop agentic, respostas diretas sem inferência quando possível.
-
-| Recurso | Caminho |
-|---------|---------|
-| Roadmap Onda 11 (feito / falta / critérios) | [`../roadmap/inteligencia-chat-onda-11-paridade-assistentes.md`](../roadmap/inteligencia-chat-onda-11-paridade-assistentes.md) |
-| Roadmap Onda 12 (backlog — desenhos PDF) | [`../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md`](../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) |
-
-### Documentos e testes
-
-| Recurso | Caminho |
-|---------|---------|
-| Changelog maio/2026 (G1–G8 + SQL + Normas + download) | [`../changelog/2026-05-inteligencia-chat-entregas.md`](../changelog/2026-05-inteligencia-chat-entregas.md) |
-| Mapa intenção → rota (RAG) | [`../knowledge/api-delpi-rotas-agente.md`](../knowledge/api-delpi-rotas-agente.md) |
-| Conhecimento global (Normas) | [`../knowledge/domains/global/`](../knowledge/domains/global/) |
-| Bundle agente exportável | [`../knowledge/domains/agents/minha-delpi-chat/`](../knowledge/domains/agents/minha-delpi-chat/) |
-| Auditoria rota a rota + status | [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md) |
-| **Testes de IA — famílias, R1–R8, bateria humana (canônico)** | [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md) |
-| Changelog jun/2026 (extração PDF chat base) | [`../changelog/2026-06-chat-pdf-extraction-base.md`](../changelog/2026-06-chat-pdf-extraction-base.md) |
-| Extração PDF (arquitetura) | [`chat-pdf-document-extraction.md`](./chat-pdf-document-extraction.md) |
-| Limite upload conhecimento | `KNOWLEDGE_DOCUMENT_MAX_CHARS` (default 2M) |
-
-```bash
-docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-delpi-ai-api pytest \
-  tests/unit/domain/services/test_chat_intelligence_regression.py \
-  tests/unit/domain/services/test_chat_sql_operational_intent_service.py \
-  tests/unit/domain/services/test_chat_sql_production_query_service.py \
-  tests/unit/domain/services/test_chat_technical_description_intent_service.py \
-  tests/unit/domain/services/test_chat_department_kpi_intent_service.py \
-  tests/unit/application/services/test_external_action_selection_service.py \
-  tests/unit/domain/services/test_chat_product_query_intent_service.py \
-  tests/unit/application/use_cases/test_download_chat_file_use_cases.py \
-  -q
+## 3. Pedidos longos e compostos
+
+Mensagem com múltiplos objetivos não é reduzida a uma única intent.
+
+```text
+pedido
+→ subtarefas
+→ dependências
+→ capabilities/actions por subtarefa
+→ plano
+→ execução
+→ síntese cobrindo todas as subtarefas
 ```
 
----
+Exemplo:
 
-## Pesquisa na internet (`web_search`)
+> consulte estoque, fornecedores e última compra deste produto; compare os dados e redija um e-mail para Compras.
 
-**Tool interna nativa do chat** (não é skill nem action OpenAPI). Habilitada por `CHAT_WEB_SEARCH_ENABLED` + admin `webSearchEnabled`.
+A execução deve representar todas as subtarefas, paralelizando somente reads independentes e seguros.
 
-| Aspecto | Comportamento |
-|---------|----------------|
-| Seleção | `ChatWebSearchIntentService` + `ToolSelectionService` — pedido explícito («pesquise na web», etc.) ou **auto-augment** em perguntas abertas («o que você pensa sobre…», «me fale sobre…»); padrões em `web_search.json` → `augmentation` |
-| Chat comum | Com web habilitada, auto-augment **não exige agente** — `skip_tools_for_inactive_agent` fica `false` e bloqueia actions OpenAPI no turno |
-| Consulta | `WebSearchQueryService`: remove «a empresa», gera candidatos (`Tyco`, `Tyco International`, retry EN) |
-| Provedores | `auto`: Tavily → Serper → Bing → **SearXNG** (OSS) → DuckDuckGo Instant Answer; fallback Wikipedia PT se todos falharem |
-| Isolamento | `blocks_external_action_selection`: no mesmo turno **não** roda `execute_external_action`, roteador de actions nem loop agentic |
-| Resposta simples | `ChatWebSearchDirectAnswerService` — 1 resultado útil ou fallback rápido (`directAnswer`, `skipRag`) |
-| Síntese LLM | `ChatWebSearchSynthesisService` — com ≥ `CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS` fontes úteis, monta intro, seções, linha do tempo e conclusão em PT; `ChatLlmSynthesisLeakGuardService` troca lead copiado pelo fallback extractivo |
-| Localização | `WebSearchPortugueseContentService` — Wikipedia PT quando snippet vier em inglês; entidades de uma palavra (ex.: «tyco») |
-| Fontes na API | `webSources` → `sources[]` com `scope: web_search`, `sourceRef` = URL |
-| Atividade de pesquisa | `webSearchResearch` na metadata da mensagem assistant; botão **Fontes · N** abre painel lateral (`ChatWebSearchResearchPanel`) |
-| UI | Badges **Fontes** no rodapé (`ChatSources`) + links curtos no markdown como pills (`ChatMarkdown`) |
-| Policy | `web-search-policy.md` — cite fontes; em `no_results`, não negar a busca |
-
-**Pipeline típico (sucesso multi-fonte):** `ingress` → `tools` → `post_tool` → `direct_answer` → `web_search_synthesis` → `skip_rag`.
-
-**Variáveis (compose / `.env`):**
-
-| Variável | Default | Papel |
-|----------|---------|--------|
-| `CHAT_WEB_SEARCH_ENABLED` | `false` | Master switch |
-| `CHAT_WEB_SEARCH_AUTO_AUGMENT_ENABLED` | `true` | Perguntas abertas sobre tópicos públicos disparam web sem frase explícita |
-| `CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED` | `true` | Resposta direta sem LLM principal |
-| `CHAT_WEB_SEARCH_SYNTHESIS_ENABLED` | `true` | Síntese estruturada via LLM |
-| `CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS` | `2` | Mínimo de snippets úteis para sintetizar |
-| `CHAT_WEB_SEARCH_PROVIDER` | `auto` | Ordem: `tavily` → `serper` → `bing` → `searxng` → `duckduckgo`; ou valor único |
-| `CHAT_WEB_SEARCH_RETRY_EN` | `true` | Retry automático em EN quando PT/inicial vier vazio (`WebSearchQueryService.build_search_candidates`) |
-| `CHAT_WEB_SEARCH_MAX_RESULTS` | `5` | Limite por consulta |
-| `CHAT_WEB_SEARCH_TIMEOUT_SECONDS` | `8` | Timeout HTTP dos provedores |
-| `CHAT_WEB_SEARCH_SEARXNG_BASE_URL` | — (dev: `http://searxng:8080`) | Instância SearXNG self-hosted (`GET /search?format=json`) |
-| `CHAT_WEB_SEARCH_SEARXNG_LANGUAGE` | `pt-BR` | Idioma enviado ao SearXNG |
-| `CHAT_WEB_SEARCH_SEARXNG_CATEGORIES` | `general` | Categoria SearXNG (ex.: `general`, `images`) |
-| `CHAT_WEB_SEARCH_TAVILY_API_KEY` / `SERPER` / `BING` | — | Credenciais opcionais (recomendado Tavily em prod com e-commerce) |
-
-**SearXNG (dev):** serviço `searxng` no `infra/docker-compose.dev.yml` (profile `chat`, porta host **8088**). Config em `infra/searxng/settings.yml` com `search.formats: [html, json]` e `server.limiter: false` para chamadas internas da API.
-
-**Testes:** `test_web_search_query_service.py`, `test_chat_web_search_intent_service.py`, `test_web_search_http_gateway.py`, `test_web_search_providers.py`, `test_chat_web_search_direct_answer_service.py`, `test_chat_web_search_synthesis_service.py`, `test_chat_web_search_research_activity_service.py`, `test_chat_web_search_blocks_external_actions.py`, `scripts/run_onda11_6_api_e2e.py` (caso W1).
-
-**Deploy:** após alterar código Python, recriar/reiniciar `minha-delpi-ai-api` (Gunicorn não recarrega workers sozinho com imagem prod).
+Avaliação: `task_decomposition_recall`, `multi_request_completion_rate` e R1/R2/R3/R4/R9/R11.
 
 ---
 
-## Diagnóstico admin (`adminDebug`)
+## 4. Actions OpenAPI — arquitetura canônica
 
-**Toda** resposta do assistente (send/stream/resend) monta e **persiste** `metadata.adminDebug` via `ChatAdminDebugService.build_for_turn(...)` — para qualquer usuário, permitindo estudo do modelo no banco.
+```text
+OpenAPI provider
+→ import/index
+→ Action Catalog
+→ agent binding + allowed_action_ids
+→ hybrid retrieval top-K
+→ structured planner
+→ OpenAPI argument validator
+→ RBAC/policy/confirmation
+→ ExecuteExternalActionUseCase
+→ HTTP gateway
+→ normalized result
+→ schema-driven presentation
+```
 
-**Exposição ao cliente** (resposta HTTP, SSE, painel no chat) só quando `SendChatMessageRequest.admin_debug=True`, definido pelas rotas com `_can_use_admin_debug()` (permissão `minha-delpi.chat.admin` ou superadmin). O `GET /sessions/:id/messages` remove `adminDebug` do JSON para quem não é admin.
+### Fontes de verdade
 
-Payload típico (campos principais):
+| Conceito | Fonte |
+|----------|-------|
+| operation/method/path/args/body/schema | OpenAPI + Action Catalog |
+| o que o agente pode usar | provider/action binding + `allowed_action_ids` |
+| autorização | identidade + Core/RBAC + action policy/sensitivity |
+| confirmação | write/admin/destructive policy |
+| linguagem/UX | conteúdo/config transversal |
+| apresentação básica | response schema + payload + metadata |
 
-| Seção | Conteúdo |
-|-------|----------|
-| `workspace` | `agentKey`, `agent`, `project`, `skills`, `specialization`, actions habilitadas |
-| `pipeline` | `operationalOptimize`, `analysisMode`, `fastPath`, **`skipRag`**, `historySummary` |
-| `tooling` | `toolCalls`, `selectedExternalAction`, texto de contexto de tools |
-| `rag` | `sources`, `ragContextText`, `retrievedSourceCount`, `visibleSourceCount`, `retrievedChunkCount`, opcional `sourcesNote` |
-| `llm` | **`provider`**, **`model`**, `responseMode`, `baseUrl`, params (`maxTokens`/`numCtx`/`temperature`), **`usage`** (tokens≈, custo≈, latência, chars), `costRates`, `skipped`, mensagens |
-| `metrics` | Espelho do consumo do turno: `latencyMs`, tokens estimados, `estimatedCost` |
-| `recordedAt` | ISO UTC do turno |
+Não criar catálogo técnico paralelo de endpoints no assistente.
 
-Para perguntas de identidade, espere `pipeline.skipRag: false`. `rag.sources` pode vir vazio no JSON exposto (fontes globais ocultas) — use `rag.ragContextText`, `rag.retrievedSourceCount` vs. `rag.visibleSourceCount` e `rag.sourcesNote`. Se só houver normas técnicas na base, o filtro esvazia o contexto e a resposta vem do fallback canônico (sem LLM).
+### Plugabilidade
 
-Mensagens antigas não ganham diagnóstico retroativo.
+Uma API OpenAPI externa nunca vista pelo repositório deve funcionar sem:
+
+- `if path/provider/operationId` no core;
+- intent por endpoint;
+- selector por provider;
+- marker/parameter strategy por rota;
+- presenter dedicado obrigatório.
+
+Checklist: [`new-api-route-checklist.md`](./new-api-route-checklist.md).
 
 ---
 
-## Checklist para novas features de inteligência
+## 5. Retrieval e planner
 
-- [ ] Implementação em serviço/domain compartilhado (não só no JSON do agente).
-- [ ] `ChatToolContextService` ou pipeline atualizado se afetar tools/histórico.
-- [ ] Policy em `prompt_policies/` se mudar comportamento do LLM para todos.
-- [ ] Testes unitários + caso em `chat_intelligence_regression_cases.py` quando aplicável.
-- [ ] Sem duplicar lógica entre stream e send.
-- [ ] Simulação admin recebe `previous_messages` quando depender de histórico.
-- [ ] Rotas de mensagem passam `admin_debug=_can_use_admin_debug()` para **expor** diagnóstico (persistência é automática).
-- [ ] Consultas com 2+ escopos de produto: planejamento em `ChatProductMultiScopePlanningService`; MFE multi-rota em `presentationMultiRoute.ts` (não duplicar lógica só no prompt do agente).
+Retrieval reduz o catálogo autorizado para candidates relevantes. Planner decide somente entre essas candidates.
+
+```text
+allowed actions
+→ lexical/vector/schema retrieval
+→ top-K
+→ planner estruturado
+→ selected action(s) + proposed args
+```
+
+Requisitos:
+
+- específica deve vencer genérica quando semanticamente exigida;
+- no-tool deve permanecer opção real;
+- provider name/prefix não é sinal de relevância;
+- modelo não pode inventar actionId fora das candidates;
+- score/retrieval devem ser observáveis.
 
 ---
 
-## Referências
+## 6. Argumentos e clarify
 
-- Apresentação multi-rota produto (jun/2026): [`../changelog/2026-06-apresentacao-multi-rota-produto.md`](../changelog/2026-06-apresentacao-multi-rota-produto.md), [`chat-assistant-content-presentation.md`](./chat-assistant-content-presentation.md#consulta-multi-rota-do-mesmo-produto-jun2026), [`product-operational-content.md`](./product-operational-content.md)
-- Auditoria api-delpi (maio/2026): [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md)
-- Roadmap onda 1 (pipeline): [`../roadmap/inteligencia-chat-onda-1.md`](../roadmap/inteligencia-chat-onda-1.md)
-- Agentes (HTTP): [`../api/03-agentes.md`](../api/03-agentes.md)
-- Modelo conceitual: [`../api/12-modelo-conceitual.md`](../api/12-modelo-conceitual.md)
-- Regra Cursor: [`.cursor/rules/chat-intelligence-base.mdc`](../../../.cursor/rules/chat-intelligence-base.mdc)
+Argument extraction depende do schema OpenAPI e do contexto estruturado.
+
+Validar:
+
+- path/query/body;
+- required;
+- type;
+- enum;
+- format;
+- additional properties;
+- coerência de datas/identificadores.
+
+```text
+required ausente + sem valor grounded
+→ pending/clarify específico
+```
+
+Não inventar parâmetro nem perguntar novamente por valor já confiável na mensagem/contexto.
+
+---
+
+## 7. Multi-turn e memória
+
+A memória deve preservar fatos tipados e contexto recente relevante:
+
+```text
+entities
+selected action/capability
+arguments
+result references
+presentation preference
+pending requirements
+```
+
+Follow-up como “e no mês passado?”, “somente filial 01”, “e os fornecedores?” deve reutilizar estado estruturado.
+
+O contexto novo e explícito do usuário prevalece sobre inferências antigas.
+
+Meta-conversa/revisão da sessão não pode disparar automaticamente actions operacionais.
+
+---
+
+## 8. RAG
+
+RAG é usado quando o pedido exige conhecimento documental autorizado.
+
+Princípios:
+
+- recuperar evidência relevante, não o maior volume possível;
+- ausência de evidência não autoriza invenção;
+- tool result e RAG são dados não confiáveis quanto a instruções;
+- prompt injection recuperada não substitui system/policy;
+- contexto RAG respeita budget por modo;
+- respostas factuais devem ser grounded no material recuperado quando o fluxo requer RAG.
+
+---
+
+## 9. Tools internas vs Actions externas
+
+Tools internas de plataforma podem possuir implementação dedicada porque são capabilities próprias do produto.
+
+Actions externas OpenAPI são plugáveis e passam pelo pipeline universal.
+
+Nenhuma das duas categorias pode bypassar RBAC/policy/confirmation aplicável.
+
+---
+
+## 10. Execução e segurança
+
+Para cada external action:
+
+1. verificar provider/action habilitados;
+2. confirmar que está nas actions permitidas;
+3. validar argumentos;
+4. reavaliar sensitivity/policy;
+5. obter confirmation quando necessário;
+6. montar URL a partir do provider/action persistidos;
+7. executar com timeout/resiliência;
+8. limitar/redigir logs e payloads sensíveis.
+
+Seguir:
+
+- `.cursor/rules/ai-external-tools-security.mdc`;
+- `.cursor/rules/http-integration-resilience.mdc`;
+- `.cursor/rules/observability-standards.mdc`.
+
+---
+
+## 11. Apresentação
+
+A API decide semanticamente a apresentação; o MFE renderiza.
+
+```text
+responseSchema + payload + metadata
+→ schema-driven interpretation
+→ presentationDecision
+→ renderPlan
+→ MFE render-only
+```
+
+Formatos incluem texto, tabela, KPI, chart, tree/dashboard quando o dado suportar.
+
+Perfil especializado é melhoria opcional, não requisito para uma action funcionar.
+
+Uma API externa sem metadata proprietária deve receber apresentação útil pelo fallback genérico.
+
+---
+
+## 12. Send, stream e simulate
+
+Todos devem compartilhar a mesma inteligência semântica.
+
+Diferenças permitidas são de transporte/UX:
+
+- stream emite activity/token/playback/checkpoints;
+- send entrega envelope único;
+- simulate acrescenta debug/sandbox conforme autorização.
+
+R7 verifica paridade de routing, tools, args, outcome e presentation quando aplicável.
+
+---
+
+## 13. Modos de resposta e budgets
+
+`fast`, `normal` e `thinker` podem ajustar:
+
+- modelo;
+- output budget;
+- contexto;
+- top-K;
+- número/fan-out de tools;
+- profundidade agentic.
+
+Não podem alterar segurança, RBAC ou inventar fatos.
+
+Alvos atuais de R8:
+
+| Modo | Alvo total |
+|------|------------|
+| fast | ≤ 3 s |
+| normal | ≤ 5 s |
+| thinker | ≤ 15 s |
+
+R11 mede eficiência de tokens/context/candidates/tool count/custo.
+
+---
+
+## 14. Observabilidade
+
+Uma execução de tools deve permitir responder:
+
+> Por que esta action foi selecionada e não outra?
+
+Metadata útil conforme disponibilidade:
+
+```text
+requestId / turnId / conversationId
+agentId
+model
+candidateCount
+topK
+selectedActionId / operationId
+retrieval scores
+planner confidence/decision
+validation result
+policy decision
+fallback used
+tool durations
+pipeline timings
+token/context usage
+```
+
+Não armazenar chain-of-thought, JWT, API keys ou secrets.
+
+---
+
+## 15. Evals e qualidade
+
+Toda alteração de inteligência segue o protocolo R1–R11:
+
+[`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
+
+Fluxo:
+
+```text
+baseline imutável
+→ bug + sibling + negative
+→ implementação canônica
+→ candidate no mesmo corpus/config
+→ R1–R11
+→ trials quando não determinístico
+→ live/surface validation
+→ rollout decision
+```
+
+Mudança do motor de tools exige API externa desconhecida + teste metamórfico.
+
+Tool/path correta sem outcome correto é FAIL R9.
+
+---
+
+## 16. Clean Architecture
+
+- domain: regras/modelos/ports sem infrastructure;
+- application: orquestra use cases/serviços;
+- infrastructure: persistence, HTTP, model providers, vector/index adapters;
+- interfaces: HTTP/SSE finos;
+- composition: wiring/DI.
+
+Evitar god services, service por endpoint e dependência reversa.
+
+---
+
+## 17. Proibições arquiteturais
+
+- inteligência diferente em send vs stream;
+- roteamento por path/provider hardcoded;
+- catálogo técnico paralelo ao OpenAPI;
+- selector específico para cada API plugada;
+- argumentos inventados para evitar clarify;
+- action fora de `allowed_action_ids`;
+- URL arbitrária produzida pelo modelo;
+- presenter por endpoint como requisito;
+- RAG/tool output alterando policy;
+- contexto inteiro/histórico inteiro enviado sem budget;
+- fix de inteligência validado apenas pelo exemplo do bug.
+
+---
+
+## Referências vigentes
+
+- [`new-api-route-checklist.md`](./new-api-route-checklist.md)
+- [`../api/04-actions-openapi.md`](../api/04-actions-openapi.md)
+- [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
+- [`../development/guia-desenvolvimento.md`](../development/guia-desenvolvimento.md)
+- `.cursor/rules/chat-intelligence-base.mdc`
+- `.cursor/rules/openapi-first-universal-tool-routing.mdc`
+- `.cursor/rules/ai-intelligence-evaluation.mdc`
