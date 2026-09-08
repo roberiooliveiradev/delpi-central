@@ -11,23 +11,34 @@ class ActionPlanStep:
     action_id: str
     arguments: dict[str, Any] = field(default_factory=dict)
     reason: str = ""
+    confidence: float | None = None
 
     def as_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "actionId": self.action_id,
             "arguments": dict(self.arguments or {}),
             "reason": self.reason,
         }
+        if self.confidence is not None:
+            payload["confidence"] = self.confidence
+        return payload
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> ActionPlanStep:
         arguments = payload.get("arguments")
         if not isinstance(arguments, dict):
             arguments = {}
+        confidence_raw = payload.get("confidence")
+        confidence: float | None
+        try:
+            confidence = float(confidence_raw) if confidence_raw is not None else None
+        except (TypeError, ValueError):
+            confidence = None
         return cls(
             action_id=str(payload.get("actionId") or payload.get("action_id") or "").strip(),
             arguments=dict(arguments),
             reason=str(payload.get("reason") or "").strip(),
+            confidence=confidence,
         )
 
 

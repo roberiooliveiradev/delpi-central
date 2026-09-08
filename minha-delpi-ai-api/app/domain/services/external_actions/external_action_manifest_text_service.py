@@ -75,6 +75,11 @@ class ExternalActionManifestTextService:
         if example_parts:
             parts.append(f"{settings['examplesLabel']}: {' ; '.join(example_parts)}")
 
+        sensitivity = str(action.get("sensitivity") or "").strip()
+        if sensitivity:
+            label = str(settings.get("sensitivityLabel") or "sensitivity")
+            parts.append(f"{label}: {sensitivity}")
+
         return_parts = cls._return_parts(action, settings)
         if return_parts:
             parts.append(f"{settings['returnsLabel']}: {' ; '.join(return_parts)}")

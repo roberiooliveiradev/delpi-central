@@ -292,12 +292,30 @@ class ExternalActionSelectionSupportService:
     def resolve_previous_external_action_id(
         previous_messages: list | None,
         *,
-        path_fragment: str,
+        path_fragment: str = "",
     ) -> str | None:
-        fragment = str(path_fragment or "").strip().lower()
+        """Resolve última action bem-sucedida.
 
-        if not fragment:
+        Preferência OpenAPI-first: ``actionId`` estruturado.
+        ``path_fragment`` permanece só como filtro opcional de compatibilidade legada.
+        """
+        fragment = str(path_fragment or "").strip().lower()
+        state = ExternalActionSelectionSupportService.resolve_last_external_action_state(
+            previous_messages,
+            path_fragment=fragment or None,
+        )
+        if not state:
             return None
+        return str(state.get("actionId") or "").strip() or None
+
+    @staticmethod
+    def resolve_last_external_action_state(
+        previous_messages: list | None,
+        *,
+        path_fragment: str | None = None,
+    ) -> dict | None:
+        """Último execute_external_action ok → estado estruturado (sem exigir path)."""
+        fragment = str(path_fragment or "").strip().lower()
 
         for item in reversed((previous_messages or [])[-14:]):
             metadata = (
@@ -317,18 +335,39 @@ class ExternalActionSelectionSupportService:
                     continue
 
                 tool_meta = tool_call.get("metadata") or {}
+                if not isinstance(tool_meta, dict):
+                    continue
 
-                if not tool_meta.get("ok"):
+                if tool_meta.get("ok") is False:
                     continue
 
                 path = str(tool_meta.get("path") or "").lower()
-
-                if fragment not in path:
+                if fragment and fragment not in path:
                     continue
 
-                action_id = tool_meta.get("actionId")
+                action_id = str(
+                    tool_meta.get("actionId")
+                    or (tool_call.get("arguments") or {}).get("actionId")
+                    or ""
+                ).strip()
+                if not action_id:
+                    continue
 
-                if action_id:
-                    return str(action_id)
+                execution_context = tool_meta.get("executionContext")
+                if isinstance(execution_context, dict) and execution_context.get("actionId"):
+                    return dict(execution_context)
+
+                parameters = {}
+                arguments = tool_call.get("arguments")
+                if isinstance(arguments, dict) and isinstance(arguments.get("parameters"), dict):
+                    parameters = dict(arguments["parameters"])
+
+                return {
+                    "actionId": action_id,
+                    "providerKey": tool_meta.get("providerKey"),
+                    "parameters": parameters,
+                    "path": tool_meta.get("path"),
+                    "operationId": tool_meta.get("operationId"),
+                }
 
         return None

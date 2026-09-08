@@ -34,9 +34,9 @@ flowchart TD
 
 | Camada | Módulo |
 |--------|--------|
-| Vocabulário | `api_route_domains.json`, `operational_route_registry.json` |
-| Spec / params | `OperationalApiRouteSpec`, `OperationalApiParameterBuilderService` |
-| Seleção | `ExternalActionSelectionService`, `ExternalActionRouteSelectionService` |
+| Vocabulário / policies | `api_route_domains.json`, `operational_route_registry.json` (legado/policies) |
+| Spec / params | Schema OpenAPI da action · `OperationalApiParameterBuilderService` (compat) |
+| Seleção | **OpenAPI-first:** `RetrieveActionCandidatesService` → `PlanExternalActionsService` → `ValidateActionArgumentsService` via `OpenApiFirstSelectionBridgeService` · legado só com `CHAT_OPENAPI_PLANNER_MODE=off` |
 | Execução | `ExecuteExternalActionUseCase`, `HttpExternalActionGateway` |
 | Pipeline único | `ChatPresentationMetadataPipelineService` → delivered → schema-driven → insight → decision → finalize |
 | Shape / rows | `ChatSchemaDrivenPresentationService.extract_tabular_rows` + `presenter_content.json` (`singleRecordObjectKeys`, `tabularListKeys`) |

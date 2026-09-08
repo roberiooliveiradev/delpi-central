@@ -96,18 +96,22 @@ class ChatExternalActionOrchestrationService:
             *,
             memory_snapshot: dict | None = None,
         ) -> list[dict]:
-            planned = cls._merge_turn_analysis_action_ids(
-                selection_service,
-                planned=list(planned or []),
-                workspace_context=workspace_context,
-                allowed_action_ids=allowed_action_ids,
-                message=selection_message,
-                raw_message=raw_message,
-                conversation_context=conversation_context,
-                previous_messages=previous_messages,
-                memory_snapshot=memory_snapshot,
-                max_calls=max_calls,
-            )
+            # OpenAPI-first: não reentrar no registry via turn_analysis.select_action.
+            if not cls._planned_is_openapi_first(planned):
+                planned = cls._merge_turn_analysis_action_ids(
+                    selection_service,
+                    planned=list(planned or []),
+                    workspace_context=workspace_context,
+                    allowed_action_ids=allowed_action_ids,
+                    message=selection_message,
+                    raw_message=raw_message,
+                    conversation_context=conversation_context,
+                    previous_messages=previous_messages,
+                    memory_snapshot=memory_snapshot,
+                    max_calls=max_calls,
+                )
+            else:
+                planned = list(planned or [])
             from app.application.services.chat_multi_intent_continuation_service import (
                 ChatMultiIntentContinuationService,
             )
@@ -939,6 +943,16 @@ class ChatExternalActionOrchestrationService:
             seen.add(action_id)
             ordered.append(action_id)
         return ordered
+
+    @classmethod
+    def _planned_is_openapi_first(cls, planned: list[dict] | None) -> bool:
+        items = [item for item in (planned or []) if isinstance(item, dict)]
+        if not items:
+            return False
+        return all(
+            str((item.get("metadata") or {}).get("selectionMode") or "") == "openapi_first"
+            for item in items
+        )
 
     @classmethod
     def _merge_turn_analysis_action_ids(

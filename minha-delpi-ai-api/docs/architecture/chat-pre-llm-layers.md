@@ -68,7 +68,7 @@ Decisões pré-tools (canvas, capacidades) e pós-tools ainda passam por `ChatIn
 | Pergunta meta composta | `ChatMetaDirectAnswerService` | perfil + capacidades + assistente numa resposta |
 | Pergunta de capacidade | `ChatCapabilitiesService.resolve_capability_answer` | use cases (antes de tools) |
 | Canvas / lousa | `ChatCanvasContentService` + `ChatCanvasIntentService` | cópia, append e merge com tools |
-| Tools + OpenAPI | `ChatToolContextService` + `ExternalActionSelectionService` | tools |
+| Tools + OpenAPI | `ChatToolContextService` + **OpenAPI-first** (`OpenApiFirstSelectionBridgeService`) · legado `ExternalActionSelectionService` só se mode=off | tools |
 | Pós-tools / modo análise | `ChatIntelligencePipelineService.finalize_after_tools` | use cases |
 | Resposta direta API | `ChatExternalActionDirectResponseService` | pipeline |
 | Comparação estruturas | `ChatStructureComparisonService` | pipeline |

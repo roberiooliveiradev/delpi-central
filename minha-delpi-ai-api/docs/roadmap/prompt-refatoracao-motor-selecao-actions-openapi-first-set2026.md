@@ -1,10 +1,18 @@
 # Prompt mestre — Refatoração do motor de seleção universal de Actions OpenAPI-first
 
 **Tipo:** prompt executivo / playbook de implementação  
-**Status:** pronto para execução  
+**Status:** implementação entregue (núcleo OpenAPI-first + cutover; registry só policies/rollback)  
 **Data:** setembro/2026  
 **Escopo principal:** `minha-delpi-ai-api`  
 **Objetivo:** tornar a seleção e execução de Actions realmente generalista para qualquer provider OpenAPI importado, inclusive APIs externas nunca vistas pelo Minha DELPI.
+
+**Entrega alinhada (set/2026):**
+- Default `CHAT_OPENAPI_PLANNER_MODE=on` (Settings); Compose sem flags de modo.
+- Fail-closed sem fallback registry; `autoTierC` só em CI.
+- Retrieval híbrido + planner com scoring de especificidade + decomposição compound + estado multi-turno por `actionId`/`executionContext`.
+- Validator com type/enum/format; manifesto semântico inclui sensitivity.
+- Aceite: logistics + ACME component_cost + structure-excel / last-purchase / budget-history / price-intelligence.
+- Dívida residual documentada: LLM planner opcional (hook existe), Fase 9 remoção físicas do código legado/markers ainda presentes para `mode=off`.
 
 ---
 

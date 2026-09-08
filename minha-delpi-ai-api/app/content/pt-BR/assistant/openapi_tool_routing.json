@@ -38,6 +38,22 @@
     "default": "on",
     "allowed": ["off", "shadow", "canary", "on"]
   },
+  "decomposition": {
+    "maxSubtasks": 4,
+    "minSubtaskChars": 12,
+    "joiners": [
+      ", compare ",
+      " e tambem ",
+      " e também ",
+      " e depois ",
+      " e mostre ",
+      " e diga ",
+      ", mostre ",
+      " alem disso ",
+      " além disso ",
+      "; "
+    ]
+  },
   "selectionReasons": {
     "openapiFirstPlan": "Plano OpenAPI-first: action escolhida pelo catálogo autorizado e schema.",
     "openapiFirstClarify": "Não foi possível executar: falta informação obrigatória no contrato OpenAPI.",

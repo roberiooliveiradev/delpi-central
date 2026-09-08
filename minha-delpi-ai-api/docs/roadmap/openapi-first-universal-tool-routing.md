@@ -1,7 +1,7 @@
 # OpenAPI-first — roteamento universal de tools (chat)
 
 **Tipo:** plano técnico executável (diagnóstico + migração incremental)  
-**Status:** cutover OpenAPI-first — default `CHAT_OPENAPI_PLANNER_MODE=on`, fail-closed (sem fallback silencioso para registry), `autoTierC` só em CI (`operational_route_registry_autotierc.ci.json`)
+**Status:** cutover OpenAPI-first entregue — default `on` (Settings), fail-closed, compound/multi-turn estruturado, autoTierC só em CI; registry = policies/rollback. Ver também o prompt mestre atualizado.
 
 **Runtime:** Action Catalog OpenAPI (Postgres) é a fonte de seleção. `operational_route_registry.json` permanece para policies SQL/predicados legados em `mode=off` (rollback).
 

@@ -149,10 +149,11 @@ app/
 Seguir **[`docs/architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md)** — resumo:
 
 1. **api-delpi:** `api_delpi_success` + `route_contract_registry` + smoke `meta`
-2. **Registry:** `operational_route_registry.json` + `generate_operational_route_registry.py --check`
-3. **Apresentação:** `pathRules`, `chartPolicy`, `entityProfiles` (mínimo) — **sem** `visualBuilders` / `tableAssembly`
-4. **Pipeline:** `ChatPresentationApiDeliveredMetadataService` → `ChatSchemaDrivenPresentationService` → `presentationDecision`
-5. **CI:** `audit_presentation_coverage.py --check-profiles` + teste schema-driven
+2. **Chat (OpenAPI-first):** importar/indexar OpenAPI → vincular actions ao agente → **sem** nova entrada técnica no registry
+3. **Registry (legado/policies):** só se `mode=off` ou policy SQL/refinamento — `operational_route_registry.json` + `--check`
+4. **Apresentação:** `pathRules`, `chartPolicy`, `entityProfiles` (mínimo) — **sem** `visualBuilders` / `tableAssembly`
+5. **Pipeline:** `ChatPresentationApiDeliveredMetadataService` → `ChatSchemaDrivenPresentationService` → `presentationDecision`
+6. **CI:** `audit_presentation_coverage.py --check-profiles` + `audit_openapi_first_routing.py` + teste schema-driven
 
 Doc: [`presentation-delivered-pure-jun2026.md`](../architecture/presentation-delivered-pure-jun2026.md).
 

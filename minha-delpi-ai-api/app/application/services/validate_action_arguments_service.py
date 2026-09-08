@@ -84,6 +84,13 @@ class ValidateActionArgumentsService:
                     error_kind="invalid_type",
                     parameter_name=str(name),
                 )
+            fmt = str(schema.get("format") or "").strip().lower()
+            if fmt and not self._value_matches_format(value, fmt):
+                raise ExternalActionValidationError(
+                    f"Invalid format for parameter: {name}",
+                    error_kind="invalid_format",
+                    parameter_name=str(name),
+                )
 
     def _validate_body_schema(self, action: dict[str, Any], body: Any) -> None:
         body_schema = action.get("requestBodySchema") or action.get("request_body_schema")
@@ -162,4 +169,35 @@ class ValidateActionArgumentsService:
             return isinstance(value, list)
         if expected == "object":
             return isinstance(value, dict)
+        return True
+
+    @classmethod
+    def _value_matches_format(cls, value: Any, fmt: str) -> bool:
+        text = str(value).strip()
+        if not text:
+            return False
+        if fmt == "date":
+            import re
+
+            return bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", text))
+        if fmt in {"date-time", "datetime"}:
+            import re
+
+            return bool(
+                re.fullmatch(
+                    r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?(Z|[+-]\d{2}:?\d{2})?",
+                    text,
+                )
+            )
+        if fmt == "uuid":
+            import re
+
+            return bool(
+                re.fullmatch(
+                    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+                    text,
+                )
+            )
+        if fmt == "email":
+            return "@" in text and "." in text.split("@")[-1]
         return True

@@ -130,18 +130,36 @@ class PlanExternalActionsService:
 
         selected: list[ActionPlanStep] = []
         ctx_params = {}
+        preferred_action_id = ""
         if isinstance(execution_context, dict):
             raw_params = execution_context.get("parameters")
             if isinstance(raw_params, dict):
                 ctx_params = dict(raw_params)
+            preferred_action_id = str(execution_context.get("actionId") or "").strip()
 
-        for candidate in candidates:
+        ranked = sorted(
+            candidates,
+            key=lambda item: (
+                -self._specificity_score(
+                    normalized,
+                    item,
+                    preferred_action_id=preferred_action_id,
+                ),
+                0 if item.descriptor.method == "GET" else 1,
+                len(item.descriptor.path),
+            ),
+        )
+
+        for candidate in ranked:
             if len(selected) >= limit:
                 break
             action = candidate.raw_action
             if not self._message_matches_action(normalized, action):
-                # Still allow top-1 if strong lexical score and only one candidate with score
-                if not (candidate.score > 0.2 and not selected and candidate is candidates[0]):
+                if not (
+                    candidate.score > 0.2
+                    and not selected
+                    and candidate is ranked[0]
+                ):
                     continue
 
             parameters, body, missing = self._bind_arguments(
@@ -181,11 +199,17 @@ class PlanExternalActionsService:
             }
             if body is not None:
                 arguments["body"] = body
+            confidence = self._specificity_score(
+                normalized,
+                candidate,
+                preferred_action_id=preferred_action_id,
+            )
             selected.append(
                 ActionPlanStep(
                     action_id=candidate.action_id,
                     arguments=arguments,
                     reason=reason,
+                    confidence=round(confidence, 4),
                 )
             )
 
@@ -203,12 +227,65 @@ class PlanExternalActionsService:
 
     @classmethod
     def _wants_multi_action(cls, normalized: str) -> bool:
-        joiners = (" e tambem ", " e o ", " e a ", " alem ", " tambem ", " e estoque", " e rastre")
-        return any(token in normalized for token in joiners)
+        from app.application.services.decompose_external_action_requests_service import (
+            DecomposeExternalActionRequestsService,
+        )
+
+        return len(DecomposeExternalActionRequestsService.decompose(normalized)) > 1
 
     @classmethod
     def _message_matches_action(cls, normalized: str, action: dict[str, Any]) -> bool:
-        haystack = " ".join(
+        haystack = cls._action_haystack(action)
+        if not haystack:
+            return False
+        tokens = [token for token in _TOKEN_RE.findall(normalized) if len(token) >= 4]
+        if not tokens:
+            return bool(_IDENTIFIER_RE.search(normalized))
+        return any(token in haystack for token in tokens)
+
+    @classmethod
+    def _specificity_score(
+        cls,
+        normalized: str,
+        candidate: ActionCandidate,
+        *,
+        preferred_action_id: str = "",
+    ) -> float:
+        """Score genérico: retrieve score + overlap lexical + segmentos de path/operationId.
+
+        Sem keywords de domínio DELPI — diferencia operations próximas pelo contrato.
+        """
+        action = candidate.raw_action
+        haystack = cls._action_haystack(action)
+        tokens = [token for token in _TOKEN_RE.findall(normalized) if len(token) >= 3]
+        hits = 0.0
+        for token in tokens:
+            if token in haystack:
+                hits += 1.0 + min(len(token), 12) * 0.04
+
+        path = str(action.get("path") or "").lower()
+        operation_id = str(action.get("operationId") or action.get("operation_id") or "").lower()
+        path_segments = [
+            segment
+            for segment in path.replace("{", " ").replace("}", " ").replace("-", " ").replace("_", " ").split()
+            if len(segment) >= 3
+        ]
+        op_segments = [
+            segment
+            for segment in operation_id.replace("-", " ").replace("_", " ").split()
+            if len(segment) >= 3
+        ]
+        segment_hits = sum(1 for segment in path_segments + op_segments if segment in normalized)
+
+        # Prefer more specific operations when the user mentions distinctive segments
+        # (excel/history/export/…) that appear in path/operationId but not in siblings.
+        specificity = segment_hits * 0.85 + len(path_segments) * 0.02
+        continuity = 1.25 if preferred_action_id and candidate.action_id == preferred_action_id else 0.0
+        return float(candidate.score or 0.0) + hits * 0.35 + specificity + continuity
+
+    @classmethod
+    def _action_haystack(cls, action: dict[str, Any]) -> str:
+        return " ".join(
             str(action.get(key) or "")
             for key in (
                 "path",
@@ -217,32 +294,9 @@ class PlanExternalActionsService:
                 "description",
                 "actionId",
                 "tags",
+                "whenToUse",
             )
         ).lower()
-        keywords = (
-            "tracking",
-            "rastre",
-            "previs",
-            "eta",
-            "shipment",
-            "remessa",
-            "entrega",
-            "cancel",
-            "estoque",
-            "stock",
-            "warehouse",
-            "armazem",
-            "pedido",
-            "order",
-        )
-        hits = sum(1 for key in keywords if key in normalized and key in haystack)
-        if hits > 0:
-            return True
-        # Token overlap with operation/path fragments
-        for token in _TOKEN_RE.findall(normalized):
-            if len(token) >= 5 and token in haystack:
-                return True
-        return False
 
     @classmethod
     def _bind_arguments(
@@ -278,6 +332,12 @@ class PlanExternalActionsService:
                 message,
                 previous_messages=previous_messages,
             ) or ChatProductQueryIntentService.extract_product_code(message or "")
+            if not product_code:
+                # OpenAPI-first: qualquer identificador alfanumérico plausível no path.
+                for token in _TOKEN_RE.findall(message or ""):
+                    if any(ch.isdigit() for ch in token) and len(token) >= 3:
+                        product_code = token
+                        break
             if product_code:
                 for name in product_param_names:
                     parameters[name] = product_code

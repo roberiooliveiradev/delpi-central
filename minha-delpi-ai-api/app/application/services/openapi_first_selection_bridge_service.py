@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.application.services.decompose_external_action_requests_service import (
+    DecomposeExternalActionRequestsService,
+)
 from app.application.services.external_actions.external_action_selection_diagnostics_service import (
     ExternalActionSelectionDiagnosticsService,
 )
@@ -14,7 +17,7 @@ from app.application.services.retrieve_action_candidates_service import (
 from app.application.services.validate_action_arguments_service import (
     ValidateActionArgumentsService,
 )
-from app.domain.models.action_plan import ActionPlan
+from app.domain.models.action_plan import ActionPlan, ActionPlanStep
 from app.domain.services.chat_write_confirmation_service import ChatWriteConfirmationService
 from app.domain.services.openapi_planner_mode_service import (
     OpenApiPlannerModeDecision,
@@ -23,7 +26,6 @@ from app.domain.services.openapi_planner_mode_service import (
 from app.domain.services.openapi_tool_routing_content_service import (
     OpenApiToolRoutingContentService,
 )
-
 
 class OpenApiFirstSelectionBridgeService:
     def __init__(
@@ -59,25 +61,50 @@ class OpenApiFirstSelectionBridgeService:
         if not decision.use_openapi_selection and not decision.run_shadow_compare:
             return []
 
-        execution_context = self._execution_context(workspace_context)
-        candidates = self.retriever.retrieve(
-            message,
-            allowed_action_ids=allowed_action_ids,
-            catalog_actions=catalog_actions,
-        )
-        plan = self.planner.plan(
-            message,
-            candidates,
+        execution_context = self._execution_context(
+            workspace_context,
             previous_messages=previous_messages,
-            execution_context=execution_context,
         )
+        subtasks = DecomposeExternalActionRequestsService.decompose(message)
+        plans: list[ActionPlan] = []
+        rolling_context = dict(execution_context or {})
+        for subtask in subtasks:
+            candidates = self.retriever.retrieve(
+                subtask.text,
+                allowed_action_ids=allowed_action_ids,
+                catalog_actions=catalog_actions,
+            )
+            plan = self.planner.plan(
+                subtask.text,
+                candidates,
+                previous_messages=previous_messages,
+                execution_context=rolling_context,
+            )
+            plans.append(plan)
+            # Propagate resolved args across independent read subtasks (compound DAG).
+            for step in plan.steps:
+                rolling_context = self.merge_execution_context(
+                    rolling_context,
+                    provider_key=None,
+                    action_id=step.action_id,
+                    arguments=step.arguments,
+                )
+        plan = self._merge_subtask_plans(plans)
         actions_by_id: dict[str, dict[str, Any]] = {}
         for action in catalog_actions or []:
             action_id = str(action.get("actionId") or "").strip()
             if action_id:
                 actions_by_id[action_id] = dict(action)
-        for candidate in candidates:
-            actions_by_id[candidate.action_id] = candidate.raw_action
+        # Re-retrieve once for metadata enrichment of chosen ids.
+        for step in plan.steps:
+            if step.action_id in actions_by_id:
+                continue
+            for candidate in self.retriever.retrieve(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                catalog_actions=catalog_actions,
+            ):
+                actions_by_id[candidate.action_id] = candidate.raw_action
 
         planned = self._plan_to_tool_calls(
             plan,
@@ -204,6 +231,14 @@ class OpenApiFirstSelectionBridgeService:
                     "selectionMode": "openapi_first",
                     "providerKey": action.get("providerKey"),
                     "operationId": action.get("operationId"),
+                    "actionId": step.action_id,
+                    "executionContext": self.merge_execution_context(
+                        None,
+                        provider_key=str(action.get("providerKey") or "") or None,
+                        action_id=step.action_id,
+                        arguments=normalized or step.arguments,
+                    ),
+                    "confidence": step.confidence,
                     "requiresConfirmation": ChatWriteConfirmationService.action_requires_confirmation(
                         action
                     ),
@@ -213,14 +248,59 @@ class OpenApiFirstSelectionBridgeService:
         return results
 
     @classmethod
-    def _execution_context(cls, workspace_context: dict | None) -> dict[str, Any]:
-        if not isinstance(workspace_context, dict):
-            return {}
-        working = workspace_context.get("workingMemory")
-        if not isinstance(working, dict):
-            return {}
-        ctx = working.get("executionContext")
-        return dict(ctx) if isinstance(ctx, dict) else {}
+    def _merge_subtask_plans(cls, plans: list[ActionPlan]) -> ActionPlan:
+        if not plans:
+            return ActionPlan(selection_mode="openapi_first")
+        if len(plans) == 1:
+            return plans[0]
+
+        steps: list[ActionPlanStep] = []
+        seen: set[str] = set()
+        clarify: str | None = None
+        metadata: dict[str, Any] = {"compound": True, "subtaskCount": len(plans)}
+        for plan in plans:
+            if plan.clarify and not plan.steps:
+                clarify = clarify or plan.clarify
+                continue
+            for step in plan.steps:
+                if step.action_id in seen:
+                    continue
+                seen.add(step.action_id)
+                steps.append(step)
+        if not steps and clarify:
+            return ActionPlan(
+                clarify=clarify,
+                selection_mode="openapi_first",
+                metadata=metadata,
+            )
+        return ActionPlan(
+            steps=tuple(steps),
+            selection_mode="openapi_first",
+            metadata=metadata,
+        )
+
+    @classmethod
+    def _execution_context(
+        cls,
+        workspace_context: dict | None,
+        *,
+        previous_messages: list | None = None,
+    ) -> dict[str, Any]:
+        if isinstance(workspace_context, dict):
+            working = workspace_context.get("workingMemory")
+            if isinstance(working, dict):
+                ctx = working.get("executionContext")
+                if isinstance(ctx, dict) and ctx.get("actionId"):
+                    return dict(ctx)
+
+        from app.application.services.external_actions.external_action_selection_support_service import (
+            ExternalActionSelectionSupportService,
+        )
+
+        previous = ExternalActionSelectionSupportService.resolve_last_external_action_state(
+            previous_messages
+        )
+        return previous or {}
 
     @classmethod
     def _agent_id(cls, workspace_context: dict | None) -> str | None:

@@ -98,7 +98,8 @@
       "requiredLabel": "required",
       "optionalLabel": "optional",
       "bodyLabel": "body",
-      "examplesLabel": "examples"
+      "examplesLabel": "examples",
+      "sensitivityLabel": "sensitivity"
     },
     "siblingDisambiguation": [
       {

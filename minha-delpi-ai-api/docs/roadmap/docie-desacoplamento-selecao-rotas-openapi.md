@@ -1,11 +1,14 @@
 # DOCIE — Desacoplamento da seleção de rotas OpenAPI (chat generalista)
 
 **Tipo:** Documento de Orientação para Implementação e Evolução (DOCIE)  
-**Status:** Fases 0–20 concluídas · **100%** desacoplamento rotas OpenAPI (seleção + params tier C)  
-**Data:** jun/2026  
+**Status:** Fases 0–20 concluídas (jun/2026) · **histórico de transição** — o “100%” refere-se ao desacoplamento de hardcode Python daquela etapa, **não** à arquitetura OpenAPI-first universal  
+**Evolução canônica (set/2026):** [`prompt-refatoracao-motor-selecao-actions-openapi-first-set2026.md`](./prompt-refatoracao-motor-selecao-actions-openapi-first-set2026.md) · [`openapi-first-universal-tool-routing.md`](./openapi-first-universal-tool-routing.md)  
+**Data:** jun/2026 (histórico) · atualização de status set/2026  
 **Commit de referência:** `b756a2be` (Fase 20 autoTierCRoutes) · `3a24f31c` (Fase 19 apresentação entity-first)  
 **Público:** `minha-delpi-ai-api`, gestão de agentes, integradores de novas APIs  
-**Regras Cursor:** `chat-intelligence-base.mdc`, `centralized-rules-first.mdc`, `assistant-content-json.mdc`, `clean-architecture-chat-api.mdc`
+**Regras Cursor:** `openapi-first-universal-tool-routing.mdc`, `chat-intelligence-base.mdc`, `centralized-rules-first.mdc`, `assistant-content-json.mdc`, `clean-architecture-chat-api.mdc`
+
+> **Nota set/2026:** seleção canônica = Action Catalog + retrieval + planner + validação OpenAPI (`mode=on` default). O registry permanece para policies SQL/refinamento e rollback (`mode=off`). `autoTierCRoutes` saiu do runtime (arquivo CI). Novas APIs **não** devem crescer o registry técnico.
 
 ---
 
