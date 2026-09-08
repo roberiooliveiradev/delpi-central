@@ -160,7 +160,30 @@ Se uma capability existente + unidade + ownership preservar a segurança, a nova
 | Gestor multi | portal + analytics + operations | units atribuídas |
 | Admin | portal + administration + capabilities necessárias | units administradas |
 
-Comprador ES no Core continua **HIPOTESE_A_VALIDAR**; o modelo não exige novas permissions funcionais para ele, apenas composição de papel + `filial-02`.
+### E1.S2 — Evidência Core (2026-09-08)
+
+| Fonte | Resultado |
+|---|---|
+| Core local `delpi-postgres-core` | 1 role (`Portal Comercial - Full`), 1 user, **zero** permissions `dashboard-supplies.*` / `purchase-requests.*` / `estoque-seguranca.*` / BIs do PO |
+| Smokes `/me` de personas Suprimentos | **não executáveis** neste ambiente (apps/permissions de Suprimentos não provisionados no Core local) |
+| Manifests no monorepo | fonte canônica dos codes **legados de produto** até dump/prod HML |
+
+**P-02 Comprador ES:** `BLOQUEADO_COM_EVIDENCIA` no Core acessível — não há papel/usuário/permission de comprador ES para inspecionar. O modelo RBAC **não** exige capability nova para ES: só composição + `supplies.unit.filial-02`. Hipótese de existência operacional do papel permanece até smoke em Core prod/HML com usuários reais (E3.S5).
+
+### Matriz legado observado (código) → alvo ADR-007
+
+| Papel alvo (UX) | Permissions legadas (manifest/código) | Units legadas | Capabilities canônicas | Units canônicas | Gap E3.S5 |
+|---|---|---|---|---|---|
+| Analista SC/ES | `dashboard-supplies.view` | — (app sem eixo unit no manifest) | `portal.access` + `analytics.access` | `filial-01` e/ou `filial-02` conforme papel | provisionar units + portal (dashboard legado não tem unit) |
+| Comprador SC | `estoque-seguranca.access` + `view.filial-sc`; BIs PO ainda sem id Core | `filial-sc` → 01 | `portal` + `operations` (+ analytics se usar OTD gerencial) | `filial-01` | mapear ESTSEG; BIs só após dump prod |
+| Comprador ES | **não observado** no Core local nem evidência PO | — | mesmas capabilities do SC se o papel existir | `filial-02` | smoke prod; senão N/A |
+| Solicitante CC | `purchase-requests.access` + unit 01/02 | `unit.filial-01/02` | `portal` + `purchase-requests.access` | mesma unit | alias + canônicas |
+| Comprador visão ampla SC | `purchase-requests.access` + `view-all` + unit | unit | + `view-all` | unit | alias |
+| Admin compras | `purchase-requests.admin` | não implica todas units | `administration.manage` + units administradas | units explícitas | não promover admin → all units |
+| Exportador SC | `purchase-requests.export` | — | `export` | herda units do access | manter segregação |
+| Usuário sem supplies | (nenhuma) | — | nenhuma `supplies.*` | — | `/me/apps` não lista Portal |
+
+Comprador ES no Core continua **HIPOTESE_A_VALIDAR** operacionalmente; para o catálogo de permissions, P-02 está **fechado como não bloqueante do desenho** (sem code novo).
 
 ---
 

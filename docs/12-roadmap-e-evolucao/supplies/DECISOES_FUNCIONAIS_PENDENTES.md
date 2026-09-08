@@ -5,7 +5,7 @@ Só o que o repositório não responde. Não bloqueia o desenho, mas pode bloque
 | ID | Pergunta | Impacto | Estado E1 | Subetapa |
 |---|---|---|---|---|
 | P-01 | URLs, ids e tipo dos 6 apps/BIs do PO | menu, paridade, redirects | **BLOQUEADO_COM_EVIDENCIA** — Core local 2026-09-08: 0/6; falta dump prod | E1.S1 → reabrir com Core prod |
-| P-02 | Comprador ES existe no Core? | papel + unit-02 | aberto (E1.S2) | E1.S2 |
+| P-02 | Comprador ES existe no Core? | papel + unit-02 | **FECHADO_PARA_DESENHO** — Core local sem papéis supplies; sem evidência PO de comprador ES; **sem permission nova**; smoke prod fica para E3.S5 (`HIPOTESE_A_VALIDAR` operacional) | E1.S2 |
 | P-03 | Regra do BI Atraso SC = OTD nativo? | WF-07/paridade | **BLOQUEADO_COM_EVIDENCIA** — BI id/path desconhecido até dump prod; OTD nativo documentado no help | E1.S1 + E7.S1 |
 | P-04 | Regra do BI Controle Estoques SC | WF-15/paridade | **BLOQUEADO_COM_EVIDENCIA** — mesmo motivo P-01 | E1.S1 + E8 |
 | P-05 | Existe processo de importação/TOTVS já mapeado? | WF-08 | **BLOQUEADO_COM_EVIDENCIA** — app não no Core local; nenhuma rota nativa confirmada no monorepo | E1.S1 |

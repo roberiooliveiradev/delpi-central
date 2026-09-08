@@ -36,7 +36,7 @@ Frequência: diária · semanal · mensal · eventual — presumida quando não 
 | Tema | SC (01) | ES (02) |
 |---|---|---|
 | Analista | evidenciado | evidenciado |
-| Comprador | evidenciado | não evidenciado; validar E1.S2 |
+| Comprador | evidenciado (PO + plugins) | não evidenciado no Core local nem pelo PO; E1.S2 = sem code novo; validar users em E3.S5 |
 | Unit canônica futura | `supplies.unit.filial-01` | `supplies.unit.filial-02` |
 | Legados | `filial-01` / `filial-sc` | `filial-02` / `filial-es` |
 
