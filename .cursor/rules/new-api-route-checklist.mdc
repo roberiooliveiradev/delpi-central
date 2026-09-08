@@ -1,6 +1,6 @@
 ---
-description: Checklist obrigatório ao criar ou alterar rotas de API expostas ao chat — OpenAPI-first e multi-provider
-alwaysApply: true
+description: Nova rota/API/action exposta ao chat — checklist OpenAPI-first, import/index, governança, execução genérica, apresentação e testes
+alwaysApply: false
 ---
 
 # Nova rota/API exposta ao chat — checklist
