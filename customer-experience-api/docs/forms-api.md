@@ -111,7 +111,7 @@ pytest tests/test_form_service.py tests/test_form_response_service.py -q
 
 ## Referências
 
-- Playbook: `docs/12-roadmap-e-volucao/customer-experience/PLAYBOOK-EXCELENCIA.md`
-- Entregas jul/2026: `docs/12-roadmap-e-volucao/customer-experience/ROADMAP-FORMULARIOS-JUL2026.md`
+- Playbook: `docs/12-roadmap-e-evolucao/customer-experience/PLAYBOOK-EXCELENCIA.md`
+- Entregas jul/2026: `docs/12-roadmap-e-evolucao/customer-experience/ROADMAP-FORMULARIOS-JUL2026.md`
 - Plugin admin: `plugins/customer-experience/README.md`
 - Página pública: `plugins/public-hub/src/apps/customer-experience/`
