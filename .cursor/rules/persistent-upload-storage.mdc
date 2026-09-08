@@ -1,6 +1,6 @@
 ---
-description: Uploads de usuário — volume persistente obrigatório; nunca só no filesystem do container
-alwaysApply: true
+description: Uploads/arquivos de usuário — carregar ao criar ou alterar storage, anexos, PDFs, evidências, paths de upload ou volumes Docker
+alwaysApply: false
 ---
 
 # Storage persistente de uploads
