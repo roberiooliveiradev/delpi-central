@@ -10,6 +10,8 @@ Regras:
 - MFE_GLOBAL_CSS: MFE não pode introduzir seletores CSS globais no documento host.
 - MFE_PLUGIN_UI_OVERRIDE: MFE não pode estilizar classes .delpi-ui-*; o CSS do kit
   pertence a plugins/plugin-ui.
+- MFE_OWN_API_BYPASS: se plugins/<app> possui <app>-api no monorepo, seu código de
+  frontend não pode introduzir chamada direta a /apps/api-delpi.
 - JWT_VERIFY_DISABLED: código de produção não pode desabilitar verificação de
   assinatura/certificado de JWT explicitamente.
 
@@ -32,6 +34,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MIGRATION_RE = re.compile(r"(?:^|/)migrations/(?:.*/)?V\d+__[^/]+\.sql$", re.IGNORECASE)
 GLOBAL_CSS_RE = re.compile(r"^\s*(?::root|body|html|#root|\*)\s*\{")
 PLUGIN_UI_CLASS_RE = re.compile(r"\.delpi-ui-[A-Za-z0-9_-]+")
+API_DELPI_GATEWAY_RE = re.compile(r"(?:^|[\"'`])/?apps/api-delpi(?:/|[\"'`])", re.IGNORECASE)
 JWT_VERIFY_DISABLED_RE = re.compile(
     r"(?:verify_signature|verify|verify_cert|verify_ssl)\s*[=:]\s*(?:False|false|0)",
     re.IGNORECASE,
@@ -43,6 +46,7 @@ JWT_OPTIONS_DISABLED_RE = re.compile(
 
 MFE_SHARED_EXCLUSIONS = {"plugin-ui", "tv-dashboard-presentation", "vite", "docker"}
 PRODUCTION_CODE_EXTENSIONS = {".py", ".js", ".jsx", ".ts", ".tsx"}
+MFE_CODE_EXTENSIONS = {".js", ".jsx", ".ts", ".tsx"}
 SKIP_SECURITY_PARTS = ("/tests/", "/test/", "/fixtures/", "/docs/", "/.cursor/")
 
 
@@ -159,12 +163,17 @@ def scan_migration_mutations(base: str) -> list[Violation]:
     return findings
 
 
-def is_mfe_css(path: str) -> bool:
+def plugin_name_from_path(path: str) -> str | None:
     normalized = path.replace("\\", "/")
     parts = normalized.split("/")
-    if len(parts) < 3 or parts[0] != "plugins" or not normalized.endswith(".css"):
-        return False
-    return parts[1] not in MFE_SHARED_EXCLUSIONS
+    if len(parts) < 3 or parts[0] != "plugins":
+        return None
+    plugin = parts[1]
+    return None if plugin in MFE_SHARED_EXCLUSIONS else plugin
+
+
+def is_mfe_css(path: str) -> bool:
+    return plugin_name_from_path(path) is not None and path.lower().endswith(".css")
 
 
 def scan_mfe_css(path: str, lines: dict[int, str]) -> list[Violation]:
@@ -191,6 +200,34 @@ def scan_mfe_css(path: str, lines: dict[int, str]) -> list[Violation]:
                     path,
                     line_no,
                     "classe .delpi-ui-* estilizada no MFE; corrija o componente em plugins/plugin-ui ou use tokens",
+                )
+            )
+    return findings
+
+
+def mfe_has_own_api(path: str) -> bool:
+    plugin = plugin_name_from_path(path)
+    return bool(plugin and (ROOT / f"{plugin}-api").is_dir())
+
+
+def scan_mfe_own_api_bypass(path: str, lines: dict[int, str]) -> list[Violation]:
+    plugin = plugin_name_from_path(path)
+    if (
+        not plugin
+        or Path(path).suffix.lower() not in MFE_CODE_EXTENSIONS
+        or not mfe_has_own_api(path)
+    ):
+        return []
+
+    findings: list[Violation] = []
+    for line_no, line in lines.items():
+        if API_DELPI_GATEWAY_RE.search(line):
+            findings.append(
+                Violation(
+                    "MFE_OWN_API_BYPASS",
+                    path,
+                    line_no,
+                    f"MFE {plugin!r} possui {plugin}-api e não pode chamar /apps/api-delpi diretamente; use sua API/BFF",
                 )
             )
     return findings
@@ -227,6 +264,7 @@ def collect(base: str) -> list[Violation]:
     findings = scan_migration_mutations(base)
     for path, lines in added_lines(base).items():
         findings.extend(scan_mfe_css(path, lines))
+        findings.extend(scan_mfe_own_api_bypass(path, lines))
         findings.extend(scan_jwt_verify_disabled(path, lines))
     return findings
 
