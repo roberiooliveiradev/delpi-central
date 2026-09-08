@@ -96,17 +96,50 @@ class PlatformGuardrailsTest(unittest.TestCase):
                 [],
             )
 
-    def test_jwt_verify_disabled_is_blocked_in_production(self):
-        findings = mod.scan_jwt_verify_disabled(
-            "some-api/app/auth.py",
-            {10: 'jwt.decode(token, key, options={"verify_signature": False})'},
-        )
-        self.assertEqual([item.rule for item in findings], ["JWT_VERIFY_DISABLED"])
+    def test_jwt_verify_signature_audience_and_issuer_disable_are_blocked(self):
+        cases = [
+            'options={"verify_signature": False}',
+            'options={"verify_aud": False}',
+            'options={"verify_iss": False}',
+            'options={"verify_aud": bool(audience)}',
+        ]
+        for line in cases:
+            with self.subTest(line=line):
+                findings = mod.scan_jwt_verify_disabled("some-api/app/auth.py", {10: line})
+                self.assertEqual([item.rule for item in findings], ["JWT_VERIFY_DISABLED"])
 
     def test_jwt_verify_disabled_test_fixture_is_ignored(self):
         findings = mod.scan_jwt_verify_disabled(
             "some-api/tests/test_auth.py",
             {10: 'jwt.decode(token, key, options={"verify_signature": False})'},
+        )
+        self.assertEqual(findings, [])
+
+    def test_new_local_jwt_decode_in_api_is_blocked(self):
+        findings = mod.scan_jwt_validator_duplication(
+            "new-service-api/app/security/jwt_validator.py",
+            {5: "claims = jwt.decode(token, key, algorithms=['RS256'])"},
+        )
+        self.assertEqual([item.rule for item in findings], ["JWT_VALIDATOR_DUPLICATION"])
+
+    def test_shared_jwt_decode_is_allowed(self):
+        findings = mod.scan_jwt_validator_duplication(
+            "shared/delpi_auth/jwt_validator.py",
+            {5: "claims = jwt.decode(token, key, algorithms=['RS256'])"},
+        )
+        self.assertEqual(findings, [])
+
+    def test_new_generic_authz_primitive_in_api_is_blocked(self):
+        findings = mod.scan_authz_primitive_duplication(
+            "new-service-api/app/auth_decorators.py",
+            {8: "def require_permission(permission: str):"},
+        )
+        self.assertEqual([item.rule for item in findings], ["AUTHZ_PRIMITIVE_DUPLICATION"])
+
+    def test_core_authz_primitive_is_allowed(self):
+        findings = mod.scan_authz_primitive_duplication(
+            "core-api/app/interfaces/http/security/authorization.py",
+            {8: "def require_permission(permission: str):"},
         )
         self.assertEqual(findings, [])
 
