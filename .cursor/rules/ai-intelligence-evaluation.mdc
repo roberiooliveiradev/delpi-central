@@ -1,0 +1,219 @@
+---
+description: Minha DELPI AI — evals e regressão da inteligência para prompts, retrieval, RAG, planner, tools, contexto, memória e argument extraction
+alwaysApply: false
+---
+
+# Avaliação da inteligência do chat
+
+## Princípio
+
+Mudança que afeta inteligência não pode ser validada apenas pelo exemplo que motivou o fix.
+
+Qualquer alteração relevante em:
+
+```text
+prompt
+retrieval
+embeddings
+RAG
+intent/decomposition
+planner/tool selection
+argument extraction
+context/memory
+ranking/fallback
+prose synthesis
+```
+
+deve ser avaliada contra um conjunto de casos representativo e comparável antes/depois.
+
+Complementa `chat-intelligence-base.mdc`, `openapi-first-universal-tool-routing.mdc`, `test-and-commit.mdc` e `ai-context-and-tool-budget.mdc`.
+
+## Objetivo
+
+Responder objetivamente:
+
+```text
+melhorou o caso reportado?
+manteve casos irmãos?
+criou falsas chamadas de tool?
+piorou follow-up/contexto?
+aumentou custo/latência sem ganho?
+```
+
+## Dataset de regressão
+
+Preferir fixtures versionadas por capacidade, por exemplo:
+
+```text
+evals/
+  action_selection.jsonl
+  compound_requests.jsonl
+  follow_up_context.jsonl
+  ambiguous_actions.jsonl
+  argument_extraction.jsonl
+  rag_grounding.jsonl
+  no_tool_needed.jsonl
+```
+
+Cada caso deve declarar, quando aplicável:
+
+```text
+id
+input
+conversation/context
+allowed actions
+expected capability/behavior
+expected action(s)
+expected arguments or constraints
+forbidden behavior
+notes/source
+```
+
+Não usar segredo, dado pessoal desnecessário ou payload de produção sem sanitização.
+
+## Famílias mínimas de eval
+
+Para tool routing:
+
+1. action correta entre semanticamente próximas;
+2. duas APIs/providers com funções semelhantes;
+3. nenhuma tool quando resposta direta basta;
+4. argumento obrigatório presente;
+5. argumento obrigatório ausente → follow-up;
+6. pedido composto com múltiplas actions;
+7. multi-turn reaproveitando contexto;
+8. write/admin/destructive respeitando policy;
+9. API externa desconhecida do domínio DELPI;
+10. linguagem curta, longa, ambígua e com sinônimos.
+
+Para RAG/contexto:
+
+- recuperação do documento correto;
+- resposta grounded no material recuperado;
+- conflito entre contexto atual e histórico antigo;
+- contexto explícito do usuário prevalecendo quando aplicável;
+- ausência de evidência → não inventar fato.
+
+## Métricas
+
+Medir conforme a capacidade alterada, preferencialmente:
+
+```text
+task_decomposition_recall
+action_top_k_recall
+action_selection_accuracy
+argument_extraction_accuracy
+missing_required_argument_accuracy
+false_tool_call_rate
+unnecessary_follow_up_rate
+multi_request_completion_rate
+rag_grounding_rate
+tool_execution_success_rate
+p50/p95 latency
+tokens/cost per turn
+```
+
+Métrica sem definição/teste reproduzível não deve ser usada para declarar melhoria.
+
+## Baseline antes/depois
+
+Fluxo obrigatório para alteração significativa:
+
+```text
+rodar baseline atual
+→ registrar métricas
+→ implementar
+→ rodar exatamente o mesmo corpus
+→ comparar
+→ investigar regressões
+→ só então aceitar
+```
+
+Se não houver harness automático ainda, criar teste determinístico possível e registrar explicitamente o que permanece não mensurado. Não substituir eval por opinião manual.
+
+## Não otimizar para um único exemplo
+
+Proibido:
+
+```text
+prompt especial para frase reportada
+regex específica do exemplo
+boost por operationId para passar um caso
+hardcode de entidade presente no dataset
+```
+
+Se o fix precisa conhecer a resposta esperada de cada fixture para funcionar, o teste está sendo "ensinado" ao runtime.
+
+## Determinismo e tolerância
+
+- Separar asserts determinísticos de avaliações semânticas.
+- Tool/action/argument esperado deve ter assert estruturado sempre que possível.
+- Prosa pode usar critérios/rubrica, não igualdade literal quando não necessária.
+- Fixar temperature/model/config de eval quando o objetivo for comparar releases.
+- Repetir amostra quando variabilidade do modelo puder alterar a conclusão.
+
+## Shadow/canary
+
+Mudanças grandes em planner, retrieval ou roteamento devem preferir:
+
+```text
+novo motor em shadow
+→ comparar seleção antiga × nova
+→ medir divergências
+→ canary por agente/provider
+→ expandir após estabilidade
+```
+
+Não remover legado com base em poucos prompts manuais.
+
+## Quality gates
+
+Uma alteração de inteligência não está pronta se:
+
+- melhora o caso alvo mas causa regressão material em família irmã;
+- aumenta false tool call sem justificativa;
+- reduz seleção/argument accuracy abaixo do baseline aceito;
+- adiciona follow-up desnecessário em massa;
+- duplica tokens/latência sem ganho mensurável relevante;
+- não há evidência de que o pipeline real usa a mudança.
+
+Thresholds numéricos específicos devem viver em configuração/eval policy canônica, não espalhados em serviços.
+
+## Evidência de entrega
+
+No resumo técnico, registrar:
+
+```text
+EVAL_SET
+BASELINE
+RESULTADO_NOVO
+REGRESSOES
+LATENCIA/CUSTO quando material
+DECISAO
+```
+
+Seguir `evidence-driven-execution.mdc`: fato medido não deve ser misturado com inferência subjetiva.
+
+## O que NÃO fazer
+
+- Validar só com um prompt no playground.
+- Declarar “mais inteligente” sem baseline comparável.
+- Criar fixtures apenas do happy path.
+- Usar apenas exact-match de texto para qualidade semântica.
+- Ignorar no-tool cases.
+- Alterar dataset e motor simultaneamente para esconder regressão.
+- Remover casos que ficaram vermelhos sem justificar mudança de requisito.
+
+## Critério de sucesso
+
+A evolução da inteligência passa a ser tratada como produto mensurável:
+
+```text
+hipótese
+→ corpus representativo
+→ baseline
+→ mudança
+→ comparação
+→ análise de regressão
+→ rollout controlado
+```
