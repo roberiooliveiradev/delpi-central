@@ -103,4 +103,12 @@ describe("home hub stack", () => {
     assert.match(help, /botão Buscar da barra superior/);
     assert.match(help, /popover ancorado/);
   });
+
+  it("Favoritos e nome do avatar usam collapse-label do kit", () => {
+    const favorites = readSrc("app/ShellFavoritesStrip.tsx");
+    const userMenu = readSrc("app/ShellUserPortfolioMenu.tsx");
+    assert.match(favorites, /delpi-ui-topbar-collapse-label/);
+    assert.match(favorites, /cm-shell-favorites__trigger-label/);
+    assert.match(userMenu, /cm-shell-user__name delpi-ui-topbar-collapse-label/);
+  });
 });

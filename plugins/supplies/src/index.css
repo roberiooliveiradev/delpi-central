@@ -710,19 +710,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 720px) {
-  .dashboard-supplies-portal .sp-shell-user__name {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-}
+/* Compactação ≤720px: dual-class `.delpi-ui-topbar-collapse-label` (kit). */
 
 /* Perfil WF-USER */
 .dashboard-supplies-portal .sp-user-profile__grid {

@@ -91,7 +91,9 @@ export function ShellFavoritesStrip({ basePath }: ShellFavoritesStripProps) {
           strokeWidth={1.75}
           aria-hidden="true"
         />
-        <span className="cm-shell-favorites__trigger-label">{triggerLabel}</span>
+        <span className="cm-shell-favorites__trigger-label delpi-ui-topbar-collapse-label">
+          {triggerLabel}
+        </span>
       </button>
 
       <AnchoredPanelPortal

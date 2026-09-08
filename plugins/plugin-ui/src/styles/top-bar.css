@@ -269,7 +269,17 @@
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
 }
 
+/**
+ * Rótulo de chrome da TopBar (Buscar, Favoritos, nome do avatar…) —
+ * em viewport estreita fica só o ícone/imagem; o texto permanece acessível (sr-only).
+ * MFEs: dual-class no span do rótulo (`…__label` / `…__name` + esta classe).
+ */
+.delpi-ui-topbar-collapse-label {
+  white-space: nowrap;
+}
+
 @media (max-width: 720px) {
+  .delpi-ui-topbar-collapse-label,
   .delpi-ui-topbar-search__label,
   .delpi-ui-topbar-search__kbd {
     position: absolute;
@@ -281,6 +291,12 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+  }
+
+  .delpi-ui-topbar-search {
+    min-height: 40px;
+    padding-inline: 0.55rem;
+    gap: 0;
   }
 }
 

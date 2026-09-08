@@ -291,6 +291,21 @@ button.cm-shell-user__portfolio:focus-visible {
   transform: rotate(180deg);
 }
 
+@media (max-width: 720px) {
+  /* Nome colapsa via kit `.delpi-ui-topbar-collapse-label`; só avatar (+ chevron de carteira). */
+  .cm-shell-user--disabled .cm-shell-user__portfolio {
+    display: none;
+  }
+
+  .cm-shell-user__portfolio {
+    padding-inline: 6px;
+  }
+
+  .cm-shell-favorites__trigger {
+    padding-inline: 8px;
+  }
+}
+
 /* TopBar secondary — busca (kit) + favoritos */
 .dashboard-commercial .cm-shell-secondary {
   display: inline-flex;

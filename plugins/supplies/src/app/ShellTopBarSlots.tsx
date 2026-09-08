@@ -87,7 +87,7 @@ export function ShellTopBarActions({ basePath }: ShellTopBarActionsProps) {
           }}
         >
           <SuppliesAvatar name={label} size="sm" />
-          <span className="sp-shell-user__name">{label}</span>
+          <span className="sp-shell-user__name delpi-ui-topbar-collapse-label">{label}</span>
         </a>
       ) : null}
       <HelpTooltip content={SP_HELP.coexistence} ariaLabel="Ajuda: Portal vs apps antigos" />

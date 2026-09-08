@@ -247,7 +247,9 @@ Props principais: `back`, `items`, `current`, `maxVisibleItems`, `size` (`sm`/`m
 
 Pill «Buscar» + atalho (`kbd`) para o slot `secondary` da TopBar. Abre a Command Palette
 do MFE via `onOpen` — **não** embute busca. CSS: `.delpi-ui-topbar-search*` em
-`styles/top-bar.css`. Labels PT vêm do MFE.
+`styles/top-bar.css`. Labels PT vêm do MFE. Em `≤720px`, rótulo/`kbd` colapsam
+(só ícone). A mesma regra serve a Favoritos/nome via dual-class
+`.delpi-ui-topbar-collapse-label` no span do texto.
 
 ```tsx
 const CommercialTopBarSearchTrigger = createDashboardTopBarSearchTrigger({ prefix: "cm" });

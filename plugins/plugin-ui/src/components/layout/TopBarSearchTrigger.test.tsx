@@ -45,6 +45,7 @@ describe("TopBarSearchTrigger", () => {
     expect(container.querySelector(".delpi-ui-topbar-search")).toBeTruthy();
     expect(container.querySelector(".cm-topbar-search")).toBeTruthy();
     expect(container.querySelector(".delpi-ui-topbar-search__label")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-topbar-collapse-label")).toBeTruthy();
     expect(container.querySelector(".delpi-ui-topbar-search__kbd")).toBeTruthy();
     expect(screen.getByText("Ctrl+K").tagName).toBe("KBD");
     expect(ref.current).toBeInstanceOf(HTMLButtonElement);

@@ -62,8 +62,8 @@ export const TopBarSearchTrigger = forwardRef<HTMLButtonElement, TopBarSearchTri
         title={title}
       >
         <Search size={16} strokeWidth={1.75} aria-hidden="true" />
-        <span className={classNames.label}>{label}</span>
-        <kbd className={classNames.kbd}>{shortcutLabel}</kbd>
+        <span className={`${classNames.label} delpi-ui-topbar-collapse-label`}>{label}</span>
+        <kbd className={`${classNames.kbd} delpi-ui-topbar-collapse-label`}>{shortcutLabel}</kbd>
       </button>
     );
   },

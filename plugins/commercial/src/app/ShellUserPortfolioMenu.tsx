@@ -190,7 +190,7 @@ export function ShellUserPortfolioMenu({
           aria-expanded={mode.kind === "menu" ? open : undefined}
           onClick={onPortfolioClick}
         >
-          <span className="cm-shell-user__name">{label}</span>
+          <span className="cm-shell-user__name delpi-ui-topbar-collapse-label">{label}</span>
           {mode.kind === "menu" ? (
             <ChevronDown
               className="cm-shell-user__chevron"
@@ -209,7 +209,7 @@ export function ShellUserPortfolioMenu({
         </button>
       ) : (
         <div className="cm-shell-user__portfolio" aria-label={portfolioAriaLabel}>
-          <span className="cm-shell-user__name">{label}</span>
+          <span className="cm-shell-user__name delpi-ui-topbar-collapse-label">{label}</span>
         </div>
       )}
 
