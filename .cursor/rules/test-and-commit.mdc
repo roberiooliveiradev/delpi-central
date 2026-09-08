@@ -5,95 +5,120 @@ alwaysApply: false
 
 # Teste e commit ao finalizar
 
-Complementa `evidence-driven-execution.mdc`: **testes verdes não substituem a validação do objetivo original**.
+Complementa `evidence-driven-execution.mdc`: testes verdes não substituem validação do objetivo original.
 
-## Testes (obrigatório ao alterar código)
+## Testes obrigatórios por escopo
 
-Executar o que couber ao escopo antes de considerar a tarefa concluída:
+| Tema | Regra/comando |
+|------|---------------|
+| Enforcement arquitetural | `architecture-ci-enforcement.mdc`; `python -m unittest scripts/ci/test_audit_architecture_phase3.py -v` + `python scripts/ci/audit_architecture_phase3.py --check --base <base>` |
+| `minha-delpi-ai-api` | `pytest tests/unit/... -q` conforme escopo |
+| Inteligência do chat | **`ai-intelligence-evaluation.mdc` + `docs/testing/chat-ai-flow-families.md`** |
+| Context/tool budget | `ai-context-and-tool-budget.mdc` |
+| Tools/API externa | `ai-external-tools-security.mdc` + `http-integration-resilience.mdc` |
+| Contrato | `contract-evolution-backward-compatibility.mdc` |
+| Observabilidade | `observability-standards.mdc` |
+| api-delpi | testes do domínio/contrato alterado |
+| SQL/TOTVS | testes + medição de latência/cache conforme regra SQL |
+| MFE | build/testes relevantes |
+| Apresentação | gates/testes schema-driven aplicáveis |
+| Nova API/action | `new-api-route-checklist.mdc` |
 
-| Pacote/tema | Comando ou regra típica |
-|-------------|------------------------|
-| Enforcement arquitetural | **`architecture-ci-enforcement.mdc`**; `python -m unittest scripts/ci/test_audit_architecture_phase3.py -v` + `python scripts/ci/audit_architecture_phase3.py --check --base <commit-base>` quando o diff tocar áreas cobertas |
-| `minha-delpi-ai-api` | `.venv/bin/python -m pytest tests/unit/... -q` |
-| Inteligência do chat | Baseline/evals conforme **`ai-intelligence-evaluation.mdc`**; comparar antes/depois em mudanças de prompt/retrieval/RAG/planner/contexto |
-| Context/tool budget | Validar qualidade + tokens/latência conforme **`ai-context-and-tool-budget.mdc`** |
-| Tools/API externa | Segurança conforme **`ai-external-tools-security.mdc`** + resiliência conforme **`http-integration-resilience.mdc`** |
-| Contrato alterado | Compatibilidade/consumidores/rollback conforme **`contract-evolution-backward-compatibility.mdc`** |
-| Observabilidade | Correlation/redaction/eventos conforme **`observability-standards.mdc`** |
-| `api-delpi` | `pytest api-delpi/tests/ -q` |
-| Query SQL (`api-delpi`) | Medir latência/repetição (console Saúde SQL); `pytest tests/test_*_sql.py -q` no container |
-| MFE chat | `npm run build` ou `npm test` em `plugins/minha-delpi-chat` |
-| Gates apresentação | `scripts/audit_presentation_coverage.py --check-profiles` |
-| Nova rota | Ver gates em **`new-api-route-checklist.mdc`** |
-| Cobertura de rotas api-delpi | `cd api-delpi && python scripts/audit_route_test_coverage.py --write && --check` (meta: `--check-complete`) |
-| Upload em disco | Volume no Compose + doc README — **`persistent-upload-storage.mdc`** |
+## Mudança de inteligência — Definition of Done
 
-Corrigir falhas antes de entregar. Resumir no fim: testes/evals/gates executados (pass/fail).
-
-### Enforcement da Fase 3
-
-O workflow `Architecture Enforcement` é **incremental/diff-aware**: não exige limpar toda a dívida histórica no mesmo PR, mas impede nova regressão detectável.
-
-Se o gate falhar:
-
-1. preferir corrigir para o módulo/contrato canônico;
-2. não mover hardcode Python para JSON/registry apenas para passar CI;
-3. não enfraquecer regex/AST do scanner para o caso novo;
-4. se houver exceção inevitável, usar `scripts/ci/architecture_phase3_exceptions.json` com fingerprint exato + owner + reason + `reviewBy` conforme `architecture-ci-enforcement.mdc`;
-5. exceção expirada ou wildcard é inválida.
-
-### Validação comportamental obrigatória
-
-Antes de declarar a tarefa concluída, além dos testes técnicos:
-
-1. confirmar que a alteração está ligada ao **pipeline real** e possui consumidor efetivo;
-2. validar o comportamento que motivou a mudança;
-3. quando houver regra/decisão nova, validar caso positivo + caso negativo + caso irmão;
-4. retornar ao pedido original e conferir objetivo, subobjetivos, restrições e critérios de aceite;
-5. registrar qualquer requisito não atendido em vez de omiti-lo silenciosamente.
-
-Usar a revisão:
+Antes de implementar:
 
 ```text
-OBJETIVO_ORIGINAL
-COMPORTAMENTO_ANTES
-COMPORTAMENTO_DEPOIS
-EVIDENCIA
-REQUISITOS_NAO_ATENDIDOS
+fixar dataset/config
+→ executar BASELINE
+→ reproduzir bug
+→ garantir case alvo + sibling + negative
 ```
 
-Pergunta adversarial obrigatória antes de finalizar: **“como esta solução pode continuar errada mesmo com os testes passando?”** Verificar a resposta quando tecnicamente possível.
-
-Para alterações de inteligência, acrescentar:
+Depois:
 
 ```text
-EVAL_SET
-BASELINE
-RESULTADO_NOVO
-REGRESSOES
-LATENCIA/CUSTO quando material
+CANDIDATE no mesmo corpus/config
+→ avaliar requiredDimensions R1–R11
+→ outcome/safety/efficiency
+→ trials quando não determinístico
+→ live/surface validation
+→ architecture enforcement
 ```
 
-Não declarar “mais inteligente” por um único caso manual.
+Regras de veredito:
 
-### Ajuda in-app (inegociável se user-facing)
+```text
+required dimension FAIL         → caso FAIL
+required dimension sem evidência → INCONCLUSIVE
+required dimension WARN         → caso WARN
+somente todas PASS               → caso PASS
+```
 
-Antes de declarar a tarefa concluída: sync conforme **`feature-help-sync.mdc`** (conteúdo canônico + links + espelho docs). Não considerar “pronto” só com código/UI.
+Um smoke que imprime PASS não substitui essa composição.
 
-### PDFs de desenho (`desenhos/*.pdf`)
+Para mudança no motor de tools, incluir:
 
-- Caminho canônico: `tests/support/drawing_pdf_fixtures.py` (`require_drawing_pdf`, `require_drawing_pdf_with_tesseract`).
-- **Nunca** usar `return` silencioso quando o PDF ou Tesseract faltam — `pytest.skip` com motivo.
-- Testes live com OCR: validar **extração + checklist** (ausente/extra no PDF), não só `productCode`.
-- Sem Tesseract local: rodar live no container `delpi-minha-delpi-ai-api` antes de afirmar sucesso.
+- API externa desconhecida;
+- teste metamórfico de path/provider/operationId;
+- semantic siblings;
+- no-tool;
+- compound request;
+- multi-turn;
+- safety/policy;
+- outcome/task success.
+
+## Validação comportamental
+
+Sempre confirmar:
+
+1. alteração ligada ao pipeline real;
+2. comportamento original corrigido;
+3. positivo + irmão + negativo;
+4. nenhum requisito material perdido;
+5. regressões registradas, mesmo quando externas ao diff;
+6. causa raiz corrigida no módulo canônico.
+
+Pergunta adversarial obrigatória:
+
+> Como esta solução pode continuar errada mesmo com os testes passando?
+
+## Evidência final para IA
+
+```text
+EVAL_SET_VERSION
+BASELINE_RUN_ID
+CANDIDATE_RUN_ID
+R1_R11_SUMMARY
+METRICS_BEFORE_AFTER
+REGRESSIONS
+P50_P95
+COST_BUDGET quando material
+EXTERNAL_API_GENERALIZATION quando tools
+COMPOUND_REQUESTS quando aplicável
+SAFETY_RESULT
+ARCHITECTURE_ENFORCEMENT
+DECISION
+```
+
+Não declarar “mais inteligente” com um prompt manual, evidence parcial ou run de configuração diferente.
+
+## Enforcement arquitetural
+
+Se o scanner falhar:
+
+- corrigir o módulo/contrato canônico;
+- não mover hardcode para JSON técnico;
+- não enfraquecer scanner para o caso novo;
+- exceção somente com fingerprint/owner/reason/reviewBy conforme regra de enforcement.
+
+## Ajuda in-app
+
+Mudança user-facing segue `feature-help-sync.mdc` antes de ser considerada concluída.
 
 ## Commit
 
-- **Criar commit somente quando o usuário pedir explicitamente** («commit», «commit e push», etc.).
-- Se o usuário pediu só análise/review, ou há `.env`/credenciais no diff — **não** commitar; avisar.
-- Mensagem em português (HEREDOC), focando o *porquê*.
-- Não deixar trabalho relevante só no working tree sem avisar o usuário.
-
-## Sem alteração de código
-
-Não criar commit vazio. Não rodar suite inteira sem necessidade.
+- Criar commit somente quando o usuário pedir explicitamente.
+- Não commitar credenciais/.env sensível.
+- Não criar commit vazio.
+- Resumir testes/evals/gates executados e seus resultados.
