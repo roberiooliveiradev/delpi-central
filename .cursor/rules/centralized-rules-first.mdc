@@ -7,89 +7,96 @@ alwaysApply: true
 
 ## Princípio
 
-**Nunca** corrigir sintoma com ajuste pontual em componente, use case, prompt de agente ou JSON de endpoint. **Sempre** localizar o módulo canônico da regra, estendê-lo e cobrir com teste de regressão. Fluxo completo: `root-cause-generalized-fix.mdc`.
+**Nunca** corrigir sintoma com ajuste pontual em componente, use case, prompt de agente ou JSON de endpoint. Localize o módulo canônico, corrija a regra real e cubra a generalização com regressão.
 
-## Mapa canônico — referência rápida
+## Mapa canônico
 
-| Domínio | Módulo canônico | Não duplicar em |
-|---------|-----------------|-----------------|
-| Pipeline / intenção / tools / RAG / direct answer | `minha-delpi-ai-api` → serviços em `application/services/` + `domain/services/` | `SendChatMessageUseCase`, `StreamChatMessageUseCase`, prompt de agente |
-| **Tools/actions OpenAPI** | **OpenAPI importado + Action Catalog/index + planner/validator genéricos**; regra `openapi-first-universal-tool-routing.mdc` | `operational_route_registry.json` por endpoint, `if path`, selector por provider, prompt de agente |
-| Stack LLM | `LLM_PROVIDER` + `llm_stack_config` → factories canônicas | URL/modelo hardcoded em use case |
-| Skip de tools por intenção | `ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags` + `should_skip_tools` | `build_tool_context` inline, flags só no frontend |
-| Ativação de agente | `ChatWorkspaceAgentActivationService` + `ChatWorkspaceContextService` | `default_agent_id` ad hoc |
-| Textos PT / UX / vocabulário | `app/content/pt-BR/assistant/*.json` | strings em Python/TS |
-| **Contrato técnico de API** | **OpenAPI + Action Catalog** | `assistant/*.json`, `pathMarkers`, `operationIdMarkers` manuais |
-| Regex, limites, thresholds configuráveis | `assistant/*.json` → loaders canônicos | `re.compile` e constantes mágicas em serviços |
-| Prosa/markdown/streaming | `plugins/minha-delpi-chat` → renderers canônicos | componentes/hooks com if próprio |
-| Apresentação rica | API schema-driven + MFE render-only | presenter por rota/entidade, `if '/analyser'` |
-| Cobertura/incompletude operacional | serviços canônicos de completeness/coverage | presenters/markdown locais |
-| Formato Automático | analyzers + profiles canônicos | scoring só no MFE |
-| Nova rota/API exposta ao chat | `new-api-route-checklist.mdc` + `openapi-first-universal-tool-routing.mdc` | endpoint + registry manual obrigatório |
-| Veredito factual | serviço/profile canônico | serviço `*RouteName*` ou `if path` |
-| Suficiência pós-retrieve | critic/service canônico | prompt de agente, planner free-pick de `operationId` |
-| Vazamento de instrução | `ChatLlmSynthesisLeakGuardService` + markers canônicos | filtros locais |
-| Overlay / toolbar / popover | `plugins-overlay-positioning.mdc` | clip/padding/abspos paliativo |
+| Domínio | Fonte/módulo canônico | Não duplicar em |
+|---------|------------------------|-----------------|
+| Pipeline/intenção/tools/RAG/direct answer | `minha-delpi-ai-api` domain/application services | send/stream use case, prompt de agente |
+| Tools/actions | OpenAPI importado + Action Catalog/index + retrieval/planner/validator | catálogo paralelo por endpoint, `if path`, selector provider |
+| Evals da IA | `ai-intelligence-evaluation.mdc` + `docs/testing/chat-ai-flow-families.md` | roadmaps, smoke isolado, opinião manual |
+| Stack LLM | `LLM_PROVIDER` + config/factories canônicas | URL/modelo hardcoded |
+| Ativação de agente | `ChatWorkspaceAgentActivationService` + workspace context | `default_agent_id` ad hoc |
+| Texto/UX/vocabulário | `app/content/pt-BR/assistant/*.json` | string PT em Python/TS |
+| Contrato técnico API | OpenAPI + Action Catalog | assistant JSON, markers, schema duplicado |
+| Regex/threshold transversal | conteúdo/config canônico | constantes espalhadas em serviços |
+| Apresentação | API schema-driven + MFE render-only | presenter/if por rota |
+| Nova API/action | `new-api-route-checklist.mdc` + `openapi-first-universal-tool-routing.mdc` | endpoint-specific routing/config |
+| Veredito factual | serviço/profile/oracle canônico | `if path` ou nome da rota |
+| Segurança de tools | policy/RBAC/confirmation + `ai-external-tools-security.mdc` | prompt do agente |
+| Observabilidade | `observability-standards.mdc` | logs improvisados/segredos |
 
-## OpenAPI-first é centralização de contrato
-
-Para tools/actions, centralização significa:
+## Tools/actions: uma única fonte técnica
 
 ```text
 OpenAPI
 → Action Catalog persistido/indexado
-→ allowed_action_ids/policies
+→ allowed_action_ids + policies
 → retrieval/planner/validator genéricos
-→ executor
+→ executor HTTP autorizado
+→ schema-driven presentation
 ```
 
-Não significa substituir if Python por uma segunda tabela manual de endpoints em JSON.
+Não substituir hardcode Python por JSON que repita path, operationId, parâmetros ou schema.
 
-`operational_route_registry.json` é legado de compatibilidade/migração. Pode ser preservado até paridade, mas não deve crescer como procedimento normal de onboarding de APIs.
+## Evals: uma única fonte de qualidade
 
-## Desacoplamento vs centralização
+Mudança de inteligência segue:
 
-- **Desacoplamento:** separar domínio, aplicação, infraestrutura, contrato, UI e provider.
-- **Centralização:** uma única fonte de verdade por conceito.
-- **OpenAPI:** fonte técnica das operações.
-- **JSON assistente:** fonte de linguagem/policy/configuração transversal.
-- **Anti-padrão:** duplicar `path`, `operationId`, parâmetros ou schemas em JSON do assistente.
+```text
+protocolo R1–R11
+→ baseline imutável
+→ implementação
+→ candidate no mesmo corpus/config
+→ comparação
+→ live/surface validation
+→ decisão de rollout
+```
+
+Um script que imprime PASS não é autoridade se uma dimensão obrigatória estiver FAIL/INCONCLUSIVE.
 
 ## API externa como teste arquitetural
 
 Qualquer mudança no motor de tools deve responder:
 
-> Uma API OpenAPI externa, sem código no monorepo, funcionaria após importar/indexar e vincular ao agente?
+> Uma API OpenAPI externa, sem código no monorepo, funciona após import/index + agent binding, sem editar o core por endpoint?
 
-Se a resposta for “não, precisa editar selector/registry/intenção por endpoint”, a solução ainda está acoplada.
+Mudanças no motor exigem fixture de API desconhecida e teste metamórfico conforme `ai-intelligence-evaluation.mdc`.
 
 ## O que NÃO fazer
 
-- Novo `if (quem é vc)` em use case em vez de módulo canônico.
+- Novo `if` no use case para a frase reportada.
 - Novo presenter por rota/entidade.
-- Fix só no agente ou só na UI quando transversal.
-- `if "/products/" in path`, `if provider == "api-delpi"`, prefix bias ou selector por API no motor genérico.
-- Criar `pathMarkers`/`operationIdMarkers` como procedimento padrão de rota nova.
-- Copiar OpenAPI para `assistant/*.json`.
-- Permitir planner escolher action fora do catálogo permitido.
-- Criar `*LogisticsRouteService`, `*CrmRouteService`, `*HrRouteService` para providers plugados.
+- Fix só no agente/UI quando transversal.
+- `if path/provider/operationId` no motor genérico.
+- Bias por prefixo do provider.
+- Criar marker/strategy/catálogo técnico por endpoint.
+- Copiar OpenAPI para JSON do assistente.
+- Permitir planner escolher action fora das candidates autorizadas.
+- Criar service por API plugada.
+- Alterar fixture/expected output para esconder regressão.
+- Usar documentação histórica como instrução de implementação quando há fonte canônica vigente.
 
 ## O que fazer
 
-1. Identificar a regra real e o módulo canônico.
-2. Para API/action, enriquecer primeiro o OpenAPI/importer/Action Catalog quando faltar metadata técnica.
-3. Para linguagem/policy, enriquecer JSON canônico, sem duplicar contrato.
+1. Identificar a responsabilidade e a fonte canônica.
+2. Para API/action, enriquecer OpenAPI/importer/Action Catalog quando faltar metadata técnica.
+3. Para linguagem/policy, enriquecer configuração transversal sem duplicar contrato.
 4. Implementar comportamento transversal uma vez.
-5. Ligar todos os consumidores ao módulo canônico.
-6. Cobrir caso positivo, irmão, negativo e, quando tools estiverem envolvidas, fixture de API externa desconhecida.
-7. Em migração grande, usar shadow/canary/rollback antes de remover legado.
+5. Ligar todos os consumidores ao ponto canônico.
+6. Cobrir positivo + irmão + negativo; tools também com API externa desconhecida quando o motor mudar.
+7. Medir outcome, segurança e eficiência, não apenas rota/tool.
+8. Para mudanças de alto risco, usar shadow/canary com critério mensurável de promoção.
 
 ## Checklist antes de merge
 
 - [ ] Existe um único ponto de verdade para a regra?
-- [ ] Metadata técnica de action veio do OpenAPI/Action Catalog?
-- [ ] JSON novo evita duplicar OpenAPI?
+- [ ] Metadata técnica veio do OpenAPI/Action Catalog?
+- [ ] Nenhum catálogo técnico paralelo foi criado?
 - [ ] Nenhum consumidor novo bypassa o módulo canônico?
-- [ ] Nova API externa funcionaria sem editar core por endpoint?
-- [ ] Teste de regressão cobre caso positivo, irmão e negativo?
-- [ ] Mudança de tools respeita `allowed_action_ids`, sensitivity e confirmation?
+- [ ] API externa desconhecida continua plugável?
+- [ ] Positive/sibling/negative estão cobertos?
+- [ ] R1–R11 obrigatórios foram avaliados?
+- [ ] Outcome/task success foi verificado quando aplicável?
+- [ ] RBAC/sensitivity/confirmation foram preservados?
