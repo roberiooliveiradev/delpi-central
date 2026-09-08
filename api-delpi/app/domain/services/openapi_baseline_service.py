@@ -87,7 +87,7 @@ def _clean_locale_map(raw: Any) -> dict[str, dict[str, str]] | None:
         if not lang_key or not isinstance(block, dict):
             continue
         cleaned: dict[str, str] = {}
-        for field in ("summary", "description", "whenToUse", "label"):
+        for field in ("summary", "description", "whenToUse", "whenNotToUse", "label"):
             value = str(block.get(field) or "").strip()
             if value:
                 cleaned[field] = value
