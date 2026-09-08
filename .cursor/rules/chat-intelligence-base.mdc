@@ -11,6 +11,13 @@ O **chat** é o núcleo de inteligência da plataforma. **Agentes** são chats c
 
 Para tools/actions, a inteligência base é **OpenAPI-first e multi-provider**. Regra canônica: `openapi-first-universal-tool-routing.mdc`.
 
+Mudanças de inteligência devem obedecer também:
+
+- `ai-intelligence-evaluation.mdc` — baseline/evals antes e depois;
+- `ai-context-and-tool-budget.mdc` — contexto e tools com budget;
+- `ai-external-tools-security.mdc` — fronteira segura com providers/tools;
+- `observability-standards.mdc` — decisões e latência diagnosticáveis.
+
 ## Onde implementar melhorias
 
 | Camada | Responsabilidade | Exemplos |
@@ -60,10 +67,27 @@ Manter rastreabilidade dos requisitos conforme `evidence-driven-execution.mdc`.
 - Foco operacional interno: `operationalFocus`.
 - Resolução de identificadores deve priorizar contexto explícito antes do histórico.
 - Multi-turn de tools deve preservar contexto estruturado de execução (action, argumentos, resultados, paginação, período) em vez de reintroduzir selectors por path.
+- Histórico, RAG, tool schemas e tool results devem respeitar `ai-context-and-tool-budget.mdc`; não crescer indefinidamente.
+
+## Qualidade mensurável
+
+Mudança em prompt, retrieval, RAG, planner, argument extraction, contexto ou memória não é considerada melhoria apenas porque o caso reportado passou.
+
+Aplicar `ai-intelligence-evaluation.mdc`:
+
+```text
+baseline
+→ alteração
+→ mesmo corpus
+→ comparação de qualidade + latência/custo quando material
+→ análise de regressão
+```
+
+No mínimo, validar caso original + irmãos + negativos; mudanças significativas devem usar corpus versionado/evals.
 
 ## Regras centralizadas
 
-Ver `development-standards-index.mdc`, `centralized-rules-first.mdc`, `openapi-first-universal-tool-routing.mdc`, `chat-prose-rendering.mdc`.
+Ver `development-standards-index.mdc`, `centralized-rules-first.mdc`, `openapi-first-universal-tool-routing.mdc`, `chat-prose-rendering.mdc`, `ai-intelligence-evaluation.mdc` e `ai-context-and-tool-budget.mdc`.
 
 **Proibido** patch local em componente, prompt, use case ou JSON por endpoint quando o comportamento é transversal.
 
@@ -80,6 +104,8 @@ Ver `development-standards-index.mdc`, `centralized-rules-first.mdc`, `openapi-f
 - Duplicar OpenAPI em `assistant/*.json`.
 - Exigir `operational_route_registry.json` para cada endpoint novo.
 - Planner escolher `operationId` fora das actions permitidas.
+- Enviar OpenAPI inteiro, todas as tools, histórico ilimitado ou payloads gigantes ao LLM por padrão.
+- Declarar melhoria de inteligência com base em um único prompt manual.
 
 ## O que fazer
 
@@ -90,20 +116,23 @@ Ver `development-standards-index.mdc`, `centralized-rules-first.mdc`, `openapi-f
 5. Planner produz seleção/argumentos estruturados; validador determinístico confere contra o OpenAPI.
 6. Novas policies globais entram em módulos canônicos.
 7. Testes base + regressões de inteligência; para tool routing, incluir fixture de API externa desconhecida.
-8. Migrações grandes usam shadow/canary/rollback antes de remover legado.
+8. Mudanças de inteligência significativas executam eval before/after.
+9. Context/history/RAG/tool schemas/results obedecem budgets mensuráveis.
+10. Migrações grandes usam shadow/canary/rollback antes de remover legado.
 
 ## Pipeline de referência
 
 ```text
 Mensagem
-→ preparação/decomposição/contexto
+→ preparação/decomposição/contexto com budget
 → allowed tools/actions
 → retrieval top-K
 → planner estruturado
-→ validação/policy
-→ execução
+→ validação/policy/security
+→ execução resiliente
 → interpretação/apresentação
 → síntese
+→ métricas/eval feedback
 ```
 
 Agentes **adicionam** contexto e restrições; a **inteligência transversal** evolui no chat base.
@@ -116,3 +145,5 @@ Regras obrigatórias:
 
 - `openapi-first-universal-tool-routing.mdc`
 - `new-api-route-checklist.mdc`
+- `ai-external-tools-security.mdc` para provider/tool externo
+- `http-integration-resilience.mdc` para execução remota
