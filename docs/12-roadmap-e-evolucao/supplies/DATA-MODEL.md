@@ -1,106 +1,245 @@
 # DATA-MODEL — supplies-api (estado Minha DELPI)
 
-Princípio: **não persistir cópia de TOTVS**. External keys = códigos Protheus (`branch`, `product_code`, `supplier_code`+`store`, `request_number`, `order_number`).
+Princípio: **não persistir cópia de TOTVS**. External keys = códigos Protheus (`branch`, `product_code`, `supplier_code` + `store`, `request_number`, `order_number`).
 
 Schema Postgres proposto: `supplies` em `postgres-plugins`.  
-Schema `purchase_requests` **permanece** até C2 (ADR-002); não duplicar as tabelas abaixo.
+Schema `purchase_requests` permanece com ownership atual até C2 ([ADR-002](./adr/ADR-002-purchase-requests-api.md)).
+
+A autorização de leitura/escrita sobre entidades deste schema segue [ADR-007](./adr/ADR-007-permission-minimization.md): capability mínima + unidade + ownership/escopo de recurso + regra de negócio.
 
 ---
 
-## Hipóteses rejeitadas (não criar)
+## 1. Hipóteses rejeitadas
 
 | Entidade | Motivo |
-|----------|--------|
-| `totvs_sc1_clone` / snapshot diário de SC | Já há SQL na api-delpi |
-| `savings_targets` | Meta = SI |
-| `supplier_scorecard_facts` | Calcular no BFF a partir de TOTVS/qualidade até P2 justificar materialização |
-| Espelho SA2/SB1 | Cadastro TOTVS |
+|---|---|
+| clone SC1 / snapshot diário de SC | regra e leitura canônica já existem na api-delpi |
+| `savings_targets` | meta pertence ao Strategic Indicators |
+| `supplier_scorecard_facts` P0 | calcular/compor antes de materializar |
+| espelho SA2/SB1 | cadastro TOTVS |
+| tabela de permissions local | RBAC é Core API |
 
 ---
 
-## Entidades justificadas
+## 2. Identidade de usuário
 
-### 1. `supply_user_preferences`
+Persistir o identificador canônico resolvido pelo Core sempre que a plataforma disponibilizar um `user_id` estável. O `sub` Keycloak pode ser armazenado como external identity/trace quando necessário, mas **não misturar silenciosamente Core user id e Keycloak sub na mesma coluna**.
 
-- **Propósito:** última filial, densidade de tabela, atalhos Home.  
-- **Owner:** supplies-api.  
-- **Caso de uso:** WF-01 filtro default.  
-- **PK:** `user_id` (text Keycloak/sub).  
-- **Campos:** `default_branch CHAR(2)`, `locale` default pt-BR, `home_layout_json` (opcional P2), timestamps.  
-- **Unique:** PK.  
-- **Lifecycle:** upsert. Sem retenção especial.  
-- **Justificativa:** estado de UI que o Core não tem por app.
+Antes da primeira migration, E2 deve fechar:
 
-### 2. `supplier_notes`
+```text
+canonical_user_id_source
+column type
+mapping strategy
+rollback/migration strategy
+```
 
-- **Propósito:** notas internas do comprador no 360.  
-- **Caso de uso:** WF-10.  
-- **PK:** `id UUID`.  
-- **External:** `branch`, `supplier_code`, `store`.  
-- **Campos:** `body`, `created_by_user_id`, `updated_by`, timestamps, `deleted_at` (soft).  
-- **Index:** `(branch, supplier_code, store, created_at DESC)`.  
-- **Auditoria:** created/updated by.  
-- **Concorrência:** updated_at optimistic opcional.  
-- **Justificativa:** não existe em SA2.
-
-### 3. `supplier_actions` / `purchase_followups`
-
-Unificar em **`supply_tasks`** (uma fila, vários tipos).
-
-- **Propósito:** follow-up de SC/PC/fornecedor/item.  
-- **Caso de uso:** WF-03, 360.  
-- **PK:** `id UUID`.  
-- **Campos:** `task_type` (`follow_up`, `alert_ack`, `note_action`), `status` (`open`,`done`,`canceled`), `due_on`, `assignee_user_id`, `created_by`, `title`, `body`,  
-  `ref_kind` (`supplier`,`product`,`purchase_request`,`purchase_order`,`safety_stock_item`),  
-  `ref_branch`, `ref_keys_json` (códigos TOTVS, não FKs TOTVS), timestamps.  
-- **Index:** `(assignee_user_id, status, due_on)`, `(ref_kind, ref_branch)`.  
-- **Justificativa:** worklist P0 precisa de ack/follow-up além do snapshot TOTVS.
-
-### 4. `supply_alert_events` (P1; não P0)
-
-- **Propósito:** materializar alerta gerado por job (OTD drop, SC parada) para não recalcular só no GET da Home.  
-- **Justificativa P1:** P0 da Home pode ser composição on-read. Só criar se latência/carga exigir.  
-- **HIPOTESE_A_VALIDAR** na E13.S1.
-
-### 5. `portal_settings`
-
-- **Propósito:** flags funcionais do módulo (ex. threshold `due_soon` quando o PO homologar).  
-- **PK:** `key TEXT`.  
-- **Campos:** `value_json`, `updated_by`, timestamps.  
-- **Justificativa:** thresholds hoje em JSON de conteúdo; settings **operados** por admin vão aqui, textos PT continuam em `content/`.
-
-### 6. `audit_logs` (funcional)
-
-- **Propósito:** CUD de notes/tasks/settings.  
-- **Não** substitui audit Core de RBAC.  
-- Campos: actor, action, entity, entity_id, payload_redacted, at.  
-- Retenção: alinhar política da plataforma (não inventar anos).
-
-### 7. `outbox_events`
-
-- **Propósito:** se jobs de notificação SC migrarem na C2.  
-- **Não criar na E2.** Herdar padrão purchase-requests na C2.
+Até essa decisão, exemplos abaixo usam `actor_user_id`/`assignee_user_id` semanticamente, sem congelar o tipo físico.
 
 ---
 
-## Schema `purchase_requests` (existente — não redesenhar)
+## 3. Entidades justificadas
 
-Já justificado pelo contrato Fase 0.2:
+### 3.1 `supply_user_preferences`
 
-- `visibility_scopes`, `_users`, `_cost_centers`
-- `user_protheus_mappings`
-- subscriptions / cursors PO / receipt events (V002–V004)
+- propósito: última filial, densidade e preferências próprias do Portal;
+- owner: supplies-api;
+- PK: `user_id` canônico;
+- campos P0: `default_branch`, `table_density`, timestamps;
+- `default_branch` deve pertencer a `allowedUnits` no momento da gravação;
+- `home_layout_json` fica fora da P0 até existir caso de uso homologado;
+- lifecycle: upsert do próprio usuário.
 
-**C2:** mudar o **processo dono** (supplies-api) sem rename obrigatório de schema (migrations imutáveis). Novo código lê o mesmo schema.
+### 3.2 `supplier_notes`
+
+**Escopo P0 decidido: nota de equipe/unidade, não privada e não global irrestrita.**
+
+- propósito: contexto interno operacional no Fornecedor 360;
+- external key: `branch`, `supplier_code`, `store`;
+- leitura: usuário com `supplies.operations.access` e acesso à `branch`;
+- criação: mesma capability + fornecedor/unidade autorizados;
+- edição: autor da nota ou regra de equipe/admin explicitamente homologada;
+- remoção: soft delete; nunca apagar trilha de auditoria;
+- campos: `id UUID`, `branch`, `supplier_code`, `store`, `body`, `created_by_user_id`, `updated_by_user_id`, `created_at`, `updated_at`, `deleted_at`, `version`;
+- índice: `(branch, supplier_code, store, created_at DESC)`;
+- concorrência P0: **optimistic locking obrigatório** por `version` ou `updated_at` comparado no PATCH; conflito → 409.
+
+Não criar permission `supplier-notes.write` por padrão. Se a homologação provar públicos distintos para leitura e escrita, revisar ADR-007.
+
+### 3.3 `supply_tasks`
+
+Unifica follow-up operacional e tarefas próprias do Portal.
+
+Campos P0:
+
+```text
+id UUID
+status: open|done|canceled
+task_type: follow_up|alert_ack|note_action
+due_on
+assignee_user_id
+created_by_user_id
+title
+body
+ref_kind
+ref_branch
+ref_keys_json
+created_at
+updated_at
+version
+```
+
+`ref_kind` permitido:
+
+```text
+supplier
+product
+purchase_request
+purchase_order
+safety_stock_item
+```
+
+`ref_keys_json` **não é JSON livre**. Cada `ref_kind` possui schema de validação:
+
+| ref_kind | chaves mínimas |
+|---|---|
+| supplier | `supplier_code`, `store` |
+| product | `product_code` |
+| purchase_request | `request_number`, opcional `item` conforme contrato |
+| purchase_order | `order_number`, opcional `item` |
+| safety_stock_item | `product_code` |
+
+`ref_branch` é obrigatório quando o recurso for filial-específico.
+
+Autorização:
+
+```text
+portal.access
++ capability do recurso referenciado
++ unit scope
++ ownership/equipe
+→ operação permitida
+```
+
+Não criar `tasks.view/write/create/complete` na P0 sem nova evidência de segregação.
+
+Índices:
+
+- `(assignee_user_id, status, due_on)`;
+- `(ref_kind, ref_branch)`;
+- índice para lookup do recurso referenciado conforme volume real.
+
+### 3.4 Idempotência de `supply_tasks`
+
+Não usar `UNIQUE(..., open)` se `open` não é coluna.
+
+Preferência P0:
+
+- gerar `ref_fingerprint` determinístico para tasks automáticas;
+- índice unique parcial para tasks automáticas abertas, por exemplo conceitualmente:
+
+```sql
+UNIQUE (task_type, ref_kind, ref_fingerprint)
+WHERE status = 'open' AND source = 'system'
+```
+
+Tasks manuais não devem ser deduplicadas pelo mesmo critério sem requisito funcional.
+
+O SQL exato deve seguir a tecnologia de migration escolhida e testes de concorrência.
+
+### 3.5 `supply_alert_events` — P1, condicional
+
+Não criar preventivamente. Primeiro medir latência/carga do `/home/attention`.
+
+Só materializar se houver evidência de:
+
+- custo de recomposição alto;
+- necessidade de ack/histórico;
+- necessidade de distribuição assíncrona.
+
+### 3.6 `portal_settings`
+
+Não usar key/value irrestrito.
+
+Criar **catálogo tipado de settings permitidos** no código da aplicação, com:
+
+```text
+key
+schema/type
+default
+validation
+owner
+help text
+```
+
+Banco persiste apenas keys conhecidas. Keys desconhecidas → 422.
+
+Administração exige `supplies.administration.manage` + unidade quando o setting for unit-scoped.
+
+### 3.7 `audit_logs`
+
+Audita CUD funcional da supplies-api; não substitui audit Core de RBAC.
+
+Campos mínimos:
+
+```text
+id
+actor_user_id
+action
+entity
+entity_id
+branch quando aplicável
+request_id
+payload_redacted
+created_at
+```
+
+Não logar JWT, cookies, secrets ou body integral sensível.
+
+### 3.8 `outbox_events`
+
+Somente quando jobs/notificações de Solicitações migrarem na C2. Herdar padrão existente; não criar na fundação P0 sem necessidade.
 
 ---
 
-## Idempotência
+## 4. Schema `purchase_requests`
 
-Jobs de alerta/task: unique `(task_type, ref_kind, ref_keys_hash, open)` para não duplicar follow-up do mesmo PC atrasado.
+O schema existente continua inalterado até C2:
+
+- visibility scopes;
+- user mappings;
+- subscriptions;
+- cursors/eventos de PO/receipt.
+
+C2 muda o **process owner** para supplies-api sem renome obrigatório do schema. Migrations aplicadas permanecem imutáveis.
+
+Sequência obrigatória:
+
+```text
+C1 composição
+→ paridade inicial
+→ C2 ownership + jobs + reconciliação
+→ paridade final
+→ C3 cutover
+```
 
 ---
 
-## Anexos
+## 5. Migrations
 
-Se tasks ganharem arquivo: volume bind mount (`persistent-upload-storage.mdc`), path EN, nunca disco efêmero do container. **Não** na E2.
+Não usar expressão ambígua `Alembic/V001`.
+
+Pela decisão de framework do [ADR-001](./adr/ADR-001-supplies-api.md), a proposta P0 é **Alembic** para o schema `supplies`, salvo revisão explícita antes da E2.
+
+Regras:
+
+- migration aplicada é imutável;
+- expand-and-contract quando houver coexistência de versões;
+- rollback deve considerar aplicação antiga + schema novo;
+- C2 não reescreve migrations do `purchase-requests-api`.
+
+---
+
+## 6. Anexos
+
+Fora da P0. Se tasks ganharem arquivos futuramente: storage persistente, MIME/tamanho validados e nenhuma gravação em filesystem efêmero do container.
