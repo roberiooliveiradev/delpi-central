@@ -7,6 +7,25 @@ alwaysApply: false
 
 Complementa `test-and-commit.mdc` e **deve obedecer primeiro** a `evidence-driven-execution.mdc`. Aplica-se a CreatePlan, iteração de plano e entregas multi-commit.
 
+## Autoridade de `.cursor/plans`
+
+Arquivos em `.cursor/plans/*.plan.md` são **estado de execução de uma tarefa**, nunca fonte arquitetural permanente.
+
+Antes de executar qualquer subetapa de um plano existente:
+
+```text
+plano ativo
+→ reler development-standards-index.mdc
+→ reler regras especializadas atuais
+→ validar código/contrato vigente
+→ remover ou reescrever instrução técnica superada no plano
+→ só então executar
+```
+
+Se um plano mencionar arquitetura, serviço, registry, selector, contrato ou fluxo que foi substituído pelas fontes canônicas atuais, a referência do plano é inválida mesmo que a subetapa esteja `pending`.
+
+Planos concluídos devem ser removidos de `.cursor/plans`; histórico de execução fica no Git. Não manter plano concluído como documentação técnica.
+
 ## Checklist obrigatório (nesta ordem)
 
 1. **Decomposição do pedido + evidência** — aplicar `evidence-driven-execution.mdc`: identificar objetivo, subobjetivos, restrições, dependências, entregáveis e critérios de aceite; separar fatos, inferências e hipóteses. Nenhum requisito material pode desaparecer do plano.
@@ -90,6 +109,8 @@ No fluxo cotidiano (sem esse protocolo no plano): commit **somente** se o usuár
 - Plano só do sintoma reportado sem inventariar fluxos irmãos (edit, bolha, rascunho, clip, …).
 - Omitir silenciosamente requisito material presente no pedido.
 - Tratar hipótese como fato ou causa raiz confirmada.
+- Executar instrução técnica de `.cursor/plans` que contradiga regra, contrato ou arquitetura vigente.
+- Manter plano concluído como documentação técnica indexável.
 - Commit sem testes do escopo.
 - Patch local que ignora módulo canônico já mapeado no inventário.
 - Feature user-facing no plano **sem** satélite/subetapa de Ajuda (`feature-help-sync.mdc`).
