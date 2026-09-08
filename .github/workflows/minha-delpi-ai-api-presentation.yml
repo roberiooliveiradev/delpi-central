@@ -107,10 +107,12 @@ jobs:
       - name: Gate Playbook 13 P6 MFE render-only
         run: PYTHONPATH=. python scripts/audit_mfe_presentation_logic.py
 
-      - name: Testes contrato render P6 e cobertura por entidade
+      - name: Testes contrato render P6, score semântico e cobertura por entidade
         run: |
           PYTHONPATH=. pytest \
             tests/unit/domain/services/test_presentation_render_contract.py \
+            tests/unit/domain/services/test_chat_presentation_decision_scores.py \
+            tests/unit/domain/services/test_chat_presentation_automatic_score_semantic_hierarchy.py \
             tests/unit/domain/services/test_chat_presentation_coverage_service.py \
             tests/unit/domain/services/test_chat_presentation_entity_contract.py \
             tests/unit/domain/services/test_chat_presentation_profile_service.py \
