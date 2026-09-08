@@ -57,6 +57,39 @@ Não duplicar manualmente paths, parâmetros ou schemas em catálogo paralelo qu
 
 Para actions do Chat AI, prevalece `openapi-first-universal-tool-routing.mdc`.
 
+### Identidade de operação
+
+`operationId` é identidade técnica estável, não rótulo cosmético.
+
+Regras:
+
+```text
+1 operação HTTP → 1 operationId explícito
+operationId não vazio
+operationId único dentro do contrato/bounded context
+sem auto-id de framework como contrato público
+renomear operationId = mudança breaking
+```
+
+Em FastAPI novo/alterado, declarar `operation_id="..."` literalmente no decorator. O auditor `scripts/ci/audit_openapi_contracts.py` bloqueia nova rota sem identidade explícita e duplicidade introduzida no mesmo `<app>-api`/`api-delpi`.
+
+### OpenAPI versionado e breaking change
+
+Quando JSON/YAML OpenAPI versionado remover uma operação `(method, path)` ou trocar o `operationId` da mesma operação, o CI considera breaking.
+
+A classificação explícita usa extensão OpenAPI válida em `info`:
+
+```yaml
+version: <nova-versão>
+x-delpi-contract-change: BREAKING
+x-delpi-contract-change-from: <versão-base-exata>
+x-delpi-contract-change-reason: <motivo concreto>
+```
+
+A versão-base deve coincidir com o contrato anterior e a nova `info.version` deve ser diferente. Metadata antiga não pode autorizar quebra futura.
+
+Classificar não substitui migração: ainda é obrigatório aplicar `contract-evolution-backward-compatibility.mdc`, inventariar consumidores e definir coexistência/rollback quando necessário.
+
 ## Erros
 
 Separar pelo menos:
@@ -137,6 +170,23 @@ O consumidor não deve impor sua regra de negócio ao produtor. O produtor expõ
 
 Aplicar `platform-architecture-boundaries.mdc`.
 
+## Enforcement executável
+
+O workflow `Architecture Enforcement` executa `scripts/ci/audit_openapi_contracts.py` em modo diff-aware.
+
+Gates atuais:
+
+```text
+OPENAPI_OPERATION_ID_REQUIRED
+OPENAPI_OPERATION_ID_DUPLICATE
+OPENAPI_CHANGE_CLASS_INVALID
+OPENAPI_BREAKING_UNCLASSIFIED
+FASTAPI_OPERATION_ID_REQUIRED
+FASTAPI_OPERATION_ID_DUPLICATE
+```
+
+Escopo atual é deliberadamente conservador. Não inferir breaking de schema complexo por regex. Evoluir para required/type/enum/request/response apenas com resolução estrutural de `$ref` e testes de falso positivo.
+
 ## Testes obrigatórios
 
 Conforme mudança:
@@ -150,6 +200,8 @@ Conforme mudança:
 - consumidor antigo × produtor novo quando coexistirem;
 - timeout/downstream failure;
 - OpenAPI válido e alinhado ao runtime;
+- `operationId` explícito e único;
+- classificação de breaking quando aplicável;
 - negative tests para payload inválido.
 
 ## Anti-padrões
@@ -157,6 +209,9 @@ Conforme mudança:
 - DTO diferente em cada controller para o mesmo conceito.
 - Renomear campo e “corrigir o frontend junto” sem inventário de consumidores.
 - `operationId` instável por estética.
+- depender do `operationId` automático do framework.
+- reutilizar um `operationId` para outra rota.
+- remover operação de snapshot OpenAPI sem classificar/migrar consumidores.
 - client HTTP criado dentro de use case/domain.
 - retry genérico de writes.
 - API retornando estrutura diferente conforme caminho interno não documentado.
@@ -170,6 +225,7 @@ Conforme mudança:
 - `api-delpi-openapi-route-standards.mdc`
 - `api-delpi-response-contract.mdc`
 - `new-api-route-checklist.mdc`
+- `architecture-ci-enforcement.mdc`
 
 ## Evidência de conclusão
 
@@ -178,6 +234,7 @@ CONTRACT_OWNER
 CHANGE_CLASS
 CONSUMERS
 OPENAPI_STATUS
+OPERATION_ID_STATUS
 ERROR_MODEL
 IDEMPOTENCY
 LIMITS
