@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { listEvents } from "../api/requestsApi";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { eventLabel, formatDateTimePtBr } from "../content/presentationLabels";
 import type { TimelineEvent } from "../types/requests";
 import {
   MyRequestsEmptyState,
@@ -32,8 +33,9 @@ export function TimelinePanel({ requestId }: TimelinePanelProps) {
     () =>
       items.map((item) => ({
         id: item.id,
-        title: item.event_type,
-        occurredAt: item.created_at,
+        title: eventLabel(item.event_type),
+        occurredAt: item.created_at || undefined,
+        timeLabel: formatDateTimePtBr(item.created_at),
         detail: item.actor_name || undefined,
       })),
     [items],
@@ -46,7 +48,7 @@ export function TimelinePanel({ requestId }: TimelinePanelProps) {
           <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
         ) : null}
         {!error && items.length === 0 ? (
-          <MyRequestsEmptyState message="Sem eventos ainda." />
+          <MyRequestsEmptyState message="Ainda não há eventos registrados." />
         ) : null}
         {timelineItems.length > 0 ? <MyRequestsTimeline items={timelineItems} /> : null}
       </div>

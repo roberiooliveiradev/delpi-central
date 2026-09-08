@@ -7,6 +7,10 @@ import {
   uploadArtifact,
 } from "../api/requestsApi";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  ARTIFACT_KIND_OPTIONS,
+  artifactKindLabel,
+} from "../content/presentationLabels";
 import type { RequestArtifact } from "../types/requests";
 import {
   MyRequestsEmptyState,
@@ -15,11 +19,6 @@ import {
   MyRequestsStateBanner,
   SelectField,
 } from "../ui/mrUi";
-
-const ARTIFACT_KIND_OPTIONS = [
-  { value: "generic", label: "Genérico" },
-  { value: "invoice_pdf", label: "PDF da NF" },
-] as const;
 
 type ArtifactsPanelProps = {
   requestId: string;
@@ -61,14 +60,14 @@ export function ArtifactsPanel({ requestId, canUpload = false }: ArtifactsPanelP
       }
       await reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao enviar artefato");
+      setError(err instanceof Error ? err.message : "Não foi possível enviar o arquivo.");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <MyRequestsSectionCard title="Artefatos">
+    <MyRequestsSectionCard title="Arquivos do atendimento">
       <div data-help="artifacts" title={MY_REQUESTS_HELP_TOOLTIPS.artifacts.section}>
         {error ? (
           <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
@@ -76,7 +75,7 @@ export function ArtifactsPanel({ requestId, canUpload = false }: ArtifactsPanelP
         {canUpload ? (
           <>
             <SelectField
-              label="Tipo do artefato"
+              label="Tipo do arquivo"
               value={artifactKind}
               onChange={setArtifactKind}
               options={[...ARTIFACT_KIND_OPTIONS]}
@@ -87,9 +86,9 @@ export function ArtifactsPanel({ requestId, canUpload = false }: ArtifactsPanelP
               busy={busy}
               disabled={busy}
               accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
-              fieldLabel="Enviar artefato"
+              fieldLabel="Enviar arquivo do atendimento"
               onFilesSelected={onFilesSelected}
-              ariaLabel="Enviar artefato de processamento"
+              ariaLabel="Enviar arquivo do atendimento"
             />
           </>
         ) : null}
@@ -97,8 +96,8 @@ export function ArtifactsPanel({ requestId, canUpload = false }: ArtifactsPanelP
           <MyRequestsEmptyState
             message={
               canUpload
-                ? "Nenhum artefato ainda. Envie evidências do processamento."
-                : "Nenhum artefato."
+                ? "Nenhum arquivo ainda. Envie evidências do atendimento (ex.: PDF da NF)."
+                : "Nenhum arquivo do atendimento."
             }
           />
         ) : null}
@@ -113,7 +112,7 @@ export function ArtifactsPanel({ requestId, canUpload = false }: ArtifactsPanelP
                 >
                   {item.file_name}
                 </ActionButton>
-                {item.kind ? ` (${item.kind})` : null}
+                {item.kind ? ` (${artifactKindLabel(item.kind)})` : null}
               </li>
             ))}
           </ul>

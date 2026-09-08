@@ -3,6 +3,7 @@ import { ActionButton, FieldLabel, NativeTextAreaControl } from "@delpi/plugin-u
 
 import { createComment, listComments } from "../api/requestsApi";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { formatDateTimePtBr } from "../content/presentationLabels";
 import type { RequestComment } from "../types/requests";
 import {
   MyRequestsEmptyState,
@@ -57,12 +58,14 @@ export function CommentsPanel({ requestId }: CommentsPanelProps) {
           <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
         ) : null}
         {items.length === 0 ? (
-          <MyRequestsEmptyState message="Nenhum comentário ainda." />
+          <MyRequestsEmptyState message="Nenhum comentário ainda. Seja o primeiro a escrever." />
         ) : (
           <ul className="my-requests-domain-list">
             {items.map((item) => (
               <li key={item.id}>
-                <strong>{item.author_name || "Usuário"}</strong>: {item.body}
+                <strong>{item.author_name || "Usuário"}</strong>
+                {item.created_at ? ` · ${formatDateTimePtBr(item.created_at)}` : null}
+                : {item.body}
               </li>
             ))}
           </ul>

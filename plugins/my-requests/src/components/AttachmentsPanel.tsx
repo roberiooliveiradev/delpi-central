@@ -72,7 +72,7 @@ export function AttachmentsPanel({ requestId }: AttachmentsPanelProps) {
           ariaLabel="Enviar anexo da solicitação"
         />
         {!error && items.length === 0 ? (
-          <MyRequestsEmptyState message="Nenhum anexo." />
+          <MyRequestsEmptyState message="Nenhum anexo ainda. Arraste arquivos ou use o botão de envio." />
         ) : null}
         {items.length > 0 ? (
           <ul className="my-requests-domain-list">
