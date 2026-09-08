@@ -37,3 +37,32 @@ def test_request_lookups_router_prefix() -> None:
     assert "/request-lookups/carriers" in paths
     assert "/request-lookups/open-sales-orders" in paths
     assert any("warehouse-01-balance" in p for p in paths)
+
+
+def test_list_open_sales_orders_returns_success_envelope() -> None:
+    from unittest.mock import patch
+
+    from app.interface.http.routes import request_lookups_router as mod
+    from tests.support.route_contract_smoke import assert_envelope_meta, body_json
+
+    payload = {
+        "branch_code": "01",
+        "party_code": "000001",
+        "party_store": "01",
+        "orders": [],
+        "orders_count": 0,
+        "lines_count": 0,
+    }
+    with (
+        patch.object(mod, "branch_access_error", return_value=None),
+        patch.object(mod, "build_open_sales_orders_use_case") as build,
+    ):
+        build.return_value.execute.return_value = payload
+        response = mod.list_open_sales_orders(
+            branch="01",
+            party_code="000001",
+            party_store="01",
+        )
+    body = body_json(response)
+    assert_envelope_meta(body, operation_id="list_request_lookup_open_sales_orders")
+    assert body["data"]["orders"] == []

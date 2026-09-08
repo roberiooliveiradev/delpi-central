@@ -1383,41 +1383,6 @@
       "stable": true
     },
     {
-      "operationId": "search_invoice_issuance_carriers",
-      "method": "GET",
-      "path": "/invoice-issuance/carriers",
-      "tag": "Invoice issuance",
-      "stable": true
-    },
-    {
-      "operationId": "list_invoice_issuance_open_sales_orders",
-      "method": "GET",
-      "path": "/invoice-issuance/open-sales-orders",
-      "tag": "Invoice issuance",
-      "stable": true
-    },
-    {
-      "operationId": "search_invoice_issuance_parties",
-      "method": "GET",
-      "path": "/invoice-issuance/parties",
-      "tag": "Invoice issuance",
-      "stable": true
-    },
-    {
-      "operationId": "search_invoice_issuance_products",
-      "method": "GET",
-      "path": "/invoice-issuance/products",
-      "tag": "Invoice issuance",
-      "stable": true
-    },
-    {
-      "operationId": "get_invoice_issuance_warehouse_01_balance",
-      "method": "GET",
-      "path": "/invoice-issuance/products/{code}/warehouse-01-balance",
-      "tag": "Invoice issuance",
-      "stable": true
-    },
-    {
       "operationId": "list_invoice_issuance_requests",
       "method": "GET",
       "path": "/invoice-issuance/requests",

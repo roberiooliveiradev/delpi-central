@@ -5,10 +5,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Query
-from app.interface.http.pagination_query import (
-    LIMIT_QUERY,
-    PAGE_SIZE_QUERY,
-)
+from app.interface.http.pagination_query import PAGE_SIZE_QUERY
 
 from pydantic import BaseModel, Field
 
@@ -33,15 +30,10 @@ from app.composition.invoice_issuance_composer import (
     build_get_use_case,
     build_issue_use_case,
     build_list_use_case,
-    build_open_sales_orders_use_case,
     build_resubmit_use_case,
     build_return_use_case,
-    build_search_carriers_use_case,
-    build_search_parties_use_case,
-    build_search_products_use_case,
     build_start_use_case,
     build_update_returned_use_case,
-    build_warehouse_balance_use_case,
 )
 from app.core.responses import error_response, not_found_response
 from app.interface.http.route_response_helpers import api_delpi_success
@@ -52,7 +44,6 @@ from app.interface.http.routes.invoice_issuance.invoice_issuance_branch_access i
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_REQUIRED,
     INVOICE_ISSUANCE_INVOICE_TYPE_QUERY_OPTIONAL,
-    INVOICE_ISSUANCE_PARTY_TYPE_QUERY,
     INVOICE_ISSUANCE_STATUS_QUERY_OPTIONAL,
 )
 from app.shared.utils.person_name import format_person_name
@@ -165,109 +156,6 @@ def _gate_loaded(data: dict[str, Any]):
             recoverable=False,
         )
     return branch_access_error(branch)
-
-
-@router.get("/parties", operation_id="search_invoice_issuance_parties")
-@require_any_permission(INVOICE_ISSUANCE_CREATE_PERMISSIONS)
-def search_parties(
-    party_type: str = INVOICE_ISSUANCE_PARTY_TYPE_QUERY(),
-    query: str = Query(..., min_length=2),
-    limit: int = LIMIT_QUERY("limit_20_50"),
-):
-    try:
-        items = build_search_parties_use_case().execute(
-            party_type=party_type, query=query, limit=limit
-        )
-        return api_delpi_success({"items": items}, operation_id="search_invoice_issuance_parties")
-    except InvoiceIssuanceError as exc:
-        return _handle_domain(exc)
-    except Exception as exc:
-        log_error(f"search_invoice_issuance_parties failed: {exc}")
-        return error_response("Falha ao buscar destinatário.", status_code=500)
-
-
-@router.get("/products", operation_id="search_invoice_issuance_products")
-@require_any_permission(INVOICE_ISSUANCE_CREATE_PERMISSIONS)
-def search_products(
-    query: str = Query(..., min_length=2),
-    limit: int = LIMIT_QUERY("limit_20_50"),
-):
-    try:
-        items = build_search_products_use_case().execute(query=query, limit=limit)
-        return api_delpi_success({"items": items}, operation_id="search_invoice_issuance_products")
-    except InvoiceIssuanceError as exc:
-        return _handle_domain(exc)
-    except Exception as exc:
-        log_error(f"search_invoice_issuance_products failed: {exc}")
-        return error_response("Falha ao buscar itens.", status_code=500)
-
-
-@router.get("/carriers", operation_id="search_invoice_issuance_carriers")
-@require_any_permission(INVOICE_ISSUANCE_CREATE_PERMISSIONS)
-def search_carriers(
-    query: str = Query(..., min_length=2),
-    limit: int = LIMIT_QUERY("limit_20_50"),
-):
-    try:
-        items = build_search_carriers_use_case().execute(query=query, limit=limit)
-        return api_delpi_success(
-            {"items": items}, operation_id="search_invoice_issuance_carriers"
-        )
-    except InvoiceIssuanceError as exc:
-        return _handle_domain(exc)
-    except Exception as exc:
-        log_error(f"search_invoice_issuance_carriers failed: {exc}")
-        return error_response("Falha ao buscar transportadora.", status_code=500)
-
-
-@router.get(
-    "/products/{code}/warehouse-01-balance",
-    operation_id="get_invoice_issuance_warehouse_01_balance",
-)
-@require_any_permission(INVOICE_ISSUANCE_CREATE_PERMISSIONS)
-def warehouse_balance(code: str, branch: str = BRANCH_QUERY_REQUIRED()):
-    denied = _gate_branch(branch)
-    if denied is not None:
-        return denied
-    try:
-        data = build_warehouse_balance_use_case().execute(
-            product_code=code, branch_code=branch
-        )
-        return api_delpi_success(data, operation_id="get_invoice_issuance_warehouse_01_balance")
-    except InvoiceIssuanceError as exc:
-        return _handle_domain(exc)
-    except Exception as exc:
-        log_error(f"get_invoice_issuance_warehouse_01_balance failed: {exc}")
-        return error_response("Falha ao consultar saldo.", status_code=500)
-
-
-@router.get(
-    "/open-sales-orders",
-    operation_id="list_invoice_issuance_open_sales_orders",
-)
-@require_any_permission(INVOICE_ISSUANCE_CREATE_PERMISSIONS)
-def list_open_sales_orders(
-    branch: str = BRANCH_QUERY_REQUIRED(),
-    party_code: str = Query(..., min_length=1),
-    party_store: str = Query(..., min_length=1),
-):
-    denied = _gate_branch(branch)
-    if denied is not None:
-        return denied
-    try:
-        data = build_open_sales_orders_use_case().execute(
-            branch_code=branch,
-            party_code=party_code,
-            party_store=party_store,
-        )
-        return api_delpi_success(
-            data, operation_id="list_invoice_issuance_open_sales_orders"
-        )
-    except InvoiceIssuanceError as exc:
-        return _handle_domain(exc)
-    except Exception as exc:
-        log_error(f"list_invoice_issuance_open_sales_orders failed: {exc}")
-        return error_response("Falha ao consultar pedidos de venda em aberto.", status_code=500)
 
 
 @router.post("/requests", operation_id="create_invoice_issuance_request")

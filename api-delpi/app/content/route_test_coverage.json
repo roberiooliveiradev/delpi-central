@@ -1997,51 +1997,6 @@
       "status": "covered"
     },
     {
-      "operationId": "search_invoice_issuance_carriers",
-      "method": "GET",
-      "path": "/invoice-issuance/carriers",
-      "module": "invoice-issuance",
-      "entity": "invoice_issuance_carrier",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "list_invoice_issuance_open_sales_orders",
-      "method": "GET",
-      "path": "/invoice-issuance/open-sales-orders",
-      "module": "invoice-issuance",
-      "entity": "invoice_issuance_open_sales_order",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "search_invoice_issuance_parties",
-      "method": "GET",
-      "path": "/invoice-issuance/parties",
-      "module": "invoice-issuance",
-      "entity": "invoice_issuance_party",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "search_invoice_issuance_products",
-      "method": "GET",
-      "path": "/invoice-issuance/products",
-      "module": "invoice-issuance",
-      "entity": "invoice_issuance_product",
-      "shape": "paged_list",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_invoice_issuance_warehouse_01_balance",
-      "method": "GET",
-      "path": "/invoice-issuance/products/{code}/warehouse-01-balance",
-      "module": "invoice-issuance",
-      "entity": "invoice_issuance_stock_balance",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
       "operationId": "list_invoice_issuance_requests",
       "method": "GET",
       "path": "/invoice-issuance/requests",

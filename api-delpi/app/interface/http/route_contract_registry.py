@@ -1112,17 +1112,6 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "refresh_lancamento_notas_fiscais_reconciliation": RouteContract(
         "invoice_posting_reconciliation_refresh", "scalar"
     ),
-    "search_invoice_issuance_parties": RouteContract("invoice_issuance_party", "paged_list"),
-    "search_invoice_issuance_products": RouteContract("invoice_issuance_product", "paged_list"),
-    "get_invoice_issuance_warehouse_01_balance": RouteContract(
-        "invoice_issuance_stock_balance", "scalar"
-    ),
-    "list_invoice_issuance_open_sales_orders": RouteContract(
-        "invoice_issuance_open_sales_order", "paged_list"
-    ),
-    "search_invoice_issuance_carriers": RouteContract(
-        "invoice_issuance_carrier", "paged_list"
-    ),
     "search_request_lookup_parties": RouteContract("invoice_issuance_party", "paged_list"),
     "search_request_lookup_products": RouteContract(
         "invoice_issuance_product", "paged_list"
