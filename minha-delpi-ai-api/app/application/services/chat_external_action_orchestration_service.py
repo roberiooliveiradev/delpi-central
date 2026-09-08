@@ -159,7 +159,50 @@ class ChatExternalActionOrchestrationService:
 
             if grounded_planned and not missing_scopes:
                 return _return_planned(grounded_planned, memory_snapshot=memory_snapshot)
-            # Escopos novos (ex.: estrutura após estoque) → segue discovery/multi-scope.
+
+            # Escopos novos (ex.: estrutura após estoque): completa com multi-scope
+            # antes dos fast-paths single-intent.
+            if missing_scopes:
+                product_code = ChatProductQueryIntentService.resolve_product_code(
+                    selection_message,
+                    conversation_context,
+                    previous_messages=previous_messages,
+                    memory_snapshot=memory_snapshot,
+                )
+                if product_code:
+                    scope_planned = (
+                        ChatProductMultiScopePlanningService.plan_product_scope_fetches(
+                            selection_service,
+                            message=selection_message,
+                            product_code=product_code,
+                            allowed_action_ids=allowed_action_ids,
+                            previous_messages=previous_messages,
+                            max_calls=max_calls or 12,
+                        )
+                    )
+                    if scope_planned:
+                        merged = list(grounded_planned or [])
+                        seen_paths = {
+                            str(
+                                (item.get("arguments") or {}).get("path")
+                                or item.get("path")
+                                or ""
+                            ).lower()
+                            for item in merged
+                            if isinstance(item, dict)
+                        }
+                        for item in scope_planned:
+                            path = str(
+                                (item.get("arguments") or {}).get("path")
+                                or item.get("path")
+                                or ""
+                            ).lower()
+                            if path and path in seen_paths:
+                                continue
+                            merged.append(item)
+                            if path:
+                                seen_paths.add(path)
+                        return _return_planned(merged, memory_snapshot=memory_snapshot)
 
         if forced_product_code and forced_intent:
             selected = selection_service.select_action_for_product(
@@ -364,6 +407,23 @@ class ChatExternalActionOrchestrationService:
                     [selected] if selected else [],
                     memory_snapshot=memory_snapshot,
                 )
+
+        from app.domain.services.chat_product_route_predicate_service import (
+            ChatProductRoutePredicateService,
+        )
+
+        if ChatProductRoutePredicateService.matches("commercialRol", normalized):
+            selected = selection_service.select_action(
+                selection_message,
+                allowed_action_ids=allowed_action_ids,
+                conversation_context=conversation_context,
+                previous_messages=previous_messages,
+                raw_message=raw_message,
+                memory_snapshot=memory_snapshot,
+            )
+
+            if selected:
+                return _return_planned([selected], memory_snapshot=memory_snapshot)
 
         from app.domain.services.chat_operational_refinement_service import (
             ChatOperationalRefinementService,
