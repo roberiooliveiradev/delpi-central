@@ -92,6 +92,25 @@ class ChatPaginatedExternalActionService:
         if not reference:
             return None
 
+        from app.domain.services.chat_product_multi_scope_planning_service import (
+            ChatProductMultiScopePlanningService,
+        )
+
+        # «Agora completa… estrutura» não é só consolidar a página de estoque.
+        missing_scopes = ChatProductMultiScopePlanningService.missing_scopes_for_planned_actions(
+            message,
+            [
+                {
+                    "arguments": {
+                        "path": str(reference.get("path") or ""),
+                        "actionId": str(reference.get("actionId") or ""),
+                    }
+                }
+            ],
+        )
+        if missing_scopes:
+            return None
+
         action_id = reference["actionId"]
         parameters = dict(reference["parameters"])
         parameters["page"] = 1

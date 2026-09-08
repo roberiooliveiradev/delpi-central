@@ -11,28 +11,49 @@
       "como funciona",
       "manual "
     ],
-    "operational": ["estoque", "produto", "saldo", "lmp"]
+    "operational": [
+      "estoque",
+      "produto",
+      "saldo",
+      "lmp"
+    ]
   },
   "intentProbes": {
-    "drawingAnalysis": { "service": "drawingAnalysis" },
+    "drawingAnalysis": {
+      "service": "drawingAnalysis"
+    },
     "mixedDocumentalOperational": {
       "allOf": [
-        { "termsFrom": "product_query_intent.mixedDocumental.documental" },
-        { "termsFrom": "product_query_intent.mixedDocumental.operational" }
+        {
+          "termsFrom": "product_query_intent.mixedDocumental.documental"
+        },
+        {
+          "termsFrom": "product_query_intent.mixedDocumental.operational"
+        }
       ]
     },
     "explicitPlaybookProductScope": {
       "anyCustomPredicateFrom": "operational_route_registry.playbookProductPredicates"
     },
-    "multiScopeSingleAnalyser": { "service": "multiScopeSingleAnalyser" },
-    "multiScope": { "service": "multiScope" },
-    "fullAnalyserQuestion": { "service": "fullAnalyserQuestion" },
+    "multiScopeSingleAnalyser": {
+      "service": "multiScopeSingleAnalyser"
+    },
+    "multiScope": {
+      "service": "multiScope"
+    },
+    "fullAnalyserQuestion": {
+      "service": "fullAnalyserQuestion"
+    },
     "productSummaryQuestion": {
       "noneOf": [
-        { "termsFrom": "product_query_intent.analyser.summaryExclude" }
+        {
+          "termsFrom": "product_query_intent.analyser.summaryExclude"
+        }
       ],
       "anyOf": [
-        { "termsFrom": "product_query_intent.analyser.summaryExplicit" },
+        {
+          "termsFrom": "product_query_intent.analyser.summaryExplicit"
+        },
         {
           "termsFrom": "product_query_intent.summaryRoute.resumoMarker",
           "excludeTermsFrom": "product_query_intent.summaryRoute.excludeWhen",
@@ -40,8 +61,12 @@
         }
       ]
     },
-    "productOverviewMessage": { "service": "productOverviewMessage" },
-    "singleScopeIntent": { "service": "singleScopeIntent" }
+    "productOverviewMessage": {
+      "service": "productOverviewMessage"
+    },
+    "singleScopeIntent": {
+      "service": "singleScopeIntent"
+    }
   },
   "referencesPreviousProduct": {
     "filterTerms": [
@@ -184,30 +209,95 @@
   },
   "intentDetectDefault": "full",
   "intentDetectPipeline": [
-    { "intent": "analyser", "probe": "drawingAnalysis" },
-    { "intent": "full", "probe": "mixedDocumentalOperational" },
-    { "intent": "parents", "predicate": "parentsQuestion" },
-    { "intent": "full", "probe": "explicitPlaybookProductScope" },
-    { "intent": "analyser", "probe": "multiScopeSingleAnalyser" },
-    { "intent": "multi_scope", "probe": "multiScope" },
-    { "intent": "analyser", "probe": "fullAnalyserQuestion" },
-    { "intent": "structure", "predicate": "structureQuestion" },
-    { "intent": "sales", "predicate": "salesQuestion" },
-    { "intent": "stock", "predicate": "stockQuestion" },
-    { "intent": "summary", "probe": "productSummaryQuestion" },
-    { "intent": "analyser", "probe": "productOverviewMessage" },
-    { "intent": "description", "predicate": "descriptionQuestion" }
+    {
+      "intent": "analyser",
+      "probe": "drawingAnalysis"
+    },
+    {
+      "intent": "full",
+      "probe": "mixedDocumentalOperational"
+    },
+    {
+      "intent": "parents",
+      "predicate": "parentsQuestion"
+    },
+    {
+      "intent": "full",
+      "probe": "explicitPlaybookProductScope"
+    },
+    {
+      "intent": "analyser",
+      "probe": "multiScopeSingleAnalyser"
+    },
+    {
+      "intent": "multi_scope",
+      "probe": "multiScope"
+    },
+    {
+      "intent": "analyser",
+      "probe": "fullAnalyserQuestion"
+    },
+    {
+      "intent": "structure",
+      "predicate": "structureQuestion"
+    },
+    {
+      "intent": "sales",
+      "predicate": "salesQuestion"
+    },
+    {
+      "intent": "stock",
+      "predicate": "stockQuestion"
+    },
+    {
+      "intent": "summary",
+      "probe": "productSummaryQuestion"
+    },
+    {
+      "intent": "analyser",
+      "probe": "productOverviewMessage"
+    },
+    {
+      "intent": "description",
+      "predicate": "descriptionQuestion"
+    }
   ],
   "intentRefinementPipeline": [
-    { "intent": "full", "probe": "explicitPlaybookProductScope" },
-    { "intent": "structure", "predicate": "structureQuestion" },
-    { "intent": "stock", "predicate": "stockQuestion" },
-    { "intent": "sales", "predicate": "salesQuestion" },
-    { "intent": "parents", "predicate": "parentsQuestion" },
-    { "intent": "summary", "predicate": "productSummaryRoute" },
-    { "intent": "description", "predicate": "descriptionQuestion" },
-    { "intent": "analyser", "probe": "fullAnalyserQuestion" },
-    { "probe": "singleScopeIntent" }
+    {
+      "intent": "full",
+      "probe": "explicitPlaybookProductScope"
+    },
+    {
+      "intent": "structure",
+      "predicate": "structureQuestion"
+    },
+    {
+      "intent": "stock",
+      "predicate": "stockQuestion"
+    },
+    {
+      "intent": "sales",
+      "predicate": "salesQuestion"
+    },
+    {
+      "intent": "parents",
+      "predicate": "parentsQuestion"
+    },
+    {
+      "intent": "summary",
+      "predicate": "productSummaryRoute"
+    },
+    {
+      "intent": "description",
+      "predicate": "descriptionQuestion"
+    },
+    {
+      "intent": "analyser",
+      "probe": "fullAnalyserQuestion"
+    },
+    {
+      "probe": "singleScopeIntent"
+    }
   ],
   "singleScopeIntentMap": {
     "structure": "structure",
@@ -227,22 +317,38 @@
     "productSubIntentRoute"
   ],
   "summaryRoute": {
-    "resumoMarker": ["resumo"],
-    "excludeWhen": ["completo", "ficha", "kaizen"]
+    "resumoMarker": [
+      "resumo"
+    ],
+    "excludeWhen": [
+      "completo",
+      "ficha",
+      "kaizen"
+    ]
   },
   "routePredicates": {
     "purchasesRoute": {
       "termsFrom": "product_query_intent.purchases.terms",
       "noneOf": [
-        { "customPredicate": "lastPurchase" },
-        { "customPredicate": "purchasePriceHistory" },
-        { "customPredicate": "purchaseBudgetHistory" },
-        { "customPredicate": "rawMaterialPriceIntelligence" }
+        {
+          "customPredicate": "lastPurchase"
+        },
+        {
+          "customPredicate": "purchasePriceHistory"
+        },
+        {
+          "customPredicate": "purchaseBudgetHistory"
+        },
+        {
+          "customPredicate": "rawMaterialPriceIntelligence"
+        }
       ]
     },
     "productSummaryRoute": {
       "anyOf": [
-        { "termsFrom": "product_query_intent.analyser.summaryExplicit" },
+        {
+          "termsFrom": "product_query_intent.analyser.summaryExplicit"
+        },
         {
           "termsFrom": "product_query_intent.summaryRoute.resumoMarker",
           "excludeTermsFrom": "product_query_intent.summaryRoute.excludeWhen"
@@ -255,10 +361,18 @@
     "genericPricingRoute": {
       "termsFrom": "product_query_intent.router.priceTerms",
       "noneOf": [
-        { "customPredicate": "salePricingRoute" },
-        { "customPredicate": "purchasePriceHistory" },
-        { "customPredicate": "purchaseBudgetHistory" },
-        { "customPredicate": "lastPurchase" }
+        {
+          "customPredicate": "salePricingRoute"
+        },
+        {
+          "customPredicate": "purchasePriceHistory"
+        },
+        {
+          "customPredicate": "purchaseBudgetHistory"
+        },
+        {
+          "customPredicate": "lastPurchase"
+        }
       ]
     },
     "billingRoute": {
@@ -271,36 +385,56 @@
     "suppliersRoute": {
       "termsFrom": "product_query_intent.suppliers.terms",
       "noneOf": [
-        { "customPredicate": "supplierPartNumberLookup" }
+        {
+          "customPredicate": "supplierPartNumberLookup"
+        }
       ]
     },
     "inspectionRoute": {
       "termsFrom": "product_query_intent.inspection.terms",
-      "noneOf": [{ "customPredicate": "shippingStatus" }]
+      "noneOf": [
+        {
+          "customPredicate": "shippingStatus"
+        }
+      ]
     },
     "inboundInvoiceRoute": {
       "allOf": [
-        { "termsFrom": "product_query_intent.invoices.terms" },
-        { "termsFrom": "product_query_intent.invoices.inboundTerms" }
+        {
+          "termsFrom": "product_query_intent.invoices.terms"
+        },
+        {
+          "termsFrom": "product_query_intent.invoices.inboundTerms"
+        }
       ]
     },
     "outboundInvoiceRoute": {
       "allOf": [
-        { "termsFrom": "product_query_intent.invoices.terms" },
-        { "termsFrom": "product_query_intent.invoices.outboundTerms" }
+        {
+          "termsFrom": "product_query_intent.invoices.terms"
+        },
+        {
+          "termsFrom": "product_query_intent.invoices.outboundTerms"
+        }
       ]
     },
     "genericInvoiceRoute": {
       "termsFrom": "product_query_intent.invoices.terms",
       "noneOf": [
-        { "customPredicate": "inboundInvoiceRoute" },
-        { "customPredicate": "outboundInvoiceRoute" }
+        {
+          "customPredicate": "inboundInvoiceRoute"
+        },
+        {
+          "customPredicate": "outboundInvoiceRoute"
+        }
       ]
     },
     "customersRoute": {
       "termsFrom": "product_query_intent.customers.terms",
       "noneOf": [
-        { "customPredicate": "openOrdersRoute" }
+        {
+          "customPredicate": "openOrdersRoute"
+        }
       ]
     },
     "internalMovementsRoute": {
@@ -313,16 +447,28 @@
       "termsFrom": "product_query_intent.salePricing.terms"
     },
     "priceAnalysisRoute": {
-      "regexPatterns": ["\\banalis"],
+      "regexPatterns": [
+        "\\banalis"
+      ],
       "termsFrom": "product_query_intent.priceAnalysis.terms",
       "noneOf": [
-        { "termsFrom": "product_query_intent.analyser.genericAnalysisExclude" },
-        { "customPredicate": "productionStatus" },
-        { "customPredicate": "rawMaterialPriceIntelligence" }
+        {
+          "termsFrom": "product_query_intent.analyser.genericAnalysisExclude"
+        },
+        {
+          "customPredicate": "productionStatus"
+        },
+        {
+          "customPredicate": "rawMaterialPriceIntelligence"
+        }
       ],
       "anyOf": [
-        { "hasProductScope": true },
-        { "hasProductIdentifier": true }
+        {
+          "hasProductScope": true
+        },
+        {
+          "hasProductIdentifier": true
+        }
       ]
     }
   },
@@ -330,32 +476,54 @@
     "directives": {
       "termsFrom": "product_query_intent.directives.terms",
       "anyOf": [
-        { "hasProductIdentifier": true },
-        { "hasProductScope": true }
+        {
+          "hasProductIdentifier": true
+        },
+        {
+          "hasProductScope": true
+        }
       ]
     },
     "lastPurchase": {
       "noneOf": [
-        { "customPredicate": "directives" },
-        { "customPredicate": "rawMaterialPriceIntelligence" },
-        { "customPredicate": "salePricingRoute" }
+        {
+          "customPredicate": "directives"
+        },
+        {
+          "customPredicate": "rawMaterialPriceIntelligence"
+        },
+        {
+          "customPredicate": "salePricingRoute"
+        }
       ],
       "anyOf": [
         {
           "termsFrom": "product_query_intent.lastPurchase.terms",
           "anyOf": [
-            { "hasProductScope": true },
-            { "hasProductIdentifier": true }
+            {
+              "hasProductScope": true
+            },
+            {
+              "hasProductIdentifier": true
+            }
           ]
         },
         {
           "allOf": [
-            { "termsFrom": "product_query_intent.lastPurchase.shorthandPhrase" },
-            { "termsFrom": "product_query_intent.lastPurchase.shorthandContext" }
+            {
+              "termsFrom": "product_query_intent.lastPurchase.shorthandPhrase"
+            },
+            {
+              "termsFrom": "product_query_intent.lastPurchase.shorthandContext"
+            }
           ],
           "anyOf": [
-            { "hasProductScope": true },
-            { "hasProductIdentifier": true }
+            {
+              "hasProductScope": true
+            },
+            {
+              "hasProductIdentifier": true
+            }
           ]
         }
       ]
@@ -363,16 +531,28 @@
     "purchasePriceHistory": {
       "termsFrom": "product_query_intent.purchasePriceHistory.terms",
       "anyOf": [
-        { "hasProductScope": true },
-        { "hasProductIdentifier": true }
+        {
+          "hasProductScope": true
+        },
+        {
+          "hasProductIdentifier": true
+        }
       ]
     },
     "purchaseBudgetHistory": {
       "termsFrom": "product_query_intent.purchaseBudgetHistory.terms",
-      "noneOf": [{ "customPredicate": "rawMaterialPriceIntelligence" }],
+      "noneOf": [
+        {
+          "customPredicate": "rawMaterialPriceIntelligence"
+        }
+      ],
       "anyOf": [
-        { "hasProductScope": true },
-        { "hasProductIdentifier": true }
+        {
+          "hasProductScope": true
+        },
+        {
+          "hasProductIdentifier": true
+        }
       ]
     },
     "productionStatus": {
@@ -385,14 +565,22 @@
         {
           "termsFrom": "product_query_intent.productionStatus.terms",
           "anyOf": [
-            { "hasProductScope": true },
-            { "hasProductIdentifier": true }
+            {
+              "hasProductScope": true
+            },
+            {
+              "hasProductIdentifier": true
+            }
           ]
         },
         {
           "allOf": [
-            { "hasProductScope": true },
-            { "termsFrom": "product_query_intent.productionStatus.productionMarkers" }
+            {
+              "hasProductScope": true
+            },
+            {
+              "termsFrom": "product_query_intent.productionStatus.productionMarkers"
+            }
           ]
         }
       ]
@@ -401,11 +589,17 @@
       "noneOf": [
         {
           "allOf": [
-            { "customPredicate": "productionStatus" },
+            {
+              "customPredicate": "productionStatus"
+            },
             {
               "noneOf": [
-                { "termsFrom": "product_query_intent.factoryStatus.terms" },
-                { "termsFrom": "product_query_intent.factoryStatus.factoryOnlyMarkers" }
+                {
+                  "termsFrom": "product_query_intent.factoryStatus.terms"
+                },
+                {
+                  "termsFrom": "product_query_intent.factoryStatus.factoryOnlyMarkers"
+                }
               ]
             }
           ]
@@ -422,14 +616,22 @@
         {
           "termsFrom": "product_query_intent.factoryStatus.colloquialTerms",
           "anyOf": [
-            { "hasProductScope": true },
-            { "hasProductIdentifier": true }
+            {
+              "hasProductScope": true
+            },
+            {
+              "hasProductIdentifier": true
+            }
           ]
         },
         {
           "allOf": [
-            { "hasProductScope": true },
-            { "termsFrom": "product_query_intent.factoryStatus.scopeMarkers" }
+            {
+              "hasProductScope": true
+            },
+            {
+              "termsFrom": "product_query_intent.factoryStatus.scopeMarkers"
+            }
           ]
         }
       ]
@@ -443,14 +645,22 @@
             "unlessTermsFrom": "product_query_intent.shippingStatus.excludeShippingContextMarkers"
           },
           "anyOf": [
-            { "hasProductScope": true },
-            { "hasProductIdentifier": true }
+            {
+              "hasProductScope": true
+            },
+            {
+              "hasProductIdentifier": true
+            }
           ]
         },
         {
           "allOf": [
-            { "hasProductScope": true },
-            { "termsFrom": "product_query_intent.shippingStatus.shippingMarkers" }
+            {
+              "hasProductScope": true
+            },
+            {
+              "termsFrom": "product_query_intent.shippingStatus.shippingMarkers"
+            }
           ]
         }
       ]
@@ -462,8 +672,12 @@
           "noneOf": [
             {
               "allOf": [
-                { "lacksProductIdentifier": true },
-                { "lacksProductScope": true },
+                {
+                  "lacksProductIdentifier": true
+                },
+                {
+                  "lacksProductScope": true
+                },
                 {
                   "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.globalMarkers"
                 }
@@ -471,19 +685,29 @@
             }
           ],
           "anyOf": [
-            { "hasSpecificProductScope": true },
-            { "hasProductIdentifier": true }
+            {
+              "hasSpecificProductScope": true
+            },
+            {
+              "hasProductIdentifier": true
+            }
           ]
         },
         {
           "allOf": [
-            { "hasSpecificProductScope": true },
+            {
+              "hasSpecificProductScope": true
+            },
             {
               "noneOf": [
                 {
                   "allOf": [
-                    { "lacksProductIdentifier": true },
-                    { "lacksProductScope": true },
+                    {
+                      "lacksProductIdentifier": true
+                    },
+                    {
+                      "lacksProductScope": true
+                    },
                     {
                       "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.globalMarkers"
                     }
@@ -491,7 +715,9 @@
                 }
               ]
             },
-            { "termsFrom": "product_query_intent.structureExclusivity.exclusivityMarkers" }
+            {
+              "termsFrom": "product_query_intent.structureExclusivity.exclusivityMarkers"
+            }
           ]
         }
       ]
@@ -500,17 +726,27 @@
       "allOf": [
         {
           "anyOf": [
-            { "hasProductIdentifier": true },
-            { "hasSpecificProductScope": true }
+            {
+              "hasProductIdentifier": true
+            },
+            {
+              "hasSpecificProductScope": true
+            }
           ]
         },
         {
           "anyOf": [
-            { "termsFrom": "product_query_intent.structureExcel.terms" },
+            {
+              "termsFrom": "product_query_intent.structureExcel.terms"
+            },
             {
               "allOf": [
-                { "termsFrom": "product_query_intent.structureExcel.exportMarkers" },
-                { "termsFrom": "product_query_intent.structureExcel.structureMarkers" }
+                {
+                  "termsFrom": "product_query_intent.structureExcel.exportMarkers"
+                },
+                {
+                  "termsFrom": "product_query_intent.structureExcel.structureMarkers"
+                }
               ]
             }
           ]
@@ -519,17 +755,27 @@
     },
     "exclusiveRawMaterialCatalog": {
       "noneOf": [
-        { "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.excludeTerms" },
-        { "customPredicate": "structureExclusivity" },
+        {
+          "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.excludeTerms"
+        },
+        {
+          "customPredicate": "structureExclusivity"
+        },
         {
           "allOf": [
-            { "hasProductIdentifier": true },
-            { "hasProductScope": true }
+            {
+              "hasProductIdentifier": true
+            },
+            {
+              "hasProductScope": true
+            }
           ]
         }
       ],
       "anyOf": [
-        { "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.terms" },
+        {
+          "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.terms"
+        },
         {
           "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.exclusivityFallbackMarkers"
         }
@@ -538,21 +784,39 @@
     },
     "rawMaterialPriceIntelligence": {
       "noneOf": [
-        { "customPredicate": "salePricingRoute" },
-        { "customPredicate": "costImpactSimulation" },
-        { "termsFrom": "product_query_intent.purchasePriceHistory.terms" },
-        { "termsFrom": "product_query_intent.purchaseBudgetHistory.terms" },
+        {
+          "customPredicate": "salePricingRoute"
+        },
+        {
+          "customPredicate": "costImpactSimulation"
+        },
+        {
+          "termsFrom": "product_query_intent.purchasePriceHistory.terms"
+        },
+        {
+          "termsFrom": "product_query_intent.purchaseBudgetHistory.terms"
+        },
         {
           "termsFrom": "product_query_intent.rawMaterialPriceIntelligence.excludeWhenSalePricing"
         }
       ],
       "allOf": [
-        { "termsFrom": "product_query_intent.rawMaterialPriceIntelligence.terms" },
+        {
+          "termsFrom": "product_query_intent.rawMaterialPriceIntelligence.terms"
+        },
         {
           "anyOf": [
-            { "hasProductScope": true },
-            { "hasProductIdentifier": true },
-            { "regexPatterns": ["\\bmp\\b"] },
+            {
+              "hasProductScope": true
+            },
+            {
+              "hasProductIdentifier": true
+            },
+            {
+              "regexPatterns": [
+                "\\bmp\\b"
+              ]
+            },
             {
               "termsFrom": "product_query_intent.rawMaterialPriceIntelligence.scopeShorthandMarkers"
             }
@@ -569,14 +833,22 @@
             "unlessTermsFrom": "product_query_intent.costImpactSimulation.excludeFactoryContextMarkers"
           },
           "anyOf": [
-            { "hasProductScope": true },
-            { "hasProductIdentifier": true }
+            {
+              "hasProductScope": true
+            },
+            {
+              "hasProductIdentifier": true
+            }
           ]
         },
         {
           "allOf": [
-            { "hasProductScope": true },
-            { "termsFrom": "product_query_intent.costImpactSimulation.costMarkers" }
+            {
+              "hasProductScope": true
+            },
+            {
+              "termsFrom": "product_query_intent.costImpactSimulation.costMarkers"
+            }
           ]
         }
       ]
@@ -590,30 +862,54 @@
       "noneOf": [
         {
           "allOf": [
-            { "termsFrom": "product_query_intent.stock.excludeAggregateWithoutCode" },
-            { "lacksProductIdentifier": true }
+            {
+              "termsFrom": "product_query_intent.stock.excludeAggregateWithoutCode"
+            },
+            {
+              "lacksProductIdentifier": true
+            }
           ]
         }
       ],
       "anyOf": [
-        { "pluralScopeLinked": "stock" },
-        { "termsFrom": "product_query_intent.stock.terms" }
+        {
+          "pluralScopeLinked": "stock"
+        },
+        {
+          "termsFrom": "product_query_intent.stock.terms"
+        }
       ]
     },
     "salesQuestion": {
       "noneOf": [
-        { "customPredicate": "salePricingRoute" },
-        { "customPredicate": "stockQuestion" },
-        { "termsFrom": "product_query_intent.sales.excludeBilling" },
-        { "departmentKpiResolved": true }
+        {
+          "customPredicate": "salePricingRoute"
+        },
+        {
+          "customPredicate": "stockQuestion"
+        },
+        {
+          "termsFrom": "product_query_intent.sales.excludeBilling"
+        },
+        {
+          "departmentKpiResolved": true
+        }
       ],
       "anyOf": [
-        { "termsFrom": "product_query_intent.sales.explicitPhrases" },
-        { "pluralScopeLinked": "sales" },
+        {
+          "termsFrom": "product_query_intent.sales.explicitPhrases"
+        },
+        {
+          "pluralScopeLinked": "sales"
+        },
         {
           "allOf": [
-            { "hasProductEntityReference": true },
-            { "termsFrom": "product_query_intent.sales.productSaleTerms" }
+            {
+              "hasProductEntityReference": true
+            },
+            {
+              "termsFrom": "product_query_intent.sales.productSaleTerms"
+            }
           ]
         }
       ]
@@ -623,18 +919,30 @@
     },
     "parentsQuestion": {
       "anyOf": [
-        { "regexPatternsFrom": "product_query_intent.parents.regexPatterns" },
-        { "termsFrom": "product_query_intent.parents.terms" }
+        {
+          "regexPatternsFrom": "product_query_intent.parents.regexPatterns"
+        },
+        {
+          "termsFrom": "product_query_intent.parents.terms"
+        }
       ]
     },
     "descriptionQuestion": {
       "noneOf": [
-        { "technicalNormasDescriptionBlock": true },
-        { "customPredicate": "productSearchQuestion" }
+        {
+          "technicalNormasDescriptionBlock": true
+        },
+        {
+          "customPredicate": "productSearchQuestion"
+        }
       ],
       "anyOf": [
-        { "pluralScopeLinked": "description" },
-        { "termsFrom": "product_query_intent.description.terms" }
+        {
+          "pluralScopeLinked": "description"
+        },
+        {
+          "termsFrom": "product_query_intent.description.terms"
+        }
       ]
     },
     "productSubIntentRoute": {
@@ -712,7 +1020,12 @@
       "traga vendas",
       "traz vendas"
     ],
-    "productSaleTerms": ["vendas", " venda ", " venda do", "venda do"]
+    "productSaleTerms": [
+      "vendas",
+      " venda ",
+      " venda do",
+      "venda do"
+    ]
   },
   "openOrders": {
     "terms": [
@@ -726,7 +1039,12 @@
     ]
   },
   "scopeComposition": {
-    "analyserBundleScopes": ["profile", "guide", "structure", "inspection"],
+    "analyserBundleScopes": [
+      "profile",
+      "guide",
+      "structure",
+      "inspection"
+    ],
     "companionScopesAllowed": [
       "stock",
       "open_orders",
@@ -1361,8 +1679,18 @@
       "notas de saída",
       "notas de saida"
     ],
-    "inboundTerms": ["entrada", "inbound", "recebimento"],
-    "outboundTerms": ["saída", "saida", "outbound", "expedição", "expedicao"]
+    "inboundTerms": [
+      "entrada",
+      "inbound",
+      "recebimento"
+    ],
+    "outboundTerms": [
+      "saída",
+      "saida",
+      "outbound",
+      "expedição",
+      "expedicao"
+    ]
   },
   "customers": {
     "terms": [
@@ -1720,18 +2048,38 @@
       "schema da tabela"
     ],
     "operationalSubIntentPipeline": [
-      { "probe": "productionScheduleToday", "subIntent": "schedule_today_lookup" },
-      { "predicate": "factoryStatus", "subIntent": "factory_status_lookup" },
-      { "predicate": "productionStatus", "subIntent": "production_status_lookup" },
-      { "predicate": "shippingStatus", "subIntent": "shipping_status_lookup" },
-      { "predicate": "stockQuestion", "subIntent": "stock_lookup" },
-      { "predicate": "billingRoute", "subIntent": "billing_lookup" },
-      { "predicate": "costImpactSimulation", "subIntent": "cost_impact_lookup" },
+      {
+        "probe": "productionScheduleToday",
+        "subIntent": "schedule_today_lookup"
+      },
+      {
+        "predicate": "factoryStatus",
+        "subIntent": "factory_status_lookup"
+      },
+      {
+        "predicate": "productionStatus",
+        "subIntent": "production_status_lookup"
+      },
+      {
+        "predicate": "shippingStatus",
+        "subIntent": "shipping_status_lookup"
+      },
+      {
+        "predicate": "billingRoute",
+        "subIntent": "billing_lookup"
+      },
+      {
+        "predicate": "costImpactSimulation",
+        "subIntent": "cost_impact_lookup"
+      },
       {
         "predicate": "rawMaterialPriceIntelligence",
         "subIntent": "raw_material_price_lookup"
       },
-      { "predicate": "lastPurchase", "subIntent": "last_purchase_lookup" },
+      {
+        "predicate": "lastPurchase",
+        "subIntent": "last_purchase_lookup"
+      },
       {
         "predicate": "purchasePriceHistory",
         "subIntent": "purchase_price_history_lookup"
@@ -1740,17 +2088,38 @@
         "predicate": "purchaseBudgetHistory",
         "subIntent": "purchase_budget_history_lookup"
       },
-      { "predicate": "salePricingRoute", "subIntent": "price_lookup" },
-      { "probe": "outboundInvoice", "subIntent": "sales_lookup" },
-      { "predicate": "salesQuestion", "subIntent": "sales_lookup" },
-      { "termsAny": "purchaseTerms", "subIntent": "purchase_lookup" },
+      {
+        "predicate": "salePricingRoute",
+        "subIntent": "price_lookup"
+      },
+      {
+        "probe": "outboundInvoice",
+        "subIntent": "sales_lookup"
+      },
+      {
+        "predicate": "salesQuestion",
+        "subIntent": "sales_lookup"
+      },
+      {
+        "termsAny": "purchaseTerms",
+        "subIntent": "purchase_lookup"
+      },
       {
         "predicate": "supplierPartNumberLookup",
         "subIntent": "product_by_supplier_part_number"
       },
-      { "probe": "supplierMention", "subIntent": "supplier_lookup" },
-      { "termsAny": "priceTerms", "subIntent": "price_lookup" },
-      { "probe": "fullAnalyserQuestion", "subIntent": "product_lookup" },
+      {
+        "probe": "supplierMention",
+        "subIntent": "supplier_lookup"
+      },
+      {
+        "termsAny": "priceTerms",
+        "subIntent": "price_lookup"
+      },
+      {
+        "probe": "fullAnalyserQuestion",
+        "subIntent": "product_lookup"
+      },
       {
         "predicate": "productSearchQuestion",
         "subIntent": "product_search"
@@ -1763,15 +2132,34 @@
         "predicate": "structureExclusivity",
         "subIntent": "structure_exclusivity_lookup"
       },
-      { "predicate": "structureQuestion", "subIntent": "structure_lookup" },
-      { "termsAny": "guideTerms", "subIntent": "guide_lookup" },
-      { "termsAny": "inspectionTerms", "subIntent": "inspection_lookup" },
-      { "predicate": "parentsQuestion", "subIntent": "parents_lookup" },
+      {
+        "predicate": "structureQuestion",
+        "subIntent": "structure_lookup"
+      },
+      {
+        "predicate": "stockQuestion",
+        "subIntent": "stock_lookup"
+      },
+      {
+        "termsAny": "guideTerms",
+        "subIntent": "guide_lookup"
+      },
+      {
+        "termsAny": "inspectionTerms",
+        "subIntent": "inspection_lookup"
+      },
+      {
+        "predicate": "parentsQuestion",
+        "subIntent": "parents_lookup"
+      },
       {
         "predicate": "systemMetadataQuestion",
         "subIntent": "system_metadata"
       },
-      { "messageContains": "produto", "subIntent": "product_lookup" }
+      {
+        "messageContains": "produto",
+        "subIntent": "product_lookup"
+      }
     ],
     "operationalAmbiguityExclusionPredicates": [
       "stockQuestion",
@@ -1788,7 +2176,9 @@
       "salePricingRoute",
       "structureExclusivity"
     ],
-    "operationalAmbiguityProbes": ["fullAnalyserQuestion"],
+    "operationalAmbiguityProbes": [
+      "fullAnalyserQuestion"
+    ],
     "operationalAmbiguityCandidates": [
       "product_lookup",
       "stock_lookup",
@@ -1817,6 +2207,10 @@
     "tokenPatternKey": "currencyLikeToken",
     "prefixBeforePatternKey": "currencyPrefixBefore",
     "productContextPrefixPatternKey": "productCodeContextPrefix",
-    "markers": ["r$", "r$ ", "rs "]
+    "markers": [
+      "r$",
+      "r$ ",
+      "rs "
+    ]
   }
 }

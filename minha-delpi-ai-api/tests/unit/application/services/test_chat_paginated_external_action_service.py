@@ -298,3 +298,49 @@ def test_fetch_format_refinement_reuses_cached_sql_payload():
     assert merged_metadata.get("presentation", {}).get("type") == "table"
     assert merged_metadata.get("presentation", {}).get("rows") == _PRODUCTION_SQL_ROWS
     assert continue_prompt is None
+
+
+def test_fetch_full_skips_when_message_requests_new_product_scopes():
+    execute_tool = FakeExecuteToolUseCase()
+    service = ChatPaginatedExternalActionService(execute_tool)
+    previous_messages = [
+        {
+            "role": "user",
+            "content": "estoque do produto 90260149",
+        },
+        {
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "stock-action",
+                            "parameters": {"code": "90260149", "page": 1, "page_size": 50},
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "actionId": "stock-action",
+                            "path": "/products/90260149/stock",
+                            "dataCoverageNotice": {"kind": "pagination"},
+                        },
+                    }
+                ]
+            }
+        },
+    ]
+
+    message = (
+        "Agora completa: inclui também a estrutura e um comentário se o "
+        "estoque cobre demanda típica. Quero visão consolidada."
+    )
+
+    assert ChatPaginationConsolidationService.looks_like_full_fetch_request(message)
+    result = service.fetch_full_from_history(
+        user_id="user-1",
+        access_token="token",
+        message=message,
+        previous_messages=previous_messages,
+    )
+
+    assert result is None
+    assert execute_tool.calls == []

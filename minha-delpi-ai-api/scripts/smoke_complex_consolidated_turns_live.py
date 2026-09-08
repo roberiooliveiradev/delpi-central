@@ -93,7 +93,7 @@ CASES: list[dict[str, Any]] = [
             "principal (KPI), a série no tempo em gráfico se disponível, e uma "
             "leitura em prosa do que está acontecendo — tudo na mesma resposta."
         ),
-        "expect_any_kinds": ["kpi", "chart", "table", "dashboard"],
+        "expect_any_kinds": ["kpi", "chart", "table", "dashboard", "stack"],
         "expect_prose": True,
         "expect_min_tools": 1,
         "expect_min_rich_surfaces": 1,
