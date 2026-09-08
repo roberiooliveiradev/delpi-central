@@ -185,6 +185,8 @@
   gap: 0.65rem;
   justify-items: start;
 }
+
+.dashboard-supplies-portal .sp-home-queue-ok {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
