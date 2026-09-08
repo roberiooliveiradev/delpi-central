@@ -2,17 +2,17 @@
 
 | Campo | Valor |
 |-------|--------|
-| Status | Aceito como **procedimento** · destino de cada BI = após dump |
+| Status | Aceito como procedimento · destino de cada BI após dump |
 | Data | 2026-09-08 |
 
 ---
 
 ## Contexto
 
-O Product Owner evidenciou apps e capabilities usados por Analista SC/ES e Comprador SC:
+O Product Owner evidenciou apps/capabilities usados por Analista SC/ES e Comprador SC:
 
-| Nome UI (PO) | Permissão observada |
-|--------------|---------------------|
+| Nome UI (PO) | Permission observada |
+|---|---|
 | Análise - Importações | `importados.access` |
 | Onde o item é usado - BI | `onde-e-usado.access` |
 | Atraso de Fornecedores - SC - BI | `matriz_atraso-fornecedores.access` |
@@ -20,24 +20,48 @@ O Product Owner evidenciou apps e capabilities usados por Analista SC/ES e Compr
 | Controle de Estoques - SC - BI | `controle-estoque-sc.access` |
 | Indicadores de Suprimentos - Sheets | `idd-suprimentos.access` |
 
-Scan do monorepo (plugins, manifests, seeds Core, Compose, gateway, docs, scripts): **zero** ocorrências desses códigos. **CONFIRMADO_NO_CODIGO** (ausência). A existência operacional é **CONFIRMADO_POR_EVIDENCIA_DO_PRODUCT_OWNER**.
-
-Equivalentes **parciais** nativos existem (OTD, estoque, parents de produto, Sheets IDD via dashboard). Isso **não** prova que os BIs foram desligados.
+Esses codes não foram localizados no monorepo; a existência operacional é **CONFIRMADO_POR_EVIDENCIA_DO_PRODUCT_OWNER** e o contrato técnico permanece desconhecido até dump do Core de produção.
 
 ## Decisão
 
-1. Classificar os seis como **LEGADO_A_VALIDAR** até dump do Core de **produção** (`apps`, `app_routes`, `permissions`, URLs iframe/Power BI/Sheets).
-2. Subetapa obrigatória **E1.S1** do plano: consultar Core (admin API ou SQL) e preencher a tabela de [INVENTARIO-ATIVOS.md](../INVENTARIO-ATIVOS.md) seção E.
-3. **Proibido** inventar redirect ou depreciação sem URL/id reais.
-4. Enquanto isso, o Hub do Portal pode ter **placeholders capability-driven** só depois que o dump revelar o `app id` — não antes.
-5. Sheets IDD já é consumida por `GET /supplies/negotiation-savings/summary`. A perm `idd-suprimentos.access` (se existir no Core) vira alias de `supplies.analytics.view` **após** confirmação, não agora.
+1. Classificar os seis como `LEGADO_A_VALIDAR` durante E1.
+2. E1.S1 consulta Core/admin/SQL autorizado e registra id, type, URL/basePath, routes, permissions e owner.
+3. Não inventar redirect, paridade ou depreciação antes dessa evidência.
+4. Não copiar permission PT/legada para o catálogo novo por conveniência.
+5. Aliases só são definidos após confirmação do code real e análise de risco pelo ADR-007.
 
-## Se o dump não achar o app
+## Gate de cutover
 
-Registrar `LEGADO_OU_POSSIVELMENTE_OBSOLETO` + data. A jornada correspondente no Portal (Importações, Alçadas, etc.) permanece **P1/P2** conforme [PLAYBOOK](../PLAYBOOK-MODULO-SUPRIMENTOS.md), sem fingir paridade.
+`LEGADO_A_VALIDAR` é estado de descoberta, **não estado permitido no GO**.
+
+Antes do `GATE-CUTOVER`, cada um deve estar em exatamente um destes estados:
+
+```text
+PARIDADE_HOMOLOGADA
+MANTER_EXTERNO
+DEEP_LINK
+FORA_DO_ESCOPO_COM_ACEITE
+```
+
+Se o dump não encontrar o app, registrar `LEGADO_OU_POSSIVELMENTE_OBSOLETO`, investigar uso/owner e obter aceite antes de convertê-lo em `FORA_DO_ESCOPO_COM_ACEITE`.
+
+## Casos especiais
+
+### Indicadores / Sheets
+
+A leitura de savings já existe via api-delpi. Isso não prova que o app Sheets possa ser removido; pode existir processo de edição. O destino só fecha após confirmar quem edita e qual é a fonte canônica de meta/realizado.
+
+### Onde o item é usado
+
+`GET /products/{code}/parents` é capability nativa existente, mas não prova paridade do BI externo. Comparar regra/filtros/apresentação antes da decisão final.
+
+### Alçadas
+
+Consultar `C7_APROV` não equivale automaticamente a workflow de aprovação. Se houver aprovação/rejeição real, avaliar segregação de função e possível permission específica conforme ADR-007.
 
 ## Não fazer
 
-- Tratar evidência visual de permissão como contrato canônico.
-- Copiar o código PT (`alcada-compras.access`) para permission **nova**.
-- Assumir que «Onde o item é usado» do chat (`GET /products/{code}/parents`) **é** o BI do PO — são superfícies diferentes até prova.
+- tratar ausência no git como ausência operacional;
+- tratar screenshot como contrato canônico completo;
+- registrar redirect para path desconhecido;
+- chegar ao cutover com qualquer BI ainda `LEGADO_A_VALIDAR`.
