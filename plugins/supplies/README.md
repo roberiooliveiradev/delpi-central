@@ -38,3 +38,14 @@ BASE_URL="https://<hml-host>" TOKEN="<jwt-apps.manage>" bash plugins/supplies/sc
 ```
 
 Atualizar manifesto já registrado: `PUT $BASE_URL/core-api/admin/apps/supplies/manifest` com o mesmo JSON (guia [registrar-plugin.md](../../docs/10-guias-operacionais/registrar-plugin.md)).
+
+## RBAC de coexistência
+
+```bash
+export TOKEN="$(bash infra/scripts/get-dev-token.sh)"
+bash plugins/supplies/scripts/provision-rbac-coexistence.sh
+```
+
+Cria papéis `Portal Suprimentos - Analista|Comprador SC|Solicitante SC|Admin` com capabilities canônicas. **Não** remove permissions legadas. Atribuição a usuários reais é passo Admin separado.
+
+Evidence local: [docs/12-roadmap-e-evolucao/supplies/evidence/e3-s5-rbac-smoke-local.json](../../docs/12-roadmap-e-evolucao/supplies/evidence/e3-s5-rbac-smoke-local.json).

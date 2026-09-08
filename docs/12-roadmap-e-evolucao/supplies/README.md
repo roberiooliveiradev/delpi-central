@@ -1,7 +1,7 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (set/2026):** baseline + **E1 concluída** + **E2 foundation API concluída (2026-09-08)** · MFE ainda não iniciado  
-> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ PASS** · próximo = **E3 (MFE + RBAC coexistência) após autorização**  
+> **Status (set/2026):** baseline + **E1–E3 concluídas (2026-09-08)** · MFE `plugins/supplies` + GATE-RBAC local  
+> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = **E4 (Home + Ajuda)**  
 > **Nome ao usuário:** **Portal Suprimentos**  
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies`  
 > **API:** `supplies-api` · gateway `/apps/supplies-api/`  
@@ -21,15 +21,16 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | Arquitetura alvo | concluída |
 | **E1 (descoberta + freeze)** | **concluída 2026-09-08** |
 | **E2 (supplies-api foundation)** | **concluída 2026-09-08** — Flask, GATE-AUTHZ, schema `supplies`, gateway api-delpi, `/me/capabilities` |
+| **E3 (MFE + RBAC coexistência)** | **concluída 2026-09-08** — `plugins/supplies`, client BFF-only, shell capability-driven, manifest Core, papéis canônicos |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** (fail-closed na fronteira; não usa claims JWT) |
 | Framework supplies-api | Flask — pacote `supplies-api/` no monorepo |
 | BIs externos | dump **local** 0/6 documentado (ADR-005); **dump prod** obrigatório antes do cutover |
-| Papéis SC/ES | matriz legado→canônico em PERFIS; P-02 fechado para desenho; smoke prod = E3.S5 |
+| Papéis SC/ES | papéis canônicos provisionados no Core local; Comprador ES = N/A_LOCAL até usuário operacional |
 | KPIs Overview P0 | **7 CONFIRMADOS**; cobertura/PO-LATE fora do Overview |
-| Manifest draft | **`schemaVersion 1.0.0`** validado vs schema Core |
+| Manifest draft | **`schemaVersion 1.0.0`** registrado no Core local |
 | P-13 | **FECHADO** — Core `/me.id` UUID |
-| Implementação MFE | não iniciada — aguarda autorização para **E3** |
+| Implementação MFE | **iniciada** — scaffold + shell E3; Home attention = E4 |
 
 ### Gates
 
@@ -39,13 +40,13 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | **GATE-ARCH** | **PASS** |
 | **GATE-AUTHZ** | **PASS** (E2.S2) |
 | **GATE-API** | **PASS** parcial — health/gateway/Compose; BFF de domínio ainda E5+ |
-| **GATE-RBAC** | pendente E3.S5 (provisionamento coexistência) |
+| **GATE-RBAC** | **PASS (local 2026-09-08)** — papéis canônicos + evidence `evidence/e3-s5-rbac-smoke-local.json`; persona negativa user-level pendente de user não-superadmin |
 
 ### Próximo
 
-**E3** (scaffold MFE + cliente BFF-only + shell + manifest HML + RBAC coexistência) — somente com autorização explícita.
+**E4** (Home `/home/attention` + Ajuda esqueleto completo) — somente com autorização explícita.
 
-Dump Core de produção **não** bloqueia E3 scaffold; bloqueia decisão final de redirects/BIs no cutover.
+Dump Core de produção **não** bloqueia E4; bloqueia decisão final de redirects/BIs no cutover.
 
 ---
 

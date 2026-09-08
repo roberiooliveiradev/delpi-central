@@ -1,0 +1,51 @@
+{
+  "date": "2026-09-08T18:09:53.672574+00:00",
+  "environment": "local",
+  "notes": {
+    "me_routes": "CONFIRMADO_NO_CODIGO — Core não expõe GET /me/routes; rotas vêm em GET /me/apps[].routes",
+    "negative_user": "BLOQUEADO_COM_EVIDENCIA — único usuário local do smoke é is_superadmin=true; persona negativa exige user Keycloak não-superadmin",
+    "comprador_es": "N/A_LOCAL — sem usuário/papel operacional ES; desenho não exige capability nova (só unit-02)"
+  },
+  "smokes": {
+    "me": {
+      "is_superadmin": true,
+      "roles": []
+    },
+    "me_apps_supplies": {
+      "present": true,
+      "route_count": 14,
+      "launcher": "/apps/supplies"
+    },
+    "role_catalog": {
+      "Portal Suprimentos - Admin": [
+        "supplies.administration.manage",
+        "supplies.portal.access",
+        "supplies.unit.filial-01",
+        "supplies.unit.filial-02"
+      ],
+      "Portal Suprimentos - Analista": [
+        "supplies.analytics.access",
+        "supplies.portal.access",
+        "supplies.unit.filial-01",
+        "supplies.unit.filial-02"
+      ],
+      "Portal Suprimentos - Comprador SC": [
+        "supplies.analytics.access",
+        "supplies.operations.access",
+        "supplies.portal.access",
+        "supplies.unit.filial-01"
+      ],
+      "Portal Suprimentos - Solicitante SC": [
+        "supplies.portal.access",
+        "supplies.purchase-requests.access",
+        "supplies.unit.filial-01"
+      ]
+    },
+    "sibling_commercial_full_without_supplies_codes": {
+      "role": "Portal Comercial - Full",
+      "supplies_codes": [],
+      "pass": true
+    }
+  },
+  "gate_rbac": "PASS_LOCAL"
+}

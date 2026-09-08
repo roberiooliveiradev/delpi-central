@@ -1,7 +1,7 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
-> **Status:** plano executável revisado · set/2026 · **E2 concluída** · MFE/E3 não iniciar sem autorização explícita  
-> **Readiness atual:** **E1 + E2 + GATE-AUTHZ PASS** · próximo = E3 após autorização · GATE-RBAC pendente  
+> **Status:** plano executável revisado · set/2026 · **E1–E3 concluídas** · E4+ não iniciar sem autorização explícita  
+> **Readiness atual:** **E1 + E2 + E3 + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = E4  
 > Referências: ADR-001..ADR-007, `plan-construction.mdc`, `evidence-driven-execution.mdc`.
 
 ---
@@ -70,9 +70,14 @@ Passa somente quando:
 
 ### GATE-RBAC
 
-- permissions canônicas provisionáveis;
-- migração de papéis definida;
-- `/me/apps` e `/me/routes` cobertos por testes/smoke.
+**PASS (local 2026-09-08)** quando:
+
+- permissions canônicas provisionáveis (manifest registrado);
+- papéis canônicos criados (`plugins/supplies/scripts/provision-rbac-coexistence.sh`);
+- smoke `GET /me` + `GET /me/apps` (rotas embutidas — Core **não** expõe `/me/routes`);
+- evidence: `evidence/e3-s5-rbac-smoke-local.json`.
+
+Persona negativa em user não-superadmin e Comprador ES operacional ficam para HML/prod com usuários reais.
 
 ### GATE-C2
 
@@ -300,13 +305,12 @@ Adicionar permissions canônicas aos papéis/grupos sem remover legadas.
 
 ```text
 /core-api/me
-/core-api/me/apps
-/core-api/me/routes
+/core-api/me/apps   # rotas filtradas em apps[].routes — Core não expõe /me/routes
 ```
 
 Casos: comprador SC, analista, usuário sem supplies, superadmin e comprador ES se existir.
 
-**Pronto quando:** GATE-RBAC.
+**Pronto quando:** GATE-RBAC (local documentado em `evidence/e3-s5-rbac-smoke-local.json`).
 
 ---
 
