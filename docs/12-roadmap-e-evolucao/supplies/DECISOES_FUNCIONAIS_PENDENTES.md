@@ -26,6 +26,7 @@ Só o que o repositório não responde. Não bloqueia o desenho, mas pode bloque
 - Framework supplies-api = Flask pela precedência oficial — ADR-001.
 - JWT não é fonte final de permissions; Core resolve effective permissions — ADR-001/006.
 - C2 ocorre antes de C3 — ADR-002 + IMPLEMENTATION-PLAN.
+- Páginas generalistas alinhadas ao Comercial: shell, Início, Ajuda `/help` (WF-HELP), perfil plugin `/users/:userId` (WF-USER); preferências no perfil + `/me/preferences`; sem `/preferences` dedicado; `/profile` do host permanece global — WIREFRAMES + DESIGN-IA + E4.S4.
 
 ## Gates
 
