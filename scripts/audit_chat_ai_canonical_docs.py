@@ -10,7 +10,6 @@ reintroduced or referenced by canonical sources.
 from __future__ import annotations
 
 from pathlib import Path
-import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -26,7 +25,10 @@ CANONICAL_FILES = (
     ".cursor/rules/ai-intelligence-evaluation.mdc",
     ".cursor/rules/test-and-commit.mdc",
     ".cursor/rules/plan-construction.mdc",
+    ".cursor/rules/schema-first-presentation-delivered.mdc",
+    ".cursor/rules/presentation-operational-decoupling.mdc",
     "minha-delpi-ai-api/docs/README.md",
+    "minha-delpi-ai-api/docs/architecture/README.md",
     "minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md",
     "minha-delpi-ai-api/docs/architecture/new-api-route-checklist.md",
     "minha-delpi-ai-api/docs/architecture/assistant-content-catalog.md",
@@ -39,6 +41,8 @@ CANONICAL_FILES = (
     "minha-delpi-ai-api/docs/flows/04-operacional-e-apresentacao.md",
     "minha-delpi-ai-api/docs/roadmap/README.md",
     "minha-delpi-ai-api/docs/roadmap/openapi-first-universal-tool-routing.md",
+    "plugins/minha-delpi-chat/README.md",
+    "docs/08-plugins/minha-delpi-chat/documentacao-tecnica.md",
 )
 
 REMOVED_DOCS = (
@@ -53,13 +57,15 @@ REMOVED_DOCS = (
     "minha-delpi-ai-api/docs/roadmap/melhorias/playbook-follow-up-operacional-desacoplado-jun2026.md",
     "minha-delpi-ai-api/docs/changelog/2026-06-product-directives-chat.md",
     "minha-delpi-ai-api/docs/changelog/2026-06-presentation-delivered-pure.md",
+    "minha-delpi-ai-api/docs/architecture/presentation-delivered-pure-jun2026.md",
+    "minha-delpi-ai-api/docs/architecture/humanized-narrative-stack-jun2026.md",
+    "minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md",
 )
 
 REMOVED_DOC_NAMES = tuple(Path(path).name for path in REMOVED_DOCS)
 
-# Forbidden only in canonical implementation/evaluation sources. Terms naming an
-# anti-pattern are allowed when the canonical source explicitly forbids it; names
-# of removed documents are never allowed because they create dead/ambiguous links.
+# Forbidden only in canonical implementation/evaluation sources. Names of removed
+# documents are separately rejected so dead links cannot become guidance again.
 FORBIDDEN_CANONICAL = (
     "R1–R8",
     "R1-R8",
@@ -82,6 +88,7 @@ OPENAPI_FIRST_REQUIRED = (
     ".cursor/rules/openapi-first-universal-tool-routing.mdc",
     ".cursor/rules/operational-api-routing.mdc",
     ".cursor/rules/new-api-route-checklist.mdc",
+    "minha-delpi-ai-api/docs/architecture/README.md",
     "minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md",
     "minha-delpi-ai-api/docs/architecture/new-api-route-checklist.md",
     "minha-delpi-ai-api/docs/api/04-actions-openapi.md",
