@@ -216,3 +216,19 @@ def test_exclusive_sale_orders_list_turn():
     assert not ChatProductMultiScopePlanningService.is_exclusive_open_orders_or_sale_orders_list_turn(
         "estrutura, estoque e pedidos em aberto do produto 90260149",
     )
+
+
+def test_se_disponivel_alone_does_not_add_stock_scope():
+    scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+        "mostre o KPI e a série no tempo em gráfico se disponível",
+    )
+
+    assert "stock" not in scopes
+
+
+def test_estoque_still_adds_stock_scope():
+    scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+        "saldo de estoque do produto 90260149",
+    )
+
+    assert "stock" in scopes

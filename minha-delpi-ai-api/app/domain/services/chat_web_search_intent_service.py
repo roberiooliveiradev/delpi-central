@@ -207,7 +207,20 @@ class ChatWebSearchIntentService:
         if ChatWebSearchIntegrationService.should_allow_operational_companion(raw):
             return False
 
+        if cls._has_operational_companion_terms(raw):
+            return False
+
         return True
+
+    @classmethod
+    def _has_operational_companion_terms(cls, message: str) -> bool:
+        """KPI/ROL/indicador pedem OpenAPI mesmo se um trigger web genérico bater."""
+        config = _augmentation_content()
+        terms = tuple(str(item) for item in (config.get("operationalCompanionTerms") or ()))
+        if not terms:
+            return False
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        return ChatMessageNormalizationService.contains_any(normalized, terms)
 
     @classmethod
     def format_disabled_notice(cls, message: str | None = None) -> str:

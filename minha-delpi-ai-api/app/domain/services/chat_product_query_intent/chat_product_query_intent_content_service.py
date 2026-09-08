@@ -155,6 +155,10 @@ class ChatProductQueryIntentContentService:
         return cls._terms("openOrders", "terms")
 
     @classmethod
+    def stock_terms(cls) -> tuple[str, ...]:
+        return cls._terms("stock", "terms")
+
+    @classmethod
     def _header(cls, key: str, *, default: str = "") -> str:
         return ChatAssistantContentService.get(
             _INTENT_CONTENT_BUNDLE,

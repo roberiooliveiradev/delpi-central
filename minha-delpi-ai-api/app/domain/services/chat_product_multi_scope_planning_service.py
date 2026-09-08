@@ -135,16 +135,17 @@ class ChatProductMultiScopePlanningService:
         ):
             add("structure")
 
-        if any(
-            term in normalized
-            for term in (
-                "estoque",
-                "stock",
-                "saldo",
-                "disponível",
-                "disponivel",
-            )
-        ):
+        stock_terms = ChatProductQueryIntentContentService.stock_terms() or (
+            "estoque",
+            "stock",
+            "saldo",
+            "quantidade dispon",
+            "posição de estoque",
+            "posicao de estoque",
+            "tem em estoque",
+            "qtd dispon",
+        )
+        if any(term in normalized for term in stock_terms):
             add("stock")
 
         open_orders_terms = ChatProductQueryIntentContentService.open_orders_terms()

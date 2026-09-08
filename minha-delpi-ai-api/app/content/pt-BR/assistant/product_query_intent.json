@@ -676,15 +676,11 @@
       "estoque",
       "stock",
       "saldo",
-      "disponível",
-      "disponivel",
       "quantidade dispon",
       "posição de estoque",
       "posicao de estoque",
       "tem em estoque",
-      "qtd dispon",
-      "posição",
-      "posicao"
+      "qtd dispon"
     ]
   },
   "sales": {

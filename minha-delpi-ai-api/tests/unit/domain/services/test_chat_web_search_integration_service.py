@@ -51,6 +51,19 @@ def test_blocks_external_action_selection_allows_hybrid(_enabled):
     )
 
 
+@patch.object(ChatWebSearchIntentService, "is_auto_augment_enabled", return_value=True)
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_rol_kpi_message_does_not_block_openapi(_enabled, _augment):
+    message = (
+        "Quero o ROL / indicadores comerciais recentes: mostre o número "
+        "principal (KPI), a série no tempo em gráfico se disponível, e uma "
+        "leitura em prosa do que está acontecendo — tudo na mesma resposta."
+    )
+
+    assert not ChatWebSearchIntentService.blocks_external_action_selection(message)
+    assert ChatWebSearchIntentService._has_operational_companion_terms(message)
+
+
 @patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
 def test_resolve_includes_integration_mode(_enabled):
     result = ChatWebSearchIntentService.resolve(
