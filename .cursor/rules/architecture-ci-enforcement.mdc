@@ -1,5 +1,5 @@
 ---
-description: Enforcement arquitetural no CI — gates incrementais contra hardcodes, contracts/OpenAPI, boundaries, migrations mutadas, CSS MFE, AuthN/AuthZ duplicado, JWT inseguro, HTTP/retry e secrets
+description: Enforcement arquitetural no CI — gates incrementais contra hardcodes, contracts/OpenAPI, boundaries, migrations mutadas, CSS MFE, AuthN/AuthZ, JWT inseguro, HTTP/retry e secrets
 alwaysApply: false
 ---
 
@@ -7,7 +7,7 @@ alwaysApply: false
 
 ## Princípio
 
-Diretriz crítica deve possuir gate automatizado quando houver **sinal estático confiável e baixo risco de falso positivo**.
+Diretriz crítica deve possuir gate automatizado quando houver **sinal estrutural confiável e baixo risco de falso positivo**. Dívida histórica não deve ser mascarada nem transformada em exceção ampla: os gates são diff-aware para impedir **nova dívida** enquanto a base converge.
 
 Fontes executáveis:
 
@@ -15,14 +15,14 @@ Fontes executáveis:
 scripts/ci/audit_architecture_phase3.py
 scripts/ci/audit_platform_guardrails.py
 scripts/ci/audit_openapi_contracts.py
+scripts/ci/audit_fastapi_authz.py
 scripts/ci/test_audit_architecture_phase3.py
 scripts/ci/test_audit_platform_guardrails.py
 scripts/ci/test_audit_openapi_contracts.py
+scripts/ci/test_audit_fastapi_authz.py
 .github/workflows/architecture-enforcement.yml
 scripts/ci/architecture_phase3_exceptions.json
 ```
-
-Os gates são diff-aware quando há dívida histórica: nova regressão bloqueia CI; remoção de dívida é permitida.
 
 ## Gates do motor Chat AI / integrações
 
@@ -30,191 +30,140 @@ Os gates são diff-aware quando há dívida histórica: nova regressão bloqueia
 Bloqueia conhecimento específico de endpoint/provider no motor genérico. Canônico: OpenAPI → Action Catalog → retrieval/planner/validator.
 
 ### Catálogo técnico paralelo de endpoints
-Impede crescimento de estruturas manuais que recriem contrato de routing por endpoint.
+Impede crescimento de estruturas manuais que recriem routing técnico por endpoint.
 
 ### `HTTP_TIMEOUT_REQUIRED`
-Nova chamada/client HTTP Python detectável deve declarar timeout explícito e finito.
+Nova chamada HTTP Python detectável deve possuir timeout explícito e finito.
 
 ### `UNSAFE_WRITE_RETRY`
 Retry automático de POST/PUT/PATCH/DELETE é proibido sem idempotência real.
 
-### `SECRET_IN_LOG`
-Bloqueia segredo óbvio enviado para logger/print/console sem redaction.
+### `SECRET_IN_LOG` / `SECRET_LITERAL`
+Bloqueiam exposição óbvia de secrets em logs ou código/configuração de produção.
 
-### `SECRET_LITERAL`
-Bloqueia private key, credencial em URL e secrets literais óbvios em código/config de produção.
-
-## Gates transversais da plataforma
+## Gates transversais de arquitetura e frontend
 
 ### `IMMUTABLE_MIGRATION_MUTATION`
-
 Migration SQL `**/migrations/**/VNN__*.sql` pode ser adicionada, mas não modificada, renomeada ou removida depois de versionada.
 
-```text
-schema precisa mudar
-→ nova migration
-→ upgrade testável
-→ rollout/rollback coerente
-```
-
 ### `MFE_GLOBAL_CSS`
-
-Bloqueia novo seletor CSS global em MFE (`body`, `html`, `:root` isolado, `#root`, `*`) que possa vazar para Portal/outros plugins.
-
-Permitido: selector escopado como `:root[data-theme="dark"] .dashboard-foo`.
+Bloqueia seletor global novo em MFE (`body`, `html`, `:root` isolado, `#root`, `*`).
 
 ### `MFE_PLUGIN_UI_OVERRIDE`
-
-Bloqueia estilização de classes `.delpi-ui-*` dentro do CSS do MFE. Bug do kit é corrigido em `plugins/plugin-ui`; MFE só usa tokens/layout de página.
+Bloqueia estilização local de `.delpi-ui-*`; bug/comportamento do kit é corrigido em `plugins/plugin-ui`.
 
 ### `MFE_OWN_API_BYPASS`
+Se existem `plugins/<app>/` e `<app>-api/`, novo código do MFE não pode chamar `/apps/api-delpi` diretamente. O bounded context é derivado da estrutura do monorepo, sem lista manual.
 
-Quando a estrutura do repositório contém simultaneamente:
-
-```text
-plugins/<app>/
-<app>-api/
-```
-
-novo código do MFE não pode introduzir chamada direta a `/apps/api-delpi`. O fluxo deve ser:
-
-```text
-MFE <app>
-→ <app>-api / BFF do bounded context
-→ contratos necessários para outros serviços/api-delpi
-```
-
-O gate deriva essa relação da estrutura do monorepo; não mantém lista manual de aplicações.
+## Gates de segurança, AuthN e AuthZ
 
 ### `JWT_VERIFY_DISABLED`
-
-Bloqueia nova desativação **ou condicionamento opcional** de verificação JWT para assinatura, audience ou issuer, incluindo padrões como:
-
-```text
-verify_signature = false
-verify_aud = false
-verify_iss = false
-"verify_aud": bool(optional_audience)
-```
-
-Issuer/audience obrigatórios não podem virar fail-open quando variável de ambiente está ausente.
+Bloqueia downgrade explícito ou condicional de assinatura, audience ou issuer.
 
 ### `JWT_VALIDATOR_DUPLICATION`
-
-Nova API não pode introduzir `jwt.decode(...)` local para recriar JWKS/claims validation. Fora da Core API, a primitive canônica é `shared/delpi_auth`.
-
-Implementações locais existentes são dívida de migração, não template.
+Nova API não pode introduzir `jwt.decode(...)` local para recriar validação JWKS/claims. Fora da Core API, usar `shared/delpi_auth`.
 
 ### `AUTHZ_PRIMITIVE_DUPLICATION`
+Nova API não pode redefinir genericamente `require_auth`, `require_permission`, `require_any_permission`, `require_all_permissions` ou `require_superadmin`.
 
-Nova API não pode redefinir genericamente:
+### `FASTAPI_WRITE_AUTHZ_EVIDENCE_REQUIRED`
+
+Write FastAPI novo/alterado (`POST`, `PUT`, `PATCH`, `DELETE`) em `api-delpi` ou `<app>-api` deve possuir evidência estrutural de ownership de autorização. São aceitos os modelos reais da plataforma:
 
 ```text
-require_auth
-require_permission
-require_any_permission
-require_all_permissions
-require_superadmin
+A) decorator canônico de acesso
+B) guarda explícita de permission/access no handler
+C) contexto do usuário entregue ao application/use case que decide acesso
+D) rota pública realmente declarada no auth_middleware do bounded context
 ```
 
-Essas primitives pertencem ao shared AuthZ (ou à Core API, bounded context dono do RBAC). Adapter específico pode existir, mas deve delegar ao canônico sem duplicar política.
+Não exigir `@require_permission` em todos os handlers: alguns bounded contexts autorizam no application/use case. Também não duplicar permission code apenas para satisfazer o gate.
+
+`@require_auth` é evidência válida somente quando **autenticação sem permissão específica é intencional** para aquele write; a revisão/teste de domínio continua obrigatória.
+
+Proibido “enganar” o gate passando `request.state.user` para chamada irrelevante. Quando o modelo é C, o application/use case deve realmente possuir a decisão de autorização e ter teste negativo correspondente.
+
+### `FASTAPI_PUBLIC_ROUTE_AUTH_DRIFT`
+
+Rota `/public/...` detectada no código não pode ser presumida pública: o prefixo/exato precisa estar efetivamente liberado pelo `auth_middleware` do mesmo bounded context. Isso evita contrato visual `/public` divergindo da proteção real.
+
+### `FASTAPI_AUTHZ_PARSE_ERROR`
+Falha de parsing em fonte FastAPI alterada bloqueia o gate; não transformar código não analisado em aprovação silenciosa.
+
+### Escopo atual de AuthZ
+
+A exigência de evidência de autorização de negócio está ativa **somente para writes**. GET/HEAD/OPTIONS ainda não recebem a mesma exigência porque leituras autenticadas, públicas, service-to-service e autorização em application variam entre domínios.
+
+Antes de expandir para reads:
+
+```text
+inventariar padrões reais
+→ distinguir authenticated-only × permission-protected × public × service-to-service
+→ testar casos legítimos
+→ ativar gate incremental
+```
 
 ## Gates de contrato OpenAPI/FastAPI
 
-A plataforma possui duas formas reais de contrato:
+A plataforma possui duas superfícies reais:
 
 ```text
 FastAPI source → OpenAPI gerado em runtime
 OpenAPI JSON/YAML versionado → snapshot/contrato consumido diretamente
 ```
 
-O enforcement cobre as duas superfícies sem exigir que todas as APIs mantenham um snapshot manual paralelo.
+O enforcement cobre ambas sem exigir snapshot manual paralelo para toda API.
 
 ### `OPENAPI_OPERATION_ID_REQUIRED`
-
-Qualquer operação HTTP em um OpenAPI JSON/YAML versionado deve declarar `operationId` explícito e não vazio.
+Toda operação HTTP em OpenAPI versionado deve declarar `operationId` explícito e não vazio.
 
 ### `OPENAPI_OPERATION_ID_DUPLICATE`
-
-Um `operationId` não pode identificar duas operações no mesmo documento OpenAPI.
+Um `operationId` não pode identificar duas operações no mesmo documento.
 
 ### `OPENAPI_CHANGE_CLASS_INVALID`
-
-Quando o contrato usar `x-delpi-contract-change`, o valor deve ser um dos canônicos:
-
-```text
-ADDITIVE
-BEHAVIORAL
-DEPRECATED
-BREAKING
-```
+`x-delpi-contract-change`, quando usado, aceita somente `ADDITIVE`, `BEHAVIORAL`, `DEPRECATED` ou `BREAKING`.
 
 ### `OPENAPI_BREAKING_UNCLASSIFIED`
 
-Em OpenAPI versionado, os seguintes sinais estruturais são breaking e não podem passar silenciosamente:
+Sinais estruturais já cobertos:
 
 - operação `(method, path)` removida;
-- `operationId` alterado na mesma operação.
+- `operationId` alterado;
+- parâmetro obrigatório novo;
+- parâmetro opcional que passa a obrigatório;
+- parâmetro local via `$ref` em `components/parameters` quando resulta em required novo;
+- `requestBody` que passa a obrigatório;
+- resposta 2xx documentada removida.
 
-Para declarar a mudança conscientemente, `info` deve registrar:
+Breaking explícito em snapshot versionado exige:
 
 ```yaml
-version: <nova-versão>
-x-delpi-contract-change: BREAKING
-x-delpi-contract-change-from: <versão-base-exata>
-x-delpi-contract-change-reason: <motivo concreto>
+info:
+  version: <nova-versão>
+  x-delpi-contract-change: BREAKING
+  x-delpi-contract-change-from: <versão-base-exata>
+  x-delpi-contract-change-reason: <motivo concreto>
 ```
 
-`x-delpi-contract-change-from` precisa ser igual à `info.version` do contrato anterior. Isso impede que metadata antiga de breaking seja reutilizada indefinidamente para autorizar mudanças futuras.
-
-Essa classificação **não torna a quebra automaticamente boa**: continua obrigatório inventariar consumidores, definir migração/coexistência e rollback conforme `contract-evolution-backward-compatibility.mdc`.
+`x-delpi-contract-change-from` deve coincidir com `info.version` do contrato-base e a nova versão precisa mudar. Metadata antiga não autoriza quebra futura. Classificar não substitui inventário de consumidores, coexistência e rollback.
 
 ### `FASTAPI_OPERATION_ID_REQUIRED`
-
-Rota FastAPI nova ou cujo decorator HTTP foi alterado deve declarar `operation_id="..."` literal. Não depender do auto-id gerado pelo framework.
-
-O gate é AST + diff-aware: não torna todo débito histórico vermelho, mas impede nova rota sem identidade estável.
+Rota FastAPI nova/alterada deve declarar `operation_id="..."` literal. O parser reconhece inclusive `APIRouter(prefix="/x")` com `@router.<method>("")`.
 
 ### `FASTAPI_OPERATION_ID_DUPLICATE`
+Ao alterar/adicionar rota, o auditor examina o bounded context inteiro e bloqueia `operation_id` duplicado.
 
-Quando uma rota FastAPI é alterada/adicionada, o auditor examina o bounded context de API correspondente (`api-delpi` ou `<app>-api`) e bloqueia `operation_id` duplicado entre arquivos.
+## O que ainda NÃO deve virar heurística frágil
 
-Não existe lista manual de APIs.
+Não inferir breaking complexo de schema compartilhado por regex. Mudanças de `type`, `enum`, propriedades required aninhadas, `oneOf`/`allOf`/`anyOf` e reutilização do mesmo schema em request/response exigem resolver contexto e `$ref` com semântica suficiente antes de bloquear CI.
 
-## O que ainda NÃO deve virar regex genérica
-
-Ainda não bloquear “rota sem `@require_permission`” por mera ausência textual. Existem stacks válidos com decorators, dependencies, policies, service token e rotas públicas intencionais.
-
-Próximo caminho correto:
-
-```text
-classificar mecanismos de rota
-→ PROTECTED | PUBLIC_INTENTIONAL | SERVICE_TO_SERVICE
-→ modelar por stack
-→ testar positive + legitimate negative
-→ ativar gate
-```
-
-Health/readiness, callbacks públicos e integrações service-to-service não podem virar falsos positivos.
-
-Também não inferir compatibilidade completa de schema apenas por regex. Required/type/enum/response breaking changes devem ganhar análise estrutural somente quando o resolver `$ref` e a semântica de composição estiverem modelados com baixo falso positivo.
+Não transformar toda rota GET sem decorator em falha enquanto a taxonomia de leitura não estiver modelada.
 
 ## Exceções
 
-O scanner Phase 3 possui exceções temporárias em `scripts/ci/architecture_phase3_exceptions.json`, com rule, path exato, fingerprint, owner, reason e `reviewBy`.
+O scanner Phase 3 possui exceções temporárias exatas em `scripts/ci/architecture_phase3_exceptions.json`, com rule, path, fingerprint, owner, reason e `reviewBy`.
 
-Os guardrails transversais priorizam sinais determinísticos e não possuem bypass genérico. Caso legítimo não modelado deve gerar melhoria geral do detector + teste, não ignore por arquivo como primeira resposta.
-
-## Evolução dos gates
-
-```text
-anti-padrão detectável com confiança
-→ AST/contrato/estrutura quando possível
-→ positive + legitimate-negative tests
-→ gate diff-aware
-```
-
-Se o sinal não for confiável, manter revisão/teste específico até haver contrato explícito. Nunca enfraquecer scanner só para o diff atual passar.
+Para os demais guardrails, caso legítimo não modelado deve gerar melhoria geral do detector + teste. Ignore/wildcard por arquivo não é primeira resposta.
 
 ## Execução local
 
@@ -222,41 +171,41 @@ Se o sinal não for confiável, manter revisão/teste específico até haver con
 python -m unittest scripts/ci/test_audit_architecture_phase3.py -v
 python -m unittest scripts/ci/test_audit_platform_guardrails.py -v
 python -m unittest scripts/ci/test_audit_openapi_contracts.py -v
+python -m unittest scripts/ci/test_audit_fastapi_authz.py -v
+
 python scripts/ci/audit_architecture_phase3.py --check --base <commit-base>
 python scripts/ci/audit_platform_guardrails.py --check --base <commit-base>
 python scripts/ci/audit_openapi_contracts.py --check --base <commit-base>
+python scripts/ci/audit_fastapi_authz.py --check --base <commit-base>
 ```
 
-Para OpenAPI YAML, instalar `PyYAML>=6,<7` no ambiente do auditor; o workflow oficial já faz isso.
+OpenAPI YAML requer `PyYAML>=6,<7`; o workflow oficial instala essa dependência.
 
 ## O que NÃO fazer
 
-- Alterar scanner para aceitar o caso recém-criado sem generalização.
-- Adicionar wildcard de exceção.
-- Mover hardcode Python para JSON técnico por endpoint.
-- Colocar timeout absurdo só para satisfazer gate.
-- Marcar write retry-safe sem idempotência real.
-- Editar migration aplicada/versionada.
-- Corrigir `plugin-ui` por override local `.delpi-ui-*`.
-- Adicionar CSS global em MFE.
-- MFE com BFF próprio bypassar sua API para consumir `api-delpi` direto.
-- Criar novo validator JWT local por conveniência.
-- Copiar `require_permission` para uma nova API.
-- Desabilitar audience/issuer/assinatura quando config faltar.
-- Criar rota FastAPI sem `operation_id` porque “o framework gera um”.
-- Reutilizar `operationId` existente para outra operação.
-- Renomear `operationId` por estética.
-- Remover operação de snapshot OpenAPI sem classificação/migração.
-- Manter `x-delpi-contract-change-from` antigo para liberar quebras futuras.
-- Desabilitar workflow porque detectou regressão.
+- enfraquecer scanner para o diff atual passar;
+- adicionar wildcard de exceção;
+- mover hardcode Python para JSON técnico por endpoint;
+- editar migration versionada;
+- corrigir `plugin-ui` por override local `.delpi-ui-*`;
+- MFE com API própria bypassar seu BFF;
+- criar validator JWT local;
+- desabilitar audience/issuer/assinatura quando config faltar;
+- criar write FastAPI sem ownership de autorização;
+- fingir handoff de usuário sem autorização real no application;
+- criar `/public/...` sem alinhar middleware e testes;
+- depender de auto-`operationId` do framework;
+- reutilizar ou renomear `operationId` sem tratar contrato;
+- remover operação/parâmetro compatível/resposta de contrato sem classificar quebra;
+- desabilitar workflow porque detectou regressão.
 
 ## Critério de sucesso
 
 ```text
 novo diff
 → responsabilidade transversal identificada
-→ scanner determinístico quando possível
-→ regressão bloqueada
+→ scanner estrutural quando possível
+→ regressão nova bloqueada
 → dívida existente não cresce
-→ arquitetura converge para owners canônicos
+→ owners canônicos permanecem fonte de verdade
 ```
