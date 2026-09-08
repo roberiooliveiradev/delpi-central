@@ -111,6 +111,50 @@ class ChatProductQueryIntentContentService:
         )
 
     @classmethod
+    def scope_composition_node(cls) -> dict[str, Any]:
+        node = ChatAssistantContentService.get_node(
+            _INTENT_CONTENT_BUNDLE,
+            "scopeComposition",
+        )
+        return dict(node) if isinstance(node, dict) else {}
+
+    @classmethod
+    def analyser_bundle_scopes(cls) -> frozenset[str]:
+        node = cls.scope_composition_node()
+        raw = node.get("analyserBundleScopes") or []
+        if not isinstance(raw, list):
+            return frozenset({"profile", "guide", "structure", "inspection"})
+        return frozenset(str(item).strip() for item in raw if str(item).strip())
+
+    @classmethod
+    def companion_scopes_allowed(cls) -> frozenset[str]:
+        node = cls.scope_composition_node()
+        raw = node.get("companionScopesAllowed") or []
+        if not isinstance(raw, list):
+            return frozenset()
+        return frozenset(str(item).strip() for item in raw if str(item).strip())
+
+    @classmethod
+    def explicit_analyser_terms(cls) -> tuple[str, ...]:
+        node = cls.scope_composition_node()
+        raw = node.get("explicitAnalyserTerms") or []
+        if isinstance(raw, list) and raw:
+            return tuple(str(item).strip().lower() for item in raw if str(item).strip())
+        return ()
+
+    @classmethod
+    def min_analyser_scopes_for_collapse(cls) -> int:
+        node = cls.scope_composition_node()
+        try:
+            return max(2, int(node.get("minAnalyserScopesForCollapse") or 3))
+        except (TypeError, ValueError):
+            return 3
+
+    @classmethod
+    def open_orders_terms(cls) -> tuple[str, ...]:
+        return cls._terms("openOrders", "terms")
+
+    @classmethod
     def _header(cls, key: str, *, default: str = "") -> str:
         return ChatAssistantContentService.get(
             _INTENT_CONTENT_BUNDLE,

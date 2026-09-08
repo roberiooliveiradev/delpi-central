@@ -729,6 +729,36 @@
       "open-orders"
     ]
   },
+  "scopeComposition": {
+    "analyserBundleScopes": ["profile", "guide", "structure", "inspection"],
+    "companionScopesAllowed": [
+      "stock",
+      "open_orders",
+      "parents",
+      "sales",
+      "purchases",
+      "suppliers",
+      "pricing",
+      "inbound_invoice",
+      "outbound_invoice"
+    ],
+    "collapseMode": "bundle_plus_companions",
+    "explicitAnalyserTerms": [
+      "ficha completa",
+      "analise completa",
+      "análise completa",
+      "analise integrada",
+      "análise integrada",
+      "visao integrada",
+      "visão integrada",
+      "analisador completo",
+      "analisador do produto",
+      "informacoes completas",
+      "informações completas",
+      "tudo sobre o produto"
+    ],
+    "minAnalyserScopesForCollapse": 3
+  },
   "billing": {
     "terms": [
       "faturado",

@@ -193,20 +193,28 @@ class ChatExternalActionOrchestrationService:
 
         if (
             fast_product_code
-            and fast_intent == ChatProductQueryIntent.STOCK
+            and ChatOperationalIntentFastPathService.is_intent_bound_eligible(fast_intent)
             and len(fast_path_codes) <= 1
             and not forced_drawing_analysis_mode
+            and not ChatAnalysisIntentService.is_comparison_or_insight_request(message)
         ):
-            selected = selection_service.select_action_for_product(
-                selection_message,
-                product_code=fast_product_code,
-                allowed_action_ids=allowed_action_ids,
-                intent=fast_intent,
-                previous_messages=previous_messages,
+            from app.domain.services.chat_product_multi_scope_planning_service import (
+                ChatProductMultiScopePlanningService,
             )
 
-            if selected:
-                return _return_planned([selected], memory_snapshot=memory_snapshot)
+            if not ChatProductMultiScopePlanningService.blocks_intent_bound_fast_path(
+                selection_message,
+            ):
+                selected = selection_service.select_action_for_product(
+                    selection_message,
+                    product_code=fast_product_code,
+                    allowed_action_ids=allowed_action_ids,
+                    intent=fast_intent,
+                    previous_messages=previous_messages,
+                )
+
+                if selected:
+                    return _return_planned([selected], memory_snapshot=memory_snapshot)
 
         from app.domain.services.chat_sql_authoring_guidance_service import (
             ChatSqlAuthoringGuidanceService,

@@ -7,14 +7,12 @@ from typing import Any
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_product_query_intent.chat_product_query_intent_content_service import (
+    ChatProductQueryIntentContentService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
-)
-
-# Escopos cobertos por GET /products/{code}/analyser (cadastro + guia + inspeção + BOM).
-_ANALYSER_SCOPES: frozenset[str] = frozenset(
-    {"profile", "guide", "structure", "inspection"},
 )
 
 # Ordem estável de execução quando são necessárias rotas separadas.
@@ -24,6 +22,7 @@ _SCOPE_FETCH_ORDER: tuple[str, ...] = (
     "inspection",
     "structure",
     "stock",
+    "open_orders",
     "parents",
     "sales",
     "purchases",
@@ -39,6 +38,7 @@ _SCOPE_TO_ROUTE: dict[str, tuple[str, str | None]] = {
     "inspection": (ChatProductQueryIntent.FULL, "inspection"),
     "structure": (ChatProductQueryIntent.STRUCTURE, "structure"),
     "stock": (ChatProductQueryIntent.STOCK, "stock"),
+    "open_orders": (ChatProductQueryIntent.FULL, "open-orders"),
     "parents": (ChatProductQueryIntent.PARENTS, "parents"),
     "sales": (ChatProductQueryIntent.SALES, "sales"),
     "purchases": (ChatProductQueryIntent.FULL, "purchases"),
@@ -48,7 +48,7 @@ _SCOPE_TO_ROUTE: dict[str, tuple[str, str | None]] = {
     "outbound_invoice": (ChatProductQueryIntent.FULL, "outbound-invoice"),
 }
 
-_EXPLICIT_ANALYSER_TERMS: tuple[str, ...] = (
+_FALLBACK_EXPLICIT_ANALYSER_TERMS: tuple[str, ...] = (
     "ficha completa",
     "analise completa",
     "análise completa",
@@ -65,6 +65,19 @@ _EXPLICIT_ANALYSER_TERMS: tuple[str, ...] = (
 
 
 class ChatProductMultiScopePlanningService:
+    @classmethod
+    def analyser_bundle_scopes(cls) -> frozenset[str]:
+        return ChatProductQueryIntentContentService.analyser_bundle_scopes()
+
+    @classmethod
+    def companion_scopes_allowed(cls) -> frozenset[str]:
+        return ChatProductQueryIntentContentService.companion_scopes_allowed()
+
+    @classmethod
+    def _explicit_analyser_terms(cls) -> tuple[str, ...]:
+        configured = ChatProductQueryIntentContentService.explicit_analyser_terms()
+        return configured or _FALLBACK_EXPLICIT_ANALYSER_TERMS
+
     @classmethod
     def extract_requested_scopes(cls, message: str | None) -> tuple[str, ...]:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
@@ -134,6 +147,12 @@ class ChatProductMultiScopePlanningService:
         ):
             add("stock")
 
+        open_orders_terms = ChatProductQueryIntentContentService.open_orders_terms()
+        if open_orders_terms and any(term in normalized for term in open_orders_terms):
+            add("open_orders")
+        elif ChatProductQueryIntentService._looks_like_open_orders_route_question(normalized):
+            add("open_orders")
+
         if ChatProductQueryIntentService._looks_like_parents_question(normalized):
             add("parents")
 
@@ -186,6 +205,31 @@ class ChatProductMultiScopePlanningService:
         return tuple(ordered)
 
     @classmethod
+    def companion_scopes(cls, scopes: tuple[str, ...] | list[str]) -> tuple[str, ...]:
+        bundle = cls.analyser_bundle_scopes()
+        allowed = cls.companion_scopes_allowed()
+        ordered = [
+            scope
+            for scope in _SCOPE_FETCH_ORDER
+            if scope in scopes and scope not in bundle and (not allowed or scope in allowed)
+        ]
+        return tuple(ordered)
+
+    @classmethod
+    def blocks_intent_bound_fast_path(cls, message: str | None) -> bool:
+        """Companions fora do bundle analyser (ou multi-escopo) impedem short-circuit single-action."""
+        scopes = cls.extract_requested_scopes(message)
+        companions = cls.companion_scopes(scopes)
+
+        if cls._has_explicit_analyser_phrase(message) and companions:
+            return True
+
+        if len(scopes) >= 2:
+            return True
+
+        return False
+
+    @classmethod
     def _is_dedicated_playbook_route_question(cls, normalized: str) -> bool:
         """Rotas playbook com path próprio não entram em multi-scope genérico."""
         dedicated_checks = (
@@ -201,26 +245,32 @@ class ChatProductMultiScopePlanningService:
 
     @classmethod
     def should_use_single_analyser(cls, scopes: tuple[str, ...], message: str | None) -> bool:
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-
-        if any(term in normalized for term in _EXPLICIT_ANALYSER_TERMS):
+        if cls._has_explicit_analyser_phrase(message):
             return True
 
         if not scopes:
             return False
 
-        analyser_only = all(scope in _ANALYSER_SCOPES for scope in scopes)
+        bundle = cls.analyser_bundle_scopes()
+        analyser_scopes = tuple(scope for scope in scopes if scope in bundle)
 
-        if not analyser_only:
+        if not analyser_scopes:
             return False
 
-        return len(scopes) >= 3
+        # Companions fora do bundle: ainda colapsa a parte analyser, se houver ≥ min.
+        analyser_only = all(scope in bundle for scope in scopes)
+        min_scopes = ChatProductQueryIntentContentService.min_analyser_scopes_for_collapse()
+
+        if analyser_only:
+            return len(analyser_scopes) >= min_scopes
+
+        return len(analyser_scopes) >= min_scopes
 
     @classmethod
     def _has_explicit_analyser_phrase(cls, message: str | None) -> bool:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
-        return any(term in normalized for term in _EXPLICIT_ANALYSER_TERMS)
+        return any(term in normalized for term in cls._explicit_analyser_terms())
 
     @classmethod
     def plan_product_scope_fetches(
@@ -239,9 +289,13 @@ class ChatProductMultiScopePlanningService:
         if not code:
             return []
 
-        if cls._has_explicit_analyser_phrase(message) or (
+        companions = cls.companion_scopes(scopes)
+        use_analyser = cls._has_explicit_analyser_phrase(message) or (
             scopes and cls.should_use_single_analyser(scopes, message)
-        ):
+        )
+
+        if use_analyser:
+            planned: list[dict] = []
             selected = selection_service.select_action_for_product(
                 message,
                 product_code=code,
@@ -249,38 +303,77 @@ class ChatProductMultiScopePlanningService:
                 intent=ChatProductQueryIntent.ANALYSER,
                 previous_messages=previous_messages,
             )
+            if selected:
+                planned.append(selected)
 
-            return [selected] if selected else []
+            limit = max(1, min(int(max_calls), 12))
+            for scope in companions:
+                if len(planned) >= limit:
+                    break
+                companion = cls._select_scope_action(
+                    selection_service,
+                    message=message,
+                    product_code=code,
+                    scope=scope,
+                    allowed_action_ids=allowed_action_ids,
+                    previous_messages=previous_messages,
+                )
+                if companion:
+                    planned.append(companion)
+
+            return planned
 
         if len(scopes) < 2:
             return []
 
         limit = max(1, min(int(max_calls), 12))
-        planned: list[dict] = []
+        planned = []
 
         for scope in scopes:
             if len(planned) >= limit:
                 break
 
-            intent, route_segment = _SCOPE_TO_ROUTE.get(scope, (ChatProductQueryIntent.FULL, None))
-
-            selected = selection_service.select_action_for_product(
-                message,
+            selected = cls._select_scope_action(
+                selection_service,
+                message=message,
                 product_code=code,
+                scope=scope,
                 allowed_action_ids=allowed_action_ids,
-                intent=intent,
-                route_segment=route_segment,
                 previous_messages=previous_messages,
             )
-
-            if not selected:
-                continue
-
-            selected = dict(selected)
-            selected["reason"] = cls._reason_for_scope(scope, code)
-            planned.append(selected)
+            if selected:
+                planned.append(selected)
 
         return planned
+
+    @classmethod
+    def _select_scope_action(
+        cls,
+        selection_service: Any,
+        *,
+        message: str,
+        product_code: str,
+        scope: str,
+        allowed_action_ids: list[str] | None,
+        previous_messages: list | None,
+    ) -> dict | None:
+        intent, route_segment = _SCOPE_TO_ROUTE.get(scope, (ChatProductQueryIntent.FULL, None))
+
+        selected = selection_service.select_action_for_product(
+            message,
+            product_code=product_code,
+            allowed_action_ids=allowed_action_ids,
+            intent=intent,
+            route_segment=route_segment,
+            previous_messages=previous_messages,
+        )
+
+        if not selected:
+            return None
+
+        selected = dict(selected)
+        selected["reason"] = cls._reason_for_scope(scope, product_code)
+        return selected
 
     @classmethod
     def _reason_for_scope(cls, scope: str, product_code: str) -> str:

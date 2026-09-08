@@ -8,6 +8,7 @@
       "stock": "estoque",
       "parents": "produtos pai",
       "sales": "vendas",
+      "open_orders": "pedidos em aberto",
       "purchases": "compras",
       "suppliers": "fornecedores",
       "pricing": "preços",
@@ -21,6 +22,7 @@
       "/guide": "roteiro de produção",
       "/inspection": "plano de inspeção",
       "/sales": "vendas",
+      "/open-orders": "pedidos em aberto",
       "/profile": "cadastro",
       "/inbound-invoice": "notas fiscais de entrada",
       "/outbound-invoice": "notas fiscais de saída"
@@ -31,6 +33,7 @@
       "/structure": "estrutura (BOM)",
       "/guide": "roteiro",
       "/inspection": "inspeção",
+      "/open-orders": "OV abertos",
       "/inbound-invoice": "NF entrada",
       "/outbound-invoice": "NF saída"
     }

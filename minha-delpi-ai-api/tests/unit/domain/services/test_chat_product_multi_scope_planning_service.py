@@ -30,6 +30,10 @@ class FakeScopeSelectionService:
             path = "/products/{code}"
         elif intent == ChatProductQueryIntent.STOCK:
             path = "/products/{code}/stock"
+        elif route_segment == "open-orders":
+            path = "/products/{code}/sales/open-orders"
+        elif route_segment == "stock":
+            path = "/products/{code}/stock"
 
         return {
             "name": "execute_external_action",
@@ -165,3 +169,41 @@ def test_plan_fetches_single_analyser_when_completa():
 
     assert len(planned) == 1
     assert "/analyser" in str(planned[0]["arguments"].get("path") or "")
+
+
+def test_plan_fetches_analyser_plus_stock_for_visao_integrada():
+    service = FakeScopeSelectionService()
+
+    planned = ChatProductMultiScopePlanningService.plan_product_scope_fetches(
+        service,
+        message="visão integrada e estoque do produto 90260149",
+        product_code="90260149",
+        allowed_action_ids=["a1"],
+    )
+
+    assert len(planned) >= 2
+    paths = {str(item["arguments"].get("path") or "") for item in planned}
+    assert any("/analyser" in path for path in paths)
+    assert any("/stock" in path for path in paths)
+
+
+def test_blocks_fast_path_when_visao_integrada_has_stock_companion():
+    assert ChatProductMultiScopePlanningService.blocks_intent_bound_fast_path(
+        "visão integrada e estoque do produto 90260149",
+    )
+    assert not ChatProductMultiScopePlanningService.blocks_intent_bound_fast_path(
+        "informações completas do produto 90260149",
+    )
+    assert not ChatProductMultiScopePlanningService.blocks_intent_bound_fast_path(
+        "estoque do produto 90260149",
+    )
+
+
+def test_extract_scopes_includes_open_orders():
+    scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+        "estrutura, estoque e pedidos em aberto do produto 90260149",
+    )
+
+    assert "structure" in scopes
+    assert "stock" in scopes
+    assert "open_orders" in scopes
