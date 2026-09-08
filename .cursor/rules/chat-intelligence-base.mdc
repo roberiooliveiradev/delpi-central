@@ -1,5 +1,5 @@
 ---
-description: Minha DELPI AI/chat — inteligência base, agentes/projetos herdando pipeline, contexto, decomposição e tools; carregar em mudanças do chat
+description: Minha DELPI AI/chat — inteligência base, agentes/projetos herdando pipeline, contexto, decomposição e Actions OpenAPI
 alwaysApply: false
 ---
 
@@ -7,143 +7,134 @@ alwaysApply: false
 
 ## Princípio
 
-O **chat** é o núcleo de inteligência da plataforma. **Agentes** são chats com camadas adicionais (prompt, skills, actions, especialização RAG). **Projetos**, simulação admin e demais fluxos **herdam** o pipeline do chat — não reimplementam.
+O chat é o núcleo de inteligência. Agentes acrescentam prompt, skills, RAG e actions autorizadas; projetos/simulate/surfaces herdam o pipeline base.
 
-Para tools/actions, a inteligência base é **OpenAPI-first e multi-provider**. Regra canônica: `openapi-first-universal-tool-routing.mdc`.
+Para actions: `openapi-first-universal-tool-routing.mdc`.
+Para evals: `ai-intelligence-evaluation.mdc` + `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md`.
 
-Mudanças de inteligência devem obedecer também:
+## Onde implementar
 
-- `ai-intelligence-evaluation.mdc` — baseline/evals antes e depois;
-- `ai-context-and-tool-budget.mdc` — contexto e tools com budget;
-- `ai-external-tools-security.mdc` — fronteira segura com providers/tools;
-- `observability-standards.mdc` — decisões e latência diagnosticáveis.
+| Responsabilidade | Fonte |
+|------------------|-------|
+| Entendimento/decomposição/contexto | chat base domain/application services |
+| Action discovery/planning | OpenAPI + Action Catalog/index + planner/validator |
+| Agent specialization | prompt, skills, knowledge scope, allowed actions/policies |
+| Projeto | contexto/prompt/agente configurado |
+| Use cases | orquestração fina consumindo pipeline comum |
+| Apresentação | schema-driven API + MFE render-only |
 
-## Onde implementar melhorias
-
-| Camada | Responsabilidade | Exemplos |
-|--------|------------------|----------|
-| **Chat base** | Intenção, decomposição, contexto, retrieval de actions, planner, policies, apresentação | serviços em `application/services/` + `domain/services/` |
-| **Action Catalog/index** | Operações OpenAPI normalizadas, documentos semânticos, embeddings | catálogo/importer/provider infrastructure |
-| **Agente** | Identidade, allowed actions, skills, escopo RAG, policies por vínculo | `system_prompt`, `metadata.skills`, providers/actions do agente |
-| **Projeto** | Agrupamento, prompt de projeto, agente default | `ChatWorkspaceContextService`, `projectPrompt` |
-| **Use cases** | Orquestração fina send/stream/simulate | apenas consumir pipeline base |
-
-## Tools/actions — regra obrigatória
-
-Nova API ou operação deve entrar por:
+## Actions
 
 ```text
 OpenAPI
 → import/index
 → Action Catalog
-→ vínculo ao agente
-→ allowed_action_ids
-→ retrieval/planner/validator genéricos
+→ agent binding + allowed_action_ids
+→ retrieval top-K
+→ structured planner
+→ OpenAPI validation
+→ RBAC/policy/confirmation
 → executor
 ```
 
-Não ensinar cada endpoint ao chat por `if`, selector específico ou registry manual.
-
-O agente **filtra** actions e adiciona contexto; ele não deve carregar a lógica transversal de descoberta/argument binding no prompt.
+O agente filtra capabilities; não contém lógica transversal de routing no prompt.
 
 ## Pedidos longos
 
-Pedidos com múltiplos objetivos não podem ser achatados para uma única intenção.
+Não achatar mensagem para uma única intent:
 
 ```text
 pedido completo
-→ decomposição em subtarefas
+→ subtarefas
+→ dependencies
 → candidates/actions por subtarefa
-→ plano de tools
-→ execução
-→ síntese
+→ plano
+→ execução segura
+→ síntese completa
 ```
 
-Manter rastreabilidade dos requisitos conforme `evidence-driven-execution.mdc`.
+Medir decomposição e completion rate em mudanças relevantes.
 
-## Contexto vs entidades
+## Contexto/multi-turn
 
-- UI e prompt: `userContextItems` + chips kind `context`.
-- Foco operacional interno: `operationalFocus`.
-- Resolução de identificadores deve priorizar contexto explícito antes do histórico.
-- Multi-turn de tools deve preservar contexto estruturado de execução (action, argumentos, resultados, paginação, período) em vez de reintroduzir selectors por path.
-- Histórico, RAG, tool schemas e tool results devem respeitar `ai-context-and-tool-budget.mdc`; não crescer indefinidamente.
+Preservar estado estruturado:
+
+```text
+entities
+action/capability
+resolved arguments
+result references
+pending requirements
+pagination/time range
+presentation preference
+```
+
+Contexto explícito atual prevalece sobre histórico antigo. Meta-conversa não deve ser convertida em operação só porque existe foco anterior.
+
+Histórico, RAG, tool schemas/results respeitam `ai-context-and-tool-budget.mdc`.
 
 ## Qualidade mensurável
 
-Mudança em prompt, retrieval, RAG, planner, argument extraction, contexto ou memória não é considerada melhoria apenas porque o caso reportado passou.
-
-Aplicar `ai-intelligence-evaluation.mdc`:
+Mudança em prompt, retrieval, RAG, planner, arguments, context, memory ou prose segue:
 
 ```text
-baseline
-→ alteração
-→ mesmo corpus
-→ comparação de qualidade + latência/custo quando material
-→ análise de regressão
+BASELINE
+→ bug + sibling + negative
+→ mudança canônica
+→ CANDIDATE no mesmo corpus/config
+→ R1–R11
+→ trials quando necessário
+→ live/surface validation
 ```
 
-No mínimo, validar caso original + irmãos + negativos; mudanças significativas devem usar corpus versionado/evals.
+Tool correta com outcome incorreto é FAIL R9.
 
-## Regras centralizadas
+## Segurança
 
-Ver `development-standards-index.mdc`, `centralized-rules-first.mdc`, `openapi-first-universal-tool-routing.mdc`, `chat-prose-rendering.mdc`, `ai-intelligence-evaluation.mdc` e `ai-context-and-tool-budget.mdc`.
-
-**Proibido** patch local em componente, prompt, use case ou JSON por endpoint quando o comportamento é transversal.
+- action somente dentro das candidates/allowed actions;
+- RBAC/sensitivity/confirmation preservados;
+- tool/RAG content não altera policy;
+- nenhuma URL arbitrária do LLM;
+- secrets fora de prompt/log/output.
 
 ## O que NÃO fazer
 
-- Lógica de comparação, insights, seleção operacional ou resposta direta só no prompt de um agente.
-- Ajustes pontuais de UI/streaming fora do pipeline/renderers canônicos.
-- Agente default ativado sem escolha explícita quando a regra vigente exigir ativação controlada.
-- Reintroduzir estruturas legadas de contexto quando `operationalFocus`/context items já resolvem.
-- Copiar o mesmo `if` em Send/Stream.
-- Presenter por entidade/rota para viabilizar action.
-- Bypass do pipeline em preview/simulate sem histórico/contexto equivalente.
-- `if "/products/" in path`, bias `api_delpi.` ou selector por provider no motor genérico.
-- Duplicar OpenAPI em `assistant/*.json`.
-- Exigir `operational_route_registry.json` para cada endpoint novo.
-- Planner escolher `operationId` fora das actions permitidas.
-- Enviar OpenAPI inteiro, todas as tools, histórico ilimitado ou payloads gigantes ao LLM por padrão.
-- Declarar melhoria de inteligência com base em um único prompt manual.
+- inteligência só no prompt de um agente;
+- duplicar ifs em send/stream/simulate;
+- presenter por endpoint para viabilizar action;
+- `if path/provider/operationId` no motor genérico;
+- duplicar OpenAPI em JSON;
+- catálogo técnico paralelo de endpoints;
+- planner escolher action fora das permitidas;
+- histórico/OpenAPI/tool payload ilimitados no contexto;
+- validar melhoria com um único prompt;
+- ajustar fixture/runtime com conhecimento da resposta específica;
+- usar roadmap/changelog como regra atual quando existe fonte canônica vigente.
 
 ## O que fazer
 
-1. Melhorias transversais vão para serviços base usados por todos os chats.
-2. Metadata técnica de action vem do OpenAPI/Action Catalog.
-3. Linguagem/policy/configuração vai para JSON canônico, sem copiar contrato.
-4. Retrieval deve operar sobre actions autorizadas e devolver top-K para o planner.
-5. Planner produz seleção/argumentos estruturados; validador determinístico confere contra o OpenAPI.
-6. Novas policies globais entram em módulos canônicos.
-7. Testes base + regressões de inteligência; para tool routing, incluir fixture de API externa desconhecida.
-8. Mudanças de inteligência significativas executam eval before/after.
-9. Context/history/RAG/tool schemas/results obedecem budgets mensuráveis.
-10. Migrações grandes usam shadow/canary/rollback antes de remover legado.
+1. Implementar transversalmente no chat base.
+2. Usar OpenAPI/Action Catalog como fonte técnica.
+3. Linguagem/policy/config transversal fica em fonte declarativa canônica.
+4. Retrieval opera sobre actions autorizadas e devolve top-K.
+5. Planner gera seleção/args estruturados; validator confere contrato.
+6. Contexto segue budget e estado tipado.
+7. Mudança de tools prova API externa desconhecida + teste metamórfico.
+8. Mudança de inteligência executa baseline/candidate R1–R11.
+9. Outcome, safety e efficiency fazem parte da qualidade.
+10. Refatoração de alto risco usa rollout controlado com métricas, sem manter arquitetura concorrente como instrução.
 
 ## Pipeline de referência
 
 ```text
-Mensagem
-→ preparação/decomposição/contexto com budget
-→ allowed tools/actions
-→ retrieval top-K
-→ planner estruturado
-→ validação/policy/security
+mensagem
+→ preparação/decomposição/contexto
+→ capabilities/actions autorizadas
+→ retrieval/planner
+→ validation/policy/security
 → execução resiliente
+→ RAG quando necessário
 → interpretação/apresentação
 → síntese
-→ métricas/eval feedback
+→ observabilidade/evals
 ```
-
-Agentes **adicionam** contexto e restrições; a **inteligência transversal** evolui no chat base.
-
-## Nova rota/API
-
-Índice: `development-standards-index.mdc`.
-
-Regras obrigatórias:
-
-- `openapi-first-universal-tool-routing.mdc`
-- `new-api-route-checklist.mdc`
-- `ai-external-tools-security.mdc` para provider/tool externo
-- `http-integration-resilience.mdc` para execução remota
