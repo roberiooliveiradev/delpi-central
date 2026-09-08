@@ -7,6 +7,12 @@ import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { iconForRequestType } from "../content/requestTypeIcons";
 import { InvoiceIssuanceWizard } from "../features/invoice-issuance/ui/InvoiceIssuanceWizard";
 import { SchemaFormPage } from "../features/raw-material-creation/SchemaFormPage";
+import {
+  myRequestsNewPath,
+  myRequestsPath,
+  navigateMyRequestsPath,
+} from "../hooks/myRequestsNavigation";
+import { useMyRequestsRouterPath } from "../hooks/useMyRequestsRouterPath";
 import type { RequestTypeSummary } from "../types/requests";
 import {
   MyRequestsEmptyState,
@@ -21,6 +27,8 @@ import { findTypeForDeepLink, readTypeCodeFromSearch } from "./newRequestDeepLin
 import { isInvoiceIssuanceSpecialized, resolveOpenMode } from "./resolveOpenMode";
 
 export function NewRequestPage() {
+  const { search } = useMyRequestsRouterPath();
+  const preferredCode = readTypeCodeFromSearch(search);
   const [types, setTypes] = useState<RequestTypeSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,16 +36,10 @@ export function NewRequestPage() {
 
   useEffect(() => {
     const ac = new AbortController();
-    const preferred = readTypeCodeFromSearch();
     setLoading(true);
     listRequestTypes({ signal: ac.signal })
       .then((items) => {
         setTypes(items);
-        if (preferred) {
-          const match = findTypeForDeepLink(items, preferred);
-          if (match) setActiveType(match);
-          else setError("Não encontramos esse tipo de solicitação. Escolha um card na lista.");
-        }
       })
       .catch((err: Error) => {
         if (err.name !== "AbortError") setError(err.message);
@@ -48,13 +50,31 @@ export function NewRequestPage() {
     return () => ac.abort();
   }, []);
 
+  useEffect(() => {
+    if (loading) return;
+    if (!preferredCode) {
+      setActiveType(null);
+      return;
+    }
+    const match = findTypeForDeepLink(types, preferredCode);
+    if (match) {
+      setActiveType(match);
+      setError(null);
+      return;
+    }
+    setActiveType(null);
+    if (types.length > 0) {
+      setError("Não encontramos esse tipo de solicitação. Escolha um card na lista.");
+    }
+  }, [loading, preferredCode, types]);
+
   function openType(type: RequestTypeSummary) {
     setError(null);
-    setActiveType(type);
+    navigateMyRequestsPath(myRequestsNewPath(type.code));
   }
 
   function closeForm() {
-    setActiveType(null);
+    navigateMyRequestsPath(myRequestsPath("new"));
   }
 
   if (activeType) {
@@ -87,8 +107,8 @@ export function NewRequestPage() {
 
   return (
     <AppShell title="Nova solicitação" canCreate>
-      <MyRequestsSectionCard title="Escolha o tipo">
-        <div data-help="new" title={MY_REQUESTS_HELP_TOOLTIPS.new.section}>
+      <MyRequestsSectionCard title="Escolha o tipo" hint={MY_REQUESTS_HELP_TOOLTIPS.new.section}>
+        <div data-help="new">
           {error ? (
             <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
           ) : null}

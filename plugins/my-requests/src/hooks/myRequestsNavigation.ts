@@ -33,3 +33,11 @@ export function myRequestsPath(
   if (route === "mine") return `${BASE}/mine`;
   return `${BASE}/${route}`;
 }
+
+/** `/new` or `/new?type=<code>` (canonical deep link for type forms). */
+export function myRequestsNewPath(typeCode?: string): string {
+  const code = String(typeCode || "").trim();
+  if (!code) return myRequestsPath("new");
+  const qs = new URLSearchParams({ type: code });
+  return `${myRequestsPath("new")}?${qs.toString()}`;
+}
