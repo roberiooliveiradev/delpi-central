@@ -3,7 +3,7 @@
 > **Produto:** Minhas Solicitações  
 > **Fluxo:** `invoice-issuance`  
 > **Rota:** `/apps/my-requests/new?type=invoice-issuance`  
-> **Status:** especificação visual/UX — **implementado (E21)**  
+> **Status:** especificação visual/UX — **implementado (E21)**; responsivo + progresso sequencial **E22**  
 > **UI kit:** `@delpi/plugin-ui` via Module Federation  
 > **Wireframe mestre:** [WIREFRAMES.md](./WIREFRAMES.md) — WF-04  
 > **Prompt transversal de UI:** [PROMPT-ui-excelencia-topbar-ptbr-help.md](./PROMPT-ui-excelencia-topbar-ptbr-help.md)
