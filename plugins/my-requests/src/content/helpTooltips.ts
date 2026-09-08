@@ -23,7 +23,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     section:
       "Passo a passo para pedir emissão de nota fiscal: destinatário, tipo, itens, frete, dados extras e conferência antes de enviar.",
     progress:
-      "O percentual e as etapas mostram o que já foi preenchido. Etapas concluídas podem ser reabertas; as futuras ficam bloqueadas até a anterior estar pronta.",
+      "O percentual sobe na ordem das etapas: só conta o que já foi concluído em sequência. Etapas futuras ficam bloqueadas até a anterior estar pronta; as concluídas podem ser reabertas. Em telas menores, use «Ver etapas» para navegar.",
     recipient: "Informe quem receberá a nota fiscal: cliente ou fornecedor.",
     invoiceType:
       "Escolha o tipo da nota. Se for «Outros», descreva o motivo em poucas palavras.",

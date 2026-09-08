@@ -66,10 +66,12 @@ Quem tem permissão de administrar vê o catálogo de tipos (código, nome, ativ
 
 Seis etapas: destinatário → tipo de NF → itens → frete → adicionais → conferência.
 
-- A barra de progresso e o rastreador de etapas mostram o que já foi preenchido. Etapas futuras ficam bloqueadas até a anterior estar pronta; etapas concluídas podem ser reabertas.
+- A barra de progresso e o rastreador de etapas avançam **na ordem**: o percentual só sobe depois que as etapas anteriores estão prontas (valores padrão de tipo/frete/peso não antecipam o progresso). Em telas menores, o rastreador fica compacto com «Ver etapas».
+- Etapas futuras ficam bloqueadas até a anterior estar pronta; etapas concluídas podem ser reabertas.
 - Ao selecionar o destinatário, o fluxo avança automaticamente para o tipo de NF.
 - Na conferência, revise cada bloco e use **Alterar** para corrigir e voltar. Não há checklist técnico na tela — só o resumo amigável antes de **Enviar**.
 - O rascunho fica só na sessão atual (recarregar a página perde o preenchimento).
+- O formulário usa a largura da página (responsivo em desktop e celular).
 
 Buscas de cliente/fornecedor/produto/transportadora usam o serviço do módulo (não é preciso sair do app). A transportadora é opcional.
 

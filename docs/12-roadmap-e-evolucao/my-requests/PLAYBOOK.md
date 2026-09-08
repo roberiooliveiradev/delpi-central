@@ -2,7 +2,7 @@
 
 > **Plugin:** `my-requests`  
 > **API:** `/apps/requests-api/v1`  
-> **Status:** E1–E21 entregues (ops + IAM + lookups + UX Nova cards + TopBar/PT-BR/Ajuda + wizard NF ProgressTracker); UI live Ops ainda assina PARITY itens 1–2  
+> **Status:** E1–E22 entregues (ops + IAM + lookups + UX Nova + TopBar/Ajuda + wizard NF ProgressTracker + responsivo/progresso sequencial); UI live Ops ainda assina PARITY itens 1–2  
 > **Próximo:** E18 deprecar lookups legado; backlog tags / Admin CRUD  
 > **Referência legado:** [`invoice-issuance`](../invoice-issuance/README.md)
 
@@ -1571,8 +1571,9 @@ flowchart LR
 | **E19** | UX `/new` por cards + unidade via `branch_scope` | **entregue** — [`PROMPT-nova-solicitacao-type-cards.md`](./PROMPT-nova-solicitacao-type-cards.md) |
 | **E20** | TopBar canônica + labels PT-BR + Ajuda user-facing | **entregue** — [`PROMPT-ui-excelencia-topbar-ptbr-help.md`](./PROMPT-ui-excelencia-topbar-ptbr-help.md) |
 | **E21** | Wizard NF: ProgressTracker + JourneyProgressBar + unlock + Conferência Alterar | **entregue** — [`DESIGN-wizard-emissao-nf.md`](./DESIGN-wizard-emissao-nf.md) |
+| **E22** | Wizard NF responsivo + progresso sequencial + wireframes etapa×viewport | **entregue** — WF-04 em [`WIREFRAMES.md`](./WIREFRAMES.md) |
 
-Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19 / E20 / E21.
+Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19 / E20 / E21 / E22.
 
 ---
 
@@ -1612,5 +1613,5 @@ Detalhe: `LOOKUPS-CANONICAL.md`, planos Cursor E10–E15+ / E19 / E20 / E21.
 
 ---
 
-**Status:** `E1–E21 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
+**Status:** `E1–E22 ENTREGUES` (UI live Ops pendente em PARITY itens 1–2)  
 **Próximo passo:** **E18** — deprecar lookups `/invoice-issuance/*` após soak; backlog tags / CreatableMultiSelect / Admin CRUD; DROP schema após retenção.
