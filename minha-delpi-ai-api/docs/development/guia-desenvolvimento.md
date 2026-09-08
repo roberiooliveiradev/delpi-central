@@ -7,7 +7,7 @@
 
 Leia:
 
-1. `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md`;
+1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`;
 2. `.cursor/rules/development-standards-index.mdc`;
 3. regras especializadas indicadas pelo índice;
 4. arquitetura vigente em [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md);
