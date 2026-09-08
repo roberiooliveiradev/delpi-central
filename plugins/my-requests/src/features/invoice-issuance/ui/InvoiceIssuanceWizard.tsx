@@ -687,7 +687,7 @@ export function InvoiceIssuanceWizard({
 
   return (
     <AppShell title="Nova emissão de NF" subtitle={subtitleParts.join(" · ")} canCreate>
-      <div className="my-requests-form-stack" data-help="invoice-wizard" title={HELP.section}>
+      <div className="my-requests-wizard-stack" data-help="invoice-wizard" title={HELP.section}>
         {showBranch ? (
           <SelectField
             label="Filial"

@@ -40,8 +40,11 @@
   flex-direction: column;
   gap: var(--my-requests-section-gap);
   min-height: 100%;
+  width: 100%;
+  max-width: 100%;
   padding: var(--my-requests-page-padding);
   color: var(--my-requests-text);
+  overflow-x: clip;
 }
 
 .dashboard-my-requests .my-requests-page-stack,
@@ -51,9 +54,40 @@
   gap: var(--my-requests-section-gap);
 }
 
+/* Forms curtos (MP / genérico) — coluna confortável */
 .dashboard-my-requests .my-requests-form-stack {
   gap: 0.75rem;
   max-width: 36rem;
+}
+
+/* Wizard NF — 100% da largura útil; conforto tipográfico ~60rem */
+.dashboard-my-requests .my-requests-wizard-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--my-requests-section-gap);
+  width: 100%;
+  max-width: min(60rem, 100%);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-my-requests .my-requests-wizard-stack .my-requests-form-stack {
+  max-width: none;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .dashboard-my-requests {
+    --my-requests-page-padding: 16px;
+    --my-requests-section-gap: 16px;
+  }
+}
+
+@media (max-width: 390px) {
+  .dashboard-my-requests {
+    --my-requests-page-padding: 12px;
+    --my-requests-section-gap: 12px;
+  }
 }
 
 /* Layout only — chrome dos cards vem do kit NavigationCard */
