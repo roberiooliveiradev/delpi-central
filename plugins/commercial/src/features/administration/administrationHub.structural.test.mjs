@@ -56,6 +56,9 @@ describe("administration hub (Painel · Carteiras · Equipe · Grupos · SLAs)",
     assert.match(source, /CommercialOrgMembershipFlow/);
     assert.match(source, /parseCommercialTeamView/);
     assert.match(source, /TaskUserChipAvatar/);
+    assert.match(source, /loadPhoto=\{false\}/);
+    assert.match(source, /includeCustomers:\s*false/);
+    assert.match(source, /view === "org"/);
     assert.match(source, /withPersonAvatarSrc/);
     assert.match(source, /useUserProfilePhotoUrls/);
     assert.match(source, /key: "person"/);

@@ -88,7 +88,10 @@ class ManageTeamRosterUseCase:
             group_filter_ids = set(self._groups.list_member_user_ids_by_group_id(gid))
 
         portfolio_filter_ids: set[str] | None = None
-        portfolios = self._portfolios.list_portfolios(active_only=False)
+        portfolios = self._portfolios.list_portfolios(
+            active_only=False,
+            include_customers=False,
+        )
         if pid:
             target = next((item for item in portfolios if item.id == pid), None)
             if target is None:

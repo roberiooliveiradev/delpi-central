@@ -546,8 +546,16 @@ class ManageSellerPortfolioUseCase:
         portfolios = self.get_me_portfolios(user_id)
         return portfolios[0] if portfolios else None
 
-    def list_portfolios(self, *, active_only: bool = False) -> list[SellerPortfolio]:
-        return self._repository.list_portfolios(active_only=active_only)
+    def list_portfolios(
+        self,
+        *,
+        active_only: bool = False,
+        include_customers: bool = True,
+    ) -> list[SellerPortfolio]:
+        return self._repository.list_portfolios(
+            active_only=active_only,
+            include_customers=include_customers,
+        )
 
     def get_portfolio(self, portfolio_id: str) -> SellerPortfolio | None:
         return self._repository.get_by_id(portfolio_id)

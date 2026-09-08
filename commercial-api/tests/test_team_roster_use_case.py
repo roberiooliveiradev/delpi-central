@@ -127,8 +127,15 @@ class FakeGroupsRepo:
 class FakePortfolioRepo:
     def __init__(self, portfolios: list[SellerPortfolio]) -> None:
         self._portfolios = portfolios
+        self.last_include_customers: bool | None = None
 
-    def list_portfolios(self, *, active_only: bool = False) -> list[SellerPortfolio]:
+    def list_portfolios(
+        self,
+        *,
+        active_only: bool = False,
+        include_customers: bool = True,
+    ) -> list[SellerPortfolio]:
+        self.last_include_customers = include_customers
         items = list(self._portfolios)
         if active_only:
             items = [item for item in items if item.active]
@@ -174,7 +181,13 @@ def _use_case() -> ManageTeamRosterUseCase:
 
 
 def test_list_roster_combines_groups_portfolios_and_directory() -> None:
-    items = _use_case().list_roster()
+    portfolios = FakePortfolioRepo([_portfolio()])
+    use_case = ManageTeamRosterUseCase(
+        groups=ManageCommercialGroupsUseCase(FakeGroupsRepo([_group()])),
+        portfolios=portfolios,
+        directory=FakeDirectory(),
+    )
+    items = use_case.list_roster()
     by_id = {item["user_id"]: item for item in items}
     assert set(by_id) == {"u1", "u2", "u3", "u4", "u5"}
     assert by_id["u1"]["name"] == "Ana"
@@ -185,6 +198,8 @@ def test_list_roster_combines_groups_portfolios_and_directory() -> None:
     assert by_id["u4"]["groups"] == []
     assert by_id["u4"]["portfolios"] == []
     assert by_id["u5"]["name"] == "Elena"
+    # Positive: roster não hidrata clientes (N+1).
+    assert portfolios.last_include_customers is False
 
 
 def test_list_roster_filters_by_group_id() -> None:

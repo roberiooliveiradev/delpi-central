@@ -58,7 +58,8 @@ class _Portfolios:
             member.user_id == user_id for member in item.members
         )]
 
-    def list_portfolios(self, *, active_only: bool = False):
+    def list_portfolios(self, *, active_only: bool = False, include_customers: bool = True):
+        _ = include_customers
         return list(self._items)
 
     def get_by_id(self, portfolio_id: str):

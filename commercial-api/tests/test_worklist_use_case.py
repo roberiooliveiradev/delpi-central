@@ -375,7 +375,10 @@ class InMemoryPortfolioRepo:
     def list_member_user_ids(self, *, active_portfolios_only: bool = True) -> list[str]:
         return list(self._ids)
 
-    def list_portfolios(self, *, active_only: bool = False) -> list[FakePortfolio]:
+    def list_portfolios(
+        self, *, active_only: bool = False, include_customers: bool = True
+    ) -> list[FakePortfolio]:
+        _ = (active_only, include_customers)
         # Só o owner espelhado em seller_portfolios.user_id — membros extras vêm de list_member_user_ids.
         return [FakePortfolio(self._ids[0])] if self._ids else []
 

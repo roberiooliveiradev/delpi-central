@@ -29,7 +29,12 @@ class SellerPortfolioRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def list_portfolios(self, *, active_only: bool = False) -> list[SellerPortfolio]:
+    def list_portfolios(
+        self,
+        *,
+        active_only: bool = False,
+        include_customers: bool = True,
+    ) -> list[SellerPortfolio]:
         raise NotImplementedError
 
     @abstractmethod

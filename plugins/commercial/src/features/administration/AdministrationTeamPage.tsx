@@ -98,7 +98,7 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
   const loadFilters = useCallback(async (signal?: AbortSignal) => {
     const [groupItems, portfolioItems] = await Promise.all([
       listCommercialGroups({ activeOnly: false, signal }),
-      listSellerPortfolios({ signal }),
+      listSellerPortfolios({ includeCustomers: false, signal }),
     ]);
     if (signal?.aborted) return;
     setGroups(
@@ -168,10 +168,12 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
 
   const personIdsForAvatars = useMemo(
     () =>
-      orgFlowModel.nodes
-        .filter((node) => node.kind === "person")
-        .map((node) => node.entityId),
-    [orgFlowModel.nodes],
+      view === "org"
+        ? orgFlowModel.nodes
+            .filter((node) => node.kind === "person")
+            .map((node) => node.entityId)
+        : [],
+    [orgFlowModel.nodes, view],
   );
   const photoByUserId = useUserProfilePhotoUrls(personIdsForAvatars);
   const orgFlowNodes = useMemo(
@@ -209,6 +211,7 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
               <TaskUserChipAvatar
                 userId={row.user_id}
                 name={displayName}
+                loadPhoto={false}
                 href={href}
                 title={profileLinkTitle(row.name || label)}
                 onNavigate={(event) => {
@@ -217,7 +220,11 @@ export function AdministrationTeamPage({ basePath }: AdministrationTeamPageProps
                 }}
               />
             ) : (
-              <TaskUserChipAvatar userId={row.user_id} name={displayName} />
+              <TaskUserChipAvatar
+                userId={row.user_id}
+                name={displayName}
+                loadPhoto={false}
+              />
             )}
             {href ? (
               <CommercialEntityLink

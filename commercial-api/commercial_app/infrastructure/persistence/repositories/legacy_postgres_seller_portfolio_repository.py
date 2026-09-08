@@ -81,7 +81,12 @@ class LegacyPostgresSellerPortfolioRepository(
             )
         return [str(row["user_id"]) for row in rows if row.get("user_id")]
 
-    def list_portfolios(self, *, active_only: bool = False) -> list[SellerPortfolio]:
+    def list_portfolios(
+        self,
+        *,
+        active_only: bool = False,
+        include_customers: bool = True,
+    ) -> list[SellerPortfolio]:
         query = f"""
             SELECT {_LEGACY_PORTFOLIO_COLUMNS}
               FROM pedidos_venda_abertos.sellers
@@ -91,7 +96,16 @@ class LegacyPostgresSellerPortfolioRepository(
         else:
             query += " ORDER BY active DESC, display_name ASC"
         rows = self.fetch_all(query)
-        return [portfolio for row in rows if (portfolio := self._hydrate(row)) is not None]
+        return [
+            portfolio
+            for row in rows
+            if (
+                portfolio := self._hydrate(
+                    row, include_customers=include_customers
+                )
+            )
+            is not None
+        ]
 
     def create_portfolio(
         self,
@@ -424,23 +438,32 @@ class LegacyPostgresSellerPortfolioRepository(
             (portfolio_id,),
         )
 
-    def _hydrate(self, row: dict[str, Any] | None) -> SellerPortfolio | None:
+    def _hydrate(
+        self,
+        row: dict[str, Any] | None,
+        *,
+        include_customers: bool = True,
+    ) -> SellerPortfolio | None:
         if not row:
             return None
         portfolio_id = str(row["id"])
         raw_user = row.get("user_id")
         user_id = str(raw_user) if raw_user is not None else None
-        customers = tuple(
-            SellerCustomerAssignment(
-                customer_code=str(item["customer_code"]),
-                customer_store=str(item["customer_store"]),
-                customer_name=(
-                    str(item["customer_name"]).strip()
-                    if item.get("customer_name")
-                    else None
-                ),
+        customers = (
+            tuple(
+                SellerCustomerAssignment(
+                    customer_code=str(item["customer_code"]),
+                    customer_store=str(item["customer_store"]),
+                    customer_name=(
+                        str(item["customer_name"]).strip()
+                        if item.get("customer_name")
+                        else None
+                    ),
+                )
+                for item in self._list_customers(portfolio_id)
             )
-            for item in self._list_customers(portfolio_id)
+            if include_customers
+            else ()
         )
         members = (
             (SellerPortfolioMember(user_id=user_id, role="owner"),)

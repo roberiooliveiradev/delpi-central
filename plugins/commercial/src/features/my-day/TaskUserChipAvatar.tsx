@@ -10,6 +10,8 @@ import { CommercialAvatar } from "../../app/commercialUi";
 type TaskUserChipAvatarBase = {
   userId: string;
   name: string;
+  /** Quando false, só iniciais — sem GET profile/photo. Default true. */
+  loadPhoto?: boolean;
 };
 
 export type TaskUserChipAvatarProps = TaskUserChipAvatarBase &
@@ -28,14 +30,15 @@ export type TaskUserChipAvatarProps = TaskUserChipAvatarBase &
 
 /**
  * Avatar no chip — com href vira link para o perfil; senão só visual.
+ * `loadPhoto=false` evita fan-out GET profile/photo (ex.: lista Equipe).
  */
 export function TaskUserChipAvatar(props: TaskUserChipAvatarProps) {
-  const { userId, name } = props;
+  const { userId, name, loadPhoto = true } = props;
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const uid = userId.trim();
-    if (!uid) {
+    if (!uid || !loadPhoto) {
       setPhotoUrl(null);
       return;
     }
@@ -62,7 +65,7 @@ export function TaskUserChipAvatar(props: TaskUserChipAvatarProps) {
       controller.abort();
       if (created) URL.revokeObjectURL(created);
     };
-  }, [userId]);
+  }, [userId, loadPhoto]);
 
   if (props.href) {
     return (

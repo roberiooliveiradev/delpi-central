@@ -212,6 +212,10 @@ def get_seller_portfolios_load_summary(
 def list_seller_portfolios(
     request: Request,
     active_only: bool = Query(False, description="Se true, lista apenas ativos."),
+    include_customers: bool = Query(
+        True,
+        description="Se false, omite clientes (filtros/roster — evita N+1 pesado).",
+    ),
 ):
     """Lista carteiras para admin (CRUD) ou team.view (filtro / Gestão Equipe)."""
     try:
@@ -220,7 +224,10 @@ def list_seller_portfolios(
         force_active = active_only or (
             can_use_team_scope(user) and not can_manage_portfolios(user)
         )
-        portfolios = _use_case().list_portfolios(active_only=force_active)
+        portfolios = _use_case().list_portfolios(
+            active_only=force_active,
+            include_customers=include_customers,
+        )
         return ok(
             {"items": _use_case().serialize_portfolios(portfolios)},
             message="Carteiras carregadas com sucesso.",

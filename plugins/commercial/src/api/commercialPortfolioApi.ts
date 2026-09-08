@@ -36,10 +36,15 @@ export async function getMySellerPortfolio(signal?: AbortSignal): Promise<Seller
 }
 
 export async function listSellerPortfolios(
-  options?: { activeOnly?: boolean; signal?: AbortSignal },
+  options?: {
+    activeOnly?: boolean;
+    includeCustomers?: boolean;
+    signal?: AbortSignal;
+  },
 ): Promise<SellerPortfolio[]> {
   const params = new URLSearchParams();
   if (options?.activeOnly) params.set("active_only", "true");
+  if (options?.includeCustomers === false) params.set("include_customers", "false");
   const qs = params.toString();
   // Sem barra final: commercial-api registra GET "" (sem slash). Com "/" o FastAPI
   // faz 307 e o Location em http atrás do proxy HTTPS → Mixed Content.
