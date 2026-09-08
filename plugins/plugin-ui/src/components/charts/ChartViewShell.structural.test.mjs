@@ -14,6 +14,8 @@ describe("ChartViewShell (fonte)", () => {
     assert.match(src, /typeToggle/);
     assert.match(src, /overlays/);
     assert.match(src, /overlaysLabel/);
+    assert.match(src, /seriesColors/);
+    assert.match(src, /seriesColorsLabel/);
     assert.match(src, /exportActions/);
     assert.match(src, /granularityLabel/);
     assert.match(src, /typeToggleLabel/);

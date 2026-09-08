@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChartOverlayOptionsPopover,
+  ChartSeriesColorsPopover,
   ChartTypeSegmentToggle,
   ChartViewShell,
   EmptyState,
   MultiTypeSeriesChart,
   TIME_MULTI_SERIES_TYPES,
+  applySeriesFillPreferences,
   runTabularExport,
   usePersistedChartPreferences,
   type ChartGranularity,
@@ -184,7 +186,7 @@ export function AnalyticsClosingRateSeriesChart({
     [filters.branch],
   );
 
-  const series = useMemo((): MultiTypeSeriesSpec[] => {
+  const baseSeries = useMemo((): MultiTypeSeriesSpec[] => {
     const list: MultiTypeSeriesSpec[] = [];
     if (seriesUnits.includes("01")) {
       list.push({
@@ -218,6 +220,11 @@ export function AnalyticsClosingRateSeriesChart({
     }
     return list;
   }, [priorLabels.unit01, priorLabels.unit02, seriesUnits, yoyActive]);
+
+  const series = useMemo(
+    () => applySeriesFillPreferences(baseSeries, preferences.seriesFills),
+    [baseSeries, preferences.seriesFills],
+  );
 
   const chartData = useMemo(
     () =>
@@ -293,6 +300,7 @@ export function AnalyticsClosingRateSeriesChart({
             />
           }
           overlaysLabel={ANALYTICS_CONTENT.overview.chartOverlaysLabel}
+          seriesColorsLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsLabel}
           overlays={
             <ChartOverlayOptionsPopover
               idPrefix="overview-closing-overlays"
@@ -300,6 +308,27 @@ export function AnalyticsClosingRateSeriesChart({
               panelTitle={ANALYTICS_CONTENT.overview.chartOverlaysPanelTitle}
               emptySummaryLabel={ANALYTICS_CONTENT.overview.chartOverlaysEmpty}
               options={overlayOptions}
+            />
+          }
+          seriesColors={
+            <ChartSeriesColorsPopover
+              idPrefix="overview-closing-colors"
+              portalScopeClassName="dashboard-commercial"
+              series={series}
+              values={preferences.seriesFills}
+              summaryLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsEmpty}
+              panelTitle={ANALYTICS_CONTENT.overview.chartSeriesColorsPanelTitle}
+              triggerAriaLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsTriggerAria}
+              resetLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsReset}
+              onChange={(dataKey, color) =>
+                setPreferences((prev) => ({
+                  ...prev,
+                  seriesFills: { ...(prev.seriesFills ?? {}), [dataKey]: color },
+                }))
+              }
+              onReset={() =>
+                setPreferences((prev) => ({ ...prev, seriesFills: undefined }))
+              }
             />
           }
         >

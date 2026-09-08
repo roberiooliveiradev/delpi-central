@@ -307,7 +307,7 @@ export const CM_HELP = {
     rankingLimit:
       "Quantidade máxima de linhas no ranking (10, 15, 20 ou 50).",
     billingSeries:
-      "Soma do faturamento no período (bruto de nota ou líquido ROL). Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix.",
+      "Soma do faturamento no período (bruto de nota ou líquido ROL). Os filtros do hero (cliente, família, produto e mercado) também restringem este gráfico — com produto/família/mercado o bruto usa valor de linha (D2_TOTAL), alinhado ao mix. Em Cores, altere a cor de cada série; «Restaurar padrão» limpa a escolha neste navegador.",
     billingNature:
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingMetric:
@@ -439,7 +439,7 @@ export const CM_HELP = {
       "Roteiro da Conta com o que já existe (histórico, pedidos, OV, atividades). Rentabilidade permanece bloqueada (FIN-004).",
     lastSale: "Data da última venda conhecida para o cliente (quando disponível).",
     purchaseEvolution:
-      "Comparativo mês a mês em colunas: janela atual versus a janela imediatamente anterior. Use Métrica R$ | Qtd para valor ou quantidade fornecida.",
+      "Comparativo mês a mês em colunas: janela atual versus a janela imediatamente anterior. Use Métrica R$ | Qtd para valor ou quantidade fornecida. Em Cores, personalize as séries; «Restaurar padrão» volta às cores originais.",
     purchaseEvolutionComparison:
       "Compara a janela atual com a anterior para evidenciar mudança de ritmo nas compras (ou no fornecimento em quantidade).",
     timeline:
@@ -465,7 +465,7 @@ export const CM_HELP = {
     billingSeriesCustomer:
       "Filtra a série de faturamento da carteira a um ou mais clientes (código+loja).",
     billingSeriesAccount:
-      "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). Em Opções do gráfico, «Comparar ano anterior» coloca as colunas do ano anterior lado a lado com o período atual.",
+      "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). Em Opções do gráfico, «Comparar ano anterior» coloca as colunas do ano anterior lado a lado com o período atual. Em Cores, escolha a cor de cada série; «Restaurar padrão» remove a personalização.",
     billingSeriesTrend:
       "Sobreposição da regressão linear sobre a série atual (não substitui o comparativo YoY).",
     billingSeriesDateStart: "Início do intervalo personalizado da série de faturamento.",
@@ -732,11 +732,11 @@ export const CM_HELP = {
       "Datas, competência, atalho de período (hoje…últimos 12 meses), unidade, segmento, cliente(s) e carteira (quando permitido) aplicados aos painéis de período. O KPI «Carteira em aberto» é snapshot agora e ignora o período.",
     kpis: "Indicadores do período: ROL vs meta SI (natureza líquido; consolidado = realizado+meta SC+ES pelo SI), conversão, OTD% e novos negócios. «Carteira em aberto» é valor aberto de pedido (snapshot) — não some com ROL e não é programação do PCP. Bruto só com contrato BFF.",
     rolSeries:
-      "Evolução do ROL no período. Com «Unidade (indicadores)» em Todas, compara Santa Catarina e Espírito Santo; com uma unidade selecionada, mostra só essa série.",
+      "Evolução do ROL no período. Com «Unidade (indicadores)» em Todas, compara Santa Catarina e Espírito Santo; com uma unidade selecionada, mostra só essa série. Em Cores, escolha a cor de cada série (persistida neste navegador); «Restaurar padrão» volta às cores originais.",
     rolSeriesYoy:
       "Compara o mesmo período filtrado deslocado −1 ano em colunas agrupadas, em Dia/Semana/Mês/Ano. Alinhamento por bucket; drill só no período atual.",
     closingRateSeries:
-      "Evolução da taxa de conversão (hit rate). Com unidade Todas, compara SC e ES; com uma unidade, só essa série. Cada ponto usa a mesma fórmula do KPI no bucket.",
+      "Evolução da taxa de conversão (hit rate). Com unidade Todas, compara SC e ES; com uma unidade, só essa série. Cada ponto usa a mesma fórmula do KPI no bucket. Em Cores, personalize a cor de cada série e use «Restaurar padrão» se quiser voltar.",
     closingRateSeriesYoy:
       "Sobrepõe hit rate do mesmo período filtrado −1 ano (tracejado), em qualquer granularidade. Mesma regra de buckets; drill só no período atual.",
     funnel:

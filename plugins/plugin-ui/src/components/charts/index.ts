@@ -319,6 +319,16 @@ export {
 } from "./ChartOverlayOptionsPopover";
 
 export {
+  ChartSeriesColorsPopover,
+  type ChartSeriesColorItem,
+  type ChartSeriesColorsPopoverProps,
+} from "./ChartSeriesColorsPopover";
+
+export {
+  applySeriesFillPreferences,
+} from "./seriesFillPreferences";
+
+export {
   MAX_COMPARE_YEARS,
   buildCompareYearsOverlayOptions,
   clampCompareYears,

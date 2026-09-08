@@ -18,6 +18,11 @@ export type PersistedChartPreferences = {
   showTrend?: boolean;
   /** Incomplete bucket handling for OLS trend. Default exclude when unset. */
   incompleteBucketMode?: "exclude" | "weightByFraction";
+  /**
+   * User overrides for series fills keyed by `dataKey`.
+   * Empty / omitted → chart uses the host default fills.
+   */
+  seriesFills?: Record<string, string>;
 };
 
 export type UsePersistedChartPreferencesOptions = {
@@ -41,6 +46,24 @@ const CHART_TYPES: readonly PersistedChartType[] = [
 
 function isChartType(value: unknown): value is PersistedChartType {
   return typeof value === "string" && (CHART_TYPES as readonly string[]).includes(value);
+}
+
+/** Keep only non-empty string dataKey → CSS color / var fills. */
+export function sanitizeSeriesFills(
+  value: unknown,
+): Record<string, string> | undefined {
+  if (value == null) return undefined;
+  if (typeof value !== "object" || Array.isArray(value)) return undefined;
+  const out: Record<string, string> = {};
+  for (const [rawKey, rawFill] of Object.entries(value as Record<string, unknown>)) {
+    const key = typeof rawKey === "string" ? rawKey.trim() : "";
+    if (!key) continue;
+    if (typeof rawFill !== "string") continue;
+    const fill = rawFill.trim();
+    if (!fill) continue;
+    out[key] = fill;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 function readStored(storageKey: string): PersistedChartPreferences | null {
@@ -82,6 +105,11 @@ function mergePreferences(
     merged.incompleteBucketMode !== "weightByFraction"
   ) {
     merged.incompleteBucketMode = defaults.incompleteBucketMode ?? "exclude";
+  }
+  if (stored != null && "seriesFills" in stored) {
+    merged.seriesFills = sanitizeSeriesFills(stored.seriesFills);
+  } else {
+    merged.seriesFills = sanitizeSeriesFills(defaults.seriesFills);
   }
   return merged;
 }

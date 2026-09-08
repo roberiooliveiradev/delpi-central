@@ -247,6 +247,10 @@ export const USER_MANUAL_CONTENT = {
           a: "Por padrão a tendência exclui o bucket incompleto (ex.: mês em andamento). Nos overlays do gráfico, «Ponderar período parcial» inclui o valor escalado pelo % do período já decorrido.",
         },
         {
+          q: "Posso mudar as cores das séries do gráfico?",
+          a: "Sim. Nos gráficos com toolbar (Visão geral, Minha Carteira, Conta), use Cores para escolher a cor de cada série. A escolha fica neste navegador; «Restaurar padrão» volta às cores originais.",
+        },
+        {
           q: "Cadê o GR / telão de vendas?",
           a: "É o app TV Dashboard, não uma tela dentro do Portal Comercial.",
         },

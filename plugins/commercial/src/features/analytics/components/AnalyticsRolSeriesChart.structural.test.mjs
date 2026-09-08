@@ -22,6 +22,8 @@ describe("AnalyticsRolSeriesChart — paridade dashboard", () => {
     assert.match(chart, /onDrillDown/);
     assert.match(chart, /shiftPeriodRangeByYears|mergeSeriesWithPriorYear/);
     assert.match(chart, /ChartViewShell|MultiTypeSeriesChart/);
+    assert.match(chart, /ChartSeriesColorsPopover/);
+    assert.match(chart, /applySeriesFillPreferences/);
     assert.match(chart, /usePersistedChartPreferences/);
     assert.doesNotMatch(chart, /LineChart/);
     assert.doesNotMatch(chart, /ROL filial|ROL matriz/);

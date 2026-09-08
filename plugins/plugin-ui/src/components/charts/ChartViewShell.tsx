@@ -23,6 +23,13 @@ export type ChartViewShellProps = {
   overlays?: ReactNode;
   /** Label above overlays (empty string hides). */
   overlaysLabel?: string;
+  /**
+   * Series color picker host (ChartSeriesColorsPopover) — after overlays,
+   * before chart type.
+   */
+  seriesColors?: ReactNode;
+  /** Label above series colors (empty string hides). */
+  seriesColorsLabel?: string;
   /** Chart type segment toggle. */
   typeToggle?: ReactNode;
   /** Label above type toggle (empty string hides). */
@@ -70,13 +77,15 @@ function ChartViewShellControl({
 }
 
 /**
- * Dense chart toolbar: granularity + overlays + type + export on one row.
+ * Dense chart toolbar: granularity + overlays + series colors + type + export.
  */
 export function ChartViewShell({
   granularity,
   granularityLabel = "Agrupamento",
   overlays,
   overlaysLabel = "Opções",
+  seriesColors,
+  seriesColorsLabel = "Cores",
   typeToggle,
   typeToggleLabel = "Tipo",
   exportActions,
@@ -97,7 +106,7 @@ export function ChartViewShell({
   };
 
   const hasToolbar =
-    granularity || overlays || typeToggle || exportActions || extra;
+    granularity || overlays || seriesColors || typeToggle || exportActions || extra;
 
   return (
     <div className={[classNames.root, className].filter(Boolean).join(" ")}>
@@ -115,6 +124,14 @@ export function ChartViewShell({
             {overlays ? (
               <ChartViewShellControl label={overlaysLabel} classNames={classNames}>
                 {overlays}
+              </ChartViewShellControl>
+            ) : null}
+            {seriesColors ? (
+              <ChartViewShellControl
+                label={seriesColorsLabel}
+                classNames={classNames}
+              >
+                {seriesColors}
               </ChartViewShellControl>
             ) : null}
             {typeToggle ? (

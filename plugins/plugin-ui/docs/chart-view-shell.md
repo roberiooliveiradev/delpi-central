@@ -19,12 +19,12 @@ Consumidor desta onda: **Portal Commercial** (`plugins/commercial`). Dashboard C
 
 | Gráfico | Família | Excel | Preferências |
 |---------|---------|-------|--------------|
-| `AnalyticsRolSeriesChart` | `time_multi_series` | Sim (CSV/XLS/PDF) | type, yoy, trend |
-| `AnalyticsClosingRateSeriesChart` | `time_multi_series` | Sim | type, yoy |
-| `CustomerBillingSeriesChart` | `time_multi_series` | Sim | type, yoy/+2/+3, trend |
-| `CustomerAccountBillingChart` | `time_multi_series` | Sim | type, trend |
-| `CustomerPurchaseEvolutionChart` | `period_compare` | Sim | type, trend |
-| `AnalyticsOtdInsightBarChart` | `ranking` | Sim | type |
+| `AnalyticsRolSeriesChart` | `time_multi_series` | Sim (CSV/XLS/PDF) | type, yoy, trend, seriesFills |
+| `AnalyticsClosingRateSeriesChart` | `time_multi_series` | Sim | type, yoy, seriesFills |
+| `CustomerBillingSeriesChart` | `time_multi_series` | Sim | type, yoy/+2/+3, trend, seriesFills |
+| `CustomerAccountBillingChart` | `time_multi_series` | Sim | type, trend, seriesFills |
+| `CustomerPurchaseEvolutionChart` | `period_compare` | Sim | type, trend, seriesFills |
+| `AnalyticsOtdInsightBarChart` | `ranking` | Sim | type (cores por severidade — sem seriesFills) |
 | OP coverage / prazo (`OpenOrdersProductionDetailContent`) | `composition` / `categorical` | Sim | — (export; type switcher N/A nesta onda) |
 | `AnalyticsFunnelChart` | `funnel` | Sim | — |
 | Gauges OTD / sparkline ranking | `scalar` / `mini` | N/A | — |
@@ -37,9 +37,10 @@ Teste estrutural: `plugins/commercial/src/features/analytics/chartExcelCoverage.
 
 | Peça | Módulo |
 |------|--------|
-| Preferências | `usePersistedChartPreferences` |
+| Preferências | `usePersistedChartPreferences` (`seriesFills` por `dataKey`) |
 | Type switcher | `ChartTypeSegmentToggle` (ícone + popover `ChartTypeCatalogPanel` filtrado por família) |
 | Overlay options | `ChartOverlayOptionsPopover` + `buildCompareYearsOverlayOptions` (YoY / tendência) |
+| Series colors | `ChartSeriesColorsPopover` (host fino sobre `ColorPickerPopover`) + `applySeriesFillPreferences` |
 | Plot | `MultiTypeSeriesChart` |
-| Shell | `ChartViewShell` — **mesma linha:** Agrupamento · Opções · Tipo · export |
+| Shell | `ChartViewShell` — **mesma linha:** Agrupamento · Opções · Cores · Tipo · export |
 | Checkbox compacto | `NativeCheckboxControl` `hintPlacement: "tooltip"` (help no **label**, sem ícone `?`) |

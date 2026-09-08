@@ -88,4 +88,58 @@ describe("usePersistedChartPreferences", () => {
     });
     expect(result.current.preferences.compareYears).toBe(3);
   });
+
+  it("aplica seriesFills válidos persistidos", () => {
+    storage.set(
+      "demo:chart",
+      JSON.stringify({
+        chartType: "column",
+        seriesFills: { rol_matrix: "#ff0000", rol_branch: "  var(--chart-2)  " },
+      }),
+    );
+    const { result } = renderHook(() =>
+      usePersistedChartPreferences({
+        storageKey: "demo:chart",
+        defaults: { chartType: "column" },
+      }),
+    );
+    expect(result.current.preferences.seriesFills).toEqual({
+      rol_matrix: "#ff0000",
+      rol_branch: "var(--chart-2)",
+    });
+  });
+
+  it("descarta seriesFills inválidos e permite restaurar padrão", () => {
+    storage.set(
+      "demo:chart",
+      JSON.stringify({
+        chartType: "column",
+        seriesFills: { ok: 12, "": "#fff", bad: "" },
+      }),
+    );
+    const { result } = renderHook(() =>
+      usePersistedChartPreferences({
+        storageKey: "demo:chart",
+        defaults: { chartType: "column" },
+      }),
+    );
+    expect(result.current.preferences.seriesFills).toBeUndefined();
+
+    act(() => {
+      result.current.setPreferences({
+        seriesFills: { rol_matrix: "#089bdb" },
+      });
+    });
+    expect(result.current.preferences.seriesFills).toEqual({
+      rol_matrix: "#089bdb",
+    });
+
+    act(() => {
+      result.current.setPreferences((prev) => ({
+        ...prev,
+        seriesFills: undefined,
+      }));
+    });
+    expect(result.current.preferences.seriesFills).toBeUndefined();
+  });
 });

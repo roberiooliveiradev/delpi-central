@@ -17,6 +17,8 @@ describe("AnalyticsClosingRateSeriesChart", () => {
     assert.match(chart, /ChartOverlayOptionsPopover/);
     assert.match(chart, /granularityLabel|chartGranularityLabel/);
     assert.match(chart, /ChartViewShell/);
+    assert.match(chart, /ChartSeriesColorsPopover/);
+    assert.match(chart, /applySeriesFillPreferences/);
     assert.doesNotMatch(chart, /CommercialChartToolbar/);
     assert.doesNotMatch(chart, /NativeCheckboxControl/);
     assert.match(chart, /comparePriorYear|shiftPeriodRangeByYears/);

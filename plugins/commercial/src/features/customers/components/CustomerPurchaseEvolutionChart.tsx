@@ -2,15 +2,18 @@ import { useMemo } from "react";
 import {
   ChartCard,
   ChartOverlayOptionsPopover,
+  ChartSeriesColorsPopover,
   ChartTypeSegmentToggle,
   ChartViewShell,
   chartCardBemClasses,
   EmptyState,
   MultiTypeSeriesChart,
   PERIOD_COMPARE_TYPES,
+  applySeriesFillPreferences,
   runTabularExport,
   usePersistedChartPreferences,
   type ChartOverlayOption,
+  type MultiTypeSeriesSpec,
 } from "@delpi/plugin-ui/index";
 
 import {
@@ -120,8 +123,8 @@ export function CustomerPurchaseEvolutionChart({
   const formatTip =
     billingMetric === "quantity" ? formatQuantity : formatCurrency;
 
-  const bars = useMemo(
-    () => [
+  const baseBars = useMemo(
+    (): MultiTypeSeriesSpec[] => [
       {
         dataKey: "atual",
         name: `Período atual · ${formatMetricTotal(totals.atual, billingMetric)}`,
@@ -135,6 +138,11 @@ export function CustomerPurchaseEvolutionChart({
       },
     ],
     [billingMetric, totals.atual, totals.anterior],
+  );
+
+  const bars = useMemo(
+    () => applySeriesFillPreferences(baseBars, preferences.seriesFills),
+    [baseBars, preferences.seriesFills],
   );
 
   const emptyMessage =
@@ -220,6 +228,7 @@ export function CustomerPurchaseEvolutionChart({
         <ChartViewShell
           prefix="cm"
           overlaysLabel={ANALYTICS_CONTENT.overview.chartOverlaysLabel}
+          seriesColorsLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsLabel}
           typeToggleLabel={ANALYTICS_CONTENT.overview.chartTypeLabel}
           typeToggle={
             <ChartTypeSegmentToggle
@@ -251,6 +260,27 @@ export function CustomerPurchaseEvolutionChart({
               panelTitle={ANALYTICS_CONTENT.overview.chartOverlaysPanelTitle}
               emptySummaryLabel={ANALYTICS_CONTENT.overview.chartOverlaysEmpty}
               options={overlayOptions}
+            />
+          }
+          seriesColors={
+            <ChartSeriesColorsPopover
+              idPrefix="purchase-evolution-colors"
+              portalScopeClassName="dashboard-commercial"
+              series={bars}
+              values={preferences.seriesFills}
+              summaryLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsEmpty}
+              panelTitle={ANALYTICS_CONTENT.overview.chartSeriesColorsPanelTitle}
+              triggerAriaLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsTriggerAria}
+              resetLabel={ANALYTICS_CONTENT.overview.chartSeriesColorsReset}
+              onChange={(dataKey, color) =>
+                setPreferences((prev) => ({
+                  ...prev,
+                  seriesFills: { ...(prev.seriesFills ?? {}), [dataKey]: color },
+                }))
+              }
+              onReset={() =>
+                setPreferences((prev) => ({ ...prev, seriesFills: undefined }))
+              }
             />
           }
         >
