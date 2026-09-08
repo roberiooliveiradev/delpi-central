@@ -174,6 +174,11 @@ class OpenApiContractGuardrailsTest(unittest.TestCase):
         findings = mod.scan_changed_fastapi_file("orders-api/app/routes.py", source, {5})
         self.assertEqual([item.rule for item in findings], ["FASTAPI_OPERATION_ID_REQUIRED"])
 
+    def test_fastapi_empty_local_path_requires_operation_id(self):
+        source = '''\nfrom fastapi import APIRouter\nrouter = APIRouter(prefix="/items")\n\n@router.post("")\nasync def create_item():\n    return {}\n'''
+        findings = mod.scan_changed_fastapi_file("orders-api/app/routes.py", source, {5})
+        self.assertEqual([item.rule for item in findings], ["FASTAPI_OPERATION_ID_REQUIRED"])
+
     def test_fastapi_explicit_operation_id_is_allowed(self):
         source = '''\nfrom fastapi import APIRouter\nrouter = APIRouter()\n\n@router.get(\n    "/items",\n    operation_id="list_items",\n)\nasync def list_items():\n    return []\n'''
         findings = mod.scan_changed_fastapi_file("orders-api/app/routes.py", source, {7})
