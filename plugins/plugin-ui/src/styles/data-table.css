@@ -1032,6 +1032,40 @@ table.delpi-ui-table td.delpi-ui-table__detail-cell {
   .delpi-ui-table-toolbar__search-group {
     width: 100%;
   }
+
+  /*
+   * Scroll horizontal intencional com indicação visual (fade nas bordas).
+   * A tabela permanece width:max-content; o wrap é a superfície scrollável.
+   */
+  .delpi-ui-table-wrap,
+  .delpi-ui-table-wrap--section {
+    background:
+      linear-gradient(
+        to right,
+        var(--delpi-ui-surface, var(--surface, #ffffff)) 30%,
+        transparent
+      ),
+      linear-gradient(
+        to left,
+        var(--delpi-ui-surface, var(--surface, #ffffff)) 30%,
+        transparent
+      ),
+      linear-gradient(
+        to right,
+        color-mix(in srgb, var(--delpi-ui-text, #111) 18%, transparent),
+        transparent
+      ),
+      linear-gradient(
+        to left,
+        color-mix(in srgb, var(--delpi-ui-text, #111) 18%, transparent),
+        transparent
+      ),
+      var(--delpi-ui-surface, var(--surface, #ffffff));
+    background-position: left center, right center, left center, right center, center;
+    background-size: 32px 100%, 32px 100%, 12px 100%, 12px 100%, 100% 100%;
+    background-repeat: no-repeat;
+    background-attachment: local, local, scroll, scroll, local;
+  }
 }
 
 

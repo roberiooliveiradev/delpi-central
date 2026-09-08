@@ -277,6 +277,7 @@ export function PortfolioBillingRankingTable({
         actions={
           <>
             <CommercialExcelExportButton
+              density="toolbar"
               disabled={loading || items.length === 0}
               onExport={() => {
                 runTabularExport({

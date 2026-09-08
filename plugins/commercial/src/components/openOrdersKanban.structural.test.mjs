@@ -15,6 +15,7 @@ describe("openOrdersKanban structural", () => {
     assert.match(src, /parseOpenOrdersListUrlState/);
     assert.match(src, /useRecentlyClosedOrdersTotvs/);
     assert.match(src, /completedRows=\{closedOrders\.items\}/);
+    assert.match(src, /CommercialExcelExportButton[\s\S]*density="toolbar"/);
     assert.doesNotMatch(src, /api-delpi|API_DELPI/);
   });
 

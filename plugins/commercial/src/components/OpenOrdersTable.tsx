@@ -552,6 +552,7 @@ export function OpenOrdersTable({
           actions={
             <>
               <CommercialExcelExportButton
+                density="toolbar"
                 onExport={() => void handleExportExcel()}
                 disabled={exportRows.length === 0 || exporting || loading}
                 exporting={exporting}

@@ -78,7 +78,28 @@
 
 @media (max-width: 768px) {
   .delpi-ui-table-font-size {
-    justify-content: space-between;
-    width: 100%;
+    position: relative;
+    flex: 0 0 auto;
+    width: auto;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+
+  /* Rótulo «Fonte» some no mobile; aria-label do grupo permanece. */
+  .delpi-ui-table-font-size__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .delpi-ui-table-font-size__btn {
+    min-width: 40px;
+    min-height: 40px;
   }
 }
