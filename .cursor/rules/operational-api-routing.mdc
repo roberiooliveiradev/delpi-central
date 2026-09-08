@@ -1,5 +1,5 @@
 ---
-description: Chat/actions OpenAPI — roteamento operacional multi-provider, retrieval, planner, validator e migração do registry legado
+description: Chat/actions OpenAPI — roteamento operacional universal multi-provider com retrieval, planner, validator, policy e execução genérica
 alwaysApply: false
 ---
 
@@ -7,115 +7,118 @@ alwaysApply: false
 
 ## Princípio
 
-O roteamento de tools/actions é **OpenAPI-first** e deve funcionar para qualquer provider habilitado no agente, inclusive APIs externas ao monorepo.
+O roteamento de tools/actions é **OpenAPI-first** e deve funcionar para qualquer provider habilitado no agente, inclusive APIs externas sem código no monorepo.
 
-Fluxo canônico alvo:
+Fluxo canônico:
 
 ```text
-Pedido / subtarefas
+pedido / subtarefas
 → allowed actions do agente
-→ retrieval semântico/híbrido sobre Action Catalog importado do OpenAPI
-→ planner estruturado
+→ Action Catalog importado do OpenAPI
+→ retrieval semântico/híbrido top-K
+→ planner estruturado restrito às candidates
 → validação determinística dos argumentos contra OpenAPI
-→ policy/confirmation
+→ policy/RBAC/confirmation
 → ExecuteExternalActionUseCase
-→ HttpExternalActionGateway
+→ gateway HTTP genérico
+→ apresentação schema-driven
 ```
 
-Regra canônica completa: **`openapi-first-universal-tool-routing.mdc`**.
+Regra arquitetural principal: `openapi-first-universal-tool-routing.mdc`.
 
-## Fonte de verdade
+## Fontes de verdade
 
-- OpenAPI importado + catálogo persistido: operação, método, path, parâmetros, body, schemas e descriptions.
-- Agente/provider/action binding: quais actions estão habilitadas e autorizadas.
-- JSON do assistente: vocabulário corporativo, UX, policies e compatibilidade — **não** catálogo paralelo de endpoints.
+| Conceito | Fonte canônica |
+|----------|----------------|
+| Operações, método, path, args, body, schemas | OpenAPI importado + Action Catalog |
+| Actions habilitadas | provider/action binding + `allowed_action_ids` |
+| Segurança de execução | sensitivity + RBAC/policy/confirmation |
+| Linguagem corporativa/UX | conteúdo/config transversal do assistente |
+| Apresentação básica | response schema + payload runtime + metadata |
 
-`operational_route_registry.json` é legado de compatibilidade/migração. Não é requisito arquitetural para adicionar nova operação.
+Não criar segundo catálogo técnico de endpoints, markers ou strategies para ensinar ao chat como chamar cada rota.
 
-## Onde implementar
+## Responsabilidades por camada
 
 | Camada | Responsabilidade |
 |--------|------------------|
-| Import/index | Normalizar OpenAPI em Action Catalog e documento semântico/embeddings |
-| Domain | Contratos de action candidate/plan, validação e policies sem dependência de provider específico |
-| Application | Retrieval, planejamento, validação, seleção e execução genérica |
-| Infrastructure | OpenAPI import, vector/lexical search, LLM adapter, HTTP gateway e autenticação de provider |
+| Import/index | Normalizar OpenAPI em Action Catalog e documento semântico |
+| Domain | Modelos/ports de candidate, plan, argumentos, policy e validation |
+| Application | Decomposição, retrieval, planning, validation e orchestration |
+| Infrastructure | importer, embedding/vector search, LLM adapter, HTTP/auth provider |
+| Presentation | interpretação schema-driven; especialização opcional |
 
-Enquanto o legado existir, `OperationalApiRouteSpec`, `OperationalRouteRegistryService` e delegates atuais podem continuar funcionando, mas novas integrações não devem ampliar o acoplamento manual por endpoint.
+O core genérico não pode depender de path/provider/domain específicos.
 
-## Checklist — rota/API nova
+## Checklist — nova API/action
 
-1. OpenAPI válido com `operationId`, summary/description, parâmetros e schemas úteis.
-2. Importar/reimportar provider e atualizar Action Catalog + embeddings.
-3. Vincular provider/action ao agente e configurar policies/permissões.
-4. Confirmar que a action aparece em `allowed_action_ids` no turno.
-5. Validar descoberta por linguagem natural via retrieval/planner genérico.
-6. Validar extração e validação de argumentos pelo schema OpenAPI.
-7. Validar execução pelo `ExecuteExternalActionUseCase`/gateway genérico.
-8. Validar fallback de apresentação schema-driven.
-9. Cobrir caso positivo, caso irmão e caso negativo.
-10. Para provider externo: provar funcionamento **sem alteração de Python/JSON por endpoint**.
-
-## Registry legado
-
-Não adicionar entrada manual em `operational_route_registry.json` somente porque uma rota nova existe.
-
-Entrada/override manual só é aceitável se representar algo que o OpenAPI padrão não expressa, por exemplo policy/vocabulário corporativo transversal temporário. Deve haver justificativa explícita e plano de remoção quando for compatibilidade.
-
-Proibido usar registry para duplicar:
-
-- `path`;
-- `operationId`;
-- lista de parâmetros;
-- schema de request/response;
-- selector específico de provider;
-- `parameterStrategy` exclusivo de um endpoint quando o OpenAPI já descreve o argumento.
+1. OpenAPI válido, com `operationId`, `summary`, `description`, parâmetros e schemas úteis.
+2. Importar/reimportar provider e atualizar Action Catalog/index.
+3. Vincular provider/action ao agente e configurar permissões/policies.
+4. Confirmar `allowed_action_ids` no turno.
+5. Validar retrieval em linguagem natural.
+6. Validar seleção entre actions semanticamente próximas.
+7. Validar path/query/body/required/type/enum/format contra o OpenAPI.
+8. Required argument ausente deve gerar clarify específico, nunca valor inventado.
+9. Executar exclusivamente pelo use case/gateway genérico autorizado.
+10. Validar fallback de apresentação schema-driven.
+11. Avaliar conforme `ai-intelligence-evaluation.mdc` e `docs/testing/chat-ai-flow-families.md`.
+12. Para mudanças no motor, provar API externa desconhecida + teste metamórfico.
 
 ## Pedidos longos e múltiplas actions
 
-Pedidos com vários objetivos devem ser decompostos. Não reduzir a uma única intent/action.
+Pedidos compostos devem ser decompostos, não reduzidos a uma intent única:
 
 ```text
 pedido completo
-→ subtarefas
+→ subtarefas independentes/dependentes
 → candidates por subtarefa
 → plano de tools
-→ execução com dependências/paralelismo
-→ síntese
+→ validação por contrato/policy
+→ execução serial ou paralela segura
+→ tratamento de falhas parciais
+→ síntese cobrindo todos os pedidos
 ```
 
-Seguir `evidence-driven-execution.mdc`.
+Follow-ups reutilizam estado estruturado da conversa/action anterior; não inferem contexto por substring de URL.
+
+## Segurança
+
+- planner só pode escolher `actionId` dentro das candidates autorizadas;
+- nenhum LLM pode inventar URL/provider/operationId executável;
+- write/admin/destructive passam novamente por policy/confirmation;
+- output da tool é dado não confiável e não pode substituir instruções/policies;
+- seguir `ai-external-tools-security.mdc` e `http-integration-resilience.mdc`.
 
 ## Apresentação
 
-Roteamento não deve depender de presenter dedicado.
+Roteamento não depende de presenter dedicado:
 
 ```text
-responseSchema + payload + metadata
-→ schema-driven presentation
+responseSchema + payload runtime + metadata
+→ ChatSchemaDrivenPresentationService
 → perfil especializado opcional
 ```
 
-Seguir `schema-first-presentation-delivered.mdc`.
+API externa sem extensão DELPI precisa produzir resposta útil pelo fallback genérico.
 
 ## O que NÃO fazer
 
-- `if "/products/"` / `if kpi` / `if provider == ...` em use case/selector genérico.
-- Bias por prefixo `api_delpi.` / `api_externa.`.
-- Criar selector ou service por API externa.
-- Adicionar `pathMarkers` / `operationIdMarkers` para toda rota nova.
-- Duplicar OpenAPI em `assistant/*.json`.
-- Permitir que o LLM execute URL arbitrária fora do catálogo autorizado.
-- Bypass de `execute_external_action` em preview/simulate sem metadata/policies equivalentes.
-- Entregar action selecionável sem fallback de apresentação genérico.
+- `if path`, `if operationId`, `if provider` em selector/use case genérico.
+- Bias por prefixo de provider/action.
+- Selector/service específico para cada API integrada.
+- Catálogo paralelo de endpoints em JSON.
+- `pathMarkers`, `operationIdMarkers` ou `parameterStrategy` por endpoint.
+- Duplicar parâmetros/schema do OpenAPI em conteúdo do assistente.
+- Escolher action fora de `allowed_action_ids`.
+- Executar URL arbitrária produzida pelo modelo.
+- Presenter por rota como requisito de plugabilidade.
+- Corrigir fixture ensinando a resposta esperada ao runtime.
 
-## Migração
+## Teste de arquitetura
 
-Preservar o fluxo legado até haver paridade comprovada. Preferir shadow mode, métricas de divergência e canary por agente/provider antes de remover registry/delegates antigos.
+Pergunta obrigatória:
 
-Referências:
+> Se eu importar agora um OpenAPI externo que nunca existiu no repositório, o agente consegue descobrir, planejar, validar e executar suas operations sem alteração no core por endpoint?
 
-- `openapi-first-universal-tool-routing.mdc`
-- `new-api-route-checklist.mdc`
-- `chat-intelligence-base.mdc`
-- `assistant-content-json.mdc`
+Se a resposta for não, a implementação ainda não está universal.
