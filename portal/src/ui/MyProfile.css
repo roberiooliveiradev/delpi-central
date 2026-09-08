@@ -457,25 +457,29 @@
   opacity: 1;
 }
 
-.profile-person__expand {
+/* Afordância de ampliar — clique é no avatar inteiro; badge só visual. */
+.profile-person__expand-badge {
   position: absolute;
   top: 8px;
   right: 8px;
   z-index: 2;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
-  border: 1px solid color-mix(in srgb, #fff 28%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, #0b1220 55%, transparent);
+  border: 1px solid color-mix(in srgb, #fff 32%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, #0b1220 62%, transparent);
   color: #fff;
-  cursor: pointer;
+  pointer-events: none;
   backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px color-mix(in srgb, #000 35%, transparent);
 }
 
-.profile-person__expand:hover {
-  background: color-mix(in srgb, var(--primary) 55%, #0b1220);
+.profile-person__avatar--expandable:hover .profile-person__expand-badge,
+.profile-person__avatar--expandable:focus-visible .profile-person__expand-badge {
+  background: color-mix(in srgb, var(--primary) 58%, #0b1220);
+  border-color: color-mix(in srgb, #fff 45%, transparent);
 }
 
 .profile-person__photo-hint {

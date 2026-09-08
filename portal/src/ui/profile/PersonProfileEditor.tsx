@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
-import { Camera, Expand, Trash2, X } from "lucide-react";
+import { Camera, Maximize2, Trash2, X } from "lucide-react";
 
 import { AuthContext } from "../../state/AuthContext";
 import { ApiClient, HttpError } from "../../data/apiClient";
@@ -8,7 +8,10 @@ import {
   type PersonProfileResponse,
 } from "../../data/coreApi";
 import { HelpTooltip } from "../../components/HelpTooltip";
-import { notifyPersonProfilePhotoChanged } from "./personProfilePhotoEvents";
+import {
+  notifyPersonProfileChanged,
+  notifyPersonProfilePhotoChanged,
+} from "./personProfilePhotoEvents";
 import {
   resolveWhatsappE164,
   resolveWhatsappSource,
@@ -17,7 +20,7 @@ import {
 
 const PERSON_PROFILE_HINTS = {
   photo:
-    "Clique na foto para enviar ou trocar. Use expandir para ver em tamanho maior. JPEG, PNG, WebP ou GIF até 2 MB.",
+    "Clique na foto para ampliar. No modal, use Trocar foto para enviar outra. Sem foto, clique para adicionar. JPEG, PNG, WebP ou GIF até 2 MB.",
   jobTitle:
     "Cargo informado por você no portal. Não sincroniza com RH ou Keycloak nesta fase.",
   contacts:
@@ -161,6 +164,7 @@ export function PersonProfileEditor({ userName }: PersonProfileEditorProps) {
         whatsapp_e164: resolveWhatsappE164(whatsappSource, phoneE164, mobileE164),
       });
       await applyProfile(data);
+      notifyPersonProfileChanged();
       setSuccess("Cargo e contatos salvos.");
     } catch (err) {
       const message =
@@ -245,10 +249,22 @@ export function PersonProfileEditor({ userName }: PersonProfileEditorProps) {
           <div className="profile-person__avatar-wrap">
             <button
               type="button"
-              className="profile-person__avatar"
-              onClick={onPickPhoto}
+              className={
+                hasPhoto
+                  ? "profile-person__avatar profile-person__avatar--expandable"
+                  : "profile-person__avatar"
+              }
+              onClick={() => {
+                if (hasPhoto) {
+                  setLightboxOpen(true);
+                  return;
+                }
+                onPickPhoto();
+              }}
               disabled={photoBusy}
-              aria-label={hasPhoto ? "Trocar foto do perfil" : "Adicionar foto do perfil"}
+              aria-label={
+                hasPhoto ? "Ampliar foto do perfil" : "Adicionar foto do perfil"
+              }
             >
               {hasPhoto ? (
                 <img
@@ -259,23 +275,17 @@ export function PersonProfileEditor({ userName }: PersonProfileEditorProps) {
               ) : (
                 <span className="profile-person__avatar-initials">{initials}</span>
               )}
-              <span className="profile-person__avatar-overlay" aria-hidden="true">
-                <Camera size={22} strokeWidth={1.75} />
-                <span>{hasPhoto ? "Trocar" : "Adicionar"}</span>
-              </span>
+              {hasPhoto ? (
+                <span className="profile-person__expand-badge" aria-hidden="true">
+                  <Maximize2 size={14} strokeWidth={2.25} />
+                </span>
+              ) : (
+                <span className="profile-person__avatar-overlay" aria-hidden="true">
+                  <Camera size={22} strokeWidth={1.75} />
+                  <span>Adicionar</span>
+                </span>
+              )}
             </button>
-
-            {hasPhoto ? (
-              <button
-                type="button"
-                className="profile-person__expand"
-                onClick={() => setLightboxOpen(true)}
-                aria-label="Expandir foto"
-                title="Expandir"
-              >
-                <Expand size={16} aria-hidden="true" />
-              </button>
-            ) : null}
           </div>
 
           {hasPhoto ? (

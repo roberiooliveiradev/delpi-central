@@ -52,6 +52,10 @@ portal/src/
 
 Nome e e-mail continuam read-only (Keycloak → Core). Cargo/contatos/foto **não** sincronizam RH nesta fase. O avatar do menu lateral usa a mesma foto quando existir.
 
+**UX da foto:** com foto, o clique no avatar **amplia** (lightbox); **Trocar foto** fica no modal. Sem foto, o clique abre o seletor de arquivo. Remover permanece abaixo do avatar.
+
+**MFEs (ex.: Portal Suprimentos):** leem a mesma Core (`/core-api/me/person-profile` + `/photo`). Após salvar cargo/contatos ou foto, o Portal dispara `DELPI_PERSON_PROFILE_CHANGED` (e `DELPI_PERSON_PROFILE_PHOTO_CHANGED` na foto) no `window` para o shell federado recarregar sem segunda fonte de verdade.
+
 ---
 
 ## UX e estados

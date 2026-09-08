@@ -405,8 +405,8 @@ export function getPortalTourQuests({
       steps: [
         "Abra Meu Perfil pelo menu da sidebar.",
         "Revise nome e e-mail (vêm da conta corporativa).",
-        "Envie ou altere sua foto e informe o cargo.",
-        "Preencha telefone/celular e marque qual também é WhatsApp, se quiser.",
+        "Clique na foto para ampliar e use Trocar foto no modal (ou adicione se ainda não houver).",
+        "Informe o cargo e preencha telefone/celular; marque qual também é WhatsApp, se quiser.",
       ],
       unlockHint: "Menu de perfil → Meu Perfil.",
       scope: "profile",
