@@ -1,363 +1,288 @@
 # Guia de desenvolvimento — minha-delpi-ai-api
 
-> **Público:** desenvolvedores backend  
-> **Pré-requisitos:** Python 3.12+, PostgreSQL com pgvector, stack Minha DELPI (Keycloak, Core API)
+**Status:** vigente  
+**Público:** desenvolvedores backend/integrações do Minha DELPI AI
+
+## 1. Regras antes de alterar código
+
+Leia:
+
+1. `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md`;
+2. `.cursor/rules/development-standards-index.mdc`;
+3. regras especializadas indicadas pelo índice;
+4. arquitetura vigente em [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md);
+5. para IA/evals: [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md).
+
+Documentos datados de roadmap/changelog não substituem fontes canônicas atuais.
 
 ---
 
-## 1. Setup local
-
-### Com Docker (recomendado)
-
-```bash
-cd infra
-docker compose -f docker-compose.dev.yml up -d minha-delpi-ai-api postgres-plugins ollama
-```
-
-Migrations rodam no boot do container (`docker-entrypoint.sh`).
-
-### Sem Docker
-
-```bash
-cd minha-delpi-ai-api
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-
-set -a && source ../infra/.env && set +a
-export DATABASE_URL="postgresql+psycopg://${PLUGINS_DB_USER}:${PLUGINS_DB_PASSWORD}@localhost:5433/${PLUGINS_DB_NAME}"
-
-flask --app app.main:app db upgrade
-flask --app app.main:app run --debug
-```
-
-Variáveis: `infra/.env.dev.example`, `app/infrastructure/config/settings.py`.
-
----
-
-## 2. Estrutura do código
+## 2. Estrutura de camadas
 
 ```text
 app/
-  interfaces/http/
-    routes/
-      chat_routes.py          # Facade — delega sub-rotas
-      chat/
-        session_routes.py     # Sessões
-        message_routes.py     # Mensagens send/stream
-        agent_routes.py       # Agentes
-        project_routes.py     # Projetos
-        attachment_routes.py  # Anexos
-        meta_routes.py        # Capabilities, catalog, typing-suggestions
-      admin_routes.py
-      knowledge_routes.py
-      tool_routes.py
-      health_routes.py
-
-  composition/
-    root_composer.py          # App factory wiring
-    chat_composer.py          # make_send_chat_message, make_stream_*
-    admin_composer.py
-    repository_composer.py
-    llm_composer.py
-    external_action_composer.py
-    …
+  domain/
+    entities/
+    ports/
+    services/
+    skills/
+    prompt_policies/
 
   application/
     use_cases/
-      send_chat_message_use_case.py
-      stream_chat_message_use_case.py
-      execute_external_action_use_case.py
-      …
     services/
-      chat_turn/              # Preparação e conclusão do turno
-        chat_turn_preparation_service.py
-        chat_turn_completion_service.py      # orquestrador pós-LLM
-        chat_turn_completion_*_service.py  # finalize, intelligence, metadata, audit, models
-        chat_turn_preparation_*_service.py   # delegates pré-LLM
-      chat_tool_context_service.py
-      chat_prompt_builder_service.py
-      …
-    dto/                      # Request/response DTOs
-
-  domain/
-    services/                 # Regras de negócio (~150+ serviços)
-    external_actions/
-      presenters/             # Hosts utilitários (SQL, KPI, table) — sem presenter por entidade
-    prompt_policies/          # *.md — instruções LLM globais
-    ports/                    # ABC: repos, LLM, content
-    entities/                 # ChatSession, ChatMessage, …
-    skills/                   # Registro de skills
+    dto/
 
   infrastructure/
-    persistence/              # Postgres*Repository
-    gateways/                 # LLM, web search, core-api HTTP
-    content/                  # ContentService (loader JSON)
-    config/settings.py
+    persistence/
+    gateways/
+    content/
+    config/
+
+  interfaces/http/
+    routes/
+
+  composition/
 
   content/pt-BR/
-    assistant/                # Bundles JSON (textos PT-BR)
-    labels/                   # Rótulos rotas api-delpi
+    assistant/
+    labels/
     skills/
 ```
 
-**Regra:** `domain` não importa `infrastructure` nem `interfaces`. Repositories só instanciados em `composition/`.
+Regras:
+
+- domain não importa infrastructure/interfaces;
+- use case não instancia repository/gateway diretamente;
+- composição/DI fica em `composition/`;
+- send/stream/simulate reutilizam serviços base sempre que a responsabilidade é comum;
+- texto PT-BR editável fica em conteúdo/config, não espalhado no Python.
 
 ---
 
-## 3. Fluxo de uma feature de chat
+## 3. Onde implementar
 
-### 3.1 Pergunta: «onde coloco a regra?»
+| Tipo de mudança | Lugar canônico |
+|-----------------|----------------|
+| Intenção/capability/clarify | domain/application services do pipeline base |
+| RAG/contexto/memória | serviços canônicos de turno/RAG/memory |
+| OpenAPI action | import/index + Action Catalog + planner/validator + executor genérico |
+| Argument binding | schema OpenAPI/validator genérico |
+| Policy/RBAC/confirmation | policy services canônicos |
+| Apresentação | schema-driven API + renderPlan; MFE render-only |
+| Texto/UX/vocabulário | `app/content/pt-BR/assistant/*.json` |
+| LLM policy transversal | `domain/prompt_policies/*.md` |
+| Endpoint HTTP | interface fina + use case + composition |
+| Integração HTTP | gateway/adapter com timeout/resiliência/observabilidade |
+
+Nunca criar solução por endpoint/provider quando a responsabilidade é transversal.
+
+---
+
+## 4. Actions OpenAPI
+
+Fluxo vigente:
 
 ```text
-1. É texto exibido ao usuário?
-   → app/content/pt-BR/assistant/*.json + *ContentService
-   → catálogo: docs/architecture/assistant-content-catalog.md
-
-2. É instrução longa para o LLM (todos os chats)?
-   → domain/prompt_policies/*.md + PromptPolicyService
-
-3. É detecção de intenção / roteamento / resposta direta?
-   → domain/services/*IntentService ou *DirectAnswerService
-   → registrar em ChatTurnPreparationService ou pipeline
-
-4. É execução de API externa?
-   → ExternalActionSelectionService + ExecuteExternalActionUseCase
-   → apresentação: ChatPresentationApiDeliveredMetadataService + ChatSchemaDrivenPresentationService
-   → **não** criar presenter por rota — ver presentation-delivered-pure-jun2026.md
-
-5. É orquestração de turno (RAG, flags, SSE)?
-   → application/services/chat_turn/
-
-6. É novo endpoint HTTP?
-   → interfaces/http/routes/ + use case + composition/make_*
-
-7. Dúvida sobre camada, nome ou pasta do service?
-   → docs/roadmap/playbook-20-organizacao-services-chat.md
-   → python3 scripts/audit_service_inventory.py --summary
+OpenAPI
+→ import/index
+→ Action Catalog
+→ agent binding + allowed actions
+→ request decomposition
+→ hybrid retrieval top-K
+→ structured planner
+→ OpenAPI argument validation
+→ RBAC/policy/confirmation
+→ ExecuteExternalActionUseCase
+→ HTTP gateway
+→ schema-driven presentation
 ```
 
-### 3.2 Checklist de implementação
+Checklist completo: [`../architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md).
 
-- [ ] Serviço canônico identificado (não patch no use case)
-- [ ] Send **e** stream usam o mesmo serviço
-- [ ] Texto PT-BR só em JSON (ou policy MD para LLM)
-- [ ] Teste unitário ou caso em `chat_intelligence_regression_cases.py`
-- [ ] Doc atualizada se contrato HTTP ou arquitetura mudou
+### Proibido
 
-### 3.3 Nova rota api-delpi exposta ao chat
+- ensinar endpoint ao chat com marker/path rule técnico;
+- criar intent por operation;
+- selector por provider;
+- duplicar path/operationId/params/schema em JSON do assistente;
+- inventar URL/operationId via LLM;
+- presenter obrigatório por endpoint.
 
-Seguir **[`docs/architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md)** — resumo:
+### api-delpi
 
-1. **api-delpi:** `api_delpi_success` + `route_contract_registry` + smoke `meta`
-2. **Chat (OpenAPI-first):** importar/indexar OpenAPI → vincular actions ao agente → **sem** nova entrada técnica no registry
-3. **Registry (legado/policies):** só se `mode=off` ou policy SQL/refinamento — `operational_route_registry.json` + `--check`
-4. **Apresentação:** `pathRules`, `chartPolicy`, `entityProfiles` (mínimo) — **sem** `visualBuilders` / `tableAssembly`
-5. **Pipeline:** `ChatPresentationApiDeliveredMetadataService` → `ChatSchemaDrivenPresentationService` → `presentationDecision`
-6. **CI:** `audit_presentation_coverage.py --check-profiles` + `audit_openapi_first_routing.py` + teste schema-driven
+Quando uma operation nova entra na api-delpi:
 
-Doc: [`presentation-delivered-pure-jun2026.md`](../architecture/presentation-delivered-pure-jun2026.md).
+1. implementar/validar contrato da própria api-delpi;
+2. publicar OpenAPI completo;
+3. `scripts/sync_api_delpi_openapi.py`;
+4. verificar Action Catalog/index;
+5. confirmar binding/allowed actions;
+6. testar retrieval/planner/arguments;
+7. validar outcome e apresentação;
+8. executar R1–R11 relevantes.
 
-Detalhe api-delpi: [`api-delpi/docs/`](../api/) e playbook-10 no repositório central.
-
----
-
-## 4. Send vs Stream
-
-Ambos consomem:
-
-| Fase | Serviço |
-|------|---------|
-| Preparação | `ChatTurnPreparationService.prepare()` |
-| Montagem LLM | `ChatTurnLlmAssemblyService` |
-| Conclusão | `ChatTurnCompletionService.complete()` |
-
-Stream adicional:
-
-| Componente | Papel |
-|------------|-------|
-| `StreamChatMessageUseCase` | Orquestra SSE |
-| `ChatStreamTurnPrepareService` | Prepare em thread com callbacks |
-| `ChatStreamActivityService` | Eventos `activity` |
-| `ChatStreamCheckpointService` | Persistência incremental |
-| `chat_sse_stream_service` | Emissão SSE |
-
-**Proibido:** copiar o mesmo `if` em send e stream — extrair para serviço base.
-
-ADR: [docs/architecture/adr/002-send-stream-turn-parity.md](../architecture/adr/002-send-stream-turn-parity.md).
+Não estender `ExternalActionSelectionService` ou um catálogo paralelo para ensinar a rota nova.
 
 ---
 
-## 5. Composition root (DI)
+## 5. Pedidos longos e multi-turn
 
-Novos use cases ou serviços com dependências:
+Não reduzir frases longas à primeira intenção.
 
-1. Implementar serviço (domain ou application)
-2. Registrar factory em `composition/*_composer.py`
-3. Handler HTTP chama `make_*()` — **nunca** `Postgres*Repository()` na rota
-
-Exemplo:
-
-```python
-# interfaces/http/routes/chat/message_routes.py
-from app.composition.chat_composer import make_stream_chat_message
-
-@bp.post("/sessions/<session_id>/messages/stream")
-def stream_message(session_id: str):
-    use_case = make_stream_chat_message()
-    return use_case.execute(...)
+```text
+pedido
+→ subtarefas
+→ dependências
+→ capabilities/actions por subtarefa
+→ execução segura
+→ síntese completa
 ```
 
----
+Follow-up reutiliza estado estruturado da conversa, não substring de path ou entidade inferida de forma global.
 
-## 6. Conteúdo JSON
-
-Loader: `ChatAssistantContentService` → `ContentService` (infra).
-
-```python
-# ✅ Correto
-ChatAssistantContentService.get("presenter_content", "titlesByPathFragment", "/stock")
-
-# ❌ Evitar
-return {"titulo": "Estoque do produto"}
-```
-
-Adicionar chave:
-
-1. Editar JSON em `app/content/pt-BR/assistant/`
-2. Usar via serviço de domínio ou application
-3. Teste: chave existe (`test_presenter_content_helpers.py` como modelo)
-4. Atualizar [assistant-content-catalog.md](../architecture/assistant-content-catalog.md)
-
-Detalhes: [app/content/README.md](../../app/content/README.md).
+Mudanças nessas áreas devem cobrir `task_decomposition_recall`, `multi_request_completion_rate` e R6/R9.
 
 ---
 
-## 7. Testes
+## 6. Send, stream e simulate
 
-### Unitários
+O comportamento semântico deve permanecer equivalente entre superfícies.
+
+Compartilhar serviços de:
+
+- preparação do turno;
+- routing/planning;
+- tools;
+- RAG;
+- conclusão;
+- metadata/presentation.
+
+Stream adiciona transporte SSE/checkpoints, mas não uma inteligência paralela.
+
+R7 do protocolo canônico mede essa paridade.
+
+---
+
+## 7. Conteúdo JSON
+
+JSON do assistente serve para:
+
+- copy/UX;
+- vocabulário corporativo;
+- thresholds/config transversal;
+- policy declarativa não técnica;
+- labels/presentation hints opcionais.
+
+Não serve para recriar o OpenAPI.
+
+Antes de criar nova chave, procurar loader/fonte canônica existente e evitar duplicidade.
+
+---
+
+## 8. Testes e eval-driven development
+
+### Unitários/arquitetura
 
 ```bash
+cd minha-delpi-ai-api
 pytest tests/unit -q
-
-# Escopo de um serviço
-pytest tests/unit/domain/services/test_chat_simple_turn_gate_service.py -q
-
-# Regressão de inteligência
-pytest tests/unit/domain/services/test_chat_intelligence_regression.py -q
-```
-
-### Fixtures de regressão
-
-`tests/fixtures/chat_intelligence_regression_cases.py` — casos nomeados consumidos por `test_chat_intelligence_regression.py`.
-
-Ao adicionar regra de roteamento/intenção, inclua caso que **falha sem a regra**.
-
-### Smokes (container)
-
-```bash
-# Identidade
-python scripts/smoke_identity_rag.py <user_id> <session_id> "quem te criou?"
-
-# GPT/SQL melhorias
-python scripts/smoke_gpt_instructions_improvements.py [user_id] [session_id]
-
-# Sync OpenAPI
-python scripts/sync_api_delpi_openapi.py
-```
-
-Checklist manual: [docs/testing/smoke-operacional-manual.md](../testing/smoke-operacional-manual.md).
-
-### Auditoria clean architecture
-
-```bash
 python scripts/audit_clean_architecture.py
-pytest tests/unit/infrastructure/test_no_hardcoded_pt_strings.py -q
 ```
 
-Baseline: [docs/architecture/clean-architecture-baseline.json](../architecture/clean-architecture-baseline.json).
+### Mudança de inteligência
 
----
+Seguir [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md):
 
-## 8. Migrations
-
-```bash
-flask --app app.main:app db migrate -m "descricao"
-flask --app app.main:app db upgrade
+```text
+BASELINE
+→ bug + sibling + negative
+→ fix canônico
+→ CANDIDATE no mesmo corpus/config
+→ R1–R11
+→ outcome/safety/efficiency
+→ live/surfaces
+→ decisão
 ```
 
-Arquivos em `migrations/versions/`. Doc: [docs/api/09-deploy-migrations-schema.md](../api/09-deploy-migrations-schema.md).
+Mudança em motor de tools exige API externa desconhecida + teste metamórfico.
+
+Não declarar sucesso porque um único prompt funciona ou porque um smoke isolado imprime PASS.
 
 ---
 
-## 9. Integração api-delpi
+## 9. Composition root
 
-Quando uma rota nova entra na api-delpi:
+Serviço/use case com dependências:
 
-1. Deploy api-delpi
-2. `scripts/sync_api_delpi_openapi.py` — reimport OpenAPI + embeddings
-3. Atualizar `labels/api_paths.json` e `capabilities.json` se necessário
-4. Estender `ExternalActionSelectionService` ou `api_route_domains.json`
-5. Presenter em `domain/external_actions/presenters/`
-6. Atualizar [api-delpi-rotas-agente.md](../knowledge/api-delpi-rotas-agente.md)
-7. Caso de regressão + smoke manual
+1. definir port/serviço na camada correta;
+2. implementar adapter quando necessário;
+3. registrar factory/composição;
+4. handler HTTP resolve a factory;
+5. testes substituem ports/gateways por doubles.
 
-Contrato de resposta: [playbook-10](../roadmap/playbook-10-contrato-respostas-api-delpi.md).
+Nunca instanciar repository concreto em rota HTTP ou domínio.
 
 ---
 
-## 10. Agentes e conhecimento
+## 10. HTTP externo
 
-| Tarefa | Onde |
-|--------|------|
-| Criar agente | API `POST /chat/agents` ou UI builder |
-| Publicar | `POST /chat/agents/{id}/publish` |
-| Vincular actions | Provider OpenAPI + agente |
-| Documentos RAG | `docs/knowledge/` → ingestão admin |
-| Export bundle | `scripts/export_agent_knowledge_bundle.py` |
+Seguir `http-integration-resilience.mdc` e `ai-external-tools-security.mdc`.
 
-Skills: registro em `domain/skills/`, doc [api/11-skills.md](../api/11-skills.md).
+Obrigatório conforme o caso:
 
----
-
-## 11. Variáveis de ambiente (dev)
-
-| Variável | Default dev | Notas |
-|----------|-------------|-------|
-| `LLM_PROVIDER` | `ollama` | `openai_compatible` para API externa; ver [tutorial-conectar-llm-externo.md](../operations/tutorial-conectar-llm-externo.md) |
-| `EMBEDDING_PROVIDER` | vazio = `LLM_PROVIDER` | Com Kimi + `bge-m3` o vetor fica `off` (RAG keyword), sem Ollama |
-| `VISION_LLM_PROVIDER` | `ollama` | VLM documentos |
-| `RATE_LIMIT_EXTERNAL_LLM_PER_WINDOW` | `10` | Rate limit extra para API externa |
-| `OLLAMA_MODEL` | `qwen2.5:1.5b` | Modelo rápido CPU |
-| `CHAT_AGENTIC_LOOP_ENABLED` | `false` | Evita loops caros |
-| `CHAT_WEB_SEARCH_ENABLED` | `false` | Requer provider |
-| `CHAT_DOCUMENT_VISION_ENABLED` | `true` (compose) | OCR anexos |
-| `CHAT_PERSIST_BEFORE_PLAYBACK` | `true` | Stream com playback |
-| `RAG_CONTEXT_MIN_SCORE` | ver settings | Calibração RAG |
-
-Perfis completos: [chat-intelligence-settings-profiles.md](../knowledge/chat-intelligence-settings-profiles.md).
+- connect/read/total timeout;
+- limites de bytes/content type;
+- retry apenas quando semanticamente seguro;
+- idempotência para write retry;
+- 429/Retry-After/backoff+jitter;
+- redirects/egress conforme security policy;
+- correlation/observability;
+- redaction de secrets.
 
 ---
 
-## 12. Checklist de PR
+## 11. Segurança
 
-1. Domain sem import de infra?
-2. Texto novo só em JSON ou policy MD?
-3. Send/stream paridade?
-4. Teste ou fixture de regressão?
-5. `pytest` relevante passa?
-6. Doc HTTP/arquitetura atualizada se contrato mudou?
-
-Playbook completo: [playbook-11-clean-architecture-chat-api.md](../roadmap/playbook-11-clean-architecture-chat-api.md).
-
-Regras Cursor (repo): `.cursor/rules/clean-architecture-chat-api.mdc`, `chat-intelligence-base.mdc`, `assistant-content-json.mdc`.
+- Keycloak/OIDC é a identidade canônica;
+- JWT não carrega a lista completa de permissões;
+- autorização efetiva respeita Core/RBAC e policy do agente/action;
+- `allowed_action_ids` restringe candidates;
+- write/admin/destructive exigem confirmação/policy aplicável;
+- prompt/RAG/tool result não pode sobrescrever policy;
+- nunca logar token, API key, password ou secret.
 
 ---
 
-## 13. Referências
+## 12. Migrations
 
-| Doc | Conteúdo |
-|-----|----------|
-| [docs/README.md](../README.md) | Índice geral |
-| [architecture/chat-intelligence-base.md](../architecture/chat-intelligence-base.md) | Pipeline completo |
-| [api/README.md](../api/README.md) | Endpoints HTTP |
-| [README.md](../../README.md) | README do pacote |
+- migrations são imutáveis depois de aplicadas em ambientes compartilhados;
+- mudanças novas usam migration nova;
+- dados operacionais de configuração de agente/provider não devem ser inseridos em migration de schema;
+- seguir `migrations-immutable-checksum.mdc`.
+
+---
+
+## 13. Checklist de PR
+
+- [ ] responsabilidade implementada na camada canônica;
+- [ ] sem duplicação de contrato/fonte de verdade;
+- [ ] send/stream/simulate alinhados quando aplicável;
+- [ ] OpenAPI/Action Catalog usados como fonte técnica de actions;
+- [ ] nenhuma regra nova por endpoint/provider no core;
+- [ ] security/RBAC/confirmation preservados;
+- [ ] timeout/resilience/observability em integração HTTP;
+- [ ] tests relevantes verdes;
+- [ ] mudança de IA passou protocolo R1–R11;
+- [ ] outcome real validado quando aplicável;
+- [ ] API externa desconhecida testada se motor de tools mudou;
+- [ ] docs canônicas atualizadas, sem orientação concorrente;
+- [ ] Architecture Enforcement verde.
+
+## Referências vigentes
+
+- [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)
+- [`../architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md)
+- [`../api/04-actions-openapi.md`](../api/04-actions-openapi.md)
+- [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
+- `.cursor/rules/development-standards-index.mdc`
