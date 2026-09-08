@@ -13,6 +13,7 @@ Executar o que couber ao escopo antes de considerar a tarefa concluída:
 
 | Pacote/tema | Comando ou regra típica |
 |-------------|------------------------|
+| Enforcement arquitetural | **`architecture-ci-enforcement.mdc`**; `python -m unittest scripts/ci/test_audit_architecture_phase3.py -v` + `python scripts/ci/audit_architecture_phase3.py --check --base <commit-base>` quando o diff tocar áreas cobertas |
 | `minha-delpi-ai-api` | `.venv/bin/python -m pytest tests/unit/... -q` |
 | Inteligência do chat | Baseline/evals conforme **`ai-intelligence-evaluation.mdc`**; comparar antes/depois em mudanças de prompt/retrieval/RAG/planner/contexto |
 | Context/tool budget | Validar qualidade + tokens/latência conforme **`ai-context-and-tool-budget.mdc`** |
@@ -28,6 +29,18 @@ Executar o que couber ao escopo antes de considerar a tarefa concluída:
 | Upload em disco | Volume no Compose + doc README — **`persistent-upload-storage.mdc`** |
 
 Corrigir falhas antes de entregar. Resumir no fim: testes/evals/gates executados (pass/fail).
+
+### Enforcement da Fase 3
+
+O workflow `Architecture Enforcement` é **incremental/diff-aware**: não exige limpar toda a dívida histórica no mesmo PR, mas impede nova regressão detectável.
+
+Se o gate falhar:
+
+1. preferir corrigir para o módulo/contrato canônico;
+2. não mover hardcode Python para JSON/registry apenas para passar CI;
+3. não enfraquecer regex/AST do scanner para o caso novo;
+4. se houver exceção inevitável, usar `scripts/ci/architecture_phase3_exceptions.json` com fingerprint exato + owner + reason + `reviewBy` conforme `architecture-ci-enforcement.mdc`;
+5. exceção expirada ou wildcard é inválida.
 
 ### Validação comportamental obrigatória
 
