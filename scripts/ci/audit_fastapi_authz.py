@@ -152,10 +152,11 @@ def api_root(path: str) -> str | None:
     return Path(path).parts[0]
 
 
-def _literal_string(node: ast.AST | None) -> str | None:
+def _literal_string(node: ast.AST | None, *, allow_empty: bool = False) -> str | None:
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
         value = node.value.strip()
-        return value if value else None
+        if value or allow_empty:
+            return value
     return None
 
 
@@ -223,8 +224,8 @@ def route_contracts(source: str) -> list[RouteContract]:
             receiver, method, call = _route_receiver_and_method(decorator)
             if method is None or call is None or not call.args:
                 continue
-            local_path = _literal_string(call.args[0])
-            if local_path is None or not local_path.startswith("/") and local_path != "":
+            local_path = _literal_string(call.args[0], allow_empty=True)
+            if local_path is None or (local_path != "" and not local_path.startswith("/")):
                 continue
             prefix = prefixes.get(receiver or "", "")
             if local_path in {"", "/"}:
@@ -255,7 +256,7 @@ def route_touched(route: RouteContract, changed_lines: set[int]) -> bool:
 def _access_decorator_names(function: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
     names: set[str] = set()
     for decorator in function.decorator_list:
-        receiver, method, _call = _route_receiver_and_method(decorator)
+        _receiver, method, _call = _route_receiver_and_method(decorator)
         if method is not None:
             continue
         target = decorator.func if isinstance(decorator, ast.Call) else decorator
