@@ -10,7 +10,7 @@
 | | Início `/` | Visão geral `/overview` |
 |---|---|---|
 | Papel | ação e descoberta | diagnóstico gerencial |
-| Conteúdo | alertas, busca, favoritos, recentes, cards de rota | ≤8 KPIs, tendência, exceções, drill |
+| Conteúdo | alertas, busca, favoritos, recentes, cards de rota | **7 KPIs P0**, tendência, exceções, drill |
 | Não traz | dashboard de 25 KPIs | filas operacionais completas |
 
 - Capability-driven: nav/ações aparecem conforme effective permissions do Core; nunca `if role`.
@@ -62,9 +62,24 @@ GESTÃO
 
 ADMINISTRAÇÃO                  /administration
 AJUDA                          /help
+PERFIL (SPA)                   /users/:userId
 ```
 
 Rotas novas usam identificadores em inglês. URLs PT só permanecem como aliases/redirects de legado quando necessário.
+
+### Páginas generalistas (padrão Comercial)
+
+| Página | Rota | Papel | Wireframe |
+|---|---|---|---|
+| Shell | chrome | TopBar, nav, Ctrl+K, estados | Shell comum |
+| Início | `/` | hub ação/descoberta | WF-01 |
+| Visão geral | `/overview` | placar KPI (≠ Início) | WF-02 |
+| Ajuda | `/help` | Manual / Quero→onde / FAQ | WF-HELP |
+| Perfil | `/users/:userId` | identidade + prefs do plugin | WF-USER |
+
+O perfil **global** Minha DELPI (`/profile` do Portal) permanece no shell host. O WF-USER do plugin é o análogo ao Comercial (`/apps/commercial/users/:userId`): contexto do **Portal Suprimentos** (units, capabilities, preferências `supply_user_preferences`), sem carteiras/OV.
+
+Preferências **não** ganham rota `/preferences` dedicada — edição no próprio perfil + API `/me/preferences`.
 
 ---
 
@@ -72,7 +87,7 @@ Rotas novas usam identificadores em inglês. URLs PT só permanecem como aliases
 
 | Área | Capability base |
 |---|---|
-| shell/Home/Ajuda/Minhas Atividades | `supplies.portal.access` |
+| shell/Home/Ajuda/Perfil/Minhas Atividades | `supplies.portal.access` |
 | Solicitações de Compras | `supplies.purchase-requests.access` |
 | PC/entregas/fornecedor/produto/estoque/ESTSEG | `supplies.operations.access` |
 | Overview/OTD gerencial/CPV/giro/savings | `supplies.analytics.access` |
@@ -91,7 +106,7 @@ PagePath nas internas
 PageHero só no Início
 ```
 
-† visível por capability. Help no TopBar + rota `/help`.
+† visível por capability. Help no TopBar + rota `/help`. Entrada ao perfil: atalho no shell/hero quando existir (padrão Comercial: menção/equipe/self → `/users/:userId`).
 
 ---
 

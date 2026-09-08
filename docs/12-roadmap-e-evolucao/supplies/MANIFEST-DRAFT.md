@@ -86,6 +86,7 @@ Launcher obrigatório no manifest. Rotas internas seguem o padrão Comercial (re
 | `/apps/supplies/indicators` | `supplies.analytics.access` | false | P0/P1 |
 | `/apps/supplies/administration` | `supplies.administration.manage` | false | P0/P1 |
 | `/apps/supplies/help` | `supplies.portal.access` | false | P0 |
+| `/apps/supplies/users/:userId` | `supplies.portal.access` (self) / `supplies.administration.manage` (outros) | false | P0 SPA — **fora do launcher**; padrão Comercial WF-USER |
 | `/apps/supplies/imports` | — | — | **BLOQUEADO** (E1.S1: BI sem id no Core local; sem dump prod) |
 | `/apps/supplies/approvals` | — | — | **BLOQUEADO** (P-06: workflow não comprovado) |
 

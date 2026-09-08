@@ -32,7 +32,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | KPIs Overview P0 | **7 CONFIRMADOS**; cobertura/PO-LATE fora do Overview |
 | Manifest draft | **`schemaVersion 1.0.0`** registrado no Core local |
 | P-13 | **FECHADO** — Core `/me.id` UUID |
-| Implementação MFE | **Overview E5** — KPIs live via BFF; SC lista = E6 |
+| Implementação MFE | **Overview E5**; perfil plugin (**E4.S4** planejado, padrão Comercial); SC lista = E6 |
 
 ### Gates
 
@@ -47,6 +47,8 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 ### Próximo
 
 **E6** (Solicitações de Compras C1 — gateway PR + lista/detalhe/export) — somente com autorização explícita.
+
+**E4.S4** (Perfil `/users/:userId`, padrão Comercial) está **documentado/planejado** e **não bloqueia** E6.
 
 Dump Core de produção **não** bloqueia E6 de composição C1; bloqueia decisão final de redirects/BIs no cutover.
 
@@ -143,8 +145,9 @@ Regras:
 6. Unidade é eixo ortogonal `supplies.unit.filial-{TOTVS}`.
 7. `purchase-requests-api`: C0 coexistência → C1 composição → C2 ownership/jobs → paridade final → C3 cutover.
 8. Home ≠ Overview.
-9. Kit-first e CSS isolado.
-10. Cutover só após paridade e BIs externos classificados.
+9. Páginas generalistas no padrão Comercial: shell, Início, Ajuda (`/help`), perfil do plugin (`/users/:userId`); preferências no perfil (sem `/preferences` dedicado). Perfil global Minha DELPI permanece em `/profile` do host.
+10. Kit-first e CSS isolado.
+11. Cutover só após paridade e BIs externos classificados.
 
 ---
 

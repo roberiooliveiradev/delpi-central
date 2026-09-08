@@ -38,6 +38,8 @@ A autorização de leitura/escrita sobre entidades deste schema segue [ADR-007](
 
 ### 3.1 `supply_user_preferences`
 
+Preferências do **Portal Suprimentos** (tema, `default_branch`, …). UI canônica de edição = **WF-USER** (`/users/:userId`, self); API também exposta em `/me/preferences` (mesmo owner). Não confundir com perfil global Minha DELPI (`/profile` no Portal host).
+
 - propósito: última filial, densidade e preferências próprias do Portal;
 - owner: supplies-api;
 - PK: `user_id` canônico;

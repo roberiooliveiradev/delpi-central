@@ -1,7 +1,7 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
-> **Status:** plano executável revisado · set/2026 · **E1–E3 concluídas** · E4+ não iniciar sem autorização explícita  
-> **Readiness atual:** **E1 + E2 + E3 + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = E4  
+> **Status:** plano executável revisado · set/2026 · **E1–E5 concluídas** · E6+ não iniciar sem autorização explícita  
+> **Readiness atual:** **E1–E5 + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = **E6** · **E4.S4 perfil** planejado (não bloqueia E6)  
 > Referências: ADR-001..ADR-007, `plan-construction.mdc`, `evidence-driven-execution.mdc`.
 
 ---
@@ -35,6 +35,7 @@ sem bypass de api-delpi pelo MFE, sem espelho TOTVS, sem autorização por permi
 | BIs externos não podem ficar `LEGADO_A_VALIDAR` no GO | ADR-005 |
 | target saudável antes de redirect | CUTOVER-RUNBOOK |
 | Home ≠ Overview | DESIGN-IA |
+| Páginas generalistas = padrão Comercial (shell, Home, Ajuda, perfil `/users/:userId`; prefs no perfil) | WIREFRAMES WF-HELP/WF-USER · DESIGN-IA §2 |
 
 ---
 
@@ -334,6 +335,31 @@ cd plugins/supplies && npm test -- Home
 ## E4.S3 — Ajuda esqueleto
 
 Manual + Quero→onde + FAQ inicial.
+
+## E4.S4 — Perfil usuário (generalista, padrão Comercial)
+
+**Objetivo:** página `/users/:userId` (WF-USER) alinhada ao Comercial — identidade Core + preferências `supply_user_preferences` + atalhos por capability.
+
+**Fazer:**
+1. Rotas MFE `users/:userId` + `UserProfilePage` (PagePath/PageHero; prefs só self).
+2. BFF `GET/PATCH /users/{id}/profile` (compose Core + preferences); PATCH só self na P0.
+3. Entrada UX: atalho self (shell/hero) sem poluir UnderlineNav.
+4. Ajuda: Quero→onde «alterar filial padrão / tema» → Perfil; distinguir `/profile` do Portal host.
+5. Testes: self ok; outro usuário sem admin → 403; admin leitura ok; prefs default_branch fora de allowedUnits → 422.
+
+**Não fazer:** volume de avatar dedicado; cargo/carteiras comerciais; bloquear E6; segunda página `/preferences`.
+
+**Wireframes:** [WF-USER](./WIREFRAMES.md) · [DESIGN-IA §2 generalistas](./DESIGN-IA-SUPRIMENTOS.md).
+
+**Teste futuro:**
+```bash
+pytest supplies-api/tests/application/test_user_profile.py -q
+cd plugins/supplies && npm test -- UserProfile
+```
+
+**Pronto quando:** perfil self utilizável; admin lê terceiros; prefs no mesmo lugar que o Comercial (perfil do plugin).
+
+**Não bloqueia:** E6 SC C1.
 
 ---
 

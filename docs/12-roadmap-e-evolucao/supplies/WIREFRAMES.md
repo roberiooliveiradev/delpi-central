@@ -1,6 +1,6 @@
 # WIREFRAMES — Portal Suprimentos
 
-Shell comum:
+Shell comum (padrão Comercial — chrome WF-00):
 
 ```text
 ┌─ .dashboard-supplies-portal ────────────────────────────────┐
@@ -13,6 +13,22 @@ Shell comum:
 ```
 
 Desktop, tablet, mobile ≤768px, light/dark. Touch ≥44×44. Tabelas no mobile → cards/stacked.
+
+## Páginas generalistas (padrão Comercial)
+
+Espelham o Portal Comercial: shell + hub + Ajuda + perfil — **não** são jornadas TOTVS.
+
+| WF | Página | Rota | Capability | Status doc |
+|---|---|---|---|---|
+| Shell comum | chrome TopBar / nav / palette | — | `supplies.portal.access` | entregue E3 |
+| WF-01 | Início (hub) | `/apps/supplies` | `supplies.portal.access` | entregue E4 |
+| WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | entregue E5 |
+| **WF-HELP** | Ajuda / Manual | `/help` | `supplies.portal.access` | esqueleto E4; completo E14 |
+| **WF-USER** | Perfil usuário | `/users/:userId` | self: portal · outros: admin | **planejado** (não bloqueia E6) |
+
+Preferências pessoais (tema, filial padrão) **não** são página separada: ficam no **WF-USER** + `GET/PATCH /me/preferences` (Comercial também não tem `/preferences` dedicado).
+
+Referência: [commercial/WIREFRAMES.md](../commercial/WIREFRAMES.md) (Shell, Início, WF-USER) + `/help` no MFE Comercial.
 
 ## Regra de RBAC nos wireframes
 
@@ -50,14 +66,64 @@ Não criar permissions de leitura/escrita separadas só porque a UI possui GET/P
 
 | Campo | Conteúdo |
 |---|---|
-| Objetivo | cockpit de 6–8 KPIs |
+| Objetivo | cockpit dos **7 KPIs P0** ([KPI-FICHAS](./KPI-FICHAS.md)) |
 | Rota | `/overview` |
 | Capability | `supplies.analytics.access` |
 | Unit | obrigatória para dados TOTVS; consolidado = only allowedUnits |
-| KPIs | OTD, estoque, giro, CPV, savings, SC, atrasos, críticos conforme homologação |
-| UX temporal | cada card mostra snapshot/estado/período/competência |
-| Drill | páginas de foco |
+| KPIs | OTD, STOCK-VALUE, TURNOVER, CPV, SAVINGS, SC-OPEN, CRITICAL-MP |
+| Fora P0 | KPI-PO-LATE (atrasos), cobertura, price-var |
+| UX temporal | cada card mostra snapshot/estado/intervalo |
+| Drill | páginas de foco quando existirem |
 | Partial | KPI auxiliar pode ficar unavailable |
+
+---
+
+## WF-HELP — Ajuda / Manual `/help`
+
+| Campo | Conteúdo |
+|---|---|
+| Objetivo | Manual in-app (padrão Comercial): conceitos, Quero→onde, FAQ, glossário |
+| Rota | `/apps/supplies/help` |
+| Capability | `supplies.portal.access` |
+| Fonte | `userManualContent.ts` · `userManualToolLinks.ts` · `glossaryContent.ts` · tooltips |
+| Nav | atalho TopBar **Ajuda** + item catálogo; sempre visível com portal |
+| Não traz | path/`operationId` nos textos; espelho markdown = E16 |
+
+```text
+┌─ PagePath: Início / Ajuda ──────────────────────────────────────────────────┐
+┌─ PageHero: Manual do usuário ───────────────────────────────────────────────┐
+┌─ TOC sticky | Conceitos | Quero→onde | Mapa | FAQ | Glossário ──────────────┐
+```
+
+Satélite: [HELP-AND-ONBOARDING.md](./HELP-AND-ONBOARDING.md).
+
+---
+
+## WF-USER — Perfil usuário `/users/:userId`
+
+Padrão Comercial (`WF-USER`), adaptado ao domínio Suprimentos (sem carteiras/OV).
+
+| Campo | Conteúdo |
+|---|---|
+| Objetivo | identidade + preferências do Portal Suprimentos + atalhos por capability |
+| Rota | `/apps/supplies/users/:userId` (EN; SPA — mesmo padrão Comercial, fora do menu launcher) |
+| Capability | self: `supplies.portal.access` · outro usuário: `supplies.administration.manage` |
+| Fonte | Core identidade + `GET/PATCH /users/{id}/profile` (BFF) + `/me/preferences` |
+| Conteúdo | avatar (Portal/Core quando disponível) · filiais `allowedUnits` · capabilities · preferências (tema, `default_branch` ∈ allowedUnits) · atalhos Início / Overview† / SC† / Ajuda |
+| Edição | preferências só no **próprio** perfil; admin não altera prefs de terceiros na P0 |
+| Não traz | cargo comercial, carteiras, volume de foto dedicado (P0); perfil global Minha DELPI continua em `/profile` do shell |
+
+```text
+┌─ PagePath: Portal / Usuário / {nome} ───────────────────────────────────────┐
+┌─ PageHero: Nome · e-mail · badges units / capabilities ─────────────────────┐
+┌─ Identidade | Atalhos ──────────────────────────────────────────────────────┐
+│ Identidade (read-only Core) · Atalhos por cap (Início, Overview†, SC†…)     │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─ Preferências (só self): tema · filial padrão ──────────────────────────────┐
+┌─ Acesso: capabilities sessão + units (só self ou admin) ────────────────────┘
+```
+
+† conforme capability. BFF: [API-ROUTES](./API-ROUTES.md). Roadmap: **E4.S4** (não bloqueia E6).
 
 ---
 
