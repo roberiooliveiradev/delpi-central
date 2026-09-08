@@ -1,0 +1,185 @@
+---
+description: Responsabilidade transversal canônica — CI/CD, Docker, gateway, configuração, health/readiness, deploy, rollback, feature flags e operação segura
+alwaysApply: false
+---
+
+# Plataforma — delivery, runtime e operações
+
+## Responsabilidade
+
+Esta é a fonte transversal para mudanças em **CI/CD, Docker/Compose, gateway, configuração por ambiente, startup, health/readiness, deploy, rollout, rollback e operação de produção**.
+
+## Configuração por ambiente
+
+Configuração operacional deve vir de ambiente/config canônica, nunca de hardcode específico de máquina.
+
+Separar:
+
+```text
+config pública
+secret
+feature flag
+runtime discovery
+```
+
+`.env.example` contém placeholders seguros. Secret real não entra no Git.
+
+## Containers
+
+Todo serviço/container deve ter:
+
+- build reproduzível;
+- dependências explicitadas;
+- usuário/permissões adequados quando possível;
+- filesystem persistente apenas onde necessário;
+- logs em stdout/stderr ou sink canônico;
+- healthcheck significativo quando o orquestrador depende dele;
+- shutdown/cancelamento coerente quando aplicável.
+
+Não depender de arquivo criado manualmente dentro do container para sobreviver a rebuild.
+
+## Startup e dependências
+
+Subir serviço por ordem aparente não substitui readiness.
+
+Quando existir dependência real:
+
+```text
+container/process up
+≠ aplicação pronta
+```
+
+Usar health/readiness e sequência operacional conforme `infra-sequential-container-startup.mdc` quando necessário.
+
+## Gateway
+
+Mudança de rota/proxy deve validar:
+
+- path/basePath;
+- headers e auth forwarding;
+- timeout/body limits;
+- websocket/SSE quando aplicável;
+- cache quando aplicável;
+- segurança/CORS/headers;
+- 404/502/timeout behavior;
+- dev e prod coerentes.
+
+Não corrigir rota apenas em um nginx/compose deixando o outro ambiente divergente sem intenção explícita.
+
+## Deploy seguro
+
+Antes de produção, avaliar:
+
+```text
+backward compatibility
+schema compatibility
+mixed versions
+cache/config propagation
+feature flag
+rollback/roll-forward
+```
+
+Mudança de alto risco prefere rollout incremental quando infraestrutura suportar:
+
+```text
+shadow → canary → promote
+```
+
+com métrica/critério claro; não “canary” sem observabilidade.
+
+## Feature flags
+
+Flag é mecanismo temporário/operacional, não depósito permanente de arquitetura.
+
+Toda flag relevante deve declarar:
+
+- owner;
+- default por ambiente;
+- comportamento ON/OFF;
+- métrica de promoção;
+- critério/data de remoção quando temporária.
+
+Não manter dois engines para sempre por medo de remover legado.
+
+## Migrations no deploy
+
+Aplicar `platform-data-persistence.mdc`:
+
+- migration aplicada antes/depois da app conforme compatibilidade;
+- nunca assumir rollback do binário se schema novo já é incompatível;
+- expand-and-contract para rolling deploy quando necessário.
+
+## CI/CD
+
+Pipeline deve validar o que é determinístico e relevante ao escopo:
+
+- lint/typecheck;
+- unit/integration/contract;
+- build;
+- migrations/schema checks;
+- architecture/security gates;
+- artefato reproduzível.
+
+Não fazer deploy de artefato diferente do testado quando evitável.
+
+## Runtime safety
+
+Operação de produção deve evitar:
+
+- reset de banco;
+- delete amplo sem confirmação/plano;
+- comandos irreversíveis sem backup/rollback;
+- `docker exec` como configuração permanente;
+- alteração manual não codificada que será perdida no próximo deploy.
+
+## Runbook e troubleshooting
+
+Mudança operacional material deve deixar suficiente informação para responder:
+
+```text
+como verificar health?
+como identificar versão?
+quais logs/métricas olhar?
+como rollback/roll-forward?
+qual dependência externa pode falhar?
+```
+
+## Testes/validação
+
+Conforme mudança:
+
+- `docker compose config`;
+- build da imagem;
+- container health;
+- rota via gateway;
+- restart/rebuild;
+- dev/prod config parity relevante;
+- migration/startup order;
+- rollback/roll-forward ensaiado ou documentado quando crítico.
+
+## Regras filhas/complementares
+
+- `infra-sequential-container-startup.mdc`
+- `plugins-frontend-build.mdc`
+- `migrations-immutable-checksum.mdc`
+- `plugins-migrations-no-reset-prod.mdc`
+- `persistent-upload-storage.mdc`
+- `contract-evolution-backward-compatibility.mdc`
+
+## Evidência de conclusão
+
+```text
+ARTIFACT
+CONFIG
+HEALTH
+GATEWAY
+MIGRATION_ORDER
+DEPLOY_STRATEGY
+ROLLBACK_OR_ROLLFORWARD
+CI_STATUS
+RUNTIME_SMOKE
+```
+
+## Critério de sucesso
+
+A mesma mudança testada deve poder ser implantada e operada de forma previsível, reproduzível e reversível/recuperável sem conhecimento manual escondido.
