@@ -59,6 +59,7 @@ Antes de implementar, identificar o domínio da tarefa e carregar **somente** as
 | Integração HTTP/gateway/provider | `http-integration-resilience.mdc`, `observability-standards.mdc` |
 | Alteração de contrato OpenAPI/DTO/evento/manifest/SSE | `contract-evolution-backward-compatibility.mdc` |
 | Logs/métricas/tracing/correlation | `observability-standards.mdc` |
+| Mudança em roteamento genérico, registry legado, HTTP client/retry ou logging sensível | `architecture-ci-enforcement.mdc` + regra técnica correspondente |
 | Apresentação do chat | `schema-first-presentation-delivered.mdc`, `presentation-operational-decoupling.mdc` |
 | Conteúdo/regex/vocabulário do assistente | `assistant-content-json.mdc` |
 | SQL/TOTVS/performance | `sql-query-development.mdc` + regras TOTVS específicas |
@@ -90,6 +91,7 @@ Se uma regra especializada não for relevante ao pedido/arquivos atuais, **não 
 | `ai-context-and-tool-budget.mdc` | Budgets de histórico, RAG, tool schemas/results, top-K e fan-out |
 | `http-integration-resilience.mdc` | Timeouts, retries seguros, idempotência, 429/5xx, circuit breaker e limites |
 | `observability-standards.mdc` | Logs estruturados, correlation, métricas/tracing e metadata das decisões |
+| `architecture-ci-enforcement.mdc` | Gate executável incremental contra novas regressões arquiteturais; exceções temporárias por fingerprint |
 | `operational-api-routing.mdc` | Compatibilidade e aplicação prática do roteamento durante migração |
 | `new-api-route-checklist.mdc` | Checklist de rota/API/action exposta ao chat |
 | `chat-intelligence-base.mdc` | Inteligência transversal do chat; agentes/projetos herdam |
@@ -138,6 +140,25 @@ As regras abaixo são canônicas por responsabilidade e não devem ser copiadas 
 
 Não transformar esses temas em `alwaysApply: true`; devem entrar quando o domínio correspondente estiver em jogo.
 
+## Fase 3 — enforcement executável
+
+Regra canônica: `architecture-ci-enforcement.mdc`.
+
+O workflow `.github/workflows/architecture-enforcement.yml` executa `scripts/ci/audit_architecture_phase3.py` sobre o diff novo e bloqueia, quando detectável estaticamente:
+
+```text
+hardcode de endpoint/provider no motor genérico do chat
+crescimento técnico do operational_route_registry manual
+HTTP Python novo sem timeout explícito
+retry configurado para escrita sem garantia explícita
+segredo enviado para log/print/console
+segredo literal óbvio em código/config de produção
+```
+
+Legado anterior ao diff não deve ser convertido em baseline permissivo: a pressão arquitetural é **monotônica — estabilizar ou reduzir dívida, nunca crescer**.
+
+Exceções ficam em `scripts/ci/architecture_phase3_exceptions.json`, por fingerprint específico, com owner, justificativa e `reviewBy`. Wildcards são proibidos.
+
 ## Frontend (plugins MFE + kit)
 
 | Regra | Escopo |
@@ -169,6 +190,6 @@ Ao criar/editar `.cursor/rules`:
 4. Para tools/actions: **OpenAPI importado + Action Catalog/index** prevalecem sobre registry/markers manuais.
 5. Segurança/policy nunca é relaxada para melhorar seleção ou conveniência.
 6. JSON declarativo para linguagem/policy/configuração transversal — nunca como duplicação de contrato OpenAPI.
-7. Testes, evals e validação do objetivo original.
+7. Gates CI, testes, evals e validação do objetivo original.
 
 Conflitos entre fontes relevantes devem ser registrados como **drift**; não reconciliar contradições silenciosamente.
