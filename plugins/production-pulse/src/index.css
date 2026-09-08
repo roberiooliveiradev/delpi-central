@@ -1976,4 +1976,11 @@
   margin: 0 0 0.75rem;
 }
 
+.dashboard-production-pulse .pp-firmware-file-field {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
 

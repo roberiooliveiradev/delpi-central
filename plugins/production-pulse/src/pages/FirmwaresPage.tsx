@@ -154,8 +154,9 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
             />
             <PpFirmwareFileField
               id="ota-file"
-              label="Arquivo .bin"
+              label="Artefato compilado (.bin)"
               hint={PP_HELP.ota.file}
+              file={file}
               onChange={setFile}
             />
             <PpNativeTextAreaField

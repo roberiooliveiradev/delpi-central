@@ -1,7 +1,10 @@
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps } from "react";
 import {
   ActionButton,
+  attachmentFileListBemClasses,
   createCompactPagination,
+  createDashboardAttachmentFileList,
+  createDashboardFileDropzone,
   createHostContainedModalShell,
   catalogSearchBarBemClasses,
   createDashboardCatalogSearchBar,
@@ -15,6 +18,7 @@ import {
   createSimpleKpiCard,
   createStateBoxPanel,
   FieldLabel,
+  fileDropzoneBemClasses,
   PageHero,
   pageHeroBemClasses,
   sectionCardPacBemClasses,
@@ -23,6 +27,8 @@ import {
   type StateBoxVariant,
 } from "@delpi/plugin-ui/index";
 import { Activity, AlertTriangle, FileQuestion, Loader2 } from "lucide-react";
+
+import { PpFormFieldShell } from "../components/data/ppFormFields";
 
 const PREFIX = "pp";
 const PP_PORTAL_SCOPE = "dashboard-production-pulse";
@@ -78,6 +84,81 @@ export const PpPagination = createCompactPagination({
 
 export const PpDataRecordCard = createDashboardDataRecordCard({ prefix: PREFIX });
 
+export const PpFileDropzone = createDashboardFileDropzone({
+  classNames: fileDropzoneBemClasses(PREFIX, "file-dropzone"),
+  labels: {
+    title: "Arraste o artefato aqui ou clique para anexar",
+    hint: "Use o .bin compilado no Arduino IDE / PlatformIO (não o fonte .ino).",
+  },
+});
+
+export const PpAttachmentFileList = createDashboardAttachmentFileList({
+  classNames: attachmentFileListBemClasses(PREFIX),
+  labels: {
+    open: "Abrir",
+    download: "Baixar",
+    remove: "Remover",
+    empty: "Nenhum arquivo anexado.",
+  },
+});
+
+export type PpFirmwareFileFieldProps = {
+  id: string;
+  label: string;
+  hint?: string;
+  accept?: string;
+  disabled?: boolean;
+  file: File | null;
+  onChange: (file: File | null) => void;
+};
+
+/** Upload OTA via FileDropzone do kit — artefato compilado (.bin), não o fonte .ino. */
+export function PpFirmwareFileField({
+  id,
+  label,
+  hint,
+  accept = ".bin,application/octet-stream",
+  disabled,
+  file,
+  onChange,
+}: PpFirmwareFileFieldProps) {
+  const items = file
+    ? [
+        {
+          id: "firmware-artifact",
+          fileName: file.name,
+          detail: `${Math.max(1, Math.round(file.size / 1024))} KB`,
+        },
+      ]
+    : [];
+
+  return (
+    <PpFormFieldShell id={id} label={label} hint={hint} span>
+      <div className="pp-firmware-file-field">
+        <PpFileDropzone
+          accept={accept}
+          multiple={false}
+          disabled={disabled}
+          hideInput
+          ariaLabel={label}
+          onFilesSelected={(files) => onChange(files[0] ?? null)}
+          labels={{
+            title: file ? "Substituir artefato (.bin)" : "Arraste o .bin ou clique para anexar",
+            hint: "Compile o sketch (.ino) e anexe o binário gerado — o .ino não é flashável via OTA.",
+          }}
+        />
+        {file ? (
+          <PpAttachmentFileList
+            items={items}
+            canRemove={!disabled}
+            onRemove={() => onChange(null)}
+          />
+        ) : null}
+      </div>
+    </PpFormFieldShell>
+  );
+}
+
 export const ppShellIcon = <Activity size={28} strokeWidth={1.75} />;
 
 export {
@@ -98,7 +179,6 @@ export {
 } from "../components/data/filtersUi";
 export {
   PpFormFieldShell,
-  PpFirmwareFileField,
   PpNativeInlineTextField,
   PpNativeSelectField,
   PpNativeSwitchField,

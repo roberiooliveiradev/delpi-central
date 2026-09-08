@@ -185,6 +185,11 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/ppFormFields"/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/dataTableUi"/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/from "\.\.\/components\/data\/filtersUi"/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/createDashboardFileDropzone/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/createDashboardAttachmentFileList/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/PpFirmwareFileField/);
+    expect(readRelative("components/data/ppFormFields.tsx")).not.toMatch(/type=["']file["']/);
+    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/PpFirmwareFileField/);
   });
 
   it("consumidores importam data gateways só via productionPulseUi", () => {
