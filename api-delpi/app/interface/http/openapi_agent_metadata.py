@@ -131,7 +131,8 @@ PRODUCT_PRICING = agent_route(
     summary="Preços e tabelas comerciais do produto",
     description=(
         "Tabelas de preço, condições comerciais e valores de venda do item. "
-        "Use para preço de venda, tabela comercial ou valor unitário — não para custo/CPV agregado de suprimentos."
+        "Use para preço de venda, tabela comercial ou valor unitário — não para custo/CPV agregado de suprimentos "
+        "nem como substituto do cadastro/detalhe sem preço."
     ),
     operation_id="get_product_pricing",
 )
@@ -195,7 +196,8 @@ PRODUCT_PRODUCTION_STATUS = agent_route(
     summary="Situação produtiva do produto (PA, PI, OP e apontamentos)",
     description=(
         "Avalia PA e intermediários com OPs da SC2010 e apontamentos da SH6010 em uma data de referência. "
-        "Use para saber se produção iniciou, quanto foi apontado e equivalente em PA."
+        "Use para saber se produção iniciou, quanto foi apontado e equivalente em PA. "
+        "Não confundir com KPI SI «Custos de Produção / ROL» nem com listagem geral de OPs/PCP."
     ),
     operation_id="get_product_production_status",
 )
@@ -223,7 +225,8 @@ PRODUCT_FACTORY_STATUS = agent_route(
     summary="Status fabril completo do produto",
     description=(
         "Visão consolidada: estrutura vigente, MPs exclusivas, estoque de MPs, produção, expedição e status fabril. "
-        "Preferir quando o usuário pedir status completo do produto na fábrica ou visão fabril integrada."
+        "Preferir quando o usuário pedir status completo do produto na fábrica ou visão fabril integrada. "
+        "Não substituir por listagem geral de OPs/PCP quando o código do produto foi informado."
     ),
     operation_id="get_product_factory_status",
 )
@@ -1020,8 +1023,9 @@ FINANCIAL_ROL = agent_route(
     summary="ROL financeiro (receita operacional líquida)",
     description=(
         "Indicador ROL financeiro consolidado por filial e período. "
-        "Use para «rol financeiro», «receita operacional líquida», «qual o rol» no contexto financeiro — "
-        "não confundir com ROL comercial (/commercial/rol/series) ou metas comerciais."
+        "Use para «ROL da filial», consolidado financeiro da filial, «rol financeiro» / receita operacional líquida. "
+        "Não confundir com breakdown tabular «ROL por filial» (/commercial/rol/by-branch) "
+        "nem com série comercial (/commercial/rol/series)."
     ),
     operation_id="get_financial_rol",
 )

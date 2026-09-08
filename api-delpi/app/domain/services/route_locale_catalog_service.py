@@ -11,7 +11,7 @@ _CONTENT_DIR = Path(__file__).resolve().parents[2] / "content"
 _AUDIENCE_PATH = _CONTENT_DIR / "tv_route_audience.json"
 _PARAM_LOCALE_PATH = _CONTENT_DIR / "openapi_param_locale.json"
 
-_LOCALE_KEYS = ("summary", "description", "whenToUse", "label")
+_LOCALE_KEYS = ("summary", "description", "whenToUse", "whenNotToUse", "label")
 
 
 def _clean_locale_block(raw: Any) -> dict[str, str]:
@@ -148,7 +148,7 @@ def tv_audience_for_operation(operation_id: str) -> dict[str, Any] | None:
     locale = entry.get("locale") if isinstance(entry.get("locale"), dict) else {}
     pt = locale.get("pt-BR") if isinstance(locale.get("pt-BR"), dict) else {}
     cleaned: dict[str, Any] = {}
-    for key in ("whenToUse", "description", "label"):
+    for key in ("whenToUse", "whenNotToUse", "description", "label"):
         value = str(pt.get(key) or "").strip()
         if value:
             cleaned[key] = value

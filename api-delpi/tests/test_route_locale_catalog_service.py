@@ -91,3 +91,36 @@ def test_apply_route_locale_filters_global_params_to_route():
     )
     assert "department_id" in merged["params"]
     assert "branch" not in merged.get("params", {})
+
+
+def test_financial_rol_vs_by_branch_when_not_to_use():
+    financial = route_locale_for_operation("get_financial_rol")
+    by_branch = route_locale_for_operation("get_commercial_rol_by_branch")
+    assert financial is not None
+    assert by_branch is not None
+    assert "whenNotToUse" in financial["locale"]["en"]
+    assert "whenNotToUse" in by_branch["locale"]["en"]
+    assert "/financial/rol" in by_branch["locale"]["en"]["whenNotToUse"]
+    assert "by-branch" in financial["locale"]["en"]["whenNotToUse"]
+    merged = apply_route_locale_to_x_delpi({}, "get_commercial_rol_by_branch")
+    assert "whenNotToUse" in merged["locale"]["pt-BR"]
+
+
+def test_product_factory_status_locale_disambiguates_pcp():
+    factory = route_locale_for_operation("get_product_factory_status")
+    assert factory is not None
+    assert "status fabril" in factory["locale"]["pt-BR"]["whenToUse"].lower()
+    assert "pcp-orders" in factory["locale"]["en"]["whenNotToUse"]
+
+
+def test_audience_catalog_has_no_root_level_route_orphans():
+    """Regressão: entries fora de routes{} nunca entram no OpenAPI."""
+    import json
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "app/content/tv_route_audience.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    reserved = {"version", "description", "routes"}
+    orphans = [key for key in payload if key not in reserved]
+    assert orphans == [], f"route orphans at root: {orphans}"
+    assert "get_commercial_rol_by_branch" in payload["routes"]

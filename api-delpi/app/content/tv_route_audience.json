@@ -1571,16 +1571,18 @@
     "get_financial_rol": {
       "locale": {
         "en": {
-          "summary": "Financial ROL (net operating revenue)",
-          "description": "Financial ROL indicator consolidated by branch and period. Use for financial ROL / net operating revenue — not commercial ROL (/commercial/rol/series).",
-          "whenToUse": "Use for financial ROL KPI by branch and period.",
-          "label": "Financial ROL"
+          "summary": "Financial ROL consolidated KPI by branch",
+          "description": "Scalar financial ROL (net operating revenue) for one branch and period. Use for «ROL da filial», consolidado financeiro da filial, KPI escalar de receita operacional líquida.",
+          "whenToUse": "Use when the user asks for the ROL of a specific branch/filial as a consolidated financial KPI (with or without an explicit period).",
+          "label": "Financial ROL",
+          "whenNotToUse": "Do not use for a side-by-side breakdown of branches 01 vs 02 («ROL por filial» tabular) — prefer /commercial/rol/by-branch. Do not use for a time series chart — prefer /commercial/rol/series."
         },
         "pt-BR": {
           "label": "ROL financeiro (receita operacional líquida)",
-          "summary": "ROL financeiro (receita operacional líquida)",
-          "description": "Indicador ROL financeiro consolidado por filial e período. Use para rol financeiro / receita operacional líquida — não confundir com ROL comercial.",
-          "whenToUse": "Use para o KPI de ROL financeiro por filial e período."
+          "summary": "ROL financeiro consolidado por filial",
+          "description": "KPI escalar de ROL financeiro (receita operacional líquida) de uma filial e período. Use para «ROL da filial», consolidado financeiro da filial.",
+          "whenToUse": "Use quando o usuário pedir o ROL de uma filial específica como consolidado financeiro (com ou sem período explícito).",
+          "whenNotToUse": "Não use para ranking/breakdown tabular das filiais 01×02 («ROL por filial») — prefira /commercial/rol/by-branch. Não use para série temporal — prefira /commercial/rol/series."
         }
       },
       "category": "financial"
@@ -2511,14 +2513,18 @@
     "get_product_cost_impact_simulation": {
       "locale": {
         "en": {
-          "summary": "Product cost impact simulation",
-          "description": "Product cost impact simulation.",
-          "label": "Product cost impact simulation"
+          "summary": "Finished-product cost impact simulation (BOM materials)",
+          "description": "Ranks raw materials that most impact the cost of one finished product (PA) from the current BOM. Supports standard or last-purchase cost and percent adjustment simulation.",
+          "label": "Product cost impact simulation",
+          "whenToUse": "Use for materials that most impact PA cost, cost Pareto of MPs, or cost increase simulation on a finished product.",
+          "whenNotToUse": "Do not use for raw materials (MP) as the subject product — cost-impact is for finished products (PA). Do not use consumption-by-item dashboards as a substitute for PA cost-impact simulation."
         },
         "pt-BR": {
           "label": "Simulador de impacto de custos do PA",
           "summary": "Simulador de impacto de custos do PA",
-          "description": "Análise composta: «Simulador de impacto de custos do PA»."
+          "description": "Ranking das MPs que mais impactam o custo de 1 PA na BOM vigente. Suporta custo padrão ou última compra e simulação percentual de reajuste.",
+          "whenToUse": "Use para materiais críticos de custo do PA, Pareto de MPs ou simulação de aumento de preço no acabado.",
+          "whenNotToUse": "Não use com matéria-prima (MP) como produto sujeito — o simulador é para PA. Não use dashboards de consumo por item no lugar do simulador de impacto de custo do PA."
         }
       },
       "category": "products"
@@ -2541,14 +2547,18 @@
     "get_product_detail": {
       "locale": {
         "en": {
-          "summary": "Dados cadastrais do product",
-          "description": "Product detail.",
-          "label": "Dados cadastrais do product"
+          "summary": "Product cadastro / master data",
+          "description": "Cadastro and master data for a product code (description, group, type).",
+          "label": "Product detail",
+          "whenToUse": "Use for cadastro, descrição or master data of a product code.",
+          "whenNotToUse": "Do not use when the user asked for sale price/pricing tables — prefer /pricing. Do not use when the user asked for stock balance — prefer /stock."
         },
         "pt-BR": {
           "label": "Dados cadastrais do produto",
           "summary": "Dados cadastrais do produto",
-          "description": "Consulta operacional: «Dados cadastrais do produto»."
+          "description": "Cadastro e dados mestres do código (descrição, grupo, tipo).",
+          "whenToUse": "Use para cadastro, descrição ou dados mestres de um código.",
+          "whenNotToUse": "Não use quando o usuário pediu preço de venda/tabelas — prefira /pricing. Não use quando pediu estoque/saldo — prefira /stock."
         }
       },
       "category": "products"
@@ -2601,14 +2611,18 @@
     "get_product_factory_status": {
       "locale": {
         "en": {
-          "summary": "Product factory status",
-          "description": "Product factory status.",
-          "label": "Product factory status"
+          "summary": "Product factory status (integrated shop-floor view)",
+          "description": "Integrated factory status for a product code: structure, exclusive MPs, MP stock, production, shipping and shop-floor status. Prefer for «status fabril» or complete factory view of a product.",
+          "label": "Product factory status",
+          "whenToUse": "Use for status fabril / visão fabril integrada of a known product code (optionally with a reference date).",
+          "whenNotToUse": "Do not use company-wide PCP order lists (/production/pcp-orders/*) as a substitute when the user named a product code and asked for factory status of that item."
         },
         "pt-BR": {
           "label": "Status fabril completo do produto",
           "summary": "Status fabril completo do produto",
-          "description": "Análise composta: «Status fabril completo do produto»."
+          "description": "Visão fabril integrada do código: estrutura, MPs exclusivas, estoque de MPs, produção, expedição e status fabril. Preferir para «status fabril» ou visão fabril completa do produto.",
+          "whenToUse": "Use para status fabril / visão fabril integrada de um código de produto (data de referência opcional).",
+          "whenNotToUse": "Não use listagens gerais de OPs/PCP (/production/pcp-orders/*) no lugar desta rota quando o usuário citou o código do produto e pediu status fabril do item."
         }
       },
       "category": "products"
@@ -2721,14 +2735,18 @@
     "get_product_pricing": {
       "locale": {
         "en": {
-          "summary": "Product pricing",
-          "description": "Product pricing.",
-          "label": "Product pricing"
+          "summary": "Product sale pricing and commercial price tables",
+          "description": "Sale price tables and commercial conditions for a product code. Use for «preço de venda», tabela comercial or unit sale price — not cadastro-only detail.",
+          "label": "Product pricing",
+          "whenToUse": "Use for sale price / commercial price table of a known product code.",
+          "whenNotToUse": "Do not use product detail/cadastro alone when the user asked for sale price. Do not use for purchase cost / last purchase price — prefer purchase routes."
         },
         "pt-BR": {
           "label": "Preços e tabelas comerciais do produto",
           "summary": "Preços e tabelas comerciais do produto",
-          "description": "Indicador numérico para «Preços e tabelas comerciais do produto»."
+          "description": "Tabelas de preço e condições comerciais do código. Use para preço de venda, tabela comercial ou valor unitário de venda — não só cadastro.",
+          "whenToUse": "Use para preço de venda / tabela comercial de um código conhecido.",
+          "whenNotToUse": "Não use só o detalhe/cadastro do produto quando o usuário pediu preço de venda. Não use para custo/última compra — prefira rotas de compras."
         }
       },
       "category": "products"
@@ -2736,14 +2754,18 @@
     "get_product_production_status": {
       "locale": {
         "en": {
-          "summary": "Product production status",
-          "description": "Product production status.",
-          "label": "Product production status"
+          "summary": "Product production status (PA/PI, OPs and appointments)",
+          "description": "Production situation for a product code: PA/PI, open OPs and shop-floor appointments on a reference date. Use for «situação de produção» / «produção do produto» of a known code.",
+          "label": "Product production status",
+          "whenToUse": "Use when the user asks whether production of a specific product started, how much was pointed, or OP status for that code.",
+          "whenNotToUse": "Do not use SI «Custos de Produção / ROL» KPIs as a substitute. Do not use company-wide PCP order lists when the question is about one product code."
         },
         "pt-BR": {
           "label": "Situação produtiva do produto (PA, PI, OP e apontamentos)",
           "summary": "Situação produtiva do produto (PA, PI, OP e apontamentos)",
-          "description": "Relatório operacional: «Situação produtiva do produto (PA, PI, OP e apontamentos)»."
+          "description": "Situação de produção do código: PA/PI, OPs e apontamentos em uma data de referência. Use para «situação de produção» / «produção do produto» de um código conhecido.",
+          "whenToUse": "Use quando o usuário perguntar se a produção do produto iniciou, quanto foi apontado ou status de OP daquele código.",
+          "whenNotToUse": "Não use KPIs SI «Custos de Produção / ROL» como substituto. Não use listagens gerais de OPs/PCP quando a pergunta é sobre um código de produto."
         }
       },
       "category": "products"
@@ -7078,13 +7100,15 @@
           "summary": "Custos de Produção / ROL — actual",
           "description": "Actual value for SI indicator «Custos de Produção / ROL» (IGD view).",
           "whenToUse": "Use as a KPI card for the actual Custos de Produção / ROL.",
-          "label": "Custos de Produção / ROL — actual"
+          "label": "Custos de Produção / ROL — actual",
+          "whenNotToUse": "Do not use when the user asked for production status of a product code (OPs/appointments) — prefer /products/{code}/production-status. This is the SI cost/ROL KPI, not shop-floor status."
         },
         "pt-BR": {
           "summary": "Custos de Produção / ROL — realizado",
           "description": "Valor realizado do indicador SI «Custos de Produção / ROL» (visão IGD).",
           "whenToUse": "Usar no card KPI do realizado de Custos de Produção / ROL.",
-          "label": "Custos de Produção / ROL — realizado"
+          "label": "Custos de Produção / ROL — realizado",
+          "whenNotToUse": "Não use quando o usuário pediu situação de produção de um código (OPs/apontamentos) — prefira /products/{code}/production-status. Este é o KPI SI de custo/ROL, não status de chão de fábrica."
         }
       }
     },
@@ -7991,13 +8015,15 @@
           "summary": "Production orders items",
           "description": "Paged production orders with product, dates, quantities, balance and delay flags.",
           "whenToUse": "Use for a table of production orders filtered by delivery date and open/mother/delayed flags.",
-          "label": "Production orders items"
+          "label": "Production orders items",
+          "whenNotToUse": "Do not use when the user asked for factory-status or production-status of a specific product code — prefer /products/{code}/factory-status or /production-status."
         },
         "pt-BR": {
           "summary": "Itens de OPs",
           "description": "Lista paginada de ordens de produção com produto, datas, quantidades, saldo e flags.",
           "whenToUse": "Usar em tabela de OPs filtrada por entrega prevista e flags (aberta/mãe/atrasada).",
-          "label": "Itens de OPs"
+          "label": "Itens de OPs",
+          "whenNotToUse": "Não use quando o usuário pediu status fabril ou situação de produção de um código específico — prefira /products/{code}/factory-status ou /production-status."
         }
       }
     },
@@ -8814,96 +8840,70 @@
         }
       },
       "category": "commercial"
+    },
+    "get_commercial_rol_by_branch": {
+      "locale": {
+        "en": {
+          "summary": "Commercial ROL breakdown by branch (01 vs 02)",
+          "description": "Short tabular list comparing ROL metrics for branches 01 and 02 in a period. Use for «ROL por filial», ranking or side-by-side branch comparison — not a single-branch scalar KPI.",
+          "label": "Commercial ROL by branch",
+          "whenToUse": "Use when the user wants ROL broken down or compared across branches (por filial, 01 e 02, ranking).",
+          "whenNotToUse": "Do not use for «ROL da filial X», consolidado financeiro de uma filial, or a single scalar ROL KPI — prefer /financial/rol. Do not use for a time series — prefer /commercial/rol/series."
+        },
+        "pt-BR": {
+          "label": "Indicador — ROL por filial (breakdown)",
+          "summary": "ROL comercial por filial (comparativo 01×02)",
+          "description": "Lista tabular curta comparando ROL das filiais 01 e 02 no período. Use para «ROL por filial», ranking ou comparativo — não para KPI escalar de uma filial.",
+          "whenToUse": "Use quando o usuário quiser ROL quebrado ou comparado entre filiais (por filial, 01 e 02, ranking).",
+          "whenNotToUse": "Não use para «ROL da filial X», consolidado financeiro de uma filial ou KPI escalar — prefira /financial/rol. Não use para série temporal — prefira /commercial/rol/series."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_sales_order_otd_by_customer": {
+      "locale": {
+        "en": {
+          "summary": "Sales order OTD by customer",
+          "description": "On-time delivery metrics broken down by customer for a period.",
+          "label": "Sales order OTD by customer"
+        },
+        "pt-BR": {
+          "label": "Indicador — OTD por cliente",
+          "summary": "OTD de pedidos por cliente",
+          "description": "Métricas de entrega no prazo agregadas por cliente no período."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_sales_order_otd_series_by_customer": {
+      "locale": {
+        "en": {
+          "summary": "Sales order OTD series by customer",
+          "description": "On-time delivery metrics per customer for each period bucket (day, week, month or year).",
+          "label": "Sales order OTD series by customer"
+        },
+        "pt-BR": {
+          "label": "Indicador — Série temporal de OTD de pedidos por cliente",
+          "summary": "Série temporal de OTD de pedidos por cliente",
+          "description": "OTD, quantidade e atendimento por cliente em cada bucket temporal (dia, semana, mês ou ano)."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_sales_order_otd_by_branch": {
+      "locale": {
+        "en": {
+          "summary": "Sales order OTD by branch",
+          "description": "On-time delivery metrics for branches 01 and 02 as a short tabular list.",
+          "label": "Sales order OTD by branch"
+        },
+        "pt-BR": {
+          "label": "Indicador — OTD por filial",
+          "summary": "OTD de pedidos por filial",
+          "description": "Métricas de entrega no prazo das filiais 01 e 02, em lista tabular curta."
+        }
+      },
+      "category": "commercial"
     }
-  },
-  "get_commercial_rol_by_branch": {
-    "locale": {
-      "en": {
-        "summary": "Commercial ROL by branch",
-        "description": "ROL metrics for branches 01 and 02 in a period, as a short tabular list.",
-        "label": "Commercial ROL by branch"
-      },
-      "pt-BR": {
-        "label": "Indicador — ROL por filial",
-        "summary": "ROL comercial por filial",
-        "description": "Métricas de ROL das filiais 01 e 02 no período, em lista tabular curta."
-      }
-    },
-    "category": "commercial"
-  },
-  "get_sales_order_otd_by_customer": {
-    "locale": {
-      "en": {
-        "summary": "Sales order OTD by customer",
-        "description": "On-time delivery metrics broken down by customer for a period.",
-        "label": "Sales order OTD by customer"
-      },
-      "pt-BR": {
-        "label": "Indicador — OTD por cliente",
-        "summary": "OTD de pedidos por cliente",
-        "description": "Métricas de entrega no prazo agregadas por cliente no período."
-      }
-    },
-    "category": "commercial"
-  },
-  "get_sales_order_otd_series_by_customer": {
-    "locale": {
-      "en": {
-        "summary": "Sales order OTD series by customer",
-        "description": "On-time delivery metrics per customer for each period bucket (day, week, month or year).",
-        "label": "Sales order OTD series by customer"
-      },
-      "pt-BR": {
-        "label": "Indicador — Série temporal de OTD de pedidos por cliente",
-        "summary": "Série temporal de OTD de pedidos por cliente",
-        "description": "OTD, quantidade e atendimento por cliente em cada bucket temporal (dia, semana, mês ou ano)."
-      }
-    },
-    "category": "commercial"
-  },
-  "get_sales_order_otd_by_branch": {
-    "locale": {
-      "en": {
-        "summary": "Sales order OTD by branch",
-        "description": "On-time delivery metrics for branches 01 and 02 as a short tabular list.",
-        "label": "Sales order OTD by branch"
-      },
-      "pt-BR": {
-        "label": "Indicador — OTD por filial",
-        "summary": "OTD de pedidos por filial",
-        "description": "Métricas de entrega no prazo das filiais 01 e 02, em lista tabular curta."
-      }
-    },
-    "category": "commercial"
-  },
-  "get_weg_rol_target_pct": {
-    "locale": {
-      "en": {
-        "summary": "Commercial WEG ROL target (realized and goal)",
-        "description": "WEG segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02.",
-        "label": "Commercial WEG ROL target"
-      },
-      "pt-BR": {
-        "label": "Meta ROL WEG comercial",
-        "summary": "Meta ROL WEG comercial (realizado e meta SI)",
-        "description": "Receita operacional líquida do segmento WEG no período com meta SI. Filial opcional (01 matriz ou 02 filial)."
-      }
-    },
-    "category": "commercial"
-  },
-  "get_new_business_rol_target_pct": {
-    "locale": {
-      "en": {
-        "summary": "Commercial new business ROL target (realized and goal)",
-        "description": "New business segment net operating revenue for a period with SI comparable goal fields. Optional branch 01 or 02.",
-        "label": "Commercial new business ROL target"
-      },
-      "pt-BR": {
-        "label": "Meta ROL novos negócios comercial",
-        "summary": "Meta ROL novos negócios comercial (realizado e meta SI)",
-        "description": "Receita operacional líquida de novos negócios no período com meta SI. Filial opcional (01 matriz ou 02 filial)."
-      }
-    },
-    "category": "commercial"
   }
 }
