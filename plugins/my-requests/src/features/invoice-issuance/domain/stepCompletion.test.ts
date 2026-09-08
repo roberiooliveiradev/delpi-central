@@ -17,6 +17,8 @@ const party: Party = {
   party_code: "001",
   party_store: "01",
   party_name: "ACME",
+  tax_id: null,
+  blocked: false,
 };
 
 const item: IssuanceItem = {
@@ -47,15 +49,30 @@ describe("stepCompletion", () => {
   });
 
   it("desbloqueia etapas em sequência e bloqueia futuras", () => {
-    const completion = buildStepCompletionMap(
-      draft({ party, items: [item], invoiceType: "sale" }),
+    const withRecipient = buildStepCompletionMap(draft({ party }));
+    expect(withRecipient.recipient).toBe(true);
+    expect(withRecipient.invoiceType).toBe(true);
+    expect(withRecipient.items).toBe(false);
+    expect(computeMaxUnlockedIndex(withRecipient)).toBe(2);
+    expect(canOpenStep("items", withRecipient)).toBe(true);
+    expect(canOpenStep("freight", withRecipient)).toBe(false);
+
+    const withItems = buildStepCompletionMap(
+      draft({
+        party,
+        items: [item],
+        invoiceType: "sale",
+        weightKg: "0",
+        volumeCount: "0",
+      }),
     );
-    expect(completion.recipient).toBe(true);
-    expect(completion.invoiceType).toBe(true);
-    expect(completion.items).toBe(true);
-    expect(computeMaxUnlockedIndex(completion)).toBe(3);
-    expect(canOpenStep("freight", completion)).toBe(true);
-    expect(canOpenStep("extras", completion)).toBe(false);
+    expect(withItems.items).toBe(true);
+    expect(withItems.freight).toBe(true);
+    expect(withItems.extras).toBe(false);
+    expect(computeMaxUnlockedIndex(withItems)).toBe(4);
+    expect(canOpenStep("freight", withItems)).toBe(true);
+    expect(canOpenStep("extras", withItems)).toBe(true);
+    expect(canOpenStep("review", withItems)).toBe(false);
   });
 
   it("recalcula progresso quando etapa anterior invalida", () => {
@@ -88,7 +105,11 @@ describe("stepCompletion", () => {
   });
 
   it("computeStepStates diferencia current, complete e locked", () => {
-    const completion = buildStepCompletionMap(draft({ party }));
+    const completion = buildStepCompletionMap(
+      draft({ party, invoiceType: "other", invoiceTypeOther: "" }),
+    );
+    expect(completion.recipient).toBe(true);
+    expect(completion.invoiceType).toBe(false);
     const states = computeStepStates({
       currentStepId: "invoiceType",
       completion,
