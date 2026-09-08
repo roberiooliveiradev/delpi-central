@@ -4,13 +4,15 @@ Shell comum (padrão Comercial — chrome WF-00):
 
 ```text
 ┌─ .dashboard-supplies-portal ────────────────────────────────┐
-│ TopBar kit (hamburger+overflow)  [Buscar Ctrl+K] [Ajuda]   │
-│   UnderlineNav (capability-driven)                          │
-│ PagePath                                                   │
+│ TopBar kit  [nav…] [Buscar Ctrl+K] [Favoritos] [Avatar]    │
+│   UnderlineNav (capability-driven) · Ajuda na nav           │
+│ PagePath / PageHero (Início)                               │
 ├─────────────────────────────────────────────────────────────┤
 │ conteúdo · loading · empty · partial · error · 403 · 404   │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**Entrega:** uma página wireframe por vez até DoD (ver README § Protocolo). Não planejar a próxima tela enquanto a atual estiver aberta.
 
 Desktop, tablet, mobile ≤768px, light/dark. Touch ≥44×44. Tabelas no mobile → cards/stacked.
 
@@ -20,9 +22,9 @@ Espelham o Portal Comercial: shell + hub + Ajuda + perfil — **não** são jorn
 
 | WF | Página | Rota | Capability | Status doc |
 |---|---|---|---|---|
-| Shell comum | chrome TopBar / nav / palette | — | `supplies.portal.access` | entregue E3 |
-| WF-01 | Início (hub) | `/apps/supplies` | `supplies.portal.access` | entregue E4 |
-| WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | entregue E5 |
+| Shell comum | chrome TopBar / nav / busca / Favoritos / avatar | — | `supplies.portal.access` | entregue E3 + Favoritos TopBar |
+| WF-01 | Início (hub) | `/apps/supplies` | `supplies.portal.access` | **EM FOCO** — fechar DoD |
+| WF-02 | Visão geral | `/overview` | `supplies.analytics.access` | entregue E5; revalidar após WF-01 |
 | **WF-HELP** | Ajuda / Manual | `/help` | `supplies.portal.access` | esqueleto E4; completo E14 |
 | **WF-USER** | Perfil usuário | `/users/:userId` | self: portal · outros: admin | **implementado** (E4.S4) |
 

@@ -1,7 +1,8 @@
 # DESIGN-IA — Portal Suprimentos
 
 > Padrão de navegação do Portal Comercial, adaptado ao domínio Suprimentos.  
-> Root CSS: `.dashboard-supplies-portal` · prefixo `sp-` · tokens `--sp-*` → `--delpi-ui-*`.
+> Root CSS: `.dashboard-supplies-portal` · prefixo `sp-` · tokens `--sp-*` → `--delpi-ui-*`.  
+> **Entrega:** uma página por vez até DoD (README § Protocolo). Foco atual: **Início**.
 
 ---
 
@@ -13,12 +14,13 @@
 | Conteúdo | alertas, busca, favoritos, recentes, cards de rota | **7 KPIs P0**, tendência, exceções, drill |
 | Não traz | dashboard de 25 KPIs | filas operacionais completas |
 
+- **Uma página por vez:** fechar DoD da página em foco antes de abrir a próxima na fila (README).
 - Capability-driven: nav/ações aparecem conforme effective permissions do Core; nunca `if role`.
 - O MFE usa capabilities apenas para UX; backend continua a barreira real de segurança.
 - `allowedUnits` é derivado das permissions efetivas do Core, não de claims do JWT.
 - Nav não se duplica por SC/ES.
 - Deep pages ficam fora da top nav.
-- Favoritos/recentes seguem mecanismos canônicos do Portal/Comercial quando disponíveis.
+- Favoritos/recentes seguem mecanismos canônicos do Portal/Comercial quando disponíveis (TopBar Favoritos + estrela nos caminhos).
 - Modais host-contained.
 
 ---
@@ -102,14 +104,14 @@ Não criar navigation gates por permissions CRUD como `tasks.view`/`tasks.write`
 ```text
 TopBar kit (createDashboardTopBar)
   · collapseMode=hamburger · collapseTrigger=overflow  (igual Comercial)
-  · secondary: busca Ctrl+K
-  · actions: avatar+nome → perfil self + hint coexistência (Ajuda só na nav)
-UnderlineNav embutida na TopBar (itens por capability)
+  · secondary: busca Ctrl+K + Favoritos (popover)
+  · actions: avatar+nome → perfil self
+UnderlineNav embutida na TopBar (itens por capability; Ajuda na nav)
 PagePath nas internas
 PageHero no Início (e Overview)
 ```
 
-† itens de nav por capability. Ajuda na nav + rota `/help`. Entrada ao perfil: avatar/nome na TopBar → `/users/:userId` (E4.S4).
+† itens de nav por capability. Ajuda na nav + rota `/help`. Favoritos na TopBar (padrão Comercial). Entrada ao perfil: avatar/nome → `/users/:userId` (E4.S4).
 
 ---
 

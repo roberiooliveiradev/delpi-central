@@ -1,7 +1,10 @@
 # Portal Suprimentos — documentação mestra
 
 > **Status (set/2026):** baseline + **E1–E6 concluídas (2026-09-08)** · MFE `plugins/supplies` + GATE-RBAC local  
-> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = **E7 (Operações PC/entregas)**  
+> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)**  
+> **Modo de entrega:** **uma página por vez até DoD** — não abrir a próxima enquanto a atual não estiver fechada  
+> **Página em foco:** **Início (WF-01)** — fechar DoD (shell/Favoritos/helps já alinhados ao Comercial)  
+> **Fila após o Início:** Visão geral → Solicitações de compras (revalidar DoD C1) → Pedidos de compra (E7) → …  
 > **Nome ao usuário:** **Portal Suprimentos**  
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies`  
 > **API:** `supplies-api` · gateway `/apps/supplies-api/`  
@@ -33,7 +36,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | KPIs Overview P0 | **7 CONFIRMADOS**; cobertura/PO-LATE fora do Overview |
 | Manifest draft | **`schemaVersion 1.0.0`** registrado no Core local |
 | P-13 | **FECHADO** — Core `/me.id` UUID |
-| Implementação MFE | **SC lista/detalhe E6**; perfil plugin (**E4.S4 concluída**, padrão Comercial); operações = E7 |
+| Implementação MFE | **modo página-a-página** · foco = **Início**; SC C1 e perfil entregues; E7+ só após fechar páginas anteriores na fila |
 
 ### Gates
 
@@ -45,13 +48,39 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | **GATE-API** | **PASS** parcial — health/gateway/Compose + Overview + SC BFF C1; ops ainda E7+ |
 | **GATE-RBAC** | **PASS (local 2026-09-08)** — papéis canônicos + evidence `evidence/e3-s5-rbac-smoke-local.json`; persona negativa user-level pendente de user não-superadmin |
 
-### Próximo
+### Protocolo de entrega — uma página por vez
 
-**E7** (Operações: pedidos e entregas) — somente com autorização explícita.
+**Regra:** não iniciar implementação de uma página nova enquanto a página em foco não estiver **fechada** (DoD abaixo). Polimento transversal do shell só entra se for material à página em foco.
 
-**E4.S4** (Perfil `/users/:userId`, padrão Comercial) está **concluída** e **não bloqueia** E7.
+| # | Página | Rota | Estado |
+|---|---|---|---|
+| 1 | **Início** | `/apps/supplies` | **EM FOCO** — fechar DoD |
+| 2 | Visão geral | `/overview` | E5 entregue; revalidar DoD antes de avançar |
+| 3 | Solicitações de compras | `/purchase-requests` | E6 C1 entregue; revalidar DoD |
+| 4 | Pedidos de compra | `/purchase-orders` | placeholder → E7 |
+| 5 | Entregas | `/deliveries` | placeholder → E7 |
+| 6 | Demais ops/analíticos/admin | ver WIREFRAMES | fila após E7 |
 
-Dump Core de produção **não** bloqueia E7; bloqueia decisão final de redirects/BIs no cutover.
+**DoD de página (GATE-FEATURE):**
+
+1. Contrato/BFF no owner (ou composição explícita) quando a página lê/escreve dados.
+2. UI kit-first (PagePath/PageHero/SectionCard/estados) no padrão Comercial.
+3. AuthZ backend-first + UX de 403/empty coerente.
+4. Estados: loading, empty, error, partial (se aplicável), 403, 404.
+5. Ajuda no mesmo entregável (`feature-help-sync`: tooltips + Quero→onde/FAQ se conceito novo).
+6. Testes positive + sibling + negative (API e/ou MFE estrutural).
+7. Docs de readiness/WIREFRAMES/API-ROUTES atualizados; sem “entra depois” na página fechada.
+8. Sem abrir subtarefas da **próxima** página no mesmo PR/plano, salvo satélite explícito (ex.: Ajuda).
+
+**Não fazer:** paralelo de duas páginas user-facing; “já deixar E7 esqueleto” enquanto o Início estiver em foco; misturar cutover/C2 com UI da página atual.
+
+### Próximo passo operacional
+
+1. **Fechar Início (WF-01)** contra o DoD — checklist de aceite com PO se necessário.
+2. Só então **revalidar Visão geral**, depois **SC**, depois **E7 Pedidos de compra** (uma de cada vez).
+3. E7+ continua exigindo autorização explícita do Product Owner **e** página anterior fechada na fila.
+
+Dump Core de produção **não** bloqueia a fila de páginas; bloqueia decisão final de redirects/BIs no cutover.
 
 ---
 

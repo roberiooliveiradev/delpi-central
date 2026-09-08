@@ -1,8 +1,9 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
-> **Status:** plano executável revisado · set/2026 · **E1–E6 concluídas** · E7+ não iniciar sem autorização explícita
-> **Readiness atual:** **E1–E6 + E4.S4 perfil + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = **E7**
-> Referências: ADR-001..ADR-007, `plan-construction.mdc`, `evidence-driven-execution.mdc`.
+> **Status:** plano executável revisado · set/2026 · **E1–E6 concluídas** · E7+ não iniciar sem autorização explícita  
+> **Readiness atual:** **E1–E6 + E4.S4 perfil + GATE-AUTHZ + GATE-RBAC PASS (local)**  
+> **Modo:** **uma página por vez** · **foco atual = Início (WF-01)** · E7 só após fechar a fila até Pedidos  
+> Referências: ADR-001..ADR-007, `plan-construction.mdc`, `evidence-driven-execution.mdc`, README § Protocolo página-a-página.
 
 ---
 
@@ -36,8 +37,32 @@ sem bypass de api-delpi pelo MFE, sem espelho TOTVS, sem autorização por permi
 | target saudável antes de redirect | CUTOVER-RUNBOOK |
 | Home ≠ Overview | DESIGN-IA |
 | Páginas generalistas = padrão Comercial (shell, Home, Ajuda, perfil `/users/:userId`; prefs no perfil) | WIREFRAMES WF-HELP/WF-USER · DESIGN-IA §2 |
+| **Uma página por vez até DoD** — não paralelizar páginas user-facing nem antecipar E7 enquanto houver foco aberto | README § Protocolo · DESIGN-IA §1 |
 
 ---
+
+## 2.1 Protocolo página-a-página (obrigatório)
+
+```text
+escolher 1 página da fila
+→ plano só dessa página (+ Ajuda satélite se user-facing)
+→ BFF/UI/AuthZ/estados/Ajuda/testes/docs
+→ DoD fechado (GATE-FEATURE)
+→ só então abrir a próxima
+```
+
+| # | Página | Etapa canônica | Estado |
+|---|---|---|---|
+| 1 | Início | E4 + polish shell/Favoritos/helps | **EM FOCO** |
+| 2 | Visão geral | E5 | revalidar DoD |
+| 3 | Solicitações de compras | E6 C1 | revalidar DoD |
+| 4 | Pedidos de compra | E7.S* | aguardando |
+| 5 | Entregas | E7.S* | aguardando |
+| … | demais | E8+ | fila |
+
+**Anti-padrões:** iniciar E7.S1 enquanto o Início estiver em foco; misturar duas UIs no mesmo plano; marcar página “concluída” com placeholder interno.
+
+DoD resumido: contrato + UI kit + AuthZ + estados L/E/E/403/404 + Ajuda + testes + docs (detalhe no README).
 
 ## 3. Gates
 
@@ -426,6 +451,9 @@ Evidência: [evidence/e6-s4-c2-migration-evidence.md](./evidence/e6-s4-c2-migrat
 ---
 
 # E7 — Operações: pedidos e entregas
+
+> **Pré-condição de execução:** página em foco anterior fechada na fila (Início → Overview → SC) **e** autorização explícita do PO.  
+> Não abrir E7.S* em paralelo com polish do Início.
 
 ## E7.S1 — Ler/fixar DTOs PO-OTD
 
