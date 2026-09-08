@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Audita governança, escopo, hierarquia e referências das regras Cursor."""
+"""Audita governança, escopo, hierarquia, ownership e referências das regras Cursor."""
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from collections import Counter
@@ -11,11 +12,18 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RULES_DIR = REPO_ROOT / ".cursor" / "rules"
 INDEX_PATH = RULES_DIR / "development-standards-index.mdc"
+RESPONSIBILITY_MAP_PATH = RULES_DIR / "responsibility-map.json"
 TRANSVERSAL_DOC_PATH = (
     REPO_ROOT
     / "docs"
     / "11-padroes-de-desenvolvimento"
     / "responsabilidades-transversais.md"
+)
+INVENTORY_DOC_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "11-padroes-de-desenvolvimento"
+    / "inventario-regras-cursor.md"
 )
 TRANSVERSAL_DOCS_INDEX_PATH = (
     REPO_ROOT / "docs" / "11-padroes-de-desenvolvimento" / "README.md"
@@ -30,7 +38,6 @@ GLOBAL_ALLOWLIST = {
 }
 GLOBAL_BUDGET = len(GLOBAL_ALLOWLIST)
 
-# Donos transversais da engenharia. Permanecem não globais para preservar contexto.
 REQUIRED_TRANSVERSAL_RULES = {
     "platform-architecture-boundaries.mdc",
     "platform-security-identity-authorization.mdc",
@@ -43,14 +50,12 @@ REQUIRED_TRANSVERSAL_RULES = {
 }
 
 REQUIRED_SPECIALIZED_RULES = {
-    # Guardrails especializados críticos já existentes.
     "ai-external-tools-security.mdc",
     "ai-intelligence-evaluation.mdc",
     "ai-context-and-tool-budget.mdc",
     "http-integration-resilience.mdc",
     "observability-standards.mdc",
     "contract-evolution-backward-compatibility.mdc",
-    # Enforcement executável.
     "architecture-ci-enforcement.mdc",
 }
 
@@ -109,6 +114,79 @@ def parse_frontmatter(path: Path) -> tuple[dict[str, str], str, list[str]]:
     return data, body, errors
 
 
+def audit_responsibility_map(rule_names: set[str], errors: list[str]) -> dict[str, list[str]]:
+    """Garante ownership primário único para toda regra especializada."""
+    if not RESPONSIBILITY_MAP_PATH.exists():
+        errors.append(".cursor/rules/responsibility-map.json ausente")
+        return {}
+
+    try:
+        payload = json.loads(RESPONSIBILITY_MAP_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        errors.append(f"responsibility-map.json inválido: {exc}")
+        return {}
+
+    if payload.get("version") != 1:
+        errors.append("responsibility-map.json: version deve ser 1")
+
+    owners = payload.get("owners")
+    if not isinstance(owners, dict):
+        errors.append("responsibility-map.json: owners deve ser objeto")
+        return {}
+
+    owner_names = set(owners)
+    missing_owners = REQUIRED_TRANSVERSAL_RULES - owner_names
+    extra_owners = owner_names - REQUIRED_TRANSVERSAL_RULES
+    if missing_owners:
+        errors.append(
+            "responsibility-map sem owners canônicos: "
+            + ", ".join(sorted(missing_owners))
+        )
+    if extra_owners:
+        errors.append(
+            "responsibility-map contém owner não canônico: "
+            + ", ".join(sorted(extra_owners))
+        )
+
+    assignments: Counter[str] = Counter()
+    normalized: dict[str, list[str]] = {}
+    for owner, children in owners.items():
+        if not isinstance(children, list) or any(
+            not isinstance(child, str) for child in children
+        ):
+            errors.append(f"responsibility-map: {owner} deve conter lista de nomes .mdc")
+            continue
+        if len(children) != len(set(children)):
+            errors.append(f"responsibility-map: {owner} contém regra duplicada na própria lista")
+        normalized[owner] = children
+        assignments.update(children)
+
+    expected_specialized = rule_names - GLOBAL_ALLOWLIST - REQUIRED_TRANSVERSAL_RULES
+    mapped = set(assignments)
+
+    orphan_rules = expected_specialized - mapped
+    if orphan_rules:
+        errors.append(
+            "regras especializadas sem owner transversal: "
+            + ", ".join(sorted(orphan_rules))
+        )
+
+    unknown_rules = mapped - expected_specialized
+    if unknown_rules:
+        errors.append(
+            "responsibility-map referencia regra inexistente/global/owner: "
+            + ", ".join(sorted(unknown_rules))
+        )
+
+    duplicate_owners = sorted(name for name, count in assignments.items() if count > 1)
+    if duplicate_owners:
+        errors.append(
+            "regras com mais de um owner primário: " + ", ".join(duplicate_owners)
+        )
+
+    return normalized
+
+
 def main() -> int:
     if not RULES_DIR.is_dir():
         print(f"ERRO: diretório não encontrado: {RULES_DIR}", file=sys.stderr)
@@ -144,6 +222,8 @@ def main() -> int:
             + ", ".join(sorted(missing_specialized))
         )
 
+    ownership = audit_responsibility_map(rule_names, errors)
+
     index_text = INDEX_PATH.read_text(encoding="utf-8") if INDEX_PATH.exists() else ""
     for required_name in sorted(REQUIRED_TRANSVERSAL_RULES):
         if required_name not in index_text:
@@ -156,6 +236,11 @@ def main() -> int:
             errors.append(
                 f"{required_name}: guardrail obrigatório não referenciado em development-standards-index.mdc"
             )
+
+    if "responsibility-map.json" not in index_text:
+        errors.append(
+            "development-standards-index.mdc não referencia responsibility-map.json"
+        )
 
     if not TRANSVERSAL_DOC_PATH.exists():
         errors.append(
@@ -172,14 +257,31 @@ def main() -> int:
                 f"{required_name}: responsabilidade transversal não documentada em responsabilidades-transversais.md"
             )
 
+    if not INVENTORY_DOC_PATH.exists():
+        errors.append("docs/11-padroes-de-desenvolvimento/inventario-regras-cursor.md ausente")
+        inventory_text = ""
+    else:
+        inventory_text = INVENTORY_DOC_PATH.read_text(encoding="utf-8")
+
+    for owner, children in ownership.items():
+        if owner not in inventory_text:
+            errors.append(f"{owner}: owner não documentado no inventário Cursor")
+        for child in children:
+            if child not in inventory_text:
+                errors.append(f"{child}: regra não documentada no inventário Cursor")
+
     if not TRANSVERSAL_DOCS_INDEX_PATH.exists():
         errors.append("docs/11-padroes-de-desenvolvimento/README.md ausente")
     else:
         docs_index_text = TRANSVERSAL_DOCS_INDEX_PATH.read_text(encoding="utf-8")
-        if "responsabilidades-transversais.md" not in docs_index_text:
-            errors.append(
-                "docs/11-padroes-de-desenvolvimento/README.md não indexa responsabilidades-transversais.md"
-            )
+        for required_doc in (
+            "responsabilidades-transversais.md",
+            "inventario-regras-cursor.md",
+        ):
+            if required_doc not in docs_index_text:
+                errors.append(
+                    f"docs/11-padroes-de-desenvolvimento/README.md não indexa {required_doc}"
+                )
 
     for path in rule_paths:
         frontmatter, body, parse_errors = parse_frontmatter(path)
@@ -268,12 +370,16 @@ def main() -> int:
         errors.append("description duplicada em regras: " + ", ".join(owners))
 
     print("Cursor rules audit")
-    print(f"- regras: {len(rule_paths)}")
+    print(f"- regras .mdc: {len(rule_paths)}")
     print(f"- globais: {len(global_rules)}/{GLOBAL_BUDGET}")
     print("- globais canônicas: " + ", ".join(sorted(global_rules)))
     print(
         "- responsabilidades transversais: "
         + ", ".join(sorted(REQUIRED_TRANSVERSAL_RULES & rule_names))
+    )
+    print(
+        "- regras especializadas classificadas: "
+        + str(sum(len(children) for children in ownership.values()))
     )
     print(
         "- guardrails especializados obrigatórios: "
@@ -282,6 +388,10 @@ def main() -> int:
     print(
         "- documentação transversal: "
         + ("OK" if TRANSVERSAL_DOC_PATH.exists() else "AUSENTE")
+    )
+    print(
+        "- inventário Cursor: "
+        + ("OK" if INVENTORY_DOC_PATH.exists() else "AUSENTE")
     )
 
     for warning in warnings:
