@@ -1,74 +1,162 @@
-# 04 — Operacional e apresentação
+# 04 — Actions operacionais e apresentação
 
 ## Objetivo
 
-Mapear o caminho **intenção → rota api-delpi → execução HTTP → metadata schema-first → MFE render-only**.
+Mapear o fluxo vigente de linguagem natural até execução e apresentação de Actions OpenAPI.
 
-## Diagrama
-
-```mermaid
-flowchart TD
-  Intent[Intent_or_heuristics] --> Spec[OperationalApiRouteSpec]
-  Spec --> Select[ExternalActionRouteSelectionService]
-  Select --> Params[OperationalApiParameterBuilderService]
-  Params --> Exec[ExecuteExternalActionUseCase]
-  Exec --> Gateway[HttpExternalActionGateway]
-  Gateway --> ApiDelpi[api_delpi]
-  ApiDelpi --> Pipe[ChatPresentationMetadataPipelineService]
-  Pipe --> Delivered[ChatPresentationApiDeliveredMetadataService]
-  Delivered --> Schema[ChatSchemaDrivenPresentationService]
-  Schema --> Insight[ChatDataInsightEnrichmentService]
-  Insight --> Decision[ChatPresentationDecisionService]
-  Decision --> Finalize[ChatPresentationRenderPipelineService]
-  Finalize --> Meta[toolCalls.metadata]
-  Meta --> MFE[MFE_render_only]
+```text
+mensagem
+→ decomposição/contexto
+→ allowed actions
+→ Action Catalog
+→ retrieval top-K
+→ structured planner
+→ OpenAPI argument validation
+→ RBAC/policy/confirmation
+→ ExecuteExternalActionUseCase
+→ HTTP provider
+→ schema-driven presentation
+→ renderPlan
+→ MFE render-only
 ```
 
-## Entrada / saída
+---
 
-| Entrada | Saída |
-|---------|--------|
-| Mensagem + código/filial/datas + `allowedActionIds` | Action HTTP + `toolCalls[].metadata` (`renderPlan`, `presentationDecision`, `dataAnswer`, coverage) |
+## 1. Descoberta e seleção
 
-## Serviços canônicos
+A fonte técnica é OpenAPI + Action Catalog.
 
-| Camada | Módulo |
-|--------|--------|
-| Vocabulário / policies | `api_route_domains.json`, `operational_route_registry.json` (legado/policies) |
-| Spec / params | Schema OpenAPI da action · `OperationalApiParameterBuilderService` (compat) |
-| Seleção | **OpenAPI-first:** `RetrieveActionCandidatesService` → `PlanExternalActionsService` → `ValidateActionArgumentsService` via `OpenApiFirstSelectionBridgeService` · legado só com `CHAT_OPENAPI_PLANNER_MODE=off` |
-| Execução | `ExecuteExternalActionUseCase`, `HttpExternalActionGateway` |
-| Pipeline único | `ChatPresentationMetadataPipelineService` → delivered → schema-driven → insight → decision → finalize |
-| Shape / rows | `ChatSchemaDrivenPresentationService.extract_tabular_rows` + `presenter_content.json` (`singleRecordObjectKeys`, `tabularListKeys`) |
-| Completude | `ChatOperationalResultCompletenessService`, `ChatDataCoverageNoticeService` |
-| MFE | `chatPresentation.ts` — **não** redecide formato |
+| Etapa | Responsabilidade |
+|-------|------------------|
+| Import | normalizar operation/schema |
+| Index | documento semântico/embedding/metadata |
+| Governança | provider/action binding + `allowed_action_ids` |
+| Retrieval | reduzir para top-K candidates |
+| Planner | selecionar action(s) e propor argumentos |
+| Validator | conferir args contra OpenAPI |
 
-## Branches
+Não cadastrar rota em catálogo técnico paralelo para torná-la selecionável.
 
-1. **Chat comum sem agente:** não chama api-delpi; orientação (`common_chat_operational_guidance`).
-2. **Segmento de rota:** `ChatRouteContextService.segment_from_message` pode forçar path (ex.: notas fiscais → outbound-invoice) antes do rank semântico.
-3. **Herança de código:** follow-up reusa produto do histórico / `operationalFocus` / context items — não `lastEntities`.
-4. **Lista vazia real:** `items=[]` + `ok=True` → empty honesto (dado TOTVS).
-5. **Falso-vazio (evitar):** envelope `data.product` precisa estar em `singleRecordObjectKeys` (shape `product_snapshot`).
-6. **Proibido:** `*_presenter.py` por rota, `visualBuilders` / `tableAssembly`, `if "/products/"` no use case ou MFE.
+---
 
-## Metadata / SSE
+## 2. Argumentos
 
-- `metadata.apiRouteDomain` no tool call.
-- `presentationDecision.selected` (`table` | `kpi` | `text` | …).
-- `renderPlan`, `dataCoverageNotice`, `suppressedKinds`.
-- Activity: «consultando dados autorizados» / planned actions.
+O validator cobre, conforme schema:
 
-## Fixtures / regressão
+```text
+path
+query
+body
+required
+type
+enum
+format
+additional properties
+```
 
-- `tests/fixtures/api_delpi_responses/*.json`
-- Gates: `audit_presentation_coverage.py --check-profiles`, `generate_operational_route_registry.py --check`
-- Checklist nova rota: [new-api-route-checklist.md](../architecture/new-api-route-checklist.md) + regra `new-api-route-checklist.mdc`
+Missing required sem valor grounded → clarify específico.
 
-## Links
+---
 
-- [presentation-delivered-pure-jun2026.md](../architecture/presentation-delivered-pure-jun2026.md) — **pipeline ativo**
-- [chat-assistant-content-presentation.md](../architecture/chat-assistant-content-presentation.md)
-- [playbook-10](../roadmap/playbook-10-contrato-respostas-api-delpi.md) · [playbook-15](../roadmap/playbook-15-rotas-operacionais-sem-sql.md) · [playbook-22](../roadmap/playbook-22-schema-first-api-actions-jun2026.md)
-- MFE: [chat-presentation-hub.md](../../../plugins/minha-delpi-chat/docs/chat-presentation-hub.md)
-- Regras: `schema-first-presentation-delivered.mdc`, `operational-api-routing.mdc`, `presentation-operational-decoupling.mdc`
+## 3. Execução
+
+```text
+selected action
+→ enabled/allowed check
+→ RBAC/policy/sensitivity
+→ confirmation quando exigida
+→ HTTP gateway
+→ normalized result
+```
+
+URL é derivada do provider/action persistidos; o LLM não produz URL executável arbitrária.
+
+---
+
+## 4. Pedidos compostos
+
+Uma mensagem pode produzir múltiplas actions:
+
+```text
+subtarefas
+→ dependencies
+→ reads paralelas quando independentes/seguras
+→ writes seriais/policy
+→ partial-failure handling
+→ síntese final completa
+```
+
+---
+
+## 5. Multi-turn
+
+Follow-ups usam estado estruturado da action/resultado anterior:
+
+```text
+entities
+arguments
+result references
+pending fields
+pagination/time range
+presentation preference
+```
+
+Não usar substring do path como memória conversacional.
+
+---
+
+## 6. Apresentação
+
+```text
+responseSchema + payload runtime + metadata
+→ ChatSchemaDrivenPresentationService
+→ presentationDecision
+→ renderPlan
+→ plugin render-only
+```
+
+Perfil dedicado é opcional. API externa sem metadata DELPI deve continuar apresentável pelo fallback genérico.
+
+---
+
+## 7. Refinamento de formato
+
+Pedidos como:
+
+```text
+mostre em tabela
+gere um gráfico
+só texto
+mostre em árvore
+```
+
+reapresentam dados existentes quando possível, sem disparar nova Action operacional aleatória.
+
+---
+
+## 8. Evals
+
+Mudanças neste fluxo seguem [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md):
+
+- R1 routing;
+- R2 trajectory;
+- R3 arguments;
+- R4 utility/faithfulness;
+- R5 presentation;
+- R6 follow-up;
+- R7 parity;
+- R8 latency;
+- R9 outcome;
+- R10 safety;
+- R11 efficiency.
+
+Mudança no motor de Actions exige API externa desconhecida + teste metamórfico.
+
+---
+
+## Referências
+
+- [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)
+- [`../architecture/new-api-route-checklist.md`](../architecture/new-api-route-checklist.md)
+- [`../api/04-actions-openapi.md`](../api/04-actions-openapi.md)
+- [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
