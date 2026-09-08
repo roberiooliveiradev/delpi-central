@@ -8,6 +8,7 @@ from app.interfaces.http.routes.analytics_routes import analytics_bp
 from app.interfaces.http.routes.health_routes import health_bp
 from app.interfaces.http.routes.home_routes import home_bp
 from app.interfaces.http.routes.me_routes import me_bp
+from app.interfaces.http.routes.purchase_requests_routes import purchase_requests_bp
 
 
 def create_application() -> Flask:
@@ -22,6 +23,7 @@ def create_application() -> Flask:
     app.register_blueprint(me_bp)
     app.register_blueprint(home_bp)
     app.register_blueprint(analytics_bp)
+    app.register_blueprint(purchase_requests_bp)
 
     return app
 
