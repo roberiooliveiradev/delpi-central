@@ -13,6 +13,7 @@ import { SuppliesStateBanner } from "./app/suppliesUi";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { OverviewPage } from "./pages/OverviewPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { UserManualPage } from "./features/help/UserManualPage";
 
@@ -26,10 +27,6 @@ export type AppProps = {
 const PLACEHOLDER: Partial<
   Record<PluginView, { title: string; description: string }>
 > = {
-  overview: {
-    title: "Visão geral",
-    description: "KPIs homologados entram na E5. Esta tela só aparece com acesso analítico.",
-  },
   my_tasks: {
     title: "Minhas tarefas",
     description: "A fila de acompanhamento será composta nas jornadas seguintes.",
@@ -132,6 +129,8 @@ function AppRoutes({
   let content = null;
   if (view === "home") {
     content = <HomePage basePath={basePath} />;
+  } else if (view === "overview") {
+    content = <OverviewPage basePath={basePath} />;
   } else if (view === "help") {
     content = <UserManualPage basePath={basePath} />;
   } else {

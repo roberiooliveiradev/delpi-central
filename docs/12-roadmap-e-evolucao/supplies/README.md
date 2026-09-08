@@ -1,7 +1,7 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (set/2026):** baseline + **E1–E4 concluídas (2026-09-08)** · MFE `plugins/supplies` + GATE-RBAC local  
-> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = **E5 (Overview)**  
+> **Status (set/2026):** baseline + **E1–E5 concluídas (2026-09-08)** · MFE `plugins/supplies` + GATE-RBAC local  
+> **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)** · próximo = **E6 (SC C1)**  
 > **Nome ao usuário:** **Portal Suprimentos**  
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies`  
 > **API:** `supplies-api` · gateway `/apps/supplies-api/`  
@@ -23,6 +23,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | **E2 (supplies-api foundation)** | **concluída 2026-09-08** — Flask, GATE-AUTHZ, schema `supplies`, gateway api-delpi, `/me/capabilities` |
 | **E3 (MFE + RBAC coexistência)** | **concluída 2026-09-08** — `plugins/supplies`, client BFF-only, shell capability-driven, manifest Core, papéis canônicos |
 | **E4 (Home + Ajuda inicial)** | **concluída 2026-09-08** — `/home/attention`, Home capability-driven, Manual/Quero→onde/FAQ/glossário |
+| **E5 (Overview)** | **concluída 2026-09-08** — `/analytics/overview` (7 KPIs P0 + partial), página Visão geral |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** (fail-closed na fronteira; não usa claims JWT) |
 | Framework supplies-api | Flask — pacote `supplies-api/` no monorepo |
@@ -31,7 +32,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | KPIs Overview P0 | **7 CONFIRMADOS**; cobertura/PO-LATE fora do Overview |
 | Manifest draft | **`schemaVersion 1.0.0`** registrado no Core local |
 | P-13 | **FECHADO** — Core `/me.id` UUID |
-| Implementação MFE | **Home E4** — attention BFF + catálogo; Overview = E5 |
+| Implementação MFE | **Overview E5** — KPIs live via BFF; SC lista = E6 |
 
 ### Gates
 
@@ -40,14 +41,14 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 | **GATE-E1** | **PASS** |
 | **GATE-ARCH** | **PASS** |
 | **GATE-AUTHZ** | **PASS** (E2.S2) |
-| **GATE-API** | **PASS** parcial — health/gateway/Compose; BFF de domínio ainda E5+ |
+| **GATE-API** | **PASS** parcial — health/gateway/Compose + Overview BFF; SC/ops ainda E6+ |
 | **GATE-RBAC** | **PASS (local 2026-09-08)** — papéis canônicos + evidence `evidence/e3-s5-rbac-smoke-local.json`; persona negativa user-level pendente de user não-superadmin |
 
 ### Próximo
 
-**E5** (Overview BFF/KPIs live) — somente com autorização explícita.
+**E6** (Solicitações de Compras C1 — gateway PR + lista/detalhe/export) — somente com autorização explícita.
 
-Dump Core de produção **não** bloqueia E5 de composição; bloqueia decisão final de redirects/BIs no cutover.
+Dump Core de produção **não** bloqueia E6 de composição C1; bloqueia decisão final de redirects/BIs no cutover.
 
 ---
 

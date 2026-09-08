@@ -95,6 +95,33 @@ declare module "@delpi/plugin-ui/index" {
     tone?: "page" | "panel";
     children: ReactNode;
   }>;
+
+  export type KpiCardLabels = {
+    goalPrefix: string;
+    iddScorePrefix: string;
+    badgesStatus: string;
+  };
+
+  export type DashboardKpiCardProps = {
+    title: string;
+    titleHint?: string;
+    value: string;
+    contextLabel?: string;
+    goalLabel?: string | null;
+    subtitle?: string;
+    icon: ReactNode;
+    footer?: ReactNode;
+    loading?: boolean;
+    className?: string;
+    onClick?: () => void;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardKpiCard(config: {
+    prefix: string;
+    labels: KpiCardLabels;
+    cardModifier?: string;
+  }): ComponentType<DashboardKpiCardProps>;
 }
 
 declare module "@delpi/plugin-ui/styles";

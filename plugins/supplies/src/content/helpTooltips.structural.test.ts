@@ -20,6 +20,7 @@ describe("helpTooltips", () => {
     expect(SP_HELP.coexistence.length).toBeGreaterThan(20);
     expect(SP_HELP.homeVsOverview.length).toBeGreaterThan(20);
     expect(SP_HELP.homeAttention.length).toBeGreaterThan(20);
+    expect(SP_HELP.overviewTemporal.length).toBeGreaterThan(20);
     expect(SP_HELP.forbiddenUnit.length).toBeGreaterThan(20);
     expect(SP_HELP.shell.navHome).toBeTruthy();
     expect(SP_HELP.shell.navOverview).toBeTruthy();

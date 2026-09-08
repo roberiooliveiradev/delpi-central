@@ -136,7 +136,11 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Onde vejo o significado de cada KPI da Visão geral?",
-          a: "Nas fichas de indicadores e na Visão geral quando a jornada analítica estiver disponível. Este manual não inventa números — use a ajuda da tela e as fichas.",
+          a: "Nas fichas de indicadores e na Visão geral. Cada card mostra se o valor é intervalo, snapshot ou estado atual — não misture com o Início.",
+        },
+        {
+          q: "Por que um card da Visão geral aparece indisponível?",
+          a: "Uma fonte auxiliar falhou. Os demais indicadores continuam utilizáveis; atualize o período/filial ou tente de novo.",
         },
         {
           q: "Por que recebi 403?",
