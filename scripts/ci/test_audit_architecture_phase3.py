@@ -2,17 +2,12 @@
 from __future__ import annotations
 
 import ast
-import importlib.util
-import json
-import tempfile
+import sys
 import unittest
 from pathlib import Path
 
-MODULE_PATH = Path(__file__).with_name("audit_architecture_phase3.py")
-SPEC = importlib.util.spec_from_file_location("audit_architecture_phase3", MODULE_PATH)
-assert SPEC and SPEC.loader
-phase3 = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(phase3)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import audit_architecture_phase3 as phase3  # noqa: E402
 
 
 class ArchitecturePhase3GateTests(unittest.TestCase):
