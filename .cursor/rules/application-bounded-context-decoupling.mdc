@@ -1,6 +1,6 @@
 ---
-description: Bounded contexts — todas as apps da Minha Delpi sem acoplamento de regra de negócio
-alwaysApply: true
+description: Arquitetura entre apps/APIs/MFEs — bounded contexts, ownership e proibição de acoplamento de regra de negócio entre aplicações
+alwaysApply: false
 ---
 
 # Minha Delpi — aplicações sem acoplamento
