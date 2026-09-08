@@ -26,6 +26,12 @@ import type {
   ProductHit,
 } from "../domain/types";
 import { searchCarriers, searchParties, searchProducts } from "../lookupsApi";
+import {
+  branchCodeForCreate,
+  requiresBranchField,
+  showsBranchField,
+} from "../../../domain/branchScope";
+import type { RequestTypeSummary } from "../../../types/requests";
 
 export const WIZARD_STEPS = [
   { id: "recipient", label: "Destinatário" },
@@ -37,16 +43,28 @@ export const WIZARD_STEPS = [
 ] as const;
 
 type InvoiceIssuanceWizardProps = {
+  requestType: RequestTypeSummary;
+  /** @deprecated Prefer branch selection inside the wizard via branch_scope */
   lockedBranch?: string;
   onCancel?: () => void;
 };
 
 export function InvoiceIssuanceWizard({
+  requestType,
   lockedBranch,
   onCancel,
 }: InvoiceIssuanceWizardProps) {
   const access = useRequestsPermissions();
-  const branch = lockedBranch || access.branches[0] || "01";
+  const branchOptions = (access.branches.length ? access.branches : ["01", "02"]).map(
+    (code) => ({ value: code, label: code }),
+  );
+  const showBranch = showsBranchField(requestType.branch_scope);
+  const [branchCode, setBranchCode] = useState(
+    lockedBranch || branchOptions[0]?.value || "",
+  );
+  const branch = showBranch
+    ? branchCode || branchOptions[0]?.value || ""
+    : "";
   const [step, setStep] = useState(0);
   const [partyType, setPartyType] = useState<PartyType>("customer");
   const [partyQuery, setPartyQuery] = useState("");
@@ -124,12 +142,16 @@ export function InvoiceIssuanceWizard({
       setError("Selecione o destinatário.");
       return;
     }
+    if (requiresBranchField(requestType.branch_scope) && !branch.trim()) {
+      setError("Selecione a filial.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       const created = await createRequest({
         typeCode: "invoice-issuance",
-        branchCode: branch,
+        branchCode: branchCodeForCreate(requestType.branch_scope, branch),
         idempotencyKey: crypto.randomUUID(),
         payload: {
           party_type: party.party_type,
@@ -168,11 +190,27 @@ export function InvoiceIssuanceWizard({
   return (
     <AppShell
       title="Nova emissão de NF"
-      subtitle={`Filial ${branch} · passo ${step + 1}/${WIZARD_STEPS.length}: ${stepMeta.label}`}
+      subtitle={
+        showBranch && branch
+          ? `Filial ${branch} · passo ${step + 1}/${WIZARD_STEPS.length}: ${stepMeta.label}`
+          : `passo ${step + 1}/${WIZARD_STEPS.length}: ${stepMeta.label}`
+      }
       canCreate
     >
       <MyRequestsSectionCard title="Wizard de emissão">
         <div data-help="invoice-wizard" title={MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard.section}>
+          {showBranch ? (
+            <div className="my-requests-form-stack">
+              <SelectField
+                label="Filial"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.new.branch}
+                value={branchCode}
+                onChange={setBranchCode}
+                options={branchOptions}
+                disabled={busy}
+              />
+            </div>
+          ) : null}
           <MyRequestsFormActions>
             {WIZARD_STEPS.map((item, index) => (
               <ActionButton

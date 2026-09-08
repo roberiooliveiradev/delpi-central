@@ -4,6 +4,12 @@ import { ActionButton, FieldLabel, NativeTextAreaControl } from "@delpi/plugin-u
 import { createRequest } from "../../api/requestsApi";
 import { AppShell } from "../../components/AppShell";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import {
+  branchCodeForCreate,
+  requiresBranchField,
+  showsBranchField,
+} from "../../domain/branchScope";
+import { useRequestsPermissions } from "../../security/RequestsPermissionsContext";
 import type { RequestTypeSummary } from "../../types/requests";
 import {
   MyRequestsFormActions,
@@ -22,11 +28,20 @@ import {
 
 type SchemaFormPageProps = {
   requestType: RequestTypeSummary;
+  /** @deprecated Prefer branch_scope on requestType */
   lockedBranch?: string;
   onCancel?: () => void;
 };
 
 export function SchemaFormPage({ requestType, lockedBranch, onCancel }: SchemaFormPageProps) {
+  const access = useRequestsPermissions();
+  const branchOptions = (access.branches.length ? access.branches : ["01", "02"]).map(
+    (code) => ({ value: code, label: code }),
+  );
+  const showBranch = showsBranchField(requestType.branch_scope);
+  const [branchCode, setBranchCode] = useState(
+    lockedBranch || branchOptions[0]?.value || "",
+  );
   const fields = useMemo(
     () =>
       mapFormSchemaToFields(
@@ -45,6 +60,10 @@ export function SchemaFormPage({ requestType, lockedBranch, onCancel }: SchemaFo
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (requiresBranchField(requestType.branch_scope) && !branchCode.trim()) {
+      setError("Selecione a filial.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -54,7 +73,7 @@ export function SchemaFormPage({ requestType, lockedBranch, onCancel }: SchemaFo
       }
       const created = await createRequest({
         typeCode: requestType.code,
-        branchCode: lockedBranch,
+        branchCode: branchCodeForCreate(requestType.branch_scope, branchCode),
         idempotencyKey: crypto.randomUUID(),
         payload,
       });
@@ -90,6 +109,16 @@ export function SchemaFormPage({ requestType, lockedBranch, onCancel }: SchemaFo
             <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
           ) : null}
           <form className="my-requests-form-stack" onSubmit={onSubmit}>
+            {showBranch ? (
+              <SelectField
+                label="Filial"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.new.branch}
+                value={branchCode}
+                onChange={setBranchCode}
+                options={branchOptions}
+                disabled={busy}
+              />
+            ) : null}
             {fields.map((field) => {
               if (field.kind === "select") {
                 return (
