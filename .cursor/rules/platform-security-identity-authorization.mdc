@@ -1,0 +1,164 @@
+---
+description: Responsabilidade transversal canônica — segurança, Keycloak/OIDC, JWT, RBAC, autorização efetiva, secrets, auditoria e proteção de ações sensíveis
+alwaysApply: false
+---
+
+# Plataforma — segurança, identidade e autorização
+
+## Responsabilidade
+
+Esta é a fonte transversal para decisões de **autenticação, autorização, identidade, secrets e trilha auditável** em qualquer app, API, MFE, job ou integração da Minha DELPI.
+
+## Invariantes de identidade
+
+1. Keycloak é o Identity Provider da plataforma.
+2. Fluxo web preferencial: OAuth2/OIDC Authorization Code + PKCE.
+3. JWT identifica o usuário/contexto; **não é a fonte final da lista completa de permissões efetivas**.
+4. Assinatura, issuer, audience, expiração e demais claims obrigatórios devem ser validados no backend.
+5. Token nunca é confiado apenas porque veio do frontend.
+6. Refresh token/access token não devem ser persistidos ou logados de forma insegura.
+
+## Autorização efetiva
+
+A decisão de acesso deve ocorrer no backend e usar a governança canônica da plataforma.
+
+```text
+JWT válido
+→ identidade/contexto
+→ resolver de permissões efetivas / Core API
+→ permission/resource/scope
+→ allow | deny
+→ audit quando sensível
+```
+
+Proibido:
+
+- confiar em `is_admin`, `permissions[]` ou equivalente do frontend como autorização final;
+- bypass de RBAC porque o usuário está autenticado;
+- rota administrativa protegida apenas por esconder botão;
+- lógica diferente de autorização em UI e API;
+- `superadmin` ad hoc sem fonte/trilha canônica.
+
+## Permissões e escopo
+
+Permissões devem ser:
+
+- estáveis e semanticamente claras;
+- verificadas no recurso correto;
+- consistentes com manifest/rotas quando aplicável;
+- restritivas por padrão;
+- combinadas com escopo de filial/unidade/tenant quando o domínio exigir.
+
+Não transformar filtro de UI em mecanismo de segurança. A API deve rejeitar recurso fora do escopo mesmo se o cliente nunca exibir essa opção.
+
+## Service-to-service
+
+Integrações internas devem usar mecanismo autenticado apropriado ao contrato vigente. Não reutilizar token de usuário indiscriminadamente quando a chamada representa identidade de serviço, nem usar segredo estático hardcoded como atalho.
+
+Ao propagar contexto do usuário, deixar explícito:
+
+```text
+quem autenticou
+em nome de quem a chamada ocorre
+qual serviço tomou a decisão de autorização
+```
+
+## Ações sensíveis
+
+Operações de escrita/admin/destrutivas exigem, conforme risco:
+
+- permissão explícita;
+- validação de escopo;
+- confirmação de intenção quando UX exigir;
+- idempotência onde necessário;
+- audit log com ator, operação, alvo e resultado;
+- nenhum segredo/dado sensível no evento.
+
+## Secrets e configuração
+
+Nunca versionar ou hardcodar:
+
+```text
+password
+client secret
+API key
+JWT
+token
+credential URL
+private key
+```
+
+Usar env/secret store/configuração de ambiente já adotada. Exemplos e `.env.example` devem usar placeholders inequivocamente não secretos.
+
+## Web security
+
+Conforme superfície:
+
+- HTTPS no gateway;
+- CORS restritivo;
+- CSP/headers adequados;
+- cookies com flags corretas quando usados;
+- proteção CSRF quando autenticação baseada em cookie/session exigir;
+- validação e escaping de input/output;
+- upload tratado como conteúdo não confiável;
+- rate limit em superfícies de abuso conforme risco.
+
+## Dados sensíveis
+
+Aplicar minimização:
+
+```text
+coletar apenas necessário
+→ trafegar apenas necessário
+→ logar apenas metadata segura
+→ reter pelo tempo necessário
+```
+
+PII/segredos nunca devem ser adicionados a logs para “facilitar debug”. Usar redaction conforme `observability-standards.mdc`.
+
+## Testes obrigatórios
+
+Conforme mudança:
+
+- token ausente/inválido/expirado;
+- issuer/audience incorretos;
+- usuário autenticado porém sem permissão;
+- escopo/filial não autorizado;
+- permissão positiva;
+- tentativa de bypass por payload/header/UI;
+- redaction de segredo;
+- ação sensível auditada;
+- confirmação/idempotência quando aplicável.
+
+## Perguntas adversariais
+
+Antes de concluir:
+
+1. Um usuário autenticado mas não autorizado consegue executar isto diretamente pela API?
+2. O frontend consegue forjar uma autorização que o backend aceita?
+3. Algum token/secret pode aparecer em log, erro ou analytics?
+4. O mesmo recurso é protegido igualmente em todas as rotas equivalentes?
+5. Existe fail-open em indisponibilidade do resolver de permissões?
+
+## Regras filhas/complementares
+
+- `ai-external-tools-security.mdc` para tools/LLM externos.
+- `observability-standards.mdc` para redaction e auditoria observável.
+- `http-integration-resilience.mdc` para transporte resiliente.
+- `contract-evolution-backward-compatibility.mdc` para evolução de claims/contratos.
+
+## Evidência de conclusão
+
+```text
+AUTHN_MECHANISM
+AUTHZ_SOURCE
+PERMISSION_SCOPE
+NEGATIVE_TESTS
+SENSITIVE_DATA_HANDLING
+AUDIT_RESULT
+SECRETS_CHECK
+```
+
+## Critério de sucesso
+
+Nenhuma decisão de segurança depende de confiança no cliente, configuração implícita ou bypass local; autenticação, autorização e auditoria permanecem coerentes em toda a plataforma.
