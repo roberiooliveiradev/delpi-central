@@ -1,6 +1,6 @@
 # DESIGN-IA — Portal Suprimentos
 
-> Padrão de navegação do [Portal Comercial](../commercial/DESIGN-IA-COMERCIAL.md) · regras visuais distintas (domínio Suprimentos).  
+> Padrão de navegação do Portal Comercial, adaptado ao domínio Suprimentos.  
 > Root CSS: `.dashboard-supplies-portal` · prefixo `sp-` · tokens `--sp-*` → `--delpi-ui-*`.
 
 ---
@@ -8,21 +8,22 @@
 ## 1. Princípios
 
 | | Início `/` | Visão geral `/overview` |
-|--|------------|-------------------------|
-| Papel | Ação e descoberta | Diagnosis gerencial |
-| Conteúdo | AlertQueue, busca, favoritos, recentes, SectionRouteCards | ≤8 KPIs, tendência, exceções, drill |
-| Não traz | Funil de 25 KPIs | Filas operacionais completas |
+|---|---|---|
+| Papel | ação e descoberta | diagnóstico gerencial |
+| Conteúdo | alertas, busca, favoritos, recentes, cards de rota | ≤8 KPIs, tendência, exceções, drill |
+| Não traz | dashboard de 25 KPIs | filas operacionais completas |
 
-- Capability-driven: item de nav some se o usuário não tem cap (não `if role`).
-- **Unidade:** filtro e default vêm de `allowedUnits` (eixo B). Nav **não** se duplica por SC/ES. Sem `if unidade == SC`.
-- Deep pages (360, OTD detalhe, consumo) **fora** da top nav — catálogo + Ctrl/Cmd+K.
-- Favoritos/recentes: Core (mesmo mecanismo do portal); HubChipRow no Início.
-- Command Palette: `createDashboardCommandPalette` + `createHostContainedModalShell`.
-- Modais: host-contained (`mfe-modal-host-contained.mdc`).
+- Capability-driven: nav/ações aparecem conforme effective permissions do Core; nunca `if role`.
+- O MFE usa capabilities apenas para UX; backend continua a barreira real de segurança.
+- `allowedUnits` é derivado das permissions efetivas do Core, não de claims do JWT.
+- Nav não se duplica por SC/ES.
+- Deep pages ficam fora da top nav.
+- Favoritos/recentes seguem mecanismos canônicos do Portal/Comercial quando disponíveis.
+- Modais host-contained.
 
 ---
 
-## 2. Navegação (hipótese revisada pelo inventário)
+## 2. Navegação
 
 ```text
 PORTAL SUPRIMENTOS
@@ -34,8 +35,8 @@ COMPRAS
   Solicitações de Compras      /purchase-requests
   Pedidos de Compra            /purchase-orders
   Entregas / Atrasos           /deliveries
-  Importações                  /imports          (cap se dump confirmar)
-  Alçadas                      /approvals        (P1, cap se dump)
+  Importações                  /imports          (bloqueado até E1)
+  Alçadas                      /approvals        (bloqueado até validar workflow)
 
 FORNECEDORES
   Fornecedores                 /suppliers
@@ -54,75 +55,90 @@ ESTOQUES
 
 NEGOCIAÇÕES
   Savings                      /negotiations
-  Histórico de Preços          /products/:code/price-history  (detalhe)
+  Histórico de Preços          /products/:code/price-history
 
 GESTÃO
   Indicadores                  /indicators
-  (CPV, OTD, Estoque, Giro, Savings = páginas de foco ou âncoras do Overview)
 
 ADMINISTRAÇÃO                  /administration
 AJUDA                          /help
 ```
 
-**Removido da hipótese inicial:** duplicar OTD em Gestão e Fornecedores como dois produtos — um Overview + uma página de foco `/supplies/otd` (alias `/analytics/otd`). Qualidade de fornecedor **não** é item de menu próprio (card no 360 + deep link Inspeções).
-
-**Aliases PT de URL:** no máximo redirects de legado (`/analise-consumo` → `/safety-stock/consumption-analysis`). Rotas **novas** só EN.
+Rotas novas usam identificadores em inglês. URLs PT só permanecem como aliases/redirects de legado quando necessário.
 
 ---
 
-## 3. Shell
+## 3. Capabilities de UX
 
-```
+| Área | Capability base |
+|---|---|
+| shell/Home/Ajuda/Minhas Atividades | `supplies.portal.access` |
+| Solicitações de Compras | `supplies.purchase-requests.access` |
+| PC/entregas/fornecedor/produto/estoque/ESTSEG | `supplies.operations.access` |
+| Overview/OTD gerencial/CPV/giro/savings | `supplies.analytics.access` |
+| Administração | `supplies.administration.manage` |
+
+Não criar navigation gates por permissions CRUD como `tasks.view`/`tasks.write`. Tasks e notas usam capability do recurso + unit + ownership/regra de negócio conforme ADR-007.
+
+---
+
+## 4. Shell
+
+```text
 TopBar (Portal Suprimentos | ações contexto)
-UnderlineNav: Início · Visão geral · Minhas atividades · Solicitações† · Estoques† · Administração†
+UnderlineNav: Início · Visão geral · Minhas atividades · Solicitações† · Operações† · Administração†
 PagePath nas internas
 PageHero só no Início
 ```
 
-† visível por cap. Help no TopBar overflow + rota `/help`.
+† visível por capability. Help no TopBar + rota `/help`.
 
 ---
 
-## 4. Component mapping `@delpi/plugin-ui`
+## 5. Component mapping `@delpi/plugin-ui`
 
-Todos **existem** (CONFIRMADO_NO_CODIGO no kit):
+Priorizar componentes existentes do kit:
 
 | Uso | Componente |
-|-----|------------|
+|---|---|
 | Chrome | `TopBar`, `UnderlineNav`, `PageHero`, `PagePath` |
 | Hub | `SectionRouteCard`, `CatalogSearchBar`, `HubChipRow`, `RouteChip`, `CommandPalette` |
-| Métricas | `MetricKpiCard` / `createMetricKpiCard`, `SectionCard`, `ChartCard` |
+| Métricas | `MetricKpiCard`, `SectionCard`, `ChartCard` |
 | Dados | `DataTable`, `StatusBadge`, `createDashboardFiltersKit` |
 | Ação | `ActionButton`, `EmptyState`, `LoadingActivityCard` |
 | Trabalho | `AlertQueue`, `WorklistItem` |
 | Ajuda | `HelpTooltip`, `FieldLabel`, `SectionHintLabel` |
 
-Bind: `plugins/supplies/src/app/suppliesUi.ts` (padrão `commercialUi.ts`). **Zero** CSS de componente no MFE. Se faltar primitivo com 2+ consumidores → estender `plugin-ui`, não copiar.
+Zero CSS estrutural duplicado do kit no MFE. Novo primitivo com potencial de reuso deve ser avaliado no `plugin-ui`.
 
 ---
 
-## 5. Responsivo / tema
+## 6. Responsivo / tema
 
 | Viewport | Comportamento |
-|----------|----------------|
-| Desktop | Tabelas completas; nav underline |
-| Tablet | Filtros em wrap; KPIs 2 colunas |
-| Mobile ≤768px | UnderlineNav scroll; tabelas → cards/`DataRecordCard`; gráficos `ResponsiveContainer`; hit target ≥44×44 |
-| Light / dark | Tokens `--sp-*` + `:root[data-theme="dark"] .dashboard-supplies-portal` |
+|---|---|
+| Desktop | tabelas completas; nav underline |
+| Tablet | filtros em wrap; KPIs 2 colunas |
+| Mobile ≤768px | nav scroll; tabelas → cards/stacked; gráficos responsivos; hit target ≥44×44 |
+| Light/dark | tokens do MFE mapeados para tokens do Portal |
 
-**Proibido:** `body{}`, `:root{}` global, `*{}`, `.delpi-ui-*`, `@media (prefers-color-scheme)`.
-
----
-
-## 6. Busca, favoritos, recentes, alertas
-
-- Busca do Hub: rotas do catálogo + (P1) fornecedor/item via BFF search (reusar `GET /products/search` e busca SA2 se existir; senão só catálogo até gap).
-- Favoritos: rotas Core do app `supplies`.
-- Recentes: localStorage do MFE (padrão Comercial) até haver API de recents.
-- Alertas Home: composição BFF (déficit, OTD late, SC aging) **sem** persistência na P0; persistência = E13.
+Proibido CSS global do MFE (`body`, `:root`, `*`, `.delpi-ui-*`).
 
 ---
 
-## 7. Estados
+## 7. Busca, favoritos, recentes e alertas
 
-Toda página planeja: loading (`LoadingActivityCard`), empty, error, 403 (filial/cap), 404. Copy em `content/` PT.
+- Busca do Hub: catálogo de rotas + busca de fornecedor/item somente quando contratos existirem.
+- Favoritos: Core/Portal.
+- Recentes: padrão Comercial enquanto não houver serviço canônico melhor.
+- Alertas Home P0: composição on-read; persistência só com evidência de necessidade.
+
+---
+
+## 8. Estados e falha parcial
+
+Toda página planeja loading, empty, error, 403 e 404.
+
+BFFs compostos podem renderizar blocos parciais quando dependência auxiliar falhar; authz nunca é mascarada como partial success.
+
+Overview deve exibir contexto temporal dos KPIs (snapshot, estado atual, intervalo, competência).
