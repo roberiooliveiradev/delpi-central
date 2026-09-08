@@ -59,15 +59,28 @@ Aplicar `root-cause-generalized-fix.mdc`.
 | Tema | Regra/gate |
 |---|---|
 | Regras Cursor | `cursor-rules-governance.mdc`; `python scripts/audit_cursor_rules.py` |
-| Enforcement arquitetural | `architecture-ci-enforcement.mdc`; testes/scanner correspondentes |
+| Enforcement arquitetural | `architecture-ci-enforcement.mdc`; executar Phase 3 + guardrails transversais |
 | Contratos | `platform-api-contracts-integration.mdc` + `contract-evolution-backward-compatibility.mdc` |
-| Segurança | `platform-security-identity-authorization.mdc` |
-| Dados/migrations | `platform-data-persistence.mdc` |
-| MFE/Portal | `platform-frontend-mfe-experience.mdc` + build/testes relevantes |
+| Segurança | `platform-security-identity-authorization.mdc`; `JWT_VERIFY_DISABLED` quando aplicável |
+| Dados/migrations | `platform-data-persistence.mdc`; `IMMUTABLE_MIGRATION_MUTATION` |
+| MFE/Portal | `platform-frontend-mfe-experience.mdc`; `MFE_GLOBAL_CSS` + `MFE_PLUGIN_UI_OVERRIDE` + build/testes relevantes |
 | Docker/gateway/deploy | `platform-delivery-runtime-operations.mdc` |
 | Reliability/HTTP/logs | `platform-reliability-observability.mdc` |
 | SQL/TOTVS | `sql-query-development.mdc` + regra TOTVS aplicável |
 | Feature user-facing | `feature-help-sync.mdc` |
+
+### Comandos de enforcement transversal
+
+Quando o diff toca código, MFE, migration, configuração ou integração e o gate é aplicável:
+
+```bash
+python -m unittest scripts/ci/test_audit_architecture_phase3.py -v
+python -m unittest scripts/ci/test_audit_platform_guardrails.py -v
+python scripts/ci/audit_architecture_phase3.py --check --base <commit-base>
+python scripts/ci/audit_platform_guardrails.py --check --base <commit-base>
+```
+
+Não substituir esses comandos por inspeção manual quando o CI correspondente é material ao diff.
 
 ## Chat AI — requisitos adicionais
 
@@ -142,6 +155,8 @@ Se scanner/gate falhar:
 - corrigir módulo/contrato canônico;
 - não mover hardcode para config paralela;
 - não enfraquecer scanner para o caso novo;
+- não editar migration antiga para satisfazer checksum;
+- não usar override CSS local para contornar bug do kit;
 - exceção só conforme política explícita do gate.
 
 ## Ajuda in-app
