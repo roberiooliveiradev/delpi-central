@@ -8,7 +8,6 @@ import {
   Package,
   ShoppingCart,
 } from "lucide-react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { SP_HELP } from "../content/helpTooltips";
 import {
@@ -18,8 +17,14 @@ import {
   resolveHubSections,
 } from "../content/pluginRouteCatalog";
 import { resolveShellNavItems, SHELL_NAV_CONTENT } from "../content/shellNav";
+import {
+  TOP_BAR_COLLAPSE_MODE,
+  TOP_BAR_COLLAPSE_STORAGE_KEY,
+  TOP_BAR_COLLAPSE_TRIGGER,
+} from "../content/topBarCollapseConfig";
 import { navigatePluginView } from "./pluginNavigation";
 import { resolveActiveNavId, type PluginNavId, type PluginView } from "./pluginRoutes";
+import { ShellTopBarActions, ShellTopBarSecondary } from "./ShellTopBarSlots";
 import { useSuppliesSession } from "./SuppliesSessionContext";
 import { SP_PORTAL_SCOPE, SuppliesCommandPalette, SuppliesTopBar, SuppliesViewTransition } from "./suppliesUi";
 
@@ -132,6 +137,11 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
           aria-label={SHELL_NAV_CONTENT.ariaLabel}
           activeId={activeId ?? ""}
           collapsible
+          collapseMode={TOP_BAR_COLLAPSE_MODE}
+          collapseTrigger={TOP_BAR_COLLAPSE_TRIGGER}
+          storageKey={
+            TOP_BAR_COLLAPSE_TRIGGER === "manual" ? TOP_BAR_COLLAPSE_STORAGE_KEY : undefined
+          }
           collapseLabel={SHELL_NAV_CONTENT.collapseLabel}
           expandLabel={SHELL_NAV_CONTENT.expandLabel}
           menuLabel={SHELL_NAV_CONTENT.menuLabel}
@@ -145,9 +155,8 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
               : item.label,
             onSelect: () => navigatePluginView(NAV_TARGET[item.id], { basePath }),
           }))}
-          actions={
-            <HelpTooltip content={SP_HELP.coexistence} ariaLabel="Ajuda: Portal vs apps antigos" />
-          }
+          secondary={<ShellTopBarSecondary onOpenPalette={() => setPaletteOpen(true)} />}
+          actions={<ShellTopBarActions basePath={basePath} />}
         />
         <SuppliesViewTransition transitionKey={view} tone="page">
           {children}

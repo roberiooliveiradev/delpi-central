@@ -4,8 +4,8 @@ Shell comum (padrão Comercial — chrome WF-00):
 
 ```text
 ┌─ .dashboard-supplies-portal ────────────────────────────────┐
-│ TopBar  Portal Suprimentos          [Ajuda] [Ctrl+K]        │
-│ UnderlineNav (capability-driven)                            │
+│ TopBar kit (hamburger+overflow)  [Buscar Ctrl+K] [Ajuda]   │
+│   UnderlineNav (capability-driven)                          │
 │ PagePath                                                   │
 ├─────────────────────────────────────────────────────────────┤
 │ conteúdo · loading · empty · partial · error · 403 · 404   │

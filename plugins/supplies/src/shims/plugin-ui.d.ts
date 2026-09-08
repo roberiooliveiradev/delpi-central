@@ -47,11 +47,15 @@ declare module "@delpi/plugin-ui/index" {
       label: ReactNode;
       icon?: ReactNode;
       title?: string;
+      count?: number;
       onSelect?: () => void;
     }>;
     activeId: string;
     "aria-label"?: string;
     collapsible?: boolean;
+    collapseMode?: "rail" | "hamburger";
+    collapseTrigger?: "manual" | "overflow";
+    storageKey?: string;
     collapseLabel?: string;
     expandLabel?: string;
     menuLabel?: string;

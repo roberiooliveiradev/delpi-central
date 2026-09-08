@@ -100,13 +100,16 @@ Não criar navigation gates por permissions CRUD como `tasks.view`/`tasks.write`
 ## 4. Shell
 
 ```text
-TopBar (Portal Suprimentos | ações contexto)
-UnderlineNav: Início · Visão geral · Minhas atividades · Solicitações† · Operações† · Administração†
+TopBar kit (createDashboardTopBar)
+  · collapseMode=hamburger · collapseTrigger=overflow  (igual Comercial)
+  · secondary: busca Ctrl+K
+  · actions: Ajuda + hint coexistência (perfil self → E4.S4)
+UnderlineNav embutida na TopBar (itens por capability)
 PagePath nas internas
-PageHero só no Início
+PageHero no Início (e Overview)
 ```
 
-† visível por capability. Help no TopBar + rota `/help`. Entrada ao perfil: atalho no shell/hero quando existir (padrão Comercial: menção/equipe/self → `/users/:userId`).
+† itens de nav por capability. Help no slot actions + rota `/help`. Entrada ao perfil: atalho no shell quando E4.S4 (padrão Comercial: avatar → `/users/:userId`).
 
 ---
 

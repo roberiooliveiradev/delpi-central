@@ -39,4 +39,9 @@ export const SHELL_NAV_CONTENT = {
   collapseLabel: "Recolher navegação",
   expandLabel: "Expandir navegação",
   menuLabel: "Menu de navegação",
+  searchLabel: "Buscar",
+  searchTitle: "Buscar áreas do Portal (Ctrl+K)",
+  searchAriaLabel: "Abrir busca do Portal Suprimentos",
+  helpActionLabel: "Ajuda",
+  helpActionAriaLabel: "Abrir Ajuda do Portal Suprimentos",
 } as const;
