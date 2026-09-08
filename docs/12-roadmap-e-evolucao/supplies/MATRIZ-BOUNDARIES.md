@@ -1,38 +1,43 @@
 # MATRIZ-BOUNDARIES — Portal Suprimentos
 
-Princípio: **dado compartilhado ≠ ownership**. Consumo HTTP ou deep link. Sem import de `domain`/`application` de outro pacote.
+Princípio: **dado compartilhado ≠ ownership**. Consumo por HTTP/deep link; sem import de domain/application de outro pacote.
 
 | Capacidade | Owner | Fonte | Portal consome como | Não deve fazer |
-|------------|-------|-------|---------------------|----------------|
-| Usuário, papéis, apps, favoritos, JWT identity | **Core API** | Postgres Core + Keycloak | `GET /core-api/me` / apps / routes | Colocar regra de SC/estoque na Core |
-| Permissões de produto + aliases | Core (cadastro) + manifest `supplies` | RBAC | Checagem no MFE (navegação) **e** na supplies-api | Autorizar só no frontend |
-| SQL Protheus SC1 SC7 SA2 SA5 SB1 SB2 SBZ SD1 SD3 SD4 | **api-delpi** | TOTVS | Gateway HTTP | Espelhar tabelas no PG do Portal |
-| Interpretação canônica CPV OTD ESTSEG giro | **api-delpi** | SQL + domain totvs | BFF | Reimplementar fórmula no MFE ou na supplies-api |
-| Envelope `/supplies/*` `/products/*` | **api-delpi** | OpenAPI | Reuso; rota nova só com gap | Copiar OpenAPI para assistant JSON |
-| Escopo CC, mapping Protheus, notif SC (hoje) | **purchase-requests-api** | schema `purchase_requests` | HTTP C1; depois C2 migra owner para supplies-api | Duplicar fail-closed na api-delpi |
-| Workflows, tarefas, follow-ups, notas, alertas, settings | **supplies-api** | Postgres `supplies` | CRUD próprio | Gravar isso na api-delpi |
-| Composição BFF / membership filial do Portal | **supplies-api** | JWT + unit perms | — | Mandar «filial pronta» do browser para api-delpi |
-| Meta vs realizado CPV/OTD/giro/estoque/savings | **strategic-indicators-api** | snapshots + gateway supplies | HTTP enrich Overview | Segunda tabela de metas no Portal |
-| Telas TV estoque | **tv-dashboard-api** | native screens | INTEGRAR feed se preciso; deep link | Hostear TV no MFE supplies |
-| Inspeção entrada, rejeição, pendência qualidade | **Qualidade** (`inspecoes-entrada` + api-delpi QE*) | views inspeção | Projeção read-only no Fornecedor 360 | Tomar o processo de inspeção |
-| Frete das compras / rateio NF | **Financeiro** (`financial-api`) | SF8/SF1 | DEEP_LINK + opcional card «ver no Financeiro» | Recalcular rateio |
-| Open-coverage para PCP, programação, OP | **Produção/PCP** | api-delpi + production-control | Portal lê cobertura de **compra** (SC7/SD4/SC1) já no ESTSEG; não lê programa PCP | Mover regra de PCP |
-| Beneficiamento SB6 (material de **cliente**) | **materiais-terceiros** | SB6 | FORA_DO_ESCOPO / deep link | Tratar como estoque de MP |
-| Chat / RAG / tools | **minha-delpi-ai-api** | OpenAPI importado | Mesmos operationIds; sem markers manuais | Duplicar tool routing por endpoint |
-| Planilha IDD (lançamento economia) | Operações + **api-delpi** composer | Google Sheets | INTEGRAR leitura já existente | Copiar aba para Postgres |
-| Power BI / iframe Core | Core (URL app) | externo | MANTER_EXTERNO até paridade | Iframe dentro do MFE sem ADR |
+|---|---|---|---|---|
+| Identidade SSO | Keycloak | JWT | validação AuthN | confiar em permission claims como AuthZ final |
+| Effective permissions, users, apps, routes, favoritos | **Core API** | Postgres Core + Keycloak context | `/me`, `/me/apps`, `/me/routes` | colocar regra de Suprimentos na Core |
+| Catálogo de permissions do app | Core + manifest `supplies` | RBAC | MFE para UX + supplies-api para segurança | autorizar só no frontend |
+| Units do Portal | Core effective permissions + catálogo `supplies.unit.*` | RBAC | supplies-api deriva `allowedUnits` | ler units de claims JWT como fonte final |
+| SQL Protheus SC1/SC7/SA2/SA5/SB1/SB2/SBZ/SD1/SD3/SD4 | **api-delpi** | TOTVS | gateway HTTP | espelhar TOTVS no PG do Portal |
+| CPV/OTD/ESTSEG/giro e interpretações ERP | **api-delpi** | SQL + domínio TOTVS | BFF | reimplementar fórmula no MFE/BFF |
+| Escopo CC/mapping/notificações SC até C2 | **purchase-requests-api** | schema `purchase_requests` | HTTP C1 | duplicar fail-closed na api-delpi |
+| Escopo CC/mapping/notificações SC após C2 | **supplies-api** | mesmo schema, novo process owner | interno | executar C3 antes de reconciliação |
+| Tasks/follow-ups/notas/settings/auditoria funcional | **supplies-api** | Postgres `supplies` | CRUD próprio com ADR-007 | criar permission por verbo CRUD automaticamente |
+| AuthZ do Portal | **supplies-api + Core** | effective permissions + units + ownership | capability + scope | confiar no browser/JWT claims |
+| Meta/realizado estratégico | **strategic-indicators-api** | SI | enrich autorizado | segunda fonte de meta no Portal |
+| Inspeções de entrada | **Qualidade** | contexto Qualidade | projeção read-only autorizada | tomar workflow de Qualidade |
+| Frete/rateio | **Financeiro** | financial-api/TOTVS | deep link/projeção | recalcular rateio |
+| PCP/programação | **Produção/PCP** | contexto PCP | somente integrações necessárias | mover regra de PCP |
+| Materiais terceiros SB6 | **materiais-terceiros** | SB6 | fora do escopo/deep link | tratar como estoque de compra |
+| Chat/tools | **minha-delpi-ai-api** | OpenAPI | mesmos contratos | duplicar tool routing |
+| Sheets IDD | operação atual + api-delpi composer | Google Sheets | leitura integrada | copiar planilha para PG |
+| Power BI/iframe externos | Core/external owner | externo | manter/deep-link até paridade | iframe arbitrário dentro do MFE |
 
 ```text
-plugins/supplies  ──HTTP──► supplies-api ──HTTP──► api-delpi ──► TOTVS
-                              │
-                              ├──HTTP──► purchase-requests-api   (até C3)
-                              ├──HTTP──► strategic-indicators-api
-                              ├──HTTP──► Core
-                              └──HTTP──► inspecoes / financial   (projeção, opcional)
+plugins/supplies
+  └─HTTP→ supplies-api (Flask)
+            ├─HTTP→ Core /me
+            ├─HTTP→ api-delpi → TOTVS
+            ├─HTTP→ purchase-requests-api (somente C1)
+            ├─HTTP→ strategic-indicators-api
+            └─HTTP→ contextos irmãos autorizados
 ```
 
-Gate de PR futuro:
+## Gates
 
-- [ ] Grep zero no MFE: `apiDelpiUrl|API_DELPI_BASE|/apps/api-delpi`
-- [ ] Nenhuma regra TOTVS nova só no BFF
-- [ ] Nenhuma membership de CC na api-delpi
+- MFE: grep zero de acesso direto à api-delpi.
+- AuthZ: effective permissions Core-first.
+- RBAC: menor catálogo suficiente (ADR-007).
+- C2 antes de C3.
+- nenhuma regra TOTVS nova só no BFF.
+- nenhuma regra de CC na api-delpi.
