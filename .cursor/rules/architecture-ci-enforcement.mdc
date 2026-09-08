@@ -1,5 +1,5 @@
 ---
-description: Enforcement arquitetural no CI — gates incrementais da plataforma contra hardcodes, boundaries, migrations mutadas, CSS MFE, AuthN/AuthZ duplicado, JWT inseguro, HTTP/retry e secrets
+description: Enforcement arquitetural no CI — gates incrementais contra hardcodes, contracts/OpenAPI, boundaries, migrations mutadas, CSS MFE, AuthN/AuthZ duplicado, JWT inseguro, HTTP/retry e secrets
 alwaysApply: false
 ---
 
@@ -14,8 +14,10 @@ Fontes executáveis:
 ```text
 scripts/ci/audit_architecture_phase3.py
 scripts/ci/audit_platform_guardrails.py
+scripts/ci/audit_openapi_contracts.py
 scripts/ci/test_audit_architecture_phase3.py
 scripts/ci/test_audit_platform_guardrails.py
+scripts/ci/test_audit_openapi_contracts.py
 .github/workflows/architecture-enforcement.yml
 scripts/ci/architecture_phase3_exceptions.json
 ```
@@ -117,6 +119,68 @@ require_superadmin
 
 Essas primitives pertencem ao shared AuthZ (ou à Core API, bounded context dono do RBAC). Adapter específico pode existir, mas deve delegar ao canônico sem duplicar política.
 
+## Gates de contrato OpenAPI/FastAPI
+
+A plataforma possui duas formas reais de contrato:
+
+```text
+FastAPI source → OpenAPI gerado em runtime
+OpenAPI JSON/YAML versionado → snapshot/contrato consumido diretamente
+```
+
+O enforcement cobre as duas superfícies sem exigir que todas as APIs mantenham um snapshot manual paralelo.
+
+### `OPENAPI_OPERATION_ID_REQUIRED`
+
+Qualquer operação HTTP em um OpenAPI JSON/YAML versionado deve declarar `operationId` explícito e não vazio.
+
+### `OPENAPI_OPERATION_ID_DUPLICATE`
+
+Um `operationId` não pode identificar duas operações no mesmo documento OpenAPI.
+
+### `OPENAPI_CHANGE_CLASS_INVALID`
+
+Quando o contrato usar `x-delpi-contract-change`, o valor deve ser um dos canônicos:
+
+```text
+ADDITIVE
+BEHAVIORAL
+DEPRECATED
+BREAKING
+```
+
+### `OPENAPI_BREAKING_UNCLASSIFIED`
+
+Em OpenAPI versionado, os seguintes sinais estruturais são breaking e não podem passar silenciosamente:
+
+- operação `(method, path)` removida;
+- `operationId` alterado na mesma operação.
+
+Para declarar a mudança conscientemente, `info` deve registrar:
+
+```yaml
+version: <nova-versão>
+x-delpi-contract-change: BREAKING
+x-delpi-contract-change-from: <versão-base-exata>
+x-delpi-contract-change-reason: <motivo concreto>
+```
+
+`x-delpi-contract-change-from` precisa ser igual à `info.version` do contrato anterior. Isso impede que metadata antiga de breaking seja reutilizada indefinidamente para autorizar mudanças futuras.
+
+Essa classificação **não torna a quebra automaticamente boa**: continua obrigatório inventariar consumidores, definir migração/coexistência e rollback conforme `contract-evolution-backward-compatibility.mdc`.
+
+### `FASTAPI_OPERATION_ID_REQUIRED`
+
+Rota FastAPI nova ou cujo decorator HTTP foi alterado deve declarar `operation_id="..."` literal. Não depender do auto-id gerado pelo framework.
+
+O gate é AST + diff-aware: não torna todo débito histórico vermelho, mas impede nova rota sem identidade estável.
+
+### `FASTAPI_OPERATION_ID_DUPLICATE`
+
+Quando uma rota FastAPI é alterada/adicionada, o auditor examina o bounded context de API correspondente (`api-delpi` ou `<app>-api`) e bloqueia `operation_id` duplicado entre arquivos.
+
+Não existe lista manual de APIs.
+
 ## O que ainda NÃO deve virar regex genérica
 
 Ainda não bloquear “rota sem `@require_permission`” por mera ausência textual. Existem stacks válidos com decorators, dependencies, policies, service token e rotas públicas intencionais.
@@ -132,6 +196,8 @@ classificar mecanismos de rota
 ```
 
 Health/readiness, callbacks públicos e integrações service-to-service não podem virar falsos positivos.
+
+Também não inferir compatibilidade completa de schema apenas por regex. Required/type/enum/response breaking changes devem ganhar análise estrutural somente quando o resolver `$ref` e a semântica de composição estiverem modelados com baixo falso positivo.
 
 ## Exceções
 
@@ -155,9 +221,13 @@ Se o sinal não for confiável, manter revisão/teste específico até haver con
 ```bash
 python -m unittest scripts/ci/test_audit_architecture_phase3.py -v
 python -m unittest scripts/ci/test_audit_platform_guardrails.py -v
+python -m unittest scripts/ci/test_audit_openapi_contracts.py -v
 python scripts/ci/audit_architecture_phase3.py --check --base <commit-base>
 python scripts/ci/audit_platform_guardrails.py --check --base <commit-base>
+python scripts/ci/audit_openapi_contracts.py --check --base <commit-base>
 ```
+
+Para OpenAPI YAML, instalar `PyYAML>=6,<7` no ambiente do auditor; o workflow oficial já faz isso.
 
 ## O que NÃO fazer
 
@@ -173,6 +243,11 @@ python scripts/ci/audit_platform_guardrails.py --check --base <commit-base>
 - Criar novo validator JWT local por conveniência.
 - Copiar `require_permission` para uma nova API.
 - Desabilitar audience/issuer/assinatura quando config faltar.
+- Criar rota FastAPI sem `operation_id` porque “o framework gera um”.
+- Reutilizar `operationId` existente para outra operação.
+- Renomear `operationId` por estética.
+- Remover operação de snapshot OpenAPI sem classificação/migração.
+- Manter `x-delpi-contract-change-from` antigo para liberar quebras futuras.
 - Desabilitar workflow porque detectou regressão.
 
 ## Critério de sucesso
