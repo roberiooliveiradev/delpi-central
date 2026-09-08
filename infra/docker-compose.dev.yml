@@ -2099,12 +2099,16 @@ services:
       DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
       DELPI_API_CALLER_APP: production-pulse-api
       PP_WORK_CENTER_CACHE_TTL_SECONDS: ${PP_WORK_CENTER_CACHE_TTL_SECONDS:-300}
+      PP_FIRMWARE_UPLOAD_DIR: ${PP_FIRMWARE_UPLOAD_DIR:-/app/data/production-pulse/firmwares}
+      PP_FIRMWARE_MAX_BYTES: ${PP_FIRMWARE_MAX_BYTES:-8388608}
+      PP_FIRMWARE_ARTIFACT_TOKEN_TTL_SECONDS: ${PP_FIRMWARE_ARTIFACT_TOKEN_TTL_SECONDS:-600}
 
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
 
     volumes:
       - ../production-pulse-api:/app
       - ../shared:/shared
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/production-pulse/firmwares:/app/data/production-pulse/firmwares
 
     depends_on:
       - keycloak
