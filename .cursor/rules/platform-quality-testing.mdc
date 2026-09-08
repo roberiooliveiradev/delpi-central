@@ -1,0 +1,165 @@
+---
+description: Responsabilidade transversal canônica — estratégia de testes, regressão, contrato, integração, evidência, critérios de PASS e Definition of Done
+alwaysApply: false
+---
+
+# Plataforma — qualidade, testes e evidência
+
+## Responsabilidade
+
+Esta é a fonte transversal para decidir **o que testar, em qual camada, como provar correção e quando uma entrega pode ser considerada concluída** fora e dentro do Chat AI.
+
+## Princípio
+
+Teste verde não prova objetivo cumprido se o teste mede o comportamento errado.
+
+A validação deve seguir:
+
+```text
+requisito/bug
+→ reprodução/baseline
+→ causa raiz
+→ mudança canônica
+→ positive
+→ sibling
+→ negative
+→ integração/contrato quando aplicável
+→ objetivo original
+```
+
+## Pirâmide por risco
+
+Preferir a menor camada que prova a regra, sem depender só dela:
+
+| Tipo | Prova |
+|---|---|
+| unitário | regra de domínio/use case isolada |
+| componente | interação/estado de UI |
+| contrato | produtor/consumidor/schema |
+| integração | DB, HTTP adapter, auth middleware, filas |
+| end-to-end/smoke | cadeia real entre componentes |
+| live | integração real/provider/ambiente quando necessário |
+
+Não usar E2E para substituir unitários determinísticos nem unitário para alegar que a integração funciona.
+
+## Bugfix
+
+Todo bugfix material deve ter:
+
+1. caso que falha antes da correção quando reproduzível;
+2. caso positivo corrigido;
+3. sibling para evitar overfitting;
+4. negativo para evitar falso positivo;
+5. validação do objetivo original.
+
+Aplicar `root-cause-generalized-fix.mdc`.
+
+## Contratos
+
+Mudança de API/evento/schema/manifest exige testes de contrato conforme `platform-api-contracts-integration.mdc` e `contract-evolution-backward-compatibility.mdc`.
+
+Quando coexistirem versões, testar combinações relevantes de produtor/consumidor.
+
+## Segurança
+
+Mudança em auth/authz exige ao menos um caso de acesso negado além do happy path. Segurança sem teste negativo é evidência incompleta.
+
+Aplicar `platform-security-identity-authorization.mdc`.
+
+## Banco/migrations
+
+Mudança de schema deve testar upgrade, invariantes e rollback/roll-forward conforme `platform-data-persistence.mdc`.
+
+## Frontend/MFE
+
+Mudança visual/material deve validar build e estados relevantes; integração federada exige smoke no Portal quando a alteração pode divergir do standalone.
+
+Aplicar `platform-frontend-mfe-experience.mdc`.
+
+## Não determinismo
+
+Quando resultado puder variar (LLM, concorrência, timing, provider), não esconder flakiness com retry cego de teste.
+
+Definir:
+
+- seed/config quando possível;
+- clock injetável para tempo relativo;
+- múltiplos trials quando o domínio exige taxa de sucesso;
+- tolerância explícita apenas quando semântica justificar;
+- evidência de variância.
+
+Para IA, seguir `ai-intelligence-evaluation.mdc`.
+
+## Mocks, fakes e fixtures
+
+Mocks devem isolar dependência, não inventar contrato impossível.
+
+- fixture representa contrato real/versionado;
+- fake deve preservar semântica crítica;
+- não mudar expected output para esconder regressão;
+- teste de integração deve existir quando mock pode mascarar wiring/configuração.
+
+## Cobertura
+
+Percentual de cobertura é indicador, não definição de qualidade. Priorizar cobertura de:
+
+```text
+invariantes
+branches de erro
+security boundaries
+contratos
+concorrência/idempotência
+migrations
+fallback/degradação
+```
+
+Não aumentar cobertura com asserts sem valor comportamental.
+
+## Critério de PASS
+
+Uma entrega só pode ser declarada PASS quando:
+
+- testes obrigatórios do escopo executaram;
+- falhas relevantes foram classificadas;
+- objetivo original foi revalidado;
+- nenhuma regressão material conhecida foi ocultada;
+- evidência corresponde ao commit/configuração atuais.
+
+Se uma etapa obrigatória não pôde ser executada, registrar como **INCONCLUSIVE/PENDENTE**, não PASS.
+
+## CI
+
+CI deve bloquear sinais estáticos/confiáveis e regressões determinísticas. Não enfraquecer gate para “destravar” um caso sem corrigir a causa.
+
+Arquitetura: `architecture-ci-enforcement.mdc`.
+
+## Pergunta adversarial obrigatória
+
+> Como esta solução pode continuar errada mesmo com os testes atuais passando?
+
+A resposta deve gerar teste adicional quando o risco for material e testável.
+
+## Regras filhas/complementares
+
+- `test-and-commit.mdc`
+- `root-cause-generalized-fix.mdc`
+- `architecture-ci-enforcement.mdc`
+- `ai-intelligence-evaluation.mdc`
+
+## Evidência de conclusão
+
+```text
+REPRODUCTION_OR_BASELINE
+TEST_SCOPE
+POSITIVE
+SIBLING
+NEGATIVE
+CONTRACT_OR_INTEGRATION
+OBJECTIVE_VALIDATION
+KNOWN_REGRESSIONS
+CI_STATUS
+```
+
+## Critério de sucesso
+
+Os testes devem reduzir incerteza sobre o comportamento real da plataforma, não apenas validar a implementação escolhida.
