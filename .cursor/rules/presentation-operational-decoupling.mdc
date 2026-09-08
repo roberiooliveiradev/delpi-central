@@ -1,72 +1,95 @@
 ---
-description: Chat/apresentação operacional — desacoplamento entre estrutura visual, narrativa, cobertura, metadata e renderização MFE
+description: Chat/apresentação operacional — separação entre semântica, schema-driven presentation, insights, cobertura e renderização MFE
 alwaysApply: false
 ---
 
 # Apresentação operacional desacoplada
 
-## O que é desacoplamento (definição)
-
-**Desacoplamento** = separar **camadas** e **contratos** para que cada uma tenha uma responsabilidade única e consuma a outra via metadata/perfil — **sem** repetir o mesmo fato em dois lugares nem acoplar regra transversal a uma rota específica no código.
-
-| É desacoplamento | Não é desacoplamento |
-|------------------|----------------------|
-| Presenter monta veredito; perfil diz `dataAnswerLeadAlignment: preserve_template`; gate genérico não injeta lead duplicado | Serviço `*StructureExclusivity*` com `if "/structure/exclusivity"` espalhado |
-| Regra por `profileKey` em JSON + serviço transversal (`ChatOperationalFactualVerdictService`) | Consolidar DRY em classe nomeada pela rota sem perfil declarativo |
-| Banner `dataCoverageNotice` no MFE; flags em `summary` na API | Aviso de incompletude no markdown do presenter |
-| `humanizedNarrative: skip` no perfil | `if entity == product_structure_exclusivity` no rich text |
-| MFE render-only (`chatPresentation.ts`) | MFE redecide tabela vs gráfico |
-
-**Centralizar** (uma fonte de verdade, DRY) é necessário mas **insuficiente**: juntar lógica num serviço por rota **consolida** — só **desacopla** se a regra for **declarativa** (perfil/JSON) e o código for **transversal** (sem nome da rota no serviço).
-
 ## Princípio
 
-**Sempre** separar: (1) **estrutura visual** do presenter, (2) **semântica/contrato** na API, (3) **interpretação e avisos** no pipeline do chat, (4) **render** no MFE. **Nunca** embutir no markdown/tabela o que o banner ou `dataAnswer` já deve dizer.
+Apresentação operacional deve separar responsabilidades sem criar regra por rota.
 
-## Mapa canônico
+```text
+API/provider
+→ contrato + payload
+→ interpretação schema-driven
+→ insights/cobertura transversais
+→ presentationDecision
+→ renderPlan
+→ MFE render-only
+```
 
-| Responsabilidade | api-delpi | minha-delpi-ai-api | MFE |
-|------------------|-----------|-------------------|-----|
-| Agregação / filial / incompletude (flags) | `ProductionOperationalSummarySemanticsService` + `build_period_summary` | `ChatOperationalSummarySemanticsService` | — |
-| Aviso incompleto / consolidado | `summary` + `pagination.is_complete` | `ChatOperationalResultCompletenessService` | banner `dataCoverageNotice` |
-| Cobertura (SQL, paginação, profundidade) | `data.pagination`, `meta.sections` | `ChatDataCoverageNoticeService` | `mdc-rich-presentation__coverage-notice` |
-| Destaques / atenção / limitações | — | `ChatOperationalDataCommentaryService` → `ChatDataInsightEnrichmentService` → `dataAnswer` | lead do `renderPlan` |
-| Veredito factual sem duplicar no texto | presenter + `presentation_profiles` (`dataAnswerLeadAlignment`, `proseDelivery`) | `ChatPresentationProseDeliveryService` | render-only |
-| Coerência factual síntese LLM | — | `operational_factual_verdict.json` + `ChatOperationalFactualVerdictService` | — |
-| Dica «use tabela/árvore» | — | `ChatPresentationVisualUiHintService` → `recommendations` | toolbar de formato |
-| Campos técnicos de summary | flags em `summary` | `ChatPresentationOperationalMetadataFieldService.filter_summary` | não exibir |
-| Textos PT | — | `data_coverage.json`, `humanized_data_response.json` | — |
+Regra principal: `schema-first-presentation-delivered.mdc`.
+Arquitetura: `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md`.
 
-## Perfis declarativos (apresentação)
+## Responsabilidades
 
-Chaves em `presentation_profiles.json` — **não** reimplementar no Python:
+| Responsabilidade | Fonte canônica |
+|------------------|----------------|
+| Semântica e agregação de negócio | API de origem / serviço de domínio responsável |
+| Shape/fields/contrato | OpenAPI response schema + payload runtime |
+| Cobertura/incompletude | metadata estruturada transversal |
+| Insight/comentário | serviços transversais de data insight |
+| Escolha de visual | pipeline schema-driven da API do chat |
+| Plano de renderização | `presentationDecision` + `renderPlan` |
+| Renderização | MFE render-only |
+| Texto/labels | conteúdo declarativo transversal |
 
-| Chave | Valores | Efeito |
-|-------|---------|--------|
-| `proseDelivery` / `proseDeliveryByProfile` | `template` \| `llm` \| `direct` | Quem monta a prosa |
-| `humanizedNarrative` | `skip` \| `enrich` | Panorama/conclusão genéricos |
-| `dataAnswerLeadAlignment` | `inject` \| `preserve_template` | Evidence-first: injetar ou preservar lead do `dataAnswer` |
+## Desacoplamento real
 
-## api-delpi — playbook_report
+É desacoplado quando:
 
-- `branch_filter_applied`: filial explícita na query.
-- `consolidated_across_branches`: valores **somados** de todas as filiais (ex.: `top-items` + `group_by=general` sem `branch`). Definir via `ProductionOperationalSummarySemanticsService` — **não** `if` solto no use case.
-- `is_complete` / `pagination`: truncamento TOP N — `operational_limit_page_service`.
+- o código de apresentação não conhece path/provider/operationId específico;
+- a mesma regra funciona para schemas equivalentes de providers diferentes;
+- a API externa continua útil sem profile/presenter proprietário;
+- avisos e insights vêm de metadata/serviço transversal, não de markdown específico de rota;
+- o MFE apenas renderiza o contrato recebido.
 
-## Chat — o que NÃO fazer
+Centralizar um `if` por rota em outra classe não é desacoplamento.
 
-- Serviço de domínio nomeado pela rota (`ChatOperationalStructureExclusivity*`) para regra que deveria ser por `profileKey`.
-- `tableVisualizationHint`, `paginatedResult`, `moreDetailRecords`, `incompleteNotice` em `linhas`/markdown de presenter.
-- Seções **Destaques** / **Pontos de atenção** no markdown quando `dataAnswer`/`dataCommentary` existem.
-- Strings PT de cobertura/consolidado em Python — só `assistant/*.json`.
-- Reimplementar «lista extensa» no MFE se `ChatDataInsightService` já cobre.
+## Metadata e cobertura
 
-## Checklist (obrigatório)
+Quando o payload precisa informar limitação, paginação, agregação ou incompletude, preferir metadata estruturada do produtor ou normalização transversal.
 
-1. Regra nova → módulo canônico da tabela + teste (`test_presentation_decoupling.py`, `test_chat_operational_result_completeness_service.py`, `test_production_operational_use_cases.py`).
-2. Nova semântica de veredito → entrada em `operational_factual_verdict.json` por `profileKey`, não serviço por path.
-3. Flag nova no `summary` → filtrar em `ChatPresentationOperationalMetadataFieldService`.
-4. Texto ao usuário → chave em `data_coverage.json` ou bundle do catálogo.
-5. Pipeline consome o serviço até o fim (`ChatPresentationApiDeliveredMetadataService`).
+Exemplos conceituais:
 
-Doc: `minha-delpi-ai-api/docs/architecture/presentation-delivered-pure-jun2026.md` (ativo) · `chat-assistant-content-presentation.md` (MFE).
+```text
+pagination.is_complete
+coverage
+truncated
+branch_filter_applied
+consolidated_across_branches
+```
+
+Não esconder esses fatos somente na prosa.
+
+## O que NÃO fazer
+
+- Service/presenter nomeado por rota apenas para decidir layout.
+- `if path/provider/operationId/entity` para criar visual específico de endpoint.
+- Inserir aviso de cobertura exclusivamente em markdown de presenter.
+- Duplicar insight no presenter, `dataAnswer` e MFE.
+- String PT de UX espalhada em Python/TS.
+- MFE redecidir tabela/gráfico/árvore com conhecimento da API.
+- Exigir perfil dedicado para um provider externo funcionar.
+- Reintroduzir arquitetura documentada apenas em playbook/changelog antigo.
+
+## O que fazer
+
+1. Corrigir a semântica no produtor quando o fato pertence ao domínio.
+2. Propagar metadata estruturada quando a apresentação precisa conhecer cobertura/limite.
+3. Interpretar shape/payload por serviço schema-driven transversal.
+4. Gerar insight apenas uma vez em serviço transversal.
+5. Gerar `presentationDecision`/`renderPlan` na API.
+6. Renderizar no MFE sem regra operacional adicional.
+7. Validar payload conhecido + sibling + provider/schema desconhecido equivalente.
+8. Executar R5/R7/R9 e demais dimensões R1–R11 aplicáveis.
+
+## Checklist
+
+- [ ] A regra funciona sem path/provider específico?
+- [ ] Existe somente uma fonte para cada fato/insight?
+- [ ] Cobertura/limitação está estruturada quando material?
+- [ ] Fallback schema-driven continua funcional?
+- [ ] MFE permanece render-only?
+- [ ] Provider externo sem metadata proprietária permanece apresentável?
