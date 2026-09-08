@@ -1,0 +1,79 @@
+name: Architecture Enforcement
+
+on:
+  pull_request:
+    paths:
+      - "**/*.py"
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.yml"
+      - "**/*.yaml"
+      - "**/*.json"
+      - "**/*.toml"
+      - "**/*.sh"
+      - "**/.env*"
+      - ".cursor/rules/architecture-ci-enforcement.mdc"
+      - "scripts/ci/audit_architecture_phase3.py"
+      - "scripts/ci/test_audit_architecture_phase3.py"
+      - "scripts/ci/architecture_phase3_exceptions.json"
+      - ".github/workflows/architecture-enforcement.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.py"
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.yml"
+      - "**/*.yaml"
+      - "**/*.json"
+      - "**/*.toml"
+      - "**/*.sh"
+      - "**/.env*"
+      - ".cursor/rules/architecture-ci-enforcement.mdc"
+      - "scripts/ci/audit_architecture_phase3.py"
+      - "scripts/ci/test_audit_architecture_phase3.py"
+      - "scripts/ci/architecture_phase3_exceptions.json"
+      - ".github/workflows/architecture-enforcement.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  architecture-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Test architecture gate
+        run: python -m unittest scripts/ci/test_audit_architecture_phase3.py -v
+
+      - name: Resolve comparison base
+        id: base
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+          fi
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            BASE="$(git rev-parse HEAD^)"
+          fi
+          echo "sha=$BASE" >> "$GITHUB_OUTPUT"
+          echo "Comparing $BASE..HEAD"
+
+      - name: Enforce Phase 3 architecture gates
+        run: python scripts/ci/audit_architecture_phase3.py --check --base "${{ steps.base.outputs.sha }}"
