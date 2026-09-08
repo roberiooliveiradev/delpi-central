@@ -1940,16 +1940,92 @@
   font-size: var(--pp-font-md);
 }
 
+.pp-firmware-link-canvas-wrap {
+  --pp-flow-controls-bg: var(--pp-surface);
+  --pp-flow-controls-border: var(--pp-border);
+  --pp-flow-controls-fg: var(--pp-text);
+  --pp-flow-controls-hover: color-mix(in srgb, var(--pp-accent) 10%, var(--pp-surface));
+  --pp-flow-handle-bg: var(--pp-accent);
+  --pp-flow-handle-border: var(--pp-surface);
+}
+
+.pp-firmware-link-canvas-wrap[data-color-mode="dark"] {
+  --pp-flow-controls-bg: color-mix(in srgb, var(--pp-surface) 88%, black);
+  --pp-flow-controls-border: rgba(148, 163, 184, 0.28);
+  --pp-flow-controls-fg: rgba(226, 232, 240, 0.92);
+  --pp-flow-controls-hover: color-mix(in srgb, var(--pp-accent) 22%, #0f172a);
+  --pp-flow-handle-border: color-mix(in srgb, var(--pp-surface) 70%, black);
+}
+
 .pp-firmware-link-canvas {
   height: min(70vh, 640px);
   width: 100%;
   border: 1px solid var(--pp-border);
   border-radius: var(--pp-card-radius);
   background: var(--pp-canvas);
+  overflow: hidden;
+}
+
+.pp-firmware-link-canvas .react-flow {
+  background: transparent;
 }
 
 .pp-firmware-link-canvas .react-flow__node {
   font-size: var(--pp-font-sm);
+}
+
+.pp-firmware-link-canvas .react-flow__controls {
+  display: flex;
+  flex-direction: column;
+  margin: 12px !important;
+  padding: 0;
+  border: 1px solid var(--pp-flow-controls-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+  background: var(--pp-flow-controls-bg);
+}
+
+.pp-firmware-link-canvas .react-flow__controls-button {
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--pp-flow-controls-border);
+  border-radius: 0;
+  background: var(--pp-flow-controls-bg) !important;
+  color: var(--pp-flow-controls-fg) !important;
+  fill: currentColor !important;
+}
+
+.pp-firmware-link-canvas .react-flow__controls-button:last-child {
+  border-bottom: 0;
+}
+
+.pp-firmware-link-canvas .react-flow__controls-button:hover {
+  background: var(--pp-flow-controls-hover) !important;
+}
+
+.pp-firmware-link-canvas .react-flow__controls-button svg {
+  max-width: 14px;
+  max-height: 14px;
+  fill: currentColor !important;
+  color: inherit;
+}
+
+.pp-firmware-link-canvas .react-flow__controls-button path {
+  fill: currentColor !important;
+}
+
+.pp-firmware-link-canvas .react-flow__handle {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--pp-flow-handle-border);
+  background: var(--pp-flow-handle-bg);
+}
+
+.pp-firmware-link-canvas .react-flow__attribution {
+  display: none;
 }
 
 .pp-firmware-node,
@@ -1960,6 +2036,12 @@
   background: var(--pp-surface);
   color: var(--pp-text);
   min-width: 140px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.pp-firmware-link-canvas-wrap[data-color-mode="dark"] .pp-firmware-node,
+.pp-firmware-link-canvas-wrap[data-color-mode="dark"] .pp-device-node {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .pp-firmware-node {

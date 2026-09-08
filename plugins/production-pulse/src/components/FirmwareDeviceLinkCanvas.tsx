@@ -15,6 +15,7 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { useDelpiDarkMode } from "@delpi/plugin-ui/index";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
 import { putDeviceFirmwareLink } from "../api/productionPulseApi";
@@ -93,6 +94,8 @@ function FirmwareDeviceLinkCanvasInner({
   canManage,
   onLinked,
 }: FirmwareDeviceLinkCanvasProps) {
+  const isDark = useDelpiDarkMode();
+  const colorMode = isDark ? "dark" : "light";
   const graph = useMemo(
     () => buildFirmwareLinkGraph({ families, devices }),
     [families, devices],
@@ -201,7 +204,7 @@ function FirmwareDeviceLinkCanvasInner({
   }
 
   return (
-    <div className="pp-firmware-link-canvas-wrap">
+    <div className="pp-firmware-link-canvas-wrap" data-color-mode={colorMode}>
       {error ? <PpStateBox variant="error" title="Conexão" message={error} /> : null}
       {!canManage ? (
         <PpStateBox
@@ -220,6 +223,7 @@ function FirmwareDeviceLinkCanvasInner({
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
+          colorMode={colorMode}
           onNodesChange={onNodesChange}
           onEdgesChange={() => undefined}
           onConnect={(c) => void onConnect(c)}
@@ -230,8 +234,13 @@ function FirmwareDeviceLinkCanvasInner({
           fitView
           proOptions={{ hideAttribution: true }}
         >
-          <Background variant={BackgroundVariant.Dots} gap={18} size={1} />
-          <Controls showInteractive={false} />
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={18}
+            size={1}
+            color={isDark ? "rgba(148, 163, 184, 0.28)" : "rgba(100, 116, 139, 0.35)"}
+          />
+          <Controls showInteractive={false} position="bottom-left" />
         </ReactFlow>
       </div>
     </div>
