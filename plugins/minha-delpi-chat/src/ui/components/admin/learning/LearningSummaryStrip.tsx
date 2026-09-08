@@ -71,7 +71,7 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
     },
     {
       key: "ft",
-      title: "Amostras (ajuste fino)",
+      title: "Amostras (dataset)",
       value: formatMetricNumber(
         summary.highlights.fineTuningSamplesApproved ?? summary.fineTuning?.samplesApproved ?? 0,
       ),

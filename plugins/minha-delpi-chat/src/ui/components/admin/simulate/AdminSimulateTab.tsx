@@ -6,6 +6,8 @@ import type { ChatAgent } from "../../../../data/api/chatTypes";
 import { simulateAdminAgent } from "../../../../data/api/adminApi";
 import type { AdminAgentSimulateResponse } from "../../../../data/api/adminTypes";
 import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
+import { buildChatAgentConfigHref } from "../../../../navigation/chatRoutes";
+import { navigateChatHref } from "../../../../navigation/chatNavigation";
 
 import {
   ChatAdminNativeSelectField,
@@ -14,6 +16,7 @@ import {
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { SimulateSummaryStrip } from "./SimulateSummaryStrip";
 import { computeSimulateSummary } from "./simulateSummary";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 
 import "./AdminSimulateTab.css";
 
@@ -99,9 +102,19 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
         eyebrow="Agentes"
         title="Simulação completa do agente"
         description="Valide prompt final, diretrizes, RAG e ferramentas previstas antes de publicar alterações."
+        helpHint={ADMIN_HELP.simulation}
         summary={<SimulateSummaryStrip summary={summary} />}
         actions={
           <div className="mdc-admin-simulate__toolbar-actions">
+            {agentId ? (
+              <button
+                type="button"
+                className="mdc-chat-ws-outline-btn"
+                onClick={() => navigateChatHref(buildChatAgentConfigHref(agentId))}
+              >
+                Abrir Studio
+              </button>
+            ) : null}
             <button
               type="button"
               className="mdc-chat-ws-outline-btn"

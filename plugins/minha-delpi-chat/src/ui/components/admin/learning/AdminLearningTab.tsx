@@ -5,6 +5,7 @@ import {
   approveAdminFineTuningDataset,
   createAdminFineTuningDataset,
   exportAdminFineTuningDataset,
+  getAdminChatLearningPipelineSettings,
   getAdminLearningSummary,
   createAdminEvaluationCase,
   listAdminEvaluationCases,
@@ -146,6 +147,9 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
   const [ftDatasetName, setFtDatasetName] = useState("");
   const [ftDatasetDescription, setFtDatasetDescription] = useState("");
   const [ftSelectedDatasetId, setFtSelectedDatasetId] = useState<number | null>(null);
+  const [fineTuningMode, setFineTuningMode] = useState<"ollama" | "export_only" | string | null>(
+    null,
+  );
   const [summary, setSummary] = useState<AdminLearningSummary | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
@@ -237,20 +241,28 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
     setError(null);
 
     try {
-      const [samplesRes, datasetsRes] = await Promise.all([
+      const [samplesRes, datasetsRes, pipelineSettings] = await Promise.all([
         listAdminFineTuningSamples(
           { status: ftSampleStatusFilter || undefined, limit: 100 },
           { getAccessToken },
         ),
         listAdminFineTuningDatasets({ getAccessToken }),
+        getAdminChatLearningPipelineSettings({ getAccessToken }).catch(() => null),
       ]);
       setFtSamples(samplesRes.items);
       setFtDatasets(datasetsRes.items);
       setFtSelectedDatasetId(
         (prev) => prev ?? (datasetsRes.items[0]?.id != null ? datasetsRes.items[0].id : null),
       );
+      if (pipelineSettings?.fineTuningMode) {
+        setFineTuningMode(pipelineSettings.fineTuningMode);
+      } else if (pipelineSettings?.supportsLocalFineTuneDeploy === false) {
+        setFineTuningMode("export_only");
+      } else if (pipelineSettings?.supportsLocalFineTuneDeploy === true) {
+        setFineTuningMode("ollama");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar ajuste fino.");
+      setError(err instanceof Error ? err.message : "Erro ao carregar dataset de treino.");
     } finally {
       setIsLoading(false);
     }
@@ -977,6 +989,13 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
         <div className="mdc-admin-learning__layout mdc-admin-split">
           <aside className="mdc-admin-split__aside mdc-admin-panel">
             <h3 className="mdc-admin-learning__subtitle">Datasets</h3>
+            {fineTuningMode === "export_only" ? (
+              <aside className="mdc-admin-learning__error" role="note">
+                Neste ambiente o provedor LLM é <strong>somente exportação</strong> (sem deploy
+                local). Use a captura e o botão Exportar JSONL; treinar/deploy exige Ollama ou
+                pipeline externo.
+              </aside>
+            ) : null}
             <label className="mdc-admin-field">
               <span>Nome</span>
               <ChatNativeTextInput

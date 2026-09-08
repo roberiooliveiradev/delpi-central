@@ -28,7 +28,7 @@ describe("adminNavigation", () => {
   it("monta href de qualidade/métricas", () => {
     expect(
       buildAdminHref({ section: "quality", subTab: "metrics" }),
-    ).toBe("/apps/minha-delpi-chat/admin/qualidade/metricas");
+    ).toBe("/apps/minha-delpi-chat/admin/qualidade/metricas/visao-geral");
   });
 
   it("parseia segmentos de conhecimento", () => {

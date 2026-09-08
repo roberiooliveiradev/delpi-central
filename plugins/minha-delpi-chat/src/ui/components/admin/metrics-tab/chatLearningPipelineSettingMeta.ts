@@ -24,8 +24,9 @@ export const CHAT_LEARNING_PIPELINE_SECTIONS: AdminBundleSectionMeta[] = [
   },
   {
     id: "finetuning",
-    title: "Ajuste fino offline",
-    description: "Captura de amostras positivas para datasets de fine-tuning.",
+    title: "Dataset de treino (export)",
+    description:
+      "Captura de amostras para exportação JSONL. Deploy local só com provedor Ollama.",
   },
 ];
 
@@ -173,18 +174,18 @@ export const CHAT_LEARNING_PIPELINE_TOGGLE_META: Record<
     qualityWhenEnabled: "higher",
   },
   learningFineTuningEnabled: {
-    title: "Pipeline de ajuste fino",
-    summary: "Permite captura e datasets para treino offline.",
-    pros: ["Base para modelo especializado da empresa."],
-    cons: ["Infra de treino (webhook, Ollama) fica no Docker."],
+    title: "Pipeline de dataset de treino",
+    summary: "Permite captura e datasets para exportação / treino offline.",
+    pros: ["Base para curadoria de amostras da empresa."],
+    cons: ["Com Kimi/OpenRouter o modo é só export — sem deploy local."],
     speedWhenEnabled: "neutral",
     qualityWhenEnabled: "neutral",
   },
   learningFineTuningCapturePositiveFeedback: {
     title: "Captura em feedback positivo",
     summary: "Salva par pergunta/resposta quando o usuário aprova a resposta.",
-    pros: ["Amostras de alta qualidade para fine-tuning."],
-    cons: ["Volume baixo; requer curadoria na aba Ajuste fino."],
+    pros: ["Amostras de alta qualidade para dataset."],
+    cons: ["Volume baixo; requer curadoria na aba Dataset de treino."],
     speedWhenEnabled: "neutral",
     qualityWhenEnabled: "neutral",
   },

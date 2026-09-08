@@ -44,11 +44,36 @@ class SaveAdminChatVisionSettingsUseCase(_BundleSaveUseCase):
 
 
 class GetAdminChatLearningPipelineSettingsUseCase(_BundleGetUseCase):
-    pass
+    def execute(self) -> dict:
+        payload = dict(self.service.to_dict())
+        from app.composition.fine_tuning_model_composer import make_fine_tuning_model_gateway
+
+        gateway = make_fine_tuning_model_gateway()
+        supports_local = bool(gateway.supports_local_deploy())
+        payload["supportsLocalFineTuneDeploy"] = supports_local
+        payload["fineTuningMode"] = "ollama" if supports_local else "export_only"
+        return payload
 
 
 class SaveAdminChatLearningPipelineSettingsUseCase(_BundleSaveUseCase):
-    pass
+    def execute(self, payload: dict) -> dict:
+        if not isinstance(payload, dict):
+            raise ValueError("payload must be an object")
+
+        # Capability fields are read-only; strip if client echoes them.
+        sanitized = {
+            key: value
+            for key, value in payload.items()
+            if key not in {"supportsLocalFineTuneDeploy", "fineTuningMode", "source", "defaults"}
+        }
+        result = dict(self.service.save(sanitized))
+        from app.composition.fine_tuning_model_composer import make_fine_tuning_model_gateway
+
+        gateway = make_fine_tuning_model_gateway()
+        supports_local = bool(gateway.supports_local_deploy())
+        result["supportsLocalFineTuneDeploy"] = supports_local
+        result["fineTuningMode"] = "ollama" if supports_local else "export_only"
+        return result
 
 
 def make_response_mode_settings_service() -> ChatAdminSettingsBundleService:

@@ -233,6 +233,7 @@ export function ChatAdminPage({
               isRefreshing={admin.isLoading}
               getAccessToken={getAccessToken}
               onNavigate={navigateTo}
+              page={nav.page}
             />
           ) : null}
 

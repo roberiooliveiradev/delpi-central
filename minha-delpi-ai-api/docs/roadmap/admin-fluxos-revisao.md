@@ -197,16 +197,18 @@ O admin Delpi já tem as **peças**; a IA ainda parece **inventário de playbook
 
 ---
 
-## 6. Backlog futuro (documentado — não executar nesta entrega)
+## 6. Backlog e status de implementação
 
-Ordem sugerida quando houver implementação:
+Ordem canônica e status (set/2026 — implementação):
 
-1. **Studio de agente** — unificar builder + especialização admin + logs de tools.
-2. **Observe** — home de Qualidade atenção-primeiro + drill-down (APIs permanecem).
-3. **Fine-tune honesto** — esconder/relabel na sidebar se `supports_local_deploy` for falso.
-4. **Ajuda in-app** do admin + aliases EN de paths novos (PT legado com dual parse).
-5. **Kit UI** e higiene de legado (`AdminLegacyTab`) em ondas posteriores.
-6. **RBAC perfis formais no core-api** — já pendente em [melhorias-futuras.md](./melhorias-futuras.md) (fora deste bounded context).
+| # | Onda | Status |
+|---|------|--------|
+| 1 | **Studio de agente** — especialização no builder + catálogo admin + logs de action no Studio | **Entregue (MVP)** |
+| 2 | **Observe** — métricas com visão geral + drill-down na sidebar | **Entregue (MVP)** |
+| 3 | **Fine-tune honesto** — `fineTuningMode` / `supportsLocalFineTuneDeploy` + copy Dataset de treino | **Entregue (MVP)** |
+| 4 | **Ajuda in-app** do admin (`adminHelpTooltips` + `AdminTabHeader.helpHint`) | **Entregue (MVP)**; aliases EN de paths = backlog |
+| 5 | Kit UI / higiene `AdminLegacyTab` | Backlog |
+| 6 | RBAC perfis formais no `core-api` | Fora deste bounded context |
 
 Regras de qualquer onda futura de código:
 

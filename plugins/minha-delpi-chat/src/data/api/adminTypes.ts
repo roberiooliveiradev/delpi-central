@@ -377,6 +377,10 @@ export type AdminChatLearningPipelineSettingsPayload = {
 export type AdminChatLearningPipelineSettings = AdminChatLearningPipelineSettingsPayload & {
   source?: "admin" | "defaults" | string;
   defaults: AdminChatLearningPipelineSettingsPayload;
+  /** Read-only: gateway atual permite create/deploy local (Ollama). */
+  supportsLocalFineTuneDeploy?: boolean;
+  /** Read-only: ollama | export_only */
+  fineTuningMode?: "ollama" | "export_only" | string;
 };
 
 export type AdminMetricsTimeseriesBucket = {

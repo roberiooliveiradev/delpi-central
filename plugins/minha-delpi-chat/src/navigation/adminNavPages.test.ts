@@ -8,4 +8,11 @@ describe("adminNavPages", () => {
     expect(nestedPageFromSlug("learning", "ajuste-fino")).toBe("finetuning");
     expect(defaultPageForSubTab("learning")).toBe("pipeline");
   });
+
+  it("resolve páginas aninhadas de métricas (Observe)", () => {
+    expect(defaultPageForSubTab("metrics")).toBe("overview");
+    expect(nestedPageSlug("metrics", "overview")).toBe("visao-geral");
+    expect(nestedPageFromSlug("metrics", "custo")).toBe("cost");
+    expect(nestedPageFromSlug("metrics", "sql")).toBe("sql");
+  });
 });

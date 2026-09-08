@@ -6,6 +6,12 @@
 | `presentation_vocabulary.json` | `minha-delpi-ai-api/app/content/pt-BR/assistant/presentation_vocabulary.json` |
 | `message_composer.json` | `minha-delpi-ai-api/app/content/pt-BR/assistant/message_composer.json` |
 
+## Ajuda do admin (MFE)
+
+| Arquivo | Uso |
+|---------|-----|
+| `adminHelpTooltips.ts` | Textos PT de Ajuda do console admin (`HelpTooltip` via `AdminTabHeader.helpHint`) |
+
 Após alterar o JSON na API, sincronize no MFE:
 
 ```bash

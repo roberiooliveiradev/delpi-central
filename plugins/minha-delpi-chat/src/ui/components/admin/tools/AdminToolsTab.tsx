@@ -10,7 +10,6 @@ import {
   listChatActions,
   listChatAgentActions,
   listChatAgentActionProviders,
-  listChatAgentActionTestLogs,
   listChatAgents,
 } from "../../../../data/api/chatApi";
 import type {
@@ -25,9 +24,10 @@ import type {
   ChatAgent,
   ChatAgentAction,
   ChatAgentActionProvider,
-  ChatActionTestLog,
   ChatCapabilities,
 } from "../../../../data/api/chatTypes";
+import { buildChatAgentActionsHref } from "../../../../navigation/chatRoutes";
+import { navigateChatHref } from "../../../../navigation/chatNavigation";
 
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { ChatAdminNativeSelectField } from "../shared/chatAdminFormFields";
@@ -36,6 +36,7 @@ import { ChatResponseModeSettingsPanel } from "../metrics-tab/ChatResponseModeSe
 import { ChatVisionSettingsPanel } from "../metrics-tab/ChatVisionSettingsPanel";
 import { ToolsSummaryStrip } from "./ToolsSummaryStrip";
 import { computeToolsSummary } from "./toolsSummary";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 
 import "./AdminToolsTab.css";
 
@@ -74,10 +75,7 @@ export function AdminToolsTab({
   const [selectedAgentId, setSelectedAgentId] = useState("");
   const [agentProviders, setAgentProviders] = useState<ChatAgentActionProvider[]>([]);
   const [agentActions, setAgentActions] = useState<ChatAgentAction[]>([]);
-  const [selectedAgentActionKey, setSelectedAgentActionKey] = useState("");
-  const [actionLogs, setActionLogs] = useState<ChatActionTestLog[]>([]);
   const [isLoadingAgentTools, setIsLoadingAgentTools] = useState(false);
-  const [isLoadingActionLogs, setIsLoadingActionLogs] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -127,49 +125,10 @@ export function AdminToolsTab({
     void loadTools();
   }, []);
 
-  async function loadActionLogs(value: string) {
-    setSelectedAgentActionKey(value);
-    setActionLogs([]);
-
-    if (!selectedAgentId || !value) {
-      return;
-    }
-
-    const [providerKey, actionId] = value.split("::");
-
-    if (!providerKey || !actionId) {
-      return;
-    }
-
-    setIsLoadingActionLogs(true);
-    setError(null);
-
-    try {
-      const logs = await listChatAgentActionTestLogs(
-        selectedAgentId,
-        providerKey,
-        actionId,
-        { getAccessToken },
-      );
-
-      setActionLogs(logs);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Erro ao carregar logs recentes da ação.",
-      );
-    } finally {
-      setIsLoadingActionLogs(false);
-    }
-  }
-
   async function loadAgentTools(agentId: string) {
     setSelectedAgentId(agentId);
     setAgentProviders([]);
     setAgentActions([]);
-    setSelectedAgentActionKey("");
-    setActionLogs([]);
 
     if (!agentId) {
       return;
@@ -242,8 +201,9 @@ export function AdminToolsTab({
         className="mdc-admin-tools-tab__toolbar"
         eyebrow="Plataforma"
         title="Ferramentas e integrações"
-        description="Provedor LLM, saúde operacional e catálogo de ações por agente."
+        description="Provedor LLM, saúde operacional e catálogo OpenAPI. Testes e logs de action ficam no Studio do agente."
         summary={<ToolsSummaryStrip summary={toolsSummary} />}
+        helpHint={ADMIN_HELP.tools}
         actions={
           <button
             type="button"
@@ -400,7 +360,7 @@ export function AdminToolsTab({
 
         {isLoadingAgentTools ? <p>Carregando tools do agente...</p> : null}
 
-        {selectedAgentId && !isLoadingAgentTools ? (
+            {selectedAgentId && !isLoadingAgentTools ? (
           <>
             <div className="mdc-admin-tools-tab__agent-grid">
               <section>
@@ -469,67 +429,20 @@ export function AdminToolsTab({
               </section>
             </div>
 
-            <section className="mdc-admin-tools-tab__logs">
-              <div>
-                <h4>Logs recentes por action</h4>
-                <p>Consulte os últimos testes registrados para uma action vinculada ao agente.</p>
-              </div>
-
-              <ChatAdminNativeSelectField
-                id="admin-tools-action-logs"
-                label="Action"
-                span={false}
-                className="mdc-admin-tools-tab__agent-select"
-                value={selectedAgentActionKey}
-                disabled={!canManageTools || agentActions.length === 0}
-                placeholderOption="Selecione uma action"
-                options={agentActions.map((action) => ({
-                  value: `${action.providerKey}::${action.actionId}`,
-                  label: `${action.providerKey} · ${action.actionId}`,
-                }))}
-                onChange={(value) => {
-                  void loadActionLogs(value);
-                }}
-              />
-
-              {isLoadingActionLogs ? <p>Carregando logs...</p> : null}
-
-              {!isLoadingActionLogs && selectedAgentActionKey && actionLogs.length === 0 ? (
-                <p>Nenhum log recente retornado para esta action.</p>
-              ) : null}
-
-              {actionLogs.length > 0 ? (
-                <div className="mdc-admin-entity-list mdc-admin-tools-tab__entity-list">
-                  {actionLogs.map((log) => (
-                    <article key={log.id} className="mdc-admin-entity-row">
-                      <div className="mdc-admin-entity-row__body">
-                        <div className="mdc-admin-entity-row__title-line">
-                          <strong>
-                            {log.providerKey} · {log.actionId}
-                          </strong>
-                          <span
-                            className={`mdc-admin-badge ${
-                              log.ok ? "mdc-admin-badge--success" : "mdc-admin-badge--danger"
-                            }`}
-                          >
-                            {log.ok ? "Sucesso" : "Erro"} · {log.statusCode ?? "—"}
-                          </span>
-                        </div>
-                        <p className="mdc-admin-entity-row__detail">
-                          {log.durationMs}ms ·{" "}
-                          {log.createdAt
-                            ? new Date(log.createdAt).toLocaleString("pt-BR")
-                            : "sem data"}
-                        </p>
-                        {log.errorMessage ? (
-                          <p className="mdc-admin-entity-row__detail">{log.errorMessage}</p>
-                        ) : null}
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              ) : null}
-            </section>
+            <aside className="mdc-admin-tools-tab__logs" role="note">
+              <h4>Testes e logs de action</h4>
+              <p className="mdc-chat-muted">
+                O histórico e o teste ao vivo ficam no Studio do agente (Actions), para evitar
+                duplicar a jornada de Ferramentas.
+              </p>
+              <button
+                type="button"
+                className="mdc-chat-ws-outline-btn"
+                onClick={() => navigateChatHref(buildChatAgentActionsHref(selectedAgentId))}
+              >
+                Abrir actions no Studio
+              </button>
+            </aside>
           </>
         ) : null}
       </article>

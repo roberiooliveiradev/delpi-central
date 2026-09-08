@@ -62,6 +62,7 @@ import { AdminTextTaskMetrics } from "./AdminTextTaskMetrics";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { ChatAdminNativeSelectField } from "../shared/chatAdminFormFields";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 
 import "./AdminMetricsTab.css";
 
@@ -74,7 +75,54 @@ type AdminMetricsTabProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   /** Navega para Plataforma → Inteligência (config global do pipeline). */
   onNavigate?: (nav: AdminNavState) => void;
+  /** Página aninhada (Observe): overview | cost | intent | … */
+  page?: string;
 };
+
+type MetricsView =
+  | "overview"
+  | "cost"
+  | "quality"
+  | "intent"
+  | "interactivity"
+  | "feedback"
+  | "errors"
+  | "presentation"
+  | "memory"
+  | "text"
+  | "web"
+  | "typing"
+  | "drawing"
+  | "vision"
+  | "sql"
+  | "operations";
+
+const METRICS_VIEWS: MetricsView[] = [
+  "overview",
+  "cost",
+  "quality",
+  "intent",
+  "interactivity",
+  "feedback",
+  "errors",
+  "presentation",
+  "memory",
+  "text",
+  "web",
+  "typing",
+  "drawing",
+  "vision",
+  "sql",
+  "operations",
+];
+
+function resolveMetricsView(page?: string): MetricsView {
+  if (page && METRICS_VIEWS.includes(page as MetricsView)) {
+    return page as MetricsView;
+  }
+
+  return "overview";
+}
 
 function formatPercent(value?: number | null): string {
   if (typeof value !== "number") {
@@ -294,7 +342,9 @@ export function AdminMetricsTab({
   isRefreshing = false,
   getAccessToken,
   onNavigate,
+  page,
 }: AdminMetricsTabProps) {
+  const metricsView = resolveMetricsView(page);
   const [timeseries, setTimeseries] = useState<AdminMetricsTimeseriesResponse | null>(null);
   const [costTable, setCostTable] = useState<AdminLlmCostTableEntry[]>([]);
   const [isSavingCostTable, setIsSavingCostTable] = useState(false);
@@ -620,7 +670,8 @@ export function AdminMetricsTab({
         className="mdc-admin-metrics-tab__header"
         eyebrow="Qualidade"
         title="Observabilidade do Minha DELPI Chat"
-        description="Acompanhe uso, erros, ferramentas, custos LLM, assertividade RAG e distribuição por agente e usuário."
+        description="Visão geral com fila de atenção; use a sidebar para drill-down por família (APIs de summary permanecem)."
+        helpHint={ADMIN_HELP.metrics}
         actions={
           <div className="mdc-admin-metrics-tab__header-actions">
             {onMetricsHoursChange ? (
@@ -653,25 +704,38 @@ export function AdminMetricsTab({
         }
       />
 
-      {onNavigate ? (
-        <aside className="mdc-admin-metrics-tab__intel-callout" role="note">
-          <p>
-            Toggles de RAG, roteador de ferramentas e loop agêntico foram movidos para{" "}
-            <strong>Plataforma → Inteligência</strong> (configuram o pipeline, não são métricas).
-          </p>
-          <button
-            type="button"
-            className="mdc-chat-ws-outline-btn"
-            onClick={() =>
-              onNavigate({ section: "platform", subTab: "intelligence" })
-            }
-          >
-            Abrir inteligência do chat
-          </button>
-        </aside>
-      ) : null}
+      {metricsView === "overview" ? (
+        <>
+          {onNavigate ? (
+            <aside className="mdc-admin-metrics-tab__intel-callout" role="note">
+              <p>
+                Toggles de RAG, roteador de ferramentas e loop agêntico foram movidos para{" "}
+                <strong>Plataforma → Inteligência</strong> (configuram o pipeline, não são métricas).
+              </p>
+              <button
+                type="button"
+                className="mdc-chat-ws-outline-btn"
+                onClick={() =>
+                  onNavigate({ section: "platform", subTab: "intelligence" })
+                }
+              >
+                Abrir inteligência do chat
+              </button>
+            </aside>
+          ) : null}
 
-      <div className="mdc-admin-kpi-grid">
+          <aside className="mdc-admin-metrics-tab__intel-callout" role="status">
+            <p>
+              <strong>Fila de atenção:</strong> taxa de erro{" "}
+              {formatPercent(metricsSummary.errorRate24h)} ·{" "}
+              {formatNumber(
+                qualityIssues.filter((issue) => issue.status !== "resolved").length,
+              )}{" "}
+              issue(s) de qualidade aberta(s) · use a sidebar para drill-down por família de
+              métrica.
+            </p>
+          </aside>
+          <div className="mdc-admin-kpi-grid">
         <article className="mdc-admin-kpi-card">
           <h3>Sessões</h3>
           <strong>{formatNumber(metricsSummary.sessions)}</strong>
@@ -750,148 +814,6 @@ export function AdminMetricsTab({
         </article>
       </div>
 
-      <AdminIntentRoutingMetrics
-        summary={intentRoutingSummary}
-        isLoading={isLoadingIntentRoutingSummary}
-        windowHours={windowLabel}
-      />
-
-      <AdminInteractivityMetrics
-        summary={interactivitySummary}
-        isLoading={isLoadingInteractivitySummary}
-        windowHours={windowLabel}
-      />
-
-      <AdminTypingCorrectionMetrics
-        summary={typingCorrectionSummary}
-        isLoading={isLoadingTypingCorrectionSummary}
-        windowHours={windowLabel}
-      />
-
-      <AdminPresentationMetrics
-        summary={presentationSummary}
-        isLoading={isLoadingPresentationSummary}
-        windowHours={windowLabel}
-      />
-
-      <AdminErrorHandlingMetrics
-        summary={errorHandlingSummary}
-        isLoading={isLoadingErrorHandlingSummary}
-        windowHours={windowLabel}
-      />
-
-      <AdminWebSearchMetrics
-        summary={webSearchSummary}
-        isLoading={isLoadingWebSearchSummary}
-        windowHours={windowLabel}
-      />
-
-      <AdminFeedbackMetrics
-        summary={feedbackSummary}
-        isLoading={isLoadingFeedbackSummary}
-        windowHours={windowLabel}
-      />
-
-      <AdminQualityUnifiedMetrics
-        summary={qualityUnifiedSummary}
-        isLoading={isLoadingQualityUnifiedSummary}
-        windowHours={windowLabel}
-      />
-
-      <AdminQualityOperations
-        latestReport={latestQualityReport}
-        issues={qualityIssues}
-        isLoading={isLoadingQualityOps}
-        isGenerating={isGeneratingQualityReport}
-        onGenerateReport={() => {
-          if (!getAccessToken) {
-            return;
-          }
-
-          setIsGeneratingQualityReport(true);
-
-          void generateWeeklyQualityReport({ getAccessToken }, true)
-            .then((response) => {
-              setLatestQualityReport(response.report);
-              setQualityIssues((current) => [...(response.issuesCreated ?? []), ...current]);
-            })
-            .finally(() => setIsGeneratingQualityReport(false));
-        }}
-        onResolveIssue={(issueId) => {
-          if (!getAccessToken) {
-            return;
-          }
-
-          void updateAdminQualityIssueStatus(issueId, "resolved", { getAccessToken }).then(
-            (updated) => {
-              setQualityIssues((current) =>
-                current.map((issue) => (issue.id === updated.id ? updated : issue)),
-              );
-            },
-          );
-        }}
-      />
-
-      <AdminSessionMemoryMetrics
-        summary={sessionMemorySummary}
-        isLoading={isLoadingSessionMemorySummary}
-        windowHours={windowLabel}
-      />
-
-      <AdminTextTaskMetrics
-        summary={textTaskSummary}
-        isLoading={isLoadingTextTaskSummary}
-        windowHours={windowLabel}
-      />
-
-      <AdminDrawingAnalysisMetrics
-        summary={drawingSummary}
-        isLoading={isLoadingDrawingSummary}
-        windowHours={windowLabel}
-      />
-
-      <AdminDocumentVisionMetrics
-        summary={documentVisionSummary}
-        isLoading={isLoadingDocumentVisionSummary}
-        windowHours={windowLabel}
-      />
-
-      <AdminSqlAdvancedMetrics
-        summary={sqlAdvancedSummary}
-        isLoading={isLoadingSqlAdvancedSummary}
-        windowHours={windowLabel}
-      />
-
-      {effectiveCostTable.length > 0 ? (
-        <CostTablePanel
-          items={effectiveCostTable}
-          editable={Boolean(getAccessToken)}
-          isSaving={isSavingCostTable}
-          onSave={handleSaveCostTable}
-        />
-      ) : null}
-
-      {timeseries && timeseries.buckets.length > 0 ? (
-        <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide">
-          <h3>Série histórica ({timeseries.windowHours}h)</h3>
-          <ul className="mdc-admin-distribution-list mdc-admin-metrics-tab__timeseries">
-            {timeseries.buckets.map((bucket) => (
-              <li key={bucket.start}>
-                <span>
-                  {new Date(bucket.start).toLocaleDateString("pt-BR")} —{" "}
-                  {formatNumber(bucket.auditLogs)} eventos
-                </span>
-                <strong>
-                  {formatCost(bucket.estimatedCost)} · {formatNumber(bucket.tokensUsed)} tokens
-                </strong>
-              </li>
-            ))}
-          </ul>
-        </article>
-      ) : null}
-
-      {costBreakdown.length > 0 ? <CostBreakdownPanel items={costBreakdown} /> : null}
-
       <div className="mdc-admin-metrics-tab__columns">
         <DistributionList
           title="Eventos por ação"
@@ -939,6 +861,211 @@ export function AdminMetricsTab({
           <p>Sem observações adicionais.</p>
         )}
       </article>
+        </>
+      ) : null}
+
+      {metricsView === "intent" ? (
+        <>
+      <AdminIntentRoutingMetrics
+        summary={intentRoutingSummary}
+        isLoading={isLoadingIntentRoutingSummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "interactivity" ? (
+        <>
+      <AdminInteractivityMetrics
+        summary={interactivitySummary}
+        isLoading={isLoadingInteractivitySummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "typing" ? (
+        <>
+      <AdminTypingCorrectionMetrics
+        summary={typingCorrectionSummary}
+        isLoading={isLoadingTypingCorrectionSummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "presentation" ? (
+        <>
+      <AdminPresentationMetrics
+        summary={presentationSummary}
+        isLoading={isLoadingPresentationSummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "errors" ? (
+        <>
+      <AdminErrorHandlingMetrics
+        summary={errorHandlingSummary}
+        isLoading={isLoadingErrorHandlingSummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "web" ? (
+        <>
+      <AdminWebSearchMetrics
+        summary={webSearchSummary}
+        isLoading={isLoadingWebSearchSummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "feedback" ? (
+        <>
+      <AdminFeedbackMetrics
+        summary={feedbackSummary}
+        isLoading={isLoadingFeedbackSummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "quality" ? (
+        <>
+      <AdminQualityUnifiedMetrics
+        summary={qualityUnifiedSummary}
+        isLoading={isLoadingQualityUnifiedSummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "operations" ? (
+        <>
+      <AdminQualityOperations
+        latestReport={latestQualityReport}
+        issues={qualityIssues}
+        isLoading={isLoadingQualityOps}
+        isGenerating={isGeneratingQualityReport}
+        onGenerateReport={() => {
+          if (!getAccessToken) {
+            return;
+          }
+
+          setIsGeneratingQualityReport(true);
+
+          void generateWeeklyQualityReport({ getAccessToken }, true)
+            .then((response) => {
+              setLatestQualityReport(response.report);
+              setQualityIssues((current) => [...(response.issuesCreated ?? []), ...current]);
+            })
+            .finally(() => setIsGeneratingQualityReport(false));
+        }}
+        onResolveIssue={(issueId) => {
+          if (!getAccessToken) {
+            return;
+          }
+
+          void updateAdminQualityIssueStatus(issueId, "resolved", { getAccessToken }).then(
+            (updated) => {
+              setQualityIssues((current) =>
+                current.map((issue) => (issue.id === updated.id ? updated : issue)),
+              );
+            },
+          );
+        }}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "memory" ? (
+        <>
+      <AdminSessionMemoryMetrics
+        summary={sessionMemorySummary}
+        isLoading={isLoadingSessionMemorySummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "text" ? (
+        <>
+      <AdminTextTaskMetrics
+        summary={textTaskSummary}
+        isLoading={isLoadingTextTaskSummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "drawing" ? (
+        <>
+      <AdminDrawingAnalysisMetrics
+        summary={drawingSummary}
+        isLoading={isLoadingDrawingSummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "vision" ? (
+        <>
+      <AdminDocumentVisionMetrics
+        summary={documentVisionSummary}
+        isLoading={isLoadingDocumentVisionSummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "sql" ? (
+        <>
+      <AdminSqlAdvancedMetrics
+        summary={sqlAdvancedSummary}
+        isLoading={isLoadingSqlAdvancedSummary}
+        windowHours={windowLabel}
+      />
+        </>
+      ) : null}
+
+      {metricsView === "cost" ? (
+        <>
+      {effectiveCostTable.length > 0 ? (
+        <CostTablePanel
+          items={effectiveCostTable}
+          editable={Boolean(getAccessToken)}
+          isSaving={isSavingCostTable}
+          onSave={handleSaveCostTable}
+        />
+      ) : null}
+
+      {timeseries && timeseries.buckets.length > 0 ? (
+        <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide">
+          <h3>Série histórica ({timeseries.windowHours}h)</h3>
+          <ul className="mdc-admin-distribution-list mdc-admin-metrics-tab__timeseries">
+            {timeseries.buckets.map((bucket) => (
+              <li key={bucket.start}>
+                <span>
+                  {new Date(bucket.start).toLocaleDateString("pt-BR")} —{" "}
+                  {formatNumber(bucket.auditLogs)} eventos
+                </span>
+                <strong>
+                  {formatCost(bucket.estimatedCost)} · {formatNumber(bucket.tokensUsed)} tokens
+                </strong>
+              </li>
+            ))}
+          </ul>
+        </article>
+      ) : null}
+
+      {costBreakdown.length > 0 ? <CostBreakdownPanel items={costBreakdown} /> : null}
+        </>
+      ) : null}
+
     </section>
   );
 }

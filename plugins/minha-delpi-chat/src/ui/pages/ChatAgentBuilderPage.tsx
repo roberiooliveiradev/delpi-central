@@ -88,7 +88,9 @@ import {
   WorkspaceSourceNoteForm,
 } from "../components/workspace/WorkspaceSourceNote";
 import { AgentMiniDashboard } from "../components/admin/agents/AgentMiniDashboard";
+import { AgentSpecializationEditor } from "../components/admin/agents/AgentSpecializationEditor";
 import "../components/admin/agents/AgentMiniDashboard.css";
+import "../components/admin/agents/AdminAgentsTab.css";
 import {
   ChatAdminNativeSelectField,
   ChatAdminNativeTextAreaField,
@@ -1793,6 +1795,35 @@ export function ChatAgentBuilderPage({
             />
           </section>
 
+          {agent ? (
+            <section
+              id="mdc-agent-studio-specialization"
+              className="mdc-chat-agent-builder__section"
+            >
+              <h2 className="mdc-chat-ws-section-head">Especialização RAG</h2>
+              <p className="mdc-chat-muted">
+                Escopo de conhecimento, diretrizes e tools permitidas para este agente.
+                Mesma configuração do catálogo admin — salva via API de especialização.
+              </p>
+              <AgentSpecializationEditor
+                agentId={agent.id}
+                getAccessToken={getAccessToken}
+                fieldIdPrefix="studio-spec"
+              />
+              {onOpenRagAdmin ? (
+                <p className="mdc-chat-muted">
+                  <button
+                    type="button"
+                    className="mdc-chat-ws-outline-btn"
+                    onClick={() => onOpenRagAdmin(agent.id)}
+                  >
+                    Abrir catálogo admin
+                  </button>
+                </p>
+              ) : null}
+            </section>
+          ) : null}
+
           <section className="mdc-chat-agent-builder__section">
             <h2 className="mdc-chat-ws-section-head">Conhecimento</h2>
 
@@ -1813,17 +1844,7 @@ export function ChatAgentBuilderPage({
                 }
                 onRemoveSource={removeAgentSource}
                 onDownloadSource={downloadAgentSource}
-                headerSlot={
-                  onOpenRagAdmin ? (
-                    <button
-                      type="button"
-                      className="mdc-chat-ws-outline-btn"
-                      onClick={() => onOpenRagAdmin(agent.id)}
-                    >
-                      Especialização RAG (admin)
-                    </button>
-                  ) : null
-                }
+                headerSlot={null}
                 noteSlot={
                   <WorkspaceSourceNoteDetails>
                     <WorkspaceSourceNoteForm

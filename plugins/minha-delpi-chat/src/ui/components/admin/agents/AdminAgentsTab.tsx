@@ -1,27 +1,17 @@
-import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
-import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import { BarChart3, ExternalLink } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getChatAgentStats } from "../../../../data/api/chatApi";
 import { buildChatAgentConfigHref } from "../../../../navigation/chatRoutes";
 import { navigateChatHref } from "../../../../navigation/chatNavigation";
+import { buildAdminAgentHref } from "../../../../navigation/adminNavigation";
 import type { ChatAgentStats } from "../../../../data/api/chatTypes";
-import {
-  getAdminAgentSpecialization,
-  listAdminAgentSpecializationPresets,
-  listAdminSpecializedAgents,
-  saveAdminAgentSpecialization,
-} from "../../../../data/api/adminApi";
-import type {
-  AdminAgentSpecialization,
-  AdminAgentSpecializationPreset,
-  AdminSpecializedAgent,
-} from "../../../../data/api/adminTypes";
+import { listAdminSpecializedAgents } from "../../../../data/api/adminApi";
+import type { AdminSpecializedAgent } from "../../../../data/api/adminTypes";
 
 import { AdminTabHeader } from "../shared/AdminTabHeader";
-import { ChatAdminNativeSelectField } from "../shared/chatAdminFormFields";
 import { AgentMiniDashboard } from "./AgentMiniDashboard";
+import { AgentSpecializationEditor } from "./AgentSpecializationEditor";
 import { AgentsSummaryStrip } from "./AgentsSummaryStrip";
 import {
   computeAgentsSummary,
@@ -29,6 +19,7 @@ import {
   type AgentCatalogFilter,
 } from "./agentsSummary";
 import { agentPrimaryLabel, agentStatusBadge } from "./agentDisplay";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 
 import "./AdminAgentsTab.css";
 
@@ -37,29 +28,15 @@ type AdminAgentsTabProps = {
   initialAgentId?: string | null;
 };
 
-const EMPTY_SPECIALIZATION: AdminAgentSpecialization = {
-  enabled: true,
-  presetKey: "",
-  label: "",
-  domain: "",
-  knowledgeDomains: [],
-  knowledgeNamespaces: [],
-  knowledgeCategories: [],
-  knowledgeTags: [],
-  guidelineCategories: [],
-  allowedTools: [],
-  includeGlobalKnowledge: true,
-};
-
+/**
+ * Catálogo admin de especialização — a edição canônica também vive no Studio
+ * (`ChatAgentBuilderPage` + `AgentSpecializationEditor`).
+ */
 export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTabProps) {
   const [agents, setAgents] = useState<AdminSpecializedAgent[]>([]);
-  const [presets, setPresets] = useState<AdminAgentSpecializationPreset[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [form, setForm] = useState<AdminAgentSpecialization>(EMPTY_SPECIALIZATION);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [agentStats, setAgentStats] = useState<ChatAgentStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [catalogFilter, setCatalogFilter] = useState<AgentCatalogFilter>("all");
@@ -77,97 +54,62 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
     setError(null);
 
     try {
-      const [agentsResponse, presetsResponse] = await Promise.all([
-        listAdminSpecializedAgents({ getAccessToken }),
-        listAdminAgentSpecializationPresets({ getAccessToken }),
-      ]);
+      const agentsResponse = await listAdminSpecializedAgents({ getAccessToken });
+      const items = agentsResponse.items;
+      setAgents(items);
 
-      setAgents(agentsResponse.items);
-      setPresets(presetsResponse.presets);
+      const preferred =
+        (initialAgentId && items.some((agent) => agent.id === initialAgentId)
+          ? initialAgentId
+          : null) ??
+        selectedAgentId ??
+        items[0]?.id ??
+        null;
+
+      if (preferred && preferred !== selectedAgentId) {
+        setSelectedAgentId(preferred);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar agentes.");
     } finally {
       setIsLoading(false);
     }
-  }, [getAccessToken]);
-
-  const loadAgentSpecialization = useCallback(
-    async (agentId: string) => {
-      try {
-        const response = await getAdminAgentSpecialization(agentId, { getAccessToken });
-
-        setForm(
-          response.specialization
-            ? {
-                ...EMPTY_SPECIALIZATION,
-                ...response.specialization,
-              }
-            : { ...EMPTY_SPECIALIZATION, enabled: false },
-        );
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao carregar especialização.");
-      }
-    },
-    [getAccessToken],
-  );
+    // selectedAgentId omitido de propósito — só hidrata na carga / refresh
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getAccessToken, initialAgentId]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
 
   useEffect(() => {
-    if (!initialAgentId || agents.length === 0) {
-      return;
-    }
-
-    const match = agents.find((item) => item.id === initialAgentId);
-
-    if (match) {
-      setSelectedAgentId(match.id);
-      void loadAgentSpecialization(match.id);
-    }
-  }, [agents, initialAgentId, loadAgentSpecialization]);
-
-  useEffect(() => {
     if (!selectedAgentId) {
+      setAgentStats(null);
       return;
     }
 
-    void loadAgentSpecialization(selectedAgentId);
-  }, [loadAgentSpecialization, selectedAgentId]);
+    navigateChatHref(buildAdminAgentHref(selectedAgentId));
 
-  useEffect(() => {
-    let isMounted = true;
+    let cancelled = false;
 
     async function loadStats() {
-      if (!selectedAgentId || !getAccessToken) {
-        setAgentStats(null);
-        return;
-      }
-
       setIsLoadingStats(true);
 
       try {
-        const stats = await getChatAgentStats(selectedAgentId, {
+        const stats = await getChatAgentStats(selectedAgentId!, {
+          hours: 7,
           getAccessToken,
-          hours: 168,
-          specialization: form.enabled
-            ? {
-                enabled: true,
-                allowedTools: form.allowedTools ?? [],
-              }
-            : { enabled: false, allowedTools: [] },
         });
 
-        if (isMounted) {
+        if (!cancelled) {
           setAgentStats(stats);
         }
       } catch {
-        if (isMounted) {
+        if (!cancelled) {
           setAgentStats(null);
         }
       } finally {
-        if (isMounted) {
+        if (!cancelled) {
           setIsLoadingStats(false);
         }
       }
@@ -176,78 +118,9 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
     void loadStats();
 
     return () => {
-      isMounted = false;
+      cancelled = true;
     };
-  }, [form.allowedTools, form.enabled, getAccessToken, selectedAgentId]);
-
-  function applyPreset(presetKey: string) {
-    const preset = presets.find((item) => item.key === presetKey);
-
-    if (!preset) {
-      return;
-    }
-
-    setForm({
-      enabled: true,
-      presetKey: preset.key,
-      label: preset.label,
-      domain: preset.domain,
-      knowledgeDomains: preset.knowledgeDomains ?? [],
-      knowledgeNamespaces: preset.knowledgeNamespaces ?? [],
-      knowledgeCategories: preset.knowledgeCategories ?? [],
-      knowledgeTags: preset.knowledgeTags ?? [],
-      guidelineCategories: preset.guidelineCategories ?? [],
-      allowedTools: preset.allowedTools ?? [],
-      includeGlobalKnowledge: preset.includeGlobalKnowledge ?? true,
-    });
-  }
-
-  function updateListField(
-    key:
-      | "knowledgeDomains"
-      | "knowledgeNamespaces"
-      | "knowledgeCategories"
-      | "knowledgeTags"
-      | "guidelineCategories"
-      | "allowedTools",
-    value: string,
-  ) {
-    setForm((current) => ({
-      ...current,
-      [key]: value
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-    }));
-  }
-
-  async function handleSave() {
-    if (!selectedAgentId) {
-      return;
-    }
-
-    setIsSaving(true);
-    setError(null);
-    setSuccessMessage(null);
-
-    try {
-      await saveAdminAgentSpecialization(
-        {
-          specialization: form.enabled ? form : { enabled: false },
-        },
-        selectedAgentId,
-        { getAccessToken },
-      );
-
-      setSuccessMessage("Especialização do agente salva.");
-      await loadData();
-      await loadAgentSpecialization(selectedAgentId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar especialização.");
-    } finally {
-      setIsSaving(false);
-    }
-  }
+  }, [selectedAgentId, getAccessToken]);
 
   function openAgentBuilder() {
     if (!selectedAgentId) {
@@ -262,8 +135,9 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
       <AdminTabHeader
         className="mdc-admin-agents__toolbar"
         eyebrow="Agentes"
-        title="Agentes especializados"
-        description="Configure domínio, escopo de RAG, diretrizes e ferramentas permitidas por agente oficial. Para identidade, prompt e ações, use o builder do agente."
+        title="Especialização (catálogo)"
+        description="Catálogo de agentes oficiais e atalho para especialização RAG. A ficha completa (identidade, prompt, skills e actions) fica no Studio do agente."
+        helpHint={ADMIN_HELP.specialization}
         summary={
           <AgentsSummaryStrip
             summary={summary}
@@ -289,14 +163,13 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
               onClick={openAgentBuilder}
             >
               <ExternalLink size={15} aria-hidden="true" />
-              <span>Abrir builder</span>
+              <span>Abrir Studio</span>
             </button>
           </div>
         }
       />
 
       {error ? <p className="mdc-admin-agents__error">{error}</p> : null}
-      {successMessage ? <p className="mdc-admin-agents__success">{successMessage}</p> : null}
 
       <div className="mdc-admin-agents__layout mdc-admin-split">
         <aside className="mdc-admin-split__aside mdc-admin-agents__list">
@@ -309,31 +182,31 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
                 : "Nenhum agente neste filtro."}
             </p>
           ) : (
-          <ul>
-            {visibleAgents.map((agent) => {
-              const badge = agentStatusBadge(agent);
+            <ul>
+              {visibleAgents.map((agent) => {
+                const badge = agentStatusBadge(agent);
 
-              return (
-              <li key={agent.id}>
-                <button
-                  type="button"
-                  className={selectedAgentId === agent.id ? "is-selected" : undefined}
-                  onClick={() => setSelectedAgentId(agent.id)}
-                >
-                  <span className="mdc-admin-agents__list-head">
-                    <strong>{agentPrimaryLabel(agent)}</strong>
-                    <span
-                      className={`mdc-admin-agents__badge mdc-admin-agents__badge--${badge.tone}`}
+                return (
+                  <li key={agent.id}>
+                    <button
+                      type="button"
+                      className={selectedAgentId === agent.id ? "is-selected" : undefined}
+                      onClick={() => setSelectedAgentId(agent.id)}
                     >
-                      {badge.label}
-                    </span>
-                  </span>
-                  <code className="mdc-admin-agents__agent-id">{agent.id}</code>
-                </button>
-              </li>
-              );
-            })}
-          </ul>
+                      <span className="mdc-admin-agents__list-head">
+                        <strong>{agentPrimaryLabel(agent)}</strong>
+                        <span
+                          className={`mdc-admin-agents__badge mdc-admin-agents__badge--${badge.tone}`}
+                        >
+                          {badge.label}
+                        </span>
+                      </span>
+                      <code className="mdc-admin-agents__agent-id">{agent.id}</code>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </aside>
 
@@ -377,121 +250,12 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
                 )}
               </div>
 
-              <NativeCheckboxControl
-                className="mdc-admin-agents__toggle"
-                checked={form.enabled}
-                label="Especialização ativa"
-                onChange={(enabled) => setForm((current) => ({ ...current, enabled }))}
+              <AgentSpecializationEditor
+                agentId={selectedAgent.id}
+                getAccessToken={getAccessToken}
+                fieldIdPrefix="admin-agents"
+                onSaved={() => void loadData()}
               />
-
-              {form.enabled ? (
-                <>
-                  <ChatAdminNativeSelectField
-                    id="admin-agents-preset"
-                    label="Preset de domínio"
-                    span={false}
-                    value={form.presetKey ?? ""}
-                    placeholderOption="Personalizado"
-                    options={presets.map((preset) => ({
-                      value: preset.key,
-                      label: preset.label,
-                    }))}
-                    onChange={(value) => {
-                      setForm((current) => ({ ...current, presetKey: value }));
-                      if (value) {
-                        applyPreset(value);
-                      }
-                    }}
-                  />
-
-                  <div className="mdc-admin-agents__grid">
-                    <label>
-                      <span>Rótulo</span>
-                      <ChatNativeTextInput
-                        value={form.label ?? ""}
-                        onChange={(event) =>
-                          setForm((current) => ({ ...current, label: event.target.value }))
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>Domínio</span>
-                      <ChatNativeTextInput
-                        value={form.domain ?? ""}
-                        onChange={(event) =>
-                          setForm((current) => ({ ...current, domain: event.target.value }))
-                        }
-                      />
-                    </label>
-                  </div>
-
-                  <label>
-                    <span>Domínios de conhecimento (vírgula)</span>
-                    <ChatNativeTextInput
-                      value={(form.knowledgeDomains ?? []).join(", ")}
-                      onChange={(event) => updateListField("knowledgeDomains", event.target.value)}
-                    />
-                  </label>
-
-                  <label>
-                    <span>Namespaces (vírgula)</span>
-                    <ChatNativeTextInput
-                      value={(form.knowledgeNamespaces ?? []).join(", ")}
-                      onChange={(event) => updateListField("knowledgeNamespaces", event.target.value)}
-                    />
-                  </label>
-
-                  <label>
-                    <span>Categorias de conhecimento (vírgula)</span>
-                    <ChatNativeTextInput
-                      value={(form.knowledgeCategories ?? []).join(", ")}
-                      onChange={(event) => updateListField("knowledgeCategories", event.target.value)}
-                    />
-                  </label>
-
-                  <label>
-                    <span>Tags de conhecimento (vírgula)</span>
-                    <ChatNativeTextInput
-                      value={(form.knowledgeTags ?? []).join(", ")}
-                      onChange={(event) => updateListField("knowledgeTags", event.target.value)}
-                    />
-                  </label>
-
-                  <label>
-                    <span>Categorias de diretrizes (vírgula)</span>
-                    <ChatNativeTextInput
-                      value={(form.guidelineCategories ?? []).join(", ")}
-                      onChange={(event) => updateListField("guidelineCategories", event.target.value)}
-                    />
-                  </label>
-
-                  <label>
-                    <span>Tools permitidas (vírgula)</span>
-                    <ChatNativeTextInput
-                      value={(form.allowedTools ?? []).join(", ")}
-                      onChange={(event) => updateListField("allowedTools", event.target.value)}
-                    />
-                  </label>
-
-                  <NativeCheckboxControl
-                    className="mdc-admin-agents__toggle"
-                    checked={form.includeGlobalKnowledge ?? true}
-                    label="Incluir base global além do domínio"
-                    onChange={(includeGlobalKnowledge) =>
-                      setForm((current) => ({ ...current, includeGlobalKnowledge }))
-                    }
-                  />
-                </>
-              ) : null}
-
-              <button
-                type="button"
-                className="mdc-admin-btn mdc-admin-btn--primary"
-                disabled={isSaving}
-                onClick={() => void handleSave()}
-              >
-                {isSaving ? "Salvando..." : "Salvar especialização"}
-              </button>
             </>
           )}
         </article>

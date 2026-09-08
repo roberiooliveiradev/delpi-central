@@ -21,6 +21,7 @@ import {
 import { navigateChatHref } from "../../../../navigation/chatNavigation";
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { AdminRbacPanel } from "../rbac/AdminRbacPanel";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 
 import "./AdminOverviewTab.css";
 
@@ -118,13 +119,13 @@ export function AdminOverviewTab({
       title: "Sessões (24h)",
       value: formatNumber(metrics?.sessions),
       detail: `${formatNumber(metrics?.messages)} mensagens`,
-      nav: { section: "quality", subTab: "metrics" },
+      nav: { section: "quality", subTab: "metrics", page: "overview" },
     },
     {
       title: "Erros (24h)",
       value: formatNumber(metrics?.recentErrors24h),
       detail: `Tools: ${formatNumber(metrics?.recentToolCalls24h)} chamadas`,
-      nav: { section: "quality", subTab: "metrics" },
+      nav: { section: "quality", subTab: "metrics", page: "errors" },
     },
     {
       title: "Segurança (24h)",
@@ -174,6 +175,7 @@ export function AdminOverviewTab({
         eyebrow="Painel"
         title="Como está o chat?"
         description="Resumo operacional das últimas 24 horas. Clique nos cards para ir à seção."
+        helpHint={ADMIN_HELP.overview}
       />
 
       {loading ? <p className="mdc-chat-muted">Atualizando indicadores...</p> : null}
