@@ -179,6 +179,22 @@ class ChatTextTaskIntentService:
         r"\bverifique\s+o\s+estoque\b",
     )
 
+    # Substantivos de escopo produto — «resumo executivo» + estes = mixed, não text_task puro.
+    _PRODUCT_OPERATIONAL_SCOPE_PATTERNS = (
+        r"\bestrutura\b",
+        r"\bestoque\b",
+        r"\bsaldo\b",
+        r"\bpedidos?\b",
+        r"\bcarteira\b",
+        r"\bopen[- ]?orders?\b",
+        r"\boteiro\b",
+        r"\binspe[cç][aã]o\b",
+        r"\bficha\b",
+        r"\bcadastro\b",
+        r"\banaly[sz]er\b",
+        r"\bvis[aã]o\s+integrada\b",
+    )
+
     _MIXED_CONNECTORS = (
         " e escreva",
         " e redija",
@@ -376,13 +392,14 @@ class ChatTextTaskIntentService:
         if any(re.search(pattern, normalized) for pattern in cls._OPERATIONAL_COMMAND_PATTERNS):
             return False
 
-        if ChatProductQueryIntentService.extract_product_code(message) and category not in {
-            "correct",
-            "rewrite",
-            "translate",
-            "summarize",
-            "simplify",
-        }:
+        # Código de produto + pedido de consulta/consolidação operacional não é redação pura
+        # (ex.: «estrutura, estoque e resumo executivo do 9026…»). Correção/tradução de
+        # texto que cita um código continua pure.
+        if ChatProductQueryIntentService.extract_product_code(message):
+            if category in {"correct", "rewrite", "translate"}:
+                return True
+            if category in {"summarize", "simplify", "report", "structure", "organize"}:
+                return False
             return False
 
         return True
@@ -397,14 +414,29 @@ class ChatTextTaskIntentService:
         has_operational = any(
             re.search(pattern, normalized) for pattern in cls._OPERATIONAL_COMMAND_PATTERNS
         )
+        has_product_code = bool(ChatProductQueryIntentService.extract_product_code(message))
+        has_product_scope_nouns = any(
+            re.search(pattern, normalized)
+            for pattern in cls._PRODUCT_OPERATIONAL_SCOPE_PATTERNS
+        )
 
-        if not has_operational:
+        if not has_operational and not (has_product_code and has_product_scope_nouns):
             return False
 
         if any(connector in normalized for connector in cls._MIXED_CONNECTORS):
             return True
 
         if cls.classify(message) and not cls._starts_with_text_lead(normalized):
+            return True
+
+        if has_product_code and has_product_scope_nouns and cls.classify(message) in {
+            "summarize",
+            "simplify",
+            "report",
+            "structure",
+            "organize",
+            "write",
+        }:
             return True
 
         return False
@@ -415,6 +447,13 @@ class ChatTextTaskIntentService:
             return False
 
         if any(connector in normalized for connector in cls._MIXED_CONNECTORS):
+            return False
+
+        # Pedido com código + escopos operacionais (estrutura/estoque/OV) não é só redação.
+        if ChatProductQueryIntentService.extract_product_code(normalized) and any(
+            re.search(pattern, normalized)
+            for pattern in cls._PRODUCT_OPERATIONAL_SCOPE_PATTERNS
+        ):
             return False
 
         if category not in {

@@ -99,3 +99,30 @@ def test_production_operational_resumo_is_not_pure_text_task():
         )
         is False
     )
+
+
+def test_executive_summary_with_product_scopes_is_not_pure():
+    """C2-like: resumo executivo + estrutura/estoque/OV não pula tools."""
+    message = (
+        "Para o produto 90260149, traga numa resposta só: (1) estrutura de produto, "
+        "(2) saldo de estoque por filial e (3) pedidos em aberto. "
+        "Consolide com tabelas e um resumo executivo."
+    )
+
+    assert ChatTextTaskIntentService.classify(message) == "summarize"
+    assert ChatTextTaskIntentService.is_mixed_text_and_operational(message) is True
+    assert ChatTextTaskIntentService.is_pure_text_task(message) is False
+
+
+def test_pure_summarize_paragraph_without_product_stays_pure():
+    message = "Resuma este parágrafo em três bullets: A empresa cresceu 10% no trimestre."
+
+    assert ChatTextTaskIntentService.classify(message) == "summarize"
+    assert ChatTextTaskIntentService.is_pure_text_task(message) is True
+
+
+def test_email_with_product_code_correction_stays_pure_when_linguistic():
+    message = "Corrija: o produto 10080001 esta com estoque baixo no texto abaixo."
+
+    assert ChatTextTaskIntentService.classify(message) == "correct"
+    assert ChatTextTaskIntentService.is_pure_text_task(message) is True
