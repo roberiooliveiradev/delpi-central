@@ -10,6 +10,7 @@ import { ResponsiveContainer } from "recharts";
 import {
   shouldAcceptMeasuredSize,
   STABLE_CHART_MIN_SIZE_PX,
+  STABLE_CHART_SIZE_EPSILON_PX,
 } from "./stableChartSize";
 
 export type StableResponsiveContainerProps = {
@@ -20,7 +21,7 @@ export type StableResponsiveContainerProps = {
   height?: number | string;
   className?: string;
   style?: CSSProperties;
-  /** Delta mínimo (px) para aceitar resize. Default 1. */
+  /** Delta mínimo (px) para aceitar resize. Default `STABLE_CHART_SIZE_EPSILON_PX`. */
   sizeEpsilonPx?: number;
 };
 
@@ -38,7 +39,7 @@ export function StableResponsiveContainer({
   height = "100%",
   className,
   style,
-  sizeEpsilonPx = 1,
+  sizeEpsilonPx = STABLE_CHART_SIZE_EPSILON_PX,
 }: StableResponsiveContainerProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);

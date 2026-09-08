@@ -12,11 +12,11 @@ describe("shouldAcceptMeasuredSize", () => {
     expect(shouldAcceptMeasuredSize(null, { w: 320, h: 4 })).toBe(false);
   });
 
-  it("rejeita ruído subpixel / 1px (anti React #185)", () => {
+  it("rejeita ruído subpixel / 1px no default (anti React #185)", () => {
     const prev = { w: 800, h: 280 };
     expect(shouldAcceptMeasuredSize(prev, { w: 800, h: 280 })).toBe(false);
     expect(shouldAcceptMeasuredSize(prev, { w: 800.4, h: 280 })).toBe(false);
-    expect(shouldAcceptMeasuredSize(prev, { w: 801, h: 280 }, 2)).toBe(false);
+    expect(shouldAcceptMeasuredSize(prev, { w: 801, h: 280 })).toBe(false);
   });
 
   it("aceita resize real da sidebar (±300px no main-area)", () => {

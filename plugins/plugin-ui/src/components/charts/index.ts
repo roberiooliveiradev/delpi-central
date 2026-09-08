@@ -62,6 +62,7 @@ export {
 export {
   shouldAcceptMeasuredSize,
   STABLE_CHART_MIN_SIZE_PX,
+  STABLE_CHART_SIZE_EPSILON_PX,
 } from "./stableChartSize";
 export {
   SpeedometerGauge,
