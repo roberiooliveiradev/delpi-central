@@ -1,6 +1,6 @@
 # Playbook de Excelência — Customer Experience DELPI
 
-> **Arquivo:** `docs/12-roadmap-e-volucao/customer-experience/PLAYBOOK-EXCELENCIA.md`  
+> **Arquivo:** `docs/12-roadmap-e-evolucao/customer-experience/PLAYBOOK-EXCELENCIA.md`  
 > **Versão:** 1.2  
 > **Data:** 2026-07-07  
 > **Status:** Onda 0 e formulários avançados (jul/2026) **implementados**; ondas 2–3 em backlog
