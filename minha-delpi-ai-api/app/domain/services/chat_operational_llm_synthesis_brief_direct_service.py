@@ -100,6 +100,9 @@ class ChatOperationalLlmSynthesisBriefDirectService:
         if cls.should_skip_for_cross_tool_insight(tool_calls, tool_context=tool_context):
             return None
 
+        if cls.should_skip_for_coverage_judgment(message, tool_calls):
+            return None
+
         if not cls._qualifies(tool_calls):
             return None
 
@@ -141,6 +144,43 @@ class ChatOperationalLlmSynthesisBriefDirectService:
         ok_count = cls._count_ok_operational_tools(tool_calls)
 
         return ok_count >= min_tools
+
+    @classmethod
+    def should_skip_for_coverage_judgment(
+        cls,
+        message: str | None,
+        tool_calls: list | None,
+    ) -> bool:
+        """Juízo estoque×demanda exige síntese LLM quando o commentary atual não cobre."""
+        from app.domain.services.chat_operational_llm_synthesis_context_content_service import (
+            ChatOperationalLlmSynthesisContextContentService,
+        )
+        from app.domain.services.chat_operational_llm_synthesis_context_service import (
+            ChatOperationalLlmSynthesisContextService,
+        )
+
+        if not ChatOperationalLlmSynthesisContextContentService.coverage_judgment_skip_brief_direct():
+            return False
+
+        if not ChatOperationalLlmSynthesisContextService._message_asks_coverage_judgment(message):
+            return False
+
+        # Skip unless current turn already has a stock commentary profile.
+        for tool_call in tool_calls or []:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+            metadata = tool_call.get("metadata")
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+            path = str(metadata.get("path") or "").lower()
+            commentary = metadata.get("dataCommentary")
+            profile = ""
+            if isinstance(commentary, dict):
+                profile = str(commentary.get("profileKey") or "").strip().lower()
+            if "/stock" in path or profile == "stock":
+                return False
+
+        return True
 
     @classmethod
     def _count_ok_operational_tools(cls, tool_calls: list | None) -> int:

@@ -49,6 +49,31 @@ def test_build_slim_action_includes_description_parameters_and_examples():
     }
 
 
+def test_build_slim_action_preserves_when_not_to_use_within_budget():
+    slim = ChatAgenticActionSchemaService.build_slim_action(
+        {
+            "actionId": "api_delpi.dashboard.get_dashboard_department_indicators",
+            "method": "GET",
+            "path": "/dashboard/department-indicators",
+            "summary": "IDD do departamento com indicadores (metas e realizado)",
+            "description": (
+                "Nota IDD do departamento e, para cada indicador, metas e realizado "
+                "no período. Texto longo adicional para forçar truncamento do slim "
+                "antes do negativo se ele ficasse só no final da descrição."
+            ),
+            "whenNotToUse": (
+                "Não use para ROL comercial, série de receita, taxa de conversão "
+                "ou faturamento — prefira /commercial/rol/series."
+            ),
+            "parametersSchema": [],
+        }
+    )
+
+    assert len(slim["description"]) <= 220
+    assert "ROL comercial" in slim["description"]
+    assert "/commercial/rol/series" in slim["description"]
+
+
 def test_format_planner_catalog_returns_json_array():
     payload = ChatAgenticActionSchemaService.format_planner_catalog(
         [

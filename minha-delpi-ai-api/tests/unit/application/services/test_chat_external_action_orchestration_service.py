@@ -302,3 +302,58 @@ def test_plan_actions_irrelevant_catalog_stays_fail_closed():
     planned = _plan("estoque do produto 10080047", actions=foreign)
     assert planned[0]["name"] == "clarify_external_action"
     assert (planned[0].get("metadata") or {}).get("selectionMode") == "openapi_first"
+
+
+def test_enrich_replaces_unknown_tools_with_stock_and_profile_scopes():
+    from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
+
+    class _Sel:
+        def select_action_for_product(
+            self,
+            message,
+            *,
+            product_code,
+            allowed_action_ids=None,
+            intent=None,
+            route_segment=None,
+            previous_messages=None,
+        ):
+            if intent == ChatProductQueryIntent.STOCK or route_segment == "stock":
+                path = f"/products/{product_code}/stock"
+            elif intent == ChatProductQueryIntent.DESCRIPTION:
+                path = f"/products/{product_code}/summary"
+            else:
+                return None
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": f"api_delpi.products.{path.split('/')[-1]}",
+                    "parameters": {"code": product_code},
+                    "path": path,
+                },
+            }
+
+    planned = [
+        {"name": "unknown_tool", "arguments": {}, "reason": "cadastro"},
+        {"name": "unknown_tool", "arguments": {}, "reason": "estoque"},
+    ]
+    out = ChatExternalActionOrchestrationService._enrich_openapi_plan_with_product_scopes(
+        _Sel(),
+        message="estoque e descrição do produto 90260149",
+        planned=planned,
+        allowed_action_ids=[
+            "api_delpi.products.get_product_stock",
+            "api_delpi.products.get_product_summary",
+        ],
+        conversation_context=None,
+        previous_messages=None,
+        memory_snapshot=None,
+        max_calls=6,
+    )
+    paths = [
+        str((item.get("arguments") or {}).get("path") or "")
+        for item in out
+        if isinstance(item, dict)
+    ]
+    assert any(path.endswith("/stock") for path in paths), paths
+    assert all(item.get("name") == "execute_external_action" for item in out), out

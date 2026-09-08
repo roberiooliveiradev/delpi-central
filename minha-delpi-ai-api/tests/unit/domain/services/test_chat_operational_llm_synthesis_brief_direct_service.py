@@ -33,6 +33,26 @@ def test_fast_commentary_direct_builds_answer_without_llm():
     assert "MP" in answer
 
 
+def test_coverage_judgment_skips_brief_direct_without_stock_tool():
+    metadata = {
+        "ok": True,
+        "llmProseDecoupled": True,
+        "path": "/products/90260149/structure",
+        "dataCommentary": {
+            "profileKey": "structure",
+            "highlights": [{"text": "Estrutura com 3 componentes."}],
+        },
+    }
+
+    answer = ChatOperationalLlmSynthesisBriefDirectService.try_build_direct_answer(
+        "inclui estrutura e se o estoque cobre demanda típica",
+        _tool_calls(metadata),
+        response_mode="normal",
+    )
+
+    assert answer is None
+
+
 def test_apply_turn_direct_answer_policy_fast_uses_commentary_direct():
     tool_context: dict = {}
     metadata = {

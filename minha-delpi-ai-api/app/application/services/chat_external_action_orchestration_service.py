@@ -199,6 +199,16 @@ class ChatExternalActionOrchestrationService:
                 # Fail-closed: com OpenAPI ativo não cai no registry/markers.
                 if openapi_decision.use_openapi_selection:
                     if openapi_planned:
+                        openapi_planned = cls._enrich_openapi_plan_with_product_scopes(
+                            selection_service,
+                            message=selection_message,
+                            planned=openapi_planned,
+                            allowed_action_ids=allowed_action_ids,
+                            conversation_context=conversation_context,
+                            previous_messages=previous_messages,
+                            memory_snapshot=memory_snapshot,
+                            max_calls=max_calls or 12,
+                        )
                         return _return_planned(
                             openapi_planned,
                             memory_snapshot=memory_snapshot,
@@ -1023,6 +1033,109 @@ class ChatExternalActionOrchestrationService:
             existing.add(selected_id)
 
         return merged[:merge_cap]
+
+    @classmethod
+    def _enrich_openapi_plan_with_product_scopes(
+        cls,
+        selection_service,
+        *,
+        message: str,
+        planned: list[dict],
+        allowed_action_ids: list[str] | None,
+        conversation_context: str | None,
+        previous_messages: list | None,
+        memory_snapshot: dict | None,
+        max_calls: int,
+    ) -> list[dict]:
+        """Complete OpenAPI-first plans that omit product scopes the user asked for.
+
+        Example: «estoque e descrição» must not stop at /summary without /stock.
+        When OpenAPI returns clarify-only despite product scopes being available,
+        replace with multi-scope product fetches.
+        """
+        from app.domain.services.chat_product_multi_scope_planning_service import (
+            ChatProductMultiScopePlanningService,
+        )
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        items = [item for item in (planned or []) if isinstance(item, dict)]
+        if not items:
+            return list(planned or [])
+
+        product_code = ChatProductQueryIntentService.resolve_product_code(
+            message,
+            conversation_context,
+            previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
+        )
+        requested = ChatProductMultiScopePlanningService.extract_requested_scopes(message)
+
+        def _plan_scopes() -> list[dict]:
+            if not product_code or not requested:
+                return []
+            return list(
+                ChatProductMultiScopePlanningService.plan_product_scope_fetches(
+                    selection_service,
+                    message=message,
+                    product_code=product_code,
+                    allowed_action_ids=allowed_action_ids,
+                    previous_messages=previous_messages,
+                    max_calls=max_calls,
+                )
+                or []
+            )
+
+        if cls._planned_is_clarify_or_unknown_only(items) and requested:
+            scope_planned = _plan_scopes()
+            if scope_planned:
+                return scope_planned[: max(1, min(int(max_calls), 12))]
+
+        missing = ChatProductMultiScopePlanningService.missing_scopes_for_planned_actions(
+            message,
+            items,
+        )
+        if not missing:
+            return items
+
+        scope_planned = _plan_scopes()
+        if not scope_planned:
+            return items
+
+        merged = [
+            item
+            for item in items
+            if str(item.get("name") or "")
+            not in {"clarify_external_action", "unknown_tool"}
+        ]
+        seen_paths = {
+            str(
+                (item.get("arguments") or {}).get("path") or item.get("path") or ""
+            ).lower()
+            for item in merged
+        }
+        limit = max(1, min(int(max_calls), 12))
+        for item in scope_planned:
+            if len(merged) >= limit:
+                break
+            path = str(
+                (item.get("arguments") or {}).get("path") or item.get("path") or ""
+            ).lower()
+            if path and path in seen_paths:
+                continue
+            merged.append(item)
+            if path:
+                seen_paths.add(path)
+        return merged or items
+
+    @classmethod
+    def _planned_is_clarify_or_unknown_only(cls, planned: list[dict]) -> bool:
+        names = {str(item.get("name") or "").strip() for item in planned if isinstance(item, dict)}
+        names.discard("")
+        if not names:
+            return True
+        return names.issubset({"clarify_external_action", "unknown_tool"})
 
     @classmethod
     def _continuity_blocks_parallel_discovery(

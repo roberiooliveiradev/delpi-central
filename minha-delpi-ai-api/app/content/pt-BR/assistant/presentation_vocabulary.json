@@ -221,6 +221,7 @@
     "auditableList": "lista detalhada ou comparação auditável",
     "analyserIntegratedStack": "consulta completa do produto — visão integrada (stack)",
     "treePrimaryView": "estrutura hierárquica — árvore como visão principal",
+    "kpiPrimaryView": "indicadores — KPI como visão principal",
     "pricingNarrativeFirst": "preços — narrativa com insights antes da tabela detalhada",
     "stockFewPositionsText": "poucas posições de estoque — resumo em texto com destaques",
     "textFirstDefault": "pergunta operacional simples — resposta em texto; visuais sob demanda",

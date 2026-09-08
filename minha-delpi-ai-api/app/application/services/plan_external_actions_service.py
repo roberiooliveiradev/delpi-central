@@ -11,6 +11,9 @@ from app.domain.models.action_plan import ActionPlan, ActionPlanStep
 from app.domain.services.chat_agentic_action_schema_service import (
     ChatAgenticActionSchemaService,
 )
+from app.domain.services.chat_message_normalization_service import (
+    ChatMessageNormalizationService,
+)
 from app.domain.services.openapi_tool_routing_content_service import (
     OpenApiToolRoutingContentService,
 )
@@ -64,6 +67,7 @@ class PlanExternalActionsService:
 
         if isinstance(llm_payload, dict):
             plan = self._plan_from_payload(llm_payload, top_k_ids=top_k_ids, limit=limit)
+            plan = self._apply_domain_compound_step_cap(message, plan)
             if plan.clarify and plan.is_empty:
                 return plan
             if not plan.is_empty:
@@ -209,6 +213,40 @@ class PlanExternalActionsService:
             steps=tuple(accepted),
             clarify=plan.clarify,
             selection_mode="openapi_first",
+            metadata=metadata,
+        )
+
+    @classmethod
+    def _apply_domain_compound_step_cap(cls, message: str, plan: ActionPlan) -> ActionPlan:
+        """Presentation-only compound must not keep N LLM steps — only domain compound."""
+        if plan.is_empty or len(plan.steps) <= 1:
+            return plan
+
+        if cls._wants_multi_action(message):
+            return plan
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        tokens = [token for token in _TOKEN_RE.findall(normalized) if len(token) >= 3]
+
+        def _step_score(step: ActionPlanStep) -> float:
+            hay = str(step.action_id or "").lower().replace("_", " ").replace(".", " ")
+            hits = sum(1.0 for token in tokens if token in hay)
+            return hits + float(step.confidence or 0.0)
+
+        ranked = sorted(plan.steps, key=_step_score, reverse=True)
+        keep = ranked[0]
+        metadata = dict(plan.metadata or {})
+        metadata["presentationCompoundStepCap"] = True
+        metadata["droppedExtraSteps"] = [
+            step.action_id
+            for step in plan.steps
+            if step.action_id and step.action_id != keep.action_id
+        ]
+
+        return ActionPlan(
+            steps=(keep,),
+            clarify=plan.clarify,
+            selection_mode=plan.selection_mode or "openapi_first",
             metadata=metadata,
         )
 

@@ -255,6 +255,9 @@ class ChatPresentationProfileDecisionService:
         if has_kpi:
             return "kpi"
 
+        if has_tree:
+            return "tree"
+
         if has_chart:
             return "chart"
 

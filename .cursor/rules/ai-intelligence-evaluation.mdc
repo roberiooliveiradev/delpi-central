@@ -69,6 +69,25 @@ todas requiredDimensions = PASS           → caso PASS
 
 `case.status`, porcentagem global ou texto “PASS” de um script **não podem sobrescrever** uma dimensão obrigatória em FAIL/INCONCLUSIVE.
 
+### Live / surface — camadas L1–L4
+
+Em pedido composto, smoke de consolidação e revisão banco/UI, reportar também (§16.1 de `chat-ai-flow-families.md`):
+
+| Camada | Alias | Foco |
+|--------|-------|------|
+| L1 | R-tools | path/action canônico e trajectory das subtarefas |
+| L2 | R-facts | prosa grounded; sem contradizer tool ok |
+| L3 | R-ui | um visual canônico por domínio; tree/nós legíveis; sem duplicar BOM |
+| L4 | R-ask | checklist literal do pedido (outcome perceptível) |
+
+```text
+harness estrutural PASS + L* FAIL → PASS_ESTRUTURAL / FAIL_QUALITATIVO (release = FAIL)
+L1∧L2∧L3∧L4 PASS → PASS perceptível
+proibido citar “smoke N/N PASS” sem nomear a camada
+```
+
+Doc do smoke C1–C4: `minha-delpi-ai-api/docs/testing/smoke-complex-consolidated-turns.md`.
+
 ## Graders
 
 Usar gradação híbrida, uma responsabilidade por grader:
@@ -225,6 +244,7 @@ tokens/context/tool-count/cost per turn
 - Criar catálogo paralelo de endpoints para passar teste.
 - Declarar “mais inteligente” porque unit tests ficaram verdes.
 - Marcar PASS com required dimension FAIL/INCONCLUSIVE.
+- Declarar release PASS com harness estrutural verde e L1–L4 (live composto) em FAIL.
 - Usar exact-match de prosa como principal medida semântica.
 - Ignorar no-tool, negative, safety, compound ou multi-turn.
 - Reutilizar evidência de commit/model/config diferente como se fosse o mesmo run.

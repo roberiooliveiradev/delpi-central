@@ -44,3 +44,11 @@ CHART_WORTHY_NUMERIC_KEYS = {
         "peso",
         "weight",
     }
+
+# Canonical time-series list keys (aligned with schema-driven tabular list keys).
+SERIES_LIST_KEYS = (
+    "periods",
+    "series",
+    "history",
+    "points",
+)

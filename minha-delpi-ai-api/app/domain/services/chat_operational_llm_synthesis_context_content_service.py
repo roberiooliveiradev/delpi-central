@@ -277,11 +277,43 @@ class ChatOperationalLlmSynthesisContextContentService:
 
     @classmethod
     def max_normal_prose_chars(cls) -> int:
-        return cls.limit_int("maxNormalProseChars", 1600)
+        return cls.limit_int("maxNormalProseChars", 2400)
 
     @classmethod
     def max_thinker_prose_chars(cls) -> int:
         return cls.limit_int("maxThinkerProseChars", 2400)
+
+    @classmethod
+    def coverage_judgment_signals(cls) -> tuple[str, ...]:
+        return tuple(
+            str(item).strip().lower()
+            for item in ChatAssistantContentService.list(_BUNDLE, "coverageJudgmentSignals")
+            if str(item).strip()
+        )
+
+    @classmethod
+    def coverage_judgment_skip_brief_direct(cls) -> bool:
+        node = ChatAssistantContentService.get_node(_BUNDLE)
+        if isinstance(node, dict) and "coverageJudgmentSkipBriefDirect" in node:
+            return bool(node.get("coverageJudgmentSkipBriefDirect"))
+        return True
+
+    @classmethod
+    def coverage_judgment_prior_stock_line(cls, **kwargs: Any) -> str:
+        template = str(
+            ChatAssistantContentService.get(
+                _BUNDLE,
+                "coverageJudgmentPriorStockLine",
+                default="Estoque do turno anterior ({path}): {preview}",
+            )
+            or ""
+        ).strip()
+        if not template:
+            return ""
+        try:
+            return template.format(**kwargs)
+        except (KeyError, ValueError):
+            return template
 
     @classmethod
     def enrich_insight_facts_budget_node(

@@ -37,6 +37,32 @@ class ChatOperationalLlmSynthesisContextService:
             dedupe_by_product_profile=dedupe_product_profile,
         )
 
+        if cls._message_asks_coverage_judgment(message):
+            prior_stock_lines = cls.collect_prior_stock_fact_lines(
+                workspace_context
+                if isinstance(workspace_context, dict)
+                else (tool_context if isinstance(tool_context, dict) else None)
+            )
+            cls._append_unique_lines(lines, prior_stock_lines)
+            if prior_stock_lines and isinstance(tool_context, dict):
+                tool_context["priorStockFactsInjected"] = True
+                # Prefer a concrete zero/non-zero hint for post-strip when no stock tool
+                # ran in the current turn.
+                joined = " ".join(prior_stock_lines).lower()
+                if any(
+                    token in joined
+                    for token in (
+                        "saldo disponível total: **0**",
+                        "saldo disponivel total: **0**",
+                        "disponível total: **0**",
+                        "disponivel total: **0**",
+                        "total: **0**",
+                    )
+                ):
+                    tool_context["priorStockScalarHint"] = 0
+                elif "saldo" in joined or "estoque" in joined:
+                    tool_context.setdefault("priorStockScalarHint", 1)
+
         session_addon = cls.build_session_context_addon(
             workspace_context
             if isinstance(workspace_context, dict)
@@ -166,6 +192,12 @@ class ChatOperationalLlmSynthesisContextService:
             result = ChatOperationalFactualVerdictService.append_fidelity_rules_for_tool_calls(
                 result,
                 tool_calls,
+                force_profiles=(
+                    ["product_stock"]
+                    if isinstance(tool_context, dict)
+                    and tool_context.get("priorStockFactsInjected")
+                    else None
+                ),
             )
 
         ok_count = sum(
@@ -407,6 +439,126 @@ class ChatOperationalLlmSynthesisContextService:
                 return metadata
 
         return None
+
+    @classmethod
+    def _message_asks_coverage_judgment(cls, message: str | None) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        return any(
+            ChatMessageNormalizationService.normalize_for_matching(signal) in normalized
+            for signal in ChatOperationalLlmSynthesisContextContentService.coverage_judgment_signals()
+        )
+
+    @classmethod
+    def collect_prior_stock_fact_lines(
+        cls,
+        workspace_context: dict[str, Any] | None,
+    ) -> list[str]:
+        if not isinstance(workspace_context, dict):
+            return []
+
+        memory = workspace_context.get("workingMemory")
+        memory = memory if isinstance(memory, dict) else {}
+        candidates: list[dict[str, Any]] = []
+
+        for raw in (
+            memory.get("lastResultExcerpt"),
+            workspace_context.get("lastResultExcerpt"),
+            memory.get("lastAction"),
+            workspace_context.get("lastAction"),
+            (workspace_context.get("turnGrounding") or {}).get("excerpt")
+            if isinstance(workspace_context.get("turnGrounding"), dict)
+            else None,
+        ):
+            if isinstance(raw, dict):
+                candidates.append(raw)
+
+        result_sets = memory.get("resultSets") or workspace_context.get("resultSets")
+        if isinstance(result_sets, list):
+            for item in result_sets:
+                if isinstance(item, dict):
+                    candidates.append(item)
+
+        prior_tools = memory.get("recentToolResults") or workspace_context.get(
+            "recentToolResults"
+        )
+        if isinstance(prior_tools, list):
+            for item in prior_tools:
+                if isinstance(item, dict):
+                    candidates.append(item)
+
+        lines: list[str] = []
+        for excerpt in candidates:
+            params = excerpt.get("params") if isinstance(excerpt.get("params"), dict) else {}
+            path = str(
+                excerpt.get("path") or params.get("path") or ""
+            ).lower()
+            # lastAction may store name/params without path — infer from name.
+            name = str(excerpt.get("name") or excerpt.get("operationId") or "").lower()
+            profile = str(excerpt.get("profileKey") or "").lower()
+            entity = str(excerpt.get("entity") or "").lower()
+            data_answer = excerpt.get("dataAnswer")
+            summary_text = ""
+            if isinstance(data_answer, dict):
+                summary = data_answer.get("summary")
+                if isinstance(summary, dict):
+                    summary_text = str(
+                        summary.get("answer") or summary.get("meaning") or ""
+                    ).strip()
+                elif isinstance(summary, str):
+                    summary_text = summary.strip()
+            preview = str(excerpt.get("preview") or "").strip()
+            title = str(excerpt.get("title") or "").strip()
+            body = summary_text or preview or title
+
+            looks_stock = (
+                "/stock" in path
+                or "stock" in name
+                or profile == "stock"
+                or "stock" in entity
+                or (
+                    body
+                    and any(
+                        token in body.lower()
+                        for token in (
+                            "saldo",
+                            "estoque",
+                            "available_quantity",
+                            "current_quantity",
+                        )
+                    )
+                )
+            )
+
+            if not looks_stock or not body:
+                continue
+
+            path_label = str(
+                excerpt.get("path")
+                or excerpt.get("operationId")
+                or excerpt.get("name")
+                or "stock"
+            ).strip()
+            line = ChatOperationalLlmSynthesisContextContentService.coverage_judgment_prior_stock_line(
+                path=path_label,
+                preview=body[:400],
+            )
+            if line:
+                lines.append(line)
+
+        # Keep unique order.
+        unique: list[str] = []
+        seen: set[str] = set()
+        for line in lines:
+            key = line.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(line)
+        return unique[:3]
 
     @classmethod
     def build_session_context_addon(

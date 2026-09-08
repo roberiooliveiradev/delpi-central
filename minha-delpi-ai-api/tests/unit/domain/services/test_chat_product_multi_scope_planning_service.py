@@ -293,3 +293,26 @@ def test_estoque_still_adds_stock_scope():
     )
 
     assert "stock" in scopes
+
+
+def test_extract_scopes_stock_and_description():
+    scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+        "estoque e descrição do produto 90260149",
+    )
+
+    assert "stock" in scopes
+    assert "profile" in scopes
+
+
+def test_summary_path_covers_profile_but_not_stock():
+    missing = ChatProductMultiScopePlanningService.missing_scopes_for_planned_actions(
+        "estoque e descrição do produto 90260149",
+        [
+            {
+                "arguments": {"path": "/products/90260149/summary"},
+            }
+        ],
+    )
+
+    assert "stock" in missing
+    assert "profile" not in missing

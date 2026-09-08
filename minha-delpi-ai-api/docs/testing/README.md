@@ -8,6 +8,7 @@ Ela define:
 
 - famílias F01–F24/F25+;
 - dimensões **R1–R11**;
+- camadas live **L1–L4** (R-tools / R-facts / R-ui / R-ask) — §16.1;
 - graders determinísticos/semânticos/humanos;
 - baseline × candidate;
 - multiple trials;
@@ -20,6 +21,8 @@ Ela define:
 - protocolo obrigatório para o Cursor.
 
 Roadmaps, changelogs, perguntas datadas e arquivos de evidence anteriores **não definem PASS**.
+
+Um `PASS` de harness estrutural (paths/kinds/prosa sem SQL) **não** é PASS de release em pedido composto/UI enquanto L1–L4 não forem avaliadas.
 
 ---
 
@@ -56,6 +59,7 @@ Fixtures de regressão devem conter positive + sibling + negative e não podem e
 | `scripts/smoke_chat_flow_families_f01_f04_f03.py` | Gates rápidos de famílias críticas |
 | `scripts/eval_packages_a_d_human_live.py` | Guidance/compare/dataAnswer |
 | `scripts/smoke_new_intent_user_simulation.py` | SQL/new intent/deixis |
+| `scripts/smoke_complex_consolidated_turns_live.py` | Pedido composto C1–C4 — **só camada estrutural**; ver L1–L4 |
 | smokes especializados | Contrato específico da feature/surface |
 
 Exemplo:
@@ -66,7 +70,9 @@ docker exec -e SMOKE_BASE_URL=http://delpi-gateway \
   python scripts/human_interaction_battery_live.py
 ```
 
-**Regra:** scripts são harnesses. Um `PASS` do script só é gate de release quando as `requiredDimensions` do caso foram realmente avaliadas conforme R1–R11.
+**Regra:** scripts são harnesses. Um `PASS` do script só é gate de release quando as `requiredDimensions` do caso foram realmente avaliadas conforme R1–R11 **e**, em pedido composto/UI, as camadas **L1–L4** (§16.1).
+
+Critério e placar qualitativo C1–C4: [`smoke-complex-consolidated-turns.md`](./smoke-complex-consolidated-turns.md).
 
 ---
 
@@ -136,6 +142,7 @@ Checklist arquitetural: [`../architecture/new-api-route-checklist.md`](../archit
 ## Referências vigentes
 
 - [Protocolo canônico R1–R11](./chat-ai-flow-families.md)
+- [Camadas L1–L4 + smoke C1–C4](./smoke-complex-consolidated-turns.md)
 - [Arquitetura de inteligência](../architecture/chat-intelligence-base.md)
 - [Nova API/action](../architecture/new-api-route-checklist.md)
 - [Actions OpenAPI](../api/04-actions-openapi.md)

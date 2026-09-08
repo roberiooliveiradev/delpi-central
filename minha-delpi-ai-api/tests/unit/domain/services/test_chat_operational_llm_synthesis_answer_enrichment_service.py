@@ -145,7 +145,25 @@ def test_trims_normal_prose_to_budget():
         response_mode="normal",
     )
 
-    assert len(enriched) <= 521
+    assert len(enriched) <= 2400
+    assert enriched.endswith((".", "!", "?", "…")) or len(enriched) < 2400
+
+
+def test_trims_normal_prose_prefers_sentence_boundary():
+    answer = ("Frase completa um. " * 200) + ("palavra " * 200)
+
+    enriched = ChatOperationalLlmSynthesisAnswerEnrichmentService.finalize_answer(
+        answer,
+        message="me fale do produto 10080045",
+        tool_calls=_tool_calls({"ok": True, "path": "/products/10080045/analyser"}),
+        response_mode_effect="llm_synthesis",
+        response_mode="normal",
+    )
+
+    assert len(enriched) <= 2400
+    assert enriched.endswith("…")
+    assert enriched.rstrip("…").rstrip().endswith(".")
+    assert "palavra palavra" not in enriched[-80:]
 
 
 def test_dedupes_repeated_markdown_sections_for_thinker():

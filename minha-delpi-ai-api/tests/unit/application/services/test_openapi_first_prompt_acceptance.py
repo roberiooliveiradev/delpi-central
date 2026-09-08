@@ -304,6 +304,14 @@ def test_compound_signal_wants_multi_action_without_joiner():
     assert len(DecomposeExternalActionRequestsService.decompose(message)) == 1
 
 
+def test_presentation_compound_signal_does_not_force_multi_action():
+    message = (
+        "Mostre o ROL comercial do mês em KPI e série, tudo na mesma resposta."
+    )
+    assert not DecomposeExternalActionRequestsService.wants_multi_action(message)
+    assert len(DecomposeExternalActionRequestsService.decompose(message)) == 1
+
+
 def test_small_talk_does_not_want_multi_action():
     assert not DecomposeExternalActionRequestsService.wants_multi_action("oi")
 

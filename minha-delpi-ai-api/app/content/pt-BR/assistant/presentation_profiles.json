@@ -933,8 +933,8 @@
     "tree_hierarchy": {
       "defaultViewPolicy": "tree_when_available",
       "viewOrder": [
-        "text",
         "tree",
+        "text",
         "table",
         "chart",
         "kpi",
@@ -994,8 +994,8 @@
       "defaultViewPolicy": "kpi_when_available",
       "viewBuildPolicy": "eager",
       "viewOrder": [
-        "text",
         "kpi",
+        "text",
         "chart",
         "table",
         "dashboard"
@@ -1315,8 +1315,8 @@
       "defaultViewPolicy": "kpi_when_available",
       "viewBuildPolicy": "eager",
       "viewOrder": [
-        "text",
         "kpi",
+        "text",
         "line_chart",
         "chart",
         "table",

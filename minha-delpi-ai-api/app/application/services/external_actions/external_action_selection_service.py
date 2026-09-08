@@ -38,16 +38,33 @@ class ExternalActionSelectionService:
         drawing_analysis_mode: bool = False,
         attachment_ids: list | None = None,
     ) -> dict | None:
-        del intent, route_segment, drawing_analysis_mode, attachment_ids
         code = ChatProductQueryIntentService.normalize_product_code(product_code)
 
         if not code or ChatAnalysisIntentService.looks_like_path_placeholder(code):
             return None
 
+        allowed = allowed_action_ids or []
+
+        # Multi-scope / fast-path pass intent+segment — honor deterministic product routing
+        # before OpenAPI-first (which ignores those signals and may invent unknown_tool).
+        if intent is not None or route_segment is not None:
+            selected = self._select_product_action(
+                message,
+                code,
+                allowed,
+                intent=intent or ChatProductQueryIntent.FULL,
+                route_segment=route_segment,
+                previous_messages=previous_messages,
+                drawing_analysis_mode=drawing_analysis_mode,
+                attachment_ids=attachment_ids,
+            )
+            if selected:
+                return selected
+
         enriched = f"{message} {code}".strip()
         return self._select_via_openapi_first(
             enriched,
-            allowed_action_ids=allowed_action_ids or [],
+            allowed_action_ids=allowed,
             previous_messages=previous_messages,
             memory_snapshot={
                 "executionContext": {
@@ -118,6 +135,7 @@ class ExternalActionSelectionService:
             if not action_id:
                 continue
             return {
+                "name": "execute_external_action",
                 "actionId": action_id,
                 "arguments": arguments,
                 "reason": item.get("reason"),

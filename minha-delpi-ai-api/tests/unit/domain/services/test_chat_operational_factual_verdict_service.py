@@ -69,3 +69,62 @@ def test_resolve_profile_key_from_presentation_profile():
     )
 
     assert profile_key == "structure_exclusivity"
+
+
+def test_product_stock_extract_scalar_zero_from_table_rows():
+    metadata = {
+        "path": "/products/90260149/stock",
+        "tablePresentation": {
+            "type": "table",
+            "rows": [
+                {"available_quantity": 0, "warehouse": "01"},
+                {"available_quantity": 0, "warehouse": "02"},
+            ],
+        },
+    }
+
+    count = ChatOperationalFactualVerdictService.extract_scalar(metadata, "product_stock")
+
+    assert count == 0
+    facts = ChatOperationalFactualVerdictService.build_llm_facts(metadata)
+    assert any("não cobre demanda" in fact.lower() for fact in facts)
+
+
+def test_product_stock_extract_scalar_positive():
+    metadata = {
+        "path": "/products/90260149/stock",
+        "tablePresentation": {
+            "type": "table",
+            "rows": [{"available_quantity": 12}],
+        },
+    }
+
+    count = ChatOperationalFactualVerdictService.extract_scalar(metadata, "product_stock")
+
+    assert count == 12
+
+
+def test_strip_stock_absence_denial_when_scalar_zero():
+    answer = (
+        "Aqui preciso ser transparente: não tenho o estoque disponível nesta consulta. "
+        "O saldo disponível total é 0."
+    )
+
+    stripped = ChatOperationalFactualVerdictService.strip_contradictory_claims(
+        answer,
+        "product_stock",
+        0,
+    )
+
+    assert "não tenho o estoque" not in stripped.lower()
+
+
+def test_force_profile_fidelity_without_stock_tool():
+    text = "base"
+    out = ChatOperationalFactualVerdictService.append_fidelity_rules_for_tool_calls(
+        text,
+        [],
+        force_profiles=["product_stock"],
+    )
+
+    assert "Cobertura estoque" in out

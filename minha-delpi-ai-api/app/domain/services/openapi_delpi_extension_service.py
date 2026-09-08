@@ -75,6 +75,7 @@ class OpenApiDelpiExtensionService:
             block.get("description") or operation.get("description") or summary
         ).strip()
         when_to_use = str(block.get("whenToUse") or "").strip()
+        when_not_to_use = str(block.get("whenNotToUse") or "").strip()
         out: dict[str, str] = {}
         if summary:
             out["summary"] = summary
@@ -82,6 +83,8 @@ class OpenApiDelpiExtensionService:
             out["description"] = description
         if when_to_use:
             out["whenToUse"] = when_to_use
+        if when_not_to_use:
+            out["whenNotToUse"] = when_not_to_use
         return out
 
     @classmethod

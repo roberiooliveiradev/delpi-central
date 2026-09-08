@@ -1,0 +1,31 @@
+{
+  "sessionId": "e74a42eb-6389-4c94-a9e6-b9a9b8407958",
+  "turns": [
+    {
+      "label": "seed",
+      "wallMs": 22542,
+      "paths": [
+        "/products/90260149",
+        "/products/90260149/stock"
+      ],
+      "proseChars": 492,
+      "tree": "no tree (ok if table-only)",
+      "dashboard": "no structure duplication",
+      "prosePreview": "O produto **90260149** é o **CHICOTE EPR SINGELO 235MM**, pertencente ao grupo **9026**. A consulta retornou o cadastro e a posição de estoque, detalhados abaixo. \n\n**Estoque — ponto de atenção:** o saldo disponível total é **0 unidade** em 1 posição consultada. Ou seja, o item e"
+    },
+    {
+      "label": "followup",
+      "wallMs": 65092,
+      "paths": [
+        "/products/90260149/structure",
+        "/products/90260149/stock"
+      ],
+      "proseChars": 1433,
+      "tree": "no tree (ok if table-only)",
+      "dashboard": "no structure duplication",
+      "prosePreview": "O produto **90260149** — **CHICOTE EPR SINGELO 235MM** — está **sem estoque disponível** (saldo total **0 un.**) e, com esse saldo zerado, **o estoque não cobre uma demanda típica**: qualquer necessidade de produção ou venda dependeria de reposição ou produção antes do atendiment"
+    }
+  ],
+  "failures": [],
+  "passed": true
+}

@@ -18,6 +18,9 @@ class ChatPresentationRouteVisualPolicyService:
         from app.domain.services.chat_presentation_route_policy_service import (
             ChatPresentationRoutePolicyService,
         )
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
 
         path = str(metadata.get("path") or "")
         views = list(decision.get("availableViews") or [])
@@ -35,8 +38,46 @@ class ChatPresentationRouteVisualPolicyService:
                 primary_presentation=metadata.get("presentation"),
             )
         )
+        has_kpi = bool(metadata.get("kpiPresentation")) or (
+            isinstance(metadata.get("presentation"), dict)
+            and metadata["presentation"].get("type") == "kpi"
+        )
 
         preferred = str(metadata.get("preferredFormat") or "").strip().lower()
+        selected = str(decision.get("selected") or "").strip().lower() or None
+        entity = ChatPresentationDecisionMetadataService.resolve_entity(metadata, path=path)
+        profile = ChatPresentationProfileService.resolve_profile(path, entity)
+        policy = str(profile.get("defaultViewPolicy") or "generic").strip().lower()
+        explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
+
+        if not explicit:
+            if (
+                policy == "tree_when_available"
+                and has_tree
+                and preferred in {"", "tree"}
+                and selected in {None, "text", "table"}
+            ):
+                decision["selected"] = "tree"
+                decision["reason"] = ChatPresentationVocabularyService.decision_reason(
+                    "treePrimaryView",
+                )
+                preferred = "tree"
+                if not str(metadata.get("preferredFormat") or "").strip():
+                    metadata["preferredFormat"] = "tree"
+
+            if (
+                policy == "kpi_when_available"
+                and has_kpi
+                and preferred in {"", "kpi"}
+                and selected in {None, "text", "table"}
+            ):
+                decision["selected"] = "kpi"
+                decision["reason"] = ChatPresentationVocabularyService.decision_reason(
+                    "kpiPrimaryView",
+                )
+                preferred = "kpi"
+                if not str(metadata.get("preferredFormat") or "").strip():
+                    metadata["preferredFormat"] = "kpi"
 
         if (
             has_tree

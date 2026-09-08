@@ -103,6 +103,9 @@ class ChatProductMultiScopePlanningService:
                 "informacoes do produto",
                 "informações do produto",
                 "dados do produto",
+                "descricao",
+                "descrição",
+                "description",
             )
         ):
             add("profile")
@@ -260,7 +263,8 @@ class ChatProductMultiScopePlanningService:
             _intent, segment = _SCOPE_TO_ROUTE.get(scope, (None, None))
             markers = [m for m in (segment, scope.replace("_", "-"), scope) if m]
             if scope == "profile":
-                markers.extend(["/products/{code}", "/analyser"])
+                markers.extend(["/products/{code}", "/analyser", "/summary", "/detail"])
+                # Bare product detail path often ends with /products/{code} without segment.
             if any(marker and marker in paths for marker in markers):
                 continue
             # analyser cobre o bundle

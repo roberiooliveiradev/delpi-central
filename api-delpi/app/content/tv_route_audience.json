@@ -2888,14 +2888,18 @@
     "get_product_stock": {
       "locale": {
         "en": {
-          "summary": "Product stock",
-          "description": "Product stock.",
+          "summary": "Product stock by branch and location",
+          "description": "Stock balance and positions for a specific product code. Prefer this over /summary when the user asks for stock, balance or available quantity — including when combined with description/cadastro.",
+          "whenToUse": "Use for stock/balance/available quantity of a product code.",
+          "whenNotToUse": "Do not substitute with /summary when the focus is balance/position. Do not use for company-wide stock value (supplies /stock-value).",
           "label": "Product stock"
         },
         "pt-BR": {
           "label": "Estoque do produto por filial e local",
           "summary": "Estoque do produto por filial e local",
-          "description": "Listagem paginada de «Estoque do produto por filial e local» para uso em tabela ou gráfico no TV."
+          "description": "Saldo e posição de estoque de um código. Prefira esta rota a /summary quando o usuário pediu estoque/saldo/disponível — inclusive junto com descrição/cadastro.",
+          "whenToUse": "Use para estoque, saldo ou disponível de um produto.",
+          "whenNotToUse": "Não substitua por /summary quando o foco é saldo/posição. Não use para valor total de estoque da empresa."
         }
       },
       "category": "products"
@@ -2971,15 +2975,17 @@
       "locale": {
         "en": {
           "summary": "Light product summary (cadastro + sample stock + prices)",
-          "description": "Light consolidation of cadastro, sample stock by branch and price table. Use only for a quick overview when the user did NOT ask for BOM/estrutura, roteiro, inspection, full analyser or visão integrada with several blocks. If they ask for wide analytical sheet, structure, routing or integrated view, prefer /analyser or granular /structure, /guide, /stock.",
+          "description": "Light consolidation of cadastro, sample stock by branch and price table. Use only for a quick overview when the user did NOT ask for BOM/estrutura, roteiro, inspection, full analyser or visão integrada with several blocks. Do NOT use when the user explicitly asked for stock/balance/available quantity — prefer /stock (optionally combined with detail/summary for cadastro). If they ask for wide analytical sheet, structure, routing or integrated view, prefer /analyser or granular /structure, /guide, /stock.",
           "whenToUse": "Use only for a light overview without BOM, routing or integrated multi-block view.",
+          "whenNotToUse": "Do not use when the user explicitly asked for stock, balance or available quantity — prefer /stock. Do not use for BOM/estrutura, roteiro, inspection or integrated multi-block view.",
           "label": "Product summary"
         },
         "pt-BR": {
           "label": "Resumo leve do produto (cadastro + amostra de estoque + preços)",
           "summary": "Resumo leve do produto (cadastro + amostra de estoque + preços)",
-          "description": "Consulta leve de cadastro, amostra de estoque e preços. Use somente quando NÃO pediu BOM, roteiro, analisador completo nem visão integrada.",
-          "whenToUse": "Use só para visão geral rápida sem BOM/roteiro/visão integrada."
+          "description": "Consulta leve de cadastro, amostra de estoque e preços. Use somente quando NÃO pediu BOM, roteiro, analisador completo nem visão integrada. NÃO use quando pediu explicitamente estoque/saldo/disponível — prefira /stock.",
+          "whenToUse": "Use só para visão geral rápida sem BOM/roteiro/visão integrada.",
+          "whenNotToUse": "Não use quando o usuário pediu estoque, saldo ou disponível — prefira /stock. Não use para BOM/estrutura, roteiro, inspeção ou visão integrada multi-bloco."
         }
       },
       "category": "products"
@@ -6506,12 +6512,14 @@
           "summary": "Department IDD with indicators (goals and realized)",
           "description": "Strategic Indicators department IDD plus each indicator with goals (metas) and realized values.",
           "whenToUse": "Use when you need IDD plus metas and realizado per indicator for one department.",
+          "whenNotToUse": "Do not use for commercial ROL, revenue series, closing-rate/conversion KPIs, or billing trends — prefer /commercial/rol/series.",
           "label": "Departamento — IDD, metas e realizado"
         },
         "pt-BR": {
           "summary": "IDD do departamento com indicadores (metas e realizado)",
           "description": "Nota IDD do departamento e, para cada indicador, metas e realizado no período.",
           "whenToUse": "Usar quando precisar do IDD e da lista de indicadores com metas e realizado de um departamento.",
+          "whenNotToUse": "Não use para ROL comercial, série de receita, taxa de conversão ou faturamento — prefira /commercial/rol/series.",
           "label": "Departamento — IDD, metas e realizado"
         }
       },
@@ -6549,12 +6557,14 @@
           "summary": "All departments with IDD, goals and realized per indicator",
           "description": "Lists every Strategic Indicators department with IDD and nested indicators (goals and realized).",
           "whenToUse": "Use for a full departmental IDD board with metas and realizado per indicator.",
+          "whenNotToUse": "Do not use as a substitute for commercial ROL or sales conversion series.",
           "label": "Departamentos — IDD, metas e realizado"
         },
         "pt-BR": {
           "summary": "Todos os departamentos com IDD, metas e realizado por indicador",
           "description": "Lista cada departamento com IDD e indicadores aninhados (metas e realizado) no período.",
           "whenToUse": "Usar para painel completo de IDDs com metas e realizado por indicador.",
+          "whenNotToUse": "Não use como substituto de ROL comercial ou série de conversão de vendas.",
           "label": "Departamentos — IDD, metas e realizado"
         }
       },

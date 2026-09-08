@@ -48,6 +48,15 @@ class ChatPresentationStructureDedupService:
         ):
             return True
 
+        # Analyser nested BOM flat projection (code/description/type/quantity).
+        if {"code", "description", "quantity"}.issubset(keys) and (
+            "type" in keys or "unit" in keys or "conversion_type" in keys
+        ):
+            if any(marker in title for marker in ("estrutura", "bom", "composição", "composicao")):
+                return True
+            if not title:
+                return True
+
         return False
 
     @classmethod

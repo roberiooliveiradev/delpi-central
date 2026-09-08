@@ -14,6 +14,9 @@ from app.domain.services.chat_operational_factual_verdict_content_service import
 from app.domain.services.chat_presentation_profile_service import (
     ChatPresentationProfileService,
 )
+from app.domain.services.chat_prose_markdown_join_service import (
+    ChatProseMarkdownJoinService,
+)
 
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
 
@@ -125,7 +128,77 @@ class ChatOperationalFactualVerdictService:
                     if any(marker in text for marker in verdict_no_markers):
                         return 0
 
+        table_total = cls._extract_scalar_from_table_rows(metadata, profile_key)
+
+        if table_total is not None:
+            return table_total
+
+        commentary = metadata.get("dataCommentary")
+
+        if isinstance(commentary, dict):
+            highlights = commentary.get("highlights")
+
+            if isinstance(highlights, list):
+                for item in highlights:
+                    text = ChatMessageNormalizationService.normalize_for_matching(
+                        cls._stringify(item),
+                    )
+                    if "0" in text and any(
+                        token in text
+                        for token in ("saldo", "disponivel", "disponível", "available")
+                    ):
+                        return 0
+
         return None
+
+    @classmethod
+    def _extract_scalar_from_table_rows(
+        cls,
+        metadata: dict[str, Any],
+        profile_key: str,
+    ) -> int | None:
+        keys = ChatOperationalFactualVerdictContentService.profile_node(profile_key).get(
+            "scalarFromTableKeys",
+        )
+
+        if not isinstance(keys, list) or not keys:
+            return None
+
+        key_set = {str(item).strip().lower() for item in keys if str(item or "").strip()}
+        total = 0.0
+        found = False
+
+        tables: list[Any] = []
+        table = metadata.get("tablePresentation")
+        if isinstance(table, dict):
+            tables.append(table)
+        multi = metadata.get("tablePresentations")
+        if isinstance(multi, list):
+            tables.extend(item for item in multi if isinstance(item, dict))
+        primary = metadata.get("presentation")
+        if isinstance(primary, dict) and primary.get("type") == "table":
+            tables.append(primary)
+
+        for table_view in tables:
+            rows = table_view.get("rows")
+            if not isinstance(rows, list):
+                continue
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                for key, value in row.items():
+                    if str(key).strip().lower() not in key_set:
+                        continue
+                    try:
+                        total += float(str(value).replace(",", ".").split()[0])
+                        found = True
+                    except (TypeError, ValueError, IndexError):
+                        continue
+
+        if not found:
+            return None
+
+        return int(total)
 
     @classmethod
     def extract_scalar_from_tool_calls(
@@ -202,11 +275,22 @@ class ChatOperationalFactualVerdictService:
         return facts
 
     @classmethod
-    def append_fidelity_rules_for_tool_calls(cls, text: str, tool_calls: list | None) -> str:
-        if not isinstance(tool_calls, list):
+    def append_fidelity_rules_for_tool_calls(
+        cls,
+        text: str,
+        tool_calls: list | None,
+        *,
+        force_profiles: list[str] | None = None,
+    ) -> str:
+        if not isinstance(tool_calls, list) and not force_profiles:
             return text
 
         result = text
+        forced = {
+            str(item or "").strip()
+            for item in (force_profiles or [])
+            if str(item or "").strip()
+        }
 
         for profile_key in ChatOperationalFactualVerdictContentService.profile_keys():
             rule = ChatOperationalFactualVerdictContentService.fidelity_rule(profile_key)
@@ -214,7 +298,8 @@ class ChatOperationalFactualVerdictService:
             if not rule:
                 continue
 
-            if not cls._tool_calls_match_profile(tool_calls, profile_key):
+            matched = cls._tool_calls_match_profile(tool_calls, profile_key)
+            if not matched and profile_key not in forced:
                 continue
 
             result = f"{result}\n\n{rule}" if result else f"\n\n{rule}"
@@ -226,11 +311,19 @@ class ChatOperationalFactualVerdictService:
         cls,
         answer: str,
         tool_calls: list | None,
+        *,
+        force_scalars: dict[str, int] | None = None,
     ) -> str:
         result = answer
+        forced = force_scalars if isinstance(force_scalars, dict) else {}
 
         for profile_key in ChatOperationalFactualVerdictContentService.profile_keys():
             scalar = cls.extract_scalar_from_tool_calls(tool_calls, profile_key)
+            if scalar is None and profile_key in forced:
+                try:
+                    scalar = int(forced[profile_key])
+                except (TypeError, ValueError):
+                    scalar = None
 
             if scalar is None:
                 continue
@@ -307,7 +400,7 @@ class ChatOperationalFactualVerdictService:
         if not kept:
             return ""
 
-        return " ".join(kept).strip()
+        return ChatProseMarkdownJoinService.join_sentence_fragments(kept)
 
     @classmethod
     def evaluate_coherence_gaps_for_tool_calls(

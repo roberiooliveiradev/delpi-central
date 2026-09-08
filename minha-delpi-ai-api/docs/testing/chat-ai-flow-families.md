@@ -286,7 +286,8 @@ Medir:
 - paralelismo somente quando seguro;
 - tratamento de falha parcial;
 - `multi_request_completion_rate`;
-- cobertura de todos os pedidos na resposta final.
+- cobertura de todos os pedidos na resposta final;
+- camadas **L1–L4** (§16.1) na revisão live/banco/UI — harness estrutural sozinho **não** fecha o caso.
 
 ---
 
@@ -529,6 +530,67 @@ Harnesses atuais podem ser usados como transporte/coleta:
 
 Até lá, um `PASS` do script é evidência parcial, não conclusão automática de release.
 
+## 16.1 Live / surface — camadas L1–L4 (obrigatório em pedido composto e UI)
+
+Pedidos compostos (F03/F13/F14), smokes de consolidação e revisão no banco/UI **não podem** ser declarados `PASS` de release só porque o harness estrutural ficou verde (paths presentes, `kinds` com tree/table, prosa sem SQL fence).
+
+Quatro camadas de análise **separadas** devem ser reportadas. São aliases operacionais das dimensões R1–R11 — **não** substituem R1–R11; obrigam evidência perceptível.
+
+| Camada | Alias | Mapeia principalmente | O que provar |
+|--------|-------|------------------------|--------------|
+| **L1** | R-tools | R1, R2, R3 | Path/action canônico do que o usuário pediu (estoque ≠ summary); trajectory completa das subtarefas; args corretos. |
+| **L2** | R-facts | R4, R6 | Todo claim da prosa tem suporte em `dataAnswer` / result set do turno (ou fato do histórico reutilizado de forma explícita). Proibido contradizer tool ok. |
+| **L3** | R-ui | R5, R7 | Um formato canônico por domínio na bolha; tree só com nós legíveis (`label` ≠ `—`, `id` ≠ `unknown`); sem painéis irmãos duplicando o mesmo BOM; `selected` coerente com Automático (salvo `explicitSessionFormat`). |
+| **L4** | R-ask | R9 (+ R6 em follow-up) | Checklist literal do pedido do usuário: cada subtarefa presente, legível e utilizável na entrega final. |
+
+### Veredito
+
+```text
+qualquer L1–L4 material = FAIL  → caso FAIL (release)
+harness estrutural PASS + L* FAIL → reportar como PASS_ESTRUTURAL / FAIL_QUALITATIVO
+somente L1∧L2∧L3∧L4 = PASS     → caso PASS perceptível / release
+L* sem evidência (sem metadata/UI) → INCONCLUSIVE, nunca PASS
+```
+
+**Proibição explícita:** resumir execução como “smoke 4/4 PASS” sem dizer a camada. Se a camada perceptível falhou, a resposta correta é: **não passou para o usuário**.
+
+### Rubricas determinísticas mínimas (quando metadata existir)
+
+**L1 — tools**
+
+- Pediu estoque → path/action de estoque (não `/summary` como substituto).
+- Pediu estrutura/BOM → `/structure` e/ou analyser com bloco de estrutura no payload.
+- Follow-up que pede juízo dependente de fato anterior → reutiliza ou reconsulta o fato (ex.: saldo para “cobre demanda”).
+- Fan-out indevido (ex.: IDD/department-indicators no pedido só de ROL) → FAIL L1/R11 conforme caso.
+
+**L2 — facts**
+
+- Claim “não trouxe estoque” com tool `/stock` ok e saldo presente → FAIL L2/R4.
+- Veredito “cobre / não cobre demanda” sem saldo (nem no turno nem no workspace herdado) → FAIL L2/R9.
+- Números/códigos na prosa alinhados a `dataAnswer.facts` / summary do tool.
+
+**L3 — ui**
+
+- `treePresentation.root.children[]`: rejeitar entrega se maioria dos filhos tiver `label` ∈ {`—`, `""`} ou `id` = `unknown`.
+- Dashboard/stack: no máximo **um** painel canônico de estrutura (tree **ou** table), não tree vazia + table + prosa listando o mesmo BOM.
+- `preferredFormat`/`selected` = `text` com `primaryType` = tree/kpi **somente** se `explicitSessionFormat` ou pedido explícito de texto; caso contrário FAIL L3 em Automático.
+- Empty-state (KPI/série vazia): prosa curta + visual empty coerente = PASS L3.
+
+**L4 — ask**
+
+- Montar checklist do prompt (cada “(1)(2)(3)”, “também”, “numa resposta só”).
+- Cada item = presente na prosa **ou** no visual **ou** lacuna explícita **e** tentativa de obter o dado.
+- Lacuna sem tentativa / visual ilegível contando como “presente” → FAIL L4.
+
+### Relato obrigatório (live composto)
+
+```text
+CASO | L1 R-tools | L2 R-facts | L3 R-ui | L4 R-ask | HARNESS | VEREDITO_RELEASE
+C4   | FAIL       | FAIL       | FAIL    | FAIL     | PASS    | FAIL
+```
+
+Harnesses de referência e rubrica aplicada a C1–C4: [`smoke-complex-consolidated-turns.md`](./smoke-complex-consolidated-turns.md).
+
 ---
 
 # 17. Protocolo obrigatório para o Cursor
@@ -584,6 +646,7 @@ Uma mudança de inteligência **não está pronta** se:
 - custo/contexto/tools crescem muito sem ganho mensurável;
 - API externa desconhecida falha após mudança do motor;
 - pedido composto perde subtarefas;
+- live composto com L1–L4 (R-tools/R-facts/R-ui/R-ask) em FAIL tratado como “PASS” só do harness estrutural;
 - evidência vem de run/config diferente;
 - apenas um prompt manual foi validado.
 

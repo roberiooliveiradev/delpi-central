@@ -489,3 +489,45 @@ def test_build_bundle_tolerates_list_data_without_raising():
 
     assert bundle.kpi is None
     assert bundle.table is not None or bundle.text is not None
+
+
+def test_analyser_composite_tree_uses_nested_code_not_unknown():
+    from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_with_meta
+
+    envelope = load_api_delpi_fixture_with_meta("product_analyser_90269001.json")
+    presenter = ExternalActionResultPresenter()
+    bundle = ChatSchemaDrivenPresentationService.build_composite_bundle(
+        presenter,
+        envelope["data"],
+        path="/products/90269001/analyser",
+        entity="product_analyser",
+        sections=(envelope.get("meta") or {}).get("sections"),
+    )
+
+    assert isinstance(bundle.tree, dict)
+    root = bundle.tree.get("root") or {}
+    children = root.get("children") or []
+    assert children, "expected structure children"
+    assert all(str(child.get("id") or "") not in {"", "unknown"} for child in children)
+    assert all(str(child.get("label") or "") not in {"", "—"} for child in children)
+    assert children[0]["id"] == "10019001"
+
+    if isinstance(bundle.dashboard, dict):
+        panels = bundle.dashboard.get("panels") or []
+        structure_like = [
+            panel
+            for panel in panels
+            if isinstance(panel, dict)
+            and (
+                str(panel.get("id") or "") == "structure"
+                or "estrutura" in str(panel.get("title") or "").lower()
+            )
+        ]
+        # Tree XOR hierarchy table — at most one structure panel family.
+        tree_panels = [
+            p for p in structure_like if (p.get("presentation") or {}).get("type") == "tree"
+        ]
+        table_panels = [
+            p for p in structure_like if (p.get("presentation") or {}).get("type") == "table"
+        ]
+        assert not (tree_panels and table_panels), panels

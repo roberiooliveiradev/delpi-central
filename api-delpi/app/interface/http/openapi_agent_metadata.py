@@ -26,6 +26,8 @@ PRODUCT_SUMMARY = agent_route(
         "Consolida cadastro, amostra de estoque por filial e tabela de preços em uma consulta leve. "
         "Use somente para visão geral rápida quando o usuário NÃO pediu BOM/estrutura, roteiro, "
         "inspeção, analisador completo nem visão integrada com vários blocos. "
+        "NÃO use quando o usuário pediu explicitamente estoque/saldo/disponível — prefira /stock "
+        "(pode combinar com /products/{code} ou /summary só se também pediu cadastro e o plano for multi-action). "
         "Se pedir ficha analítica ampla, estrutura, roteiro ou visão integrada, prefira /analyser "
         "ou as rotas granulares /structure, /guide, /stock."
     ),
@@ -288,8 +290,10 @@ PRODUCT_STOCK = agent_route(
     summary="Estoque do produto por filial e local",
     description=(
         "Saldo e posição de estoque de um item específico (código no path). "
-        "Use para perguntas como estoque, saldo, disponível, quantidade em armazém de um produto. "
-        "Não confundir com valor total de estoque da empresa (rota de suprimentos /stock-value)."
+        "Use para perguntas como estoque, saldo, disponível, quantidade em armazém de um produto — "
+        "inclusive quando o usuário pede estoque junto com descrição/cadastro (combine com ficha/summary). "
+        "Não confundir com valor total de estoque da empresa (rota de suprimentos /stock-value). "
+        "Não substituir por /summary quando o foco é saldo/posição."
     ),
     operation_id="get_product_stock",
 )

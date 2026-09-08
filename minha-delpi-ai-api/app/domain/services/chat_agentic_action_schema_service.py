@@ -117,13 +117,62 @@ class ChatAgenticActionSchemaService:
     def _build_description(cls, action: dict[str, Any]) -> str:
         summary = cls._optional_text(action.get("summary"))
         description = cls._optional_text(action.get("description"))
+        when_not = cls._optional_text(
+            action.get("whenNotToUse") or action.get("when_not_to_use")
+        )
+
+        if not when_not and description:
+            when_not = cls._extract_when_not_clause(description)
 
         if summary and description and description.lower() != summary.lower():
             merged = f"{summary}. {description}"
         else:
             merged = summary or description or str(action.get("path") or action.get("actionId") or "")
 
+        if when_not:
+            # Prefer keeping the negative guidance inside the slim budget.
+            merged_without_not = merged
+            if when_not.lower() in merged.lower():
+                merged_without_not = re.sub(
+                    re.escape(when_not),
+                    " ",
+                    merged,
+                    count=1,
+                    flags=re.IGNORECASE,
+                )
+                merged_without_not = re.sub(r"\s+", " ", merged_without_not).strip(" .")
+
+            reserved = min(len(when_not) + 1, cls._DESCRIPTION_MAX_CHARS)
+            base_budget = max(0, cls._DESCRIPTION_MAX_CHARS - reserved)
+            base = cls._truncate(merged_without_not, base_budget) if base_budget else ""
+            combined = f"{base} {when_not}".strip() if base else when_not
+            return cls._truncate(combined, cls._DESCRIPTION_MAX_CHARS)
+
         return cls._truncate(merged, cls._DESCRIPTION_MAX_CHARS)
+
+    @classmethod
+    def _extract_when_not_clause(cls, text: str) -> str | None:
+        lowered = str(text or "")
+        markers = ("Do not use", "Não use", "Nao use")
+        best: str | None = None
+        best_pos = -1
+
+        for marker in markers:
+            pos = lowered.lower().find(marker.lower())
+            if pos >= 0 and (best_pos < 0 or pos < best_pos):
+                best_pos = pos
+                best = lowered[pos:].strip()
+
+        if not best:
+            return None
+
+        # Keep one sentence-ish clause.
+        for sep in (". ", "; "):
+            if sep in best[12:]:
+                head, _tail = best.split(sep, 1)
+                return f"{head.strip()}."
+
+        return best.strip()
 
     @classmethod
     def _build_slim_parameters(

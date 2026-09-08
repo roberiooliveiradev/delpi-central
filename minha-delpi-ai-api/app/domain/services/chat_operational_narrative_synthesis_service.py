@@ -159,6 +159,8 @@ class ChatOperationalNarrativeSynthesisService:
         *,
         response_mode: str | None = None,
         tool_calls: list | None = None,
+        workspace_context: dict | None = None,
+        tool_context: dict | None = None,
     ) -> str:
         kind = cls.resolve_synthesis_kind(message, tool_calls)
 
@@ -208,6 +210,8 @@ class ChatOperationalNarrativeSynthesisService:
             tool_calls,
             response_mode=response_mode,
             message=message,
+            workspace_context=workspace_context if isinstance(workspace_context, dict) else None,
+            tool_context=tool_context if isinstance(tool_context, dict) else None,
         )
 
         return f"{addon}{facts}"

@@ -62,6 +62,8 @@ BASELINE imutável
 
 R1–R11 cobrem routing, trajectory, arguments, content, presentation, grounding, parity, latency, outcome, safety e efficiency.
 
+Live composto/UI exige ainda as camadas **L1–L4** (R-tools / R-facts / R-ui / R-ask) — ver `testing/chat-ai-flow-families.md` §16.1 e `testing/smoke-complex-consolidated-turns.md`. Harness estrutural verde ≠ PASS de release.
+
 ## Regra para documentação datada
 
 Arquivos em `roadmap/`, `changelog/` e evidências anteriores podem existir para registro de evolução, mas **não são fonte de instrução atual**. Se um documento datado contradizer uma fonte canônica vigente, ele deve ser corrigido/removido; o Cursor não deve reconciliar as duas arquiteturas.

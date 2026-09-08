@@ -718,31 +718,51 @@ class ChatSchemaDrivenPresentationService:
     @classmethod
     def _build_composite_tree(cls, root: dict[str, Any], *, path: str) -> dict[str, Any] | None:
         structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
-        items = structure.get("items") if isinstance(structure, dict) else None
-
-        if not isinstance(items, list) or not items:
-            return None
 
         from app.domain.services.chat_product_structure_presentation_service import (
             ChatProductStructurePresentationService as _Structure,
         )
 
+        # Nested BOM (analyser /structure): prefer canonical product tree builder
+        # so children keep code/description (not exclusivity-only component_* keys).
+        nested = _Structure.build_tree_presentation(
+            {"structure": structure} if structure else root,
+            path=path,
+        )
+        if isinstance(nested, dict) and nested.get("type") == "tree":
+            return nested
+
+        items = structure.get("items") if isinstance(structure, dict) else None
+
+        if not isinstance(items, list) or not items:
+            return None
+
         product = root.get("product") if isinstance(root.get("product"), dict) else {}
         code = str(product.get("product_code") or product.get("code") or "").strip()
         description = str(product.get("description") or "").strip()
 
-        children = [
-            _Structure._serialize_tree_node(
-                str(item.get("component_code") or "").strip(),
-                str(item.get("component_description") or "").strip(),
-                str(item.get("component_type") or "").strip(),
-                str(item.get("component_unit") or "").strip(),
-                cls._safe_float(item.get("quantity_per")),
-                children=None,
+        children = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            child_code = str(
+                item.get("component_code") or item.get("code") or ""
+            ).strip()
+            child_description = str(
+                item.get("component_description") or item.get("description") or ""
+            ).strip()
+            if not child_code and not child_description:
+                continue
+            children.append(
+                _Structure._serialize_tree_node(
+                    child_code,
+                    child_description,
+                    str(item.get("component_type") or item.get("type") or "").strip(),
+                    str(item.get("component_unit") or item.get("unit") or "").strip(),
+                    cls._safe_float(item.get("quantity_per") or item.get("quantity")),
+                    children=None,
+                )
             )
-            for item in items
-            if isinstance(item, dict)
-        ]
 
         if not children:
             return None
@@ -750,7 +770,7 @@ class ChatSchemaDrivenPresentationService:
         root_node = _Structure._serialize_tree_node(
             code,
             description,
-            str(product.get("product_type") or "PA").strip(),
+            str(product.get("product_type") or product.get("type") or "PA").strip(),
             str(product.get("unit") or "").strip(),
             None,
             children=children,
@@ -846,15 +866,25 @@ class ChatSchemaDrivenPresentationService:
                 {"id": "structure", "title": str(tree.get("title") or ""), "presentation": tree}
             )
 
+        from app.domain.services.chat_presentation_structure_dedup_service import (
+            ChatPresentationStructureDedupService,
+        )
+
         for index, table in enumerate(tables):
-            if isinstance(table, dict):
-                panels.append(
-                    {
-                        "id": f"table-{index}",
-                        "title": str(table.get("title") or ""),
-                        "presentation": table,
-                    }
-                )
+            if not isinstance(table, dict):
+                continue
+            # One canonical structure view: tree XOR hierarchy table in the dashboard.
+            if isinstance(tree, dict) and ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(
+                table
+            ):
+                continue
+            panels.append(
+                {
+                    "id": f"table-{index}",
+                    "title": str(table.get("title") or ""),
+                    "presentation": table,
+                }
+            )
 
         if len(panels) < 2:
             return None

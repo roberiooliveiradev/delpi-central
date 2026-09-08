@@ -70,24 +70,68 @@ class ChatPresentationPrimaryViewService:
 
         selected = str(decision.get("selected") or "").strip().lower()
         explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
+        preferred = str(metadata.get("preferredFormat") or "").strip().lower()
 
-        if selected == "kpi" and isinstance(kpi_presentation, dict):
-            metadata["presentation"] = kpi_presentation
-            text_presentation = metadata.get("textPresentation")
+        if (
+            not explicit
+            and preferred == "tree"
+            and selected in {"", "text"}
+            and cls._has_tree_evidence(metadata)
+        ):
+            decision["selected"] = "tree"
+            selected = "tree"
 
-            if isinstance(text_presentation, dict):
-                from app.domain.services.chat_rich_presentation_text_service import (
-                    ChatRichPresentationTextService,
+        if (
+            not explicit
+            and preferred == "kpi"
+            and selected in {"", "text"}
+            and (
+                isinstance(kpi_presentation, dict)
+                or (
+                    isinstance(metadata.get("presentation"), dict)
+                    and metadata["presentation"].get("type") == "kpi"
                 )
+                or isinstance(metadata.get("kpiPresentation"), dict)
+            )
+        ):
+            decision["selected"] = "kpi"
+            selected = "kpi"
 
-                if not ChatRichPresentationTextService._uses_humanized_stack_sections(metadata):
-                    title = str(
-                        text_presentation.get("title")
-                        or kpi_presentation.get("title")
-                        or ""
-                    ).strip()
-                    text_presentation["markdown"] = f"### {title}".strip() if title else ""
+        if selected == "kpi":
+            resolved_kpi = kpi_presentation if isinstance(kpi_presentation, dict) else None
 
+            if not isinstance(resolved_kpi, dict):
+                candidate = metadata.get("kpiPresentation")
+
+                if isinstance(candidate, dict):
+                    resolved_kpi = candidate
+                elif (
+                    isinstance(metadata.get("presentation"), dict)
+                    and metadata["presentation"].get("type") == "kpi"
+                ):
+                    resolved_kpi = metadata["presentation"]
+
+            if isinstance(resolved_kpi, dict):
+                metadata["presentation"] = resolved_kpi
+                text_presentation = metadata.get("textPresentation")
+
+                if isinstance(text_presentation, dict):
+                    from app.domain.services.chat_rich_presentation_text_service import (
+                        ChatRichPresentationTextService,
+                    )
+
+                    if not ChatRichPresentationTextService._uses_humanized_stack_sections(metadata):
+                        title = str(
+                            text_presentation.get("title")
+                            or resolved_kpi.get("title")
+                            or ""
+                        ).strip()
+                        text_presentation["markdown"] = f"### {title}".strip() if title else ""
+
+                return
+
+        if selected == "tree" and cls._has_tree_evidence(metadata):
+            cls._align_primary_to_selected(metadata, "tree")
             return
 
         native_selected = selected in _VIEW_SLOT_BY_TYPE or selected in _CHART_SELECTED_TYPES
@@ -127,6 +171,19 @@ class ChatPresentationPrimaryViewService:
             cls._align_primary_to_selected(metadata, selected)
             decision["layoutMode"] = "single"
             decision["visualOrder"] = [selected]
+
+    @classmethod
+    def _has_tree_evidence(cls, metadata: dict[str, Any]) -> bool:
+        from app.domain.services.chat_presentation_decision_metadata_service import (
+            ChatPresentationDecisionMetadataService,
+        )
+
+        return bool(
+            ChatPresentationDecisionMetadataService.effective_tree_presentation(
+                tree_presentation=metadata.get("treePresentation"),
+                primary_presentation=metadata.get("presentation"),
+            )
+        )
 
     @classmethod
     def finalize_explicit_native_single_view(cls, metadata: dict[str, Any]) -> None:

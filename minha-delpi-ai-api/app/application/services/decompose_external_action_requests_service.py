@@ -22,13 +22,19 @@ class ExternalActionSubtask:
 class DecomposeExternalActionRequestsService:
     """Parte mensagens longas em subtarefas sem ensinar endpoint/domínio.
 
-    Joiners, listas numeradas, compoundSignals e limites vêm de
+    Joiners, listas numeradas, compoundSignals (domínio) e limites vêm de
     ``openapi_tool_routing.json`` (assistant content).
+
+    ``presentationCompoundSignals`` ("tudo na mesma resposta") NÃO forçam
+    multi-action — só afetam apresentação/stack.
     """
 
     @classmethod
     def wants_multi_action(cls, message: str | None) -> bool:
-        """True quando há ≥2 subtarefas ou signal declarativo de pedido composto."""
+        """True quando há ≥2 subtarefas de domínio ou signal declarativo de domínio composto.
+
+        Sinais só de apresentação (`presentationCompoundSignals`) não contam.
+        """
         text = str(message or "").strip()
         if not text:
             return False

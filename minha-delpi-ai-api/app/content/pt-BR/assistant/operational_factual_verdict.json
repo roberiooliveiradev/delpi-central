@@ -45,6 +45,55 @@
         }
       },
       "qualityGapKey": "exclusivityContradiction"
+    },
+    "product_stock": {
+      "pathMarkers": ["/stock"],
+      "fidelityRule": "**Cobertura estoque × demanda:** se o saldo disponível total for **0**, diga que o estoque **não cobre** demanda típica. Se o saldo for **> 0**, cite o saldo e **não** afirme «não cobre» sem fatos de demanda. Não invente demanda numérica ausente dos fatos. **Proibido** dizer que a consulta não trouxe estoque / não tem saldo nesta consulta quando os fatos (turno atual ou anterior) já incluem saldo de estoque.",
+      "scalarFromTableKeys": [
+        "available_quantity",
+        "current_quantity",
+        "saldo",
+        "quantity"
+      ],
+      "llmFacts": {
+        "verdictNo": "Veredito canônico: estoque disponível total = 0 — não cobre demanda típica com o saldo atual.",
+        "verdictYes": "Veredito canônico: estoque disponível total = {count} — avaliar cobertura vs demanda com os fatos acima.",
+        "markdownVerdictLinePrefix": "**cobertura:**"
+      },
+      "factualCoherence": {
+        "contradictionTriggers": [
+          "estoque cobre demanda",
+          "saldo suficiente",
+          "há saldo para demanda",
+          "nao tenho o estoque",
+          "não tenho o estoque",
+          "nao tenho estoque",
+          "não tenho estoque",
+          "nao trouxe a posicao de estoque",
+          "não trouxe a posição de estoque",
+          "nao trouxe estoque",
+          "não trouxe estoque",
+          "nao retornou saldos",
+          "não retornou saldos",
+          "estoque disponivel nesta consulta",
+          "estoque disponível nesta consulta"
+        ],
+        "positiveMarkers": ["cobre", "suficiente", "atende"],
+        "sharedMarkers": [],
+        "verdictNoMarkers": [
+          "saldo disponivel total: 0",
+          "saldo disponível total: 0",
+          "available_quantity: 0",
+          "estoque zerado",
+          "saldo zero"
+        ],
+        "definedWithSharedMarker": "",
+        "gapDetails": {
+          "positiveAndShared": "afirma cobertura com saldo zero",
+          "definedWithShared": "nega existência de estoque consultado com saldo já nos fatos"
+        }
+      },
+      "qualityGapKey": "stockDemandCoverageContradiction"
     }
   }
 }

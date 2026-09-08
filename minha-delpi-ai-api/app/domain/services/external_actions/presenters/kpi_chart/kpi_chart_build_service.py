@@ -14,6 +14,7 @@ from app.domain.services.chat_presentation_profile_service import (
 from app.domain.services.external_actions.presenters.kpi_chart.kpi_chart_constants import (
     CHART_WORTHY_NUMERIC_KEYS,
     NO_CHART_PATHS,
+    SERIES_LIST_KEYS,
 )
 
 if TYPE_CHECKING:
@@ -31,7 +32,7 @@ class ExternalActionKpiChartBuildService:
         )
 
         periods = None
-        for key in ("periods", "series", "history"):
+        for key in SERIES_LIST_KEYS:
             candidate = root.get(key)
             if isinstance(candidate, list):
                 periods = candidate

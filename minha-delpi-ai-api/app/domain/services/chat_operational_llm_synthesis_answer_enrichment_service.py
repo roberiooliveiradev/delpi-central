@@ -18,6 +18,9 @@ from app.domain.services.chat_operational_narrative_synthesis_service import (
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_prose_markdown_join_service import (
+    ChatProseMarkdownJoinService,
+)
 from app.domain.services.chat_response_mode_synthesis_quality_content_service import (
     ChatResponseModeSynthesisQualityContentService,
 )
@@ -145,22 +148,36 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         return "".join(out)
 
     @classmethod
-    def _trim_brief_prose(cls, answer: str) -> str:
-        max_chars = ChatOperationalLlmSynthesisContextContentService.limit_int(
-            "maxBriefProseChars",
-            420,
-        )
+    def _trim_to_budget(cls, answer: str, max_chars: int) -> str:
         body = str(answer or "").strip()
 
         if len(body) <= max_chars:
             return body
 
-        trimmed = body[:max_chars].rstrip()
+        # Reserve one char for ellipsis.
+        budget = max(1, max_chars - 1)
+        window = body[:budget]
 
-        if " " in trimmed:
-            trimmed = trimmed.rsplit(" ", 1)[0].rstrip()
+        sentence_end = -1
+        for match in re.finditer(r"[.!?](?=\s|$)", window):
+            sentence_end = match.end()
 
-        return f"{trimmed}…" if trimmed else body[:max_chars]
+        if sentence_end >= max(24, budget // 3):
+            trimmed = window[:sentence_end].rstrip()
+        elif " " in window:
+            trimmed = window.rsplit(" ", 1)[0].rstrip()
+        else:
+            trimmed = window.rstrip()
+
+        return f"{trimmed}…" if trimmed else body[:budget] + "…"
+
+    @classmethod
+    def _trim_brief_prose(cls, answer: str) -> str:
+        max_chars = ChatOperationalLlmSynthesisContextContentService.limit_int(
+            "maxBriefProseChars",
+            420,
+        )
+        return cls._trim_to_budget(answer, max_chars)
 
     @classmethod
     def _trim_mode_prose(cls, answer: str, *, response_mode: str | None) -> str:
@@ -172,32 +189,12 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
             return cls._trim_thinker_prose(answer)
 
         max_chars = ChatOperationalLlmSynthesisContextContentService.max_normal_prose_chars()
-        body = str(answer or "").strip()
-
-        if len(body) <= max_chars:
-            return body
-
-        trimmed = body[:max_chars].rstrip()
-
-        if " " in trimmed:
-            trimmed = trimmed.rsplit(" ", 1)[0].rstrip()
-
-        return f"{trimmed}…" if trimmed else body[:max_chars]
+        return cls._trim_to_budget(answer, max_chars)
 
     @classmethod
     def _trim_thinker_prose(cls, answer: str) -> str:
         max_chars = ChatOperationalLlmSynthesisContextContentService.max_thinker_prose_chars()
-        body = str(answer or "").strip()
-
-        if len(body) <= max_chars:
-            return body
-
-        trimmed = body[:max_chars].rstrip()
-
-        if " " in trimmed:
-            trimmed = trimmed.rsplit(" ", 1)[0].rstrip()
-
-        return f"{trimmed}…" if trimmed else body[:max_chars]
+        return cls._trim_to_budget(answer, max_chars)
 
     @classmethod
     def _tool_calls_use_decoupled_panel(cls, tool_calls: list | None) -> bool:
@@ -367,7 +364,7 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         if not kept:
             return answer
 
-        return " ".join(kept).strip()
+        return ChatProseMarkdownJoinService.join_sentence_fragments(kept)
 
     @classmethod
     def _strip_profile_factual_verdict_claims(cls, answer: str, tool_calls: list | None) -> str:
@@ -410,7 +407,7 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         if not kept:
             return answer
 
-        return " ".join(kept).strip()
+        return ChatProseMarkdownJoinService.join_sentence_fragments(kept)
 
     @classmethod
     def _strip_deflection_markers(cls, answer: str) -> str:
@@ -442,7 +439,7 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         if not kept:
             return answer
 
-        return " ".join(kept).strip()
+        return ChatProseMarkdownJoinService.join_sentence_fragments(kept)
 
     @classmethod
     def _strip_ungrounded_sentences(cls, answer: str, tool_calls: list | None) -> str:
@@ -479,7 +476,7 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         if not kept:
             return answer
 
-        return " ".join(kept).strip()
+        return ChatProseMarkdownJoinService.join_sentence_fragments(kept)
 
     @classmethod
     def _collect_anchor_tokens(cls, tool_calls: list | None) -> set[str]:
@@ -624,7 +621,7 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         if not kept:
             return answer
 
-        return " ".join(kept).strip()
+        return ChatProseMarkdownJoinService.join_sentence_fragments(kept)
 
     @classmethod
     def _metadata_indicates_empty_sections(cls, tool_calls: list | None) -> bool:

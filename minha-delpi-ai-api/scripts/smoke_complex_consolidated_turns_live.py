@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
 """Smoke live — turnos complexos com pedido multi-informação e apresentação rica.
 
-Avalia se o chat consolida (prosa + KPI/tabela/gráfico/árvore/dashboard) o que
-o usuário pediu numa única resposta (ou stack coerente no metadata).
+Avalia a camada ESTRUTURAL/pipeline: tools, path markers, kinds/rich surfaces,
+prosa presente e sem fence SQL. Consolida metadata para inspeção posterior.
+
+IMPORTANTE — este script NÃO é gate de release sozinho.
+PASS aqui = PASS_ESTRUTURAL. Pedido composto exige camadas L1–L4
+(R-tools / R-facts / R-ui / R-ask) conforme:
+  docs/testing/chat-ai-flow-families.md (§16.1)
+  docs/testing/smoke-complex-consolidated-turns.md
+
+Não reportar “4/4 PASS” de excelência sem a matriz L1–L4 (banco/UI).
 
 Uso:
   docker exec -e SMOKE_BASE_URL=http://delpi-gateway -w /app delpi-minha-delpi-ai-api \\
@@ -633,7 +641,7 @@ def main() -> int:
             }
 
         results.append(evaluated)
-        status = "PASS" if evaluated["passed"] else "FAIL"
+        status = "PASS_ESTRUTURAL" if evaluated["passed"] else "FAIL_ESTRUTURAL"
         print(f"{status} kinds={evaluated.get('kinds')} paths={evaluated.get('paths')}", flush=True)
         if evaluated.get("latency"):
             _print_latency(evaluated["latency"])
@@ -667,9 +675,14 @@ def main() -> int:
         "responseMode": _MODE,
         "productCode": _PRODUCT,
         "agentId": agent_id,
+        "harnessLayer": "structural",
         "passed": failed == 0,
         "failCount": failed,
         "caseCount": len(results),
+        "releaseNote": (
+            "passed=true means PASS_ESTRUTURAL only. Release requires L1–L4 per "
+            "docs/testing/smoke-complex-consolidated-turns.md and chat-ai-flow-families.md §16.1."
+        ),
         "latencySummary": {
             "wallsMs": walls,
             "avgWallMs": int(sum(walls) / len(walls)) if walls else None,
@@ -683,6 +696,18 @@ def main() -> int:
     if not os.path.isabs(out_path):
         out_path = os.path.join(os.getcwd(), out_path)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    # Preserve prior qualitativeReview when re-running structural harness.
+    if os.path.isfile(out_path):
+        try:
+            with open(out_path, encoding="utf-8") as prev_handle:
+                previous = json.load(prev_handle)
+            if isinstance(previous.get("qualitativeReview"), dict):
+                evidence["qualitativeReview"] = previous["qualitativeReview"]
+                evidence["qualitativeReview"]["staleWarning"] = (
+                    "Structural harness re-ran after this review; re-validate L1–L4 before release."
+                )
+        except (OSError, json.JSONDecodeError):
+            pass
     with open(out_path, "w", encoding="utf-8") as handle:
         json.dump(evidence, handle, ensure_ascii=False, indent=2)
     print("=" * 72, flush=True)
@@ -697,7 +722,8 @@ def main() -> int:
         flush=True,
     )
     print(
-        f"SUMMARY {'PASS' if failed == 0 else 'FAIL'} ({len(results) - failed}/{len(results)})",
+        f"SUMMARY {'PASS_ESTRUTURAL' if failed == 0 else 'FAIL_ESTRUTURAL'} "
+        f"({len(results) - failed}/{len(results)}) — release exige L1–L4",
         flush=True,
     )
     return 0 if failed == 0 else 1

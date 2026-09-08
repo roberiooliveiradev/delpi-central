@@ -56,12 +56,13 @@ class ChatPresentationDecisionEnrichmentService:
             metadata,
             user_preference,
         )
+        decide_preference = effective_preference or cls._soft_policy_preference(metadata)
 
         decision = ChatPresentationDecisionService.decide(
             intent=intent,
             rows=ChatPresentationDecisionMetadataService.rows_from_metadata_tables(metadata),
             user_message=user_message,
-            user_preference=effective_preference,
+            user_preference=decide_preference,
             primary_presentation=primary_presentation,
             table_presentation=metadata.get("tablePresentation"),
             chart_presentation=metadata.get("chartPresentation"),
@@ -183,12 +184,7 @@ class ChatPresentationDecisionEnrichmentService:
 
         metadata["presentationDecision"] = decision
 
-        legacy = ChatPresentationDecisionBuilderService.legacy_preferred_format(
-            decision.get("selected"),
-        )
-
-        if legacy:
-            metadata["preferredFormat"] = legacy
+        cls._sync_preferred_format_from_selected(metadata, decision)
 
         views = decision.get("availableViews") or []
 
@@ -299,6 +295,85 @@ class ChatPresentationDecisionEnrichmentService:
             decision["dashboardExplanation"] = dashboard_explanation
 
     @classmethod
+    def _soft_policy_preference(cls, metadata: dict[str, Any]) -> str | None:
+        """Preferência de perfil no Automático (não é toolbar explícita)."""
+        token = str(metadata.get("preferredFormat") or "").strip().lower()
+
+        if token in {"tree", "kpi", "table", "chart", "dashboard", "line_chart", "bar_chart", "donut"}:
+            return token
+
+        return None
+
+    @classmethod
+    def _has_policy_visual_evidence(
+        cls,
+        metadata: dict[str, Any],
+        preferred: str,
+    ) -> bool:
+        if preferred == "tree":
+            return bool(
+                ChatPresentationDecisionMetadataService.effective_tree_presentation(
+                    tree_presentation=metadata.get("treePresentation"),
+                    primary_presentation=metadata.get("presentation"),
+                )
+            )
+
+        if preferred == "kpi":
+            presentation = metadata.get("presentation")
+            kpi = metadata.get("kpiPresentation")
+
+            return (
+                isinstance(kpi, dict)
+                or (isinstance(presentation, dict) and presentation.get("type") == "kpi")
+            )
+
+        if preferred == "table":
+            return bool(metadata.get("tablePresentation")) or (
+                isinstance(metadata.get("presentation"), dict)
+                and metadata["presentation"].get("type") == "table"
+            )
+
+        if preferred in {"chart", "line_chart", "bar_chart", "donut"}:
+            return bool(metadata.get("chartPresentation")) or (
+                isinstance(metadata.get("presentation"), dict)
+                and metadata["presentation"].get("type") == "chart"
+            )
+
+        if preferred == "dashboard":
+            return bool(
+                ChatPresentationDecisionMetadataService.resolve_dashboard_presentation(
+                    metadata,
+                )
+            )
+
+        return False
+
+    @classmethod
+    def _sync_preferred_format_from_selected(
+        cls,
+        metadata: dict[str, Any],
+        decision: dict[str, Any],
+    ) -> None:
+        legacy = ChatPresentationDecisionBuilderService.legacy_preferred_format(
+            decision.get("selected"),
+        )
+
+        if not legacy:
+            return
+
+        policy_preferred = str(metadata.get("preferredFormat") or "").strip().lower()
+
+        if (
+            legacy == "text"
+            and policy_preferred in {"tree", "kpi", "table", "chart", "dashboard"}
+            and cls._has_policy_visual_evidence(metadata, policy_preferred)
+            and not str(metadata.get("explicitSessionFormat") or "").strip()
+        ):
+            return
+
+        metadata["preferredFormat"] = legacy
+
+    @classmethod
     def _sanitize_zero_row_reason(
         cls,
         decision: dict[str, Any],
@@ -374,7 +449,17 @@ class ChatPresentationDecisionEnrichmentService:
             )
 
             if len(merged_views) >= 2:
-                decision["selected"] = "text"
+                policy_preferred = cls._soft_policy_preference(metadata)
+                stack_selected = "text"
+
+                if (
+                    policy_preferred
+                    and policy_preferred in set(merged_views)
+                    and cls._has_policy_visual_evidence(metadata, policy_preferred)
+                ):
+                    stack_selected = policy_preferred
+
+                decision["selected"] = stack_selected
                 decision["availableViews"] = merged_views
                 decision["layoutMode"] = "stack"
                 decision["visualOrder"] = ChatPresentationDecisionBuilderService.visual_order_for_stack(

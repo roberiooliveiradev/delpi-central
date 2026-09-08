@@ -14,6 +14,7 @@ from app.domain.services.chat_presentation_profile_service import (
 from app.domain.services.external_actions.presenters.kpi_chart.kpi_chart_constants import (
     CHART_WORTHY_NUMERIC_KEYS,
     NO_CHART_PATHS,
+    SERIES_LIST_KEYS,
 )
 
 if TYPE_CHECKING:
@@ -71,7 +72,7 @@ class ExternalActionKpiChartDetectionService:
             return True
 
         kpi_keys = ("value", "percentage", "current", "previous", "target", "meta")
-        has_series = any(k in root for k in ("periods", "series", "history"))
+        has_series = any(k in root for k in SERIES_LIST_KEYS)
         kpi_count = sum(1 for k in kpi_keys if k in root)
 
         if has_series:

@@ -72,6 +72,8 @@ class ChatPromptBuilderService:
         *,
         response_mode: str | None = None,
         tool_calls: list | None = None,
+        workspace_context: dict | None = None,
+        tool_context: dict | None = None,
     ) -> str:
         from app.domain.services.chat_operational_narrative_synthesis_service import (
             ChatOperationalNarrativeSynthesisService,
@@ -81,6 +83,8 @@ class ChatPromptBuilderService:
             current_message,
             response_mode=response_mode,
             tool_calls=tool_calls,
+            workspace_context=workspace_context,
+            tool_context=tool_context,
         )
 
     def build_fast_path_messages(
@@ -139,6 +143,7 @@ class ChatPromptBuilderService:
         skills_to_load: list[str] | tuple[str, ...] | None = None,
         analysis_ran: bool = False,
         attachment_ids: list | None = None,
+        workspace_context: dict | None = None,
     ) -> list[dict]:
         from app.domain.services.chat_meta_llm_synthesis_service import (
             ChatMetaLlmSynthesisService,
@@ -178,6 +183,12 @@ class ChatPromptBuilderService:
                 current_message,
                 response_mode=response_mode,
                 tool_calls=tool_calls,
+                workspace_context=workspace_context
+                if isinstance(workspace_context, dict)
+                else None,
+                tool_context=meta_synthesis_tool_context
+                if isinstance(meta_synthesis_tool_context, dict)
+                else None,
             )
         if host_surface_prompt and str(host_surface_prompt).strip():
             base_prompt = f"{base_prompt}\n\n{str(host_surface_prompt).strip()}"

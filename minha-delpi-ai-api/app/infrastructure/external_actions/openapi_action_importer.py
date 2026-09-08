@@ -84,6 +84,16 @@ class OpenApiActionImporter:
         if locale_texts.get("whenToUse"):
             payload["when_to_use"] = locale_texts["whenToUse"]
 
+        when_not = str(locale_texts.get("whenNotToUse") or "").strip()
+        if when_not:
+            # Persist negative guidance without a dedicated column: fold into description.
+            base_description = str(payload.get("description") or "").strip()
+            if when_not.lower() not in base_description.lower():
+                payload["description"] = (
+                    f"{base_description} {when_not}".strip() if base_description else when_not
+                )
+            payload["when_not_to_use"] = when_not
+
         if delpi_metadata:
             payload["delpi_metadata"] = delpi_metadata
 
