@@ -5,6 +5,7 @@ from app.interfaces.http.auth_middleware import register_auth_middleware
 from app.interfaces.http.error_handlers import register_error_handlers
 from app.interfaces.http.request_context import register_request_context
 from app.interfaces.http.routes.health_routes import health_bp
+from app.interfaces.http.routes.home_routes import home_bp
 from app.interfaces.http.routes.me_routes import me_bp
 
 
@@ -18,5 +19,7 @@ def create_application() -> Flask:
     register_auth_middleware(app)
     app.register_blueprint(health_bp)
     app.register_blueprint(me_bp)
+    app.register_blueprint(home_bp)
 
     return app
+
