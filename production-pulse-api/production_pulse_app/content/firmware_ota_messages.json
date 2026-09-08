@@ -1,0 +1,18 @@
+{
+  "httpErrors": {
+    "firmwareNotFound": "Firmware não encontrado.",
+    "firmwareDuplicateVersion": "Já existe esta versão para a família de firmware.",
+    "firmwareArtifactInvalid": "Arquivo de firmware inválido ou ausente.",
+    "firmwareArtifactTooLarge": "Arquivo de firmware excede o tamanho máximo permitido.",
+    "jobNotFound": "Campanha de atualização não encontrada.",
+    "jobCannotCancel": "Esta campanha não pode ser cancelada no estado atual.",
+    "noEligibleDevices": "Nenhum dispositivo elegível para a campanha.",
+    "openTargetExists": "O dispositivo já possui uma atualização OTA em andamento.",
+    "deviceOtaUnauthorized": "Token do dispositivo inválido ou ausente.",
+    "deviceOtaNotAuthorized": "Não há atualização autorizada para este dispositivo.",
+    "deviceOtaArtifactExpired": "Link de download expirado. Consulte novamente.",
+    "invalidFirmwareKey": "Identificador de firmware inválido.",
+    "invalidFirmwareVersion": "Versão de firmware inválida.",
+    "driverKeyUnknown": "Driver desconhecido no registry."
+  }
+}
