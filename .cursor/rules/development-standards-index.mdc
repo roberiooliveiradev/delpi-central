@@ -180,11 +180,11 @@ Ao criar/editar `.cursor/rules`:
 
 ## Ordem de prioridade em conflito
 
-1. `documentos/instrucoes_oficiais_gpt_arquiteto_delpi_central.md`.
+1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`.
 2. Constituição mínima + regra especializada canônica atual.
 3. ADR/contrato/schema/OpenAPI/implementação vigente conforme `evidence-driven-execution.mdc`.
 4. Para tools/actions: OpenAPI importado + Action Catalog/index.
-5. Para qualidade de IA: protocolo R1–R11 em `docs/testing/chat-ai-flow-families.md`.
+5. Para qualidade de IA: protocolo R1–R11 em `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md`.
 6. Segurança/policy.
 7. Gates CI + testes/evals do estado atual.
 
