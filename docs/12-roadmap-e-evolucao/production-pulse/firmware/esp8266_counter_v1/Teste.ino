@@ -240,6 +240,57 @@ bool extractJsonBool(const String& body, const char* key, bool& value) {
   return false;
 }
 
+/** Prefer envelope.data payload from Production Pulse API success responses. */
+String extractEnvelopeData(const String& body) {
+  int dataKey = body.indexOf("\"data\"");
+  if (dataKey < 0) {
+    return body;
+  }
+  int colon = body.indexOf(':', dataKey);
+  if (colon < 0) {
+    return body;
+  }
+  int start = colon + 1;
+  while (start < (int)body.length() && (body[start] == ' ' || body[start] == '\t')) {
+    start++;
+  }
+  if (start >= (int)body.length() || body[start] != '{') {
+    return body;
+  }
+  int depth = 0;
+  for (int i = start; i < (int)body.length(); i++) {
+    char c = body[i];
+    if (c == '{') {
+      depth++;
+    } else if (c == '}') {
+      depth--;
+      if (depth == 0) {
+        return body.substring(start, i + 1);
+      }
+    }
+  }
+  return body;
+}
+
+String urlEncodeComponent(const String& value) {
+  String out;
+  out.reserve(value.length() * 2);
+  for (size_t i = 0; i < value.length(); i++) {
+    char c = value[i];
+    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+        || c == '-' || c == '_' || c == '.' || c == '~') {
+      out += c;
+    } else if (c == ' ') {
+      out += "%20";
+    } else {
+      char buf[4];
+      snprintf(buf, sizeof(buf), "%%%02X", (unsigned char)c);
+      out += buf;
+    }
+  }
+  return out;
+}
+
 bool otaConfigured() {
   return cfg.otaBaseUrl[0] != '\0' && apiTokenConfigured() && cfg.branch[0] != '\0';
 }
@@ -262,6 +313,7 @@ bool httpExchange(
   WiFiClient client;
   HTTPClient http;
   http.setTimeout(20000);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
   if (!http.begin(client, url)) {
     return false;
   }
@@ -305,16 +357,31 @@ bool reportOtaStatus(
   int code = 0;
   String resp;
   if (!httpExchange("POST", url, payload, code, resp)) {
+    Serial.print("OTA report transport fail status=");
+    Serial.println(status);
     return false;
   }
-  return code >= 200 && code < 300;
+  bool ok = code >= 200 && code < 300;
+  if (!ok) {
+    Serial.print("OTA report HTTP ");
+    Serial.print(code);
+    Serial.print(" body=");
+    Serial.println(resp);
+  }
+  return ok;
 }
 
 bool applyOtaBinary(const String& artifactUrl, const String& targetId, const String& version) {
+  // Finish report HTTP fully before opening the artifact download stream.
   reportOtaStatus(targetId, "downloading", "", "");
+  reportOtaStatus(targetId, "applying", "", "");
+  yield();
+  ESP.wdtFeed();
+
   WiFiClient client;
   HTTPClient http;
   http.setTimeout(120000);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
   if (!http.begin(client, artifactUrl)) {
     reportOtaStatus(targetId, "failed", "http_begin_failed", "");
     return false;
@@ -328,7 +395,7 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
   }
   int contentLength = http.getSize();
   WiFiClient* stream = http.getStreamPtr();
-  reportOtaStatus(targetId, "applying", "", "");
+
   if (!Update.begin(contentLength > 0 ? (size_t)contentLength : UPDATE_SIZE_UNKNOWN)) {
     http.end();
     reportOtaStatus(targetId, "failed", "update_begin_failed", "");
@@ -362,42 +429,49 @@ void maybeCheckOta() {
     return;
   }
   unsigned long now = millis();
-  unsigned long dueAt = lastOtaCheckMs == 0 ? OTA_FIRST_CHECK_MS : OTA_CHECK_INTERVAL_MS;
-  if (lastOtaCheckMs != 0 && (now - lastOtaCheckMs) < dueAt) {
-    return;
-  }
-  if (lastOtaCheckMs == 0 && now < OTA_FIRST_CHECK_MS) {
+  if (lastOtaCheckMs == 0) {
+    if (now < OTA_FIRST_CHECK_MS) {
+      return;
+    }
+  } else if ((now - lastOtaCheckMs) < OTA_CHECK_INTERVAL_MS) {
     return;
   }
   lastOtaCheckMs = now;
   otaInProgress = true;
 
-  String url = otaBaseTrimmed() + "/device-ota/check?controllerCode=" + codigoControlador
-    + "&branch=" + String(cfg.branch);
+  String url = otaBaseTrimmed() + "/device-ota/check?controllerCode="
+    + urlEncodeComponent(codigoControlador)
+    + "&branch=" + urlEncodeComponent(String(cfg.branch));
   int code = 0;
   String resp;
   if (!httpExchange("GET", url, "", code, resp) || code != HTTP_CODE_OK) {
+    Serial.print("OTA check HTTP ");
+    Serial.println(code);
     otaInProgress = false;
     return;
   }
 
+  String dataJson = extractEnvelopeData(resp);
   bool available = false;
-  if (!extractJsonBool(resp, "updateAvailable", available) || !available) {
+  if (!extractJsonBool(dataJson, "updateAvailable", available) || !available) {
     otaInProgress = false;
     return;
   }
 
-  String token = extractJsonString(resp, "artifactToken");
-  String targetId = extractJsonString(resp, "targetId");
-  String version = extractJsonString(resp, "version");
+  String token = extractJsonString(dataJson, "artifactToken");
+  String targetId = extractJsonString(dataJson, "targetId");
+  String version = extractJsonString(dataJson, "version");
   if (token.length() == 0) {
     reportOtaStatus(targetId, "failed", "missing_artifact_token", "");
     otaInProgress = false;
     return;
   }
 
-  String artifactUrl = otaBaseTrimmed() + "/device-ota/artifacts/" + token
-    + "?controllerCode=" + codigoControlador + "&branch=" + String(cfg.branch);
+  String artifactUrl = otaBaseTrimmed() + "/device-ota/artifacts/" + urlEncodeComponent(token)
+    + "?controllerCode=" + urlEncodeComponent(codigoControlador)
+    + "&branch=" + urlEncodeComponent(String(cfg.branch));
+  Serial.print("OTA applying version=");
+  Serial.println(version);
   applyOtaBinary(artifactUrl, targetId, version);
   otaInProgress = false;
 }

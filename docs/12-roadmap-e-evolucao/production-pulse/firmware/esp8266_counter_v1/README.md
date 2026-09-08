@@ -23,40 +23,27 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 ### Autenticação
 
 - Header: `X-Device-Token: <token>`
-- Token vazio no EEPROM = bootstrap (rotas `/api/*` abertas, exceto a política futura)
+- Token vazio no EEPROM = bootstrap
 - Token setado = só `GET /api/contador` público; demais `/api/*` exigem header igual ou `401`
 
 ### Config persistida (EEPROM)
 
-`ssid`, `password`, `apiToken`, `debounceMs`, `otaBaseUrl`, `branch`. Defaults de fábrica: `YOUR_SSID` / `YOUR_PASSWORD`, debounce 100 ms, token vazio, `otaBaseUrl` vazio, `branch`=`01`. Magic `0x50505302` — flash novo limpa EEPROM antiga.
+`ssid`, `password`, `apiToken`, `debounceMs`, `otaBaseUrl`, `branch`. Magic `0x50505302`.
 
-O código do controlador é `ESP-` + `ESP.getChipId()` em hex — estável após reboot.
-
-Wi‑Fi: tentativa limitada no boot; no `loop`, reconnect com backoff via `millis()` (sem `delay` longo) + `ESP.wdtFeed()`.
-
-mDNS: hostname = `controllerCode` em minúsculas (ex.: `esp-00a1b2c3.local`).
-
-Factory reset: `POST /api/factory-reset` (auth) ou hold **D5+D1** por 10 s. Não apaga readings no Postgres; no chip, restart zera o contador em RAM.
-
-### LED de estado (`LED_BUILTIN`, ativo LOW)
-
-| Estado EN | Padrão | Quando |
-|-----------|--------|--------|
-| `connecting` | pisca ~500 ms | Wi‑Fi offline |
-| `online` | pulso lento ~2 s | Wi‑Fi conectado |
-| `authError` | pisca rápido ~100 ms | falha `X-Device-Token` em `/api/*` (exceto contador), ~5 s |
-
-Sem `delay` no LED — animação via `millis()` no `loop`.
-
-No Production Pulse: cadastro com Wi‑Fi/debounce/token; «Testar conexão» e Salvar (modo A) usam `/api/config` e `/api/status`.
-
-### OTA (P4 — implementado)
+### OTA remota (P4 — implementado)
 
 Pull autorizado contra a Production Pulse API ([FIRMWARE-OTA-P4.md](../../FIRMWARE-OTA-P4.md)):
 
-1. Configure `otaBaseUrl` (ex.: `http://<host>/apps/production-pulse-api`) e `branch` via `POST /api/config` — **sem** URL de produção hardcoded no binário.
-2. A cada ~10 min (primeiro check ~1 min após boot), se Wi‑Fi OK, heap ≥ 20 KB e token setado: `GET {otaBaseUrl}/device-ota/check?controllerCode=…&branch=…` com `X-Device-Token`.
-3. Se `updateAvailable`, baixa `GET …/device-ota/artifacts/{artifactToken}` e aplica com `Updater`; reporta `downloading` → `applying` → `updated|failed` em `POST /device-ota/report`.
-4. Após `updated`, o chip reinicia; a nova `firmwareVersion` em `/api/status` confirma o flash.
+1. Configure via `POST /api/config` (sem URL de produção no binário):
+   - `otaBaseUrl`: origem **HTTP** do gateway, ex. `http://192.168.x.x/apps/production-pulse-api` (sem trailing slash)
+   - `branch`: `01` / `02`
+   - `apiToken`: igual ao `device_api_token` no cadastro
+2. No admin: publique o `.bin`, amarre o IoT em `/firmware-links` (1 IoT = 1 firmware), crie campanha OTA.
+3. O chip (~1 min após boot, depois a cada ~10 min) chama:
+   - `GET {otaBaseUrl}/device-ota/check?controllerCode=…&branch=…` com `X-Device-Token`
+   - Parse do envelope `{ "success", "data": { "updateAvailable", "artifactToken", … } }`
+   - Download `GET …/device-ota/artifacts/{token}` e `Updater`
+   - `POST …/device-ota/report` (`downloading` → `applying` → `updated|failed`) **antes** do stream de download (evita segundo HTTP concorrente)
+4. MVP do sketch: **HTTP na VLAN** (sem BearSSL/HTTPS).
 
 Checklist lab: [HOMOLOGACAO-OTA-P4.md](../../HOMOLOGACAO-OTA-P4.md).
