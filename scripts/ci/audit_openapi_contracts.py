@@ -3,10 +3,17 @@
 
 Objetivos:
 - OpenAPI versionado: operationId obrigatório e único.
-- OpenAPI versionado: remoção de operação ou troca de operationId exige classificação
-  BREAKING explícita e vinculada à versão-base do contrato.
+- OpenAPI versionado: sinais breaking inequívocos exigem classificação BREAKING
+  explícita e vinculada à versão-base do contrato.
 - FastAPI: rota HTTP nova/alterada deve declarar operation_id literal e não pode
   introduzir duplicidade dentro do mesmo bounded context de API.
+
+Sinais breaking cobertos em OpenAPI versionado:
+- operação removida;
+- operationId alterado;
+- novo parâmetro obrigatório ou parâmetro que passa a required=true;
+- requestBody que passa a ser obrigatório;
+- resposta 2xx documentada removida.
 
 O scanner é diff-aware: dívida histórica não bloqueia o CI; regressões novas sim.
 """
@@ -17,6 +24,7 @@ import argparse
 import ast
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -108,10 +116,8 @@ def added_lines(base: str) -> dict[str, set[int]]:
     files: dict[str, set[int]] = {}
     current: str | None = None
     new_line: int | None = None
-
-    import re
-
     hunk_re = re.compile(r"@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+
     for raw in diff.splitlines():
         if raw.startswith("+++ b/"):
             current = raw[6:]
@@ -180,6 +186,78 @@ def iter_openapi_operations(document: dict[str, Any]) -> Iterable[OpenApiOperati
             yield OpenApiOperation(str(path), method_lower, operation_id)
 
 
+def resolve_local_ref(document: dict[str, Any], value: Any) -> Any:
+    if not isinstance(value, dict):
+        return value
+    ref = value.get("$ref")
+    if not isinstance(ref, str) or not ref.startswith("#/"):
+        return value
+    current: Any = document
+    for raw_token in ref[2:].split("/"):
+        token = raw_token.replace("~1", "/").replace("~0", "~")
+        if not isinstance(current, dict) or token not in current:
+            return value
+        current = current[token]
+    return current
+
+
+def operation_object(document: dict[str, Any], path: str, method: str) -> dict[str, Any] | None:
+    path_item = (document.get("paths") or {}).get(path)
+    if not isinstance(path_item, dict):
+        return None
+    operation = path_item.get(method)
+    return operation if isinstance(operation, dict) else None
+
+
+def effective_parameters(document: dict[str, Any], path: str, method: str) -> dict[tuple[str, str], dict[str, Any]]:
+    paths = document.get("paths") or {}
+    path_item = paths.get(path)
+    if not isinstance(path_item, dict):
+        return {}
+    operation = path_item.get(method)
+    if not isinstance(operation, dict):
+        return {}
+
+    parameters: dict[tuple[str, str], dict[str, Any]] = {}
+    for owner in (path_item, operation):
+        raw_parameters = owner.get("parameters")
+        if not isinstance(raw_parameters, list):
+            continue
+        for raw_parameter in raw_parameters:
+            parameter = resolve_local_ref(document, raw_parameter)
+            if not isinstance(parameter, dict):
+                continue
+            name = parameter.get("name")
+            location = parameter.get("in")
+            if not isinstance(name, str) or not name or not isinstance(location, str) or not location:
+                continue
+            parameters[(location, name)] = parameter
+    return parameters
+
+
+def request_body_required(document: dict[str, Any], path: str, method: str) -> bool:
+    operation = operation_object(document, path, method)
+    if not operation:
+        return False
+    request_body = resolve_local_ref(document, operation.get("requestBody"))
+    return bool(isinstance(request_body, dict) and request_body.get("required") is True)
+
+
+def success_response_codes(document: dict[str, Any], path: str, method: str) -> set[str]:
+    operation = operation_object(document, path, method)
+    if not operation:
+        return set()
+    responses = operation.get("responses")
+    if not isinstance(responses, dict):
+        return set()
+    result: set[str] = set()
+    for raw_code in responses:
+        code = str(raw_code).upper()
+        if code == "2XX" or (len(code) == 3 and code.startswith("2") and code.isdigit()):
+            result.add(code)
+    return result
+
+
 def contract_change_metadata(document: dict[str, Any]) -> tuple[str | None, str | None, str | None, str | None]:
     info = document.get("info") if isinstance(document.get("info"), dict) else {}
     change_class = info.get("x-delpi-contract-change") or document.get("x-delpi-contract-change")
@@ -192,6 +270,52 @@ def contract_change_metadata(document: dict[str, Any]) -> tuple[str | None, str 
         str(reason).strip() if isinstance(reason, str) and reason.strip() else None,
         version,
     )
+
+
+def operation_breaking_reasons(
+    base: dict[str, Any],
+    current: dict[str, Any],
+    previous: OpenApiOperation,
+    current_operation: OpenApiOperation,
+) -> list[str]:
+    reasons: list[str] = []
+    label = f"{previous.method.upper()} {previous.path}"
+
+    if previous.operation_id and current_operation.operation_id != previous.operation_id:
+        reasons.append(
+            f"operationId alterado em {label}: {previous.operation_id} -> {current_operation.operation_id or '<ausente>'}"
+        )
+
+    previous_parameters = effective_parameters(base, previous.path, previous.method)
+    current_parameters = effective_parameters(current, previous.path, previous.method)
+    for key, parameter in sorted(current_parameters.items()):
+        is_required = parameter.get("required") is True or key[0] == "path"
+        if not is_required:
+            continue
+        old_parameter = previous_parameters.get(key)
+        old_required = bool(
+            old_parameter
+            and (old_parameter.get("required") is True or key[0] == "path")
+        )
+        if old_parameter is None:
+            reasons.append(f"parâmetro obrigatório adicionado em {label}: {key[0]}:{key[1]}")
+        elif not old_required:
+            reasons.append(f"parâmetro passou a obrigatório em {label}: {key[0]}:{key[1]}")
+
+    if not request_body_required(base, previous.path, previous.method) and request_body_required(
+        current, previous.path, previous.method
+    ):
+        reasons.append(f"requestBody passou a obrigatório em {label}")
+
+    removed_success_codes = success_response_codes(base, previous.path, previous.method) - success_response_codes(
+        current, previous.path, previous.method
+    )
+    if removed_success_codes:
+        reasons.append(
+            f"resposta 2xx removida em {label}: {', '.join(sorted(removed_success_codes))}"
+        )
+
+    return reasons
 
 
 def validate_openapi_document(
@@ -252,11 +376,7 @@ def validate_openapi_document(
         if current_operation is None:
             breaking_reasons.append(f"operação removida: {previous.method.upper()} {previous.path}")
             continue
-        if previous.operation_id and current_operation.operation_id != previous.operation_id:
-            breaking_reasons.append(
-                f"operationId alterado em {previous.method.upper()} {previous.path}: "
-                f"{previous.operation_id} -> {current_operation.operation_id or '<ausente>'}"
-            )
+        breaking_reasons.extend(operation_breaking_reasons(base, current, previous, current_operation))
 
     if not breaking_reasons:
         return findings
@@ -422,6 +542,18 @@ def scan_fastapi_duplicates(changed_line_map: dict[str, set[int]]) -> list[Viola
     return findings
 
 
+def parse_openapi_candidate(path: str, text: str) -> tuple[dict[str, Any] | None, str | None]:
+    try:
+        document = load_document(path, text)
+    except (json.JSONDecodeError, RuntimeError, ValueError) as exc:
+        return None, str(exc)
+    except Exception as exc:
+        if yaml is not None and isinstance(exc, yaml.YAMLError):
+            return None, str(exc)
+        raise
+    return (document, None) if is_openapi_document(document) else (None, None)
+
+
 def scan_versioned_openapi(base: str) -> list[Violation]:
     findings: list[Violation] = []
     for status, paths in changed_paths(base):
@@ -431,17 +563,14 @@ def scan_versioned_openapi(base: str) -> list[Violation]:
         current_path = paths[-1]
         if Path(current_path).suffix.lower() not in OPENAPI_SUFFIXES:
             continue
-        current_text = (ROOT / current_path).read_text(encoding="utf-8") if (ROOT / current_path).exists() else None
-        if current_text is None:
+        source_path = ROOT / current_path
+        if not source_path.exists():
             continue
-        try:
-            current = load_document(current_path, current_text)
-        except (json.JSONDecodeError, RuntimeError, ValueError, yaml.YAMLError if yaml else Exception) as exc:
-            # Arquivo JSON/YAML comum não deve falhar o gate OpenAPI.
-            if "openapi" in current_text[:500].lower() or "swagger" in current_text[:500].lower():
-                findings.append(Violation("OPENAPI_PARSE_ERROR", current_path, 0, str(exc)))
-            continue
-        if not is_openapi_document(current):
+        current_text = source_path.read_text(encoding="utf-8")
+        current, parse_error = parse_openapi_candidate(current_path, current_text)
+        if current is None:
+            if parse_error and ("openapi" in current_text[:500].lower() or "swagger" in current_text[:500].lower()):
+                findings.append(Violation("OPENAPI_PARSE_ERROR", current_path, 0, parse_error))
             continue
 
         base_document: dict[str, Any] | None = None
@@ -449,12 +578,8 @@ def scan_versioned_openapi(base: str) -> list[Violation]:
         if kind != "A":
             previous_text = read_at(base, previous_path)
             if previous_text:
-                try:
-                    previous = load_document(previous_path, previous_text)
-                    if is_openapi_document(previous):
-                        base_document = previous
-                except Exception:
-                    base_document = None
+                previous, _ = parse_openapi_candidate(previous_path, previous_text)
+                base_document = previous
         findings.extend(validate_openapi_document(current_path, current, base_document))
     return findings
 
