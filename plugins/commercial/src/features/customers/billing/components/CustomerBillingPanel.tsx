@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { RefreshCw } from "lucide-react";
 
 import {
@@ -6,6 +7,10 @@ import {
   CommercialLoadingCard,
   CommercialStateBanner,
 } from "../../../../app/commercialUi";
+import {
+  DEFAULT_PORTFOLIO_BILLING_METRIC,
+  type PortfolioBillingMetric,
+} from "../../../../content/billingMetric";
 import type { UseCustomerBillingResult } from "../hooks/useCustomerBilling";
 import { CustomerAccountBillingChart } from "./CustomerAccountBillingChart";
 import { CustomerBillingFilters } from "./CustomerBillingFilters";
@@ -50,6 +55,10 @@ export function CustomerBillingPanel({
     priorSummary,
   } = billing;
 
+  const [billingMetric, setBillingMetric] = useState<PortfolioBillingMetric>(
+    DEFAULT_PORTFOLIO_BILLING_METRIC,
+  );
+
   const showInitialLoading = loading && !hasData;
   const empty =
     !loading && !error && !validationError && data && data.invoices.length === 0;
@@ -82,6 +91,8 @@ export function CustomerBillingPanel({
         disabled={loading && !hasData}
         comparePriorYear={comparePriorYear}
         onComparePriorYearChange={setComparePriorYear}
+        billingMetric={billingMetric}
+        onBillingMetricChange={setBillingMetric}
         onPresetChange={setPreset}
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
@@ -95,6 +106,7 @@ export function CustomerBillingPanel({
         startDate={startDate}
         endDate={endDate}
         comparePriorYear={comparePriorYear}
+        billingMetric={billingMetric}
         enabled={chartEnabled}
       />
 

@@ -4,12 +4,17 @@ import {
   CommercialDateField,
   CommercialFilterBarShell,
   CommercialSectionCard,
+  CommercialSectionHintLabel,
   CommercialSegmentToggle,
   CommercialSelectField,
   CommercialStateBanner,
   CommercialTextField,
 } from "../../../../app/commercialUi";
 import { ANALYTICS_CONTENT } from "../../../../content/analyticsContent";
+import {
+  BILLING_METRIC_CONTENT,
+  type PortfolioBillingMetric,
+} from "../../../../content/billingMetric";
 import { CUSTOMER_BILLING_CONTENT } from "../../../../content/customerBillingContent";
 import { CM_HELP } from "../../../../content/helpTooltips";
 import type {
@@ -27,6 +32,8 @@ type CustomerBillingFiltersProps = {
   disabled?: boolean;
   comparePriorYear: boolean;
   onComparePriorYearChange: (value: boolean) => void;
+  billingMetric: PortfolioBillingMetric;
+  onBillingMetricChange: (value: PortfolioBillingMetric) => void;
   onPresetChange: (value: CustomerBillingPeriodPreset) => void;
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
@@ -58,6 +65,8 @@ export function CustomerBillingFilters({
   disabled,
   comparePriorYear,
   onComparePriorYearChange,
+  billingMetric,
+  onBillingMetricChange,
   onPresetChange,
   onStartDateChange,
   onEndDateChange,
@@ -133,6 +142,34 @@ export function CustomerBillingFilters({
           placeholder="Nota, série, pedido ou produto"
           disabled={disabled}
         />
+        <div className="cm-field">
+          <CommercialSectionHintLabel
+            label="Métrica"
+            hint={CM_HELP.customers.billingMetric}
+          />
+          <CommercialSegmentToggle
+            ariaLabel={CM_HELP.customers.billingMetric}
+            idPrefix="customer-billing-metric"
+            value={billingMetric}
+            widthMode="content"
+            disabled={disabled}
+            onChange={(value) => {
+              if (value === "value" || value === "quantity") {
+                onBillingMetricChange(value);
+              }
+            }}
+            options={[
+              {
+                value: "value",
+                label: BILLING_METRIC_CONTENT.value.shortLabel,
+              },
+              {
+                value: "quantity",
+                label: BILLING_METRIC_CONTENT.quantity.shortLabel,
+              },
+            ]}
+          />
+        </div>
         <div className="cm-customer-billing-filters__yoy cm-field">
           <NativeCheckboxControl
             id="customer-billing-yoy"

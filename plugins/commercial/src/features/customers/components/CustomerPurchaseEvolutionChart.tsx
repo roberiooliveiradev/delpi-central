@@ -14,14 +14,22 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import {
+  CommercialSectionHintLabel,
+  CommercialSegmentToggle,
   CommercialSelectField,
   CommercialTabularExportButtons,
   cmEmptyStateClassNames,
 } from "../../../app/commercialUi";
 import { ANALYTICS_CONTENT } from "../../../content/analyticsContent";
+import {
+  BILLING_METRIC_CONTENT,
+  formatChartMetricValue,
+  formatMetricTotal,
+  type PortfolioBillingMetric,
+} from "../../../content/billingMetric";
 import { CUSTOMER_BILLING_CONTENT } from "../../../content/customerBillingContent";
 import { CM_HELP } from "../../../content/helpTooltips";
-import { formatCurrency } from "../../../utils/format";
+import { formatCurrency, formatQuantity } from "../../../utils/format";
 import { buildPurchaseEvolutionExportPayload } from "../utils/billingSeriesExportBuilders";
 import type {
   PurchaseEvolutionPoint,
@@ -48,23 +56,9 @@ type CustomerPurchaseEvolutionChartProps = {
   error: string | null;
   windowMonths: PurchaseEvolutionWindowMonths;
   onWindowMonthsChange: (months: PurchaseEvolutionWindowMonths) => void;
+  billingMetric?: PortfolioBillingMetric;
+  onBillingMetricChange?: (metric: PortfolioBillingMetric) => void;
 };
-
-function formatChartCurrency(value: number): string {
-  if (!Number.isFinite(value)) return "—";
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000) {
-    return `R$ ${(value / 1_000_000).toLocaleString("pt-BR", {
-      maximumFractionDigits: 1,
-    })} mi`;
-  }
-  if (abs >= 1_000) {
-    return `R$ ${(value / 1_000).toLocaleString("pt-BR", {
-      maximumFractionDigits: 0,
-    })} mil`;
-  }
-  return formatCurrency(value);
-}
 
 function parseWindowMonths(value: string): PurchaseEvolutionWindowMonths {
   return value === "6" ? 6 : 12;
@@ -76,6 +70,8 @@ export function CustomerPurchaseEvolutionChart({
   error,
   windowMonths,
   onWindowMonthsChange,
+  billingMetric = "value",
+  onBillingMetricChange,
 }: CustomerPurchaseEvolutionChartProps) {
   const { preferences, setPreferences, setChartType } = usePersistedChartPreferences({
     storageKey: "commercial:account:purchase-evolution",
@@ -120,44 +116,88 @@ export function CustomerPurchaseEvolutionChart({
     [points],
   );
 
+  const formatAxis = (value: number) => formatChartMetricValue(value, billingMetric);
+  const formatTip =
+    billingMetric === "quantity" ? formatQuantity : formatCurrency;
+
   const bars = useMemo(
     () => [
       {
         dataKey: "atual",
-        name: `Período atual · ${formatCurrency(totals.atual)}`,
+        name: `Período atual · ${formatMetricTotal(totals.atual, billingMetric)}`,
         fill: COLOR_CURRENT,
         trendSource: true,
       },
       {
         dataKey: "anterior",
-        name: `Período anterior · ${formatCurrency(totals.anterior)}`,
+        name: `Período anterior · ${formatMetricTotal(totals.anterior, billingMetric)}`,
         fill: COLOR_PRIOR,
       },
     ],
-    [totals.atual, totals.anterior],
+    [billingMetric, totals.atual, totals.anterior],
   );
 
   const emptyMessage =
-    windowMonths === 6
-      ? "Sem faturamento registrado nos últimos 12 meses para este cliente."
-      : "Sem faturamento registrado nos últimos 24 meses para este cliente.";
+    billingMetric === "quantity"
+      ? windowMonths === 6
+        ? "Sem quantidade fornecida nos últimos 12 meses para este cliente."
+        : "Sem quantidade fornecida nos últimos 24 meses para este cliente."
+      : windowMonths === 6
+        ? "Sem faturamento registrado nos últimos 12 meses para este cliente."
+        : "Sem faturamento registrado nos últimos 24 meses para este cliente.";
+
+  const chartTitle =
+    billingMetric === "quantity"
+      ? "Evolução de fornecimento (quantidade)"
+      : "Evolução de compras";
 
   return (
     <ChartCard
-      title="Evolução de compras"
+      title={chartTitle}
       titleHint={CM_HELP.customerDetail.purchaseEvolution}
       hint={CM_HELP.customerDetail.purchaseEvolutionComparison}
       classNames={CHART_CLASSES}
       className="cm-purchase-evolution"
       headerActions={
-        <CommercialSelectField
-          label="Período"
-          hint={CM_HELP.customerDetail.purchaseEvolutionPeriod}
-          options={PERIOD_OPTIONS}
-          value={String(windowMonths)}
-          onChange={(value) => onWindowMonthsChange(parseWindowMonths(value))}
-          allowEmpty={false}
-        />
+        <div className="cm-purchase-evolution__header-actions">
+          {onBillingMetricChange ? (
+            <div className="cm-field">
+              <CommercialSectionHintLabel
+                label="Métrica"
+                hint={CM_HELP.customers.billingMetric}
+              />
+              <CommercialSegmentToggle
+                ariaLabel={CM_HELP.customers.billingMetric}
+                idPrefix="purchase-evolution-metric"
+                value={billingMetric}
+                widthMode="content"
+                onChange={(value) => {
+                  if (value === "value" || value === "quantity") {
+                    onBillingMetricChange(value);
+                  }
+                }}
+                options={[
+                  {
+                    value: "value",
+                    label: BILLING_METRIC_CONTENT.value.shortLabel,
+                  },
+                  {
+                    value: "quantity",
+                    label: BILLING_METRIC_CONTENT.quantity.shortLabel,
+                  },
+                ]}
+              />
+            </div>
+          ) : null}
+          <CommercialSelectField
+            label="Período"
+            hint={CM_HELP.customerDetail.purchaseEvolutionPeriod}
+            options={PERIOD_OPTIONS}
+            value={String(windowMonths)}
+            onChange={(value) => onWindowMonthsChange(parseWindowMonths(value))}
+            allowEmpty={false}
+          />
+        </div>
       }
     >
       {error ? (
@@ -222,8 +262,8 @@ export function CustomerPurchaseEvolutionChart({
             height={CHART_HEIGHT}
             showTrend={showTrend}
             trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
-            formatY={formatChartCurrency}
-            formatTooltipValue={formatCurrency}
+            formatY={formatAxis}
+            formatTooltipValue={formatTip}
           />
         </ChartViewShell>
       )}

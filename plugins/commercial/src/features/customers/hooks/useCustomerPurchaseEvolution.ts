@@ -4,6 +4,7 @@ import {
   fetchCustomerBillingSeries,
   type CustomerBillingSeriesPoint,
 } from "../../../api/customerBillingSeriesApi";
+import type { PortfolioBillingMetric } from "../../../content/billingMetric";
 
 export type PurchaseEvolutionPoint = {
   periodo: string;
@@ -21,15 +22,24 @@ export type UseCustomerPurchaseEvolutionResult = {
   windowMonths: PurchaseEvolutionWindowMonths;
 };
 
+export type UseCustomerPurchaseEvolutionOptions = {
+  enabled?: boolean;
+  windowMonths?: PurchaseEvolutionWindowMonths;
+  metric?: PortfolioBillingMetric;
+};
+
 /**
  * Série 2× janela → pontos atuais + anteriores alinhados por índice.
  */
 export function useCustomerPurchaseEvolution(
   codigo: string | undefined,
   loja: string | undefined,
-  enabled = true,
-  windowMonths: PurchaseEvolutionWindowMonths = 12,
+  options: UseCustomerPurchaseEvolutionOptions = {},
 ): UseCustomerPurchaseEvolutionResult {
+  const enabled = options.enabled ?? true;
+  const windowMonths = options.windowMonths ?? 12;
+  const metric: PortfolioBillingMetric = options.metric ?? "value";
+
   const [rawPoints, setRawPoints] = useState<CustomerBillingSeriesPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +68,7 @@ export function useCustomerPurchaseEvolution(
 
     void fetchCustomerBillingSeries(
       [{ customer_code: identity.code, customer_store: identity.store }],
-      { months: fetchMonths, signal: controller.signal },
+      { months: fetchMonths, metric, signal: controller.signal },
     )
       .then((payload) => {
         if (cancelled) return;
@@ -79,7 +89,7 @@ export function useCustomerPurchaseEvolution(
       cancelled = true;
       controller.abort();
     };
-  }, [enabled, identity, fetchMonths]);
+  }, [enabled, identity, fetchMonths, metric]);
 
   const points = useMemo(() => {
     if (rawPoints.length < 2) {

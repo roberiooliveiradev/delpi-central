@@ -179,6 +179,23 @@ describe("CustomerDetailPage billing (fonte)", () => {
     assert.match(chart, /CUSTOMER_BILLING_CONTENT\.cancelledInvoicesHint/);
   });
 
+  it("painel Conta Histórico expõe métrica quantity no gráfico", () => {
+    const panel = readSrc(
+      "features/customers/billing/components/CustomerBillingPanel.tsx",
+    );
+    const filters = readSrc(
+      "features/customers/billing/components/CustomerBillingFilters.tsx",
+    );
+    const chart = readSrc(
+      "features/customers/billing/components/CustomerAccountBillingChart.tsx",
+    );
+    assert.match(panel, /billingMetric/);
+    assert.match(filters, /onBillingMetricChange/);
+    assert.match(filters, /customer-billing-metric/);
+    assert.match(chart, /metric:\s*billingMetric/);
+    assert.match(chart, /Quantidade fornecida/);
+  });
+
   it("painel Conta Histórico expõe YoY no summary", () => {
     const panel = readSrc(
       "features/customers/billing/components/CustomerBillingPanel.tsx",

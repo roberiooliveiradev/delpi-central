@@ -7,6 +7,10 @@ import {
   useCustomerPurchaseEvolution,
   type PurchaseEvolutionWindowMonths,
 } from "../hooks/useCustomerPurchaseEvolution";
+import {
+  DEFAULT_PORTFOLIO_BILLING_METRIC,
+  type PortfolioBillingMetric,
+} from "../../../content/billingMetric";
 import { InteractionRoomPanel } from "../../interaction-rooms/InteractionRoomPanel";
 import {
   buildCustomerEntityKey,
@@ -49,12 +53,14 @@ export function CustomerOverviewSection({
 }: CustomerOverviewSectionProps) {
   const [windowMonths, setWindowMonths] =
     useState<PurchaseEvolutionWindowMonths>(12);
-  const evolution = useCustomerPurchaseEvolution(
-    customer.codigo,
-    customer.loja,
-    true,
-    windowMonths,
+  const [billingMetric, setBillingMetric] = useState<PortfolioBillingMetric>(
+    DEFAULT_PORTFOLIO_BILLING_METRIC,
   );
+  const evolution = useCustomerPurchaseEvolution(customer.codigo, customer.loja, {
+    enabled: true,
+    windowMonths,
+    metric: billingMetric,
+  });
 
   return (
     <div className="cm-customer-overview">
@@ -69,6 +75,8 @@ export function CustomerOverviewSection({
         error={evolution.error}
         windowMonths={windowMonths}
         onWindowMonthsChange={setWindowMonths}
+        billingMetric={billingMetric}
+        onBillingMetricChange={setBillingMetric}
       />
       <CustomerOpenOrdersPreview
         orders={orders}

@@ -311,7 +311,7 @@ export const CM_HELP = {
     billingNature:
       "Bruto = valor de nota fiscal na série e Fat.12m (ranking/share usam receita bruta do envelope). Líquido = mesma fórmula ROL da Visão geral (impostos e devoluções). Aplica a Fat.12m, tendência, gráfico, mix, ABC, ranking e share.",
     billingMetric:
-      "R$ = valor (bruto ou líquido conforme Natureza). Qtd = quantidade fornecida no período (série e mix por produto). UMs mistas não são convertidas automaticamente.",
+      "R$ = valor (bruto ou líquido conforme Natureza). Qtd = quantidade fornecida no período (série, mix por produto, Histórico da Conta e Evolução de compras). UMs mistas não são convertidas automaticamente.",
     quantityDisplayMode:
       "Milheiro mantém a UM da nota (ex.: MI). Peças converte só UM=MI (1 MI = 1000 PC) — só apresentação, sem mudar a API.",
     billingSeriesPeriod:
@@ -439,9 +439,9 @@ export const CM_HELP = {
       "Roteiro da Conta com o que já existe (histórico, pedidos, OV, atividades). Rentabilidade permanece bloqueada (FIN-004).",
     lastSale: "Data da última venda conhecida para o cliente (quando disponível).",
     purchaseEvolution:
-      "Comparativo mês a mês em colunas: janela atual versus a janela imediatamente anterior.",
+      "Comparativo mês a mês em colunas: janela atual versus a janela imediatamente anterior. Use Métrica R$ | Qtd para valor ou quantidade fornecida.",
     purchaseEvolutionComparison:
-      "Compara a janela atual com a anterior para evidenciar mudança de ritmo nas compras.",
+      "Compara a janela atual com a anterior para evidenciar mudança de ritmo nas compras (ou no fornecimento em quantidade).",
     timeline:
       "Atividades e follow-ups registrados para esta conta, em ordem cronológica.",
     scheduleFollowUp:
@@ -465,7 +465,7 @@ export const CM_HELP = {
     billingSeriesCustomer:
       "Filtra a série de faturamento da carteira a um ou mais clientes (código+loja).",
     billingSeriesAccount:
-      "Evolução do faturamento deste cliente no período dos filtros. Com «Comparar ano anterior», as colunas do ano anterior ficam lado a lado com o período atual.",
+      "Evolução do faturamento ou da quantidade fornecida deste cliente no período dos filtros (Métrica R$ | Qtd). Com «Comparar ano anterior», as colunas do ano anterior ficam lado a lado com o período atual.",
     billingSeriesTrend:
       "Sobreposição da regressão linear sobre a série atual (não substitui o comparativo YoY).",
     billingSeriesDateStart: "Início do intervalo personalizado da série de faturamento.",

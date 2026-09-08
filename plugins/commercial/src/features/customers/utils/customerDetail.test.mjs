@@ -490,6 +490,8 @@ describe("CustomerDetailPage e navegacao (fonte)", () => {
     assert.match(overview, /useCustomerPurchaseEvolution/);
     assert.match(overview, /CustomerPurchaseEvolutionChart/);
     assert.match(overview, /windowMonths/);
+    assert.match(overview, /billingMetric/);
+    assert.match(overview, /metric:\s*billingMetric/);
     assert.match(overview, /CustomerActivityTimelinePanel/);
     assert.match(overview, /preview/);
     assert.doesNotMatch(overview, /listCustomerActivities/);

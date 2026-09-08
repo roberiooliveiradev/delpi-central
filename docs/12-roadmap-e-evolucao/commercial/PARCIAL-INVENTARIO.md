@@ -69,7 +69,7 @@ Ordem: `E0 → E1 (SI) → E3 → E2 → E4.S1 → E4.S2 → E5 → E6 → E7`.
 | ID | Tema | Status | Evidência | Fontes |
 |----|------|--------|-----------|--------|
 | P-META-CONS | Meta consolidada SC+ES (unidade Todas) | **Existe** | SI `aggregate_branch_goal_values` + Overview `consolidatedMetric` (render-only) | apontamentos #2 |
-| P-QTY-HIST | Histórico / mix em quantidade fornecida | **Existe** | `metric=quantity` billing-series + qty em `rol/by-product`; toggle R$/Qtd Minha Carteira | apontamentos #6 |
+| P-QTY-HIST | Histórico / mix em quantidade fornecida | **Existe** | `metric=quantity` billing-series + qty em `rol/by-product`; toggle R$/Qtd Minha Carteira **e** Conta (Histórico + Evolução de compras) | apontamentos #6 |
 | P-TREND-PARTIAL | Tendência sem distorção de bucket parcial | **Existe** | kit `incompleteBucketMode` (`exclude` default / `weightByFraction`) | apontamentos #7 |
 | P-QTY-UM | NF 3 casas + milheiro↔peças (só display) | **Existe** | `formatQuantity` + `resolveDisplayQuantity` (UM=MI×1000) | apontamentos #8–#9 |
 | P-PLACE-DATE | Data de colocação do pedido | **Backlog CRM** | Dado inexistente/não homologado nas OV/pedido atuais — **não** inventar no Portal | apontamentos #3 |

@@ -155,8 +155,8 @@ Sim. Realizado e meta agregam Santa Catarina + Espírito Santo pelo método dos 
 **Posso somar “carteira aberta” com o ROL do mês?**  
 Não. São conceitos diferentes: ROL é faturamento no período; carteira aberta é snapshot do que ainda está em aberto **agora**.
 
-**Como vejo o histórico em quantidade (não em R$)?**  
-**Minha Carteira → Faturamento**: toggle **Métrica R$ | Qtd**. Série e mix por produto usam quantidade fornecida. UMs mistas não têm conversão automática.
+**Como vejo o histórico em quantidade (não em R$)?**
+**Minha Carteira → Faturamento**, **Conta → Histórico** (filtros) ou **Conta → Evolução de compras**: toggle **Métrica R$ | Qtd**. A série usa quantidade fornecida (`D2_QUANT`). UMs mistas não têm conversão automática.
 
 **A linha de tendência distorce no mês corrente?**  
 Por padrão a tendência **exclui** o bucket incompleto. Nos overlays do gráfico, «Ponderar período parcial» inclui o valor escalado pelo % do período já decorrido.
@@ -328,7 +328,7 @@ Fonte na UI: **Ajuda** → **Catálogo de termos** (`plugins/commercial/src/cont
 | Mercado interno / externo | CFOP 5/6 = interno; CFOP 7 = exportação | Minha Carteira → Faturamento · ABC |
 | ABC de clientes | Ordenação por participação no período (Pareto); ≠ Ranking YoY | Minha Carteira → ABC |
 | Bruto / Líquido | Bruto = NF; líquido = fórmula ROL. Toggle na Minha Carteira | Natureza do faturamento |
-| Métrica R$ / Qtd | R$ = valor; Qtd = quantidade fornecida (série e mix) | Minha Carteira → Faturamento |
+| Métrica R$ / Qtd | R$ = valor; Qtd = quantidade fornecida (série, mix, Histórico e Evolução da Conta) | Minha Carteira → Faturamento · Conta |
 | Tendência (parcial) | Exclui bucket incompleto por padrão; opção de ponderar | Gráficos Carteira / Conta |
 | Milheiro / Peças | Display: MI nativo ou ×1000 PC só se UM=MI | Meus pedidos · NF |
 | Share empresa | Faturamento do escopo ÷ faturamento da empresa no período | Visão geral · carteira |

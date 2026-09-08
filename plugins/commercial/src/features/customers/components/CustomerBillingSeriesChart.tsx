@@ -32,6 +32,8 @@ import {
 } from "../../../content/billingNature";
 import {
   billingMetricShortLabel,
+  formatChartMetricValue,
+  formatMetricTotal,
   type PortfolioBillingMetric,
 } from "../../../content/billingMetric";
 import {
@@ -66,29 +68,6 @@ type CustomerBillingSeriesChartProps = {
   billingNature?: PortfolioBillingAmountNature;
   billingMetric?: PortfolioBillingMetric;
 };
-
-function formatChartCurrency(value: number): string {
-  if (!Number.isFinite(value)) return "—";
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000) {
-    return `R$ ${(value / 1_000_000).toLocaleString("pt-BR", {
-      maximumFractionDigits: 1,
-    })} mi`;
-  }
-  if (abs >= 1_000) {
-    return `R$ ${(value / 1_000).toLocaleString("pt-BR", {
-      maximumFractionDigits: 0,
-    })} mil`;
-  }
-  return formatCurrency(value);
-}
-
-function formatChartMetricValue(value: number, metric: PortfolioBillingMetric): string {
-  if (metric === "quantity") {
-    return formatQuantity(value);
-  }
-  return formatChartCurrency(value);
-}
 
 function billingFilterLabel(
   selectedKeys: string[],
@@ -286,10 +265,7 @@ export function CustomerBillingSeriesChart({
       : appendBillingNatureContext(`Faturamento — ${periodLabel}`, billingNature);
   const isAllCustomers = filters.selectedCustomerKeys.length === 0;
   const formatValue = (value: number) => formatChartMetricValue(value, billingMetric);
-  const totalLabel =
-    billingMetric === "quantity"
-      ? formatQuantity(totalValue)
-      : formatCurrency(totalValue);
+  const totalLabel = formatMetricTotal(totalValue, billingMetric);
 
   return (
     <div className="cm-billing-series-chart">

@@ -22,9 +22,15 @@ import {
   useChartGranularitySelection,
 } from "../../../../app/commercialUi";
 import { ANALYTICS_CONTENT } from "../../../../content/analyticsContent";
+import {
+  billingMetricShortLabel,
+  formatChartMetricValue,
+  formatMetricTotal,
+  type PortfolioBillingMetric,
+} from "../../../../content/billingMetric";
 import { CUSTOMER_BILLING_CONTENT } from "../../../../content/customerBillingContent";
 import { CM_HELP } from "../../../../content/helpTooltips";
-import { formatCurrency } from "../../../../utils/format";
+import { formatCurrency, formatQuantity } from "../../../../utils/format";
 import { resolveCalendarBucketFraction } from "../../../../utils/linearTrendSeries";
 import { buildBillingSeriesExportPayload } from "../../utils/billingSeriesExportBuilders";
 import { useCustomerBillingSeries } from "../../hooks/useCustomerBillingSeries";
@@ -44,25 +50,10 @@ type CustomerAccountBillingChartProps = {
   startDate: string;
   endDate: string;
   comparePriorYear: boolean;
+  billingMetric?: PortfolioBillingMetric;
   /** Desliga fetch (aba oculta / validação de período). */
   enabled?: boolean;
 };
-
-function formatChartCurrency(value: number): string {
-  if (!Number.isFinite(value)) return "—";
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000) {
-    return `R$ ${(value / 1_000_000).toLocaleString("pt-BR", {
-      maximumFractionDigits: 1,
-    })} mi`;
-  }
-  if (abs >= 1_000) {
-    return `R$ ${(value / 1_000).toLocaleString("pt-BR", {
-      maximumFractionDigits: 0,
-    })} mil`;
-  }
-  return formatCurrency(value);
-}
 
 /** Stub mínimo para o hook de série (só código+loja entram no request). */
 function accountAsSeriesCustomer(codigo: string, loja: string): CustomerSummary {
@@ -87,7 +78,7 @@ function accountAsSeriesCustomer(codigo: string, loja: string): CustomerSummary 
 }
 
 /**
- * Série de faturamento da Conta (Histórico) — período e YoY vêm dos filtros da aba.
+ * Série de faturamento/quantidade da Conta (Histórico) — período e YoY vêm dos filtros da aba.
  */
 export function CustomerAccountBillingChart({
   codigo,
@@ -95,6 +86,7 @@ export function CustomerAccountBillingChart({
   startDate,
   endDate,
   comparePriorYear,
+  billingMetric = "value",
   enabled = true,
 }: CustomerAccountBillingChartProps) {
   const { preferences, setPreferences, setChartType } = usePersistedChartPreferences({
@@ -160,6 +152,7 @@ export function CustomerAccountBillingChart({
       endDate,
       granularity: effectiveGrain,
       comparePriorYear,
+      metric: billingMetric,
     });
 
   const chartData = useMemo(
@@ -177,11 +170,13 @@ export function CustomerAccountBillingChart({
     [points],
   );
 
+  const seriesName =
+    billingMetric === "quantity" ? "Quantidade fornecida" : "Faturamento";
   const bars = useMemo((): MultiTypeSeriesSpec[] => {
     const list: MultiTypeSeriesSpec[] = [
       {
         dataKey: "faturamento",
-        name: "Faturamento",
+        name: seriesName,
         fill: SERIES_COLOR,
         trendSource: true,
       },
@@ -194,7 +189,7 @@ export function CustomerAccountBillingChart({
       });
     }
     return list;
-  }, [comparePriorYear]);
+  }, [comparePriorYear, seriesName]);
 
   const hasValues = chartData.some(
     (point) =>
@@ -204,16 +199,30 @@ export function CustomerAccountBillingChart({
         point.faturamento_prior > 0),
   );
 
+  const chartTitle =
+    billingMetric === "quantity"
+      ? "Quantidade fornecida no período"
+      : "Faturamento no período";
+  const metricLabel = billingMetricShortLabel(billingMetric);
+  const totalLabel = formatMetricTotal(totalValue, billingMetric);
+  const formatAxis = (value: number) => formatChartMetricValue(value, billingMetric);
+  const formatTip =
+    billingMetric === "quantity" ? formatQuantity : formatCurrency;
+  const emptyMessage =
+    billingMetric === "quantity"
+      ? "Sem quantidade fornecida registrada neste período para o cliente."
+      : "Sem faturamento registrado neste período para o cliente.";
+
   return (
     <div className="cm-billing-series-chart cm-account-billing-chart">
       <CommercialSectionCard
-        title="Faturamento no período"
+        title={chartTitle}
         hint={CM_HELP.customerDetail.billingSeriesAccount}
         subtitle={
           loading
             ? "Atualizando série…"
             : hasValues
-              ? `Total no período: ${formatCurrency(totalValue)}`
+              ? `Total no período · ${metricLabel}: ${totalLabel}`
               : undefined
         }
         actions={undefined}
@@ -227,12 +236,12 @@ export function CustomerAccountBillingChart({
         ) : loading && !hasValues ? (
           <EmptyState
             classNames={cmEmptyStateClassNames}
-            defaultMessage="Carregando faturamento…"
+            defaultMessage="Carregando série…"
           />
         ) : !hasValues ? (
           <EmptyState
             classNames={cmEmptyStateClassNames}
-            defaultMessage="Sem faturamento registrado neste período para o cliente."
+            defaultMessage={emptyMessage}
           />
         ) : (
           <>
@@ -294,7 +303,7 @@ export function CustomerAccountBillingChart({
                       kind: "table",
                       format,
                       payload: buildBillingSeriesExportPayload(chartData, {
-                        title: "Faturamento no período",
+                        title: chartTitle,
                         compareYears: comparePriorYear ? 1 : 0,
                       }),
                     });
@@ -312,8 +321,8 @@ export function CustomerAccountBillingChart({
                 incompleteBucketMode={incompleteBucketMode}
                 showLegend={comparePriorYear || showTrend}
                 trendSeriesName={CUSTOMER_BILLING_CONTENT.trendLineSeriesName}
-                formatY={formatChartCurrency}
-                formatTooltipValue={formatCurrency}
+                formatY={formatAxis}
+                formatTooltipValue={formatTip}
               />
             </ChartViewShell>
           </>
