@@ -19,6 +19,21 @@ class Settings:
     DELPI_API_TIMEOUT_SECONDS = float(os.getenv("DELPI_API_TIMEOUT", "30"))
     DELPI_API_CALLER_APP = os.getenv("DELPI_API_CALLER_APP", "supplies-api")
 
+    PURCHASE_REQUESTS_API_URL = os.getenv(
+        "PURCHASE_REQUESTS_API_URL",
+        "http://delpi-purchase-requests-api:8000",
+    )
+    PURCHASE_REQUESTS_API_TIMEOUT_SECONDS = float(
+        os.getenv("PURCHASE_REQUESTS_API_TIMEOUT", "30")
+    )
+    STRATEGIC_INDICATORS_API_BASE_URL = os.getenv(
+        "STRATEGIC_INDICATORS_API_BASE_URL",
+        "http://strategic-indicators-api:8000",
+    )
+    STRATEGIC_INDICATORS_API_TIMEOUT_SECONDS = float(
+        os.getenv("STRATEGIC_INDICATORS_API_TIMEOUT", "30")
+    )
+
     RUN_MIGRATIONS_ON_STARTUP = (
         os.getenv("SUPPLIES_RUN_MIGRATIONS_ON_STARTUP", "true").strip().lower()
         in {"1", "true", "yes", "on"}
