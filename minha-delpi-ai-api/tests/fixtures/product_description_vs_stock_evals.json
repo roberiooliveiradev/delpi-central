@@ -1,0 +1,53 @@
+{
+  "family": "F03.product-description-vs-stock",
+  "requiredDimensions": ["R1", "R2", "R9", "R11"],
+  "cases": [
+    {
+      "id": "F03.descricao-code",
+      "input": "descrição 10080011",
+      "requiredDimensions": ["R1", "R2", "R9"],
+      "expect": {
+        "preferActionIds": ["ext.products.summary"],
+        "forbidActionIds": ["ext.products.stock"],
+        "httpOkStockDoesNotFulfill": true
+      }
+    },
+    {
+      "id": "F03.cadastro-sibling",
+      "input": "cadastro do produto 10080011",
+      "requiredDimensions": ["R1", "R2"],
+      "expect": {
+        "preferActionIds": ["ext.products.summary"],
+        "forbidActionIds": ["ext.products.stock"]
+      }
+    },
+    {
+      "id": "F03.estoque-negative",
+      "input": "Consulte o estoque do produto 10080001",
+      "requiredDimensions": ["R1", "R2", "R9", "R11"],
+      "expect": {
+        "preferActionIds": ["ext.products.stock"],
+        "forbidActionIds": ["ext.products.summary"],
+        "noCoverageRetry": true
+      }
+    },
+    {
+      "id": "F03.compound-estoque-descricao",
+      "input": "estoque e descrição do produto 10080011",
+      "requiredDimensions": ["R1", "R2"],
+      "expect": {
+        "preferActionIds": ["ext.products.stock", "ext.products.summary"],
+        "minDistinctActions": 2
+      }
+    },
+    {
+      "id": "F03.inspection-negative",
+      "input": "inspeção de qualidade do produto 10080001",
+      "requiredDimensions": ["R1", "R11"],
+      "expect": {
+        "forbidActionIds": ["ext.products.stock"],
+        "noCoverageRetry": true
+      }
+    }
+  ]
+}
