@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import pytest
+
 from app.application.services.chat_attachment_follow_up_service import (
     ChatAttachmentFollowUpService,
 )
@@ -302,3 +306,54 @@ def test_canvas_ambiguity_service_detects_multiple_referents():
 
     assert clarification
     assert ChatCanvasAmbiguityService.is_deictic_canvas_request("coloque isso na lousa")
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="BUG_B_BASELINE: prosa+tabela same-message tratados como referentes concorrentes",
+)
+def test_bug_b_baseline_same_message_prose_and_table_opens_canvas():
+    """«esse resultado» após prosa+tabela no mesmo assistente deve abrir a lousa."""
+    previous_messages = [
+        {
+            "id": "asst-same-op-1",
+            "role": "assistant",
+            "content": (
+                "Consultei o estoque do produto P1. O detalhamento por filial "
+                "e armazém está na tabela abaixo com as posições disponíveis."
+            ),
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/P1/stock",
+                            "actionId": "action-stock-1",
+                            "compositionRole": "primary",
+                            "presentation": {
+                                "type": "table",
+                                "title": "Estoque por filial/armazém",
+                                "columns": [{"key": "branch"}, {"key": "warehouse"}],
+                                "rows": [{"branch": "01", "warehouse": "01"}],
+                            },
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+    message = "Coloque esse resultado na lousa."
+    assert ChatCanvasAmbiguityService.is_deictic_canvas_request(message)
+    clarification = ChatCanvasAmbiguityService.build_clarification_answer(
+        previous_messages=previous_messages,
+    )
+    assert clarification is None
+    action = ChatCanvasContentService.resolve(
+        message,
+        previous_messages,
+        {"capabilities": {"canvas": True}},
+    )
+    assert action is not None
+    assert action.open_payload is not None
+    assert action.open_payload.markdown
