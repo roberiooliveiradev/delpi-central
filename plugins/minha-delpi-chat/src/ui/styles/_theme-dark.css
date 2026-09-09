@@ -64,6 +64,10 @@
   --mdc-chart-series-8: #86efac;
   --mdc-chart-series-9: #fb7185;
   --mdc-chart-series-10: #93c5fd;
+  --mdc-heatmap-low: #0c4a6e;
+  --mdc-heatmap-high: #22d3ee;
+  --mdc-heatmap-ink-on-low: #e2e8f0;
+  --mdc-heatmap-ink-on-high: #0b1220;
 
   --mdc-surface-elevated: var(--mdc-bg-soft);
   --mdc-sidebar-surface: var(--mdc-bg-soft);
@@ -127,6 +131,10 @@
     --mdc-chart-series-8: #86efac;
     --mdc-chart-series-9: #fb7185;
     --mdc-chart-series-10: #93c5fd;
+    --mdc-heatmap-low: #0c4a6e;
+    --mdc-heatmap-high: #22d3ee;
+    --mdc-heatmap-ink-on-low: #e2e8f0;
+    --mdc-heatmap-ink-on-high: #0b1220;
 
     --mdc-surface-elevated: var(--mdc-bg-soft);
     --mdc-sidebar-surface: var(--mdc-bg-soft);

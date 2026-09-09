@@ -1,0 +1,69 @@
+{
+  "phase": "F0",
+  "generatedAt": "2026-09-09",
+  "status": "BASELINE_IMMUTABLE",
+  "callGraph": [
+    "payload + responseSchema",
+    "ChatSchemaDrivenPresentationService",
+    "ChatPresentationDecisionService.enrich_metadata",
+    "ChatPresentationFieldNormalizationService.normalize_metadata",
+    "ChatPresentationRenderPipelineService.finalize",
+    "ChatPresentationRenderPlanService.build → renderPlan v1",
+    "MFE renderPlanSegmentBuilder"
+  ],
+  "ownersConfirmed": {
+    "shapeDetection": "ChatPresentationDataShapeAnalyzer",
+    "axisPreference": "ChatPresentationAxisPreferenceService",
+    "chartType": "ChatChartTypeSelectionService",
+    "labels": "ChatFieldLabelResolutionPipelineService → FieldLabelBundle → ExternalActionColumnLabelService",
+    "renderPlan": "ChatPresentationRenderPlanService",
+    "llmProseComposition": "ChatPresentationLlmCompositionService"
+  },
+  "driftInventory": {
+    "requestedPresentation": {
+      "openapi_tool_routing.json": ["auto", "kpi", "table", "chart", "text", "tree", null],
+      "ChatPresentationPreferenceContractService": [
+        "auto", "kpi", "table", "chart", "text", "tree", "canvas", "dashboard",
+        "topics", "line_chart", "bar_chart", "horizontal_bar", "donut", "checklist"
+      ],
+      "missingInPlanner": [
+        "canvas", "dashboard", "topics", "line_chart", "bar_chart",
+        "horizontal_bar", "donut", "checklist"
+      ]
+    },
+    "axisHeuristics": {
+      "api": "chat_presentation_axis_preference_service.py",
+      "mfe": "chartAxisSelection.ts",
+      "duplication": true
+    }
+  },
+  "gaps": [
+    "No PresentationDataProfile / FieldProfile class",
+    "No PresentationSpec grammar",
+    "Heatmap Y picks lowest-cardinality string (often unit=UN)",
+    "MFE humanizer fallback is English Title Case when fieldLabels missing",
+    "LLM visual composer does not exist (only prose marker composition)"
+  ],
+  "corpusBindingCases": [
+    {"id": "table_auditable", "view": "table", "shape": "many_string_cols"},
+    {"id": "bar_category_metric", "view": "chart", "mark": "bar"},
+    {"id": "line_temporal", "view": "chart", "mark": "line"},
+    {"id": "heatmap_matrix", "view": "chart", "mark": "heatmap"},
+    {"id": "donut_low_card", "view": "chart", "mark": "donut"},
+    {"id": "kpi_single", "view": "kpi"},
+    {"id": "tree_hierarchy", "view": "tree"}
+  ],
+  "labelCorpus": [
+    {"key": "planned_qty", "expectedPtBr": "Qtd. planejada", "source": "column_labels.json"},
+    {"key": "product_code", "expectedPtBr": "Produto", "source": "column_labels.json"},
+    {"key": "created_at", "expectedPtBrPattern": "Criado", "source": "vocab_or_humanize"},
+    {"key": "x1", "expectedSafe": true, "forbidInvented": ["Faturamento", "Produção"]}
+  ],
+  "metricsToCapture": {
+    "presentation_profile_build_ms": "HIPOTESE_A_VALIDAR",
+    "presentation_compose_latency_ms": "HIPOTESE_A_VALIDAR",
+    "rawKeyVisibleRate": "HIPOTESE_A_VALIDAR",
+    "composerAmbiguityRatePct": "HIPOTESE_A_VALIDAR"
+  },
+  "ablationPlan": ["A_heuristic", "B_profile_labels", "C_intent_binder", "D_optional_composer"]
+}

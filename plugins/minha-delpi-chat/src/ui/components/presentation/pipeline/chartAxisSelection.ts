@@ -8,6 +8,14 @@ export type ChartAxisHints = {
   preferX?: string[];
 };
 
+export type ChartAxisConfig = {
+  xAxis?: string;
+  yAxis?: string | string[];
+  numericColumns?: string[];
+  categoryColumns?: string[];
+  bindingProvenance?: string;
+};
+
 const Y_PRIORITY = [
   "eficiencia",
   "eficiência",
@@ -95,15 +103,34 @@ function scoreKey(
   return score;
 }
 
+function firstConfiguredY(config?: ChartAxisConfig): string | null {
+  if (!config) {
+    return null;
+  }
+
+  if (Array.isArray(config.yAxis)) {
+    const first = String(config.yAxis[0] || "").trim();
+    return first || null;
+  }
+
+  const token = String(config.yAxis || "").trim();
+  return token || null;
+}
+
+function isCompiledBinding(config?: ChartAxisConfig): boolean {
+  return String(config?.bindingProvenance || "")
+    .trim()
+    .toUpperCase() === "COMPILED";
+}
+
+/**
+ * API owns default axes when bindingProvenance=COMPILED.
+ * MFE heuristics are fallback only for incomplete local/legacy configs.
+ */
 export function inferDefaultChartAxes(
   data: Record<string, unknown>[],
   chartType: string,
-  config?: {
-    xAxis?: string;
-    yAxis?: string | string[];
-    numericColumns?: string[];
-    categoryColumns?: string[];
-  },
+  config?: ChartAxisConfig,
   hints: ChartAxisHints = {},
 ): { xKey: string; yKey: string; numericColumns: string[]; categoryColumns: string[] } {
   const numericColumns =
@@ -113,10 +140,29 @@ export function inferDefaultChartAxes(
       ? config.categoryColumns
       : listCategoryColumns(data, numericColumns);
 
+  const configuredY = firstConfiguredY(config);
+  const configuredX = String(config?.xAxis || "").trim() || null;
+  const dataKeys = new Set(Object.keys(data[0] ?? {}));
+
+  if (isCompiledBinding(config)) {
+    const xKey =
+      (configuredX && dataKeys.has(configuredX) ? configuredX : null) ||
+      categoryColumns[0] ||
+      numericColumns[0] ||
+      Object.keys(data[0] ?? {})[0] ||
+      "name";
+    const yKey =
+      (configuredY && dataKeys.has(configuredY) ? configuredY : null) ||
+      numericColumns.find((key) => key !== xKey) ||
+      numericColumns[0] ||
+      "value";
+
+    return { xKey, yKey, numericColumns, categoryColumns };
+  }
+
   const yPriorities = [...(hints.preferY ?? []), ...Y_PRIORITY];
   const xPriorities = [...(hints.preferX ?? []), ...X_SCATTER_PRIORITY];
 
-  const configuredY = Array.isArray(config?.yAxis) ? config.yAxis[0] : config?.yAxis;
   const scoredY = pickBestKey(numericColumns, yPriorities, Y_DEPRIORITY);
   const yKey = scoredY || configuredY || numericColumns[0] || "value";
 
@@ -127,7 +173,7 @@ export function inferDefaultChartAxes(
     const scoredX = pickBestKey(xCandidates, xPriorities, [...Y_DEPRIORITY, yKey]);
     const xKey =
       scoredX ||
-      (config?.xAxis && numericColumns.includes(config.xAxis) ? config.xAxis : null) ||
+      (configuredX && numericColumns.includes(configuredX) ? configuredX : null) ||
       xCandidates[0] ||
       yKey;
 
@@ -141,9 +187,9 @@ export function inferDefaultChartAxes(
   );
   const xKey =
     scoredCategory ||
-    (config?.xAxis && categoryColumns.includes(config.xAxis) ? config.xAxis : null) ||
+    (configuredX && categoryColumns.includes(configuredX) ? configuredX : null) ||
     categoryColumns[0] ||
-    config?.xAxis ||
+    configuredX ||
     Object.keys(data[0] ?? {})[0] ||
     "name";
 

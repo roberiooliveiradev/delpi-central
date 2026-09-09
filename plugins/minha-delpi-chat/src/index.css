@@ -88,6 +88,10 @@
   --mdc-chart-series-8: #15803d;
   --mdc-chart-series-9: #9f1239;
   --mdc-chart-series-10: #003866;
+  --mdc-heatmap-low: #dbeafe;
+  --mdc-heatmap-high: #0369a1;
+  --mdc-heatmap-ink-on-low: #0f172a;
+  --mdc-heatmap-ink-on-high: #f8fafc;
 
   --mdc-code-surface: color-mix(in srgb, var(--mdc-bg-muted) 38%, var(--mdc-card-bg));
   --mdc-code-surface-end: color-mix(in srgb, var(--mdc-bg-muted) 22%, var(--mdc-card-bg));

@@ -273,6 +273,12 @@ class ExternalActionKpiChartRowChartService:
                 return None
 
         x_axis, y_axis = ChatChartTypeSelectionService._pick_heatmap_axes(string_keys, rows)
+        y_count = len({str(row.get(y_axis) or "") for row in rows})
+        x_count = len({str(row.get(x_axis) or "") for row in rows})
+        if x_count < 2 or y_count < 2:
+            # Even explicit heatmap requests need a real matrix; avoid unit=UN as Y.
+            return None
+
         value_key = numeric_keys[0]
         capped_rows = rows[:144]
 

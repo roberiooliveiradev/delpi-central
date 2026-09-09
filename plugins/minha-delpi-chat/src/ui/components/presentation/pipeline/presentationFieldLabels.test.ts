@@ -51,7 +51,8 @@ describe("presentationFieldLabels", () => {
     );
   });
 
-  it("usa humanize legacy só sem vocabulário configurado", () => {
+  it("usa humanize mínimo da key só sem vocabulário da API (sem inventar significado)", () => {
     expect(resolveFieldLabel("raw_material_code")).toBe("Raw Material Code");
+    expect(resolveFieldLabel("x1")).toBe("X1");
   });
 });

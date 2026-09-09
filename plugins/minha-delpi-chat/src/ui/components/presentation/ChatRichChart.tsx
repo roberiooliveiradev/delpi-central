@@ -189,6 +189,9 @@ export function ChatRichChart({
   const [axisYOverride, setAxisYOverride] = useState<string | null>(
     initialViewState?.axisYOverride ?? null,
   );
+  const [valueKeyOverride, setValueKeyOverride] = useState<string | null>(
+    initialViewState?.valueKeyOverride ?? null,
+  );
   const [categoryFilterKey, setCategoryFilterKey] = useState<string | null>(
     initialViewState?.categoryFilterKey ?? null,
   );
@@ -229,6 +232,7 @@ export function ChatRichChart({
     setChartTypeOverride(null);
     setAxisXOverride(null);
     setAxisYOverride(null);
+    setValueKeyOverride(null);
     setCategoryFilterKey(null);
     setCategoryFilterValue(null);
     setTopFilter("all");
@@ -292,7 +296,9 @@ export function ChatRichChart({
     xAxis,
   });
   const valueKey = isHeatmapActive
-    ? configuredValueKey || firstNumericValueKey(filteredData, xAxis, baseYAxes)
+    ? valueKeyOverride ||
+      configuredValueKey ||
+      firstNumericValueKey(filteredData, xAxis, baseYAxes)
     : firstNumericValueKey(filteredData, xAxis, baseYAxes);
   const temporalAxis = useMemo(
     () => isTemporalChartAxis(xAxis, filteredData),
@@ -351,8 +357,8 @@ export function ChatRichChart({
 
   const chartTheme = useMemo(() => readMdcChartTheme(isDark), [isDark]);
   const colors = useMemo(
-    () => resolveChartSeriesColors(config?.colors, isDark),
-    [config?.colors, isDark],
+    () => resolveChartSeriesColors(config?.colors, isDark, config?.paletteFamily),
+    [config?.colors, config?.paletteFamily, isDark],
   );
   const showLegend = config?.legend !== false && displayYAxes.length > 1;
   const { gridColor, tickFill, tooltipStyle } = chartTheme;
@@ -464,6 +470,7 @@ export function ChatRichChart({
       chartTypeOverride,
       axisXOverride,
       axisYOverride,
+      valueKeyOverride,
       categoryFilterKey,
       categoryFilterValue,
       topFilter,
@@ -473,6 +480,7 @@ export function ChatRichChart({
     [
       axisXOverride,
       axisYOverride,
+      valueKeyOverride,
       categoryFilterKey,
       categoryFilterValue,
       chartTypeOverride,
@@ -480,6 +488,65 @@ export function ChatRichChart({
       topFilter,
       zoomWindow,
     ],
+  );
+
+  const configuredHeatmapY =
+    typeof config?.yAxis === "string"
+      ? config.yAxis
+      : Array.isArray(config?.yAxis)
+        ? String(config.yAxis[0] || "")
+        : "";
+  const compiledBinding =
+    String(config?.bindingProvenance || "")
+      .trim()
+      .toUpperCase() === "COMPILED";
+  const heatmapXAxis =
+    (isHeatmapActive ? axisXOverride : null) ||
+    config?.xAxis ||
+    displayXAxis ||
+    guessXAxis(data);
+  const guessedHeatmapY = guessYAxisCategory(data, heatmapXAxis);
+  const configuredYIsUseful =
+    Boolean(configuredHeatmapY) &&
+    configuredHeatmapY !== heatmapXAxis &&
+    categoryCardinality(data, configuredHeatmapY) > 1;
+  const heatmapYAxis =
+    (isHeatmapActive ? axisYOverride : null) ||
+    (compiledBinding && configuredHeatmapY ? configuredHeatmapY : null) ||
+    (configuredYIsUseful ? configuredHeatmapY : null) ||
+    guessedHeatmapY;
+  const heatmapValueKey =
+    valueKeyOverride || configuredValueKey || valueKey || "value";
+  const heatmapCategoryOptions = useMemo(() => {
+    const keys = new Set<string>([
+      ...axisDefaults.categoryColumns,
+      ...(config?.xAxis ? [config.xAxis] : []),
+      ...(configuredHeatmapY ? [configuredHeatmapY] : []),
+      ...(heatmapXAxis ? [heatmapXAxis] : []),
+      ...(heatmapYAxis ? [heatmapYAxis] : []),
+    ]);
+    return [...keys].filter(Boolean);
+  }, [
+    axisDefaults.categoryColumns,
+    config?.xAxis,
+    configuredHeatmapY,
+    heatmapXAxis,
+    heatmapYAxis,
+  ]);
+  const heatmapValueOptions = useMemo(() => {
+    const keys = new Set<string>([
+      ...axisDefaults.numericColumns,
+      ...(configuredValueKey ? [configuredValueKey] : []),
+      ...(heatmapValueKey ? [heatmapValueKey] : []),
+    ]);
+    return [...keys].filter(Boolean);
+  }, [axisDefaults.numericColumns, configuredValueKey, heatmapValueKey]);
+  const heatmapYOptions = useMemo(
+    () =>
+      heatmapCategoryOptions.filter(
+        (column) => column !== heatmapXAxis || column === heatmapYAxis,
+      ),
+    [heatmapCategoryOptions, heatmapXAxis, heatmapYAxis],
   );
 
   const showToolbar = !hideToolbar || expanded;
@@ -503,7 +570,75 @@ export function ChatRichChart({
         )}
         <div className="mdc-rich-chart__toolbar">
           <div className="mdc-rich-chart__toolbar-row mdc-rich-chart__toolbar-row--controls">
-            {data.length > 0 && activeChartType !== "heatmap" ? (
+            {data.length > 0 && isHeatmapActive ? (
+              <div
+                className="mdc-rich-chart__ux-toolbar"
+                role="group"
+                aria-label="Parâmetros do mapa de calor"
+              >
+                {heatmapCategoryOptions.length > 0 ? (
+                  <ChatRichUxSelect
+                    label="Colunas"
+                    title="Categoria no eixo horizontal"
+                    value={heatmapXAxis}
+                    allowEmptyOption={false}
+                    onChange={(column) => {
+                      setAxisXOverride(column);
+                      recordPresentationTelemetry("presentation_axis_change", {
+                        axis: "heatmap_x",
+                        column,
+                        chartType: activeChartType,
+                      });
+                    }}
+                    options={heatmapCategoryOptions.map((column) => ({
+                      value: column,
+                      label: formatChartColumnLabel(column, fieldLabels),
+                    }))}
+                  />
+                ) : null}
+                {heatmapYOptions.length > 0 ? (
+                  <ChatRichUxSelect
+                    label="Linhas"
+                    title="Categoria no eixo vertical"
+                    value={heatmapYAxis}
+                    allowEmptyOption={false}
+                    onChange={(column) => {
+                      setAxisYOverride(column);
+                      recordPresentationTelemetry("presentation_axis_change", {
+                        axis: "heatmap_y",
+                        column,
+                        chartType: activeChartType,
+                      });
+                    }}
+                    options={heatmapYOptions.map((column) => ({
+                      value: column,
+                      label: formatChartColumnLabel(column, fieldLabels),
+                    }))}
+                  />
+                ) : null}
+                {heatmapValueOptions.length > 0 ? (
+                  <ChatRichUxSelect
+                    label="Valor"
+                    title="Métrica numérica das células"
+                    value={heatmapValueKey}
+                    allowEmptyOption={false}
+                    onChange={(column) => {
+                      setValueKeyOverride(column);
+                      recordPresentationTelemetry("presentation_axis_change", {
+                        axis: "heatmap_value",
+                        column,
+                        chartType: activeChartType,
+                      });
+                    }}
+                    options={heatmapValueOptions.map((column) => ({
+                      value: column,
+                      label: formatChartColumnLabel(column, fieldLabels),
+                    }))}
+                  />
+                ) : null}
+              </div>
+            ) : null}
+            {data.length > 0 && !isHeatmapActive ? (
               <div className="mdc-rich-chart__ux-toolbar" role="group" aria-label="Filtros do gráfico">
                 {axisDefaults.numericColumns.length > 0 ? (
                   <ChatRichUxSelect
@@ -728,9 +863,11 @@ export function ChatRichChart({
                           configuredValueKey
                         ) {
                           setAxisYOverride(configuredValueKey);
+                          setValueKeyOverride(null);
                         }
                         if (toType === "heatmap") {
                           setAxisYOverride(null);
+                          setValueKeyOverride(null);
                         }
 
                         recordPresentationTelemetry("presentation_chart_type_switch", {
@@ -770,15 +907,9 @@ export function ChatRichChart({
         {isHeatmapActive ? (
           <HeatmapGrid
             data={displayData}
-            xAxis={config?.xAxis || displayXAxis}
-            yAxis={
-              typeof config?.yAxis === "string"
-                ? config.yAxis
-                : Array.isArray(config?.yAxis)
-                  ? String(config.yAxis[0] || guessXAxis(data))
-                  : guessYAxisCategory(data, xAxis)
-            }
-            valueKey={configuredValueKey || valueKey || "value"}
+            xAxis={heatmapXAxis}
+            yAxis={heatmapYAxis}
+            valueKey={heatmapValueKey}
             colors={colors}
             tickFill={tickFill}
             onPointClick={onDrillDown ? openPointMenu : undefined}
@@ -1198,6 +1329,14 @@ function guessXAxis(data: Record<string, unknown>[]): string {
   return stringKeys[0] || Object.keys(first)[0] || "name";
 }
 
+function categoryCardinality(data: Record<string, unknown>[], key: string): number {
+  if (!key || !data.length) return 0;
+
+  return new Set(
+    data.map((row) => String(row[key] ?? "").trim()).filter(Boolean),
+  ).size;
+}
+
 function guessYAxisCategory(data: Record<string, unknown>[], xAxis: string): string {
   if (!data.length) return "category";
 
@@ -1206,7 +1345,30 @@ function guessYAxisCategory(data: Record<string, unknown>[], xAxis: string): str
     (key) => typeof first[key] === "string" && key !== xAxis,
   );
 
-  return stringKeys[0] || "category";
+  if (!stringKeys.length) return "category";
+
+  let bestKey = stringKeys[0];
+  let bestScore = -1;
+
+  for (const key of stringKeys) {
+    const unique = categoryCardinality(data, key);
+    // Colunas de unidade (ex.: "UN") têm cardinalidade 1 e não formam matriz útil.
+    const score = unique <= 1 ? 0 : unique;
+    if (score > bestScore) {
+      bestScore = score;
+      bestKey = key;
+    }
+  }
+
+  return bestKey;
+}
+
+function heatIntensityRatio(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value) || max <= min) {
+    return 1;
+  }
+
+  return Math.min(1, Math.max(0, (value - min) / (max - min)));
 }
 
 function heatColor(
@@ -1224,8 +1386,16 @@ function heatColor(
     return highColor;
   }
 
-  const ratio = Math.min(1, Math.max(0, (value - min) / (max - min)));
+  const ratio = heatIntensityRatio(value, min, max);
   return `color-mix(in srgb, ${lowColor} ${Math.round((1 - ratio) * 100)}%, ${highColor})`;
+}
+
+function heatCellInk(ratio: number, isDark: boolean): string {
+  if (isDark) {
+    return ratio >= 0.42 ? "var(--mdc-heatmap-ink-on-high)" : "var(--mdc-heatmap-ink-on-low)";
+  }
+
+  return ratio >= 0.55 ? "var(--mdc-heatmap-ink-on-high)" : "var(--mdc-heatmap-ink-on-low)";
 }
 
 function HeatmapGrid({
@@ -1281,41 +1451,51 @@ function HeatmapGrid({
     };
   }, [data, xAxis, yAxis, valueKey]);
 
-  const lowColor = colors[0] || resolveChartSeriesColor(colors, 0, isDark);
-  const highColor = colors[1] || colors[0] || resolveChartSeriesColor(colors, 1, isDark);
+  const configuredLow = typeof colors[0] === "string" ? colors[0].trim() : "";
+  const configuredHigh = typeof colors[1] === "string" ? colors[1].trim() : "";
+  const lowColor = configuredLow || "var(--mdc-heatmap-low)";
+  const highColor = configuredHigh || configuredLow || "var(--mdc-heatmap-high)";
+  const denseColumns = xLabels.length >= 8;
+  const singleRow = yLabels.length <= 1;
 
   return (
-    <div className="mdc-heatmap" role="img" aria-label="Mapa de calor">
+    <div
+      className={`mdc-heatmap${denseColumns ? " mdc-heatmap--dense" : ""}${singleRow ? " mdc-heatmap--single-row" : ""}`}
+      role="img"
+      aria-label="Mapa de calor"
+    >
       <div
         className="mdc-heatmap__grid"
         style={{
-          gridTemplateColumns: `minmax(5rem, auto) repeat(${xLabels.length}, minmax(2.5rem, 1fr))`,
+          gridTemplateColumns: `minmax(4.5rem, auto) repeat(${Math.max(xLabels.length, 1)}, minmax(${denseColumns ? "2.1rem" : "2.75rem"}, 1fr))`,
         }}
       >
         <div className="mdc-heatmap__corner" />
         {xLabels.map((label) => (
-          <div key={label} className="mdc-heatmap__x-label" style={{ color: tickFill }}>
+          <div key={label} className="mdc-heatmap__x-label" style={{ color: tickFill }} title={label}>
             {label}
           </div>
         ))}
         {yLabels.map((yLabel) => (
           <div key={yLabel} className="mdc-heatmap__row">
-            <div className="mdc-heatmap__y-label" style={{ color: tickFill }}>
+            <div className="mdc-heatmap__y-label" style={{ color: tickFill }} title={yLabel}>
               {yLabel}
             </div>
             {xLabels.map((xLabel) => {
               const value = valueMap.get(`${yLabel}\u0000${xLabel}`);
               const hasValue = value !== undefined;
+              const ratio = hasValue ? heatIntensityRatio(value, min, max) : 0;
               const background = hasValue
                 ? heatColor(value, min, max, lowColor, highColor)
-                : "transparent";
+                : undefined;
+              const ink = hasValue ? heatCellInk(ratio, isDark) : undefined;
 
               return (
                 <div
                   key={`${yLabel}-${xLabel}`}
-                  className={`mdc-heatmap__cell${hasValue ? " mdc-heatmap__cell--filled" : ""}`}
-                  style={{ background }}
-                  title={hasValue ? `${yLabel} × ${xLabel}: ${value}` : undefined}
+                  className={`mdc-heatmap__cell${hasValue ? " mdc-heatmap__cell--filled" : " mdc-heatmap__cell--empty"}`}
+                  style={{ background, color: ink }}
+                  title={hasValue ? `${yLabel} × ${xLabel}: ${formatHeatValue(value)}` : undefined}
                   onClick={(event) => {
                     if (!onPointClick || !hasValue) {
                       return;
@@ -1337,7 +1517,12 @@ function HeatmapGrid({
       </div>
       <div className="mdc-heatmap__legend" aria-hidden="true">
         <span>{formatHeatValue(min)}</span>
-        <span className="mdc-heatmap__legend-bar" />
+        <span
+          className="mdc-heatmap__legend-bar"
+          style={{
+            background: `linear-gradient(90deg, ${lowColor} 0%, ${highColor} 100%)`,
+          }}
+        />
         <span>{formatHeatValue(max)}</span>
       </div>
     </div>

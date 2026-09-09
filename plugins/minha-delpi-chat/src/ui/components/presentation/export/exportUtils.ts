@@ -7,6 +7,7 @@ import {
   triggerFileDownload,
 } from "../../../../export/primitives";
 import type { ExportColumn, TableExportPayload } from "../../../../export/types";
+import { buildFieldKeyMapRows } from "./fieldKeyMap";
 import { chatAlert } from "../../../utils/chatNativeDialogs";
 import { formatChartColumnLabel } from "../pipeline/chartAxisSelection";
 import {
@@ -26,6 +27,7 @@ type DashboardPresentation = Extract<ChatPresentation, { type: "dashboard" }>;
 
 export type { ExportColumn, TableExportPayload };
 export { sanitizeFilename, sanitizeSheetName } from "../../../../export/primitives";
+export { buildFieldKeyMapRows } from "./fieldKeyMap";
 
 export function buildTableExportPayload(
   presentation: TablePresentation,
@@ -176,6 +178,14 @@ export function exportPayloadToXlsx(payload: TableExportPayload): void {
         ws,
         sanitizeSheetName(payload.title || "Dados"),
       );
+      const keyMap = buildFieldKeyMapRows(payload.columns);
+      if (keyMap.length > 1) {
+        XLSX.utils.book_append_sheet(
+          wb,
+          XLSX.utils.aoa_to_sheet(keyMap),
+          sanitizeSheetName("campo-chave"),
+        );
+      }
       XLSX.writeFile(wb, `${sanitizeFilename(payload.title || "dados")}.xlsx`);
     })
     .catch((error) => {

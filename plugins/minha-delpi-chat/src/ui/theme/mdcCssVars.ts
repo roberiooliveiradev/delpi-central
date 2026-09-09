@@ -111,14 +111,52 @@ export function readMdcChartSeries(count = 10): string[] {
 }
 
 /** Paleta efetiva: config da API → tokens CSS → fallback saturado por tema. */
+export function resolvePaletteFamilyColors(
+  paletteFamily: string | undefined,
+): string[] {
+  const family = String(paletteFamily || "")
+    .trim()
+    .toLowerCase();
+
+  if (family === "sequential-blue") {
+    return ["var(--mdc-heatmap-low)", "var(--mdc-heatmap-high)"];
+  }
+
+  if (family === "cool") {
+    return ["var(--mdc-chart-series-7)", "var(--mdc-chart-series-2)"];
+  }
+
+  if (family === "warm") {
+    return ["var(--mdc-chart-series-4)", "var(--mdc-chart-series-5)"];
+  }
+
+  if (family === "diverging-status" || family === "status") {
+    return ["var(--mdc-chart-series-5)", "var(--mdc-chart-series-3)"];
+  }
+
+  if (family === "brand") {
+    return ["var(--mdc-chart-series-1)", "var(--mdc-chart-series-10)"];
+  }
+
+  return [];
+}
+
+/** Paleta efetiva: config da API → tokens CSS → fallback saturado por tema. */
 export function resolveChartSeriesColors(
   configColors: string[] | undefined,
   isDark: boolean,
+  paletteFamily?: string,
 ): string[] {
   const fromConfig = sanitizeChartColors(configColors);
 
   if (fromConfig.length > 0) {
     return fromConfig;
+  }
+
+  const fromFamily = sanitizeChartColors(resolvePaletteFamilyColors(paletteFamily));
+
+  if (fromFamily.length > 0) {
+    return fromFamily;
   }
 
   const fromCss = readMdcChartSeries();

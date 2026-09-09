@@ -5,6 +5,7 @@ export type ChartViewState = {
   chartTypeOverride: string | null;
   axisXOverride: string | null;
   axisYOverride: string | null;
+  valueKeyOverride: string | null;
   categoryFilterKey: string | null;
   categoryFilterValue: string | null;
   topFilter: ChartTopFilter;
@@ -17,6 +18,7 @@ export function createDefaultChartViewState(): ChartViewState {
     chartTypeOverride: null,
     axisXOverride: null,
     axisYOverride: null,
+    valueKeyOverride: null,
     categoryFilterKey: null,
     categoryFilterValue: null,
     topFilter: "all",

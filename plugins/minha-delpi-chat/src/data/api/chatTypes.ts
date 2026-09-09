@@ -100,6 +100,8 @@ export type ChatPresentation =
         gaugeTargetKey?: string | null;
         fieldLabels?: Record<string, string>;
         fieldFormats?: Record<string, string>;
+        paletteFamily?: string;
+        bindingProvenance?: string;
       };
       chartExplanation?: string;
     }

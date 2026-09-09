@@ -346,11 +346,11 @@ class ChatToolContextFormatService:
         )
 
         if requested_format in {"table", "tree", "chart", "dashboard", "kpi"}:
-            from app.domain.services.chat_presentation_render_pipeline_service import (
-                ChatPresentationRenderPipelineService,
+            from app.application.services.presentation_spec_composer_application_service import (
+                PresentationSpecComposerApplicationService,
             )
 
-            ChatPresentationRenderPipelineService.finalize(meta)
+            PresentationSpecComposerApplicationService.finalize_presentation_metadata(meta)
 
     def _schema_bundle_view(self, data, *, path: str):
         from app.domain.services.chat_operational_response_profile_service import (

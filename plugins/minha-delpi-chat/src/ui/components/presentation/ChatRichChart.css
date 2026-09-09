@@ -9,13 +9,14 @@
 }
 
 .mdc-heatmap {
-  padding: 0.25rem 0.5rem 0.5rem;
+  padding: 0.35rem 0.55rem 0.65rem;
   overflow-x: auto;
+  color-scheme: inherit;
 }
 
 .mdc-heatmap__grid {
   display: grid;
-  gap: 2px;
+  gap: 3px;
   min-width: min(100%, 28rem);
 }
 
@@ -26,9 +27,21 @@
 .mdc-heatmap__x-label {
   font-size: 0.65rem;
   text-align: center;
-  padding: 0.15rem 0.1rem;
-  line-height: 1.2;
+  padding: 0.2rem 0.1rem;
+  line-height: 1.15;
   word-break: break-word;
+  color: var(--mdc-chart-tick, var(--mdc-text-muted));
+}
+
+.mdc-heatmap--dense .mdc-heatmap__x-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  max-height: 5.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6rem;
+  padding: 0.15rem 0;
 }
 
 .mdc-heatmap__row {
@@ -36,46 +49,72 @@
 }
 
 .mdc-heatmap__y-label {
-  font-size: 0.65rem;
-  padding: 0.2rem 0.35rem 0.2rem 0;
+  font-size: 0.68rem;
+  font-weight: 550;
+  padding: 0.2rem 0.4rem 0.2rem 0;
   line-height: 1.2;
   word-break: break-word;
   align-self: center;
+  color: var(--mdc-chart-tick, var(--mdc-text-muted));
 }
 
 .mdc-heatmap__cell {
-  min-height: 1.75rem;
-  border-radius: 3px;
-  font-size: 0.6rem;
+  min-height: 2rem;
+  border-radius: 5px;
+  font-size: 0.62rem;
+  letter-spacing: 0.01em;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--mdc-title);
-  border: 1px solid color-mix(in srgb, var(--mdc-border) 55%, transparent);
+  color: var(--mdc-heatmap-ink-on-low);
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  transition: box-shadow 120ms ease, transform 120ms ease;
+}
+
+.mdc-heatmap--single-row .mdc-heatmap__cell {
+  min-height: 2.5rem;
+  font-size: 0.68rem;
+}
+
+.mdc-heatmap__cell--empty {
+  background: color-mix(in srgb, var(--mdc-bg-muted) 55%, var(--mdc-card-bg));
+  border-style: dashed;
+  opacity: 0.72;
 }
 
 .mdc-heatmap__cell--filled {
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 650;
+  border-color: color-mix(in srgb, var(--mdc-heatmap-high) 28%, var(--mdc-card-border));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
+}
+
+.mdc-heatmap__cell--filled:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--mdc-heatmap-high) 35%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, white 18%, transparent);
 }
 
 .mdc-heatmap__legend {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-  font-size: 0.65rem;
-  color: var(--mdc-muted);
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--mdc-text-muted);
 }
 
 .mdc-heatmap__legend-bar {
   flex: 1;
-  height: 0.35rem;
+  height: 0.45rem;
   border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 75%, transparent);
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--mdc-chart-series-7) 45%, var(--mdc-card-bg)) 0%,
-    var(--mdc-chart-series-7) 100%
+    var(--mdc-heatmap-low) 0%,
+    var(--mdc-heatmap-high) 100%
   );
 }
 

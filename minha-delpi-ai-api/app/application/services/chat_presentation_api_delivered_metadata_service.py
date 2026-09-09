@@ -248,9 +248,6 @@ class ChatPresentationApiDeliveredMetadataService:
         from app.domain.services.chat_presentation_decision_service import (
             ChatPresentationDecisionService,
         )
-        from app.domain.services.chat_presentation_render_pipeline_service import (
-            ChatPresentationRenderPipelineService,
-        )
 
         ChatPresentationFieldNormalizationService.normalize_metadata(
             metadata,
@@ -319,7 +316,14 @@ class ChatPresentationApiDeliveredMetadataService:
 
             ChatPresentationTextModeService.embed_and_finalize_explicit_text(metadata)
 
-        ChatPresentationRenderPipelineService.finalize(metadata)
+        from app.application.services.presentation_spec_composer_application_service import (
+            PresentationSpecComposerApplicationService,
+        )
+
+        if user_message and isinstance(metadata, dict):
+            metadata["userMessage"] = user_message
+
+        PresentationSpecComposerApplicationService.finalize_presentation_metadata(metadata)
 
         from app.domain.services.chat_presentation_data_only_prose_service import (
             ChatPresentationDataOnlyProseService,

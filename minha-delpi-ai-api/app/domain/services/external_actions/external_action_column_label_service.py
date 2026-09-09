@@ -250,8 +250,11 @@ class ExternalActionColumnLabelService:
         enable_discovery: bool = True,
         openapi_labels: dict[str, str] | None = None,
     ):
-        """Resolve labels + formats com `sourceByKey` (meta|openapi|catalog|profile|discovery|humanize)."""
-        from app.domain.entities.field_label_bundle import FieldLabelBundle
+        """Resolve labels + formats com `sourceByKey` canônico (§26-R)."""
+        from app.domain.entities.field_label_bundle import (
+            FieldLabelBundle,
+            canonicalize_label_source,
+        )
 
         ordered: list[str] = []
         seen: set[str] = set()
@@ -280,11 +283,11 @@ class ExternalActionColumnLabelService:
             )
             if label:
                 label_map[key] = label
-                source_by_key[key] = source or "catalog"
+                source_by_key[key] = canonicalize_label_source(source or "catalog")
                 continue
             pending_discovery.append(key)
             label_map[key] = self._humanize_field_key(key)
-            source_by_key[key] = "humanize"
+            source_by_key[key] = canonicalize_label_source("humanize")
 
         if enable_discovery and pending_discovery:
             catalog_fields = (_column_labels_content().get("fields") or {})
@@ -298,7 +301,7 @@ class ExternalActionColumnLabelService:
             for key, label in discovered.items():
                 if str(label or "").strip():
                     label_map[key] = str(label).strip()
-                    source_by_key[key] = "discovery"
+                    source_by_key[key] = canonicalize_label_source("discovery")
 
         formats: dict[str, str] = {}
         for key in ordered:

@@ -1,0 +1,4 @@
+{
+  "$comment": "Canonical schema lives in app.domain.entities.presentation_spec.PRESENTATION_SPEC_JSON_SCHEMA (Python). This file is an index, not a second source of truth.",
+  "canonical": "app/domain/entities/presentation_spec.py"
+}

@@ -110,12 +110,16 @@ Não usar substring do path como memória conversacional.
 ```text
 responseSchema + payload runtime + metadata
 → ChatSchemaDrivenPresentationService
+→ PresentationDataProfile + FieldLabelBundle (PT-BR)
+→ PresentationIntent → spec (deterministic; optional LLM composer)
 → presentationDecision
 → renderPlan
 → plugin render-only
 ```
 
-Perfil dedicado é opcional. API externa sem metadata DELPI deve continuar apresentável pelo fallback genérico.
+Perfil dedicado é opcional. API externa sem metadata DELPI deve continuar apresentável pelo fallback genérico. Labels PT-BR vêm da resolução canônica (`FieldLabelBundle`); o MFE não traduz keys.
+
+Ver [`../architecture/presentation-intelligence.md`](../architecture/presentation-intelligence.md).
 
 ---
 

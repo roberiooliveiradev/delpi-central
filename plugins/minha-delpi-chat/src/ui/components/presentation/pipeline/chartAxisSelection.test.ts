@@ -28,6 +28,17 @@ describe("chartAxisSelection", () => {
     expect(axes.xKey).toBe("qtd_apontada");
   });
 
+  it("respeita eixos compilados da API sem re-inferir", () => {
+    const axes = inferDefaultChartAxes(rows, "scatter", {
+      xAxis: "tempo_real_horas",
+      yAxis: ["qtd_apontada"],
+      bindingProvenance: "COMPILED",
+    });
+
+    expect(axes.xKey).toBe("tempo_real_horas");
+    expect(axes.yKey).toBe("qtd_apontada");
+  });
+
   it("usa categoria no eixo X em barras", () => {
     const axes = inferDefaultChartAxes(rows, "bar", {});
 

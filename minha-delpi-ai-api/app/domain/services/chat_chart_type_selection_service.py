@@ -215,9 +215,16 @@ class ChatChartTypeSelectionService:
             key: len({str(row.get(key) or "") for row in rows})
             for key in string_keys
         }
-        ordered = sorted(string_keys, key=lambda key: cardinalities.get(key, 0))
-
-        return ordered[-1], ordered[0]
+        # Prefer discriminant dimensions (cardinality > 1). Constant fields like unit=UN
+        # must not become the heatmap Y axis.
+        discriminant = [key for key in string_keys if cardinalities.get(key, 0) > 1]
+        pool = discriminant if len(discriminant) >= 2 else string_keys
+        ordered = sorted(pool, key=lambda key: cardinalities.get(key, 0))
+        if len(ordered) >= 2:
+            return ordered[-1], ordered[0]
+        if ordered:
+            return ordered[0], ordered[0]
+        return string_keys[-1], string_keys[0]
 
     @classmethod
     def _message_mentions_stacked(cls, message: str) -> bool:

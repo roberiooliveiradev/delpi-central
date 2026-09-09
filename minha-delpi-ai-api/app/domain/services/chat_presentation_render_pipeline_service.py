@@ -28,6 +28,24 @@ class ChatPresentationRenderPipelineService:
         # Structure dedup antes do prune/renderPlan — MFE confia em structureDedupApplied + plan.
         ChatPresentationStructureDedupService.dedupe_metadata(metadata)
         ChatPresentationPayloadPruningService.prune(metadata)
+
+        from app.domain.services.presentation_intelligence_orchestrator_service import (
+            PresentationIntelligenceOrchestratorService,
+        )
+
+        user_message = None
+        if isinstance(metadata.get("userMessage"), str):
+            user_message = metadata.get("userMessage")
+        elif isinstance(metadata.get("originalUserMessage"), str):
+            user_message = metadata.get("originalUserMessage")
+
+        PresentationIntelligenceOrchestratorService.apply_before_render_plan(
+            metadata,
+            user_message=user_message,
+            composer_enabled=bool(metadata.get("presentationComposerAuthoritative")),
+            composer_spec=metadata.get("presentationComposerSpec"),
+        )
+
         ChatPresentationRenderPlanService.build(metadata)
 
         from app.domain.services.chat_presentation_llm_composition_service import (

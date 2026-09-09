@@ -1,12 +1,28 @@
 export type FieldLabels = Record<string, string>;
 export type FieldFormats = Record<string, string>;
 
-/** Fallback legacy — preferir `columns[].label` da API (ver `presentation_vocabulary.json` → legacyFallbacks). */
+/**
+ * Fallback mínimo quando a API não enviou fieldLabels.
+ * Não inventa tradução semântica — apenas separa tokens da key técnica.
+ * A fonte canônica de labels PT-BR é a API (FieldLabelBundle).
+ */
 function humanizeFieldKeyFallback(key: string): string {
-  return key
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase())
-    .trim();
+  const normalized = String(key || "").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized.includes("_")) {
+    return normalized
+      .split("_")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(" ");
+  }
+
+  // camelCase → spaced words without inventing meaning
+  const spaced = normalized.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
 export function resolveFieldLabel(
@@ -74,6 +90,26 @@ export function formatChartAxisValue(
         return `${parts[2]}/${parts[1]}/${parts[0]}`;
       }
     }
+  }
+
+  if (fieldFormat === "percentage" && Number.isFinite(Number(text))) {
+    return `${Number(text).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+  }
+
+  if (fieldFormat === "currency" && Number.isFinite(Number(text))) {
+    return Number(text).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  }
+
+  if (
+    (fieldFormat === "quantity" || fieldFormat === "integer" || fieldFormat === "decimal") &&
+    Number.isFinite(Number(text))
+  ) {
+    return Number(text).toLocaleString("pt-BR", {
+      maximumFractionDigits: fieldFormat === "integer" ? 0 : 2,
+    });
   }
 
   return text;

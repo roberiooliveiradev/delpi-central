@@ -10,6 +10,7 @@ Este diretório contém somente fontes arquiteturais atuais. Implementação dev
 | Ordem | Fonte | Responsabilidade |
 |------:|-------|------------------|
 | 1 | [`chat-intelligence-base.md`](./chat-intelligence-base.md) | Pipeline transversal do chat, contexto, tools, RAG, segurança e apresentação |
+| 1b | [`presentation-intelligence.md`](./presentation-intelligence.md) | Profile, labels PT-BR, PresentationSpec, validator/compiler, optional composer |
 | 2 | [`new-api-route-checklist.md`](./new-api-route-checklist.md) | Nova API/Action OpenAPI |
 | 3 | [`assistant-content-catalog.md`](./assistant-content-catalog.md) | Conteúdo declarativo do assistente sem duplicar contrato técnico |
 | 4 | [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md) | Protocolo canônico R1–R11 |

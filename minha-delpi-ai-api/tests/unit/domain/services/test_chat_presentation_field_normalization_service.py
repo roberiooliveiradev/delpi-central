@@ -331,8 +331,8 @@ def test_normalize_metadata_writes_resolved_field_labels_bundle():
     assert labels["last_price"] == "Últ. preço"
     assert labels["unit_price"] == "Preço unitário"
     assert labels["meta_only_field"] == "Campo da meta"
-    assert sources["last_price"] == "catalog"
-    assert sources["meta_only_field"] == "meta"
+    assert sources["last_price"] == "CANONICAL_VOCABULARY"
+    assert sources["meta_only_field"] == "METADATA_SCHEMA"
 
     columns = {
         column["key"]: column["label"]

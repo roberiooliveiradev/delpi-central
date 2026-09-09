@@ -5,6 +5,46 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
+# Provenance tokens (§26-R). Legacy short names are mapped, never stored as new output.
+CANONICAL_LABEL_SOURCES = frozenset(
+    {
+        "OPENAPI_TITLE",
+        "OPENAPI_DESCRIPTION",
+        "METADATA_SCHEMA",
+        "CANONICAL_VOCABULARY",
+        "DETERMINISTIC_HUMANIZER",
+        "LLM_LOCALIZATION",
+        "LEGACY_FALLBACK",
+    }
+)
+
+_LEGACY_LABEL_SOURCES = {
+    "meta": "METADATA_SCHEMA",
+    "openapi": "OPENAPI_TITLE",
+    "openapi_title": "OPENAPI_TITLE",
+    "openapi_description": "OPENAPI_DESCRIPTION",
+    "catalog": "CANONICAL_VOCABULARY",
+    "profile": "METADATA_SCHEMA",
+    "humanize": "DETERMINISTIC_HUMANIZER",
+    "discovery": "LLM_LOCALIZATION",
+    "llm": "LLM_LOCALIZATION",
+    "legacy": "LEGACY_FALLBACK",
+    "presentation": "LEGACY_FALLBACK",
+}
+
+
+def canonicalize_label_source(raw: str | None) -> str:
+    token = str(raw or "").strip()
+    if not token:
+        return ""
+    mapped = _LEGACY_LABEL_SOURCES.get(token.lower())
+    if mapped:
+        return mapped
+    upper = token.upper()
+    if upper in CANONICAL_LABEL_SOURCES:
+        return upper
+    return upper
+
 
 @dataclass(frozen=True)
 class FieldLabelBundle:
@@ -24,13 +64,19 @@ class FieldLabelBundle:
         return str(default if default is not None else "")
 
     def source_for(self, key: str) -> str:
-        return str(self.source_by_key.get(str(key or "").strip()) or "").strip()
+        return canonicalize_label_source(
+            str(self.source_by_key.get(str(key or "").strip()) or "").strip()
+        )
 
     def as_metadata(self) -> dict[str, Any]:
         return {
             "labels": dict(self.labels),
             "formats": dict(self.formats),
-            "sourceByKey": dict(self.source_by_key),
+            "sourceByKey": {
+                key: canonicalize_label_source(value)
+                for key, value in self.source_by_key.items()
+                if canonicalize_label_source(value)
+            },
         }
 
     @classmethod
@@ -61,9 +107,9 @@ class FieldLabelBundle:
             if str(key).strip() and str(value or "").strip()
         }
         source_by_key = {
-            str(key).strip(): str(value).strip()
+            str(key).strip(): canonicalize_label_source(str(value).strip())
             for key, value in sources_raw.items()
-            if str(key).strip() and str(value or "").strip()
+            if str(key).strip() and canonicalize_label_source(str(value or "").strip())
         }
         return cls(labels=labels, formats=formats, source_by_key=source_by_key)
 
@@ -86,7 +132,7 @@ class FieldLabelBundle:
             if not overwrite and token in labels:
                 continue
             labels[token] = label
-            sources[token] = source
+            sources[token] = canonicalize_label_source(source) or "LEGACY_FALLBACK"
         return FieldLabelBundle(
             labels=labels,
             formats=dict(self.formats),

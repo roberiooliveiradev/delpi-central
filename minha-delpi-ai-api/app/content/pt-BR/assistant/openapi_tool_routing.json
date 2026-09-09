@@ -98,7 +98,40 @@
         },
         "requestedPresentation": {
           "type": ["string", "null"],
-          "enum": ["auto", "kpi", "table", "chart", "text", "tree", null]
+          "enum": [
+            "auto",
+            "kpi",
+            "table",
+            "chart",
+            "text",
+            "tree",
+            "canvas",
+            "dashboard",
+            "topics",
+            "line_chart",
+            "bar_chart",
+            "horizontal_bar",
+            "donut",
+            "checklist",
+            null
+          ]
+        },
+        "presentationIntent": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "properties": {
+            "view": { "type": ["string", "null"] },
+            "mark": { "type": ["string", "null"] },
+            "dimensionConcepts": {
+              "type": "array",
+              "maxItems": 8,
+              "items": { "type": "string", "maxLength": 80 }
+            },
+            "measureConcept": { "type": ["string", "null"], "maxLength": 80 },
+            "paletteFamily": { "type": ["string", "null"] },
+            "sortConcept": { "type": ["string", "null"], "maxLength": 80 },
+            "locale": { "type": "string", "default": "pt-BR" }
+          }
         },
         "clarify": { "type": ["string", "null"] },
         "clarificationKind": { "type": ["string", "null"] },
