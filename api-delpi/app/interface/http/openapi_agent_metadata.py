@@ -14,7 +14,7 @@ PRODUCT_DETAIL = agent_route(
     description=(
         "Retorna ficha cadastral completa de um código: descrição, tipo, unidade, grupo, custo, armazém, "
         "revisão Delpi no TOTVS (current_revision/B1_REVATU — não impressa no PDF; REV. do desenho é do cliente) e NCM. "
-        "Use para cadastro, descrição ou atributos do item sem agregar estoque/preços. "
+        "Use para «descrição», «cadastro» ou «ficha» / atributos do item sem agregar estoque/preços. "
         "Para visão resumida com estoque e preços, prefira /summary; para ficha analítica ampla, /analyser."
     ),
     operation_id="get_product_detail",
@@ -24,7 +24,7 @@ PRODUCT_SUMMARY = agent_route(
     summary="Resumo leve do produto (cadastro + amostra de estoque + preços)",
     description=(
         "Consolida cadastro, amostra de estoque por filial e tabela de preços em uma consulta leve. "
-        "Use somente para visão geral rápida quando o usuário NÃO pediu BOM/estrutura, roteiro, "
+        "Use para «descrição», «cadastro» ou «ficha» em visão geral rápida quando o usuário NÃO pediu BOM/estrutura, roteiro, "
         "inspeção, analisador completo nem visão integrada com vários blocos. "
         "NÃO use quando o usuário pediu explicitamente «estoque», «saldo» ou «disponível» — prefira /stock "
         "(pode combinar com /products/{code} ou /summary só se também pediu cadastro e o plano for multi-action). "
@@ -295,8 +295,8 @@ PRODUCT_STOCK = agent_route(
     summary="Estoque do produto por filial e local",
     description=(
         "Saldo e posição de estoque de um item específico (código no path). "
-        "Use para perguntas como «estoque», «saldo», «disponível», quantidade em armazém de um produto — "
-        "inclusive quando o usuário pede estoque junto com descrição/cadastro (combine com ficha/summary). "
+        "Use para perguntas como «estoque», «saldo», «disponível», quantidade em armazém de um produto. "
+        "Em pedido combinado, mantenha esta action e acrescente uma action de visão geral. "
         "Não confundir com valor total de estoque da empresa (rota de suprimentos /stock-value). "
         "Não substituir por /summary quando o foco é saldo/posição."
     ),
