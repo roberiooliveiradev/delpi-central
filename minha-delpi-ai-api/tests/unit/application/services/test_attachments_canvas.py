@@ -372,6 +372,59 @@ def test_canvas_same_message_chart_also_coalesces():
     )
 
 
+def test_canvas_multi_turn_last_message_prose_and_rich_coalesces():
+    """Views ricas em turnos anteriores não devem competir com o último resultado completo."""
+    previous_messages = [
+        {
+            "id": "asst-t1",
+            "role": "assistant",
+            "content": "Tabela de estoque inicial com filiais e armazéns listados abaixo.",
+            "metadata": {
+                "presentation": {
+                    "type": "table",
+                    "columns": [{"key": "branch"}],
+                    "rows": [{"branch": "01"}],
+                }
+            },
+        },
+        {
+            "id": "asst-t2",
+            "role": "assistant",
+            "content": "Gráfico de barras do estoque com o detalhamento por depósito.",
+            "metadata": {
+                "chartPresentation": {"type": "chart", "chartType": "bar", "data": []},
+            },
+        },
+        {
+            "id": "asst-t3",
+            "role": "assistant",
+            "content": (
+                "Mapa de calor do estoque por filial e armazém com as quantidades atuais."
+            ),
+            "metadata": {
+                "chartPresentation": {
+                    "type": "chart",
+                    "chartType": "heatmap",
+                    "data": [],
+                },
+            },
+        },
+    ]
+    assert (
+        ChatCanvasAmbiguityService.build_clarification_answer(
+            previous_messages=previous_messages,
+        )
+        is None
+    )
+    action = ChatCanvasContentService.resolve(
+        "Coloque esse resultado na lousa.",
+        previous_messages,
+        {"capabilities": {"canvas": True}},
+    )
+    assert action is not None
+    assert action.open_payload is not None
+
+
 def test_canvas_two_operational_messages_still_clarifies():
     previous_messages = [
         {

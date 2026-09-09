@@ -50,7 +50,8 @@ class ChatCanvasAmbiguityService:
         rich_on_other = cls._has_rich_view_outside_message(previous_messages, last_assistant)
 
         # Same assistant message: prose + table/chart/kpi/dashboard = one operational result.
-        if prose_on_last and rich_on_last and not has_attachment and not rich_on_other:
+        # Prior rich views in the thread must not block deictic «esse resultado» on the last turn.
+        if prose_on_last and rich_on_last and not has_attachment:
             return []
 
         labels = []
