@@ -4,8 +4,8 @@
 Turnos na mesma conversa:
   T1 estoque → tabela
   T2 gráfico de barras
-  T3 mapa de calor (materializa OU aviso honesto de dados insuficientes)
-  T4 preferência canvas (lousa) quando aplicável
+  T3 mapa de calor (materializa se ≥2 dims discriminantes; senão unmet + notice)
+  T4 lousa deíctica → canvasOpen real (clarificação = FAIL)
 
 Produtos padrão (podem sobrescrever via SMOKE_PC_PRODUCTS):
   - PA 90260149
@@ -70,14 +70,33 @@ def _turns_for(product: str) -> list[dict[str, Any]]:
                 "Agora coloque isso em um gráfico de mapa de calor "
                 "(produto × depósito/filial) em tons de azul."
             ),
-            "expect": "heatmap_or_unmet_notice",
+            "expect": "heatmap_materialized_if_dims",
         },
         {
             "id": "T4.canvas",
             "message": "Coloque esse resultado na lousa.",
-            "expect": "canvas_or_ack",
+            "expect": "canvas_open",
         },
     ]
+
+
+_DIM_FIELD_HINTS = (
+    "branch",
+    "filial",
+    "warehouse",
+    "armazem",
+    "armazém",
+    "deposito",
+    "depósito",
+    "deposit",
+    "turno",
+    "shift",
+    "maquina",
+    "máquina",
+    "machine",
+    "local",
+    "location",
+)
 
 
 def _ok(label: str, detail: str = "") -> None:
@@ -186,6 +205,54 @@ def _walk(obj: Any):
             yield from _walk(item)
 
 
+def _field_key(value: Any) -> str:
+    if isinstance(value, dict):
+        return str(value.get("key") or value.get("field") or value.get("id") or value.get("label") or "")
+    return str(value or "")
+
+
+def _collect_dim_hints(node: dict[str, Any], out: set[str]) -> None:
+    columns = node.get("columns")
+    if isinstance(columns, list):
+        for col in columns:
+            key = _field_key(col).lower()
+            if any(hint in key for hint in _DIM_FIELD_HINTS):
+                out.add(key)
+    for key_name in ("xField", "yField", "categoryKey", "seriesKey", "rowKey", "columnKey"):
+        raw = node.get(key_name)
+        if isinstance(raw, str) and any(hint in raw.lower() for hint in _DIM_FIELD_HINTS):
+            out.add(raw.lower())
+    cfg = node.get("config") if isinstance(node.get("config"), dict) else {}
+    for key_name in ("xField", "yField", "xKey", "yKey", "rowKey", "columnKey", "categoryKey"):
+        raw = cfg.get(key_name)
+        if isinstance(raw, str) and any(hint in raw.lower() for hint in _DIM_FIELD_HINTS):
+            out.add(raw.lower())
+
+
+def _collect_discriminant_dims(node: dict[str, Any], out: set[str]) -> None:
+    """Dims with ≥2 distinct values in sampled rows (true heatmap axes)."""
+    rows = node.get("rows") or node.get("data")
+    if not isinstance(rows, list) or len(rows) < 2:
+        return
+    columns = node.get("columns")
+    keys: list[str] = []
+    if isinstance(columns, list):
+        keys = [_field_key(col) for col in columns if _field_key(col)]
+    elif rows and isinstance(rows[0], dict):
+        keys = [str(k) for k in rows[0].keys()]
+    for key in keys:
+        lowered = key.lower()
+        if not any(hint in lowered for hint in _DIM_FIELD_HINTS):
+            continue
+        values = {
+            str(row.get(key))
+            for row in rows
+            if isinstance(row, dict) and row.get(key) is not None
+        }
+        if len(values) >= 2:
+            out.add(lowered)
+
+
 def _presentation_snapshot(response: dict) -> dict[str, Any]:
     answer = str(response.get("answer") or response.get("content") or "")
     snap: dict[str, Any] = {
@@ -195,18 +262,27 @@ def _presentation_snapshot(response: dict) -> dict[str, Any]:
         "paletteFamily": None,
         "bindingProvenance": None,
         "canvasOpen": False,
+        "canvasOpenPayload": None,
         "deliveryPreferCanvas": False,
         "specApplied": None,
         "selected": None,
         "unmetIntent": None,
         "unmetIntentNotice": None,
+        "dimHints": [],
+        "discriminantDims": [],
         "paths": [],
-        "answerExcerpt": answer[:320],
+        "answerExcerpt": answer[:480],
         "answerHasUnmetNotice": False,
+        "answerLooksLikeClarification": False,
+        "answerHasContextMissing": False,
     }
+    dim_hints: set[str] = set()
+    discriminant_dims: set[str] = set()
     for node in _walk(response):
         if not isinstance(node, dict):
             continue
+        _collect_dim_hints(node, dim_hints)
+        _collect_discriminant_dims(node, discriminant_dims)
         if node.get("type") == "table" and (node.get("rows") or node.get("columns")):
             snap["hasTable"] = True
         if node.get("type") == "chart":
@@ -226,13 +302,23 @@ def _presentation_snapshot(response: dict) -> dict[str, Any]:
             snap["bindingProvenance"] = (
                 cfg.get("bindingProvenance") or snap["bindingProvenance"]
             )
+            _collect_dim_hints(chart, dim_hints)
+            _collect_dim_hints(cfg, dim_hints)
         if "tablePresentation" in node and isinstance(node["tablePresentation"], dict):
             snap["hasTable"] = True
-        if node.get("canvasOpen") or node.get("deliveryPreferCanvas"):
-            snap["canvasOpen"] = bool(node.get("canvasOpen") or snap["canvasOpen"])
-            snap["deliveryPreferCanvas"] = bool(
-                node.get("deliveryPreferCanvas") or snap["deliveryPreferCanvas"]
-            )
+            _collect_dim_hints(node["tablePresentation"], dim_hints)
+        canvas = node.get("canvasOpen")
+        if isinstance(canvas, dict) and (canvas.get("markdown") or canvas.get("title")):
+            snap["canvasOpen"] = True
+            snap["canvasOpenPayload"] = {
+                "title": canvas.get("title"),
+                "hasMarkdown": bool(canvas.get("markdown")),
+                "sourceMessageId": canvas.get("sourceMessageId"),
+            }
+        elif canvas and not snap["canvasOpen"]:
+            snap["canvasOpen"] = True
+        if node.get("deliveryPreferCanvas"):
+            snap["deliveryPreferCanvas"] = True
         pi = node.get("presentationIntelligence")
         if isinstance(pi, dict):
             if "specApplied" in pi:
@@ -253,6 +339,8 @@ def _presentation_snapshot(response: dict) -> dict[str, Any]:
         if isinstance(path, str) and path.startswith("/") and path not in snap["paths"]:
             snap["paths"].append(path)
 
+    snap["dimHints"] = sorted(dim_hints)
+    snap["discriminantDims"] = sorted(discriminant_dims)
     lowered = answer.lower()
     notice = str(snap.get("unmetIntentNotice") or "").lower()
     snap["answerHasUnmetNotice"] = bool(
@@ -263,11 +351,40 @@ def _presentation_snapshot(response: dict) -> dict[str, Any]:
         or (notice and notice[:40] in lowered)
         or ("insufficient" in lowered and "heatmap" in lowered)
     )
+    snap["answerHasContextMissing"] = (
+        "referência não identificada" in lowered
+        or "referencia nao identificada" in lowered
+        or "context_missing" in lowered
+    )
+    snap["answerLooksLikeClarification"] = bool(
+        snap["answerHasContextMissing"]
+        or "qual resultado" in lowered
+        or "qual tabela" in lowered
+        or "qual gráfico" in lowered
+        or "qual grafico" in lowered
+        or "última resposta ou a tabela" in lowered
+        or "ultima resposta ou a tabela" in lowered
+        or "pode esclarecer" in lowered
+        or "preciso que você indique" in lowered
+        or "preciso que voce indique" in lowered
+        or ("ambígu" in lowered and "lousa" in lowered)
+        or ("ambigu" in lowered and "lousa" in lowered)
+        or ("responda com uma frase curta" in lowered and "lousa" in answer.lower())
+    )
     return snap
 
 
-def _grade(expect: str, snap: dict[str, Any], *, product: str) -> tuple[str, list[str]]:
+def _grade(
+    expect: str,
+    snap: dict[str, Any],
+    *,
+    product: str,
+    session_dim_hints: set[str] | None = None,
+    session_discriminant_dims: set[str] | None = None,
+) -> tuple[str, list[str]]:
     errors: list[str] = []
+    dims = set(session_dim_hints or ()) | set(snap.get("dimHints") or ())
+    discriminant = set(session_discriminant_dims or ()) | set(snap.get("discriminantDims") or [])
     if expect == "table_or_rows":
         if not snap["hasTable"] and not snap["hasChart"]:
             excerpt = snap["answerExcerpt"].lower()
@@ -282,40 +399,40 @@ def _grade(expect: str, snap: dict[str, Any], *, product: str) -> tuple[str, lis
             "horizontal_bar",
         }:
             errors.append("no_chart")
-    elif expect == "heatmap_or_unmet_notice":
+    elif expect == "heatmap_materialized_if_dims":
         chart_type = str(snap.get("chartType") or "").lower()
         selected = str(snap.get("selected") or "").lower()
         palette = str(snap.get("paletteFamily") or "").lower()
         unmet = str(snap.get("unmetIntent") or "")
         notice = str(snap.get("unmetIntentNotice") or "").strip()
         materialized = chart_type == "heatmap" or selected == "heatmap"
-        honest_gap = bool(
-            unmet
-            and (
-                notice
-                or snap.get("answerHasUnmetNotice")
+        honest_gap = bool(unmet and (notice or snap.get("answerHasUnmetNotice")))
+        # Require real heatmap only when ≥2 dims have cardinality ≥2 in sampled rows.
+        enough_dims = len(discriminant) >= 2
+        if enough_dims and not materialized:
+            errors.append(
+                "expected_heatmap_materialized_with_dims "
+                f"discriminant={sorted(discriminant)} dims={sorted(dims)} "
+                f"chartType={chart_type} selected={selected} unmetIntent={unmet or None}"
             )
-        )
-        if not materialized and not honest_gap:
+        elif not enough_dims and not materialized and not honest_gap:
             errors.append(
                 "expected_heatmap_or_unmet_notice "
-                f"got chartType={chart_type} selected={selected} "
+                f"discriminant={sorted(discriminant)} dims={sorted(dims)} "
+                f"chartType={chart_type} selected={selected} "
                 f"unmetIntent={unmet or None} notice={bool(notice)} "
                 f"answerNotice={snap.get('answerHasUnmetNotice')}"
             )
-        if materialized and palette and palette not in {"sequential-blue", "cool", "brand"}:
-            errors.append(f"unexpected_palette={palette}")
         if materialized and palette and palette != "sequential-blue":
             errors.append(f"heatmap_palette_not_blue={palette}")
-    elif expect == "canvas_or_ack":
-        text = snap["answerExcerpt"].lower()
-        if not (
-            snap["canvasOpen"]
-            or snap["deliveryPreferCanvas"]
-            or "lousa" in text
-            or "canvas" in text
-        ):
-            errors.append("no_canvas_signal")
+    elif expect == "canvas_open":
+        payload = snap.get("canvasOpenPayload") if isinstance(snap.get("canvasOpenPayload"), dict) else {}
+        if snap.get("answerLooksLikeClarification") or snap.get("answerHasContextMissing"):
+            errors.append("canvas_clarification_or_context_missing")
+        if not snap.get("canvasOpen"):
+            errors.append("canvasOpen_missing")
+        elif payload and not (payload.get("hasMarkdown") or payload.get("title")):
+            errors.append("canvasOpen_payload_incomplete")
     return ("FAIL" if errors else "PASS"), errors
 
 
@@ -328,6 +445,8 @@ def _run_product(token: str, agent_id: str, product: str) -> tuple[list[dict[str
     print(f"\n=== product={product} session={session_id} ===", flush=True)
     cases: list[dict[str, Any]] = []
     hard: list[str] = []
+    session_dim_hints: set[str] = set()
+    session_discriminant_dims: set[str] = set()
 
     for turn in _turns_for(product):
         started = time.perf_counter()
@@ -335,15 +454,28 @@ def _run_product(token: str, agent_id: str, product: str) -> tuple[list[dict[str
         try:
             response = _send(token, session_id, turn["message"])
             snap = _presentation_snapshot(response)
-            status, errors = _grade(turn["expect"], snap, product=product)
+            session_dim_hints.update(snap.get("dimHints") or [])
+            session_discriminant_dims.update(snap.get("discriminantDims") or [])
+            status, errors = _grade(
+                turn["expect"],
+                snap,
+                product=product,
+                session_dim_hints=session_dim_hints,
+                session_discriminant_dims=session_discriminant_dims,
+            )
             elapsed = round((time.perf_counter() - started) * 1000, 2)
+            payload = snap.get("canvasOpenPayload") or {}
             detail = (
                 f"table={snap['hasTable']} chart={snap['hasChart']} "
                 f"type={snap['chartType']} palette={snap['paletteFamily']} "
                 f"selected={snap['selected']} unmet={snap['unmetIntent']} "
                 f"notice={bool(snap['unmetIntentNotice'])} "
                 f"answerNotice={snap['answerHasUnmetNotice']} "
-                f"canvas={snap['canvasOpen']} ms={elapsed}"
+                f"dims={sorted(session_dim_hints)} "
+                f"discriminant={sorted(session_discriminant_dims)} "
+                f"canvas={snap['canvasOpen']} "
+                f"canvasTitle={payload.get('title') if isinstance(payload, dict) else None} "
+                f"ms={elapsed}"
             )
             if status == "PASS":
                 _ok(case_id, detail)
