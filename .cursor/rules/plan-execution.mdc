@@ -1,0 +1,351 @@
+---
+description: Execução de planos aprovados — revalidar cada E*.S*, detectar drift, controlar escopo, revisar diff, bloquear avanço incorreto e provar pós-condições
+alwaysApply: false
+---
+
+# Execução de planos (Delpi)
+
+Esta regra governa a **execução de planos aprovados**. É filha de `platform-quality-testing.mdc` e complementa `evidence-driven-execution.mdc`, `plan-construction.mdc` e `test-and-commit.mdc`.
+
+## Princípio
+
+Um plano aprovado é uma hipótese de execução estruturada, não uma ordem para obedecer cegamente a instruções que se tornaram incorretas.
+
+A execução deve seguir:
+
+```text
+PLAN_APPROVED
+→ selecionar E*.S*
+→ revalidar regras + código + contrato + dependências + working tree
+→ READY_TO_EXECUTE?
+→ baseline/precondições
+→ implementar menor escopo correto
+→ testes locais
+→ prova de wiring/contrato
+→ positive + sibling + negative quando aplicável
+→ revisão adversarial do diff
+→ validar objetivo da subetapa
+→ READY_TO_COMMIT?
+→ commit/push somente conforme protocolo autorizado
+→ provar pós-condições
+→ desbloquear dependentes
+→ verify-final contra objetivo original
+```
+
+## 1. Revalidar antes de cada subetapa
+
+Antes de alterar código para qualquer `E*.S*`:
+
+1. reler `development-standards-index.mdc`;
+2. carregar responsabilidades/regras especializadas materiais ao escopo;
+3. reler objetivo, requisitos `RQ-*`, evidências, decisão, dependências, testes e critério de pronto da subetapa;
+4. validar que arquivos, símbolos, contratos e ownership citados ainda existem e continuam canônicos;
+5. validar que dependências anteriores realmente entregaram suas pós-condições;
+6. inspecionar o estado atual do repositório e preservar alterações preexistentes;
+7. confirmar que a receita ainda está em estado executável.
+
+Não começar uma etapa apenas porque ela está `pending`.
+
+## 2. Gate `READY_TO_EXECUTE`
+
+Uma subetapa só pode começar quando:
+
+```text
+[ ] requisito/risco coberto continua válido
+[ ] decisão técnica continua sustentada por evidência atual
+[ ] ownership/módulo canônico continua correto
+[ ] dependências estão comprovadamente prontas
+[ ] arquivos/símbolos/contratos citados continuam vigentes
+[ ] baseline/precondições são reproduzíveis quando necessárias
+[ ] working tree foi inspecionada e mudanças alheias serão preservadas
+[ ] não existe drift material entre plano e código atual
+```
+
+Se qualquer item material falhar, não improvisar implementação.
+
+## 3. `EXECUTION_DRIFT` e regra STOP-THE-LINE
+
+Se durante a execução surgir evidência que invalida uma premissa, decisão, dependência ou ownership do plano, parar a cadeia afetada.
+
+Registrar:
+
+```text
+EXECUTION_DRIFT
+PLAN_SAID: ...
+CURRENT_EVIDENCE: ...
+INVALIDATED_DECISION: ...
+AFFECTED_STEPS: ...
+SAFE_ACTION: ...
+```
+
+Ação obrigatória:
+
+```text
+drift material
+→ não adaptar código para “cumprir” o plano
+→ reavaliar causa/objetivo
+→ corrigir/remover subetapas afetadas no plano
+→ revalidar rastreabilidade RQ→decisão→etapa→teste
+→ só então continuar
+```
+
+### Drift material inclui
+
+- causa raiz diferente da planejada;
+- owner canônico diferente;
+- contrato vigente incompatível com a receita;
+- etapa seguinte dependente de pós-condição que não existe;
+- descoberta de segundo bug independente;
+- correção planejada que se tornou redundante após etapa anterior;
+- risco de segurança/compatibilidade não previsto;
+- alteração concorrente no mesmo trecho/contrato;
+- teste planejado que mede sinal diferente do outcome real.
+
+Não reescrever todo o plano por detalhe irrelevante; corrigir somente o subgrafo afetado.
+
+## 4. Working tree e preservação de trabalho preexistente
+
+Antes do primeiro diff e antes de commit quando o ambiente permitir:
+
+- inspecionar `git status` e diff relevante;
+- identificar alterações não pertencentes à tarefa;
+- nunca apagar, sobrescrever, resetar, `checkout` ou incluir silenciosamente trabalho preexistente;
+- não usar mudança alheia como evidência da própria subetapa;
+- se houver conflito material de edição, tratar como drift/risco antes de continuar.
+
+Arquivos esperados no plano são escopo previsto, não autorização para sobrescrever mudanças de terceiros.
+
+## 5. Baseline e precondições
+
+Para bug/regressão reproduzível, provar o comportamento anterior antes do fix quando tecnicamente possível.
+
+O baseline deve:
+
+- representar o problema real;
+- falhar pelo motivo esperado;
+- permanecer semanticamente estável durante a correção;
+- não ser reescrito para acomodar a implementação escolhida.
+
+Para feature, validar precondições relevantes: contrato atual, rota, schema, permission, build, fixture, runtime ou estado persistido.
+
+## 6. Implementar somente o escopo necessário
+
+Durante uma `E*.S*`:
+
+```text
+requisito da etapa
+→ menor mudança no owner correto
+→ wiring necessário
+→ testes previstos
+```
+
+Proibido scope creep oportunista.
+
+Uma melhoria descoberta durante a execução só entra no diff se:
+
+- for necessária para satisfazer requisito/risco já rastreado; ou
+- corrigir bloqueio criado pela própria mudança; ou
+- for guardrail obrigatório pelas regras aplicáveis.
+
+Caso contrário registrar como fora da subetapa.
+
+## 7. Não empilhar remendos sobre hipótese falha
+
+Se a primeira implementação não produzir o outcome esperado:
+
+1. não adicionar imediatamente um segundo patch;
+2. comparar resultado real com a cadeia causal/arquitetura planejada;
+3. identificar qual hipótese ou pós-condição falhou;
+4. remover ou corrigir a tentativa incorreta quando seguro;
+5. atualizar o entendimento antes de novo diff.
+
+Dois patches que “fazem o teste passar” não substituem uma causa/decisão correta.
+
+## 8. Proibição de enfraquecimento de evidência
+
+Nunca fazer a implementação parecer correta por reduzir o rigor da validação.
+
+Proibido, salvo mudança de requisito comprovada:
+
+- remover assertion relevante;
+- transformar teste determinístico em teste permissivo;
+- ampliar tolerância sem justificativa semântica;
+- adicionar retry cego para esconder flakiness;
+- alterar fixture para remover o caso que reproduzia o bug;
+- mockar o próprio wiring que precisa ser provado;
+- trocar outcome real por metadata superficial;
+- desabilitar/skippiar teste ou gate para acomodar o diff;
+- reduzir threshold de eval/cobertura/safety para aprovar candidato;
+- enfraquecer scanner/CI para o novo caso.
+
+Quando expectativa antiga estiver realmente errada, registrar a evidência da mudança de contrato/requisito antes de atualizar o teste.
+
+## 9. Prova incremental da subetapa
+
+A validação deve ser proporcional ao risco e seguir `platform-quality-testing.mdc` e `test-and-commit.mdc`.
+
+Quando aplicável provar:
+
+```text
+regra local
+→ contrato/wiring
+→ positive
+→ sibling
+→ negative
+→ persistência/F5/superfície compartilhada
+→ objetivo da subetapa
+```
+
+Teste unitário verde não libera dependente cuja pós-condição é de integração.
+
+## 10. Revisão adversarial do diff
+
+Antes de declarar a subetapa pronta, revisar **o diff real**, não somente os testes.
+
+Perguntas obrigatórias:
+
+```text
+1. Cada arquivo alterado pertence a esta E*.S*?
+2. O diff toca o owner correto?
+3. Há regra duplicada em consumer/fallback?
+4. Algum hardcode de fixture/path/provider/operationId/string entrou?
+5. Algum contrato mudou sem atualizar producer/consumer/teste?
+6. Algum teste foi enfraquecido?
+7. Alguma alteração preexistente entrou no diff?
+8. Existe código morto, fallback duplicado ou branch temporário?
+9. O diff é maior que o necessário por causa de melhoria oportunista?
+10. Como este diff pode estar errado mesmo com testes verdes?
+```
+
+Risco material e testável descoberto aqui deve ser resolvido antes do commit.
+
+## 11. Gate `READY_TO_COMMIT`
+
+Uma subetapa só está pronta para commit quando:
+
+```text
+[ ] requisitos RQ-* da etapa estão cobertos
+[ ] diff corresponde ao escopo planejado/revalidado
+[ ] nenhum arquivo estranho foi incluído
+[ ] alterações preexistentes foram preservadas
+[ ] regra local passa
+[ ] positive/sibling/negative passam quando aplicáveis
+[ ] wiring/contrato foi provado quando material
+[ ] gates especializados aplicáveis passam
+[ ] nenhum teste/gate foi enfraquecido para acomodar o diff
+[ ] nenhum hardcode do exemplo foi introduzido
+[ ] ownership e boundaries permanecem corretos
+[ ] objetivo observável da subetapa foi validado
+[ ] evidência corresponde exatamente ao estado que será commitado
+```
+
+Se um gate obrigatório não puder ser executado, classificar `INCONCLUSIVE/PENDENTE`; não declarar a etapa PASS.
+
+## 12. Commit e push
+
+`test-and-commit.mdc` continua dono das regras gerais de commit.
+
+Execução de plano só faz commit/push automaticamente quando o plano aprovado **e o pedido do usuário** explicitamente autorizarem esse protocolo.
+
+Quando autorizado:
+
+- um commit deve representar uma unidade atomicamente coerente;
+- não agrupar subetapas independentes;
+- não fragmentar artificialmente uma mesma decisão;
+- mensagem em PT focada no porquê;
+- push somente depois do `READY_TO_COMMIT`;
+- falha de push não invalida testes, mas impede marcar entrega remota como concluída.
+
+Sem autorização explícita, concluir a alteração testada sem criar commit.
+
+## 13. Pós-condição e desbloqueio de dependentes
+
+Após concluir uma subetapa, provar o que as próximas etapas dependem.
+
+Registrar mentalmente ou no plano:
+
+```text
+STEP: E1.S2
+DELIVERED: ...
+POSTCONDITIONS_PROVED: ...
+TEST_EVIDENCE: ...
+DEPENDENTS_UNLOCKED: E1.S3
+NEW_DRIFT: none | ...
+```
+
+Não desbloquear dependente baseado apenas em “commit criado”.
+
+## 14. Atualização do estado do plano
+
+Durante execução multi-etapa:
+
+- `pending` → `in_progress` ao iniciar;
+- `in_progress` → `completed` somente após pós-condições provadas;
+- `blocked`/equivalente quando dependência real impede avanço;
+- atualizar decisão/receita quando houver `EXECUTION_DRIFT` material;
+- manter `todos` e corpo do plano coerentes;
+- não deixar etapa marcada concluída se verify local falhou.
+
+O plano continua estado de execução, não documentação arquitetural permanente.
+
+## 15. Verify-final
+
+Depois das subetapas, voltar ao pedido original e provar o outcome perceptível.
+
+O verify-final deve comparar:
+
+```text
+RQ original
+→ comportamento antes
+→ comportamento depois
+→ evidência no estado final atual
+→ regressões conhecidas
+→ pendências reais
+```
+
+Quando material, incluir:
+
+- build/rebuild;
+- runtime/container/gateway;
+- smoke/E2E/live;
+- persistência/F5;
+- send/stream/simulate ou superfícies equivalentes;
+- Help/documentação user-facing;
+- CI/gates;
+- baseline × candidate/evals para IA.
+
+Não considerar `pytest verde` como substituto do objetivo final.
+
+## 16. Estados de execução recomendados
+
+```text
+READY_TO_EXECUTE
+IN_PROGRESS
+EXECUTION_DRIFT
+BLOCKED_WITH_EVIDENCE
+INCONCLUSIVE
+READY_TO_COMMIT
+COMPLETED
+VERIFY_FINAL_FAILED
+```
+
+Usar os estados como raciocínio; não criar infraestrutura nova apenas para armazená-los se o plano atual não suportar.
+
+## O que NÃO fazer
+
+- seguir plano desatualizado para “cumprir a tarefa”;
+- adaptar código ao plano quando o código prova que o plano estava errado;
+- continuar etapas dependentes após drift material;
+- esconder drift em comentário informal e seguir normalmente;
+- sobrescrever mudanças preexistentes;
+- misturar escopo de outra etapa por conveniência;
+- empilhar patches sem revalidar hipótese;
+- reescrever baseline para fazer o fix parecer correto;
+- enfraquecer testes, mocks, evals, scanners ou CI;
+- commitar estado inconclusivo como PASS;
+- usar commit criado como prova de pós-condição;
+- declarar plano concluído sem verify-final do objetivo original.
+
+## Critério de sucesso
+
+Outro agente deve conseguir executar o plano de forma incremental **sem obedecer cegamente a premissas obsoletas, sem perder trabalho existente e sem avançar para a próxima etapa antes de provar a pós-condição da atual**.
