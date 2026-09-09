@@ -147,3 +147,31 @@ def test_product_stock_siblings_quote_estoque_saldo_disponivel():
             for phrase in phrases:
                 assert phrase in when_not, f"{operation_id} {lang} missing {phrase}"
             assert "/stock" in when_not, f"{operation_id} {lang} should prefer /stock"
+
+
+_POISON_TOKENS = ("descrição", "descricao", "cadastro", "ficha")
+
+
+def test_product_stock_locale_must_not_poison_descricao_cadastro():
+    stock = route_locale_for_operation("get_product_stock")
+    assert stock is not None
+    for lang in ("en", "pt-BR"):
+        blob = " ".join(
+            str(stock["locale"][lang].get(key) or "")
+            for key in ("description", "whenToUse", "summary")
+        ).lower()
+        for token in _POISON_TOKENS:
+            assert token not in blob, f"stock {lang} haystack contains {token!r}"
+
+
+def test_product_summary_quotes_descricao_cadastro_ficha():
+    phrases_pt = ("«descrição»", "«cadastro»", "«ficha»")
+    phrases_en = ("«description»", "«cadastro»", "«ficha»")
+    summary = route_locale_for_operation("get_product_summary")
+    assert summary is not None
+    when_pt = summary["locale"]["pt-BR"].get("whenToUse") or ""
+    for phrase in phrases_pt:
+        assert phrase in when_pt, f"summary pt-BR whenToUse missing {phrase}"
+    when_en = summary["locale"]["en"].get("whenToUse") or ""
+    for phrase in phrases_en:
+        assert phrase in when_en, f"summary en whenToUse missing {phrase}"

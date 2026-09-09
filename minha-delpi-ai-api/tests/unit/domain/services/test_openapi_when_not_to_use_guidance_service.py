@@ -157,3 +157,55 @@ def test_quoted_estoque_saldo_disponivel_match_stock_request():
         "inspeção de qualidade do produto 10080001",
         sibling,
     )
+
+
+def _stock_vs_summary():
+    stock = {
+        "actionId": "ext.products.stock",
+        "whenToUse": "Use for «estoque», «saldo» or «disponível» of a product code.",
+        "description": "Stock balance and warehouse positions for a product code.",
+    }
+    summary = {
+        "actionId": "ext.products.summary",
+        "whenToUse": "Use for «descrição», «cadastro» or «ficha» of a product.",
+        "whenNotToUse": (
+            "Do not use when the user asked for «estoque», «saldo» or "
+            "«disponível» — prefer the stock action."
+        ),
+        "description": "Light cadastro overview of a product.",
+    }
+    return stock, summary
+
+
+def test_prefer_descricao_keeps_summary_not_stock():
+    stock, summary = _stock_vs_summary()
+    message = "descrição 10080011"
+    kept = OpenApiWhenNotToUseGuidanceService.prefer_candidates(
+        message,
+        [stock, summary],
+        raw_action_of=lambda item: item,
+    )
+    ids = [item["actionId"] for item in kept]
+    assert ids == ["ext.products.summary"]
+
+
+def test_prefer_compound_estoque_and_descricao_keeps_both():
+    stock, summary = _stock_vs_summary()
+    kept = OpenApiWhenNotToUseGuidanceService.prefer_candidates(
+        "estoque e descrição do produto 10080011",
+        [stock, summary],
+        raw_action_of=lambda item: item,
+    )
+    ids = {item["actionId"] for item in kept}
+    assert ids == {"ext.products.stock", "ext.products.summary"}
+
+
+def test_prefer_estoque_keeps_stock_not_summary():
+    stock, summary = _stock_vs_summary()
+    kept = OpenApiWhenNotToUseGuidanceService.prefer_candidates(
+        "Consulte o estoque do produto 10080001",
+        [stock, summary],
+        raw_action_of=lambda item: item,
+    )
+    ids = [item["actionId"] for item in kept]
+    assert ids == ["ext.products.stock"]
