@@ -1,4 +1,14 @@
 export {
+  getColorFamilyDefinition,
+  listColorFamilies,
+  resolveColorFamily,
+} from "./colorFamilyCatalog";
+export type {
+  ColorFamilyDefinition,
+  ColorFamilyId,
+  ColorFamilyTheme,
+} from "./colorFamilyCatalog";
+export {
   DECK_CATEGORY_PALETTE,
   DECK_CHART_DEFAULTS,
   DECK_COLOR_ACCENT,
