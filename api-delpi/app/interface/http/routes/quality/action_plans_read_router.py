@@ -332,7 +332,12 @@ class ActionItemBody(BaseModel):
     responsibles: list[ActionResponsibleBody] | None = None
     department: str | None = None
     due_date: str | None = None
-    status: str = Field(default="pending", pattern="^(pending|in_progress|blocked)$")
+    # Alinhado ao CHECK do banco e ao UpdateActionBody (create era mais estreito
+    # e o MFE enviava completed/cancelled/overdue → 422 opaco).
+    status: str = Field(
+        default="pending",
+        pattern="^(pending|in_progress|blocked|completed|cancelled|overdue)$",
+    )
     evidence_required: bool = False
     cause_track: str | None = Field(default=None, pattern="^(occurrence|detection)$")
 

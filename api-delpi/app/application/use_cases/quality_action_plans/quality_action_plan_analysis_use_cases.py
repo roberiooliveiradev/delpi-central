@@ -230,6 +230,7 @@ class CreatePlanActionsUseCase:
         "standardization",
         "training",
     }
+    VALID_STATUSES = {"pending", "in_progress", "blocked", "completed", "cancelled", "overdue"}
 
     def __init__(self, repository: QualityActionPlanAnalysisRepository) -> None:
         self._repository = repository
@@ -252,8 +253,11 @@ class CreatePlanActionsUseCase:
                 raise ValueError(f"action_type inválido: {action.action_type}")
             if not action.description.strip():
                 raise ValueError("description é obrigatória em cada ação.")
+            if action.status not in self.VALID_STATUSES:
+                raise ValueError("status da ação inválido.")
             if action.cause_track and action.cause_track not in {"occurrence", "detection"}:
                 raise ValueError("cause_track inválido.")
+            cause_track = action.cause_track or None
             payload.append(
                 {
                     "action_type": action.action_type,
@@ -273,7 +277,7 @@ class CreatePlanActionsUseCase:
                     "due_date": action.due_date,
                     "status": action.status,
                     "evidence_required": action.evidence_required,
-                    "cause_track": action.cause_track,
+                    "cause_track": cause_track,
                 }
             )
         return self._repository.create_actions(
@@ -429,7 +433,7 @@ class ListPendingEffectivenessReviewsUseCase:
 
 
 class UpdatePlanActionUseCase:
-    VALID_STATUSES = {"pending", "in_progress", "blocked", "completed", "cancelled", "overdue"}
+    VALID_STATUSES = CreatePlanActionsUseCase.VALID_STATUSES
     VALID_ACTION_TYPES = CreatePlanActionsUseCase.VALID_ACTION_TYPES
 
     def __init__(self, repository: QualityActionPlanAnalysisRepository) -> None:

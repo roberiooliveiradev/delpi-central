@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
+from uuid import UUID
 
 from app.domain.services.quality_action_plans.quality_action_plan_contact_roles_service import (
     build_contact_roles_view,
@@ -72,6 +73,12 @@ PLAN_SELECT = """
 
 
 def serialize_row(row: dict[str, Any] | None, *, id_keys: tuple[str, ...] = ("id",)) -> dict[str, Any] | None:
+    """Normaliza linha do Postgres para dict JSON-safe (API + snapshot de revisão).
+
+    ``due_date`` e demais colunas ``DATE`` vêm como ``datetime.date``; sem
+    ``isoformat`` o ``json.dumps`` do snapshot de revisão falha e a API
+    devolve 500 genérico ao criar/atualizar ação com prazo.
+    """
     if row is None:
         return None
     result = dict(row)
@@ -80,7 +87,12 @@ def serialize_row(row: dict[str, Any] | None, *, id_keys: tuple[str, ...] = ("id
             result[key] = str(result[key])
     for key, value in list(result.items()):
         if isinstance(value, datetime):
+            # datetime é subclasse de date — checar primeiro
             result[key] = value.isoformat()
+        elif isinstance(value, date):
+            result[key] = value.isoformat()
+        elif isinstance(value, UUID):
+            result[key] = str(value)
     return result
 
 

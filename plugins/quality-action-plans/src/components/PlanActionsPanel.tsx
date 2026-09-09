@@ -21,6 +21,7 @@ import { SelectField } from "./ui/SelectField";
 import { TextAreaField } from "./ui/TextAreaField";
 import { TextField } from "./ui/TextField";
 import {
+  ACTION_STATUS_OPTIONS,
   ACTION_STATUSES,
   ACTION_TYPES,
   actionTypeLabel,
@@ -186,8 +187,8 @@ export function PlanActionsPanel({
   async function handleSubmit() {
     if (editingActionId) {
       await onSave(`edit-action-${editingActionId}`, async () => {
-        if (!form.description.trim()) {
-          throw new Error("Informe a descrição da ação.");
+        if (form.description.trim().length < 3) {
+          throw new Error("Informe a descrição da ação (mínimo 3 caracteres).");
         }
         await updatePlanAction(
           planId,
@@ -201,8 +202,8 @@ export function PlanActionsPanel({
     }
 
     await onSave("new-action", async () => {
-      if (!form.description.trim()) {
-        throw new Error("Informe a descrição da ação.");
+      if (form.description.trim().length < 3) {
+        throw new Error("Informe a descrição da ação (mínimo 3 caracteres).");
       }
       const responsible = responsiblesPayload(form, usesTeamFlow);
       await createPlanActions(
@@ -227,7 +228,8 @@ export function PlanActionsPanel({
   }
 
   const typeOptions = Object.entries(ACTION_TYPES).map(([value, label]) => ({ value, label }));
-  const statusOptions = Object.entries(ACTION_STATUSES).map(([value, label]) => ({ value, label }));
+  // Exclui «atrasada» (derivada do prazo); alinhado ao contrato create/update da API.
+  const statusOptions = ACTION_STATUS_OPTIONS;
   const isEditing = Boolean(editingActionId);
   const formBusy =
     saving === "new-action" ||
