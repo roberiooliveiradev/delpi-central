@@ -59,6 +59,7 @@ Aplicar `root-cause-generalized-fix.mdc`.
 | Tema | Regra/gate |
 |---|---|
 | Regras Cursor | `cursor-rules-governance.mdc`; `python scripts/audit_cursor_rules.py` |
+| Execução de plano aprovado | `plan-execution.mdc`; `READY_TO_EXECUTE` + `EXECUTION_DRIFT` + `READY_TO_COMMIT` |
 | Enforcement arquitetural | `architecture-ci-enforcement.mdc`; executar Phase 3 + guardrails transversais |
 | Contratos | `platform-api-contracts-integration.mdc` + `contract-evolution-backward-compatibility.mdc` |
 | Segurança | `platform-security-identity-authorization.mdc`; `JWT_VERIFY_DISABLED` quando aplicável |
@@ -163,6 +164,24 @@ Se scanner/gate falhar:
 
 Mudança user-facing segue `feature-help-sync.mdc` antes de ser considerada concluída.
 
+## Execução de plano aprovado
+
+Quando a alteração pertence a uma subetapa `E*.S*`, `plan-execution.mdc` é obrigatório.
+
+Antes de concluir/commitar, além dos gates desta regra, confirmar:
+
+```text
+READY_TO_EXECUTE foi satisfeito antes do diff
+nenhum EXECUTION_DRIFT material ficou sem tratar
+diff real corresponde ao escopo revalidado da subetapa
+alterações preexistentes foram preservadas
+nenhum teste/gate foi enfraquecido para acomodar o diff
+pós-condições necessárias aos dependentes foram provadas
+READY_TO_COMMIT foi satisfeito quando houver commit autorizado
+```
+
+Commit criado **não** é prova de que a subetapa entregou a pós-condição.
+
 ## Evidência final
 
 Resumir conforme escopo:
@@ -182,11 +201,23 @@ CI_GATES
 DECISION
 ```
 
+Para execução de plano incluir também, quando material:
+
+```text
+PLAN_STEP
+EXECUTION_DRIFT
+DIFF_SCOPE_REVIEW
+POSTCONDITIONS_PROVED
+DEPENDENTS_UNLOCKED
+```
+
 Para IA, incluir também baseline/candidate, R1–R11, métricas, trials e generalização externa quando materiais.
 
 ## Commit
 
-- Criar commit somente quando o usuário pedir explicitamente.
+- Criar commit somente quando o usuário pedir explicitamente ou quando o usuário tiver aprovado explicitamente um protocolo de execução do plano que determine commit/push por subetapa.
+- Antes de commit em plano, aplicar `READY_TO_COMMIT` de `plan-execution.mdc`.
 - Não commitar credenciais/.env sensível.
 - Não criar commit vazio.
+- Não incluir alterações preexistentes/alheias à subetapa.
 - Resumir testes/gates e seus resultados.
