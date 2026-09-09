@@ -52,6 +52,7 @@
       "architecture-ci-enforcement.mdc",
       "cursor-rules-governance.mdc",
       "plan-construction.mdc",
+      "plan-execution.mdc",
       "plugins-documentation.mdc",
       "root-cause-generalized-fix.mdc",
       "test-and-commit.mdc"
