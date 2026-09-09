@@ -27,11 +27,18 @@ import {
 } from "../constants/routes";
 import { PP_HELP } from "../content/helpTooltips";
 import { navigateProductionPulse } from "../utils/navigation";
+import {
+  formatOtaBytes,
+  otaStatusLabel,
+  resolveOtaProgressPercent,
+} from "../utils/otaStatusLabels";
 
 type FirmwareJobsPageProps = {
   branch: string;
   permissions: ProductionPulsePermissionFlags;
 };
+
+const JOBS_POLL_MS = 3000;
 
 export function FirmwareJobsPage({ branch, permissions }: FirmwareJobsPageProps) {
   const [jobs, setJobs] = useState<FirmwareUpdateJob[]>([]);
@@ -53,6 +60,8 @@ export function FirmwareJobsPage({ branch, permissions }: FirmwareJobsPageProps)
       })),
     [firmwares],
   );
+
+  const hasRunningJob = jobs.some((job) => job.status === "running");
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -77,14 +86,23 @@ export function FirmwareJobsPage({ branch, permissions }: FirmwareJobsPageProps)
     void reload();
   }, [reload]);
 
-  const openTargets = async (jobId: string) => {
+  const openTargets = useCallback(async (jobId: string) => {
     setSelectedJobId(jobId);
     try {
       setTargets(await fetchFirmwareUpdateTargets(jobId));
     } catch {
       setTargets([]);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!hasRunningJob && !selectedJobId) return;
+    const timer = window.setInterval(() => {
+      void reload();
+      if (selectedJobId) void openTargets(selectedJobId);
+    }, JOBS_POLL_MS);
+    return () => window.clearInterval(timer);
+  }, [hasRunningJob, selectedJobId, reload, openTargets]);
 
   const onCreate = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -188,7 +206,9 @@ export function FirmwareJobsPage({ branch, permissions }: FirmwareJobsPageProps)
             {jobs.map((job) => (
               <li key={job.id} className="pp-list__item">
                 <div>
-                  <strong>{job.trigger}</strong> · {job.status}
+                  <strong>{job.trigger === "manual" ? "Agora" : "Agendado"}</strong>
+                  {" · "}
+                  {otaStatusLabel(job.status)}
                   {job.scheduledAt ? ` · ${new Date(job.scheduledAt).toLocaleString()}` : null}
                 </div>
                 <div className="pp-inline-actions">
@@ -226,19 +246,31 @@ export function FirmwareJobsPage({ branch, permissions }: FirmwareJobsPageProps)
                     <th>De</th>
                     <th>Para</th>
                     <th>Status</th>
+                    <th>Progresso</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {targets.map((target) => (
-                    <tr key={target.id}>
-                      <td>
-                        <code>{target.deviceId.slice(0, 8)}</code>
-                      </td>
-                      <td>{target.fromVersion ?? "—"}</td>
-                      <td>{target.toVersion}</td>
-                      <td>{target.status}</td>
-                    </tr>
-                  ))}
+                  {targets.map((target) => {
+                    const pct = resolveOtaProgressPercent({
+                      status: target.status,
+                      progressPercent: target.progressPercent,
+                    });
+                    const bytes = formatOtaBytes(target.bytesReceived, target.bytesTotal);
+                    return (
+                      <tr key={target.id}>
+                        <td>
+                          <code>{target.deviceId.slice(0, 8)}</code>
+                        </td>
+                        <td>{target.fromVersion ?? "—"}</td>
+                        <td>{target.toVersion}</td>
+                        <td>{otaStatusLabel(target.status)}</td>
+                        <td>
+                          {pct}%
+                          {bytes ? ` · ${bytes}` : null}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

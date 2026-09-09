@@ -45,6 +45,29 @@ class FirmwareUpdateJobService:
             raise FirmwareJobNotFoundError(str(job_id))
         return [self._target_to_api(row) for row in self._jobs.list_targets(job_id)]
 
+    def get_device_firmware_update_status(self, device_id: UUID) -> dict[str, Any]:
+        row = self._jobs.find_status_target_for_device(device_id)
+        if row is None:
+            return {"active": False, "target": None}
+        status = str(row.get("status") or "")
+        active = status in {"pending", "authorized", "downloading", "applying"}
+        return {
+            "active": active,
+            "target": self._target_to_api(row),
+            "jobId": str(row["job_id"]),
+            "targetId": str(row["id"]),
+            "status": status,
+            "fromVersion": row.get("from_version"),
+            "toVersion": row.get("to_version"),
+            "errorCode": row.get("error_code"),
+            "firmwareKey": row.get("firmware_key"),
+            "bytesReceived": row.get("bytes_received"),
+            "bytesTotal": row.get("bytes_total"),
+            "progressPercent": row.get("progress_percent"),
+            "jobStatus": row.get("job_status"),
+            "updatedAt": row.get("updated_at"),
+        }
+
     def create_job(self, payload: dict[str, Any], *, actor_sub: str | None) -> dict[str, Any]:
         firmware_id = UUID(str(payload.get("firmware_id") or payload.get("firmwareId")))
         firmware = self._firmwares.get_by_id(firmware_id)
@@ -184,6 +207,9 @@ class FirmwareUpdateJobService:
             "fromVersion": row.get("from_version"),
             "toVersion": row.get("to_version"),
             "errorCode": row.get("error_code"),
+            "bytesReceived": row.get("bytes_received"),
+            "bytesTotal": row.get("bytes_total"),
+            "progressPercent": row.get("progress_percent"),
             "authorizedAt": row.get("authorized_at"),
             "startedAt": row.get("started_at"),
             "finishedAt": row.get("finished_at"),

@@ -12,9 +12,11 @@ import {
   createDashboardFormActions,
   createDashboardFormGrid,
   createDashboardPagePath,
+  createDashboardProgressTracker,
   createDashboardSectionCard,
   createDashboardSegmentToggle,
   createDashboardUnderlineNav,
+  createDashboardJourneyProgressBar,
   createSimpleKpiCard,
   createStateBoxPanel,
   FieldLabel,
@@ -72,6 +74,8 @@ export const PpSectionCard = createDashboardSectionCard({
 export const PpFormGrid = createDashboardFormGrid({ classNames: formGridBemClasses(PREFIX) });
 export const PpFormActions = createDashboardFormActions({ classNames: formActionsBemClasses(PREFIX) });
 export const PpUnderlineNav = createDashboardUnderlineNav({ prefix: PREFIX });
+export const PpProgressTracker = createDashboardProgressTracker({ prefix: PREFIX });
+export const PpOtaProgressBar = createDashboardJourneyProgressBar({ prefix: PREFIX });
 export const PpPagination = createCompactPagination({
   prefix: PREFIX,
   layout: "flat",

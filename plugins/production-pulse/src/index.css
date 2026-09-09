@@ -2065,4 +2065,11 @@
   width: 100%;
 }
 
+.dashboard-production-pulse .pp-ota-progress-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0.75rem 0 1rem;
+}
+
 

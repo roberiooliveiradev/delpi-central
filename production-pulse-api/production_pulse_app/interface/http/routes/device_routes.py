@@ -11,6 +11,9 @@ from production_pulse_app.application.services.work_center_catalog_service impor
 from production_pulse_app.application.services.device_firmware_link_service import (
     DeviceFirmwareLinkService,
 )
+from production_pulse_app.application.services.firmware_update_job_service import (
+    FirmwareUpdateJobService,
+)
 from production_pulse_app.application.services.device_binding_service import (
     BindingNotFoundError,
     DeviceBindingService,
@@ -66,6 +69,7 @@ router = APIRouter(prefix="/devices", tags=["Devices"])
 _service = DeviceService()
 _binding_service = DeviceBindingService()
 _firmware_link_service = DeviceFirmwareLinkService()
+_firmware_jobs_service = FirmwareUpdateJobService()
 _poll_service = DevicePollService()
 _probe_service = DeviceProbeService()
 _command_service = DeviceCommandService()
@@ -410,6 +414,20 @@ async def delete_device(request: Request, device_id: UUID):
         return denied
     try:
         data = _service.delete_device(parse_device_id(str(device_id)), actor_sub=_actor_sub(request))
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.get("/{device_id}/firmware-update-status")
+async def get_device_firmware_update_status(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="view")
+    if denied is not None:
+        return denied
+    try:
+        data = _firmware_jobs_service.get_device_firmware_update_status(
+            parse_device_id(str(device_id))
+        )
         return success(data)
     except Exception as exc:
         return _json_error(exc)

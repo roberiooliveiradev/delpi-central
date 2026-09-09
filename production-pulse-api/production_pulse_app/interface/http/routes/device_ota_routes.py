@@ -17,6 +17,15 @@ router = APIRouter(prefix="/device-ota", tags=["DeviceOTA"])
 _service = DeviceOtaService()
 
 
+def _optional_int(value) -> int | None:
+    if value is None or value == "":
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _auth_error() -> JSONResponse:
     payload = error(
         firmware_ota_http_message("deviceOtaUnauthorized"),
@@ -128,6 +137,11 @@ async def device_ota_report(
             error_code=body.get("errorCode") or body.get("error_code"),
             installed_version=body.get("installedFirmwareVersion")
             or body.get("installed_firmware_version"),
+            bytes_received=_optional_int(body.get("bytesReceived") or body.get("bytes_received")),
+            bytes_total=_optional_int(body.get("bytesTotal") or body.get("bytes_total")),
+            progress_percent=_optional_int(
+                body.get("progressPercent") or body.get("progress_percent")
+            ),
         )
     except ContentCodedError as exc:
         return _coded(exc)

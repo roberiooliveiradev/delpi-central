@@ -40,3 +40,16 @@ def test_v010_firmware_ota_is_present_and_parseable():
     assert "production_pulse.firmware_update_targets" in text
     assert "installed_firmware_version" in text
     assert len(_checksum(text)) == 64
+
+
+def test_v011_firmware_ota_progress_is_present_and_parseable():
+    migrations = _discover_migrations()
+    by_version = {m.version: m for m in migrations}
+    assert 11 in by_version
+    assert by_version[11].name == "firmware_ota_progress"
+    path = _migrations_dir() / "V011__firmware_ota_progress.sql"
+    text = path.read_text(encoding="utf-8")
+    assert "bytes_received" in text
+    assert "bytes_total" in text
+    assert "progress_percent" in text
+    assert len(_checksum(text)) == 64

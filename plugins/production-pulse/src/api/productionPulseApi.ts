@@ -326,6 +326,27 @@ export type FirmwareUpdateTarget = {
   fromVersion: string | null;
   toVersion: string | null;
   errorCode: string | null;
+  bytesReceived?: number | null;
+  bytesTotal?: number | null;
+  progressPercent?: number | null;
+  updatedAt?: string | null;
+};
+
+export type DeviceFirmwareUpdateStatus = {
+  active: boolean;
+  jobId?: string | null;
+  targetId?: string | null;
+  status?: string | null;
+  fromVersion?: string | null;
+  toVersion?: string | null;
+  errorCode?: string | null;
+  firmwareKey?: string | null;
+  bytesReceived?: number | null;
+  bytesTotal?: number | null;
+  progressPercent?: number | null;
+  jobStatus?: string | null;
+  updatedAt?: string | null;
+  target?: FirmwareUpdateTarget | null;
 };
 
 export type FirmwareUpdateSummary = {
@@ -438,6 +459,17 @@ export async function putDeviceFirmwareLink(
     "PUT",
     `${PRODUCTION_PULSE_API_BASE}/devices/${deviceId}/firmware-link`,
     { firmwareKey },
+  );
+  return payload.data;
+}
+
+export async function fetchDeviceFirmwareUpdateStatus(
+  deviceId: string,
+  signal?: AbortSignal,
+): Promise<DeviceFirmwareUpdateStatus> {
+  const payload = await httpGet<ApiEnvelope<DeviceFirmwareUpdateStatus>>(
+    `${PRODUCTION_PULSE_API_BASE}/devices/${deviceId}/firmware-update-status`,
+    { signal },
   );
   return payload.data;
 }

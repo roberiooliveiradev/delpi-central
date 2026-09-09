@@ -128,6 +128,9 @@ class DeviceOtaService:
         status: str,
         error_code: str | None = None,
         installed_version: str | None = None,
+        bytes_received: int | None = None,
+        bytes_total: int | None = None,
+        progress_percent: int | None = None,
     ) -> dict[str, Any]:
         normalized = (status or "").strip().lower()
         if normalized not in {"updated", "failed", "downloading", "applying"}:
@@ -146,13 +149,42 @@ class DeviceOtaService:
         if target is None:
             raise ContentCodedError("deviceOtaNotAuthorized")
 
-        if normalized in {"downloading", "applying"}:
+        if normalized == "downloading":
+            pct = progress_percent
+            if pct is None and bytes_received is not None and bytes_total and bytes_total > 0:
+                pct = int(round(100.0 * float(bytes_received) / float(bytes_total)))
             updated = self._jobs.update_target(
                 target["id"],
                 status=normalized,
                 touch_started=True,
+                bytes_received=bytes_received,
+                bytes_total=bytes_total,
+                progress_percent=pct,
             )
-            return {"targetId": str(updated["id"]), "status": updated["status"]}
+            return {
+                "targetId": str(updated["id"]),
+                "status": updated["status"],
+                "bytesReceived": updated.get("bytes_received"),
+                "bytesTotal": updated.get("bytes_total"),
+                "progressPercent": updated.get("progress_percent"),
+            }
+
+        if normalized == "applying":
+            updated = self._jobs.update_target(
+                target["id"],
+                status=normalized,
+                touch_started=True,
+                progress_percent=100,
+                bytes_received=bytes_received if bytes_received is not None else target.get("bytes_total"),
+                bytes_total=bytes_total if bytes_total is not None else target.get("bytes_total"),
+            )
+            return {
+                "targetId": str(updated["id"]),
+                "status": updated["status"],
+                "bytesReceived": updated.get("bytes_received"),
+                "bytesTotal": updated.get("bytes_total"),
+                "progressPercent": updated.get("progress_percent"),
+            }
 
         if normalized == "updated":
             version = installed_version or target.get("to_version")
@@ -161,6 +193,7 @@ class DeviceOtaService:
                 status="updated",
                 clear_artifact_token=True,
                 touch_finished=True,
+                progress_percent=100,
             )
             self._devices.record_installed_firmware_version(
                 device["id"],
@@ -170,6 +203,7 @@ class DeviceOtaService:
                 "targetId": str(updated["id"]),
                 "status": "updated",
                 "installedFirmwareVersion": version,
+                "progressPercent": 100,
             }
 
         updated = self._jobs.update_target(
@@ -183,4 +217,7 @@ class DeviceOtaService:
             "targetId": str(updated["id"]),
             "status": "failed",
             "errorCode": updated.get("error_code"),
+            "bytesReceived": updated.get("bytes_received"),
+            "bytesTotal": updated.get("bytes_total"),
+            "progressPercent": updated.get("progress_percent"),
         }

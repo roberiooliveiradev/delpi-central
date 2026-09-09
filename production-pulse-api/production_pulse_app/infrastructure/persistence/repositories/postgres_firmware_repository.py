@@ -131,7 +131,7 @@ _JOB_COLUMNS = """
 _TARGET_COLUMNS = """
     id, job_id, device_id, status, from_version, to_version, error_code,
     artifact_token, artifact_token_expires_at, authorized_at, started_at, finished_at,
-    created_at, updated_at
+    created_at, updated_at, bytes_received, bytes_total, progress_percent
 """
 
 _OPEN_TARGET_STATUSES = ("pending", "authorized", "downloading", "applying")
@@ -438,6 +438,10 @@ class PostgresFirmwareUpdateJobRepository:
         clear_artifact_token: bool = False,
         touch_started: bool = False,
         touch_finished: bool = False,
+        bytes_received: int | None = None,
+        bytes_total: int | None = None,
+        progress_percent: int | None = None,
+        clear_progress: bool = False,
     ) -> dict[str, Any]:
         sets = ["updated_at = NOW()"]
         params: list[Any] = []
@@ -460,6 +464,20 @@ class PostgresFirmwareUpdateJobRepository:
             sets.append("started_at = COALESCE(started_at, NOW())")
         if touch_finished:
             sets.append("finished_at = NOW()")
+        if clear_progress:
+            sets.append("bytes_received = NULL")
+            sets.append("bytes_total = NULL")
+            sets.append("progress_percent = NULL")
+        else:
+            if bytes_received is not None:
+                sets.append("bytes_received = %s")
+                params.append(int(bytes_received))
+            if bytes_total is not None:
+                sets.append("bytes_total = %s")
+                params.append(int(bytes_total))
+            if progress_percent is not None:
+                sets.append("progress_percent = %s")
+                params.append(max(0, min(100, int(progress_percent))))
         params.append(target_id)
         with plugins_connection() as conn:
             with conn.cursor() as cur:
@@ -477,3 +495,28 @@ class PostgresFirmwareUpdateJobRepository:
             if row is None:
                 raise FirmwareJobNotFoundError(str(target_id))
             return dict(row)
+
+    def find_status_target_for_device(self, device_id: UUID) -> dict[str, Any] | None:
+        """Open target if any, else the most recently updated target for the device."""
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT t.*,
+                           f.firmware_key,
+                           f.version AS firmware_version,
+                           j.status AS job_status
+                    FROM production_pulse.firmware_update_targets t
+                    JOIN production_pulse.firmware_update_jobs j ON j.id = t.job_id
+                    JOIN production_pulse.firmwares f ON f.id = j.firmware_id
+                    WHERE t.device_id = %s
+                    ORDER BY
+                      CASE WHEN t.status IN ('pending', 'authorized', 'downloading', 'applying')
+                           THEN 0 ELSE 1 END,
+                      t.updated_at DESC
+                    LIMIT 1
+                    """,
+                    (device_id,),
+                )
+                row = cur.fetchone()
+                return dict(row) if row else None

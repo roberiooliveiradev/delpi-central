@@ -7,7 +7,10 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 **Core ESP8266 (2.x / 3.x):**
 - `collectHeaders`: core ≥3 variádico; core 2.x usa array + count (`#if ARDUINO_ESP8266_MAJOR`).
 - OTA: `Update.begin` com `Content-Length` do artefato — **não** usar `UPDATE_SIZE_UNKNOWN` (símbolo do ESP32; quebra no ESP8266).
+- Download em chunks com report de `progressPercent` (throttle); ver lab em [`../esp8266_counter_v2/README.md`](../esp8266_counter_v2/README.md).
 - Redirects HTTP: `HTTPC_STRICT_FOLLOW_REDIRECTS` quando o core exporta o enum.
+
+`FIRMWARE_VERSION` atual: `esp8266_counter_v1.3.0`.
 
 ## Endpoints
 

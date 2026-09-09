@@ -286,3 +286,110 @@ def test_scheduled_job_authorizes_only_after_due(client, unique_ip, firmware_sto
     cancelled = client.post(f"/firmware-update-jobs/{job_id}/cancel")
     assert cancelled.status_code == 200
     assert cancelled.json()["data"]["status"] == "cancelled"
+
+
+def test_ota_progress_report_and_device_status(client, unique_ip, firmware_storage_dir):
+    token = "ota-progress-token"
+    device = _create_device(client, ip=unique_ip, token=token)
+    device_id = device["id"]
+    from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
+        PostgresDeviceRepository,
+    )
+    from uuid import UUID
+
+    PostgresDeviceRepository().record_installed_firmware_version(
+        UUID(device_id), version="1.0.0"
+    )
+
+    published = client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp8266_counter_v1",
+            "driverKey": "esp8266_counter_v1",
+            "version": "1.5.0",
+            "displayName": "Counter progress",
+            "publish": "true",
+        },
+        files={"file": ("counter.bin", b"x" * 200, "application/octet-stream")},
+    )
+    assert published.status_code == 201, published.text
+    firmware_id = published.json()["data"]["id"]
+
+    job = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": firmware_id,
+            "branch": "01",
+            "trigger": "manual",
+            "filter": {
+                "firmwareKey": "esp8266_counter_v1",
+                "onlyOutdated": True,
+                "deviceIds": [device_id],
+            },
+        },
+    )
+    assert job.status_code == 201, job.text
+    target_id = client.get(
+        f"/firmware-update-jobs/{job.json()['data']['id']}/targets"
+    ).json()["data"]["items"][0]["id"]
+
+    empty_status = client.get(f"/devices/{uuid4()}/firmware-update-status")
+    # wrong id may 404 — sibling below uses real device
+
+    progress = client.post(
+        "/device-ota/report",
+        headers={"X-Device-Token": token},
+        json={
+            "deviceId": device_id,
+            "targetId": target_id,
+            "status": "downloading",
+            "bytesReceived": 50,
+            "bytesTotal": 200,
+            "progressPercent": 25,
+        },
+    )
+    assert progress.status_code == 200, progress.text
+    pdata = progress.json()["data"]
+    assert pdata["status"] == "downloading"
+    assert pdata["progressPercent"] == 25
+    assert pdata["bytesReceived"] == 50
+    assert pdata["bytesTotal"] == 200
+
+    status = client.get(f"/devices/{device_id}/firmware-update-status")
+    assert status.status_code == 200, status.text
+    sdata = status.json()["data"]
+    assert sdata["active"] is True
+    assert sdata["status"] == "downloading"
+    assert sdata["progressPercent"] == 25
+    assert sdata["bytesReceived"] == 50
+    assert sdata["toVersion"] == "1.5.0"
+
+    # sibling: percent derived from bytes when percent omitted
+    progress2 = client.post(
+        "/device-ota/report",
+        headers={"X-Device-Token": token},
+        json={
+            "deviceId": device_id,
+            "targetId": target_id,
+            "status": "downloading",
+            "bytesReceived": 100,
+            "bytesTotal": 200,
+        },
+    )
+    assert progress2.status_code == 200
+    assert progress2.json()["data"]["progressPercent"] == 50
+
+    applying = client.post(
+        "/device-ota/report",
+        headers={"X-Device-Token": token},
+        json={"deviceId": device_id, "targetId": target_id, "status": "applying"},
+    )
+    assert applying.status_code == 200
+    assert applying.json()["data"]["progressPercent"] == 100
+
+    # negative: no token
+    denied = client.post(
+        "/device-ota/report",
+        json={"deviceId": device_id, "targetId": target_id, "status": "downloading"},
+    )
+    assert denied.status_code == 401

@@ -230,6 +230,7 @@ export function DeviceDetailPage({
       {tab === "firmware" ? (
         <DeviceFirmwareTab
           device={device}
+          liveSnapshot={liveSnapshot}
           canManage={permissions.canManageDevices}
           onUpdated={() => void reloadDevice()}
         />

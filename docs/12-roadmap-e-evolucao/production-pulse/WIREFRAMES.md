@@ -1527,15 +1527,18 @@ Regra: **% sempre da API** (`progress.pct`) — MFE não calcula.
 ```text
 ┌─ Campanhas OTA ──────────────────────────────────────────────────┐
 │ Firmware · versão · agora|agendar · só desatualizados · [Criar] │
-│ Lista jobs + targets (status) · [Cancelar]                       │
+│ Lista jobs (status PT) + auto-refresh se running                 │
+│ Targets: Device · De · Para · Status PT · Progresso % / bytes    │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
 ## WF-PP-OTA-04 — Detalhe · aba Firmware
 
 ```text
-┌─ Firmware ───────────────────────────────────────────────────────┐
-│ Instalada × disponível · [Atualizar este device]                 │
+┌─ Versão e atualização OTA ───────────────────────────────────────┐
+│ Em execução (live) · Instalada · Alvo · Família                  │
+│ Operação (PT) · ProgressTracker fases · barra % real (bytes)     │
+│ [Atualizar este device] [Ver campanhas]                          │
 │ ▼ Sketch de referência (firmware_source) — colapsável            │
 └──────────────────────────────────────────────────────────────────┘
 ```

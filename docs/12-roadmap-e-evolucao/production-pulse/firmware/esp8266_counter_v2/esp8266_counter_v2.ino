@@ -13,7 +13,7 @@
 static const char* DEFAULT_WIFI_SSID = "YOUR_SSID";
 static const char* DEFAULT_WIFI_PASSWORD = "YOUR_PASSWORD";
 static const unsigned long DEFAULT_DEBOUNCE_MS = 100;
-static const char* FIRMWARE_VERSION = "esp8266_counter_v1.3.0";
+static const char* FIRMWARE_VERSION = "esp8266_counter_v2.0.0";
 static const uint16_t EEPROM_SIZE = 512;
 static const uint32_t CONFIG_MAGIC = 0x50505302;  // "PPS\x02" — inclui OTA base URL
 
@@ -813,12 +813,14 @@ String paginaPrincipal() {
   html += "<!DOCTYPE html><html lang='pt-BR'><head>";
   html += "<meta charset='utf-8'/>";
   html += "<meta name='viewport' content='width=device-width,initial-scale=1'/>";
-  html += "<title>Production Pulse - Contador</" "title><style>";
-  html += ":root{--bg:#0f172a;--card:#1e293b;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--ok:#4ade80;}";
+  html += "<title>Production Pulse - Contador V2</" "title><style>";
+  html += ":root{--bg:#0b1220;--card:#111827;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#34d399;--ok:#4ade80;}";
   html += "*{box-sizing:border-box}";
   html += "body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;";
-  html += "background:linear-gradient(160deg,#0f172a,#1e293b 55%,#0f172a);color:var(--text);min-height:100vh;padding:1.25rem}";
+  html += "background:linear-gradient(160deg,#052e1f,#0b1220 55%,#052e1f);color:var(--text);min-height:100vh;padding:1.25rem}";
   html += ".wrap{max-width:28rem;margin:0 auto}";
+  html += ".badge{display:inline-block;padding:.2rem .55rem;border-radius:999px;border:1px solid var(--accent);";
+  html += "color:var(--accent);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem}";
   html += ".card{background:var(--card);border:1px solid var(--line);border-radius:1rem;padding:1.25rem;";
   html += "margin-bottom:1rem;box-shadow:0 12px 40px rgba(0,0,0,.35)}";
   html += ".label{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 .35rem}";
@@ -830,18 +832,19 @@ String paginaPrincipal() {
   html += ".dot{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--ok);";
   html += "margin-right:.35rem;vertical-align:middle}";
   html += "</" "style></" "head><body><div class='wrap'>";
+  html += "<div class='badge'>Firmware V2</" "div>";
   html += "<div class='card'>";
   html += "<p class='label'>Codigo do controlador</" "p>";
   html += "<div class='code' id='codigo'>";
   html += codigoControlador;
   html += "</" "div>";
-  html += "<p class='hint'>Use este codigo no cadastro do Production Pulse ";
-  html += "(campo Codigo do controlador), junto com IP e nome do dispositivo. ";
-  html += "Config Wi-Fi/token: API /api/config.</" "p>";
-  html += "<p class='meta'><i class='dot'></" "i>Identidade fixa do chip (nao muda ao reiniciar)</" "p>";
+  html += "<p class='hint'>Versao em execucao: ";
+  html += FIRMWARE_VERSION;
+  html += ". Use este codigo no Production Pulse. Config: /api/config.</" "p>";
+  html += "<p class='meta'><i class='dot'></" "i>Uptime ms: <span id='up'>0</" "span></" "p>";
   html += "</" "div>";
   html += "<div class='card'>";
-  html += "<p class='label'>Contador</" "p>";
+  html += "<p class='label'>Contador V2</" "p>";
   html += "<div class='valor' id='c'>0</" "div>";
   html += "<p class='meta'>Atualizacao via GET /api/contador (publico)</" "p>";
   html += "</" "div>";
@@ -853,6 +856,7 @@ String paginaPrincipal() {
   html += "var j=await r.json();";
   html += "document.getElementById('c').innerText=j.contador;";
   html += "}catch(e){}";
+  html += "document.getElementById('up').innerText=String(Date.now()%100000000);";
   html += "}";
   html += "setInterval(atualiza,500);";
   html += "atualiza();";
