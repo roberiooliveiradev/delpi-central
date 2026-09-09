@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "systemPrompt": "You propose a PresentationSpec JSON for analytics visualization. Use only candidate field keys provided. Never invent fields, hex colors, CSS, or JavaScript. Respond with JSON only. Allowed views: table, chart, kpi, tree, dashboard, text, auto. Prefer nested blocks table/chart/kpi/tree/dashboard/text/delivery when needed; keep flat fields for chart encoding compatibility.",
+  "repairPromptTemplate": "Previous JSON was invalid. Fix it. Errors: {errors}. Previous output:\n{previous}",
+  "allowedViews": [
+    "table",
+    "chart",
+    "kpi",
+    "tree",
+    "dashboard",
+    "text",
+    "auto"
+  ],
+  "allowedPaletteFamilies": [
+    "brand",
+    "sequential-blue",
+    "cool",
+    "warm",
+    "diverging-status",
+    "status"
+  ],
+  "rules": [
+    "encoding.field must be in candidates",
+    "heatmap requires x,y discriminant + color measure",
+    "labels map keys must match field keys",
+    "paletteFamily semantic only",
+    "never invent hex CSS or JavaScript",
+    "kpi values must not be invented — choose measureFields only",
+    "dashboard panels presentation must be kpi|chart|table"
+  ],
+  "knobsByView": {
+    "table": ["fields", "sort", "labels", "formats", "table.density", "table.hiddenFields"],
+    "chart": ["mark", "encoding", "paletteFamily", "legend", "chart.topN"],
+    "kpi": ["kpi.measureFields", "kpi.cardOrder", "kpi.tones", "labels"],
+    "tree": ["tree.levelFields", "tree.maxDepth", "tree.labelField", "tree.badgeField"],
+    "dashboard": ["dashboard.panels"],
+    "text": ["text.sectionPlan", "text.proseDensity"],
+    "auto": ["view"]
+  }
+}

@@ -53,15 +53,15 @@ class PresentationSpecComposerApplicationService:
                 "latencyMs": 0,
             }
 
+        from app.domain.services.presentation_composer_prompt_content_service import (
+            PresentationComposerPromptContentService,
+        )
+
         prompt = self._build_prompt(intent=intent, profile=profile, excerpt=user_message_excerpt)
         messages = [
             {
                 "role": "system",
-                "content": (
-                    "You propose a PresentationSpec JSON for analytics visualization. "
-                    "Use only candidate field keys provided. Never invent fields, hex colors, "
-                    "CSS, or JavaScript. Respond with JSON only."
-                ),
+                "content": PresentationComposerPromptContentService.system_prompt(),
             },
             {"role": "user", "content": prompt},
         ]
@@ -224,14 +224,16 @@ class PresentationSpecComposerApplicationService:
     ) -> str | None:
         if self._llm is None:
             return None
+        from app.domain.services.presentation_composer_prompt_content_service import (
+            PresentationComposerPromptContentService,
+        )
+
         repair_messages = list(messages) + [
             {
                 "role": "user",
-                "content": (
-                    "Previous JSON was invalid. Fix it. Errors: "
-                    + json.dumps(errors, ensure_ascii=False)
-                    + ". Previous output:\n"
-                    + str(previous or "")[:2000]
+                "content": PresentationComposerPromptContentService.repair_prompt(
+                    errors=errors,
+                    previous=previous,
                 ),
             }
         ]
@@ -299,13 +301,24 @@ class PresentationSpecComposerApplicationService:
                 if str(item or "").strip() and str(item).strip() not in sensitive_keys
             ]
 
+        from app.domain.services.presentation_composer_policy_service import (
+            PresentationComposerPolicyService,
+        )
+        from app.domain.services.presentation_composer_prompt_content_service import (
+            PresentationComposerPromptContentService,
+        )
+
+        excerpt_limit = PresentationComposerPolicyService.max_user_excerpt_chars()
+        palettes = PresentationComposerPromptContentService.allowed_palette_families()
+        rules = PresentationComposerPromptContentService.rules()
         return {
             "intent": intent if isinstance(intent, dict) else {},
             "dimensionCandidates": _safe_candidates(profile.get("dimensionCandidates")),
             "measureCandidates": _safe_candidates(profile.get("measureCandidates")),
             "fields": safe_fields,
-            "userExcerpt": str(excerpt or "")[:400],
-            "allowedPaletteFamilies": [
+            "userExcerpt": str(excerpt or "")[:excerpt_limit],
+            "allowedPaletteFamilies": palettes
+            or [
                 "brand",
                 "sequential-blue",
                 "cool",
@@ -313,13 +326,15 @@ class PresentationSpecComposerApplicationService:
                 "diverging-status",
                 "status",
             ],
-            "rules": [
+            "rules": rules
+            or [
                 "encoding.field must be in candidates",
                 "heatmap requires x,y discriminant + color measure",
                 "labels map keys must match field keys",
                 "paletteFamily semantic only",
                 "never invent hex CSS or JavaScript",
             ],
+            "knobsByView": PresentationComposerPromptContentService.knobs_by_view(),
         }
     @classmethod
     def _parse_json(cls, raw: str) -> dict[str, Any] | None:
