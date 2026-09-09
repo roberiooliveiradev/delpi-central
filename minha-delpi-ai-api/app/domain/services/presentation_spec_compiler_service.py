@@ -15,6 +15,9 @@ from app.domain.services.presentation_compilers.presentation_kpi_compiler_servic
 from app.domain.services.presentation_compilers.presentation_table_compiler_service import (
     PresentationTableCompilerService,
 )
+from app.domain.services.presentation_compilers.presentation_tree_compiler_service import (
+    PresentationTreeCompilerService,
+)
 
 
 class PresentationSpecCompilerService:
@@ -68,6 +71,12 @@ class PresentationSpecCompilerService:
             labels=labels,
             formats=formats,
         )
+        cls._apply_tree(
+            metadata,
+            spec=spec,
+            profile=profile,
+            labels=labels,
+        )
 
         metadata["presentationDataProfile"] = profile.as_dict()
 
@@ -119,4 +128,20 @@ class PresentationSpecCompilerService:
             profile=profile,
             labels=labels,
             formats=formats,
+        )
+
+    @classmethod
+    def _apply_tree(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        spec: PresentationSpec,
+        profile: PresentationDataProfile,
+        labels: dict[str, str],
+    ) -> None:
+        PresentationTreeCompilerService.apply(
+            metadata,
+            spec=spec,
+            profile=profile,
+            labels=labels,
         )
