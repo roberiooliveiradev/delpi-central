@@ -58,6 +58,27 @@ rows dos slots existentes
 | Shadow | loga proposta; UI continua deterministic |
 | Canary | Spec authoritative só se `validation.ok` |
 
+### Telemetria (sem raw rows / prompt)
+
+| Campo | Onde | Significado |
+|---|---|---|
+| `presentationIntelligence.profileHash` | orchestrator | fingerprint do profile |
+| `presentationIntelligence.bindConfidence` | orchestrator | confiança do binder determinístico |
+| `presentationIntelligence.composerInvoked` | orchestrator | Spec do composer aplicado no re-run |
+| `presentationIntelligence.needsComposer` | orchestrator | policy sugere composer |
+| `presentationIntelligence.specApplied` | orchestrator | validator+compiler ok |
+| `presentationIntelligence.presentation_profile_build_ms` | orchestrator | latência profile→compile |
+| `presentationComposerPolicy.decision` | composer app | `skip` \| `invoke_flag_off` \| `invoke` |
+| `presentationComposerPolicy.fallback` | composer app | true quando canary não assumiu |
+| `presentationComposerPolicy.fallbackReason` | composer app | motivo do fallback |
+| `presentationComposerPolicy.latencyMs` | composer app | latência LLM compose+validate |
+| `presentationComposerPolicy.shadowEnabled` | composer app | env shadow ativo |
+| `presentationComposerPolicy.canaryEnabled` | composer app | env canary ativo |
+| `presentationComposerPolicy.repairUsed` | composer app | repair JSON/schema usado |
+| `presentationComposerShadow.ok` | composer app | validation.ok do candidato LLM |
+| `presentationComposerShadow.latencyMs` | composer app | espelho de policy.latencyMs |
+| `presentationComposerShadow.specSummary` | composer app | `{view, mark, paletteFamily, fieldCount}` — **não** rows/prompt/spec completo |
+
 ## Owners
 
 | Responsibility | Owner |

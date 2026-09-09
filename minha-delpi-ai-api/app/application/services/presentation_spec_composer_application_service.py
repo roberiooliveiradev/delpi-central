@@ -175,17 +175,21 @@ class PresentationSpecComposerApplicationService:
             profile=profile,
             constraints=constraints if isinstance(constraints, dict) else None,
         )
+        shadow_on = self.shadow_enabled()
+        canary_on = self.canary_enabled()
         metadata["presentationComposerPolicy"] = {
             "invoke": invoke,
             "bindConfidence": summary.get("bindConfidence"),
             "needsComposer": summary.get("needsComposer"),
             "specApplied": summary.get("specApplied"),
+            "shadowEnabled": shadow_on,
+            "canaryEnabled": canary_on,
         }
         if not invoke:
             metadata["presentationComposerPolicy"]["decision"] = "skip"
             return
 
-        if not (self.shadow_enabled() or self.canary_enabled()):
+        if not (shadow_on or canary_on):
             metadata["presentationComposerPolicy"]["decision"] = "invoke_flag_off"
             return
 
@@ -195,14 +199,20 @@ class PresentationSpecComposerApplicationService:
             profile=profile,
             user_message_excerpt=str(metadata.get("userMessage") or "")[:400],
         )
+        latency_ms = result.get("latencyMs")
+        repair_used = bool(result.get("repairUsed"))
+        spec_summary = self._spec_summary(result.get("spec"))
+        metadata["presentationComposerPolicy"]["latencyMs"] = latency_ms
+        metadata["presentationComposerPolicy"]["repairUsed"] = repair_used
         metadata["presentationComposerShadow"] = {
             "ok": result.get("ok"),
             "reason": result.get("reason"),
             "errors": result.get("errors"),
-            "latencyMs": result.get("latencyMs"),
-            "spec": result.get("spec"),
+            "latencyMs": latency_ms,
+            "repairUsed": repair_used,
+            "specSummary": spec_summary,
         }
-        if self.canary_enabled() and result.get("ok") and result.get("spec"):
+        if canary_on and result.get("ok") and result.get("spec"):
             metadata["presentationComposerAuthoritative"] = True
             metadata["presentationComposerSpec"] = result["spec"]
             metadata["presentationComposerPolicy"]["fallback"] = False
@@ -371,6 +381,22 @@ class PresentationSpecComposerApplicationService:
             ],
             "knobsByView": PresentationComposerPromptContentService.knobs_by_view(),
         }
+    @classmethod
+    def _spec_summary(cls, spec: dict[str, Any] | None) -> dict[str, Any] | None:
+        """Telemetry-safe Spec digest — no rows, no prompt."""
+        if not isinstance(spec, dict):
+            return None
+        fields = spec.get("fields")
+        encoding = spec.get("encoding") if isinstance(spec.get("encoding"), dict) else {}
+        return {
+            "view": spec.get("view"),
+            "mark": spec.get("mark"),
+            "provenance": spec.get("provenance"),
+            "paletteFamily": spec.get("paletteFamily"),
+            "fieldCount": len(fields) if isinstance(fields, list) else None,
+            "encodingFieldCount": len(encoding),
+        }
+
     @classmethod
     def _parse_json(cls, raw: str) -> dict[str, Any] | None:
         text = str(raw or "").strip()
