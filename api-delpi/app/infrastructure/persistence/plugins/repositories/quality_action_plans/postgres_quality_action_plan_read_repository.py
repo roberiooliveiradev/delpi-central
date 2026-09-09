@@ -2383,7 +2383,8 @@ class PostgresQualityActionPlanRepository(
                 "responsible_user_id": legacy_user_id,
                 "responsible_name": legacy_name,
             }
-            result.append(enriched)
+            # responsibles entram após serialize_row — reaplicar JSON-safe no envelope
+            result.append(serialize_row(enriched, id_keys=("id", "plan_id")) or enriched)
         return result
 
     def _replace_action_responsibles(

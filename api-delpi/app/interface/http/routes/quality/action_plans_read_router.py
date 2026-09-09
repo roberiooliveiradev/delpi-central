@@ -1233,6 +1233,10 @@ def create_plan_actions(plan_id: str, body: CreateActionsBody = Body(...)):
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao criar ações do plano {plan_id}: {exc}")
         return error_response("Erro ao registrar ações.", status_code=500)
+    except Exception as exc:
+        # Evita 500 opaco «Internal server error» do middleware JWT sem envelope.
+        log_error(f"Erro não tratado ao criar ações do plano {plan_id}: {exc}")
+        return error_response("Erro ao registrar ações.", status_code=500)
 
 
 @router.patch(

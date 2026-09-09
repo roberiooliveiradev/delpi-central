@@ -23,7 +23,10 @@ from app.domain.services.quality_action_plans.pac_plan_revision_snapshot_service
     plan_fields_for_restore,
     validate_snapshot,
 )
-from app.domain.services.quality_action_plans.quality_action_plan_serialization import serialize_row
+from app.domain.services.quality_action_plans.quality_action_plan_serialization import (
+    dumps_json_safe,
+    serialize_row,
+)
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginsRepositoryError,
     plugins_unit_of_work,
@@ -165,7 +168,7 @@ class QualityActionPlanRevisionMixin:
                 resolved,
                 next_revision,
                 snapshot["schema_version"],
-                json.dumps(snapshot),
+                dumps_json_safe(snapshot),
                 scope,
                 summary[:500],
                 restored_from_revision,

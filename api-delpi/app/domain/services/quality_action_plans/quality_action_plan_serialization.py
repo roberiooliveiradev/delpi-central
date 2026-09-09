@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
@@ -72,28 +74,55 @@ PLAN_SELECT = """
 """
 
 
-def serialize_row(row: dict[str, Any] | None, *, id_keys: tuple[str, ...] = ("id",)) -> dict[str, Any] | None:
-    """Normaliza linha do Postgres para dict JSON-safe (API + snapshot de revisão).
+def json_safe_value(value: Any) -> Any:
+    """Converte valor Postgres/Python para tipo aceito por ``json.dumps``.
 
-    ``due_date`` e demais colunas ``DATE`` vêm como ``datetime.date``; sem
-    ``isoformat`` o ``json.dumps`` do snapshot de revisão falha e a API
-    devolve 500 genérico ao criar/atualizar ação com prazo.
+    Usado em serialização de linhas e no snapshot de revisão do PAC. Sem isso,
+    ``date`` / ``UUID`` / ``Decimal`` aninhados (ex.: ``due_date``,
+    ``template_payload``, ``responsibles[].id``) derrubam o POST de ações
+    com 500 genérico no middleware JWT.
     """
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, UUID):
+        return str(value)
+    if isinstance(value, Decimal):
+        if value == value.to_integral_value():
+            return int(value)
+        return float(value)
+    if isinstance(value, dict):
+        return {str(key): json_safe_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [json_safe_value(item) for item in value]
+    if isinstance(value, (bytes, bytearray)):
+        return bytes(value).decode("utf-8", errors="replace")
+    if hasattr(value, "isoformat"):
+        try:
+            return value.isoformat()
+        except Exception:
+            return str(value)
+    return str(value)
+
+
+def dumps_json_safe(payload: Any) -> str:
+    """``json.dumps`` à prova de tipos Postgres no snapshot de revisão."""
+    return json.dumps(json_safe_value(payload), ensure_ascii=False)
+
+
+def serialize_row(row: dict[str, Any] | None, *, id_keys: tuple[str, ...] = ("id",)) -> dict[str, Any] | None:
+    """Normaliza linha do Postgres para dict JSON-safe (API + snapshot de revisão)."""
     if row is None:
         return None
     result = dict(row)
     for key in id_keys:
         if result.get(key) is not None:
             result[key] = str(result[key])
-    for key, value in list(result.items()):
-        if isinstance(value, datetime):
-            # datetime é subclasse de date — checar primeiro
-            result[key] = value.isoformat()
-        elif isinstance(value, date):
-            result[key] = value.isoformat()
-        elif isinstance(value, UUID):
-            result[key] = str(value)
-    return result
+    safe = json_safe_value(result)
+    return safe if isinstance(safe, dict) else result
 
 
 def serialize_plan_row(row: dict[str, Any]) -> dict[str, Any]:
@@ -106,5 +135,6 @@ def serialize_plan_row(row: dict[str, Any]) -> dict[str, Any]:
         result["template_payload"] = normalize_template_payload_quantity_fields(
             result.get("template_payload")
         )
+        result["template_payload"] = json_safe_value(result["template_payload"])
     result["contact_roles"] = build_contact_roles_view(result)
     return enrich_plan_row_sla(result)
