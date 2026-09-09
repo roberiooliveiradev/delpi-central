@@ -159,11 +159,17 @@ export function firstNumericValueKey(
   xAxis: string,
   yAxes: string[],
 ): string {
-  if (yAxes[0]) {
-    return yAxes[0];
-  }
-
   const sample = data[0] ?? {};
+
+  for (const key of yAxes) {
+    if (!key || key === xAxis) {
+      continue;
+    }
+    const value = sample[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return key;
+    }
+  }
 
   for (const key of Object.keys(sample)) {
     if (key === xAxis) {
@@ -177,5 +183,5 @@ export function firstNumericValueKey(
     }
   }
 
-  return "value";
+  return yAxes[0] || "value";
 }

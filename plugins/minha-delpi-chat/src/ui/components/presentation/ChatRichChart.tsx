@@ -102,6 +102,56 @@ const CHART_TYPE_ALTERNATES = [
   "histogram",
 ] as const;
 
+function chartTypeAlternatesFor(sourceChartType: string): string[] {
+  if (sourceChartType === "heatmap") {
+    return ["heatmap", ...CHART_TYPE_ALTERNATES];
+  }
+  return [...CHART_TYPE_ALTERNATES];
+}
+
+function resolveCartesianYAxes(args: {
+  scatterMode: boolean;
+  resolvedY: string;
+  axisYOverride: string | null;
+  configYAxis: string | string[] | undefined;
+  valueKeyFromConfig: string;
+  sourceChartType: string;
+  activeChartType: string;
+  filteredData: Record<string, unknown>[];
+  xAxis: string;
+}): string[] {
+  const {
+    scatterMode,
+    resolvedY,
+    axisYOverride,
+    configYAxis,
+    valueKeyFromConfig,
+    sourceChartType,
+    activeChartType,
+    filteredData,
+    xAxis,
+  } = args;
+  if (scatterMode) {
+    return [resolvedY].filter(Boolean);
+  }
+  if (axisYOverride) {
+    return normalizeYAxes([axisYOverride], filteredData, xAxis);
+  }
+  // Heatmap config.yAxis is a categorical matrix dimension — never use it as a numeric series.
+  if (valueKeyFromConfig && (sourceChartType === "heatmap" || activeChartType !== "heatmap")) {
+    if (sourceChartType === "heatmap" && activeChartType !== "heatmap") {
+      return normalizeYAxes([valueKeyFromConfig], filteredData, xAxis);
+    }
+    if (activeChartType !== "heatmap" && valueKeyFromConfig) {
+      const sample = filteredData[0]?.[valueKeyFromConfig];
+      if (typeof sample === "number" && Number.isFinite(sample)) {
+        return normalizeYAxes([valueKeyFromConfig], filteredData, xAxis);
+      }
+    }
+  }
+  return normalizeYAxes(configYAxis, filteredData, xAxis);
+}
+
 export function ChatRichChart({
   presentation,
   hideTitle = false,
@@ -155,6 +205,19 @@ export function ChatRichChart({
     initialViewState?.periodCompareEnabled ?? false,
   );
   const activeChartType = chartTypeOverride || chartType;
+  const isHeatmapActive = activeChartType === "heatmap";
+  const configuredValueKey =
+    typeof config?.valueKey === "string" ? config.valueKey.trim() : "";
+  const typeAlternates = useMemo(
+    () => chartTypeAlternatesFor(chartType),
+    [chartType],
+  );
+  const displayTitle = useMemo(() => {
+    if (!chartTypeOverride || chartTypeOverride === chartType) {
+      return title;
+    }
+    return CHART_TYPE_LABELS[activeChartType] ?? title;
+  }, [activeChartType, chartType, chartTypeOverride, title]);
   const skipAxisResetOnMountRef = useRef(Boolean(initialViewState));
 
   useEffect(() => {
@@ -217,14 +280,20 @@ export function ChatRichChart({
   const resolvedX = axisXOverride ?? axisDefaults.xKey;
   const resolvedY = axisYOverride ?? axisDefaults.yKey;
   const xAxis = scatterMode ? resolvedX : resolvedX || config?.xAxis || guessXAxis(filteredData);
-  const baseYAxes = scatterMode
-    ? [resolvedY]
-    : normalizeYAxes(
-        axisYOverride ? [axisYOverride] : config?.yAxis,
-        filteredData,
-        xAxis,
-      );
-  const valueKey = firstNumericValueKey(filteredData, xAxis, baseYAxes);
+  const baseYAxes = resolveCartesianYAxes({
+    scatterMode,
+    resolvedY,
+    axisYOverride,
+    configYAxis: config?.yAxis,
+    valueKeyFromConfig: configuredValueKey,
+    sourceChartType: chartType,
+    activeChartType,
+    filteredData,
+    xAxis,
+  });
+  const valueKey = isHeatmapActive
+    ? configuredValueKey || firstNumericValueKey(filteredData, xAxis, baseYAxes)
+    : firstNumericValueKey(filteredData, xAxis, baseYAxes);
   const temporalAxis = useMemo(
     () => isTemporalChartAxis(xAxis, filteredData),
     [filteredData, xAxis],
@@ -246,13 +315,17 @@ export function ChatRichChart({
       axes = compared.yAxes;
       axisKey = periodCompareSpec.categoryKey;
     } else {
-      if (!scatterMode && axisKey) {
+      // Heatmap matrix must keep both categorical axes + valueKey; category aggregation
+      // would collapse rows and empty the grid.
+      if (!scatterMode && axisKey && !isHeatmapActive) {
         rows = aggregateChartRowsByCategory(rows, axisKey, axes);
       }
 
-      rows = applyChartTopFilter(rows, axisKey, valueKey, topFilter);
+      if (!isHeatmapActive) {
+        rows = applyChartTopFilter(rows, axisKey, valueKey, topFilter);
+      }
 
-      if (temporalAxis) {
+      if (temporalAxis && !isHeatmapActive) {
         rows = applyChartZoomWindow(rows, zoomWindow);
       }
     }
@@ -261,6 +334,7 @@ export function ChatRichChart({
   }, [
     baseYAxes,
     filteredData,
+    isHeatmapActive,
     periodCompareEnabled,
     periodCompareSpec,
     temporalAxis,
@@ -425,7 +499,7 @@ export function ChatRichChart({
         {hideTitle ? (
           <span className="mdc-rich-chart__title" aria-hidden="true" />
         ) : (
-          <span className="mdc-rich-chart__title">{title}</span>
+          <span className="mdc-rich-chart__title">{displayTitle}</span>
         )}
         <div className="mdc-rich-chart__toolbar">
           <div className="mdc-rich-chart__toolbar-row mdc-rich-chart__toolbar-row--controls">
@@ -637,7 +711,7 @@ export function ChatRichChart({
                 role="group"
                 aria-label="Tipo de gráfico"
               >
-                {CHART_TYPE_ALTERNATES.map((token) => (
+                {typeAlternates.map((token) => (
                   <button
                     key={token}
                     type="button"
@@ -645,10 +719,23 @@ export function ChatRichChart({
                     onClick={() => {
                       setChartTypeOverride((current) => {
                         const next = current === token ? null : token;
+                        const fromType = current ?? chartType;
+                        const toType = next ?? chartType;
+
+                        if (
+                          fromType === "heatmap" &&
+                          toType !== "heatmap" &&
+                          configuredValueKey
+                        ) {
+                          setAxisYOverride(configuredValueKey);
+                        }
+                        if (toType === "heatmap") {
+                          setAxisYOverride(null);
+                        }
 
                         recordPresentationTelemetry("presentation_chart_type_switch", {
-                          from: current ?? chartType,
-                          to: next ?? chartType,
+                          from: fromType,
+                          to: toType,
                         });
 
                         return next;
@@ -680,7 +767,7 @@ export function ChatRichChart({
         ref={chartContainerRef}
         className={`mdc-rich-chart__container${onDrillDown ? " mdc-rich-chart__container--interactive" : ""}`}
       >
-        {activeChartType === "heatmap" ? (
+        {isHeatmapActive ? (
           <HeatmapGrid
             data={displayData}
             xAxis={config?.xAxis || displayXAxis}
@@ -691,7 +778,7 @@ export function ChatRichChart({
                   ? String(config.yAxis[0] || guessXAxis(data))
                   : guessYAxisCategory(data, xAxis)
             }
-            valueKey={config?.valueKey || displayYAxes[0] || "value"}
+            valueKey={configuredValueKey || valueKey || "value"}
             colors={colors}
             tickFill={tickFill}
             onPointClick={onDrillDown ? openPointMenu : undefined}

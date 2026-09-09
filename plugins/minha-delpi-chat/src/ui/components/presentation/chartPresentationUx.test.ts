@@ -4,6 +4,7 @@ import {
   applyChartZoomWindow,
   buildPeriodComparisonRows,
   detectPeriodCompare,
+  firstNumericValueKey,
   isTemporalChartAxis,
 } from "./chartPresentationUx";
 
@@ -48,5 +49,16 @@ describe("chartPresentationUx", () => {
     expect(yAxes).toEqual(["2024", "2025"]);
     expect(rows).toHaveLength(2);
     expect(rows[0]["2025"]).toBe(14);
+  });
+
+  it("ignora eixo Y categórico e escolhe a primeira coluna numérica", () => {
+    const data = [
+      { filial: "01", armazem: "01", qtdPlanejada: 1500 },
+      { filial: "02", armazem: "01", qtdPlanejada: 500 },
+    ];
+
+    expect(firstNumericValueKey(data, "filial", ["armazem", "qtdPlanejada"])).toBe(
+      "qtdPlanejada",
+    );
   });
 });
