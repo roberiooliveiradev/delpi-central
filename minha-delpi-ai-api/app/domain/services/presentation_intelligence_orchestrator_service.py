@@ -121,7 +121,9 @@ class PresentationIntelligenceOrchestratorService:
                 else PresentationSpec.from_dict(composer_spec)
             )
             if candidate is not None:
-                spec = candidate
+                from dataclasses import replace
+
+                spec = replace(candidate, provenance="COMPOSER")
                 confidence = max(confidence, 0.8)
 
         unmet_intent = None
@@ -196,6 +198,8 @@ class PresentationIntelligenceOrchestratorService:
         cls,
         summary: dict[str, Any] | None,
         intent: dict[str, Any] | None = None,
+        profile: dict[str, Any] | None = None,
+        constraints: dict[str, Any] | None = None,
     ) -> bool:
         from app.domain.services.presentation_composer_policy_service import (
             PresentationComposerPolicyService,
@@ -204,7 +208,10 @@ class PresentationIntelligenceOrchestratorService:
         return PresentationComposerPolicyService.should_invoke(
             summary=summary,
             intent=intent,
+            profile=profile,
+            constraints=constraints,
         )
+
     @classmethod
     def _looks_ambiguous(cls, intent: Any, profile: Any) -> bool:
         dims = len(getattr(profile, "dimension_candidates", ()) or ())

@@ -203,3 +203,69 @@ def test_ablation_c_beats_raw_first_numeric_for_produced_qty():
     bound = spec.encoding["y"].field
     assert bound == "produced_qty"
     assert bound != first_numeric
+
+
+def test_policy_gate_skips_when_spec_already_applied():
+    assert (
+        PresentationIntelligenceOrchestratorService.should_invoke_composer(
+            {"specApplied": True, "bindConfidence": 0.9, "needsComposer": True},
+            intent={"mark": "heatmap"},
+        )
+        is False
+    )
+
+
+def test_policy_gate_invokes_when_needs_composer():
+    assert (
+        PresentationIntelligenceOrchestratorService.should_invoke_composer(
+            {"specApplied": False, "bindConfidence": 0.3, "needsComposer": True},
+            intent={"view": "auto"},
+            profile={
+                "dimensionCandidates": ["a", "b"],
+                "measureCandidates": ["m1", "m2"],
+            },
+        )
+        is True
+    )
+
+
+def test_canary_fallback_keeps_deterministic_when_composer_fails(monkeypatch):
+    metadata = _heatmap_metadata()
+    PresentationIntelligenceOrchestratorService.apply_before_render_plan(
+        metadata,
+        user_message=metadata["userMessage"],
+    )
+    chart_before = dict(metadata["chartPresentation"])
+
+    class BadLlm:
+        def generate(self, messages):
+            return '{"version":1,"view":"chart","mark":"heatmap","encoding":{"x":{"field":"nope"}}}'
+
+        def stream(self, messages):
+            yield ""
+
+        def supports_structured_output(self):
+            return False
+
+    monkeypatch.setenv("PRESENTATION_COMPOSER_CANARY", "1")
+    monkeypatch.setenv("PRESENTATION_COMPOSER_SHADOW", "1")
+    # Force invoke even if deterministic already applied.
+    metadata["presentationIntelligence"]["needsComposer"] = True
+    metadata["presentationIntelligence"]["specApplied"] = False
+    metadata["presentationIntelligence"]["bindConfidence"] = 0.2
+    metadata["presentationDataProfile"] = metadata.get("presentationDataProfile") or {
+        "fields": [
+            {"key": "product_code", "semanticType": "nominal", "isDimensionCandidate": True},
+            {"key": "warehouse", "semanticType": "nominal", "isDimensionCandidate": True},
+            {"key": "planned_qty", "semanticType": "quantitative", "isMeasureCandidate": True},
+        ],
+        "dimensionCandidates": ["product_code", "warehouse"],
+        "measureCandidates": ["planned_qty"],
+    }
+    metadata["presentationIntent"] = metadata.get("presentationIntent") or {"mark": "heatmap"}
+
+    service = PresentationSpecComposerApplicationService(llm=BadLlm())
+    service.apply_shadow_or_canary(metadata)
+    assert metadata["presentationComposerPolicy"]["fallback"] is True
+    assert metadata.get("presentationComposerAuthoritative") is not True
+    assert metadata["chartPresentation"]["chartType"] == chart_before["chartType"]

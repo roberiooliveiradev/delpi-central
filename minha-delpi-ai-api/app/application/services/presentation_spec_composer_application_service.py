@@ -168,12 +168,28 @@ class PresentationSpecComposerApplicationService:
             PresentationIntelligenceOrchestratorService,
         )
 
-        if not PresentationIntelligenceOrchestratorService.should_invoke_composer(summary, intent):
+        constraints = metadata.get("presentationConstraints")
+        invoke = PresentationIntelligenceOrchestratorService.should_invoke_composer(
+            summary,
+            intent if isinstance(intent, dict) else None,
+            profile=profile,
+            constraints=constraints if isinstance(constraints, dict) else None,
+        )
+        metadata["presentationComposerPolicy"] = {
+            "invoke": invoke,
+            "bindConfidence": summary.get("bindConfidence"),
+            "needsComposer": summary.get("needsComposer"),
+            "specApplied": summary.get("specApplied"),
+        }
+        if not invoke:
+            metadata["presentationComposerPolicy"]["decision"] = "skip"
             return
 
         if not (self.shadow_enabled() or self.canary_enabled()):
+            metadata["presentationComposerPolicy"]["decision"] = "invoke_flag_off"
             return
 
+        metadata["presentationComposerPolicy"]["decision"] = "invoke"
         result = self.compose(
             intent=intent if isinstance(intent, dict) else {},
             profile=profile,
@@ -189,7 +205,13 @@ class PresentationSpecComposerApplicationService:
         if self.canary_enabled() and result.get("ok") and result.get("spec"):
             metadata["presentationComposerAuthoritative"] = True
             metadata["presentationComposerSpec"] = result["spec"]
-
+            metadata["presentationComposerPolicy"]["fallback"] = False
+        else:
+            # Keep deterministic Spec; composer failure never clears slots.
+            metadata["presentationComposerPolicy"]["fallback"] = True
+            metadata["presentationComposerPolicy"]["fallbackReason"] = (
+                result.get("reason") or "composer_not_authoritative"
+            )
     @classmethod
     def finalize_presentation_metadata(
         cls,
