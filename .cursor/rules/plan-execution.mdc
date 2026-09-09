@@ -1,0 +1,324 @@
+---
+description: Execucao de planos multi-etapa — preflight, revalidacao de drift, escopo por subetapa, evidencia, avaliacao generalista e desacoplada e verify-final
+alwaysApply: false
+---
+
+# Execucao de planos (Delpi)
+
+Complementa `plan-construction.mdc`, `evidence-driven-execution.mdc`, `test-and-commit.mdc` e `platform-quality-testing.mdc`.
+
+Esta regra governa **como executar** um plano ja aprovado sem transformar o plano em fonte de verdade permanente nem considerar uma etapa concluida apenas porque o codigo compila ou os testes locais passam.
+
+## Principio
+
+Durante a execucao, o implementador deve preservar a cadeia:
+
+```text
+pedido original
+→ requisito RQ-*
+→ decisao revalidada
+→ owner canonico
+→ mudanca minima correta
+→ testes relevantes
+→ avaliacao pos-execucao
+→ evidencia
+→ atualizacao do plano
+→ verify-final
+```
+
+O plano orienta o trabalho, mas **codigo, contratos, regras vigentes e testes atuais vencem instrucoes superadas do plano**.
+
+# 1. Preflight obrigatorio por subetapa
+
+Antes de executar cada `E*.S*`:
+
+```text
+1. reler o objetivo e requisitos cobertos pela subetapa
+2. reler development-standards-index.mdc
+3. carregar responsabilidades transversais materiais
+4. carregar regras tecnicas do dominio realmente aplicaveis
+5. verificar codigo, contratos, testes, consumidores e docs atuais
+6. confirmar que a decisao do plano continua valida
+7. confirmar owner canonico e fronteiras
+8. confirmar dependencias reais e criterios de pronto
+9. somente entao alterar codigo/config/docs
+```
+
+Se a subetapa estiver baseada em fato desatualizado, classificar:
+
+```text
+PLAN_DRIFT_CONFIRMED
+PLAN_DRIFT_BOUNDED
+NO_PLAN_DRIFT
+```
+
+Quando houver `PLAN_DRIFT_CONFIRMED`, corrigir a instrucao do plano antes de continuar. Nao implementar literalmente uma etapa que contradiz a arquitetura vigente.
+
+# 2. Escopo de execucao
+
+Cada subetapa deve produzir o menor diff arquiteturalmente correto que cumpra seus requisitos.
+
+Antes de editar, registrar mentalmente ou no plano:
+
+```text
+OBJECTIVE
+RQ_COVERED
+FILES_EXPECTED
+OWNER
+CONTRACTS
+CONSUMERS
+TESTS
+OUT_OF_SCOPE
+```
+
+Durante a implementacao, nova necessidade so entra na mesma subetapa quando for:
+
+- dependencia necessaria para cumprir o objetivo;
+- correcao de drift que invalida a receita original;
+- ajuste indispensavel em producer/consumer do mesmo contrato;
+- teste/documentacao/help obrigatorios pelo diff.
+
+Melhoria conveniente, refactor oportunista ou feature adjacente deve ficar fora da subetapa.
+
+# 3. Ownership e desacoplamento durante a execucao
+
+Aplicar `platform-architecture-boundaries.mdc`, `application-bounded-context-decoupling.mdc` e `centralized-rules-first.mdc` quando materiais.
+
+Antes de considerar o diff correto, responder:
+
+```text
+quem e o owner da regra alterada?
+a decisao ficou no owner ou vazou para consumidor/UI/infra?
+algum contexto passou a conhecer detalhes internos de outro?
+alguma integracao nova bypassa contrato HTTP/evento/port?
+alguma regra de produto foi colocada em shared/?
+algum fallback passou a redecidir regra de negocio?
+```
+
+Sinais de acoplamento indevido:
+
+- `if` por path, provider, operationId, rota ou nome de entidade sem necessidade de dominio comprovada;
+- MFE decidindo regra ja determinada pela API;
+- app importando `domain`/`application` de outro bounded context;
+- mesma semantica duplicada em API e consumidor;
+- produtor alterado com semantica exclusiva de um consumidor;
+- `shared/` conhecendo KPI, workflow, membership ou regra de produto;
+- novo registry/catalogo paralelo para representar conceito ja canonico.
+
+Se qualquer sinal estiver presente, a subetapa nao esta pronta ate provar que a dependencia e arquiteturalmente legitima ou remover o acoplamento.
+
+# 4. Gate de avaliacao pos-execucao
+
+Depois de implementar e antes de marcar a subetapa como concluida, executar uma avaliacao adversarial em quatro dimensoes.
+
+## A. Resolucao do objetivo
+
+Provar:
+
+```text
+o sintoma/requisito original mudou como esperado?
+o pipeline/runtime real consome a mudanca?
+o resultado perceptivel pelo usuario foi revalidado?
+os invariantes declarados continuam validos?
+```
+
+Teste verde sem validacao do objetivo original nao e suficiente.
+
+## B. Generalizacao
+
+Aplicar `root-cause-generalized-fix.mdc` quando a mudanca corrige comportamento, bug ou decisao semantica.
+
+A solucao so passa se responder positivamente:
+
+```text
+qual classe de casos foi corrigida?
+qual propriedade geral ativa a regra?
+qual dado pode variar sem quebrar a solucao?
+qual contraexemplo nao deve ativar a regra?
+```
+
+E houver, quando aplicavel:
+
+- caso original/positivo;
+- pelo menos um caso irmao da mesma familia;
+- caso negativo;
+- caso metamorf ico quando a regressao pode reaparecer por rename/reorder/variacao de linguagem/provider/path.
+
+Falhar o gate quando a correcao funciona apenas porque reconhece o literal do exemplo, fixture, path, endpoint, codigo, provider, operationId, texto ou entidade reportada sem justificativa de dominio.
+
+## C. Desacoplamento e ownership
+
+A solucao so passa se:
+
+```text
+uma fonte canonica continua dona da decisao
+consumidores consomem contrato; nao reimplementam regra
+bounded contexts continuam independentes internamente
+shared continua neutro
+contratos entre contextos sao explicitos
+nenhum bypass novo foi introduzido
+```
+
+Quando a mudanca cruza contextos, registrar explicitamente:
+
+```text
+OWNER
+BOUNDARY
+CONTRACT
+DEPENDENCY_DIRECTION
+CONSUMERS
+WHY_CROSS_CONTEXT_CHANGE_IS_REQUIRED
+```
+
+Se mais de um contexto foi alterado para a mesma regra sem contrato/ownership claro, classificar como falha arquitetural, nao como conclusao parcial.
+
+## D. Regressao e efeitos colaterais
+
+Provar os fluxos materiais do plano e os descobertos durante a implementacao:
+
+```text
+positive
+sibling
+negative
+contract/integration
+persist/F5/replay quando aplicavel
+send/stream/simulate quando aplicavel
+admin/user surface quando aplicavel
+mobile/desktop/theme quando visual
+security negative quando auth/authz
+```
+
+Nao usar `HERANCA` sem demonstrar tecnicamente a cadeia compartilhada.
+
+# 5. Classificacao obrigatoria do resultado
+
+Ao final da subetapa, classificar cada gate:
+
+```text
+OBJECTIVE_RESOLVED: PASS | FAIL | INCONCLUSIVE
+GENERALIZATION: PASS | FAIL | INCONCLUSIVE | N/A_JUSTIFIED
+DECOUPLING: PASS | FAIL | INCONCLUSIVE | N/A_JUSTIFIED
+REGRESSION_SAFETY: PASS | FAIL | INCONCLUSIVE
+```
+
+A subetapa so pode virar `completed` quando:
+
+```text
+OBJECTIVE_RESOLVED = PASS
+AND GENERALIZATION em {PASS, N/A_JUSTIFIED}
+AND DECOUPLING em {PASS, N/A_JUSTIFIED}
+AND REGRESSION_SAFETY = PASS
+```
+
+`INCONCLUSIVE` nao e PASS. `N/A_JUSTIFIED` exige justificativa concreta.
+
+# 6. Diff review antes de concluir
+
+Comparar o diff real com a receita original:
+
+```text
+arquivos previstos × arquivos alterados
+owner previsto × owner real
+contratos previstos × contratos alterados
+requisitos cobertos × comportamento entregue
+testes previstos × testes executados
+```
+
+Perguntas obrigatorias:
+
+1. Existe arquivo alterado que nao contribui para requisito/risco desta subetapa?
+2. Existe requisito coberto no plano sem evidencia no diff/teste?
+3. Alguma decisao foi movida para camada mais conveniente em vez da camada dona?
+4. A solucao depende de conhecimento especifico que deveria estar em contrato/metadata/schema?
+5. Um caso irmao com nomes diferentes continuaria funcionando?
+6. Como esta solucao pode continuar errada mesmo com os testes atuais passando?
+
+Risco material revelado por essas perguntas deve gerar correcao ou teste antes da conclusao.
+
+# 7. Atualizacao do plano apos cada subetapa
+
+Atualizar o plano ativo somente como estado de execucao:
+
+```text
+status da subetapa
+arquivos realmente alterados
+evidencia relevante
+testes executados e resultado
+drifts encontrados
+decisoes revalidadas/alteradas
+riscos novos
+classificacao OBJECTIVE/GENERALIZATION/DECOUPLING/REGRESSION
+```
+
+Nao transformar o plano em documentacao arquitetural permanente.
+
+# 8. Verify-final do plano
+
+Depois da ultima subetapa, executar revisao completa contra o **pedido original**, nao apenas contra os checkboxes do plano.
+
+Obrigatorio:
+
+```text
+1. reler o pedido original completo
+2. reler ledger RQ-*
+3. confirmar cada requisito material: entregue, herdado, fora ou bloqueado
+4. executar gates finais de build/test/contrato/CI materiais
+5. validar fluxo real ou smoke quando wiring/runtime importar
+6. revisar generalizacao em familia de casos
+7. revisar desacoplamento/ownership do conjunto final do diff
+8. revisar regressao em consumidores e fluxos irmaos
+9. registrar pendencias reais sem chama-las de PASS
+```
+
+Tabela final recomendada:
+
+| Dimensao | Evidencia | Resultado |
+|---|---|---|
+| Objetivo original | comportamento observavel | PASS/FAIL/INCONCLUSIVE |
+| Requisitos RQ-* | rastreabilidade | PASS/FAIL |
+| Generalizacao | original + sibling + negative/metamorfico | PASS/FAIL/INCONCLUSIVE |
+| Desacoplamento | owner + boundary + contratos | PASS/FAIL/INCONCLUSIVE |
+| Regressao | testes/fluxos irmaos | PASS/FAIL/INCONCLUSIVE |
+| Gates tecnicos | comandos/CI/build | PASS/FAIL/INCONCLUSIVE |
+
+# 9. Evidencia de conclusao
+
+Resumo minimo por etapa/entrega:
+
+```text
+OBJECTIVE
+RQ_COVERED
+PLAN_DRIFT
+OWNER
+FILES_CHANGED
+CONTRACTS_CHANGED
+TESTS_EXECUTED
+OBJECTIVE_RESOLVED
+GENERALIZATION
+GENERALIZATION_EVIDENCE
+DECOUPLING
+DECOUPLING_EVIDENCE
+REGRESSION_SAFETY
+KNOWN_REGRESSIONS
+CI_GATES
+DECISION
+```
+
+# 10. Proibicoes
+
+- executar plano como script cego;
+- marcar concluido porque compilou;
+- marcar concluido porque o caso reportado passou;
+- esconder `INCONCLUSIVE` como PASS;
+- aceitar patch por endpoint/path/provider quando a regra e transversal;
+- corrigir no MFE regra que nasce na API;
+- duplicar regra em producer e consumer;
+- alterar bounded contexts vizinhos sem owner/contrato explicitos;
+- expandir escopo por conveniencia;
+- atualizar expected de teste para acomodar regressao;
+- remover gate/seguranca para fazer a etapa passar;
+- commitar automaticamente sem solicitacao explicita do usuario.
+
+## Criterio de sucesso
+
+A execucao de um plano e considerada correta somente quando a implementacao **resolve o objetivo original de forma comprovada, generaliza para a classe de casos relevante, preserva ownership/desacoplamento e nao introduz regressao material conhecida**.
