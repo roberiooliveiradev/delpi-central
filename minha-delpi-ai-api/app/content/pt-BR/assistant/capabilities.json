@@ -40,6 +40,7 @@
       "Para comparar ou resumir um resultado anterior, referencie «essa tabela» ou «esses dados».",
       "Após um KPI (ex.: ROL), peça «compara filial 01 vs filial 02» (typos como filail também funcionam) na mesma conversa.",
       "Perguntas de **negócio** (ex.: «visão 360° do produto», «onde é usado e quem fornece?») costumam cruzar estoque, estrutura, compras e vendas.",
+      "**Descrição, cadastro ou ficha** não são estoque: peça «descrição 10080011» para o cadastro; «estoque» para saldo. Pedidos compostos («estoque e descrição») podem consultar **mais de uma action** e combinar a resposta.",
       "Para **pesquisa na internet**, use frases como «pesquise na web sobre …» quando o agente tiver busca web habilitada.",
       "**Visualizações:** peça *tabela*, *gráfico*, *KPI*, *painel* ou *heatmap* na mesma pergunta; use **Expandir** para exportar CSV/Excel/PDF.",
       "Campos **ocultos na tabela** (ex.: unidade auxiliar) continuam na exportação — só somem da grade visual.",
@@ -493,7 +494,7 @@
     },
     "stockHelp": {
       "title": "**Consulta de estoque**",
-      "body": "Selecione um **agente** com action de estoque habilitada e informe o **código do produto**. Isso consulta **saldo e posições** (`GET /products/{code}/stock`) — não a inspeção de qualidade (QP).\n\n**Exemplos:**\n- «Consulte o estoque do produto 10080001»\n- «Qual o estoque do produto 10080001?»\n- «Saldo do 10080001 em tabela»\n\nPara inspeção QP, peça explicitamente «inspeção do produto …». Sem agente ou sem permissão na rota, a consulta não é executada — apenas consultas autorizadas."
+      "body": "Selecione um **agente** com action de estoque habilitada e informe o **código do produto**. Isso consulta **saldo e posições** (`GET /products/{code}/stock`) — não a inspeção de qualidade (QP) e **não** a descrição/ficha/cadastro do item.\n\n**Descrição, cadastro ou ficha** usam a action de visão geral (`/summary` ou detail), não a tabela de estoque.\n\n**Pedido composto** («estoque e descrição do 10080011»): o chat pode executar **mais de uma action** no mesmo turno e **combinar** a resposta.\n\n**Exemplos:**\n- «Consulte o estoque do produto 10080001»\n- «Qual o estoque do produto 10080001?»\n- «Saldo do 10080001 em tabela»\n- «descrição 10080011» / «cadastro do produto 10080011»\n- «estoque e descrição do produto 10080011»\n\nPara inspeção QP, peça explicitamente «inspeção do produto …». Sem agente ou sem permissão na rota, a consulta não é executada — apenas consultas autorizadas."
     },
     "destructiveAction": {
       "title": "**Alteração e exclusão de cadastros**",
@@ -517,6 +518,17 @@
         "estoque do produto 10080001",
         "saldo do 10080001",
         "quanto tem em estoque do 10080001"
+      ]
+    },
+    {
+      "token": "/summary",
+      "category": "Descrição / cadastro / ficha do produto",
+      "examples": [
+        "descrição 10080011",
+        "descrição do produto 10080001",
+        "cadastro do produto 10080011",
+        "ficha do produto 10080011",
+        "estoque e descrição do produto 10080011"
       ]
     },
     {
@@ -629,11 +641,11 @@
     },
     {
       "token": "/analyser",
-      "category": "Ficha / descrição do produto",
+      "category": "Visão integrada / analisador do produto",
       "examples": [
-        "descrição do produto 10080001",
-        "me fala do produto 10080001",
-        "dados cadastrais do 10080001"
+        "visão integrada do produto 10080001",
+        "analisador do produto 10080001",
+        "ficha completa do 10080001"
       ]
     },
     {

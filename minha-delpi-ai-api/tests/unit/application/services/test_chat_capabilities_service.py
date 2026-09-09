@@ -277,6 +277,8 @@ def test_stock_help_distinguishes_quality_inspection():
     body = str((data.get("featureAnswers") or {}).get("stockHelp", {}).get("body") or "")
     assert "Consulte o estoque do produto" in body
     assert "inspeção" in body.lower()
+    assert "descrição" in body.lower()
+    assert "combinar" in body.lower()
     stock_rule = next(
         item
         for item in (data.get("pathRules") or [])
