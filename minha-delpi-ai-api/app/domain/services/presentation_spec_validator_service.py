@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from app.domain.entities.presentation_data_profile import PresentationDataProfile
@@ -73,21 +73,8 @@ class PresentationSpecValidatorService:
 
         if spec.palette_family and spec.palette_family not in SUPPORTED_PALETTE_FAMILIES:
             errors.append(f"unsupported_palette:{spec.palette_family}")
-            # Drop invalid palette; keep rest.
-            spec = PresentationSpec(
-                version=spec.version,
-                view=spec.view,
-                mark=spec.mark,
-                encoding=spec.encoding,
-                fields=spec.fields,
-                sort_field=spec.sort_field,
-                sort_direction=spec.sort_direction,
-                labels=spec.labels,
-                formats=spec.formats,
-                palette_family=None,
-                legend_visible=spec.legend_visible,
-                provenance=spec.provenance,
-            )
+            # Drop invalid palette; keep rest (incl. nested 1.x blocks).
+            spec = replace(spec, palette_family=None)
 
         for fmt in spec.formats.values():
             if fmt not in SUPPORTED_FORMATS:
@@ -177,7 +164,8 @@ class PresentationSpecValidatorService:
             key: value for key, value in spec.labels.items() if key in known_keys
         }
 
-        cleaned = PresentationSpec(
+        cleaned = replace(
+            spec,
             version=PRESENTATION_SPEC_VERSION,
             view=spec.view if spec.view in SUPPORTED_VIEWS else "auto",
             mark=spec.mark if spec.mark in SUPPORTED_MARKS else None,
@@ -187,9 +175,6 @@ class PresentationSpecValidatorService:
             sort_direction=spec.sort_direction if spec.sort_direction in {"asc", "desc"} else None,
             labels=cleaned_labels,
             formats=cleaned_formats,
-            palette_family=spec.palette_family,
-            legend_visible=spec.legend_visible,
-            provenance=spec.provenance,
         )
 
         if cleaned.mark == "heatmap" and not cls._heatmap_ok(cleaned, profile):
