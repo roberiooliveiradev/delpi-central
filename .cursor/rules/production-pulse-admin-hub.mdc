@@ -1,0 +1,62 @@
+---
+description: Production Pulse Admin Hub OTA — canvas-first, edge modes, modais host-contained, soft delete
+globs: plugins/production-pulse/src/pages/FirmwareLinksPage.tsx,plugins/production-pulse/src/components/FirmwareDeviceLinkCanvas.tsx,plugins/production-pulse/src/components/HubCanvasLegend.tsx,plugins/production-pulse/src/components/EntityContextLayers.tsx,plugins/production-pulse/src/components/AdminSidePanel.tsx,plugins/production-pulse/src/utils/adminHubUiState.ts,plugins/production-pulse/src/utils/firmwareLinkGraph.ts,plugins/production-pulse/src/app/productionPulseUi.tsx,plugins/production-pulse/src/content/helpTooltips.ts
+alwaysApply: false
+---
+
+# Production Pulse — Admin Hub OTA
+
+## Superfície canônica
+
+Mapa Admin = `FirmwareLinksPage` (`/firmware-links`). Canvas é a superfície principal; overlays/painéis/modais são siblings (não desmontar React Flow).
+
+## Conexões (três modos — obrigatório na UI)
+
+| Modo | Visual | Significado | Remoção |
+|------|--------|-------------|---------|
+| **Sem linha** | sem edge | IoT sem vínculo explícito e sem match de `driverKey` | — |
+| **Tracejada** | `inherited` | Herança automática: mesmo `driverKey` da família | **Não** removível por Desvincular; só muda driver/família |
+| **Sólida** | `explicit` | `assignedFirmwareKey` — vínculo OTA | Desvincular / Delete na seta |
+
+Legenda in-app: `HubCanvasLegend` + `PP_HELP.hub.edge*`. Ajuda: `PP_HELP.otaLinks.*`.
+
+## Soft delete (não hard delete)
+
+| Entidade | Ação | API | Efeito |
+|----------|------|-----|--------|
+| IoT | Desativar (soft delete) | `disableDevice` | Para operação; cadastro permanece; filtro Inativos / Reativar |
+| Firmware | Arquivar versão (soft delete) | `archiveFirmware` | Sai de novos disparos; histórico permanece |
+
+Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.confirm` e exclusão definitiva sem decisão explícita de produto.
+
+## Camadas UI (matriz travada)
+
+| Conteúdo | Superfície |
+|----------|------------|
+| Clique no nó | Summary popover (`EntityContextLayers`) |
+| Menu ⋯ | Context menu |
+| Detalhe FW/IoT/Job | `PpDetailDialog` (wide) |
+| CRUD IoT/FW | `PpWorkbenchDialog` (page) |
+| Agendar OTA | `PpHostContainedDialog` compacto |
+| Confirmação | `PpConfirmDialog` |
+| Catálogos | Side panel; mobile → modal page |
+| Feedback transitório | `PpFloatingNotices` |
+| Persistente | `PpStateBox` |
+
+URL: `?modal=` canônico; `drawer=` só alias de parse. Builders emitem `modal`.
+
+## Anti-padrões
+
+1. Drawer lateral para detalhe/CRUD no Hub.
+2. Tratar edge `inherited` como vínculo desvinculável.
+3. Toast/modal/z-index locais (usar kit host-contained + FloatingNotice).
+4. CTA grande de OTA no card do nó (ações no menu/detail).
+5. Cobrir `#portal-sidebar` (só `createHostContained*`).
+6. CSS `.delpi-ui-*` no `index.css` do MFE.
+
+## Módulos canônicos
+
+- State/URL: `adminHubUiState.ts`, `routes.ts`
+- Grafo: `firmwareLinkGraph.ts`
+- Kit: `productionPulseUi.tsx` (`PpDetailDialog`, `PpWorkbenchDialog`, `PpConfirmDialog`, `PpFloatingNotices`)
+- Docs espelho: `docs/12-roadmap-e-evolucao/production-pulse/{WIREFRAMES,HELP-CONTENT,DESIGN-FRONTEND}.md`

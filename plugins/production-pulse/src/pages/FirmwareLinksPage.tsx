@@ -29,6 +29,7 @@ import {
   type CanvasEntitySelection,
 } from "../components/FirmwareDeviceLinkCanvas";
 import { HubOtaKpiChips } from "../components/HubOtaKpiChips";
+import { HubCanvasLegend } from "../components/HubCanvasLegend";
 import {
   MiniInspectorPanel,
   RenameDeviceDialog,
@@ -567,14 +568,26 @@ export function FirmwareLinksPage({
     try {
       if (kind === "disable-device") {
         await disableDevice(id);
-        pushNotice({ variant: "success", message: "IoT desativado." });
+        pushNotice({
+          variant: "success",
+          message: "IoT desativado (soft delete). Use o filtro Inativos ou Reativar no menu ⋯.",
+        });
         await reloadGraph();
       } else if (kind === "archive-firmware") {
         await archiveFirmware(id);
-        pushNotice({ variant: "success", message: "Firmware arquivado." });
+        pushNotice({
+          variant: "success",
+          message: "Versão arquivada (soft delete). Não entra em novos disparos OTA.",
+        });
         await reloadGraph();
       } else if (kind === "unlink") {
         await handleUnlink(id);
+        pushNotice({
+          variant: "info",
+          message:
+            "Vínculo explícito removido. Se permanecer uma linha tracejada, é herança pelo driver (só leitura).",
+          autoDismissMs: 8000,
+        });
       }
       closeConfirm();
     } catch (err) {
@@ -919,12 +932,7 @@ export function FirmwareLinksPage({
         activeJobs={activeJobCount}
         onOpenJobs={() => openPanel("jobs")}
       />
-      <p className="pp-hub-legend pp-hub-legend--compact">
-        <span className="pp-hub-legend__item pp-hub-legend__item--solid">sólida = vínculo</span>
-        <span className="pp-hub-legend__item pp-hub-legend__item--dashed">
-          tracejada = driver
-        </span>
-      </p>
+      <HubCanvasLegend />
     </div>
   );
 
@@ -1385,17 +1393,17 @@ export function FirmwareLinksPage({
 
       <PpConfirmDialog
         open={ui.openLayer === "confirm" && ui.confirm?.kind === "disable-device"}
-        title="Desativar IoT"
+        title={PP_HELP.hub.softDeleteDeviceConfirmTitle}
         message={
           selectedDevice || devices.find((d) => d.id === ui.confirm?.id)
-            ? `Desativar ${
+            ? `${PP_HELP.hub.softDeleteDeviceConfirmBody} (${
                 selectedDevice?.name ??
                 devices.find((d) => d.id === ui.confirm?.id)?.name ??
-                "este IoT"
-              }? O dispositivo deixa de ser operado (soft-disable).`
-            : "Desativar este IoT?"
+                "IoT"
+              })`
+            : PP_HELP.hub.softDeleteDeviceConfirmBody
         }
-        confirmLabel="Desativar"
+        confirmLabel={PP_HELP.hub.softDeleteDeviceConfirmLabel}
         cancelLabel="Voltar"
         variant="danger"
         confirmBusy={confirmBusy}
@@ -1405,9 +1413,9 @@ export function FirmwareLinksPage({
 
       <PpConfirmDialog
         open={ui.openLayer === "confirm" && ui.confirm?.kind === "archive-firmware"}
-        title="Arquivar firmware"
-        message="Arquivar esta versão? Ela deixa de ser oferecida para novos vínculos OTA."
-        confirmLabel="Arquivar"
+        title={PP_HELP.hub.softDeleteFirmwareConfirmTitle}
+        message={PP_HELP.hub.softDeleteFirmwareConfirmBody}
+        confirmLabel={PP_HELP.hub.softDeleteFirmwareConfirmLabel}
         cancelLabel="Voltar"
         variant="danger"
         confirmBusy={confirmBusy}

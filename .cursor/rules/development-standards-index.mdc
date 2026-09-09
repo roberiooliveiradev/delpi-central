@@ -173,7 +173,7 @@ O Cursor deve raciocinar por responsabilidades, mas **não precisa carregar todo
 | Overlay/popover/toolbar | `plugins-overlay-positioning.mdc` |
 | Module Federation patch | `mf-federation-patch-safety.mdc` |
 | Notificações/preferências | `notification-catalog-preferences.mdc` |
-| Domínio específico (TV Dashboard, indicadores etc.) | regra do domínio apenas após responsabilidade transversal aplicável |
+| Domínio específico (TV Dashboard, Production Pulse Hub OTA, indicadores etc.) | regra do domínio apenas após responsabilidade transversal aplicável |
 
 Regra especializada de aplicação **não substitui** a responsabilidade transversal. Ela detalha uma exceção/contrato do domínio dentro dos guardrails gerais.
 

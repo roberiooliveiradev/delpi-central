@@ -44,6 +44,7 @@
       "plugins-overlay-positioning.mdc",
       "plugins-reusable-components.mdc",
       "plugins-visual-design-system.mdc",
+      "production-pulse-admin-hub.mdc",
       "tv-dashboard-editor-pasteboard.mdc",
       "tv-dashboard-presentation-parity.mdc"
     ],

@@ -294,11 +294,13 @@ export const PP_HELP = {
     refresh: "Recarrega firmwares, devices e jobs; soft reload de jobs não bloqueia a tela.",
     canvas: "Arraste do firmware (esquerda) para o IoT. Clique no nó para resumo; ⋯ para ações.",
     connect: "Cria ou substitui o vínculo (1 IoT = 1 firmware).",
-    disconnect: "Use Desvincular no menu ⋯ ou Backspace/Delete na seta sólida.",
-    inherited: "Seta tracejada: IoT ainda herda a família pelo driver — só leitura.",
+    disconnect: "Use Desvincular no menu ⋯ ou Backspace/Delete na seta sólida. A tracejada (driver) permanece.",
+    inherited:
+      "Seta tracejada: IoT e firmware compartilham o mesmo driver — indicação automática, não removível por desvínculo.",
     oneFirmwarePerDevice: "Cada IoT só pode ter um firmware; conectar outro substitui o anterior.",
     afterPublish: "Após publicar, amarre os IoTs no mapa para habilitar atualização remota.",
-    legend: "Sólida = explícita · Tracejada = via driver_key.",
+    legend:
+      "Sem linha = sem vínculo · Tracejada = herança por driver · Sólida = vínculo OTA explícito.",
     launchOta: "Disparo agora ou agendado a partir do popover/menu do nó.",
     updateLinked: "Dispara OTA para os IoTs ligados a esta família.",
   },
@@ -315,7 +317,25 @@ export const PP_HELP = {
     kpiUpdating: "IoTs com atualização autorizada, baixando ou aplicando agora.",
     kpiFailed: "IoTs cuja última atualização falhou — verifique erro e rede.",
     kpiOutdatedSuffix: "desatualizado(s)",
-    canvasLegend: "Sólida = vínculo direto · Tracejada = via driver.",
+    canvasLegend:
+      "Sem linha = sem vínculo · Tracejada = driver (só leitura) · Sólida = vínculo OTA (desvinculável).",
+    edgeModesTitle: "Conexões",
+    edgeModesHint:
+      "Sem linha: IoT sem vínculo e sem match de driver. Tracejada: herança automática pelo driver — não apaga com Desvincular. Sólida: vínculo explícito para OTA — remova com Desvincular ou Delete na seta.",
+    edgeNone: "sem linha = sem vínculo",
+    edgeDashed: "tracejada = driver (só leitura)",
+    edgeSolid: "sólida = vínculo OTA",
+    softDeleteDevice: "Soft delete do IoT: desativa operação e polling; o cadastro permanece (filtro Inativos).",
+    softDeleteFirmware:
+      "Soft delete da versão: arquiva — sai de novos disparos OTA; histórico e jobs antigos permanecem.",
+    softDeleteDeviceConfirmTitle: "Desativar IoT (soft delete)?",
+    softDeleteDeviceConfirmBody:
+      "O dispositivo deixa de ser operado e some do filtro «Todos» como ativo. Reative depois pelo menu ⋯. Não há exclusão definitiva.",
+    softDeleteDeviceConfirmLabel: "Desativar IoT",
+    softDeleteFirmwareConfirmTitle: "Arquivar versão (soft delete)?",
+    softDeleteFirmwareConfirmBody:
+      "A versão deixa de ser elegível para novos disparos OTA. Histórico e jobs antigos permanecem. Não há exclusão definitiva.",
+    softDeleteFirmwareConfirmLabel: "Arquivar versão",
     catalog: "Catálogo de firmwares no painel lateral — busque por família, versão ou driver.",
     catalogSearch: "Busca por família, versão, driver ou nome exibido.",
     jobs: "Jobs OTA no painel lateral. Abra os detalhes para ver IoT por IoT.",

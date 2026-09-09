@@ -209,7 +209,11 @@ export function EntityActionMenu({
             <ContextMenuItem label="Desvincular firmware" onSelect={() => run("unlink")} />
             <ContextMenuDivider />
             {device.enabled ? (
-              <ContextMenuItem label="Desativar" destructive onSelect={() => run("disable")} />
+              <ContextMenuItem
+                label="Desativar (soft delete)…"
+                destructive
+                onSelect={() => run("disable")}
+              />
             ) : (
               <ContextMenuItem label="Reativar" onSelect={() => run("enable")} />
             )}
@@ -231,7 +235,7 @@ export function EntityActionMenu({
               />
               <ContextMenuDivider />
               <ContextMenuItem
-                label="Arquivar versão"
+                label="Arquivar versão (soft delete)…"
                 destructive
                 onSelect={() => run("archive")}
               />

@@ -129,6 +129,11 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/PpHostContainedDrawer/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/AnchoredPanelPortal|EntitySummaryPopover/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/HubOtaKpiChips/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/HubCanvasLegend/);
+    expect(readRelative("components/HubCanvasLegend.tsx")).toMatch(/edgeNone|edgeDashed|edgeSolid/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/softDeleteDeviceConfirmTitle/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/edgeModesHint/);
+    expect(readRelative("components/EntityContextLayers.tsx")).toMatch(/soft delete/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/pp-admin-hub/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/pp-admin-bottom-bar/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/Campanhas OTA/);
