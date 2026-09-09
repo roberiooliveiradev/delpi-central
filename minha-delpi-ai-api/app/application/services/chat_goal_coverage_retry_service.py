@@ -1,0 +1,216 @@
+"""Wave-2 SEARCH_ACTIONS when goal coverage mismatches after execute.
+
+Excludes already-executed actionIds. No path/operationId branches.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from app.domain.models.action_plan import ActionPlan, ActionPlanGoal, ActionPlanStep
+from app.domain.services.chat_goal_coverage_service import ChatGoalCoverageService
+from app.domain.services.openapi_tool_routing_content_service import (
+    OpenApiToolRoutingContentService,
+)
+from app.domain.services.openapi_when_not_to_use_guidance_service import (
+    OpenApiWhenNotToUseGuidanceService,
+)
+
+
+class ChatGoalCoverageRetryService:
+    @classmethod
+    def plan_follow_ups(
+        cls,
+        *,
+        message: str,
+        tool_calls: list[dict[str, Any]] | None,
+        remaining_slots: int,
+        allowed_action_ids: list[str] | None,
+        actions_by_id: dict[str, dict[str, Any]] | None = None,
+        retriever=None,
+    ) -> list[dict[str, Any]]:
+        if remaining_slots < 1:
+            return []
+        allowed = [
+            str(item).strip()
+            for item in (allowed_action_ids or [])
+            if str(item).strip()
+        ]
+        if not allowed:
+            return []
+        calls = [item for item in (tool_calls or []) if isinstance(item, dict)]
+        tried = cls._tried_action_ids(calls)
+        catalog = dict(actions_by_id or {})
+        plan = cls._plan_from_tool_calls(calls, message=message)
+        if plan is None:
+            return []
+        report = ChatGoalCoverageService.evaluate(
+            plan,
+            execution_results=calls,
+            message=message,
+            actions_by_id=catalog,
+        )
+        if not report.mismatch_goal_ids and not report.pending_goal_ids:
+            return []
+        query = cls._search_query(report, plan, message)
+        remaining_allowed = [item for item in allowed if item not in tried]
+        if not remaining_allowed:
+            return []
+        candidates = cls._retrieve_candidates(
+            query,
+            remaining_allowed=remaining_allowed,
+            catalog=catalog,
+            retriever=retriever,
+        )
+        picked = candidates[: max(1, remaining_slots)]
+        parameters = cls._parameters_from_previous(calls)
+        follow_ups: list[dict[str, Any]] = []
+        for action in picked:
+            action_id = str(action.get("actionId") or action.get("action_id") or "").strip()
+            if not action_id or action_id in tried:
+                continue
+            follow_ups.append(cls._to_tool_call(action, parameters=parameters, query=query))
+            tried.add(action_id)
+            if len(follow_ups) >= remaining_slots:
+                break
+        return follow_ups
+
+    @classmethod
+    def _plan_from_tool_calls(
+        cls,
+        calls: list[dict[str, Any]],
+        *,
+        message: str,
+    ) -> ActionPlan | None:
+        steps: list[ActionPlanStep] = []
+        for index, item in enumerate(calls):
+            name = str(item.get("name") or "")
+            if name and name != "execute_external_action":
+                continue
+            action_id = cls._action_id_of(item)
+            if not action_id:
+                continue
+            arguments = item.get("arguments") if isinstance(item.get("arguments"), dict) else {}
+            steps.append(
+                ActionPlanStep(
+                    action_id=action_id,
+                    goal_ids=("g1",),
+                    step_id=f"s{index + 1}",
+                    arguments=dict(arguments),
+                )
+            )
+        if not steps:
+            return None
+        return ActionPlan(
+            goals=(ActionPlanGoal(goal_id="g1", intent=str(message or "")[:160]),),
+            steps=tuple(steps),
+        )
+
+    @classmethod
+    def _search_query(cls, report, plan: ActionPlan, message: str) -> str:
+        wanted = set(report.mismatch_goal_ids) | set(report.pending_goal_ids)
+        for goal in plan.goals:
+            if goal.goal_id in wanted and str(goal.intent or "").strip():
+                return str(goal.intent).strip()
+        return str(message or "").strip()
+
+    @classmethod
+    def _retrieve_candidates(
+        cls,
+        query: str,
+        *,
+        remaining_allowed: list[str],
+        catalog: dict[str, dict[str, Any]],
+        retriever,
+    ) -> list[dict[str, Any]]:
+        remaining_set = set(remaining_allowed)
+        raws: list[dict[str, Any]] = []
+        if retriever is not None:
+            retrieved = retriever.retrieve(
+                query,
+                allowed_action_ids=remaining_allowed,
+                catalog_actions=list(catalog.values()),
+            )
+            for item in retrieved or []:
+                raw = item.raw_action if hasattr(item, "raw_action") else item
+                if isinstance(raw, dict):
+                    raws.append(raw)
+        if not raws:
+            raws = [
+                catalog[action_id]
+                for action_id in remaining_allowed
+                if isinstance(catalog.get(action_id), dict)
+            ]
+        raws = [
+            item
+            for item in raws
+            if str(item.get("actionId") or item.get("action_id") or "").strip() in remaining_set
+        ]
+        raws = OpenApiWhenNotToUseGuidanceService.filter_candidates(
+            query,
+            raws,
+            raw_action_of=lambda item: item,
+        )
+        raws = OpenApiWhenNotToUseGuidanceService.prefer_candidates(
+            query,
+            raws,
+            raw_action_of=lambda item: item,
+        )
+        return raws
+
+    @classmethod
+    def _tried_action_ids(cls, calls: list[dict[str, Any]]) -> set[str]:
+        return {cls._action_id_of(item) for item in calls if cls._action_id_of(item)}
+
+    @classmethod
+    def _action_id_of(cls, item: dict[str, Any]) -> str:
+        arguments = item.get("arguments") if isinstance(item.get("arguments"), dict) else {}
+        metadata = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
+        return str(
+            item.get("actionId")
+            or arguments.get("actionId")
+            or arguments.get("action_id")
+            or metadata.get("actionId")
+            or ""
+        ).strip()
+
+    @classmethod
+    def _parameters_from_previous(cls, calls: list[dict[str, Any]]) -> dict[str, Any]:
+        for item in calls:
+            arguments = item.get("arguments") if isinstance(item.get("arguments"), dict) else {}
+            parameters = arguments.get("parameters")
+            if isinstance(parameters, dict) and parameters:
+                return dict(parameters)
+        return {}
+
+    @classmethod
+    def _to_tool_call(
+        cls,
+        action: dict[str, Any],
+        *,
+        parameters: dict[str, Any],
+        query: str,
+    ) -> dict[str, Any]:
+        action_id = str(action.get("actionId") or action.get("action_id") or "").strip()
+        reason = OpenApiToolRoutingContentService.get(
+            "selectionReasons",
+            "openapiFirstPlan",
+        )
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": action_id,
+                "parameters": dict(parameters),
+            },
+            "reason": reason,
+            "metadata": {
+                "selectionMode": "openapi_first",
+                "goalCoverageRetry": True,
+                "actionId": action_id,
+                "providerKey": action.get("providerKey"),
+                "operationId": action.get("operationId") or action.get("operation_id"),
+                "path": action.get("path"),
+                "method": action.get("method"),
+                "coverageQuery": query,
+            },
+        }

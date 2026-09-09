@@ -185,7 +185,8 @@
       "app/application/services/chat_turn_planner_orchestrator_service.py",
       "app/domain/services/openapi_planner_mode_service.py",
       "app/domain/services/chat_bounded_planner_mode_service.py",
-      "app/domain/services/chat_goal_coverage_service.py"
+      "app/domain/services/chat_goal_coverage_service.py",
+      "app/application/services/chat_goal_coverage_retry_service.py"
     ]
   }
 }

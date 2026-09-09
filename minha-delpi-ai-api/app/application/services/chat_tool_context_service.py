@@ -265,6 +265,20 @@ class ChatToolContextService:
             wave=1,
         )
 
+        execution = self._maybe_apply_goal_coverage_retry(
+            execution,
+            user_id=user_id,
+            access_token=access_token,
+            message=message,
+            raw_message=raw_message,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            max_external_action_calls=max_external_action_calls,
+            on_stream_activity=on_stream_activity,
+            paginated_service=paginated_service,
+            selected_external_action_meta=selection.selected_external_action_meta,
+        )
+
         # Critic pós-wave-1 ANTES do assembly: follow-ups entram em safe_tool_calls
         # e entram em evidenceRefs / multiSourceCrossRule na síntese.
         execution = self._maybe_apply_sufficiency_critic(
@@ -612,6 +626,149 @@ class ChatToolContextService:
                 "skipRag": True,
                 "currentMessage": raw_message,
             },
+        )
+
+    def _coverage_actions_by_id(self, allowed_action_ids: list[str] | None) -> dict:
+        allowed = {
+            str(item).strip()
+            for item in (allowed_action_ids or [])
+            if str(item).strip()
+        }
+        mapping: dict[str, dict] = {}
+        repository = self.external_action_repository
+        if repository is None:
+            return mapping
+        list_actions = getattr(repository, "list_actions", None)
+        if not callable(list_actions):
+            return mapping
+        for action in list_actions() or []:
+            if not isinstance(action, dict):
+                continue
+            action_id = str(action.get("actionId") or "").strip()
+            if action_id and (not allowed or action_id in allowed):
+                mapping[action_id] = action
+        return mapping
+
+    def _maybe_apply_goal_coverage_retry(
+        self,
+        execution,
+        *,
+        user_id: str,
+        access_token: str,
+        message: str,
+        raw_message: str,
+        allowed_action_ids: list[str] | None,
+        previous_messages: list | None,
+        max_external_action_calls: int | None,
+        on_stream_activity,
+        paginated_service,
+        selected_external_action_meta: dict | None,
+    ):
+        from app.application.services.chat_goal_coverage_retry_service import (
+            ChatGoalCoverageRetryService,
+        )
+        from app.application.services.chat_tool_context_execution_service import (
+            ToolExecutionState,
+        )
+        from app.application.services.retrieve_action_candidates_service import (
+            RetrieveActionCandidatesService,
+        )
+
+        if not isinstance(execution, ToolExecutionState):
+            return execution
+
+        used = sum(
+            1
+            for item in execution.safe_tool_calls
+            if isinstance(item, dict)
+            and str(item.get("name") or "") == "execute_external_action"
+        )
+        limit = max(1, int(max_external_action_calls or used or 1))
+        remaining = max(0, limit - used)
+        retriever = None
+        if self.external_action_repository is not None:
+            retriever = RetrieveActionCandidatesService(
+                self.external_action_repository,
+                semantic_ranker=getattr(
+                    self.external_action_selection_service,
+                    "semantic_ranker",
+                    None,
+                ),
+            )
+        follow_ups = ChatGoalCoverageRetryService.plan_follow_ups(
+            message=raw_message or message,
+            tool_calls=execution.safe_tool_calls,
+            remaining_slots=remaining,
+            allowed_action_ids=allowed_action_ids,
+            actions_by_id=self._coverage_actions_by_id(allowed_action_ids),
+            retriever=retriever,
+        )
+        if not follow_ups:
+            return execution
+
+        follow_state = self._execution_service.execute_selected_tools(
+            self,
+            user_id=user_id,
+            access_token=access_token,
+            message=message,
+            raw_message=raw_message,
+            allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
+            selected_tools=follow_ups,
+            on_stream_activity=on_stream_activity,
+            paginated_service=paginated_service,
+        )
+        for tool_call in execution.safe_tool_calls:
+            if isinstance(tool_call, dict):
+                meta = tool_call.get("metadata")
+                if isinstance(meta, dict) and meta.get("ok"):
+                    meta.setdefault("compositionRole", "primary")
+        for tool_call in follow_state.safe_tool_calls:
+            if isinstance(tool_call, dict):
+                meta = tool_call.get("metadata")
+                if isinstance(meta, dict):
+                    meta["compositionRole"] = "coverage_retry"
+        from app.domain.services.chat_presentation_enrichment_composition_service import (
+            ChatPresentationEnrichmentCompositionService,
+        )
+
+        ChatPresentationEnrichmentCompositionService.compose_into_primary(
+            [*execution.safe_tool_calls, *follow_state.safe_tool_calls]
+        )
+        if isinstance(selected_external_action_meta, dict):
+            selected_external_action_meta["goalCoverageRetry"] = [
+                str((item.get("arguments") or {}).get("actionId") or "").strip()
+                for item in follow_ups
+                if str((item.get("arguments") or {}).get("actionId") or "").strip()
+            ]
+        merged_context = execution.context
+        if follow_state.context:
+            merged_context = (
+                f"{execution.context}\n\n{follow_state.context}".strip()
+                if execution.context
+                else follow_state.context
+            )
+        return ToolExecutionState(
+            context=merged_context,
+            safe_tool_calls=[*execution.safe_tool_calls, *follow_state.safe_tool_calls],
+            direct_answer=follow_state.direct_answer or execution.direct_answer,
+            skip_rag=execution.skip_rag or follow_state.skip_rag,
+            last_external_action_data=(
+                follow_state.last_external_action_data
+                or execution.last_external_action_data
+            ),
+            last_web_search_data=execution.last_web_search_data,
+            last_platform_tool_result=execution.last_platform_tool_result,
+            web_sources=execution.web_sources,
+            web_search_payload=execution.web_search_payload,
+            external_action_results=[
+                *execution.external_action_results,
+                *follow_state.external_action_results,
+            ],
+            pagination_continue_prompt=(
+                follow_state.pagination_continue_prompt
+                or execution.pagination_continue_prompt
+            ),
         )
 
     def _maybe_apply_sufficiency_critic(
