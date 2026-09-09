@@ -20,11 +20,20 @@ describe("ContextMenu", () => {
         </ContextMenuToolbar>
         <ContextMenuDivider />
         <ContextMenuItem label="Colar" shortcut="Ctrl+V" disabled />
+        <ContextMenuItem
+          label="Excluir"
+          hint="Remove o item selecionado."
+          destructive
+          onSelect={() => undefined}
+        />
       </ContextMenu>,
     );
 
     expect(screen.getByRole("menu", { name: "Menu de teste" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: /Colar/i })).toHaveProperty("disabled", true);
+    const deleteItem = screen.getByRole("menuitem", { name: /Excluir/i });
+    expect(deleteItem.querySelector(".delpi-ui-help-tooltip--wrap")).toBeTruthy();
+    expect(deleteItem.querySelector("[aria-describedby]")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Recortar" }));
     expect(onCut).toHaveBeenCalledTimes(1);

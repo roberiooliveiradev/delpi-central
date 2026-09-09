@@ -5,8 +5,10 @@ import {
   ContextMenuDivider,
   ContextMenuItem,
   PpActionButton,
+  PpHintAction,
 } from "../app/productionPulseUi";
 import type { FirmwareListItem } from "../api/productionPulseApi";
+import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import type { AdminEntityRef } from "../utils/adminHubUiState";
 import { isPublishedFirmware } from "../utils/hubOtaKpis";
@@ -133,13 +135,20 @@ export function EntitySummaryPopover({
         ) : null}
         <div className="pp-entity-summary__actions">
           {canManage ? (
-            <PpActionButton onClick={onPrimary}>
-              {isDevice ? "Atualizar agora" : "Atualizar vinculados"}
-            </PpActionButton>
+            <PpHintAction
+              hint={isDevice ? PP_HELP.hub.menuOtaDeviceNow : PP_HELP.hub.menuOtaFamilyNow}
+              ariaLabel={isDevice ? "Ajuda: Atualizar agora" : "Ajuda: Atualizar vinculados"}
+            >
+              <PpActionButton onClick={onPrimary}>
+                {isDevice ? "Atualizar agora" : "Atualizar vinculados"}
+              </PpActionButton>
+            </PpHintAction>
           ) : null}
-          <PpActionButton variant="ghost" onClick={onInspect}>
-            Ver detalhes
-          </PpActionButton>
+          <PpHintAction hint={PP_HELP.hub.menuOpenDetails} ariaLabel="Ajuda: Ver detalhes">
+            <PpActionButton variant="ghost" onClick={onInspect}>
+              Ver detalhes
+            </PpActionButton>
+          </PpHintAction>
         </div>
       </div>
     </AnchoredPanelPortal>
@@ -200,52 +209,104 @@ export function EntityActionMenu({
       <div ref={panelRef} className="pp-entity-menu" role="menu">
         {entity.type === "device" && device ? (
           <>
-            <ContextMenuItem label="Editar" onSelect={() => run("edit")} />
-            <ContextMenuItem label="Renomear" onSelect={() => run("rename")} />
+            <ContextMenuItem
+              label="Editar"
+              hint={PP_HELP.hub.menuEditDevice}
+              onSelect={() => run("edit")}
+            />
+            <ContextMenuItem
+              label="Renomear"
+              hint={PP_HELP.hub.menuRenameDevice}
+              onSelect={() => run("rename")}
+            />
             <ContextMenuDivider />
-            <ContextMenuItem label="Atualizar agora" onSelect={() => run("ota-now")} />
-            <ContextMenuItem label="Agendar atualização…" onSelect={() => run("ota-schedule")} />
+            <ContextMenuItem
+              label="Atualizar agora"
+              hint={PP_HELP.hub.menuOtaDeviceNow}
+              onSelect={() => run("ota-now")}
+            />
+            <ContextMenuItem
+              label="Agendar atualização…"
+              hint={PP_HELP.hub.menuOtaDeviceSchedule}
+              onSelect={() => run("ota-schedule")}
+            />
             <ContextMenuDivider />
-            <ContextMenuItem label="Desvincular firmware" onSelect={() => run("unlink")} />
+            <ContextMenuItem
+              label="Desvincular firmware"
+              hint={PP_HELP.hub.menuUnlinkFirmware}
+              onSelect={() => run("unlink")}
+            />
             <ContextMenuDivider />
             {device.enabled ? (
               <ContextMenuItem
                 label="Desativar (soft delete)…"
+                hint={PP_HELP.hub.menuDisableDevice}
                 destructive
                 onSelect={() => run("disable")}
               />
             ) : (
-              <ContextMenuItem label="Reativar" onSelect={() => run("enable")} />
+              <ContextMenuItem
+                label="Reativar"
+                hint={PP_HELP.hub.menuEnableDevice}
+                onSelect={() => run("enable")}
+              />
             )}
           </>
         ) : null}
         {entity.type === "firmware" && firmware ? (
           isPublishedFirmware(firmware) ? (
             <>
-              <ContextMenuItem label="Editar metadados" onSelect={() => run("edit")} />
-              <ContextMenuItem label="Criar nova versão" onSelect={() => run("new-version")} />
+              <ContextMenuItem
+                label="Editar metadados"
+                hint={PP_HELP.hub.menuEditFirmwareMeta}
+                onSelect={() => run("edit")}
+              />
+              <ContextMenuItem
+                label="Criar nova versão"
+                hint={PP_HELP.hub.menuNewFirmwareVersion}
+                onSelect={() => run("new-version")}
+              />
               <ContextMenuDivider />
               <ContextMenuItem
                 label="Atualizar vinculados agora"
+                hint={PP_HELP.hub.menuOtaFamilyNow}
                 onSelect={() => run("ota-now")}
               />
               <ContextMenuItem
                 label="Agendar atualização…"
+                hint={PP_HELP.hub.menuOtaFamilySchedule}
                 onSelect={() => run("ota-schedule")}
               />
               <ContextMenuDivider />
               <ContextMenuItem
                 label="Arquivar versão (soft delete)…"
+                hint={PP_HELP.hub.menuArchiveFirmware}
                 destructive
                 onSelect={() => run("archive")}
               />
             </>
           ) : (
             <>
-              <ContextMenuItem label="Editar" onSelect={() => run("edit")} />
-              <ContextMenuItem label="Anexar/alterar source" onSelect={() => run("edit")} />
-              <ContextMenuItem label="Anexar binário" onSelect={() => run("edit")} />
-              <ContextMenuItem label="Publicar" onSelect={() => run("edit")} />
+              <ContextMenuItem
+                label="Editar"
+                hint={PP_HELP.hub.menuEditFirmwareDraft}
+                onSelect={() => run("edit")}
+              />
+              <ContextMenuItem
+                label="Anexar/alterar source"
+                hint={PP_HELP.hub.menuAttachSource}
+                onSelect={() => run("edit")}
+              />
+              <ContextMenuItem
+                label="Anexar binário"
+                hint={PP_HELP.hub.menuAttachBinary}
+                onSelect={() => run("edit")}
+              />
+              <ContextMenuItem
+                label="Publicar"
+                hint={PP_HELP.hub.menuPublishFirmware}
+                onSelect={() => run("edit")}
+              />
             </>
           )
         ) : null}

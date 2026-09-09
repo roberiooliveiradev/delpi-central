@@ -32,13 +32,16 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 
 Superfície única Admin: canvas fullscreen, KPIs em chips, catálogos/jobs em painéis laterais, detalhe/CRUD em modais host-contained e popovers ancorados (`AnchoredPanelPortal`). Feedback transitório via FloatingNotice; confirmações destrutivas via ConfirmModalPanel.
 
+**Conexões:** sem linha / tracejada (driver) / sólida (vínculo OTA). **Soft delete:** Desativar IoT · Arquivar versão. **Menu ⋯:** cada item com `hint` (`PP_HELP.hub.menu*`).
+
 Helps: `PP_HELP.hub.*`, `PP_HELP.otaLinks.*`.
 
 | Elemento UI | Chave help |
 |-------------|------------|
 | Hero / CTAs | `hub.hero` · `hub.newDevice` · `hub.newFirmware` · `hub.refresh` |
 | KPIs | `hub.kpiPublished` · `hub.kpiLinked` · `hub.kpiUpdating` · `hub.kpiFailed` |
-| Canvas / legenda | `hub.hero` · `hub.canvasLegend` |
+| Canvas / legenda | `hub.edgeModesHint` · `hub.edgeNone` · `hub.edgeDashed` · `hub.edgeSolid` |
+| Menu ⋯ IoT/FW | `hub.menuEditDevice` … `hub.menuArchiveFirmware` (via `ContextMenuItem.hint`) |
 | Catálogo | `hub.catalog` · `hub.catalogSearch` |
 | Form OTA / jobs | `hub.jobs` · `ota.jobCreate` · `ota.jobsList` |
 
