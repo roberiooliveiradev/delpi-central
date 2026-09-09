@@ -28,12 +28,32 @@ _PALETTE_HINTS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("brand", ("marca", "brand", "corporativo")),
 )
 
-_DIM_PATTERNS = (
-    (r"\bpor\s+([a-zà-ú0-9_ ]{2,40?}?)(?:\s+e\s+|\s*[×x]\s*|\s+com\s+|\s*$)", "dim"),
+# Prefer axes inside parentheses: (produto × depósito/filial)
+_PAREN_MATRIX = re.compile(
+    r"\(([^()]{1,80}?[×x][^()]{1,80}?)\)",
+    flags=re.IGNORECASE,
 )
 
+# Fallback matrix split — still used on the focused fragment, not the full narrative.
 _COMPARE_SPLIT = re.compile(
     r"(.+?)\s*[×x]\s*(.+?)(?:\s+pela?\s+|\s+com\s+|\s+por\s+|\s*$)",
+    flags=re.IGNORECASE,
+)
+
+_AXIS_SEP = re.compile(r"\s*[×x]\s*", flags=re.IGNORECASE)
+
+_INSTRUCTIONAL_PREFIX = re.compile(
+    r"^(?:"
+    r"agora\s+)?"
+    r"(?:"
+    r"coloque\s+(?:isso|isto|esse\s+resultado)?\s*(?:em\s+(?:um\s+)?)?|"
+    r"mostre\s+(?:isso\s+)?(?:em\s+(?:um\s+)?)?|"
+    r"mostra\s+(?:isso\s+)?(?:em\s+(?:um\s+)?)?|"
+    r"exiba\s+(?:isso\s+)?(?:em\s+(?:um\s+)?)?|"
+    r"fa[cç]a\s+(?:um\s+)?|"
+    r"transforme\s+(?:isso\s+)?(?:em\s+(?:um\s+)?)?|"
+    r"gere\s+(?:um\s+)?"
+    r")?",
     flags=re.IGNORECASE,
 )
 
@@ -110,18 +130,14 @@ class PresentationIntentExtractorService:
         dimensions: list[str] = []
         measure: str | None = None
 
-        matrix = _COMPARE_SPLIT.search(text)
-        if matrix:
-            left = matrix.group(1).strip()
-            right = matrix.group(2).strip()
-            for part in (left, right):
-                cleaned = cls._strip_view_noise(part)
-                if cleaned:
-                    dimensions.append(cleaned)
+        for part in cls._matrix_axis_parts(text):
+            cleaned = cls._strip_view_noise(part)
+            if cleaned and cleaned not in dimensions:
+                dimensions.append(cleaned)
 
         # "pela produção" / "com qtd planejada"
         measure_match = re.search(
-            r"(?:pela?|com|usando)\s+(?:a\s+)?([a-zà-ú0-9_. ]{3,40})$",
+            r"(?:pela?|com|usando)\s+(?:a\s+)?([a-zà-ú0-9_./ ]{3,40})$",
             text,
         )
         if measure_match:
@@ -143,11 +159,26 @@ class PresentationIntentExtractorService:
         return dimensions[:4], measure
 
     @classmethod
+    def _matrix_axis_parts(cls, text: str) -> list[str]:
+        paren = _PAREN_MATRIX.search(text)
+        if paren:
+            return [part.strip() for part in _AXIS_SEP.split(paren.group(1)) if part.strip()]
+
+        # Focus fragment: drop instructional / view noise before scanning ×.
+        focused = cls._strip_view_noise(_INSTRUCTIONAL_PREFIX.sub("", text).strip())
+        matrix = _COMPARE_SPLIT.search(focused) or _COMPARE_SPLIT.search(text)
+        if not matrix:
+            return []
+
+        return [matrix.group(1).strip(), matrix.group(2).strip()]
+
+    @classmethod
     def _strip_view_noise(cls, value: str) -> str:
         token = str(value or "").strip().lower()
         phrases = (
             "mapa de calor",
             "heatmap",
+            "matriz de intensidade",
             "gráfico de barras",
             "grafico de barras",
             "gráfico de linha",
@@ -156,12 +187,23 @@ class PresentationIntentExtractorService:
             "grafico",
             "tabela",
             "tons de azul",
+            "agora coloque isso",
+            "coloque isso",
+            "coloque",
+            "mostre",
+            "mostra",
+            "exiba",
+            "faça",
+            "faca",
+            "transforme",
+            "gere",
         )
         for item in phrases:
             token = token.replace(item, " ")
         token = re.sub(
-            r"\b(em|da|do|das|dos|um|uma|o|a|os|as|azul)\b",
+            r"\b(em|da|do|das|dos|um|uma|o|a|os|as|azul|isso|isto|esse|esta|resultado)\b",
             " ",
             token,
         )
+        token = token.replace("(", " ").replace(")", " ")
         return re.sub(r"\s+", " ", token).strip(" .,:;")

@@ -63,7 +63,6 @@ def _stock_like_profile():
     return PresentationDataProfileBuilderService.build(_STOCK_LIKE_ROWS)
 
 
-@_BUG_A
 def test_bug_a_baseline_extractor_paren_axes_are_short():
     intent = PresentationIntentExtractorService.extract(_P0_MESSAGE)
     assert intent.mark == "heatmap"
