@@ -1,6 +1,6 @@
 # Hub `chatPresentation.ts` — contrato MFE ↔ metadata da API
 
-> Complementa [`component-structure.md`](./component-structure.md) e [`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md) (PR-27–38; extração hub PR-39–41).
+> Complementa [`component-structure.md`](./component-structure.md), [`frontend-refactor-roadmap.md`](./frontend-refactor-roadmap.md) (PR-27–38; extração hub PR-39–41) e o pipeline API [`minha-delpi-ai-api/docs/architecture/chat-presentation-hub.md`](../../../minha-delpi-ai-api/docs/architecture/chat-presentation-hub.md) (Spec → compiler → renderPlan → MFE + Color Family Catalog).
 
 ## Por que fica na raiz
 
@@ -51,7 +51,7 @@ Sem `renderPlan` (mensagens antigas): fallback legado permanece.
 | Tree flatten/export, chart payload normalize, explain fallback | `presentation/pipeline/treePresentationUtils.ts`, `chartPresentationNormalize.ts`, `chartExplain.ts` | 30, 32 |
 | Busca/filtro tabela (todas colunas + contains) + busca árvore | `presentationCategoryFilter.ts`, `ChatRichTable`, `ChatRichTree`, `ChatRichSearchField` | — |
 | Formatação célula KPI/tabela | `presentation/tableCellFormatting.ts` | 34 |
-| Export CSV/XLSX/PNG e lousa markdown | `presentation/export/exportUtils.ts`, `chartPngExport.ts`, `chartCanvasMarkdown.ts`, `dashboardExportCsv.ts` | 38 |
+| Export CSV/XLSX/PNG e lousa markdown | `presentation/export/exportUtils.ts` (`exportColumns` > `columns`), `chartPngExport.ts`, `chartCanvasMarkdown.ts`, `dashboardExportCsv.ts` | 38 |
 | Export PDF + dispatch central | `src/export/` (`runChatExport`, `pdf/delpiDocumentHtml.ts`) — ver [`export.md`](./export.md) | jun/2026 |
 | Readers metadata (`get*FromToolCalls`, render plan, coverage) | `presentation/presentationMetadataReaders.ts` | 39 |
 | Normalização markdown (`strip*`, `tablePresentationToMarkdown`) | `presentation/presentationMarkdownNormalization.ts` | 40 |
@@ -93,7 +93,9 @@ Cada fatia exige: mover + re-export temporário no hub (deprecate) **ou** atuali
 
 | Recurso | Caminho |
 |---------|---------|
+| Pipeline API (Spec → renderPlan) | `minha-delpi-ai-api/docs/architecture/chat-presentation-hub.md` |
 | Contrato API (metadata) | `minha-delpi-ai-api` → presenters / `presentationDecision` |
+| Color Family Catalog | `plugins/plugin-ui/src/theme/colorFamilyCatalog.ts` |
 | Vocabulário MFE | `src/content/presentation_vocabulary.json` |
 | CSS rich (não no hub TS) | [`rich-presentation-css.md`](./rich-presentation-css.md) |
 | Testes CI apresentação | `.github/workflows/minha-delpi-ai-api-presentation.yml` |

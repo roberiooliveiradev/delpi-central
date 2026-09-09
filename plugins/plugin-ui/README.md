@@ -21,6 +21,17 @@ Centraliza primitivos de UI que hoje estão duplicados em dezenas de plugins (ex
 | [docs/migration-catalog.md](./docs/migration-catalog.md) | Plugins a migrar das cópias locais |
 | [docs/export-catalog.md](./docs/export-catalog.md) | Formatos de exportação (CSV/XLSX/PDF) e fases E1–E4 |
 
+### Color Family Catalog (`paletteFamily`)
+
+Famílias semânticas de paleta para gráficos e heatmaps do chat — IDs alinhados ao `PresentationSpec.paletteFamily` da API (`sequential-blue`, `diverging-status`, `categorical`, …).
+
+- **Implementação:** `src/theme/colorFamilyCatalog.ts` (+ testes `colorFamilyCatalog.test.ts`)
+- **Export:** `@delpi/plugin-ui/theme` → `resolveColorFamily`, `ColorFamilyId`
+- **Consumidor principal:** `plugins/minha-delpi-chat` via `mdcCssVars.ts` (tokens `--mdc-chart-series-*` / heatmap, tema claro/escuro)
+- **Doc pipeline:** [`minha-delpi-ai-api/docs/architecture/chat-presentation-hub.md`](../../minha-delpi-ai-api/docs/architecture/chat-presentation-hub.md)
+
+A API emite o ID semântico; este catálogo resolve para tokens CSS — não usar hex solto no payload operacional.
+
 ---
 
 ## Quick start
