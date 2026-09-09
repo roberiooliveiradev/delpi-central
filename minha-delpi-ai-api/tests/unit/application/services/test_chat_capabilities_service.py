@@ -269,3 +269,21 @@ def test_training_agent_interaction_index_covers_six_interactions():
     assert interactions == {1, 2, 3, 4, 5, 6}
     assert len(TRAINING_AGENT_INTERACTION_INDEX) >= 9
 
+
+def test_stock_help_distinguishes_quality_inspection():
+    from app.infrastructure.content.content_service import ContentService
+
+    data = ContentService.load_json("assistant/capabilities")
+    body = str((data.get("featureAnswers") or {}).get("stockHelp", {}).get("body") or "")
+    assert "Consulte o estoque do produto" in body
+    assert "inspeção" in body.lower()
+    stock_rule = next(
+        item
+        for item in (data.get("pathRules") or [])
+        if item.get("token") == "/stock"
+    )
+    assert any(
+        "Consulte o estoque do produto" in str(example)
+        for example in (stock_rule.get("examples") or [])
+    )
+

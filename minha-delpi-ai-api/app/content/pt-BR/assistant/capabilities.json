@@ -493,7 +493,7 @@
     },
     "stockHelp": {
       "title": "**Consulta de estoque**",
-      "body": "Selecione um **agente** com action de estoque habilitada e informe o **código do produto**.\n\n**Exemplos:**\n- «Qual o estoque do produto 10080001?»\n- «Saldo do 10080001 em tabela»\n\nSem agente ou sem permissão na rota, a consulta não é executada — apenas consultas autorizadas."
+      "body": "Selecione um **agente** com action de estoque habilitada e informe o **código do produto**. Isso consulta **saldo e posições** (`GET /products/{code}/stock`) — não a inspeção de qualidade (QP).\n\n**Exemplos:**\n- «Consulte o estoque do produto 10080001»\n- «Qual o estoque do produto 10080001?»\n- «Saldo do 10080001 em tabela»\n\nPara inspeção QP, peça explicitamente «inspeção do produto …». Sem agente ou sem permissão na rota, a consulta não é executada — apenas consultas autorizadas."
     },
     "destructiveAction": {
       "title": "**Alteração e exclusão de cadastros**",
@@ -513,6 +513,7 @@
       "token": "/stock",
       "category": "Estoque de produto",
       "examples": [
+        "Consulte o estoque do produto 10080001",
         "estoque do produto 10080001",
         "saldo do 10080001",
         "quanto tem em estoque do 10080001"
