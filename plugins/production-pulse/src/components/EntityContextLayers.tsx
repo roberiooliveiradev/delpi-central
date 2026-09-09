@@ -1,3 +1,18 @@
+import {
+  Archive,
+  CalendarClock,
+  FileCode,
+  FilePenLine,
+  FilePlus2,
+  Link2Off,
+  Package,
+  Pencil,
+  Power,
+  PowerOff,
+  RefreshCw,
+  TextCursorInput,
+  Upload,
+} from "lucide-react";
 import { useEffect, useRef } from "react";
 
 import {
@@ -211,28 +226,33 @@ export function EntityActionMenu({
           <>
             <ContextMenuItem
               label="Editar"
+              icon={Pencil}
               hint={PP_HELP.hub.menuEditDevice}
               onSelect={() => run("edit")}
             />
             <ContextMenuItem
               label="Renomear"
+              icon={TextCursorInput}
               hint={PP_HELP.hub.menuRenameDevice}
               onSelect={() => run("rename")}
             />
             <ContextMenuDivider />
             <ContextMenuItem
               label="Atualizar agora"
+              icon={RefreshCw}
               hint={PP_HELP.hub.menuOtaDeviceNow}
               onSelect={() => run("ota-now")}
             />
             <ContextMenuItem
               label="Agendar atualização…"
+              icon={CalendarClock}
               hint={PP_HELP.hub.menuOtaDeviceSchedule}
               onSelect={() => run("ota-schedule")}
             />
             <ContextMenuDivider />
             <ContextMenuItem
               label="Desvincular firmware"
+              icon={Link2Off}
               hint={PP_HELP.hub.menuUnlinkFirmware}
               onSelect={() => run("unlink")}
             />
@@ -240,6 +260,7 @@ export function EntityActionMenu({
             {device.enabled ? (
               <ContextMenuItem
                 label="Desativar (soft delete)…"
+                icon={PowerOff}
                 hint={PP_HELP.hub.menuDisableDevice}
                 destructive
                 onSelect={() => run("disable")}
@@ -247,6 +268,7 @@ export function EntityActionMenu({
             ) : (
               <ContextMenuItem
                 label="Reativar"
+                icon={Power}
                 hint={PP_HELP.hub.menuEnableDevice}
                 onSelect={() => run("enable")}
               />
@@ -258,28 +280,33 @@ export function EntityActionMenu({
             <>
               <ContextMenuItem
                 label="Editar metadados"
+                icon={FilePenLine}
                 hint={PP_HELP.hub.menuEditFirmwareMeta}
                 onSelect={() => run("edit")}
               />
               <ContextMenuItem
                 label="Criar nova versão"
+                icon={FilePlus2}
                 hint={PP_HELP.hub.menuNewFirmwareVersion}
                 onSelect={() => run("new-version")}
               />
               <ContextMenuDivider />
               <ContextMenuItem
                 label="Atualizar vinculados agora"
+                icon={RefreshCw}
                 hint={PP_HELP.hub.menuOtaFamilyNow}
                 onSelect={() => run("ota-now")}
               />
               <ContextMenuItem
                 label="Agendar atualização…"
+                icon={CalendarClock}
                 hint={PP_HELP.hub.menuOtaFamilySchedule}
                 onSelect={() => run("ota-schedule")}
               />
               <ContextMenuDivider />
               <ContextMenuItem
                 label="Arquivar versão (soft delete)…"
+                icon={Archive}
                 hint={PP_HELP.hub.menuArchiveFirmware}
                 destructive
                 onSelect={() => run("archive")}
@@ -289,21 +316,25 @@ export function EntityActionMenu({
             <>
               <ContextMenuItem
                 label="Editar"
+                icon={Pencil}
                 hint={PP_HELP.hub.menuEditFirmwareDraft}
                 onSelect={() => run("edit")}
               />
               <ContextMenuItem
                 label="Anexar/alterar source"
+                icon={FileCode}
                 hint={PP_HELP.hub.menuAttachSource}
                 onSelect={() => run("edit")}
               />
               <ContextMenuItem
                 label="Anexar binário"
+                icon={Package}
                 hint={PP_HELP.hub.menuAttachBinary}
                 onSelect={() => run("edit")}
               />
               <ContextMenuItem
                 label="Publicar"
+                icon={Upload}
                 hint={PP_HELP.hub.menuPublishFirmware}
                 onSelect={() => run("edit")}
               />

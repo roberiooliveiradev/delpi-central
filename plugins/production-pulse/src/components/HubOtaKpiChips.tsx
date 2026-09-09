@@ -49,12 +49,22 @@ export function HubOtaKpiChips({
           Saúde da frota ▾
         </button>
       </PpHintAction>
-      <span className="pp-hub-chip pp-hub-chip--static">{kpis.linkedDevices} IoTs vinculados</span>
-      <span className="pp-hub-chip pp-hub-chip--static">{kpis.outdatedDevices} desatualizados</span>
+      <PpHintAction hint={PP_HELP.hub.kpiLinked} ariaLabel="Ajuda: IoTs vinculados">
+        <span className="pp-hub-chip pp-hub-chip--static">
+          {kpis.linkedDevices} IoTs vinculados
+        </span>
+      </PpHintAction>
+      <PpHintAction hint={PP_HELP.hub.kpiOutdated} ariaLabel="Ajuda: desatualizados">
+        <span className="pp-hub-chip pp-hub-chip--static">
+          {kpis.outdatedDevices} desatualizados
+        </span>
+      </PpHintAction>
       {onOpenJobs ? (
-        <PpActionButton variant="ghost" className="pp-hub-chip-btn" onClick={onOpenJobs}>
-          Jobs OTA ({activeJobs})
-        </PpActionButton>
+        <PpHintAction hint={PP_HELP.hub.kpiJobsChip} ariaLabel="Ajuda: Jobs OTA">
+          <PpActionButton variant="ghost" className="pp-hub-chip-btn" onClick={onOpenJobs}>
+            Jobs OTA ({activeJobs})
+          </PpActionButton>
+        </PpHintAction>
       ) : null}
       <AnchoredPanelPortal
         open={open}

@@ -34,7 +34,7 @@ Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.c
 | Conteúdo | Superfície |
 |----------|------------|
 | Clique no nó | Summary popover (`EntityContextLayers`) |
-| Menu ⋯ | Context menu — **todo** `ContextMenuItem` com `hint` de `PP_HELP.hub.menu*` |
+| Menu ⋯ | Context menu — ícone Lucide + `hint` (`PP_HELP.hub.menu*`) com ícone ? visível |
 | Detalhe FW/IoT/Job | `PpDetailDialog` (wide) |
 | CRUD IoT/FW | `PpWorkbenchDialog` (page) |
 | Agendar OTA | `PpHostContainedDialog` compacto |

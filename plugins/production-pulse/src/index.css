@@ -2316,19 +2316,37 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 6px;
   color: var(--pp-accent);
+  background: color-mix(in srgb, var(--pp-accent) 16%, transparent);
 }
 
 .pp-firmware-node .pp-map-node__kind {
   color: var(--pp-accent);
+  background: color-mix(in srgb, var(--pp-accent) 18%, transparent);
 }
 
 .pp-device-node .pp-map-node__kind {
-  color: var(--pp-text-muted);
+  color: var(--pp-success, #22c55e);
+  background: color-mix(in srgb, var(--pp-success, #22c55e) 16%, transparent);
 }
 
 .pp-device-node--linked .pp-map-node__kind {
   color: var(--pp-success, #15803d);
+}
+
+.pp-hub-legend__title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pp-map-overlay-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .pp-device-node[data-outdated="true"] {

@@ -55,6 +55,13 @@
   background: var(--delpi-ui-border, var(--border, #e5e7eb));
 }
 
+.delpi-ui-context-menu__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  width: 100%;
+}
+
 .delpi-ui-context-menu__item {
   display: grid;
   grid-template-columns: 24px 1fr auto;
@@ -62,13 +69,22 @@
   gap: 8px;
   width: 100%;
   min-height: 32px;
-  padding: 4px 12px 4px 8px;
+  padding: 4px 8px 4px 8px;
   border: none;
   background: transparent;
   color: inherit;
   text-align: left;
   cursor: pointer;
   transition: background 0.12s ease;
+}
+
+.delpi-ui-context-menu__item--with-hint {
+  padding-right: 4px;
+}
+
+.delpi-ui-context-menu__row:hover .delpi-ui-context-menu__item:not(:disabled),
+.delpi-ui-context-menu__row:focus-within .delpi-ui-context-menu__item:not(:disabled) {
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 8%, transparent);
 }
 
 .delpi-ui-context-menu__item:hover:not(:disabled),
@@ -109,6 +125,19 @@
   font-size: 11px;
   color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 50%, transparent));
   letter-spacing: 0.02em;
+}
+
+.delpi-ui-context-menu__item-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 8px;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 50%, transparent));
+}
+
+.delpi-ui-context-menu__item-hint .delpi-ui-help-tooltip__trigger {
+  min-width: 28px;
+  min-height: 28px;
 }
 
 .delpi-ui-context-menu__item-chevron {

@@ -31,6 +31,7 @@ import {
   fileDropzoneBemClasses,
   HintAction,
   IconButton,
+  HelpTooltip,
   PageHero,
   pageHeroBemClasses,
   sectionCardPacBemClasses,
@@ -124,6 +125,7 @@ export const PpFloatingNotices = createFloatingNoticeStack({
 
 export { useFloatingNotices };
 export const PpIconButton = IconButton;
+export { HelpTooltip };
 
 export { AnchoredPanelPortal, ContextMenuDivider, ContextMenuItem };
 

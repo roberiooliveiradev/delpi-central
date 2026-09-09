@@ -52,7 +52,17 @@ import {
   useFloatingNotices,
   type DataTableColumn,
 } from "../app/productionPulseUi";
-import { Lock, LockOpen, PanelLeftClose, PanelLeftOpen, RefreshCw } from "lucide-react";
+import {
+  Cpu,
+  FileCode,
+  ListTodo,
+  Lock,
+  LockOpen,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
+  RefreshCw,
+} from "lucide-react";
 import { resolveBranchOptions } from "../constants/branches";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import {
@@ -880,52 +890,64 @@ export function FirmwareLinksPage({
 
   const overlayTopLeft = leftChromeCollapsed ? (
     <div className="pp-map-overlay-stack pp-map-overlay-stack--collapsed">
-      <PpIconButton
-        aria-label="Expandir filtros do mapa"
-        aria-expanded={false}
-        onClick={() => setLeftChromeCollapsed(false)}
-      >
-        <PanelLeftOpen size={18} />
-      </PpIconButton>
+      <PpHintAction hint={PP_HELP.hub.collapseFilters} ariaLabel="Ajuda: Expandir filtros">
+        <PpIconButton
+          aria-label="Expandir filtros do mapa"
+          aria-expanded={false}
+          onClick={() => setLeftChromeCollapsed(false)}
+        >
+          <PanelLeftOpen size={18} />
+        </PpIconButton>
+      </PpHintAction>
     </div>
   ) : (
     <div className="pp-map-overlay-stack">
       <div className="pp-map-overlay-title">
         <div className="pp-map-overlay-title__row">
           <strong>Admin · OTA</strong>
-          <PpIconButton
-            aria-label="Recolher filtros do mapa"
-            aria-expanded={true}
-            onClick={() => setLeftChromeCollapsed(true)}
-          >
-            <PanelLeftClose size={16} />
-          </PpIconButton>
+          <PpHintAction hint={PP_HELP.hub.collapseFilters} ariaLabel="Ajuda: Recolher filtros">
+            <PpIconButton
+              aria-label="Recolher filtros do mapa"
+              aria-expanded={true}
+              onClick={() => setLeftChromeCollapsed(true)}
+            >
+              <PanelLeftClose size={16} />
+            </PpIconButton>
+          </PpHintAction>
         </div>
         <span className="pp-muted">Mapa Firmware ↔ IoT</span>
       </div>
-      <PpCatalogSearchBar
-        value={ui.filters.q}
-        onChange={(q) => setUi((current) => ({ ...current, filters: { ...current.filters, q } }))}
-        placeholder="Buscar no mapa…"
-      />
-      <PpSegmentToggle
-        ariaLabel="Filtro de status"
-        size="sm"
-        widthMode="content"
-        value={ui.filters.status || "all"}
-        onChange={(value) =>
-          setUi((current) => ({
-            ...current,
-            filters: { ...current.filters, status: value === "all" ? "" : value },
-          }))
-        }
-        options={[
-          { value: "all", label: "Todos" },
-          { value: "online", label: "Online" },
-          { value: "offline", label: "Offline" },
-          { value: "disabled", label: "Inativos" },
-        ]}
-      />
+      <PpHintAction hint={PP_HELP.hub.mapSearch} ariaLabel="Ajuda: Buscar no mapa">
+        <div>
+          <PpCatalogSearchBar
+            value={ui.filters.q}
+            onChange={(q) =>
+              setUi((current) => ({ ...current, filters: { ...current.filters, q } }))
+            }
+            placeholder="Buscar no mapa…"
+          />
+        </div>
+      </PpHintAction>
+      <PpHintAction hint={PP_HELP.hub.statusFilter} ariaLabel="Ajuda: Filtro de status">
+        <PpSegmentToggle
+          ariaLabel="Filtro de status"
+          size="sm"
+          widthMode="content"
+          value={ui.filters.status || "all"}
+          onChange={(value) =>
+            setUi((current) => ({
+              ...current,
+              filters: { ...current.filters, status: value === "all" ? "" : value },
+            }))
+          }
+          options={[
+            { value: "all", label: "Todos" },
+            { value: "online", label: "Online" },
+            { value: "offline", label: "Offline" },
+            { value: "disabled", label: "Inativos" },
+          ]}
+        />
+      </PpHintAction>
       <HubOtaKpiChips
         kpis={kpis}
         loading={loading}
@@ -953,23 +975,34 @@ export function FirmwareLinksPage({
           />
         </PpHintAction>
       ) : null}
-      <PpActionButton variant="ghost" onClick={() => openPanel("devices")}>
-        IoTs
-      </PpActionButton>
-      <PpActionButton variant="ghost" onClick={() => openPanel("firmwares")}>
-        Firmwares
-      </PpActionButton>
-      <PpActionButton variant="ghost" onClick={() => openPanel("jobs")}>
-        Jobs{activeJobCount > 0 ? ` · ${activeJobCount}` : ""}
-      </PpActionButton>
+      <PpHintAction hint={PP_HELP.hub.panelDevices} ariaLabel="Ajuda: Painel IoTs">
+        <PpActionButton variant="ghost" onClick={() => openPanel("devices")}>
+          <Cpu size={14} aria-hidden="true" /> IoTs
+        </PpActionButton>
+      </PpHintAction>
+      <PpHintAction hint={PP_HELP.hub.panelFirmwares} ariaLabel="Ajuda: Painel Firmwares">
+        <PpActionButton variant="ghost" onClick={() => openPanel("firmwares")}>
+          <FileCode size={14} aria-hidden="true" /> Firmwares
+        </PpActionButton>
+      </PpHintAction>
+      <PpHintAction hint={PP_HELP.hub.panelJobs} ariaLabel="Ajuda: Painel Jobs">
+        <PpActionButton variant="ghost" onClick={() => openPanel("jobs")}>
+          <ListTodo size={14} aria-hidden="true" />
+          Jobs{activeJobCount > 0 ? ` · ${activeJobCount}` : ""}
+        </PpActionButton>
+      </PpHintAction>
       {canManage ? (
         <PpHintAction hint={PP_HELP.hub.newDevice} ariaLabel="Ajuda: Novo IoT">
-          <PpActionButton onClick={() => openModal("device-create", null)}>+ IoT</PpActionButton>
+          <PpActionButton onClick={() => openModal("device-create", null)}>
+            <Plus size={14} aria-hidden="true" /> IoT
+          </PpActionButton>
         </PpHintAction>
       ) : null}
       {canManage ? (
         <PpHintAction hint={PP_HELP.hub.newFirmware} ariaLabel="Ajuda: Novo firmware">
-          <PpActionButton onClick={() => openModal("firmware-create", null)}>+ FW</PpActionButton>
+          <PpActionButton onClick={() => openModal("firmware-create", null)}>
+            <Plus size={14} aria-hidden="true" /> FW
+          </PpActionButton>
         </PpHintAction>
       ) : null}
       <PpHintAction hint={PP_HELP.hub.refresh} ariaLabel="Ajuda: Atualizar">
@@ -989,33 +1022,41 @@ export function FirmwareLinksPage({
 
   const overlayBottom = (
     <div className="pp-admin-bottom-bar" role="status" aria-label="Resumo do mapa">
-      <span>
-        {families.length} firmware{families.length === 1 ? "" : "s"} · {devices.length} IoT
-        {devices.length === 1 ? "" : "s"}
-      </span>
+      <PpHintAction hint={PP_HELP.hub.bottomBar} ariaLabel="Ajuda: Resumo do mapa">
+        <span>
+          {families.length} firmware{families.length === 1 ? "" : "s"} · {devices.length} IoT
+          {devices.length === 1 ? "" : "s"}
+        </span>
+      </PpHintAction>
       {activeJobCount > 0 ? (
-        <button type="button" className="pp-admin-bottom-bar__link" onClick={() => openPanel("jobs")}>
-          Job●{activeJobCount}
-        </button>
+        <PpHintAction hint={PP_HELP.hub.kpiJobsChip} ariaLabel="Ajuda: Jobs ativos">
+          <button type="button" className="pp-admin-bottom-bar__link" onClick={() => openPanel("jobs")}>
+            Job●{activeJobCount}
+          </button>
+        </PpHintAction>
       ) : (
         <span className="pp-muted">Sem jobs ativos</span>
       )}
-      <PpIconButton
-        aria-label={nodesLocked ? "Desbloquear nós" : "Bloquear nós"}
-        onClick={() => setNodesLocked((value) => !value)}
-      >
-        {nodesLocked ? <Lock size={16} /> : <LockOpen size={16} />}
-      </PpIconButton>
-      <PpIconButton
-        aria-label="Atualizar"
-        disabled={loading}
-        onClick={() => {
-          void reloadGraph();
-          void reloadJobs({ soft: true });
-        }}
-      >
-        <RefreshCw size={16} />
-      </PpIconButton>
+      <PpHintAction hint={PP_HELP.hub.lockNodes} ariaLabel="Ajuda: Bloquear nós">
+        <PpIconButton
+          aria-label={nodesLocked ? "Desbloquear nós" : "Bloquear nós"}
+          onClick={() => setNodesLocked((value) => !value)}
+        >
+          {nodesLocked ? <Lock size={16} /> : <LockOpen size={16} />}
+        </PpIconButton>
+      </PpHintAction>
+      <PpHintAction hint={PP_HELP.hub.refresh} ariaLabel="Ajuda: Atualizar">
+        <PpIconButton
+          aria-label="Atualizar"
+          disabled={loading}
+          onClick={() => {
+            void reloadGraph();
+            void reloadJobs({ soft: true });
+          }}
+        >
+          <RefreshCw size={16} />
+        </PpIconButton>
+      </PpHintAction>
     </div>
   );
 
