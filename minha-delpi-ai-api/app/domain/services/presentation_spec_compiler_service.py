@@ -9,6 +9,9 @@ from app.domain.entities.presentation_spec import PresentationSpec
 from app.domain.services.presentation_compilers.presentation_chart_compiler_service import (
     PresentationChartCompilerService,
 )
+from app.domain.services.presentation_compilers.presentation_kpi_compiler_service import (
+    PresentationKpiCompilerService,
+)
 from app.domain.services.presentation_compilers.presentation_table_compiler_service import (
     PresentationTableCompilerService,
 )
@@ -58,7 +61,13 @@ class PresentationSpecCompilerService:
 
         cls._apply_chart(metadata, spec=spec, labels=labels, formats=formats)
         cls._apply_table(metadata, spec=spec, labels=labels, formats=formats)
-        cls._apply_kpi(metadata, labels=labels)
+        cls._apply_kpi(
+            metadata,
+            spec=spec,
+            profile=profile,
+            labels=labels,
+            formats=formats,
+        )
 
         metadata["presentationDataProfile"] = profile.as_dict()
 
@@ -95,21 +104,19 @@ class PresentationSpecCompilerService:
         )
 
     @classmethod
-    def _apply_kpi(cls, metadata: dict[str, Any], *, labels: dict[str, str]) -> None:
-        kpi = metadata.get("kpiPresentation")
-        if not isinstance(kpi, dict) and isinstance(metadata.get("presentation"), dict):
-            if metadata["presentation"].get("type") == "kpi":
-                kpi = metadata["presentation"]
-        if not isinstance(kpi, dict):
-            return
-        cards = kpi.get("cards")
-        if not isinstance(cards, list):
-            return
-        for card in cards:
-            if not isinstance(card, dict):
-                continue
-            key = str(card.get("key") or card.get("id") or "").strip()
-            if key and labels.get(key):
-                card["label"] = labels[key]
-            elif not str(card.get("label") or "").strip() and key:
-                card["label"] = labels.get(key, key)
+    def _apply_kpi(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        spec: PresentationSpec,
+        profile: PresentationDataProfile,
+        labels: dict[str, str],
+        formats: dict[str, str],
+    ) -> None:
+        PresentationKpiCompilerService.apply(
+            metadata,
+            spec=spec,
+            profile=profile,
+            labels=labels,
+            formats=formats,
+        )
