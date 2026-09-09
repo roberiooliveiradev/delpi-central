@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from app.domain.services.chat_message_normalization_service import (
@@ -14,6 +15,8 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
 )
+
+_NEGATED_INSPECTION_RE = re.compile(r"\b(nao|sem)\s+inspec")
 
 # Ordem estável de execução quando são necessárias rotas separadas.
 _SCOPE_FETCH_ORDER: tuple[str, ...] = (
@@ -113,15 +116,7 @@ class ChatProductMultiScopePlanningService:
         if any(term in normalized for term in ("roteiro", "roteiros")):
             add("guide")
 
-        if any(
-            term in normalized
-            for term in (
-                "inspeção",
-                "inspecao",
-                "inspeções",
-                "inspecoes",
-            )
-        ):
+        if cls._wants_inspection_scope(normalized):
             add("inspection")
 
         if any(
@@ -306,6 +301,20 @@ class ChatProductMultiScopePlanningService:
         )
 
         return any(check(normalized) for check in dedicated_checks)
+
+    @classmethod
+    def _wants_inspection_scope(cls, normalized: str) -> bool:
+        """Inspection scope only from a positive mention — not «não/sem inspeção»."""
+        if not any(
+            term in normalized
+            for term in ("inspecao", "inspecoes", "inspeção", "inspeções")
+        ):
+            return False
+        stripped = _NEGATED_INSPECTION_RE.sub(" ", normalized)
+        return any(
+            term in stripped
+            for term in ("inspecao", "inspecoes", "inspeção", "inspeções")
+        )
 
     @classmethod
     def should_use_single_analyser(cls, scopes: tuple[str, ...], message: str | None) -> bool:
