@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from app.application.services.chat_attachment_follow_up_service import (
     ChatAttachmentFollowUpService,
 )
