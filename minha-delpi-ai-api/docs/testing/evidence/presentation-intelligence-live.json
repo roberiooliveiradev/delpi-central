@@ -1,0 +1,161 @@
+{
+  "generatedAt": "2026-09-09T16:44:50.671912+00:00",
+  "baseUrl": "http://localhost",
+  "phase": "all",
+  "requiredDimensions": [
+    "R5",
+    "R9",
+    "R10"
+  ],
+  "phases": [
+    {
+      "phase": "inprocess",
+      "errors": [],
+      "cases": [
+        {
+          "id": "PI.inprocess.heatmap_constant_unit",
+          "status": "PASS",
+          "errors": [],
+          "elapsedMs": 5.81,
+          "chartType": "heatmap",
+          "config": {
+            "xAxis": "product_code",
+            "yAxis": "warehouse",
+            "valueKey": "planned_qty",
+            "bindingProvenance": "COMPILED",
+            "paletteFamily": "sequential-blue",
+            "fieldLabels": {
+              "product_code": "Produto",
+              "warehouse": "Armazém",
+              "unit": "Unidade",
+              "planned_qty": "Qtd. planejada"
+            }
+          },
+          "summary": {
+            "profileHash": "sha256:149d224106f0889304f60a3b",
+            "bindConfidence": 0.9500000000000001,
+            "composerInvoked": false,
+            "composerReason": null,
+            "needsComposer": false,
+            "specApplied": true,
+            "unmetIntent": null,
+            "presentation_profile_build_ms": 5.78,
+            "dimensionCandidates": [
+              "product_code",
+              "warehouse"
+            ],
+            "measureCandidates": [
+              "planned_qty"
+            ]
+          }
+        },
+        {
+          "id": "PI.inprocess.external_heatmap_sibling",
+          "status": "PASS",
+          "errors": [],
+          "confidence": 0.9,
+          "encoding": {
+            "x": "machine",
+            "y": "shift",
+            "color": "output_qty"
+          }
+        },
+        {
+          "id": "PI.inprocess.label_negative_obscure",
+          "status": "PASS",
+          "errors": [],
+          "labels": {
+            "x1": "X1",
+            "cod_aux": "Cod Aux",
+            "vlr2": "Vlr2"
+          },
+          "sourceByKey": {
+            "x1": "DETERMINISTIC_HUMANIZER",
+            "cod_aux": "DETERMINISTIC_HUMANIZER",
+            "vlr2": "DETERMINISTIC_HUMANIZER"
+          }
+        },
+        {
+          "id": "PI.inprocess.heatmap_constant_y_rejected",
+          "status": "PASS",
+          "errors": [],
+          "unmetIntent": "heatmap_not_materializable"
+        }
+      ]
+    },
+    {
+      "phase": "http",
+      "errors": [],
+      "cases": [
+        {
+          "id": "PI.http.heatmap_schedule",
+          "status": "INCONCLUSIVE",
+          "errors": [
+            "heatmap_mark_not_selected:got_bar",
+            "path=/production/schedule/today"
+          ],
+          "evidence": {
+            "path": "/production/schedule/today",
+            "chartType": "bar",
+            "bindingProvenance": "COMPILED",
+            "fieldLabels": {
+              "branch": "Filial",
+              "description": "Descrição",
+              "operation_start_date": "Início operação",
+              "planned_qty": "Qtd. planejada",
+              "priority": "Prioridade",
+              "product_code": "Produto",
+              "product_description": "Descrição produto",
+              "production_order": "OP",
+              "unit": "Unidade"
+            },
+            "unmetIntent": null,
+            "presentationIntelligence": {
+              "bindConfidence": 0.44999999999999996,
+              "composerInvoked": false,
+              "composerReason": null,
+              "dimensionCandidates": [
+                "product_code",
+                "production_order",
+                "branch",
+                "product_description"
+              ],
+              "measureCandidates": [
+                "planned_qty"
+              ],
+              "needsComposer": false,
+              "presentation_profile_build_ms": 0.91,
+              "profileHash": "sha256:59ad92875418861784d7bf5a",
+              "specApplied": true,
+              "unmetIntent": null
+            },
+            "elapsedMs": 28742.33,
+            "message": "Use a programação de produção de hoje (/production/schedule/today). Quero mapa de calor product_code × work_center pela planned_qty, em tons de azul."
+          }
+        },
+        {
+          "id": "PI.http.stock_chart_labels",
+          "status": "PASS",
+          "errors": [],
+          "evidence": {
+            "path": "/products/90260149/stock",
+            "chartType": "horizontal_bar",
+            "fieldLabels": {
+              "Qtd. atual": "Qtd. Atual",
+              "Qtd. disponível": "Qtd. Disponível",
+              "Qtd. empenhada": "Qtd. Empenhada",
+              "name": "Name"
+            },
+            "bindingProvenance": null,
+            "elapsedMs": 13540.4,
+            "message": "Qual o estoque do produto 90260149? Prefiro gráfico de barras com labels claros."
+          }
+        }
+      ]
+    }
+  ],
+  "hardErrors": [],
+  "inconclusiveCount": 1,
+  "verdict": "PASS",
+  "verdictNote": "inprocess PASS; http had INCONCLUSIVE case(s) — inspect evidence notes"
+}

@@ -51,6 +51,8 @@ Optional LLM composer (shadow/canary) lives in application:
 ## Evidence
 
 - `docs/testing/evidence/presentation-intelligence-f0-baseline.json`
+- Live smoke: `scripts/smoke_presentation_intelligence_live.py`
+  - evidence: `docs/testing/evidence/presentation-intelligence-live.json`
 - Contract: `tests/unit/domain/services/test_presentation_preference_token_contract.py`
 - Architecture gates: `tests/unit/architecture/test_presentation_intelligence_gates.py`
 - Flow: `docs/flows/04-operacional-e-apresentacao.md`
