@@ -79,6 +79,36 @@ Para **melhorar um plano existente**, não ampliar texto mecanicamente. Revalida
 
 Se o pedido for longo ou contiver múltiplas ações, nenhum requisito material pode desaparecer por compressão. Aplicar o check de cobertura semântica de `evidence-driven-execution.mdc`.
 
+### Execução de plano aprovado
+
+Quando o usuário pedir para **executar, implementar, continuar, aplicar ou concluir um plano existente**, carregar obrigatoriamente `plan-execution.mdc` além das regras materiais do domínio e `test-and-commit.mdc`.
+
+Execução de plano não é obediência mecânica ao markdown. O fluxo obrigatório é:
+
+```text
+selecionar E*.S*
+→ revalidar regra/código/contrato/dependências/working tree
+→ READY_TO_EXECUTE
+→ implementar menor escopo correto
+→ testar regra + wiring + casos relevantes
+→ revisão adversarial do diff
+→ READY_TO_COMMIT quando autorizado
+→ provar pós-condições
+→ desbloquear dependentes
+→ verify-final
+```
+
+Se evidência nova invalidar premissa, owner, contrato, causa ou dependência planejada:
+
+```text
+EXECUTION_DRIFT
+→ STOP-THE-LINE no subgrafo afetado
+→ corrigir/revalidar o plano
+→ não adaptar o código para obedecer a uma instrução superada
+```
+
+Não avançar para etapa dependente apenas porque a anterior produziu um commit; provar a pós-condição que a dependência exige.
+
 # 8 responsabilidades transversais canônicas
 
 Estas regras são os **donos transversais** da engenharia da Minha DELPI. Elas não são globais para preservar orçamento de contexto, mas devem ser carregadas sempre que o tema correspondente for material.
@@ -90,7 +120,7 @@ Estas regras são os **donos transversais** da engenharia da Minha DELPI. Elas n
 | **3. APIs, contratos e integrações** | `platform-api-contracts-integration.mdc` | `contract-evolution-backward-compatibility.mdc`, `http-integration-resilience.mdc`, `api-delpi-openapi-route-standards.mdc`, `api-delpi-response-contract.mdc` |
 | **4. Dados e persistência** | `platform-data-persistence.mdc` | `migrations-immutable-checksum.mdc`, `plugins-migrations-no-reset-prod.mdc`, `persistent-upload-storage.mdc`, `sql-query-development.mdc` |
 | **5. Frontend, MFE e experiência** | `platform-frontend-mfe-experience.mdc` | `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`, `plugin-mfe-page-excellence.mdc`, `plugins-overlay-positioning.mdc`, `mf-federation-patch-safety.mdc` |
-| **6. Qualidade, testes e evidência** | `platform-quality-testing.mdc` | `test-and-commit.mdc`, `root-cause-generalized-fix.mdc`, `architecture-ci-enforcement.mdc` |
+| **6. Qualidade, testes e evidência** | `platform-quality-testing.mdc` | `plan-construction.mdc`, `plan-execution.mdc`, `test-and-commit.mdc`, `root-cause-generalized-fix.mdc`, `architecture-ci-enforcement.mdc` |
 | **7. Delivery, runtime e operações** | `platform-delivery-runtime-operations.mdc` | `infra-sequential-container-startup.mdc`, builds, gateway, deploy/migrations conforme escopo |
 | **8. Confiabilidade e observabilidade** | `platform-reliability-observability.mdc` | `observability-standards.mdc`, `http-integration-resilience.mdc`, budgets/limites conforme domínio |
 
@@ -131,7 +161,8 @@ O Cursor deve raciocinar por responsabilidades, mas **não precisa carregar todo
 |---|---|
 | Bug/fix/regressão | `root-cause-generalized-fix.mdc` |
 | Plano/CreatePlan/roadmap/playbook/multi-etapa/revisão de plano | `plan-construction.mdc` |
-| Alteração de código/testes/commit | `test-and-commit.mdc` |
+| Executar/implementar/continuar plano aprovado ou E*.S* | `plan-execution.mdc` + `test-and-commit.mdc` |
+| Alteração de código/testes/commit sem plano formal | `test-and-commit.mdc` |
 | Feature user-facing | `feature-help-sync.mdc` |
 | Chat/LLM/RAG/agents/tools | `chat-intelligence-base.mdc`, `llm-stack-centralized.mdc` + subdomínio |
 | Inteligência/prompt/retrieval/planner/RAG/contexto | `ai-intelligence-evaluation.mdc`, `ai-context-and-tool-budget.mdc` |
@@ -159,7 +190,9 @@ fonte canônica atual vence
 → executar somente a versão revalidada
 ```
 
-Plano concluído não permanece como documentação técnica; histórico fica no Git. Aplicar `plan-construction.mdc`.
+Durante execução aplicar `plan-execution.mdc`; na criação/revisão aplicar `plan-construction.mdc`.
+
+Plano concluído não permanece como documentação técnica; histórico fica no Git.
 
 # Chat AI — especialização sobre as responsabilidades transversais
 
@@ -223,6 +256,8 @@ A pressão arquitetural é monotônica: não introduzir nova dívida para preser
 - uma fonte de verdade por conceito: `centralized-rules-first.mdc`;
 - fatos medidos ≠ inferências: `evidence-driven-execution.mdc`;
 - planos devem ser rastreáveis e executáveis: `plan-construction.mdc`;
+- execução de planos deve revalidar antes de cada subetapa: `plan-execution.mdc`;
+- drift material interrompe a cadeia afetada antes de novo diff;
 - pedidos compostos não podem perder requisitos por compressão;
 - clean code/architecture: `clean-code-architecture-guardrails.mdc`;
 - identifiers técnicos em inglês: `english-code-identifiers.mdc`;
