@@ -279,6 +279,26 @@ def test_missing_scopes_for_planned_actions_detects_structure_gap():
     assert "stock" not in missing
 
 
+def test_missing_scopes_accepts_openapi_action_id_without_path():
+    planned = [
+        {
+            "name": "execute_external_action",
+            "arguments": {"actionId": "structure", "parameters": {"code": "90260149"}},
+            "metadata": {"actionId": "structure", "path": "/products/{code}/structure"},
+        },
+        {
+            "name": "execute_external_action",
+            "arguments": {"actionId": "guide", "parameters": {"code": "90260149"}},
+            "metadata": {"actionId": "guide", "path": "/products/{code}/guide"},
+        },
+    ]
+    missing = ChatProductMultiScopePlanningService.missing_scopes_for_planned_actions(
+        "para o produto 90260149 traga (1) a estrutura BOM e (2) o roteiro de fabricação",
+        planned,
+    )
+    assert missing == ()
+
+
 def test_se_disponivel_alone_does_not_add_stock_scope():
     scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
         "mostre o KPI e a série no tempo em gráfico se disponível",

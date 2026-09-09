@@ -252,11 +252,7 @@ class ChatProductMultiScopePlanningService:
         if not requested:
             return ()
 
-        paths = " ".join(
-            str((item.get("arguments") or {}).get("path") or item.get("path") or "")
-            for item in (planned or [])
-            if isinstance(item, dict)
-        ).lower()
+        haystack = cls._planned_action_haystack(planned)
 
         missing: list[str] = []
         for scope in requested:
@@ -265,14 +261,37 @@ class ChatProductMultiScopePlanningService:
             if scope == "profile":
                 markers.extend(["/products/{code}", "/analyser", "/summary", "/detail"])
                 # Bare product detail path often ends with /products/{code} without segment.
-            if any(marker and marker in paths for marker in markers):
+            if any(marker and marker in haystack for marker in markers):
                 continue
             # analyser cobre o bundle
-            if scope in cls.analyser_bundle_scopes() and "/analyser" in paths:
+            if scope in cls.analyser_bundle_scopes() and "/analyser" in haystack:
                 continue
             missing.append(scope)
 
         return tuple(missing)
+
+    @classmethod
+    def _planned_action_haystack(cls, planned: list[dict] | None) -> str:
+        """Path + actionId + operationId — planos OpenAPI-first nem sempre copiam path em arguments."""
+        parts: list[str] = []
+        for item in planned or []:
+            if not isinstance(item, dict):
+                continue
+            args = item.get("arguments") if isinstance(item.get("arguments"), dict) else {}
+            meta = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
+            parts.extend(
+                [
+                    str(args.get("path") or ""),
+                    str(item.get("path") or ""),
+                    str(meta.get("path") or ""),
+                    str(args.get("actionId") or ""),
+                    str(item.get("actionId") or ""),
+                    str(meta.get("actionId") or ""),
+                    str(meta.get("operationId") or ""),
+                    str(args.get("operationId") or ""),
+                ]
+            )
+        return " ".join(parts).lower()
 
     @classmethod
     def _is_dedicated_playbook_route_question(cls, normalized: str) -> bool:

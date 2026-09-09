@@ -242,3 +242,58 @@ def test_admin_agent_simulate_schedule_execute_from_turn_analysis(monkeypatch):
         "production_schedule_today"
     )
     assert result["turnAnalysis"]["decision"] == "execute"
+
+
+def test_admin_agent_simulate_plans_via_openapi_orchestrator(monkeypatch):
+    from app.application.services.chat_external_action_orchestration_service import (
+        ChatExternalActionOrchestrationService,
+    )
+    from app.application.services.chat_turn.chat_turn_preparation_turn_analysis_service import (
+        ChatTurnPreparationTurnAnalysisOutcome,
+        ChatTurnPreparationTurnAnalysisService,
+    )
+    from app.domain.services.chat_turn_analysis_service import ChatTurnAnalysisResult
+
+    class _FakeSelectionHost:
+        external_action_selection_service = object()
+
+    monkeypatch.setattr(
+        ChatTurnPreparationTurnAnalysisService,
+        "maybe_analyze",
+        classmethod(
+            lambda cls, **kwargs: ChatTurnPreparationTurnAnalysisOutcome(
+                result=ChatTurnAnalysisResult(
+                    decision="execute",
+                    action_ids=["legacy-should-not-win"],
+                    reason="schedule",
+                    source="test",
+                ),
+                direct_answer=None,
+                skip_tools=False,
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        ChatExternalActionOrchestrationService,
+        "plan_actions",
+        classmethod(
+            lambda cls, *args, **kwargs: [
+                {
+                    "name": "execute_external_action",
+                    "arguments": {"actionId": "stock", "parameters": {"code": "10080047"}},
+                    "metadata": {"selectionMode": "openapi_first"},
+                }
+            ]
+        ),
+    )
+
+    use_case = _make_use_case(chat_tool_context_service=_FakeSelectionHost())
+    result = use_case.execute(
+        question="estoque do produto 10080047",
+        user_id="00000000-0000-0000-0000-000000000001",
+        response_mode="normal",
+    )
+
+    assert result["plannedToolCalls"][0]["arguments"]["actionId"] == "stock"
+    assert result["plannedToolCalls"][0]["status"] == "planned"
+    assert result["plannedToolCalls"][0]["metadata"]["selectionMode"] == "openapi_first"

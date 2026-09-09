@@ -10,6 +10,9 @@ from app.domain.services.chat_presentation_decision_builder_service import (
 from app.domain.services.chat_presentation_decision_metadata_service import (
     ChatPresentationDecisionMetadataService,
 )
+from app.domain.services.chat_presentation_format_vocabulary_service import (
+    ChatPresentationFormatVocabularyService,
+)
 from app.domain.services.chat_presentation_vocabulary_service import (
     ChatPresentationVocabularyService,
 )
@@ -96,6 +99,10 @@ class ChatPresentationUserFormatPreferenceService:
             "chartSubtypeTokens",
         )
         lowered = str(message or "").strip().lower()
+
+        kpi_hints = ChatPresentationFormatVocabularyService.kpi_hints()
+        if any(hint in lowered for hint in kpi_hints):
+            return "kpi"
 
         if any(hint in lowered for hint in dashboard_hints):
             return "dashboard"

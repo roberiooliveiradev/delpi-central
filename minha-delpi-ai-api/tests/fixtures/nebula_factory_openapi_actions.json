@@ -1,0 +1,59 @@
+{
+  "providerKey": "nebula-factory",
+  "actions": [
+    {
+      "actionId": "nebula.get_product_structure",
+      "method": "GET",
+      "path": "/factory/products/{code}/structure",
+      "operationId": "getProductStructure",
+      "summary": "Get product structure",
+      "description": "Return the bill of materials for a product",
+      "enabled": true,
+      "parametersSchema": [
+        {"name": "code", "in": "path", "required": true, "schema": {"type": "string"}}
+      ]
+    },
+    {
+      "actionId": "nebula.export_product_structure",
+      "method": "GET",
+      "path": "/factory/products/{code}/structure/export",
+      "operationId": "exportProductStructure",
+      "summary": "Export product structure to excel",
+      "description": "Download the bill of materials as an excel spreadsheet",
+      "enabled": true,
+      "parametersSchema": [
+        {"name": "code", "in": "path", "required": true, "schema": {"type": "string"}}
+      ]
+    },
+    {
+      "actionId": "nebula.list_purchases",
+      "method": "GET",
+      "path": "/factory/purchases",
+      "operationId": "listPurchases",
+      "summary": "List purchases",
+      "description": "List purchase orders",
+      "enabled": true,
+      "parametersSchema": []
+    },
+    {
+      "actionId": "nebula.get_last_purchase",
+      "method": "GET",
+      "path": "/factory/purchases/latest",
+      "operationId": "getLastPurchase",
+      "summary": "Get latest purchase",
+      "description": "Return the most recent purchase order",
+      "enabled": true,
+      "parametersSchema": []
+    },
+    {
+      "actionId": "nebula.get_purchase_budget_history",
+      "method": "GET",
+      "path": "/factory/purchases/budget/history",
+      "operationId": "getPurchaseBudgetHistory",
+      "summary": "Purchase budget history",
+      "description": "Historical budget analysis for purchases",
+      "enabled": true,
+      "parametersSchema": []
+    }
+  ]
+}

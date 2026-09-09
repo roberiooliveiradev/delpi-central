@@ -40,24 +40,54 @@ class OpenApiLlmActionPlannerService:
         self,
         message: str,
         slim_catalog: list[dict[str, Any]],
+        *,
+        conversation_context: str = "",
+        candidate_set_id: str = "",
+        repair: bool = False,
     ) -> dict[str, Any] | None:
         if self.llm_gateway is None or not slim_catalog:
             return None
         try:
-            payload = self._generate(message, slim_catalog)
+            payload = self._generate(
+                message,
+                slim_catalog,
+                conversation_context=conversation_context,
+                candidate_set_id=candidate_set_id,
+                repair=repair,
+            )
         except Exception:
             logger.exception("openapi_llm_planner_failed")
             return None
         if not isinstance(payload, dict):
-            return None
-        if "steps" not in payload and "clarify" not in payload:
-            return None
+            if repair:
+                return None
+            return self.__call__(
+                message,
+                slim_catalog,
+                conversation_context=conversation_context,
+                candidate_set_id=candidate_set_id,
+                repair=True,
+            )
+        if "steps" not in payload and "clarify" not in payload and "mode" not in payload:
+            if repair:
+                return None
+            return self.__call__(
+                message,
+                slim_catalog,
+                conversation_context=conversation_context,
+                candidate_set_id=candidate_set_id,
+                repair=True,
+            )
         return payload
 
     def _generate(
         self,
         message: str,
         slim_catalog: list[dict[str, Any]],
+        *,
+        conversation_context: str = "",
+        candidate_set_id: str = "",
+        repair: bool = False,
     ) -> dict[str, Any] | None:
         system = OpenApiToolRoutingContentService.get(
             "planner",
@@ -71,14 +101,24 @@ class OpenApiLlmActionPlannerService:
         user_template = OpenApiToolRoutingContentService.get(
             "planner",
             "llmUserTemplate",
-            default="Message:\n{message}\n\nCatalog JSON:\n{catalog}\n\nSchema:\n{schema}",
+            default=(
+                "Message:\n{message}\n\nConversation context:\n{conversation_context}\n\n"
+                "Catalog JSON:\n{catalog}\n\nCandidate set: {candidate_set_id}\n\nSchema:\n{schema}"
+            ),
         )
         schema = OpenApiToolRoutingContentService.get_node("planner", "schema") or {}
         user = str(user_template).format(
             message=message,
             catalog=json.dumps(slim_catalog, ensure_ascii=False),
             schema=json.dumps(schema, ensure_ascii=False),
+            conversation_context=conversation_context or "(none)",
+            candidate_set_id=candidate_set_id or "",
         )
+        if repair:
+            user = (
+                user
+                + "\n\nReturn ONLY valid JSON matching the schema. No markdown, no commentary."
+            )
         raw = self.llm_gateway.generate(
             [
                 {"role": "system", "content": system},

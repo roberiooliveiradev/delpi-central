@@ -378,6 +378,15 @@ class AdminAgentSimulateUseCase:
 
             return result, tool_calls
 
+        planned_from_orchestrator = self._plan_external_actions_via_orchestrator(
+            question=question,
+            specialization=specialization,
+            previous_messages=previous_messages,
+            response_mode=response_mode,
+        )
+        if planned_from_orchestrator:
+            return {"context": ""}, planned_from_orchestrator
+
         if turn_analysis is not None and getattr(turn_analysis, "decision", "") == "execute":
             analysis_calls = [
                 {
@@ -394,6 +403,59 @@ class AdminAgentSimulateUseCase:
                 return {"context": "", "turnAnalysis": turn_analysis.to_metadata()}, analysis_calls
 
         return {"context": ""}, self._planned_tool_calls(question)
+
+    def _plan_external_actions_via_orchestrator(
+        self,
+        *,
+        question: str,
+        specialization: dict | None,
+        previous_messages: list | None,
+        response_mode: str | None,
+    ) -> list[dict]:
+        selection_service = getattr(
+            self.chat_tool_context_service,
+            "external_action_selection_service",
+            None,
+        )
+        if selection_service is None:
+            return []
+
+        from app.application.services.chat_external_action_orchestration_service import (
+            ChatExternalActionOrchestrationService,
+        )
+
+        allowed_action_ids = list((specialization or {}).get("allowedActionIds") or [])
+        workspace_context: dict = {
+            "allowedActionIds": allowed_action_ids,
+            "responseMode": response_mode,
+        }
+        provider_keys = (specialization or {}).get("providerKeys") or []
+        if provider_keys:
+            workspace_context["providerKeys"] = list(provider_keys)
+
+        try:
+            planned = ChatExternalActionOrchestrationService.plan_actions(
+                selection_service,
+                message=question,
+                allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
+                workspace_context=workspace_context,
+            )
+        except Exception:
+            return []
+
+        return [
+            {
+                "name": item.get("name"),
+                "arguments": item.get("arguments") or {},
+                "reason": item.get("reason"),
+                "status": "planned",
+                "sandbox": False,
+                "metadata": item.get("metadata"),
+            }
+            for item in (planned or [])
+            if isinstance(item, dict)
+        ]
 
     def _resolve_agent(
         self,

@@ -18,6 +18,9 @@ from app.application.services.validate_action_arguments_service import (
     ValidateActionArgumentsService,
 )
 from app.domain.models.action_plan import ActionPlan, ActionPlanStep
+from app.domain.services.chat_planner_conversation_context_service import (
+    ChatPlannerConversationContextService,
+)
 from app.domain.services.chat_write_confirmation_service import ChatWriteConfirmationService
 from app.domain.services.openapi_planner_mode_service import (
     OpenApiPlannerModeDecision,
@@ -94,6 +97,62 @@ class OpenApiFirstSelectionBridgeService:
                 actions_by_id[action_id] = dict(action)
 
         rolling_context = dict(execution_context or {})
+        from app.domain.services.chat_bounded_planner_mode_service import (
+            ChatBoundedPlannerModeService,
+        )
+
+        bounded = ChatBoundedPlannerModeService.decide(
+            provider_keys=self._provider_keys(catalog_actions, allowed_action_ids),
+            agent_id=self._agent_id(workspace_context),
+        )
+        if bounded.use_bounded_loop:
+            from app.application.services.chat_turn_planner_orchestrator_service import (
+                ChatTurnPlannerOrchestratorService,
+            )
+
+            orchestrator = ChatTurnPlannerOrchestratorService(
+                retriever=self.retriever,
+                planner=self.planner,
+            )
+            plan, actions_by_id, trace = orchestrator.build_plan(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                catalog_actions=catalog_actions,
+                previous_messages=previous_messages,
+                workspace_context=workspace_context,
+                execution_context=rolling_context,
+            )
+            for step in plan.steps:
+                resolved = self._resolve_action_dict(
+                    step.action_id,
+                    actions_by_id=actions_by_id,
+                    allowed_action_ids=allowed_action_ids,
+                    catalog_actions=catalog_actions,
+                    message=message,
+                )
+                if resolved:
+                    actions_by_id[step.action_id] = resolved
+            planned = self._plan_to_tool_calls(
+                plan,
+                message=message,
+                actions_by_id=actions_by_id,
+            )
+            annotated: list[dict[str, Any]] = []
+            for item in planned:
+                meta = dict(item.get("metadata") or {})
+                meta["selectionMode"] = "openapi_first"
+                meta["openapiPlannerMode"] = decision.mode
+                meta["boundedPlannerMode"] = bounded.mode
+                meta.update(trace)
+                item["metadata"] = meta
+                enriched = ExternalActionSelectionDiagnosticsService.annotate(
+                    item,
+                    match_source="openapiFirst",
+                    reason_key="openapiFirstPlan",
+                )
+                annotated.append(enriched if isinstance(enriched, dict) else item)
+            return annotated
+
         compound_fragments = len(subtasks) > 1
         # Compound decompose already split the user intent — prefer deterministic
         # binder/ranker per fragment (LLM free-pick on fragments drops siblings).
@@ -117,6 +176,11 @@ class OpenApiFirstSelectionBridgeService:
                 previous_messages=previous_messages,
                 execution_context=rolling_context,
                 max_steps=1 if compound_fragments else None,
+                conversation_context=ChatPlannerConversationContextService.build(
+                    previous_messages=previous_messages,
+                    workspace_context=workspace_context,
+                    execution_context=rolling_context,
+                ),
             )
             plans.append(plan)
             # Propagate resolved args across independent read subtasks (compound DAG).
@@ -267,7 +331,12 @@ class OpenApiFirstSelectionBridgeService:
                     "selectionMode": "openapi_first",
                     "providerKey": action.get("providerKey"),
                     "operationId": action.get("operationId"),
+                    "path": action.get("path"),
+                    "method": action.get("method"),
                     "actionId": step.action_id,
+                    "goalIds": list(step.goal_ids),
+                    "stepId": step.step_id,
+                    "requestedPresentation": plan.requested_presentation,
                     "executionContext": self.merge_execution_context(
                         None,
                         provider_key=str(action.get("providerKey") or "") or None,

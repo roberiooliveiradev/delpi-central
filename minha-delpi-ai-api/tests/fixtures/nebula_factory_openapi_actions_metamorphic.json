@@ -1,0 +1,29 @@
+{
+  "providerKey": "nebula-works",
+  "actions": [
+    {
+      "actionId": "works.fetch_item_tree",
+      "method": "GET",
+      "path": "/works/items/{sku}/tree",
+      "operationId": "fetchItemTree",
+      "summary": "Get product structure",
+      "description": "Return the bill of materials for a product",
+      "enabled": true,
+      "parametersSchema": [
+        {"name": "code", "in": "path", "required": true, "schema": {"type": "string"}}
+      ]
+    },
+    {
+      "actionId": "works.dump_item_tree_spreadsheet",
+      "method": "GET",
+      "path": "/works/items/{sku}/tree/spreadsheet",
+      "operationId": "dumpItemTreeSpreadsheet",
+      "summary": "Export product structure to excel",
+      "description": "Download the bill of materials as an excel spreadsheet",
+      "enabled": true,
+      "parametersSchema": [
+        {"name": "code", "in": "path", "required": true, "schema": {"type": "string"}}
+      ]
+    }
+  ]
+}

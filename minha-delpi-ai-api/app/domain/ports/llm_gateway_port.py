@@ -16,6 +16,9 @@ class LlmGatewayPort(ABC):
     def supports_native_tools(self) -> bool:
         return False
 
+    def supports_structured_output(self) -> bool:
+        return False
+
     def generate_with_tools(
         self,
         messages: list[dict],

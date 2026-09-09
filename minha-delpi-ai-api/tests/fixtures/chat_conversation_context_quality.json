@@ -1,0 +1,61 @@
+{
+  "id": "e8-session-a-topic-shift-return",
+  "sessionProtocol": "chat-ai-flow-families.md#8",
+  "requiredDimensions": ["R2", "R3", "R6", "R9"],
+  "turns": [
+    {
+      "id": "T1",
+      "message": "estoque do MP {SMOKE_MP_CODE}",
+      "expectFamily": "stock"
+    },
+    {
+      "id": "T2",
+      "message": "estoque desse código e produtos programados para produzir hoje",
+      "expectFamily": ["stock", "schedule"]
+    },
+    {
+      "id": "T3",
+      "message": "Mostre o ROL comercial recente (agosto 2026) com KPI e leitura em prosa — indicadores comerciais, não painel de departamento",
+      "expectFamily": "commercial_rol",
+      "expectPresentation": "kpi"
+    },
+    {
+      "id": "T4",
+      "message": "taxa de fechamento filial 01 em agosto 2026",
+      "expectFamily": "closing_rate"
+    },
+    {
+      "id": "T5",
+      "message": "quais produtos programados para produzir hoje?",
+      "expectFamily": "schedule"
+    },
+    {
+      "id": "T6",
+      "message": "e o estoque daquele primeiro material?",
+      "expectFamily": "stock",
+      "reuseEntity": "T1"
+    },
+    {
+      "id": "T7",
+      "message": "só filial 01",
+      "expectFamily": "stock",
+      "expectBranch": "01"
+    },
+    {
+      "id": "T8",
+      "message": "mostre isso em KPI",
+      "expectPresentation": "kpi"
+    },
+    {
+      "id": "T9",
+      "message": "o que você pode fazer?",
+      "expectFamily": "capabilities",
+      "forbidOperationalTool": true
+    },
+    {
+      "id": "T10",
+      "message": "volta na taxa de fechamento: compara com o mês anterior se o contrato permitir",
+      "expectFamily": "closing_rate"
+    }
+  ]
+}

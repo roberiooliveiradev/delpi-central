@@ -145,7 +145,7 @@ class ChatConversationStateService:
                 state["activeTask"] = task
                 state["activeTopic"] = state.get("activeTopic") or task.get("label")
 
-        result["conversationState"] = state
+        result["conversationState"] = cls.ensure_topic_ledger(state)
         return result
 
     @classmethod
@@ -175,7 +175,7 @@ class ChatConversationStateService:
 
             state["activeTask"] = task
 
-        result["conversationState"] = state
+        result["conversationState"] = cls.ensure_topic_ledger(state)
         return result
 
     @classmethod
@@ -235,6 +235,59 @@ class ChatConversationStateService:
         )
 
     @classmethod
+    def ensure_topic_ledger(cls, state: dict[str, Any] | None) -> dict[str, Any]:
+        payload = dict(state or cls._empty_state())
+        topics = list(payload.get("topics") or [])
+        normalized_topics: list[dict[str, Any]] = []
+        for item in topics:
+            if not isinstance(item, dict):
+                continue
+            topic_id = str(item.get("topicId") or item.get("id") or "").strip()
+            if not topic_id:
+                continue
+            normalized_topics.append(
+                {
+                    "topicId": topic_id,
+                    "label": str(item.get("label") or "").strip(),
+                    "entities": dict(item.get("entities") or {})
+                    if isinstance(item.get("entities"), dict)
+                    else {},
+                    "resolvedArguments": dict(item.get("resolvedArguments") or {})
+                    if isinstance(item.get("resolvedArguments"), dict)
+                    else {},
+                    "lastSuccessfulActionIds": [
+                        str(action_id)
+                        for action_id in (item.get("lastSuccessfulActionIds") or [])
+                        if str(action_id).strip()
+                    ],
+                    "timeRange": dict(item.get("timeRange") or {})
+                    if isinstance(item.get("timeRange"), dict)
+                    else {},
+                }
+            )
+        active_label = str(payload.get("activeTopic") or "").strip()
+        active_id = str(payload.get("activeTopicId") or "").strip()
+        if active_label and not any(row["label"] == active_label or row["topicId"] == active_id for row in normalized_topics):
+            topic_id = active_id or f"topic-{uuid.uuid4().hex[:8]}"
+            normalized_topics.append(
+                {
+                    "topicId": topic_id,
+                    "label": active_label,
+                    "entities": {},
+                    "resolvedArguments": {},
+                    "lastSuccessfulActionIds": [],
+                    "timeRange": {},
+                }
+            )
+            payload["activeTopicId"] = topic_id
+        elif active_id:
+            payload["activeTopicId"] = active_id
+        elif normalized_topics:
+            payload["activeTopicId"] = normalized_topics[-1]["topicId"]
+        payload["topics"] = normalized_topics[-8:]
+        return payload
+
+    @classmethod
     def compact_for_admin_debug(cls, snapshot: dict | None) -> dict[str, Any]:
         state = (snapshot or {}).get("conversationState")
 
@@ -256,6 +309,8 @@ class ChatConversationStateService:
     def _empty_state(cls) -> dict[str, Any]:
         return {
             "activeTopic": None,
+            "activeTopicId": None,
+            "topics": [],
             "activeTask": None,
             "taskStack": [],
             "userCorrections": [],

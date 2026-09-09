@@ -1075,6 +1075,8 @@ class ChatExternalActionOrchestrationService:
         def _plan_scopes() -> list[dict]:
             if not product_code or not requested:
                 return []
+            if not callable(getattr(selection_service, "select_action_for_product", None)):
+                return []
             return list(
                 ChatProductMultiScopePlanningService.plan_product_scope_fetches(
                     selection_service,

@@ -41,6 +41,8 @@ class PlanExternalActionsService:
         previous_messages: list | None = None,
         execution_context: dict[str, Any] | None = None,
         max_steps: int | None = None,
+        conversation_context: str | None = None,
+        candidate_set_id: str | None = None,
     ) -> ActionPlan:
         if not candidates:
             return ActionPlan(selection_mode="openapi_first")
@@ -75,12 +77,24 @@ class PlanExternalActionsService:
         llm_payload: dict[str, Any] | None = None
         if self.llm_planner is not None:
             try:
-                llm_payload = self.llm_planner(message, slim_catalog)
+                llm_payload = self._invoke_llm_planner(
+                    message,
+                    slim_catalog,
+                    conversation_context=conversation_context or "",
+                    candidate_set_id=candidate_set_id or "",
+                )
             except Exception:
                 llm_payload = None
 
         if isinstance(llm_payload, dict):
-            plan = self._plan_from_payload(llm_payload, top_k_ids=top_k_ids, limit=limit)
+            plan = self._plan_from_payload(
+                llm_payload,
+                top_k_ids=top_k_ids,
+                limit=limit,
+                candidate_set_id=candidate_set_id or "",
+            )
+            if plan.wants_search_round and not plan.steps:
+                return plan
             plan = self._apply_domain_compound_step_cap(message, plan)
             if plan.steps:
                 enriched = self._enrich_plan_with_bound_arguments(
@@ -92,12 +106,9 @@ class PlanExternalActionsService:
                 )
                 if enriched.steps:
                     # Optional LLM follow-up clarify must not swallow executable steps.
-                    executable = ActionPlan(
-                        steps=enriched.steps,
-                        clarify=None,
-                        selection_mode=enriched.selection_mode or "openapi_first",
-                        metadata=dict(enriched.metadata or {}),
-                    )
+                    payload = enriched.as_dict()
+                    payload["clarify"] = None
+                    executable = ActionPlan.from_dict(payload)
                     if len(executable.steps) == 1:
                         deterministic = self._deterministic_plan(
                             message,
@@ -167,6 +178,7 @@ class PlanExternalActionsService:
                 context_parameters=merged_context,
                 previous_messages=previous_messages,
                 context_body=existing_body,
+                execution_context=execution_context,
             )
             if missing:
                 clarify = OpenApiToolRoutingContentService.get(
@@ -249,12 +261,34 @@ class PlanExternalActionsService:
             return deterministic
         return llm_plan
 
+    def _invoke_llm_planner(
+        self,
+        message: str,
+        slim_catalog: list[dict[str, Any]],
+        *,
+        conversation_context: str,
+        candidate_set_id: str,
+    ) -> dict[str, Any] | None:
+        planner = self.llm_planner
+        if planner is None:
+            return None
+        try:
+            return planner(
+                message,
+                slim_catalog,
+                conversation_context=conversation_context,
+                candidate_set_id=candidate_set_id,
+            )
+        except TypeError:
+            return planner(message, slim_catalog)
+
     def _plan_from_payload(
         self,
         payload: dict[str, Any],
         *,
         top_k_ids: set[str],
         limit: int,
+        candidate_set_id: str = "",
     ) -> ActionPlan:
         plan = ActionPlan.from_dict(payload)
         accepted: list[ActionPlanStep] = []
@@ -273,32 +307,41 @@ class PlanExternalActionsService:
         metadata = dict(plan.metadata or {})
         if rejected:
             metadata["rejectedOutsideTopK"] = rejected
+            metadata["rejectedOutsideCandidateSet"] = rejected
+        if candidate_set_id:
+            metadata["candidateSetId"] = candidate_set_id
 
-        return ActionPlan(
-            steps=tuple(accepted),
-            clarify=plan.clarify,
-            selection_mode="openapi_first",
-            metadata=metadata,
+        return ActionPlan.from_dict(
+            {
+                **plan.as_dict(),
+                "steps": [step.as_dict() for step in accepted],
+                "candidateSetId": candidate_set_id or plan.candidate_set_id,
+                "metadata": metadata,
+            }
         )
 
     @classmethod
     def _apply_domain_compound_step_cap(cls, message: str, plan: ActionPlan) -> ActionPlan:
-        """Presentation-only compound must not keep N LLM steps — only domain compound."""
+        """Presentation-only compound must not keep N LLM steps — domain goals keep N."""
         if plan.is_empty or len(plan.steps) <= 1:
             return plan
 
-        if cls._wants_multi_action(message):
+        if len(plan.goals) >= 2:
+            return plan
+        if len({step.action_id for step in plan.steps}) >= 2 and not cls._is_presentation_compound(
+            message
+        ):
+            return plan
+        if cls._wants_multi_action(message) and not cls._is_presentation_compound(message):
+            return plan
+        if not cls._is_presentation_compound(message):
             return plan
 
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-        tokens = [token for token in _TOKEN_RE.findall(normalized) if len(token) >= 3]
-
-        def _step_score(step: ActionPlanStep) -> float:
-            hay = str(step.action_id or "").lower().replace("_", " ").replace(".", " ")
-            hits = sum(1.0 for token in tokens if token in hay)
-            return hits + float(step.confidence or 0.0)
-
-        ranked = sorted(plan.steps, key=_step_score, reverse=True)
+        ranked = sorted(
+            plan.steps,
+            key=lambda step: float(step.confidence or 0.0),
+            reverse=True,
+        )
         keep = ranked[0]
         metadata = dict(plan.metadata or {})
         metadata["presentationCompoundStepCap"] = True
@@ -307,13 +350,22 @@ class PlanExternalActionsService:
             for step in plan.steps
             if step.action_id and step.action_id != keep.action_id
         ]
+        payload = plan.as_dict()
+        payload["steps"] = [keep.as_dict()]
+        payload["metadata"] = metadata
+        return ActionPlan.from_dict(payload)
 
-        return ActionPlan(
-            steps=(keep,),
-            clarify=plan.clarify,
-            selection_mode=plan.selection_mode or "openapi_first",
-            metadata=metadata,
-        )
+    @classmethod
+    def _is_presentation_compound(cls, message: str) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        for signal in OpenApiToolRoutingContentService.list_setting(
+            "decomposition",
+            "presentationCompoundSignals",
+        ):
+            marker = ChatMessageNormalizationService.normalize_for_matching(signal)
+            if marker and marker in normalized:
+                return True
+        return False
 
     def _deterministic_plan(
         self,
@@ -379,6 +431,7 @@ class PlanExternalActionsService:
                 action,
                 context_parameters=ctx_params,
                 previous_messages=previous_messages,
+                execution_context=execution_context,
             )
             if missing:
                 # Do not abort an already-valid multi-step selection because a
@@ -528,6 +581,7 @@ class PlanExternalActionsService:
         context_parameters: dict[str, Any],
         previous_messages: list | None = None,
         context_body: dict[str, Any] | None = None,
+        execution_context: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], Any, list[str]]:
         parameters: dict[str, Any] = {}
         for key, value in (context_parameters or {}).items():
@@ -591,6 +645,19 @@ class PlanExternalActionsService:
                 for key, value in built.items():
                     if key in schema_names and key not in parameters and value is not None:
                         parameters[key] = value
+
+        if isinstance(schema_params, list):
+            from app.domain.services.chat_openapi_argument_coercion_service import (
+                ChatOpenApiArgumentCoercionService,
+            )
+
+            parameters = ChatOpenApiArgumentCoercionService.coerce_parameters(
+                parameters,
+                schema_params,
+                message=message,
+                previous_messages=previous_messages,
+                execution_context=execution_context,
+            )
 
         for parameter in schema_params:
             if not isinstance(parameter, dict):

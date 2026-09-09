@@ -1,0 +1,33 @@
+{
+  "id": "e8-session-b-reformulation",
+  "sessionProtocol": "chat-ai-flow-families.md#8",
+  "requiredDimensions": ["R2", "R3", "R6", "R9"],
+  "turns": [
+    {
+      "id": "T1",
+      "message": "saldo do material {SMOKE_MP_CODE}",
+      "expectFamily": "stock"
+    },
+    {
+      "id": "T2",
+      "message": "desse código, o saldo e a programação de produção de hoje",
+      "expectFamily": ["stock", "schedule"]
+    },
+    {
+      "id": "T3",
+      "message": "ROL comercial de agosto 2026 como indicador, leitura em prosa",
+      "expectFamily": "commercial_rol",
+      "expectPresentation": "kpi"
+    },
+    {
+      "id": "T4",
+      "message": "closing rate branch 01 august 2026",
+      "expectFamily": "closing_rate"
+    },
+    {
+      "id": "T5",
+      "message": "o que está programado pra fabricar hoje",
+      "expectFamily": "schedule"
+    }
+  ]
+}

@@ -247,6 +247,16 @@ class ChatTurnPreparationRagService:
             rag_query = message
             rag_min_score = None
 
+            planner_rag = ""
+            if isinstance(workspace_context, dict):
+                planner_rag = str(workspace_context.get("plannerRagQuery") or "").strip()
+                if not planner_rag:
+                    working_memory = workspace_context.get("workingMemory")
+                    if isinstance(working_memory, dict):
+                        planner_rag = str(working_memory.get("plannerRagQuery") or "").strip()
+            if planner_rag:
+                rag_query = planner_rag
+
             if assistant_identity_question:
                 rag_query = ChatAssistantIdentityService.build_rag_query(message)
                 from app.application.services.chat_intelligence_runtime_access import (

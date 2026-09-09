@@ -1,0 +1,20 @@
+{
+  "id": "e8-session-c-multi-provider",
+  "sessionProtocol": "chat-ai-flow-families.md#8",
+  "requiredDimensions": ["R1", "R2", "R10"],
+  "turns": [
+    {
+      "id": "T1",
+      "message": "export the product structure to excel",
+      "expectFamily": "nebula_export",
+      "expectProvider": "nebula-factory"
+    },
+    {
+      "id": "T2",
+      "message": "now dump the same structure as a spreadsheet",
+      "expectFamily": "nebula_export",
+      "expectProvider": "nebula-factory",
+      "note": "metamorphic rename of T1 — same goal, different wording"
+    }
+  ]
+}

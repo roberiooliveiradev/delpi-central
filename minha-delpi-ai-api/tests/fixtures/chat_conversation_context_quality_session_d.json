@@ -1,0 +1,30 @@
+{
+  "id": "e8-session-d-no-tool-rag",
+  "sessionProtocol": "chat-ai-flow-families.md#8",
+  "requiredDimensions": ["R1", "R2", "R4", "R6"],
+  "turns": [
+    {
+      "id": "T1",
+      "message": "oi, tudo bem?",
+      "expectFamily": "smalltalk",
+      "forbidOperationalTool": true
+    },
+    {
+      "id": "T2",
+      "message": "o que você pode fazer?",
+      "expectFamily": "capabilities",
+      "forbidOperationalTool": true
+    },
+    {
+      "id": "T3",
+      "message": "explique a política de segurança de tools do assistente",
+      "expectFamily": "knowledge",
+      "forbidOperationalTool": true
+    },
+    {
+      "id": "T4",
+      "message": "estoque do MP {SMOKE_MP_CODE}",
+      "expectFamily": "stock"
+    }
+  ]
+}

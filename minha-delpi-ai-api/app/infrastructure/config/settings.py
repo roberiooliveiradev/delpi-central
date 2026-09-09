@@ -373,6 +373,8 @@ class Settings:
         "CHAT_OPENAPI_PLANNER_PROVIDER_KEYS", ""
     ).strip()
     CHAT_OPENAPI_PLANNER_AGENT_IDS = os.getenv("CHAT_OPENAPI_PLANNER_AGENT_IDS", "").strip()
+    # Bounded planner loop (retrieve → optional search round). off = fragment/joiner path.
+    CHAT_BOUNDED_PLANNER_MODE = os.getenv("CHAT_BOUNDED_PLANNER_MODE", "on").strip().lower()
 
     CHAT_RAG_RERANK_ENABLED = (
         os.getenv("CHAT_RAG_RERANK_ENABLED", "true").lower() == "true"
