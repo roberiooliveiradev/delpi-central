@@ -13,7 +13,7 @@
 static const char* DEFAULT_WIFI_SSID = "YOUR_SSID";
 static const char* DEFAULT_WIFI_PASSWORD = "YOUR_PASSWORD";
 static const unsigned long DEFAULT_DEBOUNCE_MS = 100;
-static const char* FIRMWARE_VERSION = "esp8266_counter_v1.2.0";
+static const char* FIRMWARE_VERSION = "esp8266_counter_v1.2.1";
 static const uint16_t EEPROM_SIZE = 512;
 static const uint32_t CONFIG_MAGIC = 0x50505302;  // "PPS\x02" — inclui OTA base URL
 
@@ -303,6 +303,13 @@ String otaBaseTrimmed() {
   return base;
 }
 
+/** Redirects — API enum (core ≥2.6). Sem símbolo = no-op seguro. */
+void httpEnableRedirects(HTTPClient& http) {
+#if defined(HTTPC_STRICT_FOLLOW_REDIRECTS)
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+#endif
+}
+
 bool httpExchange(
   const String& method,
   const String& url,
@@ -313,7 +320,7 @@ bool httpExchange(
   WiFiClient client;
   HTTPClient http;
   http.setTimeout(20000);
-  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  httpEnableRedirects(http);
   if (!http.begin(client, url)) {
     return false;
   }
@@ -381,7 +388,7 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
   WiFiClient client;
   HTTPClient http;
   http.setTimeout(120000);
-  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  httpEnableRedirects(http);
   if (!http.begin(client, artifactUrl)) {
     reportOtaStatus(targetId, "failed", "http_begin_failed", "");
     return false;
@@ -393,17 +400,28 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
     reportOtaStatus(targetId, "failed", "download_http_" + String(code), "");
     return false;
   }
+  // ESP8266 Updater exige tamanho conhecido — não usar UPDATE_SIZE_UNKNOWN (símbolo do ESP32).
   int contentLength = http.getSize();
+  if (contentLength <= 0) {
+    http.end();
+    reportOtaStatus(targetId, "failed", "missing_content_length", "");
+    return false;
+  }
   WiFiClient* stream = http.getStreamPtr();
+  if (stream == nullptr) {
+    http.end();
+    reportOtaStatus(targetId, "failed", "download_stream_null", "");
+    return false;
+  }
 
-  if (!Update.begin(contentLength > 0 ? (size_t)contentLength : UPDATE_SIZE_UNKNOWN)) {
+  if (!Update.begin((size_t)contentLength)) {
     http.end();
     reportOtaStatus(targetId, "failed", "update_begin_failed", "");
     return false;
   }
   size_t written = Update.writeStream(*stream);
   http.end();
-  if (contentLength > 0 && written != (size_t)contentLength) {
+  if (written != (size_t)contentLength) {
     Update.end(false);
     reportOtaStatus(targetId, "failed", "download_incomplete", "");
     return false;
@@ -806,8 +824,13 @@ void processarBotao(
 }
 
 void registrarRotas() {
-  // ESP8266 core 3.x: collectHeaders é variádico (não array + count).
+  // Core 3.x: collectHeaders variádico. Core 2.x: array + count.
+#if defined(ARDUINO_ESP8266_MAJOR) && (ARDUINO_ESP8266_MAJOR >= 3)
   server.collectHeaders("X-Device-Token");
+#else
+  static const char* HEADER_KEYS[] = {"X-Device-Token"};
+  server.collectHeaders(HEADER_KEYS, 1);
+#endif
 
   server.on("/", HTTP_GET, []() {
     server.send(200, "text/html", paginaPrincipal());

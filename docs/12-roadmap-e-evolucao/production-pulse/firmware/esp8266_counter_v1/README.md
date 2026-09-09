@@ -2,7 +2,12 @@
 
 Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 
-**Arduino IDE 1.x:** qualquer `</tag>` literal no `.ino` é corrompido pelo IDE — no sketch as tags de fechamento HTML usam concatenação `"</" "tag>"`. Core ESP8266 **3.x**: `server.collectHeaders("X-Device-Token")`.
+**Arduino IDE 1.x:** qualquer `</tag>` literal no `.ino` é corrompido pelo IDE — no sketch as tags de fechamento HTML usam concatenação `"</" "tag>"`.
+
+**Core ESP8266 (2.x / 3.x):**
+- `collectHeaders`: core ≥3 variádico; core 2.x usa array + count (`#if ARDUINO_ESP8266_MAJOR`).
+- OTA: `Update.begin` com `Content-Length` do artefato — **não** usar `UPDATE_SIZE_UNKNOWN` (símbolo do ESP32; quebra no ESP8266).
+- Redirects HTTP: `HTTPC_STRICT_FOLLOW_REDIRECTS` quando o core exporta o enum.
 
 ## Endpoints
 
