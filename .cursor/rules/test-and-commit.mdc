@@ -7,6 +7,8 @@ alwaysApply: false
 
 Complementa `evidence-driven-execution.mdc` e `platform-quality-testing.mdc`: testes verdes não substituem validação do objetivo original.
 
+Quando a alteração estiver executando um plano multi-etapa, aplicar também `plan-execution.mdc`.
+
 ## Definition of Done transversal
 
 Antes de concluir uma alteração, identificar quais responsabilidades foram materiais e provar as aplicáveis:
@@ -59,6 +61,7 @@ Aplicar `root-cause-generalized-fix.mdc`.
 | Tema | Regra/gate |
 |---|---|
 | Regras Cursor | `cursor-rules-governance.mdc`; `python scripts/audit_cursor_rules.py` |
+| Execução de plano | `plan-execution.mdc`; objetivo + generalização + desacoplamento + regressão |
 | Enforcement arquitetural | `architecture-ci-enforcement.mdc`; executar Phase 3 + guardrails transversais |
 | Contratos | `platform-api-contracts-integration.mdc` + `contract-evolution-backward-compatibility.mdc` |
 | Segurança | `platform-security-identity-authorization.mdc`; `JWT_VERIFY_DISABLED` quando aplicável |
@@ -135,6 +138,69 @@ Pergunta adversarial:
 
 Se a resposta revelar risco material e testável, criar o teste antes de concluir.
 
+## Gate de qualidade arquitetural pós-execução
+
+Além de "funcionou?", toda alteração material deve responder **"funcionou da forma correta para a classe do problema?"**.
+
+Avaliar explicitamente:
+
+```text
+OBJECTIVE_RESOLVED
+GENERALIZATION
+DECOUPLING
+REGRESSION_SAFETY
+```
+
+### OBJECTIVE_RESOLVED
+
+PASS somente quando o objetivo original foi revalidado no fluxo que realmente consome a mudança. Teste de unidade isolado não prova wiring/runtime quando estes forem materiais.
+
+### GENERALIZATION
+
+PASS quando a solução corrige a classe de casos relevante sem depender indevidamente do literal reportado.
+
+Quando aplicável, exigir:
+
+- caso original;
+- caso irmão com dados/nome/ordem diferentes;
+- caso negativo;
+- caso metamórfico para rename/reorder/provider/path/linguagem quando esse tipo de variação puder revelar overfitting.
+
+Falhar quando a solução depender de path, endpoint, provider, operationId, fixture, texto, código ou entidade específica sem regra de domínio que justifique essa especialização.
+
+### DECOUPLING
+
+PASS quando ownership e fronteiras permanecem corretos:
+
+```text
+uma fonte canônica decide a regra
+consumidor apenas consome contrato
+MFE não reimplementa regra da API
+bounded contexts não importam domain/application de vizinhos
+shared permanece neutro
+integrações cruzam fronteiras por contrato explícito
+nenhum bypass novo foi criado
+```
+
+Para mudança multi-contexto, validar `platform-architecture-boundaries.mdc` e `application-bounded-context-decoupling.mdc` e registrar owner, boundary, contrato e direção da dependência.
+
+Se a mesma regra de negócio precisar ser editada em múltiplos contextos sem owner/contrato claro, o gate falha.
+
+### REGRESSION_SAFETY
+
+PASS quando os fluxos irmãos e invariantes materiais permanecem corretos, incluindo persist/F5, send/stream/simulate, admin/user surface, segurança, compatibilidade e outras superfícies aplicáveis.
+
+Classificação permitida:
+
+```text
+PASS
+FAIL
+INCONCLUSIVE
+N/A_JUSTIFIED   # somente para GENERALIZATION/DECOUPLING quando realmente não aplicável
+```
+
+`INCONCLUSIVE` nunca equivale a PASS.
+
 ## Falhas externas ao diff
 
 Não esconder workflow vermelho por ser “pré-existente”. Classificar claramente:
@@ -177,6 +243,12 @@ SECURITY_NEGATIVE
 MIGRATION_DATA quando aplicável
 BUILD_RUNTIME quando aplicável
 RELIABILITY_OBSERVABILITY quando aplicável
+OBJECTIVE_RESOLVED
+GENERALIZATION
+GENERALIZATION_EVIDENCE
+DECOUPLING
+DECOUPLING_EVIDENCE
+REGRESSION_SAFETY
 KNOWN_REGRESSIONS
 CI_GATES
 DECISION
