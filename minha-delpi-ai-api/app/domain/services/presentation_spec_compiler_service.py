@@ -12,6 +12,9 @@ from app.domain.services.presentation_compilers.presentation_chart_compiler_serv
 from app.domain.services.presentation_compilers.presentation_dashboard_compiler_service import (
     PresentationDashboardCompilerService,
 )
+from app.domain.services.presentation_compilers.presentation_delivery_compiler_service import (
+    PresentationDeliveryCompilerService,
+)
 from app.domain.services.presentation_compilers.presentation_kpi_compiler_service import (
     PresentationKpiCompilerService,
 )
@@ -85,7 +88,9 @@ class PresentationSpecCompilerService:
         )
         cls._apply_dashboard(metadata, spec=spec)
         cls._apply_text(metadata, spec=spec)
+        PresentationDeliveryCompilerService.apply(metadata, spec=spec)
 
+        metadata["presentationSpec"] = spec.as_dict()
         metadata["presentationDataProfile"] = profile.as_dict()
 
     @classmethod

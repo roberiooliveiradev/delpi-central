@@ -174,6 +174,14 @@ class PresentationIntelligenceOrchestratorService:
         except Exception:
             logger.debug("presentation_label_normalize_skipped", exc_info=True)
 
+        applied_spec = validation.spec if validation and validation.ok else None
+        if isinstance(constraints, dict) and constraints.get("preferCanvas"):
+            from app.domain.services.presentation_compilers.presentation_delivery_compiler_service import (
+                PresentationDeliveryCompilerService,
+            )
+
+            PresentationDeliveryCompilerService.apply(metadata, spec=applied_spec)
+
         elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
         summary = {
             "profileHash": profile.profile_hash,
