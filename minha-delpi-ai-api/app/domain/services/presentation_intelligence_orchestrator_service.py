@@ -197,12 +197,14 @@ class PresentationIntelligenceOrchestratorService:
         summary: dict[str, Any] | None,
         intent: dict[str, Any] | None = None,
     ) -> bool:
-        if not isinstance(summary, dict):
-            return False
-        if summary.get("specApplied") and float(summary.get("bindConfidence") or 0) >= _BIND_CONFIDENCE_THRESHOLD:
-            return False
-        return bool(summary.get("needsComposer"))
+        from app.domain.services.presentation_composer_policy_service import (
+            PresentationComposerPolicyService,
+        )
 
+        return PresentationComposerPolicyService.should_invoke(
+            summary=summary,
+            intent=intent,
+        )
     @classmethod
     def _looks_ambiguous(cls, intent: Any, profile: Any) -> bool:
         dims = len(getattr(profile, "dimension_candidates", ()) or ())

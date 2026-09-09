@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "skip": {
+    "whenSpecAppliedAndBindConfidenceAtLeast": 0.72,
+    "whenExplicitIntentAndBindConfidenceAtLeast": 0.85
+  },
+  "invoke": {
+    "whenNeedsComposerFlag": true,
+    "minDimensionCandidatesForAmbiguity": 2,
+    "minMeasureCandidatesForAmbiguity": 2,
+    "whenComplexConstraintsPresent": true
+  },
+  "budgets": {
+    "maxComposerCallsPerTurn": 1,
+    "maxRepairAttempts": 2,
+    "maxUserExcerptChars": 400
+  }
+}
