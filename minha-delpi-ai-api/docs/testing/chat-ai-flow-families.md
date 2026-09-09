@@ -686,3 +686,102 @@ DECISION: PASS | FAIL | INCONCLUSIVE
 ```
 
 Sem evidência suficiente, usar `INCONCLUSIVE`; não preencher lacunas por inferência.
+
+---
+
+# 20. Famílias Presentation Composer (PC)
+
+**Escopo:** `PresentationSpec` multi-view, validators, compilers, composer LLM shadow/canary, MFE render-only.  
+**Família pai:** F13 (Apresentação de dados) — estas subfamílias cobrem o composer universal sem duplicar regra por endpoint.
+
+Baseline imutável: `docs/testing/evidence/presentation-composer-universal-baseline.json`.  
+Candidate comparável: `docs/testing/evidence/presentation-composer-universal-candidate.json`.  
+Dataset versionado (stub): `docs/testing/datasets/presentation-composer-universal-v1-stub.json`.
+
+## 20.1 Taxonomia PC01–PC08
+
+| ID | Família | Objetivo | Required dimensions mínimas |
+|----|---------|----------|----------------------------|
+| **PC01** | **table** | Colunas, sort, hidden visual, density, labels PT-BR | R4, **R5**, R8, R9 |
+| **PC02** | **chart** | mark/encoding, heatmap, paletteFamily, legend | R4, **R5**, R8, R9, R10 |
+| **PC03** | **kpi** | cards, agregação, tones sem hex inventado | R4, **R5**, R9 |
+| **PC04** | **tree** | levelFields, depth, labels legíveis | R4, **R5**, R9 |
+| **PC05** | **dashboard** | panels allowlist, roles, nested presentations | R4, **R5**, R9 |
+| **PC06** | **text** | sectionPlan, proseDensity, integração com stack | R4, **R5**, R6, R9 |
+| **PC07** | **adversarial** | hex/CSS/JS, campos inventados, caps (cols/cards/panels) | **R10**, R5 |
+| **PC08** | **metamorphic** | OpenAPI rename path/operationId — mesma capability visual | R1, R3, **R5**, R9 |
+
+## 20.2 Casos obrigatórios por família
+
+| Família | Positive | Sibling | Negative |
+|---------|----------|---------|----------|
+| PC01 table | 3 cols + sort desc | hidden visual, export intacto | coluna inventada → FAIL validator |
+| PC02 chart | heatmap azul 2 dims | bar com labels OpenAPI | eixo constante `unit=UN` → reject |
+| PC03 kpi | 2 cards agregados | cardOrder explícito | >8 cards → FAIL cap |
+| PC04 tree | 2 níveis legíveis | badgeField opcional | depth > cap → FAIL |
+| PC05 dashboard | 2 panels kpi+chart | panel table sibling | panel type fora allowlist → FAIL |
+| PC06 text | sectionPlan summary | proseDensity compact | marker desconhecido → FAIL |
+| PC07 adversarial | payload sem rows no LLM | repair once | hex em palette → FAIL R10 |
+| PC08 metamorphic | V1 export path | V2 download_bom_sheet | selector acoplado a path → FAIL |
+
+## 20.3 Smoke live T1–T5 (aceite perceptível)
+
+Corpus de aceite multi-turn (reusa dados, sem refetch desnecessário):
+
+| Turno | Pedido | Prova |
+|-------|--------|-------|
+| **T1** | estoque / tabela default | table slot + labels |
+| **T2** | só 3 colunas | Spec `fields[]` + sort |
+| **T3** | gráfico de barras | chart mark bar |
+| **T4** | mapa de calor azul | heatmap + `paletteFamily=sequential-blue` |
+| **T5** | coloque na lousa | `preferCanvas` → `canvasOpen` |
+
+Harness: `scripts/smoke_presentation_composer_multiview_live.py` (inprocess default; HTTP opcional).
+
+## 20.4 Shadow / canary / telemetria
+
+| Env | Modo | Metadata |
+|-----|------|----------|
+| `PRESENTATION_COMPOSER_SHADOW=1` | propõe Spec; UI determinística | `presentationComposerShadow`, `presentationComposerPolicy` |
+| `PRESENTATION_COMPOSER_CANARY=1` | authoritative só se `validation.ok` | `presentationComposerAuthoritative`, re-apply PI |
+
+Campos de telemetria (sem raw rows, sem prompt):
+
+```text
+presentationIntelligence.profileHash
+presentationIntelligence.bindConfidence
+presentationIntelligence.composerInvoked
+presentationIntelligence.needsComposer
+presentationIntelligence.specApplied
+presentationIntelligence.presentation_profile_build_ms
+
+presentationComposerPolicy.decision   // skip | invoke_flag_off | invoke
+presentationComposerPolicy.fallback
+presentationComposerPolicy.fallbackReason
+presentationComposerPolicy.latencyMs
+
+presentationComposerShadow.ok
+presentationComposerShadow.reason
+presentationComposerShadow.latencyMs
+presentationComposerShadow.repairUsed
+presentationComposerShadow.specSummary  // view, mark, paletteFamily — não rows/prompt
+```
+
+Evidência shadow: `docs/testing/evidence/presentation-composer-shadow-evidence.md`.  
+Evidência canary/rollback: `docs/testing/evidence/presentation-composer-canary-evidence.md`.
+
+## 20.5 Baseline × candidate
+
+Fluxo obrigatório para mudanças no composer universal:
+
+```text
+baseline imutável (E0.S2)
+→ implementação E1–E8
+→ candidate gap matrix + R-dimensions
+→ smoke T1–T5
+→ shadow staging (invocation/disagreement rates)
+→ canary bounded
+→ verify-final DoD
+```
+
+Não alterar o arquivo baseline após início do candidate; comparar side-by-side.

@@ -1,0 +1,76 @@
+{
+  "datasetVersion": "presentation-composer-universal-v1-stub",
+  "status": "STUB",
+  "description": "Corpus versionado para eval offline do Presentation Composer universal. Expandir casos conforme PC01–PC08 em chat-ai-flow-families.md §20.",
+  "baselineRef": "docs/testing/evidence/presentation-composer-universal-baseline.json",
+  "candidateRef": "docs/testing/evidence/presentation-composer-universal-candidate.json",
+  "families": ["PC01", "PC02", "PC03", "PC04", "PC05", "PC06", "PC07", "PC08"],
+  "cases": [
+    {
+      "id": "PC01.table-three-cols-sort-001",
+      "family": "PC01",
+      "input": "mostre só produto, depósito e qtd planejada ordenado do maior pro menor",
+      "expectedView": "table",
+      "expectedFields": ["product_code", "warehouse", "planned_qty"],
+      "expectedSort": {"field": "planned_qty", "direction": "desc"},
+      "requiredDimensions": ["R4", "R5", "R8", "R9"]
+    },
+    {
+      "id": "PC02.chart-heatmap-blue-001",
+      "family": "PC02",
+      "input": "mapa de calor produto × depósito pela qtd planejada em tons de azul",
+      "expectedMark": "heatmap",
+      "expectedPaletteFamily": "sequential-blue",
+      "requiredDimensions": ["R4", "R5", "R8", "R9", "R10"]
+    },
+    {
+      "id": "PC03.kpi-cards-001",
+      "family": "PC03",
+      "input": "KPIs de saldo e quantidade planejada",
+      "expectedView": "kpi",
+      "requiredDimensions": ["R4", "R5", "R9"]
+    },
+    {
+      "id": "PC04.tree-levels-001",
+      "family": "PC04",
+      "input": "estrutura em árvore por família e produto",
+      "expectedView": "tree",
+      "requiredDimensions": ["R4", "R5", "R9"]
+    },
+    {
+      "id": "PC05.dashboard-panels-001",
+      "family": "PC05",
+      "input": "painel com KPI de saldo e gráfico de barras por depósito",
+      "expectedView": "dashboard",
+      "requiredDimensions": ["R4", "R5", "R9"]
+    },
+    {
+      "id": "PC06.text-sections-001",
+      "family": "PC06",
+      "input": "resumo executivo com destaques e pontos de atenção",
+      "expectedView": "text",
+      "requiredDimensions": ["R4", "R5", "R6", "R9"]
+    },
+    {
+      "id": "PC07.adversarial-hex-injection-001",
+      "family": "PC07",
+      "input": "gráfico com cor #ff0000",
+      "forbiddenBehavior": ["hex_in_spec", "raw_rows_in_compose_payload"],
+      "requiredDimensions": ["R10", "R5"]
+    },
+    {
+      "id": "PC08.metamorphic-export-rename-001",
+      "family": "PC08",
+      "input": "exporte a estrutura do item ABC em planilha",
+      "openapiVariants": ["V1_export_components", "V2_download_bom_sheet"],
+      "requiredDimensions": ["R1", "R3", "R5", "R9"]
+    }
+  ],
+  "smokeLiveTurns": [
+    {"id": "T1", "message": "Qual o estoque do produto 90260149? Prefiro tabela.", "expect": "table"},
+    {"id": "T2", "message": "Mostre só produto, depósito e quantidade.", "expect": "table_fields_subset"},
+    {"id": "T3", "message": "Prefiro gráfico de barras.", "expect": "bar_chart"},
+    {"id": "T4", "message": "Mapa de calor em tons de azul.", "expect": "heatmap_blue"},
+    {"id": "T5", "message": "Coloque na lousa.", "expect": "canvasOpen"}
+  ]
+}
