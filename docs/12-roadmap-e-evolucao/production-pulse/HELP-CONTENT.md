@@ -23,12 +23,16 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 
 | Elemento UI | Chave help | Texto |
 |-------------|------------|-------|
-| TopBar áreas | `shell.topBar` | Painel · Hub OTA · Operador (☰ quando não couber) |
+| TopBar áreas | `shell.topBar` | Admin · Operador (☰ quando não couber) |
 | Título hero | `shell.heroTitle` | Monitoramento IoT na filial… |
 | Filial | `shell.heroFilial` | Filial operacional… |
 | [Atualizar tudo] | `shell.pollAll` | Poll imediato em todos ativos… |
 
-## WF-PP-OTA-HUB — Hub OTA
+## WF-PP-OTA-HUB — Admin mapa
+
+Superfície única Admin: canvas fullscreen, KPIs em chips, catálogos/jobs em painéis laterais, CRUD/OTA em drawers e popovers ancorados (`AnchoredPanelPortal`).
+
+Helps: `PP_HELP.hub.*`, `PP_HELP.otaLinks.*`.
 
 | Elemento UI | Chave help |
 |-------------|------------|

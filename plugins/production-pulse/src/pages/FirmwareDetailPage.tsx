@@ -35,6 +35,9 @@ import { navigateProductionPulse } from "../utils/navigation";
 type FirmwareDetailPageProps = {
   firmwareId: string;
   permissions: ProductionPulsePermissionFlags;
+  embedded?: boolean;
+  onDone?: () => void;
+  onCancel?: () => void;
 };
 
 function lifecycleLabel(lifecycle: FirmwareLifecycle): string {
@@ -49,7 +52,13 @@ function lifecycleBadgeClass(lifecycle: FirmwareLifecycle): string {
   return "pp-lifecycle-badge pp-lifecycle-badge--published";
 }
 
-export function FirmwareDetailPage({ firmwareId, permissions }: FirmwareDetailPageProps) {
+export function FirmwareDetailPage({
+  firmwareId,
+  permissions,
+  embedded = false,
+  onDone,
+  onCancel,
+}: FirmwareDetailPageProps) {
   const canManage = permissions.canManageDevices;
   const [item, setItem] = useState<FirmwareDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -218,10 +227,12 @@ export function FirmwareDetailPage({ firmwareId, permissions }: FirmwareDetailPa
   }
 
   return (
-    <div className="pp-page-stack pp-firmware-detail">
+    <div className={`pp-page-stack pp-firmware-detail${embedded ? " pp-form-page--embedded" : ""}`}>
+      {!embedded ? (
+        <>
       <ProductionPulsePagePath
         panelHref={PRODUCTION_PULSE_BASE_PATH}
-        items={[{ id: "hub", label: "Hub OTA", href: productionPulseFirmwaresPath() }]}
+        items={[{ id: "hub", label: "Admin", href: productionPulseFirmwaresPath() }]}
         current={item.displayName || `${item.firmwareKey} · ${item.version}`}
       />
 
@@ -258,23 +269,52 @@ export function FirmwareDetailPage({ firmwareId, permissions }: FirmwareDetailPa
                   </PpActionButton>
                 </PpHintAction>
               ) : null}
-              <PpHintAction hint={PP_HELP.otaLinks.afterPublish} ariaLabel="Ajuda: Hub OTA">
+              <PpHintAction hint={PP_HELP.otaLinks.afterPublish} ariaLabel="Ajuda: Admin mapa">
                 <PpActionButton
                   variant="ghost"
                   className="pp-hero-brand-btn"
-                  onClick={() =>
+                  onClick={() => {
+                    if (onDone) {
+                      onDone();
+                      return;
+                    }
                     navigateProductionPulse(
                       productionPulseFirmwareLinksPath({ firmwareKey: item.firmwareKey, branch: "01" }),
-                    )
-                  }
+                    );
+                  }}
                 >
-                  Abrir hub OTA
+                  Voltar ao mapa
                 </PpActionButton>
               </PpHintAction>
             </div>
           ) : null
         }
       />
+        </>
+      ) : (
+        <div className="pp-inline-actions pp-embedded-fw-actions">
+          {canEditMeta ? (
+            <PpActionButton variant="ghost" onClick={() => setEditMetaOpen(true)}>
+              Editar metadados
+            </PpActionButton>
+          ) : null}
+          {canPublish ? (
+            <PpActionButton onClick={() => setPublishOpen(true)} disabled={busy}>
+              Publicar versão
+            </PpActionButton>
+          ) : null}
+          {canArchive ? (
+            <PpActionButton variant="ghost" onClick={() => setArchiveOpen(true)} disabled={busy}>
+              Arquivar
+            </PpActionButton>
+          ) : null}
+          {onCancel ? (
+            <PpActionButton variant="ghost" onClick={onCancel}>
+              Fechar
+            </PpActionButton>
+          ) : null}
+        </div>
+      )}
 
       {actionError ? <PpStateBox variant="error" title="Operação" message={actionError} /> : null}
 

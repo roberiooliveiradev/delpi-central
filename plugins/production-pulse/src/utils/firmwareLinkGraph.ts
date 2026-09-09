@@ -12,8 +12,16 @@ export type FirmwareLinkGraphNode = {
   deviceId?: string;
   latestVersion?: string | null;
   linkedCount?: number;
+  outdatedCount?: number;
   installedFirmwareVersion?: string | null;
+  availableVersion?: string | null;
   ipAddress?: string | null;
+  status?: string | null;
+  counter?: number | null;
+  counterDay?: number | null;
+  counterShift?: number | null;
+  lastSeenAt?: string | null;
+  dimmed?: boolean;
   position: { x: number; y: number };
 };
 
@@ -30,6 +38,9 @@ export type FirmwareFamilyNode = {
   displayName: string;
   latestVersion: string | null;
   linkedCount: number;
+  outdatedCount: number;
+  /** Latest published firmware row id for this family (for entity selection). */
+  latestFirmwareId?: string | null;
 };
 
 /** Ordem canônica de release: publishedAt vence; sem data, versão semântica. */
@@ -64,6 +75,8 @@ export function uniqueFirmwareFamilies(
           displayName: item.displayName || item.firmwareKey,
           latestVersion: item.version,
           linkedCount: 0,
+          outdatedCount: 0,
+          latestFirmwareId: item.id,
         },
       });
       continue;
@@ -79,15 +92,22 @@ export function uniqueFirmwareFamilies(
         displayName: item.displayName || prev.family.displayName,
         latestVersion: item.version,
         linkedCount: 0,
+        outdatedCount: 0,
+        latestFirmwareId: item.id,
       },
     });
   }
 
   const families = [...byKey.values()].map((entry) => entry.family);
   for (const family of families) {
-    family.linkedCount = devices.filter(
+    const linked = devices.filter(
       (device) => explicitFirmwareKey(device) === family.firmwareKey,
-    ).length;
+    );
+    family.linkedCount = linked.length;
+    family.outdatedCount = linked.filter((device) => {
+      const installed = device.installedFirmwareVersion?.trim() || null;
+      return installed !== (family.latestVersion ?? null);
+    }).length;
   }
   return families.sort((a, b) => a.firmwareKey.localeCompare(b.firmwareKey));
 }
@@ -107,37 +127,77 @@ export function explicitFirmwareKey(device: DeviceListItem): string | null {
 export function buildFirmwareLinkGraph(input: {
   families: FirmwareFamilyNode[];
   devices: DeviceListItem[];
+  /** Optional search/status filter — matching nodes stay bright; others dim. */
+  filterQuery?: string;
+  filterStatus?: string;
 }): { nodes: FirmwareLinkGraphNode[]; edges: FirmwareLinkGraphEdge[] } {
   const nodes: FirmwareLinkGraphNode[] = [];
   const edges: FirmwareLinkGraphEdge[] = [];
   const familyKeys = new Set(input.families.map((f) => f.firmwareKey));
+  const query = input.filterQuery?.trim().toLowerCase() ?? "";
+  const statusFilter = input.filterStatus?.trim() ?? "";
+
+  const matchesQuery = (haystack: string) =>
+    !query || haystack.toLowerCase().includes(query);
 
   input.families.forEach((family, index) => {
     const versionLabel = family.latestVersion ? `v${family.latestVersion}` : "sem versão";
+    const dimmed =
+      Boolean(query) &&
+      !matchesQuery(
+        `${family.displayName} ${family.firmwareKey} ${family.latestVersion ?? ""}`,
+      );
     nodes.push({
       id: `fw:${family.firmwareKey}`,
       kind: "firmware",
       label: family.displayName,
-      subtitle: `${family.firmwareKey} · ${versionLabel} · ${family.linkedCount} ligado(s)`,
+      subtitle: `${family.firmwareKey} · ${versionLabel}`,
       firmwareKey: family.firmwareKey,
       latestVersion: family.latestVersion,
       linkedCount: family.linkedCount,
-      position: { x: 40, y: 40 + index * 130 },
+      outdatedCount: family.outdatedCount,
+      dimmed,
+      position: { x: 40, y: 40 + index * 160 },
     });
   });
 
   input.devices.forEach((device, index) => {
     const nodeId = `dev:${device.id}`;
-    const installed = device.installedFirmwareVersion?.trim() || "—";
+    const installed = device.installedFirmwareVersion?.trim() || null;
+    const familyKey = explicitFirmwareKey(device);
+    const family = input.families.find((item) => item.firmwareKey === familyKey);
+    const available = family?.latestVersion ?? null;
+    const counter =
+      typeof device.lastMetrics?.counter === "number"
+        ? device.lastMetrics.counter
+        : typeof device.lastMetrics?.counter === "string"
+          ? Number(device.lastMetrics.counter)
+          : null;
+    const counterDay = device.periodDeltas?.day?.counter ?? null;
+    const counterShift = device.periodDeltas?.shift?.counter ?? null;
+    const statusMatch = !statusFilter || device.status === statusFilter;
+    const dimmed =
+      (!statusMatch) ||
+      (Boolean(query) &&
+        !matchesQuery(
+          `${device.name} ${device.ipAddress} ${installed ?? ""} ${device.driverKey}`,
+        ));
     nodes.push({
       id: nodeId,
       kind: "device",
       label: device.name,
-      subtitle: `${device.ipAddress} · ${installed}`,
+      subtitle: device.ipAddress,
       deviceId: device.id,
       ipAddress: device.ipAddress,
-      installedFirmwareVersion: device.installedFirmwareVersion ?? null,
-      position: { x: 420, y: 40 + index * 110 },
+      installedFirmwareVersion: installed,
+      availableVersion: available,
+      status: device.status,
+      counter: Number.isFinite(counter) ? counter : null,
+      counterDay,
+      counterShift,
+      lastSeenAt: device.lastSeenAt,
+      dimmed,
+      position: { x: 460, y: 40 + index * 170 },
     });
 
     const explicit = explicitFirmwareKey(device);

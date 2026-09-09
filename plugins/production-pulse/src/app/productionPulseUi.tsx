@@ -1,11 +1,15 @@
 import { useState, type ComponentProps } from "react";
 import {
   ActionButton,
+  AnchoredPanelPortal,
   attachmentFileListBemClasses,
+  ContextMenuDivider,
+  ContextMenuItem,
   createDashboardTopBar,
   createCompactPagination,
   createDashboardAttachmentFileList,
   createDashboardFileDropzone,
+  createHostContainedDrawerShell,
   createHostContainedModalShell,
   catalogSearchBarBemClasses,
   createDashboardCatalogSearchBar,
@@ -42,6 +46,13 @@ export const PpHostContainedDialog = createHostContainedModalShell({
   portalScopeClassName: PP_PORTAL_SCOPE,
   containedLayout: "dialog",
 });
+
+export const PpHostContainedDrawer = createHostContainedDrawerShell({
+  prefix: PREFIX,
+  portalScopeClassName: PP_PORTAL_SCOPE,
+});
+
+export { AnchoredPanelPortal, ContextMenuDivider, ContextMenuItem };
 
 export type PpPageHeroProps = Omit<
   ComponentProps<typeof PageHero>,

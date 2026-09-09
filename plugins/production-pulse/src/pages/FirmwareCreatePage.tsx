@@ -31,11 +31,20 @@ import { navigateProductionPulse } from "../utils/navigation";
 type FirmwareCreatePageProps = {
   branch?: string;
   permissions: ProductionPulsePermissionFlags;
+  embedded?: boolean;
+  onDone?: () => void;
+  onCancel?: () => void;
 };
 
 const DEFAULT_FIRMWARE_KEY = "esp8266_counter_v1";
 
-export function FirmwareCreatePage({ branch = "01", permissions }: FirmwareCreatePageProps) {
+export function FirmwareCreatePage({
+  branch = "01",
+  permissions,
+  embedded = false,
+  onDone,
+  onCancel,
+}: FirmwareCreatePageProps) {
   const canManage = permissions.canManageDevices;
   const [drivers, setDrivers] = useState<FirmwareDriverCatalogItem[]>([]);
   const [firmwareKey, setFirmwareKey] = useState(DEFAULT_FIRMWARE_KEY);
@@ -79,6 +88,10 @@ export function FirmwareCreatePage({ branch = "01", permissions }: FirmwareCreat
   const hubPath = productionPulseFirmwareLinksPath({ branch, focus: "catalog" });
 
   const goToHub = () => {
+    if (onCancel) {
+      onCancel();
+      return;
+    }
     navigateProductionPulse(hubPath);
   };
 
@@ -102,6 +115,10 @@ export function FirmwareCreatePage({ branch = "01", permissions }: FirmwareCreat
     setFormError(null);
     try {
       const created = await publishFirmware(data);
+      if (onDone) {
+        onDone();
+        return;
+      }
       if (publish) {
         navigateProductionPulse(
           productionPulseFirmwareLinksPath({ branch, firmwareKey: firmwareKey.trim() }),
@@ -130,18 +147,22 @@ export function FirmwareCreatePage({ branch = "01", permissions }: FirmwareCreat
   }
 
   return (
-    <div className="pp-page-stack pp-form-page">
-      <ProductionPulsePagePath
-        panelHref={PRODUCTION_PULSE_BASE_PATH}
-        items={[{ id: "hub", label: "Hub OTA", href: hubPath }]}
-        current={PP_HELP.firmwareCreate.breadcrumb}
-      />
+    <div className={`pp-page-stack pp-form-page${embedded ? " pp-form-page--embedded" : ""}`}>
+      {!embedded ? (
+        <>
+          <ProductionPulsePagePath
+            panelHref={PRODUCTION_PULSE_BASE_PATH}
+            items={[{ id: "hub", label: "Admin", href: hubPath }]}
+            current={PP_HELP.firmwareCreate.breadcrumb}
+          />
 
-      <PpPageHero
-        title={PP_HELP.firmwareCreate.breadcrumb}
-        description={PP_HELP.firmwareCreate.hero}
-        badge={ppShellIcon}
-      />
+          <PpPageHero
+            title={PP_HELP.firmwareCreate.breadcrumb}
+            description={PP_HELP.firmwareCreate.hero}
+            badge={ppShellIcon}
+          />
+        </>
+      ) : null}
 
       {formError ? (
         <PpStateBox variant="error" title="Não foi possível salvar" message={formError} />

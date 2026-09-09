@@ -88,7 +88,7 @@ Rotas administrativas (painel, hub OTA, cadastro/detalle IoT, drill-downs de fir
 
 ```text
 ┌─ Sidebar Portal ─┬─ Área MFE .dashboard-production-pulse ─────────────────────────────┐
-│ Minha DELPI      │ ┌─ PpTopBar: Painel | Hub OTA | Operador† ────────────────────────┐ │
+│ Minha DELPI      │ ┌─ PpTopBar: Admin | Operador† ───────────────────────────────────┐ │
 │ ► Pulso Produção │ └─────────────────────────────────────────────────────────────────┘ │
 │                  │ ┌─ PageHero compact (ações locais da rota) ────────────────────────┐ │
 │                  │ │ título + descrição · sem CTAs de área no hero                   │ │
@@ -1531,19 +1531,22 @@ KPIs OTA ficam no Hub — não no Painel.
 
 ## WF-PP-OTA-02 — `/firmwares` (alias)
 
-Redireciona para `/firmware-links?focus=catalog`. Create → `/firmwares/new`.
+Redireciona para `/firmware-links?panel=firmwares` (catálogo em painel lateral).
 
-## WF-PP-OTA-03 — Hub OTA (`/firmware-links`; `/firmware-jobs` → redirect)
+## WF-PP-OTA-03 — Admin mapa (`/firmware-links`; home `/apps/production-pulse` → redirect)
+
+TopBar: **Admin | Operador**. O mapa ocupa quase todo o viewport.
 
 ```text
-┌─ Hub OTA ────────────────────────────────────────────────────────┐
-│ Hero · Filial · [+ Novo IoT] [+ Novo firmware] [Atualizar]       │
-│ KPI: Publicados · Vinculados · Em atualização · Falhas           │
-│ MAPA canvas (React Flow) · legenda vínculo direto / via driver   │
-│ FIRMWARES — busca + tabela única · [Detalhe] [Amarrar]           │
-│ ATUALIZAÇÕES — form compacto · jobs · targets em dialog         │
-└──────────────────────────────────────────────────────────────────┘
+┌─ Admin                                              Operador ─┐
+│ [Buscar] [Filtros] [Saúde▾] [Jobs n]     [IoTs] [FW] [+IoT] [+FW] [↻] │
+│ ┌─ Canvas fullscreen (React Flow + MiniMap + Controls) ─────┐ │
+│ │  FW ──▶ IoT   · clique = popover · ⋯ = menu · drawers CRUD │ │
+│ └────────────────────────────────────────────────────────────┘ │
+└───────────────────────────────────────────────────────────────┘
 ```
+
+Query: `entity=device|firmware|job:<id>` · `panel=devices|firmwares|jobs` · `drawer=…`
 
 ## WF-PP-OTA-04 — Detalhe · aba Firmware (IoT)
 
@@ -1551,16 +1554,17 @@ Redireciona para `/firmware-links?focus=catalog`. Create → `/firmwares/new`.
 ┌─ Versão e atualização OTA ───────────────────────────────────────┐
 │ Em execução · Instalada · Alvo · Última publicada · Família      │
 │ Sketch instalado / alvo / legado (exact-version)                 │
-│ [Atualizar este device] [Ver hub OTA]                            │
+│ [Atualizar este device] [Ver mapa Admin]                         │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-## WF-PP-OTA-05 — Canvas no hub
+## WF-PP-OTA-05 — Canvas Admin
 
 ```text
 ┌─ Canvas Firmware ↔ IoT ──────────────────────────────────────────┐
-│ FW: família · latest · linkedCount · [Atualizar ligados]         │
-│ IoT: nome · versão · Desvincular / Atualizar / Abrir             │
+│ FW: nome · versão · vinculados · desatualizados · [CTA] · ⋯     │
+│ IoT: status · golpes · instalada/disponível · [CTA] · ⋯         │
+│ Popover resumo · menu contextual · inspector / drawers           │
 │ Delete/Backspace na seta sólida = unlink · pan/zoom/touch        │
 └──────────────────────────────────────────────────────────────────┘
 ```

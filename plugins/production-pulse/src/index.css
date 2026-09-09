@@ -89,11 +89,25 @@
   min-height: 0;
 }
 
+.dashboard-production-pulse .pp-shell--admin-fill {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  gap: 0;
+}
+
 .dashboard-production-pulse .pp-shell__content {
   display: flex;
   flex-direction: column;
   gap: var(--pp-section-gap);
   min-width: 0;
+}
+
+.dashboard-production-pulse .pp-shell--admin-fill .pp-shell__content {
+  flex: 1;
+  min-height: 0;
+  gap: 0;
+  overflow: hidden;
 }
 
 .dashboard-production-pulse .pp-firmware-family-group + .pp-firmware-family-group {
@@ -2019,6 +2033,309 @@
   border-radius: var(--pp-card-radius);
   background: var(--pp-canvas);
   overflow: hidden;
+}
+
+.pp-firmware-link-canvas--fill,
+.pp-admin-hub .pp-firmware-link-canvas {
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.pp-firmware-link-canvas-wrap--fill {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pp-firmware-link-canvas-wrap--fill .pp-firmware-link-canvas {
+  flex: 1;
+}
+
+.pp-admin-hub {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  position: relative;
+}
+
+.pp-admin-hub__notice {
+  position: absolute;
+  z-index: 5;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(28rem, 90vw);
+}
+
+.pp-admin-viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  height: 100%;
+}
+
+.pp-admin-viewport > .pp-firmware-link-canvas-wrap,
+.pp-admin-viewport > .pp-state-box {
+  flex: 1;
+  min-width: 0;
+}
+
+.pp-map-overlay-panel {
+  margin: 0.75rem !important;
+  max-width: min(22rem, 42vw);
+}
+
+.pp-map-overlay-stack,
+.pp-map-overlay-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.65rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--pp-surface) 92%, transparent);
+  border: 1px solid var(--pp-border);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.pp-map-overlay-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: min(28rem, 48vw);
+}
+
+.pp-map-overlay-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: var(--pp-font-sm);
+}
+
+.pp-hub-kpi-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.pp-hub-chip,
+.pp-hub-chip-btn {
+  border: 1px solid var(--pp-border);
+  background: var(--pp-surface);
+  color: var(--pp-text);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: var(--pp-font-xs);
+  cursor: pointer;
+}
+
+.pp-hub-chip--static {
+  cursor: default;
+}
+
+.pp-hub-chip--skeleton {
+  width: 4.5rem;
+  height: 1.5rem;
+  opacity: 0.4;
+}
+
+.pp-hub-health-popover {
+  padding: 0.75rem 1rem;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: var(--pp-surface);
+  border: 1px solid var(--pp-border);
+  border-radius: 10px;
+  font-size: var(--pp-font-sm);
+}
+
+.pp-hub-legend--compact {
+  margin: 0;
+  font-size: var(--pp-font-xs);
+}
+
+.pp-admin-side-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(26rem, 92vw);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  background: var(--pp-surface);
+  border-left: 1px solid var(--pp-border);
+  box-shadow: -8px 0 24px rgba(15, 23, 42, 0.12);
+}
+
+.pp-admin-side-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--pp-border);
+}
+
+.pp-admin-side-panel__title {
+  margin: 0;
+  font-size: var(--pp-font-md);
+}
+
+.pp-admin-side-panel__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.75rem 1rem;
+}
+
+.pp-entity-summary,
+.pp-entity-menu {
+  min-width: 14rem;
+  max-width: min(20rem, 90vw);
+  padding: 0.75rem;
+  background: var(--pp-surface);
+  border: 1px solid var(--pp-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+}
+
+.pp-entity-summary__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pp-entity-summary__body,
+.pp-entity-summary__actions,
+.pp-map-node__metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  font-size: var(--pp-font-xs);
+}
+
+.pp-entity-summary__actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.pp-map-node__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.pp-map-node__menu {
+  border: 0;
+  background: transparent;
+  color: var(--pp-text-muted);
+  cursor: pointer;
+  padding: 0.1rem;
+  border-radius: 6px;
+}
+
+.pp-map-node__menu:hover,
+.pp-map-node__menu:focus-visible {
+  color: var(--pp-text);
+  outline: 2px solid var(--pp-accent);
+}
+
+.pp-map-node__status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  font-size: var(--pp-font-xs);
+}
+
+.pp-node-status {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--pp-text-muted);
+}
+
+.pp-node-status--online {
+  background: var(--pp-success);
+}
+
+.pp-node-status--offline {
+  background: var(--pp-warning, #d97706);
+}
+
+.pp-node-status--disabled {
+  background: var(--pp-text-muted);
+}
+
+.pp-map-node__metric-strong {
+  font-weight: 600;
+  font-size: var(--pp-font-sm);
+}
+
+.pp-map-node--dimmed,
+.pp-flow-node--dimmed {
+  opacity: 0.35;
+}
+
+.pp-firmware-node,
+.pp-device-node {
+  min-width: 180px;
+  max-width: 220px;
+}
+
+.pp-mini-inspector__dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 0.75rem;
+  margin: 0 0 1rem;
+  font-size: var(--pp-font-sm);
+}
+
+.pp-mini-inspector__dl dt {
+  color: var(--pp-text-muted);
+}
+
+.pp-mini-inspector__dl dd {
+  margin: 0;
+}
+
+.pp-form-page--embedded {
+  padding: 0;
+}
+
+.pp-mb-sm {
+  margin-bottom: 0.5rem;
+}
+
+.pp-device-catalog-panel .pp-page-stack {
+  gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .pp-map-overlay-panel {
+    max-width: calc(100vw - 1.5rem);
+  }
+
+  .pp-map-overlay-actions {
+    max-width: calc(100vw - 1.5rem);
+  }
+
+  .pp-admin-side-panel {
+    width: 100%;
+  }
 }
 
 .pp-firmware-link-canvas .react-flow {

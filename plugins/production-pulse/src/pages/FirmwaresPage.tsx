@@ -1,29 +1,19 @@
 import { useEffect } from "react";
 
-import { PpHintAction, PpPageHero, PpStateBox, ppShellIcon } from "../app/productionPulseUi";
+import { PpPageHero, PpStateBox, ppShellIcon } from "../app/productionPulseUi";
 import { productionPulseFirmwareLinksPath } from "../constants/routes";
-import { PP_HELP } from "../content/helpTooltips";
 import { navigateProductionPulse } from "../utils/navigation";
 
-/** Legacy `/firmwares` — o catálogo agora vive na seção Firmwares do hub OTA. */
+/** Legacy list path → Admin hub firmwares panel. */
 export function FirmwaresPage() {
   useEffect(() => {
-    navigateProductionPulse(productionPulseFirmwareLinksPath({ focus: "catalog" }));
+    navigateProductionPulse(productionPulseFirmwareLinksPath({ focus: "catalog", panel: "firmwares" }));
   }, []);
 
   return (
     <div className="pp-page-stack">
-      <PpPageHero
-        title="Hub OTA"
-        badge={ppShellIcon}
-        description={PP_HELP.hub.catalog}
-        actions={
-          <PpHintAction hint={PP_HELP.ota.openLinks} ariaLabel="Ajuda: Hub OTA">
-            <span className="pp-muted">Redirecionando…</span>
-          </PpHintAction>
-        }
-      />
-      <PpStateBox variant="loading" title="Redirecionando…" />
+      <PpPageHero title="Admin" badge={ppShellIcon} />
+      <PpStateBox variant="loading" title="Redirecionando para o catálogo no mapa…" />
     </div>
   );
 }

@@ -22,9 +22,9 @@ import { DeviceBindingSection } from "../components/DeviceBindingSection";
 import { DeviceForm } from "../components/DeviceForm";
 import { TestConnectionModal } from "../components/modals/TestConnectionModal";
 import {
-  PRODUCTION_PULSE_BASE_PATH,
   productionPulseDeviceDetailPath,
   productionPulseDeviceEditPath,
+  productionPulseFirmwareLinksPath,
 } from "../constants/routes";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import { PP_HELP } from "../content/helpTooltips";
@@ -42,7 +42,6 @@ import {
 import { isCompactViewport, isMobileViewport } from "../utils/viewportLayout";
 import { useViewportBucket } from "../hooks/useViewportBucket";
 import { navigateProductionPulse } from "../utils/navigation";
-import { buildPanelPath } from "../utils/panelFilterUrl";
 import type { DeviceBinding } from "../types/device";
 
 type DeviceFormPageProps = {
@@ -50,6 +49,10 @@ type DeviceFormPageProps = {
   deviceId?: string;
   initialBranch?: string;
   permissions: ProductionPulsePermissionFlags;
+  /** When true, omit page chrome and call onDone instead of navigating home. */
+  embedded?: boolean;
+  onDone?: (branch: string) => void;
+  onCancel?: () => void;
 };
 
 function bindingFromApi(binding: DeviceBinding | null | undefined): BindingFormValues {
@@ -72,6 +75,9 @@ export function DeviceFormPage({
   deviceId,
   initialBranch,
   permissions,
+  embedded = false,
+  onDone,
+  onCancel,
 }: DeviceFormPageProps) {
   const viewport = useViewportBucket();
   const isMobile = isMobileViewport(viewport);
@@ -130,20 +136,18 @@ export function DeviceFormPage({
 
   const panelBackPath = useMemo(
     () =>
-      buildPanelPath({
+      productionPulseFirmwareLinksPath({
         branch: device.branch,
-        page: 1,
-        view: "table",
-        groupBy: "work_center",
-        anchorType: "",
-        role: "",
-        status: "",
-        search: "",
+        panel: "devices",
       }),
     [device.branch],
   );
 
   const goBack = () => {
+    if (onCancel) {
+      onCancel();
+      return;
+    }
     navigateProductionPulse(panelBackPath);
   };
 
@@ -234,8 +238,12 @@ export function DeviceFormPage({
         return;
       }
 
+      if (onDone) {
+        onDone(saved.branch);
+        return;
+      }
       navigateProductionPulse(
-        `${PRODUCTION_PULSE_BASE_PATH}?branch=${encodeURIComponent(saved.branch)}`,
+        productionPulseFirmwareLinksPath({ branch: saved.branch, panel: "devices" }),
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Não foi possível salvar o dispositivo.";
@@ -271,27 +279,31 @@ export function DeviceFormPage({
   }
 
   return (
-    <div className="pp-page-stack pp-form-page">
-      <ProductionPulsePagePath
-        panelHref={panelBackPath}
-        current={formPageTitle}
-        items={
-          mode === "edit" && deviceId && device.name
-            ? [
-                {
-                  id: "device",
-                  label: device.name,
-                  href: productionPulseDeviceDetailPath(deviceId),
-                },
-              ]
-            : []
-        }
-      />
-      <PpPageHero
-        title={formPageTitle}
-        description="Cadastro do hardware e onde o sensor está instalado."
-        badge={ppShellIcon}
-      />
+    <div className={`pp-page-stack pp-form-page${embedded ? " pp-form-page--embedded" : ""}`}>
+      {!embedded ? (
+        <>
+          <ProductionPulsePagePath
+            panelHref={panelBackPath}
+            current={formPageTitle}
+            items={
+              mode === "edit" && deviceId && device.name
+                ? [
+                    {
+                      id: "device",
+                      label: device.name,
+                      href: productionPulseDeviceDetailPath(deviceId),
+                    },
+                  ]
+                : []
+            }
+          />
+          <PpPageHero
+            title={formPageTitle}
+            description="Cadastro do hardware e onde o sensor está instalado."
+            badge={ppShellIcon}
+          />
+        </>
+      ) : null}
 
       {formError ? (
         <PpStateBox variant="error" title="Não foi possível continuar" message={formError} />

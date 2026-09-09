@@ -38,6 +38,23 @@ describe("parseProductionPulseRoute", () => {
     expect(route).toEqual({ kind: "firmwareJobs", branch: "02" });
   });
 
+  it("maps firmware-links entity panel drawer query", () => {
+    expect(
+      parseProductionPulseRoute(
+        "/apps/production-pulse/firmware-links",
+        "?branch=02&entity=device:abc&panel=jobs&drawer=device-create",
+      ),
+    ).toEqual({
+      kind: "firmwareLinks",
+      branch: "02",
+      firmwareKey: undefined,
+      focus: undefined,
+      entity: "device:abc",
+      panel: "jobs",
+      drawer: "device-create",
+    });
+  });
+
   it("maps panel root", () => {
     expect(parseProductionPulseRoute("/apps/production-pulse").kind).toBe("panel");
   });

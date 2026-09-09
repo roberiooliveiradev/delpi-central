@@ -10,16 +10,12 @@ import { useProductionPulseRouterPath } from "./hooks/useProductionPulseRouterPa
 import { useShortViewport } from "./hooks/useShortViewport";
 import { useViewportBucket } from "./hooks/useViewportBucket";
 import { ProductionPulseShell } from "./components/ProductionPulseShell";
-import { PanelPage } from "./pages/PanelPage";
 import { FirmwaresPage } from "./pages/FirmwaresPage";
-import { FirmwareCreatePage } from "./pages/FirmwareCreatePage";
-import { FirmwareDetailPage } from "./pages/FirmwareDetailPage";
 import { FirmwareLinksPage } from "./pages/FirmwareLinksPage";
-import { DeviceFormPage } from "./pages/DeviceFormPage";
-import { DeviceDetailPage } from "./pages/DeviceDetailPage";
 import { OperatorPage } from "./pages/operator/OperatorPage";
 import { PpPageHero, PpStateBox, ppShellIcon } from "./app/productionPulseUi";
 import { navigateProductionPulse } from "./utils/navigation";
+import { formatAdminEntity } from "./utils/adminHubUiState";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -40,20 +36,70 @@ export default function App({
   const permissionFlags = resolveProductionPulsePermissions(permissions, isSuperadmin);
   const viewport = useViewportBucket();
   const shortViewport = useShortViewport();
+  const searchParams = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
 
-  const firmwareJobsBranch = route.kind === "firmwareJobs" ? route.branch : null;
+  const redirectTarget =
+    route.kind === "firmwareJobs"
+      ? productionPulseFirmwareLinksPath({
+          branch: route.branch,
+          panel: "jobs",
+        })
+      : route.kind === "panel"
+        ? productionPulseFirmwareLinksPath({
+            branch: searchParams.get("branch") ?? "01",
+            panel: searchParams.get("panel") ?? undefined,
+            entity: searchParams.get("entity") ?? undefined,
+            drawer: searchParams.get("drawer") ?? undefined,
+          })
+        : route.kind === "deviceNew"
+          ? productionPulseFirmwareLinksPath({
+              branch: route.branch ?? "01",
+              drawer: "device-create",
+            })
+          : route.kind === "deviceEdit"
+            ? productionPulseFirmwareLinksPath({
+                branch: "01",
+                entity: formatAdminEntity({ type: "device", id: route.deviceId }) ?? undefined,
+                drawer: "device-edit",
+              })
+            : route.kind === "deviceDetail"
+              ? productionPulseFirmwareLinksPath({
+                  branch: "01",
+                  entity: formatAdminEntity({ type: "device", id: route.deviceId }) ?? undefined,
+                })
+              : route.kind === "firmwareNew"
+                ? productionPulseFirmwareLinksPath({
+                    branch: "01",
+                    drawer: "firmware-create",
+                  })
+                : route.kind === "firmwareDetail"
+                  ? productionPulseFirmwareLinksPath({
+                      branch: "01",
+                      entity:
+                        formatAdminEntity({ type: "firmware", id: route.firmwareId }) ?? undefined,
+                      drawer: "firmware-edit",
+                    })
+                  : null;
 
   useEffect(() => {
-    if (firmwareJobsBranch == null) return;
-    navigateProductionPulse(productionPulseFirmwareLinksPath({ branch: firmwareJobsBranch }));
-  }, [firmwareJobsBranch]);
+    if (!redirectTarget) return;
+    navigateProductionPulse(redirectTarget);
+  }, [redirectTarget]);
 
-  if (route.kind === "firmwareJobs") {
+  if (
+    route.kind === "firmwareJobs" ||
+    route.kind === "panel" ||
+    route.kind === "deviceNew" ||
+    route.kind === "deviceEdit" ||
+    route.kind === "deviceDetail" ||
+    route.kind === "firmwareNew" ||
+    route.kind === "firmwareDetail"
+  ) {
     return (
-      <div className="dashboard-production-pulse dashboard-page">
+      <div className="dashboard-production-pulse dashboard-page dashboard-page--fill">
         <div className="pp-page-stack">
-          <PpPageHero title="Hub OTA" badge={ppShellIcon} />
-          <PpStateBox variant="loading" title="Redirecionando para o hub OTA…" />
+          <PpPageHero title="Admin" badge={ppShellIcon} />
+          <PpStateBox variant="loading" title="Abrindo o mapa Admin…" />
         </div>
       </div>
     );
@@ -78,34 +124,20 @@ export default function App({
     route.kind === "operatorHub" ||
     route.kind === "operatorPicker" ||
     route.kind === "operatorDevice";
-  /** Superfície imersiva (contador/gauge): preenche a área do .content do portal. */
   const isOperatorFillRoute = route.kind === "operatorDevice";
+  const isAdminHub = route.kind === "firmwareLinks" || route.kind === "firmwares";
 
   const adminContent =
-    route.kind === "panel" ? (
-      <PanelPage search={search} permissions={permissionFlags} />
-    ) : route.kind === "firmwares" ? (
+    route.kind === "firmwares" ? (
       <FirmwaresPage />
-    ) : route.kind === "firmwareNew" ? (
-      <FirmwareCreatePage permissions={permissionFlags} />
-    ) : route.kind === "firmwareDetail" ? (
-      <FirmwareDetailPage firmwareId={route.firmwareId} permissions={permissionFlags} />
     ) : route.kind === "firmwareLinks" ? (
       <FirmwareLinksPage
         branch={route.branch}
         highlightFirmwareKey={route.firmwareKey}
         focus={route.focus}
-        permissions={permissionFlags}
-      />
-    ) : route.kind === "deviceNew" ? (
-      <DeviceFormPage mode="create" initialBranch={route.branch} permissions={permissionFlags} />
-    ) : route.kind === "deviceEdit" ? (
-      <DeviceFormPage mode="edit" deviceId={route.deviceId} permissions={permissionFlags} />
-    ) : route.kind === "deviceDetail" ? (
-      <DeviceDetailPage
-        deviceId={route.deviceId}
-        tab={route.tab}
-        search={search}
+        entityParam={route.entity}
+        panelParam={route.panel}
+        drawerParam={route.drawer}
         permissions={permissionFlags}
       />
     ) : isOperatorRoute ? (
@@ -118,7 +150,7 @@ export default function App({
         "dashboard-production-pulse",
         "dashboard-page",
         isOperatorRoute ? "dashboard-production-pulse--operator" : "",
-        isOperatorFillRoute ? "dashboard-page--fill" : "",
+        isOperatorFillRoute || isAdminHub ? "dashboard-page--fill" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -128,7 +160,11 @@ export default function App({
       {isOperatorRoute ? (
         adminContent
       ) : (
-        <ProductionPulseShell route={route} permissions={permissionFlags}>
+        <ProductionPulseShell
+          route={route}
+          permissions={permissionFlags}
+          fillContent={isAdminHub}
+        >
           {adminContent}
         </ProductionPulseShell>
       )}

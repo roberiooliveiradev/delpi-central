@@ -7,8 +7,7 @@ export type ShellNavItem = {
 };
 
 export const SHELL_NAV_ITEMS: readonly ShellNavItem[] = [
-  { id: "panel", label: "Painel" },
-  { id: "hub", label: "Hub OTA" },
+  { id: "admin", label: "Admin" },
   { id: "operator", label: "Operador", requiresOperator: true },
 ] as const;
 

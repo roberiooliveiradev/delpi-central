@@ -15,6 +15,15 @@ const OPERATOR_ANCHOR_FILTERS: OperatorAnchorFilter[] = [
 
 export type HubFocus = "canvas" | "catalog" | "jobs";
 
+export type AdminHubQuery = {
+  branch?: string;
+  firmwareKey?: string;
+  focus?: HubFocus;
+  entity?: string;
+  panel?: string;
+  drawer?: string;
+};
+
 export function parseDeviceDetailTab(value: string | null | undefined): DeviceDetailTab {
   if (value && DEVICE_DETAIL_TABS.includes(value as DeviceDetailTab)) {
     return value as DeviceDetailTab;
@@ -62,6 +71,9 @@ export type ProductionPulseRoute =
       branch: string;
       firmwareKey?: string;
       focus?: HubFocus;
+      entity?: string;
+      panel?: string;
+      drawer?: string;
     }
   | { kind: "operatorHub"; branch: string; anchorType: OperatorAnchorFilter; search: string }
   | { kind: "operatorPicker"; placementKey: string; branch: string }
@@ -112,6 +124,9 @@ export function parseProductionPulseRoute(pathname: string, search = ""): Produc
       branch: query.get("branch") ?? "01",
       firmwareKey: query.get("firmwareKey") ?? undefined,
       focus: parseHubFocus(query.get("focus")),
+      entity: query.get("entity") ?? undefined,
+      panel: query.get("panel") ?? undefined,
+      drawer: query.get("drawer") ?? undefined,
     };
   }
 
@@ -212,11 +227,7 @@ export function productionPulseFirmwareJobsPath(branch = "01"): string {
   return `${PRODUCTION_PULSE_BASE_PATH}/firmware-jobs?branch=${encodeURIComponent(branch)}`;
 }
 
-export function productionPulseFirmwareLinksPath(opts?: {
-  branch?: string;
-  firmwareKey?: string;
-  focus?: HubFocus;
-}): string {
+export function productionPulseFirmwareLinksPath(opts?: AdminHubQuery): string {
   const params = new URLSearchParams();
   params.set("branch", opts?.branch ?? "01");
   if (opts?.firmwareKey?.trim()) {
@@ -225,7 +236,21 @@ export function productionPulseFirmwareLinksPath(opts?: {
   if (opts?.focus && opts.focus !== "canvas") {
     params.set("focus", opts.focus);
   }
+  if (opts?.entity?.trim()) {
+    params.set("entity", opts.entity.trim());
+  }
+  if (opts?.panel?.trim()) {
+    params.set("panel", opts.panel.trim());
+  }
+  if (opts?.drawer?.trim()) {
+    params.set("drawer", opts.drawer.trim());
+  }
   return `${PRODUCTION_PULSE_BASE_PATH}/firmware-links?${params}`;
+}
+
+/** Admin home — map hub (same surface as firmware-links). */
+export function productionPulseAdminPath(opts?: AdminHubQuery): string {
+  return productionPulseFirmwareLinksPath(opts);
 }
 
 export function productionPulseOperatorPath(

@@ -1,6 +1,6 @@
 import type { ProductionPulseRoute } from "../constants/routes";
 
-export type ProductionPulseNavId = "panel" | "hub" | "operator";
+export type ProductionPulseNavId = "admin" | "operator";
 
 export function resolvePulseNavId(route: ProductionPulseRoute): ProductionPulseNavId | null {
   switch (route.kind) {
@@ -8,13 +8,12 @@ export function resolvePulseNavId(route: ProductionPulseRoute): ProductionPulseN
     case "deviceNew":
     case "deviceEdit":
     case "deviceDetail":
-      return "panel";
     case "firmwares":
     case "firmwareNew":
     case "firmwareDetail":
     case "firmwareLinks":
     case "firmwareJobs":
-      return "hub";
+      return "admin";
     case "operatorHub":
     case "operatorPicker":
     case "operatorDevice":

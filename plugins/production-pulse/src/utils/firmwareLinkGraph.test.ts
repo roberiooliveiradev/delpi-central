@@ -105,8 +105,8 @@ describe("firmwareLinkGraph", () => {
     ]);
     const deviceNode = nodes.find((n) => n.id === "dev:d1");
     expect(deviceNode?.subtitle).toContain("10.1.1.1");
-    expect(deviceNode?.subtitle).toContain("1.2.0");
     expect(deviceNode?.installedFirmwareVersion).toBe("1.2.0");
+    expect(deviceNode?.availableVersion).toBeTruthy();
   });
 
   it("builds inherited dashed edge when only driver matches", () => {

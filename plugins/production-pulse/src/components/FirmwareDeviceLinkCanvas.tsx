@@ -4,6 +4,8 @@ import {
   Controls,
   Handle,
   MarkerType,
+  MiniMap,
+  Panel,
   Position,
   ReactFlow,
   ReactFlowProvider,
@@ -18,11 +20,11 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useDelpiDarkMode } from "@delpi/plugin-ui/index";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { MoreHorizontal } from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { putDeviceFirmwareLink } from "../api/productionPulseApi";
 import { PpActionButton, PpStateBox } from "../app/productionPulseUi";
-import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import {
   buildFirmwareLinkGraph,
@@ -30,14 +32,23 @@ import {
   type FirmwareLinkGraphEdge,
 } from "../utils/firmwareLinkGraph";
 
+export type CanvasEntitySelection =
+  | { type: "device"; id: string; nodeId: string }
+  | { type: "firmware"; id: string; nodeId: string; firmwareKey: string };
+
 type FirmwareNodeData = {
   label: string;
   subtitle?: string;
   firmwareKey: string;
+  firmwareId?: string | null;
   latestVersion?: string | null;
   linkedCount?: number;
+  outdatedCount?: number;
+  dimmed?: boolean;
   canManage: boolean;
-  onUpdateFamily?: (firmwareKey: string) => void;
+  onPrimary?: (firmwareKey: string) => void;
+  onOpenMenu?: (payload: { firmwareKey: string; firmwareId?: string | null; nodeId: string }) => void;
+  onSelect?: (payload: { firmwareKey: string; firmwareId?: string | null; nodeId: string }) => void;
 };
 
 type DeviceNodeData = {
@@ -45,25 +56,76 @@ type DeviceNodeData = {
   subtitle?: string;
   deviceId: string;
   linked: boolean;
+  dimmed?: boolean;
+  status?: string | null;
+  counter?: number | null;
+  counterDay?: number | null;
+  counterShift?: number | null;
+  installedFirmwareVersion?: string | null;
+  availableVersion?: string | null;
   canManage: boolean;
-  onUnlink?: (deviceId: string) => void;
-  onUpdateDevice?: (deviceId: string) => void;
-  onSelectDevice?: (deviceId: string) => void;
+  onPrimary?: (deviceId: string) => void;
+  onOpenMenu?: (payload: { deviceId: string; nodeId: string }) => void;
+  onSelect?: (payload: { deviceId: string; nodeId: string }) => void;
 };
 
-function FirmwareNodeView({ data }: NodeProps<Node<FirmwareNodeData>>) {
+function statusDotClass(status: string | null | undefined): string {
+  if (status === "online") return "pp-node-status pp-node-status--online";
+  if (status === "offline") return "pp-node-status pp-node-status--offline";
+  if (status === "disabled") return "pp-node-status pp-node-status--disabled";
+  return "pp-node-status";
+}
+
+function statusLabel(status: string | null | undefined): string {
+  if (status === "online") return "Online";
+  if (status === "offline") return "Offline";
+  if (status === "disabled") return "Inativo";
+  if (status === "no_binding") return "Sem vínculo";
+  return "—";
+}
+
+function FirmwareNodeView({ id, data }: NodeProps<Node<FirmwareNodeData>>) {
   return (
-    <div className="pp-firmware-node">
-      <strong>{data.label}</strong>
+    <div
+      className={`pp-firmware-node${data.dimmed ? " pp-map-node--dimmed" : ""}`}
+      onClick={() => data.onSelect?.({ firmwareKey: data.firmwareKey, firmwareId: data.firmwareId, nodeId: id })}
+    >
+      <div className="pp-map-node__head nodrag nopan">
+        <strong>{data.label}</strong>
+        <button
+          type="button"
+          className="pp-map-node__menu"
+          aria-label="Ações do firmware"
+          aria-haspopup="menu"
+          onClick={(event) => {
+            event.stopPropagation();
+            data.onOpenMenu?.({
+              firmwareKey: data.firmwareKey,
+              firmwareId: data.firmwareId,
+              nodeId: id,
+            });
+          }}
+        >
+          <MoreHorizontal size={16} aria-hidden="true" />
+        </button>
+      </div>
       {data.subtitle ? <div className="pp-firmware-node__meta">{data.subtitle}</div> : null}
-      {data.canManage && data.onUpdateFamily ? (
+      <div className="pp-map-node__metrics">
+        <div>Última versão: {data.latestVersion ?? "—"}</div>
+        <div>{data.linkedCount ?? 0} vinculados</div>
+        <div>{data.outdatedCount ?? 0} desatualizados</div>
+      </div>
+      {data.canManage && data.onPrimary ? (
         <div className="pp-firmware-node__actions nodrag nopan">
           <PpActionButton
             variant="ghost"
             className="nodrag"
-            onClick={() => data.onUpdateFamily?.(data.firmwareKey)}
+            onClick={(event) => {
+              event.stopPropagation();
+              data.onPrimary?.(data.firmwareKey);
+            }}
           >
-            Atualizar ligados
+            Atualizar vinculados
           </PpActionButton>
         </div>
       ) : null}
@@ -72,42 +134,69 @@ function FirmwareNodeView({ data }: NodeProps<Node<FirmwareNodeData>>) {
   );
 }
 
-function DeviceNodeView({ data }: NodeProps<Node<DeviceNodeData>>) {
+function DeviceNodeView({ id, data }: NodeProps<Node<DeviceNodeData>>) {
+  const outdated =
+    data.availableVersion &&
+    data.installedFirmwareVersion &&
+    data.availableVersion !== data.installedFirmwareVersion;
   return (
-    <div className={`pp-device-node${data.linked ? " pp-device-node--linked" : ""}`}>
+    <div
+      className={`pp-device-node${data.linked ? " pp-device-node--linked" : ""}${
+        data.dimmed ? " pp-map-node--dimmed" : ""
+      }`}
+      onClick={() => data.onSelect?.({ deviceId: data.deviceId, nodeId: id })}
+    >
       <Handle type="target" position={Position.Left} />
-      <strong>{data.label}</strong>
-      {data.subtitle ? <div className="pp-device-node__meta">{data.subtitle}</div> : null}
-      <div className="pp-firmware-node__actions nodrag nopan">
-        {data.canManage && data.linked && data.onUnlink ? (
-          <PpActionButton
-            variant="ghost"
-            className="nodrag"
-            onClick={() => data.onUnlink?.(data.deviceId)}
-            title={PP_HELP.otaLinks.disconnect}
-          >
-            Desvincular
-          </PpActionButton>
-        ) : null}
-        {data.canManage && data.onUpdateDevice ? (
-          <PpActionButton
-            variant="ghost"
-            className="nodrag"
-            onClick={() => data.onUpdateDevice?.(data.deviceId)}
-          >
-            Atualizar este
-          </PpActionButton>
-        ) : null}
-        {data.onSelectDevice ? (
-          <PpActionButton
-            variant="ghost"
-            className="nodrag"
-            onClick={() => data.onSelectDevice?.(data.deviceId)}
-          >
-            Abrir detalhe
-          </PpActionButton>
-        ) : null}
+      <div className="pp-map-node__head nodrag nopan">
+        <strong>{data.label}</strong>
+        <button
+          type="button"
+          className="pp-map-node__menu"
+          aria-label="Ações do IoT"
+          aria-haspopup="menu"
+          onClick={(event) => {
+            event.stopPropagation();
+            data.onOpenMenu?.({ deviceId: data.deviceId, nodeId: id });
+          }}
+        >
+          <MoreHorizontal size={16} aria-hidden="true" />
+        </button>
       </div>
+      <div className="pp-map-node__status-row">
+        <span className={statusDotClass(data.status)} aria-hidden="true" />
+        <span>{statusLabel(data.status)}</span>
+      </div>
+      {data.counter != null ? (
+        <div className="pp-map-node__metrics">
+          <div className="pp-map-node__metric-strong">{data.counter} golpes</div>
+          <div>
+            {data.counterDay != null ? `+${data.counterDay} hoje` : null}
+            {data.counterDay != null && data.counterShift != null ? " · " : null}
+            {data.counterShift != null ? `+${data.counterShift} turno` : null}
+          </div>
+        </div>
+      ) : null}
+      <div className="pp-map-node__metrics">
+        <div>Instalada: {data.installedFirmwareVersion ?? "—"}</div>
+        <div>
+          Disponível: {data.availableVersion ?? "—"}
+          {outdated ? " · desatualizado" : ""}
+        </div>
+      </div>
+      {data.canManage && data.onPrimary && outdated ? (
+        <div className="pp-firmware-node__actions nodrag nopan">
+          <PpActionButton
+            variant="ghost"
+            className="nodrag"
+            onClick={(event) => {
+              event.stopPropagation();
+              data.onPrimary?.(data.deviceId);
+            }}
+          >
+            Atualizar agora
+          </PpActionButton>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -117,15 +206,27 @@ const nodeTypes = {
   device: memo(DeviceNodeView),
 };
 
-type FirmwareDeviceLinkCanvasProps = {
+export type FirmwareDeviceLinkCanvasProps = {
   families: FirmwareFamilyNode[];
   devices: DeviceListItem[];
   canManage: boolean;
+  filterQuery?: string;
+  filterStatus?: string;
   onLinked: () => void;
   onUnlink?: (deviceId: string) => void | Promise<void>;
   onUpdateDevice?: (deviceId: string) => void | Promise<void>;
   onUpdateFamily?: (firmwareKey: string) => void | Promise<void>;
-  onSelectDevice?: (deviceId: string) => void;
+  onSelectEntity?: (selection: CanvasEntitySelection) => void;
+  onOpenDeviceMenu?: (payload: { deviceId: string; nodeId: string }) => void;
+  onOpenFirmwareMenu?: (payload: {
+    firmwareKey: string;
+    firmwareId?: string | null;
+    nodeId: string;
+  }) => void;
+  onNodeDragStart?: () => void;
+  overlayTopLeft?: ReactNode;
+  overlayTopRight?: ReactNode;
+  nodesLocked?: boolean;
 };
 
 function toFlowEdges(edges: FirmwareLinkGraphEdge[], canManage: boolean): Edge[] {
@@ -148,17 +249,31 @@ function FirmwareDeviceLinkCanvasInner({
   families,
   devices,
   canManage,
+  filterQuery,
+  filterStatus,
   onLinked,
   onUnlink,
   onUpdateDevice,
   onUpdateFamily,
-  onSelectDevice,
+  onSelectEntity,
+  onOpenDeviceMenu,
+  onOpenFirmwareMenu,
+  onNodeDragStart,
+  overlayTopLeft,
+  overlayTopRight,
+  nodesLocked = false,
 }: FirmwareDeviceLinkCanvasProps) {
   const isDark = useDelpiDarkMode();
   const colorMode = isDark ? "dark" : "light";
   const graph = useMemo(
-    () => buildFirmwareLinkGraph({ families, devices }),
-    [families, devices],
+    () =>
+      buildFirmwareLinkGraph({
+        families,
+        devices,
+        filterQuery,
+        filterStatus,
+      }),
+    [families, devices, filterQuery, filterStatus],
   );
 
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -170,6 +285,9 @@ function FirmwareDeviceLinkCanvasInner({
     const linkedDeviceIds = new Set(
       graph.edges.filter((e) => e.kind === "explicit").map((e) => e.target),
     );
+    const familyIdByKey = new Map(
+      families.map((family) => [family.firmwareKey, family.latestFirmwareId ?? null]),
+    );
     setNodes(
       graph.nodes.map((n) => {
         if (n.kind === "firmware") {
@@ -177,18 +295,31 @@ function FirmwareDeviceLinkCanvasInner({
             id: n.id,
             type: "firmware",
             position: n.position,
+            className: n.dimmed ? "pp-flow-node--dimmed" : undefined,
             data: {
               label: n.label,
               subtitle: n.subtitle,
               firmwareKey: n.firmwareKey!,
+              firmwareId: familyIdByKey.get(n.firmwareKey!) ?? null,
               latestVersion: n.latestVersion,
               linkedCount: n.linkedCount,
+              outdatedCount: n.outdatedCount,
+              dimmed: n.dimmed,
               canManage,
-              onUpdateFamily: onUpdateFamily
+              onPrimary: onUpdateFamily
                 ? (firmwareKey: string) => {
                     void onUpdateFamily(firmwareKey);
                   }
                 : undefined,
+              onOpenMenu: onOpenFirmwareMenu,
+              onSelect: (payload) => {
+                onSelectEntity?.({
+                  type: "firmware",
+                  id: payload.firmwareId || payload.firmwareKey,
+                  nodeId: payload.nodeId,
+                  firmwareKey: payload.firmwareKey,
+                });
+              },
             },
           } satisfies Node<FirmwareNodeData>;
         }
@@ -196,30 +327,50 @@ function FirmwareDeviceLinkCanvasInner({
           id: n.id,
           type: "device",
           position: n.position,
+          className: n.dimmed ? "pp-flow-node--dimmed" : undefined,
           data: {
             label: n.label,
             subtitle: n.subtitle,
             deviceId: n.deviceId!,
             linked: linkedDeviceIds.has(n.id),
+            dimmed: n.dimmed,
+            status: n.status,
+            counter: n.counter,
+            counterDay: n.counterDay,
+            counterShift: n.counterShift,
+            installedFirmwareVersion: n.installedFirmwareVersion,
+            availableVersion: n.availableVersion,
             canManage,
-            onUnlink: onUnlink
-              ? (deviceId: string) => {
-                  void onUnlink(deviceId);
-                }
-              : undefined,
-            onUpdateDevice: onUpdateDevice
+            onPrimary: onUpdateDevice
               ? (deviceId: string) => {
                   void onUpdateDevice(deviceId);
                 }
               : undefined,
-            onSelectDevice,
+            onOpenMenu: onOpenDeviceMenu,
+            onSelect: (payload) => {
+              onSelectEntity?.({
+                type: "device",
+                id: payload.deviceId,
+                nodeId: payload.nodeId,
+              });
+            },
           },
         } satisfies Node<DeviceNodeData>;
       }),
     );
     setEdges(toFlowEdges(graph.edges, canManage));
     setError(null);
-  }, [graph, canManage, onUnlink, onUpdateDevice, onUpdateFamily, onSelectDevice]);
+  }, [
+    graph,
+    families,
+    canManage,
+    onUnlink,
+    onUpdateDevice,
+    onUpdateFamily,
+    onSelectEntity,
+    onOpenDeviceMenu,
+    onOpenFirmwareMenu,
+  ]);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((current) => applyNodeChanges(changes, current));
@@ -299,22 +450,9 @@ function FirmwareDeviceLinkCanvasInner({
   }
 
   return (
-    <div className="pp-firmware-link-canvas-wrap" data-color-mode={colorMode}>
+    <div className="pp-firmware-link-canvas-wrap pp-firmware-link-canvas-wrap--fill" data-color-mode={colorMode}>
       {error ? <PpStateBox variant="error" title="Conexão" message={error} /> : null}
-      {!canManage ? (
-        <PpStateBox
-          variant="empty"
-          title="Somente leitura"
-          message="Você pode ver as conexões, mas não alterar vínculos."
-        />
-      ) : (
-        <p className="pp-muted">
-          Arraste do firmware (esquerda) para o IoT. Cada IoT aceita um firmware; nova seta
-          substitui. Delete/Backspace na seta sólida ou use Desvincular. Tracejada = via driver
-          (somente leitura).
-        </p>
-      )}
-      <div className="pp-firmware-link-canvas">
+      <div className="pp-firmware-link-canvas pp-firmware-link-canvas--fill">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -324,8 +462,9 @@ function FirmwareDeviceLinkCanvasInner({
           onEdgesChange={onEdgesChange}
           onConnect={(c) => void onConnect(c)}
           onEdgesDelete={(e) => void onEdgesDelete(e)}
+          onNodeDragStart={() => onNodeDragStart?.()}
           deleteKeyCode={["Backspace", "Delete"]}
-          nodesDraggable
+          nodesDraggable={!nodesLocked}
           nodesConnectable={canManage && !busy}
           nodesFocusable
           edgesFocusable
@@ -344,7 +483,23 @@ function FirmwareDeviceLinkCanvasInner({
             size={1}
             color={isDark ? "rgba(148, 163, 184, 0.28)" : "rgba(100, 116, 139, 0.35)"}
           />
+          {overlayTopLeft ? (
+            <Panel position="top-left" className="pp-map-overlay-panel">
+              {overlayTopLeft}
+            </Panel>
+          ) : null}
+          {overlayTopRight ? (
+            <Panel position="top-right" className="pp-map-overlay-panel">
+              {overlayTopRight}
+            </Panel>
+          ) : null}
           <Controls showInteractive={false} position="bottom-left" />
+          <MiniMap
+            position="bottom-right"
+            pannable
+            zoomable
+            ariaLabel="Miniatura do mapa Admin"
+          />
         </ReactFlow>
       </div>
     </div>

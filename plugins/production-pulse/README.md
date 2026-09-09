@@ -15,22 +15,22 @@ O MFE **não** chama a api-delpi diretamente.
 
 | Path | Descrição |
 |------|-----------|
-| `/apps/production-pulse` | Painel — KPI, filtros URL-sync, lista ou agrupado por posto/máquina/equipamento |
-| `/apps/production-pulse/firmware-links` | Hub OTA — KPIs, canvas de amarração, catálogo de firmwares, disparo e acompanhamento |
-| `/apps/production-pulse/firmwares/new` | Nova versão de firmware — identificação, sketch (.ino), artefato (.bin), notas |
-| `/apps/production-pulse/firmwares/{id}` | Detalhe da versão — publicar / editar meta / arquivar |
-| `/apps/production-pulse/firmwares` | Legado — redireciona para o hub OTA (`focus=catalog`) |
-| `/apps/production-pulse/firmware-jobs` | Legado — redireciona para o hub OTA (`/firmware-links`) |
-| `/apps/production-pulse/devices/new` | Cadastro de dispositivo + amarração |
-| `/apps/production-pulse/devices/{id}/edit` | Edição |
-| `/apps/production-pulse/devices/{id}` | Detalhe (overview, histórico, comandos, firmware/OTA) |
+| `/apps/production-pulse` | Redirect → Admin mapa (`/firmware-links`) |
+| `/apps/production-pulse/firmware-links` | **Admin mapa fullscreen** — canvas Firmware↔IoT, overlays, popovers, painéis e drawers |
+| `/apps/production-pulse/firmwares/new` | Redirect → Admin com drawer de create |
+| `/apps/production-pulse/firmwares/{id}` | Redirect → Admin com drawer/inspector da versão |
+| `/apps/production-pulse/firmwares` | Legado → Admin `panel=firmwares` |
+| `/apps/production-pulse/firmware-jobs` | Legado → Admin `panel=jobs` |
+| `/apps/production-pulse/devices/new` | Redirect → Admin drawer create IoT |
+| `/apps/production-pulse/devices/{id}/edit` | Redirect → Admin drawer edit IoT |
+| `/apps/production-pulse/devices/{id}` | Redirect → Admin com entity selecionada |
 | `/apps/production-pulse/operator` | Hub operador — escolha de posto/máquina/equipamento |
 | `/apps/production-pulse/operator/placements/{key}` | Picker quando há mais de um device no local |
 | `/apps/production-pulse/operator/devices/{id}` | Superfície operador (`counter_pad` ou `gauge_readout`) |
 
-Query params comuns: `branch`, `anchorType`, `status`, `role`, `search`, `view`, `groupBy`, `tab`.
+TopBar Admin: **Admin | Operador**. Frota tabela (ex-Painel) abre via `?panel=devices`.
 
-No hub OTA, `focus=catalog|jobs` rola a página até a seção correspondente e `firmwareKey` destaca a família recém-publicada.
+Query Admin: `branch`, `entity`, `panel`, `drawer`, `firmwareKey`, `focus` (legado catalog/jobs).
 
 ## API
 

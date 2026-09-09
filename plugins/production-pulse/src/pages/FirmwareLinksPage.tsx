@@ -1,55 +1,81 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
+  archiveFirmware,
   cancelFirmwareUpdateJob,
   createFirmwareUpdateJob,
+  fetchDevice,
   fetchDevices,
   fetchFirmwareUpdateJobs,
   fetchFirmwareUpdateSummary,
   fetchFirmwareUpdateTargets,
   fetchFirmwares,
   putDeviceFirmwareLink,
+  replaceDevice,
   type FirmwareListItem,
   type FirmwareUpdateJob,
   type FirmwareUpdateSummary,
   type FirmwareUpdateTarget,
 } from "../api/productionPulseApi";
-import { FirmwareDeviceLinkCanvas } from "../components/FirmwareDeviceLinkCanvas";
-import { HubOtaKpiStrip } from "../components/HubOtaKpiStrip";
+import { AdminSidePanel } from "../components/AdminSidePanel";
+import { DeviceCatalogPanel } from "../components/DeviceCatalogPanel";
+import {
+  EntityActionMenu,
+  EntitySummaryPopover,
+} from "../components/EntityContextLayers";
+import {
+  FirmwareDeviceLinkCanvas,
+  type CanvasEntitySelection,
+} from "../components/FirmwareDeviceLinkCanvas";
+import { HubOtaKpiChips } from "../components/HubOtaKpiChips";
+import {
+  ConfirmDisableDialog,
+  MiniInspectorPanel,
+  RenameDeviceDialog,
+} from "../components/MiniInspectorPanel";
 import {
   PpActionButton,
   PpCatalogSearchBar,
   PpDataTable,
   PpHintAction,
   PpHostContainedDialog,
-  PpNativeSelectField,
+  PpHostContainedDrawer,
   PpNativeTextField,
-  PpPageHero,
-  PpSectionCard,
   PpSegmentToggle,
   PpStateBox,
-  ppShellIcon,
   type DataTableColumn,
 } from "../app/productionPulseUi";
 import { resolveBranchOptions } from "../constants/branches";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import {
-  productionPulseDeviceDetailPath,
-  productionPulseDeviceNewPath,
-  productionPulseFirmwareDetailPath,
   productionPulseFirmwareLinksPath,
-  productionPulseFirmwareNewPath,
   type HubFocus,
 } from "../constants/routes";
 import { PP_HELP } from "../content/helpTooltips";
+import { DeviceFormPage } from "../pages/DeviceFormPage";
+import { FirmwareCreatePage } from "../pages/FirmwareCreatePage";
+import { FirmwareDetailPage } from "../pages/FirmwareDetailPage";
 import type { DeviceListItem } from "../types/device";
+import {
+  formatAdminEntity,
+  hubFocusToPanel,
+  parseAdminDrawer,
+  parseAdminEntity,
+  parseAdminPanel,
+  type AdminEntityRef,
+  type AdminHubDrawer,
+  type AdminHubOpenLayer,
+  type AdminHubPanel,
+  type AdminHubUiState,
+  INITIAL_ADMIN_HUB_UI,
+} from "../utils/adminHubUiState";
 import { uniqueFirmwareFamilies } from "../utils/firmwareLinkGraph";
 import {
   computeHubOtaKpis,
   EMPTY_HUB_OTA_KPIS,
   isPublishedFirmware,
 } from "../utils/hubOtaKpis";
-import { navigateProductionPulse, replaceProductionPulse } from "../utils/navigation";
+import { replaceProductionPulse } from "../utils/navigation";
 import {
   formatOtaBytes,
   formatOtaProgressDisplay,
@@ -60,16 +86,13 @@ type FirmwareLinksPageProps = {
   branch: string;
   highlightFirmwareKey?: string;
   focus?: HubFocus;
+  entityParam?: string;
+  panelParam?: string;
+  drawerParam?: string;
   permissions: ProductionPulsePermissionFlags;
 };
 
 const JOBS_POLL_MS = 3000;
-
-const HUB_SECTION_ID: Record<HubFocus, string> = {
-  canvas: "pp-hub-canvas",
-  catalog: "pp-hub-catalog",
-  jobs: "pp-hub-jobs",
-};
 
 function lifecycleLabel(row: FirmwareListItem): string {
   if (row.lifecycle === "draft") return PP_HELP.ota.status.draft;
@@ -85,6 +108,9 @@ export function FirmwareLinksPage({
   branch,
   highlightFirmwareKey,
   focus,
+  entityParam,
+  panelParam,
+  drawerParam,
   permissions,
 }: FirmwareLinksPageProps) {
   const canManage = permissions.canManageDevices;
@@ -104,17 +130,44 @@ export function FirmwareLinksPage({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState("");
-  const [firmwareId, setFirmwareId] = useState("");
-  const [trigger, setTrigger] = useState<"manual" | "scheduled">("manual");
-  const [scheduledAt, setScheduledAt] = useState("");
-  const [scope, setScope] = useState<"branch" | "device">("branch");
-  const [scopeDeviceId, setScopeDeviceId] = useState("");
   const [cancelJobId, setCancelJobId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(
     highlightFirmwareKey
       ? `Firmware ${highlightFirmwareKey} publicado — ligue os IoTs no canvas.`
       : null,
   );
+  const [ui, setUi] = useState<AdminHubUiState>(() => {
+    const entity = parseAdminEntity(entityParam);
+    const panel =
+      parseAdminPanel(panelParam) ?? hubFocusToPanel(focus) ?? null;
+    const drawer = parseAdminDrawer(drawerParam);
+    let openLayer: AdminHubOpenLayer = "none";
+    if (drawer) openLayer = "drawer";
+    else if (panel) openLayer = "panel";
+    else if (entity) openLayer = "summary";
+    return {
+      ...INITIAL_ADMIN_HUB_UI,
+      selectedEntity: entity,
+      panel,
+      drawer,
+      openLayer,
+      popoverAnchorId: entity
+        ? entity.type === "device"
+          ? `dev:${entity.id}`
+          : entity.type === "firmware"
+            ? null
+            : null
+        : null,
+    };
+  });
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [renameDevice, setRenameDevice] = useState<DeviceListItem | null>(null);
+  const [disableDeviceRow, setDisableDeviceRow] = useState<DeviceListItem | null>(null);
+  const [scheduleContext, setScheduleContext] = useState<{
+    firmwareId: string;
+    deviceIds?: string[];
+  } | null>(null);
+  const [scheduledAt, setScheduledAt] = useState("");
 
   const publishedFirmwares = useMemo(
     () => firmwares.filter(isPublishedFirmware),
@@ -132,24 +185,6 @@ export function FirmwareLinksPage({
         ? EMPTY_HUB_OTA_KPIS
         : computeHubOtaKpis({ firmwares, devices, updateSummary }),
     [devices, firmwares, loading, updateSummary],
-  );
-
-  const firmwareOptions = useMemo(
-    () =>
-      publishedFirmwares.map((item) => ({
-        value: item.id,
-        label: `${item.firmwareKey} · ${item.version}`,
-      })),
-    [publishedFirmwares],
-  );
-
-  const deviceOptions = useMemo(
-    () =>
-      devices.map((device) => ({
-        value: device.id,
-        label: `${device.name} (${device.ipAddress})`,
-      })),
-    [devices],
   );
 
   const firmwareById = useMemo(
@@ -178,6 +213,67 @@ export function FirmwareLinksPage({
   const hasActiveJob = jobs.some(
     (job) => job.status === "running" || job.status === "scheduled",
   );
+  const activeJobCount = jobs.filter(
+    (job) => job.status === "running" || job.status === "scheduled",
+  ).length;
+
+  const selectedDevice =
+    ui.selectedEntity?.type === "device"
+      ? devices.find((item) => item.id === ui.selectedEntity!.id) ?? null
+      : null;
+
+  const selectedFirmware =
+    ui.selectedEntity?.type === "firmware"
+      ? firmwareById.get(ui.selectedEntity.id) ??
+        firmwares.find((item) => item.firmwareKey === ui.selectedEntity!.id) ??
+        null
+      : null;
+
+  const selectedFamily = useMemo(() => {
+    if (!ui.selectedEntity) return null;
+    if (ui.selectedEntity.type === "firmware") {
+      const fw = selectedFirmware;
+      const key = fw?.firmwareKey ?? ui.selectedEntity.id;
+      return families.find((family) => family.firmwareKey === key) ?? null;
+    }
+    if (ui.selectedEntity.type === "device" && selectedDevice) {
+      const key =
+        selectedDevice.assignedFirmwareKey ||
+        selectedDevice.firmwareKey ||
+        selectedDevice.driverKey;
+      return families.find((family) => family.firmwareKey === key) ?? null;
+    }
+    return null;
+  }, [families, selectedDevice, selectedFirmware, ui.selectedEntity]);
+
+  const setLayer = useCallback(
+    (patch: Partial<AdminHubUiState>, sync = true) => {
+      setUi((current) => {
+        const next = { ...current, ...patch };
+        if (sync) {
+          queueMicrotask(() => {
+            replaceProductionPulse(
+              productionPulseFirmwareLinksPath({
+                branch,
+                firmwareKey: highlightFirmwareKey,
+                entity: formatAdminEntity(next.selectedEntity) ?? undefined,
+                panel: next.panel ?? undefined,
+                drawer: next.drawer ?? undefined,
+                focus:
+                  next.panel === "firmwares"
+                    ? "catalog"
+                    : next.panel === "jobs"
+                      ? "jobs"
+                      : undefined,
+              }),
+            );
+          });
+        }
+        return next;
+      });
+    },
+    [branch, highlightFirmwareKey],
+  );
 
   const reloadGraph = useCallback(async () => {
     setLoading(true);
@@ -191,17 +287,8 @@ export function FirmwareLinksPage({
       setFirmwares(catalog);
       setDevices(devs);
       setUpdateSummary(summary);
-      const published = catalog.filter(isPublishedFirmware);
-      setFirmwareId((current) =>
-        current && published.some((item) => item.id === current)
-          ? current
-          : published[0]?.id || "",
-      );
-      setScopeDeviceId((current) =>
-        current && devs.some((item) => item.id === current) ? current : devs[0]?.id || "",
-      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar o hub OTA.");
+      setError(err instanceof Error ? err.message : "Falha ao carregar o Admin.");
     } finally {
       setLoading(false);
     }
@@ -212,8 +299,7 @@ export function FirmwareLinksPage({
       const soft = Boolean(opts?.soft);
       if (!soft) setJobsLoading(true);
       try {
-        const jobItems = await fetchFirmwareUpdateJobs(branch);
-        setJobs(jobItems);
+        setJobs(await fetchFirmwareUpdateJobs(branch));
       } catch (err) {
         if (!soft) {
           setError(err instanceof Error ? err.message : "Falha ao carregar atualizações OTA.");
@@ -258,51 +344,37 @@ export function FirmwareLinksPage({
     return () => window.clearInterval(timer);
   }, [detailJobId, hasActiveJob, loadTargets, reloadJobs]);
 
-  const focusHandledRef = useRef(false);
   useEffect(() => {
-    if (loading || focusHandledRef.current) return;
-    if (focus !== "catalog" && focus !== "jobs") return;
-    const target = document.getElementById(HUB_SECTION_ID[focus]);
-    if (!target) return;
-    focusHandledRef.current = true;
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [focus, loading]);
+    const entity = parseAdminEntity(entityParam);
+    const panel = parseAdminPanel(panelParam) ?? hubFocusToPanel(focus);
+    const drawer = parseAdminDrawer(drawerParam);
+    setUi((current) => ({
+      ...current,
+      selectedEntity: entity,
+      panel,
+      drawer,
+      openLayer: drawer
+        ? "drawer"
+        : panel
+          ? "panel"
+          : entity
+            ? current.openLayer === "inspector"
+              ? "inspector"
+              : "summary"
+            : "none",
+    }));
+  }, [drawerParam, entityParam, focus, panelParam]);
 
   const changeBranch = (nextBranch: string) => {
     replaceProductionPulse(
       productionPulseFirmwareLinksPath({
         branch: nextBranch,
         firmwareKey: highlightFirmwareKey,
-        focus,
+        panel: ui.panel ?? undefined,
+        drawer: ui.drawer ?? undefined,
+        entity: formatAdminEntity(ui.selectedEntity) ?? undefined,
       }),
     );
-  };
-
-  const onCreateJob = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!canManage || !firmwareId) return;
-    if (scope === "device" && !scopeDeviceId) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const selected = publishedFirmwares.find((item) => item.id === firmwareId);
-      const filter: Record<string, unknown> = { onlyOutdated: true };
-      if (selected?.firmwareKey) filter.firmwareKey = selected.firmwareKey;
-      if (scope === "device") filter.deviceIds = [scopeDeviceId];
-      const job = await createFirmwareUpdateJob({
-        firmwareId,
-        branch,
-        trigger,
-        scheduledAt: trigger === "scheduled" ? scheduledAt : undefined,
-        filter,
-      });
-      await reloadJobs({ soft: true });
-      await openJobDetails(job.id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao disparar atualização OTA.");
-    } finally {
-      setBusy(false);
-    }
   };
 
   const handleUnlink = useCallback(
@@ -314,7 +386,11 @@ export function FirmwareLinksPage({
   );
 
   const runFamilyJob = useCallback(
-    async (firmwareKey: string, deviceIds?: string[]) => {
+    async (
+      firmwareKey: string,
+      deviceIds?: string[],
+      opts?: { scheduledAt?: string },
+    ) => {
       const match = publishedFirmwares.find((item) => item.firmwareKey === firmwareKey);
       if (!match) {
         setError(PP_HELP.ota.noPublishedFirmware);
@@ -330,18 +406,20 @@ export function FirmwareLinksPage({
         const job = await createFirmwareUpdateJob({
           firmwareId: match.id,
           branch,
-          trigger: "manual",
+          trigger: opts?.scheduledAt ? "scheduled" : "manual",
+          scheduledAt: opts?.scheduledAt,
           filter,
         });
         await reloadJobs({ soft: true });
         await openJobDetails(job.id);
+        setLayer({ panel: "jobs", openLayer: "panel", drawer: null });
       } catch (err) {
         setError(err instanceof Error ? err.message : PP_HELP.ota.deviceJobFailed);
       } finally {
         setBusy(false);
       }
     },
-    [branch, openJobDetails, publishedFirmwares, reloadJobs],
+    [branch, openJobDetails, publishedFirmwares, reloadJobs, setLayer],
   );
 
   const handleUpdateDevice = useCallback(
@@ -377,10 +455,169 @@ export function FirmwareLinksPage({
     try {
       await cancelFirmwareUpdateJob(jobId);
     } catch {
-      /* soft refresh anyway */
+      /* soft refresh */
     }
     await reloadJobs({ soft: true });
     if (detailJobId === jobId) await loadTargets(jobId);
+  };
+
+  const resolveAnchor = (nodeId: string | null) => {
+    if (!nodeId || typeof document === "undefined") return null;
+    return (
+      document.querySelector<HTMLElement>(`.react-flow__node[data-id="${nodeId}"]`) ??
+      null
+    );
+  };
+
+  const onSelectEntity = (selection: CanvasEntitySelection) => {
+    const entity: AdminEntityRef =
+      selection.type === "device"
+        ? { type: "device", id: selection.id }
+        : { type: "firmware", id: selection.id };
+    const el = resolveAnchor(selection.nodeId);
+    setAnchorEl(el);
+    setLayer({
+      selectedEntity: entity,
+      openLayer: "summary",
+      popoverAnchorId: selection.nodeId,
+      panel: null,
+      drawer: null,
+    });
+  };
+
+  const onOpenDeviceMenu = (payload: { deviceId: string; nodeId: string }) => {
+    setAnchorEl(resolveAnchor(payload.nodeId));
+    setLayer({
+      selectedEntity: { type: "device", id: payload.deviceId },
+      openLayer: "menu",
+      popoverAnchorId: payload.nodeId,
+    });
+  };
+
+  const onOpenFirmwareMenu = (payload: {
+    firmwareKey: string;
+    firmwareId?: string | null;
+    nodeId: string;
+  }) => {
+    setAnchorEl(resolveAnchor(payload.nodeId));
+    setLayer({
+      selectedEntity: {
+        type: "firmware",
+        id: payload.firmwareId || payload.firmwareKey,
+      },
+      openLayer: "menu",
+      popoverAnchorId: payload.nodeId,
+    });
+  };
+
+  const openPanel = (panel: AdminHubPanel) => {
+    setLayer({ panel, openLayer: "panel", drawer: null });
+  };
+
+  const openDrawer = (drawer: AdminHubDrawer, entity?: AdminEntityRef | null) => {
+    setLayer({
+      drawer,
+      openLayer: "drawer",
+      panel: null,
+      selectedEntity: entity === undefined ? ui.selectedEntity : entity,
+    });
+  };
+
+  const closeLayers = () => {
+    setAnchorEl(null);
+    setLayer({
+      openLayer: "none",
+      panel: null,
+      drawer: null,
+      selectedEntity: null,
+      popoverAnchorId: null,
+    });
+  };
+
+  const onEntityAction = async (action: string) => {
+    if (!ui.selectedEntity) return;
+    if (ui.selectedEntity.type === "device") {
+      const device = devices.find((item) => item.id === ui.selectedEntity!.id);
+      if (!device) return;
+      if (action === "edit") {
+        openDrawer("device-edit", { type: "device", id: device.id });
+        return;
+      }
+      if (action === "rename") {
+        setRenameDevice(device);
+        return;
+      }
+      if (action === "ota-now") {
+        await handleUpdateDevice(device.id);
+        return;
+      }
+      if (action === "ota-schedule") {
+        const key = device.assignedFirmwareKey || device.firmwareKey || device.driverKey;
+        const match = publishedFirmwares.find((item) => item.firmwareKey === key);
+        if (!match) {
+          setError(PP_HELP.ota.noPublishedFirmware);
+          return;
+        }
+        setScheduleContext({ firmwareId: match.id, deviceIds: [device.id] });
+        openDrawer("ota-schedule", { type: "device", id: device.id });
+        return;
+      }
+      if (action === "unlink") {
+        await handleUnlink(device.id);
+        return;
+      }
+      if (action === "disable") {
+        setDisableDeviceRow(device);
+        return;
+      }
+      if (action === "enable") {
+        const full = await fetchDevice(device.id);
+        await replaceDevice(device.id, {
+          name: full.name,
+          branch: full.branch,
+          ipAddress: full.ipAddress,
+          controllerCode: full.controllerCode ?? "",
+          firmwareSource: full.firmwareSource ?? "",
+          wifiSsid: full.wifiSsid ?? "",
+          wifiPassword: "",
+          debounceMs: full.debounceMs != null ? String(full.debounceMs) : "",
+          apiToken: "",
+          apiTokenSet: Boolean(full.apiTokenSet),
+          driverKey: full.driverKey,
+          pollIntervalMs: full.pollIntervalMs,
+          enabled: true,
+        });
+        await reloadGraph();
+      }
+      return;
+    }
+    if (ui.selectedEntity.type === "firmware") {
+      const fw =
+        firmwareById.get(ui.selectedEntity.id) ||
+        firmwares.find((item) => item.firmwareKey === ui.selectedEntity!.id);
+      if (!fw) return;
+      if (action === "edit") {
+        openDrawer("firmware-edit", { type: "firmware", id: fw.id });
+        return;
+      }
+      if (action === "new-version") {
+        openDrawer("firmware-create", { type: "firmware", id: fw.id });
+        return;
+      }
+      if (action === "ota-now") {
+        await handleUpdateFamily(fw.firmwareKey);
+        return;
+      }
+      if (action === "ota-schedule") {
+        setScheduleContext({ firmwareId: fw.id });
+        openDrawer("ota-schedule", { type: "firmware", id: fw.id });
+        return;
+      }
+      if (action === "archive") {
+        await archiveFirmware(fw.id);
+        await reloadGraph();
+      }
+    }
   };
 
   const firmwareColumns: DataTableColumn<FirmwareListItem>[] = useMemo(
@@ -393,22 +630,6 @@ export function FirmwareLinksPage({
       { key: "version", header: "Versão", render: (row) => row.version },
       { key: "displayName", header: "Nome", render: (row) => row.displayName || "—" },
       { key: "lifecycle", header: "Estado", render: (row) => lifecycleLabel(row) },
-      { key: "source", header: "Sketch", render: (row) => (row.hasSource ? "Sim" : "—") },
-      {
-        key: "artifact",
-        header: "Bin",
-        render: (row) =>
-          row.hasArtifact && row.artifactSha256 ? (
-            <code>{row.artifactSha256.slice(0, 10)}…</code>
-          ) : (
-            "—"
-          ),
-      },
-      {
-        key: "published",
-        header: "Publicado",
-        render: (row) => formatTimestamp(row.publishedAt),
-      },
       {
         key: "actions",
         header: "",
@@ -416,9 +637,7 @@ export function FirmwareLinksPage({
           <div className="pp-inline-actions">
             <PpActionButton
               variant="ghost"
-              onClick={() =>
-                navigateProductionPulse(productionPulseFirmwareDetailPath(row.id))
-              }
+              onClick={() => openDrawer("firmware-edit", { type: "firmware", id: row.id })}
             >
               Detalhe
             </PpActionButton>
@@ -455,12 +674,6 @@ export function FirmwareLinksPage({
       },
       { key: "status", header: "Status", render: (row) => otaStatusLabel(row.status) },
       {
-        key: "scheduled",
-        header: "Agenda",
-        render: (row) => formatTimestamp(row.scheduledAt),
-      },
-      { key: "created", header: "Criado", render: (row) => formatTimestamp(row.createdAt) },
-      {
         key: "actions",
         header: "",
         render: (row) => (
@@ -490,8 +703,6 @@ export function FirmwareLinksPage({
             <code>{row.deviceId.slice(0, 8)}</code>
           ),
       },
-      { key: "from", header: "De", render: (row) => row.fromVersion ?? "—" },
-      { key: "to", header: "Para", render: (row) => row.toVersion ?? "—" },
       { key: "status", header: "Status", render: (row) => otaStatusLabel(row.status) },
       {
         key: "progress",
@@ -512,7 +723,6 @@ export function FirmwareLinksPage({
   if (!permissions.canViewDevices) {
     return (
       <div className="pp-page-stack">
-        <PpPageHero title="Hub OTA" badge={ppShellIcon} />
         <PpStateBox
           variant="error"
           title="Sem permissão"
@@ -522,248 +732,196 @@ export function FirmwareLinksPage({
     );
   }
 
-  return (
-    <div className="pp-page-stack pp-hub-page">
-      <PpPageHero
-        title="Hub OTA"
-        badge={ppShellIcon}
-        description={PP_HELP.hub.hero}
-        actions={
-          <div className="pp-hub-hero-actions">
-            {branchOptions.length > 1 ? (
-              <PpHintAction hint={PP_HELP.hub.branch} ariaLabel="Ajuda: Filial">
-                <PpSegmentToggle
-                  ariaLabel="Filial"
-                  size="sm"
-                  widthMode="content"
-                  value={branch}
-                  onChange={changeBranch}
-                  options={branchOptions.map((item) => ({
-                    value: item.id,
-                    label: item.label,
-                  }))}
-                />
-              </PpHintAction>
-            ) : null}
-            {canManage ? (
-              <PpHintAction hint={PP_HELP.hub.newDevice} ariaLabel="Ajuda: Novo dispositivo">
-                <PpActionButton
-                  variant="ghost"
-                  className="pp-hero-brand-btn"
-                  onClick={() =>
-                    navigateProductionPulse(productionPulseDeviceNewPath(branch))
-                  }
-                >
-                  + Novo dispositivo
-                </PpActionButton>
-              </PpHintAction>
-            ) : null}
-            {canManage ? (
-              <PpHintAction hint={PP_HELP.hub.newFirmware} ariaLabel="Ajuda: Novo firmware">
-                <PpActionButton
-                  variant="ghost"
-                  className="pp-hero-brand-btn"
-                  onClick={() =>
-                    navigateProductionPulse(productionPulseFirmwareNewPath())
-                  }
-                >
-                  + Novo firmware
-                </PpActionButton>
-              </PpHintAction>
-            ) : null}
-            <PpHintAction hint={PP_HELP.hub.refresh} ariaLabel="Ajuda: Atualizar hub">
-              <PpActionButton
-                variant="primary"
-                className="pp-hero-brand-btn"
-                onClick={() => {
-                  void reloadGraph();
-                  void reloadJobs({ soft: true });
-                }}
-                disabled={loading}
-              >
-                Atualizar
-              </PpActionButton>
-            </PpHintAction>
-          </div>
-        }
+  const overlayTopLeft = (
+    <div className="pp-map-overlay-stack">
+      <div className="pp-map-overlay-title">
+        <strong>Admin · OTA</strong>
+        <span className="pp-muted">Mapa Firmware ↔ IoT</span>
+      </div>
+      <PpCatalogSearchBar
+        value={ui.filters.q}
+        onChange={(q) => setUi((current) => ({ ...current, filters: { ...current.filters, q } }))}
+        placeholder="Buscar no mapa…"
       />
+      <PpSegmentToggle
+        ariaLabel="Filtro de status"
+        size="sm"
+        widthMode="content"
+        value={ui.filters.status || "all"}
+        onChange={(value) =>
+          setUi((current) => ({
+            ...current,
+            filters: { ...current.filters, status: value === "all" ? "" : value },
+          }))
+        }
+        options={[
+          { value: "all", label: "Todos" },
+          { value: "online", label: "Online" },
+          { value: "offline", label: "Offline" },
+          { value: "disabled", label: "Inativos" },
+        ]}
+      />
+      <HubOtaKpiChips
+        kpis={kpis}
+        loading={loading}
+        activeJobs={activeJobCount}
+        onOpenJobs={() => openPanel("jobs")}
+      />
+      <p className="pp-hub-legend pp-hub-legend--compact">
+        <span className="pp-hub-legend__item pp-hub-legend__item--solid">sólida = vínculo</span>
+        <span className="pp-hub-legend__item pp-hub-legend__item--dashed">
+          tracejada = driver
+        </span>
+      </p>
+    </div>
+  );
 
-      <HubOtaKpiStrip kpis={kpis} loading={loading} />
+  const overlayTopRight = (
+    <div className="pp-map-overlay-actions">
+      {branchOptions.length > 1 ? (
+        <PpHintAction hint={PP_HELP.hub.branch} ariaLabel="Ajuda: Filial">
+          <PpSegmentToggle
+            ariaLabel="Filial"
+            size="sm"
+            widthMode="content"
+            value={branch}
+            onChange={changeBranch}
+            options={branchOptions.map((item) => ({
+              value: item.id,
+              label: item.label,
+            }))}
+          />
+        </PpHintAction>
+      ) : null}
+      <PpActionButton variant="ghost" onClick={() => openPanel("devices")}>
+        IoTs
+      </PpActionButton>
+      <PpActionButton variant="ghost" onClick={() => openPanel("firmwares")}>
+        Firmwares
+      </PpActionButton>
+      {canManage ? (
+        <PpHintAction hint={PP_HELP.hub.newDevice} ariaLabel="Ajuda: Novo IoT">
+          <PpActionButton onClick={() => openDrawer("device-create", null)}>+ IoT</PpActionButton>
+        </PpHintAction>
+      ) : null}
+      {canManage ? (
+        <PpHintAction hint={PP_HELP.hub.newFirmware} ariaLabel="Ajuda: Novo firmware">
+          <PpActionButton onClick={() => openDrawer("firmware-create", null)}>+ FW</PpActionButton>
+        </PpHintAction>
+      ) : null}
+      <PpHintAction hint={PP_HELP.hub.refresh} ariaLabel="Ajuda: Atualizar">
+        <PpActionButton
+          variant="primary"
+          disabled={loading}
+          onClick={() => {
+            void reloadGraph();
+            void reloadJobs({ soft: true });
+          }}
+        >
+          ↻
+        </PpActionButton>
+      </PpHintAction>
+    </div>
+  );
 
+  return (
+    <div className="pp-admin-hub">
       {notice ? (
-        <PpStateBox
-          variant="empty"
-          title="Publicação"
-          message={notice}
-          action={
-            <PpActionButton variant="ghost" onClick={() => setNotice(null)}>
-              Fechar
-            </PpActionButton>
-          }
-        />
+        <div className="pp-admin-hub__notice">
+          <PpStateBox
+            variant="empty"
+            title="Publicação"
+            message={notice}
+            action={
+              <PpActionButton variant="ghost" onClick={() => setNotice(null)}>
+                Fechar
+              </PpActionButton>
+            }
+          />
+        </div>
+      ) : null}
+      {error ? (
+        <div className="pp-admin-hub__notice">
+          <PpStateBox variant="error" title="Erro" message={error} />
+        </div>
       ) : null}
 
-      {error ? <PpStateBox variant="error" title="Erro" message={error} /> : null}
-
-      <div id={HUB_SECTION_ID.canvas}>
+      <div className="pp-admin-viewport">
         {loading ? (
-          <PpStateBox variant="loading" title="Carregando firmwares e IoTs" />
+          <PpStateBox variant="loading" title="Carregando mapa Admin…" />
         ) : (
-          <PpSectionCard
-            title={`Canvas · ${families.length} firmwares · ${devices.length} IoTs`}
-            hint={PP_HELP.otaLinks.canvas}
-          >
-            <p className="pp-hub-legend">
-              <span className="pp-hub-legend__item pp-hub-legend__item--solid">
-                sólida = vínculo direto
-              </span>
-              <span className="pp-hub-legend__item pp-hub-legend__item--dashed">
-                tracejada = via driver
-              </span>
-            </p>
-            <FirmwareDeviceLinkCanvas
-              families={families}
-              devices={devices}
-              canManage={canManage}
-              onLinked={() => void reloadGraph()}
-              onUnlink={handleUnlink}
-              onUpdateDevice={handleUpdateDevice}
-              onUpdateFamily={handleUpdateFamily}
-              onSelectDevice={(deviceId) =>
-                navigateProductionPulse(
-                  productionPulseDeviceDetailPath(deviceId, "firmware"),
-                )
+          <FirmwareDeviceLinkCanvas
+            families={families}
+            devices={devices}
+            canManage={canManage}
+            filterQuery={ui.filters.q}
+            filterStatus={ui.filters.status}
+            onLinked={() => void reloadGraph()}
+            onUnlink={handleUnlink}
+            onUpdateDevice={handleUpdateDevice}
+            onUpdateFamily={handleUpdateFamily}
+            onSelectEntity={onSelectEntity}
+            onOpenDeviceMenu={onOpenDeviceMenu}
+            onOpenFirmwareMenu={onOpenFirmwareMenu}
+            onNodeDragStart={() => {
+              if (ui.openLayer === "summary" || ui.openLayer === "menu") {
+                setLayer({ openLayer: "none", popoverAnchorId: null }, false);
+                setAnchorEl(null);
               }
-            />
-          </PpSectionCard>
+            }}
+            overlayTopLeft={overlayTopLeft}
+            overlayTopRight={overlayTopRight}
+          />
         )}
-      </div>
 
-      <div id={HUB_SECTION_ID.catalog}>
-        <PpSectionCard
+        <MiniInspectorPanel
+          open={ui.openLayer === "inspector"}
+          entity={ui.selectedEntity}
+          device={selectedDevice}
+          firmware={selectedFirmware}
+          onClose={() => setLayer({ openLayer: "none" })}
+          onEdit={() => {
+            if (ui.selectedEntity?.type === "device") {
+              openDrawer("device-edit", ui.selectedEntity);
+            } else if (ui.selectedEntity?.type === "firmware") {
+              openDrawer("firmware-edit", ui.selectedEntity);
+            }
+          }}
+        />
+
+        <AdminSidePanel
+          open={ui.openLayer === "panel" && ui.panel === "firmwares"}
           title="Firmwares"
-          hint={PP_HELP.hub.catalog}
-          actions={
-            canManage ? (
-              <PpActionButton
-                variant="ghost"
-                onClick={() => navigateProductionPulse(productionPulseFirmwareNewPath())}
-              >
-                Novo firmware
-              </PpActionButton>
-            ) : undefined
-          }
+          onClose={() => setLayer({ panel: null, openLayer: "none" })}
         >
           <PpCatalogSearchBar
             value={catalogSearch}
             onChange={setCatalogSearch}
-            placeholder="Buscar família, versão, driver…"
+            placeholder="Buscar família, versão…"
           />
-          {loading ? (
-            <PpStateBox variant="loading" title="Carregando firmwares" />
-          ) : filteredFirmwares.length === 0 ? (
-            <PpStateBox
-              variant="empty"
-              title="Nenhum firmware"
-              message={PP_HELP.ota.catalogEmpty}
-            />
-          ) : (
-            <PpDataTable
-              columns={firmwareColumns}
-              rows={filteredFirmwares}
-              rowKey={(row) => row.id}
-              emptyMessage={PP_HELP.ota.catalogEmpty}
-            />
-          )}
-        </PpSectionCard>
-      </div>
+          {canManage ? (
+            <PpActionButton
+              className="pp-mb-sm"
+              onClick={() => openDrawer("firmware-create", null)}
+            >
+              Novo firmware
+            </PpActionButton>
+          ) : null}
+          <PpDataTable
+            columns={firmwareColumns}
+            rows={filteredFirmwares}
+            rowKey={(row) => row.id}
+            emptyMessage={PP_HELP.ota.catalogEmpty}
+          />
+        </AdminSidePanel>
 
-      {canManage ? (
-        <PpSectionCard title="Disparar atualização" hint={PP_HELP.ota.jobCreate}>
-          <form className="pp-form-grid pp-hub-ota-form" onSubmit={(e) => void onCreateJob(e)}>
-            <PpNativeSelectField
-              id="ota-hub-firmware"
-              label="Firmware"
-              hint={PP_HELP.ota.jobFirmware}
-              value={firmwareId}
-              onChange={setFirmwareId}
-              options={firmwareOptions}
-              placeholderOption="Selecione…"
-            />
-            <PpNativeSelectField
-              id="ota-hub-scope"
-              label="Escopo"
-              hint={PP_HELP.ota.jobScope}
-              value={scope}
-              onChange={(value) => setScope(value as "branch" | "device")}
-              options={[
-                { value: "branch", label: "Filial inteira" },
-                { value: "device", label: "Dispositivo" },
-              ]}
-              searchable={false}
-            />
-            {scope === "device" ? (
-              <PpNativeSelectField
-                id="ota-hub-device"
-                label="Dispositivo"
-                hint={PP_HELP.ota.jobScopeDevice}
-                value={scopeDeviceId}
-                onChange={setScopeDeviceId}
-                options={deviceOptions}
-                placeholderOption="Selecione…"
-              />
-            ) : null}
-            <div className="pp-hub-ota-form__trigger">
-              <PpSegmentToggle
-                ariaLabel={PP_HELP.ota.jobTrigger}
-                size="sm"
-                widthMode="content"
-                value={trigger}
-                onChange={(value) => setTrigger(value as "manual" | "scheduled")}
-                options={[
-                  { value: "manual", label: "Agora" },
-                  { value: "scheduled", label: "Agendar" },
-                ]}
-              />
-            </div>
-            {trigger === "scheduled" ? (
-              <PpNativeTextField
-                id="ota-hub-scheduled"
-                label="Agendar para"
-                hint={PP_HELP.ota.jobScheduledAt}
-                type="datetime-local"
-                value={scheduledAt}
-                onChange={setScheduledAt}
-              />
-            ) : null}
-            <div className="pp-hub-ota-form__submit">
-              <PpActionButton
-                type="submit"
-                disabled={
-                  busy ||
-                  publishedFirmwares.length === 0 ||
-                  !firmwareId ||
-                  (scope === "device" && !scopeDeviceId) ||
-                  (trigger === "scheduled" && !scheduledAt)
-                }
-              >
-                {busy ? "Disparando…" : "Disparar"}
-              </PpActionButton>
-            </div>
-          </form>
-        </PpSectionCard>
-      ) : null}
-
-      <div id={HUB_SECTION_ID.jobs}>
-        <PpSectionCard title="Atualizações OTA" hint={PP_HELP.hub.jobs}>
+        <AdminSidePanel
+          open={ui.openLayer === "panel" && ui.panel === "jobs"}
+          title="Jobs OTA"
+          onClose={() => setLayer({ panel: null, openLayer: "none" })}
+        >
           {jobsLoading && jobs.length === 0 ? (
             <PpStateBox variant="loading" title="Carregando atualizações" />
-          ) : jobs.length === 0 ? (
-            <PpStateBox
-              variant="empty"
-              title="Sem atualizações"
-              message={PP_HELP.ota.jobsEmpty}
-            />
           ) : (
             <PpDataTable
               columns={jobColumns}
@@ -772,8 +930,177 @@ export function FirmwareLinksPage({
               emptyMessage={PP_HELP.ota.jobsEmpty}
             />
           )}
-        </PpSectionCard>
+        </AdminSidePanel>
+
+        <AdminSidePanel
+          open={ui.openLayer === "panel" && ui.panel === "devices"}
+          title="IoTs"
+          onClose={() => setLayer({ panel: null, openLayer: "none" })}
+        >
+          <DeviceCatalogPanel
+            search={`?branch=${encodeURIComponent(branch)}`}
+            permissions={permissions}
+          />
+        </AdminSidePanel>
       </div>
+
+      <EntitySummaryPopover
+        open={ui.openLayer === "summary"}
+        anchorEl={anchorEl}
+        entity={ui.selectedEntity}
+        device={selectedDevice}
+        firmware={selectedFirmware}
+        firmwareMeta={
+          selectedFamily
+            ? {
+                displayName: selectedFamily.displayName,
+                firmwareKey: selectedFamily.firmwareKey,
+                version: selectedFamily.latestVersion,
+                linkedCount: selectedFamily.linkedCount,
+                outdatedCount: selectedFamily.outdatedCount,
+              }
+            : null
+        }
+        canManage={canManage}
+        onClose={() => setLayer({ openLayer: "none" }, false)}
+        onInspect={() => setLayer({ openLayer: "inspector" })}
+        onOpenMenu={() => setLayer({ openLayer: "menu" }, false)}
+        onPrimary={() => {
+          if (ui.selectedEntity?.type === "device") {
+            void handleUpdateDevice(ui.selectedEntity.id);
+          } else if (selectedFamily) {
+            void handleUpdateFamily(selectedFamily.firmwareKey);
+          }
+        }}
+      />
+
+      <EntityActionMenu
+        open={ui.openLayer === "menu"}
+        anchorEl={anchorEl}
+        entity={ui.selectedEntity}
+        device={selectedDevice}
+        firmware={selectedFirmware}
+        canManage={canManage}
+        onClose={() => setLayer({ openLayer: "none" }, false)}
+        onAction={(action) => void onEntityAction(action)}
+      />
+
+      <PpHostContainedDrawer
+        open={ui.openLayer === "drawer" && ui.drawer === "device-create"}
+        title="Novo IoT"
+        onClose={closeLayers}
+      >
+        <DeviceFormPage
+          mode="create"
+          initialBranch={branch}
+          permissions={permissions}
+          embedded
+          onCancel={closeLayers}
+          onDone={() => {
+            closeLayers();
+            void reloadGraph();
+          }}
+        />
+      </PpHostContainedDrawer>
+
+      <PpHostContainedDrawer
+        open={ui.openLayer === "drawer" && ui.drawer === "device-edit"}
+        title="Editar IoT"
+        onClose={closeLayers}
+      >
+        {ui.selectedEntity?.type === "device" ? (
+          <DeviceFormPage
+            mode="edit"
+            deviceId={ui.selectedEntity.id}
+            permissions={permissions}
+            embedded
+            onCancel={closeLayers}
+            onDone={() => {
+              closeLayers();
+              void reloadGraph();
+            }}
+          />
+        ) : null}
+      </PpHostContainedDrawer>
+
+      <PpHostContainedDrawer
+        open={
+          ui.openLayer === "drawer" &&
+          (ui.drawer === "firmware-create" || ui.drawer === "firmware-version")
+        }
+        title="Novo firmware"
+        onClose={closeLayers}
+      >
+        <FirmwareCreatePage
+          branch={branch}
+          permissions={permissions}
+          embedded
+          onCancel={closeLayers}
+          onDone={() => {
+            closeLayers();
+            void reloadGraph();
+            openPanel("firmwares");
+          }}
+        />
+      </PpHostContainedDrawer>
+
+      <PpHostContainedDrawer
+        open={ui.openLayer === "drawer" && ui.drawer === "firmware-edit"}
+        title="Firmware"
+        onClose={closeLayers}
+      >
+        {ui.selectedEntity?.type === "firmware" ? (
+          <FirmwareDetailPage
+            firmwareId={
+              firmwareById.get(ui.selectedEntity.id)?.id || ui.selectedEntity.id
+            }
+            permissions={permissions}
+            embedded
+            onCancel={closeLayers}
+            onDone={() => {
+              closeLayers();
+              void reloadGraph();
+            }}
+          />
+        ) : null}
+      </PpHostContainedDrawer>
+
+      <PpHostContainedDrawer
+        open={ui.openLayer === "drawer" && ui.drawer === "ota-schedule"}
+        title="Agendar atualização"
+        onClose={closeLayers}
+      >
+        <PpNativeTextField
+          id="ota-schedule-at"
+          label="Agendar para"
+          hint={PP_HELP.ota.jobScheduledAt}
+          type="datetime-local"
+          value={scheduledAt}
+          onChange={setScheduledAt}
+        />
+        <div className="pp-inline-actions">
+          <PpActionButton variant="ghost" onClick={closeLayers}>
+            Cancelar
+          </PpActionButton>
+          <PpActionButton
+            disabled={!scheduledAt || !scheduleContext}
+            onClick={() => {
+              if (!scheduleContext) return;
+              const fw = firmwareById.get(scheduleContext.firmwareId);
+              if (!fw) return;
+              void runFamilyJob(fw.firmwareKey, scheduleContext.deviceIds, {
+                scheduledAt,
+              }).then(() => {
+                setScheduleContext(null);
+                setScheduledAt("");
+                closeLayers();
+              });
+            }}
+          >
+            Agendar
+          </PpActionButton>
+        </div>
+      </PpHostContainedDrawer>
 
       <PpHostContainedDialog
         open={Boolean(detailJobId)}
@@ -811,6 +1138,19 @@ export function FirmwareLinksPage({
           </PpActionButton>
         </div>
       </PpHostContainedDialog>
+
+      <RenameDeviceDialog
+        open={Boolean(renameDevice)}
+        device={renameDevice}
+        onClose={() => setRenameDevice(null)}
+        onRenamed={() => void reloadGraph()}
+      />
+      <ConfirmDisableDialog
+        open={Boolean(disableDeviceRow)}
+        device={disableDeviceRow}
+        onClose={() => setDisableDeviceRow(null)}
+        onDone={() => void reloadGraph()}
+      />
     </div>
   );
 }

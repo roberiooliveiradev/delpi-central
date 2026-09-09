@@ -9,25 +9,27 @@ type FirmwareJobsPageProps = {
   branch: string;
 };
 
-/** Legacy `/firmware-jobs` — redirects to the OTA hub (`/firmware-links`). */
+/** Legacy `/firmware-jobs` — redirects to Admin hub jobs panel. */
 export function FirmwareJobsPage({ branch }: FirmwareJobsPageProps) {
   useEffect(() => {
-    navigateProductionPulse(productionPulseFirmwareLinksPath({ branch }));
+    navigateProductionPulse(
+      productionPulseFirmwareLinksPath({ branch, panel: "jobs", focus: "jobs" }),
+    );
   }, [branch]);
 
   return (
     <div className="pp-page-stack">
       <PpPageHero
-        title="Hub OTA"
+        title="Admin"
         badge={ppShellIcon}
         description={PP_HELP.ota.jobsHero}
         actions={
-          <PpHintAction hint={PP_HELP.ota.openLinks} ariaLabel="Ajuda: Hub OTA">
+          <PpHintAction hint={PP_HELP.ota.openLinks} ariaLabel="Ajuda: Admin mapa">
             <span className="pp-muted">Redirecionando…</span>
           </PpHintAction>
         }
       />
-      <PpStateBox variant="loading" title="Redirecionando para o hub OTA…" />
+      <PpStateBox variant="loading" title="Redirecionando para o mapa Admin…" />
     </div>
   );
 }

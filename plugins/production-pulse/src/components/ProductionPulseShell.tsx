@@ -6,7 +6,6 @@ import type { ProductionPulseRoute } from "../constants/routes";
 import {
   productionPulseFirmwareLinksPath,
   productionPulseOperatorPath,
-  PRODUCTION_PULSE_BASE_PATH,
 } from "../constants/routes";
 import { SHELL_NAV_CONTENT, resolveShellNavItems } from "../content/shellNav";
 import { navigateProductionPulse } from "../utils/navigation";
@@ -16,29 +15,34 @@ type ProductionPulseShellProps = {
   route: ProductionPulseRoute;
   permissions: ProductionPulsePermissionFlags;
   children: ReactNode;
+  /** Admin map viewport fills remaining height under TopBar. */
+  fillContent?: boolean;
 };
 
 function navPath(id: ProductionPulseNavId, route: ProductionPulseRoute): string {
   switch (id) {
-    case "panel":
-      return PRODUCTION_PULSE_BASE_PATH;
-    case "hub":
+    case "admin":
       return productionPulseFirmwareLinksPath({
         branch: route.kind === "firmwareLinks" ? route.branch : "01",
       });
     case "operator":
-      return productionPulseOperatorPath({ branch: "01" });
+      return productionPulseOperatorPath("01");
     default:
-      return PRODUCTION_PULSE_BASE_PATH;
+      return productionPulseFirmwareLinksPath();
   }
 }
 
-export function ProductionPulseShell({ route, permissions, children }: ProductionPulseShellProps) {
+export function ProductionPulseShell({
+  route,
+  permissions,
+  children,
+  fillContent = false,
+}: ProductionPulseShellProps) {
   const activeId = resolvePulseNavId(route);
   const items = resolveShellNavItems({ canOperator: permissions.canOperator });
 
   return (
-    <div className="pp-shell">
+    <div className={`pp-shell${fillContent ? " pp-shell--admin-fill" : ""}`}>
       <PpTopBar
         aria-label={SHELL_NAV_CONTENT.ariaLabel}
         activeId={activeId ?? ""}
