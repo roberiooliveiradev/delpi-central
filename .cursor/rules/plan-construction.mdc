@@ -1,11 +1,36 @@
 ---
-description: Planejamento/CreatePlan — método E*.S*, pesquisa, matriz transversal, wireframes, impacto, testes e protocolo de execução multi-etapa
+description: Planejamento/CreatePlan — raciocínio por evidência, ledger de requisitos, hipóteses concorrentes, método E*.S*, matriz transversal, impacto, testes e protocolo de execução multi-etapa
 alwaysApply: false
 ---
 
 # Construção de planos (Delpi)
 
-Complementa `test-and-commit.mdc` e **deve obedecer primeiro** a `evidence-driven-execution.mdc`. Aplica-se a CreatePlan, iteração de plano e entregas multi-commit.
+Complementa `test-and-commit.mdc` e **deve obedecer primeiro** a `evidence-driven-execution.mdc`. Aplica-se a CreatePlan, revisão/iteração de plano e entregas multi-etapa ou multi-commit.
+
+## Princípio de inteligência do planejamento
+
+Um plano não é uma lista de arquivos nem uma antecipação da primeira solução plausível.
+
+O plano deve demonstrar a cadeia:
+
+```text
+pedido completo
+→ ledger de requisitos
+→ inventário real
+→ evidências
+→ hipóteses concorrentes / objetivo técnico
+→ cadeia causal ou arquitetura-alvo
+→ produtores + consumidores + contratos
+→ decisões travadas
+→ delta antes/depois
+→ etapas atomicamente executáveis
+→ testes por requisito
+→ verify-final contra o pedido original
+```
+
+**Qualidade do plano = cobertura do objetivo + qualidade das decisões + executabilidade + prova de generalização.**
+
+Um plano detalhado continua incorreto se partir de hipótese não comprovada, omitir requisito, duplicar ownership, criar etapa especulativa ou validar somente o caso reportado.
 
 ## Autoridade de `.cursor/plans`
 
@@ -18,7 +43,8 @@ plano ativo
 → reler development-standards-index.mdc
 → reler regras especializadas atuais
 → validar código/contrato vigente
-→ remover ou reescrever instrução técnica superada no plano
+→ revalidar evidências e decisões travadas
+→ remover ou reescrever instrução técnica superada
 → só então executar
 ```
 
@@ -26,91 +52,381 @@ Se um plano mencionar arquitetura, serviço, registry, selector, contrato ou flu
 
 Planos concluídos devem ser removidos de `.cursor/plans`; histórico de execução fica no Git. Não manter plano concluído como documentação técnica.
 
-## Checklist obrigatório (nesta ordem)
+# Protocolo cognitivo obrigatório antes de escrever etapas
 
-1. **Decomposição do pedido + evidência** — aplicar `evidence-driven-execution.mdc`: identificar objetivo, subobjetivos, restrições, dependências, entregáveis e critérios de aceite; separar fatos, inferências e hipóteses. Nenhum requisito material pode desaparecer do plano.
-2. **Diretrizes Cursor** — consultar `development-standards-index.mdc` (se existir) e as regras do domínio; o plano **não** pode contradizer regras ativas (`english-code-identifiers`, `feature-help-sync`, `plugins-reusable-components`, `plugins-overlay-positioning`, `centralized-rules-first`, etc.).
-3. **Inventário do existente** — mapear o que já há (kit `plugin-ui`, rotas, permissões, CSS, clones); preferir **estender** o módulo canônico a reinventar. Ler produtores, consumidores e fluxos irmãos do contrato antes de travar solução.
-4. **Pesquisa de mercado** — padrões/libs/UX de referência; travar P0 vs fora na tabela de decisões. Distinguir claramente referência externa de decisão do repositório.
-5. **Fluxos + matriz transversal (obrigatório)** — não basta o happy path do sintoma. **Incluir satélite Ajuda** (`feature-help-sync.mdc`) quando a mudança for user-facing.
-   Antes de travar etapas, **estudar e nomear** todos os consumidores do mesmo contrato
-   (compose, edit, leitura/bolha, rascunho F5, reply, clip vs inline, undo, upload/rewrite,
-   dedup de strip, gates, realtime, preview inbox, etc. — o que existir no domínio).
-   No corpo do plano incluir:
-   - tabela **Fluxo × superfície × caminho × P0|herança|fora**;
-   - satélites **explícitos** (não «fica implícito»);
-   - diagrama mermaid dos caminhos que compartilham o módulo canônico.
-   Caso de referência: imagem inline na Sala (compose/edit dock/bolha/F5/clip) —
-   inventário incompleto gera regressão no fluxo omitido.
-6. **Wireframes de UI** — esboço textual, ASCII, seções de tela ou referência a `docs/**/WIREFRAMES.md` (layout, ações, vazios); UI branded respeita design system / `plugin-ui`.
-7. **Impacto transversal** — consumidores, aliases, RBAC, MFEs, APIs, docs, regressões; etapa explícita se a mudança espalha.
-8. **Estrutura do plano** — ver abaixo.
-9. **Protocolo de execução** — ver abaixo.
-10. **Sempre testar antes de commit** — unitários/build do escopo **antes** de cada commit (alinhado a `test-and-commit.mdc`).
+## 1. Ledger de requisitos — não comprimir pedidos longos
 
-## Estrutura obrigatória do plano
+Antes de propor solução, decompor o pedido em requisitos atômicos identificáveis.
+
+Exemplo:
+
+```text
+RQ-01 comportamento principal
+RQ-02 restrição arquitetural
+RQ-03 caso multi-turn
+RQ-04 compatibilidade
+RQ-05 Ajuda user-facing
+RQ-06 validação live
+```
+
+Para cada requisito material registrar exatamente um estado:
+
+```text
+ATENDIDO_NO_PLANO
+HERDADO_POR_SOLUCAO_TRANSVERSAL
+FORA_DO_ESCOPO_COM_JUSTIFICATIVA
+BLOQUEADO_COM_EVIDENCIA
+```
+
+Pedidos compostos, frases longas e múltiplas ações **não podem virar uma única intent do plano**.
+
+O plano final deve permitir auditar:
+
+```text
+requisito
+→ decisão que o resolve
+→ subetapa que o implementa
+→ teste que o prova
+→ critério de pronto
+```
+
+Se essa cadeia estiver ausente para um requisito material, o plano está incompleto.
+
+## 2. Hipóteses concorrentes — não casar com a primeira explicação
+
+Para bug, regressão, comportamento inteligente ou fluxo ambíguo, levantar as causas plausíveis antes de travar a solução.
+
+Exemplo conceitual:
+
+```text
+H1 parsing incorreto
+H2 binding incorreto
+H3 contrato correto, compiler incompleto
+H4 backend correto, consumidor redecide
+```
+
+Investigar até conseguir:
+
+- confirmar uma cadeia causal; ou
+- eliminar hipóteses concorrentes relevantes; ou
+- manter explicitamente `HIPOTESE_A_VALIDAR` com subetapa de investigação.
+
+**Proibido transformar a primeira função suspeita em causa raiz.**
+
+Quando duas causas independentes existirem, separar em subetapas diferentes. Quando uma segunda etapa for apenas consequência natural da primeira, removê-la em vez de manter trabalho especulativo.
+
+## 3. Gate de prontidão da decisão
+
+Uma decisão só pode entrar em **Decisões travadas** quando houver evidência suficiente.
+
+Classificar internamente:
+
+```text
+READY_CONFIRMED       → código/contrato/teste suporta a decisão
+READY_BOUNDED         → inferência limitada, risco conhecido e validação explícita na própria etapa
+NOT_READY             → falta dado material; investigar antes de planejar implementação
+```
+
+Não escrever como receita executável algo em estado `NOT_READY`.
+
+Expressões como:
+
+```text
+"se necessário"
+"talvez ajustar"
+"pode precisar"
+"verificar durante a implementação"
+"ajustar mapper se continuar falhando"
+```
+
+são sinais de decisão não pronta. Resolver a incerteza no planejamento ou criar uma subetapa explícita de investigação sem alteração de produto.
+
+## 4. Cadeia causal ou arquitetura-alvo
+
+### Bug/fix
+
+O plano deve reconstruir:
+
+```text
+entrada
+→ transformações relevantes
+→ decisão incorreta
+→ módulo responsável
+→ contrato/estado produzido
+→ consumidor
+→ sintoma observável
+```
+
+Nomear classes/métodos/contratos reais quando disponíveis.
+
+### Feature/evolução
+
+O plano deve reconstruir o estado atual e o estado alvo:
+
+```text
+CURRENT
+entrada → módulo A → contrato X → consumidor B → saída atual
+
+TARGET
+entrada → módulo canônico → contrato evoluído → consumidores → saída desejada
+```
+
+Não desenhar arquitetura alvo sem antes provar o ownership atual.
+
+## 5. Grafo de ownership e contrato
+
+Antes de alterar producer, DTO, metadata, evento, schema, state ou serviço compartilhado, mapear:
+
+```text
+PRODUCER
+TRANSFORMERS
+CANONICAL OWNER
+CONSUMERS
+FALLBACKS
+PERSISTENCE/RELOAD
+SURFACES
+TESTS
+DOCS/HELP
+```
+
+Ler consumidores antes de alterar o produtor.
+
+O plano deve distinguir:
+
+- **regra de negócio/inteligência**;
+- **contrato de transporte**;
+- **apresentação/renderização**;
+- **fallback de compatibilidade**.
+
+Não mover decisão para consumidor apenas porque é mais fácil testar ali.
+
+## 6. Delta antes/depois e invariantes
+
+Antes das etapas, explicitar comportamentos que mudam e os que **não podem mudar**.
+
+Tabela recomendada:
+
+| Caso | Antes | Depois esperado | Deve mudar? |
+|---|---|---|---|
+| caso P0 | incorreto | correto | sim |
+| sibling | correto/...? | correto | conforme objetivo |
+| negativo | rejeita/clarifica | rejeita/clarifica | não |
+| legado/F5 | funciona | funciona | não |
+
+Isso evita correções que resolvem o sintoma destruindo guardrails legítimos.
+
+## 7. Generalização antes da receita
+
+Toda regra nova deve responder antes da implementação:
+
+```text
+qual é a classe do problema?
+qual dado varia?
+qual propriedade permanece?
+qual contraexemplo não deve ativar a regra?
+```
+
+Se a solução depende do literal do exemplo, path, código, provider, operationId, texto específico, fixture ou nome de entidade sem necessidade de domínio comprovada, o plano deve rejeitá-la.
+
+Mínimo para mudanças de comportamento:
+
+- caso positivo/original;
+- caso irmão da mesma família;
+- caso negativo;
+- quando material, metamórfico/rename/reorder/variação de linguagem.
+
+## 8. Rastreabilidade obrigatória
+
+Planos multi-etapa devem incluir uma matriz compacta ou tornar a rastreabilidade inequívoca no corpo:
+
+| Requisito | Evidência | Decisão | Subetapa | Teste | Aceite |
+|---|---|---|---|---|---|
+| RQ-01 | ... | D-01 | E1.S2 | ... | ... |
+
+Um requisito pode ser herdado por solução transversal, mas isso deve estar explícito.
+
+**Nenhuma subetapa pode existir sem requisito/risco que a justifique. Nenhum requisito pode ficar sem etapa ou herança explícita.**
+
+## 9. Dependências e atomicidade
+
+Antes de ordenar `E*.S*`, identificar dependências reais.
+
+Perguntas obrigatórias:
+
+- esta etapa pode ser validada isoladamente?
+- ela depende de contrato criado antes?
+- ela mistura diagnóstico + implementação + documentação sem necessidade?
+- duas etapas alteram o mesmo ownership e deveriam ser uma só?
+- uma etapa é apenas consequência automática de outra?
+
+Uma subetapa deve ser atomicamente entregável e deixar o repositório em estado testável.
+
+Não fragmentar artificialmente uma única decisão em vários commits só para aumentar granularidade.
+
+## 10. Orçamento de mudança e risco
+
+Preferir a menor mudança arquiteturalmente correta.
+
+O plano deve registrar riscos materiais, por exemplo:
+
+```text
+compatibilidade de contrato
+persistência/F5
+RBAC/segurança
+performance/latência
+migração de dados
+fallback legado
+rollout/rollback
+consumidores externos
+```
+
+Mudança de alto alcance exige estratégia de compatibilidade/rollout antes das etapas de implementação.
+
+# Checklist obrigatório de construção (nesta ordem)
+
+1. **Decomposição + ledger de requisitos** — nenhum requisito material pode desaparecer.
+2. **Diretrizes Cursor** — consultar `development-standards-index.mdc` e responsabilidades/regras do domínio.
+3. **Inventário do existente** — módulos canônicos, contratos, testes, docs, producers/consumers/fallbacks.
+4. **Evidências + hipóteses concorrentes** — separar fato, inferência e hipótese; eliminar primeira-solução enviesada.
+5. **Cadeia causal ou arquitetura atual/alvo** — provar onde a mudança pertence.
+6. **Decisões prontas** — nenhuma receita com “se necessário”, Option A/B ou TBD material.
+7. **Pesquisa de mercado quando material** — referência externa não substitui decisão do repositório; travar P0 vs fora.
+8. **Fluxos + matriz transversal** — happy path, siblings, negativos, persistência/F5, superfícies e satélites relevantes.
+9. **Wireframes de UI quando aplicável** — layout, ações, vazios; respeitar design system / `plugin-ui`.
+10. **Impacto transversal + risco/compatibilidade** — consumidores, aliases, RBAC, MFEs, APIs, docs, rollout/rollback.
+11. **Delta antes/depois + invariantes** — declarar o que muda e o que deve permanecer.
+12. **Rastreabilidade requisito→etapa→teste→aceite**.
+13. **Estrutura E*.S*** — dependências e atomicidade reais.
+14. **Protocolo de execução** — quando declarado.
+15. **Verify-final** — validar objetivo perceptível original, não apenas testes verdes.
+
+## Fluxos + matriz transversal
+
+Não basta o happy path do sintoma. **Incluir satélite Ajuda** (`feature-help-sync.mdc`) quando a mudança for user-facing.
+
+Antes de travar etapas, estudar e nomear consumidores do mesmo contrato e os fluxos irmãos que existirem no domínio, por exemplo:
+
+```text
+send / stream / simulate
+create / edit / read
+persist / F5 / replay
+admin / user surface
+mobile / desktop
+fallback legado
+copy / export / canvas
+realtime / polling
+```
+
+No corpo do plano incluir:
+
+- tabela **Fluxo × superfície × caminho × P0|herança|fora**;
+- satélites explícitos;
+- diagrama Mermaid quando o fluxo compartilhado não for trivial.
+
+Classificar como **HERANÇA** somente quando a cadeia técnica compartilhada estiver comprovada; não usar “herda” para evitar investigar.
+
+# Estrutura obrigatória do plano
 
 | Bloco | Conteúdo |
-|-------|----------|
-| Overview | 1–2 frases do resultado |
-| Leitura do pedido | Objetivo principal, subobjetivos, restrições, dependências e critérios de aceite |
-| Evidências e hipóteses | Fatos confirmados vs inferências/hipóteses ainda não validadas |
-| Decisões travadas | Tabela sem Option A/B / TBD |
-| Matriz de fluxos transversais | Tabela Fluxo × superfície × P0/herança/fora (+ satélites) |
+|---|---|
+| Overview | 1–2 frases do resultado perceptível |
+| Leitura do pedido | Objetivo, subobjetivos, restrições, dependências, entregáveis e aceite |
+| Ledger/rastreabilidade | Requisitos materiais e cobertura no plano |
+| Evidências e hipóteses | Fatos confirmados, hipóteses concorrentes, drifts |
+| Cadeia causal / arquitetura atual-alvo | Fluxo real com ownership e contratos |
+| Estado antes × depois | P0, siblings, negativos e invariantes |
+| Decisões travadas | Sem Option A/B/TBD material; evidência associada |
+| Matriz de fluxos transversais | Fluxo × superfície × P0/herança/fora (+ satélites) |
+| Riscos/compatibilidade | Contratos, persistência, segurança, performance, rollout/rollback |
 | Etapas `E1…En` | Agrupamento lógico |
-| Subetapas `E*.S*` | Trabalho atomicamente entregável — **cada uma com receita** (ver abaixo) |
-| Critérios de pronto | Verificável — inclui sync de Ajuda se user-facing (`feature-help-sync.mdc`) |
-| Fora do escopo | Explícito — **proibido** colocar sync de Ajuda user-facing em “fora” |
-| Todos YAML | ids `eN-sM-slug` alinhados às subetapas |
-| Receita por subetapa | Obrigatória em planos multi-etapa (ver § Receita) |
+| Subetapas `E*.S*` | Trabalho atomicamente entregável — cada uma com receita |
+| Critérios de pronto | Verificáveis e vinculados ao objetivo |
+| Fora do escopo | Explícito; Ajuda user-facing não pode ser omitida |
+| Todos YAML | ids `eN-sM-slug` alinhados às subetapas reais |
+| Revisão adversarial | Perguntas e correções antes de fechar o plano |
 
 Citar arquivos canônicos com caminhos reais. Plan mode: iterar o documento do plano; só executar após pedido explícito do usuário.
 
-## Receita por subetapa (obrigatória)
+# Receita por subetapa (obrigatória)
 
-Planos com etapas `E*.S*` devem documentar **cada subetapa** como receita executável — para que um implementador (inclusive modelo simples) não improvise. Uma subetapa = um bloco com os campos abaixo (markdown `#### E*.S*`).
+Planos com etapas `E*.S*` devem documentar **cada subetapa** como receita executável — para que um implementador, inclusive modelo simples, não precise redescobrir arquitetura nem improvisar decisão.
 
 | Campo | Conteúdo |
-|-------|----------|
-| **Objetivo** | Uma frase do resultado da subetapa |
-| **Fazer** | Lista numerada: arquivos a criar/alterar (paths reais), métodos/contratos, JSON keys, wiring no pipeline |
-| **Não fazer** | Anti-padrões explícitos (patch local, `if path`, texto PT no Python, escopo da subetapa seguinte) |
-| **Evidência** | O que comprova que a decisão da subetapa está correta no código/contrato/pipeline |
-| **Teste** | Comando pytest/npm/gate exato + arquivo de teste; quando aplicável incluir caso positivo, negativo e irmão |
-| **Pronto quando** | Critério verificável (assert, grep, comportamento) e vínculo com o objetivo original |
-| **Commit** | Mensagem PT sugerida (porquê, não lista de arquivos) |
+|---|---|
+| **Objetivo** | Resultado verificável da subetapa |
+| **Requisitos cobertos** | IDs `RQ-*` ou riscos resolvidos |
+| **Fazer** | Arquivos reais, símbolos/métodos/contratos, wiring no pipeline |
+| **Não fazer** | Anti-padrões e limites da etapa |
+| **Evidência** | Prova de que este é o ownership correto |
+| **Dependências** | Subetapas/contratos anteriores realmente necessários |
+| **Teste** | Comando exato + positive/sibling/negative quando aplicável |
+| **Pronto quando** | Assert/comportamento observável + vínculo ao objetivo |
+| **Commit** | Mensagem PT sugerida focando o porquê |
+
+Se não for possível preencher **Fazer + Evidência + Teste** sem expressões especulativas, a subetapa ainda não está pronta e deve voltar para investigação.
 
 Planos de inteligência transversal devem incluir, quando couber:
 
-- **Protocolo de execução** no corpo (commit+push por subetapa, não agrupar).
-- **Etapa verify-final** (ex. `E9`): rebuild + fluxo live + tabela pass/fail + revisão do objetivo original; commit só se fix de regressão.
-- **Satélites** na matriz de fluxos (send/stream/simulate, MFE, admin debug, modos fast/normal).
+- protocolo de execução no corpo (commit+push por subetapa, se explicitamente desejado);
+- etapa `verify-final`: rebuild + fluxo live + tabela pass/fail + revisão do objetivo original;
+- satélites send/stream/simulate, persist/F5, MFE, admin debug e modos relevantes;
+- protocolo de eval canônico, não suite paralela;
+- baseline × candidate quando `ai-intelligence-evaluation.mdc` exigir.
 
 Sem receita por subetapa = plano incompleto para execução delegada.
 
-## Protocolo de execução (quando o plano declarar)
+# Revisão adversarial obrigatória do plano
+
+Antes de finalizar qualquer plano relevante, perguntar e corrigir o documento se necessário:
+
+```text
+1. Qual requisito do usuário ainda não consigo rastrear até um teste?
+2. Que afirmação estou tratando como fato sem evidência?
+3. Qual hipótese concorrente ainda pode explicar o problema?
+4. Estou alterando o owner canônico ou um consumidor conveniente?
+5. Existe uma segunda etapa que é apenas consequência da primeira?
+6. Existe “se necessário” escondendo investigação incompleta?
+7. Que sibling/negativo/F5/superfície posso ter esquecido?
+8. Como esta solução pode passar nos testes e ainda falhar para o usuário?
+9. O plano introduz hardcode do exemplo em vez de regra generalizável?
+10. Que comportamento atual correto pode regredir?
+11. Algum contrato precisa de compatibilidade/rollback?
+12. Outro agente conseguiria executar sem redescobrir uma decisão material?
+```
+
+Plano que falha nessa revisão deve ser corrigido antes de ser apresentado como pronto.
+
+# Protocolo de execução (quando o plano declarar)
 
 Quando o plano aprovado disser «cada **E*.S*** = commit + push»:
 
 1. Marcar subetapa `in_progress`.
-2. Implementar só o escopo da subetapa.
-3. **Testar/build** do pacote alterado.
-4. Verificar a evidência da subetapa e confirmar que o pipeline real consome a mudança.
-5. **Commit** (mensagem em PT, focando o *porquê*) + **push**.
-6. Não agrupar duas subetapas no mesmo commit.
-7. Subetapa de verify-final: commit **só** se houver fix de regressão.
+2. Revalidar evidência/contrato vigente antes do diff.
+3. Implementar somente o escopo da subetapa.
+4. Testar/build do pacote alterado.
+5. Confirmar que o pipeline real consome a mudança.
+6. Atualizar evidência/resultado da subetapa.
+7. Commit (mensagem PT, focando o porquê) + push.
+8. Não agrupar duas subetapas independentes no mesmo commit.
+9. `verify-final`: commit somente se houver fix de regressão.
 
-No fluxo cotidiano (sem esse protocolo no plano): commit **somente** se o usuário pedir — `test-and-commit.mdc`.
+No fluxo cotidiano sem esse protocolo, commit somente se o usuário pedir — `test-and-commit.mdc`.
 
-## O que NÃO fazer
+# O que NÃO fazer
 
-- Plano com alternativas abertas («A ou B», «opcional se…») — decidir e travar quando houver evidência suficiente; se faltar evidência, registrar hipótese e etapa de validação em vez de inventar.
-- Pular decomposição do pedido / inventário / regras Cursor / impacto e ir direto a código.
-- Plano só do sintoma reportado sem inventariar fluxos irmãos (edit, bolha, rascunho, clip, …).
-- Omitir silenciosamente requisito material presente no pedido.
+- Plano com alternativas abertas (`A ou B`, `opcional se...`) quando o repositório consegue resolver a dúvida.
+- Receita com `se necessário`, `talvez`, `se ainda falhar` ou decisão delegada para a implementação.
+- Pular ledger/inventário/regras/evidência e ir direto à solução.
+- Tomar a primeira função suspeita como causa raiz sem hipóteses concorrentes.
+- Plano só do sintoma sem siblings, negativos e superfícies compartilhadas.
+- Marcar fluxo como HERANÇA sem provar caminho compartilhado.
+- Criar subetapa especulativa sem causa/risco próprio.
+- Omitir requisito material ou escondê-lo em “fora do escopo”.
 - Tratar hipótese como fato ou causa raiz confirmada.
 - Executar instrução técnica de `.cursor/plans` que contradiga regra, contrato ou arquitetura vigente.
 - Manter plano concluído como documentação técnica indexável.
 - Commit sem testes do escopo.
-- Patch local que ignora módulo canônico já mapeado no inventário.
-- Feature user-facing no plano **sem** satélite/subetapa de Ajuda (`feature-help-sync.mdc`).
+- Patch local que ignora módulo canônico já mapeado.
+- Hardcode de fixture/path/provider/operationId/string do exemplo para passar teste.
+- Feature user-facing sem satélite/subetapa de Ajuda (`feature-help-sync.mdc`).
+- Declarar plano “pronto” se outro implementador ainda precisar descobrir decisão arquitetural material durante a execução.
