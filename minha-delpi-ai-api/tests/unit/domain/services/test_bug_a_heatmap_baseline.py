@@ -1,11 +1,6 @@
-"""BUG_A_BASELINE — heatmap paren + partial bind (desired behavior; xfail until E1).
-
-Fixtures genéricas (P1 / branch / warehouse / current_quantity) — sem códigos corporativos.
-"""
+"""Regression — heatmap paren + partial bind (fixtures genéricas P1)."""
 
 from __future__ import annotations
-
-import pytest
 
 from app.domain.entities.presentation_spec import PresentationIntent
 from app.domain.services.presentation_data_profile_builder_service import (
@@ -19,11 +14,6 @@ from app.domain.services.presentation_intelligence_orchestrator_service import (
 )
 from app.domain.services.presentation_intent_extractor_service import (
     PresentationIntentExtractorService,
-)
-
-_BUG_A = pytest.mark.xfail(
-    strict=True,
-    reason="BUG_A_BASELINE: extractor paren noise + binder partial completion",
 )
 
 _STOCK_LIKE_ROWS = [
