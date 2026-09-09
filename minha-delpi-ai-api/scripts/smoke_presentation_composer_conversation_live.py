@@ -54,8 +54,7 @@ def _turns_for(product: str) -> list[dict[str, Any]]:
         {
             "id": "T1.stock_table",
             "message": (
-                f"Consulte o estoque do produto {product} via ferramenta de estoque/saldo "
-                "(não inspeção). Mostre em tabela."
+                f"Consulte o estoque do produto {product}. Mostre em tabela."
             ),
             "expect": "table_or_rows",
         },
@@ -386,6 +385,13 @@ def _grade(
     dims = set(session_dim_hints or ()) | set(snap.get("dimHints") or ())
     discriminant = set(session_discriminant_dims or ()) | set(snap.get("discriminantDims") or [])
     if expect == "table_or_rows":
+        paths = [str(path) for path in (snap.get("paths") or [])]
+        has_stock = any(path.lower().rstrip("/").endswith("/stock") for path in paths)
+        has_inspection = any("/inspection" in path.lower() for path in paths)
+        if not has_stock:
+            errors.append("missing_stock_path")
+        if has_inspection:
+            errors.append("inspection_path_in_plan")
         if not snap["hasTable"] and not snap["hasChart"]:
             excerpt = snap["answerExcerpt"].lower()
             if product not in snap["answerExcerpt"] and "estoque" not in excerpt:
