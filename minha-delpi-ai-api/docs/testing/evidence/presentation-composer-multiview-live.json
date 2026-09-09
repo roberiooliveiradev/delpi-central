@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-09-09T18:32:16.964794+00:00",
+  "phase": "inprocess",
+  "requiredDimensions": [
+    "R5",
+    "R9"
+  ],
+  "turns": [
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5"
+  ],
+  "phases": [
+    {
+      "phase": "inprocess",
+      "errors": [],
+      "cases": [
+        {
+          "id": "PC.T1.table_default",
+          "status": "PASS",
+          "errors": [],
+          "elapsedMs": 7.89,
+          "summary": {
+            "profileHash": "sha256:e4894a821f9316698b3de976",
+            "bindConfidence": 0.6,
+            "composerInvoked": false,
+            "composerReason": null,
+            "needsComposer": false,
+            "specApplied": true,
+            "unmetIntent": null,
+            "presentation_profile_build_ms": 7.87,
+            "dimensionCandidates": [
+              "warehouse"
+            ],
+            "measureCandidates": [
+              "balance"
+            ]
+          }
+        },
+        {
+          "id": "PC.T2.table_three_cols_sort",
+          "status": "PASS",
+          "errors": [],
+          "elapsedMs": 0.03,
+          "columnKeys": [
+            "product_code",
+            "warehouse",
+            "planned_qty"
+          ]
+        },
+        {
+          "id": "PC.T3.bar_chart",
+          "status": "PASS",
+          "errors": [],
+          "elapsedMs": 0.67,
+          "chartType": "bar"
+        },
+        {
+          "id": "PC.T4.heatmap_blue",
+          "status": "PASS",
+          "errors": [],
+          "elapsedMs": 0.67,
+          "config": {
+            "chartType": "heatmap",
+            "paletteFamily": "sequential-blue",
+            "xAxis": "product_code",
+            "yAxis": "warehouse"
+          }
+        },
+        {
+          "id": "PC.T5.prefer_canvas",
+          "status": "PASS",
+          "errors": [],
+          "elapsedMs": 0.05,
+          "canvasTitle": "Smoke"
+        }
+      ]
+    }
+  ],
+  "hardErrors": [],
+  "verdict": "PASS"
+}
