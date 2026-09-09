@@ -2,17 +2,48 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field, replace
 from typing import Any
 
 from app.domain.entities.presentation_data_profile import PresentationDataProfile
 from app.domain.entities.presentation_spec import (
     PRESENTATION_SPEC_VERSION,
+    SUPPORTED_DASHBOARD_PANEL_PRESENTATIONS,
     SUPPORTED_FORMATS,
     SUPPORTED_MARKS,
     SUPPORTED_PALETTE_FAMILIES,
+    SUPPORTED_PROSE_DENSITIES,
+    SUPPORTED_TABLE_DENSITIES,
+    SUPPORTED_TEXT_SECTION_MARKERS,
     SUPPORTED_VIEWS,
+    PresentationDashboardSpec,
+    PresentationKpiSpec,
     PresentationSpec,
+    PresentationTableSpec,
+    PresentationTextSpec,
+    PresentationTreeSpec,
+)
+
+MAX_SPEC_FIELDS = 32
+MAX_KPI_CARDS = 8
+MAX_DASHBOARD_PANELS = 6
+MAX_TREE_DEPTH = 12
+MAX_TREE_LEVELS = 8
+
+# Hex / CSS / JS / markup — Spec is semantic-only (D1).
+_FORBIDDEN_STYLE_RE = re.compile(
+    r"("
+    r"\#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b|"
+    r"\brgba?\s*\(|"
+    r"\bhsla?\s*\(|"
+    r"\b\d+(?:\.\d+)?(?:px|em|rem|vw|vh)\b|"
+    r"javascript\s*:|"
+    r"<\s*script\b|"
+    r"\bexpression\s*\(|"
+    r"\burl\s*\("
+    r")",
+    re.IGNORECASE,
 )
 
 
@@ -56,6 +87,30 @@ class PresentationSpecValidatorService:
         dim_candidates = set(profile.dimension_candidates)
         measure_candidates = set(profile.measure_candidates)
 
+        style_errors = cls._forbidden_style_errors(spec)
+        if style_errors:
+            return PresentationSpecValidationResult(
+                ok=False,
+                errors=style_errors,
+                unmet_intent="forbidden_presentation_style",
+            )
+
+        cap_errors = cls._cap_errors(spec)
+        if cap_errors:
+            return PresentationSpecValidationResult(
+                ok=False,
+                errors=cap_errors,
+                unmet_intent="spec_cap_exceeded",
+            )
+
+        nested_errors = cls._nested_contract_errors(spec)
+        if nested_errors:
+            return PresentationSpecValidationResult(
+                ok=False,
+                errors=nested_errors,
+                unmet_intent="invalid_nested_spec",
+            )
+
         if spec.version != PRESENTATION_SPEC_VERSION:
             errors.append(f"unsupported_version:{spec.version}")
 
@@ -98,6 +153,9 @@ class PresentationSpecValidatorService:
         if spec.sort_field and spec.sort_field not in known_keys:
             errors.append(f"sort.unknown_field:{spec.sort_field}")
 
+        nested_membership = cls._nested_membership_errors(spec, known_keys)
+        errors.extend(nested_membership)
+
         # Whole-spec coherence for heatmap.
         if spec.mark == "heatmap" or (
             spec.view == "chart" and "color" in spec.encoding and "x" in spec.encoding and "y" in spec.encoding
@@ -138,7 +196,9 @@ class PresentationSpecValidatorService:
         hard_errors = [
             error
             for error in errors
-            if not error.startswith("unsupported_palette") and not error.startswith("unsupported_format")
+            if not error.startswith("unsupported_palette")
+            and not error.startswith("unsupported_format")
+            and not error.startswith("nested.")
         ]
         if hard_errors and (spec.mark == "heatmap" or any("unknown_field" in error for error in hard_errors)):
             return PresentationSpecValidationResult(
@@ -175,6 +235,11 @@ class PresentationSpecValidatorService:
             sort_direction=spec.sort_direction if spec.sort_direction in {"asc", "desc"} else None,
             labels=cleaned_labels,
             formats=cleaned_formats,
+            table=cls._clean_table(spec.table, known_keys),
+            kpi=cls._clean_kpi(spec.kpi, known_keys),
+            tree=cls._clean_tree(spec.tree, known_keys),
+            dashboard=cls._clean_dashboard(spec.dashboard, known_keys),
+            text=cls._clean_text(spec.text),
         )
 
         if cleaned.mark == "heatmap" and not cls._heatmap_ok(cleaned, profile):
@@ -185,6 +250,214 @@ class PresentationSpecValidatorService:
             )
 
         return PresentationSpecValidationResult(ok=True, spec=cleaned, errors=errors, field_errors=field_errors)
+
+    @classmethod
+    def _cap_errors(cls, spec: PresentationSpec) -> list[str]:
+        errors: list[str] = []
+        if len(spec.fields) > MAX_SPEC_FIELDS:
+            errors.append(f"cap.fields:{len(spec.fields)}>{MAX_SPEC_FIELDS}")
+        if spec.kpi is not None:
+            if len(spec.kpi.measure_fields) > MAX_KPI_CARDS:
+                errors.append(
+                    f"cap.kpi.measureFields:{len(spec.kpi.measure_fields)}>{MAX_KPI_CARDS}"
+                )
+            if len(spec.kpi.card_order) > MAX_KPI_CARDS:
+                errors.append(
+                    f"cap.kpi.cardOrder:{len(spec.kpi.card_order)}>{MAX_KPI_CARDS}"
+                )
+            if len(spec.kpi.tones) > MAX_KPI_CARDS:
+                errors.append(f"cap.kpi.tones:{len(spec.kpi.tones)}>{MAX_KPI_CARDS}")
+        if spec.dashboard is not None and len(spec.dashboard.panels) > MAX_DASHBOARD_PANELS:
+            errors.append(
+                f"cap.dashboard.panels:{len(spec.dashboard.panels)}>{MAX_DASHBOARD_PANELS}"
+            )
+        if spec.tree is not None:
+            if len(spec.tree.level_fields) > MAX_TREE_LEVELS:
+                errors.append(
+                    f"cap.tree.levelFields:{len(spec.tree.level_fields)}>{MAX_TREE_LEVELS}"
+                )
+            if spec.tree.max_depth is not None and spec.tree.max_depth > MAX_TREE_DEPTH:
+                errors.append(f"cap.tree.maxDepth:{spec.tree.max_depth}>{MAX_TREE_DEPTH}")
+            if (
+                spec.tree.default_expanded_depth is not None
+                and spec.tree.default_expanded_depth > MAX_TREE_DEPTH
+            ):
+                errors.append(
+                    f"cap.tree.defaultExpandedDepth:{spec.tree.default_expanded_depth}>{MAX_TREE_DEPTH}"
+                )
+        return errors
+
+    @classmethod
+    def _nested_contract_errors(cls, spec: PresentationSpec) -> list[str]:
+        errors: list[str] = []
+        if spec.table is not None and spec.table.density and spec.table.density not in SUPPORTED_TABLE_DENSITIES:
+            errors.append(f"table.unsupported_density:{spec.table.density}")
+        if spec.text is not None:
+            if spec.text.prose_density and spec.text.prose_density not in SUPPORTED_PROSE_DENSITIES:
+                errors.append(f"text.unsupported_proseDensity:{spec.text.prose_density}")
+            for marker in spec.text.section_plan:
+                if marker not in SUPPORTED_TEXT_SECTION_MARKERS:
+                    errors.append(f"text.unsupported_sectionPlan:{marker}")
+        if spec.dashboard is not None:
+            for panel in spec.dashboard.panels:
+                if panel.presentation not in SUPPORTED_DASHBOARD_PANEL_PRESENTATIONS:
+                    errors.append(
+                        f"dashboard.panel.unsupported_presentation:{panel.presentation}"
+                    )
+        return errors
+
+    @classmethod
+    def _nested_membership_errors(
+        cls,
+        spec: PresentationSpec,
+        known_keys: set[str],
+    ) -> list[str]:
+        if not known_keys:
+            return []
+        errors: list[str] = []
+        if spec.table is not None:
+            for key in spec.table.hidden_fields:
+                if key not in known_keys:
+                    errors.append(f"nested.table.hiddenFields.unknown:{key}")
+        if spec.kpi is not None:
+            for key in (*spec.kpi.measure_fields, *spec.kpi.card_order):
+                if key not in known_keys:
+                    errors.append(f"nested.kpi.unknown:{key}")
+        if spec.tree is not None:
+            for key in (
+                *spec.tree.level_fields,
+                *(
+                    [spec.tree.label_field]
+                    if spec.tree.label_field
+                    else []
+                ),
+                *([spec.tree.badge_field] if spec.tree.badge_field else []),
+            ):
+                if key not in known_keys:
+                    errors.append(f"nested.tree.unknown:{key}")
+        if spec.dashboard is not None:
+            for panel in spec.dashboard.panels:
+                for key in (*panel.fields, *panel.measures):
+                    if key not in known_keys:
+                        errors.append(f"nested.dashboard.{panel.id}.unknown:{key}")
+        return errors
+
+    @classmethod
+    def _forbidden_style_errors(cls, spec: PresentationSpec) -> list[str]:
+        errors: list[str] = []
+        for path, value in cls._iter_string_leaves(spec.as_dict()):
+            if _FORBIDDEN_STYLE_RE.search(value):
+                errors.append(f"forbidden_style:{path}")
+        return errors
+
+    @classmethod
+    def _iter_string_leaves(
+        cls,
+        payload: Any,
+        *,
+        prefix: str = "spec",
+    ) -> list[tuple[str, str]]:
+        leaves: list[tuple[str, str]] = []
+        if isinstance(payload, dict):
+            for key, value in payload.items():
+                leaves.extend(cls._iter_string_leaves(value, prefix=f"{prefix}.{key}"))
+        elif isinstance(payload, list):
+            for index, value in enumerate(payload):
+                leaves.extend(cls._iter_string_leaves(value, prefix=f"{prefix}[{index}]"))
+        elif isinstance(payload, str):
+            leaves.append((prefix, payload))
+        return leaves
+
+    @classmethod
+    def _clean_table(
+        cls,
+        block: PresentationTableSpec | None,
+        known_keys: set[str],
+    ) -> PresentationTableSpec | None:
+        if block is None:
+            return None
+        hidden = tuple(key for key in block.hidden_fields if key in known_keys)
+        density = block.density if block.density in SUPPORTED_TABLE_DENSITIES else None
+        cleaned = PresentationTableSpec(
+            density=density,
+            hidden_fields=hidden,
+            emphasis_rules=block.emphasis_rules,
+            role=block.role,
+            title=block.title,
+        )
+        return cleaned if cleaned.as_dict() else None
+
+    @classmethod
+    def _clean_kpi(
+        cls,
+        block: PresentationKpiSpec | None,
+        known_keys: set[str],
+    ) -> PresentationKpiSpec | None:
+        if block is None:
+            return None
+        cleaned = PresentationKpiSpec(
+            measure_fields=tuple(key for key in block.measure_fields if key in known_keys),
+            card_order=tuple(key for key in block.card_order if key in known_keys),
+            tones=block.tones,
+        )
+        return cleaned if cleaned.as_dict() else None
+
+    @classmethod
+    def _clean_tree(
+        cls,
+        block: PresentationTreeSpec | None,
+        known_keys: set[str],
+    ) -> PresentationTreeSpec | None:
+        if block is None:
+            return None
+        cleaned = PresentationTreeSpec(
+            level_fields=tuple(key for key in block.level_fields if key in known_keys),
+            max_depth=block.max_depth,
+            default_expanded_depth=block.default_expanded_depth,
+            label_field=block.label_field if block.label_field in known_keys else None,
+            badge_field=block.badge_field if block.badge_field in known_keys else None,
+        )
+        return cleaned if cleaned.as_dict() else None
+
+    @classmethod
+    def _clean_dashboard(
+        cls,
+        block: PresentationDashboardSpec | None,
+        known_keys: set[str],
+    ) -> PresentationDashboardSpec | None:
+        if block is None:
+            return None
+        panels = []
+        for panel in block.panels:
+            if panel.presentation not in SUPPORTED_DASHBOARD_PANEL_PRESENTATIONS:
+                continue
+            panels.append(
+                replace(
+                    panel,
+                    fields=tuple(key for key in panel.fields if key in known_keys),
+                    measures=tuple(key for key in panel.measures if key in known_keys),
+                )
+            )
+        cleaned = PresentationDashboardSpec(panels=tuple(panels))
+        return cleaned if cleaned.as_dict() else None
+
+    @classmethod
+    def _clean_text(cls, block: PresentationTextSpec | None) -> PresentationTextSpec | None:
+        if block is None:
+            return None
+        cleaned = PresentationTextSpec(
+            section_plan=tuple(
+                marker
+                for marker in block.section_plan
+                if marker in SUPPORTED_TEXT_SECTION_MARKERS
+            ),
+            prose_density=(
+                block.prose_density
+                if block.prose_density in SUPPORTED_PROSE_DENSITIES
+                else None
+            ),
+        )
+        return cleaned if cleaned.as_dict() else None
 
     @classmethod
     def _validate_heatmap(

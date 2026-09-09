@@ -335,6 +335,6 @@ def test_compiler_table_spec_does_not_invent_chart_slot():
         "paletteFamily": "url(javascript:alert(1))",
     }
     result = PresentationSpecValidatorService.validate(raw, profile=profile)
-    assert result.ok is True
-    assert result.spec is not None
-    assert result.spec.palette_family is None
+    assert result.ok is False
+    assert any(error.startswith("forbidden_style:") for error in result.errors)
+    assert result.unmet_intent == "forbidden_presentation_style"
