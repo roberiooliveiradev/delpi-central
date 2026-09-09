@@ -447,6 +447,96 @@ def test_wrap_payload_for_sql_maps_table_items_to_rows():
     }
 
 
+def test_rebuild_metadata_preserves_presentation_constraints_and_spec():
+    from app.application.use_cases.execute_external_action_use_case import (
+        ExecuteExternalActionUseCase,
+    )
+
+    prior_constraints = {
+        "density": "compact",
+        "columnCount": 3,
+        "preferCanvas": True,
+        "fields": ["branch", "balance"],
+    }
+    prior_spec = {
+        "version": 1,
+        "view": "table",
+        "table": {"density": "compact", "hiddenFields": ["unit"]},
+    }
+    prior_intelligence = {
+        "bindConfidence": 0.81,
+        "specApplied": True,
+        "constraintsPresent": True,
+    }
+
+    operation = {
+        "actionId": "stock-action",
+        "path": "/products/10080001/stock",
+        "parameters": {"productCode": "10080001"},
+        "metadata": {
+            "ok": True,
+            "path": "/products/10080001/stock",
+            "actionId": "stock-action",
+            "presentationConstraints": prior_constraints,
+            "presentationSpec": prior_spec,
+            "presentationIntelligence": prior_intelligence,
+            "presentationIntent": {"view": "table"},
+            "tablePresentation": {
+                "type": "table",
+                "title": "Estoque",
+                "columns": [{"key": "branch", "label": "Filial"}],
+                "rows": [{"branch": "01"}],
+            },
+        },
+    }
+
+    payload = {
+        "data": {
+            "stock": {
+                "items": [{"branch": "01"}],
+                "total": 1,
+                "page": 1,
+                "page_size": 1,
+                "total_pages": 1,
+            }
+        }
+    }
+
+    use_case = ExecuteExternalActionUseCase(
+        repository=None,
+        gateway=None,
+        policy=None,
+        audit_repository=None,
+    )
+
+    class _RefinementUseCase:
+        def build_metadata_for_data(self, *, action_id, data, parameters=None):
+            return use_case._build_presentation_metadata(
+                action={
+                    "path": "/products/10080001/stock",
+                    "actionId": action_id,
+                    "entity": "product_stock",
+                },
+                sanitized_data=data,
+                resolved_path="/products/10080001/stock",
+                request_parameters=dict(parameters or {}),
+            )
+
+    rebuilt = ChatPresentationFormatRefinementService.rebuild_metadata_for_refinement(
+        external_use_case=_RefinementUseCase(),
+        operation=operation,
+        payload=payload,
+        requested_format="chart",
+        user_message="mostre os mesmos dados em gráfico",
+    )
+
+    assert rebuilt is not None
+    assert rebuilt.get("presentationConstraints") == prior_constraints
+    assert rebuilt.get("presentationSpec") == prior_spec
+    assert rebuilt.get("presentationIntelligence") == prior_intelligence
+    assert rebuilt.get("presentationIntent") == {"view": "table"}
+
+
 def test_rebuild_metadata_sql_format_refinement_does_not_crash():
     from app.application.use_cases.execute_external_action_use_case import (
         ExecuteExternalActionUseCase,

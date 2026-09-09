@@ -16,6 +16,16 @@ from app.domain.services.external_actions.external_action_sql_capability_service
 
 
 class ChatPresentationFormatRefinementService:
+    _PRESERVED_SPEC_KEYS: tuple[str, ...] = (
+        "presentationConstraints",
+        "presentationSpec",
+        "presentationIntelligence",
+        "presentationIntent",
+        "presentationDataProfile",
+        "presentationComposerSpec",
+        "resolvedFieldLabels",
+    )
+
     @classmethod
     def looks_like_format_refinement(cls, message: str | None) -> bool:
         return ChatPresentationFormatRefinementIntentService.looks_like_format_refinement(
@@ -372,7 +382,24 @@ class ChatPresentationFormatRefinementService:
         if isinstance(consolidation, dict):
             rebuilt["paginationConsolidation"] = dict(consolidation)
 
+        cls._preserve_spec_constraints(rebuilt, prior)
+
         return rebuilt
+
+    @classmethod
+    def _preserve_spec_constraints(
+        cls,
+        rebuilt: dict[str, Any],
+        prior: dict[str, Any],
+    ) -> None:
+        if not isinstance(rebuilt, dict) or not isinstance(prior, dict):
+            return
+
+        for key in cls._PRESERVED_SPEC_KEYS:
+            value = prior.get(key)
+            if value in (None, "", [], {}):
+                continue
+            rebuilt[key] = value
 
     @classmethod
     def _iter_table_candidates(cls, meta: dict[str, Any]):
