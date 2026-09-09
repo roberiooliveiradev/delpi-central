@@ -1,0 +1,40 @@
+{
+  "sessionId": "33b3bd47-8092-477a-87b2-aa3244504901",
+  "fixtureId": "e8-session-c-multi-provider",
+  "fixturePath": "tests/fixtures/chat_conversation_context_quality_session_c.json",
+  "requiredDimensions": [
+    "R1",
+    "R2",
+    "R10"
+  ],
+  "turns": [
+    {
+      "id": "T1",
+      "wallMs": 23057,
+      "paths": [],
+      "actionIds": [],
+      "presentation": "",
+      "prosePreview": "Não ficou claro o que você precisa. Pode reformular em uma frase o que deseja consultar ou fazer?",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T2",
+      "wallMs": 32774,
+      "paths": [],
+      "actionIds": [],
+      "presentation": "",
+      "prosePreview": "Não há nenhuma estrutura de produto carregada nesta conversa — não localizei consultas anteriores nesta sessão para poder repetir ou exportar.\n\nAlém disso, um ponto importante: **não consigo gerar ou exportar arquivos Excel** diretamente por aqui. O que posso fazer é apresentar o",
+      "plannerRoundCount": null
+    }
+  ],
+  "dimensions": {
+    "R1": "INCONCLUSIVE",
+    "R2": "FAIL",
+    "R10": "INCONCLUSIVE"
+  },
+  "caseStatus": "FAIL",
+  "failures": [
+    "T1: family nebula_export not evidenced",
+    "T2: family nebula_export not evidenced"
+  ]
+}

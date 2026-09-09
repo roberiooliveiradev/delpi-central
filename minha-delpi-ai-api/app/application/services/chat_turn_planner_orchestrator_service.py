@@ -9,7 +9,12 @@ from app.application.services.retrieve_action_candidates_service import (
     RetrieveActionCandidatesService,
 )
 from app.domain.models.action_descriptor import ActionCandidate
-from app.domain.models.action_plan import ActionPlan, ActionPlanGoal, ActionPlanStep
+from app.domain.models.action_plan import (
+    ActionPlan,
+    ActionPlanGoal,
+    ActionPlanSearchRequest,
+    ActionPlanStep,
+)
 from app.domain.services.chat_agentic_action_schema_service import (
     ChatAgenticActionSchemaService,
 )
@@ -18,8 +23,8 @@ from app.domain.services.chat_goal_coverage_service import ChatGoalCoverageServi
 from app.domain.services.chat_planner_conversation_context_service import (
     ChatPlannerConversationContextService,
 )
-from app.domain.services.chat_presentation_user_format_preference_service import (
-    ChatPresentationUserFormatPreferenceService,
+from app.domain.services.chat_presentation_preference_contract_service import (
+    ChatPresentationPreferenceContractService,
 )
 from app.domain.services.openapi_tool_routing_content_service import (
     OpenApiToolRoutingContentService,
@@ -140,10 +145,15 @@ class ChatTurnPlannerOrchestratorService:
                 "planVersion": plan.plan_version or "2",
             }
         )
+        plan = self._ensure_pending_goal_searches(plan, message)
 
         if (
-            plan.wants_search_round
-            and round_count < max_rounds
+            round_count < max_rounds
+            and (
+                plan.wants_search_round
+                or plan.search_action_requests
+                or plan.search_knowledge_requests
+            )
             and (plan.search_action_requests or plan.search_knowledge_requests)
         ):
             extra_queries = [
@@ -217,6 +227,15 @@ class ChatTurnPlannerOrchestratorService:
             plan = self._union_plans(plan, filled)
 
         plan = self._with_subtask_goals(plan, subtasks)
+        plan = self._fill_pending_goal_steps(
+            plan,
+            candidates,
+            previous_messages=previous_messages,
+            execution_context=execution_context,
+            conversation_context=conversation_context,
+            candidate_set_id=candidate_set_id,
+            remaining_searches=max(0, max_action_searches - action_search_count),
+        )
         plan = self._with_requested_presentation(plan, message)
         coverage = ChatGoalCoverageService.evaluate(plan)
         actions_by_id: dict[str, dict[str, Any]] = {}
@@ -428,11 +447,175 @@ class ChatTurnPlannerOrchestratorService:
         return ActionPlan.from_dict(payload)
 
     @classmethod
+    def _ensure_pending_goal_searches(cls, plan: ActionPlan, message: str) -> ActionPlan:
+        """Synthesize SEARCH queries for uncovered goals without domain taxonomy."""
+        if not plan.goals or len(plan.goals) < 2:
+            return plan
+        coverage = ChatGoalCoverageService.evaluate(plan)
+        pending_ids = set(coverage.pending_goal_ids)
+        if not pending_ids and len(plan.steps) >= len(plan.goals):
+            return plan
+        if not pending_ids:
+            covered = {
+                goal_id
+                for step in plan.steps
+                for goal_id in (step.goal_ids or ())
+            }
+            pending_ids = {
+                goal.goal_id for goal in plan.goals if goal.goal_id not in covered
+            }
+        if not pending_ids:
+            return plan
+
+        existing_queries = {
+            item.query.strip().lower() for item in plan.search_action_requests if item.query
+        }
+        existing_goal_ids = {
+            item.goal_id for item in plan.search_action_requests if item.goal_id
+        }
+        synthesized: list[ActionPlanSearchRequest] = list(plan.search_action_requests)
+        for goal in plan.goals:
+            if goal.goal_id not in pending_ids:
+                continue
+            if goal.goal_id in existing_goal_ids:
+                continue
+            query = str(goal.intent or "").strip() or message.strip()
+            if not query or query.lower() in existing_queries:
+                continue
+            synthesized.append(
+                ActionPlanSearchRequest(
+                    goal_id=goal.goal_id,
+                    query=query,
+                    reason="compound_goal",
+                )
+            )
+            existing_queries.add(query.lower())
+            existing_goal_ids.add(goal.goal_id)
+        if synthesized == list(plan.search_action_requests):
+            return plan
+        payload = plan.as_dict()
+        payload["searchRequests"] = {
+            "actions": [item.as_dict() for item in synthesized],
+            "knowledge": [item.as_dict() for item in plan.search_knowledge_requests],
+        }
+        if not plan.mode or plan.mode == "EXECUTE":
+            payload["mode"] = "SEARCH_ACTIONS" if not plan.steps else "SEARCH_MIXED"
+        metadata = dict(plan.metadata or {})
+        metadata["pendingGoalSearchSynthesized"] = [
+            item.goal_id for item in synthesized if item.goal_id in pending_ids
+        ]
+        payload["metadata"] = metadata
+        return ActionPlan.from_dict(payload)
+
+    def _fill_pending_goal_steps(
+        self,
+        plan: ActionPlan,
+        candidates: list[ActionCandidate],
+        *,
+        previous_messages: list | None,
+        execution_context: dict[str, Any] | None,
+        conversation_context: str,
+        candidate_set_id: str,
+        remaining_searches: int,
+    ) -> ActionPlan:
+        """Deterministic fill for pending goals after SEARCH merge — no DELPI families."""
+        if not plan.goals or len(plan.goals) < 2:
+            return plan
+        if getattr(self.planner, "llm_planner", None) is None and plan.steps:
+            return plan
+        coverage = ChatGoalCoverageService.evaluate(plan)
+        pending = list(coverage.pending_goal_ids)
+        if not pending and len(plan.steps) >= len(plan.goals):
+            return plan
+        if not pending:
+            covered = {
+                goal_id
+                for step in plan.steps
+                for goal_id in (step.goal_ids or ())
+            }
+            pending = [
+                goal.goal_id for goal in plan.goals if goal.goal_id not in covered
+            ]
+        if not pending:
+            return plan
+
+        from app.application.services.openapi_first_selection_bridge_service import (
+            OpenApiFirstSelectionBridgeService,
+        )
+
+        goals_by_id = {goal.goal_id: goal for goal in plan.goals}
+        seen = {step.action_id for step in plan.steps if step.action_id}
+        rolling = dict(execution_context or {})
+        allowed = [item.action_id for item in candidates if item.action_id]
+        catalog = [item.raw_action for item in candidates]
+        extra_steps: list[ActionPlanStep] = []
+        searches_used = 0
+        for goal_id in pending:
+            goal = goals_by_id.get(goal_id)
+            if goal is None:
+                continue
+            text = str(goal.intent or "").strip()
+            if not text:
+                continue
+            fragment_candidates = list(candidates)
+            if searches_used < remaining_searches:
+                retrieved = self.retriever.retrieve(
+                    text,
+                    allowed_action_ids=allowed,
+                    catalog_actions=catalog,
+                )
+                if retrieved:
+                    fragment_candidates = retrieved
+                    searches_used += 1
+            bind_context = dict(rolling)
+            bind_context.pop("actionId", None)
+            fragment = self.planner.plan(
+                text,
+                fragment_candidates,
+                previous_messages=previous_messages,
+                execution_context=bind_context,
+                max_steps=1,
+                conversation_context=conversation_context,
+                candidate_set_id=candidate_set_id,
+            )
+            for step in fragment.steps:
+                if not step.action_id or step.action_id in seen:
+                    continue
+                seen.add(step.action_id)
+                payload = step.as_dict()
+                payload["goalIds"] = [goal_id]
+                payload["stepId"] = payload.get("stepId") or f"s{len(plan.steps) + len(extra_steps) + 1}"
+                bound = ActionPlanStep.from_dict(payload)
+                extra_steps.append(bound)
+                rolling = OpenApiFirstSelectionBridgeService.merge_execution_context(
+                    rolling,
+                    provider_key=None,
+                    action_id=step.action_id,
+                    arguments=step.arguments,
+                )
+                break
+        if not extra_steps:
+            return plan
+        return self._union_plans(
+            plan,
+            ActionPlan.from_dict(
+                {
+                    "steps": [step.as_dict() for step in extra_steps],
+                    "goals": [goal.as_dict() for goal in plan.goals],
+                    "mode": "EXECUTE",
+                    "selectionMode": plan.selection_mode or "openapi_first",
+                    "planVersion": plan.plan_version or "2",
+                    "candidateSetId": candidate_set_id,
+                    "metadata": {"pendingGoalFill": [step.action_id for step in extra_steps]},
+                }
+            ),
+        )
+
+    @classmethod
     def _with_requested_presentation(cls, plan: ActionPlan, message: str) -> ActionPlan:
         if plan.requested_presentation:
             return plan
-        preferred = ChatPresentationUserFormatPreferenceService.normalize_from_message(
-            None,
+        preferred = ChatPresentationPreferenceContractService.normalize_from_message(
             message,
         )
         if not preferred:

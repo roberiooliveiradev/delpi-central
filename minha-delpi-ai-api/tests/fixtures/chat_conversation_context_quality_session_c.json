@@ -2,6 +2,15 @@
   "id": "e8-session-c-multi-provider",
   "sessionProtocol": "chat-ai-flow-families.md#8",
   "requiredDimensions": ["R1", "R2", "R10"],
+  "preconditions": {
+    "ephemeralProvider": "nebula-factory",
+    "fixture": "tests/fixtures/nebula_factory_openapi_actions.json",
+    "metamorphicFixture": "tests/fixtures/nebula_factory_openapi_actions_metamorphic.json",
+    "orionSibling": "tests/fixtures/orion_manufacturing_openapi_actions.json",
+    "loader": "tests/support/openapi_ephemeral_provider_fixtures.py",
+    "localWithoutBinding": "INCONCLUSIVE",
+    "releaseWithoutEvidence": "FAIL"
+  },
   "turns": [
     {
       "id": "T1",

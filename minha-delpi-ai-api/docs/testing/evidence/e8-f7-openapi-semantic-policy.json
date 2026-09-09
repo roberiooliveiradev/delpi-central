@@ -1,0 +1,20 @@
+{
+  "id": "e8-f7-openapi-semantic-policy",
+  "status": "DEFERRED_UNTIL_MISS_CLASS",
+  "policy": {
+    "caseA": "Enrich OpenAPI summary/description/tags/response semantics when contract is incomplete",
+    "caseB": "whenNotToUse only for durable capability negatives, with positive+sibling+negative+metamorphic",
+    "caseC": "Forbidden: endpoint patches to make a single fixture pass"
+  },
+  "decision": {
+    "siClosingRatePatch": "NOT_APPLIED",
+    "pcpWhenNotToUsePatch": "NOT_APPLIED",
+    "reason": "F0 classifies B-T5 as HIPOTESE retrieval_vs_planner_vs_sticky — Case A not confirmed; avoid overfitting"
+  },
+  "requiredEvalBeforeAnyMetadataChange": [
+    "positive specialized capability wins",
+    "sibling generic loses",
+    "unrelated capability unaffected",
+    "metamorphic external rename preserves behavior"
+  ]
+}

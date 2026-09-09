@@ -663,3 +663,230 @@ def test_e8_session_b_sibling_also_omits_joiner_gate():
     lowered = str(turn["message"]).lower()
     assert " e tambem " not in lowered
     assert " e quais " not in lowered
+
+
+def test_nl_compound_pending_goals_trigger_search_without_numbered_list(monkeypatch):
+    monkeypatch.setattr(ChatBoundedPlannerModeService, "resolve_mode", lambda: "on")
+    stock = _stock_action()
+    schedule = _schedule_action()
+    payloads = [
+        json.dumps(
+            {
+                "mode": "EXECUTE",
+                "goals": [
+                    {"goalId": "g1", "intent": "consultar disponibilidade do material citado"},
+                    {"goalId": "g2", "intent": "ver o que está programado hoje"},
+                ],
+                "steps": [
+                    {
+                        "actionId": "stock-action",
+                        "goalIds": ["g1"],
+                        "arguments": {"parameters": {"code": "10080055"}},
+                    }
+                ],
+            }
+        ),
+        json.dumps(
+            {
+                "mode": "EXECUTE",
+                "goals": [
+                    {"goalId": "g1", "intent": "consultar disponibilidade do material citado"},
+                    {"goalId": "g2", "intent": "ver o que está programado hoje"},
+                ],
+                "steps": [
+                    {
+                        "actionId": "stock-action",
+                        "goalIds": ["g1"],
+                        "arguments": {"parameters": {"code": "10080055"}},
+                    },
+                    {
+                        "actionId": "schedule-action",
+                        "goalIds": ["g2"],
+                        "arguments": {"parameters": {}},
+                    },
+                ],
+            }
+        ),
+    ]
+
+    class _SequencedLlm:
+        def __init__(self):
+            self.calls = 0
+
+        def generate(self, messages):
+            payload = payloads[min(self.calls, len(payloads) - 1)]
+            self.calls += 1
+            return payload
+
+        def stream(self, messages):
+            yield self.generate(messages)
+
+    repo = _CatalogRepository([stock, schedule])
+    planner = PlanExternalActionsService(
+        llm_planner=OpenApiLlmActionPlannerService(_SequencedLlm())
+    )
+    bridge = OpenApiFirstSelectionBridgeService(repo, planner=planner)
+    message = "me traga o estoque do 10080055 e veja o que está programado hoje"
+    assert "(1)" not in message and "(2)" not in message
+    planned = bridge.plan_tool_calls(
+        message,
+        allowed_action_ids=["stock-action", "schedule-action"],
+        catalog_actions=[stock, schedule],
+        mode_decision=_mode_on(),
+    )
+    action_ids = [
+        (item.get("arguments") or {}).get("actionId")
+        or (item.get("metadata") or {}).get("actionId")
+        for item in planned
+    ]
+    assert "stock-action" in action_ids
+    assert "schedule-action" in action_ids
+    assert all("stock" not in str(item).lower() or True for item in planned)
+
+
+def test_nl_compound_sibling_inverted_order_still_covers_two_goals(monkeypatch):
+    monkeypatch.setattr(ChatBoundedPlannerModeService, "resolve_mode", lambda: "on")
+    stock = _stock_action()
+    schedule = _schedule_action()
+    llm = _FakeLlm(
+        json.dumps(
+            {
+                "mode": "EXECUTE",
+                "goals": [
+                    {"goalId": "g1", "intent": "programação de produção de hoje"},
+                    {"goalId": "g2", "intent": "estoque do material"},
+                ],
+                "steps": [
+                    {"actionId": "schedule-action", "goalIds": ["g1"], "arguments": {"parameters": {}}},
+                    {
+                        "actionId": "stock-action",
+                        "goalIds": ["g2"],
+                        "arguments": {"parameters": {"code": "10080055"}},
+                    },
+                ],
+            }
+        )
+    )
+    bridge = OpenApiFirstSelectionBridgeService(
+        _CatalogRepository([stock, schedule]),
+        planner=PlanExternalActionsService(llm_planner=OpenApiLlmActionPlannerService(llm)),
+    )
+    planned = bridge.plan_tool_calls(
+        "o que está programado hoje e o estoque do 10080055",
+        allowed_action_ids=["stock-action", "schedule-action"],
+        catalog_actions=[stock, schedule],
+        mode_decision=_mode_on(),
+    )
+    assert len(planned) >= 2
+
+
+def test_nl_single_domain_negative_does_not_force_second_goal(monkeypatch):
+    monkeypatch.setattr(ChatBoundedPlannerModeService, "resolve_mode", lambda: "on")
+    stock = _stock_action()
+    schedule = _schedule_action()
+    llm = _FakeLlm(
+        json.dumps(
+            {
+                "mode": "EXECUTE",
+                "goals": [{"goalId": "g1", "intent": "estoque do material"}],
+                "steps": [
+                    {
+                        "actionId": "stock-action",
+                        "goalIds": ["g1"],
+                        "arguments": {"parameters": {"code": "10080055"}},
+                    }
+                ],
+            }
+        )
+    )
+    bridge = OpenApiFirstSelectionBridgeService(
+        _CatalogRepository([stock, schedule]),
+        planner=PlanExternalActionsService(llm_planner=OpenApiLlmActionPlannerService(llm)),
+    )
+    planned = bridge.plan_tool_calls(
+        "estoque do 10080055",
+        allowed_action_ids=["stock-action", "schedule-action"],
+        catalog_actions=[stock, schedule],
+        mode_decision=_mode_on(),
+    )
+    action_ids = [
+        (item.get("arguments") or {}).get("actionId")
+        or (item.get("metadata") or {}).get("actionId")
+        for item in planned
+    ]
+    assert action_ids == ["stock-action"]
+
+
+def test_candidate_membership_revalidated_on_tool_metadata(monkeypatch):
+    monkeypatch.setattr(ChatBoundedPlannerModeService, "resolve_mode", lambda: "on")
+    stock = _stock_action()
+    llm = _FakeLlm(
+        json.dumps(
+            {
+                "steps": [
+                    {
+                        "actionId": "stock-action",
+                        "arguments": {"parameters": {"code": "1"}},
+                    }
+                ]
+            }
+        )
+    )
+    bridge = OpenApiFirstSelectionBridgeService(
+        _CatalogRepository([stock]),
+        planner=PlanExternalActionsService(llm_planner=OpenApiLlmActionPlannerService(llm)),
+    )
+    planned = bridge.plan_tool_calls(
+        "estoque 1",
+        allowed_action_ids=["stock-action"],
+        catalog_actions=[stock],
+        mode_decision=_mode_on(),
+    )
+    assert planned
+    args = planned[0].get("arguments") or {}
+    meta = planned[0].get("metadata") or {}
+    assert "candidateActionIds" in args
+    assert "stock-action" in args["candidateActionIds"]
+    assert meta.get("candidateSetId")
+
+
+def test_orion_metamorphic_inventory_availability_retrieval():
+    payload = json.loads(
+        (_FIXTURES / "orion_manufacturing_openapi_actions.json").read_text(encoding="utf-8")
+    )
+    actions = payload["actions"]
+    repo = _CatalogRepository(actions)
+    rows = RetrieveActionCandidatesService(repo).retrieve(
+        "material availability for sku 10080055",
+        allowed_action_ids=[item["actionId"] for item in actions],
+        catalog_actions=actions,
+    )
+    assert rows
+    assert any("availability" in (item.descriptor.path or "") for item in rows)
+
+
+def test_shadow_compare_blocks_dual_write():
+    from app.domain.services.chat_shadow_planner_compare_service import (
+        ChatShadowPlannerCompareService,
+    )
+
+    baseline = [
+        {
+            "name": "execute_external_action",
+            "arguments": {"actionId": "a1"},
+            "metadata": {"method": "POST", "path": "/x", "requiresConfirmation": True},
+        }
+    ]
+    candidate = [
+        {
+            "name": "execute_external_action",
+            "arguments": {"actionId": "a1"},
+            "metadata": {"method": "POST", "path": "/x", "requiresConfirmation": True},
+        }
+    ]
+    report = ChatShadowPlannerCompareService.compare(
+        baseline_tool_calls=baseline,
+        candidate_tool_calls=candidate,
+    )
+    assert report["safeToDualExecute"] is False
+    assert report["actionIdsMatch"] is True

@@ -119,10 +119,21 @@ class ChatToolContextExecutionService:
         )
 
         def _prepare_external_arguments(selected: dict) -> dict:
+            from app.domain.services.chat_presentation_preference_contract_service import (
+                ChatPresentationPreferenceContractService,
+            )
+
             arguments = dict(selected.get("arguments") or {})
-            if session_response_format:
-                parameters = dict(arguments.get("parameters") or {})
-                parameters["sessionResponseFormat"] = session_response_format
+            parameters = dict(arguments.get("parameters") or {})
+            meta = selected.get("metadata") if isinstance(selected.get("metadata"), dict) else {}
+            requested = ChatPresentationPreferenceContractService.as_session_response_format(
+                meta.get("requestedPresentation")
+                or parameters.get("requestedPresentation")
+                or parameters.get("sessionResponseFormat")
+            )
+            effective_format = session_response_format or requested
+            if effective_format:
+                parameters["sessionResponseFormat"] = effective_format
                 parameters.setdefault("userMessage", raw_message)
                 arguments["parameters"] = parameters
             return arguments

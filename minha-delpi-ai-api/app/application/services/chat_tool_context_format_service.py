@@ -16,20 +16,29 @@ class ChatToolContextFormatService:
 
     @classmethod
     def session_response_format(cls, workspace_context: dict | None) -> str | None:
+        from app.domain.services.chat_presentation_preference_contract_service import (
+            ChatPresentationPreferenceContractService,
+            SESSION_RESPONSE_FORMAT_TOKENS,
+        )
+
         working = (workspace_context or {}).get("workingMemory") or {}
         behavior = working.get("behaviorInstructions") or {}
-        token = str(behavior.get("responseFormat") or "").strip().lower()
+        token = ChatPresentationPreferenceContractService.normalize(
+            behavior.get("responseFormat")
+        )
 
-        if token in {"table", "text", "tree", "chart", "topics", "canvas", "dashboard"}:
+        if token in SESSION_RESPONSE_FORMAT_TOKENS:
             return token
 
         prefs = working.get("userPreferences") or {}
         pref_behavior = prefs.get("behavior") if isinstance(prefs, dict) else None
 
         if isinstance(pref_behavior, dict):
-            token = str(pref_behavior.get("responseFormat") or "").strip().lower()
+            token = ChatPresentationPreferenceContractService.normalize(
+                pref_behavior.get("responseFormat")
+            )
 
-            if token in {"table", "text", "tree", "chart", "topics", "canvas", "dashboard"}:
+            if token in SESSION_RESPONSE_FORMAT_TOKENS:
                 return token
 
         return None

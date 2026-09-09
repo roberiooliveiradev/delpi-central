@@ -1,0 +1,61 @@
+{
+  "sessionId": "2c8213bb-6dc8-468a-b1eb-4218b1f743d9",
+  "fixtureId": "e8-session-d-no-tool-rag",
+  "fixturePath": "tests/fixtures/chat_conversation_context_quality_session_d.json",
+  "requiredDimensions": [
+    "R1",
+    "R2",
+    "R4",
+    "R6"
+  ],
+  "turns": [
+    {
+      "id": "T1",
+      "wallMs": 12210,
+      "paths": [],
+      "actionIds": [],
+      "presentation": "",
+      "prosePreview": "Oi! Aqui é o **Agente Minha DELPI** — me diga o que precisa.",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T2",
+      "wallMs": 7564,
+      "paths": [],
+      "actionIds": [],
+      "presentation": "",
+      "prosePreview": "Você está usando o agente **Agente Minha DELPI** (Assistente corporativo geral da Minha DELPI, com acesso a conhecimento, APIs autorizadas e ferramentas configuradas.). Abaixo estão as capacidades **deste agente** nesta sessão:\n\nPosso ajudar você nestes formatos:\n\n**Sempre dispon",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T3",
+      "wallMs": 25067,
+      "paths": [],
+      "actionIds": [],
+      "presentation": "",
+      "prosePreview": "A política de segurança das minhas ferramentas segue o princípio de **menor privilégio com confirmação para ações críticas**: só executo o que o backend autorizou para este agente e para o seu perfil, e nunca ajo por conta própria em operações de escrita. Os pilares são:\n\n## 1. A",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T4",
+      "wallMs": 9765,
+      "paths": [
+        "/products/10080055/stock"
+      ],
+      "actionIds": [
+        "api_delpi.products.get_product_stock"
+      ],
+      "presentation": "",
+      "prosePreview": "O produto **10080055**\n\nSaldo disponível total: **0** un. em **2** posição(ões). **2** posição(ões) com disponível zerado.",
+      "plannerRoundCount": null
+    }
+  ],
+  "dimensions": {
+    "R1": "INCONCLUSIVE",
+    "R2": "PASS",
+    "R4": "INCONCLUSIVE",
+    "R6": "INCONCLUSIVE"
+  },
+  "caseStatus": "INCONCLUSIVE",
+  "failures": []
+}

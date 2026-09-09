@@ -108,10 +108,22 @@ class OpenApiFirstSelectionBridgeService:
             )
             if resolved:
                 actions_by_id[step.action_id] = resolved
+        candidate_action_ids = [
+            str(item.get("actionId") or "").strip()
+            for item in (trace.get("candidateSummaries") or [])
+            if isinstance(item, dict) and str(item.get("actionId") or "").strip()
+        ]
+        if not candidate_action_ids:
+            candidate_action_ids = [
+                step.action_id for step in plan.steps if step.action_id
+            ]
         planned = self._plan_to_tool_calls(
             plan,
             message=message,
             actions_by_id=actions_by_id,
+            allowed_action_ids=allowed_action_ids,
+            candidate_action_ids=candidate_action_ids,
+            candidate_set_id=str(trace.get("candidateSetId") or plan.candidate_set_id or ""),
         )
         annotated: list[dict[str, Any]] = []
         for item in planned:
@@ -136,7 +148,12 @@ class OpenApiFirstSelectionBridgeService:
         *,
         message: str,
         actions_by_id: dict[str, dict[str, Any]],
+        allowed_action_ids: list[str] | None = None,
+        candidate_action_ids: list[str] | None = None,
+        candidate_set_id: str = "",
     ) -> list[dict[str, Any]]:
+        from app.domain.services.chat_candidate_set_service import ChatCandidateSetService
+
         if plan.clarify and not plan.steps:
             return [
                 {
@@ -151,8 +168,15 @@ class OpenApiFirstSelectionBridgeService:
                 }
             ]
 
+        membership_ids = candidate_action_ids or list(actions_by_id.keys())
         results: list[dict[str, Any]] = []
         for step in plan.steps:
+            if not ChatCandidateSetService.contains(
+                step.action_id,
+                candidate_action_ids=membership_ids,
+                allowed_action_ids=allowed_action_ids,
+            ):
+                continue
             action = dict(actions_by_id.get(step.action_id) or {"actionId": step.action_id})
             if ChatWriteConfirmationService.action_requires_confirmation(
                 action
@@ -198,9 +222,29 @@ class OpenApiFirstSelectionBridgeService:
                     }
                 ]
 
+            args = dict(normalized or step.arguments or {})
+            parameters = dict(args.get("parameters") or {})
+            if plan.requested_presentation:
+                from app.domain.services.chat_presentation_preference_contract_service import (
+                    ChatPresentationPreferenceContractService,
+                )
+
+                session_token = ChatPresentationPreferenceContractService.as_session_response_format(
+                    plan.requested_presentation
+                )
+                if session_token:
+                    parameters.setdefault("sessionResponseFormat", session_token)
+                    parameters.setdefault(
+                        "requestedPresentation",
+                        plan.requested_presentation,
+                    )
+                args["parameters"] = parameters
+            args["candidateSetId"] = candidate_set_id or plan.candidate_set_id
+            args["candidateActionIds"] = list(membership_ids)
+
             payload = {
                 "name": "execute_external_action",
-                "arguments": normalized or step.arguments,
+                "arguments": args,
                 "reason": step.reason
                 or OpenApiToolRoutingContentService.get(
                     "selectionReasons",
@@ -216,11 +260,13 @@ class OpenApiFirstSelectionBridgeService:
                     "goalIds": list(step.goal_ids),
                     "stepId": step.step_id,
                     "requestedPresentation": plan.requested_presentation,
+                    "candidateSetId": candidate_set_id or plan.candidate_set_id,
+                    "candidateActionIds": list(membership_ids),
                     "executionContext": self.merge_execution_context(
                         None,
                         provider_key=str(action.get("providerKey") or "") or None,
                         action_id=step.action_id,
-                        arguments=normalized or step.arguments,
+                        arguments=args,
                     ),
                     "confidence": step.confidence,
                     "requiresConfirmation": ChatWriteConfirmationService.action_requires_confirmation(

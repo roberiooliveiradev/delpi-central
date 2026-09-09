@@ -1,0 +1,153 @@
+{
+  "sessionId": "5ff188d0-614a-4149-868b-6617c6490200",
+  "fixtureId": "e8-session-a-topic-shift-return",
+  "fixturePath": "tests/fixtures/chat_conversation_context_quality.json",
+  "requiredDimensions": [
+    "R2",
+    "R3",
+    "R6",
+    "R9"
+  ],
+  "turns": [
+    {
+      "id": "T1",
+      "wallMs": 12129,
+      "paths": [
+        "/products/10080055/stock"
+      ],
+      "actionIds": [
+        "api_delpi.products.get_product_stock"
+      ],
+      "presentation": "",
+      "prosePreview": "O produto **10080055**\n\nSaldo disponível total: **26.712** un. em **5** posição(ões). Maior concentração na filial **02** (26.712 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado.\n\n- Empenho elevado",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T2",
+      "wallMs": 35591,
+      "paths": [
+        "/products/10080055/stock"
+      ],
+      "actionIds": [
+        "api_delpi.products.get_product_stock"
+      ],
+      "presentation": "",
+      "prosePreview": "O produto **10080055**\n\nSaldo disponível total: **26.712** un. em **5** posição(ões). Maior concentração na filial **02** (26.712 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado.\n\n- Empenho elevado",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T3",
+      "wallMs": 75973,
+      "paths": [
+        "/products/10080055/stock",
+        "/production/schedule/today",
+        "/commercial/rol/by-product"
+      ],
+      "actionIds": [
+        "api_delpi.products.get_product_stock",
+        "api_delpi.produ_o_operacional.get_production_schedule_today",
+        "api_delpi.comercial.get_commercial_rol_by_product"
+      ],
+      "presentation": "",
+      "prosePreview": "Consultei o **ROL comercial por produto** para o período de **agosto/2026** (recorte da sessão: produto **10080055**). \n\n## Leitura\n\nO **ROL realizado** no período soma **R$ 4.455.783,89**, distribuído em uma lista extensa de itens — o que indica uma carteira de faturamento pulve",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T4",
+      "wallMs": 6644,
+      "paths": [
+        "/commercial/rol/by-product"
+      ],
+      "actionIds": [
+        "api_delpi.comercial.get_commercial_rol_by_product"
+      ],
+      "presentation": "",
+      "prosePreview": "Consulta filtrada pela filial 01. Período mantido: 01-08-2026 a 31-08-2026.\n\nTotal de **ROL realizado**: **723419.01**. **Pontos de atenção**\n\n- A lista é extensa; considere filtros ou paginação para focar o que importa.",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T5",
+      "wallMs": 43142,
+      "paths": [
+        "/production/schedule/today"
+      ],
+      "actionIds": [
+        "api_delpi.produ_o_operacional.get_production_schedule_today"
+      ],
+      "presentation": "",
+      "prosePreview": "**Não há produtos programados para produzir hoje** na filial **01** — a consulta à programação de produção do dia não retornou registros. Isso pode indicar que não há ordens de produção planejadas para a data atual nessa filial, ou que a programação ainda não foi liberada no sist",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T6",
+      "wallMs": 5123,
+      "paths": [
+        "/products/10080055/stock"
+      ],
+      "actionIds": [
+        "api_delpi.products.get_product_stock"
+      ],
+      "presentation": "",
+      "prosePreview": "O produto **10080055**\n\nSaldo disponível total: **26.712** un. em **5** posição(ões). Maior concentração na filial **02** (26.712 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado.\n\n- Empenho elevado",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T7",
+      "wallMs": 4239,
+      "paths": [
+        "/products/10080055/stock"
+      ],
+      "actionIds": [
+        "api_delpi.products.get_product_stock"
+      ],
+      "presentation": "",
+      "prosePreview": "Consulta filtrada pela filial 01.\n\nO produto **10080055**\n\nSaldo disponível total: **0** un. em **2** posição(ões). **2** posição(ões) com disponível zerado.",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T8",
+      "wallMs": 37313,
+      "paths": [
+        "/products/10080055/stock"
+      ],
+      "actionIds": [
+        "api_delpi.products.get_product_stock"
+      ],
+      "presentation": "",
+      "prosePreview": "O produto **10080055**\n\nSaldo disponível total: **0** un. em **2** posição(ões). **2** posição(ões) com disponível zerado.",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T9",
+      "wallMs": 18229,
+      "paths": [],
+      "actionIds": [],
+      "presentation": "",
+      "prosePreview": "Você está usando o agente **Agente Minha DELPI** (Assistente corporativo geral da Minha DELPI, com acesso a conhecimento, APIs autorizadas e ferramentas configuradas.). Abaixo estão as capacidades **deste agente** nesta sessão:\n\nPosso ajudar você nestes formatos:\n\n**Sempre dispon",
+      "plannerRoundCount": null
+    },
+    {
+      "id": "T10",
+      "wallMs": 68560,
+      "paths": [],
+      "actionIds": [],
+      "presentation": "",
+      "prosePreview": "Não tenho os dados de julho/2026 disponíveis nesta conversa para fazer a comparação — e vale um alinhamento importante antes:\n\n**O que temos em mãos (agosto/2026, filial 01):**\n\n- **ROL realizado: R$ 723.419,01** — esse é o faturamento líquido por produto, **não** a taxa de fecha",
+      "plannerRoundCount": null
+    }
+  ],
+  "dimensions": {
+    "R2": "FAIL",
+    "R3": "INCONCLUSIVE",
+    "R6": "INCONCLUSIVE",
+    "R9": "FAIL"
+  },
+  "caseStatus": "FAIL",
+  "failures": [
+    "T2: family ['stock', 'schedule'] not evidenced",
+    "T3: presentation '' != 'kpi'",
+    "T4: family closing_rate not evidenced",
+    "T8: presentation '' != 'kpi'",
+    "T10: family closing_rate not evidenced"
+  ]
+}

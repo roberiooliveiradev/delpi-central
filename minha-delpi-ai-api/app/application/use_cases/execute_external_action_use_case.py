@@ -53,6 +53,20 @@ class ExecuteExternalActionUseCase:
         action_id: str,
         arguments: dict,
     ) -> dict:
+        from app.domain.services.chat_candidate_set_service import ChatCandidateSetService
+
+        arguments = dict(arguments or {})
+        candidate_action_ids = arguments.pop("candidateActionIds", None)
+        arguments.pop("candidateSetId", None)
+        if candidate_action_ids is not None:
+            if not ChatCandidateSetService.contains(
+                action_id,
+                candidate_action_ids=candidate_action_ids
+                if isinstance(candidate_action_ids, (list, tuple, set))
+                else [],
+            ):
+                raise ValueError("Action not in current candidate set")
+
         action_bundle = self.repository.get_action_for_execution(action_id)
 
         if not action_bundle:

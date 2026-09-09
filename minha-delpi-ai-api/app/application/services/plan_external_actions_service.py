@@ -155,6 +155,11 @@ class PlanExternalActionsService:
                 ctx_params = dict(raw_params)
 
         enriched: list[ActionPlanStep] = []
+        provenance_rows: list[dict[str, Any]] = []
+        from app.domain.services.chat_argument_provenance_service import (
+            ChatArgumentProvenanceService,
+        )
+
         for step in plan.steps:
             candidate = by_id.get(step.action_id)
             if candidate is None:
@@ -205,6 +210,17 @@ class PlanExternalActionsService:
                     },
                 )
 
+            # Provenance: current-turn / context values win; coerced dates = extractor.
+            source = "current_turn" if existing_params else "planner"
+            if ctx_params and not existing_params:
+                source = "active_topic"
+            provenance_rows = ChatArgumentProvenanceService.annotate(
+                parameters,
+                source=source,
+                evidence_ref=step.step_id or step.action_id,
+                previous=provenance_rows,
+            )
+
             arguments: dict[str, Any] = {
                 **existing_args,
                 "actionId": step.action_id,
@@ -221,14 +237,24 @@ class PlanExternalActionsService:
                     arguments=arguments,
                     reason=step.reason,
                     confidence=step.confidence,
+                    step_id=step.step_id,
+                    goal_ids=step.goal_ids,
+                    depends_on=step.depends_on,
                 )
             )
 
-        return ActionPlan(
-            steps=tuple(enriched),
-            clarify=plan.clarify,
-            selection_mode=plan.selection_mode or "openapi_first",
-            metadata=dict(plan.metadata or {}),
+        metadata = ChatArgumentProvenanceService.merge_into_metadata(
+            plan.metadata,
+            provenance_rows,
+        )
+        return ActionPlan.from_dict(
+            {
+                **plan.as_dict(),
+                "steps": [step.as_dict() for step in enriched],
+                "clarify": plan.clarify,
+                "selectionMode": plan.selection_mode or "openapi_first",
+                "metadata": metadata,
+            }
         )
 
     @classmethod
@@ -549,7 +575,8 @@ class PlanExternalActionsService:
         # Prefer more specific operations when the user mentions distinctive segments
         # (excel/history/export/…) that appear in path/operationId but not in siblings.
         specificity = segment_hits * 0.85 + len(path_segments) * 0.02
-        continuity = 1.25 if preferred_action_id and candidate.action_id == preferred_action_id else 0.0
+        # lastSuccessfulAction is evidence only — tiny continuity, never authority.
+        continuity = 0.15 if preferred_action_id and candidate.action_id == preferred_action_id else 0.0
         negative = OpenApiWhenNotToUseGuidanceService.penalty(normalized, action)
         positive = OpenApiWhenNotToUseGuidanceService.bonus(normalized, action)
         return float(candidate.score or 0.0) + hits * 0.35 + specificity + continuity + positive - negative

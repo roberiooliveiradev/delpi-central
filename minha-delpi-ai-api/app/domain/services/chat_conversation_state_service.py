@@ -112,6 +112,9 @@ class ChatConversationStateService:
             state = cls._pause_current_task(state)
             state["activeTopic"] = cls._infer_topic_from_message(normalized)
             state["activeTask"] = cls._detect_task(normalized)
+            # Topic shift: previous context stays in ledger (not destroyed) but is not active.
+            state["preferencesTopicChanged"] = True
+            state["stickyContextActive"] = False
             result["preferencesTopicChanged"] = True
 
         elif cls._resume_re().search(normalized):
@@ -119,6 +122,8 @@ class ChatConversationStateService:
 
             if resumed:
                 state = resumed
+                state["stickyContextActive"] = True
+                result["preferencesTopicChanged"] = False
 
         elif cls._continuation_re().match(normalized):
             result["continuationRequested"] = True
@@ -155,6 +160,7 @@ class ChatConversationStateService:
         *,
         message: str | None,
         answer: str | None = None,
+        successful_action_ids: list[str] | None = None,
     ) -> dict:
         result = dict(snapshot)
         state = dict(result.get("conversationState") or {})
@@ -175,7 +181,29 @@ class ChatConversationStateService:
 
             state["activeTask"] = task
 
-        result["conversationState"] = cls.ensure_topic_ledger(state)
+        state = cls.ensure_topic_ledger(state)
+        action_ids = [
+            str(item).strip()
+            for item in (successful_action_ids or [])
+            if str(item).strip()
+        ]
+        if action_ids:
+            active_id = str(state.get("activeTopicId") or "").strip()
+            topics = []
+            for topic in state.get("topics") or []:
+                if not isinstance(topic, dict):
+                    continue
+                row = dict(topic)
+                if str(row.get("topicId") or "") == active_id:
+                    merged = list(row.get("lastSuccessfulActionIds") or [])
+                    for action_id in action_ids:
+                        if action_id not in merged:
+                            merged.append(action_id)
+                    row["lastSuccessfulActionIds"] = merged[-8:]
+                topics.append(row)
+            state["topics"] = topics
+
+        result["conversationState"] = state
         return result
 
     @classmethod
@@ -285,6 +313,10 @@ class ChatConversationStateService:
         elif normalized_topics:
             payload["activeTopicId"] = normalized_topics[-1]["topicId"]
         payload["topics"] = normalized_topics[-8:]
+        if "preferencesTopicChanged" in (state or {}):
+            payload["preferencesTopicChanged"] = bool(state.get("preferencesTopicChanged"))
+        if "stickyContextActive" in (state or {}):
+            payload["stickyContextActive"] = bool(state.get("stickyContextActive"))
         return payload
 
     @classmethod

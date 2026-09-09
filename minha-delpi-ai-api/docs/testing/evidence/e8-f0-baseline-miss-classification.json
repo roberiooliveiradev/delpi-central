@@ -1,0 +1,83 @@
+{
+  "id": "e8-f0-baseline-miss-classification",
+  "frozenAt": "2026-09-09",
+  "sourceEvidence": [
+    "docs/testing/evidence/chat-conversation-context-quality-live.json",
+    "docs/testing/evidence/chat-conversation-context-quality-session-b-live.json",
+    "docs/testing/evidence/chat-conversation-context-quality-session-c-live.json",
+    "docs/testing/evidence/chat-conversation-context-quality-session-d-live.json",
+    "docs/testing/evidence/chat-conversation-context-quality-session-e-live.json"
+  ],
+  "caseStatusesAtFreeze": {
+    "A": "FAIL",
+    "B": "FAIL",
+    "C": "FAIL",
+    "D": "INCONCLUSIVE",
+    "E": "INCONCLUSIVE"
+  },
+  "missClassification": [
+    {
+      "id": "A-T2",
+      "symptom": "compound stock+schedule → only /stock",
+      "hypothesisClass": "planner_or_goal_discovery",
+      "notYet": "retrieval_miss_until_adminDebug_candidates_checked",
+      "linkedPhase": "F1"
+    },
+    {
+      "id": "A-T3",
+      "symptom": "ROL request sticky stock+schedule+by-product; presentation empty",
+      "hypothesisClass": "sticky_context_and_presentation_wiring",
+      "linkedPhase": ["F2", "F6"]
+    },
+    {
+      "id": "A-T4-T10",
+      "symptom": "closing rate → by-product or zero tools",
+      "hypothesisClass": "sticky_or_retrieval_or_planner",
+      "linkedPhase": ["F0-adminDebug", "F2", "F3"]
+    },
+    {
+      "id": "A-T8",
+      "symptom": "explicit KPI → presentation ''",
+      "hypothesisClass": "presentation_preference_contract",
+      "linkedPhase": "F6"
+    },
+    {
+      "id": "B-T2",
+      "symptom": "reformulated compound incomplete",
+      "hypothesisClass": "goal_discovery_nl",
+      "linkedPhase": "F1"
+    },
+    {
+      "id": "B-T5",
+      "symptom": "SI closing-rate wins",
+      "hypothesisClass": "HIPOTESE_A_VALIDAR_retrieval_vs_planner_vs_sticky",
+      "linkedPhase": ["F0-adminDebug", "F2", "F7-only-if-case-A"]
+    },
+    {
+      "id": "C",
+      "symptom": "Nebula provider not bound / expectProvider never graded",
+      "hypothesisClass": "harness_and_external_fixture",
+      "linkedPhase": "F8"
+    },
+    {
+      "id": "D-E",
+      "symptom": "empty-token families → silent R2 PASS; safety graders missing",
+      "hypothesisClass": "harness_grader_gap",
+      "linkedPhase": "F8"
+    }
+  ],
+  "invariants": {
+    "neverPassSilentEmptyTokens": true,
+    "neverReleasePassWithoutExternalMetamorphic": true,
+    "noDomainFamilyRouter": true,
+    "lastActionIsEvidenceOnly": true
+  },
+  "baselineConfig": {
+    "boundedLoop": {
+      "maxPlannerRoundsPerTurn": 2,
+      "maxActionSearchesPerTurn": 2,
+      "maxKnowledgeSearchesPerTurn": 2
+    },
+    "note": "Do not change caps until F0 latency/recall tradeoff is measured on candidate"
+  }
+}

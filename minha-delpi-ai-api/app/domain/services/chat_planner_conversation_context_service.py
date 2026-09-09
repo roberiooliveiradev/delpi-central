@@ -39,12 +39,19 @@ class ChatPlannerConversationContextService:
         topics = list(state.get("topics") or [])[-cls._MAX_TOPICS :]
         active_id = str(state.get("activeTopicId") or state.get("activeTopic") or "").strip()
         focus = {}
+        sticky_active = state.get("stickyContextActive")
+        topic_shifted = bool(state.get("preferencesTopicChanged"))
         if isinstance(workspace_context, dict):
             working = workspace_context.get("workingMemory")
             if isinstance(working, dict):
                 raw_focus = working.get("operationalFocus")
-                if isinstance(raw_focus, dict):
-                    focus = dict(raw_focus)
+                # After topic shift, focus is not argument authority (ledger holds inactive topics).
+                if isinstance(raw_focus, dict) and sticky_active is not False and not topic_shifted:
+                    focus = {
+                        key: raw_focus.get(key)
+                        for key in ("entities", "timeRange", "label")
+                        if raw_focus.get(key) not in (None, "", {}, [])
+                    }
 
         last_action = cls._last_action(previous_messages)
         recent = cls._recent_user_messages(previous_messages)
@@ -61,9 +68,21 @@ class ChatPlannerConversationContextService:
             "lastSuccessfulAction": last_action,
             "resolvedParameters": ctx_params,
             "recentUserTurns": recent,
+            "contextPrecedence": [
+                "current_turn_explicit",
+                "referenced_topic",
+                "active_topic",
+                "planner_grounded_proposal",
+                "openapi_default",
+                "clarify",
+            ],
             "rule": (
-                "Current-turn explicit values win. Do not reuse product/branch/timeRange "
-                "from a non-referenced topic after a topic shift. Resume only via topicId listed above."
+                "Precedence: (1) explicit values in the current turn win; "
+                "(2) explicit reference to a prior topic; (3) resumed topic state; "
+                "(4) active topic entities/args; (5) planner grounded proposal; "
+                "(6) OpenAPI default; (7) missing required → clarify. "
+                "lastSuccessfulAction is evidence only (actionId/path), never argument authority. "
+                "Do not reuse product/branch/timeRange from a non-referenced inactive topic."
             ),
         }
         return json.dumps(payload, ensure_ascii=False, default=str)
@@ -86,12 +105,14 @@ class ChatPlannerConversationContextService:
                 meta = call.get("metadata") if isinstance(call.get("metadata"), dict) else {}
                 if meta.get("ok") is False:
                     continue
+                action_id = str(arguments.get("actionId") or meta.get("actionId") or "").strip()
+                path = str(meta.get("path") or "").strip()
+                if not action_id and not path:
+                    continue
                 return {
-                    "actionId": str(arguments.get("actionId") or meta.get("actionId") or ""),
-                    "path": str(meta.get("path") or ""),
-                    "parameters": arguments.get("parameters")
-                    if isinstance(arguments.get("parameters"), dict)
-                    else {},
+                    "role": "evidence",
+                    "actionId": action_id,
+                    "path": path,
                 }
         return None
 

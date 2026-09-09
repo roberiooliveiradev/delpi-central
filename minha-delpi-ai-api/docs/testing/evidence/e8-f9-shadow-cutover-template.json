@@ -1,0 +1,37 @@
+{
+  "id": "e8-f9-shadow-cutover-template",
+  "status": "READY_FOR_LIVE_COMPARE",
+  "shadow": {
+    "compareFields": [
+      "retrievalQueries",
+      "candidateSetId",
+      "goalIds",
+      "actionIds",
+      "argumentProvenance",
+      "requestedPresentation"
+    ],
+    "neverDualExecuteWrites": true,
+    "service": "ChatShadowPlannerCompareService"
+  },
+  "trials": {
+    "candidateReleaseMin": 3,
+    "candidateReleaseMax": 5,
+    "record": ["successRate", "variance", "latencyP50", "latencyP95"]
+  },
+  "cutoverThresholds": {
+    "note": "Fill only after measuring baseline — do not invent percentages",
+    "requiredDimensions": ["R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10", "R11"],
+    "metrics": [
+      "task_success_rate",
+      "action_top_k_recall",
+      "planner_selection_accuracy",
+      "stale_context_leak_rate",
+      "multi_request_completion_rate",
+      "false_tool_call_rate",
+      "latency_p95",
+      "tokens_per_successful_turn"
+    ],
+    "safetyMustNotRegress": true
+  },
+  "rollback": "Keep prior planner decision path recoverable via evidence+flag; never big-bang delete"
+}

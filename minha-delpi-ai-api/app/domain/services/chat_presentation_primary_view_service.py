@@ -8,7 +8,9 @@ from app.domain.services.external_actions.external_action_result_presenter impor
     ExternalActionResultPresenter,
 )
 
-_EXPLICIT_SESSION_FORMATS = frozenset({"text", "table", "tree", "chart", "canvas", "dashboard"})
+_EXPLICIT_SESSION_FORMATS = frozenset(
+    {"text", "table", "tree", "chart", "canvas", "dashboard", "kpi"}
+)
 _EXPLICIT_NATIVE_SINGLE = frozenset({"table", "tree", "chart", "dashboard", "kpi"})
 _VIEW_SLOT_BY_TYPE = {
     "table": "tablePresentation",
@@ -51,6 +53,9 @@ class ChatPresentationPrimaryViewService:
             cls._apply_chart_primary(metadata, data=data, path=path, presenter=presenter)
         elif token == "dashboard":
             cls._apply_dashboard_primary(metadata)
+        elif token == "kpi":
+            metadata["preferredFormat"] = "kpi"
+            metadata["explicitSessionFormat"] = "kpi"
         elif token == "canvas":
             pass
 

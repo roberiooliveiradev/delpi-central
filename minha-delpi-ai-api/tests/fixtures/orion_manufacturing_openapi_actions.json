@@ -1,0 +1,29 @@
+{
+  "providerKey": "orion-manufacturing",
+  "actions": [
+    {
+      "actionId": "orion.get_material_availability",
+      "method": "GET",
+      "path": "/materials/{sku}/availability",
+      "operationId": "getMaterialAvailability",
+      "summary": "Material availability by SKU",
+      "description": "Return inventory availability for a manufacturing material SKU",
+      "enabled": true,
+      "parametersSchema": [
+        {"name": "sku", "in": "path", "required": true, "schema": {"type": "string"}}
+      ]
+    },
+    {
+      "actionId": "orion.get_inventory_item",
+      "method": "GET",
+      "path": "/inventory/items/{sku}",
+      "operationId": "getInventoryItem",
+      "summary": "Inventory item by SKU",
+      "description": "Return inventory item details for a SKU",
+      "enabled": true,
+      "parametersSchema": [
+        {"name": "sku", "in": "path", "required": true, "schema": {"type": "string"}}
+      ]
+    }
+  ]
+}
