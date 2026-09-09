@@ -14,6 +14,8 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from calendar import monthrange
+from datetime import datetime
 from typing import Any
 
 _BASE = os.environ.get("SMOKE_BASE_URL", "http://localhost").strip() or "http://localhost"
@@ -41,11 +43,45 @@ _DEPT_MARKERS = (
 )
 
 
+_MONTHS_PT = {
+    "janeiro": 1,
+    "fevereiro": 2,
+    "marco": 3,
+    "março": 3,
+    "abril": 4,
+    "maio": 5,
+    "junho": 6,
+    "julho": 7,
+    "agosto": 8,
+    "setembro": 9,
+    "outubro": 10,
+    "novembro": 11,
+    "dezembro": 12,
+}
+
+
+def _period_iso_bounds(period: str) -> tuple[str, str] | None:
+    parts = str(period or "").strip().lower().split()
+    if len(parts) < 2:
+        return None
+    month = _MONTHS_PT.get(parts[0])
+    try:
+        year = int(parts[1])
+    except ValueError:
+        return None
+    if not month:
+        return None
+    last = monthrange(year, month)[1]
+    return f"{year:04d}-{month:02d}-01", f"{year:04d}-{month:02d}-{last:02d}"
+
+
 def _cases() -> list[dict[str, Any]]:
     rol_filial = (
         f"Qual o ROL da filial {_BRANCH} em {_PERIOD}? "
         f"Quero o consolidado financeiro da filial."
     )
+    iso_bounds = _period_iso_bounds(_PERIOD)
+    iso_start, iso_end = iso_bounds if iso_bounds else ("", "")
     return [
         {
             "id": "I1-financial-rol",
@@ -92,6 +128,8 @@ def _cases() -> list[dict[str, Any]]:
             "require_any_path": ["/commercial/closing-rate"],
             "forbid_any_path": list(_DEPT_MARKERS),
             "expect_prose_min": 30,
+            "require_iso_start": iso_start,
+            "require_iso_end": iso_end,
             "negative": False,
         },
         {
@@ -117,6 +155,8 @@ def _cases() -> list[dict[str, Any]]:
             ],
             "forbid_any_path": list(_DEPT_MARKERS),
             "expect_prose_min": 30,
+            "require_iso_start": iso_start,
+            "require_iso_end": iso_end,
             "negative": True,
         },
     ]
@@ -199,6 +239,36 @@ def _paths_from_payload(payload: dict) -> list[str]:
     return out
 
 
+def _dates_from_payload(payload: dict) -> list[dict[str, str]]:
+    out: list[dict[str, str]] = []
+    msg = payload
+    if isinstance(payload.get("message"), dict):
+        msg = payload["message"]
+    tool_calls = msg.get("toolCalls") or payload.get("toolCalls") or []
+    meta = msg.get("metadata") if isinstance(msg.get("metadata"), dict) else {}
+    if not tool_calls and isinstance(meta.get("toolCalls"), list):
+        tool_calls = meta["toolCalls"]
+    for tc in tool_calls:
+        if not isinstance(tc, dict):
+            continue
+        args = tc.get("arguments") if isinstance(tc.get("arguments"), dict) else {}
+        params = args.get("parameters") if isinstance(args.get("parameters"), dict) else {}
+        m = tc.get("metadata") if isinstance(tc.get("metadata"), dict) else {}
+        nested = m.get("parameters") if isinstance(m.get("parameters"), dict) else {}
+        start = str(
+            params.get("start_date")
+            or nested.get("start_date")
+            or m.get("start_date")
+            or ""
+        ).strip()
+        end = str(
+            params.get("end_date") or nested.get("end_date") or m.get("end_date") or ""
+        ).strip()
+        if start or end:
+            out.append({"start_date": start, "end_date": end})
+    return out
+
+
 def _content(payload: dict) -> str:
     msg = payload
     if isinstance(payload.get("message"), dict):
@@ -210,7 +280,12 @@ def _content(payload: dict) -> str:
     return ""
 
 
-def _eval_case(case: dict[str, Any], paths: list[str], content: str) -> list[str]:
+def _eval_case(
+    case: dict[str, Any],
+    paths: list[str],
+    content: str,
+    dates: list[dict[str, str]] | None = None,
+) -> list[str]:
     failures: list[str] = []
     joined = " ".join(paths).lower()
     require = case.get("require_any_path") or []
@@ -246,6 +321,28 @@ def _eval_case(case: dict[str, Any], paths: list[str], content: str) -> list[str
     min_chars = int(case.get("expect_prose_min") or 0)
     if min_chars and len(content.strip()) < min_chars:
         failures.append(f"L2/L4: prosa curta ({len(content.strip())} < {min_chars})")
+
+    want_start = str(case.get("require_iso_start") or "").strip()
+    want_end = str(case.get("require_iso_end") or "").strip()
+    if want_start or want_end:
+        found_starts = {str(item.get("start_date") or "").strip() for item in (dates or [])}
+        found_ends = {str(item.get("end_date") or "").strip() for item in (dates or [])}
+
+        def _dd_mm(iso: str) -> str:
+            try:
+                parsed = datetime.strptime(iso, "%Y-%m-%d")
+            except ValueError:
+                return ""
+            return parsed.strftime("%d-%m-%Y")
+
+        if want_start and want_start not in found_starts and _dd_mm(want_start) not in found_starts:
+            failures.append(
+                f"R3: start_date {want_start} ausente; got={sorted(found_starts)}"
+            )
+        if want_end and want_end not in found_ends and _dd_mm(want_end) not in found_ends:
+            failures.append(
+                f"R3: end_date {want_end} ausente; got={sorted(found_ends)}"
+            )
 
     return failures
 
@@ -290,8 +387,9 @@ def main() -> int:
             )
             wall = int((time.time() - t0) * 1000)
             paths = _paths_from_payload(payload if isinstance(payload, dict) else {})
+            dates = _dates_from_payload(payload if isinstance(payload, dict) else {})
             content = _content(payload if isinstance(payload, dict) else {})
-            errors = _eval_case(case, paths, content)
+            errors = _eval_case(case, paths, content, dates)
             row = {
                 "id": case["id"],
                 "sessionId": session_id,
@@ -299,6 +397,7 @@ def main() -> int:
                 "productKind": "none",
                 "wallMs": wall,
                 "paths": paths,
+                "dates": dates,
                 "proseChars": len(content.strip()),
                 "prosePreview": content.strip()[:280],
                 "errors": errors,

@@ -11,8 +11,10 @@ from app.application.services.openapi_first_selection_bridge_service import (
 from app.application.services.plan_external_actions_service import (
     PlanExternalActionsService,
 )
-from app.domain.services.openapi_planner_mode_service import OpenApiPlannerModeDecision
-from app.infrastructure.config.settings import Settings
+from app.domain.services.openapi_planner_mode_service import (
+    OpenApiPlannerModeDecision,
+    OpenApiPlannerModeService,
+)
 
 
 class _CatalogRepository:
@@ -276,13 +278,13 @@ def test_raw_material_price_beats_pricing():
     assert _first_action_id(planned) == "raw-material-price-intelligence"
 
 
-def test_compound_decomposes_into_multiple_subtasks():
+def test_joiners_are_not_a_decomposition_gate():
     message = (
         "Veja a última compra do 10080001, compare com o preço atual, "
         "mostre o histórico de orçamento"
     )
     subtasks = DecomposeExternalActionRequestsService.decompose(message)
-    assert len(subtasks) >= 2
+    assert len(subtasks) == 1
 
 
 def test_numbered_list_decomposes_into_multiple_subtasks():
@@ -296,11 +298,11 @@ def test_numbered_list_decomposes_into_multiple_subtasks():
     assert any("estoque" in item.text.lower() for item in subtasks)
 
 
-def test_compound_signal_wants_multi_action_without_joiner():
+def test_compound_signal_without_numbered_list_is_not_a_joiner_gate():
     message = (
         "Me dá uma visão integrada do produto 90260149: ficha, estrutura e estoque."
     )
-    assert DecomposeExternalActionRequestsService.wants_multi_action(message)
+    assert not DecomposeExternalActionRequestsService.wants_multi_action(message)
     assert len(DecomposeExternalActionRequestsService.decompose(message)) == 1
 
 
@@ -332,11 +334,37 @@ def test_plain_structure_prefers_bom_not_exclusivity():
     assert _first_action_id(planned) == "structure"
 
 
-def test_compound_plans_multiple_distinct_actions():
+def test_compound_plans_multiple_distinct_actions_via_llm():
+    """Joiners não partem a mensagem; o LLM é quem emite N steps."""
     message = (
         "Veja a última compra do 10080001 e tambem mostre o histórico de orçamento"
     )
-    planned = _plan(message, PURCHASE_ACTIONS)
+
+    def fake_llm(_message, _catalog):
+        return {
+            "steps": [
+                {
+                    "actionId": "last-purchase",
+                    "arguments": {"parameters": {"code": "10080001"}},
+                },
+                {
+                    "actionId": "purchase-budget-history",
+                    "arguments": {"parameters": {"code": "10080001"}},
+                },
+            ]
+        }
+
+    repo = _CatalogRepository(PURCHASE_ACTIONS)
+    bridge = OpenApiFirstSelectionBridgeService(
+        repo,
+        planner=PlanExternalActionsService(llm_planner=fake_llm),
+    )
+    planned = bridge.plan_tool_calls(
+        message,
+        allowed_action_ids=[str(item["actionId"]) for item in PURCHASE_ACTIONS],
+        catalog_actions=PURCHASE_ACTIONS,
+        mode_decision=_mode_on(),
+    )
     action_ids = [
         str((item.get("arguments") or {}).get("actionId") or "")
         for item in planned
@@ -387,4 +415,5 @@ def test_multi_turn_prefers_previous_action_id_without_path_fragment():
 
 
 def test_openapi_default_mode_is_on():
-    assert Settings.CHAT_OPENAPI_PLANNER_MODE == "on"
+    assert OpenApiPlannerModeService.resolve_mode() == "on"
+    assert OpenApiPlannerModeService.decide().use_openapi_selection is True

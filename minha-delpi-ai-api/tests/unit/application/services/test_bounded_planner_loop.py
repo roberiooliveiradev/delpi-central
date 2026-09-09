@@ -187,6 +187,50 @@ def test_llm_two_steps_without_joiner_are_kept():
     assert {item.status for item in coverage.results} == {"planned"}
 
 
+def test_compound_schedule_step_drops_inherited_code_not_in_schema():
+    stock = _stock_action()
+    schedule = _schedule_action()
+    llm = _FakeLlm(
+        json.dumps(
+            {
+                "planVersion": "2",
+                "mode": "EXECUTE",
+                "goals": [
+                    {"goalId": "g1", "intent": "stock"},
+                    {"goalId": "g2", "intent": "schedule"},
+                ],
+                "steps": [
+                    {
+                        "actionId": "stock-action",
+                        "goalIds": ["g1"],
+                        "arguments": {"parameters": {"code": "10080055"}},
+                    },
+                    {
+                        "actionId": "schedule-action",
+                        "goalIds": ["g2"],
+                        "arguments": {"parameters": {"code": "10080055"}},
+                    },
+                ],
+            }
+        )
+    )
+    plan = PlanExternalActionsService(llm_planner=OpenApiLlmActionPlannerService(llm)).plan(
+        "estoque desse código e produtos programados para produzir hoje",
+        [_candidate(stock), _candidate(schedule)],
+        execution_context={"parameters": {"code": "10080055"}},
+    )
+    by_id = {step.action_id: step for step in plan.steps}
+    assert "stock-action" in by_id
+    assert "schedule-action" in by_id
+    assert (by_id["stock-action"].arguments.get("parameters") or {}).get("code") == "10080055"
+    assert "code" not in (by_id["schedule-action"].arguments.get("parameters") or {})
+    ValidateActionArgumentsService().validate(
+        provider={"enabled": True},
+        action=schedule,
+        arguments=by_id["schedule-action"].arguments,
+    )
+
+
 def test_presentation_compound_still_caps_to_one_step():
     rol = {
         "actionId": "rol-action",
@@ -247,6 +291,41 @@ def test_invalid_llm_dates_are_coerced_to_iso(monkeypatch):
     )
     plan = PlanExternalActionsService(llm_planner=OpenApiLlmActionPlannerService(llm)).plan(
         "taxa de fechamento filial 01 agosto 2026",
+        [_candidate(action)],
+        execution_context={"referenceDate": "2026-09-09"},
+    )
+    params = plan.steps[0].arguments.get("parameters") or {}
+    assert params["start_date"] == "2026-08-01"
+    assert params["end_date"] == "2026-08-31"
+    ValidateActionArgumentsService().validate(
+        provider={"enabled": True},
+        action=action,
+        arguments=plan.steps[0].arguments,
+    )
+
+
+def test_llm_recent_window_is_overwritten_by_named_month_in_message():
+    action = _closing_rate_action()
+    llm = _FakeLlm(
+        json.dumps(
+            {
+                "steps": [
+                    {
+                        "actionId": "closing-rate",
+                        "arguments": {
+                            "parameters": {
+                                "start_date": "11-08-2026",
+                                "end_date": "09-09-2026",
+                                "branch": "01",
+                            }
+                        },
+                    }
+                ]
+            }
+        )
+    )
+    plan = PlanExternalActionsService(llm_planner=OpenApiLlmActionPlannerService(llm)).plan(
+        "Qual a taxa de fechamento da filial 01 em agosto 2026?",
         [_candidate(action)],
         execution_context={"referenceDate": "2026-09-09"},
     )
@@ -455,6 +534,36 @@ def test_date_coercion_sibling_month_name():
     )
     assert coerced["start_date"] == "2026-08-01"
     assert coerced["end_date"] == "2026-08-31"
+
+
+def test_date_coercion_overwrites_llm_window_when_message_has_named_month():
+    schema = [
+        {"name": "start_date", "schema": {"format": "date"}},
+        {"name": "end_date", "schema": {"format": "date"}},
+    ]
+    coerced = ChatOpenApiArgumentCoercionService.coerce_parameters(
+        {"start_date": "11-08-2026", "end_date": "09-09-2026"},
+        schema,
+        message="Mostre o ROL comercial recente (agosto 2026) com KPI",
+        execution_context={"referenceDate": "2026-09-09"},
+    )
+    assert coerced["start_date"] == "2026-08-01"
+    assert coerced["end_date"] == "2026-08-31"
+
+
+def test_date_coercion_keeps_bound_dates_when_message_is_only_recent():
+    schema = [
+        {"name": "start_date", "schema": {"format": "date"}},
+        {"name": "end_date", "schema": {"format": "date"}},
+    ]
+    coerced = ChatOpenApiArgumentCoercionService.coerce_parameters(
+        {"start_date": "11-08-2026", "end_date": "09-09-2026"},
+        schema,
+        message="ROL comercial recente",
+        execution_context={"referenceDate": "2026-09-09"},
+    )
+    assert coerced["start_date"] == "2026-08-11"
+    assert coerced["end_date"] == "2026-09-09"
 
 
 def _product_action(action_id: str, path: str, summary: str) -> dict:

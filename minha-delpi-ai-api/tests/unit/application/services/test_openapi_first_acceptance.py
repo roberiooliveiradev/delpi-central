@@ -211,11 +211,7 @@ def test_case6_two_providers_scoped_to_allowed(logistics_actions, logistics_repo
     assert all(c.action_id != foreign["actionId"] for c in candidates)
 
 
-def test_case7_write_requires_confirmation(logistics_actions, logistics_repo, monkeypatch):
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "on",
-    )
+def test_case7_write_requires_confirmation(logistics_actions, logistics_repo):
     cancel = find_logistics_action("cancel_shipment", logistics_actions)
     cancel_id = cancel["actionId"]
 
@@ -311,12 +307,8 @@ def test_case9_execution_context_preserves_id(logistics_actions, logistics_repo)
     assert plan.steps[0].arguments["parameters"]["id"] == "45871"
 
 
-def test_case10_legacy_mode_off_aliases_to_openapi_on(monkeypatch, logistics_repo, logistics_actions):
-    """off/shadow viram on — pipeline de registry não volta."""
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "off",
-    )
+def test_case10_planner_mode_is_always_on(logistics_repo, logistics_actions):
+    """OpenAPI-first é o único seletor — registry não volta."""
     assert OpenApiPlannerModeService.resolve_mode() == "on"
     decision = OpenApiPlannerModeService.decide(provider_keys={"logistics-example"})
     assert decision.is_off is False
@@ -332,12 +324,7 @@ def test_case10_legacy_mode_off_aliases_to_openapi_on(monkeypatch, logistics_rep
     assert planned[0]["arguments"]["parameters"]["id"] == "45871"
 
 
-def test_fail_closed_on_empty_plan_does_not_use_registry(monkeypatch, logistics_actions, logistics_repo):
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "on",
-    )
-
+def test_fail_closed_on_empty_plan_does_not_use_registry(logistics_actions, logistics_repo):
     class _Selection:
         repository = logistics_repo
         semantic_ranker = None
@@ -364,11 +351,7 @@ def test_small_talk_negative_no_steps(logistics_actions, logistics_repo):
     assert plan.steps == ()
 
 
-def test_agentic_catalog_uses_retriever_when_mode_on(monkeypatch, logistics_actions, logistics_repo):
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "on",
-    )
+def test_agentic_catalog_uses_retriever_when_mode_on(logistics_actions, logistics_repo):
     ranked = ChatAgenticCatalogService.build_ranked_candidates(
         "Onde esta a remessa 45871 e previsao de entrega?",
         logistics_allowed_action_ids(logistics_actions),
@@ -378,12 +361,7 @@ def test_agentic_catalog_uses_retriever_when_mode_on(monkeypatch, logistics_acti
     assert ranked[0].get("operationId") == "get_shipment_tracking"
 
 
-def test_orchestration_on_mode_returns_tracking(monkeypatch, logistics_actions, logistics_repo):
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "on",
-    )
-
+def test_orchestration_on_mode_returns_tracking(logistics_actions, logistics_repo):
     class _Selection:
         repository = logistics_repo
         semantic_ranker = None
@@ -399,13 +377,9 @@ def test_orchestration_on_mode_returns_tracking(monkeypatch, logistics_actions, 
     assert (planned[0]["arguments"].get("parameters") or {}).get("id") == "45871"
 
 
-def test_shadow_mode_aliases_to_on_and_compare_helper_still_works(
-    monkeypatch, logistics_actions, logistics_repo
+def test_shadow_mode_is_gone_openapi_is_always_on(
+    logistics_actions, logistics_repo
 ):
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "shadow",
-    )
     assert OpenApiPlannerModeService.resolve_mode() == "on"
     bridge = OpenApiFirstSelectionBridgeService(logistics_repo, planner=PlanExternalActionsService(llm_planner=None))
     openapi = bridge.plan_tool_calls(
@@ -414,34 +388,15 @@ def test_shadow_mode_aliases_to_on_and_compare_helper_still_works(
         catalog_actions=logistics_actions,
         mode_decision=OpenApiPlannerModeService.decide(),
     )
-    legacy = [
-        {
-            "name": "execute_external_action",
-            "arguments": {"actionId": "legacy.action", "parameters": {}},
-        }
-    ]
-    shadow = OpenApiFirstSelectionBridgeService.compare_shadow(
-        legacy_planned=legacy,
-        openapi_planned=openapi,
-    )
     assert openapi
-    assert shadow["diverged"] is True
-    assert shadow["selectionMode"] == "shadow"
+    assert (openapi[0].get("metadata") or {}).get("selectionMode") == "openapi_first"
 
 
-def test_canary_matches_provider_only(monkeypatch):
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "canary",
-    )
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_PROVIDER_KEYS",
-        "logistics-example",
-    )
+def test_planner_mode_ignores_provider_canary():
     matched = OpenApiPlannerModeService.decide(provider_keys={"logistics-example"})
-    assert matched.use_openapi_selection is True
     unmatched = OpenApiPlannerModeService.decide(provider_keys={"api-delpi"})
-    assert unmatched.use_openapi_selection is False
+    assert matched.use_openapi_selection is True
+    assert unmatched.use_openapi_selection is True
 
 
 def test_presentation_flat_tracking_without_x_delpi():

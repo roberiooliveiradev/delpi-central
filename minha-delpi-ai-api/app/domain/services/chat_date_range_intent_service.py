@@ -83,10 +83,12 @@ class ChatDateRangeIntentService:
         if year_follow_up:
             return year_follow_up
 
-        explicit = cls._parse_explicit_range(normalized)
-
-        if explicit:
-            return explicit
+        explicit_calendar = cls.resolve_explicit_calendar_period(
+            message,
+            today=reference,
+        )
+        if explicit_calendar:
+            return explicit_calendar
 
         from app.domain.services.chat_temporal_intent_service import (
             ChatTemporalIntentService,
@@ -118,15 +120,6 @@ class ChatDateRangeIntentService:
                 point.target_date,
                 point.target_date,
                 reason=cls._reason("pointAsRange", label=point.label),
-            )
-
-        competence = ChatDateRangeVocabularyService.compile_pattern("competence").search(normalized)
-
-        if competence:
-            return cls._month_range(
-                int(competence.group(1)),
-                int(competence.group(2)),
-                reason=cls._reason("competence"),
             )
 
         last_weeks = ChatDateRangeVocabularyService.compile_pattern("lastNWeeks").search(normalized)
@@ -220,20 +213,6 @@ class ChatDateRangeIntentService:
                 reason=cls._reason("nextYear"),
             )
 
-        month_match = cls._parse_named_month(normalized, reference)
-
-        if month_match:
-            return month_match
-
-        year_month = ChatDateRangeVocabularyService.compile_pattern("yearMonth").search(normalized)
-
-        if year_month and any(term in normalized for term in ChatDateRangeVocabularyService.terms("periodMetricTerms")):
-            return cls._month_range(
-                int(year_month.group(1)),
-                int(year_month.group(2)),
-                reason=cls._reason("yearMonthInQuestion"),
-            )
-
         if previous_messages:
             inherited = cls._inherit_period_from_previous_user_messages(
                 previous_messages,
@@ -241,6 +220,52 @@ class ChatDateRangeIntentService:
             )
             if inherited:
                 return inherited
+
+        return None
+
+    @classmethod
+    def resolve_explicit_calendar_period(
+        cls,
+        message: str | None,
+        *,
+        today: date | None = None,
+    ) -> ResolvedDateRange | None:
+        """Mês nomeado, intervalo explícito, competência ou YYYY-MM — não recência/herança."""
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        if not normalized:
+            return None
+
+        reference = today or date.today()
+        explicit = cls._parse_explicit_range(normalized)
+        if explicit:
+            return explicit
+
+        month_match = cls._parse_named_month(normalized, reference)
+        if month_match:
+            return month_match
+
+        year_month = ChatDateRangeVocabularyService.compile_pattern("yearMonth").search(
+            normalized
+        )
+        if year_month and any(
+            term in normalized
+            for term in ChatDateRangeVocabularyService.terms("periodMetricTerms")
+        ):
+            return cls._month_range(
+                int(year_month.group(1)),
+                int(year_month.group(2)),
+                reason=cls._reason("yearMonthInQuestion"),
+            )
+
+        competence = ChatDateRangeVocabularyService.compile_pattern("competence").search(
+            normalized
+        )
+        if competence:
+            return cls._month_range(
+                int(competence.group(1)),
+                int(competence.group(2)),
+                reason=cls._reason("competence"),
+            )
 
         return None
 
@@ -489,6 +514,7 @@ class ChatDateRangeIntentService:
             rf"\bde\s+(\d{{4}})\b[^\d]{{0,24}}\b{re.escape(month_name)}\b",
             rf"\b{re.escape(month_name)}\s*/\s*(\d{{4}})\b",
             rf"\b(\d{{4}})\s*/\s*{re.escape(month_name)}\b",
+            rf"\b{re.escape(month_name)}\s+(\d{{4}})\b",
         )
 
         for pattern in patterns:

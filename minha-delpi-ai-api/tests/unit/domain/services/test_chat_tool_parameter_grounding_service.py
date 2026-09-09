@@ -94,3 +94,21 @@ def test_ground_parameters_drops_branch_when_not_in_schema():
     )
 
     assert grounded == {"code": "10080047"}
+
+
+def test_empty_schema_drops_inherited_product_code():
+    grounded = ChatToolParameterGroundingService.retain_declared_parameters(
+        [],
+        {"code": "10080055", "branch": "01"},
+    )
+
+    assert grounded == {}
+
+
+def test_declared_schema_keeps_code_and_drops_unknown():
+    grounded = ChatToolParameterGroundingService.retain_declared_parameters(
+        [{"name": "code", "in": "path"}],
+        {"code": "10080055", "limit": 10},
+    )
+
+    assert grounded == {"code": "10080055"}

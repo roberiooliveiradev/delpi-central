@@ -204,7 +204,7 @@ def test_continuity_challenge_returns_empty_without_bom(monkeypatch):
     assert bom_called["value"] is False
 
 
-def test_allow_discovery_keeps_current_behavior(monkeypatch):
+def test_allow_discovery_uses_openapi_first_not_registry(monkeypatch):
     monkeypatch.setattr(
         "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
         True,
@@ -217,16 +217,65 @@ def test_allow_discovery_keeps_current_behavior(monkeypatch):
         lambda *_a, **_k: [],
     )
 
-    selection = MagicMock()
-    selection.select_action.return_value = {
-        "name": "execute_external_action",
-        "arguments": {"actionId": "financial-rol"},
-        "reason": "discovery",
+    from app.application.services.openapi_first_selection_bridge_service import (
+        OpenApiFirstSelectionBridgeService,
+    )
+    from app.application.services.plan_external_actions_service import (
+        PlanExternalActionsService,
+    )
+
+    real_init = OpenApiFirstSelectionBridgeService.__init__
+
+    def _init(
+        self,
+        repository=None,
+        *,
+        semantic_ranker=None,
+        planner=None,
+        validator=None,
+    ):
+        real_init(
+            self,
+            repository,
+            semantic_ranker=semantic_ranker,
+            planner=planner or PlanExternalActionsService(llm_planner=None),
+            validator=validator,
+        )
+
+    monkeypatch.setattr(OpenApiFirstSelectionBridgeService, "__init__", _init)
+
+    action = {
         "actionId": "financial-rol",
+        "providerKey": "api-delpi-fixture",
+        "method": "GET",
+        "path": "/financial/rol",
+        "operationId": "get_financial_rol",
+        "summary": "ROL comercial do período",
+        "description": "Receita operacional líquida por filial",
+        "enabled": True,
+        "parametersSchema": [],
+        "sensitivity": "read",
     }
 
+    class _Repo:
+        def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
+            return [action]
+
+        def list_actions(self, provider_key=None):
+            return [action]
+
+        def search_similar_actions(self, embedding, *, allowed_action_ids=None, limit=20):
+            return []
+
+    class _Selection:
+        repository = _Repo()
+        semantic_ranker = None
+
+        def select_action(self, *_a, **_k):
+            raise AssertionError("registry select_action must not run")
+
     planned = ChatExternalActionOrchestrationService.plan_actions(
-        selection,
+        _Selection(),
         message="qual o rol desse mês?",
         allowed_action_ids=["financial-rol"],
         workspace_context={
@@ -243,4 +292,7 @@ def test_allow_discovery_keeps_current_behavior(monkeypatch):
     )
 
     assert planned
-    assert planned[0].get("actionId") == "financial-rol"
+    first = planned[0]
+    assert first.get("name") == "execute_external_action"
+    assert (first.get("arguments") or {}).get("actionId") == "financial-rol"
+    assert (first.get("metadata") or {}).get("selectionMode") == "openapi_first"

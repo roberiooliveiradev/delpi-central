@@ -1,32 +1,11 @@
 from __future__ import annotations
 
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
-from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
-from app.domain.services.chat_message_normalization_service import (
-    ChatMessageNormalizationService,
-)
-from app.domain.services.chat_product_query_intent_service import (
-    ChatProductQueryIntent,
-    ChatProductQueryIntentService,
-)
 from app.infrastructure.config.settings import Settings
 
 
 class ChatExternalActionOrchestrationService:
     """Planeja uma ou mais consultas OpenAPI (actions) para a mesma pergunta."""
-
-    _MULTI_PRODUCT_INTENTS = frozenset(
-        {
-            ChatProductQueryIntent.STRUCTURE,
-            ChatProductQueryIntent.STOCK,
-            ChatProductQueryIntent.SALES,
-            ChatProductQueryIntent.SUMMARY,
-            ChatProductQueryIntent.ANALYSER,
-            ChatProductQueryIntent.DESCRIPTION,
-            ChatProductQueryIntent.PARENTS,
-            ChatProductQueryIntent.FULL,
-        }
-    )
 
     @classmethod
     def plan_actions(
@@ -88,9 +67,6 @@ class ChatExternalActionOrchestrationService:
             if isinstance(working, dict):
                 memory_snapshot = working
 
-        openapi_decision = None
-        openapi_planned: list[dict] = []
-
         def _return_planned(
             planned: list[dict],
             *,
@@ -131,125 +107,14 @@ class ChatExternalActionOrchestrationService:
                     planned,
                 )
 
-            if (
-                openapi_decision is not None
-                and openapi_decision.run_shadow_compare
-                and openapi_planned is not None
-            ):
-                from app.application.services.openapi_first_selection_bridge_service import (
-                    OpenApiFirstSelectionBridgeService,
-                )
-
-                shadow = OpenApiFirstSelectionBridgeService.compare_shadow(
-                    legacy_planned=planned,
-                    openapi_planned=openapi_planned,
-                )
-                for item in planned:
-                    if not isinstance(item, dict):
-                        continue
-                    meta = dict(item.get("metadata") or {})
-                    meta["openapiShadow"] = shadow
-                    meta["selectionMode"] = meta.get("selectionMode") or "legacy"
-                    item["metadata"] = meta
-
             return planned
-
-        try:
-            from app.application.services.openapi_first_selection_bridge_service import (
-                OpenApiFirstSelectionBridgeService,
-            )
-            from app.domain.services.openapi_planner_mode_service import (
-                OpenApiPlannerModeService,
-            )
-
-            provider_keys: set[str] = set()
-            if isinstance(workspace_context, dict):
-                for key in workspace_context.get("providerKeys") or []:
-                    if str(key).strip():
-                        provider_keys.add(str(key).strip())
-            for action_id in allowed_action_ids or []:
-                text = str(action_id)
-                if "." in text:
-                    provider_keys.add(text.split(".", 1)[0])
-
-            agent_id = None
-            if isinstance(workspace_context, dict):
-                agent_id = (
-                    workspace_context.get("agentId")
-                    or workspace_context.get("activeAgentId")
-                    or workspace_context.get("contextAgentId")
-                )
-
-            openapi_decision = OpenApiPlannerModeService.decide(
-                provider_keys=provider_keys,
-                agent_id=str(agent_id) if agent_id else None,
-            )
-            if openapi_decision.use_openapi_selection or openapi_decision.run_shadow_compare:
-                bridge = OpenApiFirstSelectionBridgeService(
-                    getattr(selection_service, "repository", None),
-                    semantic_ranker=getattr(selection_service, "semantic_ranker", None),
-                )
-                openapi_planned = bridge.plan_tool_calls(
-                    selection_message,
-                    allowed_action_ids=allowed_action_ids,
-                    previous_messages=previous_messages,
-                    workspace_context=workspace_context,
-                    mode_decision=openapi_decision,
-                )
-                # Fail-closed: com OpenAPI ativo não cai no registry/markers.
-                if openapi_decision.use_openapi_selection:
-                    if openapi_planned:
-                        openapi_planned = cls._enrich_openapi_plan_with_product_scopes(
-                            selection_service,
-                            message=selection_message,
-                            planned=openapi_planned,
-                            allowed_action_ids=allowed_action_ids,
-                            conversation_context=conversation_context,
-                            previous_messages=previous_messages,
-                            memory_snapshot=memory_snapshot,
-                            max_calls=max_calls or 12,
-                        )
-                        return _return_planned(
-                            openapi_planned,
-                            memory_snapshot=memory_snapshot,
-                        )
-                    from app.domain.services.openapi_tool_routing_content_service import (
-                        OpenApiToolRoutingContentService,
-                    )
-
-                    clarify = OpenApiToolRoutingContentService.get(
-                        "selectionReasons",
-                        "openapiFirstNoMatch",
-                    )
-                    return _return_planned(
-                        [
-                            {
-                                "name": "clarify_external_action",
-                                "arguments": {"message": clarify},
-                                "reason": clarify,
-                                "directAnswer": clarify,
-                                "metadata": {
-                                    "selectionMode": "openapi_first",
-                                    "emptyPlan": True,
-                                },
-                            }
-                        ],
-                        memory_snapshot=memory_snapshot,
-                    )
-        except Exception:
-            # Com modo on, não engolir erro para cair no legado.
-            from app.domain.services.openapi_planner_mode_service import (
-                OpenApiPlannerModeService as _Mode,
-            )
-
-            if _Mode.resolve_mode() == "on":
-                raise
-            openapi_decision = None
-            openapi_planned = []
 
         if isinstance(workspace_context, dict):
             from app.domain.services.chat_grounded_capability_planning_service import (
                 ChatGroundedCapabilityPlanningService,
+            )
+            from app.domain.services.chat_product_multi_scope_planning_service import (
+                ChatProductMultiScopePlanningService,
             )
 
             grounded_planned = ChatGroundedCapabilityPlanningService.plan_actions(
@@ -260,656 +125,101 @@ class ChatExternalActionOrchestrationService:
                 previous_messages=previous_messages,
                 max_calls=max_calls,
             )
-
-            from app.domain.services.chat_product_multi_scope_planning_service import (
-                ChatProductMultiScopePlanningService,
+            missing_scopes = (
+                ChatProductMultiScopePlanningService.missing_scopes_for_planned_actions(
+                    selection_message,
+                    grounded_planned,
+                )
             )
-
-            missing_scopes = ChatProductMultiScopePlanningService.missing_scopes_for_planned_actions(
-                selection_message,
-                grounded_planned,
-            )
-
             if cls._continuity_blocks_parallel_discovery(workspace_context):
                 if not missing_scopes:
                     return _return_planned(
                         list(grounded_planned or []),
                         memory_snapshot=memory_snapshot,
                     )
-                # Pedido acrescenta escopos → não engolir discovery.
-
-            if grounded_planned and not missing_scopes:
-                return _return_planned(grounded_planned, memory_snapshot=memory_snapshot)
-
-            # Escopos novos (ex.: estrutura após estoque): completa com multi-scope
-            # antes dos fast-paths single-intent.
-            if missing_scopes:
-                product_code = ChatProductQueryIntentService.resolve_product_code(
-                    selection_message,
-                    conversation_context,
-                    previous_messages=previous_messages,
-                    memory_snapshot=memory_snapshot,
-                )
-                if product_code:
-                    scope_planned = (
-                        ChatProductMultiScopePlanningService.plan_product_scope_fetches(
-                            selection_service,
-                            message=selection_message,
-                            product_code=product_code,
-                            allowed_action_ids=allowed_action_ids,
-                            previous_messages=previous_messages,
-                            max_calls=max_calls or 12,
-                        )
-                    )
-                    if scope_planned:
-                        merged = list(grounded_planned or [])
-                        seen_paths = {
-                            str(
-                                (item.get("arguments") or {}).get("path")
-                                or item.get("path")
-                                or ""
-                            ).lower()
-                            for item in merged
-                            if isinstance(item, dict)
-                        }
-                        for item in scope_planned:
-                            path = str(
-                                (item.get("arguments") or {}).get("path")
-                                or item.get("path")
-                                or ""
-                            ).lower()
-                            if path and path in seen_paths:
-                                continue
-                            merged.append(item)
-                            if path:
-                                seen_paths.add(path)
-                        return _return_planned(merged, memory_snapshot=memory_snapshot)
-
-        if forced_product_code and forced_intent:
-            selected = selection_service.select_action_for_product(
-                message,
-                product_code=forced_product_code,
-                allowed_action_ids=allowed_action_ids,
-                intent=forced_intent,
-                route_segment=forced_route_segment,
-                previous_messages=previous_messages,
-                drawing_analysis_mode=forced_drawing_analysis_mode,
-            )
-
-            if selected and forced_reason:
-                selected["reason"] = forced_reason
-
-            if selected and forced_drawing_analysis_mode:
-                selected = cls._apply_drawing_analyser_full_view(
-                    selection_service,
-                    selected,
-                    message=message,
-                )
-
-            return _return_planned([selected] if selected else [], memory_snapshot=memory_snapshot)
-
-        from app.domain.services.chat_operational_intent_fast_path_service import (
-            ChatOperationalIntentFastPathService,
-        )
-
-        fast_product_code, fast_intent = (
-            ChatOperationalIntentFastPathService.resolve_operational_fast_path(
-                selection_message,
-                conversation_context=conversation_context,
-                previous_messages=previous_messages,
-                memory_snapshot=memory_snapshot,
-            )
-        )
-        fast_path_codes = ChatAnalysisIntentService.extract_product_codes_for_action_planning(
-            selection_message,
-            conversation_context,
-            previous_messages=previous_messages,
-            memory_snapshot=memory_snapshot,
-        )
-
-        if (
-            fast_product_code
-            and ChatOperationalIntentFastPathService.is_intent_bound_eligible(fast_intent)
-            and len(fast_path_codes) <= 1
-            and not forced_drawing_analysis_mode
-            and not ChatAnalysisIntentService.is_comparison_or_insight_request(message)
-        ):
-            from app.domain.services.chat_product_multi_scope_planning_service import (
-                ChatProductMultiScopePlanningService,
-            )
-
-            if not ChatProductMultiScopePlanningService.blocks_intent_bound_fast_path(
-                selection_message,
-            ):
-                selected = selection_service.select_action_for_product(
-                    selection_message,
-                    product_code=fast_product_code,
-                    allowed_action_ids=allowed_action_ids,
-                    intent=fast_intent,
-                    previous_messages=previous_messages,
-                )
-
-                if selected:
-                    return _return_planned([selected], memory_snapshot=memory_snapshot)
-
-        from app.domain.services.chat_sql_authoring_guidance_service import (
-            ChatSqlAuthoringGuidanceService,
-        )
-        from app.domain.services.chat_advanced_sql_specialist_service import (
-            ChatAdvancedSqlSpecialistService,
-        )
-
-        if ChatAdvancedSqlSpecialistService.should_prefetch_schema(
-            message=message,
-            workspace_context=workspace_context,
-            previous_messages=previous_messages,
-        ):
-            prefetch = ChatSqlAuthoringGuidanceService.plan_schema_prefetch(
-                selection_service,
-                message=message,
-                allowed_action_ids=allowed_action_ids,
-                conversation_context=conversation_context,
-                previous_messages=previous_messages,
-            )
-
-            if prefetch:
-                return _return_planned(prefetch, memory_snapshot=memory_snapshot)
-
-        from app.application.services.chat_intelligence_runtime_access import (
-            resolve_chat_intelligence_runtime,
-        )
-
-        if not resolve_chat_intelligence_runtime().multi_action_enabled:
-            selected = selection_service.select_action(
-                selection_message,
-                allowed_action_ids=allowed_action_ids,
-                conversation_context=conversation_context,
-                previous_messages=previous_messages,
-                raw_message=raw_message,
-                memory_snapshot=memory_snapshot,
-            )
-
-            return _return_planned([selected] if selected else [], memory_snapshot=memory_snapshot)
-
-        from app.domain.services.chat_production_operational_intent_service import (
-            ChatProductionOperationalIntentService,
-        )
-
-        if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
-            if not ChatProductionOperationalIntentService.matches_rest_route(message):
-                if on_stream_activity:
-                    from app.application.services.chat_stream_activity_service import (
-                        ChatStreamActivityService,
-                    )
-                    from app.domain.services.chat_assistant_content_service import (
-                        ChatAssistantContentService,
-                    )
-
-                    comparison = ChatAssistantContentService.get_mapping(
-                        "stream",
-                        "activity",
-                        "structureComparison",
-                    )
-                    on_stream_activity(
-                        ChatStreamActivityService.plan_step(
-                            step=1,
-                            total=1,
-                            target=str(comparison.get("target") or ""),
-                            verb=str(comparison.get("verb") or ""),
-                            message=str(comparison.get("message") or ""),
-                            detail=str(comparison.get("detail") or ""),
-                        )
-                    )
-
-                from app.application.services.chat_structure_comparison_orchestration_service import (
-                    ChatStructureComparisonOrchestrationService,
-                )
-
-                planned = ChatStructureComparisonOrchestrationService.plan_structure_fetches(
-                    selection_service,
-                    message=message,
-                    allowed_action_ids=allowed_action_ids,
-                    conversation_context=conversation_context,
-                    previous_messages=previous_messages,
-                    max_calls=max_calls,
-                )
-
-                if planned:
-                    return _return_planned(planned, memory_snapshot=memory_snapshot)
-
-        if ChatCanvasIntentService.blocks_external_action_selection(message):
-            return []
-
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-
-        from app.domain.services.chat_production_operational_intent_service import (
-            ChatProductionOperationalIntentService,
-        )
-
-        if ChatProductionOperationalIntentService.matches_rest_route(message):
-            selected = selection_service.select_action(
-                selection_message,
-                allowed_action_ids=allowed_action_ids,
-                conversation_context=conversation_context,
-                previous_messages=previous_messages,
-                raw_message=raw_message,
-                memory_snapshot=memory_snapshot,
-            )
-
-            if selected:
-                return _return_planned([selected], memory_snapshot=memory_snapshot)
-
-            return []
-
-        from app.domain.services.operational_route_matcher_service import (
-            OperationalRouteMatcherService,
-        )
-
-        if OperationalRouteMatcherService.looks_like_sale_orders_list_question(
-            normalized
-        ):
-            from app.domain.services.chat_product_multi_scope_planning_service import (
-                ChatProductMultiScopePlanningService,
-            )
-
-            if ChatProductMultiScopePlanningService.is_exclusive_open_orders_or_sale_orders_list_turn(
-                selection_message,
-            ):
-                selected = selection_service.select_action(
-                    selection_message,
-                    allowed_action_ids=allowed_action_ids,
-                    conversation_context=conversation_context,
-                    previous_messages=previous_messages,
-                    raw_message=raw_message,
-                    memory_snapshot=memory_snapshot,
-                )
-
+            elif grounded_planned and not missing_scopes:
                 return _return_planned(
-                    [selected] if selected else [],
+                    grounded_planned,
                     memory_snapshot=memory_snapshot,
                 )
 
-        from app.domain.services.chat_product_route_predicate_service import (
-            ChatProductRoutePredicateService,
+        from app.application.services.openapi_first_selection_bridge_service import (
+            OpenApiFirstSelectionBridgeService,
+        )
+        from app.domain.services.openapi_planner_mode_service import (
+            OpenApiPlannerModeService,
+        )
+        from app.domain.services.openapi_tool_routing_content_service import (
+            OpenApiToolRoutingContentService,
         )
 
-        if ChatProductRoutePredicateService.matches("commercialRol", normalized):
-            selected = selection_service.select_action(
-                selection_message,
-                allowed_action_ids=allowed_action_ids,
-                conversation_context=conversation_context,
-                previous_messages=previous_messages,
-                raw_message=raw_message,
-                memory_snapshot=memory_snapshot,
+        provider_keys: set[str] = set()
+        if isinstance(workspace_context, dict):
+            for key in workspace_context.get("providerKeys") or []:
+                if str(key).strip():
+                    provider_keys.add(str(key).strip())
+        for action_id in allowed_action_ids or []:
+            text = str(action_id)
+            if "." in text:
+                provider_keys.add(text.split(".", 1)[0])
+
+        agent_id = None
+        if isinstance(workspace_context, dict):
+            agent_id = (
+                workspace_context.get("agentId")
+                or workspace_context.get("activeAgentId")
+                or workspace_context.get("contextAgentId")
             )
 
-            if selected:
-                return _return_planned([selected], memory_snapshot=memory_snapshot)
-
-        from app.domain.services.chat_operational_refinement_service import (
-            ChatOperationalRefinementService,
+        openapi_decision = OpenApiPlannerModeService.decide(
+            provider_keys=provider_keys,
+            agent_id=str(agent_id) if agent_id else None,
         )
-        from app.domain.services.chat_route_context_service import (
-            ChatRouteContextService,
+        bridge = OpenApiFirstSelectionBridgeService(
+            getattr(selection_service, "repository", None),
+            semantic_ranker=getattr(selection_service, "semantic_ranker", None),
         )
-
-        operational_follow_ups = ChatOperationalRefinementService.plan_operational_follow_ups(
-            message,
-            conversation_context=conversation_context,
-            previous_messages=previous_messages,
-        )
-
-        from app.domain.services.chat_product_multi_scope_planning_service import (
-            ChatProductMultiScopePlanningService,
-        )
-
-        sticky_follow_up_ok = bool(operational_follow_ups) and not (
-            ChatProductMultiScopePlanningService.blocks_intent_bound_fast_path(
-                selection_message,
-            )
-            or any(
-                scope != "stock"
-                for scope in ChatProductMultiScopePlanningService.extract_requested_scopes(
-                    selection_message,
-                )
-            )
-        )
-
-        if sticky_follow_up_ok:
-            limit = cls._resolve_max_calls(max_calls)
-            planned: list[dict] = []
-
-            for refinement in operational_follow_ups[:limit]:
-                if refinement.kind in {"stock_refinement", "stock_reset"}:
-                    selected = selection_service.select_action_for_product(
-                        selection_message,
-                        product_code=str(refinement.product_code or ""),
-                        allowed_action_ids=allowed_action_ids,
-                        intent=ChatProductQueryIntent.STOCK,
-                        previous_messages=previous_messages,
-                    )
-                elif refinement.kind in {"metric_refinement", "metric_reset"}:
-                    select_metric = getattr(
-                        selection_service,
-                        "select_metric_refinement",
-                        None,
-                    )
-
-                    if callable(select_metric):
-                        selected = select_metric(
-                            selection_message,
-                            refinement,
-                            allowed_action_ids=allowed_action_ids,
-                            previous_messages=previous_messages,
-                        )
-                    else:
-                        selected = selection_service.select_action(
-                            selection_message,
-                            allowed_action_ids=allowed_action_ids,
-                            conversation_context=conversation_context,
-                            previous_messages=previous_messages,
-                            raw_message=raw_message,
-                            memory_snapshot=memory_snapshot,
-                        )
-                elif refinement.kind == "pagination_refinement":
-                    select_pagination = getattr(
-                        selection_service,
-                        "select_pagination_refinement",
-                        None,
-                    )
-
-                    if callable(select_pagination):
-                        selected = select_pagination(
-                            refinement,
-                            allowed_action_ids=allowed_action_ids,
-                            message=selection_message,
-                        )
-                    else:
-                        selected = selection_service.select_action(
-                            selection_message,
-                            allowed_action_ids=allowed_action_ids,
-                            conversation_context=conversation_context,
-                            previous_messages=previous_messages,
-                            raw_message=raw_message,
-                            memory_snapshot=memory_snapshot,
-                        )
-                elif refinement.kind == "operational_group_by_refinement":
-                    select_group_by = getattr(
-                        selection_service,
-                        "select_operational_group_by_refinement",
-                        None,
-                    )
-
-                    if callable(select_group_by):
-                        selected = select_group_by(
-                            refinement,
-                            allowed_action_ids=allowed_action_ids,
-                        )
-                    else:
-                        selected = selection_service.select_action(
-                            selection_message,
-                            allowed_action_ids=allowed_action_ids,
-                            conversation_context=conversation_context,
-                            previous_messages=previous_messages,
-                            raw_message=raw_message,
-                            memory_snapshot=memory_snapshot,
-                        )
-                elif refinement.kind == "depth_refinement":
-                    select_depth = getattr(
-                        selection_service,
-                        "select_depth_refinement",
-                        None,
-                    )
-
-                    if callable(select_depth):
-                        selected = select_depth(
-                            refinement,
-                            allowed_action_ids=allowed_action_ids,
-                            message=selection_message,
-                        )
-                    else:
-                        selected = selection_service.select_action(
-                            selection_message,
-                            allowed_action_ids=allowed_action_ids,
-                            conversation_context=conversation_context,
-                            previous_messages=previous_messages,
-                            raw_message=raw_message,
-                            memory_snapshot=memory_snapshot,
-                        )
-                else:
-                    selected = None
-
-                if selected:
-                    planned.append(selected)
-
-            if planned:
-                return _return_planned(planned, memory_snapshot=memory_snapshot)
-
-            return _return_planned([], memory_snapshot=memory_snapshot)
-
-        limit = cls._resolve_max_calls(max_calls)
-        planning_message = selection_message
-        normalized = ChatMessageNormalizationService.normalize_for_matching(planning_message)
-        codes = ChatAnalysisIntentService.extract_product_codes_for_action_planning(
-            planning_message,
-            conversation_context,
-            previous_messages=previous_messages,
-            memory_snapshot=memory_snapshot,
-        )
-        intent = ChatProductQueryIntentService.resolve_product_intent(
-            planning_message,
-            previous_messages=previous_messages,
-        )
-        route_segment = ChatRouteContextService.resolve_product_route_segment(
-            planning_message,
-            previous_messages=previous_messages,
-        )
-
-        explicit_route_segment = ChatRouteContextService.segment_from_message(planning_message)
-
-        if intent == ChatProductQueryIntent.FULL:
-            intent = ChatProductQueryIntentService.refine_operational_intent_from_full(
-                planning_message,
-                normalized=normalized,
-            )
-
-        recent_batch = ChatRouteContextService.collect_recent_product_route_batch(
-            previous_messages,
-            route_segment=None if explicit_route_segment else route_segment,
-        )
-
-        if (
-            not codes
-            and recent_batch
-            and (
-                ChatProductQueryIntentService.references_previous_product(planning_message)
-                or ChatRouteContextService.is_product_route_segment(route_segment)
-                or ChatRouteContextService.is_product_route_segment(explicit_route_segment)
-            )
-        ):
-            codes = list(recent_batch.product_codes)
-            route_segment = route_segment or recent_batch.route_segment
-
-            if not explicit_route_segment:
-                inherited_intent = ChatRouteContextService.intent_for_product_segment(
-                    recent_batch.route_segment
-                )
-
-                if inherited_intent:
-                    intent = inherited_intent
-
-        multi_product = len(codes) > 1 and (
-            intent in cls._MULTI_PRODUCT_INTENTS
-            or ChatRouteContextService.is_product_route_segment(route_segment)
-        )
-
-        if multi_product:
-            planned: list[dict] = []
-            candidate_cap = max(limit, 12)
-
-            for code in codes[:candidate_cap]:
-                selected = selection_service.select_action_for_product(
-                    selection_message,
-                    product_code=code,
-                    allowed_action_ids=allowed_action_ids,
-                    intent=intent,
-                    route_segment=route_segment,
-                    previous_messages=previous_messages,
-                )
-
-                if selected:
-                    planned.append(selected)
-
-            if planned:
-                from app.application.services.chat_multi_intent_continuation_service import (
-                    ChatMultiIntentContinuationService,
-                )
-
-                executed, _ = ChatMultiIntentContinuationService.apply_limit(
-                    planned,
-                    max_calls=limit,
-                )
-
-                return _return_planned(executed, memory_snapshot=memory_snapshot)
-
-        from app.domain.services.chat_product_multi_scope_planning_service import (
-            ChatProductMultiScopePlanningService,
-        )
-
-        product_code = ChatProductQueryIntentService.resolve_product_code(
-            planning_message,
-            conversation_context,
-            previous_messages=previous_messages,
-            memory_snapshot=memory_snapshot,
-        )
-
-        if product_code:
-            scope_planned = ChatProductMultiScopePlanningService.plan_product_scope_fetches(
-                selection_service,
-                message=planning_message,
-                product_code=product_code,
-                allowed_action_ids=allowed_action_ids,
-                previous_messages=previous_messages,
-                max_calls=12,
-            )
-
-            if scope_planned:
-                from app.application.services.chat_multi_intent_continuation_service import (
-                    ChatMultiIntentContinuationService,
-                )
-
-                executed, _ = ChatMultiIntentContinuationService.apply_limit(
-                    scope_planned,
-                    max_calls=limit,
-                )
-
-                return _return_planned(executed, memory_snapshot=memory_snapshot)
-
-        from app.domain.services.chat_product_enrichment_composition_planning_service import (
-            ChatProductEnrichmentCompositionPlanningService,
-        )
-
-        if product_code and ChatProductEnrichmentCompositionPlanningService.looks_like_product_overview(
-            planning_message
-        ):
-            enrichment_planned = ChatProductEnrichmentCompositionPlanningService.plan(
-                selection_service,
-                message=planning_message,
-                product_code=product_code,
-                allowed_action_ids=allowed_action_ids,
-                previous_messages=previous_messages,
-                max_calls=limit,
-            )
-
-            if enrichment_planned:
-                from app.application.services.chat_multi_intent_continuation_service import (
-                    ChatMultiIntentContinuationService,
-                )
-
-                executed, deferred = ChatMultiIntentContinuationService.apply_limit(
-                    enrichment_planned,
-                    max_calls=limit,
-                )
-                enrichment_audit = {
-                    "kind": "product_enrichment_composition",
-                    "plannedScopes": [
-                        str(item.get("enrichmentScope") or "").strip()
-                        for item in enrichment_planned
-                        if str(item.get("enrichmentScope") or "").strip()
-                    ],
-                    "executedCount": len(executed),
-                    "skippedByCap": int((deferred or {}).get("deferredCount") or 0)
-                    if isinstance(deferred, dict)
-                    else 0,
-                    "productCode": product_code,
-                }
-
-                if executed:
-                    first = dict(executed[0])
-                    first["enrichmentPlan"] = enrichment_audit
-                    executed = [first, *executed[1:]]
-
-                return _return_planned(executed, memory_snapshot=memory_snapshot)
-
-        from app.domain.services.chat_department_meta_composition_planning_service import (
-            ChatDepartmentMetaCompositionPlanningService,
-        )
-
-        if ChatDepartmentMetaCompositionPlanningService.looks_like_department_meta_composition(
-            planning_message
-        ):
-            meta_planned = ChatDepartmentMetaCompositionPlanningService.plan(
-                selection_service,
-                message=planning_message,
-                allowed_action_ids=allowed_action_ids,
-                previous_messages=previous_messages,
-                max_calls=limit,
-            )
-
-            if meta_planned:
-                return _return_planned(meta_planned, memory_snapshot=memory_snapshot)
-
-        selected = selection_service.select_action(
+        openapi_planned = bridge.plan_tool_calls(
             selection_message,
             allowed_action_ids=allowed_action_ids,
-            conversation_context=conversation_context,
             previous_messages=previous_messages,
-            raw_message=raw_message,
+            workspace_context=workspace_context,
+            mode_decision=openapi_decision,
+        )
+        if openapi_planned:
+            openapi_planned = cls._enrich_openapi_plan_with_product_scopes(
+                selection_service,
+                message=selection_message,
+                planned=openapi_planned,
+                allowed_action_ids=allowed_action_ids,
+                conversation_context=conversation_context,
+                previous_messages=previous_messages,
+                memory_snapshot=memory_snapshot,
+                max_calls=max_calls or 12,
+            )
+            return _return_planned(
+                openapi_planned,
+                memory_snapshot=memory_snapshot,
+            )
+
+        clarify = OpenApiToolRoutingContentService.get(
+            "selectionReasons",
+            "openapiFirstNoMatch",
+        )
+        return _return_planned(
+            [
+                {
+                    "name": "clarify_external_action",
+                    "arguments": {"message": clarify},
+                    "reason": clarify,
+                    "directAnswer": clarify,
+                    "metadata": {
+                        "selectionMode": "openapi_first",
+                        "emptyPlan": True,
+                    },
+                }
+            ],
             memory_snapshot=memory_snapshot,
-        )
-
-        return _return_planned([selected] if selected else [], memory_snapshot=memory_snapshot)
-
-    @classmethod
-    def _apply_drawing_analyser_full_view(
-        cls,
-        selection_service,
-        selected: dict | None,
-        *,
-        message: str,
-    ) -> dict | None:
-        if not isinstance(selected, dict):
-            return selected
-
-        from app.domain.services.chat_drawing_analyser_parameter_service import (
-            ChatDrawingAnalyserParameterService,
-        )
-
-        arguments = selected.get("arguments") or {}
-        action_id = str(arguments.get("actionId") or "").strip()
-        action: dict = {"path": "/products/{code}/analyser"}
-
-        if action_id and getattr(selection_service, "repository", None):
-            bundle = selection_service.repository.get_action_for_execution(action_id)
-
-            if isinstance(bundle, dict) and isinstance(bundle.get("action"), dict):
-                action = bundle["action"]
-
-        return ChatDrawingAnalyserParameterService.apply_to_tool_call(
-            selected,
-            action=action,
-            drawing_analysis_mode=True,
-            message=message,
         )
 
     @classmethod
@@ -1174,16 +484,4 @@ class ChatExternalActionOrchestrationService:
         return (
             ChatFollowUpTurnContentService.continuity_mode_for_decision(decision)
             != "allow_discovery"
-        )
-
-    @classmethod
-    def _resolve_product_intent(cls, message: str, normalized: str) -> str:
-        intent = ChatProductQueryIntentService.detect(message)
-
-        if intent != ChatProductQueryIntent.FULL:
-            return intent
-
-        return ChatProductQueryIntentService.refine_operational_intent_from_full(
-            message,
-            normalized=normalized,
         )

@@ -21,6 +21,13 @@ PLATFORM_DIRECT_ANSWER_TOOL_NAMES = frozenset(
     }
 )
 
+PLANNER_SIGNAL_TOOL_NAMES = frozenset(
+    {
+        "clarify_external_action",
+        "unknown_tool",
+    }
+)
+
 
 class ChatPlatformInternalToolsService:
     @classmethod
@@ -30,6 +37,10 @@ class ChatPlatformInternalToolsService:
     @classmethod
     def is_direct_answer_tool(cls, tool_name: str | None) -> bool:
         return str(tool_name or "") in PLATFORM_DIRECT_ANSWER_TOOL_NAMES
+
+    @classmethod
+    def is_non_executable_planner_signal(cls, tool_name: str | None) -> bool:
+        return str(tool_name or "") in PLANNER_SIGNAL_TOOL_NAMES
 
     @classmethod
     def is_platform_direct_answer_turn(cls, tool_calls: list | None) -> bool:

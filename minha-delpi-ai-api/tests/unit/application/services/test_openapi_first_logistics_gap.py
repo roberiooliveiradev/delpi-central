@@ -6,8 +6,6 @@ for an API that never existed in operational_route_registry.json.
 
 from __future__ import annotations
 
-import pytest
-
 from app.application.services.external_actions.external_action_selection_service import (
     ExternalActionSelectionService,
 )
@@ -60,12 +58,8 @@ def test_logistics_import_produces_tracking_and_cancel_actions():
     assert "/shipments/{id}/tracking" in str(tracking["path"])
 
 
-def test_select_action_facade_uses_openapi_first_and_binds_shipment_id(monkeypatch):
-    """Fase 9: facade select_action com mode=on não depende do registry."""
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "on",
-    )
+def test_select_action_facade_uses_openapi_first_and_binds_shipment_id():
+    """Fase 9: facade select_action não depende do registry."""
     actions = import_logistics_actions()
     for action in actions:
         action["enabled"] = True
@@ -82,7 +76,7 @@ def test_select_action_facade_uses_openapi_first_and_binds_shipment_id(monkeypat
     assert (selected["arguments"].get("parameters") or {}).get("id") == "45871"
 
 
-def test_openapi_first_acceptance_tracking_with_path_param(monkeypatch):
+def test_openapi_first_acceptance_tracking_with_path_param():
     """Aceite: planner OpenAPI-first liga tracking + id sem registry."""
     from app.application.services.openapi_first_selection_bridge_service import (
         OpenApiFirstSelectionBridgeService,
@@ -92,10 +86,6 @@ def test_openapi_first_acceptance_tracking_with_path_param(monkeypatch):
     )
     from app.domain.services.openapi_planner_mode_service import OpenApiPlannerModeDecision
 
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "on",
-    )
     actions = import_logistics_actions()
     repo = _LogisticsRepository(actions)
     bridge = OpenApiFirstSelectionBridgeService(repo, planner=PlanExternalActionsService(llm_planner=None))

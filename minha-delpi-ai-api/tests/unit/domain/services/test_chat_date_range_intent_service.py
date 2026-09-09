@@ -126,6 +126,50 @@ def test_resolve_named_month_in_current_year():
     assert resolved.end_date == "31-03-2026"
 
 
+def test_named_month_outranks_recent_soft():
+    resolved = ChatDateRangeIntentService.resolve(
+        "Mostre o ROL comercial recente (agosto 2026) com KPI",
+        today=date(2026, 9, 9),
+    )
+
+    assert resolved is not None
+    assert resolved.start_date == "01-08-2026"
+    assert resolved.end_date == "31-08-2026"
+
+
+def test_named_month_outranks_recent_soft_sibling_july():
+    resolved = ChatDateRangeIntentService.resolve(
+        "indicadores recentes de julho 2025",
+        today=date(2026, 9, 9),
+    )
+
+    assert resolved is not None
+    assert resolved.start_date == "01-07-2025"
+    assert resolved.end_date == "31-07-2025"
+
+
+def test_recent_without_month_stays_last_n_days():
+    resolved = ChatDateRangeIntentService.resolve(
+        "ROL comercial recente",
+        today=date(2026, 9, 9),
+    )
+
+    assert resolved is not None
+    assert resolved.start_date == "11-08-2026"
+    assert resolved.end_date == "09-09-2026"
+
+
+def test_month_space_year_without_de():
+    resolved = ChatDateRangeIntentService.resolve_explicit_calendar_period(
+        "taxa de fechamento filial 01 em agosto 2026",
+        today=date(2026, 9, 9),
+    )
+
+    assert resolved is not None
+    assert resolved.start_date == "01-08-2026"
+    assert resolved.end_date == "31-08-2026"
+
+
 def test_named_month_without_year_is_ambiguous_before_month_occurs():
     ambiguous = ChatDateRangeIntentService.detect_ambiguous_named_month(
         "rol do mes de marco",

@@ -12,8 +12,7 @@ Modos:
 
 Fases:
   1) inprocess — fixture logística no processo (selectionMode=openapi_first)
-  2) http — chat live via gateway (OpenAPI-first é o default da API; override
-     opcional só via env CHAT_OPENAPI_PLANNER_MODE se precisar de shadow/off)
+  2) http — chat live via gateway (OpenAPI-first é o único seletor)
 """
 
 from __future__ import annotations
@@ -149,10 +148,6 @@ def phase_inprocess() -> list[str]:
         _fail("content_ports", str(exc))
         return errors
 
-    from app.infrastructure.config.settings import Settings
-
-    Settings.CHAT_OPENAPI_PLANNER_MODE = "on"
-
     from app.application.services.chat_external_action_orchestration_service import (
         ChatExternalActionOrchestrationService,
     )
@@ -270,12 +265,7 @@ def phase_http() -> list[str]:
         _fail("agent", str(exc))
         return errors
 
-    # Descobre mode efetivo no container via endpoint de status se existir;
-    # fallback: inferir do adminDebug do turno.
-    container_mode = (
-        os.environ.get("CHAT_OPENAPI_PLANNER_MODE") or "on (Settings default)"
-    ).strip()
-    print(f"info  CHAT_OPENAPI_PLANNER_MODE (host env hint)={container_mode}")
+    print("info  OpenAPI-first é o único seletor (sem flag de mode)")
 
     try:
         session_id = _create_session(token, agent_id)
@@ -312,24 +302,17 @@ def phase_http() -> list[str]:
             f"tools={len(tool_calls)} chars={len(content)}",
         )
 
-    # Se shadow/on estiver ativo, procura metadata de seleção OpenAPI.
+    # Procura metadata de seleção OpenAPI.
     blob = json.dumps(
         {"toolCalls": tool_calls, "adminDebug": admin_debug, "metadata": metadata},
         ensure_ascii=False,
     )
-    if "openapi_first" in blob or "openapiShadow" in blob or "openapiFirst" in blob:
+    if "openapi_first" in blob or "openapiFirst" in blob:
         _ok("openapi_metadata", "sinal OpenAPI-first presente no turno")
-    elif container_mode in {"on", "shadow", "canary"}:
-        # Após execução, metadata de seleção costuma ser substituída pela de present/HTTP.
-        # O critério live é: turno DELPI continua saudável com mode≠off no container.
+    else:
         _ok(
             "openapi_runtime",
-            f"mode={container_mode} sem regressão no turno (metadata de seleção pode não sobreviver ao present)",
-        )
-    else:
-        print(
-            "info  mode=off (esperado): path legado; reinicie a API com "
-            "CHAT_OPENAPI_PLANNER_MODE=shadow|canary|on para validar o runtime HTTP"
+            "turno DELPI saudável (metadata de seleção pode não sobreviver ao present)",
         )
 
     # Turno logístico só faz sentido se o provider estiver importado no agente.

@@ -38,7 +38,7 @@ class ChatToolParameterGroundingService:
         schema = action.get("parametersSchema") if isinstance(action, dict) else None
 
         if not isinstance(schema, list) or not schema:
-            return grounded
+            return {} if isinstance(schema, list) else dict(parameters or {})
 
         resolved_message = message if message not in (None, "") else (
             ChatToolGroundingContextService.current_message()
@@ -79,6 +79,11 @@ class ChatToolParameterGroundingService:
         )
 
     @classmethod
+    def retain_declared_parameters(cls, schema: list, parameters: dict) -> dict[str, Any]:
+        """API pública do strip OpenAPI — planner e executor compartilham a regra."""
+        return cls._retain_schema_parameters(schema, parameters)
+
+    @classmethod
     def _retain_schema_parameters(
         cls,
         schema: list,
@@ -95,7 +100,7 @@ class ChatToolParameterGroundingService:
             if isinstance(parameter, dict) and str(parameter.get("name") or "").strip()
         }
         if not schema_names:
-            return dict(parameters or {})
+            return {}
         return {
             key: value
             for key, value in dict(parameters or {}).items()

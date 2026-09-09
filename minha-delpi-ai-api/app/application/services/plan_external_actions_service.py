@@ -630,6 +630,23 @@ class PlanExternalActionsService:
             "endDate",
             "granularity",
         } & schema_names
+        if date_branch_names:
+            from app.domain.services.chat_date_range_intent_service import (
+                ChatDateRangeIntentService,
+            )
+            from app.domain.services.chat_reference_clock import ChatReferenceClock
+
+            specific = ChatDateRangeIntentService.resolve_explicit_calendar_period(
+                message,
+                today=ChatReferenceClock.today(execution_context),
+            )
+            if specific:
+                for name in ("start_date", "date_start", "startDate"):
+                    if name in schema_names:
+                        parameters[name] = specific.start_date
+                for name in ("end_date", "date_end", "endDate"):
+                    if name in schema_names:
+                        parameters[name] = specific.end_date
         if date_branch_names and not date_branch_names.issubset(parameters.keys()):
             from app.domain.services.operational_api_parameter_builder_service import (
                 OperationalApiParameterBuilderService,
@@ -657,6 +674,14 @@ class PlanExternalActionsService:
                 message=message,
                 previous_messages=previous_messages,
                 execution_context=execution_context,
+            )
+            from app.domain.services.chat_tool_parameter_grounding_service import (
+                ChatToolParameterGroundingService,
+            )
+
+            parameters = ChatToolParameterGroundingService.retain_declared_parameters(
+                schema_params,
+                parameters,
             )
 
         for parameter in schema_params:

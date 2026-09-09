@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.application.services.decompose_external_action_requests_service import (
-    DecomposeExternalActionRequestsService,
-)
 from app.application.services.external_actions.external_action_selection_diagnostics_service import (
     ExternalActionSelectionDiagnosticsService,
 )
@@ -17,14 +14,10 @@ from app.application.services.retrieve_action_candidates_service import (
 from app.application.services.validate_action_arguments_service import (
     ValidateActionArgumentsService,
 )
-from app.domain.models.action_plan import ActionPlan, ActionPlanStep
-from app.domain.services.chat_planner_conversation_context_service import (
-    ChatPlannerConversationContextService,
-)
+from app.domain.models.action_plan import ActionPlan
 from app.domain.services.chat_write_confirmation_service import ChatWriteConfirmationService
 from app.domain.services.openapi_planner_mode_service import (
     OpenApiPlannerModeDecision,
-    OpenApiPlannerModeService,
 )
 from app.domain.services.openapi_tool_routing_content_service import (
     OpenApiToolRoutingContentService,
@@ -77,19 +70,11 @@ class OpenApiFirstSelectionBridgeService:
         workspace_context: dict | None = None,
         mode_decision: OpenApiPlannerModeDecision | None = None,
     ) -> list[dict[str, Any]]:
-        decision = mode_decision or OpenApiPlannerModeService.decide(
-            provider_keys=self._provider_keys(catalog_actions, allowed_action_ids),
-            agent_id=self._agent_id(workspace_context),
-        )
-        if not decision.use_openapi_selection and not decision.run_shadow_compare:
-            return []
-
+        del mode_decision
         execution_context = self._execution_context(
             workspace_context,
             previous_messages=previous_messages,
         )
-        subtasks = DecomposeExternalActionRequestsService.decompose(message)
-        plans: list[ActionPlan] = []
         actions_by_id: dict[str, dict[str, Any]] = {}
         for action in catalog_actions or []:
             action_id = str(action.get("actionId") or "").strip()
@@ -97,101 +82,22 @@ class OpenApiFirstSelectionBridgeService:
                 actions_by_id[action_id] = dict(action)
 
         rolling_context = dict(execution_context or {})
-        from app.domain.services.chat_bounded_planner_mode_service import (
-            ChatBoundedPlannerModeService,
+        from app.application.services.chat_turn_planner_orchestrator_service import (
+            ChatTurnPlannerOrchestratorService,
         )
 
-        bounded = ChatBoundedPlannerModeService.decide(
-            provider_keys=self._provider_keys(catalog_actions, allowed_action_ids),
-            agent_id=self._agent_id(workspace_context),
+        orchestrator = ChatTurnPlannerOrchestratorService(
+            retriever=self.retriever,
+            planner=self.planner,
         )
-        if bounded.use_bounded_loop:
-            from app.application.services.chat_turn_planner_orchestrator_service import (
-                ChatTurnPlannerOrchestratorService,
-            )
-
-            orchestrator = ChatTurnPlannerOrchestratorService(
-                retriever=self.retriever,
-                planner=self.planner,
-            )
-            plan, actions_by_id, trace = orchestrator.build_plan(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                catalog_actions=catalog_actions,
-                previous_messages=previous_messages,
-                workspace_context=workspace_context,
-                execution_context=rolling_context,
-            )
-            for step in plan.steps:
-                resolved = self._resolve_action_dict(
-                    step.action_id,
-                    actions_by_id=actions_by_id,
-                    allowed_action_ids=allowed_action_ids,
-                    catalog_actions=catalog_actions,
-                    message=message,
-                )
-                if resolved:
-                    actions_by_id[step.action_id] = resolved
-            planned = self._plan_to_tool_calls(
-                plan,
-                message=message,
-                actions_by_id=actions_by_id,
-            )
-            annotated: list[dict[str, Any]] = []
-            for item in planned:
-                meta = dict(item.get("metadata") or {})
-                meta["selectionMode"] = "openapi_first"
-                meta["openapiPlannerMode"] = decision.mode
-                meta["boundedPlannerMode"] = bounded.mode
-                meta.update(trace)
-                item["metadata"] = meta
-                enriched = ExternalActionSelectionDiagnosticsService.annotate(
-                    item,
-                    match_source="openapiFirst",
-                    reason_key="openapiFirstPlan",
-                )
-                annotated.append(enriched if isinstance(enriched, dict) else item)
-            return annotated
-
-        compound_fragments = len(subtasks) > 1
-        # Compound decompose already split the user intent — prefer deterministic
-        # binder/ranker per fragment (LLM free-pick on fragments drops siblings).
-        fragment_planner = (
-            PlanExternalActionsService(llm_planner=None)
-            if compound_fragments
-            else self.planner
+        plan, actions_by_id, trace = orchestrator.build_plan(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            catalog_actions=catalog_actions,
+            previous_messages=previous_messages,
+            workspace_context=workspace_context,
+            execution_context=rolling_context,
         )
-        for subtask in subtasks:
-            candidates = self.retriever.retrieve(
-                subtask.text,
-                allowed_action_ids=allowed_action_ids,
-                catalog_actions=catalog_actions,
-            )
-            for candidate in candidates:
-                if candidate.action_id:
-                    actions_by_id[candidate.action_id] = candidate.raw_action
-            plan = fragment_planner.plan(
-                subtask.text,
-                candidates,
-                previous_messages=previous_messages,
-                execution_context=rolling_context,
-                max_steps=1 if compound_fragments else None,
-                conversation_context=ChatPlannerConversationContextService.build(
-                    previous_messages=previous_messages,
-                    workspace_context=workspace_context,
-                    execution_context=rolling_context,
-                ),
-            )
-            plans.append(plan)
-            # Propagate resolved args across independent read subtasks (compound DAG).
-            for step in plan.steps:
-                rolling_context = self.merge_execution_context(
-                    rolling_context,
-                    provider_key=None,
-                    action_id=step.action_id,
-                    arguments=step.arguments,
-                )
-        plan = self._merge_subtask_plans(plans)
         for step in plan.steps:
             resolved = self._resolve_action_dict(
                 step.action_id,
@@ -202,7 +108,6 @@ class OpenApiFirstSelectionBridgeService:
             )
             if resolved:
                 actions_by_id[step.action_id] = resolved
-
         planned = self._plan_to_tool_calls(
             plan,
             message=message,
@@ -212,7 +117,9 @@ class OpenApiFirstSelectionBridgeService:
         for item in planned:
             meta = dict(item.get("metadata") or {})
             meta["selectionMode"] = "openapi_first"
-            meta["openapiPlannerMode"] = decision.mode
+            meta["openapiPlannerMode"] = "on"
+            meta["boundedPlannerMode"] = "on"
+            meta.update(trace)
             item["metadata"] = meta
             enriched = ExternalActionSelectionDiagnosticsService.annotate(
                 item,
@@ -222,34 +129,6 @@ class OpenApiFirstSelectionBridgeService:
             annotated.append(enriched if isinstance(enriched, dict) else item)
         return annotated
 
-    @classmethod
-    def compare_shadow(
-        cls,
-        *,
-        legacy_planned: list[dict[str, Any]],
-        openapi_planned: list[dict[str, Any]],
-    ) -> dict[str, Any]:
-        legacy_ids = [
-            str((item.get("arguments") or {}).get("actionId") or item.get("actionId") or "")
-            for item in legacy_planned
-        ]
-        openapi_ids = [
-            str((item.get("arguments") or {}).get("actionId") or item.get("actionId") or "")
-            for item in openapi_planned
-        ]
-        diverged = legacy_ids != openapi_ids
-        return {
-            "selectionMode": "shadow",
-            "legacyActionIds": legacy_ids,
-            "openapiActionIds": openapi_ids,
-            "diverged": diverged,
-            "reason": OpenApiToolRoutingContentService.get(
-                "selectionReasons",
-                "openapiFirstShadowDivergence",
-            )
-            if diverged
-            else None,
-        }
 
     def _plan_to_tool_calls(
         self,
@@ -412,38 +291,6 @@ class OpenApiFirstSelectionBridgeService:
         return current if isinstance(current, dict) else None
 
     @classmethod
-    def _merge_subtask_plans(cls, plans: list[ActionPlan]) -> ActionPlan:
-        if not plans:
-            return ActionPlan(selection_mode="openapi_first")
-        if len(plans) == 1:
-            return plans[0]
-
-        steps: list[ActionPlanStep] = []
-        seen: set[str] = set()
-        clarify: str | None = None
-        metadata: dict[str, Any] = {"compound": True, "subtaskCount": len(plans)}
-        for plan in plans:
-            if plan.clarify and not plan.steps:
-                clarify = clarify or plan.clarify
-                continue
-            for step in plan.steps:
-                if step.action_id in seen:
-                    continue
-                seen.add(step.action_id)
-                steps.append(step)
-        if not steps and clarify:
-            return ActionPlan(
-                clarify=clarify,
-                selection_mode="openapi_first",
-                metadata=metadata,
-            )
-        return ActionPlan(
-            steps=tuple(steps),
-            selection_mode="openapi_first",
-            metadata=metadata,
-        )
-
-    @classmethod
     def _execution_context(
         cls,
         workspace_context: dict | None,
@@ -465,38 +312,6 @@ class OpenApiFirstSelectionBridgeService:
             previous_messages
         )
         return previous or {}
-
-    @classmethod
-    def _agent_id(cls, workspace_context: dict | None) -> str | None:
-        if not isinstance(workspace_context, dict):
-            return None
-        for key in ("agentId", "activeAgentId", "contextAgentId"):
-            value = workspace_context.get(key)
-            if value:
-                return str(value).strip()
-        agent = workspace_context.get("agent")
-        if isinstance(agent, dict) and agent.get("id"):
-            return str(agent["id"]).strip()
-        return None
-
-    def _provider_keys(
-        self,
-        catalog_actions: list[dict[str, Any]] | None,
-        allowed_action_ids: list[str] | None,
-    ) -> set[str]:
-        keys: set[str] = set()
-        for action in catalog_actions or []:
-            key = str(action.get("providerKey") or "").strip()
-            if key:
-                keys.add(key)
-        if keys:
-            return keys
-        # Infer from actionId prefix (provider_key.operation)
-        for action_id in allowed_action_ids or []:
-            text = str(action_id)
-            if "." in text:
-                keys.add(text.split(".", 1)[0])
-        return keys
 
     @classmethod
     def merge_execution_context(

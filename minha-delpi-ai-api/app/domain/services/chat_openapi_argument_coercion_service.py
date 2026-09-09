@@ -34,7 +34,11 @@ class ChatOpenApiArgumentCoercionService:
             return out
 
         today = ChatReferenceClock.today(execution_context)
-        grounded = ChatDateRangeIntentService.resolve(
+        specific = ChatDateRangeIntentService.resolve_explicit_calendar_period(
+            message,
+            today=today,
+        )
+        grounded = specific or ChatDateRangeIntentService.resolve(
             message,
             today=today,
             previous_messages=previous_messages,
@@ -45,6 +49,7 @@ class ChatOpenApiArgumentCoercionService:
         grounded_end = (
             ChatDateRangeIntentService.parse_api_date(grounded.end_date) if grounded else None
         )
+        prefer_message_calendar = specific is not None
 
         for parameter in date_params:
             name = str(parameter.get("name") or "").strip()
@@ -52,6 +57,20 @@ class ChatOpenApiArgumentCoercionService:
             parsed = ChatDateRangeIntentService.parse_api_date(
                 str(current) if current is not None else ""
             )
+            if (
+                prefer_message_calendar
+                and grounded_start is not None
+                and name in cls._START_NAMES
+            ):
+                out[name] = grounded_start.strftime("%Y-%m-%d")
+                continue
+            if (
+                prefer_message_calendar
+                and grounded_end is not None
+                and name in cls._END_NAMES
+            ):
+                out[name] = grounded_end.strftime("%Y-%m-%d")
+                continue
             if parsed is not None:
                 out[name] = parsed.strftime("%Y-%m-%d")
                 continue

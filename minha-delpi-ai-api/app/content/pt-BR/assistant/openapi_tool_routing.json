@@ -12,7 +12,7 @@
     "minQuotedPhraseChars": 10,
     "clauseMarkers": ["Do not use", "Não use", "Nao use"]
   },
-    "planner": {
+  "planner": {
     "maxSteps": 4,
     "llmSystemPrompt": "You are an OpenAPI action planner. Choose only actionId values present in the catalog. Return JSON matching the schema (planVersion 2). Never invent paths, URLs, operationIds or actionIds outside the catalog. Prefer the most specific operation when candidates are similar. Respect negative guidance in action descriptions. Distinct data domains in one user turn = multiple steps with goalIds, even without Portuguese joiners. Phrases like 'tudo na mesma resposta' / 'numa resposta só' / KPI+série are presentation-only — one step. If the current top-K is insufficient, set mode to SEARCH_ACTIONS and searchRequests.actions with a short query per goal. Do not invent topicIds; only reference ids listed in conversation context. Current-turn values override older topics.",
     "llmUserTemplate": "User message:\n{message}\n\nConversation context (structured, not full history):\n{conversation_context}\n\nAuthorized action catalog (JSON):\n{catalog}\n\nCandidate set id: {candidate_set_id}\n\nExpected response schema:\n{schema}",
@@ -107,18 +107,11 @@
     }
   },
   "boundedLoop": {
-    "default": "on",
     "maxPlannerRoundsPerTurn": 2,
     "maxActionSearchesPerTurn": 2,
     "maxKnowledgeSearchesPerTurn": 2
   },
-  "modes": {
-    "default": "on",
-    "allowed": ["on", "canary"],
-    "legacyAliases": ["off", "shadow"],
-    "legacyOffNote": "off/shadow are accepted as aliases of on — registry selection pipeline removed."
-  },
-    "decomposition": {
+  "decomposition": {
     "maxSubtasks": 4,
     "minSubtaskChars": 12,
     "numberedListPattern": "\\(\\s*\\d+\\s*\\)",
@@ -128,29 +121,6 @@
       "tudo na mesma resposta",
       "tudo numa resposta",
       "na mesma resposta"
-    ],
-    "compoundSignals": [
-      "visao integrada",
-      "visão integrada",
-      "visao consolidada",
-      "visão consolidada",
-      "ficha completa",
-      "analise completa",
-      "análise completa"
-    ],
-    "joiners": [
-      ", compare ",
-      " e tambem ",
-      " e também ",
-      " e depois ",
-      " e mostre ",
-      " e diga ",
-      ", mostre ",
-      " alem disso ",
-      " além disso ",
-      " e (2) ",
-      " e (3) ",
-      "; "
     ]
   },
   "agenticGate": {
@@ -161,7 +131,6 @@
     "openapiFirstClarify": "Não foi possível executar: falta informação obrigatória no contrato OpenAPI.",
     "openapiFirstRejectedOutsideTopK": "Action fora do top-K recuperado — rejeitada pelo planner OpenAPI-first.",
     "openapiFirstWriteNeedsConfirm": "Action de escrita exige confirmação explícita do usuário.",
-    "openapiFirstShadowDivergence": "Seleção legado e OpenAPI-first divergiram (modo shadow).",
     "openapiFirstNoMatch": "Não encontrei uma action autorizada no catálogo OpenAPI para este pedido. Reformule ou vincule a operation ao agente."
   },
   "gate": {
@@ -179,11 +148,6 @@
       "app/domain/services/openapi_planner_mode_service.py",
       "app/domain/services/chat_bounded_planner_mode_service.py",
       "app/domain/services/chat_goal_coverage_service.py"
-    ],
-    "legacyAllowlistGlobs": [
-      "app/application/services/external_actions/**",
-      "app/domain/services/operational_route_*.py",
-      "app/content/pt-BR/assistant/operational_route_registry.json"
     ]
   }
 }

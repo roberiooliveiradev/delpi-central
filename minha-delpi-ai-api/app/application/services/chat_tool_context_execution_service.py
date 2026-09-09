@@ -182,6 +182,31 @@ class ChatToolContextExecutionService:
             action_id = str(arguments.get("actionId") or arguments.get("action_id") or "")
             path_hint = str(arguments.get("path") or "")
 
+            if ChatPlatformInternalToolsService.is_non_executable_planner_signal(tool_name):
+                clarify_text = str(
+                    arguments.get("message")
+                    or selected_tool.get("directAnswer")
+                    or selected_tool.get("reason")
+                    or ""
+                ).strip()
+                if clarify_text:
+                    direct_answer = direct_answer or clarify_text
+                    skip_rag = True
+                safe_tool_calls.append(
+                    {
+                        "name": tool_name,
+                        "arguments": arguments,
+                        "reason": selected_tool.get("reason"),
+                        "metadata": {
+                            "ok": False,
+                            "skippedExecution": True,
+                            "plannerSignal": True,
+                        },
+                        "directAnswer": clarify_text or None,
+                    }
+                )
+                continue
+
             if tool_name == "execute_external_action" and session_response_format:
                 arguments = _prepare_external_arguments(selected_tool)
                 selected_tool = {**selected_tool, "arguments": arguments}

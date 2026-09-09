@@ -31,22 +31,14 @@ class _Repo:
         return []
 
 
-def test_legacy_modes_alias_to_on(monkeypatch):
-    for raw in ("off", "shadow", "on"):
-        monkeypatch.setattr(
-            "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-            raw,
-        )
-        assert OpenApiPlannerModeService.resolve_mode() == "on"
-        decision = OpenApiPlannerModeService.decide()
-        assert decision.use_openapi_selection is True
+def test_openapi_planner_is_always_on():
+    assert OpenApiPlannerModeService.resolve_mode() == "on"
+    decision = OpenApiPlannerModeService.decide()
+    assert decision.use_openapi_selection is True
+    assert decision.run_shadow_compare is False
 
 
-def test_select_action_uses_openapi_without_dispatch(monkeypatch):
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "on",
-    )
+def test_select_action_uses_openapi_without_dispatch():
     actions = import_logistics_actions()
     for action in actions:
         action["enabled"] = True
@@ -62,11 +54,7 @@ def test_select_action_uses_openapi_without_dispatch(monkeypatch):
     assert (selected.get("arguments") or {}).get("parameters", {}).get("id") == "45871"
 
 
-def test_select_action_for_product_uses_openapi(monkeypatch):
-    monkeypatch.setattr(
-        "app.infrastructure.config.settings.Settings.CHAT_OPENAPI_PLANNER_MODE",
-        "off",  # alias → on
-    )
+def test_select_action_for_product_uses_openapi():
     actions = [
         {
             "actionId": "stock-action",
