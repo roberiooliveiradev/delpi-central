@@ -249,15 +249,39 @@ class PresentationSpecComposerApplicationService:
         profile: dict[str, Any],
         excerpt: str | None,
     ) -> str:
+        return json.dumps(
+            cls.build_compose_payload(
+                intent=intent,
+                profile=profile,
+                excerpt=excerpt,
+            ),
+            ensure_ascii=False,
+        )
+
+    @classmethod
+    def build_compose_payload(
+        cls,
+        *,
+        intent: dict[str, Any],
+        profile: dict[str, Any],
+        excerpt: str | None,
+    ) -> dict[str, Any]:
+        """Prompt shape for LLM — profile stats only; never raw rows or sensitive keys."""
+        sensitive_keys = {
+            str(item.get("key") or "").strip()
+            for item in (profile.get("fields") or [])
+            if isinstance(item, dict) and item.get("sensitive") and str(item.get("key") or "").strip()
+        }
         safe_fields = []
         for item in profile.get("fields") or []:
             if not isinstance(item, dict):
                 continue
-            if item.get("sensitive"):
+            key = str(item.get("key") or "").strip()
+            if not key or key in sensitive_keys or item.get("sensitive"):
                 continue
             safe_fields.append(
                 {
-                    "key": item.get("key"),
+                    "key": key,
                     "semanticType": item.get("semanticType"),
                     "cardinalityBand": item.get("cardinalityBand"),
                     "displayLabel": item.get("displayLabel"),
@@ -265,10 +289,20 @@ class PresentationSpecComposerApplicationService:
                     "isMeasureCandidate": item.get("isMeasureCandidate"),
                 }
             )
-        payload = {
-            "intent": intent,
-            "dimensionCandidates": profile.get("dimensionCandidates"),
-            "measureCandidates": profile.get("measureCandidates"),
+
+        def _safe_candidates(values: Any) -> list[str]:
+            if not isinstance(values, list):
+                return []
+            return [
+                str(item).strip()
+                for item in values
+                if str(item or "").strip() and str(item).strip() not in sensitive_keys
+            ]
+
+        return {
+            "intent": intent if isinstance(intent, dict) else {},
+            "dimensionCandidates": _safe_candidates(profile.get("dimensionCandidates")),
+            "measureCandidates": _safe_candidates(profile.get("measureCandidates")),
             "fields": safe_fields,
             "userExcerpt": str(excerpt or "")[:400],
             "allowedPaletteFamilies": [
@@ -284,10 +318,9 @@ class PresentationSpecComposerApplicationService:
                 "heatmap requires x,y discriminant + color measure",
                 "labels map keys must match field keys",
                 "paletteFamily semantic only",
+                "never invent hex CSS or JavaScript",
             ],
         }
-        return json.dumps(payload, ensure_ascii=False)
-
     @classmethod
     def _parse_json(cls, raw: str) -> dict[str, Any] | None:
         text = str(raw or "").strip()
