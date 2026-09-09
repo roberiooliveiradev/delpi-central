@@ -1,5 +1,5 @@
 ---
-description: Responsabilidade transversal canônica — estratégia de testes, regressão, contrato, integração, evidência, critérios de PASS e Definition of Done
+description: Responsabilidade transversal canônica — estratégia de testes, regressão, contrato, integração, evidência, execução de planos, critérios de PASS e Definition of Done
 alwaysApply: false
 ---
 
@@ -8,6 +8,8 @@ alwaysApply: false
 ## Responsabilidade
 
 Esta é a fonte transversal para decidir **o que testar, em qual camada, como provar correção e quando uma entrega pode ser considerada concluída** fora e dentro do Chat AI.
+
+Também é o owner transversal de planejamento e execução disciplinada de planos por meio de `plan-construction.mdc` e `plan-execution.mdc`.
 
 ## Princípio
 
@@ -26,6 +28,24 @@ requisito/bug
 → integração/contrato quando aplicável
 → objetivo original
 ```
+
+## Execução de planos aprovados
+
+Quando a mudança é executada a partir de `.cursor/plans/*.plan.md` ou de um plano `E*.S*` aprovado, aplicar `plan-execution.mdc`.
+
+A execução deve provar, antes de avançar:
+
+```text
+READY_TO_EXECUTE
+→ diff controlado
+→ testes/evidência
+→ revisão adversarial do diff
+→ READY_TO_COMMIT quando autorizado
+→ pós-condições
+→ dependentes desbloqueados
+```
+
+Se evidência nova invalidar a premissa do plano, classificar `EXECUTION_DRIFT` e interromper o subgrafo afetado. Não adaptar a implementação para obedecer cegamente ao plano.
 
 ## Pirâmide por risco
 
@@ -123,7 +143,8 @@ Uma entrega só pode ser declarada PASS quando:
 - falhas relevantes foram classificadas;
 - objetivo original foi revalidado;
 - nenhuma regressão material conhecida foi ocultada;
-- evidência corresponde ao commit/configuração atuais.
+- evidência corresponde ao commit/configuração atuais;
+- quando oriunda de plano, drift material foi resolvido e pós-condições da etapa foram provadas.
 
 Se uma etapa obrigatória não pôde ser executada, registrar como **INCONCLUSIVE/PENDENTE**, não PASS.
 
@@ -141,6 +162,8 @@ A resposta deve gerar teste adicional quando o risco for material e testável.
 
 ## Regras filhas/complementares
 
+- `plan-construction.mdc`
+- `plan-execution.mdc`
 - `test-and-commit.mdc`
 - `root-cause-generalized-fix.mdc`
 - `architecture-ci-enforcement.mdc`
@@ -160,6 +183,16 @@ KNOWN_REGRESSIONS
 CI_STATUS
 ```
 
+Para subetapa de plano, incluir também:
+
+```text
+PLAN_STEP
+EXECUTION_DRIFT
+DIFF_SCOPE_REVIEW
+POSTCONDITIONS_PROVED
+DEPENDENTS_UNLOCKED
+```
+
 ## Critério de sucesso
 
-Os testes devem reduzir incerteza sobre o comportamento real da plataforma, não apenas validar a implementação escolhida.
+Os testes devem reduzir incerteza sobre o comportamento real da plataforma, não apenas validar a implementação escolhida. Na execução de planos, cada etapa deve reduzir incerteza antes de desbloquear a próxima.
