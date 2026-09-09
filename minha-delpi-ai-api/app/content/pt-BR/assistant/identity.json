@@ -295,7 +295,7 @@
     "capabilitiesHint": "Para ver tudo que consigo fazer nesta sessão, pergunte: *o que você pode fazer* ou abra o painel **?**."
   },
   "catalogSync": {
-    "version": "2026.06.03",
+    "version": "2026.09.09",
     "featuresCatalogPath": "assistant/features_catalog",
     "capabilitiesPath": "assistant/capabilities",
     "featureIds": [
@@ -315,6 +315,7 @@
       "web_search",
       "canvas",
       "chart",
+      "presentation_composer",
       "attachment",
       "text_tasks",
       "agent_selection",

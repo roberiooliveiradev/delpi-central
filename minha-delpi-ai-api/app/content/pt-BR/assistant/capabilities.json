@@ -40,7 +40,11 @@
       "Para comparar ou resumir um resultado anterior, referencie «essa tabela» ou «esses dados».",
       "Após um KPI (ex.: ROL), peça «compara filial 01 vs filial 02» (typos como filail também funcionam) na mesma conversa.",
       "Perguntas de **negócio** (ex.: «visão 360° do produto», «onde é usado e quem fornece?») costumam cruzar estoque, estrutura, compras e vendas.",
-      "Para **pesquisa na internet**, use frases como «pesquise na web sobre …» quando o agente tiver busca web habilitada."
+      "Para **pesquisa na internet**, use frases como «pesquise na web sobre …» quando o agente tiver busca web habilitada.",
+      "**Visualizações:** peça *tabela*, *gráfico*, *KPI*, *painel* ou *heatmap* na mesma pergunta; use **Expandir** para exportar CSV/Excel/PDF.",
+      "Campos **ocultos na tabela** (ex.: unidade auxiliar) continuam na exportação — só somem da grade visual.",
+      "Gráficos e heatmaps usam **família de cores** (`paletteFamily`) alinhada ao tema; peça «escala azul» ou «cores de status» quando quiser ênfase semântica.",
+      "Para documento longo ou rascunho editável, peça **lousa (canvas)** após os dados."
     ]
   },
   "skills": {
@@ -474,6 +478,10 @@
     "chartHelp": {
       "title": "**Gráficos e visualizações**",
       "body": "Depois de uma consulta com números, peça **gráfico**, **em gráfico de barras/linhas** ou **visualize**.\n\n**Exemplos:**\n- «Mostre vendas do produto 10080001 e gere um gráfico»\n- «Gere gráfico de barras com os dados acima»\n- «Compare em gráfico com o mês anterior»\n\nTambém aceito **tabela** ou **só texto** — diga o formato desejado na mesma pergunta."
+    },
+    "presentationComposerHelp": {
+      "title": "**Visualizações multi-view (Presentation Composer)**",
+      "body": "Posso montar **tabela**, **gráfico**, **KPI**, **painel (dashboard)**, **mapa de calor** ou enviar conteúdo para a **lousa**.\n\n**Tabela:** peça colunas, ordenação («ordene por saldo desc») ou oculte campos auxiliares na grade — a **exportação CSV/Excel** inclui todas as colunas compiladas (`exportColumns`), inclusive as ocultas na tela.\n\n**Gráfico / heatmap:** uso família de cores semântica (`paletteFamily`: sequential-blue, diverging-status, categorical…) resolvida pelo tema claro/escuro.\n\n**Painel:** combine KPI + gráfico + tabela; use **Expandir** para busca, filtro e exportação.\n\n**Lousa:** documentos longos e rascunhos editáveis na sessão.\n\n**Exemplos:** «em tabela ordenada por quantidade», «gráfico de barras», «painel com KPI», «heatmap escala azul», «coloque na lousa»."
     },
     "attachmentHelp": {
       "title": "**Anexos e arquivos**",

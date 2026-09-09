@@ -1,6 +1,6 @@
 {
-  "version": "2026.09.08",
-  "updatedAt": "2026-09-08T12:00:00Z",
+  "version": "2026.09.09",
+  "updatedAt": "2026-09-09T18:32:00Z",
   "features": [
     {
       "id": "capabilities_overview",
@@ -23,6 +23,7 @@
         "web_search",
         "canvas",
         "chart",
+        "presentation_composer",
         "attachment",
         "product_lookup",
         "commercial_indicators",
@@ -339,6 +340,7 @@
       ],
       "relatedFeatures": [
         "chart",
+        "presentation_composer",
         "web_search"
       ]
     },
@@ -356,11 +358,41 @@
       ],
       "howToUse": [
         "Peça gráfico após uma consulta com números (KPI, série ou listagem).",
-        "Os rótulos dos eixos e colunas seguem o mesmo catálogo/meta da API usado na tabela e no comentário — não uma tradução livre na prosa."
+        "Os rótulos dos eixos e colunas seguem o mesmo catálogo/meta da API usado na tabela e no comentário — não uma tradução livre na prosa.",
+        "Heatmaps e séries usam família de cores semântica (`paletteFamily`, ex.: sequential-blue ou diverging-status) — resolvida pelo tema claro/escuro no chat."
       ],
       "relatedFeatures": [
         "sales_lookup",
-        "canvas"
+        "canvas",
+        "presentation_composer"
+      ]
+    },
+    {
+      "id": "presentation_composer",
+      "title": "Visualizações multi-view",
+      "category": "visualization",
+      "status": "available",
+      "summary": "Tabela, gráfico, KPI, painel, heatmap e lousa — colunas, ordenação e paleta sem perder dados na exportação.",
+      "requiresAgent": false,
+      "helpTopicId": "presentation_composer",
+      "examples": [
+        "Mostre em tabela ordenada por quantidade decrescente",
+        "Gere gráfico de barras com os dados acima",
+        "Monte um painel com KPI e tabela",
+        "Heatmap da matriz com escala azul",
+        "Coloque o resumo na lousa"
+      ],
+      "howToUse": [
+        "Peça o formato na mesma frase: *em tabela*, *gráfico*, *KPI*, *painel* ou *mapa de calor*.",
+        "Tabela: escolha colunas, peça ordenação (ex.: «ordene por saldo desc») ou oculte campos auxiliares na tela — a exportação CSV/Excel mantém todas as colunas compiladas.",
+        "Gráfico/heatmap: a API emite `paletteFamily` (sequential-blue, diverging-status, categorical…); cores seguem o tema claro/escuro.",
+        "Painel: combine KPI, gráfico e tabela numa única resposta; use **Expandir** para busca, filtro e exportação.",
+        "Lousa (canvas): documentos longos, rascunhos e tabelas editáveis persistentes na sessão."
+      ],
+      "relatedFeatures": [
+        "chart",
+        "canvas",
+        "capabilities_overview"
       ]
     },
     {
@@ -442,7 +474,7 @@
     }
   ],
   "generation": {
-    "generatedAt": "2026-05-31T04:46:11.752802+00:00",
+    "generatedAt": "2026-09-09T18:32:32.547685+00:00",
     "sources": [
       "external_actions",
       "skills/catalog",
@@ -450,7 +482,7 @@
     ],
     "actionCount": 110,
     "enabledActionCount": 110,
-    "skillCount": 2,
+    "skillCount": 7,
     "unmappedActionPaths": [],
     "pathRulesVersion": "2026.06.03"
   }
