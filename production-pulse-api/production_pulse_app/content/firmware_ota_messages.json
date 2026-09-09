@@ -11,6 +11,8 @@
     "deviceOtaUnauthorized": "Token do dispositivo inválido ou ausente.",
     "deviceOtaNotAuthorized": "Não há atualização autorizada para este dispositivo.",
     "deviceOtaArtifactExpired": "Link de download expirado. Consulte novamente.",
+    "firmwareArchived": "Esta versão de firmware está arquivada.",
+    "deviceOtaInvalidTransition": "Transição de status OTA inválida para o estado atual do target.",
     "invalidFirmwareKey": "Identificador de firmware inválido.",
     "invalidFirmwareVersion": "Versão de firmware inválida.",
     "driverKeyUnknown": "Driver desconhecido no registry.",

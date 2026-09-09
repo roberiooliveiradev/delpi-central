@@ -29,6 +29,11 @@ describe("parseProductionPulseRoute", () => {
     });
   });
 
+  it("keeps firmware-jobs parse for App redirect to firmware-links", () => {
+    const route = parseProductionPulseRoute("/apps/production-pulse/firmware-jobs", "?branch=02");
+    expect(route).toEqual({ kind: "firmwareJobs", branch: "02" });
+  });
+
   it("maps panel root", () => {
     expect(parseProductionPulseRoute("/apps/production-pulse").kind).toBe("panel");
   });

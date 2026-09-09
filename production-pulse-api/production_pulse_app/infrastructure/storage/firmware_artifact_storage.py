@@ -68,6 +68,8 @@ class FirmwareArtifactStorage:
             suffix = Path(filename_hint).suffix.lower()
             if suffix and not re.fullmatch(r"\.[a-z0-9]{1,8}", suffix):
                 suffix = ""
+        if suffix and suffix not in {".bin"}:
+            raise FirmwareArtifactStorageError("artifact_bad_extension")
         name = f"{uuid.uuid4().hex}{suffix or '.bin'}"
         path = folder / name
         path.write_bytes(raw)
@@ -77,6 +79,14 @@ class FirmwareArtifactStorage:
             sha256=sha256,
             size_bytes=len(raw),
         )
+
+    def delete_relative(self, relative_path: str) -> None:
+        try:
+            file_path = self.absolute_path(relative_path)
+        except FirmwareArtifactStorageError:
+            return
+        if file_path.is_file():
+            file_path.unlink(missing_ok=True)
 
     def absolute_path(self, relative_path: str) -> Path:
         base = self.base_dir.resolve()

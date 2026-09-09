@@ -19,12 +19,18 @@ export function isOtaStatusActive(status: string | null | undefined): boolean {
   return ACTIVE.has((status || "").trim().toLowerCase());
 }
 
-/** Prefer device-reported percent; otherwise map phase to a coarse %. */
+/**
+ * Prefer device-reported percent while downloading.
+ * authorized/pending wait for the chip — no fake download %.
+ */
 export function resolveOtaProgressPercent(input: {
   status?: string | null;
   progressPercent?: number | null;
-}): number {
+}): number | null {
   const status = (input.status || "").trim().toLowerCase();
+  if (status === "pending" || status === "authorized") {
+    return null;
+  }
   if (
     typeof input.progressPercent === "number" &&
     Number.isFinite(input.progressPercent) &&
@@ -33,14 +39,10 @@ export function resolveOtaProgressPercent(input: {
     return Math.min(100, Math.max(0, Math.round(input.progressPercent)));
   }
   switch (status) {
-    case "pending":
-      return 0;
-    case "authorized":
-      return 5;
     case "downloading":
-      return typeof input.progressPercent === "number"
+      return typeof input.progressPercent === "number" && Number.isFinite(input.progressPercent)
         ? Math.min(100, Math.max(0, Math.round(input.progressPercent)))
-        : 25;
+        : null;
     case "applying":
       return 95;
     case "updated":
@@ -48,12 +50,26 @@ export function resolveOtaProgressPercent(input: {
     case "failed":
     case "cancelled":
     case "skipped":
-      return typeof input.progressPercent === "number"
+      return typeof input.progressPercent === "number" && Number.isFinite(input.progressPercent)
         ? Math.min(100, Math.max(0, Math.round(input.progressPercent)))
-        : 0;
+        : null;
     default:
-      return 0;
+      return null;
   }
+}
+
+/** Display helper: awaiting chip | real percent | em dash. */
+export function formatOtaProgressDisplay(input: {
+  status?: string | null;
+  progressPercent?: number | null;
+}): string {
+  const status = (input.status || "").trim().toLowerCase();
+  if (status === "pending" || status === "authorized") {
+    return "Aguardando chip";
+  }
+  const pct = resolveOtaProgressPercent(input);
+  if (pct === null) return "—";
+  return `${pct}%`;
 }
 
 export function formatOtaBytes(received: number | null | undefined, total: number | null | undefined): string | null {

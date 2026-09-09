@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import Any
 from uuid import UUID
@@ -16,6 +17,8 @@ from production_pulse_app.infrastructure.persistence.repositories.postgres_firmw
     PostgresFirmwareRepository,
     PostgresFirmwareUpdateJobRepository,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class FirmwareUpdateJobService:
@@ -73,6 +76,8 @@ class FirmwareUpdateJobService:
         firmware = self._firmwares.get_by_id(firmware_id)
         if firmware is None or firmware.get("published_at") is None:
             raise FirmwareNotFoundError(str(firmware_id))
+        if firmware.get("archived_at") is not None:
+            raise ContentCodedError("firmwareArchived")
 
         branch = validate_branch(payload.get("branch", ""))
         trigger = str(payload.get("trigger") or "manual").strip().lower()
@@ -156,16 +161,31 @@ class FirmwareUpdateJobService:
                     updates={"target_firmware_version": firmware["version"]},
                     actor_sub=actor_sub,
                 )
-        return self._job_to_api(job)
+        api = self._job_to_api(job)
+        logger.info(
+            "ota_job_created job_id=%s status=%s branch=%s targets=%s",
+            api.get("id"),
+            api.get("status"),
+            api.get("branch"),
+            len(eligible),
+        )
+        return api
 
     def cancel_job(self, job_id: UUID) -> dict[str, Any]:
+        existing = self._jobs.get_job(job_id)
+        if existing is None:
+            raise FirmwareJobNotFoundError(str(job_id))
+        if existing["status"] == "cancelled":
+            return self._job_to_api(existing)
         try:
             job = self._jobs.cancel_job(job_id)
         except FirmwareJobNotFoundError:
             raise
         except FirmwareJobConflictError as exc:
             raise ContentCodedError("jobCannotCancel") from exc
-        return self._job_to_api(job)
+        api = self._job_to_api(job)
+        logger.info("ota_job_cancelled job_id=%s", api.get("id"))
+        return api
 
     def authorize_due_scheduled(self) -> int:
         return self._jobs.authorize_due_scheduled_jobs()

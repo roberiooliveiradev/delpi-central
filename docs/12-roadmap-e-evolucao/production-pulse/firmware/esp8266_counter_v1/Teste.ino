@@ -809,16 +809,18 @@ String paginaPrincipal() {
   // Arduino IDE 1.x corrompe sequencias literais de fechamento HTML no .ino.
   // Sempre quebrar: "</" + "tag>"
   String html;
-  html.reserve(2400);
+  html.reserve(2800);
   html += "<!DOCTYPE html><html lang='pt-BR'><head>";
   html += "<meta charset='utf-8'/>";
   html += "<meta name='viewport' content='width=device-width,initial-scale=1'/>";
   html += "<title>Production Pulse - Contador</" "title><style>";
-  html += ":root{--bg:#0f172a;--card:#1e293b;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--ok:#4ade80;}";
+  html += ":root{--bg:#0b1220;--card:#111827;--line:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#34d399;--ok:#4ade80;}";
   html += "*{box-sizing:border-box}";
   html += "body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;";
-  html += "background:linear-gradient(160deg,#0f172a,#1e293b 55%,#0f172a);color:var(--text);min-height:100vh;padding:1.25rem}";
+  html += "background:linear-gradient(160deg,#052e1f,#0b1220 55%,#052e1f);color:var(--text);min-height:100vh;padding:1.25rem}";
   html += ".wrap{max-width:28rem;margin:0 auto}";
+  html += ".badge{display:inline-block;padding:.2rem .55rem;border-radius:999px;border:1px solid var(--accent);";
+  html += "color:var(--accent);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem}";
   html += ".card{background:var(--card);border:1px solid var(--line);border-radius:1rem;padding:1.25rem;";
   html += "margin-bottom:1rem;box-shadow:0 12px 40px rgba(0,0,0,.35)}";
   html += ".label{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 .35rem}";
@@ -830,6 +832,14 @@ String paginaPrincipal() {
   html += ".dot{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--ok);";
   html += "margin-right:.35rem;vertical-align:middle}";
   html += "</" "style></" "head><body><div class='wrap'>";
+  html += "<div class='badge'>Firmware V1</" "div>";
+  html += "<div class='card'>";
+  html += "<p class='label'>Firmware instalado</" "p>";
+  html += "<div class='code'>";
+  html += FIRMWARE_VERSION;
+  html += "</" "div>";
+  html += "<p class='hint'>Versao em execucao reportada em /api/status e na OTA.</" "p>";
+  html += "</" "div>";
   html += "<div class='card'>";
   html += "<p class='label'>Codigo do controlador</" "p>";
   html += "<div class='code' id='codigo'>";

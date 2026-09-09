@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -17,6 +18,11 @@ from production_pulse_app.infrastructure.storage.firmware_artifact_storage impor
     FirmwareArtifactStorage,
     FirmwareArtifactStorageError,
 )
+
+logger = logging.getLogger(__name__)
+
+_OPEN = ("authorized", "downloading", "applying")
+_TERMINAL = ("updated", "failed", "cancelled", "skipped")
 
 
 class DeviceOtaAuthError(Exception):
@@ -106,19 +112,22 @@ class DeviceOtaService:
             exp = expires if expires.tzinfo else expires.replace(tzinfo=timezone.utc)
             if exp < datetime.now(timezone.utc):
                 raise ContentCodedError("deviceOtaArtifactExpired")
-        if target["status"] not in {"authorized", "downloading", "applying"}:
+        if target["status"] not in _OPEN:
             raise ContentCodedError("deviceOtaNotAuthorized")
 
-        self._jobs.update_target(
+        transitioned = self._jobs.transition_target(
             target["id"],
-            status="downloading",
+            next_status="downloading",
+            allowed_statuses=_OPEN,
             touch_started=True,
         )
+        if transitioned is None:
+            raise ContentCodedError("deviceOtaNotAuthorized")
         try:
             path = self._storage.open_path(target["artifact_path"])
         except FirmwareArtifactStorageError as exc:
             raise ContentCodedError("firmwareArtifactInvalid") from exc
-        return path, target
+        return path, transitioned
 
     def report(
         self,
@@ -149,18 +158,46 @@ class DeviceOtaService:
         if target is None:
             raise ContentCodedError("deviceOtaNotAuthorized")
 
+        current = str(target.get("status") or "")
+        if current in _TERMINAL:
+            # Idempotent terminal: same status = no-op; otherwise reject resurrection.
+            if current == normalized or (
+                normalized == "updated" and current == "updated"
+            ) or (normalized == "failed" and current == "failed"):
+                return {
+                    "targetId": str(target["id"]),
+                    "status": current,
+                    "bytesReceived": target.get("bytes_received"),
+                    "bytesTotal": target.get("bytes_total"),
+                    "progressPercent": target.get("progress_percent"),
+                    "errorCode": target.get("error_code"),
+                    "installedFirmwareVersion": installed_version
+                    if current == "updated"
+                    else None,
+                }
+            logger.info(
+                "ota_late_report_rejected target_id=%s current=%s attempted=%s",
+                target["id"],
+                current,
+                normalized,
+            )
+            raise ContentCodedError("deviceOtaInvalidTransition")
+
         if normalized == "downloading":
             pct = progress_percent
             if pct is None and bytes_received is not None and bytes_total and bytes_total > 0:
                 pct = int(round(100.0 * float(bytes_received) / float(bytes_total)))
-            updated = self._jobs.update_target(
+            updated = self._jobs.transition_target(
                 target["id"],
-                status=normalized,
+                next_status="downloading",
+                allowed_statuses=_OPEN,
                 touch_started=True,
                 bytes_received=bytes_received,
                 bytes_total=bytes_total,
                 progress_percent=pct,
             )
+            if updated is None:
+                raise ContentCodedError("deviceOtaInvalidTransition")
             return {
                 "targetId": str(updated["id"]),
                 "status": updated["status"],
@@ -170,14 +207,19 @@ class DeviceOtaService:
             }
 
         if normalized == "applying":
-            updated = self._jobs.update_target(
+            updated = self._jobs.transition_target(
                 target["id"],
-                status=normalized,
+                next_status="applying",
+                allowed_statuses=_OPEN,
                 touch_started=True,
                 progress_percent=100,
-                bytes_received=bytes_received if bytes_received is not None else target.get("bytes_total"),
+                bytes_received=bytes_received
+                if bytes_received is not None
+                else target.get("bytes_total"),
                 bytes_total=bytes_total if bytes_total is not None else target.get("bytes_total"),
             )
+            if updated is None:
+                raise ContentCodedError("deviceOtaInvalidTransition")
             return {
                 "targetId": str(updated["id"]),
                 "status": updated["status"],
@@ -188,16 +230,30 @@ class DeviceOtaService:
 
         if normalized == "updated":
             version = installed_version or target.get("to_version")
-            updated = self._jobs.update_target(
+            updated = self._jobs.transition_target(
                 target["id"],
-                status="updated",
+                next_status="updated",
+                allowed_statuses=_OPEN,
                 clear_artifact_token=True,
                 touch_finished=True,
                 progress_percent=100,
             )
+            if updated is None:
+                logger.info(
+                    "ota_invalid_transition target_id=%s attempted=updated",
+                    target["id"],
+                )
+                raise ContentCodedError("deviceOtaInvalidTransition")
             self._devices.record_installed_firmware_version(
                 device["id"],
                 version=str(version),
+            )
+            finished = self._jobs.maybe_finish_job(target["job_id"])
+            logger.info(
+                "ota_target_updated target_id=%s job_id=%s job_status=%s",
+                updated["id"],
+                target["job_id"],
+                (finished or {}).get("status"),
             )
             return {
                 "targetId": str(updated["id"]),
@@ -206,12 +262,27 @@ class DeviceOtaService:
                 "progressPercent": 100,
             }
 
-        updated = self._jobs.update_target(
+        updated = self._jobs.transition_target(
             target["id"],
-            status="failed",
+            next_status="failed",
+            allowed_statuses=_OPEN,
             error_code=(error_code or "ota_failed"),
             clear_artifact_token=True,
             touch_finished=True,
+        )
+        if updated is None:
+            logger.info(
+                "ota_invalid_transition target_id=%s attempted=failed",
+                target["id"],
+            )
+            raise ContentCodedError("deviceOtaInvalidTransition")
+        finished = self._jobs.maybe_finish_job(target["job_id"])
+        logger.info(
+            "ota_target_failed target_id=%s job_id=%s job_status=%s error_code=%s",
+            updated["id"],
+            target["job_id"],
+            (finished or {}).get("status"),
+            updated.get("error_code"),
         )
         return {
             "targetId": str(updated["id"]),

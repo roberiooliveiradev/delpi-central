@@ -41,6 +41,22 @@ const familiesCatalog: FirmwareCatalogItem[] = [
     publishedAt: "2026-01-01T00:00:00Z",
     releaseNotes: null,
     minCompatibleVersion: null,
+    createdAt: "2026-01-01T00:00:00Z",
+    archivedAt: null,
+  },
+  {
+    id: "1b",
+    firmwareKey: "esp8266_counter_v1",
+    driverKey: "esp8266_counter_v1",
+    version: "1.3.0",
+    displayName: "Counter",
+    artifactSha256: "c".repeat(64),
+    artifactSizeBytes: 12,
+    publishedAt: "2026-03-01T00:00:00Z",
+    releaseNotes: null,
+    minCompatibleVersion: null,
+    createdAt: "2026-03-01T00:00:00Z",
+    archivedAt: null,
   },
   {
     id: "2",
@@ -53,13 +69,28 @@ const familiesCatalog: FirmwareCatalogItem[] = [
     publishedAt: "2026-01-01T00:00:00Z",
     releaseNotes: null,
     minCompatibleVersion: null,
+    createdAt: "2026-01-01T00:00:00Z",
+    archivedAt: null,
   },
 ];
 
 describe("firmwareLinkGraph", () => {
+  it("picks latestVersion and linkedCount per family", () => {
+    const families = uniqueFirmwareFamilies(familiesCatalog, [
+      device({
+        id: "d1",
+        name: "A",
+        assignedFirmwareKey: "esp8266_counter_v1",
+      }),
+    ]);
+    const counter = families.find((f) => f.firmwareKey === "esp8266_counter_v1");
+    expect(counter?.latestVersion).toBe("1.3.0");
+    expect(counter?.linkedCount).toBe(1);
+  });
+
   it("builds explicit solid edge for assignedFirmwareKey", () => {
     const families = uniqueFirmwareFamilies(familiesCatalog);
-    const { edges } = buildFirmwareLinkGraph({
+    const { edges, nodes } = buildFirmwareLinkGraph({
       families,
       devices: [
         device({
@@ -67,6 +98,8 @@ describe("firmwareLinkGraph", () => {
           name: "A",
           assignedFirmwareKey: "esp8266_counter_v1",
           firmwareKey: "esp8266_counter_v1",
+          installedFirmwareVersion: "1.2.0",
+          ipAddress: "10.1.1.1",
         }),
       ],
     });
@@ -78,6 +111,10 @@ describe("firmwareLinkGraph", () => {
         kind: "explicit",
       },
     ]);
+    const deviceNode = nodes.find((n) => n.id === "dev:d1");
+    expect(deviceNode?.subtitle).toContain("10.1.1.1");
+    expect(deviceNode?.subtitle).toContain("1.2.0");
+    expect(deviceNode?.installedFirmwareVersion).toBe("1.2.0");
   });
 
   it("builds inherited dashed edge when only driver matches", () => {

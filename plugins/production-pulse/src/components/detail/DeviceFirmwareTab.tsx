@@ -14,13 +14,14 @@ import {
   PpSectionCard,
   PpStateBox,
 } from "../../app/productionPulseUi";
-import { productionPulseFirmwareJobsPath } from "../../constants/routes";
+import { productionPulseFirmwareLinksPath } from "../../constants/routes";
 import { PP_HELP } from "../../content/helpTooltips";
 import type { DeviceListItem } from "../../types/device";
 import type { LivePollResult } from "../../types/detail";
 import { navigateProductionPulse } from "../../utils/navigation";
 import {
   formatOtaBytes,
+  formatOtaProgressDisplay,
   isOtaStatusActive,
   otaOperationLabel,
   otaStatusLabel,
@@ -154,8 +155,13 @@ export function DeviceFirmwareTab({
     status,
     progressPercent: otaStatus?.progressPercent,
   });
+  const progressDisplay = formatOtaProgressDisplay({
+    status,
+    progressPercent: otaStatus?.progressPercent,
+  });
   const bytesLabel = formatOtaBytes(otaStatus?.bytesReceived, otaStatus?.bytesTotal);
   const showProgress = Boolean(status) && status !== "cancelled" && status !== "skipped";
+  const showPercentBar = typeof progress === "number";
 
   const trackerSteps = useMemo(
     () => [
@@ -218,11 +224,17 @@ export function DeviceFirmwareTab({
         {showProgress ? (
           <div className="pp-ota-progress-block">
             <PpProgressTracker steps={trackerSteps} density="compact" />
-            <PpOtaProgressBar
-              value={progress}
-              label={PP_HELP.ota.downloadProgress}
-              summary={bytesLabel ?? undefined}
-            />
+            <p className="pp-muted" title={PP_HELP.ota.awaitingChip}>
+              <strong>Progresso:</strong> {progressDisplay}
+              {bytesLabel ? ` · ${bytesLabel}` : null}
+            </p>
+            {showPercentBar ? (
+              <PpOtaProgressBar
+                value={progress ?? 0}
+                label={PP_HELP.ota.downloadProgress}
+                summary={bytesLabel ?? undefined}
+              />
+            ) : null}
           </div>
         ) : null}
 
@@ -238,10 +250,10 @@ export function DeviceFirmwareTab({
             <PpActionButton
               variant="ghost"
               onClick={() =>
-                navigateProductionPulse(productionPulseFirmwareJobsPath(device.branch))
+                navigateProductionPulse(productionPulseFirmwareLinksPath({ branch: device.branch }))
               }
             >
-              Ver campanhas
+              Ver hub OTA
             </PpActionButton>
           ) : null}
         </div>

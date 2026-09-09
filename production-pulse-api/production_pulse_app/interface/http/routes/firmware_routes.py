@@ -54,11 +54,18 @@ async def list_firmwares(
     request: Request,
     firmwareKey: str | None = Query(default=None),
     driverKey: str | None = Query(default=None),
+    includeArchived: bool = Query(default=True),
+    publishedOnly: bool = Query(default=False),
 ):
     denied = guard_view_devices(request)
     if denied:
         return denied
-    items = _catalog.list_firmwares(firmware_key=firmwareKey, driver_key=driverKey)
+    items = _catalog.list_firmwares(
+        firmware_key=firmwareKey,
+        driver_key=driverKey,
+        include_archived=includeArchived,
+        published_only=publishedOnly,
+    )
     return success({"items": items})
 
 
@@ -77,6 +84,63 @@ async def get_firmware(request: Request, firmware_id: str):
         )
         return JSONResponse(status_code=404, content={k: v for k, v in payload.items() if k != "_status_code"})
     return success(data)
+
+
+@router.patch("/firmwares/{firmware_id}")
+async def patch_firmware(request: Request, firmware_id: str):
+    denied = guard_manage_devices(request)
+    if denied:
+        return denied
+    body = await request.json()
+    if not isinstance(body, dict):
+        payload = error("Dados inválidos.", code="validation_error", status_code=422)
+        return JSONResponse(status_code=422, content={k: v for k, v in payload.items() if k != "_status_code"})
+    try:
+        data = _catalog.update_metadata(
+            UUID(firmware_id),
+            display_name=body.get("displayName") if "displayName" in body else None,
+            release_notes=body.get("releaseNotes") if "releaseNotes" in body else None,
+        )
+    except ContentCodedError as exc:
+        return _coded_error(exc)
+    except (ValueError, FirmwareNotFoundError):
+        payload = error(
+            firmware_ota_http_message("firmwareNotFound"),
+            code="firmwareNotFound",
+            status_code=404,
+        )
+        return JSONResponse(status_code=404, content={k: v for k, v in payload.items() if k != "_status_code"})
+    return success(data)
+
+
+@router.post("/firmwares/{firmware_id}/archive")
+async def archive_firmware(request: Request, firmware_id: str):
+    denied = guard_manage_devices(request)
+    if denied:
+        return denied
+    try:
+        data = _catalog.archive(UUID(firmware_id))
+    except (ValueError, FirmwareNotFoundError):
+        payload = error(
+            firmware_ota_http_message("firmwareNotFound"),
+            code="firmwareNotFound",
+            status_code=404,
+        )
+        return JSONResponse(status_code=404, content={k: v for k, v in payload.items() if k != "_status_code"})
+    return success(data)
+
+
+@router.get("/firmware-drivers")
+async def list_firmware_drivers(request: Request):
+    denied = guard_view_devices(request)
+    if denied:
+        return denied
+    from production_pulse_app.application.services.device_driver_registry_service import (
+        get_device_driver_registry,
+    )
+
+    items = get_device_driver_registry().list_catalog_drivers()
+    return success({"items": items})
 
 
 @router.post("/firmwares")

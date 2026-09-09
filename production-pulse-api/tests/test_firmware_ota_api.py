@@ -393,3 +393,148 @@ def test_ota_progress_report_and_device_status(client, unique_ip, firmware_stora
         json={"deviceId": device_id, "targetId": target_id, "status": "downloading"},
     )
     assert denied.status_code == 401
+
+
+def test_cancel_rejects_late_report_and_idempotent_cancel(client, unique_ip, firmware_storage_dir):
+    token = "ota-cancel-race"
+    device = _create_device(client, ip=unique_ip, token=token)
+    device_id = device["id"]
+
+    published = client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp8266_counter_v1",
+            "driverKey": "esp8266_counter_v1",
+            "version": "2.0.0",
+            "displayName": "Cancel race",
+            "publish": "true",
+        },
+        files={"file": ("counter.bin", b"y" * 120, "application/octet-stream")},
+    )
+    assert published.status_code == 201, published.text
+    firmware_id = published.json()["data"]["id"]
+
+    job = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": firmware_id,
+            "branch": "01",
+            "trigger": "manual",
+            "filter": {"onlyOutdated": False, "deviceIds": [device_id]},
+        },
+    )
+    assert job.status_code == 201, job.text
+    job_id = job.json()["data"]["id"]
+    target_id = client.get(f"/firmware-update-jobs/{job_id}/targets").json()["data"]["items"][0]["id"]
+
+    cancelled = client.post(f"/firmware-update-jobs/{job_id}/cancel")
+    assert cancelled.status_code == 200
+    assert cancelled.json()["data"]["status"] == "cancelled"
+
+    again = client.post(f"/firmware-update-jobs/{job_id}/cancel")
+    assert again.status_code == 200
+    assert again.json()["data"]["status"] == "cancelled"
+
+    late = client.post(
+        "/device-ota/report",
+        headers={"X-Device-Token": token},
+        json={
+            "deviceId": device_id,
+            "targetId": target_id,
+            "status": "updated",
+            "installedFirmwareVersion": "2.0.0",
+        },
+    )
+    assert late.status_code == 422
+    assert late.json()["error"]["code"] == "deviceOtaInvalidTransition"
+
+
+def test_archive_and_patch_firmware_metadata(client, unique_ip, firmware_storage_dir):
+    _create_device(client, ip=unique_ip)
+    published = client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp8266_counter_v1",
+            "driverKey": "esp8266_counter_v1",
+            "version": "3.0.0",
+            "displayName": "Before archive",
+            "publish": "true",
+        },
+        files={"file": ("counter.bin", b"z" * 80, "application/octet-stream")},
+    )
+    assert published.status_code == 201, published.text
+    firmware_id = published.json()["data"]["id"]
+
+    patched = client.patch(
+        f"/firmwares/{firmware_id}",
+        json={"displayName": "Renamed version", "releaseNotes": "notes"},
+    )
+    assert patched.status_code == 200, patched.text
+    assert patched.json()["data"]["displayName"] == "Renamed version"
+    assert patched.json()["data"]["releaseNotes"] == "notes"
+
+    archived = client.post(f"/firmwares/{firmware_id}/archive")
+    assert archived.status_code == 200
+    assert archived.json()["data"]["archivedAt"] is not None
+
+    blocked = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": firmware_id,
+            "branch": "01",
+            "trigger": "manual",
+            "filter": {"onlyOutdated": False},
+        },
+    )
+    assert blocked.status_code == 422
+    assert blocked.json()["error"]["code"] == "firmwareArchived"
+
+    drivers = client.get("/firmware-drivers")
+    assert drivers.status_code == 200
+    assert any(item.get("key") == "esp8266_counter_v1" for item in drivers.json()["data"]["items"])
+
+
+def test_job_completes_when_all_targets_updated(client, unique_ip, firmware_storage_dir):
+    token = "ota-complete-job"
+    device = _create_device(client, ip=unique_ip, token=token)
+    device_id = device["id"]
+    published = client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp8266_counter_v1",
+            "driverKey": "esp8266_counter_v1",
+            "version": "4.0.0",
+            "displayName": "Complete job",
+            "publish": "true",
+        },
+        files={"file": ("counter.bin", b"w" * 64, "application/octet-stream")},
+    )
+    firmware_id = published.json()["data"]["id"]
+    job = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": firmware_id,
+            "branch": "01",
+            "trigger": "manual",
+            "filter": {"onlyOutdated": False, "deviceIds": [device_id]},
+        },
+    )
+    assert job.status_code == 201, job.text
+    job_id = job.json()["data"]["id"]
+    target_id = client.get(f"/firmware-update-jobs/{job_id}/targets").json()["data"]["items"][0]["id"]
+
+    updated = client.post(
+        "/device-ota/report",
+        headers={"X-Device-Token": token},
+        json={
+            "deviceId": device_id,
+            "targetId": target_id,
+            "status": "updated",
+            "installedFirmwareVersion": "4.0.0",
+        },
+    )
+    assert updated.status_code == 200, updated.text
+    jobs = client.get("/firmware-update-jobs", params={"branch": "01"})
+    assert jobs.status_code == 200
+    row = next(item for item in jobs.json()["data"]["items"] if item["id"] == job_id)
+    assert row["status"] == "completed"

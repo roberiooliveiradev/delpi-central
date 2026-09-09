@@ -2048,6 +2048,23 @@
   border-color: var(--pp-accent);
 }
 
+.pp-firmware-node__meta,
+.pp-device-node__meta {
+  margin-top: 0.25rem;
+  font-size: var(--pp-font-xs, 12px);
+  color: var(--pp-text-muted);
+  line-height: 1.35;
+  max-width: 12rem;
+  word-break: break-word;
+}
+
+.pp-firmware-node__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
 .pp-device-node--linked {
   border-color: var(--pp-success);
 }

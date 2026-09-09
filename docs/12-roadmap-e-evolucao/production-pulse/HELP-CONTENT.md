@@ -73,17 +73,17 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 | Filial vazia | `panel.emptyFilial` | `EmptyGuidance` |
 | Filtro vazio | `panel.emptyFilters` | `EmptyState` |
 
-### OTA (P4) — `PP_HELP.ota` + `PP_HELP.otaLinks` + canvas
+### OTA (P4) — `PP_HELP.ota` + `PP_HELP.otaLinks` + canvas hub
 
 | Elemento | Chave |
 |----------|-------|
-| Campos publish/campanha | `ota.firmwareKey`, `ota.version`, `ota.jobTrigger`, … |
-| Amarração `/firmware-links` | `otaLinks.hero`, `refresh`, `canvas`, `oneFirmwarePerDevice` |
+| Campos publish/campanha | `ota.firmwareKey`, `ota.version`, `ota.jobTrigger`, `ota.archiveConfirm*`, … |
+| Hub `/firmware-links` | `otaLinks.hero`, `refresh`, `canvas`, `disconnect`, `launchOta`, `oneFirmwarePerDevice` |
 | KPI frota | `ota.openCatalog` / `ota.jobsHero` (titleHint) |
-| Botões do hero (painel/OTA/detalhe) | `PpHintAction` + `shell.backToPanel`, `ota.openCatalog` / `openJobs` / `openLinks`, `otaLinks.refresh`, `detail.editDevice` / `pollNow`, `shell.modeOperator`, `operator.adminLink` |
-| Progresso OTA | `ota.downloadProgress`, `ota.progressPhases`, `ota.runningVersion`, `ota.status.*`, `ota.operation.*` |
+| Botões do hero (painel/OTA/detalhe) | `PpHintAction` + `shell.backToPanel`, `ota.openCatalog` / `openLinks`, `otaLinks.refresh`, `detail.editDevice` / `pollNow`, `shell.modeOperator`, `operator.adminLink` |
+| Progresso OTA | `ota.downloadProgress`, `ota.awaitingChip` / `awaitingDevice`, `ota.progressPhases`, `ota.runningVersion`, `ota.status.*`, `ota.operation.*` |
 
-Wireframes: WF-PP-OTA-01…05. Homologação: [HOMOLOGACAO-OTA-P4.md](./HOMOLOGACAO-OTA-P4.md).
+Wireframes: WF-PP-OTA-01…05 (hub em `/firmware-links`; `/firmware-jobs` redireciona). Homologação: [HOMOLOGACAO-OTA-P4.md](./HOMOLOGACAO-OTA-P4.md).
 
 ### Agrupado (`DeviceGroupedByPlacement`)
 

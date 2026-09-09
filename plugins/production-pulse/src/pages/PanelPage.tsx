@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import {
   productionPulseDeviceDetailPath,
   productionPulseDeviceNewPath,
-  productionPulseFirmwareJobsPath,
+  productionPulseFirmwareLinksPath,
   productionPulseFirmwaresPath,
   productionPulseOperatorPath,
 } from "../constants/routes";
@@ -143,14 +143,14 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
                   Firmwares
                 </PpActionButton>
               </PpHintAction>
-              <PpHintAction hint={PP_HELP.ota.openJobs} ariaLabel="Ajuda: OTA">
+              <PpHintAction hint={PP_HELP.ota.openLinks} ariaLabel="Ajuda: Hub OTA">
                 <PpActionButton
                   variant="ghost"
                   onClick={() =>
-                    navigateProductionPulse(productionPulseFirmwareJobsPath(filters.branch))
+                    navigateProductionPulse(productionPulseFirmwareLinksPath({ branch: filters.branch }))
                   }
                 >
-                  OTA
+                  Hub OTA
                 </PpActionButton>
               </PpHintAction>
               {branchOptions.length > 1 ? (

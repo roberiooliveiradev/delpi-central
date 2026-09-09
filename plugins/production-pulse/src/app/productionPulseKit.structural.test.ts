@@ -84,27 +84,52 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("constants/routes.ts")).toMatch(/firmware-links/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/ota:\s*\{/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/otaLinks:\s*\{/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/awaitingChip|awaitingDevice/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/archiveConfirmTitle|archiveFirmware/);
     expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/PP_HELP\.ota\.firmwareKey/);
-    expect(readRelative("pages/FirmwareJobsPage.tsx")).toMatch(/PP_HELP\.ota\.jobTrigger/);
+    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/PpDataTable/);
+    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/PpCatalogSearchBar/);
+    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/archiveFirmware/);
+    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/PpHostContainedDialog/);
+    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/patchFirmware/);
+    expect(readRelative("pages/FirmwaresPage.tsx")).not.toMatch(/Campanhas/);
+    expect(readRelative("pages/FirmwareJobsPage.tsx")).toMatch(/productionPulseFirmwareLinksPath/);
+    expect(readRelative("pages/FirmwareJobsPage.tsx")).toMatch(/Redirecionando/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PP_HELP\.ota\.jobTrigger|PP_HELP\.ota\.jobCreate/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PP_HELP\.otaLinks/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/createFirmwareUpdateJob/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/reloadJobs\(\{\s*soft:\s*true/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/formatOtaProgressDisplay/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PpDataTable/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/Campanhas OTA/);
     expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/productionPulseFirmwareLinksPath/);
-    expect(readRelative("pages/FirmwareJobsPage.tsx")).toMatch(/PpNativeSelectField/);
     expect(readRelative("pages/PanelPage.tsx")).toMatch(/FirmwareOtaKpiStrip/);
+    expect(readRelative("pages/PanelPage.tsx")).toMatch(/productionPulseFirmwareLinksPath/);
+    expect(readRelative("pages/PanelPage.tsx")).not.toMatch(/productionPulseFirmwareJobsPath/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/fetchDevices/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/FirmwareDeviceLinkCanvas/);
+    expect(readRelative("App.tsx")).toMatch(/firmwareJobs/);
+    expect(readRelative("App.tsx")).toMatch(/productionPulseFirmwareLinksPath/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/@xyflow\/react/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/useDelpiDarkMode/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/colorMode=\{colorMode\}/);
+    expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/applyEdgeChanges/);
+    expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/deleteKeyCode/);
+    expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/onUnlink/);
     expect(readRelative("components/detail/DeviceFirmwareTab.tsx")).toMatch(
       /createFirmwareUpdateJob/,
     );
+    expect(readRelative("components/detail/DeviceFirmwareTab.tsx")).toMatch(
+      /productionPulseFirmwareLinksPath/,
+    );
+    expect(readRelative("utils/otaStatusLabels.ts")).toMatch(/formatOtaProgressDisplay/);
+    expect(readRelative("utils/otaStatusLabels.ts")).toMatch(/Aguardando chip/);
   });
 
   it("botões do hero usam PpHintAction + PP_HELP (sem ação órfã)", () => {
     const heroPages = [
       "pages/PanelPage.tsx",
       "pages/FirmwaresPage.tsx",
-      "pages/FirmwareJobsPage.tsx",
       "pages/FirmwareLinksPage.tsx",
       "pages/DeviceDetailPage.tsx",
       "components/operator/OperatorBrandBar.tsx",

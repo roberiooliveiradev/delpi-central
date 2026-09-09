@@ -1,17 +1,22 @@
+import { useEffect } from "react";
+
 import { configureHttpClient } from "./api/httpClient";
 import { resolveProductionPulsePermissions } from "./constants/permissions";
-import { parseProductionPulseRoute } from "./constants/routes";
+import {
+  parseProductionPulseRoute,
+  productionPulseFirmwareLinksPath,
+} from "./constants/routes";
 import { useProductionPulseRouterPath } from "./hooks/useProductionPulseRouterPath";
 import { useShortViewport } from "./hooks/useShortViewport";
 import { useViewportBucket } from "./hooks/useViewportBucket";
 import { PanelPage } from "./pages/PanelPage";
 import { FirmwaresPage } from "./pages/FirmwaresPage";
-import { FirmwareJobsPage } from "./pages/FirmwareJobsPage";
 import { FirmwareLinksPage } from "./pages/FirmwareLinksPage";
 import { DeviceFormPage } from "./pages/DeviceFormPage";
 import { DeviceDetailPage } from "./pages/DeviceDetailPage";
 import { OperatorPage } from "./pages/operator/OperatorPage";
 import { PpPageHero, PpStateBox, ppShellIcon } from "./app/productionPulseUi";
+import { navigateProductionPulse } from "./utils/navigation";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -32,6 +37,24 @@ export default function App({
   const permissionFlags = resolveProductionPulsePermissions(permissions, isSuperadmin);
   const viewport = useViewportBucket();
   const shortViewport = useShortViewport();
+
+  const firmwareJobsBranch = route.kind === "firmwareJobs" ? route.branch : null;
+
+  useEffect(() => {
+    if (firmwareJobsBranch == null) return;
+    navigateProductionPulse(productionPulseFirmwareLinksPath({ branch: firmwareJobsBranch }));
+  }, [firmwareJobsBranch]);
+
+  if (route.kind === "firmwareJobs") {
+    return (
+      <div className="dashboard-production-pulse dashboard-page">
+        <div className="pp-page-stack">
+          <PpPageHero title="Hub OTA" badge={ppShellIcon} />
+          <PpStateBox variant="loading" title="Redirecionando para o hub OTA…" />
+        </div>
+      </div>
+    );
+  }
 
   if (route.kind === "unknown") {
     return (
@@ -72,8 +95,6 @@ export default function App({
         <PanelPage search={search} permissions={permissionFlags} />
       ) : route.kind === "firmwares" ? (
         <FirmwaresPage permissions={permissionFlags} />
-      ) : route.kind === "firmwareJobs" ? (
-        <FirmwareJobsPage branch={route.branch} permissions={permissionFlags} />
       ) : route.kind === "firmwareLinks" ? (
         <FirmwareLinksPage
           branch={route.branch}

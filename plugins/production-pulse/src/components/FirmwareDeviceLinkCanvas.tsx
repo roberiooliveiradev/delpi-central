@@ -7,9 +7,11 @@ import {
   Position,
   ReactFlow,
   ReactFlowProvider,
+  applyEdgeChanges,
   applyNodeChanges,
   type Connection,
   type Edge,
+  type EdgeChange,
   type Node,
   type NodeChange,
   type NodeProps,
@@ -19,7 +21,8 @@ import { useDelpiDarkMode } from "@delpi/plugin-ui/index";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
 import { putDeviceFirmwareLink } from "../api/productionPulseApi";
-import { PpStateBox } from "../app/productionPulseUi";
+import { PpActionButton, PpStateBox } from "../app/productionPulseUi";
+import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import {
   buildFirmwareLinkGraph,
@@ -31,6 +34,10 @@ type FirmwareNodeData = {
   label: string;
   subtitle?: string;
   firmwareKey: string;
+  latestVersion?: string | null;
+  linkedCount?: number;
+  canManage: boolean;
+  onUpdateFamily?: (firmwareKey: string) => void;
 };
 
 type DeviceNodeData = {
@@ -38,13 +45,28 @@ type DeviceNodeData = {
   subtitle?: string;
   deviceId: string;
   linked: boolean;
+  canManage: boolean;
+  onUnlink?: (deviceId: string) => void;
+  onUpdateDevice?: (deviceId: string) => void;
+  onSelectDevice?: (deviceId: string) => void;
 };
 
 function FirmwareNodeView({ data }: NodeProps<Node<FirmwareNodeData>>) {
   return (
     <div className="pp-firmware-node">
       <strong>{data.label}</strong>
-      {data.subtitle ? <div>{data.subtitle}</div> : null}
+      {data.subtitle ? <div className="pp-firmware-node__meta">{data.subtitle}</div> : null}
+      {data.canManage && data.onUpdateFamily ? (
+        <div className="pp-firmware-node__actions nodrag nopan">
+          <PpActionButton
+            variant="ghost"
+            className="nodrag"
+            onClick={() => data.onUpdateFamily?.(data.firmwareKey)}
+          >
+            Atualizar ligados
+          </PpActionButton>
+        </div>
+      ) : null}
       <Handle type="source" position={Position.Right} />
     </div>
   );
@@ -55,7 +77,37 @@ function DeviceNodeView({ data }: NodeProps<Node<DeviceNodeData>>) {
     <div className={`pp-device-node${data.linked ? " pp-device-node--linked" : ""}`}>
       <Handle type="target" position={Position.Left} />
       <strong>{data.label}</strong>
-      {data.subtitle ? <div>{data.subtitle}</div> : null}
+      {data.subtitle ? <div className="pp-device-node__meta">{data.subtitle}</div> : null}
+      <div className="pp-firmware-node__actions nodrag nopan">
+        {data.canManage && data.linked && data.onUnlink ? (
+          <PpActionButton
+            variant="ghost"
+            className="nodrag"
+            onClick={() => data.onUnlink?.(data.deviceId)}
+            title={PP_HELP.otaLinks.disconnect}
+          >
+            Desvincular
+          </PpActionButton>
+        ) : null}
+        {data.canManage && data.onUpdateDevice ? (
+          <PpActionButton
+            variant="ghost"
+            className="nodrag"
+            onClick={() => data.onUpdateDevice?.(data.deviceId)}
+          >
+            Atualizar este
+          </PpActionButton>
+        ) : null}
+        {data.onSelectDevice ? (
+          <PpActionButton
+            variant="ghost"
+            className="nodrag"
+            onClick={() => data.onSelectDevice?.(data.deviceId)}
+          >
+            Abrir detalhe
+          </PpActionButton>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -70,6 +122,10 @@ type FirmwareDeviceLinkCanvasProps = {
   devices: DeviceListItem[];
   canManage: boolean;
   onLinked: () => void;
+  onUnlink?: (deviceId: string) => void | Promise<void>;
+  onUpdateDevice?: (deviceId: string) => void | Promise<void>;
+  onUpdateFamily?: (firmwareKey: string) => void | Promise<void>;
+  onSelectDevice?: (deviceId: string) => void;
 };
 
 function toFlowEdges(edges: FirmwareLinkGraphEdge[], canManage: boolean): Edge[] {
@@ -93,6 +149,10 @@ function FirmwareDeviceLinkCanvasInner({
   devices,
   canManage,
   onLinked,
+  onUnlink,
+  onUpdateDevice,
+  onUpdateFamily,
+  onSelectDevice,
 }: FirmwareDeviceLinkCanvasProps) {
   const isDark = useDelpiDarkMode();
   const colorMode = isDark ? "dark" : "light";
@@ -121,6 +181,14 @@ function FirmwareDeviceLinkCanvasInner({
               label: n.label,
               subtitle: n.subtitle,
               firmwareKey: n.firmwareKey!,
+              latestVersion: n.latestVersion,
+              linkedCount: n.linkedCount,
+              canManage,
+              onUpdateFamily: onUpdateFamily
+                ? (firmwareKey: string) => {
+                    void onUpdateFamily(firmwareKey);
+                  }
+                : undefined,
             },
           } satisfies Node<FirmwareNodeData>;
         }
@@ -133,16 +201,32 @@ function FirmwareDeviceLinkCanvasInner({
             subtitle: n.subtitle,
             deviceId: n.deviceId!,
             linked: linkedDeviceIds.has(n.id),
+            canManage,
+            onUnlink: onUnlink
+              ? (deviceId: string) => {
+                  void onUnlink(deviceId);
+                }
+              : undefined,
+            onUpdateDevice: onUpdateDevice
+              ? (deviceId: string) => {
+                  void onUpdateDevice(deviceId);
+                }
+              : undefined,
+            onSelectDevice,
           },
         } satisfies Node<DeviceNodeData>;
       }),
     );
     setEdges(toFlowEdges(graph.edges, canManage));
     setError(null);
-  }, [graph, canManage]);
+  }, [graph, canManage, onUnlink, onUpdateDevice, onUpdateFamily, onSelectDevice]);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((current) => applyNodeChanges(changes, current));
+  }, []);
+
+  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
+    setEdges((current) => applyEdgeChanges(changes, current));
   }, []);
 
   const onConnect = useCallback(
@@ -170,6 +254,18 @@ function FirmwareDeviceLinkCanvasInner({
     [busy, canManage, onLinked],
   );
 
+  const unlinkDevice = useCallback(
+    async (deviceId: string) => {
+      if (onUnlink) {
+        await onUnlink(deviceId);
+        return;
+      }
+      await putDeviceFirmwareLink(deviceId, null);
+      onLinked();
+    },
+    [onLinked, onUnlink],
+  );
+
   const onEdgesDelete = useCallback(
     async (deleted: Edge[]) => {
       if (!canManage || busy) return;
@@ -180,9 +276,8 @@ function FirmwareDeviceLinkCanvasInner({
       try {
         for (const edge of explicit) {
           const deviceId = String(edge.target).replace(/^dev:/, "");
-          await putDeviceFirmwareLink(deviceId, null);
+          await unlinkDevice(deviceId);
         }
-        onLinked();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Falha ao desvincular.");
         onLinked();
@@ -190,7 +285,7 @@ function FirmwareDeviceLinkCanvasInner({
         setBusy(false);
       }
     },
-    [busy, canManage, onLinked],
+    [busy, canManage, onLinked, unlinkDevice],
   );
 
   if (families.length === 0 && devices.length === 0) {
@@ -215,7 +310,8 @@ function FirmwareDeviceLinkCanvasInner({
       ) : (
         <p className="pp-muted">
           Arraste do firmware (esquerda) para o IoT. Cada IoT aceita um firmware; nova seta
-          substitui. Delete na seta sólida desvincula. Tracejada = via driver (somente leitura).
+          substitui. Delete/Backspace na seta sólida ou use Desvincular. Tracejada = via driver
+          (somente leitura).
         </p>
       )}
       <div className="pp-firmware-link-canvas">
@@ -225,9 +321,10 @@ function FirmwareDeviceLinkCanvasInner({
           nodeTypes={nodeTypes}
           colorMode={colorMode}
           onNodesChange={onNodesChange}
-          onEdgesChange={() => undefined}
+          onEdgesChange={onEdgesChange}
           onConnect={(c) => void onConnect(c)}
           onEdgesDelete={(e) => void onEdgesDelete(e)}
+          deleteKeyCode={["Backspace", "Delete"]}
           nodesDraggable
           nodesConnectable={canManage && !busy}
           edgesUpdatable={false}

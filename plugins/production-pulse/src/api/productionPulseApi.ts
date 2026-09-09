@@ -305,6 +305,13 @@ export type FirmwareCatalogItem = {
   minCompatibleVersion: string | null;
   publishedAt: string | null;
   createdAt: string | null;
+  archivedAt: string | null;
+};
+
+export type FirmwareDriverCatalogItem = {
+  key: string;
+  labelPt?: string;
+  [key: string]: unknown;
 };
 
 export type FirmwareUpdateJob = {
@@ -361,15 +368,55 @@ export type FirmwareUpdateSummary = {
 export async function fetchFirmwares(params: {
   firmwareKey?: string;
   driverKey?: string;
+  includeArchived?: boolean;
+  publishedOnly?: boolean;
   signal?: AbortSignal;
 } = {}): Promise<FirmwareCatalogItem[]> {
   const searchParams = new URLSearchParams();
   if (params.firmwareKey) searchParams.set("firmwareKey", params.firmwareKey);
   if (params.driverKey) searchParams.set("driverKey", params.driverKey);
+  if (params.includeArchived === false) searchParams.set("includeArchived", "false");
+  if (params.includeArchived === true) searchParams.set("includeArchived", "true");
+  if (params.publishedOnly) searchParams.set("publishedOnly", "true");
   const suffix = searchParams.toString();
   const payload = await httpGet<ApiEnvelope<{ items: FirmwareCatalogItem[] }>>(
     `${PRODUCTION_PULSE_API_BASE}/firmwares${suffix ? `?${suffix}` : ""}`,
     { signal: params.signal },
+  );
+  return payload.data.items;
+}
+
+export async function fetchFirmwareById(firmwareId: string): Promise<FirmwareCatalogItem> {
+  const payload = await httpGet<ApiEnvelope<FirmwareCatalogItem>>(
+    `${PRODUCTION_PULSE_API_BASE}/firmwares/${encodeURIComponent(firmwareId)}`,
+  );
+  return payload.data;
+}
+
+export async function patchFirmware(
+  firmwareId: string,
+  body: { displayName?: string | null; releaseNotes?: string | null },
+): Promise<FirmwareCatalogItem> {
+  const payload = await httpJson<ApiEnvelope<FirmwareCatalogItem>>(
+    "PATCH",
+    `${PRODUCTION_PULSE_API_BASE}/firmwares/${encodeURIComponent(firmwareId)}`,
+    body,
+  );
+  return payload.data;
+}
+
+export async function archiveFirmware(firmwareId: string): Promise<FirmwareCatalogItem> {
+  const payload = await httpJson<ApiEnvelope<FirmwareCatalogItem>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/firmwares/${encodeURIComponent(firmwareId)}/archive`,
+  );
+  return payload.data;
+}
+
+export async function fetchFirmwareDrivers(signal?: AbortSignal): Promise<FirmwareDriverCatalogItem[]> {
+  const payload = await httpGet<ApiEnvelope<{ items: FirmwareDriverCatalogItem[] }>>(
+    `${PRODUCTION_PULSE_API_BASE}/firmware-drivers`,
+    { signal },
   );
   return payload.data.items;
 }

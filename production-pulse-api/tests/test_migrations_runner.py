@@ -53,3 +53,14 @@ def test_v011_firmware_ota_progress_is_present_and_parseable():
     assert "bytes_total" in text
     assert "progress_percent" in text
     assert len(_checksum(text)) == 64
+
+
+def test_v012_firmware_archive_is_present_and_parseable():
+    migrations = _discover_migrations()
+    by_version = {m.version: m for m in migrations}
+    assert 12 in by_version
+    assert by_version[12].name == "firmware_archive"
+    path = _migrations_dir() / "V012__firmware_archive.sql"
+    text = path.read_text(encoding="utf-8")
+    assert "archived_at" in text
+    assert len(_checksum(text)) == 64

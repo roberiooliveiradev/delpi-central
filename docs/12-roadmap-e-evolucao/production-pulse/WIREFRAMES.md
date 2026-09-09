@@ -1503,7 +1503,7 @@ Regra: **% sempre da API** (`progress.pct`) — MFE não calcula.
 
 ```text
 ┌─ Painel ─────────────────────────────────────────────────────────┐
-│ Hero …  [Firmwares ?]  [Campanhas OTA ?]                         │
+│ Hero …  [Firmwares ?]  [Hub OTA ?]                               │
 │                                                                  │
 │ ┌ KPI frota OTA ──────────────────────────────────────────────┐ │
 │ │ Devices │ Atualizados │ Em update │ Falhas  (? PP_HELP.ota) │ │
@@ -1516,19 +1516,18 @@ Regra: **% sempre da API** (`progress.pct`) — MFE não calcula.
 
 ```text
 ┌─ Firmwares OTA ──────────────────────────────────────────────────┐
-│ Publicar: firmwareKey · versão · notas · [arquivo .bin] [Salvar] │
-│                                                                  │
-│ Tabela: família | versão | publicado | sha curto | tamanho       │
+│ Publicar: firmwareKey · driver(select) · versão · [.bin] [Salvar]│
+│ Busca · PpDataTable · [Amarrar] [Editar] [Arquivar?]             │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-## WF-PP-OTA-03 — `/firmware-jobs` campanhas
+## WF-PP-OTA-03 — Hub OTA (`/firmware-links`; `/firmware-jobs` → redirect)
 
 ```text
-┌─ Campanhas OTA ──────────────────────────────────────────────────┐
-│ Firmware · versão · agora|agendar · só desatualizados · [Criar] │
-│ Lista jobs (status PT) + auto-refresh se running                 │
-│ Targets: Device · De · Para · Status PT · Progresso % / bytes    │
+┌─ Hub OTA · Amarração ────────────────────────────────────────────┐
+│ Atualização OTA: firmware · Agora|Agendar · filial|device [Disp.]│
+│ Jobs PpDataTable (Progresso: Aguardando chip | N% | —) + Cancel  │
+│ Canvas: [FW v+ligados]──►[IoT IP+versão] · Desvincular / Update  │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1537,23 +1536,24 @@ Regra: **% sempre da API** (`progress.pct`) — MFE não calcula.
 ```text
 ┌─ Versão e atualização OTA ───────────────────────────────────────┐
 │ Em execução (live) · Instalada · Alvo · Família                  │
-│ Operação (PT) · ProgressTracker fases · barra % real (bytes)     │
-│ [Atualizar este device] [Ver campanhas]                          │
+│ Operação (PT) · ProgressTracker · «Aguardando chip» ou barra %   │
+│ [Atualizar este device] [Ver hub OTA]                            │
 │ ▼ Sketch de referência (firmware_source) — colapsável            │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-## WF-PP-OTA-05 — `/firmware-links` amarração visual
+## WF-PP-OTA-05 — Canvas no hub (`/firmware-links`)
 
 ```text
-┌─ Amarração Firmware ↔ IoT ───────────────────────────────────────┐
-│ Filial [01]  [Atualizar conexões ?]  [Campanhas]  [Firmwares]    │
-│ Canvas: [FW]──solid──►[IoT] · tracejada=via driver               │
-│ 1 IoT = 1 firmware (nova seta substitui)                         │
+┌─ Canvas Firmware ↔ IoT ──────────────────────────────────────────┐
+│ Filial [01]  [Atualizar ?]  [Firmwares]                          │
+│ FW: key · latestVersion · linkedCount · [Atualizar ligados]      │
+│ IoT: IP · installedFirmwareVersion · Desvincular / Atualizar /…  │
+│ Delete/Backspace na seta sólida = unlink                         │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-Helps: `PP_HELP.otaLinks.*`
+Helps: `PP_HELP.otaLinks.*` + `PP_HELP.ota.awaitingChip` / archive.
 
 ---
 

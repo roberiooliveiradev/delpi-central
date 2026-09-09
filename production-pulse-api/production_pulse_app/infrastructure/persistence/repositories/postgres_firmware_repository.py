@@ -23,7 +23,7 @@ class FirmwareNotFoundError(Exception):
 _FIRMWARE_COLUMNS = """
     id, firmware_key, driver_key, version, display_name, artifact_path, artifact_sha256,
     artifact_size_bytes, release_notes, min_compatible_version, published_at,
-    created_by, created_at
+    created_by, created_at, archived_at
 """
 
 
@@ -34,6 +34,7 @@ class PostgresFirmwareRepository:
         firmware_key: str | None = None,
         driver_key: str | None = None,
         published_only: bool = False,
+        include_archived: bool = True,
     ) -> list[dict[str, Any]]:
         clauses = ["1=1"]
         params: list[Any] = []
@@ -45,6 +46,8 @@ class PostgresFirmwareRepository:
             params.append(driver_key)
         if published_only:
             clauses.append("published_at IS NOT NULL")
+        if not include_archived:
+            clauses.append("archived_at IS NULL")
         where_sql = " AND ".join(clauses)
         with plugins_connection() as conn:
             with conn.cursor() as cur:
@@ -121,6 +124,66 @@ class PostgresFirmwareRepository:
             except psycopg.errors.UniqueViolation as exc:
                 conn.rollback()
                 raise FirmwareConflictError(str(exc)) from exc
+
+    def update_metadata(
+        self,
+        firmware_id: UUID,
+        *,
+        display_name: str | None = None,
+        release_notes: str | None = None,
+    ) -> dict[str, Any]:
+        sets: list[str] = []
+        params: list[Any] = []
+        if display_name is not None:
+            sets.append("display_name = %s")
+            params.append(display_name)
+        if release_notes is not None:
+            sets.append("release_notes = %s")
+            params.append(release_notes)
+        if not sets:
+            row = self.get_by_id(firmware_id)
+            if row is None:
+                raise FirmwareNotFoundError(str(firmware_id))
+            return row
+        params.append(firmware_id)
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.firmwares
+                    SET {", ".join(sets)}
+                    WHERE id = %s
+                      AND archived_at IS NULL
+                    RETURNING {_FIRMWARE_COLUMNS}
+                    """,
+                    params,
+                )
+                row = cur.fetchone()
+            conn.commit()
+            if row is None:
+                existing = self.get_by_id(firmware_id)
+                if existing is None:
+                    raise FirmwareNotFoundError(str(firmware_id))
+                raise FirmwareConflictError("firmware_archived")
+            return dict(row)
+
+    def archive(self, firmware_id: UUID) -> dict[str, Any]:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.firmwares
+                    SET archived_at = COALESCE(archived_at, NOW())
+                    WHERE id = %s
+                    RETURNING {_FIRMWARE_COLUMNS}
+                    """,
+                    (firmware_id,),
+                )
+                row = cur.fetchone()
+            conn.commit()
+            if row is None:
+                raise FirmwareNotFoundError(str(firmware_id))
+            return dict(row)
 
 
 _JOB_COLUMNS = """
@@ -276,7 +339,11 @@ class PostgresFirmwareUpdateJobRepository:
                 cur.execute(
                     """
                     UPDATE production_pulse.firmware_update_targets
-                    SET status = 'cancelled', finished_at = NOW(), updated_at = NOW()
+                    SET status = 'cancelled',
+                        finished_at = NOW(),
+                        updated_at = NOW(),
+                        artifact_token = NULL,
+                        artifact_token_expires_at = NULL
                     WHERE job_id = %s
                       AND status IN ('pending', 'authorized', 'downloading', 'applying')
                     """,
@@ -284,6 +351,110 @@ class PostgresFirmwareUpdateJobRepository:
                 )
             conn.commit()
             return dict(job)
+
+    def transition_target(
+        self,
+        target_id: UUID,
+        *,
+        next_status: str,
+        allowed_statuses: tuple[str, ...],
+        error_code: str | None = None,
+        clear_artifact_token: bool = False,
+        touch_started: bool = False,
+        touch_finished: bool = False,
+        bytes_received: int | None = None,
+        bytes_total: int | None = None,
+        progress_percent: int | None = None,
+    ) -> dict[str, Any] | None:
+        """Atomic status transition; returns None if current status not allowed."""
+        sets = ["status = %s", "updated_at = NOW()"]
+        params: list[Any] = [next_status]
+        if error_code is not None:
+            sets.append("error_code = %s")
+            params.append(error_code)
+        if clear_artifact_token:
+            sets.append("artifact_token = NULL")
+            sets.append("artifact_token_expires_at = NULL")
+        if touch_started:
+            sets.append("started_at = COALESCE(started_at, NOW())")
+        if touch_finished:
+            sets.append("finished_at = NOW()")
+        if bytes_received is not None:
+            sets.append("bytes_received = %s")
+            params.append(int(bytes_received))
+        if bytes_total is not None:
+            sets.append("bytes_total = %s")
+            params.append(int(bytes_total))
+        if progress_percent is not None:
+            sets.append("progress_percent = %s")
+            params.append(max(0, min(100, int(progress_percent))))
+        params.extend([target_id, list(allowed_statuses)])
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.firmware_update_targets
+                    SET {", ".join(sets)}
+                    WHERE id = %s
+                      AND status = ANY(%s)
+                    RETURNING {_TARGET_COLUMNS}
+                    """,
+                    params,
+                )
+                row = cur.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+
+    def maybe_finish_job(self, job_id: UUID) -> dict[str, Any] | None:
+        """If all targets are terminal and job is running, set completed or failed."""
+        terminal = ("updated", "failed", "skipped", "cancelled")
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_JOB_COLUMNS}
+                    FROM production_pulse.firmware_update_jobs
+                    WHERE id = %s
+                    FOR UPDATE
+                    """,
+                    (job_id,),
+                )
+                job = cur.fetchone()
+                if job is None or job["status"] != "running":
+                    conn.commit()
+                    return dict(job) if job else None
+                cur.execute(
+                    """
+                    SELECT
+                        COUNT(*) AS total,
+                        COUNT(*) FILTER (WHERE status = ANY(%s)) AS terminal,
+                        COUNT(*) FILTER (WHERE status = 'updated') AS updated,
+                        COUNT(*) FILTER (WHERE status = 'failed') AS failed
+                    FROM production_pulse.firmware_update_targets
+                    WHERE job_id = %s
+                    """,
+                    (list(terminal), job_id),
+                )
+                counts = cur.fetchone()
+                total = int(counts["total"] or 0)
+                done = int(counts["terminal"] or 0)
+                if total == 0 or done < total:
+                    conn.commit()
+                    return dict(job)
+                updated_n = int(counts["updated"] or 0)
+                next_status = "completed" if updated_n > 0 else "failed"
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.firmware_update_jobs
+                    SET status = %s, updated_at = NOW()
+                    WHERE id = %s AND status = 'running'
+                    RETURNING {_JOB_COLUMNS}
+                    """,
+                    (next_status, job_id),
+                )
+                finished = cur.fetchone()
+            conn.commit()
+            return dict(finished) if finished else dict(job)
 
     def authorize_due_scheduled_jobs(self, *, now: datetime | None = None) -> int:
         moment = now or datetime.now(timezone.utc)

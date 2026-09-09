@@ -10,6 +10,10 @@ export type FirmwareLinkGraphNode = {
   subtitle?: string;
   firmwareKey?: string;
   deviceId?: string;
+  latestVersion?: string | null;
+  linkedCount?: number;
+  installedFirmwareVersion?: string | null;
+  ipAddress?: string | null;
   position: { x: number; y: number };
 };
 
@@ -24,28 +28,62 @@ export type FirmwareFamilyNode = {
   firmwareKey: string;
   driverKey: string;
   displayName: string;
+  latestVersion: string | null;
+  linkedCount: number;
 };
 
-export function uniqueFirmwareFamilies(items: FirmwareCatalogItem[]): FirmwareFamilyNode[] {
-  const byKey = new Map<string, FirmwareFamilyNode>();
+function isNewerCatalogItem(candidate: FirmwareCatalogItem, current: FirmwareCatalogItem): boolean {
+  if (candidate.publishedAt && current.publishedAt) {
+    return candidate.publishedAt > current.publishedAt;
+  }
+  if (candidate.publishedAt && !current.publishedAt) return true;
+  if (!candidate.publishedAt && current.publishedAt) return false;
+  return candidate.version.localeCompare(current.version, undefined, { numeric: true }) > 0;
+}
+
+export function uniqueFirmwareFamilies(
+  items: FirmwareCatalogItem[],
+  devices: DeviceListItem[] = [],
+): FirmwareFamilyNode[] {
+  const byKey = new Map<string, { family: FirmwareFamilyNode; source: FirmwareCatalogItem }>();
   for (const item of items) {
+    if (item.archivedAt) continue;
     const prev = byKey.get(item.firmwareKey);
     if (!prev) {
       byKey.set(item.firmwareKey, {
-        firmwareKey: item.firmwareKey,
-        driverKey: item.driverKey,
-        displayName: item.displayName || item.firmwareKey,
+        source: item,
+        family: {
+          firmwareKey: item.firmwareKey,
+          driverKey: item.driverKey,
+          displayName: item.displayName || item.firmwareKey,
+          latestVersion: item.version,
+          linkedCount: 0,
+        },
       });
       continue;
     }
-    // Keep latest published when duplicate keys appear.
+    if (!isNewerCatalogItem(item, prev.source)) {
+      continue;
+    }
     byKey.set(item.firmwareKey, {
-      firmwareKey: item.firmwareKey,
-      driverKey: item.driverKey,
-      displayName: item.displayName || prev.displayName,
+      source: item,
+      family: {
+        firmwareKey: item.firmwareKey,
+        driverKey: item.driverKey,
+        displayName: item.displayName || prev.family.displayName,
+        latestVersion: item.version,
+        linkedCount: 0,
+      },
     });
   }
-  return [...byKey.values()].sort((a, b) => a.firmwareKey.localeCompare(b.firmwareKey));
+
+  const families = [...byKey.values()].map((entry) => entry.family);
+  for (const family of families) {
+    family.linkedCount = devices.filter(
+      (device) => explicitFirmwareKey(device) === family.firmwareKey,
+    ).length;
+  }
+  return families.sort((a, b) => a.firmwareKey.localeCompare(b.firmwareKey));
 }
 
 /** Effective assigned family for canvas solid edge (explicit column only). */
@@ -69,25 +107,31 @@ export function buildFirmwareLinkGraph(input: {
   const familyKeys = new Set(input.families.map((f) => f.firmwareKey));
 
   input.families.forEach((family, index) => {
+    const versionLabel = family.latestVersion ? `v${family.latestVersion}` : "sem versão";
     nodes.push({
       id: `fw:${family.firmwareKey}`,
       kind: "firmware",
       label: family.displayName,
-      subtitle: family.firmwareKey,
+      subtitle: `${family.firmwareKey} · ${versionLabel} · ${family.linkedCount} ligado(s)`,
       firmwareKey: family.firmwareKey,
-      position: { x: 40, y: 40 + index * 110 },
+      latestVersion: family.latestVersion,
+      linkedCount: family.linkedCount,
+      position: { x: 40, y: 40 + index * 130 },
     });
   });
 
   input.devices.forEach((device, index) => {
     const nodeId = `dev:${device.id}`;
+    const installed = device.installedFirmwareVersion?.trim() || "—";
     nodes.push({
       id: nodeId,
       kind: "device",
       label: device.name,
-      subtitle: device.ipAddress,
+      subtitle: `${device.ipAddress} · ${installed}`,
       deviceId: device.id,
-      position: { x: 420, y: 40 + index * 90 },
+      ipAddress: device.ipAddress,
+      installedFirmwareVersion: device.installedFirmwareVersion ?? null,
+      position: { x: 420, y: 40 + index * 110 },
     });
 
     const explicit = explicitFirmwareKey(device);

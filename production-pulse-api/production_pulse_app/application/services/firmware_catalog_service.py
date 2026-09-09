@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import logging
 import re
 from typing import Any
+from uuid import UUID
 
 from production_pulse_app.domain.errors import ContentCodedError, DeviceValidationError
 from production_pulse_app.domain.services.device_validation_service import resolve_driver
@@ -17,6 +19,8 @@ from production_pulse_app.infrastructure.storage.firmware_artifact_storage impor
     FirmwareArtifactStorage,
     FirmwareArtifactStorageError,
 )
+
+logger = logging.getLogger(__name__)
 
 _FIRMWARE_KEY_RE = re.compile(r"^[a-z][a-z0-9_]{1,63}$")
 _VERSION_RE = re.compile(r"^[0-9]+(\.[0-9]+){0,3}([-+][A-Za-z0-9.-]+)?$")
@@ -36,11 +40,14 @@ class FirmwareCatalogService:
         *,
         firmware_key: str | None = None,
         driver_key: str | None = None,
+        include_archived: bool = True,
+        published_only: bool = False,
     ) -> list[dict[str, Any]]:
         rows = self._repo.list_firmwares(
             firmware_key=firmware_key,
             driver_key=driver_key,
-            published_only=False,
+            published_only=published_only,
+            include_archived=include_archived,
         )
         return [self._to_api(row) for row in rows]
 
@@ -49,6 +56,37 @@ class FirmwareCatalogService:
         if row is None:
             raise FirmwareNotFoundError(str(firmware_id))
         return self._to_api(row)
+
+    def update_metadata(
+        self,
+        firmware_id: UUID,
+        *,
+        display_name: str | None = None,
+        release_notes: str | None = None,
+    ) -> dict[str, Any]:
+        if display_name is not None:
+            display_name = display_name.strip()
+            if not display_name:
+                raise ContentCodedError("validation_error")
+        try:
+            row = self._repo.update_metadata(
+                firmware_id,
+                display_name=display_name,
+                release_notes=release_notes,
+            )
+        except FirmwareConflictError as exc:
+            raise ContentCodedError("firmwareArchived") from exc
+        return self._to_api(row)
+
+    def archive(self, firmware_id: UUID) -> dict[str, Any]:
+        row = self._to_api(self._repo.archive(firmware_id))
+        logger.info(
+            "firmware_archived firmware_id=%s firmware_key=%s version=%s",
+            row.get("id"),
+            row.get("firmwareKey"),
+            row.get("version"),
+        )
+        return row
 
     def publish(
         self,
@@ -87,6 +125,8 @@ class FirmwareCatalogService:
             code = str(exc)
             if code == "artifact_too_large":
                 raise ContentCodedError("firmwareArtifactTooLarge") from exc
+            if code == "artifact_bad_extension":
+                raise ContentCodedError("firmwareArtifactInvalid") from exc
             raise ContentCodedError("firmwareArtifactInvalid") from exc
 
         try:
@@ -104,8 +144,17 @@ class FirmwareCatalogService:
                 actor_sub=actor_sub,
             )
         except FirmwareConflictError as exc:
+            self._storage.delete_relative(saved.relative_path)
             raise ContentCodedError("firmwareDuplicateVersion") from exc
-        return self._to_api(row)
+        api = self._to_api(row)
+        logger.info(
+            "firmware_published firmware_id=%s firmware_key=%s version=%s size=%s",
+            api.get("id"),
+            api.get("firmwareKey"),
+            api.get("version"),
+            api.get("artifactSizeBytes"),
+        )
+        return api
 
     @staticmethod
     def _to_api(row: dict[str, Any]) -> dict[str, Any]:
@@ -120,6 +169,7 @@ class FirmwareCatalogService:
             "releaseNotes": row.get("release_notes"),
             "minCompatibleVersion": row.get("min_compatible_version"),
             "publishedAt": row.get("published_at"),
+            "archivedAt": row.get("archived_at"),
             "createdBy": row.get("created_by"),
             "createdAt": row.get("created_at"),
         }
