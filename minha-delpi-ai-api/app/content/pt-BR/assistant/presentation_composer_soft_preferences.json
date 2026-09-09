@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "weights": {
+    "preferSequentialBlueForHeatmap": 1.0,
+    "preferBrandForCategoricalChart": 0.6,
+    "preferLegendHiddenForHeatmap": 0.8,
+    "preferLegendVisibleForMultiSeries": 0.5,
+    "preferBarWhenNominalXQuantitativeY": 0.4,
+    "preferFewerTableFieldsCap": 8
+  },
+  "defaults": {
+    "heatmapPaletteFamily": "sequential-blue",
+    "categoricalPaletteFamily": "brand",
+    "heatmapLegendVisible": false,
+    "chartLegendVisible": true,
+    "defaultChartMark": "bar"
+  }
+}

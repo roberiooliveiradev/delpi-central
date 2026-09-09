@@ -12,6 +12,9 @@ from app.domain.entities.presentation_spec import (
     PresentationIntent,
     PresentationSpec,
 )
+from app.domain.services.presentation_soft_preference_service import (
+    PresentationSoftPreferenceService,
+)
 
 
 class PresentationDeterministicIntentBinderService:
@@ -109,44 +112,46 @@ class PresentationDeterministicIntentBinderService:
                 for item in profile.fields
                 if not item.sensitive
             )[:12]
+            draft = PresentationSpec(
+                view="table",
+                fields=fields,
+                labels={key: labels[key] for key in fields if key in labels},
+                formats={
+                    key: str(item.format)
+                    for key, item in field_map.items()
+                    if item.format and key in fields
+                },
+                palette_family=intent.palette_family,
+                provenance="DETERMINISTIC",
+            )
             return (
-                PresentationSpec(
-                    view="table",
-                    fields=fields,
-                    labels={key: labels[key] for key in fields if key in labels},
-                    formats={
-                        key: str(item.format)
-                        for key, item in field_map.items()
-                        if item.format and key in fields
-                    },
-                    palette_family=intent.palette_family,
-                    provenance="DETERMINISTIC",
-                ),
+                PresentationSoftPreferenceService.apply(draft, profile=profile),
                 max(confidence, 0.6),
             )
 
-        if not encoding and view not in {"kpi", "text", "tree"}:
+        if not encoding and view not in {"kpi", "text", "tree", "dashboard"}:
             return None, confidence
 
+        draft = PresentationSpec(
+            view="chart" if (view == "chart" or mark) else (view or "auto"),
+            mark=mark,
+            encoding=encoding,
+            labels={
+                channel.field: labels[channel.field]
+                for channel in encoding.values()
+                if channel.field in labels
+            },
+            formats={
+                channel.field: str(field_map[channel.field].format)
+                for channel in encoding.values()
+                if channel.field in field_map and field_map[channel.field].format
+            },
+            palette_family=intent.palette_family,
+            legend_visible=False if mark == "heatmap" else None,
+            provenance="DETERMINISTIC",
+        )
         return (
-            PresentationSpec(
-                view="chart" if (view == "chart" or mark) else (view or "auto"),
-                mark=mark,
-                encoding=encoding,
-                labels={
-                    channel.field: labels[channel.field]
-                    for channel in encoding.values()
-                    if channel.field in labels
-                },
-                formats={
-                    channel.field: str(field_map[channel.field].format)
-                    for channel in encoding.values()
-                    if channel.field in field_map and field_map[channel.field].format
-                },
-                palette_family=intent.palette_family,
-                legend_visible=False if mark == "heatmap" else None,
-                provenance="DETERMINISTIC",
-            ),
+            PresentationSoftPreferenceService.apply(draft, profile=profile),
             min(1.0, confidence),
         )
 

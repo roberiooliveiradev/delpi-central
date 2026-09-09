@@ -129,6 +129,19 @@ class PresentationSpecComposerApplicationService:
                         profile=data_profile,
                         user_explicit=True,
                     )
+        if validation.ok and validation.spec is not None:
+            from app.domain.services.presentation_soft_preference_service import (
+                PresentationSoftPreferenceService,
+            )
+
+            softened = PresentationSoftPreferenceService.apply(
+                validation.spec,
+                profile=data_profile,
+            )
+            if softened is not None:
+                from dataclasses import replace
+
+                validation.spec = replace(softened, provenance="COMPOSER")
         latency = round((time.perf_counter() - started) * 1000, 2)
         return {
             "ok": validation.ok,
