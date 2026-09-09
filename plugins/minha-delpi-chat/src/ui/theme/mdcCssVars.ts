@@ -1,3 +1,4 @@
+import { resolveColorFamily } from "@delpi/plugin-ui/index";
 import { useEffect, useState } from "react";
 
 /** Lê tokens --mdc-* do :root (portal + plugin). */
@@ -110,35 +111,12 @@ export function readMdcChartSeries(count = 10): string[] {
   return sanitizeChartColors(colors);
 }
 
-/** Paleta efetiva: config da API → tokens CSS → fallback saturado por tema. */
+/** Paleta efetiva: config da API → Color Family Catalog → tokens CSS MDC. */
 export function resolvePaletteFamilyColors(
   paletteFamily: string | undefined,
+  isDark = false,
 ): string[] {
-  const family = String(paletteFamily || "")
-    .trim()
-    .toLowerCase();
-
-  if (family === "sequential-blue") {
-    return ["var(--mdc-heatmap-low)", "var(--mdc-heatmap-high)"];
-  }
-
-  if (family === "cool") {
-    return ["var(--mdc-chart-series-7)", "var(--mdc-chart-series-2)"];
-  }
-
-  if (family === "warm") {
-    return ["var(--mdc-chart-series-4)", "var(--mdc-chart-series-5)"];
-  }
-
-  if (family === "diverging-status" || family === "status") {
-    return ["var(--mdc-chart-series-5)", "var(--mdc-chart-series-3)"];
-  }
-
-  if (family === "brand") {
-    return ["var(--mdc-chart-series-1)", "var(--mdc-chart-series-10)"];
-  }
-
-  return [];
+  return resolveColorFamily(paletteFamily, isDark ? "dark" : "light");
 }
 
 /** Paleta efetiva: config da API → tokens CSS → fallback saturado por tema. */
@@ -153,7 +131,7 @@ export function resolveChartSeriesColors(
     return fromConfig;
   }
 
-  const fromFamily = sanitizeChartColors(resolvePaletteFamilyColors(paletteFamily));
+  const fromFamily = sanitizeChartColors(resolvePaletteFamilyColors(paletteFamily, isDark));
 
   if (fromFamily.length > 0) {
     return fromFamily;

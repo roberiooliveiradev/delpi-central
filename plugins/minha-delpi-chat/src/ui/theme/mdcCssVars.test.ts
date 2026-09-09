@@ -4,6 +4,7 @@ import {
   resolveChartSeriesColor,
   resolveChartSeriesColors,
   resolveMermaidTheme,
+  resolvePaletteFamilyColors,
 } from "./mdcCssVars";
 
 describe("resolveMermaidTheme", () => {
@@ -32,6 +33,36 @@ describe("resolveChartSeriesColors", () => {
     const colors = resolveChartSeriesColors(undefined, true);
 
     expect(colors[0]).toBe("#38bdf8");
+  });
+
+  it("usa paletteFamily quando colors[] está vazio", () => {
+    expect(resolveChartSeriesColors([], false, "warm")).toEqual([
+      "var(--mdc-chart-series-4)",
+      "var(--mdc-chart-series-5)",
+    ]);
+  });
+});
+
+describe("resolvePaletteFamilyColors", () => {
+  it("delega ao Color Family Catalog do plugin-ui", () => {
+    expect(resolvePaletteFamilyColors("brand")).toEqual([
+      "var(--mdc-chart-series-1)",
+      "var(--mdc-chart-series-10)",
+    ]);
+    expect(resolvePaletteFamilyColors("sequential-blue")).toEqual([
+      "var(--mdc-heatmap-low)",
+      "var(--mdc-heatmap-high)",
+    ]);
+  });
+
+  it("alinha status e diverging-status", () => {
+    expect(resolvePaletteFamilyColors("status")).toEqual(
+      resolvePaletteFamilyColors("diverging-status"),
+    );
+  });
+
+  it("retorna vazio para família desconhecida", () => {
+    expect(resolvePaletteFamilyColors("unknown-family")).toEqual([]);
   });
 });
 

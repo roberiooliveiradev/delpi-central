@@ -11,25 +11,36 @@ import {
   pluginUiTestAliases,
 } from "../vite/federation.shared";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const isVitest = mode === "test" || Boolean(process.env.VITEST);
+
+  return {
   plugins: [
-    federation({
-      name: "minha-delpi-chat",
-      filename: "remoteEntry.js",
-      remotes: pluginUiRemote(),
-      exposes: {
-        "./App": "./src/bootstrap.tsx",
-        "./EmbeddedChat": "./src/embeddedBootstrap.tsx",
-      },
-      shared: { ...FEDERATION_SHARED_REACT },
-    }),
-    federationReactProxyFixPlugin(),
+    ...(isVitest
+      ? []
+      : [
+          federation({
+            name: "minha-delpi-chat",
+            filename: "remoteEntry.js",
+            remotes: pluginUiRemote(),
+            exposes: {
+              "./App": "./src/bootstrap.tsx",
+              "./EmbeddedChat": "./src/embeddedBootstrap.tsx",
+            },
+            shared: { ...FEDERATION_SHARED_REACT },
+          }),
+          federationReactProxyFixPlugin(),
+        ]),
     react(),
   ],
   resolve: {
-    alias: {
-      ...reactResolveAliases(__dirname),
-    },
+    alias: [
+      ...(isVitest ? pluginUiTestAliases(__dirname) : []),
+      ...Object.entries(reactResolveAliases(__dirname)).map(([find, replacement]) => ({
+        find,
+        replacement,
+      })),
+    ],
     dedupe: ["react", "react-dom"],
   },
   base: "/apps/minha-delpi-chat/",
@@ -44,4 +55,5 @@ export default defineConfig({
     alias: pluginUiTestAliases(__dirname),
   },
 
+};
 });

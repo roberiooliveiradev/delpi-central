@@ -9,13 +9,15 @@ from app.domain.services.presentation_format_mapping_service import (
     PresentationFormatMappingService,
 )
 
+# Mirror of plugin-ui ColorFamilyCatalog — prefer paletteFamily emission over colors[].
 _PALETTE_TO_SERIES: dict[str, list[str]] = {
     "brand": ["var(--mdc-chart-series-1)", "var(--mdc-chart-series-10)"],
     "sequential-blue": ["var(--mdc-heatmap-low)", "var(--mdc-heatmap-high)"],
     "cool": ["var(--mdc-chart-series-7)", "var(--mdc-chart-series-2)"],
     "warm": ["var(--mdc-chart-series-4)", "var(--mdc-chart-series-5)"],
     "diverging-status": ["var(--mdc-chart-series-5)", "var(--mdc-chart-series-3)"],
-    "status": ["var(--mdc-chart-series-3)", "var(--mdc-chart-series-5)"],
+    # status alias — same semantic pair as diverging-status (MFE catalog aligned)
+    "status": ["var(--mdc-chart-series-5)", "var(--mdc-chart-series-3)"],
 }
 
 
