@@ -305,11 +305,11 @@ export const PP_HELP = {
 
   hub: {
     hero:
-      "Admin mapa: firmewares e IoTs no canvas. Popovers, menus e drawers para operar sem sair do mapa.",
+      "Admin mapa: firmwares e IoTs no canvas. Popovers, menus e modais host-contained para operar sem sair do mapa.",
     branch: "Filial dos IoTs exibidos no canvas, no disparo e nas atualizações.",
     refresh: "Recarrega firmwares, IoTs e atualizações da filial.",
-    newDevice: "Cadastra um novo dispositivo IoT nesta filial (drawer).",
-    newFirmware: "Cria uma nova versão de firmware (drawer).",
+    newDevice: "Cadastra um novo dispositivo IoT nesta filial (modal).",
+    newFirmware: "Cria uma nova versão de firmware (modal).",
     kpiPublished: "Versões publicadas e não arquivadas, elegíveis para disparo OTA.",
     kpiLinked: "IoTs com vínculo explícito de família — pré-requisito para OTA.",
     kpiUpdating: "IoTs com atualização autorizada, baixando ou aplicando agora.",
@@ -326,6 +326,9 @@ export const PP_HELP = {
     focusJobsAnchor: "Atualizações OTA",
     mapSearch: "Filtra e destaca nós no mapa.",
     fleetHealth: "Resumo compacto da saúde OTA da frota.",
+    collapseFilters: "Recolhe ou expande filtros, KPIs e legenda do mapa.",
+    lockNodes: "Bloqueia o arraste dos nós no canvas.",
+    bottomBar: "Contagens, jobs ativos e atalhos secundários do mapa.",
   },
 
   firmwareCreate: {

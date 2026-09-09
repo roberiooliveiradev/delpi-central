@@ -30,19 +30,29 @@ import { navigateProductionPulse, replaceProductionPulse } from "../utils/naviga
 import { formatDeviceDetailDescription } from "../utils/deviceDisplay";
 import { DeviceStatusBadge } from "../components/DeviceStatusBadge";
 
+type DeviceDetailTab = Extract<ProductionPulseRoute, { kind: "deviceDetail" }>["tab"];
+
 type DeviceDetailPageProps = {
   deviceId: string;
-  tab: Extract<ProductionPulseRoute, { kind: "deviceDetail" }>["tab"];
+  tab: DeviceDetailTab;
   search: string;
   permissions: ProductionPulsePermissionFlags;
+  /** When true, omit page chrome and keep tab switches local (no route navigate). */
+  embedded?: boolean;
+  onClose?: () => void;
 };
 
 export function DeviceDetailPage({
   deviceId,
-  tab,
+  tab: tabProp,
   search,
   permissions,
+  embedded = false,
+  onClose,
 }: DeviceDetailPageProps) {
+  const [localTab, setLocalTab] = useState<DeviceDetailTab>(tabProp);
+  const tab = embedded ? localTab : tabProp;
+
   const [resetOpen, setResetOpen] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
@@ -94,7 +104,11 @@ export function DeviceDetailPage({
             : PP_HELP.detail.tabFirmware,
   }));
 
-  const setTab = (nextTab: typeof tab) => {
+  const setTab = (nextTab: DeviceDetailTab) => {
+    if (embedded) {
+      setLocalTab(nextTab);
+      return;
+    }
     replaceProductionPulse(productionPulseDeviceDetailPath(deviceId, nextTab));
   };
 
@@ -130,6 +144,10 @@ export function DeviceDetailPage({
     try {
       await disableDevice(deviceId);
       setDeactivateOpen(false);
+      if (onClose) {
+        onClose();
+        return;
+      }
       navigateProductionPulse(panelBackPath);
     } catch (err) {
       setDeactivateError(err instanceof Error ? err.message : "Erro ao desativar dispositivo.");
@@ -141,7 +159,7 @@ export function DeviceDetailPage({
   if (!permissions.canViewDevices) {
     return (
       <div className="pp-page-stack">
-        <PpPageHero title="Detalhe do dispositivo" badge={ppShellIcon} />
+        {!embedded ? <PpPageHero title="Detalhe do dispositivo" badge={ppShellIcon} /> : null}
         <PpStateBox
           variant="error"
           title="Sem permissão"
@@ -154,7 +172,7 @@ export function DeviceDetailPage({
   if (loading && !device) {
     return (
       <div className="pp-page-stack">
-        <PpPageHero title="Detalhe do dispositivo" badge={ppShellIcon} />
+        {!embedded ? <PpPageHero title="Detalhe do dispositivo" badge={ppShellIcon} /> : null}
         <PpStateBox variant="loading" title="Carregando dispositivo…" message="Aguarde um instante." />
       </div>
     );
@@ -163,7 +181,7 @@ export function DeviceDetailPage({
   if (error && !device) {
     return (
       <div className="pp-page-stack">
-        <PpPageHero title="Detalhe do dispositivo" badge={ppShellIcon} />
+        {!embedded ? <PpPageHero title="Detalhe do dispositivo" badge={ppShellIcon} /> : null}
         <PpStateBox variant="error" title="Erro ao carregar" message={error} />
       </div>
     );
@@ -172,19 +190,21 @@ export function DeviceDetailPage({
   if (!device) {
     return (
       <div className="pp-page-stack">
-        <PpPageHero title="Detalhe do dispositivo" badge={ppShellIcon} />
+        {!embedded ? <PpPageHero title="Detalhe do dispositivo" badge={ppShellIcon} /> : null}
         <PpStateBox variant="empty" title="Dispositivo não encontrado" message="Verifique o link ou volte ao painel." />
       </div>
     );
   }
 
   return (
-    <div className="pp-page-stack pp-device-detail">
-      <ProductionPulsePagePath panelHref={panelBackPath} current={device.name} />
+    <div className={`pp-page-stack pp-device-detail${embedded ? " pp-form-page--embedded" : ""}`}>
+      {!embedded ? (
+        <ProductionPulsePagePath panelHref={panelBackPath} current={device.name} />
+      ) : null}
       <PpPageHero
         title={device.name}
         description={formatDeviceDetailDescription(device)}
-        badge={ppShellIcon}
+        badge={embedded ? undefined : ppShellIcon}
         actions={
           <div className="pp-device-detail__hero-actions">
             <DeviceStatusBadge status={device.status} />
@@ -222,6 +242,11 @@ export function DeviceDetailPage({
                 {refreshing ? PP_HELP.detail.pollNowLoading : PP_HELP.detail.pollNowAction}
               </PpActionButton>
             </PpHintAction>
+            {embedded && onClose ? (
+              <PpActionButton variant="ghost" className="pp-hero-brand-btn" onClick={onClose}>
+                Fechar
+              </PpActionButton>
+            ) : null}
           </div>
         }
       />

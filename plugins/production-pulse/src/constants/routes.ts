@@ -21,6 +21,11 @@ export type AdminHubQuery = {
   focus?: HubFocus;
   entity?: string;
   panel?: string;
+  /** Canonical modal layer (`modal=`). */
+  modal?: string;
+  /**
+   * @deprecated Prefer `modal`. Still accepted on parse; builders should emit `modal`.
+   */
   drawer?: string;
 };
 
@@ -73,6 +78,8 @@ export type ProductionPulseRoute =
       focus?: HubFocus;
       entity?: string;
       panel?: string;
+      modal?: string;
+      /** @deprecated Prefer `modal`. Legacy query still parsed. */
       drawer?: string;
     }
   | { kind: "operatorHub"; branch: string; anchorType: OperatorAnchorFilter; search: string }
@@ -126,6 +133,7 @@ export function parseProductionPulseRoute(pathname: string, search = ""): Produc
       focus: parseHubFocus(query.get("focus")),
       entity: query.get("entity") ?? undefined,
       panel: query.get("panel") ?? undefined,
+      modal: query.get("modal") ?? undefined,
       drawer: query.get("drawer") ?? undefined,
     };
   }
@@ -242,8 +250,11 @@ export function productionPulseFirmwareLinksPath(opts?: AdminHubQuery): string {
   if (opts?.panel?.trim()) {
     params.set("panel", opts.panel.trim());
   }
-  if (opts?.drawer?.trim()) {
-    params.set("drawer", opts.drawer.trim());
+  if (opts?.modal?.trim()) {
+    params.set("modal", opts.modal.trim());
+  } else if (opts?.drawer?.trim()) {
+    // Back-compat emit only when caller still passes drawer without modal.
+    params.set("modal", opts.drawer.trim() === "firmware-edit" ? "firmware-detail" : opts.drawer.trim());
   }
   return `${PRODUCTION_PULSE_BASE_PATH}/firmware-links?${params}`;
 }

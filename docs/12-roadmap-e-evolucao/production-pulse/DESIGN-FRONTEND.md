@@ -139,7 +139,7 @@ Import: `from "@delpi/plugin-ui/index"`. Factory com prefixo `pp` onde existir h
 | `PagePath` | Breadcrumb em detalhe/create (`ProductionPulsePagePath`) |
 | `UnderlineNav` | Abas no detalhe do device (Visão geral · Histórico · Comandos · Firmware) |
 
-**IA:** Firmwares e frota **não** são itens da TopBar — vivem no Admin mapa (`/firmware-links`) via painéis `?panel=firmwares|devices|jobs` e drawers. Operador **não** usa TopBar admin.
+**IA:** Firmwares e frota **não** são itens da TopBar — vivem no Admin mapa (`/firmware-links`) via painéis `?panel=firmwares|devices|jobs` e modais host-contained (`?modal=`). Operador **não** usa TopBar admin.
 
 ### 3.2 Ações
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { PpActionButton, PpHostContainedDrawer } from "../app/productionPulseUi";
+import { PpActionButton, PpWorkbenchDialog } from "../app/productionPulseUi";
 import { useViewportBucket } from "../hooks/useViewportBucket";
 import { isMobileViewport } from "../utils/viewportLayout";
 
@@ -9,6 +9,7 @@ type AdminSidePanelProps = {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  /** On mobile, catalogs open as page dialog (not side drawer). */
   preferDrawerOnMobile?: boolean;
 };
 
@@ -26,9 +27,9 @@ export function AdminSidePanel({
 
   if (preferDrawerOnMobile && mobile) {
     return (
-      <PpHostContainedDrawer open={open} title={title} onClose={onClose}>
+      <PpWorkbenchDialog open={open} title={title} onClose={onClose}>
         {children}
-      </PpHostContainedDrawer>
+      </PpWorkbenchDialog>
     );
   }
 

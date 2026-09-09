@@ -49,35 +49,39 @@ export default function App({
             branch: searchParams.get("branch") ?? "01",
             panel: searchParams.get("panel") ?? undefined,
             entity: searchParams.get("entity") ?? undefined,
-            drawer: searchParams.get("drawer") ?? undefined,
+            modal:
+              searchParams.get("modal") ??
+              searchParams.get("drawer") ??
+              undefined,
           })
         : route.kind === "deviceNew"
           ? productionPulseFirmwareLinksPath({
               branch: route.branch ?? "01",
-              drawer: "device-create",
+              modal: "device-create",
             })
           : route.kind === "deviceEdit"
             ? productionPulseFirmwareLinksPath({
                 branch: "01",
                 entity: formatAdminEntity({ type: "device", id: route.deviceId }) ?? undefined,
-                drawer: "device-edit",
+                modal: "device-edit",
               })
             : route.kind === "deviceDetail"
               ? productionPulseFirmwareLinksPath({
                   branch: "01",
                   entity: formatAdminEntity({ type: "device", id: route.deviceId }) ?? undefined,
+                  modal: "device-detail",
                 })
               : route.kind === "firmwareNew"
                 ? productionPulseFirmwareLinksPath({
                     branch: "01",
-                    drawer: "firmware-create",
+                    modal: "firmware-create",
                   })
                 : route.kind === "firmwareDetail"
                   ? productionPulseFirmwareLinksPath({
                       branch: "01",
                       entity:
                         formatAdminEntity({ type: "firmware", id: route.firmwareId }) ?? undefined,
-                      drawer: "firmware-edit",
+                      modal: "firmware-detail",
                     })
                   : null;
 
@@ -138,6 +142,7 @@ export default function App({
         entityParam={route.entity}
         panelParam={route.panel}
         drawerParam={route.drawer}
+        modalParam={route.modal}
         permissions={permissionFlags}
       />
     ) : isOperatorRoute ? (

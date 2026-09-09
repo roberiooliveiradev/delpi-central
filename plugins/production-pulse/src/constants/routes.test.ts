@@ -38,7 +38,25 @@ describe("parseProductionPulseRoute", () => {
     expect(route).toEqual({ kind: "firmwareJobs", branch: "02" });
   });
 
-  it("maps firmware-links entity panel drawer query", () => {
+  it("maps firmware-links entity panel modal query", () => {
+    expect(
+      parseProductionPulseRoute(
+        "/apps/production-pulse/firmware-links",
+        "?branch=02&entity=device:abc&panel=jobs&modal=device-create",
+      ),
+    ).toEqual({
+      kind: "firmwareLinks",
+      branch: "02",
+      firmwareKey: undefined,
+      focus: undefined,
+      entity: "device:abc",
+      panel: "jobs",
+      modal: "device-create",
+      drawer: undefined,
+    });
+  });
+
+  it("keeps legacy drawer query on firmware-links parse", () => {
     expect(
       parseProductionPulseRoute(
         "/apps/production-pulse/firmware-links",
@@ -51,6 +69,7 @@ describe("parseProductionPulseRoute", () => {
       focus: undefined,
       entity: "device:abc",
       panel: "jobs",
+      modal: undefined,
       drawer: "device-create",
     });
   });

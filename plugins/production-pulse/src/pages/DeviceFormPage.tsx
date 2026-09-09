@@ -20,7 +20,6 @@ import {
 import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import { DeviceBindingSection } from "../components/DeviceBindingSection";
 import { DeviceForm } from "../components/DeviceForm";
-import { TestConnectionModal } from "../components/modals/TestConnectionModal";
 import {
   productionPulseDeviceDetailPath,
   productionPulseDeviceEditPath,
@@ -44,6 +43,8 @@ import { useViewportBucket } from "../hooks/useViewportBucket";
 import { navigateProductionPulse } from "../utils/navigation";
 import type { DeviceBinding } from "../types/device";
 
+type ProbeNoticeVariant = "error" | "warning" | "success" | "info";
+
 type DeviceFormPageProps = {
   mode: "create" | "edit";
   deviceId?: string;
@@ -53,6 +54,8 @@ type DeviceFormPageProps = {
   embedded?: boolean;
   onDone?: (branch: string) => void;
   onCancel?: () => void;
+  /** Optional floating notice host (Admin Hub). */
+  onProbeNotice?: (message: string, variant?: ProbeNoticeVariant) => void;
 };
 
 function bindingFromApi(binding: DeviceBinding | null | undefined): BindingFormValues {
@@ -78,6 +81,7 @@ export function DeviceFormPage({
   embedded = false,
   onDone,
   onCancel,
+  onProbeNotice,
 }: DeviceFormPageProps) {
   const viewport = useViewportBucket();
   const isMobile = isMobileViewport(viewport);
@@ -95,7 +99,6 @@ export function DeviceFormPage({
   const [formError, setFormError] = useState<string | null>(null);
   const [configPushBanner, setConfigPushBanner] = useState<string | null>(null);
 
-  const [testOpen, setTestOpen] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<ProbeResult | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
@@ -154,7 +157,6 @@ export function DeviceFormPage({
   const formPageTitle = mode === "create" ? "Novo dispositivo" : "Editar dispositivo";
 
   const runTestConnection = async () => {
-    setTestOpen(true);
     setTestLoading(true);
     setTestResult(null);
     setTestError(null);
@@ -186,11 +188,16 @@ export function DeviceFormPage({
           }
           return Object.keys(patch).length ? { ...prev, ...patch } : prev;
         });
+        onProbeNotice?.(PP_HELP.modals.testOk, "success");
       } else {
-        setTestError(resolveProbeErrorMessage(result, PP_HELP.modals.testFail));
+        const message = resolveProbeErrorMessage(result, PP_HELP.modals.testFail);
+        setTestError(message);
+        onProbeNotice?.(message, "warning");
       }
     } catch (err) {
-      setTestError(resolveDeviceActionMessage(err, PP_HELP.modals.testFail));
+      const message = resolveDeviceActionMessage(err, PP_HELP.modals.testFail);
+      setTestError(message);
+      onProbeNotice?.(message, "error");
     } finally {
       setTestLoading(false);
     }
@@ -317,6 +324,46 @@ export function DeviceFormPage({
         />
       ) : null}
 
+      {testLoading ? (
+        <PpStateBox
+          variant="loading"
+          title="Testando conexão…"
+          message="Aguarde a resposta do dispositivo."
+        />
+      ) : null}
+
+      {!testLoading && testResult?.online ? (
+        <PpStateBox
+          variant="empty"
+          title="Conexão OK"
+          message="O dispositivo respondeu ao probe."
+          action={
+            <PpActionButton variant="ghost" onClick={() => setTestResult(null)}>
+              Fechar
+            </PpActionButton>
+          }
+        />
+      ) : null}
+
+      {!testLoading && testError ? (
+        <PpStateBox
+          variant="error"
+          title="Falha no teste"
+          message={testError}
+          action={
+            <PpActionButton
+              variant="ghost"
+              onClick={() => {
+                setTestError(null);
+                setTestResult(null);
+              }}
+            >
+              Fechar
+            </PpActionButton>
+          }
+        />
+      ) : null}
+
       <div className="pp-form-layout">
         <PpSectionCard title="Dispositivo IoT" hint={PP_HELP.form.sectionDevice}>
           <DeviceForm
@@ -352,14 +399,6 @@ export function DeviceFormPage({
           </PpActionButton>
         </PpFormActions>
       </div>
-
-      <TestConnectionModal
-        open={testOpen}
-        loading={testLoading}
-        result={testResult}
-        error={testError}
-        onClose={() => setTestOpen(false)}
-      />
     </div>
   );
 }

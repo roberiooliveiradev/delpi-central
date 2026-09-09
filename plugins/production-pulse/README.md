@@ -16,21 +16,21 @@ O MFE **não** chama a api-delpi diretamente.
 | Path | Descrição |
 |------|-----------|
 | `/apps/production-pulse` | Redirect → Admin mapa (`/firmware-links`) |
-| `/apps/production-pulse/firmware-links` | **Admin mapa fullscreen** — canvas Firmware↔IoT, overlays, popovers, painéis e drawers |
-| `/apps/production-pulse/firmwares/new` | Redirect → Admin com drawer de create |
-| `/apps/production-pulse/firmwares/{id}` | Redirect → Admin com drawer/inspector da versão |
+| `/apps/production-pulse/firmware-links` | **Admin mapa fullscreen** — canvas Firmware↔IoT, overlays, popovers, painéis e modais host-contained |
+| `/apps/production-pulse/firmwares/new` | Redirect → Admin com modal de create |
+| `/apps/production-pulse/firmwares/{id}` | Redirect → Admin com modal de detalhe da versão |
 | `/apps/production-pulse/firmwares` | Legado → Admin `panel=firmwares` |
 | `/apps/production-pulse/firmware-jobs` | Legado → Admin `panel=jobs` |
-| `/apps/production-pulse/devices/new` | Redirect → Admin drawer create IoT |
-| `/apps/production-pulse/devices/{id}/edit` | Redirect → Admin drawer edit IoT |
-| `/apps/production-pulse/devices/{id}` | Redirect → Admin com entity selecionada |
+| `/apps/production-pulse/devices/new` | Redirect → Admin modal create IoT |
+| `/apps/production-pulse/devices/{id}/edit` | Redirect → Admin modal edit IoT |
+| `/apps/production-pulse/devices/{id}` | Redirect → Admin com entity + modal detalhe |
 | `/apps/production-pulse/operator` | Hub operador — escolha de posto/máquina/equipamento |
 | `/apps/production-pulse/operator/placements/{key}` | Picker quando há mais de um device no local |
 | `/apps/production-pulse/operator/devices/{id}` | Superfície operador (`counter_pad` ou `gauge_readout`) |
 
 TopBar Admin: **Admin | Operador**. Frota tabela (ex-Painel) abre via `?panel=devices`.
 
-Query Admin: `branch`, `entity`, `panel`, `drawer`, `firmwareKey`, `focus` (legado catalog/jobs).
+Query Admin: `branch`, `entity`, `panel`, `modal` (alias legado `drawer`), `firmwareKey`, `focus` (legado catalog/jobs).
 
 ## API
 

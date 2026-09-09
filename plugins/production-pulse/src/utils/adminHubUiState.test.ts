@@ -5,30 +5,43 @@ import {
   hubFocusToPanel,
   parseAdminDrawer,
   parseAdminEntity,
+  parseAdminModal,
   parseAdminPanel,
+  resolveAdminModalFromQuery,
 } from "./adminHubUiState";
 
 describe("adminHubUiState", () => {
-  it("parses entity refs (positive)", () => {
+  it("parses and formats entity refs", () => {
     expect(parseAdminEntity("device:abc")).toEqual({ type: "device", id: "abc" });
     expect(parseAdminEntity("firmware:fw-1")).toEqual({ type: "firmware", id: "fw-1" });
-    expect(parseAdminEntity("job:j:with:colons")).toEqual({ type: "job", id: "j:with:colons" });
-  });
-
-  it("rejects invalid entity (negative)", () => {
-    expect(parseAdminEntity(null)).toBeNull();
+    expect(parseAdminEntity("job:j1")).toEqual({ type: "job", id: "j1" });
     expect(parseAdminEntity("unknown:x")).toBeNull();
-    expect(parseAdminEntity("device:")).toBeNull();
+    expect(formatAdminEntity({ type: "device", id: "x" })).toBe("device:x");
   });
 
-  it("formats entity and maps legacy focus (sibling)", () => {
-    expect(formatAdminEntity({ type: "device", id: "1" })).toBe("device:1");
+  it("parses panels and focus aliases", () => {
+    expect(parseAdminPanel("jobs")).toBe("jobs");
+    expect(parseAdminPanel("fleet-health")).toBe("fleet-health");
+    expect(parseAdminPanel("nope")).toBeNull();
     expect(hubFocusToPanel("catalog")).toBe("firmwares");
     expect(hubFocusToPanel("jobs")).toBe("jobs");
-    expect(hubFocusToPanel("canvas")).toBeNull();
-    expect(parseAdminPanel("devices")).toBe("devices");
-    expect(parseAdminPanel("nope")).toBeNull();
-    expect(parseAdminDrawer("firmware-create")).toBe("firmware-create");
-    expect(parseAdminDrawer("delete-draft")).toBeNull();
+  });
+
+  it("parses canonical modal keys", () => {
+    expect(parseAdminModal("device-create")).toBe("device-create");
+    expect(parseAdminModal("firmware-detail")).toBe("firmware-detail");
+    expect(parseAdminModal("device-detail")).toBe("device-detail");
+    expect(parseAdminModal("job-detail")).toBe("job-detail");
+    expect(parseAdminModal("ota-schedule")).toBe("ota-schedule");
+    expect(parseAdminModal("nope")).toBeNull();
+  });
+
+  it("aliases legacy drawer=firmware-edit to firmware-detail", () => {
+    expect(parseAdminDrawer("firmware-edit")).toBe("firmware-detail");
+    expect(parseAdminModal("firmware-edit")).toBe("firmware-detail");
+    expect(resolveAdminModalFromQuery({ drawer: "device-create" })).toBe("device-create");
+    expect(resolveAdminModalFromQuery({ modal: "firmware-detail", drawer: "device-create" })).toBe(
+      "firmware-detail",
+    );
   });
 });

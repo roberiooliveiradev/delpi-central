@@ -30,7 +30,7 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 
 ## WF-PP-OTA-HUB — Admin mapa
 
-Superfície única Admin: canvas fullscreen, KPIs em chips, catálogos/jobs em painéis laterais, CRUD/OTA em drawers e popovers ancorados (`AnchoredPanelPortal`).
+Superfície única Admin: canvas fullscreen, KPIs em chips, catálogos/jobs em painéis laterais, detalhe/CRUD em modais host-contained e popovers ancorados (`AnchoredPanelPortal`). Feedback transitório via FloatingNotice; confirmações destrutivas via ConfirmModalPanel.
 
 Helps: `PP_HELP.hub.*`, `PP_HELP.otaLinks.*`.
 

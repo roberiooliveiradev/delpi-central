@@ -7,6 +7,21 @@ export type AdminEntityRef =
 
 export type AdminHubPanel = "devices" | "firmwares" | "jobs" | "fleet-health";
 
+/** Canonical modal layer keys (URL `modal=`). */
+export type AdminHubModal =
+  | "device-create"
+  | "device-edit"
+  | "device-detail"
+  | "firmware-create"
+  | "firmware-version"
+  | "firmware-detail"
+  | "ota-schedule"
+  | "job-detail";
+
+/**
+ * @deprecated Prefer `AdminHubModal`. Kept for typed alias of legacy `drawer=` values.
+ * `firmware-edit` maps to `firmware-detail`.
+ */
 export type AdminHubDrawer =
   | "device-create"
   | "device-edit"
@@ -28,14 +43,14 @@ export type AdminHubOpenLayer =
   | "menu"
   | "inspector"
   | "panel"
-  | "drawer"
+  | "modal"
   | "confirm";
 
 export type AdminHubUiState = {
   selectedEntity: AdminEntityRef | null;
   openLayer: AdminHubOpenLayer;
   panel: AdminHubPanel | null;
-  drawer: AdminHubDrawer | null;
+  modal: AdminHubModal | null;
   confirm: { kind: AdminHubConfirmKind; id: string } | null;
   filters: { q: string; status: string };
   popoverAnchorId: string | null;
@@ -45,10 +60,31 @@ export const INITIAL_ADMIN_HUB_UI: AdminHubUiState = {
   selectedEntity: null,
   openLayer: "none",
   panel: null,
-  drawer: null,
+  modal: null,
   confirm: null,
   filters: { q: "", status: "" },
   popoverAnchorId: null,
+};
+
+const ADMIN_HUB_MODALS = new Set<AdminHubModal>([
+  "device-create",
+  "device-edit",
+  "device-detail",
+  "firmware-create",
+  "firmware-version",
+  "firmware-detail",
+  "ota-schedule",
+  "job-detail",
+]);
+
+/** Legacy `drawer=` → canonical `modal=`. */
+const LEGACY_DRAWER_TO_MODAL: Record<string, AdminHubModal> = {
+  "device-create": "device-create",
+  "device-edit": "device-edit",
+  "firmware-create": "firmware-create",
+  "firmware-version": "firmware-version",
+  "firmware-edit": "firmware-detail",
+  "ota-schedule": "ota-schedule",
 };
 
 export function parseAdminEntity(raw: string | null | undefined): AdminEntityRef | null {
@@ -79,19 +115,19 @@ export function parseAdminPanel(raw: string | null | undefined): AdminHubPanel |
   return null;
 }
 
-export function parseAdminDrawer(raw: string | null | undefined): AdminHubDrawer | null {
-  if (
-    raw === "device-create" ||
-    raw === "device-edit" ||
-    raw === "firmware-create" ||
-    raw === "firmware-version" ||
-    raw === "firmware-edit" ||
-    raw === "ota-schedule" ||
-    raw === "ota-confirm"
-  ) {
-    return raw;
+export function parseAdminModal(raw: string | null | undefined): AdminHubModal | null {
+  if (!raw?.trim()) return null;
+  if (ADMIN_HUB_MODALS.has(raw as AdminHubModal)) {
+    return raw as AdminHubModal;
   }
-  return null;
+  return LEGACY_DRAWER_TO_MODAL[raw] ?? null;
+}
+
+/**
+ * @deprecated Prefer `parseAdminModal`. Accepts legacy drawer query values.
+ */
+export function parseAdminDrawer(raw: string | null | undefined): AdminHubModal | null {
+  return parseAdminModal(raw);
 }
 
 export function hubFocusToPanel(
@@ -100,4 +136,12 @@ export function hubFocusToPanel(
   if (focus === "catalog") return "firmwares";
   if (focus === "jobs") return "jobs";
   return null;
+}
+
+/** Resolve modal from URL: prefer `modal=`, fall back to legacy `drawer=`. */
+export function resolveAdminModalFromQuery(opts: {
+  modal?: string | null;
+  drawer?: string | null;
+}): AdminHubModal | null {
+  return parseAdminModal(opts.modal) ?? parseAdminModal(opts.drawer);
 }

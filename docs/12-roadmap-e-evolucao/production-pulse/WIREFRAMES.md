@@ -1540,13 +1540,14 @@ TopBar: **Admin | Operador**. O mapa ocupa quase todo o viewport.
 ```text
 ┌─ Admin                                              Operador ─┐
 │ [Buscar] [Filtros] [Saúde▾] [Jobs n]     [IoTs] [FW] [+IoT] [+FW] [↻] │
-│ ┌─ Canvas fullscreen (React Flow + MiniMap + Controls) ─────┐ │
-│ │  FW ──▶ IoT   · clique = popover · ⋯ = menu · drawers CRUD │ │
+│ ┌─ Canvas fullscreen (React Flow + MiniMap condicional) ────┐ │
+│ │  FW ──▶ IoT   · clique = popover · ⋯ = menu · modais CRUD │ │
 │ └────────────────────────────────────────────────────────────┘ │
+│ [contagens · jobs · lock · refresh]                            │
 └───────────────────────────────────────────────────────────────┘
 ```
 
-Query: `entity=device|firmware|job:<id>` · `panel=devices|firmwares|jobs` · `drawer=…`
+Query: `entity=device|firmware|job:<id>` · `panel=devices|firmwares|jobs` · `modal=…` (alias legado `drawer=`)
 
 ## WF-PP-OTA-04 — Detalhe · aba Firmware (IoT)
 
@@ -1562,9 +1563,9 @@ Query: `entity=device|firmware|job:<id>` · `panel=devices|firmwares|jobs` · `d
 
 ```text
 ┌─ Canvas Firmware ↔ IoT ──────────────────────────────────────────┐
-│ FW: nome · versão · vinculados · desatualizados · [CTA] · ⋯     │
-│ IoT: status · golpes · instalada/disponível · [CTA] · ⋯         │
-│ Popover resumo · menu contextual · inspector / drawers           │
+│ FW (FileCode): nome · versão · IoTs · desatul. · ⋯               │
+│ IoT (Cpu): status+dot · golpes · FW · ⋯                          │
+│ Popover resumo · menu contextual · detail/workbench modals       │
 │ Delete/Backspace na seta sólida = unlink · pan/zoom/touch        │
 └──────────────────────────────────────────────────────────────────┘
 ```

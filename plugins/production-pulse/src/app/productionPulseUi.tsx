@@ -1,14 +1,17 @@
-import { useState, type ComponentProps } from "react";
+import { useState, type ComponentProps, type ReactNode } from "react";
 import {
   ActionButton,
   AnchoredPanelPortal,
   attachmentFileListBemClasses,
+  ConfirmModalPanel,
+  confirmModalBemClasses,
   ContextMenuDivider,
   ContextMenuItem,
   createDashboardTopBar,
   createCompactPagination,
   createDashboardAttachmentFileList,
   createDashboardFileDropzone,
+  createFloatingNoticeStack,
   createHostContainedDrawerShell,
   createHostContainedModalShell,
   catalogSearchBarBemClasses,
@@ -27,11 +30,13 @@ import {
   FieldLabel,
   fileDropzoneBemClasses,
   HintAction,
+  IconButton,
   PageHero,
   pageHeroBemClasses,
   sectionCardPacBemClasses,
   formActionsBemClasses,
   formGridBemClasses,
+  useFloatingNotices,
   type StateBoxVariant,
 } from "@delpi/plugin-ui/index";
 import { Activity, AlertTriangle, FileQuestion, Loader2 } from "lucide-react";
@@ -47,10 +52,78 @@ export const PpHostContainedDialog = createHostContainedModalShell({
   containedLayout: "dialog",
 });
 
+/** Detail firmware / IoT / job — wide host-contained dialog. */
+export const PpDetailDialog = createHostContainedModalShell({
+  prefix: PREFIX,
+  portalScopeClassName: PP_PORTAL_SCOPE,
+  containedLayout: "dialog",
+  variant: "wide",
+});
+
+/** CRUD workbench (create/edit IoT, FW) — page host-contained dialog. */
+export const PpWorkbenchDialog = createHostContainedModalShell({
+  prefix: PREFIX,
+  portalScopeClassName: PP_PORTAL_SCOPE,
+  containedLayout: "dialog",
+  variant: "page",
+});
+
 export const PpHostContainedDrawer = createHostContainedDrawerShell({
   prefix: PREFIX,
   portalScopeClassName: PP_PORTAL_SCOPE,
 });
+
+const ppConfirmClasses = confirmModalBemClasses(PREFIX, {
+  actionsBlock: "form-actions",
+  actionsAlign: "end",
+});
+
+export type PpConfirmDialogProps = {
+  open: boolean;
+  title?: string;
+  message: ReactNode;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  confirmBusy?: boolean;
+  variant?: "default" | "danger";
+  onConfirm: () => void;
+  onCancel: () => void;
+};
+
+export function PpConfirmDialog({
+  open,
+  title = "Confirmar",
+  message,
+  confirmLabel = "Confirmar",
+  cancelLabel = "Cancelar",
+  confirmBusy = false,
+  variant = "default",
+  onConfirm,
+  onCancel,
+}: PpConfirmDialogProps) {
+  return (
+    <PpHostContainedDialog open={open} title={title} onClose={onCancel}>
+      <ConfirmModalPanel
+        message={message}
+        confirmLabel={confirmLabel}
+        cancelLabel={cancelLabel}
+        confirmBusy={confirmBusy}
+        variant={variant}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+        classNames={ppConfirmClasses}
+      />
+    </PpHostContainedDialog>
+  );
+}
+
+export const PpFloatingNotices = createFloatingNoticeStack({
+  prefix: PREFIX,
+  portalScopeClassName: PP_PORTAL_SCOPE,
+});
+
+export { useFloatingNotices };
+export const PpIconButton = IconButton;
 
 export { AnchoredPanelPortal, ContextMenuDivider, ContextMenuItem };
 

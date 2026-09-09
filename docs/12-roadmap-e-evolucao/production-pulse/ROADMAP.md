@@ -38,6 +38,8 @@ Live (quando na VLAN): `PP_LIVE_ESP=1 PP_LIVE_ESP_IP=192.168.20.2 bash ./scripts
 
 **E7.S5 entregue (set/2026):** `SegmentToggle` width/column no kit; toolbar filtros via `filterToolbarRowBemClasses`; zero `.delpi-ui-*` no `index.css` do MFE; teste estrutural — commit `d645243f5`.
 
+**Admin Hub UX (set/2026):** canvas-first — detalhe/CRUD em `PpDetailDialog` / `PpWorkbenchDialog`; URL `modal=` (+ alias `drawer=`); FloatingNotice + ConfirmModalPanel; nodes compactos; bottom bar; MiniMap condicional (`ADMIN_HUB_MINIMAP_NODE_THRESHOLD`).
+
 **E8.S0–S3 entregue (set/2026):** tokens viewport + `data-pp-viewport`; form grade 2 col + footer sticky compact; painel/detalhe/operador responsive — commit `11378d221`.
 
 **E8.S1+ (form kit):** `ppFormFields.tsx` + `createDashboardNativeFormFields`; cadastro 2 col desktop (1200px); CT via busca+select TOTVS — commit `2c15a1491`.

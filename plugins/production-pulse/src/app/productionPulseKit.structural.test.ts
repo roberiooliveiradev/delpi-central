@@ -94,11 +94,12 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/operator/OperatorPage.tsx")).not.toMatch(/PpTopBar/);
   });
 
-  it("OTA: Admin mapa fullscreen, popovers, painéis e drawers kit-first", () => {
+  it("OTA: Admin mapa fullscreen, popovers, painéis e modais kit-first", () => {
     expect(readRelative("constants/routes.ts")).toMatch(/firmwares/);
     expect(readRelative("constants/routes.ts")).toMatch(/firmware-jobs/);
     expect(readRelative("constants/routes.ts")).toMatch(/firmware-links/);
     expect(readRelative("constants/routes.ts")).toMatch(/entity\?/);
+    expect(readRelative("constants/routes.ts")).toMatch(/modal\?/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/ota:\s*\{/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/otaLinks:\s*\{/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/awaitingChip|awaitingDevice/);
@@ -121,10 +122,15 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/formatOtaProgressDisplay/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PpDataTable/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PpCatalogSearchBar/);
-    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PpHostContainedDrawer/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PpWorkbenchDialog/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PpDetailDialog/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PpConfirmDialog/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PpFloatingNotices/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/PpHostContainedDrawer/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/AnchoredPanelPortal|EntitySummaryPopover/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/HubOtaKpiChips/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/pp-admin-hub/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/pp-admin-bottom-bar/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/Campanhas OTA/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(
       /<PpSectionCard title="Targets/,
@@ -133,6 +139,8 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("utils/hubOtaKpis.ts")).toMatch(/computeHubOtaKpis/);
     expect(readRelative("utils/hubOtaKpis.ts")).toMatch(/explicitFirmwareKey/);
     expect(readRelative("utils/adminHubUiState.ts")).toMatch(/AdminHubUiState/);
+    expect(readRelative("utils/adminHubUiState.ts")).toMatch(/AdminHubModal/);
+    expect(readRelative("utils/adminHubUiState.ts")).toMatch(/parseAdminModal/);
     expect(readRelative("pages/PanelPage.tsx")).not.toMatch(/FirmwareOtaKpiStrip/);
     expect(readRelative("pages/PanelPage.tsx")).not.toMatch(/productionPulseFirmwareJobsPath/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/fetchDevices/);
@@ -140,8 +148,13 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("App.tsx")).toMatch(/firmwareJobs/);
     expect(readRelative("App.tsx")).toMatch(/productionPulseFirmwareLinksPath/);
     expect(readRelative("App.tsx")).toMatch(/dashboard-page--fill/);
+    expect(readRelative("App.tsx")).toMatch(/modal:\s*"device-create"/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/@xyflow\/react/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/MiniMap/);
+    expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/ADMIN_HUB_MINIMAP_NODE_THRESHOLD/);
+    expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/FileCode/);
+    expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/Cpu/);
+    expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).not.toMatch(/Atualizar vinculados/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/Panel/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/useDelpiDarkMode/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/colorMode=\{colorMode\}/);
@@ -162,13 +175,22 @@ describe("production-pulse kit contracts", () => {
       /productionPulseFirmwareLinksPath/,
     );
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/disableDevice/);
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/embedded/);
     expect(readRelative("pages/DeviceFormPage.tsx")).toMatch(/embedded/);
+    expect(readRelative("pages/DeviceFormPage.tsx")).not.toMatch(/TestConnectionModal/);
     expect(readRelative("components/DeviceForm.tsx")).not.toMatch(/firmwareSource/);
     expect(readRelative("utils/otaStatusLabels.ts")).toMatch(/formatOtaProgressDisplay/);
     expect(readRelative("utils/otaStatusLabels.ts")).toMatch(/Aguardando chip/);
     expect(readRelative("index.css")).toMatch(/pp-firmware-link-canvas--fill|pp-admin-hub/);
+    expect(readRelative("index.css")).toMatch(/pp-admin-bottom-bar/);
+    expect(readRelative("index.css")).not.toMatch(/\.delpi-ui-/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/PpHostContainedDrawer/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/PpDetailDialog/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/PpWorkbenchDialog/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/PpConfirmDialog/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/PpFloatingNotices/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/AnchoredPanelPortal/);
+    expect(readRelative("components/AdminSidePanel.tsx")).toMatch(/PpWorkbenchDialog/);
   });
 
   it("botões do hero usam PpHintAction + PP_HELP (sem ação órfã)", () => {
