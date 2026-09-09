@@ -174,11 +174,14 @@ Owner: `platform-quality-testing.mdc`
 - `architecture-ci-enforcement.mdc`
 - `cursor-rules-governance.mdc`
 - `plan-construction.mdc`
+- `plan-execution.mdc`
 - `plugins-documentation.mdc`
 - `root-cause-generalized-fix.mdc`
 - `test-and-commit.mdc`
 
-Racional: investigação, planejamento, evidência, regressão, CI, documentação e Definition of Done.
+Racional: investigação, planejamento, execução controlada, evidência, regressão, generalização, desacoplamento, CI, documentação e Definition of Done.
+
+`plan-construction.mdc` governa **como construir/revisar** planos. `plan-execution.mdc` governa **como executar e avaliar** cada subetapa e o verify-final, incluindo os gates `OBJECTIVE_RESOLVED`, `GENERALIZATION`, `DECOUPLING` e `REGRESSION_SAFETY`.
 
 `Architecture Enforcement` executa:
 
@@ -218,6 +221,13 @@ O scanner Phase 3 bloqueia novas chamadas HTTP Python detectáveis sem timeout, 
 # Sobreposições revisadas
 
 ## Permanecem separadas
+
+### `plan-construction` × `plan-execution`
+
+- `plan-construction` governa evidência, decisões, rastreabilidade e receita **antes da implementação**;
+- `plan-execution` governa preflight, drift, escopo, diff review, avaliação pós-execução e verify-final **durante/depois da implementação**.
+
+Não duplicar arquitetura de domínio nessas regras; ambas referenciam os owners transversais aplicáveis.
 
 ### `plugins-reusable-components` × `plugins-visual-design-system` × `plugin-mfe-page-excellence`
 
@@ -259,7 +269,8 @@ Revisar após estabilização. Regra criada por incidente não deve permanecer i
 7. coerência de rotas públicas FastAPI;
 8. `operationId` explícito/único;
 9. breaking estrutural OpenAPI selecionado;
-10. HTTP timeout/retry/secrets.
+10. HTTP timeout/retry/secrets;
+11. protocolo de execução de planos com avaliação explícita de objetivo, generalização, desacoplamento e regressão.
 
 ## Próximos, após modelagem segura
 
