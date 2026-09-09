@@ -156,6 +156,25 @@ class ChatPresentationVocabularyService(ChatAssistantVocabularyService):
         return cls.terms("automaticScoreMarkers", group_key)
 
     @classmethod
+    def unmet_intent_notice(cls, token: str | None, *, default: str = "") -> str:
+        raw = str(token or "").strip()
+        if not raw:
+            return default
+
+        exact = cls.text("unmetIntentNotices", raw, default="")
+        if exact:
+            return exact
+
+        # Tokens like mark_unavailable:heatmap → family prefix.
+        family = raw.split(":", 1)[0].strip()
+        if family and family != raw:
+            family_text = cls.text("unmetIntentNotices", family, default="")
+            if family_text:
+                return family_text
+
+        return cls.text("unmetIntentNotices", "default", default=default)
+
+    @classmethod
     def insight_text(cls, key: str, *, default: str = "", **values: str) -> str:
         return cls.text("insights", key, default=default, **values)
 

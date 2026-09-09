@@ -1,0 +1,230 @@
+{
+  "generatedAt": "2026-09-09T18:54:14.745335+00:00",
+  "baseUrl": "http://localhost",
+  "products": [
+    "90260149",
+    "10080001"
+  ],
+  "cases": [
+    {
+      "id": "90260149.T1.stock_table",
+      "product": "90260149",
+      "message": "Consulte o estoque do produto 90260149 via ferramenta de estoque/saldo (não inspeção). Mostre em tabela.",
+      "status": "PASS",
+      "errors": [],
+      "elapsedMs": 62771.96,
+      "snapshot": {
+        "hasTable": true,
+        "hasChart": false,
+        "chartType": null,
+        "paletteFamily": null,
+        "bindingProvenance": null,
+        "canvasOpen": false,
+        "deliveryPreferCanvas": false,
+        "specApplied": true,
+        "selected": "table",
+        "unmetIntent": null,
+        "unmetIntentNotice": null,
+        "paths": [
+          "/products/90260149/stock",
+          "/products/90260149/inspection"
+        ],
+        "answerExcerpt": "O produto **90260149** está com **saldo disponível zero** — conforme a tabela ao lado, há apenas **1 posição** de estoque registrada e ela está totalmente zerada. **Leitura do resultado:**\n\n- **Saldo disponível total: 0 unidades** — na prática, o estoque atual **não cobre** nenhuma demanda típica para este item.\n\n- Os ",
+        "answerHasUnmetNotice": false
+      },
+      "sessionId": "ea6cb765-d9c3-475c-8860-879975df3817"
+    },
+    {
+      "id": "90260149.T2.chart_followup",
+      "product": "90260149",
+      "message": "Com esses mesmos dados de estoque, mostre em um gráfico de barras.",
+      "status": "PASS",
+      "errors": [],
+      "elapsedMs": 10712.41,
+      "snapshot": {
+        "hasTable": true,
+        "hasChart": true,
+        "chartType": "horizontal_bar",
+        "paletteFamily": null,
+        "bindingProvenance": null,
+        "canvasOpen": false,
+        "deliveryPreferCanvas": false,
+        "specApplied": false,
+        "selected": "chart",
+        "unmetIntent": null,
+        "unmetIntentNotice": null,
+        "paths": [
+          "/products/90260149/stock"
+        ],
+        "answerExcerpt": "O produto **90260149**\n\nTotal de **Qtd. empenhada**: **0**. **Pontos de atenção**\n\n- Valor zerado em **Qtd. empenhada** (linha 1).\n\n- Valor zerado em **Qtd. reservada** (linha 1).\n\n- Valor zerado em **Quantidade atual no armazém** (linha 1).",
+        "answerHasUnmetNotice": false
+      },
+      "sessionId": "ea6cb765-d9c3-475c-8860-879975df3817"
+    },
+    {
+      "id": "90260149.T3.heatmap_or_notice",
+      "product": "90260149",
+      "message": "Agora coloque isso em um gráfico de mapa de calor (produto × depósito/filial) em tons de azul.",
+      "status": "PASS",
+      "errors": [],
+      "elapsedMs": 17758.31,
+      "snapshot": {
+        "hasTable": true,
+        "hasChart": true,
+        "chartType": "horizontal_bar",
+        "paletteFamily": null,
+        "bindingProvenance": null,
+        "canvasOpen": false,
+        "deliveryPreferCanvas": false,
+        "specApplied": false,
+        "selected": "chart",
+        "unmetIntent": "heatmap_not_materializable",
+        "unmetIntentNotice": "Não consegui montar o **mapa de calor** com os dados disponíveis (faltam dimensões discriminantes ou há poucas linhas). Mantive a visualização alternativa abaixo; peça tabela, gráfico de barras ou refine o filtro.",
+        "paths": [
+          "/products/90260149/stock"
+        ],
+        "answerExcerpt": "Não consegui montar o **mapa de calor** com os dados disponíveis (faltam dimensões discriminantes ou há poucas linhas). Mantive a visualização alternativa abaixo; peça tabela, gráfico de barras ou refine o filtro. O produto **90260149**\n\nTotal de **Qtd. empenhada**: **0**. **Pontos de atenção**\n\n- Valor zerado em **Qtd",
+        "answerHasUnmetNotice": true
+      },
+      "sessionId": "ea6cb765-d9c3-475c-8860-879975df3817"
+    },
+    {
+      "id": "90260149.T4.canvas",
+      "product": "90260149",
+      "message": "Coloque esse resultado na lousa.",
+      "status": "PASS",
+      "errors": [],
+      "elapsedMs": 4098.68,
+      "snapshot": {
+        "hasTable": false,
+        "hasChart": true,
+        "chartType": null,
+        "paletteFamily": null,
+        "bindingProvenance": null,
+        "canvasOpen": false,
+        "deliveryPreferCanvas": false,
+        "specApplied": null,
+        "selected": null,
+        "unmetIntent": null,
+        "unmetIntentNotice": null,
+        "paths": [
+          "/products/90260149/stock"
+        ],
+        "answerExcerpt": "Você quer colocar na lousa a última resposta ou a tabela?\n\nResponda com uma frase curta (ex.: «a última resposta», «a tabela» ou «o resumo do arquivo»).",
+        "answerHasUnmetNotice": false
+      },
+      "sessionId": "ea6cb765-d9c3-475c-8860-879975df3817"
+    },
+    {
+      "id": "10080001.T1.stock_table",
+      "product": "10080001",
+      "message": "Consulte o estoque do produto 10080001 via ferramenta de estoque/saldo (não inspeção). Mostre em tabela.",
+      "status": "PASS",
+      "errors": [],
+      "elapsedMs": 73312.1,
+      "snapshot": {
+        "hasTable": true,
+        "hasChart": false,
+        "chartType": null,
+        "paletteFamily": null,
+        "bindingProvenance": null,
+        "canvasOpen": false,
+        "deliveryPreferCanvas": false,
+        "specApplied": true,
+        "selected": "table",
+        "unmetIntent": null,
+        "unmetIntentNotice": null,
+        "paths": [
+          "/products/10080001/stock",
+          "/products/10080001/inspection"
+        ],
+        "answerExcerpt": "Consultei a posição de estoque do produto **10080001** pela rota de saldo — o detalhamento por filial e armazém está na **tabela** do painel, com todas as 8 posições retornadas.\n\n## Resumo\n\n- Saldo disponível total: **2.975.970 unidades**, distribuídas em **8 posições**\n- Maior concentração na filial **02**, com **2.58",
+        "answerHasUnmetNotice": false
+      },
+      "sessionId": "478044d6-122c-4d5f-b415-1bec204a6758"
+    },
+    {
+      "id": "10080001.T2.chart_followup",
+      "product": "10080001",
+      "message": "Com esses mesmos dados de estoque, mostre em um gráfico de barras.",
+      "status": "PASS",
+      "errors": [],
+      "elapsedMs": 5221.43,
+      "snapshot": {
+        "hasTable": true,
+        "hasChart": true,
+        "chartType": "bar",
+        "paletteFamily": "brand",
+        "bindingProvenance": "COMPILED",
+        "canvasOpen": false,
+        "deliveryPreferCanvas": false,
+        "specApplied": true,
+        "selected": "bar_chart",
+        "unmetIntent": null,
+        "unmetIntentNotice": null,
+        "paths": [
+          "/products/10080001/stock"
+        ],
+        "answerExcerpt": "O produto **10080001**\n\nTotal de **Qtd. empenhada**: **763459**. **Pontos de atenção**\n\n- Valor zerado em **Qtd. empenhada** (linha 1).\n\n- Valor zerado em **Qtd. reservada** (linha 1).\n\n- Valor zerado em **Qtd. empenhada** (linha 2).",
+        "answerHasUnmetNotice": false
+      },
+      "sessionId": "478044d6-122c-4d5f-b415-1bec204a6758"
+    },
+    {
+      "id": "10080001.T3.heatmap_or_notice",
+      "product": "10080001",
+      "message": "Agora coloque isso em um gráfico de mapa de calor (produto × depósito/filial) em tons de azul.",
+      "status": "PASS",
+      "errors": [],
+      "elapsedMs": 15701.02,
+      "snapshot": {
+        "hasTable": true,
+        "hasChart": true,
+        "chartType": "horizontal_bar",
+        "paletteFamily": null,
+        "bindingProvenance": null,
+        "canvasOpen": false,
+        "deliveryPreferCanvas": false,
+        "specApplied": false,
+        "selected": "chart",
+        "unmetIntent": "heatmap_not_materializable",
+        "unmetIntentNotice": "Não consegui montar o **mapa de calor** com os dados disponíveis (faltam dimensões discriminantes ou há poucas linhas). Mantive a visualização alternativa abaixo; peça tabela, gráfico de barras ou refine o filtro.",
+        "paths": [
+          "/products/10080001/stock"
+        ],
+        "answerExcerpt": "Não consegui montar o **mapa de calor** com os dados disponíveis (faltam dimensões discriminantes ou há poucas linhas). Mantive a visualização alternativa abaixo; peça tabela, gráfico de barras ou refine o filtro. O produto **10080001**\n\nTotal de **Qtd. empenhada**: **763459**. **Pontos de atenção**\n\n- Valor zerado em ",
+        "answerHasUnmetNotice": true
+      },
+      "sessionId": "478044d6-122c-4d5f-b415-1bec204a6758"
+    },
+    {
+      "id": "10080001.T4.canvas",
+      "product": "10080001",
+      "message": "Coloque esse resultado na lousa.",
+      "status": "PASS",
+      "errors": [],
+      "elapsedMs": 5991.16,
+      "snapshot": {
+        "hasTable": false,
+        "hasChart": true,
+        "chartType": null,
+        "paletteFamily": null,
+        "bindingProvenance": null,
+        "canvasOpen": false,
+        "deliveryPreferCanvas": false,
+        "specApplied": null,
+        "selected": null,
+        "unmetIntent": null,
+        "unmetIntentNotice": null,
+        "paths": [
+          "/products/10080001/stock"
+        ],
+        "answerExcerpt": "Você quer colocar na lousa a última resposta ou a tabela?\n\nResponda com uma frase curta (ex.: «a última resposta», «a tabela» ou «o resumo do arquivo»).",
+        "answerHasUnmetNotice": false
+      },
+      "sessionId": "478044d6-122c-4d5f-b415-1bec204a6758"
+    }
+  ],
+  "hardFailures": [],
+  "pass": true
+}

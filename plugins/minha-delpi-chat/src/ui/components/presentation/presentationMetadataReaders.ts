@@ -196,15 +196,26 @@ export function getPresentationInsightFromToolCalls(
     return "";
   }
 
+  const unmetNotice = String(
+    decision?.unmetIntentNotice ?? "",
+  ).trim();
+  const policyNotice = String(decision?.policyNotice ?? "").trim();
+  // Capability-gap notices must remain visible even when prose is LLM-decoupled.
+  const capabilityNotice = unmetNotice || (decision?.unmetIntent ? policyNotice : "");
+
   // Prosa canônica está no assistantMessage (lead do renderPlan) — não repetir insight genérico.
   if (isLlmProseDecoupledFromToolCalls(toolCalls)) {
-    return "";
+    return capabilityNotice;
   }
 
   const insight = String(decision?.insight ?? "").trim();
 
   if (insight) {
     return insight;
+  }
+
+  if (capabilityNotice) {
+    return capabilityNotice;
   }
 
   const reason = String(decision?.reason ?? "").trim();

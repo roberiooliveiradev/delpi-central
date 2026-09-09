@@ -431,6 +431,27 @@ describe("presentationDecision (Playbook 09)", () => {
 
     expect(getPresentationInsightFromToolCalls(toolCalls)).toBe("");
   });
+
+  it("com llmProseDecoupled ainda expõe unmetIntentNotice", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        metadata: {
+          llmProseDecoupled: true,
+          presentationDecision: {
+            selected: "chart",
+            insight: "A tabela lista os principais registros encontrados (4 linhas).",
+            unmetIntent: "heatmap_not_materializable",
+            unmetIntentNotice:
+              "Não consegui montar o mapa de calor com os dados disponíveis.",
+          },
+        },
+      },
+    ]);
+
+    expect(getPresentationInsightFromToolCalls(toolCalls)).toContain(
+      "mapa de calor",
+    );
+  });
 });
 
 describe("compositionRole primary vs enrichment", () => {

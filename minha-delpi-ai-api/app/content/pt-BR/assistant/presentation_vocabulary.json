@@ -275,6 +275,16 @@
     "stockChart": "estoque — gráfico para visão agregada",
     "stockTable": "estoque — tabela para conferência por filial/armazém"
   },
+  "unmetIntentNotices": {
+    "heatmap_not_materializable": "Não consegui montar o **mapa de calor** com os dados disponíveis (faltam dimensões discriminantes ou há poucas linhas). Mantive a visualização alternativa abaixo; peça tabela, gráfico de barras ou refine o filtro.",
+    "tree_not_materializable": "Não consegui montar a **árvore** com os dados disponíveis (faltam níveis hierárquicos utilizáveis). Mantive a visualização alternativa abaixo; peça tabela ou refine o filtro.",
+    "dashboard_not_materializable": "Não consegui montar o **painel** com os dados disponíveis (faltam painéis ou indicadores suficientes). Mantive a visualização alternativa abaixo; peça tabela, gráfico ou KPI.",
+    "mark_unavailable": "O formato visual pedido não está disponível para estes dados. Mantive a visualização alternativa abaixo; peça tabela, texto ou outro gráfico compatível.",
+    "spec_cap_exceeded": "O pedido de visualização excede os limites suportados para estes dados. Mantive uma apresentação mais simples abaixo.",
+    "forbidden_presentation_style": "Não posso aplicar o estilo visual pedido nesta apresentação. Mantive a visualização alternativa abaixo.",
+    "invalid_nested_spec": "Não consegui materializar a visualização pedida com a especificação recebida. Mantive a apresentação alternativa abaixo.",
+    "default": "Não há dados suficientes para a visualização pedida. Mantive a apresentação alternativa abaixo; peça tabela, texto ou refine o filtro."
+  },
   "insights": {
     "tree": "A árvore mostra a hierarquia de composição ou relacionamento entre itens.",
     "insufficientData": "Não há dados suficientes para gerar esta visualização.",

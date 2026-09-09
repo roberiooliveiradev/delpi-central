@@ -104,22 +104,38 @@ class ChatToolContextPresentationService:
             from app.domain.services.chat_presentation_prose_delivery_service import (
                 ChatPresentationProseDeliveryService,
             )
+            from app.domain.services.presentation_unmet_intent_notice_service import (
+                PresentationUnmetIntentNoticeService,
+            )
+
+            unmet_notice = PresentationUnmetIntentNoticeService.collect_from_tool_calls(
+                safe_tool_calls,
+            )
 
             if ChatPresentationProseDeliveryService.should_use_llm_prose(
                 message,
                 safe_tool_calls,
             ):
-                return direct_answer
+                return PresentationUnmetIntentNoticeService.prepend_to_answer(
+                    direct_answer,
+                    unmet_notice,
+                )
 
             from app.domain.services.chat_product_overview_intent_service import (
                 ChatProductOverviewIntentService,
             )
 
             if ChatDrawingIntentService.blocks_presentation_only_shortcut(message):
-                return direct_answer
+                return PresentationUnmetIntentNoticeService.prepend_to_answer(
+                    direct_answer,
+                    unmet_notice,
+                )
 
             if ChatProductOverviewIntentService.blocks_presentation_only_shortcut(message):
-                return direct_answer
+                return PresentationUnmetIntentNoticeService.prepend_to_answer(
+                    direct_answer,
+                    unmet_notice,
+                )
 
             from app.domain.services.chat_production_schedule_membership_presentation_service import (
                 ChatProductionScheduleMembershipPresentationService,
@@ -128,14 +144,20 @@ class ChatToolContextPresentationService:
             if ChatProductionScheduleMembershipPresentationService.blocks_presentation_only_shortcut(
                 message
             ):
-                return direct_answer
+                return PresentationUnmetIntentNoticeService.prepend_to_answer(
+                    direct_answer,
+                    unmet_notice,
+                )
 
             from app.domain.services.chat_product_query_intent_service import (
                 ChatProductQueryIntentService,
             )
 
             if ChatProductQueryIntentService.looks_like_structure_exclusivity_question(message):
-                return direct_answer
+                return PresentationUnmetIntentNoticeService.prepend_to_answer(
+                    direct_answer,
+                    unmet_notice,
+                )
 
             from app.domain.services.chat_presentation_format_refinement_service import (
                 ChatPresentationFormatRefinementService,
@@ -148,20 +170,32 @@ class ChatToolContextPresentationService:
                 presentation = cls.resolve_presentation_only_answer(safe_tool_calls)
 
                 if presentation:
-                    return presentation
+                    return PresentationUnmetIntentNoticeService.prepend_to_answer(
+                        presentation,
+                        unmet_notice,
+                    )
 
             if not cls.should_answer_with_presentation_only(safe_tool_calls):
-                return direct_answer
+                return PresentationUnmetIntentNoticeService.prepend_to_answer(
+                    direct_answer,
+                    unmet_notice,
+                )
 
             presentation = cls.resolve_presentation_only_answer(safe_tool_calls)
 
             if not presentation:
-                return direct_answer
+                return PresentationUnmetIntentNoticeService.prepend_to_answer(
+                    direct_answer,
+                    unmet_notice,
+                )
 
             continuation = cls._extract_pagination_continuation_suffix(direct_answer)
 
             if continuation:
-                return f"{presentation}\n\n{continuation}".strip()
+                return PresentationUnmetIntentNoticeService.prepend_to_answer(
+                    f"{presentation}\n\n{continuation}".strip(),
+                    unmet_notice,
+                )
 
             normalized = str(direct_answer or "").strip()
 
@@ -187,14 +221,23 @@ class ChatToolContextPresentationService:
                 looks_tabular = "|" in normalized or normalized.count("\n") > 6
 
                 if prefers_native_view:
-                    return presentation
+                    return PresentationUnmetIntentNoticeService.prepend_to_answer(
+                        presentation,
+                        unmet_notice,
+                    )
 
                 if not looks_tabular and (
                     "\n" in normalized or len(normalized) > len(presentation) + 30
                 ):
-                    return normalized
+                    return PresentationUnmetIntentNoticeService.prepend_to_answer(
+                        normalized,
+                        unmet_notice,
+                    )
 
-            return presentation
+            return PresentationUnmetIntentNoticeService.prepend_to_answer(
+                presentation,
+                unmet_notice,
+            )
 
         @classmethod
         def _selected_presentation_view(cls, metadata: dict[str, Any]) -> str:

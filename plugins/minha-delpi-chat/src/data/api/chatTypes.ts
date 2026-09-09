@@ -335,6 +335,8 @@ export type ChatPresentationDecision = {
     recommended?: string | null;
   } | null;
   intent?: string | null;
+  unmetIntent?: string | null;
+  unmetIntentNotice?: string | null;
 };
 
 export type ChatTemplateProseArchive = {

@@ -182,6 +182,22 @@ class PresentationIntelligenceOrchestratorService:
 
             PresentationDeliveryCompilerService.apply(metadata, spec=applied_spec)
 
+        decision = metadata.get("presentationDecision")
+        final_unmet = unmet_intent
+        if isinstance(decision, dict):
+            decision_unmet = str(decision.get("unmetIntent") or "").strip()
+            if decision_unmet:
+                final_unmet = decision_unmet
+
+        from app.domain.services.presentation_unmet_intent_notice_service import (
+            PresentationUnmetIntentNoticeService,
+        )
+
+        PresentationUnmetIntentNoticeService.apply(
+            metadata,
+            unmet_intent=final_unmet,
+        )
+
         elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
         summary = {
             "profileHash": profile.profile_hash,
@@ -193,7 +209,7 @@ class PresentationIntelligenceOrchestratorService:
             and confidence < _BIND_CONFIDENCE_THRESHOLD
             and cls._looks_ambiguous(intent, profile),
             "specApplied": bool(validation and validation.ok),
-            "unmetIntent": unmet_intent,
+            "unmetIntent": final_unmet,
             "presentation_profile_build_ms": elapsed_ms,
             "dimensionCandidates": list(profile.dimension_candidates),
             "measureCandidates": list(profile.measure_candidates),

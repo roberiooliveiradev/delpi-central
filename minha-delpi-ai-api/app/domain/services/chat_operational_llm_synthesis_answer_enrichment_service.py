@@ -52,8 +52,20 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
         # Sempre: `•` do LLM não é lista GFM — normaliza antes de qualquer early-return.
         body = cls._normalize_unicode_bullet_lists(body)
 
+        from app.domain.services.presentation_unmet_intent_notice_service import (
+            PresentationUnmetIntentNoticeService,
+        )
+
+        unmet_notice = PresentationUnmetIntentNoticeService.collect_from_tool_calls(
+            tool_calls,
+        )
+
         if not cls._should_enrich(response_mode_effect, tool_calls):
-            return body
+            ensured = PresentationUnmetIntentNoticeService.prepend_to_answer(
+                body,
+                unmet_notice,
+            )
+            return str(ensured or body)
 
         product_code = cls._resolve_product_code(message, tool_calls)
 
@@ -78,6 +90,11 @@ class ChatOperationalLlmSynthesisAnswerEnrichmentService:
 
         body = cls._strip_sparse_list_items(body)
         body = cls._normalize_unicode_bullet_lists(body)
+        if unmet_notice:
+            body = PresentationUnmetIntentNoticeService.prepend_to_answer(
+                body,
+                unmet_notice,
+            ) or body
         body = cls._strip_contradictory_claims(body, tool_calls)
         body = cls._strip_profile_factual_verdict_claims(body, tool_calls)
         body = cls._strip_hallucination_markers(body)
