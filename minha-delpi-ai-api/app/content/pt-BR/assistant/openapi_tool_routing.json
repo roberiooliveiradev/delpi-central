@@ -144,6 +144,11 @@
     "maxActionSearchesPerTurn": 2,
     "maxKnowledgeSearchesPerTurn": 2
   },
+  "goalCoverage": {
+    "mismatchOnWhenNotToUse": true,
+    "requireWhenToUseMatchWhenQuotesExist": true,
+    "emptyPayloadNotFulfilled": true
+  },
   "decomposition": {
     "maxSubtasks": 4,
     "minSubtaskChars": 12,

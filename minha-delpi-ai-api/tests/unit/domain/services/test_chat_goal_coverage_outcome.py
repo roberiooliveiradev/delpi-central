@@ -84,6 +84,66 @@ def test_http_ok_stock_fulfills_estoque_request():
     assert report.results[0].status == "fulfilled"
 
 
+def test_http_ok_summary_does_not_fulfill_estoque_via_when_not_to_use():
+    plan = ActionPlan(
+        goals=(ActionPlanGoal(goal_id="g1", intent="estoque do produto"),),
+        steps=(
+            ActionPlanStep(
+                action_id="ext.products.summary",
+                goal_ids=("g1",),
+                arguments={"path": "/products/10080001/summary"},
+            ),
+        ),
+    )
+    report = ChatGoalCoverageService.evaluate(
+        plan,
+        execution_results=[
+            {
+                "actionId": "ext.products.summary",
+                "ok": True,
+                "metadata": {"ok": True},
+            }
+        ],
+        message="Consulte o estoque do produto 10080001",
+        actions_by_id={
+            "ext.products.stock": _stock_action(),
+            "ext.products.summary": _summary_action(),
+        },
+    )
+    assert report.complete is False
+    assert report.results[0].status == "mismatch"
+
+
+def test_http_ok_summary_fulfills_cadastro_sibling():
+    plan = ActionPlan(
+        goals=(ActionPlanGoal(goal_id="g1", intent="cadastro do produto"),),
+        steps=(
+            ActionPlanStep(
+                action_id="ext.products.summary",
+                goal_ids=("g1",),
+                arguments={"path": "/products/10080011/summary"},
+            ),
+        ),
+    )
+    report = ChatGoalCoverageService.evaluate(
+        plan,
+        execution_results=[
+            {
+                "actionId": "ext.products.summary",
+                "ok": True,
+                "metadata": {"ok": True},
+            }
+        ],
+        message="cadastro do produto 10080011",
+        actions_by_id={
+            "ext.products.stock": _stock_action(),
+            "ext.products.summary": _summary_action(),
+        },
+    )
+    assert report.complete is True
+    assert report.results[0].status == "fulfilled"
+
+
 def test_empty_payload_is_not_fulfilled():
     plan = ActionPlan(
         goals=(ActionPlanGoal(goal_id="g1", intent="estoque"),),

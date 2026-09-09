@@ -53,6 +53,22 @@ class OpenApiToolRoutingContentService:
             return default
 
     @classmethod
+    def bool_setting(cls, *path: str, default: bool = False) -> bool:
+        node = cls.get_node(*path)
+        if isinstance(node, bool):
+            return node
+        if node is None:
+            return default
+        if isinstance(node, (int, float)):
+            return bool(node)
+        text = str(node).strip().lower()
+        if text in {"1", "true", "yes", "on"}:
+            return True
+        if text in {"0", "false", "no", "off"}:
+            return False
+        return default
+
+    @classmethod
     def list_setting(cls, *path: str) -> list[str]:
         node = cls.get_node(*path)
         if not isinstance(node, list):
