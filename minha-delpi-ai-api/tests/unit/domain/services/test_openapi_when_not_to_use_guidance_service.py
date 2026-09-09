@@ -136,3 +136,24 @@ def test_folded_locale_quotes_steer_without_reading_paths():
     assert not OpenApiWhenNotToUseGuidanceService.matches_message(
         por_filial_msg, breakdown
     )
+
+
+def test_quoted_estoque_saldo_disponivel_match_stock_request():
+    sibling = {
+        "whenNotToUse": (
+            "Do not use when the user asked for «estoque», «saldo» or "
+            "«disponível» — prefer /stock."
+        )
+    }
+    stock = {
+        "whenToUse": "Use for «estoque», «saldo» or «disponível» of a product code."
+    }
+    message = "Consulte o estoque do produto 10080001"
+    sibling_msg = "Qual o saldo disponível do produto 10080001?"
+    assert OpenApiWhenNotToUseGuidanceService.matches_message(message, sibling)
+    assert OpenApiWhenNotToUseGuidanceService.matches_positive(message, stock)
+    assert OpenApiWhenNotToUseGuidanceService.matches_message(sibling_msg, sibling)
+    assert not OpenApiWhenNotToUseGuidanceService.matches_message(
+        "inspeção de qualidade do produto 10080001",
+        sibling,
+    )

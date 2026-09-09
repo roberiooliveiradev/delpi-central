@@ -124,3 +124,26 @@ def test_audience_catalog_has_no_root_level_route_orphans():
     orphans = [key for key in payload if key not in reserved]
     assert orphans == [], f"route orphans at root: {orphans}"
     assert "get_commercial_rol_by_branch" in payload["routes"]
+
+
+def test_product_stock_siblings_quote_estoque_saldo_disponivel():
+    phrases = ("«estoque»", "«saldo»", "«disponível»")
+    stock = route_locale_for_operation("get_product_stock")
+    assert stock is not None
+    for lang in ("en", "pt-BR"):
+        when_to_use = stock["locale"][lang].get("whenToUse") or ""
+        for phrase in phrases:
+            assert phrase in when_to_use, f"stock {lang} whenToUse missing {phrase}"
+
+    for operation_id in (
+        "get_product_summary",
+        "get_product_inspection",
+        "get_product_internal_movements",
+    ):
+        entry = route_locale_for_operation(operation_id)
+        assert entry is not None, operation_id
+        for lang in ("en", "pt-BR"):
+            when_not = entry["locale"][lang].get("whenNotToUse") or ""
+            for phrase in phrases:
+                assert phrase in when_not, f"{operation_id} {lang} missing {phrase}"
+            assert "/stock" in when_not, f"{operation_id} {lang} should prefer /stock"

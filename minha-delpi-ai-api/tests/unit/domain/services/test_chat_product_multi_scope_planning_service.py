@@ -336,3 +336,45 @@ def test_summary_path_covers_profile_but_not_stock():
 
     assert "stock" in missing
     assert "profile" not in missing
+
+
+def test_extract_scopes_stock_only_consulta_estoque():
+    scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+        "Consulte o estoque do produto 10080001",
+    )
+    assert scopes == ("stock",)
+
+
+def test_extract_scopes_nao_inspecao_does_not_add_inspection():
+    scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+        "Consulte o estoque do produto 10080001 via ferramenta de estoque/saldo "
+        "(não inspeção). Mostre em tabela."
+    )
+    assert "stock" in scopes
+    assert "inspection" not in scopes
+
+
+def test_extract_scopes_sem_inspecao_does_not_add_inspection():
+    scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+        "saldo disponível do produto 10080001 sem inspeção",
+    )
+    assert "stock" in scopes
+    assert "inspection" not in scopes
+
+
+def test_extract_scopes_positive_inspecao_keeps_inspection():
+    scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+        "inspeção do produto 10080001",
+    )
+    assert scopes == ("inspection",)
+
+
+def test_plan_fetches_single_stock_scope():
+    planned = ChatProductMultiScopePlanningService.plan_product_scope_fetches(
+        FakeScopeSelectionService(),
+        message="Consulte o estoque do produto 10080001",
+        product_code="10080001",
+        allowed_action_ids=["a1"],
+    )
+    paths = {str(item["arguments"].get("path") or "") for item in planned}
+    assert paths == {"/products/{code}/stock"}

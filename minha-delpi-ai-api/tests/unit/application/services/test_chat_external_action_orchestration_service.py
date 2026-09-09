@@ -357,3 +357,68 @@ def test_enrich_replaces_unknown_tools_with_stock_and_profile_scopes():
     ]
     assert any(path.endswith("/stock") for path in paths), paths
     assert all(item.get("name") == "execute_external_action" for item in out), out
+
+
+def test_enrich_replaces_inspection_when_only_stock_requested():
+    from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
+
+    class _Sel:
+        def select_action_for_product(
+            self,
+            message,
+            *,
+            product_code,
+            allowed_action_ids=None,
+            intent=None,
+            route_segment=None,
+            previous_messages=None,
+        ):
+            if intent == ChatProductQueryIntent.STOCK or route_segment == "stock":
+                path = f"/products/{product_code}/stock"
+            else:
+                return None
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": "api_delpi.products.get_product_stock",
+                    "parameters": {"code": product_code},
+                    "path": path,
+                },
+                "metadata": {"selectionMode": "openapi_first", "path": path},
+            }
+
+    planned = [
+        {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": "api_delpi.products.get_product_inspection",
+                "parameters": {"code": "10080001"},
+                "path": "/products/10080001/inspection",
+            },
+            "metadata": {
+                "selectionMode": "openapi_first",
+                "operationId": "get_product_inspection",
+                "path": "/products/{code}/inspection",
+            },
+        }
+    ]
+    out = ChatExternalActionOrchestrationService._enrich_openapi_plan_with_product_scopes(
+        _Sel(),
+        message="Consulte o estoque do produto 10080001",
+        planned=planned,
+        allowed_action_ids=[
+            "api_delpi.products.get_product_stock",
+            "api_delpi.products.get_product_inspection",
+        ],
+        conversation_context=None,
+        previous_messages=None,
+        memory_snapshot=None,
+        max_calls=6,
+    )
+    paths = [
+        str((item.get("arguments") or {}).get("path") or "")
+        for item in out
+        if isinstance(item, dict)
+    ]
+    assert any("/stock" in path for path in paths), paths
+    assert not any("/inspection" in path for path in paths), paths
