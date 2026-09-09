@@ -9,7 +9,7 @@
   "whenNotToUse": {
     "penalty": 3.0,
     "positiveReward": 3.0,
-    "minQuotedPhraseChars": 10,
+    "minQuotedPhraseChars": 5,
     "clauseMarkers": ["Do not use", "Não use", "Nao use"]
   },
   "planner": {

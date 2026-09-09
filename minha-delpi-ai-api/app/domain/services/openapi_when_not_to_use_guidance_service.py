@@ -159,7 +159,7 @@ class OpenApiWhenNotToUseGuidanceService:
         min_chars = OpenApiToolRoutingContentService.int_setting(
             "whenNotToUse",
             "minQuotedPhraseChars",
-            default=10,
+            default=5,
         )
         phrases: list[str] = []
         seen: set[str] = set()

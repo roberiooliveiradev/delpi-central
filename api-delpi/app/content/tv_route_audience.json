@@ -2661,13 +2661,17 @@
       "locale": {
         "en": {
           "summary": "Product inspection",
-          "description": "Product inspection.",
+          "description": "Product inspection. Do not use when the user asked for «estoque», «saldo» or «disponível» — prefer /stock.",
+          "whenToUse": "Use for quality inspection (QP) of a product code.",
+          "whenNotToUse": "Do not use when the user asked for «estoque», «saldo» or «disponível» — prefer /stock.",
           "label": "Product inspection"
         },
         "pt-BR": {
           "label": "Inspeção de qualidade do produto (QP6/QP7/QP8)",
           "summary": "Inspeção de qualidade do produto (QP6/QP7/QP8)",
-          "description": "Listagem paginada de «Inspeção de qualidade do produto (QP6/QP7/QP8)» para uso em tabela ou gráfico no TV."
+          "description": "Listagem paginada de «Inspeção de qualidade do produto (QP6/QP7/QP8)» para uso em tabela ou gráfico no TV. Não use quando pediu «estoque», «saldo» ou «disponível» — prefira /stock.",
+          "whenToUse": "Use para inspeção de qualidade (QP) de um código.",
+          "whenNotToUse": "Não use quando o usuário pediu «estoque», «saldo» ou «disponível» — prefira /stock."
         }
       },
       "category": "products"
@@ -2676,13 +2680,17 @@
       "locale": {
         "en": {
           "summary": "Product internal movements",
-          "description": "Product internal movements.",
+          "description": "Product internal movements. Do not use when the user asked for «estoque», «saldo» or «disponível» — prefer /stock.",
+          "whenToUse": "Use for internal stock/production movements of a product code.",
+          "whenNotToUse": "Do not use when the user asked for «estoque», «saldo» or «disponível» — prefer /stock.",
           "label": "Product internal movements"
         },
         "pt-BR": {
           "label": "Movimentações internas do produto",
           "summary": "Movimentações internas do produto",
-          "description": "Listagem paginada de «Movimentações internas do produto» para uso em tabela ou gráfico no TV."
+          "description": "Listagem paginada de «Movimentações internas do produto» para uso em tabela ou gráfico no TV. Não use quando pediu «estoque», «saldo» ou «disponível» — prefira /stock.",
+          "whenToUse": "Use para movimentações internas de estoque/produção de um código.",
+          "whenNotToUse": "Não use quando o usuário pediu «estoque», «saldo» ou «disponível» — prefira /stock."
         }
       },
       "category": "products"
@@ -2911,16 +2919,16 @@
       "locale": {
         "en": {
           "summary": "Product stock by branch and location",
-          "description": "Stock balance and positions for a specific product code. Prefer this over /summary when the user asks for stock, balance or available quantity — including when combined with description/cadastro.",
-          "whenToUse": "Use for stock/balance/available quantity of a product code.",
+          "description": "Stock balance and positions for a specific product code. Prefer this over /summary when the user asks for «estoque», «saldo» or «disponível» — including when combined with description/cadastro.",
+          "whenToUse": "Use for «estoque», «saldo» or «disponível» of a product code.",
           "whenNotToUse": "Do not substitute with /summary when the focus is balance/position. Do not use for company-wide stock value (supplies /stock-value).",
           "label": "Product stock"
         },
         "pt-BR": {
           "label": "Estoque do produto por filial e local",
           "summary": "Estoque do produto por filial e local",
-          "description": "Saldo e posição de estoque de um código. Prefira esta rota a /summary quando o usuário pediu estoque/saldo/disponível — inclusive junto com descrição/cadastro.",
-          "whenToUse": "Use para estoque, saldo ou disponível de um produto.",
+          "description": "Saldo e posição de estoque de um código. Prefira esta rota a /summary quando o usuário pediu «estoque», «saldo» ou «disponível» — inclusive junto com descrição/cadastro.",
+          "whenToUse": "Use para «estoque», «saldo» ou «disponível» de um produto.",
           "whenNotToUse": "Não substitua por /summary quando o foco é saldo/posição. Não use para valor total de estoque da empresa."
         }
       },
@@ -2997,17 +3005,17 @@
       "locale": {
         "en": {
           "summary": "Light product summary (cadastro + sample stock + prices)",
-          "description": "Light consolidation of cadastro, sample stock by branch and price table. Use only for a quick overview when the user did NOT ask for BOM/estrutura, roteiro, inspection, full analyser or visão integrada with several blocks. Do NOT use when the user explicitly asked for stock/balance/available quantity — prefer /stock (optionally combined with detail/summary for cadastro). If they ask for wide analytical sheet, structure, routing or integrated view, prefer /analyser or granular /structure, /guide, /stock.",
+          "description": "Light consolidation of cadastro, sample stock by branch and price table. Use only for a quick overview when the user did NOT ask for BOM/estrutura, roteiro, inspection, full analyser or visão integrada with several blocks. Do NOT use when the user explicitly asked for «estoque», «saldo» or «disponível» — prefer /stock (optionally combined with detail/summary for cadastro). If they ask for wide analytical sheet, structure, routing or integrated view, prefer /analyser or granular /structure, /guide, /stock.",
           "whenToUse": "Use only for a light overview without BOM, routing or integrated multi-block view.",
-          "whenNotToUse": "Do not use when the user explicitly asked for stock, balance or available quantity — prefer /stock. Do not use for BOM/estrutura, roteiro, inspection or integrated multi-block view.",
+          "whenNotToUse": "Do not use when the user explicitly asked for «estoque», «saldo» or «disponível» — prefer /stock. Do not use for BOM/estrutura, roteiro, inspection or integrated multi-block view.",
           "label": "Product summary"
         },
         "pt-BR": {
           "label": "Resumo leve do produto (cadastro + amostra de estoque + preços)",
           "summary": "Resumo leve do produto (cadastro + amostra de estoque + preços)",
-          "description": "Consulta leve de cadastro, amostra de estoque e preços. Use somente quando NÃO pediu BOM, roteiro, analisador completo nem visão integrada. NÃO use quando pediu explicitamente estoque/saldo/disponível — prefira /stock.",
+          "description": "Consulta leve de cadastro, amostra de estoque e preços. Use somente quando NÃO pediu BOM, roteiro, analisador completo nem visão integrada. NÃO use quando pediu explicitamente «estoque», «saldo» ou «disponível» — prefira /stock.",
           "whenToUse": "Use só para visão geral rápida sem BOM/roteiro/visão integrada.",
-          "whenNotToUse": "Não use quando o usuário pediu estoque, saldo ou disponível — prefira /stock. Não use para BOM/estrutura, roteiro, inspeção ou visão integrada multi-bloco."
+          "whenNotToUse": "Não use quando o usuário pediu «estoque», «saldo» ou «disponível» — prefira /stock. Não use para BOM/estrutura, roteiro, inspeção ou visão integrada multi-bloco."
         }
       },
       "category": "products"
