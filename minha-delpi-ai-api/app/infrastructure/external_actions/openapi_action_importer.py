@@ -81,8 +81,20 @@ class OpenApiActionImporter:
             "enabled": True,
         }
 
+        if delpi_metadata:
+            payload["delpi_metadata"] = delpi_metadata
+
         if locale_texts.get("whenToUse"):
-            payload["when_to_use"] = locale_texts["whenToUse"]
+            when_to = str(locale_texts["whenToUse"]).strip()
+            payload["when_to_use"] = when_to
+            base_description = str(payload.get("description") or "").strip()
+            if when_to.lower() not in base_description.lower():
+                payload["description"] = (
+                    f"{when_to} {base_description}".strip() if base_description else when_to
+                )
+            metadata = dict(payload.get("delpi_metadata") or {})
+            metadata["whenToUse"] = when_to
+            payload["delpi_metadata"] = metadata
 
         when_not = str(locale_texts.get("whenNotToUse") or "").strip()
         if when_not:
@@ -93,9 +105,9 @@ class OpenApiActionImporter:
                     f"{base_description} {when_not}".strip() if base_description else when_not
                 )
             payload["when_not_to_use"] = when_not
-
-        if delpi_metadata:
-            payload["delpi_metadata"] = delpi_metadata
+            metadata = dict(payload.get("delpi_metadata") or {})
+            metadata["whenNotToUse"] = when_not
+            payload["delpi_metadata"] = metadata
 
         return payload
 

@@ -113,3 +113,20 @@ def test_backfill_action_embeddings_reports_progress(
 
     assert result == {"updated": 2, "skipped": 0, "total": 2}
     assert progress == [(1, 2), (2, 2)]
+
+
+def test_guidance_from_metadata_reads_locale_and_top_level():
+    locale_only = {
+        "locale": {
+            "pt-BR": {"whenToUse": "Use para «descrição» ou «cadastro»."},
+        }
+    }
+    assert "«descrição»" in PostgresExternalActionRepository._guidance_from_metadata(
+        locale_only,
+        "whenToUse",
+    )
+    top_level = {"whenToUse": "Use for «estoque»."}
+    assert "«estoque»" in PostgresExternalActionRepository._guidance_from_metadata(
+        top_level,
+        "whenToUse",
+    )

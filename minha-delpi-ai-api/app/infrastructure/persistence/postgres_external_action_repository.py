@@ -492,4 +492,28 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
                 payload["providerKey"] = provider_key
             if provider_name:
                 payload["providerName"] = provider_name
+        metadata = action.delpi_metadata if isinstance(action.delpi_metadata, dict) else {}
+        when_to_use = self._guidance_from_metadata(metadata, "whenToUse")
+        if when_to_use:
+            payload["whenToUse"] = when_to_use
+        when_not = self._guidance_from_metadata(metadata, "whenNotToUse")
+        if when_not:
+            payload["whenNotToUse"] = when_not
         return payload
+
+    @staticmethod
+    def _guidance_from_metadata(metadata: dict, key: str) -> str:
+        snake = "when_to_use" if key == "whenToUse" else "when_not_to_use"
+        direct = str(metadata.get(key) or metadata.get(snake) or "").strip()
+        if direct:
+            return direct
+        locale = metadata.get("locale")
+        if not isinstance(locale, dict):
+            return ""
+        for lang in ("pt-BR", "en"):
+            block = locale.get(lang)
+            if isinstance(block, dict):
+                text = str(block.get(key) or "").strip()
+                if text:
+                    return text
+        return ""
