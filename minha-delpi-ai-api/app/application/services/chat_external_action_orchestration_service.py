@@ -415,6 +415,10 @@ class ChatExternalActionOrchestrationService:
         if not scope_planned:
             return items
 
+        limit = max(1, min(int(max_calls), 12))
+        if len(requested) == 1 and requested[0] in missing:
+            return scope_planned[:limit]
+
         merged = [
             item
             for item in items
@@ -427,7 +431,6 @@ class ChatExternalActionOrchestrationService:
             ).lower()
             for item in merged
         }
-        limit = max(1, min(int(max_calls), 12))
         for item in scope_planned:
             if len(merged) >= limit:
                 break

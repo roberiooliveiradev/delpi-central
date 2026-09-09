@@ -415,7 +415,7 @@ class ChatProductMultiScopePlanningService:
 
             return planned
 
-        if len(scopes) < 2:
+        if not scopes:
             return []
 
         limit = max(1, min(int(max_calls), 12))

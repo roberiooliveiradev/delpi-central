@@ -422,3 +422,61 @@ def test_enrich_replaces_inspection_when_only_stock_requested():
     ]
     assert any("/stock" in path for path in paths), paths
     assert not any("/inspection" in path for path in paths), paths
+
+
+def test_enrich_merges_when_multiple_scopes_requested():
+    from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
+
+    class _Sel:
+        def select_action_for_product(
+            self,
+            message,
+            *,
+            product_code,
+            allowed_action_ids=None,
+            intent=None,
+            route_segment=None,
+            previous_messages=None,
+        ):
+            if intent == ChatProductQueryIntent.STOCK or route_segment == "stock":
+                path = f"/products/{product_code}/stock"
+            elif intent == ChatProductQueryIntent.STRUCTURE or route_segment == "structure":
+                path = f"/products/{product_code}/structure"
+            else:
+                return None
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": f"api_delpi.products.{path.split('/')[-1]}",
+                    "parameters": {"code": product_code},
+                    "path": path,
+                },
+            }
+
+    planned = [
+        {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": "api_delpi.products.get_product_summary",
+                "path": "/products/90260149/summary",
+            },
+        }
+    ]
+    out = ChatExternalActionOrchestrationService._enrich_openapi_plan_with_product_scopes(
+        _Sel(),
+        message="estoque e estrutura do produto 90260149",
+        planned=planned,
+        allowed_action_ids=["a1"],
+        conversation_context=None,
+        previous_messages=None,
+        memory_snapshot=None,
+        max_calls=6,
+    )
+    paths = [
+        str((item.get("arguments") or {}).get("path") or "")
+        for item in out
+        if isinstance(item, dict)
+    ]
+    assert any("/summary" in path for path in paths), paths
+    assert any("/stock" in path for path in paths), paths
+    assert any("/structure" in path for path in paths), paths
