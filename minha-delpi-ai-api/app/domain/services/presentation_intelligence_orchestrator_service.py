@@ -22,6 +22,9 @@ from app.domain.services.presentation_data_profile_builder_service import (
 from app.domain.services.presentation_deterministic_intent_binder_service import (
     PresentationDeterministicIntentBinderService,
 )
+from app.domain.services.presentation_constraints_extractor_service import (
+    PresentationConstraintsExtractorService,
+)
 from app.domain.services.presentation_intent_extractor_service import (
     PresentationIntentExtractorService,
 )
@@ -91,6 +94,13 @@ class PresentationIntelligenceOrchestratorService:
             openapi_field_meta=openapi_field_meta,
         )
         metadata["presentationDataProfile"] = profile.as_dict()
+
+        constraints = metadata.get("presentationConstraints")
+        if not isinstance(constraints, dict) or not constraints:
+            extracted = PresentationConstraintsExtractorService.extract(user_message)
+            if extracted:
+                constraints = extracted
+                metadata["presentationConstraints"] = dict(extracted)
 
         requested = None
         decision = metadata.get("presentationDecision")
@@ -180,6 +190,8 @@ class PresentationIntelligenceOrchestratorService:
             "dimensionCandidates": list(profile.dimension_candidates),
             "measureCandidates": list(profile.measure_candidates),
         }
+        if isinstance(constraints, dict) and constraints:
+            summary["constraintsPresent"] = True
         metadata["presentationIntelligence"] = summary
         logger.info(
             "presentation_intelligence_applied",

@@ -1,0 +1,168 @@
+{
+  "density": {
+    "compact": [
+      "compacta",
+      "compacto",
+      "densa",
+      "denso",
+      "resumida",
+      "resumido",
+      "enxuta",
+      "enxuto"
+    ],
+    "comfortable": [
+      "confortável",
+      "confortavel",
+      "espaçada",
+      "espacada",
+      "normal"
+    ],
+    "spacious": [
+      "ampla",
+      "amplo",
+      "espaçosa",
+      "espacosa",
+      "arejada",
+      "arejado"
+    ]
+  },
+  "columnCount": {
+    "markers": [
+      "só {n} col",
+      "somente {n} col",
+      "apenas {n} col",
+      "só {n} coluna",
+      "somente {n} coluna",
+      "apenas {n} coluna",
+      "só {n} colunas",
+      "somente {n} colunas",
+      "apenas {n} colunas",
+      "{n} colunas",
+      "{n} cols"
+    ],
+    "maxColumns": 12
+  },
+  "preferCanvas": [
+    "coloque na lousa",
+    "colocar na lousa",
+    "coloca na lousa",
+    "ponha na lousa",
+    "manda para a lousa",
+    "manda pra lousa",
+    "envia para a lousa",
+    "envia pra lousa",
+    "abrir lousa",
+    "abrir a lousa",
+    "abrir canvas",
+    "abrir o canvas",
+    "na lousa",
+    "para a lousa",
+    "pra lousa"
+  ],
+  "kpiMeasures": {
+    "markers": [
+      "{n} kpi",
+      "{n} kpis",
+      "{n} indicador",
+      "{n} indicadores",
+      "kpi no topo",
+      "kpis no topo",
+      "indicadores no topo",
+      "indicador no topo"
+    ],
+    "topPlacement": [
+      "no topo",
+      "em cima",
+      "acima da tabela",
+      "acima do gráfico",
+      "acima do grafico"
+    ],
+    "maxCount": 8
+  },
+  "dashboardPanels": [
+    "dashboard",
+    "painel de indicadores",
+    "painéis",
+    "paineis",
+    "visão geral",
+    "visao geral",
+    "múltiplos painéis",
+    "multiplos paineis",
+    "layout de dashboard"
+  ],
+  "sort": {
+    "ascMarkers": [
+      "do menor para o maior",
+      "crescente",
+      "ordem crescente",
+      "ascendente"
+    ],
+    "descMarkers": [
+      "do maior para o menor",
+      "decrescente",
+      "ordem decrescente",
+      "descendente"
+    ],
+    "commandMarkers": [
+      "ordene por",
+      "ordenar por",
+      "ordena por",
+      "classifique por",
+      "classificar por",
+      "sort por"
+    ]
+  },
+  "hiddenFields": {
+    "markers": [
+      "esconda a coluna",
+      "esconder a coluna",
+      "esconde a coluna",
+      "oculte a coluna",
+      "ocultar a coluna",
+      "oculta a coluna",
+      "esconda o campo",
+      "esconder o campo",
+      "oculte o campo",
+      "ocultar o campo",
+      "sem a coluna",
+      "sem coluna",
+      "sem o campo",
+      "sem campo",
+      "não mostre a coluna",
+      "nao mostre a coluna",
+      "não exiba a coluna",
+      "nao exiba a coluna"
+    ]
+  },
+  "fields": {
+    "onlyMarkers": [
+      "só colunas",
+      "somente colunas",
+      "apenas colunas",
+      "só os campos",
+      "somente os campos",
+      "apenas os campos",
+      "só mostre",
+      "somente mostre",
+      "apenas mostre"
+    ],
+    "parenPattern": "\\(([\\w\\s,à-ú/-]+)\\)"
+  },
+  "emphasis": {
+    "lowBalance": [
+      "saldo baixo",
+      "saldos baixos",
+      "estoque baixo",
+      "estoque crítico",
+      "estoque critico",
+      "destaque saldo baixo",
+      "destaque estoque baixo"
+    ],
+    "highBalance": [
+      "saldo alto",
+      "saldos altos",
+      "estoque alto",
+      "destaque saldo alto"
+    ]
+  }
+}
