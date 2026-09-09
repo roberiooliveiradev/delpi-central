@@ -76,7 +76,6 @@ def test_bug_a_baseline_extractor_paren_axes_are_short():
     )
 
 
-@_BUG_A
 def test_bug_a_baseline_binder_completes_partial_single_axis_match():
     """Um único concept discriminante não deve impedir completar o 2º eixo."""
     profile = _stock_like_profile()
@@ -100,7 +99,6 @@ def test_bug_a_baseline_binder_completes_partial_single_axis_match():
     }
 
 
-@_BUG_A
 def test_bug_a_baseline_orchestrator_materializes_heatmap():
     metadata = {
         "path": "/products/P1/stock",

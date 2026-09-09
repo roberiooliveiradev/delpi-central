@@ -77,12 +77,19 @@ class PresentationDeterministicIntentBinderService:
             confidence += 0.05
 
         # Default chart axes when mark/view chart without explicit dims.
-        if (view == "chart" or mark) and not bound_dims and dims:
-            if mark == "heatmap" and len(dims) >= 2:
-                bound_dims = cls._default_heatmap_dims(dims)
-            else:
+        # Heatmap: also complete a *partial* bind (1 discriminant) from profile defaults.
+        if (view == "chart" or mark) and dims:
+            if mark == "heatmap" and len(bound_dims) < 2 and len(dims) >= 2:
+                for key in cls._default_heatmap_dims(dims):
+                    if key not in bound_dims:
+                        bound_dims.append(key)
+                    if len(bound_dims) >= 2:
+                        break
+                if not intent.dimension_concepts:
+                    confidence = min(confidence, 0.55)
+            elif not bound_dims:
                 bound_dims = dims[:2]
-            confidence = min(confidence, 0.55)
+                confidence = min(confidence, 0.55)
 
         encoding: dict[str, EncodingChannel] = {}
         if mark == "heatmap":
@@ -189,6 +196,37 @@ class PresentationDeterministicIntentBinderService:
         field_map: dict[str, Any],
         openapi_field_meta: dict[str, dict[str, Any]],
     ) -> str | None:
+        # Slash inside one matrix axis token = OR aliases for the same slot.
+        aliases_or = [
+            part.strip()
+            for part in re.split(r"\s*/\s*", str(concept or "").strip())
+            if part.strip()
+        ] or [str(concept or "").strip()]
+
+        for alias in aliases_or:
+            hit = cls._match_single_concept(
+                alias,
+                candidates=candidates,
+                labels=labels,
+                field_map=field_map,
+                openapi_field_meta=openapi_field_meta,
+            )
+            if hit is None:
+                continue
+            # Prefer earlier alias on ties; first discriminant hit wins the slot.
+            return hit
+        return None
+
+    @classmethod
+    def _match_single_concept(
+        cls,
+        concept: str,
+        *,
+        candidates: list[str],
+        labels: dict[str, str],
+        field_map: dict[str, Any],
+        openapi_field_meta: dict[str, dict[str, Any]],
+    ) -> str | None:
         needle = cls._normalize(concept)
         if not needle:
             return None
@@ -196,6 +234,7 @@ class PresentationDeterministicIntentBinderService:
             "produto": "product",
             "deposito": "warehouse",
             "armazem": "warehouse",
+            "filial": "branch",
             "maquina": "machine",
             "turno": "shift",
             "producao": "output",
