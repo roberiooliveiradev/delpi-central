@@ -1,0 +1,244 @@
+{
+  "id": "presentation-composer-universal-baseline",
+  "immutable": true,
+  "capturedAt": "2026-09-09T18:05:00Z",
+  "sourcePlan": ".cursor/plans/presentation-composer-color-catalog.plan.md",
+  "auditAgents": [
+    "70b468c1-8d9c-4692-a770-09867276bd9b",
+    "3e10ace0-1306-44de-b275-514534e69daa",
+    "ce5e33db-c739-43b9-a463-d4f3313b5fa1"
+  ],
+  "pipelineRealOrder": [
+    "schema_driven_slots",
+    "session_preference",
+    "field_normalization",
+    "presentation_decision",
+    "insights",
+    "dedup_prune",
+    "presentation_intelligence_orchestrator",
+    "render_plan",
+    "llm_composition_markers",
+    "composer_shadow_or_canary_optional",
+    "mfe_render_plan_v1"
+  ],
+  "supportedViewsSpec": ["table", "chart", "kpi", "text", "tree", "auto"],
+  "dashboardInSupportedViews": false,
+  "compilerApplyMethods": ["_apply_chart", "_apply_table", "_apply_kpi"],
+  "compilerMissingApply": ["_apply_tree", "_apply_dashboard", "_apply_text"],
+  "composerDefaultOff": true,
+  "composerReceivesRawRows": false,
+  "gapMatrix": [
+    {
+      "capability": "view_table_chart",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "validator": "CONFIRMADO_NO_CODIGO",
+      "binder": "CONFIRMADO_NO_CODIGO",
+      "composer": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO"
+    },
+    {
+      "capability": "view_kpi_text_tree",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "validator": "CONFIRMADO_NO_CODIGO",
+      "binder": "PARCIAL",
+      "composer": "CONFIRMADO_NO_CODIGO",
+      "compiler": "PARCIAL",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "PARCIAL"
+    },
+    {
+      "capability": "view_dashboard",
+      "spec": "NAO_IMPLEMENTADO",
+      "validator": "NAO_IMPLEMENTADO",
+      "binder": "NAO_IMPLEMENTADO",
+      "composer": "NAO_IMPLEMENTADO",
+      "compiler": "NAO_IMPLEMENTADO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "NAO_IMPLEMENTADO_NO_SPEC"
+    },
+    {
+      "capability": "canvas_preference",
+      "spec": "NAO_IMPLEMENTADO",
+      "compiler": "NAO_IMPLEMENTADO",
+      "mfe": "CONFIRMADO_NO_CONTRATO",
+      "situation": "LEGADO_PREFERENCIA_EXPORT"
+    },
+    {
+      "capability": "fields_column_order",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "PARCIAL",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "PARCIAL"
+    },
+    {
+      "capability": "labels",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO"
+    },
+    {
+      "capability": "formats",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "PARCIAL",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "PARCIAL_LEGADO_DRIFT_ENUM"
+    },
+    {
+      "capability": "sort",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "NAO_IMPLEMENTADO",
+      "mfe": "LEGADO",
+      "situation": "PARCIAL"
+    },
+    {
+      "capability": "row_emphasis",
+      "spec": "NAO_IMPLEMENTADO",
+      "mfe": "LEGADO",
+      "situation": "LEGADO"
+    },
+    {
+      "capability": "chart_mark_encoding",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "PARCIAL",
+      "situation": "CONFIRMADO_RISCO_MFE_OVERRIDE"
+    },
+    {
+      "capability": "legend_visible",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO"
+    },
+    {
+      "capability": "palette_family",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO_COM_DUP_MAPA"
+    },
+    {
+      "capability": "kpi_cards_create",
+      "spec": "NAO_IMPLEMENTADO",
+      "compiler": "NAO_IMPLEMENTADO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "NAO_IMPLEMENTADO"
+    },
+    {
+      "capability": "kpi_trend_delta",
+      "spec": "NAO_IMPLEMENTADO",
+      "compiler": "NAO_IMPLEMENTADO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "PARCIAL_ASSEMBLY"
+    },
+    {
+      "capability": "kpi_semantic_color",
+      "spec": "NAO_IMPLEMENTADO",
+      "compiler": "NAO_IMPLEMENTADO",
+      "mfe": "LEGADO",
+      "situation": "LEGADO_HEX_INSEGURO"
+    },
+    {
+      "capability": "tree_levels_depth",
+      "spec": "NAO_IMPLEMENTADO",
+      "compiler": "NAO_IMPLEMENTADO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "NAO_IMPLEMENTADO"
+    },
+    {
+      "capability": "dashboard_panels",
+      "spec": "NAO_IMPLEMENTADO",
+      "compiler": "NAO_IMPLEMENTADO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "NAO_IMPLEMENTADO"
+    },
+    {
+      "capability": "text_sections",
+      "spec": "NAO_IMPLEMENTADO",
+      "compiler": "NAO_IMPLEMENTADO",
+      "mfe": "PARCIAL",
+      "situation": "PARCIAL_PROSE_PIPELINE"
+    },
+    {
+      "capability": "density",
+      "spec": "NAO_IMPLEMENTADO",
+      "compiler": "NAO_IMPLEMENTADO",
+      "mfe": "LEGADO",
+      "situation": "NAO_IMPLEMENTADO"
+    },
+    {
+      "capability": "layout_mode",
+      "spec": "NAO_IMPLEMENTADO",
+      "decision": "CONFIRMADO_NO_CONTRATO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO_NO_DECISION"
+    }
+  ],
+  "colorCatalogs": {
+    "api_mfe_chat": {
+      "families": [
+        "brand",
+        "sequential-blue",
+        "cool",
+        "warm",
+        "diverging-status",
+        "status"
+      ],
+      "notes": "API emits paletteFamily + colors[]; MFE resolves family if colors empty; status map order drifts API vs MFE"
+    },
+    "plugin_ui": {
+      "source": "plugins/plugin-ui/src/theme/deckColorCatalog.ts",
+      "knowsPaletteFamily": false
+    },
+    "tv_dashboard": {
+      "source": "plugins/tv-dashboard/src/content/chartStyleRecipes.ts",
+      "knowsPaletteFamily": false
+    }
+  },
+  "priorPlanVerdicts": [
+    {
+      "claim": "dashboard not in SUPPORTED_VIEWS",
+      "verdict": "CONFIRMADO"
+    },
+    {
+      "claim": "compiler strong on chart",
+      "verdict": "CONFIRMADO"
+    },
+    {
+      "claim": "compiler partial on table",
+      "verdict": "CONFIRMADO"
+    },
+    {
+      "claim": "KPI weak support",
+      "verdict": "CONFIRMADO"
+    },
+    {
+      "claim": "tree not compiled",
+      "verdict": "CONFIRMADO"
+    },
+    {
+      "claim": "dashboard not compiled",
+      "verdict": "CONFIRMADO"
+    },
+    {
+      "claim": "text not compiled",
+      "verdict": "CONFIRMADO"
+    },
+    {
+      "claim": "color duplication",
+      "verdict": "CONFIRMADO"
+    },
+    {
+      "claim": "canvas is preference not rich slot",
+      "verdict": "CONFIRMADO"
+    }
+  ],
+  "hypothesesOpen": [
+    "composer_invocation_rate_ideal",
+    "tv_copilot_palette_family_p0_or_fora"
+  ],
+  "notes": "Baseline imutável pré-candidate. Não alterar este arquivo após candidate; criar evidence candidate separada."
+}
