@@ -1,13 +1,51 @@
 import { describe, expect, it } from "vitest";
 
+import { csvCell } from "../../../../export/primitives";
 import {
   buildChartExportPayload,
   buildKpiExportPayload,
   buildTableExportPayload,
+  resolveTableExportColumns,
   sanitizeSheetName,
 } from "./exportUtils";
 
 describe("exportUtils payloads", () => {
+  it("prefere exportColumns e mantém campo oculto na exportação CSV", () => {
+    const presentation = {
+      type: "table" as const,
+      title: "Planejamento",
+      columns: [
+        { key: "product_code", label: "Produto" },
+        { key: "warehouse", label: "Depósito" },
+        { key: "planned_qty", label: "Qtd. planejada" },
+      ],
+      exportColumns: [
+        { key: "product_code", label: "Produto" },
+        { key: "warehouse", label: "Depósito" },
+        { key: "planned_qty", label: "Qtd. planejada" },
+        { key: "unit", label: "Unidade" },
+      ],
+      config: { hiddenFields: ["unit"] },
+      rows: [{ product_code: "P1", warehouse: "W1", planned_qty: 10, unit: "UN" }],
+    };
+
+    expect(resolveTableExportColumns(presentation).map((column) => column.key)).toEqual([
+      "product_code",
+      "warehouse",
+      "planned_qty",
+      "unit",
+    ]);
+
+    const payload = buildTableExportPayload(presentation);
+    const header = payload.columns.map((column) => column.label).join(";");
+    const body = payload.rows
+      .map((row) => payload.columns.map((column) => csvCell(row[column.key])).join(";"))
+      .join("\n");
+
+    expect(header).toBe("Produto;Depósito;Qtd. planejada;Unidade");
+    expect(body).toContain("UN");
+  });
+
   it("monta payload tabular com linhas filtradas", () => {
     const payload = buildTableExportPayload(
       {

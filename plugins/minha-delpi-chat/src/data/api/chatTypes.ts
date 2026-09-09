@@ -39,6 +39,12 @@ export type ChatKpiCard = {
   color?: string;
 };
 
+export type ChatTableColumn = {
+  key: string;
+  label: string;
+  dataType?: "text" | "number" | "currency" | "date" | "percent" | "quantity" | "days";
+};
+
 export type ChatTreeNode = {
   id: string;
   label: string;
@@ -59,11 +65,16 @@ export type ChatPresentation =
       title: string;
       /** Papel no stack humanizado — emitido pela API (Playbook 12 R1). */
       role?: string;
-      columns: {
-        key: string;
-        label: string;
-        dataType?: "text" | "number" | "currency" | "date" | "percent" | "quantity" | "days";
-      }[];
+      columns: ChatTableColumn[];
+      /** Colunas completas para exportação (inclui campos ocultos na tela). */
+      exportColumns?: ChatTableColumn[];
+      config?: {
+        hiddenFields?: string[];
+        density?: string;
+        role?: string;
+        bindingProvenance?: string;
+        exportSourceUnchanged?: boolean;
+      };
       rows: Record<string, unknown>[];
     }
   | {

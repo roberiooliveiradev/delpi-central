@@ -1,5 +1,6 @@
 import type { ChatPresentation } from "../../../../data/api/chatTypes";
 import { csvRow, sanitizeFilename, triggerFileDownload } from "../../../../export/primitives";
+import { resolveTableExportColumns } from "./exportUtils";
 
 type DashboardPresentation = Extract<ChatPresentation, { type: "dashboard" }>;
 
@@ -43,8 +44,9 @@ export function buildDashboardCsv(presentation: DashboardPresentation): string {
     }
 
     if (inner.type === "table") {
-      const keys = inner.columns.map((column) => column.key);
-      blocks.push(csvRow(inner.columns.map((column) => column.label)));
+      const exportColumns = resolveTableExportColumns(inner);
+      const keys = exportColumns.map((column) => column.key);
+      blocks.push(csvRow(exportColumns.map((column) => column.label)));
       for (const row of inner.rows) {
         blocks.push(csvRow(keys.map((key) => row[key])));
       }

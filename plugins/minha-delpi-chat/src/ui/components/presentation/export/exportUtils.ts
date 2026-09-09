@@ -20,6 +20,18 @@ import { buildDashboardCsv } from "./dashboardExportCsv";
 import { exportTreeToCsv, treePresentationToTable } from "../pipeline/treePresentationUtils";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
+
+export function resolveTableExportColumns(
+  presentation: Pick<TablePresentation, "columns" | "exportColumns">,
+): ExportColumn[] {
+  const source =
+    presentation.exportColumns?.length ? presentation.exportColumns : presentation.columns ?? [];
+
+  return source.map((column) => ({
+    key: column.key,
+    label: column.label,
+  }));
+}
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 type TreePresentation = Extract<ChatPresentation, { type: "tree" }>;
 type KpiPresentation = Extract<ChatPresentation, { type: "kpi" }>;
@@ -33,10 +45,7 @@ export function buildTableExportPayload(
   presentation: TablePresentation,
   rows?: Record<string, unknown>[],
 ): TableExportPayload {
-  const columns = (presentation.columns ?? []).map((column) => ({
-    key: column.key,
-    label: column.label,
-  }));
+  const columns = resolveTableExportColumns(presentation);
   const effectiveRows = rows ?? presentation.rows ?? [];
 
   return {
@@ -108,10 +117,7 @@ function buildDashboardExportSheets(
     if (inner.type === "table") {
       sheets.push({
         title: panelTitle,
-        columns: inner.columns.map((column) => ({
-          key: column.key,
-          label: column.label,
-        })),
+        columns: resolveTableExportColumns(inner),
         rows: inner.rows ?? [],
       });
       continue;
