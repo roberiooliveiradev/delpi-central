@@ -1,0 +1,269 @@
+{
+  "id": "presentation-composer-universal-candidate",
+  "immutable": false,
+  "capturedAt": "2026-09-09T21:00:00Z",
+  "baselineRef": "docs/testing/evidence/presentation-composer-universal-baseline.json",
+  "baselineId": "presentation-composer-universal-baseline",
+  "gitShaAtCapture": "891effa2f",
+  "sourcePlan": ".cursor/plans/presentation-composer-color-catalog.plan.md",
+  "pipelineRealOrder": [
+    "schema_driven_slots",
+    "session_preference",
+    "field_normalization",
+    "presentation_decision",
+    "insights",
+    "dedup_prune",
+    "presentation_intelligence_orchestrator",
+    "render_plan",
+    "llm_composition_markers",
+    "composer_shadow_or_canary_optional",
+    "mfe_render_plan_v1"
+  ],
+  "supportedViewsSpec": ["table", "chart", "kpi", "text", "tree", "dashboard", "auto"],
+  "dashboardInSupportedViews": true,
+  "compilerApplyMethods": [
+    "_apply_chart",
+    "_apply_table",
+    "_apply_kpi",
+    "_apply_tree",
+    "_apply_dashboard",
+    "_apply_text"
+  ],
+  "compilerMissingApply": [],
+  "composerDefaultOff": true,
+  "composerReceivesRawRows": false,
+  "improvementsVsBaseline": [
+    "dashboard added to SUPPORTED_VIEWS",
+    "PresentationTreeCompilerService wired",
+    "PresentationDashboardCompilerService wired",
+    "PresentationTextCompilerService wired",
+    "PresentationKpiCompilerService aggregates cards",
+    "PresentationTableCompilerService sort + hiddenFields + density",
+    "preferCanvas via PresentationDeliveryCompilerService",
+    "presentation_composer_policies.json + prompts JSON",
+    "Color Family Catalog in plugin-ui (chat MFE)"
+  ],
+  "gapMatrix": [
+    {
+      "capability": "view_table_chart",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "validator": "CONFIRMADO_NO_CODIGO",
+      "binder": "CONFIRMADO_NO_CODIGO",
+      "composer": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "CONFIRMADO",
+      "delta": "UNCHANGED"
+    },
+    {
+      "capability": "view_kpi_text_tree",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "validator": "CONFIRMADO_NO_CODIGO",
+      "binder": "CONFIRMADO_NO_CODIGO",
+      "composer": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "PARCIAL",
+      "delta": "IMPROVED"
+    },
+    {
+      "capability": "view_dashboard",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "validator": "CONFIRMADO_NO_CODIGO",
+      "binder": "PARCIAL",
+      "composer": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "NAO_IMPLEMENTADO_NO_SPEC",
+      "delta": "IMPROVED"
+    },
+    {
+      "capability": "canvas_preference",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CONTRATO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "LEGADO_PREFERENCIA_EXPORT",
+      "delta": "IMPROVED"
+    },
+    {
+      "capability": "fields_column_order",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "PARCIAL",
+      "delta": "IMPROVED"
+    },
+    {
+      "capability": "labels",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "CONFIRMADO",
+      "delta": "UNCHANGED"
+    },
+    {
+      "capability": "formats",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "PARCIAL_LEGADO_DRIFT_ENUM",
+      "delta": "IMPROVED"
+    },
+    {
+      "capability": "sort",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "LEGADO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "PARCIAL",
+      "delta": "IMPROVED"
+    },
+    {
+      "capability": "row_emphasis",
+      "spec": "NAO_IMPLEMENTADO",
+      "mfe": "LEGADO",
+      "situation": "LEGADO",
+      "baselineSituation": "LEGADO",
+      "delta": "UNCHANGED"
+    },
+    {
+      "capability": "chart_mark_encoding",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "PARCIAL",
+      "situation": "CONFIRMADO_RISCO_MFE_OVERRIDE",
+      "baselineSituation": "CONFIRMADO_RISCO_MFE_OVERRIDE",
+      "delta": "UNCHANGED"
+    },
+    {
+      "capability": "legend_visible",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "CONFIRMADO",
+      "delta": "UNCHANGED"
+    },
+    {
+      "capability": "palette_family",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "CONFIRMADO_COM_DUP_MAPA",
+      "delta": "IMPROVED"
+    },
+    {
+      "capability": "kpi_cards_create",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "NAO_IMPLEMENTADO",
+      "delta": "IMPROVED"
+    },
+    {
+      "capability": "kpi_trend_delta",
+      "spec": "PARCIAL",
+      "compiler": "PARCIAL",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "PARCIAL_ASSEMBLY",
+      "baselineSituation": "PARCIAL_ASSEMBLY",
+      "delta": "UNCHANGED"
+    },
+    {
+      "capability": "kpi_semantic_color",
+      "spec": "PARCIAL",
+      "compiler": "PARCIAL",
+      "mfe": "LEGADO",
+      "situation": "LEGADO_HEX_INSEGURO",
+      "baselineSituation": "LEGADO_HEX_INSEGURO",
+      "delta": "UNCHANGED"
+    },
+    {
+      "capability": "tree_levels_depth",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "NAO_IMPLEMENTADO",
+      "delta": "IMPROVED"
+    },
+    {
+      "capability": "dashboard_panels",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "NAO_IMPLEMENTADO",
+      "delta": "IMPROVED"
+    },
+    {
+      "capability": "text_sections",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "PARCIAL",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "PARCIAL_PROSE_PIPELINE",
+      "delta": "IMPROVED"
+    },
+    {
+      "capability": "density",
+      "spec": "CONFIRMADO_NO_CODIGO",
+      "compiler": "CONFIRMADO_NO_CODIGO",
+      "mfe": "LEGADO",
+      "situation": "CONFIRMADO",
+      "baselineSituation": "NAO_IMPLEMENTADO",
+      "delta": "IMPROVED"
+    },
+    {
+      "capability": "layout_mode",
+      "spec": "NAO_IMPLEMENTADO",
+      "decision": "CONFIRMADO_NO_CONTRATO",
+      "mfe": "CONFIRMADO_NO_CODIGO",
+      "situation": "CONFIRMADO_NO_DECISION",
+      "baselineSituation": "CONFIRMADO_NO_DECISION",
+      "delta": "UNCHANGED"
+    }
+  ],
+  "rDimensions": {
+    "R4_content": {
+      "verdict": "PASS",
+      "evidence": "Unit compilers + orchestrator heatmap labels PT-BR"
+    },
+    "R5_presentation": {
+      "verdict": "PASS",
+      "evidence": "Multi-view compilers materialize slots; smoke T1–T5 harness"
+    },
+    "R7_surface_parity": {
+      "verdict": "INCONCLUSIVE",
+      "evidence": "Stream parity not re-run in this candidate capture"
+    },
+    "R8_latency": {
+      "verdict": "PASS",
+      "evidence": "presentation_profile_build_ms + composer latencyMs in telemetry"
+    },
+    "R9_outcome": {
+      "verdict": "PASS",
+      "evidence": "Table 3-col sort, heatmap blue, preferCanvas unit tests green"
+    },
+    "R10_safety": {
+      "verdict": "PASS",
+      "evidence": "Validator adversarial suite; compose payload excludes rows/sensitive"
+    },
+    "R11_efficiency": {
+      "verdict": "PASS",
+      "evidence": "Policy gate skips composer when specApplied; default off"
+    }
+  },
+  "regressionsVsBaseline": [],
+  "heatmapRegression": "NONE — orchestrator heatmap + constant unit rejection preserved",
+  "notes": "Candidate pós E1–E8. Baseline imutável não alterado. Compare gapMatrix.delta=IMPROVED para rollout decision."
+}
