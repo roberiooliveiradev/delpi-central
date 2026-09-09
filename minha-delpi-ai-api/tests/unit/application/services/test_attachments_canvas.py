@@ -308,10 +308,6 @@ def test_canvas_ambiguity_service_detects_multiple_referents():
     assert ChatCanvasAmbiguityService.is_deictic_canvas_request("coloque isso na lousa")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG_B_BASELINE: prosa+tabela same-message tratados como referentes concorrentes",
-)
 def test_bug_b_baseline_same_message_prose_and_table_opens_canvas():
     """«esse resultado» após prosa+tabela no mesmo assistente deve abrir a lousa."""
     previous_messages = [
@@ -357,3 +353,81 @@ def test_bug_b_baseline_same_message_prose_and_table_opens_canvas():
     assert action is not None
     assert action.open_payload is not None
     assert action.open_payload.markdown
+
+
+def test_canvas_same_message_chart_also_coalesces():
+    previous_messages = [
+        {
+            "id": "asst-chart-1",
+            "role": "assistant",
+            "content": "A" * 100,
+            "metadata": {
+                "chartPresentation": {"type": "chart", "chartType": "bar", "data": []},
+            },
+        }
+    ]
+    assert (
+        ChatCanvasAmbiguityService.build_clarification_answer(
+            previous_messages=previous_messages,
+        )
+        is None
+    )
+
+
+def test_canvas_two_operational_messages_still_clarifies():
+    previous_messages = [
+        {
+            "id": "asst-op-a",
+            "role": "assistant",
+            "content": "Estoque ok.",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "metadata": {
+                            "presentation": {"type": "table", "rows": [{"a": 1}]},
+                        }
+                    }
+                ]
+            },
+        },
+        {
+            "id": "asst-op-b",
+            "role": "assistant",
+            "content": "B" * 100,
+            "metadata": {},
+        },
+    ]
+    clarification = ChatCanvasAmbiguityService.build_clarification_answer(
+        previous_messages=previous_messages,
+    )
+    assert clarification
+
+
+def test_canvas_explicit_table_request_still_resolves():
+    previous_messages = [
+        {
+            "id": "asst-1",
+            "role": "assistant",
+            "content": "C" * 100,
+            "metadata": {
+                "presentation": {"type": "table", "rows": [{"x": 1}]},
+            },
+        }
+    ]
+    action = ChatCanvasContentService.resolve(
+        "coloque a tabela na lousa",
+        previous_messages,
+        {"capabilities": {"canvas": True}},
+    )
+    assert action is not None
+    assert action.open_payload is not None
+
+
+def test_canvas_empty_history_has_no_open_payload():
+    action = ChatCanvasContentService.resolve(
+        "Coloque esse resultado na lousa.",
+        [],
+        {"capabilities": {"canvas": True}},
+    )
+    assert action is not None
+    assert action.open_payload is None
