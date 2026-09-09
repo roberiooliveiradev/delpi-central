@@ -1,6 +1,7 @@
 export {
   inferDefaultChartAxes,
   formatChartColumnLabel,
+  isCompiledChartBinding,
   listCategoryColumns,
   listNumericColumns,
   type ChartAxisHints,

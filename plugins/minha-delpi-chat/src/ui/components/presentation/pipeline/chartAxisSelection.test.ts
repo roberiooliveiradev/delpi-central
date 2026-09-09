@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { inferDefaultChartAxes } from "./chartAxisSelection";
+import { inferDefaultChartAxes, isCompiledChartBinding } from "./chartAxisSelection";
 
 describe("chartAxisSelection", () => {
   const rows = [
@@ -37,6 +37,22 @@ describe("chartAxisSelection", () => {
 
     expect(axes.xKey).toBe("tempo_real_horas");
     expect(axes.yKey).toBe("qtd_apontada");
+  });
+
+  it("respeita eixos compilados em barras sem priorizar eficiência", () => {
+    const axes = inferDefaultChartAxes(rows, "bar", {
+      xAxis: "nome_operador",
+      yAxis: ["tempo_real_horas"],
+      bindingProvenance: "COMPILED",
+    });
+
+    expect(axes.xKey).toBe("nome_operador");
+    expect(axes.yKey).toBe("tempo_real_horas");
+  });
+
+  it("identifica binding COMPILED de forma case-insensitive", () => {
+    expect(isCompiledChartBinding({ bindingProvenance: "compiled" })).toBe(true);
+    expect(isCompiledChartBinding({ bindingProvenance: "LOCAL" })).toBe(false);
   });
 
   it("usa categoria no eixo X em barras", () => {

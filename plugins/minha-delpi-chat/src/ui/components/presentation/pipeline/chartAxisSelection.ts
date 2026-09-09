@@ -117,7 +117,7 @@ function firstConfiguredY(config?: ChartAxisConfig): string | null {
   return token || null;
 }
 
-function isCompiledBinding(config?: ChartAxisConfig): boolean {
+export function isCompiledChartBinding(config?: ChartAxisConfig): boolean {
   return String(config?.bindingProvenance || "")
     .trim()
     .toUpperCase() === "COMPILED";
@@ -144,7 +144,7 @@ export function inferDefaultChartAxes(
   const configuredX = String(config?.xAxis || "").trim() || null;
   const dataKeys = new Set(Object.keys(data[0] ?? {}));
 
-  if (isCompiledBinding(config)) {
+  if (isCompiledChartBinding(config)) {
     const xKey =
       (configuredX && dataKeys.has(configuredX) ? configuredX : null) ||
       categoryColumns[0] ||

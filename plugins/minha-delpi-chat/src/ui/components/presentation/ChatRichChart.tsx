@@ -50,6 +50,7 @@ import { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 import {
   formatChartColumnLabel,
   inferDefaultChartAxes,
+  isCompiledChartBinding,
   isNumericAxisChartType,
 } from "./pipeline/chartAxisSelection";
 import {
@@ -119,6 +120,7 @@ function resolveCartesianYAxes(args: {
   activeChartType: string;
   filteredData: Record<string, unknown>[];
   xAxis: string;
+  compiledBinding: boolean;
 }): string[] {
   const {
     scatterMode,
@@ -130,12 +132,28 @@ function resolveCartesianYAxes(args: {
     activeChartType,
     filteredData,
     xAxis,
+    compiledBinding,
   } = args;
   if (scatterMode) {
     return [resolvedY].filter(Boolean);
   }
   if (axisYOverride) {
     return normalizeYAxes([axisYOverride], filteredData, xAxis);
+  }
+  if (compiledBinding) {
+    if (Array.isArray(configYAxis) && configYAxis.length) {
+      return configYAxis.map((key) => String(key).trim()).filter(Boolean);
+    }
+
+    const configuredY = String(configYAxis || "").trim();
+
+    if (configuredY) {
+      return [configuredY];
+    }
+
+    if (resolvedY) {
+      return [resolvedY];
+    }
   }
   // Heatmap config.yAxis is a categorical matrix dimension — never use it as a numeric series.
   if (valueKeyFromConfig && (sourceChartType === "heatmap" || activeChartType !== "heatmap")) {
@@ -280,10 +298,16 @@ export function ChatRichChart({
     [activeChartType, config, filteredData],
   );
 
+  const compiledBinding = isCompiledChartBinding(config);
   const scatterMode = isNumericAxisChartType(activeChartType);
   const resolvedX = axisXOverride ?? axisDefaults.xKey;
   const resolvedY = axisYOverride ?? axisDefaults.yKey;
-  const xAxis = scatterMode ? resolvedX : resolvedX || config?.xAxis || guessXAxis(filteredData);
+  const configuredXAxis = String(config?.xAxis || "").trim();
+  const xAxis = scatterMode
+    ? resolvedX
+    : compiledBinding
+      ? axisXOverride || configuredXAxis || resolvedX
+      : resolvedX || configuredXAxis || guessXAxis(filteredData);
   const baseYAxes = resolveCartesianYAxes({
     scatterMode,
     resolvedY,
@@ -294,6 +318,7 @@ export function ChatRichChart({
     activeChartType,
     filteredData,
     xAxis,
+    compiledBinding,
   });
   const valueKey = isHeatmapActive
     ? valueKeyOverride ||
@@ -496,15 +521,11 @@ export function ChatRichChart({
       : Array.isArray(config?.yAxis)
         ? String(config.yAxis[0] || "")
         : "";
-  const compiledBinding =
-    String(config?.bindingProvenance || "")
-      .trim()
-      .toUpperCase() === "COMPILED";
   const heatmapXAxis =
     (isHeatmapActive ? axisXOverride : null) ||
     config?.xAxis ||
     displayXAxis ||
-    guessXAxis(data);
+    (compiledBinding ? configuredXAxis || displayXAxis : guessXAxis(data));
   const guessedHeatmapY = guessYAxisCategory(data, heatmapXAxis);
   const configuredYIsUseful =
     Boolean(configuredHeatmapY) &&
