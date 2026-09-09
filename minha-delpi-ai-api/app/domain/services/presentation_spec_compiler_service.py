@@ -9,6 +9,9 @@ from app.domain.entities.presentation_spec import PresentationSpec
 from app.domain.services.presentation_compilers.presentation_chart_compiler_service import (
     PresentationChartCompilerService,
 )
+from app.domain.services.presentation_compilers.presentation_dashboard_compiler_service import (
+    PresentationDashboardCompilerService,
+)
 from app.domain.services.presentation_compilers.presentation_kpi_compiler_service import (
     PresentationKpiCompilerService,
 )
@@ -77,6 +80,7 @@ class PresentationSpecCompilerService:
             profile=profile,
             labels=labels,
         )
+        cls._apply_dashboard(metadata, spec=spec)
 
         metadata["presentationDataProfile"] = profile.as_dict()
 
@@ -145,3 +149,12 @@ class PresentationSpecCompilerService:
             profile=profile,
             labels=labels,
         )
+
+    @classmethod
+    def _apply_dashboard(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        spec: PresentationSpec,
+    ) -> None:
+        PresentationDashboardCompilerService.apply(metadata, spec=spec)
