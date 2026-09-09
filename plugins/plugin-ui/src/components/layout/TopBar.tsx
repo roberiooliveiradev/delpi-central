@@ -55,13 +55,16 @@ export type TopBarProps = {
   sticky?: boolean;
   /** Fundo surface (banda). Default false = flush com a página. */
   surface?: boolean;
-  /** Enables collapse chrome (rail or hamburger). */
+  /** Enables collapse chrome (hamburger overflow by default). */
   collapsible?: boolean;
-  /** Visual mode when collapsed. Default `rail`. */
+  /**
+   * Visual mode when collapsed.
+   * Default `hamburger` (canonical). `rail` is deprecated — no production consumers.
+   */
   collapseMode?: TopBarCollapseMode;
   /**
-   * `manual` — toggle + optional localStorage.
-   * `overflow` — hamburger when measure row exceeds host width (responsive).
+   * `overflow` (default) — hamburger when measure row exceeds host width.
+   * `manual` — toggle + optional localStorage (deprecated; no production consumers).
    */
   collapseTrigger?: TopBarCollapseTrigger;
   /** Persist collapsed state as `"1"` / `"0"` (manual trigger only). */
@@ -307,8 +310,8 @@ export function TopBar({
   sticky = true,
   surface = false,
   collapsible = false,
-  collapseMode = "rail",
-  collapseTrigger = "manual",
+  collapseMode = "hamburger",
+  collapseTrigger = "overflow",
   storageKey,
   collapsed: collapsedProp,
   defaultCollapsed = false,

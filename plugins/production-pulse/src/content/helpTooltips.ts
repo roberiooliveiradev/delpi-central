@@ -17,7 +17,7 @@ export const PP_HELP = {
     backToPanel: "Volta ao painel principal de dispositivos.",
     modeOperator: "Abre a visão simplificada para tablet no chão de fábrica.",
     topBar:
-      "Navega entre Painel, catálogo de firmwares, hub OTA e modo operador (quando permitido).",
+      "Navega entre Painel, Hub OTA e modo operador (quando permitido). Em telas estreitas vira menu ☰.",
   },
 
   panel: {
@@ -301,6 +301,44 @@ export const PP_HELP = {
     legend: "Sólida = explícita · Tracejada = via driver_key.",
     launchOta: "Disparo agora ou agendado para a filial ou o IoT selecionado.",
     updateLinked: "Dispara OTA para os IoTs ligados a esta família.",
+  },
+
+  hub: {
+    hero:
+      "Amarre IoTs a firmwares, dispare atualização e acompanhe o progresso em um só lugar.",
+    branch: "Filial dos IoTs exibidos no canvas, no disparo e nas atualizações.",
+    refresh: "Recarrega firmwares, IoTs e atualizações da filial.",
+    newDevice: "Cadastra um novo dispositivo IoT nesta filial.",
+    newFirmware: "Cria uma nova versão de firmware (rascunho ou publicada).",
+    kpiPublished: "Versões publicadas e não arquivadas, elegíveis para disparo OTA.",
+    kpiLinked: "IoTs com vínculo explícito de família — pré-requisito para OTA.",
+    kpiUpdating: "IoTs com atualização autorizada, baixando ou aplicando agora.",
+    kpiFailed: "IoTs cuja última atualização falhou — verifique erro e rede.",
+    kpiOutdatedSuffix: "desatualizado(s)",
+    canvasLegend: "Sólida = vínculo direto · Tracejada = via driver.",
+    catalog: "Todas as versões de firmware — busque por família, versão ou driver.",
+    catalogSearch: "Busca por família, versão, driver ou nome exibido.",
+    jobs: "Atualizações recentes da filial. Abra os detalhes para ver IoT por IoT.",
+    jobDetails: "Ver detalhes",
+    jobDetailsHint: "Abre o status por dispositivo desta atualização.",
+    targetsDialogTitle: "Detalhes da atualização",
+    focusCatalogAnchor: "Catálogo de firmwares",
+    focusJobsAnchor: "Atualizações OTA",
+  },
+
+  firmwareCreate: {
+    hero: "Nova versão: identificação, sketch (.ino) e artefato (.bin) na mesma release.",
+    breadcrumb: "Novo firmware",
+    sectionIdentity: "Família, driver e versão — imutáveis depois de criar.",
+    sectionSource: "Snapshot do sketch da versão. Importar .ino preenche o editor.",
+    sectionArtifact: "Binário OTA. Obrigatório para publicar; opcional no rascunho.",
+    sectionNotes: "Nome exibido e notas da versão para operadores e admin.",
+    sourceField: "Importe o .ino desta versão — o texto fica editável abaixo.",
+    sourceEditor: "Cole ou ajuste o sketch. Limite ~256 KiB por versão.",
+    artifactField: "Anexe o .bin compilado. O sha256 é calculado no servidor.",
+    cancel: "Descarta a versão e volta ao hub OTA.",
+    saveDraft: "Cria a versão como rascunho — sketch e bin ainda editáveis.",
+    publish: "Cria e publica a versão. Exige artefato .bin anexado.",
   },
 
   modals: {

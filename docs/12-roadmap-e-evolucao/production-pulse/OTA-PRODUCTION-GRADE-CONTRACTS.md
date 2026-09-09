@@ -48,6 +48,9 @@ Documento de evidência para o plano hub OTA. Não substitui SCHEMA.md / API-ROU
 | Job finish `completed`/`failed` | P0 | `maybe_finish_job` |
 | Cancel token + late report 409 | P0 | `deviceOtaInvalidTransition` |
 | Hub `/firmware-links` + redirect jobs | P0 | soft poll; PpDataTable |
+| TopBar 3 áreas (Painel / Hub / Operador) | P0 | Firmwares fora da TopBar |
+| Create `/firmwares/new` + source/bin fields | P0 | progressive disclosure |
+| Hub KPIs client-side | P0 | publicados/vinculados/updating/failed |
 | Progress PHASE vs % | P0 | `formatOtaProgressDisplay` |
 | Canvas Desvincular / Delete+Backspace | P0 | |
 | Logs transição job/target / archive | P0 | sem token/bin |

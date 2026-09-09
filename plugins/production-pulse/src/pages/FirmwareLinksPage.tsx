@@ -1,20 +1,24 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   cancelFirmwareUpdateJob,
   createFirmwareUpdateJob,
   fetchDevices,
   fetchFirmwareUpdateJobs,
+  fetchFirmwareUpdateSummary,
   fetchFirmwareUpdateTargets,
   fetchFirmwares,
   putDeviceFirmwareLink,
   type FirmwareListItem,
   type FirmwareUpdateJob,
+  type FirmwareUpdateSummary,
   type FirmwareUpdateTarget,
 } from "../api/productionPulseApi";
 import { FirmwareDeviceLinkCanvas } from "../components/FirmwareDeviceLinkCanvas";
+import { HubOtaKpiStrip } from "../components/HubOtaKpiStrip";
 import {
   PpActionButton,
+  PpCatalogSearchBar,
   PpDataTable,
   PpHintAction,
   PpHostContainedDialog,
@@ -27,12 +31,25 @@ import {
   ppShellIcon,
   type DataTableColumn,
 } from "../app/productionPulseUi";
+import { resolveBranchOptions } from "../constants/branches";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
-import { productionPulseDeviceDetailPath } from "../constants/routes";
+import {
+  productionPulseDeviceDetailPath,
+  productionPulseDeviceNewPath,
+  productionPulseFirmwareDetailPath,
+  productionPulseFirmwareLinksPath,
+  productionPulseFirmwareNewPath,
+  type HubFocus,
+} from "../constants/routes";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import { uniqueFirmwareFamilies } from "../utils/firmwareLinkGraph";
-import { navigateProductionPulse } from "../utils/navigation";
+import {
+  computeHubOtaKpis,
+  EMPTY_HUB_OTA_KPIS,
+  isPublishedFirmware,
+} from "../utils/hubOtaKpis";
+import { navigateProductionPulse, replaceProductionPulse } from "../utils/navigation";
 import {
   formatOtaBytes,
   formatOtaProgressDisplay,
@@ -42,28 +59,51 @@ import {
 type FirmwareLinksPageProps = {
   branch: string;
   highlightFirmwareKey?: string;
+  focus?: HubFocus;
   permissions: ProductionPulsePermissionFlags;
 };
 
 const JOBS_POLL_MS = 3000;
 
+const HUB_SECTION_ID: Record<HubFocus, string> = {
+  canvas: "pp-hub-canvas",
+  catalog: "pp-hub-catalog",
+  jobs: "pp-hub-jobs",
+};
+
+function lifecycleLabel(row: FirmwareListItem): string {
+  if (row.lifecycle === "draft") return PP_HELP.ota.status.draft;
+  if (row.lifecycle === "archived") return PP_HELP.ota.statusArchived;
+  return PP_HELP.ota.statusPublished;
+}
+
+function formatTimestamp(value: string | null | undefined): string {
+  return value ? new Date(value).toLocaleString() : "—";
+}
+
 export function FirmwareLinksPage({
-  branch: initialBranch,
+  branch,
   highlightFirmwareKey,
+  focus,
   permissions,
 }: FirmwareLinksPageProps) {
   const canManage = permissions.canManageDevices;
-  const [branch, setBranch] = useState(initialBranch || "01");
-  const [firmwaresRaw, setFirmwaresRaw] = useState<FirmwareListItem[]>([]);
-  const [publishedFirmwares, setPublishedFirmwares] = useState<FirmwareListItem[]>([]);
+  const branchOptions = useMemo(
+    () => resolveBranchOptions(permissions.allowedBranches),
+    [permissions.allowedBranches],
+  );
+
+  const [firmwares, setFirmwares] = useState<FirmwareListItem[]>([]);
   const [devices, setDevices] = useState<DeviceListItem[]>([]);
+  const [updateSummary, setUpdateSummary] = useState<FirmwareUpdateSummary | null>(null);
   const [jobs, setJobs] = useState<FirmwareUpdateJob[]>([]);
   const [targets, setTargets] = useState<FirmwareUpdateTarget[]>([]);
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [detailJobId, setDetailJobId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [jobsLoading, setJobsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [catalogSearch, setCatalogSearch] = useState("");
   const [firmwareId, setFirmwareId] = useState("");
   const [trigger, setTrigger] = useState<"manual" | "scheduled">("manual");
   const [scheduledAt, setScheduledAt] = useState("");
@@ -76,9 +116,22 @@ export function FirmwareLinksPage({
       : null,
   );
 
+  const publishedFirmwares = useMemo(
+    () => firmwares.filter(isPublishedFirmware),
+    [firmwares],
+  );
+
   const families = useMemo(
-    () => uniqueFirmwareFamilies(firmwaresRaw, devices),
-    [firmwaresRaw, devices],
+    () => uniqueFirmwareFamilies(firmwares, devices),
+    [firmwares, devices],
+  );
+
+  const kpis = useMemo(
+    () =>
+      loading
+        ? EMPTY_HUB_OTA_KPIS
+        : computeHubOtaKpis({ firmwares, devices, updateSummary }),
+    [devices, firmwares, loading, updateSummary],
   );
 
   const firmwareOptions = useMemo(
@@ -99,6 +152,29 @@ export function FirmwareLinksPage({
     [devices],
   );
 
+  const firmwareById = useMemo(
+    () => new Map(firmwares.map((item) => [item.id, item])),
+    [firmwares],
+  );
+
+  const filteredFirmwares = useMemo(() => {
+    const query = catalogSearch.trim().toLowerCase();
+    if (!query) return firmwares;
+    return firmwares.filter((item) =>
+      [
+        item.firmwareKey,
+        item.driverKey,
+        item.version,
+        item.displayName,
+        item.lifecycle,
+        item.artifactSha256 ?? "",
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(query),
+    );
+  }, [catalogSearch, firmwares]);
+
   const hasActiveJob = jobs.some(
     (job) => job.status === "running" || job.status === "scheduled",
   );
@@ -107,18 +183,25 @@ export function FirmwareLinksPage({
     setLoading(true);
     setError(null);
     try {
-      const [fw, published, devs] = await Promise.all([
-        fetchFirmwares({ includeArchived: false }),
-        fetchFirmwares({ includeArchived: false, publishedOnly: true }),
+      const [catalog, devs, summary] = await Promise.all([
+        fetchFirmwares({ includeArchived: true }),
         fetchDevices({ branch }),
+        fetchFirmwareUpdateSummary(branch).catch(() => null),
       ]);
-      setFirmwaresRaw(fw);
-      setPublishedFirmwares(published);
+      setFirmwares(catalog);
       setDevices(devs);
-      setFirmwareId((current) => current || published[0]?.id || "");
-      setScopeDeviceId((current) => current || devs[0]?.id || "");
+      setUpdateSummary(summary);
+      const published = catalog.filter(isPublishedFirmware);
+      setFirmwareId((current) =>
+        current && published.some((item) => item.id === current)
+          ? current
+          : published[0]?.id || "",
+      );
+      setScopeDeviceId((current) =>
+        current && devs.some((item) => item.id === current) ? current : devs[0]?.id || "",
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar conexões.");
+      setError(err instanceof Error ? err.message : "Falha ao carregar o hub OTA.");
     } finally {
       setLoading(false);
     }
@@ -131,13 +214,6 @@ export function FirmwareLinksPage({
       try {
         const jobItems = await fetchFirmwareUpdateJobs(branch);
         setJobs(jobItems);
-        if (selectedJobId) {
-          try {
-            setTargets(await fetchFirmwareUpdateTargets(selectedJobId));
-          } catch {
-            setTargets([]);
-          }
-        }
       } catch (err) {
         if (!soft) {
           setError(err instanceof Error ? err.message : "Falha ao carregar atualizações OTA.");
@@ -146,7 +222,23 @@ export function FirmwareLinksPage({
         if (!soft) setJobsLoading(false);
       }
     },
-    [branch, selectedJobId],
+    [branch],
+  );
+
+  const loadTargets = useCallback(async (jobId: string) => {
+    try {
+      setTargets(await fetchFirmwareUpdateTargets(jobId));
+    } catch {
+      setTargets([]);
+    }
+  }, []);
+
+  const openJobDetails = useCallback(
+    async (jobId: string) => {
+      setDetailJobId(jobId);
+      await loadTargets(jobId);
+    },
+    [loadTargets],
   );
 
   useEffect(() => {
@@ -161,18 +253,30 @@ export function FirmwareLinksPage({
     if (!hasActiveJob) return;
     const timer = window.setInterval(() => {
       void reloadJobs({ soft: true });
+      if (detailJobId) void loadTargets(detailJobId);
     }, JOBS_POLL_MS);
     return () => window.clearInterval(timer);
-  }, [hasActiveJob, reloadJobs]);
+  }, [detailJobId, hasActiveJob, loadTargets, reloadJobs]);
 
-  const openTargets = useCallback(async (jobId: string) => {
-    setSelectedJobId(jobId);
-    try {
-      setTargets(await fetchFirmwareUpdateTargets(jobId));
-    } catch {
-      setTargets([]);
-    }
-  }, []);
+  const focusHandledRef = useRef(false);
+  useEffect(() => {
+    if (loading || focusHandledRef.current) return;
+    if (focus !== "catalog" && focus !== "jobs") return;
+    const target = document.getElementById(HUB_SECTION_ID[focus]);
+    if (!target) return;
+    focusHandledRef.current = true;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [focus, loading]);
+
+  const changeBranch = (nextBranch: string) => {
+    replaceProductionPulse(
+      productionPulseFirmwareLinksPath({
+        branch: nextBranch,
+        firmwareKey: highlightFirmwareKey,
+        focus,
+      }),
+    );
+  };
 
   const onCreateJob = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -182,9 +286,7 @@ export function FirmwareLinksPage({
     setError(null);
     try {
       const selected = publishedFirmwares.find((item) => item.id === firmwareId);
-      const filter: Record<string, unknown> = {
-        onlyOutdated: true,
-      };
+      const filter: Record<string, unknown> = { onlyOutdated: true };
       if (selected?.firmwareKey) filter.firmwareKey = selected.firmwareKey;
       if (scope === "device") filter.deviceIds = [scopeDeviceId];
       const job = await createFirmwareUpdateJob({
@@ -195,7 +297,7 @@ export function FirmwareLinksPage({
         filter,
       });
       await reloadJobs({ soft: true });
-      await openTargets(job.id);
+      await openJobDetails(job.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao disparar atualização OTA.");
     } finally {
@@ -211,6 +313,37 @@ export function FirmwareLinksPage({
     [reloadGraph],
   );
 
+  const runFamilyJob = useCallback(
+    async (firmwareKey: string, deviceIds?: string[]) => {
+      const match = publishedFirmwares.find((item) => item.firmwareKey === firmwareKey);
+      if (!match) {
+        setError(PP_HELP.ota.noPublishedFirmware);
+        return;
+      }
+      setBusy(true);
+      try {
+        const filter: Record<string, unknown> = {
+          firmwareKey: match.firmwareKey,
+          onlyOutdated: true,
+        };
+        if (deviceIds?.length) filter.deviceIds = deviceIds;
+        const job = await createFirmwareUpdateJob({
+          firmwareId: match.id,
+          branch,
+          trigger: "manual",
+          filter,
+        });
+        await reloadJobs({ soft: true });
+        await openJobDetails(job.id);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : PP_HELP.ota.deviceJobFailed);
+      } finally {
+        setBusy(false);
+      }
+    },
+    [branch, openJobDetails, publishedFirmwares, reloadJobs],
+  );
+
   const handleUpdateDevice = useCallback(
     async (deviceId: string) => {
       if (!canManage) return;
@@ -224,57 +357,17 @@ export function FirmwareLinksPage({
         setError(PP_HELP.ota.noPublishedFirmware);
         return;
       }
-      setBusy(true);
-      try {
-        const job = await createFirmwareUpdateJob({
-          firmwareId: match.id,
-          branch,
-          trigger: "manual",
-          filter: {
-            firmwareKey: match.firmwareKey,
-            onlyOutdated: true,
-            deviceIds: [deviceId],
-          },
-        });
-        await reloadJobs({ soft: true });
-        await openTargets(job.id);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : PP_HELP.ota.deviceJobFailed);
-      } finally {
-        setBusy(false);
-      }
+      await runFamilyJob(match.firmwareKey, [deviceId]);
     },
-    [branch, canManage, devices, openTargets, publishedFirmwares, reloadJobs],
+    [canManage, devices, publishedFirmwares, runFamilyJob],
   );
 
   const handleUpdateFamily = useCallback(
     async (firmwareKey: string) => {
       if (!canManage) return;
-      const match = publishedFirmwares.find((item) => item.firmwareKey === firmwareKey);
-      if (!match) {
-        setError(PP_HELP.ota.noPublishedFirmware);
-        return;
-      }
-      setBusy(true);
-      try {
-        const job = await createFirmwareUpdateJob({
-          firmwareId: match.id,
-          branch,
-          trigger: "manual",
-          filter: {
-            firmwareKey: match.firmwareKey,
-            onlyOutdated: true,
-          },
-        });
-        await reloadJobs({ soft: true });
-        await openTargets(job.id);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : PP_HELP.ota.deviceJobFailed);
-      } finally {
-        setBusy(false);
-      }
+      await runFamilyJob(firmwareKey);
     },
-    [branch, canManage, openTargets, publishedFirmwares, reloadJobs],
+    [canManage, runFamilyJob],
   );
 
   const confirmCancelJob = async () => {
@@ -287,45 +380,93 @@ export function FirmwareLinksPage({
       /* soft refresh anyway */
     }
     await reloadJobs({ soft: true });
-    if (selectedJobId === jobId) {
-      try {
-        setTargets(await fetchFirmwareUpdateTargets(jobId));
-      } catch {
-        setTargets([]);
-      }
-    }
+    if (detailJobId === jobId) await loadTargets(jobId);
   };
 
-  const jobColumns: DataTableColumn<FirmwareUpdateJob>[] = useMemo(
+  const firmwareColumns: DataTableColumn<FirmwareListItem>[] = useMemo(
     () => [
       {
-        key: "trigger",
-        header: "Disparo",
-        render: (row) => (row.trigger === "manual" ? "Agora" : "Agendado"),
+        key: "family",
+        header: "Família",
+        render: (row) => <code>{row.firmwareKey}</code>,
       },
+      { key: "version", header: "Versão", render: (row) => row.version },
+      { key: "displayName", header: "Nome", render: (row) => row.displayName || "—" },
+      { key: "lifecycle", header: "Estado", render: (row) => lifecycleLabel(row) },
+      { key: "source", header: "Sketch", render: (row) => (row.hasSource ? "Sim" : "—") },
       {
-        key: "status",
-        header: "Status",
-        render: (row) => otaStatusLabel(row.status),
-      },
-      {
-        key: "scheduled",
-        header: "Agenda",
+        key: "artifact",
+        header: "Bin",
         render: (row) =>
-          row.scheduledAt ? new Date(row.scheduledAt).toLocaleString() : "—",
+          row.hasArtifact && row.artifactSha256 ? (
+            <code>{row.artifactSha256.slice(0, 10)}…</code>
+          ) : (
+            "—"
+          ),
       },
       {
-        key: "created",
-        header: "Criado",
-        render: (row) => (row.createdAt ? new Date(row.createdAt).toLocaleString() : "—"),
+        key: "published",
+        header: "Publicado",
+        render: (row) => formatTimestamp(row.publishedAt),
       },
       {
         key: "actions",
         header: "",
         render: (row) => (
           <div className="pp-inline-actions">
-            <PpActionButton variant="ghost" onClick={() => void openTargets(row.id)}>
-              Targets
+            <PpActionButton
+              variant="ghost"
+              onClick={() =>
+                navigateProductionPulse(productionPulseFirmwareDetailPath(row.id))
+              }
+            >
+              Detalhe
+            </PpActionButton>
+            {canManage && isPublishedFirmware(row) ? (
+              <PpActionButton
+                variant="ghost"
+                disabled={busy}
+                onClick={() => void handleUpdateFamily(row.firmwareKey)}
+              >
+                Atualizar ligados
+              </PpActionButton>
+            ) : null}
+          </div>
+        ),
+      },
+    ],
+    [busy, canManage, handleUpdateFamily],
+  );
+
+  const jobColumns: DataTableColumn<FirmwareUpdateJob>[] = useMemo(
+    () => [
+      {
+        key: "firmware",
+        header: "Firmware",
+        render: (row) => {
+          const item = firmwareById.get(row.firmwareId);
+          return item ? `${item.firmwareKey} · ${item.version}` : "—";
+        },
+      },
+      {
+        key: "trigger",
+        header: "Disparo",
+        render: (row) => (row.trigger === "manual" ? "Agora" : "Agendado"),
+      },
+      { key: "status", header: "Status", render: (row) => otaStatusLabel(row.status) },
+      {
+        key: "scheduled",
+        header: "Agenda",
+        render: (row) => formatTimestamp(row.scheduledAt),
+      },
+      { key: "created", header: "Criado", render: (row) => formatTimestamp(row.createdAt) },
+      {
+        key: "actions",
+        header: "",
+        render: (row) => (
+          <div className="pp-inline-actions">
+            <PpActionButton variant="ghost" onClick={() => void openJobDetails(row.id)}>
+              {PP_HELP.hub.jobDetails}
             </PpActionButton>
             {canManage && ["draft", "scheduled", "running"].includes(row.status) ? (
               <PpActionButton variant="ghost" onClick={() => setCancelJobId(row.id)}>
@@ -336,31 +477,22 @@ export function FirmwareLinksPage({
         ),
       },
     ],
-    [canManage, openTargets],
+    [canManage, firmwareById, openJobDetails],
   );
 
   const targetColumns: DataTableColumn<FirmwareUpdateTarget>[] = useMemo(
     () => [
       {
         key: "device",
-        header: "Device",
-        render: (row) => <code>{row.deviceId.slice(0, 8)}</code>,
+        header: "Dispositivo",
+        render: (row) =>
+          devices.find((device) => device.id === row.deviceId)?.name ?? (
+            <code>{row.deviceId.slice(0, 8)}</code>
+          ),
       },
-      {
-        key: "from",
-        header: "De",
-        render: (row) => row.fromVersion ?? "—",
-      },
-      {
-        key: "to",
-        header: "Para",
-        render: (row) => row.toVersion ?? "—",
-      },
-      {
-        key: "status",
-        header: "Status",
-        render: (row) => otaStatusLabel(row.status),
-      },
+      { key: "from", header: "De", render: (row) => row.fromVersion ?? "—" },
+      { key: "to", header: "Para", render: (row) => row.toVersion ?? "—" },
+      { key: "status", header: "Status", render: (row) => otaStatusLabel(row.status) },
       {
         key: "progress",
         header: "Progresso",
@@ -370,22 +502,17 @@ export function FirmwareLinksPage({
             progressPercent: row.progressPercent,
           });
           const bytes = formatOtaBytes(row.bytesReceived, row.bytesTotal);
-          return (
-            <span>
-              {display}
-              {bytes ? ` · ${bytes}` : null}
-            </span>
-          );
+          return <span>{bytes ? `${display} · ${bytes}` : display}</span>;
         },
       },
     ],
-    [],
+    [devices],
   );
 
   if (!permissions.canViewDevices) {
     return (
       <div className="pp-page-stack">
-        <PpPageHero title="Hub OTA · Amarração" badge={ppShellIcon} />
+        <PpPageHero title="Hub OTA" badge={ppShellIcon} />
         <PpStateBox
           variant="error"
           title="Sem permissão"
@@ -396,16 +523,58 @@ export function FirmwareLinksPage({
   }
 
   return (
-    <div className="pp-page-stack">
+    <div className="pp-page-stack pp-hub-page">
       <PpPageHero
-        title="Hub OTA · Amarração"
+        title="Hub OTA"
         badge={ppShellIcon}
-        description={PP_HELP.otaLinks.hero}
+        description={PP_HELP.hub.hero}
         actions={
-          <>
-            <PpHintAction hint={PP_HELP.otaLinks.refresh} ariaLabel="Ajuda: Atualizar conexões">
+          <div className="pp-hub-hero-actions">
+            {branchOptions.length > 1 ? (
+              <PpHintAction hint={PP_HELP.hub.branch} ariaLabel="Ajuda: Filial">
+                <PpSegmentToggle
+                  ariaLabel="Filial"
+                  size="sm"
+                  widthMode="content"
+                  value={branch}
+                  onChange={changeBranch}
+                  options={branchOptions.map((item) => ({
+                    value: item.id,
+                    label: item.label,
+                  }))}
+                />
+              </PpHintAction>
+            ) : null}
+            {canManage ? (
+              <PpHintAction hint={PP_HELP.hub.newDevice} ariaLabel="Ajuda: Novo dispositivo">
+                <PpActionButton
+                  variant="ghost"
+                  className="pp-hero-brand-btn"
+                  onClick={() =>
+                    navigateProductionPulse(productionPulseDeviceNewPath(branch))
+                  }
+                >
+                  + Novo dispositivo
+                </PpActionButton>
+              </PpHintAction>
+            ) : null}
+            {canManage ? (
+              <PpHintAction hint={PP_HELP.hub.newFirmware} ariaLabel="Ajuda: Novo firmware">
+                <PpActionButton
+                  variant="ghost"
+                  className="pp-hero-brand-btn"
+                  onClick={() =>
+                    navigateProductionPulse(productionPulseFirmwareNewPath())
+                  }
+                >
+                  + Novo firmware
+                </PpActionButton>
+              </PpHintAction>
+            ) : null}
+            <PpHintAction hint={PP_HELP.hub.refresh} ariaLabel="Ajuda: Atualizar hub">
               <PpActionButton
                 variant="primary"
+                className="pp-hero-brand-btn"
                 onClick={() => {
                   void reloadGraph();
                   void reloadJobs({ soft: true });
@@ -415,30 +584,17 @@ export function FirmwareLinksPage({
                 Atualizar
               </PpActionButton>
             </PpHintAction>
-          </>
+          </div>
         }
       />
 
-      <PpSectionCard title="Filial" hint={PP_HELP.otaLinks.branch}>
-        <PpNativeSelectField
-          id="ota-links-branch"
-          label="Filial"
-          hint={PP_HELP.otaLinks.branch}
-          value={branch}
-          onChange={setBranch}
-          options={[
-            { value: "01", label: "Filial 01" },
-            { value: "02", label: "Filial 02" },
-          ]}
-          searchable={false}
-        />
-      </PpSectionCard>
+      <HubOtaKpiStrip kpis={kpis} loading={loading} />
 
       {notice ? (
         <PpStateBox
           variant="empty"
           title="Publicação"
-          message={notice || PP_HELP.otaLinks.afterPublish}
+          message={notice}
           action={
             <PpActionButton variant="ghost" onClick={() => setNotice(null)}>
               Fechar
@@ -447,9 +603,84 @@ export function FirmwareLinksPage({
         />
       ) : null}
 
+      {error ? <PpStateBox variant="error" title="Erro" message={error} /> : null}
+
+      <div id={HUB_SECTION_ID.canvas}>
+        {loading ? (
+          <PpStateBox variant="loading" title="Carregando firmwares e IoTs" />
+        ) : (
+          <PpSectionCard
+            title={`Canvas · ${families.length} firmwares · ${devices.length} IoTs`}
+            hint={PP_HELP.otaLinks.canvas}
+          >
+            <p className="pp-hub-legend">
+              <span className="pp-hub-legend__item pp-hub-legend__item--solid">
+                sólida = vínculo direto
+              </span>
+              <span className="pp-hub-legend__item pp-hub-legend__item--dashed">
+                tracejada = via driver
+              </span>
+            </p>
+            <FirmwareDeviceLinkCanvas
+              families={families}
+              devices={devices}
+              canManage={canManage}
+              onLinked={() => void reloadGraph()}
+              onUnlink={handleUnlink}
+              onUpdateDevice={handleUpdateDevice}
+              onUpdateFamily={handleUpdateFamily}
+              onSelectDevice={(deviceId) =>
+                navigateProductionPulse(
+                  productionPulseDeviceDetailPath(deviceId, "firmware"),
+                )
+              }
+            />
+          </PpSectionCard>
+        )}
+      </div>
+
+      <div id={HUB_SECTION_ID.catalog}>
+        <PpSectionCard
+          title="Firmwares"
+          hint={PP_HELP.hub.catalog}
+          actions={
+            canManage ? (
+              <PpActionButton
+                variant="ghost"
+                onClick={() => navigateProductionPulse(productionPulseFirmwareNewPath())}
+              >
+                Novo firmware
+              </PpActionButton>
+            ) : undefined
+          }
+        >
+          <PpCatalogSearchBar
+            value={catalogSearch}
+            onChange={setCatalogSearch}
+            placeholder="Buscar família, versão, driver…"
+          />
+          {loading ? (
+            <PpStateBox variant="loading" title="Carregando firmwares" />
+          ) : filteredFirmwares.length === 0 ? (
+            <PpStateBox
+              variant="empty"
+              title="Nenhum firmware"
+              message={PP_HELP.ota.catalogEmpty}
+            />
+          ) : (
+            <PpDataTable
+              columns={firmwareColumns}
+              rows={filteredFirmwares}
+              rowKey={(row) => row.id}
+              emptyMessage={PP_HELP.ota.catalogEmpty}
+            />
+          )}
+        </PpSectionCard>
+      </div>
+
       {canManage ? (
-        <PpSectionCard title="Atualização OTA" hint={PP_HELP.ota.jobCreate}>
-          <form className="pp-form-grid" onSubmit={(e) => void onCreateJob(e)}>
+        <PpSectionCard title="Disparar atualização" hint={PP_HELP.ota.jobCreate}>
+          <form className="pp-form-grid pp-hub-ota-form" onSubmit={(e) => void onCreateJob(e)}>
             <PpNativeSelectField
               id="ota-hub-firmware"
               label="Firmware"
@@ -458,11 +689,33 @@ export function FirmwareLinksPage({
               onChange={setFirmwareId}
               options={firmwareOptions}
               placeholderOption="Selecione…"
-              span
             />
-            <div className="pp-form-field-span">
+            <PpNativeSelectField
+              id="ota-hub-scope"
+              label="Escopo"
+              hint={PP_HELP.ota.jobScope}
+              value={scope}
+              onChange={(value) => setScope(value as "branch" | "device")}
+              options={[
+                { value: "branch", label: "Filial inteira" },
+                { value: "device", label: "Dispositivo" },
+              ]}
+              searchable={false}
+            />
+            {scope === "device" ? (
+              <PpNativeSelectField
+                id="ota-hub-device"
+                label="Dispositivo"
+                hint={PP_HELP.ota.jobScopeDevice}
+                value={scopeDeviceId}
+                onChange={setScopeDeviceId}
+                options={deviceOptions}
+                placeholderOption="Selecione…"
+              />
+            ) : null}
+            <div className="pp-hub-ota-form__trigger">
               <PpSegmentToggle
-                ariaLabel="Disparo"
+                ariaLabel={PP_HELP.ota.jobTrigger}
                 size="sm"
                 widthMode="content"
                 value={trigger}
@@ -483,101 +736,65 @@ export function FirmwareLinksPage({
                 onChange={setScheduledAt}
               />
             ) : null}
-            <PpSegmentToggle
-              ariaLabel="Escopo"
-              size="sm"
-              widthMode="content"
-              value={scope}
-              onChange={(value) => setScope(value as "branch" | "device")}
-              options={[
-                { value: "branch", label: "Filial" },
-                { value: "device", label: "Device selecionado" },
-              ]}
-            />
-            {scope === "device" ? (
-              <PpNativeSelectField
-                id="ota-hub-device"
-                label="Device"
-                hint={PP_HELP.ota.jobScopeDevice}
-                value={scopeDeviceId}
-                onChange={setScopeDeviceId}
-                options={deviceOptions}
-                placeholderOption="Selecione…"
-                span
-              />
-            ) : null}
-            <PpActionButton
-              type="submit"
-              disabled={
-                busy ||
-                publishedFirmwares.length === 0 ||
-                !firmwareId ||
-                (scope === "device" && !scopeDeviceId)
-              }
-            >
-              {busy ? "Disparando…" : "Disparar"}
-            </PpActionButton>
+            <div className="pp-hub-ota-form__submit">
+              <PpActionButton
+                type="submit"
+                disabled={
+                  busy ||
+                  publishedFirmwares.length === 0 ||
+                  !firmwareId ||
+                  (scope === "device" && !scopeDeviceId) ||
+                  (trigger === "scheduled" && !scheduledAt)
+                }
+              >
+                {busy ? "Disparando…" : "Disparar"}
+              </PpActionButton>
+            </div>
           </form>
         </PpSectionCard>
       ) : null}
 
-      <PpSectionCard title={`Atualizações · filial ${branch}`} hint={PP_HELP.ota.jobsList}>
-        {jobsLoading && jobs.length === 0 ? (
-          <PpStateBox variant="loading" title="Carregando atualizações" />
-        ) : error && jobs.length === 0 ? (
-          <PpStateBox variant="error" title="Erro" message={error} />
-        ) : jobs.length === 0 ? (
-          <PpStateBox variant="empty" title="Sem atualizações" message={PP_HELP.ota.jobsEmpty} />
-        ) : (
-          <PpDataTable
-            columns={jobColumns}
-            rows={jobs}
-            rowKey={(row) => row.id}
-            emptyMessage={PP_HELP.ota.jobsEmpty}
-          />
-        )}
-      </PpSectionCard>
-
-      {selectedJobId ? (
-        <PpSectionCard title="Targets da atualização" hint={PP_HELP.ota.targetsList}>
-          {targets.length === 0 ? (
-            <PpStateBox variant="empty" title="Sem targets" />
+      <div id={HUB_SECTION_ID.jobs}>
+        <PpSectionCard title="Atualizações OTA" hint={PP_HELP.hub.jobs}>
+          {jobsLoading && jobs.length === 0 ? (
+            <PpStateBox variant="loading" title="Carregando atualizações" />
+          ) : jobs.length === 0 ? (
+            <PpStateBox
+              variant="empty"
+              title="Sem atualizações"
+              message={PP_HELP.ota.jobsEmpty}
+            />
           ) : (
             <PpDataTable
-              columns={targetColumns}
-              rows={targets}
+              columns={jobColumns}
+              rows={jobs}
               rowKey={(row) => row.id}
-              emptyMessage="Sem targets"
+              emptyMessage={PP_HELP.ota.jobsEmpty}
             />
           )}
         </PpSectionCard>
-      ) : null}
+      </div>
 
-      {loading ? (
-        <PpStateBox variant="loading" title="Carregando firmwares e IoTs" />
-      ) : error && families.length === 0 ? (
-        <PpStateBox variant="error" title="Erro" message={error} />
-      ) : (
-        <PpSectionCard
-          title={`Canvas · ${families.length} firmwares · ${devices.length} IoTs`}
-          hint={PP_HELP.otaLinks.canvas}
-        >
-          <p className="pp-muted">{PP_HELP.otaLinks.oneFirmwarePerDevice}</p>
-          <p className="pp-muted">{PP_HELP.otaLinks.legend}</p>
-          <FirmwareDeviceLinkCanvas
-            families={families}
-            devices={devices}
-            canManage={canManage}
-            onLinked={() => void reloadGraph()}
-            onUnlink={handleUnlink}
-            onUpdateDevice={handleUpdateDevice}
-            onUpdateFamily={handleUpdateFamily}
-            onSelectDevice={(deviceId) =>
-              navigateProductionPulse(productionPulseDeviceDetailPath(deviceId, "firmware"))
-            }
+      <PpHostContainedDialog
+        open={Boolean(detailJobId)}
+        title={PP_HELP.hub.targetsDialogTitle}
+        onClose={() => {
+          setDetailJobId(null);
+          setTargets([]);
+        }}
+      >
+        <p className="pp-muted">{PP_HELP.ota.targetsList}</p>
+        {targets.length === 0 ? (
+          <PpStateBox variant="empty" title="Sem targets" />
+        ) : (
+          <PpDataTable
+            columns={targetColumns}
+            rows={targets}
+            rowKey={(row) => row.id}
+            emptyMessage="Sem targets"
           />
-        </PpSectionCard>
-      )}
+        )}
+      </PpHostContainedDialog>
 
       <PpHostContainedDialog
         open={Boolean(cancelJobId)}
@@ -589,7 +806,9 @@ export function FirmwareLinksPage({
           <PpActionButton variant="ghost" onClick={() => setCancelJobId(null)}>
             Voltar
           </PpActionButton>
-          <PpActionButton onClick={() => void confirmCancelJob()}>Cancelar atualização</PpActionButton>
+          <PpActionButton onClick={() => void confirmCancelJob()}>
+            Cancelar atualização
+          </PpActionButton>
         </div>
       </PpHostContainedDialog>
     </div>

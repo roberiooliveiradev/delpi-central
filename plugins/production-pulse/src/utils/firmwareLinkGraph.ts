@@ -1,4 +1,4 @@
-import type { FirmwareCatalogItem } from "../api/productionPulseApi";
+import type { FirmwareListItem } from "../api/productionPulseApi";
 import type { DeviceListItem } from "../types/device";
 
 export type FirmwareLinkEdgeKind = "explicit" | "inherited";
@@ -32,7 +32,13 @@ export type FirmwareFamilyNode = {
   linkedCount: number;
 };
 
-function isNewerCatalogItem(candidate: FirmwareCatalogItem, current: FirmwareCatalogItem): boolean {
+/** Ordem canônica de release: publishedAt vence; sem data, versão semântica. */
+export type FirmwareReleaseRef = Pick<FirmwareListItem, "version" | "publishedAt">;
+
+export function isNewerFirmwareRelease(
+  candidate: FirmwareReleaseRef,
+  current: FirmwareReleaseRef,
+): boolean {
   if (candidate.publishedAt && current.publishedAt) {
     return candidate.publishedAt > current.publishedAt;
   }
@@ -42,10 +48,10 @@ function isNewerCatalogItem(candidate: FirmwareCatalogItem, current: FirmwareCat
 }
 
 export function uniqueFirmwareFamilies(
-  items: FirmwareCatalogItem[],
+  items: FirmwareListItem[],
   devices: DeviceListItem[] = [],
 ): FirmwareFamilyNode[] {
-  const byKey = new Map<string, { family: FirmwareFamilyNode; source: FirmwareCatalogItem }>();
+  const byKey = new Map<string, { family: FirmwareFamilyNode; source: FirmwareListItem }>();
   for (const item of items) {
     if (item.archivedAt) continue;
     const prev = byKey.get(item.firmwareKey);
@@ -62,7 +68,7 @@ export function uniqueFirmwareFamilies(
       });
       continue;
     }
-    if (!isNewerCatalogItem(item, prev.source)) {
+    if (!isNewerFirmwareRelease(item, prev.source)) {
       continue;
     }
     byKey.set(item.firmwareKey, {

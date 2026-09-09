@@ -327,9 +327,16 @@ function FirmwareDeviceLinkCanvasInner({
           deleteKeyCode={["Backspace", "Delete"]}
           nodesDraggable
           nodesConnectable={canManage && !busy}
-          edgesUpdatable={false}
+          nodesFocusable
+          edgesFocusable
+          autoPanOnNodeFocus
+          edgesReconnectable={false}
           fitView
+          minZoom={0.35}
+          maxZoom={1.75}
+          panOnScroll
           proOptions={{ hideAttribution: true }}
+          aria-label="Canvas de vínculos entre firmwares e dispositivos IoT"
         >
           <Background
             variant={BackgroundVariant.Dots}

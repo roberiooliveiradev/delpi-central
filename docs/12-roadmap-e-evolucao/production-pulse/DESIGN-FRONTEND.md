@@ -134,10 +134,12 @@ Import: `from "@delpi/plugin-ui/index"`. Factory com prefixo `pp` onde existir h
 
 | Componente | Uso no Production Pulse |
 |------------|-------------------------|
-| `PageHero` | Cabeçalho de todas as páginas (`density="compact"`) |
-| `BackLink` | Voltar do formulário/detalhe → painel |
-| `UnderlineNav` | Abas no detalhe do device (Visão geral · Histórico · Comandos) |
-| `ScopeChipBar` | **Fora MVP** — usar `FilialSwitcher` (padrão maintenance) |
+| `TopBar` / `createDashboardTopBar` | Shell admin: **Painel · Hub OTA · Operador**; defaults kit hamburger + overflow (sem rail) |
+| `PageHero` | Cabeçalho de todas as páginas (`density="compact"`) — ações locais só |
+| `PagePath` | Breadcrumb em detalhe/create (`ProductionPulsePagePath`) |
+| `UnderlineNav` | Abas no detalhe do device (Visão geral · Histórico · Comandos · Firmware) |
+
+**IA:** Firmwares **não** é item da TopBar — vive no Hub OTA (`/firmware-links`) com create em `/firmwares/new`. Operador **não** usa TopBar admin.
 
 ### 3.2 Ações
 

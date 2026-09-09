@@ -69,9 +69,10 @@ Cada tela inclui subseções **`tablet (769–1100px)`** e **`mobile (≤768px)`
 | `/apps/production-pulse/devices/new` | WF-PP-02 | não | `devices.manage` |
 | `/apps/production-pulse/devices/:id` | WF-PP-03 | não | `devices.view` |
 | `/apps/production-pulse/devices/:id/edit` | WF-PP-02 | não | `devices.manage` |
-| `/apps/production-pulse/firmwares` | WF-PP-OTA-02 | TopBar | `devices.view` |
-| `/apps/production-pulse/firmwares/:id` | WF-PP-FW-DETAIL | TopBar | `devices.view` |
-| `/apps/production-pulse/firmware-links` | WF-PP-OTA-HUB | TopBar | `devices.view` |
+| `/apps/production-pulse/firmwares` | alias → Hub `?focus=catalog` | TopBar Hub | `devices.view` |
+| `/apps/production-pulse/firmwares/new` | WF-PP-FW-NEW | TopBar Hub | `devices.manage` |
+| `/apps/production-pulse/firmwares/:id` | WF-PP-FW-DETAIL | TopBar Hub | `devices.view` |
+| `/apps/production-pulse/firmware-links` | WF-PP-OTA-HUB | TopBar Hub | `devices.view` |
 | `/apps/production-pulse/operator` | **WF-PP-OP-HUB** | sim† «Operador · Pulso» | `operator` |
 | `/apps/production-pulse/operator/placements/:placementKey` | **WF-PP-OP-PICK** | não | picker devices |
 | `/apps/production-pulse/operator/devices/:deviceId` | **WF-PP-OP** / **GAUGE** / **TEMP** / **ROTATION** | não | superfície driver |
@@ -83,22 +84,22 @@ Rotas legado: redirect **308** — ver [ADR-004-routes-and-legacy-aliases.md](./
 
 ## WF-PP-00 — Shell admin (`ProductionPulseShell`)
 
-Rotas administrativas (painel, firmwares, hub OTA, cadastro/detalle IoT). **Operador** usa `OperatorBrandBar` — sem TopBar admin.
+Rotas administrativas (painel, hub OTA, cadastro/detalle IoT, drill-downs de firmware). **Operador** usa `OperatorBrandBar` — sem TopBar admin.
 
 ```text
 ┌─ Sidebar Portal ─┬─ Área MFE .dashboard-production-pulse ─────────────────────────────┐
-│ Minha DELPI      │ ┌─ PpTopBar: Painel | Firmwares | Hub OTA | Operador† ────────────┐ │
+│ Minha DELPI      │ ┌─ PpTopBar: Painel | Hub OTA | Operador† ────────────────────────┐ │
 │ ► Pulso Produção │ └─────────────────────────────────────────────────────────────────┘ │
 │                  │ ┌─ PageHero compact (ações locais da rota) ────────────────────────┐ │
-│                  │ │ título + descrição · sem CTAs Painel/Firmwares/Hub no hero       │ │
+│                  │ │ título + descrição · sem CTAs de área no hero                   │ │
 │                  │ └─────────────────────────────────────────────────────────────────┘ │
 │                  │ conteúdo da rota                                                  │
 └──────────────────┴─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Componentes:** `PpTopBar` (`createDashboardTopBar({ prefix: "pp" })`) + `PpPageHero` density=`compact`.  
-**Active item:** `resolvePulseNavId(route)` — `/firmwares/{id}` → Firmwares; `/devices/*` → Painel.  
-**Filial (painel):** `PpSegmentToggle` no hero — não duplicar no TopBar.
+**Componentes:** `PpTopBar` (`createDashboardTopBar({ prefix: "pp" })`) — defaults kit **hamburger + overflow** (sem rail/seta).  
+**Active item:** `resolvePulseNavId(route)` — `/firmwares/*` e `/firmware-links` → **Hub OTA**; `/devices/*` → Painel.  
+**Filial:** no hero da página (painel/hub) — não duplicar no TopBar.
 
 **Helps (`PP_HELP`):** `shell.topBar` · `shell.heroTitle` · ver [HELP-CONTENT § WF-PP-00](./HELP-CONTENT.md#wf-pp-00--shell-productionpulsepagehero).
 
@@ -106,6 +107,17 @@ Rotas administrativas (painel, firmwares, hub OTA, cadastro/detalle IoT). **Oper
 
 Hero: `{displayName}` + badge Draft/Published/Archived · família · versão.  
 Seções: metadados · sketch (edit draft / read-only published) · artefato SHA · ações Publicar/Arquivar.
+
+## WF-PP-FW-NEW — `/firmwares/new`
+
+```text
+Hub OTA / Novo firmware
+┌ Identificação ─ Família · Driver · Versão · Nome ──────────────┐
+┌ Código-fonte (.ino) — upload + editor (mesmo sourceText) ─────┐
+┌ Binário OTA (.bin) — dropzone artefato ───────────────────────┐
+┌ Notas ────────────────────────────────────────────────────────┐
+                         [Cancelar] [Salvar rascunho] [Publicar]
+```
 
 ### WF-PP-00 tablet (769–1100px)
 
@@ -1505,61 +1517,55 @@ Regra: **% sempre da API** (`progress.pct`) — MFE não calcula.
 
 ---
 
-## WF-PP-OTA-01 — Painel: KPI strip OTA
+## WF-PP-OTA-01 — Painel (somente frota IoT)
 
 ```text
 ┌─ Painel ─────────────────────────────────────────────────────────┐
-│ Hero …  [Firmwares ?]  [Hub OTA ?]                               │
-│                                                                  │
-│ ┌ KPI frota OTA ──────────────────────────────────────────────┐ │
-│ │ Devices │ Atualizados │ Em update │ Falhas  (? PP_HELP.ota) │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-│ … lista devices …                                                │
+│ Hero · Filial  (sem CTAs Firmwares/Hub — TopBar)                 │
+│ KPI frota: Total · Online · Offline · Sem amarração · Golpes…    │
+│ Filtros · Tabela/Cards/Agrupado · [+ Novo dispositivo]           │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-## WF-PP-OTA-02 — `/firmwares` catálogo
+KPIs OTA ficam no Hub — não no Painel.
 
-```text
-┌─ Firmwares OTA ──────────────────────────────────────────────────┐
-│ Publicar: firmwareKey · driver(select) · versão · [.bin] [Salvar]│
-│ Busca · PpDataTable · [Amarrar] [Editar] [Arquivar?]             │
-└──────────────────────────────────────────────────────────────────┘
-```
+## WF-PP-OTA-02 — `/firmwares` (alias)
+
+Redireciona para `/firmware-links?focus=catalog`. Create → `/firmwares/new`.
 
 ## WF-PP-OTA-03 — Hub OTA (`/firmware-links`; `/firmware-jobs` → redirect)
 
 ```text
-┌─ Hub OTA · Amarração ────────────────────────────────────────────┐
-│ Atualização OTA: firmware · Agora|Agendar · filial|device [Disp.]│
-│ Jobs PpDataTable (Progresso: Aguardando chip | N% | —) + Cancel  │
-│ Canvas: [FW v+ligados]──►[IoT IP+versão] · Desvincular / Update  │
+┌─ Hub OTA ────────────────────────────────────────────────────────┐
+│ Hero · Filial · [+ Novo IoT] [+ Novo firmware] [Atualizar]       │
+│ KPI: Publicados · Vinculados · Em atualização · Falhas           │
+│ MAPA canvas (React Flow) · legenda vínculo direto / via driver   │
+│ FIRMWARES — busca + tabela única · [Detalhe] [Amarrar]           │
+│ ATUALIZAÇÕES — form compacto · jobs · targets em dialog         │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-## WF-PP-OTA-04 — Detalhe · aba Firmware
+## WF-PP-OTA-04 — Detalhe · aba Firmware (IoT)
 
 ```text
 ┌─ Versão e atualização OTA ───────────────────────────────────────┐
-│ Em execução (live) · Instalada · Alvo · Família                  │
-│ Operação (PT) · ProgressTracker · «Aguardando chip» ou barra %   │
+│ Em execução · Instalada · Alvo · Última publicada · Família      │
+│ Sketch instalado / alvo / legado (exact-version)                 │
 │ [Atualizar este device] [Ver hub OTA]                            │
-│ ▼ Sketch de referência (firmware_source) — colapsável            │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-## WF-PP-OTA-05 — Canvas no hub (`/firmware-links`)
+## WF-PP-OTA-05 — Canvas no hub
 
 ```text
 ┌─ Canvas Firmware ↔ IoT ──────────────────────────────────────────┐
-│ Filial [01]  [Atualizar ?]  [Firmwares]                          │
-│ FW: key · latestVersion · linkedCount · [Atualizar ligados]      │
-│ IoT: IP · installedFirmwareVersion · Desvincular / Atualizar /…  │
-│ Delete/Backspace na seta sólida = unlink                         │
+│ FW: família · latest · linkedCount · [Atualizar ligados]         │
+│ IoT: nome · versão · Desvincular / Atualizar / Abrir             │
+│ Delete/Backspace na seta sólida = unlink · pan/zoom/touch        │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-Helps: `PP_HELP.otaLinks.*` + `PP_HELP.ota.awaitingChip` / archive.
+Helps: `PP_HELP.hub.*` · `PP_HELP.otaLinks.*` · `PP_HELP.firmwareCreate.*`.
 
 ---
 

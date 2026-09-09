@@ -271,21 +271,23 @@ Faixa sticky de navegação secundária do plugin (`createDashboardTopBar({ pref
 Compõe `UnderlineNav` + slots `secondary` / `actions`. CSS: `styles/top-bar.css`
 (`.delpi-ui-topbar*`). **Não** espelhar no MFE.
 
-### Collapse (dual mode)
+### Collapse (canônico: hamburger + overflow)
 
 | Prop | Valores | Efeito |
 |------|---------|--------|
-| `collapsible` | boolean | Liga chrome de recolher |
-| `collapseMode` | `rail` \| `hamburger` (default `rail`) | Visual quando colapsada |
-| `collapseTrigger` | `manual` \| `overflow` (default `manual`) | `overflow` = hamburger só quando nav+slots não cabem (ResizeObserver) |
-| `storageKey` | string | Persiste collapsed (`manual` only) |
-| `collapsed` / `onCollapsedChange` | controlado | Opcional (`manual` only) |
-| `collapseLabel` / `expandLabel` / `menuLabel` | string | aria-labels (MFE passa PT) |
+| `collapsible` | boolean | Liga chrome responsivo |
+| `collapseMode` | `hamburger` (default) \| `rail` (deprecated) | Visual quando colapsada |
+| `collapseTrigger` | `overflow` (default) \| `manual` (deprecated) | `overflow` = ☰ só quando nav+slots não cabem (ResizeObserver) |
+| `storageKey` | string | Persiste collapsed (`manual` only — legado) |
+| `collapsed` / `onCollapsedChange` | controlado | Opcional (`manual` only — legado) |
+| `menuLabel` | string | aria-label do ☰ + menu (MFE passa PT) |
+| `collapseLabel` / `expandLabel` | string | aria-labels do toggle chevron (`manual` / `rail` legado) |
 | `portalScopeClassName` | string | Escopo CSS do menu hamburger no `body` |
 
-- **`rail` + manual:** rótulo do item ativo + chevron; esconde nav, secondary e actions.
-- **`hamburger` + manual:** ☰ + rótulo; mantém secondary/actions; toggle chevron opcional.
-- **`hamburger` + overflow:** expande abas inline quando couber; ☰ automático quando não couber (sem localStorage).
+**Padrão canônico:** com `collapsible`, a TopBar mostra links inline quando couber e ☰ automático quando não couber (sem seta ▲/▼, sem rail, sem localStorage).
+
+- **`hamburger` + overflow (default):** abas inline ↔ ☰ + menu portal.
+- **`rail` / `manual`:** legado; sem consumidores de produção — não usar em MFE novo.
 
 ```tsx
 const CommercialTopBar = createDashboardTopBar({ prefix: "cm" });
@@ -294,8 +296,6 @@ const CommercialTopBar = createDashboardTopBar({ prefix: "cm" });
   activeId="home"
   items={items}
   collapsible
-  collapseMode="hamburger"
-  collapseTrigger="overflow"
   menuLabel="Menu de navegação"
   portalScopeClassName="dashboard-commercial"
   secondary={<Favorites />}

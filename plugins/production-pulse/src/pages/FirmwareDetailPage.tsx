@@ -11,7 +11,8 @@ import {
 } from "../api/productionPulseApi";
 import {
   PpActionButton,
-  PpFirmwareFileField,
+  PpFirmwareArtifactField,
+  PpFirmwareSourceField,
   PpHintAction,
   PpHostContainedDialog,
   PpNativeTextAreaField,
@@ -175,16 +176,6 @@ export function FirmwareDetailPage({ firmwareId, permissions }: FirmwareDetailPa
     }
   };
 
-  const loadInoFile = async (file: File | null) => {
-    if (!file) return;
-    try {
-      const text = await file.text();
-      setSourceDraft(text);
-    } catch {
-      setActionError(PP_HELP.ota.sourceFileReadFailed);
-    }
-  };
-
   if (!permissions.canViewDevices) {
     return (
       <div className="pp-page-stack">
@@ -208,7 +199,7 @@ export function FirmwareDetailPage({ firmwareId, permissions }: FirmwareDetailPa
       <div className="pp-page-stack">
         <ProductionPulsePagePath
           panelHref={PRODUCTION_PULSE_BASE_PATH}
-          items={[{ label: "Firmwares", href: productionPulseFirmwaresPath() }]}
+          items={[{ id: "hub", label: "Hub OTA", href: productionPulseFirmwaresPath() }]}
           current="Versão"
         />
         <PpPageHero title="Versão de firmware" badge={ppShellIcon} />
@@ -230,7 +221,7 @@ export function FirmwareDetailPage({ firmwareId, permissions }: FirmwareDetailPa
     <div className="pp-page-stack pp-firmware-detail">
       <ProductionPulsePagePath
         panelHref={PRODUCTION_PULSE_BASE_PATH}
-        items={[{ label: "Firmwares", href: productionPulseFirmwaresPath() }]}
+        items={[{ id: "hub", label: "Hub OTA", href: productionPulseFirmwaresPath() }]}
         current={item.displayName || `${item.firmwareKey} · ${item.version}`}
       />
 
@@ -326,22 +317,16 @@ export function FirmwareDetailPage({ firmwareId, permissions }: FirmwareDetailPa
       <PpSectionCard title="Sketch (.ino)" hint={PP_HELP.ota.detailSource}>
         {canEditSource ? (
           <div className="pp-form-grid">
-            <PpFirmwareFileField
-              id="fw-detail-ino"
+            <PpFirmwareSourceField
+              id="fw-detail-source"
               label="Importar .ino"
               hint={PP_HELP.ota.sourceFile}
-              accept=".ino,.txt,text/plain"
-              file={null}
-              onChange={(file) => void loadInoFile(file)}
-            />
-            <PpNativeTextAreaField
-              id="fw-detail-source"
-              label="Código-fonte"
-              hint={PP_HELP.ota.sourceTextarea}
+              editorLabel="Código-fonte"
+              editorHint={PP_HELP.ota.sourceTextarea}
               value={sourceDraft}
               onChange={setSourceDraft}
               rows={16}
-              span
+              onReadError={() => setActionError(PP_HELP.ota.sourceFileReadFailed)}
             />
             <PpActionButton onClick={() => void saveSource()} disabled={busy}>
               {busy ? "Salvando…" : "Salvar sketch"}
@@ -375,7 +360,7 @@ export function FirmwareDetailPage({ firmwareId, permissions }: FirmwareDetailPa
         )}
         {canAttachArtifact ? (
           <div className="pp-form-grid">
-            <PpFirmwareFileField
+            <PpFirmwareArtifactField
               id="fw-detail-bin"
               label="Anexar .bin"
               hint={PP_HELP.ota.file}

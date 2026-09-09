@@ -23,11 +23,29 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 
 | Elemento UI | Chave help | Texto |
 |-------------|------------|-------|
-| TopBar áreas | `shell.topBar` | Painel · Firmwares · Hub OTA · Operador |
+| TopBar áreas | `shell.topBar` | Painel · Hub OTA · Operador (☰ quando não couber) |
 | Título hero | `shell.heroTitle` | Monitoramento IoT na filial… |
-| FilialSwitcher | `shell.heroFilial` | Filial operacional… |
+| Filial | `shell.heroFilial` | Filial operacional… |
 | [Atualizar tudo] | `shell.pollAll` | Poll imediato em todos ativos… |
-| Link modo operador | `shell.modeOperator` | Visão tablet (TopBar quando permitido) |
+
+## WF-PP-OTA-HUB — Hub OTA
+
+| Elemento UI | Chave help |
+|-------------|------------|
+| Hero / CTAs | `hub.hero` · `hub.newDevice` · `hub.newFirmware` · `hub.refresh` |
+| KPIs | `hub.kpiPublished` · `hub.kpiLinked` · `hub.kpiUpdating` · `hub.kpiFailed` |
+| Canvas / legenda | `hub.hero` · `hub.canvasLegend` |
+| Catálogo | `hub.catalog` · `hub.catalogSearch` |
+| Form OTA / jobs | `hub.jobs` · `ota.jobCreate` · `ota.jobsList` |
+
+## WF-PP-FW-NEW — Novo firmware
+
+| Elemento UI | Chave help |
+|-------------|------------|
+| Identificação | `firmwareCreate.sectionIdentity` · `ota.firmwareKey` |
+| Sketch .ino | `firmwareCreate.sectionSource` · `firmwareCreate.sourceField` |
+| Binário .bin | `firmwareCreate.sectionArtifact` · `firmwareCreate.artifactField` |
+| Ações | `firmwareCreate.saveDraft` · `firmwareCreate.publish` |
 
 ## WF-PP-FW-DETAIL — Detalhe versão firmware
 

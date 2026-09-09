@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { useState, type ComponentProps } from "react";
 import {
   ActionButton,
   attachmentFileListBemClasses,
@@ -32,7 +32,7 @@ import {
 } from "@delpi/plugin-ui/index";
 import { Activity, AlertTriangle, FileQuestion, Loader2 } from "lucide-react";
 
-import { PpFormFieldShell } from "../components/data/ppFormFields";
+import { PpFormFieldShell, PpNativeTextAreaField } from "../components/data/ppFormFields";
 
 const PREFIX = "pp";
 const PP_PORTAL_SCOPE = "dashboard-production-pulse";
@@ -43,7 +43,12 @@ export const PpHostContainedDialog = createHostContainedModalShell({
   containedLayout: "dialog",
 });
 
-export function PpPageHero(props: ComponentProps<typeof PageHero>) {
+export type PpPageHeroProps = Omit<
+  ComponentProps<typeof PageHero>,
+  "classNames" | "density"
+>;
+
+export function PpPageHero(props: PpPageHeroProps) {
   return <PageHero {...props} classNames={pageHeroBemClasses(PREFIX)} density="compact" />;
 }
 
@@ -95,8 +100,8 @@ export const PpDataRecordCard = createDashboardDataRecordCard({ prefix: PREFIX }
 export const PpFileDropzone = createDashboardFileDropzone({
   classNames: fileDropzoneBemClasses(PREFIX, "file-dropzone"),
   labels: {
-    title: "Arraste o artefato aqui ou clique para anexar",
-    hint: "Use o .bin compilado no Arduino IDE / PlatformIO (não o fonte .ino).",
+    title: "Arraste o arquivo aqui ou clique para anexar",
+    hint: "Cada campo indica o formato aceito.",
   },
 });
 
@@ -110,41 +115,36 @@ export const PpAttachmentFileList = createDashboardAttachmentFileList({
   },
 });
 
-export type PpFirmwareFileFieldProps = {
+const FIRMWARE_ARTIFACT_ACCEPT = ".bin,application/octet-stream";
+const FIRMWARE_SOURCE_ACCEPT = ".ino,.txt,text/plain";
+
+function formatAttachmentSize(bytes: number): string {
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+export type PpFirmwareArtifactFieldProps = {
   id: string;
   label: string;
   hint?: string;
-  accept?: string;
   disabled?: boolean;
   file: File | null;
   onChange: (file: File | null) => void;
 };
 
-/** Upload OTA via FileDropzone do kit — artefato compilado (.bin), não o fonte .ino. */
-export function PpFirmwareFileField({
+/** Artefato OTA (.bin) via FileDropzone do kit — o fonte .ino nunca é flashável. */
+export function PpFirmwareArtifactField({
   id,
   label,
   hint,
-  accept = ".bin,application/octet-stream",
   disabled,
   file,
   onChange,
-}: PpFirmwareFileFieldProps) {
-  const items = file
-    ? [
-        {
-          id: "firmware-artifact",
-          fileName: file.name,
-          detail: `${Math.max(1, Math.round(file.size / 1024))} KB`,
-        },
-      ]
-    : [];
-
+}: PpFirmwareArtifactFieldProps) {
   return (
     <PpFormFieldShell id={id} label={label} hint={hint} span>
       <div className="pp-firmware-file-field">
         <PpFileDropzone
-          accept={accept}
+          accept={FIRMWARE_ARTIFACT_ACCEPT}
           multiple={false}
           disabled={disabled}
           hideInput
@@ -157,13 +157,111 @@ export function PpFirmwareFileField({
         />
         {file ? (
           <PpAttachmentFileList
-            items={items}
+            items={[
+              {
+                id: "firmware-artifact",
+                fileName: file.name,
+                detail: formatAttachmentSize(file.size),
+              },
+            ]}
             canRemove={!disabled}
             onRemove={() => onChange(null)}
           />
         ) : null}
       </div>
     </PpFormFieldShell>
+  );
+}
+
+export type PpFirmwareSourceFieldProps = {
+  id: string;
+  label: string;
+  hint?: string;
+  editorLabel: string;
+  editorHint?: string;
+  disabled?: boolean;
+  rows?: number;
+  /** Snapshot do sketch — dropzone e editor compartilham este estado. */
+  value: string;
+  onChange: (sourceText: string) => void;
+  onReadError?: () => void;
+};
+
+/** Sketch (.ino): importar arquivo e editar texto alimentam o mesmo snapshot. */
+export function PpFirmwareSourceField({
+  id,
+  label,
+  hint,
+  editorLabel,
+  editorHint,
+  disabled,
+  rows = 12,
+  value,
+  onChange,
+  onReadError,
+}: PpFirmwareSourceFieldProps) {
+  const [imported, setImported] = useState<{ name: string; size: number } | null>(null);
+
+  const importSource = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      setImported({ name: file.name, size: file.size });
+      onChange(text);
+    } catch {
+      setImported(null);
+      onReadError?.();
+    }
+  };
+
+  const clearSource = () => {
+    setImported(null);
+    onChange("");
+  };
+
+  return (
+    <>
+      <PpFormFieldShell id={id} label={label} hint={hint} span>
+        <div className="pp-firmware-file-field">
+          <PpFileDropzone
+            accept={FIRMWARE_SOURCE_ACCEPT}
+            multiple={false}
+            disabled={disabled}
+            hideInput
+            ariaLabel={label}
+            onFilesSelected={(files) => void importSource(files[0] ?? null)}
+            labels={{
+              title: imported
+                ? "Substituir sketch (.ino)"
+                : "Arraste o .ino ou clique para importar",
+              hint: "O texto importado entra no snapshot da versão e continua editável abaixo.",
+            }}
+          />
+          {imported ? (
+            <PpAttachmentFileList
+              items={[
+                {
+                  id: "firmware-source",
+                  fileName: imported.name,
+                  detail: formatAttachmentSize(imported.size),
+                },
+              ]}
+              canRemove={!disabled}
+              onRemove={clearSource}
+            />
+          ) : null}
+        </div>
+      </PpFormFieldShell>
+      <PpNativeTextAreaField
+        id={`${id}-editor`}
+        label={editorLabel}
+        hint={editorHint}
+        value={value}
+        onChange={onChange}
+        rows={rows}
+        span
+      />
+    </>
   );
 }
 

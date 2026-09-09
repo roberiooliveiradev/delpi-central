@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { FirmwareCatalogItem } from "../api/productionPulseApi";
+import type { FirmwareListItem } from "../api/productionPulseApi";
 import type { DeviceListItem } from "../types/device";
 import {
   buildFirmwareLinkGraph,
@@ -29,49 +29,41 @@ function device(partial: Partial<DeviceListItem> & Pick<DeviceListItem, "id" | "
   };
 }
 
-const familiesCatalog: FirmwareCatalogItem[] = [
-  {
-    id: "1",
-    firmwareKey: "esp8266_counter_v1",
-    driverKey: "esp8266_counter_v1",
-    version: "1.0.0",
+function firmware(
+  partial: Partial<FirmwareListItem> &
+    Pick<FirmwareListItem, "id" | "firmwareKey" | "version">,
+): FirmwareListItem {
+  return {
+    driverKey: partial.firmwareKey,
     displayName: "Counter",
+    lifecycle: "published",
+    hasSource: true,
+    hasArtifact: true,
     artifactSha256: "a".repeat(64),
     artifactSizeBytes: 10,
-    publishedAt: "2026-01-01T00:00:00Z",
     releaseNotes: null,
     minCompatibleVersion: null,
+    publishedAt: "2026-01-01T00:00:00Z",
     createdAt: "2026-01-01T00:00:00Z",
     archivedAt: null,
-  },
-  {
+    ...partial,
+  };
+}
+
+const familiesCatalog: FirmwareListItem[] = [
+  firmware({ id: "1", firmwareKey: "esp8266_counter_v1", version: "1.0.0" }),
+  firmware({
     id: "1b",
     firmwareKey: "esp8266_counter_v1",
-    driverKey: "esp8266_counter_v1",
     version: "1.3.0",
-    displayName: "Counter",
-    artifactSha256: "c".repeat(64),
-    artifactSizeBytes: 12,
     publishedAt: "2026-03-01T00:00:00Z",
-    releaseNotes: null,
-    minCompatibleVersion: null,
-    createdAt: "2026-03-01T00:00:00Z",
-    archivedAt: null,
-  },
-  {
+  }),
+  firmware({
     id: "2",
     firmwareKey: "esp8266_gauge_v1",
-    driverKey: "esp8266_gauge_v1",
     version: "1.0.0",
     displayName: "Gauge",
-    artifactSha256: "b".repeat(64),
-    artifactSizeBytes: 10,
-    publishedAt: "2026-01-01T00:00:00Z",
-    releaseNotes: null,
-    minCompatibleVersion: null,
-    createdAt: "2026-01-01T00:00:00Z",
-    archivedAt: null,
-  },
+  }),
 ];
 
 describe("firmwareLinkGraph", () => {

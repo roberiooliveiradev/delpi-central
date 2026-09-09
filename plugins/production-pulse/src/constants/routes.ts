@@ -13,6 +13,8 @@ const OPERATOR_ANCHOR_FILTERS: OperatorAnchorFilter[] = [
   "equipment",
 ];
 
+export type HubFocus = "canvas" | "catalog" | "jobs";
+
 export function parseDeviceDetailTab(value: string | null | undefined): DeviceDetailTab {
   if (value && DEVICE_DETAIL_TABS.includes(value as DeviceDetailTab)) {
     return value as DeviceDetailTab;
@@ -29,9 +31,15 @@ export function parseOperatorAnchorFilter(
   return "";
 }
 
+export function parseHubFocus(value: string | null | undefined): HubFocus | undefined {
+  if (value === "catalog" || value === "jobs" || value === "canvas") return value;
+  return undefined;
+}
+
 export type ProductionPulseRouteKind =
   | "panel"
   | "firmwares"
+  | "firmwareNew"
   | "firmwareDetail"
   | "firmwareJobs"
   | "firmwareLinks"
@@ -46,9 +54,15 @@ export type ProductionPulseRouteKind =
 export type ProductionPulseRoute =
   | { kind: "panel" }
   | { kind: "firmwares" }
+  | { kind: "firmwareNew" }
   | { kind: "firmwareDetail"; firmwareId: string }
   | { kind: "firmwareJobs"; branch: string }
-  | { kind: "firmwareLinks"; branch: string; firmwareKey?: string }
+  | {
+      kind: "firmwareLinks";
+      branch: string;
+      firmwareKey?: string;
+      focus?: HubFocus;
+    }
   | { kind: "operatorHub"; branch: string; anchorType: OperatorAnchorFilter; search: string }
   | { kind: "operatorPicker"; placementKey: string; branch: string }
   | { kind: "operatorDevice"; deviceId: string; branch: string; placementKey?: string }
@@ -73,6 +87,10 @@ export function parseProductionPulseRoute(pathname: string, search = ""): Produc
     return { kind: "panel" };
   }
 
+  if (normalized === `${PRODUCTION_PULSE_BASE_PATH}/firmwares/new`) {
+    return { kind: "firmwareNew" };
+  }
+
   if (normalized === `${PRODUCTION_PULSE_BASE_PATH}/firmwares`) {
     return { kind: "firmwares" };
   }
@@ -93,6 +111,7 @@ export function parseProductionPulseRoute(pathname: string, search = ""): Produc
       kind: "firmwareLinks",
       branch: query.get("branch") ?? "01",
       firmwareKey: query.get("firmwareKey") ?? undefined,
+      focus: parseHubFocus(query.get("focus")),
     };
   }
 
@@ -176,8 +195,13 @@ export function productionPulseDeviceDetailPath(
   return `${PRODUCTION_PULSE_BASE_PATH}/devices/${deviceId}${query}`;
 }
 
+/** @deprecated Prefer hub path — list redirect uses catalog focus. */
 export function productionPulseFirmwaresPath(): string {
-  return `${PRODUCTION_PULSE_BASE_PATH}/firmwares`;
+  return productionPulseFirmwareLinksPath({ focus: "catalog" });
+}
+
+export function productionPulseFirmwareNewPath(): string {
+  return `${PRODUCTION_PULSE_BASE_PATH}/firmwares/new`;
 }
 
 export function productionPulseFirmwareDetailPath(firmwareId: string): string {
@@ -191,11 +215,15 @@ export function productionPulseFirmwareJobsPath(branch = "01"): string {
 export function productionPulseFirmwareLinksPath(opts?: {
   branch?: string;
   firmwareKey?: string;
+  focus?: HubFocus;
 }): string {
   const params = new URLSearchParams();
   params.set("branch", opts?.branch ?? "01");
   if (opts?.firmwareKey?.trim()) {
     params.set("firmwareKey", opts.firmwareKey.trim());
+  }
+  if (opts?.focus && opts.focus !== "canvas") {
+    params.set("focus", opts.focus);
   }
   return `${PRODUCTION_PULSE_BASE_PATH}/firmware-links?${params}`;
 }

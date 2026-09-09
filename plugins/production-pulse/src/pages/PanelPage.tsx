@@ -27,7 +27,6 @@ import { DeviceCardList } from "../components/DeviceCard";
 import { DeviceFiltersBar } from "../components/DeviceFiltersBar";
 import { DeviceGroupedByWorkCenter } from "../components/DeviceGroupedByWorkCenter";
 import { DeviceKpiStrip } from "../components/DeviceKpiStrip";
-import { FirmwareOtaKpiStrip } from "../components/FirmwareOtaKpiStrip";
 import { DeviceTable } from "../components/DeviceTable";
 
 const PAGE_SIZE = 20;
@@ -138,7 +137,6 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
       />
 
       <DeviceKpiStrip summary={summary} loading={loading} />
-      <FirmwareOtaKpiStrip branch={filters.branch} enabled={permissions.canViewDevices} />
 
       <DeviceFiltersBar
         filters={filters}

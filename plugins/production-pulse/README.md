@@ -16,9 +16,11 @@ O MFE **não** chama a api-delpi diretamente.
 | Path | Descrição |
 |------|-----------|
 | `/apps/production-pulse` | Painel — KPI, filtros URL-sync, lista ou agrupado por posto/máquina/equipamento |
-| `/apps/production-pulse/firmwares` | Catálogo OTA — publicar / editar meta / arquivar versões |
+| `/apps/production-pulse/firmware-links` | Hub OTA — KPIs, canvas de amarração, catálogo de firmwares, disparo e acompanhamento |
+| `/apps/production-pulse/firmwares/new` | Nova versão de firmware — identificação, sketch (.ino), artefato (.bin), notas |
+| `/apps/production-pulse/firmwares/{id}` | Detalhe da versão — publicar / editar meta / arquivar |
+| `/apps/production-pulse/firmwares` | Legado — redireciona para o hub OTA (`focus=catalog`) |
 | `/apps/production-pulse/firmware-jobs` | Legado — redireciona para o hub OTA (`/firmware-links`) |
-| `/apps/production-pulse/firmware-links` | Hub OTA — amarração visual + disparo/acompanhamento de jobs |
 | `/apps/production-pulse/devices/new` | Cadastro de dispositivo + amarração |
 | `/apps/production-pulse/devices/{id}/edit` | Edição |
 | `/apps/production-pulse/devices/{id}` | Detalhe (overview, histórico, comandos, firmware/OTA) |
@@ -27,6 +29,8 @@ O MFE **não** chama a api-delpi diretamente.
 | `/apps/production-pulse/operator/devices/{id}` | Superfície operador (`counter_pad` ou `gauge_readout`) |
 
 Query params comuns: `branch`, `anchorType`, `status`, `role`, `search`, `view`, `groupBy`, `tab`.
+
+No hub OTA, `focus=catalog|jobs` rola a página até a seção correspondente e `firmwareKey` destaca a família recém-publicada.
 
 ## API
 

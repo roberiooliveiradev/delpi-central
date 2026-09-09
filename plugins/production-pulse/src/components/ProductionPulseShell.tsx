@@ -5,7 +5,6 @@ import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import type { ProductionPulseRoute } from "../constants/routes";
 import {
   productionPulseFirmwareLinksPath,
-  productionPulseFirmwaresPath,
   productionPulseOperatorPath,
   PRODUCTION_PULSE_BASE_PATH,
 } from "../constants/routes";
@@ -23,9 +22,7 @@ function navPath(id: ProductionPulseNavId, route: ProductionPulseRoute): string 
   switch (id) {
     case "panel":
       return PRODUCTION_PULSE_BASE_PATH;
-    case "firmwares":
-      return productionPulseFirmwaresPath();
-    case "firmwareLinks":
+    case "hub":
       return productionPulseFirmwareLinksPath({
         branch: route.kind === "firmwareLinks" ? route.branch : "01",
       });
@@ -46,9 +43,6 @@ export function ProductionPulseShell({ route, permissions, children }: Productio
         aria-label={SHELL_NAV_CONTENT.ariaLabel}
         activeId={activeId ?? ""}
         collapsible
-        collapseTrigger="overflow"
-        collapseLabel={SHELL_NAV_CONTENT.collapseLabel}
-        expandLabel={SHELL_NAV_CONTENT.expandLabel}
         menuLabel={SHELL_NAV_CONTENT.menuLabel}
         portalScopeClassName="dashboard-production-pulse"
         items={items.map((item) => ({

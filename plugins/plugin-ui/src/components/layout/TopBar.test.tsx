@@ -147,6 +147,51 @@ describe("TopBar", () => {
     expect(onRooms).toHaveBeenCalled();
   });
 
+  it("collapsible sem props explícitas usa hamburger + overflow (defaults canônicos)", async () => {
+    let callback: ResizeObserverCallback | null = null;
+    vi.stubGlobal(
+      "ResizeObserver",
+      vi.fn(function ResizeObserverStub(this: ResizeObserver, cb: ResizeObserverCallback) {
+        callback = cb;
+        this.observe = vi.fn();
+        this.disconnect = vi.fn();
+        this.unobserve = vi.fn();
+      }),
+    );
+
+    const { container } = render(
+      <TopBar
+        classNames={topBarBemClasses("cm")}
+        navClassNames={underlineNavBemClasses("cm")}
+        activeId="home"
+        collapsible
+        menuLabel="Menu de navegação"
+        items={[
+          { id: "home", label: "Início", onSelect: vi.fn() },
+          { id: "rooms", label: "Sala", onSelect: vi.fn() },
+        ]}
+      />,
+    );
+
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).toContain("delpi-ui-topbar--mode-hamburger");
+    expect(root.className).toContain("delpi-ui-topbar--responsive");
+    expect(container.querySelector(".delpi-ui-topbar__measure")).toBeTruthy();
+
+    const measureRow = container.querySelector(
+      ".delpi-ui-topbar__row--measure",
+    ) as HTMLElement;
+    Object.defineProperty(root, "clientWidth", { value: 320, configurable: true });
+    Object.defineProperty(measureRow, "scrollWidth", { value: 600, configurable: true });
+    Object.defineProperty(measureRow, "offsetWidth", { value: 600, configurable: true });
+    await act(async () => {
+      callback?.([], {} as ResizeObserver);
+    });
+
+    expect(screen.getByRole("button", { name: "Menu de navegação" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Recolher navegação" })).toBeNull();
+  });
+
   it("hamburger overflow: colapsa quando measure excede host", async () => {
     let callback: ResizeObserverCallback | null = null;
     vi.stubGlobal(

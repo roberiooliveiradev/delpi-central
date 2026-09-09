@@ -1,17 +1,17 @@
 /**
- * Escolha do modo visual da TopBar colapsável — mesmo contrato do Portal Comercial.
- * Altere as constantes abaixo e faça rebuild do MFE.
+ * TopBar collapse — canônico: hamburger + overflow (defaults do kit).
+ * `rail` / `manual` estão deprecated e sem consumidores de produção.
  */
 export type TopBarCollapseMode = "rail" | "hamburger";
 
-/** `manual` = botão + localStorage; `overflow` = hamburger quando não couber na largura. */
+/** `overflow` (canônico) = hamburger quando não couber; `manual` = legado. */
 export type TopBarCollapseTrigger = "manual" | "overflow";
 
-/** Troque para `"rail"` se quiser faixa compacta manual em vez de hamburger. */
+/** Preferir omitir — default do kit já é hamburger. Mantido para wiring explícito. */
 export const TOP_BAR_COLLAPSE_MODE: TopBarCollapseMode = "hamburger";
 
-/** Hamburger responsivo: colapsa só quando nav + slots não cabem na linha. */
+/** Preferir omitir — default do kit já é overflow. Mantido para wiring explícito. */
 export const TOP_BAR_COLLAPSE_TRIGGER: TopBarCollapseTrigger = "overflow";
 
-/** Usado apenas quando `TOP_BAR_COLLAPSE_TRIGGER === "manual"`. */
+/** Só usado se `TOP_BAR_COLLAPSE_TRIGGER === "manual"` (legado — não ativo). */
 export const TOP_BAR_COLLAPSE_STORAGE_KEY = "delpi.supplies.topbar.collapsed";

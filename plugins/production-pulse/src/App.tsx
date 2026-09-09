@@ -12,6 +12,7 @@ import { useViewportBucket } from "./hooks/useViewportBucket";
 import { ProductionPulseShell } from "./components/ProductionPulseShell";
 import { PanelPage } from "./pages/PanelPage";
 import { FirmwaresPage } from "./pages/FirmwaresPage";
+import { FirmwareCreatePage } from "./pages/FirmwareCreatePage";
 import { FirmwareDetailPage } from "./pages/FirmwareDetailPage";
 import { FirmwareLinksPage } from "./pages/FirmwareLinksPage";
 import { DeviceFormPage } from "./pages/DeviceFormPage";
@@ -84,13 +85,16 @@ export default function App({
     route.kind === "panel" ? (
       <PanelPage search={search} permissions={permissionFlags} />
     ) : route.kind === "firmwares" ? (
-      <FirmwaresPage permissions={permissionFlags} />
+      <FirmwaresPage />
+    ) : route.kind === "firmwareNew" ? (
+      <FirmwareCreatePage permissions={permissionFlags} />
     ) : route.kind === "firmwareDetail" ? (
       <FirmwareDetailPage firmwareId={route.firmwareId} permissions={permissionFlags} />
     ) : route.kind === "firmwareLinks" ? (
       <FirmwareLinksPage
         branch={route.branch}
         highlightFirmwareKey={route.firmwareKey}
+        focus={route.focus}
         permissions={permissionFlags}
       />
     ) : route.kind === "deviceNew" ? (
