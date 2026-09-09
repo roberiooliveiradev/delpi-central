@@ -6,6 +6,9 @@ from typing import Any
 
 from app.domain.entities.presentation_data_profile import PresentationDataProfile
 from app.domain.entities.presentation_spec import PresentationSpec
+from app.domain.services.presentation_compilers.presentation_table_compiler_service import (
+    PresentationTableCompilerService,
+)
 from app.domain.services.presentation_format_mapping_service import (
     PresentationFormatMappingService,
 )
@@ -224,43 +227,12 @@ class PresentationSpecCompilerService:
         labels: dict[str, str],
         formats: dict[str, str],
     ) -> None:
-        tables: list[dict[str, Any]] = []
-        for key in ("tablePresentation", "presentation"):
-            value = metadata.get(key)
-            if isinstance(value, dict) and value.get("type") == "table":
-                tables.append(value)
-        multi = metadata.get("tablePresentations")
-        if isinstance(multi, list):
-            tables.extend(item for item in multi if isinstance(item, dict))
-
-        preferred = list(spec.fields) if spec.fields else None
-        for table in tables:
-            columns = table.get("columns")
-            if not isinstance(columns, list):
-                continue
-            normalized: list[dict[str, Any]] = []
-            for column in columns:
-                if not isinstance(column, dict):
-                    continue
-                key = str(column.get("key") or "").strip()
-                if not key:
-                    continue
-                if preferred and key not in preferred:
-                    continue
-                label = labels.get(key) or str(column.get("label") or key)
-                entry = dict(column)
-                entry["key"] = key
-                entry["label"] = label
-                if formats.get(key) and not entry.get("dataType"):
-                    mapped = PresentationFormatMappingService.to_mfe_data_type(formats[key])
-                    if mapped:
-                        entry["dataType"] = mapped
-                normalized.append(entry)
-            if preferred:
-                order = {key: index for index, key in enumerate(preferred)}
-                normalized.sort(key=lambda item: order.get(str(item.get("key")), 10_000))
-            if normalized:
-                table["columns"] = normalized
+        PresentationTableCompilerService.apply(
+            metadata,
+            spec=spec,
+            labels=labels,
+            formats=formats,
+        )
 
     @classmethod
     def _apply_kpi(cls, metadata: dict[str, Any], *, labels: dict[str, str]) -> None:
