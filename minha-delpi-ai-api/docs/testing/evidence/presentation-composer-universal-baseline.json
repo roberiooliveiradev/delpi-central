@@ -237,8 +237,25 @@
     }
   ],
   "hypothesesOpen": [
-    "composer_invocation_rate_ideal",
-    "tv_copilot_palette_family_p0_or_fora"
+    "composer_invocation_rate_ideal"
   ],
-  "notes": "Baseline imutável pré-candidate. Não alterar este arquivo após candidate; criar evidence candidate separada."
+  "tvCopilotColorFamilyScope": {
+    "decision": "FORA",
+    "wave": "presentation-composer-universal",
+    "rationale": [
+      "TV usa CHART_COLOR_PALETTES (hex seriesColor, ids próprios) em plugins/tv-dashboard/src/content/chartStyleRecipes.ts — não consome paletteFamily do chat/PI",
+      "plugin-ui deckColorCatalog também não conhece paletteFamily",
+      "Copiloto TV (tv_copilot_patch_service / suggest_ops) tem colorVocabulary para background; sem contrato paletteFamily em patch de série",
+      "Color Family Catalog canônico ainda não existe (E6); adaptar TV antes do catalog criaria terceira ponte"
+    ],
+    "followUp": "Após E6.S1 catalog em plugin-ui, onda TV: adapter CHART_COLOR_PALETTES → ColorFamilyId + copiloto ops semânticas (sem hex no LLM)",
+    "evidencePaths": [
+      "plugins/tv-dashboard/src/content/chartStyleRecipes.ts",
+      "plugins/plugin-ui/src/theme/deckColorCatalog.ts",
+      "tv-dashboard-api/tv_app/application/services/data/tv_copilot_content_service.py",
+      "tv-dashboard-api/tv_app/application/services/data/tv_copilot_suggest_ops_service.py"
+    ],
+    "decidedAt": "2026-09-09T18:10:00Z"
+  },
+  "notes": "Baseline imutável pré-candidate após E0.S3. Não alterar após início de candidate; criar evidence candidate separada."
 }
