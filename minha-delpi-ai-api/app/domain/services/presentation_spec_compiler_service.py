@@ -18,6 +18,9 @@ from app.domain.services.presentation_compilers.presentation_kpi_compiler_servic
 from app.domain.services.presentation_compilers.presentation_table_compiler_service import (
     PresentationTableCompilerService,
 )
+from app.domain.services.presentation_compilers.presentation_text_compiler_service import (
+    PresentationTextCompilerService,
+)
 from app.domain.services.presentation_compilers.presentation_tree_compiler_service import (
     PresentationTreeCompilerService,
 )
@@ -81,6 +84,7 @@ class PresentationSpecCompilerService:
             labels=labels,
         )
         cls._apply_dashboard(metadata, spec=spec)
+        cls._apply_text(metadata, spec=spec)
 
         metadata["presentationDataProfile"] = profile.as_dict()
 
@@ -158,3 +162,12 @@ class PresentationSpecCompilerService:
         spec: PresentationSpec,
     ) -> None:
         PresentationDashboardCompilerService.apply(metadata, spec=spec)
+
+    @classmethod
+    def _apply_text(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        spec: PresentationSpec,
+    ) -> None:
+        PresentationTextCompilerService.apply(metadata, spec=spec)
