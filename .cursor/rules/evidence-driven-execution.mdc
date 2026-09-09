@@ -1,5 +1,5 @@
 ---
-description: Protocolo cognitivo obrigatório — decompor pedido, obter evidência, decidir com confiança e validar o objetivo antes de concluir
+description: Protocolo cognitivo obrigatório — decompor pedidos complexos, obter evidência, comparar hipóteses, decidir com confiança e validar o objetivo antes de concluir
 alwaysApply: true
 ---
 
@@ -9,17 +9,21 @@ alwaysApply: true
 
 **Entender antes de decidir. Provar antes de alterar. Validar o objetivo antes de concluir.**
 
-Não iniciar implementação a partir da primeira interpretação plausível do pedido. Toda tarefa deve percorrer o fluxo:
+Não iniciar análise, plano ou implementação a partir da primeira interpretação plausível do pedido.
+
+Toda tarefa deve percorrer:
 
 ```text
 Pedido completo
-→ decomposição
+→ decomposição atômica
+→ ledger de requisitos
 → inventário
 → evidências
-→ hipótese/causa ou objetivo técnico
+→ hipóteses concorrentes / objetivo técnico
+→ cadeia causal ou arquitetura-alvo
 → impacto transversal
-→ decisão
-→ implementação
+→ decisão com confiança
+→ implementação (quando solicitada)
 → validação técnica
 → validação contra o objetivo original
 ```
@@ -28,7 +32,7 @@ Esta regra é transversal e complementa `development-standards-index.mdc`, `cent
 
 ## 1. Decompor o pedido integralmente
 
-Antes de agir, identificar explicitamente, ainda que de forma compacta:
+Antes de agir, identificar:
 
 - objetivo principal;
 - subobjetivos;
@@ -36,11 +40,13 @@ Antes de agir, identificar explicitamente, ainda que de forma compacta:
 - dependências;
 - entregáveis;
 - critérios de aceite explícitos;
-- critérios de aceite implícitos indispensáveis ao objetivo.
+- critérios de aceite implícitos indispensáveis ao objetivo;
+- superfícies/fluxos citados ou afetados;
+- decisões que o usuário já travou.
 
-Pedidos longos ou com múltiplas solicitações **não podem ser reduzidos a uma única intenção**.
+Pedidos longos, compostos ou com múltiplas ações **não podem ser reduzidos a uma única intenção**.
 
-Nenhum requisito material pode desaparecer silenciosamente durante análise, planejamento ou implementação. Para cada requisito relevante deve ocorrer exatamente um dos estados:
+Criar mentalmente ou explicitamente um ledger `RQ-*` quando a tarefa for complexa. Para cada requisito material deve existir exatamente um estado:
 
 ```text
 ATENDIDO
@@ -49,9 +55,21 @@ FORA_DO_ESCOPO_COM_JUSTIFICATIVA
 BLOQUEADO_COM_EVIDENCIA
 ```
 
+Nenhum requisito pode desaparecer silenciosamente durante análise, planejamento ou implementação.
+
+### Check de cobertura semântica
+
+Antes de seguir, perguntar:
+
+```text
+Se eu remover qualquer frase material do pedido original, meu plano/resposta mudaria?
+```
+
+Se a resposta for “não” para uma frase que contém requisito, restrição ou aceite, provavelmente houve compressão indevida.
+
 ## 2. Evidência antes de hipótese
 
-Classificar descobertas relevantes com um dos estados abaixo quando houver risco de confusão entre fato e inferência:
+Classificar descobertas relevantes:
 
 ```text
 CONFIRMADO_NO_CODIGO
@@ -68,11 +86,12 @@ Regras:
 - não apresentar inferência como fato;
 - não transformar hipótese em causa raiz sem seguir o pipeline real;
 - não assumir que nome de arquivo, classe ou método prova responsabilidade arquitetural;
-- documentação antiga não prevalece automaticamente sobre contrato e implementação vigente.
+- documentação antiga não prevalece automaticamente sobre contrato e implementação vigente;
+- evidência de existência não prova evidência de uso no pipeline.
 
 ## 3. Hierarquia de fontes de verdade
 
-Quando houver divergência, usar esta precedência como padrão:
+Quando houver divergência, usar esta precedência:
 
 1. `docs/11-padroes-de-desenvolvimento/instrucoes-oficiais-gpt-arquiteto-delpi-central.md`;
 2. regras `.cursor` aplicáveis;
@@ -86,41 +105,88 @@ Quando houver divergência, usar esta precedência como padrão:
 
 Se duas fontes relevantes divergirem, registrar explicitamente como **drift**. Não reconciliar contradições silenciosamente.
 
-## 4. Investigar antes de editar
+## 4. Investigar antes de editar ou planejar solução
 
-Antes de alterar comportamento existente:
+Antes de propor mudança de comportamento existente:
 
 1. localizar o ponto de entrada;
 2. seguir o fluxo até a decisão relevante;
 3. identificar o módulo canônico;
 4. identificar produtores do contrato;
 5. identificar consumidores e transformadores;
-6. identificar fluxos irmãos;
-7. identificar testes existentes;
-8. identificar documentação e Ajuda afetadas.
+6. identificar persistência/reload/fallbacks quando existirem;
+7. identificar fluxos irmãos;
+8. identificar testes existentes;
+9. identificar documentação e Ajuda afetadas.
 
 **Ler consumidores antes de alterar o produtor** quando contrato, metadata, DTO, evento, payload ou comportamento compartilhado estiver em jogo.
 
-## 5. Causa raiz exige cadeia de evidência
+Não planejar baseado apenas em busca textual. Busca localiza candidatos; fluxo prova ownership.
+
+## 5. Comparar hipóteses concorrentes
+
+Em bug, regressão, IA, routing, parsing, apresentação, contexto ou comportamento ambíguo, não se casar com a primeira causa plausível.
+
+Levantar alternativas relevantes, por exemplo:
+
+```text
+H1 entrada interpretada incorretamente
+H2 binding/normalização incorreto
+H3 contrato produzido incorretamente
+H4 consumidor reinterpreta contrato correto
+H5 persistência/reload perde informação
+H6 teste/smoke observa sinal errado
+```
+
+Uma hipótese pode ser descartada por evidência. A solução só deve ser travada quando as hipóteses concorrentes materiais tiverem sido eliminadas ou isoladas.
+
+Se faltar dado, manter `HIPOTESE_A_VALIDAR`; não mascarar incerteza como receita.
+
+## 6. Causa raiz exige cadeia de evidência
 
 Uma causa raiz só pode ser considerada confirmada quando houver evidência da cadeia:
 
 ```text
 entrada
+→ transformações relevantes
 → decisão/comportamento incorreto
 → módulo responsável
+→ contrato/estado produzido
+→ consumidor
 → consequência observada
 ```
 
-Correlação não é causa. Sintoma não é causa. O primeiro `if` encontrado não é necessariamente a causa.
+Correlação não é causa. Sintoma não é causa. O primeiro `if`, regex ou mapper encontrado não é necessariamente a causa.
 
-Se a causa ainda não estiver comprovada, marcar como `HIPOTESE_A_VALIDAR` e continuar a investigação.
+Quando houver mais de uma causa independente, separar. Quando uma “segunda correção” for apenas consequência natural da primeira, removê-la em vez de criar patch redundante.
 
-## 6. Não perguntar o que o repositório pode responder
+## 7. Grau de confiança e prontidão
+
+Para decisões materiais, usar o raciocínio:
+
+```text
+ALTA_CONFIANCA    → evidência direta suficiente; decidir
+MEDIA_CONFIANCA   → inferência limitada + validação explícita prevista
+BAIXA_CONFIANCA   → investigar antes de prescrever solução
+```
+
+Não transformar decisão de baixa confiança em etapa executável.
+
+Sinais de baixa confiança escondida:
+
+```text
+"se necessário"
+"talvez"
+"pode precisar"
+"ver depois"
+"ajustar se continuar falhando"
+```
+
+## 8. Não perguntar o que o repositório pode responder
 
 Antes de solicitar esclarecimento ao usuário:
 
-1. revisar o pedido já fornecido e o contexto da conversa;
+1. revisar pedido e contexto;
 2. consultar regras aplicáveis;
 3. consultar documentação canônica;
 4. consultar código, contratos e testes;
@@ -141,17 +207,28 @@ incerteza real → declarar
 
 Evitar tanto perguntar tudo quanto inventar tudo.
 
-## 7. Menor mudança correta
+## 9. Ownership antes da conveniência
 
-Preferir a **menor mudança arquiteturalmente correta**, não a menor quantidade de linhas alteradas.
+A menor mudança correta é a menor mudança **no ownership correto**, não a menor quantidade de linhas.
 
-Uma alteração curta no local errado é pior que uma extensão corretamente ligada ao módulo canônico.
+Antes de decidir onde alterar, distinguir:
 
-## 8. Prova de integração
+```text
+regra de negócio/inteligência
+contrato/schema/evento
+orquestração
+persistência
+renderização/UI
+fallback de compatibilidade
+```
+
+Não mover decisão para consumidor porque é mais simples localmente.
+
+## 10. Prova de integração
 
 Código criado não significa comportamento entregue.
 
-Toda nova regra ou serviço deve possuir evidência de integração no fluxo real:
+Toda nova regra ou serviço deve possuir evidência:
 
 ```text
 entrada real
@@ -160,38 +237,93 @@ entrada real
 → saída observável
 ```
 
-Teste unitário isolado de uma classe nova não comprova que a feature está ligada ao pipeline.
+Teste unitário isolado de classe nova não comprova integração.
 
-## 9. Generalização e contraexemplos
+Planos também devem provar que a etapa proposta está ligada ao pipeline real; arquivo existente não é evidência suficiente.
+
+## 11. Generalização e contraexemplos
 
 Toda correção ou regra nova relevante deve validar no mínimo:
 
-- o caso que motivou a mudança;
-- um caso irmão da mesma família;
-- um caso negativo que **não** deve ativar a regra.
+- caso que motivou a mudança;
+- caso irmão da mesma família;
+- caso negativo que **não** deve ativar a regra.
+
+Quando material, adicionar:
+
+- variação linguística;
+- reorder;
+- rename/metamórfico;
+- persistência/F5;
+- outra superfície que compartilha o contrato.
 
 Não transformar exemplos do usuário em exceções hardcoded.
 
-## 10. Revisão adversarial antes de concluir
+Antes de prescrever regra, responder:
 
-Antes de declarar conclusão, revisar:
+```text
+qual é a classe do problema?
+qual dado varia?
+qual propriedade permanece?
+qual contraexemplo não deve ativar?
+```
+
+## 12. Rastreabilidade em tarefas complexas
+
+Para planos e implementações multi-etapa, deve ser possível seguir:
+
+```text
+RQ requisito
+→ evidência
+→ decisão
+→ mudança
+→ teste
+→ aceite
+```
+
+Uma etapa sem requisito/risco que a justifique é suspeita de trabalho especulativo.
+Um requisito sem teste/aceite é suspeito de cobertura incompleta.
+
+## 13. Estado antes × depois
+
+Antes de considerar uma solução correta, explicitar mentalmente ou no plano:
+
+```text
+caso P0: antes → depois
+sibling: antes → depois
+negativo: antes → depois
+invariante: comportamento correto que não pode mudar
+```
+
+Correção que resolve P0 removendo guardrail legítimo não é correta.
+
+## 14. Revisão adversarial antes de concluir
+
+Antes de declarar conclusão ou plano pronto, revisar:
 
 ```text
 Como esta solução pode estar errada mesmo com os testes passando?
+Qual requisito do pedido ficou sem rastreabilidade?
+Que afirmação tratei como fato sem evidência?
+Qual hipótese concorrente ainda explica o problema?
 Que fluxo irmão posso ter esquecido?
 Que comportamento anterior pode ter regredido?
 Existe regra duplicada ou consumidor que bypassa o módulo canônico?
+Existe persistência/F5/superfície alternativa afetada?
 Existe fonte mais nova contradizendo minha interpretação?
+Estou hardcodando o exemplo em vez da classe do problema?
+Outro agente conseguiria executar sem redescobrir decisão material?
 ```
 
-Verificar as respostas quando tecnicamente possível.
+Verificar respostas quando tecnicamente possível. Corrigir o plano/implementação antes de finalizar.
 
-## 11. Validar contra o objetivo original
+## 15. Validar contra o objetivo original
 
 Antes da conclusão, retornar ao pedido inicial e conferir:
 
 ```text
 OBJETIVO_ORIGINAL
+REQUISITOS_RQ
 COMPORTAMENTO_ANTES
 COMPORTAMENTO_DEPOIS
 EVIDENCIA
@@ -202,7 +334,7 @@ REQUISITOS_NAO_ATENDIDOS
 
 Se o objetivo perceptível do usuário não estiver comprovadamente atendido, a tarefa ainda não está concluída.
 
-## 12. Plano não é implementação
+## 16. Plano não é implementação
 
 Quando o usuário solicitar diagnóstico, análise, arquitetura, review ou plano:
 
@@ -211,19 +343,22 @@ Quando o usuário solicitar diagnóstico, análise, arquitetura, review ou plano
 - produzir evidência, decisões e plano;
 - implementar somente quando o usuário solicitar execução.
 
+Quando o usuário pedir **melhoria de plano**, revalidar o plano contra código/regras atuais; não apenas reformatar ou aumentar texto.
+
 ## Checklist obrigatório
 
-### Antes de implementar
+### Antes de planejar/implementar
 
-- [ ] Decompus o pedido completo?
-- [ ] Nenhum requisito material foi omitido?
+- [ ] Decompus o pedido completo em requisitos materiais?
+- [ ] Nenhum requisito foi comprimido ou omitido?
 - [ ] Li as regras aplicáveis?
 - [ ] Separei fatos de inferências?
-- [ ] Inspecionei a implementação real?
-- [ ] Localizei o módulo canônico?
-- [ ] Mapeei produtores, consumidores e fluxos irmãos?
-- [ ] Confirmei causa raiz ou marquei hipótese como ainda não validada?
-- [ ] Identifiquei impacto transversal?
+- [ ] Inspecionei a implementação/contratos reais?
+- [ ] Localizei o módulo canônico e seus consumers?
+- [ ] Considerei hipóteses concorrentes relevantes?
+- [ ] Confirmei causa raiz ou marquei hipótese como não validada?
+- [ ] Identifiquei impacto transversal, persistência e superfícies?
+- [ ] Sei o estado antes/depois e as invariantes?
 
 ### Antes de concluir
 
@@ -231,6 +366,8 @@ Quando o usuário solicitar diagnóstico, análise, arquitetura, review ou plano
 - [ ] Caso positivo passa?
 - [ ] Caso negativo passa?
 - [ ] Caso irmão passa?
+- [ ] Persistência/F5/superfícies foram avaliadas quando materiais?
 - [ ] O objetivo original foi atingido e há evidência?
-- [ ] Algum requisito foi silenciosamente omitido?
+- [ ] Todo requisito material está rastreado?
+- [ ] Alguma decisão ainda contém incerteza escondida?
 - [ ] Documentação/Ajuda está coerente quando aplicável?
