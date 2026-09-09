@@ -1,5 +1,5 @@
 ---
-description: Índice das diretrizes do repositório — constituição mínima, responsabilidades transversais, prioridade e roteamento para regras especializadas
+description: Índice das diretrizes do repositório — constituição mínima, protocolo cognitivo, responsabilidades transversais, prioridade e roteamento para regras especializadas
 alwaysApply: true
 ---
 
@@ -23,10 +23,12 @@ Todo o restante é especializado e deve ser carregado por relevância (`descript
 
 ```text
 pedido
+→ decomposição/ledger de requisitos
 → evidência/objetivo
 → responsabilidade transversal aplicável
 → regra técnica filha necessária
-→ implementação
+→ decisão
+→ implementação/planejamento
 → validação
 ```
 
@@ -36,21 +38,46 @@ Mapa executável de ownership das regras especializadas: `.cursor/rules/responsi
 
 ## Protocolo cognitivo obrigatório
 
-`evidence-driven-execution.mdc` é a fonte canônica para decomposição, evidência, investigação, causa raiz e validação do objetivo original.
+`evidence-driven-execution.mdc` é a fonte canônica para decomposição, cobertura semântica, evidência, investigação, hipóteses concorrentes, causa raiz, ownership e validação do objetivo original.
 
 ```text
 pedido completo
-→ decomposição
+→ decomposição atômica
+→ ledger RQ-* quando complexo
 → evidências
 → arquitetura vigente
-→ causa/objetivo
-→ consumidores/impacto
+→ hipóteses concorrentes / causa / objetivo
+→ produtores + consumidores + contratos
+→ impacto transversal
 → responsabilidade transversal
 → regra especializada aplicável
-→ implementação canônica
+→ decisão com confiança
+→ implementação ou plano
 → casos irmãos/negativos
 → validação do objetivo original
 ```
+
+### Pedidos complexos e criação/revisão de planos
+
+Quando o pedido envolver `plano`, `CreatePlan`, `roadmap`, `playbook`, `etapas`, `arquitetura de implementação`, `melhorar plano` ou trabalho multi-etapa, **carregar obrigatoriamente** `plan-construction.mdc` antes de produzir a resposta final.
+
+O Cursor não deve tratar planejamento como formatação. Deve aplicar os gates de `plan-construction.mdc`:
+
+```text
+ledger de requisitos
+→ inventário real
+→ hipóteses concorrentes
+→ cadeia causal/arquitetura atual-alvo
+→ gate de prontidão das decisões
+→ delta antes/depois
+→ matriz transversal
+→ rastreabilidade requisito→etapa→teste→aceite
+→ revisão adversarial
+```
+
+Para **melhorar um plano existente**, não ampliar texto mecanicamente. Revalidar cada decisão do plano contra regras, contratos, código, testes e consumidores atuais; remover etapas especulativas ou superadas.
+
+Se o pedido for longo ou contiver múltiplas ações, nenhum requisito material pode desaparecer por compressão. Aplicar o check de cobertura semântica de `evidence-driven-execution.mdc`.
 
 # 8 responsabilidades transversais canônicas
 
@@ -103,7 +130,7 @@ O Cursor deve raciocinar por responsabilidades, mas **não precisa carregar todo
 | Sinal da tarefa | Regras especializadas adicionais |
 |---|---|
 | Bug/fix/regressão | `root-cause-generalized-fix.mdc` |
-| Plano/CreatePlan/multi-etapa | `plan-construction.mdc` |
+| Plano/CreatePlan/roadmap/playbook/multi-etapa/revisão de plano | `plan-construction.mdc` |
 | Alteração de código/testes/commit | `test-and-commit.mdc` |
 | Feature user-facing | `feature-help-sync.mdc` |
 | Chat/LLM/RAG/agents/tools | `chat-intelligence-base.mdc`, `llm-stack-centralized.mdc` + subdomínio |
@@ -128,6 +155,7 @@ Quando um plano contradizer regra, contrato, arquitetura ou implementação atua
 ```text
 fonte canônica atual vence
 → corrigir/remover a instrução superada do plano
+→ revalidar decisões e rastreabilidade
 → executar somente a versão revalidada
 ```
 
@@ -171,8 +199,10 @@ Nova API/operation não deve exigir `if path/provider/operationId`, selector esp
 ## Regra de ouro para mudanças de inteligência
 
 ```text
-dataset versionado
+pedido completo / dataset
+→ requisitos e comportamento esperado
 → BASELINE imutável
+→ hipóteses concorrentes
 → bug + sibling + negative
 → implementação no módulo canônico
 → CANDIDATE no mesmo corpus/config
@@ -192,6 +222,8 @@ A pressão arquitetural é monotônica: não introduzir nova dívida para preser
 
 - uma fonte de verdade por conceito: `centralized-rules-first.mdc`;
 - fatos medidos ≠ inferências: `evidence-driven-execution.mdc`;
+- planos devem ser rastreáveis e executáveis: `plan-construction.mdc`;
+- pedidos compostos não podem perder requisitos por compressão;
 - clean code/architecture: `clean-code-architecture-guardrails.mdc`;
 - identifiers técnicos em inglês: `english-code-identifiers.mdc`;
 - segurança nunca é relaxada para conveniência;
