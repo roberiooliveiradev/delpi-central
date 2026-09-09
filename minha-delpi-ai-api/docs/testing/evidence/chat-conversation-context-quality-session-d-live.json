@@ -1,5 +1,5 @@
 {
-  "sessionId": "2c8213bb-6dc8-468a-b1eb-4218b1f743d9",
+  "sessionId": "17207592-7fd5-4226-9230-e64f56d58298",
   "fixtureId": "e8-session-d-no-tool-rag",
   "fixturePath": "tests/fixtures/chat_conversation_context_quality_session_d.json",
   "requiredDimensions": [
@@ -11,7 +11,7 @@
   "turns": [
     {
       "id": "T1",
-      "wallMs": 12210,
+      "wallMs": 13945,
       "paths": [],
       "actionIds": [],
       "presentation": "",
@@ -20,7 +20,7 @@
     },
     {
       "id": "T2",
-      "wallMs": 7564,
+      "wallMs": 7995,
       "paths": [],
       "actionIds": [],
       "presentation": "",
@@ -29,16 +29,16 @@
     },
     {
       "id": "T3",
-      "wallMs": 25067,
+      "wallMs": 45169,
       "paths": [],
       "actionIds": [],
       "presentation": "",
-      "prosePreview": "A política de segurança das minhas ferramentas segue o princípio de **menor privilégio com confirmação para ações críticas**: só executo o que o backend autorizou para este agente e para o seu perfil, e nunca ajo por conta própria em operações de escrita. Os pilares são:\n\n## 1. A",
+      "prosePreview": "Não há um documento formal sobre isso na base de conhecimento autorizada, mas posso explicar as **regras de segurança que regem o uso de ferramentas (tools/actions)** neste assistente, conforme minha configuração operacional:\n\n## Princípios da política de segurança de tools\n\n- **",
       "plannerRoundCount": null
     },
     {
       "id": "T4",
-      "wallMs": 9765,
+      "wallMs": 14629,
       "paths": [
         "/products/10080055/stock"
       ],
@@ -46,7 +46,7 @@
         "api_delpi.products.get_product_stock"
       ],
       "presentation": "",
-      "prosePreview": "O produto **10080055**\n\nSaldo disponível total: **0** un. em **2** posição(ões). **2** posição(ões) com disponível zerado.",
+      "prosePreview": "O produto **10080055**\n\nSaldo disponível total: **26.711** un. em **5** posição(ões). Maior concentração na filial **02** (26.711 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado.\n\n- Empenho elevado",
       "plannerRoundCount": null
     }
   ],
@@ -56,6 +56,13 @@
     "R4": "INCONCLUSIVE",
     "R6": "INCONCLUSIVE"
   },
+  "dimensionEvidence": {
+    "R1": [],
+    "R2": [],
+    "R4": [],
+    "R6": []
+  },
   "caseStatus": "INCONCLUSIVE",
-  "failures": []
+  "failures": [],
+  "inconclusiveNotes": []
 }

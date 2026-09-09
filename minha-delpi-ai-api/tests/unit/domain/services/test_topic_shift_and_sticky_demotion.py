@@ -68,3 +68,58 @@ def test_planner_context_omits_last_action_parameters():
     assert "OLD" not in ctx or '"parameters"' not in ctx
     assert '"role": "evidence"' in ctx or '"role":"evidence"' in ctx
     assert "contextPrecedence" in ctx
+
+
+def test_planner_context_reads_chat_message_entities():
+    class _Msg:
+        def __init__(self, role, content=None, metadata=None):
+            self.role = role
+            self.content = content
+            self.metadata = metadata or {}
+
+    previous = [
+        _Msg("user", "estoque do 10080055"),
+        _Msg(
+            "assistant",
+            "ok",
+            {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {"actionId": "stock-action"},
+                        "metadata": {"ok": True, "path": "/products/10080055/stock"},
+                    }
+                ]
+            },
+        ),
+        _Msg("user", "e a programação de hoje"),
+    ]
+    ctx = ChatPlannerConversationContextService.build(
+        previous_messages=previous,
+        workspace_context={
+            "workingMemory": {
+                "operationalFocus": {"productCode": "10080055", "branch": "01"},
+                "conversationState": {
+                    "activeTopicId": "topic-1",
+                    "activeTopic": "estoque",
+                    "topics": [
+                        {
+                            "topicId": "topic-1",
+                            "label": "estoque",
+                            "entities": {},
+                            "resolvedArguments": {},
+                            "lastSuccessfulActionIds": [],
+                            "timeRange": {},
+                        }
+                    ],
+                    "stickyContextActive": True,
+                    "preferencesTopicChanged": False,
+                },
+            }
+        },
+        execution_context={"parameters": {"code": "10080055"}},
+    )
+    assert "10080055" in ctx
+    assert "stock-action" in ctx
+    assert "estoque do 10080055" in ctx
+    assert "productCode" in ctx

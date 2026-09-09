@@ -1,5 +1,5 @@
 {
-  "sessionId": "33b3bd47-8092-477a-87b2-aa3244504901",
+  "sessionId": "55984c76-d179-4915-bd6c-7760633255d4",
   "fixtureId": "e8-session-c-multi-provider",
   "fixturePath": "tests/fixtures/chat_conversation_context_quality_session_c.json",
   "requiredDimensions": [
@@ -10,7 +10,7 @@
   "turns": [
     {
       "id": "T1",
-      "wallMs": 23057,
+      "wallMs": 27134,
       "paths": [],
       "actionIds": [],
       "presentation": "",
@@ -19,11 +19,11 @@
     },
     {
       "id": "T2",
-      "wallMs": 32774,
+      "wallMs": 49140,
       "paths": [],
       "actionIds": [],
       "presentation": "",
-      "prosePreview": "Não há nenhuma estrutura de produto carregada nesta conversa — não localizei consultas anteriores nesta sessão para poder repetir ou exportar.\n\nAlém disso, um ponto importante: **não consigo gerar ou exportar arquivos Excel** diretamente por aqui. O que posso fazer é apresentar o",
+      "prosePreview": "Não há nenhuma estrutura de produto carregada nesta conversa — esta é a primeira consulta sobre o tema, então não tenho um resultado anterior para converter em planilha.\n\nPara eu ajudar, preciso de um esclarecimento:\n\n- **Qual produto** você quer consultar? Informe o código ou o ",
       "plannerRoundCount": null
     }
   ],
@@ -32,9 +32,17 @@
     "R2": "FAIL",
     "R10": "INCONCLUSIVE"
   },
+  "dimensionEvidence": {
+    "R1": [],
+    "R2": [],
+    "R10": []
+  },
   "caseStatus": "FAIL",
   "failures": [
     "T1: family nebula_export not evidenced",
-    "T2: family nebula_export not evidenced"
-  ]
+    "T1: provider nebula-factory not evidenced",
+    "T2: family nebula_export not evidenced",
+    "T2: provider nebula-factory not evidenced"
+  ],
+  "inconclusiveNotes": []
 }

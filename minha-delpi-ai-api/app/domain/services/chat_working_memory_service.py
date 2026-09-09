@@ -474,7 +474,11 @@ class ChatWorkingMemoryService:
             if cls._message_role(item) != "assistant":
                 continue
 
-            metadata = item.get("metadata") if isinstance(item, dict) else None
+            metadata = (
+                item.get("metadata")
+                if isinstance(item, dict)
+                else getattr(item, "metadata", None)
+            )
 
             if not isinstance(metadata, dict):
                 continue

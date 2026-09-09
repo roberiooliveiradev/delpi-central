@@ -235,6 +235,8 @@ def main() -> int:
     for spec in fixture.get("turns") or []:
         message = str(spec.get("message") or "").replace("{SMOKE_MP_CODE}", _MP)
         print(f"--- {spec.get('id')}: {message}", flush=True)
+        # Long multi-turn sessions can exceed access-token TTL — refresh each turn.
+        token = _token()
         t0 = time.time()
         try:
             payload = _http_json(
@@ -251,8 +253,28 @@ def main() -> int:
             )
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
-            print(f"FAIL HTTP {exc.code}: {body[:400]}", flush=True)
-            return 1
+            if exc.code == 401:
+                token = _token()
+                try:
+                    payload = _http_json(
+                        "POST",
+                        f"{_BASE}{_CHAT}/sessions/{session_id}/messages",
+                        token=token,
+                        body={
+                            "message": message,
+                            "agentId": _AGENT_ID,
+                            "responseMode": _MODE,
+                            "includeAdminDebug": True,
+                            "adminDebug": True,
+                        },
+                    )
+                except urllib.error.HTTPError as retry_exc:
+                    body = retry_exc.read().decode("utf-8", errors="replace")
+                    print(f"FAIL HTTP {retry_exc.code}: {body[:400]}", flush=True)
+                    return 1
+            else:
+                print(f"FAIL HTTP {exc.code}: {body[:400]}", flush=True)
+                return 1
         wall = int((time.time() - t0) * 1000)
         _msg, meta, content = _unwrap(payload)
         payload_dict = payload if isinstance(payload, dict) else {}
@@ -263,6 +285,33 @@ def main() -> int:
             or meta.get("requestedPresentation")
             or ""
         )
+        if not presentation:
+            for item in (payload_dict.get("toolCalls") or meta.get("toolCalls") or []):
+                if not isinstance(item, dict):
+                    continue
+                item_meta = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
+                presentation = str(
+                    (item_meta.get("presentationDecision") or {}).get("selected")
+                    or item_meta.get("requestedPresentation")
+                    or ""
+                )
+                if presentation:
+                    break
+        planner_round = meta.get("plannerRoundCount")
+        if planner_round is None:
+            planner_round = (meta.get("boundedPlanner") or {}).get("plannerRoundCount")
+        if planner_round is None:
+            for item in (payload_dict.get("toolCalls") or meta.get("toolCalls") or []):
+                if not isinstance(item, dict):
+                    continue
+                item_meta = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
+                if item_meta.get("plannerRoundCount") is not None:
+                    planner_round = item_meta.get("plannerRoundCount")
+                    break
+                bounded = item_meta.get("boundedPlanner")
+                if isinstance(bounded, dict) and bounded.get("plannerRoundCount") is not None:
+                    planner_round = bounded.get("plannerRoundCount")
+                    break
         turn = {
             "id": spec.get("id"),
             "wallMs": wall,
@@ -270,8 +319,7 @@ def main() -> int:
             "actionIds": action_ids,
             "presentation": presentation,
             "prosePreview": content.strip()[:280],
-            "plannerRoundCount": meta.get("plannerRoundCount")
-            or (meta.get("boundedPlanner") or {}).get("plannerRoundCount"),
+            "plannerRoundCount": planner_round,
         }
         evidence["turns"].append(turn)
         print(json.dumps(turn, ensure_ascii=False, indent=2), flush=True)

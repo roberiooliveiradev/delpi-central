@@ -198,11 +198,14 @@ class ChatConversationMemoryService:
             project_id=project_id,
         )
 
+        successful_action_ids = cls._successful_action_ids(tool_calls)
         snapshot = ChatConversationStateService.apply_post_turn(
             snapshot,
             message=message,
             answer=answer,
+            successful_action_ids=successful_action_ids,
         )
+        snapshot = cls._sync_topic_entities_from_focus(snapshot)
         snapshot = ChatUserPreferenceManagerService.apply_to_snapshot(
             snapshot,
             message=message,
@@ -454,6 +457,68 @@ class ChatConversationMemoryService:
         if current:
             result["activeAgentId"] = current
 
+        return result
+
+    @classmethod
+    def _successful_action_ids(cls, tool_calls: list | None) -> list[str]:
+        ids: list[str] = []
+        for call in tool_calls or []:
+            if not isinstance(call, dict):
+                continue
+            name = str(call.get("name") or "")
+            if name != "execute_external_action":
+                continue
+            meta = call.get("metadata") if isinstance(call.get("metadata"), dict) else {}
+            if meta.get("ok") is False:
+                continue
+            args = call.get("arguments") if isinstance(call.get("arguments"), dict) else {}
+            action_id = str(args.get("actionId") or meta.get("actionId") or "").strip()
+            if action_id and action_id not in ids:
+                ids.append(action_id)
+        return ids
+
+    @classmethod
+    def _sync_topic_entities_from_focus(cls, snapshot: dict) -> dict:
+        result = dict(snapshot)
+        focus = result.get("operationalFocus")
+        state = result.get("conversationState")
+        if not isinstance(focus, dict) or not isinstance(state, dict):
+            return result
+        entities = {
+            key: focus.get(key)
+            for key in (
+                "productCode",
+                "branch",
+                "warehouse",
+                "period",
+                "code",
+                "sku",
+            )
+            if focus.get(key) not in (None, "", {}, [])
+        }
+        nested = focus.get("entities")
+        if isinstance(nested, dict):
+            for key, value in nested.items():
+                if value not in (None, "", {}, []):
+                    entities[key] = value
+        if not entities:
+            return result
+        active_id = str(state.get("activeTopicId") or "").strip()
+        topics = []
+        for topic in state.get("topics") or []:
+            if not isinstance(topic, dict):
+                continue
+            row = dict(topic)
+            if not active_id or str(row.get("topicId") or "") == active_id:
+                merged = dict(row.get("entities") or {})
+                merged.update(entities)
+                row["entities"] = merged
+                if isinstance(focus.get("period"), dict) and not row.get("timeRange"):
+                    row["timeRange"] = dict(focus.get("period") or {})
+            topics.append(row)
+        state = dict(state)
+        state["topics"] = topics
+        result["conversationState"] = state
         return result
 
     @staticmethod

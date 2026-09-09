@@ -1,5 +1,5 @@
 {
-  "sessionId": "840095fd-f286-4909-973e-567210f9fe87",
+  "sessionId": "8a11c7ae-184b-4ce5-9207-6a9675895e05",
   "fixtureId": "e8-session-b-reformulation",
   "fixturePath": "tests/fixtures/chat_conversation_context_quality_session_b.json",
   "requiredDimensions": [
@@ -11,48 +11,42 @@
   "turns": [
     {
       "id": "T1",
-      "wallMs": 14063,
+      "wallMs": 29866,
       "paths": [],
       "actionIds": [],
       "presentation": "",
-      "prosePreview": "Não tenho essa informação disponível no momento — a consulta de saldo do material **10080055** não retornou dados nesta sessão.\n\nPosso tentar novamente. Se quiser refinar a consulta, informe:\n\n- **Filial**: 01 ou 02 (ou deixo em aberto para consultar todas)\n- **Armazém**: opciona",
+      "prosePreview": "Não tenho essa informação disponível no momento. A consulta de saldo de estoque não retornou dados para o material **10080055** nesta sessão — é possível que a ferramenta de consulta de estoque não esteja habilitada para este agente.\n\nPara ajudar melhor, você pode:\n\n- Confirmar s",
       "plannerRoundCount": null
     },
     {
       "id": "T2",
-      "wallMs": 60282,
+      "wallMs": 52875,
       "paths": [
-        "/production/pcp-orders/ranking",
-        "/production/schedule/today"
+        "/production/pcp-orders/items"
       ],
       "actionIds": [
-        "api_delpi.produ_o_ordens_de_produ_o.get_production_pcp_orders_ranking",
-        "api_delpi.produ_o_operacional.get_production_schedule_today"
+        "api_delpi.produ_o_ordens_de_produ_o.get_production_pcp_orders_items"
       ],
       "presentation": "",
-      "prosePreview": "Para o material **10080055**, o resultado é o seguinte:\n\n## Saldo\n\nA consulta de saldo não retornou registros para este código — não há informação de saldo disponível no momento para o **10080055**.\n\n## Programação de produção de hoje\n\nA programação de hoje está consolidada com *",
+      "prosePreview": "Total de **Qtd produzida**: **34.84**. **Pontos de atenção**\n\n- Resultado incompleto: exibindo 0 de 41614 registro(s). Para ver o restante, peça mais linhas, informe a filial ou aumente o limite.",
       "plannerRoundCount": null
     },
     {
       "id": "T3",
-      "wallMs": 60416,
+      "wallMs": 46551,
       "paths": [
-        "/products/10080055/stock",
-        "/products/10080055/production-status",
-        "/commercial/rol/by-product"
+        "/dashboard/indicators/production-costs/realized"
       ],
       "actionIds": [
-        "api_delpi.products.get_product_stock",
-        "api_delpi.products.get_product_production_status",
-        "api_delpi.comercial.get_commercial_rol_by_product"
+        "api_delpi.dashboard.get_si_indicator_production_costs_realized"
       ],
       "presentation": "",
-      "prosePreview": "O produto **10080055**\n\nNão tenho essa informação disponível no momento — a consulta do indicador **ROL comercial de agosto/2026** não retornou dados nesta sessão. Para localizar esse indicador, algumas opções:\n\n- **DELPI Indicadores**: você tem acesso ao app, onde o ROL comercia",
+      "prosePreview": "**Leitura do cenário**\n\n- **Status**: Sem registro de receita operacional líquida consolidada para o mês\n- **Interpretação**: O valor zero pode refletir período ainda não fechado, ausência de lançamentos no sistema ou efetiva inatividade comercial no mês\n- **Nível de alerta**: No",
       "plannerRoundCount": null
     },
     {
       "id": "T4",
-      "wallMs": 57922,
+      "wallMs": 96395,
       "paths": [
         "/commercial/closing-rate"
       ],
@@ -60,20 +54,20 @@
         "api_delpi.comercial.get_sales_conversion_rate"
       ],
       "presentation": "",
-      "prosePreview": "A **taxa de fechamento (closing rate)** da filial **01** em **agosto/2026** ficou em **22,58%**, calculada sobre **31 propostas** no período. \n\n## Leitura\n\n- **Taxa de fechamento:** **22,58%** — ou seja, cerca de **7 propostas convertidas** em vendas a partir das 31 registradas n",
+      "prosePreview": "A **taxa de conversão de vendas** da filial **01** em **agosto/2026** foi de **22,58%**, com **31 propostas** registradas no período — resultado **acima da meta**, que está cadastrada em 10%. \n\n**Leitura**\n\n- **Realizado: 22,58%** × **Meta: 10%** — superação de cerca de 12,58 pon",
       "plannerRoundCount": null
     },
     {
       "id": "T5",
-      "wallMs": 39669,
+      "wallMs": 68784,
       "paths": [
-        "/dashboard/indicators/commercial-closing-rate/realized"
+        "/dashboard/indicators/commercial-closing-rate/meta"
       ],
       "actionIds": [
-        "api_delpi.dashboard.get_si_indicator_commercial_closing_rate_realized"
+        "api_delpi.dashboard.get_si_indicator_commercial_closing_rate_meta"
       ],
       "presentation": "",
-      "prosePreview": "A programação de produção de hoje está consolidada com **22 itens** e **quantidade planejada total de 15.430 unidades** (média de ~701 unidades por item). **Próximo passo:** posso filtrar a programação de hoje pelo código **10080055** para confirmar se ele está programado e em qu",
+      "prosePreview": "Não tenho essa informação disponível no momento. A consulta da **programação de produção de hoje** não retornou dados válidos nesta sessão — não retornei nenhuma lista de ordens de produção programadas para a data atual, então não posso afirmar o que está previsto sem inventar da",
       "plannerRoundCount": null
     }
   ],
@@ -83,11 +77,19 @@
     "R6": "INCONCLUSIVE",
     "R9": "FAIL"
   },
+  "dimensionEvidence": {
+    "R2": [],
+    "R3": [],
+    "R6": [],
+    "R9": []
+  },
   "caseStatus": "FAIL",
   "failures": [
     "T1: family stock not evidenced",
     "T2: family ['stock', 'schedule'] not evidenced",
+    "T3: family commercial_rol not evidenced",
     "T3: presentation '' != 'kpi'",
     "T5: family schedule not evidenced"
-  ]
+  ],
+  "inconclusiveNotes": []
 }
