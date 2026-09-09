@@ -6,6 +6,9 @@ from typing import Any
 
 from app.domain.entities.presentation_data_profile import PresentationDataProfile
 from app.domain.entities.presentation_spec import PresentationSpec
+from app.domain.services.presentation_format_mapping_service import (
+    PresentationFormatMappingService,
+)
 
 _PALETTE_TO_SERIES: dict[str, list[str]] = {
     "brand": ["var(--mdc-chart-series-1)", "var(--mdc-chart-series-10)"],
@@ -128,7 +131,9 @@ class PresentationSpecCompilerService:
         config["fieldLabels"] = field_labels
 
         field_formats = dict(config.get("fieldFormats") or {})
-        field_formats.update(formats)
+        field_formats.update(
+            PresentationFormatMappingService.map_chart_field_formats(formats)
+        )
         config["fieldFormats"] = field_formats
 
         if spec.legend_visible is not None:
@@ -247,7 +252,9 @@ class PresentationSpecCompilerService:
                 entry["key"] = key
                 entry["label"] = label
                 if formats.get(key) and not entry.get("dataType"):
-                    entry["dataType"] = formats[key]
+                    mapped = PresentationFormatMappingService.to_mfe_data_type(formats[key])
+                    if mapped:
+                        entry["dataType"] = mapped
                 normalized.append(entry)
             if preferred:
                 order = {key: index for index, key in enumerate(preferred)}
