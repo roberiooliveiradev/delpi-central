@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatCellValue } from "./tableCellFormatting";
+import { formatCellValue, inferColumnType } from "./tableCellFormatting";
 
 describe("tableCellFormatting", () => {
   it("formats billing documents as count, not currency", () => {
@@ -35,6 +35,23 @@ describe("tableCellFormatting", () => {
         valorType: "quantity",
       }),
     ).toBe("15");
+  });
+
+  it("prefers API dataType percent over currency key heuristics", () => {
+    expect(inferColumnType("total_revenue", "percent")).toBe("percent");
+    expect(formatCellValue(42.5, "total_revenue", "percent")).toBe("42,5%");
+  });
+
+  it("prefers API dataType currency over quantity key heuristics", () => {
+    expect(inferColumnType("count", "currency")).toBe("currency");
+    expect(formatCellValue(1898, "count", "currency")).toBe("R$\u00a01.898,00");
+  });
+
+  it("prefers API dataType over percent key heuristics", () => {
+    expect(inferColumnType("margem_percentual", "currency")).toBe("currency");
+    expect(formatCellValue(12.3, "margem_percentual", "currency")).toBe(
+      "R$\u00a012,30",
+    );
   });
 
   it("formats nested parent objects without [object Object]", () => {
