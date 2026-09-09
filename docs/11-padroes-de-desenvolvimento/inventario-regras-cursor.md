@@ -174,11 +174,51 @@ Owner: `platform-quality-testing.mdc`
 - `architecture-ci-enforcement.mdc`
 - `cursor-rules-governance.mdc`
 - `plan-construction.mdc`
+- `plan-execution.mdc`
 - `plugins-documentation.mdc`
 - `root-cause-generalized-fix.mdc`
 - `test-and-commit.mdc`
 
-Racional: investigação, planejamento, evidência, regressão, CI, documentação e Definition of Done.
+Racional: investigação, planejamento, execução disciplinada de planos, evidência, regressão, CI, documentação e Definition of Done.
+
+### Planejamento × execução
+
+`plan-construction.mdc` governa a inteligência para construir/revisar o plano:
+
+```text
+pedido
+→ ledger RQ-*
+→ evidências/hipóteses
+→ decisões
+→ etapas E*.S*
+→ testes/aceite
+```
+
+`plan-execution.mdc` governa a execução do plano aprovado:
+
+```text
+E*.S*
+→ READY_TO_EXECUTE
+→ implementação controlada
+→ testes + wiring
+→ revisão adversarial do diff
+→ READY_TO_COMMIT quando autorizado
+→ pós-condições
+→ dependentes
+→ verify-final
+```
+
+Se a implementação descobrir que uma premissa do plano ficou inválida, a regra exige `EXECUTION_DRIFT` + STOP-THE-LINE no subgrafo afetado; o agente deve corrigir/revalidar o plano em vez de forçar o código a seguir a instrução obsoleta.
+
+Também são obrigatórios durante execução de plano:
+
+- preservação de alterações preexistentes;
+- proibição de scope creep oportunista;
+- proibição de empilhar patches sobre hipótese falha;
+- proibição de enfraquecer assertions, fixtures, mocks, evals, scanners ou CI para acomodar o diff;
+- revisão `planned scope × actual diff`;
+- prova de pós-condições antes de desbloquear etapa dependente;
+- verify-final do objetivo perceptível original.
 
 `Architecture Enforcement` executa:
 
@@ -218,6 +258,14 @@ O scanner Phase 3 bloqueia novas chamadas HTTP Python detectáveis sem timeout, 
 # Sobreposições revisadas
 
 ## Permanecem separadas
+
+### `plan-construction` × `plan-execution` × `test-and-commit`
+
+- `plan-construction` governa **qualidade e estrutura das decisões antes da implementação**;
+- `plan-execution` governa **revalidação, drift, escopo, diff e pós-condições durante execução de E*.S***;
+- `test-and-commit` governa **Definition of Done, gates e política de commit**.
+
+Não copiar o protocolo completo de uma para outra; referências cruzadas são intencionais.
 
 ### `plugins-reusable-components` × `plugins-visual-design-system` × `plugin-mfe-page-excellence`
 
@@ -259,7 +307,8 @@ Revisar após estabilização. Regra criada por incidente não deve permanecer i
 7. coerência de rotas públicas FastAPI;
 8. `operationId` explícito/único;
 9. breaking estrutural OpenAPI selecionado;
-10. HTTP timeout/retry/secrets.
+10. HTTP timeout/retry/secrets;
+11. protocolo semântico de execução de planos com gates `READY_TO_EXECUTE`, `EXECUTION_DRIFT` e `READY_TO_COMMIT`.
 
 ## Próximos, após modelagem segura
 
@@ -268,7 +317,8 @@ Revisar após estabilização. Regra criada por incidente não deve permanecer i
 3. boundaries backend entre contexts por imports/ports;
 4. compatibilidade profunda de schema OpenAPI;
 5. MFE federation/build usando helpers vigentes como contrato;
-6. delivery: health/readiness/rollback quando houver convenção comum verificável.
+6. delivery: health/readiness/rollback quando houver convenção comum verificável;
+7. avaliar enforcement automatizável de integridade entre `.cursor/plans` e execução sem criar parser frágil de markdown.
 
 Gates permanecem incrementais/diff-aware quando existe dívida histórica. Não tornar CI vermelho por todo o passado para depois criar exceções genéricas.
 
