@@ -46,6 +46,17 @@ class ChatPresentationRenderPipelineService:
             composer_spec=metadata.get("presentationComposerSpec"),
         )
 
+        # PI may change selected (ex.: table → heatmap) and materialize chart slots;
+        # refresh single-layout suppressions so the new primary is not toolbar-suppressed.
+        plan = metadata.get("stackPresentationPlan")
+        if not isinstance(plan, dict):
+            plan = {}
+            metadata["stackPresentationPlan"] = plan
+        ChatPresentationPayloadPruningService._suppress_sibling_kinds_for_single(
+            metadata,
+            plan,
+        )
+
         ChatPresentationRenderPlanService.build(metadata)
 
         from app.domain.services.chat_presentation_llm_composition_service import (

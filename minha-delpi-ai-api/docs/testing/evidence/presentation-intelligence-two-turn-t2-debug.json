@@ -1,0 +1,163 @@
+{
+  "path": "/production/schedule/today",
+  "presentationDecision": {
+    "allowedMarkerKinds": [],
+    "availableViews": [
+      "text",
+      "canvas",
+      "table",
+      "chart"
+    ],
+    "bindingProvenance": "DETERMINISTIC",
+    "chartExplanation": "Formato solicitado pelo usuário.\n\nEste gráfico de barras reúne 1 ponto(s) e foi escolhido porque formato solicitado pelo usuário.\n\nAs categorias em «Início operação» são comparadas pelo valor de «Qtd. planejada» — barras maiores indicam valores mais altos.\n\nO valor de «Qtd. planejada» em 20260909 é 7120.\n\nUse os seletores acima para trocar eixo, filtrar por qualquer coluna (lista ou texto «contém») ou alternar o tipo de gráfico — sem precisar enviar nova pergunta.",
+    "dataShape": {
+      "columns": 8,
+      "hasCategory": true,
+      "hasDate": true,
+      "hasHierarchy": false,
+      "hasNumeric": true,
+      "labelKey": "unit",
+      "numericKeys": [
+        "planned_qty"
+      ],
+      "rows": 15
+    },
+    "fallback": "table",
+    "insight": "Formato solicitado pelo usuário.",
+    "intent": null,
+    "layoutMode": "single",
+    "presentationProfileKey": "generic",
+    "presentationSpecApplied": true,
+    "proseCompositionAllowed": false,
+    "proseCompositionPolicy": "api_only",
+    "proseSource": "llm",
+    "purpose": "Agora coloque isso em um gráfico de mapa de calor.",
+    "readingLayers": {
+      "diagnostic": [
+        "highlights",
+        "attention",
+        "interpretation",
+        "analysis"
+      ],
+      "evidence": [
+        "tables",
+        "charts",
+        "tree",
+        "sourceMeta"
+      ],
+      "quick": [
+        "summary",
+        "alertLevel",
+        "nextAction"
+      ]
+    },
+    "reason": "formato solicitado pelo usuário",
+    "recommendations": [
+      {
+        "label": "Ver como tabela",
+        "query": "mostre o último resultado em tabela",
+        "reason": "alternativa em tabela para conferência detalhada",
+        "view": "table"
+      }
+    ],
+    "scores": {
+      "canvas": 5,
+      "chart": 95,
+      "table": 100,
+      "text": 25
+    },
+    "selected": "heatmap",
+    "visualOrder": [
+      "text",
+      "table",
+      "chart",
+      "canvas"
+    ]
+  },
+  "presentationIntent": {
+    "locale": "pt-BR",
+    "mark": "heatmap",
+    "view": "chart"
+  },
+  "presentationIntelligence": {
+    "bindConfidence": 0.7,
+    "composerInvoked": false,
+    "composerReason": null,
+    "dimensionCandidates": [
+      "product_code",
+      "product_description",
+      "branch",
+      "production_order"
+    ],
+    "measureCandidates": [
+      "planned_qty"
+    ],
+    "needsComposer": false,
+    "presentation_profile_build_ms": 0.96,
+    "profileHash": "sha256:89bdf66945e112313b41ae42",
+    "specApplied": true,
+    "unmetIntent": null
+  },
+  "renderPlan": {
+    "layoutMode": "single",
+    "segments": [
+      {
+        "kind": "markdown",
+        "slot": "lead",
+        "source": "assistantMessage"
+      },
+      {
+        "kind": "chart",
+        "slot": "primary",
+        "source": "chartPresentation"
+      }
+    ],
+    "version": 1
+  },
+  "chartPresentation": {
+    "chartType": "heatmap",
+    "config": {
+      "bindingProvenance": "COMPILED",
+      "categoryColumns": [
+        "branch",
+        "production_order",
+        "product_code",
+        "description",
+        "unit",
+        "priority",
+        "operation_start_date",
+        "product_description"
+      ],
+      "colors": [
+        "var(--mdc-heatmap-low)",
+        "var(--mdc-heatmap-high)"
+      ],
+      "fieldFormats": {
+        "operation_start_date": "date",
+        "planned_qty": "quantity"
+      },
+      "fieldLabels": {
+        "branch": "Filial",
+        "description": "Descrição",
+        "operation_start_date": "Início operação",
+        "planned_qty": "Qtd. planejada",
+        "priority": "Prioridade",
+        "product_code": "Produto",
+        "product_description": "Descrição produto",
+        "production_order": "OP",
+        "unit": "Unidade"
+      },
+      "legend": false,
+      "numericColumns": [
+        "planned_qty"
+      ],
+      "paletteFamily": "sequential-blue",
+      "recommendedChartType": "bar",
+      "valueKey": "planned_qty",
+      "xAxis": "product_code",
+      "yAxis": "branch"
+    },
+    "dataRows": 15
+  },
+  "hasTable": true
+}

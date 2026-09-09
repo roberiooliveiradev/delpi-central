@@ -20,7 +20,21 @@ _VIEW_SLOT_BY_TYPE = {
     "dashboard": "dashboardPresentation",
 }
 _CHART_SELECTED_TYPES = frozenset(
-    {"chart", "line_chart", "bar_chart", "horizontal_bar", "donut", "area_chart"}
+    {
+        "chart",
+        "line_chart",
+        "bar_chart",
+        "horizontal_bar",
+        "donut",
+        "area_chart",
+        "heatmap",
+        "grouped_bar",
+        "stacked_bar",
+        "scatter",
+        "gauge",
+        "histogram",
+        "combo_chart",
+    }
 )
 
 

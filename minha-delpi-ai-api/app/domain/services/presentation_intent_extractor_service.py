@@ -47,6 +47,7 @@ class PresentationIntentExtractorService:
         requested_presentation: str | None = None,
     ) -> PresentationIntent:
         text = re.sub(r"\s+", " ", str(message or "").strip().lower())
+        message_mark = cls._detect_mark(text, None)
         view = ChatPresentationPreferenceContractService.normalize(
             requested_presentation
         )
@@ -57,7 +58,7 @@ class PresentationIntentExtractorService:
                 )
             except Exception:
                 view = None
-        mark = cls._detect_mark(text, view)
+        mark = message_mark or cls._detect_mark(text, view)
         palette = cls._detect_palette(text)
         dimensions, measure = cls._detect_concepts(text)
 
@@ -70,7 +71,13 @@ class PresentationIntentExtractorService:
                 "donut": "donut",
             }.get(view)
             view = "chart"
-        if view in {"kpi", "table", "text", "tree", "canvas", "dashboard", "topics", "checklist"}:
+
+        # Explicit visual mark in THIS message outranks sticky session format
+        # (ex.: previous turn "lista" → table must not block "mapa de calor").
+        if message_mark:
+            mark = message_mark
+            view = "chart"
+        elif view in {"kpi", "table", "text", "tree", "canvas", "dashboard", "topics", "checklist"}:
             pass
         elif mark or view == "chart":
             view = "chart"

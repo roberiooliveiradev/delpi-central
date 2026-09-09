@@ -184,8 +184,21 @@ class ChatPresentationRenderPlanService:
         return ChatPresentationStructureDedupService._metadata_has_dashboard(metadata)
 
     @classmethod
-    def _resolve_visual_source(cls, metadata: dict[str, Any], token: str) -> str | None:
+    def _canonical_visual_token(cls, token: str) -> str:
+        """Map chart subtypes (heatmap, bar_chart, …) to the slot kind the MFE renders."""
         normalized = str(token or "").strip().lower()
+        if not normalized:
+            return normalized
+        from app.domain.services.chat_presentation_decision_builder_service import (
+            ChatPresentationDecisionBuilderService,
+        )
+
+        legacy = ChatPresentationDecisionBuilderService.legacy_preferred_format(normalized)
+        return str(legacy or normalized).strip().lower()
+
+    @classmethod
+    def _resolve_visual_source(cls, metadata: dict[str, Any], token: str) -> str | None:
+        normalized = cls._canonical_visual_token(token)
         source = _VISUAL_TOKEN_TO_KEY.get(normalized)
 
         if source and metadata.get(source):
@@ -202,7 +215,9 @@ class ChatPresentationRenderPlanService:
         if isinstance(presentation, dict):
             presentation_type = str(presentation.get("type") or "").strip().lower()
 
-            if presentation_type == normalized:
+            if presentation_type == normalized or (
+                normalized == "chart" and presentation_type == "chart"
+            ):
                 return "presentation"
 
         return None
@@ -244,6 +259,7 @@ class ChatPresentationRenderPlanService:
             segments.append({"kind": "decision", "slot": "lead", "source": "dataAnswer"})
 
         selected = str((decision or {}).get("selected") or "").strip().lower()
+        visual_kind = cls._canonical_visual_token(selected)
 
         if selected == "canvas" and cls._should_include_lead_segment(metadata):
             segments.append(cls._lead_markdown_segment(metadata))
@@ -257,17 +273,17 @@ class ChatPresentationRenderPlanService:
         ):
             segments.append(cls._lead_markdown_segment(metadata))
 
-        if selected in _VISUAL_TOKEN_TO_KEY:
+        if visual_kind in _VISUAL_TOKEN_TO_KEY:
             source = cls._resolve_visual_source(metadata, selected)
 
-            if not source and selected == "dashboard":
+            if not source and visual_kind == "dashboard":
                 source = cls._resolve_visual_source(metadata, "kpi")
 
                 if source:
-                    selected = "kpi"
+                    visual_kind = "kpi"
 
             if source:
-                if selected == "table" and cls._table_bundle_count(metadata) >= 2:
+                if visual_kind == "table" and cls._table_bundle_count(metadata) >= 2:
                     segments.append(
                         {
                             "kind": "table",
@@ -276,7 +292,9 @@ class ChatPresentationRenderPlanService:
                         },
                     )
                 else:
-                    segments.append({"kind": selected, "slot": "primary", "source": source})
+                    segments.append(
+                        {"kind": visual_kind, "slot": "primary", "source": source}
+                    )
 
         return segments
 
@@ -376,7 +394,8 @@ class ChatPresentationRenderPlanService:
     ) -> list[dict[str, Any]]:
         """Invariante: single emite só lead + selected (nunca irmãos tree/table/chart/kpi)."""
         selected = str((decision or {}).get("selected") or "").strip().lower()
-        allowed_visuals = {selected} if selected in _VISUAL_TOKEN_TO_KEY else set()
+        visual_kind = cls._canonical_visual_token(selected)
+        allowed_visuals = {visual_kind} if visual_kind in _VISUAL_TOKEN_TO_KEY else set()
         passthrough = {"markdown", "decision", "download"}
 
         filtered: list[dict[str, Any]] = []
@@ -411,15 +430,18 @@ class ChatPresentationRenderPlanService:
             str(segment.get("kind") or "").strip().lower() for segment in result
         }
         selected = str((decision or {}).get("selected") or "").strip().lower()
+        visual_kind = cls._canonical_visual_token(selected)
         layout_mode = cls._layout_mode_from_decision(decision)
 
         # Single: um visual por turno — só garante o selected (nunca injeta tabela/irmão).
         if layout_mode != "stack":
-            if selected in _VISUAL_TOKEN_TO_KEY and selected not in existing_kinds:
+            if visual_kind in _VISUAL_TOKEN_TO_KEY and visual_kind not in existing_kinds:
                 source = cls._resolve_visual_source(metadata, selected)
 
                 if source:
-                    result.append({"kind": selected, "slot": "primary", "source": source})
+                    result.append(
+                        {"kind": visual_kind, "slot": "primary", "source": source}
+                    )
 
             return result
 
@@ -447,11 +469,11 @@ class ChatPresentationRenderPlanService:
                 str(segment.get("kind") or "").strip().lower() for segment in tail_segments
             )
 
-        if selected in _VISUAL_TOKEN_TO_KEY and selected not in existing_kinds:
+        if visual_kind in _VISUAL_TOKEN_TO_KEY and visual_kind not in existing_kinds:
             source = cls._resolve_visual_source(metadata, selected)
 
             if source:
-                result.append({"kind": selected, "slot": "primary", "source": source})
+                result.append({"kind": visual_kind, "slot": "primary", "source": source})
 
         return result
 

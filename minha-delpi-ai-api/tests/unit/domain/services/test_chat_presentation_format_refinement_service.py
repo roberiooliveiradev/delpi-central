@@ -1,6 +1,9 @@
 """Reapresentação do último resultado (tabela/gráfico) sem rota /system/tables."""
 
 from app.domain.services.chat_intent_router_service import ChatIntentRouterService
+from app.domain.services.chat_presentation_format_refinement_intent_service import (
+    ChatPresentationFormatRefinementIntentService,
+)
 from app.domain.services.chat_presentation_format_refinement_service import (
     ChatPresentationFormatRefinementService,
 )
@@ -214,6 +217,21 @@ def test_looks_like_format_refinement_tree_and_chart():
         )
         == "tree"
     )
+
+
+def test_heatmap_follow_up_detects_chart_format():
+    message = "Agora coloque isso em um gráfico de mapa de calor."
+    assert (
+        ChatPresentationFormatRefinementService.detect_requested_format(message)
+        == "chart"
+    )
+    assert ChatPresentationFormatRefinementService.looks_like_format_refinement(message)
+    intent = ChatPresentationFormatRefinementIntentService.resolve(
+        message,
+        has_prior_operation=True,
+    )
+    assert intent.is_refinement is True
+    assert intent.requested_format == "chart"
 
 
 _ANALYSER_HISTORY = [

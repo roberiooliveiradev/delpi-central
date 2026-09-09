@@ -171,3 +171,45 @@ def test_decoupled_table_lead_order_strict():
         },
     }
     _assert_lead_then_primary(metadata, "table")
+
+
+def test_selected_heatmap_emits_chart_primary_segment():
+    """selected=heatmap must resolve to chartPresentation (MFE kind=chart)."""
+    metadata = {
+        "llmProseDecoupled": True,
+        "chartPresentation": {
+            "type": "chart",
+            "chartType": "heatmap",
+            "data": [{"product_code": "P1", "warehouse": "W1", "planned_qty": 10}],
+            "config": {
+                "xAxis": "product_code",
+                "yAxis": "warehouse",
+                "valueKey": "planned_qty",
+            },
+        },
+        "tablePresentation": {
+            "type": "table",
+            "columns": [{"key": "product_code"}],
+            "rows": [{"product_code": "P1", "warehouse": "W1", "planned_qty": 10}],
+        },
+        "presentationDecision": {
+            "selected": "heatmap",
+            "layoutMode": "single",
+            "proseSource": "llm",
+        },
+    }
+    ChatPresentationRenderPlanService.build(metadata)
+    plan = metadata.get("renderPlan") or {}
+    segments = plan.get("segments") or []
+    assert any(
+        segment.get("kind") == "chart"
+        and segment.get("slot") == "primary"
+        and segment.get("source") == "chartPresentation"
+        for segment in segments
+        if isinstance(segment, dict)
+    )
+    assert not any(
+        segment.get("kind") == "table" and segment.get("slot") == "primary"
+        for segment in segments
+        if isinstance(segment, dict)
+    )

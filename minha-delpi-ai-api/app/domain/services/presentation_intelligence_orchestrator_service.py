@@ -168,7 +168,9 @@ class PresentationIntelligenceOrchestratorService:
             "bindConfidence": confidence,
             "composerInvoked": composer_invoked,
             "composerReason": composer_reason,
-            "needsComposer": confidence < _BIND_CONFIDENCE_THRESHOLD
+            # Composer only when we could not already apply a valid deterministic spec.
+            "needsComposer": not (validation and validation.ok)
+            and confidence < _BIND_CONFIDENCE_THRESHOLD
             and cls._looks_ambiguous(intent, profile),
             "specApplied": bool(validation and validation.ok),
             "unmetIntent": unmet_intent,

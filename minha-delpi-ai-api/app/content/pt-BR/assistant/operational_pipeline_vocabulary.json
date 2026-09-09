@@ -64,6 +64,8 @@
     "chartHints": [
       "em gráfico",
       "em grafico",
+      "em um gráfico",
+      "em um grafico",
       "formato gráfico",
       "formato grafico",
       "como gráfico",
@@ -92,6 +94,16 @@
       "exibir gráfico",
       "exiba em gráfico",
       "coloque em gráfico",
+      "coloque em um gráfico",
+      "coloque em um grafico",
+      "coloque isso em um gráfico",
+      "coloque isso em um grafico",
+      "coloque em mapa de calor",
+      "mapa de calor",
+      "mapa calor",
+      "heatmap",
+      "gráfico de mapa de calor",
+      "grafico de mapa de calor",
       "plote em gráfico",
       "plote em grafico",
       "plote um gráfico",
@@ -317,7 +329,11 @@
       "anterior",
       "mesmo dado",
       "mesmos dados",
-      "mesma consulta"
+      "mesma consulta",
+      "isso",
+      "nesses dados",
+      "nestes dados",
+      "com isso"
     ],
     "negativeHints": [
       "não quero gráfico",
@@ -355,6 +371,8 @@
         " rosca",
         " donut",
         " histograma",
+        " mapa de calor",
+        " heatmap",
         " plot",
         " chart"
       ],

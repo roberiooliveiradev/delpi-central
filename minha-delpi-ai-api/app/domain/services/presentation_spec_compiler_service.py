@@ -79,10 +79,24 @@ class PresentationSpecCompilerService:
             if metadata["presentation"].get("type") == "chart":
                 chart = metadata["presentation"]
         if not isinstance(chart, dict) or chart.get("type") != "chart":
-            if spec.view == "chart" or spec.mark:
-                # Spec may request chart without existing slot — leave decision only.
+            if not (spec.view == "chart" or spec.mark):
                 return
-            return
+            # Format refinement / table-first turns: materialize chart from tabular rows
+            # so selected heatmap|chart is deliverable (not decision-only).
+            chart = cls._materialize_chart_slot(metadata, spec=spec)
+            if chart is None:
+                return
+            metadata["chartPresentation"] = chart
+
+        # Heatmap / chart rebinding must not keep a prior aggregated 1-row chart slot
+        # when the table still holds the full matrix.
+        tabular_rows = cls._prefer_table_rows(metadata)
+        if tabular_rows and (
+            spec.mark == "heatmap"
+            or not isinstance(chart.get("data"), list)
+            or len(chart.get("data") or []) < len(tabular_rows)
+        ):
+            chart["data"] = tabular_rows
 
         config = dict(chart.get("config") or {})
         x = spec.encoding.get("x")
@@ -130,12 +144,71 @@ class PresentationSpecCompilerService:
         config["bindingProvenance"] = "COMPILED"
         chart["config"] = config
 
-        if metadata.get("chartPresentation") is chart or isinstance(
-            metadata.get("chartPresentation"), dict
+        # Canonical slot for chart delivery (even when we rebound `presentation`).
+        metadata["chartPresentation"] = chart
+        if metadata.get("presentation") is chart or (
+            isinstance(metadata.get("presentation"), dict)
+            and metadata["presentation"].get("type") == "chart"
         ):
-            metadata["chartPresentation"] = chart
-        if metadata.get("presentation") is chart:
             metadata["presentation"] = chart
+
+    @classmethod
+    def _prefer_table_rows(cls, metadata: dict[str, Any]) -> list[dict[str, Any]]:
+        for key in ("tablePresentation",):
+            presentation = metadata.get(key)
+            if isinstance(presentation, dict) and presentation.get("type") == "table":
+                rows = presentation.get("rows")
+                if isinstance(rows, list):
+                    typed = [row for row in rows if isinstance(row, dict)]
+                    if typed:
+                        return typed
+        tables = metadata.get("tablePresentations")
+        if isinstance(tables, list) and tables and isinstance(tables[0], dict):
+            rows = tables[0].get("rows")
+            if isinstance(rows, list):
+                typed = [row for row in rows if isinstance(row, dict)]
+                if typed:
+                    return typed
+        return []
+
+    @classmethod
+    def _materialize_chart_slot(
+        cls,
+        metadata: dict[str, Any],
+        *,
+        spec: PresentationSpec,
+    ) -> dict[str, Any] | None:
+        if not spec.encoding:
+            return None
+        rows = cls._prefer_table_rows(metadata) or cls._tabular_rows(metadata)
+        if not rows:
+            return None
+        return {
+            "type": "chart",
+            "title": "",
+            "chartType": spec.mark or "bar",
+            "data": rows,
+            "config": {},
+        }
+
+    @classmethod
+    def _tabular_rows(cls, metadata: dict[str, Any]) -> list[dict[str, Any]]:
+        preferred = cls._prefer_table_rows(metadata)
+        if preferred:
+            return preferred
+        for key in ("presentation", "chartPresentation"):
+            presentation = metadata.get(key)
+            if not isinstance(presentation, dict):
+                continue
+            if presentation.get("type") == "table":
+                rows = presentation.get("rows")
+                if isinstance(rows, list):
+                    return [row for row in rows if isinstance(row, dict)]
+            if presentation.get("type") == "chart":
+                data = presentation.get("data")
+                if isinstance(data, list):
+                    return [row for row in data if isinstance(row, dict)]
+        return []
 
     @classmethod
     def _apply_table(

@@ -163,7 +163,168 @@ def test_intent_binder_heatmap_from_portuguese_message():
     assert spec.encoding["color"].field == "planned_qty"
 
 
-def test_adversarial_palette_rejected():
+def test_compiler_rebinds_heatmap_data_from_table_when_chart_is_aggregated():
+    rows = _matrix_rows()
+    profile = PresentationDataProfileBuilderService.build(
+        rows,
+        label_bundle={
+            "labels": {
+                "product_code": "Produto",
+                "warehouse": "Depósito",
+                "planned_qty": "Qtd. planejada",
+            },
+            "formats": {},
+            "sourceByKey": {},
+        },
+    )
+    intent = PresentationIntentExtractorService.extract(
+        "Agora coloque isso em um gráfico de mapa de calor.",
+        requested_presentation="table",
+    )
+    spec, _ = PresentationDeterministicIntentBinderService.bind(intent, profile)
+    assert spec is not None
+    result = PresentationSpecValidatorService.validate(spec, profile=profile, user_explicit=True)
+    assert result.ok
+    metadata = {
+        "tablePresentation": {
+            "type": "table",
+            "columns": [
+                {"key": "product_code"},
+                {"key": "warehouse"},
+                {"key": "planned_qty"},
+            ],
+            "rows": rows,
+        },
+        "presentation": {
+            "type": "chart",
+            "chartType": "bar",
+            "data": [{"operation_start_date": "20260909", "planned_qty": 7620}],
+            "config": {"xAxis": "operation_start_date", "yAxis": "planned_qty"},
+        },
+        "presentationDecision": {"selected": "table", "layoutMode": "single"},
+    }
+    PresentationSpecCompilerService.compile_into_metadata(
+        metadata, spec=result.spec, profile=profile
+    )
+    chart = metadata["chartPresentation"]
+    assert chart["chartType"] == "heatmap"
+    assert len(chart["data"]) == len(rows)
+    assert {chart["config"]["xAxis"], chart["config"]["yAxis"]} == {
+        "product_code",
+        "warehouse",
+    }
+
+
+def test_compiler_materializes_heatmap_from_table_only_metadata():
+    """Follow-up «mapa de calor» sobre lista: table slot exists, chart must be created."""
+    rows = _matrix_rows()
+    profile = PresentationDataProfileBuilderService.build(
+        rows,
+        label_bundle={
+            "labels": {
+                "product_code": "Produto",
+                "warehouse": "Depósito",
+                "planned_qty": "Qtd. planejada",
+            },
+            "formats": {},
+            "sourceByKey": {},
+        },
+    )
+    intent = PresentationIntentExtractorService.extract(
+        "Agora coloque isso em um gráfico de mapa de calor.",
+        requested_presentation="table",
+    )
+    assert intent.mark == "heatmap"
+    assert intent.view == "chart"
+    spec, confidence = PresentationDeterministicIntentBinderService.bind(intent, profile)
+    assert spec is not None
+    assert confidence >= 0.55
+    result = PresentationSpecValidatorService.validate(
+        spec, profile=profile, user_explicit=True
+    )
+    assert result.ok is True
+
+    metadata = {
+        "tablePresentation": {
+            "type": "table",
+            "columns": [
+                {"key": "product_code", "label": "product_code"},
+                {"key": "warehouse", "label": "warehouse"},
+                {"key": "planned_qty", "label": "planned_qty"},
+            ],
+            "rows": rows,
+        },
+        "presentationDecision": {"selected": "table", "layoutMode": "single"},
+    }
+    PresentationSpecCompilerService.compile_into_metadata(
+        metadata,
+        spec=result.spec,
+        profile=profile,
+    )
+    chart = metadata.get("chartPresentation")
+    assert isinstance(chart, dict)
+    assert chart["type"] == "chart"
+    assert chart["chartType"] == "heatmap"
+    assert chart["config"]["valueKey"] == "planned_qty"
+    assert chart["config"]["bindingProvenance"] == "COMPILED"
+    assert metadata["presentationDecision"]["selected"] == "heatmap"
+    assert "unit" not in {
+        chart["config"].get("xAxis"),
+        chart["config"].get("yAxis"),
+    }
+
+
+def test_compiler_materializes_bar_sibling_from_table_only_metadata():
+    rows = _matrix_rows()
+    profile = PresentationDataProfileBuilderService.build(rows)
+    intent = PresentationIntentExtractorService.extract(
+        "Mostre isso em gráfico de barras.",
+        requested_presentation="table",
+    )
+    assert intent.view == "chart"
+    spec, _confidence = PresentationDeterministicIntentBinderService.bind(intent, profile)
+    assert spec is not None
+    result = PresentationSpecValidatorService.validate(spec, profile=profile)
+    assert result.ok is True
+    metadata = {
+        "tablePresentation": {
+            "type": "table",
+            "columns": [{"key": "product_code"}, {"key": "planned_qty"}],
+            "rows": rows,
+        }
+    }
+    PresentationSpecCompilerService.compile_into_metadata(
+        metadata, spec=result.spec, profile=profile
+    )
+    chart = metadata.get("chartPresentation")
+    assert isinstance(chart, dict)
+    assert chart["type"] == "chart"
+
+
+def test_compiler_table_spec_does_not_invent_chart_slot():
+    rows = _matrix_rows()
+    profile = PresentationDataProfileBuilderService.build(rows)
+    intent = PresentationIntentExtractorService.extract(
+        "Traga a lista de produtos.",
+        requested_presentation="table",
+    )
+    assert intent.view == "table"
+    assert intent.mark is None
+    spec, _confidence = PresentationDeterministicIntentBinderService.bind(intent, profile)
+    assert spec is not None
+    assert spec.view == "table"
+    metadata = {
+        "tablePresentation": {
+            "type": "table",
+            "columns": [{"key": "product_code"}, {"key": "planned_qty"}],
+            "rows": rows,
+        }
+    }
+    PresentationSpecCompilerService.compile_into_metadata(
+        metadata, spec=spec, profile=profile
+    )
+    assert metadata.get("chartPresentation") is None
+
     rows = _matrix_rows()
     profile = PresentationDataProfileBuilderService.build(rows)
     raw = {

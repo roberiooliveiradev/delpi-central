@@ -1,0 +1,92 @@
+{
+  "capturedAt": "2026-09-09T17:25:25.700946+00:00",
+  "sessionId": "f8c56c1d-b978-45c9-b40b-6703c4fe8919",
+  "messages": [
+    "Traga a lista de produtos programados para produzir hoje.",
+    "Agora coloque isso em um gráfico de mapa de calor."
+  ],
+  "turns": [
+    {
+      "turn": "T1",
+      "path": "/production/schedule/today",
+      "selected": "table",
+      "presentationIntent": {
+        "locale": "pt-BR",
+        "view": "table"
+      },
+      "chart": {
+        "chartType": "heatmap",
+        "xAxis": "product_code",
+        "yAxis": "branch",
+        "valueKey": "planned_qty",
+        "bindingProvenance": "COMPILED",
+        "fieldLabels": {
+          "product_code": "Produto",
+          "planned_qty": "Qtd. planejada",
+          "branch": "Filial",
+          "production_order": "OP",
+          "unit": "Unidade"
+        },
+        "dataRows": 15,
+        "slot": "chartPresentation"
+      },
+      "tableRows": null,
+      "renderSegments": [
+        "markdown",
+        "table"
+      ],
+      "needsComposer": false,
+      "specApplied": true,
+      "suppressedKinds": [
+        "chart"
+      ]
+    },
+    {
+      "turn": "T2",
+      "path": "/production/schedule/today",
+      "selected": "heatmap",
+      "presentationIntent": {
+        "locale": "pt-BR",
+        "mark": "heatmap",
+        "view": "chart"
+      },
+      "chart": {
+        "chartType": "heatmap",
+        "xAxis": "product_code",
+        "yAxis": "branch",
+        "valueKey": "planned_qty",
+        "bindingProvenance": "COMPILED",
+        "fieldLabels": {
+          "product_code": "Produto",
+          "planned_qty": "Qtd. planejada",
+          "branch": "Filial",
+          "production_order": "OP",
+          "unit": "Unidade"
+        },
+        "dataRows": 15,
+        "slot": "chartPresentation"
+      },
+      "tableRows": 15,
+      "renderSegments": [
+        "markdown",
+        "chart"
+      ],
+      "needsComposer": false,
+      "specApplied": true,
+      "suppressedKinds": [
+        "table"
+      ]
+    }
+  ],
+  "verdict": {
+    "t1_table_primary": true,
+    "t2_heatmap_mark": true,
+    "t2_heatmap_chart": true,
+    "t2_render_chart": true,
+    "t2_matrix_rows": true,
+    "t2_no_unit_axis": true,
+    "t2_no_description_axis": true,
+    "t2_labels_pt": true,
+    "t2_canonical_slot": true
+  }
+}

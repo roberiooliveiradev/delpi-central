@@ -99,19 +99,31 @@ class ChatPresentationPayloadPruningService:
         if isinstance(decision, dict):
             selected = str(decision.get("selected") or "").strip().lower()
 
-        if selected not in _VISUAL_TOKEN_TO_KEY and selected not in {"", "text", "canvas"}:
+        from app.domain.services.chat_presentation_decision_builder_service import (
+            ChatPresentationDecisionBuilderService,
+        )
+
+        visual_selected = (
+            ChatPresentationDecisionBuilderService.legacy_preferred_format(selected)
+            or selected
+        )
+
+        if (
+            visual_selected not in _VISUAL_TOKEN_TO_KEY
+            and visual_selected not in {"", "text", "canvas"}
+        ):
             return
 
         suppressed: list[str] = []
 
         for token, key in _VISUAL_TOKEN_TO_KEY.items():
-            if token == selected:
+            if token == visual_selected:
                 continue
 
             if isinstance(metadata.get(key), dict):
                 suppressed.append(token)
 
-        if selected != "table":
+        if visual_selected != "table":
             bundled = metadata.get("tablePresentations")
 
             if isinstance(bundled, list) and any(
@@ -121,7 +133,7 @@ class ChatPresentationPayloadPruningService:
                     suppressed.append("table")
 
         # Preferência explícita / promote: tabela pode estar só em ``presentation``.
-        if selected == "table":
+        if visual_selected == "table":
             suppressed = [token for token in suppressed if token != "table"]
 
         hints = plan.get("renderHints")
@@ -138,8 +150,8 @@ class ChatPresentationPayloadPruningService:
             merged = list(dict.fromkeys(suppressed))
 
         # Merge com prune anterior (ex.: selected era tree) não pode manter a vista atual.
-        if selected in _VISUAL_TOKEN_TO_KEY:
-            merged = [token for token in merged if token != selected]
+        if visual_selected in _VISUAL_TOKEN_TO_KEY:
+            merged = [token for token in merged if token != visual_selected]
 
         if merged:
             hints["suppressedKinds"] = merged

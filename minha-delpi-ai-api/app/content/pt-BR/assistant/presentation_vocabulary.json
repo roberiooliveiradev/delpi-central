@@ -166,7 +166,18 @@
     ]
   },
   "formatPreferenceMarkers": {
-    "chartHints": ["em gráfico", "em grafico", "como gráfico", "como grafico"],
+    "chartHints": [
+      "em gráfico",
+      "em grafico",
+      "em um gráfico",
+      "em um grafico",
+      "como gráfico",
+      "como grafico",
+      "mapa de calor",
+      "heatmap",
+      "gráfico de mapa de calor",
+      "grafico de mapa de calor"
+    ],
     "tableHints": ["em tabela", "como tabela", "formato tabela"],
     "dashboardHints": [
       "painel",
@@ -180,7 +191,17 @@
     "areaTokens": ["área", "area"],
     "donutTokens": ["rosca", "donut"],
     "horizontalToken": "horizontal",
-    "chartSubtypeTokens": ["linha", "line", "área", "area", "barra", "rosca", "donut"]
+    "chartSubtypeTokens": [
+      "linha",
+      "line",
+      "área",
+      "area",
+      "barra",
+      "rosca",
+      "donut",
+      "mapa de calor",
+      "heatmap"
+    ]
   },
   "intentMarkers": {
     "checklist": [

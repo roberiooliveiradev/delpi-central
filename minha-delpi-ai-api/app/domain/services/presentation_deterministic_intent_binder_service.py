@@ -75,7 +75,10 @@ class PresentationDeterministicIntentBinderService:
 
         # Default chart axes when mark/view chart without explicit dims.
         if (view == "chart" or mark) and not bound_dims and dims:
-            bound_dims = dims[:2]
+            if mark == "heatmap" and len(dims) >= 2:
+                bound_dims = cls._default_heatmap_dims(dims)
+            else:
+                bound_dims = dims[:2]
             confidence = min(confidence, 0.55)
 
         encoding: dict[str, EncodingChannel] = {}
@@ -146,6 +149,30 @@ class PresentationDeterministicIntentBinderService:
             ),
             min(1.0, confidence),
         )
+
+    @classmethod
+    def _default_heatmap_dims(cls, dims: list[str]) -> list[str]:
+        """Prefer code-like / matrix-friendly dims over free-text descriptions."""
+        preferred_order = (
+            "product_code",
+            "warehouse",
+            "work_center",
+            "branch",
+            "production_order",
+            "shift",
+            "machine",
+        )
+        ranked = [key for key in preferred_order if key in dims]
+        for key in dims:
+            if key in ranked:
+                continue
+            # Skip long free-text description fields when better dims exist.
+            if key.endswith("_description") or key in {"description", "product_description"}:
+                continue
+            ranked.append(key)
+        if len(ranked) < 2:
+            ranked = list(dims)
+        return ranked[:2]
 
     @classmethod
     def _match_concept(
