@@ -11,6 +11,9 @@ from app.domain.models.action_descriptor import ActionCandidate, ActionDescripto
 from app.domain.services.openapi_tool_routing_content_service import (
     OpenApiToolRoutingContentService,
 )
+from app.domain.services.openapi_when_not_to_use_guidance_service import (
+    OpenApiWhenNotToUseGuidanceService,
+)
 
 
 class _ActionRepositoryPort(Protocol):
@@ -127,8 +130,23 @@ class RetrieveActionCandidatesService:
                 vector = float(row.get("selectionScore") or 0.0)
 
             boost = self._schema_token_boost(message, row)
-            combined = (vector_weight * vector) + (lexical_weight * lexical) + boost
-            if combined < min_score and lexical <= 0 and vector <= 0 and boost <= 0:
+            negative = OpenApiWhenNotToUseGuidanceService.penalty(message, row)
+            positive = OpenApiWhenNotToUseGuidanceService.bonus(message, row)
+            combined = (
+                (vector_weight * vector)
+                + (lexical_weight * lexical)
+                + boost
+                + positive
+                - negative
+            )
+            if (
+                combined < min_score
+                and lexical <= 0
+                and vector <= 0
+                and boost <= 0
+                and negative <= 0
+                and positive <= 0
+            ):
                 continue
 
             descriptor = ActionDescriptor.from_action_dict(row)
@@ -142,11 +160,15 @@ class RetrieveActionCandidatesService:
                 reasons.append("vector")
             if boost > 0:
                 reasons.append("schema_token")
+            if negative > 0:
+                reasons.append("when_not_to_use")
+            if positive > 0:
+                reasons.append("when_to_use")
 
             scored.append(
                 ActionCandidate(
                     descriptor=descriptor,
-                    score=combined if combined > 0 else lexical,
+                    score=combined,
                     lexical_score=lexical,
                     vector_score=vector,
                     reasons=tuple(reasons),
@@ -160,6 +182,16 @@ class RetrieveActionCandidatesService:
                 len(item.descriptor.path),
             )
         )
+        scored = OpenApiWhenNotToUseGuidanceService.filter_candidates(
+            message,
+            scored,
+            raw_action_of=lambda item: item.raw_action,
+        )
+        scored = OpenApiWhenNotToUseGuidanceService.prefer_candidates(
+            message,
+            scored,
+            raw_action_of=lambda item: item.raw_action,
+        )
         return scored[: max(1, limit)]
 
     def _load_allowed_actions(
@@ -172,12 +204,23 @@ class RetrieveActionCandidatesService:
     ) -> list[dict[str, Any]]:
         allowed_set = set(allowed)
         by_id: dict[str, dict[str, Any]] = {}
+        catalog = [action for action in (catalog_actions or []) if isinstance(action, dict)]
+        repo_actions: list[dict[str, Any]] = []
+        if self.repository is not None:
+            list_actions = getattr(self.repository, "list_actions", None)
+            if callable(list_actions):
+                repo_actions = [
+                    action for action in list_actions() if isinstance(action, dict)
+                ]
 
-        if catalog_actions:
-            for action in catalog_actions:
-                action_id = str(action.get("actionId") or "").strip()
-                if action_id in allowed_set:
-                    by_id[action_id] = dict(action)
+        def _put(action: dict[str, Any]) -> None:
+            action_id = str(action.get("actionId") or action.get("action_id") or "").strip()
+            if action_id and action_id in allowed_set:
+                by_id.setdefault(action_id, dict(action))
+
+        for action in catalog + repo_actions:
+            if OpenApiWhenNotToUseGuidanceService.matches_positive(message, action):
+                _put(action)
 
         if self.repository is not None:
             find = getattr(self.repository, "find_candidate_actions", None)
@@ -187,23 +230,21 @@ class RetrieveActionCandidatesService:
                     limit=pool_limit,
                     allowed_action_ids=allowed,
                 ):
-                    action_id = str(action.get("actionId") or "").strip()
-                    if action_id in allowed_set and action_id not in by_id:
-                        by_id[action_id] = dict(action)
+                    if isinstance(action, dict):
+                        _put(action)
 
-            list_actions = getattr(self.repository, "list_actions", None)
-            if callable(list_actions) and len(by_id) < len(allowed_set):
-                for action in list_actions():
-                    action_id = str(action.get("actionId") or "").strip()
-                    if action_id in allowed_set and action_id not in by_id:
-                        by_id[action_id] = dict(action)
+        for action in catalog:
+            if len(by_id) >= pool_limit:
+                break
+            _put(action)
 
-        # Ensure every allowed id has a stub if catalog was incomplete.
         for action_id in allowed:
+            if len(by_id) >= pool_limit:
+                break
             if action_id not in by_id:
                 by_id[action_id] = {"actionId": action_id}
 
-        return list(by_id.values())[:pool_limit]
+        return list(by_id.values())
 
     @classmethod
     def _schema_token_boost(cls, message: str, action: dict[str, Any]) -> float:

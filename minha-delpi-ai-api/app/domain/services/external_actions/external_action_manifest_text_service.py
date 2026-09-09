@@ -7,6 +7,9 @@ from typing import Any
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
+from app.domain.services.openapi_when_not_to_use_guidance_service import (
+    OpenApiWhenNotToUseGuidanceService,
+)
 
 
 class ExternalActionManifestTextService:
@@ -39,7 +42,9 @@ class ExternalActionManifestTextService:
         if summary:
             parts.append(summary)
 
-        description = str(action.get("description") or "").strip()
+        description = OpenApiWhenNotToUseGuidanceService.description_for_positive_match(
+            action
+        )
         if description:
             parts.append(description)
 
@@ -113,7 +118,9 @@ class ExternalActionManifestTextService:
         if summary:
             parts.append(summary)
 
-        description = str(action.get("description") or "").strip()
+        description = OpenApiWhenNotToUseGuidanceService.description_for_positive_match(
+            action
+        )
         if description:
             parts.append(description)
 

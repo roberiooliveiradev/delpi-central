@@ -17,6 +17,9 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.openapi_tool_routing_content_service import (
     OpenApiToolRoutingContentService,
 )
+from app.domain.services.openapi_when_not_to_use_guidance_service import (
+    OpenApiWhenNotToUseGuidanceService,
+)
 
 _IDENTIFIER_RE = re.compile(r"\b(\d{4,})\b")
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_-]{3,}")
@@ -41,6 +44,17 @@ class PlanExternalActionsService:
     ) -> ActionPlan:
         if not candidates:
             return ActionPlan(selection_mode="openapi_first")
+
+        candidates = OpenApiWhenNotToUseGuidanceService.filter_candidates(
+            message,
+            candidates,
+            raw_action_of=lambda item: item.raw_action,
+        )
+        candidates = OpenApiWhenNotToUseGuidanceService.prefer_candidates(
+            message,
+            candidates,
+            raw_action_of=lambda item: item.raw_action,
+        )
 
         top_k_ids = {item.action_id for item in candidates if item.action_id}
         slim_catalog = [
@@ -68,9 +82,7 @@ class PlanExternalActionsService:
         if isinstance(llm_payload, dict):
             plan = self._plan_from_payload(llm_payload, top_k_ids=top_k_ids, limit=limit)
             plan = self._apply_domain_compound_step_cap(message, plan)
-            if plan.clarify and plan.is_empty:
-                return plan
-            if not plan.is_empty:
+            if plan.steps:
                 enriched = self._enrich_plan_with_bound_arguments(
                     message,
                     plan,
@@ -78,9 +90,32 @@ class PlanExternalActionsService:
                     previous_messages=previous_messages,
                     execution_context=execution_context,
                 )
-                # If the LLM chose an action but binding cannot satisfy required
-                # args, prefer the deterministic ranker for this subtask.
-                if not (enriched.clarify and enriched.is_empty):
+                if enriched.steps:
+                    # Optional LLM follow-up clarify must not swallow executable steps.
+                    executable = ActionPlan(
+                        steps=enriched.steps,
+                        clarify=None,
+                        selection_mode=enriched.selection_mode or "openapi_first",
+                        metadata=dict(enriched.metadata or {}),
+                    )
+                    if len(executable.steps) == 1:
+                        deterministic = self._deterministic_plan(
+                            message,
+                            candidates,
+                            previous_messages=previous_messages,
+                            execution_context=execution_context,
+                            limit=limit,
+                        )
+                        preferred = self._prefer_more_specific_plan(
+                            message,
+                            executable,
+                            deterministic,
+                            candidates,
+                        )
+                        if preferred is not None:
+                            return preferred
+                    return executable
+                if enriched.clarify:
                     return enriched
 
         return self._deterministic_plan(
@@ -184,6 +219,36 @@ class PlanExternalActionsService:
             metadata=dict(plan.metadata or {}),
         )
 
+    @classmethod
+    def _prefer_more_specific_plan(
+        cls,
+        message: str,
+        llm_plan: ActionPlan,
+        deterministic: ActionPlan,
+        candidates: list[ActionCandidate],
+    ) -> ActionPlan:
+        """When the LLM picks a weaker sibling, keep the OpenAPI-ranked action."""
+        if not llm_plan.steps:
+            return deterministic if deterministic.steps else llm_plan
+        if not deterministic.steps:
+            return llm_plan
+        llm_id = llm_plan.steps[0].action_id
+        det_id = deterministic.steps[0].action_id
+        if llm_id == det_id:
+            return llm_plan
+        by_id = {item.action_id: item for item in candidates if item.action_id}
+        llm_candidate = by_id.get(llm_id)
+        det_candidate = by_id.get(det_id)
+        if llm_candidate is None or det_candidate is None:
+            return llm_plan
+        normalized = (message or "").lower()
+        if cls._specificity_score(normalized, det_candidate) > cls._specificity_score(
+            normalized,
+            llm_candidate,
+        ):
+            return deterministic
+        return llm_plan
+
     def _plan_from_payload(
         self,
         payload: dict[str, Any],
@@ -277,7 +342,15 @@ class PlanExternalActionsService:
             preferred_action_id = str(execution_context.get("actionId") or "").strip()
 
         ranked = sorted(
-            candidates,
+            OpenApiWhenNotToUseGuidanceService.prefer_candidates(
+                message,
+                OpenApiWhenNotToUseGuidanceService.filter_candidates(
+                    message,
+                    candidates,
+                    raw_action_of=lambda item: item.raw_action,
+                ),
+                raw_action_of=lambda item: item.raw_action,
+            ),
             key=lambda item: (
                 -self._specificity_score(
                     normalized,
@@ -424,20 +497,25 @@ class PlanExternalActionsService:
         # (excel/history/export/…) that appear in path/operationId but not in siblings.
         specificity = segment_hits * 0.85 + len(path_segments) * 0.02
         continuity = 1.25 if preferred_action_id and candidate.action_id == preferred_action_id else 0.0
-        return float(candidate.score or 0.0) + hits * 0.35 + specificity + continuity
+        negative = OpenApiWhenNotToUseGuidanceService.penalty(normalized, action)
+        positive = OpenApiWhenNotToUseGuidanceService.bonus(normalized, action)
+        return float(candidate.score or 0.0) + hits * 0.35 + specificity + continuity + positive - negative
 
     @classmethod
     def _action_haystack(cls, action: dict[str, Any]) -> str:
+        description = OpenApiWhenNotToUseGuidanceService.description_for_positive_match(
+            action
+        )
         return " ".join(
-            str(action.get(key) or "")
-            for key in (
-                "path",
-                "operationId",
-                "summary",
-                "description",
-                "actionId",
-                "tags",
-                "whenToUse",
+            str(value or "")
+            for value in (
+                action.get("path"),
+                action.get("operationId"),
+                action.get("summary"),
+                description,
+                action.get("actionId"),
+                action.get("tags"),
+                action.get("whenToUse") or action.get("when_to_use"),
             )
         ).lower()
 

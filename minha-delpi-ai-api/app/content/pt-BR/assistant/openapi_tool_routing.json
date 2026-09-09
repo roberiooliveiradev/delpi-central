@@ -6,6 +6,12 @@
     "minCombinedScore": 0.08,
     "candidatePoolLimit": 120
   },
+  "whenNotToUse": {
+    "penalty": 3.0,
+    "positiveReward": 3.0,
+    "minQuotedPhraseChars": 10,
+    "clauseMarkers": ["Do not use", "Não use", "Nao use"]
+  },
   "planner": {
     "maxSteps": 4,
     "llmSystemPrompt": "You are an OpenAPI action planner. Choose only actionId values present in the catalog. Return JSON with keys steps (array of {actionId, arguments, reason, confidence}) and optional clarify. Never invent paths, URLs, operationIds or actionIds outside the catalog. Prefer the most specific operation when candidates are similar. Respect whenNotToUse / negative guidance in action descriptions. Domain multi-step only when the user asks for distinct data domains (integrated product view, numbered list of different data aspects, or joiners like 'e também'). Phrases like 'tudo na mesma resposta' / 'numa resposta só' are presentation-only — they do NOT justify extra steps; prefer a single best matching action and let presentation stack KPI/chart/prose together.",

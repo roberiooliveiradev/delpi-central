@@ -145,22 +145,22 @@ Placar:
 CASO | kind | L1 | L2 | L3 | L4 | HARNESS | RELEASE
 ```
 
-## 9. Placar desta bateria (2026-09-08)
+## 9. Placar desta bateria (2026-09-09)
 
 | CASO | kind | HARNESS | RELEASE | Notas |
 |------|------|---------|---------|-------|
-| C1 | PA | PASS | WARN | analyser+stock |
+| C1 | PA | PASS | WARN | analyser+stock (bateria 2026-09-08) |
 | C2 | PA | PASS | PASS | structure+stock+open-orders |
 | C3 | none | PASS | PASS | rol/series |
 | C4 | PA | PASS | PASS | smoke_c4 L1–L4 leve OK |
 | C5 | MP | PASS | WARN | stock ok; structure indesejada; vendas ausentes |
-| I1 | none | FAIL | FAIL | by-branch em vez de financial/rol |
+| I1 | none | PASS | PASS | `/financial/rol` (whenNotToUse + whenToUse quotes) |
 | I2 | none | PASS | PASS | series |
-| I3 | none | FAIL | FAIL | negativo: ainda by-branch-only |
-| I4 | none | PASS | PASS | closing-rate |
+| I3 | none | PASS | PASS | mesmo texto I1; não by-branch-only |
+| I4 | none | FAIL | FAIL | trial 2026-09-09: `toolCalls` vazio (baseline 08/09 era closing-rate) |
 | I5 | none | PASS | PASS | sales-order-otd |
-| I6 | none | PASS | PASS | sem department-indicators |
+| I6 | none | PASS | PASS | by-branch; sem department-indicators |
 | Wave B | mix | 8/12 | FAIL | F1/F2 path errado; cost-impact/pricing miss; MP7 OK |
 
-Release global desta bateria: **FAIL** (I1/I3 + gaps Wave B + WARN C5).
+Release global desta bateria: **FAIL** (I4 neste trial + gaps Wave B + WARN C5). I1/I3 saíram de FAIL (by-branch) para PASS.
 Harness Wave A estrutural: **5/5 PASS_ESTRUTURAL**.

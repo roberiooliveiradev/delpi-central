@@ -69,9 +69,11 @@ def test_build_slim_action_preserves_when_not_to_use_within_budget():
         }
     )
 
+    assert slim.get("whenNotToUse")
+    assert "ROL comercial" in slim["whenNotToUse"]
+    assert "/commercial/rol/series" in slim["whenNotToUse"]
     assert len(slim["description"]) <= 220
-    assert "ROL comercial" in slim["description"]
-    assert "/commercial/rol/series" in slim["description"]
+    assert len(slim["whenNotToUse"]) <= 220
 
 
 def test_format_planner_catalog_returns_json_array():

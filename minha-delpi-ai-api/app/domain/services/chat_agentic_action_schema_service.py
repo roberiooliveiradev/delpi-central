@@ -10,6 +10,9 @@ from app.domain.services.chat_domain_config_service import ChatDomainConfigServi
 from app.domain.services.chat_operational_pagination_defaults_service import (
     ChatOperationalPaginationDefaultsService,
 )
+from app.domain.services.openapi_when_not_to_use_guidance_service import (
+    OpenApiWhenNotToUseGuidanceService,
+)
 
 
 class ChatAgenticActionSchemaService:
@@ -51,8 +54,9 @@ class ChatAgenticActionSchemaService:
             prefer_openapi_examples=prefer_openapi_examples,
         )
         example_arguments = cls._build_example_arguments(parameters)
+        when_not = OpenApiWhenNotToUseGuidanceService.resolve(action)
 
-        return {
+        slim = {
             "actionId": action_id,
             "method": str(action.get("method") or "GET").upper(),
             "path": str(action.get("path") or "").strip(),
@@ -60,6 +64,9 @@ class ChatAgenticActionSchemaService:
             "parameters": parameters,
             "exampleArguments": example_arguments,
         }
+        if when_not:
+            slim["whenNotToUse"] = cls._truncate(when_not, cls._DESCRIPTION_MAX_CHARS)
+        return slim
 
     @classmethod
     def collect_openapi_examples(cls, action: dict[str, Any]) -> dict[str, Any]:
@@ -152,27 +159,8 @@ class ChatAgenticActionSchemaService:
 
     @classmethod
     def _extract_when_not_clause(cls, text: str) -> str | None:
-        lowered = str(text or "")
-        markers = ("Do not use", "Não use", "Nao use")
-        best: str | None = None
-        best_pos = -1
-
-        for marker in markers:
-            pos = lowered.lower().find(marker.lower())
-            if pos >= 0 and (best_pos < 0 or pos < best_pos):
-                best_pos = pos
-                best = lowered[pos:].strip()
-
-        if not best:
-            return None
-
-        # Keep one sentence-ish clause.
-        for sep in (". ", "; "):
-            if sep in best[12:]:
-                head, _tail = best.split(sep, 1)
-                return f"{head.strip()}."
-
-        return best.strip()
+        clause = OpenApiWhenNotToUseGuidanceService.extract_clause(text)
+        return clause or None
 
     @classmethod
     def _build_slim_parameters(

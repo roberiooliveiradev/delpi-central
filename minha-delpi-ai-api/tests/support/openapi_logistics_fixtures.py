@@ -71,6 +71,7 @@ def normalize_imported_action(
         "enabled": bool(action.get("enabled", True)),
         "deprecated": bool(action.get("deprecated", False)),
         "whenToUse": action.get("when_to_use") or action.get("whenToUse"),
+        "whenNotToUse": action.get("when_not_to_use") or action.get("whenNotToUse"),
         "delpiMetadata": action.get("delpi_metadata") or action.get("delpiMetadata"),
         "providerKey": provider_key,
         "providerName": "Logistics Example API",

@@ -194,7 +194,7 @@ class OpenApiFirstSelectionBridgeService:
         message: str,
         actions_by_id: dict[str, dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        if plan.clarify:
+        if plan.clarify and not plan.steps:
             return [
                 {
                     "name": "clarify_external_action",
