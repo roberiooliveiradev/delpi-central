@@ -225,6 +225,61 @@ describe("collectVisualSegments", () => {
     expect(kinds).toEqual(["table"]);
   });
 
+  it("coleta table e chart de metadata legada sem renderPlan ou presentationSpec", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          presentationDecision: {
+            presentationMode: "summary_then_evidence",
+            layoutMode: "stack",
+            selected: "table",
+          },
+          stackPresentationPlan: {
+            tailVisualOrder: ["table", "chart"],
+          },
+          tablePresentation: {
+            type: "table",
+            title: "Pedidos em aberto",
+            columns: [
+              { key: "order_code", label: "Pedido" },
+              { key: "total_value", label: "Valor", dataType: "currency" },
+            ],
+            rows: [{ order_code: "PC-1001", total_value: 1250.5 }],
+          },
+          chartPresentation: {
+            type: "chart",
+            title: "Valor por pedido",
+            chartType: "bar",
+            data: [{ order_code: "PC-1001", total_value: 1250.5 }],
+            config: {
+              xAxis: "order_code",
+              yAxis: "total_value",
+            },
+          },
+        },
+      },
+    ]);
+
+    const segments = collectVisualSegments(toolCalls);
+    const kinds = segments.map((segment) => segment.kind);
+
+    expect(kinds).toHaveLength(2);
+    expect(kinds).toContain("table");
+    expect(kinds).toContain("chart");
+
+    const tableSegment = segments.find((segment) => segment.kind === "table");
+    const chartSegment = segments.find((segment) => segment.kind === "chart");
+
+    expect(tableSegment?.kind === "table" ? tableSegment.presentation.title : "").toBe(
+      "Pedidos em aberto",
+    );
+    expect(chartSegment?.kind === "chart" ? chartSegment.presentation.chartType : "").toBe(
+      "bar",
+    );
+  });
+
   it("ainda suprime visuais com sqlSchemaPrefetch explícito", () => {
     const toolCalls = fixtureToolCalls([
       {
