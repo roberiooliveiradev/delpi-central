@@ -209,3 +209,25 @@ def test_prefer_estoque_keeps_stock_not_summary():
     )
     ids = [item["actionId"] for item in kept]
     assert ids == ["ext.products.stock"]
+
+
+def test_filter_compound_keeps_summary_when_when_to_use_also_matches():
+    stock, summary = _stock_vs_summary()
+    kept = OpenApiWhenNotToUseGuidanceService.filter_candidates(
+        "estoque e descrição do produto 10080011",
+        [stock, summary],
+        raw_action_of=lambda item: item,
+    )
+    ids = {item["actionId"] for item in kept}
+    assert ids == {"ext.products.stock", "ext.products.summary"}
+
+
+def test_filter_estoque_only_drops_summary():
+    stock, summary = _stock_vs_summary()
+    kept = OpenApiWhenNotToUseGuidanceService.filter_candidates(
+        "Consulte o estoque do produto 10080001",
+        [stock, summary],
+        raw_action_of=lambda item: item,
+    )
+    ids = [item["actionId"] for item in kept]
+    assert ids == ["ext.products.stock"]

@@ -346,3 +346,79 @@ def test_quoted_positive_survives_large_catalog_pool():
     ids = [item.action_id for item in candidates]
     assert "ext.metrics.scalar" in ids
     assert ids[0] == "ext.metrics.scalar"
+
+
+def _item_balance() -> dict:
+    return {
+        "actionId": "ext.items.balance",
+        "method": "GET",
+        "path": "/items/{code}/balance",
+        "operationId": "get_item_balance",
+        "summary": "Item balance",
+        "description": "Use for «estoque», «saldo» or «disponível» of an item.",
+        "whenToUse": "Use for «estoque», «saldo» or «disponível» of an item.",
+        "parametersSchema": [
+            {"name": "code", "in": "path", "required": True, "schema": {"type": "string"}}
+        ],
+        "sensitivity": "read",
+        "enabled": True,
+    }
+
+
+def _item_overview() -> dict:
+    return {
+        "actionId": "ext.items.overview",
+        "method": "GET",
+        "path": "/items/{code}/overview",
+        "operationId": "get_item_overview",
+        "summary": "Item overview",
+        "description": "Use for «descrição», «cadastro» or «ficha» of an item.",
+        "whenToUse": "Use for «descrição», «cadastro» or «ficha» of an item.",
+        "whenNotToUse": (
+            "Do not use when the user asked for «estoque», «saldo» or «disponível»."
+        ),
+        "parametersSchema": [
+            {"name": "code", "in": "path", "required": True, "schema": {"type": "string"}}
+        ],
+        "sensitivity": "read",
+        "enabled": True,
+    }
+
+
+def test_compound_balance_and_overview_retrieves_and_plans_two_actions():
+    catalog = [_item_balance(), _item_overview(), _stock()]
+    message = "estoque e descrição do produto 10080011"
+    candidates = RetrieveActionCandidatesService(_Repo(catalog)).retrieve(
+        message,
+        allowed_action_ids=_allowed(catalog),
+        catalog_actions=catalog,
+    )
+    ids = {item.action_id for item in candidates}
+    assert "ext.items.balance" in ids
+    assert "ext.items.overview" in ids
+
+    def fake_llm(_message, _catalog):
+        return {
+            "goals": [
+                {"goalId": "g1", "intent": "estoque"},
+                {"goalId": "g2", "intent": "descrição"},
+            ],
+            "steps": [
+                {
+                    "actionId": "ext.items.balance",
+                    "goalIds": ["g1"],
+                    "arguments": {"parameters": {"code": "10080011"}},
+                },
+                {
+                    "actionId": "ext.items.overview",
+                    "goalIds": ["g2"],
+                    "arguments": {"parameters": {"code": "10080011"}},
+                },
+            ],
+        }
+
+    plan = PlanExternalActionsService(llm_planner=fake_llm).plan(message, candidates)
+    assert [step.action_id for step in plan.steps] == [
+        "ext.items.balance",
+        "ext.items.overview",
+    ]

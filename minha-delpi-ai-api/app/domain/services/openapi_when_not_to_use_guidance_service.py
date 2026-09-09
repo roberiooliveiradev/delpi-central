@@ -123,15 +123,25 @@ class OpenApiWhenNotToUseGuidanceService:
         *,
         raw_action_of,
     ) -> list[Any]:
-        """Drop candidates whose quoted whenNotToUse matches; fail-soft if all match."""
+        """Drop candidates whose quoted whenNotToUse matches; keep if whenToUse also matches.
+
+        Compound requests (estoque + descrição) must not lose the sibling whose
+        own quoted whenToUse still matches. Fail-soft if everyone would drop.
+        """
         if not candidates:
             return candidates
         kept = [
             item
             for item in candidates
-            if not cls.matches_message(message, raw_action_of(item))
+            if not cls._negative_without_positive(message, raw_action_of(item))
         ]
         return kept if kept else list(candidates)
+
+    @classmethod
+    def _negative_without_positive(cls, message: str, action: dict | None) -> bool:
+        if not cls.matches_message(message, action):
+            return False
+        return not cls.matches_positive(message, action)
 
     @classmethod
     def prefer_candidates(
