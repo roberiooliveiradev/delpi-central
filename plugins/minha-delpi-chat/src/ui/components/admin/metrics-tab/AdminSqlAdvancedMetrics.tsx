@@ -9,6 +9,8 @@ import {
   rankedFromRecord,
 } from "./adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AdminSqlAdvancedMetricsProps = {
   summary: AdminSqlAdvancedSummary | null;
   isLoading?: boolean;
@@ -64,32 +66,32 @@ export function AdminSqlAdvancedMetrics({
             <AdminKpiCard
               title="Turnos SQL"
               value={formatMetricNumber(summary.runsCount)}
-              hint="Conversas com skill SQL avançada ativa."
+              hint={ADMIN_HELP.kpis.sql.skillOn}
             />
             <AdminKpiCard
               title="Bloqueios"
               value={formatMetricNumber(summary.blockedCount)}
-              hint="Comandos destrutivos detectados e recusados."
+              hint={ADMIN_HELP.kpis.sql.destructive}
             />
             <AdminKpiCard
               title="Resultados vazios"
               value={formatMetricNumber(summary.emptyResultCount)}
-              hint="Execuções sem linhas retornadas."
+              hint={ADMIN_HELP.kpis.sql.empty}
             />
             <AdminKpiCard
               title="Edição incremental"
               value={formatMetricNumber(summary.incrementalEditCount)}
-              hint="Turnos com query ativa pronta para refinamento."
+              hint={ADMIN_HELP.kpis.sql.ready}
             />
             <AdminKpiCard
               title="CTEs / Window"
               value={`${formatMetricNumber(summary.cteUsageCount)} / ${formatMetricNumber(summary.windowFunctionUsageCount)}`}
-              hint="Uso detectado em SQL gerado ou analisado."
+              hint={ADMIN_HELP.kpis.sql.usage}
             />
             <AdminKpiCard
               title="Prefetch schema"
               value={formatMetricNumber(summary.schemaPrefetchCount)}
-              hint="Turnos que recomendaram explorar /system/tables/*."
+              hint={ADMIN_HELP.kpis.sql.catalogHint}
             />
           </AdminKpiGrid>
 

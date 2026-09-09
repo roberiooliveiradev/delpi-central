@@ -8,6 +8,8 @@ import {
   rankedFromRows,
 } from "./adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AdminFeedbackMetricsProps = {
   summary: AdminFeedbackSummary | null;
   isLoading?: boolean;
@@ -34,10 +36,10 @@ export function AdminFeedbackMetrics({
       {summary ? (
         <>
           <AdminKpiGrid>
-            <AdminKpiCard title="CSAT" value={formatMetricPercent(summary.csat)} hint="Feedback positivo ÷ total." />
-            <AdminKpiCard title="Positivos" value={formatMetricNumber(summary.positiveCount)} />
-            <AdminKpiCard title="Negativos" value={formatMetricNumber(summary.negativeCount)} />
-            <AdminKpiCard title="Perda de contexto" value={formatMetricNumber(summary.lostContextCount)} />
+            <AdminKpiCard title="CSAT" value={formatMetricPercent(summary.csat)} hint={ADMIN_HELP.kpis.feedback.csat} />
+            <AdminKpiCard title="Positivos" value={formatMetricNumber(summary.positiveCount)} hint={ADMIN_HELP.kpis.feedback.positive} />
+            <AdminKpiCard title="Negativos" value={formatMetricNumber(summary.negativeCount)} hint={ADMIN_HELP.kpis.feedback.negative} />
+            <AdminKpiCard title="Perda de contexto" value={formatMetricNumber(summary.lostContextCount)} hint={ADMIN_HELP.kpis.feedback.lostContext} />
           </AdminKpiGrid>
 
           {summary.alerts?.length ? (

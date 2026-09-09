@@ -1,3 +1,4 @@
+import { HintAction } from "@delpi/plugin-ui/index";
 import { ChatNativeTextInput } from "../components/shared/chatNativeFormFields";
 import { ArrowLeft, Bot, ChevronRight, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -10,6 +11,7 @@ import { useConfirmDialog } from "../components/shared";
 import { ChatAgentActionsPage } from "./ChatAgentActionsPage";
 import { ChatAgentBuilderPage } from "./ChatAgentBuilderPage";
 import { ChatAgentSkillsPage } from "./ChatAgentSkillsPage";
+import { ADMIN_HELP } from "../../content/adminHelpTooltips";
 
 import { normalizeAgentIcebreakers } from "../agentIcebreakers";
 
@@ -359,14 +361,16 @@ export function ChatAgentsPage({
 
         {canManageAgents ? (
           <div className="mdc-chat-ws-topbar__actions">
-            <button
-              type="button"
-              className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
-              onClick={() => setEditingAgent(null)}
-            >
-              <Plus size={16} aria-hidden="true" />
-              <span>Criar agente</span>
-            </button>
+            <HintAction hint={ADMIN_HELP.studio.create} ariaLabel="Ajuda: Criar agente">
+              <button
+                type="button"
+                className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+                onClick={() => setEditingAgent(null)}
+              >
+                <Plus size={16} aria-hidden="true" />
+                <span>Criar agente</span>
+              </button>
+            </HintAction>
           </div>
         ) : null}
       </header>
@@ -378,11 +382,16 @@ export function ChatAgentsPage({
           </p>
 
           <label className="mdc-chat-ws-directory__search">
-            <Search size={17} aria-hidden="true" />
+            <HintAction hint={ADMIN_HELP.studio.search} ariaLabel="Ajuda: Buscar agentes">
+              <span className="mdc-chat-ws-directory__search-icon">
+                <Search size={17} aria-hidden="true" />
+              </span>
+            </HintAction>
             <ChatNativeTextInput
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Buscar agentes"
+              aria-label="Buscar agentes"
             />
           </label>
         </div>
@@ -398,6 +407,7 @@ export function ChatAgentsPage({
                 void onReloadAgents?.(includeDisabled, canManageAgents);
               }}
               label="Mostrar inativos"
+              hint={ADMIN_HELP.studio.showInactive}
             />
           ) : null}
         </div>

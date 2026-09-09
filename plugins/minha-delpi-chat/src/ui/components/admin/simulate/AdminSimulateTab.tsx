@@ -5,7 +5,7 @@ import type { ChatSession } from "../../../../data/api/chatTypes";
 import type { ChatAgent } from "../../../../data/api/chatTypes";
 import { simulateAdminAgent } from "../../../../data/api/adminApi";
 import type { AdminAgentSimulateResponse } from "../../../../data/api/adminTypes";
-import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
+import { HintAction, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import { buildChatAgentConfigHref } from "../../../../navigation/chatRoutes";
 import { navigateChatHref } from "../../../../navigation/chatNavigation";
 
@@ -102,18 +102,20 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
         eyebrow="Agentes"
         title="Simulação completa do agente"
         description="Valide prompt final, diretrizes, RAG e ferramentas previstas antes de publicar alterações."
-        helpHint={ADMIN_HELP.simulation}
+        helpHint={ADMIN_HELP.pages.simulation}
         summary={<SimulateSummaryStrip summary={summary} />}
         actions={
           <div className="mdc-admin-simulate__toolbar-actions">
             {agentId ? (
-              <button
-                type="button"
-                className="mdc-chat-ws-outline-btn"
-                onClick={() => navigateChatHref(buildChatAgentConfigHref(agentId))}
-              >
-                Abrir Studio
-              </button>
+              <HintAction hint={ADMIN_HELP.fields.simulation.openStudio} ariaLabel="Ajuda: Abrir Studio">
+                <button
+                  type="button"
+                  className="mdc-chat-ws-outline-btn"
+                  onClick={() => navigateChatHref(buildChatAgentConfigHref(agentId))}
+                >
+                  Abrir Studio
+                </button>
+              </HintAction>
             ) : null}
             <button
               type="button"
@@ -133,6 +135,7 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
         <ChatAdminNativeTextAreaField
           id="admin-simulate-question"
           label="Pergunta de teste"
+          hint={ADMIN_HELP.fields.simulation.question}
           span={false}
           rows={4}
           value={question}
@@ -143,6 +146,7 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
         <ChatAdminNativeSelectField
           id="admin-simulate-agent"
           label="Agente (opcional)"
+          hint={ADMIN_HELP.fields.simulation.agent}
           span={false}
           value={agentId}
           placeholderOption="Padrão do chat"
@@ -153,6 +157,7 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
         <ChatAdminNativeSelectField
           id="admin-simulate-session"
           label="Sessão real (opcional)"
+          hint={ADMIN_HELP.fields.simulation.session}
           span={false}
           value={sessionId}
           placeholderOption="Sem histórico de sessão"
@@ -167,6 +172,9 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
           className="mdc-admin-simulate__checkbox"
           checked={executeToolsInSandbox}
           label="Executar tools em sandbox (com token do admin)"
+          hint={ADMIN_HELP.fields.simulation.executeTools}
+          hintPlacement="tooltip"
+          hintAriaLabel="Ajuda: Executar tools"
           onChange={setExecuteToolsInSandbox}
         />
 
@@ -174,6 +182,9 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
           className="mdc-admin-simulate__checkbox"
           checked={generateAnswer}
           label="Gerar resposta com LLM (mais lento)"
+          hint={ADMIN_HELP.fields.simulation.generateAnswer}
+          hintPlacement="tooltip"
+          hintAriaLabel="Ajuda: Gerar resposta"
           onChange={setGenerateAnswer}
         />
 

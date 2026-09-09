@@ -96,6 +96,8 @@ import {
   ChatAdminNativeTextAreaField,
   ChatNativeTextAreaControl,
 } from "../components/admin/shared/chatAdminFormFields";
+import { FieldLabel, SectionHintLabel } from "@delpi/plugin-ui/index";
+import { ADMIN_HELP } from "../../content/adminHelpTooltips";
 
 import "./ChatAgentBuilderPage.css";
 
@@ -553,7 +555,9 @@ export function ChatAgentBuilderPage({
       className="mdc-chat-agent-builder__section mdc-chat-agent-builder__icebreakers-section"
       aria-label="Quebra-gelos do agente"
     >
-      <h2 className="mdc-chat-ws-section-head">Quebra-gelos</h2>
+      <h2 className="mdc-chat-ws-section-head">
+        <SectionHintLabel label="Quebra-gelos" hint={ADMIN_HELP.studio.icebreakers} />
+      </h2>
 
       <AgentIcebreakersEditor
         entries={icebreakers}
@@ -1585,7 +1589,11 @@ export function ChatAgentBuilderPage({
               <ChatAgentIcon icon={icon} size={26} />
             </span>
             <label className="mdc-chat-agent-builder__hero-name-wrap">
-              <span className="mdc-chat-agent-builder__sr-only">Nome do agente</span>
+              <FieldLabel
+                label="Nome do agente"
+                hint={ADMIN_HELP.studio.name}
+                className="mdc-chat-agent-builder__sr-only"
+              />
               <ChatNativeTextInput
                 className="mdc-chat-agent-builder__hero-name"
                 value={name}
@@ -1602,6 +1610,7 @@ export function ChatAgentBuilderPage({
             <ChatAdminNativeTextAreaField
               id="agent-builder-description"
               label="Descrição"
+              hint={ADMIN_HELP.studio.description}
               span={false}
               rows={2}
               maxLength={900}
@@ -1621,6 +1630,7 @@ export function ChatAgentBuilderPage({
               <ChatAdminNativeSelectField
                 id="agent-builder-visibility"
                 label="Visibilidade"
+                hint={ADMIN_HELP.studio.visibility}
                 span={false}
                 value={visibility}
                 options={[
@@ -1666,7 +1676,7 @@ export function ChatAgentBuilderPage({
 
             <div className="mdc-chat-agent-builder__grid mdc-chat-agent-builder__grid--three">
               <label className="mdc-chat-ws-field">
-                <span>Categoria</span>
+                <FieldLabel label="Categoria" hint={ADMIN_HELP.studio.category} />
                 <ChatNativeTextInput
                   value={category}
                   maxLength={80}
@@ -1676,7 +1686,7 @@ export function ChatAgentBuilderPage({
               </label>
 
               <div className="mdc-chat-ws-field">
-                <span>Ícone</span>
+                <FieldLabel label="Ícone" hint={ADMIN_HELP.studio.icon} />
                 <div className="mdc-chat-agent-icon-field">
                   <button
                     type="button"
@@ -1705,12 +1715,15 @@ export function ChatAgentBuilderPage({
           </section>
 
           <section className="mdc-chat-agent-builder__section">
-            <h2 className="mdc-chat-ws-section-head">Instruções</h2>
+            <h2 className="mdc-chat-ws-section-head">
+              <SectionHintLabel label="Instruções" hint={ADMIN_HELP.studio.instructions} />
+            </h2>
 
             <div className="mdc-chat-agent-builder__prompt-templates">
               <ChatAdminNativeSelectField
                 id="agent-builder-prompt-template"
                 label="Modelo de instruções"
+                hint={ADMIN_HELP.studio.promptTemplate}
                 span={false}
                 value={selectedPromptTemplateKey}
                 placeholderOption="Selecione um modelo (opcional)"
@@ -1765,6 +1778,7 @@ export function ChatAgentBuilderPage({
             <ChatAdminNativeTextAreaField
               id="agent-builder-system-prompt"
               label="Instruções do agente"
+              hint={ADMIN_HELP.studio.instructions}
               controlClassName="mdc-chat-agent-builder__prompt"
               maxLength={12000}
               value={systemPrompt}
@@ -1782,6 +1796,7 @@ export function ChatAgentBuilderPage({
             <ChatAdminNativeSelectField
               id="agent-builder-response-style"
               label="Estilo de resposta"
+              hint={ADMIN_HELP.studio.responseStyle}
               span={false}
               className="mdc-chat-ws-field mdc-chat-agent-builder__field--compact"
               value={responseStyle}
@@ -1872,16 +1887,19 @@ export function ChatAgentBuilderPage({
                 checked={capActions}
                 onChange={(event) => setCapActions(event.target.checked)}
                 label="Permitir uso de actions configuradas"
+                hint={ADMIN_HELP.studio.allowActions}
               />
               <AgentBuilderCheckbox
                 checked={capFiles}
                 onChange={(event) => setCapFiles(event.target.checked)}
                 label="Permitir documentos e fontes de conhecimento"
+                hint={ADMIN_HELP.studio.allowFiles}
               />
               <AgentBuilderCheckbox
                 checked={capCanvas}
                 onChange={(event) => setCapCanvas(event.target.checked)}
                 label="Permitir lousa (canvas)"
+                hint={ADMIN_HELP.studio.allowCanvas}
               />
             </div>
           </section>
@@ -2080,11 +2098,13 @@ export function ChatAgentBuilderPage({
                     checked={copyActionsOnDuplicate}
                     onChange={(event) => setCopyActionsOnDuplicate(event.target.checked)}
                     label="Ao duplicar, copiar também APIs e actions configuradas"
+                    hint={ADMIN_HELP.studio.copyActions}
                   />
                   <AgentBuilderCheckbox
                     checked={copySourcesOnDuplicate}
                     onChange={(event) => setCopySourcesOnDuplicate(event.target.checked)}
                     label="Ao duplicar, copiar também fontes de conhecimento do agente"
+                    hint={ADMIN_HELP.studio.copySources}
                   />
                 </div>
               ) : null}
@@ -2098,10 +2118,11 @@ export function ChatAgentBuilderPage({
               checked={enabled}
               onChange={(event) => setEnabled(event.target.checked)}
               label="Agente ativo (visível para uso)"
+              hint={ADMIN_HELP.studio.agentEnabled}
             />
 
             <label className="mdc-chat-ws-field mdc-chat-agent-builder__field--compact">
-              <span>Máximo de chamadas de ferramentas</span>
+              <FieldLabel label="Máximo de chamadas de ferramentas" hint={ADMIN_HELP.studio.maxTools} />
               <ChatNativeTextInput
                 type="number"
                 min={1}
@@ -2119,6 +2140,7 @@ export function ChatAgentBuilderPage({
                 setRequiresConfirmationForWrite(event.target.checked)
               }
               label="Exigir confirmação para ações de escrita"
+              hint={ADMIN_HELP.studio.requireWriteConfirmation}
             />
           </section>
 
@@ -2137,6 +2159,7 @@ export function ChatAgentBuilderPage({
                 <ChatAdminNativeSelectField
                   id="agent-builder-share-role"
                   label="Papel"
+                  hint={ADMIN_HELP.studio.shareRole}
                   span={false}
                   value={shareRole}
                   options={[
@@ -2180,6 +2203,7 @@ export function ChatAgentBuilderPage({
                       <ChatAdminNativeSelectField
                         id={`agent-builder-share-role-${share.target_user_id}`}
                         label="Papel do compartilhamento"
+                        hint={ADMIN_HELP.studio.shareRole}
                         span={false}
                         value={share.role}
                         disabled={updatingShareUserId === share.target_user_id}

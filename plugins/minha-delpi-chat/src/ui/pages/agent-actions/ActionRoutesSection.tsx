@@ -8,6 +8,7 @@ import type {
   ChatAgentActionProvider,
 } from "../../../data/api/chatTypes";
 import { AgentBuilderCheckbox, AgentBuilderSwitch } from "../../components/workspace/agentBuilder";
+import { ADMIN_HELP } from "../../../content/adminHelpTooltips";
 import { ActionTestPanel } from "./ActionTestPanel";
 import type { ActionTestPayload } from "./types";
 
@@ -92,6 +93,7 @@ export function ActionRoutesSection({
               onUpdateProviderPermissions({ allowRead: event.target.checked })
             }
             label="Leitura"
+            hint={ADMIN_HELP.studio.allowRead}
           />
           <AgentBuilderCheckbox
             checked={selectedLink.allowWrite}
@@ -99,6 +101,7 @@ export function ActionRoutesSection({
               onUpdateProviderPermissions({ allowWrite: event.target.checked })
             }
             label="Escrita"
+            hint={ADMIN_HELP.studio.allowWrite}
           />
           <AgentBuilderCheckbox
             checked={selectedLink.allowAdmin}
@@ -106,6 +109,7 @@ export function ActionRoutesSection({
               onUpdateProviderPermissions({ allowAdmin: event.target.checked })
             }
             label="Admin"
+            hint={ADMIN_HELP.studio.allowAdmin}
           />
           <AgentBuilderCheckbox
             checked={selectedLink.requiresConfirmationForWrite}
@@ -115,6 +119,7 @@ export function ActionRoutesSection({
               })
             }
             label="Confirmar escrita"
+            hint={ADMIN_HELP.studio.requireWriteConfirmation}
           />
         </div>
       ) : null}

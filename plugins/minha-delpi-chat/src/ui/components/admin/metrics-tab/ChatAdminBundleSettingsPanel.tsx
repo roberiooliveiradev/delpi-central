@@ -1,5 +1,8 @@
 import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
+import { FieldLabel, SectionHintLabel } from "@delpi/plugin-ui/index";
 import { useEffect, useState, type ReactNode } from "react";
+
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
 import {
@@ -137,7 +140,7 @@ export function BundleToggleSettingCard({
       <div className="mdc-chat-intelligence-setting__control">
         <AdminFormCheckbox
           title={checked ? "Ativado" : "Desativado"}
-          hint="Marque para aplicar este comportamento no pipeline do chat."
+          hint={ADMIN_HELP.fields.settings.applyToggle}
           checked={checked}
           onChange={(event) => onChange(event.target.checked)}
         />
@@ -192,9 +195,14 @@ export function BundleNumberSettingCard({
       </div>
 
       <div className="mdc-chat-intelligence-setting__control">
-        <label className="mdc-admin-field">
-          <span>Valor atual</span>
+        <div className="mdc-admin-field">
+          <FieldLabel
+            htmlFor={`bundle-number-${meta.title}`}
+            label="Valor atual"
+            hint={ADMIN_HELP.fields.settings.currentValue}
+          />
           <ChatNativeTextInput
+            id={`bundle-number-${meta.title}`}
             type="number"
             min={meta.min}
             max={meta.max}
@@ -202,7 +210,7 @@ export function BundleNumberSettingCard({
             value={value}
             onChange={(event) => onChange(Number(event.target.value))}
           />
-        </label>
+        </div>
       </div>
     </article>
   );
@@ -270,7 +278,9 @@ export function ChatAdminBundleSettingsPanel<T extends BundleSettingsRecord>({
         {sections.map((section) => (
           <section key={section.id} className="mdc-chat-intelligence-section">
             <header className="mdc-chat-intelligence-section__header">
-              <h5>{section.title}</h5>
+              <h5>
+                <SectionHintLabel label={section.title} hint={section.description} />
+              </h5>
               <p>{section.description}</p>
             </header>
             <div className="mdc-chat-intelligence-section__grid">

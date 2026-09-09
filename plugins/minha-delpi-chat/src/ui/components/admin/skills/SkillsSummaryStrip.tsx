@@ -1,3 +1,4 @@
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 import type { SkillStatusFilter, SkillsSummary } from "./skillsSummary";
 import { AdminKpiCard } from "../shared/AdminKpiCard";
 import { AdminSummaryStrip } from "../shared/AdminSummaryStrip";
@@ -17,15 +18,15 @@ export function SkillsSummaryStrip({
   onFilterChange,
 }: SkillsSummaryStripProps) {
   const items = [
-    { key: "total", label: "Total", value: summary.total, filter: "all" as const },
+    { key: "total", label: "Total", value: summary.total, filter: "all" as const, hint: ADMIN_HELP.kpis.skills.total },
     {
       key: "active",
       label: "Ativas",
       value: summary.active,
       filter: "active" as const,
-      hint: "Visíveis no catálogo dos agentes",
+      hint: ADMIN_HELP.kpis.skills.active,
     },
-    { key: "inactive", label: "Inativas", value: summary.inactive, filter: "inactive" as const },
+    { key: "inactive", label: "Inativas", value: summary.inactive, filter: "inactive" as const, hint: ADMIN_HELP.kpis.skills.inactive },
   ];
 
   return (

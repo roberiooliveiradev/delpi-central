@@ -10,6 +10,8 @@ import {
   rankedFromRecord,
 } from "./adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AdminDocumentVisionMetricsProps = {
   summary: AdminDocumentVisionSummary | null;
   isLoading?: boolean;
@@ -40,12 +42,12 @@ export function AdminDocumentVisionMetrics({
             <AdminKpiCard
               title="Execuções OCR"
               value={formatMetricNumber(summary.runsCount)}
-              hint="Turnos com snapshot documentVision na janela."
+              hint={ADMIN_HELP.kpis.vision.turns}
             />
             <AdminKpiCard
               title="Taxa legível"
               value={formatMetricPercent(summary.legibilityRate)}
-              hint={`${formatMetricNumber(summary.legibleCount)} execução(ões) legíveis.`}
+              hint={`${formatMetricNumber(summary.legibleCount)} ${ADMIN_HELP.kpis.vision.legible}`}
             />
             <AdminKpiCard
               title="Duração média"
@@ -54,7 +56,7 @@ export function AdminDocumentVisionMetrics({
                   ? `${formatMetricNumber(summary.avgDurationMs)} ms`
                   : "—"
               }
-              hint="Tempo médio do pipeline de visão quando instrumentado."
+              hint={ADMIN_HELP.kpis.vision.latency}
             />
           </AdminKpiGrid>
 

@@ -3,6 +3,8 @@ import { AdminKpiCard } from "../shared/AdminKpiCard";
 import { AdminSummaryStrip } from "../shared/AdminSummaryStrip";
 import { formatMetricNumber } from "../metrics-tab/adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type ToolsSummaryStripProps = {
   summary: ToolsSummary;
 };
@@ -18,17 +20,17 @@ export function ToolsSummaryStrip({ summary }: ToolsSummaryStripProps) {
       <AdminKpiCard
         title="Saúde"
         value={summary.healthLabel}
-        hint="Verificações operacionais do catálogo."
+        hint={ADMIN_HELP.kpis.tools.health}
       />
       <AdminKpiCard
         title="Ações globais"
         value={formatMetricNumber(summary.globalActions)}
-        hint="Rotas OpenAPI administradas."
+        hint={ADMIN_HELP.kpis.tools.routes}
       />
       <AdminKpiCard
         title="Ações no chat"
         value={formatMetricNumber(summary.chatActions)}
-        hint="Itens expostos ao catálogo do usuário."
+        hint={ADMIN_HELP.kpis.tools.exposed}
       />
     </AdminSummaryStrip>
   );

@@ -1,4 +1,6 @@
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import type { AdminRbacSummary } from "../../../../data/api/adminTypes";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 
 import "./AdminRbacPanel.css";
 
@@ -19,7 +21,9 @@ export function AdminRbacPanel({ rbac }: AdminRbacPanelProps) {
       <header className="mdc-admin-tab-header">
         <div className="mdc-admin-panel__intro">
           <p className="mdc-chat-eyebrow">RBAC</p>
-          <h2>Permissões administrativas</h2>
+          <h2>
+            <SectionHintLabel label="Permissões administrativas" hint={ADMIN_HELP.fields.overview.rbac} />
+          </h2>
           <p>Capacidades do seu perfil no painel admin (curadoria, auditoria e operações sensíveis).</p>
         </div>
       </header>

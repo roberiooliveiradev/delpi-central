@@ -14,6 +14,9 @@ import type {
   AdminSecuritySummary,
 } from "../../../../data/api/adminTypes";
 
+import { HintAction } from "@delpi/plugin-ui/index";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { ChatAdminNativeTextAreaField } from "../shared/chatAdminFormFields";
 import { SecuritySummaryStrip } from "./SecuritySummaryStrip";
@@ -91,13 +94,16 @@ export function AdminSecurityTab({
         eyebrow="Governança"
         title="Segurança operacional"
         description="Proteção contra injeção de prompt, sanitização, limites e auditoria de tentativas suspeitas."
+        helpHint={ADMIN_HELP.pages.security}
         summary={<SecuritySummaryStrip summary={summary} isLoading={isLoading} />}
         actions={
           <div className="mdc-admin-security__toolbar-actions">
             {onOpenAudit ? (
-              <button type="button" className="mdc-chat-ws-outline-btn" onClick={onOpenAudit}>
-                Ver auditoria
-              </button>
+              <HintAction hint={ADMIN_HELP.fields.security.openAudit} ariaLabel="Ajuda: Ver auditoria">
+                <button type="button" className="mdc-chat-ws-outline-btn" onClick={onOpenAudit}>
+                  Ver auditoria
+                </button>
+              </HintAction>
             ) : null}
             <button
               type="button"
@@ -119,19 +125,22 @@ export function AdminSecurityTab({
           <ChatAdminNativeTextAreaField
             id="admin-security-scan-message"
             label="Mensagem"
+            hint={ADMIN_HELP.fields.security.message}
             span={false}
             value={scanMessage}
             placeholder="Cole uma mensagem para avaliar risco de injeção de prompt..."
             onChange={setScanMessage}
           />
-          <button
-            type="button"
-            className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
-            disabled={isScanning}
-            onClick={() => void handleScan()}
-          >
-            {isScanning ? "Analisando..." : "Analisar"}
-          </button>
+          <HintAction hint={ADMIN_HELP.fields.security.scan} ariaLabel="Ajuda: Analisar mensagem">
+            <button
+              type="button"
+              className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+              disabled={isScanning}
+              onClick={() => void handleScan()}
+            >
+              {isScanning ? "Analisando..." : "Analisar"}
+            </button>
+          </HintAction>
 
           {scanResult ? (
             <div className="mdc-admin-security__scan-result">

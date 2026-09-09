@@ -676,13 +676,14 @@ export function AdminMetricsTab({
         eyebrow="Qualidade"
         title="Observabilidade do Minha DELPI Chat"
         description="Visão geral com fila de atenção; use a sidebar para drill-down. A janela (hours) fica na URL."
-        helpHint={ADMIN_HELP.metrics}
+        helpHint={ADMIN_HELP.pages.metrics}
         actions={
           <div className="mdc-admin-metrics-tab__header-actions">
             {onMetricsHoursChange ? (
               <ChatAdminNativeSelectField
                 id="admin-metrics-window"
                 label="Janela"
+                hint={ADMIN_HELP.fields.metrics.window}
                 span={false}
                 className="mdc-admin-metrics-tab__window"
                 value={String(metricsHours)}

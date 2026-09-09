@@ -1,3 +1,4 @@
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 import type { AdminLearningSummary } from "../../../../data/api/adminTypes";
 import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
 import { formatMetricNumber, formatMetricPercent } from "../metrics-tab/adminMetricsFormatters";
@@ -21,37 +22,37 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
       key: "pending",
       title: "Pendentes",
       value: formatMetricNumber(summary.funnel.pending),
-      hint: `${summary.highlights.pendingHighConfidence} alta confiança`,
+      hint: `${ADMIN_HELP.kpis.learning.pendingHighConfidence} ${summary.highlights.pendingHighConfidence}`,
     },
     {
       key: "created",
       title: "Criados (janela)",
       value: formatMetricNumber(summary.funnel.recentCreated),
-      hint: `${summary.funnel.created} no total`,
+      hint: `${ADMIN_HELP.kpis.learning.createdTotal} ${summary.funnel.created}`,
     },
     {
       key: "promoted",
       title: "Promovidos",
       value: formatMetricNumber(summary.funnel.promoted),
-      hint: `${summary.funnel.approved} aprovados`,
+      hint: `${ADMIN_HELP.kpis.learning.approved} ${summary.funnel.approved}`,
     },
     {
       key: "approval",
       title: "Taxa de aprovação",
       value: formatMetricPercent(summary.funnel.approvalRate),
-      hint: `${summary.funnel.rejected} rejeitados`,
+      hint: `${ADMIN_HELP.kpis.learning.rejected} ${summary.funnel.rejected}`,
     },
     {
       key: "terms",
       title: "Termos ativos",
       value: formatMetricNumber(summary.highlights.learnedTermsActive),
-      hint: `${summary.vocabulary.total} no vocabulário`,
+      hint: `${ADMIN_HELP.kpis.learning.vocabularyTotal} ${summary.vocabulary.total}`,
     },
     {
       key: "defs",
       title: "Definições / Typos",
       value: `${formatMetricNumber(summary.highlights.termDefinitions)} / ${formatMetricNumber(summary.highlights.normalizationRules)}`,
-      hint: "candidatos por tipo",
+      hint: ADMIN_HELP.kpis.learning.candidateTypes,
     },
     {
       key: "memory",
@@ -59,7 +60,7 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
       value: formatMetricNumber(
         summary.highlights.memoryItemsActive ?? summary.memory?.active ?? 0,
       ),
-      hint: `${summary.memory?.forgotten ?? 0} esquecidas`,
+      hint: `${ADMIN_HELP.kpis.learning.forgotten} ${summary.memory?.forgotten ?? 0}`,
     },
     {
       key: "eval",
@@ -67,7 +68,7 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
       value: formatMetricNumber(
         summary.highlights.evaluationCasesFailing ?? summary.evaluation?.failing ?? 0,
       ),
-      hint: `${summary.highlights.evaluationCasesActive ?? summary.evaluation?.active ?? 0} casos ativos`,
+      hint: `${ADMIN_HELP.kpis.learning.evalActive} ${summary.highlights.evaluationCasesActive ?? summary.evaluation?.active ?? 0}`,
     },
     {
       key: "ft",
@@ -75,7 +76,7 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
       value: formatMetricNumber(
         summary.highlights.fineTuningSamplesApproved ?? summary.fineTuning?.samplesApproved ?? 0,
       ),
-      hint: `${summary.fineTuning?.samplesCaptured ?? 0} capturadas`,
+      hint: `${ADMIN_HELP.kpis.learning.samplesCaptured} ${summary.fineTuning?.samplesCaptured ?? 0}`,
     },
     {
       key: "rag",
@@ -84,7 +85,7 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
         (summary.highlights.ragGlossaryIndexed ?? summary.ragIndex?.glossaryDocuments ?? 0) +
           (summary.highlights.ragUserMemoryIndexed ?? summary.ragIndex?.userMemoryDocuments ?? 0),
       ),
-      hint: `glossário ${summary.ragIndex?.glossaryDocuments ?? 0} · memória ${summary.ragIndex?.userMemoryDocuments ?? 0}`,
+      hint: `${ADMIN_HELP.kpis.learning.ragBreakdown} glossário ${summary.ragIndex?.glossaryDocuments ?? 0} · memória ${summary.ragIndex?.userMemoryDocuments ?? 0}`,
     },
   ];
 

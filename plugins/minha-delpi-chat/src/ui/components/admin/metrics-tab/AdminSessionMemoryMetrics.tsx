@@ -9,6 +9,8 @@ import {
   rankedFromRows,
 } from "./adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AdminSessionMemoryMetricsProps = {
   summary: AdminSessionMemorySummary | null;
   isLoading?: boolean;
@@ -52,32 +54,32 @@ export function AdminSessionMemoryMetrics({
             <AdminKpiCard
               title="Turnos com memória"
               value={formatMetricNumber(summary.memoryTurnsCount)}
-              hint="Respostas com snapshot de memória na auditoria."
+              hint={ADMIN_HELP.kpis.memory.turns}
             />
             <AdminKpiCard
               title="Follow-ups"
               value={formatMetricNumber(summary.followUpTurns)}
-              hint={`Taxa de resolução: ${formatMetricPercent(summary.followUpResolutionRate)}.`}
+              hint={`${ADMIN_HELP.kpis.memory.resolution} ${formatMetricPercent(summary.followUpResolutionRate)}.`}
             />
             <AdminKpiCard
               title="Risco de perda"
               value={formatMetricNumber(summary.contextLossRiskTurns)}
-              hint="Assertividade baixa ou entidade não reutilizada."
+              hint={ADMIN_HELP.kpis.memory.lowAssert}
             />
             <AdminKpiCard
               title="Assertividade < 70"
               value={formatMetricNumber(summary.lowAssertivenessTurns)}
-              hint="Score contextual abaixo do limiar."
+              hint={ADMIN_HELP.kpis.memory.lowScore}
             />
             <AdminKpiCard
               title="Ambiguidade"
               value={formatMetricNumber(summary.ambiguityTurns)}
-              hint="Memória não resolveu referência sozinha."
+              hint={ADMIN_HELP.kpis.memory.unresolved}
             />
             <AdminKpiCard
               title="Feedback memória"
               value={formatMetricNumber(feedback?.memoryFeedbackCount)}
-              hint={`Perda de contexto: ${formatMetricNumber(feedback?.lostContextFeedbackCount)}.`}
+              hint={`${ADMIN_HELP.kpis.memory.lostContext} ${formatMetricNumber(feedback?.lostContextFeedbackCount)}.`}
             />
           </AdminKpiGrid>
 

@@ -13,6 +13,7 @@ import type {
 } from "./knowledgeTypes";
 import { syncKnowledgeFiltersToUrl } from "../../../../navigation/adminUrlQuery";
 import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 import { useEffect } from "react";
 
 import "./AdminKnowledgeTab.css";
@@ -102,7 +103,7 @@ export function AdminKnowledgeTab({
         eyebrow="Conhecimento"
         title="Base de conhecimento"
         description="Documentos globais do chat, ingestão e curadoria. Anexos de conversa não entram nesta base. Filtros ficam na URL para compartilhar."
-        helpHint={ADMIN_HELP.documents}
+        helpHint={ADMIN_HELP.pages.documents}
         summary={
           <KnowledgeSummaryStrip
             summary={documentSummary}

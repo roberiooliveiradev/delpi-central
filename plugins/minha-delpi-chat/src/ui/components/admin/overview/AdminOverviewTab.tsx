@@ -24,6 +24,7 @@ import { navigateChatHref } from "../../../../navigation/chatNavigation";
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { AdminRbacPanel } from "../rbac/AdminRbacPanel";
 import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 import { AdminAttentionQueue } from "./AdminAttentionQueue";
 import { AdminManualPanel } from "./AdminManualPanel";
 import { buildAttentionQueue } from "./attentionQueue";
@@ -203,7 +204,7 @@ export function AdminOverviewTab({
         eyebrow="Painel"
         title="Como está o chat?"
         description="Resumo operacional das últimas 24 horas. Clique nos cards ou na fila de atenção para ir à seção."
-        helpHint={ADMIN_HELP.overview}
+        helpHint={ADMIN_HELP.pages.overview}
       />
 
       {loading ? <p className="mdc-chat-muted">Atualizando indicadores...</p> : null}

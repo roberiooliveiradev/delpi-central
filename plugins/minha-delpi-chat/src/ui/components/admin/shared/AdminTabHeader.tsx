@@ -5,8 +5,8 @@ type AdminTabHeaderProps = {
   eyebrow?: string;
   title: string;
   description?: string;
-  /** Texto de Ajuda (hover) — catálogo adminHelpTooltips. */
-  helpHint?: string;
+  /** Texto de Ajuda (hover) — catálogo adminHelpTooltips.pages. */
+  helpHint: string;
   actions?: ReactNode;
   summary?: ReactNode;
   className?: string;
@@ -42,12 +42,8 @@ export function AdminTabHeader({
         {eyebrow ? <p className="mdc-chat-eyebrow">{eyebrow}</p> : null}
         <h2>
           {title}
-          {helpHint ? (
-            <>
-              {" "}
-              <HelpTooltip content={helpHint} />
-            </>
-          ) : null}
+          {" "}
+          <HelpTooltip content={helpHint} />
         </h2>
         {description ? <p>{description}</p> : null}
       </div>

@@ -1,11 +1,13 @@
-import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { useEffect, useState } from "react";
 
 import type { SaveAdminGuidelinePayload } from "../../../../data/api/adminApi";
 import type { AdminGuideline } from "./guidelineTypes";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 import {
   ChatAdminNativeSelectField,
   ChatAdminNativeTextAreaField,
+  ChatAdminNativeTextField,
 } from "../shared/chatAdminFormFields";
 
 import "./GuidelineEditorPanel.css";
@@ -127,29 +129,30 @@ export function GuidelineEditorPanel({
         </div>
       ) : null}
 
-      <label>
-        <span>Título</span>
-        <ChatNativeTextInput
-          value={title}
-          disabled={!canCreateGuidelines}
-          placeholder="Ex.: Não inventar respostas"
-          onChange={(event) => setTitle(event.target.value)}
-        />
-      </label>
+      <ChatAdminNativeTextField
+        id="guideline-editor-title"
+        label="Título"
+        hint={ADMIN_HELP.fields.guidelines.title}
+        value={title}
+        disabled={!canCreateGuidelines}
+        placeholder="Ex.: Não inventar respostas"
+        onChange={setTitle}
+      />
 
-      <label>
-        <span>Descrição</span>
-        <ChatNativeTextInput
-          value={description}
-          disabled={!canCreateGuidelines}
-          placeholder="Resumo curto da diretriz"
-          onChange={(event) => setDescription(event.target.value)}
-        />
-      </label>
+      <ChatAdminNativeTextField
+        id="guideline-editor-description"
+        label="Descrição"
+        hint={ADMIN_HELP.fields.guidelines.description}
+        value={description}
+        disabled={!canCreateGuidelines}
+        placeholder="Resumo curto da diretriz"
+        onChange={setDescription}
+      />
 
       <ChatAdminNativeSelectField
         id="guideline-editor-category"
         label="Categoria"
+        hint={ADMIN_HELP.fields.guidelines.category}
         span={false}
         value={category}
         disabled={!canCreateGuidelines}
@@ -167,6 +170,7 @@ export function GuidelineEditorPanel({
       <ChatAdminNativeSelectField
         id="guideline-editor-environment"
         label="Ambiente"
+        hint={ADMIN_HELP.fields.guidelines.environment}
         span={false}
         value={environment}
         disabled={!canCreateGuidelines}
@@ -184,6 +188,7 @@ export function GuidelineEditorPanel({
       <ChatAdminNativeTextAreaField
         id="guideline-editor-content"
         label="Conteúdo"
+        hint={ADMIN_HELP.fields.guidelines.content}
         span={false}
         rows={7}
         value={content}

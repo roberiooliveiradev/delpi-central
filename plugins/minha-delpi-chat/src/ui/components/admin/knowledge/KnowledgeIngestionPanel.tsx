@@ -1,11 +1,13 @@
-import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { useState } from "react";
+
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 
 import { workspaceFileProjectIngestLabels } from "../../../../content/workspaceFileIngestContent";
 import { AdminFileDropzone } from "../shared/AdminFileDropzone";
 import {
   ChatAdminNativeSelectField,
   ChatAdminNativeTextAreaField,
+  ChatAdminNativeTextField,
 } from "../shared/chatAdminFormFields";
 import { IngestProgressIndicator } from "../../shared/IngestProgressIndicator";
 import { KnowledgeCuratorialFields } from "./KnowledgeCuratorialFields";
@@ -226,6 +228,7 @@ export function KnowledgeIngestionPanel({
         {ingestMode === "file" ? (
           <AdminFileDropzone
             label="Arquivo de conhecimento"
+            labelHint={ADMIN_HELP.fields.documents.file}
             ingestFamily="global_knowledge"
             getAccessToken={getAccessToken}
             disabled={isMutating || !canManageKnowledge}
@@ -254,6 +257,7 @@ export function KnowledgeIngestionPanel({
           <ChatAdminNativeTextAreaField
             id="knowledge-ingestion-content"
             label="Conteúdo"
+            hint={ADMIN_HELP.fields.documents.content}
             span={false}
             rows={8}
             value={content}
@@ -271,19 +275,20 @@ export function KnowledgeIngestionPanel({
           />
         ) : null}
 
-        <label className="mdc-admin-field">
-          <span>Título</span>
-          <ChatNativeTextInput
-            value={title}
-            disabled={isMutating || !canManageKnowledge}
-            placeholder="Ex.: Diretrizes gerais do atendimento"
-            onChange={(event) => setTitle(event.target.value)}
-          />
-        </label>
+        <ChatAdminNativeTextField
+          id="knowledge-ingestion-title"
+          label="Título"
+          hint={ADMIN_HELP.fields.documents.title}
+          value={title}
+          disabled={isMutating || !canManageKnowledge}
+          placeholder="Ex.: Diretrizes gerais do atendimento"
+          onChange={setTitle}
+        />
 
         <ChatAdminNativeSelectField
           id="knowledge-ingestion-source-type"
           label="Tipo"
+          hint={ADMIN_HELP.fields.documents.type}
           span={false}
           value={sourceType}
           disabled={isMutating || !canManageKnowledge}
@@ -297,15 +302,15 @@ export function KnowledgeIngestionPanel({
           onChange={setSourceType}
         />
 
-        <label className="mdc-admin-field">
-          <span>Referência</span>
-          <ChatNativeTextInput
-            value={sourceRef}
-            disabled={isMutating}
-            placeholder="Ex.: global:diretrizes-atendimento"
-            onChange={(event) => setSourceRef(event.target.value)}
-          />
-        </label>
+        <ChatAdminNativeTextField
+          id="knowledge-ingestion-source-ref"
+          label="Referência"
+          hint={ADMIN_HELP.fields.documents.sourceRef}
+          value={sourceRef}
+          disabled={isMutating}
+          placeholder="Ex.: global:diretrizes-atendimento"
+          onChange={setSourceRef}
+        />
 
         <KnowledgeCuratorialFields
           category={category}

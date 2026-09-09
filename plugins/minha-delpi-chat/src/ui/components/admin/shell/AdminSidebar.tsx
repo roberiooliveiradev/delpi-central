@@ -1,3 +1,4 @@
+import { HintAction } from "@delpi/plugin-ui/index";
 import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { ChevronRight, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -11,6 +12,7 @@ import {
 } from "../../../../navigation/adminNavTree";
 import { searchAdminNavigation } from "../../../../navigation/adminNavSearch";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 
 import "./AdminSidebar.css";
 
@@ -189,7 +191,11 @@ export function AdminSidebar({
       ) : null}
 
       <div className="mdc-admin-sidebar__search">
-        <Search size={16} aria-hidden="true" />
+        <HintAction hint={ADMIN_HELP.shell.search} ariaLabel="Ajuda: Buscar no admin">
+          <span className="mdc-admin-sidebar__search-icon">
+            <Search size={16} aria-hidden="true" />
+          </span>
+        </HintAction>
         <ChatNativeTextInput
           ref={searchInputRef}
           type="search"

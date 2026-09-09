@@ -6,7 +6,18 @@ A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo d
 
 **Plano do restante do BC:** [`admin-fluxos-plano-implementacao-restante.md`](../../../../../../minha-delpi-ai-api/docs/roadmap/admin-fluxos-plano-implementacao-restante.md).
 
-Ajuda in-app: `src/content/adminHelpTooltips.ts` via `AdminTabHeader.helpHint`. Manual por persona: `src/content/adminManualContent.ts` (Painel).
+Ajuda in-app: catálogo único em `src/content/adminHelpTooltips.ts`.
+
+- **Página:** `AdminTabHeader.helpHint={ADMIN_HELP.pages.*}` — `?` no título.
+- **Campo/filtro:** `ChatAdminNative*Field hint={ADMIN_HELP.fields.*}` (o kit usa `FieldLabel`; hover no rótulo, sem `?` solto).
+- **Label avulso:** `FieldLabel` do kit.
+- **Seção/ribbon:** `SectionHintLabel` quando não houver descrição visível; se a descrição já estiver no cartão (`*SettingMeta`), não duplicar no catálogo.
+- **KPI:** microcopy visível via `AdminKpiCard.hint={ADMIN_HELP.kpis.*}`.
+- **Tabela:** `AdminDataTableColumn.headerHint`.
+- **CTA:** `HintAction` (Nova diretriz, Abrir Studio, Exportar, Analisar).
+- **Studio:** mesma fonte (`ADMIN_HELP.studio.*`).
+
+Gate: `src/content/auditAdminHelpCoverage.mjs` + `adminHelpCoverage.structural.test.ts`. Manual por persona: `src/content/adminManualContent.ts` (Painel).
 
 ## Jornada canônica de especialização
 

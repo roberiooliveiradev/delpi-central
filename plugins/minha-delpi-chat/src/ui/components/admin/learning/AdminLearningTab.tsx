@@ -1,4 +1,3 @@
-import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
@@ -30,10 +29,13 @@ import type {
   AdminVocabularyTerm,
 } from "../../../../data/api/adminTypes";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import {
   ChatAdminNativeSelectField,
   ChatAdminNativeTextAreaField,
+  ChatAdminNativeTextField,
 } from "../shared/chatAdminFormFields";
 import { ChatLearningPipelineSettingsPanel } from "./ChatLearningPipelineSettingsPanel";
 import { LearningSummaryStrip } from "./LearningSummaryStrip";
@@ -56,6 +58,25 @@ const LEARNING_VIEWS: AdminLearningView[] = [
   "evaluation",
   "finetuning",
 ];
+
+function learningPageHelp(view: AdminLearningView): string {
+  if (view === "pipeline") {
+    return ADMIN_HELP.pages.learningPipeline;
+  }
+  if (view === "candidates") {
+    return ADMIN_HELP.pages.learningCandidates;
+  }
+  if (view === "vocabulary") {
+    return ADMIN_HELP.pages.learningVocabulary;
+  }
+  if (view === "memory") {
+    return ADMIN_HELP.pages.learningMemory;
+  }
+  if (view === "evaluation") {
+    return ADMIN_HELP.pages.learningEvaluation;
+  }
+  return ADMIN_HELP.pages.finetuning;
+}
 
 function resolveLearningView(page?: string): AdminLearningView {
   if (page && LEARNING_VIEWS.includes(page as AdminLearningView)) {
@@ -562,6 +583,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
           eyebrow="Conhecimento"
           title="Pipeline de aprendizagem"
           description="Interruptores do pipeline (captura, vocabulário, glossário e correção de digitação)."
+          helpHint={ADMIN_HELP.pages.learningPipeline}
         />
         <ChatLearningPipelineSettingsPanel getAccessToken={getAccessToken} />
       </section>
@@ -575,6 +597,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
         eyebrow="Conhecimento"
         title="Aprendizagem contínua"
         description="Revise candidatos aprendidos com o uso (erros de digitação, definições) e promova-os ao vocabulário aprovado, que refina a normalização do chat."
+        helpHint={learningPageHelp(view)}
         summary={<LearningSummaryStrip summary={summary} isLoading={isSummaryLoading} />}
         actions={
           <>
@@ -614,6 +637,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
             <ChatAdminNativeSelectField
               id="admin-learning-candidate-status"
               label="Status"
+              hint={ADMIN_HELP.fields.learning.candidateStatus}
               span={false}
               value={statusFilter}
               options={STATUS_OPTIONS.map((option) => ({
@@ -695,27 +719,28 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
                   </div>
                 </div>
 
-                <label className="mdc-admin-field">
-                  <span>Termo</span>
-                  <ChatNativeTextInput
-                    value={termOverride}
-                    onChange={(event) => setTermOverride(event.target.value)}
-                    placeholder="forma que o chat deve reconhecer"
-                  />
-                </label>
+                <ChatAdminNativeTextField
+                  id="admin-learning-term-override"
+                  label="Termo"
+                  hint={ADMIN_HELP.fields.learning.term}
+                  value={termOverride}
+                  placeholder="forma que o chat deve reconhecer"
+                  onChange={setTermOverride}
+                />
 
-                <label className="mdc-admin-field">
-                  <span>Correção / forma normalizada</span>
-                  <ChatNativeTextInput
-                    value={normalizedOverride}
-                    onChange={(event) => setNormalizedOverride(event.target.value)}
-                    placeholder="ex.: como voce se chama"
-                  />
-                </label>
+                <ChatAdminNativeTextField
+                  id="admin-learning-normalized-override"
+                  label="Correção / forma normalizada"
+                  hint={ADMIN_HELP.fields.learning.normalized}
+                  value={normalizedOverride}
+                  placeholder="ex.: como voce se chama"
+                  onChange={setNormalizedOverride}
+                />
 
                 <ChatAdminNativeTextAreaField
                   id="admin-learning-meaning-override"
                   label="Significado (opcional)"
+                  hint={ADMIN_HELP.fields.learning.meaning}
                   span={false}
                   rows={3}
                   value={meaningOverride}
@@ -757,25 +782,26 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
         <div className="mdc-admin-learning__layout mdc-admin-split">
           <aside className="mdc-admin-split__aside mdc-admin-panel">
             <h3 className="mdc-admin-learning__subtitle">Novo termo</h3>
-            <label className="mdc-admin-field">
-              <span>Termo (forma a reconhecer)</span>
-              <ChatNativeTextInput
-                value={newTerm}
-                onChange={(event) => setNewTerm(event.target.value)}
-                placeholder="ex.: como vc s chama"
-              />
-            </label>
-            <label className="mdc-admin-field">
-              <span>Forma normalizada</span>
-              <ChatNativeTextInput
-                value={newNormalized}
-                onChange={(event) => setNewNormalized(event.target.value)}
-                placeholder="ex.: como voce se chama"
-              />
-            </label>
+            <ChatAdminNativeTextField
+              id="admin-learning-new-term"
+              label="Termo (forma a reconhecer)"
+              hint={ADMIN_HELP.fields.learning.term}
+              value={newTerm}
+              placeholder="ex.: como vc s chama"
+              onChange={setNewTerm}
+            />
+            <ChatAdminNativeTextField
+              id="admin-learning-new-normalized"
+              label="Forma normalizada"
+              hint={ADMIN_HELP.fields.learning.normalized}
+              value={newNormalized}
+              placeholder="ex.: como voce se chama"
+              onChange={setNewNormalized}
+            />
             <ChatAdminNativeSelectField
               id="admin-learning-new-term-type"
               label="Tipo"
+              hint={ADMIN_HELP.fields.learning.termType}
               span={false}
               value={newType}
               options={[
@@ -789,6 +815,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
             <ChatAdminNativeTextAreaField
               id="admin-learning-new-term-meaning"
               label="Significado (opcional)"
+              hint={ADMIN_HELP.fields.learning.meaning}
               span={false}
               rows={2}
               value={newMeaning}
@@ -837,6 +864,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
               <ChatAdminNativeSelectField
                 id="admin-learning-memory-status"
                 label="Status"
+                hint={ADMIN_HELP.fields.learning.candidateStatus}
                 span={false}
                 value={memoryStatusFilter}
                 options={MEMORY_STATUS_OPTIONS.map((option) => ({
@@ -903,22 +931,22 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
         <div className="mdc-admin-learning__layout mdc-admin-split">
           <aside className="mdc-admin-split__aside mdc-admin-panel">
             <h3 className="mdc-admin-learning__subtitle">Novo caso</h3>
-            <label className="mdc-admin-field">
-              <span>Pergunta / entrada</span>
-              <ChatNativeTextInput
-                value={evalInput}
-                onChange={(event) => setEvalInput(event.target.value)}
-                placeholder='ex.: "como vc s chama?"'
-              />
-            </label>
-            <label className="mdc-admin-field">
-              <span>Intenção esperada</span>
-              <ChatNativeTextInput
-                value={evalIntent}
-                onChange={(event) => setEvalIntent(event.target.value)}
-                placeholder="assistant_identity"
-              />
-            </label>
+            <ChatAdminNativeTextField
+              id="admin-learning-eval-input"
+              label="Pergunta / entrada"
+              hint={ADMIN_HELP.fields.learning.evalInput}
+              value={evalInput}
+              placeholder='ex.: "como vc s chama?"'
+              onChange={setEvalInput}
+            />
+            <ChatAdminNativeTextField
+              id="admin-learning-eval-intent"
+              label="Intenção esperada"
+              hint={ADMIN_HELP.fields.learning.evalIntent}
+              value={evalIntent}
+              placeholder="assistant_identity"
+              onChange={setEvalIntent}
+            />
             <button
               type="button"
               className="mdc-chat-ws-outline-btn"
@@ -996,17 +1024,18 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
                 pipeline externo.
               </aside>
             ) : null}
-            <label className="mdc-admin-field">
-              <span>Nome</span>
-              <ChatNativeTextInput
-                value={ftDatasetName}
-                onChange={(event) => setFtDatasetName(event.target.value)}
-                placeholder="ex.: chat-v1-mar-2026"
-              />
-            </label>
+            <ChatAdminNativeTextField
+              id="admin-learning-ft-dataset-name"
+              label="Nome"
+              hint={ADMIN_HELP.fields.learning.datasetName}
+              value={ftDatasetName}
+              placeholder="ex.: chat-v1-mar-2026"
+              onChange={setFtDatasetName}
+            />
             <ChatAdminNativeTextAreaField
               id="admin-learning-ft-dataset-description"
               label="Descrição"
+              hint={ADMIN_HELP.fields.learning.datasetDescription}
               span={false}
               rows={2}
               value={ftDatasetDescription}
@@ -1024,6 +1053,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
             <ChatAdminNativeSelectField
               id="admin-learning-ft-dataset"
               label="Dataset para aprovar amostras"
+              hint={ADMIN_HELP.fields.learning.approveDataset}
               span={false}
               value={ftSelectedDatasetId != null ? String(ftSelectedDatasetId) : ""}
               placeholderOption="— selecione —"
@@ -1039,6 +1069,7 @@ export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps
             <ChatAdminNativeSelectField
               id="admin-learning-ft-sample-status"
               label="Status das amostras"
+              hint={ADMIN_HELP.fields.learning.sampleStatus}
               span={false}
               value={ftSampleStatusFilter}
               options={FT_SAMPLE_STATUS_OPTIONS.map((option) => ({

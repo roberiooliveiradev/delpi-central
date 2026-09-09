@@ -10,6 +10,8 @@ import {
   rankedFromLabelCounts,
 } from "./adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AdminTypingCorrectionMetricsProps = {
   summary: AdminTypingCorrectionSummary | null;
   isLoading?: boolean;
@@ -73,32 +75,32 @@ export function AdminTypingCorrectionMetrics({
             <AdminKpiCard
               title="Sugestões oferecidas"
               value={formatMetricNumber(summary.offeredCount)}
-              hint="Chips exibidos após debounce no composer."
+              hint={ADMIN_HELP.kpis.typing.chips}
             />
             <AdminKpiCard
               title="Aceites (evento)"
               value={formatMetricNumber(summary.acceptedCount)}
-              hint="Cliques em «Enviar corrigido» registrados via help-events."
+              hint={ADMIN_HELP.kpis.typing.acceptClicks}
             />
             <AdminKpiCard
               title="Dispensadas"
               value={formatMetricNumber(summary.dismissedCount)}
-              hint="Usuário manteve o texto original."
+              hint={ADMIN_HELP.kpis.typing.keepOriginal}
             />
             <AdminKpiCard
               title="Taxa de aceite"
               value={formatMetricPercent(summary.acceptanceRate)}
-              hint="Aceites ÷ ofertas na janela."
+              hint={ADMIN_HELP.kpis.typing.acceptRate}
             />
             <AdminKpiCard
               title="Turnos com aceite"
               value={formatMetricNumber(summary.acceptedTurnsCount)}
-              hint="Mensagens enviadas com typingCorrection.accepted."
+              hint={ADMIN_HELP.kpis.typing.sent}
             />
             <AdminKpiCard
               title="Média de substituições"
               value={formatMetricNumber(summary.avgChangesPerAcceptance)}
-              hint="Por turno aceito (auditoria)."
+              hint={ADMIN_HELP.kpis.typing.perTurn}
             />
           </AdminKpiGrid>
 

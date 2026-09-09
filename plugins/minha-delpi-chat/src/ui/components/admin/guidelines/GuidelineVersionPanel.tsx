@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 import {
   compareAdminGuidelineVersions,
   listAdminGuidelineVersions,
@@ -141,6 +143,7 @@ export function GuidelineVersionPanel({
       <ChatAdminNativeSelectField
         id="guideline-version-guideline"
         label="Diretriz"
+        hint={ADMIN_HELP.fields.guidelines.versionGuideline}
         span={false}
         value={selectedGuidelineId}
         placeholderOption="Selecione uma diretriz"
@@ -161,6 +164,7 @@ export function GuidelineVersionPanel({
             <ChatAdminNativeSelectField
               id="guideline-version-from"
               label="De"
+              hint={ADMIN_HELP.fields.guidelines.versionFrom}
               span={false}
               value={fromVersion}
               placeholderOption="Versão"
@@ -174,6 +178,7 @@ export function GuidelineVersionPanel({
             <ChatAdminNativeSelectField
               id="guideline-version-to"
               label="Para"
+              hint={ADMIN_HELP.fields.guidelines.versionTo}
               span={false}
               value={toVersion}
               placeholderOption="Versão"

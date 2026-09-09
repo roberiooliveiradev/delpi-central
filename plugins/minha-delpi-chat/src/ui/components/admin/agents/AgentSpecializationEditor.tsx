@@ -1,6 +1,7 @@
-import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import { useCallback, useEffect, useState } from "react";
+
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 
 import {
   getAdminAgentSpecialization,
@@ -11,7 +12,10 @@ import type {
   AdminAgentSpecialization,
   AdminAgentSpecializationPreset,
 } from "../../../../data/api/adminTypes";
-import { ChatAdminNativeSelectField } from "../shared/chatAdminFormFields";
+import {
+  ChatAdminNativeSelectField,
+  ChatAdminNativeTextField,
+} from "../shared/chatAdminFormFields";
 
 const EMPTY_SPECIALIZATION: AdminAgentSpecialization = {
   enabled: true,
@@ -169,6 +173,9 @@ export function AgentSpecializationEditor({
         className="mdc-admin-agents__toggle"
         checked={form.enabled}
         label="Especialização ativa"
+        hint={ADMIN_HELP.fields.specialization.enabled}
+        hintPlacement="tooltip"
+        hintAriaLabel="Ajuda: Especialização ativa"
         onChange={(enabled) => setForm((current) => ({ ...current, enabled }))}
       />
 
@@ -177,6 +184,7 @@ export function AgentSpecializationEditor({
           <ChatAdminNativeSelectField
             id={`${fieldIdPrefix}-preset`}
             label="Preset de domínio"
+            hint={ADMIN_HELP.fields.specialization.preset}
             span={false}
             value={form.presetKey ?? ""}
             placeholderOption="Personalizado"
@@ -193,78 +201,77 @@ export function AgentSpecializationEditor({
           />
 
           <div className="mdc-admin-agents__grid">
-            <label>
-              <span>Rótulo</span>
-              <ChatNativeTextInput
-                value={form.label ?? ""}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, label: event.target.value }))
-                }
-              />
-            </label>
-            <label>
-              <span>Domínio</span>
-              <ChatNativeTextInput
-                value={form.domain ?? ""}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, domain: event.target.value }))
-                }
-              />
-            </label>
+            <ChatAdminNativeTextField
+              id={`${fieldIdPrefix}-label`}
+              label="Rótulo"
+              hint={ADMIN_HELP.fields.specialization.label}
+              value={form.label ?? ""}
+              onChange={(value) => setForm((current) => ({ ...current, label: value }))}
+            />
+            <ChatAdminNativeTextField
+              id={`${fieldIdPrefix}-domain`}
+              label="Domínio"
+              hint={ADMIN_HELP.fields.specialization.domain}
+              value={form.domain ?? ""}
+              onChange={(value) => setForm((current) => ({ ...current, domain: value }))}
+            />
           </div>
 
-          <label>
-            <span>Domínios de conhecimento (vírgula)</span>
-            <ChatNativeTextInput
-              value={(form.knowledgeDomains ?? []).join(", ")}
-              onChange={(event) => updateListField("knowledgeDomains", event.target.value)}
-            />
-          </label>
+          <ChatAdminNativeTextField
+            id={`${fieldIdPrefix}-knowledge-domains`}
+            label="Domínios de conhecimento (vírgula)"
+            hint={ADMIN_HELP.fields.specialization.knowledgeDomains}
+            value={(form.knowledgeDomains ?? []).join(", ")}
+            onChange={(value) => updateListField("knowledgeDomains", value)}
+          />
 
-          <label>
-            <span>Namespaces (vírgula)</span>
-            <ChatNativeTextInput
-              value={(form.knowledgeNamespaces ?? []).join(", ")}
-              onChange={(event) => updateListField("knowledgeNamespaces", event.target.value)}
-            />
-          </label>
+          <ChatAdminNativeTextField
+            id={`${fieldIdPrefix}-namespaces`}
+            label="Namespaces (vírgula)"
+            hint={ADMIN_HELP.fields.specialization.namespaces}
+            value={(form.knowledgeNamespaces ?? []).join(", ")}
+            onChange={(value) => updateListField("knowledgeNamespaces", value)}
+          />
 
-          <label>
-            <span>Categorias de conhecimento (vírgula)</span>
-            <ChatNativeTextInput
-              value={(form.knowledgeCategories ?? []).join(", ")}
-              onChange={(event) => updateListField("knowledgeCategories", event.target.value)}
-            />
-          </label>
+          <ChatAdminNativeTextField
+            id={`${fieldIdPrefix}-knowledge-categories`}
+            label="Categorias de conhecimento (vírgula)"
+            hint={ADMIN_HELP.fields.specialization.knowledgeCategories}
+            value={(form.knowledgeCategories ?? []).join(", ")}
+            onChange={(value) => updateListField("knowledgeCategories", value)}
+          />
 
-          <label>
-            <span>Tags de conhecimento (vírgula)</span>
-            <ChatNativeTextInput
-              value={(form.knowledgeTags ?? []).join(", ")}
-              onChange={(event) => updateListField("knowledgeTags", event.target.value)}
-            />
-          </label>
+          <ChatAdminNativeTextField
+            id={`${fieldIdPrefix}-knowledge-tags`}
+            label="Tags de conhecimento (vírgula)"
+            hint={ADMIN_HELP.fields.specialization.knowledgeTags}
+            value={(form.knowledgeTags ?? []).join(", ")}
+            onChange={(value) => updateListField("knowledgeTags", value)}
+          />
 
-          <label>
-            <span>Categorias de diretrizes (vírgula)</span>
-            <ChatNativeTextInput
-              value={(form.guidelineCategories ?? []).join(", ")}
-              onChange={(event) => updateListField("guidelineCategories", event.target.value)}
-            />
-          </label>
+          <ChatAdminNativeTextField
+            id={`${fieldIdPrefix}-guideline-categories`}
+            label="Categorias de diretrizes (vírgula)"
+            hint={ADMIN_HELP.fields.specialization.guidelineCategories}
+            value={(form.guidelineCategories ?? []).join(", ")}
+            onChange={(value) => updateListField("guidelineCategories", value)}
+          />
 
-          <label>
-            <span>Tools permitidas (vírgula)</span>
-            <ChatNativeTextInput
-              value={(form.allowedTools ?? []).join(", ")}
-              onChange={(event) => updateListField("allowedTools", event.target.value)}
-            />
-          </label>
+          <ChatAdminNativeTextField
+            id={`${fieldIdPrefix}-allowed-tools`}
+            label="Tools permitidas (vírgula)"
+            hint={ADMIN_HELP.fields.specialization.allowedTools}
+            value={(form.allowedTools ?? []).join(", ")}
+            onChange={(value) => updateListField("allowedTools", value)}
+          />
 
           <NativeCheckboxControl
             className="mdc-admin-agents__toggle"
             checked={form.includeGlobalKnowledge ?? true}
             label="Incluir base global além do domínio"
+            hint={ADMIN_HELP.fields.specialization.includeGlobal}
+            hintPlacement="tooltip"
+            hintAriaLabel="Ajuda: Incluir base global"
             onChange={(includeGlobalKnowledge) =>
               setForm((current) => ({ ...current, includeGlobalKnowledge }))
             }

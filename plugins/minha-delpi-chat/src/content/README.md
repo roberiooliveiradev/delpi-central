@@ -10,7 +10,8 @@
 
 | Arquivo | Uso |
 |---------|-----|
-| `adminHelpTooltips.ts` | Textos PT de Ajuda do console admin (`HelpTooltip` via `AdminTabHeader.helpHint`) |
+| `adminHelpTooltips.ts` | Única fonte de Ajuda in-app do console admin e do Studio (`pages`, `fields`, `kpis`, `studio`, `shell`). Consumir com `getAdminHelp("fields.documents.search")` ou `ADMIN_HELP.pages.overview`. |
+| `auditAdminHelpCoverage.mjs` | Gate estrutural: `helpHint`/`hint` em headers, campos nativos, KPIs e checkboxes. |
 
 Após alterar o JSON na API, sincronize no MFE:
 

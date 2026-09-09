@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
-import { delpiUiClass } from "@delpi/plugin-ui/index";
+import { HelpTooltip, delpiUiClass } from "@delpi/plugin-ui/index";
 
 export type AdminDataTableColumn<T> = {
   id: string;
   header: string;
+  headerHint?: string;
   render: (row: T, index: number) => ReactNode;
   className?: string;
 };
@@ -49,7 +50,18 @@ export function AdminDataTable<T>({
               <tr>
                 {columns.map((column) => (
                   <th key={column.id} className={column.className}>
-                    {column.header}
+                    {column.headerHint ? (
+                      <HelpTooltip
+                        content={column.headerHint}
+                        ariaLabel={`Ajuda: ${column.header}`}
+                        wrap
+                        placement="bottom"
+                      >
+                        <span>{column.header}</span>
+                      </HelpTooltip>
+                    ) : (
+                      column.header
+                    )}
                   </th>
                 ))}
               </tr>

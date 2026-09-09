@@ -4,6 +4,8 @@ import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
 import { AdminMetricSection } from "../shared/AdminMetricSection";
 import { formatMetricNumber, formatMetricPercent } from "./adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AdminErrorHandlingMetricsProps = {
   summary: AdminErrorHandlingSummary | null;
   isLoading?: boolean;
@@ -35,32 +37,32 @@ export function AdminErrorHandlingMetrics({
             <AdminKpiCard
               title="Eventos"
               value={formatMetricNumber(summary.totalEvents)}
-              hint="Respostas com classificação de erro/vazio."
+              hint={ADMIN_HELP.kpis.errors.classified}
             />
             <AdminKpiCard
               title="Recuperáveis"
               value={formatMetricNumber(summary.recoverableCount)}
-              hint="Com chips ou fluxo de recuperação."
+              hint={ADMIN_HELP.kpis.errors.recoveryUi}
             />
             <AdminKpiCard
               title="Falha de API"
               value={formatMetricNumber(summary.apiFailedCount)}
-              hint="Sem afirmar inexistência de dados."
+              hint={ADMIN_HELP.kpis.errors.noDenial}
             />
             <AdminKpiCard
               title="Planos auto-recuperação"
               value={formatMetricNumber(summary.autoRecoveryPlans)}
-              hint="Respostas com plano para reexecutar consulta."
+              hint={ADMIN_HELP.kpis.errors.retryPlan}
             />
             <AdminKpiCard
               title="Cliques recuperar"
               value={formatMetricNumber(summary.recoveryClicksCount)}
-              hint="Chips do grupo «recuperar» acionados."
+              hint={ADMIN_HELP.kpis.errors.recoverClicks}
             />
             <AdminKpiCard
               title="Tentativas automáticas"
               value={formatMetricNumber(summary.recoveryAttemptsCount)}
-              hint={`Sucesso: ${formatMetricNumber(summary.recoverySuccessCount)} (${formatMetricPercent(summary.recoverySuccessRate)})`}
+              hint={`${ADMIN_HELP.kpis.errors.recoverySuccess} ${formatMetricNumber(summary.recoverySuccessCount)} (${formatMetricPercent(summary.recoverySuccessRate)})`}
             />
           </AdminKpiGrid>
 

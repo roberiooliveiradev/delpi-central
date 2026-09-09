@@ -3,6 +3,8 @@ import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
 import { AdminMetricSection } from "../shared/AdminMetricSection";
 import { AdminRankedList } from "../shared/AdminRankedList";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AdminInteractivityMetricsProps = {
   summary: AdminInteractivitySummary | null;
   isLoading?: boolean;
@@ -65,27 +67,27 @@ export function AdminInteractivityMetrics({
             <AdminKpiCard
               title="Respostas com chips"
               value={formatNumber(summary.responsesWithChips)}
-              hint="Turnos com bloco consolidado de sugestões."
+              hint={ADMIN_HELP.kpis.interactivity.turns}
             />
             <AdminKpiCard
               title="Chips exibidos"
               value={formatNumber(summary.suggestionsShownTotal)}
-              hint="Total de sugestões mostradas (primários + overflow)."
+              hint={ADMIN_HELP.kpis.interactivity.shown}
             />
             <AdminKpiCard
               title="Cliques"
               value={formatNumber(summary.clicksCount)}
-              hint="Chips acionados pelo usuário."
+              hint={ADMIN_HELP.kpis.interactivity.clicks}
             />
             <AdminKpiCard
               title="CTR geral"
               value={formatPercent(summary.clickThroughRate)}
-              hint="Cliques ÷ impressões de chip."
+              hint={ADMIN_HELP.kpis.interactivity.ctr}
             />
             <AdminKpiCard
               title="«Mais opções»"
               value={formatNumber(summary.moreOptionsResponses)}
-              hint="Respostas que exibiram overflow agrupado."
+              hint={ADMIN_HELP.kpis.interactivity.overflow}
             />
           </AdminKpiGrid>
 

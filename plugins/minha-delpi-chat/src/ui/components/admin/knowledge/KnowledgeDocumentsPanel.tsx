@@ -1,6 +1,7 @@
-import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
+import { ChatAdminNativeSelectField, ChatAdminNativeTextField } from "../shared/chatAdminFormFields";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 import { KnowledgeDocumentCard } from "./KnowledgeDocumentCard";
-import { ChatAdminNativeSelectField } from "../shared/chatAdminFormFields";
 import type {
   DocumentStatusFilter,
   KnowledgeBackendPlaceholders,
@@ -21,6 +22,7 @@ type KnowledgeDocumentsPanelProps = KnowledgeDocumentsState &
 function FacetSelect({
   id,
   label,
+  hint,
   value,
   options,
   disabled,
@@ -28,6 +30,7 @@ function FacetSelect({
 }: {
   id: string;
   label: string;
+  hint: string;
   value: string;
   options: string[];
   disabled?: boolean;
@@ -37,6 +40,7 @@ function FacetSelect({
     <ChatAdminNativeSelectField
       id={id}
       label={label}
+      hint={hint}
       span={false}
       value={value}
       disabled={disabled}
@@ -95,19 +99,21 @@ export function KnowledgeDocumentsPanel({
       </header>
 
       <div className="mdc-admin-filter-bar" aria-label="Filtros da base global">
-        <label className="mdc-admin-field mdc-admin-filter-bar__search">
-          <span>Buscar</span>
-          <ChatNativeTextInput
-            value={documentSearch}
-            placeholder="Título, categoria, tags..."
-            onChange={(event) => setDocumentSearch(event.target.value)}
-          />
-        </label>
+        <ChatAdminNativeTextField
+          id="knowledge-documents-search"
+          className="mdc-admin-filter-bar__search"
+          label="Buscar"
+          hint={ADMIN_HELP.fields.documents.search}
+          value={documentSearch}
+          placeholder="Título, categoria, tags..."
+          onChange={setDocumentSearch}
+        />
 
         <div className="mdc-admin-filter-bar__row">
           <ChatAdminNativeSelectField
             id="knowledge-documents-status"
             label="Status"
+            hint={ADMIN_HELP.fields.documents.status}
             span={false}
             value={documentStatus}
             options={[
@@ -121,6 +127,7 @@ export function KnowledgeDocumentsPanel({
           <FacetSelect
             id="knowledge-documents-category"
             label="Categoria"
+            hint={ADMIN_HELP.fields.documents.category}
             value={documentCategory}
             options={documentFacets.categories}
             disabled={isLoading}
@@ -130,6 +137,7 @@ export function KnowledgeDocumentsPanel({
           <FacetSelect
             id="knowledge-documents-namespace"
             label="Namespace"
+            hint={ADMIN_HELP.fields.documents.namespace}
             value={documentNamespace}
             options={documentFacets.namespaces}
             disabled={isLoading}
@@ -139,6 +147,7 @@ export function KnowledgeDocumentsPanel({
           <FacetSelect
             id="knowledge-documents-domain"
             label="Domínio"
+            hint={ADMIN_HELP.fields.documents.domain}
             value={documentDomain}
             options={documentFacets.domains}
             disabled={isLoading}
@@ -148,6 +157,7 @@ export function KnowledgeDocumentsPanel({
           <FacetSelect
             id="knowledge-documents-tag"
             label="Tag"
+            hint={ADMIN_HELP.fields.documents.tag}
             value={documentTag}
             options={documentFacets.tags}
             disabled={isLoading}
@@ -157,6 +167,7 @@ export function KnowledgeDocumentsPanel({
           <FacetSelect
             id="knowledge-documents-source-type"
             label="Tipo de fonte"
+            hint={ADMIN_HELP.fields.documents.sourceType}
             value={documentSourceType}
             options={documentFacets.sourceTypes}
             disabled={isLoading}

@@ -1,8 +1,10 @@
 import { useState } from "react";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 import type { AdminRagTestResponse } from "../../../../data/api/adminTypes";
 import type { GuidelineBackendPlaceholders } from "./guidelineTypes";
-import { ChatNativeTextAreaControl } from "../shared/chatAdminFormFields";
+import { ChatAdminNativeTextAreaField } from "../shared/chatAdminFormFields";
 
 import "./GuidelineTestPanel.css";
 
@@ -101,7 +103,11 @@ export function GuidelineTestPanel({ testGuidelines }: GuidelineTestPanelProps) 
           Simule perguntas para validar se a base global e as diretrizes estão orientando a resposta.
         </p>
 
-        <ChatNativeTextAreaControl
+        <ChatAdminNativeTextAreaField
+          id="guideline-test-question"
+          label="Pergunta de teste"
+          hint={ADMIN_HELP.fields.guidelines.testQuestion}
+          span={false}
           value={question}
           rows={6}
           placeholder="Ex.: Como o chat deve responder quando não encontrar fonte suficiente?"

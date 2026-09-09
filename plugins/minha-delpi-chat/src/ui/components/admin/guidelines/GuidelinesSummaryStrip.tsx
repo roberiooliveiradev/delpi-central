@@ -1,3 +1,4 @@
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 import type { GuidelinesSummary, GuidelineStatusFilter } from "./guidelinesSummary";
 import { AdminKpiCard } from "../shared/AdminKpiCard";
 import { AdminSummaryStrip } from "../shared/AdminSummaryStrip";
@@ -15,20 +16,21 @@ export function GuidelinesSummaryStrip({
   onFilterChange,
 }: GuidelinesSummaryStripProps) {
   const items = [
-    { key: "total", label: "Total", value: summary.total, filter: "all" as const },
+    { key: "total", label: "Total", value: summary.total, filter: "all" as const, hint: ADMIN_HELP.kpis.guidelines.total },
     {
       key: "active",
       label: "Ativas",
       value: summary.active,
       filter: "active" as const,
-      hint: "Publicadas e em vigor",
+      hint: ADMIN_HELP.kpis.guidelines.active,
     },
-    { key: "draft", label: "Rascunhos", value: summary.draft, filter: "draft" as const },
+    { key: "draft", label: "Rascunhos", value: summary.draft, filter: "draft" as const, hint: ADMIN_HELP.kpis.guidelines.draft },
     {
       key: "archived",
       label: "Arquivadas",
       value: summary.archived,
       filter: "archived" as const,
+      hint: ADMIN_HELP.kpis.guidelines.archived,
     },
   ];
 

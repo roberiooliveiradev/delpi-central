@@ -1,4 +1,6 @@
 import type { AdminKnowledgeDocumentsSummary } from "../../../../data/api/adminTypes";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 import { AdminKpiCard } from "../shared/AdminKpiCard";
 import { AdminSummaryStrip } from "../shared/AdminSummaryStrip";
 import { formatMetricNumber } from "../metrics-tab/adminMetricsFormatters";
@@ -28,20 +30,20 @@ export function KnowledgeSummaryStrip({
   onFilterChange,
 }: KnowledgeSummaryStripProps) {
   const items: KpiItem[] = [
-    { key: "total", label: "Total", value: summary?.total, filter: "all" },
+    { key: "total", label: "Total", value: summary?.total, filter: "all", hint: ADMIN_HELP.kpis.documents.total },
     {
       key: "active",
       label: "Indexados",
       value: summary?.active,
       filter: "active",
-      hint: "Documentos ativos na base global",
+      hint: ADMIN_HELP.kpis.documents.active,
     },
-    { key: "inactive", label: "Inativos", value: summary?.inactive, filter: "inactive" },
+    { key: "inactive", label: "Inativos", value: summary?.inactive, filter: "inactive", hint: ADMIN_HELP.kpis.documents.inactive },
     {
       key: "pending",
       label: "Sem índice",
       value: summary?.pendingIndex,
-      hint: "Ativos sem chunks indexados",
+      hint: ADMIN_HELP.kpis.documents.pending,
     },
   ];
 

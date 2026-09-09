@@ -1,3 +1,4 @@
+import { FieldLabel, HintAction, SectionHintLabel } from "@delpi/plugin-ui/index";
 import { ChatNativeTextInput } from "../../components/shared/chatNativeFormFields";
 import { Plus, Route, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -13,6 +14,7 @@ import {
 } from "./actionTestUtils";
 import type { ActionTestPanelProps } from "./types";
 import { ChatNativeTextAreaControl } from "../../components/admin/shared/chatAdminFormFields";
+import { ADMIN_HELP } from "../../../content/adminHelpTooltips";
 
 import "./ActionTestPanel.css";
 
@@ -37,10 +39,10 @@ function ParameterField({
 }) {
   return (
     <label className="mdc-action-test-panel__parameter">
-      <span>
-        {field.key}
-        {field.required ? <em>obrigatório</em> : null}
-      </span>
+      <FieldLabel
+        label={field.required ? `${field.key} (obrigatório)` : field.key}
+        hint={field.description || ADMIN_HELP.studio.testPathParam}
+      />
 
       <ChatNativeTextInput
         value={field.value}
@@ -99,7 +101,9 @@ export function ActionTestPanel({
     <section className="mdc-action-test-panel" aria-label="Teste da rota">
       <header className="mdc-action-test-panel__header">
         <div>
-          <strong>Testar rota</strong>
+          <strong>
+            <SectionHintLabel label="Testar rota" hint={ADMIN_HELP.studio.actionsTest} />
+          </strong>
           <span>{routeLabel}</span>
         </div>
 
@@ -168,6 +172,8 @@ export function ActionTestPanel({
                 )
               }
               placeholder="Nome. Ex.: page"
+              aria-label={ADMIN_HELP.studio.testQueryName}
+              title={ADMIN_HELP.studio.testQueryName}
               readOnly={Boolean(field.required)}
             />
 
@@ -179,6 +185,8 @@ export function ActionTestPanel({
                 )
               }
               placeholder={field.required ? "Obrigatório" : "Valor"}
+              aria-label={ADMIN_HELP.studio.testQueryValue}
+              title={ADMIN_HELP.studio.testQueryValue}
             />
 
             <button
@@ -223,10 +231,12 @@ export function ActionTestPanel({
       ) : null}
 
       <div className="mdc-action-test-panel__footer">
-        <button type="button" onClick={() => void runTest()} disabled={isRunning}>
-          <Route size={16} aria-hidden="true" />
-          <span>{isRunning ? "Testando..." : "Executar teste"}</span>
-        </button>
+        <HintAction hint={ADMIN_HELP.studio.runTest} ariaLabel="Ajuda: Executar teste">
+          <button type="button" onClick={() => void runTest()} disabled={isRunning}>
+            <Route size={16} aria-hidden="true" />
+            <span>{isRunning ? "Testando..." : "Executar teste"}</span>
+          </button>
+        </HintAction>
       </div>
 
       {result ? (

@@ -1,4 +1,5 @@
 import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
+import { FieldLabel, SectionHintLabel } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import {
@@ -28,6 +29,7 @@ import {
   INTELLIGENCE_PRESETS,
   type IntelligencePresetKey,
 } from "./chatIntelligencePresets";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 
 import "./ChatIntelligenceSettingsPanel.css";
 
@@ -131,7 +133,7 @@ function ToggleSettingCard({
       <div className="mdc-chat-intelligence-setting__control">
         <AdminFormCheckbox
           title={checked ? "Ativado" : "Desativado"}
-          hint="Marque para aplicar este comportamento no pipeline do chat."
+          hint={ADMIN_HELP.fields.settings.applyToggle}
           checked={checked}
           onChange={(event) => onChange(event.target.checked)}
         />
@@ -170,9 +172,14 @@ function NumberSettingCard({
       </div>
 
       <div className="mdc-chat-intelligence-setting__control">
-        <label className="mdc-admin-field">
-          <span>Valor atual</span>
+        <div className="mdc-admin-field">
+          <FieldLabel
+            htmlFor={`intelligence-number-${String(fieldKey)}`}
+            label="Valor atual"
+            hint={ADMIN_HELP.fields.settings.currentValue}
+          />
           <ChatNativeTextInput
+            id={`intelligence-number-${String(fieldKey)}`}
             type="number"
             min={meta.min}
             max={meta.max}
@@ -180,7 +187,7 @@ function NumberSettingCard({
             value={value}
             onChange={(event) => onChange(Number(event.target.value))}
           />
-        </label>
+        </div>
       </div>
     </article>
   );
@@ -481,7 +488,7 @@ export function ChatIntelligenceSettingsPanel({
       <div className="mdc-chat-intelligence-panel__advanced">
         <AdminFormCheckbox
           title="Avançado"
-          hint="Mostra todos os knobs de RAG, actions e orquestração."
+          hint={ADMIN_HELP.fields.intelligence.advanced}
           checked={advanced}
           onChange={(event) => setAdvanced(event.target.checked)}
         />
@@ -492,7 +499,9 @@ export function ChatIntelligenceSettingsPanel({
           {CHAT_INTELLIGENCE_SECTIONS.map((section) => (
             <section key={section.id} className="mdc-chat-intelligence-section">
               <header className="mdc-chat-intelligence-section__header">
-                <h4>{section.title}</h4>
+                <h4>
+                  <SectionHintLabel label={section.title} hint={section.description} />
+                </h4>
                 <p>{section.description}</p>
               </header>
               <div className="mdc-chat-intelligence-section__grid">

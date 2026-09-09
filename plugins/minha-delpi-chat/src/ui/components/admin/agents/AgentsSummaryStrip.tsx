@@ -1,3 +1,4 @@
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 import type { AgentCatalogFilter, AgentsSummary } from "./agentsSummary";
 import { AdminKpiCard } from "../shared/AdminKpiCard";
 import { AdminSummaryStrip } from "../shared/AdminSummaryStrip";
@@ -23,16 +24,16 @@ export function AgentsSummaryStrip({
     filter: AgentCatalogFilter;
     hint?: string;
   }[] = [
-    { key: "total", label: "Total", value: summary.total, filter: "all" },
-    { key: "enabled", label: "Ativos", value: summary.enabled, filter: "enabled" },
+    { key: "total", label: "Total", value: summary.total, filter: "all", hint: ADMIN_HELP.kpis.agents.total },
+    { key: "enabled", label: "Ativos", value: summary.enabled, filter: "enabled", hint: ADMIN_HELP.kpis.agents.enabled },
     {
       key: "specialized",
       label: "Especializados",
       value: summary.withSpecialization,
       filter: "specialized",
-      hint: "Com domínio RAG e ferramentas configurados",
+      hint: ADMIN_HELP.kpis.agents.specialized,
     },
-    { key: "disabled", label: "Inativos", value: summary.disabled, filter: "disabled" },
+    { key: "disabled", label: "Inativos", value: summary.disabled, filter: "disabled", hint: ADMIN_HELP.kpis.agents.disabled },
   ];
 
   return (

@@ -3,6 +3,8 @@ import { AdminKpiCard } from "../shared/AdminKpiCard";
 import { AdminSummaryStrip } from "../shared/AdminSummaryStrip";
 import { computeAuditSummary } from "./auditSummary";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AuditSummaryStripProps = {
   logs: AdminAuditLog[];
   total?: number;
@@ -23,22 +25,22 @@ export function AuditSummaryStrip({
       <AdminKpiCard
         title="Total (filtro)"
         value={view.total}
-        hint="Eventos que correspondem aos filtros."
+        hint={ADMIN_HELP.kpis.audit.matching}
       />
       <AdminKpiCard
         title="Nesta página"
         value={view.pageEvents}
-        hint="Linhas exibidas na tabela atual."
+        hint={ADMIN_HELP.kpis.audit.pageRows}
       />
       <AdminKpiCard
         title="Ações distintas"
         value={view.uniqueActions}
-        hint="Na página carregada."
+        hint={ADMIN_HELP.kpis.audit.pageEvents}
       />
       <AdminKpiCard
         title="Usuários"
         value={view.uniqueUsers}
-        hint={`Na página · ${view.timelineDays} dia(s) na timeline.`}
+        hint={`${ADMIN_HELP.kpis.audit.timeline} ${view.timelineDays} dia(s).`}
       />
     </AdminSummaryStrip>
   );

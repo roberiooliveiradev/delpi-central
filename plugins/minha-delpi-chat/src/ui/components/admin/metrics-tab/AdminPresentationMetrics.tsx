@@ -10,6 +10,8 @@ import {
   rankedFromLabelCounts,
 } from "./adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AdminPresentationMetricsProps = {
   summary: AdminPresentationSummary | null;
   isLoading?: boolean;
@@ -63,42 +65,42 @@ export function AdminPresentationMetrics({
             <AdminKpiCard
               title="Respostas ricas"
               value={formatMetricNumber(summary.responsesWithRichPresentation)}
-              hint="Turnos com gráfico/tabela/KPI e decisão registrada."
+              hint={ADMIN_HELP.kpis.presentation.rich}
             />
             <AdminKpiCard
               title="Eventos de UI"
               value={formatMetricNumber(summary.eventsCount)}
-              hint="Trocas de vista, eixo, tipo e exportações."
+              hint={ADMIN_HELP.kpis.presentation.interactions}
             />
             <AdminKpiCard
               title="Engajamento"
               value={formatMetricPercent(summary.engagementRate)}
-              hint="Eventos por resposta rica (média na janela)."
+              hint={ADMIN_HELP.kpis.presentation.perAnswer}
             />
             <AdminKpiCard
               title="Troca de formato"
               value={formatMetricNumber(summary.viewSwitchCount)}
-              hint={`${formatMetricPercent(summary.viewSwitchRate)} das respostas — texto ↔ tabela ↔ gráfico.`}
+              hint={`${ADMIN_HELP.kpis.presentation.viewSwitch} ${formatMetricPercent(summary.viewSwitchRate)}.`}
             />
             <AdminKpiCard
               title="→ Tabela"
               value={formatMetricNumber(summary.switchToTableCount)}
-              hint={`${formatMetricPercent(summary.switchToTableRate)} das trocas de vista foram para tabela.`}
+              hint={`${ADMIN_HELP.kpis.presentation.toTable} ${formatMetricPercent(summary.switchToTableRate)}.`}
             />
             <AdminKpiCard
               title="Alteração de eixo"
               value={formatMetricNumber(summary.axisChangeCount)}
-              hint={`${formatMetricPercent(summary.axisChangeRate)} das respostas ricas.`}
+              hint={`${ADMIN_HELP.kpis.presentation.axis} ${formatMetricPercent(summary.axisChangeRate)}.`}
             />
             <AdminKpiCard
               title="Filtros categoria"
               value={formatMetricNumber(summary.categoryFilterCount)}
-              hint="Filial, operador, centro, etc."
+              hint={ADMIN_HELP.kpis.presentation.filters}
             />
             <AdminKpiCard
               title="Exportar PNG"
               value={formatMetricNumber(summary.exportPngCount)}
-              hint="Downloads de gráfico."
+              hint={ADMIN_HELP.kpis.presentation.downloads}
             />
           </AdminKpiGrid>
 

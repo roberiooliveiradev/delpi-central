@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
 
+import { HintAction } from "@delpi/plugin-ui/index";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { GuidelineEditorPanel } from "./GuidelineEditorPanel";
 import { GuidelineListPanel } from "./GuidelineListPanel";
@@ -55,6 +58,7 @@ export function AdminGuidelinesTab({
         eyebrow="Conhecimento"
         title="Diretrizes globais"
         description="Comportamento padrão do chat: versões, publicação e teste antes de vincular aos agentes."
+        helpHint={ADMIN_HELP.pages.guidelines}
         summary={
           <GuidelinesSummaryStrip
             summary={summary}
@@ -63,19 +67,21 @@ export function AdminGuidelinesTab({
           />
         }
         actions={
-          <button
-            type="button"
-            className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
-            disabled={!canCreateGuidelines}
-            title={
-              canCreateGuidelines
-                ? "Criar nova diretriz"
-                : "Sem permissão para criar diretrizes"
-            }
-            onClick={() => setEditingGuideline(null)}
-          >
-            Nova diretriz
-          </button>
+          <HintAction hint={ADMIN_HELP.ctas.newGuideline} ariaLabel="Ajuda: Nova diretriz">
+            <button
+              type="button"
+              className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+              disabled={!canCreateGuidelines}
+              title={
+                canCreateGuidelines
+                  ? "Criar nova diretriz"
+                  : "Sem permissão para criar diretrizes"
+              }
+              onClick={() => setEditingGuideline(null)}
+            >
+              Nova diretriz
+            </button>
+          </HintAction>
         }
       />
 

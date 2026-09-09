@@ -8,6 +8,8 @@ import {
   formatMetricNumber,
 } from "./adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AdminIntentRoutingMetricsProps = {
   summary: AdminIntentRoutingSummary | null;
   isLoading?: boolean;
@@ -48,22 +50,22 @@ export function AdminIntentRoutingMetrics({
             <AdminKpiCard
               title="Rotas"
               value={formatMetricNumber(summary.routesCount)}
-              hint="Turnos com snapshot de intentRouting na janela."
+              hint={ADMIN_HELP.kpis.intent.turns}
             />
             <AdminKpiCard
               title="Ambíguos"
               value={formatMetricNumber(summary.ambiguousCount)}
-              hint="Pedidos com escopo operacional incerto (desambiguação)."
+              hint={ADMIN_HELP.kpis.intent.ambiguous}
             />
             <AdminKpiCard
               title="Tarefas mistas"
               value={formatMetricNumber(summary.mixedTaskCount)}
-              hint="Pedidos compostos (operacional + texto/web/etc.)."
+              hint={ADMIN_HELP.kpis.intent.compound}
             />
             <AdminKpiCard
               title="Web"
               value={formatMetricNumber(summary.webSearchCount)}
-              hint="Rotas com pesquisa web explícita."
+              hint={ADMIN_HELP.kpis.intent.web}
             />
           </AdminKpiGrid>
 

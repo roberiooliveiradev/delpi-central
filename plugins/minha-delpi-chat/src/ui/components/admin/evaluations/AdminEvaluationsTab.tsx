@@ -1,4 +1,3 @@
-import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -13,8 +12,10 @@ import type {
   AdminResponseCandidate,
 } from "../../../../data/api/adminTypes";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
-import { ChatAdminNativeTextAreaField } from "../shared/chatAdminFormFields";
+import { ChatAdminNativeTextAreaField, ChatAdminNativeTextField } from "../shared/chatAdminFormFields";
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { EvaluationsSummaryStrip } from "./EvaluationsSummaryStrip";
 
@@ -128,6 +129,7 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
         eyebrow="Qualidade"
         title="Avaliação de respostas"
         description="Avalie respostas do assistente, registre feedback e receba sugestões de melhoria para conhecimento e diretrizes."
+        helpHint={ADMIN_HELP.pages.evaluations}
         summary={<EvaluationsSummaryStrip summary={summary} isLoading={isLoading} />}
         actions={
           <button
@@ -146,14 +148,14 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
 
       <div className="mdc-admin-evaluations__layout mdc-admin-split">
         <aside className="mdc-admin-split__aside mdc-admin-panel mdc-admin-evaluations__candidates">
-          <label className="mdc-admin-field">
-            <span>Buscar respostas</span>
-            <ChatNativeTextInput
-              value={search}
-              placeholder="Texto da resposta ou título da sessão"
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </label>
+          <ChatAdminNativeTextField
+            id="admin-evaluation-search"
+            label="Buscar respostas"
+            hint={ADMIN_HELP.fields.evaluations.search}
+            value={search}
+            placeholder="Texto da resposta ou título da sessão"
+            onChange={setSearch}
+          />
 
           <div className="mdc-admin-entity-list mdc-admin-evaluations__candidate-list">
             {candidates.map((candidate) => (
@@ -224,6 +226,7 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
               <ChatAdminNativeTextAreaField
                 id="admin-evaluation-comment"
                 label="Comentário (opcional)"
+                hint={ADMIN_HELP.fields.evaluations.comment}
                 span={false}
                 rows={4}
                 value={comment}
@@ -233,7 +236,7 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
 
               <AdminFormCheckbox
                 title="Enriquecer sugestões com LLM"
-                hint="Mais lento; gera sugestões adicionais com base no contexto da resposta."
+                hint={ADMIN_HELP.fields.evaluations.useLlm}
                 checked={useLlmSuggestions}
                 onChange={(event) => setUseLlmSuggestions(event.target.checked)}
               />

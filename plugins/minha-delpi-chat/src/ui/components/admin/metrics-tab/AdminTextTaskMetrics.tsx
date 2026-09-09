@@ -9,6 +9,8 @@ import {
   rankedFromRecord,
 } from "./adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AdminTextTaskMetricsProps = {
   summary: AdminTextTaskSummary | null;
   isLoading?: boolean;
@@ -55,32 +57,32 @@ export function AdminTextTaskMetrics({
             <AdminKpiCard
               title="Tarefas textuais"
               value={formatMetricNumber(summary.textTasksCount)}
-              hint="Turnos com snapshot textual na janela."
+              hint={ADMIN_HELP.kpis.textTask.turns}
             />
             <AdminKpiCard
               title="Mistas"
               value={formatMetricNumber(summary.mixedTurnCount)}
-              hint="Consulta operacional + redação no mesmo fluxo."
+              hint={ADMIN_HELP.kpis.textTask.mixed}
             />
             <AdminKpiCard
               title="Qualidade"
               value={formatMetricNumber(summary.qualityFailedCount)}
-              hint="Respostas com falha no validador textual."
+              hint={ADMIN_HELP.kpis.textTask.validatorFail}
             />
             <AdminKpiCard
               title="Lousa versionada"
               value={formatMetricNumber(summary.canvasVersionedCount)}
-              hint="Atualizações com histórico de versões na lousa."
+              hint={ADMIN_HELP.kpis.textTask.versions}
             />
             <AdminKpiCard
               title="Só versão final"
               value={formatMetricNumber(summary.deliverFinalOnlyCount)}
-              hint="Pedidos com entrega direta, sem explicação longa."
+              hint={ADMIN_HELP.kpis.textTask.direct}
             />
             <AdminKpiCard
               title="Com anexo"
               value={formatMetricNumber(summary.attachmentSourceCount)}
-              hint="Tarefas textuais com origem em arquivo anexado."
+              hint={ADMIN_HELP.kpis.textTask.fromFile}
             />
           </AdminKpiGrid>
 

@@ -1,4 +1,6 @@
+import { SectionHintLabel } from "@delpi/plugin-ui/index";
 import { ADMIN_ATTENTION } from "../../../../content/adminAttentionContent";
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
 import type { AttentionItem } from "./attentionQueue";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
 
@@ -21,7 +23,9 @@ export function AdminAttentionQueue({ items, onOpen }: AdminAttentionQueueProps)
   return (
     <article className="mdc-admin-attention-queue" aria-label={ADMIN_ATTENTION.sectionTitle}>
       <header className="mdc-admin-attention-queue__header">
-        <h3>{ADMIN_ATTENTION.sectionTitle}</h3>
+        <h3>
+          <SectionHintLabel label={ADMIN_ATTENTION.sectionTitle} hint={ADMIN_HELP.fields.overview.attention} />
+        </h3>
         <p className="mdc-chat-muted">{ADMIN_ATTENTION.sectionDescription}</p>
       </header>
 

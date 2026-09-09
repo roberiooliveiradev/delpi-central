@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 
 import type { WorkspaceFileIngestPolicyFamily } from "../../../../data/api/chatTypes";
 import { WorkspaceFileDropzone } from "../../workspace/WorkspaceFileDropzone";
@@ -9,6 +10,7 @@ type TokenProvider = () => string | undefined | Promise<string | undefined>;
 
 type AdminFileDropzoneProps = {
   label: string;
+  labelHint?: string;
   accept?: string;
   ingestFamily?: WorkspaceFileIngestPolicyFamily;
   getAccessToken?: TokenProvider;
@@ -26,6 +28,7 @@ type AdminFileDropzoneProps = {
 
 export function AdminFileDropzone({
   label,
+  labelHint,
   accept,
   ingestFamily = "global_knowledge",
   getAccessToken,
@@ -41,23 +44,32 @@ export function AdminFileDropzone({
   footerSlot,
 }: AdminFileDropzoneProps) {
   return (
-    <WorkspaceFileDropzone
-      showFieldLabel={label}
-      accept={accept}
-      ingestFamily={ingestFamily}
-      getAccessToken={getAccessToken}
-      multiple={multiple}
-      disabled={disabled}
-      isBusy={isBusy}
-      isDragActive={isDragActive}
-      title={title}
-      hint={hint}
-      actionLabel={actionLabel}
-      contentVariant="workspace"
-      ariaLabel={label}
-      onFilesSelected={onFilesSelected}
-      onDragActiveChange={onDragActiveChange}
-      footerSlot={footerSlot}
-    />
+    <div className="mdc-admin-file-dropzone-field">
+      {labelHint ? (
+        <FieldLabel
+          label={label}
+          hint={labelHint}
+          className="mdc-admin-file-dropzone-field__label"
+        />
+      ) : null}
+      <WorkspaceFileDropzone
+        showFieldLabel={labelHint ? undefined : label}
+        accept={accept}
+        ingestFamily={ingestFamily}
+        getAccessToken={getAccessToken}
+        multiple={multiple}
+        disabled={disabled}
+        isBusy={isBusy}
+        isDragActive={isDragActive}
+        title={title}
+        hint={hint}
+        actionLabel={actionLabel}
+        contentVariant="workspace"
+        ariaLabel={label}
+        onFilesSelected={onFilesSelected}
+        onDragActiveChange={onDragActiveChange}
+        footerSlot={footerSlot}
+      />
+    </div>
   );
 }

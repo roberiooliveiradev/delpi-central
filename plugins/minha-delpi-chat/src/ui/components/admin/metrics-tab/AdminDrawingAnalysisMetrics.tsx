@@ -9,6 +9,8 @@ import {
   rankedFromRecord,
 } from "./adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AdminDrawingAnalysisMetricsProps = {
   summary: AdminDrawingAnalysisSummary | null;
   isLoading?: boolean;
@@ -54,32 +56,32 @@ export function AdminDrawingAnalysisMetrics({
             <AdminKpiCard
               title="Análises"
               value={formatMetricNumber(summary.analysesCount)}
-              hint="Turnos com snapshot de drawingAnalysis na janela."
+              hint={ADMIN_HELP.kpis.drawing.turns}
             />
             <AdminKpiCard
               title="Produtos distintos"
               value={formatMetricNumber(summary.uniqueProductCodes)}
-              hint="Códigos únicos detectados nos snapshots."
+              hint={ADMIN_HELP.kpis.drawing.codes}
             />
             <AdminKpiCard
               title="Erros críticos"
               value={formatMetricNumber(summary.totalCriticalErrors)}
-              hint="Soma de criticalErrors nos snapshots."
+              hint={ADMIN_HELP.kpis.drawing.critical}
             />
             <AdminKpiCard
               title="Relatório exportado"
               value={formatMetricNumber(summary.reportExportedCount)}
-              hint="Turnos com flag reportExported."
+              hint={ADMIN_HELP.kpis.drawing.exported}
             />
             <AdminKpiCard
               title="Analyser OK"
               value={formatMetricNumber(summary.analyserOkCount)}
-              hint="Chamadas ao analyser concluídas com sucesso."
+              hint={ADMIN_HELP.kpis.drawing.analyserOk}
             />
             <AdminKpiCard
               title="Com PDF"
               value={formatMetricNumber(summary.withPdfCount)}
-              hint="Turnos com anexo PDF na conversa."
+              hint={ADMIN_HELP.kpis.drawing.pdf}
             />
           </AdminKpiGrid>
 

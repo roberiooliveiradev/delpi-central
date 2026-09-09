@@ -3,6 +3,8 @@ import { AdminKpiCard } from "../shared/AdminKpiCard";
 import { AdminSummaryStrip } from "../shared/AdminSummaryStrip";
 import { formatMetricNumber } from "../metrics-tab/adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type SimulateSummaryStripProps = {
   summary: SimulateSummary;
 };
@@ -13,17 +15,17 @@ export function SimulateSummaryStrip({ summary }: SimulateSummaryStripProps) {
       <AdminKpiCard
         title="Agentes"
         value={formatMetricNumber(summary.agentCount)}
-        hint="Disponíveis para sandbox."
+        hint={ADMIN_HELP.kpis.simulate.agents}
       />
       <AdminKpiCard
         title="Sessões"
         value={formatMetricNumber(summary.sessionCount)}
-        hint="Histórico opcional na simulação."
+        hint={ADMIN_HELP.kpis.simulate.sessions}
       />
       <AdminKpiCard
         title="Resultado"
         value={summary.hasResult ? "Pronto" : "—"}
-        hint="Prompt, RAG e ferramentas após simular."
+        hint={ADMIN_HELP.kpis.simulate.result}
         active={summary.hasResult}
       />
     </AdminSummaryStrip>

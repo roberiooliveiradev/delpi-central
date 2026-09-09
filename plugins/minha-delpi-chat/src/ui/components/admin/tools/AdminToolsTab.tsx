@@ -163,7 +163,7 @@ export function AdminToolsTab({
           eyebrow="Plataforma"
           title="Inteligência do chat"
           description="Presets Rápido / Equilibrado / Máxima qualidade, ou Avançado para knobs. Métricas ficam em Qualidade."
-          helpHint={ADMIN_HELP.intelligence}
+          helpHint={ADMIN_HELP.pages.intelligence}
         />
         <ChatIntelligenceSettingsPanel getAccessToken={getAccessToken} />
       </section>
@@ -177,6 +177,7 @@ export function AdminToolsTab({
           eyebrow="Plataforma"
           title="Modos de resposta"
           description="Seletor Texto / Painel / Automático na sessão do chat."
+          helpHint={ADMIN_HELP.pages.response}
         />
         <ChatResponseModeSettingsPanel getAccessToken={getAccessToken} />
       </section>
@@ -190,6 +191,7 @@ export function AdminToolsTab({
           eyebrow="Plataforma"
           title="Visão e anexos"
           description="OCR, desenhos técnicos e limites de extração de documentos."
+          helpHint={ADMIN_HELP.pages.vision}
         />
         <ChatVisionSettingsPanel getAccessToken={getAccessToken} />
       </section>
@@ -204,7 +206,7 @@ export function AdminToolsTab({
         title="Ferramentas e integrações"
         description="Provedor LLM, saúde operacional e catálogo OpenAPI. Testes e logs de action ficam no Studio do agente."
         summary={<ToolsSummaryStrip summary={toolsSummary} />}
-        helpHint={ADMIN_HELP.tools}
+        helpHint={ADMIN_HELP.pages.tools}
         actions={
           <button
             type="button"
@@ -348,6 +350,7 @@ export function AdminToolsTab({
         <ChatAdminNativeSelectField
           id="admin-tools-agent"
           label="Agente"
+          hint={ADMIN_HELP.fields.tools.agentFilter}
           span={false}
           className="mdc-admin-tools-tab__agent-select"
           value={selectedAgentId}

@@ -1,4 +1,4 @@
-import { ChatNativeTextInput } from "../../shared/chatNativeFormFields";
+import { HintAction } from "@delpi/plugin-ui/index";
 import { ExternalLink, Plus, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -10,10 +10,14 @@ import {
 } from "../../../../data/api/adminApi";
 import type { AdminChatSkill, AdminRbacSummary } from "../../../../data/api/adminTypes";
 import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 import { buildChatAgentHref } from "../../../../navigation/chatRoutes";
 import { navigateChatHref } from "../../../../navigation/chatNavigation";
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
-import { ChatAdminNativeTextAreaField } from "../shared/chatAdminFormFields";
+import {
+  ChatAdminNativeTextAreaField,
+  ChatAdminNativeTextField,
+} from "../shared/chatAdminFormFields";
 import { useConfirmDialog } from "../../shared";
 import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { SkillsSummaryStrip } from "./SkillsSummaryStrip";
@@ -235,7 +239,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
         eyebrow="Conhecimento"
         title="Comportamentos"
         description="Catálogo global de skills de prompt. Skills e actions por agente são editadas no Studio — não neste CRUD."
-        helpHint={ADMIN_HELP.behaviors}
+        helpHint={ADMIN_HELP.pages.behaviors}
         summary={
           <SkillsSummaryStrip
             summary={summary}
@@ -256,14 +260,16 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
               <RefreshCw size={15} aria-hidden="true" className={isLoading ? "is-spinning" : ""} />
               <span>Atualizar</span>
             </button>
-            <button
-              type="button"
-              className="mdc-chat-ws-toolbar-btn"
-              onClick={() => navigateChatHref(buildChatAgentHref(null))}
-            >
-              <ExternalLink size={15} aria-hidden="true" />
-              <span>Abrir Studio</span>
-            </button>
+            <HintAction hint={ADMIN_HELP.fields.skills.openStudio} ariaLabel="Ajuda: Abrir Studio">
+              <button
+                type="button"
+                className="mdc-chat-ws-toolbar-btn"
+                onClick={() => navigateChatHref(buildChatAgentHref(null))}
+              >
+                <ExternalLink size={15} aria-hidden="true" />
+                <span>Abrir Studio</span>
+              </button>
+            </HintAction>
             {canManage ? (
               <button
                 type="button"
@@ -354,34 +360,35 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
               <h3>{isCreating ? "Nova skill" : `Editar — ${selectedSkill?.label}`}</h3>
 
               <div className="mdc-admin-skills__form-grid">
-                <label className="mdc-admin-field">
-                  <span>Chave (slug)</span>
-                  <ChatNativeTextInput
-                    value={draft.skillKey}
-                    disabled={!isCreating || isSaving}
-                    onChange={(event) =>
-                      setDraft((current) => ({ ...current, skillKey: event.target.value }))
-                    }
-                    placeholder="ex.: sql, resumo-executivo"
-                    required
-                  />
-                </label>
+                <ChatAdminNativeTextField
+                  id="admin-skill-key"
+                  label="Chave (slug)"
+                  hint={ADMIN_HELP.fields.skills.key}
+                  value={draft.skillKey}
+                  disabled={!isCreating || isSaving}
+                  onChange={(value) =>
+                    setDraft((current) => ({ ...current, skillKey: value }))
+                  }
+                  placeholder="ex.: sql, resumo-executivo"
+                  required
+                />
 
-                <label className="mdc-admin-field">
-                  <span>Nome exibido</span>
-                  <ChatNativeTextInput
-                    value={draft.label}
-                    disabled={isSaving}
-                    onChange={(event) =>
-                      setDraft((current) => ({ ...current, label: event.target.value }))
-                    }
-                    required
-                  />
-                </label>
+                <ChatAdminNativeTextField
+                  id="admin-skill-label"
+                  label="Nome exibido"
+                  hint={ADMIN_HELP.fields.skills.label}
+                  value={draft.label}
+                  disabled={isSaving}
+                  onChange={(value) =>
+                    setDraft((current) => ({ ...current, label: value }))
+                  }
+                  required
+                />
 
                 <ChatAdminNativeTextAreaField
                   id="admin-skill-description"
                   label="Descrição (UI)"
+                  hint={ADMIN_HELP.fields.skills.description}
                   className="mdc-admin-skills__field-span"
                   value={draft.description}
                   disabled={isSaving}
@@ -394,6 +401,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
                 <ChatAdminNativeTextAreaField
                   id="admin-skill-policy"
                   label="Policy (Markdown para o LLM)"
+                  hint={ADMIN_HELP.fields.skills.policyMarkdown}
                   className="mdc-admin-skills__field-span"
                   value={draft.policyContent}
                   disabled={isSaving}
@@ -404,94 +412,91 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
                   placeholder="Instruções injetadas no contexto quando a skill estiver ativa no agente."
                 />
 
-                <label className="mdc-admin-field">
-                  <span>Arquivo policy (fallback)</span>
-                  <ChatNativeTextInput
-                    value={draft.policyFile}
-                    disabled={isSaving}
-                    onChange={(event) =>
-                      setDraft((current) => ({ ...current, policyFile: event.target.value }))
-                    }
-                    placeholder="sql-assistant-skill.md"
-                  />
-                </label>
+                <ChatAdminNativeTextField
+                  id="admin-skill-policy-file"
+                  label="Arquivo policy (fallback)"
+                  hint={ADMIN_HELP.fields.skills.policyFile}
+                  value={draft.policyFile}
+                  disabled={isSaving}
+                  onChange={(value) =>
+                    setDraft((current) => ({ ...current, policyFile: value }))
+                  }
+                  placeholder="sql-assistant-skill.md"
+                />
 
-                <label className="mdc-admin-field">
-                  <span>Flag no metadata</span>
-                  <ChatNativeTextInput
-                    value={draft.metadataFlag}
-                    disabled={isSaving}
-                    onChange={(event) =>
-                      setDraft((current) => ({ ...current, metadataFlag: event.target.value }))
-                    }
-                    placeholder="authoring"
-                  />
-                </label>
+                <ChatAdminNativeTextField
+                  id="admin-skill-metadata-flag"
+                  label="Flag no metadata"
+                  hint={ADMIN_HELP.fields.skills.metadataFlag}
+                  value={draft.metadataFlag}
+                  disabled={isSaving}
+                  onChange={(value) =>
+                    setDraft((current) => ({ ...current, metadataFlag: value }))
+                  }
+                />
 
-                <label className="mdc-admin-field">
-                  <span>Flag legada (opcional)</span>
-                  <ChatNativeTextInput
-                    value={draft.legacyMetadataFlag}
-                    disabled={isSaving}
-                    onChange={(event) =>
-                      setDraft((current) => ({
-                        ...current,
-                        legacyMetadataFlag: event.target.value,
-                      }))
-                    }
-                    placeholder="sqlAuthoring"
-                  />
-                </label>
+                <ChatAdminNativeTextField
+                  id="admin-skill-legacy-flag"
+                  label="Flag legada (opcional)"
+                  hint={ADMIN_HELP.fields.skills.legacyFlag}
+                  value={draft.legacyMetadataFlag}
+                  disabled={isSaving}
+                  onChange={(value) =>
+                    setDraft((current) => ({
+                      ...current,
+                      legacyMetadataFlag: value,
+                    }))
+                  }
+                />
 
-                <label className="mdc-admin-field">
-                  <span>Dica de execução</span>
-                  <ChatNativeTextInput
-                    value={draft.executionPathHint}
-                    disabled={isSaving}
-                    onChange={(event) =>
-                      setDraft((current) => ({
-                        ...current,
-                        executionPathHint: event.target.value,
-                      }))
-                    }
-                    placeholder="POST /data/sql"
-                  />
-                </label>
+                <ChatAdminNativeTextField
+                  id="admin-skill-execution-hint"
+                  label="Dica de execução"
+                  hint={ADMIN_HELP.fields.skills.executionHint}
+                  value={draft.executionPathHint}
+                  disabled={isSaving}
+                  onChange={(value) =>
+                    setDraft((current) => ({
+                      ...current,
+                      executionPathHint: value,
+                    }))
+                  }
+                />
 
-                <label className="mdc-admin-field">
-                  <span>Chave derivada</span>
-                  <ChatNativeTextInput
-                    value={draft.executionDerivedKey}
-                    disabled={isSaving}
-                    onChange={(event) =>
-                      setDraft((current) => ({
-                        ...current,
-                        executionDerivedKey: event.target.value,
-                      }))
-                    }
-                    placeholder="sqlExecutionAvailable"
-                  />
-                </label>
+                <ChatAdminNativeTextField
+                  id="admin-skill-derived-key"
+                  label="Chave derivada"
+                  hint={ADMIN_HELP.fields.skills.derivedKey}
+                  value={draft.executionDerivedKey}
+                  disabled={isSaving}
+                  onChange={(value) =>
+                    setDraft((current) => ({
+                      ...current,
+                      executionDerivedKey: value,
+                    }))
+                  }
+                  placeholder="sqlExecutionAvailable"
+                />
 
-                <label className="mdc-admin-field">
-                  <span>Ordem</span>
-                  <ChatNativeTextInput
-                    type="number"
-                    value={draft.sortOrder}
-                    disabled={isSaving}
-                    onChange={(event) =>
-                      setDraft((current) => ({
-                        ...current,
-                        sortOrder: Number(event.target.value),
-                      }))
-                    }
-                  />
-                </label>
+                <ChatAdminNativeTextField
+                  id="admin-skill-sort-order"
+                  label="Ordem"
+                  hint={ADMIN_HELP.fields.skills.sortOrder}
+                  type="number"
+                  value={String(draft.sortOrder)}
+                  disabled={isSaving}
+                  onChange={(value) =>
+                    setDraft((current) => ({
+                      ...current,
+                      sortOrder: Number(value),
+                    }))
+                  }
+                />
               </div>
 
               <AdminFormCheckbox
                 title="Skill ativa no catálogo"
-                hint="Skills inativas não aparecem para novos vínculos em agentes."
+                hint={ADMIN_HELP.fields.skills.active}
                 checked={draft.isActive}
                 disabled={isSaving}
                 onChange={(event) =>

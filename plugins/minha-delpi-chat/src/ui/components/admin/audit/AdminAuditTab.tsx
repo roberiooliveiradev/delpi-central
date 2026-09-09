@@ -263,7 +263,7 @@ export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
         eyebrow="Governança"
         title="Eventos administrativos"
         description="Consulte, filtre e exporte ações registradas pelo Minha DELPI Chat para rastreabilidade operacional."
-        helpHint={ADMIN_HELP.audit}
+        helpHint={ADMIN_HELP.pages.audit}
         summary={
           <AuditSummaryStrip
             logs={logs}

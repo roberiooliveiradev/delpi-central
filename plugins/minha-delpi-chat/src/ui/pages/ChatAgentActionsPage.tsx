@@ -1,3 +1,4 @@
+import { FieldLabel, SectionHintLabel } from "@delpi/plugin-ui/index";
 import { ChatNativeTextInput } from "../components/shared/chatNativeFormFields";
 import {
   ArrowLeft,
@@ -51,6 +52,7 @@ import {
   ChatAdminNativeSelectField,
   ChatAdminNativeTextAreaField,
 } from "../components/admin/shared/chatAdminFormFields";
+import { ADMIN_HELP } from "../../content/adminHelpTooltips";
 import { ChatAgentPreviewWorkspace } from "../components/workspace/ChatAgentPreviewWorkspace";
 import { buildChatAgentHref } from "../../navigation/chatRoutes";
 import { ActionRoutesSection } from "./agent-actions/ActionRoutesSection";
@@ -906,7 +908,7 @@ export function ChatAgentActionsPage({
               <div className="mdc-chat-agent-actions-page__fields">
                 <div className="mdc-chat-agent-actions-page__grid">
                   <label className="mdc-chat-ws-field">
-                    <span>Nome da API</span>
+                    <FieldLabel label="Nome da API" hint={ADMIN_HELP.studio.actionsName} />
                     <ChatNativeTextInput
                       value={newProviderName}
                       onChange={(event) => setNewProviderName(event.target.value)}
@@ -915,7 +917,7 @@ export function ChatAgentActionsPage({
                   </label>
 
                   <label className="mdc-chat-ws-field">
-                    <span>URL base</span>
+                    <FieldLabel label="URL base" hint={ADMIN_HELP.studio.actionsBaseUrl} />
                     <ChatNativeTextInput
                       value={newProviderBaseUrl}
                       onChange={(event) => setNewProviderBaseUrl(event.target.value)}
@@ -926,7 +928,7 @@ export function ChatAgentActionsPage({
 
                 <div className="mdc-chat-agent-actions-page__grid">
                   <label className="mdc-chat-ws-field">
-                    <span>URL OpenAPI</span>
+                    <FieldLabel label="URL OpenAPI" hint={ADMIN_HELP.studio.openApiUrl} />
                     <ChatNativeTextInput
                       value={newProviderOpenApiUrl}
                       onChange={(event) => setNewProviderOpenApiUrl(event.target.value)}
@@ -935,7 +937,7 @@ export function ChatAgentActionsPage({
                   </label>
 
                   <label className="mdc-chat-ws-field">
-                    <span>Política de privacidade</span>
+                    <FieldLabel label="Política de privacidade" hint={ADMIN_HELP.studio.privacyPolicy} />
                     <ChatNativeTextInput
                       value={newProviderPrivacyPolicyUrl}
                       onChange={(event) =>
@@ -949,6 +951,7 @@ export function ChatAgentActionsPage({
                 <ChatAdminNativeTextAreaField
                   id="agent-actions-new-provider-schema"
                   label="Schema OpenAPI JSON"
+                  hint={ADMIN_HELP.studio.schema}
                   rows={12}
                   value={newProviderSchema}
                   placeholder='{"openapi":"3.1.0","info":{"title":"Minha API","version":"1.0.0"},"paths":{}}'
@@ -1003,7 +1006,7 @@ export function ChatAgentActionsPage({
                 <div className="mdc-chat-agent-actions-page__fields">
                   <div className="mdc-chat-agent-actions-page__grid">
                     <label className="mdc-chat-ws-field">
-                      <span>Nome da API</span>
+                      <FieldLabel label="Nome da API" hint={ADMIN_HELP.studio.actionsName} />
                       <ChatNativeTextInput
                         value={providerName}
                         onChange={(event) => setProviderName(event.target.value)}
@@ -1011,7 +1014,7 @@ export function ChatAgentActionsPage({
                     </label>
 
                     <label className="mdc-chat-ws-field">
-                      <span>URL base</span>
+                      <FieldLabel label="URL base" hint={ADMIN_HELP.studio.actionsBaseUrl} />
                       <ChatNativeTextInput
                         value={providerBaseUrl}
                         onChange={(event) => setProviderBaseUrl(event.target.value)}
@@ -1021,7 +1024,7 @@ export function ChatAgentActionsPage({
 
                   <div className="mdc-chat-agent-actions-page__grid">
                     <label className="mdc-chat-ws-field">
-                      <span>URL OpenAPI</span>
+                      <FieldLabel label="URL OpenAPI" hint={ADMIN_HELP.studio.openApiUrl} />
                       <ChatNativeTextInput
                         value={providerOpenApiUrl}
                         onChange={(event) => setProviderOpenApiUrl(event.target.value)}
@@ -1029,7 +1032,7 @@ export function ChatAgentActionsPage({
                     </label>
 
                     <label className="mdc-chat-ws-field">
-                      <span>Política de privacidade</span>
+                      <FieldLabel label="Política de privacidade" hint={ADMIN_HELP.studio.privacyPolicy} />
                       <ChatNativeTextInput
                         value={providerPrivacyPolicyUrl}
                         onChange={(event) =>
@@ -1052,7 +1055,11 @@ export function ChatAgentActionsPage({
                 </div>
 
                 <div className="mdc-chat-agent-actions-page__auth-panel">
-                  <span className="mdc-chat-ws-section-head">Tipo de autenticação</span>
+                  <SectionHintLabel
+                    className="mdc-chat-ws-section-head"
+                    label="Tipo de autenticação"
+                    hint={ADMIN_HELP.studio.authMode}
+                  />
                   <div className="mdc-chat-ws-radio-group" role="radiogroup">
                     <label className="mdc-chat-ws-radio-option">
                       <input
@@ -1106,7 +1113,7 @@ export function ChatAgentActionsPage({
                   {authMode === "api_key" ? (
                     <div className="mdc-chat-agent-actions-page__grid">
                       <label className="mdc-chat-ws-field">
-                        <span>Chave API</span>
+                        <FieldLabel label="Chave API" hint={ADMIN_HELP.studio.apiKey} />
                         <ChatNativeTextInput
                           value={authConfig.apiKey}
                           onChange={(event) =>
@@ -1121,7 +1128,7 @@ export function ChatAgentActionsPage({
                       </label>
 
                       <label className="mdc-chat-ws-field">
-                        <span>Nome do cabeçalho</span>
+                        <FieldLabel label="Nome do cabeçalho" hint={ADMIN_HELP.studio.authHeader} />
                         <ChatNativeTextInput
                           value={authConfig.headerName}
                           onChange={(event) =>
@@ -1137,6 +1144,7 @@ export function ChatAgentActionsPage({
                       <ChatAdminNativeSelectField
                         id="agent-actions-auth-scheme"
                         label="Formato"
+                        hint={ADMIN_HELP.studio.authScheme}
                         span={false}
                         value={authConfig.scheme}
                         options={[
@@ -1158,7 +1166,7 @@ export function ChatAgentActionsPage({
                     <div className="mdc-chat-agent-actions-page__fields">
                       <div className="mdc-chat-agent-actions-page__grid">
                         <label className="mdc-chat-ws-field">
-                          <span>ID do cliente</span>
+                          <FieldLabel label="ID do cliente" hint={ADMIN_HELP.studio.clientId} />
                           <ChatNativeTextInput
                             value={authConfig.clientId}
                             onChange={(event) =>
@@ -1171,7 +1179,7 @@ export function ChatAgentActionsPage({
                         </label>
 
                         <label className="mdc-chat-ws-field">
-                          <span>Segredo do cliente</span>
+                          <FieldLabel label="Segredo do cliente" hint={ADMIN_HELP.studio.clientSecret} />
                           <ChatNativeTextInput
                             value={authConfig.clientSecret}
                             onChange={(event) =>
@@ -1186,7 +1194,7 @@ export function ChatAgentActionsPage({
                       </div>
 
                       <label className="mdc-chat-ws-field">
-                        <span>URL de autorização</span>
+                        <FieldLabel label="URL de autorização" hint={ADMIN_HELP.studio.authorizationUrl} />
                         <ChatNativeTextInput
                           value={authConfig.authorizationUrl}
                           onChange={(event) =>
@@ -1199,7 +1207,7 @@ export function ChatAgentActionsPage({
                       </label>
 
                       <label className="mdc-chat-ws-field">
-                        <span>Token URL</span>
+                        <FieldLabel label="Token URL" hint={ADMIN_HELP.studio.tokenUrl} />
                         <ChatNativeTextInput
                           value={authConfig.tokenUrl}
                           onChange={(event) =>
@@ -1212,7 +1220,7 @@ export function ChatAgentActionsPage({
                       </label>
 
                       <label className="mdc-chat-ws-field">
-                        <span>Escopo</span>
+                        <FieldLabel label="Escopo" hint={ADMIN_HELP.studio.oauthScope} />
                         <ChatNativeTextInput
                           value={authConfig.scope}
                           onChange={(event) =>
@@ -1243,6 +1251,7 @@ export function ChatAgentActionsPage({
                   <ChatAdminNativeTextAreaField
                     id="agent-actions-provider-schema"
                     label="Schema OpenAPI JSON"
+                  hint={ADMIN_HELP.studio.schema}
                     rows={14}
                     readOnly
                     value={providerSchemaText}

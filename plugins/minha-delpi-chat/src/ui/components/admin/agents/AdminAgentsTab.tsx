@@ -138,7 +138,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
         eyebrow="Agentes"
         title="Especialização (catálogo)"
         description="Descoberta e atalho RAG/tools. A edição principal (identidade, prompt, skills e actions) é no Studio — use Abrir Studio (lista ou agente selecionado)."
-        helpHint={ADMIN_HELP.specialization}
+        helpHint={ADMIN_HELP.pages.specialization}
         summary={
           <AgentsSummaryStrip
             summary={summary}

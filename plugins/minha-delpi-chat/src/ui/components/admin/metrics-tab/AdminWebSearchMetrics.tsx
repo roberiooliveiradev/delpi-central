@@ -4,6 +4,8 @@ import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
 import { AdminMetricSection } from "../shared/AdminMetricSection";
 import { formatMetricNumber, formatMetricPercent } from "./adminMetricsFormatters";
 
+import { ADMIN_HELP } from "../../../../content/adminHelpTooltips";
+
 type AdminWebSearchMetricsProps = {
   summary: AdminWebSearchSummary | null;
   isLoading?: boolean;
@@ -35,42 +37,42 @@ export function AdminWebSearchMetrics({
             <AdminKpiCard
               title="Pesquisas"
               value={formatMetricNumber(summary.totalSearches)}
-              hint="Turnos com pesquisa web concluída ou tentada."
+              hint={ADMIN_HELP.kpis.webSearch.turns}
             />
             <AdminKpiCard
               title="Fonte oficial"
               value={formatMetricPercent(summary.officialSourceRate)}
-              hint={`${formatMetricNumber(summary.withOfficialSourceCount)} com fonte oficial.`}
+              hint={`${formatMetricNumber(summary.withOfficialSourceCount)} ${ADMIN_HELP.kpis.webSearch.official}`}
             />
             <AdminKpiCard
               title="Baixa confiança"
               value={formatMetricNumber(summary.lowConfidenceCount)}
-              hint="Respostas com confiança classificada como baixa."
+              hint={ADMIN_HELP.kpis.webSearch.lowConfidence}
             />
             <AdminKpiCard
               title="Sem resultado"
               value={formatMetricNumber(summary.noResultCount)}
-              hint="Busca vazia ou sem fonte confiável."
+              hint={ADMIN_HELP.kpis.webSearch.empty}
             />
             <AdminKpiCard
               title="Query sanitizada"
               value={formatMetricNumber(summary.redactedQueryCount)}
-              hint="Dados sensíveis removidos antes da busca."
+              hint={ADMIN_HELP.kpis.webSearch.redacted}
             />
             <AdminKpiCard
               title="Bloqueadas"
               value={formatMetricNumber(summary.blockedBySecurityCount)}
-              hint="Consultas não enviadas ao buscador."
+              hint={ADMIN_HELP.kpis.webSearch.skipped}
             />
             <AdminKpiCard
               title="Cliques pós-pesquisa"
               value={formatMetricNumber(summary.followUpClicksCount)}
-              hint="Chips «Só fontes oficiais», «Buscar em inglês», etc."
+              hint={ADMIN_HELP.kpis.webSearch.chips}
             />
             <AdminKpiCard
               title="Feedback negativo"
               value={formatMetricNumber(summary.negativeFeedbackCount)}
-              hint="Motivos específicos de pesquisa web."
+              hint={ADMIN_HELP.kpis.webSearch.reasons}
             />
           </AdminKpiGrid>
 

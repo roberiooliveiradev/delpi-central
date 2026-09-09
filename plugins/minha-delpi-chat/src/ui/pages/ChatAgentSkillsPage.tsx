@@ -10,7 +10,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { NativeSwitchControl } from "@delpi/plugin-ui/index";
+import { HintAction, NativeSwitchControl } from "@delpi/plugin-ui/index";
 
 import {
   listChatAgentSkills,
@@ -20,6 +20,7 @@ import {
 import type { ChatAgent, ChatAgentSkillBinding } from "../../data/api/chatTypes";
 import { buildChatAgentHref } from "../../navigation/chatRoutes";
 import { ChatResourceUsageLink } from "../components/shared/ChatResourceUsageLink";
+import { ADMIN_HELP } from "../../content/adminHelpTooltips";
 
 import "./ChatAgentSkillsPage.css";
 
@@ -252,7 +253,11 @@ export function ChatAgentSkillsPage({
                       <p>{binding.description}</p>
                     </div>
 
-                    <NativeSwitchControl
+                    <HintAction
+                      hint={ADMIN_HELP.studio.skillToggle}
+                      ariaLabel={`Ajuda: ${binding.label}`}
+                    >
+                      <NativeSwitchControl
                       className="mdc-agent-skills__switch"
                       trackClassName="mdc-agent-skills__switch-track"
                       checked={binding.enabled}
@@ -260,6 +265,7 @@ export function ChatAgentSkillsPage({
                       aria-label={`${binding.enabled ? "Desativar" : "Ativar"} ${binding.label}`}
                       onChange={(enabled) => void handleToggle(binding, enabled)}
                     />
+                    </HintAction>
                   </div>
 
                   <footer className="mdc-agent-skills__card-foot">
