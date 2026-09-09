@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 
+import { disableDevice } from "../api/productionPulseApi";
 import {
   PpActionButton,
   PpHintAction,
+  PpHostContainedDialog,
   PpPageHero,
   PpStateBox,
   PpUnderlineNav,
@@ -47,6 +49,9 @@ export function DeviceDetailPage({
   const [factoryOpen, setFactoryOpen] = useState(false);
   const [factoryLoading, setFactoryLoading] = useState(false);
   const [factoryError, setFactoryError] = useState<string | null>(null);
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
+  const [deactivateLoading, setDeactivateLoading] = useState(false);
+  const [deactivateError, setDeactivateError] = useState<string | null>(null);
 
   const {
     device,
@@ -119,6 +124,20 @@ export function DeviceDetailPage({
     }
   };
 
+  const handleDeactivate = async () => {
+    setDeactivateLoading(true);
+    setDeactivateError(null);
+    try {
+      await disableDevice(deviceId);
+      setDeactivateOpen(false);
+      navigateProductionPulse(panelBackPath);
+    } catch (err) {
+      setDeactivateError(err instanceof Error ? err.message : "Erro ao desativar dispositivo.");
+    } finally {
+      setDeactivateLoading(false);
+    }
+  };
+
   if (!permissions.canViewDevices) {
     return (
       <div className="pp-page-stack">
@@ -170,15 +189,28 @@ export function DeviceDetailPage({
           <div className="pp-device-detail__hero-actions">
             <DeviceStatusBadge status={device.status} />
             {permissions.canManageDevices ? (
-              <PpHintAction hint={PP_HELP.detail.editDevice} ariaLabel="Ajuda: Editar">
-                <PpActionButton
-                  variant="ghost"
-                  className="pp-hero-brand-btn"
-                  onClick={() => navigateProductionPulse(productionPulseDeviceEditPath(deviceId))}
-                >
-                  Editar
-                </PpActionButton>
-              </PpHintAction>
+              <>
+                <PpHintAction hint={PP_HELP.detail.editDevice} ariaLabel="Ajuda: Editar">
+                  <PpActionButton
+                    variant="ghost"
+                    className="pp-hero-brand-btn"
+                    onClick={() => navigateProductionPulse(productionPulseDeviceEditPath(deviceId))}
+                  >
+                    Editar
+                  </PpActionButton>
+                </PpHintAction>
+                {device.enabled ? (
+                  <PpHintAction hint={PP_HELP.detail.deactivate} ariaLabel="Ajuda: Desativar">
+                    <PpActionButton
+                      variant="ghost"
+                      className="pp-hero-brand-btn"
+                      onClick={() => setDeactivateOpen(true)}
+                    >
+                      Desativar
+                    </PpActionButton>
+                  </PpHintAction>
+                ) : null}
+              </>
             ) : null}
             <PpHintAction hint={PP_HELP.detail.pollNow} ariaLabel="Ajuda: Atualizar agora">
               <PpActionButton
@@ -259,6 +291,27 @@ export function DeviceDetailPage({
           setFactoryError(null);
         }}
       />
+
+      <PpHostContainedDialog
+        open={deactivateOpen}
+        title={PP_HELP.modals.deactivateTitle}
+        onClose={() => {
+          if (deactivateLoading) return;
+          setDeactivateOpen(false);
+          setDeactivateError(null);
+        }}
+      >
+        <p>{PP_HELP.modals.deactivateBody}</p>
+        {deactivateError ? <PpStateBox variant="error" title="Desativação" message={deactivateError} /> : null}
+        <div className="pp-inline-actions">
+          <PpActionButton variant="ghost" onClick={() => setDeactivateOpen(false)} disabled={deactivateLoading}>
+            Cancelar
+          </PpActionButton>
+          <PpActionButton onClick={() => void handleDeactivate()} disabled={deactivateLoading}>
+            {deactivateLoading ? "Desativando…" : "Desativar dispositivo"}
+          </PpActionButton>
+        </div>
+      </PpHostContainedDialog>
     </div>
   );
 }

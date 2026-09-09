@@ -49,7 +49,16 @@ def _coded_error(exc: ContentCodedError) -> JSONResponse:
     return JSONResponse(status_code=status_code, content=payload)
 
 
-@router.get("/firmwares")
+def _not_found_firmware() -> JSONResponse:
+    payload = error(
+        firmware_ota_http_message("firmwareNotFound"),
+        code="firmwareNotFound",
+        status_code=404,
+    )
+    return JSONResponse(status_code=404, content={k: v for k, v in payload.items() if k != "_status_code"})
+
+
+@router.get("/firmwares", operation_id="list_firmwares")
 async def list_firmwares(
     request: Request,
     firmwareKey: str | None = Query(default=None),
@@ -69,7 +78,7 @@ async def list_firmwares(
     return success({"items": items})
 
 
-@router.get("/firmwares/{firmware_id}")
+@router.get("/firmwares/{firmware_id}", operation_id="get_firmware")
 async def get_firmware(request: Request, firmware_id: str):
     denied = guard_view_devices(request)
     if denied:
@@ -77,16 +86,11 @@ async def get_firmware(request: Request, firmware_id: str):
     try:
         data = _catalog.get_firmware(UUID(firmware_id))
     except (ValueError, FirmwareNotFoundError):
-        payload = error(
-            firmware_ota_http_message("firmwareNotFound"),
-            code="firmwareNotFound",
-            status_code=404,
-        )
-        return JSONResponse(status_code=404, content={k: v for k, v in payload.items() if k != "_status_code"})
+        return _not_found_firmware()
     return success(data)
 
 
-@router.patch("/firmwares/{firmware_id}")
+@router.patch("/firmwares/{firmware_id}", operation_id="patch_firmware")
 async def patch_firmware(request: Request, firmware_id: str):
     denied = guard_manage_devices(request)
     if denied:
@@ -100,20 +104,54 @@ async def patch_firmware(request: Request, firmware_id: str):
             UUID(firmware_id),
             display_name=body.get("displayName") if "displayName" in body else None,
             release_notes=body.get("releaseNotes") if "releaseNotes" in body else None,
+            source_text=body.get("sourceText") if "sourceText" in body else None,
+            source_text_provided="sourceText" in body,
         )
     except ContentCodedError as exc:
         return _coded_error(exc)
     except (ValueError, FirmwareNotFoundError):
-        payload = error(
-            firmware_ota_http_message("firmwareNotFound"),
-            code="firmwareNotFound",
-            status_code=404,
-        )
-        return JSONResponse(status_code=404, content={k: v for k, v in payload.items() if k != "_status_code"})
+        return _not_found_firmware()
     return success(data)
 
 
-@router.post("/firmwares/{firmware_id}/archive")
+@router.post("/firmwares/{firmware_id}/artifact", operation_id="attach_firmware_artifact")
+async def attach_firmware_artifact(
+    request: Request,
+    firmware_id: str,
+    file: UploadFile = File(...),
+):
+    denied = guard_manage_devices(request)
+    if denied:
+        return denied
+    raw = await file.read()
+    try:
+        data = _catalog.attach_artifact(
+            UUID(firmware_id),
+            raw=raw,
+            filename_hint=file.filename,
+        )
+    except ContentCodedError as exc:
+        return _coded_error(exc)
+    except (ValueError, FirmwareNotFoundError):
+        return _not_found_firmware()
+    return success(data)
+
+
+@router.post("/firmwares/{firmware_id}/publish", operation_id="publish_firmware_version")
+async def publish_firmware_version(request: Request, firmware_id: str):
+    denied = guard_manage_devices(request)
+    if denied:
+        return denied
+    try:
+        data = _catalog.publish_version(UUID(firmware_id))
+    except ContentCodedError as exc:
+        return _coded_error(exc)
+    except (ValueError, FirmwareNotFoundError):
+        return _not_found_firmware()
+    return success(data)
+
+
+@router.post("/firmwares/{firmware_id}/archive", operation_id="archive_firmware")
 async def archive_firmware(request: Request, firmware_id: str):
     denied = guard_manage_devices(request)
     if denied:
@@ -121,16 +159,11 @@ async def archive_firmware(request: Request, firmware_id: str):
     try:
         data = _catalog.archive(UUID(firmware_id))
     except (ValueError, FirmwareNotFoundError):
-        payload = error(
-            firmware_ota_http_message("firmwareNotFound"),
-            code="firmwareNotFound",
-            status_code=404,
-        )
-        return JSONResponse(status_code=404, content={k: v for k, v in payload.items() if k != "_status_code"})
+        return _not_found_firmware()
     return success(data)
 
 
-@router.get("/firmware-drivers")
+@router.get("/firmware-drivers", operation_id="list_firmware_drivers")
 async def list_firmware_drivers(request: Request):
     denied = guard_view_devices(request)
     if denied:
@@ -143,30 +176,38 @@ async def list_firmware_drivers(request: Request):
     return success({"items": items})
 
 
-@router.post("/firmwares")
-async def publish_firmware(
+@router.post("/firmwares", operation_id="create_firmware")
+async def create_firmware(
     request: Request,
-    file: UploadFile = File(...),
     firmwareKey: str = Form(...),
     driverKey: str = Form(...),
     version: str = Form(...),
     displayName: str = Form(""),
     releaseNotes: str = Form(""),
     minCompatibleVersion: str = Form(""),
+    sourceText: str = Form(""),
     publish: bool = Form(True),
+    file: UploadFile | None = File(default=None),
 ):
     denied = guard_manage_devices(request)
     if denied:
         return denied
-    raw = await file.read()
+    raw: bytes | None = None
+    filename_hint: str | None = None
+    if file is not None:
+        raw = await file.read()
+        filename_hint = file.filename
+    if publish and not raw:
+        return _coded_error(ContentCodedError("firmwareMissingArtifact"))
     try:
-        data = _catalog.publish(
+        data = _catalog.create_draft(
             firmware_key=firmwareKey,
             driver_key=driverKey,
             version=version,
             display_name=displayName,
+            source_text=sourceText or None,
             raw=raw,
-            filename_hint=file.filename,
+            filename_hint=filename_hint,
             release_notes=releaseNotes or None,
             min_compatible_version=minCompatibleVersion or None,
             publish=publish,
@@ -178,7 +219,7 @@ async def publish_firmware(
     return JSONResponse(status_code=201, content=payload)
 
 
-@router.get("/firmware-update-jobs")
+@router.get("/firmware-update-jobs", operation_id="list_firmware_update_jobs")
 async def list_jobs(request: Request, branch: str | None = Query(default=None)):
     denied = guard_view_devices(request)
     if denied:
@@ -194,7 +235,7 @@ async def list_jobs(request: Request, branch: str | None = Query(default=None)):
     return success({"items": items})
 
 
-@router.post("/firmware-update-jobs")
+@router.post("/firmware-update-jobs", operation_id="create_firmware_update_job")
 async def create_job(request: Request):
     denied = guard_manage_devices(request)
     if denied:
@@ -223,7 +264,7 @@ async def create_job(request: Request):
     return JSONResponse(status_code=201, content=success(data))
 
 
-@router.get("/firmware-update-jobs/{job_id}/targets")
+@router.get("/firmware-update-jobs/{job_id}/targets", operation_id="list_firmware_update_targets")
 async def list_targets(request: Request, job_id: str):
     denied = guard_view_devices(request)
     if denied:
@@ -240,7 +281,7 @@ async def list_targets(request: Request, job_id: str):
     return success({"items": items})
 
 
-@router.post("/firmware-update-jobs/{job_id}/cancel")
+@router.post("/firmware-update-jobs/{job_id}/cancel", operation_id="cancel_firmware_update_job")
 async def cancel_job(request: Request, job_id: str):
     denied = guard_manage_devices(request)
     if denied:
@@ -259,7 +300,7 @@ async def cancel_job(request: Request, job_id: str):
     return success(data)
 
 
-@router.get("/firmware-update-summary")
+@router.get("/firmware-update-summary", operation_id="get_firmware_update_summary")
 async def firmware_update_summary(
     request: Request,
     branch: str = Query(...),

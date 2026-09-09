@@ -2,6 +2,7 @@ import type { ComponentProps } from "react";
 import {
   ActionButton,
   attachmentFileListBemClasses,
+  createDashboardTopBar,
   createCompactPagination,
   createDashboardAttachmentFileList,
   createDashboardFileDropzone,
@@ -61,6 +62,7 @@ export const PpPagePath = createDashboardPagePath({
   prefix: PREFIX,
   portalScopeClassName: PP_PORTAL_SCOPE,
 });
+export const PpTopBar = createDashboardTopBar({ prefix: PREFIX });
 export const PpFieldLabel = FieldLabel;
 export const PpSimpleKpiCard = createSimpleKpiCard(PREFIX, { withBody: true, withSubtitle: true });
 export const PpSegmentToggle = createDashboardSegmentToggle(PREFIX);

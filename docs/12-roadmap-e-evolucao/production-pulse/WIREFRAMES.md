@@ -69,6 +69,9 @@ Cada tela inclui subseções **`tablet (769–1100px)`** e **`mobile (≤768px)`
 | `/apps/production-pulse/devices/new` | WF-PP-02 | não | `devices.manage` |
 | `/apps/production-pulse/devices/:id` | WF-PP-03 | não | `devices.view` |
 | `/apps/production-pulse/devices/:id/edit` | WF-PP-02 | não | `devices.manage` |
+| `/apps/production-pulse/firmwares` | WF-PP-OTA-02 | TopBar | `devices.view` |
+| `/apps/production-pulse/firmwares/:id` | WF-PP-FW-DETAIL | TopBar | `devices.view` |
+| `/apps/production-pulse/firmware-links` | WF-PP-OTA-HUB | TopBar | `devices.view` |
 | `/apps/production-pulse/operator` | **WF-PP-OP-HUB** | sim† «Operador · Pulso» | `operator` |
 | `/apps/production-pulse/operator/placements/:placementKey` | **WF-PP-OP-PICK** | não | picker devices |
 | `/apps/production-pulse/operator/devices/:deviceId` | **WF-PP-OP** / **GAUGE** / **TEMP** / **ROTATION** | não | superfície driver |
@@ -78,28 +81,31 @@ Rotas legado: redirect **308** — ver [ADR-004-routes-and-legacy-aliases.md](./
 
 ---
 
-## WF-PP-00 — Shell comum (template)
+## WF-PP-00 — Shell admin (`ProductionPulseShell`)
 
-Todas as páginas internas (exceto redirect inicial).
+Rotas administrativas (painel, firmwares, hub OTA, cadastro/detalle IoT). **Operador** usa `OperatorBrandBar` — sem TopBar admin.
 
 ```text
 ┌─ Sidebar Portal ─┬─ Área MFE .dashboard-production-pulse ─────────────────────────────┐
-│ Minha DELPI      │ ┌─ PageHero compact ────────────────────────────────────────────┐ │
-│ …                │ │ PULSO DE PRODUÇÃO                                               │ │
-│ ► Pulso Produção │ │ Monitoramento IoT — dispositivos, sensores e postos de trabalho     │ │
-│                  │ │ Filial: [Santa Catarina ▼]              [ghost Atualizar tudo]† │ │
+│ Minha DELPI      │ ┌─ PpTopBar: Painel | Firmwares | Hub OTA | Operador† ────────────┐ │
+│ ► Pulso Produção │ └─────────────────────────────────────────────────────────────────┘ │
+│                  │ ┌─ PageHero compact (ações locais da rota) ────────────────────────┐ │
+│                  │ │ título + descrição · sem CTAs Painel/Firmwares/Hub no hero       │ │
 │                  │ └─────────────────────────────────────────────────────────────────┘ │
-│                  │ ┌─ conteúdo da rota (WF-PP-01 / 02 / 03) ────────────────────────┐ │
-│                  │ │                                                                 │ │
-│                  │ └─────────────────────────────────────────────────────────────────┘ │
+│                  │ conteúdo da rota                                                  │
 └──────────────────┴─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Componentes:** `ProductionPulsePageHero` → wrapper `PageHero` density=`compact`.  
-**Filial:** `FilialSwitcher` compact no `children` do hero (se >1 filial permitida).  
-**Atualizar tudo:** `POST /devices/poll-all` — visível só com `devices.manage`†.
+**Componentes:** `PpTopBar` (`createDashboardTopBar({ prefix: "pp" })`) + `PpPageHero` density=`compact`.  
+**Active item:** `resolvePulseNavId(route)` — `/firmwares/{id}` → Firmwares; `/devices/*` → Painel.  
+**Filial (painel):** `PpSegmentToggle` no hero — não duplicar no TopBar.
 
-**Helps (`PP_HELP`):** `shell.heroTitle` · `shell.heroFilial` · `shell.pollAll` · ver [HELP-CONTENT § WF-PP-00](./HELP-CONTENT.md#wf-pp-00--shell-productionpulsepagehero).
+**Helps (`PP_HELP`):** `shell.topBar` · `shell.heroTitle` · ver [HELP-CONTENT § WF-PP-00](./HELP-CONTENT.md#wf-pp-00--shell-productionpulsepagehero).
+
+## WF-PP-FW-DETAIL — `/firmwares/:id`
+
+Hero: `{displayName}` + badge Draft/Published/Archived · família · versão.  
+Seções: metadados · sketch (edit draft / read-only published) · artefato SHA · ações Publicar/Arquivar.
 
 ### WF-PP-00 tablet (769–1100px)
 

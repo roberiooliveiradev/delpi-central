@@ -95,9 +95,6 @@ function deviceFormToApiBody(device: DeviceFormValues): Record<string, unknown> 
     branch: device.branch,
     ipAddress: device.ipAddress.trim(),
     controllerCode: device.controllerCode.trim() || null,
-    firmwareSource: device.firmwareSource.trim()
-      ? device.firmwareSource.replace(/^\n+|\n+$/g, "")
-      : null,
     wifiSsid: device.wifiSsid.trim() || null,
     driverKey: device.driverKey,
     pollIntervalMs: device.pollIntervalMs,
@@ -293,19 +290,50 @@ export async function executeOperatorCommand(
   return payload.data;
 }
 
-export type FirmwareCatalogItem = {
+export type FirmwareLifecycle = "draft" | "published" | "archived";
+
+export type FirmwareListItem = {
   id: string;
   firmwareKey: string;
   driverKey: string;
   version: string;
   displayName: string;
-  artifactSha256: string;
-  artifactSizeBytes: number;
+  lifecycle: FirmwareLifecycle;
+  hasSource: boolean;
+  hasArtifact: boolean;
+  artifactSha256: string | null;
+  artifactSizeBytes: number | null;
   releaseNotes: string | null;
   minCompatibleVersion: string | null;
   publishedAt: string | null;
   createdAt: string | null;
   archivedAt: string | null;
+};
+
+export type FirmwareDetail = FirmwareListItem & {
+  sourceText: string | null;
+};
+
+/** @deprecated use FirmwareListItem — kept for gradual migration */
+export type FirmwareCatalogItem = FirmwareDetail;
+
+export type FirmwareSourceBlock = {
+  available: boolean;
+  firmwareKey?: string | null;
+  version?: string | null;
+  firmwareId?: string | null;
+  sourceText?: string | null;
+  reason?: string | null;
+  label?: string;
+};
+
+export type DeviceFirmwareSources = {
+  firmwareKey: string | null;
+  installedVersion: string | null;
+  targetVersion: string | null;
+  installedSource: FirmwareSourceBlock;
+  targetSource: FirmwareSourceBlock | null;
+  legacySource: FirmwareSourceBlock | null;
 };
 
 export type FirmwareDriverCatalogItem = {
@@ -371,7 +399,7 @@ export async function fetchFirmwares(params: {
   includeArchived?: boolean;
   publishedOnly?: boolean;
   signal?: AbortSignal;
-} = {}): Promise<FirmwareCatalogItem[]> {
+} = {}): Promise<FirmwareListItem[]> {
   const searchParams = new URLSearchParams();
   if (params.firmwareKey) searchParams.set("firmwareKey", params.firmwareKey);
   if (params.driverKey) searchParams.set("driverKey", params.driverKey);
@@ -379,15 +407,15 @@ export async function fetchFirmwares(params: {
   if (params.includeArchived === true) searchParams.set("includeArchived", "true");
   if (params.publishedOnly) searchParams.set("publishedOnly", "true");
   const suffix = searchParams.toString();
-  const payload = await httpGet<ApiEnvelope<{ items: FirmwareCatalogItem[] }>>(
+  const payload = await httpGet<ApiEnvelope<{ items: FirmwareListItem[] }>>(
     `${PRODUCTION_PULSE_API_BASE}/firmwares${suffix ? `?${suffix}` : ""}`,
     { signal: params.signal },
   );
   return payload.data.items;
 }
 
-export async function fetchFirmwareById(firmwareId: string): Promise<FirmwareCatalogItem> {
-  const payload = await httpGet<ApiEnvelope<FirmwareCatalogItem>>(
+export async function fetchFirmwareById(firmwareId: string): Promise<FirmwareDetail> {
+  const payload = await httpGet<ApiEnvelope<FirmwareDetail>>(
     `${PRODUCTION_PULSE_API_BASE}/firmwares/${encodeURIComponent(firmwareId)}`,
   );
   return payload.data;
@@ -395,9 +423,13 @@ export async function fetchFirmwareById(firmwareId: string): Promise<FirmwareCat
 
 export async function patchFirmware(
   firmwareId: string,
-  body: { displayName?: string | null; releaseNotes?: string | null },
-): Promise<FirmwareCatalogItem> {
-  const payload = await httpJson<ApiEnvelope<FirmwareCatalogItem>>(
+  body: {
+    displayName?: string | null;
+    releaseNotes?: string | null;
+    sourceText?: string | null;
+  },
+): Promise<FirmwareDetail> {
+  const payload = await httpJson<ApiEnvelope<FirmwareDetail>>(
     "PATCH",
     `${PRODUCTION_PULSE_API_BASE}/firmwares/${encodeURIComponent(firmwareId)}`,
     body,
@@ -405,10 +437,59 @@ export async function patchFirmware(
   return payload.data;
 }
 
-export async function archiveFirmware(firmwareId: string): Promise<FirmwareCatalogItem> {
-  const payload = await httpJson<ApiEnvelope<FirmwareCatalogItem>>(
+export async function attachFirmwareArtifact(
+  firmwareId: string,
+  file: File,
+): Promise<FirmwareDetail> {
+  const form = new FormData();
+  form.set("file", file);
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "X-Delpi-Caller-App": "production-pulse",
+  };
+  const token = getAccessToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const response = await fetch(
+    `${PRODUCTION_PULSE_API_BASE}/firmwares/${encodeURIComponent(firmwareId)}/artifact`,
+    { method: "POST", headers, body: form },
+  );
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Erro HTTP ${response.status}`);
+  }
+  const payload = (await response.json()) as ApiEnvelope<FirmwareDetail>;
+  return payload.data;
+}
+
+export async function publishFirmwareVersion(firmwareId: string): Promise<FirmwareDetail> {
+  const payload = await httpJson<ApiEnvelope<FirmwareDetail>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/firmwares/${encodeURIComponent(firmwareId)}/publish`,
+  );
+  return payload.data;
+}
+
+export async function archiveFirmware(firmwareId: string): Promise<FirmwareDetail> {
+  const payload = await httpJson<ApiEnvelope<FirmwareDetail>>(
     "POST",
     `${PRODUCTION_PULSE_API_BASE}/firmwares/${encodeURIComponent(firmwareId)}/archive`,
+  );
+  return payload.data;
+}
+
+export async function fetchDeviceFirmwareSources(
+  deviceId: string,
+): Promise<DeviceFirmwareSources> {
+  const payload = await httpGet<ApiEnvelope<DeviceFirmwareSources>>(
+    `${PRODUCTION_PULSE_API_BASE}/devices/${encodeURIComponent(deviceId)}/firmware-sources`,
+  );
+  return payload.data;
+}
+
+export async function disableDevice(deviceId: string): Promise<{ id: string; enabled: boolean }> {
+  const payload = await httpJson<ApiEnvelope<{ id: string; enabled: boolean }>>(
+    "DELETE",
+    `${PRODUCTION_PULSE_API_BASE}/devices/${encodeURIComponent(deviceId)}`,
   );
   return payload.data;
 }
@@ -421,7 +502,7 @@ export async function fetchFirmwareDrivers(signal?: AbortSignal): Promise<Firmwa
   return payload.data.items;
 }
 
-export async function publishFirmware(form: FormData): Promise<FirmwareCatalogItem> {
+export async function publishFirmware(form: FormData): Promise<FirmwareDetail> {
   const headers: Record<string, string> = {
     Accept: "application/json",
     "X-Delpi-Caller-App": "production-pulse",
@@ -444,7 +525,7 @@ export async function publishFirmware(form: FormData): Promise<FirmwareCatalogIt
     }
     throw new Error(message);
   }
-  const payload = (await response.json()) as ApiEnvelope<FirmwareCatalogItem>;
+  const payload = (await response.json()) as ApiEnvelope<FirmwareDetail>;
   return payload.data;
 }
 

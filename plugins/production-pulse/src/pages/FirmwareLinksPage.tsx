@@ -8,7 +8,7 @@ import {
   fetchFirmwareUpdateTargets,
   fetchFirmwares,
   putDeviceFirmwareLink,
-  type FirmwareCatalogItem,
+  type FirmwareListItem,
   type FirmwareUpdateJob,
   type FirmwareUpdateTarget,
 } from "../api/productionPulseApi";
@@ -28,11 +28,7 @@ import {
   type DataTableColumn,
 } from "../app/productionPulseUi";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
-import {
-  PRODUCTION_PULSE_BASE_PATH,
-  productionPulseDeviceDetailPath,
-  productionPulseFirmwaresPath,
-} from "../constants/routes";
+import { productionPulseDeviceDetailPath } from "../constants/routes";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import { uniqueFirmwareFamilies } from "../utils/firmwareLinkGraph";
@@ -58,8 +54,8 @@ export function FirmwareLinksPage({
 }: FirmwareLinksPageProps) {
   const canManage = permissions.canManageDevices;
   const [branch, setBranch] = useState(initialBranch || "01");
-  const [firmwaresRaw, setFirmwaresRaw] = useState<FirmwareCatalogItem[]>([]);
-  const [publishedFirmwares, setPublishedFirmwares] = useState<FirmwareCatalogItem[]>([]);
+  const [firmwaresRaw, setFirmwaresRaw] = useState<FirmwareListItem[]>([]);
+  const [publishedFirmwares, setPublishedFirmwares] = useState<FirmwareListItem[]>([]);
   const [devices, setDevices] = useState<DeviceListItem[]>([]);
   const [jobs, setJobs] = useState<FirmwareUpdateJob[]>([]);
   const [targets, setTargets] = useState<FirmwareUpdateTarget[]>([]);
@@ -407,22 +403,6 @@ export function FirmwareLinksPage({
         description={PP_HELP.otaLinks.hero}
         actions={
           <>
-            <PpHintAction hint={PP_HELP.shell.backToPanel} ariaLabel="Ajuda: Painel">
-              <PpActionButton
-                variant="ghost"
-                onClick={() => navigateProductionPulse(PRODUCTION_PULSE_BASE_PATH)}
-              >
-                Painel
-              </PpActionButton>
-            </PpHintAction>
-            <PpHintAction hint={PP_HELP.ota.openCatalog} ariaLabel="Ajuda: Firmwares">
-              <PpActionButton
-                variant="ghost"
-                onClick={() => navigateProductionPulse(productionPulseFirmwaresPath())}
-              >
-                Firmwares
-              </PpActionButton>
-            </PpHintAction>
             <PpHintAction hint={PP_HELP.otaLinks.refresh} ariaLabel="Ajuda: Atualizar conexões">
               <PpActionButton
                 variant="primary"

@@ -70,12 +70,17 @@ describe("production-pulse kit contracts", () => {
     expect(hub).not.toMatch(/pp-operator-hub__search-actions/);
   });
 
-  it("painel admin tem atalho simétrico para modo operador", () => {
-    const panel = readRelative("pages/PanelPage.tsx");
-    expect(panel).toMatch(/productionPulseOperatorPath/);
-    expect(panel).toMatch(/Modo operador/);
-    expect(panel).toMatch(/canOperator/);
-    expect(panel).toMatch(/pp-panel-operator-link/);
+  it("shell admin usa PpTopBar — navegação de área fora do hero", () => {
+    expect(readRelative("App.tsx")).toMatch(/ProductionPulseShell/);
+    expect(readRelative("App.tsx")).toMatch(/isOperatorRoute/);
+    expect(readRelative("components/ProductionPulseShell.tsx")).toMatch(/PpTopBar/);
+    expect(readRelative("components/ProductionPulseShell.tsx")).toMatch(/resolvePulseNavId/);
+    expect(readRelative("constants/routes.ts")).toMatch(/firmwareDetail/);
+    expect(readRelative("pages/PanelPage.tsx")).not.toMatch(/productionPulseFirmwaresPath/);
+    expect(readRelative("pages/FirmwaresPage.tsx")).not.toMatch(
+      /<PpPageHero[\s\S]*productionPulseFirmwareLinksPath/,
+    );
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/productionPulseFirmwaresPath/);
   });
 
   it("OTA: rotas, helps, páginas kit-first e KPI de frota no painel", () => {
@@ -89,9 +94,9 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/PP_HELP\.ota\.firmwareKey/);
     expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/PpDataTable/);
     expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/PpCatalogSearchBar/);
-    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/archiveFirmware/);
-    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/PpHostContainedDialog/);
-    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/patchFirmware/);
+    expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/productionPulseFirmwareDetailPath/);
+    expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/publishFirmwareVersion/);
+    expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/attachFirmwareArtifact/);
     expect(readRelative("pages/FirmwaresPage.tsx")).not.toMatch(/Campanhas/);
     expect(readRelative("pages/FirmwareJobsPage.tsx")).toMatch(/productionPulseFirmwareLinksPath/);
     expect(readRelative("pages/FirmwareJobsPage.tsx")).toMatch(/Redirecionando/);
@@ -104,7 +109,7 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/Campanhas OTA/);
     expect(readRelative("pages/FirmwaresPage.tsx")).toMatch(/productionPulseFirmwareLinksPath/);
     expect(readRelative("pages/PanelPage.tsx")).toMatch(/FirmwareOtaKpiStrip/);
-    expect(readRelative("pages/PanelPage.tsx")).toMatch(/productionPulseFirmwareLinksPath/);
+    expect(readRelative("components/FirmwareOtaKpiStrip.tsx")).toMatch(/fetchFirmwareUpdateSummary/);
     expect(readRelative("pages/PanelPage.tsx")).not.toMatch(/productionPulseFirmwareJobsPath/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/fetchDevices/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/FirmwareDeviceLinkCanvas/);
@@ -120,8 +125,13 @@ describe("production-pulse kit contracts", () => {
       /createFirmwareUpdateJob/,
     );
     expect(readRelative("components/detail/DeviceFirmwareTab.tsx")).toMatch(
+      /fetchDeviceFirmwareSources/,
+    );
+    expect(readRelative("components/detail/DeviceFirmwareTab.tsx")).toMatch(
       /productionPulseFirmwareLinksPath/,
     );
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/disableDevice/);
+    expect(readRelative("components/DeviceForm.tsx")).not.toMatch(/firmwareSource/);
     expect(readRelative("utils/otaStatusLabels.ts")).toMatch(/formatOtaProgressDisplay/);
     expect(readRelative("utils/otaStatusLabels.ts")).toMatch(/Aguardando chip/);
   });
@@ -129,8 +139,8 @@ describe("production-pulse kit contracts", () => {
   it("botões do hero usam PpHintAction + PP_HELP (sem ação órfã)", () => {
     const heroPages = [
       "pages/PanelPage.tsx",
-      "pages/FirmwaresPage.tsx",
       "pages/FirmwareLinksPage.tsx",
+      "pages/FirmwareDetailPage.tsx",
       "pages/DeviceDetailPage.tsx",
       "components/operator/OperatorBrandBar.tsx",
       "components/operator/CounterPadSurface.tsx",

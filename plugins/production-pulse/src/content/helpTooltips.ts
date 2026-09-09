@@ -16,6 +16,8 @@ export const PP_HELP = {
     breadcrumbRoot: "Pulso de Produção",
     backToPanel: "Volta ao painel principal de dispositivos.",
     modeOperator: "Abre a visão simplificada para tablet no chão de fábrica.",
+    topBar:
+      "Navega entre Painel, catálogo de firmwares, hub OTA e modo operador (quando permitido).",
   },
 
   panel: {
@@ -96,8 +98,8 @@ export const PP_HELP = {
       "Cadastro salvo, mas não foi possível enviar a configuração ao dispositivo. Verifique IP, energia e token.",
     deviceConfigPushOk: "Configuração enviada ao dispositivo.",
     deviceConfigPushSkipped: "Cadastro salvo. Nenhuma configuração de chip para enviar.",
-    firmwareSource:
-      "Cole aqui o sketch Arduino (.ino) deste dispositivo. Sem limite de tamanho. Fica disponível na aba Firmware do detalhe, pronto para copiar.",
+    firmwareSourceDeprecated:
+      "Sketch legado no cadastro do device — substituído pelo catálogo de versões. Use a aba Firmware para ver a resolução exact-version.",
     driver:
       "Protocolo/firmware instalado no device. Define quais métricas são lidas e se há comandos (+/−/zerar).",
     driverPreview:
@@ -137,8 +139,20 @@ export const PP_HELP = {
     tabHistory: "Gráfico e tabela de leituras ao longo do tempo.",
     tabCommands: "Auditoria de comandos enviados ao hardware (zerar, +/−).",
     tabFirmware:
-      "Versão OTA instalada/alvo e sketch .ino cadastrado (cópia para gravação manual).",
-    firmwareEmpty: "Nenhum código .ino cadastrado. Edite o dispositivo e cole o sketch.",
+      "Versão OTA instalada/alvo, última publicada e sketch resolvido por versão exacta (nunca latest como instalado).",
+    firmwareEmpty: "Nenhum sketch disponível para esta versão.",
+    firmwareInstalledSource:
+      "Sketch da versão exata instalada no cadastro — resolvido no catálogo de firmwares.",
+    firmwareTargetSource: "Sketch da versão alvo da atualização OTA em andamento.",
+    firmwareLegacySource:
+      "Texto legado gravado no device antes do catálogo — fallback explícito, não substitui versão instalada.",
+    firmwareLegacyBadge: "Sketch legado do dispositivo",
+    firmwareInstalledMissingVersion:
+      "Informe installedFirmwareVersion no cadastro para resolver o sketch instalado.",
+    firmwareInstalledNotInCatalog: "Versão instalada não existe no catálogo de firmwares.",
+    firmwareInstalledNoSource: "Versão instalada existe, mas não tem sketch cadastrado.",
+    firmwareTargetNoSource: "Versão alvo existe, mas não tem sketch cadastrado.",
+    firmwareSourcesFailed: "Não foi possível carregar os sketches deste dispositivo.",
     firmwareCopy: "Copiar código",
     firmwareCopied: "Copiado",
     firmwareCopyFailed: "Não foi possível copiar. Selecione o texto e copie manualmente.",
@@ -190,8 +204,29 @@ export const PP_HELP = {
     openJobs: "Hub de amarração — disparo imediato, agendamento e acompanhamento OTA.",
     openLinks: "Hub: amarrar IoTs, disparar OTA e acompanhar atualizações.",
     catalogHero:
-      "Publique binários por família/versão. Depois amarre cada IoT a um firmware para poder atualizar.",
+      "Versões por família: sketch (.ino) e bin (.bin) na mesma release. Rascunho permite source antes do bin.",
+    createVersionForm:
+      "Crie rascunho (source ± bin) ou publique direto com .bin. Chave e versão são imutáveis após criar.",
     publishForm: "Envia o artefato .bin e metadados. Requer permissão de gestão.",
+    detailMetadata: "Identidade imutável da versão (família, versão, driver) e timestamps de lifecycle.",
+    detailSource:
+      "Snapshot do sketch (.ino) desta versão. Rascunho: editável; publicado: somente leitura.",
+    detailArtifact: "Binário OTA (.bin) usado pelo ESP. Publicar exige artefato anexado.",
+    sourceFile: "Importe um arquivo .ino — o texto entra no snapshot da versão (não é flashável via OTA).",
+    sourceTextarea: "Cole ou edite o sketch. Limite ~256 KiB por versão.",
+    sourceFileReadFailed: "Não foi possível ler o arquivo .ino selecionado.",
+    sourceEmpty: "Nenhum sketch cadastrado nesta versão.",
+    fileOptionalDraft: "Opcional no rascunho — obrigatório para publicar.",
+    publishRequiresBin: "Publicar exige anexar o artefato .bin.",
+    publishVersion: "Torna a versão elegível para OTA. Source e bin ficam imutáveis.",
+    publishConfirmTitle: "Publicar esta versão?",
+    publishConfirmBody:
+      "Após publicar, sketch e binário não podem ser alterados. Corrigir exige nova versão.",
+    editMetadata: "Edita nome exibido e notas — permitido em rascunho e publicado (até arquivar).",
+    artifactEmptyDraft: "Anexe o .bin antes de publicar.",
+    artifactImmutable: "Artefato publicado não pode ser substituído.",
+    statusPublished: "Publicado",
+    statusArchived: "Arquivado",
     firmwareKey: "Identificador da família (EN). Devices usam o mesmo valor para OTA.",
     driverKey: "Driver do registry compatível com os IoTs desta família (select).",
     driverKeyEmpty: "Lista de drivers indisponível — digite a chave EN do driver.",

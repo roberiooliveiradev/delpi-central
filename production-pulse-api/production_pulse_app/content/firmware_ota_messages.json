@@ -16,6 +16,10 @@
     "invalidFirmwareKey": "Identificador de firmware inválido.",
     "invalidFirmwareVersion": "Versão de firmware inválida.",
     "driverKeyUnknown": "Driver desconhecido no registry.",
-    "firmwareLinkIncompatible": "Este dispositivo não é compatível com a família de firmware escolhida."
+    "firmwareLinkIncompatible": "Este dispositivo não é compatível com a família de firmware escolhida.",
+    "firmwareNotEditable": "Esta versão não pode ser editada no estado atual.",
+    "firmwareMissingArtifact": "Publicação exige artefato .bin anexado.",
+    "firmwareAlreadyPublished": "Esta versão já está publicada.",
+    "firmwareSourceTooLarge": "Sketch (.ino) excede o tamanho máximo permitido."
   }
 }

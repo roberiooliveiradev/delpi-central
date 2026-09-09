@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   createFirmwareUpdateJob,
+  fetchDeviceFirmwareSources,
   fetchDeviceFirmwareUpdateStatus,
   fetchFirmwares,
+  type DeviceFirmwareSources,
   type DeviceFirmwareUpdateStatus,
 } from "../../api/productionPulseApi";
 import {
@@ -58,46 +60,21 @@ function stepState(
   return "available";
 }
 
-export function DeviceFirmwareTab({
-  device,
-  liveSnapshot,
-  canManage,
-  onUpdated,
-}: DeviceFirmwareTabProps) {
-  const source = (device.firmwareSource ?? "").trim() ? device.firmwareSource ?? "" : "";
+function SourceBlock({
+  title,
+  hint,
+  block,
+  emptyMessage,
+  legacyBadge,
+}: {
+  title: string;
+  hint: string;
+  block: { available: boolean; sourceText?: string | null; version?: string | null; reason?: string | null };
+  emptyMessage: string;
+  legacyBadge?: boolean;
+}) {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
-  const [otaBusy, setOtaBusy] = useState(false);
-  const [otaMessage, setOtaMessage] = useState<string | null>(null);
-  const [otaStatus, setOtaStatus] = useState<DeviceFirmwareUpdateStatus | null>(null);
-
-  const runningVersion =
-    liveSnapshot?.firmwareVersion?.trim() ||
-    device.installedFirmwareVersion ||
-    "—";
-
-  const refreshStatus = useCallback(async () => {
-    try {
-      const next = await fetchDeviceFirmwareUpdateStatus(device.id);
-      setOtaStatus(next);
-    } catch {
-      /* keep last */
-    }
-  }, [device.id]);
-
-  useEffect(() => {
-    void refreshStatus();
-  }, [refreshStatus]);
-
-  useEffect(() => {
-    if (!otaStatus?.active && !isOtaStatusActive(otaStatus?.status)) {
-      return;
-    }
-    const timer = window.setInterval(() => {
-      void refreshStatus();
-      onUpdated?.();
-    }, POLL_MS);
-    return () => window.clearInterval(timer);
-  }, [otaStatus?.active, otaStatus?.status, refreshStatus, onUpdated]);
+  const source = (block.sourceText ?? "").trim();
 
   const handleCopy = async () => {
     if (!source) return;
@@ -110,6 +87,112 @@ export function DeviceFirmwareTab({
     }
   };
 
+  const copyLabel =
+    copyState === "copied"
+      ? PP_HELP.detail.firmwareCopied
+      : copyState === "failed"
+        ? PP_HELP.detail.firmwareCopyFailed
+        : PP_HELP.detail.firmwareCopy;
+
+  return (
+    <PpSectionCard
+      title={title}
+      hint={hint}
+      actions={
+        source ? (
+          <PpActionButton variant="ghost" onClick={() => void handleCopy()}>
+            {copyLabel}
+          </PpActionButton>
+        ) : undefined
+      }
+    >
+      {legacyBadge ? (
+        <p className="pp-lifecycle-badge pp-lifecycle-badge--legacy">{PP_HELP.detail.firmwareLegacyBadge}</p>
+      ) : null}
+      {!block.available || !source ? (
+        <PpStateBox variant="empty" title="Indisponível" message={emptyMessage} />
+      ) : (
+        <>
+          {block.version ? (
+            <p className="pp-muted">
+              Versão <code>{block.version}</code>
+            </p>
+          ) : null}
+          <pre className="pp-firmware-source" tabIndex={0}>
+            {source}
+          </pre>
+        </>
+      )}
+    </PpSectionCard>
+  );
+}
+
+export function DeviceFirmwareTab({
+  device,
+  liveSnapshot,
+  canManage,
+  onUpdated,
+}: DeviceFirmwareTabProps) {
+  const [sources, setSources] = useState<DeviceFirmwareSources | null>(null);
+  const [sourcesError, setSourcesError] = useState<string | null>(null);
+  const [otaBusy, setOtaBusy] = useState(false);
+  const [otaMessage, setOtaMessage] = useState<string | null>(null);
+  const [otaStatus, setOtaStatus] = useState<DeviceFirmwareUpdateStatus | null>(null);
+  const [latestPublishedVersion, setLatestPublishedVersion] = useState<string | null>(null);
+
+  const runningVersion =
+    liveSnapshot?.firmwareVersion?.trim() ||
+    device.installedFirmwareVersion ||
+    "—";
+
+  const refreshSources = useCallback(async () => {
+    try {
+      const next = await fetchDeviceFirmwareSources(device.id);
+      setSources(next);
+      setSourcesError(null);
+    } catch (err) {
+      setSourcesError(err instanceof Error ? err.message : PP_HELP.detail.firmwareSourcesFailed);
+    }
+  }, [device.id]);
+
+  const refreshStatus = useCallback(async () => {
+    try {
+      const next = await fetchDeviceFirmwareUpdateStatus(device.id);
+      setOtaStatus(next);
+    } catch {
+      /* keep last */
+    }
+  }, [device.id]);
+
+  useEffect(() => {
+    void refreshSources();
+    void refreshStatus();
+  }, [refreshSources, refreshStatus]);
+
+  useEffect(() => {
+    void fetchFirmwares({
+      firmwareKey: device.firmwareKey || device.driverKey,
+      publishedOnly: true,
+    })
+      .then((items) => {
+        const latest = items.find((item) => item.lifecycle === "published" && !item.archivedAt);
+        setLatestPublishedVersion(latest?.version ?? null);
+      })
+      .catch(() => setLatestPublishedVersion(null));
+  }, [device.driverKey, device.firmwareKey]);
+
+  useEffect(() => {
+    if (!otaStatus?.active && !isOtaStatusActive(otaStatus?.status)) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      void refreshStatus();
+      void refreshSources();
+      onUpdated?.();
+    }, POLL_MS);
+    return () => window.clearInterval(timer);
+  }, [otaStatus?.active, otaStatus?.status, refreshStatus, refreshSources, onUpdated]);
+
   const handleUpdateDevice = async () => {
     if (!canManage) return;
     setOtaBusy(true);
@@ -117,8 +200,9 @@ export function DeviceFirmwareTab({
     try {
       const firmwares = await fetchFirmwares({
         firmwareKey: device.firmwareKey || device.driverKey,
+        publishedOnly: true,
       });
-      const latest = firmwares.find((item) => item.publishedAt);
+      const latest = firmwares.find((item) => item.lifecycle === "published" && !item.archivedAt);
       if (!latest) {
         setOtaMessage(PP_HELP.ota.noPublishedFirmware);
         return;
@@ -142,13 +226,6 @@ export function DeviceFirmwareTab({
       setOtaBusy(false);
     }
   };
-
-  const copyLabel =
-    copyState === "copied"
-      ? PP_HELP.detail.firmwareCopied
-      : copyState === "failed"
-        ? PP_HELP.detail.firmwareCopyFailed
-        : PP_HELP.detail.firmwareCopy;
 
   const status = otaStatus?.status ?? null;
   const progress = resolveOtaProgressPercent({
@@ -189,6 +266,13 @@ export function DeviceFirmwareTab({
     [status],
   );
 
+  const installedEmptyMessage =
+    sources?.installedSource.reason === "missing_version"
+      ? PP_HELP.detail.firmwareInstalledMissingVersion
+      : sources?.installedSource.reason === "version_not_in_catalog"
+        ? PP_HELP.detail.firmwareInstalledNotInCatalog
+        : PP_HELP.detail.firmwareInstalledNoSource;
+
   return (
     <div className="pp-page-stack">
       <PpSectionCard title="Versão e atualização OTA" hint={PP_HELP.ota.deviceVersionCard}>
@@ -205,7 +289,11 @@ export function DeviceFirmwareTab({
           </div>
           <div>
             <dt>Alvo</dt>
-            <dd>{otaStatus?.toVersion ?? device.targetFirmwareVersion ?? "—"}</dd>
+            <dd>{otaStatus?.toVersion ?? device.targetFirmwareVersion ?? sources?.targetVersion ?? "—"}</dd>
+          </div>
+          <div>
+            <dt>Última publicada</dt>
+            <dd>{latestPublishedVersion ?? "—"}</dd>
           </div>
           <div>
             <dt>Família</dt>
@@ -260,27 +348,36 @@ export function DeviceFirmwareTab({
         {otaMessage ? <p className="pp-muted">{otaMessage}</p> : null}
       </PpSectionCard>
 
-      {!source ? (
-        <PpSectionCard title="Firmware (.ino)">
-          <PpStateBox
-            variant="empty"
-            title="Sem sketch cadastrado"
-            message={PP_HELP.detail.firmwareEmpty}
+      {sourcesError ? <PpStateBox variant="error" title="Sketch" message={sourcesError} /> : null}
+
+      {sources ? (
+        <>
+          <SourceBlock
+            title="Sketch instalado"
+            hint={PP_HELP.detail.firmwareInstalledSource}
+            block={sources.installedSource}
+            emptyMessage={installedEmptyMessage}
           />
-        </PpSectionCard>
+          {sources.targetSource ? (
+            <SourceBlock
+              title="Sketch alvo"
+              hint={PP_HELP.detail.firmwareTargetSource}
+              block={sources.targetSource}
+              emptyMessage={PP_HELP.detail.firmwareTargetNoSource}
+            />
+          ) : null}
+          {sources.legacySource ? (
+            <SourceBlock
+              title="Sketch legado do dispositivo"
+              hint={PP_HELP.detail.firmwareLegacySource}
+              block={sources.legacySource}
+              emptyMessage={PP_HELP.detail.firmwareEmpty}
+              legacyBadge
+            />
+          ) : null}
+        </>
       ) : (
-        <PpSectionCard
-          title="Firmware (.ino)"
-          actions={
-            <PpActionButton variant="ghost" onClick={() => void handleCopy()}>
-              {copyLabel}
-            </PpActionButton>
-          }
-        >
-          <pre className="pp-firmware-source" tabIndex={0}>
-            {source}
-          </pre>
-        </PpSectionCard>
+        <PpStateBox variant="loading" title="Carregando sketches…" />
       )}
     </div>
   );

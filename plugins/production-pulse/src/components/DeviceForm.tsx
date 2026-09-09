@@ -185,19 +185,6 @@ export function DeviceForm({
           }
         />
 
-        <PpNativeTextAreaField
-          id="pp-device-firmware-source"
-          label="Código .ino"
-          hint={PP_HELP.form.firmwareSource}
-          className="pp-firmware-source-field"
-          controlClassName="pp-firmware-source-field__control"
-          rows={14}
-          value={device.firmwareSource}
-          placeholder="// Cole o sketch Arduino completo deste dispositivo"
-          onChange={(value) => onChange({ firmwareSource: value })}
-          afterControl={ppFieldError(errors?.firmwareSource)}
-        />
-
         <PpNativeSelectField
           id="pp-device-driver"
           label="Driver"

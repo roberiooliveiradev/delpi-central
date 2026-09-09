@@ -32,6 +32,7 @@ export function parseOperatorAnchorFilter(
 export type ProductionPulseRouteKind =
   | "panel"
   | "firmwares"
+  | "firmwareDetail"
   | "firmwareJobs"
   | "firmwareLinks"
   | "operatorHub"
@@ -45,6 +46,7 @@ export type ProductionPulseRouteKind =
 export type ProductionPulseRoute =
   | { kind: "panel" }
   | { kind: "firmwares" }
+  | { kind: "firmwareDetail"; firmwareId: string }
   | { kind: "firmwareJobs"; branch: string }
   | { kind: "firmwareLinks"; branch: string; firmwareKey?: string }
   | { kind: "operatorHub"; branch: string; anchorType: OperatorAnchorFilter; search: string }
@@ -73,6 +75,13 @@ export function parseProductionPulseRoute(pathname: string, search = ""): Produc
 
   if (normalized === `${PRODUCTION_PULSE_BASE_PATH}/firmwares`) {
     return { kind: "firmwares" };
+  }
+
+  const firmwareDetailMatch = normalized.match(
+    new RegExp(`^${PRODUCTION_PULSE_BASE_PATH}/firmwares/([^/]+)$`),
+  );
+  if (firmwareDetailMatch) {
+    return { kind: "firmwareDetail", firmwareId: firmwareDetailMatch[1] };
   }
 
   if (normalized === `${PRODUCTION_PULSE_BASE_PATH}/firmware-jobs`) {
@@ -169,6 +178,10 @@ export function productionPulseDeviceDetailPath(
 
 export function productionPulseFirmwaresPath(): string {
   return `${PRODUCTION_PULSE_BASE_PATH}/firmwares`;
+}
+
+export function productionPulseFirmwareDetailPath(firmwareId: string): string {
+  return `${PRODUCTION_PULSE_BASE_PATH}/firmwares/${encodeURIComponent(firmwareId)}`;
 }
 
 export function productionPulseFirmwareJobsPath(branch = "01"): string {

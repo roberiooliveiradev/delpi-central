@@ -9,8 +9,10 @@ import {
 import { useProductionPulseRouterPath } from "./hooks/useProductionPulseRouterPath";
 import { useShortViewport } from "./hooks/useShortViewport";
 import { useViewportBucket } from "./hooks/useViewportBucket";
+import { ProductionPulseShell } from "./components/ProductionPulseShell";
 import { PanelPage } from "./pages/PanelPage";
 import { FirmwaresPage } from "./pages/FirmwaresPage";
+import { FirmwareDetailPage } from "./pages/FirmwareDetailPage";
 import { FirmwareLinksPage } from "./pages/FirmwareLinksPage";
 import { DeviceFormPage } from "./pages/DeviceFormPage";
 import { DeviceDetailPage } from "./pages/DeviceDetailPage";
@@ -78,6 +80,34 @@ export default function App({
   /** Superfície imersiva (contador/gauge): preenche a área do .content do portal. */
   const isOperatorFillRoute = route.kind === "operatorDevice";
 
+  const adminContent =
+    route.kind === "panel" ? (
+      <PanelPage search={search} permissions={permissionFlags} />
+    ) : route.kind === "firmwares" ? (
+      <FirmwaresPage permissions={permissionFlags} />
+    ) : route.kind === "firmwareDetail" ? (
+      <FirmwareDetailPage firmwareId={route.firmwareId} permissions={permissionFlags} />
+    ) : route.kind === "firmwareLinks" ? (
+      <FirmwareLinksPage
+        branch={route.branch}
+        highlightFirmwareKey={route.firmwareKey}
+        permissions={permissionFlags}
+      />
+    ) : route.kind === "deviceNew" ? (
+      <DeviceFormPage mode="create" initialBranch={route.branch} permissions={permissionFlags} />
+    ) : route.kind === "deviceEdit" ? (
+      <DeviceFormPage mode="edit" deviceId={route.deviceId} permissions={permissionFlags} />
+    ) : route.kind === "deviceDetail" ? (
+      <DeviceDetailPage
+        deviceId={route.deviceId}
+        tab={route.tab}
+        search={search}
+        permissions={permissionFlags}
+      />
+    ) : isOperatorRoute ? (
+      <OperatorPage route={route} permissions={permissionFlags} />
+    ) : null;
+
   return (
     <div
       className={[
@@ -91,34 +121,13 @@ export default function App({
       data-pp-viewport={viewport}
       data-pp-viewport-short={shortViewport && isOperatorRoute ? "true" : undefined}
     >
-      {route.kind === "panel" ? (
-        <PanelPage search={search} permissions={permissionFlags} />
-      ) : route.kind === "firmwares" ? (
-        <FirmwaresPage permissions={permissionFlags} />
-      ) : route.kind === "firmwareLinks" ? (
-        <FirmwareLinksPage
-          branch={route.branch}
-          highlightFirmwareKey={route.firmwareKey}
-          permissions={permissionFlags}
-        />
-      ) : route.kind === "deviceNew" ? (
-        <DeviceFormPage
-          mode="create"
-          initialBranch={route.branch}
-          permissions={permissionFlags}
-        />
-      ) : route.kind === "deviceEdit" ? (
-        <DeviceFormPage mode="edit" deviceId={route.deviceId} permissions={permissionFlags} />
-      ) : route.kind === "deviceDetail" ? (
-        <DeviceDetailPage
-          deviceId={route.deviceId}
-          tab={route.tab}
-          search={search}
-          permissions={permissionFlags}
-        />
-      ) : isOperatorRoute ? (
-        <OperatorPage route={route} permissions={permissionFlags} />
-      ) : null}
+      {isOperatorRoute ? (
+        adminContent
+      ) : (
+        <ProductionPulseShell route={route} permissions={permissionFlags}>
+          {adminContent}
+        </ProductionPulseShell>
+      )}
     </div>
   );
 }

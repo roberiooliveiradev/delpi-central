@@ -21,9 +21,9 @@ class FirmwareNotFoundError(Exception):
 
 
 _FIRMWARE_COLUMNS = """
-    id, firmware_key, driver_key, version, display_name, artifact_path, artifact_sha256,
-    artifact_size_bytes, release_notes, min_compatible_version, published_at,
-    created_by, created_at, archived_at
+    id, firmware_key, driver_key, version, display_name, source_text, artifact_path,
+    artifact_sha256, artifact_size_bytes, release_notes, min_compatible_version,
+    published_at, created_by, created_at, archived_at
 """
 
 
@@ -76,6 +76,27 @@ class PostgresFirmwareRepository:
                 row = cur.fetchone()
                 return dict(row) if row else None
 
+    def get_by_key_version(
+        self,
+        *,
+        firmware_key: str,
+        version: str,
+    ) -> dict[str, Any] | None:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_FIRMWARE_COLUMNS}
+                    FROM production_pulse.firmwares
+                    WHERE firmware_key = %s AND version = %s
+                    ORDER BY published_at DESC NULLS LAST, created_at DESC
+                    LIMIT 1
+                    """,
+                    (firmware_key, version),
+                )
+                row = cur.fetchone()
+                return dict(row) if row else None
+
     def create(
         self,
         *,
@@ -83,9 +104,10 @@ class PostgresFirmwareRepository:
         driver_key: str,
         version: str,
         display_name: str,
-        artifact_path: str,
-        artifact_sha256: str,
-        artifact_size_bytes: int,
+        source_text: str | None = None,
+        artifact_path: str | None = None,
+        artifact_sha256: str | None = None,
+        artifact_size_bytes: int | None = None,
         release_notes: str | None,
         min_compatible_version: str | None,
         publish: bool,
@@ -97,11 +119,14 @@ class PostgresFirmwareRepository:
                     cur.execute(
                         f"""
                         INSERT INTO production_pulse.firmwares (
-                            firmware_key, driver_key, version, display_name, artifact_path,
-                            artifact_sha256, artifact_size_bytes, release_notes,
-                            min_compatible_version, published_at, created_by
+                            firmware_key, driver_key, version, display_name, source_text,
+                            artifact_path, artifact_sha256, artifact_size_bytes,
+                            release_notes, min_compatible_version, published_at, created_by
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CASE WHEN %s THEN NOW() ELSE NULL END, %s)
+                        VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                            CASE WHEN %s THEN NOW() ELSE NULL END, %s
+                        )
                         RETURNING {_FIRMWARE_COLUMNS}
                         """,
                         (
@@ -109,6 +134,7 @@ class PostgresFirmwareRepository:
                             driver_key,
                             version,
                             display_name,
+                            source_text,
                             artifact_path,
                             artifact_sha256,
                             artifact_size_bytes,
@@ -124,6 +150,96 @@ class PostgresFirmwareRepository:
             except psycopg.errors.UniqueViolation as exc:
                 conn.rollback()
                 raise FirmwareConflictError(str(exc)) from exc
+
+    def update_source(self, firmware_id: UUID, *, source_text: str | None) -> dict[str, Any]:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.firmwares
+                    SET source_text = %s
+                    WHERE id = %s
+                      AND published_at IS NULL
+                      AND archived_at IS NULL
+                    RETURNING {_FIRMWARE_COLUMNS}
+                    """,
+                    (source_text, firmware_id),
+                )
+                row = cur.fetchone()
+            conn.commit()
+            if row is None:
+                existing = self.get_by_id(firmware_id)
+                if existing is None:
+                    raise FirmwareNotFoundError(str(firmware_id))
+                raise FirmwareConflictError("firmware_not_editable")
+            return dict(row)
+
+    def attach_artifact(
+        self,
+        firmware_id: UUID,
+        *,
+        artifact_path: str,
+        artifact_sha256: str,
+        artifact_size_bytes: int,
+    ) -> dict[str, Any]:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.firmwares
+                    SET artifact_path = %s,
+                        artifact_sha256 = %s,
+                        artifact_size_bytes = %s
+                    WHERE id = %s
+                      AND published_at IS NULL
+                      AND archived_at IS NULL
+                    RETURNING {_FIRMWARE_COLUMNS}
+                    """,
+                    (
+                        artifact_path,
+                        artifact_sha256,
+                        artifact_size_bytes,
+                        firmware_id,
+                    ),
+                )
+                row = cur.fetchone()
+            conn.commit()
+            if row is None:
+                existing = self.get_by_id(firmware_id)
+                if existing is None:
+                    raise FirmwareNotFoundError(str(firmware_id))
+                raise FirmwareConflictError("firmware_not_editable")
+            return dict(row)
+
+    def publish_version(self, firmware_id: UUID) -> dict[str, Any]:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.firmwares
+                    SET published_at = NOW()
+                    WHERE id = %s
+                      AND published_at IS NULL
+                      AND archived_at IS NULL
+                      AND artifact_path IS NOT NULL
+                      AND artifact_sha256 IS NOT NULL
+                      AND artifact_size_bytes IS NOT NULL
+                    RETURNING {_FIRMWARE_COLUMNS}
+                    """,
+                    (firmware_id,),
+                )
+                row = cur.fetchone()
+            conn.commit()
+            if row is None:
+                existing = self.get_by_id(firmware_id)
+                if existing is None:
+                    raise FirmwareNotFoundError(str(firmware_id))
+                if existing.get("archived_at") is not None:
+                    raise FirmwareConflictError("firmware_archived")
+                if existing.get("published_at") is not None:
+                    raise FirmwareConflictError("firmware_already_published")
+                raise FirmwareConflictError("firmware_missing_artifact")
+            return dict(row)
 
     def update_metadata(
         self,

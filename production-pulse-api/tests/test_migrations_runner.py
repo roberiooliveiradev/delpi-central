@@ -64,3 +64,15 @@ def test_v012_firmware_archive_is_present_and_parseable():
     text = path.read_text(encoding="utf-8")
     assert "archived_at" in text
     assert len(_checksum(text)) == 64
+
+
+def test_v013_firmware_version_source_draft_is_present_and_parseable():
+    migrations = _discover_migrations()
+    by_version = {m.version: m for m in migrations}
+    assert 13 in by_version
+    assert by_version[13].name == "firmware_version_source_draft"
+    path = _migrations_dir() / "V013__firmware_version_source_draft.sql"
+    text = path.read_text(encoding="utf-8")
+    assert "source_text" in text
+    assert "firmwares_published_requires_artifact" in text
+    assert len(_checksum(text)) == 64

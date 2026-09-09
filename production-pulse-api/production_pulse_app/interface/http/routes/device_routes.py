@@ -11,6 +11,9 @@ from production_pulse_app.application.services.work_center_catalog_service impor
 from production_pulse_app.application.services.device_firmware_link_service import (
     DeviceFirmwareLinkService,
 )
+from production_pulse_app.application.services.firmware_source_resolution_service import (
+    FirmwareSourceResolutionService,
+)
 from production_pulse_app.application.services.firmware_update_job_service import (
     FirmwareUpdateJobService,
 )
@@ -70,6 +73,7 @@ _service = DeviceService()
 _binding_service = DeviceBindingService()
 _firmware_link_service = DeviceFirmwareLinkService()
 _firmware_jobs_service = FirmwareUpdateJobService()
+_firmware_source_service = FirmwareSourceResolutionService()
 _poll_service = DevicePollService()
 _probe_service = DeviceProbeService()
 _command_service = DeviceCommandService()
@@ -427,6 +431,25 @@ async def get_device_firmware_update_status(request: Request, device_id: UUID):
     try:
         data = _firmware_jobs_service.get_device_firmware_update_status(
             parse_device_id(str(device_id))
+        )
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.get("/{device_id}/firmware-sources", operation_id="get_device_firmware_sources")
+async def get_device_firmware_sources(request: Request, device_id: UUID):
+    device, denied = _load_device_for_request(request, device_id, action="view")
+    if denied is not None:
+        return denied
+    try:
+        ota_status = _firmware_jobs_service.get_device_firmware_update_status(
+            parse_device_id(str(device_id))
+        )
+        target_version = ota_status.get("toVersion") if ota_status.get("active") else None
+        data = _firmware_source_service.resolve_device_firmware_sources(
+            device,
+            target_version=target_version,
         )
         return success(data)
     except Exception as exc:

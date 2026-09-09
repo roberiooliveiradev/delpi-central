@@ -19,14 +19,34 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 
 ---
 
-## WF-PP-00 — Shell (`ProductionPulsePageHero`)
+## WF-PP-00 — Shell admin (`ProductionPulseShell` + `PpTopBar`)
 
 | Elemento UI | Chave help | Texto |
 |-------------|------------|-------|
+| TopBar áreas | `shell.topBar` | Painel · Firmwares · Hub OTA · Operador |
 | Título hero | `shell.heroTitle` | Monitoramento IoT na filial… |
 | FilialSwitcher | `shell.heroFilial` | Filial operacional… |
 | [Atualizar tudo] | `shell.pollAll` | Poll imediato em todos ativos… |
-| Link modo operador | `shell.modeOperator` | Visão tablet… |
+| Link modo operador | `shell.modeOperator` | Visão tablet (TopBar quando permitido) |
+
+## WF-PP-FW-DETAIL — Detalhe versão firmware
+
+| Elemento UI | Chave help |
+|-------------|------------|
+| Metadados | `ota.detailMetadata` |
+| Sketch | `ota.detailSource` · `ota.sourceTextarea` |
+| Artefato | `ota.detailArtifact` · `ota.artifactImmutable` |
+| Publicar | `ota.publishVersion` · `ota.publishConfirmTitle` |
+| Arquivar | `ota.archiveFirmware` |
+
+## WF-PP-DEVICE-FW — Aba firmware do IoT
+
+| Elemento UI | Chave help |
+|-------------|------------|
+| Sketch instalado | `detail.firmwareInstalledSource` |
+| Sketch alvo | `detail.firmwareTargetSource` |
+| Legado device | `detail.firmwareLegacySource` · `detail.firmwareLegacyBadge` |
+| Desativar | `detail.deactivate` · `modals.deactivateTitle` |
 
 ---
 

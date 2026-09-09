@@ -3,9 +3,6 @@ import { useMemo } from "react";
 import {
   productionPulseDeviceDetailPath,
   productionPulseDeviceNewPath,
-  productionPulseFirmwareLinksPath,
-  productionPulseFirmwaresPath,
-  productionPulseOperatorPath,
 } from "../constants/routes";
 import { navigateProductionPulse } from "../utils/navigation";
 
@@ -124,44 +121,17 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
         badge={ppShellIcon}
         actions={
           <div className="pp-panel-hero-actions">
-              {permissions.canOperator ? (
-                <PpHintAction hint={PP_HELP.shell.modeOperator} ariaLabel="Ajuda: Modo operador">
-                  <PpActionButton
-                    variant="ghost"
-                    className="pp-panel-operator-link"
-                    onClick={() => navigateProductionPulse(productionPulseOperatorPath(filters.branch))}
-                  >
-                    Modo operador
-                  </PpActionButton>
-                </PpHintAction>
-              ) : null}
-              <PpHintAction hint={PP_HELP.ota.openCatalog} ariaLabel="Ajuda: Firmwares">
-                <PpActionButton
-                  variant="ghost"
-                  onClick={() => navigateProductionPulse(productionPulseFirmwaresPath())}
-                >
-                  Firmwares
-                </PpActionButton>
-              </PpHintAction>
-              <PpHintAction hint={PP_HELP.ota.openLinks} ariaLabel="Ajuda: Hub OTA">
-                <PpActionButton
-                  variant="ghost"
-                  onClick={() =>
-                    navigateProductionPulse(productionPulseFirmwareLinksPath({ branch: filters.branch }))
-                  }
-                >
-                  Hub OTA
-                </PpActionButton>
-              </PpHintAction>
               {branchOptions.length > 1 ? (
-                <PpSegmentToggle
-                  ariaLabel="Filial"
-                  size="sm"
-                  widthMode="content"
-                  value={filters.branch}
-                  onChange={(branch) => setFilters({ branch, page: 1 })}
-                  options={branchOptions.map((item) => ({ value: item.id, label: item.label }))}
-                />
+                <PpHintAction hint={PP_HELP.shell.heroFilial} ariaLabel="Ajuda: Filial">
+                  <PpSegmentToggle
+                    ariaLabel="Filial"
+                    size="sm"
+                    widthMode="content"
+                    value={filters.branch}
+                    onChange={(branch) => setFilters({ branch, page: 1 })}
+                    options={branchOptions.map((item) => ({ value: item.id, label: item.label }))}
+                  />
+                </PpHintAction>
               ) : null}
             </div>
         }

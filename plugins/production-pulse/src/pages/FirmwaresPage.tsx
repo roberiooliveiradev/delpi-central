@@ -1,21 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
-  archiveFirmware,
   fetchFirmwareDrivers,
   fetchFirmwares,
-  patchFirmware,
   publishFirmware,
-  type FirmwareCatalogItem,
   type FirmwareDriverCatalogItem,
+  type FirmwareListItem,
 } from "../api/productionPulseApi";
 import {
   PpActionButton,
   PpCatalogSearchBar,
   PpDataTable,
   PpFirmwareFileField,
-  PpHintAction,
-  PpHostContainedDialog,
   PpNativeSelectField,
   PpNativeTextAreaField,
   PpNativeTextField,
@@ -26,10 +22,7 @@ import {
   type DataTableColumn,
 } from "../app/productionPulseUi";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
-import {
-  PRODUCTION_PULSE_BASE_PATH,
-  productionPulseFirmwareLinksPath,
-} from "../constants/routes";
+import { productionPulseFirmwareDetailPath, productionPulseFirmwareLinksPath } from "../constants/routes";
 import { PP_HELP } from "../content/helpTooltips";
 import { navigateProductionPulse } from "../utils/navigation";
 
@@ -37,13 +30,19 @@ type FirmwaresPageProps = {
   permissions: ProductionPulsePermissionFlags;
 };
 
+function lifecycleLabel(row: FirmwareListItem): string {
+  if (row.lifecycle === "draft") return PP_HELP.ota.status.draft;
+  if (row.lifecycle === "archived") return PP_HELP.ota.statusArchived;
+  return PP_HELP.ota.statusPublished;
+}
+
 export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
   const canManage = permissions.canManageDevices;
-  const [items, setItems] = useState<FirmwareCatalogItem[]>([]);
+  const [items, setItems] = useState<FirmwareListItem[]>([]);
   const [drivers, setDrivers] = useState<FirmwareDriverCatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [publishing, setPublishing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [firmwareKey, setFirmwareKey] = useState("esp8266_counter_v1");
@@ -51,13 +50,8 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
   const [version, setVersion] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [releaseNotes, setReleaseNotes] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [archiveTarget, setArchiveTarget] = useState<FirmwareCatalogItem | null>(null);
-  const [archiving, setArchiving] = useState(false);
-  const [editTarget, setEditTarget] = useState<FirmwareCatalogItem | null>(null);
-  const [editDisplayName, setEditDisplayName] = useState("");
-  const [editReleaseNotes, setEditReleaseNotes] = useState("");
-  const [savingEdit, setSavingEdit] = useState(false);
+  const [sourceText, setSourceText] = useState("");
+  const [binFile, setBinFile] = useState<File | null>(null);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -102,7 +96,8 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
         item.driverKey,
         item.version,
         item.displayName,
-        item.artifactSha256,
+        item.lifecycle,
+        item.artifactSha256 ?? "",
       ]
         .join(" ")
         .toLowerCase();
@@ -110,108 +105,99 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
     });
   }, [items, search]);
 
-  const onSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!canManage || !file) return;
+  const groupedItems = useMemo(() => {
+    const groups = new Map<string, FirmwareListItem[]>();
+    for (const item of filteredItems) {
+      const key = item.firmwareKey;
+      const bucket = groups.get(key) ?? [];
+      bucket.push(item);
+      groups.set(key, bucket);
+    }
+    return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredItems]);
+
+  const loadInoFile = async (file: File | null) => {
+    if (!file) return;
+    try {
+      setSourceText(await file.text());
+    } catch {
+      setFormError(PP_HELP.ota.sourceFileReadFailed);
+    }
+  };
+
+  const submitVersion = async (publish: boolean) => {
+    if (!canManage || !version.trim()) return;
+    if (publish && !binFile) {
+      setFormError(PP_HELP.ota.publishRequiresBin);
+      return;
+    }
     const data = new FormData();
     data.set("firmwareKey", firmwareKey);
     data.set("driverKey", driverKey);
-    data.set("version", version);
+    data.set("version", version.trim());
     data.set("displayName", displayName);
     data.set("releaseNotes", releaseNotes);
-    data.set("publish", "true");
-    data.set("file", file);
-    setPublishing(true);
+    data.set("sourceText", sourceText);
+    data.set("publish", publish ? "true" : "false");
+    if (binFile) data.set("file", binFile);
+    setSubmitting(true);
     setFormError(null);
     try {
-      await publishFirmware(data);
+      const created = await publishFirmware(data);
       setVersion("");
       setDisplayName("");
       setReleaseNotes("");
-      setFile(null);
-      navigateProductionPulse(
-        productionPulseFirmwareLinksPath({
-          firmwareKey,
-          branch: "01",
-        }),
-      );
+      setSourceText("");
+      setBinFile(null);
+      if (publish) {
+        navigateProductionPulse(
+          productionPulseFirmwareLinksPath({
+            firmwareKey,
+            branch: "01",
+          }),
+        );
+      } else {
+        navigateProductionPulse(productionPulseFirmwareDetailPath(created.id));
+      }
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Falha ao publicar firmware.");
+      setFormError(err instanceof Error ? err.message : "Falha ao salvar versão.");
     } finally {
-      setPublishing(false);
+      setSubmitting(false);
     }
   };
 
-  const openEdit = (row: FirmwareCatalogItem) => {
-    setEditTarget(row);
-    setEditDisplayName(row.displayName || "");
-    setEditReleaseNotes(row.releaseNotes || "");
-  };
-
-  const confirmEdit = async () => {
-    if (!editTarget || !canManage) return;
-    setSavingEdit(true);
-    try {
-      await patchFirmware(editTarget.id, {
-        displayName: editDisplayName.trim() || editTarget.displayName,
-        releaseNotes: editReleaseNotes,
-      });
-      setEditTarget(null);
-      await reload();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao salvar metadados.");
-    } finally {
-      setSavingEdit(false);
-    }
-  };
-
-  const confirmArchive = async () => {
-    if (!archiveTarget || !canManage) return;
-    setArchiving(true);
-    try {
-      await archiveFirmware(archiveTarget.id);
-      setArchiveTarget(null);
-      await reload();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao arquivar firmware.");
-      setArchiveTarget(null);
-    } finally {
-      setArchiving(false);
-    }
-  };
-
-  const columns: DataTableColumn<FirmwareCatalogItem>[] = useMemo(
+  const columns: DataTableColumn<FirmwareListItem>[] = useMemo(
     () => [
-      {
-        key: "family",
-        header: "Família",
-        render: (row) => row.displayName || row.firmwareKey,
-      },
       {
         key: "version",
         header: "Versão",
         render: (row) => row.version,
       },
       {
-        key: "driver",
-        header: "Driver",
-        render: (row) => row.driverKey,
+        key: "displayName",
+        header: "Nome",
+        render: (row) => row.displayName || "—",
       },
       {
-        key: "sha",
-        header: "SHA256",
-        render: (row) => <code>{row.artifactSha256.slice(0, 12)}…</code>,
+        key: "lifecycle",
+        header: "Estado",
+        render: (row) => lifecycleLabel(row),
+      },
+      {
+        key: "source",
+        header: "Sketch",
+        render: (row) => (row.hasSource ? "Sim" : "—"),
+      },
+      {
+        key: "artifact",
+        header: "Bin",
+        render: (row) =>
+          row.hasArtifact && row.artifactSha256 ? <code>{row.artifactSha256.slice(0, 10)}…</code> : "—",
       },
       {
         key: "published",
         header: "Publicado",
         render: (row) => (row.publishedAt ? new Date(row.publishedAt).toLocaleString() : "—"),
-      },
-      {
-        key: "archived",
-        header: "Arquivo",
-        render: (row) =>
-          row.archivedAt ? new Date(row.archivedAt).toLocaleString() : "Ativo",
       },
       {
         key: "actions",
@@ -220,32 +206,30 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
           <div className="pp-inline-actions">
             <PpActionButton
               variant="ghost"
-              onClick={() =>
-                navigateProductionPulse(
-                  productionPulseFirmwareLinksPath({
-                    firmwareKey: row.firmwareKey,
-                    branch: "01",
-                  }),
-                )
-              }
+              onClick={() => navigateProductionPulse(productionPulseFirmwareDetailPath(row.id))}
             >
-              Amarrar
+              Detalhe
             </PpActionButton>
-            {canManage && !row.archivedAt ? (
-              <>
-                <PpActionButton variant="ghost" onClick={() => openEdit(row)}>
-                  Editar
-                </PpActionButton>
-                <PpActionButton variant="ghost" onClick={() => setArchiveTarget(row)}>
-                  Arquivar
-                </PpActionButton>
-              </>
+            {row.lifecycle === "published" && !row.archivedAt ? (
+              <PpActionButton
+                variant="ghost"
+                onClick={() =>
+                  navigateProductionPulse(
+                    productionPulseFirmwareLinksPath({
+                      firmwareKey: row.firmwareKey,
+                      branch: "01",
+                    }),
+                  )
+                }
+              >
+                Amarrar
+              </PpActionButton>
             ) : null}
           </div>
         ),
       },
     ],
-    [canManage],
+    [],
   );
 
   return (
@@ -254,31 +238,11 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
         title="Firmwares OTA"
         badge={ppShellIcon}
         description={PP_HELP.ota.catalogHero}
-        actions={
-          <>
-            <PpHintAction hint={PP_HELP.shell.backToPanel} ariaLabel="Ajuda: Painel">
-              <PpActionButton
-                variant="ghost"
-                onClick={() => navigateProductionPulse(PRODUCTION_PULSE_BASE_PATH)}
-              >
-                Painel
-              </PpActionButton>
-            </PpHintAction>
-            <PpHintAction hint={PP_HELP.ota.openLinks} ariaLabel="Ajuda: Hub OTA">
-              <PpActionButton
-                variant="primary"
-                onClick={() => navigateProductionPulse(productionPulseFirmwareLinksPath())}
-              >
-                Hub OTA
-              </PpActionButton>
-            </PpHintAction>
-          </>
-        }
       />
 
       {canManage ? (
-        <PpSectionCard title="Publicar versão" hint={PP_HELP.ota.publishForm}>
-          <form className="pp-form-grid" onSubmit={(e) => void onSubmit(e)}>
+        <PpSectionCard title="Nova versão" hint={PP_HELP.ota.createVersionForm}>
+          <div className="pp-form-grid">
             <PpNativeTextField
               id="ota-firmware-key"
               label="Família (firmwareKey)"
@@ -322,11 +286,28 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
               placeholder="Leitor de máquina"
             />
             <PpFirmwareFileField
+              id="ota-ino"
+              label="Sketch (.ino)"
+              hint={PP_HELP.ota.sourceFile}
+              accept=".ino,.txt,text/plain"
+              file={null}
+              onChange={(file) => void loadInoFile(file)}
+            />
+            <PpNativeTextAreaField
+              id="ota-source"
+              label="Código-fonte"
+              hint={PP_HELP.ota.sourceTextarea}
+              value={sourceText}
+              onChange={setSourceText}
+              rows={8}
+              span
+            />
+            <PpFirmwareFileField
               id="ota-file"
               label="Artefato compilado (.bin)"
-              hint={PP_HELP.ota.file}
-              file={file}
-              onChange={setFile}
+              hint={PP_HELP.ota.fileOptionalDraft}
+              file={binFile}
+              onChange={setBinFile}
             />
             <PpNativeTextAreaField
               id="ota-notes"
@@ -336,11 +317,23 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
               onChange={setReleaseNotes}
               span
             />
-            {formError ? <PpStateBox variant="error" title="Publicação" message={formError} /> : null}
-            <PpActionButton type="submit" disabled={publishing || !file || !version.trim()}>
-              {publishing ? "Publicando…" : "Publicar firmware"}
-            </PpActionButton>
-          </form>
+            {formError ? <PpStateBox variant="error" title="Versão" message={formError} /> : null}
+            <div className="pp-inline-actions">
+              <PpActionButton
+                variant="ghost"
+                disabled={submitting || !version.trim()}
+                onClick={() => void submitVersion(false)}
+              >
+                {submitting ? "Salvando…" : "Salvar rascunho"}
+              </PpActionButton>
+              <PpActionButton
+                disabled={submitting || !version.trim() || !binFile}
+                onClick={() => void submitVersion(true)}
+              >
+                {submitting ? "Publicando…" : "Publicar agora"}
+              </PpActionButton>
+            </div>
+          </div>
         </PpSectionCard>
       ) : null}
 
@@ -354,80 +347,24 @@ export function FirmwaresPage({ permissions }: FirmwaresPageProps) {
           <PpStateBox variant="loading" title="Carregando firmwares" />
         ) : error ? (
           <PpStateBox variant="error" title="Erro" message={error} />
-        ) : filteredItems.length === 0 ? (
+        ) : groupedItems.length === 0 ? (
           <PpStateBox variant="empty" title="Nenhum firmware" message={PP_HELP.ota.catalogEmpty} />
         ) : (
-          <PpDataTable
-            columns={columns}
-            rows={filteredItems}
-            rowKey={(row) => row.id}
-            emptyMessage={PP_HELP.ota.catalogEmpty}
-          />
+          groupedItems.map(([familyKey, rows]) => (
+            <div key={familyKey} className="pp-firmware-family-group">
+              <h3 className="pp-firmware-family-group__title">
+                <code>{familyKey}</code>
+              </h3>
+              <PpDataTable
+                columns={columns}
+                rows={rows}
+                rowKey={(row) => row.id}
+                emptyMessage={PP_HELP.ota.catalogEmpty}
+              />
+            </div>
+          ))
         )}
       </PpSectionCard>
-
-      <PpHostContainedDialog
-        open={Boolean(editTarget)}
-        title="Editar metadados"
-        onClose={() => setEditTarget(null)}
-      >
-        {editTarget ? (
-          <div className="pp-form-grid">
-            <p className="pp-muted">
-              <code>
-                {editTarget.firmwareKey} · {editTarget.version}
-              </code>{" "}
-              (chave e versão imutáveis)
-            </p>
-            <PpNativeTextField
-              id="ota-edit-display-name"
-              label="Nome exibido"
-              hint={PP_HELP.ota.displayName}
-              value={editDisplayName}
-              onChange={setEditDisplayName}
-            />
-            <PpNativeTextAreaField
-              id="ota-edit-notes"
-              label="Notas"
-              hint={PP_HELP.ota.releaseNotes}
-              value={editReleaseNotes}
-              onChange={setEditReleaseNotes}
-              span
-            />
-            <div className="pp-inline-actions">
-              <PpActionButton variant="ghost" onClick={() => setEditTarget(null)} disabled={savingEdit}>
-                Cancelar
-              </PpActionButton>
-              <PpActionButton onClick={() => void confirmEdit()} disabled={savingEdit}>
-                {savingEdit ? "Salvando…" : "Salvar"}
-              </PpActionButton>
-            </div>
-          </div>
-        ) : null}
-      </PpHostContainedDialog>
-
-      <PpHostContainedDialog
-        open={Boolean(archiveTarget)}
-        title={PP_HELP.ota.archiveConfirmTitle}
-        onClose={() => setArchiveTarget(null)}
-      >
-        <p>{PP_HELP.ota.archiveConfirmBody}</p>
-        {archiveTarget ? (
-          <p className="pp-muted">
-            <code>
-              {archiveTarget.firmwareKey} · {archiveTarget.version}
-            </code>
-          </p>
-        ) : null}
-        <div className="pp-inline-actions">
-          <PpActionButton variant="ghost" onClick={() => setArchiveTarget(null)} disabled={archiving}>
-            Cancelar
-          </PpActionButton>
-          <PpActionButton onClick={() => void confirmArchive()} disabled={archiving}>
-            {archiving ? "Arquivando…" : "Arquivar"}
-          </PpActionButton>
-        </div>
-      </PpHostContainedDialog>
     </div>
   );
 }

@@ -82,6 +82,61 @@
   overflow: hidden;
 }
 
+.dashboard-production-pulse .pp-shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pp-section-gap);
+  min-height: 0;
+}
+
+.dashboard-production-pulse .pp-shell__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pp-section-gap);
+  min-width: 0;
+}
+
+.dashboard-production-pulse .pp-firmware-family-group + .pp-firmware-family-group {
+  margin-top: var(--pp-section-gap);
+}
+
+.dashboard-production-pulse .pp-firmware-family-group__title {
+  margin: 0 0 8px;
+  font-size: var(--pp-font-md);
+  color: var(--pp-title);
+}
+
+.dashboard-production-pulse .pp-lifecycle-badge {
+  display: inline-block;
+  margin-inline-start: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--pp-font-xs);
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.dashboard-production-pulse .pp-lifecycle-badge--draft {
+  background: color-mix(in srgb, var(--pp-warning) 18%, transparent);
+  color: var(--pp-warning);
+}
+
+.dashboard-production-pulse .pp-lifecycle-badge--published {
+  background: color-mix(in srgb, var(--pp-success) 18%, transparent);
+  color: var(--pp-success);
+}
+
+.dashboard-production-pulse .pp-lifecycle-badge--archived {
+  background: color-mix(in srgb, var(--pp-text-muted) 20%, transparent);
+  color: var(--pp-text-muted);
+}
+
+.dashboard-production-pulse .pp-lifecycle-badge--legacy {
+  background: color-mix(in srgb, var(--pp-accent) 14%, transparent);
+  color: var(--pp-title);
+  margin-bottom: 8px;
+}
+
 .dashboard-production-pulse .pp-page-stack {
   display: flex;
   flex-direction: column;
