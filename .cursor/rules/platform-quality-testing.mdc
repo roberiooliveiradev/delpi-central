@@ -25,6 +25,8 @@ requisito/bug
 → negative
 → integração/contrato quando aplicável
 → objetivo original
+→ generalização
+→ desacoplamento/ownership
 ```
 
 ## Pirâmide por risco
@@ -50,9 +52,25 @@ Todo bugfix material deve ter:
 2. caso positivo corrigido;
 3. sibling para evitar overfitting;
 4. negativo para evitar falso positivo;
-5. validação do objetivo original.
+5. validação do objetivo original;
+6. avaliação de generalização e ownership quando a correção introduz regra/decisão nova.
 
 Aplicar `root-cause-generalized-fix.mdc`.
+
+## Execução de planos
+
+Quando a alteração executar um plano multi-etapa, aplicar `plan-execution.mdc`.
+
+Cada subetapa deve provar, antes de ser marcada como concluída:
+
+```text
+OBJECTIVE_RESOLVED
+GENERALIZATION
+DECOUPLING
+REGRESSION_SAFETY
+```
+
+O gate de generalização verifica se a solução resolve a família de casos, não apenas o exemplo. O gate de desacoplamento verifica owner, boundary, contrato e direção de dependência. `INCONCLUSIVE` não equivale a PASS.
 
 ## Contratos
 
@@ -111,6 +129,8 @@ contratos
 concorrência/idempotência
 migrations
 fallback/degradação
+generalização
+ownership/boundaries
 ```
 
 Não aumentar cobertura com asserts sem valor comportamental.
@@ -122,6 +142,8 @@ Uma entrega só pode ser declarada PASS quando:
 - testes obrigatórios do escopo executaram;
 - falhas relevantes foram classificadas;
 - objetivo original foi revalidado;
+- a solução não está overfit ao caso reportado quando generalização é material;
+- ownership e desacoplamento foram revalidados quando a mudança é arquitetural/material;
 - nenhuma regressão material conhecida foi ocultada;
 - evidência corresponde ao commit/configuração atuais.
 
@@ -137,11 +159,18 @@ Arquitetura: `architecture-ci-enforcement.mdc`.
 
 > Como esta solução pode continuar errada mesmo com os testes atuais passando?
 
-A resposta deve gerar teste adicional quando o risco for material e testável.
+Complementar com:
+
+> Em que caso irmão ela falharia por estar acoplada ao exemplo?
+
+> Algum consumidor ou bounded context agora conhece uma decisão que deveria permanecer no owner canônico?
+
+As respostas devem gerar correção ou teste adicional quando o risco for material e testável.
 
 ## Regras filhas/complementares
 
 - `test-and-commit.mdc`
+- `plan-execution.mdc`
 - `root-cause-generalized-fix.mdc`
 - `architecture-ci-enforcement.mdc`
 - `ai-intelligence-evaluation.mdc`
@@ -156,10 +185,12 @@ SIBLING
 NEGATIVE
 CONTRACT_OR_INTEGRATION
 OBJECTIVE_VALIDATION
+GENERALIZATION
+DECOUPLING
 KNOWN_REGRESSIONS
 CI_STATUS
 ```
 
 ## Critério de sucesso
 
-Os testes devem reduzir incerteza sobre o comportamento real da plataforma, não apenas validar a implementação escolhida.
+Os testes devem reduzir incerteza sobre o comportamento real da plataforma e provar que a solução resolveu o objetivo na camada correta, com generalização e desacoplamento proporcionais ao risco — não apenas validar a implementação escolhida.
