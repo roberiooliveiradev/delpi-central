@@ -3,6 +3,10 @@ from __future__ import annotations
 from types import SimpleNamespace
 from uuid import uuid4
 
+import pytest
+
+from requests_app.application.errors import ApplicationError
+from requests_app.application.services.attachment_storage import AttachmentStorage
 from requests_app.application.use_cases.request_use_cases import (
     CreateRequestUseCase,
     TransitionRequestUseCase,
@@ -43,7 +47,16 @@ def _processor():
     )
 
 
-def test_timeline_comment_and_events():
+def _timeline(types, requests, files, tmp_path) -> TimelineUseCases:
+    return TimelineUseCases(
+        types,
+        requests,
+        files,
+        attachment_storage=AttachmentStorage(base_dir=str(tmp_path / "att")),
+    )
+
+
+def test_timeline_comment_and_events(tmp_path):
     invoice = RequestTypeRegistry.from_workflow_content(
         code="invoice-issuance",
         name="Emissão NF",
@@ -68,7 +81,7 @@ def test_timeline_comment_and_events():
         action="start",
         idempotency_key=str(uuid4()),
     )
-    timeline = TimelineUseCases(types, requests, files)
+    timeline = _timeline(types, requests, files, tmp_path)
     comment = timeline.create_comment(
         user=_user(), request_id=created["id"], body="Preciso de atualização"
     )
@@ -77,6 +90,83 @@ def test_timeline_comment_and_events():
     types_seen = {item["event_type"] for item in events["items"]}
     assert "created" in types_seen
     assert "transition" in types_seen
-    assert "commented" in types_seen
+    assert "commented" not in types_seen
     comments = timeline.list_comments(user=_user(), request_id=created["id"])
     assert comments["total"] == 1
+    assert comments["items"][0].get("updated_at") is None
+
+
+def test_comment_edit_marks_updated_at_and_silent_rewrite_does_not(tmp_path):
+    invoice = RequestTypeRegistry.from_workflow_content(
+        code="invoice-issuance",
+        name="Emissão NF",
+        workflow_name="invoice_issuance",
+        permission_prefix="my-requests.invoice-issuance",
+        branch_scope="required",
+    )
+    types = InMemoryRequestTypeRepository([invoice])
+    requests = InMemoryRequestRepository()
+    idem = InMemoryIdempotencyRepository()
+    files = InMemoryFileRepository()
+    created = CreateRequestUseCase(types, requests, idem, files=files).execute(
+        user=_user(),
+        type_code="invoice-issuance",
+        payload={},
+        branch_code="01",
+        idempotency_key=str(uuid4()),
+    )
+    timeline = _timeline(types, requests, files, tmp_path)
+    comment = timeline.create_comment(
+        user=_user(), request_id=created["id"], body="rascunho"
+    )
+    silent = timeline.update_comment(
+        user=_user(),
+        request_id=created["id"],
+        comment_id=comment["id"],
+        body="rascunho com imagem",
+        mark_as_edited=False,
+    )
+    assert silent.get("updated_at") is None
+    edited = timeline.update_comment(
+        user=_user(),
+        request_id=created["id"],
+        comment_id=comment["id"],
+        body="texto final",
+        mark_as_edited=True,
+    )
+    assert edited["body"] == "texto final"
+    assert edited.get("updated_at") is not None
+    listed = timeline.list_comments(user=_user(), request_id=created["id"])
+    assert listed["items"][0]["updated_at"] is not None
+
+
+def test_comment_frozen_when_request_terminal(tmp_path):
+    invoice = RequestTypeRegistry.from_workflow_content(
+        code="invoice-issuance",
+        name="Emissão NF",
+        workflow_name="invoice_issuance",
+        permission_prefix="my-requests.invoice-issuance",
+        branch_scope="required",
+    )
+    types = InMemoryRequestTypeRepository([invoice])
+    requests = InMemoryRequestRepository()
+    idem = InMemoryIdempotencyRepository()
+    files = InMemoryFileRepository()
+    created = CreateRequestUseCase(types, requests, idem, files=files).execute(
+        user=_user(),
+        type_code="invoice-issuance",
+        payload={},
+        branch_code="01",
+        idempotency_key=str(uuid4()),
+    )
+    stored = requests.get(created["id"])
+    assert stored is not None
+    stored.status = "completed"
+    requests._requests[str(stored.id)] = stored  # noqa: SLF001 — test double
+
+    timeline = _timeline(types, requests, files, tmp_path)
+    with pytest.raises(ApplicationError) as exc:
+        timeline.create_comment(
+            user=_user(), request_id=created["id"], body="depois do fim"
+        )
+    assert exc.value.code == "conversation_frozen"

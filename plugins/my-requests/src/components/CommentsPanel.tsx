@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActionButton,
   listInlineAttachmentIdsFromMarkdown,
   listInlinePendingIdsFromMarkdown,
   rewriteInlinePendingInMarkdown,
@@ -13,7 +14,7 @@ import {
   uploadCommentAttachment,
 } from "../api/requestsApi";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { formatDateTimePtBr } from "../content/presentationLabels";
+import { commentTimeLabel } from "../content/presentationLabels";
 import { useParticipantAvatarUrls } from "../hooks/useParticipantAvatarUrls";
 import type { RequestComment } from "../types/requests";
 import {
@@ -24,13 +25,17 @@ import {
   MyRequestsRoomPanel,
   MyRequestsSectionCard,
   MyRequestsStateBanner,
+  type MessageThreadAction,
   type MessageThreadItem,
 } from "../ui/mrUi";
 import { shouldStickThreadToBottom } from "../utils/threadStickToBottom";
+import { appendAttachmentMarkdown } from "../utils/commentAttachmentMarkdown";
 
 type CommentsPanelProps = {
   requestId: string;
   canComment?: boolean;
+  /** Terminal request — conversation read-only for everyone. */
+  conversationFrozen?: boolean;
   refreshKey?: number;
 };
 
@@ -63,7 +68,14 @@ const COMPOSER_LABELS = {
   emojiMenuAriaLabel: "Inserir emoji",
 };
 
-const IMAGE_ACCEPT = "image/png,image/jpeg,image/jpg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif";
+const EDIT_COMPOSER_LABELS = {
+  ...COMPOSER_LABELS,
+  placeholder: "Editar mensagem…",
+  sendAriaLabel: "Salvar edição",
+};
+
+const IMAGE_ACCEPT =
+  "image/png,image/jpeg,image/jpg,image/webp,image/gif,.png,.jpg,.jpeg,.webp,.gif";
 const MAX_INLINE_IMAGES = 10;
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
@@ -84,9 +96,7 @@ function toThreadItems(
       id: item.id,
       kind: "text",
       bodyText: item.body,
-      createdAtLabel: item.created_at
-        ? formatDateTimePtBr(item.created_at)
-        : "",
+      createdAtLabel: commentTimeLabel(item.created_at, item.updated_at),
       authorName: item.author_name || "Usuário",
       authorUserId: authorId || null,
       authorSrc: authorId ? avatarByUserId.get(authorId) || null : null,
@@ -106,6 +116,7 @@ function isImageFile(file: File): boolean {
 export function CommentsPanel({
   requestId,
   canComment = false,
+  conversationFrozen = false,
   refreshKey = 0,
 }: CommentsPanelProps) {
   const [items, setItems] = useState<RequestComment[]>([]);
@@ -113,6 +124,8 @@ export function CommentsPanel({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<PendingAttachment[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const [attachmentSrcById, setAttachmentSrcById] = useState<Map<string, string>>(
     () => new Map(),
   );
@@ -157,6 +170,13 @@ export function CommentsPanel({
     });
     return () => ac.abort();
   }, [requestId, refreshKey]);
+
+  useEffect(() => {
+    if (!canComment || conversationFrozen) {
+      setEditingId(null);
+      setEditDraft("");
+    }
+  }, [canComment, conversationFrozen]);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -216,11 +236,7 @@ export function CommentsPanel({
     (attachmentId: string) => {
       const id = (attachmentId || "").trim();
       if (!id) return null;
-      return (
-        attachmentSrcById.get(id) ||
-        pendingSrcById.get(id) ||
-        null
-      );
+      return attachmentSrcById.get(id) || pendingSrcById.get(id) || null;
     },
     [attachmentSrcById, pendingSrcById],
   );
@@ -265,9 +281,57 @@ export function CommentsPanel({
     setPending((prev) => prev.filter((row) => row.id !== id));
   }, []);
 
+  const beginEdit = useCallback(
+    (messageId: string) => {
+      const row = items.find((item) => item.id === messageId);
+      if (!row || !canComment) return;
+      setEditingId(messageId);
+      setEditDraft(row.body || "");
+    },
+    [items, canComment],
+  );
+
+  const cancelEdit = useCallback(() => {
+    setEditingId(null);
+    setEditDraft("");
+  }, []);
+
+  async function onSaveEdit(markdown: string) {
+    const id = (editingId || "").trim();
+    const text = markdown.trim();
+    if (!id || !canComment || busy || !text) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await patchComment(requestId, id, text, { markAsEdited: true });
+      setEditingId(null);
+      setEditDraft("");
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao editar mensagem");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const resolveActions = useCallback(
+    (message: MessageThreadItem): MessageThreadAction[] => {
+      if (!canComment || conversationFrozen || !message.mine) return [];
+      if (editingId) return [];
+      return [
+        {
+          id: "edit",
+          label: "Editar",
+          onClick: () => beginEdit(message.id),
+        },
+      ];
+    },
+    [canComment, conversationFrozen, editingId, beginEdit],
+  );
+
   async function onSend(markdown: string) {
     const text = markdown.trim();
-    if (!canComment || busy) return;
+    if (!canComment || busy || editingId) return;
     if (!text && pending.length === 0) return;
     setBusy(true);
     setError(null);
@@ -286,12 +350,29 @@ export function CommentsPanel({
         );
         pendingToUuid[pendingId] = uploaded.id;
       }
+      const clipUploaded: Array<{ id: string; fileName: string }> = [];
       for (const row of pending.filter((item) => item.kind === "clip")) {
-        await uploadCommentAttachment(requestId, created.id, row.file);
+        const uploaded = await uploadCommentAttachment(
+          requestId,
+          created.id,
+          row.file,
+        );
+        clipUploaded.push({ id: uploaded.id, fileName: row.file.name });
       }
       if (Object.keys(pendingToUuid).length) {
         bodyText = rewriteInlinePendingInMarkdown(bodyText, pendingToUuid);
-        await patchComment(requestId, created.id, bodyText);
+      }
+      if (clipUploaded.length) {
+        bodyText = appendAttachmentMarkdown(
+          bodyText === " " ? "" : bodyText,
+          clipUploaded,
+        );
+      }
+      if (Object.keys(pendingToUuid).length || clipUploaded.length) {
+        const finalBody = bodyText.trim() || " ";
+        await patchComment(requestId, created.id, finalBody, {
+          markAsEdited: false,
+        });
       }
       setDraft("");
       setPending([]);
@@ -305,15 +386,16 @@ export function CommentsPanel({
     }
   }
 
+  const dockMessage = conversationFrozen
+    ? "Esta solicitação foi finalizada. A conversa está somente leitura."
+    : "Você pode ler a conversa, mas não tem permissão para enviar mensagens neste momento.";
+
   return (
     <MyRequestsSectionCard
       title="Conversa sobre a solicitação"
       hint={MY_REQUESTS_HELP_TOOLTIPS.comments.section}
     >
-      <div
-        className="my-requests-detail-conversation"
-        data-help="comments"
-      >
+      <div className="my-requests-detail-conversation" data-help="comments">
         {error ? (
           <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
         ) : null}
@@ -328,7 +410,7 @@ export function CommentsPanel({
                 );
               }}
               dock={
-                canComment ? (
+                canComment && !editingId ? (
                   <MyRequestsMentionComposer
                     value={draft}
                     onChange={setDraft}
@@ -347,11 +429,12 @@ export function CommentsPanel({
                     portalScopeClassName={MR_PORTAL_SCOPE}
                     labels={COMPOSER_LABELS}
                   />
-                ) : (
+                ) : canComment && editingId ? (
                   <MyRequestsStateBanner>
-                    Você pode ler a conversa, mas não tem permissão para enviar
-                    mensagens neste momento.
+                    Edite a mensagem na bolha acima e salve, ou cancele a edição.
                   </MyRequestsStateBanner>
+                ) : (
+                  <MyRequestsStateBanner>{dockMessage}</MyRequestsStateBanner>
                 )
               }
             >
@@ -361,6 +444,32 @@ export function CommentsPanel({
                 emptyLabel="Nenhuma mensagem ainda. Inicie a conversa."
                 portalScopeClassName={MR_PORTAL_SCOPE}
                 resolveAttachmentImageSrc={resolveAttachmentImageSrc}
+                resolveActions={resolveActions}
+                editingId={editingId}
+                renderEditSlot={() => (
+                  <div className="my-requests-comment-edit">
+                    <MyRequestsMentionComposer
+                      value={editDraft}
+                      onChange={setEditDraft}
+                      onSubmit={(md) => void onSaveEdit(md)}
+                      disabled={busy}
+                      submitting={busy}
+                      showAttach={false}
+                      portalScopeClassName={MR_PORTAL_SCOPE}
+                      labels={EDIT_COMPOSER_LABELS}
+                    />
+                    <div className="my-requests-comment-edit__actions">
+                      <ActionButton
+                        type="button"
+                        variant="ghost"
+                        disabled={busy}
+                        onClick={cancelEdit}
+                      >
+                        Cancelar
+                      </ActionButton>
+                    </div>
+                  </div>
+                )}
               />
             </MyRequestsRoomConversationChatColumn>
           </MyRequestsRoomPanel>

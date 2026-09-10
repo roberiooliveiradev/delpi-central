@@ -133,7 +133,7 @@ def test_owner_terminal_cannot_upload_attachment():
         workflow=_TERMINAL_WF,
     )
     assert caps["can_upload_attachment"] is False
-    assert caps["can_comment"] is True
+    assert caps["can_comment"] is False
 
 
 def test_owner_in_progress_cannot_manage_attachments():
@@ -143,3 +143,4 @@ def test_owner_in_progress_cannot_manage_attachments():
         workflow=_TERMINAL_WF,
     )
     assert caps["can_upload_attachment"] is False
+    assert caps["can_comment"] is True

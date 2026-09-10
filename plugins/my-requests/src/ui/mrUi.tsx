@@ -42,6 +42,7 @@ import {
 export type {
   EntityDirectoryOption,
   EntityDirectoryPickerProps,
+  MessageThreadAction,
   MessageThreadItem,
 } from "@delpi/plugin-ui/index";
 

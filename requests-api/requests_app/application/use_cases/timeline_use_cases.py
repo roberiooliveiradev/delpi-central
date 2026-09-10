@@ -29,9 +29,14 @@ from requests_app.domain.ports.file_repository_port import FileRepositoryPort
 
 logger = logging.getLogger(__name__)
 
-# Access-log style events must not appear in the business timeline (Histórico).
+# Access-log / conversation noise must not appear in the business timeline (Histórico).
 TIMELINE_EXCLUDED_EVENT_TYPES = frozenset(
-    {"attachment_downloaded", "artifact_downloaded"}
+    {
+        "attachment_downloaded",
+        "artifact_downloaded",
+        "commented",
+        "comment_added",
+    }
 )
 
 
@@ -70,7 +75,30 @@ class TimelineUseCases:
         actor = actor_for(user, request_type)
         if not _can_view(request=request, actor=actor):
             raise ApplicationError(code="forbidden", status_code=403)
-        return request, actor
+        return request, request_type, actor
+
+    def _assert_conversation_mutable(self, *, request, request_type) -> None:
+        workflow = request_type.workflow_definition or {}
+        terminals = {
+            str(item).strip()
+            for item in (workflow.get("terminalStatuses") or [])
+            if str(item).strip()
+        }
+        if request.status in terminals:
+            raise ApplicationError(code="conversation_frozen", status_code=403)
+
+    def _serialize_comment(self, comment: RequestComment, *, actor_user_id: str) -> dict[str, Any]:
+        return json_safe(
+            {
+                "id": comment.id,
+                "author_user_id": comment.author_user_id,
+                "author_name": comment.author_name,
+                "body": comment.body,
+                "created_at": comment.created_at,
+                "updated_at": comment.updated_at,
+                "is_mine": comment.author_user_id == actor_user_id,
+            }
+        )
 
     def list_events(
         self,
@@ -118,22 +146,13 @@ class TimelineUseCases:
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
-        request, actor = self._ctx(user=user, request_id=request_id)
+        _request, _request_type, actor = self._ctx(user=user, request_id=request_id)
         items, total = self._files.list_comments(
             request_id, page=page, page_size=page_size
         )
         return {
             "items": [
-                json_safe(
-                    {
-                        "id": item.id,
-                        "author_user_id": item.author_user_id,
-                        "author_name": item.author_name,
-                        "body": item.body,
-                        "created_at": item.created_at,
-                        "is_mine": item.author_user_id == actor.user_id,
-                    }
-                )
+                self._serialize_comment(item, actor_user_id=actor.user_id)
                 for item in items
             ],
             "total": total,
@@ -149,7 +168,8 @@ class TimelineUseCases:
         body: str,
         actor_client_id: str | None = None,
     ) -> dict[str, Any]:
-        request, actor = self._ctx(user=user, request_id=request_id)
+        request, request_type, actor = self._ctx(user=user, request_id=request_id)
+        self._assert_conversation_mutable(request=request, request_type=request_type)
         text = (body or "").strip()
         if not text:
             raise ApplicationError(code="comment_required", status_code=422)
@@ -188,16 +208,7 @@ class TimelineUseCases:
                 "variant": "info",
             },
         )
-        return json_safe(
-            {
-                "id": comment.id,
-                "author_user_id": comment.author_user_id,
-                "author_name": comment.author_name,
-                "body": comment.body,
-                "created_at": comment.created_at,
-                "is_mine": True,
-            }
-        )
+        return self._serialize_comment(comment, actor_user_id=actor.user_id)
 
     def update_comment(
         self,
@@ -206,9 +217,11 @@ class TimelineUseCases:
         request_id: str,
         comment_id: str,
         body: str,
+        mark_as_edited: bool = True,
         actor_client_id: str | None = None,
     ) -> dict[str, Any]:
-        request, actor = self._ctx(user=user, request_id=request_id)
+        request, request_type, actor = self._ctx(user=user, request_id=request_id)
+        self._assert_conversation_mutable(request=request, request_type=request_type)
         comment = self._files.get_comment(comment_id)
         if comment is None or str(comment.request_id) != str(request.id):
             raise ApplicationError(code="not_found", status_code=404)
@@ -219,7 +232,11 @@ class TimelineUseCases:
         if not text:
             raise ApplicationError(code="comment_required", status_code=422)
         assert_comment_body_media_policy(text)
-        updated = self._files.update_comment_body(comment_id, body=text)
+        updated = self._files.update_comment_body(
+            comment_id,
+            body=text,
+            touch_updated_at=bool(mark_as_edited),
+        )
         if updated is None:
             raise ApplicationError(code="not_found", status_code=404)
         _safe_realtime(
@@ -232,17 +249,7 @@ class TimelineUseCases:
             actor_user_id=actor.user_id,
             actor_client_id=actor_client_id,
         )
-        return json_safe(
-            {
-                "id": updated.id,
-                "author_user_id": updated.author_user_id,
-                "author_name": updated.author_name,
-                "body": updated.body,
-                "created_at": updated.created_at,
-                "updated_at": updated.updated_at,
-                "is_mine": updated.author_user_id == actor.user_id,
-            }
-        )
+        return self._serialize_comment(updated, actor_user_id=actor.user_id)
 
     def upload_comment_attachment(
         self,
@@ -255,7 +262,8 @@ class TimelineUseCases:
         mime_type: str | None,
         actor_client_id: str | None = None,
     ) -> dict[str, Any]:
-        request, actor = self._ctx(user=user, request_id=request_id)
+        request, request_type, actor = self._ctx(user=user, request_id=request_id)
+        self._assert_conversation_mutable(request=request, request_type=request_type)
         comment = self._files.get_comment(comment_id)
         if comment is None or str(comment.request_id) != str(request.id):
             raise ApplicationError(code="not_found", status_code=404)
@@ -314,7 +322,7 @@ class TimelineUseCases:
     def list_comment_attachments(
         self, *, user, request_id: str, comment_id: str
     ) -> dict[str, Any]:
-        request, _actor = self._ctx(user=user, request_id=request_id)
+        request, _request_type, _actor = self._ctx(user=user, request_id=request_id)
         comment = self._files.get_comment(comment_id)
         if comment is None or str(comment.request_id) != str(request.id):
             raise ApplicationError(code="not_found", status_code=404)
@@ -337,7 +345,7 @@ class TimelineUseCases:
     def resolve_comment_attachment_path(
         self, *, user, request_id: str, comment_id: str, attachment_id: str
     ) -> tuple[Path, RequestCommentAttachment]:
-        request, _actor = self._ctx(user=user, request_id=request_id)
+        request, _request_type, _actor = self._ctx(user=user, request_id=request_id)
         comment = self._files.get_comment(comment_id)
         if comment is None or str(comment.request_id) != str(request.id):
             raise ApplicationError(code="not_found", status_code=404)

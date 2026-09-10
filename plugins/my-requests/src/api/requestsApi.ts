@@ -218,11 +218,15 @@ export async function patchComment(
   requestId: string,
   commentId: string,
   text: string,
+  options?: { markAsEdited?: boolean },
 ) {
   return unwrap(
     await httpPatch<Envelope<RequestComment>>(
       `${API_BASE}/requests/${encodeURIComponent(requestId)}/comments/${encodeURIComponent(commentId)}`,
-      { body: text },
+      {
+        body: text,
+        mark_as_edited: options?.markAsEdited ?? true,
+      },
     ),
   );
 }

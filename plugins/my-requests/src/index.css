@@ -338,6 +338,19 @@
   color: var(--my-requests-text-muted);
 }
 
+.dashboard-my-requests .my-requests-comment-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-my-requests .my-requests-comment-edit__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 @media (max-width: 768px) {
   .dashboard-my-requests .my-requests-detail-layout {
     gap: 1rem;

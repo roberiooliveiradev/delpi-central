@@ -307,14 +307,26 @@ class PostgresFileRepository(FileRepositoryPort):
         return _comment(dict(row)) if row else None
 
     def update_comment_body(
-        self, comment_id: UUID | str, *, body: str
+        self,
+        comment_id: UUID | str,
+        *,
+        body: str,
+        touch_updated_at: bool = True,
     ) -> RequestComment | None:
-        sql = f"""
-        UPDATE {_SCHEMA}.request_comments
-        SET body = %s, updated_at = NOW()
-        WHERE id = %s::uuid
-        RETURNING *
-        """
+        if touch_updated_at:
+            sql = f"""
+            UPDATE {_SCHEMA}.request_comments
+            SET body = %s, updated_at = NOW()
+            WHERE id = %s::uuid
+            RETURNING *
+            """
+        else:
+            sql = f"""
+            UPDATE {_SCHEMA}.request_comments
+            SET body = %s
+            WHERE id = %s::uuid
+            RETURNING *
+            """
         with plugins_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(sql, (body, str(comment_id)))

@@ -58,7 +58,7 @@ class FileRepositoryPort(ABC):
 
     @abstractmethod
     def update_comment_body(
-        self, comment_id: UUID | str, *, body: str
+        self, comment_id: UUID | str, *, body: str, touch_updated_at: bool = True
     ) -> RequestComment | None: ...
 
     @abstractmethod

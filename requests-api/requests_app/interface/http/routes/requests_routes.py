@@ -86,6 +86,8 @@ class TransitionBody(BaseModel):
 
 class CommentBody(BaseModel):
     body: str = Field(..., min_length=1)
+    # False = silent rewrite (e.g. pending→uuid after upload); does not mark as edited.
+    mark_as_edited: bool = True
 
 
 @router.get("/request-types")
@@ -526,6 +528,7 @@ def update_comment(
             request_id=str(request_id),
             comment_id=str(comment_id),
             body=body.body,
+            mark_as_edited=body.mark_as_edited,
             actor_client_id=client_id_from_request(request),
         )
     except ApplicationError as exc:

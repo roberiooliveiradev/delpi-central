@@ -33,6 +33,14 @@ def _file_immutable_statuses(workflow: dict[str, Any] | None) -> set[str]:
     return terminals | locked
 
 
+def _terminal_statuses(workflow: dict[str, Any] | None) -> set[str]:
+    return {
+        str(item).strip()
+        for item in ((workflow or {}).get("terminalStatuses") or [])
+        if str(item).strip()
+    }
+
+
 def resolve_request_capabilities(
     request: Request,
     *,
@@ -41,6 +49,7 @@ def resolve_request_capabilities(
 ) -> dict[str, bool]:
     immutable = _file_immutable_statuses(workflow)
     files_locked = request.status in immutable
+    is_terminal = request.status in _terminal_statuses(workflow)
     is_owner = request.created_by_user_id == actor.user_id
     can_view = bool(
         is_owner or actor.has_view_all or actor.has_process or actor.has_manage
@@ -53,8 +62,8 @@ def resolve_request_capabilities(
     )
 
     return {
-        # create_comment: any viewer of the request
-        "can_comment": can_view,
+        # create/update comment: viewers while request is not terminal
+        "can_comment": bool(can_view and not is_terminal),
         # detail manage (upload + delete): owner + needs_information only
         "can_upload_attachment": can_manage_attachments,
         # upload artifact: process|manage and not terminal / fileImmutableStatuses

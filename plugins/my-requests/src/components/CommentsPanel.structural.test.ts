@@ -25,7 +25,12 @@ describe("Request conversation structural", () => {
     expect(panel).toMatch(/formatToggleAriaLabel/);
     expect(panel).toMatch(/showAttach/);
     expect(panel).toMatch(/resolveAttachmentImageSrc/);
-    expect(panel).not.toMatch(/showAttach=\{false\}/);
+    expect(panel).toMatch(/resolveActions/);
+    expect(panel).toMatch(/editingId/);
+    expect(panel).toMatch(/commentTimeLabel/);
+    expect(panel).toMatch(/conversationFrozen/);
+    expect(panel).toMatch(/appendAttachmentMarkdown/);
+    expect(panel).toMatch(/markAsEdited/);
     expect(panel).not.toMatch(/my-requests-domain-list/);
     expect(panel).not.toMatch(/NativeTextAreaControl/);
     expect(panel).not.toMatch(/commercial-api/);

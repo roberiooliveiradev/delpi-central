@@ -4,6 +4,7 @@ import {
   actionLabel,
   artifactKindLabel,
   branchScopeLabel,
+  commentTimeLabel,
   eventLabel,
   formatDateTimePtBr,
   presentationModeLabel,
@@ -98,5 +99,12 @@ describe("presentationLabels", () => {
   it("formata data em pt-BR", () => {
     expect(formatDateTimePtBr("")).toBe("—");
     expect(formatDateTimePtBr("2026-09-08T15:20:00.000Z")).toMatch(/\d{2}\/\d{2}\/2026 às \d{2}:\d{2}/);
+  });
+
+  it("marca mensagem editada no rótulo de tempo", () => {
+    expect(commentTimeLabel("2026-09-10T19:00:00.000Z")).toMatch(/10\/09\/2026 às/);
+    expect(
+      commentTimeLabel("2026-09-10T19:00:00.000Z", "2026-09-10T19:05:00.000Z"),
+    ).toMatch(/editada às/);
   });
 });

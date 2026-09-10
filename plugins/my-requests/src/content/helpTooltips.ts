@@ -108,11 +108,11 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   timeline: {
     section:
-      "Histórico do que aconteceu nesta solicitação: criação, mudanças de etapa (ação e novo status), mensagens e envios de arquivo. Cada evento mostra quem atuou, com foto do perfil quando disponível; em devoluções e cancelamentos o motivo também aparece.",
+      "Histórico de etapas e documentos da solicitação (criação, mudanças de status, anexos gerados). Mensagens da conversa ficam só na seção Conversa, não nesta linha do tempo.",
   },
   comments: {
     section:
-      "Conversa com formatação (negrito, listas etc.) e imagens coladas ou anexadas. As mensagens ficam nesta solicitação e não substituem o Histórico de etapas.",
+      "Conversa com formatação (negrito, listas etc.) e imagens coladas ou anexadas pelo clipe. As imagens aparecem na bolha da mensagem. Você pode editar as próprias mensagens (aparece «editada»); após a conclusão ou cancelamento, a conversa fica somente leitura.",
     newComment:
       "Escreva, formate e, se precisar, anexe ou cole uma imagem antes de enviar.",
   },

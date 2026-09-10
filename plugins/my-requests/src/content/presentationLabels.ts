@@ -245,6 +245,19 @@ export function formatDateTimePtBr(value: string | null | undefined): string {
   return `${datePart} às ${timePart}`;
 }
 
+/** Creation time; when `updatedAt` is set, appends «editada às …». */
+export function commentTimeLabel(
+  createdAt: string | null | undefined,
+  updatedAt?: string | null,
+): string {
+  const created = formatDateTimePtBr(createdAt);
+  const editedRaw = (updatedAt || "").trim();
+  if (!editedRaw) return created === "—" ? "" : created;
+  const edited = formatDateTimePtBr(editedRaw);
+  if (!created || created === "—") return `Editada às ${edited}`;
+  return `${created} · editada às ${edited}`;
+}
+
 /** Options for list status filter — values stay technical for the API. */
 export const REQUEST_STATUS_FILTER_OPTIONS = [
   { value: "", label: "Todos" },

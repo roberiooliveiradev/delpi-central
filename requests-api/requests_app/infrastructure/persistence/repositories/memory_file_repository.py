@@ -113,13 +113,14 @@ class InMemoryFileRepository(FileRepositoryPort):
         return None
 
     def update_comment_body(
-        self, comment_id: UUID | str, *, body: str
+        self, comment_id: UUID | str, *, body: str, touch_updated_at: bool = True
     ) -> RequestComment | None:
         for idx, item in enumerate(self.comments):
             if str(item.id) == str(comment_id):
                 updated = deepcopy(item)
                 updated.body = body
-                updated.updated_at = _utcnow()
+                if touch_updated_at:
+                    updated.updated_at = _utcnow()
                 self.comments[idx] = updated
                 return deepcopy(updated)
         return None
