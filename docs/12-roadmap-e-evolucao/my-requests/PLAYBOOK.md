@@ -1115,7 +1115,7 @@ src/
 | Upload anexo | Detalhe | POST .../attachments | Sim |
 | Upload artifact NF | Detalhe processador | POST .../artifacts | Sim |
 | Download artifact | Detalhe solicitante | GET /artifacts/{id}/download | Sim |
-| Notificação nova solicitação | Core sino | outbox → Core API | Sim |
+| Notificação gates ao criador | Core sino | outbox (transition gate) → Core API | Sim |
 | Comentário | Detalhe | POST .../comments | Sim |
 | Admin tipos | MFE admin | GET /request-types | Herança |
 | Dual-run legado | Menu Financeiro | invoice-issuance antigo | Homologação |
@@ -1203,7 +1203,7 @@ Factories: [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/
 | cancel in_progress (process) | POST cancel | transition cancel |
 | allowed_actions por papel | get detail | get detail |
 | Gate filial 403 | branch_access | branch_access |
-| Notificação create | Core sino | outbox → Core |
+| Notificação gates ao criador | Core sino | outbox transition (userIds) |
 | Lookup parties/products | GET parties | adapter lookup |
 
 ### 20.4 O que NÃO remover (pós-E13)
@@ -1270,7 +1270,7 @@ Revogação em massa no Core **não** faz parte deste playbook — exige runbook
 - Schema manifest 1.1.0 (`plugin`/`module`) até Core adotar
 - Descomissionamento imediato do plugin `invoice-issuance`
 - Rotas TV Dashboard para filas de solicitação
-- ~~WebSocket realtime na fila (fase 2 — avaliar padrão commercial worklist)~~ **Entregue:** ver [`requests-api/docs/architecture/realtime-requests.md`](../../../requests-api/docs/architecture/realtime-requests.md)
+- ~~WebSocket realtime na fila (fase 2 — avaliar padrão commercial worklist)~~ **Entregue (dual-channel):** WS MFE + sino ao criador nos gates — [`realtime-requests.md`](../../../requests-api/docs/architecture/realtime-requests.md)
 
 ---
 

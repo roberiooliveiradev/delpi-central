@@ -346,12 +346,24 @@ def test_p0_branch_gate_403(stack):
     assert exc.value.code == "branch_forbidden"
 
 
-def test_p0_notification_outbox_on_create(stack):
+def test_p0_notification_outbox_on_creator_gate_transition(stack):
+    """Sino ao criador nos gates (ex.: start) — create não notifica o owner."""
     created = _create(stack, outbox=True)
+    assert stack.outbox.list_pending() == []
+
+    TransitionRequestUseCase(
+        stack.types, stack.requests, stack.idem, outbox=stack.outbox
+    ).execute(
+        user=_processor(),
+        request_id=created["id"],
+        action="start",
+        idempotency_key=str(uuid4()),
+    )
     pending = stack.outbox.list_pending()
     assert len(pending) == 1
-    assert pending[0].event_type == "request.created"
+    assert pending[0].event_type == "request.transition"
     assert pending[0].payload["category"] == "my_requests"
+    assert pending[0].payload["userIds"] == [created["created_by_user_id"]]
     assert pending[0].request_id == created["id"]
 
 

@@ -61,7 +61,44 @@ def _stack():
     return types, requests, idem, outbox
 
 
-def test_create_and_transition_enqueue_outbox_and_worker_publishes():
+def test_transition_gate_enqueues_creator_outbox_and_worker_publishes():
+    types, requests, idem, outbox = _stack()
+    created = CreateRequestUseCase(
+        types, requests, idem, outbox=outbox
+    ).execute(
+        user=_user(),
+        type_code="invoice-issuance",
+        payload={},
+        branch_code="01",
+        idempotency_key=str(uuid4()),
+    )
+    assert outbox.list_pending() == []
+
+    TransitionRequestUseCase(types, requests, idem, outbox=outbox).execute(
+        user=_processor(),
+        request_id=created["id"],
+        action="start",
+        idempotency_key=str(uuid4()),
+    )
+    pending = outbox.list_pending()
+    assert len(pending) == 1
+    row = pending[0]
+    assert row.event_type == "request.transition"
+    assert row.payload["category"] == "my_requests"
+    assert row.payload["userIds"] == ["u-create"]
+    assert row.payload["message"]
+    assert row.payload["action"]["type"] == "portal_route"
+    assert row.payload["action"]["target"].endswith(created["id"])
+    assert row.request_id == created["id"]
+
+    notifier = InMemoryPortalNotificationAdapter()
+    published = PublishOutboxUseCase(outbox, notifier).execute()
+    assert published == 1
+    assert len(notifier.published) == 1
+    assert outbox.list_pending() == []
+
+
+def test_owner_self_transition_does_not_enqueue_outbox():
     types, requests, idem, outbox = _stack()
     created = CreateRequestUseCase(
         types, requests, idem, outbox=outbox
@@ -78,20 +115,23 @@ def test_create_and_transition_enqueue_outbox_and_worker_publishes():
         action="start",
         idempotency_key=str(uuid4()),
     )
-    pending = outbox.list_pending()
-    assert len(pending) == 2
-    assert {row.event_type for row in pending} == {
-        "request.created",
-        "request.transition",
-    }
-    for row in pending:
-        assert row.payload["category"] == "my_requests"
-        assert row.request_id == created["id"]
+    TransitionRequestUseCase(types, requests, idem, outbox=outbox).execute(
+        user=_processor(),
+        request_id=created["id"],
+        action="return",
+        body={"return_reason": "Falta NF"},
+        idempotency_key=str(uuid4()),
+    )
+    # Clear pending from processor gates so we isolate owner resubmit.
+    for row in list(outbox.list_pending()):
+        outbox.mark_published(row.id)
 
-    notifier = InMemoryPortalNotificationAdapter()
-    published = PublishOutboxUseCase(outbox, notifier).execute()
-    assert published == 2
-    assert len(notifier.published) == 2
+    TransitionRequestUseCase(types, requests, idem, outbox=outbox).execute(
+        user=_user(),
+        request_id=created["id"],
+        action="resubmit",
+        idempotency_key=str(uuid4()),
+    )
     assert outbox.list_pending() == []
 
 

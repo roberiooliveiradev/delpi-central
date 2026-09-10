@@ -29,6 +29,10 @@ from requests_app.domain.ports import (
 from requests_app.domain.ports.file_repository_port import FileRepositoryPort
 from requests_app.domain.ports.integration_outbox_port import IntegrationOutboxRepositoryPort
 from requests_app.domain.services.workflow_engine import WorkflowEngine
+from requests_app.domain.services.creator_portal_notification_policy import (
+    resolve_creator_gate_copy,
+    should_notify_creator_on_transition,
+)
 from requests_app.infrastructure.gateways.core_notification_adapter import (
     build_notification_payload,
 )
@@ -164,23 +168,8 @@ class CreateRequestUseCase:
                     payload={"status": stored.status},
                 )
             )
-        if self._outbox is not None:
-            self._outbox.enqueue(
-                event_type="request.created",
-                aggregate_type="request",
-                aggregate_id=str(stored.id),
-                request_id=str(stored.id),
-                request_version=stored.version,
-                dedupe_key=f"request:{stored.id}:created:v{stored.version}",
-                payload=build_notification_payload(
-                    event_type="request.created",
-                    request_id=str(stored.id),
-                    request_number=stored.request_number,
-                    type_code=stored.type_code,
-                    status=stored.status,
-                    actor_name=actor.user_name,
-                ),
-            )
+        # Create does not notify the creator (they already know). Processor fan-out
+        # via permissionCodes stays out of scope for creator-gate notifications.
         actions = allowed_actions_for(
             stored, actor=actor, workflow=workflow, engine=self._engine
         )
@@ -577,7 +566,19 @@ class TransitionRequestUseCase:
                     },
                 )
             )
-        if self._outbox is not None:
+        if self._outbox is not None and should_notify_creator_on_transition(
+            workflow=workflow,
+            from_status=result.history.from_status,
+            to_status=result.history.to_status,
+            actor_user_id=actor.user_id,
+            owner_user_id=stored.created_by_user_id,
+        ):
+            title, message, notif_type = resolve_creator_gate_copy(
+                workflow=workflow,
+                to_status=result.history.to_status,
+                request_number=stored.request_number,
+                actor_name=actor.user_name,
+            )
             self._outbox.enqueue(
                 event_type="request.transition",
                 aggregate_type="request",
@@ -595,6 +596,10 @@ class TransitionRequestUseCase:
                     type_code=stored.type_code,
                     status=stored.status,
                     actor_name=actor.user_name,
+                    recipient_user_ids=[stored.created_by_user_id],
+                    title=title,
+                    message=message,
+                    notification_type=notif_type,
                 ),
             )
         response = serialize_request(

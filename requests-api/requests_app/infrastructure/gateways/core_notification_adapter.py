@@ -49,19 +49,38 @@ def build_notification_payload(
     type_code: str,
     status: str,
     actor_name: str,
+    recipient_user_ids: list[str] | None = None,
+    title: str | None = None,
+    message: str | None = None,
+    notification_type: str = "info",
 ) -> dict[str, Any]:
-    title_map = {
+    """Core-compatible payload for POST /integrations/notifications."""
+    default_titles = {
         "request.created": "Nova solicitação",
         "request.transition": "Solicitação atualizada",
     }
-    return {
+    resolved_title = (title or "").strip() or default_titles.get(
+        event_type, "Minhas Solicitações"
+    )
+    resolved_message = (message or "").strip() or (
+        f"{request_number} ({type_code}) — {status} por {actor_name}"
+    )
+    link = f"/apps/my-requests/requests/{request_id}"
+    payload: dict[str, Any] = {
         "category": "my_requests",
         "sourceApp": "my-requests",
-        "title": title_map.get(event_type, "Minhas Solicitações"),
-        "body": f"{request_number} ({type_code}) — {status} por {actor_name}",
-        "link": f"/apps/my-requests/requests/{request_id}",
-        "dedupeKey": f"my-requests:{event_type}:{request_id}:{status}",
-        "meta": {
+        "title": resolved_title,
+        "message": resolved_message,
+        "type": notification_type if notification_type in {"info", "success", "warning", "error"} else "info",
+        "action": {
+            "type": "portal_route",
+            "label": "Abrir solicitação",
+            "target": link,
+        },
+        "metadata": {
+            "source": "my-requests",
+            "event": event_type,
+            "dedupeKey": f"my-requests:{event_type}:{request_id}:{status}",
             "requestId": request_id,
             "requestNumber": request_number,
             "typeCode": type_code,
@@ -69,3 +88,9 @@ def build_notification_payload(
             "eventType": event_type,
         },
     }
+    recipients = [
+        str(uid).strip() for uid in (recipient_user_ids or []) if str(uid).strip()
+    ]
+    if recipients:
+        payload["userIds"] = recipients
+    return payload

@@ -6,6 +6,15 @@ nativo FastAPI — mesmo padrão do [commercial worklist](../../../commercial-ap
 **Não substitui** o outbox → Core (`POST /integrations/notifications`) do sino do Portal.
 O WS só invalida UI aberta no MFE; o MFE faz debounce + HTTP refetch.
 
+## Dual-channel (WS + sino)
+
+| Canal | Quando | Destino |
+|-------|--------|---------|
+| WebSocket | Qualquer create/transition/edit/comment/files | MFE conectado (hint + refetch) |
+| Outbox → Core sino | Transição em **gate principal** e ator ≠ criador | `userIds: [created_by_user_id]` |
+
+Gates (journey): início de atendimento (`service`/`in_progress`), `waiting_requester`, `succeeded`, `rejected`, `cancelled`. Create **não** notifica o criador. Política: `creator_portal_notification_policy.py`. Payload Core: `message` + `action.portal_route` + `userIds` (não `body`/`link`).
+
 ## Endpoint
 
 ```
