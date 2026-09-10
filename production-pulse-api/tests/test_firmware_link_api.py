@@ -57,6 +57,33 @@ def test_firmware_link_incompatible_driver(client, unique_ip):
     assert bad.json()["error"]["code"] == "firmwareLinkIncompatible"
 
 
+def test_firmware_link_c3_family_isolation(client, unique_ip):
+    """C3 may link to esp32c3_counter_v1; cross-family links are rejected."""
+    c3 = _create_device(client, ip=unique_ip, driver_key="esp32c3_counter_v1")
+    c3_id = c3["id"]
+
+    ok = client.put(f"/devices/{c3_id}/firmware-link", json={"firmwareKey": "esp32c3_counter_v1"})
+    assert ok.status_code == 200, ok.text
+    assert ok.json()["data"]["assignedFirmwareKey"] == "esp32c3_counter_v1"
+
+    cross = client.put(
+        f"/devices/{c3_id}/firmware-link",
+        json={"firmwareKey": "esp8266_counter_v1"},
+    )
+    assert cross.status_code == 422
+    assert cross.json()["error"]["code"] == "firmwareLinkIncompatible"
+
+    parts = unique_ip.split(".")
+    esp_ip = f"{parts[0]}.{parts[1]}.{(int(parts[2]) + 1) % 250}.{parts[3]}"
+    esp = _create_device(client, ip=esp_ip, driver_key="esp8266_counter_v1")
+    reverse = client.put(
+        f"/devices/{esp['id']}/firmware-link",
+        json={"firmwareKey": "esp32c3_counter_v1"},
+    )
+    assert reverse.status_code == 422
+    assert reverse.json()["error"]["code"] == "firmwareLinkIncompatible"
+
+
 def test_firmware_link_not_found_and_invalid_key(client):
     missing = client.put(
         f"/devices/{uuid4()}/firmware-link",

@@ -27,6 +27,32 @@
       "poll": { "timeoutMs": 3000 },
       "thresholds": {}
     },
+    "esp32c3_counter_v1": {
+      "roleKey": "pulse_counter",
+      "labelPt": "ESP32-C3 Super Mini — contador de golpes",
+      "descriptionPt": "Firmware C3: contador público, config/token, reboot e factory-reset autenticados; OTA isolado por driverKey",
+      "metrics": [
+        {
+          "key": "counter",
+          "type": "integer",
+          "monotonic": true,
+          "labelPt": "Golpes",
+          "primary": true,
+          "icon": "Hash"
+        }
+      ],
+      "commands": ["increment", "decrement", "reset", "set", "configure", "reboot", "factory_reset"],
+      "counterRestore": {
+        "enabled": true,
+        "preferHardwareSet": true,
+        "intentionalDecreaseCommands": ["decrement", "reset", "set"],
+        "intentionalDecreaseCommandGraceMs": 15000
+      },
+      "operatorSurface": "counter_pad",
+      "operatorEligible": true,
+      "poll": { "timeoutMs": 3000 },
+      "thresholds": {}
+    },
     "esp8266_gauge_v1": {
       "roleKey": "process_gauge",
       "labelPt": "ESP8266 — sensores de processo",

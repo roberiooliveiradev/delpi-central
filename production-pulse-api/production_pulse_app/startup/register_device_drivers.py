@@ -5,6 +5,7 @@ import logging
 from production_pulse_app.application.services.device_driver_registry_service import (
     get_device_driver_registry,
 )
+from production_pulse_app.infrastructure.drivers.esp32c3_counter_driver import Esp32c3CounterDriver
 from production_pulse_app.infrastructure.drivers.esp8266_counter_driver import Esp8266CounterDriver
 from production_pulse_app.infrastructure.drivers.esp8266_gauge_driver import Esp8266GaugeDriver
 
@@ -19,9 +20,12 @@ def register_device_drivers() -> None:
 
     registry = get_device_driver_registry()
     registry.register_implementation(Esp8266CounterDriver())
+    registry.register_implementation(Esp32c3CounterDriver())
     registry.register_implementation(Esp8266GaugeDriver())
     _registered = True
-    logger.info("Device drivers registered: esp8266_counter_v1, esp8266_gauge_v1")
+    logger.info(
+        "Device drivers registered: esp8266_counter_v1, esp32c3_counter_v1, esp8266_gauge_v1"
+    )
 
 
 def reset_device_driver_registration_for_tests() -> None:

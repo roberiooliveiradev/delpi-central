@@ -538,3 +538,67 @@ def test_job_completes_when_all_targets_updated(client, unique_ip, firmware_stor
     assert jobs.status_code == 200
     row = next(item for item in jobs.json()["data"]["items"] if item["id"] == job_id)
     assert row["status"] == "completed"
+
+
+def test_ota_job_isolates_c3_and_esp8266_families(client, unique_ip, firmware_storage_dir):
+    """Job for C3 firmware must not target ESP8266 devices (and vice-versa)."""
+    parts = unique_ip.split(".")
+    esp_ip = unique_ip
+    c3_ip = f"{parts[0]}.{parts[1]}.{(int(parts[2]) + 1) % 250}.{parts[3]}"
+
+    esp = _create_device(client, ip=esp_ip, token="esp-tok", code=f"ESP-{uuid4().hex[:8].upper()}")
+    c3_body = {
+        "name": f"C3 {c3_ip}",
+        "branch": "01",
+        "ipAddress": c3_ip,
+        "driverKey": "esp32c3_counter_v1",
+        "apiToken": "c3-tok",
+        "controllerCode": f"ESP32C3-{uuid4().hex[:12].upper()}",
+        "enabled": True,
+    }
+    c3_created = client.post("/devices", json=c3_body)
+    assert c3_created.status_code == 201, c3_created.text
+    c3 = c3_created.json()["data"]
+
+    published_c3 = client.post(
+        "/firmwares",
+        data={
+            "firmwareKey": "esp32c3_counter_v1",
+            "driverKey": "esp32c3_counter_v1",
+            "version": "1.0.0",
+            "displayName": "C3 Counter",
+            "publish": "true",
+        },
+        files={"file": ("c3.bin", b"c3-firmware-bytes", "application/octet-stream")},
+    )
+    assert published_c3.status_code == 201, published_c3.text
+    c3_fw_id = published_c3.json()["data"]["id"]
+
+    # Explicit ESP8266 id against C3 firmware → no eligible devices
+    cross = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": c3_fw_id,
+            "branch": "01",
+            "trigger": "manual",
+            "filter": {"onlyOutdated": False, "deviceIds": [esp["id"]]},
+        },
+    )
+    assert cross.status_code == 422, cross.text
+    assert cross.json()["error"]["code"] == "noEligibleDevices"
+
+    ok = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": c3_fw_id,
+            "branch": "01",
+            "trigger": "manual",
+            "filter": {"onlyOutdated": False, "deviceIds": [c3["id"], esp["id"]]},
+        },
+    )
+    assert ok.status_code == 201, ok.text
+    targets = client.get(f"/firmware-update-jobs/{ok.json()['data']['id']}/targets")
+    assert targets.status_code == 200
+    items = targets.json()["data"]["items"]
+    assert len(items) == 1
+    assert items[0]["deviceId"] == c3["id"]

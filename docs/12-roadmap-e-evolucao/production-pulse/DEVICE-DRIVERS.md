@@ -86,6 +86,22 @@ Health no mesmo `GET /api/status` (sem rota `/api/health` paralela): `firmwareVe
 
 **HTTP gauge:** `GET /api/sensores` → `{"rpm": <number>, "temperatura": <number>}` (aliases `rotacao`, `temperature_c`).
 
+### `esp32c3_counter_v1` (ESP32-C3 Super Mini)
+
+Mesma semântica operacional do contador ESP8266 (`roleKey=pulse_counter`, `operatorSurface=counter_pad`, mesmos commands HTTP), com **família/driver isolados** para bloquear OTA cruzado.
+
+| Item | Valor |
+|------|--------|
+| `driverKey` / `firmwareKey` | `esp32c3_counter_v1` |
+| Versão inicial | `esp32c3_counter_v1.0.0` |
+| Firmware | [firmware/esp32c3_counter_v1/](./firmware/esp32c3_counter_v1/) |
+| Identidade | `ESP32C3-` + MAC Wi-Fi Station (sem `:`), aliases `controllerCode` / `codigoControlador` / `equipamento` |
+| Protocolo | Idêntico: `/api/contador`, `/api/status`, `/api/config`, commands, OTA `/device-ota/*` |
+| Campos ADDITIVE em `/api/status` | `input1`, `input2` (`0`=LOW/ativo, `1`=HIGH/inativo) — diagnóstico; não são métricas/comandos do registry |
+| OTA | Vínculo/job exigem `device.driver_key == firmware.driver_key` (API authority) |
+
+Implementação Python: `HttpCounterDriver` compartilhado + wrapper `Esp32c3CounterDriver`. Não misturar binário ESP8266 nesta família.
+
 ### `esp8266_gauge_v1` (P1 — implementado)
 
 ```json

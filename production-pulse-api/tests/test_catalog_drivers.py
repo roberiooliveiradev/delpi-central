@@ -7,11 +7,17 @@ def test_catalog_drivers_lists_registry(client):
     assert data["schemaVersion"] == 1
     keys = {item["key"] for item in data["drivers"]}
     assert "esp8266_counter_v1" in keys
+    assert "esp32c3_counter_v1" in keys
     assert "esp8266_gauge_v1" in keys
 
     counter = next(item for item in data["drivers"] if item["key"] == "esp8266_counter_v1")
     assert counter["roleKey"] == "pulse_counter"
     assert counter["operatorSurface"] == "counter_pad"
+
+    c3 = next(item for item in data["drivers"] if item["key"] == "esp32c3_counter_v1")
+    assert c3["roleKey"] == "pulse_counter"
+    assert c3["operatorSurface"] == "counter_pad"
+    assert c3["commands"] == counter["commands"]
 
 
 def test_get_device_includes_capabilities(client, unique_ip):

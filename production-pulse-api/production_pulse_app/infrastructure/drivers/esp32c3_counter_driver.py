@@ -2,15 +2,12 @@ from __future__ import annotations
 
 import httpx
 
-from production_pulse_app.infrastructure.drivers.http_counter_driver import (
-    HttpCounterDriver,
-    parse_controller_identity,
-)
+from production_pulse_app.infrastructure.drivers.http_counter_driver import HttpCounterDriver
 
-_DRIVER_KEY = "esp8266_counter_v1"
+_DRIVER_KEY = "esp32c3_counter_v1"
 
 
-class Esp8266CounterDriver(HttpCounterDriver):
+class Esp32c3CounterDriver(HttpCounterDriver):
     def __init__(
         self,
         *,
@@ -24,4 +21,4 @@ class Esp8266CounterDriver(HttpCounterDriver):
         )
 
 
-__all__ = ["Esp8266CounterDriver", "parse_controller_identity"]
+__all__ = ["Esp32c3CounterDriver"]
