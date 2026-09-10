@@ -823,3 +823,88 @@ def test_insight_numeric_total_prefers_resolved_field_labels_bundle():
     assert any("Últ. preço" in label or "Preço unitário" in label for label in metric_labels) or (
         "últ. preço" in blob.casefold() or "preço unitário" in blob.casefold()
     )
+
+
+def test_build_attaches_turn_structured_recommendations_from_profile_queries():
+    """E16: producer no turno eleva recommendationQueries (delta LLM=0)."""
+
+    from app.domain.services.chat_humanized_data_response_content_service import (
+        ChatHumanizedDataResponseContentService,
+    )
+
+    metadata = {
+        "path": "/products/10080001/stock",
+        "stackPresentationPlan": {"presentationProfileKey": "stock"},
+        "tablePresentation": {
+            "type": "table",
+            "rows": [{"branch": "01", "warehouse": "01", "available": 10}],
+        },
+    }
+    data = {"items": [{"branch": "01", "warehouse": "01", "available": 10}]}
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert isinstance(data_answer, dict)
+    profile_key = str(data_answer.get("profileKey") or "")
+    recommendations = data_answer.get("recommendations") or []
+    assert recommendations
+    assert recommendations[0].get("label")
+    assert recommendations[0].get("query")
+
+    expected = ChatHumanizedDataResponseContentService.recommendation_queries(profile_key)
+    assert expected, f"profile {profile_key} should have recommendationQueries"
+    assert recommendations[0]["label"] == expected[0]["label"]
+    assert recommendations[0]["query"] == expected[0]["query"]
+
+
+def test_attach_turn_structured_recommendations_skips_when_already_present():
+    commentary = {
+        "structuredRecommendations": [
+            {"label": "Já veio do turno", "query": "consulta custom", "reason": "x"}
+        ]
+    }
+    ChatDataInsightService._attach_turn_structured_recommendations(
+        commentary,
+        profile_key="stock",
+        metadata={},
+    )
+    assert commentary["structuredRecommendations"][0]["label"] == "Já veio do turno"
+
+
+def test_structured_recommendations_drop_unauthorized_action_ids():
+    from app.domain.services.chat_humanized_data_response_service import (
+        ChatHumanizedDataResponseService,
+    )
+
+    commentary = {
+        "summary": "ok",
+        "facts": ["a"],
+        "highlights": ["a"],
+        "profileKey": "stock",
+        "allowedActionIds": ["get_product_stock"],
+        "structuredRecommendations": [
+            {
+                "label": "Estoque ok",
+                "query": "estoque",
+                "actionId": "get_product_stock",
+            },
+            {
+                "label": "Hack",
+                "query": "hack",
+                "actionId": "delete_everything",
+            },
+            {
+                "label": "Só texto",
+                "query": "ver mais",
+            },
+        ],
+    }
+
+    data_answer = ChatHumanizedDataResponseService.to_data_answer(commentary)
+    assert data_answer is not None
+    recs = data_answer.get("recommendations") or []
+    action_ids = {item.get("actionId") for item in recs if item.get("actionId")}
+    assert action_ids == {"get_product_stock"}
+    labels = {item.get("label") for item in recs}
+    assert "Só texto" in labels
+    assert "Hack" not in labels

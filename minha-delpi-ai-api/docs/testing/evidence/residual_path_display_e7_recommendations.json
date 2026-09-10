@@ -1,14 +1,14 @@
 {
   "stage": "E7",
-  "status": "CUTOVER_INCOMPLETE",
-  "decision": "KEEP static humanized_data_response.recommendations as LEGACY_FALLBACK; no producer hook this stage",
+  "status": "CUTOVER_PASS_PRODUCER_DETERMINISTIC",
+  "decision": "Producer = ChatDataInsightService._attach_turn_structured_recommendations from recommendationQueries; delta LLM=0; static list remains LEGACY_FALLBACK when no queries",
   "findings": {
     "consumer_ready": true,
     "consumer": "ChatHumanizedDataResponseService._build_recommendations / _build_structured_recommendations",
     "validator": "RecommendationActionValidator.filter_items — actionId ∈ allowedActions; textual without actionId allowed",
     "rbac_invariant": "never bypass validator; actionId is never an executor",
-    "producer_structuredRecommendations": false,
-    "ChatDataInsightService": "builds commentary highlights/attention; does not emit structuredRecommendations",
+    "producer_structuredRecommendations": true,
+    "ChatDataInsightService": "emits structuredRecommendations before to_data_answer",
     "synthesis_services": "chat_operational_llm_synthesis_* / prose delivery have no recommendations JSON field or emitter",
     "ChatPresentationRecommendationService": "format/view recommendations only — different concept; not domain next-actions",
     "followUpSuggestions": "sibling UX surface; not synthesis structuredRecommendations — do not conflate"
@@ -41,5 +41,7 @@
     "Negative: actionId outside allowlist discarded",
     "Then mark static JSON recommendations as removable LEGACY_FALLBACK and schedule CLEANUP"
   ],
-  "cleanup": "SKIP until exit_criteria_cutover PASS"
+  "cleanup": "SKIP until exit_criteria_cutover PASS",
+  "updated_at": "2026-09-10T06:08:43.358860+00:00",
+  "follow_up_evidence": "residual_path_display_e16_recommendations_producer.json"
 }

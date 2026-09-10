@@ -201,6 +201,15 @@ class ChatHumanizedDataResponseService:
                 else cls._build_structured_recommendations(
                     normalized,
                     profile_key=profile,
+                    allowed_action_ids=(
+                        list(normalized.get("allowedActionIds") or [])
+                        if isinstance(normalized.get("allowedActionIds"), (list, set, tuple))
+                        else (
+                            list(normalized.get("allowedActions") or [])
+                            if isinstance(normalized.get("allowedActions"), (list, set, tuple))
+                            else None
+                        )
+                    ),
                 )
             ),
             "limitations": [] if empty_result else (normalized.get("limitations") or []),

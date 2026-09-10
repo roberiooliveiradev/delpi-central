@@ -1,0 +1,18 @@
+{
+  "stage": "E16",
+  "generated_at": "2026-09-10T06:05:31.318134+00:00",
+  "gate": "READY",
+  "producer": "ChatDataInsightService._attach_turn_structured_recommendations",
+  "source": "humanized_data_response.recommendationQueries[profileKey]",
+  "delta_llm_calls": 0,
+  "validator": "RecommendationActionValidator via to_data_answer/_build_structured_recommendations",
+  "llm_synthesis_json_slot": "NOT_USED — synthesis remains Markdown; deterministic producer preferred (GATE for schema expansion remains FAIL)",
+  "static_recommendations_list": "LEGACY_FALLBACK_WHEN_NO_QUERIES",
+  "exit_criteria": {
+    "structured_on_turn": "PASS",
+    "extra_llm": "PASS_0",
+    "allowlist_negative": "PASS_unit",
+    "static_cleanup": "DEFERRED_KEEP_FALLBACK"
+  },
+  "status": "CUTOVER_PASS_CLEANUP_DEFERRED"
+}

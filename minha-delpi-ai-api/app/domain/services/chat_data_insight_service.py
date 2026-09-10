@@ -184,12 +184,55 @@ class ChatDataInsightService:
             metadata,
         )
 
+        cls._attach_turn_structured_recommendations(
+            commentary,
+            profile_key=profile_key or "",
+            metadata=metadata,
+        )
+
         data_answer = ChatHumanizedDataResponseService.to_data_answer(commentary)
 
         if not data_answer:
             return None
 
         return data_answer
+
+    @classmethod
+    def _attach_turn_structured_recommendations(
+        cls,
+        commentary: dict[str, Any],
+        *,
+        profile_key: str,
+        metadata: dict[str, Any],
+    ) -> None:
+        """Producer no turno: eleva recommendationQueries → structuredRecommendations (delta LLM=0)."""
+
+        existing = commentary.get("structuredRecommendations")
+        if isinstance(existing, list) and existing:
+            return
+
+        from app.domain.services.chat_humanized_data_response_content_service import (
+            ChatHumanizedDataResponseContentService,
+        )
+
+        queries = ChatHumanizedDataResponseContentService.recommendation_queries(
+            str(profile_key or "").strip()
+        )
+        if not queries:
+            return
+
+        commentary["structuredRecommendations"] = [
+            {
+                "label": item["label"],
+                "query": item["query"],
+                "reason": item.get("reason") or "",
+            }
+            for item in queries
+        ]
+
+        allowed = metadata.get("allowedActionIds") or metadata.get("allowedActions")
+        if isinstance(allowed, (list, set, tuple)) and "allowedActionIds" not in commentary:
+            commentary["allowedActionIds"] = list(allowed)
 
     @classmethod
     def build_commentary_mirror(
