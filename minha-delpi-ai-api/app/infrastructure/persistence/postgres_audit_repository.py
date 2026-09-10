@@ -365,6 +365,49 @@ class PostgresAuditRepository(AuditRepositoryPort):
             since_iso=since.isoformat(),
         )
 
+    def get_registry_selection_shadow_summary(self, *, hours: int = 168) -> dict:
+        from app.domain.services.registry_selection_shadow_observability_service import (
+            RegistrySelectionShadowObservabilityService,
+        )
+
+        safe_hours = max(1, min(int(hours), 720))
+        since = datetime.now(timezone.utc) - timedelta(hours=safe_hours)
+
+        models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action.in_(
+                    ("chat.message.sent", "chat.message.streamed"),
+                ),
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(3000)
+            .all()
+        )
+
+        entries: list[dict] = []
+
+        for model in models:
+            metadata = model.audit_metadata if isinstance(model.audit_metadata, dict) else {}
+            snapshot = metadata.get("registrySelectionShadows")
+
+            if not isinstance(snapshot, list) or not snapshot:
+                continue
+
+            entries.append(
+                {
+                    "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                    "action": model.action,
+                    "snapshot": snapshot,
+                }
+            )
+
+        return RegistrySelectionShadowObservabilityService.aggregate_snapshots(
+            entries,
+            hours=safe_hours,
+            since_iso=since.isoformat(),
+        )
+
     def get_text_task_summary(self, *, hours: int = 168) -> dict:
         from app.domain.services.chat_text_task_admin_metrics_service import (
             ChatTextTaskAdminMetricsService,

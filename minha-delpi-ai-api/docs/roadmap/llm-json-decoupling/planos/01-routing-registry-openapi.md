@@ -111,9 +111,10 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 - flag `registrySelectionShadow` + metadata em `select_registry_route_id`;
 - shadow no preemption product `intent+route_segment` (`productSelectionShadow`);
 - telemetria estruturada `RegistrySelectionShadowObservabilityService`;
-- testes agree/diverge/off/product. Evidência: [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md).
+- audit snapshot + `GET /admin/metrics/registry-selection-shadow/summary` (`agreeRate`);
+- testes agree/diverge/off/product + aggregate. Evidência: [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s4-agree-aggregation.md`](../evidence/e1-s4-agree-aggregation.md).
 
-**Pendente:** agregação live/admin da taxa `agree` de seleção; cutover default candidate (E1.S6).
+**Pendente:** cutover default candidate (E1.S6B) após janela live de `agreeRate` via admin summary.
 
 ### E1.S5 — Parameter strategy removal — **ATENDIDO** (2026-09-10)
 

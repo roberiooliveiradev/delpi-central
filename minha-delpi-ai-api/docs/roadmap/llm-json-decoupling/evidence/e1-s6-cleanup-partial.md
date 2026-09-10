@@ -54,6 +54,6 @@ ACTION_SELECTION_WITHOUT_ENDPOINT_REGISTRY = PENDING
 
 ## Próximo
 
-1. Agregar taxa `agree` E1.S4 (live/admin).  
+1. Coletar taxa `agree` live via admin summary E1.S4.  
 2. Cutover de seleção default candidate.  
 3. Só então DELETE/cleanup de fields técnicos do registry + R1–R11/gates.

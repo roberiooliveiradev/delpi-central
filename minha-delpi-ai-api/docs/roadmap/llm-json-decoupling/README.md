@@ -43,7 +43,8 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`planos/09-evals-rollout-cleanup.md`](./planos/09-evals-rollout-cleanup.md) | Baseline, shadow/canary, R1-R11, cleanup. |
 | [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) | Estado das ondas A–H e próxima subetapa. |
 | [`evidence/onda-a-inventory.md`](./evidence/onda-a-inventory.md) | Inventário Onda A (consumers + classificação). |
-| [`evidence/e1-s3-action-catalog.md`](./evidence/e1-s3-action-catalog.md) | Prova E1.S3 (Onda B) — **PASS**. |
+| [`evidence/e1-s4-registry-selection-shadow.md`](./evidence/e1-s4-registry-selection-shadow.md) | E1.S4 — SHADOW_ON + agree aggregation admin. |
+| [`evidence/e1-s4-agree-aggregation.md`](./evidence/e1-s4-agree-aggregation.md) | E1.S4 — admin summary `agreeRate` (sem cutover). |
 | [`evidence/e1-s5-parameter-strategy-shadow.md`](./evidence/e1-s5-parameter-strategy-shadow.md) | E1.S5 — **ATENDIDO** (cutover completo da fila do resolver). |
 | [`evidence/e1-s6-cleanup-partial.md`](./evidence/e1-s6-cleanup-partial.md) | E1.S6 — **PARTIAL** (cleanup switch; DELETE registry bloqueado). |
 

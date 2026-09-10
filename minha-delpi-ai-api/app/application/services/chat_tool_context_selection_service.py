@@ -407,6 +407,16 @@ class ChatToolContextSelectionService:
                         "reason": first.get("reason"),
                         "plannedCount": len(planned_external_actions),
                     }
+                    first_meta = (
+                        first.get("metadata") if isinstance(first.get("metadata"), dict) else {}
+                    )
+                    for shadow_key in (
+                        "registrySelectionShadow",
+                        "productSelectionShadow",
+                    ):
+                        shadow = first_meta.get(shadow_key)
+                        if isinstance(shadow, dict):
+                            selected_external_action_meta[shadow_key] = shadow
                     if multi_continuation:
                         selected_external_action_meta["multiActionContinuation"] = (
                             multi_continuation

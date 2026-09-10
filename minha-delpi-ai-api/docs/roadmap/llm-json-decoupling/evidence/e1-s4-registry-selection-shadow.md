@@ -43,11 +43,14 @@ DIVERGE_CASE = PASS
 FLAG_OFF_SKIPS_SHADOW = PASS
 PRODUCT_INTENT_SEGMENT_PREEMPTION_SHADOW = PASS
 STRUCTURED_OBSERVABILITY_LOG = PASS
+AGREE_RATE_ADMIN_SUMMARY = PASS
 CUTOVER_DEFAULT_CANDIDATE = NOT_STARTED
 ```
 
+Evidência da agregação: [`e1-s4-agree-aggregation.md`](./e1-s4-agree-aggregation.md).
+
 ## Próximo
 
-1. Agregar taxa `agree` em live/admin a partir dos logs (ou painel quando houver consumidor).  
+1. Coletar taxa `agree` live via `GET /admin/metrics/registry-selection-shadow/summary`.  
 2. Só após divergências explicáveis + corpus estável → cutover de seleção (E1.S6 fatia B).  
 3. Parameter strategy binding já cutoverado (E1.S5) + switch tipado removido (E1.S6A).

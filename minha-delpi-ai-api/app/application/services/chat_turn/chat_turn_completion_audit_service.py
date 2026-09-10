@@ -103,6 +103,15 @@ class ChatTurnCompletionAuditService:
             audit_metadata,
             route=turn.prepared.intent_route,
         )
+        from app.domain.services.registry_selection_shadow_observability_service import (
+            RegistrySelectionShadowObservabilityService,
+        )
+
+        RegistrySelectionShadowObservabilityService.enrich_audit_metadata(
+            audit_metadata,
+            tool_calls=tool_calls,
+            assistant_metadata=assistant_metadata,
+        )
         ChatTextTaskAdminMetricsService.enrich_audit_metadata(
             audit_metadata,
             assistant_metadata=assistant_metadata,

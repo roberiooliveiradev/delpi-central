@@ -107,6 +107,16 @@ Query: `hours` (default `168`, máx. `ADMIN_METRICS_MAX_HOURS`).
 
 Resposta: `routesCount`, `ambiguousCount`, `mixedTaskCount`, `webSearchCount`, `textSkipToolsCount`, `byIntent`, `byDecision`, `recent[]`.
 
+### GET `/admin/metrics/registry-selection-shadow/summary`
+
+Resumo agregado do **selection shadow E1.S4** (registry markers / product intent vs retrieval lexical), a partir de `ai_audit_logs.metadata.registrySelectionShadows`.
+
+Query: `hours` (default `168`, máx. `ADMIN_METRICS_MAX_HOURS`).
+
+Resposta: `samplesCount`, `agreeCount`, `divergeCount`, `agreeRate`, `byKind`, `divergeRecent[]`, `recent[]`, `cutoverReadyHint`.
+
+Não altera a seleção (shadow-only). Cutover de seleção permanece bloqueado até taxa/`agree` estável.
+
 ### GET `/admin/metrics/session-memory/summary`
 
 Resumo agregado de **memória de sessão e assertividade** (playbook memória Fase 9), a partir de `ai_audit_logs.metadata.sessionMemoryAdminMetrics` e feedback `memory_*`.
