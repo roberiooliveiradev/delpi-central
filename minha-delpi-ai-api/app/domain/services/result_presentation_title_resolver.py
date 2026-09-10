@@ -27,12 +27,11 @@ class ResultPresentationTitleResult:
 
 
 class ResultPresentationTitleResolver:
-    """Cascata: slot/presentation.title → action label → legacy JSON path titles.
+    """Cascata: slot/presentation.title → action label → fallback.
 
     Modos (`PRESENTATION_TITLE_MODE`):
-    - ``legacy``: só mapas JSON (comportamento histórico via callers)
-    - ``shadow``: UX legacy; calcula candidato
-    - ``default``: cascata canônica com legacy como fallback
+    - ``legacy`` / ``shadow``: rollback temporário (EXIT = E2.S3)
+    - ``default``: sem mapas path→title
     """
 
     @classmethod
@@ -64,18 +63,20 @@ class ResultPresentationTitleResolver:
             action_id=action_id,
             slot_title=slot_title,
             metadata=metadata,
-            legacy_title=legacy,
-            auto_legacy_title=auto_legacy,
             fallback=fallback,
         )
 
         current_mode = cls.mode()
 
         if current_mode == "legacy":
-            title = legacy or auto_legacy or fallback
+            title = legacy or auto_legacy or candidate.title or fallback
             return ResultPresentationTitleResult(
                 title=title,
-                source=SOURCE_LEGACY_PATH_FRAGMENT if (legacy or auto_legacy) else SOURCE_TECHNICAL_FALLBACK,
+                source=(
+                    SOURCE_LEGACY_PATH_FRAGMENT
+                    if (legacy or auto_legacy)
+                    else candidate.source
+                ),
             )
 
         if current_mode == "shadow":
@@ -113,8 +114,6 @@ class ResultPresentationTitleResolver:
         action_id: str,
         slot_title: str | None,
         metadata: dict | None,
-        legacy_title: str | None,
-        auto_legacy_title: str | None,
         fallback: str,
     ) -> ResultPresentationTitleResult:
         slot = cls._coerce_title(slot_title)
@@ -128,13 +127,6 @@ class ResultPresentationTitleResolver:
                 source=SOURCE_PRESENTATION_TITLE,
             )
 
-        # Editorial explícito do caller (ex.: kpiPathMatchers) vence action label genérico
-        if legacy_title:
-            return ResultPresentationTitleResult(
-                title=legacy_title,
-                source=SOURCE_LEGACY_PATH_FRAGMENT,
-            )
-
         action_label = cls._action_label(
             path=path,
             method=method,
@@ -146,12 +138,6 @@ class ResultPresentationTitleResolver:
             return ResultPresentationTitleResult(
                 title=action_label,
                 source=SOURCE_ACTION_DISPLAY_LABEL,
-            )
-
-        if auto_legacy_title:
-            return ResultPresentationTitleResult(
-                title=auto_legacy_title,
-                source=SOURCE_LEGACY_PATH_FRAGMENT,
             )
 
         return ResultPresentationTitleResult(

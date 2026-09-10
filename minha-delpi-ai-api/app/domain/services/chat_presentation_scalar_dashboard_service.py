@@ -128,57 +128,33 @@ class ChatPresentationScalarDashboardService:
 
     @classmethod
     def _resolve_dashboard_title(cls, path: str, *, fallback: str = "") -> str:
-        title = cls._title_for_fragment_map(
-            ("dashboardPresentation", "titlesByPathFragment"),
-            path,
+        from app.domain.services.result_presentation_title_resolver import (
+            ResultPresentationTitleResolver,
         )
 
-        if title:
-            return title
-
-        if fallback.strip():
-            return fallback.strip()
-
-        return cls._dashboard_text("defaultTitle", default="Dashboard")
+        default = fallback.strip() or cls._dashboard_text(
+            "defaultTitle", default="Dashboard"
+        )
+        resolved = ResultPresentationTitleResolver.resolve(
+            path=path,
+            fallback=default,
+        )
+        return resolved.title
 
     @classmethod
     def _resolve_detail_table_title(cls, path: str) -> str:
-        title = cls._title_for_fragment_map(
-            ("dashboardPresentation", "detailTableTitlesByPathFragment"),
-            path,
+        from app.domain.services.result_presentation_title_resolver import (
+            ResultPresentationTitleResolver,
         )
 
-        if title:
-            return title
-
-        kpi_title = ChatAssistantContentService.title_for_path(
-            "presenter_content",
-            path,
-        )
-
-        if kpi_title:
-            return f"{kpi_title} — detalhamento"
+        base = ResultPresentationTitleResolver.resolve(
+            path=path,
+            fallback="",
+        ).title
+        if base:
+            return f"{base} — detalhamento"
 
         return cls._dashboard_text("metricsFallbackTitle", default="Detalhamento")
-
-    @classmethod
-    def _title_for_fragment_map(cls, node_path: tuple[str, ...], path: str) -> str | None:
-        fragments = ChatAssistantContentService.get_node("presenter_content", *node_path)
-
-        if not isinstance(fragments, dict):
-            return None
-
-        lowered = str(path or "").lower()
-
-        for fragment, label in sorted(
-            fragments.items(),
-            key=lambda item: len(str(item[0] or "")),
-            reverse=True,
-        ):
-            if str(fragment).lower() in lowered:
-                return str(label)
-
-        return None
 
     @classmethod
     def _dashboard_text(cls, key: str, *, default: str = "") -> str:

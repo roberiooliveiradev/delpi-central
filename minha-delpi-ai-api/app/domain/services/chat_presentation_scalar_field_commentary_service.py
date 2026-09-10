@@ -81,11 +81,20 @@ class ChatPresentationScalarFieldCommentaryService:
         ).strip()
 
         if not title:
-            from app.domain.services.chat_assistant_content_service import (
-                ChatAssistantContentService,
+            from app.domain.services.result_presentation_title_resolver import (
+                ResultPresentationTitleResolver,
             )
 
-            title = ChatAssistantContentService.title_for_path(str(metadata.get("path") or ""))
+            resolved = ResultPresentationTitleResolver.resolve(
+                path=str(metadata.get("path") or ""),
+                summary=str(
+                    metadata.get("summary") or metadata.get("actionSummary") or ""
+                ),
+                action_id=str(metadata.get("actionId") or ""),
+                metadata=metadata,
+                fallback="Resultado",
+            )
+            title = resolved.title
 
         body = "\n".join(highlights)
         markdown = f"### {title}\n\n<!-- section:scope -->\n\n{body}".strip()

@@ -254,23 +254,12 @@ class ChatOperationalToolSummaryResolutionService:
             ResultPresentationTitleResolver,
         )
 
-        lowered = str(path or "").lower()
-        titles = _content().get("pathTitles") or {}
-        legacy = str(titles.get("default") or "Consulta operacional")
-
-        if "/guide" in lowered:
-            legacy = str(titles.get("guide") or legacy)
-        elif ChatPresentationProfileService.has_flag(path, "stock"):
-            legacy = str(titles.get("stock") or legacy)
-        elif "/structure" in lowered:
-            legacy = str(titles.get("structure") or legacy)
-        elif "/inspection" in lowered:
-            legacy = str(titles.get("inspection") or legacy)
-
+        meta = metadata if isinstance(metadata, dict) else {}
         resolved = ResultPresentationTitleResolver.resolve(
             path=path,
-            metadata=metadata if isinstance(metadata, dict) else None,
-            legacy_title=legacy,
-            fallback=legacy,
+            summary=str(meta.get("summary") or meta.get("actionSummary") or ""),
+            action_id=str(meta.get("actionId") or ""),
+            metadata=meta,
+            fallback="Consulta operacional",
         )
         return resolved.title

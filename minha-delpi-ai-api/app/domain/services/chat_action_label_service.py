@@ -107,6 +107,15 @@ class ChatActionLabelService:
             "branches": "Filiais",
             "columns": "Colunas",
             "tables": "Tabelas",
+            "stock": "Estoque",
+            "purchases": "Compras",
+            "structure": "Estrutura",
+            "inspection": "Inspeção",
+            "guide": "Roteiro",
+            "customers": "Clientes",
+            "suppliers": "Fornecedores",
+            "pricing": "Preços",
+            "analyser": "Analisador",
         }
 
         if tail in segment_map:

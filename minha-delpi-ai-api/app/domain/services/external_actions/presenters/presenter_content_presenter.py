@@ -15,26 +15,20 @@ class ExternalActionPresenterContentPresenter:
         self._host = host
 
     def _path_fragment_title(self, fragment: str) -> str | None:
-        from app.domain.services.chat_assistant_content_service import (
-            ChatAssistantContentService,
+        from app.domain.services.result_presentation_title_resolver import (
+            ResultPresentationTitleResolver,
         )
 
         key = str(fragment or "").strip()
         if not key:
             return None
 
-        if not key.startswith("/"):
-            key = f"/{key}"
-
-        return ChatAssistantContentService.get(
-            "presenter_content",
-            "titlesByPathFragment",
-            key,
-        ) or ChatAssistantContentService.get(
-            "presenter_content",
-            "titlesByPathFragment",
-            key.lstrip("/"),
+        path = key if key.startswith("/") else f"/{key}"
+        resolved = ResultPresentationTitleResolver.resolve(
+            path=path,
+            fallback="",
         )
+        return resolved.title or None
 
     def _analyser_markdown(self, key: str, **values: str) -> str:
         return self._presenter_text("analyserMarkdown", key, **values)

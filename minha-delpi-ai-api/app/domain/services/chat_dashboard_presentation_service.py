@@ -36,25 +36,13 @@ class ChatDashboardPresentationService:
             ResultPresentationTitleResolver,
         )
 
-        lowered = str(path or "").lower()
-        titles = ChatAssistantContentService.get_node(
-            "presenter_content",
-            "dashboardPresentation",
-            "titlesByPathFragment",
-        )
-        legacy = None
-
-        if isinstance(titles, dict):
-            for fragment, title in titles.items():
-                if str(fragment).lower() in lowered:
-                    legacy = str(title)
-                    break
-
         default = cls._dashboard_text("defaultTitle", default="Dashboard")
+        meta = metadata if isinstance(metadata, dict) else {}
         resolved = ResultPresentationTitleResolver.resolve(
             path=path,
-            metadata=metadata if isinstance(metadata, dict) else None,
-            legacy_title=legacy,
+            summary=str(meta.get("summary") or meta.get("actionSummary") or ""),
+            action_id=str(meta.get("actionId") or ""),
+            metadata=meta,
             fallback=default,
         )
         return resolved.title

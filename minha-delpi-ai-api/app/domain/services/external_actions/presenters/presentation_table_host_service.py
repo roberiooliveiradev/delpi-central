@@ -19,20 +19,49 @@ if TYPE_CHECKING:
 
 
 def infer_items_title(items: list, path: str, *, metadata: dict | None = None) -> str | None:
+    from app.domain.services.chat_presentation_profile_service import (
+        ChatPresentationProfileService,
+    )
     from app.domain.services.result_presentation_title_resolver import (
         ResultPresentationTitleResolver,
     )
 
-    legacy = ChatAssistantContentService.title_for_path(
-        "presenter_content",
-        path,
-        path_key="titlesByPathFragment",
-    )
+    meta = dict(metadata) if isinstance(metadata, dict) else {}
+    entity = str(meta.get("entity") or "").strip()
+    if not entity:
+        try:
+            entity = str(
+                ChatPresentationProfileService.resolve_entity_from_path(path) or ""
+            ).strip()
+        except Exception:
+            entity = ""
+    if entity:
+        meta.setdefault("entity", entity)
+
+    playbook_title = None
+    if entity:
+        playbook_title = ChatAssistantContentService.get(
+            "presenter_content",
+            "playbookReports",
+            "entities",
+            entity,
+            "tableTitle",
+            default=None,
+        ) or ChatAssistantContentService.get(
+            "presenter_content",
+            "playbookReports",
+            "entities",
+            entity,
+            "textTitle",
+            default=None,
+        )
 
     resolved = ResultPresentationTitleResolver.resolve(
         path=path,
-        metadata=metadata if isinstance(metadata, dict) else None,
-        legacy_title=legacy,
+        slot_title=str(playbook_title).strip() if playbook_title else None,
+        metadata=meta,
+        summary=str(meta.get("summary") or meta.get("actionSummary") or ""),
+        action_id=str(meta.get("actionId") or ""),
         fallback="",
     )
     if resolved.title:
