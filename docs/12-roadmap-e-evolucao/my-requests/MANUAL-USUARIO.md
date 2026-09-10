@@ -46,17 +46,22 @@ A **filial**, quando o tipo exige, aparece **dentro** do formulário (01 = Santa
 
 ## Detalhe
 
-Mostra tipo, status, filial, solicitante e data. Os **botões de ação** mudam conforme o andamento — só aparecem as opções liberadas para você naquele momento. **Devolver** e **cancelar** pedem um motivo em uma janela do app.
+Mostra o número da solicitação, o **status** em destaque e o **progresso do atendimento** (etapas + percentual vindos do sistema — não é o mesmo progresso do formulário de criação). Os **botões de ação** mudam conforme o andamento — só aparecem as opções liberadas para você naquele momento. **Devolver** e **cancelar** pedem um motivo em uma janela do app. Passe o mouse nos títulos dos campos (Tipo, Status, Filial, etc.) para ver a ajuda.
+
+Em telas largas, resumo e ações ficam lado a lado; linha do tempo e comentários também; os dois tipos de documentos ficam em colunas. Em telas menores, tudo empilha em uma coluna.
 
 Painéis:
 
 | Painel | Uso |
 |--------|-----|
+| Progresso do atendimento | Etapas e percentual do andamento; avisa se estiver aguardando informação |
+| Dados da solicitação | Tipo, status, filial, solicitante e data |
+| Ações disponíveis | Botões liberados no momento |
 | Dados da emissão | Resumo da NF (quando for esse tipo) |
 | Linha do tempo | Histórico do que aconteceu |
-| Comentários | Conversa sobre o pedido |
-| Anexos | Arquivos que você envia com o pedido |
-| Arquivos do atendimento | Evidências do atendimento (ex.: PDF da nota) — quem atende pode enviar; solicitantes costumam só baixar |
+| Comentários | Conversa sobre o pedido (quando permitido) |
+| Documentos da solicitação | Arquivos que ajudam a explicar ou complementar o pedido |
+| Documentos gerados no atendimento | Resultados do atendimento (ex.: nota fiscal em PDF) — quem atende pode enviar; solicitantes costumam só baixar |
 
 ## Administração (tipos)
 

@@ -14,9 +14,13 @@ import {
 
 type CommentsPanelProps = {
   requestId: string;
+  canComment?: boolean;
 };
 
-export function CommentsPanel({ requestId }: CommentsPanelProps) {
+export function CommentsPanel({
+  requestId,
+  canComment = false,
+}: CommentsPanelProps) {
   const [items, setItems] = useState<RequestComment[]>([]);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +41,7 @@ export function CommentsPanel({ requestId }: CommentsPanelProps) {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!body.trim()) return;
+    if (!canComment || !body.trim()) return;
     setBusy(true);
     setError(null);
     try {
@@ -52,13 +56,16 @@ export function CommentsPanel({ requestId }: CommentsPanelProps) {
   }
 
   return (
-    <MyRequestsSectionCard title="Comentários">
-      <div data-help="comments" title={MY_REQUESTS_HELP_TOOLTIPS.comments.section}>
+    <MyRequestsSectionCard
+      title="Comentários"
+      hint={MY_REQUESTS_HELP_TOOLTIPS.comments.section}
+    >
+      <div data-help="comments">
         {error ? (
           <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
         ) : null}
         {items.length === 0 ? (
-          <MyRequestsEmptyState message="Nenhum comentário ainda. Seja o primeiro a escrever." />
+          <MyRequestsEmptyState message="Nenhum comentário ainda." />
         ) : (
           <ul className="my-requests-domain-list">
             {items.map((item) => (
@@ -70,27 +77,33 @@ export function CommentsPanel({ requestId }: CommentsPanelProps) {
             ))}
           </ul>
         )}
-        <form className="my-requests-form-stack" onSubmit={onSubmit}>
-          <div>
-            <FieldLabel label="Novo comentário" htmlFor="mr-new-comment" />
-            <NativeTextAreaControl
-              id="mr-new-comment"
-              value={body}
-              onChange={setBody}
-              rows={3}
-              disabled={busy}
-            />
-          </div>
-          <MyRequestsFormActions>
-            <ActionButton
-              type="submit"
-              variant="primary"
-              disabled={busy || !body.trim()}
-            >
-              Enviar
-            </ActionButton>
-          </MyRequestsFormActions>
-        </form>
+        {canComment ? (
+          <form className="my-requests-form-stack" onSubmit={onSubmit}>
+            <div>
+              <FieldLabel
+                label="Novo comentário"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.comments.newComment}
+                htmlFor="mr-new-comment"
+              />
+              <NativeTextAreaControl
+                id="mr-new-comment"
+                value={body}
+                onChange={setBody}
+                rows={3}
+                disabled={busy}
+              />
+            </div>
+            <MyRequestsFormActions>
+              <ActionButton
+                type="submit"
+                variant="primary"
+                disabled={busy || !body.trim()}
+              >
+                Enviar
+              </ActionButton>
+            </MyRequestsFormActions>
+          </form>
+        ) : null}
       </div>
     </MyRequestsSectionCard>
   );

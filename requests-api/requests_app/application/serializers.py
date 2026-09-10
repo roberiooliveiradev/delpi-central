@@ -4,6 +4,10 @@ from typing import Any
 
 from requests_app.core.serialize import json_safe
 from requests_app.domain.entities import Request, RequestType
+from requests_app.domain.services.journey_progress_service import resolve_journey_progress
+from requests_app.domain.services.request_capabilities_service import (
+    resolve_request_capabilities,
+)
 from requests_app.domain.services.workflow_engine import WorkflowEngine
 
 
@@ -38,10 +42,12 @@ def serialize_request(
     *,
     allowed_actions: list[str] | None = None,
     workflow: dict[str, Any] | None = None,
+    actor=None,
+    include_detail_projections: bool = False,
 ) -> dict[str, Any]:
     aliases = (workflow or {}).get("statusAliases") or {}
     alias = aliases.get(request.status)
-    payload = {
+    payload: dict[str, Any] = {
         "id": request.id,
         "request_number": request.request_number,
         "type_code": request.type_code,
@@ -61,6 +67,20 @@ def serialize_request(
         "cancelled_at": request.cancelled_at,
         "allowed_actions": allowed_actions or [],
     }
+    if include_detail_projections:
+        payload["journey_progress"] = resolve_journey_progress(
+            workflow, status=request.status
+        )
+        if actor is not None:
+            payload["capabilities"] = resolve_request_capabilities(
+                request, actor=actor, workflow=workflow
+            )
+        else:
+            payload["capabilities"] = {
+                "can_comment": False,
+                "can_upload_attachment": False,
+                "can_upload_artifact": False,
+            }
     return json_safe(payload)
 
 

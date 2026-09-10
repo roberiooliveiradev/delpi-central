@@ -102,10 +102,10 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), a
 | Admin | `/admin` | SectionCard, DataTable, StatusBadge, StateBanner (gate manage) | **E14 + E20 labels** |
 | Nova (genérico) | `/new` | SectionCard + grid `NavigationCard` (sem Filial no shell); filial só no form do tipo |
 | Wizard NF | `/new` → specialized | **entregue E21:** ProgressTracker, JourneyProgressBar, SectionCard, SegmentToggle, TextField, SelectField, FormActions (footer), ActionButton, StateBanner, DetailFields (seleção/conferência) |
-| Detalhe | `/requests/:id` | SectionCard, DetailFields, ActionBar→ActionButton (label PT), ModalShell (return/cancel), Timeline, painéis |
-| Payload NF | detalhe | SectionCard, DetailFields |
-| Comentários | detalhe | SectionCard, FieldLabel, NativeTextArea, ActionButton |
-| Anexos / Artefatos | detalhe | SectionCard, FileDropzone (anexos + artefatos se process/manage), SelectField (kind), Empty, ActionButton(link) |
+| Detalhe | `/requests/:id` | ProgressTracker + JourneyProgressBar (`journey_progress`), SectionCard grid, DetailFields+hints, ActionBar, Timeline, Comentários, Documentos (attachments≠artifacts) |
+| Payload NF | detalhe | SectionCard, DetailFields com hint |
+| Comentários | detalhe | SectionCard, FieldLabel+hint, NativeTextArea (se `capabilities.can_comment`) |
+| Documentos | detalhe | SectionCard irmãos: solicitação + atendimento; FileDropzone composto com FieldLabel; SelectField «Tipo de documento» |
 | Schema MP | `/new` type MP | SchemaFormPage + SectionCard + kit fields | **entregue E7** |
 
 ---
@@ -119,7 +119,7 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), a
 | `/new` | WF-03 | **entregue E19** | Grid NavigationCard; filial no form |
 | `/new` + `invoice-issuance` | WF-04 | **entregue E21; responsivo E22** | Wizard 6 passos + ProgressTracker + JourneyProgressBar + Conferência; layout fluido + progresso sequencial |
 | `/new` + `raw-material-creation` | WF-07 | **entregue** | SchemaFormPage |
-| `/requests/:id` | WF-05 | **entregue** | Stack de SectionCards |
+| `/requests/:id` | WF-05 | **entregue (layout denso + journey)** | Grid resumo/ações · histórico · documentos; progresso da API |
 | `/admin` | WF-06 | **entregue E14** | RequestTypes read-only (`manage`) |
 
 ---
@@ -411,28 +411,32 @@ Zero CSS chrome do kit no MFE; layout de página só em `index.css` (`.my-reques
 ### WF-05 — Detalhe (`/requests/:id`)
 
 ```text
-┌─ PageHeader: REQ-2026-000042 ───────────────────────────────────────┐
+┌─ PageHeader: REQ-2026-000042                    [StatusBadge] ──────┐
 └─────────────────────────────────────────────────────────────────────┘
-┌─ SectionCard «Solicitação» ─────────────────────────────────────────┐
-│ DetailFields: Tipo · Status · Filial · Solicitante · Criada em      │
-│ ActionBar: [Iniciar…] [Devolver…] … (label PT; código API intacto)  │
+┌─ SectionCard «Progresso do atendimento» ────────────────────────────┐
+│ ProgressTracker (etapas) + JourneyProgressBar (%)                   │
+│ Fonte: journey_progress da API (não hardcode no MFE)                │
 └─────────────────────────────────────────────────────────────────────┘
+┌─ Dados da solicitação (DetailFields+hints) ─┬─ Ações disponíveis ───┐
+│ Tipo · Status · Filial · Solicitante · Data │ ActionBar             │
+└─────────────────────────────────────────────┴───────────────────────┘
 ┌─ SectionCard «Dados da emissão» † type=invoice-issuance ────────────┐
-│ DetailFields destinatário/tipo/frete · lista itens                  │
+│ DetailFields + hints · lista itens                                  │
 └─────────────────────────────────────────────────────────────────────┘
-┌─ SectionCard «Linha do tempo» ── Timeline ──────────────────────────┐
-└─────────────────────────────────────────────────────────────────────┘
-┌─ SectionCard «Comentários» ── lista · TextArea · [Enviar] ─────────┐
-└─────────────────────────────────────────────────────────────────────┘
-┌─ SectionCard «Anexos» ── FileDropzone · links ActionButton ─────────┐
-└─────────────────────────────────────────────────────────────────────┘
-┌─ SectionCard «Arquivos do atendimento» ── Select kind† · Dropzone† ─┐
-│ † upload só se process/manage · kind em PT-BR                       │
-└─────────────────────────────────────────────────────────────────────┘
+┌─ Linha do tempo ────────────────────────────┬─ Comentários ─────────┐
+│ Timeline                                    │ lista · form†         │
+└─────────────────────────────────────────────┴───────────────────────┘
+┌─ Documentos da solicitação ─────────────────┬─ Docs. do atendimento ┐
+│ descrição · dropzone† · links               │ tipo doc† · dropzone† │
+│ † capabilities.can_upload_attachment        │ † can_upload_artifact │
+└─────────────────────────────────────────────┴───────────────────────┘
 ```
 
-**Regra:** botões = `allowed_actions` da API (render-only).  
-**Kit:** ModalShell (return/cancel) · FileDropzone (anexos + artefatos) · SelectField (tipo do artefato)
+Desktop: grids 2 colunas (resumo|ações, histórico|comentários, docs|docs).  
+≤1100px: uma coluna.  
+**Regra:** botões = `allowed_actions`; uploads/comentário = `capabilities` (API).  
+**Kit:** ProgressTracker · JourneyProgressBar · ModalShell · FileDropzone · SelectField · FieldLabel+hint · DetailFields.hint  
+**Ajuda:** `helpTooltips.detail.*` / `attachments` / `artifacts` / `comments`
 
 ### WF-06 — Admin tipos (E14 — entregue; labels E20)
 

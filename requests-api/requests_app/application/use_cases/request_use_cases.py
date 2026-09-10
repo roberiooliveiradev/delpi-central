@@ -169,7 +169,13 @@ class CreateRequestUseCase:
         actions = allowed_actions_for(
             stored, actor=actor, workflow=workflow, engine=self._engine
         )
-        result = serialize_request(stored, allowed_actions=actions, workflow=workflow)
+        result = serialize_request(
+            stored,
+            allowed_actions=actions,
+            workflow=workflow,
+            actor=actor,
+            include_detail_projections=True,
+        )
         self._idempotency.save(
             key=str(idempotency_key).strip(),
             route=route,
@@ -336,7 +342,13 @@ class GetRequestUseCase:
         actions = allowed_actions_for(
             request, actor=actor, workflow=workflow, engine=self._engine
         )
-        return serialize_request(request, allowed_actions=actions, workflow=workflow)
+        return serialize_request(
+            request,
+            allowed_actions=actions,
+            workflow=workflow,
+            actor=actor,
+            include_detail_projections=True,
+        )
 
 
 class UpdateRequestPayloadUseCase:
@@ -426,6 +438,8 @@ class UpdateRequestPayloadUseCase:
                 stored, actor=actor, workflow=workflow, engine=self._engine
             ),
             workflow=workflow,
+            actor=actor,
+            include_detail_projections=True,
         )
         self._idempotency.save(
             key=str(idempotency_key).strip(),
@@ -548,6 +562,8 @@ class TransitionRequestUseCase:
                 stored, actor=actor, workflow=workflow, engine=self._engine
             ),
             workflow=workflow,
+            actor=actor,
+            include_detail_projections=True,
         )
         self._idempotency.save(
             key=str(idempotency_key).strip(),

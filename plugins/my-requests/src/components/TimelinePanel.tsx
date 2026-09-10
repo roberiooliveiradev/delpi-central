@@ -42,8 +42,11 @@ export function TimelinePanel({ requestId }: TimelinePanelProps) {
   );
 
   return (
-    <MyRequestsSectionCard title="Linha do tempo">
-      <div data-help="timeline" title={MY_REQUESTS_HELP_TOOLTIPS.timeline.section}>
+    <MyRequestsSectionCard
+      title="Linha do tempo"
+      hint={MY_REQUESTS_HELP_TOOLTIPS.timeline.section}
+    >
+      <div data-help="timeline">
         {error ? (
           <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
         ) : null}

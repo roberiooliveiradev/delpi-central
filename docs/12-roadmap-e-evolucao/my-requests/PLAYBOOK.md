@@ -707,14 +707,34 @@ Seeds: `invoice-issuance` (specialized), `raw-material-creation` (schema_driven)
   "request_number": "REQ-2026-000042",
   "type_code": "invoice-issuance",
   "status": "in_progress",
+  "status_alias": null,
   "branch_code": "01",
   "payload": {},
   "allowed_actions": ["view", "return", "complete", "cancel"],
-  "assignments": [],
+  "journey_progress": {
+    "percentage": 66,
+    "current_stage_id": "service",
+    "outcome": "in_progress",
+    "summary": null,
+    "stages": [
+      { "id": "intake", "label": "Solicitação criada", "state": "complete" },
+      { "id": "service", "label": "Em atendimento", "state": "current" },
+      { "id": "closure", "label": "Conclusão", "state": "upcoming" }
+    ]
+  },
+  "capabilities": {
+    "can_comment": true,
+    "can_upload_attachment": true,
+    "can_upload_artifact": true
+  },
   "created_by_name": "...",
   "created_at": "..."
 }
 ```
+
+- `journey_progress`: projeção de `workflow_definition.journey` (declarativo no RequestType). Ausente/`null` se o tipo não tiver jornada. **Não** confundir com progresso do wizard de criação.
+- `capabilities`: projeção não-transicional (comentário/uploads) espelhando enforcement dos use cases; **não** substitui `allowed_actions`.
+- Timeline/attachments/artifacts continuam em rotas irmãs (não embutidos no detail).
 
 ### 10.3 Timeline, comentários, arquivos
 

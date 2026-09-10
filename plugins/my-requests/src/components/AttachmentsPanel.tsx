@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ActionButton } from "@delpi/plugin-ui/index";
+import { ActionButton, FieldLabel } from "@delpi/plugin-ui/index";
 
 import {
   attachmentDownloadUrl,
@@ -17,9 +17,13 @@ import {
 
 type AttachmentsPanelProps = {
   requestId: string;
+  canUpload?: boolean;
 };
 
-export function AttachmentsPanel({ requestId }: AttachmentsPanelProps) {
+export function AttachmentsPanel({
+  requestId,
+  canUpload = false,
+}: AttachmentsPanelProps) {
   const [items, setItems] = useState<RequestAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -41,7 +45,7 @@ export function AttachmentsPanel({ requestId }: AttachmentsPanelProps) {
   }, [reload]);
 
   async function onFilesSelected(files: File[]) {
-    if (!files.length || busy) return;
+    if (!canUpload || !files.length || busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -50,29 +54,46 @@ export function AttachmentsPanel({ requestId }: AttachmentsPanelProps) {
       }
       await reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao enviar anexo");
+      setError(err instanceof Error ? err.message : "Falha ao enviar documento");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <MyRequestsSectionCard title="Anexos">
-      <div data-help="attachments" title={MY_REQUESTS_HELP_TOOLTIPS.attachments.section}>
+    <MyRequestsSectionCard
+      title="Documentos da solicitação"
+      subtitle="Arquivos que ajudam a entender ou complementar o pedido."
+      hint={MY_REQUESTS_HELP_TOOLTIPS.attachments.section}
+    >
+      <div data-help="attachments">
         {error ? (
           <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
         ) : null}
-        <MyRequestsFileDropzone
-          multiple
-          busy={busy}
-          disabled={busy}
-          accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
-          fieldLabel="Enviar anexo"
-          onFilesSelected={onFilesSelected}
-          ariaLabel="Enviar anexo da solicitação"
-        />
+        {canUpload ? (
+          <div className="my-requests-upload-field">
+            <FieldLabel
+              label="Adicionar documento à solicitação"
+              hint={MY_REQUESTS_HELP_TOOLTIPS.attachments.upload}
+            />
+            <MyRequestsFileDropzone
+              multiple
+              busy={busy}
+              disabled={busy}
+              accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
+              onFilesSelected={onFilesSelected}
+              ariaLabel="Adicionar documento à solicitação"
+            />
+          </div>
+        ) : null}
         {!error && items.length === 0 ? (
-          <MyRequestsEmptyState message="Nenhum anexo ainda. Arraste arquivos ou use o botão de envio." />
+          <MyRequestsEmptyState
+            message={
+              canUpload
+                ? "Nenhum documento ainda. Arraste arquivos ou use a área de envio."
+                : "Nenhum documento da solicitação."
+            }
+          />
         ) : null}
         {items.length > 0 ? (
           <ul className="my-requests-domain-list">

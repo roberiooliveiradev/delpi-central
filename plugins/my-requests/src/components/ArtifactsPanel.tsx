@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ActionButton } from "@delpi/plugin-ui/index";
+import { ActionButton, FieldLabel } from "@delpi/plugin-ui/index";
 
 import {
   artifactDownloadUrl,
@@ -60,44 +60,54 @@ export function ArtifactsPanel({ requestId, canUpload = false }: ArtifactsPanelP
       }
       await reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível enviar o arquivo.");
+      setError(err instanceof Error ? err.message : "Não foi possível enviar o documento.");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <MyRequestsSectionCard title="Arquivos do atendimento">
-      <div data-help="artifacts" title={MY_REQUESTS_HELP_TOOLTIPS.artifacts.section}>
+    <MyRequestsSectionCard
+      title="Documentos gerados no atendimento"
+      subtitle="Arquivos produzidos como resultado do atendimento."
+      hint={MY_REQUESTS_HELP_TOOLTIPS.artifacts.section}
+    >
+      <div data-help="artifacts">
         {error ? (
           <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
         ) : null}
         {canUpload ? (
           <>
             <SelectField
-              label="Tipo do arquivo"
+              label="Tipo de documento"
+              hint={MY_REQUESTS_HELP_TOOLTIPS.artifacts.kind}
               value={artifactKind}
               onChange={setArtifactKind}
               options={[...ARTIFACT_KIND_OPTIONS]}
               disabled={busy}
             />
-            <MyRequestsFileDropzone
-              multiple
-              busy={busy}
-              disabled={busy}
-              accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
-              fieldLabel="Enviar arquivo do atendimento"
-              onFilesSelected={onFilesSelected}
-              ariaLabel="Enviar arquivo do atendimento"
-            />
+            <div className="my-requests-upload-field">
+              <FieldLabel
+                label="Adicionar documento do atendimento"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.artifacts.upload}
+              />
+              <MyRequestsFileDropzone
+                multiple
+                busy={busy}
+                disabled={busy}
+                accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
+                onFilesSelected={onFilesSelected}
+                ariaLabel="Adicionar documento do atendimento"
+              />
+            </div>
           </>
         ) : null}
         {!error && items.length === 0 ? (
           <MyRequestsEmptyState
             message={
               canUpload
-                ? "Nenhum arquivo ainda. Envie evidências do atendimento (ex.: PDF da NF)."
-                : "Nenhum arquivo do atendimento."
+                ? "Nenhum documento ainda. Envie evidências do atendimento (ex.: nota fiscal em PDF)."
+                : "Nenhum documento gerado no atendimento."
             }
           />
         ) : null}

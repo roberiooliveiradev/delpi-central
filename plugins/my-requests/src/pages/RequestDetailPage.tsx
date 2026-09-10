@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getRequest, transitionRequest } from "../api/requestsApi";
 import { ActionBar } from "../components/ActionBar";
@@ -19,14 +19,22 @@ import {
 } from "../content/presentationLabels";
 import { InvoiceIssuancePayloadPanel } from "../features/invoice-issuance/ui/InvoiceIssuancePayloadPanel";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
-import { canCreateAnyRequest, canProcessAnyRequest } from "../security/requestsAccess";
+import { canCreateAnyRequest } from "../security/requestsAccess";
 import type { RequestDetail } from "../types/requests";
 import {
   DetailFields,
+  MyRequestsJourneyProgressBar,
   MyRequestsLoadingState,
+  MyRequestsProgressTracker,
   MyRequestsSectionCard,
   MyRequestsStateBanner,
+  MyRequestsStatusBadge,
 } from "../ui/mrUi";
+import {
+  journeyBarSummary,
+  mapJourneyStagesToTrackerSteps,
+  statusBadgeVariant,
+} from "../utils/journeyProgressUi";
 
 type RequestDetailPageProps = {
   requestId: string;
@@ -96,58 +104,140 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
     void runTransition("cancel", { cancelJustification: reason });
   }
 
+  const journey = request?.journey_progress ?? null;
+  const trackerSteps = useMemo(
+    () => (journey ? mapJourneyStagesToTrackerSteps(journey.stages) : []),
+    [journey],
+  );
+  const capabilities = request?.capabilities ?? null;
+
   return (
     <AppShell
       title={request ? request.request_number : "Detalhe"}
       canCreate={canCreateAnyRequest(access)}
     >
-      <MyRequestsSectionCard title="Solicitação">
-        <div data-help="detail" title={MY_REQUESTS_HELP_TOOLTIPS.detail.section}>
-          {error ? (
-            <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
-          ) : null}
-          {!request && !error ? <MyRequestsLoadingState /> : null}
-          {request ? (
-            <>
-              <DetailFields
-                fields={[
-                  {
-                    label: "Tipo",
-                    value: requestTypeLabel(request.type_code),
-                  },
-                  {
-                    label: "Status",
-                    value: statusLabel(request.status, request.status_alias),
-                  },
-                  { label: "Filial", value: request.branch_code || "—" },
-                  { label: "Solicitante", value: request.created_by_name },
-                  {
-                    label: "Criada em",
-                    value: formatDateTimePtBr(request.created_at),
-                  },
-                ]}
+      <div className="my-requests-detail-layout">
+        {error ? (
+          <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
+        ) : null}
+        {!request && !error ? <MyRequestsLoadingState /> : null}
+
+        {request ? (
+          <>
+            <header className="my-requests-detail-header">
+              <MyRequestsStatusBadge
+                label={statusLabel(request.status, request.status_alias)}
+                variant={statusBadgeVariant(request.status, journey?.outcome)}
               />
-              <div title={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}>
+            </header>
+
+            {journey ? (
+              <MyRequestsSectionCard
+                title="Progresso do atendimento"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.detail.progress}
+              >
+                <div className="my-requests-detail-progress">
+                  <MyRequestsProgressTracker
+                    steps={trackerSteps}
+                    currentStepId={journey.current_stage_id || trackerSteps[0]?.id}
+                    density="compact"
+                    ariaLabel="Etapas do atendimento"
+                  />
+                  <MyRequestsJourneyProgressBar
+                    value={journey.percentage}
+                    label="Progresso do atendimento"
+                    summary={journeyBarSummary(journey)}
+                    ariaLabel="Percentual do atendimento"
+                  />
+                </div>
+              </MyRequestsSectionCard>
+            ) : null}
+
+            {request.return_reason ? (
+              <MyRequestsStateBanner variant="error">
+                Motivo da devolução: {request.return_reason}
+              </MyRequestsStateBanner>
+            ) : null}
+            {request.cancel_justification ? (
+              <MyRequestsStateBanner variant="error">
+                Motivo do cancelamento: {request.cancel_justification}
+              </MyRequestsStateBanner>
+            ) : null}
+
+            <div className="my-requests-detail-split">
+              <MyRequestsSectionCard
+                title="Dados da solicitação"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.detail.section}
+              >
+                <DetailFields
+                  fields={[
+                    {
+                      label: "Tipo",
+                      hint: MY_REQUESTS_HELP_TOOLTIPS.detail.type,
+                      value: requestTypeLabel(request.type_code),
+                    },
+                    {
+                      label: "Status",
+                      hint: MY_REQUESTS_HELP_TOOLTIPS.detail.status,
+                      value: statusLabel(request.status, request.status_alias),
+                    },
+                    {
+                      label: "Filial",
+                      hint: MY_REQUESTS_HELP_TOOLTIPS.detail.branch,
+                      value: request.branch_code || "—",
+                    },
+                    {
+                      label: "Solicitante",
+                      hint: MY_REQUESTS_HELP_TOOLTIPS.detail.requester,
+                      value: request.created_by_name,
+                    },
+                    {
+                      label: "Criada em",
+                      hint: MY_REQUESTS_HELP_TOOLTIPS.detail.createdAt,
+                      value: formatDateTimePtBr(request.created_at),
+                    },
+                  ]}
+                />
+              </MyRequestsSectionCard>
+
+              <MyRequestsSectionCard
+                title="Ações disponíveis"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}
+              >
                 <ActionBar
                   actions={request.allowed_actions || []}
                   busy={busy}
                   onAction={onAction}
                 />
-              </div>
-            </>
-          ) : null}
-        </div>
-      </MyRequestsSectionCard>
-      {request?.type_code === "invoice-issuance" ? (
-        <InvoiceIssuancePayloadPanel payload={request.payload} />
-      ) : null}
-      <TimelinePanel requestId={requestId} />
-      <CommentsPanel requestId={requestId} />
-      <AttachmentsPanel requestId={requestId} />
-      <ArtifactsPanel
-        requestId={requestId}
-        canUpload={canProcessAnyRequest(access)}
-      />
+              </MyRequestsSectionCard>
+            </div>
+
+            {request.type_code === "invoice-issuance" ? (
+              <InvoiceIssuancePayloadPanel payload={request.payload} />
+            ) : null}
+
+            <div className="my-requests-detail-history">
+              <TimelinePanel requestId={requestId} />
+              <CommentsPanel
+                requestId={requestId}
+                canComment={capabilities?.can_comment ?? false}
+              />
+            </div>
+
+            <section className="my-requests-detail-docs" aria-label="Documentos">
+              <AttachmentsPanel
+                requestId={requestId}
+                canUpload={capabilities?.can_upload_attachment ?? false}
+              />
+              <ArtifactsPanel
+                requestId={requestId}
+                canUpload={capabilities?.can_upload_artifact ?? false}
+              />
+            </section>
+          </>
+        ) : null}
+      </div>
+
       {reasonKind ? (
         <ReasonConfirmModal
           open

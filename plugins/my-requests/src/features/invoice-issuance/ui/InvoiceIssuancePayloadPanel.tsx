@@ -14,23 +14,33 @@ export function InvoiceIssuancePayloadPanel({ payload }: InvoiceIssuancePayloadP
   const invoiceType = String(payload.invoice_type || "");
   const freightMode = String(payload.freight_mode || "");
   return (
-    <MyRequestsSectionCard title="Dados da emissão">
-      <div data-help="invoice-payload" title={MY_REQUESTS_HELP_TOOLTIPS.detail.invoicePayload}>
+    <MyRequestsSectionCard
+      title="Dados da emissão"
+      hint={MY_REQUESTS_HELP_TOOLTIPS.detail.invoicePayload}
+    >
+      <div data-help="invoice-payload">
         <DetailFields
           fields={[
             {
               label: "Destinatário",
+              hint: MY_REQUESTS_HELP_TOOLTIPS.detail.party,
               value: `${String(payload.party_name || "—")} (${String(payload.party_code || "")}/${String(payload.party_store || "")})`,
             },
             {
               label: "Tipo NF",
+              hint: MY_REQUESTS_HELP_TOOLTIPS.detail.invoiceType,
               value: invoiceType ? invoiceTypeLabel(invoiceType) : "—",
             },
             {
               label: "Frete",
+              hint: MY_REQUESTS_HELP_TOOLTIPS.detail.freight,
               value: freightMode ? freightModeLabel(freightMode) : "—",
             },
-            { label: "Itens", value: String(items.length) },
+            {
+              label: "Itens",
+              hint: MY_REQUESTS_HELP_TOOLTIPS.detail.items,
+              value: String(items.length),
+            },
           ]}
         />
         {items.length > 0 ? (

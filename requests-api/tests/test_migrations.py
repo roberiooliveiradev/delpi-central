@@ -22,6 +22,7 @@ def test_list_migration_files_in_order():
         "V005__integration_outbox.sql",
         "V006__seed_invoice_issuance_request_type.sql",
         "V007__seed_raw_material_creation_request_type.sql",
+        "V008__request_type_journey_progress.sql",
     ]
 
 
@@ -78,3 +79,14 @@ def test_v007_seeds_raw_material_creation():
     assert "description" in sql
     _, name = parse_version_and_name(v007)
     assert name == "seed_raw_material_creation_request_type"
+
+
+def test_v008_adds_journey_progress_metadata():
+    v008 = MIGRATIONS_DIR / "V008__request_type_journey_progress.sql"
+    sql = v008.read_text(encoding="utf-8")
+    assert "journey" in sql
+    assert "invoice-issuance" in sql
+    assert "raw-material-creation" in sql
+    assert "statusMappings" in sql
+    _, name = parse_version_and_name(v008)
+    assert name == "request_type_journey_progress"

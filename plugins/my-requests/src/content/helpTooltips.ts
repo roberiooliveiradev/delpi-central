@@ -58,11 +58,22 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   detail: {
     section:
-      "Resumo da solicitação: tipo, status, filial e solicitante. As ações possíveis aparecem como botões conforme o andamento atual.",
+      "Resumo da solicitação: tipo, status, filial e solicitante. As ações possíveis aparecem conforme o andamento atual.",
     actions:
       "Use os botões para avançar o atendimento. Devolver e cancelar pedem um motivo antes de confirmar.",
     invoicePayload:
       "Resumo dos dados da emissão (destinatário, tipo de NF, frete e itens) quando a solicitação é de nota fiscal.",
+    type: "Qual formulário e fluxo esta solicitação segue.",
+    status: "Mostra em que etapa sua solicitação está neste momento.",
+    branch: "Unidade da empresa relacionada a esta solicitação.",
+    requester: "Quem abriu esta solicitação.",
+    createdAt: "Data e hora em que a solicitação foi registrada.",
+    progress:
+      "Acompanhe as etapas do atendimento e o percentual de andamento. Se estiver aguardando correção, isso aparece em destaque.",
+    party: "Cliente ou fornecedor que receberá a nota fiscal.",
+    invoiceType: "Tipo da nota escolhido no pedido de emissão.",
+    freight: "Quem assume o frete (CIF ou FOB) e dados relacionados.",
+    items: "Quantidade de produtos incluídos na emissão.",
   },
   timeline: {
     section:
@@ -70,14 +81,18 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   comments: {
     section: "Converse sobre a solicitação com quem acompanha o atendimento.",
+    newComment: "Escreva uma mensagem para quem acompanha ou atende esta solicitação.",
   },
   attachments: {
     section:
-      "Anexe PDFs ou imagens que ajudem a entender o pedido. Quem acompanha a solicitação pode baixar os arquivos.",
+      "Arquivos que ajudam a explicar ou complementar o pedido. Quem acompanha a solicitação pode baixar os documentos.",
+    upload: "Envie PDF ou imagem para complementar a solicitação.",
   },
   artifacts: {
     section:
-      "Arquivos gerados no atendimento (por exemplo, PDF da nota). Quem atende pode enviar; quem só solicitou normalmente só baixa.",
+      "Arquivos produzidos durante o atendimento, como a nota fiscal ou outro comprovante. Quem atende envia; quem só solicitou normalmente só baixa.",
+    kind: "Classifique o documento gerado no atendimento (por exemplo, nota fiscal em PDF).",
+    upload: "Envie o documento resultante do atendimento.",
   },
   admin: {
     section:

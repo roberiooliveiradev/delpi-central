@@ -1,6 +1,47 @@
 {
   "initialStatus": "submitted",
   "terminalStatuses": ["completed", "rejected", "cancelled"],
+  "journey": {
+    "stages": [
+      { "id": "intake", "label": "Solicitação criada" },
+      { "id": "service", "label": "Em atendimento" },
+      { "id": "closure", "label": "Conclusão" }
+    ],
+    "statusMappings": [
+      {
+        "statuses": ["submitted"],
+        "stageId": "intake",
+        "progressPercent": 33,
+        "outcome": "in_progress"
+      },
+      {
+        "statuses": ["in_progress"],
+        "stageId": "service",
+        "progressPercent": 66,
+        "outcome": "in_progress"
+      },
+      {
+        "statuses": ["completed"],
+        "stageId": "closure",
+        "progressPercent": 100,
+        "outcome": "succeeded"
+      },
+      {
+        "statuses": ["cancelled"],
+        "stageId": "intake",
+        "progressPercent": 33,
+        "outcome": "cancelled",
+        "summary": "Solicitação cancelada"
+      },
+      {
+        "statuses": ["rejected"],
+        "stageId": "service",
+        "progressPercent": 66,
+        "outcome": "rejected",
+        "summary": "Solicitação rejeitada"
+      }
+    ]
+  },
   "computedActions": [
     {
       "action": "view",

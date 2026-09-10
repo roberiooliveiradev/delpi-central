@@ -59,8 +59,8 @@ const PRESENTATION_MODE_LABELS: Record<string, string> = {
 };
 
 const ARTIFACT_KIND_LABELS: Record<string, string> = {
-  generic: "Genérico",
-  invoice_pdf: "PDF da NF",
+  generic: "Outro documento",
+  invoice_pdf: "Nota fiscal — PDF",
 };
 
 const TYPE_NAME_FALLBACKS: Record<string, string> = {

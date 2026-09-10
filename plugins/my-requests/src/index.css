@@ -182,3 +182,63 @@
     padding-bottom: 0;
   }
 }
+
+/* Detalhe / atendimento — layout denso (somente composição de página) */
+.dashboard-my-requests .my-requests-detail-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--my-requests-section-gap);
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-my-requests .my-requests-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.dashboard-my-requests .my-requests-detail-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.dashboard-my-requests .my-requests-detail-split,
+.dashboard-my-requests .my-requests-detail-history,
+.dashboard-my-requests .my-requests-detail-docs {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 1fr);
+  gap: var(--my-requests-section-gap);
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-my-requests .my-requests-detail-docs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-my-requests .my-requests-upload-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-my-requests .my-requests-detail-split,
+  .dashboard-my-requests .my-requests-detail-history,
+  .dashboard-my-requests .my-requests-detail-docs {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-my-requests .my-requests-detail-layout {
+    gap: 1rem;
+  }
+}

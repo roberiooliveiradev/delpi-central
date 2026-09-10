@@ -28,7 +28,8 @@ describe("presentationLabels", () => {
   it("traduz escopos, modos, kinds e tipos", () => {
     expect(branchScopeLabel("required")).toBe("Filial obrigatória");
     expect(presentationModeLabel("schema_driven")).toBe("Formulário configurável");
-    expect(artifactKindLabel("invoice_pdf")).toBe("PDF da NF");
+    expect(artifactKindLabel("invoice_pdf")).toBe("Nota fiscal — PDF");
+    expect(artifactKindLabel("generic")).toBe("Outro documento");
     expect(requestTypeLabel("invoice-issuance")).toBe("Emissão de Notas Fiscais");
     expect(requestTypeLabel("x", "Nome da API")).toBe("Nome da API");
   });

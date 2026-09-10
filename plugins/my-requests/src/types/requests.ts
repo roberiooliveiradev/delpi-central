@@ -28,6 +28,37 @@ export type RequestDetail = RequestSummary & {
   cancel_justification?: string | null;
   completed_at?: string | null;
   cancelled_at?: string | null;
+  journey_progress?: JourneyProgress | null;
+  capabilities?: RequestCapabilities | null;
+};
+
+export type JourneyProgressOutcome =
+  | "in_progress"
+  | "waiting_requester"
+  | "succeeded"
+  | "cancelled"
+  | "rejected";
+
+export type JourneyProgressStageState = "complete" | "current" | "upcoming" | "error";
+
+export type JourneyProgressStage = {
+  id: string;
+  label: string;
+  state: JourneyProgressStageState;
+};
+
+export type JourneyProgress = {
+  percentage: number;
+  current_stage_id: string | null;
+  outcome: JourneyProgressOutcome;
+  summary: string | null;
+  stages: JourneyProgressStage[];
+};
+
+export type RequestCapabilities = {
+  can_comment: boolean;
+  can_upload_attachment: boolean;
+  can_upload_artifact: boolean;
 };
 
 export type RequestListResponse = {

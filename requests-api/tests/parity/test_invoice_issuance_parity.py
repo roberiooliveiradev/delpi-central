@@ -393,3 +393,6 @@ def test_p0_get_detail_exposes_issue_alias(stack):
     )
     assert "issue" in detail["allowed_actions"]
     assert "complete" in detail["allowed_actions"]
+    assert detail["journey_progress"]["percentage"] == 66
+    assert detail["journey_progress"]["current_stage_id"] == "service"
+    assert detail["capabilities"]["can_upload_artifact"] is True

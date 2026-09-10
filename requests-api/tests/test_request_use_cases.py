@@ -204,3 +204,9 @@ def test_work_queue_lists_for_processor(harness):
         user=_processor_user(), request_id=queue["items"][0]["id"]
     )
     assert "start" in detail["allowed_actions"]
+    assert detail["journey_progress"] is not None
+    assert detail["journey_progress"]["percentage"] == 33
+    assert detail["journey_progress"]["current_stage_id"] == "intake"
+    assert detail["capabilities"]["can_comment"] is True
+    assert detail["capabilities"]["can_upload_artifact"] is True
+    assert detail["capabilities"]["can_upload_attachment"] is True
