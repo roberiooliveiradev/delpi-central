@@ -1,0 +1,102 @@
+# Plano 07 — Presentation residual -> schema/shape-first
+
+**Prioridade:** P2  
+**Objetivo perceptível:** novas actions e APIs devem produzir apresentação útil sem exigir profile, path rule, title map ou presenter dedicado por endpoint.
+
+## CURRENT
+
+Fontes prioritárias:
+
+- `presentation_profiles.json`;
+- `column_labels.json`;
+- `product_operational_content.json`;
+- `presenter_content.json`;
+- `data_interpretation.json`;
+- consumers de `pathContains`, entity/profile maps, table profiles, titles/framing e field formats.
+
+O trabalho anterior já reduziu parte dos catálogos de display. Este plano trata somente dívida residual; não recriar o que já foi removido.
+
+## TARGET
+
+```text
+responseSchema + payload + action metadata
+-> shape/data analysis
+-> presentationDecision/renderPlan
+-> FieldLabelBundle / formats
+-> views
+-> contextual prose via síntese existente
+```
+
+Perfis especializados permanecem opcionais quando há necessidade real de domínio, nunca requisito para uma API funcionar.
+
+## Requisitos
+
+| ID | Requisito |
+|---|---|
+| R07-01 | Preferir shape/schema a path/entity para seleção genérica de view. |
+| R07-02 | Preservar `fieldFormats` e policies determinísticas onde schema não basta. |
+| R07-03 | Remover `pathContains` residual quando existir sinal canônico equivalente. |
+| R07-04 | Não criar chamada LLM por título/visual. |
+| R07-05 | Contextual framing pode usar síntese LLM já existente. |
+| R07-06 | MFE deve renderizar contrato materializado, sem redecidir semântica. |
+
+## Etapas
+
+### E7.S1 — Inventário residual
+
+**Fazer:** classificar cada key relevante como `SCHEMA_DIRECT`, `DETERMINISTIC_POLICY`, `SEMANTIC_PRESENTATION_METADATA`, `LLM_COMPOSITION_CANDIDATE`, `UX_COPY` ou `DEAD_CONTENT`.
+
+**Não fazer:** tocar routing técnico do plano 01 dentro deste plano.
+
+### E7.S2 — Baseline de presentation
+
+Cobrir scalar, paged list, hierarchy, composite analysis, document export, unknown API e payloads parcialmente tipados.
+
+Medir R4/R5/R7/R8/R9/R11.
+
+### E7.S3 — Shape defaults como caminho principal
+
+**Fazer:** validar/fortalecer `openapiShapeDefaults` e shape analyzer; garantir fallback útil para schema desconhecido.
+
+**Teste:** provider externo com scalar/list/hierarchy sem profile local.
+
+### E7.S4 — Path/entity rules cleanup
+
+**Fazer:** substituir `pathContains` e entity maps por shape/schema/metadata canônica quando houver equivalência comprovada; manter exceção especializada somente com requisito de domínio documentado.
+
+**Teste:** metamorphic rename de path mantendo schema; view não deve mudar sem motivo semântico.
+
+### E7.S5 — Labels e formats
+
+**Fazer:** preservar pipeline `OpenAPI/meta -> humanize -> discovery/cache` para labels; formats preferem schema e depois fallback determinístico.
+
+**Não fazer:** LLM decidir tipo monetário/percentual sem validação.
+
+### E7.S6 — Titles/framing
+
+**Fazer:** títulos estáveis vêm de metadata/action/schema; framing contextual pode ser produzido pela síntese do turno. Copy genérica continua configurável.
+
+**Teste:** history/F5 não reinfere título materializado.
+
+### E7.S7 — MFE render-only e cleanup
+
+**Fazer:** garantir que frontend não escolhe semântica por route/path; remover JSON duplicado no MFE somente após contrato backend estar completo.
+
+**Teste:** send/stream/reload + render parity.
+
+## Invariantes
+
+- `fieldFormats`, table ordering, limits e policies não migram para LLM sem motivo.
+- Factual/business interpretation continua grounded.
+- Um profile especializado não pode impedir fallback genérico.
+
+## Aceite
+
+```text
+UNKNOWN_API_PRESENTATION = PASS
+PATH_RENAME_PRESENTATION = PASS
+SCHEMA_SHAPE_DEFAULTS = PASS
+NO_LLM_PER_VISUAL = PASS
+MFE_RENDER_ONLY = PASS
+PERSIST_RELOAD = PASS
+```
