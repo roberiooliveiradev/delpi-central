@@ -20,16 +20,21 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useDelpiDarkMode } from "@delpi/plugin-ui/index";
-import { Cpu, FileCode, MoreHorizontal } from "lucide-react";
+import { Ban, Check, Cpu, FileCode, Link2, MoreHorizontal } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { putDeviceFirmwareLink } from "../api/productionPulseApi";
 import { PpStateBox } from "../app/productionPulseUi";
+import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import {
   buildFirmwareLinkGraph,
+  explicitFirmwareKey,
+  resolveConnectionCandidateState,
+  type ConnectionCandidateState,
   type FirmwareFamilyNode,
   type FirmwareLinkGraphEdge,
+  type LinkMode,
 } from "../utils/firmwareLinkGraph";
 
 /** Show MiniMap only when the graph is large enough to need overview. */
@@ -39,6 +44,12 @@ export type CanvasEntitySelection =
   | { type: "device"; id: string; nodeId: string }
   | { type: "firmware"; id: string; nodeId: string; firmwareKey: string };
 
+export type LinkCandidateRequest = {
+  deviceId: string;
+  firmwareKey: string;
+  state: Extract<ConnectionCandidateState, "compatible" | "replace-link" | "incompatible" | "already-linked">;
+};
+
 type FirmwareNodeData = {
   label: string;
   subtitle?: string;
@@ -47,10 +58,12 @@ type FirmwareNodeData = {
   latestVersion?: string | null;
   linkedCount?: number;
   outdatedCount?: number;
-  dimmed?: boolean;
+  filterDimmed?: boolean;
+  connectionState?: ConnectionCandidateState;
   canManage: boolean;
   onOpenMenu?: (payload: { firmwareKey: string; firmwareId?: string | null; nodeId: string }) => void;
   onSelect?: (payload: { firmwareKey: string; firmwareId?: string | null; nodeId: string }) => void;
+  onCandidateClick?: (payload: { firmwareKey: string; firmwareId?: string | null; nodeId: string }) => void;
 };
 
 type DeviceNodeData = {
@@ -58,7 +71,8 @@ type DeviceNodeData = {
   subtitle?: string;
   deviceId: string;
   linked: boolean;
-  dimmed?: boolean;
+  filterDimmed?: boolean;
+  connectionState?: ConnectionCandidateState;
   status?: string | null;
   counter?: number | null;
   counterDay?: number | null;
@@ -68,6 +82,7 @@ type DeviceNodeData = {
   canManage: boolean;
   onOpenMenu?: (payload: { deviceId: string; nodeId: string }) => void;
   onSelect?: (payload: { deviceId: string; nodeId: string }) => void;
+  onCandidateClick?: (payload: { deviceId: string; nodeId: string }) => void;
 };
 
 function statusDotClass(status: string | null | undefined): string {
@@ -85,25 +100,78 @@ function statusLabel(status: string | null | undefined): string {
   return "—";
 }
 
+function connectionClass(state: ConnectionCandidateState | undefined): string {
+  if (!state) return "";
+  return ` pp-map-node--connection-${state}`;
+}
+
+function ConnectionBadge({ state }: { state?: ConnectionCandidateState }) {
+  if (state === "incompatible") {
+    return (
+      <span className="pp-map-node__conn-badge" title={PP_HELP.hub.linkIncompatible} aria-hidden="true">
+        <Ban size={14} strokeWidth={2.25} />
+      </span>
+    );
+  }
+  if (state === "already-linked") {
+    return (
+      <span className="pp-map-node__conn-badge pp-map-node__conn-badge--ok" aria-hidden="true">
+        <Check size={14} strokeWidth={2.25} />
+      </span>
+    );
+  }
+  if (state === "compatible" || state === "replace-link") {
+    return (
+      <span className="pp-map-node__conn-badge pp-map-node__conn-badge--link" aria-hidden="true">
+        <Link2 size={14} strokeWidth={2.25} />
+      </span>
+    );
+  }
+  return null;
+}
+
 function FirmwareNodeView({ id, data }: NodeProps<Node<FirmwareNodeData>>) {
   const outdated = (data.outdatedCount ?? 0) > 0;
+  const state = data.connectionState ?? "neutral";
+  const blocked = state === "incompatible" || state === "already-linked";
+  const ariaLabel =
+    state === "incompatible"
+      ? `${data.label} — ${PP_HELP.hub.linkIncompatibleFirmware}`
+      : state === "already-linked"
+        ? `${data.label} — ${PP_HELP.hub.linkAlreadyAssigned}`
+        : data.label;
+
   return (
     <div
-      className={`pp-firmware-node pp-map-node--compact${data.dimmed ? " pp-map-node--dimmed" : ""}`}
+      className={`pp-firmware-node pp-map-node--compact${
+        data.filterDimmed ? " pp-map-node--dimmed" : ""
+      }${connectionClass(state)}`}
       data-entity="firmware"
-      onClick={() =>
+      data-connection-state={state}
+      aria-label={ariaLabel}
+      aria-disabled={blocked ? true : undefined}
+      onClick={() => {
+        if (data.onCandidateClick) {
+          data.onCandidateClick({
+            firmwareKey: data.firmwareKey,
+            firmwareId: data.firmwareId,
+            nodeId: id,
+          });
+          return;
+        }
         data.onSelect?.({
           firmwareKey: data.firmwareKey,
           firmwareId: data.firmwareId,
           nodeId: id,
-        })
-      }
+        });
+      }}
     >
       <div className="pp-map-node__head nodrag nopan">
         <span className="pp-map-node__kind" aria-hidden="true">
           <FileCode size={14} strokeWidth={2} />
         </span>
         <strong className="pp-map-node__title">{data.label}</strong>
+        <ConnectionBadge state={state} />
         <button
           type="button"
           className="pp-map-node__menu"
@@ -128,7 +196,7 @@ function FirmwareNodeView({ id, data }: NodeProps<Node<FirmwareNodeData>>) {
           {outdated ? ` · ${data.outdatedCount} desatul.` : ""}
         </div>
       </div>
-      <Handle type="source" position={Position.Right} />
+      <Handle type="source" position={Position.Right} isConnectable={data.canManage && state !== "incompatible"} />
     </div>
   );
 }
@@ -138,21 +206,40 @@ function DeviceNodeView({ id, data }: NodeProps<Node<DeviceNodeData>>) {
     Boolean(data.availableVersion) &&
     Boolean(data.installedFirmwareVersion) &&
     data.availableVersion !== data.installedFirmwareVersion;
+  const state = data.connectionState ?? "neutral";
+  const blocked = state === "incompatible" || state === "already-linked";
+  const ariaLabel =
+    state === "incompatible"
+      ? `${data.label} — ${PP_HELP.hub.linkIncompatible}`
+      : state === "already-linked"
+        ? `${data.label} — ${PP_HELP.hub.linkAlreadyAssigned}`
+        : data.label;
+
   return (
     <div
       className={`pp-device-node pp-map-node--compact${data.linked ? " pp-device-node--linked" : ""}${
-        data.dimmed ? " pp-map-node--dimmed" : ""
-      }`}
+        data.filterDimmed ? " pp-map-node--dimmed" : ""
+      }${connectionClass(state)}`}
       data-entity="device"
       data-outdated={outdated ? "true" : undefined}
-      onClick={() => data.onSelect?.({ deviceId: data.deviceId, nodeId: id })}
+      data-connection-state={state}
+      aria-label={ariaLabel}
+      aria-disabled={blocked ? true : undefined}
+      onClick={() => {
+        if (data.onCandidateClick) {
+          data.onCandidateClick({ deviceId: data.deviceId, nodeId: id });
+          return;
+        }
+        data.onSelect?.({ deviceId: data.deviceId, nodeId: id });
+      }}
     >
-      <Handle type="target" position={Position.Left} />
+      <Handle type="target" position={Position.Left} isConnectable={data.canManage && state !== "incompatible"} />
       <div className="pp-map-node__head nodrag nopan">
         <span className="pp-map-node__kind" aria-hidden="true">
           <Cpu size={14} strokeWidth={2} />
         </span>
         <strong className="pp-map-node__title">{data.label}</strong>
+        <ConnectionBadge state={state} />
         <button
           type="button"
           className="pp-map-node__menu"
@@ -194,6 +281,9 @@ export type FirmwareDeviceLinkCanvasProps = {
   canManage: boolean;
   filterQuery?: string;
   filterStatus?: string;
+  linkMode?: LinkMode | null;
+  onLinkModeChange?: (mode: LinkMode | null) => void;
+  onRequestLink?: (request: LinkCandidateRequest) => void;
   onLinked: () => void;
   onUnlink?: (deviceId: string) => void | Promise<void>;
   onUpdateDevice?: (deviceId: string) => void | Promise<void>;
@@ -219,15 +309,39 @@ function toFlowEdges(edges: FirmwareLinkGraphEdge[], canManage: boolean): Edge[]
     id: edge.id,
     source: edge.source,
     target: edge.target,
-    animated: edge.kind === "inherited",
-    style:
-      edge.kind === "inherited"
-        ? { strokeDasharray: "6 4", stroke: "var(--pp-text-muted)" }
-        : { stroke: "var(--pp-accent)" },
+    animated: false,
+    style: { stroke: "var(--pp-accent)" },
     markerEnd: { type: MarkerType.ArrowClosed },
     deletable: canManage && edge.kind === "explicit",
     data: { kind: edge.kind },
   }));
+}
+
+function classifyLinkPair(input: {
+  linkMode: LinkMode;
+  device: DeviceListItem;
+  firmwareKey: string;
+  familyByKey: Map<string, FirmwareFamilyNode>;
+}): ConnectionCandidateState {
+  const assigned = explicitFirmwareKey(input.device);
+  if (input.linkMode.origin === "firmware") {
+    return resolveConnectionCandidateState({
+      linkMode: input.linkMode,
+      nodeKind: "device",
+      deviceId: input.device.id,
+      deviceDriverKey: input.device.driverKey,
+      assignedFirmwareKey: assigned,
+      familyByKey: input.familyByKey,
+    });
+  }
+  return resolveConnectionCandidateState({
+    linkMode: input.linkMode,
+    nodeKind: "firmware",
+    firmwareKey: input.firmwareKey,
+    deviceDriverKey: input.device.driverKey,
+    assignedFirmwareKey: assigned,
+    familyByKey: input.familyByKey,
+  });
 }
 
 function FirmwareDeviceLinkCanvasInner({
@@ -236,6 +350,9 @@ function FirmwareDeviceLinkCanvasInner({
   canManage,
   filterQuery,
   filterStatus,
+  linkMode = null,
+  onLinkModeChange,
+  onRequestLink,
   onLinked,
   onUnlink,
   onUpdateDevice,
@@ -265,6 +382,15 @@ function FirmwareDeviceLinkCanvasInner({
     [families, devices, filterQuery, filterStatus],
   );
 
+  const familyByKey = useMemo(
+    () => new Map(families.map((family) => [family.firmwareKey, family])),
+    [families],
+  );
+  const deviceById = useMemo(
+    () => new Map(devices.map((device) => [device.id, device])),
+    [devices],
+  );
+
   const miniMapVisible =
     showMiniMap ?? graph.nodes.length >= ADMIN_HUB_MINIMAP_NODE_THRESHOLD;
 
@@ -273,6 +399,28 @@ function FirmwareDeviceLinkCanvasInner({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const emitCandidate = useCallback(
+    (deviceId: string, firmwareKey: string) => {
+      const device = deviceById.get(deviceId);
+      if (!device || !onRequestLink) return;
+      const state = classifyLinkPair({
+        linkMode: linkMode ?? { origin: "firmware", firmwareKey },
+        device,
+        firmwareKey,
+        familyByKey,
+      });
+      if (
+        state === "compatible" ||
+        state === "replace-link" ||
+        state === "incompatible" ||
+        state === "already-linked"
+      ) {
+        onRequestLink({ deviceId, firmwareKey, state });
+      }
+    },
+    [deviceById, familyByKey, linkMode, onRequestLink],
+  );
+
   useEffect(() => {
     const linkedDeviceIds = new Set(
       graph.edges.filter((e) => e.kind === "explicit").map((e) => e.target),
@@ -280,13 +428,36 @@ function FirmwareDeviceLinkCanvasInner({
     const familyIdByKey = new Map(
       families.map((family) => [family.firmwareKey, family.latestFirmwareId ?? null]),
     );
-    setNodes(
-      graph.nodes.map((n) => {
+    const originDevice =
+      linkMode?.origin === "device" ? deviceById.get(linkMode.deviceId) : null;
+
+    setNodes((previous) => {
+      const positionById = new Map(previous.map((node) => [node.id, node.position]));
+      return graph.nodes.map((n) => {
+        const position = positionById.get(n.id) ?? n.position;
         if (n.kind === "firmware") {
+          const connectionState = linkMode
+            ? resolveConnectionCandidateState({
+                linkMode,
+                nodeKind: "firmware",
+                firmwareKey: n.firmwareKey,
+                deviceDriverKey: originDevice?.driverKey,
+                assignedFirmwareKey: originDevice
+                  ? explicitFirmwareKey(originDevice)
+                  : null,
+                familyByKey,
+              })
+            : undefined;
+          const inLinkPick =
+            Boolean(linkMode) &&
+            (connectionState === "compatible" ||
+              connectionState === "replace-link" ||
+              connectionState === "incompatible" ||
+              connectionState === "already-linked");
           return {
             id: n.id,
             type: "firmware",
-            position: n.position,
+            position,
             className: n.dimmed ? "pp-flow-node--dimmed" : undefined,
             data: {
               label: n.label,
@@ -296,31 +467,63 @@ function FirmwareDeviceLinkCanvasInner({
               latestVersion: n.latestVersion,
               linkedCount: n.linkedCount,
               outdatedCount: n.outdatedCount,
-              dimmed: n.dimmed,
+              filterDimmed: n.dimmed,
+              connectionState,
               canManage,
               onOpenMenu: onOpenFirmwareMenu,
-              onSelect: (payload) => {
-                onSelectEntity?.({
-                  type: "firmware",
-                  id: payload.firmwareId || payload.firmwareKey,
-                  nodeId: payload.nodeId,
-                  firmwareKey: payload.firmwareKey,
-                });
-              },
+              onSelect: linkMode
+                ? undefined
+                : (payload) => {
+                    onSelectEntity?.({
+                      type: "firmware",
+                      id: payload.firmwareId || payload.firmwareKey,
+                      nodeId: payload.nodeId,
+                      firmwareKey: payload.firmwareKey,
+                    });
+                  },
+              onCandidateClick: inLinkPick
+                ? (payload) => {
+                    if (!linkMode || linkMode.origin !== "device") return;
+                    emitCandidate(linkMode.deviceId, payload.firmwareKey);
+                  }
+                : linkMode?.origin === "firmware" &&
+                    n.firmwareKey === linkMode.firmwareKey
+                  ? () => onLinkModeChange?.(null)
+                  : undefined,
             },
           } satisfies Node<FirmwareNodeData>;
         }
+
+        const device = deviceById.get(n.deviceId!);
+        const connectionState = linkMode
+          ? resolveConnectionCandidateState({
+              linkMode,
+              nodeKind: "device",
+              deviceId: n.deviceId,
+              deviceDriverKey: device?.driverKey,
+              assignedFirmwareKey: device ? explicitFirmwareKey(device) : null,
+              familyByKey,
+            })
+          : undefined;
+        const inLinkPick =
+          Boolean(linkMode) &&
+          (connectionState === "compatible" ||
+            connectionState === "replace-link" ||
+            connectionState === "incompatible" ||
+            connectionState === "already-linked");
+
         return {
           id: n.id,
           type: "device",
-          position: n.position,
+          position,
           className: n.dimmed ? "pp-flow-node--dimmed" : undefined,
           data: {
             label: n.label,
             subtitle: n.subtitle,
             deviceId: n.deviceId!,
             linked: linkedDeviceIds.has(n.id),
-            dimmed: n.dimmed,
+            filterDimmed: n.dimmed,
+            connectionState,
             status: n.status,
             counter: n.counter,
             counterDay: n.counterDay,
@@ -329,27 +532,51 @@ function FirmwareDeviceLinkCanvasInner({
             availableVersion: n.availableVersion,
             canManage,
             onOpenMenu: onOpenDeviceMenu,
-            onSelect: (payload) => {
-              onSelectEntity?.({
-                type: "device",
-                id: payload.deviceId,
-                nodeId: payload.nodeId,
-              });
-            },
+            onSelect: linkMode
+              ? undefined
+              : (payload) => {
+                  onSelectEntity?.({
+                    type: "device",
+                    id: payload.deviceId,
+                    nodeId: payload.nodeId,
+                  });
+                },
+            onCandidateClick: inLinkPick
+              ? (payload) => {
+                  if (!linkMode || linkMode.origin !== "firmware") return;
+                  emitCandidate(payload.deviceId, linkMode.firmwareKey);
+                }
+              : linkMode?.origin === "device" && n.deviceId === linkMode.deviceId
+                ? () => onLinkModeChange?.(null)
+                : undefined,
           },
         } satisfies Node<DeviceNodeData>;
-      }),
-    );
+      });
+    });
     setEdges(toFlowEdges(graph.edges, canManage));
     setError(null);
   }, [
     graph,
     families,
     canManage,
+    linkMode,
+    familyByKey,
+    deviceById,
+    emitCandidate,
+    onLinkModeChange,
     onSelectEntity,
     onOpenDeviceMenu,
     onOpenFirmwareMenu,
   ]);
+
+  useEffect(() => {
+    if (!linkMode) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onLinkModeChange?.(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [linkMode, onLinkModeChange]);
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((current) => applyNodeChanges(changes, current));
@@ -358,6 +585,35 @@ function FirmwareDeviceLinkCanvasInner({
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
     setEdges((current) => applyEdgeChanges(changes, current));
   }, []);
+
+  const isValidConnection = useCallback(
+    (connection: Connection) => {
+      if (!canManage) return false;
+      const source = connection.source;
+      const target = connection.target;
+      if (!source?.startsWith("fw:") || !target?.startsWith("dev:")) return false;
+      const firmwareKey = source.slice(3);
+      const deviceId = target.slice(4);
+      const device = deviceById.get(deviceId);
+      if (!device) return false;
+      const state = classifyLinkPair({
+        linkMode: { origin: "firmware", firmwareKey },
+        device,
+        firmwareKey,
+        familyByKey,
+      });
+      return state === "compatible" || state === "replace-link";
+    },
+    [canManage, deviceById, familyByKey],
+  );
+
+  const onConnectStart = useCallback(
+    (_event: unknown, params: { nodeId: string | null }) => {
+      if (!canManage || !params.nodeId?.startsWith("fw:")) return;
+      onLinkModeChange?.({ origin: "firmware", firmwareKey: params.nodeId.slice(3) });
+    },
+    [canManage, onLinkModeChange],
+  );
 
   const onConnect = useCallback(
     async (connection: Connection) => {
@@ -370,18 +626,46 @@ function FirmwareDeviceLinkCanvasInner({
       }
       const firmwareKey = source.slice(3);
       const deviceId = target.slice(4);
-      setBusy(true);
-      setError(null);
-      try {
-        await putDeviceFirmwareLink(deviceId, firmwareKey);
-        onLinked();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Falha ao vincular.");
-      } finally {
-        setBusy(false);
+      const device = deviceById.get(deviceId);
+      if (!device) return;
+      const state = classifyLinkPair({
+        linkMode: { origin: "firmware", firmwareKey },
+        device,
+        firmwareKey,
+        familyByKey,
+      });
+      if (state === "incompatible" || state === "already-linked") {
+        onRequestLink?.({ deviceId, firmwareKey, state });
+        return;
+      }
+      if (state === "compatible" || state === "replace-link") {
+        onRequestLink?.({ deviceId, firmwareKey, state });
+        return;
+      }
+      // Fallback: direct PUT only if page did not wire onRequestLink
+      if (!onRequestLink) {
+        setBusy(true);
+        setError(null);
+        try {
+          await putDeviceFirmwareLink(deviceId, firmwareKey);
+          onLinked();
+          onLinkModeChange?.(null);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Falha ao vincular.");
+        } finally {
+          setBusy(false);
+        }
       }
     },
-    [busy, canManage, onLinked],
+    [
+      busy,
+      canManage,
+      deviceById,
+      familyByKey,
+      onLinked,
+      onLinkModeChange,
+      onRequestLink,
+    ],
   );
 
   const unlinkDevice = useCallback(
@@ -429,7 +713,12 @@ function FirmwareDeviceLinkCanvasInner({
   }
 
   return (
-    <div className="pp-firmware-link-canvas-wrap pp-firmware-link-canvas-wrap--fill" data-color-mode={colorMode}>
+    <div
+      className={`pp-firmware-link-canvas-wrap pp-firmware-link-canvas-wrap--fill${
+        linkMode ? " pp-firmware-link-canvas-wrap--linking" : ""
+      }`}
+      data-color-mode={colorMode}
+    >
       {error ? <PpStateBox variant="error" title="Conexão" message={error} /> : null}
       <div className="pp-firmware-link-canvas pp-firmware-link-canvas--fill">
         <ReactFlow
@@ -440,8 +729,13 @@ function FirmwareDeviceLinkCanvasInner({
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={(c) => void onConnect(c)}
+          onConnectStart={onConnectStart}
+          isValidConnection={isValidConnection}
           onEdgesDelete={(e) => void onEdgesDelete(e)}
           onNodeDragStart={() => onNodeDragStart?.()}
+          onPaneClick={() => {
+            if (linkMode) onLinkModeChange?.(null);
+          }}
           deleteKeyCode={["Backspace", "Delete"]}
           nodesDraggable={!nodesLocked}
           nodesConnectable={canManage && !busy}
