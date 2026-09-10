@@ -1,6 +1,6 @@
 # Desacoplamento de JSONs + inteligência LLM — Minha DELPI AI
 
-**Status:** Onda A ATENDIDA · ondas B–H via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
+**Status:** Onda A–E ATENDIDAS · ondas F–H via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
 **Escopo:** `minha-delpi-ai-api/app/content` + consumidores runtime relacionados  
 **Objetivo:** remover acoplamentos técnicos e linguísticos que impedem o chat de generalizar para novas APIs, novos domínios e formulações de linguagem natural sem manutenção rota a rota.
 
@@ -71,6 +71,7 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`evidence/e5-s4-planner-driven-enrichment.md`](./evidence/e5-s4-planner-driven-enrichment.md) | E5.S4 — enrichment via coverage gaps. |
 | [`evidence/e5-s5-department-composition-cutover.md`](./evidence/e5-s5-department-composition-cutover.md) | E5.S5 — department goals+retrieval. |
 | [`evidence/e5-s6-entity-enrichment-cutover.md`](./evidence/e5-s6-entity-enrichment-cutover.md) | E5.S6 — entity enrichment goals. |
+| [`evidence/e5-s7-composition-cleanup.md`](./evidence/e5-s7-composition-cleanup.md) | E5.S7 — DELETE maps mortos composition. |
 
 ## Drift HEAD (2026-09-10) — resumido
 

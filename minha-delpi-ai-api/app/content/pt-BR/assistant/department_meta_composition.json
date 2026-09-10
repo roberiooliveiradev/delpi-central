@@ -1,7 +1,5 @@
 {
-  "version": "2026.09.1",
-  "cutoverEnabled": true,
-  "routeMapsDeprecated": true,
+  "version": "2026.09.2",
   "triggerTerms": [
     "meta para",
     "meta da",
@@ -75,58 +73,6 @@
         }
       }
     ]
-  },
-  "byDepartment": {
-    "engineering": {
-      "primaryRouteId": "dashboardDepartmentIndicators",
-      "composeRouteIds": [
-        "dashboardDepartmentIdd",
-        "engineeringLmpDashboardSummary",
-        "engineeringTransformaSummary"
-      ]
-    },
-    "commercial": {
-      "primaryRouteId": "dashboardDepartmentIndicators",
-      "composeRouteIds": [
-        "dashboardDepartmentIdd",
-        "autoTierCHeadOfficeRolTargetPct"
-      ]
-    },
-    "financial": {
-      "primaryRouteId": "dashboardDepartmentIndicators",
-      "composeRouteIds": [
-        "dashboardDepartmentIdd",
-        "autoTierCFinancialEbitdaPct"
-      ]
-    },
-    "production": {
-      "primaryRouteId": "dashboardDepartmentIndicators",
-      "composeRouteIds": [
-        "dashboardDepartmentIdd",
-        "productionOeeDetail"
-      ]
-    },
-    "quality": {
-      "primaryRouteId": "dashboardDepartmentIndicators",
-      "composeRouteIds": [
-        "dashboardDepartmentIdd",
-        "autoTierCPpmInternal"
-      ]
-    },
-    "hr": {
-      "primaryRouteId": "dashboardDepartmentIndicators",
-      "composeRouteIds": [
-        "dashboardDepartmentIdd",
-        "autoTierCHrSnapshot"
-      ]
-    },
-    "supplies": {
-      "primaryRouteId": "dashboardDepartmentIndicators",
-      "composeRouteIds": [
-        "dashboardDepartmentIdd",
-        "suppliesCpv"
-      ]
-    }
   },
   "selectionReasons": {
     "primary": "Consulta o painel de metas e realizado do departamento.",

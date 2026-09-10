@@ -61,8 +61,12 @@ def _structure_excerpt():
 
 
 def test_e5_s6_cutover_flags():
-    assert ChatEntityCapabilityCatalogService.cutover_enabled() is True
-    assert ChatEntityCapabilityCatalogService.enrich_maps_deprecated() is True
+    goals = ChatEntityCapabilityCatalogService.enrich_goals_for_artifact(
+        "product_structure",
+        "structure",
+    )
+    assert goals
+    assert ChatEntityCapabilityCatalogService.max_extra_routes_per_turn() == 4
 
 
 def test_e5_s6_product_structure_enrich_via_goals():
@@ -101,9 +105,6 @@ def test_e5_s6_unknown_entity_uses_default_goals_not_route_map():
     )
     assert goals
     assert goals[0].scope_label == "profile"
-    # scopeToRouteId observer exists but is not required for goal resolution
-    assert ChatEntityCapabilityCatalogService.route_id_for_scope("profile")
-
 
 def test_e5_s6_max_routes_by_mode():
     excerpt = _structure_excerpt()

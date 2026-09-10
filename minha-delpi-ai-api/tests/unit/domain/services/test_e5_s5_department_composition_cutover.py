@@ -74,8 +74,12 @@ _DEPT_CASES = (
 
 
 def test_e5_s5_cutover_flags():
-    assert ChatDepartmentMetaCompositionPlanningService.cutover_enabled() is True
-    assert ChatDepartmentMetaCompositionPlanningService.route_maps_deprecated() is True
+    goals = ChatDepartmentMetaCompositionPlanningService.goals_for_department(
+        "financial",
+        mode="compose",
+    )
+    assert goals
+    assert goals[0].goal_id == "dept_meta_indicators"
 
 
 def test_e5_s5_department_families_compose_without_route_ids():

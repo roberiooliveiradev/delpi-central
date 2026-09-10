@@ -65,16 +65,6 @@ def test_goals_engineering_compose_are_semantic():
     assert goals[0].goal_id == "dept_meta_indicators"
     assert any(goal.goal_id == "dept_idd" for goal in goals)
     assert any("lmp" in goal.query_hints for goal in goals)
-    assert ChatDepartmentMetaCompositionPlanningService.route_maps_deprecated() is True
-
-
-def test_route_ids_legacy_observer_still_readable():
-    route_ids = ChatDepartmentMetaCompositionPlanningService.route_ids_for_department(
-        "engineering",
-        mode="compose",
-    )
-    assert route_ids[0] == "dashboardDepartmentIndicators"
-    assert "dashboardDepartmentIdd" in route_ids
 
 
 def test_composition_mode_primary_vs_compose():

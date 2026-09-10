@@ -1,61 +1,8 @@
 {
-  "version": "2026.09.1",
-  "cutoverEnabled": true,
-  "enrichMapsDeprecated": true,
+  "version": "2026.09.2",
   "limits": {
     "maxExtraRoutesPerTurn": 4,
     "maxFanOutKeys": 8
-  },
-  "domains": {
-    "product": {
-      "parameterStrategy": "product_code",
-      "capabilities": [
-        {
-          "routeId": "productSummary",
-          "scopeKey": "profile",
-          "labelKey": "summary",
-          "suggest": true
-        },
-        {
-          "routeId": "productStock",
-          "scopeKey": "stock",
-          "labelKey": "stock",
-          "suggest": true
-        },
-        {
-          "routeId": "productSales",
-          "scopeKey": "sales",
-          "labelKey": "sales",
-          "suggest": true
-        },
-        {
-          "routeId": "productStructure",
-          "scopeKey": "structure",
-          "labelKey": "structure",
-          "suggest": true
-        },
-        {
-          "routeId": "productParents",
-          "scopeKey": "parents",
-          "labelKey": "parents",
-          "suggest": false
-        }
-      ]
-    }
-  },
-  "scopeToRouteId": {
-    "profile": "productSummary",
-    "stock": "productStock",
-    "sales": "productSales",
-    "structure": "productStructure",
-    "parents": "productParents",
-    "purchases": "productPurchases",
-    "suppliers": "productSuppliers"
-  },
-  "enrichInsightScopes": {
-    "structure": ["stock", "profile"],
-    "stock": ["structure"],
-    "default": ["profile"]
   },
   "semanticGoals": {
     "enrichByArtifact": {
@@ -104,10 +51,5 @@
       "maxExtraRoutes": 6,
       "maxFanOut": 12
     }
-  },
-  "artifactToEnrichKey": {
-    "product_structure": "structure",
-    "product_stock": "stock",
-    "product_summary": "profile"
   }
 }

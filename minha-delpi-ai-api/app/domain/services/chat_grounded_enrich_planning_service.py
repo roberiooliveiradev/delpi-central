@@ -73,11 +73,7 @@ class ChatGroundedEnrichPlanningService:
             max_calls=max_calls,
             max_fan_out=cls._resolve_fan_out_cap(limits),
             response_mode=normalized_mode,
-            reason=(
-                "grounded_enrich_insight_goal_driven"
-                if ChatEntityCapabilityCatalogService.cutover_enabled()
-                else "grounded_enrich_insight"
-            ),
+            reason="grounded_enrich_insight_goal_driven",
             enrich_goals=enrich_goals,
         )
 
@@ -159,9 +155,6 @@ class ChatGroundedEnrichPlanningService:
         *,
         product_code: str | None,
     ) -> tuple[EntityEnrichGoal, ...]:
-        if not ChatEntityCapabilityCatalogService.cutover_enabled():
-            return ()
-
         goals = list(
             ChatEntityCapabilityCatalogService.enrich_goals_for_artifact(
                 str(excerpt.get("entity") or "").strip() or None,
@@ -220,12 +213,8 @@ class ChatGroundedEnrichPlanningService:
         if enrich_goals:
             return tuple(goal.scope_label for goal in enrich_goals if goal.scope_label)
 
+        # Sem goals semânticos: não há fallback de mapa (E5.S7).
         workspace = workspace_context if isinstance(workspace_context, dict) else {}
-        artifact_key = ChatEntityCapabilityCatalogService.artifact_enrich_key(
-            str(excerpt.get("entity") or "").strip() or None,
-            str(excerpt.get("profileKey") or "").strip() or None,
-        )
-        base_scopes = ChatEntityCapabilityCatalogService.enrich_insight_scopes(artifact_key)
         requested = cls._scopes_from_message(message)
         turn_analysis = (
             workspace.get("turnAnalysis")
@@ -235,19 +224,11 @@ class ChatGroundedEnrichPlanningService:
         analysis_scopes = cls._scopes_from_turn_analysis(turn_analysis)
         preferred = cls._preferred_scopes_from_behavior(workspace)
 
-        if requested:
-            scoped = [scope for scope in requested if scope in base_scopes] or list(requested)
-        else:
-            scoped = list(base_scopes)
-
         merged: list[str] = []
-
-        for scope in (*scoped, *analysis_scopes, *preferred):
+        for scope in (*requested, *analysis_scopes, *preferred):
             token = str(scope or "").strip()
-
             if token and token not in merged:
                 merged.append(token)
-
         return tuple(merged)
 
     @classmethod

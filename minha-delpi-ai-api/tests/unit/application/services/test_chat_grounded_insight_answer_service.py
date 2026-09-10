@@ -9,15 +9,19 @@ from app.domain.services.chat_entity_capability_catalog_service import (
 configure_domain_infrastructure_ports()
 
 
-def test_enrich_insight_scopes_for_structure():
-    scopes = ChatEntityCapabilityCatalogService.enrich_insight_scopes("structure")
+def test_enrich_goals_for_structure():
+    goals = ChatEntityCapabilityCatalogService.enrich_goals_for_artifact(
+        "product_structure",
+        "structure",
+        product_code="90260149",
+    )
+    labels = {goal.scope_label for goal in goals}
+    assert "stock" in labels
+    assert "profile" in labels
 
-    assert "stock" in scopes
-    assert "profile" in scopes
 
-
-def test_artifact_enrich_key_maps_product_structure():
-    key = ChatEntityCapabilityCatalogService.artifact_enrich_key(
+def test_enrich_artifact_group_maps_product_structure():
+    key = ChatEntityCapabilityCatalogService.enrich_artifact_group(
         "product_structure",
         None,
     )

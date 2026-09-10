@@ -269,10 +269,7 @@ def test_e5_s2_grounded_enrich_live_after_structure():
     assert plan is not None
     assert plan.planned_scopes == ("stock", "profile")
     assert plan.max_calls == 4
-    assert ChatEntityCapabilityCatalogService.enrich_insight_scopes("structure") == (
-        "stock",
-        "profile",
-    )
+    assert {goal.scope_label for goal in plan.enrich_goals} >= {"stock", "profile"}
     assert ChatEntityCapabilityCatalogService.max_extra_routes_per_turn() == 4
 
 

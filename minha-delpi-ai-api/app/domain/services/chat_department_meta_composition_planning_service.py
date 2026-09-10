@@ -1,7 +1,7 @@
-"""Planejamento de composição departamental por goals + Action Catalog (E5.S5).
+"""Planejamento de composição departamental por goals + Action Catalog (E5.S5/S7).
 
 Taxonomia de departamento (`department_idd`) permanece canônica.
-`primaryRouteId` / `composeRouteIds` estão deprecated (observer até E5.S7).
+Maps ``primaryRouteId`` / ``composeRouteIds`` removidos no cleanup E5.S7.
 """
 
 from __future__ import annotations
@@ -97,19 +97,6 @@ class ChatDepartmentMetaCompositionPlanningService:
         return default_mode
 
     @classmethod
-    def cutover_enabled(cls) -> bool:
-        raw = ChatAssistantContentService.get_node(_BUNDLE, "cutoverEnabled")
-        if raw is None:
-            return True
-        return bool(raw)
-
-    @classmethod
-    def route_maps_deprecated(cls) -> bool:
-        return bool(
-            ChatAssistantContentService.get_node(_BUNDLE, "routeMapsDeprecated")
-        )
-
-    @classmethod
     def goals_for_department(
         cls,
         department_id: str,
@@ -151,39 +138,6 @@ class ChatDepartmentMetaCompositionPlanningService:
         return goals
 
     @classmethod
-    def route_ids_for_department(
-        cls,
-        department_id: str,
-        *,
-        mode: str = "compose",
-    ) -> list[str]:
-        """Legacy observer — maps deprecated (E5.S5). Prefer ``goals_for_department``."""
-        node = ChatAssistantContentService.get_node(
-            _BUNDLE,
-            "byDepartment",
-            str(department_id or "").strip().lower(),
-        )
-
-        if not isinstance(node, dict):
-            return []
-
-        primary = str(node.get("primaryRouteId") or "").strip()
-        compose = node.get("composeRouteIds") or []
-        route_ids: list[str] = []
-
-        if primary:
-            route_ids.append(primary)
-
-        if mode == "compose" and isinstance(compose, list):
-            for item in compose:
-                route_id = str(item or "").strip()
-
-                if route_id and route_id not in route_ids:
-                    route_ids.append(route_id)
-
-        return route_ids
-
-    @classmethod
     def plan(
         cls,
         selection_service: Any = None,
@@ -214,8 +168,6 @@ class ChatDepartmentMetaCompositionPlanningService:
         actions_by_id: dict[str, dict[str, Any]] | None,
         max_calls: int = 5,
     ) -> list[dict]:
-        if not cls.cutover_enabled():
-            return []
         if not cls.looks_like_department_meta_composition(message):
             return []
 
@@ -377,6 +329,5 @@ class ChatDepartmentMetaCompositionPlanningService:
                 "operationId": action.get("operationId") or action.get("operation_id"),
                 "path": action.get("path"),
                 "method": action.get("method"),
-                "routeMapsDeprecated": cls.route_maps_deprecated(),
             },
         }

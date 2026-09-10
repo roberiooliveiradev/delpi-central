@@ -1,5 +1,7 @@
 # Playbook 25 — Composição multi-rota de meta departamental (jul/2026)
 
+> **Drift (2026-09-10):** authority de composition departamental migrou para **goals semânticos + Action Catalog** (`ChatDepartmentMetaCompositionPlanningService.plan_goal_driven`). Maps `primaryRouteId`/`composeRouteIds` foram **removidos** (E5.S5–S7 em `docs/roadmap/llm-json-decoupling/`). Este playbook permanece histórico.
+
 ## Objetivo
 
 Quando o usuário pergunta a **meta / indicadores de um departamento**, o chat pode planejar **várias** `execute_external_action` (não só uma), no mesmo padrão do multi-scope de produto — **sem LLM escolhendo rotas**.

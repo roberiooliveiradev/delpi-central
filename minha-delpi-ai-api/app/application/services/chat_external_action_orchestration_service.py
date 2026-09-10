@@ -379,8 +379,6 @@ class ChatExternalActionOrchestrationService:
             ChatDepartmentMetaCompositionPlanningService,
         )
 
-        if not ChatDepartmentMetaCompositionPlanningService.cutover_enabled():
-            return list(planned or [])
         if not ChatDepartmentMetaCompositionPlanningService.looks_like_department_meta_composition(
             message
         ):
