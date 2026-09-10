@@ -1,11 +1,15 @@
 import { FieldLabel } from "@delpi/plugin-ui/index";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   MyRequestsAttachmentPreviewStrip,
   MyRequestsFileDropzone,
 } from "../ui/mrUi";
+import {
+  RequestFilePreviewModal,
+  type RequestFilePreviewTarget,
+} from "./RequestFilePreviewModal";
 
 export type StagedAttachment = {
   id: string;
@@ -46,6 +50,7 @@ export function StagedAttachmentsField({
   busy = false,
   heading = "Documentos da solicitação",
 }: StagedAttachmentsFieldProps) {
+  const [preview, setPreview] = useState<RequestFilePreviewTarget>(null);
   const stripItems = useMemo(
     () =>
       items.map((item) => ({
@@ -71,32 +76,37 @@ export function StagedAttachmentsField({
   }
 
   return (
-    <div className="my-requests-upload-field" data-help="attachments-create">
-      <FieldLabel
-        label={heading}
-        hint={MY_REQUESTS_HELP_TOOLTIPS.attachments.create}
+    <>
+      <div className="my-requests-upload-field" data-help="attachments-create">
+        <FieldLabel
+          label={heading}
+          hint={MY_REQUESTS_HELP_TOOLTIPS.attachments.create}
+        />
+        <MyRequestsFileDropzone
+          multiple
+          busy={busy}
+          disabled={busy}
+          accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
+          onFilesSelected={onFilesSelected}
+          ariaLabel={heading}
+        />
+        <MyRequestsAttachmentPreviewStrip
+          mode="manage"
+          items={stripItems}
+          emptyMessage="Nenhum documento selecionado ainda."
+          onOpen={(item) => {
+            const staged = items.find((row) => row.id === item.id);
+            if (!staged) return;
+            setPreview({ kind: "local", file: staged.file });
+          }}
+          onRemove={(item) => onRemove(item.id)}
+        />
+      </div>
+      <RequestFilePreviewModal
+        target={preview}
+        open={Boolean(preview)}
+        onClose={() => setPreview(null)}
       />
-      <MyRequestsFileDropzone
-        multiple
-        busy={busy}
-        disabled={busy}
-        accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
-        onFilesSelected={onFilesSelected}
-        ariaLabel={heading}
-      />
-      <MyRequestsAttachmentPreviewStrip
-        mode="manage"
-        items={stripItems}
-        emptyMessage="Nenhum documento selecionado ainda."
-        onOpen={(item) => {
-          const staged = items.find((row) => row.id === item.id);
-          if (!staged) return;
-          const url = staged.previewUrl || URL.createObjectURL(staged.file);
-          window.open(url, "_blank", "noopener,noreferrer");
-          if (!staged.previewUrl) URL.revokeObjectURL(url);
-        }}
-        onRemove={(item) => onRemove(item.id)}
-      />
-    </div>
+    </>
   );
 }

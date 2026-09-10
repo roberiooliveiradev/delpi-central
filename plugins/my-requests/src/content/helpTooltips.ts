@@ -95,17 +95,22 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   attachments: {
     section:
-      "Arquivos que ajudam a explicar ou complementar o pedido. Depois da criação, só dá para adicionar ou remover quando a solicitação estiver devolvida para ajuste.",
+      "Arquivos que ajudam a explicar ou complementar o pedido. Depois da criação, só dá para adicionar ou remover quando a solicitação estiver devolvida para ajuste. Abra a miniatura para ver e baixar com segurança.",
     create:
-      "Anexe PDF ou imagem ao criar a solicitação. Os arquivos são enviados logo após o registro do pedido.",
+      "Selecione PDF ou imagem ao criar a solicitação. Os arquivos ficam pendentes até você enviar o pedido; remova os que não quiser antes de confirmar.",
     upload:
-      "Envie PDF ou imagem para complementar a solicitação (disponível apenas quando devolvida para ajuste).",
+      "Selecione PDF ou imagem. Eles ficam pendentes até você clicar em Salvar documentos — assim dá para descartar um arquivo errado antes do envio.",
+    pending:
+      "Arquivos escolhidos ainda não enviados. Remova o que estiver errado e use Salvar documentos para gravar na solicitação.",
   },
   artifacts: {
     section:
-      "Arquivos produzidos durante o atendimento, como a nota fiscal ou outro comprovante. Quem atende envia; quem só solicitou normalmente só baixa.",
+      "Arquivos produzidos durante o atendimento, como a nota fiscal ou outro comprovante. Abra a miniatura para ver e baixar. Quem atende envia; quem só solicitou normalmente só baixa.",
     kind: "Classifique o documento gerado no atendimento (por exemplo, nota fiscal em PDF).",
-    upload: "Envie o documento resultante do atendimento.",
+    upload:
+      "Selecione o arquivo do atendimento. Ele fica pendente até Salvar documentos — revise antes de enviar.",
+    pending:
+      "Arquivos escolhidos ainda não enviados. Remova o que estiver errado e salve para gravar no atendimento.",
   },
   admin: {
     section:

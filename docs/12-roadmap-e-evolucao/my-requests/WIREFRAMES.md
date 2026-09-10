@@ -69,7 +69,8 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 | `createDashboardFiltersKit` | `MyRequestsFiltersRow` / `FilterSelectField` / `FilterInputField` | Mine + Fila |
 | `createCompactPagination` | `MyRequestsCompactPagination` | Mine + Fila |
 | `createHostContainedModalShell` | `MyRequestsModal` | Detalhe return/cancel |
-| `createDashboardFileDropzone` | `MyRequestsFileDropzone` | Upload anexos e artefatos no detalhe |
+| `createDashboardFileDropzone` | `MyRequestsFileDropzone` | Staging de anexos/artefatos (salvar depois) |
+| `FilePreviewModal` | `RequestFilePreviewModal` | Prévia + baixar autenticado (blob) |
 | `ActionButton` | — | Nav, ações, links de linha |
 | `DataTable` + `dataTableBemClasses` | `mrDataTableClassNames` | `/mine`, `/work-queue` |
 | `FieldLabel` | — | Comentários, observação NF |
@@ -107,8 +108,8 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), a
 | Edição | `/requests/:id/edit` | Wizard/form em modo edit (`PATCH` + Idempotency-Key) |
 | Payload NF | detalhe (fase solicitação) | SectionCard, DetailFields com hint |
 | Comentários | detalhe (fase atendimento) | SectionCard, FieldLabel+hint, NativeTextArea (se `capabilities.can_comment`) |
-| Documentos pedido | detalhe (fase solicitação) | AttachmentPreviewStrip; FileDropzone só se `can_upload_attachment` |
-| Documentos atendimento | detalhe (fase atendimento) | PreviewStrip + FileDropzone se `can_upload_artifact` |
+| Documentos pedido | detalhe (fase solicitação) | PreviewStrip + modal autenticado; staging → Salvar se `can_upload_attachment` |
+| Documentos atendimento | detalhe (fase atendimento) | PreviewStrip + modal autenticado; staging → Salvar se `can_upload_artifact` |
 | Schema MP | `/new` type MP | SchemaFormPage + SectionCard + kit fields | **entregue E7** |
 
 ---

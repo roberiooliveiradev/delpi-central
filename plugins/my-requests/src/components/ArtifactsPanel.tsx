@@ -1,8 +1,7 @@
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { ActionButton, FieldLabel } from "@delpi/plugin-ui/index";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  artifactDownloadUrl,
   downloadArtifactBlob,
   listArtifacts,
   uploadArtifact,
@@ -17,10 +16,20 @@ import {
   MyRequestsAttachmentPreviewStrip,
   MyRequestsEmptyState,
   MyRequestsFileDropzone,
+  MyRequestsFormActions,
   MyRequestsSectionCard,
   MyRequestsStateBanner,
   SelectField,
 } from "../ui/mrUi";
+import {
+  RequestFilePreviewModal,
+  type RequestFilePreviewTarget,
+} from "./RequestFilePreviewModal";
+import {
+  revokeStagedPreviews,
+  stageFiles,
+  type StagedAttachment,
+} from "./StagedAttachmentsField";
 
 type ArtifactsPanelProps = {
   requestId: string;
@@ -47,11 +56,13 @@ export function ArtifactsPanel({
   refreshKey = 0,
 }: ArtifactsPanelProps) {
   const [items, setItems] = useState<RequestArtifact[]>([]);
+  const [pending, setPending] = useState<StagedAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [artifactKind, setArtifactKind] = useState<string>("generic");
   const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({});
   const thumbUrlsRef = useRef<Record<string, string>>({});
+  const [preview, setPreview] = useState<RequestFilePreviewTarget>(null);
 
   const reload = useCallback(
     async (signal?: AbortSignal) => {
@@ -68,6 +79,11 @@ export function ArtifactsPanel({
     });
     return () => ac.abort();
   }, [reload, refreshKey]);
+
+  useEffect(() => {
+    return () => revokeStagedPreviews(pending);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -113,7 +129,7 @@ export function ArtifactsPanel({
     };
   }, [items]);
 
-  const stripItems = useMemo(
+  const savedStripItems = useMemo(
     () =>
       items.map((item) => ({
         id: item.id,
@@ -127,80 +143,173 @@ export function ArtifactsPanel({
     [items, thumbUrls],
   );
 
-  async function onFilesSelected(files: File[]) {
+  const pendingStripItems = useMemo(
+    () =>
+      pending.map((item) => ({
+        id: item.id,
+        fileName: item.file.name,
+        contentType: item.file.type || null,
+        previewUrl: item.previewUrl,
+        detail: formatBytes(item.file.size),
+      })),
+    [pending],
+  );
+
+  function onFilesSelected(files: File[]) {
     if (!canUpload || !files.length || busy) return;
+    setError(null);
+    setPending((prev) => [...prev, ...stageFiles(files)]);
+  }
+
+  function onRemovePending(id: string) {
+    setPending((prev) => {
+      const removed = prev.find((row) => row.id === id);
+      if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+      return prev.filter((row) => row.id !== id);
+    });
+  }
+
+  async function onSavePending() {
+    if (!canUpload || !pending.length || busy) return;
     setBusy(true);
     setError(null);
+    const queue = [...pending];
     try {
-      for (const file of files) {
-        await uploadArtifact(requestId, file, {
+      for (const staged of queue) {
+        await uploadArtifact(requestId, staged.file, {
           artifactKind,
           idempotencyKey: crypto.randomUUID(),
         });
       }
+      revokeStagedPreviews(queue);
+      setPending([]);
       await reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível enviar o documento.");
+      setError(
+        err instanceof Error ? err.message : "Não foi possível enviar o documento.",
+      );
     } finally {
       setBusy(false);
     }
   }
 
+  const empty = !error && items.length === 0 && pending.length === 0;
+
   return (
-    <MyRequestsSectionCard
-      title="Documentos gerados no atendimento"
-      subtitle="Arquivos produzidos como resultado do atendimento."
-      hint={MY_REQUESTS_HELP_TOOLTIPS.artifacts.section}
-    >
-      <div data-help="artifacts">
-        {error ? (
-          <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
-        ) : null}
-        {canUpload ? (
-          <>
-            <SelectField
-              label="Tipo de documento"
-              hint={MY_REQUESTS_HELP_TOOLTIPS.artifacts.kind}
-              value={artifactKind}
-              onChange={setArtifactKind}
-              options={[...ARTIFACT_KIND_OPTIONS]}
-              disabled={busy}
-            />
+    <>
+      <MyRequestsSectionCard
+        title="Documentos gerados no atendimento"
+        subtitle="Arquivos produzidos como resultado do atendimento."
+        hint={MY_REQUESTS_HELP_TOOLTIPS.artifacts.section}
+      >
+        <div data-help="artifacts">
+          {error ? (
+            <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
+          ) : null}
+          {canUpload ? (
+            <>
+              <SelectField
+                label="Tipo de documento"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.artifacts.kind}
+                value={artifactKind}
+                onChange={setArtifactKind}
+                options={[...ARTIFACT_KIND_OPTIONS]}
+                disabled={busy}
+              />
+              <div className="my-requests-upload-field">
+                <FieldLabel
+                  label="Adicionar documento do atendimento"
+                  hint={MY_REQUESTS_HELP_TOOLTIPS.artifacts.upload}
+                />
+                <MyRequestsFileDropzone
+                  multiple
+                  busy={busy}
+                  disabled={busy}
+                  accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
+                  onFilesSelected={onFilesSelected}
+                  ariaLabel="Adicionar documento do atendimento"
+                />
+              </div>
+            </>
+          ) : null}
+
+          {pending.length > 0 ? (
             <div className="my-requests-upload-field">
               <FieldLabel
-                label="Adicionar documento do atendimento"
-                hint={MY_REQUESTS_HELP_TOOLTIPS.artifacts.upload}
+                label="Pendentes de envio"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.artifacts.pending}
               />
-              <MyRequestsFileDropzone
-                multiple
-                busy={busy}
-                disabled={busy}
-                accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
-                onFilesSelected={onFilesSelected}
-                ariaLabel="Adicionar documento do atendimento"
+              <MyRequestsAttachmentPreviewStrip
+                mode="manage"
+                items={pendingStripItems}
+                emptyMessage="Nenhum arquivo pendente."
+                onOpen={(item) => {
+                  const staged = pending.find((row) => row.id === item.id);
+                  if (!staged) return;
+                  setPreview({ kind: "local", file: staged.file });
+                }}
+                onRemove={(item) => onRemovePending(item.id)}
               />
+              <MyRequestsFormActions>
+                <ActionButton
+                  type="button"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    revokeStagedPreviews(pending);
+                    setPending([]);
+                  }}
+                >
+                  Descartar
+                </ActionButton>
+                <ActionButton
+                  type="button"
+                  variant="primary"
+                  disabled={busy}
+                  onClick={() => void onSavePending()}
+                >
+                  {busy ? "Salvando…" : "Salvar documentos"}
+                </ActionButton>
+              </MyRequestsFormActions>
             </div>
-          </>
-        ) : null}
-        {!error && items.length === 0 ? (
-          <MyRequestsEmptyState
-            message={
-              canUpload
-                ? "Nenhum documento ainda. Envie evidências do atendimento (ex.: nota fiscal em PDF)."
-                : "Nenhum documento gerado no atendimento."
-            }
-          />
-        ) : null}
-        {items.length > 0 ? (
-          <MyRequestsAttachmentPreviewStrip
-            mode="preview"
-            items={stripItems}
-            onOpen={(item) => {
-              window.open(artifactDownloadUrl(item.id), "_blank", "noopener,noreferrer");
-            }}
-          />
-        ) : null}
-      </div>
-    </MyRequestsSectionCard>
+          ) : null}
+
+          {empty ? (
+            <MyRequestsEmptyState
+              message={
+                canUpload
+                  ? "Nenhum documento ainda. Selecione evidências e use Salvar documentos."
+                  : "Nenhum documento gerado no atendimento."
+              }
+            />
+          ) : null}
+
+          {items.length > 0 ? (
+            <MyRequestsAttachmentPreviewStrip
+              mode="preview"
+              heading={canUpload ? "Documentos salvos" : undefined}
+              items={savedStripItems}
+              onOpen={(item) => {
+                const saved = items.find((row) => row.id === item.id);
+                if (!saved) return;
+                setPreview({
+                  kind: "artifact",
+                  id: saved.id,
+                  fileName: saved.file_name,
+                  contentType: saved.content_type,
+                  byteSize: saved.size_bytes,
+                });
+              }}
+            />
+          ) : null}
+        </div>
+      </MyRequestsSectionCard>
+
+      <RequestFilePreviewModal
+        target={preview}
+        open={Boolean(preview)}
+        onClose={() => setPreview(null)}
+      />
+    </>
   );
 }

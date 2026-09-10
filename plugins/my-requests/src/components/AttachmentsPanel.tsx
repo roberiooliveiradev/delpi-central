@@ -1,8 +1,7 @@
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { ActionButton, FieldLabel } from "@delpi/plugin-ui/index";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  attachmentDownloadUrl,
   deleteAttachment,
   downloadAttachmentBlob,
   listAttachments,
@@ -14,9 +13,19 @@ import {
   MyRequestsAttachmentPreviewStrip,
   MyRequestsEmptyState,
   MyRequestsFileDropzone,
+  MyRequestsFormActions,
   MyRequestsSectionCard,
   MyRequestsStateBanner,
 } from "../ui/mrUi";
+import {
+  revokeStagedPreviews,
+  stageFiles,
+  type StagedAttachment,
+} from "./StagedAttachmentsField";
+import {
+  RequestFilePreviewModal,
+  type RequestFilePreviewTarget,
+} from "./RequestFilePreviewModal";
 
 type AttachmentsPanelProps = {
   requestId: string;
@@ -43,10 +52,12 @@ export function AttachmentsPanel({
   refreshKey = 0,
 }: AttachmentsPanelProps) {
   const [items, setItems] = useState<RequestAttachment[]>([]);
+  const [pending, setPending] = useState<StagedAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({});
   const thumbUrlsRef = useRef<Record<string, string>>({});
+  const [preview, setPreview] = useState<RequestFilePreviewTarget>(null);
 
   const reload = useCallback(
     async (signal?: AbortSignal) => {
@@ -63,6 +74,11 @@ export function AttachmentsPanel({
     });
     return () => ac.abort();
   }, [reload, refreshKey]);
+
+  useEffect(() => {
+    return () => revokeStagedPreviews(pending);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- revoke on unmount
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,7 +106,7 @@ export function AttachmentsPanel({
           if (cancelled) return;
           next[item.id] = URL.createObjectURL(blob);
         } catch {
-          // keep typed icon fallback
+          // typed icon fallback
         }
       }
       if (cancelled) {
@@ -108,7 +124,7 @@ export function AttachmentsPanel({
     };
   }, [items]);
 
-  const stripItems = useMemo(
+  const savedStripItems = useMemo(
     () =>
       items.map((item) => ({
         id: item.id,
@@ -120,14 +136,43 @@ export function AttachmentsPanel({
     [items, thumbUrls],
   );
 
-  async function onFilesSelected(files: File[]) {
+  const pendingStripItems = useMemo(
+    () =>
+      pending.map((item) => ({
+        id: item.id,
+        fileName: item.file.name,
+        contentType: item.file.type || null,
+        previewUrl: item.previewUrl,
+        detail: formatBytes(item.file.size),
+      })),
+    [pending],
+  );
+
+  function onFilesSelected(files: File[]) {
     if (!canUpload || !files.length || busy) return;
+    setError(null);
+    setPending((prev) => [...prev, ...stageFiles(files)]);
+  }
+
+  function onRemovePending(id: string) {
+    setPending((prev) => {
+      const removed = prev.find((row) => row.id === id);
+      if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+      return prev.filter((row) => row.id !== id);
+    });
+  }
+
+  async function onSavePending() {
+    if (!canUpload || !pending.length || busy) return;
     setBusy(true);
     setError(null);
+    const queue = [...pending];
     try {
-      for (const file of files) {
-        await uploadAttachment(requestId, file, crypto.randomUUID());
+      for (const staged of queue) {
+        await uploadAttachment(requestId, staged.file, crypto.randomUUID());
       }
+      revokeStagedPreviews(queue);
+      setPending([]);
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao enviar documento");
@@ -136,7 +181,7 @@ export function AttachmentsPanel({
     }
   }
 
-  async function onRemove(attachmentId: string) {
+  async function onRemoveSaved(attachmentId: string) {
     if (!canUpload || busy) return;
     setBusy(true);
     setError(null);
@@ -150,56 +195,117 @@ export function AttachmentsPanel({
     }
   }
 
+  const empty =
+    !error && items.length === 0 && pending.length === 0;
+
   return (
-    <MyRequestsSectionCard
-      title="Documentos da solicitação"
-      subtitle="Arquivos que ajudam a entender ou complementar o pedido."
-      hint={MY_REQUESTS_HELP_TOOLTIPS.attachments.section}
-    >
-      <div data-help="attachments">
-        {error ? (
-          <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
-        ) : null}
-        {canUpload ? (
-          <div className="my-requests-upload-field">
-            <FieldLabel
-              label="Adicionar documento à solicitação"
-              hint={MY_REQUESTS_HELP_TOOLTIPS.attachments.upload}
+    <>
+      <MyRequestsSectionCard
+        title="Documentos da solicitação"
+        subtitle="Arquivos que ajudam a entender ou complementar o pedido."
+        hint={MY_REQUESTS_HELP_TOOLTIPS.attachments.section}
+      >
+        <div data-help="attachments">
+          {error ? (
+            <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
+          ) : null}
+          {canUpload ? (
+            <div className="my-requests-upload-field">
+              <FieldLabel
+                label="Adicionar documento à solicitação"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.attachments.upload}
+              />
+              <MyRequestsFileDropzone
+                multiple
+                busy={busy}
+                disabled={busy}
+                accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
+                onFilesSelected={onFilesSelected}
+                ariaLabel="Adicionar documento à solicitação"
+              />
+            </div>
+          ) : null}
+
+          {pending.length > 0 ? (
+            <div className="my-requests-upload-field">
+              <FieldLabel
+                label="Pendentes de envio"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.attachments.pending}
+              />
+              <MyRequestsAttachmentPreviewStrip
+                mode="manage"
+                items={pendingStripItems}
+                emptyMessage="Nenhum arquivo pendente."
+                onOpen={(item) => {
+                  const staged = pending.find((row) => row.id === item.id);
+                  if (!staged) return;
+                  setPreview({ kind: "local", file: staged.file });
+                }}
+                onRemove={(item) => onRemovePending(item.id)}
+              />
+              <MyRequestsFormActions>
+                <ActionButton
+                  type="button"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    revokeStagedPreviews(pending);
+                    setPending([]);
+                  }}
+                >
+                  Descartar
+                </ActionButton>
+                <ActionButton
+                  type="button"
+                  variant="primary"
+                  disabled={busy}
+                  onClick={() => void onSavePending()}
+                >
+                  {busy ? "Salvando…" : "Salvar documentos"}
+                </ActionButton>
+              </MyRequestsFormActions>
+            </div>
+          ) : null}
+
+          {empty ? (
+            <MyRequestsEmptyState
+              message={
+                canUpload
+                  ? "Nenhum documento ainda. Selecione arquivos e use Salvar documentos."
+                  : "Nenhum documento da solicitação."
+              }
             />
-            <MyRequestsFileDropzone
-              multiple
-              busy={busy}
-              disabled={busy}
-              accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
-              onFilesSelected={onFilesSelected}
-              ariaLabel="Adicionar documento à solicitação"
+          ) : null}
+
+          {items.length > 0 ? (
+            <MyRequestsAttachmentPreviewStrip
+              mode={canUpload ? "manage" : "preview"}
+              heading={canUpload ? "Documentos salvos" : undefined}
+              items={savedStripItems}
+              onOpen={(item) => {
+                const saved = items.find((row) => row.id === item.id);
+                if (!saved) return;
+                setPreview({
+                  kind: "attachment",
+                  id: saved.id,
+                  fileName: saved.file_name,
+                  contentType: saved.content_type,
+                  byteSize: saved.size_bytes,
+                });
+              }}
+              onRemove={
+                canUpload ? (item) => void onRemoveSaved(item.id) : undefined
+              }
             />
-          </div>
-        ) : null}
-        {!error && items.length === 0 ? (
-          <MyRequestsEmptyState
-            message={
-              canUpload
-                ? "Nenhum documento ainda. Arraste arquivos ou use a área de envio."
-                : "Nenhum documento da solicitação."
-            }
-          />
-        ) : null}
-        {items.length > 0 ? (
-          <MyRequestsAttachmentPreviewStrip
-            mode={canUpload ? "manage" : "preview"}
-            items={stripItems}
-            onOpen={(item) => {
-              window.open(
-                attachmentDownloadUrl(item.id),
-                "_blank",
-                "noopener,noreferrer",
-              );
-            }}
-            onRemove={canUpload ? (item) => void onRemove(item.id) : undefined}
-          />
-        ) : null}
-      </div>
-    </MyRequestsSectionCard>
+          ) : null}
+        </div>
+      </MyRequestsSectionCard>
+
+      <RequestFilePreviewModal
+        target={preview}
+        open={Boolean(preview)}
+        onClose={() => setPreview(null)}
+      />
+    </>
   );
 }

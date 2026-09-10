@@ -37,8 +37,12 @@ describe("MY_REQUESTS_HELP_TOOLTIPS", () => {
     expect(MY_REQUESTS_HELP_TOOLTIPS.comments.newComment.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.attachments.upload.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.attachments.create.length).toBeGreaterThan(10);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.attachments.pending.length).toBeGreaterThan(10);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.attachments.upload).toMatch(/Salvar documentos/);
     expect(MY_REQUESTS_HELP_TOOLTIPS.detail.returnReason.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.artifacts.kind.length).toBeGreaterThan(10);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.artifacts.pending.length).toBeGreaterThan(10);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.artifacts.upload).toMatch(/Salvar documentos/);
     expect(MY_REQUESTS_HELP_TOOLTIPS.timeline.section.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.invoiceWizard.section.length).toBeGreaterThan(20);
     expect(MY_REQUESTS_HELP_TOOLTIPS.rawMaterialForm.section.length).toBeGreaterThan(20);

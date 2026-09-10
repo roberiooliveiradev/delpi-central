@@ -283,6 +283,22 @@ declare module "@delpi/plugin-ui/index" {
 
   export function ActionButton(props: ActionButtonProps): ReactElement;
 
+  export type FilePreviewModalProps = {
+    open: boolean;
+    title: string;
+    onClose: () => void;
+    source?: File | Blob | (() => Promise<Blob>) | string | null;
+    mimeType?: string | null;
+    fileName?: string | null;
+    metaItems?: Array<string | null | undefined>;
+    headerActions?: ReactNode;
+    portalScopeClassName?: string;
+    containInHost?: boolean;
+    enabled?: boolean;
+  };
+
+  export function FilePreviewModal(props: FilePreviewModalProps): ReactElement;
+
   export type FieldLabelProps = {
     label: string;
     hint?: string;

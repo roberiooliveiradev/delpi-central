@@ -9,7 +9,8 @@ Microfrontend federado do módulo **Minhas Solicitações**.
 - Ações no detalhe: render-only de `allowed_actions` (label PT na UI; código canônico na chamada)
 - Detalhe: fases **O que foi solicitado → Atendimento → Histórico**; progresso via `journey_progress`; uploads via `capabilities`
 - Devolução: card «Motivo da devolução» + rota `/requests/:id/edit` (wizard/form); `PATCH` payload + `resubmit` na ActionBar
-- Anexos do pedido: miniaturas (`AttachmentPreviewStrip`); anexar na criação; no detalhe manage só com `can_upload_attachment` (`needs_information`); `DELETE /attachments/{id}`
+- Anexos do pedido: miniaturas + modal autenticado (`RequestFilePreviewModal` / `FilePreviewModal`); staging → **Salvar documentos** no detalhe (`can_upload_attachment`); criação com staging local até submit; `DELETE /attachments/{id}`
+- Artifacts do atendimento: mesmo padrão de modal + staging → Salvar (`can_upload_artifact`)
 - Avisos: `MyRequestsFloatingNoticeProvider` (`FloatingNoticeStack` do `@delpi/plugin-ui`) — erros/sucesso de ações no detalhe
 - **Tempo real:** `MyRequestsRealtimeProvider` → `wss://…/apps/requests-api/v1/realtime/ws` (hint + refetch; anti-eco via `X-My-Requests-Client-Id`). Sino Portal ao criador nos gates da jornada (outbox→Core). Doc: [realtime-requests.md](../../requests-api/docs/architecture/realtime-requests.md)
 - Ação `view` não vira botão no detalhe (já está visualizando; não é transição)

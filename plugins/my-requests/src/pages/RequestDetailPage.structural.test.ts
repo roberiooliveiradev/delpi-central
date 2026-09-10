@@ -72,9 +72,44 @@ describe("RequestDetailPage structural", () => {
 
     expect(attachments).toMatch(/Documentos da solicitação/);
     expect(attachments).toMatch(/MyRequestsAttachmentPreviewStrip/);
+    expect(attachments).toMatch(/RequestFilePreviewModal/);
+    expect(attachments).toMatch(/Salvar documentos/);
+    expect(attachments).toMatch(/Pendentes de envio/);
+    expect(attachments).not.toMatch(/window\.open/);
+    expect(attachments).not.toMatch(/attachmentDownloadUrl/);
     expect(artifacts).toMatch(/Documentos gerados no atendimento/);
     expect(artifacts).toMatch(/MyRequestsAttachmentPreviewStrip/);
     expect(artifacts).toMatch(/Tipo de documento/);
+    expect(artifacts).toMatch(/RequestFilePreviewModal/);
+    expect(artifacts).toMatch(/Salvar documentos/);
+    expect(artifacts).not.toMatch(/window\.open/);
+    expect(artifacts).not.toMatch(/artifactDownloadUrl/);
+  });
+
+  it("abre arquivo em modal autenticado e não faz upload imediato no detalhe", () => {
+    const preview = read("components/RequestFilePreviewModal.tsx");
+    const attachments = read("components/AttachmentsPanel.tsx");
+    const artifacts = read("components/ArtifactsPanel.tsx");
+    const staged = read("components/StagedAttachmentsField.tsx");
+
+    expect(preview).toMatch(/FilePreviewModal/);
+    expect(preview).toMatch(/downloadAttachmentBlob/);
+    expect(preview).toMatch(/downloadArtifactBlob/);
+    expect(preview).toMatch(/Baixar/);
+    expect(preview).not.toMatch(/window\.open/);
+
+    expect(attachments).toMatch(/stageFiles/);
+    expect(attachments).toMatch(/onSavePending/);
+    expect(attachments).not.toMatch(
+      /onFilesSelected[\s\S]{0,200}uploadAttachment/,
+    );
+    expect(artifacts).toMatch(/stageFiles/);
+    expect(artifacts).toMatch(/onSavePending/);
+    expect(artifacts).not.toMatch(
+      /onFilesSelected[\s\S]{0,200}uploadArtifact/,
+    );
+    expect(staged).toMatch(/RequestFilePreviewModal/);
+    expect(staged).not.toMatch(/window\.open/);
   });
 
   it("abre edição real e destaca motivo da devolução", () => {

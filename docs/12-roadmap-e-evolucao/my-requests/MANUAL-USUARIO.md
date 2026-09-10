@@ -56,7 +56,7 @@ O **status** aparece no topo. Se a solicitação foi **devolvida para ajuste**, 
 
 O **progresso do atendimento** (etapas + percentual) vem do sistema. Em telas largas o rastreador fica horizontal; em telas estreitas usa «Ver etapas». Os **botões de ação** só mostram o que a API liberou. **Devolver** e **cancelar** pedem motivo em uma janela.
 
-Documentos do pedido usam miniaturas. Você pode anexar arquivos **ao criar** a solicitação. No detalhe, adicionar ou remover anexos do pedido só é possível quando ela está **devolvida para ajuste**. Documentos gerados no atendimento continuam a cargo de quem processa.
+Documentos do pedido usam miniaturas. Clique para **abrir em modal** (pré-visualizar e **baixar** com a sessão autenticada — não use a URL de download direto no navegador). Você pode anexar arquivos **ao criar** a solicitação (ficam pendentes até enviar o pedido). No detalhe, adicionar anexos do pedido só é possível quando ela está **devolvida para ajuste**: selecione os arquivos, revise/descarte e use **Salvar documentos**. Documentos gerados no atendimento seguem o mesmo fluxo de seleção → Salvar, a cargo de quem processa.
 
 | Painel | Fase | Uso |
 |--------|------|-----|
@@ -84,7 +84,7 @@ Seis etapas: destinatário → tipo de NF → itens → frete → adicionais →
 - Etapas futuras ficam bloqueadas até a anterior estar pronta; etapas concluídas podem ser reabertas.
 - Ao selecionar o destinatário, o fluxo avança automaticamente para o tipo de NF.
 - Na conferência, revise cada bloco e use **Alterar** para corrigir e voltar. Não há checklist técnico na tela — só o resumo amigável antes de **Enviar**.
-- Na conferência você também pode **anexar documentos** que complementam o pedido; eles são enviados junto com a criação.
+- Na conferência você também pode **selecionar documentos** que complementam o pedido; eles são enviados junto com a criação (remova os indesejados antes de confirmar).
 - O rascunho fica só na sessão atual (recarregar a página perde o preenchimento).
 - O formulário usa a largura da página (responsivo em desktop e celular).
 
