@@ -9,7 +9,6 @@ import {
   presentationModeLabel,
 } from "../content/presentationLabels";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
-import { canCreateAnyRequest } from "../security/requestsAccess";
 import type { RequestTypeSummary } from "../types/requests";
 import {
   MyRequestsEmptyState,
@@ -72,7 +71,7 @@ export function AdminTypesPage() {
   );
 
   return (
-    <AppShell title="Tipos de solicitação" canCreate={canCreateAnyRequest(access)}>
+    <AppShell title="Tipos de solicitação">
       <MyRequestsSectionCard title="Catálogo de tipos">
         <div data-help="admin" title={MY_REQUESTS_HELP_TOOLTIPS.admin.section}>
           {!access.canManage ? (

@@ -166,7 +166,7 @@ export function SchemaFormPage({
 
   if (!fields.length) {
     return (
-      <AppShell title={requestType.name} canCreate>
+      <AppShell title={requestType.name}>
         <MyRequestsSectionCard title="Formulário">
           <MyRequestsLoadingState message="Este tipo ainda não tem formulário configurado. Fale com o administrador." />
           {onCancel ? (
@@ -182,7 +182,7 @@ export function SchemaFormPage({
   }
 
   return (
-    <AppShell title={isEdit ? `Corrigir: ${requestType.name}` : requestType.name} canCreate>
+    <AppShell title={isEdit ? `Corrigir: ${requestType.name}` : requestType.name}>
       <MyRequestsSectionCard title={isEdit ? "Corrigir formulário" : "Formulário"}>
         <div data-help="raw-material-form" title={MY_REQUESTS_HELP_TOOLTIPS.rawMaterialForm.section}>
           {error ? (

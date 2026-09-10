@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { MyRequestsFloatingNoticeProvider } from "./app/MyRequestsFloatingNoticeProvider";
 import { MyRequestsRealtimeProvider } from "./app/MyRequestsRealtimeProvider";
 import { configureHttpClient } from "./api/httpClient";
+import { AppShell } from "./components/AppShell";
 import {
   resolveInternalRoute,
   useMyRequestsRouterPath,
@@ -14,7 +15,11 @@ import { RequestDetailPage } from "./pages/RequestDetailPage";
 import { RequestEditPage } from "./pages/RequestEditPage";
 import { WorkQueuePage } from "./pages/WorkQueuePage";
 import { RequestsPermissionsProvider } from "./security/RequestsPermissionsContext";
-import { buildAccessFromPermissions } from "./security/requestsAccess";
+import {
+  buildAccessFromPermissions,
+  canAccessWorkQueue,
+  canCreateAnyRequest,
+} from "./security/requestsAccess";
 import { MyRequestsStateBanner } from "./ui/mrUi";
 
 export type AppProps = {
@@ -24,6 +29,14 @@ export type AppProps = {
   permissions?: string[];
   isSuperadmin?: boolean;
 };
+
+function ForbiddenRoute({ title, message }: { title: string; message: string }) {
+  return (
+    <AppShell title={title}>
+      <MyRequestsStateBanner variant="error">{message}</MyRequestsStateBanner>
+    </AppShell>
+  );
+}
 
 export default function App({
   getAccessToken,
@@ -51,10 +64,24 @@ export default function App({
   let page: ReactNode;
   switch (route.name) {
     case "work-queue":
-      page = <WorkQueuePage />;
+      page = canAccessWorkQueue(access) ? (
+        <WorkQueuePage />
+      ) : (
+        <ForbiddenRoute
+          title="Fila de trabalho"
+          message="Você não tem permissão para atender a fila de trabalho. É necessário processar ao menos um tipo de solicitação (ou visão ampla / administração)."
+        />
+      );
       break;
     case "new":
-      page = <NewRequestPage />;
+      page = canCreateAnyRequest(access) ? (
+        <NewRequestPage />
+      ) : (
+        <ForbiddenRoute
+          title="Nova solicitação"
+          message="Você não tem permissão para criar solicitações. Peça ao administrador a permissão de criação do tipo desejado."
+        />
+      );
       break;
     case "detail":
       page = <RequestDetailPage requestId={route.requestId!} />;
@@ -63,7 +90,14 @@ export default function App({
       page = <RequestEditPage requestId={route.requestId!} />;
       break;
     case "admin":
-      page = <AdminTypesPage />;
+      page = access.canManage ? (
+        <AdminTypesPage />
+      ) : (
+        <ForbiddenRoute
+          title="Administração"
+          message="Você não tem permissão para administrar tipos de solicitação."
+        />
+      );
       break;
     case "mine":
     case "home":

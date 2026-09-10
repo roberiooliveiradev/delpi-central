@@ -19,7 +19,6 @@ import {
   navigateMyRequestsPath,
 } from "../hooks/myRequestsNavigation";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
-import { canCreateAnyRequest } from "../security/requestsAccess";
 import type { RequestSummary, RequestTypeSummary } from "../types/requests";
 import {
   MyRequestsCompactPagination,
@@ -145,7 +144,7 @@ export function MinePage() {
       : "Você ainda não criou solicitações.";
 
   return (
-    <AppShell title="Minhas solicitações" canCreate={canCreateAnyRequest(access)}>
+    <AppShell title="Minhas solicitações">
       <MyRequestsSectionCard title="Minhas solicitações">
         <div data-help="mine" title={MY_REQUESTS_HELP_TOOLTIPS.mine.section}>
           <RequestListFilters

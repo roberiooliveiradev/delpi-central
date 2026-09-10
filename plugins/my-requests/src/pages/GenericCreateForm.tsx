@@ -125,7 +125,7 @@ export function GenericCreateForm({
   }
 
   return (
-    <AppShell title={isEdit ? `Corrigir: ${requestType.name}` : requestType.name} canCreate>
+    <AppShell title={isEdit ? `Corrigir: ${requestType.name}` : requestType.name}>
       <MyRequestsSectionCard title={isEdit ? "Corrigir solicitação" : "Criar solicitação"}>
         <div data-help="new" title={MY_REQUESTS_HELP_TOOLTIPS.new.section}>
           {error ? (

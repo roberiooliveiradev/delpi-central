@@ -907,7 +907,6 @@ export function InvoiceIssuanceWizard({
     <AppShell
       title={isEdit ? "Corrigir emissão de NF" : "Nova emissão de NF"}
       subtitle={subtitleParts.join(" · ")}
-      canCreate
     >
       <div className="my-requests-wizard-stack" data-help="invoice-wizard">
         {showBranch ? (

@@ -7,7 +7,10 @@ import {
 } from "../hooks/myRequestsNavigation";
 import { resolveTopBarActiveId } from "../hooks/resolveTopBarActiveId";
 import { useMyRequestsRouterPath } from "../hooks/useMyRequestsRouterPath";
-import { canCreateAnyRequest } from "../security/requestsAccess";
+import {
+  canAccessWorkQueue,
+  canCreateAnyRequest,
+} from "../security/requestsAccess";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import { MR_PORTAL_SCOPE, MyRequestsPageHeader, MyRequestsTopBar } from "../ui/mrUi";
 
@@ -15,14 +18,14 @@ type AppShellProps = {
   title: string;
   subtitle?: string;
   children: ReactNode;
-  canCreate?: boolean;
 };
 
-export function AppShell({ title, subtitle, children, canCreate = false }: AppShellProps) {
+export function AppShell({ title, subtitle, children }: AppShellProps) {
   const access = useRequestsPermissions();
   const { pathname } = useMyRequestsRouterPath();
   const activeId = resolveTopBarActiveId(pathname);
-  const showCreate = canCreate || canCreateAnyRequest(access);
+  const showCreate = canCreateAnyRequest(access);
+  const showWorkQueue = canAccessWorkQueue(access);
   const canManage = access.canManage;
 
   const items = [
@@ -32,12 +35,16 @@ export function AppShell({ title, subtitle, children, canCreate = false }: AppSh
       icon: <ClipboardList size={18} aria-hidden />,
       onSelect: () => navigateMyRequestsPath(myRequestsPath("mine")),
     },
-    {
-      id: "work_queue",
-      label: "Fila de trabalho",
-      icon: <ListChecks size={18} aria-hidden />,
-      onSelect: () => navigateMyRequestsPath(myRequestsPath("work-queue")),
-    },
+    ...(showWorkQueue
+      ? [
+          {
+            id: "work_queue",
+            label: "Fila de trabalho",
+            icon: <ListChecks size={18} aria-hidden />,
+            onSelect: () => navigateMyRequestsPath(myRequestsPath("work-queue")),
+          },
+        ]
+      : []),
     ...(showCreate
       ? [
           {

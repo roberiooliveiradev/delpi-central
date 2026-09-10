@@ -2,7 +2,7 @@
 
 export const MY_REQUESTS_HELP_TOOLTIPS = {
   shell: {
-    nav: "Use o menu superior para ir às suas solicitações, à fila de atendimento, criar uma nova ou (se autorizado) ver os tipos cadastrados.",
+    nav: "Use o menu superior para ir às suas solicitações. A fila de atendimento, a criação de novas e a administração só aparecem se o seu perfil tiver permissão para isso.",
   },
   mine: {
     section:
@@ -10,11 +10,11 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   workQueue: {
     section:
-      "Lista o que está na sua fila para atender. Filtre o que precisa e abra a solicitação para iniciar, devolver, concluir ou registrar a emissão.",
+      "Lista o que está na sua fila para atender (somente se você puder processar algum tipo, tiver visão ampla ou for administrador). Filtre o que precisa e abra a solicitação para iniciar, devolver, concluir ou registrar a emissão.",
   },
   new: {
     section:
-      "Escolha um card para abrir o formulário do tipo desejado. A filial, quando necessária, aparece dentro do formulário. Você também pode abrir um tipo direto pelo link com ?type=.",
+      "Escolha um card para abrir o formulário de um tipo que você pode criar. Tipos sem permissão de criação não aparecem. A filial, quando necessária, fica dentro do formulário. Você também pode abrir um tipo direto pelo link com ?type=.",
     type: "Tipo de solicitação disponível para o seu perfil.",
     branch:
       "Escolha a filial com os botões SC (Santa Catarina) ou ES (Espírito Santo). Alguns tipos exigem filial; outros não pedem.",

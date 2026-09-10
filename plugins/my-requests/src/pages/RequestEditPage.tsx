@@ -10,8 +10,6 @@ import {
   myRequestsPath,
   navigateMyRequestsPath,
 } from "../hooks/myRequestsNavigation";
-import { canCreateAnyRequest } from "../security/requestsAccess";
-import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import type { RequestDetail, RequestTypeSummary } from "../types/requests";
 import {
   MyRequestsLoadingState,
@@ -29,7 +27,6 @@ type RequestEditPageProps = {
 };
 
 export function RequestEditPage({ requestId }: RequestEditPageProps) {
-  const access = useRequestsPermissions();
   const { notifyError } = useMyRequestsFloatingNotice();
   const [request, setRequest] = useState<RequestDetail | null>(null);
   const [requestType, setRequestType] = useState<RequestTypeSummary | null>(null);
@@ -77,7 +74,7 @@ export function RequestEditPage({ requestId }: RequestEditPageProps) {
 
   if (loading) {
     return (
-      <AppShell title="Corrigir solicitação" canCreate={canCreateAnyRequest(access)}>
+      <AppShell title="Corrigir solicitação">
         <MyRequestsLoadingState />
       </AppShell>
     );
@@ -85,7 +82,7 @@ export function RequestEditPage({ requestId }: RequestEditPageProps) {
 
   if (error || !request || !requestType) {
     return (
-      <AppShell title="Corrigir solicitação" canCreate={canCreateAnyRequest(access)}>
+      <AppShell title="Corrigir solicitação">
         <MyRequestsSectionCard title="Edição indisponível">
           <MyRequestsStateBanner variant="error">
             {error || "Não foi possível abrir a edição."}

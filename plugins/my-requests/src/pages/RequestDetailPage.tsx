@@ -32,8 +32,6 @@ import {
   navigateMyRequestsPath,
 } from "../hooks/myRequestsNavigation";
 import { useViewportMaxWidth } from "../hooks/useViewportMaxWidth";
-import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
-import { canCreateAnyRequest } from "../security/requestsAccess";
 import type { RequestDetail } from "../types/requests";
 import {
   DetailFields,
@@ -57,7 +55,6 @@ type RequestDetailPageProps = {
 };
 
 export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
-  const access = useRequestsPermissions();
   const { notifyError, notifySuccess, notifyInfo } = useMyRequestsFloatingNotice();
   const [request, setRequest] = useState<RequestDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -174,10 +171,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
   const canEdit = Boolean(request?.allowed_actions?.includes("edit"));
 
   return (
-    <AppShell
-      title={request ? request.request_number : "Detalhe"}
-      canCreate={canCreateAnyRequest(access)}
-    >
+    <AppShell title={request ? request.request_number : "Detalhe"}>
       <div className="my-requests-detail-layout">
         {loadError ? (
           <MyRequestsStateBanner variant="error">{loadError}</MyRequestsStateBanner>

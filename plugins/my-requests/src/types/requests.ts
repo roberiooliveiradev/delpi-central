@@ -77,6 +77,8 @@ export type RequestTypeSummary = {
   active: boolean;
   presentation_mode?: string;
   branch_scope?: string;
+  /** Prefix for RBAC codes (`{prefix}.create` / `.process`) — from API. */
+  permission_prefix?: string | null;
   form_schema?: Record<string, unknown> | null;
   ui_schema?: Record<string, unknown> | null;
 };

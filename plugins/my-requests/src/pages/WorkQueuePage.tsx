@@ -19,7 +19,6 @@ import {
   navigateMyRequestsPath,
 } from "../hooks/myRequestsNavigation";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
-import { canCreateAnyRequest } from "../security/requestsAccess";
 import type { RequestSummary, RequestTypeSummary } from "../types/requests";
 import {
   MyRequestsCompactPagination,
@@ -145,7 +144,7 @@ export function WorkQueuePage() {
       : "Fila vazia no momento.";
 
   return (
-    <AppShell title="Fila de trabalho" canCreate={canCreateAnyRequest(access)}>
+    <AppShell title="Fila de trabalho">
       <MyRequestsSectionCard title="Pendências">
         <div data-help="work-queue" title={MY_REQUESTS_HELP_TOOLTIPS.workQueue.section}>
           <RequestListFilters
