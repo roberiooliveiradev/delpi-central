@@ -1,0 +1,70 @@
+{
+  "program": "llm-json-decoupling",
+  "planStep": "E9.S4",
+  "notes": [
+    "Inventário de shadows críticos já wired — sem novo dual-run.",
+    "Owner = plano/onda; reason exigida quando diverge (agree=false / onlyIn* / !agreeExact)."
+  ],
+  "shadows": [
+    {
+      "id": "registrySelectionShadow",
+      "owner": "plano-01 / Onda B",
+      "metadataKey": "registrySelectionShadow",
+      "module": "app/domain/services/registry_selection_shadow_observability_service.py",
+      "sideEffects": false,
+      "divergenceSignals": ["agree=false"],
+      "reasonFields": ["error", "legacyActionId", "candidateTopIds", "markerMatchedIds"],
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e1-s4-registry-selection-shadow.md"
+    },
+    {
+      "id": "productSelectionShadow",
+      "owner": "plano-01 / Onda B",
+      "metadataKey": "productSelectionShadow",
+      "module": "app/domain/services/registry_selection_shadow_observability_service.py",
+      "sideEffects": false,
+      "divergenceSignals": ["agree=false"],
+      "reasonFields": ["intent", "routeSegment", "legacyActionId", "candidateTopIds"],
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e1-s4-registry-selection-shadow.md"
+    },
+    {
+      "id": "turnUnderstandingAuthorityShadow",
+      "owner": "plano-02 / Onda C",
+      "metadataKey": "workspace_context.shadowTurnUnderstanding.authorityShadow",
+      "module": "app/domain/services/turn_understanding_authority_shadow_service.py",
+      "sideEffects": false,
+      "divergenceSignals": ["agree=false", "agreeProduct=false", "agreeProduction=false"],
+      "reasonFields": ["productIntent", "productionKind", "kpiMatched", "goalCount"],
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e2-s4-authority-shadow.md"
+    },
+    {
+      "id": "parameterStrategyShadow",
+      "owner": "plano-01 / Onda B",
+      "metadataKey": "parameterStrategyShadow",
+      "module": "app/domain/services/parameter_strategy_shadow_service.py",
+      "sideEffects": false,
+      "divergenceSignals": ["agree=false", "agreeExact=false"],
+      "reasonFields": ["strategy", "authority", "error", "legacyParameters", "candidateParameters"],
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e1-s5-parameter-strategy-shadow.md"
+    },
+    {
+      "id": "recommendationDualRun",
+      "owner": "plano-06 / Onda F",
+      "metadataKey": "recommendationDualRun",
+      "module": "app/domain/services/chat_contextual_recommendation_producer_service.py",
+      "sideEffects": false,
+      "divergenceSignals": ["onlyInStatic", "onlyInCandidate", "falseSuggestionCount>0"],
+      "reasonFields": ["authority", "usedProfileFallback", "onlyInStatic", "onlyInCandidate", "profileKey"],
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e6-s4-recommendation-queries-fallback.md"
+    },
+    {
+      "id": "followUpRoutingAuthorityShadow",
+      "owner": "plano-03 / Onda D",
+      "metadataKey": "followUpRoutingAuthorityShadow",
+      "module": "app/domain/services/follow_up_routing_authority_shadow_service.py",
+      "sideEffects": false,
+      "divergenceSignals": ["agree=false"],
+      "reasonFields": ["legacySegment", "candidateSegment", "followUpType", "authority"],
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e3-s7-follow-up-routing-cutover.md"
+    }
+  ]
+}

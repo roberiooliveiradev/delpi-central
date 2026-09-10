@@ -29,4 +29,5 @@ Fixtures JSON sem runner dedicado neste passo ficam **indexadas** (classes 2 e 3
 
 ## Próximo
 
-**E9.S3** — candidate evidence por plano 01–08 no mesmo dataset **ou** completar E9.S2 com runners de fixtures + dims N/A documentadas.
+**E9.S3** — candidate evidence por plano 01–08 — **ATENDIDO** (`e9-s3-candidate-plans-offline.md`).  
+**E9.S4** — shadow divergence — **ATENDIDO** (`e9-s4-shadow-divergence.md`). Próximo: **E9.S5** canary/default cutover.

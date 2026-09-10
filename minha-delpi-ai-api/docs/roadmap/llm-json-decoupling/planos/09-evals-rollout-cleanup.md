@@ -1,8 +1,8 @@
 # Plano 09 — Evals, rollout, cutover e cleanup final
 
 **Prioridade:** transversal  
-**Status execução:** Onda H · E9.S1 **ATENDIDO** · E9.S2 **ATENDIDO_PARCIAL** · E9.S3 **ATENDIDO** (offline) · próxima E9.S4  
-**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda H · E9.S1 **ATENDIDO** · E9.S2 **ATENDIDO_PARCIAL** · E9.S3 **ATENDIDO** (offline) · E9.S4 **ATENDIDO** · próxima E9.S5  
+**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** cada migração de catálogo/heurística para OpenAPI/LLM deve provar melhora generalizável, preservar segurança e só então remover legado.
 
 ## Fonte de verdade
@@ -73,11 +73,11 @@ Cobrir no mínimo (checklist do plano — harness indexado; execução plena pro
 
 **Não fazer:** marcar PASS global com dimensão obrigatória FAIL/INCONCLUSIVE — **respeitado**.
 
-### E9.S4 — Shadow divergence telemetry
+### E9.S4 — Shadow divergence telemetry — **ATENDIDO** (2026-09-10)
 
-**Fazer:** para fluxos de alto risco, comparar legacy vs candidate sem duplicar side effects; registrar seleção, confidence, args, fallback e reason metadata segura.
+**Feito:** inventário canônico `e9_s4_shadow_divergence_inventory.json` (6 shadows críticos) + gate pytest (owner, module em `app/domain/services/`, `sideEffects=false`, reasonFields, evidence). Sem novo sistema dual-run.
 
-**Pronto quando:** divergências críticas possuem explicação e owner.
+**Pronto quando:** divergências críticas possuem explicação e owner — **cumprido** via inventário + teste de explainability.
 
 ### E9.S5 — Canary/default cutover
 
