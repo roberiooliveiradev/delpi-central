@@ -107,6 +107,7 @@ export function RequestEditPage({ requestId }: RequestEditPageProps) {
         initialPayload={request.payload}
         initialVersion={request.version}
         lockedBranch={request.branch_code || undefined}
+        correctionTargets={request.correction_targets || []}
         onCancel={goDetail}
       />
     );

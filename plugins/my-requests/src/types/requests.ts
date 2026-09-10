@@ -26,6 +26,7 @@ export type RequestDetail = RequestSummary & {
   payload: Record<string, unknown>;
   return_reason?: string | null;
   cancel_justification?: string | null;
+  correction_targets?: string[] | null;
   completed_at?: string | null;
   cancelled_at?: string | null;
   journey_progress?: JourneyProgress | null;

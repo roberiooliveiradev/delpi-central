@@ -12,6 +12,10 @@ import {
 import { AttachmentsPanel } from "../../../components/AttachmentsPanel";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import {
+  correctionTargetLabels,
+  wizardStepIdsForCorrectionTargets,
+} from "../../../content/correctionTargets";
+import {
   branchCodeForCreate,
   requiresBranchField,
   showsBranchField,
@@ -101,6 +105,8 @@ type InvoiceIssuanceWizardProps = {
   requestId?: string;
   initialPayload?: Record<string, unknown>;
   initialVersion?: number;
+  /** Seções marcadas na devolução (API correction_targets). */
+  correctionTargets?: string[];
 };
 
 function stepIndex(stepId: WizardStepId): number {
@@ -122,8 +128,17 @@ export function InvoiceIssuanceWizard({
   requestId,
   initialPayload,
   initialVersion,
+  correctionTargets = [],
 }: InvoiceIssuanceWizardProps) {
   const isEdit = mode === "edit";
+  const flaggedStepIds = useMemo(
+    () => new Set(wizardStepIdsForCorrectionTargets(correctionTargets)),
+    [correctionTargets],
+  );
+  const flaggedLabels = useMemo(
+    () => correctionTargetLabels(requestType.code, correctionTargets),
+    [correctionTargets, requestType.code],
+  );
   const access = useRequestsPermissions();
   const branchOptions = (access.branches.length ? access.branches : ["01", "02"]).map(
     (code) => ({
@@ -205,14 +220,17 @@ export function InvoiceIssuanceWizard({
     [party, items, invoiceType, invoiceTypeOther, freightMode, weightKg, volumeCount],
   );
 
-  const stepStates = useMemo(
-    () =>
-      computeStepStates({
-        currentStepId: stepId,
-        completion,
-      }),
-    [stepId, completion],
-  );
+  const stepStates = useMemo(() => {
+    const base = computeStepStates({
+      currentStepId: stepId,
+      completion,
+    });
+    return base.map((step) =>
+      flaggedStepIds.has(step.id)
+        ? { ...step, statusLabel: "Corrigir" }
+        : step,
+    );
+  }, [stepId, completion, flaggedStepIds]);
 
   const completed = completedStepCount(completion);
   const percent = progressPercent(completion);
@@ -911,6 +929,12 @@ export function InvoiceIssuanceWizard({
           ariaLabel={HELP.progress}
         />
 
+        {isEdit && flaggedLabels.length > 0 ? (
+          <MyRequestsStateBanner variant="error">
+            Corrija em especial: {flaggedLabels.join(", ")}.
+          </MyRequestsStateBanner>
+        ) : null}
+
         <MyRequestsProgressTracker
           steps={stepStates}
           currentStepId={stepId}
@@ -923,7 +947,14 @@ export function InvoiceIssuanceWizard({
 
         {error ? <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner> : null}
 
-        <MyRequestsSectionCard title={stepMeta.label} hint={STEP_HELP[stepId]}>
+        <MyRequestsSectionCard
+          title={
+            flaggedStepIds.has(stepId)
+              ? `${stepMeta.label} (corrigir)`
+              : stepMeta.label
+          }
+          hint={STEP_HELP[stepId]}
+        >
           <h2
             ref={headingRef}
             tabIndex={-1}

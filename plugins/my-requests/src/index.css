@@ -220,6 +220,38 @@
   line-height: 1.45;
 }
 
+.dashboard-my-requests .my-requests-detail-reason-targets {
+  margin: 0.75rem 0 0;
+}
+
+.dashboard-my-requests .my-requests-detail-reason-targets__label {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--my-requests-text-muted, var(--delpi-ui-text-muted, #94a3b8));
+}
+
+.dashboard-my-requests .my-requests-detail-reason-targets__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-my-requests .my-requests-reason-modal__targets {
+  margin-top: 1rem;
+}
+
+.dashboard-my-requests .my-requests-reason-modal__target-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
 .dashboard-my-requests .my-requests-detail-reason-actions {
   display: flex;
   flex-wrap: wrap;

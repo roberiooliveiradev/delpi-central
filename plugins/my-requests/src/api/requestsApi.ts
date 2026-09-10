@@ -129,7 +129,13 @@ export async function createRequest(input: {
 export async function transitionRequest(
   requestId: string,
   action: string,
-  input: { version?: number; returnReason?: string; cancelJustification?: string; idempotencyKey: string },
+  input: {
+    version?: number;
+    returnReason?: string;
+    cancelJustification?: string;
+    correctionTargets?: string[];
+    idempotencyKey: string;
+  },
 ) {
   const response = await fetch(
     `${API_BASE}/requests/${encodeURIComponent(requestId)}/transitions/${encodeURIComponent(action)}`,
@@ -145,6 +151,7 @@ export async function transitionRequest(
         version: input.version,
         return_reason: input.returnReason,
         cancel_justification: input.cancelJustification,
+        correction_targets: input.correctionTargets,
       }),
     },
   );

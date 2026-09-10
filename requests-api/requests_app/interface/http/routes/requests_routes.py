@@ -58,6 +58,7 @@ class TransitionBody(BaseModel):
     version: int | None = None
     return_reason: str | None = None
     cancel_justification: str | None = None
+    correction_targets: list[str] | None = None
 
 
 class CommentBody(BaseModel):
@@ -285,6 +286,7 @@ def transition_request(
         for key, value in {
             "return_reason": payload.return_reason,
             "cancel_justification": payload.cancel_justification,
+            "correction_targets": payload.correction_targets,
         }.items()
         if value is not None
     }

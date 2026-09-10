@@ -78,6 +78,8 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
       "Acompanhe as etapas do atendimento e o percentual de andamento. Em telas menores, use «Ver etapas». O percentual e o texto da etapa atual vêm da API.",
     returnReason:
       "Explicação de quem atendeu sobre o que precisa ser corrigido. Use «Corrigir dados» para abrir o formulário e, depois, Reenviar na barra de ações.",
+    correctionTargets:
+      "Marque as seções que precisam de ajuste (destinatário, itens, etc.). O solicitante verá a lista junto com o motivo.",
     cancelReason: "Justificativa registrada quando a solicitação foi cancelada.",
     party: "Cliente ou fornecedor que receberá a nota fiscal.",
     invoiceType: "Tipo da nota escolhido no pedido de emissão.",

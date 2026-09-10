@@ -58,6 +58,7 @@ def serialize_request(
         "payload": request.payload,
         "return_reason": request.return_reason,
         "cancel_justification": request.cancel_justification,
+        "correction_targets": list(request.correction_targets or []),
         "version": request.version,
         "created_by_user_id": request.created_by_user_id,
         "created_by_name": request.created_by_name,

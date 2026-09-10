@@ -307,6 +307,20 @@ class WorkflowEngine:
                 updated.cancel_justification = value
                 justification = value
 
+        from requests_app.domain.services.correction_targets import (
+            normalize_correction_targets,
+        )
+
+        history_changes: dict[str, Any] = {"action_requested": action}
+        if canonical_action == "return":
+            targets = normalize_correction_targets(
+                (body or {}).get("correction_targets"),
+                type_code=request.type_code,
+            )
+            updated.correction_targets = targets
+            if targets:
+                history_changes["correction_targets"] = targets
+
         if to_status in self.terminal_statuses(workflow):
             if to_status == "cancelled":
                 updated.cancelled_at = now
@@ -315,6 +329,7 @@ class WorkflowEngine:
 
         if to_status == "submitted":
             updated.return_reason = None
+            updated.correction_targets = []
 
         assignment: AssignmentEntry | None = None
         if transition.get("assignSelf"):
@@ -330,7 +345,7 @@ class WorkflowEngine:
             actor_user_id=actor.user_id,
             actor_name=actor.user_name,
             justification=justification,
-            changes={"action_requested": action},
+            changes=history_changes,
         )
 
         events = [

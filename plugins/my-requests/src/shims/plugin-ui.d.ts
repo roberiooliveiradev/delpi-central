@@ -324,6 +324,9 @@ declare module "@delpi/plugin-ui/index" {
   export type NativeCheckboxControlProps = {
     checked: boolean;
     onChange: (checked: boolean) => void;
+    label?: ReactNode;
+    children?: ReactNode;
+    hint?: ReactNode;
     disabled?: boolean;
     id?: string;
     className?: string;

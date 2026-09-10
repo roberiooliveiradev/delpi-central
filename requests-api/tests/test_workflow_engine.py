@@ -156,6 +156,35 @@ def test_return_requires_reason(engine, invoice_workflow):
     assert exc.value.field == "return_reason"
 
 
+def test_return_persists_correction_targets_and_resubmit_clears(engine, invoice_workflow):
+    returned = engine.apply_transition(
+        request=_request(status="in_progress"),
+        actor=_processor(),
+        workflow=invoice_workflow,
+        action="return",
+        body={
+            "return_reason": "Corrigir destinatário e itens",
+            "correction_targets": ["recipient", "items", "unknown_x", "ITEMS"],
+        },
+        expected_version=1,
+    )
+    assert returned.request.status == "needs_information"
+    assert returned.request.return_reason == "Corrigir destinatário e itens"
+    assert returned.request.correction_targets == ["recipient", "items"]
+    assert returned.history.changes.get("correction_targets") == ["recipient", "items"]
+
+    resubmitted = engine.apply_transition(
+        request=returned.request,
+        actor=_creator(),
+        workflow=invoice_workflow,
+        action="resubmit",
+        expected_version=returned.request.version,
+    )
+    assert resubmitted.request.status == "submitted"
+    assert resubmitted.request.return_reason is None
+    assert resubmitted.request.correction_targets == []
+
+
 def test_stale_version(engine, invoice_workflow):
     with pytest.raises(WorkflowEngineError) as exc:
         engine.apply_transition(

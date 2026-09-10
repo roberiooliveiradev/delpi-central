@@ -40,6 +40,7 @@ describe("MY_REQUESTS_HELP_TOOLTIPS", () => {
     expect(MY_REQUESTS_HELP_TOOLTIPS.attachments.pending.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.attachments.upload).toMatch(/Salvar documentos/);
     expect(MY_REQUESTS_HELP_TOOLTIPS.detail.returnReason.length).toBeGreaterThan(10);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.detail.correctionTargets.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.artifacts.kind.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.artifacts.pending.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.artifacts.upload).toMatch(/Salvar documentos/);

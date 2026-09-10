@@ -12,8 +12,13 @@ import { CommentsPanel } from "../components/CommentsPanel";
 import {
   ReasonConfirmModal,
   type ReasonConfirmKind,
+  type ReasonConfirmResult,
 } from "../components/ReasonConfirmModal";
 import { TimelinePanel } from "../components/TimelinePanel";
+import {
+  correctionTargetLabels,
+  correctionTargetOptionsForType,
+} from "../content/correctionTargets";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   actionLabel,
@@ -96,7 +101,11 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
 
   async function runTransition(
     action: string,
-    options?: { returnReason?: string; cancelJustification?: string },
+    options?: {
+      returnReason?: string;
+      cancelJustification?: string;
+      correctionTargets?: string[];
+    },
   ) {
     if (!request) return;
     if (!isTransitionAction(action)) {
@@ -110,6 +119,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
         idempotencyKey: crypto.randomUUID(),
         returnReason: options?.returnReason,
         cancelJustification: options?.cancelJustification,
+        correctionTargets: options?.correctionTargets,
       });
       setRequest(updated);
       setReasonKind(null);
@@ -143,13 +153,16 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
     await runTransition(action);
   }
 
-  function onReasonConfirm(reason: string) {
+  function onReasonConfirm(result: ReasonConfirmResult) {
     if (!reasonKind) return;
     if (reasonKind === "return") {
-      void runTransition("return", { returnReason: reason });
+      void runTransition("return", {
+        returnReason: result.reason,
+        correctionTargets: result.correctionTargets,
+      });
       return;
     }
-    void runTransition("cancel", { cancelJustification: reason });
+    void runTransition("cancel", { cancelJustification: result.reason });
   }
 
   const journey = request?.journey_progress ?? null;
@@ -189,6 +202,26 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
                 <MyRequestsStateBanner variant="error">
                   {request.return_reason}
                 </MyRequestsStateBanner>
+                {(request.correction_targets || []).length > 0 ? (
+                  <div
+                    className="my-requests-detail-reason-targets"
+                    data-help="correction-targets"
+                  >
+                    <p className="my-requests-detail-reason-targets__label">
+                      Campos a corrigir
+                    </p>
+                    <ul className="my-requests-detail-reason-targets__list">
+                      {correctionTargetLabels(
+                        request.type_code,
+                        request.correction_targets,
+                      ).map((label) => (
+                        <li key={label}>
+                          <MyRequestsStatusBadge label={label} variant="warning" />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
                 {canEdit ? (
                   <div className="my-requests-detail-reason-actions">
                     <ActionButton type="button" variant="primary" onClick={openEdit}>
@@ -351,6 +384,11 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
           open
           kind={reasonKind}
           busy={busy}
+          correctionOptions={
+            reasonKind === "return"
+              ? correctionTargetOptionsForType(request?.type_code)
+              : []
+          }
           onClose={() => {
             if (!busy) setReasonKind(null);
           }}

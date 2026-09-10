@@ -55,6 +55,7 @@ class Request:
     branch_code: str | None = None
     return_reason: str | None = None
     cancel_justification: str | None = None
+    correction_targets: list[str] = field(default_factory=list)
     version: int = 1
     created_at: datetime | None = None
     updated_at: datetime | None = None

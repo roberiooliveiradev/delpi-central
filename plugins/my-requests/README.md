@@ -8,7 +8,7 @@ Microfrontend federado do módulo **Minhas Solicitações**.
 - **Proibido** chamar api-delpi no browser
 - Ações no detalhe: render-only de `allowed_actions` (label PT na UI; código canônico na chamada)
 - Detalhe: fases **O que foi solicitado → Atendimento → Histórico**; progresso via `journey_progress`; uploads via `capabilities`
-- Devolução: card «Motivo da devolução» + rota `/requests/:id/edit` (wizard/form); `PATCH` payload + `resubmit` na ActionBar
+- Devolução: card «Motivo da devolução» + `correction_targets` (seções marcadas) + rota `/requests/:id/edit` (wizard/form); `PATCH` payload + `resubmit` na ActionBar
 - Anexos do pedido: miniaturas + modal autenticado (`RequestFilePreviewModal` / `FilePreviewModal`); staging → **Salvar documentos** no detalhe (`can_upload_attachment`); criação com staging local até submit; `DELETE /attachments/{id}`
 - Artifacts do atendimento: mesmo padrão de modal + staging → Salvar (`can_upload_artifact`)
 - Avisos: `MyRequestsFloatingNoticeProvider` (`FloatingNoticeStack` do `@delpi/plugin-ui`) — erros/sucesso de ações no detalhe

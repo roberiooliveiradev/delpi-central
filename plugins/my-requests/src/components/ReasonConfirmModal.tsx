@@ -1,17 +1,30 @@
 import { useEffect, useId, useState } from "react";
-import { ActionButton, FieldLabel, NativeTextAreaControl } from "@delpi/plugin-ui/index";
+import {
+  ActionButton,
+  FieldLabel,
+  NativeCheckboxControl,
+  NativeTextAreaControl,
+} from "@delpi/plugin-ui/index";
 
+import type { CorrectionTargetOption } from "../content/correctionTargets";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { MyRequestsFormActions, MyRequestsModal } from "../ui/mrUi";
 
 export type ReasonConfirmKind = "return" | "cancel";
 
+export type ReasonConfirmResult = {
+  reason: string;
+  correctionTargets: string[];
+};
+
 type ReasonConfirmModalProps = {
   open: boolean;
   kind: ReasonConfirmKind;
   busy?: boolean;
+  /** Só na devolução — opções de seções/campos a marcar. */
+  correctionOptions?: CorrectionTargetOption[];
   onClose: () => void;
-  onConfirm: (reason: string) => void;
+  onConfirm: (result: ReasonConfirmResult) => void;
 };
 
 const COPY: Record<
@@ -23,7 +36,7 @@ const COPY: Record<
     label: "Motivo da devolução",
     confirm: "Devolver",
     description:
-      "Explique o que precisa ser ajustado. O solicitante verá este motivo ao reabrir o pedido.",
+      "Explique o que precisa ser ajustado e, se quiser, marque as seções que o solicitante deve corrigir.",
   },
   cancel: {
     title: "Cancelar solicitação",
@@ -37,17 +50,30 @@ export function ReasonConfirmModal({
   open,
   kind,
   busy,
+  correctionOptions = [],
   onClose,
   onConfirm,
 }: ReasonConfirmModalProps) {
   const [reason, setReason] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
   const fieldId = useId();
   const copy = COPY[kind];
   const trimmed = reason.trim();
+  const showTargets = kind === "return" && correctionOptions.length > 0;
 
   useEffect(() => {
-    if (open) setReason("");
+    if (open) {
+      setReason("");
+      setSelected([]);
+    }
   }, [open, kind]);
+
+  function toggleTarget(id: string, checked: boolean) {
+    setSelected((prev) => {
+      if (checked) return prev.includes(id) ? prev : [...prev, id];
+      return prev.filter((row) => row !== id);
+    });
+  }
 
   return (
     <MyRequestsModal
@@ -65,14 +91,19 @@ export function ReasonConfirmModal({
             type="button"
             variant="primary"
             disabled={busy || !trimmed}
-            onClick={() => onConfirm(trimmed)}
+            onClick={() =>
+              onConfirm({
+                reason: trimmed,
+                correctionTargets: showTargets ? selected : [],
+              })
+            }
           >
             {copy.confirm}
           </ActionButton>
         </MyRequestsFormActions>
       }
     >
-      <div title={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}>
+      <div className="my-requests-reason-modal" title={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}>
         <FieldLabel label={copy.label} htmlFor={fieldId} />
         <NativeTextAreaControl
           id={fieldId}
@@ -82,6 +113,30 @@ export function ReasonConfirmModal({
           disabled={busy}
           data-testid="reason-confirm-textarea"
         />
+
+        {showTargets ? (
+          <div
+            className="my-requests-reason-modal__targets"
+            data-testid="reason-confirm-targets"
+          >
+            <FieldLabel
+              label="Campos a corrigir"
+              hint={MY_REQUESTS_HELP_TOOLTIPS.detail.correctionTargets}
+            />
+            <ul className="my-requests-reason-modal__target-list">
+              {correctionOptions.map((option) => (
+                <li key={option.id}>
+                  <NativeCheckboxControl
+                    checked={selected.includes(option.id)}
+                    disabled={busy}
+                    label={option.label}
+                    onChange={(checked) => toggleTarget(option.id, checked)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </div>
     </MyRequestsModal>
   );

@@ -58,6 +58,8 @@ O **progresso do atendimento** (etapas + percentual) vem do sistema. Em telas la
 
 Documentos do pedido usam miniaturas. Clique para **abrir em modal** (pré-visualizar e **baixar** com a sessão autenticada — não use a URL de download direto no navegador). Você pode anexar arquivos **ao criar** a solicitação (ficam pendentes até enviar o pedido). No detalhe, adicionar anexos do pedido só é possível quando ela está **devolvida para ajuste**: selecione os arquivos, revise/descarte e use **Salvar documentos**. Documentos gerados no atendimento seguem o mesmo fluxo de seleção → Salvar, a cargo de quem processa.
 
+Ao **devolver** uma solicitação, além do motivo em texto, quem atende pode **marcar as seções** que precisam de correção (ex.: destinatário, itens). O solicitante vê essa lista no card de devolução e no formulário de correção.
+
 | Painel | Fase | Uso |
 |--------|------|-----|
 | Motivo da devolução / cancelamento | topo | Destaque do motivo + atalho para corrigir |
