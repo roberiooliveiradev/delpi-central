@@ -139,9 +139,9 @@ Executar plano 03. Follow-up deve depender de contexto estruturado e schema, nã
 
 Planos 04 e 05 (S1–S7): Action Catalog discovery + composition/enrichment por goals/budget. Maps `scopeToRouteId` / `primaryRouteId`/`composeRouteIds` removidos.
 
-### Onda F — UX inteligente — **EM_ANDAMENTO** (E6.S1–S3 ATENDIDO)
+### Onda F — UX inteligente — **EM_ANDAMENTO** (E6.S1–S4 ATENDIDO)
 
-Plano 06: inventário + grounding + producer contextual OK. Próximo: E6.S4 rebaixar `recommendationQueries` a LEGACY_FALLBACK. Composer: E6.S5.
+Plano 06: recommendations contextuais + `recommendationQueries` = LEGACY_FALLBACK. Próximo: E6.S5 composer contextual.
 
 ### Onda G — apresentação e conteúdo residual — **PRONTO_APÓS_F**
 

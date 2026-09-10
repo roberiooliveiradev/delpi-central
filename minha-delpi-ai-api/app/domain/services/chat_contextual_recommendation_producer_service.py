@@ -1,7 +1,8 @@
-"""Producer contextual de recommendations (E6.S3) — delta LLM=0; prefer llm_candidates se presentes."""
+"""Producer contextual de recommendations — candidate-first; recommendationQueries = LEGACY_FALLBACK."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from app.domain.services.chat_humanized_data_response_content_service import (
@@ -21,11 +22,49 @@ _PAGINATION_MARKERS = (
 )
 
 
+@dataclass(frozen=True)
+class RecommendationDualRunReport:
+    """Comparação candidate (contextual) vs static (recommendationQueries bruto)."""
+
+    profile_key: str
+    authority: str
+    static_queries: tuple[str, ...]
+    candidate_queries: tuple[str, ...]
+    only_in_static: tuple[str, ...]
+    only_in_candidate: tuple[str, ...]
+    used_profile_fallback: bool
+    false_suggestion_count: int
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "profileKey": self.profile_key,
+            "authority": self.authority,
+            "staticQueryCount": len(self.static_queries),
+            "candidateQueryCount": len(self.candidate_queries),
+            "staticQueries": list(self.static_queries),
+            "candidateQueries": list(self.candidate_queries),
+            "onlyInStatic": list(self.only_in_static),
+            "onlyInCandidate": list(self.only_in_candidate),
+            "usedProfileFallback": self.used_profile_fallback,
+            "falseSuggestionCount": self.false_suggestion_count,
+        }
+
+
+@dataclass(frozen=True)
+class RecommendationProduceResult:
+    items: tuple[dict[str, Any], ...]
+    dual_run: RecommendationDualRunReport
+
+    def as_items(self) -> list[dict[str, Any]]:
+        return [dict(item) for item in self.items]
+
+
 class ChatContextualRecommendationProducerService:
     """
-    Ordem de autoridade no turno:
-    1) candidatos já presentes / llm_candidates (source llm_contextual)
-    2) profile queries filtradas por grounding (source deterministic | profile_fallback)
+    Autoridade no turno (E6.S4):
+    1) llm_candidates | existing (llm_contextual / deterministic)
+    2) candidate contextual = profile queries *filtradas* (deterministic)
+    3) LEGACY_FALLBACK = recommendationQueries bruto só se candidate vazio
     """
 
     @classmethod
@@ -37,8 +76,35 @@ class ChatContextualRecommendationProducerService:
         llm_candidates: list[Any] | None = None,
         existing_candidates: list[Any] | None = None,
     ) -> list[dict[str, Any]]:
+        return cls.produce_with_dual_run(
+            grounding=grounding,
+            profile_queries=profile_queries,
+            llm_candidates=llm_candidates,
+            existing_candidates=existing_candidates,
+        ).as_items()
+
+    @classmethod
+    def produce_with_dual_run(
+        cls,
+        *,
+        grounding: RecommendationGroundingContext,
+        profile_queries: list[dict[str, str]] | None = None,
+        llm_candidates: list[Any] | None = None,
+        existing_candidates: list[Any] | None = None,
+    ) -> RecommendationProduceResult:
         caps = ChatHumanizedDataResponseContentService.recommendation_grounding_caps()
         max_recs = max(0, int(caps.get("maxRecommendations") or 3))
+
+        queries = profile_queries
+        if queries is None:
+            queries = ChatHumanizedDataResponseContentService.recommendation_queries(
+                grounding.profile_key
+            )
+        static_queries = tuple(
+            str(item.get("query") or "").strip()
+            for item in (queries or [])
+            if isinstance(item, dict) and str(item.get("query") or "").strip()
+        )
 
         primary = list(llm_candidates or []) or list(existing_candidates or [])
         if primary:
@@ -56,15 +122,17 @@ class ChatContextualRecommendationProducerService:
                 normalized,
                 grounding,
             )
-            return cls._dedupe_by_query(filtered)[:max_recs]
-
-        queries = profile_queries
-        if queries is None:
-            queries = ChatHumanizedDataResponseContentService.recommendation_queries(
-                grounding.profile_key
+            items = cls._dedupe_by_query(filtered)[:max_recs]
+            dual = cls._build_dual_run(
+                profile_key=grounding.profile_key,
+                static_queries=static_queries,
+                items=items,
+                authority="llm_or_existing",
+                used_profile_fallback=False,
             )
+            return RecommendationProduceResult(items=tuple(items), dual_run=dual)
 
-        candidates: list[dict[str, Any]] = []
+        candidate_items: list[dict[str, Any]] = []
         for item in queries or []:
             if not isinstance(item, dict):
                 continue
@@ -74,7 +142,7 @@ class ChatContextualRecommendationProducerService:
                 continue
             if cls._should_skip_profile_query(query, grounding):
                 continue
-            candidates.append(
+            candidate_items.append(
                 {
                     "label": label,
                     "query": query,
@@ -84,8 +152,12 @@ class ChatContextualRecommendationProducerService:
                 }
             )
 
-        if not candidates and queries:
-            # Nenhum filtro contextual aplicável — fallback explícito do profile.
+        used_fallback = False
+        authority = "contextual_candidate"
+        if not candidate_items and queries:
+            # LEGACY_FALLBACK: recommendationQueries bruto só quando candidate vazio.
+            used_fallback = True
+            authority = "profile_fallback"
             for item in queries:
                 if not isinstance(item, dict):
                     continue
@@ -93,7 +165,7 @@ class ChatContextualRecommendationProducerService:
                 query = str(item.get("query") or "").strip()
                 if not label or not query:
                     continue
-                candidates.append(
+                candidate_items.append(
                     {
                         "label": label,
                         "query": query,
@@ -104,10 +176,54 @@ class ChatContextualRecommendationProducerService:
                 )
 
         filtered = ChatRecommendationGroundingService.filter_candidates_against_grounding(
-            candidates,
+            candidate_items,
             grounding,
         )
-        return cls._dedupe_by_query(filtered)[:max_recs]
+        items = cls._dedupe_by_query(filtered)[:max_recs]
+        dual = cls._build_dual_run(
+            profile_key=grounding.profile_key,
+            static_queries=static_queries,
+            items=items,
+            authority=authority,
+            used_profile_fallback=used_fallback,
+        )
+        return RecommendationProduceResult(items=tuple(items), dual_run=dual)
+
+    @classmethod
+    def _build_dual_run(
+        cls,
+        *,
+        profile_key: str,
+        static_queries: tuple[str, ...],
+        items: list[dict[str, Any]],
+        authority: str,
+        used_profile_fallback: bool,
+    ) -> RecommendationDualRunReport:
+        candidate = tuple(
+            str(item.get("query") or "").strip()
+            for item in items
+            if str(item.get("query") or "").strip()
+        )
+        static_fold = {q.casefold(): q for q in static_queries}
+        candidate_fold = {q.casefold(): q for q in candidate}
+        only_static = tuple(
+            static_fold[k] for k in static_fold.keys() - candidate_fold.keys()
+        )
+        only_candidate = tuple(
+            candidate_fold[k] for k in candidate_fold.keys() - static_fold.keys()
+        )
+        # False suggestion: query no candidate que não existia no catálogo estático do profile.
+        # (llm_candidates podem legítimamente divergir; ainda assim contabilizamos.)
+        return RecommendationDualRunReport(
+            profile_key=str(profile_key or "").strip(),
+            authority=authority,
+            static_queries=static_queries,
+            candidate_queries=candidate,
+            only_in_static=only_static,
+            only_in_candidate=only_candidate,
+            used_profile_fallback=used_profile_fallback,
+            false_suggestion_count=len(only_candidate),
+        )
 
     @classmethod
     def _should_skip_profile_query(
@@ -119,7 +235,6 @@ class ChatContextualRecommendationProducerService:
         if any(marker in q for marker in _PAGINATION_MARKERS):
             if not cls._has_pagination_signal(grounding):
                 return True
-        # Anti-redundância leve: query idêntica a goal/fact já coberto não sobe.
         covered = {
             token.casefold()
             for token in (
@@ -135,12 +250,10 @@ class ChatContextualRecommendationProducerService:
     @classmethod
     def _has_pagination_signal(cls, grounding: RecommendationGroundingContext) -> bool:
         blob = " ".join(grounding.limitations).casefold()
-        if any(
+        return any(
             token in blob
             for token in ("página", "pagina", "paginaç", "truncad", "hasmore", "parcial")
-        ):
-            return True
-        return False
+        )
 
     @classmethod
     def _dedupe_by_query(cls, items: list[dict[str, Any]]) -> list[dict[str, Any]]:

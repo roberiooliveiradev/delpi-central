@@ -1,6 +1,6 @@
 # Desacoplamento de JSONs + inteligência LLM — Minha DELPI AI
 
-**Status:** Onda A–E ATENDIDAS · Onda F EM_ANDAMENTO (E6.S1–S3) · G–H via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
+**Status:** Onda A–E ATENDIDAS · Onda F EM_ANDAMENTO (E6.S1–S4) · G–H via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
 **Escopo:** `minha-delpi-ai-api/app/content` + consumidores runtime relacionados  
 **Objetivo:** remover acoplamentos técnicos e linguísticos que impedem o chat de generalizar para novas APIs, novos domínios e formulações de linguagem natural sem manutenção rota a rota.
 
@@ -79,7 +79,7 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 |------|--------|
 | OpenAPI-first cold path | Já default — plano 01 = residual |
 | `capabilities.pathRules` | Removido — plano 04 R04-02 ATENDIDO |
-| `recommendationQueries` | Ainda authority estática — plano 06 aberto |
+| `recommendationQueries` | LEGACY_FALLBACK (E6.S4) — dual-run `recommendationDualRun` |
 | Turn Understanding | Bundle + shadow on — plano 02 |
 
 ## Fontes obrigatórias antes de executar

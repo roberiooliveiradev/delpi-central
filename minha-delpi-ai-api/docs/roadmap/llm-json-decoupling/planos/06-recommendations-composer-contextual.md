@@ -1,18 +1,18 @@
 # Plano 06 — Recommendations e composer -> sugestões contextuais grounded
 
 **Prioridade:** P1  
-**Status execução:** Onda F · E6.S1–S3 **ATENDIDO** · próxima E6.S4 · `recommendationQueries` ainda path determinístico (a rebaixar)  
-**Evidência:** [`../evidence/e6-s1-recommendations-inventory.md`](../evidence/e6-s1-recommendations-inventory.md) · [`../evidence/e6-s2-recommendation-grounding-contract.md`](../evidence/e6-s2-recommendation-grounding-contract.md) · [`../evidence/e6-s3-contextual-recommendation-producer.md`](../evidence/e6-s3-contextual-recommendation-producer.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda F · E6.S1–S4 **ATENDIDO** · próxima E6.S5 · `recommendationQueries` = LEGACY_FALLBACK  
+**Evidência:** [`../evidence/e6-s1-recommendations-inventory.md`](../evidence/e6-s1-recommendations-inventory.md) · [`../evidence/e6-s2-recommendation-grounding-contract.md`](../evidence/e6-s2-recommendation-grounding-contract.md) · [`../evidence/e6-s3-contextual-recommendation-producer.md`](../evidence/e6-s3-contextual-recommendation-producer.md) · [`../evidence/e6-s4-recommendation-queries-fallback.md`](../evidence/e6-s4-recommendation-queries-fallback.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** próximos passos e sugestões devem considerar o pedido atual, os fatos retornados, limitações, contexto multi-turn e actions permitidas, em vez de listas estáticas por profile.
 
-**HEAD revalidado:** pós-E6.S2 (`f8c2dedf4`+)
+**HEAD revalidado:** pós-E6.S3 (`6a311b8f0`+)
 
 ## EXECUTION_DRIFT (2026-09-10)
 
 | Item | Estado no código | Impacto neste plano |
 |------|------------------|---------------------|
 | Nó estático `humanized_data_response.recommendations` (lista textual) | **REMOVIDO** | Cleanup legado path→display **DONE** — não confundir com aceite deste plano |
-| `recommendationQueries` por `commentaryProfileKey` | Ainda **autoridade** no turno (`ChatDataInsightService._attach_turn_structured_recommendations`, delta LLM=0) | E6.S4 ainda necessário: rebaixar a fallback |
+| `recommendationQueries` por `commentaryProfileKey` | **LEGACY_FALLBACK** (E6.S4); dual-run em `recommendationDualRun` | Candidate contextual é autoridade; bruto só se candidate vazio |
 | Coverage 27/27 profiles | Gate D2 PASS | Prova cobertura estática, **não** relevância contextual grounded |
 | Composer | `composer_route_questions` + UX classification keywords | Ainda templates/heurística; E6.S5 aberto |
 
@@ -62,11 +62,11 @@ user goal
 
 | ID | Requisito | Estado |
 |---|---|---|
-| R06-01 | Recomendações não citam capability/action inexistente ou não autorizada | ABERTO |
-| R06-02 | Evitar recomendação redundante com o já executado no turno | ABERTO |
-| R06-03 | Reutilizar chamada LLM do turno; delta ≈ 0 quando viável | PARCIAL (hoje delta=0 via queries estáticas) |
-| R06-04 | Fallback determinístico seguro em timeout/falha | PARCIAL (`recommendationQueries` cumpre fallback) |
-| R06-05 | Composer sem LLM caro por tecla (debounce/cache) | ABERTO |
+| R06-01 | Recomendações não citam capability/action inexistente ou não autorizada | PARCIAL (actionId allowlist; query textual livre) |
+| R06-02 | Evitar recomendação redundante com o já executado no turno | PARCIAL (actionId + pagination filter) |
+| R06-03 | Reutilizar chamada LLM do turno; delta ≈ 0 quando viável | ATENDIDO (delta=0) |
+| R06-04 | Fallback determinístico seguro em timeout/falha | ATENDIDO (`profile_fallback`) |
+| R06-05 | Composer sem LLM caro por tecla (debounce/cache) | ABERTO → E6.S5 |
 
 ## Contrato alvo
 
@@ -113,11 +113,13 @@ Se houver `actionId`, deve pertencer às actions permitidas. Recommendation nunc
 
 **Teste:** malformed, unauthorized actionId, already-executed, empty, pagination sibling.
 
-### E6.S4 — Static profile queries -> fallback
+### E6.S4 — Static profile queries -> fallback — **ATENDIDO** (2026-09-10)
 
 **Fazer:** mover `recommendationQueries` de autoridade principal para **LEGACY_FALLBACK**; medir divergência candidate vs static.
 
-**Pronto quando:** candidate cobre profiles importantes sem aumentar false suggestions.
+**Feito:** `produce_with_dual_run` + `recommendationDualRun` no commentary; path profile-derived com `falseSuggestionCount=0` em 13/13 profiles; bruto só se candidate vazio (`source=profile_fallback`).
+
+**Pronto quando:** candidate cobre profiles importantes sem aumentar false suggestions — **PASS**.
 
 ### E6.S5 — Composer contextual
 

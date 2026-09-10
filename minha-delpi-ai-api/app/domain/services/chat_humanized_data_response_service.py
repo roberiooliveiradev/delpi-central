@@ -577,7 +577,19 @@ class ChatHumanizedDataResponseService:
         queries = ChatHumanizedDataResponseContentService.recommendation_queries(profile_key)
 
         if queries:
-            return queries
+            # E6.S4 — recommendationQueries só como LEGACY_FALLBACK neste consumer.
+            return [
+                {
+                    "label": str(item.get("label") or "").strip(),
+                    "query": str(item.get("query") or "").strip(),
+                    "reason": str(item.get("reason") or "").strip(),
+                    "source": "profile_fallback",
+                    "confidence": 0.4,
+                }
+                for item in queries
+                if str(item.get("label") or "").strip()
+                and str(item.get("query") or "").strip()
+            ]
 
         texts = cls._build_recommendations(
             commentary,

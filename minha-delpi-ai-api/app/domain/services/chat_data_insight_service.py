@@ -237,17 +237,18 @@ class ChatDataInsightService:
         existing = commentary.get("structuredRecommendations")
         existing_list = existing if isinstance(existing, list) and existing else None
 
-        produced = ChatContextualRecommendationProducerService.produce(
+        produced = ChatContextualRecommendationProducerService.produce_with_dual_run(
             grounding=grounding,
             profile_queries=ChatHumanizedDataResponseContentService.recommendation_queries(
                 str(profile_key or "").strip()
             ),
             existing_candidates=existing_list,
         )
-        if not produced:
+        if not produced.items:
             return
 
-        commentary["structuredRecommendations"] = produced
+        commentary["structuredRecommendations"] = produced.as_items()
+        commentary["recommendationDualRun"] = produced.dual_run.as_dict()
 
         allowed = meta.get("allowedActionIds") or meta.get("allowedActions")
         if isinstance(allowed, (list, set, tuple)) and "allowedActionIds" not in commentary:
