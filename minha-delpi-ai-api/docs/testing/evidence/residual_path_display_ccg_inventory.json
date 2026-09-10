@@ -11,7 +11,7 @@
     "data_interpretation_pathTitles": 5
   },
   "cutover_incomplete": {
-    "action_labels": "pathLabels still editorial override in default mode",
+    "action_labels": "CUTOVER+CLEANUP PASS (E1)",
     "titles": "legacy_title from fragment/kpi/pathTitles still wins",
     "stack_plan": "full routeTitles/routeFraming dump",
     "mfe": "routeTitle(routeKey) + SECTION_BASE domain fallbacks",
@@ -24,5 +24,16 @@
   "out_of_scope_routing": [
     "presentation_profiles.pathRules",
     "pathContains prioritization"
-  ]
+  ],
+  "e1_s3_cleanup": {
+    "pathLabels_removed": true,
+    "englishSummaries_removed": true,
+    "ACTION_DISPLAY_LABEL_MODE_removed": true,
+    "catalog_counts_after": {
+      "pathLabels": 0,
+      "englishSummaries": 0,
+      "api_paths_defaults_only": true
+    },
+    "git_sha_note": "updated after E1.S3 commit"
+  }
 }

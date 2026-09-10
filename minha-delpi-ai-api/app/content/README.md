@@ -45,7 +45,7 @@ Arquivos em `labels/`:
 
 | Arquivo | Uso |
 |---------|-----|
-| `api_paths.json` | ~84 rotas reais do **api-delpi** → rótulos PT em tool calls e capacidades |
+| `api_paths.json` | Defaults de rótulo técnico (`authorizedQuery`); labels de action vêm de OpenAPI/`x-delpi.locale` via `ActionDisplayLabelResolver` |
 
 **Typos:** regras estáticas em `assistant/typing_correction_rules.json` (159 regras, jun/2026 — P14-0); carregadas em `ChatMessageNormalizationService` no composition root. Typos de frases utilitárias/small talk → JSON dedicado e/ou normalização.
 

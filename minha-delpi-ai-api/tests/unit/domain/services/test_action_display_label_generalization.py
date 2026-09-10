@@ -13,7 +13,6 @@ from app.domain.services.action_display_label_resolver import (
 
 
 def test_gen_first_party_locale_pt_br(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
     result = ActionDisplayLabelResolver.resolve(
         path="/commercial/closing-rate",
         method="GET",
@@ -28,7 +27,6 @@ def test_gen_first_party_locale_pt_br(monkeypatch):
 
 
 def test_gen_external_summary_already_pt(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
     result = ActionDisplayLabelResolver.resolve(
         path="/widgets/{id}/stock",
         method="GET",
@@ -41,7 +39,6 @@ def test_gen_external_summary_already_pt(monkeypatch):
 
 
 def test_gen_external_summary_en_llm_off_humanize(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
     ActionDisplayLabelResolver.configure(llm_localizer=None, cache_get=None, cache_put=None)
     result = ActionDisplayLabelResolver.resolve(
         path="/widgets/{id}/things",
@@ -53,14 +50,12 @@ def test_gen_external_summary_en_llm_off_humanize(monkeypatch):
     assert result.source in {
         SOURCE_DETERMINISTIC_HUMANIZE,
         SOURCE_TECHNICAL_FALLBACK,
-        "ENGLISH_SUMMARY_MAP",
     }
     assert result.label
     assert result.source != "LEGACY_PATH_LABEL"
 
 
 def test_gen_empty_summary_technical_fallback(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
     result = ActionDisplayLabelResolver.resolve(
         path="/unknown/xyz",
         method="GET",
@@ -73,7 +68,6 @@ def test_gen_empty_summary_technical_fallback(monkeypatch):
 
 
 def test_gen_llm_cache_hit_and_miss(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
     store: dict[str, str] = {}
 
     def cache_get(key: str) -> str | None:
@@ -122,7 +116,6 @@ def test_gen_llm_cache_hit_and_miss(monkeypatch):
 
 
 def test_gen_metamorphic_provider_path_operation_rename(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
     summary = "Consultar disponibilidade de item"
     a = ActionDisplayLabelResolver.resolve(
         path="/v1/widgets/{id}/availability",
@@ -143,7 +136,6 @@ def test_gen_metamorphic_provider_path_operation_rename(monkeypatch):
 
 
 def test_gen_unknown_provider_without_x_delpi(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
     result = ActionDisplayLabelResolver.resolve(
         path="/fleet/vehicles/{vin}/telemetry",
         method="GET",
@@ -154,5 +146,10 @@ def test_gen_unknown_provider_without_x_delpi(monkeypatch):
     )
     assert result.label
     assert result.source != "LEGACY_PATH_LABEL"
-    # Sem cadastro manual: humanize/LLM/fallback genérico
-    assert "telemetry" in result.label.casefold() or "vehicle" in result.label.casefold() or result.label
+    assert (
+        "telemetry" in result.label.casefold()
+        or "vehicle" in result.label.casefold()
+        or "veículo" in result.label.casefold()
+        or "telemetria" in result.label.casefold()
+        or result.label
+    )

@@ -57,7 +57,6 @@ def _warn(label: str, detail: str) -> None:
 
 
 def _phase_inprocess() -> None:
-    os.environ.setdefault("ACTION_DISPLAY_LABEL_MODE", "default")
     os.environ.setdefault("PRESENTATION_TITLE_MODE", "default")
 
     from app.composition.content_composer import configure_domain_infrastructure_ports
@@ -68,7 +67,6 @@ def _phase_inprocess() -> None:
         SOURCE_OPENAPI_SUMMARY,
         ActionDisplayLabelResolver,
     )
-    from app.domain.services.chat_action_label_service import ChatActionLabelService
     from app.domain.services.chat_data_insight_service import ChatDataInsightService
     from app.domain.services.chat_humanized_data_response_service import (
         ChatHumanizedDataResponseService,
@@ -121,19 +119,18 @@ def _phase_inprocess() -> None:
     else:
         _ok("action_label_en_locale", en.label)
 
-    # LLM-off / sem locale: bridge englishSummaries ou humanize (nunca pathLabels)
+    # LLM-off / sem locale: humanize determinístico (nunca pathLabels)
     en_bridge = ActionDisplayLabelResolver.resolve(
         path="/products/{code}/customers",
         method="GET",
         summary="Customers",
     )
-    if en_bridge.source == "LEGACY_PATH_LABEL":
-        _fail("action_label_no_path_labels_default", en_bridge.label)
-    elif "Clientes" not in en_bridge.label:
-        _fail("action_label_en_bridge", f"{en_bridge.source}:{en_bridge.label!r}")
+    if en_bridge.source in {"LEGACY_PATH_LABEL", "ENGLISH_SUMMARY_MAP"}:
+        _fail("action_label_no_legacy_catalogs", f"{en_bridge.source}:{en_bridge.label}")
+    elif "cliente" not in en_bridge.label.casefold():
+        _fail("action_label_en_humanize", f"{en_bridge.source}:{en_bridge.label!r}")
     else:
-        _ok("action_label_en_bridge", f"{en_bridge.source}:{en_bridge.label}")
-
+        _ok("action_label_en_humanize", f"{en_bridge.source}:{en_bridge.label}")
     # Unknown API sem api_paths
     unknown = ActionDisplayLabelResolver.resolve(
         path="/acme/widgets/{id}/inventory",

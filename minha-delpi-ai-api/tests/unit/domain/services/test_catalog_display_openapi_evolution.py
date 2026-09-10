@@ -5,11 +5,9 @@ from __future__ import annotations
 import os
 
 from app.domain.services.action_display_label_resolver import (
-    SOURCE_LEGACY_PATH_LABEL,
     SOURCE_OPENAPI_SUMMARY,
     ActionDisplayLabelResolver,
 )
-from app.domain.services.chat_action_label_service import ChatActionLabelService
 from app.domain.services.chat_humanized_data_response_service import (
     ChatHumanizedDataResponseService,
 )
@@ -24,8 +22,7 @@ from app.domain.services.result_presentation_title_resolver import (
 )
 
 
-def test_action_display_prefers_portuguese_summary_over_path_label(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
+def test_action_display_prefers_portuguese_summary(monkeypatch):
     result = ActionDisplayLabelResolver.resolve(
         path="/products/{code}/stock",
         method="GET",
@@ -35,19 +32,7 @@ def test_action_display_prefers_portuguese_summary_over_path_label(monkeypatch):
     assert result.source == SOURCE_OPENAPI_SUMMARY
 
 
-def test_action_display_legacy_mode_keeps_path_label_first(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "legacy")
-    result = ActionDisplayLabelResolver.resolve(
-        path="/products/{code}/stock",
-        method="GET",
-        summary="Consultar estoque do produto por filial",
-    )
-    assert "Estoque" in result.label
-    assert result.source == SOURCE_LEGACY_PATH_LABEL
-
-
 def test_action_display_english_summary_uses_locale_not_path_label(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
     result = ActionDisplayLabelResolver.resolve(
         path="/commercial/closing-rate",
         method="GET",
@@ -60,8 +45,7 @@ def test_action_display_english_summary_uses_locale_not_path_label(monkeypatch):
     assert result.source == "OPENAPI_LOCALIZED"
 
 
-def test_action_display_default_does_not_prefer_path_label_over_locale(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
+def test_action_display_locale_beats_english_summary(monkeypatch):
     result = ActionDisplayLabelResolver.resolve(
         path="/products/{code}/stock",
         method="GET",
@@ -72,11 +56,9 @@ def test_action_display_default_does_not_prefer_path_label_over_locale(monkeypat
     )
     assert result.source == "OPENAPI_LOCALIZED"
     assert "Consultar estoque" in result.label
-    assert result.source != SOURCE_LEGACY_PATH_LABEL
 
 
 def test_action_display_unknown_api_without_path_label(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
     result = ActionDisplayLabelResolver.resolve(
         path="/acme/widgets/{id}/inventory",
         method="GET",
@@ -85,11 +67,10 @@ def test_action_display_unknown_api_without_path_label(monkeypatch):
         provider_key="acme-erp",
     )
     assert result.label
-    assert "Widget" in result.label or "inventory" in result.label.lower() or result.label
+    assert result.source != "LEGACY_PATH_LABEL"
 
 
 def test_action_display_metamorphic_rename_same_summary(monkeypatch):
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
     summary = "Consultar disponibilidade de item"
     a = ActionDisplayLabelResolver.resolve(
         path="/v1/widgets/{id}/availability",
@@ -130,7 +111,6 @@ def test_presentation_title_prefers_slot_then_metadata(monkeypatch):
 
 def test_presentation_title_falls_back_to_action_label(monkeypatch):
     monkeypatch.setenv("PRESENTATION_TITLE_MODE", "default")
-    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
     resolved = ResultPresentationTitleResolver.resolve(
         path="/acme/widgets",
         summary="Lista de widgets",

@@ -23,26 +23,6 @@ _ENGLISH_SUMMARY_PREFIXES = (
 
 
 @lru_cache(maxsize=1)
-def _path_labels() -> tuple[tuple[str, str], ...]:
-    data = ChatLabelContentService.load("api_paths")
-    items = data.get("pathLabels") or []
-    return tuple(
-        (str(item["path"]), str(item["label"]))
-        for item in items
-        if isinstance(item, dict) and item.get("path") and item.get("label")
-    )
-
-
-@lru_cache(maxsize=1)
-def _english_exact_summaries() -> dict[str, str]:
-    data = ChatLabelContentService.load("api_paths")
-    raw = data.get("englishSummaries") or {}
-    if not isinstance(raw, dict):
-        return {}
-    return {str(key).casefold(): str(value) for key, value in raw.items()}
-
-
-@lru_cache(maxsize=1)
 def _default_authorized_query_label() -> str:
     data = ChatLabelContentService.load("api_paths")
     defaults = data.get("defaults") or {}
@@ -107,68 +87,6 @@ class ChatActionLabelService:
         )
 
     @classmethod
-    def _lookup_english_summary(cls, summary: str) -> str | None:
-        """Bridge map for EN OpenAPI summaries until E1.S3 removes englishSummaries."""
-        english_summaries = _english_exact_summaries()
-        lowered = str(summary or "").casefold().strip()
-        if not lowered:
-            return None
-
-        if lowered in english_summaries:
-            return english_summaries[lowered]
-
-        remainder = lowered
-        for prefix in _ENGLISH_SUMMARY_PREFIXES:
-            if remainder.startswith(prefix):
-                remainder = remainder[len(prefix) :].strip(" .")
-                break
-
-        if remainder and remainder in english_summaries:
-            return english_summaries[remainder]
-
-        best_label: str | None = None
-        best_len = 0
-        for key, label in english_summaries.items():
-            if key and key in lowered and len(key) > best_len:
-                best_label = label
-                best_len = len(key)
-        return best_label
-
-    @classmethod
-    def _label_from_path(cls, path: str) -> str | None:
-        if not path:
-            return None
-
-        normalized = path.strip().lower().rstrip("/") or "/"
-        if not normalized.startswith("/"):
-            normalized = f"/{normalized}"
-
-        for pattern, label in _path_labels():
-            if cls._path_matches_pattern(normalized, pattern.lower()):
-                return label
-
-        return None
-
-    @classmethod
-    def _path_matches_pattern(cls, path: str, pattern: str) -> bool:
-        def segments(value: str) -> list[str]:
-            return [seg for seg in value.strip("/").lower().split("/") if seg]
-
-        path_parts = segments(path)
-        pattern_parts = segments(pattern)
-
-        if len(path_parts) != len(pattern_parts):
-            return False
-
-        for path_seg, pattern_seg in zip(path_parts, pattern_parts):
-            if pattern_seg.startswith("{") and pattern_seg.endswith("}"):
-                continue
-            if path_seg != pattern_seg:
-                return False
-
-        return True
-
-    @classmethod
     def _label_from_path_tail(cls, path: str, method: str) -> str | None:
         if not path:
             return None
@@ -212,13 +130,37 @@ class ChatActionLabelService:
 
     @classmethod
     def _looks_english(cls, text: str) -> bool:
-        english_summaries = _english_exact_summaries()
         lowered = text.casefold().strip()
         if not lowered:
             return True
 
-        if lowered in english_summaries:
-            return True
+        pt_markers = (
+            "consultar",
+            "listar",
+            "buscar",
+            "estoque",
+            "produto",
+            "filial",
+            " inventário",
+            "inventario",
+            "resumo",
+            "painel",
+            "roteiro",
+            "inspeção",
+            "inspecao",
+            " estrutura",
+            " fornecedor",
+            " cliente",
+            " do ",
+            " da ",
+            " dos ",
+            " das ",
+            " por ",
+            " para ",
+            " com ",
+        )
+        if any(marker in lowered for marker in pt_markers):
+            return False
 
         if any(lowered.startswith(prefix) for prefix in _ENGLISH_SUMMARY_PREFIXES):
             return True
@@ -249,6 +191,11 @@ class ChatActionLabelService:
             "snapshot",
             "orders",
             "products",
+            "inventory",
+            "telemetry",
+            "warehouse",
+            "widget",
+            "widgets",
         )
         if any(token in lowered for token in en_tokens):
             return True
@@ -292,6 +239,10 @@ class ChatActionLabelService:
             "business": "negócios",
             "clients": "clientes",
             "client": "cliente",
+            "customers": "clientes",
+            "customer": "cliente",
+            "suppliers": "fornecedores",
+            "supplier": "fornecedor",
             "average": "média",
             "commercial": "comercial",
             "series": "série",
@@ -335,6 +286,20 @@ class ChatActionLabelService:
             "processes": "processos",
             "health": "saúde",
             "root": "raiz",
+            "product": "produto",
+            "stock": "estoque",
+            "schema": "schema",
+            "table": "tabela",
+            "dashboard": "painel",
+            "fabril": "fabril",
+            "eficiencia": "eficiência",
+            "things": "itens",
+            "widget": "widget",
+            "widgets": "widgets",
+            "inventory": "inventário",
+            "warehouse": "depósito",
+            "vehicle": "veículo",
+            "telemetry": "telemetria",
         }
 
         translated: list[str] = []

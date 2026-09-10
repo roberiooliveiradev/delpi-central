@@ -11,18 +11,12 @@ def test_load_capabilities_json():
     assert "traduzidos" in body
 
 
-def test_load_api_path_labels():
+def test_load_api_paths_defaults_only():
     data = ContentService.load_json("labels/api_paths")
-    paths = {item["path"] for item in (data.get("pathLabels") or [])}
-    assert len(paths) >= 80
-    assert "/commercial/proposals" in paths
-    assert "/production/oee/series" in paths
-    assert "/production/oee/appointments/{id}" in paths
-    assert "/production/oee" in paths
-    assert "/production/eficiencia-fabril/dashboard" in paths
-    assert "/system/tables/{tablename}/schema" in paths
-    assert "/commercial/billing" not in paths
-    assert "/chat/sessions" not in paths
+    assert "pathLabels" not in data or not data.get("pathLabels")
+    assert "englishSummaries" not in data or not data.get("englishSummaries")
+    defaults = data.get("defaults") or {}
+    assert defaults.get("authorizedQuery") == "Consulta autorizada"
 
 
 def test_stream_session_title_default():

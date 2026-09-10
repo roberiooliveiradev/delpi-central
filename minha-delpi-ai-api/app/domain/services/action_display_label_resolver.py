@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import logging
-import os
 from dataclasses import dataclass
 from typing import Callable
 
@@ -12,13 +11,9 @@ logger = logging.getLogger(__name__)
 
 SOURCE_OPENAPI_SUMMARY = "OPENAPI_SUMMARY"
 SOURCE_OPENAPI_LOCALIZED = "OPENAPI_LOCALIZED"
-SOURCE_LEGACY_PATH_LABEL = "LEGACY_PATH_LABEL"
-SOURCE_ENGLISH_SUMMARY_MAP = "ENGLISH_SUMMARY_MAP"
 SOURCE_DETERMINISTIC_HUMANIZE = "DETERMINISTIC_HUMANIZE"
 SOURCE_TECHNICAL_FALLBACK = "TECHNICAL_FALLBACK"
 SOURCE_LLM_LOCALIZATION = "LLM_LOCALIZATION"
-
-_MODE_ENV = "ACTION_DISPLAY_LABEL_MODE"
 
 
 @dataclass(frozen=True)
@@ -30,13 +25,7 @@ class ActionDisplayLabelResult:
 
 
 class ActionDisplayLabelResolver:
-    """Cascata canônica (default): locale → summary PT → LLM/cache → humanize → id.
-
-    Modos (`ACTION_DISPLAY_LABEL_MODE`):
-    - ``legacy``: pathLabels primeiro (rollback temporário; EXIT = E1.S3)
-    - ``shadow``: UX legacy; calcula candidato canônico para telemetria
-    - ``default``: sem pathLabels; englishSummaries só como ponte até E1.S3
-    """
+    """Cascata: locale → summary PT → LLM/cache → humanize → id técnico."""
 
     _llm_localizer: Callable[..., str | None] | None = None
     _cache_get: Callable[[str], str | None] | None = None
@@ -55,13 +44,6 @@ class ActionDisplayLabelResolver:
         cls._cache_put = cache_put
 
     @classmethod
-    def mode(cls) -> str:
-        token = str(os.environ.get(_MODE_ENV) or "default").strip().lower()
-        if token in {"legacy", "shadow", "default"}:
-            return token
-        return "default"
-
-    @classmethod
     def resolve(
         cls,
         *,
@@ -74,14 +56,6 @@ class ActionDisplayLabelResolver:
         locale: str = "pt-BR",
         delpi_metadata: dict | None = None,
     ) -> ActionDisplayLabelResult:
-        from app.domain.services.chat_action_label_service import ChatActionLabelService
-
-        legacy = cls._resolve_legacy(
-            path=path,
-            method=method,
-            summary=summary,
-            action_id=action_id,
-        )
         candidate = cls._resolve_canonical(
             path=path,
             method=method,
@@ -92,44 +66,6 @@ class ActionDisplayLabelResolver:
             locale=locale,
             delpi_metadata=delpi_metadata,
         )
-
-        current_mode = cls.mode()
-
-        if current_mode == "legacy":
-            return ActionDisplayLabelResult(label=legacy.label, source=legacy.source)
-
-        if current_mode == "shadow":
-            if legacy.label != candidate.label or legacy.source != candidate.source:
-                logger.info(
-                    "action_display_label_shadow_diff",
-                    extra={
-                        "path": path,
-                        "actionId": action_id,
-                        "legacyLabel": legacy.label,
-                        "legacySource": legacy.source,
-                        "candidateLabel": candidate.label,
-                        "candidateSource": candidate.source,
-                    },
-                )
-                try:
-                    from app.domain.services.catalog_display_observability_service import (
-                        CatalogDisplayObservabilityService,
-                    )
-
-                    CatalogDisplayObservabilityService.record_action_label(
-                        source=legacy.source,
-                        path=path,
-                        provider_key=provider_key,
-                        shadow_diff=True,
-                    )
-                except Exception:
-                    pass
-            return ActionDisplayLabelResult(
-                label=legacy.label,
-                source=legacy.source,
-                shadow_label=candidate.label,
-                shadow_source=candidate.source,
-            )
 
         try:
             from app.domain.services.catalog_display_observability_service import (
@@ -146,29 +82,6 @@ class ActionDisplayLabelResolver:
             pass
 
         return candidate
-
-    @classmethod
-    def _resolve_legacy(
-        cls,
-        *,
-        path: str,
-        method: str,
-        summary: str,
-        action_id: str,
-    ) -> ActionDisplayLabelResult:
-        from app.domain.services.chat_action_label_service import ChatActionLabelService
-
-        path_label = ChatActionLabelService._label_from_path(path)
-        if path_label:
-            return ActionDisplayLabelResult(label=path_label, source=SOURCE_LEGACY_PATH_LABEL)
-
-        return cls._resolve_after_path_label(
-            path=path,
-            method=method,
-            summary=summary,
-            action_id=action_id,
-            prefer_summary_first=False,
-        )
 
     @classmethod
     def _resolve_canonical(
@@ -210,23 +123,21 @@ class ActionDisplayLabelResolver:
             if cached:
                 return cached
 
-        return cls._resolve_after_path_label(
+        return cls._resolve_fallback(
             path=path,
             method=method,
             summary=summary,
             action_id=action_id,
-            prefer_summary_first=False,
         )
 
     @classmethod
-    def _resolve_after_path_label(
+    def _resolve_fallback(
         cls,
         *,
         path: str,
         method: str,
         summary: str,
         action_id: str,
-        prefer_summary_first: bool,
     ) -> ActionDisplayLabelResult:
         from app.domain.services.chat_action_label_service import (
             ChatActionLabelService,
@@ -234,16 +145,6 @@ class ActionDisplayLabelResolver:
         )
 
         raw = str(summary or "").strip()
-
-        if prefer_summary_first and raw and not ChatActionLabelService._looks_english(raw):
-            return ActionDisplayLabelResult(label=raw, source=SOURCE_OPENAPI_SUMMARY)
-
-        mapped = ChatActionLabelService._lookup_english_summary(raw)
-        if mapped:
-            return ActionDisplayLabelResult(
-                label=mapped,
-                source=SOURCE_ENGLISH_SUMMARY_MAP,
-            )
 
         if raw and not ChatActionLabelService._looks_english(raw):
             return ActionDisplayLabelResult(label=raw, source=SOURCE_OPENAPI_SUMMARY)
@@ -324,7 +225,6 @@ class ActionDisplayLabelResolver:
         schema_hash: str,
         locale: str,
     ) -> ActionDisplayLabelResult | None:
-        # Localization is universal: first-party EN without locale + external providers.
         key = cls.cache_key(
             provider_key=provider_key or "unknown",
             action_id=action_id or path,
