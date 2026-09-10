@@ -487,7 +487,7 @@
     },
     "tableHeadersHelp": {
       "title": "**Cabeçalhos de tabela**",
-      "body": "Os títulos das colunas são **rótulos em português**, não os nomes técnicos do cadastro (ex.: «MANDATORY CC PC»). Quando a API já traz um título no contrato (OpenAPI / meta.fields), esse título prevalece. Os demais campos apresentados são traduzidos automaticamente para um cabeçalho curto. **Nomes de consultas/actions** no catálogo de capacidades seguem o summary do Action Catalog (locale OpenAPI) — não um mapa paralelo de paths. **Números** saem formatados em pt-BR (moeda, percentual, data, quantidade e flags Sim/Não). Códigos, NCM e descrições **não** são traduzidos."
+      "body": "Os títulos das colunas são **rótulos em português**, não os nomes técnicos do cadastro (ex.: «MANDATORY CC PC»). Quando a API já traz um título no contrato (OpenAPI / meta.fields), esse título prevalece. Os demais campos apresentados são traduzidos automaticamente para um cabeçalho curto. **Nomes de consultas/actions** no catálogo de capacidades seguem o summary do Action Catalog (locale OpenAPI) — não um mapa paralelo de paths. **Títulos de rota/seção** na resposta rica vêm do plano de apresentação da API (`stackPresentationPlan`); o chat não inventa título por fragmento de path no MFE. **Números** saem formatados em pt-BR (moeda, percentual, data, quantidade e flags Sim/Não). Códigos, NCM e descrições **não** são traduzidos."
     },
     "attachmentHelp": {
       "title": "**Anexos e arquivos**",

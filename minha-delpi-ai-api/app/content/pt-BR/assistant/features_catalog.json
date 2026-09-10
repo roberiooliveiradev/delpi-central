@@ -1,6 +1,6 @@
 {
-  "version": "2026.09.09",
-  "updatedAt": "2026-09-09T18:32:00Z",
+  "version": "2026.09.10",
+  "updatedAt": "2026-09-10T12:00:00Z",
   "features": [
     {
       "id": "capabilities_overview",
@@ -18,7 +18,9 @@
         "Pergunte em linguagem natural.",
         "Use os chips Explorar após a resposta.",
         "Rótulos de colunas e campos nas tabelas/gráficos vêm do contrato OpenAPI/meta e do FieldLabelBundle — a prosa não inventa nomes diferentes dos cabeçalhos.",
-        "Rótulos de actions no catálogo seguem o summary do Action Catalog (locale), não um JSON de paths paralelo."
+        "Rótulos de actions no catálogo seguem o summary do Action Catalog (locale OpenAPI), não um JSON de paths paralelo.",
+        "Títulos e framing de rota na resposta multi-view vêm do `stackPresentationPlan` materializado pela API; o MFE só renderiza (sem catálogo local path→título).",
+        "Sugestões de próximos passos estruturados (`structuredRecommendations`) saem do turno da resposta e passam por allowlist — não executam action fora do planner/RBAC."
       ],
       "relatedFeatures": [
         "web_search",

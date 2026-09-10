@@ -1,0 +1,27 @@
+{
+  "stage": "E18.S2_partial_residual_7f3a9c21",
+  "generated_at": "2026-09-10T06:08:43.359291+00:00",
+  "PLAN_STALE": "~/.cursor/plans/residual_path_catalogs_cleanup_7f3a9c21.plan.md",
+  "PLAN_AUTHORITY": "~/.cursor/plans/residual_path_display_cleanup_28b9adee.plan.md + revalidated residual of 7f3a9c21",
+  "IMPLEMENTED_RESIDUAL": {
+    "E11_locale_inventory": "PASS_missing_0",
+    "E13_S3_mfe_mirrors": "PASS",
+    "E13_S4_scopes_sync": "PASS",
+    "E14_capabilityGroup": "SUPERSEDED_KEEP_pathRules",
+    "E16_producer": "PASS_deterministic_delta0",
+    "E18_S1_help": "PASS_features_catalog_capabilities",
+    "W_ROUTING": "PASS_charter_and_child_plan"
+  },
+  "STILL_OUT_OF_SCOPE_OR_DEBT": [
+    "capabilities.pathRules KEEP (no capabilityGroup)",
+    "live send/stream/F5 surfaces",
+    "static recommendations JSON cleanup deferred",
+    "en==pt locale stub polish (28 ops) not display residual"
+  ],
+  "TESTS": {
+    "test_chat_data_insight_service_recs": "4 passed",
+    "presentationRenderOnly": "6 passed"
+  },
+  "HELP_UPDATED": true,
+  "FINAL_RESULT_NOTE": "Residual válido de 7f3a9c21 fechado; capabilityGroup e live surfaces não reabertos"
+}

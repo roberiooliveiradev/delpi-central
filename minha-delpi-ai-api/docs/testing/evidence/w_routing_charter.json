@@ -1,0 +1,89 @@
+{
+  "stage": "W-ROUTING.S0",
+  "generated_at": "2026-09-10T06:05:46.117728+00:00",
+  "purpose": "Charter for pathMarkers / operational route registry cleanup — OUT OF SCOPE for residual path→display kill",
+  "prohibition": [
+    "Do not mix pathMarkers migration with display catalog cleanup",
+    "Do not delete pathMarkers while display work is open",
+    "Do not introduce capabilityGroup as routing substitute",
+    "Display plans must not edit operational_route_registry*"
+  ],
+  "inventory_files": [
+    "app/content/pt-BR/assistant/operational_route_registry.json",
+    "app/content/pt-BR/assistant/operational_route_registry_autotierc.ci.json",
+    "app/content/pt-BR/assistant/external_action_responses.json",
+    "app/domain/services/operational_route_registry_service.py",
+    "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py",
+    "app/domain/services/chat_operational_narrative_synthesis_service.py",
+    "app/domain/services/chat_grounded_capability_planning_service.py",
+    ".cursor/rules/openapi-first-universal-tool-routing.mdc",
+    ".cursor/rules/operational-api-routing.mdc"
+  ],
+  "registry_routes_with_pathMarkers": 80,
+  "sample_pathMarkers": [
+    {
+      "index": 0,
+      "intent": null,
+      "pathMarkers": [
+        "/directives/"
+      ]
+    },
+    {
+      "index": 1,
+      "intent": null,
+      "pathMarkers": [
+        "exclusive-raw-materials/catalog",
+        "/structure/exclusivity/catalog"
+      ]
+    },
+    {
+      "index": 2,
+      "intent": null,
+      "pathMarkers": [
+        "raw-material-price-intelligence"
+      ]
+    },
+    {
+      "index": 3,
+      "intent": null,
+      "pathMarkers": [
+        "cost-impact-simulation"
+      ]
+    },
+    {
+      "index": 4,
+      "intent": null,
+      "pathMarkers": [
+        "production-status"
+      ]
+    },
+    {
+      "index": 5,
+      "intent": null,
+      "pathMarkers": [
+        "shipping-status"
+      ]
+    },
+    {
+      "index": 6,
+      "intent": null,
+      "pathMarkers": [
+        "/structure/exclusivity"
+      ]
+    },
+    {
+      "index": 7,
+      "intent": null,
+      "pathMarkers": [
+        "factory-status"
+      ]
+    }
+  ],
+  "risk": [
+    "Changing pathMarkers without planner/retrieval evals breaks operational routing",
+    "Shadow catch-alls (domainProductSearch) can hide missing markers",
+    "Display path fragment maps are NOT the same concept — do not conflate"
+  ],
+  "child_plan": "~/.cursor/plans/w_routing_pathmarkers_a1b2c3d4.plan.md",
+  "status": "CHARTER_COMPLETE_NO_PRODUCT_DIFF"
+}
