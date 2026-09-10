@@ -1,0 +1,29 @@
+{
+  "runId": "e9-s1-corpus-v1",
+  "wave": "H",
+  "planStep": "E9.S1",
+  "program": "llm-json-decoupling",
+  "role": "CORPUS_FREEZE",
+  "immutable": true,
+  "timestamp": "2026-09-10T19:49:46Z",
+  "gitSha": "9ae63f8b2689d184e8b8c53b6cdbda5653ffd77e",
+  "environment": "host-offline",
+  "datasetVersion": "intelligence_baseline/r1_r11_corpus_v1",
+  "datasetHash": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8",
+  "ondaABaselineRunId": "0249db78-d6fd-45b3-84bf-d11abcd17a6a",
+  "ondaABaselineUntouched": true,
+  "coverage": {
+    "classesRequired": 20,
+    "classesPresent": 20,
+    "offlineOnly": true,
+    "liveLlm": false
+  },
+  "openApiSchemaHash": "PENDING_RUNTIME",
+  "actionCatalogHash": "PENDING_RUNTIME",
+  "modelProvider": "not_invoked_offline",
+  "model": "n/a",
+  "notes": [
+    "Corpus index freeze for E9.S1 \u2014 full R1-R11 baseline execution is E9.S2.",
+    "Does not mutate onda-a-baseline manifest."
+  ]
+}

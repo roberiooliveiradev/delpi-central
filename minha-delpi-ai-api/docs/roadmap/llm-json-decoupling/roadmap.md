@@ -147,9 +147,9 @@ Plano 06 S1–S6: recommendations contextuais + composer budget-safe; `recommend
 
 Planos 07+08 fechados (schema-first presentation + skills/help residual + audit gate). Próximo: plano 09 / Onda H.
 
-### Onda H — cutover e limpeza — **CONTÍNUO**
+### Onda H — cutover e limpeza — **EM_ANDAMENTO** (E9.S1 ATENDIDO)
 
-Executar plano 09. Remover registries, predicates e mappings mortos somente após evidência de equivalência/superioridade. Ampliar corpus/hashes runtime a partir do freeze Onda A.
+Corpus R1–R11 v1 congelado (20/20 classes). Próximo: E9.S2 baseline no mesmo dataset. Remover legado somente após gates E9.S6.
 
 ## 6. Métricas obrigatórias
 

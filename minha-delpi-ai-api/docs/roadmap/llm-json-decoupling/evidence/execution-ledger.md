@@ -15,7 +15,7 @@
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
 | G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
-| H — cutover/cleanup | 09 | **CONTÍNUO** | E9.S1 corpus ampliado | Não remover legado sem gates |
+| H — cutover/cleanup | 09 | **EM_ANDAMENTO** | E9.S2 | E9.S1 corpus v1 20/20; Onda A intacta |
 
 ## Protocolo por subetapa
 
@@ -127,3 +127,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | E8.S5 **ATENDIDO** — audit gate assistant technical duplication |
 | 2026-09-10 | E8.S6 **ATENDIDO** — cleanup documental content README |
 | 2026-09-10 | Plano 08 / Onda G **ATENDIDO** — próxima plano 09 / Onda H |
+| 2026-09-10 | E9.S1 **ATENDIDO** — corpus R1–R11 v1 (20 classes) + manifesto imutável |
+| 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S2 (baseline R1–R11) |

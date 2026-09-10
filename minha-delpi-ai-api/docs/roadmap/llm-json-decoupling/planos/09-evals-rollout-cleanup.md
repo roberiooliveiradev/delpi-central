@@ -1,8 +1,8 @@
 # Plano 09 — Evals, rollout, cutover e cleanup final
 
 **Prioridade:** transversal  
-**Status execução:** Onda H contínua · Onda A freeze parcial feito · próxima = E9.S1 corpus ampliado + hashes runtime  
-**Evidência:** [`../evidence/onda-a-baseline/manifest.json`](../evidence/onda-a-baseline/manifest.json) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda H · E9.S1 **ATENDIDO** · próxima E9.S2  
+**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s1-corpus-v1/manifest.json`](../evidence/e9-s1-corpus-v1/manifest.json) · [`../evidence/onda-a-baseline/manifest.json`](../evidence/onda-a-baseline/manifest.json) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** cada migração de catálogo/heurística para OpenAPI/LLM deve provar melhora generalizável, preservar segurança e só então remover legado.
 
 ## Fonte de verdade
@@ -30,13 +30,13 @@ Não usar scripts isolados ou smokes históricos como critério final de release
 
 ## Etapas
 
-### E9.S1 — Dataset e manifesto imutável — **PARCIAL** (Onda A)
+### E9.S1 — Dataset e manifesto imutável — **ATENDIDO** (2026-09-10)
 
-**Feito (2026-09-10):** manifesto em [`../evidence/onda-a-baseline/manifest.json`](../evidence/onda-a-baseline/manifest.json) com `runId`, `gitSha`, `datasetHash`, content hashes, harness 6/6 + matrix 25.
+**Feito (Onda A):** manifesto estreito `routing_cases@v1` (6 casos) — **imutável**.
 
-**Pendente:** corpus R1–R11 completo; `openApiSchemaHash` / `actionCatalogHash` / model hashes em runtime; layout espelho em `docs/testing/evidence/runs/` se desejado pelo protocolo canônico.
+**Feito (E9.S1):** corpus ampliado `r1_r11_corpus_v1` com **20/20** classes do §E9.S2 indexadas a harness existentes; freeze `datasetHash=371f0cfa…`; run em `docs/testing/evidence/runs/*_e9-s1-corpus-v1/`; Onda A intocada.
 
-**Pronto quando (release):** baseline pode ser reproduzido e comparado sem mudar expectativa no meio da implementação — ainda **não** para release R1–R11.
+**Pendente para release R1–R11:** execução E9.S2; `openApiSchemaHash` / `actionCatalogHash` runtime.
 
 ### E9.S2 — Baseline R1-R11
 

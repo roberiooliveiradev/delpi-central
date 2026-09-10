@@ -1,0 +1,26 @@
+{
+  "coverageByClass": {
+    "1": "e9.c01.specific_vs_generic",
+    "2": "e9.c02.semantic_siblings",
+    "3": "e9.c03.multi_provider",
+    "4": "e9.c04.no_tool",
+    "5": "e9.c05.required_present",
+    "6": "e9.c06.required_missing_clarify",
+    "7": "e9.c07.enum_type_invalid",
+    "8": "e9.c08.compound",
+    "9": "e9.c09.multi_turn",
+    "10": "e9.c10.typo_synonym",
+    "11": "e9.c11.unknown_external_openapi",
+    "12": "e9.c12.metamorphic_rename",
+    "13": "e9.c13.unauthorized",
+    "14": "e9.c14.write_confirmation",
+    "15": "e9.c15.injection",
+    "16": "e9.c16.schema_presentation",
+    "17": "e9.c17.recommendations_grounded",
+    "18": "e9.c18.send_stream_simulate",
+    "19": "e9.c19.persist_reload",
+    "20": "e9.c20.partial_failure"
+  },
+  "offlineOnly": true,
+  "datasetHash": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8"
+}
