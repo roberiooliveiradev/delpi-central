@@ -15,7 +15,7 @@
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
 | G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
-| H — cutover/cleanup | 09 | **EM_ANDAMENTO** | E9.S8 | E9.S1–S7 (S2/S6 parcial); verify-final |
+| H — cutover/cleanup | 09 | **EM_ANDAMENTO** | E9.S9 | E9.S1–S8 (S2/S6/S8 parcial); docs/encerramento |
 
 ## Protocolo por subetapa
 
@@ -141,3 +141,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S7 (architecture audit) |
 | 2026-09-10 | E9.S7 **ATENDIDO** — residuals classificados (REMOVE_WHEN_GATES_PASS / JUSTIFIED / REMOVED) |
 | 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S8 (verify-final) |
+| 2026-09-10 | E9.S8 **ATENDIDO_PARCIAL** — matriz 10 objetivos; globalReleasePass=false (INCONCLUSIVE) |
+| 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S9 (documentação) |

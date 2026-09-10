@@ -46,4 +46,5 @@ parameterStrategy (dispatch permanente), department/entity (legado DELETE E5.S7)
 
 ## Próximo
 
-**E9.S6** — cleanup gates — **ATENDIDO_PARCIAL** (`e9-s6-cleanup-gates.md`). Próximo: **E9.S7** architecture audit.
+**E9.S6** — cleanup gates — **ATENDIDO_PARCIAL** (`e9-s6-cleanup-gates.md`).  
+**E9.S7–S8** — audit + verify-final parcial. Próximo no ledger: **E9.S9**.

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "step": "E9.S8",
+  "program": "llm-json-decoupling",
+  "evaluatedAt": "2026-09-10",
+  "datasetHash": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8",
+  "globalReleasePass": false,
+  "aggregate": "PASS_OFFLINE_WITH_INCONCLUSIVE_DIMS",
+  "matrix": [
+    {
+      "id": "unknown_api_no_code",
+      "objective": "nova API sem código",
+      "proof": "unknown provider eval",
+      "expected": "PASS",
+      "status": "INCONCLUSIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": "Harness indexado; live unknown provider pending"
+    },
+    {
+      "id": "metamorphic_rename",
+      "objective": "rename técnico sem quebra",
+      "proof": "metamorphic eval",
+      "expected": "PASS",
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": "Corpus metamorphic offline"
+    },
+    {
+      "id": "compound_long",
+      "objective": "frases longas",
+      "proof": "compound corpus",
+      "expected": "PASS",
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": null
+    },
+    {
+      "id": "multi_turn_follow_up",
+      "objective": "follow-up",
+      "proof": "multi-turn corpus + F5",
+      "expected": "PASS",
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": "F5 live pending; harness reload E3.S8 offline"
+    },
+    {
+      "id": "required_args",
+      "objective": "argumentos",
+      "proof": "OpenAPI validator corpus",
+      "expected": "PASS",
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": null
+    },
+    {
+      "id": "safety",
+      "objective": "safety",
+      "proof": "unauthorized/write/injection",
+      "expected": "PASS",
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": null
+    },
+    {
+      "id": "presentation_schema",
+      "objective": "apresentação",
+      "proof": "unknown schema/provider",
+      "expected": "PASS",
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s3-candidate-plans-offline.md",
+      "note": "Plano 07 candidate offline"
+    },
+    {
+      "id": "recommendations_grounded",
+      "objective": "recomendações",
+      "proof": "grounded/allowlist",
+      "expected": "PASS",
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s3-candidate-plans-offline.md",
+      "note": "Plano 06 candidate offline"
+    },
+    {
+      "id": "send_stream_simulate_parity",
+      "objective": "paridade",
+      "proof": "send/stream/simulate",
+      "expected": "PASS",
+      "status": "INCONCLUSIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": "Live parity pending"
+    },
+    {
+      "id": "efficiency",
+      "objective": "eficiência",
+      "proof": "P50/P95/tokens/tool/LLM calls",
+      "expected": "aprovado",
+      "status": "INCONCLUSIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s3-candidate-plans-offline.md",
+      "note": "Métricas de latência/custo não medidas no offline"
+    }
+  ],
+  "blockingStatuses": ["INCONCLUSIVE", "FAIL", "PENDING", "PENDING_RUNTIME"],
+  "note": "globalReleasePass=false enquanto qualquer célula required estiver INCONCLUSIVE — não marcar iniciativa como PASS."
+}

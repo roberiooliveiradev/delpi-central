@@ -34,4 +34,5 @@ NO_PREMATURE_DELETE = PASS
 
 ## Próximo
 
-**E9.S7** — architecture audit — **ATENDIDO** (`e9-s7-architecture-audit.md`). Próximo: **E9.S8** verify-final.
+**E9.S7** — architecture audit — **ATENDIDO** (`e9-s7-architecture-audit.md`).  
+**E9.S8** — verify-final — **ATENDIDO_PARCIAL** (`e9-s8-verify-final.md`). Próximo: **E9.S9**.
