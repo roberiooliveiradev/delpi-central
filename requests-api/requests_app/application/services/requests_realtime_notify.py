@@ -34,6 +34,33 @@ def _broadcast_rooms(room_keys: list[str], payload: dict[str, Any]) -> None:
         logger.exception("requests_realtime_schedule_failed rooms=%s", room_keys)
 
 
+def _unique_rooms(*candidates: str | None) -> list[str]:
+    seen: set[str] = set()
+    rooms: list[str] = []
+    for raw in candidates:
+        key = str(raw or "").strip()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        rooms.append(key)
+    return rooms
+
+
+def _party_user_rooms(
+    *,
+    owner_user_id: str | None = None,
+    assignee_user_id: str | None = None,
+) -> list[str]:
+    rooms: list[str] = []
+    owner = str(owner_user_id or "").strip()
+    if owner:
+        rooms.append(user_room(owner))
+    assignee = str(assignee_user_id or "").strip()
+    if assignee:
+        rooms.append(user_room(assignee))
+    return rooms
+
+
 def _base_payload(
     *,
     event_type: str,
@@ -44,6 +71,7 @@ def _base_payload(
     actor_user_id: str | None = None,
     actor_client_id: str | None = None,
     owner_user_id: str | None = None,
+    assignee_user_id: str | None = None,
     notification: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
@@ -55,6 +83,7 @@ def _base_payload(
         "actorUserId": (actor_user_id or "").strip() or None,
         "actorClientId": (actor_client_id or "").strip() or None,
         "ownerUserId": (owner_user_id or "").strip() or None,
+        "assigneeUserId": (assignee_user_id or "").strip() or None,
     }
     if notification:
         payload["notification"] = notification
@@ -67,6 +96,7 @@ def notify_request_created(
     request_number: str | None = None,
     status: str | None = None,
     owner_user_id: str | None = None,
+    assignee_user_id: str | None = None,
     actor_user_id: str | None = None,
     actor_client_id: str | None = None,
     notification: dict[str, str] | None = None,
@@ -80,12 +110,16 @@ def notify_request_created(
         actor_user_id=actor_user_id,
         actor_client_id=actor_client_id,
         owner_user_id=owner_user_id,
+        assignee_user_id=assignee_user_id,
         notification=notification,
     )
-    rooms = [WORK_QUEUE_ROOM]
-    owner = (owner_user_id or "").strip()
-    if owner:
-        rooms.append(user_room(owner))
+    rooms = _unique_rooms(
+        WORK_QUEUE_ROOM,
+        *_party_user_rooms(
+            owner_user_id=owner_user_id,
+            assignee_user_id=assignee_user_id,
+        ),
+    )
     _broadcast_rooms(rooms, payload)
 
 
@@ -96,6 +130,7 @@ def notify_request_changed(
     request_number: str | None = None,
     status: str | None = None,
     owner_user_id: str | None = None,
+    assignee_user_id: str | None = None,
     actor_user_id: str | None = None,
     actor_client_id: str | None = None,
     notification: dict[str, str] | None = None,
@@ -109,12 +144,17 @@ def notify_request_changed(
         actor_user_id=actor_user_id,
         actor_client_id=actor_client_id,
         owner_user_id=owner_user_id,
+        assignee_user_id=assignee_user_id,
         notification=notification,
     )
-    rooms = [request_room(request_id), WORK_QUEUE_ROOM]
-    owner = (owner_user_id or "").strip()
-    if owner:
-        rooms.append(user_room(owner))
+    rooms = _unique_rooms(
+        request_room(request_id),
+        WORK_QUEUE_ROOM,
+        *_party_user_rooms(
+            owner_user_id=owner_user_id,
+            assignee_user_id=assignee_user_id,
+        ),
+    )
     _broadcast_rooms(rooms, payload)
 
 
@@ -125,6 +165,7 @@ def notify_request_timeline(
     request_number: str | None = None,
     status: str | None = None,
     owner_user_id: str | None = None,
+    assignee_user_id: str | None = None,
     actor_user_id: str | None = None,
     actor_client_id: str | None = None,
     notification: dict[str, str] | None = None,
@@ -138,6 +179,14 @@ def notify_request_timeline(
         actor_user_id=actor_user_id,
         actor_client_id=actor_client_id,
         owner_user_id=owner_user_id,
+        assignee_user_id=assignee_user_id,
         notification=notification,
     )
-    _broadcast_rooms([request_room(request_id)], payload)
+    rooms = _unique_rooms(
+        request_room(request_id),
+        *_party_user_rooms(
+            owner_user_id=owner_user_id,
+            assignee_user_id=assignee_user_id,
+        ),
+    )
+    _broadcast_rooms(rooms, payload)

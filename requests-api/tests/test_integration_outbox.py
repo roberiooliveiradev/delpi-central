@@ -72,7 +72,11 @@ def test_transition_gate_enqueues_creator_outbox_and_worker_publishes():
         branch_code="01",
         idempotency_key=str(uuid4()),
     )
-    assert outbox.list_pending() == []
+    create_pending = outbox.list_pending()
+    assert len(create_pending) == 1
+    assert create_pending[0].event_type == "request.created"
+    for row in list(create_pending):
+        outbox.mark_published(row.id)
 
     TransitionRequestUseCase(types, requests, idem, outbox=outbox).execute(
         user=_processor(),
@@ -98,7 +102,7 @@ def test_transition_gate_enqueues_creator_outbox_and_worker_publishes():
     assert outbox.list_pending() == []
 
 
-def test_owner_self_transition_does_not_enqueue_outbox():
+def test_owner_resubmit_does_not_notify_creator_but_notifies_assignee():
     types, requests, idem, outbox = _stack()
     created = CreateRequestUseCase(
         types, requests, idem, outbox=outbox
@@ -132,7 +136,10 @@ def test_owner_self_transition_does_not_enqueue_outbox():
         action="resubmit",
         idempotency_key=str(uuid4()),
     )
-    assert outbox.list_pending() == []
+    pending = outbox.list_pending()
+    assert len(pending) == 1
+    assert pending[0].payload["userIds"] == ["u-process"]
+    assert "u-create" not in pending[0].payload.get("userIds", [])
 
 
 def test_outbox_dedupe_key_prevents_duplicate_enqueue():

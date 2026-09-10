@@ -424,6 +424,29 @@ class PostgresRequestRepository(RequestRepositoryPort):
             items.append(_row_to_request(data, type_code=code))
         return items, total
 
+    def get_active_processor_assignee_user_id(
+        self, request_id: UUID | str
+    ) -> str | None:
+        sql = f"""
+        SELECT assignee_user_id
+        FROM {_SCHEMA}.request_assignments
+        WHERE request_id = %s::uuid
+          AND role = 'processor'
+          AND released_at IS NULL
+          AND assignee_user_id IS NOT NULL
+          AND length(trim(assignee_user_id)) > 0
+        ORDER BY assigned_at DESC
+        LIMIT 1
+        """
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (str(request_id),))
+                row = cur.fetchone()
+        if not row:
+            return None
+        value = str(row.get("assignee_user_id") or "").strip()
+        return value or None
+
 
 class PostgresIdempotencyRepository(IdempotencyRepositoryPort):
     def get(

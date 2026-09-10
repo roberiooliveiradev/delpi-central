@@ -162,6 +162,7 @@ class FileUseCases:
             request_number=request.request_number,
             status=request.status,
             owner_user_id=request.created_by_user_id,
+            assignee_user_id=self._requests.get_active_processor_assignee_user_id(request.id),
             actor_user_id=actor.user_id,
             actor_client_id=actor_client_id,
         )
@@ -253,6 +254,7 @@ class FileUseCases:
             request_number=request.request_number,
             status=request.status,
             owner_user_id=request.created_by_user_id,
+            assignee_user_id=self._requests.get_active_processor_assignee_user_id(request.id),
             actor_user_id=actor.user_id,
             actor_client_id=actor_client_id,
         )
@@ -306,6 +308,7 @@ class FileUseCases:
             request_number=request.request_number,
             status=request.status,
             owner_user_id=request.created_by_user_id,
+            assignee_user_id=self._requests.get_active_processor_assignee_user_id(request.id),
             actor_user_id=actor.user_id,
             actor_client_id=actor_client_id,
         )
@@ -378,6 +381,7 @@ class FileUseCases:
             request_number=request.request_number,
             status=request.status,
             owner_user_id=request.created_by_user_id,
+            assignee_user_id=self._requests.get_active_processor_assignee_user_id(request.id),
             actor_user_id=actor.user_id,
             actor_client_id=actor_client_id,
         )

@@ -74,6 +74,13 @@ class RequestRepositoryPort(ABC):
         page_size: int = 50,
     ) -> tuple[list[Request], int]: ...
 
+    @abstractmethod
+    def get_active_processor_assignee_user_id(
+        self, request_id: UUID | str
+    ) -> str | None:
+        """Latest unreleased processor assignment, or None."""
+        ...
+
 
 class IdempotencyRepositoryPort(ABC):
     @abstractmethod

@@ -121,6 +121,7 @@ def build_update_request_payload_use_case() -> UpdateRequestPayloadUseCase:
         PostgresIdempotencyRepository(),
         _engine(),
         build_payload_validator_registry(),
+        PostgresIntegrationOutboxRepository(),
     )
 
 
@@ -153,4 +154,5 @@ def build_timeline_use_cases():
         PostgresRequestTypeRepository(),
         PostgresRequestRepository(),
         PostgresFileRepository(),
+        outbox=PostgresIntegrationOutboxRepository(),
     )

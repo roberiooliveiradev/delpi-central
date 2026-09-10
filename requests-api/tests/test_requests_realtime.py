@@ -100,11 +100,11 @@ def test_protocol_subscribe_joins_request_room():
 
 
 def test_notify_request_created_schedules_work_queue_and_owner(monkeypatch):
-    scheduled: list[tuple[str, dict]] = []
+    scheduled: list[tuple[list[str], dict]] = []
 
     class HubStub:
-        def schedule_broadcast(self, room_key, payload):
-            scheduled.append((room_key, payload))
+        def schedule_broadcast_rooms(self, room_keys, payload):
+            scheduled.append((list(room_keys), payload))
 
     monkeypatch.setattr(
         "requests_app.application.services.requests_realtime_notify.requests_realtime_hub",
@@ -122,18 +122,18 @@ def test_notify_request_created_schedules_work_queue_and_owner(monkeypatch):
         owner_user_id="owner-1",
         actor_user_id="owner-1",
     )
-    rooms = {item[0] for item in scheduled}
+    rooms = {r for keys, _ in scheduled for r in keys}
     assert WORK_QUEUE_ROOM in rooms
     assert "user:owner-1" in rooms
     assert scheduled[0][1]["type"] == "request.created"
 
 
 def test_notify_request_changed_and_timeline(monkeypatch):
-    scheduled: list[tuple[str, dict]] = []
+    scheduled: list[tuple[list[str], dict]] = []
 
     class HubStub:
-        def schedule_broadcast(self, room_key, payload):
-            scheduled.append((room_key, payload))
+        def schedule_broadcast_rooms(self, room_keys, payload):
+            scheduled.append((list(room_keys), payload))
 
     monkeypatch.setattr(
         "requests_app.application.services.requests_realtime_notify.requests_realtime_hub",
@@ -152,7 +152,7 @@ def test_notify_request_changed_and_timeline(monkeypatch):
         actor_user_id="proc-1",
         notification={"title": "Atualizada", "message": "Iniciada", "variant": "info"},
     )
-    changed_rooms = {r for r, p in scheduled if p["type"] == "request.changed"}
+    changed_rooms = {r for keys, p in scheduled if p["type"] == "request.changed" for r in keys}
     assert request_room("11111111-1111-1111-1111-111111111111") in changed_rooms
     assert WORK_QUEUE_ROOM in changed_rooms
     assert "user:owner-1" in changed_rooms
@@ -162,10 +162,14 @@ def test_notify_request_changed_and_timeline(monkeypatch):
         reason="comment.created",
         request_id="11111111-1111-1111-1111-111111111111",
         owner_user_id="owner-1",
+        assignee_user_id="proc-1",
     )
-    timeline_rooms = {r for r, _ in scheduled}
-    assert timeline_rooms == {request_room("11111111-1111-1111-1111-111111111111")}
-
+    timeline_rooms = {r for keys, _ in scheduled for r in keys}
+    assert timeline_rooms == {
+        request_room("11111111-1111-1111-1111-111111111111"),
+        "user:owner-1",
+        "user:proc-1",
+    }
 
 def test_notify_disabled_is_noop(monkeypatch):
     called = []

@@ -10,7 +10,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   workQueue: {
     section:
-      "Lista o que está na sua fila para atender (somente se você puder processar algum tipo, tiver visão ampla ou for administrador). Filtre o que precisa e abra a solicitação para iniciar, devolver, concluir ou registrar a emissão.",
+      "Lista o que está na sua fila para atender (somente se você puder processar algum tipo, tiver visão ampla ou for administrador). Filtre o que precisa e abra a solicitação para iniciar, devolver, concluir ou registrar a emissão. Ao iniciar, você passa a receber no sino do Portal e em avisos na tela as atualizações e conversas dessa solicitação.",
   },
   new: {
     section:
@@ -112,7 +112,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   comments: {
     section:
-      "Conversa com formatação. Imagem colada fica no texto; imagem pelo clipe fica como anexo com tamanho. Ao editar, você pode remover imagens — elas são apagadas de verdade. Clique para ampliar. Após a conclusão, a conversa fica somente leitura.",
+      "Conversa com formatação. Imagem colada fica no texto; imagem pelo clipe fica como anexo com tamanho. Ao editar, você pode remover imagens — elas são apagadas de verdade. Clique para ampliar. Após a conclusão, a conversa fica somente leitura. Quem abriu e quem está atendendo recebem aviso de novos comentários (exceto o autor da mensagem).",
     newComment:
       "Escreva, formate e, se precisar, cole uma imagem no texto ou anexe pelo clipe (PNG/JPEG/WebP/GIF, máx. 20 MB).",
   },

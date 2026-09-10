@@ -26,6 +26,14 @@ from requests_app.domain.entities.files import (
 )
 from requests_app.domain.ports import RequestRepositoryPort, RequestTypeRepositoryPort
 from requests_app.domain.ports.file_repository_port import FileRepositoryPort
+from requests_app.domain.ports.integration_outbox_port import IntegrationOutboxRepositoryPort
+from requests_app.domain.services.attendant_portal_notification_policy import (
+    resolve_assignee_comment_copy,
+    should_notify_assignee,
+)
+from requests_app.infrastructure.gateways.core_notification_adapter import (
+    build_notification_payload,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -59,11 +67,16 @@ class TimelineUseCases:
         requests: RequestRepositoryPort,
         files: FileRepositoryPort,
         attachment_storage: AttachmentStorage | None = None,
+        outbox: IntegrationOutboxRepositoryPort | None = None,
     ) -> None:
         self._types = types
         self._requests = requests
         self._files = files
         self._attachments = attachment_storage or AttachmentStorage()
+        self._outbox = outbox
+
+    def _assignee_user_id(self, request_id) -> str | None:
+        return self._requests.get_active_processor_assignee_user_id(request_id)
 
     def _ctx(self, *, user, request_id: str):
         request = self._requests.get(request_id)
@@ -193,6 +206,65 @@ class TimelineUseCases:
                 payload={"comment_id": str(comment.id)},
             )
         )
+        assignee_user_id = self._assignee_user_id(request.id)
+        if self._outbox is not None and should_notify_assignee(
+            actor_user_id=actor.user_id,
+            assignee_user_id=assignee_user_id,
+        ):
+            title, message, notif_type = resolve_assignee_comment_copy(
+                request_number=request.request_number,
+                actor_name=actor.user_name,
+            )
+            self._outbox.enqueue(
+                event_type="request.comment",
+                aggregate_type="request",
+                aggregate_id=str(request.id),
+                request_id=str(request.id),
+                request_version=request.version,
+                dedupe_key=f"request:{request.id}:comment:{comment.id}",
+                payload=build_notification_payload(
+                    event_type="request.comment",
+                    request_id=str(request.id),
+                    request_number=request.request_number,
+                    type_code=request.type_code,
+                    status=request.status,
+                    actor_name=actor.user_name,
+                    recipient_user_ids=[str(assignee_user_id)],
+                    title=title,
+                    message=message,
+                    notification_type=notif_type,
+                ),
+            )
+        # Creator gets a Portal bell when the attendant comments (not self).
+        if (
+            self._outbox is not None
+            and str(request.created_by_user_id or "").strip()
+            and str(actor.user_id) != str(request.created_by_user_id)
+        ):
+            title, message, notif_type = resolve_assignee_comment_copy(
+                request_number=request.request_number,
+                actor_name=actor.user_name,
+            )
+            self._outbox.enqueue(
+                event_type="request.comment",
+                aggregate_type="request",
+                aggregate_id=str(request.id),
+                request_id=str(request.id),
+                request_version=request.version,
+                dedupe_key=f"request:{request.id}:comment:{comment.id}:creator",
+                payload=build_notification_payload(
+                    event_type="request.comment",
+                    request_id=str(request.id),
+                    request_number=request.request_number,
+                    type_code=request.type_code,
+                    status=request.status,
+                    actor_name=actor.user_name,
+                    recipient_user_ids=[request.created_by_user_id],
+                    title=title,
+                    message=message,
+                    notification_type=notif_type,
+                ),
+            )
         _safe_realtime(
             notify_request_timeline,
             reason="comment.created",
@@ -200,6 +272,7 @@ class TimelineUseCases:
             request_number=request.request_number,
             status=request.status,
             owner_user_id=request.created_by_user_id,
+            assignee_user_id=assignee_user_id,
             actor_user_id=actor.user_id,
             actor_client_id=actor_client_id,
             notification={
@@ -246,6 +319,7 @@ class TimelineUseCases:
             request_number=request.request_number,
             status=request.status,
             owner_user_id=request.created_by_user_id,
+            assignee_user_id=self._assignee_user_id(request.id),
             actor_user_id=actor.user_id,
             actor_client_id=actor_client_id,
         )
@@ -304,6 +378,7 @@ class TimelineUseCases:
             request_number=request.request_number,
             status=request.status,
             owner_user_id=request.created_by_user_id,
+            assignee_user_id=self._assignee_user_id(request.id),
             actor_user_id=actor.user_id,
             actor_client_id=actor_client_id,
         )
@@ -396,6 +471,7 @@ class TimelineUseCases:
             request_number=request.request_number,
             status=request.status,
             owner_user_id=request.created_by_user_id,
+            assignee_user_id=self._assignee_user_id(request.id),
             actor_user_id=actor.user_id,
             actor_client_id=actor_client_id,
         )

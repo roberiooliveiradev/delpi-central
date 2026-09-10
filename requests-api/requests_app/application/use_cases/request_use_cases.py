@@ -32,6 +32,11 @@ from requests_app.domain.ports import (
 from requests_app.domain.ports.file_repository_port import FileRepositoryPort
 from requests_app.domain.ports.integration_outbox_port import IntegrationOutboxRepositoryPort
 from requests_app.domain.services.workflow_engine import WorkflowEngine
+from requests_app.domain.services.attendant_portal_notification_policy import (
+    resolve_assignee_transition_copy,
+    resolve_queue_created_copy,
+    should_notify_assignee,
+)
 from requests_app.domain.services.creator_portal_notification_policy import (
     resolve_creator_gate_copy,
     should_notify_creator_on_transition,
@@ -185,8 +190,34 @@ class CreateRequestUseCase:
                     payload={"status": stored.status},
                 )
             )
-        # Create does not notify the creator (they already know). Processor fan-out
-        # via permissionCodes stays out of scope for creator-gate notifications.
+        # Creator already knows; fan-out to processors via permissionCodes (Core).
+        if self._outbox is not None:
+            process_perm = f"{request_type.permission_prefix}.process"
+            title, message, notif_type = resolve_queue_created_copy(
+                request_number=stored.request_number,
+                type_name=request_type.name,
+            )
+            self._outbox.enqueue(
+                event_type="request.created",
+                aggregate_type="request",
+                aggregate_id=str(stored.id),
+                request_id=str(stored.id),
+                request_version=stored.version,
+                dedupe_key=f"request:{stored.id}:created:v{stored.version}",
+                payload=build_notification_payload(
+                    event_type="request.created",
+                    request_id=str(stored.id),
+                    request_number=stored.request_number,
+                    type_code=stored.type_code,
+                    status=stored.status,
+                    actor_name=actor.user_name,
+                    permission_codes=[process_perm],
+                    excluded_user_ids=[stored.created_by_user_id],
+                    title=title,
+                    message=message,
+                    notification_type=notif_type,
+                ),
+            )
         actions = allowed_actions_for(
             stored, actor=actor, workflow=workflow, engine=self._engine
         )
@@ -401,12 +432,14 @@ class UpdateRequestPayloadUseCase:
         idempotency: IdempotencyRepositoryPort,
         engine: WorkflowEngine | None = None,
         validators: PayloadValidatorRegistry | None = None,
+        outbox: IntegrationOutboxRepositoryPort | None = None,
     ) -> None:
         self._types = types
         self._requests = requests
         self._idempotency = idempotency
         self._engine = engine or WorkflowEngine()
         self._validators = validators or PayloadValidatorRegistry()
+        self._outbox = outbox
 
     def execute(
         self,
@@ -484,6 +517,39 @@ class UpdateRequestPayloadUseCase:
             actor=actor,
             include_detail_projections=True,
         )
+        assignee_user_id = self._requests.get_active_processor_assignee_user_id(
+            stored.id
+        )
+        if self._outbox is not None and should_notify_assignee(
+            actor_user_id=actor.user_id,
+            assignee_user_id=assignee_user_id,
+        ):
+            title, message, notif_type = resolve_assignee_transition_copy(
+                request_number=stored.request_number,
+                actor_name=actor.user_name,
+                to_status=stored.status,
+                action="edit",
+            )
+            self._outbox.enqueue(
+                event_type="request.payload_updated",
+                aggregate_type="request",
+                aggregate_id=str(stored.id),
+                request_id=str(stored.id),
+                request_version=stored.version,
+                dedupe_key=f"request:{stored.id}:payload:v{stored.version}",
+                payload=build_notification_payload(
+                    event_type="request.payload_updated",
+                    request_id=str(stored.id),
+                    request_number=stored.request_number,
+                    type_code=stored.type_code,
+                    status=stored.status,
+                    actor_name=actor.user_name,
+                    recipient_user_ids=[str(assignee_user_id)],
+                    title=title,
+                    message=message,
+                    notification_type=notif_type,
+                ),
+            )
         _safe_realtime(
             notify_request_changed,
             reason="payload.edit",
@@ -491,8 +557,14 @@ class UpdateRequestPayloadUseCase:
             request_number=stored.request_number,
             status=stored.status,
             owner_user_id=stored.created_by_user_id,
+            assignee_user_id=assignee_user_id,
             actor_user_id=actor.user_id,
             actor_client_id=actor_client_id,
+            notification={
+                "title": "Dados atualizados",
+                "message": f"{stored.request_number}: dados atualizados.",
+                "variant": "info",
+            },
         )
         self._idempotency.save(
             key=str(idempotency_key).strip(),
@@ -637,6 +709,46 @@ class TransitionRequestUseCase:
                     notification_type=notif_type,
                 ),
             )
+        assignee_user_id = None
+        if result.assignment is not None and result.assignment.assignee_user_id:
+            assignee_user_id = str(result.assignment.assignee_user_id).strip() or None
+        if not assignee_user_id:
+            assignee_user_id = self._requests.get_active_processor_assignee_user_id(
+                stored.id
+            )
+        if self._outbox is not None and should_notify_assignee(
+            actor_user_id=actor.user_id,
+            assignee_user_id=assignee_user_id,
+        ):
+            title, message, notif_type = resolve_assignee_transition_copy(
+                request_number=stored.request_number,
+                actor_name=actor.user_name,
+                to_status=result.history.to_status,
+                action=result.history.action,
+            )
+            self._outbox.enqueue(
+                event_type="request.transition",
+                aggregate_type="request",
+                aggregate_id=str(stored.id),
+                request_id=str(stored.id),
+                request_version=stored.version,
+                dedupe_key=(
+                    f"request:{stored.id}:transition:{result.history.action}"
+                    f":assignee:v{stored.version}"
+                ),
+                payload=build_notification_payload(
+                    event_type="request.transition",
+                    request_id=str(stored.id),
+                    request_number=stored.request_number,
+                    type_code=stored.type_code,
+                    status=stored.status,
+                    actor_name=actor.user_name,
+                    recipient_user_ids=[str(assignee_user_id)],
+                    title=title,
+                    message=message,
+                    notification_type=notif_type,
+                ),
+            )
         response = serialize_request(
             stored,
             allowed_actions=allowed_actions_for(
@@ -658,6 +770,7 @@ class TransitionRequestUseCase:
             request_number=stored.request_number,
             status=stored.status,
             owner_user_id=stored.created_by_user_id,
+            assignee_user_id=assignee_user_id,
             actor_user_id=actor.user_id,
             actor_client_id=actor_client_id,
             notification=build_realtime_transition_notification(

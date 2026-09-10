@@ -200,6 +200,22 @@ class InMemoryRequestRepository(RequestRepositoryPort):
         start = max(page - 1, 0) * page_size
         return [deepcopy(item) for item in items[start : start + page_size]], total
 
+    def get_active_processor_assignee_user_id(
+        self, request_id: UUID | str
+    ) -> str | None:
+        rid = str(request_id)
+        matches = [
+            row
+            for row in self._assignments
+            if row.get("request_id") == rid
+            and row.get("role") == "processor"
+            and not row.get("released_at")
+            and str(row.get("assignee_user_id") or "").strip()
+        ]
+        if not matches:
+            return None
+        return str(matches[-1]["assignee_user_id"]).strip() or None
+
 
 class InMemoryIdempotencyRepository(IdempotencyRepositoryPort):
     def __init__(self) -> None:

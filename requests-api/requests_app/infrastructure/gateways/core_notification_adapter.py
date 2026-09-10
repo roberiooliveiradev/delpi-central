@@ -66,6 +66,8 @@ def build_notification_payload(
     status: str,
     actor_name: str,
     recipient_user_ids: list[str] | None = None,
+    permission_codes: list[str] | None = None,
+    excluded_user_ids: list[str] | None = None,
     title: str | None = None,
     message: str | None = None,
     notification_type: str = "info",
@@ -74,6 +76,8 @@ def build_notification_payload(
     default_titles = {
         "request.created": "Nova solicitação",
         "request.transition": "Solicitação atualizada",
+        "request.comment": "Novo comentário",
+        "request.payload_updated": "Dados atualizados",
     }
     resolved_title = (title or "").strip() or default_titles.get(
         event_type, "Minhas Solicitações"
@@ -109,4 +113,14 @@ def build_notification_payload(
     ]
     if recipients:
         payload["userIds"] = recipients
+    codes = [
+        str(code).strip() for code in (permission_codes or []) if str(code).strip()
+    ]
+    if codes:
+        payload["permissionCodes"] = codes
+    excluded = [
+        str(uid).strip() for uid in (excluded_user_ids or []) if str(uid).strip()
+    ]
+    if excluded:
+        payload["excludedUserIds"] = excluded
     return payload
