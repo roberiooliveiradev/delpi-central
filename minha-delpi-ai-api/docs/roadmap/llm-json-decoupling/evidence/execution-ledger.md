@@ -14,7 +14,7 @@
 | D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
-| G — presentation/skills | 07, 08 | **EM_ANDAMENTO** | E8.S5 | E8.S1–S4 OK; EAR copy split |
+| G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
 | H — cutover/cleanup | 09 | **CONTÍNUO** | E9.S1 corpus ampliado | Não remover legado sem gates |
 
 ## Protocolo por subetapa
@@ -124,3 +124,6 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda G **EM_ANDAMENTO** — próxima E8.S4 (mixed bundles EAR) |
 | 2026-09-10 | E8.S4 **ATENDIDO** — actionSelectionCopy; policy/PATH intactos |
 | 2026-09-10 | Onda G **EM_ANDAMENTO** — próxima E8.S5 (audit gate) |
+| 2026-09-10 | E8.S5 **ATENDIDO** — audit gate assistant technical duplication |
+| 2026-09-10 | E8.S6 **ATENDIDO** — cleanup documental content README |
+| 2026-09-10 | Plano 08 / Onda G **ATENDIDO** — próxima plano 09 / Onda H |

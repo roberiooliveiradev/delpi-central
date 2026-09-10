@@ -1,6 +1,6 @@
 # Desacoplamento de JSONs + inteligência LLM — Minha DELPI AI
 
-**Status:** Onda A–F ATENDIDAS · Onda G EM_ANDAMENTO (plano 07 ATENDIDO; próxima 08) · H via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
+**Status:** Onda A–G ATENDIDAS · Onda H CONTÍNUA via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
 **Escopo:** `minha-delpi-ai-api/app/content` + consumidores runtime relacionados  
 **Objetivo:** remover acoplamentos técnicos e linguísticos que impedem o chat de generalizar para novas APIs, novos domínios e formulações de linguagem natural sem manutenção rota a rota.
 
@@ -39,7 +39,7 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`planos/05-composition-enrichment-planning.md`](./planos/05-composition-enrichment-planning.md) | Composition/enrichment planner-driven. |
 | [`planos/06-recommendations-composer-contextual.md`](./planos/06-recommendations-composer-contextual.md) | Recommendations/composer contextuais — **ATENDIDO** (queries = LEGACY_FALLBACK). |
 | [`planos/07-presentation-schema-first-residuals.md`](./planos/07-presentation-schema-first-residuals.md) | Residuais de apresentação path/entity. |
-| [`planos/08-skills-content-residual-catalogs.md`](./planos/08-skills-content-residual-catalogs.md) | Hints técnicos em skills/help. |
+| [`planos/08-skills-content-residual-catalogs.md`](./planos/08-skills-content-residual-catalogs.md) | Skills/help residual — **ATENDIDO** (hints neutros + help actionId + EAR copy + audit). |
 | [`planos/09-evals-rollout-cleanup.md`](./planos/09-evals-rollout-cleanup.md) | Baseline, shadow/canary, R1-R11, cleanup. |
 | [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) | Estado das ondas A–H e próxima subetapa. |
 | [`evidence/onda-a-inventory.md`](./evidence/onda-a-inventory.md) | Inventário Onda A (consumers + classificação). |

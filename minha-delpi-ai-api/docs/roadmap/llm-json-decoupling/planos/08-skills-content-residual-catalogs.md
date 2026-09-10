@@ -1,8 +1,8 @@
 # Plano 08 — Skills/help/content -> remover catálogos técnicos residuais
 
 **Prioridade:** P2  
-**Status execução:** Onda G · E8.S1–S4 **ATENDIDO** · próxima E8.S5  
-**Evidência:** [`../evidence/e8-s1-skills-help-residual-inventory.md`](../evidence/e8-s1-skills-help-residual-inventory.md) · [`../evidence/e8-s2-skill-catalog-cleanup.md`](../evidence/e8-s2-skill-catalog-cleanup.md) · [`../evidence/e8-s3-help-capabilities-cleanup.md`](../evidence/e8-s3-help-capabilities-cleanup.md) · [`../evidence/e8-s4-ear-mixed-bundle-copy-split.md`](../evidence/e8-s4-ear-mixed-bundle-copy-split.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda G · Plano 08 **ATENDIDO** (E8.S1–S6) · próxima plano 09 / Onda H  
+**Evidência:** [`../evidence/e8-s1-skills-help-residual-inventory.md`](../evidence/e8-s1-skills-help-residual-inventory.md) · [`../evidence/e8-s2-skill-catalog-cleanup.md`](../evidence/e8-s2-skill-catalog-cleanup.md) · [`../evidence/e8-s3-help-capabilities-cleanup.md`](../evidence/e8-s3-help-capabilities-cleanup.md) · [`../evidence/e8-s4-ear-mixed-bundle-copy-split.md`](../evidence/e8-s4-ear-mixed-bundle-copy-split.md) · [`../evidence/e8-s5-content-audit-gate.md`](../evidence/e8-s5-content-audit-gate.md) · [`../evidence/e8-s6-document-cleanup.md`](../evidence/e8-s6-document-cleanup.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** conteúdo editorial continua rico e configurável, mas deixa de anunciar ou depender de endpoints hardcoded quando a disponibilidade real pode ser consultada no runtime.
 
 ## CURRENT
@@ -78,13 +78,15 @@ resposta de ajuda
 
 ### E8.S5 — Audit gate
 
-**Fazer:** criar/ajustar auditoria que bloqueie nova duplicação técnica em assistant content, respeitando exceptions documentais/fixtures.
+**Status:** **ATENDIDO** (2026-09-10) — evidência [`../evidence/e8-s5-content-audit-gate.md`](../evidence/e8-s5-content-audit-gate.md)
 
-**Teste:** fixture positiva e negativa do audit.
+**Feito:** `scripts/audit_assistant_technical_duplication.py` + testes positive/negative/sibling.
 
 ### E8.S6 — Cleanup documental
 
-**Fazer:** atualizar README/catalog docs para refletir ownership; remover documentação contraditória apenas quando fonte canônica já estiver atualizada.
+**Status:** **ATENDIDO** (2026-09-10) — evidência [`../evidence/e8-s6-document-cleanup.md`](../evidence/e8-s6-document-cleanup.md)
+
+**Feito:** README de content + status do programa alinhados à ownership pós-S2–S5.
 
 ## Invariantes
 

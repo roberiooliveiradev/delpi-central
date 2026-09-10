@@ -9,7 +9,13 @@ app/content/
   pt-BR/
     assistant/     # capacidades, stream SSE, títulos de sessão, utility, small talk
     labels/        # rótulos PT-BR das rotas OpenAPI (api-delpi)
-    skills/        # catálogo de skills (UI e metadados)
+    skills/        # catálogo de skills (UI/metadados; hints = capability keys, não HTTP)
+```
+
+Auditoria de regressão técnica (E8.S5):
+
+```bash
+python scripts/audit_assistant_technical_duplication.py
 ```
 
 Arquivos em `assistant/` usados pela API de chat:
@@ -21,7 +27,8 @@ Arquivos em `assistant/` usados pela API de chat:
 | `attachments.json` | Welcome de anexo, preview, arquivo extenso, chips de follow-up e ambiguidade da lousa (`ChatAttachmentContentService`) |
 | `smoke_e2e_scenarios.json` | Perguntas e marcadores dos smokes E2E (`operational_mixed`, `empresa_kpi`) |
 | `column_labels.json` | Colunas e perfis de tabelas operacionais |
-| `external_action_responses.json` | Respostas SQL, produção, composite e temporal |
+| `external_action_responses.json` | Respostas SQL/produção/composite; **`actionSelection`** = autoridade de routing/policy; **`actionSelectionCopy`** = clarificações/sugestões UX (E8.S4) |
+| `skills/catalog.json` | Catálogo editorial de skills — `executionPathHint` = capability key neutra (não HTTP path; E8.S2) |
 | `product_operational_content.json` | Escopos, termos plurais, textos de presenter, framing MFE/API — doc: [`docs/architecture/product-operational-content.md`](../docs/architecture/product-operational-content.md) |
 | `presenter_content.json` | Títulos por rota/KPI e trechos de markdown do presenter |
 | `sql_execution_errors.json` | Ponte erros SQL → `error_handling.types` |
