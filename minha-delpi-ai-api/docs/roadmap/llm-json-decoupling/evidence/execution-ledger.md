@@ -14,7 +14,7 @@
 | D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
-| G — presentation/skills | 07, 08 | **EM_ANDAMENTO** | E8.S3 | E8.S1–S2 OK; hints pathish=0 |
+| G — presentation/skills | 07, 08 | **EM_ANDAMENTO** | E8.S4 | E8.S1–S3 OK; help actionId-first |
 | H — cutover/cleanup | 09 | **CONTÍNUO** | E9.S1 corpus ampliado | Não remover legado sem gates |
 
 ## Protocolo por subetapa
@@ -118,3 +118,7 @@ abrir planos/0N-*.md
 | 2026-09-10 | Plano 07 **ATENDIDO** — Onda G segue no plano 08 (skills) |
 | 2026-09-10 | E8.S1 **ATENDIDO** — inventário residual skills/help (freeze + classes) |
 | 2026-09-10 | Onda G **EM_ANDAMENTO** — próxima E8.S2 (skill catalog cleanup) |
+| 2026-09-10 | E8.S2 **ATENDIDO** — hints path-like → capability keys neutras |
+| 2026-09-10 | Onda G **EM_ANDAMENTO** — próxima E8.S3 (help/capabilities) |
+| 2026-09-10 | E8.S3 **ATENDIDO** — help availability actionId-first + path fallback |
+| 2026-09-10 | Onda G **EM_ANDAMENTO** — próxima E8.S4 (mixed bundles EAR) |

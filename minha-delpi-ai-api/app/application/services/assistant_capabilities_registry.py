@@ -378,23 +378,60 @@ class AssistantCapabilitiesRegistry:
         return highlights
 
     @classmethod
+    def _token_is_pathish(cls, token: str) -> bool:
+        normalized = str(token or "").strip().lower()
+        if not normalized:
+            return False
+        if normalized.startswith("/"):
+            return True
+        return bool(
+            normalized.startswith(
+                ("get /", "post /", "put /", "patch /", "delete /")
+            )
+        )
+
+    @classmethod
     def _matches_actions(
         cls,
         required_tokens: list[str],
         catalog: list[dict],
         allowed_ids: set[str],
     ) -> bool:
+        """E8.S3 — prefer actionId/capability key; path substring só como fallback."""
+
+        if not required_tokens or not allowed_ids:
+            return False
+
+        allowed_lower = {str(item).strip().lower() for item in allowed_ids if str(item).strip()}
+        id_tokens = [
+            token
+            for token in required_tokens
+            if token and not cls._token_is_pathish(token)
+        ]
+        path_tokens = [
+            token for token in required_tokens if token and cls._token_is_pathish(token)
+        ]
+
+        # 1) Exact actionId / allowed-id match (non-path tokens).
+        for token in id_tokens:
+            if token in allowed_lower:
+                return True
+
+        # 2) Path/operationId substring fallback (legacy requiredActions).
+        if not path_tokens:
+            return False
+
         for action in catalog:
             action_id = str(action.get("actionId") or "").strip()
 
-            if action_id not in allowed_ids:
+            if action_id not in allowed_ids and action_id.lower() not in allowed_lower:
                 continue
 
             path = str(action.get("path") or "").lower()
             operation_id = str(action.get("operationId") or "").lower()
             haystack = f"{path} {operation_id}"
 
-            if any(token in haystack for token in required_tokens):
+            if any(token in haystack for token in path_tokens):
                 return True
 
         return False

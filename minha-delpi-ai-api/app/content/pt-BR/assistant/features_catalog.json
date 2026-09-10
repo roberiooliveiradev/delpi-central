@@ -90,7 +90,8 @@
       "summary": "Saldo e posição de estoque por produto.",
       "requiresAgent": true,
       "requiredActions": [
-        "/stock"
+        "/stock",
+        "get_product_stock"
       ],
       "helpTopicId": null,
       "examples": [

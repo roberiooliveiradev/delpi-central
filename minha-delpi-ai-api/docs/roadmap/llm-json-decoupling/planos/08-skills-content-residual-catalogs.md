@@ -1,8 +1,8 @@
 # Plano 08 — Skills/help/content -> remover catálogos técnicos residuais
 
 **Prioridade:** P2  
-**Status execução:** Onda G · E8.S1–S2 **ATENDIDO** · próxima E8.S3  
-**Evidência:** [`../evidence/e8-s1-skills-help-residual-inventory.md`](../evidence/e8-s1-skills-help-residual-inventory.md) · [`../evidence/e8-s2-skill-catalog-cleanup.md`](../evidence/e8-s2-skill-catalog-cleanup.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda G · E8.S1–S3 **ATENDIDO** · próxima E8.S4  
+**Evidência:** [`../evidence/e8-s1-skills-help-residual-inventory.md`](../evidence/e8-s1-skills-help-residual-inventory.md) · [`../evidence/e8-s2-skill-catalog-cleanup.md`](../evidence/e8-s2-skill-catalog-cleanup.md) · [`../evidence/e8-s3-help-capabilities-cleanup.md`](../evidence/e8-s3-help-capabilities-cleanup.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** conteúdo editorial continua rico e configurável, mas deixa de anunciar ou depender de endpoints hardcoded quando a disponibilidade real pode ser consultada no runtime.
 
 ## CURRENT
@@ -66,9 +66,9 @@ resposta de ajuda
 
 ### E8.S3 — Help/capabilities cleanup
 
-**Fazer:** conteúdo de Ajuda deve consultar runtime para dizer quais actions/features estão liberadas; texto estático fica responsável por explicar como usar a capacidade.
+**Status:** **ATENDIDO** (2026-09-10) — evidência [`../evidence/e8-s3-help-capabilities-cleanup.md`](../evidence/e8-s3-help-capabilities-cleanup.md)
 
-**Teste:** common chat vs specialized agent; unauthorized action não aparece.
+**Feito:** `_matches_actions` actionId-first + path fallback; piloto `get_product_stock` em `stock_lookup`; E4 catalog answer intocado.
 
 ### E8.S4 — Mixed bundles cleanup
 
