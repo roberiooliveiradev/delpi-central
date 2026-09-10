@@ -1,8 +1,8 @@
 # Plano 02 — NLU manual -> Turn Understanding + planner estruturado
 
 **Prioridade:** P0  
-**Status execução:** Onda C · inventário Onda A §6 · próxima = baseline TU vs intents authority  
-**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda C · E2.S1–S2 **ATENDIDOS** · próxima = **E2.S3** contrato canônico TU  
+**Evidência:** [`../evidence/e2-s1-heuristic-intent-inventory.md`](../evidence/e2-s1-heuristic-intent-inventory.md) · [`../evidence/e2-s2-understanding-baseline.md`](../evidence/e2-s2-understanding-baseline.md) · [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** frases longas, sinônimos, linguagem informal, typos e pedidos compostos devem ser compreendidos sem manutenção contínua de `terms`, `excludes`, regex e predicates por domínio.
 
 ## CURRENT
@@ -81,21 +81,17 @@ O campo `intent` é semântico, não enum por endpoint.
 
 ## Etapas
 
-### E2.S1 — Inventário das árvores heurísticas
+### E2.S1 — Inventário das árvores heurísticas — **ATENDIDO** (2026-09-10)
 
 **Fazer:** mapear cada `terms/excludeTerms/regex/predicate/pipeline` e o consumer que altera routing, args, presentation ou fast-path.
 
-**Não fazer:** migrar listas editoriais/help que não decidem execução.
+**Feito:** matriz bundle→classe→consumers em [`../evidence/e2-s1-heuristic-intent-inventory.md`](../evidence/e2-s1-heuristic-intent-inventory.md) (complementa Onda A §6). Sem migração de runtime.
 
-**Pronto quando:** matriz distingue `SEMANTIC_ROUTING_HEURISTIC`, `VOCABULARY`, `FAST_PATH`, `UX_COPY` e `BUSINESS_RULE`.
+### E2.S2 — Baseline de entendimento — **ATENDIDO** (2026-09-10)
 
-### E2.S2 — Baseline de entendimento
+**Fazer:** corpus com requests curtos/longos, 2-4 goals, typos, sinônimos, no-tool, RAG e apresentação-only.
 
-**Fazer:** corpus com requests curtos/longos, 2-4 goals, coordenação sem “e”, typos, sinônimos, referências, requests no-tool, RAG e apresentação-only.
-
-**Teste:** `task_decomposition_recall`, false tool calls, unnecessary follow-up, multi-request completion.
-
-**Pronto quando:** há baseline por família e exemplos negativos.
+**Feito:** harness `test_e2_s2_understanding_baseline.py` congela authority + shadow TU por família. Evidência: [`../evidence/e2-s2-understanding-baseline.md`](../evidence/e2-s2-understanding-baseline.md).
 
 ### E2.S3 — Contrato canônico de Turn Understanding
 
