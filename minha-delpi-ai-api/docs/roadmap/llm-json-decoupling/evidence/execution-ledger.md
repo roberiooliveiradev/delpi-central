@@ -13,7 +13,7 @@
 | C — entendimento | 02 | **ATENDIDO_PARCIAL** | E2.S4 cutover (após agree) → S5–S7 | S1–S3 OK; S4 shadow-only; DELETE heuristics deferred |
 | D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
-| F — UX inteligente | 06 | **EM_ANDAMENTO** | E6.S5 | E6.S1–S4 OK; queries = LEGACY_FALLBACK |
+| F — UX inteligente | 06 | **EM_ANDAMENTO** | E6.S6 | E6.S1–S5 OK; cleanup residual |
 | G — presentation/skills | 07, 08 | **PRONTO_APÓS_F** | inventário residual | Display path→label já limpo |
 | H — cutover/cleanup | 09 | **CONTÍNUO** | E9.S1 corpus ampliado | Não remover legado sem gates |
 
@@ -98,3 +98,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda F **EM_ANDAMENTO** — próxima E6.S4 (queries → LEGACY_FALLBACK) |
 | 2026-09-10 | E6.S4 **ATENDIDO** — recommendationQueries LEGACY_FALLBACK + dual-run |
 | 2026-09-10 | Onda F **EM_ANDAMENTO** — próxima E6.S5 (composer contextual) |
+| 2026-09-10 | E6.S5 **ATENDIDO** — composer cache + allowlist + entities (sem LLM/tecla) |
+| 2026-09-10 | Onda F **EM_ANDAMENTO** — próxima E6.S6 (cleanup) |

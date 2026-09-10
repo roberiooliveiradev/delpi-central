@@ -1,11 +1,11 @@
 # Plano 06 — Recommendations e composer -> sugestões contextuais grounded
 
 **Prioridade:** P1  
-**Status execução:** Onda F · E6.S1–S4 **ATENDIDO** · próxima E6.S5 · `recommendationQueries` = LEGACY_FALLBACK  
-**Evidência:** [`../evidence/e6-s1-recommendations-inventory.md`](../evidence/e6-s1-recommendations-inventory.md) · [`../evidence/e6-s2-recommendation-grounding-contract.md`](../evidence/e6-s2-recommendation-grounding-contract.md) · [`../evidence/e6-s3-contextual-recommendation-producer.md`](../evidence/e6-s3-contextual-recommendation-producer.md) · [`../evidence/e6-s4-recommendation-queries-fallback.md`](../evidence/e6-s4-recommendation-queries-fallback.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda F · E6.S1–S5 **ATENDIDO** · próxima E6.S6 · `recommendationQueries` = LEGACY_FALLBACK  
+**Evidência:** [`../evidence/e6-s1-recommendations-inventory.md`](../evidence/e6-s1-recommendations-inventory.md) · [`../evidence/e6-s2-recommendation-grounding-contract.md`](../evidence/e6-s2-recommendation-grounding-contract.md) · [`../evidence/e6-s3-contextual-recommendation-producer.md`](../evidence/e6-s3-contextual-recommendation-producer.md) · [`../evidence/e6-s4-recommendation-queries-fallback.md`](../evidence/e6-s4-recommendation-queries-fallback.md) · [`../evidence/e6-s5-composer-contextual.md`](../evidence/e6-s5-composer-contextual.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** próximos passos e sugestões devem considerar o pedido atual, os fatos retornados, limitações, contexto multi-turn e actions permitidas, em vez de listas estáticas por profile.
 
-**HEAD revalidado:** pós-E6.S3 (`6a311b8f0`+)
+**HEAD revalidado:** pós-E6.S4 (`fb3b5102b`+)
 
 ## EXECUTION_DRIFT (2026-09-10)
 
@@ -66,7 +66,7 @@ user goal
 | R06-02 | Evitar recomendação redundante com o já executado no turno | PARCIAL (actionId + pagination filter) |
 | R06-03 | Reutilizar chamada LLM do turno; delta ≈ 0 quando viável | ATENDIDO (delta=0) |
 | R06-04 | Fallback determinístico seguro em timeout/falha | ATENDIDO (`profile_fallback`) |
-| R06-05 | Composer sem LLM caro por tecla (debounce/cache) | ABERTO → E6.S5 |
+| R06-05 | Composer sem LLM caro por tecla (debounce/cache) | ATENDIDO (debounce MFE + cache server; sem LLM) |
 
 ## Contrato alvo
 
@@ -121,11 +121,13 @@ Se houver `actionId`, deve pertencer às actions permitidas. Recommendation nunc
 
 **Pronto quando:** candidate cobre profiles importantes sem aumentar false suggestions — **PASS**.
 
-### E6.S5 — Composer contextual
+### E6.S5 — Composer contextual — **ATENDIDO** (2026-09-10)
 
 **Fazer:** draft + entities + allowed capabilities; debounce/cache; modelo menor se call dedicada.
 
-**Não fazer:** auto-executar tool a partir da sugestão.
+**Feito:** entity `{productCode}`; `allowedActionIds` + `groupActionHints`; cache TTL server; debounce MFE 500ms; **sem** LLM por tecla.
+
+**Não fazer:** auto-executar tool a partir da sugestão — **garantido** (só query textual).
 
 ### E6.S6 — Cleanup
 

@@ -238,7 +238,14 @@ def typing_suggestions():
         return bad_request("Request body must be a JSON object")
 
     text = str(payload.get("text") or "")
-    route_questions = ChatComposerRouteQuestionSuggestionService.suggest(text)
+    allowed_raw = payload.get("allowedActionIds") or payload.get("allowedActions")
+    allowed_action_ids = None
+    if isinstance(allowed_raw, (list, tuple, set)):
+        allowed_action_ids = [str(item).strip() for item in allowed_raw if str(item).strip()]
+    route_questions = ChatComposerRouteQuestionSuggestionService.suggest(
+        text,
+        allowed_action_ids=allowed_action_ids,
+    )
 
     from app.application.services.chat_platform_runtime_access import (
         learning_pipeline_settings,

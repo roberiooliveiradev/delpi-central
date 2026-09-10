@@ -4,6 +4,16 @@
   "maxSuggestions": 4,
   "minDraftLength": 3,
   "includePathRulesFromCapabilities": true,
+  "cache": {
+    "enabled": true,
+    "ttlSeconds": 45,
+    "maxEntries": 256
+  },
+  "groupActionHints": {
+    "drawing_analysis": ["drawing", "desenho", "validate", "balloon", "pdf", "cotas"],
+    "product_stock": ["stock", "estoque", "warehouse", "saldo", "balance"],
+    "product_structure": ["structure", "bom", "component", "estrutura", "material"]
+  },
   "groups": [
     {
       "id": "drawing_analysis",
