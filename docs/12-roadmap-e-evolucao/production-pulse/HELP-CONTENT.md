@@ -32,6 +32,8 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 
 Superfície única Admin: canvas fullscreen, KPIs em chips, catálogos/jobs em painéis laterais, detalhe/CRUD em modais host-contained e popovers ancorados (`AnchoredPanelPortal`). Feedback transitório via FloatingNotice; confirmações destrutivas via ConfirmModalPanel.
 
+**Single Surface Principle:** resumo do nó, menu ⋯ e popover Saúde da frota = uma moldura (`variant="bare"` + `delpi-ui-popover-surface`); classes `pp-*` só layout. Filtros recolhidos no mapa = `IconButton` sem card externo. Ver [DESIGN-FRONTEND §3.6.1](./DESIGN-FRONTEND.md).
+
 **Conexões:** sem linha / tracejada (driver) / sólida (vínculo OTA). **Soft delete:** Desativar IoT · Arquivar versão. **Menu ⋯:** cada item com `hint` (`PP_HELP.hub.menu*`).
 
 Helps: `PP_HELP.hub.*`, `PP_HELP.otaLinks.*`.

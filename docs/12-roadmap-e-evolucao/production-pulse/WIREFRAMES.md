@@ -1547,6 +1547,8 @@ TopBar: **Admin | Operador**. O mapa ocupa quase todo o viewport.
 └───────────────────────────────────────────────────────────────┘
 ```
 
+**Single Surface:** popover de resumo, menu ⋯ e Saúde da frota usam `AnchoredPanelPortal` `bare` + `delpi-ui-popover-surface` (uma moldura). Overlay de filtros recolhido = só `IconButton` (sem card externo). Ver [DESIGN-FRONTEND §3.6.1](./DESIGN-FRONTEND.md).
+
 Query: `entity=device|firmware|job:<id>` · `panel=devices|firmwares|jobs` · `modal=…` (alias legado `drawer=`)
 
 ## WF-PP-OTA-04 — Detalhe · aba Firmware (IoT)

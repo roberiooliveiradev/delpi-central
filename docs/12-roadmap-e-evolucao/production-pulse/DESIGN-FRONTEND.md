@@ -186,6 +186,37 @@ Import: `from "@delpi/plugin-ui/index"`. Factory com prefixo `pp` onde existir h
 
 **Modal host-contained** (`mfe-modal-host-contained.mdc`): `containInHost={true}` default.
 
+### 3.6.1 Single Surface Principle (popovers / overlays compactos)
+
+**Regra:** um popover, menu ou overlay compacto tem **uma** moldura visual externa. Conteúdo fica layout-only (tipografia, gap, width) — sem segundo card (`background` + `border` + `box-shadow` + `radius`) dentro do portal.
+
+**Padrão canônico (kit):**
+
+```tsx
+<AnchoredPanelPortal
+  variant="bare"
+  className="delpi-ui-popover-surface pp-entity-summary"
+  density="compact"
+  portalScopeClassName="dashboard-production-pulse"
+  panelRef={panelRef}
+  role="dialog" /* ou menu */
+  …
+>
+  {/* só layout interno — sem ref={panelRef} no filho */}
+</AnchoredPanelPortal>
+```
+
+| Superfície | Classe layout `pp-*` | Chrome |
+|---|---|---|
+| Resumo nó (FW/IoT) | `pp-entity-summary` | kit `delpi-ui-popover-surface` |
+| Menu ⋯ | `pp-entity-menu` | idem |
+| Saúde da frota | `pp-hub-health-popover` | idem |
+| Filtros mapa recolhidos | `pp-map-overlay-stack--collapsed` | **sem** card — só `IconButton` |
+
+**Não fazer:** `variant` omitido (default `shape`) + filho com chrome; `panelRef` no filho e no portal; regras `.delpi-ui-*` no MFE; flatten de `SectionCard` em modais/forms (seções funcionais reais ficam).
+
+**Guardrail:** `productionPulseKit.structural.test.ts` — bare + surface + CSS sem chrome paralelo + collapsed transparente.
+
 ### 3.7 Helps e explicações
 
 **Catálogo:** [`docs/.../content/helpTooltips.ts`](./content/helpTooltips.ts) → `plugins/production-pulse/src/content/helpTooltips.ts`  
