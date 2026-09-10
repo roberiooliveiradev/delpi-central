@@ -105,7 +105,22 @@ class ChatOperationalFollowUpRoutingService:
         return tuple(parsed)
 
     @classmethod
-    def segment_from_message(cls, message: str | None) -> str | None:
+    def authority_shadow_enabled(cls) -> bool:
+        config = _routing_content().get("authorityShadow") or {}
+        if not isinstance(config, dict):
+            return False
+        return bool(config.get("enabled"))
+
+    @classmethod
+    def cutover_enabled(cls) -> bool:
+        config = _routing_content().get("authorityShadow") or {}
+        if not isinstance(config, dict):
+            return False
+        return bool(config.get("cutoverEnabled"))
+
+    @classmethod
+    def segment_from_message_terms(cls, message: str | None) -> str | None:
+        """Legado: messageSegmentTerms → routeSegment (observer após cutover)."""
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if not normalized:
@@ -116,6 +131,48 @@ class ChatOperationalFollowUpRoutingService:
                 return segment
 
         return None
+
+    @classmethod
+    def segment_from_follow_up_type(cls, message: str | None) -> str | None:
+        """Candidato estruturado: follow_up_type → routeSegment (sem varrer terms)."""
+        from app.domain.services.chat_follow_up_intent_service import (
+            ChatFollowUpIntentService,
+        )
+
+        follow_up_type = ChatFollowUpIntentService.follow_up_type(message)
+        return cls.route_segment(follow_up_type)
+
+    @classmethod
+    def segment_from_message(cls, message: str | None) -> str | None:
+        from app.domain.services.follow_up_routing_authority_shadow_service import (
+            FollowUpRoutingAuthorityShadowService,
+        )
+        from app.domain.services.chat_follow_up_intent_service import (
+            ChatFollowUpIntentService,
+        )
+
+        legacy = cls.segment_from_message_terms(message)
+        candidate = cls.segment_from_follow_up_type(message)
+        follow_up_type = ChatFollowUpIntentService.follow_up_type(message)
+        cutover = cls.cutover_enabled()
+        authority = "follow_up_type" if cutover else "message_segment_terms"
+
+        if cls.authority_shadow_enabled():
+            FollowUpRoutingAuthorityShadowService.record(
+                {
+                    "legacySegment": legacy,
+                    "candidateSegment": candidate,
+                    "followUpType": follow_up_type,
+                    "agree": legacy == candidate,
+                    "authority": authority,
+                    "cutoverEnabled": cutover,
+                }
+            )
+
+        if cutover:
+            return candidate
+
+        return legacy
 
     @classmethod
     def looks_like_playbook_date_follow_up(

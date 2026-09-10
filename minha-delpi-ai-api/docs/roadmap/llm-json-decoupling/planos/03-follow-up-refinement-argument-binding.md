@@ -1,8 +1,8 @@
 # Plano 03 — Follow-up, refinement e argument binding generalizados
 
 **Prioridade:** P0  
-**Status execução:** Onda D · **EM_ANDAMENTO** · E3.S1–S6 **ATENDIDO** · próxima = E3.S7 (follow-up cutover)  
-**Evidência:** [`../evidence/e3-s1-multi-turn-state-inventory.md`](../evidence/e3-s1-multi-turn-state-inventory.md) · [`../evidence/e3-s2-follow-up-baseline.md`](../evidence/e3-s2-follow-up-baseline.md) · [`../evidence/e3-s3-turn-refinement-contract.md`](../evidence/e3-s3-turn-refinement-contract.md) · [`../evidence/e3-s4-schema-driven-argument-binder.md`](../evidence/e3-s4-schema-driven-argument-binder.md) · [`../evidence/e3-s5-schema-driven-group-by.md`](../evidence/e3-s5-schema-driven-group-by.md) · [`../evidence/e3-s6-pagination-filter-fast-path.md`](../evidence/e3-s6-pagination-filter-fast-path.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda D · **EM_ANDAMENTO** · E3.S1–S7 **ATENDIDO** · próxima = E3.S8 (persist/reload + cleanup)  
+**Evidência:** [`../evidence/e3-s1-multi-turn-state-inventory.md`](../evidence/e3-s1-multi-turn-state-inventory.md) · [`../evidence/e3-s2-follow-up-baseline.md`](../evidence/e3-s2-follow-up-baseline.md) · [`../evidence/e3-s3-turn-refinement-contract.md`](../evidence/e3-s3-turn-refinement-contract.md) · [`../evidence/e3-s4-schema-driven-argument-binder.md`](../evidence/e3-s4-schema-driven-argument-binder.md) · [`../evidence/e3-s5-schema-driven-group-by.md`](../evidence/e3-s5-schema-driven-group-by.md) · [`../evidence/e3-s6-pagination-filter-fast-path.md`](../evidence/e3-s6-pagination-filter-fast-path.md) · [`../evidence/e3-s7-follow-up-routing-cutover.md`](../evidence/e3-s7-follow-up-routing-cutover.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** continuidade conversacional, paginação, filtros, group-by e complementação de argumentos devem funcionar a partir do estado estruturado da conversa e do schema da action, não de substrings de rota ou frases cadastradas.
 
 ## CURRENT
@@ -122,11 +122,13 @@ Medir R3/R6/R7/R8/R9/R11.
 
 **Teste:** phrases exatas + frases livres + field inexistente. ✅
 
-### E3.S7 — Follow-up cutover
+### E3.S7 — Follow-up cutover — **ATENDIDO**
 
 **Fazer:** trocar `operational_follow_up_routing` por resolução via contexto estruturado + candidates; usar legacy apenas como shadow temporário.
 
-**Teste:** follow-up entre actions irmãs, troca de domínio e referência a resultado não imediatamente anterior.
+**Feito:** authority = `follow_up_type → routeSegment`; `messageSegmentTerms` observer; shadow log; evidência [`../evidence/e3-s7-follow-up-routing-cutover.md`](../evidence/e3-s7-follow-up-routing-cutover.md).
+
+**Teste:** follow-up entre actions irmãs (`preferredRouteId`), troca de domínio e referência a resultado não imediatamente anterior (topic switch sem segment). ✅
 
 ### E3.S8 — Persist/reload e cleanup
 

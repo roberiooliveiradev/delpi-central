@@ -4,6 +4,10 @@
     "/production-status",
     "/shipping-status"
   ],
+  "authorityShadow": {
+    "enabled": true,
+    "cutoverEnabled": true
+  },
   "followUpTypes": {
     "shipping": {
       "routeSegment": "shipping-status",
