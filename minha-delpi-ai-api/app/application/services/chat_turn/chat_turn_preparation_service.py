@@ -241,9 +241,23 @@ class ChatTurnPreparationService:
             previous_messages=history_source,
         )
         if shadow_understanding is not None and isinstance(workspace_context, dict):
+            from app.domain.services.turn_understanding_authority_shadow_service import (
+                TurnUnderstandingAuthorityShadowService,
+            )
+
+            authority_shadow = TurnUnderstandingAuthorityShadowService.compare(
+                message,
+                shadow_understanding,
+            )
+            debug_payload = shadow_understanding.as_admin_debug()
+            if authority_shadow is not None:
+                debug_payload = {
+                    **debug_payload,
+                    "authorityShadow": authority_shadow,
+                }
             workspace_context = {
                 **workspace_context,
-                "shadowTurnUnderstanding": shadow_understanding.as_admin_debug(),
+                "shadowTurnUnderstanding": debug_payload,
             }
             if "turn_understanding_shadow" not in pipeline_stages:
                 pipeline_stages.append("turn_understanding_shadow")

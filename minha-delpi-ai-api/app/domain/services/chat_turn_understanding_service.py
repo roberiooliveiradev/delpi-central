@@ -1,70 +1,36 @@
-"""Turn Understanding — decomposição heurística multi-subtask (E3.S1, shadow).
+"""Turn Understanding — decomposição multi-subtask (shadow) + contrato canônico E2.S3.
 
-Produz um contrato estruturado sem controlar a execução (shadow). Cutover
-fica a cargo do Task Planner (E5) quando a flag estiver ligada.
+Produz contrato estruturado sem controlar a execução (shadow). Cutover de
+authority fica em E2.S4+ / Task Planner quando a flag estiver ligada.
 """
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from app.domain.entities.turn_understanding import (
+    TurnUnderstanding,
+    TurnUnderstandingGoal,
+    TurnUnderstandingSubtask,
+)
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
 from app.domain.services.chat_turn_understanding_content_service import (
     ChatTurnUnderstandingContentService,
 )
+from app.domain.services.turn_understanding_validator_service import (
+    TurnUnderstandingValidatorService,
+)
 
 _CONTENT = ChatTurnUnderstandingContentService
 
-
-@dataclass(frozen=True)
-class TurnUnderstandingSubtask:
-    id: str
-    goal: str
-    type: str
-    depends_on: tuple[str, ...] = ()
-    status: str = "pending"
-
-    def as_dict(self) -> dict[str, Any]:
-        return {
-            "id": self.id,
-            "goal": self.goal,
-            "type": self.type,
-            "dependsOn": list(self.depends_on),
-            "status": self.status,
-        }
-
-
-@dataclass(frozen=True)
-class TurnUnderstanding:
-    user_goal: str
-    subtasks: tuple[TurnUnderstandingSubtask, ...]
-    confidence: float
-    continuation_of: str | None = None
-    ambiguities: tuple[dict[str, Any], ...] = ()
-    references: tuple[dict[str, Any], ...] = ()
-    source: str = "heuristic"
-
-    @property
-    def subtask_count(self) -> int:
-        return len(self.subtasks)
-
-    def as_dict(self) -> dict[str, Any]:
-        return {
-            "userGoal": self.user_goal,
-            "subtasks": [item.as_dict() for item in self.subtasks],
-            "confidence": self.confidence,
-            "continuationOf": self.continuation_of,
-            "ambiguities": list(self.ambiguities),
-            "references": list(self.references),
-            "source": self.source,
-            "subtaskCount": self.subtask_count,
-        }
-
-    def as_admin_debug(self) -> dict[str, Any]:
-        return self.as_dict()
+__all__ = [
+    "ChatTurnUnderstandingService",
+    "TurnUnderstanding",
+    "TurnUnderstandingGoal",
+    "TurnUnderstandingSubtask",
+]
 
 
 class ChatTurnUnderstandingService:
@@ -86,39 +52,62 @@ class ChatTurnUnderstandingService:
             max_subtasks = 1
 
         segments = segments[:max_subtasks] or [clipped or raw]
-        subtasks: list[TurnUnderstandingSubtask] = []
+        goals: list[TurnUnderstandingGoal] = []
 
         for index, segment in enumerate(segments, start=1):
-            goal = cls._clean_segment(segment)
-            if not goal:
+            intent = cls._clean_segment(segment)
+            if not intent:
                 continue
-            subtasks.append(
-                TurnUnderstandingSubtask(
-                    id=f"st-{index}",
-                    goal=goal,
-                    type=cls._classify_type(goal),
+            goals.append(
+                TurnUnderstandingGoal(
+                    goal_id=f"g{index}",
+                    intent=intent,
+                    entities=cls._extract_entities(intent),
                     depends_on=tuple(
-                        [f"st-{index - 1}"] if index > 1 and cls._looks_dependent(goal) else []
+                        [f"g{index - 1}"] if index > 1 and cls._looks_dependent(intent) else []
                     ),
+                    kind=cls._classify_type(intent),
                 )
             )
 
-        if not subtasks:
-            subtasks = [
-                TurnUnderstandingSubtask(
-                    id="st-1",
-                    goal=clipped or raw or "(vazio)",
-                    type=_CONTENT.kind("unknown"),
+        if not goals:
+            goals = [
+                TurnUnderstandingGoal(
+                    goal_id="g1",
+                    intent=clipped or raw or "(vazio)",
+                    entities=cls._extract_entities(clipped or raw),
+                    kind=_CONTENT.kind("unknown"),
                 )
             ]
 
-        confidence = cls._resolve_confidence(len(subtasks))
-        return TurnUnderstanding(
+        # Compat IDs st-* ainda aceitos via from_dict; emissão canônica = gN.
+        # Task planner / E2.S2 leem .subtasks / .goal / .type / depends_on.
+        # Mantém st-* nos IDs para não quebrar depends_on esperados nos testes TU.
+        st_goals = [
+            TurnUnderstandingGoal(
+                goal_id=f"st-{index}",
+                intent=goal.intent,
+                entities=goal.entities,
+                depends_on=(f"st-{index - 1}",) if goal.depends_on and index > 1 else (),
+                kind=goal.kind,
+                status=goal.status,
+            )
+            for index, goal in enumerate(goals, start=1)
+        ]
+
+        confidence = cls._resolve_confidence(len(st_goals))
+        draft = TurnUnderstanding(
             user_goal=clipped or raw,
-            subtasks=tuple(subtasks),
+            goals=tuple(st_goals),
             confidence=confidence,
             continuation_of=cls._continuation_hint(previous_messages),
+            presentation_intent=cls._presentation_intent(clipped or raw),
+            needs_tool=cls._infer_needs_tool(st_goals),
             source="heuristic",
+        )
+        return TurnUnderstandingValidatorService.ensure(
+            draft,
+            fallback_message=clipped or raw,
         )
 
     @classmethod
@@ -147,6 +136,38 @@ class ChatTurnUnderstandingService:
         )
 
     @classmethod
+    def _extract_entities(cls, goal: str) -> dict[str, str]:
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        entities: dict[str, str] = {}
+        code = ChatProductQueryIntentService.extract_product_code(goal or "")
+        if code:
+            entities["productCode"] = code
+        return entities
+
+    @classmethod
+    def _presentation_intent(cls, message: str) -> dict[str, str] | None:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
+        if "tabela" in normalized or "table" in normalized:
+            return {"view": "table"}
+        if "grafico" in normalized or "gráfico" in normalized or "chart" in normalized:
+            return {"view": "chart"}
+        if "kpi" in normalized or "indicador" in normalized:
+            return {"view": "kpi"}
+        return None
+
+    @classmethod
+    def _infer_needs_tool(cls, goals: list[TurnUnderstandingGoal]) -> bool | None:
+        kinds = {goal.kind for goal in goals}
+        if kinds & {"lookup", "action", "reasoning"}:
+            return True
+        if kinds == {"unknown"} and len(goals) == 1 and len(goals[0].intent) < 40:
+            return False
+        return None
+
+    @classmethod
     def _split_segments(cls, message: str) -> list[str]:
         text = message.strip()
         if not text:
@@ -155,14 +176,12 @@ class ChatTurnUnderstandingService:
         min_chars = max(1, _CONTENT.limit_int("minSubtaskChars", 4))
         candidates: list[str] = []
 
-        # 1) linhas enumeradas
         lines = [line.strip() for line in text.splitlines() if line.strip()]
         enum_line = _CONTENT.compile_pattern("enumerationLine")
         enumerated = [enum_line.sub("", line).strip() for line in lines if enum_line.search(line)]
         if len(enumerated) >= 2:
             candidates = enumerated
         else:
-            # 2) separadores fortes / conectores
             parts = _CONTENT.compile_pattern("hardSeparator").split(text)
             expanded: list[str] = []
             for part in parts:
@@ -176,7 +195,6 @@ class ChatTurnUnderstandingService:
                         continue
                     coord = _CONTENT.compile_pattern("coordinationConnector").split(piece)
                     expanded.extend(str(item).strip() for item in coord if str(item).strip())
-            # perguntas
             if len(expanded) <= 1:
                 expanded = [
                     str(item).strip()

@@ -10,7 +10,7 @@
 |------|--------|--------|------------------|-------|
 | A — baseline/contratos | inventário + freeze | **ATENDIDO** | — | Ver `onda-a-inventory.md` |
 | B — routing universal | 01 | **ATENDIDO_PARCIAL** | Onda H: DELETE fields registry | Cutover seleção + binder OK; JSON markers deferred |
-| C — entendimento | 02 | **EM_ANDAMENTO** | **E2.S3** contrato canônico TU | E2.S1 inventário + E2.S2 baseline ATENDIDOS |
+| C — entendimento | 02 | **ATENDIDO_PARCIAL** | E2.S4 cutover (após agree) → S5–S7 | S1–S3 OK; S4 shadow-only; DELETE heuristics deferred |
 | D — multi-turn/args | 03 | **DESBLOQUEADO** | inventário follow-up | actionId estável via OpenAPI-first |
 | E — caps/composition | 04, 05 | **PARCIAL** | 04: `action.*`; 05: routeIds | pathRules já DONE |
 | F — UX inteligente | 06 | **PRONTO_APÓS_E** | E6.S1 | recommendationQueries ainda authority |
@@ -57,3 +57,6 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda B **ATENDIDO_PARCIAL** — DELETE JSON registry deferred (ledger / Onda H) |
 | 2026-09-10 | E2.S1 **ATENDIDO** — inventário heurísticas intent (Onda C) |
 | 2026-09-10 | E2.S2 **ATENDIDO** — baseline authority vs shadow TU (10 famílias) |
+| 2026-09-10 | E2.S3 **ATENDIDO** — contrato canônico TU (schema/validator/fallback) |
+| 2026-09-10 | E2.S4 **SHADOW_ON** — authority vs TU (sem cutover) |
+| 2026-09-10 | Onda C **ATENDIDO_PARCIAL** — cutover/DELETE intents deferred |

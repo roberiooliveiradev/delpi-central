@@ -50,6 +50,8 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`evidence/e1-s6b-selection-cutover.md`](./evidence/e1-s6b-selection-cutover.md) | E1.S6B — **ATENDIDO** cutover seleção OpenAPI-first. |
 | [`evidence/e2-s1-heuristic-intent-inventory.md`](./evidence/e2-s1-heuristic-intent-inventory.md) | E2.S1 — inventário árvores heurísticas (Onda C). |
 | [`evidence/e2-s2-understanding-baseline.md`](./evidence/e2-s2-understanding-baseline.md) | E2.S2 — baseline authority vs shadow TU. |
+| [`evidence/e2-s3-turn-understanding-contract.md`](./evidence/e2-s3-turn-understanding-contract.md) | E2.S3 — contrato canônico TU. |
+| [`evidence/e2-s4-authority-shadow.md`](./evidence/e2-s4-authority-shadow.md) | E2.S4 — SHADOW_ON authority vs TU. |
 
 ## Drift HEAD (2026-09-10) — resumido
 

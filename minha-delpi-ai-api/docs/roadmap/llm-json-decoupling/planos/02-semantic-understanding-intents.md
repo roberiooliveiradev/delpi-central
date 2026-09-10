@@ -1,8 +1,8 @@
 # Plano 02 — NLU manual -> Turn Understanding + planner estruturado
 
 **Prioridade:** P0  
-**Status execução:** Onda C · E2.S1–S2 **ATENDIDOS** · próxima = **E2.S3** contrato canônico TU  
-**Evidência:** [`../evidence/e2-s1-heuristic-intent-inventory.md`](../evidence/e2-s1-heuristic-intent-inventory.md) · [`../evidence/e2-s2-understanding-baseline.md`](../evidence/e2-s2-understanding-baseline.md) · [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda C · E2.S1–S3 **ATENDIDOS** · E2.S4 **SHADOW_ON** · Onda C **ATENDIDO_PARCIAL** (cutover/DELETE deferred)  
+**Evidência:** [`../evidence/e2-s1-heuristic-intent-inventory.md`](../evidence/e2-s1-heuristic-intent-inventory.md) · [`../evidence/e2-s2-understanding-baseline.md`](../evidence/e2-s2-understanding-baseline.md) · [`../evidence/e2-s3-turn-understanding-contract.md`](../evidence/e2-s3-turn-understanding-contract.md) · [`../evidence/e2-s4-authority-shadow.md`](../evidence/e2-s4-authority-shadow.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** frases longas, sinônimos, linguagem informal, typos e pedidos compostos devem ser compreendidos sem manutenção contínua de `terms`, `excludes`, regex e predicates por domínio.
 
 ## CURRENT
@@ -93,25 +93,19 @@ O campo `intent` é semântico, não enum por endpoint.
 
 **Feito:** harness `test_e2_s2_understanding_baseline.py` congela authority + shadow TU por família. Evidência: [`../evidence/e2-s2-understanding-baseline.md`](../evidence/e2-s2-understanding-baseline.md).
 
-### E2.S3 — Contrato canônico de Turn Understanding
+### E2.S3 — Contrato canônico de Turn Understanding — **ATENDIDO** (2026-09-10)
 
 **Fazer:** definir owner em application/domain apropriado, schema de saída e integração com estado da conversa e planner.
 
-**Não fazer:** criar enums de intent por endpoint ou domínio novo.
+**Feito:** entity + `TURN_UNDERSTANDING_JSON_SCHEMA` + validator/fallback; `analyze` emite contrato validado com `goals`/`entities`/`presentationIntent`/`needsTool`; sem path tokens. Evidência: [`../evidence/e2-s3-turn-understanding-contract.md`](../evidence/e2-s3-turn-understanding-contract.md).
 
-**Teste:** schema validation, malformed model output, missing fields e fallback.
+### E2.S4 — Product/production/KPI migration — **SHADOW_ON** (2026-09-10)
 
-**Pronto quando:** consumers recebem semântica estruturada sem depender de path token.
+**Fazer:** substituir gradualmente gates… / **Não fazer:** apagar heurística antes de shadow compare.
 
-### E2.S4 — Product/production/KPI migration
+**Feito (sem cutover):** `TurnUnderstandingAuthorityShadowService` compara authority vs TU e anexa `authorityShadow` no prepare. Evidência: [`../evidence/e2-s4-authority-shadow.md`](../evidence/e2-s4-authority-shadow.md).
 
-**Fazer:** substituir gradualmente gates baseados em `product_query_intent`, `production_operational_intent` e `department_kpi_rules` pelo contrato de understanding + Action Catalog.
-
-**Não fazer:** apagar heurística antes de shadow compare.
-
-**Teste:** semantic siblings, ambiguous KPI, product vs production, purchase vs consumption, typo e informal.
-
-**Pronto quando:** seleção correta não depende de frase presente no JSON.
+**Pendente:** cutover por família; E2.S5–S7.
 
 ### E2.S5 — Generic intent/router migration
 
