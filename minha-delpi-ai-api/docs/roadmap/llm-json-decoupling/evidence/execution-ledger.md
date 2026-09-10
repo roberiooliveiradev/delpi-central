@@ -13,7 +13,7 @@
 | C — entendimento | 02 | **ATENDIDO_PARCIAL** | E2.S4 cutover (após agree) → S5–S7 | S1–S3 OK; S4 shadow-only; DELETE heuristics deferred |
 | D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
-| F — UX inteligente | 06 | **PRONTO_APÓS_E** | E6.S1 | recommendationQueries ainda authority |
+| F — UX inteligente | 06 | **EM_ANDAMENTO** | E6.S2 | E6.S1 OK; recommendationQueries ainda authority |
 | G — presentation/skills | 07, 08 | **PRONTO_APÓS_F** | inventário residual | Display path→label já limpo |
 | H — cutover/cleanup | 09 | **CONTÍNUO** | E9.S1 corpus ampliado | Não remover legado sem gates |
 
@@ -90,3 +90,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | E5.S6 **ATENDIDO** — entity enrichment goals (enrich maps deprecated; caps mantidos) |
 | 2026-09-10 | E5.S7 **ATENDIDO** — DELETE maps mortos entity/department; caps preservados |
 | 2026-09-10 | Plano 05 / Onda E **ATENDIDO** — próxima Onda F (plano 06) |
+| 2026-09-10 | E6.S1 **ATENDIDO** — inventário + baseline recommendations/composer (6 famílias) |
+| 2026-09-10 | Onda F **EM_ANDAMENTO** — próxima E6.S2 (grounding contract) |

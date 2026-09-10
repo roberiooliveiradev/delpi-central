@@ -1,11 +1,11 @@
 # Plano 06 — Recommendations e composer -> sugestões contextuais grounded
 
 **Prioridade:** P1  
-**Status execução:** Onda F · `recommendationQueries` ainda authority (inventário §5) · após E  
-**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda F · E6.S1 **ATENDIDO** · próxima E6.S2 · `recommendationQueries` ainda LIVE_AUTHORITY  
+**Evidência:** [`../evidence/e6-s1-recommendations-inventory.md`](../evidence/e6-s1-recommendations-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** próximos passos e sugestões devem considerar o pedido atual, os fatos retornados, limitações, contexto multi-turn e actions permitidas, em vez de listas estáticas por profile.
 
-**HEAD revalidado:** pós-D2 (`13dbec11a` / residual path→display recommendations)
+**HEAD revalidado:** pós-E5.S7 / Onda E ATENDIDA (`8093707cd`+)
 
 ## EXECUTION_DRIFT (2026-09-10)
 
@@ -89,11 +89,13 @@ Se houver `actionId`, deve pertencer às actions permitidas. Recommendation nunc
 
 ## Etapas
 
-### E6.S1 — Inventário e baseline
+### E6.S1 — Inventário e baseline — **ATENDIDO** (2026-09-10)
 
 **Fazer:** mapear origem/transformação/persistência/UI; baseline com producer atual (`recommendationQueries`) vs desejado contextual.
 
-**Teste:** relevance, duplication, unavailable capability, multi-turn, latency.
+**Feito:** inventário `e6-s1-recommendations-inventory.md`; freeze 6 famílias em `test_e6_s1_recommendations_baseline.py` (profile static, no-dedupe, unauthorized actionId parcial, skip-if-present, composer prefix/negative). Cobertura profiles = **13/13** (drift vs E16 “27/27”).
+
+**Teste:** relevance (= JSON), duplication gap, unavailable capability (parcial), composer prefix/short; multi-turn/latency documentados no inventário.
 
 ### E6.S2 — Grounding contract
 
