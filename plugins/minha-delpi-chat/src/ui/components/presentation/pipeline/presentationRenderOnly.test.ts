@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
-import productOperationalContent from "../../../../content/product_operational_content.json";
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { routeFraming, routeTitle } from "../../../../content/operationalPresentationContent";
 import { buildStackSectionChrome } from "./presentationStackSections";
+import { routeKeyFromToolMetadata } from "./presentationMultiRoute";
 
-describe("MFE render-only display semantics (E4/E13)", () => {
+const contentDir = join(dirname(fileURLToPath(import.meta.url)), "../../../../content");
+
+describe("MFE render-only display semantics (E7.S7)", () => {
   it("does not invent domain route titles locally", () => {
     expect(routeTitle("stock")).toBe("Resultado");
     expect(routeTitle("structure")).toBe("Resultado");
@@ -15,16 +20,23 @@ describe("MFE render-only display semantics (E4/E13)", () => {
     expect(routeFraming("guide")).toBe("");
   });
 
-  it("does not keep routeTitles/routeFraming mirrors in local JSON", () => {
-    const presentation = productOperationalContent.presentation as Record<string, unknown>;
-    expect(presentation.routeTitles).toBeUndefined();
-    expect(presentation.routeFraming).toBeUndefined();
+  it("does not keep a mirrored product_operational_content.json in the MFE", () => {
+    expect(existsSync(join(contentDir, "product_operational_content.json"))).toBe(false);
   });
 
-  it("keeps scopes.byPathFragment synced with API intent (open-orders present)", () => {
-    expect(productOperationalContent.scopes.byPathFragment["/open-orders"]).toBe(
-      "pedidos em aberto",
-    );
+  it("prefers API presentationProfileKey over path for route key", () => {
+    const key = routeKeyFromToolMetadata({
+      path: "/products/10080001/stock",
+      presentationProfileKey: "product_structure",
+    });
+    expect(key).toBe("structure");
+  });
+
+  it("negative: unknown path without profileKey stays generic other", () => {
+    const key = routeKeyFromToolMetadata({
+      path: "/acme/widgets/inventory-v2",
+    });
+    expect(key).toBe("other");
   });
 
   it("renders API section titles for unseen domains without local domain map", () => {

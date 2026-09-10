@@ -2,9 +2,10 @@
 
 | Arquivo local | Origem na API |
 |---------------|---------------|
-| `product_operational_content.json` | `minha-delpi-ai-api/app/content/pt-BR/assistant/product_operational_content.json` (sync remove `presentation.routeTitles` / `routeFraming` — MFE render-only) |
 | `presentation_vocabulary.json` | `minha-delpi-ai-api/app/content/pt-BR/assistant/presentation_vocabulary.json` |
 | `message_composer.json` | `minha-delpi-ai-api/app/content/pt-BR/assistant/message_composer.json` |
+
+> E7.S7 — `product_operational_content.json` **não** é mais espelhado no MFE. Títulos/framing/scopes vêm do contrato materializado pela API (`stackPresentationPlan`, `routeTitle`, `sectionTitles`).
 
 ## Ajuda do admin (MFE)
 
@@ -16,7 +17,6 @@
 Após alterar o JSON na API, sincronize no MFE:
 
 ```bash
-npm run sync:product-operational-content
 npm run sync:presentation-vocabulary
 npm run sync:message-composer-content
 ```

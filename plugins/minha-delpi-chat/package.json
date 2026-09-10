@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "sync:product-operational-content": "node ./scripts/sync-product-operational-content.mjs",
     "sync:presentation-vocabulary": "cp ../../minha-delpi-ai-api/app/content/pt-BR/assistant/presentation_vocabulary.json src/content/presentation_vocabulary.json",
     "sync:message-composer-content": "cp ../../minha-delpi-ai-api/app/content/pt-BR/assistant/message_composer.json src/content/message_composer.json",
     "sync:attachments-content": "cp ../../minha-delpi-ai-api/app/content/pt-BR/assistant/attachments.json src/content/attachments_content.json",
