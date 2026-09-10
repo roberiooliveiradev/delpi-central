@@ -2281,16 +2281,50 @@
   border-inline-start: 1px solid color-mix(in srgb, var(--pp-border) 90%, transparent);
 }
 
-.dashboard-production-pulse .pp-map-overlay-actions .pp-map-overlay-create-btn,
-.dashboard-production-pulse .pp-map-overlay-create-btn {
-  background: var(--pp-accent);
-  border-color: var(--pp-accent);
-  color: #fff;
-  font-weight: 650;
+.dashboard-production-pulse .pp-map-overlay-nav-btn--device {
+  color: color-mix(in srgb, var(--pp-success, #22c55e) 82%, var(--pp-text));
+  border-color: color-mix(in srgb, var(--pp-success, #22c55e) 42%, var(--pp-border));
 }
 
-.dashboard-production-pulse .pp-map-overlay-actions .pp-map-overlay-create-btn:hover:not(:disabled),
-.dashboard-production-pulse .pp-map-overlay-create-btn:hover:not(:disabled) {
+.dashboard-production-pulse .pp-map-overlay-nav-btn--firmware {
+  color: color-mix(in srgb, var(--pp-accent) 78%, var(--pp-text));
+  border-color: color-mix(in srgb, var(--pp-accent) 42%, var(--pp-border));
+}
+
+.dashboard-production-pulse .pp-map-overlay-nav-btn--driver {
+  color: color-mix(in srgb, var(--pp-title, #089bdb) 72%, var(--pp-text));
+  border-color: color-mix(in srgb, var(--pp-title, #089bdb) 38%, var(--pp-border));
+}
+
+.dashboard-production-pulse .pp-map-overlay-nav-btn--jobs {
+  color: color-mix(in srgb, var(--pp-warning, #d97706) 78%, var(--pp-text));
+  border-color: color-mix(in srgb, var(--pp-warning, #d97706) 42%, var(--pp-border));
+}
+
+.dashboard-production-pulse .pp-map-overlay-actions .pp-map-overlay-create-btn,
+.dashboard-production-pulse .pp-map-overlay-create-btn {
+  font-weight: 650;
+  color: #fff;
+}
+
+.dashboard-production-pulse .pp-map-overlay-create-btn--device {
+  background: var(--pp-success, #15803d);
+  border-color: var(--pp-success, #15803d);
+}
+
+.dashboard-production-pulse .pp-map-overlay-create-btn--firmware {
+  background: var(--pp-accent);
+  border-color: var(--pp-accent);
+}
+
+.dashboard-production-pulse .pp-map-overlay-create-btn--device:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pp-success, #15803d) 88%, white);
+  border-color: color-mix(in srgb, var(--pp-success, #15803d) 88%, white);
+  color: #fff;
+  filter: none;
+}
+
+.dashboard-production-pulse .pp-map-overlay-create-btn--firmware:hover:not(:disabled) {
   background: color-mix(in srgb, var(--pp-accent) 88%, white);
   border-color: color-mix(in srgb, var(--pp-accent) 88%, white);
   color: #fff;

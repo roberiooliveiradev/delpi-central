@@ -1221,22 +1221,38 @@ export function FirmwareLinksPage({
         </PpHintAction>
       ) : null}
       <PpHintAction hint={PP_HELP.hub.panelDevices} ariaLabel="Ajuda: Painel IoTs">
-        <PpActionButton variant="ghost" onClick={() => openPanel("devices")}>
+        <PpActionButton
+          variant="ghost"
+          className="pp-map-overlay-nav-btn pp-map-overlay-nav-btn--device"
+          onClick={() => openPanel("devices")}
+        >
           <Cpu size={14} aria-hidden="true" /> IoTs
         </PpActionButton>
       </PpHintAction>
       <PpHintAction hint={PP_HELP.hub.panelFirmwares} ariaLabel="Ajuda: Painel Firmwares">
-        <PpActionButton variant="ghost" onClick={() => openPanel("firmwares")}>
+        <PpActionButton
+          variant="ghost"
+          className="pp-map-overlay-nav-btn pp-map-overlay-nav-btn--firmware"
+          onClick={() => openPanel("firmwares")}
+        >
           <FileCode size={14} aria-hidden="true" /> Firmwares
         </PpActionButton>
       </PpHintAction>
       <PpHintAction hint={PP_HELP.hub.panelDrivers} ariaLabel="Ajuda: Painel Drivers">
-        <PpActionButton variant="ghost" onClick={() => openPanel("drivers")}>
+        <PpActionButton
+          variant="ghost"
+          className="pp-map-overlay-nav-btn pp-map-overlay-nav-btn--driver"
+          onClick={() => openPanel("drivers")}
+        >
           <CircuitBoard size={14} aria-hidden="true" /> Drivers
         </PpActionButton>
       </PpHintAction>
       <PpHintAction hint={PP_HELP.hub.panelJobs} ariaLabel="Ajuda: Painel Jobs">
-        <PpActionButton variant="ghost" onClick={() => openPanel("jobs")}>
+        <PpActionButton
+          variant="ghost"
+          className="pp-map-overlay-nav-btn pp-map-overlay-nav-btn--jobs"
+          onClick={() => openPanel("jobs")}
+        >
           <ListTodo size={14} aria-hidden="true" />
           Jobs{activeJobCount > 0 ? ` · ${activeJobCount}` : ""}
         </PpActionButton>
@@ -1246,19 +1262,23 @@ export function FirmwareLinksPage({
           <PpHintAction hint={PP_HELP.hub.newDevice} ariaLabel="Ajuda: Novo IoT">
             <PpActionButton
               variant="primary"
-              className="pp-map-overlay-create-btn"
+              className="pp-map-overlay-create-btn pp-map-overlay-create-btn--device"
               onClick={() => openModal("device-create", null)}
             >
-              <Plus size={14} aria-hidden="true" /> IoT
+              <Plus size={14} aria-hidden="true" />
+              <Cpu size={14} aria-hidden="true" />
+              IoT
             </PpActionButton>
           </PpHintAction>
           <PpHintAction hint={PP_HELP.hub.newFirmware} ariaLabel="Ajuda: Novo firmware">
             <PpActionButton
               variant="primary"
-              className="pp-map-overlay-create-btn"
+              className="pp-map-overlay-create-btn pp-map-overlay-create-btn--firmware"
               onClick={() => openModal("firmware-create", null)}
             >
-              <Plus size={14} aria-hidden="true" /> FW
+              <Plus size={14} aria-hidden="true" />
+              <FileCode size={14} aria-hidden="true" />
+              FW
             </PpActionButton>
           </PpHintAction>
         </div>
