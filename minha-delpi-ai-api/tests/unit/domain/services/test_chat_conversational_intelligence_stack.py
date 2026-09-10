@@ -12,14 +12,28 @@ from app.domain.services.chat_turn_understanding_service import (
 
 
 def test_capability_registry_has_core_entries():
-    assert ChatCapabilityRegistryService.count() >= 5
-    assert ChatCapabilityRegistryService.by_id("action.product_search")
+    # E4.S5: registry só não-OpenAPI
+    assert ChatCapabilityRegistryService.count() >= 4
+    assert ChatCapabilityRegistryService.by_id("rag.company_knowledge")
+    assert ChatCapabilityRegistryService.by_id("action.product_search") is None
 
 
 def test_discovery_terminais_pino_includes_product_search():
-    result = ChatCapabilityDiscoveryService.discover("liste terminais pino")
+    catalog = [
+        {
+            "actionId": "acme.search",
+            "summary": "Busca produtos",
+            "enabled": True,
+            "delpi_metadata": {"whenToUse": ["liste", "terminais"]},
+        }
+    ]
+    result = ChatCapabilityDiscoveryService.discover(
+        "liste terminais pino",
+        action_catalog=catalog,
+        allowed_action_ids=["acme.search"],
+    )
     ids = {str(item.get("capabilityId") or "") for item in result.candidates}
-    assert "action.product_search" in ids
+    assert "action:acme.search" in ids
 
 
 def test_task_plan_search_to_stock_dependency():
@@ -28,10 +42,26 @@ def test_task_plan_search_to_stock_dependency():
         "2) mostre o estoque do segundo"
     )
     understanding = ChatTurnUnderstandingService.analyze(message)
+    catalog = [
+        {
+            "actionId": "acme.search",
+            "summary": "Busca",
+            "enabled": True,
+            "delpi_metadata": {"whenToUse": ["liste", "terminais"]},
+        },
+        {
+            "actionId": "acme.stock",
+            "summary": "Estoque",
+            "enabled": True,
+            "delpi_metadata": {"whenToUse": ["estoque"]},
+        },
+    ]
     plan = ChatTaskPlannerService.build_from_understanding(
         understanding,
         message=message,
         response_mode="normal",
+        action_catalog=catalog,
+        allowed_action_ids=["acme.search", "acme.stock"],
     )
     assert plan.task_count >= 2
     assert any(task.depends_on for task in plan.tasks[1:])

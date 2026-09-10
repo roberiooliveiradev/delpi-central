@@ -74,6 +74,8 @@ class ChatTaskPlannerService:
         *,
         message: str,
         response_mode: str | None = None,
+        action_catalog: list[dict[str, Any]] | None = None,
+        allowed_action_ids: list[str] | None = None,
     ) -> TaskPlan:
         fallback_mode = ChatTaskPlannerContentService.default_text(
             "responseMode",
@@ -92,12 +94,21 @@ class ChatTaskPlannerService:
             mode,
             default_replan,
         )
-        discovery = ChatCapabilityDiscoveryService.discover(message)
+        discovery = ChatCapabilityDiscoveryService.discover(
+            message,
+            action_catalog=action_catalog,
+            allowed_action_ids=allowed_action_ids,
+        )
         candidates = list(discovery.candidates)
         tasks: list[TaskPlanTask] = []
 
         for index, subtask in enumerate(understanding.subtasks[:max_steps], start=1):
-            capability_id = cls._match_capability(subtask.goal, candidates)
+            capability_id = cls._match_capability(
+                subtask.goal,
+                candidates,
+                action_catalog=action_catalog,
+                allowed_action_ids=allowed_action_ids,
+            )
             task_type = cls._map_type(subtask.type, capability_id)
             depends = tuple(subtask.depends_on)
             if index > 1 and not depends and cls._needs_prior_code(subtask.goal):
@@ -147,6 +158,8 @@ class ChatTaskPlannerService:
         *,
         response_mode: str | None = None,
         previous_messages: list[Any] | None = None,
+        action_catalog: list[dict[str, Any]] | None = None,
+        allowed_action_ids: list[str] | None = None,
     ) -> TaskPlan | None:
         understanding = ChatTurnUnderstandingService.analyze(
             message,
@@ -157,6 +170,8 @@ class ChatTaskPlannerService:
             understanding,
             message=message,
             response_mode=response_mode,
+            action_catalog=action_catalog,
+            allowed_action_ids=allowed_action_ids,
         )
 
     @classmethod
@@ -166,6 +181,8 @@ class ChatTaskPlannerService:
         *,
         response_mode: str | None = None,
         previous_messages: list[Any] | None = None,
+        action_catalog: list[dict[str, Any]] | None = None,
+        allowed_action_ids: list[str] | None = None,
     ) -> TaskPlan | None:
         if not ChatConversationalIntelligenceFlagService.task_planner_enabled():
             return None
@@ -177,6 +194,8 @@ class ChatTaskPlannerService:
             message,
             response_mode=response_mode,
             previous_messages=previous_messages,
+            action_catalog=action_catalog,
+            allowed_action_ids=allowed_action_ids,
         )
 
     @classmethod
@@ -184,10 +203,15 @@ class ChatTaskPlannerService:
         cls,
         goal: str,
         candidates: list[dict[str, Any]],
+        *,
+        action_catalog: list[dict[str, Any]] | None = None,
+        allowed_action_ids: list[str] | None = None,
     ) -> str | None:
         discovery = ChatCapabilityDiscoveryService.discover(
             goal,
             top_k=ChatTaskPlannerContentService.default_int("matchTopK", 3),
+            action_catalog=action_catalog,
+            allowed_action_ids=allowed_action_ids,
         )
         if discovery.candidates:
             return str(discovery.candidates[0].get("capabilityId") or "") or None
@@ -204,6 +228,10 @@ class ChatTaskPlannerService:
         ).items():
             if token.startswith(prefix):
                 return mapped
+
+        # E4.S5: Action Catalog ids use action:<actionId>
+        if token.startswith("action:"):
+            return "tool"
 
         mapped_subtask = ChatTaskPlannerContentService.string_map("subtaskTypeMap").get(
             str(subtask_type or "").strip().lower()

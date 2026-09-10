@@ -266,8 +266,16 @@ class ChatTurnPreparationService:
             ChatCapabilityDiscoveryService,
         )
         from app.domain.services.chat_task_planner_service import ChatTaskPlannerService
+        from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 
-        discovery = ChatCapabilityDiscoveryService.discover(message)
+        action_catalog = ChatCapabilitiesService.load_action_catalog_for_agent(
+            allowed_action_ids
+        )
+        discovery = ChatCapabilityDiscoveryService.discover(
+            message,
+            action_catalog=action_catalog,
+            allowed_action_ids=allowed_action_ids,
+        )
         if isinstance(workspace_context, dict):
             workspace_context = {
                 **workspace_context,
@@ -278,6 +286,8 @@ class ChatTurnPreparationService:
             message,
             response_mode=getattr(request, "response_mode", None),
             previous_messages=history_source,
+            action_catalog=action_catalog,
+            allowed_action_ids=allowed_action_ids,
         )
         if shadow_plan is not None and isinstance(workspace_context, dict):
             workspace_context = {
@@ -291,6 +301,8 @@ class ChatTurnPreparationService:
             message,
             response_mode=getattr(request, "response_mode", None),
             previous_messages=history_source,
+            action_catalog=action_catalog,
+            allowed_action_ids=allowed_action_ids,
         )
         if execution_plan is not None and isinstance(workspace_context, dict):
             from app.application.services.chat_turn.chat_task_plan_execution_bridge_service import (

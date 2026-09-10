@@ -1,66 +1,10 @@
 {
-  "version": "2026.09.1",
+  "version": "2026.09.10",
   "limits": {
     "discoveryTopK": 8,
     "maxDescriptionChars": 160
   },
   "capabilities": [
-    {
-      "capabilityId": "action.product_search",
-      "type": "action",
-      "descriptionForModel": "Busca produtos por descrição, texto ou grupo via /products/search.",
-      "whenToUse": [
-        "liste",
-        "busque",
-        "pesquise",
-        "terminais",
-        "produtos por descrição"
-      ],
-      "whenNot": [
-        "estoque de um código já conhecido"
-      ],
-      "routeHints": [
-        "/products/search"
-      ],
-      "readWrite": "read",
-      "parallelSafe": true,
-      "risk": "low"
-    },
-    {
-      "capabilityId": "action.product_stock",
-      "type": "action",
-      "descriptionForModel": "Consulta estoque de produto por código.",
-      "whenToUse": [
-        "estoque",
-        "saldo",
-        "disponível"
-      ],
-      "whenNot": [
-        "busca por descrição sem código"
-      ],
-      "routeHints": [
-        "/products/{code}/stock"
-      ],
-      "readWrite": "read",
-      "parallelSafe": true,
-      "risk": "low"
-    },
-    {
-      "capabilityId": "action.product_description",
-      "type": "action",
-      "descriptionForModel": "Obtém cadastro/descrição do produto.",
-      "whenToUse": [
-        "descrição",
-        "cadastro",
-        "ficha"
-      ],
-      "routeHints": [
-        "/products/{code}"
-      ],
-      "readWrite": "read",
-      "parallelSafe": true,
-      "risk": "low"
-    },
     {
       "capabilityId": "rag.company_knowledge",
       "type": "rag",
@@ -125,5 +69,6 @@
   "discardReasons": {
     "typeFiltered": "type_filtered",
     "lowRelevance": "low_relevance"
-  }
+  },
+  "notes": "E4.S5: action.* removidos — discovery de tools OpenAPI via Action Catalog (capabilities_from_actions)."
 }

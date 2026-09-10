@@ -63,6 +63,8 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`evidence/e4-s1-capability-inventory.md`](./evidence/e4-s1-capability-inventory.md) | E4.S1 — inventário capabilities/registry. |
 | [`evidence/e4-s2-capability-discovery-baseline.md`](./evidence/e4-s2-capability-discovery-baseline.md) | E4.S2 — baseline discovery. |
 | [`evidence/e4-s3-ux-capability-contract.md`](./evidence/e4-s3-ux-capability-contract.md) | E4.S3 — contrato uxCapability. |
+| [`evidence/e4-s4-dynamic-capability-view.md`](./evidence/e4-s4-dynamic-capability-view.md) | E4.S4 — help dinâmico Action Catalog. |
+| [`evidence/e4-s5-remove-action-mini-catalog.md`](./evidence/e4-s5-remove-action-mini-catalog.md) | E4.S5 — remove action.* do registry. |
 
 ## Drift HEAD (2026-09-10) — resumido
 

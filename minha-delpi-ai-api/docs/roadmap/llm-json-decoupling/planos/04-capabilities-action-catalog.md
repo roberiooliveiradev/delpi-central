@@ -1,8 +1,8 @@
 # Plano 04 — Capabilities e mini catálogos -> Action Catalog dinâmico
 
 **Prioridade:** P1  
-**Status execução:** Onda E · E4.S1–S3 **ATENDIDO** · próxima = E4.S4 (dynamic view) → E4.S5 (remover `action.*`)  
-**Evidência:** [`../evidence/e4-s1-capability-inventory.md`](../evidence/e4-s1-capability-inventory.md) · [`../evidence/e4-s2-capability-discovery-baseline.md`](../evidence/e4-s2-capability-discovery-baseline.md) · [`../evidence/e4-s3-ux-capability-contract.md`](../evidence/e4-s3-ux-capability-contract.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda E · plano 04 **ATENDIDO** (S1–S5; S6 pathRules já DONE) · próxima = plano 05 E5.S1  
+**Evidência:** [`../evidence/e4-s1-capability-inventory.md`](../evidence/e4-s1-capability-inventory.md) · [`../evidence/e4-s2-capability-discovery-baseline.md`](../evidence/e4-s2-capability-discovery-baseline.md) · [`../evidence/e4-s3-ux-capability-contract.md`](../evidence/e4-s3-ux-capability-contract.md) · [`../evidence/e4-s4-dynamic-capability-view.md`](../evidence/e4-s4-dynamic-capability-view.md) · [`../evidence/e4-s5-remove-action-mini-catalog.md`](../evidence/e4-s5-remove-action-mini-catalog.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** o chat deve explicar e descobrir o que consegue fazer a partir das actions realmente autorizadas na sessão, sem manter um segundo catálogo manual de endpoints/capabilities.
 
 **HEAD revalidado:** pós-`78a25befe` (D1 path→display / capabilities UX)
@@ -57,11 +57,11 @@ Capabilities não-OpenAPI (RAG, web, skills, transforms) continuam em catálogo 
 
 | ID | Requisito | Estado |
 |---|---|---|
-| R04-01 | Separar action capabilities de RAG/web/skill/transform | ABERTO |
+| R04-01 | Separar action capabilities de RAG/web/skill/transform | **ATENDIDO** (E4.S5) |
 | R04-02 | Eliminar `pathRules` como fonte de classificação por endpoint | **ATENDIDO** |
 | R04-03 | Gerar classificação/label útil a partir da metadata real do Action Catalog | **ATENDIDO** (`uxCapability` contrato E4.S3) |
-| R04-04 | Respeitar `allowed_action_ids` e bindings na Ajuda e no composer | ABERTO (revalidar) |
-| R04-05 | Nova API externa sem alteração manual de capability registry | ABERTO até remover `action.*` |
+| R04-04 | Respeitar `allowed_action_ids` e bindings na Ajuda e no composer | **ATENDIDO** |
+| R04-05 | Nova API externa sem alteração manual de capability registry | **ATENDIDO** (actions via catalog) |
 
 ## Etapas
 
@@ -89,17 +89,15 @@ Capabilities não-OpenAPI (RAG, web, skills, transforms) continuam em catálogo 
 
 **Teste:** reindex/import; unknown; metamorphic rename; fallback «Outras consultas». ✅
 
-### E4.S4 — Dynamic capability view
+### E4.S4 — Dynamic capability view — **ATENDIDO**
 
-**Fazer:** capability list a partir das actions permitidas + não-OpenAPI; copy de seção/help separada da fonte técnica.
+**Feito:** help já Action Catalog + allowed; evidência [`../evidence/e4-s4-dynamic-capability-view.md`](../evidence/e4-s4-dynamic-capability-view.md).
 
-**Teste:** mesma action permitida/não entre agentes; provider/action disabled.
+### E4.S5 — Remove action mini catalog — **ATENDIDO**
 
-### E4.S5 — Remove action mini catalog
+**Feito:** removidos `action.*`/`routeHints`; discovery sintetiza do Action Catalog; evidência [`../evidence/e4-s5-remove-action-mini-catalog.md`](../evidence/e4-s5-remove-action-mini-catalog.md).
 
-**Fazer:** retirar `action.*` manual do `capability_registry` quando o Action Catalog cobrir o discovery; preservar RAG/web/skill/transform; limpar `routeHints` mortos.
-
-**Teste:** search/audit residual.
+**Teste:** search/audit residual + baselines atualizados. ✅
 
 ### E4.S6 — `capabilities.pathRules` cutover
 

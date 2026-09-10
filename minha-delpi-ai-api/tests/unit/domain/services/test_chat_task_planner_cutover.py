@@ -19,8 +19,9 @@ from app.domain.services.chat_task_planner_service import ChatTaskPlannerService
 
 
 def test_registry_loader_counts_by_type():
-    assert ChatCapabilityRegistryService.count() >= 5
-    assert len(ChatCapabilityRegistryService.by_type("action")) >= 3
+    # E4.S5: action.* removidos do registry; só não-OpenAPI
+    assert ChatCapabilityRegistryService.count() >= 4
+    assert ChatCapabilityRegistryService.by_type("action") == []
     assert len(ChatCapabilityRegistryService.by_type("rag")) >= 1
     assert len(ChatCapabilityRegistryService.by_type("web")) >= 1
     assert ChatCapabilityRegistryService.by_type("nonexistent") == []
@@ -30,26 +31,44 @@ def test_registry_capabilities_expose_thin_route_hints_not_full_registry():
     for capability in ChatCapabilityRegistryService.all_capabilities():
         assert capability.get("descriptionForModel")
         assert "operationId" not in capability
+        assert not capability.get("routeHints")
 
 
 # -------------------------------------------------------------- E4.S2 discovery
 
 
+def _catalog() -> list[dict]:
+    return [
+        {
+            "actionId": "acme.search",
+            "summary": "Busca produtos por descrição",
+            "enabled": True,
+            "delpi_metadata": {"whenToUse": ["liste", "busque", "terminais"]},
+        }
+    ]
+
+
 def test_discovery_ranks_product_search_for_terminais_pino():
-    result = ChatCapabilityDiscoveryService.discover("liste terminais pino")
+    result = ChatCapabilityDiscoveryService.discover(
+        "liste terminais pino",
+        action_catalog=_catalog(),
+        allowed_action_ids=["acme.search"],
+    )
     ids = [str(item.get("capabilityId") or "") for item in result.candidates]
 
-    assert "action.product_search" in ids
+    assert "action:acme.search" in ids
 
 
 def test_discovery_type_filter_records_discard_reason():
     result = ChatCapabilityDiscoveryService.discover(
         "liste terminais pino",
         allowed_types={"rag"},
+        action_catalog=_catalog(),
+        allowed_action_ids=["acme.search"],
     )
     reasons = {item["capabilityId"]: item["reason"] for item in result.discard_reasons}
 
-    assert reasons.get("action.product_search") == "type_filtered"
+    assert reasons.get("action:acme.search") == "type_filtered"
 
 
 def test_discovery_discards_irrelevant_capabilities_with_reason():
