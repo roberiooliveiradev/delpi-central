@@ -1,8 +1,8 @@
 # Plano 01 — Routing registry -> OpenAPI + Action Catalog
 
 **Prioridade:** P0  
-**Status execução:** Onda B · E1.S3 **ATENDIDO** · E1.S4 **SHADOW_ON** (registry + product + logs) · próxima = E1.S5 ou agregação live de `agree`  
-**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda B · E1.S3 ATENDIDO · E1.S4 SHADOW_ON · E1.S5 **SHADOW_ON** (none/semantic/sale_orders) · próxima = observar agree / cutover parcial  
+**Evidência:** [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** uma action nova deve ser descoberta e selecionada por semântica/contrato sem exigir `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` por endpoint no conteúdo do assistente.
 
 ## CURRENT
@@ -113,17 +113,17 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 - telemetria estruturada `RegistrySelectionShadowObservabilityService`;
 - testes agree/diverge/off/product. Evidência: [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md).
 
-**Pendente:** agregação live/admin da taxa `agree`; cutover default candidate (E1.S5/S6).
+**Pendente:** agregação live/admin da taxa `agree` de seleção; cutover default candidate (E1.S6).
 
-### E1.S5 — Parameter strategy removal
+### E1.S5 — Parameter strategy removal — **SHADOW_ON** (1º corte, 2026-09-10)
 
 **Objetivo:** mover binding para `mensagem + contexto + action schema`.
 
-**Fazer:** identificar strategies que apenas duplicam parâmetros OpenAPI; migrar para binder genérico e validators; preservar apenas regras transversais justificadas.
+**Feito (sem cutover):** inventário das 13 strategies; shadow `none`/`semantic`/`sale_orders` vs `_bind_arguments`; flag `parameterStrategyShadow`; telemetria; testes. Evidência: [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md).
 
-**Teste:** required present/missing, enum/type, dates, branch, pagination, body/query/path.
+**Não tocado:** `product_code`, `date_branch`, `supplies_stock`, `department_idd`.
 
-**Pronto quando:** nova action com schema equivalente funciona sem strategy dedicada.
+**Pendente:** cutover parcial quando agree estável; demais strategies.
 
 ### E1.S6 — Cutover e cleanup
 

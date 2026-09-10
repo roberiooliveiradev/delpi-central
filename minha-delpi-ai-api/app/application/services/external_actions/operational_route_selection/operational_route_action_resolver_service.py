@@ -216,7 +216,7 @@ class OperationalRouteActionResolverService:
 
         action, parameters, reason = self._prefer_branch_capable_match(matching)
 
-        return {
+        result = {
             "name": "execute_external_action",
             "arguments": {
                 "actionId": action["actionId"],
@@ -229,6 +229,21 @@ class OperationalRouteActionResolverService:
                 else {}
             ),
         }
+        strategy = str((route.get("parameters") or {}).get("strategy") or "").strip()
+        from app.domain.services.parameter_strategy_shadow_service import (
+            ParameterStrategyShadowService,
+        )
+
+        shadow = ParameterStrategyShadowService.compare(
+            strategy=strategy,
+            legacy_parameters=parameters if isinstance(parameters, dict) else {},
+            action=action if isinstance(action, dict) else {},
+            message=message,
+            previous_messages=previous_messages,
+        )
+        if shadow is not None:
+            result["metadata"] = {"parameterStrategyShadow": shadow}
+        return result
 
     @staticmethod
     def _prefer_branch_capable_match(

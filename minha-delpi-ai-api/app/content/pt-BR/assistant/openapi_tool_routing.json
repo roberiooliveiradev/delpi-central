@@ -10,6 +10,10 @@
     "enabled": true,
     "topK": 5
   },
+  "parameterStrategyShadow": {
+    "enabled": true,
+    "strategies": ["none", "semantic", "sale_orders"]
+  },
   "whenNotToUse": {
     "penalty": 3.0,
     "positiveReward": 3.0,
