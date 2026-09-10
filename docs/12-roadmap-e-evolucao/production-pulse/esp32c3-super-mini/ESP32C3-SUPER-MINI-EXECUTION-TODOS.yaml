@@ -100,11 +100,13 @@ plans:
     document: ESP32C3-SUPER-MINI-VALIDATION-PLAN.md
     todos:
       - id: e1-s1-compile-release-profile
-        status: blocked_needs_toolchain
+        status: completed
         requirements: [RQ-01, RQ-05, RQ-08, RQ-10, RQ-21]
+        note: "PASS — evidence/e1-compile-partitions-2026-09-10.md"
       - id: e1-s2-inspect-effective-partitions
-        status: blocked_needs_toolchain
+        status: completed
         requirements: [RQ-10, RQ-21]
+        note: "PASS — min_spiffs otadata/ota_0/ota_1; ver evidence"
       - id: e1-s3-run-api-regression
         status: completed
         requirements: [RQ-02, RQ-07, RQ-08, RQ-09, RQ-19, RQ-21]
