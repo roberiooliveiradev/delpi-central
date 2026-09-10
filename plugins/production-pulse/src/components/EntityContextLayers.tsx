@@ -1,10 +1,12 @@
 import {
   Archive,
   CalendarClock,
+  Cpu,
   FileCode,
   FilePenLine,
   FilePlus2,
   Link2Off,
+  MoreHorizontal,
   Package,
   Pencil,
   Power,
@@ -21,12 +23,29 @@ import {
   ContextMenuItem,
   PpActionButton,
   PpHintAction,
+  PpIconButton,
 } from "../app/productionPulseUi";
 import type { FirmwareListItem } from "../api/productionPulseApi";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import type { AdminEntityRef } from "../utils/adminHubUiState";
 import { isPublishedFirmware } from "../utils/hubOtaKpis";
+
+const POPOVER_SURFACE = "delpi-ui-popover-surface";
+
+function deviceStatusLabel(device: DeviceListItem): string {
+  if (device.status === "online") return "● Online";
+  if (device.status === "offline") return "● Offline";
+  if (!device.enabled) return "● Inativo";
+  return "● —";
+}
+
+function firmwareLifecycleLabel(firmware: FirmwareListItem | null | undefined): string {
+  if (!firmware) return "—";
+  if (isPublishedFirmware(firmware)) return "Publicado";
+  if (firmware.lifecycle === "draft") return "Rascunho";
+  return "Arquivado";
+}
 
 type EntitySummaryPopoverProps = {
   open: boolean;
@@ -77,94 +96,116 @@ export function EntitySummaryPopover({
   if (!entity) return null;
 
   const isDevice = entity.type === "device";
+  const title = isDevice
+    ? device?.name ?? "IoT"
+    : firmwareMeta?.displayName || firmware?.displayName || firmwareMeta?.firmwareKey || "Firmware";
 
   return (
     <AnchoredPanelPortal
       open={open && Boolean(anchorEl)}
       anchorRef={anchorRef}
       panelRef={panelRef}
+      variant="bare"
+      className={`${POPOVER_SURFACE} pp-entity-summary`}
+      density="compact"
+      role="dialog"
+      aria-label={isDevice ? `Resumo IoT: ${title}` : `Resumo firmware: ${title}`}
       preferredPlacement="right"
       allowFlip
       portalScopeClassName="dashboard-production-pulse"
       onDismiss={onClose}
     >
-      <div ref={panelRef} className="pp-entity-summary" role="dialog" aria-label="Resumo">
-        {isDevice && device ? (
-          <>
-            <div className="pp-entity-summary__head">
-              <strong>{device.name}</strong>
-              <PpActionButton variant="ghost" aria-haspopup="menu" onClick={onOpenMenu}>
-                ⋯
-              </PpActionButton>
+      {isDevice && device ? (
+        <>
+          <div className="pp-entity-summary__head">
+            <div className="pp-entity-summary__identity">
+              <Cpu size={18} aria-hidden="true" className="pp-entity-summary__glyph" />
+              <div className="pp-entity-summary__titles">
+                <strong className="pp-entity-summary__name">{device.name}</strong>
+                <span className="pp-entity-summary__meta">IoT · {deviceStatusLabel(device)}</span>
+              </div>
+            </div>
+            <PpHintAction hint={PP_HELP.hub.menuOpenDetails} ariaLabel="Ajuda: Menu de ações">
+              <PpIconButton aria-label="Ações do IoT" onClick={onOpenMenu}>
+                <MoreHorizontal size={16} aria-hidden="true" />
+              </PpIconButton>
+            </PpHintAction>
+          </div>
+          <div className="pp-entity-summary__body">
+            <div className="pp-entity-summary__metric-strong">
+              {typeof device.lastMetrics?.counter === "number"
+                ? `${device.lastMetrics.counter} golpes`
+                : "— golpes"}
             </div>
             <div className="pp-muted">
-              {device.status === "online"
-                ? "● Online"
-                : device.status === "offline"
-                  ? "● Offline"
-                  : device.enabled
-                    ? "● —"
-                    : "● Inativo"}
+              +{device.periodDeltas?.day?.counter ?? 0} hoje · +
+              {device.periodDeltas?.shift?.counter ?? 0} turno
             </div>
-            <div className="pp-entity-summary__body">
-              <div>
-                Golpes:{" "}
-                {typeof device.lastMetrics?.counter === "number"
-                  ? device.lastMetrics.counter
-                  : "—"}
+            <div className="pp-entity-summary__firmware-line">
+              Firmware {device.installedFirmwareVersion ?? "—"}
+              {firmwareMeta?.version ? ` → ${firmwareMeta.version}` : ""}
+            </div>
+          </div>
+        </>
+      ) : null}
+      {!isDevice && (firmware || firmwareMeta) ? (
+        <>
+          <div className="pp-entity-summary__head">
+            <div className="pp-entity-summary__identity">
+              <FileCode size={18} aria-hidden="true" className="pp-entity-summary__glyph" />
+              <div className="pp-entity-summary__titles">
+                <strong className="pp-entity-summary__name">
+                  {firmwareMeta?.displayName ||
+                    firmware?.displayName ||
+                    firmwareMeta?.firmwareKey ||
+                    firmware?.firmwareKey ||
+                    "Firmware"}
+                </strong>
+                <span className="pp-entity-summary__meta">
+                  Firmware · v{firmwareMeta?.version || firmware?.version || "—"} ·{" "}
+                  {firmwareLifecycleLabel(firmware)}
+                </span>
               </div>
-              <div>
-                Hoje: +{device.periodDeltas?.day?.counter ?? 0} · Turno: +
-                {device.periodDeltas?.shift?.counter ?? 0}
-              </div>
-              <div>Firmware: {device.installedFirmwareVersion ?? "—"}</div>
-              <div>Disponível: {firmwareMeta?.version ?? "—"}</div>
             </div>
-          </>
-        ) : null}
-        {!isDevice && (firmware || firmwareMeta) ? (
-          <>
-            <div className="pp-entity-summary__head">
-              <strong>{firmwareMeta?.displayName || firmware?.displayName || "Firmware"}</strong>
-              <PpActionButton variant="ghost" aria-haspopup="menu" onClick={onOpenMenu}>
-                ⋯
-              </PpActionButton>
-            </div>
-            <div className="pp-muted">{firmwareMeta?.firmwareKey || firmware?.firmwareKey}</div>
-            <div className="pp-entity-summary__body">
-              <div>Versão: {firmwareMeta?.version || firmware?.version || "—"}</div>
-              <div>Vinculados: {firmwareMeta?.linkedCount ?? 0}</div>
-              <div>Desatualizados: {firmwareMeta?.outdatedCount ?? 0}</div>
-              {firmware ? (
-                <div>
-                  Estado:{" "}
-                  {isPublishedFirmware(firmware)
-                    ? "Publicado"
-                    : firmware.lifecycle === "draft"
-                      ? "Rascunho"
-                      : "Arquivado"}
-                </div>
-              ) : null}
-            </div>
-          </>
-        ) : null}
-        <div className="pp-entity-summary__actions">
-          {canManage ? (
-            <PpHintAction
-              hint={isDevice ? PP_HELP.hub.menuOtaDeviceNow : PP_HELP.hub.menuOtaFamilyNow}
-              ariaLabel={isDevice ? "Ajuda: Atualizar agora" : "Ajuda: Atualizar vinculados"}
-            >
-              <PpActionButton onClick={onPrimary}>
-                {isDevice ? "Atualizar agora" : "Atualizar vinculados"}
-              </PpActionButton>
+            <PpHintAction hint={PP_HELP.hub.menuOpenDetails} ariaLabel="Ajuda: Menu de ações">
+              <PpIconButton aria-label="Ações do firmware" onClick={onOpenMenu}>
+                <MoreHorizontal size={16} aria-hidden="true" />
+              </PpIconButton>
             </PpHintAction>
-          ) : null}
-          <PpHintAction hint={PP_HELP.hub.menuOpenDetails} ariaLabel="Ajuda: Ver detalhes">
-            <PpActionButton variant="ghost" onClick={onInspect}>
-              Ver detalhes
+          </div>
+          <div className="pp-entity-summary__body">
+            <div>
+              {firmwareMeta?.linkedCount ?? 0} IoT vinculado
+              {(firmwareMeta?.linkedCount ?? 0) === 1 ? "" : "s"}
+              {(firmwareMeta?.outdatedCount ?? 0) > 0
+                ? ` · ⚠ ${firmwareMeta?.outdatedCount} desatual.`
+                : ""}
+            </div>
+            {firmwareMeta?.firmwareKey || firmware?.firmwareKey ? (
+              <div className="pp-muted pp-entity-summary__key">
+                <code>{firmwareMeta?.firmwareKey || firmware?.firmwareKey}</code>
+              </div>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+      <div className="pp-entity-summary__actions" role="group" aria-label="Ações rápidas">
+        {canManage ? (
+          <PpHintAction
+            hint={isDevice ? PP_HELP.hub.menuOtaDeviceNow : PP_HELP.hub.menuOtaFamilyNow}
+            ariaLabel={isDevice ? "Ajuda: Atualizar agora" : "Ajuda: Atualizar vinculados"}
+          >
+            <PpActionButton onClick={onPrimary}>
+              <RefreshCw size={14} aria-hidden="true" />
+              {isDevice ? "Atualizar" : "Atualizar vinculados"}
             </PpActionButton>
           </PpHintAction>
-        </div>
+        ) : null}
+        <PpHintAction hint={PP_HELP.hub.menuOpenDetails} ariaLabel="Ajuda: Ver detalhes">
+          <PpActionButton variant="ghost" className="pp-entity-summary__details" onClick={onInspect}>
+            Detalhes ›
+          </PpActionButton>
+        </PpHintAction>
       </div>
     </AnchoredPanelPortal>
   );
@@ -207,8 +248,6 @@ export function EntityActionMenu({
   if (!entity || !canManage) return null;
 
   const run = (action: string) => {
-    // Ação primeiro: openConfirm/openModal definem openLayer.
-    // onClose só limpa se ainda estivermos no menu (não clobber confirm/modal).
     onAction(action);
     onClose();
   };
@@ -218,132 +257,135 @@ export function EntityActionMenu({
       open={open && Boolean(anchorEl)}
       anchorRef={anchorRef}
       panelRef={panelRef}
+      variant="bare"
+      className={`${POPOVER_SURFACE} pp-entity-menu`}
+      density="compact"
+      role="menu"
+      aria-label="Menu de ações"
       preferredPlacement="bottom"
       allowFlip
       portalScopeClassName="dashboard-production-pulse"
       onDismiss={onClose}
     >
-      <div ref={panelRef} className="pp-entity-menu" role="menu">
-        {entity.type === "device" && device ? (
+      {entity.type === "device" && device ? (
+        <>
+          <ContextMenuItem
+            label="Editar"
+            icon={Pencil}
+            hint={PP_HELP.hub.menuEditDevice}
+            onSelect={() => run("edit")}
+          />
+          <ContextMenuItem
+            label="Renomear"
+            icon={TextCursorInput}
+            hint={PP_HELP.hub.menuRenameDevice}
+            onSelect={() => run("rename")}
+          />
+          <ContextMenuDivider />
+          <ContextMenuItem
+            label="Atualizar agora"
+            icon={RefreshCw}
+            hint={PP_HELP.hub.menuOtaDeviceNow}
+            onSelect={() => run("ota-now")}
+          />
+          <ContextMenuItem
+            label="Agendar atualização…"
+            icon={CalendarClock}
+            hint={PP_HELP.hub.menuOtaDeviceSchedule}
+            onSelect={() => run("ota-schedule")}
+          />
+          <ContextMenuDivider />
+          <ContextMenuItem
+            label="Desvincular firmware"
+            icon={Link2Off}
+            hint={PP_HELP.hub.menuUnlinkFirmware}
+            onSelect={() => run("unlink")}
+          />
+          <ContextMenuDivider />
+          {device.enabled ? (
+            <ContextMenuItem
+              label="Desativar (soft delete)…"
+              icon={PowerOff}
+              hint={PP_HELP.hub.menuDisableDevice}
+              destructive
+              onSelect={() => run("disable")}
+            />
+          ) : (
+            <ContextMenuItem
+              label="Reativar"
+              icon={Power}
+              hint={PP_HELP.hub.menuEnableDevice}
+              onSelect={() => run("enable")}
+            />
+          )}
+        </>
+      ) : null}
+      {entity.type === "firmware" && firmware ? (
+        isPublishedFirmware(firmware) ? (
           <>
             <ContextMenuItem
-              label="Editar"
-              icon={Pencil}
-              hint={PP_HELP.hub.menuEditDevice}
+              label="Editar metadados"
+              icon={FilePenLine}
+              hint={PP_HELP.hub.menuEditFirmwareMeta}
               onSelect={() => run("edit")}
             />
             <ContextMenuItem
-              label="Renomear"
-              icon={TextCursorInput}
-              hint={PP_HELP.hub.menuRenameDevice}
-              onSelect={() => run("rename")}
+              label="Criar nova versão"
+              icon={FilePlus2}
+              hint={PP_HELP.hub.menuNewFirmwareVersion}
+              onSelect={() => run("new-version")}
             />
             <ContextMenuDivider />
             <ContextMenuItem
-              label="Atualizar agora"
+              label="Atualizar vinculados agora"
               icon={RefreshCw}
-              hint={PP_HELP.hub.menuOtaDeviceNow}
+              hint={PP_HELP.hub.menuOtaFamilyNow}
               onSelect={() => run("ota-now")}
             />
             <ContextMenuItem
               label="Agendar atualização…"
               icon={CalendarClock}
-              hint={PP_HELP.hub.menuOtaDeviceSchedule}
+              hint={PP_HELP.hub.menuOtaFamilySchedule}
               onSelect={() => run("ota-schedule")}
             />
             <ContextMenuDivider />
             <ContextMenuItem
-              label="Desvincular firmware"
-              icon={Link2Off}
-              hint={PP_HELP.hub.menuUnlinkFirmware}
-              onSelect={() => run("unlink")}
+              label="Arquivar versão (soft delete)…"
+              icon={Archive}
+              hint={PP_HELP.hub.menuArchiveFirmware}
+              destructive
+              onSelect={() => run("archive")}
             />
-            <ContextMenuDivider />
-            {device.enabled ? (
-              <ContextMenuItem
-                label="Desativar (soft delete)…"
-                icon={PowerOff}
-                hint={PP_HELP.hub.menuDisableDevice}
-                destructive
-                onSelect={() => run("disable")}
-              />
-            ) : (
-              <ContextMenuItem
-                label="Reativar"
-                icon={Power}
-                hint={PP_HELP.hub.menuEnableDevice}
-                onSelect={() => run("enable")}
-              />
-            )}
           </>
-        ) : null}
-        {entity.type === "firmware" && firmware ? (
-          isPublishedFirmware(firmware) ? (
-            <>
-              <ContextMenuItem
-                label="Editar metadados"
-                icon={FilePenLine}
-                hint={PP_HELP.hub.menuEditFirmwareMeta}
-                onSelect={() => run("edit")}
-              />
-              <ContextMenuItem
-                label="Criar nova versão"
-                icon={FilePlus2}
-                hint={PP_HELP.hub.menuNewFirmwareVersion}
-                onSelect={() => run("new-version")}
-              />
-              <ContextMenuDivider />
-              <ContextMenuItem
-                label="Atualizar vinculados agora"
-                icon={RefreshCw}
-                hint={PP_HELP.hub.menuOtaFamilyNow}
-                onSelect={() => run("ota-now")}
-              />
-              <ContextMenuItem
-                label="Agendar atualização…"
-                icon={CalendarClock}
-                hint={PP_HELP.hub.menuOtaFamilySchedule}
-                onSelect={() => run("ota-schedule")}
-              />
-              <ContextMenuDivider />
-              <ContextMenuItem
-                label="Arquivar versão (soft delete)…"
-                icon={Archive}
-                hint={PP_HELP.hub.menuArchiveFirmware}
-                destructive
-                onSelect={() => run("archive")}
-              />
-            </>
-          ) : (
-            <>
-              <ContextMenuItem
-                label="Editar"
-                icon={Pencil}
-                hint={PP_HELP.hub.menuEditFirmwareDraft}
-                onSelect={() => run("edit")}
-              />
-              <ContextMenuItem
-                label="Anexar/alterar source"
-                icon={FileCode}
-                hint={PP_HELP.hub.menuAttachSource}
-                onSelect={() => run("edit")}
-              />
-              <ContextMenuItem
-                label="Anexar binário"
-                icon={Package}
-                hint={PP_HELP.hub.menuAttachBinary}
-                onSelect={() => run("edit")}
-              />
-              <ContextMenuItem
-                label="Publicar"
-                icon={Upload}
-                hint={PP_HELP.hub.menuPublishFirmware}
-                onSelect={() => run("edit")}
-              />
-            </>
-          )
-        ) : null}
-      </div>
+        ) : (
+          <>
+            <ContextMenuItem
+              label="Editar"
+              icon={Pencil}
+              hint={PP_HELP.hub.menuEditFirmwareDraft}
+              onSelect={() => run("edit")}
+            />
+            <ContextMenuItem
+              label="Anexar/alterar source"
+              icon={FileCode}
+              hint={PP_HELP.hub.menuAttachSource}
+              onSelect={() => run("edit")}
+            />
+            <ContextMenuItem
+              label="Anexar binário"
+              icon={Package}
+              hint={PP_HELP.hub.menuAttachBinary}
+              onSelect={() => run("edit")}
+            />
+            <ContextMenuItem
+              label="Publicar"
+              icon={Upload}
+              hint={PP_HELP.hub.menuPublishFirmware}
+              onSelect={() => run("edit")}
+            />
+          </>
+        )
+      ) : null}
     </AnchoredPanelPortal>
   );
 }
