@@ -385,6 +385,62 @@ def test_lmp_cutover_requires_sale_number_when_path_has_placeholder():
     )
 
 
+def test_build_parameters_ignores_cutover_flag_for_dispatch(monkeypatch):
+    """E1.S6: resolver always uses binder for known strategies (flag only affects shadow labels)."""
+    invalidate_openapi_tool_routing_cache()
+    from app.application.services.external_actions.operational_route_selection.operational_route_action_resolver_service import (
+        OperationalRouteActionResolverService,
+    )
+    from app.domain.services.openapi_tool_routing_content_service import (
+        OpenApiToolRoutingContentService,
+    )
+
+    original = OpenApiToolRoutingContentService.bool_setting
+
+    def _bool_setting(*path, default=False):
+        if path[:2] == ("parameterStrategyShadow", "cutoverEnabled"):
+            return False
+        return original(*path, default=default)
+
+    monkeypatch.setattr(OpenApiToolRoutingContentService, "bool_setting", _bool_setting)
+
+    class _Catalog:
+        def filter_parameters_to_schema(self, action, parameters):
+            return parameters
+
+    resolver = OperationalRouteActionResolverService(_Catalog())
+    params = resolver.build_parameters(
+        {"parameters": {"strategy": "none"}},
+        _generic_action(),
+        message="liste itens genéricos",
+        identifier=None,
+    )
+    assert params == {}
+    assert ParameterStrategyShadowService.uses_openapi_authority("none") is False
+
+
+def test_build_parameters_unknown_strategy_returns_none():
+    invalidate_openapi_tool_routing_cache()
+    from app.application.services.external_actions.operational_route_selection.operational_route_action_resolver_service import (
+        OperationalRouteActionResolverService,
+    )
+
+    class _Catalog:
+        def filter_parameters_to_schema(self, action, parameters):
+            return parameters
+
+    resolver = OperationalRouteActionResolverService(_Catalog())
+    assert (
+        resolver.build_parameters(
+            {"parameters": {"strategy": "sql"}},
+            _generic_action(),
+            message="rode sql",
+            identifier=None,
+        )
+        is None
+    )
+
+
 def test_resolver_attaches_parameter_strategy_shadow_for_none(monkeypatch):
     invalidate_openapi_tool_routing_cache()
     from app.application.services.external_actions.operational_route_selection.operational_route_action_resolver_service import (

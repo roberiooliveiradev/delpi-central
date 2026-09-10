@@ -49,4 +49,5 @@ CUTOVER_DEFAULT_CANDIDATE = NOT_STARTED
 ## Próximo
 
 1. Agregar taxa `agree` em live/admin a partir dos logs (ou painel quando houver consumidor).  
-2. Só após divergências explicáveis + corpus estável → E1.S5 (parameter strategy) / E1.S6 cutover.
+2. Só após divergências explicáveis + corpus estável → cutover de seleção (E1.S6 fatia B).  
+3. Parameter strategy binding já cutoverado (E1.S5) + switch tipado removido (E1.S6A).

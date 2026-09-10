@@ -45,6 +45,7 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`evidence/onda-a-inventory.md`](./evidence/onda-a-inventory.md) | Inventário Onda A (consumers + classificação). |
 | [`evidence/e1-s3-action-catalog.md`](./evidence/e1-s3-action-catalog.md) | Prova E1.S3 (Onda B) — **PASS**. |
 | [`evidence/e1-s5-parameter-strategy-shadow.md`](./evidence/e1-s5-parameter-strategy-shadow.md) | E1.S5 — **ATENDIDO** (cutover completo da fila do resolver). |
+| [`evidence/e1-s6-cleanup-partial.md`](./evidence/e1-s6-cleanup-partial.md) | E1.S6 — **PARTIAL** (cleanup switch; DELETE registry bloqueado). |
 
 ## Drift HEAD (2026-09-10) — resumido
 

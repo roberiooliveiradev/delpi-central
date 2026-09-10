@@ -1,8 +1,8 @@
 # Plano 01 — Routing registry -> OpenAPI + Action Catalog
 
 **Prioridade:** P0  
-**Status execução:** Onda B · E1.S5 **ATENDIDO** · próxima = **E1.S6** (cleanup fields/consumers mortos)  
-**Evidência:** [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda B · E1.S6 **PARTIAL** (fatia A: switch tipado removido) · próxima = cutover seleção (E1.S4) antes de DELETE registry  
+**Evidência:** [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md) · [`../evidence/e1-s6-cleanup-partial.md`](../evidence/e1-s6-cleanup-partial.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** uma action nova deve ser descoberta e selecionada por semântica/contrato sem exigir `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` por endpoint no conteúdo do assistente.
 
 ## CURRENT
@@ -123,15 +123,15 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 
 **Fora:** `sql` (policy). Limpeza de fields/braços mortos = **E1.S6**.
 
-### E1.S6 — Cutover e cleanup
+### E1.S6 — Cutover e cleanup — **PARTIAL** (2026-09-10)
 
 **Objetivo:** retirar autoridade runtime do registry técnico.
 
-**Fazer:** remover fields/consumers mortos e regenerar snapshots/gates; manter somente conteúdo policy legítimo ou mover para owner correto.
+**Feito (fatia A):** removidos braços tipados mortos de `build_parameters`; dispatch permanente via `ParameterStrategyShadowService.bind_via_openapi` para a fila do resolver. Evidência: [`../evidence/e1-s6-cleanup-partial.md`](../evidence/e1-s6-cleanup-partial.md).
 
-**Teste:** full R1-R11 + grep/audit arquitetural de path coupling.
+**EXECUTION_DRIFT:** aceite pleno (unknown API + metamorphic + DELETE markers) **bloqueado** — E1.S4 ainda `SHADOW_ON`; ledger proíbe DELETE sem gates.
 
-**Pronto quando:** unknown API e metamorphic rename passam e nenhuma seleção genérica exige registry por endpoint.
+**Pendente:** cutover de seleção (pós-agree E1.S4) → DELETE fields/consumers mortos → regenerar snapshots/gates → R1–R11.
 
 ## Riscos
 

@@ -7,24 +7,11 @@ from typing import Callable
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
-from app.domain.services.chat_product_query_intent_service import (
-    ChatProductQueryIntentService,
-)
 from app.domain.services.chat_production_operational_intent_service import (
-    ChatProductionOperationalIntentService,
     ProductionOperationalIntentKind,
-)
-from app.domain.services.chat_tool_grounding_context_service import (
-    ChatToolGroundingContextService,
 )
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
-)
-from app.domain.services.operational_route_query_defaults_service import (
-    OperationalRouteQueryDefaultsService,
-)
-from app.domain.services.chat_operational_pagination_defaults_service import (
-    ChatOperationalPaginationDefaultsService,
 )
 
 
@@ -411,6 +398,11 @@ class OperationalRouteActionResolverService:
         description_override: str | None = None,
         memory_snapshot: dict | None = None,
     ) -> dict | None:
+        """Bind parameters via ParameterStrategyShadowService (E1.S5/S6 authority).
+
+        Typed switch arms were removed: known strategies always go through the
+        canonical binder/domain binder. Unknown strategies return None.
+        """
         parameters_spec = route.get("parameters") or {}
         strategy = str(parameters_spec.get("strategy") or "").strip()
         normalized_text = normalized or ChatMessageNormalizationService.normalize_for_matching(
@@ -421,248 +413,25 @@ class OperationalRouteActionResolverService:
             ParameterStrategyShadowService,
         )
 
-        if ParameterStrategyShadowService.uses_openapi_authority(strategy):
-            return ParameterStrategyShadowService.bind_via_openapi(
-                action,
-                message,
-                previous_messages=previous_messages,
-                strategy=strategy,
-                catalog=self._catalog,
-                identifier=identifier,
-                conversation_context=conversation_context,
-                memory_snapshot=memory_snapshot,
-                production_kind=production_kind,
-                route=route,
-                build_date_branch_parameters=build_date_branch_parameters,
-                merge_date_parameters=merge_date_parameters,
-                description_override=description_override,
-                normalized=normalized_text,
-            )
+        if strategy not in ParameterStrategyShadowService.cutover_strategies():
+            return None
 
-        if strategy == "product_search":
-            from app.application.services.external_actions.external_action_product_search_route_selection_service import (
-                ExternalActionProductSearchRouteSelectionService,
-            )
-
-            path = str(action.get("path") or "").lower()
-            operation_id = str(action.get("operationId") or "").lower()
-
-            if "/products/" not in path:
-                return None
-
-            if "search" not in path and "search" not in operation_id:
-                return None
-
-            return ExternalActionProductSearchRouteSelectionService.build_search_parameters(
-                message,
-                normalized_text,
-                action,
-                description_override=description_override,
-            )
-
-        if strategy == "lmp":
-            from app.domain.services.operational_route_matcher_service import (
-                OperationalRouteMatcherService,
-            )
-
-            path = str(action.get("path") or "")
-            sale_number = OperationalRouteMatcherService.extract_lmp_sale_number(
-                message
-            ) or OperationalRouteMatcherService.extract_lmp_sale_number(conversation_context)
-
-            if "{sale_number}" in path and not sale_number:
-                return None
-
-            if sale_number and "{sale_number}" in path:
-                for parameter in action.get("parametersSchema") or []:
-                    name = parameter.get("name")
-
-                    if name and name.lower() in {"sale_number", "ordem", "ov"}:
-                        return {name: sale_number}
-
-                return {"sale_number": sale_number}
-
-            parameters: dict = {}
-
-            for parameter in action.get("parametersSchema") or []:
-                name = parameter.get("name")
-
-                if not name:
-                    continue
-
-                lowered = name.lower()
-
-                if lowered in {"page"}:
-                    parameters[name] = 1
-                elif lowered in {"page_size", "pagesize", "limit"}:
-                    parameters[name] = ChatOperationalPaginationDefaultsService.standard()
-                elif lowered == "status" and "/dashboard" in path:
-                    parameters[name] = "Todos"
-
-            if not parameters:
-                if "/dashboard" in path.lower():
-                    parameters = {}
-                else:
-                    parameters = {
-                        "page": 1,
-                        "page_size": ChatOperationalPaginationDefaultsService.standard(),
-                    }
-
-            if merge_date_parameters:
-                return merge_date_parameters(action, message, parameters)
-
-            return parameters
-
-        if strategy == "supplier_part_number":
-            from app.domain.services.chat_operational_identifier_resolution_service import (
-                ChatOperationalIdentifierResolutionService,
-            )
-
-            part_number = ChatOperationalIdentifierResolutionService.primary_supplier_part_number(
-                message or ""
-            )
-            if not part_number:
-                return None
-
-            parameters: dict = {
-                "supplier_part_number": part_number,
-                "page": 1,
-                "page_size": ChatOperationalPaginationDefaultsService.standard(),
-            }
-            return self._catalog.filter_parameters_to_schema(action, parameters)
-
-        if strategy == "product_code":
-            if not identifier:
-                identifier = ChatProductQueryIntentService.extract_product_code(message or "")
-
-            if not identifier:
-                identifier = ChatProductQueryIntentService.resolve_product_code(
-                    message or "",
-                    conversation_context,
-                    previous_messages=previous_messages,
-                    memory_snapshot=memory_snapshot
-                    or ChatToolGroundingContextService.current_memory_snapshot(),
-                )
-
-            if not identifier:
-                return None
-
-            return self._catalog.build_product_parameters(
-                action,
-                identifier,
-                message=message,
-                previous_messages=previous_messages,
-            )
-
-        if strategy == "exclusive_catalog":
-            normalized = message.lower()
-
-            return self._catalog.build_exclusive_catalog_parameters(
-                action,
-                message=message,
-                normalized=normalized,
-            )
-
-        if strategy == "date_branch":
-            parameters: dict = {}
-
-            if build_date_branch_parameters:
-                parameters = build_date_branch_parameters(
-                    action,
-                    message,
-                    previous_messages=previous_messages,
-                )
-
-            if production_kind in {
-                ProductionOperationalIntentKind.LOSSES_TOP,
-                ProductionOperationalIntentKind.LOSSES_RECORDS,
-            }:
-                loss_type = ChatProductionOperationalIntentService.infer_loss_type(
-                    ChatMessageNormalizationService.normalize_for_matching(message)
-                )
-
-                if loss_type:
-                    parameters["loss_type"] = loss_type
-
-            if production_kind == ProductionOperationalIntentKind.CONSUMPTION_BY_ITEM:
-                product_code = ChatProductQueryIntentService.extract_product_code(message)
-
-                if product_code:
-                    parameters["code"] = product_code
-
-            if production_kind == ProductionOperationalIntentKind.SCHEDULE_TODAY:
-                filter_code = ChatProductQueryIntentService.resolve_schedule_product_filter_code(
-                    message,
-                    product_code=ChatProductQueryIntentService.extract_product_code(message),
-                )
-
-                if filter_code:
-                    parameters["presentationDetailFilter"] = {
-                        "product_code_prefix": filter_code,
-                    }
-
-            if not parameters:
-                parameters = {}
-
-            parameters = OperationalRouteQueryDefaultsService.apply(
-                action,
-                parameters,
-                route=route,
-            )
-
-            parameters = self._catalog.filter_parameters_to_schema(
-                action,
-                parameters,
-            )
-
-            return parameters
-
-        if strategy == "department_idd":
-            from app.domain.services.operational_api_parameter_builder_service import (
-                OperationalApiParameterBuilderService,
-            )
-
-            parameters = OperationalApiParameterBuilderService().build_department_idd(
-                action,
-                message,
-                previous_messages=previous_messages,
-            )
-            parameters = OperationalRouteQueryDefaultsService.apply(
-                action,
-                parameters,
-                route=route,
-            )
-            return self._catalog.filter_parameters_to_schema(action, parameters)
-
-        if strategy == "sale_orders":
-            from app.domain.services.operational_api_parameter_builder_service import (
-                OperationalApiParameterBuilderService,
-            )
-
-            return OperationalApiParameterBuilderService().build_sale_orders(
-                action,
-                message,
-                previous_messages=previous_messages,
-            )
-
-        if strategy == "system_metadata":
-            from app.domain.services.chat_system_metadata_intent_service import (
-                ChatSystemMetadataIntentService,
-            )
-
-            return ChatSystemMetadataIntentService.build_parameters(message, action)
-
-        if strategy == "supplies_stock":
-            from app.domain.services.operational_api_parameter_builder_service import (
-                OperationalApiParameterBuilderService,
-            )
-
-            return OperationalApiParameterBuilderService.build_supplies_stock(action)
-
-        if strategy in {"none", "semantic"}:
-            return {}
-
-        return None
+        return ParameterStrategyShadowService.bind_via_openapi(
+            action,
+            message,
+            previous_messages=previous_messages,
+            strategy=strategy,
+            catalog=self._catalog,
+            identifier=identifier,
+            conversation_context=conversation_context,
+            memory_snapshot=memory_snapshot,
+            production_kind=production_kind,
+            route=route,
+            build_date_branch_parameters=build_date_branch_parameters,
+            merge_date_parameters=merge_date_parameters,
+            description_override=description_override,
+            normalized=normalized_text,
+        )
 
     def resolve_presentation_reason(
         self,

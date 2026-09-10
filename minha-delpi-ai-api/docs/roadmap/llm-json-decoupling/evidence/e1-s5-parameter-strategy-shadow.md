@@ -65,5 +65,5 @@ ALL_RESOLVER_STRATEGIES_IN_CUTOVER = PASS
 
 ## Próximo
 
-1. **E1.S6** — remover autoridade residual / fields mortos do registry e braços mortos do switch.  
-2. Não reabrir cutover de binding sem evidência de regressão live.
+1. **E1.S6 fatia B** — cutover de seleção (após agree E1.S4), depois DELETE fields.  
+2. Binding: switch tipado do resolver já removido (E1.S6A); não reabrir cutover de binding sem regressão live.
