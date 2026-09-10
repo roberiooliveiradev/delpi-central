@@ -31,7 +31,6 @@ import {
   type MessageThreadAction,
   type MessageThreadItem,
 } from "../ui/mrUi";
-import { appendAttachmentMarkdown } from "../utils/commentAttachmentMarkdown";
 import { formatBytes } from "../utils/formatBytes";
 import { shouldStickThreadToBottom } from "../utils/threadStickToBottom";
 import {
@@ -289,6 +288,8 @@ export function CommentsPanel({
       const authorId = (item.author_user_id || "").trim();
       const attachments = attachmentsByCommentId.get(item.id) || [];
       const inlineIds = new Set(listInlineAttachmentIdsFromMarkdown(item.body || ""));
+      // Paste/inline → body only. Paperclip tray → strip only (interaction-room split).
+      const stripAttachments = attachments.filter((row) => !inlineIds.has(row.id));
       return {
         id: item.id,
         kind: "text",
@@ -299,20 +300,15 @@ export function CommentsPanel({
         authorSrc: authorId ? avatarByUserId.get(authorId) || null : null,
         mine: Boolean(item.is_mine),
         belowBody:
-          attachments.length > 0 ? (
+          stripAttachments.length > 0 ? (
             <div className="my-requests-comment-attachments">
               <MyRequestsAttachmentPreviewStrip
                 mode="preview"
-                items={attachments.map((row) => ({
+                items={stripAttachments.map((row) => ({
                   id: row.id,
                   fileName: row.original_name,
                   contentType: row.mime_type,
-                  // Inline images already render in the markdown body — keep the
-                  // strip as name + real size (and click-to-enlarge) without a
-                  // second large thumb.
-                  previewUrl: inlineIds.has(row.id)
-                    ? null
-                    : attachmentSrcById.get(row.id) || null,
+                  previewUrl: attachmentSrcById.get(row.id) || null,
                   detail: formatBytes(row.size_bytes),
                 }))}
                 onOpen={(row) => openAttachmentPreview(row.id, item.id)}
@@ -346,25 +342,28 @@ export function CommentsPanel({
 
   const composerPending = useMemo(
     () =>
-      pending.map((item) => {
-        if (item.kind === "remote") {
+      pending
+        // Inline/paste lives in the editor surface; tray is paperclip + remotes only.
+        .filter((item) => item.kind !== "inline")
+        .map((item) => {
+          if (item.kind === "remote") {
+            return {
+              id: item.id,
+              fileName: item.fileName,
+              contentType: item.contentType,
+              previewUrl: item.previewUrl,
+              detail: formatBytes(item.sizeBytes),
+            };
+          }
           return {
             id: item.id,
-            fileName: item.fileName,
-            contentType: item.contentType,
-            previewUrl: item.previewUrl,
-            detail: formatBytes(item.sizeBytes),
+            fileName: item.file.name,
+            contentType: item.file.type || null,
+            file: item.file,
+            detail: formatBytes(item.file.size),
+            kind: item.kind,
           };
-        }
-        return {
-          id: item.id,
-          fileName: item.file.name,
-          contentType: item.file.type || null,
-          file: item.file,
-          detail: formatBytes(item.file.size),
-          kind: item.kind,
-        };
-      }),
+        }),
     [pending],
   );
 
@@ -472,23 +471,12 @@ export function CommentsPanel({
       const uploaded = await uploadCommentAttachment(requestId, commentId, file);
       pendingToUuid[pendingId] = uploaded.id;
     }
-    const clipUploaded: Array<{ id: string; fileName: string }> = [];
+    // Paperclip clips stay as comment attachments (strip), never embedded in markdown.
     for (const row of pending.filter((item): item is PendingLocal => item.kind === "clip")) {
-      const uploaded = await uploadCommentAttachment(
-        requestId,
-        commentId,
-        row.file,
-      );
-      clipUploaded.push({ id: uploaded.id, fileName: row.file.name });
+      await uploadCommentAttachment(requestId, commentId, row.file);
     }
     if (Object.keys(pendingToUuid).length) {
       bodyText = rewriteInlinePendingInMarkdown(bodyText, pendingToUuid);
-    }
-    if (clipUploaded.length) {
-      bodyText = appendAttachmentMarkdown(
-        bodyText === " " ? "" : bodyText,
-        clipUploaded,
-      );
     }
     return bodyText.trim() || " ";
   }
@@ -502,29 +490,16 @@ export function CommentsPanel({
     try {
       if (editingId) {
         const finalBody = await applyUploadsAndBody(editingId, text || " ");
-        // Re-append remotes still in tray that are not already in body.
-        let bodyWithRemotes = finalBody;
-        const present = new Set(listInlineAttachmentIdsFromMarkdown(bodyWithRemotes));
-        const remotesToKeep = pending.filter(
-          (item): item is PendingRemote => item.kind === "remote",
-        );
-        bodyWithRemotes = appendAttachmentMarkdown(
-          bodyWithRemotes === " " ? "" : bodyWithRemotes,
-          remotesToKeep
-            .filter((item) => !present.has(item.id))
-            .map((item) => ({ id: item.id, fileName: item.fileName })),
-        );
-        await patchComment(requestId, editingId, bodyWithRemotes.trim() || " ", {
+        await patchComment(requestId, editingId, finalBody.trim() || " ", {
           markAsEdited: true,
         });
         cancelEdit();
       } else {
         let bodyText = text || " ";
         const created = await createComment(requestId, bodyText);
+        const beforeUpload = bodyText;
         bodyText = await applyUploadsAndBody(created.id, bodyText);
-        const needsPatch =
-          bodyText !== (text || " ") ||
-          pending.some((item) => item.kind === "clip" || item.kind === "inline");
+        const needsPatch = bodyText !== beforeUpload;
         if (needsPatch) {
           await patchComment(requestId, created.id, bodyText, {
             markAsEdited: false,

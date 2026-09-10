@@ -28,7 +28,9 @@ describe("Request conversation structural", () => {
     expect(panel).toMatch(/resolveActions/);
     expect(panel).toMatch(/commentTimeLabel/);
     expect(panel).toMatch(/conversationFrozen/);
-    expect(panel).toMatch(/appendAttachmentMarkdown/);
+    expect(panel).not.toMatch(/appendAttachmentMarkdown/);
+    expect(panel).toMatch(/stripAttachments/);
+    expect(panel).toMatch(/kind !== "inline"/);
     expect(panel).toMatch(/markAsEdited/);
     expect(panel).toMatch(/onAttachmentImageClick/);
     expect(panel).toMatch(/RequestFilePreviewModal/);
