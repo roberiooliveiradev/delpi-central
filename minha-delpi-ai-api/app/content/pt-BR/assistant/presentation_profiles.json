@@ -293,7 +293,62 @@
     ],
     "richStackProfiles": [],
     "legacyPresentationProfiles": [],
-    "schemaFirstMigratedProfiles": [],
+    "schemaFirstMigratedProfiles": [
+      "pathRule:/commercial/rol/by-customer",
+      "pathRule:/commercial/rol/by-product",
+      "pathRule:/process-inspection-plans/orders-without-plan",
+      "pathRule:/process-inspection-plans/products-without-plan",
+      "pathRule:/process-inspection-plans/summary",
+      "pathRule:/production/allocation-gaps",
+      "pathRule:/production/consumption/by-item/",
+      "pathRule:/production/consumption/top-items",
+      "pathRule:/production/consumption/top-items-by-work-center",
+      "pathRule:/production/consumption/top-items-validated",
+      "pathRule:/production/losses/records",
+      "pathRule:/production/losses/top-materials",
+      "pathRule:/production/oee/series",
+      "pathRule:/production/orders/by-op/",
+      "pathRule:/production/orders/finished",
+      "pathRule:/production/orders/finished-without-consumption",
+      "pathRule:/production/orders/open",
+      "pathRule:/production/otd/series",
+      "pathRule:/production/pcp-orders/summary",
+      "pathRule:/production/planned-vs-real-time",
+      "pathRule:/production/schedule/today",
+      "pathRule:/production/work-centers/average-planned-time",
+      "pathRule:/production/work-centers/order-summary",
+      "pathRule:/products/search",
+      "pathRule:/purchases/top-products",
+      "pathRule:/quality/action-plans/recurrence",
+      "pathRule:/quality/ppm",
+      "pathRule:/supplies/stock-balances/items",
+      "pathRule:/supplies/stock-balances/summary",
+      "table:eficienciaFabril",
+      "table:lmpList",
+      "table:pcpOrdersItems",
+      "table:playbookConsumptionByItem",
+      "table:playbookConsumptionByWorkCenter",
+      "table:playbookConsumptionTopItems",
+      "table:playbookConsumptionValidated",
+      "table:playbookLossesRecords",
+      "table:playbookLossesTopMaterials",
+      "table:playbookOrdersFinished",
+      "table:playbookOrdersOpen",
+      "table:playbookPlannedVsRealTime",
+      "table:playbookProductionOeeAppointment",
+      "table:playbookProductionOeeDetail",
+      "table:playbookPurchasesTopProducts",
+      "table:playbookScheduleToday",
+      "table:playbookWorkCenterAveragePlannedTime",
+      "table:playbookWorkCenterOrderSummary",
+      "table:productBySupplierPartNumber",
+      "table:productSearchBasic",
+      "table:productionOtdOrders",
+      "table:saleOrders",
+      "table:systemSx2Columns",
+      "dead:compositeVisualSpecs",
+      "dead:pathEntityFallbacks"
+    ],
     "presentationTableAssemblyEntities": [],
     "textFirstProfiles": [
       "structure_exclusivity",
@@ -572,41 +627,11 @@
   },
   "pathRules": [
     {
-      "contains": "/commercial/rol/by-product",
-      "profile": "table_list",
-      "chartPolicy": "skip"
-    },
-    {
-      "contains": "/commercial/rol/by-customer",
-      "profile": "table_list",
-      "chartPolicy": "skip"
-    },
-    {
-      "contains": "/process-inspection-plans/summary",
-      "profile": "kpi_series"
-    },
-    {
-      "contains": "/process-inspection-plans/orders-without-plan",
-      "profile": "table_list"
-    },
-    {
-      "contains": "/process-inspection-plans/products-without-plan",
-      "profile": "table_list"
-    },
-    {
       "contains": "/process-inspection-plans/products/",
       "profile": "composite_detail"
     },
     {
       "contains": "/process-inspection-plans/products",
-      "profile": "table_list"
-    },
-    {
-      "contains": "/supplies/stock-balances/summary",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/supplies/stock-balances/items",
       "profile": "table_list"
     },
     {
@@ -718,10 +743,6 @@
       "profile": "table_list"
     },
     {
-      "contains": "/products/search",
-      "profile": "table_list"
-    },
-    {
       "contains": "/summary",
       "profile": "table_list"
     },
@@ -734,16 +755,8 @@
       "profile": "system"
     },
     {
-      "contains": "/production/otd/series",
-      "profile": "kpi_series"
-    },
-    {
       "contains": "/production/otd",
       "profile": "kpi_dashboard"
-    },
-    {
-      "contains": "/production/oee/series",
-      "profile": "kpi_series"
     },
     {
       "contains": "/production/oee/appointments/",
@@ -758,22 +771,6 @@
       "profile": "kpi_dashboard"
     },
     {
-      "contains": "/production/planned-vs-real-time",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/allocation-gaps",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/orders/finished-without-consumption",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/orders/by-op/",
-      "profile": "playbook_report"
-    },
-    {
       "contains": "/pedidos-venda-abertos/ops-abertas",
       "profile": "playbook_report"
     },
@@ -786,64 +783,12 @@
       "profile": "table_list"
     },
     {
-      "contains": "/production/work-centers/average-planned-time",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/consumption/by-item/",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/consumption/top-items-by-work-center",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/consumption/top-items-validated",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/consumption/top-items",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/orders/open",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/pcp-orders/summary",
-      "profile": "playbook_report"
-    },
-    {
       "contains": "/production/pcp-orders/items",
       "profile": "paged_list"
     },
     {
       "contains": "/production/pcp-orders/ranking",
       "profile": "list"
-    },
-    {
-      "contains": "/production/orders/finished",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/work-centers/order-summary",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/losses/top-materials",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/losses/records",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/production/schedule/today",
-      "profile": "playbook_report"
-    },
-    {
-      "contains": "/purchases/top-products",
-      "profile": "playbook_report"
     },
     {
       "contains": "/production/",
@@ -854,16 +799,8 @@
       "profile": "kpi_snapshot"
     },
     {
-      "contains": "/quality/ppm",
-      "profile": "kpi_series"
-    },
-    {
       "contains": "/quality/action-plans/dashboard",
       "profile": "kpi_dashboard"
-    },
-    {
-      "contains": "/quality/action-plans/recurrence",
-      "profile": "table_list"
     },
     {
       "contains": "/quality/action-plans/",
@@ -1401,7 +1338,9 @@
     },
     "document_export": {
       "defaultViewPolicy": "text_when_available",
-      "viewOrder": ["text"],
+      "viewOrder": [
+        "text"
+      ],
       "stackPlan": "default",
       "flags": [],
       "chartPolicy": "skip",
@@ -2244,6 +2183,5 @@
     "commercial_rol_target": [
       "/commercial/rol/summary"
     ]
-  },
-  "pathEntityFallbacks": []
+  }
 }

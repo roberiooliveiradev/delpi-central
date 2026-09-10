@@ -1,11 +1,11 @@
 # Plano 07 — Presentation residual -> schema/shape-first
 
 **Prioridade:** P2  
-**Status execução:** Onda G · E7.S1–S3 **ATENDIDO** · próxima E7.S4 · display path→label **não** reabrir  
-**Evidência:** [`../evidence/e7-s1-presentation-residual-inventory.md`](../evidence/e7-s1-presentation-residual-inventory.md) · [`../evidence/e7-s2-presentation-baseline.md`](../evidence/e7-s2-presentation-baseline.md) · [`../evidence/e7-s3-shape-defaults-primary-path.md`](../evidence/e7-s3-shape-defaults-primary-path.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda G · E7.S1–S4 **ATENDIDO** · próxima E7.S5 · display path→label **não** reabrir  
+**Evidência:** [`../evidence/e7-s1-presentation-residual-inventory.md`](../evidence/e7-s1-presentation-residual-inventory.md) · [`../evidence/e7-s2-presentation-baseline.md`](../evidence/e7-s2-presentation-baseline.md) · [`../evidence/e7-s3-shape-defaults-primary-path.md`](../evidence/e7-s3-shape-defaults-primary-path.md) · [`../evidence/e7-s4-path-entity-cleanup.md`](../evidence/e7-s4-path-entity-cleanup.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** novas actions e APIs devem produzir apresentação útil sem exigir profile, path rule, title map ou presenter dedicado por endpoint.
 
-**HEAD revalidado:** pós-E7.S2 (`e50aaad81`+)
+**HEAD revalidado:** pós-E7.S3 (`8d7836483`+)
 
 ## CURRENT
 
@@ -73,11 +73,14 @@ Medir R4/R5/R7/R8/R9/R11 — **baseline TU PASS** (R7 parcial sem multi-surface)
 **Teste:** provider externo scalar/list/hierarchy sem profile local — PASS.
 
 
-### E7.S4 — Path/entity rules cleanup
+### E7.S4 — Path/entity rules cleanup — **ATENDIDO** (2026-09-10)
 
 **Fazer:** substituir `pathContains` e entity maps por shape/schema/metadata canônica quando houver equivalência comprovada; manter exceção especializada somente com requisito de domínio documentado.
 
-**Teste:** metamorphic rename de path mantendo schema; view não deve mudar sem motivo semântico.
+**Feito:** −29 `pathRules` replaceable; −23 table `pathContains` redundantes; DELETE órfãos; ledger `schemaFirstMigratedProfiles`; resolve entity-from-path antes de shape. `entityProfiles` especializados **não** cutover.
+
+**Teste:** metamorphic path rename (entity+shape) — PASS; stock negativo — PASS.
+
 
 ### E7.S5 — Labels e formats
 

@@ -151,6 +151,13 @@ class ChatPresentationProfileResolveService:
         if not shape_token and isinstance(delpi_metadata, dict):
             shape_token = str(delpi_metadata.get("shape") or "").strip() or None
 
+        # E7.S4 — path-only: resolver entity do path antes do shape OpenAPI.
+        if not entity_token and path:
+            entity_token = (
+                presentation_profile_service().resolve_entity_from_path(path) or None
+            )
+            entity_token = str(entity_token or "").strip() or None
+
         if not shape_token and entity_token:
             shape_token = OpenApiOperationContractService.shape_for_entity(entity_token)
 

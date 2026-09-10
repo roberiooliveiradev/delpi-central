@@ -23,14 +23,14 @@ Dívida viva concentrada em **seleção de profile/table por path/entity**, não
 
 | Sinal | Valor |
 |-------|------:|
-| `pathRules` | 78 |
+| `pathRules` | **49** (E7.S4 −29) |
 | `entityProfiles` | 34 |
 | `entityTableProfiles` | 18 |
 | `entityPathHints` | 139 |
-| `tableProfiles` com `detect.pathContains` | 46 / 76 |
+| `tableProfiles` com `detect.pathContains` | **23** / 76 (E7.S4 −23) |
 | `openapiShapeDefaults` keys | 9 (incl. `unknown`) |
-| `pathEntityFallbacks` | `[]` (DEAD) |
-| `entitySets.schemaFirstMigratedProfiles` | `[]` (DEAD ledger) |
+| `pathEntityFallbacks` | **removido** (E7.S4) |
+| `entitySets.schemaFirstMigratedProfiles` | **ledger populado** (E7.S4) |
 
 ## Matriz (resumo)
 

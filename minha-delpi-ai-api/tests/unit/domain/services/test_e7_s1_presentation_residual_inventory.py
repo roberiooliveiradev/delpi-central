@@ -13,11 +13,11 @@ _PRESENTER = _ASSISTANT / "presenter_content.json"
 
 # Frozen 2026-09-10 — autoridade residual path/entity ainda LIVE.
 _FREEZE = {
-    "pathRules": 78,
+    "pathRules": 49,
     "entityProfiles": 34,
     "entityTableProfiles": 18,
     "entityPathHints": 139,
-    "tableProfilesWithPathContains": 46,
+    "tableProfilesWithPathContains": 23,
     "tableProfilesTotal": 76,
     "openapiShapeDefaults": 9,
 }
@@ -64,11 +64,13 @@ def test_e7_s1_dead_orphans_flagged():
     profiles = _load(_PROFILES)
     presenter = _load(_PRESENTER)
 
-    assert profiles.get("pathEntityFallbacks") in ([], None)
+    assert "pathEntityFallbacks" not in profiles
     entity_sets = profiles.get("entitySets") or {}
-    assert entity_sets.get("schemaFirstMigratedProfiles") in ([], None)
-    # Órfão: presente no JSON, sem consumer runtime esperado neste inventário.
-    assert isinstance(presenter.get("compositeVisualSpecs"), dict)
+    migrated = entity_sets.get("schemaFirstMigratedProfiles") or []
+    assert isinstance(migrated, list)
+    assert len(migrated) >= 1  # E7.S4 popula ledger de cutovers
+    # Órfão removido em E7.S4.
+    assert "compositeVisualSpecs" not in presenter
 
 
 def test_e7_s1_field_formats_policy_preserved():

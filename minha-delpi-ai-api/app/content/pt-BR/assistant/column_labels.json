@@ -490,9 +490,6 @@
         "allKeys": [
           "product_code",
           "supplier_part_number"
-        ],
-        "pathContains": [
-          "/by-supplier-part-number"
         ]
       },
       "preferredColumns": [
@@ -530,9 +527,6 @@
     },
     "eficienciaFabril": {
       "detect": {
-        "pathContains": [
-          "eficiencia-fabril"
-        ],
         "anyKeys": [
           "eficiencia_percentual",
           "tempo_real_horas"
@@ -560,9 +554,6 @@
           "due_date",
           "otd_status",
           "days_late"
-        ],
-        "pathContains": [
-          "/production/otd"
         ]
       },
       "preferredColumns": [
@@ -898,9 +889,6 @@
         "allKeys": [
           "campo",
           "descricao"
-        ],
-        "pathContains": [
-          "/system/sx2"
         ]
       },
       "preferredColumns": [
@@ -915,9 +903,6 @@
         "allKeys": [
           "sale_number",
           "branch"
-        ],
-        "pathContains": [
-          "/lmp"
         ]
       },
       "preferredColumns": [
@@ -933,9 +918,6 @@
         "allKeys": [
           "order_number",
           "branch"
-        ],
-        "pathContains": [
-          "/sales"
         ]
       },
       "preferredColumns": [
@@ -951,9 +933,6 @@
         "allKeys": [
           "code",
           "description"
-        ],
-        "pathContains": [
-          "/products/search"
         ]
       },
       "preferredColumns": [
@@ -1313,9 +1292,6 @@
         "anyKeys": [
           "real_consumption_qty",
           "item_code"
-        ],
-        "pathContains": [
-          "/production/consumption/top-items"
         ]
       },
       "preferredColumns": [
@@ -1380,9 +1356,6 @@
         "anyKeys": [
           "invoice_count",
           "total_value"
-        ],
-        "pathContains": [
-          "/purchases/top-products"
         ]
       },
       "preferredColumns": [
@@ -1400,9 +1373,6 @@
         "anyKeys": [
           "total_loss_qty",
           "material_code"
-        ],
-        "pathContains": [
-          "/production/losses/top-materials"
         ]
       },
       "preferredColumns": [
@@ -1419,9 +1389,6 @@
         "anyKeys": [
           "loss_qty",
           "appointment_id"
-        ],
-        "pathContains": [
-          "/production/losses/records"
         ]
       },
       "preferredColumns": [
@@ -1442,9 +1409,6 @@
         "anyKeys": [
           "planned_qty",
           "priority"
-        ],
-        "pathContains": [
-          "/production/schedule/today"
         ]
       },
       "preferredColumns": [
@@ -1464,9 +1428,6 @@
           "pending_qty",
           "produced_qty",
           "product_description"
-        ],
-        "pathContains": [
-          "/production/orders/open"
         ]
       },
       "preferredColumns": [
@@ -1491,9 +1452,6 @@
           "days_late",
           "is_open",
           "op_key"
-        ],
-        "pathContains": [
-          "/production/pcp-orders/items"
         ]
       },
       "preferredColumns": [
@@ -1519,9 +1477,6 @@
         "anyKeys": [
           "end_time",
           "produced_qty"
-        ],
-        "pathContains": [
-          "/production/orders/finished"
         ]
       },
       "preferredColumns": [
@@ -1544,9 +1499,6 @@
         "anyKeys": [
           "finished_orders_count",
           "open_orders_count"
-        ],
-        "pathContains": [
-          "/production/work-centers/order-summary"
         ]
       },
       "preferredColumns": [
@@ -1561,9 +1513,6 @@
         "anyKeys": [
           "original_allocated_qty",
           "allocated_balance_qty"
-        ],
-        "pathContains": [
-          "/production/consumption/top-items-by-work-center"
         ]
       },
       "preferredColumns": [
@@ -1581,9 +1530,6 @@
       "detect": {
         "anyKeys": [
           "real_consumption_qty"
-        ],
-        "pathContains": [
-          "/production/consumption/top-items-validated"
         ]
       },
       "preferredColumns": [
@@ -1640,9 +1586,6 @@
       "detect": {
         "anyKeys": [
           "average_planned_hours"
-        ],
-        "pathContains": [
-          "/production/work-centers/average-planned-time"
         ]
       },
       "preferredColumns": [
@@ -1655,9 +1598,6 @@
         "anyKeys": [
           "product_group",
           "real_consumption_qty"
-        ],
-        "pathContains": [
-          "/production/consumption/by-item/"
         ]
       },
       "preferredColumns": [
@@ -1672,9 +1612,6 @@
         "anyKeys": [
           "variance_hours",
           "planned_hours"
-        ],
-        "pathContains": [
-          "/production/planned-vs-real-time"
         ]
       },
       "preferredColumns": [
@@ -1697,9 +1634,6 @@
           "oee_pct",
           "appointment_id",
           "outlier_appointments"
-        ],
-        "pathContains": [
-          "/production/oee"
         ]
       },
       "preferredColumns": [
@@ -1724,9 +1658,6 @@
           "time_analysis",
           "routing_operations",
           "efficiency_from_times_pct"
-        ],
-        "pathContains": [
-          "/production/oee/appointments/"
         ]
       },
       "preferredColumns": [
