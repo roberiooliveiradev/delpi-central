@@ -1,6 +1,6 @@
 # Catálogo OpenAPI — api-delpi (gerado automaticamente)
 
-**Provider:** `api-delpi` · **Rotas:** 705 · **Gerado em:** 2026-09-08 15:29 UTC
+**Provider:** `api-delpi` · **Rotas:** 700 · **Gerado em:** 2026-09-09 23:26 UTC
 
 > Não edite manualmente. Regenerado por `scripts/sync_api_delpi_openapi.py`.
 
@@ -59,18 +59,18 @@
 | `GET` | `/commercial/proposals/collaborator-summary` | `summarize_commercial_proposals_by_collaborator` | Commercial proposal counts by collaborator |
 | `GET` | `/commercial/proposals/{proposal_number}` | `get_commercial_proposal` | Commercial proposal detail (sales order) |
 | `GET` | `/commercial/proposals/{proposal_number}/history/events` | `get_commercial_proposal_history_events` | Commercial proposal stage history |
-| `GET` | `/commercial/rol/by-branch` | `get_commercial_rol_by_branch` | Lista paginada — Rol comercial por filial |
+| `GET` | `/commercial/rol/by-branch` | `get_commercial_rol_by_branch` | Commercial ROL breakdown by branch (01 vs 02) |
 | `GET` | `/commercial/rol/by-customer` | `get_commercial_rol_by_customer` | Commercial ROL ranking by customer |
 | `GET` | `/commercial/rol/by-product` | `get_commercial_rol_by_product` | Commercial ROL by product or product group |
 | `GET` | `/commercial/rol/series` | `get_commercial_rol_series` | Commercial rol series |
 | `GET` | `/commercial/rol/summary` | `get_commercial_rol_summary` | Commercial ROL summary (realized and goal) |
 | `GET` | `/commercial/sales-order-otd` | `get_sales_order_otd` | Sales order otd |
-| `GET` | `/commercial/sales-order-otd/by-branch` | `get_sales_order_otd_by_branch` | Lista paginada — Otd de pedidos de venda por filial |
-| `GET` | `/commercial/sales-order-otd/by-customer` | `get_sales_order_otd_by_customer` | Lista paginada — Otd de pedidos de venda por cliente |
+| `GET` | `/commercial/sales-order-otd/by-branch` | `get_sales_order_otd_by_branch` | Sales order OTD by branch |
+| `GET` | `/commercial/sales-order-otd/by-customer` | `get_sales_order_otd_by_customer` | Sales order OTD by customer |
 | `GET` | `/commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}` | `get_sales_order_otd_line_detail` | Sales order otd line detail |
 | `GET` | `/commercial/sales-order-otd/panel` | `get_sales_order_otd_panel` | Sales order otd panel |
 | `GET` | `/commercial/sales-order-otd/series` | `get_sales_order_otd_series` | Sales order otd series |
-| `GET` | `/commercial/sales-order-otd/series-by-customer` | `get_sales_order_otd_series_by_customer` | Lista paginada — Série temporal otd de pedidos de venda por cliente |
+| `GET` | `/commercial/sales-order-otd/series-by-customer` | `get_sales_order_otd_series_by_customer` | Sales order OTD series by customer |
 | `GET` | `/commercial/sales-order-otd/summary` | `get_sales_order_otd_summary` | Sales order OTD summary (realized and goal) |
 | `GET` | `/commercial/weg-rol-target-pct` | `get_weg_rol_target_pct` | Commercial WEG ROL target (realized and goal) |
 
@@ -234,7 +234,7 @@
 | `GET` | `/financial/fixed_cost_pct` | `get_financial_fixed_cost_pct` | Financial fixed cost percentage |
 | `GET` | `/financial/pmr` | `get_financial_pmr` | Financial pmr |
 | `GET` | `/financial/purchase-freight/links` | `get_financial_purchase_freight_links` | Purchase invoice to freight document links |
-| `GET` | `/financial/rol` | `get_financial_rol` | Financial ROL (net operating revenue) |
+| `GET` | `/financial/rol` | `get_financial_rol` | Financial ROL consolidated KPI by branch |
 | `GET` | `/financial/rol/invoices` | `get_financial_rol_invoices` | ROL invoices (sales and returns) |
 
 ## Financeiro — Despesas por Centro de Custo (6)
@@ -338,15 +338,10 @@
 | `GET` | `/inspecoes-processo/ranking-ensaio` | `get_inspecoes_processo_ranking_ensaio` | Inspections processo ranking ensaio |
 | `GET` | `/inspecoes-processo/resumo` | `get_inspecoes_processo_resumo` | In-process inspections — summary KPIs |
 
-## Invoice issuance (14)
+## Invoice issuance (9)
 
 | Método | Path | operationId | Summary |
 |--------|------|-------------|---------|
-| `GET` | `/invoice-issuance/carriers` | `search_invoice_issuance_carriers` | Search invoice issuance carriers |
-| `GET` | `/invoice-issuance/open-sales-orders` | `list_invoice_issuance_open_sales_orders` | List open sales orders for issuance |
-| `GET` | `/invoice-issuance/parties` | `search_invoice_issuance_parties` | Search invoice issuance parties |
-| `GET` | `/invoice-issuance/products` | `search_invoice_issuance_products` | Search invoice issuance products |
-| `GET` | `/invoice-issuance/products/{code}/warehouse-01-balance` | `get_invoice_issuance_warehouse_01_balance` | Warehouse 01 stock hint for issuance |
 | `GET` | `/invoice-issuance/requests` | `list_invoice_issuance_requests` | List invoice issuance requests |
 | `POST` | `/invoice-issuance/requests` | `create_invoice_issuance_request` | Create invoice issuance request |
 | `GET` | `/invoice-issuance/requests/{request_id}` | `get_invoice_issuance_request` | Get invoice issuance request |
@@ -911,13 +906,13 @@
 | `GET` | `/products/drawings` | `list_product_drawings` | Product drawings |
 | `GET` | `/products/exclusive-raw-materials/catalog` | `list_exclusive_raw_materials_catalog` | Exclusive raw materials catalog |
 | `GET` | `/products/search` | `search_products` | Search products |
-| `GET` | `/products/{code}` | `get_product_detail` | Dados cadastrais do product |
+| `GET` | `/products/{code}` | `get_product_detail` | Product cadastro / master data |
 | `GET` | `/products/{code}/analyser` | `get_product_analyser` | Full product analyser / integrated view |
-| `GET` | `/products/{code}/cost-impact-simulation` | `get_product_cost_impact_simulation` | Product cost impact simulation |
+| `GET` | `/products/{code}/cost-impact-simulation` | `get_product_cost_impact_simulation` | Finished-product cost impact simulation (BOM materials) |
 | `GET` | `/products/{code}/customers` | `get_product_customers` | Clientes do product |
 | `GET` | `/products/{code}/drawing` | `get_product_drawing` | Product drawing |
 | `GET` | `/products/{code}/drawing/pdf` | `get_product_drawing_pdf` | Product drawing pdf |
-| `GET` | `/products/{code}/factory-status` | `get_product_factory_status` | Product factory status |
+| `GET` | `/products/{code}/factory-status` | `get_product_factory_status` | Product factory status (integrated shop-floor view) |
 | `GET` | `/products/{code}/guide` | `get_product_guide` | Product guide |
 | `GET` | `/products/{code}/inbound-invoice-items` | `get_product_inbound_invoice_items` | Product inbound invoice items |
 | `GET` | `/products/{code}/inspection` | `get_product_inspection` | Product inspection |
@@ -925,8 +920,8 @@
 | `GET` | `/products/{code}/last-purchase` | `get_product_last_purchase` | Product last purchase |
 | `GET` | `/products/{code}/outbound-invoice-items` | `get_product_outbound_invoice_items` | Product outbound invoice items |
 | `GET` | `/products/{code}/parents` | `get_product_parents` | Product parents |
-| `GET` | `/products/{code}/pricing` | `get_product_pricing` | Product pricing |
-| `GET` | `/products/{code}/production-status` | `get_product_production_status` | Product production status |
+| `GET` | `/products/{code}/pricing` | `get_product_pricing` | Product sale pricing and commercial price tables |
+| `GET` | `/products/{code}/production-status` | `get_product_production_status` | Product production status (PA/PI, OPs and appointments) |
 | `GET` | `/products/{code}/purchase-budget-history` | `get_product_purchase_budget_history` | Product purchase budget history |
 | `GET` | `/products/{code}/purchase-price-history` | `get_product_purchase_price_history` | Product purchase price history |
 | `GET` | `/products/{code}/purchases` | `get_product_purchases` | Product purchases |
@@ -936,7 +931,7 @@
 | `GET` | `/products/{code}/sales/billing` | `get_product_sales_billing` | Faturamento do product |
 | `GET` | `/products/{code}/sales/open-orders` | `get_product_sales_open_orders` | Product sales open orders |
 | `GET` | `/products/{code}/shipping-status` | `get_product_shipping_status` | Product shipping status |
-| `GET` | `/products/{code}/stock` | `get_product_stock` | Product stock |
+| `GET` | `/products/{code}/stock` | `get_product_stock` | Product stock by branch and location |
 | `GET` | `/products/{code}/structure` | `get_product_structure` | Product structure (BOM) |
 | `GET` | `/products/{code}/structure/excel` | `get_product_structure_excel` | Product structure excel |
 | `GET` | `/products/{code}/structure/exclusivity` | `get_product_structure_exclusivity` | Raw-material exclusivity in product structure |

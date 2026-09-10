@@ -4,25 +4,25 @@ overview: Corrigir roteamento OpenAPI-first para que «Consulte o estoque do pro
 todos:
   - id: e0-s1-baseline
     content: E0.S1 Baseline vermelho estoque vs inspeção (scopes/enrich/whenNotToUse)
-    status: pending
+    status: completed
   - id: e1-s1-openapi-locale
     content: E1.S1 whenNotToUse/whenToUse com «estoque»«saldo»«disponível» no locale+metadata
-    status: pending
+    status: completed
   - id: e1-s2-reimport
     content: E1.S2 Reimport sync Action Catalog api-delpi
-    status: pending
+    status: completed
   - id: e2-s1-negation
     content: E2.S1 Negação em extract_requested_scopes (inspection)
-    status: pending
+    status: completed
   - id: e2-s2-enrich
     content: E2.S2 Enrich single-scope + replace irmão conflitante
-    status: pending
+    status: completed
   - id: e3-s1-help
     content: E3.S1 Sync Ajuda capabilities estoque vs inspeção
-    status: pending
+    status: completed
   - id: e3-s2-smoke-verify
     content: E3.S2 Smoke T1 sem workaround + verify-final
-    status: pending
+    status: completed
 isProject: false
 ---
 
