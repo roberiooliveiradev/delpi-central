@@ -59,6 +59,7 @@ import {
   useFloatingNotices,
   type DataTableColumn,
 } from "../app/productionPulseUi";
+import { DriverTypeListItem } from "../components/drivers/DriverTypeListItem";
 import { OtaStatusIndicator } from "../components/ota/OtaStatusIndicator";
 import { OtaJobListItem } from "../components/ota/OtaJobListItem";
 import { OtaTargetProgress } from "../components/ota/OtaTargetProgress";
@@ -1077,75 +1078,24 @@ export function FirmwareLinksPage({
     [busy, canManage, handleUpdateFamily],
   );
 
-  const driverColumns: DataTableColumn<DriverListItem>[] = useMemo(
-    () => [
-      {
-        key: "key",
-        header: "Chave",
-        render: (row) => <code>{row.key}</code>,
-      },
-      { key: "labelPt", header: "Rótulo", render: (row) => row.labelPt || "—" },
-      {
-        key: "protocolKind",
-        header: "Protocolo",
-        render: (row) => row.protocolKind,
-      },
-      { key: "roleKey", header: "Role", render: (row) => row.roleKey },
-      {
-        key: "status",
-        header: "Estado",
-        render: (row) =>
-          row.archivedAt ? PP_HELP.drivers.statusArchived : PP_HELP.drivers.statusActive,
-      },
-      {
-        key: "actions",
-        header: "",
-        render: (row) => (
-          <div className="pp-inline-actions">
-            <PpActionButton
-              variant="ghost"
-              onClick={() => openModal("driver-detail", { type: "driver", id: row.key })}
-            >
-              Detalhe
-            </PpActionButton>
-            {canManage && !row.archivedAt ? (
-              <PpActionButton
-                variant="ghost"
-                onClick={() => openConfirm("archive-driver", row.key)}
-              >
-                Arquivar
-              </PpActionButton>
-            ) : null}
-            {canManage && row.archivedAt ? (
-              <PpActionButton
-                variant="ghost"
-                disabled={busy}
-                onClick={() => {
-                  void unarchiveDriver(row.key)
-                    .then(() => {
-                      pushNotice({
-                        variant: "success",
-                        message: PP_HELP.drivers.unarchiveSuccess,
-                      });
-                      return reloadDrivers();
-                    })
-                    .catch((err) => {
-                      pushNotice({
-                        variant: "error",
-                        message:
-                          err instanceof Error ? err.message : "Falha ao reativar driver.",
-                      });
-                    });
-                }}
-              >
-                Reativar
-              </PpActionButton>
-            ) : null}
-          </div>
-        ),
-      },
-    ],
-    [busy, canManage, pushNotice, reloadDrivers],
+  const handleUnarchiveDriver = useCallback(
+    (driverKey: string) => {
+      void unarchiveDriver(driverKey)
+        .then(() => {
+          pushNotice({
+            variant: "success",
+            message: PP_HELP.drivers.unarchiveSuccess,
+          });
+          return reloadDrivers();
+        })
+        .catch((err) => {
+          pushNotice({
+            variant: "error",
+            message: err instanceof Error ? err.message : "Falha ao reativar driver.",
+          });
+        });
+    },
+    [pushNotice, reloadDrivers],
   );
 
   const targetColumns: DataTableColumn<FirmwareUpdateTarget>[] = useMemo(
@@ -1548,6 +1498,7 @@ export function FirmwareLinksPage({
             onChange={setDriversSearch}
             placeholder={PP_HELP.hub.driversCatalogSearch}
           />
+          <p className="pp-muted">{PP_HELP.hub.driversCatalogList}</p>
           {canManage ? (
             <PpActionButton
               className="pp-mb-sm"
@@ -1558,13 +1509,25 @@ export function FirmwareLinksPage({
           ) : null}
           {driversLoading && drivers.length === 0 ? (
             <PpStateBox variant="loading" title="Carregando drivers…" />
+          ) : filteredDrivers.length === 0 ? (
+            <PpStateBox variant="empty" title={PP_HELP.hub.driversCatalogEmpty} />
           ) : (
-            <PpDataTable
-              columns={driverColumns}
-              rows={filteredDrivers}
-              rowKey={(row) => row.key}
-              emptyMessage={PP_HELP.hub.driversCatalogEmpty}
-            />
+            <div className="pp-driver-type-list" role="list">
+              {filteredDrivers.map((driver) => (
+                <div key={driver.key} role="listitem">
+                  <DriverTypeListItem
+                    driver={driver}
+                    canManage={canManage}
+                    busy={busy}
+                    onOpenDetails={() =>
+                      openModal("driver-detail", { type: "driver", id: driver.key })
+                    }
+                    onArchive={() => openConfirm("archive-driver", driver.key)}
+                    onUnarchive={() => handleUnarchiveDriver(driver.key)}
+                  />
+                </div>
+              ))}
+            </div>
           )}
         </AdminSidePanel>
 

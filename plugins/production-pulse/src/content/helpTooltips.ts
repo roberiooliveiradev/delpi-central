@@ -429,6 +429,8 @@ export const PP_HELP = {
     newDriver: "Cadastra um novo tipo de driver no catálogo (modal).",
     driversCatalogEmpty: "Nenhum tipo de driver cadastrado.",
     driversCatalogSearch: "Busca por chave, rótulo, protocolo ou role.",
+    driversCatalogList:
+      "Lista visual dos tipos de driver: rótulo, chave, protocolo, métricas e estado ativo/arquivado.",
     statusFilter: "Filtra nós do mapa por status (online, offline ou inativos).",
     kpiOutdated: "IoTs com versão instalada diferente da última publicada da família vinculada.",
     kpiJobsChip: "Abre o painel de jobs OTA da filial.",

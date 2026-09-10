@@ -3158,6 +3158,105 @@
   align-self: center;
 }
 
+.dashboard-production-pulse .pp-driver-type-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dashboard-production-pulse .pp-driver-type-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem 0.85rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--pp-border) 80%, transparent);
+}
+
+.dashboard-production-pulse .pp-driver-type-row:last-child {
+  border-bottom: none;
+}
+
+.dashboard-production-pulse .pp-driver-type-row--archived {
+  opacity: 0.78;
+}
+
+.dashboard-production-pulse .pp-driver-type-row__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.55rem 0.75rem;
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
+.dashboard-production-pulse .pp-driver-type-row__identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.dashboard-production-pulse .pp-driver-type-row__icon {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  color: var(--pp-accent, inherit);
+  opacity: 0.9;
+}
+
+.dashboard-production-pulse .pp-driver-type-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.dashboard-production-pulse .pp-driver-type-row__label {
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.dashboard-production-pulse .pp-driver-type-row__key {
+  font-size: 0.8rem;
+  word-break: break-all;
+  opacity: 0.85;
+}
+
+.dashboard-production-pulse .pp-driver-type-row__meta {
+  font-size: 0.85rem;
+  color: var(--pp-muted, inherit);
+  word-break: break-word;
+}
+
+.dashboard-production-pulse .pp-driver-type-row__badge {
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 0.1rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid color-mix(in srgb, var(--pp-border) 90%, transparent);
+}
+
+.dashboard-production-pulse .pp-driver-type-row__badge--active {
+  color: color-mix(in srgb, var(--pp-accent, #5b9fd4) 90%, white);
+  background: color-mix(in srgb, var(--pp-accent, #5b9fd4) 16%, transparent);
+}
+
+.dashboard-production-pulse .pp-driver-type-row__badge--archived {
+  color: var(--pp-muted, inherit);
+  background: color-mix(in srgb, var(--pp-border) 35%, transparent);
+}
+
+.dashboard-production-pulse .pp-driver-type-row__actions {
+  flex-shrink: 0;
+  align-self: center;
+}
+
 .dashboard-production-pulse .pp-entity-summary__ota {
   margin-top: 0.55rem;
 }
