@@ -74,6 +74,7 @@ class _BaseFileStorage:
         content: bytes,
         mime_type: str | None,
         artifact_kind: str | None = None,
+        comment_id: str | None = None,
     ) -> StoredFile:
         self.validate_upload(mime_type=mime_type, size_bytes=len(content))
         extension = Path(original_name).suffix.lower()
@@ -91,6 +92,9 @@ class _BaseFileStorage:
         if self.kind == "artifact":
             kind = _SAFE_PART.sub("_", (artifact_kind or "generic").strip()) or "generic"
             rel_dir = f"{safe_request}/artifacts/{kind}"
+        elif comment_id:
+            safe_comment = _SAFE_PART.sub("_", (comment_id or "").strip()) or "comment"
+            rel_dir = f"{safe_request}/comments/{safe_comment}"
         else:
             rel_dir = safe_request
         target_dir = self.base_dir / rel_dir

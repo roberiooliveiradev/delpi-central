@@ -8,7 +8,10 @@ Microfrontend federado do módulo **Minhas Solicitações**.
 - **Proibido** chamar api-delpi no browser
 - Ações no detalhe: render-only de `allowed_actions` via `resolveActionPresentation` (ícone lucide + `HintAction` + label PT)
 - Detalhe: fases **O que foi solicitado → Atendimento → Histórico**; Atendimento em stack full-width: Progresso → Ações → **Conversa** (MessageThread + MentionComposer) → Documentos gerados
-- Conversa: `RequestComment` + projeção `is_mine`; avatares oficiais via BFF `GET /participants/{user_id}/avatar` (requests-api → Core S2S person-profile); sem commercial-api
+- Conversa: formatação rica + imagens (`attachment:{uuid}` via BFF comment-attachments); `is_mine`; avatares Portal via `GET /participants/{id}/avatar` (Core S2S com `CORE_API_INTEGRATIONS_SERVICE_TOKEN`); sem commercial-api
+- Escolhas finitas (Tipo NF, Tipo de documento): `SegmentToggle` (não Select)
+- Histórico: só mutações (sem linhas de download de anexo/artefato)
+- Toasts realtime: copy PT amigável + dedupe multi-sala
 - Devolução: card «Motivo da devolução» + `correction_targets` (seções marcadas) + rota `/requests/:id/edit` (wizard/form); `PATCH` payload + `resubmit` na ActionBar
 - Anexos do pedido: miniaturas + modal autenticado (`RequestFilePreviewModal` / `FilePreviewModal`); staging → **Salvar documentos** no detalhe (`can_upload_attachment`); criação com staging local até submit; `DELETE /attachments/{id}`
 - Artifacts do atendimento: mesmo padrão de modal + staging → Salvar (`can_upload_artifact`)

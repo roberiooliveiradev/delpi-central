@@ -8,6 +8,7 @@ from requests_app.domain.entities.files import (
     RequestArtifact,
     RequestAttachment,
     RequestComment,
+    RequestCommentAttachment,
     RequestEvent,
 )
 
@@ -50,6 +51,14 @@ class FileRepositoryPort(ABC):
     def create_comment(self, comment: RequestComment) -> RequestComment: ...
 
     @abstractmethod
+    def get_comment(self, comment_id: UUID | str) -> RequestComment | None: ...
+
+    @abstractmethod
+    def update_comment_body(
+        self, comment_id: UUID | str, *, body: str
+    ) -> RequestComment | None: ...
+
+    @abstractmethod
     def list_comments(
         self,
         request_id: UUID | str,
@@ -57,3 +66,18 @@ class FileRepositoryPort(ABC):
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[RequestComment], int]: ...
+
+    @abstractmethod
+    def create_comment_attachment(
+        self, attachment: RequestCommentAttachment
+    ) -> RequestCommentAttachment: ...
+
+    @abstractmethod
+    def get_comment_attachment(
+        self, attachment_id: UUID | str
+    ) -> RequestCommentAttachment | None: ...
+
+    @abstractmethod
+    def list_comment_attachments(
+        self, comment_id: UUID | str
+    ) -> list[RequestCommentAttachment]: ...

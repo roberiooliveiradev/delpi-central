@@ -83,6 +83,8 @@ describe("RequestDetailPage structural", () => {
     expect(artifacts).toMatch(/Documentos gerados no atendimento/);
     expect(artifacts).toMatch(/MyRequestsAttachmentPreviewStrip/);
     expect(artifacts).toMatch(/Tipo de documento/);
+    expect(artifacts).toMatch(/SegmentToggle/);
+    expect(artifacts).not.toMatch(/SelectField/);
     expect(artifacts).toMatch(/RequestFilePreviewModal/);
     expect(artifacts).toMatch(/Salvar documentos/);
     expect(artifacts).not.toMatch(/window\.open/);

@@ -27,7 +27,7 @@ class RequestsRealtimeHub:
         self._user_socket_counts: dict[str, int] = {}
         self._lock = asyncio.Lock()
         self._loop: asyncio.AbstractEventLoop | None = None
-        self._queue: asyncio.Queue[tuple[str, dict[str, Any]]] | None = None
+        self._queue: asyncio.Queue[tuple[tuple[str, ...], dict[str, Any]]] | None = None
         self._idle_seconds = float(idle_seconds)
 
     def bind_loop(self, loop: asyncio.AbstractEventLoop) -> None:
@@ -38,16 +38,36 @@ class RequestsRealtimeHub:
         if self._queue is None:
             return
         while True:
-            room_key, payload = await self._queue.get()
+            room_keys, payload = await self._queue.get()
             try:
-                await self.broadcast_now(room_key, payload)
+                await self.broadcast_now_rooms(room_keys, payload)
             except Exception:  # noqa: BLE001
                 logger.exception("requests_realtime_broadcast_failed")
 
     def schedule_broadcast(self, room_key: str, payload: dict[str, Any]) -> None:
-        if not room_key or self._loop is None or self._queue is None:
+        key = (room_key or "").strip()
+        if not key:
             return
-        self._loop.call_soon_threadsafe(self._queue.put_nowait, (room_key, payload))
+        self.schedule_broadcast_rooms([key], payload)
+
+    def schedule_broadcast_rooms(
+        self, room_keys: list[str], payload: dict[str, Any]
+    ) -> None:
+        if self._loop is None or self._queue is None:
+            return
+        cleaned: list[str] = []
+        seen: set[str] = set()
+        for key in room_keys:
+            item = (key or "").strip()
+            if not item or item in seen:
+                continue
+            seen.add(item)
+            cleaned.append(item)
+        if not cleaned:
+            return
+        self._loop.call_soon_threadsafe(
+            self._queue.put_nowait, (tuple(cleaned), payload)
+        )
 
     def is_user_online(self, user_id: str | None) -> bool:
         uid = str(user_id or "").strip()
@@ -168,8 +188,19 @@ class RequestsRealtimeHub:
         return meta[0]
 
     async def broadcast_now(self, room_key: str, payload: dict[str, Any]) -> None:
+        await self.broadcast_now_rooms([room_key], payload)
+
+    async def broadcast_now_rooms(
+        self, room_keys: tuple[str, ...] | list[str], payload: dict[str, Any]
+    ) -> None:
+        """Send once per WebSocket even when the socket is in multiple rooms."""
         async with self._lock:
-            targets = list(self._rooms.get(room_key, set()))
+            targets: set[WebSocket] = set()
+            for room_key in room_keys:
+                key = (room_key or "").strip()
+                if not key:
+                    continue
+                targets.update(self._rooms.get(key, set()))
         if not targets:
             return
         dead: list[WebSocket] = []

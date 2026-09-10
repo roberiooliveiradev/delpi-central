@@ -22,6 +22,10 @@ describe("Request conversation structural", () => {
     expect(panel).toMatch(/is_mine/);
     expect(panel).toMatch(/authorSrc/);
     expect(panel).toMatch(/canComment/);
+    expect(panel).toMatch(/formatToggleAriaLabel/);
+    expect(panel).toMatch(/showAttach/);
+    expect(panel).toMatch(/resolveAttachmentImageSrc/);
+    expect(panel).not.toMatch(/showAttach=\{false\}/);
     expect(panel).not.toMatch(/my-requests-domain-list/);
     expect(panel).not.toMatch(/NativeTextAreaControl/);
     expect(panel).not.toMatch(/commercial-api/);

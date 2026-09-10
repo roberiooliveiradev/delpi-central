@@ -9,6 +9,7 @@ from requests_app.domain.entities.files import (
     RequestArtifact,
     RequestAttachment,
     RequestComment,
+    RequestCommentAttachment,
     RequestEvent,
 )
 from requests_app.domain.ports.file_repository_port import FileRepositoryPort
@@ -24,6 +25,7 @@ class InMemoryFileRepository(FileRepositoryPort):
         self.artifacts: dict[str, RequestArtifact] = {}
         self.events: list[RequestEvent] = []
         self.comments: list[RequestComment] = []
+        self.comment_attachments: dict[str, RequestCommentAttachment] = {}
 
     def create_attachment(self, attachment: RequestAttachment) -> RequestAttachment:
         stored = deepcopy(attachment)
@@ -97,6 +99,24 @@ class InMemoryFileRepository(FileRepositoryPort):
         self.comments.append(stored)
         return deepcopy(stored)
 
+    def get_comment(self, comment_id: UUID | str) -> RequestComment | None:
+        for item in self.comments:
+            if str(item.id) == str(comment_id):
+                return deepcopy(item)
+        return None
+
+    def update_comment_body(
+        self, comment_id: UUID | str, *, body: str
+    ) -> RequestComment | None:
+        for idx, item in enumerate(self.comments):
+            if str(item.id) == str(comment_id):
+                updated = deepcopy(item)
+                updated.body = body
+                updated.updated_at = _utcnow()
+                self.comments[idx] = updated
+                return deepcopy(updated)
+        return None
+
     def list_comments(
         self,
         request_id: UUID | str,
@@ -109,3 +129,28 @@ class InMemoryFileRepository(FileRepositoryPort):
         total = len(items)
         start = max(page - 1, 0) * page_size
         return [deepcopy(item) for item in items[start : start + page_size]], total
+
+    def create_comment_attachment(
+        self, attachment: RequestCommentAttachment
+    ) -> RequestCommentAttachment:
+        stored = deepcopy(attachment)
+        stored.created_at = stored.created_at or _utcnow()
+        self.comment_attachments[str(stored.id)] = stored
+        return deepcopy(stored)
+
+    def get_comment_attachment(
+        self, attachment_id: UUID | str
+    ) -> RequestCommentAttachment | None:
+        found = self.comment_attachments.get(str(attachment_id))
+        return deepcopy(found) if found else None
+
+    def list_comment_attachments(
+        self, comment_id: UUID | str
+    ) -> list[RequestCommentAttachment]:
+        items = [
+            item
+            for item in self.comment_attachments.values()
+            if str(item.comment_id) == str(comment_id)
+        ]
+        items.sort(key=lambda row: row.created_at or _utcnow(), reverse=True)
+        return [deepcopy(item) for item in items]

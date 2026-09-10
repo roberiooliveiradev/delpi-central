@@ -38,7 +38,6 @@ import {
   MyRequestsSectionCard,
   MyRequestsStateBanner,
   SegmentToggle,
-  SelectField,
   TextField,
   type EntityDirectoryOption,
 } from "../../../ui/mrUi";
@@ -536,28 +535,31 @@ export function InvoiceIssuanceWizard({
   function renderInvoiceTypeStep() {
     return (
       <div className="my-requests-form-stack">
-        <SelectField
-          label="Tipo de NF"
-          hint={HELP.invoiceType}
-          value={invoiceType}
-          onChange={(value) => {
-            const next = value as InvoiceType;
-            setInvoiceType(next);
-            setItems((prev) => applyDefaultStockWriteOff(prev, next));
-          }}
-          options={Object.entries(INVOICE_TYPE_LABELS).map(([value, label]) => ({
-            value,
-            label,
-          }))}
-        />
-        {invoiceType === "other" ? (
-          <TextField
-            label="Descreva o tipo"
+          <FieldLabel
+            label="Tipo de NF"
             hint={HELP.invoiceType}
-            value={invoiceTypeOther}
-            onChange={setInvoiceTypeOther}
           />
-        ) : null}
+          <SegmentToggle
+            ariaLabel="Tipo de NF"
+            value={invoiceType}
+            onChange={(value) => {
+              const next = value as InvoiceType;
+              setInvoiceType(next);
+              setItems((prev) => applyDefaultStockWriteOff(prev, next));
+            }}
+            options={Object.entries(INVOICE_TYPE_LABELS).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+          />
+          {invoiceType === "other" ? (
+            <TextField
+              label="Descreva o tipo"
+              hint={HELP.invoiceType}
+              value={invoiceTypeOther}
+              onChange={setInvoiceTypeOther}
+            />
+          ) : null}
       </div>
     );
   }

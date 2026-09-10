@@ -374,6 +374,7 @@ function useMyRequestsRemoteToasts(options: {
     subscribeRequestChanged,
     subscribeRequestTimeline,
   } = options;
+  const recentToastKeysRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     if (!enabled) return;
@@ -387,19 +388,34 @@ function useMyRequestsRemoteToasts(options: {
       if (event.actorClientId && event.actorClientId === clientId) return;
       const notice = resolveRemoteNotification(event);
       if (!notice) return;
+      const dedupeKey = [
+        event.type,
+        event.requestId || "",
+        event.reason || "",
+        event.status || "",
+        notice.title,
+        notice.message,
+      ].join("|");
+      const now = Date.now();
+      const last = recentToastKeysRef.current.get(dedupeKey) || 0;
+      if (now - last < 2000) return;
+      recentToastKeysRef.current.set(dedupeKey, now);
+      for (const [key, ts] of recentToastKeysRef.current) {
+        if (now - ts > 10_000) recentToastKeysRef.current.delete(key);
+      }
       if (notice.variant === "success") {
-        notifySuccess(notice.message, { title: notice.title });
+        notifySuccess(notice.message, { title: notice.title, id: dedupeKey });
         return;
       }
       if (notice.variant === "warning") {
-        notifyWarning(notice.message, { title: notice.title });
+        notifyWarning(notice.message, { title: notice.title, id: dedupeKey });
         return;
       }
       if (notice.variant === "error") {
-        notifyError(notice.message, { title: notice.title });
+        notifyError(notice.message, { title: notice.title, id: dedupeKey });
         return;
       }
-      notifyInfo(notice.message, { title: notice.title });
+      notifyInfo(notice.message, { title: notice.title, id: dedupeKey });
     };
 
     const unsubs = [

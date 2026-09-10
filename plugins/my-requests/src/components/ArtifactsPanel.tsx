@@ -19,7 +19,7 @@ import {
   MyRequestsFormActions,
   MyRequestsSectionCard,
   MyRequestsStateBanner,
-  SelectField,
+  SegmentToggle,
 } from "../ui/mrUi";
 import {
   RequestFilePreviewModal,
@@ -208,14 +208,19 @@ export function ArtifactsPanel({
           ) : null}
           {canUpload ? (
             <>
-              <SelectField
-                label="Tipo de documento"
-                hint={MY_REQUESTS_HELP_TOOLTIPS.artifacts.kind}
-                value={artifactKind}
-                onChange={setArtifactKind}
-                options={[...ARTIFACT_KIND_OPTIONS]}
-                disabled={busy}
-              />
+              <div className="my-requests-upload-field">
+                <FieldLabel
+                  label="Tipo de documento"
+                  hint={MY_REQUESTS_HELP_TOOLTIPS.artifacts.kind}
+                />
+                <SegmentToggle
+                  ariaLabel="Tipo de documento"
+                  value={artifactKind}
+                  onChange={setArtifactKind}
+                  options={[...ARTIFACT_KIND_OPTIONS]}
+                  disabled={busy}
+                />
+              </div>
               <div className="my-requests-upload-field">
                 <FieldLabel
                   label="Adicionar documento do atendimento"

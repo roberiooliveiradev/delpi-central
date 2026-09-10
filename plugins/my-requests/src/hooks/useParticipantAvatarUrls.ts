@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 
-import {
-  downloadParticipantAvatarBlob,
-  lookupParticipantsHasPhoto,
-} from "../api/requestsApi";
+import { downloadParticipantAvatarBlob } from "../api/requestsApi";
 
 /**
  * Resolve Portal avatars (via requests-api BFF → Core) for unique author ids.
- * Missing/404 → key absent (MessageThread falls back to initials).
+ * Always attempts GET per id (lookup is soft); 404 → initials fallback.
  */
 export function useParticipantAvatarUrls(
   userIds: readonly (string | null | undefined)[],
@@ -33,23 +30,8 @@ export function useParticipantAvatarUrls(
 
     void (async () => {
       const next = new Map<string, string>();
-      let withPhoto = new Set(ids);
-      try {
-        const lookup = await lookupParticipantsHasPhoto(ids, {
-          signal: controller.signal,
-        });
-        if (lookup.length) {
-          withPhoto = new Set(
-            lookup.filter((row) => row.has_photo).map((row) => row.user_id),
-          );
-        }
-      } catch {
-        // Fall through: attempt photo GETs for all unique ids.
-      }
-
       await Promise.all(
         ids.map(async (uid) => {
-          if (!withPhoto.has(uid)) return;
           try {
             const blob = await downloadParticipantAvatarBlob(uid, {
               signal: controller.signal,

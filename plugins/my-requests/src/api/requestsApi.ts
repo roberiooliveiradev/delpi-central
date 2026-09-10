@@ -1,4 +1,4 @@
-import { httpDelete, httpGet, httpPost, getAccessToken, DELPI_CALLER_APP } from "./httpClient";
+import { httpDelete, httpGet, httpPatch, httpPost, getAccessToken, DELPI_CALLER_APP } from "./httpClient";
 import {
   getMyRequestsClientId,
   MY_REQUESTS_CLIENT_ID_HEADER,
@@ -212,6 +212,111 @@ export async function createComment(requestId: string, text: string) {
       { body: text },
     ),
   );
+}
+
+export async function patchComment(
+  requestId: string,
+  commentId: string,
+  text: string,
+) {
+  return unwrap(
+    await httpPatch<Envelope<RequestComment>>(
+      `${API_BASE}/requests/${encodeURIComponent(requestId)}/comments/${encodeURIComponent(commentId)}`,
+      { body: text },
+    ),
+  );
+}
+
+export type CommentAttachmentMeta = {
+  id: string;
+  comment_id: string;
+  original_name: string;
+  mime_type: string | null;
+  size_bytes: number | null;
+};
+
+export async function listCommentAttachments(
+  requestId: string,
+  commentId: string,
+  options?: { signal?: AbortSignal },
+): Promise<CommentAttachmentMeta[]> {
+  const body = await httpGet<
+    Envelope<{ items: Array<Record<string, unknown>> }>
+  >(
+    `${API_BASE}/requests/${encodeURIComponent(requestId)}/comments/${encodeURIComponent(commentId)}/attachments`,
+    options,
+  );
+  const items = unwrap(body).items || [];
+  return items.map((row) => ({
+    id: String(row.id ?? ""),
+    comment_id: String(row.comment_id ?? commentId),
+    original_name: String(row.original_name || "imagem"),
+    mime_type: (row.mime_type as string | null | undefined) ?? null,
+    size_bytes: (row.size_bytes as number | null | undefined) ?? null,
+  }));
+}
+
+export async function uploadCommentAttachment(
+  requestId: string,
+  commentId: string,
+  file: File,
+): Promise<CommentAttachmentMeta> {
+  const form = new FormData();
+  form.append("file", file, file.name);
+  const response = await fetch(
+    `${API_BASE}/requests/${encodeURIComponent(requestId)}/comments/${encodeURIComponent(commentId)}/attachments`,
+    {
+      method: "POST",
+      headers: clientHeaders(),
+      body: form,
+    },
+  );
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Erro HTTP ${response.status}`);
+  }
+  const body = (await response.json()) as Envelope<Record<string, unknown>>;
+  const row = unwrap(body);
+  return {
+    id: String(row.id ?? ""),
+    comment_id: String(row.comment_id ?? commentId),
+    original_name: String(row.original_name || file.name),
+    mime_type: (row.mime_type as string | null | undefined) ?? (file.type || null),
+    size_bytes: (row.size_bytes as number | null | undefined) ?? file.size,
+  };
+}
+
+export function commentAttachmentContentUrl(
+  requestId: string,
+  commentId: string,
+  attachmentId: string,
+) {
+  return (
+    `${API_BASE}/requests/${encodeURIComponent(requestId)}` +
+    `/comments/${encodeURIComponent(commentId)}` +
+    `/attachments/${encodeURIComponent(attachmentId)}/content`
+  );
+}
+
+export async function downloadCommentAttachmentBlob(
+  requestId: string,
+  commentId: string,
+  attachmentId: string,
+  options?: { signal?: AbortSignal },
+): Promise<Blob> {
+  const response = await fetch(
+    commentAttachmentContentUrl(requestId, commentId, attachmentId),
+    {
+      method: "GET",
+      headers: clientHeaders(),
+      signal: options?.signal,
+    },
+  );
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Erro HTTP ${response.status}`);
+  }
+  return response.blob();
 }
 
 export async function listAttachments(requestId: string, options?: { signal?: AbortSignal }) {

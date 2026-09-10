@@ -500,6 +500,86 @@ def create_comment(request_id: UUID, body: CommentBody, request: Request):
         return _handle(exc)
     return ok(data, message="Comentário criado.", status_code=201)
 
+
+@router.patch("/requests/{request_id}/comments/{comment_id}")
+def update_comment(
+    request_id: UUID, comment_id: UUID, body: CommentBody, request: Request
+):
+    user = _current_user()
+    try:
+        data = build_timeline_use_cases().update_comment(
+            user=user,
+            request_id=str(request_id),
+            comment_id=str(comment_id),
+            body=body.body,
+            actor_client_id=client_id_from_request(request),
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data, message="Comentário atualizado.")
+
+
+@router.get("/requests/{request_id}/comments/{comment_id}/attachments")
+def list_comment_attachments(request_id: UUID, comment_id: UUID):
+    user = _current_user()
+    try:
+        data = build_timeline_use_cases().list_comment_attachments(
+            user=user,
+            request_id=str(request_id),
+            comment_id=str(comment_id),
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data)
+
+
+@router.post("/requests/{request_id}/comments/{comment_id}/attachments")
+async def create_comment_attachment(
+    request_id: UUID,
+    comment_id: UUID,
+    request: Request,
+    file: UploadFile = File(...),
+):
+    user = _current_user()
+    content = await file.read()
+    try:
+        data = build_timeline_use_cases().upload_comment_attachment(
+            user=user,
+            request_id=str(request_id),
+            comment_id=str(comment_id),
+            original_name=file.filename or "imagem.bin",
+            content=content,
+            mime_type=file.content_type,
+            actor_client_id=client_id_from_request(request),
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data, message="Anexo da conversa enviado.", status_code=201)
+
+
+@router.get(
+    "/requests/{request_id}/comments/{comment_id}/attachments/{attachment_id}/content"
+)
+def download_comment_attachment(
+    request_id: UUID, comment_id: UUID, attachment_id: UUID
+):
+    user = _current_user()
+    try:
+        path, attachment = build_timeline_use_cases().resolve_comment_attachment_path(
+            user=user,
+            request_id=str(request_id),
+            comment_id=str(comment_id),
+            attachment_id=str(attachment_id),
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return FileResponse(
+        path,
+        media_type=attachment.mime_type,
+        filename=attachment.original_name,
+    )
+
+
 class ParticipantLookupBody(BaseModel):
     ids: list[str] = Field(default_factory=list, max_length=50)
 

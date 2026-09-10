@@ -1,15 +1,23 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Protocol
 
 import httpx
 
-from delpi_auth.service_token import apply_internal_service_headers
 from requests_app.config import settings
 from requests_app.domain.ports.integration_outbox_port import IntegrationOutboxRow
 
 logger = logging.getLogger(__name__)
+
+
+def _core_integrations_token() -> str:
+    return (
+        os.getenv("CORE_API_INTEGRATIONS_SERVICE_TOKEN")
+        or os.getenv("API_DELPI_INTERNAL_SERVICE_TOKEN")
+        or ""
+    ).strip()
 
 
 class PortalNotificationPort(Protocol):
@@ -25,8 +33,16 @@ class CoreNotificationAdapter:
 
     def publish(self, row: IntegrationOutboxRow) -> None:
         payload = dict(row.payload or {})
-        headers = {"Content-Type": "application/json", "X-Delpi-Caller-App": "requests-api"}
-        apply_internal_service_headers(headers)
+        token = _core_integrations_token()
+        headers = {
+            "Content-Type": "application/json",
+            "X-Delpi-Caller-App": "requests-api",
+        }
+        if token:
+            headers["X-Delpi-Service-Token"] = token
+            headers["Authorization"] = (
+                token if token.startswith("Bearer ") else f"Bearer {token}"
+            )
         url = f"{self.base_url}/integrations/notifications"
         with httpx.Client(timeout=self.timeout) as client:
             response = client.post(url, json=payload, headers=headers)

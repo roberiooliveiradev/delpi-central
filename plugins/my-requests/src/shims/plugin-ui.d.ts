@@ -674,7 +674,19 @@ declare module "@delpi/plugin-ui/index" {
     emptyContent?: ReactNode;
     portalScopeClassName?: string;
     className?: string;
+    resolveAttachmentImageSrc?: (
+      attachmentId: string,
+    ) => string | null | undefined;
   };
+
+  export function rewriteInlinePendingInMarkdown(
+    bodyText: string,
+    pendingToUuid: Record<string, string>,
+  ): string;
+
+  export function listInlinePendingIdsFromMarkdown(bodyText: string): string[];
+
+  export function listInlineAttachmentIdsFromMarkdown(bodyText: string): string[];
 
   export function createDashboardMessageThread(
     prefix: string,
@@ -686,6 +698,38 @@ declare module "@delpi/plugin-ui/index" {
     attachAriaLabel: string;
     mentionListAriaLabel: string;
     mentionEmptyLabel: string;
+    formatToggleAriaLabel?: string;
+    formatBoldAriaLabel?: string;
+    formatItalicAriaLabel?: string;
+    formatStrikeAriaLabel?: string;
+    formatUnderlineAriaLabel?: string;
+    formatListAriaLabel?: string;
+    formatOrderedListAriaLabel?: string;
+    formatCodeAriaLabel?: string;
+    formatQuoteAriaLabel?: string;
+    formatLinkAriaLabel?: string;
+    formatAlignLeftAriaLabel?: string;
+    formatAlignCenterAriaLabel?: string;
+    formatAlignRightAriaLabel?: string;
+    formatAlignJustifyAriaLabel?: string;
+    formatFontSizeAriaLabel?: string;
+    formatFontSizeDecreaseAriaLabel?: string;
+    formatFontSizeIncreaseAriaLabel?: string;
+    formatUndoAriaLabel?: string;
+    formatRedoAriaLabel?: string;
+    formatEmojiAriaLabel?: string;
+    emojiMenuAriaLabel?: string;
+  };
+
+  export type MentionComposerPendingAttachment = {
+    id: string;
+    file: File;
+    kind?: "clip" | "inline";
+  };
+
+  export type MentionComposerInlineImageInsert = {
+    pendingId: string;
+    file: File;
   };
 
   export type DashboardMentionComposerProps = {
@@ -697,6 +741,18 @@ declare module "@delpi/plugin-ui/index" {
     disabled?: boolean;
     submitting?: boolean;
     showAttach?: boolean;
+    fileAccept?: string;
+    pendingAttachments?: readonly MentionComposerPendingAttachment[];
+    onFilesSelected?: (files: File[]) => void;
+    onRemovePendingAttachment?: (id: string) => void;
+    onInlineImagesInserted?: (
+      items: readonly MentionComposerInlineImageInsert[],
+    ) => void;
+    onInlineImageRemoved?: (pendingId: string) => void;
+    onInlineAttachmentRemoved?: (pendingId: string) => void;
+    resolveAttachmentImageSrc?: (
+      attachmentId: string,
+    ) => string | null | undefined;
     portalScopeClassName?: string;
     submitOnEnter?: boolean;
     submitOnModEnter?: boolean;

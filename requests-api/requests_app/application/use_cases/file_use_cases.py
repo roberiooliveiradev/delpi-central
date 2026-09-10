@@ -194,16 +194,7 @@ class FileUseCases:
             raise ApplicationError(
                 code=exc.code, status_code=404, detail=str(exc)
             ) from exc
-        self._files.append_event(
-            RequestEvent(
-                id=uuid4(),
-                request_id=attachment.request_id,
-                event_type="attachment_downloaded",
-                actor_user_id=str(getattr(user, "id", "") or ""),
-                actor_name=str(getattr(user, "name", "") or ""),
-                payload={"attachment_id": str(attachment.id)},
-            )
-        )
+        # Downloads are access-log, not request audit — do not append timeline events.
         return path, attachment
 
     def delete_attachment(
@@ -364,14 +355,5 @@ class FileUseCases:
             raise ApplicationError(
                 code=exc.code, status_code=404, detail=str(exc)
             ) from exc
-        self._files.append_event(
-            RequestEvent(
-                id=uuid4(),
-                request_id=artifact.request_id,
-                event_type="artifact_downloaded",
-                actor_user_id=str(getattr(user, "id", "") or ""),
-                actor_name=str(getattr(user, "name", "") or ""),
-                payload={"artifact_id": str(artifact.id)},
-            )
-        )
+        # Downloads are access-log, not request audit — do not append timeline events.
         return path, artifact

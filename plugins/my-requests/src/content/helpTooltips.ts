@@ -106,8 +106,9 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   comments: {
     section:
-      "Use esta conversa para trocar informações com quem solicitou ou está atendendo. As mensagens ficam registradas nesta solicitação e não substituem a linha do tempo.",
-    newComment: "Escreva uma mensagem para as pessoas que acompanham esta solicitação.",
+      "Conversa com formatação (negrito, listas etc.) e imagens coladas ou anexadas. As mensagens ficam nesta solicitação e não substituem o Histórico de etapas.",
+    newComment:
+      "Escreva, formate e, se precisar, anexe ou cole uma imagem antes de enviar.",
   },
   attachments: {
     section:

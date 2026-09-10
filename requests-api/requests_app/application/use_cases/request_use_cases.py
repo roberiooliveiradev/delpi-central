@@ -14,6 +14,9 @@ from requests_app.application.serializers import allowed_actions_for, serialize_
 from requests_app.application.services.payload_validator_registry import (
     PayloadValidatorRegistry,
 )
+from requests_app.application.services.realtime_notification_copy import (
+    build_realtime_transition_notification,
+)
 from requests_app.application.services.requests_realtime_notify import (
     notify_request_changed,
     notify_request_created,
@@ -621,11 +624,12 @@ class TransitionRequestUseCase:
             owner_user_id=stored.created_by_user_id,
             actor_user_id=actor.user_id,
             actor_client_id=actor_client_id,
-            notification={
-                "title": "Solicitação atualizada",
-                "message": f"{stored.request_number} → {stored.status}",
-                "variant": "info",
-            },
+            notification=build_realtime_transition_notification(
+                workflow=workflow,
+                to_status=stored.status,
+                request_number=stored.request_number,
+                actor_name=actor.user_name,
+            ),
         )
         self._idempotency.save(
             key=str(idempotency_key).strip(),

@@ -570,7 +570,7 @@ Resultado do atendimento/sistema (NF PDF, XML, planilha). Binário em volume `my
 
 ### 8.8 RequestEvent
 
-Timeline enriquecida: `event_type` (`created`, `transition`, `commented`, `attachment_added`, `artifact_added`, `integration_failed`, …), `payload JSONB`, `created_at`.
+Timeline enriquecida (somente **mutações**): `event_type` (`created`, `transition`, `commented`, `attachment_added`, `attachment_removed`, `artifact_added`, `integration_failed`, …). Downloads (`attachment_downloaded` / `artifact_downloaded`) **não** entram no Histórico — são access-log, não auditoria de alteração.
 
 ### 8.9 IntegrationOutbox
 

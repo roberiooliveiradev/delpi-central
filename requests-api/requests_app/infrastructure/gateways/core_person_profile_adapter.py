@@ -3,14 +3,23 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 import httpx
 
-from delpi_auth.service_token import apply_internal_service_headers
 from requests_app.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _core_integrations_token() -> str:
+    """Core S2S expects CORE_API_INTEGRATIONS_SERVICE_TOKEN (not API_DELPI_*)."""
+    return (
+        os.getenv("CORE_API_INTEGRATIONS_SERVICE_TOKEN")
+        or os.getenv("API_DELPI_INTERNAL_SERVICE_TOKEN")
+        or ""
+    ).strip()
 
 
 class CorePersonProfileAdapter:
@@ -21,14 +30,19 @@ class CorePersonProfileAdapter:
         self.timeout = timeout
 
     def configured(self) -> bool:
-        return bool(self.base_url)
+        return bool(self.base_url) and bool(_core_integrations_token())
 
     def _headers(self, *, accept: str = "application/json") -> dict[str, str]:
+        token = _core_integrations_token()
         headers = {
             "Accept": accept,
             "X-Delpi-Caller-App": "requests-api",
         }
-        apply_internal_service_headers(headers)
+        if token:
+            headers["X-Delpi-Service-Token"] = token
+            headers["Authorization"] = (
+                token if token.startswith("Bearer ") else f"Bearer {token}"
+            )
         return headers
 
     def get_photo(

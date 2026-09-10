@@ -10,6 +10,7 @@ from requests_app.domain.entities.files import (
     RequestArtifact,
     RequestAttachment,
     RequestComment,
+    RequestCommentAttachment,
     RequestEvent,
 )
 from requests_app.domain.ports.file_repository_port import FileRepositoryPort
@@ -81,6 +82,23 @@ def _comment(row: dict[str, Any]) -> RequestComment:
         body=row["body"],
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
+    )
+
+
+def _comment_attachment(row: dict[str, Any]) -> RequestCommentAttachment:
+    return RequestCommentAttachment(
+        id=row["id"],
+        request_id=row["request_id"],
+        comment_id=row["comment_id"],
+        original_name=row["original_name"],
+        stored_name=row["stored_name"],
+        storage_key=row["storage_key"],
+        mime_type=row["mime_type"],
+        size_bytes=int(row["size_bytes"]),
+        checksum_sha256=row["checksum_sha256"],
+        created_by_user_id=row["created_by_user_id"],
+        created_by_name=row["created_by_name"],
+        created_at=row.get("created_at"),
     )
 
 
@@ -271,6 +289,30 @@ class PostgresFileRepository(FileRepositoryPort):
             conn.commit()
         return _comment(dict(row))
 
+    def get_comment(self, comment_id: UUID | str) -> RequestComment | None:
+        sql = f"SELECT * FROM {_SCHEMA}.request_comments WHERE id = %s::uuid"
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (str(comment_id),))
+                row = cur.fetchone()
+        return _comment(dict(row)) if row else None
+
+    def update_comment_body(
+        self, comment_id: UUID | str, *, body: str
+    ) -> RequestComment | None:
+        sql = f"""
+        UPDATE {_SCHEMA}.request_comments
+        SET body = %s, updated_at = NOW()
+        WHERE id = %s::uuid
+        RETURNING *
+        """
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (body, str(comment_id)))
+                row = cur.fetchone()
+            conn.commit()
+        return _comment(dict(row)) if row else None
+
     def list_comments(
         self,
         request_id: UUID | str,
@@ -296,3 +338,64 @@ class PostgresFileRepository(FileRepositoryPort):
                 cur.execute(list_sql, (str(request_id), page_size, offset))
                 rows = cur.fetchall()
         return [_comment(dict(row)) for row in rows], total
+
+    def create_comment_attachment(
+        self, attachment: RequestCommentAttachment
+    ) -> RequestCommentAttachment:
+        sql = f"""
+        INSERT INTO {_SCHEMA}.request_comment_attachments (
+            id, request_id, comment_id, original_name, stored_name, storage_key,
+            mime_type, size_bytes, checksum_sha256, created_by_user_id, created_by_name
+        ) VALUES (
+            %s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s
+        )
+        RETURNING *
+        """
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    sql,
+                    (
+                        str(attachment.id),
+                        str(attachment.request_id),
+                        str(attachment.comment_id),
+                        attachment.original_name,
+                        attachment.stored_name,
+                        attachment.storage_key,
+                        attachment.mime_type,
+                        attachment.size_bytes,
+                        attachment.checksum_sha256,
+                        attachment.created_by_user_id,
+                        attachment.created_by_name,
+                    ),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        return _comment_attachment(dict(row))
+
+    def get_comment_attachment(
+        self, attachment_id: UUID | str
+    ) -> RequestCommentAttachment | None:
+        sql = (
+            f"SELECT * FROM {_SCHEMA}.request_comment_attachments "
+            f"WHERE id = %s::uuid"
+        )
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (str(attachment_id),))
+                row = cur.fetchone()
+        return _comment_attachment(dict(row)) if row else None
+
+    def list_comment_attachments(
+        self, comment_id: UUID | str
+    ) -> list[RequestCommentAttachment]:
+        sql = f"""
+        SELECT * FROM {_SCHEMA}.request_comment_attachments
+        WHERE comment_id = %s::uuid
+        ORDER BY created_at DESC
+        """
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (str(comment_id),))
+                rows = cur.fetchall()
+        return [_comment_attachment(dict(row)) for row in rows]

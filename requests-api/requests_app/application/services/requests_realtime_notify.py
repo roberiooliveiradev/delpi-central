@@ -28,16 +28,10 @@ def _realtime_enabled() -> bool:
 def _broadcast_rooms(room_keys: list[str], payload: dict[str, Any]) -> None:
     if not _realtime_enabled():
         return
-    seen: set[str] = set()
-    for key in room_keys:
-        cleaned = (key or "").strip()
-        if not cleaned or cleaned in seen:
-            continue
-        seen.add(cleaned)
-        try:
-            requests_realtime_hub.schedule_broadcast(cleaned, payload)
-        except Exception:  # noqa: BLE001
-            logger.exception("requests_realtime_schedule_failed room=%s", cleaned)
+    try:
+        requests_realtime_hub.schedule_broadcast_rooms(room_keys, payload)
+    except Exception:  # noqa: BLE001
+        logger.exception("requests_realtime_schedule_failed rooms=%s", room_keys)
 
 
 def _base_payload(
