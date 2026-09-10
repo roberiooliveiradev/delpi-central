@@ -1,44 +1,36 @@
-# E1.S5 — Parameter strategy shadow (evidência)
+# E1.S5 — Parameter strategy shadow + cutover parcial
 
-**Status:** `SHADOW_ON` (2026-09-10) — **não** é cutover  
+**Status:** `CUTOVER_PARTIAL` (2026-09-10)  
 **Onda:** B (plano 01)  
-**Escopo do 1º corte:** `none`, `semantic`, `sale_orders`  
+**Authority agora (cutover):** `none`, `semantic`, `sale_orders` → `PlanExternalActionsService._bind_arguments`  
+**Observer (shadow):** builders legados (`{}` / `build_sale_orders`)  
 **Fora do corte:** `product_code`, `date_branch`, `supplies_stock`, `department_idd`, …
 
-## Inventário (resumo)
+## Flags
 
-| Strategy | Onde | Classe |
-|----------|------|--------|
-| `none` / `semantic` | domains (+ binding `{}`) | DUPLICATES_OPENAPI |
-| `sale_orders` | 1 rota registry | DUPLICATES_OPENAPI (parcial) |
-| `product_code` / `date_branch` / … | maioria | BUSINESS_RULE / TRANSVERSAL — **não** neste PR |
+```json
+"parameterStrategyShadow": {
+  "enabled": true,
+  "cutoverEnabled": true,
+  "strategies": ["none", "semantic", "sale_orders"]
+}
+```
 
-Owner canônico de binding: `PlanExternalActionsService._bind_arguments` → `ValidateActionArgumentsService`.
+- `cutoverEnabled=false` → volta authority para strategy (só shadow vs binder).
 
-## O que entrou
-
-| Peça | Path |
-|------|------|
-| Flag | `openapi_tool_routing.json` → `parameterStrategyShadow.enabled=true` |
-| Compare | `ParameterStrategyShadowService` |
-| Telemetria | log `parameter_strategy_shadow` |
-| Wiring | `OperationalRouteActionResolverService.resolve_route_action` → `metadata.parameterStrategyShadow` |
-| Testes | `test_parameter_strategy_shadow_service.py` (7 passed) |
-
-## Aceite parcial
+## Aceite
 
 ```text
-INVENTORY_STRATEGIES = PASS
-SHADOW_NONE_SEMANTIC = PASS
-SHADOW_SALE_ORDERS = PASS
-NON_SHADOWABLE_SKIPPED = PASS
-FLAG_OFF = PASS
+CUTOVER_NONE_SEMANTIC = PASS
+CUTOVER_SALE_ORDERS = PASS
 PRODUCT_DATE_BRANCH_UNTOUCHED = PASS
-CUTOVER_STRATEGY_REMOVAL = NOT_STARTED
+SHADOW_STILL_OBSERVES_LEGACY = PASS
+FLAG_ROLLBACK = PASS (cutoverEnabled off)
+FULL_STRATEGY_REMOVAL = NOT_STARTED
 ```
 
 ## Próximo
 
-1. Observar taxa `agree` em live para `sale_orders`.  
-2. Se estável → delegar resolver a `_bind_arguments` para esses strategies.  
-3. Depois: `supplier_part_number` / `supplies_stock` (ainda sem product/date_branch).
+1. Live: taxa agree binder vs legacy em `sale_orders`.  
+2. Expandir cutover para `supplier_part_number` / `supplies_stock` se prose/schema bastar.  
+3. E1.S6: cleanup de fields mortos só após evidência ampla.

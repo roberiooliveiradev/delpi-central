@@ -1,4 +1,4 @@
-"""E1.S5 — parameterStrategy shadow vs OpenAPI binder (sem cutover)."""
+"""E1.S5 — parameterStrategy shadow + cutover parcial vs OpenAPI binder."""
 
 from __future__ import annotations
 
@@ -44,6 +44,21 @@ def _generic_action() -> dict:
     }
 
 
+def _product_code_action() -> dict:
+    return {
+        "actionId": "acme.products.stock",
+        "method": "GET",
+        "path": "/products/{code}/stock",
+        "operationId": "get_product_stock",
+        "summary": "Stock",
+        "parametersSchema": [
+            {"name": "code", "in": "path", "required": True, "schema": {"type": "string"}},
+        ],
+        "sensitivity": "read",
+        "enabled": True,
+    }
+
+
 def test_none_strategy_shadow_agrees_on_empty_params():
     invalidate_openapi_tool_routing_cache()
     shadow = ParameterStrategyShadowService.compare(
@@ -54,6 +69,8 @@ def test_none_strategy_shadow_agrees_on_empty_params():
     )
     assert shadow is not None
     assert shadow["strategy"] == "none"
+    assert shadow["cutover"] is True
+    assert shadow["authority"] == "openapi_binder"
     assert shadow["agreeExact"] is True
     assert shadow["agree"] is True
 
@@ -70,28 +87,37 @@ def test_semantic_strategy_shadow_agrees_on_empty_params():
     assert shadow["agree"] is True
 
 
-def test_sale_orders_compatible_when_legacy_subset():
+def test_sale_orders_cutover_uses_openapi_authority():
     invalidate_openapi_tool_routing_cache()
-    legacy = {"page": "1", "page_size": "50"}
+    assert ParameterStrategyShadowService.uses_openapi_authority("sale_orders") is True
+    params = ParameterStrategyShadowService.bind_via_openapi(
+        _sale_orders_action(),
+        "liste pedidos de venda",
+    )
+    assert isinstance(params, dict)
+
+
+def test_sale_orders_shadow_reports_cutover_authority():
+    invalidate_openapi_tool_routing_cache()
     shadow = ParameterStrategyShadowService.compare(
         strategy="sale_orders",
-        legacy_parameters=legacy,
+        legacy_parameters={"page": "1"},
         action=_sale_orders_action(),
         message="liste pedidos de venda",
     )
     assert shadow is not None
-    assert shadow["agreeCompatible"] is True or shadow["agreeExact"] is True
-    # Authority unchanged by design — this only observes.
-    assert "legacyParameters" in shadow
+    assert shadow["authority"] == "openapi_binder"
+    assert shadow["cutover"] is True
 
 
-def test_non_shadowable_strategy_returns_none():
+def test_product_code_not_cutover():
     invalidate_openapi_tool_routing_cache()
+    assert ParameterStrategyShadowService.uses_openapi_authority("product_code") is False
     assert (
         ParameterStrategyShadowService.compare(
             strategy="product_code",
             legacy_parameters={"code": "10080047"},
-            action=_sale_orders_action(),
+            action=_product_code_action(),
             message="estoque 10080047",
         )
         is None
@@ -123,11 +149,38 @@ def test_flag_off_skips_shadow(monkeypatch):
     )
 
 
+def test_cutover_off_keeps_strategy_authority(monkeypatch):
+    invalidate_openapi_tool_routing_cache()
+    from app.domain.services.openapi_tool_routing_content_service import (
+        OpenApiToolRoutingContentService,
+    )
+
+    original = OpenApiToolRoutingContentService.bool_setting
+
+    def _bool_setting(*path, default=False):
+        if path[:2] == ("parameterStrategyShadow", "cutoverEnabled"):
+            return False
+        return original(*path, default=default)
+
+    monkeypatch.setattr(OpenApiToolRoutingContentService, "bool_setting", _bool_setting)
+    assert ParameterStrategyShadowService.uses_openapi_authority("none") is False
+    shadow = ParameterStrategyShadowService.compare(
+        strategy="none",
+        legacy_parameters={},
+        action=_generic_action(),
+        message="liste itens",
+    )
+    assert shadow is not None
+    assert shadow["authority"] == "strategy"
+    assert shadow["cutover"] is False
+
+
 def test_parameter_strategy_shadow_observability(caplog):
     with caplog.at_level(logging.INFO):
         ParameterStrategyShadowObservabilityService.record(
             {
                 "strategy": "sale_orders",
+                "authority": "openapi_binder",
                 "agree": True,
                 "agreeExact": False,
                 "agreeCompatible": True,
@@ -138,8 +191,34 @@ def test_parameter_strategy_shadow_observability(caplog):
     assert any("parameter_strategy_shadow" in record.message for record in caplog.records)
 
 
+def test_build_parameters_cutover_none_uses_binder():
+    invalidate_openapi_tool_routing_cache()
+    from app.application.services.external_actions.operational_route_selection.operational_route_action_resolver_service import (
+        OperationalRouteActionResolverService,
+    )
+
+    class _Catalog:
+        def filter_parameters_to_schema(self, action, parameters):
+            return parameters
+
+    resolver = OperationalRouteActionResolverService(_Catalog())
+    route = {"parameters": {"strategy": "none"}}
+    params = resolver.build_parameters(
+        route,
+        _generic_action(),
+        message="liste itens genéricos",
+        identifier=None,
+    )
+    assert params == {}
+
+
+def test_product_code_not_openapi_authority():
+    invalidate_openapi_tool_routing_cache()
+    assert ParameterStrategyShadowService.uses_openapi_authority("product_code") is False
+    assert ParameterStrategyShadowService.uses_openapi_authority("date_branch") is False
+
+
 def test_resolver_attaches_parameter_strategy_shadow_for_none(monkeypatch):
-    """Wiring: resolve_route_action anexa metadata quando strategy=none."""
     invalidate_openapi_tool_routing_cache()
     from app.application.services.external_actions.operational_route_selection.operational_route_action_resolver_service import (
         OperationalRouteActionResolverService,
@@ -186,7 +265,6 @@ def test_resolver_attaches_parameter_strategy_shadow_for_none(monkeypatch):
         lambda *args, **kwargs: "generic.list",
     )
 
-    # Inject candidate via candidates= to skip marker catalog load
     selected = resolver.resolve_route_action(
         route,
         "liste itens genéricos",
@@ -197,4 +275,5 @@ def test_resolver_attaches_parameter_strategy_shadow_for_none(monkeypatch):
     shadow = (selected.get("metadata") or {}).get("parameterStrategyShadow")
     assert isinstance(shadow, dict)
     assert shadow["strategy"] == "none"
+    assert shadow["authority"] == "openapi_binder"
     assert selected["arguments"]["parameters"] == {}

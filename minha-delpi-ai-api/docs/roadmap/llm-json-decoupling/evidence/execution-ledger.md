@@ -9,7 +9,7 @@
 | Onda | Planos | Status | Próxima subetapa | Notas |
 |------|--------|--------|------------------|-------|
 | A — baseline/contratos | inventário + freeze | **ATENDIDO** | — | Ver `onda-a-inventory.md` |
-| B — routing universal | 01 | **EM_ANDAMENTO** | E1.S5 cutover parcial (`sale_orders`) ou E1.S6 prep | E1.S5 shadow none/semantic/sale_orders |
+| B — routing universal | 01 | **EM_ANDAMENTO** | E1.S6 prep / expandir cutover strategies | E1.S5 CUTOVER_PARTIAL none/semantic/sale_orders |
 | C — entendimento | 02 | **BLOQUEADO_POR_B** (soft) | E2 inventário+baseline TU | Pode shadow em paralelo após B começar |
 | D — multi-turn/args | 03 | **BLOQUEADO_POR_B** | inventário follow-up | Depende de actionId estável |
 | E — caps/composition | 04, 05 | **PARCIAL** | 04: `action.*`; 05: routeIds | pathRules já DONE |
@@ -48,3 +48,4 @@ abrir planos/0N-*.md
 | 2026-09-10 | E1.S4 SHADOW_ON — `registrySelectionShadow` metadata (sem cutover) |
 | 2026-09-10 | E1.S4 — product intent/segment shadow + observability log |
 | 2026-09-10 | E1.S5 SHADOW_ON — parameterStrategy none/semantic/sale_orders |
+| 2026-09-10 | E1.S5 CUTOVER_PARTIAL — authority OpenAPI binder (flag cutoverEnabled) |

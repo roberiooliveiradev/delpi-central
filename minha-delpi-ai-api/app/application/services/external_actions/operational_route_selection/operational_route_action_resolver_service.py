@@ -408,6 +408,17 @@ class OperationalRouteActionResolverService:
             message or ""
         )
 
+        from app.domain.services.parameter_strategy_shadow_service import (
+            ParameterStrategyShadowService,
+        )
+
+        if ParameterStrategyShadowService.uses_openapi_authority(strategy):
+            return ParameterStrategyShadowService.bind_via_openapi(
+                action,
+                message,
+                previous_messages=previous_messages,
+            )
+
         if strategy == "product_search":
             from app.application.services.external_actions.external_action_product_search_route_selection_service import (
                 ExternalActionProductSearchRouteSelectionService,

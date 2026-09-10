@@ -1,4 +1,4 @@
-"""E1.S5 — shadow parameterStrategy residual vs OpenAPI binder genérico."""
+"""E1.S5 — parameterStrategy: shadow e cutover parcial para binder OpenAPI."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-_SHADOWABLE = frozenset({"none", "semantic", "sale_orders"})
+_CUTOVER_STRATEGIES = frozenset({"none", "semantic", "sale_orders"})
 
 
 class ParameterStrategyShadowObservabilityService:
@@ -20,6 +20,7 @@ class ParameterStrategyShadowObservabilityService:
             extra={
                 "metric": "parameter_strategy_shadow",
                 "strategy": str(shadow.get("strategy") or ""),
+                "authority": str(shadow.get("authority") or ""),
                 "agree": bool(shadow.get("agree")),
                 "agreeExact": bool(shadow.get("agreeExact")),
                 "agreeCompatible": bool(shadow.get("agreeCompatible")),
@@ -31,14 +32,91 @@ class ParameterStrategyShadowObservabilityService:
 
 
 class ParameterStrategyShadowService:
-    """Compara params do resolver (strategy) com PlanExternalActionsService._bind_arguments.
+    """Shadow + cutover parcial (`none`/`semantic`/`sale_orders`) → `_bind_arguments`.
 
-    Não altera o binding authority. Lexical/deterministic only — sem LLM.
+    Cutover on: authority = OpenAPI binder; observer = strategy legada.
+    Cutover off: authority = strategy; observer = binder (comportamento E1.S5 shadow).
     """
 
     @classmethod
+    def cutover_strategies(cls) -> frozenset[str]:
+        return _CUTOVER_STRATEGIES
+
+    @classmethod
     def shadowable_strategies(cls) -> frozenset[str]:
-        return _SHADOWABLE
+        return _CUTOVER_STRATEGIES
+
+    @classmethod
+    def cutover_enabled(cls) -> bool:
+        from app.domain.services.openapi_tool_routing_content_service import (
+            OpenApiToolRoutingContentService,
+        )
+
+        return OpenApiToolRoutingContentService.bool_setting(
+            "parameterStrategyShadow",
+            "cutoverEnabled",
+            default=False,
+        )
+
+    @classmethod
+    def shadow_enabled(cls) -> bool:
+        from app.domain.services.openapi_tool_routing_content_service import (
+            OpenApiToolRoutingContentService,
+        )
+
+        return OpenApiToolRoutingContentService.bool_setting(
+            "parameterStrategyShadow",
+            "enabled",
+            default=False,
+        )
+
+    @classmethod
+    def uses_openapi_authority(cls, strategy: str) -> bool:
+        return str(strategy or "").strip() in _CUTOVER_STRATEGIES and cls.cutover_enabled()
+
+    @classmethod
+    def bind_via_openapi(
+        cls,
+        action: dict[str, Any],
+        message: str,
+        *,
+        previous_messages: list | None = None,
+    ) -> dict[str, Any]:
+        from app.application.services.plan_external_actions_service import (
+            PlanExternalActionsService,
+        )
+
+        parameters, _body, _missing = PlanExternalActionsService._bind_arguments(
+            message,
+            action,
+            context_parameters={},
+            previous_messages=previous_messages,
+        )
+        return dict(parameters) if isinstance(parameters, dict) else {}
+
+    @classmethod
+    def legacy_strategy_parameters(
+        cls,
+        *,
+        strategy: str,
+        action: dict[str, Any],
+        message: str,
+        previous_messages: list | None = None,
+    ) -> dict[str, Any]:
+        name = str(strategy or "").strip()
+        if name in {"none", "semantic"}:
+            return {}
+        if name == "sale_orders":
+            from app.domain.services.operational_api_parameter_builder_service import (
+                OperationalApiParameterBuilderService,
+            )
+
+            return OperationalApiParameterBuilderService().build_sale_orders(
+                action,
+                message,
+                previous_messages=previous_messages,
+            )
+        return {}
 
     @classmethod
     def compare(
@@ -50,66 +128,74 @@ class ParameterStrategyShadowService:
         message: str,
         previous_messages: list | None = None,
     ) -> dict[str, Any] | None:
-        from app.domain.services.openapi_tool_routing_content_service import (
-            OpenApiToolRoutingContentService,
-        )
-
         strategy_name = str(strategy or "").strip()
-        if strategy_name not in _SHADOWABLE:
+        if strategy_name not in _CUTOVER_STRATEGIES:
             return None
-        if not OpenApiToolRoutingContentService.bool_setting(
-            "parameterStrategyShadow",
-            "enabled",
-            default=False,
-        ):
+        if not cls.shadow_enabled():
             return None
 
-        legacy = cls._normalize_params(legacy_parameters)
         try:
-            from app.application.services.plan_external_actions_service import (
-                PlanExternalActionsService,
-            )
-
-            candidate_raw, _body, _missing = PlanExternalActionsService._bind_arguments(
-                message,
+            binder_params = cls.bind_via_openapi(
                 action,
-                context_parameters={},
+                message,
                 previous_messages=previous_messages,
             )
-            candidate = cls._normalize_params(candidate_raw)
+            strategy_params = cls.legacy_strategy_parameters(
+                strategy=strategy_name,
+                action=action,
+                message=message,
+                previous_messages=previous_messages,
+            )
         except Exception:
             shadow = {
                 "strategy": strategy_name,
-                "legacyParameters": legacy,
+                "authority": "error",
+                "legacyParameters": cls._normalize_params(legacy_parameters),
                 "candidateParameters": {},
                 "agree": False,
                 "agreeExact": False,
                 "agreeCompatible": False,
-                "legacyKeyCount": len(legacy),
+                "legacyKeyCount": 0,
                 "candidateKeyCount": 0,
                 "error": "bind_failed",
             }
             ParameterStrategyShadowObservabilityService.record(shadow)
             return shadow
 
-        agree_exact = legacy == candidate
-        agree_compatible = all(candidate.get(key) == value for key, value in legacy.items())
-        # none/semantic: legacy empty — exact match is the meaningful signal.
-        # sale_orders: compatible (candidate may add schema-grounded extras).
+        cutover = cls.cutover_enabled()
+        if cutover:
+            # Authority = binder; observer = strategy legada.
+            authority_params = binder_params
+            observer_params = strategy_params
+            authority = "openapi_binder"
+        else:
+            # Shadow-only: authority = strategy (já aplicada); observer = binder.
+            authority_params = legacy_parameters if legacy_parameters is not None else strategy_params
+            observer_params = binder_params
+            authority = "strategy"
+
+        authority_n = cls._normalize_params(authority_params)
+        observer_n = cls._normalize_params(observer_params)
+        agree_exact = authority_n == observer_n
+        agree_compatible = all(
+            observer_n.get(key) == value for key, value in authority_n.items()
+        )
         if strategy_name in {"none", "semantic"}:
             agree = agree_exact
         else:
-            agree = agree_compatible
+            agree = agree_compatible if cutover else agree_compatible
 
         shadow = {
             "strategy": strategy_name,
-            "legacyParameters": legacy,
-            "candidateParameters": candidate,
+            "authority": authority,
+            "cutover": cutover,
+            "legacyParameters": observer_n if cutover else authority_n,
+            "candidateParameters": authority_n if cutover else observer_n,
             "agree": agree,
             "agreeExact": agree_exact,
             "agreeCompatible": agree_compatible,
-            "legacyKeyCount": len(legacy),
-            "candidateKeyCount": len(candidate),
+            "legacyKeyCount": len(observer_n if cutover else authority_n),
+            "candidateKeyCount": len(authority_n if cutover else observer_n),
         }
         ParameterStrategyShadowObservabilityService.record(shadow)
         return shadow

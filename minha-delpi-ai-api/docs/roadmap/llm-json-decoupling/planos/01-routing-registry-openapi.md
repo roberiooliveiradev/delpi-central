@@ -1,7 +1,7 @@
 # Plano 01 — Routing registry -> OpenAPI + Action Catalog
 
 **Prioridade:** P0  
-**Status execução:** Onda B · E1.S3 ATENDIDO · E1.S4 SHADOW_ON · E1.S5 **SHADOW_ON** (none/semantic/sale_orders) · próxima = observar agree / cutover parcial  
+**Status execução:** Onda B · E1.S3 ATENDIDO · E1.S4 SHADOW_ON · E1.S5 **CUTOVER_PARTIAL** (none/semantic/sale_orders) · próxima = E1.S6 prep / expandir strategies  
 **Evidência:** [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** uma action nova deve ser descoberta e selecionada por semântica/contrato sem exigir `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` por endpoint no conteúdo do assistente.
 
@@ -115,15 +115,15 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 
 **Pendente:** agregação live/admin da taxa `agree` de seleção; cutover default candidate (E1.S6).
 
-### E1.S5 — Parameter strategy removal — **SHADOW_ON** (1º corte, 2026-09-10)
+### E1.S5 — Parameter strategy removal — **CUTOVER_PARTIAL** (2026-09-10)
 
 **Objetivo:** mover binding para `mensagem + contexto + action schema`.
 
-**Feito (sem cutover):** inventário das 13 strategies; shadow `none`/`semantic`/`sale_orders` vs `_bind_arguments`; flag `parameterStrategyShadow`; telemetria; testes. Evidência: [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md).
+**Feito:** `none`/`semantic`/`sale_orders` usam `_bind_arguments` como authority (`cutoverEnabled=true`); shadow observa builders legados; rollback via flag. Evidência: [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md).
 
 **Não tocado:** `product_code`, `date_branch`, `supplies_stock`, `department_idd`.
 
-**Pendente:** cutover parcial quando agree estável; demais strategies.
+**Pendente:** expandir cutover; limpeza de fields (E1.S6).
 
 ### E1.S6 — Cutover e cleanup
 
