@@ -9,6 +9,7 @@ import { AppShell } from "../components/AppShell";
 import { ArtifactsPanel } from "../components/ArtifactsPanel";
 import { AttachmentsPanel } from "../components/AttachmentsPanel";
 import { CommentsPanel } from "../components/CommentsPanel";
+import { PersonIdentity } from "../components/PersonIdentity";
 import {
   ReasonConfirmModal,
   type ReasonConfirmKind,
@@ -31,6 +32,7 @@ import {
   myRequestsEditPath,
   navigateMyRequestsPath,
 } from "../hooks/myRequestsNavigation";
+import { useParticipantAvatarUrls } from "../hooks/useParticipantAvatarUrls";
 import { useViewportMaxWidth } from "../hooks/useViewportMaxWidth";
 import type { RequestDetail } from "../types/requests";
 import {
@@ -169,6 +171,9 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
   );
   const capabilities = request?.capabilities ?? null;
   const canEdit = Boolean(request?.allowed_actions?.includes("edit"));
+  const requesterAvatarById = useParticipantAvatarUrls([
+    request?.created_by_user_id,
+  ]);
 
   return (
     <AppShell title={request ? request.request_number : "Detalhe"}>
@@ -273,7 +278,16 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
                     {
                       label: "Solicitante",
                       hint: MY_REQUESTS_HELP_TOOLTIPS.detail.requester,
-                      value: request.created_by_name,
+                      value: (
+                        <PersonIdentity
+                          name={request.created_by_name}
+                          userId={request.created_by_user_id}
+                          src={
+                            requesterAvatarById.get(request.created_by_user_id) ||
+                            null
+                          }
+                        />
+                      ),
                     },
                     {
                       label: "Criada em",
@@ -352,6 +366,9 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
                 requestId={requestId}
                 canUpload={capabilities?.can_upload_artifact ?? false}
                 refreshKey={timelineEpoch}
+                defaultArtifactKind={
+                  request.type_code === "invoice-issuance" ? "invoice_pdf" : "generic"
+                }
               />
             </section>
 

@@ -23,6 +23,9 @@ def test_list_migration_files_in_order():
         "V006__seed_invoice_issuance_request_type.sql",
         "V007__seed_raw_material_creation_request_type.sql",
         "V008__request_type_journey_progress.sql",
+        "V009__request_correction_targets.sql",
+        "V010__comment_attachments.sql",
+        "V011__invoice_issue_confirmation_workflow.sql",
     ]
 
 
@@ -90,3 +93,14 @@ def test_v008_adds_journey_progress_metadata():
     assert "statusMappings" in sql
     _, name = parse_version_and_name(v008)
     assert name == "request_type_journey_progress"
+
+
+def test_v011_invoice_confirmation_and_artifact_require():
+    v011 = MIGRATIONS_DIR / "V011__invoice_issue_confirmation_workflow.sql"
+    sql = v011.read_text(encoding="utf-8")
+    assert "awaiting_requester_confirmation" in sql
+    assert "confirm_fulfillment" in sql
+    assert "invoice_pdf" in sql
+    assert "invoice-issuance" in sql
+    _, name = parse_version_and_name(v011)
+    assert name == "invoice_issue_confirmation_workflow"

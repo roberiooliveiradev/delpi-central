@@ -97,6 +97,14 @@ def resolve_creator_gate_copy(
     actor = (actor_name or "").strip() or "alguém"
 
     if outcome == "waiting_requester":
+        if to_status == "awaiting_requester_confirmation":
+            title = "Confirme o atendimento"
+            detail = (
+                str(summary).strip()
+                if summary
+                else "A nota foi registrada. Confirme se o pedido foi atendido."
+            )
+            return title, f"{number}: {detail}", "warning"
         title = "Aguardando sua informação"
         detail = str(summary).strip() if summary else "Informações adicionais foram pedidas."
         return title, f"{number}: {detail}", "warning"

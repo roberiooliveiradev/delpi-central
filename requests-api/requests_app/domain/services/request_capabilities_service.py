@@ -24,14 +24,21 @@ def resolve_request_capabilities(
     actor: Actor,
     workflow: dict[str, Any] | None,
 ) -> dict[str, bool]:
-    del workflow  # terminal check not used for attachment manage gate
+    terminals = {
+        str(item).strip()
+        for item in ((workflow or {}).get("terminalStatuses") or [])
+        if str(item).strip()
+    }
+    is_terminal = request.status in terminals
     is_owner = request.created_by_user_id == actor.user_id
     can_view = bool(
         is_owner or actor.has_view_all or actor.has_process or actor.has_manage
     )
     can_staff = bool(actor.has_process or actor.has_manage)
     can_manage_attachments = bool(
-        is_owner and request.status == ATTACHMENT_MANAGE_STATUS
+        (not is_terminal)
+        and is_owner
+        and request.status == ATTACHMENT_MANAGE_STATUS
     )
 
     return {
@@ -39,6 +46,6 @@ def resolve_request_capabilities(
         "can_comment": can_view,
         # detail manage (upload + delete): owner + needs_information only
         "can_upload_attachment": can_manage_attachments,
-        # upload artifact: process|manage (no terminal check in use case today)
-        "can_upload_artifact": can_staff,
+        # upload artifact: process|manage and not terminal
+        "can_upload_artifact": bool(can_staff and not is_terminal),
     }

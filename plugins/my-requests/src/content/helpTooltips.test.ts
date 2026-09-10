@@ -40,6 +40,8 @@ describe("MY_REQUESTS_HELP_TOOLTIPS", () => {
     expect(MY_REQUESTS_HELP_TOOLTIPS.actions.start.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.actions.return.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.actions.complete.length).toBeGreaterThan(10);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.actions.issue.length).toBeGreaterThan(10);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.actions.confirm_fulfillment.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.attachments.upload.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.attachments.create.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.attachments.pending.length).toBeGreaterThan(10);

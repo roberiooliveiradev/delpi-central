@@ -91,6 +91,15 @@ def test_view_all_readonly_can_comment_not_upload():
     assert caps["can_upload_artifact"] is False
 
 
+def test_processor_cannot_upload_artifact_when_terminal():
+    caps = resolve_request_capabilities(
+        _request(owner="u-owner", status="completed"),
+        actor=_actor(user_id="u-proc", has_process=True),
+        workflow=_TERMINAL_WF,
+    )
+    assert caps["can_upload_artifact"] is False
+
+
 def test_owner_terminal_cannot_upload_attachment():
     caps = resolve_request_capabilities(
         _request(owner="u-owner", status="cancelled"),

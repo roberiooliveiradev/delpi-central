@@ -50,6 +50,20 @@ def _safe_realtime(fn, **kwargs) -> None:
         logger.exception("requests_realtime_notify_failed")
 
 
+def _artifact_summaries(
+    files: FileRepositoryPort | None,
+    request_id,
+) -> list[dict[str, Any]]:
+    if files is None:
+        return []
+    try:
+        rows = files.list_artifacts(request_id)
+    except Exception:  # noqa: BLE001
+        logger.exception("requests_list_artifacts_for_actions_failed")
+        return []
+    return [{"artifact_kind": row.artifact_kind} for row in rows]
+
+
 def _normalize_branch(raw: Any) -> str | None:
     text = str(raw or "").strip()
     return text or None
@@ -340,10 +354,12 @@ class GetRequestUseCase:
         types: RequestTypeRepositoryPort,
         requests: RequestRepositoryPort,
         engine: WorkflowEngine | None = None,
+        files: FileRepositoryPort | None = None,
     ) -> None:
         self._types = types
         self._requests = requests
         self._engine = engine or WorkflowEngine()
+        self._files = files
 
     def execute(self, *, user, request_id: str) -> dict[str, Any]:
         request = self._requests.get(request_id)
@@ -360,8 +376,13 @@ class GetRequestUseCase:
             if not is_owner:
                 raise ApplicationError(code="branch_forbidden", status_code=403)
         workflow = request_type.workflow_definition or {}
+        artifacts = _artifact_summaries(self._files, request.id)
         actions = allowed_actions_for(
-            request, actor=actor, workflow=workflow, engine=self._engine
+            request,
+            actor=actor,
+            workflow=workflow,
+            engine=self._engine,
+            artifacts=artifacts,
         )
         return serialize_request(
             request,
@@ -530,6 +551,7 @@ class TransitionRequestUseCase:
             raise ApplicationError(code="type_not_found", status_code=404)
         actor = actor_for(user, request_type)
         workflow = request_type.workflow_definition or {}
+        artifacts = _artifact_summaries(self._files, request.id)
         try:
             result = self._engine.apply_transition(
                 request=request,
@@ -540,6 +562,7 @@ class TransitionRequestUseCase:
                 expected_version=expected_version
                 if expected_version is not None
                 else request.version,
+                artifacts=artifacts,
             )
         except WorkflowEngineError as exc:
             raise ApplicationError(
@@ -608,7 +631,11 @@ class TransitionRequestUseCase:
         response = serialize_request(
             stored,
             allowed_actions=allowed_actions_for(
-                stored, actor=actor, workflow=workflow, engine=self._engine
+                stored,
+                actor=actor,
+                workflow=workflow,
+                engine=self._engine,
+                artifacts=_artifact_summaries(self._files, stored.id),
             ),
             workflow=workflow,
             actor=actor,

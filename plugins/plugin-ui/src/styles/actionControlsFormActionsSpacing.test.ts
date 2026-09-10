@@ -19,4 +19,21 @@ describe("action-controls FormActions spacing", () => {
       /\.delpi-ui-form-actions\s*\{[^}]*margin-block-start:\s*var\(--delpi-ui-form-actions-block-start,\s*24px\)/,
     );
   });
+
+  it("mobile ≤768 empilha FormActions em coluna full-width", () => {
+    expect(css).toMatch(
+      /@media\s*\(max-width:\s*768px\)\s*\{[\s\S]*?\.delpi-ui-form-actions[\s\S]*?flex-direction:\s*column/,
+    );
+    expect(css).toMatch(
+      /@media\s*\(max-width:\s*768px\)\s*\{[\s\S]*?\.delpi-ui-form-actions\s*>\s*\*[\s\S]*?width:\s*100%/,
+    );
+    expect(css).toMatch(
+      /@media\s*\(max-width:\s*768px\)\s*\{[\s\S]*?\.delpi-ui-form-actions\s+\.delpi-ui-help-tooltip--wrap[\s\S]*?width:\s*100%/,
+    );
+  });
+
+  it("desktop FormActions base não usa coluna", () => {
+    const baseBlock = css.match(/\.delpi-ui-form-actions\s*\{[^}]+\}/);
+    expect(baseBlock?.[0] ?? "").not.toMatch(/flex-direction:\s*column/);
+  });
 });

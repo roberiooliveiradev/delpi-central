@@ -35,6 +35,8 @@ type ArtifactsPanelProps = {
   requestId: string;
   canUpload?: boolean;
   refreshKey?: number;
+  /** Prefer this artifact kind in the SegmentToggle (e.g. invoice_pdf). */
+  defaultArtifactKind?: string;
 };
 
 function isImageArtifact(item: RequestArtifact): boolean {
@@ -54,12 +56,17 @@ export function ArtifactsPanel({
   requestId,
   canUpload = false,
   refreshKey = 0,
+  defaultArtifactKind = "generic",
 }: ArtifactsPanelProps) {
   const [items, setItems] = useState<RequestArtifact[]>([]);
   const [pending, setPending] = useState<StagedAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [artifactKind, setArtifactKind] = useState<string>("generic");
+  const initialKind =
+    ARTIFACT_KIND_OPTIONS.some((opt) => opt.value === defaultArtifactKind)
+      ? defaultArtifactKind
+      : "generic";
+  const [artifactKind, setArtifactKind] = useState<string>(initialKind);
   const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({});
   const thumbUrlsRef = useRef<Record<string, string>>({});
   const [preview, setPreview] = useState<RequestFilePreviewTarget>(null);

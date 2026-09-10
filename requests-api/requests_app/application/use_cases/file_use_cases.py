@@ -262,6 +262,9 @@ class FileUseCases:
         )
         if not (actor.has_process or actor.has_manage):
             raise ApplicationError(code="upload_forbidden", status_code=403)
+        workflow = request_type.workflow_definition or {}
+        if _is_terminal(request, workflow):
+            raise ApplicationError(code="upload_forbidden", status_code=403)
         try:
             stored = self._artifacts.save(
                 request_id=str(request.id),

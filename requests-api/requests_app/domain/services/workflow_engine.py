@@ -95,6 +95,41 @@ def _matches_requires(
     )
 
 
+def _artifact_kinds(artifacts: list[dict[str, Any]] | None) -> list[str]:
+    kinds: list[str] = []
+    for item in artifacts or []:
+        if not isinstance(item, dict):
+            continue
+        kind = str(item.get("artifact_kind") or item.get("kind") or "").strip()
+        if kind:
+            kinds.append(kind)
+    return kinds
+
+
+def _matches_artifacts(
+    requires: dict[str, Any] | None,
+    artifacts: list[dict[str, Any]] | None,
+) -> bool:
+    if not isinstance(requires, dict):
+        return True
+    spec = requires.get("artifacts")
+    if not isinstance(spec, dict):
+        return True
+    try:
+        min_count = int(spec.get("minCount") or 1)
+    except (TypeError, ValueError):
+        min_count = 1
+    if min_count < 1:
+        min_count = 1
+    kinds = _artifact_kinds(artifacts)
+    kinds_any = spec.get("kindsAny")
+    if isinstance(kinds_any, list) and kinds_any:
+        allowed = {str(item).strip() for item in kinds_any if str(item).strip()}
+        matching = [kind for kind in kinds if kind in allowed]
+        return len(matching) >= min_count
+    return len(kinds) >= min_count
+
+
 def _required_fields(transition: dict[str, Any]) -> list[str]:
     fields: list[str] = []
     top = transition.get("fields")
@@ -158,6 +193,7 @@ class WorkflowEngine:
         body: dict[str, Any] | None = None,
         require_fields: bool = True,
         expected_version: int | None = None,
+        artifacts: list[dict[str, Any]] | None = None,
     ) -> tuple[bool, str | None, str | None]:
         """
         Returns (ok, error_code, missing_field).
@@ -186,6 +222,9 @@ class WorkflowEngine:
         ):
             return False, "forbidden", None
 
+        if not _matches_artifacts(requires, artifacts):
+            return False, "artifact_required", "invoice_pdf"
+
         if require_fields:
             for field_name in _required_fields(transition):
                 if _field_value(body, field_name) is None:
@@ -199,6 +238,7 @@ class WorkflowEngine:
         request: Request,
         actor: Actor,
         workflow: dict[str, Any],
+        artifacts: list[dict[str, Any]] | None = None,
     ) -> list[str]:
         actions: list[str] = []
         status = request.status
@@ -240,6 +280,7 @@ class WorkflowEngine:
                 action=action,
                 body=None,
                 require_fields=False,
+                artifacts=artifacts,
             )
             if ok:
                 actions.append(action)
@@ -265,6 +306,7 @@ class WorkflowEngine:
         action: str,
         body: dict[str, Any] | None = None,
         expected_version: int | None = None,
+        artifacts: list[dict[str, Any]] | None = None,
     ) -> TransitionResult:
         ok, error_code, missing_field = self.can_transition(
             request=request,
@@ -274,13 +316,16 @@ class WorkflowEngine:
             body=body,
             require_fields=True,
             expected_version=expected_version,
+            artifacts=artifacts,
         )
         if not ok:
             raise WorkflowEngineError(
                 code=error_code or "invalid_transition",
                 field=missing_field,
                 status_code=409 if error_code == "stale_version" else (
-                    403 if error_code == "forbidden" else 409
+                    422 if error_code == "artifact_required" else (
+                        403 if error_code == "forbidden" else 409
+                    )
                 ),
             )
 

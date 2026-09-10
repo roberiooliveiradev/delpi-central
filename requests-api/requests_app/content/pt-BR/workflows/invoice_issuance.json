@@ -4,6 +4,7 @@
   "statusAliases": {
     "submitted": "pending",
     "needs_information": "returned",
+    "awaiting_requester_confirmation": "awaiting_confirmation",
     "completed": "issued"
   },
   "journey": {
@@ -31,6 +32,13 @@
         "progressPercent": 66,
         "outcome": "waiting_requester",
         "summary": "Aguardando informação do solicitante"
+      },
+      {
+        "statuses": ["awaiting_requester_confirmation"],
+        "stageId": "closure",
+        "progressPercent": 90,
+        "outcome": "waiting_requester",
+        "summary": "Aguardando confirmação do solicitante"
       },
       {
         "statuses": ["completed"],
@@ -101,15 +109,25 @@
     {
       "action": "complete",
       "from": ["in_progress"],
-      "to": "completed",
+      "to": "awaiting_requester_confirmation",
       "requires": {
-        "permissionsAny": ["process", "manage"]
+        "permissionsAny": ["process", "manage"],
+        "artifacts": { "minCount": 1, "kindsAny": ["invoice_pdf"] }
       },
       "actionAlias": "issue"
     },
     {
+      "action": "confirm_fulfillment",
+      "from": ["awaiting_requester_confirmation"],
+      "to": "completed",
+      "requires": {
+        "permissions": ["create"],
+        "ownership": true
+      }
+    },
+    {
       "action": "cancel",
-      "from": ["submitted", "in_progress", "needs_information"],
+      "from": ["submitted", "in_progress", "needs_information", "awaiting_requester_confirmation"],
       "to": "cancelled",
       "requires": {
         "anyOf": [
@@ -120,7 +138,7 @@
           },
           {
             "permissions": ["process"],
-            "from": ["in_progress"]
+            "from": ["in_progress", "awaiting_requester_confirmation"]
           },
           {
             "permissions": ["manage"]

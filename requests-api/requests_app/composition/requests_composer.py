@@ -110,6 +110,7 @@ def build_get_request_use_case() -> GetRequestUseCase:
         PostgresRequestTypeRepository(),
         PostgresRequestRepository(),
         _engine(),
+        PostgresFileRepository(),
     )
 
 

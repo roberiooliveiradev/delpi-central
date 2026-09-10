@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { listEvents } from "../api/requestsApi";
+import { PersonIdentity } from "./PersonIdentity";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { eventLabel, formatDateTimePtBr } from "../content/presentationLabels";
+import { useParticipantAvatarUrls } from "../hooks/useParticipantAvatarUrls";
 import type { TimelineEvent } from "../types/requests";
 import {
   MyRequestsEmptyState,
@@ -30,16 +32,33 @@ export function TimelinePanel({ requestId, refreshKey = 0 }: TimelinePanelProps)
     return () => ac.abort();
   }, [requestId, refreshKey]);
 
+  const actorIds = useMemo(
+    () => items.map((item) => item.actor_user_id),
+    [items],
+  );
+  const avatarByUserId = useParticipantAvatarUrls(actorIds);
+
   const timelineItems = useMemo(
     () =>
-      items.map((item) => ({
-        id: item.id,
-        title: eventLabel(item.event_type),
-        occurredAt: item.created_at || undefined,
-        timeLabel: formatDateTimePtBr(item.created_at),
-        detail: item.actor_name || undefined,
-      })),
-    [items],
+      items.map((item) => {
+        const name = (item.actor_name || "").trim();
+        const userId = (item.actor_user_id || "").trim();
+        return {
+          id: item.id,
+          title: eventLabel(item.event_type),
+          occurredAt: item.created_at || undefined,
+          timeLabel: formatDateTimePtBr(item.created_at),
+          detail:
+            name || userId ? (
+              <PersonIdentity
+                name={name || null}
+                userId={userId || null}
+                src={userId ? avatarByUserId.get(userId) || null : null}
+              />
+            ) : undefined,
+        };
+      }),
+    [items, avatarByUserId],
   );
 
   return (

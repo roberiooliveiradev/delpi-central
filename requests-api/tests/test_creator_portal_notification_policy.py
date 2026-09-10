@@ -39,7 +39,13 @@ def test_positive_start_by_processor_notifies_creator():
 
 def test_positive_return_complete_reject_cancel_by_processor():
     workflow = _invoice_workflow()
-    for to_status in ("needs_information", "completed", "rejected", "cancelled"):
+    for to_status in (
+        "needs_information",
+        "awaiting_requester_confirmation",
+        "completed",
+        "rejected",
+        "cancelled",
+    ):
         assert should_notify_creator_on_transition(
             workflow=workflow,
             from_status="in_progress",
@@ -47,6 +53,18 @@ def test_positive_return_complete_reject_cancel_by_processor():
             actor_user_id="proc",
             owner_user_id="owner",
         )
+
+
+def test_creator_gate_copy_confirmation_awaiting():
+    title, message, variant = resolve_creator_gate_copy(
+        workflow=_invoice_workflow(),
+        to_status="awaiting_requester_confirmation",
+        request_number="REQ-9",
+        actor_name="Proc",
+    )
+    assert title == "Confirme o atendimento"
+    assert "REQ-9" in message
+    assert variant == "warning"
 
 
 def test_negative_owner_self_transition_skipped():

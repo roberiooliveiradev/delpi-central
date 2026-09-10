@@ -309,6 +309,21 @@
   min-width: 0;
 }
 
+.dashboard-my-requests .my-requests-person-identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dashboard-my-requests .my-requests-person-identity__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 768px) {
   .dashboard-my-requests .my-requests-detail-layout {
     gap: 1rem;

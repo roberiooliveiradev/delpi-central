@@ -72,7 +72,8 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     type: "Qual formulário e fluxo esta solicitação segue.",
     status: "Mostra em que etapa sua solicitação está neste momento.",
     branch: "Unidade da empresa relacionada a esta solicitação.",
-    requester: "Quem abriu esta solicitação.",
+    requester:
+      "Quem abriu esta solicitação. A foto do perfil do Portal aparece quando disponível; senão, as iniciais.",
     createdAt: "Data e hora em que a solicitação foi registrada.",
     progress:
       "Acompanhe as etapas do atendimento e o percentual de andamento. Em telas menores, use «Ver etapas». O percentual e o texto da etapa atual vêm da API.",
@@ -94,7 +95,10 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     resubmit: "Envia novamente a solicitação após as correções solicitadas.",
     complete:
       "Finaliza o atendimento quando todas as providências necessárias foram realizadas.",
-    issue: "Registra a emissão da nota fiscal conforme o fluxo desta solicitação.",
+    issue:
+      "Registra a emissão da nota fiscal. É obrigatório ter anexado a nota (PDF) em Documentos gerados. Depois disso, o solicitante precisa confirmar o atendimento para fechar o chamado.",
+    confirm_fulfillment:
+      "Confirme que o que você pediu foi atendido. Só essa confirmação fecha a solicitação; depois disso, os arquivos não podem mais ser alterados.",
     cancel: "Encerra a solicitação sem conclusão. Uma justificativa será solicitada.",
     reject: "Encerra a solicitação como rejeitada.",
     edit: "Abre os dados da solicitação para realizar as correções permitidas.",
@@ -102,7 +106,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   timeline: {
     section:
-      "Histórico do que aconteceu nesta solicitação: criação, mudanças de etapa, mensagens e envios de arquivo.",
+      "Histórico do que aconteceu nesta solicitação: criação, mudanças de etapa, mensagens e envios de arquivo. Cada evento mostra quem atuou, com foto do perfil quando disponível.",
   },
   comments: {
     section:

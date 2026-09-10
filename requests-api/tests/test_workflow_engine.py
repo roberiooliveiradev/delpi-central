@@ -10,6 +10,9 @@ from requests_app.domain.services.content_loader import load_workflow_definition
 from requests_app.domain.services.request_type_registry import RequestTypeRegistry
 from requests_app.domain.services.workflow_engine import WorkflowEngine
 
+_NF = [{"artifact_kind": "invoice_pdf"}]
+_GENERIC_ONLY = [{"artifact_kind": "generic"}]
+
 
 def _creator(**kwargs) -> Actor:
     base = dict(user_id="u-create", user_name="Criador", has_create=True, has_access=True)
@@ -80,30 +83,60 @@ def test_registry_loads_invoice_and_generic_without_engine_branch():
 
 
 @pytest.mark.parametrize(
-    "status,actor_factory,expected",
+    "status,actor_factory,artifacts,expected",
     [
-        ("submitted", _processor, {"view", "start"}),
-        ("submitted", _creator, {"view", "cancel"}),
-        ("submitted", _manager, {"view", "start", "cancel"}),
-        ("in_progress", _processor, {"view", "return", "complete", "issue", "cancel"}),
-        ("in_progress", _creator, {"view"}),
-        ("needs_information", _creator, {"view", "edit", "resubmit"}),
-        ("needs_information", _processor, {"view"}),
-        ("needs_information", _manager, {"view", "cancel"}),
-        ("completed", _creator, {"view"}),
-        ("completed", _processor, {"view"}),
-        ("cancelled", _manager, {"view"}),
+        ("submitted", _processor, None, {"view", "start"}),
+        ("submitted", _creator, None, {"view", "cancel"}),
+        ("submitted", _manager, None, {"view", "start", "cancel"}),
+        ("in_progress", _processor, None, {"view", "return", "cancel"}),
+        ("in_progress", _processor, _NF, {"view", "return", "complete", "issue", "cancel"}),
+        ("in_progress", _creator, _NF, {"view"}),
+        ("needs_information", _creator, None, {"view", "edit", "resubmit"}),
+        ("needs_information", _processor, None, {"view"}),
+        ("needs_information", _manager, None, {"view", "cancel"}),
+        (
+            "awaiting_requester_confirmation",
+            _creator,
+            _NF,
+            {"view", "confirm_fulfillment"},
+        ),
+        (
+            "awaiting_requester_confirmation",
+            _processor,
+            _NF,
+            {"view", "cancel"},
+        ),
+        ("completed", _creator, _NF, {"view"}),
+        ("completed", _processor, _NF, {"view"}),
+        ("cancelled", _manager, None, {"view"}),
     ],
 )
-def test_invoice_allowed_actions_parity(engine, invoice_workflow, status, actor_factory, expected):
+def test_invoice_allowed_actions_parity(
+    engine, invoice_workflow, status, actor_factory, artifacts, expected
+):
     actions = set(
         engine.compute_allowed_actions(
             request=_request(status=status),
             actor=actor_factory(),
             workflow=invoice_workflow,
+            artifacts=artifacts,
         )
     )
     assert actions == expected
+
+
+def test_issue_requires_invoice_pdf_artifact(engine, invoice_workflow):
+    ok, code, field = engine.can_transition(
+        request=_request(status="in_progress"),
+        actor=_processor(),
+        workflow=invoice_workflow,
+        action="issue",
+        artifacts=_GENERIC_ONLY,
+        require_fields=False,
+    )
+    assert ok is False
+    assert code == "artifact_required"
+    assert field == "invoice_pdf"
 
 
 def test_creator_cannot_start_submitted(engine, invoice_workflow):
@@ -130,16 +163,41 @@ def test_apply_start_assigns_processor(engine, invoice_workflow):
     assert result.history.action == "start"
 
 
-def test_apply_issue_alias_completes(engine, invoice_workflow):
+def test_apply_issue_awaits_requester_confirmation(engine, invoice_workflow):
     result = engine.apply_transition(
         request=_request(status="in_progress"),
         actor=_processor(),
         workflow=invoice_workflow,
         action="issue",
         expected_version=1,
+        artifacts=_NF,
+    )
+    assert result.request.status == "awaiting_requester_confirmation"
+    assert result.history.action == "complete"
+
+
+def test_confirm_fulfillment_closes(engine, invoice_workflow):
+    result = engine.apply_transition(
+        request=_request(status="awaiting_requester_confirmation"),
+        actor=_creator(),
+        workflow=invoice_workflow,
+        action="confirm_fulfillment",
+        expected_version=1,
     )
     assert result.request.status == "completed"
-    assert result.history.action == "complete"
+    assert result.history.action == "confirm_fulfillment"
+
+
+def test_processor_cannot_confirm_fulfillment(engine, invoice_workflow):
+    ok, code, _ = engine.can_transition(
+        request=_request(status="awaiting_requester_confirmation"),
+        actor=_processor(),
+        workflow=invoice_workflow,
+        action="confirm_fulfillment",
+        require_fields=False,
+    )
+    assert ok is False
+    assert code == "forbidden"
 
 
 def test_return_requires_reason(engine, invoice_workflow):

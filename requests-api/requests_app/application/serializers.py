@@ -91,10 +91,12 @@ def allowed_actions_for(
     actor,
     workflow: dict[str, Any],
     engine: WorkflowEngine | None = None,
+    artifacts: list[dict[str, Any]] | None = None,
 ) -> list[str]:
     engine = engine or WorkflowEngine()
     return engine.compute_allowed_actions(
         request=request,
         actor=actor,
         workflow=workflow,
+        artifacts=artifacts,
     )
