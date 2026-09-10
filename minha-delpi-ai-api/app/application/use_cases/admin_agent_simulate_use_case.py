@@ -96,9 +96,18 @@ class AdminAgentSimulateUseCase:
         )
         from types import SimpleNamespace
 
-        allowed_action_ids = list((specialization or {}).get("allowedActionIds") or [])
-        if not allowed_action_ids and isinstance(agent_meta, dict):
-            allowed_action_ids = list(agent_meta.get("allowedActionIds") or [])
+        resolved_agent_id = None
+        if isinstance(agent_meta, dict) and agent_meta.get("id"):
+            resolved_agent_id = str(agent_meta.get("id"))
+        elif agent_id:
+            resolved_agent_id = str(agent_id)
+
+        allowed_action_ids = self._resolve_allowed_action_ids(
+            specialization=specialization,
+            agent_id=resolved_agent_id,
+            agent_meta=agent_meta if isinstance(agent_meta, dict) else None,
+            user_id=user_id,
+        )
 
         turn_analysis_outcome = ChatTurnPreparationTurnAnalysisService.maybe_analyze(
             message=normalized_question,
@@ -156,10 +165,18 @@ class AdminAgentSimulateUseCase:
                 "clarifyInsteadOfGuess": True,
             }
 
+        resolved_agent_id = None
+        if isinstance(agent_meta, dict) and agent_meta.get("id"):
+            resolved_agent_id = str(agent_meta.get("id"))
+        elif agent_id:
+            resolved_agent_id = str(agent_id)
+
         tool_context_payload, planned_tool_calls = self._build_tool_context(
             question=normalized_question,
             user_id=user_id,
             access_token=access_token,
+            agent_id=resolved_agent_id,
+            agent_meta=agent_meta if isinstance(agent_meta, dict) else None,
             specialization=specialization,
             execute_tools_in_sandbox=execute_tools_in_sandbox,
             previous_messages=history,
@@ -331,12 +348,26 @@ class AdminAgentSimulateUseCase:
         question: str,
         user_id: str | None,
         access_token: str | None,
+        agent_id: str | None = None,
+        agent_meta: dict | None = None,
         specialization: dict | None = None,
         execute_tools_in_sandbox: bool = False,
         previous_messages: list | None = None,
         response_mode: str | None = None,
         turn_analysis=None,
     ) -> tuple[dict, list[dict]]:
+        allowed_action_ids = self._resolve_allowed_action_ids(
+            specialization=specialization,
+            agent_id=agent_id,
+            agent_meta=agent_meta,
+            user_id=user_id,
+        )
+        agent_context = {
+            "id": agent_id,
+            "name": (agent_meta or {}).get("name"),
+            "allowedActionIds": allowed_action_ids,
+        }
+
         if (
             execute_tools_in_sandbox
             and self.chat_tool_context_service
@@ -350,8 +381,10 @@ class AdminAgentSimulateUseCase:
                 access_token=access_token,
                 message=question,
                 actions_enabled=True,
+                allowed_action_ids=allowed_action_ids or None,
                 allowed_tool_names=allowed_tool_names,
                 previous_messages=previous_messages,
+                agent_context=agent_context,
             )
 
             from app.domain.services.chat_presentation_prose_delivery_service import (
@@ -381,6 +414,7 @@ class AdminAgentSimulateUseCase:
         planned_from_orchestrator = self._plan_external_actions_via_orchestrator(
             question=question,
             specialization=specialization,
+            allowed_action_ids=allowed_action_ids,
             previous_messages=previous_messages,
             response_mode=response_mode,
         )
@@ -404,11 +438,41 @@ class AdminAgentSimulateUseCase:
 
         return {"context": ""}, self._planned_tool_calls(question)
 
+    def _resolve_allowed_action_ids(
+        self,
+        *,
+        specialization: dict | None,
+        agent_id: str | None,
+        agent_meta: dict | None,
+        user_id: str | None,
+    ) -> list[str]:
+        allowed_action_ids = list((specialization or {}).get("allowedActionIds") or [])
+        if not allowed_action_ids and isinstance(agent_meta, dict):
+            allowed_action_ids = list(agent_meta.get("allowedActionIds") or [])
+
+        if allowed_action_ids or not agent_id or not user_id:
+            return [str(item) for item in allowed_action_ids if str(item).strip()]
+
+        list_enabled = getattr(self.chat_agent_repository, "list_enabled_action_ids", None)
+        if not callable(list_enabled):
+            return []
+
+        try:
+            configured = list_enabled(
+                agent_id=UUID(str(agent_id)),
+                user_id=UUID(str(user_id)),
+            )
+        except Exception:
+            return []
+
+        return [str(item) for item in (configured or []) if str(item).strip()]
+
     def _plan_external_actions_via_orchestrator(
         self,
         *,
         question: str,
         specialization: dict | None,
+        allowed_action_ids: list[str] | None = None,
         previous_messages: list | None,
         response_mode: str | None,
     ) -> list[dict]:
@@ -424,9 +488,11 @@ class AdminAgentSimulateUseCase:
             ChatExternalActionOrchestrationService,
         )
 
-        allowed_action_ids = list((specialization or {}).get("allowedActionIds") or [])
+        resolved_ids = list(allowed_action_ids or [])
+        if not resolved_ids:
+            resolved_ids = list((specialization or {}).get("allowedActionIds") or [])
         workspace_context: dict = {
-            "allowedActionIds": allowed_action_ids,
+            "allowedActionIds": resolved_ids,
             "responseMode": response_mode,
         }
         provider_keys = (specialization or {}).get("providerKeys") or []
@@ -437,7 +503,7 @@ class AdminAgentSimulateUseCase:
             planned = ChatExternalActionOrchestrationService.plan_actions(
                 selection_service,
                 message=question,
-                allowed_action_ids=allowed_action_ids,
+                allowed_action_ids=resolved_ids,
                 previous_messages=previous_messages,
                 workspace_context=workspace_context,
             )

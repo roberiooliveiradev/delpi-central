@@ -45,8 +45,8 @@
   },
   "SURFACES": {
     "SEND": "PASS",
-    "STREAM": "INCONCLUSIVE_NOT_EXERCISED_SAME_ENRICH_PATH",
-    "SIMULATE": "INCONCLUSIVE_NOT_EXERCISED",
+    "STREAM": "PASS",
+    "SIMULATE": "PASS",
     "F5": "PASS",
     "HISTORY": "PASS"
   },
@@ -78,7 +78,6 @@
     "D1 capabilities.pathRules KEEP until Action Catalog UX classification (no capabilityGroup)",
     "D2 static humanized_data_response.recommendations cleanup after profile coverage",
     "D3 api-delpi locale EN==pt stubs (~28 ops) — not display residual",
-    "D4 STREAM/SIMULATE formal harness (INCONCLUSIVE)",
     "D5 full R1–R11 corpus optional"
   ],
   "OUT_OF_SCOPE_ROUTING_FINDINGS": [
@@ -88,7 +87,7 @@
   "CUTOVER_RESULT": "PASS",
   "CLEANUP_RESULT": "PASS_WITH_PATHRULES_DEBT",
   "GENERALIZATION_RESULT": "PASS",
-  "VERIFY_FINAL": "PASS — live SEND/F5/HISTORY + smoke http; pathRules KEEP debt remains",
+  "VERIFY_FINAL": "PASS — live SEND/F5/HISTORY/STREAM/SIMULATE + smoke; pathRules KEEP debt remains",
   "FINAL_RESULT": "PASS_WITH_DOCUMENTED_DEBT",
   "COMMIT_REALIZADO": true,
   "PUSH_REALIZADO": true,
@@ -100,5 +99,7 @@
   "generated_at_live": "2026-09-10T07:51:42.961788+00:00",
   "LIVE_EVIDENCE": "residual_path_display_live_surfaces.json",
   "REMAINING_DEBT_DOC": "docs/testing/residual_path_display_cleanup_remaining_debt.md",
-  "generated_at_debt_doc": "2026-09-10T09:07:34.417262+00:00"
+  "generated_at_debt_doc": "2026-09-10T09:07:34.417262+00:00",
+  "LIVE_STREAM_SIMULATE_EVIDENCE": "residual_path_display_stream_simulate.json",
+  "generated_at_d4": "2026-09-10T11:42:04.202680+00:00"
 }

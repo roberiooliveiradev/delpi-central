@@ -58,7 +58,19 @@ class FakeRagContextService:
 
 
 class FakeChatToolContextService:
+    def __init__(self):
+        self.last_kwargs = {}
+
     def build_context(self, user_id, access_token, message, actions_enabled=True, **kwargs):
+        self.last_kwargs = dict(kwargs)
+        self.last_kwargs.update(
+            {
+                "user_id": user_id,
+                "access_token": access_token,
+                "message": message,
+                "actions_enabled": actions_enabled,
+            }
+        )
         return {
             "context": "Ferramenta get_current_user: Nome: Usuário Real; E-mail: real@delpi.com.br",
             "toolCalls": [
@@ -122,7 +134,8 @@ def test_admin_agent_simulate_builds_prompt_and_comparison():
 
 
 def test_admin_agent_simulate_executes_tools_with_access_token():
-    use_case = _make_use_case(chat_tool_context_service=FakeChatToolContextService())
+    tool_service = FakeChatToolContextService()
+    use_case = _make_use_case(chat_tool_context_service=tool_service)
 
     result = use_case.execute(
         question="Quem sou eu?",
@@ -135,6 +148,41 @@ def test_admin_agent_simulate_executes_tools_with_access_token():
     assert result["plannedToolCalls"][0]["status"] == "executed"
     assert "get_current_user" in result["finalPrompt"]["systemPrompt"]
     assert result["debugContext"]["toolsExecuted"] is True
+
+
+def test_admin_agent_simulate_sandbox_passes_bound_action_ids():
+    tool_service = FakeChatToolContextService()
+    agent_repo = Mock(spec=ChatAgentRepositoryPort)
+    agent = Mock()
+    agent.id = "11111111-1111-1111-1111-111111111111"
+    agent.name = "Agente Minha DELPI"
+    agent.enabled = True
+    agent.system_prompt = "prompt"
+    agent.metadata = {}
+    agent_repo.get_accessible_by_id.return_value = (agent, "owner")
+    agent_repo.list_enabled_action_ids.return_value = [
+        "api-delpi.get_product_stock",
+    ]
+
+    use_case = _make_use_case(
+        chat_tool_context_service=tool_service,
+        chat_agent_repository=agent_repo,
+    )
+
+    result = use_case.execute(
+        question="Consulte o estoque do produto 10080001.",
+        agent_id=str(agent.id),
+        user_id="00000000-0000-0000-0000-000000000001",
+        access_token="token-test",
+        execute_tools_in_sandbox=True,
+    )
+
+    assert result["debugContext"]["toolsExecuted"] is True
+    assert tool_service.last_kwargs.get("allowed_action_ids") == [
+        "api-delpi.get_product_stock",
+    ]
+    assert (tool_service.last_kwargs.get("agent_context") or {}).get("id") == str(agent.id)
+    assert agent_repo.list_enabled_action_ids.call_count >= 1
 
 
 def test_admin_agent_simulate_applies_prose_delivery_on_sandbox_tools(monkeypatch):

@@ -3,8 +3,9 @@
 **Plano vigente:** `~/.cursor/plans/residual_path_display_cleanup_28b9adee.plan.md`  
 **Plano STALE (parcialmente absorvido):** `~/.cursor/plans/residual_path_catalogs_cleanup_7f3a9c21.plan.md`  
 **BASE:** `c20064c06` · **HEAD ao documentar:** `ee4a43c0e`  
-**Veredito atual:** `PASS_WITH_DOCUMENTED_DEBT`  
-**Live:** SEND / F5 / HISTORY = PASS (`docs/testing/evidence/residual_path_display_live_surfaces.json`)
+**Veredito atual:** `PASS_WITH_DOCUMENTED_DEBT` (D4 STREAM/SIMULATE fechado)  
+**Live:** SEND / F5 / HISTORY / STREAM / SIMULATE = PASS  
+(`docs/testing/evidence/residual_path_display_live_surfaces.json`, `residual_path_display_stream_simulate.json`)
 
 Este arquivo é a lista **canônica do que ainda falta** após o cutover/cleanup/generalização de path→display. Não reabre o kill de catálogos já removidos.
 
@@ -25,6 +26,7 @@ Este arquivo é a lista **canônica do que ainda falta** após o cutover/cleanup
 | Locale pt-BR coverage (551/551) | PASS | E11 |
 | Ajuda features/capabilities | PASS | E18.S1 |
 | Live SEND + F5/HISTORY + smoke HTTP | PASS | live_surfaces + smoke |
+| Live STREAM + SIMULATE (D4) | PASS | stream_simulate |
 | W-ROUTING charter + plano-filho (docs only) | PASS | `w_routing_charter.json` |
 
 ---
@@ -64,10 +66,10 @@ Este arquivo é a lista **canônica do que ainda falta** após o cutover/cleanup
 
 | | |
 |--|--|
-| **Status** | INCONCLUSIVE |
-| **Por quê** | Mesmo enrich path que SEND; não exercidos em harness dedicado nesta sessão |
-| **Aceite mínimo sugerido** | 1 caso stream SSE + 1 simulate admin com assert de `stackPresentationPlan` / labels |
-| **Não bloqueia** | Cutover display já validado em SEND+F5 |
+| **Status** | PASS |
+| **Feito** | Harness `scripts/smoke_residual_path_display_stream_simulate.py` + fix simulate passa `allowedActionIds` do binding do agente no sandbox |
+| **Evidência** | `docs/testing/evidence/residual_path_display_stream_simulate.json` |
+| **Aceite** | STREAM SSE e SIMULATE admin com `stackPresentationPlan` / tabela e sem leak técnico EN |
 
 ### D5 — Evals R1–R11 corpus completo
 
@@ -94,11 +96,10 @@ Este arquivo é a lista **canônica do que ainda falta** após o cutover/cleanup
 ## Ordem sugerida para fechar
 
 ```text
-1. D4 STREAM/SIMULATE (rápido, fecha INCONCLUSIVE de superfície)
-2. D2 cleanup recommendations static (quando coverage de profiles OK)
-3. D1 capabilities pathRules (plano novo, maior risco)
-4. D3 EN==pt (backlog api-delpi paralelo)
-5. D5 evals corpus (sob demanda)
+1. D2 cleanup recommendations static (quando coverage de profiles OK)
+2. D1 capabilities pathRules (plano novo, maior risco)
+3. D3 EN==pt (backlog api-delpi paralelo)
+4. D5 evals corpus (sob demanda)
 ```
 
 ---
@@ -109,6 +110,8 @@ Este arquivo é a lista **canônica do que ainda falta** após o cutover/cleanup
 |----------|-----|
 | `docs/testing/evidence/residual_path_display_e10_verify_final.json` | Veredito C/C/G |
 | `docs/testing/evidence/residual_path_display_live_surfaces.json` | Live SEND/F5 |
+| `docs/testing/evidence/residual_path_display_stream_simulate.json` | Live STREAM/SIMULATE (D4) |
 | `docs/testing/evidence/residual_path_catalogs_7f3a9c21_residual_verify.json` | Residual do plano STALE |
 | `docs/testing/evidence/w_routing_charter.json` | Charter routing |
 | `scripts/smoke_catalog_display_openapi.py` | Smoke inprocess+http (`message` field) |
+| `scripts/smoke_residual_path_display_stream_simulate.py` | Smoke STREAM+SIMULATE |
