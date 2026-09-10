@@ -41,7 +41,7 @@ Lista o catálogo (somente leitura).
     "description": "Elabora, explica, corrige e revisa consultas SELECT (SQL genérico); identifica erros de sintaxe quando o usuário colar SQL ou mensagens de erro.",
     "policyFile": "sql-assistant-skill.md",
     "metadataFlag": "authoring",
-    "executionHint": "POST /data/sql"
+    "executionHint": "sql_execution"
   }
 ]
 ```
@@ -66,7 +66,7 @@ Retorna o catálogo mesclado com o estado do agente e capacidades derivadas.
     "description": "...",
     "policyFile": "sql-assistant-skill.md",
     "enabled": true,
-    "executionHint": "POST /data/sql",
+    "executionHint": "sql_execution",
     "derived": {
       "sqlExecutionAvailable": true
     }

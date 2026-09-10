@@ -16,7 +16,7 @@ _EAR = _ROOT / "app/content/pt-BR/assistant/external_action_responses.json"
 # Frozen 2026-09-10 — E8.S1 inventory-only (sem mutação de conteúdo).
 _FREEZE = {
     "skills_total": 7,
-    "execution_path_hint_pathish": 3,
+    "execution_path_hint_pathish": 0,
     "execution_derived_key": 1,
     "features_total": 21,
     "features_with_path_required_actions": 12,

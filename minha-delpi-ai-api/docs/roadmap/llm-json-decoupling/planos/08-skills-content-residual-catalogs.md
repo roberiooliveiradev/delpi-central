@@ -1,8 +1,8 @@
 # Plano 08 — Skills/help/content -> remover catálogos técnicos residuais
 
 **Prioridade:** P2  
-**Status execução:** Onda G · E8.S1 **ATENDIDO** · próxima E8.S2  
-**Evidência:** [`../evidence/e8-s1-skills-help-residual-inventory.md`](../evidence/e8-s1-skills-help-residual-inventory.md) · [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda G · E8.S1–S2 **ATENDIDO** · próxima E8.S3  
+**Evidência:** [`../evidence/e8-s1-skills-help-residual-inventory.md`](../evidence/e8-s1-skills-help-residual-inventory.md) · [`../evidence/e8-s2-skill-catalog-cleanup.md`](../evidence/e8-s2-skill-catalog-cleanup.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** conteúdo editorial continua rico e configurável, mas deixa de anunciar ou depender de endpoints hardcoded quando a disponibilidade real pode ser consultada no runtime.
 
 ## CURRENT
@@ -58,11 +58,11 @@ resposta de ajuda
 
 ### E8.S2 — Skill catalog cleanup
 
-**Fazer:** substituir hints de execução usados como runtime dependency por capability keys neutras ou resolver dinâmico; manter `policyFile`, descrição, aliases e exemplos.
+**Status:** **ATENDIDO** (2026-09-10) — evidência [`../evidence/e8-s2-skill-catalog-cleanup.md`](../evidence/e8-s2-skill-catalog-cleanup.md)
 
-**Não fazer:** esconder do usuário limitações reais da skill.
+**Feito:** hints path-like → capability keys (`sql_execution`, `product_analyser`, `quality_action_plans`, `document_vision`); policy/derived preservados; enablement continua por actions.
 
-**Teste:** skill habilitada/desabilitada; action disponível/indisponível; agente com bindings diferentes.
+**Não fazer:** esconder do usuário limitações reais da skill — **respeitado**.
 
 ### E8.S3 — Help/capabilities cleanup
 

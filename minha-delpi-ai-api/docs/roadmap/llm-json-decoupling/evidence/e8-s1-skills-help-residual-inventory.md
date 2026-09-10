@@ -20,7 +20,7 @@ NO_CONTENT_MUTATION = PASS
 | Sinal | Valor |
 |-------|------:|
 | skills total | **7** |
-| `executionPathHint` path-like | **3** (`sql`, `drawing-analysis-delpi`, `quality-action-plans-delpi`) |
+| `executionPathHint` path-like | **0** (E8.S2) |
 | `executionDerivedKey` | **1** |
 | features total | **21** |
 | features com `requiredActions` path | **12** |

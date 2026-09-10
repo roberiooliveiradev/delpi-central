@@ -24,11 +24,11 @@
     {
       "key": "sql",
       "label": "Especialista SQL",
-      "description": "Elabora, explica, corrige e revisa consultas SELECT (SQL genérico) em blocos ```sql```. Identifica erros de sintaxe e lógica quando o usuário colar SQL ou mensagens de erro do Protheus/TOTVS. A execução no banco depende da action POST /data/sql habilitada no agente — elaborar SQL e executar são camadas diferentes.",
+      "description": "Elabora, explica, corrige e revisa consultas SELECT (SQL genérico) em blocos ```sql```. Identifica erros de sintaxe e lógica quando o usuário colar SQL ou mensagens de erro do Protheus/TOTVS. A execução no banco depende da action SQL habilitada no agente (Action Catalog + RBAC) — elaborar SQL e executar são camadas diferentes.",
       "policyFile": "sql-assistant-skill.md",
       "metadataFlag": "authoring",
       "legacyMetadataFlag": "sqlAuthoring",
-      "executionPathHint": "POST /data/sql",
+      "executionPathHint": "sql_execution",
       "executionDerivedKey": "sqlExecutionAvailable",
       "aliases": [
         "sql",
@@ -81,11 +81,11 @@
     {
       "key": "drawing-analysis-delpi",
       "label": "Análise de Desenhos DELPI",
-      "description": "Analisa desenhos técnicos DELPI em PDF, validando o documento contra dados reais do Protheus via provider OpenAPI (api-delpi ou api-externa: GET /products/{code}/analyser) e normas internas.",
+      "description": "Analisa desenhos técnicos DELPI em PDF, validando o documento contra dados reais do Protheus via action OpenAPI de análise de produto (analyser) e normas internas.",
       "policyFile": "drawing-analysis-delpi-skill.md",
       "metadataFlag": "engineering",
       "legacyMetadataFlag": "drawingAnalysis",
-      "executionPathHint": "GET /products/{code}/analyser",
+      "executionPathHint": "product_analyser",
       "aliases": [
         "drawing-analyser",
         "analise de desenho",
@@ -112,7 +112,7 @@
       "policyFile": "document-vision-delpi-skill.md",
       "metadataFlag": "enabled",
       "legacyMetadataFlag": "documentVision",
-      "executionPathHint": "ChatDocumentVisionService",
+      "executionPathHint": "document_vision",
       "aliases": [
         "ocr-delpi",
         "pdf-ocr",
@@ -133,7 +133,7 @@
       "policyFile": "quality-action-plans-delpi-skill.md",
       "metadataFlag": "enabled",
       "legacyMetadataFlag": "qualityActionPlans",
-      "executionPathHint": "/quality/action-plans",
+      "executionPathHint": "quality_action_plans",
       "aliases": [
         "pac",
         "pac qualidade",
