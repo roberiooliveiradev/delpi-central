@@ -434,8 +434,10 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/PpFirmwareArtifactField/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/PpFirmwareSourceField/);
     expect(readRelative("components/data/ppFormFields.tsx")).not.toMatch(/type=["']file["']/);
+    expect(readRelative("pages/FirmwareCreatePage.tsx")).toMatch(/pp-firmware-create-layout/);
     expect(readRelative("pages/FirmwareCreatePage.tsx")).toMatch(/PpFirmwareArtifactField/);
     expect(readRelative("pages/FirmwareCreatePage.tsx")).toMatch(/PpFirmwareSourceField/);
+    expect(readRelative("index.css")).toMatch(/pp-firmware-create-layout/);
     // Campo genérico de arquivo foi dividido em artefato (.bin) e source (.ino).
     for (const { rel, source } of sources) {
       expect(source, rel).not.toMatch(/PpFirmwareFileField/);

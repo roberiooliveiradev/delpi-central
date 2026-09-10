@@ -694,6 +694,36 @@
   grid-column: 1 / -1;
 }
 
+/* Novo firmware: meta empilhada à esquerda, sketch à direita — sem buraco vertical. */
+.pp-firmware-create-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pp-section-gap);
+  width: 100%;
+  max-width: min(72rem, 100%);
+}
+
+.pp-firmware-create-layout__meta,
+.pp-firmware-create-layout__source {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pp-section-gap);
+  min-width: 0;
+}
+
+@media (min-width: 901px) {
+  .pp-firmware-create-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
+    align-items: start;
+    column-gap: var(--pp-section-gap);
+  }
+}
+
+.pp-form-page--embedded .pp-firmware-create-layout {
+  max-width: none;
+}
+
 .pp-field {
   display: flex;
   flex-direction: column;

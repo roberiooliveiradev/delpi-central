@@ -171,115 +171,119 @@ export function FirmwareCreatePage({
         <PpStateBox variant="error" title="Não foi possível salvar" message={formError} />
       ) : null}
 
-      <div className="pp-form-layout">
-        <PpSectionCard
-          title="Identificação"
-          hint={PP_HELP.firmwareCreate.sectionIdentity}
-        >
-          <div className="pp-form-grid pp-form-grid--pair">
-            <PpNativeTextField
-              id="firmware-new-key"
-              label="Família OTA"
-              hint={PP_HELP.ota.firmwareFamily}
-              value={firmwareKey}
-              onChange={setFirmwareKey}
-            />
-            {driverOptions.length > 0 ? (
-              <PpNativeSelectField
-                id="firmware-new-driver"
-                label="Tipo de driver"
-                hint={PP_HELP.ota.driverType}
-                value={driverKey}
-                onChange={setDriverKey}
-                options={driverOptions}
-                searchable={false}
-                afterControl={
-                  onOpenDriverCreate ? (
+      <div className="pp-firmware-create-layout">
+        <div className="pp-firmware-create-layout__meta">
+          <PpSectionCard
+            title="Identificação"
+            hint={PP_HELP.firmwareCreate.sectionIdentity}
+          >
+            <div className="pp-form-grid pp-form-grid--pair">
+              <PpNativeTextField
+                id="firmware-new-key"
+                label="Família OTA"
+                hint={PP_HELP.ota.firmwareFamily}
+                value={firmwareKey}
+                onChange={setFirmwareKey}
+              />
+              {driverOptions.length > 0 ? (
+                <PpNativeSelectField
+                  id="firmware-new-driver"
+                  label="Tipo de driver"
+                  hint={PP_HELP.ota.driverType}
+                  value={driverKey}
+                  onChange={setDriverKey}
+                  options={driverOptions}
+                  searchable={false}
+                  afterControl={
+                    onOpenDriverCreate ? (
+                      <PpActionButton variant="ghost" onClick={onOpenDriverCreate}>
+                        {PP_HELP.firmwareCreate.registerDriverType}
+                      </PpActionButton>
+                    ) : null
+                  }
+                />
+              ) : (
+                <div className="pp-form-grid">
+                  <PpNativeTextField
+                    id="firmware-new-driver"
+                    label="Tipo de driver"
+                    hint={PP_HELP.ota.driverKeyEmpty}
+                    value={driverKey}
+                    onChange={setDriverKey}
+                  />
+                  {onOpenDriverCreate ? (
                     <PpActionButton variant="ghost" onClick={onOpenDriverCreate}>
                       {PP_HELP.firmwareCreate.registerDriverType}
                     </PpActionButton>
-                  ) : null
-                }
+                  ) : null}
+                </div>
+              )}
+              <PpNativeTextField
+                id="firmware-new-version"
+                label="Versão"
+                hint={PP_HELP.ota.version}
+                value={version}
+                onChange={setVersion}
+                placeholder="1.3.0"
               />
-            ) : (
-              <div className="pp-form-grid">
-                <PpNativeTextField
-                  id="firmware-new-driver"
-                  label="Tipo de driver"
-                  hint={PP_HELP.ota.driverKeyEmpty}
-                  value={driverKey}
-                  onChange={setDriverKey}
-                />
-                {onOpenDriverCreate ? (
-                  <PpActionButton variant="ghost" onClick={onOpenDriverCreate}>
-                    {PP_HELP.firmwareCreate.registerDriverType}
-                  </PpActionButton>
-                ) : null}
-              </div>
-            )}
-            <PpNativeTextField
-              id="firmware-new-version"
-              label="Versão"
-              hint={PP_HELP.ota.version}
-              value={version}
-              onChange={setVersion}
-              placeholder="1.3.0"
-            />
-            <PpNativeTextField
-              id="firmware-new-display-name"
-              label="Nome exibido"
-              hint={PP_HELP.ota.displayName}
-              value={displayName}
-              onChange={setDisplayName}
-              placeholder="Leitor de máquina"
-            />
-          </div>
-        </PpSectionCard>
+              <PpNativeTextField
+                id="firmware-new-display-name"
+                label="Nome exibido"
+                hint={PP_HELP.ota.displayName}
+                value={displayName}
+                onChange={setDisplayName}
+                placeholder="Leitor de máquina"
+              />
+            </div>
+          </PpSectionCard>
 
-        <PpSectionCard title="Sketch (.ino)" hint={PP_HELP.firmwareCreate.sectionSource}>
-          <div className="pp-form-grid">
-            <PpFirmwareSourceField
-              id="firmware-new-source"
-              label="Importar sketch (.ino)"
-              hint={PP_HELP.firmwareCreate.sourceField}
-              editorLabel="Código-fonte"
-              editorHint={PP_HELP.firmwareCreate.sourceEditor}
-              value={sourceText}
-              onChange={setSourceText}
-              rows={14}
-              onReadError={() => setFormError(PP_HELP.ota.sourceFileReadFailed)}
-            />
-          </div>
-        </PpSectionCard>
+          <PpSectionCard
+            title="Artefato OTA (.bin)"
+            hint={PP_HELP.firmwareCreate.sectionArtifact}
+          >
+            <div className="pp-form-grid">
+              <PpFirmwareArtifactField
+                id="firmware-new-bin"
+                label="Artefato compilado (.bin)"
+                hint={PP_HELP.firmwareCreate.artifactField}
+                file={binFile}
+                onChange={setBinFile}
+              />
+            </div>
+          </PpSectionCard>
 
-        <PpSectionCard
-          title="Artefato OTA (.bin)"
-          hint={PP_HELP.firmwareCreate.sectionArtifact}
-        >
-          <div className="pp-form-grid">
-            <PpFirmwareArtifactField
-              id="firmware-new-bin"
-              label="Artefato compilado (.bin)"
-              hint={PP_HELP.firmwareCreate.artifactField}
-              file={binFile}
-              onChange={setBinFile}
-            />
-          </div>
-        </PpSectionCard>
+          <PpSectionCard title="Notas" hint={PP_HELP.firmwareCreate.sectionNotes}>
+            <div className="pp-form-grid">
+              <PpNativeTextAreaField
+                id="firmware-new-notes"
+                label="Notas da versão"
+                hint={PP_HELP.ota.releaseNotes}
+                value={releaseNotes}
+                onChange={setReleaseNotes}
+                rows={3}
+                span
+              />
+            </div>
+          </PpSectionCard>
+        </div>
 
-        <PpSectionCard title="Notas" hint={PP_HELP.firmwareCreate.sectionNotes}>
-          <div className="pp-form-grid">
-            <PpNativeTextAreaField
-              id="firmware-new-notes"
-              label="Notas da versão"
-              hint={PP_HELP.ota.releaseNotes}
-              value={releaseNotes}
-              onChange={setReleaseNotes}
-              rows={4}
-              span
-            />
-          </div>
-        </PpSectionCard>
+        <div className="pp-firmware-create-layout__source">
+          <PpSectionCard title="Sketch (.ino)" hint={PP_HELP.firmwareCreate.sectionSource}>
+            <div className="pp-form-grid">
+              <PpFirmwareSourceField
+                id="firmware-new-source"
+                label="Importar sketch (.ino)"
+                hint={PP_HELP.firmwareCreate.sourceField}
+                editorLabel="Código-fonte"
+                editorHint={PP_HELP.firmwareCreate.sourceEditor}
+                value={sourceText}
+                onChange={setSourceText}
+                rows={embedded ? 10 : 12}
+                onReadError={() => setFormError(PP_HELP.ota.sourceFileReadFailed)}
+              />
+            </div>
+          </PpSectionCard>
+        </div>
       </div>
 
       <div className="pp-form-footer">
