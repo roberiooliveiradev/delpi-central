@@ -172,3 +172,150 @@ def test_commentary_highlight_uses_resolved_field_labels():
     joined = " ".join(lines)
     assert "OEE %" in joined
     assert "OPs em atraso" in joined
+
+
+def test_field_label_parity_table_chart_kpi_insight():
+    """R4/R5 — same key resolves equivalently for table/chart/KPI/insight via FLB."""
+    from app.domain.entities.field_label_bundle import FieldLabelBundle
+    from app.domain.entities.presentation_spec import (
+        EncodingChannel,
+        PresentationKpiSpec,
+        PresentationSpec,
+        PresentationTableSpec,
+    )
+    from app.domain.services.chat_data_insight_service import ChatDataInsightService
+    from app.domain.services.presentation_compilers.presentation_chart_compiler_service import (
+        PresentationChartCompilerService,
+    )
+    from app.domain.services.presentation_compilers.presentation_kpi_compiler_service import (
+        PresentationKpiCompilerService,
+    )
+    from app.domain.services.presentation_compilers.presentation_table_compiler_service import (
+        PresentationTableCompilerService,
+    )
+    from app.domain.services.presentation_data_profile_builder_service import (
+        PresentationDataProfileBuilderService,
+    )
+
+    key = "oee_pct"
+    expected = "OEE %"
+    sibling_key = "late_ops"
+    sibling_label = "OPs em atraso"
+    labels = {key: expected, sibling_key: sibling_label}
+    formats = {key: "percent", sibling_key: "quantity"}
+    metadata_labels = {
+        "resolvedFieldLabels": {
+            "labels": labels,
+            "formats": formats,
+            "sourceByKey": {
+                key: "OPENAPI_TITLE",
+                sibling_key: "OPENAPI_TITLE",
+            },
+        }
+    }
+
+    bundle = FieldLabelBundle.from_metadata(metadata_labels)
+    assert bundle.label_for(key) == expected
+    assert bundle.label_for(sibling_key) == sibling_label
+
+    rows = [
+        {key: 87.5, sibling_key: 3, "product_code": "P1"},
+        {key: 90.0, sibling_key: 1, "product_code": "P2"},
+    ]
+    profile = PresentationDataProfileBuilderService.build(
+        rows,
+        label_bundle=metadata_labels["resolvedFieldLabels"],
+    )
+    shared_labels = dict(profile.resolved_field_labels.get("labels") or {})
+    shared_formats = dict(profile.resolved_field_labels.get("formats") or {})
+    assert shared_labels[key] == expected
+
+    table_spec = PresentationSpec(
+        view="table",
+        fields=(key, sibling_key),
+        labels=shared_labels,
+        formats=shared_formats,
+        table=PresentationTableSpec(title="Indicadores"),
+    )
+    table_meta = {
+        "tablePresentation": {
+            "type": "table",
+            "columns": [{"key": key}, {"key": sibling_key}],
+            "rows": rows,
+        }
+    }
+    PresentationTableCompilerService.apply(
+        table_meta,
+        spec=table_spec,
+        labels=shared_labels,
+        formats=shared_formats,
+    )
+    table_cols = {
+        col["key"]: col["label"] for col in table_meta["tablePresentation"]["columns"]
+    }
+    assert table_cols[key] == expected
+    assert table_cols[sibling_key] == sibling_label
+
+    chart_spec = PresentationSpec(
+        view="chart",
+        mark="bar",
+        encoding={
+            "x": EncodingChannel(field="product_code", type="nominal"),
+            "y": EncodingChannel(field=key, type="quantitative"),
+        },
+        labels=shared_labels,
+        formats=shared_formats,
+    )
+    chart_meta = {
+        "chartPresentation": {
+            "type": "chart",
+            "chartType": "bar",
+            "data": rows,
+            "config": {"xAxis": "product_code", "yAxis": key},
+        }
+    }
+    PresentationChartCompilerService.apply(
+        chart_meta,
+        spec=chart_spec,
+        labels=shared_labels,
+        formats=shared_formats,
+    )
+    chart_field_labels = chart_meta["chartPresentation"]["config"]["fieldLabels"]
+    assert chart_field_labels[key] == expected
+
+    kpi_spec = PresentationSpec(
+        view="kpi",
+        kpi=PresentationKpiSpec(measure_fields=(key, sibling_key)),
+        labels=shared_labels,
+        formats=shared_formats,
+    )
+    kpi_meta = {
+        "tablePresentation": {
+            "type": "table",
+            "columns": [{"key": key}, {"key": sibling_key}],
+            "rows": rows,
+        }
+    }
+    PresentationKpiCompilerService.apply(
+        kpi_meta,
+        spec=kpi_spec,
+        profile=profile,
+        labels=shared_labels,
+        formats=shared_formats,
+    )
+    kpi_labels = {
+        card["key"]: card["label"] for card in kpi_meta["kpiPresentation"]["cards"]
+    }
+    assert kpi_labels[key] == expected
+    assert kpi_labels[sibling_key] == sibling_label
+
+    insight_lines = ChatDataInsightService._highlights_from_operational_summary(
+        {"summary": {key: 87.5, sibling_key: 3}},
+        metadata=metadata_labels,
+    )
+    joined = " ".join(insight_lines)
+    assert expected in joined
+    assert sibling_label in joined
+
+    # Negative: unknown key does not invent a parallel catalog label
+    assert bundle.label_for("unknown_metric_xyz") == ""

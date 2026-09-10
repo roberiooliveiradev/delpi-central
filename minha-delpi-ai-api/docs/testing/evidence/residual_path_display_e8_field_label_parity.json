@@ -1,0 +1,15 @@
+{
+  "stage": "E8",
+  "status": "PARITY_TEST_ADDED",
+  "decision": "Same key resolves via FieldLabelBundle / resolvedFieldLabels for table, chart, KPI, insight",
+  "authority": "FieldLabelBundle.from_metadata(resolvedFieldLabels) → labels dict shared by PresentationSpecCompilerService + ChatDataInsightService",
+  "consumers": [
+    "PresentationTableCompilerService.apply(labels=…)",
+    "PresentationChartCompilerService.apply → config.fieldLabels",
+    "PresentationKpiCompilerService.apply → card.label",
+    "ChatDataInsightService._highlights_from_operational_summary → bundle.label_for"
+  ],
+  "test": "tests/unit/domain/services/test_catalog_display_openapi_evolution.py::test_field_label_parity_table_chart_kpi_insight",
+  "dims": ["R4", "R5"],
+  "note": "Extends catalog display evolution suite; does not reintroduce parallel label maps"
+}

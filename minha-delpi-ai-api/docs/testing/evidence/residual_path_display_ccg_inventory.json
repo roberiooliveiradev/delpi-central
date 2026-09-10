@@ -15,8 +15,10 @@
     "titles": "CUTOVER+CLEANUP PASS (E2)",
     "stack_plan": "full routeTitles/routeFraming dump",
     "mfe": "routeTitle(routeKey) + SECTION_BASE domain fallbacks",
-    "capabilities": "pathRules token match; H-CAP not decided",
-    "recommendations": "validator ready; LLM producer not emitting"
+    "capabilities": "KEEP pathRules (E5 H-CAP FAIL_DO_NOT_CREATE capabilityGroup)",
+    "fieldFormats": "KEEP catalog; OPENAPI_COVERED=0 (E6)",
+    "recommendations": "CUTOVER incomplete; static LEGACY_FALLBACK (E7); validator ready",
+    "field_label_parity": "E8 unit parity table/chart/KPI/insight via FLB"
   },
   "bugs": [
     "chat_presentation_scalar_field_commentary_service.title_for_path wrong arity"
