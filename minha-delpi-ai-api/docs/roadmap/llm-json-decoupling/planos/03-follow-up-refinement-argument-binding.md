@@ -1,8 +1,8 @@
 # Plano 03 — Follow-up, refinement e argument binding generalizados
 
 **Prioridade:** P0  
-**Status execução:** Onda D · **EM_ANDAMENTO** · E3.S1–S3 **ATENDIDO** · próxima = E3.S4 (schema-driven argument binder)  
-**Evidência:** [`../evidence/e3-s1-multi-turn-state-inventory.md`](../evidence/e3-s1-multi-turn-state-inventory.md) · [`../evidence/e3-s2-follow-up-baseline.md`](../evidence/e3-s2-follow-up-baseline.md) · [`../evidence/e3-s3-turn-refinement-contract.md`](../evidence/e3-s3-turn-refinement-contract.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda D · **EM_ANDAMENTO** · E3.S1–S4 **ATENDIDO** · próxima = E3.S5 (group-by/refetch sem pathContains)  
+**Evidência:** [`../evidence/e3-s1-multi-turn-state-inventory.md`](../evidence/e3-s1-multi-turn-state-inventory.md) · [`../evidence/e3-s2-follow-up-baseline.md`](../evidence/e3-s2-follow-up-baseline.md) · [`../evidence/e3-s3-turn-refinement-contract.md`](../evidence/e3-s3-turn-refinement-contract.md) · [`../evidence/e3-s4-schema-driven-argument-binder.md`](../evidence/e3-s4-schema-driven-argument-binder.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** continuidade conversacional, paginação, filtros, group-by e complementação de argumentos devem funcionar a partir do estado estruturado da conversa e do schema da action, não de substrings de rota ou frases cadastradas.
 
 ## CURRENT
@@ -96,13 +96,15 @@ Medir R3/R6/R7/R8/R9/R11.
 
 **Teste:** malformed output, unknown field, invalid enum, conflicting inherited arg. ✅
 
-### E3.S4 — Schema-driven argument binder
+### E3.S4 — Schema-driven argument binder — **ATENDIDO**
 
 **Fazer:** usar OpenAPI parameters/requestBody como autoridade; combinar valores explícitos, contexto e inferência; validar/coagir deterministicamente.
 
 **Não fazer:** LLM decidir required/type/enum ou inventar valor ausente.
 
-**Teste:** required present/missing, path/query/body, enum/type/format, additionalProperties e conflicting values.
+**Feito:** `SchemaDrivenArgumentBinderService` orquestra retain/coerce/`ValidateActionArgumentsService` sobre `TurnRefinement`; evidência [`../evidence/e3-s4-schema-driven-argument-binder.md`](../evidence/e3-s4-schema-driven-argument-binder.md). Sem cutover dos planners.
+
+**Teste:** required present/missing, path/query/body, enum/type/format, additionalProperties e conflicting values. ✅
 
 ### E3.S5 — Group-by/refetch generalization
 
