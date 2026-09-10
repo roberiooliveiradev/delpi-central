@@ -20,6 +20,7 @@ Para implementar no estado atual, consultar primeiro:
 | [`admin-fluxos-revisao.md`](./admin-fluxos-revisao.md) | Veredito manter/melhorar/remover dos fluxos admin do chat (ondas 1–8). |
 | [`admin-fluxos-plano-implementacao-restante.md`](./admin-fluxos-plano-implementacao-restante.md) | **Plano executável** do restante do BC admin (ondas 9+: presets, debug, HITL, Studio, kit). |
 | [`openapi-first-universal-tool-routing.md`](./openapi-first-universal-tool-routing.md) | Arquitetura vigente e critérios de aceite do roteamento universal de Actions. |
+| [`llm-json-decoupling/README.md`](./llm-json-decoupling/README.md) | **Iniciativa ativa** para remover catálogos técnicos e NLU hardcoded em `app/content`, migrando routing para OpenAPI/Action Catalog e semântica contextual para LLM estruturado. Inclui prompt mestre, roadmap e planos por fluxo. |
 | [`melhorias-futuras.md`](./melhorias-futuras.md) | Backlog de melhorias futuras explicitamente não implementadas. |
 | [`melhorias/BACKLOG_ROADMAP.md`](./melhorias/BACKLOG_ROADMAP.md) | Backlog priorizado quando aplicável. |
 
