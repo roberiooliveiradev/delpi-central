@@ -240,6 +240,15 @@ class OperationalRouteActionResolverService:
             action=action if isinstance(action, dict) else {},
             message=message,
             previous_messages=previous_messages,
+            catalog=self._catalog,
+            identifier=identifier,
+            conversation_context=conversation_context,
+            memory_snapshot=memory_snapshot,
+            production_kind=production_kind,
+            route=route,
+            build_date_branch_parameters=build_date_branch_parameters,
+            merge_date_parameters=merge_date_parameters,
+            description_override=description_override,
         )
         if shadow is not None:
             result["metadata"] = {"parameterStrategyShadow": shadow}
@@ -418,6 +427,16 @@ class OperationalRouteActionResolverService:
                 message,
                 previous_messages=previous_messages,
                 strategy=strategy,
+                catalog=self._catalog,
+                identifier=identifier,
+                conversation_context=conversation_context,
+                memory_snapshot=memory_snapshot,
+                production_kind=production_kind,
+                route=route,
+                build_date_branch_parameters=build_date_branch_parameters,
+                merge_date_parameters=merge_date_parameters,
+                description_override=description_override,
+                normalized=normalized_text,
             )
 
         if strategy == "product_search":

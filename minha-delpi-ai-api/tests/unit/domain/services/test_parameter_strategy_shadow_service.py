@@ -110,18 +110,20 @@ def test_sale_orders_shadow_reports_cutover_authority():
     assert shadow["cutover"] is True
 
 
-def test_product_code_not_cutover():
+def test_product_code_cutover_uses_openapi_authority():
     invalidate_openapi_tool_routing_cache()
-    assert ParameterStrategyShadowService.uses_openapi_authority("product_code") is False
-    assert (
-        ParameterStrategyShadowService.compare(
-            strategy="product_code",
-            legacy_parameters={"code": "10080047"},
-            action=_product_code_action(),
-            message="estoque 10080047",
-        )
-        is None
+    assert ParameterStrategyShadowService.uses_openapi_authority("product_code") is True
+    shadow = ParameterStrategyShadowService.compare(
+        strategy="product_code",
+        legacy_parameters={"code": "10080047"},
+        action=_product_code_action(),
+        message="estoque 10080047",
+        identifier="10080047",
+        catalog=_ProductCodeCatalog(),
     )
+    assert shadow is not None
+    assert shadow["cutover"] is True
+    assert shadow["authority"] == "openapi_binder"
 
 
 def test_flag_off_skips_shadow(monkeypatch):
@@ -191,6 +193,14 @@ def test_parameter_strategy_shadow_observability(caplog):
     assert any("parameter_strategy_shadow" in record.message for record in caplog.records)
 
 
+class _ProductCodeCatalog:
+    def filter_parameters_to_schema(self, action, parameters):
+        return parameters
+
+    def build_product_parameters(self, action, code, *, message=None, previous_messages=None):
+        return {"code": code}
+
+
 def test_build_parameters_cutover_none_uses_binder():
     invalidate_openapi_tool_routing_cache()
     from app.application.services.external_actions.operational_route_selection.operational_route_action_resolver_service import (
@@ -212,10 +222,10 @@ def test_build_parameters_cutover_none_uses_binder():
     assert params == {}
 
 
-def test_product_code_not_openapi_authority():
+def test_product_code_and_date_branch_openapi_authority():
     invalidate_openapi_tool_routing_cache()
-    assert ParameterStrategyShadowService.uses_openapi_authority("product_code") is False
-    assert ParameterStrategyShadowService.uses_openapi_authority("date_branch") is False
+    assert ParameterStrategyShadowService.uses_openapi_authority("product_code") is True
+    assert ParameterStrategyShadowService.uses_openapi_authority("date_branch") is True
 
 
 def test_supplier_part_number_cutover_binds_identifier():
@@ -298,10 +308,81 @@ def test_supplies_stock_cutover_fills_top_limit():
     assert int(params["top_limit"]) >= 1
 
 
-def test_date_branch_still_not_in_cutover():
+def test_e1s5_all_resolver_strategies_in_cutover():
     invalidate_openapi_tool_routing_cache()
-    assert "date_branch" not in ParameterStrategyShadowService.cutover_strategies()
-    assert "product_code" not in ParameterStrategyShadowService.cutover_strategies()
+    expected = {
+        "none",
+        "semantic",
+        "sale_orders",
+        "supplier_part_number",
+        "supplies_stock",
+        "exclusive_catalog",
+        "lmp",
+        "product_search",
+        "system_metadata",
+        "department_idd",
+        "product_code",
+        "date_branch",
+    }
+    assert ParameterStrategyShadowService.cutover_strategies() == expected
+    for name in expected:
+        assert ParameterStrategyShadowService.uses_openapi_authority(name) is True
+
+
+def test_product_code_and_date_branch_use_binder_authority():
+    invalidate_openapi_tool_routing_cache()
+    assert ParameterStrategyShadowService.uses_openapi_authority("product_code") is True
+    assert ParameterStrategyShadowService.uses_openapi_authority("date_branch") is True
+
+
+def test_product_search_cutover_requires_products_search_path():
+    invalidate_openapi_tool_routing_cache()
+    bad = {
+        "actionId": "x",
+        "path": "/other/search",
+        "operationId": "search_other",
+        "parametersSchema": [],
+    }
+    assert (
+        ParameterStrategyShadowService.bind_via_openapi(
+            bad,
+            "busque produtos cabo",
+            strategy="product_search",
+        )
+        is None
+    )
+    good = {
+        "actionId": "products-search",
+        "path": "/products/search",
+        "operationId": "search_products",
+        "parametersSchema": [
+            {"name": "description", "in": "query"},
+            {"name": "page_size", "in": "query"},
+        ],
+    }
+    params = ParameterStrategyShadowService.bind_via_openapi(
+        good,
+        "busque produtos cabo pp",
+        strategy="product_search",
+    )
+    assert params is not None
+
+
+def test_lmp_cutover_requires_sale_number_when_path_has_placeholder():
+    invalidate_openapi_tool_routing_cache()
+    action = {
+        "actionId": "lmp",
+        "path": "/sales/{sale_number}/lmp",
+        "parametersSchema": [{"name": "sale_number", "in": "path", "required": True}],
+    }
+    assert (
+        ParameterStrategyShadowService.bind_via_openapi(
+            action,
+            "mostre o dashboard LMP",
+            strategy="lmp",
+        )
+        is None
+    )
 
 
 def test_resolver_attaches_parameter_strategy_shadow_for_none(monkeypatch):

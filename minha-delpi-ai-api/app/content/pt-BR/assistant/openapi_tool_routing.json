@@ -18,7 +18,14 @@
       "semantic",
       "sale_orders",
       "supplier_part_number",
-      "supplies_stock"
+      "supplies_stock",
+      "exclusive_catalog",
+      "lmp",
+      "product_search",
+      "system_metadata",
+      "department_idd",
+      "product_code",
+      "date_branch"
     ]
   },
   "whenNotToUse": {

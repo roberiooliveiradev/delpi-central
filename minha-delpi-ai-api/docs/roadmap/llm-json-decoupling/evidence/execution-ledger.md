@@ -9,7 +9,7 @@
 | Onda | Planos | Status | Próxima subetapa | Notas |
 |------|--------|--------|------------------|-------|
 | A — baseline/contratos | inventário + freeze | **ATENDIDO** | — | Ver `onda-a-inventory.md` |
-| B — routing universal | 01 | **EM_ANDAMENTO** | E1.S5: próximas strategies (`lmp`/`exclusive_catalog`/…) | Cutover: +supplier_pn +supplies_stock; sem product/date |
+| B — routing universal | 01 | **EM_ANDAMENTO** | **E1.S6** cutover/cleanup fields | E1.S3–S5 ATENDIDOS; binding cutover completo |
 | C — entendimento | 02 | **BLOQUEADO_POR_B** (soft) | E2 inventário+baseline TU | Pode shadow em paralelo após B começar |
 | D — multi-turn/args | 03 | **BLOQUEADO_POR_B** | inventário follow-up | Depende de actionId estável |
 | E — caps/composition | 04, 05 | **PARCIAL** | 04: `action.*`; 05: routeIds | pathRules já DONE |
@@ -50,3 +50,4 @@ abrir planos/0N-*.md
 | 2026-09-10 | E1.S5 SHADOW_ON — parameterStrategy none/semantic/sale_orders |
 | 2026-09-10 | E1.S5 CUTOVER_PARTIAL — authority OpenAPI binder (flag cutoverEnabled) |
 | 2026-09-10 | E1.S5 — cutover supplier_part_number + supplies_stock (sem pular) |
+| 2026-09-10 | E1.S5 **ATENDIDO** — cutover completo (fila resolver; sql fora) |

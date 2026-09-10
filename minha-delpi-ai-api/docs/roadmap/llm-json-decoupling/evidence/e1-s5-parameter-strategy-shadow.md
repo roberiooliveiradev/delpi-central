@@ -1,16 +1,19 @@
-# E1.S5 — Parameter strategy shadow + cutover parcial
+# E1.S5 — Parameter strategy cutover completo
 
-**Status:** `CUTOVER_PARTIAL` expandido (2026-09-10)  
+**Status:** `ATENDIDO` (2026-09-10)  
 **Onda:** B (plano 01)
 
 ## Ordem executada (sem pular)
 
-1. `none` / `semantic` → binder  
-2. `sale_orders` → binder  
-3. `supplier_part_number` → binder (+ resolução canônica de papel no `_bind_arguments`)  
-4. `supplies_stock` → binder (+ defaults `top_limit`/`limit` no wrapper de cutover)
+1. `none` / `semantic` → OpenAPI binder  
+2. `sale_orders` → OpenAPI binder  
+3. `supplier_part_number` → OpenAPI binder (+ resolução canônica de papel no `_bind_arguments`)  
+4. `supplies_stock` → OpenAPI binder (+ defaults `top_limit`/`limit` no wrapper de cutover)  
+5. `exclusive_catalog` / `lmp` / `product_search` → domain binder canônico via `ParameterStrategyShadowService`  
+6. `system_metadata` / `department_idd` → domain binder canônico  
+7. `product_code` / `date_branch` → OpenAPI binder + enrich (`catalog.build_product_parameters` / `_enrich_date_branch`)
 
-**Ainda fora:** `product_code`, `date_branch`, `department_idd`, `lmp`, `product_search`, `exclusive_catalog`, `system_metadata`, `sql`
+**Fora do escopo E1.S5:** `sql` (policy/domains; cleanup em E1.S6+ se aplicável).
 
 ## Flags
 
@@ -20,10 +23,25 @@
   "cutoverEnabled": true,
   "strategies": [
     "none", "semantic", "sale_orders",
-    "supplier_part_number", "supplies_stock"
+    "supplier_part_number", "supplies_stock",
+    "exclusive_catalog", "lmp", "product_search",
+    "system_metadata", "department_idd",
+    "product_code", "date_branch"
   ]
 }
 ```
+
+## Ownership
+
+```text
+build_parameters (resolver)
+→ early return se strategy ∈ cutover + cutoverEnabled
+→ ParameterStrategyShadowService.bind_via_openapi
+   → binder authority: none/semantic/sale_orders/supplier_pn/supplies_stock/product_code/date_branch
+   → domain binder: exclusive_catalog/lmp/product_search/system_metadata/department_idd
+```
+
+O switch tipado no resolver permanece como código morto até E1.S6 (DELETE/cleanup).
 
 ## Aceite
 
@@ -32,13 +50,20 @@ CUTOVER_NONE_SEMANTIC = PASS
 CUTOVER_SALE_ORDERS = PASS
 CUTOVER_SUPPLIER_PART_NUMBER = PASS
 CUTOVER_SUPPLIES_STOCK = PASS
-PRODUCT_DATE_BRANCH_UNTOUCHED = PASS
+CUTOVER_EXCLUSIVE_LMP_PRODUCT_SEARCH = PASS
+CUTOVER_SYSTEM_METADATA_DEPARTMENT_IDD = PASS
+CUTOVER_PRODUCT_CODE_DATE_BRANCH = PASS
 MISSING_SUPPLIER_PN_RETURNS_NONE = PASS
-BINDER_SUPPLIER_ROLE_SCHEMA_DRIVEN = PASS
+LMP_MISSING_SALE_NUMBER_RETURNS_NONE = PASS
+PRODUCT_SEARCH_NON_PRODUCTS_PATH_RETURNS_NONE = PASS
+ALL_RESOLVER_STRATEGIES_IN_CUTOVER = PASS
 ```
 
-## Próximo (não pular)
+## Testes
 
-1. Próximas strategies da fila segura (ex.: avaliar `exclusive_catalog` / `lmp` com inventário).  
-2. Só então E1.S6 cleanup de fields mortos.  
-3. `product_code` / `date_branch` só com plano próprio (BUSINESS_RULE / TRANSVERSAL).
+`tests/unit/domain/services/test_parameter_strategy_shadow_service.py` — suite E1.S5.
+
+## Próximo
+
+1. **E1.S6** — remover autoridade residual / fields mortos do registry e braços mortos do switch.  
+2. Não reabrir cutover de binding sem evidência de regressão live.

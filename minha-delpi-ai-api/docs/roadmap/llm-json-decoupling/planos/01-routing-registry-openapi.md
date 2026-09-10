@@ -1,7 +1,7 @@
 # Plano 01 — Routing registry -> OpenAPI + Action Catalog
 
 **Prioridade:** P0  
-**Status execução:** Onda B · E1.S5 **CUTOVER_PARTIAL** (none→sale_orders→supplier_pn→supplies_stock) · próxima = demais strategies da fila (não E1.S6 ainda)  
+**Status execução:** Onda B · E1.S5 **ATENDIDO** · próxima = **E1.S6** (cleanup fields/consumers mortos)  
 **Evidência:** [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** uma action nova deve ser descoberta e selecionada por semântica/contrato sem exigir `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` por endpoint no conteúdo do assistente.
 
@@ -115,15 +115,13 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 
 **Pendente:** agregação live/admin da taxa `agree` de seleção; cutover default candidate (E1.S6).
 
-### E1.S5 — Parameter strategy removal — **CUTOVER_PARTIAL** (2026-09-10)
+### E1.S5 — Parameter strategy removal — **ATENDIDO** (2026-09-10)
 
-**Objetivo:** mover binding para `mensagem + contexto + action schema`.
+**Objetivo:** mover binding para `mensagem + contexto + action schema` (ou domain binder canônico), com shadow observável.
 
-**Feito (ordem):** `none`/`semantic` → `sale_orders` → `supplier_part_number` → `supplies_stock` com authority `_bind_arguments` (`cutoverEnabled=true`); shadow observa legado; `supplier_part_number` resolve via papel canônico no binder. Evidência: [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md).
+**Feito (ordem completa):** `none`/`semantic` → `sale_orders` → `supplier_part_number` → `supplies_stock` → `exclusive_catalog`/`lmp`/`product_search` → `system_metadata`/`department_idd` → `product_code`/`date_branch`. Authority via `ParameterStrategyShadowService` (`cutoverEnabled=true`); switch tipado no resolver vira dead code até E1.S6. Evidência: [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md).
 
-**Não tocado:** `product_code`, `date_branch`, `department_idd`, `lmp`, `product_search`, `exclusive_catalog`, `system_metadata`.
-
-**Pendente:** demais strategies na fila; limpeza de fields (E1.S6) só depois.
+**Fora:** `sql` (policy). Limpeza de fields/braços mortos = **E1.S6**.
 
 ### E1.S6 — Cutover e cleanup
 
