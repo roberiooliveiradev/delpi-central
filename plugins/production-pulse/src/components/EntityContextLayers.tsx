@@ -5,6 +5,7 @@ import {
   FileCode,
   FilePenLine,
   FilePlus2,
+  Link2,
   Link2Off,
   MoreHorizontal,
   Package,
@@ -29,6 +30,7 @@ import type { FirmwareListItem } from "../api/productionPulseApi";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import type { AdminEntityRef } from "../utils/adminHubUiState";
+import { explicitFirmwareKey } from "../utils/firmwareLinkGraph";
 import { isPublishedFirmware } from "../utils/hubOtaKpis";
 
 const POPOVER_SURFACE = "delpi-ui-popover-surface";
@@ -296,11 +298,19 @@ export function EntityActionMenu({
           />
           <ContextMenuDivider />
           <ContextMenuItem
-            label="Desvincular firmware"
-            icon={Link2Off}
-            hint={PP_HELP.hub.menuUnlinkFirmware}
-            onSelect={() => run("unlink")}
+            label="Vincular firmware"
+            icon={Link2}
+            hint={PP_HELP.hub.startLinkFromDevice}
+            onSelect={() => run("link")}
           />
+          {explicitFirmwareKey(device) ? (
+            <ContextMenuItem
+              label="Desvincular firmware"
+              icon={Link2Off}
+              hint={PP_HELP.hub.menuUnlinkFirmware}
+              onSelect={() => run("unlink")}
+            />
+          ) : null}
           <ContextMenuDivider />
           {device.enabled ? (
             <ContextMenuItem
@@ -336,6 +346,12 @@ export function EntityActionMenu({
               onSelect={() => run("new-version")}
             />
             <ContextMenuDivider />
+            <ContextMenuItem
+              label="Vincular IoT"
+              icon={Link2}
+              hint={PP_HELP.hub.startLinkFromFirmware}
+              onSelect={() => run("link")}
+            />
             <ContextMenuItem
               label="Atualizar vinculados agora"
               icon={RefreshCw}
@@ -382,6 +398,13 @@ export function EntityActionMenu({
               icon={Upload}
               hint={PP_HELP.hub.menuPublishFirmware}
               onSelect={() => run("edit")}
+            />
+            <ContextMenuDivider />
+            <ContextMenuItem
+              label="Vincular IoT"
+              icon={Link2}
+              hint={PP_HELP.hub.startLinkFromFirmware}
+              onSelect={() => run("link")}
             />
           </>
         )

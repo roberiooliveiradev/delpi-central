@@ -27,6 +27,7 @@ import {
 import {
   FirmwareDeviceLinkCanvas,
   type CanvasEntitySelection,
+  type LinkCandidateRequest,
 } from "../components/FirmwareDeviceLinkCanvas";
 import { HubOtaKpiChips } from "../components/HubOtaKpiChips";
 import { HubCanvasLegend } from "../components/HubCanvasLegend";
@@ -34,6 +35,7 @@ import {
   MiniInspectorPanel,
   RenameDeviceDialog,
 } from "../components/MiniInspectorPanel";
+import { ProductionPulseRequestError } from "../api/httpClient";
 import {
   PpActionButton,
   PpCatalogSearchBar,
@@ -55,6 +57,7 @@ import {
 import {
   Cpu,
   FileCode,
+  Link2,
   ListTodo,
   Lock,
   LockOpen,
@@ -89,7 +92,10 @@ import {
   type AdminHubUiState,
   INITIAL_ADMIN_HUB_UI,
 } from "../utils/adminHubUiState";
-import { uniqueFirmwareFamilies } from "../utils/firmwareLinkGraph";
+import {
+  uniqueFirmwareFamilies,
+  type LinkMode,
+} from "../utils/firmwareLinkGraph";
 import {
   computeHubOtaKpis,
   EMPTY_HUB_OTA_KPIS,
@@ -156,6 +162,11 @@ export function FirmwareLinksPage({
   const [busy, setBusy] = useState(false);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState("");
+  const [linkMode, setLinkMode] = useState<LinkMode | null>(null);
+  const [pendingReplaceLink, setPendingReplaceLink] = useState<{
+    deviceId: string;
+    firmwareKey: string;
+  } | null>(null);
   const [ui, setUi] = useState<AdminHubUiState>(() => {
     const entity = parseAdminEntity(entityParam);
     const panel =
@@ -437,6 +448,75 @@ export function FirmwareLinksPage({
     [pushNotice, reloadGraph],
   );
 
+  const applyFirmwareLink = useCallback(
+    async (deviceId: string, firmwareKey: string) => {
+      const device = devices.find((item) => item.id === deviceId);
+      try {
+        await putDeviceFirmwareLink(deviceId, firmwareKey);
+        setLinkMode(null);
+        setPendingReplaceLink(null);
+        await reloadGraph();
+        pushNotice({
+          variant: "success",
+          title: PP_HELP.hub.linkSuccess,
+          message: device
+            ? `${device.name} agora está vinculado a ${firmwareKey}.`
+            : PP_HELP.hub.linkSuccessBody,
+        });
+      } catch (err) {
+        const code = err instanceof ProductionPulseRequestError ? err.code : undefined;
+        pushNotice({
+          variant: "warning",
+          title: "Vínculo indisponível",
+          message:
+            code === "firmwareLinkIncompatible"
+              ? PP_HELP.hub.linkIncompatible
+              : err instanceof Error
+                ? err.message
+                : "Falha ao criar vínculo.",
+        });
+      }
+    },
+    [devices, pushNotice, reloadGraph],
+  );
+
+  const onRequestLink = useCallback(
+    (request: LinkCandidateRequest) => {
+      if (!canManage) return;
+      if (request.state === "incompatible") {
+        pushNotice({
+          variant: "warning",
+          title: "Vínculo indisponível",
+          message:
+            linkMode?.origin === "device"
+              ? PP_HELP.hub.linkIncompatibleFirmware
+              : PP_HELP.hub.linkIncompatible,
+          autoDismissMs: 5000,
+        });
+        return;
+      }
+      if (request.state === "already-linked") {
+        pushNotice({
+          variant: "info",
+          message: PP_HELP.hub.linkAlreadyAssigned,
+          autoDismissMs: 4000,
+        });
+        return;
+      }
+      if (request.state === "replace-link") {
+        setPendingReplaceLink({
+          deviceId: request.deviceId,
+          firmwareKey: request.firmwareKey,
+        });
+        return;
+      }
+      if (request.state === "compatible") {
+        void applyFirmwareLink(request.deviceId, request.firmwareKey);
+      }
+    },
+    [applyFirmwareLink, canManage, linkMode?.origin, pushNotice],
+  );
+
   const runFamilyJob = useCallback(
     async (
       firmwareKey: string,
@@ -592,12 +672,6 @@ export function FirmwareLinksPage({
         await reloadGraph();
       } else if (kind === "unlink") {
         await handleUnlink(id);
-        pushNotice({
-          variant: "info",
-          message:
-            "Vínculo explícito removido. Se permanecer uma linha tracejada, é herança pelo driver (só leitura).",
-          autoDismissMs: 8000,
-        });
       }
       closeConfirm();
     } catch (err) {
@@ -719,6 +793,12 @@ export function FirmwareLinksPage({
         openConfirm("unlink", device.id);
         return;
       }
+      if (action === "link") {
+        setLayer({ openLayer: "none", popoverAnchorId: null }, false);
+        setAnchorEl(null);
+        setLinkMode({ origin: "device", deviceId: device.id });
+        return;
+      }
       if (action === "disable") {
         openConfirm("disable-device", device.id);
         return;
@@ -769,6 +849,12 @@ export function FirmwareLinksPage({
       }
       if (action === "archive") {
         openConfirm("archive-firmware", fw.id);
+        return;
+      }
+      if (action === "link") {
+        setLayer({ openLayer: "none", popoverAnchorId: null }, false);
+        setAnchorEl(null);
+        setLinkMode({ origin: "firmware", firmwareKey: fw.firmwareKey });
       }
     }
   };
@@ -954,7 +1040,7 @@ export function FirmwareLinksPage({
         activeJobs={activeJobCount}
         onOpenJobs={() => openPanel("jobs")}
       />
-      <HubCanvasLegend />
+      <HubCanvasLegend linkModeActive={Boolean(linkMode)} />
     </div>
   );
 
@@ -1020,7 +1106,32 @@ export function FirmwareLinksPage({
     </div>
   );
 
-  const overlayBottom = (
+  const overlayBottom = linkMode ? (
+    <div className="pp-admin-bottom-bar pp-admin-bottom-bar--link-mode" role="status" aria-live="polite">
+      <span className="pp-admin-bottom-bar__link-mode">
+        <Link2 size={16} aria-hidden="true" />
+        {linkMode.origin === "firmware" ? (
+          <>
+            <strong>Vinculando {linkMode.firmwareKey}</strong>
+            <span className="pp-muted">{PP_HELP.hub.linkModeFirmwareHint}</span>
+          </>
+        ) : (
+          <>
+            <strong>
+              Vinculando{" "}
+              {devices.find((item) => item.id === linkMode.deviceId)?.name ?? "IoT"}
+            </strong>
+            <span className="pp-muted">{PP_HELP.hub.linkModeDeviceHint}</span>
+          </>
+        )}
+      </span>
+      <PpHintAction hint={PP_HELP.hub.cancelLinkMode} ariaLabel="Ajuda: Cancelar vínculo">
+        <PpActionButton variant="ghost" onClick={() => setLinkMode(null)}>
+          Esc · Cancelar
+        </PpActionButton>
+      </PpHintAction>
+    </div>
+  ) : (
     <div className="pp-admin-bottom-bar" role="status" aria-label="Resumo do mapa">
       <PpHintAction hint={PP_HELP.hub.bottomBar} ariaLabel="Ajuda: Resumo do mapa">
         <span>
@@ -1088,6 +1199,9 @@ export function FirmwareLinksPage({
             canManage={canManage}
             filterQuery={ui.filters.q}
             filterStatus={ui.filters.status}
+            linkMode={linkMode}
+            onLinkModeChange={setLinkMode}
+            onRequestLink={onRequestLink}
             onLinked={() => void reloadGraph()}
             onUnlink={handleUnlink}
             onUpdateDevice={handleUpdateDevice}
@@ -1481,6 +1595,24 @@ export function FirmwareLinksPage({
         confirmBusy={confirmBusy}
         onConfirm={() => void runConfirmAction()}
         onCancel={closeConfirm}
+      />
+
+      <PpConfirmDialog
+        open={Boolean(pendingReplaceLink)}
+        title={PP_HELP.hub.linkReplaceTitle}
+        message={PP_HELP.hub.linkReplaceBody}
+        confirmLabel={PP_HELP.hub.linkReplaceConfirm}
+        cancelLabel="Voltar"
+        variant="danger"
+        confirmBusy={confirmBusy}
+        onConfirm={() => {
+          if (!pendingReplaceLink) return;
+          setConfirmBusy(true);
+          void applyFirmwareLink(pendingReplaceLink.deviceId, pendingReplaceLink.firmwareKey).finally(
+            () => setConfirmBusy(false),
+          );
+        }}
+        onCancel={() => setPendingReplaceLink(null)}
       />
 
       <RenameDeviceDialog
