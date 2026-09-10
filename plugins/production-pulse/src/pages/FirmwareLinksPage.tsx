@@ -60,6 +60,7 @@ import {
   type DataTableColumn,
 } from "../app/productionPulseUi";
 import { OtaStatusIndicator } from "../components/ota/OtaStatusIndicator";
+import { OtaJobListItem } from "../components/ota/OtaJobListItem";
 import { OtaTargetProgress } from "../components/ota/OtaTargetProgress";
 import { useProductionPulseOtaMonitor } from "../hooks/useProductionPulseOtaMonitor";
 import {
@@ -121,7 +122,7 @@ import {
   isPublishedFirmware,
 } from "../utils/hubOtaKpis";
 import { replaceProductionPulse } from "../utils/navigation";
-import { otaStatusLabel } from "../utils/otaStatusLabels";
+import { summarizeOtaJobTargets } from "../utils/otaJobSummary";
 import {
   otaActiveNoticeId,
   otaJobCreatedNoticeId,
@@ -1076,45 +1077,6 @@ export function FirmwareLinksPage({
     [busy, canManage, handleUpdateFamily],
   );
 
-  const jobColumns: DataTableColumn<FirmwareUpdateJob>[] = useMemo(
-    () => [
-      {
-        key: "firmware",
-        header: "Firmware",
-        render: (row) => {
-          const item = firmwareById.get(row.firmwareId);
-          return item ? `${item.firmwareKey} · ${item.version}` : "—";
-        },
-      },
-      {
-        key: "trigger",
-        header: "Disparo",
-        render: (row) => (row.trigger === "manual" ? "Agora" : "Agendado"),
-      },
-      { key: "status", header: "Status", render: (row) => otaStatusLabel(row.status) },
-      {
-        key: "actions",
-        header: "",
-        render: (row) => (
-          <div className="pp-inline-actions">
-            <PpActionButton variant="ghost" onClick={() => void openJobDetails(row.id)}>
-              {PP_HELP.hub.jobDetails}
-            </PpActionButton>
-            {canManage && ["draft", "scheduled", "running"].includes(row.status) ? (
-              <PpActionButton
-                variant="ghost"
-                onClick={() => openConfirm("cancel-job", row.id)}
-              >
-                Cancelar
-              </PpActionButton>
-            ) : null}
-          </div>
-        ),
-      },
-    ],
-    [canManage, firmwareById, openJobDetails],
-  );
-
   const driverColumns: DataTableColumn<DriverListItem>[] = useMemo(
     () => [
       {
@@ -1607,23 +1569,6 @@ export function FirmwareLinksPage({
         </AdminSidePanel>
 
         <AdminSidePanel
-          open={ui.openLayer === "panel" && ui.panel === "jobs"}
-          title="Jobs OTA"
-          onClose={() => dispatch({ type: "closePanel" })}
-        >
-          {jobsLoading && jobs.length === 0 ? (
-            <PpStateBox variant="loading" title="Carregando atualizações" />
-          ) : (
-            <PpDataTable
-              columns={jobColumns}
-              rows={jobs}
-              rowKey={(row) => row.id}
-              emptyMessage={PP_HELP.ota.jobsEmpty}
-            />
-          )}
-        </AdminSidePanel>
-
-        <AdminSidePanel
           open={ui.openLayer === "panel" && ui.panel === "devices"}
           title="IoTs"
           size="wide"
@@ -1902,6 +1847,41 @@ export function FirmwareLinksPage({
       </PpHostContainedDialog>
 
       <PpDetailDialog
+        open={ui.openLayer === "panel" && ui.panel === "jobs"}
+        title={PP_HELP.hub.jobsDialogTitle}
+        onClose={() => dispatch({ type: "closePanel" })}
+      >
+        <p className="pp-muted">{PP_HELP.ota.jobsList}</p>
+        {jobsLoading && jobs.length === 0 ? (
+          <PpStateBox variant="loading" title="Carregando atualizações" />
+        ) : jobs.length === 0 ? (
+          <PpStateBox variant="empty" title={PP_HELP.ota.jobsEmpty} />
+        ) : (
+          <div className="pp-ota-job-list" role="list">
+            {jobs.map((job) => {
+              const item = firmwareById.get(job.firmwareId);
+              const label = item
+                ? `${item.firmwareKey} · ${item.version}`
+                : PP_HELP.hub.jobsUnknownFirmware;
+              const jobTargets = otaMonitor.targetsByJobId.get(job.id) ?? [];
+              return (
+                <div key={job.id} role="listitem">
+                  <OtaJobListItem
+                    job={job}
+                    firmwareLabel={label}
+                    targets={jobTargets}
+                    canManage={canManage}
+                    onOpenDetails={() => void openJobDetails(job.id)}
+                    onCancel={() => openConfirm("cancel-job", job.id)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </PpDetailDialog>
+
+      <PpDetailDialog
         open={ui.openLayer === "modal" && ui.modal === "job-detail"}
         title={PP_HELP.hub.targetsDialogTitle}
         onClose={() => {
@@ -1916,46 +1896,24 @@ export function FirmwareLinksPage({
         ) : (
           <>
             {(() => {
-              const total = targets.length;
-              const terminal = targets.filter((t) =>
-                ["updated", "failed", "cancelled", "skipped"].includes(
-                  (t.status || "").toLowerCase(),
-                ),
-              ).length;
-              const updated = targets.filter((t) => t.status === "updated").length;
-              const downloading = targets.filter((t) => t.status === "downloading").length;
-              const awaiting = targets.filter((t) =>
-                ["pending", "authorized"].includes((t.status || "").toLowerCase()),
-              ).length;
-              const failed = targets.filter((t) => t.status === "failed").length;
-              const pct = total > 0 ? Math.round((terminal / total) * 100) : 0;
+              const summary = summarizeOtaJobTargets(targets);
               return (
                 <div className="pp-job-summary" aria-label="Resumo da atualização OTA">
                   <OtaStatusIndicator
-                    status={
-                      failed > 0 && terminal === total
-                        ? "failed"
-                        : terminal === total
-                          ? "updated"
-                          : downloading > 0
-                            ? "downloading"
-                            : awaiting > 0
-                              ? "authorized"
-                              : "applying"
-                    }
+                    status={summary.phaseStatus}
                     density="comfortable"
-                    meta={`${terminal} de ${total} dispositivos processados`}
+                    meta={`${summary.terminal} de ${summary.total} dispositivos processados`}
                   />
                   <PpOtaProgressBar
-                    value={pct}
-                    summary={`${terminal} de ${total} processados`}
+                    value={summary.processedPercent}
+                    summary={`${summary.terminal} de ${summary.total} processados`}
                     ariaLabel="Progresso agregado do job (targets terminais)"
                   />
                   <ul className="pp-job-summary__counts">
-                    <li>{updated} concluídos</li>
-                    <li>{downloading} baixando</li>
-                    <li>{awaiting} aguardando</li>
-                    <li>{failed} falhas</li>
+                    <li>{summary.updated} concluídos</li>
+                    <li>{summary.downloading} baixando</li>
+                    <li>{summary.awaiting} aguardando</li>
+                    <li>{summary.failed} falhas</li>
                   </ul>
                 </div>
               );

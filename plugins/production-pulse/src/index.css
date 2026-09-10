@@ -3084,6 +3084,80 @@
   max-width: 28rem;
 }
 
+.dashboard-production-pulse .pp-ota-job-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.dashboard-production-pulse .pp-ota-job-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--pp-border) 80%, transparent);
+}
+
+.dashboard-production-pulse .pp-ota-job-row:last-child {
+  border-bottom: none;
+}
+
+.dashboard-production-pulse .pp-ota-job-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+  flex: 1 1 16rem;
+}
+
+.dashboard-production-pulse .pp-ota-job-row__firmware {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.dashboard-production-pulse .pp-ota-job-row__fw-icon {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  color: var(--pp-accent, inherit);
+  opacity: 0.9;
+}
+
+.dashboard-production-pulse .pp-ota-job-row__fw-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.dashboard-production-pulse .pp-ota-job-row__fw-label {
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.dashboard-production-pulse .pp-ota-job-row__fw-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--pp-muted, inherit);
+}
+
+.dashboard-production-pulse .pp-ota-job-row__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 28rem;
+}
+
+.dashboard-production-pulse .pp-ota-job-row__actions {
+  flex-shrink: 0;
+  align-self: center;
+}
+
 .dashboard-production-pulse .pp-entity-summary__ota {
   margin-top: 0.55rem;
 }

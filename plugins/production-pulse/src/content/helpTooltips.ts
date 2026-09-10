@@ -437,6 +437,8 @@ export const PP_HELP = {
     jobs: "Jobs OTA no painel lateral. Abra os detalhes para ver IoT por IoT.",
     jobDetails: "Ver detalhes",
     jobDetailsHint: "Abre o status por dispositivo desta atualização.",
+    jobsDialogTitle: "Atualizações OTA",
+    jobsUnknownFirmware: "Firmware desconhecido",
     targetsDialogTitle: "Detalhes da atualização",
     focusCatalogAnchor: "Catálogo de firmwares",
     focusJobsAnchor: "Atualizações OTA",

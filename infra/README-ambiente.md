@@ -838,6 +838,8 @@ Recreate de `delpi-travel-expenses-api` **não** apaga cupons (metadado no schem
 
 Dev: Postgres plugins via **`127.0.0.1:5433`** (`PRODUCTION_PULSE_PLUGINS_DB_HOST` / `PRODUCTION_PULSE_PLUGINS_DB_PORT`). Porta host da API: **`PRODUCTION_PULSE_API_PORT=8025`** (deve coincidir com nginx dev).
 
+JWKS em host network: **`PRODUCTION_PULSE_KEYCLOAK_JWKS_URL=http://127.0.0.1/auth/realms/delpi/protocol/openid-connect/certs`** (default no `docker-compose.dev.yml`). O alias Docker `keycloak` **não** resolve com `network_mode: host` — se a API usar `KEYCLOAK_JWKS_URL=http://keycloak:8080/...`, login autenticado falha (timeout/401) ao buscar certs.
+
 Gateway dev proxy: **`172.17.0.1:8025`** (bridge Docker → serviço em `network_mode: host`). Se o bridge local usar outro CIDR, ajuste `gateway/nginx.dev.conf`.
 
 Homologação LAN: `curl -sf http://localhost/apps/production-pulse-api/health` e, com ESP na rede, poll HTTP a partir do container/host conforme [ADR-002](../docs/12-roadmap-e-evolucao/production-pulse/ADR-002-poll-scheduler-and-lan.md). Variáveis em `infra/env.production-pulse.example`.

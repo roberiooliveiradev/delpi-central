@@ -58,7 +58,9 @@ Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.c
 | CRUD IoT/FW/Driver | `PpWorkbenchDialog` (page) |
 | Agendar OTA | `PpHostContainedDialog` compacto |
 | Confirmação | `PpConfirmDialog` |
-| Catálogos | Side panel (`devices` wide; `firmwares` / `drivers` / `jobs`); conteúdo `embedded`; mobile → modal page |
+| Catálogos | Side panel (`devices` wide; `firmwares` / `drivers`); conteúdo `embedded`; mobile → modal page |
+| Lista Jobs OTA | `PpDetailDialog` (`panel=jobs`) com `OtaJobListItem` (ícone, fase, barra agregada) |
+| Detalhe de Job | `PpDetailDialog` (`modal=job-detail`) com resumo + targets |
 | Feedback transitório | `PpFloatingNotices` (`pushResolvedProductionPulseNotice` / `resolveProductionPulseError`) |
 | Persistente | `PpStateBox` (somente `structuralError` de carga) |
 | Estado OTA por IoT | `useProductionPulseOtaMonitor` + `resolveOtaVisualState` / `OtaStatusIndicator` |

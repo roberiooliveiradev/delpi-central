@@ -2073,7 +2073,8 @@ services:
       JWT_SECRET: ${API_DELPI_JWT_SECRET}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
       KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
-      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      # Host network não resolve o alias Docker "keycloak" — JWKS via gateway no loopback.
+      KEYCLOAK_JWKS_URL: ${PRODUCTION_PULSE_KEYCLOAK_JWKS_URL:-http://127.0.0.1/auth/realms/delpi/protocol/openid-connect/certs}
       KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
       JWT_ALGORITHMS: ${JWT_ALGORITHMS}
       LOG_LEVEL: ${LOG_LEVEL}
