@@ -71,6 +71,7 @@ def test_e9_s6_delete_candidates_status():
         "follow_up_playbook_path_markers",
         "narrative_path_marker_families",
         "registry_path_markers",
+        "registry_parameter_strategy_fields",
     ):
         item = by_id[deleted_id]
         assert item.get("status") == "DELETED", deleted_id

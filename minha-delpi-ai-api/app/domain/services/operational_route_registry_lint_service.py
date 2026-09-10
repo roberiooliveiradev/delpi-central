@@ -710,11 +710,8 @@ class OperationalRouteRegistryLintService:
             parameters = route.get("parameters") or {}
             strategy = str(parameters.get("strategy") or "").strip()
 
-            if not strategy:
-                report.add_error(
-                    f"autoTierCRoutes.{route_id}: parameters.strategy ausente"
-                )
-            elif strategy not in allowed:
+            # E9.S12.E — strategy opcional (inferida do OpenAPI em runtime).
+            if strategy and strategy not in allowed:
                 report.add_error(
                     f"autoTierCRoutes.{route_id}: strategy desconhecida {strategy!r}"
                 )

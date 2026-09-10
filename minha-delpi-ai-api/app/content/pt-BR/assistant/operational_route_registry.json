@@ -197,9 +197,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productDirectives"
       }
@@ -216,9 +213,6 @@
           "list_exclusive_raw_materials_catalog"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "exclusive_catalog"
       },
       "presentation": {
         "reasonKey": "exclusiveRawMaterialCatalog"
@@ -238,9 +232,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productRawMaterialPriceIntelligence"
       }
@@ -259,9 +250,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productCostImpactSimulation"
       }
@@ -278,9 +266,6 @@
           "get_product_production_status"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "productProductionStatus"
@@ -299,9 +284,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productShippingStatus"
       }
@@ -318,9 +300,6 @@
           "get_product_structure_exclusivity"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "productStructureExclusivity"
@@ -345,9 +324,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productFactoryStatus"
       }
@@ -366,9 +342,6 @@
           "get_product_guide"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "productOperational"
@@ -390,9 +363,6 @@
           "search_products_by_supplier_part_number"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "supplier_part_number"
       },
       "presentation": {
         "reasonKey": "productOperational",
@@ -416,9 +386,6 @@
           "get_product_suppliers"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "productOperational"
@@ -453,9 +420,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productOperational"
       }
@@ -474,9 +438,6 @@
           "get_product_pricing"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "productOperational"
@@ -499,9 +460,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productOperational"
       }
@@ -520,9 +478,6 @@
           "get_product_sales_billing"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "productOperational"
@@ -557,9 +512,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productOperational"
       }
@@ -580,9 +532,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productOperational"
       }
@@ -602,9 +551,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productOperational"
       }
@@ -623,9 +569,6 @@
           "get_product_internal_movements"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "productOperational"
@@ -650,9 +593,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productLastPurchase"
       }
@@ -670,9 +610,6 @@
           "get_product_purchase_price_history"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "productPurchasePriceHistory"
@@ -692,9 +629,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productPurchaseBudgetHistory"
       }
@@ -709,9 +643,6 @@
           "get_product_stock"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "stockFastPath"
@@ -730,9 +661,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productStructureExcel"
       }
@@ -747,9 +675,6 @@
           "get_product_structure"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "productStructure"
@@ -766,9 +691,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productParents"
       }
@@ -782,9 +704,6 @@
           "get_product_sales_summary"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "productSales"
@@ -806,9 +725,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productOperational"
       }
@@ -828,9 +744,6 @@
           "get_product_outbound_invoice_items"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "productOperational"
@@ -860,9 +773,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productOperational"
       }
@@ -881,9 +791,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productAnalyser"
       }
@@ -897,9 +804,6 @@
           "get_product_summary"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "productSummary"
@@ -915,9 +819,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productAnalyser"
       }
@@ -932,9 +833,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "productDescription"
       }
@@ -948,9 +846,6 @@
           "get_production_consumption_top_items"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "productionConsumptionTopItems"
@@ -969,9 +864,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "date_branch"
-      },
       "presentation": {
         "reasonKey": "productionConsumptionByWorkCenter"
       },
@@ -988,9 +880,6 @@
           "get_production_consumption_top_items_validated"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "productionConsumptionValidated"
@@ -1009,9 +898,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "date_branch"
-      },
       "presentation": {
         "reasonKey": "purchasesTopProducts"
       },
@@ -1029,9 +915,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "date_branch"
-      },
       "presentation": {
         "reasonKey": "productionLossesTopMaterials"
       },
@@ -1048,9 +931,6 @@
           "get_production_losses_records"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "productionLossesRecords"
@@ -1075,7 +955,6 @@
         "method": "GET"
       },
       "parameters": {
-        "strategy": "date_branch",
         "queryDefaults": {
           "limit": 500
         },
@@ -1100,9 +979,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "date_branch"
-      },
       "presentation": {
         "reasonKey": "productionOrdersOpen"
       },
@@ -1119,9 +995,6 @@
           "get_production_orders_finished"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "productionOrdersFinished"
@@ -1140,9 +1013,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "date_branch"
-      },
       "presentation": {
         "reasonKey": "productionWorkCenterOrderSummary"
       },
@@ -1159,9 +1029,6 @@
           "get_production_allocation_gaps"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "productionAllocationGaps"
@@ -1180,9 +1047,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "date_branch"
-      },
       "presentation": {
         "reasonKey": "productionOrdersFinishedWithoutConsumption"
       },
@@ -1199,9 +1063,6 @@
           "get_production_work_center_average_planned_time"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "productionWorkCenterAveragePlannedTime"
@@ -1220,9 +1081,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "date_branch"
-      },
       "presentation": {
         "reasonKey": "productionConsumptionByItem"
       },
@@ -1239,9 +1097,6 @@
           "get_production_planned_vs_real_time"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "productionPlannedVsRealTime"
@@ -1263,9 +1118,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "date_branch"
-      },
       "presentation": {
         "reasonKey": "kpiCpv"
       }
@@ -1282,9 +1134,6 @@
           "get_supplies_otd"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "kpiOtd"
@@ -1303,9 +1152,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "department_idd"
-      },
       "presentation": {
         "reasonKey": "departmentIddAll"
       }
@@ -1322,9 +1168,6 @@
           "get_dashboard_department_indicators"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "department_idd"
       },
       "presentation": {
         "reasonKey": "departmentIddIndicators"
@@ -1344,9 +1187,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "department_idd"
-      },
       "presentation": {
         "reasonKey": "departmentIddScore"
       }
@@ -1365,9 +1205,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "date_branch"
-      },
       "presentation": {
         "reasonKey": "kpiIdd"
       }
@@ -1384,9 +1221,6 @@
           "get_supplies_stock_value"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "supplies_stock"
       },
       "presentation": {
         "reasonKey": "kpiStockValue"
@@ -1405,9 +1239,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "supplies_stock"
-      },
       "presentation": {
         "reasonKey": "kpiStockValue"
       }
@@ -1424,9 +1255,6 @@
           "get_supplies_stock_balances_items"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "supplies_stock"
       },
       "presentation": {
         "reasonKey": "kpiStockValue"
@@ -1446,9 +1274,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "safetyStockItemDetails"
       }
@@ -1466,9 +1291,6 @@
           "get_supplies_safety_stock_consumption_analysis_items"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "supplies_stock"
       },
       "presentation": {
         "reasonKey": "safetyStockConsumptionAnalysisItems"
@@ -1488,9 +1310,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_code"
-      },
       "presentation": {
         "reasonKey": "safetyStockConsumptionAnalysisItemDetails"
       }
@@ -1508,9 +1327,6 @@
           "get_production_otd_series"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "departmentKpi"
@@ -1530,9 +1346,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "date_branch"
-      },
       "presentation": {
         "reasonKey": "departmentKpi"
       }
@@ -1549,9 +1362,6 @@
           "get_production_oee_appointment_by_id"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "departmentKpi"
@@ -1572,9 +1382,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "date_branch"
-      },
       "presentation": {
         "reasonKey": "departmentKpi"
       }
@@ -1591,9 +1398,6 @@
           "list_sale_orders"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "sale_orders"
       },
       "presentation": {
         "reasonKey": "saleOrdersList"
@@ -1613,9 +1417,6 @@
           "get_financial_rol"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "commercialRol"
@@ -1641,9 +1442,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "date_branch"
-      },
       "presentation": {
         "reasonKey": "transformaMais"
       }
@@ -1660,9 +1458,6 @@
           "list_transforma_mais_processes"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "transformaMais"
@@ -1690,9 +1485,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "lmp"
-      },
       "presentation": {
         "reasonKey": "lmpQuery"
       }
@@ -1716,9 +1508,6 @@
           "get_lmps_dashboard_summary"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "lmpQuery"
@@ -1744,9 +1533,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "lmp"
-      },
       "presentation": {
         "reasonKey": "lmpQuery"
       }
@@ -1770,9 +1556,6 @@
           "get_lmps_dashboard_charts"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "lmp"
       },
       "presentation": {
         "reasonKey": "lmpQuery"
@@ -1798,9 +1581,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "lmp"
-      },
       "presentation": {
         "reasonKey": "lmpQuery"
       }
@@ -1818,9 +1598,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "lmp"
-      },
       "presentation": {
         "reasonKey": "lmpQuery"
       }
@@ -1837,9 +1614,6 @@
           "search_products"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_search"
       },
       "presentation": {
         "reasonFormatKey": "productSearchByGroup",
@@ -1871,9 +1645,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "product_search"
-      },
       "presentation": {
         "reasonFormatKey": "productSearchByDescription",
         "reasonFormatParam": "description_query"
@@ -1902,9 +1673,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "system_metadata"
-      },
       "presentation": {
         "reasonKey": "systemMetadata"
       }
@@ -1931,9 +1699,6 @@
           "get_protheus_table_indexes"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "system_metadata"
       },
       "presentation": {
         "reasonKey": "systemMetadata"
@@ -1962,9 +1727,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "system_metadata"
-      },
       "presentation": {
         "reasonKey": "systemMetadata"
       }
@@ -1991,9 +1753,6 @@
           "list_protheus_table_columns"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "system_metadata"
       },
       "presentation": {
         "reasonKey": "systemMetadata"
@@ -2027,9 +1786,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "system_metadata"
-      },
       "presentation": {
         "reasonKey": "systemMetadata"
       }
@@ -2053,9 +1809,6 @@
           "search_tables_by_description"
         ],
         "method": "GET"
-      },
-      "parameters": {
-        "strategy": "system_metadata"
       },
       "presentation": {
         "reasonKey": "systemMetadata"
@@ -2081,9 +1834,6 @@
         ],
         "method": "GET"
       },
-      "parameters": {
-        "strategy": "system_metadata"
-      },
       "presentation": {
         "reasonKey": "systemMetadata"
       }
@@ -2098,6 +1848,7 @@
       "path_backfill": 51,
       "forced": 1,
       "empty": 0
-    }
+    },
+    "parameterStrategyDeletedAt": "E9.S12.E"
   }
 }

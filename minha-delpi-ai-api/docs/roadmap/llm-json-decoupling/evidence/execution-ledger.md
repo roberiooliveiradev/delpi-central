@@ -155,3 +155,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: migrar resolve_route_action (E9.S12.C) antes de DELETE registry |
 | 2026-09-10 | E9.S12.C **ATENDIDO** — DELETE path/op markers do registry; `operationIds` canônicos; routeSegment/strategy ainda residual |
 | 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: E9.S12.E (`parameters.strategy`) ou E9.S12.D (`routeSegment`) |
+| 2026-09-10 | E9.S12.E **ATENDIDO** — DELETE parameters.strategy / domain parameterStrategy; inferência OpenAPI |
+| 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: E9.S12.D (`routeSegment`) ou cutover TU |

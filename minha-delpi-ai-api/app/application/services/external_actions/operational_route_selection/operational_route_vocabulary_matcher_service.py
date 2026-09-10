@@ -66,12 +66,17 @@ class OperationalRouteVocabularyMatcherService:
             if not resolved_identifier:
                 return None
 
-        parameters_spec = route.get("parameters")
+        from app.domain.services.parameter_strategy_inference_service import (
+            ParameterStrategyInferenceService,
+        )
 
+        inferred = ParameterStrategyInferenceService.infer_from_action(
+            None,
+            route=route,
+        ).lower()
         if (
             not resolved_identifier
-            and isinstance(parameters_spec, dict)
-            and str(parameters_spec.get("strategy") or "").strip().lower() == "product_code"
+            and inferred == "product_code"
         ):
             resolved_identifier = str(
                 ChatProductQueryIntentService.resolve_product_code(

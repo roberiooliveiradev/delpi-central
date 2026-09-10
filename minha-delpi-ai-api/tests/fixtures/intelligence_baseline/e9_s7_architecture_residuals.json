@@ -49,9 +49,11 @@
       "coreConsumers": [
         "app/domain/services/parameter_strategy_shadow_service.py"
       ],
-      "disposition": "REMOVE_WHEN_GATES_PASS",
-      "justification": "Dispatch binder permanente OpenAPI; JSON strategies ainda listadas para shadow/compare e domains. DELETE bloqueado.",
-      "inCoreGenericSelection": "observer_or_compat"
+      "disposition": "REMOVED",
+      "justification": "E9.S12.E — parameters.strategy / domain parameterStrategy removidos; authority = ParameterStrategyInferenceService (OpenAPI path/operationId).",
+      "inCoreGenericSelection": false,
+      "deletedAt": "E9.S12.E",
+      "replacement": "ParameterStrategyInferenceService"
     },
     {
       "id": "pathToken_pathContains",

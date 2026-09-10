@@ -49,6 +49,7 @@ class ChatOperationalApiDomainService:
 
     @classmethod
     def parameter_strategy_for_domain(cls, domain: str) -> str:
+        """Legacy domain→strategy map; prefer ParameterStrategyInferenceService for actions."""
         config = cls.domains().get(str(domain or "").strip())
 
         if not isinstance(config, dict):
@@ -57,6 +58,14 @@ class ChatOperationalApiDomainService:
         strategy = config.get("parameterStrategy")
 
         return str(strategy).strip() if isinstance(strategy, str) and strategy.strip() else "semantic"
+
+    @classmethod
+    def parameter_strategy_for_path(cls, path: str) -> str:
+        from app.domain.services.parameter_strategy_inference_service import (
+            ParameterStrategyInferenceService,
+        )
+
+        return ParameterStrategyInferenceService.infer_from_path(path)
 
     @classmethod
     def parameter_strategy_ids(cls) -> frozenset[str]:

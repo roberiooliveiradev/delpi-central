@@ -88,10 +88,16 @@
     {
       "id": "registry_parameter_strategy_fields",
       "fields": ["parameterStrategy", "parameters.strategy"],
-      "surface": "app/content/pt-BR/assistant/operational_route_registry.json",
+      "surface": "app/content/pt-BR/assistant/operational_route_registry.json + api_route_domains.json",
       "owner": "plano-01 / Onda B",
-      "status": "BLOCKED",
-      "blockReason": "campo ainda discriminante do dispatch binder/domain; cutover moveu implementação, não remove a chave"
+      "status": "DELETED",
+      "deletedAt": "E9.S12.E",
+      "authorization": "APPROVED",
+      "authorizationSource": "user:siga + ParameterStrategyInferenceService OpenAPI-first",
+      "replacement": "ParameterStrategyInferenceService.infer_from_action",
+      "blockReason": null,
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s12e-parameter-strategy-inference.md",
+      "note": "parameterStrategies catalog retained as enum docs; dial parameterStrategyShadow kept for compare"
     },
     {
       "id": "follow_up_message_segment_terms",
@@ -139,5 +145,5 @@
     }
   ],
   "passStatusesForDelete": ["PASS", "PASS_OFFLINE_AND_LIVE", "APPROVED"],
-  "note": "deleteAuthorized global=false; E9.S12.A/B/C DELETED (terms, playbook/narrative path, registry path markers). strategy + routeSegment + TU BLOCKED."
+  "note": "deleteAuthorized global=false; E9.S12.A/B/C/E DELETED. routeSegment + TU heuristics BLOCKED."
 }

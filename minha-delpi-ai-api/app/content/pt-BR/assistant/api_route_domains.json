@@ -3,87 +3,105 @@
   "domains": {
     "product": {
       "label": "Produto",
-      "pathMarkers": ["/products/{code}", "/products/"],
-      "excludePathMarkers": ["/products/search", "/products/directives/"],
-      "parameterStrategy": "product_code",
+      "pathMarkers": [
+        "/products/{code}",
+        "/products/"
+      ],
+      "excludePathMarkers": [
+        "/products/search",
+        "/products/directives/"
+      ],
       "method": "GET"
     },
     "product_directives": {
       "label": "Diretivas do produto",
-      "pathMarkers": ["/products/directives/"],
-      "parameterStrategy": "product_code",
+      "pathMarkers": [
+        "/products/directives/"
+      ],
       "method": "GET"
     },
     "product_search": {
       "label": "Busca de produtos",
-      "pathMarkers": ["/products/search"],
-      "parameterStrategy": "product_search",
+      "pathMarkers": [
+        "/products/search"
+      ],
       "method": "GET"
     },
     "product_exclusive_catalog": {
       "label": "Catálogo MP exclusiva",
-      "pathMarkers": ["/products/exclusive-raw-materials/catalog"],
-      "parameterStrategy": "exclusive_catalog",
+      "pathMarkers": [
+        "/products/exclusive-raw-materials/catalog"
+      ],
       "method": "GET"
     },
     "production_consumption": {
       "label": "Consumo produção",
-      "pathMarkers": ["/production/consumption/"],
-      "parameterStrategy": "date_branch",
+      "pathMarkers": [
+        "/production/consumption/"
+      ],
       "method": "GET"
     },
     "production_losses": {
       "label": "Perdas produção",
-      "pathMarkers": ["/production/losses/"],
-      "parameterStrategy": "date_branch",
+      "pathMarkers": [
+        "/production/losses/"
+      ],
       "method": "GET"
     },
     "production_schedule": {
       "label": "Programação produção",
-      "pathMarkers": ["/production/schedule/"],
-      "parameterStrategy": "date_branch",
+      "pathMarkers": [
+        "/production/schedule/"
+      ],
       "method": "GET"
     },
     "production_orders": {
       "label": "Ordens de produção",
-      "pathMarkers": ["/production/orders/"],
-      "parameterStrategy": "date_branch",
+      "pathMarkers": [
+        "/production/orders/"
+      ],
       "method": "GET"
     },
     "production_work_centers": {
       "label": "Centros de trabalho",
-      "pathMarkers": ["/production/work-centers/"],
-      "parameterStrategy": "date_branch",
+      "pathMarkers": [
+        "/production/work-centers/"
+      ],
       "method": "GET"
     },
     "purchases_ranking": {
       "label": "Ranking de compras",
-      "pathMarkers": ["/purchases/top-products"],
-      "parameterStrategy": "date_branch",
+      "pathMarkers": [
+        "/purchases/top-products"
+      ],
       "method": "GET"
     },
     "open_sales_orders": {
       "label": "Pedidos de venda em aberto",
-      "pathMarkers": ["/pedidos-venda-abertos/"],
-      "parameterStrategy": "date_branch",
+      "pathMarkers": [
+        "/pedidos-venda-abertos/"
+      ],
       "method": "GET"
     },
     "commercial_proposal_documents": {
       "label": "Propostas comerciais internas",
-      "pathMarkers": ["/propostas-comerciais/"],
-      "parameterStrategy": "semantic",
+      "pathMarkers": [
+        "/propostas-comerciais/"
+      ],
       "method": "GET"
     },
     "quality_action_plans": {
       "label": "PAC — planos de ação",
-      "pathMarkers": ["/quality/action-plans/"],
-      "parameterStrategy": "semantic",
+      "pathMarkers": [
+        "/quality/action-plans/"
+      ],
       "method": "GET"
     },
     "process_inspection_plans": {
       "label": "Planos de inspeção de processo",
-      "pathMarkers": ["/process-inspection-plans/"],
-      "parameterStrategy": "none",
+      "pathMarkers": [
+        "/process-inspection-plans/"
+      ],
       "method": "GET"
     },
     "department_kpi": {
@@ -105,7 +123,6 @@
         "/production/planned-vs-real-time",
         "/quality/action-plans/"
       ],
-      "parameterStrategy": "date_branch",
       "method": "GET"
     },
     "department_idd": {
@@ -115,48 +132,55 @@
         "/dashboard/department-indicators",
         "/dashboard/departments-indicators"
       ],
-      "parameterStrategy": "department_idd",
       "method": "GET"
     },
     "supplies_kpi": {
       "label": "KPI suprimentos",
-      "pathMarkers": ["/supplies/"],
-      "excludePathMarkers": ["/supplies/safety-stock/"],
-      "parameterStrategy": "date_branch",
+      "pathMarkers": [
+        "/supplies/"
+      ],
+      "excludePathMarkers": [
+        "/supplies/safety-stock/"
+      ],
       "method": "GET"
     },
     "safety_stock": {
       "label": "Estoque de segurança",
-      "pathMarkers": ["/supplies/safety-stock/"],
-      "parameterStrategy": "product_code",
+      "pathMarkers": [
+        "/supplies/safety-stock/"
+      ],
       "method": "GET"
     },
     "lmp": {
       "label": "LMP / transformação",
-      "pathMarkers": ["/lmp", "/transforma"],
-      "parameterStrategy": "lmp",
+      "pathMarkers": [
+        "/lmp",
+        "/transforma"
+      ],
       "method": "GET"
     },
     "sql": {
       "label": "SQL / dados",
-      "pathMarkers": ["/data/sql", "/data/"],
-      "parameterStrategy": "sql",
+      "pathMarkers": [
+        "/data/sql",
+        "/data/"
+      ],
       "method": "POST"
     },
     "system": {
       "label": "Metadados Protheus",
-      "pathMarkers": ["/system/"],
-      "parameterStrategy": "system_metadata",
+      "pathMarkers": [
+        "/system/"
+      ],
       "method": "GET"
     },
     "generic": {
       "label": "Operacional genérico",
       "pathMarkers": [],
-      "parameterStrategy": "semantic",
       "method": "GET"
     }
   },
-    "parameterStrategies": {
+  "parameterStrategies": {
     "product_code": {
       "description": "Código de produto com paginação, filial e armazém",
       "registryOnly": true
@@ -177,7 +201,11 @@
       "bindings": [
         {
           "source": "branch_regex",
-          "matchAliases": ["branch", "filial", "branch_code"]
+          "matchAliases": [
+            "branch",
+            "filial",
+            "branch_code"
+          ]
         },
         {
           "source": "date_range.start",
@@ -203,42 +231,91 @@
         },
         {
           "source": "date_range.start",
-          "matchAliases": ["reference_date", "referencedate"]
+          "matchAliases": [
+            "reference_date",
+            "referencedate"
+          ]
         },
         {
           "source": "pagination.page",
-          "matchAliases": ["page"]
+          "matchAliases": [
+            "page"
+          ]
         },
         {
           "source": "pagination.page_size",
-          "matchAliases": ["page_size", "pagesize"]
+          "matchAliases": [
+            "page_size",
+            "pagesize"
+          ]
         },
         {
           "source": "work_center_regex",
-          "matchAliases": ["work_center", "workcenter"]
+          "matchAliases": [
+            "work_center",
+            "workcenter"
+          ]
         },
         {
           "source": "product_group_regex",
-          "matchAliases": ["product_group"]
+          "matchAliases": [
+            "product_group"
+          ]
         },
         {
           "source": "granularity_inferred",
-          "matchAliases": ["granularity"]
+          "matchAliases": [
+            "granularity"
+          ]
         },
         {
           "source": "status_term_map",
-          "matchAliases": ["status"],
+          "matchAliases": [
+            "status"
+          ],
           "termMap": {
-            "late": ["atraso", "atrasad", "em atraso", " late ", "atrasadas", "atrasados"],
-            "on_time": ["no prazo", "pontual", "on time", "on_time", "no_prazo"]
+            "late": [
+              "atraso",
+              "atrasad",
+              "em atraso",
+              " late ",
+              "atrasadas",
+              "atrasados"
+            ],
+            "on_time": [
+              "no prazo",
+              "pontual",
+              "on time",
+              "on_time",
+              "no_prazo"
+            ]
           },
-          "preferOrder": ["late", "on_time"]
+          "preferOrder": [
+            "late",
+            "on_time"
+          ]
         }
       ],
       "granularityTerms": {
-        "day": ["diario", "diaria", "por dia", " ao dia", " diaria"],
-        "week": ["semanal", "por semana", " semana ", "semanas"],
-        "year": ["anual", "por ano", " ano ", " anos "],
+        "day": [
+          "diario",
+          "diaria",
+          "por dia",
+          " ao dia",
+          " diaria"
+        ],
+        "week": [
+          "semanal",
+          "por semana",
+          " semana ",
+          "semanas"
+        ],
+        "year": [
+          "anual",
+          "por ano",
+          " ano ",
+          " anos "
+        ],
         "month": [
           "serie",
           "series",
@@ -306,7 +383,11 @@
       "bindings": [
         {
           "source": "branch_regex",
-          "matchAliases": ["branch", "filial", "branch_code"]
+          "matchAliases": [
+            "branch",
+            "filial",
+            "branch_code"
+          ]
         },
         {
           "source": "date_range.start",
@@ -332,7 +413,10 @@
         },
         {
           "source": "department_id_regex",
-          "matchAliases": ["department_id", "departamento"]
+          "matchAliases": [
+            "department_id",
+            "departamento"
+          ]
         }
       ]
     },
@@ -349,7 +433,10 @@
       "bindings": [
         {
           "source": "pagination.supplies_stock_top",
-          "matchAliases": ["top_limit", "limit"]
+          "matchAliases": [
+            "top_limit",
+            "limit"
+          ]
         }
       ]
     },
@@ -358,11 +445,17 @@
       "bindings": [
         {
           "source": "pagination.page",
-          "matchAliases": ["page"]
+          "matchAliases": [
+            "page"
+          ]
         },
         {
           "source": "pagination.page_size",
-          "matchAliases": ["page_size", "pagesize", "limit"]
+          "matchAliases": [
+            "page_size",
+            "pagesize",
+            "limit"
+          ]
         }
       ],
       "emptyDefault": {
@@ -389,5 +482,8 @@
       "description": "Ranking semântico sobre candidatos",
       "registryOnly": true
     }
+  },
+  "cleanupMeta": {
+    "parameterStrategyDeletedAt": "E9.S12.E"
   }
 }

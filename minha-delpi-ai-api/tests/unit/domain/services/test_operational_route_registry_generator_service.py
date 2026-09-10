@@ -57,7 +57,7 @@ def test_route_id_from_operation_id_is_stable() -> None:
     assert "Audit" in route_id
 
 
-def test_infer_parameter_strategy_uses_domain_classification() -> None:
+def test_infer_parameter_strategy_from_openapi_path() -> None:
     assert (
         OperationalRouteRegistryGeneratorService.infer_parameter_strategy(
             path="/production/orders/by-op/{production_order}",

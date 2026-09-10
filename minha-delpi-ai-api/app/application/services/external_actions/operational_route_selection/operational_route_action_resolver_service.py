@@ -252,6 +252,15 @@ class OperationalRouteActionResolverService:
             ),
         }
         strategy = str((route.get("parameters") or {}).get("strategy") or "").strip()
+        if not strategy:
+            from app.domain.services.parameter_strategy_inference_service import (
+                ParameterStrategyInferenceService,
+            )
+
+            strategy = ParameterStrategyInferenceService.infer_from_action(
+                action if isinstance(action, dict) else {},
+                route=route,
+            )
         from app.domain.services.parameter_strategy_shadow_service import (
             ParameterStrategyShadowService,
         )
@@ -396,8 +405,14 @@ class OperationalRouteActionResolverService:
         quando a rota exige identificador de produto, ou ``product_search`` em
         ``/customers/search``.
         """
-        parameters_spec = route.get("parameters") or {}
-        strategy = str(parameters_spec.get("strategy") or "").strip().lower()
+        from app.domain.services.parameter_strategy_inference_service import (
+            ParameterStrategyInferenceService,
+        )
+
+        strategy = ParameterStrategyInferenceService.infer_from_action(
+            action,
+            route=route,
+        ).lower()
         match_spec = route.get("match") if isinstance(route.get("match"), dict) else {}
         requires_product = bool(match_spec.get("requiresProductIdentifier"))
         route_segment = str(route.get("routeSegment") or "").strip()
@@ -433,19 +448,23 @@ class OperationalRouteActionResolverService:
         description_override: str | None = None,
         memory_snapshot: dict | None = None,
     ) -> dict | None:
-        """Bind parameters via ParameterStrategyShadowService (E1.S5/S6 authority).
+        """Bind parameters via ParameterStrategyShadowService (E1.S5/S6 + E9.S12.E).
 
-        Typed switch arms were removed: known strategies always go through the
-        canonical binder/domain binder. Unknown strategies return None.
+        Strategy é inferida do OpenAPI (path/operationId); JSON registry não é authority.
         """
-        parameters_spec = route.get("parameters") or {}
-        strategy = str(parameters_spec.get("strategy") or "").strip()
-        normalized_text = normalized or ChatMessageNormalizationService.normalize_for_matching(
-            message or ""
+        from app.domain.services.parameter_strategy_inference_service import (
+            ParameterStrategyInferenceService,
         )
-
         from app.domain.services.parameter_strategy_shadow_service import (
             ParameterStrategyShadowService,
+        )
+
+        strategy = ParameterStrategyInferenceService.infer_from_action(
+            action,
+            route=route,
+        )
+        normalized_text = normalized or ChatMessageNormalizationService.normalize_for_matching(
+            message or ""
         )
 
         if strategy not in ParameterStrategyShadowService.cutover_strategies():

@@ -98,8 +98,6 @@ class OperationalRouteRegistryGeneratorService:
     @classmethod
     def build_route_entry(cls, row: PresentationCoverageRow) -> dict[str, Any]:
         operation_id = str(row.operation_id or "").strip()
-        path = str(row.path or "").strip()
-        strategy = cls.infer_parameter_strategy(path=path, entity=row.entity)
 
         return {
             "id": cls.route_id_from_operation_id(operation_id),
@@ -110,9 +108,6 @@ class OperationalRouteRegistryGeneratorService:
             "route": {
                 "operationIds": [operation_id],
                 "method": "GET",
-            },
-            "parameters": {
-                "strategy": strategy,
             },
             "presentation": {
                 "reasonKey": _DEFAULT_PRESENTATION_REASON,
@@ -131,18 +126,12 @@ class OperationalRouteRegistryGeneratorService:
         path: str,
         entity: str | None,
     ) -> str:
-        lowered = str(path or "").lower()
+        from app.domain.services.parameter_strategy_inference_service import (
+            ParameterStrategyInferenceService,
+        )
 
-        if "{code}" in lowered or entity == "product":
-            return "product_code"
-
-        domain = ChatOperationalApiDomainService.classify_path(path)
-        strategy = ChatOperationalApiDomainService.parameter_strategy_for_domain(domain)
-
-        if strategy == "semantic":
-            return "none"
-
-        return strategy
+        del entity  # entity retained for call-site compat; path/operation drive inference
+        return ParameterStrategyInferenceService.infer_from_path(path)
 
     @classmethod
     def route_id_from_operation_id(cls, operation_id: str) -> str:
