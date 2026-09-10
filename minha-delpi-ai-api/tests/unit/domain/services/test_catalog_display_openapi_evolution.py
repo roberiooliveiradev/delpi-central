@@ -46,14 +46,33 @@ def test_action_display_legacy_mode_keeps_path_label_first(monkeypatch):
     assert result.source == SOURCE_LEGACY_PATH_LABEL
 
 
-def test_action_display_english_summary_uses_path_label_override(monkeypatch):
+def test_action_display_english_summary_uses_locale_not_path_label(monkeypatch):
     monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
-    label = ChatActionLabelService.humanize(
+    result = ActionDisplayLabelResolver.resolve(
         path="/commercial/closing-rate",
         method="GET",
         summary="Get Sales Conversion Rate",
+        delpi_metadata={
+            "locale": {"pt-BR": {"summary": "Taxa de conversão de vendas"}},
+        },
     )
-    assert label == "Taxa de conversão de vendas"
+    assert result.label == "Taxa de conversão de vendas"
+    assert result.source == "OPENAPI_LOCALIZED"
+
+
+def test_action_display_default_does_not_prefer_path_label_over_locale(monkeypatch):
+    monkeypatch.setenv("ACTION_DISPLAY_LABEL_MODE", "default")
+    result = ActionDisplayLabelResolver.resolve(
+        path="/products/{code}/stock",
+        method="GET",
+        summary="Get product stock",
+        delpi_metadata={
+            "locale": {"pt-BR": {"summary": "Consultar estoque do produto por filial"}},
+        },
+    )
+    assert result.source == "OPENAPI_LOCALIZED"
+    assert "Consultar estoque" in result.label
+    assert result.source != SOURCE_LEGACY_PATH_LABEL
 
 
 def test_action_display_unknown_api_without_path_label(monkeypatch):

@@ -107,16 +107,32 @@ def _phase_inprocess() -> None:
     else:
         _ok("action_label_pt_summary", pt.label)
 
-    # EN summary ainda usa override editorial pathLabels
-    en = ChatActionLabelService.humanize(
+    # First-party: locale pt-BR vence summary EN (sem pathLabels no default)
+    en = ActionDisplayLabelResolver.resolve(
         path="/commercial/closing-rate",
         method="GET",
         summary="Get Sales Conversion Rate",
+        delpi_metadata={
+            "locale": {"pt-BR": {"summary": "Taxa de conversão de vendas"}},
+        },
     )
-    if en != "Taxa de conversão de vendas":
-        _fail("action_label_en_path_override", en)
+    if en.label != "Taxa de conversão de vendas" or en.source != "OPENAPI_LOCALIZED":
+        _fail("action_label_en_locale", f"{en.source}:{en.label!r}")
     else:
-        _ok("action_label_en_path_override", en)
+        _ok("action_label_en_locale", en.label)
+
+    # LLM-off / sem locale: bridge englishSummaries ou humanize (nunca pathLabels)
+    en_bridge = ActionDisplayLabelResolver.resolve(
+        path="/products/{code}/customers",
+        method="GET",
+        summary="Customers",
+    )
+    if en_bridge.source == "LEGACY_PATH_LABEL":
+        _fail("action_label_no_path_labels_default", en_bridge.label)
+    elif "Clientes" not in en_bridge.label:
+        _fail("action_label_en_bridge", f"{en_bridge.source}:{en_bridge.label!r}")
+    else:
+        _ok("action_label_en_bridge", f"{en_bridge.source}:{en_bridge.label}")
 
     # Unknown API sem api_paths
     unknown = ActionDisplayLabelResolver.resolve(

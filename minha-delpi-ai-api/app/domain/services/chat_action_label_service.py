@@ -107,6 +107,34 @@ class ChatActionLabelService:
         )
 
     @classmethod
+    def _lookup_english_summary(cls, summary: str) -> str | None:
+        """Bridge map for EN OpenAPI summaries until E1.S3 removes englishSummaries."""
+        english_summaries = _english_exact_summaries()
+        lowered = str(summary or "").casefold().strip()
+        if not lowered:
+            return None
+
+        if lowered in english_summaries:
+            return english_summaries[lowered]
+
+        remainder = lowered
+        for prefix in _ENGLISH_SUMMARY_PREFIXES:
+            if remainder.startswith(prefix):
+                remainder = remainder[len(prefix) :].strip(" .")
+                break
+
+        if remainder and remainder in english_summaries:
+            return english_summaries[remainder]
+
+        best_label: str | None = None
+        best_len = 0
+        for key, label in english_summaries.items():
+            if key and key in lowered and len(key) > best_len:
+                best_label = label
+                best_len = len(key)
+        return best_label
+
+    @classmethod
     def _label_from_path(cls, path: str) -> str | None:
         if not path:
             return None

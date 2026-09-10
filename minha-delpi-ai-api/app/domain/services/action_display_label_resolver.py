@@ -30,12 +30,12 @@ class ActionDisplayLabelResult:
 
 
 class ActionDisplayLabelResolver:
-    """Cascata: summary PT → override pathLabels → english map → humanize → id.
+    """Cascata canônica (default): locale → summary PT → LLM/cache → humanize → id.
 
     Modos (`ACTION_DISPLAY_LABEL_MODE`):
-    - ``legacy``: pathLabels primeiro (comportamento histórico)
-    - ``shadow``: UX legacy; calcula candidato novo para telemetria
-    - ``default``: summary PT primeiro; pathLabels só como override editorial
+    - ``legacy``: pathLabels primeiro (rollback temporário; EXIT = E1.S3)
+    - ``shadow``: UX legacy; calcula candidato canônico para telemetria
+    - ``default``: sem pathLabels; englishSummaries só como ponte até E1.S3
     """
 
     _llm_localizer: Callable[..., str | None] | None = None
@@ -186,20 +186,16 @@ class ActionDisplayLabelResolver:
         from app.domain.services.chat_action_label_service import ChatActionLabelService
 
         localized = cls._locale_summary(delpi_metadata, locale=locale)
-        raw = str(localized or summary or "").strip()
+        if localized and not ChatActionLabelService._looks_english(localized):
+            return ActionDisplayLabelResult(
+                label=localized,
+                source=SOURCE_OPENAPI_LOCALIZED,
+            )
+
+        raw = str(summary or "").strip()
 
         if raw and not ChatActionLabelService._looks_english(raw):
-            source = (
-                SOURCE_OPENAPI_LOCALIZED
-                if localized
-                else SOURCE_OPENAPI_SUMMARY
-            )
-            return ActionDisplayLabelResult(label=raw, source=source)
-
-        # Override editorial (pathLabels) — temporário até cleanup E8
-        path_label = ChatActionLabelService._label_from_path(path)
-        if path_label:
-            return ActionDisplayLabelResult(label=path_label, source=SOURCE_LEGACY_PATH_LABEL)
+            return ActionDisplayLabelResult(label=raw, source=SOURCE_OPENAPI_SUMMARY)
 
         if raw and ChatActionLabelService._looks_english(raw):
             cached = cls._try_cache_or_llm(
@@ -207,7 +203,7 @@ class ActionDisplayLabelResolver:
                 method=method,
                 summary=raw,
                 action_id=action_id,
-                provider_key=provider_key,
+                provider_key=provider_key or "unknown",
                 schema_hash=schema_hash,
                 locale=locale,
             )
@@ -235,19 +231,17 @@ class ActionDisplayLabelResolver:
         from app.domain.services.chat_action_label_service import (
             ChatActionLabelService,
             _default_authorized_query_label,
-            _english_exact_summaries,
         )
 
         raw = str(summary or "").strip()
-        english_summaries = _english_exact_summaries()
-        lowered = raw.casefold()
 
         if prefer_summary_first and raw and not ChatActionLabelService._looks_english(raw):
             return ActionDisplayLabelResult(label=raw, source=SOURCE_OPENAPI_SUMMARY)
 
-        if lowered in english_summaries:
+        mapped = ChatActionLabelService._lookup_english_summary(raw)
+        if mapped:
             return ActionDisplayLabelResult(
-                label=english_summaries[lowered],
+                label=mapped,
                 source=SOURCE_ENGLISH_SUMMARY_MAP,
             )
 
@@ -330,11 +324,9 @@ class ActionDisplayLabelResolver:
         schema_hash: str,
         locale: str,
     ) -> ActionDisplayLabelResult | None:
-        if not provider_key or provider_key in {"api-delpi", "delpi", ""}:
-            return None
-
+        # Localization is universal: first-party EN without locale + external providers.
         key = cls.cache_key(
-            provider_key=provider_key,
+            provider_key=provider_key or "unknown",
             action_id=action_id or path,
             schema_hash=schema_hash,
             locale=locale,
