@@ -16,19 +16,19 @@ SIBLING_ALL_PASS_AUTHORIZES = PASS
 NO_PREMATURE_DELETE = PASS
 ```
 
-## Gates (estado atual)
+## Gates (estado atual — pós E9.S10)
 
 | Gate | Status |
 |------|--------|
 | candidate_task_success | PASS_OFFLINE |
-| unknown_api | INCONCLUSIVE |
+| unknown_api | PASS_OFFLINE |
 | metamorphic | PASS_OFFLINE |
 | safety | PASS_OFFLINE |
 | required_args | PASS_OFFLINE |
 | multi_turn | PASS_OFFLINE |
 | compound | PASS_OFFLINE |
 | latency_cost | INCONCLUSIVE |
-| legacy_fallback_hit_rate | INCONCLUSIVE |
+| legacy_fallback_hit_rate | PASS_OFFLINE |
 
 `passStatusesForDelete` = `PASS` | `PASS_OFFLINE_AND_LIVE` | `APPROVED`.  
 **PASS_OFFLINE sozinho não autoriza DELETE.**

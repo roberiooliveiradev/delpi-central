@@ -15,7 +15,7 @@
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
 | G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
-| H — cutover/cleanup | 09 | **ATENDIDO_PARCIAL** | live + DELETE + re-verify | S1–S9 docs; release/DELETE bloqueados |
+| H — cutover/cleanup | 09 | **ATENDIDO_PARCIAL** | live latency/cost + DELETE | S1–S10; DELETE/release ainda bloqueados |
 
 ## Protocolo por subetapa
 
@@ -145,3 +145,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S9 (documentação) |
 | 2026-09-10 | E9.S9 **ATENDIDO_PARCIAL** — ponte docs canônicas; roadmap mantido; aceite final aberto |
 | 2026-09-10 | Plano 09 / Onda H **ATENDIDO_PARCIAL** — próximo: live dims + DELETE gated + re-verify |
+| 2026-09-10 | E9.S10 **ATENDIDO** — unknown/legacy/parity offline; latency INCONCLUSIVE; DELETE ainda bloqueado |
+| 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: live Ollama/gateway (latency/cost) → DELETE gated |

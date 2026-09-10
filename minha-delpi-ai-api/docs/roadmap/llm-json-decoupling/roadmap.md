@@ -149,7 +149,7 @@ Planos 07+08 fechados (schema-first presentation + skills/help residual + audit 
 
 ### Onda H — cutover e limpeza — **ATENDIDO_PARCIAL** (2026-09-10)
 
-Plano 09 S1–S9 entregues offline/docs. **Não** é aceite final: live INCONCLUSIVE, `deleteAuthorized=false`, `globalReleasePass=false`. Próximo: live + DELETE gated + re-verify.
+Plano 09 S1–S10: offline fortalecido (E9.S10). **Não** é aceite final: `latency_cost` INCONCLUSIVE, `deleteAuthorized=false`, `globalReleasePass=false`. Próximo: live com Ollama/gateway → DELETE gated → re-verify.
 
 ## 6. Métricas obrigatórias
 

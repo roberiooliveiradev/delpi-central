@@ -16,9 +16,9 @@
     {
       "id": "unknown_api",
       "required": true,
-      "status": "INCONCLUSIVE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
-      "note": "Harness indexado; trial live LLM pending"
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s10-offline-inconclusive-close.md",
+      "note": "E9.S10 logistics-example top-K/plan sem pathMarkers; live LLM pending"
     },
     {
       "id": "metamorphic",
@@ -65,9 +65,9 @@
     {
       "id": "legacy_fallback_hit_rate",
       "required": true,
-      "status": "INCONCLUSIVE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s4-shadow-divergence.md",
-      "note": "Shadows inventariados; taxa live residual não agregada"
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s10-offline-inconclusive-close.md",
+      "note": "Residual explicado (observer terms + recommendationQueries LEGACY_FALLBACK); taxa live ainda PENDING"
     }
   ],
   "deleteCandidates": [

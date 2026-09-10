@@ -55,8 +55,10 @@ def test_e9_s6_current_evaluation_blocks_delete():
         for g in data["gates"]
         if g.get("required") and str(g.get("status")) in _BLOCKING
     ]
-    assert "unknown_api" in blocking or "latency_cost" in blocking
-    assert "legacy_fallback_hit_rate" in blocking
+    # E9.S10 promoveu unknown_api / legacy_fallback residual a PASS_OFFLINE;
+    # latency/cost live continua bloqueando DELETE.
+    assert "latency_cost" in blocking
+    assert blocking
 
 
 def test_e9_s6_delete_candidates_are_blocked():

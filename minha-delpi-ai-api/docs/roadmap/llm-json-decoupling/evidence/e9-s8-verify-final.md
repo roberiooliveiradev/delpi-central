@@ -11,15 +11,15 @@
 MATRIX_10_OBJECTIVES = PASS
 GLOBAL_RELEASE_PASS = false
 AGGREGATE = PASS_OFFLINE_WITH_INCONCLUSIVE_DIMS
-INCONCLUSIVE_CELLS = unknown_api_no_code, send_stream_simulate_parity, efficiency
+INCONCLUSIVE_CELLS = efficiency
 NO_FALSE_GLOBAL_PASS = PASS
 ```
 
-## Matriz
+## Matriz (pós E9.S10)
 
 | Objetivo | Status |
 |----------|--------|
-| nova API sem código | INCONCLUSIVE |
+| nova API sem código | PASS_OFFLINE |
 | rename metamorphic | PASS_OFFLINE |
 | frases longas | PASS_OFFLINE |
 | follow-up | PASS_OFFLINE |
@@ -27,7 +27,7 @@ NO_FALSE_GLOBAL_PASS = PASS
 | safety | PASS_OFFLINE |
 | apresentação | PASS_OFFLINE |
 | recomendações | PASS_OFFLINE |
-| paridade send/stream/simulate | INCONCLUSIVE |
+| paridade send/stream/simulate | PASS_OFFLINE |
 | eficiência | INCONCLUSIVE |
 
 ## Decisão

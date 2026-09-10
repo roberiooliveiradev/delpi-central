@@ -1,8 +1,8 @@
 # Plano 09 — Evals, rollout, cutover e cleanup final
 
 **Prioridade:** transversal  
-**Status execução:** Onda H · plano 09 **ATENDIDO_PARCIAL** (E9.S1–S9; release/DELETE abertos)  
-**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/e9-s5-canary-cutover.md`](../evidence/e9-s5-canary-cutover.md) · [`../evidence/e9-s6-cleanup-gates.md`](../evidence/e9-s6-cleanup-gates.md) · [`../evidence/e9-s7-architecture-audit.md`](../evidence/e9-s7-architecture-audit.md) · [`../evidence/e9-s8-verify-final.md`](../evidence/e9-s8-verify-final.md) · [`../evidence/e9-s9-documentation.md`](../evidence/e9-s9-documentation.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda H · plano 09 **ATENDIDO_PARCIAL** (E9.S1–S10; live latency + DELETE abertos)  
+**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/e9-s5-canary-cutover.md`](../evidence/e9-s5-canary-cutover.md) · [`../evidence/e9-s6-cleanup-gates.md`](../evidence/e9-s6-cleanup-gates.md) · [`../evidence/e9-s7-architecture-audit.md`](../evidence/e9-s7-architecture-audit.md) · [`../evidence/e9-s8-verify-final.md`](../evidence/e9-s8-verify-final.md) · [`../evidence/e9-s9-documentation.md`](../evidence/e9-s9-documentation.md) · [`../evidence/e9-s10-offline-inconclusive-close.md`](../evidence/e9-s10-offline-inconclusive-close.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** cada migração de catálogo/heurística para OpenAPI/LLM deve provar melhora generalizável, preservar segurança e só então remover legado.
 
 ## Fonte de verdade
@@ -137,7 +137,7 @@ Executar matriz final:
 
 | Objetivo | Prova | Resultado esperado | Status atual |
 |---|---|---|---|
-| nova API sem código | unknown provider eval | PASS | INCONCLUSIVE |
+| nova API sem código | unknown provider eval | PASS | PASS_OFFLINE |
 | rename técnico sem quebra | metamorphic eval | PASS | PASS_OFFLINE |
 | frases longas | compound corpus | PASS | PASS_OFFLINE |
 | follow-up | multi-turn corpus + F5 | PASS | PASS_OFFLINE |
@@ -145,7 +145,7 @@ Executar matriz final:
 | safety | unauthorized/write/injection | PASS | PASS_OFFLINE |
 | apresentação | unknown schema/provider | PASS | PASS_OFFLINE |
 | recomendações | grounded/allowlist | PASS | PASS_OFFLINE |
-| paridade | send/stream/simulate | PASS | INCONCLUSIVE |
+| paridade | send/stream/simulate | PASS | PASS_OFFLINE |
 | eficiência | P50/P95/tokens/tool/LLM calls | aprovado | INCONCLUSIVE |
 
 ### E9.S9 — Documentação e encerramento — **ATENDIDO_PARCIAL** (2026-09-10)
@@ -155,6 +155,12 @@ Executar matriz final:
 **Não feito:** declarar aceite final da iniciativa; remover pasta roadmap.
 
 **Fazer (quando gates/live plenos):** incorporar decisões finais remanescentes; atualizar changelog; arquivar roadmap se deixar de ter valor futuro.
+
+### E9.S10 — Offline INCONCLUSIVE close — **ATENDIDO** (2026-09-10)
+
+**Feito:** harnesses dedicados unknown API / legacy residual / send-stream parity; atualização E9.S6+E9.S8 para `PASS_OFFLINE` nessas células; corpus v1 **imutável**.
+
+**Bloqueado:** `latency_cost` / efficiency (Ollama DNS); `deleteAuthorized` e `globalReleasePass` permanecem false.
 
 ## Métricas mínimas
 

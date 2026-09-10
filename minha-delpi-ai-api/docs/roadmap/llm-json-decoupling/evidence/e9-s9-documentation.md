@@ -33,8 +33,9 @@ DOCS_CANONICAL = UPDATED (esta fatia)
 
 ## Próximo (fora de “fechar falso”)
 
-1. Live L1–L4 / trials LLM para dims INCONCLUSIVE.
-2. Reavaliar E9.S6 → `deleteAuthorized=true` quando gates plenos.
-3. Executar DELETEs classificados em E9.S7 `REMOVE_WHEN_GATES_PASS`.
-4. Re-rodar E9.S8 até `globalReleasePass=true`.
-5. Só então encerrar roadmap ou arquivar.
+1. ~~Fortalecer unknown/legacy/parity offline~~ → **E9.S10 ATENDIDO**.
+2. Live L1–L4 + eficiência com Ollama/gateway (`latency_cost`).
+3. Reavaliar E9.S6 → `deleteAuthorized=true` quando gates plenos.
+4. Executar DELETEs `REMOVE_WHEN_GATES_PASS`.
+5. Re-rodar E9.S8 até `globalReleasePass=true`.
+6. Só então encerrar roadmap ou arquivar.

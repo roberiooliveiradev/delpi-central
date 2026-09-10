@@ -12,9 +12,9 @@
       "objective": "nova API sem código",
       "proof": "unknown provider eval",
       "expected": "PASS",
-      "status": "INCONCLUSIVE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
-      "note": "Harness indexado; live unknown provider pending"
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s10-offline-inconclusive-close.md",
+      "note": "E9.S10 logistics-example offline; live LLM pending"
     },
     {
       "id": "metamorphic_rename",
@@ -84,9 +84,9 @@
       "objective": "paridade",
       "proof": "send/stream/simulate",
       "expected": "PASS",
-      "status": "INCONCLUSIVE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
-      "note": "Live parity pending"
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s10-offline-inconclusive-close.md",
+      "note": "Completion parity + artefato D4; live L1–L4 pending"
     },
     {
       "id": "efficiency",
@@ -94,8 +94,8 @@
       "proof": "P50/P95/tokens/tool/LLM calls",
       "expected": "aprovado",
       "status": "INCONCLUSIVE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s3-candidate-plans-offline.md",
-      "note": "Métricas de latência/custo não medidas no offline"
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s10-offline-inconclusive-close.md",
+      "note": "Ollama/host live indisponível neste ambiente; P50/P95 não medidos"
     }
   ],
   "blockingStatuses": ["INCONCLUSIVE", "FAIL", "PENDING", "PENDING_RUNTIME"],
