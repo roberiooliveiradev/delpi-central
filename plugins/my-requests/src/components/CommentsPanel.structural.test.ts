@@ -42,6 +42,9 @@ describe("Request conversation structural", () => {
     expect(css).toMatch(/--delpi-ui-room-panel-height:\s*100%/);
     expect(css).toMatch(/--delpi-ui-room-panel-max-height:\s*100%/);
     expect(css).toMatch(/--delpi-ui-room-panel-min-height:\s*0/);
+    expect(css).toMatch(
+      /\.my-requests-detail-conversation__frame\s*\{[^}]*height:\s*clamp\(/s,
+    );
   });
 
   it("stick-to-bottom só perto do fundo", () => {

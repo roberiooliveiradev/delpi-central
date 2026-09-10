@@ -276,15 +276,16 @@
 
 /*
   Host height owns the RoomPanel. Kit defaults (min(34rem, 70vh)) would
-  overflow the SectionCard and paint over Artifacts below.
+  overflow the SectionCard and paint over Artifacts below. Prefer clamp
+  so tall viewports gain space without blowing past a rem ceiling.
 */
 .dashboard-my-requests .my-requests-detail-conversation__frame {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 18rem;
-  height: min(28rem, 55vh);
-  max-height: min(28rem, 55vh);
+  min-height: 22rem;
+  height: clamp(22rem, 62vh, 40rem);
+  max-height: clamp(22rem, 62vh, 40rem);
   overflow: hidden;
   isolation: isolate;
   --delpi-ui-room-panel-min-height: 0;
@@ -314,8 +315,8 @@
   }
 
   .dashboard-my-requests .my-requests-detail-conversation__frame {
-    min-height: 16rem;
-    height: min(24rem, 50vh);
-    max-height: min(24rem, 50vh);
+    min-height: 18rem;
+    height: clamp(18rem, 58vh, 32rem);
+    max-height: clamp(18rem, 58vh, 32rem);
   }
 }
