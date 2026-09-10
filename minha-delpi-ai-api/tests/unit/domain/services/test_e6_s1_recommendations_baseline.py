@@ -88,11 +88,14 @@ def test_profile_static_queries_match_json_authority():
     assert recommendations
     assert recommendations[0]["label"] == expected[0]["label"]
     assert recommendations[0]["query"] == expected[0]["query"]
-    assert "source" not in recommendations[0]
+    assert recommendations[0].get("source") in {
+        "deterministic",
+        "profile_fallback",
+    }
 
 
 def test_already_executed_no_dedupe_still_emits_profile_queries():
-    """Sibling gap R06-02: metadata de action já executada não remove queries estáticas."""
+    """Sibling: action executada sem actionId nas queries estáticas — ainda emite (gap textual R06-02)."""
 
     metadata = {
         "path": "/products/10080001/stock",
@@ -112,7 +115,9 @@ def test_already_executed_no_dedupe_still_emits_profile_queries():
         str(data_answer.get("profileKey") or "")
     )
     recommendations = data_answer.get("recommendations") or []
-    assert len(recommendations) == len(expected)
+    assert recommendations
+    # E6.S3 pode omitir query de paginação sem sinal de truncamento.
+    assert len(recommendations) <= len(expected)
     assert recommendations[0]["query"] == expected[0]["query"]
 
 

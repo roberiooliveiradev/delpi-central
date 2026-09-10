@@ -537,7 +537,7 @@ class ChatHumanizedDataResponseService:
         *,
         profile_key: str,
         allowed_action_ids: list[str] | set[str] | None = None,
-    ) -> list[dict[str, str]]:
+    ) -> list[dict[str, Any]]:
         from app.domain.services.recommendation_action_validator import (
             RecommendationActionValidator,
         )
@@ -551,15 +551,23 @@ class ChatHumanizedDataResponseService:
                 existing,
                 allowed_action_ids,
             )
-            structured: list[dict[str, str]] = []
+            structured: list[dict[str, Any]] = []
 
             for item in filtered:
                 label = str(item.get("label") or item.get("text") or "").strip()
                 query = str(item.get("query") or item.get("intent") or label).strip()
                 reason = str(item.get("reason") or "").strip()
-                entry = {"label": label, "query": query, "reason": reason}
+                entry: dict[str, Any] = {"label": label, "query": query, "reason": reason}
                 if item.get("actionId"):
                     entry["actionId"] = str(item["actionId"]).strip()
+                source = str(item.get("source") or "").strip()
+                if source:
+                    entry["source"] = source
+                if item.get("confidence") is not None:
+                    try:
+                        entry["confidence"] = float(item["confidence"])
+                    except (TypeError, ValueError):
+                        pass
                 if label:
                     structured.append(entry)
 

@@ -93,6 +93,7 @@ class ChatHumanizedDataResponseContentService:
             "maxAllowedActions": 40,
             "maxAlreadyExecuted": 20,
             "maxMessageChars": 400,
+            "maxRecommendations": 3,
         }
         if not isinstance(node, dict):
             return defaults

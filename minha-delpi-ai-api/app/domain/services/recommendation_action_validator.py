@@ -13,14 +13,14 @@ class RecommendationActionValidator:
         cls,
         items: list[Any] | None,
         allowed_action_ids: list[str] | set[str] | None,
-    ) -> list[dict[str, str]]:
+    ) -> list[dict[str, Any]]:
         allowed = {
             str(token).strip()
             for token in (allowed_action_ids or [])
             if str(token).strip()
         }
         enforce = bool(allowed)
-        output: list[dict[str, str]] = []
+        output: list[dict[str, Any]] = []
 
         for item in items or []:
             if isinstance(item, str):
@@ -44,7 +44,7 @@ class RecommendationActionValidator:
             if not (label or text):
                 continue
 
-            entry: dict[str, str] = {}
+            entry: dict[str, Any] = {}
             if text:
                 entry["text"] = text
             if label:
@@ -55,6 +55,15 @@ class RecommendationActionValidator:
                 entry["reason"] = reason
             if action_id and (not enforce or action_id in allowed):
                 entry["actionId"] = action_id
+            source = str(item.get("source") or "").strip()
+            if source:
+                entry["source"] = source
+            confidence_raw = item.get("confidence")
+            if confidence_raw is not None and str(confidence_raw).strip() != "":
+                try:
+                    entry["confidence"] = float(confidence_raw)
+                except (TypeError, ValueError):
+                    pass
 
             output.append(entry)
 

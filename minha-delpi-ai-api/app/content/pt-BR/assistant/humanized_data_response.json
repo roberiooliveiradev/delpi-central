@@ -49,7 +49,8 @@
     "maxResultRefs": 8,
     "maxAllowedActions": 40,
     "maxAlreadyExecuted": 20,
-    "maxMessageChars": 400
+    "maxMessageChars": 400,
+    "maxRecommendations": 3
   },
   "recommendationQueries": {
     "factory_status": [

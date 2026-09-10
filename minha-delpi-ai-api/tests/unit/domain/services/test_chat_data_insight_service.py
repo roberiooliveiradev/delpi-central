@@ -869,6 +869,12 @@ def test_attach_turn_structured_recommendations_skips_when_already_present():
         metadata={},
     )
     assert commentary["structuredRecommendations"][0]["label"] == "Já veio do turno"
+    assert commentary["structuredRecommendations"][0]["query"] == "consulta custom"
+    assert commentary["structuredRecommendations"][0].get("source") in {
+        "deterministic",
+        "llm_contextual",
+        "profile_fallback",
+    }
 
 
 def test_structured_recommendations_drop_unauthorized_action_ids():

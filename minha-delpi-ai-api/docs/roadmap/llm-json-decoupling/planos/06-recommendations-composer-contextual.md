@@ -1,11 +1,11 @@
 # Plano 06 — Recommendations e composer -> sugestões contextuais grounded
 
 **Prioridade:** P1  
-**Status execução:** Onda F · E6.S1–S2 **ATENDIDO** · próxima E6.S3 · `recommendationQueries` ainda LIVE_AUTHORITY  
-**Evidência:** [`../evidence/e6-s1-recommendations-inventory.md`](../evidence/e6-s1-recommendations-inventory.md) · [`../evidence/e6-s2-recommendation-grounding-contract.md`](../evidence/e6-s2-recommendation-grounding-contract.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda F · E6.S1–S3 **ATENDIDO** · próxima E6.S4 · `recommendationQueries` ainda path determinístico (a rebaixar)  
+**Evidência:** [`../evidence/e6-s1-recommendations-inventory.md`](../evidence/e6-s1-recommendations-inventory.md) · [`../evidence/e6-s2-recommendation-grounding-contract.md`](../evidence/e6-s2-recommendation-grounding-contract.md) · [`../evidence/e6-s3-contextual-recommendation-producer.md`](../evidence/e6-s3-contextual-recommendation-producer.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** próximos passos e sugestões devem considerar o pedido atual, os fatos retornados, limitações, contexto multi-turn e actions permitidas, em vez de listas estáticas por profile.
 
-**HEAD revalidado:** pós-E6.S1 (`39244f19d`+)
+**HEAD revalidado:** pós-E6.S2 (`f8c2dedf4`+)
 
 ## EXECUTION_DRIFT (2026-09-10)
 
@@ -105,11 +105,13 @@ Se houver `actionId`, deve pertencer às actions permitidas. Recommendation nunc
 
 **Não fazer:** payload bruto ilimitado ao LLM — **garantido** (raw_data excluído; caps).
 
-### E6.S3 — Contextual producer
+### E6.S3 — Contextual producer — **ATENDIDO** (2026-09-10)
 
 **Fazer:** acoplar à síntese operacional existente quando possível; validar output, tamanho, duplicação e allowlist.
 
-**Teste:** malformed, unauthorized actionId, hallucinated query, empty result.
+**Feito:** `ChatContextualRecommendationProducerService` + wiring no attach; filtros pagination/allowlist/dedupe; `source`/`confidence` no `dataAnswer`; aceita `llm_candidates` (síntese ainda não emite — opt-in). Delta LLM=0.
+
+**Teste:** malformed, unauthorized actionId, already-executed, empty, pagination sibling.
 
 ### E6.S4 — Static profile queries -> fallback
 

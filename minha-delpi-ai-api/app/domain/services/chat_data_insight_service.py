@@ -205,32 +205,51 @@ class ChatDataInsightService:
         profile_key: str,
         metadata: dict[str, Any],
     ) -> None:
-        """Producer no turno: eleva recommendationQueries → structuredRecommendations (delta LLM=0)."""
+        """Producer no turno: grounding + contextual producer (delta LLM=0)."""
 
-        existing = commentary.get("structuredRecommendations")
-        if isinstance(existing, list) and existing:
-            return
-
+        from app.domain.services.chat_contextual_recommendation_producer_service import (
+            ChatContextualRecommendationProducerService,
+        )
         from app.domain.services.chat_humanized_data_response_content_service import (
             ChatHumanizedDataResponseContentService,
         )
-
-        queries = ChatHumanizedDataResponseContentService.recommendation_queries(
-            str(profile_key or "").strip()
+        from app.domain.services.chat_recommendation_grounding_service import (
+            ChatRecommendationGroundingService,
         )
-        if not queries:
+
+        meta = metadata if isinstance(metadata, dict) else {}
+        grounding = ChatRecommendationGroundingService.build(
+            profile_key=str(profile_key or "").strip(),
+            metadata=meta,
+            facts=commentary.get("facts") if isinstance(commentary, dict) else None,
+            limitations=(
+                commentary.get("limitations") if isinstance(commentary, dict) else None
+            ),
+            user_message=str(
+                meta.get("userMessage") or meta.get("message") or ""
+            ).strip()
+            or None,
+            allowed_action_ids=meta.get("allowedActionIds") or meta.get("allowedActions"),
+            already_executed_action_ids=meta.get("executedActionIds")
+            or meta.get("alreadyExecutedActionIds"),
+        )
+
+        existing = commentary.get("structuredRecommendations")
+        existing_list = existing if isinstance(existing, list) and existing else None
+
+        produced = ChatContextualRecommendationProducerService.produce(
+            grounding=grounding,
+            profile_queries=ChatHumanizedDataResponseContentService.recommendation_queries(
+                str(profile_key or "").strip()
+            ),
+            existing_candidates=existing_list,
+        )
+        if not produced:
             return
 
-        commentary["structuredRecommendations"] = [
-            {
-                "label": item["label"],
-                "query": item["query"],
-                "reason": item.get("reason") or "",
-            }
-            for item in queries
-        ]
+        commentary["structuredRecommendations"] = produced
 
-        allowed = metadata.get("allowedActionIds") or metadata.get("allowedActions")
+        allowed = meta.get("allowedActionIds") or meta.get("allowedActions")
         if isinstance(allowed, (list, set, tuple)) and "allowedActionIds" not in commentary:
             commentary["allowedActionIds"] = list(allowed)
 
