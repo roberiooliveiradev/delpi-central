@@ -1,6 +1,7 @@
 {
   "initialStatus": "submitted",
   "terminalStatuses": ["completed", "cancelled", "rejected"],
+  "fileImmutableStatuses": ["awaiting_requester_confirmation"],
   "statusAliases": {
     "submitted": "pending",
     "needs_information": "returned",
@@ -123,6 +124,16 @@
       "requires": {
         "permissions": ["create"],
         "ownership": true
+      }
+    },
+    {
+      "action": "reject_fulfillment",
+      "from": ["awaiting_requester_confirmation"],
+      "to": "in_progress",
+      "requires": {
+        "permissions": ["create"],
+        "ownership": true,
+        "fields": ["return_reason"]
       }
     },
     {

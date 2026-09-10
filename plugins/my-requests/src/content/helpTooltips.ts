@@ -96,9 +96,11 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     complete:
       "Finaliza o atendimento quando todas as providências necessárias foram realizadas.",
     issue:
-      "Registra a emissão da nota fiscal. É obrigatório ter anexado a nota (PDF) em Documentos gerados. Depois disso, o solicitante precisa confirmar o atendimento para fechar o chamado.",
+      "Registra a emissão da nota fiscal. É obrigatório ter anexado a nota (PDF) em Documentos gerados. Depois disso, os documentos ficam bloqueados e o solicitante precisa confirmar o atendimento ou devolver para correção.",
     confirm_fulfillment:
-      "Confirme que o que você pediu foi atendido. Só essa confirmação fecha a solicitação; depois disso, os arquivos não podem mais ser alterados.",
+      "Confirme que o que você pediu foi atendido. Só essa confirmação fecha a solicitação. Se algo estiver errado, use Devolver para correção.",
+    reject_fulfillment:
+      "Devolve o atendimento para correção (informe o motivo). Depois da devolução, a equipe pode trocar a nota e registrar a emissão de novo.",
     cancel: "Encerra a solicitação sem conclusão. Uma justificativa será solicitada.",
     reject: "Encerra a solicitação como rejeitada.",
     edit: "Abre os dados da solicitação para realizar as correções permitidas.",
@@ -126,7 +128,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   artifacts: {
     section:
-      "Arquivos produzidos durante o atendimento, como a nota fiscal ou outro comprovante. Abra a miniatura para ver e baixar. Quem atende pode remover e substituir enquanto o chamado não estiver concluído; quem só solicitou normalmente só baixa.",
+      "Arquivos produzidos durante o atendimento, como a nota fiscal ou outro comprovante. Abra a miniatura para ver e baixar. Quem atende pode remover e substituir enquanto o chamado estiver em andamento; após registrar a emissão (aguardando confirmação) ou após a conclusão, os documentos ficam bloqueados até o solicitante devolver para correção.",
     kind: "Classifique o documento gerado no atendimento (por exemplo, nota fiscal em PDF).",
     upload:
       "Selecione o arquivo do atendimento. Ele fica pendente até Salvar documentos — revise antes de enviar. Depois de salvo, use o X na miniatura para remover se precisar trocar.",

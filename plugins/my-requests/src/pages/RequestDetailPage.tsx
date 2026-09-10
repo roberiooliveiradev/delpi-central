@@ -145,7 +145,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
       openEdit();
       return;
     }
-    if (action === "return" || action === "cancel") {
+    if (action === "return" || action === "cancel" || action === "reject_fulfillment") {
       setReasonKind(action);
       return;
     }
@@ -158,6 +158,12 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
       void runTransition("return", {
         returnReason: result.reason,
         correctionTargets: result.correctionTargets,
+      });
+      return;
+    }
+    if (reasonKind === "reject_fulfillment") {
+      void runTransition("reject_fulfillment", {
+        returnReason: result.reason,
       });
       return;
     }

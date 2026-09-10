@@ -100,6 +100,32 @@ def test_processor_cannot_upload_artifact_when_terminal():
     assert caps["can_upload_artifact"] is False
 
 
+def test_processor_cannot_upload_artifact_when_file_immutable_status():
+    workflow = {
+        **_TERMINAL_WF,
+        "fileImmutableStatuses": ["awaiting_requester_confirmation"],
+    }
+    caps = resolve_request_capabilities(
+        _request(owner="u-owner", status="awaiting_requester_confirmation"),
+        actor=_actor(user_id="u-proc", has_process=True),
+        workflow=workflow,
+    )
+    assert caps["can_upload_artifact"] is False
+
+
+def test_processor_can_upload_artifact_again_after_reject_status():
+    workflow = {
+        **_TERMINAL_WF,
+        "fileImmutableStatuses": ["awaiting_requester_confirmation"],
+    }
+    caps = resolve_request_capabilities(
+        _request(owner="u-owner", status="in_progress"),
+        actor=_actor(user_id="u-proc", has_process=True),
+        workflow=workflow,
+    )
+    assert caps["can_upload_artifact"] is True
+
+
 def test_owner_terminal_cannot_upload_attachment():
     caps = resolve_request_capabilities(
         _request(owner="u-owner", status="cancelled"),

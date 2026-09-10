@@ -98,7 +98,7 @@ def test_registry_loads_invoice_and_generic_without_engine_branch():
             "awaiting_requester_confirmation",
             _creator,
             _NF,
-            {"view", "confirm_fulfillment"},
+            {"view", "confirm_fulfillment", "reject_fulfillment"},
         ),
         (
             "awaiting_requester_confirmation",
@@ -186,6 +186,44 @@ def test_confirm_fulfillment_closes(engine, invoice_workflow):
     )
     assert result.request.status == "completed"
     assert result.history.action == "confirm_fulfillment"
+
+
+def test_reject_fulfillment_returns_to_in_progress(engine, invoice_workflow):
+    result = engine.apply_transition(
+        request=_request(status="awaiting_requester_confirmation"),
+        actor=_creator(),
+        workflow=invoice_workflow,
+        action="reject_fulfillment",
+        body={"return_reason": "Nota com dados incorretos"},
+        expected_version=1,
+    )
+    assert result.request.status == "in_progress"
+    assert result.request.return_reason == "Nota com dados incorretos"
+    assert result.history.action == "reject_fulfillment"
+
+
+def test_reject_fulfillment_requires_reason(engine, invoice_workflow):
+    with pytest.raises(WorkflowEngineError) as exc:
+        engine.apply_transition(
+            request=_request(status="awaiting_requester_confirmation"),
+            actor=_creator(),
+            workflow=invoice_workflow,
+            action="reject_fulfillment",
+            expected_version=1,
+        )
+    assert exc.value.code == "missing_field"
+
+
+def test_processor_cannot_reject_fulfillment(engine, invoice_workflow):
+    ok, code, _ = engine.can_transition(
+        request=_request(status="awaiting_requester_confirmation"),
+        actor=_processor(),
+        workflow=invoice_workflow,
+        action="reject_fulfillment",
+        require_fields=False,
+    )
+    assert ok is False
+    assert code == "forbidden"
 
 
 def test_processor_cannot_confirm_fulfillment(engine, invoice_workflow):

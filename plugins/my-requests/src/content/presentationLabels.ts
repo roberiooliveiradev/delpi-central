@@ -26,6 +26,7 @@ const ACTION_LABELS: Record<string, string> = {
   complete: "Concluir",
   issue: "Registrar emissão",
   confirm_fulfillment: "Confirmar atendimento",
+  reject_fulfillment: "Devolver para correção",
   cancel: "Cancelar solicitação",
   reject: "Rejeitar",
 };
@@ -103,6 +104,7 @@ export function actionButtonVariant(
 ): "primary" | "ghost" | "default" {
   const code = action.trim();
   if (code === "cancel" || code === "reject" || code === "return") return "ghost";
+  if (code === "reject_fulfillment") return "ghost";
   if (code === "view" || code === "edit") return "ghost";
   return "primary";
 }

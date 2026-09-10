@@ -378,6 +378,11 @@ class WorkflowEngine:
             updated.return_reason = None
             updated.correction_targets = []
 
+        # Fresh confirmation cycle: clear previous rework reason after re-issue.
+        if to_status == "awaiting_requester_confirmation":
+            updated.return_reason = None
+            updated.correction_targets = []
+
         assignment: AssignmentEntry | None = None
         if transition.get("assignSelf"):
             assignment = AssignmentEntry(

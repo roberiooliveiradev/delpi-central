@@ -43,6 +43,18 @@ def _is_terminal(request, workflow: dict[str, Any]) -> bool:
     return request.status in terminals
 
 
+def _files_immutable(request, workflow: dict[str, Any]) -> bool:
+    """Terminal or workflow fileImmutableStatuses (e.g. awaiting confirmation)."""
+    if _is_terminal(request, workflow):
+        return True
+    locked = {
+        str(item).strip()
+        for item in (workflow or {}).get("fileImmutableStatuses") or []
+        if str(item).strip()
+    }
+    return request.status in locked
+
+
 def _owner_may_upload_attachment(*, request, actor) -> bool:
     is_owner = request.created_by_user_id == actor.user_id
     return bool(is_owner and request.status in _ATTACHMENT_UPLOAD_STATUSES)
@@ -103,7 +115,7 @@ class FileUseCases:
             user=user, request_id=request_id
         )
         workflow = request_type.workflow_definition or {}
-        if _is_terminal(request, workflow):
+        if _files_immutable(request, workflow):
             raise ApplicationError(code="upload_forbidden", status_code=403)
         if not _owner_may_upload_attachment(request=request, actor=actor):
             raise ApplicationError(code="upload_forbidden", status_code=403)
@@ -262,7 +274,7 @@ class FileUseCases:
         if not (actor.has_process or actor.has_manage):
             raise ApplicationError(code="delete_forbidden", status_code=403)
         workflow = request_type.workflow_definition or {}
-        if _is_terminal(request, workflow):
+        if _files_immutable(request, workflow):
             raise ApplicationError(code="delete_forbidden", status_code=403)
         try:
             self._artifacts.delete_file(storage_key=artifact.storage_key)
@@ -316,7 +328,7 @@ class FileUseCases:
         if not (actor.has_process or actor.has_manage):
             raise ApplicationError(code="upload_forbidden", status_code=403)
         workflow = request_type.workflow_definition or {}
-        if _is_terminal(request, workflow):
+        if _files_immutable(request, workflow):
             raise ApplicationError(code="upload_forbidden", status_code=403)
         try:
             stored = self._artifacts.save(

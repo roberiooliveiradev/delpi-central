@@ -18,25 +18,36 @@ from requests_app.domain.entities import Actor, Request
 ATTACHMENT_MANAGE_STATUS = "needs_information"
 
 
+def _file_immutable_statuses(workflow: dict[str, Any] | None) -> set[str]:
+    """Statuses where artifacts/attachments must not be mutated (workflow-driven)."""
+    terminals = {
+        str(item).strip()
+        for item in ((workflow or {}).get("terminalStatuses") or [])
+        if str(item).strip()
+    }
+    locked = {
+        str(item).strip()
+        for item in ((workflow or {}).get("fileImmutableStatuses") or [])
+        if str(item).strip()
+    }
+    return terminals | locked
+
+
 def resolve_request_capabilities(
     request: Request,
     *,
     actor: Actor,
     workflow: dict[str, Any] | None,
 ) -> dict[str, bool]:
-    terminals = {
-        str(item).strip()
-        for item in ((workflow or {}).get("terminalStatuses") or [])
-        if str(item).strip()
-    }
-    is_terminal = request.status in terminals
+    immutable = _file_immutable_statuses(workflow)
+    files_locked = request.status in immutable
     is_owner = request.created_by_user_id == actor.user_id
     can_view = bool(
         is_owner or actor.has_view_all or actor.has_process or actor.has_manage
     )
     can_staff = bool(actor.has_process or actor.has_manage)
     can_manage_attachments = bool(
-        (not is_terminal)
+        (not files_locked)
         and is_owner
         and request.status == ATTACHMENT_MANAGE_STATUS
     )
@@ -46,6 +57,6 @@ def resolve_request_capabilities(
         "can_comment": can_view,
         # detail manage (upload + delete): owner + needs_information only
         "can_upload_attachment": can_manage_attachments,
-        # upload artifact: process|manage and not terminal
-        "can_upload_artifact": bool(can_staff and not is_terminal),
+        # upload artifact: process|manage and not terminal / fileImmutableStatuses
+        "can_upload_artifact": bool(can_staff and not files_locked),
     }

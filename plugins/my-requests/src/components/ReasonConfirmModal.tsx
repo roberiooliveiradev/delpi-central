@@ -10,7 +10,7 @@ import type { CorrectionTargetOption } from "../content/correctionTargets";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { MyRequestsFormActions, MyRequestsModal } from "../ui/mrUi";
 
-export type ReasonConfirmKind = "return" | "cancel";
+export type ReasonConfirmKind = "return" | "cancel" | "reject_fulfillment";
 
 export type ReasonConfirmResult = {
   reason: string;
@@ -21,7 +21,7 @@ type ReasonConfirmModalProps = {
   open: boolean;
   kind: ReasonConfirmKind;
   busy?: boolean;
-  /** Só na devolução — opções de seções/campos a marcar. */
+  /** Só na devolução do atendimento — opções de seções/campos a marcar. */
   correctionOptions?: CorrectionTargetOption[];
   onClose: () => void;
   onConfirm: (result: ReasonConfirmResult) => void;
@@ -43,6 +43,13 @@ const COPY: Record<
     label: "Justificativa do cancelamento",
     confirm: "Cancelar solicitação",
     description: "Informe por que a solicitação será cancelada. Esta ação encerra o fluxo.",
+  },
+  reject_fulfillment: {
+    title: "Devolver para correção",
+    label: "Motivo da devolução",
+    confirm: "Devolver para correção",
+    description:
+      "Explique o que está incorreto no atendimento ou na nota. A equipe poderá substituir o documento e registrar a emissão novamente.",
   },
 };
 

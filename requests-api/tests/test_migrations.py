@@ -26,6 +26,7 @@ def test_list_migration_files_in_order():
         "V009__request_correction_targets.sql",
         "V010__comment_attachments.sql",
         "V011__invoice_issue_confirmation_workflow.sql",
+        "V012__invoice_reject_fulfillment_and_file_lock.sql",
     ]
 
 
@@ -104,3 +105,14 @@ def test_v011_invoice_confirmation_and_artifact_require():
     assert "invoice-issuance" in sql
     _, name = parse_version_and_name(v011)
     assert name == "invoice_issue_confirmation_workflow"
+
+
+def test_v012_reject_fulfillment_and_file_lock():
+    v012 = MIGRATIONS_DIR / "V012__invoice_reject_fulfillment_and_file_lock.sql"
+    sql = v012.read_text(encoding="utf-8")
+    assert "reject_fulfillment" in sql
+    assert "fileImmutableStatuses" in sql
+    assert "awaiting_requester_confirmation" in sql
+    assert "invoice-issuance" in sql
+    _, name = parse_version_and_name(v012)
+    assert name == "invoice_reject_fulfillment_and_file_lock"

@@ -8,6 +8,7 @@ import {
   Pencil,
   RotateCcw,
   Send,
+  ThumbsDown,
   ThumbsUp,
   XCircle,
 } from "lucide-react";
@@ -31,6 +32,7 @@ const ACTION_ICONS: Record<string, LucideIcon> = {
   complete: CheckCircle2,
   issue: FileCheck2,
   confirm_fulfillment: ThumbsUp,
+  reject_fulfillment: ThumbsDown,
   cancel: XCircle,
   reject: Ban,
 };
