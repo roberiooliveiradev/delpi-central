@@ -143,9 +143,9 @@ Planos 04 e 05 (S1–S7): Action Catalog discovery + composition/enrichment por 
 
 Plano 06 S1–S6: recommendations contextuais + composer budget-safe; `recommendationQueries` = LEGACY_FALLBACK.
 
-### Onda G — apresentação e conteúdo residual — **EM_ANDAMENTO** (E7.S1–S6 ATENDIDO)
+### Onda G — apresentação e conteúdo residual — **EM_ANDAMENTO** (plano 07 ATENDIDO)
 
-Plano 07: inventário + baseline + shape-first + path/entity + labels/formats + titles write-once. Próximo: E7.S7 MFE render-only.
+Plano 07 S1–S7 fechado (schema-first + MFE render-only cleanup). Próximo: plano 08 (skills residual).
 
 ### Onda H — cutover e limpeza — **CONTÍNUO**
 

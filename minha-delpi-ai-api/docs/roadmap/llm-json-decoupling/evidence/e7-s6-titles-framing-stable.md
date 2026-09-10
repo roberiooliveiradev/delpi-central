@@ -38,4 +38,4 @@ slot / presentation.title / metadata.title
 
 ## Próximo
 
-**E7.S7** — MFE render-only + cleanup de JSON duplicado no frontend.
+**E7.S7** — MFE render-only + cleanup — **ATENDIDO** (`e7-s7-mfe-render-only-cleanup.md`).
