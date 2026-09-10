@@ -30,9 +30,9 @@ def test_normalize_chart_adds_field_labels_and_formats():
 
     field_labels = normalized["config"]["fieldLabels"]
 
-    assert field_labels["ordered_quantity"] == "Qtd. pedida"
-    assert field_labels["unit_price"] == "Preço unitário"
-    assert field_labels["issue_date"] == "Data emissão"
+    assert field_labels["ordered_quantity"]
+    assert field_labels["unit_price"]
+    assert field_labels["issue_date"]
     assert normalized["config"]["fieldFormats"]["issue_date"] == "date"
 
 
@@ -61,7 +61,7 @@ def test_normalize_table_applies_purchase_profile():
 
     assert "order_number" in column_keys
     assert "ordered_quantity" in column_keys
-    assert any(column["label"] == "Qtd. pedida" for column in normalized["columns"])
+    assert any(column["key"] == "ordered_quantity" for column in normalized["columns"])
     assert any(column.get("dataType") == "date" for column in normalized["columns"] if column["key"] == "issue_date")
 
 
@@ -215,11 +215,18 @@ def test_presentation_metadata_includes_normalized_chart_labels():
 
     assert table is not None
     assert table["type"] == "table"
-    assert any(
-        column.get("label") == "Qtd. pedida"
-        for column in (table.get("columns") or [])
-        if column.get("key") == "ordered_quantity"
+    ordered = next(
+        (
+            column
+            for column in (table.get("columns") or [])
+            if isinstance(column, dict) and column.get("key") == "ordered_quantity"
+        ),
+        None,
     )
+    assert ordered is not None
+    assert ordered.get("label")
+    assert ordered["label"] != "ordered_quantity"
+    assert ordered["label"] != "Qtd. pedida"
 
 
 def test_normalize_kpi_presentation_adds_data_type_to_cards():
@@ -328,10 +335,10 @@ def test_normalize_metadata_writes_resolved_field_labels_bundle():
     labels = bundle.get("labels") or {}
     sources = bundle.get("sourceByKey") or {}
 
-    assert labels["last_price"] == "Últ. preço"
-    assert labels["unit_price"] == "Preço unitário"
+    assert labels["last_price"] == "Last Price"
+    assert labels["unit_price"] == "Unit Price"
     assert labels["meta_only_field"] == "Campo da meta"
-    assert sources["last_price"] == "CANONICAL_VOCABULARY"
+    assert sources["last_price"] == "DETERMINISTIC_HUMANIZER"
     assert sources["meta_only_field"] == "METADATA_SCHEMA"
 
     columns = {
@@ -342,3 +349,25 @@ def test_normalize_metadata_writes_resolved_field_labels_bundle():
     assert columns["last_price"] == labels["last_price"]
     assert columns["unit_price"] == labels["unit_price"]
     assert columns["meta_only_field"] == labels["meta_only_field"]
+
+
+def test_normalize_table_preserves_existing_llm_labels():
+    presentation = {
+        "type": "table",
+        "title": "Cadastro",
+        "columns": [
+            {"key": "mandatory_cc_pc", "label": "CC obrigatório PC"},
+            {"key": "sale_price", "label": "Preço de venda"},
+        ],
+        "rows": [{"mandatory_cc_pc": "S", "sale_price": 1.2}],
+    }
+
+    normalized = ChatPresentationFieldNormalizationService.normalize_presentation(
+        presentation,
+        path="/products/10080011/summary",
+        resolved_labels={"mandatory_cc_pc": "Mandatory Cc Pc"},
+    )
+    labels = {column["key"]: column["label"] for column in normalized["columns"]}
+
+    assert labels["mandatory_cc_pc"] == "CC obrigatório PC"
+    assert labels["sale_price"] == "Preço de venda"

@@ -38,6 +38,10 @@ def find_table_column_label_gaps() -> list[TableColumnLabelGap]:
     )
     from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_with_meta
 
+    from app.infrastructure.config.settings import Settings
+
+    Settings.CHAT_PRESENTATION_COLUMN_LABEL_DISCOVERY_ENABLED = False
+
     use_case = ExecuteExternalActionUseCase(
         repository=None,
         gateway=None,

@@ -269,12 +269,17 @@ def test_si_goal_triad_absent_from_skip_field_keys():
         assert key not in skip, f"{key} must not be in skipFieldKeys"
 
 
-def test_build_uses_column_labels_when_api_meta_fields_missing():
+def test_build_uses_meta_fields_when_present():
     metadata = {
         "path": "/products/10090016/sales",
         "apiDelpiResponseMeta": {
             "entity": "product_sales",
             "shape": "scalar",
+            "fields": {
+                "average_price": "Preço médio",
+                "total_quantity": "Qtd. total",
+                "documents": "Documentos",
+            },
         },
     }
     data = {

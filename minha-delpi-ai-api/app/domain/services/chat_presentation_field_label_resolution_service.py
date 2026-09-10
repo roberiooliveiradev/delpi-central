@@ -26,7 +26,7 @@ class ChatPresentationFieldLabelResolutionService:
         path: str = "",
         profile_name: str | None = None,
         schema_labels: dict[str, str] | None = None,
-        enable_discovery: bool = True,
+        enable_discovery: bool = False,
     ) -> dict[str, str]:
         return ExternalActionColumnLabelService().resolve_field_labels(
             keys,
@@ -46,7 +46,7 @@ class ChatPresentationFieldLabelResolutionService:
         schema_labels: dict[str, str] | None = None,
         schema_formats: dict[str, str] | None = None,
         openapi_labels: dict[str, str] | None = None,
-        enable_discovery: bool = True,
+        enable_discovery: bool = False,
     ) -> FieldLabelBundle:
         from app.domain.services.chat_field_label_resolution_pipeline_service import (
             ChatFieldLabelResolutionPipelineService,
@@ -70,7 +70,7 @@ class ChatPresentationFieldLabelResolutionService:
         path: str = "",
         profile_name: str | None = None,
         schema_labels: dict[str, str] | None = None,
-        enable_discovery: bool = True,
+        enable_discovery: bool = False,
     ) -> str:
         token = str(key or "").strip()
 

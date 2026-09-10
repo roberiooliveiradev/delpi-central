@@ -64,12 +64,14 @@ class PresentationIntelligenceOrchestratorService:
         field_keys = cls._collect_keys(metadata, rows)
 
         path = str(metadata.get("path") or "")
+        existing_labels = cls._existing_column_labels(metadata)
         try:
             bundle = ChatFieldLabelResolutionPipelineService.resolve(
                 field_keys,
                 path=path,
                 openapi_labels=cls._openapi_titles(openapi_field_meta),
-                enable_discovery=False,
+                enable_discovery=True,
+                existing_labels=existing_labels,
             )
         except Exception:
             from app.domain.entities.field_label_bundle import FieldLabelBundle
@@ -169,7 +171,8 @@ class PresentationIntelligenceOrchestratorService:
                 metadata,
                 path=path,
                 openapi_labels=cls._openapi_titles(openapi_field_meta),
-                enable_discovery=False,
+                enable_discovery=True,
+                existing_labels=dict(bundle.labels),
             )
         except Exception:
             logger.debug("presentation_label_normalize_skipped", exc_info=True)
@@ -303,6 +306,58 @@ class PresentationIntelligenceOrchestratorService:
                 seen.add(token)
                 keys.append(token)
         return keys
+
+    @classmethod
+    def _existing_column_labels(cls, metadata: dict[str, Any]) -> dict[str, str]:
+        labels: dict[str, str] = {}
+        bundle = metadata.get("resolvedFieldLabels")
+        if isinstance(bundle, dict):
+            stored = bundle.get("labels")
+            if isinstance(stored, dict):
+                for key, value in stored.items():
+                    token = str(key or "").strip()
+                    label = str(value or "").strip()
+                    if token and label:
+                        labels[token] = label
+
+        for key in (
+            "presentation",
+            "tablePresentation",
+            "chartPresentation",
+            "kpiPresentation",
+            "dashboardPresentation",
+        ):
+            cls._collect_presentation_labels(metadata.get(key), labels)
+
+        tables = metadata.get("tablePresentations")
+        if isinstance(tables, list):
+            for presentation in tables:
+                cls._collect_presentation_labels(presentation, labels)
+
+        return labels
+
+    @classmethod
+    def _collect_presentation_labels(cls, presentation: Any, labels: dict[str, str]) -> None:
+        if not isinstance(presentation, dict):
+            return
+        columns = presentation.get("columns")
+        if isinstance(columns, list):
+            for column in columns:
+                if not isinstance(column, dict):
+                    continue
+                key = str(column.get("key") or "").strip()
+                label = str(column.get("label") or "").strip()
+                if key and label:
+                    labels[key] = label
+        config = presentation.get("config")
+        if isinstance(config, dict):
+            field_labels = config.get("fieldLabels")
+            if isinstance(field_labels, dict):
+                for key, value in field_labels.items():
+                    token = str(key or "").strip()
+                    label = str(value or "").strip()
+                    if token and label:
+                        labels[token] = label
 
     @classmethod
     def _openapi_titles(

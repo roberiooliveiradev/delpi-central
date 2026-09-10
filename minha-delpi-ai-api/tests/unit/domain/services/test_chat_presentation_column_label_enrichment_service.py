@@ -13,8 +13,8 @@ def test_discovery_config_loads_from_column_labels_bundle():
     assert config.get("llmResponseHint")
 
 
-def test_is_catalog_resolved_detects_schema_fields_and_profile_hints():
-    assert ChatPresentationColumnLabelEnrichmentService.is_catalog_resolved(
+def test_is_catalog_resolved_only_schema_not_json_fields():
+    assert not ChatPresentationColumnLabelEnrichmentService.is_catalog_resolved(
         "unit",
         fields={"unit": "Unidade"},
     )
@@ -22,7 +22,7 @@ def test_is_catalog_resolved_detects_schema_fields_and_profile_hints():
         "route_code",
         schema_labels={"route_code": "Roteiro"},
     )
-    assert ChatPresentationColumnLabelEnrichmentService.is_catalog_resolved(
+    assert not ChatPresentationColumnLabelEnrichmentService.is_catalog_resolved(
         "custom_field",
         profile_label="Campo customizado",
     )

@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import logging
 from threading import Lock
+from typing import ClassVar
 
+from app.domain.ports.presentation_field_label_cache_port import (
+    PresentationFieldLabelCachePort,
+)
 from app.domain.services.chat_domain_config_service import ChatDomainConfigService
 from app.domain.services.chat_presentation_column_label_enrichment_service import (
     ChatPresentationColumnLabelEnrichmentService,
@@ -25,6 +29,11 @@ logger = logging.getLogger(__name__)
 class ChatPresentationColumnLabelDiscoveryService:
     _cache: dict[str, str] = {}
     _lock = Lock()
+    _cache_port: ClassVar[PresentationFieldLabelCachePort | None] = None
+
+    @classmethod
+    def configure_cache(cls, port: PresentationFieldLabelCachePort | None) -> None:
+        cls._cache_port = port
 
     @classmethod
     def clear_cache(cls) -> None:
@@ -48,8 +57,7 @@ class ChatPresentationColumnLabelDiscoveryService:
         if not cls.is_enabled():
             return {}
 
-        label_service = ExternalActionColumnLabelService()
-        catalog_fields = fields or {}
+        del profile_labels, fields
         pending: list[str] = []
         resolved: dict[str, str] = {}
 
@@ -61,18 +69,18 @@ class ChatPresentationColumnLabelDiscoveryService:
 
             cached = cls._cache_get(token)
 
+            if not cached:
+                cached = cls._persistent_get(token)
+                if cached:
+                    cls._cache_set(token, cached)
+
             if cached:
                 resolved[token] = cached
                 continue
 
-            profile_label = (profile_labels or {}).get(token)
-
             if ExternalActionColumnLabelService.is_catalog_field_resolved(
                 token,
                 schema_labels=schema_labels,
-                profile_label=profile_label,
-                fields=catalog_fields,
-                snake_key=label_service._snake_case_key(token),
             ):
                 continue
 
@@ -89,10 +97,14 @@ class ChatPresentationColumnLabelDiscoveryService:
 
         for key, label in llm_labels.items():
             normalized = ChatPresentationColumnLabelEnrichmentService.normalize_label(label)
-
-            if normalized:
-                cls._cache_set(key, normalized)
-                resolved[key] = normalized
+            if not normalized:
+                continue
+            humanized = ExternalActionColumnLabelService._humanize_field_key(key)
+            if normalized.casefold() == humanized.casefold():
+                continue
+            cls._cache_set(key, normalized)
+            cls._persistent_put(key, normalized)
+            resolved[key] = normalized
 
         return resolved
 
@@ -113,6 +125,31 @@ class ChatPresentationColumnLabelDiscoveryService:
                 cls._cache.pop(oldest, None)
 
             cls._cache[key] = label
+
+    @classmethod
+    def _persistent_get(cls, key: str) -> str | None:
+        port = cls._cache_port
+        if port is None:
+            return None
+
+        try:
+            value = port.get_label(key)
+        except Exception:
+            logger.debug("presentation_field_label_cache_get_skipped", extra={"fieldKey": key})
+            return None
+
+        return str(value).strip() if value else None
+
+    @classmethod
+    def _persistent_put(cls, key: str, label: str) -> None:
+        port = cls._cache_port
+        if port is None:
+            return
+
+        try:
+            port.put_label(key, label, source="LLM_LOCALIZATION")
+        except Exception:
+            logger.debug("presentation_field_label_cache_put_skipped", extra={"fieldKey": key})
 
     @classmethod
     def _gather_web_snippets(cls, keys: list[str]) -> dict[str, str]:

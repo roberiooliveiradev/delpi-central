@@ -3,11 +3,18 @@ from app.domain.services.external_actions.external_action_column_label_service i
 )
 
 
-def test_label_for_uses_content_dictionary():
+def test_label_for_uses_openapi_not_json_catalog():
     service = ExternalActionColumnLabelService()
 
-    assert service.label_for("route_code") == "Cód. roteiro"
-    assert service.label_for("operation_description") == "Descrição operação"
+    assert service.label_for("route_code", enable_discovery=False) == "Route Code"
+    assert (
+        service.label_for(
+            "route_code",
+            schema_labels={"route_code": "Cód. roteiro"},
+            enable_discovery=False,
+        )
+        == "Cód. roteiro"
+    )
 
 
 def test_label_for_prefers_openapi_schema_title():
@@ -91,14 +98,19 @@ def test_detect_guide_profile_for_sg2_schema():
     assert profile == "guide"
 
 
-def test_label_for_eficiencia_fabril_summary_and_items():
+def test_label_for_eficiencia_fabril_uses_schema_not_catalog():
     service = ExternalActionColumnLabelService()
+    schema = {
+        "weighted_efficiency_pct": "Eficiência média dos CTs (%)",
+        "total_mod_result": "Resultado MOD total",
+        "appointment_count": "Qtd. de apontamentos",
+        "tempo_real_horas": "Tempo real (h)",
+        "eficiencia_percentual": "Eficiência (%)",
+    }
 
-    assert service.label_for("weighted_efficiency_pct") == "Eficiência média dos CTs (%)"
-    assert service.label_for("total_mod_result") == "Resultado MOD total"
-    assert service.label_for("appointment_count") == "Qtd. de apontamentos"
-    assert service.label_for("tempo_real_horas") == "Tempo real (h)"
-    assert service.label_for("eficiencia_percentual") == "Eficiência (%)"
+    for key, expected in schema.items():
+        assert service.label_for(key, schema_labels=schema, enable_discovery=False) == expected
+    assert service.label_for("tempo_real_horas", enable_discovery=False) == "Tempo Real Horas"
 
 
 def test_detect_eficiencia_fabril_profile():
@@ -129,23 +141,33 @@ def test_preferred_columns_for_guide_profile():
     }
 
     columns = service.preferred_columns("guide", row)
+    keys = [item[0] for item in columns]
 
-    assert ("route_code", "Cód. roteiro") in columns
-    assert ("operation_code", "Cód. operação") in columns
+    assert "route_code" in keys
+    assert "operation_code" in keys
+    assert ("route_code", "Cód. roteiro") not in columns
 
 
 def test_label_for_camel_case_product_summary_keys():
     service = ExternalActionColumnLabelService()
 
-    assert service.label_for("groupCode") == "Grupo"
-    assert service.label_for("lastPurchasePrice") == "Último preço de compra"
-    assert service.label_for("customerReference") == "Referência cliente"
+    assert service.label_for("groupCode", enable_discovery=False) == "Group Code"
+    assert service.label_for(
+        "lastPurchasePrice",
+        schema_labels={"lastPurchasePrice": "Último preço de compra"},
+        enable_discovery=False,
+    ) == "Último preço de compra"
 
 
-def test_label_for_resolves_snake_case_dictionary_from_camel_case_key():
+def test_json_catalog_fields_do_not_supply_labels():
     service = ExternalActionColumnLabelService()
 
-    assert service.label_for("registeredLeadTimeDays") == "Lead time (dias)"
+    assert service.label_for("sale_price", enable_discovery=False) == "Sale Price"
+    assert service.label_for(
+        "sale_price",
+        schema_labels={"sale_price": "Preço venda"},
+        enable_discovery=False,
+    ) == "Preço venda"
 
 
 def test_label_for_humanizes_unknown_snake_and_camel_keys():
@@ -153,6 +175,24 @@ def test_label_for_humanizes_unknown_snake_and_camel_keys():
 
     assert service.label_for("some_custom_metric", enable_discovery=False) == "Some Custom Metric"
     assert service.label_for("someCustomMetric", enable_discovery=False) == "Some Custom Metric"
+
+
+def test_baseline_p0_summary_unknown_keys_humanize_without_schema():
+    """E0.S1 — P0 summary: chaves sem OpenAPI caem em humanize (não em LLM neste teste)."""
+    service = ExternalActionColumnLabelService()
+
+    assert (
+        service.label_for("mandatory_cc_pc", enable_discovery=False)
+        == "Mandatory Cc Pc"
+    )
+    assert (
+        ExternalActionColumnLabelService._humanize_field_key("rohs_indicator")
+        == "Rohs Indicator"
+    )
+    assert (
+        ExternalActionColumnLabelService._humanize_field_key("approval_validation")
+        == "Approval Validation"
+    )
 
 
 def test_humanize_all_caps_sql_alias_does_not_space_letters():
@@ -265,8 +305,9 @@ def test_presenter_kv_table_and_profile_rows():
         extended=True,
     )
 
-    assert rows[0] == {"campo": "Código", "valor": "90260123"}
-    assert rows[1] == {"campo": "Descrição", "valor": "PARAFUSO"}
+    assert rows[0]["valor"] == "90260123"
+    assert rows[1]["valor"] == "PARAFUSO"
+    assert rows[0]["campo"] in {"Code", "Código"}
     assert all(row["campo"] != "Bloqueio" for row in rows)
 
 
@@ -277,22 +318,17 @@ def test_format_collection_total_and_structure_columns():
 
     columns = service.fixed_table_columns("analyserStructureComponents")
 
-    assert columns[0] == {"key": "parent_code", "label": "PI pai"}
-    assert columns[-1] == {
-        "key": "quantity",
-        "label": "Qtde",
-        "dataType": "quantity",
-    }
+    assert columns[0]["key"] == "parent_code"
+    assert columns[-1]["key"] == "quantity"
+    assert columns[-1].get("dataType") == "quantity"
 
 
 def test_fixed_table_columns_for_billing_and_analyser():
     service = ExternalActionColumnLabelService()
 
     assert service.fixed_table_columns("lmpList")[0]["key"] == "sale_number"
-    assert service.markdown_column_pairs("analyserInspectionDimensionalMarkdown")[2] == (
-        "lab",
-        "Labor.",
-    )
+    pairs = service.markdown_column_pairs("analyserInspectionDimensionalMarkdown")
+    assert pairs[2][0] == "lab"
 
 
 def test_fixed_table_columns_removed_from_presenter_bundle():
@@ -310,14 +346,74 @@ def test_fixed_table_columns_removed_from_presenter_bundle():
     assert "lmpList" in (_column_labels_content().get("tableProfiles") or {})
 
 
-def test_label_for_si_goal_triad_uses_canonical_pt_labels():
+def test_label_for_si_goal_triad_uses_schema_not_catalog():
     from app.domain.services.external_actions.external_action_column_label_service import (
         invalidate_column_label_cache,
     )
 
     invalidate_column_label_cache()
     service = ExternalActionColumnLabelService()
+    schema = {
+        "goal_value": "Meta cadastrada",
+        "comparable_goal": "Meta do período",
+        "reference_goal": "Meta mês (referência)",
+    }
 
-    assert service.label_for("goal_value") == "Meta cadastrada"
-    assert service.label_for("comparable_goal") == "Meta do período"
-    assert service.label_for("reference_goal") == "Meta mês (referência)"
+    assert service.label_for("goal_value", enable_discovery=False) == "Goal Value"
+    assert service.label_for(
+        "goal_value",
+        schema_labels=schema,
+        enable_discovery=False,
+    ) == "Meta cadastrada"
+    assert service.label_for(
+        "comparable_goal",
+        schema_labels=schema,
+        enable_discovery=False,
+    ) == "Meta do período"
+    assert service.label_for(
+        "reference_goal",
+        schema_labels=schema,
+        enable_discovery=False,
+    ) == "Meta mês (referência)"
+
+
+def test_resolve_schema_labels_follows_local_ref():
+    service = ExternalActionColumnLabelService()
+    labels = service.resolve_schema_labels(
+        {
+            "components": {
+                "schemas": {
+                    "StockItem": {
+                        "type": "object",
+                        "properties": {
+                            "warehouse": {
+                                "type": "string",
+                                "title": "Armazém",
+                            },
+                            "available_quantity": {
+                                "type": "number",
+                                "x-ptLabel": "Qtd. disponível",
+                            },
+                        },
+                    }
+                }
+            },
+            "200": {
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": {"$ref": "#/components/schemas/StockItem"},
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+        }
+    )
+
+    assert labels["warehouse"] == "Armazém"
+    assert labels["available_quantity"] == "Qtd. disponível"

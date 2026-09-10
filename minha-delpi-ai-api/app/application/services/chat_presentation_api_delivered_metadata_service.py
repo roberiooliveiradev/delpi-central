@@ -254,6 +254,7 @@ class ChatPresentationApiDeliveredMetadataService:
             path=resolved_path,
             schema_labels=schema_labels,
             schema_formats=schema_formats,
+            enable_discovery=True,
         )
 
         user_message = str(request_parameters.get("userMessage") or "").strip() or None

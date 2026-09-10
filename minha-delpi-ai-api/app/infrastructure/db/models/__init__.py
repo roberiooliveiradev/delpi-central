@@ -31,6 +31,9 @@ from app.infrastructure.db.models.fine_tuning_run_model import AiFineTuningRunMo
 from app.infrastructure.db.models.external_action_import_job_model import (
     ExternalActionImportJobModel,
 )
+from app.infrastructure.db.models.presentation_field_label_cache_model import (
+    PresentationFieldLabelCacheModel,
+)
 
 __all__ = [
     "AiAdminGuidelineModel",
@@ -64,4 +67,5 @@ __all__ = [
     "AiFineTuningSampleModel",
     "AiFineTuningRunModel",
     "ExternalActionImportJobModel",
+    "PresentationFieldLabelCacheModel",
 ]

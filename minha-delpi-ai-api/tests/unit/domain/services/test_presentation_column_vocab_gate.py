@@ -1,9 +1,36 @@
-"""Gate — vocabulário interno cobre chaves das fixtures tier A."""
+"""Gate — labels de tabela ≠ key quando discovery está mockada (sem catálogo JSON)."""
 
-from tests.fixtures.presentation_column_vocab_gate import validate_column_vocab_for_ci
+from app.domain.services.external_actions.external_action_column_label_service import (
+    ExternalActionColumnLabelService,
+)
+from app.domain.services.presentation_column_label_discovery_service import (
+    PresentationColumnLabelDiscoveryService,
+)
 
 
-def test_api_fixture_column_keys_exist_in_column_labels_fields():
-    report = validate_column_vocab_for_ci()
+def test_mocked_discovery_labels_differ_from_technical_keys(monkeypatch):
+    def _fake_resolve(cls, keys, **kwargs):
+        discovered = {
+            "mandatory_cc_pc": "CC obrigatório PC",
+            "rohs_indicator": "Indicador ROHS",
+        }
+        return {key: discovered[key] for key in keys if key in discovered}
 
-    assert report["ok"] is True, "\n".join(report.get("missingKeys") or [])
+    monkeypatch.setattr(
+        PresentationColumnLabelDiscoveryService,
+        "resolve_labels",
+        classmethod(_fake_resolve),
+    )
+
+    columns = ExternalActionColumnLabelService().resolve_columns_for_items(
+        [{"mandatory_cc_pc": "S", "rohs_indicator": "N"}],
+    )
+    labels = {
+        column["key"]: column["label"]
+        for column in columns
+        if isinstance(column, dict)
+    }
+
+    assert labels["mandatory_cc_pc"] == "CC obrigatório PC"
+    assert labels["rohs_indicator"] == "Indicador ROHS"
+    assert labels["mandatory_cc_pc"] != "mandatory_cc_pc"

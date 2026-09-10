@@ -142,7 +142,11 @@ class ExternalActionColumnLabelService:
         resolved_label = (
             str(label).strip()
             if isinstance(label, str) and label.strip()
-            else self.label_for(normalized_key, schema_labels=schema_labels)
+            else self.label_for(
+                normalized_key,
+                schema_labels=schema_labels,
+                enable_discovery=False,
+            )
         )
         column: dict[str, str] = {
             "key": normalized_key,
@@ -165,7 +169,7 @@ class ExternalActionColumnLabelService:
         schema_labels: dict[str, str] | None = None,
         path: str = "",
         profile_name: str | None = None,
-        enable_discovery: bool = True,
+        enable_discovery: bool = False,
     ) -> str:
         token = str(key or "").strip()
 
@@ -192,32 +196,13 @@ class ExternalActionColumnLabelService:
         if not token:
             return None
 
-        if profile_name:
-            hinted = self.column_label_hints(profile_name).get(token)
-
-            if str(hinted or "").strip():
-                return str(hinted).strip()
+        del profile_name  # preferredColumns is order-only; not a translation catalog
 
         if schema_labels:
             schema_label = schema_labels.get(token)
 
             if isinstance(schema_label, str) and schema_label.strip():
                 return schema_label.strip()
-
-        content = _column_labels_content()
-        fields = content.get("fields") or {}
-        configured = fields.get(token)
-
-        if isinstance(configured, str) and configured.strip():
-            return configured.strip()
-
-        snake_key = self._snake_case_key(token)
-
-        if snake_key != token:
-            configured = fields.get(snake_key)
-
-            if isinstance(configured, str) and configured.strip():
-                return configured.strip()
 
         return None
 
@@ -228,15 +213,17 @@ class ExternalActionColumnLabelService:
         path: str = "",
         profile_name: str | None = None,
         schema_labels: dict[str, str] | None = None,
-        enable_discovery: bool = True,
+        enable_discovery: bool = False,
+        existing_labels: dict[str, str] | None = None,
     ) -> dict[str, str]:
-        """Cascata canônica R17: catálogo → humanize → discovery (web+LLM)."""
+        """Cascata: OpenAPI/meta → humanize → discovery (web+LLM). Sem catálogo JSON."""
         return self.resolve_field_label_bundle(
             keys,
             path=path,
             profile_name=profile_name,
             schema_labels=schema_labels,
             enable_discovery=enable_discovery,
+            existing_labels=existing_labels,
         ).labels
 
     def resolve_field_label_bundle(
@@ -247,8 +234,9 @@ class ExternalActionColumnLabelService:
         profile_name: str | None = None,
         schema_labels: dict[str, str] | None = None,
         schema_formats: dict[str, str] | None = None,
-        enable_discovery: bool = True,
+        enable_discovery: bool = False,
         openapi_labels: dict[str, str] | None = None,
+        existing_labels: dict[str, str] | None = None,
     ):
         """Resolve labels + formats com `sourceByKey` canônico (§26-R)."""
         from app.domain.entities.field_label_bundle import (
@@ -272,33 +260,45 @@ class ExternalActionColumnLabelService:
         label_map: dict[str, str] = {}
         source_by_key: dict[str, str] = {}
         pending_discovery: list[str] = []
-        profile_hints = self.column_label_hints(profile_name) if profile_name else {}
+        _ = profile_name
+
+        materialized = {
+            str(token).strip(): str(value).strip()
+            for token, value in (existing_labels or {}).items()
+            if str(token or "").strip() and str(value or "").strip()
+        }
 
         for key in ordered:
             label, source = self._resolve_catalog_label_with_source(
                 key,
-                profile_name=profile_name,
                 schema_labels=schema_labels,
                 openapi_labels=openapi_labels,
             )
             if label:
                 label_map[key] = label
-                source_by_key[key] = canonicalize_label_source(source or "catalog")
+                source_by_key[key] = canonicalize_label_source(source or "meta")
+                continue
+            existing = materialized.get(key)
+            if existing:
+                label_map[key] = existing
+                source_by_key[key] = canonicalize_label_source("discovery")
                 continue
             pending_discovery.append(key)
             label_map[key] = self._humanize_field_key(key)
             source_by_key[key] = canonicalize_label_source("humanize")
 
         if enable_discovery and pending_discovery:
-            catalog_fields = (_column_labels_content().get("fields") or {})
             discovered = PresentationColumnLabelDiscoveryService.resolve_labels(
                 pending_discovery,
                 path=path,
                 schema_labels=schema_labels,
-                profile_labels=profile_hints,
-                fields=catalog_fields,
+                profile_labels=None,
+                fields=None,
             )
+            pending_set = set(pending_discovery)
             for key, label in discovered.items():
+                if key not in pending_set:
+                    continue
                 if str(label or "").strip():
                     label_map[key] = str(label).strip()
                     source_by_key[key] = canonicalize_label_source("discovery")
@@ -327,10 +327,7 @@ class ExternalActionColumnLabelService:
         if not token:
             return None, None
 
-        if profile_name:
-            hinted = self.column_label_hints(profile_name).get(token)
-            if str(hinted or "").strip():
-                return str(hinted).strip(), "profile"
+        del profile_name
 
         if schema_labels:
             schema_label = schema_labels.get(token)
@@ -345,18 +342,6 @@ class ExternalActionColumnLabelService:
             openapi_label = openapi_labels.get(token)
             if isinstance(openapi_label, str) and openapi_label.strip():
                 return openapi_label.strip(), "openapi"
-
-        content = _column_labels_content()
-        fields = content.get("fields") or {}
-        configured = fields.get(token)
-        if isinstance(configured, str) and configured.strip():
-            return configured.strip(), "catalog"
-
-        snake_key = self._snake_case_key(token)
-        if snake_key != token:
-            configured = fields.get(snake_key)
-            if isinstance(configured, str) and configured.strip():
-                return configured.strip(), "catalog"
 
         return None, None
 
@@ -376,22 +361,12 @@ class ExternalActionColumnLabelService:
         if not token:
             return True
 
-        if str(profile_label or "").strip():
-            return True
+        del profile_name, profile_label, fields, snake_key
 
         if cls()._resolve_catalog_label(
             token,
-            profile_name=profile_name,
             schema_labels=schema_labels,
         ):
-            return True
-
-        catalog = fields or {}
-
-        if str(catalog.get(token) or "").strip():
-            return True
-
-        if snake_key and snake_key != token and str(catalog.get(snake_key) or "").strip():
             return True
 
         return False
@@ -727,8 +702,11 @@ class ExternalActionColumnLabelService:
             return {}
 
         labels: dict[str, str] = {}
+        responses = response_schema.get("responses")
+        if not isinstance(responses, dict):
+            responses = response_schema
 
-        for status_code, response in response_schema.items():
+        for status_code, response in responses.items():
             if not str(status_code).startswith(("2", "default")):
                 continue
 
@@ -747,7 +725,11 @@ class ExternalActionColumnLabelService:
                 schema = media.get("schema")
 
                 if isinstance(schema, dict):
-                    self._collect_schema_property_labels(schema, labels)
+                    self._collect_schema_property_labels(
+                        schema,
+                        labels,
+                        document_root=response_schema,
+                    )
 
         return labels
 
@@ -883,25 +865,9 @@ class ExternalActionColumnLabelService:
         return []
 
     def column_label_hints(self, profile_name: str | None) -> dict[str, str]:
-        token = str(profile_name or "").strip()
-
-        if not token:
-            return {}
-
-        content = _column_labels_content()
-        profile = (content.get("tableProfiles") or {}).get(token) or {}
-        configured = profile.get("preferredColumns") or []
-        labels: dict[str, str] = {}
-
-        for item in configured:
-            if isinstance(item, (list, tuple)) and len(item) >= 2:
-                key = str(item[0]).strip()
-                label = str(item[1]).strip()
-
-                if key and label:
-                    labels[key] = label
-
-        return labels
+        """preferredColumns is order-only — never a translation catalog."""
+        del profile_name
+        return {}
 
     def resolve_label_for_column(
         self,
@@ -916,6 +882,7 @@ class ExternalActionColumnLabelService:
             path=path,
             profile_name=profile_name,
             schema_labels=schema_labels,
+            enable_discovery=False,
         ).get(str(key or "").strip(), self._humanize_field_key(str(key or "")))
 
     def resolve_columns_for_items(
@@ -965,6 +932,7 @@ class ExternalActionColumnLabelService:
             path=path,
             profile_name=label_hints_profile,
             schema_labels=schema_labels,
+            enable_discovery=True,
         )
 
         columns: list[dict[str, str]] = []
@@ -1083,15 +1051,52 @@ class ExternalActionColumnLabelService:
 
         return " ".join(part.capitalize() for part in parts)
 
+    @staticmethod
+    def _follow_local_schema_ref(
+        node: dict,
+        document_root: dict | None,
+        *,
+        seen: tuple[str, ...] = (),
+    ) -> dict:
+        if not isinstance(node, dict):
+            return {}
+
+        ref = node.get("$ref")
+        if not isinstance(ref, str) or not ref.startswith("#/"):
+            return node
+
+        if ref in seen or not isinstance(document_root, dict):
+            return node
+
+        current: object = document_root
+        for part in ref[2:].split("/"):
+            token = part.replace("~1", "/").replace("~0", "~")
+            if not isinstance(current, dict) or token not in current:
+                return node
+            current = current[token]
+
+        if not isinstance(current, dict):
+            return node
+
+        return ExternalActionColumnLabelService._follow_local_schema_ref(
+            current,
+            document_root,
+            seen=seen + (ref,),
+        )
+
     def _collect_schema_property_labels(
         self,
         schema: dict,
         labels: dict[str, str],
         *,
         depth: int = 0,
+        document_root: dict | None = None,
     ) -> None:
         if depth > 8 or not isinstance(schema, dict):
             return
+
+        root = document_root if isinstance(document_root, dict) else schema
+        schema = self._follow_local_schema_ref(schema, root)
 
         properties = schema.get("properties")
 
@@ -1099,6 +1104,8 @@ class ExternalActionColumnLabelService:
             for key, spec in properties.items():
                 if not isinstance(spec, dict):
                     continue
+
+                spec = self._follow_local_schema_ref(spec, root)
 
                 title = spec.get("title") or spec.get("x-label") or spec.get("x-ptLabel")
 
@@ -1113,18 +1120,25 @@ class ExternalActionColumnLabelService:
                             items,
                             labels,
                             depth=depth + 1,
+                            document_root=root,
                         )
-                elif spec.get("type") == "object":
+                elif spec.get("type") == "object" or spec.get("properties"):
                     self._collect_schema_property_labels(
                         spec,
                         labels,
                         depth=depth + 1,
+                        document_root=root,
                     )
 
         items = schema.get("items")
 
         if isinstance(items, dict):
-            self._collect_schema_property_labels(items, labels, depth=depth + 1)
+            self._collect_schema_property_labels(
+                items,
+                labels,
+                depth=depth + 1,
+                document_root=root,
+            )
 
     _COLUMN_TYPE_MAP: dict[str, tuple[str, ...]] = {
         "currency": (

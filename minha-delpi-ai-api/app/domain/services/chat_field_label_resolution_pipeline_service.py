@@ -28,7 +28,8 @@ class ChatFieldLabelResolutionPipelineService:
         schema_labels: dict[str, str] | None = None,
         schema_formats: dict[str, str] | None = None,
         openapi_labels: dict[str, str] | None = None,
-        enable_discovery: bool = True,
+        enable_discovery: bool = False,
+        existing_labels: dict[str, str] | None = None,
     ) -> FieldLabelBundle:
         ordered = [str(key).strip() for key in keys if str(key or "").strip()]
         return cls._column_labels.resolve_field_label_bundle(
@@ -39,6 +40,7 @@ class ChatFieldLabelResolutionPipelineService:
             schema_formats=schema_formats,
             openapi_labels=openapi_labels,
             enable_discovery=enable_discovery,
+            existing_labels=existing_labels,
         )
 
     @classmethod
@@ -49,7 +51,7 @@ class ChatFieldLabelResolutionPipelineService:
         path: str = "",
         profile_name: str | None = None,
         schema_labels: dict[str, str] | None = None,
-        enable_discovery: bool = True,
+        enable_discovery: bool = False,
     ) -> str:
         return ChatPresentationFieldLabelResolutionService.resolve_label(
             key,

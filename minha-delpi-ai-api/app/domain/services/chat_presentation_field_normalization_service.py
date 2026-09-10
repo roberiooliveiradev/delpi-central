@@ -14,7 +14,7 @@ from app.domain.services.external_actions.external_action_column_label_service i
 
 
 class ChatPresentationFieldNormalizationService:
-    """Aplica vocabulário central (`column_labels.json`) a qualquer presentation da tool."""
+    """Aplica rótulos OpenAPI/meta e LLM a qualquer presentation da tool."""
 
     _column_labels = ExternalActionColumnLabelService()
 
@@ -27,7 +27,8 @@ class ChatPresentationFieldNormalizationService:
         schema_labels: dict[str, str] | None = None,
         schema_formats: dict[str, str] | None = None,
         openapi_labels: dict[str, str] | None = None,
-        enable_discovery: bool = True,
+        enable_discovery: bool = False,
+        existing_labels: dict[str, str] | None = None,
     ) -> None:
         if not isinstance(metadata, dict):
             return
@@ -44,6 +45,7 @@ class ChatPresentationFieldNormalizationService:
             schema_formats=schema_formats,
             openapi_labels=openapi_labels,
             enable_discovery=enable_discovery,
+            existing_labels=existing_labels,
         )
         metadata["resolvedFieldLabels"] = bundle.as_metadata()
         resolved_labels = dict(bundle.labels)
@@ -356,7 +358,6 @@ class ChatPresentationFieldNormalizationService:
         if not present_keys and first_row:
             present_keys = discovered_keys[:15]
 
-        preferred_labels: dict[str, str] = {}
         profile_name: str | None = None
 
         if first_row and present_keys:
@@ -371,17 +372,6 @@ class ChatPresentationFieldNormalizationService:
                 column_labels=cls._column_labels,
             )
 
-            if profile_name:
-                preferred_labels = {
-                    key: label.strip()
-                    for key, label in cls._column_labels.preferred_columns(
-                        profile_name,
-                        first_row,
-                        schema_labels=schema_labels,
-                    )
-                    if isinstance(label, str) and label.strip()
-                }
-
         ordered_keys = cls._column_labels.order_keys_with_preferred_hints(
             present_keys,
             profile_name=profile_name,
@@ -392,8 +382,7 @@ class ChatPresentationFieldNormalizationService:
 
         for key in ordered_keys:
             label = (
-                preferred_labels.get(key)
-                or existing_label_by_key.get(key)
+                existing_label_by_key.get(key)
                 or bundle_labels.get(key)
             )
             normalized_columns.append(
@@ -444,6 +433,7 @@ class ChatPresentationFieldNormalizationService:
                     key,
                     schema_labels=schema_labels,
                     path=path,
+                    enable_discovery=False,
                 )
 
             field_format = bundle_formats.get(key) or cls._column_labels.resolve_field_format(

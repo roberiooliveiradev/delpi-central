@@ -640,6 +640,10 @@ def test_multi_row_list_prefers_numeric_total_not_shape_recommend():
         "path": "/production/schedule/today",
         "tablePresentation": {
             "type": "table",
+            "columns": [
+                {"key": "op", "label": "OP"},
+                {"key": "planned_qty", "label": "Qtd. planejada"},
+            ],
             "rows": [
                 {"op": "1", "planned_qty": 10},
                 {"op": "2", "planned_qty": 20},

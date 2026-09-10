@@ -36,7 +36,17 @@ def _heatmap_metadata():
     }
 
 
-def test_orchestrator_compiles_heatmap_and_humanized_labels():
+from app.domain.services.presentation_column_label_discovery_service import (
+    PresentationColumnLabelDiscoveryService,
+)
+
+
+def test_orchestrator_compiles_heatmap_and_humanized_labels(monkeypatch):
+    monkeypatch.setattr(
+        PresentationColumnLabelDiscoveryService,
+        "resolve_labels",
+        classmethod(lambda cls, *args, **kwargs: {}),
+    )
     metadata = _heatmap_metadata()
     summary = PresentationIntelligenceOrchestratorService.apply_before_render_plan(
         metadata,
@@ -54,6 +64,34 @@ def test_orchestrator_compiles_heatmap_and_humanized_labels():
     assert labels["planned_qty"]
     assert labels["planned_qty"] != "planned_qty"
     assert " " in labels["planned_qty"] or labels["planned_qty"][0].isupper()
+
+
+def test_orchestrator_preserves_existing_llm_column_labels(monkeypatch):
+    monkeypatch.setattr(
+        PresentationColumnLabelDiscoveryService,
+        "resolve_labels",
+        classmethod(lambda cls, *args, **kwargs: {"mandatory_cc_pc": "NÃO USAR"}),
+    )
+    metadata = {
+        "path": "/products/10080011/summary",
+        "presentation": {
+            "type": "table",
+            "title": "Cadastro",
+            "columns": [
+                {"key": "mandatory_cc_pc", "label": "CC obrigatório PC"},
+            ],
+            "rows": [{"mandatory_cc_pc": "S", "sale_price": 1.2}],
+        },
+    }
+    PresentationIntelligenceOrchestratorService.apply_before_render_plan(metadata)
+    columns = {
+        column["key"]: column["label"]
+        for column in metadata["presentation"]["columns"]
+        if isinstance(column, dict)
+    }
+    assert columns["mandatory_cc_pc"] == "CC obrigatório PC"
+    bundle = metadata.get("resolvedFieldLabels") or {}
+    assert (bundle.get("labels") or {}).get("mandatory_cc_pc") == "CC obrigatório PC"
 
 
 def test_shadow_composer_validates_closed_candidate_set():
@@ -230,6 +268,11 @@ def test_policy_gate_invokes_when_needs_composer():
 
 
 def test_canary_authoritative_only_when_validation_ok(monkeypatch):
+    monkeypatch.setattr(
+        PresentationColumnLabelDiscoveryService,
+        "resolve_labels",
+        classmethod(lambda cls, *args, **kwargs: {}),
+    )
     metadata = _heatmap_metadata()
     PresentationIntelligenceOrchestratorService.apply_before_render_plan(
         metadata,
@@ -284,6 +327,11 @@ def test_canary_authoritative_only_when_validation_ok(monkeypatch):
 
 
 def test_canary_fallback_keeps_deterministic_when_composer_fails(monkeypatch):
+    monkeypatch.setattr(
+        PresentationColumnLabelDiscoveryService,
+        "resolve_labels",
+        classmethod(lambda cls, *args, **kwargs: {}),
+    )
     metadata = _heatmap_metadata()
     PresentationIntelligenceOrchestratorService.apply_before_render_plan(
         metadata,

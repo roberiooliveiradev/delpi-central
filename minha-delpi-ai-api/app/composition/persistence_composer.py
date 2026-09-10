@@ -81,4 +81,14 @@ def configure_domain_persistence_ports() -> None:
 
     ChatAttachmentDocumentSelectionService.configure(make_chat_attachment_repository)
     configure_external_action_repository_loader(make_external_action_repository)
+    from app.application.services.chat_presentation_column_label_discovery_service import (
+        ChatPresentationColumnLabelDiscoveryService,
+    )
+    from app.infrastructure.persistence.postgres_presentation_field_label_cache_repository import (
+        PostgresPresentationFieldLabelCacheRepository,
+    )
+
+    ChatPresentationColumnLabelDiscoveryService.configure_cache(
+        PostgresPresentationFieldLabelCacheRepository()
+    )
     _PERSISTENCE_CONFIGURED = True
