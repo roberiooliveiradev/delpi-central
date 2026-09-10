@@ -578,6 +578,19 @@ class TransitionRequestUseCase:
             expected_version=request.version,
         )
         if self._files is not None:
+            history_changes = result.history.changes or {}
+            payload: dict[str, Any] = {
+                "action": result.history.action,
+                "action_requested": history_changes.get("action_requested")
+                or result.history.action,
+                "from_status": result.history.from_status,
+                "to_status": result.history.to_status,
+            }
+            if result.history.justification:
+                payload["justification"] = result.history.justification
+            correction_targets = history_changes.get("correction_targets")
+            if correction_targets:
+                payload["correction_targets"] = correction_targets
             self._files.append_event(
                 RequestEvent(
                     id=uuid4(),
@@ -585,11 +598,7 @@ class TransitionRequestUseCase:
                     event_type="transition",
                     actor_user_id=actor.user_id,
                     actor_name=actor.user_name,
-                    payload={
-                        "action": result.history.action,
-                        "from_status": result.history.from_status,
-                        "to_status": result.history.to_status,
-                    },
+                    payload=payload,
                 )
             )
         if self._outbox is not None and should_notify_creator_on_transition(

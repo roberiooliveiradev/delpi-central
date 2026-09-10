@@ -9,6 +9,8 @@ import {
   presentationModeLabel,
   requestTypeLabel,
   statusLabel,
+  timelineEventJustification,
+  timelineEventTitle,
 } from "./presentationLabels";
 
 describe("presentationLabels", () => {
@@ -24,6 +26,64 @@ describe("presentationLabels", () => {
     expect(eventLabel("attachment_added")).toBe("Documento anexado");
     expect(eventLabel("attachment_removed")).toBe("Documento removido");
     expect(eventLabel("transition")).toBe("Etapa atualizada");
+  });
+
+  it("monta título rico da timeline a partir do payload", () => {
+    expect(
+      timelineEventTitle({
+        event_type: "transition",
+        payload: {
+          action: "complete",
+          action_requested: "issue",
+          from_status: "in_progress",
+          to_status: "awaiting_requester_confirmation",
+        },
+      }),
+    ).toBe("Registrar emissão — Aguardando confirmação do solicitante");
+
+    expect(
+      timelineEventTitle({
+        event_type: "transition",
+        payload: {
+          action: "complete",
+          from_status: "in_progress",
+          to_status: "awaiting_requester_confirmation",
+        },
+      }),
+    ).toBe("Registrar emissão — Aguardando confirmação do solicitante");
+
+    expect(
+      timelineEventTitle({
+        event_type: "transition",
+        payload: {
+          action: "confirm_fulfillment",
+          to_status: "completed",
+        },
+      }),
+    ).toBe("Confirmar atendimento — Concluída");
+
+    expect(
+      timelineEventTitle({
+        event_type: "artifact_added",
+        payload: { kind: "invoice_pdf", name: "nf-123.pdf" },
+      }),
+    ).toBe("Documento gerado anexado · Nota fiscal — PDF · nf-123.pdf");
+
+    expect(
+      timelineEventTitle({
+        event_type: "attachment_removed",
+        payload: { name: "pedido.pdf" },
+      }),
+    ).toBe("Documento removido · pedido.pdf");
+
+    expect(timelineEventTitle({ event_type: "created" })).toBe("Solicitação criada");
+  });
+
+  it("extrai justificativa do payload da timeline", () => {
+    expect(
+      timelineEventJustification({ justification: "Nota com CNPJ errado" }),
+    ).toBe("Nota com CNPJ errado");
+    expect(timelineEventJustification({})).toBeNull();
   });
 
   it("traduz escopos, modos, kinds e tipos", () => {

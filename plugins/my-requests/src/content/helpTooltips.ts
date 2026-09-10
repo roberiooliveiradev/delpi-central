@@ -108,7 +108,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   timeline: {
     section:
-      "Histórico do que aconteceu nesta solicitação: criação, mudanças de etapa, mensagens e envios de arquivo. Cada evento mostra quem atuou, com foto do perfil quando disponível.",
+      "Histórico do que aconteceu nesta solicitação: criação, mudanças de etapa (ação e novo status), mensagens e envios de arquivo. Cada evento mostra quem atuou, com foto do perfil quando disponível; em devoluções e cancelamentos o motivo também aparece.",
   },
   comments: {
     section:

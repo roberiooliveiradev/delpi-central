@@ -50,6 +50,50 @@ const EVENT_LABELS: Record<string, string> = {
   cancelled: "Cancelada",
 };
 
+const TRANSITION_EVENT_TYPES = new Set([
+  "transition",
+  "transitioned",
+  "status_changed",
+]);
+
+function payloadText(
+  payload: Record<string, unknown> | null | undefined,
+  ...keys: string[]
+): string {
+  if (!payload) return "";
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+/**
+ * Prefer the action the user requested (alias like `issue`) over the
+ * canonical transition action (`complete`). Legacy rows without
+ * `action_requested` still get a sensible label when destination is known.
+ */
+function resolveTimelineActionCode(
+  payload: Record<string, unknown> | null | undefined,
+): string {
+  const requested = payloadText(payload, "action_requested", "action");
+  const toStatus = payloadText(payload, "to_status");
+  if (
+    requested === "complete" &&
+    toStatus === "awaiting_requester_confirmation"
+  ) {
+    return "issue";
+  }
+  return requested;
+}
+
+function joinTimelineParts(parts: Array<string | null | undefined>): string {
+  return parts
+    .map((part) => (part || "").trim())
+    .filter(Boolean)
+    .join(" · ");
+}
+
 const BRANCH_SCOPE_LABELS: Record<string, string> = {
   required: "Filial obrigatória",
   optional: "Filial opcional",
@@ -112,6 +156,51 @@ export function actionButtonVariant(
 export function eventLabel(eventType: string | null | undefined): string {
   const code = (eventType || "").trim();
   return EVENT_LABELS[code] || humanizeCode(code);
+}
+
+/** Human-readable timeline title from event type + payload (API remains coded). */
+export function timelineEventTitle(event: {
+  event_type?: string | null;
+  payload?: Record<string, unknown> | null;
+}): string {
+  const type = (event.event_type || "").trim();
+  const payload = event.payload || null;
+
+  if (TRANSITION_EVENT_TYPES.has(type)) {
+    const actionCode = resolveTimelineActionCode(payload);
+    const fromStatus = payloadText(payload, "from_status");
+    const toStatus = payloadText(payload, "to_status");
+    if (actionCode && toStatus) {
+      return `${actionLabel(actionCode)} — ${statusLabel(toStatus)}`;
+    }
+    if (actionCode) return actionLabel(actionCode);
+    if (fromStatus && toStatus) {
+      return `${statusLabel(fromStatus)} → ${statusLabel(toStatus)}`;
+    }
+    return eventLabel(type);
+  }
+
+  if (type === "artifact_added" || type === "artifact_removed") {
+    const name = payloadText(payload, "name");
+    const kindRaw = payloadText(payload, "kind", "artifact_kind");
+    const kind = kindRaw ? artifactKindLabel(kindRaw) : "";
+    return joinTimelineParts([eventLabel(type), kind || null, name || null]);
+  }
+
+  if (type === "attachment_added" || type === "attachment_removed") {
+    const name = payloadText(payload, "name");
+    return joinTimelineParts([eventLabel(type), name || null]);
+  }
+
+  return eventLabel(type);
+}
+
+/** Optional reason shown under the actor for return/cancel/reject. */
+export function timelineEventJustification(
+  payload?: Record<string, unknown> | null,
+): string | null {
+  const text = payloadText(payload, "justification", "return_reason", "cancel_justification");
+  return text || null;
 }
 
 export function branchScopeLabel(scope: string | null | undefined): string {

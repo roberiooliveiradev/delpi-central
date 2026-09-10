@@ -25,6 +25,8 @@ describe("PersonIdentity / avatar surfaces", () => {
     expect(timeline).toMatch(/PersonIdentity/);
     expect(timeline).toMatch(/useParticipantAvatarUrls/);
     expect(timeline).toMatch(/actor_user_id/);
+    expect(timeline).toMatch(/timelineEventTitle/);
+    expect(timeline).toMatch(/timelineEventJustification/);
     expect(detail).not.toMatch(/commercial-api/);
     expect(timeline).not.toMatch(/core-api\/person/);
   });

@@ -3,7 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { listEvents } from "../api/requestsApi";
 import { PersonIdentity } from "./PersonIdentity";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { eventLabel, formatDateTimePtBr } from "../content/presentationLabels";
+import {
+  formatDateTimePtBr,
+  timelineEventJustification,
+  timelineEventTitle,
+} from "../content/presentationLabels";
 import { useParticipantAvatarUrls } from "../hooks/useParticipantAvatarUrls";
 import type { TimelineEvent } from "../types/requests";
 import {
@@ -43,18 +47,26 @@ export function TimelinePanel({ requestId, refreshKey = 0 }: TimelinePanelProps)
       items.map((item) => {
         const name = (item.actor_name || "").trim();
         const userId = (item.actor_user_id || "").trim();
+        const justification = timelineEventJustification(item.payload);
         return {
           id: item.id,
-          title: eventLabel(item.event_type),
+          title: timelineEventTitle(item),
           occurredAt: item.created_at || undefined,
           timeLabel: formatDateTimePtBr(item.created_at),
           detail:
-            name || userId ? (
-              <PersonIdentity
-                name={name || null}
-                userId={userId || null}
-                src={userId ? avatarByUserId.get(userId) || null : null}
-              />
+            name || userId || justification ? (
+              <div className="my-requests-timeline-detail">
+                {name || userId ? (
+                  <PersonIdentity
+                    name={name || null}
+                    userId={userId || null}
+                    src={userId ? avatarByUserId.get(userId) || null : null}
+                  />
+                ) : null}
+                {justification ? (
+                  <p className="my-requests-timeline-detail__reason">{justification}</p>
+                ) : null}
+              </div>
             ) : undefined,
         };
       }),
