@@ -18,27 +18,7 @@
   "narrativePolicySynthesisKinds": {
     "operational_structure_exclusivity_summary": "structure_exclusivity"
   },
-  "pathMarkers": [
-    "/stock",
-    "/factory-status",
-    "/production-status",
-    "/shipping-status"
-  ],
-  "playbookPathMarkers": [
-    "/production/",
-    "/playbook",
-    "/top-items",
-    "/consumption/",
-    "/eficiencia"
-  ],
-  "sqlPathMarkers": [
-    "/data/sql"
-  ],
-  "kpiPathMarkers": [
-    "/kpi",
-    "/indicators",
-    "/metrics"
-  ],
+  "pathMarkersDeletedAt": "E9.S12.B",
   "narrativeMarkers": [
     "como esta",
     "como está",

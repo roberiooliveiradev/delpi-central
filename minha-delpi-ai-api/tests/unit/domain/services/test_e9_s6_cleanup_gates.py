@@ -66,10 +66,14 @@ def test_e9_s6_delete_candidates_status():
     candidates = data.get("deleteCandidates") or []
     assert len(candidates) >= 3
     by_id = {str(c.get("id")): c for c in candidates}
-    # E9.S12.A — terms deletados com APPROVED; demais BLOCKED
-    terms = by_id["follow_up_message_segment_terms"]
-    assert terms.get("status") == "DELETED"
-    assert terms.get("authorization") == "APPROVED"
+    for deleted_id in (
+        "follow_up_message_segment_terms",
+        "follow_up_playbook_path_markers",
+        "narrative_path_marker_families",
+    ):
+        item = by_id[deleted_id]
+        assert item.get("status") == "DELETED", deleted_id
+        assert item.get("authorization") == "APPROVED", deleted_id
     for item in candidates:
         status = item.get("status")
         assert status in {"BLOCKED", "DELETED"}, item.get("id")

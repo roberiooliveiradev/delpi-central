@@ -40,10 +40,20 @@ class ChatOperationalFollowUpRoutingService:
 
     @classmethod
     def playbook_path_markers(cls) -> tuple[str, ...]:
-        markers = _routing_content().get("playbookPathMarkers") or []
+        """E9.S12.B — removidos; date inherit usa dateInheritance.routeSegments / entity."""
+        return ()
 
-        return tuple(str(item) for item in markers if str(item).strip())
-
+    @classmethod
+    def date_inheritance_route_segments(cls) -> tuple[str, ...]:
+        configured = _routing_content().get("dateInheritance") or {}
+        if not isinstance(configured, dict):
+            return ()
+        segments = configured.get("routeSegments") or []
+        return tuple(
+            str(item).strip().lower()
+            for item in segments
+            if str(item).strip()
+        )
     @classmethod
     def route_segment(cls, follow_up_type: str | None) -> str | None:
         segment = str(cls.type_config(follow_up_type).get("routeSegment") or "").strip()

@@ -67,7 +67,7 @@
       "required": true,
       "status": "PASS_OFFLINE",
       "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s12a-message-segment-terms-delete.md",
-      "note": "E9.S12.A: messageSegmentTerms REMOVED; residual restante = recommendationQueries LEGACY_FALLBACK + playbookPathMarkers"
+      "note": "E9.S12.A/B: messageSegmentTerms + playbookPathMarkers REMOVED; residual = recommendationQueries LEGACY_FALLBACK + registry markers/strategy"
     }
   ],
   "deleteCandidates": [
@@ -77,7 +77,7 @@
       "surface": "app/content/pt-BR/assistant/operational_route_registry.json",
       "owner": "plano-01 / Onda B",
       "status": "BLOCKED",
-      "blockReason": "deleteAuthorized=false; consumers residuais (resolver/readiness/selection shadow compare)"
+      "blockReason": "29 routes só pathMarkers; resolve_route_action + vocabulary/domain ainda AUTHORITY; OpenAPI catalog local não backfill operationIds"
     },
     {
       "id": "registry_parameter_strategy_fields",
@@ -85,7 +85,7 @@
       "surface": "app/content/pt-BR/assistant/operational_route_registry.json",
       "owner": "plano-01 / Onda B",
       "status": "BLOCKED",
-      "blockReason": "deleteAuthorized=false; shadow/compare e lint ainda referenciam"
+      "blockReason": "campo ainda discriminante do dispatch binder/domain; cutover moveu implementação, não remove a chave"
     },
     {
       "id": "follow_up_message_segment_terms",
@@ -104,8 +104,24 @@
       "fields": ["playbookPathMarkers"],
       "surface": "app/content/pt-BR/assistant/operational_follow_up_routing.json",
       "owner": "plano-03 / Onda D",
-      "status": "BLOCKED",
-      "blockReason": "ainda authority residual em date inherit; migrar antes de DELETE (E9.S12.B)"
+      "status": "DELETED",
+      "deletedAt": "E9.S12.B",
+      "authorization": "APPROVED",
+      "authorizationSource": "user:limpe_todos + dateInheritance.routeSegments authority + narrative entity families",
+      "blockReason": null,
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s12b-playbook-path-markers-delete.md"
+    },
+    {
+      "id": "narrative_path_marker_families",
+      "fields": ["pathMarkers", "playbookPathMarkers", "sqlPathMarkers", "kpiPathMarkers"],
+      "surface": "app/content/pt-BR/assistant/operational_narrative_synthesis.json",
+      "owner": "plano-07 / Onda F",
+      "status": "DELETED",
+      "deletedAt": "E9.S12.B",
+      "authorization": "APPROVED",
+      "authorizationSource": "user:limpe_todos + entity/family helpers",
+      "blockReason": null,
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s12b-playbook-path-markers-delete.md"
     },
     {
       "id": "turn_understanding_heuristics_json",
@@ -117,5 +133,5 @@
     }
   ],
   "passStatusesForDelete": ["PASS", "PASS_OFFLINE_AND_LIVE", "APPROVED"],
-  "note": "deleteAuthorized global=false; fatia E9.S12.A (messageSegmentTerms) DELETED com APPROVED explícito. Demais candidatos BLOCKED."
+  "note": "deleteAuthorized global=false; E9.S12.A/B DELETED; registry markers/strategy + TU heuristics BLOCKED (STOP-THE-LINE)."
 }

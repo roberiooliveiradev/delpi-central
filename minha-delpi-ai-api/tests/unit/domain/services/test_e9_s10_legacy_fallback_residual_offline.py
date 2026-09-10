@@ -43,7 +43,7 @@ def test_e9_s10_recommendation_queries_legacy_fallback_role():
 
 
 def test_e9_s10_negative_remaining_residuals_still_gated():
-    """Negative: DELETE de terms ≠ liberar todos os residuals (playbookPathMarkers etc.)."""
+    """Negative: DELETE follow-up ≠ liberar registry markers/strategy/TU."""
     shadows = json.loads(_SHADOW.read_text(encoding="utf-8"))
     ids = {s["id"] for s in shadows.get("shadows") or []}
     assert "recommendationDualRun" in ids
@@ -53,5 +53,8 @@ def test_e9_s10_negative_remaining_residuals_still_gated():
             _ROOT / "tests/fixtures/intelligence_baseline/e9_s6_cleanup_gates.json"
         ).read_text(encoding="utf-8")
     )
-    # deleteAuthorized global permanece false até fatias restantes + live gates
     assert gates.get("deleteAuthorized") is False
+    by_id = {c["id"]: c for c in gates.get("deleteCandidates") or []}
+    assert by_id["registry_path_markers"]["status"] == "BLOCKED"
+    assert by_id["registry_parameter_strategy_fields"]["status"] == "BLOCKED"
+    assert by_id["turn_understanding_heuristics_json"]["status"] == "BLOCKED"

@@ -389,10 +389,13 @@ class ChatOperationalDateParameterService:
     @classmethod
     def is_playbook_date_route(cls, path: str | None) -> bool:
         lowered = str(path or "").strip().lower()
+        if not lowered:
+            return False
 
+        # E9.S12.B — single source: dateInheritance.routeSegments (não playbookPathMarkers).
         return any(
-            marker in lowered
-            for marker in ChatOperationalFollowUpRoutingService.playbook_path_markers()
+            segment in lowered
+            for segment in ChatOperationalFollowUpRoutingService.date_inheritance_route_segments()
         )
 
     @classmethod

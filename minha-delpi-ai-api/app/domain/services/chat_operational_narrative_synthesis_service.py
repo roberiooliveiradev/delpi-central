@@ -47,7 +47,7 @@ class ChatOperationalNarrativeSynthesisService:
         if cls._qualifies_summary_then_evidence(message, tool_calls):
             return _SYNTHESIS_SUMMARY_THEN_EVIDENCE
 
-        if cls._tool_calls_match_path_markers(tool_calls, cls._content().sql_path_markers()):
+        if cls._tool_calls_match_sql_family(tool_calls):
             return _SYNTHESIS_SQL_RESULT
 
         factual_profile_kind = cls._resolve_factual_profile_synthesis_kind(tool_calls)
@@ -60,13 +60,7 @@ class ChatOperationalNarrativeSynthesisService:
         if narrative_policy_kind:
             return narrative_policy_kind
 
-        if cls._tool_calls_match_path_markers(
-            tool_calls,
-            cls._content().playbook_path_markers(),
-        ) or cls._tool_calls_match_path_markers(
-            tool_calls,
-            cls._content().kpi_path_markers(),
-        ):
+        if cls._tool_calls_match_playbook_or_kpi_family(tool_calls):
             return _SYNTHESIS_OPERATIONAL_DATA
 
         if tool_calls is None and cls._message_suggests_summary_then_evidence(message):
@@ -365,10 +359,7 @@ class ChatOperationalNarrativeSynthesisService:
             if narrative_policy_kind:
                 return narrative_policy_kind
 
-            if cls._tool_calls_match_path_markers(
-                tool_calls,
-                cls._content().kpi_path_markers(),
-            ):
+            if cls._tool_calls_match_kpi_family(tool_calls):
                 return _SYNTHESIS_KPI_DATA
 
             return _SYNTHESIS_PLAYBOOK_DATA
@@ -446,11 +437,77 @@ class ChatOperationalNarrativeSynthesisService:
         return collected
 
     @classmethod
+    def _tool_entity_from_metadata(cls, metadata: dict) -> str | None:
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
+        )
+
+        api_meta = metadata.get("apiDelpiResponseMeta")
+        if isinstance(api_meta, dict):
+            entity = str(api_meta.get("entity") or "").strip()
+            if entity:
+                return entity
+        path = str(metadata.get("path") or "").strip()
+        if not path:
+            return None
+        return ChatOperationalResponseProfileService.resolve_entity_from_path(path)
+
+    @classmethod
+    def _tool_calls_match_sql_family(cls, tool_calls: list | None) -> bool:
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
+        )
+
+        for metadata in cls._successful_tool_metadata(tool_calls):
+            entity = cls._tool_entity_from_metadata(metadata)
+            if entity and entity in ChatOperationalResponseProfileService.SQL_PRESENT_ENTITIES:
+                return True
+            path = str(metadata.get("path") or "").lower()
+            if "/data/sql" in path:
+                return True
+        return False
+
+    @classmethod
+    def _tool_calls_match_kpi_family(cls, tool_calls: list | None) -> bool:
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
+        )
+
+        for metadata in cls._successful_tool_metadata(tool_calls):
+            entity = cls._tool_entity_from_metadata(metadata)
+            if ChatOperationalResponseProfileService.is_kpi_entity(entity):
+                return True
+            path = str(metadata.get("path") or "").lower()
+            if any(token in path for token in ("/kpi", "/indicators", "/metrics")):
+                return True
+        return False
+
+    @classmethod
+    def _tool_calls_match_playbook_or_kpi_family(cls, tool_calls: list | None) -> bool:
+        from app.domain.services.chat_operational_response_profile_service import (
+            ChatOperationalResponseProfileService,
+        )
+
+        if cls._tool_calls_match_kpi_family(tool_calls):
+            return True
+        for metadata in cls._successful_tool_metadata(tool_calls):
+            entity = cls._tool_entity_from_metadata(metadata)
+            if ChatOperationalResponseProfileService.is_playbook_operational_entity(entity):
+                return True
+            path = str(metadata.get("path") or "")
+            if path and ChatOperationalResponseProfileService.is_playbook_operational_path(
+                path
+            ):
+                return True
+        return False
+
+    @classmethod
     def _tool_calls_match_path_markers(
         cls,
         tool_calls: list | None,
         markers: tuple[str, ...],
     ) -> bool:
+        """Compat residual — markers vazios pós-E9.S12.B; preferir family helpers."""
         if not isinstance(tool_calls, list) or not markers:
             return False
 

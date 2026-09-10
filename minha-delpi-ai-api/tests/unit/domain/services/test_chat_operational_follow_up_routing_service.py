@@ -53,11 +53,11 @@ def test_blocks_capability_inquiry_on_operational_follow_up():
     )
 
 
-def test_playbook_path_markers_include_factory_and_shipping():
-    markers = ChatOperationalFollowUpRoutingService.playbook_path_markers()
-
-    assert "/factory-status" in markers
-    assert "/shipping-status" in markers
+def test_playbook_path_markers_removed_e9_s12b():
+    assert ChatOperationalFollowUpRoutingService.playbook_path_markers() == ()
+    segments = ChatOperationalFollowUpRoutingService.date_inheritance_route_segments()
+    assert "factory-status" in segments
+    assert "shipping-status" in segments
 
 
 def test_should_block_semantic_fallback_for_shipping_follow_up():

@@ -151,3 +151,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: elevar dims PASS_OFFLINE→PASS ou autorizar DELETE com política explícita |
 | 2026-09-10 | E9.S12.A **ATENDIDO** — DELETE `messageSegmentTerms`; authority permanente follow_up_type; playbookPathMarkers/registry ainda BLOCKED |
 | 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: E9.S12.B (`playbookPathMarkers`) |
+| 2026-09-10 | E9.S12.B **ATENDIDO** — DELETE playbookPathMarkers + narrative path families; registry/strategy/TU STOP-THE-LINE |
+| 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: migrar resolve_route_action (E9.S12.C) antes de DELETE registry |

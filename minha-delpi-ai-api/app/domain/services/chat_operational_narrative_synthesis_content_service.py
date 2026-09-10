@@ -31,19 +31,23 @@ class ChatOperationalNarrativeSynthesisContentService:
 
     @classmethod
     def path_markers(cls) -> tuple[str, ...]:
-        return tuple(ChatAssistantContentService.list(_BUNDLE, "pathMarkers"))
+        """E9.S12.B — removidos; síntese usa entity/profile."""
+        return ()
 
     @classmethod
     def playbook_path_markers(cls) -> tuple[str, ...]:
-        return tuple(ChatAssistantContentService.list(_BUNDLE, "playbookPathMarkers"))
+        """E9.S12.B — removidos; síntese usa playbookOperational entity set."""
+        return ()
 
     @classmethod
     def sql_path_markers(cls) -> tuple[str, ...]:
-        return tuple(ChatAssistantContentService.list(_BUNDLE, "sqlPathMarkers"))
+        """E9.S12.B — removidos; síntese usa sqlPresent entity set."""
+        return ()
 
     @classmethod
     def kpi_path_markers(cls) -> tuple[str, ...]:
-        return tuple(ChatAssistantContentService.list(_BUNDLE, "kpiPathMarkers"))
+        """E9.S12.B — removidos; síntese usa kpiPresent entity set."""
+        return ()
 
     @classmethod
     def factual_profile_synthesis_kinds(cls) -> dict[str, str]:
