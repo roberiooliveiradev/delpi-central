@@ -1,6 +1,10 @@
 export { ContextMenu, type ContextMenuProps } from "./ContextMenu";
 export { ContextMenuDivider } from "./ContextMenuDivider";
-export { ContextMenuItem, type ContextMenuItemProps } from "./ContextMenuItem";
+export {
+  ContextMenuItem,
+  type ContextMenuItemHintTrigger,
+  type ContextMenuItemProps,
+} from "./ContextMenuItem";
 export { ContextMenuSub, type ContextMenuSubProps } from "./ContextMenuSub";
 export { ContextMenuToolbar, type ContextMenuToolbarProps } from "./ContextMenuToolbar";
 export {

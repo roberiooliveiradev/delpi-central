@@ -1412,7 +1412,7 @@ Infraestrutura de popover portaled (posição fixa a partir de cursor/rect), com
 |--------|-----------|
 | `FixedPanelPortal` | Primitivo de infraestrutura: portal no `body`, posição por ponto, tema (`useDelpiUiPortalTheme`), dismiss (`useClickOutside` + Escape) e `portalScopeClassName` para escopo do plugin. Base do `ContextMenu`. Para ancorar a um elemento use `AnchoredPanelPortal`. |
 | `ContextMenu` | Menu contextual (`role="menu"`) sobre `FixedPanelPortal`. |
-| `ContextMenuItem` / `ContextMenuDivider` | Itens e divisores do menu. |
+| `ContextMenuItem` / `ContextMenuDivider` | Itens e divisores do menu. `ContextMenuItem` aceita `hint` + `hintTrigger?: "icon" \| "label"` (default `"icon"` = botão `?` irmão; `"label"` = help no próprio item sem coluna de `?`). |
 | `ContextMenuSub` | Item com submenu lateral (hover/foco, setas →/←, flip na viewport). |
 | `ContextMenuToolbar` / `ContextMenuToolbarButton` | Barra de ações compacta. |
 

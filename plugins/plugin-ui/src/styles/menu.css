@@ -62,6 +62,16 @@
   width: 100%;
 }
 
+.delpi-ui-context-menu__row--hint-label {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.delpi-ui-context-menu__item-hit {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
 .delpi-ui-context-menu__item {
   display: grid;
   grid-template-columns: 24px 1fr auto;

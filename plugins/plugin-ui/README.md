@@ -86,6 +86,7 @@ Demos: `src/catalog/demos/`. Tabela estilo LMPS: entradas **DataTable** / **Data
 | `SectionHintLabel` | Rótulo de seção (ribbon) + ajuda |
 | `TabHintCell` | Aba + ? sem botão aninhado |
 | `HintAction` | Botão/controle com balão ao hover |
+| `ContextMenuItem` | Item de menu; `hint` + `hintTrigger?: "icon" \| "label"` (default `"icon"`) |
 | `ShapeFillMenu` / `ShapeOutlineMenu` | Menus de cor estilo PowerPoint (ribbon) |
 | `ColorDialog` / `ColorPickerPopover` | Paleta tema + «Mais cores» + conta-gotas; FillPicker Cor\|Gradiente só com `onFillChange` |
 | `ShapeStyleMenu` / `ShapeStyleRibbonStrip` / `ShapeEffectsMenu` | Estilos de tema (galeria Abc ou faixa) e efeitos de forma |

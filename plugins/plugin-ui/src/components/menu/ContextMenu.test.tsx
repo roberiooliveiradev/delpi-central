@@ -37,6 +37,46 @@ describe("ContextMenu", () => {
     expect(onCut).toHaveBeenCalledTimes(1);
   });
 
+  it("hintTrigger label não renderiza botão ? separado", () => {
+    const onSelect = vi.fn();
+    render(
+      <ContextMenu open position={{ x: 40, y: 40 }} onClose={() => undefined} aria-label="Menu">
+        <ContextMenuItem
+          label="Editar"
+          hint="Abre o formulário."
+          hintTrigger="label"
+          onSelect={onSelect}
+        />
+        <ContextMenuItem
+          label="Arquivar"
+          hint="Arquiva a versão."
+          hintTrigger="label"
+          destructive
+          disabled
+          onSelect={() => undefined}
+        />
+      </ContextMenu>,
+    );
+
+    expect(screen.queryByRole("button", { name: "Ajuda: Editar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ajuda: Arquivar" })).toBeNull();
+    expect(screen.getByRole("menuitem", { name: /Editar/i })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: /Arquivar/i })).toHaveProperty("disabled", true);
+
+    fireEvent.click(screen.getByRole("menuitem", { name: /Editar/i }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it("sem hint não cria gatilho de ajuda", () => {
+    render(
+      <ContextMenu open position={{ x: 40, y: 40 }} onClose={() => undefined} aria-label="Menu sem ajuda">
+        <ContextMenuItem label="Copiar" onSelect={() => undefined} />
+      </ContextMenu>,
+    );
+    const menu = screen.getByRole("menu", { name: "Menu sem ajuda" });
+    expect(menu.querySelector(".delpi-ui-help-tooltip__trigger")).toBeNull();
+  });
+
   it("fecha ao clicar fora (captura, mesmo com stopPropagation)", () => {
     const onClose = vi.fn();
 
