@@ -15,4 +15,9 @@ describe("ActionBar render-only", () => {
     expect(actionLabel("return")).toBe("Devolver para ajuste");
     expect(actionLabel("cancel")).toBe("Cancelar solicitação");
   });
+
+  it("filtra view antes de renderizar botões", async () => {
+    const { filterDetailBarActions } = await import("../utils/operationalActions");
+    expect(filterDetailBarActions(["view", "start"])).toEqual(["start"]);
+  });
 });

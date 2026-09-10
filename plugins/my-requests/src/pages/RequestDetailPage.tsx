@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { useMyRequestsFloatingNotice } from "../app/MyRequestsFloatingNoticeProvider";
 import { getRequest, transitionRequest } from "../api/requestsApi";
 import { ActionBar } from "../components/ActionBar";
 import { AppShell } from "../components/AppShell";
@@ -13,6 +14,7 @@ import {
 import { TimelinePanel } from "../components/TimelinePanel";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
+  actionLabel,
   formatDateTimePtBr,
   requestTypeLabel,
   statusLabel,
@@ -35,6 +37,7 @@ import {
   mapJourneyStagesToTrackerSteps,
   statusBadgeVariant,
 } from "../utils/journeyProgressUi";
+import { isTransitionAction } from "../utils/operationalActions";
 
 type RequestDetailPageProps = {
   requestId: string;
@@ -42,8 +45,9 @@ type RequestDetailPageProps = {
 
 export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
   const access = useRequestsPermissions();
+  const { notifyError, notifySuccess, notifyInfo } = useMyRequestsFloatingNotice();
   const [request, setRequest] = useState<RequestDetail | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [reasonKind, setReasonKind] = useState<ReasonConfirmKind | null>(null);
 
@@ -51,6 +55,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
     async (signal?: AbortSignal) => {
       const data = await getRequest(requestId, { signal });
       setRequest(data);
+      setLoadError(null);
     },
     [requestId],
   );
@@ -58,7 +63,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
   useEffect(() => {
     const ac = new AbortController();
     reload(ac.signal).catch((err: Error) => {
-      if (err.name !== "AbortError") setError(err.message);
+      if (err.name !== "AbortError") setLoadError(err.message);
     });
     return () => ac.abort();
   }, [reload]);
@@ -68,8 +73,11 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
     options?: { returnReason?: string; cancelJustification?: string },
   ) {
     if (!request) return;
+    if (!isTransitionAction(action)) {
+      notifyInfo("Esta ação não altera o andamento da solicitação.");
+      return;
+    }
     setBusy(true);
-    setError(null);
     try {
       const updated = await transitionRequest(request.id, action, {
         version: request.version,
@@ -79,8 +87,11 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
       });
       setRequest(updated);
       setReasonKind(null);
+      notifySuccess(`${actionLabel(action)} concluído.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível aplicar a ação.");
+      notifyError(
+        err instanceof Error ? err.message : "Não foi possível aplicar a ação.",
+      );
     } finally {
       setBusy(false);
     }
@@ -88,6 +99,16 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
 
   async function onAction(action: string) {
     if (!request) return;
+    if (action === "view") {
+      return;
+    }
+    if (action === "edit") {
+      notifyInfo(
+        "Ajuste os dados quando a solicitação estiver aguardando informação e use Reenviar para continuar.",
+        { title: "Editar solicitação" },
+      );
+      return;
+    }
     if (action === "return" || action === "cancel") {
       setReasonKind(action);
       return;
@@ -117,10 +138,10 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
       canCreate={canCreateAnyRequest(access)}
     >
       <div className="my-requests-detail-layout">
-        {error ? (
-          <MyRequestsStateBanner variant="error">{error}</MyRequestsStateBanner>
+        {loadError ? (
+          <MyRequestsStateBanner variant="error">{loadError}</MyRequestsStateBanner>
         ) : null}
-        {!request && !error ? <MyRequestsLoadingState /> : null}
+        {!request && !loadError ? <MyRequestsLoadingState /> : null}
 
         {request ? (
           <>

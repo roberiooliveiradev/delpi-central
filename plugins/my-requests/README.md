@@ -8,6 +8,8 @@ Microfrontend federado do módulo **Minhas Solicitações**.
 - **Proibido** chamar api-delpi no browser
 - Ações no detalhe: render-only de `allowed_actions` (label PT na UI; código canônico na chamada)
 - Detalhe: progresso via `journey_progress` + uploads via `capabilities` (projeção da API; MFE não reconstrói workflow)
+- Avisos: `MyRequestsFloatingNoticeProvider` (`FloatingNoticeStack` do `@delpi/plugin-ui`) — erros/sucesso de ações no detalhe
+- Ação `view` não vira botão no detalhe (já está visualizando; não é transição)
 - Shell: **TopBar** canônica (`createDashboardTopBar`) + PageHeader contextual — padrão commercial
 - Labels PT-BR: [`src/content/presentationLabels.ts`](src/content/presentationLabels.ts)
 - Ajuda: [`src/content/helpTooltips.ts`](src/content/helpTooltips.ts) · Manual: [MANUAL-USUARIO.md](../../docs/12-roadmap-e-evolucao/my-requests/MANUAL-USUARIO.md)

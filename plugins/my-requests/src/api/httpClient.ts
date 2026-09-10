@@ -53,9 +53,16 @@ async function parseError(response: Response, bodyText?: string): Promise<string
     return "API de Minhas Solicitações indisponível. Verifique o serviço requests-api e o gateway.";
   }
   try {
-    const body = JSON.parse(text) as { message?: string; detail?: string | unknown };
+    const body = JSON.parse(text) as {
+      message?: string;
+      detail?: string | unknown;
+      data?: { message?: string; code?: string };
+    };
     if (body?.message) return body.message;
     if (typeof body?.detail === "string" && body.detail.trim()) return body.detail.trim();
+    if (typeof body?.data?.message === "string" && body.data.message.trim()) {
+      return body.data.message.trim();
+    }
   } catch {
     // ignore
   }

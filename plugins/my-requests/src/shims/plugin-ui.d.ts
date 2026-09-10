@@ -591,6 +591,34 @@ declare module "@delpi/plugin-ui/index" {
   export function createInitialsAvatar(
     prefix: string,
   ): ComponentType<DashboardInitialsAvatarProps>;
+
+  export type FloatingNoticeVariant = "error" | "warning" | "success" | "info";
+
+  export type FloatingNoticeInput = {
+    id?: string;
+    title?: string;
+    message: string;
+    variant?: FloatingNoticeVariant;
+    autoDismissMs?: number | null;
+  };
+
+  export type FloatingNoticeItem = FloatingNoticeInput & { id: string };
+
+  export function useFloatingNotices(): {
+    items: FloatingNoticeItem[];
+    push: (notice: FloatingNoticeInput | string) => string;
+    dismiss: (id: string) => void;
+    clear: () => void;
+  };
+
+  export function createFloatingNoticeStack(config: {
+    prefix: string;
+    portalScopeClassName?: string;
+    labels?: { stackAriaLabel?: string; dismissAriaLabel?: string };
+  }): ComponentType<{
+    items: FloatingNoticeItem[];
+    onDismiss: (id: string) => void;
+  }>;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

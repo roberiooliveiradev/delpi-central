@@ -50,4 +50,15 @@ describe("RequestDetailPage structural", () => {
     expect(page).toMatch(/hint:\s*MY_REQUESTS_HELP_TOOLTIPS\.detail\.status/);
     expect(payload).toMatch(/hint:\s*MY_REQUESTS_HELP_TOOLTIPS\.detail\.party/);
   });
+
+  it("não chama transição para view e usa avisos flutuantes", () => {
+    const page = read("pages/RequestDetailPage.tsx");
+    const actionBar = read("components/ActionBar.tsx");
+    const app = read("App.tsx");
+    expect(actionBar).toMatch(/filterDetailBarActions/);
+    expect(page).toMatch(/isTransitionAction/);
+    expect(page).toMatch(/useMyRequestsFloatingNotice/);
+    expect(page).toMatch(/notifyError/);
+    expect(app).toMatch(/MyRequestsFloatingNoticeProvider/);
+  });
 });
