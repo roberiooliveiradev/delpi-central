@@ -52,6 +52,7 @@ import {
   PpHostContainedDialog,
   PpIconButton,
   PpNativeTextField,
+  PpOtaProgressBar,
   PpSegmentToggle,
   PpStateBox,
   PpWorkbenchDialog,
