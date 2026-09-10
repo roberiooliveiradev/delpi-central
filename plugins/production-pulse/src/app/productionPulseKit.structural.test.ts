@@ -147,6 +147,13 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/\bBan\b/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/linkMode/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/putDeviceFirmwareLink/);
+    expect(readRelative("index.css")).toMatch(/pp-map-node-compatible-pulse/);
+    expect(readRelative("index.css")).toMatch(
+      /\.pp-firmware-link-canvas-wrap--linking\s+\.pp-map-node--connection-compatible/,
+    );
+    expect(readRelative("index.css")).toMatch(
+      /\.pp-firmware-link-canvas-wrap--linking\s+\.pp-map-node--connection-incompatible/,
+    );
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/onRequestLink|setLinkMode/);
     expect(readRelative("components/EntityContextLayers.tsx")).toMatch(/Vincular IoT|Vincular firmware/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/softDeleteDeviceConfirmTitle/);

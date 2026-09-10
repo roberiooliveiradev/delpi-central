@@ -26,8 +26,9 @@ Compatibilidade de driver **não** gera edge. Após desvincular, a linha some po
 Estado efêmero na página (não na URL). Entrada: menu `Vincular IoT` / `Vincular firmware` ou arraste FW→IoT.
 
 - origem fica destacada;
-- candidatos compatíveis ativos (`Link2`);
+- candidatos compatíveis ativos (`Link2`) com **pulsação** visual (respeita `prefers-reduced-motion`);
 - candidatos incompatíveis permanecem **visíveis**, esmaecidos, com `Ban`, `aria-disabled`;
+- opacidade reduzida / Ban / pulse **somente** no Connection Mode — fora dele os nós ficam no visual normal;
 - conexão incompatível é bloqueada no frontend (sem PUT);
 - API permanece autoridade final (`422 firmwareLinkIncompatible`);
 - funciona Firmware → IoT e IoT → Firmware (seleção/menu; drag FW→IoT como atalho do mesmo motor);
