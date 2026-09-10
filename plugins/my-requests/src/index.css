@@ -269,14 +269,35 @@
 .dashboard-my-requests .my-requests-detail-conversation {
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
   min-width: 0;
   width: 100%;
 }
 
+/*
+  Host height owns the RoomPanel. Kit defaults (min(34rem, 70vh)) would
+  overflow the SectionCard and paint over Artifacts below.
+*/
 .dashboard-my-requests .my-requests-detail-conversation__frame {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   min-height: 18rem;
-  max-height: min(28rem, 55vh);
   height: min(28rem, 55vh);
+  max-height: min(28rem, 55vh);
+  overflow: hidden;
+  isolation: isolate;
+  --delpi-ui-room-panel-min-height: 0;
+  --delpi-ui-room-panel-height: 100%;
+  --delpi-ui-room-panel-max-height: 100%;
+}
+
+.dashboard-my-requests .my-requests-detail-conversation__frame > * {
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
 }
 
 .dashboard-my-requests .my-requests-upload-field {
@@ -294,7 +315,7 @@
 
   .dashboard-my-requests .my-requests-detail-conversation__frame {
     min-height: 16rem;
-    max-height: min(24rem, 50vh);
     height: min(24rem, 50vh);
+    max-height: min(24rem, 50vh);
   }
 }

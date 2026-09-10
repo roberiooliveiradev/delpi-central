@@ -30,6 +30,16 @@ describe("Request conversation structural", () => {
     expect(mrUi).toMatch(/createDashboardRoomConversationShell/);
   });
 
+  it("contem o RoomPanel no frame para não vazar sobre Artifacts", () => {
+    const css = read("index.css");
+    expect(css).toMatch(
+      /\.my-requests-detail-conversation__frame\s*\{[^}]*overflow:\s*hidden/s,
+    );
+    expect(css).toMatch(/--delpi-ui-room-panel-height:\s*100%/);
+    expect(css).toMatch(/--delpi-ui-room-panel-max-height:\s*100%/);
+    expect(css).toMatch(/--delpi-ui-room-panel-min-height:\s*0/);
+  });
+
   it("stick-to-bottom só perto do fundo", () => {
     expect(
       shouldStickThreadToBottom({
