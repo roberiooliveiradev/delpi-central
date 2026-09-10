@@ -14,7 +14,7 @@
 | D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
-| G — presentation/skills | 07, 08 | **EM_ANDAMENTO** | E7.S2 | E7.S1 OK; path/entity residual inventariado |
+| G — presentation/skills | 07, 08 | **EM_ANDAMENTO** | E7.S3 | E7.S1–S2 OK; gap entityProfiles documentado |
 | H — cutover/cleanup | 09 | **CONTÍNUO** | E9.S1 corpus ampliado | Não remover legado sem gates |
 
 ## Protocolo por subetapa
@@ -104,3 +104,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Próxima **Onda G** (planos 07/08) |
 | 2026-09-10 | E7.S1 **ATENDIDO** — inventário residual presentation (path/entity vs shape) |
 | 2026-09-10 | Onda G **EM_ANDAMENTO** — próxima E7.S2 (baseline presentation) |
+| 2026-09-10 | E7.S2 **ATENDIDO** — baseline shape families + path rename unknown |
+| 2026-09-10 | Onda G **EM_ANDAMENTO** — próxima E7.S3 (shape defaults path principal) |

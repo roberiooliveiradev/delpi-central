@@ -1,11 +1,11 @@
 # Plano 07 — Presentation residual -> schema/shape-first
 
 **Prioridade:** P2  
-**Status execução:** Onda G · E7.S1 **ATENDIDO** · próxima E7.S2 · display path→label **não** reabrir  
-**Evidência:** [`../evidence/e7-s1-presentation-residual-inventory.md`](../evidence/e7-s1-presentation-residual-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda G · E7.S1–S2 **ATENDIDO** · próxima E7.S3 · display path→label **não** reabrir  
+**Evidência:** [`../evidence/e7-s1-presentation-residual-inventory.md`](../evidence/e7-s1-presentation-residual-inventory.md) · [`../evidence/e7-s2-presentation-baseline.md`](../evidence/e7-s2-presentation-baseline.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** novas actions e APIs devem produzir apresentação útil sem exigir profile, path rule, title map ou presenter dedicado por endpoint.
 
-**HEAD revalidado:** pós-Onda F (`e2e3325fa`+)
+**HEAD revalidado:** pós-E7.S1 (`c7b491aa9`+)
 
 ## CURRENT
 
@@ -55,11 +55,14 @@ Perfis especializados permanecem opcionais quando há necessidade real de domín
 **Não fazer:** tocar routing técnico do plano 01 — **respeitado**.
 
 
-### E7.S2 — Baseline de presentation
+### E7.S2 — Baseline de presentation — **ATENDIDO** (2026-09-10)
 
 Cobrir scalar, paged list, hierarchy, composite analysis, document export, unknown API e payloads parcialmente tipados.
 
-Medir R4/R5/R7/R8/R9/R11.
+**Feito:** corpus 6 famílias em `test_e7_s2_presentation_baseline.py`; unknown API openapiDerived + path rename estável; gap `product_stock` documentado; analyzer payload families; R4/R5/R8/R9/R11 baseline TU.
+
+Medir R4/R5/R7/R8/R9/R11 — **baseline TU PASS** (R7 parcial sem multi-surface).
+
 
 ### E7.S3 — Shape defaults como caminho principal
 
