@@ -590,7 +590,7 @@ As mesmas variáveis alimentam o **chat** quando `LLM_PROVIDER=openai_compatible
 | `KIMI_API_KEY` | vazio | Sem chave → 502 na geração de ata; chat exige chave se `openai_compatible` |
 | `KIMI_BASE_URL` | `https://openrouter.ai/api/v1` | OpenAI-compatible |
 | `KIMI_MODEL` | `moonshotai/kimi-k3` | |
-| `LLM_PROVIDER` | `ollama` | Em prod com Kimi no chat: `openai_compatible` |
+| `LLM_PROVIDER` | `openai_compatible` | Em prod com Kimi no chat: `openai_compatible` (default). Ollama só com valor explícito `ollama` |
 | `LLM_TEXT_*` | vazio | Opcional; se vazio com `openai_compatible`, herda `KIMI_*` |
 | `EMBEDDING_PROVIDER` | vazio | **Herda `LLM_PROVIDER`**. Com Kimi + `bge-m3`, vetor `off` (RAG keyword), sem Ollama |
 

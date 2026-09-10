@@ -4,6 +4,7 @@ import os
 
 from app.domain.entities.llm_text_config import LlmTextConfig
 from app.domain.services.chat_llm_provider_normalization_service import (
+    DEFAULT_LLM_PROVIDER,
     ChatLlmProviderNormalizationService,
 )
 
@@ -38,7 +39,7 @@ def _first_env(*names: str, default: str = "") -> str:
 
 
 def resolve_llm_provider_name() -> str:
-    return normalize_llm_provider(_env("LLM_PROVIDER", "ollama"))
+    return normalize_llm_provider(_env("LLM_PROVIDER", DEFAULT_LLM_PROVIDER))
 
 
 def resolve_llm_text_config() -> LlmTextConfig:
@@ -57,26 +58,27 @@ def resolve_llm_text_config() -> LlmTextConfig:
             "LLM_TEXT_BASE_URL",
             "KIMI_BASE_URL",
             "VLLM_BASE_URL",
-            default="http://vllm:8000/v1",
+            default="https://openrouter.ai/api/v1",
         ).rstrip("/")
         model = _first_env(
             "LLM_TEXT_MODEL",
             "KIMI_MODEL",
             "VLLM_MODEL",
-            default="Qwen/Qwen2.5-7B-Instruct",
+            default="moonshotai/kimi-k3",
         )
         api_key = _first_env(
             "LLM_TEXT_API_KEY",
             "KIMI_API_KEY",
             "VLLM_API_KEY",
-            default="minha-delpi-local-vllm",
+            default="",
         )
         timeout = (
             _env_float("LLM_TEXT_TIMEOUT_SECONDS", 0.0)
             or _env_float("KIMI_TIMEOUT_SECONDS", 0.0)
-            or _env_float("VLLM_TIMEOUT_SECONDS", 300.0)
+            or _env_float("VLLM_TIMEOUT_SECONDS", 180.0)
         )
     else:
+        # Branch Ollama: só quando LLM_PROVIDER=ollama (explícito).
         base_url = (_env("LLM_TEXT_BASE_URL") or _env("OLLAMA_BASE_URL", "http://ollama:11434")).rstrip(
             "/"
         )

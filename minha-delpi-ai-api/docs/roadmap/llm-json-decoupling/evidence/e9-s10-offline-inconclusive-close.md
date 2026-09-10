@@ -44,16 +44,17 @@ Em vez de inventar live PASS, fortaleceu-se a evidência **offline** onde o harn
 | send_stream_simulate_parity | INCONCLUSIVE | PASS_OFFLINE |
 | efficiency | INCONCLUSIVE | INCONCLUSIVE |
 
-## Live BLOCKED
+## Live BLOCKED (corrigido)
 
 ```text
-EXECUTION_BLOCK
-REASON: LLM host ollama DNS failure; sem métricas latency/cost
-SAFE_ACTION: manter deleteAuthorized=false e globalReleasePass=false
-NEXT: repetir live com stack Ollama/gateway disponível
+EXECUTION_BLOCK (histórico E9.S10)
+REASON_ANTIGO: smoke inprocess sem .env → default ollama DNS
+REASON_ATUAL: stack canônico = openai_compatible + KIMI_*; live exige chave/runtime, não Ollama
+SAFE_ACTION: manter deleteAuthorized=false e globalReleasePass=false até medir efficiency no stack Kimi
+NEXT: live L1–L4 / P50–P95 com LLM_PROVIDER=openai_compatible
 ```
 
 ## Próximo
 
-1. Live L1–L4 + eficiência com Ollama/gateway.
+1. Live L1–L4 + eficiência com Kimi/OpenRouter (`openai_compatible`).
 2. Só então promover gates a `PASS` / `PASS_OFFLINE_AND_LIVE` e reconsiderar DELETE.

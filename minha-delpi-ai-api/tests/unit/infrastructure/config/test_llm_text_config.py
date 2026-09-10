@@ -14,6 +14,18 @@ def test_normalize_llm_provider_keeps_ollama():
     assert normalize_llm_provider("ollama") == "ollama"
 
 
+def test_normalize_llm_provider_empty_defaults_to_openai_compatible():
+    assert normalize_llm_provider("") == "openai_compatible"
+    assert normalize_llm_provider(None) == "openai_compatible"  # type: ignore[arg-type]
+
+
+def test_resolve_llm_provider_defaults_to_openai_compatible(monkeypatch):
+    monkeypatch.delenv("LLM_PROVIDER", raising=False)
+    from app.infrastructure.config.llm_text_config import resolve_llm_provider_name
+
+    assert resolve_llm_provider_name() == "openai_compatible"
+
+
 def test_is_openai_compatible_provider():
     assert is_openai_compatible_provider("vllm") is True
     assert is_openai_compatible_provider("ollama") is False

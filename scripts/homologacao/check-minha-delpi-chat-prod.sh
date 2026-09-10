@@ -76,8 +76,8 @@ python3 -m json.tool "$LLM_FILE"
 
 PROVIDER="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("provider"))' "$LLM_FILE")"
 
-if [ "$PROVIDER" != "ollama" ] && [ "$PROVIDER" != "vllm" ]; then
-  fail "Provider inválido: $PROVIDER"
+if [ "$PROVIDER" != "openai_compatible" ] && [ "$PROVIDER" != "ollama" ] && [ "$PROVIDER" != "vllm" ]; then
+  fail "Provider inválido: $PROVIDER (esperado openai_compatible|ollama|vllm)"
 fi
 
 ok "Provider LLM: $PROVIDER"

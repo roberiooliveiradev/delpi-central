@@ -29,7 +29,7 @@ class Settings:
         os.getenv("TV_DASHBOARD_API_TIMEOUT_SECONDS", "60")
     )
 
-    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "ollama").lower().strip()
+    LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai_compatible").lower().strip()
     LLM_TEXT_BASE_URL = os.getenv("LLM_TEXT_BASE_URL", "").strip()
     LLM_TEXT_MODEL = os.getenv("LLM_TEXT_MODEL", "").strip()
     LLM_TEXT_API_KEY = os.getenv("LLM_TEXT_API_KEY", "").strip()

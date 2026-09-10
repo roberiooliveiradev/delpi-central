@@ -30,7 +30,8 @@ def test_admin_debug_keys():
     payload = ChatResponseModeContextBudgetService.resolve("normal").as_admin_debug()
 
     assert payload["mode"] == "normal"
-    assert payload["profile"] == "local"
+    # Default stack = openai_compatible → profile cloud (não local/ollama).
+    assert payload["profile"] == "cloud"
     assert payload["historyMaxMessages"] == 12
     assert "messageSearchLookbackMessages" in payload
     assert payload["priorTurnFactsPreToolMaxChars"] < payload["priorTurnFactsSynthesisMaxChars"]

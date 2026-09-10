@@ -7,8 +7,8 @@ alwaysApply: false
 
 ## Princípio
 
-**Um seletor:** `LLM_PROVIDER` (`ollama` | `openai_compatible`; aliases `vllm`/`openai`).  
-Hoje o ambiente usa **Kimi/OpenRouter** (`openai_compatible` + `KIMI_*`). Trocar o motor = mudar `LLM_PROVIDER` (e credenciais do eixo), **não** apontar host `ollama` em use case, RAG, visão ou MFE.
+**Um seletor:** `LLM_PROVIDER` (`openai_compatible` default | `ollama` só se explícito; aliases `vllm`/`openai`).  
+Ambiente vigente: **Kimi/OpenRouter** (`openai_compatible` + `KIMI_*`). Trocar o motor = mudar `LLM_PROVIDER` (e credenciais do eixo), **não** apontar host `ollama` em use case, RAG, visão ou MFE.
 
 Texto, embeddings e visão **herdam** o seletor quando o env do eixo está vazio.
 
@@ -19,7 +19,8 @@ LLM_PROVIDER
  → make_vision_llm_gateway()       (VLM documentos)
 ```
 
-Ollama só existe como **implementação de infra** (`OllamaLlmGateway`, …) escolhida pelo registry quando o provedor efetivo é `ollama`.
+Ollama só existe como **implementação de infra** (`OllamaLlmGateway`, …) escolhida pelo registry quando o provedor efetivo é `ollama` **explícito**.  
+**Proibido:** default/env vazio → ollama; coerção de provider desconhecido → ollama; fallback de erro do LLM externo → ollama.
 
 ## Módulos canônicos
 

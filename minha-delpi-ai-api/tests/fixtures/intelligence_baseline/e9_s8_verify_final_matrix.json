@@ -95,7 +95,7 @@
       "expected": "aprovado",
       "status": "INCONCLUSIVE",
       "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s10-offline-inconclusive-close.md",
-      "note": "Ollama/host live indisponível neste ambiente; P50/P95 não medidos"
+      "note": "Medir P50/P95 no stack openai_compatible + KIMI_*; Ollama não é fallback"
     }
   ],
   "blockingStatuses": ["INCONCLUSIVE", "FAIL", "PENDING", "PENDING_RUNTIME"],

@@ -157,7 +157,11 @@ class ChatResponseModeContextBudgetService:
 
                 provider = resolve_llm_text_config().provider
             except Exception:
-                provider = "ollama"
+                from app.domain.services.chat_llm_provider_normalization_service import (
+                    DEFAULT_LLM_PROVIDER,
+                )
+
+                provider = DEFAULT_LLM_PROVIDER
 
         return ChatResponseModeContentService.context_budget_profile_for_provider(provider)
 

@@ -1,6 +1,7 @@
 """Stack LLM canônico — um seletor, três eixos.
 
-Troca de motor: ``LLM_PROVIDER`` (``ollama`` | ``openai_compatible``; aliases ``vllm``/``openai``).
+Troca de motor: ``LLM_PROVIDER`` (default ``openai_compatible``; opcional ``ollama``
+explícito; aliases ``vllm``/``openai`` → ``openai_compatible``).
 
 Eixos (herdam o seletor quando o env do eixo está vazio):
 
@@ -8,8 +9,9 @@ Eixos (herdam o seletor quando o env do eixo está vazio):
 - embeddings — ``make_embedding_gateway()`` / ``resolve_embedding_config()``
 - visão — ``make_vision_llm_gateway()`` / ``resolve_vision_llm_config()``
 
-Não chamar host Ollama (``http://ollama:11434``) a partir de use case, vision stage ou RAG.
-O gateway de infra só é construído quando o provedor efetivo é ``ollama``.
+Não usar Ollama como fallback silencioso (env vazio, provider desconhecido ou erro
+do LLM externo). Host ``http://ollama:11434`` só nos gateways quando
+``LLM_PROVIDER=ollama`` (explícito).
 """
 
 from __future__ import annotations

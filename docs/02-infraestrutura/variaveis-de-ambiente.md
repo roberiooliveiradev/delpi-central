@@ -131,7 +131,7 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 |---|---|
 | `DATABASE_URL` | Montada no Compose → `postgres-plugins` |
 | `CORE_API_BASE_URL` | `http://core-api:8000` |
-| `LLM_PROVIDER` | `ollama` ou `vllm` |
+| `LLM_PROVIDER` | `openai_compatible` (default) ou `ollama` (explícito); aliases `vllm`/`openai` |
 | `OLLAMA_BASE_URL` | `http://ollama:11434` |
 | `OLLAMA_MODEL` | Default **`qwen2.5:3b`** (CPU, bom equilíbrio qualidade/velocidade). Alternativas: `qwen2.5:7b` (GPU/16GB RAM), `qwen2.5:1.5b` (mínimo) |
 | `OLLAMA_NUM_CTX` | Janela de contexto. **Recomendado:** `2048` (permite coexistência 3b + bge-m3 em 8GB); com 16GB+: `4096`. Perfil `operational_cpu`: `1536` |

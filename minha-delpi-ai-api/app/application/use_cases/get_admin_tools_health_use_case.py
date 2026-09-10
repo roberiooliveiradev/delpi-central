@@ -69,7 +69,7 @@ class GetAdminToolsHealthUseCase:
         items.append(
             {
                 "id": "embedding-provider",
-                "label": f"Embeddings ({embedding.get('provider', 'ollama')})",
+                "label": f"Embeddings ({embedding.get('provider', 'openai_compatible')})",
                 "status": self._map_status(embedding.get("status")),
                 "description": embedding.get("message")
                 or (

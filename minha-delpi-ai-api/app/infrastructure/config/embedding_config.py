@@ -34,7 +34,13 @@ def normalize_embedding_provider(provider: str) -> str:
     if normalized in {"off", "disabled", "none"}:
         return "off"
 
-    return "ollama"
+    if normalized == "ollama":
+        return "ollama"
+
+    raise ValueError(
+        f"Unsupported embedding provider {normalized!r}; "
+        "use openai_compatible, ollama (explicit), or off"
+    )
 
 
 def resolve_embedding_provider_name() -> str:

@@ -33,7 +33,13 @@ def normalize_vision_llm_provider(provider: str) -> str:
     if normalized in OPENAI_COMPATIBLE_VISION_PROVIDERS:
         return "openai_compatible"
 
-    return "ollama"
+    if normalized == "ollama":
+        return "ollama"
+
+    raise ValueError(
+        f"Unsupported vision LLM provider {normalized!r}; "
+        "use openai_compatible, ollama (explicit), or off"
+    )
 
 
 def resolve_vision_llm_provider_name() -> str:

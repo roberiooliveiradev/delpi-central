@@ -1,4 +1,7 @@
-from app.infrastructure.config.vision_llm_config import resolve_vision_llm_config
+from app.infrastructure.config.vision_llm_config import (
+    normalize_vision_llm_provider,
+    resolve_vision_llm_config,
+)
 
 
 def test_openai_compatible_inherits_kimi_when_vision_vars_empty(monkeypatch):
@@ -63,3 +66,10 @@ def test_explicit_ollama_vision_ignores_kimi_model(monkeypatch):
 
     assert config.provider == "ollama"
     assert config.model == "qwen2.5vl:7b"
+
+
+def test_normalize_vision_rejects_unknown_provider():
+    import pytest
+
+    with pytest.raises(ValueError, match="Unsupported vision LLM provider"):
+        normalize_vision_llm_provider("olama-typo")

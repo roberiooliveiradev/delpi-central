@@ -9,6 +9,17 @@ def test_normalize_embedding_provider_maps_openai_aliases():
         assert normalize_embedding_provider(alias) == "openai_compatible"
 
 
+def test_normalize_embedding_provider_keeps_explicit_ollama():
+    assert normalize_embedding_provider("ollama") == "ollama"
+
+
+def test_normalize_embedding_provider_rejects_unknown():
+    import pytest
+
+    with pytest.raises(ValueError, match="Unsupported embedding provider"):
+        normalize_embedding_provider("olama-typo")
+
+
 def test_resolve_embedding_config_uses_ollama_defaults(monkeypatch):
     monkeypatch.setenv("EMBEDDING_PROVIDER", "ollama")
     monkeypatch.delenv("EMBEDDING_BASE_URL", raising=False)

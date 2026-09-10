@@ -14,9 +14,11 @@ Regra Cursor: `llm-stack-centralized.mdc`.
 
 | Eixo | Variável principal | Default |
 |------|-------------------|---------|
-| Texto (chat) | `LLM_PROVIDER` | herda env; sem valor → `ollama` |
+| Texto (chat) | `LLM_PROVIDER` | sem valor → **`openai_compatible`** (Kimi/OpenRouter) |
 | Embeddings (RAG) | `EMBEDDING_PROVIDER` | **vazio = mesmo eixo do texto** (`LLM_PROVIDER`) |
-| Visão (VLM) | `VISION_LLM_PROVIDER` | `ollama` (em prod Kimi: `openai_compatible`) |
+| Visão (VLM) | `VISION_LLM_PROVIDER` | **vazio = herda `LLM_PROVIDER`** |
+
+**Ollama não é fallback.** Só entra com `LLM_PROVIDER=ollama` (ou eixo `EMBEDDING_PROVIDER` / `VISION_LLM_PROVIDER=ollama`) **explícito**. Provider desconhecido em embedding/visão → erro, não coerção para Ollama.
 
 Com `LLM_PROVIDER=openai_compatible` (Kimi/OpenRouter), **não** use Ollama para embeddings. Se `EMBEDDING_MODEL` for tag local (`bge-m3`, `nomic-embed-text`, …), o vetor fica **`off`** e o RAG cai em busca por palavra-chave — o turno **não** quebra. Para vetor no mesmo stack: `EMBEDDING_PROVIDER=openai_compatible` + modelo `/v1/embeddings` (ex. `openai/text-embedding-3-small`) e reindex.
 
@@ -24,7 +26,9 @@ Trocar só `LLM_PROVIDER` **alinha** embeddings ao mesmo provedor quando `EMBEDD
 
 ---
 
-## Ollama local (legado)
+## Ollama local (opcional — nunca default)
+
+Ativar só com valor explícito:
 
 ```env
 LLM_PROVIDER=ollama

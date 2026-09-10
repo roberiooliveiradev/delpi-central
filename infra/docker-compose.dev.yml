@@ -276,7 +276,7 @@ services:
       JWT_ALGORITHMS: ${JWT_ALGORITHMS:-RS256}
       CORE_API_BASE_URL: http://core-api:8000
       CORE_API_TIMEOUT_SECONDS: 5
-      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai_compatible}
       LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.2}
       # Fallback global / status admin. Com modos ligados o teto do turno vem do
       # ChatResponseModeService (Ollama: CHAT_RESPONSE_MODE_*; Kimi: generationLimitsCloud).

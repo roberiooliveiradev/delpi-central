@@ -401,7 +401,7 @@ Remova `llmProviderOverride` dos agentes se tiver configurado override.
 | `EMBEDDING_BASE_URL` | RAG | `EMBEDDING_PROVIDER=openai_compatible` |
 | `EMBEDDING_API_KEY` | RAG | `EMBEDDING_PROVIDER=openai_compatible` |
 | `EMBEDDING_DIMENSIONS` | RAG | Deve bater com modelo; reindex se mudar |
-| `VISION_LLM_PROVIDER` | VLM | Sempre (default `ollama`) |
+| `VISION_LLM_PROVIDER` | VLM | Sempre (vazio herda `LLM_PROVIDER`; default stack = `openai_compatible`) |
 | `VISION_LLM_BASE_URL` | VLM | Provider externo |
 | `VISION_LLM_MODEL` | VLM | Provider externo |
 | `RATE_LIMIT_EXTERNAL_LLM_PER_WINDOW` | Texto externo | Opcional (default `10`) |
