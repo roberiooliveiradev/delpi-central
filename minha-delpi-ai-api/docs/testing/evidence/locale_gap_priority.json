@@ -1,0 +1,51 @@
+{
+  "stage": "E11.S0",
+  "generated_at": "2026-09-10T06:00:56.164838+00:00",
+  "source": "api-delpi/app/content/tv_route_audience.json routes.*.locale",
+  "priority_criteria": [
+    "chat-priority = operations used by Action Catalog / product operational surfaces",
+    "missing = no locale.pt-BR.summary in tv_route_audience (canonical x-delpi.locale source)",
+    "pathLabels already removed (E1/E11.S4 DONE) — hit-rate gate is vacuously PASS at 0"
+  ],
+  "total": 551,
+  "with_pt_BR_summary": 551,
+  "missing": [],
+  "missing_count": 0,
+  "priority": [],
+  "priority_note": "missing∩priority = 0 — E11.S2 fill locale is N/A (already complete). EN==pt stub polish is debt, not display-path residual.",
+  "en_eq_pt_stub_count": 28,
+  "en_eq_pt_stub_sample": [
+    "approve_scheduling_booking",
+    "archive_guias_procedimentos_admin_procedure",
+    "attach_audit_5s_evidence",
+    "attach_audit_5s_response_photo",
+    "close_audit_5s_audit_without_nc_treatment",
+    "create_canal_denuncia",
+    "create_guias_procedimentos_admin_department",
+    "create_guias_procedimentos_admin_procedure",
+    "create_public_kaizen_suggestion",
+    "get_guias_procedimentos_admin_department",
+    "get_guias_procedimentos_admin_procedure",
+    "get_guias_procedimentos_department",
+    "get_guias_procedimentos_procedure",
+    "get_transformometro_savings_investment_series",
+    "list_audit_5s_nonconformities_board",
+    "list_guias_procedimentos_admin_departments",
+    "list_guias_procedimentos_admin_procedures",
+    "list_guias_procedimentos_departments",
+    "list_my_scheduling_bookings",
+    "list_pending_scheduling_bookings"
+  ],
+  "pathLabels_present": false,
+  "englishSummaries_present": false,
+  "manual_catalog_hit_rate": {
+    "numerator": 0,
+    "denominator": "N/A_catalog_removed",
+    "rate": 0.0,
+    "gate_lt_0_15": "PASS",
+    "note": "pathLabels/englishSummaries removed from api_paths.json; hit-rate is 0 by construction"
+  },
+  "E11_S2": "N/A_ALREADY_COMPLETE",
+  "E11_S3": "PASS_via_existing_action_label_tests_no_LEGACY_PATH_LABEL",
+  "E11_S4": "DONE_prior"
+}
