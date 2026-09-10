@@ -34,6 +34,7 @@ import {
   HelpTooltip,
   PageHero,
   pageHeroBemClasses,
+  SectionHintLabel,
   sectionCardPacBemClasses,
   formActionsBemClasses,
   formGridBemClasses,
@@ -127,7 +128,14 @@ export { useFloatingNotices };
 export const PpIconButton = IconButton;
 export { HelpTooltip };
 
-export { AnchoredPanelPortal, ContextMenuDivider, ContextMenuItem };
+export { AnchoredPanelPortal, ContextMenuDivider };
+
+/** Menu item with help on the label itself (Pulse default — no `?` column). */
+export function PpContextMenuItem(props: ComponentProps<typeof ContextMenuItem>) {
+  return <ContextMenuItem {...props} hintTrigger={props.hintTrigger ?? "label"} />;
+}
+
+export const PpSectionHintLabel = SectionHintLabel;
 
 export type PpPageHeroProps = Omit<
   ComponentProps<typeof PageHero>,

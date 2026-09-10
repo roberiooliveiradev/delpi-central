@@ -21,8 +21,8 @@ import { useEffect, useRef } from "react";
 import {
   AnchoredPanelPortal,
   ContextMenuDivider,
-  ContextMenuItem,
   PpActionButton,
+  PpContextMenuItem,
   PpHintAction,
   PpIconButton,
 } from "../app/productionPulseUi";
@@ -271,40 +271,40 @@ export function EntityActionMenu({
     >
       {entity.type === "device" && device ? (
         <>
-          <ContextMenuItem
+          <PpContextMenuItem
             label="Editar"
             icon={Pencil}
             hint={PP_HELP.hub.menuEditDevice}
             onSelect={() => run("edit")}
           />
-          <ContextMenuItem
+          <PpContextMenuItem
             label="Renomear"
             icon={TextCursorInput}
             hint={PP_HELP.hub.menuRenameDevice}
             onSelect={() => run("rename")}
           />
           <ContextMenuDivider />
-          <ContextMenuItem
+          <PpContextMenuItem
             label="Atualizar agora"
             icon={RefreshCw}
             hint={PP_HELP.hub.menuOtaDeviceNow}
             onSelect={() => run("ota-now")}
           />
-          <ContextMenuItem
+          <PpContextMenuItem
             label="Agendar atualização…"
             icon={CalendarClock}
             hint={PP_HELP.hub.menuOtaDeviceSchedule}
             onSelect={() => run("ota-schedule")}
           />
           <ContextMenuDivider />
-          <ContextMenuItem
+          <PpContextMenuItem
             label="Vincular firmware"
             icon={Link2}
             hint={PP_HELP.hub.startLinkFromDevice}
             onSelect={() => run("link")}
           />
           {explicitFirmwareKey(device) ? (
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Desvincular firmware"
               icon={Link2Off}
               hint={PP_HELP.hub.menuUnlinkFirmware}
@@ -313,7 +313,7 @@ export function EntityActionMenu({
           ) : null}
           <ContextMenuDivider />
           {device.enabled ? (
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Desativar (soft delete)…"
               icon={PowerOff}
               hint={PP_HELP.hub.menuDisableDevice}
@@ -321,7 +321,7 @@ export function EntityActionMenu({
               onSelect={() => run("disable")}
             />
           ) : (
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Reativar"
               icon={Power}
               hint={PP_HELP.hub.menuEnableDevice}
@@ -333,39 +333,39 @@ export function EntityActionMenu({
       {entity.type === "firmware" && firmware ? (
         isPublishedFirmware(firmware) ? (
           <>
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Editar metadados"
               icon={FilePenLine}
               hint={PP_HELP.hub.menuEditFirmwareMeta}
               onSelect={() => run("edit")}
             />
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Criar nova versão"
               icon={FilePlus2}
               hint={PP_HELP.hub.menuNewFirmwareVersion}
               onSelect={() => run("new-version")}
             />
             <ContextMenuDivider />
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Vincular IoT"
               icon={Link2}
               hint={PP_HELP.hub.startLinkFromFirmware}
               onSelect={() => run("link")}
             />
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Atualizar vinculados agora"
               icon={RefreshCw}
               hint={PP_HELP.hub.menuOtaFamilyNow}
               onSelect={() => run("ota-now")}
             />
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Agendar atualização…"
               icon={CalendarClock}
               hint={PP_HELP.hub.menuOtaFamilySchedule}
               onSelect={() => run("ota-schedule")}
             />
             <ContextMenuDivider />
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Arquivar versão (soft delete)…"
               icon={Archive}
               hint={PP_HELP.hub.menuArchiveFirmware}
@@ -375,32 +375,32 @@ export function EntityActionMenu({
           </>
         ) : (
           <>
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Editar"
               icon={Pencil}
               hint={PP_HELP.hub.menuEditFirmwareDraft}
               onSelect={() => run("edit")}
             />
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Anexar/alterar source"
               icon={FileCode}
               hint={PP_HELP.hub.menuAttachSource}
               onSelect={() => run("edit")}
             />
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Anexar binário"
               icon={Package}
               hint={PP_HELP.hub.menuAttachBinary}
               onSelect={() => run("edit")}
             />
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Publicar"
               icon={Upload}
               hint={PP_HELP.hub.menuPublishFirmware}
               onSelect={() => run("edit")}
             />
             <ContextMenuDivider />
-            <ContextMenuItem
+            <PpContextMenuItem
               label="Vincular IoT"
               icon={Link2}
               hint={PP_HELP.hub.startLinkFromFirmware}
