@@ -70,18 +70,35 @@ export function HubOtaKpiChips({
         open={open}
         anchorRef={anchorRef}
         panelRef={panelRef}
+        variant="bare"
+        className="delpi-ui-popover-surface pp-hub-health-popover"
+        density="compact"
+        role="dialog"
+        aria-label="Saúde da frota"
         preferredPlacement="bottom"
         portalScopeClassName="dashboard-production-pulse"
         onDismiss={() => setOpen(false)}
       >
-        <div ref={panelRef} className="pp-hub-health-popover" role="dialog" aria-label="Saúde da frota">
-          <div>{kpis.publishedFirmwares} firmwares publicados</div>
-          <div>{kpis.linkedDevices} IoTs vinculados</div>
-          <div>
-            {kpis.outdatedDevices} {PP_HELP.hub.kpiOutdatedSuffix}
-          </div>
-          <div>{kpis.updatingDevices} em atualização</div>
-          <div>{kpis.failedDevices} falhas OTA</div>
+        <div className="pp-hub-health-popover__title">Saúde da frota</div>
+        <div className="pp-hub-health-popover__row">
+          <strong>{kpis.publishedFirmwares}</strong>
+          <span>Firmwares publicados</span>
+        </div>
+        <div className="pp-hub-health-popover__row">
+          <strong>{kpis.linkedDevices}</strong>
+          <span>IoTs vinculados</span>
+        </div>
+        <div className="pp-hub-health-popover__row">
+          <strong>{kpis.outdatedDevices}</strong>
+          <span>{PP_HELP.hub.kpiOutdatedSuffix}</span>
+        </div>
+        <div className="pp-hub-health-popover__row">
+          <strong>{kpis.updatingDevices}</strong>
+          <span>Em atualização</span>
+        </div>
+        <div className="pp-hub-health-popover__row">
+          <strong>{kpis.failedDevices}</strong>
+          <span>Falhas OTA</span>
         </div>
       </AnchoredPanelPortal>
     </div>
