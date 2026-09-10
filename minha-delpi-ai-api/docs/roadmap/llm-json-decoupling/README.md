@@ -46,7 +46,8 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`evidence/e1-s4-registry-selection-shadow.md`](./evidence/e1-s4-registry-selection-shadow.md) | E1.S4 — SHADOW_ON + agree aggregation admin. |
 | [`evidence/e1-s4-agree-aggregation.md`](./evidence/e1-s4-agree-aggregation.md) | E1.S4 — admin summary `agreeRate` (sem cutover). |
 | [`evidence/e1-s5-parameter-strategy-shadow.md`](./evidence/e1-s5-parameter-strategy-shadow.md) | E1.S5 — **ATENDIDO** (cutover completo da fila do resolver). |
-| [`evidence/e1-s6-cleanup-partial.md`](./evidence/e1-s6-cleanup-partial.md) | E1.S6 — **PARTIAL** (cleanup switch; DELETE registry bloqueado). |
+| [`evidence/e1-s6-cleanup-partial.md`](./evidence/e1-s6-cleanup-partial.md) | E1.S6A — binder permanente / switch removido. |
+| [`evidence/e1-s6b-selection-cutover.md`](./evidence/e1-s6b-selection-cutover.md) | E1.S6B — **ATENDIDO** cutover seleção OpenAPI-first. |
 
 ## Drift HEAD (2026-09-10) — resumido
 

@@ -67,8 +67,24 @@ def _stock_catalog() -> list[dict]:
     ]
 
 
+def _disable_selection_cutover(monkeypatch) -> None:
+    from app.domain.services.openapi_tool_routing_content_service import (
+        OpenApiToolRoutingContentService,
+    )
+
+    original = OpenApiToolRoutingContentService.bool_setting
+
+    def _bool_setting(*path, default=False):
+        if path[:2] == ("registrySelectionShadow", "cutoverEnabled"):
+            return False
+        return original(*path, default=default)
+
+    monkeypatch.setattr(OpenApiToolRoutingContentService, "bool_setting", _bool_setting)
+
+
 def test_registry_selection_shadow_agrees_when_prose_matches(monkeypatch):
     invalidate_openapi_tool_routing_cache()
+    _disable_selection_cutover(monkeypatch)
     catalog = _stock_catalog()
     service = ExternalActionSelectionService(_Repo(catalog))
 
@@ -108,6 +124,7 @@ def test_registry_selection_shadow_agrees_when_prose_matches(monkeypatch):
 
 def test_registry_selection_shadow_diverges_when_markers_force_wrong_family(monkeypatch):
     invalidate_openapi_tool_routing_cache()
+    _disable_selection_cutover(monkeypatch)
     catalog = _stock_catalog()
     service = ExternalActionSelectionService(_Repo(catalog))
 
@@ -147,6 +164,7 @@ def test_registry_selection_shadow_diverges_when_markers_force_wrong_family(monk
 
 def test_registry_selection_shadow_can_be_disabled(monkeypatch):
     invalidate_openapi_tool_routing_cache()
+    _disable_selection_cutover(monkeypatch)
     catalog = _stock_catalog()
     service = ExternalActionSelectionService(_Repo(catalog))
 
@@ -190,6 +208,7 @@ def test_registry_selection_shadow_can_be_disabled(monkeypatch):
 
 def test_product_intent_preemption_shadow_agrees(monkeypatch):
     invalidate_openapi_tool_routing_cache()
+    _disable_selection_cutover(monkeypatch)
     catalog = _stock_catalog()
     service = ExternalActionSelectionService(_Repo(catalog))
 
@@ -227,6 +246,7 @@ def test_product_intent_preemption_shadow_agrees(monkeypatch):
 
 def test_product_intent_preemption_shadow_diverges(monkeypatch):
     invalidate_openapi_tool_routing_cache()
+    _disable_selection_cutover(monkeypatch)
     catalog = _stock_catalog()
     service = ExternalActionSelectionService(_Repo(catalog))
 

@@ -1,6 +1,6 @@
 # Roadmap — desacoplamento de JSONs e generalização LLM/OpenAPI
 
-**Status:** ativo — **Onda A ATENDIDA** (2026-09-10); execução via markdowns desta pasta + [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
+**Status:** ativo — Onda A **ATENDIDA**; Onda B **ATENDIDO_PARCIAL** (cutover seleção; DELETE JSON → H)  
 **Owner arquitetural:** Minha DELPI AI / OpenAPI-first tool routing  
 **Dependência:** `../openapi-first-universal-tool-routing.md`  
 **Baseline freeze:** [`evidence/onda-a-baseline/manifest.json`](./evidence/onda-a-baseline/manifest.json)

@@ -40,11 +40,10 @@ AUDIT_SNAPSHOT_WIRED = PASS
 ADMIN_SUMMARY_ENDPOINT = PASS
 AGGREGATE_AGREE_RATE = PASS
 SELECTION_AUTHORITY_UNCHANGED = PASS
-CUTOVER_DEFAULT_CANDIDATE = NOT_STARTED
+CUTOVER_DEFAULT_CANDIDATE = NOT_STARTED → **PASS** (ver e1-s6b)
 ```
 
 ## Próximo
 
-1. Coletar janela live (`hours=168`) até `samplesCount` e `agreeRate` estáveis.  
-2. Revisar `divergeRecent` (explicáveis vs bugs).  
-3. Só então cutover de seleção (E1.S6 fatia B) — ainda bloqueado pelo ledger sem unknown/metamorphic.
+1. Monitorar taxa live pós-cutover.  
+2. DELETE JSON registry → Onda H.

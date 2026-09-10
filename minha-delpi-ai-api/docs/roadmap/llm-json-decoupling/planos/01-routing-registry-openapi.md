@@ -1,8 +1,8 @@
 # Plano 01 — Routing registry -> OpenAPI + Action Catalog
 
 **Prioridade:** P0  
-**Status execução:** Onda B · E1.S6 **PARTIAL** (fatia A: switch tipado removido) · próxima = cutover seleção (E1.S4) antes de DELETE registry  
-**Evidência:** [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md) · [`../evidence/e1-s6-cleanup-partial.md`](../evidence/e1-s6-cleanup-partial.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda B · E1.S6 **ATENDIDO_PARCIAL** (cutover seleção + binder; DELETE JSON deferred Onda H)  
+**Evidência:** [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s4-agree-aggregation.md`](../evidence/e1-s4-agree-aggregation.md) · [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md) · [`../evidence/e1-s6-cleanup-partial.md`](../evidence/e1-s6-cleanup-partial.md) · [`../evidence/e1-s6b-selection-cutover.md`](../evidence/e1-s6b-selection-cutover.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** uma action nova deve ser descoberta e selecionada por semântica/contrato sem exigir `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` por endpoint no conteúdo do assistente.
 
 ## CURRENT
@@ -114,7 +114,7 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 - audit snapshot + `GET /admin/metrics/registry-selection-shadow/summary` (`agreeRate`);
 - testes agree/diverge/off/product + aggregate. Evidência: [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s4-agree-aggregation.md`](../evidence/e1-s4-agree-aggregation.md).
 
-**Pendente:** cutover default candidate (E1.S6B) após janela live de `agreeRate` via admin summary.
+**Pendente:** DELETE de fields JSON do registry (deferred Onda H / após migração readiness/lint).
 
 ### E1.S5 — Parameter strategy removal — **ATENDIDO** (2026-09-10)
 
@@ -124,15 +124,17 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 
 **Fora:** `sql` (policy). Limpeza de fields/braços mortos = **E1.S6**.
 
-### E1.S6 — Cutover e cleanup — **PARTIAL** (2026-09-10)
+### E1.S6 — Cutover e cleanup — **ATENDIDO_PARCIAL** (2026-09-10)
 
 **Objetivo:** retirar autoridade runtime do registry técnico.
 
-**Feito (fatia A):** removidos braços tipados mortos de `build_parameters`; dispatch permanente via `ParameterStrategyShadowService.bind_via_openapi` para a fila do resolver. Evidência: [`../evidence/e1-s6-cleanup-partial.md`](../evidence/e1-s6-cleanup-partial.md).
+**Feito:**
+- **Fatia A:** switch tipado de `build_parameters` removido; binder permanente ([`e1-s6-cleanup-partial.md`](../evidence/e1-s6-cleanup-partial.md)).
+- **Fatia B:** `registrySelectionShadow.cutoverEnabled=true` — authority OpenAPI-first em `select_registry_route_id` e product intent/segment; corpus offline agree + unknown + metamorphic ([`e1-s6b-selection-cutover.md`](../evidence/e1-s6b-selection-cutover.md)).
 
-**EXECUTION_DRIFT:** aceite pleno (unknown API + metamorphic + DELETE markers) **bloqueado** — E1.S4 ainda `SHADOW_ON`; ledger proíbe DELETE sem gates.
+**Deferred (Onda H / ledger):** DELETE de fields técnicos no JSON (`pathMarkers`, etc.) enquanto readiness/lint/resolver residual ainda os leem.
 
-**Pendente:** cutover de seleção (pós-agree E1.S4) → DELETE fields/consumers mortos → regenerar snapshots/gates → R1–R11.
+**Aceite perceptível plano 01:** seleção residual não exige markers como authority; unknown provider + metamorphic no harness cutover = PASS.
 
 ## Riscos
 

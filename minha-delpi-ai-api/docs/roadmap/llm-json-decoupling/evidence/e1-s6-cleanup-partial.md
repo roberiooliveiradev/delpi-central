@@ -1,6 +1,6 @@
 # E1.S6 — Cutover/cleanup (fatia parameter binding)
 
-**Status:** `PARTIAL` (2026-09-10) — fatia A ATENDIDA; cutover de seleção e DELETE de JSON **não** READY  
+**Status:** `SUPERSEDED_BY_E1_S6B` (2026-09-10) — fatia A permanece válida; cutover de seleção concluído  
 **Onda:** B (plano 01)
 
 ## EXECUTION_DRIFT (escopo vs aceite pleno)
@@ -45,15 +45,10 @@ SELECTION_AUTHORITY_UNCHANGED = PASS
 ## Bloqueado até evidência
 
 ```text
-SELECTION_CUTOVER = BLOQUEADO (E1.S4 agree live)
-DELETE_REGISTRY_TECHNICAL_FIELDS = PROIBIDO (ledger)
-UNKNOWN_OPENAPI_PROVIDER = PENDING
-METAMORPHIC_RENAME_LIVE = PENDING (harness E1.S3 retrieval ≠ cutover seleção)
-ACTION_SELECTION_WITHOUT_ENDPOINT_REGISTRY = PENDING
+DELETE_REGISTRY_TECHNICAL_FIELDS = DEFERRED_ONDA_H
 ```
 
 ## Próximo
 
-1. Coletar taxa `agree` live via admin summary E1.S4.  
-2. Cutover de seleção default candidate.  
-3. Só então DELETE/cleanup de fields técnicos do registry + R1–R11/gates.
+1. ~~Cutover de seleção~~ → **ATENDIDO** (`e1-s6b-selection-cutover.md`).  
+2. DELETE/cleanup de fields técnicos do registry + R1–R11/gates (Onda H).

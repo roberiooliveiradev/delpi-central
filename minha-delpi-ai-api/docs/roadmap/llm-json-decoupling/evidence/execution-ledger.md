@@ -9,9 +9,9 @@
 | Onda | Planos | Status | Próxima subetapa | Notas |
 |------|--------|--------|------------------|-------|
 | A — baseline/contratos | inventário + freeze | **ATENDIDO** | — | Ver `onda-a-inventory.md` |
-| B — routing universal | 01 | **EM_ANDAMENTO** | Coletar agree live → E1.S6B cutover seleção | E1.S4 agree-agg admin ON; E1.S6A done |
-| C — entendimento | 02 | **BLOQUEADO_POR_B** (soft) | E2 inventário+baseline TU | Pode shadow em paralelo após B começar |
-| D — multi-turn/args | 03 | **BLOQUEADO_POR_B** | inventário follow-up | Depende de actionId estável |
+| B — routing universal | 01 | **ATENDIDO_PARCIAL** | Onda H: DELETE fields registry | Cutover seleção + binder OK; JSON markers deferred |
+| C — entendimento | 02 | **DESBLOQUEADO** | E2 inventário+baseline TU | B não bloqueia mais soft |
+| D — multi-turn/args | 03 | **DESBLOQUEADO** | inventário follow-up | actionId estável via OpenAPI-first |
 | E — caps/composition | 04, 05 | **PARCIAL** | 04: `action.*`; 05: routeIds | pathRules já DONE |
 | F — UX inteligente | 06 | **PRONTO_APÓS_E** | E6.S1 | recommendationQueries ainda authority |
 | G — presentation/skills | 07, 08 | **PRONTO_APÓS_F** | inventário residual | Display path→label já limpo |
@@ -53,3 +53,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | E1.S5 **ATENDIDO** — cutover completo (fila resolver; sql fora) |
 | 2026-09-10 | E1.S6 **PARTIAL** — fatia A: binder permanente + switch tipado removido (sem DELETE registry) |
 | 2026-09-10 | E1.S4 **AGREE_AGG_ON** — audit snapshot + `GET /admin/metrics/registry-selection-shadow/summary` |
+| 2026-09-10 | E1.S6B **ATENDIDO** — cutover seleção OpenAPI-first (`cutoverEnabled`) |
+| 2026-09-10 | Onda B **ATENDIDO_PARCIAL** — DELETE JSON registry deferred (ledger / Onda H) |

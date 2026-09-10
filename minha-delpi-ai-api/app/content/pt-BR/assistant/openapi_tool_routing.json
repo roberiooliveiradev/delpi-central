@@ -8,6 +8,7 @@
   },
   "registrySelectionShadow": {
     "enabled": true,
+    "cutoverEnabled": true,
     "topK": 5
   },
   "parameterStrategyShadow": {

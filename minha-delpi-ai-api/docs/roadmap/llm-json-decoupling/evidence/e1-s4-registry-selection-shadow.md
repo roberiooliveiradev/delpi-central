@@ -44,13 +44,13 @@ FLAG_OFF_SKIPS_SHADOW = PASS
 PRODUCT_INTENT_SEGMENT_PREEMPTION_SHADOW = PASS
 STRUCTURED_OBSERVABILITY_LOG = PASS
 AGREE_RATE_ADMIN_SUMMARY = PASS
-CUTOVER_DEFAULT_CANDIDATE = NOT_STARTED
+CUTOVER_DEFAULT_CANDIDATE = PASS
 ```
 
-Evidência da agregação: [`e1-s4-agree-aggregation.md`](./e1-s4-agree-aggregation.md).
+Evidência cutover: [`e1-s6b-selection-cutover.md`](./e1-s6b-selection-cutover.md).
 
 ## Próximo
 
-1. Coletar taxa `agree` live via `GET /admin/metrics/registry-selection-shadow/summary`.  
-2. Só após divergências explicáveis + corpus estável → cutover de seleção (E1.S6 fatia B).  
+1. Monitorar `agreeRate` live pós-cutover via admin summary.  
+2. DELETE de fields técnicos do registry → Onda H (após migrar readiness/lint).  
 3. Parameter strategy binding já cutoverado (E1.S5) + switch tipado removido (E1.S6A).

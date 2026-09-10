@@ -44,10 +44,55 @@ class ExternalActionSelectionService:
             return None
 
         allowed = allowed_action_ids or []
+        enriched = f"{message} {code}".strip()
 
-        # Multi-scope / fast-path pass intent+segment — honor deterministic product routing
-        # before OpenAPI-first (which ignores those signals and may invent unknown_tool).
+        # Multi-scope / fast-path pass intent+segment.
         if intent is not None or route_segment is not None:
+            from app.domain.services.openapi_tool_routing_content_service import (
+                OpenApiToolRoutingContentService,
+            )
+
+            cutover = OpenApiToolRoutingContentService.bool_setting(
+                "registrySelectionShadow",
+                "cutoverEnabled",
+                default=False,
+            )
+            if cutover:
+                # E1.S6B — authority = OpenAPI-first no allowlist completo.
+                selected = self._select_via_openapi_first(
+                    enriched,
+                    allowed_action_ids=allowed,
+                    previous_messages=previous_messages,
+                    memory_snapshot={
+                        "executionContext": {
+                            "parameters": {"code": code, "productCode": code},
+                        }
+                    },
+                )
+                if not selected:
+                    return None
+                legacy = self._select_product_action(
+                    message,
+                    code,
+                    allowed,
+                    intent=intent or ChatProductQueryIntent.FULL,
+                    route_segment=route_segment,
+                    previous_messages=previous_messages,
+                    drawing_analysis_mode=drawing_analysis_mode,
+                    attachment_ids=attachment_ids,
+                )
+                return self._attach_product_selection_shadow(
+                    selected,
+                    message=message,
+                    product_code=code,
+                    intent=intent,
+                    route_segment=route_segment,
+                    allowed_action_ids=list(allowed),
+                    legacy_action_id=self._legacy_action_id(legacy)
+                    if isinstance(legacy, dict)
+                    else "",
+                )
+
             selected = self._select_product_action(
                 message,
                 code,
@@ -68,7 +113,6 @@ class ExternalActionSelectionService:
                     allowed_action_ids=list(allowed),
                 )
 
-        enriched = f"{message} {code}".strip()
         return self._select_via_openapi_first(
             enriched,
             allowed_action_ids=allowed,
@@ -242,7 +286,10 @@ class ExternalActionSelectionService:
         allowed_action_ids: list[str],
         previous_messages: list | None,
     ) -> dict | None:
-        """Usa só metadados técnicos da rota (path/operationId) + Action Catalog."""
+        """Usa metadados técnicos da rota + Action Catalog; cutover E1.S6B no allowlist completo."""
+        from app.domain.services.openapi_tool_routing_content_service import (
+            OpenApiToolRoutingContentService,
+        )
         from app.domain.services.operational_route_registry_service import (
             OperationalRouteRegistryService,
         )
@@ -284,6 +331,57 @@ class ExternalActionSelectionService:
                 continue
             if any(marker in operation_id for marker in operation_markers):
                 matched_ids.append(action_id)
+
+        cutover = OpenApiToolRoutingContentService.bool_setting(
+            "registrySelectionShadow",
+            "cutoverEnabled",
+            default=False,
+        )
+
+        if cutover:
+            # Authority: OpenAPI-first no allowlist completo (sem narrowing por markers).
+            selected = self._select_via_openapi_first(
+                message,
+                allowed_action_ids=list(allowed_action_ids),
+                previous_messages=previous_messages,
+                memory_snapshot=None,
+            )
+            if not isinstance(selected, dict):
+                return None
+            legacy_selected = None
+            if matched_ids:
+                legacy_selected = self._select_via_openapi_first(
+                    message,
+                    allowed_action_ids=matched_ids,
+                    previous_messages=previous_messages,
+                    memory_snapshot=None,
+                )
+            legacy_action_id = (
+                self._legacy_action_id(legacy_selected)
+                if isinstance(legacy_selected, dict)
+                else ""
+            )
+            shadow = self._build_registry_selection_shadow(
+                message=message,
+                route_id=str(route_id or "").strip(),
+                legacy_action_id=legacy_action_id,
+                marker_matched_ids=list(matched_ids),
+                full_allowed_ids=list(allowed_action_ids),
+                catalog_actions=list(list_actions()),
+                kind="registry_route_id",
+                authority_action_id=self._legacy_action_id(selected),
+                cutover=True,
+            )
+            if shadow is not None:
+                metadata = dict(selected.get("metadata") or {})
+                metadata["registrySelectionShadow"] = shadow
+                selected = {**selected, "metadata": metadata}
+                from app.domain.services.registry_selection_shadow_observability_service import (
+                    RegistrySelectionShadowObservabilityService,
+                )
+
+                RegistrySelectionShadowObservabilityService.record(shadow)
+            return selected
 
         if not matched_ids:
             return None
@@ -336,24 +434,42 @@ class ExternalActionSelectionService:
         intent: str | None,
         route_segment: str | None,
         allowed_action_ids: list[str],
+        legacy_action_id: str | None = None,
     ) -> dict:
-        """E1.S4 — shadow do preemption product intent/segment vs retrieval lexical."""
+        """E1.S4/S6B — shadow do preemption product intent/segment vs retrieval lexical."""
         list_actions = getattr(self.repository, "list_actions", None)
         catalog_actions = list(list_actions()) if callable(list_actions) else []
         enriched = f"{message} {product_code}".strip()
         route_label = (
             f"product.intent:{intent or ''}|segment:{route_segment or ''}"
         ).strip()
+        from app.domain.services.openapi_tool_routing_content_service import (
+            OpenApiToolRoutingContentService,
+        )
+
+        cutover = OpenApiToolRoutingContentService.bool_setting(
+            "registrySelectionShadow",
+            "cutoverEnabled",
+            default=False,
+        )
+        authority_id = self._legacy_action_id(selected)
+        observer_id = (
+            str(legacy_action_id).strip()
+            if legacy_action_id is not None
+            else authority_id
+        )
         shadow = self._build_registry_selection_shadow(
             message=enriched,
             route_id=route_label,
-            legacy_action_id=self._legacy_action_id(selected),
+            legacy_action_id=observer_id,
             marker_matched_ids=[],
             full_allowed_ids=list(allowed_action_ids),
             catalog_actions=catalog_actions,
             kind="product_intent_segment",
             intent=intent,
             route_segment=route_segment,
+            authority_action_id=authority_id if cutover else None,
+            cutover=cutover,
         )
         if shadow is None:
             return selected
@@ -378,12 +494,10 @@ class ExternalActionSelectionService:
         kind: str = "registry_route_id",
         intent: str | None = None,
         route_segment: str | None = None,
+        authority_action_id: str | None = None,
+        cutover: bool = False,
     ) -> dict | None:
-        """E1.S4 — compara autoridade residual vs retrieval lexical no allowlist completo.
-
-        Não altera a action escolhida. Lexical-only (sem semantic_ranker) para não
-        duplicar custo de embedding/LLM.
-        """
+        """E1.S4/S6B — compara authority vs retrieval lexical no allowlist completo."""
         from app.application.services.retrieve_action_candidates_service import (
             RetrieveActionCandidatesService,
         )
@@ -425,8 +539,11 @@ class ExternalActionSelectionService:
                 "markerMatchedIds": list(marker_matched_ids),
                 "candidateTopIds": [],
                 "agree": False,
+                "cutover": cutover,
                 "error": "retrieve_failed",
             }
+            if authority_action_id is not None:
+                payload["authorityActionId"] = authority_action_id
             if intent is not None:
                 payload["intent"] = intent
             if route_segment is not None:
@@ -434,14 +551,22 @@ class ExternalActionSelectionService:
             return payload
 
         candidate_ids = [item.action_id for item in candidates]
+        compare_id = (
+            str(authority_action_id or "").strip()
+            if cutover and authority_action_id is not None
+            else str(legacy_action_id or "").strip()
+        )
         payload = {
             "kind": kind,
             "routeId": route_id,
             "legacyActionId": legacy_action_id,
             "markerMatchedIds": list(marker_matched_ids),
             "candidateTopIds": candidate_ids,
-            "agree": bool(legacy_action_id) and legacy_action_id in candidate_ids,
+            "agree": bool(compare_id) and compare_id in candidate_ids,
+            "cutover": cutover,
         }
+        if authority_action_id is not None:
+            payload["authorityActionId"] = authority_action_id
         if intent is not None:
             payload["intent"] = intent
         if route_segment is not None:
