@@ -1,7 +1,7 @@
 # Plano 01 — Routing registry -> OpenAPI + Action Catalog
 
 **Prioridade:** P0  
-**Status execução:** Onda B · E1.S1–S2 ATENDIDOS · E1.S3 **ATENDIDO** · E1.S4 **SHADOW_ON** · próxima = telemetria agree + shadow product preemption  
+**Status execução:** Onda B · E1.S3 **ATENDIDO** · E1.S4 **SHADOW_ON** (registry + product + logs) · próxima = E1.S5 ou agregação live de `agree`  
 **Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** uma action nova deve ser descoberta e selecionada por semântica/contrato sem exigir `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` por endpoint no conteúdo do assistente.
 
@@ -107,9 +107,13 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 
 **Objetivo:** tornar retrieval/planner candidate o decisor principal em modo comparável.
 
-**Feito (sem cutover):** flag `registrySelectionShadow` + metadata em `select_registry_route_id`; lexical-only; testes agree/diverge/off. Evidência: [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md).
+**Feito (sem cutover):**
+- flag `registrySelectionShadow` + metadata em `select_registry_route_id`;
+- shadow no preemption product `intent+route_segment` (`productSelectionShadow`);
+- telemetria estruturada `RegistrySelectionShadowObservabilityService`;
+- testes agree/diverge/off/product. Evidência: [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md).
 
-**Pendente:** shadow no preemption product `intent+route_segment`; telemetria live de `agree`; cutover default candidate.
+**Pendente:** agregação live/admin da taxa `agree`; cutover default candidate (E1.S5/S6).
 
 ### E1.S5 — Parameter strategy removal
 

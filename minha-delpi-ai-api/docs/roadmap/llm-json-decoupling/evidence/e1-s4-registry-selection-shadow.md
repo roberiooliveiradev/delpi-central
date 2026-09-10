@@ -9,19 +9,24 @@
 | Peça | Path |
 |------|------|
 | Flag | `openapi_tool_routing.json` → `registrySelectionShadow.enabled=true` |
-| Wiring | `ExternalActionSelectionService._select_registry_route_via_openapi` anexa `metadata.registrySelectionShadow` |
-| Scoring shadow | `RetrieveActionCandidatesService` **lexical-only** (`semantic_ranker=None`) no allowlist completo |
-| Testes | `tests/unit/application/services/test_e1_s4_registry_selection_shadow.py` (3 passed) |
+| Wiring registry | `select_registry_route_id` → `metadata.registrySelectionShadow` |
+| Wiring product | `select_action_for_product` (intent/segment) → `metadata.productSelectionShadow` |
+| Scoring shadow | `RetrieveActionCandidatesService` **lexical-only** no allowlist completo |
+| Telemetria | `RegistrySelectionShadowObservabilityService.record` → log `registry_selection_shadow` |
+| Testes | `test_e1_s4_registry_selection_shadow.py` (**15** asserts / 6 tests no arquivo + E1.S3) |
 
 ## Contrato do metadata
 
 ```json
 {
-  "routeId": "product.stock",
+  "kind": "registry_route_id | product_intent_segment",
+  "routeId": "product.stock | product.intent:stock|segment:stock",
   "legacyActionId": "…",
   "markerMatchedIds": ["…"],
   "candidateTopIds": ["…"],
-  "agree": true
+  "agree": true,
+  "intent": "stock",
+  "routeSegment": "stock"
 }
 ```
 
@@ -36,12 +41,12 @@ SHADOW_DOES_NOT_CHANGE_SELECTION = PASS
 AGREE_CASE = PASS
 DIVERGE_CASE = PASS
 FLAG_OFF_SKIPS_SHADOW = PASS
-PRODUCT_INTENT_SEGMENT_PREEMPTION_SHADOW = PENDING
+PRODUCT_INTENT_SEGMENT_PREEMPTION_SHADOW = PASS
+STRUCTURED_OBSERVABILITY_LOG = PASS
 CUTOVER_DEFAULT_CANDIDATE = NOT_STARTED
 ```
 
 ## Próximo
 
-1. Telemetria/admin: agregar taxa `agree` em live.  
-2. Shadow também no preemption `intent+route_segment` (product).  
-3. Só após divergências explicáveis + E1.S3 corpus estável → E1.S5/S6 cutover.
+1. Agregar taxa `agree` em live/admin a partir dos logs (ou painel quando houver consumidor).  
+2. Só após divergências explicáveis + corpus estável → E1.S5 (parameter strategy) / E1.S6 cutover.

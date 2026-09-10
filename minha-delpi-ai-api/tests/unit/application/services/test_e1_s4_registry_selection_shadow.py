@@ -103,6 +103,7 @@ def test_registry_selection_shadow_agrees_when_prose_matches(monkeypatch):
     assert shadow["legacyActionId"] == "acme.products.stock"
     assert shadow["agree"] is True
     assert "acme.products.stock" in shadow["candidateTopIds"]
+    assert shadow.get("kind") == "registry_route_id"
 
 
 def test_registry_selection_shadow_diverges_when_markers_force_wrong_family(monkeypatch):
@@ -185,3 +186,88 @@ def test_registry_selection_shadow_can_be_disabled(monkeypatch):
     )
     assert selected is not None
     assert "registrySelectionShadow" not in (selected.get("metadata") or {})
+
+
+def test_product_intent_preemption_shadow_agrees(monkeypatch):
+    invalidate_openapi_tool_routing_cache()
+    catalog = _stock_catalog()
+    service = ExternalActionSelectionService(_Repo(catalog))
+
+    monkeypatch.setattr(
+        service,
+        "_select_product_action",
+        lambda *args, **kwargs: {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": "acme.products.stock",
+                "parameters": {"code": "10080047"},
+            },
+            "reason": "product.stock",
+        },
+    )
+
+    selected = service.select_action_for_product(
+        "qual o estoque do produto 10080047",
+        product_code="10080047",
+        allowed_action_ids=[row["actionId"] for row in catalog],
+        intent="stock",
+        route_segment="stock",
+    )
+    assert selected is not None
+    # Authority unchanged — still product path without top-level actionId.
+    assert selected["arguments"]["actionId"] == "acme.products.stock"
+    shadow = (selected.get("metadata") or {}).get("productSelectionShadow")
+    assert isinstance(shadow, dict)
+    assert shadow["kind"] == "product_intent_segment"
+    assert shadow["legacyActionId"] == "acme.products.stock"
+    assert shadow["agree"] is True
+    assert shadow["intent"] == "stock"
+    assert shadow["routeSegment"] == "stock"
+
+
+def test_product_intent_preemption_shadow_diverges(monkeypatch):
+    invalidate_openapi_tool_routing_cache()
+    catalog = _stock_catalog()
+    service = ExternalActionSelectionService(_Repo(catalog))
+
+    # Legacy forces stock; message is tracking — retrieval prefers tracking.
+    monkeypatch.setattr(
+        service,
+        "_select_product_action",
+        lambda *args, **kwargs: {
+            "name": "execute_external_action",
+            "arguments": {"actionId": "acme.products.stock", "parameters": {}},
+        },
+    )
+
+    selected = service.select_action_for_product(
+        "onde está a remessa 45871",
+        product_code="10080047",
+        allowed_action_ids=[row["actionId"] for row in catalog],
+        intent="stock",
+        route_segment="stock",
+    )
+    assert selected["arguments"]["actionId"] == "acme.products.stock"
+    shadow = (selected.get("metadata") or {}).get("productSelectionShadow")
+    assert shadow["agree"] is False
+    assert shadow["candidateTopIds"][0] == "acme.shipments.tracking"
+
+
+def test_registry_selection_shadow_observability_records(caplog):
+    import logging
+
+    from app.domain.services.registry_selection_shadow_observability_service import (
+        RegistrySelectionShadowObservabilityService,
+    )
+
+    with caplog.at_level(logging.INFO):
+        RegistrySelectionShadowObservabilityService.record(
+            {
+                "kind": "registry_route_id",
+                "routeId": "product.stock",
+                "legacyActionId": "acme.products.stock",
+                "agree": True,
+                "candidateTopIds": ["acme.products.stock"],
+            }
+        )
+    assert any("registry_selection_shadow" in record.message for record in caplog.records)

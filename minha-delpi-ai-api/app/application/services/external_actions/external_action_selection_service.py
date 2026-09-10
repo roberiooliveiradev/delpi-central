@@ -59,7 +59,14 @@ class ExternalActionSelectionService:
                 attachment_ids=attachment_ids,
             )
             if selected:
-                return selected
+                return self._attach_product_selection_shadow(
+                    selected,
+                    message=message,
+                    product_code=code,
+                    intent=intent,
+                    route_segment=route_segment,
+                    allowed_action_ids=list(allowed),
+                )
 
         enriched = f"{message} {code}".strip()
         return self._select_via_openapi_first(
@@ -293,16 +300,71 @@ class ExternalActionSelectionService:
         shadow = self._build_registry_selection_shadow(
             message=message,
             route_id=str(route_id or "").strip(),
-            legacy_action_id=str(selected.get("actionId") or "").strip(),
+            legacy_action_id=self._legacy_action_id(selected),
             marker_matched_ids=list(matched_ids),
             full_allowed_ids=list(allowed_action_ids),
             catalog_actions=list(list_actions()),
+            kind="registry_route_id",
         )
         if shadow is not None:
             metadata = dict(selected.get("metadata") or {})
             metadata["registrySelectionShadow"] = shadow
             selected = {**selected, "metadata": metadata}
+            from app.domain.services.registry_selection_shadow_observability_service import (
+                RegistrySelectionShadowObservabilityService,
+            )
+
+            RegistrySelectionShadowObservabilityService.record(shadow)
         return selected
+
+    @staticmethod
+    def _legacy_action_id(selected: dict) -> str:
+        top = str(selected.get("actionId") or "").strip()
+        if top:
+            return top
+        arguments = selected.get("arguments")
+        if isinstance(arguments, dict):
+            return str(arguments.get("actionId") or "").strip()
+        return ""
+
+    def _attach_product_selection_shadow(
+        self,
+        selected: dict,
+        *,
+        message: str,
+        product_code: str,
+        intent: str | None,
+        route_segment: str | None,
+        allowed_action_ids: list[str],
+    ) -> dict:
+        """E1.S4 — shadow do preemption product intent/segment vs retrieval lexical."""
+        list_actions = getattr(self.repository, "list_actions", None)
+        catalog_actions = list(list_actions()) if callable(list_actions) else []
+        enriched = f"{message} {product_code}".strip()
+        route_label = (
+            f"product.intent:{intent or ''}|segment:{route_segment or ''}"
+        ).strip()
+        shadow = self._build_registry_selection_shadow(
+            message=enriched,
+            route_id=route_label,
+            legacy_action_id=self._legacy_action_id(selected),
+            marker_matched_ids=[],
+            full_allowed_ids=list(allowed_action_ids),
+            catalog_actions=catalog_actions,
+            kind="product_intent_segment",
+            intent=intent,
+            route_segment=route_segment,
+        )
+        if shadow is None:
+            return selected
+        metadata = dict(selected.get("metadata") or {})
+        metadata["productSelectionShadow"] = shadow
+        from app.domain.services.registry_selection_shadow_observability_service import (
+            RegistrySelectionShadowObservabilityService,
+        )
+
+        RegistrySelectionShadowObservabilityService.record(shadow)
+        return {**selected, "metadata": metadata}
 
     def _build_registry_selection_shadow(
         self,
@@ -313,8 +375,11 @@ class ExternalActionSelectionService:
         marker_matched_ids: list[str],
         full_allowed_ids: list[str],
         catalog_actions: list[dict],
+        kind: str = "registry_route_id",
+        intent: str | None = None,
+        route_segment: str | None = None,
     ) -> dict | None:
-        """E1.S4 — compara seleção via markers vs retrieval lexical no allowlist completo.
+        """E1.S4 — compara autoridade residual vs retrieval lexical no allowlist completo.
 
         Não altera a action escolhida. Lexical-only (sem semantic_ranker) para não
         duplicar custo de embedding/LLM.
@@ -353,7 +418,8 @@ class ExternalActionSelectionService:
                 top_k=max(1, top_k),
             )
         except Exception:
-            return {
+            payload = {
+                "kind": kind,
                 "routeId": route_id,
                 "legacyActionId": legacy_action_id,
                 "markerMatchedIds": list(marker_matched_ids),
@@ -361,15 +427,26 @@ class ExternalActionSelectionService:
                 "agree": False,
                 "error": "retrieve_failed",
             }
+            if intent is not None:
+                payload["intent"] = intent
+            if route_segment is not None:
+                payload["routeSegment"] = route_segment
+            return payload
 
         candidate_ids = [item.action_id for item in candidates]
-        return {
+        payload = {
+            "kind": kind,
             "routeId": route_id,
             "legacyActionId": legacy_action_id,
             "markerMatchedIds": list(marker_matched_ids),
             "candidateTopIds": candidate_ids,
             "agree": bool(legacy_action_id) and legacy_action_id in candidate_ids,
         }
+        if intent is not None:
+            payload["intent"] = intent
+        if route_segment is not None:
+            payload["routeSegment"] = route_segment
+        return payload
 
     def _select_product_for_refinement(
         self,
