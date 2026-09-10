@@ -1,0 +1,142 @@
+# Plano 03 — Follow-up, refinement e argument binding generalizados
+
+**Prioridade:** P0  
+**Objetivo perceptível:** continuidade conversacional, paginação, filtros, group-by e complementação de argumentos devem funcionar a partir do estado estruturado da conversa e do schema da action, não de substrings de rota ou frases cadastradas.
+
+## CURRENT
+
+Fontes prioritárias:
+
+- `operational_follow_up_routing.json`;
+- `operational_group_by_refinement.json`;
+- `operational_refinement.json`;
+- `operational_parameters.json`;
+- `conversation_state.json`, `result_set_references.json`, `selection_pending.json` e services relacionados.
+
+Padrões residuais:
+
+```text
+follow-up text
+-> messageSegmentTerms / routeSegment / preferredRouteId
+-> previous path match
+-> inherited parameter strategy
+```
+
+ou:
+
+```text
+"agrupe por filial"
+-> pathContains conhecido
+-> group_by conhecido
+-> refetch rule conhecida
+```
+
+## TARGET
+
+```text
+message
++ selectedAction/result reference anterior
++ resolvedEntities/resolvedArguments/timeRange/pagination
++ candidate action schema
+-> semantic refinement
+-> proposed argument delta
+-> deterministic schema validation
+-> policy
+-> execute/re-render
+```
+
+## Requisitos
+
+| ID | Requisito |
+|---|---|
+| R03-01 | Persistir/reutilizar action/context/result reference estruturados. |
+| R03-02 | Remover continuidade baseada em path substring. |
+| R03-03 | Resolver refinements por schema: page, page_size, branch, warehouse, dates, group_by etc. |
+| R03-04 | Missing required gera clarify específico e grounded. |
+| R03-05 | Valores herdados só são reutilizados quando semanticamente compatíveis. |
+| R03-06 | F5/replay preserva comportamento sem nova inferência desnecessária. |
+
+## Etapas
+
+### E3.S1 — Grafo de estado multi-turn
+
+**Fazer:** mapear producer/consumer/persistence de `selectedAction`, action metadata, result references, arguments, entity refs, pagination, time range e pending requirements.
+
+**Teste:** send -> persist -> reload -> follow-up.
+
+**Pronto quando:** cada dado necessário possui owner e estratégia de serialização/replay.
+
+### E3.S2 — Baseline de follow-up
+
+Cobrir:
+
+- “e a expedição?”;
+- “agora só filial 02”;
+- “próxima página”;
+- “traga 100 linhas”;
+- “agrupe por filial”;
+- “compare com o mês anterior”;
+- “use o mesmo produto”;
+- troca explícita de assunto;
+- referência ambígua a dois resultados anteriores.
+
+Medir R3/R6/R7/R8/R9/R11.
+
+### E3.S3 — Canonical refinement contract
+
+**Fazer:** definir output estruturado de refinement, contendo referência alvo, argument delta, presentation delta e confidence/clarification quando aplicável.
+
+**Não fazer:** incluir path/operationId como chave de decisão semântica.
+
+**Teste:** malformed output, unknown field, invalid enum, conflicting inherited arg.
+
+### E3.S4 — Schema-driven argument binder
+
+**Fazer:** usar OpenAPI parameters/requestBody como autoridade; combinar valores explícitos, contexto e inferência; validar/coagir deterministicamente.
+
+**Não fazer:** LLM decidir required/type/enum ou inventar valor ausente.
+
+**Teste:** required present/missing, path/query/body, enum/type/format, additionalProperties e conflicting values.
+
+### E3.S5 — Group-by/refetch generalization
+
+**Fazer:** derivar parâmetros e enums do schema; decidir local transform vs refetch por capability real do resultado/action, não por path fixo.
+
+**Teste:** mesma semântica com provider/path/operationId renomeados; group_by diferente; action sem group_by deve rejeitar/clarificar.
+
+### E3.S6 — Pagination/filter fast paths
+
+**Fazer:** manter parsers determinísticos para valores explícitos quando vantajoso (`página 3`, `50 linhas`, `filial 01`), mas aplicar delta apenas sobre parâmetros aceitos pelo schema.
+
+**Teste:** phrases exatas + frases livres + field inexistente.
+
+### E3.S7 — Follow-up cutover
+
+**Fazer:** trocar `operational_follow_up_routing` por resolução via contexto estruturado + candidates; usar legacy apenas como shadow temporário.
+
+**Teste:** follow-up entre actions irmãs, troca de domínio e referência a resultado não imediatamente anterior.
+
+### E3.S8 — Persist/reload e cleanup
+
+**Fazer:** materializar metadados necessários para não reconsultar LLM só para reconstruir títulos/action refs; remover routeSegments/message terms mortos.
+
+**Teste:** F5, replay, historical turn, send/stream/simulate.
+
+## Invariantes
+
+- Explicit current-turn value vence contexto anterior.
+- Required ausente permanece ausente até usuário/contexto grounded fornecer valor.
+- Refino não altera action autorizada para uma não permitida.
+- Alteração de formato de apresentação não dispara tool call desnecessária quando os dados existentes bastam.
+
+## Aceite
+
+```text
+MULTI_TURN_REFERENCE = PASS
+ARGUMENT_SCHEMA_BINDING = PASS
+MISSING_REQUIRED_CLARIFY = PASS
+GROUP_BY_WITHOUT_PATH_COUPLING = PASS
+PAGINATION_FILTER = PASS
+PERSIST_RELOAD = PASS
+SEND_STREAM_SIMULATE = PASS
+```
