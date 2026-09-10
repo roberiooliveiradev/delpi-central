@@ -87,6 +87,14 @@ describe("presentationStackSections", () => {
               structure: "Composição em árvore abaixo.",
               attention: "Validar antes de decidir.",
             },
+            sectionTitles: {
+              scope: "Escopo da consulta",
+              profile: "Ficha cadastral",
+              highlights: "Síntese executiva (Destaques)",
+              guide: "Roteiro de produção",
+              structure: "Estrutura (BOM)",
+              attention: "Alertas e divergências",
+            },
             narrativeOrder: [
               "lead",
               "profileTables",
@@ -162,11 +170,15 @@ describe("presentationStackSections", () => {
   });
 
   it("renumera seções quando escopo e inspeção estão ausentes", () => {
+    const apiTitles = {
+      guide: "Roteiro de produção",
+      structure: "Estrutura (BOM)",
+    };
     const segments = [
       { kind: "stackSection", section: buildStackSectionChrome("profile") },
       { kind: "stackSection", section: buildStackSectionChrome("highlights") },
-      { kind: "stackSection", section: buildStackSectionChrome("guide") },
-      { kind: "stackSection", section: buildStackSectionChrome("structure") },
+      { kind: "stackSection", section: buildStackSectionChrome("guide", apiTitles) },
+      { kind: "stackSection", section: buildStackSectionChrome("structure", apiTitles) },
       { kind: "stackSection", section: buildStackSectionChrome("attention") },
     ] as never;
 

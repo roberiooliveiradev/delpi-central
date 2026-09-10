@@ -15,13 +15,15 @@ type PresentationContent = typeof productOperationalContent.presentation;
 const presentation = productOperationalContent.presentation as PresentationContent;
 
 export function routeTitle(routeKey: ProductRouteKey): string {
-  // Legacy fallback — prefer API `stackPresentationPlan.routeTitles` / metadata.routeTitle.
-  return presentation.routeTitles[routeKey] ?? presentation.routeTitles.other;
+  // Render-only: semântica de domínio vem da API (`resolvedRouteTitle` / `routeTitles`).
+  void routeKey;
+  return "Resultado";
 }
 
 export function routeFraming(routeKey: ProductRouteKey): string {
-  // Legacy fallback — prefer API `stackPresentationPlan.routeFraming`.
-  return presentation.routeFraming[routeKey] ?? presentation.routeFraming.other;
+  // Sem framing de domínio local — só o que a API materializou no plan.
+  void routeKey;
+  return "";
 }
 
 export const PRODUCT_ROUTE_KEYS = Object.keys(presentation.routeTitles) as ProductRouteKey[];

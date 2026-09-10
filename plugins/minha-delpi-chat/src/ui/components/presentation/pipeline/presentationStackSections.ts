@@ -17,13 +17,10 @@ export type StackSectionChrome = {
   showIn: Array<ContentFormatKind | "complete">;
 };
 
-const SECTION_BASE_TITLES: Record<StackSectionId, string> = {
+const SECTION_UX_STATIC_TITLES: Partial<Record<StackSectionId, string>> = {
   scope: "Escopo da consulta",
   profile: "Ficha cadastral",
   highlights: "Síntese executiva (Destaques)",
-  guide: "Roteiro de produção",
-  inspection: "Plano de inspeção",
-  structure: "Estrutura (BOM)",
   attention: "Alertas e divergências",
 };
 
@@ -46,9 +43,10 @@ export function buildStackSectionChrome(
   sectionTitles?: Partial<Record<StackSectionId, string>> | null,
 ): StackSectionChrome {
   const fromApi = sectionTitles?.[id];
+  const fromUx = SECTION_UX_STATIC_TITLES[id];
   return {
     id,
-    title: (typeof fromApi === "string" && fromApi.trim()) || SECTION_BASE_TITLES[id],
+    title: (typeof fromApi === "string" && fromApi.trim()) || fromUx || "Resultado",
     showIn: SECTION_SHOW_IN[id],
   };
 }
