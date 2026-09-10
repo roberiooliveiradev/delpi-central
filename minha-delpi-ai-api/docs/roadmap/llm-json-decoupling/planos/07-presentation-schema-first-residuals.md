@@ -1,9 +1,11 @@
 # Plano 07 — Presentation residual -> schema/shape-first
 
 **Prioridade:** P2  
-**Status execução:** Onda G · após F · display path→label já limpo (não reabrir)  
-**Evidência:** [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda G · E7.S1 **ATENDIDO** · próxima E7.S2 · display path→label **não** reabrir  
+**Evidência:** [`../evidence/e7-s1-presentation-residual-inventory.md`](../evidence/e7-s1-presentation-residual-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** novas actions e APIs devem produzir apresentação útil sem exigir profile, path rule, title map ou presenter dedicado por endpoint.
+
+**HEAD revalidado:** pós-Onda F (`e2e3325fa`+)
 
 ## CURRENT
 
@@ -44,11 +46,14 @@ Perfis especializados permanecem opcionais quando há necessidade real de domín
 
 ## Etapas
 
-### E7.S1 — Inventário residual
+### E7.S1 — Inventário residual — **ATENDIDO** (2026-09-10)
 
 **Fazer:** classificar cada key relevante como `SCHEMA_DIRECT`, `DETERMINISTIC_POLICY`, `SEMANTIC_PRESENTATION_METADATA`, `LLM_COMPOSITION_CANDIDATE`, `UX_COPY` ou `DEAD_CONTENT`.
 
-**Não fazer:** tocar routing técnico do plano 01 dentro deste plano.
+**Feito:** inventário `e7-s1-presentation-residual-inventory.md` + freeze de contagens (`pathRules=78`, `entityProfiles=34`, table `pathContains=46`, shape defaults=8). Órfãos: `pathEntityFallbacks`, `schemaFirstMigratedProfiles`, `compositeVisualSpecs`.
+
+**Não fazer:** tocar routing técnico do plano 01 — **respeitado**.
+
 
 ### E7.S2 — Baseline de presentation
 

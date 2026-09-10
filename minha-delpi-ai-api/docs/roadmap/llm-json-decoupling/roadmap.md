@@ -143,9 +143,9 @@ Planos 04 e 05 (S1–S7): Action Catalog discovery + composition/enrichment por 
 
 Plano 06 S1–S6: recommendations contextuais + composer budget-safe; `recommendationQueries` = LEGACY_FALLBACK.
 
-### Onda G — apresentação e conteúdo residual — **PRONTO** (após F)
+### Onda G — apresentação e conteúdo residual — **EM_ANDAMENTO** (E7.S1 ATENDIDO)
 
-Executar planos 07/08. Inventário residual de presentation/skills; path→label display já limpo. Preservar copy/business rules; retirar somente conhecimento técnico duplicado.
+Plano 07: inventário residual OK (pathRules/entityProfiles vs openapiShapeDefaults). Próximo: E7.S2 baseline. Plano 08 em paralelo após S1 ou após shape cutover parcial.
 
 ### Onda H — cutover e limpeza — **CONTÍNUO**
 

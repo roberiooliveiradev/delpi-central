@@ -14,7 +14,7 @@
 | D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
-| G — presentation/skills | 07, 08 | **PRONTO_APÓS_F** | inventário residual | Display path→label já limpo |
+| G — presentation/skills | 07, 08 | **EM_ANDAMENTO** | E7.S2 | E7.S1 OK; path/entity residual inventariado |
 | H — cutover/cleanup | 09 | **CONTÍNUO** | E9.S1 corpus ampliado | Não remover legado sem gates |
 
 ## Protocolo por subetapa
@@ -102,3 +102,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda F **EM_ANDAMENTO** — próxima E6.S6 (cleanup) |
 | 2026-09-10 | E6.S6 **ATENDIDO** — cleanup seguro; plano 06 / Onda F fechados |
 | 2026-09-10 | Próxima **Onda G** (planos 07/08) |
+| 2026-09-10 | E7.S1 **ATENDIDO** — inventário residual presentation (path/entity vs shape) |
+| 2026-09-10 | Onda G **EM_ANDAMENTO** — próxima E7.S2 (baseline presentation) |
