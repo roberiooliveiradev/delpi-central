@@ -1,8 +1,8 @@
 # Plano 09 — Evals, rollout, cutover e cleanup final
 
 **Prioridade:** transversal  
-**Status execução:** Onda H · E9.S1 **ATENDIDO** · E9.S2 **ATENDIDO_PARCIAL** · E9.S3 **ATENDIDO** (offline) · E9.S4 **ATENDIDO** · próxima E9.S5  
-**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda H · E9.S1 **ATENDIDO** · E9.S2 **ATENDIDO_PARCIAL** · E9.S3 **ATENDIDO** (offline) · E9.S4 **ATENDIDO** · E9.S5 **ATENDIDO** · próxima E9.S6  
+**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/e9-s5-canary-cutover.md`](../evidence/e9-s5-canary-cutover.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** cada migração de catálogo/heurística para OpenAPI/LLM deve provar melhora generalizável, preservar segurança e só então remover legado.
 
 ## Fonte de verdade
@@ -79,11 +79,11 @@ Cobrir no mínimo (checklist do plano — harness indexado; execução plena pro
 
 **Pronto quando:** divergências críticas possuem explicação e owner — **cumprido** via inventário + teste de explainability.
 
-### E9.S5 — Canary/default cutover
+### E9.S5 — Canary/default cutover — **ATENDIDO** (2026-09-10)
 
-**Fazer:** liberar candidate por cohort/agente/feature flag quando existir mecanismo canônico; definir rollback simples e observável.
+**Feito:** inventário `e9_s5_canary_cutover_inventory.json` (11 cutovers) + gate pytest. **Cohort/agent canary = ABSENT** (só dials globais). Rollback documentado por cutover; live L1–L4 deferred aos dials reversíveis.
 
-**Teste:** live L1-L4 quando aplicável.
+**Não feito:** inventar canary por cohort/agente sem mecanismo canônico.
 
 ### E9.S6 — Cleanup gates
 

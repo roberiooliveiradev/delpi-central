@@ -147,9 +147,9 @@ Plano 06 S1–S6: recommendations contextuais + composer budget-safe; `recommend
 
 Planos 07+08 fechados (schema-first presentation + skills/help residual + audit gate). Próximo: plano 09 / Onda H.
 
-### Onda H — cutover e limpeza — **EM_ANDAMENTO** (E9.S1–S4)
+### Onda H — cutover e limpeza — **EM_ANDAMENTO** (E9.S1–S5)
 
-Corpus v1 + baseline/candidate offline + inventário de shadows críticos. Próximo: E9.S5 canary/default cutover. DELETE legado só após E9.S6.
+Corpus/baseline/candidate + shadows + inventário de cutover (cohort/agent ABSENT). Próximo: E9.S6 cleanup gates. DELETE legado só após E9.S6.
 
 ## 6. Métricas obrigatórias
 
