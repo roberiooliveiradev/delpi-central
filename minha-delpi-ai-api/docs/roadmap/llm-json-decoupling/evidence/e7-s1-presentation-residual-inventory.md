@@ -28,7 +28,7 @@ Dívida viva concentrada em **seleção de profile/table por path/entity**, não
 | `entityTableProfiles` | 18 |
 | `entityPathHints` | 139 |
 | `tableProfiles` com `detect.pathContains` | 46 / 76 |
-| `openapiShapeDefaults` keys | 8 (scalar…document_export) |
+| `openapiShapeDefaults` keys | 9 (incl. `unknown`) |
 | `pathEntityFallbacks` | `[]` (DEAD) |
 | `entitySets.schemaFirstMigratedProfiles` | `[]` (DEAD ledger) |
 

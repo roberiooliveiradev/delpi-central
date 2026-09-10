@@ -270,12 +270,14 @@ class ChatPresentationProfileService(ChatAssistantVocabularyService):
         entity: str | None = None,
         shape: str | None = None,
         delpi_metadata: dict[str, Any] | None = None,
+        rows: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         return ChatPresentationProfileResolveService.build_resolved_profile(
             path=path,
             entity=entity,
             shape=shape,
             delpi_metadata=delpi_metadata,
+            rows=rows,
         )
 
     @classmethod

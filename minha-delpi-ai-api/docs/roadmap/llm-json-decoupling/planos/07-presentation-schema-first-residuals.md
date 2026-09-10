@@ -1,11 +1,11 @@
 # Plano 07 — Presentation residual -> schema/shape-first
 
 **Prioridade:** P2  
-**Status execução:** Onda G · E7.S1–S2 **ATENDIDO** · próxima E7.S3 · display path→label **não** reabrir  
-**Evidência:** [`../evidence/e7-s1-presentation-residual-inventory.md`](../evidence/e7-s1-presentation-residual-inventory.md) · [`../evidence/e7-s2-presentation-baseline.md`](../evidence/e7-s2-presentation-baseline.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda G · E7.S1–S3 **ATENDIDO** · próxima E7.S4 · display path→label **não** reabrir  
+**Evidência:** [`../evidence/e7-s1-presentation-residual-inventory.md`](../evidence/e7-s1-presentation-residual-inventory.md) · [`../evidence/e7-s2-presentation-baseline.md`](../evidence/e7-s2-presentation-baseline.md) · [`../evidence/e7-s3-shape-defaults-primary-path.md`](../evidence/e7-s3-shape-defaults-primary-path.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** novas actions e APIs devem produzir apresentação útil sem exigir profile, path rule, title map ou presenter dedicado por endpoint.
 
-**HEAD revalidado:** pós-E7.S1 (`c7b491aa9`+)
+**HEAD revalidado:** pós-E7.S2 (`e50aaad81`+)
 
 ## CURRENT
 
@@ -64,11 +64,14 @@ Cobrir scalar, paged list, hierarchy, composite analysis, document export, unkno
 Medir R4/R5/R7/R8/R9/R11 — **baseline TU PASS** (R7 parcial sem multi-surface).
 
 
-### E7.S3 — Shape defaults como caminho principal
+### E7.S3 — Shape defaults como caminho principal — **ATENDIDO** (2026-09-10)
 
 **Fazer:** validar/fortalecer `openapiShapeDefaults` e shape analyzer; garantir fallback útil para schema desconhecido.
 
-**Teste:** provider externo com scalar/list/hierarchy sem profile local.
+**Feito:** derive shape-only; `unknown` defaults; `infer_shape_from_rows` + `openapiShapeFromAnalyzer`; `rows=` em `build_resolved_profile`. Especializados (`product_stock`) preservados.
+
+**Teste:** provider externo scalar/list/hierarchy sem profile local — PASS.
+
 
 ### E7.S4 — Path/entity rules cleanup
 

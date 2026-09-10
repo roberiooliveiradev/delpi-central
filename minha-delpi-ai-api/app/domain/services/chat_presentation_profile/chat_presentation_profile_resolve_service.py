@@ -141,6 +141,7 @@ class ChatPresentationProfileResolveService:
         entity: str | None = None,
         shape: str | None = None,
         delpi_metadata: dict[str, Any] | None = None,
+        rows: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         entity_token = str(entity or "").strip() or None
         shape_token = str(shape or "").strip() or None
@@ -152,6 +153,12 @@ class ChatPresentationProfileResolveService:
 
         if not shape_token and entity_token:
             shape_token = OpenApiOperationContractService.shape_for_entity(entity_token)
+
+        # E7.S3 — schema desconhecido: inferir shape do payload quando meta ausente.
+        if not shape_token and rows is not None:
+            shape_token = OpenApiPresentationProfileDeriverService.infer_shape_from_rows(
+                rows
+            )
 
         key = presentation_profile_service().resolve_profile_key(path, entity_token)
 
@@ -165,6 +172,7 @@ class ChatPresentationProfileResolveService:
                 entity=entity_token,
                 shape=shape_token,
                 delpi_metadata=delpi_metadata,
+                rows=rows,
             )
 
             return presentation_profile_service()._stamp_openapi_presentation_strategy(profile, delpi_metadata)

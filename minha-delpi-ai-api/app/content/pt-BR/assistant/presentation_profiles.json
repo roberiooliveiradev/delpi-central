@@ -60,7 +60,22 @@
       "defaultViewPolicy": "text_when_available",
       "chartPolicy": "skip",
       "humanizedNarrative": "skip"
+    },
+    "unknown": {
+      "defaultViewPolicy": "table_when_available",
+      "chartPolicy": "skip",
+      "commentaryProfileKey": "generic_list",
+      "narrativePolicy": "generic_data_summary"
     }
+  },
+  "openapiShapeFromAnalyzer": {
+    "hierarchy": "hierarchy",
+    "single_metric": "scalar",
+    "temporal_series": "scalar",
+    "auditable_list": "paged_list",
+    "ranking": "list",
+    "table_only": "list",
+    "unknown": "unknown"
   },
   "openapiShapeProfileEquivalents": {
     "scalar": "kpi_series",
@@ -70,7 +85,8 @@
     "product_snapshot": "table_list",
     "hierarchy": "tree_hierarchy",
     "composite_analysis": "analyser",
-    "document_export": "document_export"
+    "document_export": "document_export",
+    "unknown": "table_list"
   },
   "openapiReplaceableProfileKeys": [
     "kpi_series",

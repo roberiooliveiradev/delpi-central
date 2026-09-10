@@ -19,7 +19,7 @@ _FREEZE = {
     "entityPathHints": 139,
     "tableProfilesWithPathContains": 46,
     "tableProfilesTotal": 76,
-    "openapiShapeDefaults": 8,
+    "openapiShapeDefaults": 9,
 }
 
 
@@ -45,6 +45,7 @@ def test_e7_s1_path_entity_residual_counts_frozen():
         "hierarchy",
         "composite_analysis",
         "document_export",
+        "unknown",
     }.issubset(set(shape_defaults.keys()))
 
     table_profiles = columns.get("tableProfiles") or {}
