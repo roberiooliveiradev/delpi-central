@@ -112,6 +112,7 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareCreatePage.tsx")).toMatch(/onOpenDriverCreate/);
     expect(readRelative("pages/DriverFormPage.tsx")).toMatch(/createDriver|patchDriver/);
     expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/archiveDriver|unarchiveDriver/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/FirmwareCatalogListItem/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/DriverTypeListItem/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/panel === \"drivers\"/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/driver-create/);

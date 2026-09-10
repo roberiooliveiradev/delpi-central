@@ -3257,6 +3257,77 @@
   align-self: center;
 }
 
+.dashboard-production-pulse .pp-firmware-catalog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dashboard-production-pulse .pp-firmware-catalog-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem 0.85rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--pp-border) 80%, transparent);
+}
+
+.dashboard-production-pulse .pp-firmware-catalog-row:last-child {
+  border-bottom: none;
+}
+
+.dashboard-production-pulse .pp-firmware-catalog-row--archived {
+  opacity: 0.78;
+}
+
+.dashboard-production-pulse .pp-firmware-catalog-row__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.55rem 0.75rem;
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
+.dashboard-production-pulse .pp-firmware-catalog-row__identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.dashboard-production-pulse .pp-firmware-catalog-row__icon {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  color: var(--pp-accent, inherit);
+  opacity: 0.9;
+}
+
+.dashboard-production-pulse .pp-firmware-catalog-row__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.dashboard-production-pulse .pp-firmware-catalog-row__label {
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.dashboard-production-pulse .pp-firmware-catalog-row__meta {
+  font-size: 0.85rem;
+  color: var(--pp-muted, inherit);
+  word-break: break-word;
+}
+
+.dashboard-production-pulse .pp-firmware-catalog-row__actions {
+  flex-shrink: 0;
+  align-self: center;
+}
+
 .dashboard-production-pulse .pp-entity-summary__ota {
   margin-top: 0.55rem;
 }

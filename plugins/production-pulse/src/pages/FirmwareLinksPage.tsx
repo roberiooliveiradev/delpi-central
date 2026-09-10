@@ -60,6 +60,7 @@ import {
   type DataTableColumn,
 } from "../app/productionPulseUi";
 import { DriverTypeListItem } from "../components/drivers/DriverTypeListItem";
+import { FirmwareCatalogListItem } from "../components/firmware/FirmwareCatalogListItem";
 import { OtaStatusIndicator } from "../components/ota/OtaStatusIndicator";
 import { OtaJobListItem } from "../components/ota/OtaJobListItem";
 import { OtaTargetProgress } from "../components/ota/OtaTargetProgress";
@@ -144,12 +145,6 @@ type FirmwareLinksPageProps = {
 };
 
 const JOBS_POLL_MS = 3000;
-
-function lifecycleLabel(row: FirmwareListItem): string {
-  if (row.lifecycle === "draft") return PP_HELP.ota.status.draft;
-  if (row.lifecycle === "archived") return PP_HELP.ota.statusArchived;
-  return PP_HELP.ota.statusPublished;
-}
 
 export function FirmwareLinksPage({
   branch,
@@ -1041,43 +1036,6 @@ export function FirmwareLinksPage({
     }
   };
 
-  const firmwareColumns: DataTableColumn<FirmwareListItem>[] = useMemo(
-    () => [
-      {
-        key: "family",
-        header: "Família",
-        render: (row) => <code>{row.firmwareKey}</code>,
-      },
-      { key: "version", header: "Versão", render: (row) => row.version },
-      { key: "displayName", header: "Nome", render: (row) => row.displayName || "—" },
-      { key: "lifecycle", header: "Estado", render: (row) => lifecycleLabel(row) },
-      {
-        key: "actions",
-        header: "",
-        render: (row) => (
-          <div className="pp-inline-actions">
-            <PpActionButton
-              variant="ghost"
-              onClick={() => openModal("firmware-detail", { type: "firmware", id: row.id })}
-            >
-              Detalhe
-            </PpActionButton>
-            {canManage && isPublishedFirmware(row) ? (
-              <PpActionButton
-                variant="ghost"
-                disabled={busy}
-                onClick={() => void handleUpdateFamily(row.firmwareKey)}
-              >
-                Atualizar ligados
-              </PpActionButton>
-            ) : null}
-          </div>
-        ),
-      },
-    ],
-    [busy, canManage, handleUpdateFamily],
-  );
-
   const handleUnarchiveDriver = useCallback(
     (driverKey: string) => {
       void unarchiveDriver(driverKey)
@@ -1470,8 +1428,9 @@ export function FirmwareLinksPage({
           <PpCatalogSearchBar
             value={catalogSearch}
             onChange={setCatalogSearch}
-            placeholder="Buscar família, versão…"
+            placeholder={PP_HELP.hub.firmwaresCatalogSearch}
           />
+          <p className="pp-muted">{PP_HELP.hub.firmwaresCatalogList}</p>
           {canManage ? (
             <PpActionButton
               className="pp-mb-sm"
@@ -1480,12 +1439,25 @@ export function FirmwareLinksPage({
               Novo firmware
             </PpActionButton>
           ) : null}
-          <PpDataTable
-            columns={firmwareColumns}
-            rows={filteredFirmwares}
-            rowKey={(row) => row.id}
-            emptyMessage={PP_HELP.ota.catalogEmpty}
-          />
+          {filteredFirmwares.length === 0 ? (
+            <PpStateBox variant="empty" title={PP_HELP.ota.catalogEmpty} />
+          ) : (
+            <div className="pp-firmware-catalog-list" role="list">
+              {filteredFirmwares.map((firmware) => (
+                <div key={firmware.id} role="listitem">
+                  <FirmwareCatalogListItem
+                    firmware={firmware}
+                    canManage={canManage}
+                    busy={busy}
+                    onOpenDetails={() =>
+                      openModal("firmware-detail", { type: "firmware", id: firmware.id })
+                    }
+                    onUpdateLinked={() => void handleUpdateFamily(firmware.firmwareKey)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </AdminSidePanel>
 
         <AdminSidePanel

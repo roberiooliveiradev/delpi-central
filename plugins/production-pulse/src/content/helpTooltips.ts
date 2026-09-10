@@ -424,6 +424,9 @@ export const PP_HELP = {
     menuOpenDetails: "Abre o detalhe completo (modal) do IoT ou da versão.",
     panelDevices: "Abre o catálogo de IoTs da filial em painel lateral compacto (sem hero de página).",
     panelFirmwares: "Abre o catálogo de firmwares em painel lateral.",
+    firmwaresCatalogSearch: "Busca por família, versão, driver ou nome exibido.",
+    firmwaresCatalogList:
+      "Lista visual das versões: nome, família, driver, artefato e lifecycle (rascunho/publicado/arquivado).",
     panelDrivers: "Abre o catálogo de tipos de driver (protocolo/registry) em painel lateral.",
     panelJobs: "Abre a lista de jobs OTA (agendados e em andamento).",
     newDriver: "Cadastra um novo tipo de driver no catálogo (modal).",

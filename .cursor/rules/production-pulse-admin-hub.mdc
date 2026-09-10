@@ -59,6 +59,7 @@ Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.c
 | Agendar OTA | `PpHostContainedDialog` compacto |
 | Confirmação | `PpConfirmDialog` |
 | Catálogos | Side panel (`devices` wide; `firmwares` / `drivers`); conteúdo `embedded`; mobile → modal page |
+| Lista Firmwares | Side panel `panel=firmwares` com `FirmwareCatalogListItem` (ícone, lifecycle badge, ações) |
 | Lista Drivers | Side panel `panel=drivers` com `DriverTypeListItem` (ícone por protocolo, badge ativo/arquivado) |
 | Lista Jobs OTA | `PpDetailDialog` (`panel=jobs`) com `OtaJobListItem` (ícone, fase, barra agregada) |
 | Detalhe de Job | `PpDetailDialog` (`modal=job-detail`) com resumo + targets |
