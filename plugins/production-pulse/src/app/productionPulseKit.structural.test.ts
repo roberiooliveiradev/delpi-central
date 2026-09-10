@@ -133,14 +133,22 @@ describe("production-pulse kit contracts", () => {
       /current\.openLayer !== \"menu\"/,
     );
     expect(readRelative("components/EntityContextLayers.tsx")).toMatch(/hint=\{PP_HELP\.hub\.menu/);
+    expect(readRelative("components/EntityContextLayers.tsx")).toMatch(/PpContextMenuItem/);
+    expect(readRelative("components/EntityContextLayers.tsx")).not.toMatch(/<ContextMenuItem\b/);
     expect(readRelative("components/EntityContextLayers.tsx")).toMatch(/icon=\{Pencil\}|icon=\{Archive\}/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/panelDevices|panelFirmwares|panelJobs/);
-    expect(readRelative("components/HubCanvasLegend.tsx")).toMatch(/HelpTooltip/);
+    expect(readRelative("components/HubCanvasLegend.tsx")).toMatch(/PpSectionHintLabel/);
+    expect(readRelative("components/HubCanvasLegend.tsx")).not.toMatch(/HelpTooltip/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/menuArchiveFirmware/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/menuUnlinkFirmware/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/HubCanvasLegend/);
     expect(readRelative("components/HubCanvasLegend.tsx")).toMatch(/edgeSolid|linkModeTitle/);
     expect(readRelative("components/HubCanvasLegend.tsx")).not.toMatch(/edgeDashed/);
+    expect(readRelative("app/productionPulseUi.tsx")).toMatch(/hintTrigger=\{props\.hintTrigger \?\? "label"\}/);
+    expect(readRelative("components/detail/DeviceMetricHero.tsx")).toMatch(/PpHintAction/);
+    expect(readRelative("components/detail/DeviceMetricHero.tsx")).not.toMatch(
+      /title=\{PP_HELP\.detail\.factoryReset\}/,
+    );
     expect(readRelative("utils/firmwareLinkGraph.ts")).toMatch(/compatibleDriverKeys/);
     expect(readRelative("utils/firmwareLinkGraph.ts")).toMatch(/isFirmwareDeviceCompatible/);
     expect(readRelative("utils/firmwareLinkGraph.ts")).not.toMatch(/"inherited"|kind: "inherited"/);

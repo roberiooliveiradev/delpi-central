@@ -1,12 +1,16 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { Scissors } from "lucide-react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ContextMenu } from "./ContextMenu";
 import { ContextMenuDivider } from "./ContextMenuDivider";
 import { ContextMenuItem } from "./ContextMenuItem";
 import { ContextMenuToolbar } from "./ContextMenuToolbar";
 import { ContextMenuToolbarButton } from "./ContextMenuToolbarButton";
+
+afterEach(() => {
+  cleanup();
+});
 
 describe("ContextMenu", () => {
   it("renderiza itens e dispara onSelect", () => {
