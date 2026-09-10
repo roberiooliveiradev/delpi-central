@@ -52,6 +52,8 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`evidence/e2-s2-understanding-baseline.md`](./evidence/e2-s2-understanding-baseline.md) | E2.S2 — baseline authority vs shadow TU. |
 | [`evidence/e2-s3-turn-understanding-contract.md`](./evidence/e2-s3-turn-understanding-contract.md) | E2.S3 — contrato canônico TU. |
 | [`evidence/e2-s4-authority-shadow.md`](./evidence/e2-s4-authority-shadow.md) | E2.S4 — SHADOW_ON authority vs TU. |
+| [`evidence/e3-s1-multi-turn-state-inventory.md`](./evidence/e3-s1-multi-turn-state-inventory.md) | E3.S1 — inventário grafo multi-turn (Onda D). |
+| [`evidence/e3-s2-follow-up-baseline.md`](./evidence/e3-s2-follow-up-baseline.md) | E3.S2 — baseline follow-up/refinement. |
 
 ## Drift HEAD (2026-09-10) — resumido
 

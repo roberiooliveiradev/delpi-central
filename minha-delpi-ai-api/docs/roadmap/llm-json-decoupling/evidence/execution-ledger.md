@@ -11,7 +11,7 @@
 | A — baseline/contratos | inventário + freeze | **ATENDIDO** | — | Ver `onda-a-inventory.md` |
 | B — routing universal | 01 | **ATENDIDO_PARCIAL** | Onda H: DELETE fields registry | Cutover seleção + binder OK; JSON markers deferred |
 | C — entendimento | 02 | **ATENDIDO_PARCIAL** | E2.S4 cutover (após agree) → S5–S7 | S1–S3 OK; S4 shadow-only; DELETE heuristics deferred |
-| D — multi-turn/args | 03 | **DESBLOQUEADO** | inventário follow-up | actionId estável via OpenAPI-first |
+| D — multi-turn/args | 03 | **EM_ANDAMENTO** | E3.S3 contrato refinement | S1 inventário + S2 baseline OK; sem cutover |
 | E — caps/composition | 04, 05 | **PARCIAL** | 04: `action.*`; 05: routeIds | pathRules já DONE |
 | F — UX inteligente | 06 | **PRONTO_APÓS_E** | E6.S1 | recommendationQueries ainda authority |
 | G — presentation/skills | 07, 08 | **PRONTO_APÓS_F** | inventário residual | Display path→label já limpo |
@@ -60,3 +60,6 @@ abrir planos/0N-*.md
 | 2026-09-10 | E2.S3 **ATENDIDO** — contrato canônico TU (schema/validator/fallback) |
 | 2026-09-10 | E2.S4 **SHADOW_ON** — authority vs TU (sem cutover) |
 | 2026-09-10 | Onda C **ATENDIDO_PARCIAL** — cutover/DELETE intents deferred |
+| 2026-09-10 | E3.S1 **ATENDIDO** — inventário grafo multi-turn (Onda D) |
+| 2026-09-10 | E3.S2 **ATENDIDO** — baseline follow-up/refinement (10 famílias) |
+| 2026-09-10 | Onda D **EM_ANDAMENTO** — próxima E3.S3 |

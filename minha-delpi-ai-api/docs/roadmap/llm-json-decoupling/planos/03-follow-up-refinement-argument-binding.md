@@ -1,8 +1,8 @@
 # Plano 03 — Follow-up, refinement e argument binding generalizados
 
 **Prioridade:** P0  
-**Status execução:** Onda D · **BLOQUEADO_SOFT por B** (actionId estável) · registry `routeSegment` consumers no inventário §2  
-**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda D · **EM_ANDAMENTO** · E3.S1–S2 **ATENDIDO** · próxima = E3.S3 (contrato refinement)  
+**Evidência:** [`../evidence/e3-s1-multi-turn-state-inventory.md`](../evidence/e3-s1-multi-turn-state-inventory.md) · [`../evidence/e3-s2-follow-up-baseline.md`](../evidence/e3-s2-follow-up-baseline.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** continuidade conversacional, paginação, filtros, group-by e complementação de argumentos devem funcionar a partir do estado estruturado da conversa e do schema da action, não de substrings de rota ou frases cadastradas.
 
 ## CURRENT
@@ -60,15 +60,15 @@ message
 
 ## Etapas
 
-### E3.S1 — Grafo de estado multi-turn
+### E3.S1 — Grafo de estado multi-turn — **ATENDIDO**
 
 **Fazer:** mapear producer/consumer/persistence de `selectedAction`, action metadata, result references, arguments, entity refs, pagination, time range e pending requirements.
 
-**Teste:** send -> persist -> reload -> follow-up.
+**Feito:** inventário em [`../evidence/e3-s1-multi-turn-state-inventory.md`](../evidence/e3-s1-multi-turn-state-inventory.md). Nota: chave real = `selectedExternalAction` + `lastAction` (não existe `selectedAction`).
 
-**Pronto quando:** cada dado necessário possui owner e estratégia de serialização/replay.
+**Pronto quando:** cada dado necessário possui owner e estratégia de serialização/replay. ✅
 
-### E3.S2 — Baseline de follow-up
+### E3.S2 — Baseline de follow-up — **ATENDIDO**
 
 Cobrir:
 
@@ -83,6 +83,8 @@ Cobrir:
 - referência ambígua a dois resultados anteriores.
 
 Medir R3/R6/R7/R8/R9/R11.
+
+**Feito:** harness `tests/unit/domain/services/test_e3_s2_follow_up_baseline.py` + [`../evidence/e3-s2-follow-up-baseline.md`](../evidence/e3-s2-follow-up-baseline.md). Sem cutover.
 
 ### E3.S3 — Canonical refinement contract
 
