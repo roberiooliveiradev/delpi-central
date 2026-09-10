@@ -87,6 +87,8 @@ describe("RequestDetailPage structural", () => {
     expect(artifacts).not.toMatch(/SelectField/);
     expect(artifacts).toMatch(/RequestFilePreviewModal/);
     expect(artifacts).toMatch(/Salvar documentos/);
+    expect(artifacts).toMatch(/deleteArtifact/);
+    expect(artifacts).toMatch(/onRemove/);
     expect(artifacts).not.toMatch(/window\.open/);
     expect(artifacts).not.toMatch(/artifactDownloadUrl/);
   });

@@ -371,6 +371,14 @@ export async function deleteAttachment(attachmentId: string) {
   );
 }
 
+export async function deleteArtifact(artifactId: string) {
+  return unwrap(
+    await httpDelete<Envelope<{ id: string; deleted: boolean }>>(
+      `${API_BASE}/artifacts/${encodeURIComponent(artifactId)}`,
+    ),
+  );
+}
+
 /** Authenticated blob fetch for image thumbnails (download endpoint). */
 export async function downloadAttachmentBlob(attachmentId: string): Promise<Blob> {
   const response = await fetch(attachmentDownloadUrl(attachmentId), {

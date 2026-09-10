@@ -126,10 +126,10 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   artifacts: {
     section:
-      "Arquivos produzidos durante o atendimento, como a nota fiscal ou outro comprovante. Abra a miniatura para ver e baixar. Quem atende envia; quem só solicitou normalmente só baixa.",
+      "Arquivos produzidos durante o atendimento, como a nota fiscal ou outro comprovante. Abra a miniatura para ver e baixar. Quem atende pode remover e substituir enquanto o chamado não estiver concluído; quem só solicitou normalmente só baixa.",
     kind: "Classifique o documento gerado no atendimento (por exemplo, nota fiscal em PDF).",
     upload:
-      "Selecione o arquivo do atendimento. Ele fica pendente até Salvar documentos — revise antes de enviar.",
+      "Selecione o arquivo do atendimento. Ele fica pendente até Salvar documentos — revise antes de enviar. Depois de salvo, use o X na miniatura para remover se precisar trocar.",
     pending:
       "Arquivos escolhidos ainda não enviados. Remova o que estiver errado e salve para gravar no atendimento.",
   },

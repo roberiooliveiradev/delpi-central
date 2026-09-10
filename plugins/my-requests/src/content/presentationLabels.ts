@@ -41,6 +41,7 @@ const EVENT_LABELS: Record<string, string> = {
   attachment_added: "Documento anexado",
   attachment_removed: "Documento removido",
   artifact_added: "Documento gerado anexado",
+  artifact_removed: "Documento gerado removido",
   resubmitted: "Reenviada",
   started: "Atendimento iniciado",
   returned: "Devolvida",

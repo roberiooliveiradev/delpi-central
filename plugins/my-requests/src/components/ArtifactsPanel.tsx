@@ -2,6 +2,7 @@ import { ActionButton, FieldLabel } from "@delpi/plugin-ui/index";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  deleteArtifact,
   downloadArtifactBlob,
   listArtifacts,
   uploadArtifact,
@@ -200,6 +201,22 @@ export function ArtifactsPanel({
     }
   }
 
+  async function onRemoveSaved(artifactId: string) {
+    if (!canUpload || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteArtifact(artifactId);
+      await reload();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Falha ao remover documento gerado",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const empty = !error && items.length === 0 && pending.length === 0;
 
   return (
@@ -298,7 +315,7 @@ export function ArtifactsPanel({
 
           {items.length > 0 ? (
             <MyRequestsAttachmentPreviewStrip
-              mode="preview"
+              mode={canUpload ? "manage" : "preview"}
               heading={canUpload ? "Documentos salvos" : undefined}
               items={savedStripItems}
               onOpen={(item) => {
@@ -312,6 +329,9 @@ export function ArtifactsPanel({
                   byteSize: saved.size_bytes,
                 });
               }}
+              onRemove={
+                canUpload ? (item) => void onRemoveSaved(item.id) : undefined
+              }
             />
           ) : null}
         </div>

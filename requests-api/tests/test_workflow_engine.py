@@ -89,7 +89,7 @@ def test_registry_loads_invoice_and_generic_without_engine_branch():
         ("submitted", _creator, None, {"view", "cancel"}),
         ("submitted", _manager, None, {"view", "start", "cancel"}),
         ("in_progress", _processor, None, {"view", "return", "cancel"}),
-        ("in_progress", _processor, _NF, {"view", "return", "complete", "issue", "cancel"}),
+        ("in_progress", _processor, _NF, {"view", "return", "issue", "cancel"}),
         ("in_progress", _creator, _NF, {"view"}),
         ("needs_information", _creator, None, {"view", "edit", "resubmit"}),
         ("needs_information", _processor, None, {"view"}),

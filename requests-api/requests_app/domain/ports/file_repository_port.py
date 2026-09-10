@@ -36,6 +36,9 @@ class FileRepositoryPort(ABC):
     def list_artifacts(self, request_id: UUID | str) -> list[RequestArtifact]: ...
 
     @abstractmethod
+    def delete_artifact(self, artifact_id: UUID | str) -> bool: ...
+
+    @abstractmethod
     def append_event(self, event: RequestEvent) -> RequestEvent: ...
 
     @abstractmethod

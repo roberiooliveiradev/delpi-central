@@ -216,6 +216,15 @@ class PostgresFileRepository(FileRepositoryPort):
                 rows = cur.fetchall()
         return [_artifact(dict(row)) for row in rows]
 
+    def delete_artifact(self, artifact_id: UUID | str) -> bool:
+        sql = f"DELETE FROM {_SCHEMA}.request_artifacts WHERE id = %s::uuid"
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (str(artifact_id),))
+                deleted = cur.rowcount > 0
+            conn.commit()
+        return deleted
+
     def append_event(self, event: RequestEvent) -> RequestEvent:
         sql = f"""
         INSERT INTO {_SCHEMA}.request_events (

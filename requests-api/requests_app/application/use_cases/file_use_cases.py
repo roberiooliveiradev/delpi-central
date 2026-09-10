@@ -246,6 +246,59 @@ class FileUseCases:
         )
         return {"id": str(attachment.id), "deleted": True}
 
+    def delete_artifact(
+        self,
+        *,
+        user,
+        artifact_id: str,
+        actor_client_id: str | None = None,
+    ) -> dict[str, Any]:
+        artifact = self._files.get_artifact(artifact_id)
+        if artifact is None:
+            raise ApplicationError(code="artifact_not_found", status_code=404)
+        request, request_type, actor = self._load_request_context(
+            user=user, request_id=str(artifact.request_id)
+        )
+        if not (actor.has_process or actor.has_manage):
+            raise ApplicationError(code="delete_forbidden", status_code=403)
+        workflow = request_type.workflow_definition or {}
+        if _is_terminal(request, workflow):
+            raise ApplicationError(code="delete_forbidden", status_code=403)
+        try:
+            self._artifacts.delete_file(storage_key=artifact.storage_key)
+        except StorageError as exc:
+            raise ApplicationError(
+                code=exc.code, status_code=422, detail=str(exc)
+            ) from exc
+        deleted = self._files.delete_artifact(artifact_id)
+        if not deleted:
+            raise ApplicationError(code="artifact_not_found", status_code=404)
+        self._files.append_event(
+            RequestEvent(
+                id=uuid4(),
+                request_id=request.id,
+                event_type="artifact_removed",
+                actor_user_id=actor.user_id,
+                actor_name=actor.user_name,
+                payload={
+                    "artifact_id": str(artifact.id),
+                    "name": artifact.original_name,
+                    "artifact_kind": artifact.artifact_kind,
+                },
+            )
+        )
+        _safe_realtime(
+            notify_request_timeline,
+            reason="artifact.deleted",
+            request_id=str(request.id),
+            request_number=request.request_number,
+            status=request.status,
+            owner_user_id=request.created_by_user_id,
+            actor_user_id=actor.user_id,
+            actor_client_id=actor_client_id,
+        )
+        return {"id": str(artifact.id), "deleted": True}
+
     def upload_artifact(
         self,
         *,

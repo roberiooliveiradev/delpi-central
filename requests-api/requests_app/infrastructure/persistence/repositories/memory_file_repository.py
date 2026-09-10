@@ -72,6 +72,13 @@ class InMemoryFileRepository(FileRepositoryPort):
         items.sort(key=lambda row: row.created_at or _utcnow(), reverse=True)
         return [deepcopy(item) for item in items]
 
+    def delete_artifact(self, artifact_id: UUID | str) -> bool:
+        key = str(artifact_id)
+        if key not in self.artifacts:
+            return False
+        del self.artifacts[key]
+        return True
+
     def append_event(self, event: RequestEvent) -> RequestEvent:
         stored = deepcopy(event)
         stored.created_at = stored.created_at or _utcnow()

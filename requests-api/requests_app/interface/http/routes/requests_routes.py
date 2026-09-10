@@ -448,6 +448,20 @@ def download_artifact(artifact_id: UUID):
     )
 
 
+@router.delete("/artifacts/{artifact_id}")
+def delete_artifact(artifact_id: UUID, request: Request):
+    user = _current_user()
+    try:
+        data = build_file_use_cases().delete_artifact(
+            user=user,
+            artifact_id=str(artifact_id),
+            actor_client_id=client_id_from_request(request),
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data, message="Documento removido.")
+
+
 @router.get("/requests/{request_id}/events")
 def list_events(
     request_id: UUID,

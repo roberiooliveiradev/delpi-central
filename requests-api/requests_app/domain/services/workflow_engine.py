@@ -283,10 +283,12 @@ class WorkflowEngine:
                 artifacts=artifacts,
             )
             if ok:
-                actions.append(action)
+                # Prefer actionAlias for UI when present (avoid Concluir + Registrar emissão).
                 alias = transition.get("actionAlias")
                 if isinstance(alias, str) and alias.strip():
                     actions.append(alias.strip())
+                else:
+                    actions.append(action)
 
         # unique preserve order
         seen: set[str] = set()
