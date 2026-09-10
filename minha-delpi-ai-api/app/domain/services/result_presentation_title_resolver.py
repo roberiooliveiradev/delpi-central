@@ -2,20 +2,13 @@
 
 from __future__ import annotations
 
-import logging
-import os
 from dataclasses import dataclass
 
-logger = logging.getLogger(__name__)
 
 SOURCE_SLOT_TITLE = "SLOT_TITLE"
 SOURCE_PRESENTATION_TITLE = "PRESENTATION_TITLE"
 SOURCE_ACTION_DISPLAY_LABEL = "ACTION_DISPLAY_LABEL"
-SOURCE_LEGACY_PATH_FRAGMENT = "LEGACY_PATH_FRAGMENT"
-SOURCE_LEGACY_PATH_TITLES = "LEGACY_PATH_TITLES"
 SOURCE_TECHNICAL_FALLBACK = "TECHNICAL_FALLBACK"
-
-_MODE_ENV = "PRESENTATION_TITLE_MODE"
 
 
 @dataclass(frozen=True)
@@ -27,19 +20,7 @@ class ResultPresentationTitleResult:
 
 
 class ResultPresentationTitleResolver:
-    """Cascata: slot/presentation.title → action label → fallback.
-
-    Modos (`PRESENTATION_TITLE_MODE`):
-    - ``legacy`` / ``shadow``: rollback temporário (EXIT = E2.S3)
-    - ``default``: sem mapas path→title
-    """
-
-    @classmethod
-    def mode(cls) -> str:
-        token = str(os.environ.get(_MODE_ENV) or "default").strip().lower()
-        if token in {"legacy", "shadow", "default"}:
-            return token
-        return "default"
+    """Cascata: slot/presentation.title → action label → fallback."""
 
     @classmethod
     def resolve(
@@ -54,9 +35,9 @@ class ResultPresentationTitleResolver:
         legacy_title: str | None = None,
         fallback: str = "Resultado",
     ) -> ResultPresentationTitleResult:
-        legacy = cls._coerce_title(legacy_title)
-        auto_legacy = None if legacy else cls._legacy_from_path(path)
-        candidate = cls._resolve_canonical(
+        # legacy_title retained for call-site compat; ignored in canonical cascade.
+        _ = legacy_title
+        return cls._resolve_canonical(
             path=path,
             method=method,
             summary=summary,
@@ -65,44 +46,6 @@ class ResultPresentationTitleResolver:
             metadata=metadata,
             fallback=fallback,
         )
-
-        current_mode = cls.mode()
-
-        if current_mode == "legacy":
-            title = legacy or auto_legacy or candidate.title or fallback
-            return ResultPresentationTitleResult(
-                title=title,
-                source=(
-                    SOURCE_LEGACY_PATH_FRAGMENT
-                    if (legacy or auto_legacy)
-                    else candidate.source
-                ),
-            )
-
-        if current_mode == "shadow":
-            ux_title = legacy or auto_legacy or candidate.title
-            if (legacy or auto_legacy) and ux_title != candidate.title:
-                logger.info(
-                    "presentation_title_shadow_diff",
-                    extra={
-                        "path": path,
-                        "legacyTitle": ux_title,
-                        "candidateTitle": candidate.title,
-                        "candidateSource": candidate.source,
-                    },
-                )
-            return ResultPresentationTitleResult(
-                title=ux_title,
-                source=(
-                    SOURCE_LEGACY_PATH_FRAGMENT
-                    if (legacy or auto_legacy)
-                    else candidate.source
-                ),
-                shadow_title=candidate.title,
-                shadow_source=candidate.source,
-            )
-
-        return candidate
 
     @classmethod
     def _resolve_canonical(
@@ -209,7 +152,6 @@ class ResultPresentationTitleResolver:
         if not label:
             return None
 
-        # Evita usar fallback técnico genérico como título de painel
         if result.source == "TECHNICAL_FALLBACK" and label in {
             path,
             action_id,
@@ -218,23 +160,6 @@ class ResultPresentationTitleResolver:
             return None
 
         return label
-
-    @classmethod
-    def _legacy_from_path(cls, path: str) -> str | None:
-        if not path:
-            return None
-
-        from app.domain.services.chat_assistant_content_service import (
-            ChatAssistantContentService,
-        )
-
-        return cls._coerce_title(
-            ChatAssistantContentService.title_for_path(
-                "presenter_content",
-                path,
-                default=None,
-            )
-        )
 
     @staticmethod
     def _coerce_title(value: object) -> str | None:

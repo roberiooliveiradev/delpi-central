@@ -104,14 +104,13 @@ def test_presenter_kpi_title_metamorphic_path_same_metadata():
     assert a == b == "Meta % ROL comercial — filial"
 
 
-def test_title_for_path_helper_still_reads_content_when_present():
+def test_title_for_path_helper_returns_none_without_fragment_catalog():
     title = ChatAssistantContentService.title_for_path(
         "presenter_content",
         "/production/orders/open?branch=01",
         default=None,
     )
-    # Helper still exists for cleanup phase; may return fragment map until E2.S3.
-    assert title is None or isinstance(title, str)
+    assert title is None
 
 
 def test_kpi_title_unknown_path_uses_safe_fallback():

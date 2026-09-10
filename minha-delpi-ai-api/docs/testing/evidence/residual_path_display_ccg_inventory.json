@@ -12,7 +12,7 @@
   },
   "cutover_incomplete": {
     "action_labels": "CUTOVER+CLEANUP PASS (E1)",
-    "titles": "legacy_title from fragment/kpi/pathTitles still wins",
+    "titles": "CUTOVER+CLEANUP PASS (E2)",
     "stack_plan": "full routeTitles/routeFraming dump",
     "mfe": "routeTitle(routeKey) + SECTION_BASE domain fallbacks",
     "capabilities": "pathRules token match; H-CAP not decided",
@@ -35,5 +35,12 @@
       "api_paths_defaults_only": true
     },
     "git_sha_note": "updated after E1.S3 commit"
+  },
+  "e2_s3_cleanup": {
+    "titlesByPathFragment_removed": true,
+    "kpiPathMatchers_removed": true,
+    "dashboard_fragment_titles_removed": true,
+    "data_interpretation_pathTitles_removed": true,
+    "PRESENTATION_TITLE_MODE_removed": true
   }
 }

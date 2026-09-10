@@ -1,223 +1,9 @@
 {
-  "titlesByPathFragment": {
-    "eficiencia-fabril": "Eficiência fabril",
-    "eficiencia_fabril": "Eficiência fabril",
-    "/structure": "Estrutura do produto",
-    "/directives/": "Diretivas do produto",
-    "/parents": "Produtos pai (onde é usado)",
-    "/stock": "Estoque do produto",
-    "/financial/rol": "ROL financeiro",
-    "/financial/": "Indicador financeiro",
-    "/commercial/rol/by-branch": "ROL por filial",
-    "/commercial/rol": "ROL comercial",
-    "/commercial/": "Indicador comercial",
-    "/suppliers": "Fornecedores do produto",
-    "/customers": "Clientes do produto",
-    "/guide": "Roteiro do produto",
-    "/inspection": "Inspeção do produto",
-    "/internal-movements": "Movimentações internas",
-    "/inbound-invoice": "Notas fiscais de entrada",
-    "/outbound-invoice": "Notas fiscais de saída",
-    "/purchases": "Compras do produto",
-    "/sales": "Vendas do produto",
-    "/lmp": "Lista de LMPs",
-    "/oee": "OEE — eficiência dos equipamentos",
-    "/otd": "OTD — entrega no prazo",
-    "/production/otd": "OTD produção — ordens",
-    "/production/oee": "OEE produção — apontamentos SH6010",
-    "/production/oee/appointments/": "Detalhe do apontamento OEE",
-    "/sale-order": "Ordens de venda",
-    "/orders": "Ordens de venda",
-    "/consumption/top-items-by-work-center": "Consumo por centro de trabalho",
-    "/consumption/top-items-validated": "Consumo validado",
-    "/consumption/top-items": "Itens mais consumidos",
-    "/consumption/by-item/": "Consumo por item",
-    "/losses/top-materials": "Refugos por matéria-prima",
-    "/losses/records": "Registros de refugo",
-    "/schedule/today": "Programação de produção",
-    "/orders/finished-without-consumption": "OPs encerradas sem consumo",
-    "/orders/finished": "OPs encerradas",
-    "/orders/open": "OPs em aberto",
-    "/orders/by-op/": "Detalhe da ordem de produção",
-    "/pedidos-venda-abertos": "Pedidos de venda em aberto",
-    "/propostas-comerciais": "Propostas comerciais",
-    "/work-centers/average-planned-time": "Tempo médio planejado por CT",
-    "/work-centers/order-summary": "Resumo de OPs por centro de trabalho",
-    "/allocation-gaps": "Componentes sem empenho",
-    "/planned-vs-real-time": "Planejado × real por OP",
-    "/purchases/top-products": "Produtos mais comprados"
-  },
   "titlesByItemShape": {
     "structure": "Estrutura do produto",
     "stock": "Estoque do produto",
     "efficiency": "Eficiência fabril"
   },
-  "kpiPathMatchers": [
-    {
-      "fragment": "inventory-turnover",
-      "titleKey": "idd"
-    },
-    {
-      "fragment": "stock-value",
-      "titleKey": "stock_value"
-    },
-    {
-      "fragment": "closing-rate",
-      "titleKey": "conversion"
-    },
-    {
-      "fragment": "new-clients",
-      "titleKey": "new_customers"
-    },
-    {
-      "fragment": "new-business",
-      "titleKey": "new_business"
-    },
-    {
-      "fragment": "production_cost",
-      "titleKey": "production_cost"
-    },
-    {
-      "fragment": "fixed_cost",
-      "titleKey": "fixed_cost"
-    },
-    {
-      "fragment": "labor_cost",
-      "titleKey": "labor"
-    },
-    {
-      "fragment": "direct_labor",
-      "titleKey": "labor"
-    },
-    {
-      "fragment": "effectiveness",
-      "titleKey": "oee"
-    },
-    {
-      "fragment": "depreciation",
-      "titleKey": "depreciation"
-    },
-    {
-      "fragment": "snapshot",
-      "titleKey": "hr"
-    },
-    {
-      "fragment": "completion",
-      "titleKey": "performance"
-    },
-    {
-      "fragment": "dashboard",
-      "titleKey": "dashboard"
-    },
-    {
-      "fragment": "cpv",
-      "titleKey": "cpv"
-    },
-    {
-      "fragment": "pmr",
-      "titleKey": "pmr"
-    },
-    {
-      "fragment": "ebitda",
-      "titleKey": "ebitda"
-    },
-    {
-      "fragment": "delivery",
-      "titleKey": "otd_equipment"
-    },
-    {
-      "fragment": "lmp",
-      "titleKey": "lmp_dashboard"
-    },
-    {
-      "fragment": "pdi",
-      "titleKey": "pdi"
-    },
-    {
-      "fragment": "oee",
-      "titleKey": "oee"
-    },
-    {
-      "fragment": "otd",
-      "titleKey": "otd"
-    },
-    {
-      "fragment": "ppm/internal",
-      "titleKey": "quality_ppm_internal"
-    },
-    {
-      "fragment": "ppm/external",
-      "titleKey": "quality_ppm_external"
-    },
-    {
-      "fragment": "kaizens/summary",
-      "titleKey": "quality_kaizen_summary"
-    },
-    {
-      "fragment": "audit-5s/summary",
-      "titleKey": "quality_audit_5s"
-    },
-    {
-      "fragment": "ebitda_pct",
-      "titleKey": "financial_ebitda"
-    },
-    {
-      "fragment": "fixed_cost_pct",
-      "titleKey": "financial_fixed_cost"
-    },
-    {
-      "fragment": "/financial/rol",
-      "titleKey": "financial_rol"
-    },
-    {
-      "fragment": "on_time_delivery_pct",
-      "titleKey": "production_otd_pct"
-    },
-    {
-      "fragment": "overall_equipment_effectiveness_pct",
-      "titleKey": "production_oee_pct"
-    },
-    {
-      "fragment": "department-indicators",
-      "titleKey": "department_idd_indicators"
-    },
-    {
-      "fragment": "/supplies/",
-      "titleKey": "supplies"
-    },
-    {
-      "fragment": "rol/summary",
-      "titleKey": "commercial_rol_target_branch"
-    },
-    {
-      "fragment": "rol/summary",
-      "titleKey": "commercial_rol_target_head_office"
-    },
-    {
-      "fragment": "/commercial/",
-      "titleKey": "commercial"
-    },
-    {
-      "fragment": "/finacial/",
-      "titleKey": "financial"
-    },
-    {
-      "fragment": "/financial/",
-      "titleKey": "financial"
-    },
-    {
-      "fragment": "/production/",
-      "titleKey": "production"
-    },
-    {
-      "fragment": "/quality/",
-      "titleKey": "quality"
-    },
-    {
-      "fragment": "/hr/",
-      "titleKey": "rh"
-    }
-  ],
   "kpiTitles": {
     "cpv": "CPV — Custo de Produção Vendido",
     "otd": "OTD — On Time Delivery",
@@ -404,21 +190,81 @@
       "table": "Metadados da tabela (SX2)"
     },
     "indicatorCards": [
-      { "key": "total_components", "label": "Componentes", "unit": "" },
-      { "key": "total_raw_materials", "label": "Matérias-primas", "unit": "" },
-      { "key": "total_exclusive_raw_materials", "label": "MPs exclusivas", "unit": "" },
-      { "key": "total_raw_materials_without_stock_for_one_pa", "label": "MPs sem estoque p/ 1 PA", "unit": "" },
-      { "key": "max_pa_producible_from_stock", "label": "PA possíveis com estoque", "unit": "" },
-      { "key": "total_pa_orders", "label": "OPs de PA", "unit": "" },
-      { "key": "total_pa_reported_quantity", "label": "PA apontado", "unit": "" },
-      { "key": "total_pa_shipped_quantity", "label": "PA expedido", "unit": "" },
-      { "key": "total_material_cost", "label": "Custo de materiais", "unit": "R$" },
-      { "key": "pa_standard_cost", "label": "Custo padrão do PA", "unit": "R$" },
-      { "key": "material_cost_vs_pa_standard_percent", "label": "Materiais x custo padrão", "unit": "%" },
-      { "key": "material_to_pa_cost_ratio", "label": "Materiais ÷ custo padrão PA", "unit": "×" },
-      { "key": "top_material_impact_percent", "label": "Maior impacto de MP", "unit": "%" },
-      { "key": "projected_cost_delta", "label": "Delta simulado", "unit": "R$" },
-      { "key": "adjustment_percent", "label": "Reajuste simulado", "unit": "%" }
+      {
+        "key": "total_components",
+        "label": "Componentes",
+        "unit": ""
+      },
+      {
+        "key": "total_raw_materials",
+        "label": "Matérias-primas",
+        "unit": ""
+      },
+      {
+        "key": "total_exclusive_raw_materials",
+        "label": "MPs exclusivas",
+        "unit": ""
+      },
+      {
+        "key": "total_raw_materials_without_stock_for_one_pa",
+        "label": "MPs sem estoque p/ 1 PA",
+        "unit": ""
+      },
+      {
+        "key": "max_pa_producible_from_stock",
+        "label": "PA possíveis com estoque",
+        "unit": ""
+      },
+      {
+        "key": "total_pa_orders",
+        "label": "OPs de PA",
+        "unit": ""
+      },
+      {
+        "key": "total_pa_reported_quantity",
+        "label": "PA apontado",
+        "unit": ""
+      },
+      {
+        "key": "total_pa_shipped_quantity",
+        "label": "PA expedido",
+        "unit": ""
+      },
+      {
+        "key": "total_material_cost",
+        "label": "Custo de materiais",
+        "unit": "R$"
+      },
+      {
+        "key": "pa_standard_cost",
+        "label": "Custo padrão do PA",
+        "unit": "R$"
+      },
+      {
+        "key": "material_cost_vs_pa_standard_percent",
+        "label": "Materiais x custo padrão",
+        "unit": "%"
+      },
+      {
+        "key": "material_to_pa_cost_ratio",
+        "label": "Materiais ÷ custo padrão PA",
+        "unit": "×"
+      },
+      {
+        "key": "top_material_impact_percent",
+        "label": "Maior impacto de MP",
+        "unit": "%"
+      },
+      {
+        "key": "projected_cost_delta",
+        "label": "Delta simulado",
+        "unit": "R$"
+      },
+      {
+        "key": "adjustment_percent",
+        "label": "Reajuste simulado",
+        "unit": "%"
+      }
     ]
   },
   "stackMarkdownMarkers": {
@@ -1268,17 +1114,6 @@
     "summaryFallbackTitle": "Resumo",
     "itemsFallbackTitle": "Itens",
     "panelItemsTitle": "Itens do painel",
-    "titlesByPathFragment": {
-      "/stock": "Painel de estoque",
-      "/financial/rol": "Indicador financeiro — ROL",
-      "eficiencia-fabril": "Painel de eficiência fabril",
-      "eficiencia_fabril": "Painel de eficiência fabril",
-      "lmp": "Dashboard de LMPs",
-      "engineering": "Painel de engenharia"
-    },
-    "detailTableTitlesByPathFragment": {
-      "/financial/rol": "Composição do ROL"
-    },
     "metricsFallbackTitle": "Detalhamento",
     "chartBlockTitles": {
       "levelData": "LMPs por nível",

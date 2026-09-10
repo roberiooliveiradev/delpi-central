@@ -91,7 +91,6 @@ def test_action_display_metamorphic_rename_same_summary(monkeypatch):
 
 
 def test_presentation_title_prefers_slot_then_metadata(monkeypatch):
-    monkeypatch.setenv("PRESENTATION_TITLE_MODE", "default")
     slot = ResultPresentationTitleResolver.resolve(
         path="/products/X/stock",
         slot_title="Estoque — X",
@@ -110,7 +109,6 @@ def test_presentation_title_prefers_slot_then_metadata(monkeypatch):
 
 
 def test_presentation_title_falls_back_to_action_label(monkeypatch):
-    monkeypatch.setenv("PRESENTATION_TITLE_MODE", "default")
     resolved = ResultPresentationTitleResolver.resolve(
         path="/acme/widgets",
         summary="Lista de widgets",

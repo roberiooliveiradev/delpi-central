@@ -57,8 +57,6 @@ def _warn(label: str, detail: str) -> None:
 
 
 def _phase_inprocess() -> None:
-    os.environ.setdefault("PRESENTATION_TITLE_MODE", "default")
-
     from app.composition.content_composer import configure_domain_infrastructure_ports
 
     configure_domain_infrastructure_ports()
