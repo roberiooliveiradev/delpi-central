@@ -59,6 +59,7 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`evidence/e3-s5-schema-driven-group-by.md`](./evidence/e3-s5-schema-driven-group-by.md) | E3.S5 — group-by por schema/actionId. |
 | [`evidence/e3-s6-pagination-filter-fast-path.md`](./evidence/e3-s6-pagination-filter-fast-path.md) | E3.S6 — pagination/filter schema-bound. |
 | [`evidence/e3-s7-follow-up-routing-cutover.md`](./evidence/e3-s7-follow-up-routing-cutover.md) | E3.S7 — cutover follow-up routing. |
+| [`evidence/e3-s8-persist-reload-cleanup.md`](./evidence/e3-s8-persist-reload-cleanup.md) | E3.S8 — persist/reload (DELETE deferred). |
 
 ## Drift HEAD (2026-09-10) — resumido
 
