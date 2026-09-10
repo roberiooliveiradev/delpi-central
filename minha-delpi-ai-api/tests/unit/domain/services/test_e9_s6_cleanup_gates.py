@@ -46,19 +46,19 @@ def test_e9_s6_required_gates_present():
 
 
 def test_e9_s6_current_evaluation_blocks_delete():
-    """Positive (estado atual): deleteAuthorized=false enquanto há INCONCLUSIVE."""
+    """Positive (estado atual): deleteAuthorized=false enquanto há PASS_OFFLINE."""
     data = _load()
     assert data.get("deleteAuthorized") is False
     assert delete_authorized(data) is False
-    blocking = [
+    offline_only = [
         g["id"]
         for g in data["gates"]
-        if g.get("required") and str(g.get("status")) in _BLOCKING
+        if g.get("required") and str(g.get("status")) == "PASS_OFFLINE"
     ]
-    # E9.S10 promoveu unknown_api / legacy_fallback residual a PASS_OFFLINE;
-    # latency/cost live continua bloqueando DELETE.
-    assert "latency_cost" in blocking
-    assert blocking
+    # E9.S11: latency_cost=PASS; demais dims offline ainda bloqueiam DELETE.
+    assert offline_only
+    latency = next(g for g in data["gates"] if g["id"] == "latency_cost")
+    assert latency["status"] == "PASS"
 
 
 def test_e9_s6_delete_candidates_are_blocked():

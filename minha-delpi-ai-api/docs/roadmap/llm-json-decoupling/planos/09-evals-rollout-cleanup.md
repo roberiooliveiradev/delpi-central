@@ -162,6 +162,12 @@ Executar matriz final:
 
 **Bloqueado:** `latency_cost` / efficiency (Ollama DNS); `deleteAuthorized` e `globalReleasePass` permanecem false.
 
+### E9.S11 — Efficiency live (Kimi) — **ATENDIDO** (2026-09-10)
+
+**Feito:** `run_e9_s11_efficiency_live.py` — 5/5 trials; p50≈14.7s; p95≈19.1s; provider `openai_compatible` only; gate `latency_cost=PASS` / matriz `efficiency=PASS`.
+
+**Ainda bloqueado:** `deleteAuthorized=false` e `globalReleasePass=false` (células PASS_OFFLINE).
+
 ## Métricas mínimas
 
 ```text

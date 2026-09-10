@@ -47,7 +47,9 @@ def test_e9_s8_current_global_release_is_false():
     data = _load()
     assert data.get("globalReleasePass") is False
     assert global_release_pass(data) is False
-    assert data.get("aggregate") == "PASS_OFFLINE_WITH_INCONCLUSIVE_DIMS"
+    assert data.get("aggregate") == "PASS_OFFLINE_WITH_LIVE_EFFICIENCY"
+    efficiency = next(r for r in data["matrix"] if r["id"] == "efficiency")
+    assert efficiency["status"] == "PASS"
 
 
 def test_e9_s8_each_row_has_evidence():

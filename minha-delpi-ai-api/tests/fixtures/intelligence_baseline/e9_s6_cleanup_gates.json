@@ -58,9 +58,9 @@
     {
       "id": "latency_cost",
       "required": true,
-      "status": "INCONCLUSIVE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s3-candidate-plans-offline.md",
-      "note": "P50/P95/tokens não medidos no candidate offline"
+      "status": "PASS",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s11-efficiency-live.md",
+      "note": "E9.S11 live: p50≈14708ms p95≈19073ms; provider=openai_compatible; sem Ollama"
     },
     {
       "id": "legacy_fallback_hit_rate",

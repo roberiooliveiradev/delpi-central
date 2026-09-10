@@ -10,12 +10,14 @@
 ```text
 MATRIX_10_OBJECTIVES = PASS
 GLOBAL_RELEASE_PASS = false
-AGGREGATE = PASS_OFFLINE_WITH_INCONCLUSIVE_DIMS
-INCONCLUSIVE_CELLS = efficiency
+AGGREGATE = PASS_OFFLINE_WITH_LIVE_EFFICIENCY
+INCONCLUSIVE_CELLS = (none)
+PASS_OFFLINE_CELLS = majority (bloqueiam release)
+EFFICIENCY = PASS (E9.S11)
 NO_FALSE_GLOBAL_PASS = PASS
 ```
 
-## Matriz (pós E9.S10)
+## Matriz (pós E9.S11)
 
 | Objetivo | Status |
 |----------|--------|
@@ -28,7 +30,7 @@ NO_FALSE_GLOBAL_PASS = PASS
 | apresentação | PASS_OFFLINE |
 | recomendações | PASS_OFFLINE |
 | paridade send/stream/simulate | PASS_OFFLINE |
-| eficiência | INCONCLUSIVE |
+| eficiência | PASS |
 
 ## Decisão
 

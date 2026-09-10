@@ -15,7 +15,7 @@
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
 | G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
-| H — cutover/cleanup | 09 | **ATENDIDO_PARCIAL** | live latency/cost + DELETE | S1–S10; DELETE/release ainda bloqueados |
+| H — cutover/cleanup | 09 | **ATENDIDO_PARCIAL** | promover dims PASS_OFFLINE→PASS / DELETE | S1–S11; efficiency live OK; DELETE ainda bloqueado |
 
 ## Protocolo por subetapa
 
@@ -147,3 +147,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Plano 09 / Onda H **ATENDIDO_PARCIAL** — próximo: live dims + DELETE gated + re-verify |
 | 2026-09-10 | E9.S10 **ATENDIDO** — unknown/legacy/parity offline; latency INCONCLUSIVE; DELETE ainda bloqueado |
 | 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: live Ollama/gateway (latency/cost) → DELETE gated |
+| 2026-09-10 | E9.S11 **ATENDIDO** — efficiency live Kimi p50/p95; provider=openai_compatible; sem Ollama |
+| 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: elevar dims PASS_OFFLINE→PASS ou autorizar DELETE com política explícita |

@@ -27,7 +27,7 @@ NO_PREMATURE_DELETE = PASS
 | required_args | PASS_OFFLINE |
 | multi_turn | PASS_OFFLINE |
 | compound | PASS_OFFLINE |
-| latency_cost | INCONCLUSIVE |
+| latency_cost | PASS (E9.S11 live) |
 | legacy_fallback_hit_rate | PASS_OFFLINE |
 
 `passStatusesForDelete` = `PASS` | `PASS_OFFLINE_AND_LIVE` | `APPROVED`.  

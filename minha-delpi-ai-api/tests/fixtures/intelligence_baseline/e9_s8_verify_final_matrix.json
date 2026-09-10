@@ -5,7 +5,7 @@
   "evaluatedAt": "2026-09-10",
   "datasetHash": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8",
   "globalReleasePass": false,
-  "aggregate": "PASS_OFFLINE_WITH_INCONCLUSIVE_DIMS",
+  "aggregate": "PASS_OFFLINE_WITH_LIVE_EFFICIENCY",
   "matrix": [
     {
       "id": "unknown_api_no_code",
@@ -93,11 +93,11 @@
       "objective": "eficiência",
       "proof": "P50/P95/tokens/tool/LLM calls",
       "expected": "aprovado",
-      "status": "INCONCLUSIVE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s10-offline-inconclusive-close.md",
-      "note": "Medir P50/P95 no stack openai_compatible + KIMI_*; Ollama não é fallback"
+      "status": "PASS",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s11-efficiency-live.md",
+      "note": "E9.S11: p50/p95 wall live no stack Kimi; tokens metadata ainda PENDING"
     }
   ],
-  "blockingStatuses": ["INCONCLUSIVE", "FAIL", "PENDING", "PENDING_RUNTIME"],
-  "note": "globalReleasePass=false enquanto qualquer célula required estiver INCONCLUSIVE — não marcar iniciativa como PASS."
+  "blockingStatuses": ["INCONCLUSIVE", "FAIL", "PENDING", "PENDING_RUNTIME", "PASS_OFFLINE"],
+  "note": "globalReleasePass=false enquanto qualquer célula estiver PASS_OFFLINE/INCONCLUSIVE — PASS pleno exigido para release."
 }
