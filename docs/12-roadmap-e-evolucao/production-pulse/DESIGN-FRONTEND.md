@@ -230,6 +230,19 @@ Ver `.cursor/rules/production-pulse-admin-hub.mdc`.
 **Catálogo:** [`docs/.../content/helpTooltips.ts`](./content/helpTooltips.ts) → `plugins/production-pulse/src/content/helpTooltips.ts`  
 **Mapa completo:** [HELP-CONTENT.md](./HELP-CONTENT.md)
 
+#### Help without visual clutter
+
+O help fica no **próprio** label ou controle — sem coluna/ícone `?` separado quando o texto já existe:
+
+| Superfície | Padrão Pulse |
+|---|---|
+| Campos / títulos de seção | `FieldLabel` / `SectionCard hint=` / `SectionHintLabel` |
+| Botões / chips / icon-only | `PpHintAction` |
+| Menu ⋯ | `PpContextMenuItem` (`hintTrigger="label"`) |
+| Legenda Conexões | `PpSectionHintLabel` no título |
+
+**Proibido:** `HelpTooltip` standalone ao lado de um título; `title={PP_HELP…}` nativo em botão de ação (usar `HintAction`); exigir `?` visível no menu.
+
 | Componente MFE | Kit | Chaves `PP_HELP` |
 |----------------|-----|------------------|
 | `ProductionPulsePageHero` | `PageHero` | `shell.heroTitle`, `shell.heroFilial`, `shell.pollAll`, `shell.modeOperator` |
@@ -260,7 +273,7 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 <SectionHintLabel hint={PP_HELP.form.sectionDevice}>Dispositivo IoT</SectionHintLabel>
 ```
 
-**Copy visível** (prosa abaixo do título de seção, além do `?`): ver [HELP-CONTENT § textos de seção](./HELP-CONTENT.md#textos-de-seção-copy-visível-não-só-tooltip). Opcional P1: `sectionIntros.ts` ao lado do catálogo.
+**Copy visível** (prosa abaixo do título de seção, além do help no próprio título): ver [HELP-CONTENT § textos de seção](./HELP-CONTENT.md#textos-de-seção-copy-visível-não-só-tooltip). Opcional P1: `sectionIntros.ts` ao lado do catálogo.
 
 **Proibido:** textos PT hardcoded no componente; `HelpTooltip.tsx` local; paths API ou IPs fixos nos helps.
 

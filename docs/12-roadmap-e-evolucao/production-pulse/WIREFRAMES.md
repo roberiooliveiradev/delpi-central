@@ -19,7 +19,7 @@
 | `│ ░░░ │` | skeleton |
 | `†` | gate permissão |
 | `▼` | seção expansível |
-| `?` | help hover (`FieldLabel` / `SectionHintLabel` → chave `PP_HELP.*`) |
+| `?` | help no **próprio** label/controle (`FieldLabel` / `SectionHintLabel` / `HintAction` / `PpContextMenuItem` → `PP_HELP.*`); **não** chrome `?` separado quando há texto |
 
 **Layout:** sidebar Minha DELPI à esquerda (portal). Root MFE `.dashboard-production-pulse.dashboard-page`.
 

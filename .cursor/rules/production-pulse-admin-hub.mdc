@@ -53,7 +53,7 @@ Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.c
 | Conteúdo | Superfície |
 |----------|------------|
 | Clique no nó | Summary popover (`EntityContextLayers`) |
-| Menu ⋯ | Context menu — ícone Lucide + `hint` (`PP_HELP.hub.menu*`) com ícone ? visível |
+| Menu ⋯ | Context menu — ícone Lucide + `hint` no próprio item (`PpContextMenuItem` / `hintTrigger="label"`; sem coluna `?`) |
 | Detalhe FW/IoT/Job | `PpDetailDialog` (wide) |
 | CRUD IoT/FW | `PpWorkbenchDialog` (page) |
 | Agendar OTA | `PpHostContainedDialog` compacto |
@@ -74,6 +74,15 @@ URL: `?modal=` canônico; `drawer=` só alias de parse. Builders emitem `modal`.
 6. CSS `.delpi-ui-*` no `index.css` do MFE.
 7. Remontar React Flow só para alternar Connection Mode.
 8. Ocultar candidatos incompatíveis (`display:none` / filtrar do array).
+9. Ícone `?` separado quando o label/controle já é o gatilho (`SectionHintLabel`, `FieldLabel`, `HintAction`, `PpContextMenuItem`).
+
+## Helps (embutidos no label/controle)
+
+- Catálogo `PP_HELP` permanece; o chrome `?` standalone é proibido quando há texto/controle.
+- Menu: `PpContextMenuItem` (default `hintTrigger="label"`).
+- Legenda Conexões: `PpSectionHintLabel` no título.
+- Botões de ação com help: `PpHintAction` (não `title=` HTML com `PP_HELP`).
+- Forms/seções: `FieldLabel` / `SectionCard hint=` / `SectionHintLabel` (já corretos).
 
 ## Módulos canônicos
 

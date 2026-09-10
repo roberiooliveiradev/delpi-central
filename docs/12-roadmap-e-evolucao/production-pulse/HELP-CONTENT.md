@@ -15,7 +15,7 @@ import { PP_HELP, getPpHelp } from "../content/helpTooltips";
 <SectionHintLabel hint={PP_HELP.form.sectionDevice}>Dispositivo IoT</SectionHintLabel>
 ```
 
-Ícone `?` do kit aparece no hover/focus — ver `FieldLabel` / `SectionHintLabel` em `@delpi/plugin-ui`.
+Ícone `?` standalone **não** é o padrão quando já existe label ou controle: o próprio elemento é o gatilho (`FieldLabel`, `SectionHintLabel`, `HintAction`, `PpContextMenuItem` com `hintTrigger="label"`). Ver `FieldLabel` / `SectionHintLabel` / `HintAction` / `ContextMenuItem` em `@delpi/plugin-ui`.
 
 ---
 
@@ -34,7 +34,7 @@ Superfície única Admin: canvas fullscreen, KPIs em chips, catálogos/jobs em p
 
 **Single Surface Principle:** resumo do nó, menu ⋯ e popover Saúde da frota = uma moldura (`variant="bare"` + `delpi-ui-popover-surface`); classes `pp-*` só layout. Filtros recolhidos no mapa = `IconButton` sem card externo. Ver [DESIGN-FRONTEND §3.6.1](./DESIGN-FRONTEND.md).
 
-**Conexões:** linha sólida = vínculo OTA explícito; sem linha = sem vínculo. Compatibilidade de driver só no **modo vínculo** (menu Vincular / arraste FW→IoT) — sem linha tracejada permanente. **Soft delete:** Desativar IoT · Arquivar versão. **Menu ⋯:** cada item com `hint` (`PP_HELP.hub.menu*`).
+**Conexões:** linha sólida = vínculo OTA explícito; sem linha = sem vínculo. Compatibilidade de driver só no **modo vínculo** (menu Vincular / arraste FW→IoT) — sem linha tracejada permanente. **Soft delete:** Desativar IoT · Arquivar versão. **Menu ⋯:** cada item com `hint` no próprio label (`PpContextMenuItem` / `PP_HELP.hub.menu*`). **Legenda:** título via `PpSectionHintLabel` (sem `HelpTooltip` standalone).
 
 Helps: `PP_HELP.hub.*`, `PP_HELP.otaLinks.*`.
 
@@ -318,7 +318,7 @@ Spec: [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md).
 
 ## Textos de seção (copy visível, não só tooltip)
 
-Estes textos aparecem **abaixo do título** da seção (prosa curta), além do help no `?`:
+Estes textos aparecem **abaixo do título** da seção (prosa curta), além do help no próprio título/label:
 
 | Local | Chave `PP_SECTION_INTROS` | Copy |
 |-------|---------------------------|------|
