@@ -1,0 +1,23 @@
+{
+  "stage": "E0_rebaseline",
+  "generated_at": "2026-09-10T12:25:00+00:00",
+  "BASE_GIT_SHA": "c20064c06",
+  "PLAN_REVIEW_GIT_SHA": "13dbec11a",
+  "HEAD_AT_E0": "13dbec11a",
+  "DISPLAY_LEGACY_REMOVE_remaining": 0,
+  "DEAD_CODE_REMOVED": [
+    "chat_capabilities_service._sections",
+    "chat_capabilities_service._skills_texts",
+    "chat_capabilities_service._catalog_texts",
+    "chat_capabilities_service._path_rules",
+    "chat_capabilities_service._path_rule_default",
+    "chat_capabilities_service._common_chat_examples",
+    "chat_capabilities_service._self_help_agent_context",
+    "chat_capabilities_service._format_business_suggestions",
+    "chat_capabilities_service._format_skills_section",
+    "chat_capabilities_service._format_action_catalog",
+    "chat_capabilities_service._resolve_path_rule"
+  ],
+  "OWNER_PATH_RULES_WAS": "ChatCapabilitiesCatalogAnswerService.resolve_path_rule",
+  "pass": true
+}

@@ -1,13 +1,11 @@
 # Residual path→display — dívidas restantes
 
-**Plano vigente:** `~/.cursor/plans/residual_path_display_cleanup_28b9adee.plan.md`  
-**Plano STALE (parcialmente absorvido):** `~/.cursor/plans/residual_path_catalogs_cleanup_7f3a9c21.plan.md`  
-**BASE:** `c20064c06` · **HEAD ao documentar:** `ee4a43c0e`  
-**Veredito atual:** `PASS_WITH_DOCUMENTED_DEBT` (D4 + D2 fechados)  
-**Live:** SEND / F5 / HISTORY / STREAM / SIMULATE = PASS  
-(`docs/testing/evidence/residual_path_display_live_surfaces.json`, `residual_path_display_stream_simulate.json`)
+**Plano vigente:** `~/.cursor/plans/residual_path_catalogs_3a3dbf91.plan.md`  
+**BASE:** `c20064c06` · **HEAD ao documentar (pré-D1):** `13dbec11a`  
+**Veredito atual:** `PASS` (D1 H-CAP-04 = A — pathRules removidos)  
+**Live:** revalidar E10 após rebuild AI
 
-Este arquivo é a lista **canônica do que ainda falta** após o cutover/cleanup/generalização de path→display. Não reabre o kill de catálogos já removidos.
+Este arquivo é a lista **canônica do que ainda falta** após o cutover/cleanup/generalização de path→display.
 
 ---
 
@@ -15,102 +13,54 @@ Este arquivo é a lista **canônica do que ainda falta** após o cutover/cleanup
 
 | Domínio | Estado | Evidência |
 |---------|--------|-----------|
-| Action labels sem `pathLabels` | PASS | E1 + smoke inprocess |
-| Titles sem fragment maps / `pathTitles` | PASS | E2 |
+| Action labels sem `pathLabels` | PASS | E1 + smoke |
+| Titles sem fragment maps | PASS | E2 |
 | `stackPresentationPlan` per-response | PASS | E3 |
-| MFE render-only + mirrors `routeTitles`/`routeFraming` | PASS | E4 + E13.S3 |
-| Scopes API↔MFE sync | PASS | E13.S4 |
-| Field formats KEEP (OPENAPI_COVERED=0) | PASS | E6 |
-| Recommendations producer turno (delta LLM=0) | PASS | E16 + live recs |
-| Field-label parity table/chart/KPI/insight | PASS | E8 |
-| Locale pt-BR coverage (551/551) | PASS | E11 |
-| Ajuda features/capabilities | PASS | E18.S1 |
-| Live SEND + F5/HISTORY + smoke HTTP | PASS | live_surfaces + smoke |
-| Live STREAM + SIMULATE (D4) | PASS | stream_simulate |
-| Recommendations static cleanup (D2) | PASS | E16 cleanup + coverage 27/27 |
-| W-ROUTING charter + plano-filho (docs only) | PASS | `w_routing_charter.json` |
+| MFE render-only + mirrors | PASS | E4 + E13 |
+| Field formats KEEP | PASS | E6 |
+| Recommendations `recommendationQueries` | PASS | E16 + D2 |
+| Field-label parity | PASS | E8 |
+| Locale pt-BR coverage | PASS | E11 |
+| Live STREAM/SIMULATE | PASS | D4 |
+| **capabilities.pathRules → Action Catalog uxCapability (D1)** | **PASS** | E5 H-CAP-04 A + classifier + DELETE pathRules |
+| Dead `title_for_path` | PASS | E9 |
+| MFE merge title sem hardcode Estoque | PASS | E8 |
 
 ---
 
 ## Dívidas abertas
-
-### D1 — `capabilities.pathRules` (KEEP)
-
-| | |
-|--|--|
-| **Status** | BLOQUEADO / dívida consciente |
-| **Por quê** | H-CAP-01..05 não justificaram `x-delpi.capabilityGroup`; E5 decidiu KEEP |
-| **Não fazer** | Introduzir `capabilityGroup` ou apagar `pathRules` sem inventário Action Catalog |
-| **Próximo plano** | Charter próprio: classificação de categorias UX no Action Catalog → cutover consumer → DELETE pathRules |
-| **Evidência** | `docs/testing/evidence/residual_path_display_e5_capability_hcap.json` |
-
-### D2 — Cleanup do JSON estático de recommendations
-
-| | |
-|--|--|
-| **Status** | PASS |
-| **Feito** | Orfãos (`directives`, `structure`, `system_metadata`, `kpi_summary`, `sale_pricing`) migrados para `recommendationQueries`; nó estático `recommendations` removido; fallback textual usa queries; gate 27/27 + negativo unknown profile |
-| **Não fazer** | Reintroduzir lista estática paralela |
-| **Evidência** | `residual_path_display_e16_recommendations_cleanup.json` (+ producer E16) |
 
 ### D3 — Locale EN==pt stubs (api-delpi)
 
 | | |
 |--|--|
 | **Status** | BACKLOG qualidade OpenAPI (fora de path→display) |
-| **Contagem** | ~28 ops com `locale.en.summary == locale.pt-BR.summary` |
-| **Não misturar** | Com kill de catálogos de display do chat |
-| **Owner** | api-delpi / `tv_route_audience.json` + polish locale |
-
-### D4 — STREAM / SIMULATE formal
-
-| | |
-|--|--|
-| **Status** | PASS |
-| **Feito** | Harness `scripts/smoke_residual_path_display_stream_simulate.py` + fix simulate passa `allowedActionIds` do binding do agente no sandbox |
-| **Evidência** | `docs/testing/evidence/residual_path_display_stream_simulate.json` |
-| **Aceite** | STREAM SSE e SIMULATE admin com `stackPresentationPlan` / tabela e sem leak técnico EN |
+| **Owner** | api-delpi |
 
 ### D5 — Evals R1–R11 corpus completo
 
 | | |
 |--|--|
 | **Status** | NÃO RODADO como corpus formal |
-| **Feito** | Unit + smoke + live P0 |
-| **Gap** | `BASELINE_RUN_ID` / `CANDIDATE_RUN_ID` nulos no verify-final |
-| **Quando** | Se houver regressão de inteligência/routing/display em produção; senão opcional |
+| **Quando** | sob demanda |
 
 ---
 
-## Fora de escopo (não é dívida deste plano)
+## Fora de escopo
 
 | Item | Destino |
 |------|---------|
-| `operational_route_registry` / `pathMarkers` | W-ROUTING (`w_routing_pathmarkers_*.plan.md`) |
-| `presentation_profiles.pathRules` / pathContains | Routing / presentation detect — charter separado |
-| MegaLabelService / LLM por visual | Proibido (D-07 do plano) |
-| Commit/push como DoD do plano antigo | Superado — commits já realizados por pedido explícito |
+| `presentation_profiles.pathRules` / pathMarkers | W-ROUTING |
+| `segment_map` path-tail humanizer | LEGITIMATE_KEEP (fallback labels) |
+| `assistant_capabilities_catalog_generator._PATH_RULES` | featureId index (não UX capabilities) |
 
 ---
 
-## Ordem sugerida para fechar
-
-```text
-1. D1 capabilities pathRules (plano novo, maior risco) — charter próprio
-2. D3 EN==pt (backlog api-delpi paralelo)
-3. D5 evals corpus (sob demanda)
-```
-
----
-
-## Referências de evidência
+## Referências
 
 | Artefato | Uso |
 |----------|-----|
-| `docs/testing/evidence/residual_path_display_e10_verify_final.json` | Veredito C/C/G |
-| `docs/testing/evidence/residual_path_display_live_surfaces.json` | Live SEND/F5 |
-| `docs/testing/evidence/residual_path_display_stream_simulate.json` | Live STREAM/SIMULATE (D4) |
-| `docs/testing/evidence/residual_path_catalogs_7f3a9c21_residual_verify.json` | Residual do plano STALE |
-| `docs/testing/evidence/w_routing_charter.json` | Charter routing |
-| `scripts/smoke_catalog_display_openapi.py` | Smoke inprocess+http (`message` field) |
-| `scripts/smoke_residual_path_display_stream_simulate.py` | Smoke STREAM+SIMULATE |
+| `residual_path_display_e5_hcap04_decision.json` | Decisão A H-CAP-04 |
+| `residual_path_display_e0_rebaseline.json` | Dead code E0 |
+| `capability_ux_classification.json` | Regras determinísticas import/runtime fallback |
+| `scripts/smoke_catalog_display_openapi.py` | Smoke HTTP |

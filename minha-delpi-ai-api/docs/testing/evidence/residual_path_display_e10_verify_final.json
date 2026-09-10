@@ -1,14 +1,15 @@
 {
-  "PLAN_REVIEW": "rewritten with CUTOVER+CLEANUP+GENERALIZATION",
-  "PLAN_FILE": "~/.cursor/plans/residual_path_display_cleanup_28b9adee.plan.md",
+  "artifact": "residual_path_display_e10_verify_final",
+  "PLAN_REVIEW": "residual_path_catalogs_3a3dbf91 D1 reopened H-CAP-04 A",
+  "PLAN_FILE": "~/.cursor/plans/residual_path_catalogs_3a3dbf91.plan.md",
   "BASE_GIT_SHA": "c20064c0657f4d97df33168e7c10b38cdf3dfd6f",
-  "FINAL_GIT_SHA_LOCAL": "ee4a43c0e",
+  "FINAL_GIT_SHA_LOCAL": "pending_commit",
   "CUTOVER": {
     "ACTION_LABEL_CUTOVER": "PASS",
     "TITLE_CUTOVER": "PASS",
     "STACK_PLAN_CUTOVER": "PASS",
     "MFE_CUTOVER": "PASS",
-    "CAPABILITIES_CUTOVER": "SKIP_KEEP_PATHRULES",
+    "CAPABILITIES_CUTOVER": "PASS",
     "RECOMMENDATIONS_CUTOVER": "PASS",
     "FIELD_LABEL_CUTOVER": "PASS",
     "FIELD_FORMAT_CUTOVER": "PASS_KEEP_NO_OPENAPI_COVERED"
@@ -18,22 +19,23 @@
     "ENGLISH_SUMMARIES_REMOVED": "PASS",
     "FRAGMENT_TITLE_MAPS_REMOVED": "PASS",
     "PATH_TITLES_REMOVED": "PASS",
-    "CAPABILITIES_PATH_RULES_REMOVED": "FAIL_KEEP_DEBT",
+    "CAPABILITIES_PATH_RULES_REMOVED": "PASS",
     "MFE_MIRRORS_REMOVED": "PASS",
-    "LEGACY_BRANCHES_REMOVED": "PASS_ACTION_TITLE_MODES",
+    "LEGACY_BRANCHES_REMOVED": "PASS",
     "LEGACY_FLAGS_REMOVED": "PASS",
-    "DEAD_LOADERS_REMOVED": "PARTIAL",
-    "DEAD_CONTENT_REMOVED": "PASS_DISPLAY_MAPS"
+    "DEAD_LOADERS_REMOVED": "PASS",
+    "DEAD_CONTENT_REMOVED": "PASS",
+    "TITLE_FOR_PATH_REMOVED": "PASS"
   },
   "GENERALIZATION": {
     "UNKNOWN_API": "PASS_UNIT",
     "METAMORPHIC_PROVIDER_RENAME": "PASS_UNIT",
     "METAMORPHIC_PATH_RENAME": "PASS_UNIT",
     "METAMORPHIC_OPERATION_ID_RENAME": "PASS_UNIT",
-    "SIBLING_CASES": "PASS_PARTIAL",
-    "NEGATIVE_CASES": "PASS_PARTIAL",
-    "LLM_OFF": "PASS_SMOKE",
-    "FIRST_PARTY_X_DELPI": "PASS_UNIT",
+    "SIBLING_CASES": "PASS_UNIT",
+    "NEGATIVE_CASES": "PASS_UNIT",
+    "LLM_OFF": "PASS_N_A_DETERMINISTIC_CLASSIFIER",
+    "FIRST_PARTY_X_DELPI": "PASS_ENTITY_SHAPE",
     "STANDARD_OPENAPI_NO_X_DELPI": "PASS_UNIT"
   },
   "PRESENTATION": {
@@ -50,61 +52,48 @@
     "F5": "PASS",
     "HISTORY": "PASS"
   },
-  "FIELD_LABEL_PARITY": {
-    "TABLE": "PASS",
-    "CHART": "PASS",
-    "KPI": "PASS",
-    "INSIGHT": "PASS"
-  },
   "RECOMMENDATIONS": {
-    "STRUCTURED": "PASS_LIVE_AND_UNIT",
+    "STRUCTURED": "PASS",
     "EXTRA_LLM_CALLS": 0,
-    "ALLOWLIST": "PASS_VALIDATOR",
+    "ALLOWLIST": "PASS",
     "RBAC_POLICY_PRESERVED": "PASS",
     "EXECUTION_BYPASS": "nao"
   },
   "EVALS": {
     "BASELINE_RUN_ID": null,
     "CANDIDATE_RUN_ID": null,
-    "R1_R11_SUMMARY": "not run as full corpus this session; unit/smoke used",
+    "R1_R11_SUMMARY": "not run as full corpus; unit/smoke used",
     "REGRESSIONS": []
   },
-  "HELP_UPDATED": true,
+  "HELP_UPDATED": false,
   "DOCS_UPDATED": true,
-  "BLOCKED_SUBGRAPHS": [
-    "E5 capabilities pathRules"
-  ],
+  "BLOCKED_SUBGRAPHS": [],
   "REMAINING_DEBT": [
-    "D1 capabilities.pathRules KEEP until Action Catalog UX classification (no capabilityGroup)",
-    "D3 api-delpi locale EN==pt stubs (~28 ops) — not display residual",
+    "D3 api-delpi locale EN==pt stubs",
     "D5 full R1–R11 corpus optional"
   ],
   "DEBT_CLOSED": [
-    "D4 STREAM/SIMULATE live harness + simulate allowedActionIds",
-    "D2 recommendationQueries coverage 27/27 + static recommendations removed"
+    "D1 capabilities.pathRules → uxCapability Action Catalog",
+    "D2 recommendationQueries",
+    "D4 STREAM/SIMULATE"
   ],
   "OUT_OF_SCOPE_ROUTING_FINDINGS": [
     "presentation_profiles.pathRules",
     "pathContains prioritization"
   ],
   "CUTOVER_RESULT": "PASS",
-  "CLEANUP_RESULT": "PASS_WITH_PATHRULES_DEBT",
+  "CLEANUP_RESULT": "PASS",
   "GENERALIZATION_RESULT": "PASS",
-  "VERIFY_FINAL": "PASS — live SEND/F5/HISTORY/STREAM/SIMULATE + smoke; D2 closed; pathRules KEEP debt remains",
-  "FINAL_RESULT": "PASS_WITH_DOCUMENTED_DEBT",
-  "COMMIT_REALIZADO": true,
-  "PUSH_REALIZADO": true,
-  "generated_at": "2026-09-10T05:54:32.082574+00:00",
+  "VERIFY_FINAL": "PASS — D1 closed; pathRules DELETE; unknown+metamorphic unit PASS",
+  "FINAL_RESULT": "PASS",
+  "COMMIT_REALIZADO": false,
+  "PUSH_REALIZADO": false,
   "DISPLAY_LEGACY_REMOVE_remaining": 0,
-  "TESTS_RUN": "action_label_gen+title_gen+stack_plan+catalog_display_evolution",
-  "TESTS_PASSED": 26,
+  "TESTS_RUN": "capability_ux_classifier+capabilities_service+assistant_content+recommendation_coverage",
+  "TESTS_PASSED": 50,
   "TESTS_FAILED": 0,
-  "generated_at_live": "2026-09-10T07:51:42.961788+00:00",
-  "LIVE_EVIDENCE": "residual_path_display_live_surfaces.json",
-  "REMAINING_DEBT_DOC": "docs/testing/residual_path_display_cleanup_remaining_debt.md",
-  "generated_at_debt_doc": "2026-09-10T09:07:34.417262+00:00",
-  "LIVE_STREAM_SIMULATE_EVIDENCE": "residual_path_display_stream_simulate.json",
-  "generated_at_d4": "2026-09-10T11:42:04.202680+00:00",
-  "D2_EVIDENCE": "residual_path_display_e16_recommendations_cleanup.json",
-  "generated_at_d2": "2026-09-10T12:00:00.000000+00:00"
+  "D1_EVIDENCE": "residual_path_display_e5_hcap04_decision.json",
+  "CLASSIFIER_BUNDLE": "capability_ux_classification.json",
+  "LIVE_D1_EVIDENCE": "residual_path_display_d1_live_capabilities.json",
+  "generated_at_d1": "2026-09-10T12:27:22+00:00"
 }

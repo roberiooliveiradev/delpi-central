@@ -104,15 +104,6 @@ def test_presenter_kpi_title_metamorphic_path_same_metadata():
     assert a == b == "Meta % ROL comercial — filial"
 
 
-def test_title_for_path_helper_returns_none_without_fragment_catalog():
-    title = ChatAssistantContentService.title_for_path(
-        "presenter_content",
-        "/production/orders/open?branch=01",
-        default=None,
-    )
-    assert title is None
-
-
 def test_kpi_title_unknown_path_uses_safe_fallback():
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,

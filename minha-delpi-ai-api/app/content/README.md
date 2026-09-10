@@ -16,7 +16,7 @@ Arquivos em `assistant/` usados pela API de chat:
 
 | Arquivo | Uso |
 |---------|-----|
-| `capabilities.json` | Catálogo de capacidades, `pathRules` api-delpi e detecção operacional (`detection.operationalQueryPatterns`, `suppliesKpiTerms`, …) |
+| `capabilities.json` | Catálogo de capacidades e detecção operacional; buckets UX em `capability_ux_classification.json` (`detection.operationalQueryPatterns`, `suppliesKpiTerms`, …) |
 | `api_route_domains.json` | Domínios de rota operacional (`product`, `department_kpi`, `supplies_kpi`, …) e `parameterStrategy` para `ExternalActionRouteSelectionService` |
 | `attachments.json` | Welcome de anexo, preview, arquivo extenso, chips de follow-up e ambiguidade da lousa (`ChatAttachmentContentService`) |
 | `smoke_e2e_scenarios.json` | Perguntas e marcadores dos smokes E2E (`operational_mixed`, `empresa_kpi`) |

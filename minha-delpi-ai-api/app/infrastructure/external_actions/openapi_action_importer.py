@@ -109,6 +109,12 @@ class OpenApiActionImporter:
             metadata["whenNotToUse"] = when_not
             payload["delpi_metadata"] = metadata
 
+        from app.domain.services.capability_ux_classifier_service import (
+            CapabilityUxClassifierService,
+        )
+
+        CapabilityUxClassifierService.attach_to_action(payload)
+
         return payload
 
     def _operation_id_from_path(self, method: str, path: str) -> str:

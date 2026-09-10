@@ -19,18 +19,6 @@ def _capabilities_content() -> dict:
     return ContentService.load_json("assistant/capabilities")
 
 
-def _sections() -> dict:
-    return _capabilities_content().get("sections") or {}
-
-
-def _skills_texts() -> dict:
-    return _capabilities_content().get("skills") or {}
-
-
-def _catalog_texts() -> dict:
-    return _capabilities_content().get("catalog") or {}
-
-
 _external_action_repository_loader: Callable[[], ExternalActionRepositoryPort] | None = None
 
 
@@ -46,46 +34,8 @@ def _detection() -> dict:
 
 
 @lru_cache(maxsize=1)
-def _path_rules() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
-    data = _capabilities_content()
-    rules = data.get("pathRules") or []
-    parsed: list[tuple[str, str, tuple[str, ...]]] = []
-    for item in rules:
-        if not isinstance(item, dict):
-            continue
-        token = str(item.get("token") or "").strip()
-        category = str(item.get("category") or "").strip()
-        examples = item.get("examples") or []
-        if token and category:
-            parsed.append((token, category, tuple(str(ex) for ex in examples)))
-    return tuple(parsed)
-
-
-@lru_cache(maxsize=1)
-def _path_rule_default() -> tuple[str, tuple[str, ...]]:
-    data = _capabilities_content()
-    default = data.get("pathRuleDefault") or {}
-    if not isinstance(default, dict):
-        return "Outras APIs", ("consulta conforme rota habilitada", "dados operacionais autorizados")
-    category = str(default.get("category") or "Outras APIs")
-    examples = tuple(str(item) for item in (default.get("examples") or ()))
-    return category, examples
-
-
-@lru_cache(maxsize=1)
-def _common_chat_examples() -> tuple[str, ...]:
-    data = _capabilities_content()
-    return tuple(str(item) for item in (data.get("commonExamples") or ()))
-
-
-@lru_cache(maxsize=1)
 def _feature_answers() -> dict:
     return _capabilities_content().get("featureAnswers") or {}
-
-
-@lru_cache(maxsize=1)
-def _self_help_agent_context() -> dict:
-    return _capabilities_content().get("selfHelpAgentContext") or {}
 
 
 @lru_cache(maxsize=1)
@@ -956,29 +906,6 @@ class ChatCapabilitiesService:
             allowed_action_ids=allowed_action_ids,
             action_catalog=action_catalog,
         )
-
-    @classmethod
-    def _format_business_suggestions(cls, content: dict) -> list[str]:
-        return ChatCapabilitiesCatalogAnswerService.format_business_suggestions(content)
-
-    @classmethod
-    def _format_skills_section(
-        cls,
-        skills: dict,
-        allowed_action_ids: list[str] | None,
-    ) -> list[str]:
-        return ChatCapabilitiesCatalogAnswerService.format_skills_section(
-            skills,
-            allowed_action_ids,
-        )
-
-    @classmethod
-    def _format_action_catalog(cls, catalog: list[dict], allowed_ids: list[str]) -> list[str]:
-        return ChatCapabilitiesCatalogAnswerService.format_action_catalog(catalog, allowed_ids)
-
-    @classmethod
-    def _resolve_path_rule(cls, path: str) -> tuple[str, tuple[str, ...]]:
-        return ChatCapabilitiesCatalogAnswerService.resolve_path_rule(path)
 
     @classmethod
     def load_action_catalog_for_agent(

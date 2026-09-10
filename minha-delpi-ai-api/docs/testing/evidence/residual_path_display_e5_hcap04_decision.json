@@ -1,0 +1,31 @@
+{
+  "E5": "H-CAP-04_REOPEN",
+  "D1_REOPENED": true,
+  "H_CAP_01": "REJECTED_AS_DROP_IN",
+  "H_CAP_02": "REJECTED_AS_DROP_IN",
+  "H_CAP_03": "REJECTED_AS_DROP_IN",
+  "H_CAP_04": "VIABLE_A",
+  "H_CAP_05": "FAIL_DO_NOT_CREATE_capabilityGroup",
+  "DECISION": "A",
+  "CAPABILITY_CURRENT": "Action Catalog rows + capabilities.pathRules token-in-path grouping",
+  "CAPABILITY_TARGET": "OpenAPI signals → CapabilityUxClassifierService at import → delpi_metadata.uxCapability → ChatCapabilities*/composer",
+  "CONTRACT": {
+    "field": "delpi_metadata.uxCapability",
+    "shape": {
+      "category": "string",
+      "examples": ["string"],
+      "source": "entity_shape|keyword|persisted|default",
+      "confidence": "high|medium|low"
+    },
+    "persistence": "JSONB delpi_metadata — no new column",
+    "hot_path_llm": false
+  },
+  "WHY_NOT_H_CAP_05": [
+    "would move manual catalog into OpenAPI per operation",
+    "unknown provider must work without x-delpi",
+    "existing signals + import classification sufficient"
+  ],
+  "FALLBACK": "Outras consultas",
+  "CLASSIFIER_BUNDLE": "capability_ux_classification.json",
+  "pass": true
+}

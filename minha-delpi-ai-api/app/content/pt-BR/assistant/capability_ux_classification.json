@@ -1,0 +1,1294 @@
+{
+  "version": "2026.09.10",
+  "defaultCategory": "Outras consultas",
+  "defaultExamples": [
+    "consulta conforme rota habilitada",
+    "dados operacionais autorizados"
+  ],
+  "entityRules": [
+    {
+      "entity": "product",
+      "shape": "stock",
+      "category": "Estoque de produto",
+      "examples": [
+        "Consulte o estoque do produto 10080001",
+        "estoque do produto 10080001",
+        "saldo do 10080001",
+        "quanto tem em estoque do 10080001"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "summary",
+      "category": "Descrição / cadastro / ficha do produto",
+      "examples": [
+        "descrição 10080011",
+        "descrição do produto 10080001",
+        "cadastro do produto 10080011",
+        "ficha do produto 10080011"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "suppliers",
+      "category": "Fornecedores de produto",
+      "examples": [
+        "fornecedores do 10080001",
+        "quem fornece o produto 10080001",
+        "forncedores do 10080001 em tabela"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "customers",
+      "category": "Clientes de produto",
+      "examples": [
+        "clientes do produto 10080001",
+        "quem compra o 10080001"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "structure",
+      "category": "Estrutura (BOM)",
+      "examples": [
+        "estrutura do produto 10080001",
+        "componentes do 10080001",
+        "bom do 10080001"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "inspection",
+      "category": "Inspeção / qualidade",
+      "examples": [
+        "inspeção do produto 10080001",
+        "plano de inspeção do 10080001"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "stock",
+      "category": "Valor total de estoque (empresa)",
+      "examples": [
+        "valor total de estoque",
+        "quanto vale o estoque"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Consumo de produção (ranking)",
+      "examples": [
+        "itens mais consumidos no mes",
+        "top consumo de materia prima",
+        "ranking de consumo filial 01",
+        "materia prima mais consumida"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Consumo por centro de trabalho",
+      "examples": [
+        "consumo por centro de trabalho",
+        "itens mais consumidos por ct",
+        "maior consumo por ct",
+        "ranking consumo centro de trabalho"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Consumo validado por apontamento",
+      "examples": [
+        "consumo validado por apontamento",
+        "consumo apontado no mes",
+        "consumo confirmado por apontamento",
+        "baixa validada producao"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Consumo real de um item",
+      "examples": [
+        "consumo real do item 01010001",
+        "quanto foi consumido do produto",
+        "consumo do codigo 01010001",
+        "baixa do componente na producao"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Refugos por matéria-prima",
+      "examples": [
+        "refugos de materia prima",
+        "top perdas de mp",
+        "ranking refugo março",
+        "scrap matéria-prima filial 02"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Registros de refugo",
+      "examples": [
+        "listar refugos detalhado",
+        "registros de perda no periodo",
+        "detalhe refugo linha a linha",
+        "historico de refugo"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "OPs em aberto",
+      "examples": [
+        "ops em aberto hoje",
+        "ordens de producao abertas",
+        "liste ops em aberto filial 01",
+        "backlog de producao hoje"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "OPs finalizadas",
+      "examples": [
+        "ops finalizadas hoje",
+        "ordens de producao encerradas",
+        "quais ops finalizadas hoje",
+        "ops concluidas na data"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "OPs finalizadas sem consumo",
+      "examples": [
+        "ops finalizadas sem baixa de mp",
+        "ordens encerradas sem consumo",
+        "op finalizada sem consumo hoje",
+        "fechou op sem baixa material"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "summary",
+      "category": "Resumo de OPs por CT",
+      "examples": [
+        "resumo de ops por centro de trabalho",
+        "ops por ct hoje",
+        "finalizadas e abertas por ct",
+        "painel ops por ct"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Resumo de OPs por CT",
+      "examples": [
+        "resumo de ops por centro de trabalho",
+        "ops por ct hoje",
+        "finalizadas e abertas por ct",
+        "painel ops por ct"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Tempo médio planejado por CT",
+      "examples": [
+        "tempo medio planejado por ct",
+        "tempo planejado por centro de trabalho",
+        "media setup por ct",
+        "tempo standard ct hoje"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Componentes sem empenho",
+      "examples": [
+        "componentes sem empenho",
+        "travamento por falta de empenho",
+        "materiais sem reserva hoje",
+        "empenho zero filial 01"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Planejado × real por OP",
+      "examples": [
+        "compare tempo planejado e real",
+        "planejado versus real das ops",
+        "desvio tempo produtivo hoje",
+        "estouro de tempo op"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Programação de produção (hoje)",
+      "examples": [
+        "quais produtos serao produzidos hoje",
+        "programacao de producao hoje",
+        "cronograma producao hoje",
+        "o que fabricar hoje"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Indicadores de produção",
+      "examples": [
+        "indicadores de produção"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "summary",
+      "category": "Resumo do produto",
+      "examples": [
+        "resumo do produto 10080001",
+        "visao geral do item"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Detalhe do apontamento OEE",
+      "examples": [
+        "detalhe do apontamento oee",
+        "roteiro e estrutura do apontamento",
+        "tempos previsto e realizado do apontamento",
+        "analise de tempos do apontamento sh6010"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "OEE produção — listagem de apontamentos",
+      "examples": [
+        "oee de producao com apontamentos",
+        "listar apontamentos oee",
+        "apontamentos fora da faixa oee",
+        "oee por centro de trabalho"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "OTD produção — listagem de ordens",
+      "examples": [
+        "otd de producao com ordens",
+        "ops atrasadas na producao",
+        "listar ordens de producao no prazo",
+        "entrega no prazo das ops"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "OEE produção — apontamentos",
+      "examples": [
+        "listar apontamentos oee",
+        "apontamentos fora da faixa",
+        "painel oee producao"
+      ]
+    },
+    {
+      "entity": "product",
+      "shape": "production",
+      "category": "Detalhe do apontamento (roteiro e tempos)",
+      "examples": [
+        "detalhe do apontamento oee",
+        "roteiro do apontamento",
+        "analise de tempos previsto x realizado"
+      ]
+    }
+  ],
+  "keywordRules": [
+    {
+      "matchAny": [
+        "estoque",
+        "produto",
+        "stock",
+        "inventory",
+        "warehouse",
+        "saldo"
+      ],
+      "category": "Estoque de produto",
+      "examples": [
+        "Consulte o estoque do produto 10080001",
+        "estoque do produto 10080001",
+        "saldo do 10080001",
+        "quanto tem em estoque do 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "cadastro",
+        "descrição",
+        "ficha",
+        "produto",
+        "summary"
+      ],
+      "category": "Descrição / cadastro / ficha do produto",
+      "examples": [
+        "descrição 10080011",
+        "descrição do produto 10080001",
+        "cadastro do produto 10080011",
+        "ficha do produto 10080011"
+      ]
+    },
+    {
+      "matchAny": [
+        "fornece",
+        "fornecedores",
+        "produto",
+        "quem",
+        "suppliers"
+      ],
+      "category": "Fornecedores de produto",
+      "examples": [
+        "fornecedores do 10080001",
+        "quem fornece o produto 10080001",
+        "forncedores do 10080001 em tabela"
+      ]
+    },
+    {
+      "matchAny": [
+        "clientes",
+        "compra",
+        "customers",
+        "produto",
+        "quem"
+      ],
+      "category": "Clientes de produto",
+      "examples": [
+        "clientes do produto 10080001",
+        "quem compra o 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "componentes",
+        "estrutura",
+        "produto",
+        "structure"
+      ],
+      "category": "Estrutura (BOM)",
+      "examples": [
+        "estrutura do produto 10080001",
+        "componentes do 10080001",
+        "bom do 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "onde",
+        "pais",
+        "parents",
+        "produto",
+        "produtos",
+        "usado"
+      ],
+      "category": "Onde o produto é usado (pais)",
+      "examples": [
+        "onde o 10080001 é usado",
+        "produtos pai do 10080001",
+        "pai do 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "compras",
+        "historico",
+        "produto",
+        "purchases"
+      ],
+      "category": "Compras de produto",
+      "examples": [
+        "compras do produto 10080001",
+        "historico de compras do 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "faturamento",
+        "produto",
+        "sales",
+        "vendas"
+      ],
+      "category": "Vendas de produto",
+      "examples": [
+        "vendas do produto 10080001",
+        "faturamento do 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "preço",
+        "preços",
+        "prices",
+        "produto",
+        "tabela",
+        "tabelas"
+      ],
+      "category": "Preços / tabelas",
+      "examples": [
+        "preço do produto 10080001",
+        "tabela de preço do 10080001",
+        "quanto custa o 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "etapas",
+        "guide",
+        "produto",
+        "produção",
+        "roteiro"
+      ],
+      "category": "Roteiro de produção",
+      "examples": [
+        "roteiro do produto 10080001",
+        "etapas do 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "inspection",
+        "inspeção",
+        "plano",
+        "produto",
+        "qualidade"
+      ],
+      "category": "Inspeção / qualidade",
+      "examples": [
+        "inspeção do produto 10080001",
+        "plano de inspeção do 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "internal",
+        "internas",
+        "movements",
+        "movimentações",
+        "transferências",
+        "internal-movements"
+      ],
+      "category": "Movimentações internas",
+      "examples": [
+        "movimentações internas do 10080001",
+        "transferências do 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "entrada",
+        "fiscais",
+        "inbound",
+        "invoice",
+        "notas",
+        "inbound-invoice"
+      ],
+      "category": "Notas fiscais de entrada",
+      "examples": [
+        "notas de entrada do 10080001",
+        "nfe entrada do 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "fiscais",
+        "invoice",
+        "notas",
+        "outbound",
+        "saída",
+        "outbound-invoice"
+      ],
+      "category": "Notas fiscais de saída",
+      "examples": [
+        "notas de saída do 10080001",
+        "nfe saída do 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "bandeira",
+        "busca",
+        "buscar",
+        "descrição",
+        "parafuso",
+        "pesquisar",
+        "produto",
+        "produtos",
+        "search"
+      ],
+      "category": "Busca de produtos",
+      "examples": [
+        "buscar produto por descrição parafuso",
+        "pesquisar produto bandeira"
+      ]
+    },
+    {
+      "matchAny": [
+        "analisador",
+        "analyser",
+        "integrada",
+        "produto",
+        "visão"
+      ],
+      "category": "Visão integrada / analisador do produto",
+      "examples": [
+        "visão integrada do produto 10080001",
+        "analisador do produto 10080001",
+        "ficha completa do 10080001"
+      ]
+    },
+    {
+      "matchAny": [
+        "engineering",
+        "filial",
+        "listas",
+        "lmps",
+        "materiais",
+        "projeto"
+      ],
+      "category": "LMP / listas de materiais de projeto",
+      "examples": [
+        "listar lmps",
+        "lmps da filial 01",
+        "detalhe da lmp ov 003578"
+      ]
+    },
+    {
+      "matchAny": [
+        "detalhe",
+        "detalhes",
+        "lmps"
+      ],
+      "category": "Detalhe de LMP por OV",
+      "examples": [
+        "lmp ov 003578",
+        "detalhes da ov 003578",
+        "proposta 003578 engenharia"
+      ]
+    },
+    {
+      "matchAny": [
+        "empresa",
+        "estoque",
+        "quanto",
+        "stock",
+        "supplies",
+        "total",
+        "vale",
+        "valor",
+        "value",
+        "stock-value"
+      ],
+      "category": "Valor total de estoque (empresa)",
+      "examples": [
+        "valor total de estoque",
+        "quanto vale o estoque"
+      ]
+    },
+    {
+      "matchAny": [
+        "estoque",
+        "giro",
+        "inventory",
+        "turnover",
+        "inventory-turnover"
+      ],
+      "category": "Giro de estoque (IDD)",
+      "examples": [
+        "giro de estoque",
+        "idd do estoque"
+      ]
+    },
+    {
+      "matchAny": [
+        "indicador",
+        "suprimentos"
+      ],
+      "category": "Indicador CPV",
+      "examples": [
+        "cpv de suprimentos",
+        "indicador cpv"
+      ]
+    },
+    {
+      "matchAny": [
+        "entregas",
+        "indicador"
+      ],
+      "category": "Indicador OTD",
+      "examples": [
+        "otd de entregas",
+        "indicador otd"
+      ]
+    },
+    {
+      "matchAny": [
+        "autorizada",
+        "consulta",
+        "data",
+        "leitura",
+        "select",
+        "somente"
+      ],
+      "category": "Consulta SQL (leitura)",
+      "examples": [
+        "consulta sql autorizada",
+        "select somente leitura"
+      ]
+    },
+    {
+      "matchAny": [
+        "ordens",
+        "order",
+        "período",
+        "sale",
+        "venda",
+        "sale-order"
+      ],
+      "category": "Ordens de venda",
+      "examples": [
+        "ordens de venda do período",
+        "listar ovs"
+      ]
+    },
+    {
+      "matchAny": [
+        "comerciais",
+        "commercial",
+        "indicadores"
+      ],
+      "category": "Indicadores comerciais",
+      "examples": [
+        "indicadores comerciais do mês"
+      ]
+    },
+    {
+      "matchAny": [
+        "financeiros",
+        "financial",
+        "indicadores"
+      ],
+      "category": "Indicadores financeiros",
+      "examples": [
+        "indicadores financeiros"
+      ]
+    },
+    {
+      "matchAny": [
+        "consumidos",
+        "consumo",
+        "consumption",
+        "items",
+        "itens",
+        "mais",
+        "materia",
+        "prima",
+        "production",
+        "produção",
+        "ranking"
+      ],
+      "category": "Consumo de produção (ranking)",
+      "examples": [
+        "itens mais consumidos no mes",
+        "top consumo de materia prima",
+        "ranking de consumo filial 01",
+        "materia prima mais consumida"
+      ]
+    },
+    {
+      "matchAny": [
+        "center",
+        "centro",
+        "consumidos",
+        "consumo",
+        "consumption",
+        "items",
+        "itens",
+        "mais",
+        "production",
+        "trabalho",
+        "work"
+      ],
+      "category": "Consumo por centro de trabalho",
+      "examples": [
+        "consumo por centro de trabalho",
+        "itens mais consumidos por ct",
+        "maior consumo por ct",
+        "ranking consumo centro de trabalho"
+      ]
+    },
+    {
+      "matchAny": [
+        "apontado",
+        "apontamento",
+        "consumo",
+        "consumption",
+        "items",
+        "production",
+        "validado",
+        "validated",
+        "top-items-validated"
+      ],
+      "category": "Consumo validado por apontamento",
+      "examples": [
+        "consumo validado por apontamento",
+        "consumo apontado no mes",
+        "consumo confirmado por apontamento",
+        "baixa validada producao"
+      ]
+    },
+    {
+      "matchAny": [
+        "consumido",
+        "consumo",
+        "consumption",
+        "item",
+        "production",
+        "produto",
+        "quanto",
+        "real",
+        "by-item"
+      ],
+      "category": "Consumo real de um item",
+      "examples": [
+        "consumo real do item 01010001",
+        "quanto foi consumido do produto",
+        "consumo do codigo 01010001",
+        "baixa do componente na producao"
+      ]
+    },
+    {
+      "matchAny": [
+        "losses",
+        "materia",
+        "materials",
+        "matéria",
+        "perdas",
+        "prima",
+        "production",
+        "refugos",
+        "top-materials"
+      ],
+      "category": "Refugos por matéria-prima",
+      "examples": [
+        "refugos de materia prima",
+        "top perdas de mp",
+        "ranking refugo março",
+        "scrap matéria-prima filial 02"
+      ]
+    },
+    {
+      "matchAny": [
+        "detalhado",
+        "losses",
+        "perda",
+        "periodo",
+        "production",
+        "records",
+        "refugo",
+        "refugos",
+        "registros"
+      ],
+      "category": "Registros de refugo",
+      "examples": [
+        "listar refugos detalhado",
+        "registros de perda no periodo",
+        "detalhe refugo linha a linha",
+        "historico de refugo"
+      ]
+    },
+    {
+      "matchAny": [
+        "abertas",
+        "aberto",
+        "hoje",
+        "open",
+        "ordens",
+        "orders",
+        "producao",
+        "production"
+      ],
+      "category": "OPs em aberto",
+      "examples": [
+        "ops em aberto hoje",
+        "ordens de producao abertas",
+        "liste ops em aberto filial 01",
+        "backlog de producao hoje"
+      ]
+    },
+    {
+      "matchAny": [
+        "encerradas",
+        "finalizadas",
+        "finished",
+        "hoje",
+        "ordens",
+        "orders",
+        "producao",
+        "production"
+      ],
+      "category": "OPs finalizadas",
+      "examples": [
+        "ops finalizadas hoje",
+        "ordens de producao encerradas",
+        "quais ops finalizadas hoje",
+        "ops concluidas na data"
+      ]
+    },
+    {
+      "matchAny": [
+        "baixa",
+        "consumo",
+        "consumption",
+        "encerradas",
+        "finalizadas",
+        "finished",
+        "ordens",
+        "orders",
+        "production",
+        "without"
+      ],
+      "category": "OPs finalizadas sem consumo",
+      "examples": [
+        "ops finalizadas sem baixa de mp",
+        "ordens encerradas sem consumo",
+        "op finalizada sem consumo hoje",
+        "fechou op sem baixa material"
+      ]
+    },
+    {
+      "matchAny": [
+        "centers",
+        "centro",
+        "hoje",
+        "order",
+        "production",
+        "resumo",
+        "summary",
+        "trabalho",
+        "work",
+        "order-summary"
+      ],
+      "category": "Resumo de OPs por CT",
+      "examples": [
+        "resumo de ops por centro de trabalho",
+        "ops por ct hoje",
+        "finalizadas e abertas por ct",
+        "painel ops por ct"
+      ]
+    },
+    {
+      "matchAny": [
+        "average",
+        "centers",
+        "centro",
+        "medio",
+        "médio",
+        "planejado",
+        "planned",
+        "production",
+        "tempo",
+        "time",
+        "trabalho",
+        "work"
+      ],
+      "category": "Tempo médio planejado por CT",
+      "examples": [
+        "tempo medio planejado por ct",
+        "tempo planejado por centro de trabalho",
+        "media setup por ct",
+        "tempo standard ct hoje"
+      ]
+    },
+    {
+      "matchAny": [
+        "allocation",
+        "componentes",
+        "empenho",
+        "falta",
+        "gaps",
+        "production",
+        "travamento",
+        "allocation-gaps"
+      ],
+      "category": "Componentes sem empenho",
+      "examples": [
+        "componentes sem empenho",
+        "travamento por falta de empenho",
+        "materiais sem reserva hoje",
+        "empenho zero filial 01"
+      ]
+    },
+    {
+      "matchAny": [
+        "compare",
+        "planejado",
+        "planned",
+        "production",
+        "real",
+        "tempo",
+        "time",
+        "versus",
+        "planned-vs-real-time"
+      ],
+      "category": "Planejado × real por OP",
+      "examples": [
+        "compare tempo planejado e real",
+        "planejado versus real das ops",
+        "desvio tempo produtivo hoje",
+        "estouro de tempo op"
+      ]
+    },
+    {
+      "matchAny": [
+        "hoje",
+        "producao",
+        "production",
+        "produtos",
+        "produzidos",
+        "produção",
+        "programacao",
+        "programação",
+        "quais",
+        "schedule",
+        "serao",
+        "today"
+      ],
+      "category": "Programação de produção (hoje)",
+      "examples": [
+        "quais produtos serao produzidos hoje",
+        "programacao de producao hoje",
+        "cronograma producao hoje",
+        "o que fabricar hoje"
+      ]
+    },
+    {
+      "matchAny": [
+        "comprados",
+        "compras",
+        "mais",
+        "products",
+        "produto",
+        "produtos",
+        "purchases",
+        "ranking",
+        "top-products"
+      ],
+      "category": "Produtos mais comprados",
+      "examples": [
+        "produtos mais comprados no mes",
+        "ranking de compras por produto",
+        "top compras março 2026",
+        "itens mais adquiridos"
+      ]
+    },
+    {
+      "matchAny": [
+        "indicadores",
+        "production",
+        "produção"
+      ],
+      "category": "Indicadores de produção",
+      "examples": [
+        "indicadores de produção"
+      ]
+    },
+    {
+      "matchAny": [
+        "indicadores",
+        "snapshot"
+      ],
+      "category": "Indicadores de RH",
+      "examples": [
+        "indicadores de rh",
+        "snapshot rh"
+      ]
+    },
+    {
+      "matchAny": [
+        "conformidades",
+        "indicadores",
+        "qualidade",
+        "quality"
+      ],
+      "category": "Indicadores de qualidade",
+      "examples": [
+        "indicadores de qualidade",
+        "nao conformidades do mes",
+        "ppm interno"
+      ]
+    },
+    {
+      "matchAny": [
+        "abertas",
+        "comerciais",
+        "ganhas",
+        "proposals",
+        "propostas"
+      ],
+      "category": "Propostas comerciais",
+      "examples": [
+        "propostas comerciais ganhas",
+        "listar propostas abertas",
+        "propostas da filial 01"
+      ]
+    },
+    {
+      "matchAny": [
+        "billing",
+        "faturamento",
+        "item",
+        "produto",
+        "sales"
+      ],
+      "category": "Faturamento do produto",
+      "examples": [
+        "faturamento do produto 10080001",
+        "billing do item"
+      ]
+    },
+    {
+      "matchAny": [
+        "aberto",
+        "carteira",
+        "open",
+        "orders",
+        "pedidos",
+        "produto",
+        "open-orders"
+      ],
+      "category": "Pedidos em aberto",
+      "examples": [
+        "pedidos em aberto do produto",
+        "carteira de pedidos"
+      ]
+    },
+    {
+      "matchAny": [
+        "comerciais",
+        "comercial",
+        "preco",
+        "preços",
+        "pricing",
+        "produto",
+        "tabela"
+      ],
+      "category": "Preços comerciais do produto",
+      "examples": [
+        "preco comercial do 10080001",
+        "tabela comercial do produto"
+      ]
+    },
+    {
+      "matchAny": [
+        "geral",
+        "item",
+        "produto",
+        "resumo",
+        "summary",
+        "visao"
+      ],
+      "category": "Resumo do produto",
+      "examples": [
+        "resumo do produto 10080001",
+        "visao geral do item"
+      ]
+    },
+    {
+      "matchAny": [
+        "histórica",
+        "longo",
+        "serie",
+        "series",
+        "série",
+        "tempo"
+      ],
+      "category": "Série histórica de OEE",
+      "examples": [
+        "serie de oee",
+        "oee ao longo do tempo"
+      ]
+    },
+    {
+      "matchAny": [
+        "histórica",
+        "longo",
+        "producao",
+        "serie",
+        "series",
+        "série",
+        "tempo"
+      ],
+      "category": "Série histórica de OTD",
+      "examples": [
+        "serie de otd producao",
+        "otd ao longo do tempo"
+      ]
+    },
+    {
+      "matchAny": [
+        "apontamento",
+        "appointments",
+        "detalhe",
+        "estrutura",
+        "production",
+        "roteiro"
+      ],
+      "category": "Detalhe do apontamento OEE",
+      "examples": [
+        "detalhe do apontamento oee",
+        "roteiro e estrutura do apontamento",
+        "tempos previsto e realizado do apontamento",
+        "analise de tempos do apontamento sh6010"
+      ]
+    },
+    {
+      "matchAny": [
+        "apontamentos",
+        "listagem",
+        "producao",
+        "production",
+        "produção"
+      ],
+      "category": "OEE produção — listagem de apontamentos",
+      "examples": [
+        "oee de producao com apontamentos",
+        "listar apontamentos oee",
+        "apontamentos fora da faixa oee",
+        "oee por centro de trabalho"
+      ]
+    },
+    {
+      "matchAny": [
+        "atrasadas",
+        "listagem",
+        "ordens",
+        "producao",
+        "production",
+        "produção"
+      ],
+      "category": "OTD produção — listagem de ordens",
+      "examples": [
+        "otd de producao com ordens",
+        "ops atrasadas na producao",
+        "listar ordens de producao no prazo",
+        "entrega no prazo das ops"
+      ]
+    },
+    {
+      "matchAny": [
+        "apontamentos",
+        "faixa",
+        "fora",
+        "production",
+        "produção"
+      ],
+      "category": "OEE produção — apontamentos",
+      "examples": [
+        "listar apontamentos oee",
+        "apontamentos fora da faixa",
+        "painel oee producao"
+      ]
+    },
+    {
+      "matchAny": [
+        "apontamento",
+        "appointments",
+        "detalhe",
+        "production",
+        "roteiro",
+        "tempos"
+      ],
+      "category": "Detalhe do apontamento (roteiro e tempos)",
+      "examples": [
+        "detalhe do apontamento oee",
+        "roteiro do apontamento",
+        "analise de tempos previsto x realizado"
+      ]
+    },
+    {
+      "matchAny": [
+        "dashboard",
+        "eficiencia",
+        "eficiência",
+        "fabril",
+        "eficiencia-fabril"
+      ],
+      "category": "Eficiência fabril",
+      "examples": [
+        "eficiencia fabril",
+        "dashboard eficiencia fabril",
+        "resultado mod fabril",
+        "apontamentos de producao"
+      ]
+    },
+    {
+      "matchAny": [
+        "engenharia",
+        "mais",
+        "processos",
+        "resumo",
+        "transforma",
+        "transforma-mais"
+      ],
+      "category": "Transforma Mais (engenharia)",
+      "examples": [
+        "processos transforma mais",
+        "resumo transforma mais"
+      ]
+    },
+    {
+      "matchAny": [
+        "buscar",
+        "guarda",
+        "metadados",
+        "produtos",
+        "qual",
+        "system",
+        "tabela",
+        "tabelas",
+        "tables"
+      ],
+      "category": "Metadados de tabelas (SX2)",
+      "examples": [
+        "buscar tabela sb1",
+        "qual tabela guarda produtos",
+        "qual a tabela de produtos",
+        "schema da tabela sb1"
+      ]
+    },
+    {
+      "matchAny": [
+        "buscar",
+        "columns",
+        "coluna",
+        "colunas",
+        "descricao",
+        "metadados",
+        "system",
+        "tabela"
+      ],
+      "category": "Metadados de colunas (SX3)",
+      "examples": [
+        "buscar coluna por descricao",
+        "colunas da tabela sb1"
+      ]
+    }
+  ],
+  "notes": "seedToken is audit-only; runtime matching uses entity/shape and matchAny against summary/description/tags/whenToUse — never path substring authority"
+}

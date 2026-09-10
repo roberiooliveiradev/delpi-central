@@ -94,29 +94,36 @@ class ChatComposerRouteQuestionSuggestionService:
         normalized: str,
         product_code: str | None,
     ) -> list[dict[str, str]]:
-        path_rules = ChatAssistantContentService.get_node("capabilities", "pathRules") or []
+        classification = ChatAssistantContentService.load_bundle(
+            "capability_ux_classification"
+        )
+        keyword_rules = classification.get("keywordRules") or []
 
-        if not isinstance(path_rules, list):
+        if not isinstance(keyword_rules, list):
             return []
 
         candidates: list[dict[str, str]] = []
+        seen_categories: set[str] = set()
 
-        for item in path_rules:
+        for item in keyword_rules:
             if not isinstance(item, dict):
                 continue
 
-            token = str(item.get("token") or "").strip()
             category = str(item.get("category") or "").strip()
             examples_raw = item.get("examples") or []
-            examples = tuple(str(example).strip() for example in examples_raw if str(example).strip())
+            examples = tuple(
+                str(example).strip() for example in examples_raw if str(example).strip()
+            )
 
-            if not token or not category:
+            if not category or category in seen_categories:
                 continue
 
             category_norm = ChatMessageNormalizationService.normalize_for_matching(category)
 
             if not cls._path_rule_matches(normalized, category_norm, examples):
                 continue
+
+            seen_categories.add(category)
 
             for example in examples[:2]:
                 query = cls._resolve_query(example, product_code)
@@ -129,8 +136,7 @@ class ChatComposerRouteQuestionSuggestionService:
                         "label": category,
                         "query": query,
                         "category": category,
-                        "source": "path_rule",
-                        "routeToken": token,
+                        "source": "ux_capability",
                     }
                 )
 

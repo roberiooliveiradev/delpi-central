@@ -82,7 +82,7 @@ function mergeTablePresentations(
 
   const title =
     productCodes.length > 1
-      ? "Estoque por filial/armazém"
+      ? (first.title?.trim() || "Resultado")
       : first.title;
 
   return {
@@ -156,7 +156,7 @@ function mergeChartPresentations(
     ...first,
     title:
       productCodes.length > 1
-        ? "Estoque por filial/armazém"
+        ? (first.title?.trim() || "Resultado")
         : first.title,
     data: mergedData,
   };

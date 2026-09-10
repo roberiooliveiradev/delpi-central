@@ -231,32 +231,3 @@ class ChatAssistantContentService:
             node = node.get(key)
 
         return node
-
-    @classmethod
-    def title_for_path(
-        cls,
-        bundle: str,
-        path: str,
-        *,
-        path_key: str = "",
-        default: str | None = None,
-    ) -> str | None:
-        """Lookup opcional por mapa de fragmentos (legado removido; retorna default se vazio)."""
-        if not path_key:
-            return default
-
-        lowered = str(path or "").lower()
-        fragments = cls.get_mapping(bundle, path_key)
-
-        if not fragments:
-            return default
-
-        for fragment, label in sorted(
-            fragments.items(),
-            key=lambda item: len(str(item[0] or "")),
-            reverse=True,
-        ):
-            if fragment in lowered:
-                return label
-
-        return default

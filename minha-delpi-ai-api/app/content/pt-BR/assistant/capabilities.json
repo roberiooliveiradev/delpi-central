@@ -514,550 +514,6 @@
       "body": "Corrijo, resumo, traduzo, reescrevo e crio **e-mails, cartas, atas, comunicados, relatórios e documentação** sem consultar o ERP, salvo pedido misto explícito.\n\n**Modos:** só versão final, antes/depois, múltiplas versões (formal, direta, cordial), ELI5 e adaptação por público (diretoria, cliente, produção).\n\n**Anexos:** resumo, correção, pendências, ata, checklist, relatório, comunicado e e-mail com base no arquivo.\n\n**Lousa:** coloque textos longos na lousa; transforme em ata, checklist ou relatório.\n\n**Exemplos:**\n- «Corrija preservando o código 10080022»\n- «Crie uma carta formal solicitando autorização»\n- «Explique RBAC como se eu tivesse 5 anos»\n- «Transforme o anexo em ata de reunião»\n- «Consulte estoque do 10080001 e escreva e-mail para compras»"
     }
   },
-  "pathRules": [
-    {
-      "token": "/stock",
-      "category": "Estoque de produto",
-      "examples": [
-        "Consulte o estoque do produto 10080001",
-        "estoque do produto 10080001",
-        "saldo do 10080001",
-        "quanto tem em estoque do 10080001"
-      ]
-    },
-    {
-      "token": "/summary",
-      "category": "Descrição / cadastro / ficha do produto",
-      "examples": [
-        "descrição 10080011",
-        "descrição do produto 10080001",
-        "cadastro do produto 10080011",
-        "ficha do produto 10080011",
-        "estoque e descrição do produto 10080011"
-      ]
-    },
-    {
-      "token": "/suppliers",
-      "category": "Fornecedores de produto",
-      "examples": [
-        "fornecedores do 10080001",
-        "quem fornece o produto 10080001",
-        "forncedores do 10080001 em tabela"
-      ]
-    },
-    {
-      "token": "/customers",
-      "category": "Clientes de produto",
-      "examples": [
-        "clientes do produto 10080001",
-        "quem compra o 10080001"
-      ]
-    },
-    {
-      "token": "/structure",
-      "category": "Estrutura (BOM)",
-      "examples": [
-        "estrutura do produto 10080001",
-        "componentes do 10080001",
-        "bom do 10080001"
-      ]
-    },
-    {
-      "token": "/parents",
-      "category": "Onde o produto é usado (pais)",
-      "examples": [
-        "onde o 10080001 é usado",
-        "produtos pai do 10080001",
-        "pai do 10080001"
-      ]
-    },
-    {
-      "token": "/purchases",
-      "category": "Compras de produto",
-      "examples": [
-        "compras do produto 10080001",
-        "historico de compras do 10080001"
-      ]
-    },
-    {
-      "token": "/sales",
-      "category": "Vendas de produto",
-      "examples": [
-        "vendas do produto 10080001",
-        "faturamento do 10080001"
-      ]
-    },
-    {
-      "token": "/prices",
-      "category": "Preços / tabelas",
-      "examples": [
-        "preço do produto 10080001",
-        "tabela de preço do 10080001",
-        "quanto custa o 10080001"
-      ]
-    },
-    {
-      "token": "/guide",
-      "category": "Roteiro de produção",
-      "examples": [
-        "roteiro do produto 10080001",
-        "etapas do 10080001"
-      ]
-    },
-    {
-      "token": "/inspection",
-      "category": "Inspeção / qualidade",
-      "examples": [
-        "inspeção do produto 10080001",
-        "plano de inspeção do 10080001"
-      ]
-    },
-    {
-      "token": "/internal-movements",
-      "category": "Movimentações internas",
-      "examples": [
-        "movimentações internas do 10080001",
-        "transferências do 10080001"
-      ]
-    },
-    {
-      "token": "/inbound-invoice",
-      "category": "Notas fiscais de entrada",
-      "examples": [
-        "notas de entrada do 10080001",
-        "nfe entrada do 10080001"
-      ]
-    },
-    {
-      "token": "/outbound-invoice",
-      "category": "Notas fiscais de saída",
-      "examples": [
-        "notas de saída do 10080001",
-        "nfe saída do 10080001"
-      ]
-    },
-    {
-      "token": "/search",
-      "category": "Busca de produtos",
-      "examples": [
-        "buscar produto por descrição parafuso",
-        "pesquisar produto bandeira"
-      ]
-    },
-    {
-      "token": "/analyser",
-      "category": "Visão integrada / analisador do produto",
-      "examples": [
-        "visão integrada do produto 10080001",
-        "analisador do produto 10080001",
-        "ficha completa do 10080001"
-      ]
-    },
-    {
-      "token": "/engineering/lmps",
-      "category": "LMP / listas de materiais de projeto",
-      "examples": [
-        "listar lmps",
-        "lmps da filial 01",
-        "detalhe da lmp ov 003578"
-      ]
-    },
-    {
-      "token": "/lmps/",
-      "category": "Detalhe de LMP por OV",
-      "examples": [
-        "lmp ov 003578",
-        "detalhes da ov 003578",
-        "proposta 003578 engenharia"
-      ]
-    },
-    {
-      "token": "/supplies/stock-value",
-      "category": "Valor total de estoque (empresa)",
-      "examples": [
-        "valor total de estoque",
-        "quanto vale o estoque"
-      ]
-    },
-    {
-      "token": "/inventory-turnover",
-      "category": "Giro de estoque (IDD)",
-      "examples": [
-        "giro de estoque",
-        "idd do estoque"
-      ]
-    },
-    {
-      "token": "/cpv",
-      "category": "Indicador CPV",
-      "examples": [
-        "cpv de suprimentos",
-        "indicador cpv"
-      ]
-    },
-    {
-      "token": "/otd",
-      "category": "Indicador OTD",
-      "examples": [
-        "otd de entregas",
-        "indicador otd"
-      ]
-    },
-    {
-      "token": "/data/sql",
-      "category": "Consulta SQL (leitura)",
-      "examples": [
-        "consulta sql autorizada",
-        "select somente leitura"
-      ]
-    },
-    {
-      "token": "/sale-order",
-      "category": "Ordens de venda",
-      "examples": [
-        "ordens de venda do período",
-        "listar ovs"
-      ]
-    },
-    {
-      "token": "/commercial/",
-      "category": "Indicadores comerciais",
-      "examples": [
-        "indicadores comerciais do mês"
-      ]
-    },
-    {
-      "token": "/financial/",
-      "category": "Indicadores financeiros",
-      "examples": [
-        "indicadores financeiros"
-      ]
-    },
-    {
-      "token": "/production/consumption/top-items",
-      "category": "Consumo de produção (ranking)",
-      "examples": [
-        "itens mais consumidos no mes",
-        "top consumo de materia prima",
-        "ranking de consumo filial 01",
-        "materia prima mais consumida"
-      ]
-    },
-    {
-      "token": "/production/consumption/top-items-by-work-center",
-      "category": "Consumo por centro de trabalho",
-      "examples": [
-        "consumo por centro de trabalho",
-        "itens mais consumidos por ct",
-        "maior consumo por ct",
-        "ranking consumo centro de trabalho"
-      ]
-    },
-    {
-      "token": "/production/consumption/top-items-validated",
-      "category": "Consumo validado por apontamento",
-      "examples": [
-        "consumo validado por apontamento",
-        "consumo apontado no mes",
-        "consumo confirmado por apontamento",
-        "baixa validada producao"
-      ]
-    },
-    {
-      "token": "/production/consumption/by-item",
-      "category": "Consumo real de um item",
-      "examples": [
-        "consumo real do item 01010001",
-        "quanto foi consumido do produto",
-        "consumo do codigo 01010001",
-        "baixa do componente na producao"
-      ]
-    },
-    {
-      "token": "/production/losses/top-materials",
-      "category": "Refugos por matéria-prima",
-      "examples": [
-        "refugos de materia prima",
-        "top perdas de mp",
-        "ranking refugo março",
-        "scrap matéria-prima filial 02"
-      ]
-    },
-    {
-      "token": "/production/losses/records",
-      "category": "Registros de refugo",
-      "examples": [
-        "listar refugos detalhado",
-        "registros de perda no periodo",
-        "detalhe refugo linha a linha",
-        "historico de refugo"
-      ]
-    },
-    {
-      "token": "/production/orders/open",
-      "category": "OPs em aberto",
-      "examples": [
-        "ops em aberto hoje",
-        "ordens de producao abertas",
-        "liste ops em aberto filial 01",
-        "backlog de producao hoje"
-      ]
-    },
-    {
-      "token": "/production/orders/finished",
-      "category": "OPs finalizadas",
-      "examples": [
-        "ops finalizadas hoje",
-        "ordens de producao encerradas",
-        "quais ops finalizadas hoje",
-        "ops concluidas na data"
-      ]
-    },
-    {
-      "token": "/production/orders/finished-without-consumption",
-      "category": "OPs finalizadas sem consumo",
-      "examples": [
-        "ops finalizadas sem baixa de mp",
-        "ordens encerradas sem consumo",
-        "op finalizada sem consumo hoje",
-        "fechou op sem baixa material"
-      ]
-    },
-    {
-      "token": "/production/work-centers/order-summary",
-      "category": "Resumo de OPs por CT",
-      "examples": [
-        "resumo de ops por centro de trabalho",
-        "ops por ct hoje",
-        "finalizadas e abertas por ct",
-        "painel ops por ct"
-      ]
-    },
-    {
-      "token": "/production/work-centers/average-planned-time",
-      "category": "Tempo médio planejado por CT",
-      "examples": [
-        "tempo medio planejado por ct",
-        "tempo planejado por centro de trabalho",
-        "media setup por ct",
-        "tempo standard ct hoje"
-      ]
-    },
-    {
-      "token": "/production/allocation-gaps",
-      "category": "Componentes sem empenho",
-      "examples": [
-        "componentes sem empenho",
-        "travamento por falta de empenho",
-        "materiais sem reserva hoje",
-        "empenho zero filial 01"
-      ]
-    },
-    {
-      "token": "/production/planned-vs-real-time",
-      "category": "Planejado × real por OP",
-      "examples": [
-        "compare tempo planejado e real",
-        "planejado versus real das ops",
-        "desvio tempo produtivo hoje",
-        "estouro de tempo op"
-      ]
-    },
-    {
-      "token": "/production/schedule/today",
-      "category": "Programação de produção (hoje)",
-      "examples": [
-        "quais produtos serao produzidos hoje",
-        "programacao de producao hoje",
-        "cronograma producao hoje",
-        "o que fabricar hoje"
-      ]
-    },
-    {
-      "token": "/purchases/top-products",
-      "category": "Produtos mais comprados",
-      "examples": [
-        "produtos mais comprados no mes",
-        "ranking de compras por produto",
-        "top compras março 2026",
-        "itens mais adquiridos"
-      ]
-    },
-    {
-      "token": "/production/",
-      "category": "Indicadores de produção",
-      "examples": [
-        "indicadores de produção"
-      ]
-    },
-    {
-      "token": "/hr/",
-      "category": "Indicadores de RH",
-      "examples": [
-        "indicadores de rh",
-        "snapshot rh"
-      ]
-    },
-    {
-      "token": "/quality/",
-      "category": "Indicadores de qualidade",
-      "examples": [
-        "indicadores de qualidade",
-        "nao conformidades do mes",
-        "ppm interno"
-      ]
-    },
-    {
-      "token": "/proposals",
-      "category": "Propostas comerciais",
-      "examples": [
-        "propostas comerciais ganhas",
-        "listar propostas abertas",
-        "propostas da filial 01"
-      ]
-    },
-    {
-      "token": "/sales/billing",
-      "category": "Faturamento do produto",
-      "examples": [
-        "faturamento do produto 10080001",
-        "billing do item"
-      ]
-    },
-    {
-      "token": "/open-orders",
-      "category": "Pedidos em aberto",
-      "examples": [
-        "pedidos em aberto do produto",
-        "carteira de pedidos"
-      ]
-    },
-    {
-      "token": "/pricing",
-      "category": "Preços comerciais do produto",
-      "examples": [
-        "preco comercial do 10080001",
-        "tabela comercial do produto"
-      ]
-    },
-    {
-      "token": "/summary",
-      "category": "Resumo do produto",
-      "examples": [
-        "resumo do produto 10080001",
-        "visao geral do item"
-      ]
-    },
-    {
-      "token": "/oee/series",
-      "category": "Série histórica de OEE",
-      "examples": [
-        "serie de oee",
-        "oee ao longo do tempo"
-      ]
-    },
-    {
-      "token": "/otd/series",
-      "category": "Série histórica de OTD",
-      "examples": [
-        "serie de otd producao",
-        "otd ao longo do tempo"
-      ]
-    },
-    {
-      "token": "/production/oee/appointments/",
-      "category": "Detalhe do apontamento OEE",
-      "examples": [
-        "detalhe do apontamento oee",
-        "roteiro e estrutura do apontamento",
-        "tempos previsto e realizado do apontamento",
-        "analise de tempos do apontamento sh6010"
-      ]
-    },
-    {
-      "token": "/production/oee",
-      "category": "OEE produção — listagem de apontamentos",
-      "examples": [
-        "oee de producao com apontamentos",
-        "listar apontamentos oee",
-        "apontamentos fora da faixa oee",
-        "oee por centro de trabalho",
-        "apontamentos oee pa e pi"
-      ]
-    },
-    {
-      "token": "/production/otd",
-      "category": "OTD produção — listagem de ordens",
-      "examples": [
-        "otd de producao com ordens",
-        "ops atrasadas na producao",
-        "listar ordens de producao no prazo",
-        "entrega no prazo das ops"
-      ]
-    },
-    {
-      "token": "/production/oee",
-      "category": "OEE produção — apontamentos",
-      "examples": [
-        "listar apontamentos oee",
-        "apontamentos fora da faixa",
-        "painel oee producao"
-      ]
-    },
-    {
-      "token": "/production/oee/appointments/",
-      "category": "Detalhe do apontamento (roteiro e tempos)",
-      "examples": [
-        "detalhe do apontamento oee",
-        "roteiro do apontamento",
-        "analise de tempos previsto x realizado"
-      ]
-    },
-    {
-      "token": "/eficiencia-fabril",
-      "category": "Eficiência fabril",
-      "examples": [
-        "eficiencia fabril",
-        "dashboard eficiencia fabril",
-        "resultado mod fabril",
-        "apontamentos de producao"
-      ]
-    },
-    {
-      "token": "/transforma-mais",
-      "category": "Transforma Mais (engenharia)",
-      "examples": [
-        "processos transforma mais",
-        "resumo transforma mais"
-      ]
-    },
-    {
-      "token": "/system/tables",
-      "category": "Metadados de tabelas (SX2)",
-      "examples": [
-        "buscar tabela sb1",
-        "qual tabela guarda produtos",
-        "qual a tabela de produtos",
-        "schema da tabela sb1",
-        "indices da tabela"
-      ]
-    },
-    {
-      "token": "/system/columns",
-      "category": "Metadados de colunas (SX3)",
-      "examples": [
-        "buscar coluna por descricao",
-        "colunas da tabela sb1"
-      ]
-    }
-  ],
-  "pathRuleDefault": {
-    "category": "Outras APIs",
-    "examples": [
-      "consulta conforme rota habilitada",
-      "dados operacionais autorizados"
-    ]
-  },
   "commonExamples": [
     "estoque do produto 10080001",
     "fornecedores do 10080001 em tabela",
@@ -1152,8 +608,14 @@
         "description": "Cadastro, ficha, estrutura e fornecedores.",
         "flowId": "product",
         "suggestions": [
-          { "label": "Consultar produto", "query": "me fale do produto {{productCode}}" },
-          { "label": "Visão 360°", "query": "visão 360° do produto {{productCode}}" }
+          {
+            "label": "Consultar produto",
+            "query": "me fale do produto {{productCode}}"
+          },
+          {
+            "label": "Visão 360°",
+            "query": "visão 360° do produto {{productCode}}"
+          }
         ]
       },
       {
@@ -1161,7 +623,10 @@
         "description": "Saldo por filial e armazém.",
         "flowId": "stock",
         "suggestions": [
-          { "label": "Ver estoque", "query": "qual o estoque do produto {{productCode}}?" }
+          {
+            "label": "Ver estoque",
+            "query": "qual o estoque do produto {{productCode}}?"
+          }
         ]
       },
       {
@@ -1169,7 +634,10 @@
         "description": "OVs, faturamento e histórico de compras.",
         "flowId": "sales",
         "suggestions": [
-          { "label": "Ver vendas", "query": "mostre vendas do produto {{productCode}}" }
+          {
+            "label": "Ver vendas",
+            "query": "mostre vendas do produto {{productCode}}"
+          }
         ]
       },
       {
@@ -1177,7 +645,10 @@
         "description": "Fontes públicas com transparência.",
         "flowId": "web",
         "suggestions": [
-          { "label": "Pesquisar na web", "query": "pesquise na web sobre {{searchQuery}}" }
+          {
+            "label": "Pesquisar na web",
+            "query": "pesquise na web sobre {{searchQuery}}"
+          }
         ]
       }
     ]
@@ -1191,17 +662,26 @@
         {
           "order": 1,
           "text": "No composer, toque em **+** (ou digite **@**) e abra a lista de agentes disponíveis.",
-          "suggestion": { "label": "O que você pode fazer?", "query": "o que você pode fazer?" }
+          "suggestion": {
+            "label": "O que você pode fazer?",
+            "query": "o que você pode fazer?"
+          }
         },
         {
           "order": 2,
           "text": "Escolha o agente com as **actions** da tarefa (produto, estoque, indicadores, SQL…). O nome deve aparecer no contexto da conversa.",
-          "suggestion": { "label": "Como escolho um agente?", "query": "como escolho um agente?" }
+          "suggestion": {
+            "label": "Como escolho um agente?",
+            "query": "como escolho um agente?"
+          }
         },
         {
           "order": 3,
           "text": "Faça a pergunta operacional já com o agente ativo (ex.: estoque ou ficha de produto).",
-          "suggestion": { "label": "Exemplo estoque", "query": "qual o estoque do produto {{productCode}}?" }
+          "suggestion": {
+            "label": "Exemplo estoque",
+            "query": "qual o estoque do produto {{productCode}}?"
+          }
         }
       ]
     },
@@ -1213,17 +693,26 @@
         {
           "order": 1,
           "text": "Selecione no composer um **agente** com actions de produto (ex.: GET /products).",
-          "suggestion": { "label": "Como escolher agente?", "query": "como escolho um agente?" }
+          "suggestion": {
+            "label": "Como escolher agente?",
+            "query": "como escolho um agente?"
+          }
         },
         {
           "order": 2,
           "text": "Informe o **código do produto** (8 dígitos) ou peça busca por descrição.",
-          "suggestion": { "label": "Exemplo com código", "query": "me fale do produto {{productCode}}" }
+          "suggestion": {
+            "label": "Exemplo com código",
+            "query": "me fale do produto {{productCode}}"
+          }
         },
         {
           "order": 3,
           "text": "Peça **tabela**, **gráfico** ou **texto** na mesma mensagem, se quiser outro formato.",
-          "suggestion": { "label": "Em tabela", "query": "ficha do produto {{productCode}} em tabela" }
+          "suggestion": {
+            "label": "Em tabela",
+            "query": "ficha do produto {{productCode}} em tabela"
+          }
         }
       ]
     },
@@ -1235,17 +724,26 @@
         {
           "order": 1,
           "text": "Use um **agente** com action de estoque habilitada.",
-          "suggestion": { "label": "Ver capacidades", "query": "o que você pode fazer?" }
+          "suggestion": {
+            "label": "Ver capacidades",
+            "query": "o que você pode fazer?"
+          }
         },
         {
           "order": 2,
           "text": "Informe o código do produto (ex.: 10080001).",
-          "suggestion": { "label": "Exemplo estoque", "query": "qual o estoque do produto {{productCode}}?" }
+          "suggestion": {
+            "label": "Exemplo estoque",
+            "query": "qual o estoque do produto {{productCode}}?"
+          }
         },
         {
           "order": 3,
           "text": "Opcional: peça **em gráfico** ou **por filial** na mesma pergunta.",
-          "suggestion": { "label": "Gráfico", "query": "estoque do produto {{productCode}} em gráfico" }
+          "suggestion": {
+            "label": "Gráfico",
+            "query": "estoque do produto {{productCode}} em gráfico"
+          }
         }
       ]
     },
@@ -1257,12 +755,18 @@
         {
           "order": 1,
           "text": "Agente com rota **/sales** ou vendas por produto.",
-          "suggestion": { "label": "Agentes", "query": "como escolho um agente?" }
+          "suggestion": {
+            "label": "Agentes",
+            "query": "como escolho um agente?"
+          }
         },
         {
           "order": 2,
           "text": "Informe produto e período quando souber.",
-          "suggestion": { "label": "Vendas do item", "query": "vendas do produto {{productCode}} nos últimos {{period}}" }
+          "suggestion": {
+            "label": "Vendas do item",
+            "query": "vendas do produto {{productCode}} nos últimos {{period}}"
+          }
         }
       ]
     },
@@ -1274,17 +778,26 @@
         {
           "order": 1,
           "text": "Use frases explícitas: «pesquise na web sobre …».",
-          "suggestion": { "label": "Exemplo", "query": "pesquise na web sobre DELPI Conexões Elétricas" }
+          "suggestion": {
+            "label": "Exemplo",
+            "query": "pesquise na web sobre DELPI Conexões Elétricas"
+          }
         },
         {
           "order": 2,
           "text": "Abra **Fontes · N** para ver sites e confiança.",
-          "suggestion": { "label": "Pesquisa profunda", "query": "pesquisa profunda na web sobre NR-12" }
+          "suggestion": {
+            "label": "Pesquisa profunda",
+            "query": "pesquisa profunda na web sobre NR-12"
+          }
         },
         {
           "order": 3,
           "text": "Com **projeto** ativo, use **Salvar fontes** após a busca.",
-          "suggestion": { "label": "Salvar fontes", "query": "salve as fontes da pesquisa web no projeto" }
+          "suggestion": {
+            "label": "Salvar fontes",
+            "query": "salve as fontes da pesquisa web no projeto"
+          }
         }
       ]
     },
@@ -1296,12 +809,18 @@
         {
           "order": 1,
           "text": "Clique no **clipe** e anexe o arquivo antes de enviar a pergunta.",
-          "suggestion": { "label": "Resumir anexo", "query": "resuma o arquivo anexado" }
+          "suggestion": {
+            "label": "Resumir anexo",
+            "query": "resuma o arquivo anexado"
+          }
         },
         {
           "order": 2,
           "text": "Peça resumo, correção ou comparação com produto interno.",
-          "suggestion": { "label": "Comparar", "query": "compare o anexo com o produto {{productCode}}" }
+          "suggestion": {
+            "label": "Comparar",
+            "query": "compare o anexo com o produto {{productCode}}"
+          }
         }
       ]
     },
@@ -1313,12 +832,18 @@
         {
           "order": 1,
           "text": "Escolha agente com rotas de **indicadores** (/commercial, /financial, /quality, …).",
-          "suggestion": { "label": "Comercial", "query": "indicadores comerciais do mês" }
+          "suggestion": {
+            "label": "Comercial",
+            "query": "indicadores comerciais do mês"
+          }
         },
         {
           "order": 2,
           "text": "Peça período ou filial quando aplicável.",
-          "suggestion": { "label": "Gráfico", "query": "mostre em gráfico de linhas" }
+          "suggestion": {
+            "label": "Gráfico",
+            "query": "mostre em gráfico de linhas"
+          }
         }
       ]
     },
@@ -1330,12 +855,18 @@
         {
           "order": 1,
           "text": "Agente com actions **/engineering/lmps**.",
-          "suggestion": { "label": "Listar LMPs", "query": "listar lmps da filial" }
+          "suggestion": {
+            "label": "Listar LMPs",
+            "query": "listar lmps da filial"
+          }
         },
         {
           "order": 2,
           "text": "Para detalhe, informe número da OV.",
-          "suggestion": { "label": "Detalhe OV", "query": "detalhe da lmp ov 12345" }
+          "suggestion": {
+            "label": "Detalhe OV",
+            "query": "detalhe da lmp ov 12345"
+          }
         }
       ]
     }
@@ -1365,5 +896,6 @@
       "normal": 1200,
       "thinker": 2400
     }
-  }
+  },
+  "capabilityUxClassificationBundle": "capability_ux_classification"
 }

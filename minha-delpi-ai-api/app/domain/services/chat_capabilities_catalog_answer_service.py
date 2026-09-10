@@ -28,38 +28,6 @@ def _catalog_texts() -> dict[str, Any]:
 
 
 @lru_cache(maxsize=1)
-def _path_rules() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
-    rules = _content().get("pathRules") or []
-    parsed: list[tuple[str, str, tuple[str, ...]]] = []
-
-    for item in rules:
-        if not isinstance(item, dict):
-            continue
-
-        token = str(item.get("token") or "").strip()
-        category = str(item.get("category") or "").strip()
-        examples = item.get("examples") or []
-
-        if token and category:
-            parsed.append((token, category, tuple(str(ex) for ex in examples)))
-
-    return tuple(parsed)
-
-
-@lru_cache(maxsize=1)
-def _path_rule_default() -> tuple[str, tuple[str, ...]]:
-    default = _content().get("pathRuleDefault") or {}
-
-    if not isinstance(default, dict):
-        return "Outras APIs", ("consulta conforme rota habilitada", "dados operacionais autorizados")
-
-    category = str(default.get("category") or "Outras APIs")
-    examples = tuple(str(item) for item in (default.get("examples") or ()))
-
-    return category, examples
-
-
-@lru_cache(maxsize=1)
 def _common_chat_examples() -> tuple[str, ...]:
     return tuple(str(item) for item in (_content().get("commonExamples") or ()))
 
@@ -277,7 +245,7 @@ class ChatCapabilitiesCatalogAnswerService:
                 continue
 
             path = str(action.get("path") or "")
-            category, _examples = cls.resolve_path_rule(path)
+            category, examples = cls.resolve_ux_capability(action)
             raw_summary = str(
                 action.get("summary") or action.get("description") or action_id
             ).strip()
@@ -293,13 +261,17 @@ class ChatCapabilitiesCatalogAnswerService:
                         delpi_metadata=(
                             action.get("delpiMetadata")
                             if isinstance(action.get("delpiMetadata"), dict)
-                            else None
+                            else (
+                                action.get("delpi_metadata")
+                                if isinstance(action.get("delpi_metadata"), dict)
+                                else None
+                            )
                         ),
                         schema_hash=str(action.get("schemaHash") or ""),
                     ),
                     "method": method,
                     "path": path,
-                    "examples": _examples,
+                    "examples": examples,
                 }
             )
 
@@ -466,11 +438,30 @@ class ChatCapabilitiesCatalogAnswerService:
         return "\n".join(lines).strip()
 
     @classmethod
+    def resolve_ux_capability(cls, action: dict[str, Any] | str) -> tuple[str, tuple[str, ...]]:
+        """Resolve UX bucket from Action Catalog metadata (import-time classification)."""
+
+        from app.domain.services.capability_ux_classifier_service import (
+            CapabilityUxClassifierService,
+        )
+
+        if isinstance(action, str):
+            classified = CapabilityUxClassifierService.classify_action(
+                {"path": action, "summary": "", "description": ""}
+            )
+        else:
+            classified = CapabilityUxClassifierService.classify_action(action)
+
+        category = str(classified.get("category") or "").strip() or "Outras consultas"
+        examples = tuple(
+            str(item).strip()
+            for item in (classified.get("examples") or ())
+            if str(item).strip()
+        )
+        return category, examples
+
+    @classmethod
     def resolve_path_rule(cls, path: str) -> tuple[str, tuple[str, ...]]:
-        lowered = path.lower()
+        """Deprecated shim — prefer ``resolve_ux_capability`` with full action dict."""
 
-        for token, category, examples in _path_rules():
-            if token in lowered:
-                return category, examples
-
-        return _path_rule_default()
+        return cls.resolve_ux_capability({"path": path, "summary": "", "description": ""})

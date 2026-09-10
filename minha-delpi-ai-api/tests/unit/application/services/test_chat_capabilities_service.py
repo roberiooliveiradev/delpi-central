@@ -70,9 +70,26 @@ def test_build_direct_answer_includes_business_suggestions():
     assert "cruzam várias fontes" in text.lower() or "cruzam varias fontes" in text.lower()
 
 
-def test_resolve_path_rule_suppliers():
-    category, examples = ChatCapabilitiesService._resolve_path_rule(
-        "/api/v1/products/{code}/suppliers"
+def test_resolve_ux_capability_suppliers_from_catalog_metadata():
+    from app.domain.services.chat_capabilities_catalog_answer_service import (
+        ChatCapabilitiesCatalogAnswerService,
+    )
+
+    category, examples = ChatCapabilitiesCatalogAnswerService.resolve_ux_capability(
+        {
+            "path": "/api/v1/widgets/{code}/partners",
+            "summary": "Listar fornecedores do produto",
+            "delpiMetadata": {
+                "entity": "product",
+                "shape": "suppliers",
+                "uxCapability": {
+                    "category": "Fornecedores de produto",
+                    "examples": ["fornecedores do 10080001"],
+                    "source": "test",
+                    "confidence": "high",
+                },
+            },
+        }
     )
     assert category == "Fornecedores de produto"
     assert any("fornecedor" in ex for ex in examples)
@@ -279,10 +296,12 @@ def test_stock_help_distinguishes_quality_inspection():
     assert "inspeção" in body.lower()
     assert "descrição" in body.lower()
     assert "combinar" in body.lower()
+
+    ux = ContentService.load_json("assistant/capability_ux_classification")
     stock_rule = next(
         item
-        for item in (data.get("pathRules") or [])
-        if item.get("token") == "/stock"
+        for item in (ux.get("keywordRules") or [])
+        if item.get("category") == "Estoque de produto"
     )
     assert any(
         "Consulte o estoque do produto" in str(example)

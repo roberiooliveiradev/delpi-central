@@ -1,0 +1,18 @@
+{
+  "stage": "E10_live_capabilities_d1",
+  "generated_at": "2026-09-10T12:27:22+00:00",
+  "capabilities_inquiry": {
+    "ok": true,
+    "answer_chars": 37736,
+    "has_estoque": true,
+    "has_outras": true,
+    "pathRules_leak": false
+  },
+  "smoke_catalog_display_http": {
+    "ok": true,
+    "capabilities_list": "PASS",
+    "product_description": "PASS",
+    "product_stock": "PASS"
+  },
+  "pass": true
+}
