@@ -75,4 +75,6 @@ def test_partial_si_failure_does_not_drop_kpis():
     assert all(kpi["status"] == "available" for kpi in result["kpis"])
     assert any(item["source"] == "si" for item in result["partialFailures"])
     assert all(kpi["meta"] is None for kpi in result["kpis"])
+    assert all(kpi.get("goalValue") is None for kpi in result["kpis"])
+    assert all(kpi.get("comparableGoal") is None for kpi in result["kpis"])
     assert all(kpi["iddScore"] is None for kpi in result["kpis"])

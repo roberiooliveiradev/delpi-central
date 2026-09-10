@@ -81,7 +81,7 @@ O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de
 2. Depois **E7 Pedidos de compra** (uma de cada vez).
 3. E7+ continua exigindo autorização explícita do Product Owner **e** página anterior fechada na fila.
 
-**Visão geral (WF-02 / WF-02R) — DoD fechado:** BFF `/analytics/overview` + `/analytics/otd/series`, PageHero + FilterBar MultiSelect Unidade (SC/ES) + URL sync, 7 KPIs com chrome Comercial (MTD/YTD, natureza, grid 3-col), ChartViewShell OTD completo (granularidade/tipo/YoY/cores/export) + comparativo valor×meta com toolbar, CTA «Abrir OTD», Ajuda, testes API+MFE.
+**Visão geral (WF-02 / WF-02R) — DoD fechado:** BFF `/analytics/overview` + `/analytics/otd/series`, PageHero + FilterBar MultiSelect Unidade (SC/ES) + URL sync (presets Hoje/Esta semana/mês…), 7 KPIs com chrome Comercial e **tríade de meta SI** (`goalValue` / `comparableGoal` / `referenceGoal` + `iddScore`), ChartViewShell OTD completo + comparativo valor×meta, CTA «Abrir OTD», Ajuda, testes API+MFE. Filtros comerciais/`location`/`stock_method` **não** são globais da Overview.
 
 **OTD analytics (WF-OTD-A) — DoD fechado:** BFF `GET /analytics/otd`, página `/analytics/otd` com SpeedometerGauge por unidade + série, filtros compartilhados com Overview, Ajuda Quero→onde/FAQ.
 

@@ -45,7 +45,15 @@ def test_overview_positive_seven_kpis():
     pr.count_open_requests.return_value = 12
     si = MagicMock()
     si.metrics_by_kpi.return_value = {
-        "KPI-OTD": {"goal": 98.0, "score": 6.57},
+        "KPI-OTD": {
+            "goal_value": 98.0,
+            "comparable_goal": 30.0,
+            "reference_goal": 98.0,
+            "score": 6.57,
+            "performance_direction": "higher_is_better",
+            "goal_mode": "standard",
+            "goal": 98.0,
+        },
     }
 
     service = OverviewCompositionService(
@@ -82,8 +90,13 @@ def test_overview_positive_seven_kpis():
     otd = next(k for k in result["kpis"] if k["id"] == "KPI-OTD")
     assert otd["value"] == 95.0
     assert next(k for k in result["kpis"] if k["id"] == "KPI-SC-OPEN")["value"] == 12.0
-    assert otd["meta"] == 98.0
+    assert otd["meta"] == 30.0
+    assert otd["goalValue"] == 98.0
+    assert otd["comparableGoal"] == 30.0
+    assert otd["referenceGoal"] == 98.0
     assert otd["iddScore"] == 6.57
+    assert otd["performanceDirection"] == "higher_is_better"
+    assert otd["comparableGoal"] != otd["referenceGoal"]
     assert otd["temporalNature"] == "interval"
     assert next(k for k in result["kpis"] if k["id"] == "KPI-CRITICAL-MP")["temporalNature"] == (
         "snapshot"

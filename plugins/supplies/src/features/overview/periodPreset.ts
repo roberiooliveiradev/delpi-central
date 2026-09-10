@@ -4,6 +4,8 @@
  */
 
 export const PERIOD_PRESET_IDS = [
+  "today",
+  "this_week",
   "this_month",
   "last_month",
   "this_quarter",
@@ -20,6 +22,8 @@ export type PeriodPresetRange = {
 };
 
 export const PERIOD_PRESET_OPTIONS: { value: PeriodPresetId; label: string }[] = [
+  { value: "today", label: "Hoje" },
+  { value: "this_week", label: "Esta semana" },
   { value: "this_month", label: "Este mês" },
   { value: "last_month", label: "Mês passado" },
   { value: "this_quarter", label: "Este trimestre" },
@@ -76,7 +80,24 @@ export function resolvePeriodPreset(
   const today = todayIsoInTimeZone(now, timeZone);
   const parsed = parseYmd(today);
   if (!parsed) return null;
-  const { y, m } = parsed;
+  const { y, m, d } = parsed;
+
+  if (preset === "today") {
+    return { from: today, to: today };
+  }
+
+  if (preset === "this_week") {
+    // Week starts Monday (ISO) in America/Sao_Paulo calendar day.
+    const utcNoon = Date.UTC(y, m - 1, d, 12, 0, 0);
+    const weekday = new Date(utcNoon).getUTCDay(); // 0=Sun … 6=Sat
+    const daysFromMonday = (weekday + 6) % 7;
+    const monday = new Date(utcNoon);
+    monday.setUTCDate(monday.getUTCDate() - daysFromMonday);
+    return {
+      from: formatYmd(monday.getUTCFullYear(), monday.getUTCMonth() + 1, monday.getUTCDate()),
+      to: today,
+    };
+  }
 
   if (preset === "this_month") {
     return { from: formatYmd(y, m, 1), to: today };
@@ -126,7 +147,9 @@ export type PeriodKindChip = "MTD" | "YTD";
 export function resolvePeriodKindChip(
   preset: PeriodPresetId | null | undefined,
 ): PeriodKindChip | null {
-  if (preset === "this_month" || preset === "last_month") return "MTD";
+  if (preset === "today" || preset === "this_week" || preset === "this_month" || preset === "last_month") {
+    return "MTD";
+  }
   if (preset === "this_year" || preset === "last_12_months") return "YTD";
   return null;
 }

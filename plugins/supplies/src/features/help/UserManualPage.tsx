@@ -2,7 +2,12 @@ import { BookOpen } from "lucide-react";
 
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
-import { SuppliesPagePath } from "../../app/suppliesUi";
+import {
+  SuppliesActionButton,
+  SuppliesPageHero,
+  SuppliesPagePath,
+  SuppliesSectionCard,
+} from "../../app/suppliesUi";
 import { USER_MANUAL_CONTENT } from "../../content/userManualContent";
 import { UserManualLinkedText } from "./UserManualLinkedText";
 
@@ -34,21 +39,24 @@ export function UserManualPage({ basePath }: UserManualPageProps) {
         current={c.pageTitle}
       />
 
-      <header className="sp-user-manual__hero">
-        <p className="sp-user-manual__eyebrow">
-          <BookOpen size={16} strokeWidth={1.75} aria-hidden="true" />
-          Ajuda
-        </p>
-        <h1>{c.pageTitle}</h1>
-        <p className="sp-user-manual__subtitle">{c.pageSubtitle}</p>
-        <button
-          type="button"
-          className="sp-home__chip"
-          onClick={() => navigatePluginView("home", { basePath })}
-        >
-          {c.backHome}
-        </button>
-      </header>
+      <SuppliesPageHero
+        eyebrow={
+          <span className="sp-user-manual__eyebrow">
+            <BookOpen size={16} strokeWidth={1.75} aria-hidden="true" />
+            Ajuda
+          </span>
+        }
+        title={c.pageTitle}
+        description={c.pageSubtitle}
+        actions={
+          <SuppliesActionButton
+            variant="default"
+            onClick={() => navigatePluginView("home", { basePath })}
+          >
+            {c.backHome}
+          </SuppliesActionButton>
+        }
+      />
 
       <p className="sp-user-manual__scope-note">
         <UserManualLinkedText text={c.scopeNote} basePath={basePath} />
@@ -83,15 +91,16 @@ export function UserManualPage({ basePath }: UserManualPageProps) {
 
         <div className="sp-user-manual__main">
           <section id="manual-concepts" className="sp-user-manual__section">
-            <h2>{c.conceptsTitle}</h2>
-            <ul className="sp-user-manual__concepts">
-              {c.concepts.map((item) => (
-                <li key={item.term}>
-                  <strong>{item.term}</strong>
-                  <UserManualLinkedText text={item.meaning} basePath={basePath} />
-                </li>
-              ))}
-            </ul>
+            <SuppliesSectionCard title={c.conceptsTitle}>
+              <ul className="sp-user-manual__concepts">
+                {c.concepts.map((item) => (
+                  <li key={item.term} className="sp-user-manual__concept-card">
+                    <strong>{item.term}</strong>
+                    <UserManualLinkedText text={item.meaning} basePath={basePath} />
+                  </li>
+                ))}
+              </ul>
+            </SuppliesSectionCard>
           </section>
 
           {c.sections.map((section) => (
@@ -100,79 +109,80 @@ export function UserManualPage({ basePath }: UserManualPageProps) {
               id={`manual-${section.id}`}
               className="sp-user-manual__section"
             >
-              <h2>{section.title}</h2>
-              {section.intro ? (
-                <p>
-                  <UserManualLinkedText text={section.intro} basePath={basePath} />
-                </p>
-              ) : null}
+              <SuppliesSectionCard title={section.title}>
+                {section.intro ? (
+                  <p className="sp-user-manual__intro">
+                    <UserManualLinkedText text={section.intro} basePath={basePath} />
+                  </p>
+                ) : null}
 
-              {section.links?.length ? (
-                <div className="sp-user-manual__table-wrap">
-                  <table className="sp-user-manual__table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Quero…</th>
-                        <th scope="col">Onde ir</th>
-                        <th scope="col">Como</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {section.links.map((row) => (
-                        <tr key={row.want}>
-                          <td>
-                            <UserManualLinkedText text={row.want} basePath={basePath} />
-                          </td>
-                          <td>
-                            <UserManualLinkedText text={row.where} basePath={basePath} />
-                          </td>
-                          <td>
-                            <UserManualLinkedText text={row.how} basePath={basePath} />
-                          </td>
+                {section.links?.length ? (
+                  <div className="sp-user-manual__table-wrap">
+                    <table className="sp-user-manual__table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Quero…</th>
+                          <th scope="col">Onde ir</th>
+                          <th scope="col">Como</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : null}
+                      </thead>
+                      <tbody>
+                        {section.links.map((row) => (
+                          <tr key={row.want}>
+                            <td>
+                              <UserManualLinkedText text={row.want} basePath={basePath} />
+                            </td>
+                            <td>
+                              <UserManualLinkedText text={row.where} basePath={basePath} />
+                            </td>
+                            <td>
+                              <UserManualLinkedText text={row.how} basePath={basePath} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
 
-              {section.bullets?.length ? (
-                <ul className="sp-user-manual__list">
-                  {section.bullets.map((item) => (
-                    <li key={item}>
-                      <UserManualLinkedText text={item} basePath={basePath} />
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+                {section.bullets?.length ? (
+                  <ul className="sp-user-manual__list">
+                    {section.bullets.map((item) => (
+                      <li key={item}>
+                        <UserManualLinkedText text={item} basePath={basePath} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
 
-              {section.faqs?.length ? (
-                <dl className="sp-user-manual__faq">
-                  {section.faqs.map((item) => (
-                    <div key={item.q} className="sp-user-manual__faq-item">
-                      <dt>
-                        <UserManualLinkedText text={item.q} basePath={basePath} />
-                      </dt>
-                      <dd>
-                        <UserManualLinkedText text={item.a} basePath={basePath} />
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : null}
+                {section.faqs?.length ? (
+                  <dl className="sp-user-manual__faq">
+                    {section.faqs.map((item) => (
+                      <div key={item.q} className="sp-user-manual__faq-item">
+                        <dt>
+                          <UserManualLinkedText text={item.q} basePath={basePath} />
+                        </dt>
+                        <dd>
+                          <UserManualLinkedText text={item.a} basePath={basePath} />
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
 
-              {section.glossary?.length ? (
-                <dl className="sp-user-manual__glossary">
-                  {section.glossary.map((item) => (
-                    <div key={item.term} className="sp-user-manual__glossary-item">
-                      <dt>{item.term}</dt>
-                      <dd>
-                        <UserManualLinkedText text={item.meaning} basePath={basePath} />
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              ) : null}
+                {section.glossary?.length ? (
+                  <dl className="sp-user-manual__glossary">
+                    {section.glossary.map((item) => (
+                      <div key={item.term} className="sp-user-manual__glossary-item">
+                        <dt>{item.term}</dt>
+                        <dd>
+                          <UserManualLinkedText text={item.meaning} basePath={basePath} />
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+              </SuppliesSectionCard>
             </section>
           ))}
         </div>

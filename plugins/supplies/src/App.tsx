@@ -9,7 +9,7 @@ import {
 } from "./app/pluginRoutes";
 import { SuppliesSessionProvider, useSuppliesSession } from "./app/SuppliesSessionContext";
 import { usePluginRouterPath } from "./app/usePluginRouterPath";
-import { SuppliesStateBanner } from "./app/suppliesUi";
+import { SuppliesLoadingCard, SuppliesStateBanner } from "./app/suppliesUi";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -86,7 +86,7 @@ function AppRoutes({
   if (session.loading) {
     return (
       <div className="dashboard-supplies-portal dashboard-page">
-        <SuppliesStateBanner>Consultando suas permissões.</SuppliesStateBanner>
+        <SuppliesLoadingCard title="Consultando suas permissões" variant="panel" />
       </div>
     );
   }

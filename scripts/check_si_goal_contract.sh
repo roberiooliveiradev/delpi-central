@@ -53,6 +53,12 @@ run_step "plugin-ui (vitest)" \
     src/utils/goalDisplay.test.ts \
     src/components/layout/KpiCard.test.tsx"
 
+run_step "supplies-api (goal triad)" \
+  bash -c "cd supplies-api && .venv/bin/python -m pytest \
+    tests/application/test_strategic_indicators_gateway.py \
+    tests/application/test_overview.py \
+    tests/application/test_partial_composition.py -q"
+
 echo ""
 if [[ "$fail" -ne 0 ]]; then
   echo "check_si_goal_contract: FAILED" >&2

@@ -112,7 +112,7 @@ export function OverviewCompareChart({
               panelTitle={OVERVIEW_CONTENT.chartSeriesColorsPanelTitle}
               triggerAriaLabel={OVERVIEW_CONTENT.chartSeriesColorsTriggerAria}
               resetLabel={OVERVIEW_CONTENT.chartSeriesColorsReset}
-              onChange={(dataKey, color) =>
+              onChange={(dataKey: string, color: string) =>
                 setPreferences((prev) => ({
                   ...prev,
                   seriesFills: { ...(prev.seriesFills ?? {}), [dataKey]: color },

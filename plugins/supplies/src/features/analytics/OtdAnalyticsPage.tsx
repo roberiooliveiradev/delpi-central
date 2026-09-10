@@ -6,7 +6,7 @@ import { navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
 import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import {
-  HelpTooltip,
+  SuppliesTitleWithHelp,
   SuppliesActionButton,
   SuppliesEmptyState,
   SuppliesLoadingCard,
@@ -93,13 +93,10 @@ export function OtdAnalyticsPage({ basePath }: OtdAnalyticsPageProps) {
       <SuppliesPageHero
         eyebrow={OTD_ANALYTICS_CONTENT.eyebrow}
         title={
-          <>
-            {OTD_ANALYTICS_CONTENT.title}{" "}
-            <HelpTooltip
-              content={SP_HELP.otdAnalyticsPage}
-              ariaLabel={OTD_ANALYTICS_CONTENT.helpAriaLabel}
-            />
-          </>
+          <SuppliesTitleWithHelp
+            title={OTD_ANALYTICS_CONTENT.title}
+            hint={SP_HELP.otdAnalyticsPage}
+          />
         }
         description={OTD_ANALYTICS_CONTENT.description}
         badge={<SuppliesStatusBadge label={filters.scopeBadge} variant="info" />}

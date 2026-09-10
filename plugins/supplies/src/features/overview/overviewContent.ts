@@ -25,7 +25,7 @@ export const OVERVIEW_CONTENT = {
   partialNote: "Alguns indicadores falharam; o restante permanece utilizável.",
   indicatorsTitle: "Indicadores",
   indicatorsHint:
-    "Cada card mostra a natureza temporal (intervalo, snapshot ou estado) e a meta quando houver.",
+    "Cada card mostra natureza temporal e, quando o SI tiver meta, Meta parcial (período) distinta da Meta mês (cadastrada), além da Nota IDD do SI. SC pendentes e materiais críticos não inventam meta.",
   otdChartTitle: "OTD no tempo",
   otdChartHint: "Evolução do OTD de pedidos de compra no recorte filtrado.",
   otdChartLoading: "Carregando série OTD…",

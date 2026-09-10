@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { GLOSSARY_CONTENT } from "../../content/glossaryContent";
@@ -6,6 +9,8 @@ import {
   MANUAL_TOOL_TARGETS,
   splitManualTextWithToolLinks,
 } from "../../content/userManualToolLinks";
+
+const dir = dirname(fileURLToPath(import.meta.url));
 
 describe("userManual content", () => {
   it("covers P0 manual sections from HELP-AND-ONBOARDING", () => {
@@ -50,5 +55,14 @@ describe("userManual content", () => {
       true,
     );
     expect(parts.some((part) => part.kind === "link" && part.value === "Início")).toBe(true);
+  });
+
+  it("recomposes with kit PageHero/SectionCard (Commercial family)", () => {
+    const page = readFileSync(join(dir, "UserManualPage.tsx"), "utf8");
+    expect(page).toContain("SuppliesPageHero");
+    expect(page).toContain("SuppliesSectionCard");
+    expect(page).toContain("SuppliesActionButton");
+    expect(page).not.toContain("sp-user-manual__hero");
+    expect(page).not.toMatch(/className=\"sp-home__chip\"/);
   });
 });

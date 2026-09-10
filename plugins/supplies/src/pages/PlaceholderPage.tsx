@@ -1,8 +1,11 @@
-import { HelpTooltip } from "@delpi/plugin-ui/index";
-
 import { SP_HELP } from "../content/helpTooltips";
 import { navigatePluginView } from "../app/pluginNavigation";
-import { SuppliesEmptyState, SuppliesPagePath } from "../app/suppliesUi";
+import {
+  SuppliesEmptyState,
+  SuppliesPageHero,
+  SuppliesPagePath,
+  SuppliesTitleWithHelp,
+} from "../app/suppliesUi";
 import { buildPluginPath } from "../app/pluginRoutes";
 
 type PlaceholderPageProps = {
@@ -27,9 +30,11 @@ export function PlaceholderPage({ basePath, title, description }: PlaceholderPag
         items={[]}
         current={title}
       />
-      <SuppliesEmptyState title={title} message={description}>
-        <HelpTooltip content={SP_HELP.homeVsOverview} ariaLabel="Ajuda: Início vs Visão geral" />
-      </SuppliesEmptyState>
+      <SuppliesPageHero
+        title={<SuppliesTitleWithHelp title={title} hint={SP_HELP.homeVsOverview} />}
+        description={description}
+      />
+      <SuppliesEmptyState message="Conteúdo desta área será entregue na próxima etapa do portal." />
     </div>
   );
 }

@@ -16,13 +16,13 @@ import { navigatePluginView } from "../app/pluginNavigation";
 import type { PluginRoutableView } from "../app/pluginRoutes";
 import { useSuppliesSession } from "../app/SuppliesSessionContext";
 import {
-  HelpTooltip,
   SuppliesActionButton,
   SuppliesCatalogSearchBar,
   SuppliesEmptyState,
   SuppliesHubChipRow,
   SuppliesLoadingCard,
   SuppliesRouteChip,
+  SuppliesSectionHintLabel,
   SuppliesSectionCard,
   SuppliesSectionRouteCard,
   SuppliesStateBanner,
@@ -99,23 +99,6 @@ function isNavigationTarget(viewId: string): viewId is PluginRoutableView {
     "administration",
     "help",
   ].includes(viewId);
-}
-
-function LabelWithHelp({
-  label,
-  help,
-  ariaLabel,
-}: {
-  label: string;
-  help: string;
-  ariaLabel: string;
-}) {
-  return (
-    <span className="sp-label-with-help">
-      <span>{label}</span>
-      <HelpTooltip content={help} ariaLabel={ariaLabel} placement="bottom" />
-    </span>
-  );
 }
 
 export function HomePage({ basePath }: HomePageProps) {
@@ -266,11 +249,10 @@ export function HomePage({ basePath }: HomePageProps) {
 
         {showQueueOk ? (
           <div className="sp-home-queue-ok" role="status">
-            <LabelWithHelp
-              label={HOME.attentionQueueOk}
-              help={SP_HELP.home.queueOk}
-              ariaLabel={HOME.queueOkHelpAriaLabel}
-            />
+            <SuppliesSectionHintLabel
+                  label={HOME.attentionQueueOk}
+                  hint={SP_HELP.home.queueOk}
+                />
           </div>
         ) : null}
 
@@ -295,10 +277,9 @@ export function HomePage({ basePath }: HomePageProps) {
           <div className="sp-home-paths">
             <div className="sp-home-search">
               <div className="sp-home-search__label">
-                <LabelWithHelp
+                <SuppliesSectionHintLabel
                   label={HOME.searchLabel}
-                  help={SP_HELP.home.search}
-                  ariaLabel={HOME.searchHelpAriaLabel}
+                  hint={SP_HELP.home.search}
                 />
               </div>
               <SuppliesCatalogSearchBar
@@ -323,11 +304,10 @@ export function HomePage({ basePath }: HomePageProps) {
             {visibleFavorites.length > 0 ? (
               <SuppliesHubChipRow
                 label={
-                  <LabelWithHelp
-                    label={HOME.favoritesTitle}
-                    help={SP_HELP.home.favorites}
-                    ariaLabel={HOME.favoritesHelpAriaLabel}
-                  />
+                  <SuppliesSectionHintLabel
+                  label={HOME.favoritesTitle}
+                  hint={SP_HELP.home.favorites}
+                />
                 }
                 aria-label={HOME.favoritesTitle}
               >
@@ -354,11 +334,10 @@ export function HomePage({ basePath }: HomePageProps) {
             {visibleRecents.length > 0 ? (
               <SuppliesHubChipRow
                 label={
-                  <LabelWithHelp
-                    label={HOME.recentsTitle}
-                    help={SP_HELP.home.recents}
-                    ariaLabel={HOME.recentsHelpAriaLabel}
-                  />
+                  <SuppliesSectionHintLabel
+                  label={HOME.recentsTitle}
+                  hint={SP_HELP.home.recents}
+                />
                 }
                 aria-label={HOME.recentsTitle}
               >

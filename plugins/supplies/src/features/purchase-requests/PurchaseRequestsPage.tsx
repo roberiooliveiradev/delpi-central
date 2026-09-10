@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { Download, ShoppingCart } from "lucide-react";
 
 import { navigatePluginView } from "../../app/pluginNavigation";
@@ -7,7 +6,9 @@ import { buildPluginPath } from "../../app/pluginRoutes";
 import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import {
   SuppliesEmptyState,
+  SuppliesLoadingCard,
   SuppliesPagePath,
+  SuppliesTitleWithHelp,
   SuppliesStateBanner,
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
@@ -180,8 +181,7 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
           {C.eyebrow}
         </p>
         <h1>
-          {C.title}{" "}
-          <HelpTooltip content={SP_HELP.purchaseRequests} ariaLabel={C.helpAriaLabel} />
+          <SuppliesTitleWithHelp title={C.title} hint={SP_HELP.purchaseRequests} />
         </h1>
         <p className="sp-purchase-requests__description">{C.description}</p>
       </header>
@@ -295,7 +295,7 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
         </div>
       ) : null}
 
-      {loading ? <SuppliesStateBanner>{C.loading}</SuppliesStateBanner> : null}
+      {loading ? <SuppliesLoadingCard title={C.loading} variant="panel" /> : null}
 
       {!loading && !error && items.length === 0 ? (
         <SuppliesEmptyState title={C.emptyTitle} message={C.emptyMessage} />
@@ -395,7 +395,7 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
               {C.detailClose}
             </button>
           </div>
-          {detailLoading ? <SuppliesStateBanner>{C.detailLoading}</SuppliesStateBanner> : null}
+          {detailLoading ? <SuppliesLoadingCard title={C.detailLoading} variant="panel" /> : null}
           {!detailLoading && (detailError || detailNotFound) ? (
             <div className="sp-purchase-requests__error">
               <SuppliesStateBanner variant="error">

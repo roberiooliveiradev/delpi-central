@@ -58,11 +58,13 @@ export const SP_HELP = {
   overviewTemporal:
     "Cada card tem natureza temporal própria: intervalo (OTD, CPV, economia), snapshot (estoque, críticos) ou estado atual (SC pendentes). Início não substitui este painel.",
   overviewFiltersPeriod:
-    "Atalhos de período (este mês, trimestre, ano…). Ao mudar datas manualmente, o preset vira Personalizado.",
+    "Atalhos de período (Hoje, Esta semana, Este mês, trimestre, ano, 12 meses…). Ao mudar datas manualmente, o preset vira Personalizado. O recorte fica na URL (F5/compartilhar).",
   overviewFiltersFrom: "Data inicial do recorte analítico compartilhado na URL.",
   overviewFiltersTo: "Data final do recorte analítico compartilhado na URL.",
   overviewFiltersBranch:
     "Unidades liberadas no seu escopo (Santa Catarina e/ou Espírito Santo). Vazio ou ambas = consolidado. Unidade fora do escopo é bloqueada pela API.",
+  overviewGoalTriad:
+    "Meta do período (Meta parcial quando o recorte não cobre o mês inteiro) vem do SI como comparable_goal. Meta mês/referência é a meta cadastrada (goal_value). Nota IDD é o score do SI — não é recalculada no navegador.",
   overviewOtdChart:
     "Série de OTD de pedidos de compra com ChartViewShell completo (granularidade, tipo, YoY, cores e exportação). Usa o mesmo filtro de unidade e período da Visão geral. Abra OTD para ver os velocímetros.",
   overviewCompareChart:

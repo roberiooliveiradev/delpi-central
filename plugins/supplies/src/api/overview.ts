@@ -14,9 +14,15 @@ export type OverviewKpiCard = {
   value: number | null;
   displayValue: string | null;
   unit: string | null;
+  /** @deprecated Prefer comparableGoal — period-comparable meta. */
   meta: number | null;
+  goalValue: number | null;
+  comparableGoal: number | null;
+  referenceGoal: number | null;
   /** Nota IDD canônica do SI (`score`); null quando SI não enviou. */
   iddScore: number | null;
+  performanceDirection: "higher_is_better" | "lower_is_better" | null;
+  goalMode: string | null;
   status: OverviewKpiStatus;
   source: string;
 };

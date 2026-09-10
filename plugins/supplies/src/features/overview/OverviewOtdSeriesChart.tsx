@@ -80,7 +80,7 @@ export function OverviewOtdSeriesChart({
         label: OVERVIEW_CONTENT.comparePriorYear,
         summaryLabel: OVERVIEW_CONTENT.comparePriorYear,
         checked: yoyActive,
-        onChange: (checked) => setPreferences({ comparePriorYear: checked }),
+        onChange: (checked: boolean) => setPreferences({ comparePriorYear: checked }),
         hint: OVERVIEW_CONTENT.comparePriorYearHint,
         hintAriaLabel: "Ajuda: comparar ano anterior",
       },
@@ -249,7 +249,7 @@ export function OverviewOtdSeriesChart({
               panelTitle={OVERVIEW_CONTENT.chartSeriesColorsPanelTitle}
               triggerAriaLabel={OVERVIEW_CONTENT.chartSeriesColorsTriggerAria}
               resetLabel={OVERVIEW_CONTENT.chartSeriesColorsReset}
-              onChange={(dataKey, color) =>
+              onChange={(dataKey: string, color: string) =>
                 setPreferences((prev) => ({
                   ...prev,
                   seriesFills: { ...(prev.seriesFills ?? {}), [dataKey]: color },

@@ -347,6 +347,13 @@ declare module "@delpi/plugin-ui/index" {
     className?: string;
   }): ReactNode;
 
+  export function createDashboardTitleWithHelp(config: {
+    classNames: { root: string };
+    labels: { titleHelpAriaLabel: (title: string) => string };
+  }): ComponentType<{ title: string; hint?: string; className?: string }>;
+
+  export function titleWithHelpBemClasses(prefix: string): { root: string };
+
   export function createFilterBarShell(config: {
     prefix: string;
     withGrid?: boolean;
@@ -516,14 +523,15 @@ declare module "@delpi/plugin-ui/index" {
     disabled?: boolean;
     onExport: (format: string) => void;
   }>;
-  export function SpeedometerGauge(props: {
+  export type SpeedometerGaugeProps = {
     prefix?: string;
     size?: number;
     value?: number | null;
     goal?: number | null;
     showZonesLegend?: boolean;
     tip?: string;
-  }): ReactNode;
+  };
+  export function SpeedometerGauge(props: SpeedometerGaugeProps): ReactNode;
 }
 
 declare module "@delpi/plugin-ui/styles";

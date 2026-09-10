@@ -22,6 +22,7 @@ import {
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTabularExportButtons,
+  createDashboardTitleWithHelp,
   createDashboardTopBar,
   createDashboardTopBarSearchTrigger,
   createDashboardViewTransition,
@@ -34,6 +35,7 @@ import {
   sectionRouteCardBemClasses,
   selectFieldPacClasses,
   stateBannerBemClasses,
+  titleWithHelpBemClasses,
   useChartGranularitySelection,
   type SpeedometerGaugeProps,
 } from "@delpi/plugin-ui/index";
@@ -160,6 +162,13 @@ export const SuppliesMultiSelectField = createDashboardMultiSelectField({
 
 export const SuppliesSegmentToggle = createDashboardSegmentToggle(UI_PREFIX);
 export const SuppliesSectionHintLabel = SectionHintLabel;
+
+export const SuppliesTitleWithHelp = createDashboardTitleWithHelp({
+  classNames: titleWithHelpBemClasses(UI_PREFIX),
+  labels: {
+    titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
+  },
+});
 
 const suppliesChartToolbarKit = createDashboardChartToolbarKit({
   prefix: UI_PREFIX,

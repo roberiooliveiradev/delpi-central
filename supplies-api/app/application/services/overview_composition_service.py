@@ -279,8 +279,14 @@ class OverviewCompositionService:
                 else period_label
             )
             si_row = si_metrics.get(kpi_id) or {}
-            meta_value = si_row.get("goal")
+            goal_value = si_row.get("goal_value")
+            comparable_goal = si_row.get("comparable_goal")
+            reference_goal = si_row.get("reference_goal")
             idd_score = si_row.get("score")
+            performance_direction = si_row.get("performance_direction")
+            goal_mode = si_row.get("goal_mode")
+            # `meta` aliases period-comparable goal for legacy compare chart consumers.
+            meta_value = comparable_goal if comparable_goal is not None else goal_value
             kpis.append(
                 {
                     "id": kpi_id,
@@ -295,7 +301,12 @@ class OverviewCompositionService:
                     else None,
                     "unit": definition["unit"],
                     "meta": meta_value,
+                    "goalValue": goal_value,
+                    "comparableGoal": comparable_goal,
+                    "referenceGoal": reference_goal,
                     "iddScore": idd_score,
+                    "performanceDirection": performance_direction,
+                    "goalMode": goal_mode,
                     "status": "available" if available else "unavailable",
                     "source": definition["source"],
                 }

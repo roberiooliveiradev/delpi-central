@@ -28,15 +28,35 @@ function unitFields(unit: string | null): Pick<
   "value_unit" | "value_prefix" | "value_suffix" | "value_decimals"
 > {
   if (unit === "%") {
-    return { value_unit: "percent", value_suffix: "%", value_decimals: 1 };
+    return {
+      value_unit: "percent",
+      value_prefix: "",
+      value_suffix: "%",
+      value_decimals: 1,
+    };
   }
   if (unit === "R$") {
-    return { value_unit: "currency", value_prefix: "R$", value_decimals: 2 };
+    return {
+      value_unit: "currency",
+      value_prefix: "R$",
+      value_suffix: "",
+      value_decimals: 2,
+    };
   }
   if (unit === "×") {
-    return { value_unit: "ratio", value_suffix: "×", value_decimals: 2 };
+    return {
+      value_unit: "ratio",
+      value_prefix: "",
+      value_suffix: "×",
+      value_decimals: 2,
+    };
   }
-  return { value_unit: "count", value_decimals: 0 };
+  return {
+    value_unit: "count",
+    value_prefix: "",
+    value_suffix: "",
+    value_decimals: 0,
+  };
 }
 
 export type OverviewKpiGoalContext = {
@@ -47,21 +67,47 @@ export type OverviewKpiGoalContext = {
   consolidated: boolean;
 };
 
-/** Maps overview KPI + SI meta into kit DashboardGoalFields (Commercial parity). */
+function resolveComparable(kpi: OverviewKpiCard): number | null {
+  const value = kpi.comparableGoal ?? kpi.meta;
+  if (value == null || !Number.isFinite(value) || value <= 0) return null;
+  return value;
+}
+
+function resolveReference(kpi: OverviewKpiCard): number | null {
+  const value = kpi.referenceGoal ?? kpi.goalValue ?? kpi.meta;
+  if (value == null || !Number.isFinite(value) || value <= 0) return null;
+  return value;
+}
+
+function resolveGoalValue(kpi: OverviewKpiCard): number | null {
+  const value = kpi.goalValue ?? kpi.referenceGoal ?? kpi.meta;
+  if (value == null || !Number.isFinite(value) || value <= 0) return null;
+  return value;
+}
+
+/** Maps overview KPI + SI triad into kit DashboardGoalFields (Commercial parity). */
 export function buildOverviewGoalFields(
   kpi: OverviewKpiCard,
   ctx: OverviewKpiGoalContext,
 ): DashboardGoalFields | null {
-  if (kpi.meta == null || !Number.isFinite(kpi.meta) || kpi.meta <= 0) {
+  const comparable = resolveComparable(kpi);
+  const reference = resolveReference(kpi);
+  const goalValue = resolveGoalValue(kpi);
+  if (comparable == null && reference == null && goalValue == null) {
     return null;
   }
   const units = unitFields(kpi.unit);
+  const direction =
+    (kpi.performanceDirection as PerformanceDirection | null) ??
+    KPI_DIRECTION[kpi.id] ??
+    "higher_is_better";
   return {
-    goal_value: kpi.meta,
-    reference_goal: kpi.meta,
-    comparable_goal: kpi.meta,
+    goal_value: goalValue ?? reference ?? comparable,
+    reference_goal: reference ?? goalValue ?? comparable,
+    comparable_goal: comparable ?? reference ?? goalValue,
     has_goal: true,
-    performance_direction: KPI_DIRECTION[kpi.id] ?? "higher_is_better",
+    performance_direction: direction,
+    goal_mode: kpi.goalMode ?? "standard",
     goal_scope_branch: ctx.consolidated ? null : ctx.branch ?? null,
     goal_scope_label: ctx.consolidated
       ? "Meta consolidada"
@@ -95,8 +141,6 @@ export function buildOverviewKpiPresentation(
     return value.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
   };
 
-  // Comercial: Nota IDD vem do SI (`score`). Passar iddScoreLabel explícito
-  // evita o fallback local resolveIddScoreLabel(realizado, meta).
   const iddScoreLabel = resolveIndicatorIddScoreLabelFromSi(kpi.iddScore);
 
   return buildKpiGoalPresentation(contextLabel, goal, formatComparable, {

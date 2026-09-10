@@ -71,7 +71,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Ver indicadores do período",
           where: "Visão geral",
-          how: "Filtros de período e Unidade (MultiSelect Santa Catarina / Espírito Santo); KPIs, gráfico OTD e comparativo valor×meta",
+          how: "Filtros Hoje/Esta semana/Este mês… e Unidade (MultiSelect SC/ES); KPIs com Meta parcial ≠ Meta mês quando o SI distingue; Nota IDD do SI",
         },
         {
           want: "Ver OTD com velocímetro",
@@ -81,7 +81,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Compartilhar o mesmo recorte da Visão geral",
           where: "Visão geral",
-          how: "A URL guarda unidade(s) e datas — copie o link com o filtro ativo",
+          how: "A URL guarda unidade(s), datas e preset — copie o link com o filtro ativo",
         },
         {
           want: "Abrir solicitações de compras (SC)",
@@ -187,7 +187,11 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Como filtro Unidade e período na Visão geral?",
-          a: "Use o preset (este mês, trimestre…) ou as datas De/Até e o MultiSelect Unidade (Santa Catarina / Espírito Santo). Vazio ou ambas = consolidado. O link da página guarda o recorte para compartilhar.",
+          a: "Use o preset (Hoje, Esta semana, Este mês, trimestre, ano…) ou as datas De/Até e o MultiSelect Unidade (Santa Catarina / Espírito Santo). Vazio ou ambas = consolidado. O link da página guarda o recorte para compartilhar (F5/voltar).",
+        },
+        {
+          q: "Por que Meta parcial e Meta mês podem ser diferentes?",
+          a: "A Meta do período (parcial) é a comparable_goal do Strategic Indicators para o recorte De–Até. A Meta mês/referência é a meta cadastrada (goal_value). A Nota IDD é o score do SI — o Portal não recalcula no navegador. SC pendentes e materiais críticos não têm meta SI.",
         },
         {
           q: "Por que recebi 403?",

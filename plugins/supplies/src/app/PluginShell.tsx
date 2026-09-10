@@ -8,7 +8,6 @@ import {
   Package,
   ShoppingCart,
 } from "lucide-react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { SP_HELP } from "../content/helpTooltips";
@@ -38,7 +37,8 @@ import {
   SuppliesActionButton,
   SuppliesCommandPalette,
   SuppliesPageHero,
-  SuppliesStatusBadge,
+  SuppliesSectionHintLabel,
+  SuppliesTitleWithHelp,
   SuppliesTopBar,
   SuppliesViewTransition,
 } from "./suppliesUi";
@@ -196,14 +196,10 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
     {
       id: "attention",
       label: (
-        <span className="sp-label-with-help">
-          <span>{heroCopy.highlights.attention}</span>
-          <HelpTooltip
-            content={SP_HELP.home.heroAttention}
-            ariaLabel={`Ajuda: ${heroCopy.highlights.attention}`}
-            placement="bottom"
-          />
-        </span>
+        <SuppliesSectionHintLabel
+          label={heroCopy.highlights.attention}
+          hint={SP_HELP.home.heroAttention}
+        />
       ),
       value: attentionValue,
       tone:
@@ -214,28 +210,20 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
     {
       id: "units",
       label: (
-        <span className="sp-label-with-help">
-          <span>{heroCopy.highlights.units}</span>
-          <HelpTooltip
-            content={SP_HELP.home.heroUnits}
-            ariaLabel={`Ajuda: ${heroCopy.highlights.units}`}
-            placement="bottom"
-          />
-        </span>
+        <SuppliesSectionHintLabel
+          label={heroCopy.highlights.units}
+          hint={SP_HELP.home.heroUnits}
+        />
       ),
       value: session.allowedUnits.length > 0 ? String(session.allowedUnits.length) : "—",
     },
     {
       id: "overview",
       label: (
-        <span className="sp-label-with-help">
-          <span>{heroCopy.highlights.overview}</span>
-          <HelpTooltip
-            content={SP_HELP.home.heroOverview}
-            ariaLabel={`Ajuda: ${heroCopy.highlights.overview}`}
-            placement="bottom"
-          />
-        </span>
+        <SuppliesSectionHintLabel
+          label={heroCopy.highlights.overview}
+          hint={SP_HELP.home.heroOverview}
+        />
       ),
       value: caps.analytics
         ? heroCopy.highlights.overviewCta
@@ -288,28 +276,21 @@ export function PluginShell({ view, basePath, children }: PluginShellProps) {
               aria-label={heroCopy.ariaLabel}
               eyebrow={heroCopy.eyebrow}
               title={
-                <>
-                  {heroTitle}
-                  <HelpTooltip
-                    content={SP_HELP.home.vsOverview}
-                    ariaLabel={heroCopy.helpAriaLabel}
-                  />
-                </>
+                <SuppliesTitleWithHelp
+                  title={heroTitle}
+                  hint={SP_HELP.home.vsOverview}
+                />
               }
               description={heroCopy.description}
               badge={
                 <span className="sp-home-hero-badge">
-                  <SuppliesStatusBadge
+                  <SuppliesSectionHintLabel
                     label={
                       session.allowedUnits.length > 0
                         ? `${heroCopy.scopeUnits}: ${unitsLabel}`
                         : heroCopy.scopeEmpty
                     }
-                    variant={session.allowedUnits.length > 0 ? "info" : "neutral"}
-                  />
-                  <HelpTooltip
-                    content={SP_HELP.home.scopeBadge}
-                    ariaLabel={`Ajuda: ${heroCopy.scopeUnits}`}
+                    hint={SP_HELP.home.scopeBadge}
                   />
                 </span>
               }

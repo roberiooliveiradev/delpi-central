@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
 import {
   BookOpen,
   Home,
@@ -19,7 +18,9 @@ import { useMyPersonProfile } from "../../app/useMyPersonProfile";
 import {
   SuppliesActionButton,
   SuppliesAvatar,
+  SuppliesLoadingCard,
   SuppliesPageHero,
+  SuppliesTitleWithHelp,
   SuppliesPagePath,
   SuppliesSectionCard,
   SuppliesStateBanner,
@@ -176,7 +177,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
         current={profile?.name || "Perfil"}
       />
 
-      {loading ? <SuppliesStateBanner>{C.loading}</SuppliesStateBanner> : null}
+      {loading ? <SuppliesLoadingCard title={C.loading} variant="panel" /> : null}
 
       {forbidden ? (
         <SuppliesStateBanner variant="error">{C.forbidden}</SuppliesStateBanner>
@@ -196,10 +197,7 @@ export function UserProfilePage({ basePath, userId }: UserProfilePageProps) {
           <SuppliesPageHero
             eyebrow="Portal Suprimentos"
             title={
-              <>
-                {profile.name}{" "}
-                <HelpTooltip content={SP_HELP.userProfile} ariaLabel={C.helpAriaLabel} />
-              </>
+              <SuppliesTitleWithHelp title={profile.name} hint={SP_HELP.userProfile} />
             }
             description={profile.email || C.hostProfileNote}
             badge={

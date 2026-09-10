@@ -71,6 +71,19 @@ describe("Overview content", () => {
 });
 
 describe("Overview period presets", () => {
+  it("resolves today and this_week for a fixed date", () => {
+    const fixed = new Date("2026-09-08T15:00:00-03:00");
+    expect(resolvePeriodPreset("today", fixed)).toEqual({
+      from: "2026-09-08",
+      to: "2026-09-08",
+    });
+    // 2026-09-08 is Tuesday → week from Monday 07
+    expect(resolvePeriodPreset("this_week", fixed)).toEqual({
+      from: "2026-09-07",
+      to: "2026-09-08",
+    });
+  });
+
   it("resolves this_month for a fixed date", () => {
     const fixed = new Date("2026-09-08T15:00:00-03:00");
     const range = resolvePeriodPreset("this_month", fixed);
@@ -160,27 +173,40 @@ describe("overview KPI presentation", () => {
     consolidated: true,
   };
 
-  it("positive: uses SI iddScore (not local recalc) and goal badges", async () => {
-    const { buildOverviewKpiPresentation } = await import("./overviewKpiPresentation");
-    const presentation = buildOverviewKpiPresentation(
-      {
-        id: "KPI-OTD",
-        viewId: "overview",
-        title: "OTD compras",
-        description: "Pontualidade",
-        temporalNature: "interval",
-        periodLabel: "2026-09-01 → 2026-09-08",
-        value: 92,
-        displayValue: "92,0%",
-        unit: "%",
-        meta: 98,
-        iddScore: 6.57,
-        status: "available",
-        source: "api-delpi",
-      },
-      ctx,
+  it("positive: partial month keeps comparable ≠ reference and SI idd", async () => {
+    const { buildOverviewKpiPresentation, buildOverviewGoalFields } = await import(
+      "./overviewKpiPresentation"
     );
+    const kpi = {
+      id: "KPI-OTD",
+      viewId: "overview",
+      title: "OTD compras",
+      description: "Pontualidade",
+      temporalNature: "interval" as const,
+      periodLabel: "2026-09-01 → 2026-09-08",
+      value: 92,
+      displayValue: "92,0%",
+      unit: "%",
+      meta: 30,
+      goalValue: 98,
+      comparableGoal: 30,
+      referenceGoal: 98,
+      iddScore: 6.57,
+      performanceDirection: "higher_is_better" as const,
+      goalMode: "standard",
+      status: "available" as const,
+      source: "api-delpi",
+    };
+    const fields = buildOverviewGoalFields(kpi, ctx);
+    expect(fields?.comparable_goal).toBe(30);
+    expect(fields?.reference_goal).toBe(98);
+    expect(fields?.goal_value).toBe(98);
+    expect(fields?.comparable_goal).not.toBe(fields?.reference_goal);
+
+    const presentation = buildOverviewKpiPresentation(kpi, ctx);
     expect(presentation.goalLabel).toBeTruthy();
+    expect(presentation.monthlyGoalLabel).toBeTruthy();
+    expect(presentation.goalLabel).not.toBe(presentation.monthlyGoalLabel);
     expect(presentation.goalPerformanceBadge?.statusLabel).toMatch(/meta/i);
     expect(presentation.goalPerformanceBadge?.directionLabel).toMatch(/maior|menor/i);
     expect(presentation.iddScoreLabel).toBe("6,57");
@@ -201,7 +227,12 @@ describe("overview KPI presentation", () => {
         displayValue: "R$ 1.000.000,00",
         unit: "R$",
         meta: 1_200_000,
+        goalValue: 1_200_000,
+        comparableGoal: 1_200_000,
+        referenceGoal: 1_200_000,
         iddScore: 8.2,
+        performanceDirection: "higher_is_better",
+        goalMode: "standard",
         status: "available",
         source: "api-delpi",
       },
@@ -224,12 +255,45 @@ describe("overview KPI presentation", () => {
         displayValue: "92,0%",
         unit: "%",
         meta: 98,
+        goalValue: 98,
+        comparableGoal: 98,
+        referenceGoal: 98,
         iddScore: null,
+        performanceDirection: "higher_is_better",
+        goalMode: "standard",
         status: "available",
         source: "api-delpi",
       },
       ctx,
     );
     expect(presentation.iddScoreLabel).toBeNull();
+  });
+
+  it("negative: SC open without triad has no goal presentation", async () => {
+    const { buildOverviewGoalFields } = await import("./overviewKpiPresentation");
+    const fields = buildOverviewGoalFields(
+      {
+        id: "KPI-SC-OPEN",
+        viewId: "overview",
+        title: "SC abertas",
+        description: "…",
+        temporalNature: "state",
+        periodLabel: "…",
+        value: 12,
+        displayValue: "12",
+        unit: null,
+        meta: null,
+        goalValue: null,
+        comparableGoal: null,
+        referenceGoal: null,
+        iddScore: null,
+        performanceDirection: null,
+        goalMode: null,
+        status: "available",
+        source: "purchase-requests",
+      },
+      ctx,
+    );
+    expect(fields).toBeNull();
   });
 });

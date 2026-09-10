@@ -27,13 +27,17 @@ Herdar textos já canônicos de:
 
 - O que é o Portal vs apps antigos (coexistência).
 - Início vs Visão geral.
-- Como filtrar **Unidade** (MultiSelect Santa Catarina / Espírito Santo) e período na Visão geral / OTD (FilterBar + URL shareable) + preferência de filial padrão no perfil.
+- Como filtrar **Unidade** (MultiSelect Santa Catarina / Espírito Santo) e período na Visão geral / OTD (presets Hoje/Esta semana/mês… + FilterBar + URL shareable) + preferência de filial padrão no perfil.
+- Filtros **rejeitados** na Overview (não entram no chrome global): competence, cliente, segmento, carteira, vendedor, `location` global, `stock_method` global (pertencem a telas de domínio, não ao placar).
+- Metas na Visão geral: **Meta parcial** = `comparableGoal` do SI; **Meta mês** = `referenceGoal`/`goalValue` cadastrada; **Nota IDD** = `iddScore` do SI (não recalcular no MFE). SC pendentes e materiais críticos sem meta SI.
 - Gráfico OTD com toolbar (granularity/tipo/export) e comparativo valor×meta (sem série inventada).
 - Página OTD (`/analytics/otd`): velocímetros por unidade; Overview = placar; Entregas = atraso operacional.
+- Loading padrão: `SuppliesLoadingCard` (plugin-ui); banners só para error/partial/forbidden.
+- Manual `/help`: PageHero + SectionCard (família Comercial), conteúdo em `userManualContent.ts`.
 - Onde ver SC, ESTSEG, item, fornecedor.
 - O que cada KPI do Overview significa (link fichas, linguagem de negócio).
 - 403: «sem permissão para esta filial / este módulo».
-- FAQ: diferença estoque × estoque de segurança; OTD × atraso; Overview × página OTD; Sheets × indicadores; filtros/URL.
+- FAQ: diferença estoque × estoque de segurança; OTD × atraso; Overview × página OTD; Sheets × indicadores; filtros/URL; Meta parcial × Meta mês.
 - Onde alterar filial padrão / densidade de tabelas (perfil do plugin — WF-USER), sem confundir com `/profile` do Portal.
 - Foto, cargo e contatos: fonte Core (`/me/person-profile`); edição só no Meu Perfil do host; TopBar/WF-USER sincronizam via CustomEvent.
 
