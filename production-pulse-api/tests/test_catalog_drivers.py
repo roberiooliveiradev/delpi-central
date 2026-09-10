@@ -4,7 +4,7 @@ def test_catalog_drivers_lists_registry(client):
     body = response.json()
     assert body["success"] is True
     data = body["data"]
-    assert data["schemaVersion"] == 1
+    assert data["schemaVersion"] == 2
     keys = {item["key"] for item in data["drivers"]}
     assert "esp8266_counter_v1" in keys
     assert "esp32c3_counter_v1" in keys

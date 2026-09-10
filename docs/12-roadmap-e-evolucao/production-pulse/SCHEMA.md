@@ -49,6 +49,26 @@ Cadastro de **hardware** na rede (ESP, gateway, futuro Modbus).
 
 ---
 
+### `device_drivers` (V014)
+
+Catálogo de **tipos de driver** (metadados). Implementação HTTP escolhida por `protocol_kind`.
+
+| Coluna | Tipo | Notas |
+|--------|------|-------|
+| `driver_key` | `varchar(40)` PK | EN snake_case; referenciado por `devices` / `firmwares` |
+| `protocol_kind` | `varchar(40)` | `http_counter` \| `http_gauge` |
+| `role_key` | `varchar(40)` | `pulse_counter`, `process_gauge`, … |
+| `label_pt` / `description_pt` | text | UI |
+| `metrics` / `commands` | `jsonb` | capabilities |
+| `operator_surface` | `varchar(40)` | MFE operador |
+| `operator_eligible` | `boolean` | |
+| `poll` / `thresholds` / `counter_restore` | `jsonb` | |
+| `archived_at` | `timestamptz` | soft-archive; omitido em selects de create |
+
+Ver [DEVICE-DRIVERS.md](./DEVICE-DRIVERS.md).
+
+---
+
 ### `device_bindings`
 
 **Uma amarração vigente por dispositivo** — define o **objeto monitorado** e links opcionais ao TOTVS.

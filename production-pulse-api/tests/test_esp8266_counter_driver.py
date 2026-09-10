@@ -4,11 +4,11 @@ import httpx
 import pytest
 
 from production_pulse_app.application.services.device_driver_registry_service import (
-    DeviceDriverNotImplementedError,
     get_device_driver_registry,
 )
 from production_pulse_app.domain.errors import DeviceDriverError
 from production_pulse_app.infrastructure.drivers.esp8266_counter_driver import Esp8266CounterDriver
+from production_pulse_app.infrastructure.drivers.http_counter_driver import HttpCounterDriver
 from production_pulse_app.startup.register_device_drivers import (
     register_device_drivers,
     reset_device_driver_registration_for_tests,
@@ -190,11 +190,13 @@ def test_execute_set_without_payload_fails():
     assert result.error_code == "invalid_command_payload"
 
 
-def test_register_device_drivers_exposes_implementation():
+def test_register_device_drivers_exposes_implementation(plugins_db_env):
     reset_device_driver_registration_for_tests()
-    with pytest.raises(DeviceDriverNotImplementedError):
-        get_device_driver_registry().get_implementation("esp8266_counter_v1")
+    # Sem wrapper pré-registrado: factory resolve pelo protocol_kind do banco.
+    factory_driver = get_device_driver_registry().get_implementation("esp8266_counter_v1")
+    assert isinstance(factory_driver, HttpCounterDriver)
 
+    reset_device_driver_registration_for_tests()
     register_device_drivers()
     driver = get_device_driver_registry().get_implementation("esp8266_counter_v1")
     assert isinstance(driver, Esp8266CounterDriver)

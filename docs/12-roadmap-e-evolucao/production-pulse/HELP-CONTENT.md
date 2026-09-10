@@ -155,7 +155,9 @@ Cabeçalho de grupo: `placement_label` + `AnchorTypeBadge` — helps dos badges 
 | Nome do dispositivo | `form.name` |
 | Filial | `form.filial` |
 | Endereço IP | `form.ip` |
-| Driver | `form.driver` |
+| Driver / Tipo de driver | `form.driver` / `ota.driverType` |
+| Família OTA | `ota.firmwareFamily` |
+
 | Preview driver | `form.driverPreview` |
 | Intervalo poll | `form.pollInterval` |
 | Ativo | `form.enabled` |

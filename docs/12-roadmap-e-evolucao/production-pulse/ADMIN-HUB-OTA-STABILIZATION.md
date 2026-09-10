@@ -28,12 +28,21 @@ stateDiagram-v2
 
 | Layer | Entra na URL? | Notas |
 |-------|---------------|-------|
-| `panel` | `panel=` | shareable |
-| `modal` | `modal=` (+ `entity=` quando relevante) | canônico; `drawer=` só alias de parse |
+| `panel` | `panel=` | shareable (`devices`/`firmwares`/`jobs`/`drivers`/…) |
+| `modal` | `modal=` (+ `entity=` quando relevante) | canônico; inclui `driver-create` / `driver-detail` |
 | `summary` / `menu` | **não** | âncora DOM + `popoverAnchorId`; fechar limpa entity URL |
 | `confirm` | **não** | sobrevive a hydrate URL que ainda carrega `modal=` |
 | Link Mode | **não** | efêmero na página |
 | FloatingNotice | **não** | nunca altera `openLayer` |
+
+### Tipo de driver vs Família OTA
+
+| Termo UI | Campo | Cadastro |
+|----------|-------|----------|
+| Tipo de driver | `driver_key` | Painel Drivers (tabela `device_drivers`) |
+| Família OTA | `firmware_key` | Novo firmware / catálogo de versões |
+
+Não usar `firmwareKey` como label principal na UI.
 
 ### Invariantes
 

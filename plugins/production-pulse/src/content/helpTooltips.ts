@@ -101,9 +101,9 @@ export const PP_HELP = {
     firmwareSourceDeprecated:
       "Sketch legado no cadastro do device — substituído pelo catálogo de versões. Use a aba Firmware para ver a resolução exact-version.",
     driver:
-      "Protocolo/firmware instalado no device. Define quais métricas são lidas e se há comandos (+/−/zerar).",
+      "Tipo de driver — protocolo/registry do IoT. Define métricas lidas e comandos (+/−/zerar).",
     driverPreview:
-      "Resumo das métricas e comandos suportados pelo driver selecionado.",
+      "Resumo das métricas e comandos suportados pelo tipo de driver selecionado.",
     pollInterval:
       "Intervalo em milissegundos entre leituras automáticas (mín. 1, máx. 300000). Default 30000.",
     enabled:
@@ -227,9 +227,15 @@ export const PP_HELP = {
     artifactImmutable: "Artefato publicado não pode ser substituído.",
     statusPublished: "Publicado",
     statusArchived: "Arquivado",
-    firmwareKey: "Identificador da família (EN). Devices usam o mesmo valor para OTA.",
-    driverKey: "Driver do registry compatível com os IoTs desta família (select).",
-    driverKeyEmpty: "Lista de drivers indisponível — digite a chave EN do driver.",
+    firmwareKey: "Chave técnica EN da família OTA (imutável). Preferir o rótulo «Família OTA» na UI.",
+    firmwareFamily:
+      "Família OTA — agrupa versões do mesmo produto. A chave técnica (firmwareKey) fica no campo.",
+    driverKey: "Chave técnica EN do tipo de driver compatível com os IoTs desta família.",
+    driverType:
+      "Tipo de driver — protocolo/registry que o IoT usa. Deve existir no catálogo de drivers.",
+    driverKeyEmpty:
+      "Lista de tipos de driver indisponível — digite a chave EN ou cadastre um novo tipo.",
+    registerDriverType: "Abre o cadastro de um novo tipo de driver no catálogo.",
     version: "Versão semântica do binário (ex.: 1.3.0).",
     displayName: "Nome amigável na UI (pode ser em português).",
     file: "Anexe o .bin gerado ao compilar o sketch (ex.: Teste.ino). O fonte .ino não é o artefato OTA. O sha256 é calculado no servidor.",
@@ -365,6 +371,11 @@ export const PP_HELP = {
     softDeleteFirmwareConfirmBody:
       "A versão deixa de ser elegível para novos disparos OTA. Histórico e jobs antigos permanecem. Não há exclusão definitiva.",
     softDeleteFirmwareConfirmLabel: "Arquivar versão",
+    softDeleteDriver: "Soft delete do tipo de driver: arquiva — some do catálogo ativo; IoTs existentes continuam resolvendo.",
+    softDeleteDriverConfirmTitle: "Arquivar tipo de driver (soft delete)?",
+    softDeleteDriverConfirmBody:
+      "O tipo de driver deixa de aparecer em novos cadastros e no select de firmware. IoTs e versões já vinculados permanecem. Não há exclusão definitiva.",
+    softDeleteDriverConfirmLabel: "Arquivar tipo de driver",
     menuEditDevice: "Abre o formulário do IoT (rede, vínculo de posto, token) em modal.",
     menuRenameDevice: "Altera só o nome exibido do IoT, sem mudar IP ou vínculo.",
     menuOtaDeviceNow: "Dispara OTA agora para este IoT (exige vínculo sólido ou família publicada compatível).",
@@ -386,7 +397,11 @@ export const PP_HELP = {
     menuOpenDetails: "Abre o detalhe completo (modal) do IoT ou da versão.",
     panelDevices: "Abre o catálogo de IoTs da filial em painel lateral compacto (sem hero de página).",
     panelFirmwares: "Abre o catálogo de firmwares em painel lateral.",
+    panelDrivers: "Abre o catálogo de tipos de driver (protocolo/registry) em painel lateral.",
     panelJobs: "Abre a lista de jobs OTA (agendados e em andamento).",
+    newDriver: "Cadastra um novo tipo de driver no catálogo (modal).",
+    driversCatalogEmpty: "Nenhum tipo de driver cadastrado.",
+    driversCatalogSearch: "Busca por chave, rótulo, protocolo ou role.",
     statusFilter: "Filtra nós do mapa por status (online, offline ou inativos).",
     kpiOutdated: "IoTs com versão instalada diferente da última publicada da família vinculada.",
     kpiJobsChip: "Abre o painel de jobs OTA da filial.",
@@ -408,7 +423,7 @@ export const PP_HELP = {
   firmwareCreate: {
     hero: "Nova versão: identificação, sketch (.ino) e artefato (.bin) na mesma release.",
     breadcrumb: "Novo firmware",
-    sectionIdentity: "Família, driver e versão — imutáveis depois de criar.",
+    sectionIdentity: "Família OTA, tipo de driver e versão — imutáveis depois de criar.",
     sectionSource: "Snapshot do sketch da versão. Importar .ino preenche o editor.",
     sectionArtifact: "Binário OTA. Obrigatório para publicar; opcional no rascunho.",
     sectionNotes: "Nome exibido e notas da versão para operadores e admin.",
@@ -418,6 +433,38 @@ export const PP_HELP = {
     cancel: "Descarta a versão e volta ao hub OTA.",
     saveDraft: "Cria a versão como rascunho — sketch e bin ainda editáveis.",
     publish: "Cria e publica a versão. Exige artefato .bin anexado.",
+    registerDriverType: "Cadastrar tipo de driver",
+  },
+
+  drivers: {
+    hero: "Tipos de driver: protocolo HTTP, métricas, comandos e superfície do operador.",
+    breadcrumbCreate: "Novo tipo de driver",
+    breadcrumbDetail: "Tipo de driver",
+    sectionIdentity: "Chave EN, protocolo e rótulos — a chave e o protocolo são imutáveis após criar.",
+    sectionMetrics: "Métricas lidas no poll. Uma deve ser marcada como primária.",
+    sectionCommands: "Comandos HTTP suportados pelo protocolo (ex.: reset, reboot).",
+    sectionOperator: "Superfície do hub operador e elegibilidade.",
+    driverKey: "Chave técnica EN (snake_case). Ex.: esp32c3_counter_v2.",
+    protocolKind: "Protocolo de transporte/parsing: contador HTTP ou gauge HTTP.",
+    roleKey: "Papel operacional: pulse_counter, process_gauge ou telemetry.",
+    labelPt: "Nome amigável exibido em selects e catálogos.",
+    descriptionPt: "Descrição curta do firmware/protocolo para operadores.",
+    operatorSurface: "UI do operador: counter_pad, gauge_readout, etc.",
+    operatorEligible: "Se ligado, o IoT com este driver aparece no hub operador.",
+    pollTimeout: "Timeout HTTP do poll em milissegundos (default 3000).",
+    metricKey: "Identificador EN da métrica no payload (ex.: counter, rpm).",
+    metricLabel: "Rótulo PT da métrica na UI.",
+    metricType: "Tipo numérico: integer (contador) ou number (gauge).",
+    metricPrimary: "Métrica principal exibida no card e no hero do detalhe.",
+    commands: "Selecione os comandos do protocolo ou digite separados por vírgula.",
+    archive: "Arquiva o tipo de driver (soft delete) — some do catálogo ativo.",
+    unarchive: "Reativa um tipo de driver arquivado no catálogo.",
+    statusActive: "Ativo",
+    statusArchived: "Arquivado",
+    createSuccess: "Tipo de driver cadastrado.",
+    updateSuccess: "Tipo de driver atualizado.",
+    archiveSuccess: "Tipo de driver arquivado (soft delete).",
+    unarchiveSuccess: "Tipo de driver reativado.",
   },
 
   modals: {

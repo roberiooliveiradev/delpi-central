@@ -75,7 +75,7 @@ def test_c3_and_esp8266_share_capabilities():
     assert Esp32c3CounterDriver().capabilities() == Esp8266CounterDriver().capabilities()
 
 
-def test_register_exposes_c3_implementation():
+def test_register_exposes_c3_implementation(plugins_db_env):
     reset_device_driver_registration_for_tests()
     register_device_drivers()
     registry = get_device_driver_registry()

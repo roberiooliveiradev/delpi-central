@@ -4,12 +4,12 @@ import httpx
 import pytest
 
 from production_pulse_app.application.services.device_driver_registry_service import (
-    DeviceDriverNotImplementedError,
     get_device_driver_registry,
 )
 from production_pulse_app.domain.errors import DeviceDriverError
 from production_pulse_app.infrastructure.drivers.device_http_support import parse_gauge_response
 from production_pulse_app.infrastructure.drivers.esp8266_gauge_driver import Esp8266GaugeDriver
+from production_pulse_app.infrastructure.drivers.http_gauge_driver import HttpGaugeDriver
 from production_pulse_app.startup.register_device_drivers import (
     register_device_drivers,
     reset_device_driver_registration_for_tests,
@@ -65,11 +65,12 @@ def test_execute_any_command_returns_failure():
     assert result.error_code == "unsupported_command"
 
 
-def test_register_device_drivers_exposes_gauge_implementation():
+def test_register_device_drivers_exposes_gauge_implementation(plugins_db_env):
     reset_device_driver_registration_for_tests()
-    with pytest.raises(DeviceDriverNotImplementedError):
-        get_device_driver_registry().get_implementation("esp8266_gauge_v1")
+    factory_driver = get_device_driver_registry().get_implementation("esp8266_gauge_v1")
+    assert isinstance(factory_driver, HttpGaugeDriver)
 
+    reset_device_driver_registration_for_tests()
     register_device_drivers()
     driver = get_device_driver_registry().get_implementation("esp8266_gauge_v1")
     assert isinstance(driver, Esp8266GaugeDriver)

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  archiveDriver,
   archiveFirmware,
   cancelFirmwareUpdateJob,
   createFirmwareUpdateJob,
@@ -12,8 +13,11 @@ import {
   fetchFirmwareUpdateSummary,
   fetchFirmwareUpdateTargets,
   fetchFirmwares,
+  listDrivers,
   putDeviceFirmwareLink,
   replaceDevice,
+  unarchiveDriver,
+  type DriverListItem,
   type FirmwareListItem,
   type FirmwareUpdateJob,
   type FirmwareUpdateSummary,
@@ -56,6 +60,7 @@ import {
   type DataTableColumn,
 } from "../app/productionPulseUi";
 import {
+  CircuitBoard,
   Cpu,
   FileCode,
   Link2,
@@ -76,6 +81,8 @@ import {
 import { PP_HELP } from "../content/helpTooltips";
 import { DeviceDetailPage } from "../pages/DeviceDetailPage";
 import { DeviceFormPage } from "../pages/DeviceFormPage";
+import { DriverDetailPage } from "../pages/DriverDetailPage";
+import { DriverFormPage } from "../pages/DriverFormPage";
 import { FirmwareCreatePage } from "../pages/FirmwareCreatePage";
 import { FirmwareDetailPage } from "../pages/FirmwareDetailPage";
 import type { DeviceListItem } from "../types/device";
@@ -157,6 +164,7 @@ export function FirmwareLinksPage({
   } = useFloatingNotices();
 
   const [firmwares, setFirmwares] = useState<FirmwareListItem[]>([]);
+  const [drivers, setDrivers] = useState<DriverListItem[]>([]);
   const [devices, setDevices] = useState<DeviceListItem[]>([]);
   const [updateSummary, setUpdateSummary] = useState<FirmwareUpdateSummary | null>(null);
   const [jobs, setJobs] = useState<FirmwareUpdateJob[]>([]);
@@ -164,10 +172,12 @@ export function FirmwareLinksPage({
   const [detailJobId, setDetailJobId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [jobsLoading, setJobsLoading] = useState(false);
+  const [driversLoading, setDriversLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState("");
+  const [driversSearch, setDriversSearch] = useState("");
   const [linkMode, setLinkMode] = useState<LinkMode | null>(null);
   const [pendingReplaceLink, setPendingReplaceLink] = useState<{
     deviceId: string;
@@ -258,6 +268,23 @@ export function FirmwareLinksPage({
         .includes(query),
     );
   }, [catalogSearch, firmwares]);
+
+  const filteredDrivers = useMemo(() => {
+    const query = driversSearch.trim().toLowerCase();
+    if (!query) return drivers;
+    return drivers.filter((item) =>
+      [
+        item.key,
+        item.labelPt,
+        item.protocolKind,
+        item.roleKey,
+        item.archivedAt ? "archived" : "active",
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(query),
+    );
+  }, [drivers, driversSearch]);
 
   const hasActiveJob = jobs.some(
     (job) => job.status === "running" || job.status === "scheduled",
@@ -371,6 +398,20 @@ export function FirmwareLinksPage({
     [branch],
   );
 
+  const reloadDrivers = useCallback(async () => {
+    setDriversLoading(true);
+    try {
+      setDrivers(await listDrivers({ includeArchived: true }));
+    } catch (err) {
+      pushNotice({
+        variant: "error",
+        message: err instanceof Error ? err.message : "Falha ao carregar tipos de driver.",
+      });
+    } finally {
+      setDriversLoading(false);
+    }
+  }, [pushNotice]);
+
   const loadTargets = useCallback(async (jobId: string) => {
     try {
       setTargets(await fetchFirmwareUpdateTargets(jobId));
@@ -399,6 +440,12 @@ export function FirmwareLinksPage({
   useEffect(() => {
     void reloadJobs();
   }, [reloadJobs]);
+
+  useEffect(() => {
+    if (ui.openLayer === "panel" && ui.panel === "drivers") {
+      void reloadDrivers();
+    }
+  }, [reloadDrivers, ui.openLayer, ui.panel]);
 
   useEffect(() => {
     if (!hasActiveJob) return;
@@ -524,8 +571,11 @@ export function FirmwareLinksPage({
   const openPanel = useCallback(
     (panel: AdminHubPanel) => {
       dispatch({ type: "openPanel", panel });
+      if (panel === "drivers") {
+        void reloadDrivers();
+      }
     },
-    [dispatch],
+    [dispatch, reloadDrivers],
   );
 
   const runFamilyJob = useCallback(
@@ -772,6 +822,13 @@ export function FirmwareLinksPage({
           message: "Versão arquivada (soft delete). Não entra em novos disparos OTA.",
         });
         await reloadGraph();
+      } else if (kind === "archive-driver") {
+        await archiveDriver(id);
+        pushNotice({
+          variant: "success",
+          message: PP_HELP.drivers.archiveSuccess,
+        });
+        await reloadDrivers();
       } else if (kind === "unlink") {
         await handleUnlink(id);
       }
@@ -1011,6 +1068,77 @@ export function FirmwareLinksPage({
     [canManage, firmwareById, openJobDetails],
   );
 
+  const driverColumns: DataTableColumn<DriverListItem>[] = useMemo(
+    () => [
+      {
+        key: "key",
+        header: "Chave",
+        render: (row) => <code>{row.key}</code>,
+      },
+      { key: "labelPt", header: "Rótulo", render: (row) => row.labelPt || "—" },
+      {
+        key: "protocolKind",
+        header: "Protocolo",
+        render: (row) => row.protocolKind,
+      },
+      { key: "roleKey", header: "Role", render: (row) => row.roleKey },
+      {
+        key: "status",
+        header: "Estado",
+        render: (row) =>
+          row.archivedAt ? PP_HELP.drivers.statusArchived : PP_HELP.drivers.statusActive,
+      },
+      {
+        key: "actions",
+        header: "",
+        render: (row) => (
+          <div className="pp-inline-actions">
+            <PpActionButton
+              variant="ghost"
+              onClick={() => openModal("driver-detail", { type: "driver", id: row.key })}
+            >
+              Detalhe
+            </PpActionButton>
+            {canManage && !row.archivedAt ? (
+              <PpActionButton
+                variant="ghost"
+                onClick={() => openConfirm("archive-driver", row.key)}
+              >
+                Arquivar
+              </PpActionButton>
+            ) : null}
+            {canManage && row.archivedAt ? (
+              <PpActionButton
+                variant="ghost"
+                disabled={busy}
+                onClick={() => {
+                  void unarchiveDriver(row.key)
+                    .then(() => {
+                      pushNotice({
+                        variant: "success",
+                        message: PP_HELP.drivers.unarchiveSuccess,
+                      });
+                      return reloadDrivers();
+                    })
+                    .catch((err) => {
+                      pushNotice({
+                        variant: "error",
+                        message:
+                          err instanceof Error ? err.message : "Falha ao reativar driver.",
+                      });
+                    });
+                }}
+              >
+                Reativar
+              </PpActionButton>
+            ) : null}
+          </div>
+        ),
+      },
+    ],
+    [busy, canManage, pushNotice, reloadDrivers],
+  );
+
   const targetColumns: DataTableColumn<FirmwareUpdateTarget>[] = useMemo(
     () => [
       {
@@ -1151,6 +1279,11 @@ export function FirmwareLinksPage({
       <PpHintAction hint={PP_HELP.hub.panelFirmwares} ariaLabel="Ajuda: Painel Firmwares">
         <PpActionButton variant="ghost" onClick={() => openPanel("firmwares")}>
           <FileCode size={14} aria-hidden="true" /> Firmwares
+        </PpActionButton>
+      </PpHintAction>
+      <PpHintAction hint={PP_HELP.hub.panelDrivers} ariaLabel="Ajuda: Painel Drivers">
+        <PpActionButton variant="ghost" onClick={() => openPanel("drivers")}>
+          <CircuitBoard size={14} aria-hidden="true" /> Drivers
         </PpActionButton>
       </PpHintAction>
       <PpHintAction hint={PP_HELP.hub.panelJobs} ariaLabel="Ajuda: Painel Jobs">
@@ -1345,6 +1478,36 @@ export function FirmwareLinksPage({
         </AdminSidePanel>
 
         <AdminSidePanel
+          open={ui.openLayer === "panel" && ui.panel === "drivers"}
+          title="Tipos de driver"
+          onClose={() => dispatch({ type: "closePanel" })}
+        >
+          <PpCatalogSearchBar
+            value={driversSearch}
+            onChange={setDriversSearch}
+            placeholder={PP_HELP.hub.driversCatalogSearch}
+          />
+          {canManage ? (
+            <PpActionButton
+              className="pp-mb-sm"
+              onClick={() => openModal("driver-create", null)}
+            >
+              Novo tipo de driver
+            </PpActionButton>
+          ) : null}
+          {driversLoading && drivers.length === 0 ? (
+            <PpStateBox variant="loading" title="Carregando drivers…" />
+          ) : (
+            <PpDataTable
+              columns={driverColumns}
+              rows={filteredDrivers}
+              rowKey={(row) => row.key}
+              emptyMessage={PP_HELP.hub.driversCatalogEmpty}
+            />
+          )}
+        </AdminSidePanel>
+
+        <AdminSidePanel
           open={ui.openLayer === "panel" && ui.panel === "jobs"}
           title="Jobs OTA"
           onClose={() => dispatch({ type: "closePanel" })}
@@ -1495,6 +1658,7 @@ export function FirmwareLinksPage({
           branch={branch}
           permissions={permissions}
           embedded
+          onOpenDriverCreate={() => openModal("driver-create", null)}
           onCancel={closeLayers}
           onDone={() => {
             closeLayers();
@@ -1504,6 +1668,47 @@ export function FirmwareLinksPage({
           }}
         />
       </PpWorkbenchDialog>
+
+      <PpWorkbenchDialog
+        open={ui.openLayer === "modal" && ui.modal === "driver-create"}
+        title={PP_HELP.drivers.breadcrumbCreate}
+        onClose={closeLayers}
+      >
+        <DriverFormPage
+          mode="create"
+          permissions={permissions}
+          embedded
+          onCancel={closeLayers}
+          onDone={() => {
+            closeLayers();
+            void reloadDrivers();
+            openPanel("drivers");
+            pushNotice({
+              variant: "success",
+              message: PP_HELP.drivers.createSuccess,
+            });
+          }}
+        />
+      </PpWorkbenchDialog>
+
+      <PpDetailDialog
+        open={ui.openLayer === "modal" && ui.modal === "driver-detail"}
+        title={PP_HELP.drivers.breadcrumbDetail}
+        onClose={closeLayers}
+      >
+        {ui.selectedEntity?.type === "driver" ? (
+          <DriverDetailPage
+            driverKey={ui.selectedEntity.id}
+            permissions={permissions}
+            embedded
+            onCancel={closeLayers}
+            onDone={() => {
+              void reloadDrivers();
+            }}
+            onRequestArchive={(key) => openConfirm("archive-driver", key)}
+          />
+        ) : null}
+      </PpDetailDialog>
 
       <PpDetailDialog
         open={ui.openLayer === "modal" && ui.modal === "firmware-detail"}
@@ -1657,6 +1862,18 @@ export function FirmwareLinksPage({
         title={PP_HELP.hub.softDeleteFirmwareConfirmTitle}
         message={PP_HELP.hub.softDeleteFirmwareConfirmBody}
         confirmLabel={PP_HELP.hub.softDeleteFirmwareConfirmLabel}
+        cancelLabel="Voltar"
+        variant="danger"
+        confirmBusy={confirmBusy}
+        onConfirm={() => void runConfirmAction()}
+        onCancel={closeConfirm}
+      />
+
+      <PpConfirmDialog
+        open={ui.openLayer === "confirm" && ui.confirm?.kind === "archive-driver"}
+        title={PP_HELP.hub.softDeleteDriverConfirmTitle}
+        message={PP_HELP.hub.softDeleteDriverConfirmBody}
+        confirmLabel={PP_HELP.hub.softDeleteDriverConfirmLabel}
         cancelLabel="Voltar"
         variant="danger"
         confirmBusy={confirmBusy}

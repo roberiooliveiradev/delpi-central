@@ -54,13 +54,15 @@ Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.c
 |----------|------------|
 | Clique no nó | Summary popover (`EntityContextLayers`) |
 | Menu ⋯ | Context menu — ícone Lucide + `hint` no próprio item (`PpContextMenuItem` / `hintTrigger="label"`; sem coluna `?`) |
-| Detalhe FW/IoT/Job | `PpDetailDialog` (wide) |
-| CRUD IoT/FW | `PpWorkbenchDialog` (page) |
+| Detalhe FW/IoT/Job/Driver | `PpDetailDialog` (wide) |
+| CRUD IoT/FW/Driver | `PpWorkbenchDialog` (page) |
 | Agendar OTA | `PpHostContainedDialog` compacto |
 | Confirmação | `PpConfirmDialog` |
-| Catálogos | Side panel (`size=wide` para IoTs); conteúdo `embedded` (sem hero); mobile → modal page |
+| Catálogos | Side panel (`devices` wide; `firmwares` / `drivers` / `jobs`); conteúdo `embedded`; mobile → modal page |
 | Feedback transitório | `PpFloatingNotices` (`resolveProductionPulseError`) |
 | Persistente | `PpStateBox` (somente load estrutural) |
+
+**Vocabulário UI:** **Tipo de driver** (`driver_key` / protocolo IoT) ≠ **Família OTA** (`firmware_key` / versões). Painel `panel=drivers`; modais `driver-create` / `driver-detail`.
 
 URL: `panel`/`modal` shareable; summary/menu/confirm **efêmeros** (não reidratam summary fantasma). Transições: `adminHubLayerTransitions.ts`. Detalhe: `docs/12-roadmap-e-evolucao/production-pulse/ADMIN-HUB-OTA-STABILIZATION.md`.
 

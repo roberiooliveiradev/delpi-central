@@ -287,6 +287,13 @@ class FirmwareCatalogService:
             driver = resolve_driver(driver_key)
         except DeviceValidationError as exc:
             raise ContentCodedError("driverKeyUnknown") from exc
+        from production_pulse_app.application.services.device_driver_registry_service import (
+            get_device_driver_registry,
+        )
+
+        resolved = get_device_driver_registry().resolve_driver(driver_key)
+        if resolved.definition.get("archivedAt"):
+            raise ContentCodedError("driverArchived")
         name = (display_name or "").strip() or key
         return key, ver, name, driver
 

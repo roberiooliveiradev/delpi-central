@@ -15,13 +15,19 @@ describe("adminHubUiState", () => {
     expect(parseAdminEntity("device:abc")).toEqual({ type: "device", id: "abc" });
     expect(parseAdminEntity("firmware:fw-1")).toEqual({ type: "firmware", id: "fw-1" });
     expect(parseAdminEntity("job:j1")).toEqual({ type: "job", id: "j1" });
+    expect(parseAdminEntity("driver:esp8266_counter_v1")).toEqual({
+      type: "driver",
+      id: "esp8266_counter_v1",
+    });
     expect(parseAdminEntity("unknown:x")).toBeNull();
     expect(formatAdminEntity({ type: "device", id: "x" })).toBe("device:x");
+    expect(formatAdminEntity({ type: "driver", id: "d1" })).toBe("driver:d1");
   });
 
   it("parses panels and focus aliases", () => {
     expect(parseAdminPanel("jobs")).toBe("jobs");
     expect(parseAdminPanel("fleet-health")).toBe("fleet-health");
+    expect(parseAdminPanel("drivers")).toBe("drivers");
     expect(parseAdminPanel("nope")).toBeNull();
     expect(hubFocusToPanel("catalog")).toBe("firmwares");
     expect(hubFocusToPanel("jobs")).toBe("jobs");
@@ -31,6 +37,8 @@ describe("adminHubUiState", () => {
     expect(parseAdminModal("device-create")).toBe("device-create");
     expect(parseAdminModal("firmware-detail")).toBe("firmware-detail");
     expect(parseAdminModal("device-detail")).toBe("device-detail");
+    expect(parseAdminModal("driver-create")).toBe("driver-create");
+    expect(parseAdminModal("driver-detail")).toBe("driver-detail");
     expect(parseAdminModal("job-detail")).toBe("job-detail");
     expect(parseAdminModal("ota-schedule")).toBe("ota-schedule");
     expect(parseAdminModal("nope")).toBeNull();

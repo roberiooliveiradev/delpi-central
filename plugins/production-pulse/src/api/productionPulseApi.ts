@@ -492,6 +492,123 @@ export async function fetchFirmwareDrivers(signal?: AbortSignal): Promise<Firmwa
   return payload.data.items;
 }
 
+export type DriverProtocolKind = "http_counter" | "http_gauge";
+
+export type DriverMetricDef = {
+  key: string;
+  type: "integer" | "number";
+  labelPt: string;
+  primary?: boolean;
+  monotonic?: boolean;
+  unit?: string;
+  icon?: string;
+};
+
+export type DriverListItem = {
+  key: string;
+  protocolKind: DriverProtocolKind | string;
+  roleKey: string;
+  labelPt: string;
+  descriptionPt?: string | null;
+  metrics: DriverMetricDef[];
+  commands: string[];
+  operatorSurface: string;
+  operatorEligible: boolean;
+  poll: { timeoutMs?: number; [key: string]: unknown };
+  thresholds?: Record<string, unknown>;
+  counterRestore?: Record<string, unknown> | null;
+  archivedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type DriverCreateBody = {
+  driverKey: string;
+  protocolKind: DriverProtocolKind;
+  roleKey?: string;
+  labelPt: string;
+  descriptionPt?: string | null;
+  metrics?: DriverMetricDef[];
+  commands?: string[];
+  operatorSurface?: string;
+  operatorEligible?: boolean;
+  poll?: { timeoutMs?: number };
+  thresholds?: Record<string, unknown>;
+  counterRestore?: Record<string, unknown> | null;
+};
+
+export type DriverPatchBody = {
+  roleKey?: string;
+  labelPt?: string;
+  descriptionPt?: string | null;
+  metrics?: DriverMetricDef[];
+  commands?: string[];
+  operatorSurface?: string;
+  operatorEligible?: boolean;
+  poll?: { timeoutMs?: number };
+  thresholds?: Record<string, unknown>;
+  counterRestore?: Record<string, unknown> | null;
+};
+
+export async function listDrivers(params: {
+  includeArchived?: boolean;
+  signal?: AbortSignal;
+} = {}): Promise<DriverListItem[]> {
+  const searchParams = new URLSearchParams();
+  if (params.includeArchived === true) searchParams.set("includeArchived", "true");
+  if (params.includeArchived === false) searchParams.set("includeArchived", "false");
+  const suffix = searchParams.toString();
+  const payload = await httpGet<ApiEnvelope<{ items: DriverListItem[] }>>(
+    `${PRODUCTION_PULSE_API_BASE}/drivers${suffix ? `?${suffix}` : ""}`,
+    { signal: params.signal },
+  );
+  return payload.data.items;
+}
+
+export async function getDriver(driverKey: string): Promise<DriverListItem> {
+  const payload = await httpGet<ApiEnvelope<DriverListItem>>(
+    `${PRODUCTION_PULSE_API_BASE}/drivers/${encodeURIComponent(driverKey)}`,
+  );
+  return payload.data;
+}
+
+export async function createDriver(body: DriverCreateBody): Promise<DriverListItem> {
+  const payload = await httpJson<ApiEnvelope<DriverListItem>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/drivers`,
+    body,
+  );
+  return payload.data;
+}
+
+export async function patchDriver(
+  driverKey: string,
+  body: DriverPatchBody,
+): Promise<DriverListItem> {
+  const payload = await httpJson<ApiEnvelope<DriverListItem>>(
+    "PATCH",
+    `${PRODUCTION_PULSE_API_BASE}/drivers/${encodeURIComponent(driverKey)}`,
+    body,
+  );
+  return payload.data;
+}
+
+export async function archiveDriver(driverKey: string): Promise<DriverListItem> {
+  const payload = await httpJson<ApiEnvelope<DriverListItem>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/drivers/${encodeURIComponent(driverKey)}/archive`,
+  );
+  return payload.data;
+}
+
+export async function unarchiveDriver(driverKey: string): Promise<DriverListItem> {
+  const payload = await httpJson<ApiEnvelope<DriverListItem>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/drivers/${encodeURIComponent(driverKey)}/unarchive`,
+  );
+  return payload.data;
+}
+
 export async function publishFirmware(form: FormData): Promise<FirmwareDetail> {
   const payload = await httpMultipart<ApiEnvelope<FirmwareDetail>>(
     "POST",

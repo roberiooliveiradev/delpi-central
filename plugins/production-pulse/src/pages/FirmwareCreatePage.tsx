@@ -34,6 +34,8 @@ type FirmwareCreatePageProps = {
   embedded?: boolean;
   onDone?: () => void;
   onCancel?: () => void;
+  /** Opens Admin Hub driver-create modal (or equivalent). */
+  onOpenDriverCreate?: () => void;
 };
 
 const DEFAULT_FIRMWARE_KEY = "esp8266_counter_v1";
@@ -44,6 +46,7 @@ export function FirmwareCreatePage({
   embedded = false,
   onDone,
   onCancel,
+  onOpenDriverCreate,
 }: FirmwareCreatePageProps) {
   const canManage = permissions.canManageDevices;
   const [drivers, setDrivers] = useState<FirmwareDriverCatalogItem[]>([]);
@@ -176,29 +179,43 @@ export function FirmwareCreatePage({
           <div className="pp-form-grid pp-form-grid--pair">
             <PpNativeTextField
               id="firmware-new-key"
-              label="Família (firmwareKey)"
-              hint={PP_HELP.ota.firmwareKey}
+              label="Família OTA"
+              hint={PP_HELP.ota.firmwareFamily}
               value={firmwareKey}
               onChange={setFirmwareKey}
             />
             {driverOptions.length > 0 ? (
               <PpNativeSelectField
                 id="firmware-new-driver"
-                label="Driver"
-                hint={PP_HELP.ota.driverKey}
+                label="Tipo de driver"
+                hint={PP_HELP.ota.driverType}
                 value={driverKey}
                 onChange={setDriverKey}
                 options={driverOptions}
                 searchable={false}
+                afterControl={
+                  onOpenDriverCreate ? (
+                    <PpActionButton variant="ghost" onClick={onOpenDriverCreate}>
+                      {PP_HELP.firmwareCreate.registerDriverType}
+                    </PpActionButton>
+                  ) : null
+                }
               />
             ) : (
-              <PpNativeTextField
-                id="firmware-new-driver"
-                label="Driver"
-                hint={PP_HELP.ota.driverKeyEmpty}
-                value={driverKey}
-                onChange={setDriverKey}
-              />
+              <div className="pp-form-grid">
+                <PpNativeTextField
+                  id="firmware-new-driver"
+                  label="Tipo de driver"
+                  hint={PP_HELP.ota.driverKeyEmpty}
+                  value={driverKey}
+                  onChange={setDriverKey}
+                />
+                {onOpenDriverCreate ? (
+                  <PpActionButton variant="ghost" onClick={onOpenDriverCreate}>
+                    {PP_HELP.firmwareCreate.registerDriverType}
+                  </PpActionButton>
+                ) : null}
+              </div>
             )}
             <PpNativeTextField
               id="firmware-new-version"

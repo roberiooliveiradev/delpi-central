@@ -3,9 +3,10 @@
 export type AdminEntityRef =
   | { type: "device"; id: string }
   | { type: "firmware"; id: string }
-  | { type: "job"; id: string };
+  | { type: "job"; id: string }
+  | { type: "driver"; id: string };
 
-export type AdminHubPanel = "devices" | "firmwares" | "jobs" | "fleet-health";
+export type AdminHubPanel = "devices" | "firmwares" | "jobs" | "fleet-health" | "drivers";
 
 /** Canonical modal layer keys (URL `modal=`). */
 export type AdminHubModal =
@@ -15,6 +16,8 @@ export type AdminHubModal =
   | "firmware-create"
   | "firmware-version"
   | "firmware-detail"
+  | "driver-create"
+  | "driver-detail"
   | "ota-schedule"
   | "job-detail";
 
@@ -34,6 +37,7 @@ export type AdminHubDrawer =
 export type AdminHubConfirmKind =
   | "disable-device"
   | "archive-firmware"
+  | "archive-driver"
   | "cancel-job"
   | "unlink";
 
@@ -73,6 +77,8 @@ const ADMIN_HUB_MODALS = new Set<AdminHubModal>([
   "firmware-create",
   "firmware-version",
   "firmware-detail",
+  "driver-create",
+  "driver-detail",
   "ota-schedule",
   "job-detail",
 ]);
@@ -92,7 +98,7 @@ export function parseAdminEntity(raw: string | null | undefined): AdminEntityRef
   const [type, ...rest] = raw.split(":");
   const id = rest.join(":").trim();
   if (!id) return null;
-  if (type === "device" || type === "firmware" || type === "job") {
+  if (type === "device" || type === "firmware" || type === "job" || type === "driver") {
     return { type, id };
   }
   return null;
@@ -108,7 +114,8 @@ export function parseAdminPanel(raw: string | null | undefined): AdminHubPanel |
     raw === "devices" ||
     raw === "firmwares" ||
     raw === "jobs" ||
-    raw === "fleet-health"
+    raw === "fleet-health" ||
+    raw === "drivers"
   ) {
     return raw;
   }

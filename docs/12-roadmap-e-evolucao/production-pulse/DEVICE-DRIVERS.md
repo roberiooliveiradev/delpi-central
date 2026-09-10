@@ -1,177 +1,52 @@
-# Registry de drivers — `device_drivers.json`
+# Registry de drivers — banco + protocolo em código
 
-> Catálogo declarativo na **production-pulse-api** (`app/content/device_drivers.json`).  
-> Consumido por: cadastro (preview), poll, comandos capability-gated, hub operador (superfície UI).
+> **Fonte de verdade runtime:** tabela `production_pulse.device_drivers` (V014).  
+> **Seed histórico:** [`device_drivers.json`](../../../production-pulse-api/production_pulse_app/content/device_drivers.json) (bootstrap/migration).  
+> **Implementação HTTP:** `protocol_kind` → factory Python (`http_counter` | `http_gauge`).
 
----
+## Conceitos (não confundir)
 
-## Schema JSON (versão 1)
+| Conceito | Campo | O que é |
+|----------|-------|---------|
+| **Tipo de driver** | `driver_key` | Perfil + protocolo do IoT (poll, comandos, superfície operador) |
+| **Família OTA** | `firmware_key` | Catálogo de versões (`.ino` / `.bin`) publicáveis |
+| **Protocolo** | `protocol_kind` | Classe de código; só muda com deploy se for protocolo **novo** |
 
-```json
-{
-  "schemaVersion": 1,
-  "drivers": {
-    "<driver_key>": {
-      "roleKey": "pulse_counter | process_gauge | telemetry",
-      "labelPt": "string",
-      "descriptionPt": "string",
-      "metrics": [
-        {
-          "key": "counter",
-          "type": "integer | number",
-          "monotonic": true,
-          "labelPt": "Golpes",
-          "unit": "optional",
-          "primary": true,
-          "icon": "Hash"
-        }
-      ],
-      "commands": ["increment", "decrement", "reset"],
-      "operatorSurface": "counter_pad | gauge_readout | telemetry_dashboard",
-      "operatorEligible": true,
-      "poll": { "timeoutMs": 3000 },
-      "thresholds": {}
-    }
-  }
-}
-```
+Novo tipo com o mesmo protocolo (ex. outro contador HTTP) = **CRUD no Admin Hub**, sem redeploy da API.
 
-| Campo | Obrigatório | Notas |
-|-------|-------------|-------|
-| `roleKey` | sim | Copiado para `devices.role_key` no save |
-| `metrics[].primary` | recomendado | Métrica na tabela painel e preview card operador |
-| `metrics[].monotonic` | sim | Se true → calcula `delta_metrics` no poll |
-| `commands` | sim | Pode ser `[]` — gauge read-only |
-| `operatorSurface` | sim | Roteador MFE `OperatorDeviceSurface` |
-| `thresholds` | não | P1 — ex. `temperature_c.warnAbove: 75` para cor UI |
+## CRUD Admin
 
----
+Painel Hub `panel=drivers` + modais `driver-create` / `driver-detail`.  
+API: `GET/POST /drivers`, `GET/PATCH /drivers/{driverKey}`, `POST …/archive|unarchive`.  
+RBAC: `production-pulse.devices.view` / `.manage`.
 
-## Entradas MVP + P1
+## Schema da tabela
 
-### `esp8266_counter_v1` (MVP)
+Ver [SCHEMA.md](./SCHEMA.md) — `device_drivers`.
 
-```json
-{
-  "roleKey": "pulse_counter",
-  "labelPt": "ESP8266 — contador de golpes",
-  "descriptionPt": "Firmware piloto: GET /api/contador, POST incrementar/decrementar/reset/definir",
-  "metrics": [
-    {
-      "key": "counter",
-      "type": "integer",
-      "monotonic": true,
-      "labelPt": "Golpes",
-      "primary": true,
-      "icon": "Hash"
-    }
-  ],
-  "commands": ["increment", "decrement", "reset", "set"],
-  "counterRestore": {
-    "enabled": true,
-    "preferHardwareSet": true,
-    "intentionalDecreaseCommands": ["decrement", "reset", "set"],
-    "intentionalDecreaseCommandGraceMs": 15000
-  },
-  "operatorSurface": "counter_pad",
-  "operatorEligible": true,
-  "poll": { "timeoutMs": 3000 }
-}
-```
+Campos principais espelham o catálogo antigo (camelCase na API):
 
-**Firmware:** ver [README.md § Protocolo piloto](./README.md) e [firmware/esp8266_counter_v1/](./firmware/esp8266_counter_v1/).
+- `protocolKind`, `roleKey`, `labelPt`, `descriptionPt`
+- `metrics[]`, `commands[]`, `operatorSurface`, `operatorEligible`
+- `poll.timeoutMs`, `thresholds`, `counterRestore` (opcional)
+- soft-archive: `archivedAt`
 
-Contrato config: `GET/POST /api/config` + header `X-Device-Token`. Contagem pública em `GET /api/contador`.
-Health no mesmo `GET /api/status` (sem rota `/api/health` paralela): `firmwareVersion`, `uptimeMs`, `freeHeap`, `rssi`, `wifiConnected`.
+## Protocol kinds
 
-**HTTP gauge:** `GET /api/sensores` → `{"rpm": <number>, "temperatura": <number>}` (aliases `rotacao`, `temperature_c`).
+| kind | Implementação | Uso típico |
+|------|---------------|------------|
+| `http_counter` | `HttpCounterDriver` | Contador ESP8266 / ESP32-C3 |
+| `http_gauge` | `HttpGaugeDriver` | rpm / temperatura |
 
-### `esp32c3_counter_v1` (ESP32-C3 Super Mini)
+`GET /catalog/drivers` e `GET /firmware-drivers` listam **apenas ativos** (não arquivados).
 
-Mesma semântica operacional do contador ESP8266 (`roleKey=pulse_counter`, `operatorSurface=counter_pad`, mesmos commands HTTP), com **família/driver isolados** para bloquear OTA cruzado.
+## Seed MVP
 
-| Item | Valor |
-|------|--------|
-| `driverKey` / `firmwareKey` | `esp32c3_counter_v1` |
-| Versão inicial | `esp32c3_counter_v1.0.0` |
-| Firmware | [firmware/esp32c3_counter_v1/](./firmware/esp32c3_counter_v1/) |
-| Identidade | `ESP32C3-` + MAC Wi-Fi Station (sem `:`), aliases `controllerCode` / `codigoControlador` / `equipamento` |
-| Protocolo | Idêntico: `/api/contador`, `/api/status`, `/api/config`, commands, OTA `/device-ota/*` |
-| Campos ADDITIVE em `/api/status` | `input1`, `input2` (`0`=LOW/ativo, `1`=HIGH/inativo) — diagnóstico; não são métricas/comandos do registry |
-| OTA | Vínculo/job exigem `device.driver_key == firmware.driver_key` (API authority) |
+- `esp8266_counter_v1` → `http_counter`
+- `esp32c3_counter_v1` → `http_counter`
+- `esp8266_gauge_v1` → `http_gauge`
 
-Implementação Python: `HttpCounterDriver` compartilhado + wrapper `Esp32c3CounterDriver`. Não misturar binário ESP8266 nesta família.
+## Extensão
 
-### `esp8266_gauge_v1` (P1 — implementado)
-
-```json
-{
-  "roleKey": "process_gauge",
-  "labelPt": "ESP8266 — sensores de processo",
-  "descriptionPt": "Leitura rpm e temperatura; sem comandos de escrita",
-  "metrics": [
-    {
-      "key": "rpm",
-      "type": "number",
-      "monotonic": false,
-      "labelPt": "Rotação",
-      "unit": "rpm",
-      "primary": true,
-      "icon": "Gauge"
-    },
-    {
-      "key": "temperature_c",
-      "type": "number",
-      "monotonic": false,
-      "labelPt": "Temperatura",
-      "unit": "°C",
-      "primary": false,
-      "icon": "Thermometer"
-    }
-  ],
-  "commands": [],
-  "operatorSurface": "gauge_readout",
-  "operatorEligible": true,
-  "poll": { "timeoutMs": 3000 },
-  "thresholds": {
-    "temperature_c": { "warnAbove": 75, "dangerAbove": 90 }
-  }
-}
-```
-
----
-
-## API
-
-| Método | Path | Resposta |
-|--------|------|----------|
-| `GET` | `/catalog/drivers` | `{ drivers: [{ key, ...def }] }` |
-
-`GET /devices/{id}` embute `capabilities` derivadas do registry (commands + metrics + operatorSurface + `thresholds` quando definidos no JSON).
-
-A superfície operador `gauge_readout` usa `capabilities.thresholds` para colorir tiles (warn/danger) conforme a leitura atual.
-
----
-
-## Drivers futuros (P2 — especificação)
-
-> Spec: [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md) · WF-PP-OP-TEMP / ROTATION / COMBO.
-
-| driver_key | role_key | operatorSurface | HTTP piloto |
-|------------|----------|-----------------|-------------|
-| `esp8266_temp_v1` | `temperature_probe` | `temperature_focus` | `GET /api/temperatura` |
-| `esp8266_rotation_v1` | `rotation_probe` | `rotation_ring` | `GET /api/rotacao` |
-| `esp8266_pressure_v1` | `process_scalar` | `gauge_readout` | `GET /api/pressao` |
-| `modbus_generic_v1` | `telemetry_bundle` | `telemetry_stack` | gateway (P3) |
-
----
-
-## Extensão (novo driver)
-
-1. Entrada em `device_drivers.json`
-2. Classe `DeviceDriver` em `infrastructure/drivers/`
-3. Registro em `DeviceDriverRegistryService`
-4. Teste unitário: registry load + mock poll
-5. Wireframe operador se `operatorSurface` nova — ver [OPERATOR-SURFACES-P2.md](./OPERATOR-SURFACES-P2.md)
-
-Sem migration SQL (salvo colunas de `goals` em P2.S0).
+1. **Mesmo protocolo:** Admin → Novo tipo de driver → escolher `protocolKind`.
+2. **Protocolo novo:** adicionar valor no CHECK SQL + factory em `DeviceDriverRegistryService` + classe em `infrastructure/drivers/` (deploy).

@@ -106,6 +106,39 @@ describe("transitionAdminHub", () => {
     expect(closed.state.panel).toBeNull();
   });
 
+  it("openPanel drivers sets panel URL and clears modal", () => {
+    const next = transitionAdminHub(INITIAL_ADMIN_HUB_UI, {
+      type: "openPanel",
+      panel: "drivers",
+    });
+    expect(next.state.openLayer).toBe("panel");
+    expect(next.state.panel).toBe("drivers");
+    expect(next.state.modal).toBeNull();
+    expect(next.urlSlice.panel).toBe("drivers");
+    expect(next.urlSlice.modal).toBeNull();
+  });
+
+  it("openModal driver-create / driver-detail share entity in URL", () => {
+    const created = transitionAdminHub(INITIAL_ADMIN_HUB_UI, {
+      type: "openModal",
+      modal: "driver-create",
+    });
+    expect(created.state.modal).toBe("driver-create");
+    expect(created.urlSlice.modal).toBe("driver-create");
+
+    const detail = transitionAdminHub(INITIAL_ADMIN_HUB_UI, {
+      type: "openModal",
+      modal: "driver-detail",
+      entity: { type: "driver", id: "esp8266_counter_v1" },
+    });
+    expect(detail.state.selectedEntity).toEqual({
+      type: "driver",
+      id: "esp8266_counter_v1",
+    });
+    expect(detail.urlSlice.entity).toBe("driver:esp8266_counter_v1");
+    expect(detail.urlSlice.modal).toBe("driver-detail");
+  });
+
   it("hydrateFromUrl does not reopen summary from stale entity", () => {
     const afterClose = transitionAdminHub(
       transitionAdminHub(INITIAL_ADMIN_HUB_UI, {

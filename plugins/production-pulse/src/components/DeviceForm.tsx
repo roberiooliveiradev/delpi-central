@@ -187,7 +187,7 @@ export function DeviceForm({
 
         <PpNativeSelectField
           id="pp-device-driver"
-          label="Driver"
+          label="Tipo de driver"
           hint={PP_HELP.form.driver}
           span
           value={device.driverKey}
