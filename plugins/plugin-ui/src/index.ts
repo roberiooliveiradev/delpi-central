@@ -31,6 +31,16 @@ export * from "./components/deck";
 export * from "./components/collaboration";
 export * from "./brand";
 export * from "./theme";
+/**
+ * Export nomeado — Color Family Catalog é consumido por hosts (ex.: chat MFE)
+ * sem uso interno no remote; `export *` sozinho pode sumir no tree-shake do MF
+ * e o host recebe `resolveColorFamily` undefined → TypeError "X is not a function".
+ */
+export {
+  getColorFamilyDefinition,
+  listColorFamilies,
+  resolveColorFamily,
+} from "./theme/colorFamilyCatalog";
 export * from "./utils";
 export * from "./displayFormat";
 export * from "./components/displayFormat";

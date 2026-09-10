@@ -116,6 +116,11 @@ export function resolvePaletteFamilyColors(
   paletteFamily: string | undefined,
   isDark = false,
 ): string[] {
+  // Federated remote pode estar defasado (export ausente) — não derrubar a UI.
+  if (typeof resolveColorFamily !== "function") {
+    return [];
+  }
+
   return resolveColorFamily(paletteFamily, isDark ? "dark" : "light");
 }
 
