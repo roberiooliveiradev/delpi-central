@@ -119,6 +119,18 @@ class ChatOperationalGroupByRefinementService:
         return None
 
     @classmethod
+    def match_route_for_action_id(cls, action_id: str | None) -> dict[str, Any] | None:
+        """E3.S5 — identidade por actionId (pathContains só como fallback legado)."""
+        from app.domain.services.schema_driven_group_by_refinement_service import (
+            SchemaDrivenGroupByRefinementService,
+        )
+
+        return SchemaDrivenGroupByRefinementService.match_vocabulary_route_by_action_id(
+            str(action_id or ""),
+            cls.routes(),
+        )
+
+    @classmethod
     def match_route_for_context(cls, conversation_context: str | None) -> dict[str, Any] | None:
         return cls.match_route_for_path(str(conversation_context or ""))
 
@@ -276,7 +288,14 @@ class ChatOperationalGroupByRefinementService:
                     continue
 
                 path = str(tool_meta.get("path") or "")
-                route = cls.match_route_for_path(path)
+                action_id = str(
+                    tool_meta.get("actionId")
+                    or (tool_call.get("arguments") or {}).get("actionId")
+                    or ""
+                ).strip()
+                route = cls.match_route_for_action_id(action_id) or cls.match_route_for_path(
+                    path
+                )
 
                 if not route:
                     continue
@@ -288,8 +307,7 @@ class ChatOperationalGroupByRefinementService:
                     parameters = {}
 
                 action_id = str(
-                    tool_meta.get("actionId")
-                    or arguments.get("actionId")
+                    action_id
                     or route.get("actionIdDefault")
                     or ""
                 ).strip()

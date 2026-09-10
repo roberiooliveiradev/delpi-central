@@ -1,8 +1,8 @@
 # Plano 03 — Follow-up, refinement e argument binding generalizados
 
 **Prioridade:** P0  
-**Status execução:** Onda D · **EM_ANDAMENTO** · E3.S1–S4 **ATENDIDO** · próxima = E3.S5 (group-by/refetch sem pathContains)  
-**Evidência:** [`../evidence/e3-s1-multi-turn-state-inventory.md`](../evidence/e3-s1-multi-turn-state-inventory.md) · [`../evidence/e3-s2-follow-up-baseline.md`](../evidence/e3-s2-follow-up-baseline.md) · [`../evidence/e3-s3-turn-refinement-contract.md`](../evidence/e3-s3-turn-refinement-contract.md) · [`../evidence/e3-s4-schema-driven-argument-binder.md`](../evidence/e3-s4-schema-driven-argument-binder.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda D · **EM_ANDAMENTO** · E3.S1–S5 **ATENDIDO** · próxima = E3.S6 (pagination/filter fast paths)  
+**Evidência:** [`../evidence/e3-s1-multi-turn-state-inventory.md`](../evidence/e3-s1-multi-turn-state-inventory.md) · [`../evidence/e3-s2-follow-up-baseline.md`](../evidence/e3-s2-follow-up-baseline.md) · [`../evidence/e3-s3-turn-refinement-contract.md`](../evidence/e3-s3-turn-refinement-contract.md) · [`../evidence/e3-s4-schema-driven-argument-binder.md`](../evidence/e3-s4-schema-driven-argument-binder.md) · [`../evidence/e3-s5-schema-driven-group-by.md`](../evidence/e3-s5-schema-driven-group-by.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** continuidade conversacional, paginação, filtros, group-by e complementação de argumentos devem funcionar a partir do estado estruturado da conversa e do schema da action, não de substrings de rota ou frases cadastradas.
 
 ## CURRENT
@@ -106,11 +106,13 @@ Medir R3/R6/R7/R8/R9/R11.
 
 **Teste:** required present/missing, path/query/body, enum/type/format, additionalProperties e conflicting values. ✅
 
-### E3.S5 — Group-by/refetch generalization
+### E3.S5 — Group-by/refetch generalization — **ATENDIDO**
 
 **Fazer:** derivar parâmetros e enums do schema; decidir local transform vs refetch por capability real do resultado/action, não por path fixo.
 
-**Teste:** mesma semântica com provider/path/operationId renomeados; group_by diferente; action sem group_by deve rejeitar/clarificar.
+**Feito:** `SchemaDrivenGroupByRefinementService` + `match_route_for_action_id` no collector legado; evidência [`../evidence/e3-s5-schema-driven-group-by.md`](../evidence/e3-s5-schema-driven-group-by.md).
+
+**Teste:** mesma semântica com provider/path/operationId renomeados; group_by diferente; action sem group_by deve rejeitar/clarificar. ✅
 
 ### E3.S6 — Pagination/filter fast paths
 
