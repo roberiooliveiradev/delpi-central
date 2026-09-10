@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "step": "E9.S6",
+  "program": "llm-json-decoupling",
+  "evaluatedAt": "2026-09-10",
+  "datasetHash": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8",
+  "deleteAuthorized": false,
+  "gates": [
+    {
+      "id": "candidate_task_success",
+      "required": true,
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s3-candidate-plans-offline.md",
+      "note": "8/8 planos NO_REGRESSION_OFFLINE; live ainda INCONCLUSIVE"
+    },
+    {
+      "id": "unknown_api",
+      "required": true,
+      "status": "INCONCLUSIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": "Harness indexado; trial live LLM pending"
+    },
+    {
+      "id": "metamorphic",
+      "required": true,
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": "Corpus class metamorphic offline; live rename pending"
+    },
+    {
+      "id": "safety",
+      "required": true,
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": "Unauthorized/write/injection harnesses offline; live pending"
+    },
+    {
+      "id": "required_args",
+      "required": true,
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": "Required present/missing clarify offline"
+    },
+    {
+      "id": "multi_turn",
+      "required": true,
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": "Follow-up harnesses offline; F5 live pending"
+    },
+    {
+      "id": "compound",
+      "required": true,
+      "status": "PASS_OFFLINE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
+      "note": "Compound/long request offline"
+    },
+    {
+      "id": "latency_cost",
+      "required": true,
+      "status": "INCONCLUSIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s3-candidate-plans-offline.md",
+      "note": "P50/P95/tokens não medidos no candidate offline"
+    },
+    {
+      "id": "legacy_fallback_hit_rate",
+      "required": true,
+      "status": "INCONCLUSIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s4-shadow-divergence.md",
+      "note": "Shadows inventariados; taxa live residual não agregada"
+    }
+  ],
+  "deleteCandidates": [
+    {
+      "id": "registry_path_markers",
+      "fields": ["pathMarkers", "operationIdMarkers", "excludePathMarkers", "routeSegment", "pathSuffix"],
+      "surface": "app/content/pt-BR/assistant/operational_route_registry.json",
+      "owner": "plano-01 / Onda B",
+      "status": "BLOCKED",
+      "blockReason": "deleteAuthorized=false; consumers residuais (resolver/readiness/selection shadow compare)"
+    },
+    {
+      "id": "registry_parameter_strategy_fields",
+      "fields": ["parameterStrategy", "parameters.strategy"],
+      "surface": "app/content/pt-BR/assistant/operational_route_registry.json",
+      "owner": "plano-01 / Onda B",
+      "status": "BLOCKED",
+      "blockReason": "deleteAuthorized=false; shadow/compare e lint ainda referenciam"
+    },
+    {
+      "id": "follow_up_message_segment_terms",
+      "fields": ["messageSegmentTerms", "playbookPathMarkers"],
+      "surface": "app/content/pt-BR/assistant/operational_follow_up_routing.json",
+      "owner": "plano-03 / Onda D",
+      "status": "BLOCKED",
+      "blockReason": "deleteAuthorized=false; observer ainda usado em rollback flag e shadow"
+    },
+    {
+      "id": "turn_understanding_heuristics_json",
+      "fields": ["intent heuristics residual"],
+      "surface": "app/content/pt-BR/assistant/ (plano-02)",
+      "owner": "plano-02 / Onda C",
+      "status": "BLOCKED",
+      "blockReason": "cutover de família ainda shadow-only (E2.S4); gates incompletos"
+    }
+  ],
+  "passStatusesForDelete": ["PASS", "PASS_OFFLINE_AND_LIVE", "APPROVED"],
+  "note": "PASS_OFFLINE sozinho NÃO autoriza DELETE enquanto gates required tiverem INCONCLUSIVE/PENDING/FAIL."
+}

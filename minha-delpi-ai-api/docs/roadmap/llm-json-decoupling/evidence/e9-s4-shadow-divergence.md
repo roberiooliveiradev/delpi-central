@@ -34,4 +34,5 @@ Modules canônicos em `app/domain/services/` (não `application/services/externa
 
 ## Próximo
 
-**E9.S5** — canary/default cutover — **ATENDIDO** (`e9-s5-canary-cutover.md`). Próximo: **E9.S6** cleanup gates.
+**E9.S5** — canary/default cutover — **ATENDIDO** (`e9-s5-canary-cutover.md`).  
+**E9.S6** — cleanup gates — **ATENDIDO_PARCIAL** (`e9-s6-cleanup-gates.md`; DELETE blocked). Próximo: **E9.S7**.

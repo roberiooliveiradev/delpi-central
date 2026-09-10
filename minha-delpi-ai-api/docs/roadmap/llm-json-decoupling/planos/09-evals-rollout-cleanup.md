@@ -1,8 +1,8 @@
 # Plano 09 — Evals, rollout, cutover e cleanup final
 
 **Prioridade:** transversal  
-**Status execução:** Onda H · E9.S1 **ATENDIDO** · E9.S2 **ATENDIDO_PARCIAL** · E9.S3 **ATENDIDO** (offline) · E9.S4 **ATENDIDO** · E9.S5 **ATENDIDO** · próxima E9.S6  
-**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/e9-s5-canary-cutover.md`](../evidence/e9-s5-canary-cutover.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda H · E9.S1 **ATENDIDO** · E9.S2 **ATENDIDO_PARCIAL** · E9.S3 **ATENDIDO** (offline) · E9.S4 **ATENDIDO** · E9.S5 **ATENDIDO** · E9.S6 **ATENDIDO_PARCIAL** · próxima E9.S7  
+**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/e9-s5-canary-cutover.md`](../evidence/e9-s5-canary-cutover.md) · [`../evidence/e9-s6-cleanup-gates.md`](../evidence/e9-s6-cleanup-gates.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** cada migração de catálogo/heurística para OpenAPI/LLM deve provar melhora generalizável, preservar segurança e só então remover legado.
 
 ## Fonte de verdade

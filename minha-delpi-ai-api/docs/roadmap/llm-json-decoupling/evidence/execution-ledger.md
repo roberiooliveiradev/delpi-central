@@ -15,7 +15,7 @@
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
 | G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
-| H — cutover/cleanup | 09 | **EM_ANDAMENTO** | E9.S6 | E9.S1–S5 OK; cleanup gates antes de DELETE |
+| H — cutover/cleanup | 09 | **EM_ANDAMENTO** | E9.S7 | E9.S1–S5 OK; E9.S6 parcial (gates on, DELETE blocked) |
 
 ## Protocolo por subetapa
 
@@ -137,3 +137,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S5 (canary/default cutover) |
 | 2026-09-10 | E9.S5 **ATENDIDO** — inventário cutover/canary; cohort/agent ABSENT; dials globais + rollback |
 | 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S6 (cleanup gates) |
+| 2026-09-10 | E9.S6 **ATENDIDO_PARCIAL** — 9 gates; deleteAuthorized=false; 4 candidates BLOCKED |
+| 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S7 (architecture audit) |

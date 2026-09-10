@@ -46,4 +46,4 @@ parameterStrategy (dispatch permanente), department/entity (legado DELETE E5.S7)
 
 ## Próximo
 
-**E9.S6** — cleanup gates antes de DELETE de catálogo/heurística residual.
+**E9.S6** — cleanup gates — **ATENDIDO_PARCIAL** (`e9-s6-cleanup-gates.md`). Próximo: **E9.S7** architecture audit.
