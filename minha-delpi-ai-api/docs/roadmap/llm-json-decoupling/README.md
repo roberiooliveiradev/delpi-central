@@ -62,6 +62,7 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`evidence/e3-s8-persist-reload-cleanup.md`](./evidence/e3-s8-persist-reload-cleanup.md) | E3.S8 — persist/reload (DELETE deferred). |
 | [`evidence/e4-s1-capability-inventory.md`](./evidence/e4-s1-capability-inventory.md) | E4.S1 — inventário capabilities/registry. |
 | [`evidence/e4-s2-capability-discovery-baseline.md`](./evidence/e4-s2-capability-discovery-baseline.md) | E4.S2 — baseline discovery. |
+| [`evidence/e4-s3-ux-capability-contract.md`](./evidence/e4-s3-ux-capability-contract.md) | E4.S3 — contrato uxCapability. |
 
 ## Drift HEAD (2026-09-10) — resumido
 
