@@ -54,6 +54,7 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`evidence/e2-s4-authority-shadow.md`](./evidence/e2-s4-authority-shadow.md) | E2.S4 — SHADOW_ON authority vs TU. |
 | [`evidence/e3-s1-multi-turn-state-inventory.md`](./evidence/e3-s1-multi-turn-state-inventory.md) | E3.S1 — inventário grafo multi-turn (Onda D). |
 | [`evidence/e3-s2-follow-up-baseline.md`](./evidence/e3-s2-follow-up-baseline.md) | E3.S2 — baseline follow-up/refinement. |
+| [`evidence/e3-s3-turn-refinement-contract.md`](./evidence/e3-s3-turn-refinement-contract.md) | E3.S3 — contrato canônico Turn Refinement. |
 
 ## Drift HEAD (2026-09-10) — resumido
 
