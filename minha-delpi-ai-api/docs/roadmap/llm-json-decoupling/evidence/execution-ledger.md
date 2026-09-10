@@ -14,7 +14,7 @@
 | D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
-| G — presentation/skills | 07, 08 | **EM_ANDAMENTO** | plano 08 | Plano 07 S1–S7 OK; próxima skills residual |
+| G — presentation/skills | 07, 08 | **EM_ANDAMENTO** | E8.S2 | Plano 07 OK; E8.S1 inventário skills/help |
 | H — cutover/cleanup | 09 | **CONTÍNUO** | E9.S1 corpus ampliado | Não remover legado sem gates |
 
 ## Protocolo por subetapa

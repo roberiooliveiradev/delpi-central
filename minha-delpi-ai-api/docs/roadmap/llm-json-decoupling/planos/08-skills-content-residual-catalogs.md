@@ -1,8 +1,8 @@
 # Plano 08 — Skills/help/content -> remover catálogos técnicos residuais
 
 **Prioridade:** P2  
-**Status execução:** Onda G · com/após 07 · `routeHints` DEAD no inventário §4  
-**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda G · E8.S1 **ATENDIDO** · próxima E8.S2  
+**Evidência:** [`../evidence/e8-s1-skills-help-residual-inventory.md`](../evidence/e8-s1-skills-help-residual-inventory.md) · [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** conteúdo editorial continua rico e configurável, mas deixa de anunciar ou depender de endpoints hardcoded quando a disponibilidade real pode ser consultada no runtime.
 
 ## CURRENT
@@ -50,18 +50,11 @@ resposta de ajuda
 
 ### E8.S1 — Auditoria de conteúdo
 
-**Fazer:** search por `GET /`, `POST /`, `PUT /`, `PATCH /`, `DELETE /`, `operationId`, `routeHints`, `executionPathHint`, `pathMarkers`, `parameterStrategy` dentro de `app/content`.
+**Status:** **ATENDIDO** (2026-09-10) — evidência [`../evidence/e8-s1-skills-help-residual-inventory.md`](../evidence/e8-s1-skills-help-residual-inventory.md)
 
-Classificar cada ocorrência:
+**Feito:** freeze de contagens (3 hints path-like; 12 features com requiredActions path; routeHints=0); classificação PATH_COUPLED/UX_COPY/DEAD; sem mutação de conteúdo.
 
-```text
-TECHNICAL_CONTRACT_DUPLICATION
-DOCUMENTATION_EXAMPLE
-UX_COPY
-POLICY
-TEST_FIXTURE
-GENERATED_SNAPSHOT
-```
+**Fazer (histórico):** search por `GET /`, `POST /`, …, `executionPathHint`, `routeHints` dentro de `app/content`.
 
 ### E8.S2 — Skill catalog cleanup
 
