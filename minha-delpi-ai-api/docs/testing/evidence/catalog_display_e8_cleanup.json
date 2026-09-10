@@ -1,0 +1,44 @@
+{
+  "stage": "E8",
+  "actions": [
+    {
+      "key": "preferredColumns labels",
+      "status": "REMOVED",
+      "note": "flattened to string[] keys-only in E1"
+    },
+    {
+      "key": "column_label_hints",
+      "status": "REMOVED",
+      "note": "method and call site deleted"
+    },
+    {
+      "key": "summaryFirstCommentary.labels",
+      "status": "EMPTIED",
+      "note": "FieldLabelBundle first; map kept empty for residual editorial"
+    },
+    {
+      "key": "api_paths.pathLabels",
+      "status": "DEPRECATED_PRIORITY",
+      "note": "no longer #1 when summary PT; remains editorial override for EN/poor summaries until hit-rate limiar"
+    },
+    {
+      "key": "api_paths.englishSummaries",
+      "status": "KEEP_RESIDUAL",
+      "note": "still used after pathLabels miss"
+    },
+    {
+      "key": "product_operational.presentation.routeTitles",
+      "status": "KEEP_LEGACY_FALLBACK",
+      "note": "API materializes into stackPresentationPlan; MFE prefers metadata then local JSON"
+    },
+    {
+      "key": "capabilities.pathRules",
+      "status": "KEEP",
+      "note": "OpenAPI tags insufficient for UX categories — investigation closed KEEP"
+    }
+  ],
+  "exitCriteria": {
+    "manual_catalog_hit_rate_target": "<0.15 for api-delpi PT locale summaries",
+    "path_coupled_display_rules_remaining": "titlesByPathFragment + kpiPathMatchers residual until consumers fully on ResultPresentationTitleResolver slot titles"
+  }
+}

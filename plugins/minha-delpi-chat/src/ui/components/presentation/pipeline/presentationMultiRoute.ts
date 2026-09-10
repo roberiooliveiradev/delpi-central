@@ -257,9 +257,19 @@ function buildRouteSectionChrome(
   routeKey: ProductRouteKey,
   index: number,
   path = "",
+  plan?: StackPresentationPlan | null,
+  toolMetadata?: Record<string, unknown> | null,
 ): StackSectionChrome {
   const code = productCodeFromPath(path);
-  const baseTitle = routeTitle(routeKey);
+  const fromTool =
+    (typeof toolMetadata?.routeTitle === "string" && toolMetadata.routeTitle.trim()) ||
+    (typeof toolMetadata?.title === "string" && toolMetadata.title.trim()) ||
+    "";
+  const fromPlan =
+    (typeof plan?.routeTitles?.[routeKey] === "string" && plan.routeTitles[routeKey].trim()) ||
+    (typeof plan?.resolvedRouteTitle === "string" && plan.resolvedRouteTitle.trim()) ||
+    "";
+  const baseTitle = fromTool || fromPlan || routeTitle(routeKey);
   const titled = code ? `${baseTitle} — ${code}` : baseTitle;
 
   return {
@@ -478,6 +488,35 @@ function collectVisualsForToolCall(toolCall: ChatToolCall): AssistantContentSegm
   return segments;
 }
 
+function resolveDisplayPlanFromToolMetadata(
+  metadata: Record<string, unknown>,
+): StackPresentationPlan | null {
+  const raw = metadata.stackPresentationPlan;
+
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+
+  const plan = raw as Record<string, unknown>;
+  const routeTitles =
+    plan.routeTitles && typeof plan.routeTitles === "object"
+      ? (plan.routeTitles as Record<string, string>)
+      : undefined;
+  const routeFramingMap =
+    plan.routeFraming && typeof plan.routeFraming === "object"
+      ? (plan.routeFraming as Record<string, string>)
+      : undefined;
+
+  return {
+    ...resolveMultiRouteStackPlan([]),
+    routeTitles,
+    routeFraming: routeFramingMap,
+    resolvedRouteTitle:
+      typeof plan.resolvedRouteTitle === "string" ? plan.resolvedRouteTitle : undefined,
+    titleSource: typeof plan.titleSource === "string" ? plan.titleSource : undefined,
+  };
+}
+
 export function buildMultiRouteStackSegments(
   commentary: string,
   toolCalls: ChatToolCall[],
@@ -492,6 +531,10 @@ export function buildMultiRouteStackSegments(
   const segments: AssistantContentSegment[] = [];
   const compositeSections = splitCompositeProseByHeading(commentary);
   let sectionIndex = 0;
+  const sharedPlan =
+    resolveDisplayPlanFromToolMetadata(
+      (blocks[0]?.toolCall.metadata ?? {}) as Record<string, unknown>,
+    ) ?? resolveMultiRouteStackPlan(toolCalls);
 
   const lead = commentary
     .split(/\n(?=###\s+)/)[0]
@@ -506,12 +549,24 @@ export function buildMultiRouteStackSegments(
 
   for (const block of blocks) {
     sectionIndex += 1;
+    const toolMeta = (block.toolCall.metadata ?? {}) as Record<string, unknown>;
+    const planFromTool = resolveDisplayPlanFromToolMetadata(toolMeta) ?? sharedPlan;
     appendUnique(segments, {
       kind: "stackSection",
-      section: buildRouteSectionChrome(block.routeKey, sectionIndex, block.path),
+      section: buildRouteSectionChrome(
+        block.routeKey,
+        sectionIndex,
+        block.path,
+        planFromTool,
+        toolMeta,
+      ),
     });
 
-    const framing = routeFraming(block.routeKey);
+    const framingFromPlan =
+      (typeof planFromTool?.routeFraming?.[block.routeKey] === "string" &&
+        planFromTool.routeFraming[block.routeKey].trim()) ||
+      "";
+    const framing = framingFromPlan || routeFraming(block.routeKey);
 
     if (framing) {
       for (const segment of parseMarkdownAndCodeSegments(framing)) {

@@ -15,10 +15,12 @@ type PresentationContent = typeof productOperationalContent.presentation;
 const presentation = productOperationalContent.presentation as PresentationContent;
 
 export function routeTitle(routeKey: ProductRouteKey): string {
+  // Legacy fallback — prefer API `stackPresentationPlan.routeTitles` / metadata.routeTitle.
   return presentation.routeTitles[routeKey] ?? presentation.routeTitles.other;
 }
 
 export function routeFraming(routeKey: ProductRouteKey): string {
+  // Legacy fallback — prefer API `stackPresentationPlan.routeFraming`.
   return presentation.routeFraming[routeKey] ?? presentation.routeFraming.other;
 }
 

@@ -427,22 +427,7 @@
       "max_price"
     ],
     "metricLine": "**{label}**: **{value}**.",
-    "labels": {
-      "on_time_delivery_pct": "OTD %",
-      "late_ops": "OPs em atraso",
-      "on_time_ops": "OPs no prazo",
-      "late_percentage": "% em atraso",
-      "total_ops": "Total de OPs",
-      "total_orders": "Total de ordens",
-      "oee_pct": "OEE %",
-      "availability_pct": "Disponibilidade %",
-      "performance_pct": "Performance %",
-      "quality_pct": "Qualidade %",
-      "efficiency_pct": "Eficiência %",
-      "appointments_count": "Apontamentos",
-      "valid_appointments": "Apontamentos válidos",
-      "outlier_appointments": "Apontamentos fora da faixa"
-    }
+    "labels": {}
   },
   "anomalies": {
     "empty_list": "Não há registros na consulta ({scope}).",

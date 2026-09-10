@@ -249,20 +249,28 @@ class ChatOperationalToolSummaryResolutionService:
         return any(marker in lowered for marker in cls._generic_line_markers())
 
     @classmethod
-    def _title_from_path(cls, path: str) -> str:
+    def _title_from_path(cls, path: str, *, metadata: dict | None = None) -> str:
+        from app.domain.services.result_presentation_title_resolver import (
+            ResultPresentationTitleResolver,
+        )
+
         lowered = str(path or "").lower()
         titles = _content().get("pathTitles") or {}
+        legacy = str(titles.get("default") or "Consulta operacional")
 
         if "/guide" in lowered:
-            return str(titles.get("guide") or "Consulta operacional")
+            legacy = str(titles.get("guide") or legacy)
+        elif ChatPresentationProfileService.has_flag(path, "stock"):
+            legacy = str(titles.get("stock") or legacy)
+        elif "/structure" in lowered:
+            legacy = str(titles.get("structure") or legacy)
+        elif "/inspection" in lowered:
+            legacy = str(titles.get("inspection") or legacy)
 
-        if ChatPresentationProfileService.has_flag(path, "stock"):
-            return str(titles.get("stock") or "Consulta operacional")
-
-        if "/structure" in lowered:
-            return str(titles.get("structure") or "Consulta operacional")
-
-        if "/inspection" in lowered:
-            return str(titles.get("inspection") or "Consulta operacional")
-
-        return str(titles.get("default") or "Consulta operacional")
+        resolved = ResultPresentationTitleResolver.resolve(
+            path=path,
+            metadata=metadata if isinstance(metadata, dict) else None,
+            legacy_title=legacy,
+            fallback=legacy,
+        )
+        return resolved.title

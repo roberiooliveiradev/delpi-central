@@ -51,6 +51,14 @@ export type StackPresentationPlan = {
   sectionVisibility?: Partial<Record<StackSectionId, boolean>>;
   /** Texto explicativo por seção (API) — renderizado como markdown normal, sem repetir tabela/bullets. */
   sectionFraming?: Partial<Record<StackSectionId, string>>;
+  /** Títulos de seção materializados na API (MFE render-only). */
+  sectionTitles?: Partial<Record<StackSectionId, string>>;
+  /** Títulos de rota de produto materializados na API. */
+  routeTitles?: Partial<Record<string, string>>;
+  /** Framing de rota materializado na API. */
+  routeFraming?: Partial<Record<string, string>>;
+  resolvedRouteTitle?: string;
+  titleSource?: string;
 };
 
 const DEFAULT_TABLE_ROLE_ORDER: StackTableRole[] = [
@@ -253,7 +261,29 @@ function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
     sectionFraming: normalizeSectionFraming(
       raw.sectionFraming ?? raw.sectionIntros,
     ),
+    sectionTitles: normalizeStringMap(raw.sectionTitles) as StackPresentationPlan["sectionTitles"],
+    routeTitles: normalizeStringMap(raw.routeTitles),
+    routeFraming: normalizeStringMap(raw.routeFraming),
+    resolvedRouteTitle:
+      typeof raw.resolvedRouteTitle === "string" ? raw.resolvedRouteTitle.trim() || undefined : undefined,
+    titleSource: typeof raw.titleSource === "string" ? raw.titleSource.trim() || undefined : undefined,
   };
+}
+
+function normalizeStringMap(raw: unknown): Record<string, string> | undefined {
+  if (!raw || typeof raw !== "object") {
+    return undefined;
+  }
+
+  const out: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof value === "string" && value.trim()) {
+      out[key] = value.trim();
+    }
+  }
+
+  return Object.keys(out).length ? out : undefined;
 }
 
 export function planUsesHumanizedSections(plan: StackPresentationPlan): boolean {

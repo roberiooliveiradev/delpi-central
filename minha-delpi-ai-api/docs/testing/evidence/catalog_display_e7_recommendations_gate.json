@@ -1,0 +1,12 @@
+{
+  "stage": "E7.S0",
+  "gate": "READY",
+  "findings": {
+    "turnSynthesisEmitsStructuredRecommendations": false,
+    "staticFallbackOwner": "ChatHumanizedDataResponseService._build_recommendations → humanized_data_response.json",
+    "insertionPoint": "commentary.structuredRecommendations | commentary.recommendations before static profile list",
+    "validator": "RecommendationActionValidator.filter_items — actionId ∈ allowedActions; textual sem actionId permitido",
+    "negativeCase": "actionId fora do allowlist é descartado"
+  },
+  "decision": "Implementar consumer/validator agora; producer LLM no turno fica opt-in via structuredRecommendations sem nova chamada dedicada"
+}

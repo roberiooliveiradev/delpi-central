@@ -1,0 +1,80 @@
+{
+  "version": "2026.09.10",
+  "phase": "E0.S1",
+  "note": "Baseline pré-migração — fontes CURRENT observadas no código (não live HTTP).",
+  "cases": [
+    {
+      "id": "action_label_stock",
+      "input": {"path": "/products/{code}/stock", "summary": "Product stock"},
+      "currentSource": "api_paths.pathLabels",
+      "currentBehavior": "pathLabels vence summary mesmo com locale PT no Action Catalog",
+      "targetBehavior": "Action Catalog summary (x-delpi.locale) com source OPENAPI_SUMMARY"
+    },
+    {
+      "id": "action_label_capabilities_list",
+      "input": {"surface": "capabilities catalog"},
+      "currentSource": "ChatActionLabelService.humanize → pathLabels",
+      "targetBehavior": "ActionDisplayLabelResolver → catalog summary first"
+    },
+    {
+      "id": "table_title_stock",
+      "input": {"path": "/products/10080001/stock"},
+      "currentSource": "presenter_content.titlesByPathFragment",
+      "targetBehavior": "presentation.title / ResultPresentationTitleResolver"
+    },
+    {
+      "id": "kpi_title",
+      "input": {"pathFragment": "kpiPathMatchers"},
+      "currentSource": "presenter_content.kpiPathMatchers + kpiTitles",
+      "targetBehavior": "mesmo resolver de título + profile quando existir"
+    },
+    {
+      "id": "dashboard_title",
+      "input": {"path": "/financial/rol"},
+      "currentSource": "dashboardPresentation.titlesByPathFragment",
+      "targetBehavior": "resolver canônico"
+    },
+    {
+      "id": "tool_summary_pathTitles",
+      "input": {"path": ".../guide|stock|structure|inspection"},
+      "currentSource": "data_interpretation.pathTitles",
+      "targetBehavior": "ResultPresentationTitleResolver"
+    },
+    {
+      "id": "multi_route_mfe",
+      "input": {"surface": "presentationMultiRoute"},
+      "currentSource": "MFE routeTitles/routeFraming",
+      "targetBehavior": "metadata da API materializada; MFE render-only"
+    },
+    {
+      "id": "product_scope",
+      "input": {"scopeKey": "stock"},
+      "currentSource": "product_operational_content.scopes",
+      "targetBehavior": "KEEP keys/vocab; display alinhado a action label quando houver actionId"
+    },
+    {
+      "id": "commentary_label",
+      "input": {"summaryKey": "on_time_delivery_pct"},
+      "currentSource": "summaryFirstCommentary.labels",
+      "targetBehavior": "FieldLabelBundle / resolvedFieldLabels"
+    },
+    {
+      "id": "recommendation_static",
+      "input": {"profileKey": "stock"},
+      "currentSource": "humanized_data_response.recommendations",
+      "targetBehavior": "síntese turno + allowedActions; fallback JSON"
+    },
+    {
+      "id": "unknown_external_api",
+      "input": {"provider": "acme-industrial", "operation": "energy consumption"},
+      "currentSource": "path-tail / lexicon / actionId",
+      "targetBehavior": "summary/humanize/(LLM cache se EN) sem api_paths entry"
+    },
+    {
+      "id": "preferred_columns_order",
+      "input": {"profile": "stock"},
+      "currentSource": "preferredColumns[0] only; [1] dead",
+      "targetBehavior": "string[] order-only; labels via FieldLabelBundle"
+    }
+  ]
+}

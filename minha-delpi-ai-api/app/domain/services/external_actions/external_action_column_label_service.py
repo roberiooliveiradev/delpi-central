@@ -956,11 +956,6 @@ class ExternalActionColumnLabelService:
 
         return []
 
-    def column_label_hints(self, profile_name: str | None) -> dict[str, str]:
-        """preferredColumns is order-only — never a translation catalog."""
-        del profile_name
-        return {}
-
     def resolve_label_for_column(
         self,
         key: str,
@@ -1018,7 +1013,6 @@ class ExternalActionColumnLabelService:
             sample_row=dict_items[0],
         )
 
-        profile_hints = self.column_label_hints(resolved_profile)
         label_map = self.resolve_field_labels(
             ordered_keys,
             path=path,

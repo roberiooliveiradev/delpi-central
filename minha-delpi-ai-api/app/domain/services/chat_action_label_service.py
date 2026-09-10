@@ -62,34 +62,49 @@ class ChatActionLabelService:
         method: str,
         summary: str,
         action_id: str = "",
+        provider_key: str = "",
+        delpi_metadata: dict | None = None,
+        schema_hash: str = "",
     ) -> str:
-        raw = str(summary or "").strip()
-        path_key = str(path or "").strip()
+        from app.domain.services.action_display_label_resolver import (
+            ActionDisplayLabelResolver,
+        )
 
-        label = cls._label_from_path(path_key)
-        if label:
-            return label
+        return ActionDisplayLabelResolver.resolve(
+            path=path,
+            method=method,
+            summary=summary,
+            action_id=action_id,
+            provider_key=provider_key,
+            delpi_metadata=delpi_metadata,
+            schema_hash=schema_hash,
+        ).label
 
-        english_summaries = _english_exact_summaries()
-        lowered = raw.casefold()
-        if lowered in english_summaries:
-            return english_summaries[lowered]
+    @classmethod
+    def humanize_with_source(
+        cls,
+        *,
+        path: str,
+        method: str,
+        summary: str,
+        action_id: str = "",
+        provider_key: str = "",
+        delpi_metadata: dict | None = None,
+        schema_hash: str = "",
+    ):
+        from app.domain.services.action_display_label_resolver import (
+            ActionDisplayLabelResolver,
+        )
 
-        if raw and not cls._looks_english(raw):
-            return raw
-
-        from_path = cls._label_from_path_tail(path_key, method)
-        if from_path:
-            return from_path
-
-        translated = cls._translate_english_summary(raw)
-        if translated:
-            return translated
-
-        if raw:
-            return raw
-
-        return action_id or path_key or _default_authorized_query_label()
+        return ActionDisplayLabelResolver.resolve(
+            path=path,
+            method=method,
+            summary=summary,
+            action_id=action_id,
+            provider_key=provider_key,
+            delpi_metadata=delpi_metadata,
+            schema_hash=schema_hash,
+        )
 
     @classmethod
     def _label_from_path(cls, path: str) -> str | None:
@@ -196,6 +211,16 @@ class ChatActionLabelService:
             "pricing",
             "dashboard",
             "public",
+            "production",
+            "appointment",
+            "appointments",
+            "detail",
+            "series",
+            "schema",
+            "complete",
+            "snapshot",
+            "orders",
+            "products",
         )
         if any(token in lowered for token in en_tokens):
             return True

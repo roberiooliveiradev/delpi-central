@@ -29,31 +29,22 @@ class ExternalActionKpiChartTitleService:
         from app.domain.services.chat_assistant_content_service import (
             ChatAssistantContentService,
         )
+        from app.domain.services.result_presentation_title_resolver import (
+            ResultPresentationTitleResolver,
+        )
 
         lowered = str(path or "").lower()
+        metadata = getattr(presenter, "metadata", None)
+        if not isinstance(metadata, dict):
+            metadata = {}
+
         playbook_title = ChatAssistantContentService.title_for_path(
             "presenter_content",
             path,
             default=None,
         )
 
-        if playbook_title and any(
-            token in lowered
-            for token in (
-                "/consumption/",
-                "/losses/",
-                "/schedule/today",
-                "/orders/open",
-                "/orders/finished",
-                "/orders/finished-without-consumption",
-                "/work-centers/",
-                "/allocation-gaps",
-                "/planned-vs-real-time",
-                "/purchases/top-products",
-            )
-        ):
-            return playbook_title
-
+        legacy_matchers_title = None
         matchers = ChatAssistantContentService.get_node(
             "presenter_content",
             "kpiPathMatchers",
@@ -91,12 +82,43 @@ class ExternalActionKpiChartTitleService:
                     )
 
                     if title:
-                        return title
+                        legacy_matchers_title = title
+                        break
 
-        return ChatAssistantContentService.get(
+        default_title = ChatAssistantContentService.get(
             "presenter_content",
             "kpiTitles",
             "default",
             default="Indicador",
         )
+
+        # Preferência histórica estreita: playbook só para paths operacionais específicos
+        if playbook_title and any(
+            token in lowered
+            for token in (
+                "/consumption/",
+                "/losses/",
+                "/schedule/today",
+                "/orders/open",
+                "/orders/finished",
+                "/orders/finished-without-consumption",
+                "/work-centers/",
+                "/allocation-gaps",
+                "/planned-vs-real-time",
+                "/purchases/top-products",
+            )
+        ):
+            legacy = playbook_title
+        else:
+            legacy = legacy_matchers_title or playbook_title or default_title
+
+        resolved = ResultPresentationTitleResolver.resolve(
+            path=path,
+            summary=str(metadata.get("summary") or metadata.get("actionSummary") or ""),
+            action_id=str(metadata.get("actionId") or ""),
+            metadata=metadata,
+            legacy_title=legacy,
+            fallback=str(default_title or "Indicador"),
+        )
+        return resolved.title
 

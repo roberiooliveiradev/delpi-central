@@ -31,20 +31,33 @@ class ChatDashboardPresentationService:
         return {str(key): str(value) for key, value in node.items() if value}
 
     @classmethod
-    def _resolve_dashboard_title(cls, path: str) -> str:
+    def _resolve_dashboard_title(cls, path: str, *, metadata: dict | None = None) -> str:
+        from app.domain.services.result_presentation_title_resolver import (
+            ResultPresentationTitleResolver,
+        )
+
         lowered = str(path or "").lower()
         titles = ChatAssistantContentService.get_node(
             "presenter_content",
             "dashboardPresentation",
             "titlesByPathFragment",
         )
+        legacy = None
 
         if isinstance(titles, dict):
             for fragment, title in titles.items():
                 if str(fragment).lower() in lowered:
-                    return str(title)
+                    legacy = str(title)
+                    break
 
-        return cls._dashboard_text("defaultTitle", default="Dashboard")
+        default = cls._dashboard_text("defaultTitle", default="Dashboard")
+        resolved = ResultPresentationTitleResolver.resolve(
+            path=path,
+            metadata=metadata if isinstance(metadata, dict) else None,
+            legacy_title=legacy,
+            fallback=default,
+        )
+        return resolved.title
 
     @classmethod
     def build(

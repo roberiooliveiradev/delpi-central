@@ -91,4 +91,18 @@ def configure_domain_persistence_ports() -> None:
     ChatPresentationColumnLabelDiscoveryService.configure_cache(
         PostgresPresentationFieldLabelCacheRepository()
     )
+    from app.domain.services.action_display_label_resolver import (
+        ActionDisplayLabelResolver,
+    )
+    from app.infrastructure.persistence.postgres_action_display_label_cache_repository import (
+        PostgresActionDisplayLabelCacheRepository,
+    )
+
+    _action_label_cache = PostgresActionDisplayLabelCacheRepository()
+    ActionDisplayLabelResolver.configure(
+        cache_get=_action_label_cache.get_label,
+        cache_put=lambda key, label, source="LLM_LOCALIZATION": _action_label_cache.put_label(
+            key, label, source=source
+        ),
+    )
     _PERSISTENCE_CONFIGURED = True

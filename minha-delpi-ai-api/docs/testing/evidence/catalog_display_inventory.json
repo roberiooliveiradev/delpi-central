@@ -1,0 +1,148 @@
+{
+  "version": "2026.09.10",
+  "purpose": "Inventário congelado E0.S2 — catálogos de display vs OpenAPI/FieldLabelBundle",
+  "entries": [
+    {
+      "key": "column_labels.preferredColumns[1]",
+      "classification": "DEAD_CONTENT",
+      "destination": "DELETE_DEAD",
+      "consumers": ["ExternalActionColumnLabelService.column_order_hints"],
+      "usesLlm": false
+    },
+    {
+      "key": "column_labels.fieldFormats",
+      "classification": "DETERMINISTIC_POLICY",
+      "destination": "KEEP_JSON",
+      "consumers": ["ExternalActionColumnLabelService.resolve_field_format"],
+      "usesLlm": false
+    },
+    {
+      "key": "column_labels.tableProfiles.detect",
+      "classification": "DETERMINISTIC_POLICY",
+      "destination": "KEEP_JSON",
+      "consumers": ["ExternalActionColumnLabelService.detect_table_profile"],
+      "usesLlm": false
+    },
+    {
+      "key": "column_labels.columnLabelDiscovery",
+      "classification": "LLM_LOCALIZATION_CANDIDATE",
+      "destination": "KEEP_JSON",
+      "consumers": ["ChatPresentationColumnLabelDiscoveryService"],
+      "usesLlm": true,
+      "notes": "Já implementado; prompts apenas"
+    },
+    {
+      "key": "api_paths.pathLabels",
+      "classification": "CONTRACT_DUPLICATION",
+      "destination": "OPENAPI_DIRECT",
+      "consumers": ["ChatActionLabelService.humanize"],
+      "usesLlm": false
+    },
+    {
+      "key": "api_paths.englishSummaries",
+      "classification": "EDITORIAL_LEGACY",
+      "destination": "OPENAPI_PLUS_DETERMINISTIC",
+      "consumers": ["ChatActionLabelService.humanize"],
+      "usesLlm": false
+    },
+    {
+      "key": "ActionCatalog.summary+delpiMetadata.locale",
+      "classification": "CONTRACT_CANONICAL",
+      "destination": "OPENAPI_DIRECT",
+      "consumers": ["OpenApiActionImporter", "ActionDisplayLabelResolver"],
+      "usesLlm": false
+    },
+    {
+      "key": "presenter_content.titlesByPathFragment",
+      "classification": "SEMANTIC_DISPLAY_METADATA",
+      "destination": "OPENAPI_PLUS_DETERMINISTIC",
+      "consumers": ["ChatAssistantContentService.title_for_path", "kpi_chart_title_service"],
+      "usesLlm": false
+    },
+    {
+      "key": "presenter_content.kpiPathMatchers",
+      "classification": "SEMANTIC_DISPLAY_METADATA",
+      "destination": "OPENAPI_PLUS_DETERMINISTIC",
+      "consumers": ["ExternalActionKpiChartTitleService"],
+      "usesLlm": false
+    },
+    {
+      "key": "data_interpretation.pathTitles",
+      "classification": "CONTRACT_DUPLICATION",
+      "destination": "OPENAPI_PLUS_DETERMINISTIC",
+      "consumers": ["ChatOperationalToolSummaryResolutionService._title_from_path"],
+      "usesLlm": false
+    },
+    {
+      "key": "humanized_data_response.summaryFirstCommentary.labels",
+      "classification": "CONTRACT_DUPLICATION",
+      "destination": "FIELD_LABEL_BUNDLE",
+      "consumers": ["ChatDataInsightService._highlights_from_operational_summary"],
+      "usesLlm": false
+    },
+    {
+      "key": "humanized_data_response.nextActions+recommendations",
+      "classification": "UX_STATIC",
+      "destination": "LLM_COMPOSITION_EXISTING_TURN",
+      "consumers": ["ChatHumanizedDataResponseService"],
+      "usesLlm": true,
+      "notes": "Fallback JSON permanece"
+    },
+    {
+      "key": "product_operational_content.scopes.*",
+      "classification": "INTENT_VOCABULARY",
+      "destination": "KEEP_JSON",
+      "consumers": ["ChatProductOperationalContentService"],
+      "usesLlm": false
+    },
+    {
+      "key": "product_operational_content.presentation.routeTitles",
+      "classification": "DEAD_CONTENT",
+      "destination": "DELETE_DEAD",
+      "consumers": ["MFE presentationMultiRoute only"],
+      "usesLlm": false
+    },
+    {
+      "key": "product_operational_content.presentation.sectionFraming",
+      "classification": "PRESENTATION_HINT",
+      "destination": "KEEP_JSON",
+      "consumers": ["ChatPresentationSectionRulesService"],
+      "usesLlm": false
+    },
+    {
+      "key": "MFE.routeTitle/routeFraming",
+      "classification": "SEMANTIC_DISPLAY_METADATA",
+      "destination": "SCHEMA_DIRECT",
+      "consumers": ["presentationMultiRoute.ts"],
+      "usesLlm": false
+    },
+    {
+      "key": "capabilities.pathRules",
+      "classification": "UX_STATIC",
+      "destination": "KEEP_JSON",
+      "consumers": ["ChatCapabilitiesCatalogAnswerService"],
+      "usesLlm": false
+    },
+    {
+      "key": "capabilities/features_catalog help",
+      "classification": "EDITORIAL_COPY",
+      "destination": "KEEP_JSON",
+      "consumers": ["ChatCapabilitiesService"],
+      "usesLlm": false
+    },
+    {
+      "key": "presentation_vocabulary",
+      "classification": "DETERMINISTIC_POLICY",
+      "destination": "KEEP_JSON",
+      "consumers": ["ChatPresentationVocabularyService"],
+      "usesLlm": false
+    }
+  ],
+  "totals": {
+    "llmCandidates": 2,
+    "openapiDirectFamilies": 8,
+    "fieldLabelBundle": 1,
+    "keepJson": "majority",
+    "deadContent": 4
+  }
+}

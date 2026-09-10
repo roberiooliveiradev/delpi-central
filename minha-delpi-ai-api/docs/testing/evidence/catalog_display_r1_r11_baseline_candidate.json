@@ -1,0 +1,54 @@
+{
+  "suite": "catalog-display-openapi-evolution",
+  "protocol": "R1-R11",
+  "baseline": {
+    "id": "BASELINE_catalog_display_pre_evolution",
+    "notes": "pathLabels first; preferredColumns pairs; commentary JSON labels; MFE routeTitles authority"
+  },
+  "candidate": {
+    "id": "CANDIDATE_catalog_display_openapi",
+    "notes": "ActionDisplayLabelResolver default; preferredColumns keys-only; FieldLabelBundle commentary; ResultPresentationTitleResolver; MFE prefers API metadata; RecommendationActionValidator"
+  },
+  "cases": [
+    {
+      "id": "action_label_pt_summary",
+      "dims": ["R1", "R3"],
+      "expect": "OPENAPI_SUMMARY wins over pathLabels"
+    },
+    {
+      "id": "action_label_en_with_path_override",
+      "dims": ["R1", "R11"],
+      "expect": "pathLabels editorial override for EN summary"
+    },
+    {
+      "id": "unknown_external_api",
+      "dims": ["R1", "R12"],
+      "expect": "humanize/summary without api_paths entry"
+    },
+    {
+      "id": "metamorphic_rename",
+      "dims": ["R1", "R12"],
+      "expect": "same summary → same display label"
+    },
+    {
+      "id": "commentary_field_label_parity",
+      "dims": ["R2", "R3"],
+      "expect": "insight label == resolvedFieldLabels"
+    },
+    {
+      "id": "recommendation_unauthorized_rejected",
+      "dims": ["R9", "R10"],
+      "expect": "actionId fora de allowedActions descartado"
+    },
+    {
+      "id": "mfe_prefers_api_route_title",
+      "dims": ["R2", "R14"],
+      "expect": "stackPresentationPlan.routeTitles / metadata.routeTitle before JSON local"
+    },
+    {
+      "id": "llm_off_fallback",
+      "dims": ["R8", "R11"],
+      "expect": "actions e títulos funcionam sem LLM localization"
+    }
+  ]
+}

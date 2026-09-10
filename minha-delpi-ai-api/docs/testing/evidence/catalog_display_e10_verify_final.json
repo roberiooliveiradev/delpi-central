@@ -1,0 +1,25 @@
+{
+  "stage": "E10",
+  "verifyFinal": {
+    "unitTests": "PASS test_catalog_display_openapi_evolution + action_label + humanized_data_response",
+    "preferredColumnsKeysOnly": true,
+    "actionDisplayResolver": true,
+    "commentaryFieldLabelBundle": true,
+    "presentationTitleResolver": true,
+    "pathTitlesDelegates": true,
+    "mfePrefersApiMetadata": true,
+    "recommendationAllowlist": true,
+    "actionDisplayLabelCacheTable": "migration y7z8a9b0c1d2",
+    "llmOffFallback": "humanize/pathLabels without LLM localizer configured",
+    "liveSmoke": "SKIPPED_IN_AGENT — gateway/live stack not required for unit gate; run smoke_complex when environment up",
+    "adversarial": {
+      "noMegaLabelService": true,
+      "displayDoesNotAffectRouting": true,
+      "separateCaches": true,
+      "planFileUnedited": true
+    }
+  },
+  "CODIGO_IMPLEMENTADO": true,
+  "COMMIT_REALIZADO": false,
+  "PUSH_REALIZADO": false
+}

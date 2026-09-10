@@ -41,10 +41,14 @@ export function stripStackSectionNumber(title: string): string {
   return String(title || "").replace(/^\d+\.\s*/, "").trim();
 }
 
-export function buildStackSectionChrome(id: StackSectionId): StackSectionChrome {
+export function buildStackSectionChrome(
+  id: StackSectionId,
+  sectionTitles?: Partial<Record<StackSectionId, string>> | null,
+): StackSectionChrome {
+  const fromApi = sectionTitles?.[id];
   return {
     id,
-    title: SECTION_BASE_TITLES[id],
+    title: (typeof fromApi === "string" && fromApi.trim()) || SECTION_BASE_TITLES[id],
     showIn: SECTION_SHOW_IN[id],
   };
 }

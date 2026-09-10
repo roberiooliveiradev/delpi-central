@@ -76,7 +76,71 @@ class ChatPresentationStackOrderService:
         )
 
         plan = ChatPresentationSectionAvailabilityService.enrich_stack_plan(metadata, plan)
-        return ChatPresentationStackMarkdownService.enrich_stack_plan(metadata, plan)
+        plan = ChatPresentationStackMarkdownService.enrich_stack_plan(metadata, plan)
+        cls._materialize_display_titles(metadata, plan)
+        return plan
+
+    @classmethod
+    def _materialize_display_titles(
+        cls,
+        metadata: dict[str, Any],
+        plan: dict[str, Any],
+    ) -> None:
+        """Materializa títulos/framing no plano para MFE render-only (F5-safe)."""
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+        from app.domain.services.result_presentation_title_resolver import (
+            ResultPresentationTitleResolver,
+        )
+
+        route_titles = ChatProductOperationalContentService.get_mapping(
+            "presentation",
+            "routeTitles",
+        )
+        route_framing = ChatProductOperationalContentService.get_mapping(
+            "presentation",
+            "routeFraming",
+        )
+        section_titles = {
+            "scope": "Escopo da consulta",
+            "profile": "Ficha cadastral",
+            "highlights": "Síntese executiva (Destaques)",
+            "guide": "Roteiro de produção",
+            "inspection": "Plano de inspeção",
+            "structure": "Estrutura (BOM)",
+            "attention": "Alertas e divergências",
+        }
+
+        if route_titles:
+            plan["routeTitles"] = dict(route_titles)
+        if route_framing:
+            plan["routeFraming"] = dict(route_framing)
+        plan["sectionTitles"] = section_titles
+
+        path = str(metadata.get("path") or "")
+        resolved = ResultPresentationTitleResolver.resolve(
+            path=path,
+            summary=str(metadata.get("summary") or metadata.get("actionSummary") or ""),
+            action_id=str(metadata.get("actionId") or ""),
+            metadata=metadata,
+            legacy_title=None,
+            fallback="",
+        )
+        if resolved.title:
+            metadata["routeTitle"] = resolved.title
+            metadata["title"] = metadata.get("title") or resolved.title
+            plan["resolvedRouteTitle"] = resolved.title
+            plan["titleSource"] = resolved.source
+
+        # Preferir sectionTitles no MFE; framing já pode existir via section rules
+        if not isinstance(plan.get("sectionFraming"), dict):
+            framing = ChatProductOperationalContentService.get_mapping(
+                "presentation",
+                "sectionFraming",
+            )
+            if framing:
+                plan["sectionFraming"] = dict(framing)
 
     @classmethod
     def enrich_metadata(cls, metadata: dict[str, Any]) -> None:

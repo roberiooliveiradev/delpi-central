@@ -283,7 +283,10 @@ class ChatDataInsightService:
         rows = cls._resolve_rows(metadata, data)
 
         if rows is None:
-            summary_highlights = cls._highlights_from_operational_summary(data)
+            summary_highlights = cls._highlights_from_operational_summary(
+                data,
+                metadata=metadata,
+            )
             if not summary_highlights:
                 return None
             commentary = {
@@ -299,7 +302,10 @@ class ChatDataInsightService:
         shape = ChatPresentationDataShapeAnalyzer.analyze(rows=rows)
         highlights: list[str] = []
         attention: list[str] = []
-        summary_highlights = cls._highlights_from_operational_summary(data)
+        summary_highlights = cls._highlights_from_operational_summary(
+            data,
+            metadata=metadata,
+        )
         profile_key = "kpi_summary" if summary_highlights else "generic_list"
         commentary: dict[str, Any] = {
             "profileKey": profile_key,
@@ -653,8 +659,16 @@ class ChatDataInsightService:
         return None
 
     @classmethod
-    def _highlights_from_operational_summary(cls, data: dict[str, Any]) -> list[str]:
+    def _highlights_from_operational_summary(
+        cls,
+        data: dict[str, Any],
+        *,
+        metadata: dict[str, Any] | None = None,
+    ) -> list[str]:
         """Facts a partir de ``summary`` (KPI), não da 1ª coluna numérica da lista."""
+        from app.domain.services.chat_field_label_resolution_pipeline_service import (
+            ChatFieldLabelResolutionPipelineService,
+        )
         from app.domain.services.chat_humanized_data_response_content_service import (
             ChatHumanizedDataResponseContentService,
         )
@@ -684,6 +698,7 @@ class ChatDataInsightService:
         if not preferred:
             return []
 
+        # Legacy editorial fallback — FieldLabelBundle / resolvedFieldLabels first
         labels = ChatHumanizedDataResponseContentService.get_mapping(
             "summaryFirstCommentary",
             "labels",
@@ -699,6 +714,8 @@ class ChatDataInsightService:
             min_keys = 1
 
         lines: list[str] = []
+        path = str((metadata or {}).get("path") or "")
+        bundle = ChatFieldLabelResolutionPipelineService.bundle_from_metadata(metadata)
 
         for key in preferred:
             if key not in summary:
@@ -717,7 +734,16 @@ class ChatDataInsightService:
             if not formatted:
                 continue
 
-            label = str(labels.get(key) or key).strip() or key
+            label = (
+                bundle.label_for(key)
+                or str(labels.get(key) or "").strip()
+                or ChatFieldLabelResolutionPipelineService.label_from_metadata(
+                    metadata,
+                    key,
+                    path=path,
+                    enable_discovery=False,
+                )
+            )
             line = ChatHumanizedDataResponseContentService.format(
                 "summaryFirstCommentary",
                 "metricLine",

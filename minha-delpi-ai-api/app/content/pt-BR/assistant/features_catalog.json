@@ -17,7 +17,8 @@
       "howToUse": [
         "Pergunte em linguagem natural.",
         "Use os chips Explorar após a resposta.",
-        "Rótulos de colunas e campos nas tabelas/gráficos vêm do catálogo e da meta da API — a prosa não inventa nomes diferentes dos cabeçalhos."
+        "Rótulos de colunas e campos nas tabelas/gráficos vêm do contrato OpenAPI/meta e do FieldLabelBundle — a prosa não inventa nomes diferentes dos cabeçalhos.",
+        "Rótulos de actions no catálogo seguem o summary do Action Catalog (locale), não um JSON de paths paralelo."
       ],
       "relatedFeatures": [
         "web_search",

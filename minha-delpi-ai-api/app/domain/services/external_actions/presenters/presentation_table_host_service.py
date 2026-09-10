@@ -18,15 +18,25 @@ if TYPE_CHECKING:
     )
 
 
-def infer_items_title(items: list, path: str) -> str | None:
-    title = ChatAssistantContentService.title_for_path(
+def infer_items_title(items: list, path: str, *, metadata: dict | None = None) -> str | None:
+    from app.domain.services.result_presentation_title_resolver import (
+        ResultPresentationTitleResolver,
+    )
+
+    legacy = ChatAssistantContentService.title_for_path(
         "presenter_content",
         path,
         path_key="titlesByPathFragment",
     )
 
-    if title:
-        return title
+    resolved = ResultPresentationTitleResolver.resolve(
+        path=path,
+        metadata=metadata if isinstance(metadata, dict) else None,
+        legacy_title=legacy,
+        fallback="",
+    )
+    if resolved.title:
+        return resolved.title
 
     if items and isinstance(items[0], dict):
         first = items[0]

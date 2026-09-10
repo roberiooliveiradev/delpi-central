@@ -289,6 +289,13 @@ class ChatCapabilitiesCatalogAnswerService:
                         method=method,
                         summary=raw_summary,
                         action_id=action_id,
+                        provider_key=str(action.get("providerKey") or ""),
+                        delpi_metadata=(
+                            action.get("delpiMetadata")
+                            if isinstance(action.get("delpiMetadata"), dict)
+                            else None
+                        ),
+                        schema_hash=str(action.get("schemaHash") or ""),
                     ),
                     "method": method,
                     "path": path,
@@ -386,6 +393,13 @@ class ChatCapabilitiesCatalogAnswerService:
                     action.get("summary") or action.get("description") or action_id
                 ).strip(),
                 action_id=action_id,
+                provider_key=str(action.get("providerKey") or ""),
+                delpi_metadata=(
+                    action.get("delpiMetadata")
+                    if isinstance(action.get("delpiMetadata"), dict)
+                    else None
+                ),
+                schema_hash=str(action.get("schemaHash") or ""),
             )
 
             if not path:

@@ -70,7 +70,7 @@ function maybePushStackSection(
     return;
   }
 
-  pushStackSection(segments, buildStackSectionChrome(sectionId), appendUnique);
+  pushStackSection(segments, buildStackSectionChrome(sectionId, plan.sectionTitles), appendUnique);
 }
 
 function pushSectionFraming(

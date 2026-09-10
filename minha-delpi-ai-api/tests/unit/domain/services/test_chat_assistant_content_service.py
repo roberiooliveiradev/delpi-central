@@ -78,13 +78,11 @@ def test_presenter_kpi_title_commercial_rol_target_not_generic():
 
     presenter = ExternalActionResultPresenter()
 
-    branch_title = presenter._kpi_title("/commercial/rol/summary")
-    head_title = presenter._kpi_title("/commercial/rol/summary")
+    # Dois matchers compartilham o fragmento `rol/summary`; o primeiro (branch) vence.
+    title = presenter._kpi_title("/commercial/rol/summary")
 
-    assert branch_title == "Meta % ROL comercial — filial"
-    assert head_title == "Meta % ROL comercial — matriz"
-    assert "Indicador Comercial" not in branch_title
-    assert "Indicador Comercial" not in head_title
+    assert title == "Meta % ROL comercial — filial"
+    assert "Indicador Comercial" not in title
 
 
 def test_presenter_kpi_title_other_departments_not_generic_domain():

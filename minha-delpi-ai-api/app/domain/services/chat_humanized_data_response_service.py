@@ -21,7 +21,13 @@ _RISK_TO_ALERT = {value: key for key, value in _ALERT_TO_RISK.items()}
 
 class ChatHumanizedDataResponseService:
     @classmethod
-    def normalize(cls, commentary: dict[str, Any] | None, *, profile_key: str = "") -> dict[str, Any] | None:
+    def normalize(
+        cls,
+        commentary: dict[str, Any] | None,
+        *,
+        profile_key: str = "",
+        allowed_action_ids: list[str] | set[str] | None = None,
+    ) -> dict[str, Any] | None:
         if not isinstance(commentary, dict):
             return None
 
@@ -42,6 +48,12 @@ class ChatHumanizedDataResponseService:
         )
         empty_result = bool(commentary.get("emptyResult"))
 
+        allowlist = allowed_action_ids
+        if allowlist is None:
+            raw_allowed = commentary.get("allowedActionIds") or commentary.get("allowedActions")
+            if isinstance(raw_allowed, (list, set, tuple)):
+                allowlist = list(raw_allowed)
+
         if empty_result:
             next_action = ""
             recommendations: list[dict[str, str]] = []
@@ -53,7 +65,11 @@ class ChatHumanizedDataResponseService:
                 profile_key=profile,
                 alert_level=alert_level,
             )
-            recommendations = cls._build_recommendations(commentary, profile_key=profile)
+            recommendations = cls._build_recommendations(
+                commentary,
+                profile_key=profile,
+                allowed_action_ids=allowlist,
+            )
 
             if not limitations:
                 limitations = cls._default_limitations(commentary)
@@ -431,17 +447,61 @@ class ChatHumanizedDataResponseService:
         commentary: dict[str, Any],
         *,
         profile_key: str,
+        allowed_action_ids: list[str] | set[str] | None = None,
     ) -> list[dict[str, str]]:
+        from app.domain.services.recommendation_action_validator import (
+            RecommendationActionValidator,
+        )
+
+        # Prefer structured turn/synthesis recommendations when present
+        structured = commentary.get("structuredRecommendations")
+        if isinstance(structured, list) and structured:
+            filtered = RecommendationActionValidator.filter_items(
+                structured,
+                allowed_action_ids,
+            )
+            if filtered:
+                return [
+                    {
+                        "text": str(item.get("text") or item.get("label") or "").strip(),
+                        **(
+                            {"intent": str(item.get("query") or item.get("intent") or "").strip()}
+                            if item.get("query") or item.get("intent")
+                            else {}
+                        ),
+                        **(
+                            {"actionId": str(item["actionId"]).strip()}
+                            if item.get("actionId")
+                            else {}
+                        ),
+                    }
+                    for item in filtered
+                    if str(item.get("text") or item.get("label") or "").strip()
+                ]
+
         existing = commentary.get("recommendations")
 
         if isinstance(existing, list) and existing:
+            filtered = RecommendationActionValidator.filter_items(
+                existing,
+                allowed_action_ids,
+            )
             return [
                 {
-                    "text": str(item.get("text") or item).strip(),
-                    **({"intent": str(item.get("intent")).strip()} if isinstance(item, dict) and item.get("intent") else {}),
+                    "text": str(item.get("text") or item.get("label") or "").strip(),
+                    **(
+                        {"intent": str(item.get("intent") or item.get("query") or "").strip()}
+                        if item.get("intent") or item.get("query")
+                        else {}
+                    ),
+                    **(
+                        {"actionId": str(item["actionId"]).strip()}
+                        if item.get("actionId")
+                        else {}
+                    ),
                 }
-                for item in existing
-                if str(item.get("text") if isinstance(item, dict) else item or "").strip()
+                for item in filtered
+                if str(item.get("text") or item.get("label") or "").strip()
             ]
 
         texts = ChatHumanizedDataResponseContentService.list(
@@ -457,27 +517,32 @@ class ChatHumanizedDataResponseService:
         commentary: dict[str, Any],
         *,
         profile_key: str,
+        allowed_action_ids: list[str] | set[str] | None = None,
     ) -> list[dict[str, str]]:
-        existing = commentary.get("recommendations")
+        from app.domain.services.recommendation_action_validator import (
+            RecommendationActionValidator,
+        )
+
+        existing = commentary.get("structuredRecommendations") or commentary.get(
+            "recommendations"
+        )
 
         if isinstance(existing, list) and existing:
+            filtered = RecommendationActionValidator.filter_items(
+                existing,
+                allowed_action_ids,
+            )
             structured: list[dict[str, str]] = []
 
-            for item in existing:
-                if not isinstance(item, dict):
-                    text = str(item or "").strip()
-
-                    if text:
-                        structured.append({"label": text, "query": text, "reason": ""})
-
-                    continue
-
+            for item in filtered:
                 label = str(item.get("label") or item.get("text") or "").strip()
                 query = str(item.get("query") or item.get("intent") or label).strip()
                 reason = str(item.get("reason") or "").strip()
-
+                entry = {"label": label, "query": query, "reason": reason}
+                if item.get("actionId"):
+                    entry["actionId"] = str(item["actionId"]).strip()
                 if label:
-                    structured.append({"label": label, "query": query, "reason": reason})
+                    structured.append(entry)
 
             if structured:
                 return structured
@@ -487,7 +552,11 @@ class ChatHumanizedDataResponseService:
         if queries:
             return queries
 
-        texts = cls._build_recommendations(commentary, profile_key=profile_key)
+        texts = cls._build_recommendations(
+            commentary,
+            profile_key=profile_key,
+            allowed_action_ids=allowed_action_ids,
+        )
 
         return [
             {
