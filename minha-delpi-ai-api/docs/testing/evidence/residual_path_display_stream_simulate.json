@@ -1,6 +1,6 @@
 {
   "stage": "D4_stream_simulate",
-  "generated_at": "2026-09-10T11:41:11.053591+00:00",
+  "generated_at": "2026-09-10T11:47:29.438207+00:00",
   "stock_code": "10080001",
   "cases": {
     "STREAM_stock": {
@@ -25,7 +25,7 @@
       "plan_routeTitles_keys": [],
       "path_leaks": [],
       "ok": true,
-      "elapsed_s": 15.77
+      "elapsed_s": 15.49
     },
     "SIMULATE_stock": {
       "has_answer_preview": true,
@@ -48,7 +48,7 @@
       "path_leaks": [],
       "ok": true,
       "source": "simulate_root",
-      "elapsed_s": 8.92
+      "elapsed_s": 17.94
     }
   },
   "SURFACES": {
@@ -56,6 +56,6 @@
     "SIMULATE": "PASS"
   },
   "agentId": "4f9c225b-0414-40d3-a462-040889719b83",
-  "sessionId": "9d051efc-8a23-49ce-89c5-e54d5de03d9b",
+  "sessionId": "14103520-2432-41e3-8908-04dfc5e18fff",
   "pass": true
 }

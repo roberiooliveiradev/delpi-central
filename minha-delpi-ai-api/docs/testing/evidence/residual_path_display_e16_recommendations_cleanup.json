@@ -1,0 +1,29 @@
+{
+  "artifact": "residual_path_display_e16_recommendations_cleanup",
+  "debt": "D2",
+  "status": "PASS",
+  "date": "2026-09-10",
+  "summary": "Migrated orphan commentaryProfileKeys into recommendationQueries; removed static recommendations LEGACY_FALLBACK; coverage gate 27/27.",
+  "migrated_keys": [
+    "directives",
+    "structure",
+    "system_metadata",
+    "kpi_summary",
+    "sale_pricing"
+  ],
+  "coverage": {
+    "presentation_profiles_with_commentaryProfileKey": 27,
+    "with_recommendationQueries": 27,
+    "missing": []
+  },
+  "static_recommendations_node": "REMOVED",
+  "tests": [
+    "tests/unit/domain/services/test_recommendation_queries_profile_coverage.py",
+    "tests/unit/domain/services/test_chat_humanized_data_response_content.py",
+    "tests/unit/domain/services/test_chat_data_insight_service.py"
+  ],
+  "negative": {
+    "unknown_profile_recommendation_queries": []
+  },
+  "producer": "ChatDataInsightService._attach_turn_structured_recommendations → recommendationQueries only"
+}

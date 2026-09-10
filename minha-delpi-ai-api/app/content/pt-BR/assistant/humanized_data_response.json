@@ -40,58 +40,6 @@
     "structure_exclusivity": "Validar MPs marcadas como exclusivas na árvore e comparar com o catálogo de exclusividade quando houver dúvida.",
     "structure": "Explorar a árvore para ver MPs por intermediário; peça estoque das matérias-primas se precisar avaliar montagem."
   },
-  "recommendations": {
-    "factory_status": [
-      "Ver saldo detalhado das MPs com cobertura baixa",
-      "Listar OPs abertas sem apontamento",
-      "Comparar expedição com produção finalizada"
-    ],
-    "stock": [
-      "Mostrar apenas posições com disponível negativo",
-      "Ver concentração por filial",
-      "Pedir a próxima página de estoque"
-    ],
-    "production_status": [
-      "Detalhar apontamentos SH6010 do período",
-      "Comparar quantidade da OP com apontamento",
-      "Ver status fabril completo do produto"
-    ],
-    "shipping_status": [
-      "Listar registros com perda de inspeção",
-      "Comparar com o período anterior",
-      "Ver status fabril do mesmo produto"
-    ],
-    "directives": [
-      "Ver estrutura completa do produto",
-      "Detalhar fornecedores de uma MP",
-      "Ver última compra de uma matéria-prima"
-    ],
-    "structure_exclusivity": [
-      "Ver estrutura completa do produto",
-      "Listar MPs exclusivas do catálogo",
-      "Comparar estrutura com exclusividade em outro PA"
-    ],
-    "structure": [
-      "Ver estoque das matérias-primas",
-      "Comparar estrutura com outro produto",
-      "Detalhar um intermediário (PI) específico"
-    ],
-    "generic_list": [
-      "Filtrar os registros por critério relevante",
-      "Pedir a próxima página se a lista estiver truncada",
-      "Detalhar um registro específico da lista"
-    ],
-    "system_metadata": [
-      "Listar colunas da tabela",
-      "Ver índices da tabela",
-      "Montar um SELECT de leitura com os campos principais"
-    ],
-    "generic_kpi_series": [
-      "Comparar com o período anterior",
-      "Ver detalhamento por filial",
-      "Exportar os indicadores"
-    ]
-  },
   "recommendationQueries": {
     "factory_status": [
       {
@@ -227,6 +175,91 @@
         "label": "Exportar os indicadores",
         "query": "Exportar os indicadores desta consulta",
         "reason": "Compartilhar ou registrar os valores retornados"
+      }
+    ],
+    "directives": [
+      {
+        "label": "Ver estrutura completa do produto",
+        "query": "Mostrar estrutura completa do produto",
+        "reason": "Aprofundar BOM além do recorte de diretivas"
+      },
+      {
+        "label": "Detalhar fornecedores de uma MP",
+        "query": "Detalhar fornecedores de uma matéria-prima da diretiva",
+        "reason": "Validar part numbers e alternativas de compra"
+      },
+      {
+        "label": "Ver última compra de uma matéria-prima",
+        "query": "Ver última compra válida de uma matéria-prima",
+        "reason": "Conferir preço e NF recentes da MP"
+      }
+    ],
+    "structure": [
+      {
+        "label": "Ver estoque das matérias-primas",
+        "query": "Mostrar estoque das matérias-primas desta estrutura",
+        "reason": "Avaliar cobertura para montagem"
+      },
+      {
+        "label": "Comparar estrutura com outro produto",
+        "query": "Comparar esta estrutura com outro produto",
+        "reason": "Identificar diferenças de BOM entre itens similares"
+      },
+      {
+        "label": "Detalhar um intermediário (PI) específico",
+        "query": "Detalhar um intermediário específico desta estrutura",
+        "reason": "Aprofundar um nó da árvore"
+      }
+    ],
+    "system_metadata": [
+      {
+        "label": "Listar colunas da tabela",
+        "query": "Listar colunas desta tabela do catálogo",
+        "reason": "Entender campos disponíveis para consulta"
+      },
+      {
+        "label": "Ver índices da tabela",
+        "query": "Mostrar índices desta tabela",
+        "reason": "Apoiar leitura performática no Protheus"
+      },
+      {
+        "label": "Montar um SELECT de leitura com os campos principais",
+        "query": "Montar um SELECT de leitura com os campos principais desta tabela",
+        "reason": "Preparar consulta somente leitura"
+      }
+    ],
+    "kpi_summary": [
+      {
+        "label": "Comparar com o período anterior",
+        "query": "Comparar este KPI com o período anterior",
+        "reason": "Avaliar tendência do indicador"
+      },
+      {
+        "label": "Ver detalhamento por filial",
+        "query": "Detalhar este KPI por filial",
+        "reason": "Entender variação entre filiais"
+      },
+      {
+        "label": "Exportar os indicadores",
+        "query": "Exportar os indicadores desta consulta",
+        "reason": "Registrar ou compartilhar os valores"
+      }
+    ],
+    "sale_pricing": [
+      {
+        "label": "Comparar tabelas de preço",
+        "query": "Comparar tabelas de preço deste produto",
+        "reason": "Identificar divergências entre tabelas"
+      },
+      {
+        "label": "Ver preço por filial",
+        "query": "Mostrar preço de venda por filial",
+        "reason": "Entender política comercial regional"
+      },
+      {
+        "label": "Cruzar preço com estoque",
+        "query": "Cruzar preço de venda com estoque disponível",
+        "reason": "Avaliar margem versus disponibilidade"
       }
     ]
   },

@@ -3,7 +3,7 @@
 **Plano vigente:** `~/.cursor/plans/residual_path_display_cleanup_28b9adee.plan.md`  
 **Plano STALE (parcialmente absorvido):** `~/.cursor/plans/residual_path_catalogs_cleanup_7f3a9c21.plan.md`  
 **BASE:** `c20064c06` · **HEAD ao documentar:** `ee4a43c0e`  
-**Veredito atual:** `PASS_WITH_DOCUMENTED_DEBT` (D4 STREAM/SIMULATE fechado)  
+**Veredito atual:** `PASS_WITH_DOCUMENTED_DEBT` (D4 + D2 fechados)  
 **Live:** SEND / F5 / HISTORY / STREAM / SIMULATE = PASS  
 (`docs/testing/evidence/residual_path_display_live_surfaces.json`, `residual_path_display_stream_simulate.json`)
 
@@ -27,6 +27,7 @@ Este arquivo é a lista **canônica do que ainda falta** após o cutover/cleanup
 | Ajuda features/capabilities | PASS | E18.S1 |
 | Live SEND + F5/HISTORY + smoke HTTP | PASS | live_surfaces + smoke |
 | Live STREAM + SIMULATE (D4) | PASS | stream_simulate |
+| Recommendations static cleanup (D2) | PASS | E16 cleanup + coverage 27/27 |
 | W-ROUTING charter + plano-filho (docs only) | PASS | `w_routing_charter.json` |
 
 ---
@@ -47,11 +48,10 @@ Este arquivo é a lista **canônica do que ainda falta** após o cutover/cleanup
 
 | | |
 |--|--|
-| **Status** | DEFERRED |
-| **Por quê** | Producer eleva `recommendationQueries` no turno; lista `recommendations` textual ainda é LEGACY_FALLBACK para perfis sem queries |
-| **Pronto para cleanup quando** | 100% dos profiles usados em produção tiverem `recommendationQueries` (ou producer equivalente) + eval negativo |
-| **Não fazer** | Remover static agora e deixar profile órfão sem próximo passo |
-| **Evidência** | `residual_path_display_e16_recommendations_producer.json` |
+| **Status** | PASS |
+| **Feito** | Orfãos (`directives`, `structure`, `system_metadata`, `kpi_summary`, `sale_pricing`) migrados para `recommendationQueries`; nó estático `recommendations` removido; fallback textual usa queries; gate 27/27 + negativo unknown profile |
+| **Não fazer** | Reintroduzir lista estática paralela |
+| **Evidência** | `residual_path_display_e16_recommendations_cleanup.json` (+ producer E16) |
 
 ### D3 — Locale EN==pt stubs (api-delpi)
 
@@ -96,10 +96,9 @@ Este arquivo é a lista **canônica do que ainda falta** após o cutover/cleanup
 ## Ordem sugerida para fechar
 
 ```text
-1. D2 cleanup recommendations static (quando coverage de profiles OK)
-2. D1 capabilities pathRules (plano novo, maior risco)
-3. D3 EN==pt (backlog api-delpi paralelo)
-4. D5 evals corpus (sob demanda)
+1. D1 capabilities pathRules (plano novo, maior risco) — charter próprio
+2. D3 EN==pt (backlog api-delpi paralelo)
+3. D5 evals corpus (sob demanda)
 ```
 
 ---

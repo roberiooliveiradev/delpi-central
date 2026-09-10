@@ -284,9 +284,14 @@ def _resolve_agent_id(token: str) -> str:
     if _AGENT_ID:
         return _AGENT_ID
     payload = _request("GET", f"{_BASE_URL}{_CHAT_PREFIX}/agents", token=token)
-    agents = payload.get("agents") or payload.get("items") or payload
-    if isinstance(agents, dict):
-        agents = agents.get("agents") or agents.get("items") or []
+    if isinstance(payload, list):
+        agents = payload
+    elif isinstance(payload, dict):
+        agents = payload.get("agents") or payload.get("items") or []
+        if isinstance(agents, dict):
+            agents = agents.get("agents") or agents.get("items") or []
+    else:
+        agents = []
     if not isinstance(agents, list) or not agents:
         raise RuntimeError(f"nenhum agente: {payload!r}")
     agent_id = str(agents[0].get("id") or agents[0].get("agentId") or "").strip()

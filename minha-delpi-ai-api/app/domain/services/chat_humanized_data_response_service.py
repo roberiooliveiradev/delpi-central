@@ -513,12 +513,22 @@ class ChatHumanizedDataResponseService:
                 if str(item.get("text") or item.get("label") or "").strip()
             ]
 
-        texts = ChatHumanizedDataResponseContentService.list(
-            "recommendations",
+        queries = ChatHumanizedDataResponseContentService.recommendation_queries(
             profile_key,
         )
 
-        return [{"text": text} for text in texts if str(text).strip()]
+        return [
+            {
+                "text": str(item.get("label") or "").strip(),
+                **(
+                    {"intent": str(item.get("query") or "").strip()}
+                    if str(item.get("query") or "").strip()
+                    else {}
+                ),
+            }
+            for item in queries
+            if str(item.get("label") or "").strip()
+        ]
 
     @classmethod
     def _build_structured_recommendations(
