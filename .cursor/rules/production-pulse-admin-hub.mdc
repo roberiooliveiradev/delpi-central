@@ -59,10 +59,11 @@ Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.c
 | CRUD IoT/FW/Driver | `PpWorkbenchDialog` (page) |
 | Agendar OTA | `PpHostContainedDialog` compacto |
 | Confirmação | `PpConfirmDialog` |
-| Catálogos | Side panel (`devices` wide; `firmwares` / `drivers`); conteúdo `embedded`; mobile → modal page |
-| Lista Firmwares | Side panel `panel=firmwares` com `FirmwareCatalogListItem` (ícone, lifecycle badge, ações) |
-| Lista Drivers | Side panel `panel=drivers` com `DriverTypeListItem` (ícone por protocolo, badge ativo/arquivado) |
-| Lista Jobs OTA | `PpDetailDialog` (`panel=jobs`) com `OtaJobListItem` (ícone, fase, barra agregada) |
+| Catálogos Hub | `PpDetailDialog` — `devices` / `firmwares` / `drivers` / `jobs` |
+| Lista IoTs | `panel=devices` + `DeviceCatalogPanel` embedded |
+| Lista Firmwares | `panel=firmwares` + `FirmwareCatalogListItem` |
+| Lista Drivers | `panel=drivers` + `DriverTypeListItem` |
+| Lista Jobs OTA | `panel=jobs` + `OtaJobListItem` |
 | Detalhe de Job | `PpDetailDialog` (`modal=job-detail`) com resumo + targets |
 | Feedback transitório | `PpFloatingNotices` (`pushResolvedProductionPulseNotice` / `resolveProductionPulseError`) |
 | Persistente | `PpStateBox` (somente `structuralError` de carga) |

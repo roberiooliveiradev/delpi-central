@@ -23,7 +23,6 @@ import {
   type FirmwareUpdateSummary,
   type FirmwareUpdateTarget,
 } from "../api/productionPulseApi";
-import { AdminSidePanel } from "../components/AdminSidePanel";
 import { DeviceCatalogPanel } from "../components/DeviceCatalogPanel";
 import {
   EntityActionMenu,
@@ -1419,101 +1418,6 @@ export function FirmwareLinksPage({
             }
           }}
         />
-
-        <AdminSidePanel
-          open={ui.openLayer === "panel" && ui.panel === "firmwares"}
-          title="Firmwares"
-          onClose={() => dispatch({ type: "closePanel" })}
-        >
-          <PpCatalogSearchBar
-            value={catalogSearch}
-            onChange={setCatalogSearch}
-            placeholder={PP_HELP.hub.firmwaresCatalogSearch}
-          />
-          <p className="pp-muted">{PP_HELP.hub.firmwaresCatalogList}</p>
-          {canManage ? (
-            <PpActionButton
-              className="pp-mb-sm"
-              onClick={() => openModal("firmware-create", null)}
-            >
-              Novo firmware
-            </PpActionButton>
-          ) : null}
-          {filteredFirmwares.length === 0 ? (
-            <PpStateBox variant="empty" title={PP_HELP.ota.catalogEmpty} />
-          ) : (
-            <div className="pp-firmware-catalog-list" role="list">
-              {filteredFirmwares.map((firmware) => (
-                <div key={firmware.id} role="listitem">
-                  <FirmwareCatalogListItem
-                    firmware={firmware}
-                    canManage={canManage}
-                    busy={busy}
-                    onOpenDetails={() =>
-                      openModal("firmware-detail", { type: "firmware", id: firmware.id })
-                    }
-                    onUpdateLinked={() => void handleUpdateFamily(firmware.firmwareKey)}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </AdminSidePanel>
-
-        <AdminSidePanel
-          open={ui.openLayer === "panel" && ui.panel === "drivers"}
-          title="Tipos de driver"
-          onClose={() => dispatch({ type: "closePanel" })}
-        >
-          <PpCatalogSearchBar
-            value={driversSearch}
-            onChange={setDriversSearch}
-            placeholder={PP_HELP.hub.driversCatalogSearch}
-          />
-          <p className="pp-muted">{PP_HELP.hub.driversCatalogList}</p>
-          {canManage ? (
-            <PpActionButton
-              className="pp-mb-sm"
-              onClick={() => openModal("driver-create", null)}
-            >
-              Novo tipo de driver
-            </PpActionButton>
-          ) : null}
-          {driversLoading && drivers.length === 0 ? (
-            <PpStateBox variant="loading" title="Carregando drivers…" />
-          ) : filteredDrivers.length === 0 ? (
-            <PpStateBox variant="empty" title={PP_HELP.hub.driversCatalogEmpty} />
-          ) : (
-            <div className="pp-driver-type-list" role="list">
-              {filteredDrivers.map((driver) => (
-                <div key={driver.key} role="listitem">
-                  <DriverTypeListItem
-                    driver={driver}
-                    canManage={canManage}
-                    busy={busy}
-                    onOpenDetails={() =>
-                      openModal("driver-detail", { type: "driver", id: driver.key })
-                    }
-                    onArchive={() => openConfirm("archive-driver", driver.key)}
-                    onUnarchive={() => handleUnarchiveDriver(driver.key)}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </AdminSidePanel>
-
-        <AdminSidePanel
-          open={ui.openLayer === "panel" && ui.panel === "devices"}
-          title="IoTs"
-          size="wide"
-          onClose={() => dispatch({ type: "closePanel" })}
-        >
-          <DeviceCatalogPanel
-            search={`?branch=${encodeURIComponent(branch)}`}
-            permissions={permissions}
-          />
-        </AdminSidePanel>
       </div>
 
       <EntitySummaryPopover
@@ -1780,6 +1684,101 @@ export function FirmwareLinksPage({
           </PpActionButton>
         </div>
       </PpHostContainedDialog>
+
+      <PpDetailDialog
+        open={ui.openLayer === "panel" && ui.panel === "firmwares"}
+        title={PP_HELP.hub.firmwaresDialogTitle}
+        onClose={() => dispatch({ type: "closePanel" })}
+      >
+        <PpCatalogSearchBar
+          value={catalogSearch}
+          onChange={setCatalogSearch}
+          placeholder={PP_HELP.hub.firmwaresCatalogSearch}
+        />
+        <p className="pp-muted">{PP_HELP.hub.firmwaresCatalogList}</p>
+        {canManage ? (
+          <PpActionButton
+            className="pp-mb-sm"
+            onClick={() => openModal("firmware-create", null)}
+          >
+            Novo firmware
+          </PpActionButton>
+        ) : null}
+        {filteredFirmwares.length === 0 ? (
+          <PpStateBox variant="empty" title={PP_HELP.ota.catalogEmpty} />
+        ) : (
+          <div className="pp-firmware-catalog-list" role="list">
+            {filteredFirmwares.map((firmware) => (
+              <div key={firmware.id} role="listitem">
+                <FirmwareCatalogListItem
+                  firmware={firmware}
+                  canManage={canManage}
+                  busy={busy}
+                  onOpenDetails={() =>
+                    openModal("firmware-detail", { type: "firmware", id: firmware.id })
+                  }
+                  onUpdateLinked={() => void handleUpdateFamily(firmware.firmwareKey)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </PpDetailDialog>
+
+      <PpDetailDialog
+        open={ui.openLayer === "panel" && ui.panel === "drivers"}
+        title={PP_HELP.hub.driversDialogTitle}
+        onClose={() => dispatch({ type: "closePanel" })}
+      >
+        <PpCatalogSearchBar
+          value={driversSearch}
+          onChange={setDriversSearch}
+          placeholder={PP_HELP.hub.driversCatalogSearch}
+        />
+        <p className="pp-muted">{PP_HELP.hub.driversCatalogList}</p>
+        {canManage ? (
+          <PpActionButton
+            className="pp-mb-sm"
+            onClick={() => openModal("driver-create", null)}
+          >
+            Novo tipo de driver
+          </PpActionButton>
+        ) : null}
+        {driversLoading && drivers.length === 0 ? (
+          <PpStateBox variant="loading" title="Carregando drivers…" />
+        ) : filteredDrivers.length === 0 ? (
+          <PpStateBox variant="empty" title={PP_HELP.hub.driversCatalogEmpty} />
+        ) : (
+          <div className="pp-driver-type-list" role="list">
+            {filteredDrivers.map((driver) => (
+              <div key={driver.key} role="listitem">
+                <DriverTypeListItem
+                  driver={driver}
+                  canManage={canManage}
+                  busy={busy}
+                  onOpenDetails={() =>
+                    openModal("driver-detail", { type: "driver", id: driver.key })
+                  }
+                  onArchive={() => openConfirm("archive-driver", driver.key)}
+                  onUnarchive={() => handleUnarchiveDriver(driver.key)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </PpDetailDialog>
+
+      <PpDetailDialog
+        open={ui.openLayer === "panel" && ui.panel === "devices"}
+        title={PP_HELP.hub.devicesDialogTitle}
+        onClose={() => dispatch({ type: "closePanel" })}
+      >
+        <p className="pp-muted">{PP_HELP.hub.devicesCatalogList}</p>
+        <DeviceCatalogPanel
+          search={`?branch=${encodeURIComponent(branch)}`}
+          permissions={permissions}
+        />
+      </PpDetailDialog>
 
       <PpDetailDialog
         open={ui.openLayer === "panel" && ui.panel === "jobs"}
