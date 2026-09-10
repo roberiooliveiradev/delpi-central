@@ -1,0 +1,55 @@
+{
+  "E5": "INVESTIGATION",
+  "H-CAP-01_tags": "INCONCLUSIVE — tags OpenAPI não mapeiam buckets finos PT de capabilities.pathRules",
+  "H-CAP-02_x_delpi_category": {
+    "verdict": "FAIL_AS_DROP_IN",
+    "note": "x-delpi.category é domínio grosso (commercial/production/…); pathRules tem buckets UX finos em PT",
+    "pathRules_category_count": 60,
+    "pathRules_top": [
+      [
+        "Estoque de produto",
+        1
+      ],
+      [
+        "Descrição / cadastro / ficha do produto",
+        1
+      ],
+      [
+        "Fornecedores de produto",
+        1
+      ],
+      [
+        "Clientes de produto",
+        1
+      ],
+      [
+        "Estrutura (BOM)",
+        1
+      ],
+      [
+        "Onde o produto é usado (pais)",
+        1
+      ],
+      [
+        "Compras de produto",
+        1
+      ],
+      [
+        "Vendas de produto",
+        1
+      ]
+    ],
+    "inventory_category_keys": 0
+  },
+  "H-CAP-03_combination": "INCONCLUSIVE — tags+category não reproduzem labels UX atuais sem perda",
+  "H-CAP-04_import_classification": "POSSIBLE_FUTURE — classificação no import exigiria owner/contrato novo; fora do escopo display cleanup",
+  "H-CAP-05_capabilityGroup": {
+    "verdict": "FAIL_DO_NOT_CREATE",
+    "rationale": "Criar x-delpi.capabilityGroup em toda operation desloca dívida JSON→OpenAPI manual sem fallback universal"
+  },
+  "DECISION": "KEEP capabilities.pathRules temporariamente",
+  "EXIT_CRITERIA": "substituir por classificação semântica no Action Catalog import com fallback genérico + prova unknown provider",
+  "CUTOVER": "SKIP",
+  "CLEANUP": "SKIP",
+  "DEBT": "RQ-CUTOVER-04 / RQ-CLEANUP pathRules adiados com justificativa H-CAP"
+}
