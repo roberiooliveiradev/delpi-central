@@ -1,0 +1,143 @@
+version: 1
+scope: production-pulse-esp32c3-super-mini
+status: planning
+authority_note: >-
+  Estado de execução auxiliar. Antes de cada item, revalidar development-standards-index,
+  regras especializadas, código, contratos, dependências e working tree. Em caso de drift
+  material, aplicar EXECUTION_DRIFT e corrigir o plano antes de continuar.
+plans:
+  firmware:
+    document: ESP32C3-SUPER-MINI-FIRMWARE-PLAN.md
+    todos:
+      - id: e1-s1-firmware-baseline-c3
+        status: pending
+        requirements: [RQ-01, RQ-02, RQ-08, RQ-09, RQ-16]
+      - id: e1-s2-station-mac-identity
+        status: pending
+        requirements: [RQ-03, RQ-04]
+      - id: e2-s1-radio-configuration
+        status: pending
+        requirements: [RQ-05, RQ-18]
+      - id: e2-s2-wifi-state-machine
+        status: pending
+        requirements: [RQ-06, RQ-18]
+      - id: e2-s3-config-reconnect-owner
+        status: pending
+        requirements: [RQ-02, RQ-06, RQ-07]
+      - id: e3-s1-active-low-inputs
+        status: pending
+        requirements: [RQ-11, RQ-12, RQ-13, RQ-16]
+      - id: e3-s2-remove-physical-factory-reset
+        status: pending
+        requirements: [RQ-02, RQ-20]
+      - id: e3-s3-backend-freshness
+        status: pending
+        requirements: [RQ-07, RQ-14, RQ-15]
+      - id: e3-s4-rgb-state-renderer
+        status: pending
+        requirements: [RQ-14, RQ-15, RQ-18]
+      - id: e4-s1-port-existing-ota
+        status: pending
+        requirements: [RQ-08, RQ-09, RQ-18]
+      - id: e4-s2-prove-dual-ota-layout
+        status: pending
+        requirements: [RQ-10, RQ-21]
+      - id: e5-s1-additive-device-status
+        status: pending
+        requirements: [RQ-02, RQ-03, RQ-04, RQ-13, RQ-17]
+      - id: e5-s2-maintenance-html
+        status: pending
+        requirements: [RQ-04, RQ-07, RQ-17]
+      - id: e5-s3-serial-observability
+        status: pending
+        requirements: [RQ-04, RQ-05, RQ-06, RQ-07, RQ-18]
+      - id: e6-s1-firmware-verify-final
+        status: pending
+        requirements: [RQ-01, RQ-02, RQ-03, RQ-04, RQ-05, RQ-06, RQ-07, RQ-08, RQ-09, RQ-10, RQ-11, RQ-12, RQ-13, RQ-14, RQ-15, RQ-16, RQ-17, RQ-18, RQ-20, RQ-21]
+  api_ota:
+    document: ESP32C3-SUPER-MINI-API-OTA-PLAN.md
+    todos:
+      - id: e1-s1-share-counter-http-protocol
+        status: pending
+        requirements: [RQ-02, RQ-07, RQ-09]
+      - id: e2-s1-declare-c3-driver
+        status: pending
+        requirements: [RQ-09, RQ-19]
+      - id: e2-s2-register-c3-driver-implementation
+        status: pending
+        requirements: [RQ-02, RQ-07, RQ-09]
+      - id: e3-s1-test-explicit-link-isolation
+        status: pending
+        requirements: [RQ-09, RQ-19]
+      - id: e3-s2-test-ota-job-driver-isolation
+        status: pending
+        requirements: [RQ-08, RQ-09]
+      - id: e3-s3-preserve-device-ota-channel
+        status: pending
+        requirements: [RQ-07, RQ-08, RQ-09]
+      - id: e4-s1-verify-mfe-catalog-driven
+        status: pending
+        requirements: [RQ-19]
+      - id: e4-s2-sync-canonical-docs
+        status: pending
+        requirements: [RQ-01, RQ-09, RQ-10, RQ-21]
+      - id: e5-s1-api-bff-verify-final
+        status: pending
+        requirements: [RQ-02, RQ-07, RQ-08, RQ-09, RQ-19, RQ-21]
+  validation:
+    document: ESP32C3-SUPER-MINI-VALIDATION-PLAN.md
+    todos:
+      - id: e1-s1-compile-release-profile
+        status: pending
+        requirements: [RQ-01, RQ-05, RQ-08, RQ-10, RQ-21]
+      - id: e1-s2-inspect-effective-partitions
+        status: pending
+        requirements: [RQ-10, RQ-21]
+      - id: e1-s3-run-api-regression
+        status: pending
+        requirements: [RQ-02, RQ-07, RQ-08, RQ-09, RQ-19, RQ-21]
+      - id: e2-s1-validate-live-sta-identity
+        status: pending
+        requirements: [RQ-03, RQ-04, RQ-18]
+      - id: e2-s2-live-secret-redaction
+        status: pending
+        requirements: [RQ-07, RQ-17, RQ-18]
+      - id: e3-s1-live-wifi-association
+        status: pending
+        requirements: [RQ-05, RQ-06, RQ-18]
+      - id: e3-s2-live-wifi-reconnect
+        status: pending
+        requirements: [RQ-06, RQ-14, RQ-18]
+      - id: e3-s3-live-config-reconnect
+        status: pending
+        requirements: [RQ-02, RQ-06, RQ-07]
+      - id: e4-s1-live-input1-counter
+        status: pending
+        requirements: [RQ-11, RQ-12, RQ-13]
+      - id: e4-s2-live-input2-diagnostic
+        status: pending
+        requirements: [RQ-11, RQ-13]
+      - id: e4-s3-live-no-input-factory-reset
+        status: pending
+        requirements: [RQ-20, RQ-07]
+      - id: e5-s1-live-device-api-contract
+        status: pending
+        requirements: [RQ-02, RQ-07, RQ-17]
+      - id: e5-s2-live-backend-freshness-rgb
+        status: pending
+        requirements: [RQ-14, RQ-15]
+      - id: e6-s1-live-bff-lan-probe-poll
+        status: pending
+        requirements: [RQ-02, RQ-07, RQ-09, RQ-15, RQ-19, RQ-21]
+      - id: e7-s1-live-publish-link-c3-artifact
+        status: pending
+        requirements: [RQ-08, RQ-09, RQ-10]
+      - id: e7-s2-live-end-to-end-ota
+        status: pending
+        requirements: [RQ-08, RQ-10, RQ-14, RQ-18, RQ-21]
+      - id: e7-s3-live-ota-negative-failures
+        status: pending
+        requirements: [RQ-07, RQ-08, RQ-09, RQ-21]
+      - id: e8-s1-objective-verify-final
+        status: pending
+        requirements: [RQ-01, RQ-02, RQ-03, RQ-04, RQ-05, RQ-06, RQ-07, RQ-08, RQ-09, RQ-10, RQ-11, RQ-12, RQ-13, RQ-14, RQ-15, RQ-16, RQ-17, RQ-18, RQ-19, RQ-20, RQ-21]
