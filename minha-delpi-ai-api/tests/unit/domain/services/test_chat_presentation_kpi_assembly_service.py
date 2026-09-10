@@ -26,6 +26,17 @@ def test_metric_card_infers_currency_for_sale_price():
     assert card["dataType"] == "currency"
 
 
+def test_metric_card_uses_canonical_format_without_unit():
+    card = ChatPresentationKpiAssemblyService.metric_card(
+        label="Preço de venda",
+        value=1.2,
+        key="sale_price",
+        color="#10b981",
+    )
+
+    assert card["dataType"] == "currency"
+
+
 def test_metric_card_infers_quantity_for_suffix_units():
     card = ChatPresentationKpiAssemblyService.metric_card(
         label="Ordens de produção",

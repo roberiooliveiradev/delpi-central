@@ -6,7 +6,16 @@ export type ColumnType =
   | "percent"
   | "quantity"
   | "days"
+  | "boolean"
   | undefined;
+
+const NUMERIC_COLUMN_TYPES = new Set<ColumnType>([
+  "currency",
+  "percent",
+  "quantity",
+  "days",
+  "number",
+]);
 
 const COUNT_AGGREGATE_KEYS =
   /^(total|count|cnt|n|registros|row_count|total_registros|records)$/i;
@@ -117,6 +126,107 @@ export function getAlignClass(
   return "";
 }
 
+export function parseNumericValue(
+  value: unknown,
+  options?: { allowInteger?: boolean },
+): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const text = value.trim();
+  const allowInteger = options?.allowInteger !== false;
+
+  if (!text) {
+    return null;
+  }
+
+  if (/^-?\d+$/.test(text)) {
+    return allowInteger ? Number(text) : null;
+  }
+
+  if (/^-?\d+\.\d+$/.test(text)) {
+    return Number(text);
+  }
+
+  if (/^-?\d{1,3}(\.\d{3})+,\d+$/.test(text)) {
+    return Number(text.replace(/\./g, "").replace(",", "."));
+  }
+
+  if (/^-?\d+,\d+$/.test(text)) {
+    return Number(text.replace(",", "."));
+  }
+
+  return null;
+}
+
+function formatBooleanToken(value: unknown): string | null {
+  if (typeof value === "boolean") {
+    return value ? "Sim" : "Não";
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const token = value.trim().toLowerCase();
+
+  if (["s", "sim", "true", "y", "yes", "1"].includes(token)) {
+    return "Sim";
+  }
+
+  if (["n", "nao", "não", "false", "no", "0"].includes(token)) {
+    return "Não";
+  }
+
+  return null;
+}
+
+function formatNumericCell(value: number, colType: ColumnType): string {
+  if (colType === "currency") {
+    return value.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  }
+
+  if (colType === "percent") {
+    return `${value.toLocaleString("pt-BR", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 2,
+    })}%`;
+  }
+
+  if (colType === "quantity") {
+    return value.toLocaleString("pt-BR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+  }
+
+  if (colType === "days") {
+    if (Number.isInteger(value)) {
+      return `${value.toLocaleString("pt-BR")} dias`;
+    }
+
+    return `${value.toLocaleString("pt-BR", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 2,
+    })} dias`;
+  }
+
+  if (Number.isInteger(value)) return value.toLocaleString("pt-BR");
+
+  return value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  });
+}
+
 export function formatCellValue(
   value: unknown,
   columnKey?: string,
@@ -140,45 +250,19 @@ export function formatCellValue(
   const key = columnKey || "";
   const colType = inferColumnType(key, dataType, row);
 
-  if (typeof value === "number") {
-    if (colType === "currency") {
-      return value.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      });
-    }
+  if (colType === "boolean") {
+    return formatBooleanToken(value) || String(value);
+  }
 
-    if (colType === "percent") {
-      return `${value.toLocaleString("pt-BR", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 2,
-      })}%`;
-    }
+  const numeric =
+    typeof value === "number"
+      ? value
+      : NUMERIC_COLUMN_TYPES.has(colType)
+        ? parseNumericValue(value, { allowInteger: colType !== "currency" })
+        : null;
 
-    if (colType === "quantity") {
-      return value.toLocaleString("pt-BR", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      });
-    }
-
-    if (colType === "days") {
-      if (Number.isInteger(value)) {
-        return `${value.toLocaleString("pt-BR")} dias`;
-      }
-
-      return `${value.toLocaleString("pt-BR", {
-        minimumFractionDigits: 1,
-        maximumFractionDigits: 2,
-      })} dias`;
-    }
-
-    if (Number.isInteger(value)) return value.toLocaleString("pt-BR");
-
-    return value.toLocaleString("pt-BR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 4,
-    });
+  if (typeof numeric === "number" && Number.isFinite(numeric)) {
+    return formatNumericCell(numeric, colType);
   }
 
   const str = String(value);

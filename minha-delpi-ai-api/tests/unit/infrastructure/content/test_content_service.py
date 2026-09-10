@@ -5,6 +5,10 @@ def test_load_capabilities_json():
     data = ContentService.load_json("assistant/capabilities")
     assert data.get("intro")
     assert data.get("sections", {}).get("platformTools")
+    headers_help = (data.get("featureAnswers") or {}).get("tableHeadersHelp") or {}
+    body = str(headers_help.get("body") or "").casefold()
+    assert "moeda" in body
+    assert "traduzidos" in body
 
 
 def test_load_api_path_labels():

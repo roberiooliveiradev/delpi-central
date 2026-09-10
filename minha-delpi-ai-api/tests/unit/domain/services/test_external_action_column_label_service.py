@@ -218,6 +218,88 @@ def test_format_field_value_applies_currency_percent_and_days():
     assert service.format_field_value("pmr_days", 42) == "42 dias"
 
 
+def test_format_field_value_humanizes_p0_summary_types():
+    service = ExternalActionColumnLabelService()
+
+    assert service.format_field_value("sale_price", 1.2) == "R$ 1,20"
+    assert service.format_field_value("sale_price", "1.2") == "R$ 1,20"
+    assert service.format_field_value("cofins_percent", 1.65) == "1,65%"
+    assert service.format_field_value("standard_cost_date", "20260531") == "31/05/2026"
+    assert service.format_field_value("mandatory_cc_pc", "S") == "Sim"
+    assert service.format_field_value("rohs_indicator", "N") == "Não"
+    assert service.format_field_value("available_quantity", 105) == "105"
+    assert service.format_field_value("code", "10080011") == "10080011"
+    assert service.format_field_value("ncm", "85444200") == "85444200"
+    assert "R$" not in service.format_field_value("valor", "90269002")
+
+
+def test_resolve_schema_formats_reads_openapi_and_refs():
+    service = ExternalActionColumnLabelService()
+    formats = service.resolve_schema_formats(
+        {
+            "components": {
+                "schemas": {
+                    "StockItem": {
+                        "type": "object",
+                        "properties": {
+                            "available_quantity": {
+                                "type": "number",
+                                "x-dataType": "quantity",
+                            },
+                            "unit_price": {
+                                "type": "number",
+                                "x-dataType": "currency",
+                            },
+                            "active": {"type": "boolean"},
+                            "issue_date": {"type": "string", "format": "date"},
+                        },
+                    }
+                }
+            },
+            "200": {
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": {"$ref": "#/components/schemas/StockItem"},
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+        }
+    )
+
+    assert formats["available_quantity"] == "quantity"
+    assert formats["unit_price"] == "currency"
+    assert formats["active"] == "boolean"
+    assert formats["issue_date"] == "date"
+
+
+def test_markdown_table_formats_cells_without_stringifying_codes():
+    from app.domain.services.external_actions.presenters.presentation_table_host_service import (
+        markdown_table,
+    )
+
+    lines = markdown_table(
+        [
+            ("sale_price", "Preço de venda"),
+            ("cofins_percent", "COFINS"),
+            ("code", "Código"),
+        ],
+        [{"sale_price": 1.2, "cofins_percent": 1.65, "code": "10080011"}],
+    )
+    body = "\n".join(lines)
+
+    assert "R$ 1,20" in body
+    assert "1,65%" in body
+    assert "10080011" in body
+    assert "R$ 10.080.011" not in body
+
+
 def test_count_aggregate_total_is_quantity_not_currency():
     """COUNT(*) AS TOTAL — quantidade de itens, não R$."""
     service = ExternalActionColumnLabelService()

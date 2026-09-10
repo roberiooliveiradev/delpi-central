@@ -126,6 +126,34 @@ class ExternalActionColumnLabelService:
         ),
     }
 
+    _ALLOWED_FIELD_FORMATS = frozenset(
+        {
+            "currency",
+            "percent",
+            "date",
+            "quantity",
+            "days",
+            "boolean",
+        }
+    )
+    _NUMERIC_FIELD_FORMATS = frozenset(
+        {
+            "currency",
+            "percent",
+            "quantity",
+            "days",
+        }
+    )
+    _BOOLEAN_EXACT_KEYS = frozenset(
+        {
+            "active",
+            "blocked",
+            "enabled",
+            "flag",
+            "inactive",
+        }
+    )
+
     def enrich_column_def(
         self,
         key: str,
@@ -512,6 +540,28 @@ class ExternalActionColumnLabelService:
             schema_formats=schema_formats,
         )
 
+        if isinstance(value, str):
+            text = value.strip()
+
+            if field_format == "boolean":
+                mapped = self._format_boolean_token(text)
+
+                if mapped is not None:
+                    return mapped
+
+            if field_format in self._NUMERIC_FIELD_FORMATS:
+                parsed = self._parse_numeric_string(
+                    text,
+                    allow_integer=field_format != "currency",
+                )
+
+                if parsed is not None:
+                    return self.format_field_value(
+                        key,
+                        parsed,
+                        schema_formats=schema_formats,
+                    )
+
         if isinstance(value, (int, float)):
             number = float(value)
 
@@ -537,6 +587,12 @@ class ExternalActionColumnLabelService:
             return self._format_br_number(number)
 
         text = str(value).strip()
+
+        if field_format == "boolean":
+            mapped = self._format_boolean_token(text)
+
+            if mapped is not None:
+                return mapped
 
         if field_format == "date" and text:
             # Já no padrão de exibição BR (ex.: LMP dd/mm/yyyy).
@@ -732,6 +788,42 @@ class ExternalActionColumnLabelService:
                     )
 
         return labels
+
+    def resolve_schema_formats(self, response_schema: dict | None) -> dict[str, str]:
+        if not isinstance(response_schema, dict):
+            return {}
+
+        formats: dict[str, str] = {}
+        responses = response_schema.get("responses")
+        if not isinstance(responses, dict):
+            responses = response_schema
+
+        for status_code, response in responses.items():
+            if not str(status_code).startswith(("2", "default")):
+                continue
+
+            if not isinstance(response, dict):
+                continue
+
+            content = response.get("content") or {}
+
+            if not isinstance(content, dict):
+                continue
+
+            for media in content.values():
+                if not isinstance(media, dict):
+                    continue
+
+                schema = media.get("schema")
+
+                if isinstance(schema, dict):
+                    self._collect_schema_property_formats(
+                        schema,
+                        formats,
+                        document_root=response_schema,
+                    )
+
+        return formats
 
     def detect_table_profile(self, row: dict, *, path: str = "") -> str | None:
         if not isinstance(row, dict):
@@ -1002,9 +1094,69 @@ class ExternalActionColumnLabelService:
         if lowered.endswith("_date") or lowered.endswith("_at"):
             return "date"
 
+        if cls._infer_boolean_format(lowered):
+            return "boolean"
+
         for field_format, tokens in cls._FIELD_FORMAT_TOKENS.items():
             if any(token in lowered for token in tokens):
                 return field_format
+
+        return None
+
+    @classmethod
+    def _infer_boolean_format(cls, lowered: str) -> bool:
+        token = str(lowered or "").strip().lower()
+
+        if not token:
+            return False
+
+        if token in cls._BOOLEAN_EXACT_KEYS:
+            return True
+
+        if "mandatory" in token:
+            return True
+
+        if token.endswith("_indicator") or token.endswith("_flag"):
+            return True
+
+        if token.endswith("_active") or token.startswith("active_"):
+            return True
+
+        return False
+
+    @staticmethod
+    def _format_boolean_token(text: str) -> str | None:
+        token = str(text or "").strip().lower()
+
+        if token in {"s", "sim", "true", "y", "yes", "1"}:
+            return "Sim"
+
+        if token in {"n", "nao", "não", "false", "no", "0"}:
+            return "Não"
+
+        return None
+
+    @staticmethod
+    def _parse_numeric_string(text: str, *, allow_integer: bool = True) -> float | None:
+        stripped = str(text or "").strip()
+
+        if not stripped:
+            return None
+
+        if re.fullmatch(r"-?\d+", stripped):
+            if not allow_integer:
+                return None
+
+            return float(stripped)
+
+        if re.fullmatch(r"-?\d+\.\d+", stripped):
+            return float(stripped)
+
+        if re.fullmatch(r"-?\d{1,3}(\.\d{3})+,\d+", stripped):
+            return float(stripped.replace(".", "").replace(",", "."))
+
+        if re.fullmatch(r"-?\d+,\d+", stripped):
+            return float(stripped.replace(",", "."))
 
         return None
 
@@ -1140,53 +1292,93 @@ class ExternalActionColumnLabelService:
                 document_root=root,
             )
 
-    _COLUMN_TYPE_MAP: dict[str, tuple[str, ...]] = {
-        "currency": (
-            "valor", "preco", "price", "custo", "cost", "revenue",
-            "faturamento", "receita", "vlr", "vl_", "last_purchase_price",
-            "standard_cost", "unit_price", "net_value", "gross_value",
-            "valor_total", "total_value", "total_valor", "total_revenue",
-            "total_cost", "total_rol", "grand_total", "amount",
-        ),
-        "percent": (
-            "pct", "percent", "taxa", "rate", "margem", "margin", "otd",
-            "giro", "eficiencia", "yield",
-        ),
-        "date": (
-            "data", "date", "emissao", "criacao", "atualizacao", "inicio",
-            "fim", "vencimento", "dt_", "created", "updated", "last_revision",
-        ),
-        "quantity": (
-            "qtd", "quantidade", "qty", "quantity", "saldo", "disponivel",
-            "reservado", "estoque", "volume", "current_quantity",
-            "available_quantity", "committed_quantity", "reserved_quantity",
-            "count", "cnt", "registros", "row_count",
-        ),
-    }
+    def _collect_schema_property_formats(
+        self,
+        schema: dict,
+        formats: dict[str, str],
+        *,
+        depth: int = 0,
+        document_root: dict | None = None,
+    ) -> None:
+        if depth > 8 or not isinstance(schema, dict):
+            return
 
-    def infer_column_type(self, key: str) -> str | None:
-        lowered = str(key or "").strip().lower()
+        root = document_root if isinstance(document_root, dict) else schema
+        schema = self._follow_local_schema_ref(schema, root)
 
-        if not lowered:
+        properties = schema.get("properties")
+
+        if isinstance(properties, dict):
+            for key, spec in properties.items():
+                if not isinstance(spec, dict):
+                    continue
+
+                spec = self._follow_local_schema_ref(spec, root)
+                field_format = self._format_from_property_spec(spec)
+
+                if field_format:
+                    formats[str(key)] = field_format
+
+                if spec.get("type") == "array":
+                    items = spec.get("items")
+
+                    if isinstance(items, dict):
+                        self._collect_schema_property_formats(
+                            items,
+                            formats,
+                            depth=depth + 1,
+                            document_root=root,
+                        )
+                elif spec.get("type") == "object" or spec.get("properties"):
+                    self._collect_schema_property_formats(
+                        spec,
+                        formats,
+                        depth=depth + 1,
+                        document_root=root,
+                    )
+
+        items = schema.get("items")
+
+        if isinstance(items, dict):
+            self._collect_schema_property_formats(
+                items,
+                formats,
+                depth=depth + 1,
+                document_root=root,
+            )
+
+    @classmethod
+    def _format_from_property_spec(cls, spec: dict) -> str | None:
+        if not isinstance(spec, dict):
             return None
 
-        if lowered in self._EXACT_QUANTITY_KEYS:
-            return "quantity"
+        for extra_key in ("x-dataType", "x-format"):
+            raw = spec.get(extra_key)
 
-        for data_type, tokens in self._COLUMN_TYPE_MAP.items():
-            if any(token in lowered for token in tokens):
-                return data_type
+            if isinstance(raw, str) and raw.strip().lower() in cls._ALLOWED_FIELD_FORMATS:
+                return raw.strip().lower()
+
+        fmt = spec.get("format")
+
+        if isinstance(fmt, str):
+            token = fmt.strip().lower()
+
+            if token in cls._ALLOWED_FIELD_FORMATS:
+                return token
+
+            if token in {"date", "date-time"}:
+                return "date"
+
+        if spec.get("type") == "boolean":
+            return "boolean"
 
         return None
 
+    def infer_column_type(self, key: str) -> str | None:
+        return self.resolve_field_format(key)
+
     def enrich_column(self, key: str, label: str) -> dict:
-        col = {"key": key, "label": label}
-        data_type = self.infer_column_type(key)
-
-        if data_type:
-            col["dataType"] = data_type
-
-        return col
+        return self.enrich_column_def(key, label=label)
 
     @staticmethod
     def format_num(value) -> str:

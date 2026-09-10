@@ -32,7 +32,7 @@ export type ChatKpiCard = {
   label: string;
   value: string | number;
   unit?: string;
-  dataType?: "text" | "number" | "currency" | "date" | "percent" | "quantity" | "days";
+  dataType?: "text" | "number" | "currency" | "date" | "percent" | "quantity" | "days" | "boolean";
   key?: string;
   trend?: "up" | "down" | "stable";
   delta?: string;
@@ -42,7 +42,7 @@ export type ChatKpiCard = {
 export type ChatTableColumn = {
   key: string;
   label: string;
-  dataType?: "text" | "number" | "currency" | "date" | "percent" | "quantity" | "days";
+  dataType?: "text" | "number" | "currency" | "date" | "percent" | "quantity" | "days" | "boolean";
 };
 
 export type ChatTreeNode = {

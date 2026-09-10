@@ -384,7 +384,7 @@
       ],
       "howToUse": [
         "Peça o formato na mesma frase: *em tabela*, *gráfico*, *KPI*, *painel* ou *mapa de calor*.",
-        "Tabela: escolha colunas, peça ordenação (ex.: «ordene por saldo desc») ou oculte campos auxiliares na tela — a exportação CSV/Excel mantém todas as colunas compiladas.",
+        "Tabela: escolha colunas, peça ordenação (ex.: «ordene por saldo desc») ou oculte campos auxiliares na tela — a exportação CSV/Excel mantém todas as colunas compiladas. Números aparecem em pt-BR (moeda, %, data); códigos e descrições não são traduzidos.",
         "Gráfico/heatmap: a API emite `paletteFamily` (sequential-blue, diverging-status, categorical…); cores seguem o tema claro/escuro.",
         "Painel: combine KPI, gráfico e tabela numa única resposta; use **Expandir** para busca, filtro e exportação.",
         "Lousa (canvas): documentos longos, rascunhos e tabelas editáveis persistentes na sessão."

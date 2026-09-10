@@ -108,15 +108,32 @@ def escape_markdown_table_cell(value: object) -> str:
     return text.replace("|", "\\|").replace("\n", " ")
 
 
-def markdown_table(columns: list[tuple[str, str]], rows: list[dict]) -> list[str]:
+def markdown_table(
+    columns: list[tuple[str, str]],
+    rows: list[dict],
+    *,
+    format_value=None,
+) -> list[str]:
     if not rows:
         return []
+
+    formatter = format_value
+
+    if formatter is None:
+        from app.domain.services.external_actions.external_action_column_label_service import (
+            ExternalActionColumnLabelService,
+        )
+
+        formatter = ExternalActionColumnLabelService().format_field_value
 
     header = "| " + " | ".join(label for _, label in columns) + " |"
     separator = "| " + " | ".join("---" for _ in columns) + " |"
     body = [
         "| "
-        + " | ".join(escape_markdown_table_cell(row.get(key)) for key, _ in columns)
+        + " | ".join(
+            escape_markdown_table_cell(formatter(key, row.get(key)))
+            for key, _ in columns
+        )
         + " |"
         for row in rows
     ]

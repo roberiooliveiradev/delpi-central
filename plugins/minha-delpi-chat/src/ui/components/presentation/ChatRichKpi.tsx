@@ -97,19 +97,7 @@ function formatKpiValue(card: ChatKpiCard): string {
   const columnKey = key || label;
   const resolvedType = dataType || inferKpiDataType(columnKey, unit);
 
-  if (typeof value === "number") {
-    return formatCellValue(value, columnKey, resolvedType);
-  }
-
-  if (typeof value === "string" && value.trim()) {
-    const numeric = Number(value.replace(/\./g, "").replace(",", "."));
-
-    if (!Number.isNaN(numeric) && value.trim() !== "") {
-      return formatCellValue(numeric, columnKey, resolvedType);
-    }
-  }
-
-  return String(value);
+  return formatCellValue(value, columnKey, resolvedType);
 }
 
 function inferKpiDataType(key: string, unit?: string): ColumnType {

@@ -238,7 +238,7 @@ class ChatPresentationApiDeliveredMetadataService:
             sanitized_data,
         )
         schema_formats = presenter._column_labels.merge_meta_field_formats(
-            {},
+            presenter._column_labels.resolve_schema_formats(response_schema),
             sanitized_data,
         )
 

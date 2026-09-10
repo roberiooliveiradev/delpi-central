@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.external_actions.external_action_column_label_service import (
+    ExternalActionColumnLabelService,
+)
+
 
 class ChatPresentationKpiAssemblyService:
     """Contrato único de KPI consumido pelo MFE (`kpiPresentation` ou primário)."""
@@ -68,12 +72,22 @@ class ChatPresentationKpiAssemblyService:
             "percent",
             "quantity",
             "days",
+            "boolean",
         }:
             payload["dataType"] = existing_type
             return payload
 
+        key = str(payload.get("key") or "").strip() or None
+
+        if key:
+            resolved_from_cascade = ExternalActionColumnLabelService().resolve_field_format(key)
+
+            if resolved_from_cascade:
+                payload["dataType"] = resolved_from_cascade
+                return payload
+
         resolved_type = cls._infer_data_type(
-            key=str(payload.get("key") or "").strip() or None,
+            key=key,
             unit=str(payload.get("unit") or ""),
             label=str(payload.get("label") or "").strip() or None,
         )
@@ -161,7 +175,13 @@ class ChatPresentationKpiAssemblyService:
         if delta:
             card["delta"] = delta
 
-        resolved_type = data_type or cls._infer_data_type(key=key, unit=unit, label=label)
+        resolved_type = data_type
+
+        if not resolved_type and key:
+            resolved_type = ExternalActionColumnLabelService().resolve_field_format(key)
+
+        if not resolved_type:
+            resolved_type = cls._infer_data_type(key=key, unit=unit, label=label)
 
         if resolved_type:
             card["dataType"] = resolved_type

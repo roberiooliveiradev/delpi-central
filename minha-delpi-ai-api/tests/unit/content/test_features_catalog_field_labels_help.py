@@ -43,3 +43,13 @@ def test_features_catalog_documents_consolidated_multi_scope_product_lookup():
     assert "painel" in help_text or "painéis" in help_text or "paineis" in help_text
     assert "visão integrada" in examples or "visao integrada" in examples
     assert "estrutura" in examples and "estoque" in examples
+
+
+def test_features_catalog_documents_numeric_value_formatting():
+    payload = _catalog()
+    features = {item["id"]: item for item in payload["features"]}
+    composer = features["presentation_composer"]
+    help_text = " ".join(composer.get("howToUse") or []).casefold()
+
+    assert "pt-br" in help_text or "moeda" in help_text
+    assert "códigos" in help_text or "codigos" in help_text

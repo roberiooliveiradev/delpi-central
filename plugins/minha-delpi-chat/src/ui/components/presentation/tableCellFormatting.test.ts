@@ -54,15 +54,32 @@ describe("tableCellFormatting", () => {
     );
   });
 
-  it("formats nested parent objects without [object Object]", () => {
-    expect(
-      formatCellValue(
-        [
-          { code: "90260148", description: "CHICOTE" },
-          { code: "90260200", description: "OUTRO PA" },
-        ],
-        "parents",
-      ),
-    ).toBe("90260148 — CHICOTE, 90260200 — OUTRO PA");
-  });
+    it("formats numeric strings when API dataType is set", () => {
+      expect(formatCellValue("1.2", "sale_price", "currency")).toBe(
+        "R$\u00a01,20",
+      );
+      expect(formatCellValue("1.65", "cofins_percent", "percent")).toBe("1,65%");
+      expect(formatCellValue("105", "available_quantity", "quantity")).toBe(
+        "105",
+      );
+    });
+
+    it("formats boolean flags from API dataType without translating codes", () => {
+      expect(formatCellValue("S", "mandatory_cc_pc", "boolean")).toBe("Sim");
+      expect(formatCellValue("N", "rohs_indicator", "boolean")).toBe("Não");
+      expect(formatCellValue("10080011", "code")).toBe("10080011");
+      expect(formatCellValue("90269002", "valor", "currency")).toBe("90269002");
+    });
+
+    it("formats nested parent objects without [object Object]", () => {
+      expect(
+        formatCellValue(
+          [
+            { code: "90260148", description: "CHICOTE" },
+            { code: "90260200", description: "OUTRO PA" },
+          ],
+          "parents",
+        ),
+      ).toBe("90260148 — CHICOTE, 90260200 — OUTRO PA");
+    });
 });

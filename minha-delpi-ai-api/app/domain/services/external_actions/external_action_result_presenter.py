@@ -275,7 +275,7 @@ class ExternalActionResultPresenter:
         return escape_markdown_table_cell(value)
 
     def _markdown_table(self, columns: list[tuple[str, str]], rows: list[dict]) -> list[str]:
-        return markdown_table(columns, rows)
+        return markdown_table(columns, rows, format_value=self._format_field_value)
 
     def _looks_like_kpi_response(
         self,

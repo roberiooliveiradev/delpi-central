@@ -44,7 +44,7 @@
       "Para **pesquisa na internet**, use frases como «pesquise na web sobre …» quando o agente tiver busca web habilitada.",
       "**Visualizações:** peça *tabela*, *gráfico*, *KPI*, *painel* ou *heatmap* na mesma pergunta; use **Expandir** para exportar CSV/Excel/PDF.",
       "Campos **ocultos na tabela** (ex.: unidade auxiliar) continuam na exportação — só somem da grade visual.",
-      "Cabeçalhos da tabela são **nomes legíveis em português**, não os códigos técnicos do ERP (ex.: não aparece «MANDATORY CC PC»). Títulos do contrato da API têm prioridade; o restante é traduzido automaticamente.",
+      "Cabeçalhos da tabela são **nomes legíveis em português**, não os códigos técnicos do ERP (ex.: não aparece «MANDATORY CC PC»). Títulos do contrato da API têm prioridade; o restante é traduzido automaticamente. **Números** aparecem formatados (moeda `R$`, percentual, data `dd/mm/aaaa`, quantidade); códigos e descrições **não** são traduzidos.",
       "Gráficos e heatmaps usam **família de cores** (`paletteFamily`) alinhada ao tema; peça «escala azul» ou «cores de status» quando quiser ênfase semântica.",
       "Para documento longo ou rascunho editável, peça **lousa (canvas)** após os dados."
     ]
@@ -483,11 +483,11 @@
     },
     "presentationComposerHelp": {
       "title": "**Visualizações multi-view (Presentation Composer)**",
-      "body": "Posso montar **tabela**, **gráfico**, **KPI**, **painel (dashboard)**, **mapa de calor** ou enviar conteúdo para a **lousa**.\n\n**Tabela:** peça colunas, ordenação («ordene por saldo desc») ou oculte campos auxiliares na grade — a **exportação CSV/Excel** inclui todas as colunas compiladas (`exportColumns`), inclusive as ocultas na tela. Os **cabeçalhos** vêm em português curto (contrato da API ou tradução automática); não são os nomes técnicos do ERP.\n\n**Gráfico / heatmap:** uso família de cores semântica (`paletteFamily`: sequential-blue, diverging-status, categorical…) resolvida pelo tema claro/escuro. Com estoque por filial/armazém, peça «mapa de calor por filial e armazém».\n\n**Painel:** combine KPI + gráfico + tabela; use **Expandir** para busca, filtro e exportação.\n\n**Lousa:** documentos longos e rascunhos editáveis na sessão — «coloque esse resultado na lousa» após a consulta.\n\n**Exemplos:** «em tabela ordenada por quantidade», «gráfico de barras», «painel com KPI», «heatmap por filial e armazém», «coloque esse resultado na lousa»."
+      "body": "Posso montar **tabela**, **gráfico**, **KPI**, **painel (dashboard)**, **mapa de calor** ou enviar conteúdo para a **lousa**.\n\n**Tabela:** peça colunas, ordenação («ordene por saldo desc») ou oculte campos auxiliares na grade — a **exportação CSV/Excel** inclui todas as colunas compiladas (`exportColumns`), inclusive as ocultas na tela. Os **cabeçalhos** vêm em português curto (contrato da API ou tradução automática); não são os nomes técnicos do ERP. **Valores** numéricos vêm em pt-BR (`R$ 1,20`, `1,65%`, `31/05/2026`); códigos e textos não são traduzidos.\n\n**Gráfico / heatmap:** uso família de cores semântica (`paletteFamily`: sequential-blue, diverging-status, categorical…) resolvida pelo tema claro/escuro. Com estoque por filial/armazém, peça «mapa de calor por filial e armazém».\n\n**Painel:** combine KPI + gráfico + tabela; use **Expandir** para busca, filtro e exportação.\n\n**Lousa:** documentos longos e rascunhos editáveis na sessão — «coloque esse resultado na lousa» após a consulta.\n\n**Exemplos:** «em tabela ordenada por quantidade», «gráfico de barras», «painel com KPI», «heatmap por filial e armazém», «coloque esse resultado na lousa»."
     },
     "tableHeadersHelp": {
       "title": "**Cabeçalhos de tabela**",
-      "body": "Os títulos das colunas são **rótulos em português**, não os nomes técnicos do cadastro (ex.: «MANDATORY CC PC»). Quando a API já traz um título no contrato, esse título prevalece. Os demais campos apresentados são traduzidos automaticamente para um cabeçalho curto; os **valores** das células não são traduzidos."
+      "body": "Os títulos das colunas são **rótulos em português**, não os nomes técnicos do cadastro (ex.: «MANDATORY CC PC»). Quando a API já traz um título no contrato, esse título prevalece. Os demais campos apresentados são traduzidos automaticamente para um cabeçalho curto. **Números** saem formatados em pt-BR (moeda, percentual, data, quantidade e flags Sim/Não). Códigos, NCM e descrições **não** são traduzidos."
     },
     "attachmentHelp": {
       "title": "**Anexos e arquivos**",
