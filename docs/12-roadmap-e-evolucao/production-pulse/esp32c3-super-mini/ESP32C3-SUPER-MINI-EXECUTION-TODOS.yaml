@@ -8,8 +8,9 @@ authority_note: >-
 updated_at: "2026-09-10"
 notes:
   - Firmware esp32c3_counter_v1 criado (sketch+README) cobrindo E1–E5 software do FIRMWARE-PLAN.
-  - API: HttpCounterDriver + esp32c3_counter_v1 registry/catalog + testes unitários; integração DB skipped sem Postgres local.
-  - Validação live (placa/Wi-Fi/OTA física) permanece pendente — toolchain Arduino Core 3.3.11 e hardware necessários.
+  - API: HttpCounterDriver + esp32c3_counter_v1 registry/catalog; pytest 193 passed com Postgres.
+  - VALIDATION E1 compile+partitions PASS (evidence/e1-compile-partitions-2026-09-10.md).
+  - E2+ live bloqueado: nenhuma porta USB no WSL (board list vazio). Kit: LIVE-BENCH-CHECKLIST.md + scripts/c3_flash.sh.
 plans:
   firmware:
     document: ESP32C3-SUPER-MINI-FIRMWARE-PLAN.md
