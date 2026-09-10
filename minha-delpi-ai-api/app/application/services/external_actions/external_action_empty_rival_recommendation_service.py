@@ -27,6 +27,13 @@ class ExternalActionEmptyRivalRecommendationService:
         )
 
         matched: list[dict[str, str]] = []
+        suggestions_by_id = ExternalActionResponseContentService.get_node(
+            "actionSelectionCopy",
+            "emptyRivalSuggestions",
+        )
+        if not isinstance(suggestions_by_id, dict):
+            suggestions_by_id = {}
+
         for family in families:
             if not cls._family_matches(
                 family,
@@ -35,7 +42,11 @@ class ExternalActionEmptyRivalRecommendationService:
                 profile_key=profile_key,
             ):
                 continue
-            for item in family.get("suggestions") or []:
+            family_id = str(family.get("id") or "").strip()
+            suggestions = suggestions_by_id.get(family_id)
+            if not isinstance(suggestions, list):
+                suggestions = family.get("suggestions") or []
+            for item in suggestions:
                 if not isinstance(item, dict):
                     continue
                 label = str(item.get("label") or "").strip()

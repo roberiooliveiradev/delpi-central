@@ -105,7 +105,7 @@ class ExternalActionScoreGapClarificationService:
         operation_b = str(rival.get("operationId") or rival.get("actionId") or "").strip()
 
         direct_answer = ExternalActionResponseContentService.format(
-            "actionSelection",
+            "actionSelectionCopy",
             "routeClarification",
             "scoreGapDirectAnswer",
             labelA=label_a,

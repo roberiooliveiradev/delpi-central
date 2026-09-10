@@ -88,7 +88,7 @@ class ExternalActionRefinementRouteSelectionService:
         selected = select_product(
             message
             or ExternalActionResponseContentService.get(
-                "actionSelection",
+                "actionSelectionCopy",
                 "refinementFallbackMessages",
                 "pagination",
             ),
@@ -257,7 +257,7 @@ class ExternalActionRefinementRouteSelectionService:
         selected = select_product(
             message
             or ExternalActionResponseContentService.get(
-                "actionSelection",
+                "actionSelectionCopy",
                 "refinementFallbackMessages",
                 "depth",
             ),

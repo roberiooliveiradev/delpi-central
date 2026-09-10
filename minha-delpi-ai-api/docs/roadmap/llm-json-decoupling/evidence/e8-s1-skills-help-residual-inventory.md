@@ -27,7 +27,7 @@ NO_CONTENT_MUTATION = PASS
 | tokens path em `requiredActions` | **26** |
 | menções `METHOD /path` em `capabilities.json` | **8** |
 | `capability_registry.routeHints` | **0** (E4 — não reabrir) |
-| `external_action_responses.actionSelection` keys | **61** (→ E8.S4) |
+| `external_action_responses.actionSelection` keys | **59** (E8.S4; copy → `actionSelectionCopy`) |
 
 ## Matriz skills (`executionPathHint`)
 

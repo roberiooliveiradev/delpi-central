@@ -1,8 +1,8 @@
 # Plano 08 — Skills/help/content -> remover catálogos técnicos residuais
 
 **Prioridade:** P2  
-**Status execução:** Onda G · E8.S1–S3 **ATENDIDO** · próxima E8.S4  
-**Evidência:** [`../evidence/e8-s1-skills-help-residual-inventory.md`](../evidence/e8-s1-skills-help-residual-inventory.md) · [`../evidence/e8-s2-skill-catalog-cleanup.md`](../evidence/e8-s2-skill-catalog-cleanup.md) · [`../evidence/e8-s3-help-capabilities-cleanup.md`](../evidence/e8-s3-help-capabilities-cleanup.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda G · E8.S1–S4 **ATENDIDO** · próxima E8.S5  
+**Evidência:** [`../evidence/e8-s1-skills-help-residual-inventory.md`](../evidence/e8-s1-skills-help-residual-inventory.md) · [`../evidence/e8-s2-skill-catalog-cleanup.md`](../evidence/e8-s2-skill-catalog-cleanup.md) · [`../evidence/e8-s3-help-capabilities-cleanup.md`](../evidence/e8-s3-help-capabilities-cleanup.md) · [`../evidence/e8-s4-ear-mixed-bundle-copy-split.md`](../evidence/e8-s4-ear-mixed-bundle-copy-split.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** conteúdo editorial continua rico e configurável, mas deixa de anunciar ou depender de endpoints hardcoded quando a disponibilidade real pode ser consultada no runtime.
 
 ## CURRENT
@@ -72,9 +72,9 @@ resposta de ajuda
 
 ### E8.S4 — Mixed bundles cleanup
 
-**Fazer:** em `external_action_responses` e bundles semelhantes, separar copy transversal de regras técnicas que pertencem a executor/policy/OpenAPI.
+**Status:** **ATENDIDO** (2026-09-10) — evidência [`../evidence/e8-s4-ear-mixed-bundle-copy-split.md`](../evidence/e8-s4-ear-mixed-bundle-copy-split.md)
 
-**Não fazer:** mover timeout/retry/safety para prompt.
+**Feito:** `actionSelectionCopy` (routeClarification, refinementFallbackMessages, emptyRivalSuggestions); matchers/policy PATH ficam em `actionSelection`; `httpExecution` intocado.
 
 ### E8.S5 — Audit gate
 

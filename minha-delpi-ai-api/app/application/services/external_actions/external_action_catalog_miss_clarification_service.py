@@ -37,7 +37,7 @@ class ExternalActionCatalogMissClarificationService:
             return None
 
         answer = ExternalActionResponseContentService.get(
-            "actionSelection",
+            "actionSelectionCopy",
             "routeClarification",
             "catalogMissDirectAnswer",
         )

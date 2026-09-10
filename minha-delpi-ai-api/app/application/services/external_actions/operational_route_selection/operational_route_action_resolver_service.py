@@ -287,13 +287,13 @@ class OperationalRouteActionResolverService:
         operation_b = str(rival.get("operationId") or rival.get("actionId") or "").strip()
 
         inbound_label = ExternalActionResponseContentService.get(
-            "actionSelection",
+            "actionSelectionCopy",
             "routeClarification",
             "invoiceInboundLabel",
             default="Notas fiscais de entrada",
         )
         outbound_label = ExternalActionResponseContentService.get(
-            "actionSelection",
+            "actionSelectionCopy",
             "routeClarification",
             "invoiceOutboundLabel",
             default="Notas fiscais de saída",
@@ -313,7 +313,7 @@ class OperationalRouteActionResolverService:
             label_b = outbound_label
 
         direct_answer = ExternalActionResponseContentService.format(
-            "actionSelection",
+            "actionSelectionCopy",
             "routeClarification",
             "invoiceDirectionDirectAnswer",
             labelA=label_a,

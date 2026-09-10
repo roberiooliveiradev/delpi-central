@@ -23,7 +23,7 @@ _FREEZE = {
     "required_action_path_tokens": 26,
     "capabilities_http_method_path_mentions": 8,
     "capability_registry_route_hints": 0,
-    "ear_action_selection_keys": 61,
+    "ear_action_selection_keys": 59,
 }
 
 _PATHISH_HINT = re.compile(
@@ -111,9 +111,15 @@ def test_e8_s1_capabilities_http_mentions_and_dead_route_hints():
 
 
 def test_e8_s1_ear_action_selection_residual_flagged():
-    """EAR actionSelection é residual LIVE → E8.S4 (não limpar em S1)."""
+    """EAR actionSelection é residual LIVE → E8.S4 (copy UX já saiu)."""
 
     ear = _load(_EAR)
     selection = ear.get("actionSelection") or {}
     assert isinstance(selection, dict)
     assert len(selection) == _FREEZE["ear_action_selection_keys"]
+    assert "routeClarification" not in selection
+    assert "refinementFallbackMessages" not in selection
+    copy = ear.get("actionSelectionCopy") or {}
+    assert isinstance(copy.get("routeClarification"), dict)
+    assert isinstance(copy.get("refinementFallbackMessages"), dict)
+    assert isinstance(copy.get("emptyRivalSuggestions"), dict)
