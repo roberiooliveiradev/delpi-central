@@ -1,5 +1,3 @@
-import productOperationalContent from "./product_operational_content.json";
-
 export type ProductRouteKey =
   | "profile"
   | "guide"
@@ -10,9 +8,17 @@ export type ProductRouteKey =
   | "analyser"
   | "other";
 
-type PresentationContent = typeof productOperationalContent.presentation;
-
-const presentation = productOperationalContent.presentation as PresentationContent;
+/** Route keys for multi-route chrome — not a display-title catalog. */
+export const PRODUCT_ROUTE_KEYS: readonly ProductRouteKey[] = [
+  "profile",
+  "guide",
+  "inspection",
+  "structure",
+  "stock",
+  "parents",
+  "analyser",
+  "other",
+] as const;
 
 export function routeTitle(routeKey: ProductRouteKey): string {
   // Render-only: semântica de domínio vem da API (`resolvedRouteTitle` / `routeTitles`).
@@ -26,8 +32,6 @@ export function routeFraming(routeKey: ProductRouteKey): string {
   return "";
 }
 
-export const PRODUCT_ROUTE_KEYS = Object.keys(presentation.routeTitles) as ProductRouteKey[];
-
 export function isProductRouteKey(value: string): value is ProductRouteKey {
-  return PRODUCT_ROUTE_KEYS.includes(value as ProductRouteKey);
+  return (PRODUCT_ROUTE_KEYS as readonly string[]).includes(value);
 }

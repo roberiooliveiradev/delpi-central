@@ -1,0 +1,11 @@
+{
+  "stage": "E13.S3_S4",
+  "generated_at": "2026-09-10T06:05:31.317985+00:00",
+  "MFE_routeTitles_present": false,
+  "MFE_routeFraming_present": false,
+  "scopes_byPathFragment_diff": [],
+  "scopes_values_equal": true,
+  "compositeShort_equal": true,
+  "sync_script": "plugins/minha-delpi-chat/scripts/sync-product-operational-content.mjs",
+  "status": "PASS"
+}
