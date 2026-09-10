@@ -34,7 +34,7 @@ Superfície única Admin: canvas fullscreen, KPIs em chips, catálogos/jobs em p
 
 **Single Surface Principle:** resumo do nó, menu ⋯ e popover Saúde da frota = uma moldura (`variant="bare"` + `delpi-ui-popover-surface`); classes `pp-*` só layout. Filtros recolhidos no mapa = `IconButton` sem card externo. Ver [DESIGN-FRONTEND §3.6.1](./DESIGN-FRONTEND.md).
 
-**Conexões:** sem linha / tracejada (driver) / sólida (vínculo OTA). **Soft delete:** Desativar IoT · Arquivar versão. **Menu ⋯:** cada item com `hint` (`PP_HELP.hub.menu*`).
+**Conexões:** linha sólida = vínculo OTA explícito; sem linha = sem vínculo. Compatibilidade de driver só no **modo vínculo** (menu Vincular / arraste FW→IoT) — sem linha tracejada permanente. **Soft delete:** Desativar IoT · Arquivar versão. **Menu ⋯:** cada item com `hint` (`PP_HELP.hub.menu*`).
 
 Helps: `PP_HELP.hub.*`, `PP_HELP.otaLinks.*`.
 
@@ -42,8 +42,8 @@ Helps: `PP_HELP.hub.*`, `PP_HELP.otaLinks.*`.
 |-------------|------------|
 | Hero / CTAs | `hub.hero` · `hub.newDevice` · `hub.newFirmware` · `hub.refresh` |
 | KPIs | `hub.kpiPublished` · `hub.kpiLinked` · `hub.kpiUpdating` · `hub.kpiFailed` |
-| Canvas / legenda | `hub.edgeModesHint` · `hub.edgeNone` · `hub.edgeDashed` · `hub.edgeSolid` |
-| Menu ⋯ IoT/FW | `hub.menuEditDevice` … `hub.menuArchiveFirmware` (via `ContextMenuItem.hint`) |
+| Canvas / legenda | `hub.edgeModesHint` · `hub.edgeSolid` · `hub.edgeNone` · `hub.linkMode*` |
+| Menu ⋯ IoT/FW | `hub.menuEditDevice` … `hub.menuArchiveFirmware` · `hub.startLinkFrom*` |
 | Catálogo | `hub.catalog` · `hub.catalogSearch` |
 | Form OTA / jobs | `hub.jobs` · `ota.jobCreate` · `ota.jobsList` |
 

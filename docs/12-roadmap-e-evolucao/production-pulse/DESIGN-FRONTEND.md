@@ -217,6 +217,14 @@ Import: `from "@delpi/plugin-ui/index"`. Factory com prefixo `pp` onde existir h
 
 **Guardrail:** `productionPulseKit.structural.test.ts` — bare + surface + CSS sem chrome paralelo + collapsed transparente.
 
+### 3.6.2 Connection Mode (Firmware ↔ IoT)
+
+**Estado normal:** só edge sólida (`assignedFirmwareKey`). Compatibilidade de driver **não** gera linha.
+
+**Modo vínculo:** menu `Vincular IoT` / `Vincular firmware` (ou arraste FW→IoT) → origem destacada; candidatos compatíveis ativos; incompatíveis visíveis + `Ban` + bloqueio de PUT; bottom bar com Esc·Cancelar. Paridade com API via `compatibleDriverKeys` / `isFirmwareDeviceCompatible`.
+
+Ver `.cursor/rules/production-pulse-admin-hub.mdc`.
+
 ### 3.7 Helps e explicações
 
 **Catálogo:** [`docs/.../content/helpTooltips.ts`](./content/helpTooltips.ts) → `plugins/production-pulse/src/content/helpTooltips.ts`  

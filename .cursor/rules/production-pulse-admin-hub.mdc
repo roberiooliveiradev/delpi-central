@@ -1,5 +1,5 @@
 ---
-description: Production Pulse Admin Hub OTA — canvas-first, edge modes, modais host-contained, soft delete
+description: Production Pulse Admin Hub OTA — canvas-first, explicit OTA edges, Connection Mode, modais host-contained, soft delete
 globs: plugins/production-pulse/src/pages/FirmwareLinksPage.tsx,plugins/production-pulse/src/components/FirmwareDeviceLinkCanvas.tsx,plugins/production-pulse/src/components/HubCanvasLegend.tsx,plugins/production-pulse/src/components/EntityContextLayers.tsx,plugins/production-pulse/src/components/AdminSidePanel.tsx,plugins/production-pulse/src/utils/adminHubUiState.ts,plugins/production-pulse/src/utils/firmwareLinkGraph.ts,plugins/production-pulse/src/app/productionPulseUi.tsx,plugins/production-pulse/src/content/helpTooltips.ts
 alwaysApply: false
 ---
@@ -10,15 +10,33 @@ alwaysApply: false
 
 Mapa Admin = `FirmwareLinksPage` (`/firmware-links`). Canvas é a superfície principal; overlays/painéis/modais são siblings (não desmontar React Flow).
 
-## Conexões (três modos — obrigatório na UI)
+## Conexões
 
-| Modo | Visual | Significado | Remoção |
-|------|--------|-------------|---------|
-| **Sem linha** | sem edge | IoT sem vínculo explícito e sem match de `driverKey` | — |
-| **Tracejada** | `inherited` | Herança automática: mesmo `driverKey` da família | **Não** removível por Desvincular; só muda driver/família |
-| **Sólida** | `explicit` | `assignedFirmwareKey` — vínculo OTA | Desvincular / Delete na seta |
+### Estado normal
 
-Legenda in-app: `HubCanvasLegend` + `PP_HELP.hub.edge*`. Ajuda: `PP_HELP.otaLinks.*`.
+| Visual | Significado | Remoção |
+|--------|-------------|---------|
+| **Sem edge** | Sem vínculo OTA explícito (`assignedFirmwareKey` vazio) | — |
+| **Linha sólida** | `assignedFirmwareKey` — vínculo OTA explícito | Desvincular / Delete na seta |
+
+Compatibilidade de driver **não** gera edge. Após desvincular, a linha some por completo (não volta tracejada).
+
+### Modo vínculo (Connection Mode)
+
+Estado efêmero na página (não na URL). Entrada: menu `Vincular IoT` / `Vincular firmware` ou arraste FW→IoT.
+
+- origem fica destacada;
+- candidatos compatíveis ativos (`Link2`);
+- candidatos incompatíveis permanecem **visíveis**, esmaecidos, com `Ban`, `aria-disabled`;
+- conexão incompatível é bloqueada no frontend (sem PUT);
+- API permanece autoridade final (`422 firmwareLinkIncompatible`);
+- funciona Firmware → IoT e IoT → Firmware (seleção/menu; drag FW→IoT como atalho do mesmo motor);
+- Escape / Cancelar / clique no fundo sai do modo;
+- bottom bar comunica o modo ativo (não FloatingNotice).
+
+Compatibilidade no MFE espelha a API: `{ firmwareKey } ∪ driverKey de todas as versões do catálogo` via `compatibleDriverKeys` / `isFirmwareDeviceCompatible`.
+
+Legenda: `HubCanvasLegend` (+ modo vínculo contextual). Ajuda: `PP_HELP.hub.link*` / `edge*`.
 
 ## Soft delete (não hard delete)
 
@@ -43,20 +61,22 @@ Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.c
 | Feedback transitório | `PpFloatingNotices` |
 | Persistente | `PpStateBox` |
 
-URL: `?modal=` canônico; `drawer=` só alias de parse. Builders emitem `modal`.
+URL: `?modal=` canônico; `drawer=` só alias de parse. Builders emitem `modal`. Link Mode **não** entra na URL.
 
 ## Anti-padrões
 
 1. Drawer lateral para detalhe/CRUD no Hub.
-2. Tratar edge `inherited` como vínculo desvinculável.
+2. Gerar edge visual só por match de driver / compatibilidade.
 3. Toast/modal/z-index locais (usar kit host-contained + FloatingNotice).
 4. CTA grande de OTA no card do nó (ações no menu/detail).
 5. Cobrir `#portal-sidebar` (só `createHostContained*`).
 6. CSS `.delpi-ui-*` no `index.css` do MFE.
+7. Remontar React Flow só para alternar Connection Mode.
+8. Ocultar candidatos incompatíveis (`display:none` / filtrar do array).
 
 ## Módulos canônicos
 
 - State/URL: `adminHubUiState.ts`, `routes.ts`
-- Grafo: `firmwareLinkGraph.ts`
+- Grafo + compatibilidade: `firmwareLinkGraph.ts`
 - Kit: `productionPulseUi.tsx` (`PpDetailDialog`, `PpWorkbenchDialog`, `PpConfirmDialog`, `PpFloatingNotices`)
 - Docs espelho: `docs/12-roadmap-e-evolucao/production-pulse/{WIREFRAMES,HELP-CONTENT,DESIGN-FRONTEND}.md`

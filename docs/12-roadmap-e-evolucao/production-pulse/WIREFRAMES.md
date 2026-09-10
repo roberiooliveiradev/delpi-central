@@ -1567,10 +1567,13 @@ Query: `entity=device|firmware|job:<id>` · `panel=devices|firmwares|jobs` · `m
 ┌─ Canvas Firmware ↔ IoT ──────────────────────────────────────────┐
 │ FW (FileCode): nome · versão · IoTs · desatul. · ⋯               │
 │ IoT (Cpu): status+dot · golpes · FW · ⋯                          │
-│ Popover resumo · menu contextual · detail/workbench modals       │
+│ Linha sólida = vínculo OTA · sem linha = sem vínculo             │
+│ ⋯ Vincular IoT / Vincular firmware → modo vínculo (Ban / Link2)  │
 │ Delete/Backspace na seta sólida = unlink · pan/zoom/touch        │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+**Connection Mode:** compatibilidade de driver é estado visual dos nós (nunca edge). FW→IoT e IoT→FW via menu; arraste FW→IoT usa o mesmo motor.
 
 Helps: `PP_HELP.hub.*` · `PP_HELP.otaLinks.*` · `PP_HELP.firmwareCreate.*`.
 
