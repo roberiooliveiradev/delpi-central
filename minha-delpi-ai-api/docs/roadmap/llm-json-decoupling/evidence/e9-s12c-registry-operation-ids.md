@@ -16,8 +16,8 @@
 
 ## Não removido nesta fatia
 
-- `routeSegment` (refinement/pagination) → E9.S12.D
-- `parameters.strategy` / domain `parameterStrategy` → E9.S12.E
+- `routeSegment` (refinement/pagination) → **E9.S12.D ATENDIDO**
+- `parameters.strategy` / domain `parameterStrategy` → **E9.S12.E ATENDIDO**
 - TU heuristics → plano-02
 
 ## Evidência

@@ -108,11 +108,9 @@ class OperationalRouteDomainSelectionService:
                 ),
             },
             "route": {
-                "operationIds": [
-                    str(token).strip()
-                    for token in (spec.operation_tokens or [])
-                    if str(token).strip()
-                ],
+                # E9.S12.C/D — operationIds = OpenAPI canônicos only.
+                # Virtual KPI uses path/operation markers for catalog match.
+                "operationIds": [],
                 "pathMarkers": path_markers or list(spec.path_prefixes),
                 "operationIdMarkers": list(spec.operation_tokens),
                 "method": spec.method,
@@ -148,13 +146,18 @@ class OperationalRouteDomainSelectionService:
             if binding != normalized_intent:
                 continue
 
-            route_segment_spec = str(route.get("routeSegment") or "").strip().lower()
+            from app.domain.services.route_segment_inference_service import (
+                RouteSegmentInferenceService,
+            )
 
-            if normalized_segment and route_segment_spec:
-                if route_segment_spec != normalized_segment:
+            route_keys = RouteSegmentInferenceService.continuity_keys_for_route(route)
+
+            if normalized_segment:
+                if route_keys:
+                    if normalized_segment not in route_keys:
+                        continue
+                elif normalized_segment in ("inbound-invoice", "outbound-invoice"):
                     continue
-            elif normalized_segment in ("inbound-invoice", "outbound-invoice"):
-                continue
 
             selected = self._resolver.resolve_route_action(
                 route,

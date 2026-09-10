@@ -23,5 +23,5 @@
 
 ## Ainda residual
 
-- `routeSegment` (E9.S12.D)
+- `routeSegment` → **E9.S12.D ATENDIDO**
 - TU heuristics (plano-02)

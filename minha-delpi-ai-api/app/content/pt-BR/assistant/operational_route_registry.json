@@ -186,7 +186,6 @@
       "id": "productDirectives",
       "domain": "product",
       "priority": 165,
-      "routeSegment": "directives",
       "match": {
         "customPredicate": "directives",
         "requiresProductIdentifier": true
@@ -222,7 +221,6 @@
       "id": "productRawMaterialPriceIntelligence",
       "domain": "product",
       "priority": 150,
-      "routeSegment": "raw-material-price-intelligence",
       "match": {
         "customPredicate": "rawMaterialPriceIntelligence"
       },
@@ -240,7 +238,6 @@
       "id": "productCostImpactSimulation",
       "domain": "product",
       "priority": 150,
-      "routeSegment": "cost-impact-simulation",
       "match": {
         "customPredicate": "costImpactSimulation"
       },
@@ -309,7 +306,6 @@
       "id": "productFactoryStatus",
       "domain": "product",
       "priority": 140,
-      "routeSegment": "factory-status",
       "match": {
         "customPredicate": "factoryStatus",
         "noneOf": [
@@ -332,7 +328,6 @@
       "id": "productGuide",
       "domain": "product",
       "priority": 122,
-      "routeSegment": "guide",
       "match": {
         "customPredicate": "guideRoute",
         "requiresProductIdentifier": true
@@ -351,7 +346,6 @@
       "id": "productBySupplierPartNumber",
       "domain": "product",
       "priority": 125,
-      "routeSegment": "by-supplier-part-number",
       "match": {
         "customPredicate": "supplierPartNumberLookup",
         "acceptedIdentifierRoles": [
@@ -373,7 +367,6 @@
       "id": "productSuppliers",
       "domain": "product",
       "priority": 121,
-      "routeSegment": "suppliers",
       "match": {
         "customPredicate": "suppliersRoute",
         "requiresProductIdentifier": true,
@@ -395,7 +388,6 @@
       "id": "productPurchases",
       "domain": "product",
       "priority": 120,
-      "routeSegment": "purchases",
       "match": {
         "customPredicate": "purchasesRoute",
         "requiresProductIdentifier": true,
@@ -428,7 +420,6 @@
       "id": "productSalePricing",
       "domain": "product",
       "priority": 119,
-      "routeSegment": "pricing",
       "match": {
         "customPredicate": "salePricingRoute",
         "requiresProductIdentifier": true
@@ -447,7 +438,6 @@
       "id": "productOpenOrders",
       "domain": "product",
       "priority": 123,
-      "routeSegment": "open-orders",
       "match": {
         "customPredicate": "openOrdersRoute",
         "requiresProductIdentifier": true
@@ -468,7 +458,6 @@
       "id": "productBilling",
       "domain": "product",
       "priority": 118,
-      "routeSegment": "billing",
       "match": {
         "customPredicate": "billingRoute",
         "requiresProductIdentifier": true
@@ -487,7 +476,6 @@
       "id": "productGenericPricing",
       "domain": "product",
       "priority": 117,
-      "routeSegment": "pricing",
       "match": {
         "customPredicate": "genericPricingRoute",
         "requiresProductIdentifier": true,
@@ -520,7 +508,6 @@
       "id": "productInspection",
       "domain": "product",
       "priority": 116,
-      "routeSegment": "inspection",
       "match": {
         "customPredicate": "inspectionRoute",
         "requiresProductIdentifier": true
@@ -540,7 +527,6 @@
       "id": "productCustomers",
       "domain": "product",
       "priority": 115,
-      "routeSegment": "customers",
       "match": {
         "customPredicate": "customersRoute",
         "requiresProductIdentifier": true
@@ -559,7 +545,6 @@
       "id": "productInternalMovements",
       "domain": "product",
       "priority": 114,
-      "routeSegment": "internal-movements",
       "match": {
         "customPredicate": "internalMovementsRoute",
         "requiresProductIdentifier": true
@@ -578,7 +563,6 @@
       "id": "productLastPurchase",
       "domain": "product",
       "priority": 151,
-      "routeSegment": "last-purchase",
       "match": {
         "customPredicate": "lastPurchase",
         "noneOf": [
@@ -601,7 +585,6 @@
       "id": "productPurchasePriceHistory",
       "domain": "product",
       "priority": 122,
-      "routeSegment": "purchase-price-history",
       "match": {
         "customPredicate": "purchasePriceHistory"
       },
@@ -619,7 +602,6 @@
       "id": "productPurchaseBudgetHistory",
       "domain": "product",
       "priority": 122,
-      "routeSegment": "purchase-budget-history",
       "match": {
         "customPredicate": "purchaseBudgetHistory"
       },
@@ -637,7 +619,6 @@
       "id": "productStock",
       "domain": "product",
       "intentBinding": "stock",
-      "routeSegment": "stock",
       "route": {
         "operationIds": [
           "get_product_stock"
@@ -669,7 +650,6 @@
       "id": "productStructure",
       "domain": "product",
       "intentBinding": "structure",
-      "routeSegment": "structure",
       "route": {
         "operationIds": [
           "get_product_structure"
@@ -684,7 +664,6 @@
       "id": "productParents",
       "domain": "product",
       "intentBinding": "parents",
-      "routeSegment": "parents",
       "route": {
         "operationIds": [
           "get_product_parents"
@@ -714,7 +693,6 @@
       "domain": "product",
       "priority": 113,
       "intentBinding": "full",
-      "routeSegment": "inbound-invoice",
       "match": {
         "customPredicate": "inboundInvoiceRoute",
         "requiresProductIdentifier": true
@@ -734,7 +712,6 @@
       "domain": "product",
       "priority": 112,
       "intentBinding": "full",
-      "routeSegment": "outbound-invoice",
       "match": {
         "customPredicate": "outboundInvoiceRoute",
         "requiresProductIdentifier": true
@@ -1849,6 +1826,8 @@
       "forced": 1,
       "empty": 0
     },
-    "parameterStrategyDeletedAt": "E9.S12.E"
+    "parameterStrategyDeletedAt": "E9.S12.E",
+    "routeSegmentDeletedAt": "E9.S12.D",
+    "routeSegmentDeletedCount": 23
   }
 }

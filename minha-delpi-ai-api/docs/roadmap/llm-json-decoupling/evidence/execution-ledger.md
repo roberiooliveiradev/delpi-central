@@ -157,3 +157,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: E9.S12.E (`parameters.strategy`) ou E9.S12.D (`routeSegment`) |
 | 2026-09-10 | E9.S12.E **ATENDIDO** — DELETE parameters.strategy / domain parameterStrategy; inferência OpenAPI |
 | 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: E9.S12.D (`routeSegment`) ou cutover TU |
+| 2026-09-10 | E9.S12.D **ATENDIDO** — DELETE registry `routeSegment`; `RouteSegmentInferenceService`; follow-up JSON KEEP |
+| 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: cutover TU (plano-02) |

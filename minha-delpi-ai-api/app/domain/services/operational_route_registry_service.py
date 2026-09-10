@@ -16,6 +16,11 @@ from app.domain.services.chat_assistant_content_service import ChatAssistantCont
 def invalidate_operational_route_registry_cache() -> None:
     _registry_content.cache_clear()
     _autotierc_ci_content.cache_clear()
+    from app.domain.services.route_segment_inference_service import (
+        invalidate_route_segment_inference_cache,
+    )
+
+    invalidate_route_segment_inference_cache()
 
 
 @lru_cache(maxsize=1)
@@ -170,15 +175,20 @@ class OperationalRouteRegistryService:
     @staticmethod
     def _vocabulary_route_sort_key(route: dict[str, Any]) -> tuple[int, int]:
         """Facetas de produto (segmento/código) antes de catch-alls como productSearch."""
+        from app.domain.services.route_segment_inference_service import (
+            RouteSegmentInferenceService,
+        )
+
         domain = str(route.get("domain") or "").strip()
         match = route.get("match") if isinstance(route.get("match"), dict) else {}
-        has_segment = bool(str(route.get("routeSegment") or "").strip())
+        has_segment = RouteSegmentInferenceService.has_product_continuity_segment(route)
         requires_product = bool(match.get("requiresProductIdentifier"))
 
-        if has_segment or requires_product or domain == "product":
-            class_rank = 0
-        elif domain == "domainProductSearch":
+        # domainProductSearch before inferred path keys — /products/search also yields keys.
+        if domain == "domainProductSearch":
             class_rank = 2
+        elif has_segment or requires_product or domain == "product":
+            class_rank = 0
         else:
             class_rank = 1
 
@@ -195,6 +205,10 @@ class OperationalRouteRegistryService:
 
     @classmethod
     def routes_by_segment(cls, segment: str) -> list[dict[str, Any]]:
+        from app.domain.services.route_segment_inference_service import (
+            RouteSegmentInferenceService,
+        )
+
         normalized = str(segment or "").strip().lower()
 
         if not normalized:
@@ -203,7 +217,7 @@ class OperationalRouteRegistryService:
         return [
             route
             for route in cls.routes()
-            if str(route.get("routeSegment") or "").strip().lower() == normalized
+            if RouteSegmentInferenceService.route_matches_segment(route, normalized)
         ]
 
     @classmethod
@@ -329,40 +343,35 @@ class OperationalRouteRegistryService:
 
     @classmethod
     def route_path_marker_for_segment(cls, segment: str) -> str | None:
-        """Hint de path por segment — pós-E9.S12.C usa routeSegment (pathMarkers removidos)."""
+        """Hint de path por segment — pós-E9.S12.D deriva de operationIds (OpenAPI)."""
         normalized = str(segment or "").strip().lower()
 
         if not normalized:
             return None
 
-        for route in cls.routes():
-            if str(route.get("routeSegment") or "").strip().lower() != normalized:
-                continue
+        if not cls.routes_by_segment(normalized):
+            return None
 
-            route_spec = route.get("route")
-            if isinstance(route_spec, dict):
-                markers = route_spec.get("pathMarkers")
-                if isinstance(markers, list):
-                    for marker in markers:
-                        value = str(marker or "").strip()
-                        if value:
-                            return value
-
-            # Canonical fallback: segment as path fragment (ex.: stock → /stock).
-            return f"/{normalized}"
-
-        return None
+        # Canonical: continuity segment as path fragment (ex.: stock → /stock).
+        return f"/{normalized}"
 
     @classmethod
     def refinement_intent_by_route_segment(cls) -> dict[str, str]:
+        from app.domain.services.route_segment_inference_service import (
+            RouteSegmentInferenceService,
+        )
+
         mapping: dict[str, str] = {}
 
         for route in cls.intent_bound_routes():
-            segment = str(route.get("routeSegment") or "").strip().lower()
             intent = str(route.get("intentBinding") or "").strip().lower()
+            if not intent:
+                continue
 
-            if segment and intent:
-                mapping[segment] = intent
+            for segment in RouteSegmentInferenceService.continuity_keys_for_route(route):
+                # Prefer exact intentBinding key when present among derived keys.
+                if segment == intent or segment not in mapping:
+                    mapping[segment] = intent
 
         return mapping
 

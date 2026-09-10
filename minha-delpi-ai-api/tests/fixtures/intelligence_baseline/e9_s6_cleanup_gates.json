@@ -83,7 +83,7 @@
       "replacement": "route.operationIds",
       "blockReason": null,
       "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s12c-registry-operation-ids.md",
-      "note": "routeSegment e parameters.strategy permanecem (E9.S12.D/E)"
+      "note": "parameters.strategy removido em E9.S12.E; routeSegment removido em E9.S12.D"
     },
     {
       "id": "registry_parameter_strategy_fields",
@@ -98,6 +98,20 @@
       "blockReason": null,
       "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s12e-parameter-strategy-inference.md",
       "note": "parameterStrategies catalog retained as enum docs; dial parameterStrategyShadow kept for compare"
+    },
+    {
+      "id": "registry_route_segment",
+      "fields": ["routeSegment"],
+      "surface": "app/content/pt-BR/assistant/operational_route_registry.json",
+      "owner": "plano-01 / Onda B / E9.S12.D",
+      "status": "DELETED",
+      "deletedAt": "E9.S12.D",
+      "authorization": "APPROVED",
+      "authorizationSource": "user:continuar limpeza jsons + RouteSegmentInferenceService via openapi_operation_id_inventory",
+      "replacement": "RouteSegmentInferenceService.continuity_keys_for_route (operationIds→OpenAPI path)",
+      "blockReason": null,
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s12d-route-segment-inference.md",
+      "note": "follow-up JSON routeSegment / dateInheritance.routeSegments KEEP (conceito separado)"
     },
     {
       "id": "follow_up_message_segment_terms",
@@ -145,5 +159,5 @@
     }
   ],
   "passStatusesForDelete": ["PASS", "PASS_OFFLINE_AND_LIVE", "APPROVED"],
-  "note": "deleteAuthorized global=false; E9.S12.A/B/C/E DELETED. routeSegment + TU heuristics BLOCKED."
+  "note": "deleteAuthorized global=false; E9.S12.A/B/C/D/E DELETED. TU heuristics BLOCKED."
 }

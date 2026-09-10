@@ -408,6 +408,9 @@ class OperationalRouteActionResolverService:
         from app.domain.services.parameter_strategy_inference_service import (
             ParameterStrategyInferenceService,
         )
+        from app.domain.services.route_segment_inference_service import (
+            RouteSegmentInferenceService,
+        )
 
         strategy = ParameterStrategyInferenceService.infer_from_action(
             action,
@@ -415,7 +418,9 @@ class OperationalRouteActionResolverService:
         ).lower()
         match_spec = route.get("match") if isinstance(route.get("match"), dict) else {}
         requires_product = bool(match_spec.get("requiresProductIdentifier"))
-        route_segment = str(route.get("routeSegment") or "").strip()
+        has_product_segment = (
+            RouteSegmentInferenceService.has_product_continuity_segment(route)
+        )
         domain = str(route.get("domain") or "").strip()
 
         if strategy == "product_search" or domain == "domainProductSearch":
@@ -424,7 +429,7 @@ class OperationalRouteActionResolverService:
         if strategy == "supplier_part_number":
             return "/products/" in path and "by-supplier-part-number" in path
 
-        if strategy == "product_code" or requires_product or route_segment:
+        if strategy == "product_code" or requires_product or has_product_segment:
             if "{code}" in path or "{identifier}" in path:
                 return "/products/" in path
 

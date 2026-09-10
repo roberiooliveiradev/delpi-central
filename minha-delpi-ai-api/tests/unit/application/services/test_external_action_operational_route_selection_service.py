@@ -41,7 +41,7 @@ def test_operational_route_selection_picks_exclusive_catalog_without_product_cod
                 "actionId": "exclusive-catalog",
                 "method": "GET",
                 "path": "/products/exclusive-raw-materials/catalog",
-                "operationId": "get_exclusive_raw_material_catalog",
+                "operationId": "list_exclusive_raw_materials_catalog",
                 "parametersSchema": [],
             }
         ]
@@ -523,7 +523,7 @@ def test_operational_route_selection_picks_product_inspection() -> None:
                 "actionId": "inspection",
                 "method": "GET",
                 "path": "/products/{code}/inspection",
-                "operationId": "list_product_inspection",
+                "operationId": "get_product_inspection",
                 "parametersSchema": [{"name": "code", "in": "path", "required": True}],
             },
             {
@@ -754,7 +754,7 @@ def test_operational_route_selection_system_tables_search() -> None:
                 "actionId": "tables-search",
                 "method": "GET",
                 "path": "/system/tables/search",
-                "operationId": "search_tables",
+                "operationId": "search_tables_by_description",
                 "parametersSchema": [{"name": "description", "in": "query"}],
             }
         ]
