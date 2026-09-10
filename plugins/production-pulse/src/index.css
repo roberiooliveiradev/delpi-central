@@ -2177,6 +2177,10 @@
   box-shadow: -8px 0 24px rgba(15, 23, 42, 0.12);
 }
 
+.pp-admin-side-panel--wide {
+  width: min(34rem, 94vw);
+}
+
 .pp-admin-side-panel__head {
   display: flex;
   align-items: center;
@@ -2453,6 +2457,56 @@
 
 .pp-device-catalog-panel .pp-page-stack {
   gap: 0.75rem;
+}
+
+.pp-panel-page--embedded {
+  gap: 0.65rem;
+  padding: 0;
+}
+
+.pp-panel-embedded-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pp-kpi-strip--compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.pp-kpi-strip--compact .pp-kpi-skeleton {
+  min-height: 3.25rem;
+}
+
+.pp-kpi-strip--compact .pp-kpi-card {
+  min-width: 0;
+  padding: 0.55rem 0.65rem;
+}
+
+.pp-kpi-strip--compact .pp-kpi-card__value {
+  font-size: var(--pp-font-md);
+  line-height: 1.15;
+}
+
+.pp-kpi-strip--compact .pp-kpi-card__title {
+  font-size: var(--pp-font-xs);
+}
+
+.pp-kpi-strip--compact .pp-kpi-card__icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.pp-kpi-strip--compact .pp-kpi-card__icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.pp-panel-page--embedded .pp-device-table__col-role,
+.pp-panel-page--embedded .pp-device-table__col-last-seen {
+  display: none;
 }
 
 @media (max-width: 768px) {

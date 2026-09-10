@@ -11,6 +11,8 @@ type AdminSidePanelProps = {
   children: ReactNode;
   /** On mobile, catalogs open as page dialog (not side drawer). */
   preferDrawerOnMobile?: boolean;
+  /** Catálogo denso (IoTs): painel mais largo sem cobrir o canvas. */
+  size?: "default" | "wide";
 };
 
 export function AdminSidePanel({
@@ -19,6 +21,7 @@ export function AdminSidePanel({
   onClose,
   children,
   preferDrawerOnMobile = true,
+  size = "default",
 }: AdminSidePanelProps) {
   const viewport = useViewportBucket();
   const mobile = isMobileViewport(viewport);
@@ -33,8 +36,11 @@ export function AdminSidePanel({
     );
   }
 
+  const panelClass =
+    size === "wide" ? "pp-admin-side-panel pp-admin-side-panel--wide" : "pp-admin-side-panel";
+
   return (
-    <aside className="pp-admin-side-panel" aria-label={title}>
+    <aside className={panelClass} aria-label={title}>
       <header className="pp-admin-side-panel__head">
         <h2 className="pp-admin-side-panel__title">{title}</h2>
         <PpActionButton variant="ghost" onClick={onClose} aria-label="Fechar painel">

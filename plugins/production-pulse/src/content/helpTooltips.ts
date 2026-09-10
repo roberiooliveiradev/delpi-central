@@ -355,7 +355,7 @@ export const PP_HELP = {
     menuAttachBinary: "Anexa o artefato .bin necessário para publicar.",
     menuPublishFirmware: "Publica a versão (imutável depois). Exige .bin anexado.",
     menuOpenDetails: "Abre o detalhe completo (modal) do IoT ou da versão.",
-    panelDevices: "Abre o catálogo de IoTs da filial em painel lateral.",
+    panelDevices: "Abre o catálogo de IoTs da filial em painel lateral compacto (sem hero de página).",
     panelFirmwares: "Abre o catálogo de firmwares em painel lateral.",
     panelJobs: "Abre a lista de jobs OTA (agendados e em andamento).",
     statusFilter: "Filtra nós do mapa por status (online, offline ou inativos).",

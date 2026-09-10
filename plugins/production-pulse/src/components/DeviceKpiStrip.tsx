@@ -8,16 +8,26 @@ import { formatCounterDeltaKpi } from "../utils/deviceDisplay";
 type DeviceKpiStripProps = {
   summary: DeviceSummary | null;
   loading?: boolean;
+  /** Side panel / modal — grade 2 colunas e cards densos. */
+  compact?: boolean;
 };
 
 function skeletonCard(key: string) {
   return <div key={key} className="pp-kpi-skeleton" aria-hidden="true" />;
 }
 
-export function DeviceKpiStrip({ summary, loading }: DeviceKpiStripProps) {
+export function DeviceKpiStrip({ summary, loading, compact = false }: DeviceKpiStripProps) {
+  const stripClass = [
+    "pp-kpi-strip",
+    compact ? "pp-kpi-strip--compact" : "",
+    !compact && summary?.counterDelta ? "pp-kpi-strip--extended" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   if (loading && !summary) {
     return (
-      <section className="pp-kpi-strip" aria-label="Indicadores">
+      <section className={stripClass} aria-label="Indicadores">
         {skeletonCard("a")}
         {skeletonCard("b")}
         {skeletonCard("c")}
@@ -30,10 +40,7 @@ export function DeviceKpiStrip({ summary, loading }: DeviceKpiStripProps) {
   const hasCounterDelta = Boolean(summary?.counterDelta);
 
   return (
-    <section
-      className={`pp-kpi-strip${hasCounterDelta ? " pp-kpi-strip--extended" : ""}`}
-      aria-label="Indicadores"
-    >
+    <section className={stripClass} aria-label="Indicadores">
       <PpSimpleKpiCard
         title="Total"
         titleHint={PP_HELP.panel.kpiTotal}

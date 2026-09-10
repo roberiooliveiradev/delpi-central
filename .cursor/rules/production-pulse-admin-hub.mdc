@@ -39,7 +39,7 @@ Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.c
 | CRUD IoT/FW | `PpWorkbenchDialog` (page) |
 | Agendar OTA | `PpHostContainedDialog` compacto |
 | Confirmação | `PpConfirmDialog` |
-| Catálogos | Side panel; mobile → modal page |
+| Catálogos | Side panel (`size=wide` para IoTs); conteúdo `embedded` (sem hero); mobile → modal page |
 | Feedback transitório | `PpFloatingNotices` |
 | Persistente | `PpStateBox` |
 

@@ -16,6 +16,8 @@ type DeviceFiltersBarProps = {
   canManage: boolean;
   onChange: (patch: Partial<PanelFilters>) => void;
   onCreateDevice?: () => void;
+  /** Hub side panel — esconde modo Cards (largura insuficiente). */
+  compact?: boolean;
 };
 
 const ANCHOR_OPTIONS = [
@@ -53,7 +55,19 @@ export function DeviceFiltersBar({
   canManage,
   onChange,
   onCreateDevice,
+  compact = false,
 }: DeviceFiltersBarProps) {
+  const viewOptions = compact
+    ? [
+        { value: "table", label: "Tabela" },
+        { value: "grouped", label: "Agrupado" },
+      ]
+    : [
+        { value: "table", label: "Tabela" },
+        { value: "cards", label: "Cards" },
+        { value: "grouped", label: "Agrupado" },
+      ];
+
   return (
     <PpFiltersRow>
       <PpFilterSelectField
@@ -98,13 +112,9 @@ export function DeviceFiltersBar({
             ariaLabel="Modo de visualização"
             size="sm"
             widthMode="content"
-            value={filters.view}
+            value={compact && filters.view === "cards" ? "table" : filters.view}
             onChange={(value) => onChange({ view: value as PanelFilters["view"] })}
-            options={[
-              { value: "table", label: "Tabela" },
-              { value: "cards", label: "Cards" },
-              { value: "grouped", label: "Agrupado" },
-            ]}
+            options={viewOptions}
           />
           {filters.view === "grouped" ? (
             <PpFilterSelectField

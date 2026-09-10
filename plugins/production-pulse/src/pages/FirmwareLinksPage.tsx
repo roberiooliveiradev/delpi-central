@@ -1169,6 +1169,7 @@ export function FirmwareLinksPage({
         <AdminSidePanel
           open={ui.openLayer === "panel" && ui.panel === "devices"}
           title="IoTs"
+          size="wide"
           onClose={() => setLayer({ panel: null, openLayer: "none" })}
         >
           <DeviceCatalogPanel

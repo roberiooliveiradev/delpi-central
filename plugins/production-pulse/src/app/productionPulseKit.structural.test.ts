@@ -360,9 +360,15 @@ describe("production-pulse kit contracts", () => {
     const panel = readRelative("pages/PanelPage.tsx");
     expect(panel).toMatch(/PpSegmentToggle/);
     expect(panel).toMatch(/PpPagination/);
+    expect(panel).toMatch(/embedded/);
+    expect(panel).toMatch(/pp-panel-page--embedded/);
     expect(panel).not.toMatch(/FilialSwitcher/);
     expect(panel).not.toMatch(/pp-compact-pagination/);
     expect(sources.some(({ rel }) => rel === "components/FilialSwitcher.tsx")).toBe(false);
+    expect(readRelative("components/DeviceCatalogPanel.tsx")).toMatch(/embedded/);
+    expect(readRelative("components/AdminSidePanel.tsx")).toMatch(/size\?: "default" \| "wide"/);
+    expect(readRelative("index.css")).toMatch(/pp-admin-side-panel--wide/);
+    expect(readRelative("index.css")).toMatch(/pp-kpi-strip--compact/);
   });
 
   it("replacePanelFilters só roda no path do painel", () => {

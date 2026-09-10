@@ -34,9 +34,11 @@ const PAGE_SIZE = 20;
 type PanelPageProps = {
   search: string;
   permissions: ProductionPulsePermissionFlags;
+  /** Hub side panel / modal — sem hero de página cheia; KPIs e filtros densos. */
+  embedded?: boolean;
 };
 
-export function PanelPage({ search, permissions }: PanelPageProps) {
+export function PanelPage({ search, permissions, embedded = false }: PanelPageProps) {
   const branchOptions = useMemo(
     () => resolveBranchOptions(permissions.allowedBranches),
     [permissions.allowedBranches],
@@ -85,8 +87,8 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
 
   if (!permissions.canViewDevices) {
     return (
-      <div className="pp-page-stack">
-        <PpPageHero title="Pulso de Produção" badge={ppShellIcon} />
+      <div className={`pp-page-stack${embedded ? " pp-panel-page--embedded" : ""}`}>
+        {!embedded ? <PpPageHero title="Pulso de Produção" badge={ppShellIcon} /> : null}
         <PpStateBox
           variant="error"
           title="Sem permissão"
@@ -98,8 +100,8 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
 
   if (!branchAllowed) {
     return (
-      <div className="pp-page-stack">
-        <PpPageHero title="Pulso de Produção" badge={ppShellIcon} />
+      <div className={`pp-page-stack${embedded ? " pp-panel-page--embedded" : ""}`}>
+        {!embedded ? <PpPageHero title="Pulso de Produção" badge={ppShellIcon} /> : null}
         <PpStateBox
           variant="error"
           title="Sem permissão para esta filial"
@@ -111,15 +113,18 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
 
   const showEmptyFilial = !loading && !error && filteredDevices.length === 0 && !filters.search && !filters.status && !filters.anchorType && !filters.role;
   const showEmptyFilters = !loading && !error && filteredDevices.length === 0 && !showEmptyFilial;
+  const effectiveView =
+    embedded && filters.view === "cards" ? "table" : filters.view;
 
   return (
-    <div className="pp-page-stack pp-panel-page">
-      <PpPageHero
-        title="Pulso de Produção"
-        description={PP_HELP.shell.heroTitle}
-        badge={ppShellIcon}
-        actions={
-          <div className="pp-panel-hero-actions">
+    <div className={`pp-page-stack pp-panel-page${embedded ? " pp-panel-page--embedded" : ""}`}>
+      {!embedded ? (
+        <PpPageHero
+          title="Pulso de Produção"
+          description={PP_HELP.shell.heroTitle}
+          badge={ppShellIcon}
+          actions={
+            <div className="pp-panel-hero-actions">
               {branchOptions.length > 1 ? (
                 <PpHintAction hint={PP_HELP.shell.heroFilial} ariaLabel="Ajuda: Filial">
                   <PpSegmentToggle
@@ -133,16 +138,31 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
                 </PpHintAction>
               ) : null}
             </div>
-        }
-      />
+          }
+        />
+      ) : branchOptions.length > 1 ? (
+        <div className="pp-panel-embedded-toolbar">
+          <PpHintAction hint={PP_HELP.shell.heroFilial} ariaLabel="Ajuda: Filial">
+            <PpSegmentToggle
+              ariaLabel="Filial"
+              size="sm"
+              widthMode="content"
+              value={filters.branch}
+              onChange={(branch) => setFilters({ branch, page: 1 })}
+              options={branchOptions.map((item) => ({ value: item.id, label: item.label }))}
+            />
+          </PpHintAction>
+        </div>
+      ) : null}
 
-      <DeviceKpiStrip summary={summary} loading={loading} />
+      <DeviceKpiStrip summary={summary} loading={loading} compact={embedded} />
 
       <DeviceFiltersBar
         filters={filters}
         canManage={permissions.canManageDevices}
         onChange={setFilters}
         onCreateDevice={openCreate}
+        compact={embedded}
       />
 
       {pollNotice ? (
@@ -208,15 +228,15 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
       ) : null}
 
       {!showEmptyFilial && !showEmptyFilters ? (
-        filters.view === "grouped" ? (
+        effectiveView === "grouped" ? (
           <DeviceGroupedByWorkCenter
             groups={groups}
-            mobile={isMobile}
+            mobile={isMobile || embedded}
             pollingDeviceId={pollingDeviceId}
             onPoll={runPoll}
             onOpenDevice={openDevice}
           />
-        ) : filters.view === "cards" ? (
+        ) : effectiveView === "cards" ? (
           <DeviceCardList
             devices={pagedDevices}
             loading={loading}
@@ -235,7 +255,7 @@ export function PanelPage({ search, permissions }: PanelPageProps) {
         )
       ) : null}
 
-      {!showEmptyFilial && !showEmptyFilters && filters.view !== "grouped" ? (
+      {!showEmptyFilial && !showEmptyFilters && effectiveView !== "grouped" ? (
         <PpPagination
           page={filters.page}
           pageSize={PAGE_SIZE}
