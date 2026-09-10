@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "step": "E9.S7",
+  "program": "llm-json-decoupling",
+  "evaluatedAt": "2026-09-10",
+  "deleteGateRef": "tests/fixtures/intelligence_baseline/e9_s6_cleanup_gates.json",
+  "deleteAuthorized": false,
+  "residuals": [
+    {
+      "id": "pathMarkers",
+      "surfaces": [
+        "app/content/pt-BR/assistant/operational_route_registry.json",
+        "app/content/pt-BR/assistant/api_route_domains.json",
+        "app/content/pt-BR/assistant/operational_factual_verdict.json",
+        "app/content/pt-BR/assistant/external_action_responses.json"
+      ],
+      "coreConsumers": [
+        "app/application/services/external_actions/external_action_selection_service.py",
+        "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py"
+      ],
+      "disposition": "REMOVE_WHEN_GATES_PASS",
+      "justification": "Ainda lidos por resolver/selection compare e domains; authority de seleção já cutover OpenAPI-first quando cutoverEnabled. DELETE bloqueado por E9.S6.",
+      "inCoreGenericSelection": "observer_or_compat"
+    },
+    {
+      "id": "operationIdMarkers",
+      "surfaces": [
+        "app/content/pt-BR/assistant/operational_route_registry.json"
+      ],
+      "coreConsumers": [
+        "app/application/services/external_actions/external_action_selection_service.py",
+        "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py"
+      ],
+      "disposition": "REMOVE_WHEN_GATES_PASS",
+      "justification": "Mesmo padrão pathMarkers; residual pós-cutover E1.S6B.",
+      "inCoreGenericSelection": "observer_or_compat"
+    },
+    {
+      "id": "parameterStrategy_per_endpoint",
+      "surfaces": [
+        "app/content/pt-BR/assistant/api_route_domains.json",
+        "app/content/pt-BR/assistant/operational_route_registry.json",
+        "app/content/pt-BR/assistant/openapi_tool_routing.json"
+      ],
+      "coreConsumers": [
+        "app/domain/services/parameter_strategy_shadow_service.py"
+      ],
+      "disposition": "REMOVE_WHEN_GATES_PASS",
+      "justification": "Dispatch binder permanente OpenAPI; JSON strategies ainda listadas para shadow/compare e domains. DELETE bloqueado.",
+      "inCoreGenericSelection": "observer_or_compat"
+    },
+    {
+      "id": "pathToken_pathContains",
+      "surfaces": [
+        "app/content/pt-BR/assistant/department_kpi_rules.json"
+      ],
+      "coreConsumers": [
+        "app/domain/services (department KPI matching)"
+      ],
+      "disposition": "JUSTIFIED_POLICY",
+      "justification": "Matching de KPI por token de path do payload operacional — policy de domínio financeiro/fabril, não seletor genérico de actions OpenAPI. Fora do core de tool routing.",
+      "inCoreGenericSelection": false
+    },
+    {
+      "id": "routeHints",
+      "surfaces": [],
+      "coreConsumers": [],
+      "disposition": "REMOVED",
+      "justification": "Audit E8.S5 bloqueia routeHints em capability_registry; scan content sem routeHints authority.",
+      "inCoreGenericSelection": false
+    },
+    {
+      "id": "scopeToRouteId",
+      "surfaces": [],
+      "coreConsumers": [],
+      "disposition": "REMOVED",
+      "justification": "Removido no cutover E5.S6/S7 (entity enrichment goal-driven).",
+      "inCoreGenericSelection": false
+    },
+    {
+      "id": "preferredRouteId",
+      "surfaces": [
+        "app/content/pt-BR/assistant/operational_follow_up_routing.json"
+      ],
+      "coreConsumers": [
+        "app/domain/services/chat_operational_follow_up_routing_service.py"
+      ],
+      "disposition": "JUSTIFIED_COMPATIBILITY",
+      "justification": "Hint de rota preferida no follow-up type após cutover E3.S7 (authority=follow_up_type→routeSegment). Não é seletor OpenAPI genérico; compat multi-turn.",
+      "inCoreGenericSelection": false
+    },
+    {
+      "id": "manual_endpoint_priority",
+      "surfaces": [
+        "app/content/pt-BR/assistant/operational_route_registry.json"
+      ],
+      "coreConsumers": [
+        "app/application/services/external_actions/external_action_selection_service.py"
+      ],
+      "disposition": "REMOVE_WHEN_GATES_PASS",
+      "justification": "priority/markers residual no registry; authority OpenAPI-first no cutover. DELETE via E9.S6 quando autorizado.",
+      "inCoreGenericSelection": "observer_or_compat"
+    },
+    {
+      "id": "if_path_provider_operationId",
+      "surfaces": [
+        "app/application/services/external_actions/",
+        "app/domain/services/"
+      ],
+      "coreConsumers": [],
+      "disposition": "JUSTIFIED_COMPATIBILITY",
+      "justification": "Branches residuais de compare/shadow e resolvers de domínio (KPI/factual) — não reintroduzir como authority de seleção OpenAPI. Novos if path/provider/operationId no core genérico continuam proibidos (CI/audit).",
+      "inCoreGenericSelection": "forbidden_as_authority"
+    },
+    {
+      "id": "messageSegmentTerms",
+      "surfaces": [
+        "app/content/pt-BR/assistant/operational_follow_up_routing.json"
+      ],
+      "coreConsumers": [
+        "app/domain/services/chat_operational_follow_up_routing_service.py"
+      ],
+      "disposition": "REMOVE_WHEN_GATES_PASS",
+      "justification": "Observer pós-E3.S7; rollback flag ainda depende. DELETE bloqueado E9.S6.",
+      "inCoreGenericSelection": false
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 # Plano 09 — Evals, rollout, cutover e cleanup final
 
 **Prioridade:** transversal  
-**Status execução:** Onda H · E9.S1 **ATENDIDO** · E9.S2 **ATENDIDO_PARCIAL** · E9.S3 **ATENDIDO** (offline) · E9.S4 **ATENDIDO** · E9.S5 **ATENDIDO** · E9.S6 **ATENDIDO_PARCIAL** · próxima E9.S7  
-**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/e9-s5-canary-cutover.md`](../evidence/e9-s5-canary-cutover.md) · [`../evidence/e9-s6-cleanup-gates.md`](../evidence/e9-s6-cleanup-gates.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda H · E9.S1 **ATENDIDO** · E9.S2 **ATENDIDO_PARCIAL** · E9.S3 **ATENDIDO** (offline) · E9.S4 **ATENDIDO** · E9.S5 **ATENDIDO** · E9.S6 **ATENDIDO_PARCIAL** · E9.S7 **ATENDIDO** · próxima E9.S8  
+**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/e9-s5-canary-cutover.md`](../evidence/e9-s5-canary-cutover.md) · [`../evidence/e9-s6-cleanup-gates.md`](../evidence/e9-s6-cleanup-gates.md) · [`../evidence/e9-s7-architecture-audit.md`](../evidence/e9-s7-architecture-audit.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** cada migração de catálogo/heurística para OpenAPI/LLM deve provar melhora generalizável, preservar segurança e só então remover legado.
 
 ## Fonte de verdade
@@ -85,7 +85,11 @@ Cobrir no mínimo (checklist do plano — harness indexado; execução plena pro
 
 **Não feito:** inventar canary por cohort/agente sem mecanismo canônico.
 
-### E9.S6 — Cleanup gates
+### E9.S6 — Cleanup gates — **ATENDIDO_PARCIAL** (2026-09-10)
+
+**Feito:** fixture `e9_s6_cleanup_gates.json` + harness; 9 gates required avaliados; `deleteAuthorized=false`; 4 delete candidates **BLOCKED**.
+
+**Não feito:** remover catálogo/heurística morta (bloqueado por unknown_api / latency_cost / legacy_fallback_hit_rate INCONCLUSIVE).
 
 Antes de remover qualquer catálogo/heurística:
 
@@ -101,11 +105,13 @@ latency/cost = aprovado
 legacy fallback hit rate = residual e explicado
 ```
 
-Depois remover código/conteúdo morto e atualizar audits.
+Depois remover código/conteúdo morto e atualizar audits — **somente com deleteAuthorized=true**.
 
-### E9.S7 — Architecture audit
+### E9.S7 — Architecture audit — **ATENDIDO** (2026-09-10)
 
-**Fazer:** procurar residuals no core genérico:
+**Feito:** inventário `e9_s7_architecture_residuals.json` — checklist do plano classificado (REMOVE_WHEN_GATES_PASS / JUSTIFIED_* / REMOVED). Sem DELETE (E9.S6 bloqueia).
+
+**Fazer (histórico do plano):** procurar residuals no core genérico:
 
 ```text
 pathMarkers
@@ -119,7 +125,7 @@ manual endpoint priority
 if path/provider/operationId
 ```
 
-Cada residual deve ser removido ou explicitamente justificado como policy/compatibility/documentation fora do core genérico.
+Cada residual deve ser removido ou explicitamente justificado como policy/compatibility/documentation fora do core genérico — **cumprido via inventário**.
 
 ### E9.S8 — Verify-final
 
