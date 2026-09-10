@@ -1,104 +1,118 @@
 # Plano 04 — Capabilities e mini catálogos -> Action Catalog dinâmico
 
 **Prioridade:** P1  
+**Status execução:** Onda E · R04-02 **ATENDIDO** · restante = `capability_registry.action.*` (+ `routeHints` DEAD)  
+**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) §4 · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** o chat deve explicar e descobrir o que consegue fazer a partir das actions realmente autorizadas na sessão, sem manter um segundo catálogo manual de endpoints/capabilities.
 
-## CURRENT
+**HEAD revalidado:** pós-`78a25befe` (D1 path→display / capabilities UX)
 
-Fontes prioritárias:
+## EXECUTION_DRIFT (2026-09-10)
 
-- `capabilities.json`, especialmente `pathRules` e conteúdo dependente de API conhecida;
-- `capability_registry.json`, especialmente `action.*`, `routeHints`, `whenToUse`, `whenNot` e descrição duplicada de actions;
-- consumers de self-help, agent capabilities, routing hints e composer.
+| Item | Estado no código | Impacto neste plano |
+|------|------------------|---------------------|
+| `capabilities.pathRules` | **REMOVIDO** | R04-02 e E4.S6 = **ATENDIDO** |
+| Classificação UX de actions | `capability_ux_classification.json` + `CapabilityUxClassifierService` no import → `delpi_metadata.uxCapability` | Materialização parcial; não reintroduzir pathRules |
+| Agrupamento «o que você pode fazer?» | `ChatCapabilitiesCatalogAnswerService.resolve_ux_capability` | Lê metadata/classificador, não token-in-path |
+| Composer chips (legado `includePathRulesFromCapabilities`) | Lê `keywordRules` do bundle UX | Nome de flag legado; fonte já não é pathRules |
 
-Problema:
+**Não refazer** cutover de pathRules. Trabalho restante = mini-catálogo `capability_registry.action.*` e help dinâmico.
+
+## CURRENT (restante)
+
+Fontes prioritárias ainda abertas:
+
+- `capability_registry.json`, especialmente `action.*`, `routeHints` (morto no Python), `whenToUse`, `whenNot`, `descriptionForModel`;
+- consumers de discovery (`ChatCapabilityDiscoveryService` / task planner / turn preparation);
+- copy/help em `capabilities.json` que ainda cita exemplos de path como documentação (UX, não authority de routing).
+
+Já resolvido (não é CURRENT de dívida):
+
+- `capabilities.pathRules` / `pathRuleDefault` path-based;
+- ponteiro `capabilityUxClassificationBundle`.
+
+Problema residual:
 
 ```text
 OpenAPI/Action Catalog
 +
-capabilities/pathRules
-+
 capability_registry.action.*
 =
-mais de uma fonte de verdade para a mesma capacidade
+ainda duas fontes para “o que o agente consegue via tools”
 ```
 
 ## TARGET
 
 ```text
 OpenAPI import
--> Action Catalog normalizado
+-> Action Catalog normalizado (+ uxCapability materializado)
 -> provider/action binding
 -> allowed actions da sessão
--> semantic classification/materialization opcional
 -> capability view/help/retrieval
 ```
 
-Capabilities não-OpenAPI, como RAG, web, skills e transforms, continuam em catálogo próprio.
+Capabilities não-OpenAPI (RAG, web, skills, transforms) continuam em catálogo próprio.
 
 ## Requisitos
 
-| ID | Requisito |
-|---|---|
-| R04-01 | Separar action capabilities de RAG/web/skill/transform capabilities. |
-| R04-02 | Eliminar `pathRules` como fonte de classificação por endpoint. |
-| R04-03 | Gerar classificação/label útil a partir da metadata real do Action Catalog. |
-| R04-04 | Respeitar `allowed_action_ids` e bindings na Ajuda e no composer. |
-| R04-05 | Nova API externa deve aparecer sem alteração manual de capability registry. |
+| ID | Requisito | Estado |
+|---|---|---|
+| R04-01 | Separar action capabilities de RAG/web/skill/transform | ABERTO |
+| R04-02 | Eliminar `pathRules` como fonte de classificação por endpoint | **ATENDIDO** |
+| R04-03 | Gerar classificação/label útil a partir da metadata real do Action Catalog | **PARCIAL** (uxCapability no import; evoluir se necessário) |
+| R04-04 | Respeitar `allowed_action_ids` e bindings na Ajuda e no composer | ABERTO (revalidar) |
+| R04-05 | Nova API externa sem alteração manual de capability registry | ABERTO até remover `action.*` |
 
 ## Etapas
 
-### E4.S1 — Inventário de consumers
+### E4.S1 — Inventário de consumers (revalidar pós-D1)
 
-**Fazer:** localizar todos os reads de `pathRules`, `capability_registry.action.*`, `routeHints`, `descriptionForModel`, `whenToUse`, `whenNot` e aliases de action.
+**Fazer:** localizar reads de `capability_registry.action.*`, `routeHints`, `descriptionForModel`, `whenToUse`, `whenNot`; confirmar **zero** consumers de `capabilities.pathRules`.
 
-**Pronto quando:** cada read está classificado como retrieval, help, composer, UI, test ou legado.
+**Pronto quando:** matriz atualizada; pathRules = DELETE confirmado.
 
 ### E4.S2 — Baseline de capability discovery
 
-**Fazer:** registrar respostas de “o que você pode fazer?”, “quais actions?”, help por tema, agent active vs common chat e provider externo.
+**Fazer:** registrar “o que você pode fazer?”, help por tema, agent vs common chat, provider externo (já há smoke live pós-D1 — reusar como baseline).
 
 **Teste:** R1/R4/R7/R9/R10/R11.
 
 ### E4.S3 — Semantic metadata materialization
 
-**Fazer:** avaliar se summary/description/tags/schema já bastam; quando não bastarem, classificar semanticamente no import/index e materializar resultado cacheável com provenance/version/hash.
+**Fazer:** consolidar `uxCapability` como contrato canônico; avaliar lacunas summary/tags/entity/shape; **não** criar `x-delpi.capabilityGroup` manual por operation.
 
-**Não fazer:** nova taxonomia manual por endpoint obrigatória.
-
-**Teste:** reindex após alteração de schema; unknown provider; cache invalidation.
+**Teste:** reindex; unknown provider; metamorphic rename; fallback «Outras consultas».
 
 ### E4.S4 — Dynamic capability view
 
-**Fazer:** construir capability list a partir das actions permitidas + capabilities não-OpenAPI; manter copy de seção/help separada da fonte técnica.
+**Fazer:** capability list a partir das actions permitidas + não-OpenAPI; copy de seção/help separada da fonte técnica.
 
-**Teste:** mesma action permitida/não permitida entre dois agentes; provider disabled; action disabled.
+**Teste:** mesma action permitida/não entre agentes; provider/action disabled.
 
 ### E4.S5 — Remove action mini catalog
 
-**Fazer:** retirar `action.*` manual do `capability_registry` quando o Action Catalog cobrir integralmente o uso; preservar RAG/web/skill/transform.
+**Fazer:** retirar `action.*` manual do `capability_registry` quando o Action Catalog cobrir o discovery; preservar RAG/web/skill/transform; limpar `routeHints` mortos.
 
-**Teste:** search/audit para routeHints técnicos residuais.
+**Teste:** search/audit residual.
 
 ### E4.S6 — `capabilities.pathRules` cutover
 
-**Fazer:** substituir grouping/classification por metadata materializada ou fallback genérico; remover path grouping legado somente após parity.
-
-**Teste:** rename de path/operationId sem alterar semântica e capability grouping esperado.
+**Status:** **SKIP / ATENDIDO** (D1). Evidência: `residual_path_display_e5_hcap04_decision.json`, `residual_path_display_e10_verify_final.json`, live capabilities.
 
 ## Invariantes
 
 - Help nunca anuncia action não autorizada.
 - Label amigável não influencia autorização.
-- Falha de classificação semântica não torna a action inutilizável; existe fallback pelo OpenAPI.
+- Falha de classificação semântica não torna a action inutilizável; existe fallback pelo OpenAPI/`Outras consultas`.
 - RAG/web/skills não são forçados para dentro do Action Catalog se não forem OpenAPI actions.
+- Não reintroduzir `pathRules` nem `capabilityGroup` por endpoint.
 
 ## Aceite
 
 ```text
-DYNAMIC_ALLOWED_CAPABILITIES = PASS
+DYNAMIC_ALLOWED_CAPABILITIES = PASS   # restante E4.S4–S5
 UNKNOWN_PROVIDER_HELP = PASS
-PATHRULES_NOT_REQUIRED = PASS
-NO_DUPLICATE_ACTION_REGISTRY = PASS
+PATHRULES_NOT_REQUIRED = PASS         # ATENDIDO
+NO_DUPLICATE_ACTION_REGISTRY = PASS   # após E4.S5
 AUTHORIZED_ONLY = PASS
 ```

@@ -1,6 +1,8 @@
 # Plano 02 — NLU manual -> Turn Understanding + planner estruturado
 
 **Prioridade:** P0  
+**Status execução:** Onda C · inventário Onda A §6 · próxima = baseline TU vs intents authority  
+**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** frases longas, sinônimos, linguagem informal, typos e pedidos compostos devem ser compreendidos sem manutenção contínua de `terms`, `excludes`, regex e predicates por domínio.
 
 ## CURRENT
@@ -15,6 +17,10 @@ Principais fontes:
 - `operational_pipeline_vocabulary.json`;
 - `turn_understanding.json`;
 - services que convertem palavras em intents/path tokens/route predicates.
+
+### EXECUTION_DRIFT (2026-09-10)
+
+`turn_understanding.json` + `ChatTurnUnderstandingService` já existem, mas operam em **shadow** (`turnUnderstandingShadow: true`; task planner execution off). Intents heurísticos continuam **autoridade** de routing/gates. Este plano = promover TU a authority com baseline/candidate — não criar pipeline do zero.
 
 Padrão residual:
 

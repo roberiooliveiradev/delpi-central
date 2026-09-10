@@ -1,8 +1,9 @@
 # Roadmap — desacoplamento de JSONs e generalização LLM/OpenAPI
 
-**Status:** ativo — planejamento, sem autorização implícita para alterar runtime  
+**Status:** ativo — **Onda A ATENDIDA** (2026-09-10); execução via markdowns desta pasta + [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
 **Owner arquitetural:** Minha DELPI AI / OpenAPI-first tool routing  
-**Dependência:** `../openapi-first-universal-tool-routing.md`
+**Dependência:** `../openapi-first-universal-tool-routing.md`  
+**Baseline freeze:** [`evidence/onda-a-baseline/manifest.json`](./evidence/onda-a-baseline/manifest.json)
 
 ## 1. Resultado esperado
 
@@ -95,54 +96,60 @@ Registry/heurística antiga pode existir temporariamente como shadow/fallback ob
 
 ## 4. Matriz de fluxos
 
-| Fluxo | CURRENT principal | TARGET | Prioridade | Plano |
-|---|---|---|---|---|
-| Routing técnico | `operational_route_registry`, `api_route_domains` | Action Catalog + retrieval + planner | P0 | 01 |
-| Understanding/intents | `product_query_intent`, `production_operational_intent`, `department_kpi_rules`, vocabularies | Turn Understanding estruturado | P0 | 02 |
-| Follow-up/refinement/args | route segments, terms, regex, strategies | state + schema + planner/binder | P0 | 03 |
-| Capabilities/actions | `capabilities.pathRules`, `capability_registry.action.*` | Action Catalog materializado | P1 | 04 |
-| Composition/enrichment | routeIds/scope maps pré-programados | planner orientado a goals/budget | P1 | 05 |
-| Recommendations/composer | queries/sugestões estáticas por profile | recomendações contextuais validadas | P1 | 06 |
-| Presentation residual | entity/path profiles e hints | shape/schema-first | P2 | 07 |
-| Skills/help residual | endpoint hints em conteúdo editorial | runtime capability lookup | P2 | 08 |
-| Evals/rollout/cleanup | validação fragmentada | baseline/candidate R1-R11 | transversal | 09 |
+| Fluxo | CURRENT principal (HEAD) | TARGET | Prioridade | Plano | Nota |
+|---|---|---|---|---|---|
+| Routing técnico | OpenAPI-first no cold path + **registry residual** (intent/grounded/params) | Action Catalog + retrieval + planner sem preempção | P0 | 01 | Não reinventar OpenAPI-first |
+| Understanding/intents | `product_query_intent`, `production_operational_intent`, `department_kpi_rules`, vocabularies; TU em **shadow** | Turn Understanding estruturado | P0 | 02 | |
+| Follow-up/refinement/args | route segments, terms, regex, `pathContains` | state + schema + planner/binder | P0 | 03 | |
+| Capabilities/actions | `capability_registry.action.*` (+ UX via `uxCapability`; **pathRules removido**) | Action Catalog materializado | P1 | 04 | R04-02 ATENDIDO (D1) |
+| Composition/enrichment | routeIds/scope maps pré-programados | planner orientado a goals/budget | P1 | 05 | |
+| Recommendations/composer | `recommendationQueries` por profile (estático elevado; lista textual removida) | recomendações **contextuais** validadas | P1 | 06 | D2 ≠ aceite 06 |
+| Presentation residual | entity/path profiles e hints | shape/schema-first | P2 | 07 | display maps path→label já limpos |
+| Skills/help residual | endpoint hints em conteúdo editorial | runtime capability lookup | P2 | 08 | |
+| Evals/rollout/cleanup | validação fragmentada | baseline/candidate R1-R11 | transversal | 09 | |
+
+### Drift documental resolvido (2026-09-10)
+
+- `capabilities.pathRules` não é mais CURRENT — ver plano 04.
+- Cold path já é OpenAPI-first — ver plano 01.
+- Recommendations estáticas textuais removidas; `recommendationQueries` ainda authority — ver plano 06.
 
 ## 5. Ordem de execução
 
-### Onda A — congelar baseline e contratos
+### Onda A — congelar baseline e contratos — **ATENDIDO** (2026-09-10)
 
-1. Inventariar consumidores e fallbacks atuais.
-2. Congelar dataset e métricas de routing/args/multi-turn.
-3. Provar hash/config de OpenAPI, Action Catalog e modelos.
-4. Classificar cada nó de conteúdo como `TECHNICAL_DUPLICATION`, `SEMANTIC_HEURISTIC`, `DETERMINISTIC_POLICY`, `BUSINESS_RULE`, `UX_COPY`, `PRESENTATION_HINT`, `DEAD_CONTENT`.
+1. Inventariar consumidores e fallbacks atuais. → [`evidence/onda-a-inventory.md`](./evidence/onda-a-inventory.md)
+2. Congelar dataset e métricas de routing offline + flow-family matrix. → [`evidence/onda-a-baseline/`](./evidence/onda-a-baseline/)
+3. Hashes de conteúdo assistant no manifest; `openApiSchemaHash` / `actionCatalogHash` = `PENDING_RUNTIME` (plano 09).
+4. Classificar nós → inventário §7.
 
-### Onda B — routing universal
+### Onda B — routing universal — **EM_ANDAMENTO**
 
-Executar plano 01. Nenhuma remoção final antes de `unknown external API` + metamorphic rename passarem.
+Executar plano 01. E1.S3 = `GAPS_BLOCKING` ([`evidence/e1-s3-action-catalog.md`](./evidence/e1-s3-action-catalog.md)). Nenhuma remoção final antes de `unknown external API` + metamorphic rename passarem.
 
-### Onda C — entendimento semântico
+### Onda C — entendimento semântico — **PRONTO após início B**
 
-Executar plano 02, com foco em pedidos longos, intents próximas, linguagem informal, typos e no-tool.
+Executar plano 02, com foco em pedidos longos, intents próximas, linguagem informal, typos e no-tool. Inventário intents: Onda A §6.
 
-### Onda D — multi-turn e argument binding
+### Onda D — multi-turn e argument binding — **BLOQUEADO_SOFT por B**
 
 Executar plano 03. Follow-up deve depender de contexto estruturado e schema, não de route substring.
 
-### Onda E — capabilities e composition
+### Onda E — capabilities e composition — **PARCIAL**
 
-Executar planos 04 e 05. Actions passam a ser auto-descritas pelo catálogo; enrichment passa a ser decisão planner-driven sob budget.
+Executar planos 04 (restante: mini-catálogo `action.*`) e 05. **Não** reabrir cutover de `pathRules` (D1). Enrichment passa a ser decisão planner-driven sob budget.
 
-### Onda F — UX inteligente
+### Onda F — UX inteligente — **PRONTO_APÓS_E**
 
-Executar plano 06. Recomendações e composer usam contexto atual e capabilities permitidas, preferencialmente sem aumentar chamadas LLM do turno.
+Executar plano 06. Subir recomendações **contextuais** acima de `recommendationQueries` (que permanece só como fallback). Composer usa contexto + allowlist com budget.
 
-### Onda G — apresentação e conteúdo residual
+### Onda G — apresentação e conteúdo residual — **PRONTO_APÓS_F**
 
 Executar planos 07 e 08. Preservar copy/business rules; retirar somente conhecimento técnico duplicado.
 
-### Onda H — cutover e limpeza
+### Onda H — cutover e limpeza — **CONTÍNUO**
 
-Executar plano 09. Remover registries, predicates e mappings mortos somente após evidência de equivalência/superioridade.
+Executar plano 09. Remover registries, predicates e mappings mortos somente após evidência de equivalência/superioridade. Ampliar corpus/hashes runtime a partir do freeze Onda A.
 
 ## 6. Métricas obrigatórias
 

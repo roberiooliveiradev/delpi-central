@@ -1,6 +1,8 @@
 # Plano 09 — Evals, rollout, cutover e cleanup final
 
 **Prioridade:** transversal  
+**Status execução:** Onda H contínua · Onda A freeze parcial feito · próxima = E9.S1 corpus ampliado + hashes runtime  
+**Evidência:** [`../evidence/onda-a-baseline/manifest.json`](../evidence/onda-a-baseline/manifest.json) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** cada migração de catálogo/heurística para OpenAPI/LLM deve provar melhora generalizável, preservar segurança e só então remover legado.
 
 ## Fonte de verdade
@@ -28,11 +30,13 @@ Não usar scripts isolados ou smokes históricos como critério final de release
 
 ## Etapas
 
-### E9.S1 — Dataset e manifesto imutável
+### E9.S1 — Dataset e manifesto imutável — **PARCIAL** (Onda A)
 
-**Fazer:** versionar/congelar corpus cobrindo todos os planos 01-08; registrar `gitSha`, dataset version, model/provider/config hash, agent config hash, OpenAPI hash, Action Catalog hash e trial count.
+**Feito (2026-09-10):** manifesto em [`../evidence/onda-a-baseline/manifest.json`](../evidence/onda-a-baseline/manifest.json) com `runId`, `gitSha`, `datasetHash`, content hashes, harness 6/6 + matrix 25.
 
-**Pronto quando:** baseline pode ser reproduzido e comparado sem mudar expectativa no meio da implementação.
+**Pendente:** corpus R1–R11 completo; `openApiSchemaHash` / `actionCatalogHash` / model hashes em runtime; layout espelho em `docs/testing/evidence/runs/` se desejado pelo protocolo canônico.
+
+**Pronto quando (release):** baseline pode ser reproduzido e comparado sem mudar expectativa no meio da implementação — ainda **não** para release R1–R11.
 
 ### E9.S2 — Baseline R1-R11
 

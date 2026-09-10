@@ -1,6 +1,8 @@
 # Plano 05 — Composition/enrichment -> planejamento orientado por goals e budget
 
 **Prioridade:** P1  
+**Status execução:** Onda E · consumers `routeId`/composition no inventário §2 · após/com 04  
+**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** consultas compostas e enriquecimentos devem ser escolhidos pelo objetivo real do usuário, pelos dados já disponíveis e pelas actions autorizadas, não por listas fixas de `routeIds` e mapas `scope -> route`.
 
 ## CURRENT

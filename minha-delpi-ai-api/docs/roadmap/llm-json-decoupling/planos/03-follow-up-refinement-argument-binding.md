@@ -1,6 +1,8 @@
 # Plano 03 — Follow-up, refinement e argument binding generalizados
 
 **Prioridade:** P0  
+**Status execução:** Onda D · **BLOQUEADO_SOFT por B** (actionId estável) · registry `routeSegment` consumers no inventário §2  
+**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** continuidade conversacional, paginação, filtros, group-by e complementação de argumentos devem funcionar a partir do estado estruturado da conversa e do schema da action, não de substrings de rota ou frases cadastradas.
 
 ## CURRENT

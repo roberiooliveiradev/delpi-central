@@ -1,18 +1,33 @@
 # Plano 06 — Recommendations e composer -> sugestões contextuais grounded
 
 **Prioridade:** P1  
+**Status execução:** Onda F · `recommendationQueries` ainda authority (inventário §5) · após E  
+**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** próximos passos e sugestões devem considerar o pedido atual, os fatos retornados, limitações, contexto multi-turn e actions permitidas, em vez de listas estáticas por profile.
+
+**HEAD revalidado:** pós-D2 (`13dbec11a` / residual path→display recommendations)
+
+## EXECUTION_DRIFT (2026-09-10)
+
+| Item | Estado no código | Impacto neste plano |
+|------|------------------|---------------------|
+| Nó estático `humanized_data_response.recommendations` (lista textual) | **REMOVIDO** | Cleanup legado path→display **DONE** — não confundir com aceite deste plano |
+| `recommendationQueries` por `commentaryProfileKey` | Ainda **autoridade** no turno (`ChatDataInsightService._attach_turn_structured_recommendations`, delta LLM=0) | E6.S4 ainda necessário: rebaixar a fallback |
+| Coverage 27/27 profiles | Gate D2 PASS | Prova cobertura estática, **não** relevância contextual grounded |
+| Composer | `composer_route_questions` + UX classification keywords | Ainda templates/heurística; E6.S5 aberto |
+
+**D2 ≠ Plano 06.** D2 fechou fallback textual paralelo. Este plano exige recomendações **contextuais** (facts/goals/allowed actions), preferencialmente via síntese LLM já existente no turno.
 
 ## CURRENT
 
 Fontes prioritárias:
 
-- `humanized_data_response.json`, especialmente `recommendationQueries`, `nextActions` e fallbacks;
+- `humanized_data_response.json` → `recommendationQueries`, `nextActions`;
 - `composer_route_questions.json`;
 - producers de `structuredRecommendations`;
 - consumers no MFE/UI e síntese final.
 
-Padrão residual:
+Padrão residual atual:
 
 ```text
 profileKey
@@ -24,7 +39,7 @@ ou:
 
 ```text
 prefix/marker digitado
--> group estático
+-> group estático / keywordRules
 -> question template
 ```
 
@@ -45,17 +60,17 @@ user goal
 
 ## Requisitos
 
-| ID | Requisito |
-|---|---|
-| R06-01 | Recomendações não podem citar capability/action inexistente ou não autorizada. |
-| R06-02 | Evitar recomendação redundante com algo já executado no turno. |
-| R06-03 | Preferir reutilizar chamada LLM já existente; delta de LLM calls deve ser zero quando viável. |
-| R06-04 | Preservar fallback determinístico seguro em timeout/falha. |
-| R06-05 | Composer não pode gerar chamadas LLM caras a cada tecla sem budget/debounce/cache. |
+| ID | Requisito | Estado |
+|---|---|---|
+| R06-01 | Recomendações não citam capability/action inexistente ou não autorizada | ABERTO |
+| R06-02 | Evitar recomendação redundante com o já executado no turno | ABERTO |
+| R06-03 | Reutilizar chamada LLM do turno; delta ≈ 0 quando viável | PARCIAL (hoje delta=0 via queries estáticas) |
+| R06-04 | Fallback determinístico seguro em timeout/falha | PARCIAL (`recommendationQueries` cumpre fallback) |
+| R06-05 | Composer sem LLM caro por tecla (debounce/cache) | ABERTO |
 
 ## Contrato alvo
 
-`structuredRecommendations` deve ser materializado no turno com campos validados, por exemplo:
+`structuredRecommendations` materializado no turno com campos validados, por exemplo:
 
 ```json
 {
@@ -68,45 +83,45 @@ user goal
 }
 ```
 
-Se houver `actionId`, ele deve pertencer às actions permitidas. Recommendation nunca autoexecuta write.
+Se houver `actionId`, deve pertencer às actions permitidas. Recommendation nunca autoexecuta write.
+
+`source` pode ser `llm_contextual` | `profile_fallback` | `deterministic` durante dual-run.
 
 ## Etapas
 
 ### E6.S1 — Inventário e baseline
 
-**Fazer:** mapear origem, transformação, persistência e UI de recommendations/chips; congelar exemplos por profile e contexto.
+**Fazer:** mapear origem/transformação/persistência/UI; baseline com producer atual (`recommendationQueries`) vs desejado contextual.
 
-**Teste:** recommendation relevance, duplication, unavailable capability, multi-turn relevance e latency.
+**Teste:** relevance, duplication, unavailable capability, multi-turn, latency.
 
 ### E6.S2 — Grounding contract
 
-**Fazer:** definir input mínimo: user goals, facts/dataAnswer, limitations, result refs, allowed actions/capabilities e already-executed goals.
+**Fazer:** input mínimo: user goals, facts/dataAnswer, limitations, result refs, allowed actions, already-executed goals.
 
-**Não fazer:** enviar payload bruto ilimitado ao LLM.
+**Não fazer:** payload bruto ilimitado ao LLM.
 
 ### E6.S3 — Contextual producer
 
-**Fazer:** acoplar produção estruturada à síntese operacional existente quando arquitetura permitir; validar output, tamanho, duplicação e action allowlist.
+**Fazer:** acoplar à síntese operacional existente quando possível; validar output, tamanho, duplicação e allowlist.
 
-**Teste:** malformed output, unauthorized actionId, hallucinated query, empty result.
+**Teste:** malformed, unauthorized actionId, hallucinated query, empty result.
 
 ### E6.S4 — Static profile queries -> fallback
 
-**Fazer:** mover `recommendationQueries` de autoridade principal para fallback temporário; medir divergência/relevância candidate vs static.
+**Fazer:** mover `recommendationQueries` de autoridade principal para **LEGACY_FALLBACK**; medir divergência candidate vs static.
 
 **Pronto quando:** candidate cobre profiles importantes sem aumentar false suggestions.
 
 ### E6.S5 — Composer contextual
 
-**Fazer:** usar draft + current entities + allowed capabilities para sugerir perguntas; desenhar debounce/cache/trigger controlado; considerar modelo menor quando houver chamada dedicada.
+**Fazer:** draft + entities + allowed capabilities; debounce/cache; modelo menor se call dedicada.
 
-**Não fazer:** executar tool automaticamente a partir da sugestão.
-
-**Teste:** draft curto, rápido, typo, ambiguous; agent com capabilities diferentes; no action available.
+**Não fazer:** auto-executar tool a partir da sugestão.
 
 ### E6.S6 — Cleanup
 
-**Fazer:** remover blocos estáticos mortos apenas após métricas; manter copy genérica e fallback seguro mínimo.
+**Fazer:** remover blocos estáticos mortos só após métricas; manter fallback seguro mínimo.
 
 ## Métricas específicas
 
@@ -120,20 +135,12 @@ llm_calls_per_turn
 p50/p95 recommendation latency
 ```
 
-## Invariantes
-
-- Sem actionId inventado.
-- Sem write autoexecutado por recommendation.
-- Falha de recommendation não quebra resposta principal.
-- History/F5 usa recommendation materializada; não precisa reinferir.
-
 ## Aceite
 
 ```text
 CONTEXTUAL_RECOMMENDATIONS = PASS
-AUTHORIZED_ONLY = PASS
-NO_REDUNDANT_SUGGESTION = PASS
-LLM_CALL_BUDGET = PASS
-COMPOSER_AGENT_AWARE = PASS
-PERSIST_RELOAD = PASS
+ALLOWLIST = PASS
+DELTA_LLM_CALLS_ACCEPTABLE = PASS
+STATIC_QUERIES_FALLBACK_ONLY = PASS
+COMPOSER_BUDGET_SAFE = PASS
 ```

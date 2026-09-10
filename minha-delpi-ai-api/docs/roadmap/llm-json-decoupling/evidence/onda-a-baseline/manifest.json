@@ -1,0 +1,63 @@
+{
+  "runId": "0249db78-d6fd-45b3-84bf-d11abcd17a6a",
+  "wave": "A",
+  "program": "llm-json-decoupling",
+  "role": "BASELINE",
+  "immutable": true,
+  "timestamp": "2026-09-10T12:59:20Z",
+  "gitSha": "79f3a21f9b54ff0e0aa16b9f3ada2b0c032c7b92",
+  "environment": "host-offline",
+  "datasetVersion": "intelligence_baseline/routing_cases.json@v1",
+  "datasetHash": "7ff3733293815064c9dd346a74b848623ade2113d987b4690adf81a3388e039d",
+  "harness": {
+    "name": "chat_intelligence_baseline_harness",
+    "resultPath": "chat-intelligence-baseline.json",
+    "resultHash": "1e741a35b9282cb27c8b3ff83181d3151243bc24cd476cf1849a17a2a088e7ea",
+    "summary": { "total": 6, "pass": 6, "fail": 0, "offlinePassRate": 1.0 }
+  },
+  "secondaryGates": {
+    "check_flow_family_matrix_harness": {
+      "status": "PASS",
+      "cases": 25,
+      "families": [
+        "follow_up_turn",
+        "message_search",
+        "multi_intent",
+        "operational_api",
+        "operational_api_retry",
+        "skill_company_knowledge",
+        "text_task",
+        "turn_grounding",
+        "web"
+      ]
+    }
+  },
+  "modelProvider": "not_invoked_offline",
+  "model": "n/a",
+  "modelConfigHash": "n/a-offline-pre-llm",
+  "agentId": "n/a-offline",
+  "agentConfigHash": "n/a-offline",
+  "openApiSchemaHash": "PENDING_RUNTIME",
+  "actionCatalogHash": "PENDING_RUNTIME",
+  "trialCount": 0,
+  "contentHashes": {
+    "operational_route_registry.json": "ba5970e7a573af71faf1070cafa280c810133f3abe332377a35bbec89ec9f8f1",
+    "api_route_domains.json": "244e458ba4d9b49b53aa47ec395f8a5f3f96bedba140bb436a872de1f960035d",
+    "capability_registry.json": "521d28f2b6bc27b557362bfc48f482c347e76d12778d2b7bf7b441359a12a0be",
+    "humanized_data_response.json": "546156f9d114ee2880985dc51b4e723dd19fa26beeaf5679699fd6d1cedaeae8",
+    "product_query_intent.json": "204bfadf2e30e03df3a1dc36a2bb5069dd1571dd2e34debbf592fbc5c427c159",
+    "production_operational_intent.json": "1db292a7f0fb19370239a08f54c9539f3fc39a8f0a91a8e10ef8e07f17b110a1",
+    "department_kpi_rules.json": "0a1ae0589a63c3efbb1636a6c9ef46167d65337281f09e43b918ee25e57858fb",
+    "analysis_intent_vocabulary.json": "135fc1a1a76d0b038de3ff280efef85d69ed411076e57efa465a12640af3c779",
+    "intent_router.json": "f8032d03df9da4d95954c6c9182f43834d8834a8a44ac51fb3b4bba5f30ec5c3",
+    "operational_pipeline_vocabulary.json": "2e6db3584f5d803642a2024a43930554aaf5f1166d4a620e60ee83f3aeb275da",
+    "turn_understanding.json": "685796019d2f080133bf63a606ecdf58078ada5c4be042f6447d7a8d054b066d",
+    "capabilities.json": "18447eddd606ff8b01418e988f713eea1affd84426c20230cbdde7ea428470e1"
+  },
+  "notes": [
+    "Baseline Onda A: congela comportamento offline pré-LLM e hashes de conteúdo assistant.",
+    "Corpus estreito (6 casos) — ampliação R1-R11 = plano 09 E9.S1 sem alterar este run.",
+    "openApiSchemaHash/actionCatalogHash exigem snapshot do catálogo persistido em runtime."
+  ],
+  "inventoryRef": "../onda-a-inventory.md"
+}

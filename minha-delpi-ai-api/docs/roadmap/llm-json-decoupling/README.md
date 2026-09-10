@@ -1,10 +1,10 @@
 # Desacoplamento de JSONs + inteligência LLM — Minha DELPI AI
 
-**Status:** planejamento ativo  
+**Status:** Onda A ATENDIDA · ondas B–H via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
 **Escopo:** `minha-delpi-ai-api/app/content` + consumidores runtime relacionados  
 **Objetivo:** remover acoplamentos técnicos e linguísticos que impedem o chat de generalizar para novas APIs, novos domínios e formulações de linguagem natural sem manutenção rota a rota.
 
-> Este diretório é roadmap executável, não fonte canônica de arquitetura. Antes de implementar qualquer subetapa, revalidar código, contratos, regras `.cursor` e documentação vigente.
+> Este diretório é roadmap executável. **Não criar planos `.plan.md` paralelos** para o mesmo programa: atualizar estes markdowns quando houver drift. Antes de implementar qualquer subetapa, revalidar código, contratos, regras `.cursor` e documentação vigente.
 
 ## Princípio da iniciativa
 
@@ -30,17 +30,29 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 
 | Documento | Finalidade |
 |---|---|
-| [`prompt-cursor-plano-mestre.md`](./prompt-cursor-plano-mestre.md) | Prompt pronto para o Cursor investigar o estado atual e construir/atualizar o plano completo antes de implementar. |
+| [`prompt-cursor-plano-mestre.md`](./prompt-cursor-plano-mestre.md) | Prompt para o Cursor revalidar HEAD e **atualizar estes markdowns** antes de implementar. |
 | [`roadmap.md`](./roadmap.md) | Roadmap macro, dependências, critérios globais, ordem das ondas e Definition of Done. |
-| [`planos/01-routing-registry-openapi.md`](./planos/01-routing-registry-openapi.md) | Remover autoridade runtime de `operational_route_registry`/`api_route_domains` sobre seleção técnica. |
-| [`planos/02-semantic-understanding-intents.md`](./planos/02-semantic-understanding-intents.md) | Substituir NLU manual de produto, produção, KPI e intents genéricas por entendimento estruturado. |
-| [`planos/03-follow-up-refinement-argument-binding.md`](./planos/03-follow-up-refinement-argument-binding.md) | Generalizar follow-up, refinamento, group-by e binding de parâmetros via contexto + schema. |
-| [`planos/04-capabilities-action-catalog.md`](./planos/04-capabilities-action-catalog.md) | Eliminar mini-catálogo manual de actions/capabilities e classificar semanticamente no Action Catalog. |
-| [`planos/05-composition-enrichment-planning.md`](./planos/05-composition-enrichment-planning.md) | Tornar composição departamental e enriquecimentos entity-driven planner-driven. |
-| [`planos/06-recommendations-composer-contextual.md`](./planos/06-recommendations-composer-contextual.md) | Recomendações e sugestões do composer baseadas no contexto e nas actions permitidas. |
-| [`planos/07-presentation-schema-first-residuals.md`](./planos/07-presentation-schema-first-residuals.md) | Remover acoplamentos residuais de apresentação por path/entity quando schema/metadata bastam. |
-| [`planos/08-skills-content-residual-catalogs.md`](./planos/08-skills-content-residual-catalogs.md) | Limpar hints técnicos em skills/help/content sem mover copy legítima para o LLM. |
-| [`planos/09-evals-rollout-cleanup.md`](./planos/09-evals-rollout-cleanup.md) | Baseline, shadow/canary, R1-R11, unknown API, metamorphic tests, rollout e remoção final. |
+| [`planos/01-routing-registry-openapi.md`](./planos/01-routing-registry-openapi.md) | Remover autoridade **residual** do registry/`api_route_domains` (cold path já OpenAPI-first). |
+| [`planos/02-semantic-understanding-intents.md`](./planos/02-semantic-understanding-intents.md) | Substituir NLU manual por Turn Understanding estruturado (hoje shadow). |
+| [`planos/03-follow-up-refinement-argument-binding.md`](./planos/03-follow-up-refinement-argument-binding.md) | Generalizar follow-up/refinement/args via contexto + schema. |
+| [`planos/04-capabilities-action-catalog.md`](./planos/04-capabilities-action-catalog.md) | Mini-catálogo `action.*` → Action Catalog; **pathRules já removido (D1)**. |
+| [`planos/05-composition-enrichment-planning.md`](./planos/05-composition-enrichment-planning.md) | Composition/enrichment planner-driven. |
+| [`planos/06-recommendations-composer-contextual.md`](./planos/06-recommendations-composer-contextual.md) | Recommendations/composer contextuais; D2 ≠ aceite (queries ainda authority). |
+| [`planos/07-presentation-schema-first-residuals.md`](./planos/07-presentation-schema-first-residuals.md) | Residuais de apresentação path/entity. |
+| [`planos/08-skills-content-residual-catalogs.md`](./planos/08-skills-content-residual-catalogs.md) | Hints técnicos em skills/help. |
+| [`planos/09-evals-rollout-cleanup.md`](./planos/09-evals-rollout-cleanup.md) | Baseline, shadow/canary, R1-R11, cleanup. |
+| [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) | Estado das ondas A–H e próxima subetapa. |
+| [`evidence/onda-a-inventory.md`](./evidence/onda-a-inventory.md) | Inventário Onda A (consumers + classificação). |
+| [`evidence/e1-s3-action-catalog.md`](./evidence/e1-s3-action-catalog.md) | Prova E1.S3 (Onda B) — GAPS_BLOCKING. |
+
+## Drift HEAD (2026-09-10) — resumido
+
+| Tema | Estado |
+|------|--------|
+| OpenAPI-first cold path | Já default — plano 01 = residual |
+| `capabilities.pathRules` | Removido — plano 04 R04-02 ATENDIDO |
+| `recommendationQueries` | Ainda authority estática — plano 06 aberto |
+| Turn Understanding | Bundle + shadow on — plano 02 |
 
 ## Fontes obrigatórias antes de executar
 
@@ -66,8 +78,8 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 - Regras factuais e de negócio não migram para LLM só para reduzir JSON.
 - Fast paths pequenos podem permanecer quando comprovadamente seguros e úteis para latência.
 - Nova API OpenAPI desconhecida deve funcionar sem alterações por endpoint no core.
-- Mudanças de inteligência exigem baseline vs candidate + R1-R11 + live/surface validation.
+- Mudanças de inteligência exigem baseline vs candidate + R1–R11 + live/surface validation.
 
 ## Regra de execução
 
-Cada plano filho deve ser revalidado antes de executar. Se o código atual contradizer uma decisão deste roadmap, registrar `EXECUTION_DRIFT`, atualizar o plano com evidência e só então prosseguir.
+Cada plano filho (`planos/0N-*.md`) é a **unidade de execução**. Se o código atual contradizer uma decisão, registrar `EXECUTION_DRIFT` **no próprio markdown**, atualizar CURRENT/etapas e só então prosseguir. Não manter segundo plano Cursor como fonte.

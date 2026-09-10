@@ -1,6 +1,6 @@
 # Prompt para Cursor — plano completo de desacoplamento JSON + LLM/OpenAPI
 
-Copie o bloco abaixo para o Cursor em **Plan mode**. O objetivo inicial é revalidar o repositório e produzir/atualizar um plano executável; não implementar até existir autorização explícita.
+Copie o bloco abaixo para o Cursor em **Plan mode**. O objetivo inicial é revalidar o repositório e **atualizar os markdowns desta pasta** (`roadmap.md`, `planos/*.md`); não criar `.plan.md` paralelo nem implementar até autorização explícita.
 
 ---
 
@@ -130,7 +130,8 @@ Mapear terms, excludes, anyOf/allOf/noneOf, customPredicate, regex, keyword scor
 
 #### Capabilities e composição
 
-- `capabilities.json`, especialmente `pathRules`
+- `capabilities.json` — copy/detection/help ( **`pathRules` já removido** — ver plano 04 drift )
+- `capability_ux_classification.json` — classificação UX materializada no import (`uxCapability`)
 - `capability_registry.json`, especialmente `action.*` e `routeHints`
 - `entity_capability_catalog.json`
 - `department_meta_composition.json`
@@ -303,26 +304,18 @@ manual_intent_rule_count
 
 ### Formato obrigatório do plano produzido pelo Cursor
 
-Use `plan-construction.mdc` integralmente. Entregue:
+Use `plan-construction.mdc`. **Entrega canônica = atualização dos markdowns em** `minha-delpi-ai-api/docs/roadmap/llm-json-decoupling/` (README, roadmap, planos/01–09). Não criar plano Cursor paralelo como segunda fonte.
 
-1. **Overview**.
-2. **Leitura do pedido**.
-3. **Ledger RQ** com todos os requisitos.
-4. **Inventário real**: JSON -> key -> consumers -> fallback -> tests -> docs.
-5. **Matriz de classificação** de cada chave material + destino.
-6. **Hipóteses concorrentes** e evidências.
-7. **CURRENT -> TARGET** com Mermaid.
-8. **Grafo producer/transformer/owner/consumer/persistence/surface**.
-9. **Estado antes x depois + invariantes**.
-10. **Decisões travadas** com readiness (`READY_CONFIRMED`, `READY_BOUNDED`, `NOT_READY`).
-11. **Matriz fluxo x superfície x P0/herança/fora** incluindo send/stream/simulate/F5/admin/UI/Ajuda.
-12. **Riscos e rollout/rollback**.
-13. **Etapas E1...En e subetapas E*.S***.
-14. Para cada subetapa: Objetivo, RQ, Fazer, Não fazer, Evidência, Dependências, Teste, Pronto quando, Commit sugerido.
-15. **Rastreabilidade RQ -> decisão -> subetapa -> teste -> aceite**.
-16. **Revisão adversarial** com pelo menos 20 perguntas.
-17. **verify-final** com checklist do pedido original.
-18. **Relatório de completude**: quantos JSONs/chaves foram investigados, quantos consumers, quais ficaram fora e por quê.
+Ao revalidar, atualize no markdown afetado:
+
+1. **Overview** / status HEAD.
+2. **EXECUTION_DRIFT** quando código divergir.
+3. **CURRENT / TARGET** e ledger RQ do plano filho.
+4. Inventário / classificação de nós quando a etapa for inventário.
+5. Etapas E*.S* (marcar ATENDIDO / SKIP / ABERTO).
+6. Aceite e evidências.
+
+Opcional: um card Cursor pode apontar para esta pasta, sem duplicar conteúdo.
 
 ### Sequenciamento sugerido — validar antes de travar
 

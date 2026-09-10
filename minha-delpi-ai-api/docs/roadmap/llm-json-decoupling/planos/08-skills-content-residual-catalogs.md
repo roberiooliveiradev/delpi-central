@@ -1,6 +1,8 @@
 # Plano 08 — Skills/help/content -> remover catálogos técnicos residuais
 
 **Prioridade:** P2  
+**Status execução:** Onda G · com/após 07 · `routeHints` DEAD no inventário §4  
+**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** conteúdo editorial continua rico e configurável, mas deixa de anunciar ou depender de endpoints hardcoded quando a disponibilidade real pode ser consultada no runtime.
 
 ## CURRENT

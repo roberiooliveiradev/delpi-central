@@ -1,6 +1,8 @@
 # Plano 07 — Presentation residual -> schema/shape-first
 
 **Prioridade:** P2  
+**Status execução:** Onda G · após F · display path→label já limpo (não reabrir)  
+**Evidência:** [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** novas actions e APIs devem produzir apresentação útil sem exigir profile, path rule, title map ou presenter dedicado por endpoint.
 
 ## CURRENT

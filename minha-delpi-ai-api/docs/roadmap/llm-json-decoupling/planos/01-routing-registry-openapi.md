@@ -1,6 +1,8 @@
 # Plano 01 — Routing registry -> OpenAPI + Action Catalog
 
 **Prioridade:** P0  
+**Status execução:** Onda B · E1.S1–S2 **ATENDIDOS** · E1.S3 **GAPS_BLOCKING** (evidência sem cutover) · próxima runtime = harness top-K  
+**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** uma action nova deve ser descoberta e selecionada por semântica/contrato sem exigir `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` por endpoint no conteúdo do assistente.
 
 ## CURRENT
@@ -9,16 +11,34 @@ Fontes de dívida prioritárias:
 
 - `app/content/pt-BR/assistant/operational_route_registry.json`;
 - `app/content/pt-BR/assistant/api_route_domains.json`;
-- consumers em seleção, readiness, route resolver, entity capability e lint/generator;
+- consumers em seleção residual, readiness, route resolver, entity capability, grounded/composition, lint/generator;
 - snapshots CI e fallbacks associados.
 
-Fluxo atual residual:
+### EXECUTION_DRIFT (2026-09-10)
+
+O **cold path principal** já é OpenAPI-first:
+
+```text
+RetrieveActionCandidatesService
+-> PlanExternalActionsService / OpenApiLlmActionPlannerService
+-> OpenApiFirstSelectionBridgeService
+```
+
+(`OpenApiPlannerModeService` efetivamente on; `select_operational_registry(...)` sem callers no pipeline frio principal.)
+
+Este plano **não** reinventa retrieval/planner. Foco = remover **autoridade residual** do registry que ainda preempta ou classifica por markers:
+
+- product+intent / route_segment → registry filter;
+- grounded/composition via `select_registry_route_id`;
+- `api_route_domains.parameterStrategy` no binding;
+- readiness/lint/CI que ainda leem markers.
+
+Fluxo residual a eliminar:
 
 ```text
 mensagem
--> predicate/domain
--> route registry
--> pathMarkers/operationIdMarkers/priority
+-> predicate/domain / intent+segment
+-> route registry (pathMarkers/operationIdMarkers/priority)
 -> parameterStrategy
 -> action
 ```
@@ -59,39 +79,29 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 
 ## Etapas
 
-### E1.S1 — Inventário de ownership
+### E1.S1 — Inventário de ownership — **ATENDIDO** (2026-09-10)
 
 **Objetivo:** mapear producer -> consumers -> fallback -> tests dos fields `pathMarkers`, `operationIdMarkers`, `excludePathMarkers`, `routeSegment`, `pathSuffix`, `pathExactEnd`, `method`, `priority`, `parameterStrategy` e `routeId`.
 
-**Fazer:** localizar todos os reads; classificar cada consumer como routing, policy, readiness, presentation, telemetry, lint/test ou legado.
+**Feito:** matriz em [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) §§2–3 (routing / policy / readiness / lint). `fallbackPolicies` classificado KEEP (policy).
 
-**Não fazer:** alterar runtime.
+**Não feito (correto):** alterar runtime.
 
-**Teste:** produzir matriz sem consumer órfão; cruzar com code search e testes existentes.
-
-**Pronto quando:** 100% dos reads conhecidos têm owner alvo e estratégia de cutover.
-
-### E1.S2 — Baseline de routing
+### E1.S2 — Baseline de routing — **ATENDIDO_PARCIAL** (2026-09-10)
 
 **Objetivo:** congelar comportamento atual.
 
-**Fazer:** dataset com product, production, KPI, SQL policy, sibling actions, no-tool, multi-provider e unknown external API.
+**Feito:** harness offline 6/6 + flow-family matrix 25 + content hashes — [`../evidence/onda-a-baseline/manifest.json`](../evidence/onda-a-baseline/manifest.json).
 
-**Teste:** R1/R2/R3/R8/R10/R11; registrar action top-K, selected action, args, latency e fallback.
+**Gap explícito:** corpus ainda estreito (sem unknown API / metamorphic no freeze offline); `openApiSchemaHash`/`actionCatalogHash` = `PENDING_RUNTIME` → ampliar em plano 09 sem invalidar este runId.
 
-**Pronto quando:** baseline imutável possui runId/config hashes.
-
-### E1.S3 — Action Catalog suficiente
+### E1.S3 — Action Catalog suficiente — **GAPS_BLOCKING** (2026-09-10)
 
 **Objetivo:** provar que catálogo normalizado contém semântica suficiente.
 
-**Fazer:** verificar summary, description, tags, params/descriptions, request/response schema, sensitivity e binding; corrigir import/index genericamente quando necessário.
+**Feito (sem alterar runtime):** evidência em [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) — fields + retrieval PASS; top-K families registry + residual markers = gap.
 
-**Não fazer:** adicionar metadata DELPI manual por endpoint para passar casos.
-
-**Teste:** unknown API sem extensão proprietária entra no retrieval.
-
-**Pronto quando:** top-K recall atende corpus sem registry técnico.
+**Próximo (runtime autorizado):** harness top-K sem registry; metamorphic rename; só então E1.S4 shadow.
 
 ### E1.S4 — Selection cutover em shadow
 
