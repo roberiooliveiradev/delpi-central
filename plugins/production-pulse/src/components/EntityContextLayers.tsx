@@ -26,7 +26,8 @@ import {
   PpHintAction,
   PpIconButton,
 } from "../app/productionPulseUi";
-import type { FirmwareListItem } from "../api/productionPulseApi";
+import type { FirmwareListItem, FirmwareUpdateTarget } from "../api/productionPulseApi";
+import { OtaTargetProgress } from "./ota/OtaTargetProgress";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import type { AdminEntityRef } from "../utils/adminHubUiState";
@@ -54,6 +55,7 @@ type EntitySummaryPopoverProps = {
   anchorEl: HTMLElement | null;
   entity: AdminEntityRef | null;
   device?: DeviceListItem | null;
+  otaTarget?: FirmwareUpdateTarget | null;
   firmware?: FirmwareListItem | null;
   firmwareMeta?: {
     displayName: string;
@@ -74,6 +76,7 @@ export function EntitySummaryPopover({
   anchorEl,
   entity,
   device,
+  otaTarget,
   firmware,
   firmwareMeta,
   canManage,
@@ -147,6 +150,18 @@ export function EntitySummaryPopover({
               Firmware {device.installedFirmwareVersion ?? "—"}
               {firmwareMeta?.version ? ` → ${firmwareMeta.version}` : ""}
             </div>
+            {otaTarget ? (
+              <OtaTargetProgress
+                status={otaTarget.status}
+                errorCode={otaTarget.errorCode}
+                deviceOnline={device.status === "online"}
+                progressPercent={otaTarget.progressPercent}
+                bytesReceived={otaTarget.bytesReceived}
+                bytesTotal={otaTarget.bytesTotal}
+                updatedAt={otaTarget.updatedAt}
+                className="pp-entity-summary__ota"
+              />
+            ) : null}
           </div>
         </>
       ) : null}

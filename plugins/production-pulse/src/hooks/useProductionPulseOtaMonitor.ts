@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  fetchFirmwareUpdateJobTargets,
+  fetchFirmwareUpdateTargets,
   type FirmwareUpdateJob,
   type FirmwareUpdateTarget,
 } from "../api/productionPulseApi";
@@ -14,13 +14,17 @@ import {
   pushOtaTargetFailureNotice,
 } from "../utils/pushResolvedNotice";
 
-type NoticePush = (notice: {
-  id?: string;
-  variant?: "error" | "warning" | "info" | "success";
-  title?: string;
-  message: string;
-  action?: { label: string; onClick: () => void };
-}) => string;
+type NoticePush = (
+  notice:
+    | {
+        id?: string;
+        variant?: "error" | "warning" | "info" | "success";
+        title?: string;
+        message: string;
+        action?: { label: string; onClick: () => void };
+      }
+    | string,
+) => string;
 
 type UseProductionPulseOtaMonitorArgs = {
   jobs: FirmwareUpdateJob[];
@@ -84,7 +88,7 @@ export function useProductionPulseOtaMonitor(
     const batches = await Promise.all(
       activeJobs.map(async (job) => {
         try {
-          return await fetchFirmwareUpdateJobTargets(job.id);
+          return await fetchFirmwareUpdateTargets(job.id);
         } catch {
           return [] as FirmwareUpdateTarget[];
         }

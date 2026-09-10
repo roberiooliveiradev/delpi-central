@@ -12,6 +12,8 @@ type HubOtaKpiChipsProps = {
   kpis: HubOtaKpis;
   loading?: boolean;
   activeJobs?: number;
+  awaitingCount?: number;
+  downloadingCount?: number;
   onOpenJobs?: () => void;
 };
 
@@ -19,6 +21,8 @@ export function HubOtaKpiChips({
   kpis,
   loading,
   activeJobs = 0,
+  awaitingCount,
+  downloadingCount,
   onOpenJobs,
 }: HubOtaKpiChipsProps) {
   const anchorRef = useRef<HTMLButtonElement>(null);
@@ -96,6 +100,18 @@ export function HubOtaKpiChips({
           <strong>{kpis.updatingDevices}</strong>
           <span>Em atualização</span>
         </div>
+        {typeof awaitingCount === "number" ? (
+          <div className="pp-hub-health-popover__row">
+            <strong>{awaitingCount}</strong>
+            <span>Aguardando dispositivo</span>
+          </div>
+        ) : null}
+        {typeof downloadingCount === "number" ? (
+          <div className="pp-hub-health-popover__row">
+            <strong>{downloadingCount}</strong>
+            <span>Baixando</span>
+          </div>
+        ) : null}
         <div className="pp-hub-health-popover__row">
           <strong>{kpis.failedDevices}</strong>
           <span>Falhas OTA</span>

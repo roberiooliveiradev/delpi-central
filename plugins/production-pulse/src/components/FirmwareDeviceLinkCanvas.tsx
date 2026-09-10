@@ -320,6 +320,8 @@ export type FirmwareDeviceLinkCanvasProps = {
   filterQuery?: string;
   filterStatus?: string;
   linkMode?: LinkMode | null;
+  /** Live OTA targets indexed by device id (hub monitor). */
+  otaByDeviceId?: Map<string, FirmwareUpdateTarget>;
   onLinkModeChange?: (mode: LinkMode | null) => void;
   onRequestLink?: (request: LinkCandidateRequest) => void;
   onLinked: () => void;
@@ -389,6 +391,7 @@ function FirmwareDeviceLinkCanvasInner({
   filterQuery,
   filterStatus,
   linkMode = null,
+  otaByDeviceId,
   onLinkModeChange,
   onRequestLink,
   onLinked,
@@ -568,6 +571,7 @@ function FirmwareDeviceLinkCanvasInner({
             counterShift: n.counterShift,
             installedFirmwareVersion: n.installedFirmwareVersion,
             availableVersion: n.availableVersion,
+            otaTarget: otaByDeviceId?.get(n.deviceId!) ?? null,
             canManage,
             onOpenMenu: onOpenDeviceMenu,
             onSelect: linkMode
@@ -600,6 +604,7 @@ function FirmwareDeviceLinkCanvasInner({
     linkMode,
     familyByKey,
     deviceById,
+    otaByDeviceId,
     emitCandidate,
     onLinkModeChange,
     onSelectEntity,

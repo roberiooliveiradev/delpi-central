@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import type { FirmwareUpdateTarget } from "../api/productionPulseApi";
 import { disableDevice } from "../api/productionPulseApi";
 import {
   PpActionButton,
@@ -40,6 +41,14 @@ type DeviceDetailPageProps = {
   /** When true, omit page chrome and keep tab switches local (no route navigate). */
   embedded?: boolean;
   onClose?: () => void;
+  hubOtaTarget?: FirmwareUpdateTarget | null;
+  suppressLocalOtaPoll?: boolean;
+  onOperationalNotice?: (notice: {
+    id?: string;
+    variant?: "error" | "warning" | "info" | "success";
+    title?: string;
+    message: string;
+  }) => void;
 };
 
 export function DeviceDetailPage({
@@ -49,6 +58,9 @@ export function DeviceDetailPage({
   permissions,
   embedded = false,
   onClose,
+  hubOtaTarget,
+  suppressLocalOtaPoll,
+  onOperationalNotice,
 }: DeviceDetailPageProps) {
   const [localTab, setLocalTab] = useState<DeviceDetailTab>(tabProp);
   const tab = embedded ? localTab : tabProp;
@@ -290,6 +302,9 @@ export function DeviceDetailPage({
           liveSnapshot={liveSnapshot}
           canManage={permissions.canManageDevices}
           onUpdated={() => void reloadDevice()}
+          hubOtaTarget={hubOtaTarget}
+          suppressLocalPoll={suppressLocalOtaPoll}
+          onOperationalNotice={onOperationalNotice}
         />
       ) : null}
 

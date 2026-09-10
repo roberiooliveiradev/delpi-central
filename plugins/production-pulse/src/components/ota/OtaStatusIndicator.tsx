@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-import { resolveOtaVisualState, type OtaVisualTone } from "../utils/otaVisualState";
+import { resolveOtaVisualState, type OtaVisualTone } from "../../utils/otaVisualState";
 
 type Density = "compact" | "comfortable";
 

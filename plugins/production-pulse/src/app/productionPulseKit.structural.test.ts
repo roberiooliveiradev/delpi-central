@@ -131,7 +131,9 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PP_HELP\.otaLinks|PP_HELP\.hub/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/createFirmwareUpdateJob/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/reloadJobs\(\{\s*soft:\s*true/);
-    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/formatOtaProgressDisplay/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/useProductionPulseOtaMonitor/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/OtaTargetProgress/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/structuralError/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PpDataTable/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PpCatalogSearchBar/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/PpWorkbenchDialog/);
@@ -231,9 +233,12 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/DeviceFormPage.tsx")).not.toMatch(/TestConnectionModal/);
     expect(readRelative("components/DeviceForm.tsx")).not.toMatch(/firmwareSource/);
     expect(readRelative("utils/otaStatusLabels.ts")).toMatch(/formatOtaProgressDisplay/);
-    expect(readRelative("utils/otaStatusLabels.ts")).toMatch(/Aguardando chip/);
+    expect(readRelative("utils/otaStatusLabels.ts")).toMatch(/resolveOtaProgressPercent/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/Aguardando dispositivo/);
     expect(readRelative("index.css")).toMatch(/pp-firmware-link-canvas--fill|pp-admin-hub/);
     expect(readRelative("index.css")).toMatch(/pp-admin-bottom-bar/);
+    expect(readRelative("index.css")).toMatch(/pp-ota-state/);
+    expect(readRelative("index.css")).toMatch(/pp-map-node__ota/);
     expect(readRelative("index.css")).not.toMatch(/\.delpi-ui-/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/PpHostContainedDrawer/);
     expect(readRelative("app/productionPulseUi.tsx")).toMatch(/PpDetailDialog/);

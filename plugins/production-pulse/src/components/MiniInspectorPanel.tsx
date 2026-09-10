@@ -10,13 +10,12 @@ import {
   PpActionButton,
   PpHostContainedDialog,
   PpNativeTextField,
-  PpOtaProgressBar,
   PpStateBox,
 } from "../app/productionPulseUi";
 import type { DeviceListItem } from "../types/device";
 import type { AdminEntityRef } from "../utils/adminHubUiState";
-import { formatOtaProgressDisplay, otaStatusLabel } from "../utils/otaStatusLabels";
 import { AdminSidePanel } from "./AdminSidePanel";
+import { OtaStatusIndicator } from "./ota/OtaStatusIndicator";
 
 type MiniInspectorPanelProps = {
   open: boolean;
@@ -224,23 +223,18 @@ export function ConfirmDisableDialog({
 export function OtaProgressSnippet(props: {
   status: string;
   progressPercent: number | null | undefined;
+  errorCode?: string | null;
+  deviceOnline?: boolean | null;
 }) {
-  const display = formatOtaProgressDisplay({
-    status: props.status,
-    progressPercent: props.progressPercent,
-  });
-  const pct =
-    typeof props.progressPercent === "number" && Number.isFinite(props.progressPercent)
-      ? Math.max(0, Math.min(100, props.progressPercent))
-      : null;
   return (
     <div className="pp-ota-progress-snippet">
-      <div>
-        {otaStatusLabel(props.status)} · {display}
-      </div>
-      {pct != null ? (
-        <PpOtaProgressBar value={pct} ariaLabel={`Progresso OTA ${pct}%`} />
-      ) : null}
+      <OtaStatusIndicator
+        status={props.status}
+        errorCode={props.errorCode}
+        deviceOnline={props.deviceOnline}
+        progressPercent={props.progressPercent}
+        density="compact"
+      />
     </div>
   );
 }

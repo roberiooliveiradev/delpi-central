@@ -100,6 +100,16 @@ stateDiagram-v2
 | Report idempotente | Terminal + mesmo status → no-op sucesso; não ressuscita terminal |
 | Firmware ACK | `reportTerminalWithRetry` ≤3 com backoff; restart mesmo se ACK falhar (BE reconcilia) |
 
+**Lease:** `GET /device-ota/check` reemite `artifact_token` com `touch_activity=False` — **não** renova `updated_at`. Só transição/progresso (`transition_target` / report) renova o lease de stale.
+
+### Observabilidade MFE
+
+- Owner: `useProductionPulseOtaMonitor` (poll targets de jobs ativos → mapa por device).
+- Taxonomia: `resolveOtaVisualState` + `OtaStatusIndicator` / `OtaTargetProgress`.
+- Notices: IDs determinísticos (`ota-target-active:<deviceId>`, …); `pushResolvedProductionPulseNotice`.
+- `applying` = indeterminate (sem % 95 sintético).
+- Fases UI: Aguardando dispositivo / Baixando / Aplicando / Atualizado / Falhou / Interrompida.
+
 ### Scheduler
 
 `DevicePollSchedulerService` no mesmo tick: authorize scheduled + stale + reconcile batch.
@@ -116,3 +126,15 @@ stateDiagram-v2
 ## Diagnóstico DB DEV (2026-09-10)
 
 Consultas readonly em `plugins_hub`: **0** targets abertos, **0** jobs running/scheduled no momento da estabilização (`INCONCLUSIVE` quanto a histórico produtivo antigo — ambiente limpo).
+
+## Paridade ambiente (ciclo OTA final)
+
+| Sinal | Valor típico DEV |
+|-------|------------------|
+| `SOURCE_COMMIT` | tip do git no host |
+| `REMOTE_ENTRY` | `/apps/production-pulse/assets/remoteEntry.js` (hash SHA-256 do body) |
+| `SCHEDULER` | `PP_POLL_SCHEDULER_ENABLED=true` |
+| `STALE_SEC` | `3600` (default; env `PP_OTA_TARGET_STALE_SECONDS` se setado) |
+| `API_BUILD` / `MFE_BUILD` | **gap** — sem metadata de commit no health/imagem |
+
+Smoke OTA com ESP físico / produção: **PENDENTE**.

@@ -160,6 +160,20 @@ Import: `from "@delpi/plugin-ui/index"`. Factory com prefixo `pp` onde existir h
 | `InlineLoadingProgress` | Poll row / refresh strip |
 | `StateBox` | Erro API / permissão / load estrutural |
 | `PpFloatingNotices` | Feedback transitório de ação (1 evento = 1 notice; ver [ADMIN-HUB-OTA-STABILIZATION.md](./ADMIN-HUB-OTA-STABILIZATION.md)) |
+| `OtaStatusIndicator` / `OtaTargetProgress` | Taxonomia visual OTA (ícone+label+barra real); owner `resolveOtaVisualState` |
+| `PpOtaProgressBar` / `PpProgressTracker` | Progresso quantitativo / lifecycle no detalhe |
+
+### 3.3b Fases OTA (mapa / summary / job)
+
+| Estado | Ícone (Lucide) | Progresso |
+|--------|----------------|-----------|
+| pending/authorized | Clock3 / WifiOff se offline | nenhum |
+| downloading | Download | barra + % real |
+| applying | LoaderCircle | indeterminate |
+| updated | CircleCheck | — |
+| failed | CircleX | — |
+| ota_target_stale | TriangleAlert | — |
+| cancelled | Ban | — |
 
 ### 3.4 Filtros e formulário
 

@@ -7,34 +7,50 @@ import {
   fetchFirmwares,
   type DeviceFirmwareSources,
   type DeviceFirmwareUpdateStatus,
+  type FirmwareUpdateTarget,
 } from "../../api/productionPulseApi";
 import {
   PpActionButton,
   PpHintAction,
-  PpOtaProgressBar,
   PpProgressTracker,
   PpSectionCard,
   PpStateBox,
 } from "../../app/productionPulseUi";
+import { OtaTargetProgress } from "../ota/OtaTargetProgress";
 import { productionPulseFirmwareLinksPath } from "../../constants/routes";
 import { PP_HELP } from "../../content/helpTooltips";
 import type { DeviceListItem } from "../../types/device";
 import type { LivePollResult } from "../../types/detail";
 import { navigateProductionPulse } from "../../utils/navigation";
 import {
-  formatOtaBytes,
-  formatOtaProgressDisplay,
   isOtaStatusActive,
   otaOperationLabel,
   otaStatusLabel,
-  resolveOtaProgressPercent,
 } from "../../utils/otaStatusLabels";
+import {
+  otaActiveNoticeId,
+  otaJobCreatedNoticeId,
+  pushResolvedProductionPulseNotice,
+} from "../../utils/pushResolvedNotice";
+import { resolveProductionPulseError } from "../../utils/apiErrors";
+
+type OperationalNotice = {
+  id?: string;
+  variant?: "error" | "warning" | "info" | "success";
+  title?: string;
+  message: string;
+};
 
 type DeviceFirmwareTabProps = {
   device: DeviceListItem;
   liveSnapshot?: LivePollResult | null;
   canManage: boolean;
   onUpdated?: () => void;
+  /** Prefer hub monitor target when embedded in Admin Hub. */
+  hubOtaTarget?: FirmwareUpdateTarget | null;
+  /** Skip local status polling when hub monitor owns refresh. */
+  suppressLocalPoll?: boolean;
+  onOperationalNotice?: (notice: OperationalNotice) => void;
 };
 
 const POLL_MS = 2500;
@@ -127,11 +143,33 @@ function SourceBlock({
   );
 }
 
+function statusFromHubTarget(
+  target: FirmwareUpdateTarget,
+): DeviceFirmwareUpdateStatus {
+  return {
+    active: isOtaStatusActive(target.status),
+    jobId: target.jobId,
+    targetId: target.id,
+    status: target.status,
+    fromVersion: target.fromVersion,
+    toVersion: target.toVersion,
+    errorCode: target.errorCode,
+    bytesReceived: target.bytesReceived,
+    bytesTotal: target.bytesTotal,
+    progressPercent: target.progressPercent,
+    updatedAt: target.updatedAt,
+    target,
+  };
+}
+
 export function DeviceFirmwareTab({
   device,
   liveSnapshot,
   canManage,
   onUpdated,
+  hubOtaTarget,
+  suppressLocalPoll = false,
+  onOperationalNotice,
 }: DeviceFirmwareTabProps) {
   const [sources, setSources] = useState<DeviceFirmwareSources | null>(null);
   const [sourcesError, setSourcesError] = useState<string | null>(null);
@@ -156,13 +194,14 @@ export function DeviceFirmwareTab({
   }, [device.id]);
 
   const refreshStatus = useCallback(async () => {
+    if (hubOtaTarget) return;
     try {
       const next = await fetchDeviceFirmwareUpdateStatus(device.id);
       setOtaStatus(next);
     } catch {
       /* keep last */
     }
-  }, [device.id]);
+  }, [device.id, hubOtaTarget]);
 
   useEffect(() => {
     void refreshSources();
@@ -181,8 +220,13 @@ export function DeviceFirmwareTab({
       .catch(() => setLatestPublishedVersion(null));
   }, [device.driverKey, device.firmwareKey]);
 
+  const effectiveStatus = hubOtaTarget
+    ? statusFromHubTarget(hubOtaTarget)
+    : otaStatus;
+
   useEffect(() => {
-    if (!otaStatus?.active && !isOtaStatusActive(otaStatus?.status)) {
+    if (suppressLocalPoll || hubOtaTarget) return;
+    if (!effectiveStatus?.active && !isOtaStatusActive(effectiveStatus?.status)) {
       return;
     }
     const timer = window.setInterval(() => {
@@ -191,7 +235,23 @@ export function DeviceFirmwareTab({
       onUpdated?.();
     }, POLL_MS);
     return () => window.clearInterval(timer);
-  }, [otaStatus?.active, otaStatus?.status, refreshStatus, refreshSources, onUpdated]);
+  }, [
+    effectiveStatus?.active,
+    effectiveStatus?.status,
+    hubOtaTarget,
+    onUpdated,
+    refreshSources,
+    refreshStatus,
+    suppressLocalPoll,
+  ]);
+
+  const emitNotice = (notice: OperationalNotice) => {
+    if (onOperationalNotice) {
+      onOperationalNotice(notice);
+      return;
+    }
+    setOtaMessage(notice.message);
+  };
 
   const handleUpdateDevice = async () => {
     if (!canManage) return;
@@ -204,10 +264,14 @@ export function DeviceFirmwareTab({
       });
       const latest = firmwares.find((item) => item.lifecycle === "published" && !item.archivedAt);
       if (!latest) {
-        setOtaMessage(PP_HELP.ota.noPublishedFirmware);
+        emitNotice({
+          variant: "warning",
+          title: PP_HELP.ota.noEligibleTitle,
+          message: PP_HELP.ota.noPublishedFirmware,
+        });
         return;
       }
-      await createFirmwareUpdateJob({
+      const job = await createFirmwareUpdateJob({
         firmwareId: latest.id,
         branch: device.branch,
         trigger: "manual",
@@ -217,28 +281,50 @@ export function DeviceFirmwareTab({
           deviceIds: [device.id],
         },
       });
-      setOtaMessage(PP_HELP.ota.deviceJobCreated);
+      emitNotice({
+        id: otaJobCreatedNoticeId(job.id),
+        variant: "success",
+        title: PP_HELP.ota.updateStartedTitle,
+        message: PP_HELP.ota.deviceJobCreated,
+      });
       await refreshStatus();
       onUpdated?.();
     } catch (err) {
-      setOtaMessage(err instanceof Error ? err.message : PP_HELP.ota.deviceJobFailed);
+      if (onOperationalNotice) {
+        const resolved = resolveProductionPulseError(err);
+        pushResolvedProductionPulseNotice(
+          (notice) => {
+            onOperationalNotice(
+              typeof notice === "string" ? { message: notice } : notice,
+            );
+            return typeof notice === "string" ? notice : notice.message;
+          },
+          err,
+          {
+            id:
+              resolved.code === "openTargetExists"
+                ? otaActiveNoticeId(device.id)
+                : undefined,
+          },
+        );
+      } else {
+        setOtaMessage(err instanceof Error ? err.message : PP_HELP.ota.deviceJobFailed);
+      }
     } finally {
       setOtaBusy(false);
     }
   };
 
-  const status = otaStatus?.status ?? null;
-  const progress = resolveOtaProgressPercent({
-    status,
-    progressPercent: otaStatus?.progressPercent,
-  });
-  const progressDisplay = formatOtaProgressDisplay({
-    status,
-    progressPercent: otaStatus?.progressPercent,
-  });
-  const bytesLabel = formatOtaBytes(otaStatus?.bytesReceived, otaStatus?.bytesTotal);
+  const status = effectiveStatus?.status ?? null;
   const showProgress = Boolean(status) && status !== "cancelled" && status !== "skipped";
-  const showPercentBar = typeof progress === "number";
+  const trackerCurrentStepId = useMemo(() => {
+    const s = (status || "").toLowerCase();
+    if (s === "pending" || s === "authorized") return "authorized";
+    if (s === "downloading") return "downloading";
+    if (s === "applying") return "applying";
+    if (s === "updated" || s === "failed") return "updated";
+    return "authorized";
+  }, [status]);
 
   const trackerSteps = useMemo(
     () => [
@@ -289,7 +375,12 @@ export function DeviceFirmwareTab({
           </div>
           <div>
             <dt>Alvo</dt>
-            <dd>{otaStatus?.toVersion ?? device.targetFirmwareVersion ?? sources?.targetVersion ?? "—"}</dd>
+            <dd>
+              {effectiveStatus?.toVersion ??
+                device.targetFirmwareVersion ??
+                sources?.targetVersion ??
+                "—"}
+            </dd>
           </div>
           <div>
             <dt>Última publicada</dt>
@@ -306,23 +397,24 @@ export function DeviceFirmwareTab({
         <p className="pp-muted" title={PP_HELP.ota.progressPhases}>
           <strong>Operação:</strong> {otaOperationLabel(status)}
           {status ? ` (${otaStatusLabel(status)})` : null}
-          {otaStatus?.errorCode ? ` · ${otaStatus.errorCode}` : null}
         </p>
 
         {showProgress ? (
           <div className="pp-ota-progress-block">
-            <PpProgressTracker steps={trackerSteps} density="compact" />
-            <p className="pp-muted" title={PP_HELP.ota.awaitingChip}>
-              <strong>Progresso:</strong> {progressDisplay}
-              {bytesLabel ? ` · ${bytesLabel}` : null}
-            </p>
-            {showPercentBar ? (
-              <PpOtaProgressBar
-                value={progress ?? 0}
-                label={PP_HELP.ota.downloadProgress}
-                summary={bytesLabel ?? undefined}
-              />
-            ) : null}
+            <PpProgressTracker
+              steps={trackerSteps}
+              currentStepId={trackerCurrentStepId}
+              density="compact"
+            />
+            <OtaTargetProgress
+              status={status}
+              errorCode={effectiveStatus?.errorCode}
+              deviceOnline={device.status === "online"}
+              progressPercent={effectiveStatus?.progressPercent}
+              bytesReceived={effectiveStatus?.bytesReceived}
+              bytesTotal={effectiveStatus?.bytesTotal}
+              updatedAt={effectiveStatus?.updatedAt}
+            />
           </div>
         ) : null}
 
@@ -334,7 +426,7 @@ export function DeviceFirmwareTab({
               </PpActionButton>
             </PpHintAction>
           ) : null}
-          {otaStatus?.jobId ? (
+          {effectiveStatus?.jobId ? (
             <PpActionButton
               variant="ghost"
               onClick={() =>
@@ -345,7 +437,7 @@ export function DeviceFirmwareTab({
             </PpActionButton>
           ) : null}
         </div>
-        {otaMessage ? <p className="pp-muted">{otaMessage}</p> : null}
+        {otaMessage && !onOperationalNotice ? <p className="pp-muted">{otaMessage}</p> : null}
       </PpSectionCard>
 
       {sourcesError ? <PpStateBox variant="error" title="Sketch" message={sourcesError} /> : null}

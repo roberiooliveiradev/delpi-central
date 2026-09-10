@@ -1205,7 +1205,7 @@ export function FirmwareLinksPage({
               <OtaTargetProgress
                 status={row.status}
                 errorCode={row.errorCode}
-                deviceOnline={device?.status === "online"}
+                deviceOnline={device?.online ?? device?.status === "online"}
                 progressPercent={row.progressPercent}
                 bytesReceived={row.bytesReceived}
                 bytesTotal={row.bytesTotal}
@@ -1848,14 +1848,17 @@ export function FirmwareLinksPage({
             embedded
             hubOtaTarget={otaMonitor.getTargetForDevice(ui.selectedEntity.id)}
             suppressLocalOtaPoll
-            onOperationalNotice={(notice) =>
+            onOperationalNotice={(notice) => {
               pushNotice({
                 message: notice.message,
                 variant: notice.variant ?? "info",
                 title: notice.title,
                 id: notice.id,
-              })
-            }
+              });
+              if (notice.id?.startsWith("ota-job-created:")) {
+                void reloadJobs({ soft: true });
+              }
+            }}
             onClose={closeLayers}
           />
         ) : null}
@@ -1910,12 +1913,59 @@ export function FirmwareLinksPage({
         {targets.length === 0 ? (
           <PpStateBox variant="empty" title="Sem targets" />
         ) : (
-          <PpDataTable
-            columns={targetColumns}
-            rows={targets}
-            rowKey={(row) => row.id}
-            emptyMessage="Sem targets"
-          />
+          <>
+            {(() => {
+              const total = targets.length;
+              const terminal = targets.filter((t) =>
+                ["updated", "failed", "cancelled", "skipped"].includes(
+                  (t.status || "").toLowerCase(),
+                ),
+              ).length;
+              const updated = targets.filter((t) => t.status === "updated").length;
+              const downloading = targets.filter((t) => t.status === "downloading").length;
+              const awaiting = targets.filter((t) =>
+                ["pending", "authorized"].includes((t.status || "").toLowerCase()),
+              ).length;
+              const failed = targets.filter((t) => t.status === "failed").length;
+              const pct = total > 0 ? Math.round((terminal / total) * 100) : 0;
+              return (
+                <div className="pp-job-summary" aria-label="Resumo da atualização OTA">
+                  <OtaStatusIndicator
+                    status={
+                      failed > 0 && terminal === total
+                        ? "failed"
+                        : terminal === total
+                          ? "updated"
+                          : downloading > 0
+                            ? "downloading"
+                            : awaiting > 0
+                              ? "authorized"
+                              : "applying"
+                    }
+                    density="comfortable"
+                    meta={`${terminal} de ${total} dispositivos processados`}
+                  />
+                  <PpOtaProgressBar
+                    value={pct}
+                    summary={`${terminal} de ${total} processados`}
+                    ariaLabel="Progresso agregado do job (targets terminais)"
+                  />
+                  <ul className="pp-job-summary__counts">
+                    <li>{updated} concluídos</li>
+                    <li>{downloading} baixando</li>
+                    <li>{awaiting} aguardando</li>
+                    <li>{failed} falhas</li>
+                  </ul>
+                </div>
+              );
+            })()}
+            <PpDataTable
+              columns={targetColumns}
+              rows={targets}
+              rowKey={(row) => row.id}
+              emptyMessage="Sem targets"
+            />
+          </>
         )}
       </PpDetailDialog>
 

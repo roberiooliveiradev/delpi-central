@@ -59,10 +59,12 @@ Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.c
 | Agendar OTA | `PpHostContainedDialog` compacto |
 | Confirmação | `PpConfirmDialog` |
 | Catálogos | Side panel (`devices` wide; `firmwares` / `drivers` / `jobs`); conteúdo `embedded`; mobile → modal page |
-| Feedback transitório | `PpFloatingNotices` (`resolveProductionPulseError`) |
-| Persistente | `PpStateBox` (somente load estrutural) |
+| Feedback transitório | `PpFloatingNotices` (`pushResolvedProductionPulseNotice` / `resolveProductionPulseError`) |
+| Persistente | `PpStateBox` (somente `structuralError` de carga) |
+| Estado OTA por IoT | `useProductionPulseOtaMonitor` + `resolveOtaVisualState` / `OtaStatusIndicator` |
 
 **Vocabulário UI:** **Tipo de driver** (`driver_key` / protocolo IoT) ≠ **Família OTA** (`firmware_key` / versões). Painel `panel=drivers`; modais `driver-create` / `driver-detail`.
+**OTA:** `pending`/`authorized` = «Aguardando dispositivo» (sem %); `applying` indeterminate; falhas via `resolveOtaTargetFailure`.
 
 URL: `panel`/`modal` shareable; summary/menu/confirm **efêmeros** (não reidratam summary fantasma). Transições: `adminHubLayerTransitions.ts`. Detalhe: `docs/12-roadmap-e-evolucao/production-pulse/ADMIN-HUB-OTA-STABILIZATION.md`.
 

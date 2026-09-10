@@ -128,7 +128,7 @@ Helps: `PP_HELP.hub.*`, `PP_HELP.otaLinks.*`.
 | Hub `/firmware-links` | `otaLinks.hero`, `refresh`, `canvas`, `disconnect`, `launchOta`, `oneFirmwarePerDevice` |
 | KPI frota | `ota.openCatalog` / `ota.jobsHero` (titleHint) |
 | Botões do hero (painel/OTA/detalhe) | `PpHintAction` + `shell.backToPanel`, `ota.openCatalog` / `openLinks`, `otaLinks.refresh`, `detail.editDevice` / `pollNow`, `shell.modeOperator`, `operator.adminLink` |
-| Progresso OTA | `ota.downloadProgress`, `ota.awaitingChip` / `awaitingDevice`, `ota.progressPhases`, `ota.runningVersion`, `ota.status.*`, `ota.operation.*` |
+| Progresso OTA | `ota.downloadProgress`, `ota.phase.*` / `awaitingDevice`, `ota.progressPhases`, `ota.runningVersion`, `ota.status.*`, `ota.operation.*`, `ota.failureMessages.*` |
 
 Wireframes: WF-PP-OTA-01…05 (hub em `/firmware-links`; `/firmware-jobs` redireciona). Homologação: [HOMOLOGACAO-OTA-P4.md](./HOMOLOGACAO-OTA-P4.md).
 
