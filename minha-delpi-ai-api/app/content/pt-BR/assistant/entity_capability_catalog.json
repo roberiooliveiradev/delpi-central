@@ -1,5 +1,7 @@
 {
-  "version": "2026.08.1",
+  "version": "2026.09.1",
+  "cutoverEnabled": true,
+  "enrichMapsDeprecated": true,
   "limits": {
     "maxExtraRoutesPerTurn": 4,
     "maxFanOutKeys": 8
@@ -41,7 +43,7 @@
       ]
     }
   },
-    "scopeToRouteId": {
+  "scopeToRouteId": {
     "profile": "productSummary",
     "stock": "productStock",
     "sales": "productSales",
@@ -50,10 +52,44 @@
     "purchases": "productPurchases",
     "suppliers": "productSuppliers"
   },
-    "enrichInsightScopes": {
+  "enrichInsightScopes": {
     "structure": ["stock", "profile"],
     "stock": ["structure"],
     "default": ["profile"]
+  },
+  "semanticGoals": {
+    "enrichByArtifact": {
+      "structure": [
+        {
+          "goalId": "enrich_stock",
+          "scopeLabel": "stock",
+          "intentTemplate": "estoque dos itens relacionados ao produto {product_code}",
+          "queryHints": ["estoque", "saldo", "disponível", "stock"]
+        },
+        {
+          "goalId": "enrich_profile",
+          "scopeLabel": "profile",
+          "intentTemplate": "cadastro ou resumo dos itens do produto {product_code}",
+          "queryHints": ["descrição", "cadastro", "ficha", "resumo", "summary", "profile"]
+        }
+      ],
+      "stock": [
+        {
+          "goalId": "enrich_structure",
+          "scopeLabel": "structure",
+          "intentTemplate": "estrutura dos itens do produto {product_code}",
+          "queryHints": ["estrutura", "bom", "structure"]
+        }
+      ],
+      "default": [
+        {
+          "goalId": "enrich_profile",
+          "scopeLabel": "profile",
+          "intentTemplate": "cadastro ou resumo do produto {product_code}",
+          "queryHints": ["descrição", "cadastro", "ficha", "resumo", "summary", "profile"]
+        }
+      ]
+    }
   },
   "enrichInsightLimitsByMode": {
     "fast": {

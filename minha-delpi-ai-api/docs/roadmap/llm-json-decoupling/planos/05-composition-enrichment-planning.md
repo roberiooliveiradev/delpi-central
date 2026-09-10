@@ -1,8 +1,8 @@
 # Plano 05 — Composition/enrichment -> planejamento orientado por goals e budget
 
 **Prioridade:** P1  
-**Status execução:** Onda E · S1–S5 **ATENDIDO** · próxima **E5.S6**  
-**Evidência:** [`../evidence/e5-s1-composition-inventory.md`](../evidence/e5-s1-composition-inventory.md) · [`../evidence/e5-s2-composition-baseline.md`](../evidence/e5-s2-composition-baseline.md) · [`../evidence/e5-s3-goal-coverage-contract.md`](../evidence/e5-s3-goal-coverage-contract.md) · [`../evidence/e5-s4-planner-driven-enrichment.md`](../evidence/e5-s4-planner-driven-enrichment.md) · [`../evidence/e5-s5-department-composition-cutover.md`](../evidence/e5-s5-department-composition-cutover.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda E · S1–S6 **ATENDIDO** · próxima **E5.S7**  
+**Evidência:** [`../evidence/e5-s1-composition-inventory.md`](../evidence/e5-s1-composition-inventory.md) · [`../evidence/e5-s2-composition-baseline.md`](../evidence/e5-s2-composition-baseline.md) · [`../evidence/e5-s3-goal-coverage-contract.md`](../evidence/e5-s3-goal-coverage-contract.md) · [`../evidence/e5-s4-planner-driven-enrichment.md`](../evidence/e5-s4-planner-driven-enrichment.md) · [`../evidence/e5-s5-department-composition-cutover.md`](../evidence/e5-s5-department-composition-cutover.md) · [`../evidence/e5-s6-entity-enrichment-cutover.md`](../evidence/e5-s6-entity-enrichment-cutover.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** consultas compostas e enriquecimentos devem ser escolhidos pelo objetivo real do usuário, pelos dados já disponíveis e pelas actions autorizadas, não por listas fixas de `routeIds` e mapas `scope -> route`.
 
 ## CURRENT
@@ -90,11 +90,13 @@ Medir tool count, task success, redundancy, latency e partial-failure behavior.
 
 **Evidência:** [`../evidence/e5-s5-department-composition-cutover.md`](../evidence/e5-s5-department-composition-cutover.md) · harness `test_e5_s5_department_composition_cutover.py`
 
-### E5.S6 — Entity enrichment cutover
+### E5.S6 — Entity enrichment cutover — **ATENDIDO**
 
 **Fazer:** retirar `scopeToRouteId` e maps equivalentes quando goal coverage + retrieval cobrirem o caso; manter limites de fan-out e modos fast/normal/thinker.
 
 **Teste:** product and unknown entity/API; max routes; mixed goals.
+
+**Evidência:** [`../evidence/e5-s6-entity-enrichment-cutover.md`](../evidence/e5-s6-entity-enrichment-cutover.md) · harness `test_e5_s6_entity_enrichment_cutover.py`
 
 ### E5.S7 — Cleanup
 

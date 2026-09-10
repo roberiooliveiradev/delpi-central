@@ -70,6 +70,7 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`evidence/e5-s3-goal-coverage-contract.md`](./evidence/e5-s3-goal-coverage-contract.md) | E5.S3 — contrato Goal Coverage. |
 | [`evidence/e5-s4-planner-driven-enrichment.md`](./evidence/e5-s4-planner-driven-enrichment.md) | E5.S4 — enrichment via coverage gaps. |
 | [`evidence/e5-s5-department-composition-cutover.md`](./evidence/e5-s5-department-composition-cutover.md) | E5.S5 — department goals+retrieval. |
+| [`evidence/e5-s6-entity-enrichment-cutover.md`](./evidence/e5-s6-entity-enrichment-cutover.md) | E5.S6 — entity enrichment goals. |
 
 ## Drift HEAD (2026-09-10) — resumido
 

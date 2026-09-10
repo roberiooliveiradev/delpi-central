@@ -186,8 +186,18 @@ class ChatGroundedCapabilityPlanningService:
         limit = enrich_plan.max_calls
         planned: list[dict] = []
         fan_out_cap = enrich_plan.max_fan_out
+        seen_action_ids: set[str] = set()
 
-        for scope in enrich_plan.planned_scopes:
+        goal_driven = bool(enrich_plan.enrich_goals)
+        scope_items: list[tuple[str, str | None]] = []
+        if goal_driven:
+            scope_items = [
+                (goal.scope_label, goal.goal_id) for goal in enrich_plan.enrich_goals if goal.scope_label
+            ]
+        else:
+            scope_items = [(scope, None) for scope in enrich_plan.planned_scopes]
+
+        for scope, goal_id in scope_items:
             if len(planned) >= limit:
                 break
 
@@ -209,8 +219,26 @@ class ChatGroundedCapabilityPlanningService:
                 if not selected:
                     continue
 
+                action_id = str(
+                    (selected.get("arguments") or {}).get("actionId") or ""
+                ).strip()
+                if action_id and action_id in seen_action_ids:
+                    continue
+                if action_id:
+                    seen_action_ids.add(action_id)
+
                 payload = dict(selected)
                 payload["reason"] = f"{enrich_plan.reason}:{scope}:{code}"
+                meta = dict(payload.get("metadata") or {})
+                if goal_driven:
+                    meta["entityEnrichGoalDriven"] = True
+                    meta["enrichMapsDeprecated"] = (
+                        ChatEntityCapabilityCatalogService.enrich_maps_deprecated()
+                    )
+                    if goal_id:
+                        meta["goalId"] = goal_id
+                    meta["scopeLabel"] = scope
+                    payload["metadata"] = meta
                 planned.append(payload)
 
         return planned
@@ -231,11 +259,21 @@ class ChatGroundedCapabilityPlanningService:
         if not product_codes:
             return []
 
-        artifact_key = ChatEntityCapabilityCatalogService.artifact_enrich_key(
-            str(excerpt.get("entity") or "").strip() or None,
-            str(excerpt.get("profileKey") or "").strip() or None,
-        )
-        scopes = ChatEntityCapabilityCatalogService.enrich_insight_scopes(artifact_key)
+        if ChatEntityCapabilityCatalogService.cutover_enabled():
+            goals = ChatEntityCapabilityCatalogService.enrich_goals_for_artifact(
+                str(excerpt.get("entity") or "").strip() or None,
+                str(excerpt.get("profileKey") or "").strip() or None,
+                product_code=product_codes[0],
+            )
+            scopes = tuple(goal.scope_label for goal in goals if goal.scope_label)
+            goal_by_scope = {goal.scope_label: goal.goal_id for goal in goals}
+        else:
+            artifact_key = ChatEntityCapabilityCatalogService.artifact_enrich_key(
+                str(excerpt.get("entity") or "").strip() or None,
+                str(excerpt.get("profileKey") or "").strip() or None,
+            )
+            scopes = ChatEntityCapabilityCatalogService.enrich_insight_scopes(artifact_key)
+            goal_by_scope = {}
 
         if not scopes:
             return []
@@ -245,6 +283,7 @@ class ChatGroundedCapabilityPlanningService:
             ChatEntityCapabilityCatalogService.max_extra_routes_per_turn(),
         )
         planned: list[dict] = []
+        seen_action_ids: set[str] = set()
 
         for scope in scopes:
             if len(planned) >= limit:
@@ -268,8 +307,26 @@ class ChatGroundedCapabilityPlanningService:
                 if not selected:
                     continue
 
+                action_id = str(
+                    (selected.get("arguments") or {}).get("actionId") or ""
+                ).strip()
+                if action_id and action_id in seen_action_ids:
+                    continue
+                if action_id:
+                    seen_action_ids.add(action_id)
+
                 payload = dict(selected)
                 payload["reason"] = f"grounded_enrich_insight:{scope}:{code}"
+                if ChatEntityCapabilityCatalogService.cutover_enabled():
+                    meta = dict(payload.get("metadata") or {})
+                    meta["entityEnrichGoalDriven"] = True
+                    meta["enrichMapsDeprecated"] = (
+                        ChatEntityCapabilityCatalogService.enrich_maps_deprecated()
+                    )
+                    if goal_by_scope.get(scope):
+                        meta["goalId"] = goal_by_scope[scope]
+                    meta["scopeLabel"] = scope
+                    payload["metadata"] = meta
                 planned.append(payload)
 
         return planned

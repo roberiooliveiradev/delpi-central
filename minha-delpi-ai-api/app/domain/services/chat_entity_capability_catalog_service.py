@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
@@ -12,7 +13,36 @@ from app.domain.services.operational_route_registry_service import (
 _BUNDLE = "entity_capability_catalog"
 
 
+@dataclass(frozen=True)
+class EntityEnrichGoal:
+    goal_id: str
+    scope_label: str
+    intent: str
+    query_hints: tuple[str, ...]
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "goalId": self.goal_id,
+            "scopeLabel": self.scope_label,
+            "intent": self.intent,
+            "queryHints": list(self.query_hints),
+        }
+
+
 class ChatEntityCapabilityCatalogService:
+    @classmethod
+    def cutover_enabled(cls) -> bool:
+        raw = ChatAssistantContentService.get_node(_BUNDLE, "cutoverEnabled")
+        if raw is None:
+            return True
+        return bool(raw)
+
+    @classmethod
+    def enrich_maps_deprecated(cls) -> bool:
+        return bool(
+            ChatAssistantContentService.get_node(_BUNDLE, "enrichMapsDeprecated")
+        )
+
     @classmethod
     def limit_int(cls, key: str, default: int) -> int:
         node = ChatAssistantContentService.get_node(_BUNDLE, "limits") or {}
@@ -46,6 +76,7 @@ class ChatEntityCapabilityCatalogService:
 
     @classmethod
     def route_id_for_scope(cls, scope_key: str) -> str | None:
+        """Legacy observer — scope→routeId deprecated (E5.S6)."""
         route_id = ChatAssistantContentService.get(
             _BUNDLE,
             "scopeToRouteId",
@@ -57,6 +88,7 @@ class ChatEntityCapabilityCatalogService:
 
     @classmethod
     def enrich_insight_scopes(cls, artifact_key: str) -> tuple[str, ...]:
+        """Legacy observer when cutover on — prefer ``enrich_goals_for_artifact``."""
         node = ChatAssistantContentService.get_node(_BUNDLE, "enrichInsightScopes") or {}
 
         if not isinstance(node, dict):
@@ -73,7 +105,92 @@ class ChatEntityCapabilityCatalogService:
         return tuple(str(item).strip() for item in scopes if str(item).strip())
 
     @classmethod
+    def enrich_artifact_group(
+        cls,
+        entity: str | None,
+        profile_key: str | None = None,
+    ) -> str:
+        """Resolve semantic goal group without routeId authority."""
+        node = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "semanticGoals",
+            "enrichByArtifact",
+        )
+        if not isinstance(node, dict) or not node:
+            return "default"
+
+        candidates: list[str] = []
+        profile = str(profile_key or "").strip()
+        entity_key = str(entity or "").strip()
+        if profile:
+            candidates.append(profile)
+        if entity_key:
+            candidates.append(entity_key)
+            if entity_key.startswith("product_"):
+                candidates.append(entity_key[len("product_") :])
+        candidates.append("default")
+
+        for candidate in candidates:
+            if candidate in node and isinstance(node.get(candidate), list):
+                return candidate
+        return "default"
+
+    @classmethod
+    def enrich_goals_for_artifact(
+        cls,
+        entity: str | None,
+        profile_key: str | None = None,
+        *,
+        product_code: str | None = None,
+    ) -> list[EntityEnrichGoal]:
+        group = cls.enrich_artifact_group(entity, profile_key)
+        node = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "semanticGoals",
+            "enrichByArtifact",
+            group,
+        )
+        if not isinstance(node, list):
+            node = ChatAssistantContentService.get_node(
+                _BUNDLE,
+                "semanticGoals",
+                "enrichByArtifact",
+                "default",
+            )
+        if not isinstance(node, list):
+            return []
+
+        code = str(product_code or "produto").strip() or "produto"
+        goals: list[EntityEnrichGoal] = []
+        for item in node:
+            if not isinstance(item, dict):
+                continue
+            goal_id = str(item.get("goalId") or "").strip()
+            scope_label = str(item.get("scopeLabel") or "").strip()
+            template = str(item.get("intentTemplate") or "").strip()
+            if not goal_id or not template:
+                continue
+            hints = tuple(
+                str(hint).strip().lower()
+                for hint in (item.get("queryHints") or [])
+                if str(hint).strip()
+            )
+            goals.append(
+                EntityEnrichGoal(
+                    goal_id=goal_id,
+                    scope_label=scope_label or goal_id,
+                    intent=template.format(product_code=code),
+                    query_hints=hints,
+                )
+            )
+        return goals
+
+    @classmethod
     def artifact_enrich_key(cls, entity: str | None, profile_key: str | None = None) -> str:
+        """Legacy observer — prefer ``enrich_artifact_group`` under cutover."""
+        if cls.cutover_enabled():
+            return cls.enrich_artifact_group(entity, profile_key)
+
         node = ChatAssistantContentService.get_node(_BUNDLE, "artifactToEnrichKey") or {}
 
         if isinstance(node, dict):

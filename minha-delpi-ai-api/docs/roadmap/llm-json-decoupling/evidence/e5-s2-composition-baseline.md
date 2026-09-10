@@ -31,8 +31,8 @@ SUFFICIENT_NO_AUTO_FOLLOWUP = PASS
 
 | Sinal | Freeze |
 |-------|--------|
-| `enrich_insight_scopes('structure')` | `('stock', 'profile')` |
-| grounded plan após estrutura | scopes `stock`+`profile`, `max_calls=4` |
+| `enrich_insight_scopes('structure')` | observer legado; authority = `semanticGoals` (E5.S6) |
+| grounded plan após estrutura | scopes `stock`+`profile` via goals, `max_calls=4` |
 | `maxExtraRoutesPerTurn` | `4` |
 | mode caps fast/normal/thinker | 2 / 4 / 6 |
 

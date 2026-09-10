@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from app.domain.services.chat_entity_capability_catalog_service import (
     ChatEntityCapabilityCatalogService,
+    EntityEnrichGoal,
 )
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
@@ -23,6 +24,7 @@ class ChatGroundedEnrichPlan:
     max_fan_out: int
     response_mode: str
     reason: str
+    enrich_goals: tuple[EntityEnrichGoal, ...] = field(default_factory=tuple)
 
 
 class ChatGroundedEnrichPlanningService:
@@ -42,7 +44,6 @@ class ChatGroundedEnrichPlanningService:
         limits = ChatEntityCapabilityCatalogService.enrich_insight_limits_for_mode(
             normalized_mode
         )
-        scopes = cls._resolve_scopes(message, workspace_context, excerpt)
         product_codes = cls._resolve_product_codes(
             message,
             workspace_context=workspace_context,
@@ -50,8 +51,20 @@ class ChatGroundedEnrichPlanningService:
             max_fan_out=cls._resolve_fan_out_cap(limits),
         )
         max_calls = cls._resolve_max_calls(normalized_mode, limits)
+        enrich_goals = cls._resolve_enrich_goals(
+            message,
+            workspace_context,
+            excerpt,
+            product_code=product_codes[0] if product_codes else None,
+        )
+        scopes = cls._resolve_scopes(
+            message,
+            workspace_context,
+            excerpt,
+            enrich_goals=enrich_goals,
+        )
 
-        if not scopes or not product_codes:
+        if (not scopes and not enrich_goals) or not product_codes:
             return None
 
         return ChatGroundedEnrichPlan(
@@ -60,7 +73,12 @@ class ChatGroundedEnrichPlanningService:
             max_calls=max_calls,
             max_fan_out=cls._resolve_fan_out_cap(limits),
             response_mode=normalized_mode,
-            reason="grounded_enrich_insight",
+            reason=(
+                "grounded_enrich_insight_goal_driven"
+                if ChatEntityCapabilityCatalogService.cutover_enabled()
+                else "grounded_enrich_insight"
+            ),
+            enrich_goals=enrich_goals,
         )
 
     @classmethod
@@ -133,12 +151,75 @@ class ChatGroundedEnrichPlanningService:
         return []
 
     @classmethod
+    def _resolve_enrich_goals(
+        cls,
+        message: str,
+        workspace_context: dict[str, Any] | None,
+        excerpt: dict[str, Any],
+        *,
+        product_code: str | None,
+    ) -> tuple[EntityEnrichGoal, ...]:
+        if not ChatEntityCapabilityCatalogService.cutover_enabled():
+            return ()
+
+        goals = list(
+            ChatEntityCapabilityCatalogService.enrich_goals_for_artifact(
+                str(excerpt.get("entity") or "").strip() or None,
+                str(excerpt.get("profileKey") or "").strip() or None,
+                product_code=product_code,
+            )
+        )
+        requested = cls._scopes_from_message(message)
+        if requested:
+            filtered = [goal for goal in goals if goal.scope_label in requested]
+            if filtered:
+                goals = filtered
+
+        workspace = workspace_context if isinstance(workspace_context, dict) else {}
+        preferred = cls._preferred_scopes_from_behavior(workspace)
+        for scope in preferred:
+            if any(goal.scope_label == scope for goal in goals):
+                continue
+            goals.append(
+                EntityEnrichGoal(
+                    goal_id=f"enrich_{scope}",
+                    scope_label=scope,
+                    intent=f"{scope} do produto {product_code or 'produto'}",
+                    query_hints=(scope,),
+                )
+            )
+
+        turn_analysis = (
+            workspace.get("turnAnalysis")
+            if isinstance(workspace.get("turnAnalysis"), dict)
+            else {}
+        )
+        for scope in cls._scopes_from_turn_analysis(turn_analysis):
+            if any(goal.scope_label == scope for goal in goals):
+                continue
+            goals.append(
+                EntityEnrichGoal(
+                    goal_id=f"enrich_{scope}",
+                    scope_label=scope,
+                    intent=f"{scope} do produto {product_code or 'produto'}",
+                    query_hints=(scope,),
+                )
+            )
+
+        return tuple(goals)
+
+    @classmethod
     def _resolve_scopes(
         cls,
         message: str,
         workspace_context: dict[str, Any] | None,
         excerpt: dict[str, Any],
+        *,
+        enrich_goals: tuple[EntityEnrichGoal, ...] = (),
     ) -> tuple[str, ...]:
+        if enrich_goals:
+            return tuple(goal.scope_label for goal in enrich_goals if goal.scope_label)
+
         workspace = workspace_context if isinstance(workspace_context, dict) else {}
         artifact_key = ChatEntityCapabilityCatalogService.artifact_enrich_key(
             str(excerpt.get("entity") or "").strip() or None,
