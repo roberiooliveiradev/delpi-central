@@ -1,11 +1,11 @@
 # Plano 06 — Recommendations e composer -> sugestões contextuais grounded
 
 **Prioridade:** P1  
-**Status execução:** Onda F · E6.S1 **ATENDIDO** · próxima E6.S2 · `recommendationQueries` ainda LIVE_AUTHORITY  
-**Evidência:** [`../evidence/e6-s1-recommendations-inventory.md`](../evidence/e6-s1-recommendations-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda F · E6.S1–S2 **ATENDIDO** · próxima E6.S3 · `recommendationQueries` ainda LIVE_AUTHORITY  
+**Evidência:** [`../evidence/e6-s1-recommendations-inventory.md`](../evidence/e6-s1-recommendations-inventory.md) · [`../evidence/e6-s2-recommendation-grounding-contract.md`](../evidence/e6-s2-recommendation-grounding-contract.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** próximos passos e sugestões devem considerar o pedido atual, os fatos retornados, limitações, contexto multi-turn e actions permitidas, em vez de listas estáticas por profile.
 
-**HEAD revalidado:** pós-E5.S7 / Onda E ATENDIDA (`8093707cd`+)
+**HEAD revalidado:** pós-E6.S1 (`39244f19d`+)
 
 ## EXECUTION_DRIFT (2026-09-10)
 
@@ -97,11 +97,13 @@ Se houver `actionId`, deve pertencer às actions permitidas. Recommendation nunc
 
 **Teste:** relevance (= JSON), duplication gap, unavailable capability (parcial), composer prefix/short; multi-turn/latency documentados no inventário.
 
-### E6.S2 — Grounding contract
+### E6.S2 — Grounding contract — **ATENDIDO** (2026-09-10)
 
 **Fazer:** input mínimo: user goals, facts/dataAnswer, limitations, result refs, allowed actions, already-executed goals.
 
-**Não fazer:** payload bruto ilimitado ao LLM.
+**Feito:** `ChatRecommendationGroundingService` + caps `recommendationGrounding` em `humanized_data_response.json`; shape `StructuredRecommendationCandidate`; filter allowlist + already-executed. Sem cutover do producer.
+
+**Não fazer:** payload bruto ilimitado ao LLM — **garantido** (raw_data excluído; caps).
 
 ### E6.S3 — Contextual producer
 

@@ -77,3 +77,29 @@ class ChatHumanizedDataResponseContentService:
             )
 
         return queries
+
+    @classmethod
+    def recommendation_grounding_caps(cls) -> dict[str, int]:
+        """Caps do contrato E6.S2 — input bounded para recomendações contextuais."""
+
+        node = cls.get_node("recommendationGrounding")
+        defaults = {
+            "maxUserGoals": 5,
+            "maxFacts": 12,
+            "maxFactChars": 240,
+            "maxLimitations": 6,
+            "maxLimitationChars": 200,
+            "maxResultRefs": 8,
+            "maxAllowedActions": 40,
+            "maxAlreadyExecuted": 20,
+            "maxMessageChars": 400,
+        }
+        if not isinstance(node, dict):
+            return defaults
+        out = dict(defaults)
+        for key, default in defaults.items():
+            try:
+                out[key] = max(0, int(node.get(key, default)))
+            except (TypeError, ValueError):
+                out[key] = default
+        return out

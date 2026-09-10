@@ -40,6 +40,17 @@
     "structure_exclusivity": "Validar MPs marcadas como exclusivas na árvore e comparar com o catálogo de exclusividade quando houver dúvida.",
     "structure": "Explorar a árvore para ver MPs por intermediário; peça estoque das matérias-primas se precisar avaliar montagem."
   },
+  "recommendationGrounding": {
+    "maxUserGoals": 5,
+    "maxFacts": 12,
+    "maxFactChars": 240,
+    "maxLimitations": 6,
+    "maxLimitationChars": 200,
+    "maxResultRefs": 8,
+    "maxAllowedActions": 40,
+    "maxAlreadyExecuted": 20,
+    "maxMessageChars": 400
+  },
   "recommendationQueries": {
     "factory_status": [
       {
