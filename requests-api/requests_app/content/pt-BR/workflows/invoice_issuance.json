@@ -145,14 +145,15 @@
           {
             "permissions": ["create"],
             "ownership": true,
-            "from": ["submitted"]
+            "from": ["submitted", "awaiting_requester_confirmation"]
           },
           {
             "permissions": ["process"],
-            "from": ["in_progress", "awaiting_requester_confirmation"]
+            "from": ["in_progress"]
           },
           {
-            "permissions": ["manage"]
+            "permissions": ["manage"],
+            "from": ["submitted", "in_progress", "needs_information"]
           }
         ],
         "fields": ["cancel_justification"]

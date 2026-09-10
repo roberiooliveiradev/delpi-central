@@ -27,6 +27,7 @@ def test_list_migration_files_in_order():
         "V010__comment_attachments.sql",
         "V011__invoice_issue_confirmation_workflow.sql",
         "V012__invoice_reject_fulfillment_and_file_lock.sql",
+        "V013__invoice_cancel_owner_only_on_awaiting_confirmation.sql",
     ]
 
 
@@ -116,3 +117,13 @@ def test_v012_reject_fulfillment_and_file_lock():
     assert "invoice-issuance" in sql
     _, name = parse_version_and_name(v012)
     assert name == "invoice_reject_fulfillment_and_file_lock"
+
+
+def test_v013_cancel_owner_only_on_awaiting_confirmation():
+    v013 = MIGRATIONS_DIR / "V013__invoice_cancel_owner_only_on_awaiting_confirmation.sql"
+    sql = v013.read_text(encoding="utf-8")
+    assert "awaiting_requester_confirmation" in sql
+    assert '"permissions":["process"],"from":["in_progress"]' in sql.replace(" ", "")
+    assert "invoice-issuance" in sql
+    _, name = parse_version_and_name(v013)
+    assert name == "invoice_cancel_owner_only_on_awaiting_confirmation"

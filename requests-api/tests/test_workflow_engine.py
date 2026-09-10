@@ -98,13 +98,19 @@ def test_registry_loads_invoice_and_generic_without_engine_branch():
             "awaiting_requester_confirmation",
             _creator,
             _NF,
-            {"view", "confirm_fulfillment", "reject_fulfillment"},
+            {"view", "confirm_fulfillment", "reject_fulfillment", "cancel"},
         ),
         (
             "awaiting_requester_confirmation",
             _processor,
             _NF,
-            {"view", "cancel"},
+            {"view"},
+        ),
+        (
+            "awaiting_requester_confirmation",
+            _manager,
+            _NF,
+            {"view"},
         ),
         ("completed", _creator, _NF, {"view"}),
         ("completed", _processor, _NF, {"view"}),
@@ -304,6 +310,33 @@ def test_cancel_create_only_on_submitted(engine, invoice_workflow):
     )
     assert ok is False
     assert code == "forbidden"
+
+
+def test_staff_cannot_cancel_while_awaiting_requester_confirmation(engine, invoice_workflow):
+    for actor in (_processor(), _manager()):
+        ok, code, _ = engine.can_transition(
+            request=_request(status="awaiting_requester_confirmation"),
+            actor=actor,
+            workflow=invoice_workflow,
+            action="cancel",
+            body={"cancel_justification": "erro"},
+            require_fields=True,
+        )
+        assert ok is False
+        assert code == "forbidden"
+
+
+def test_owner_can_cancel_while_awaiting_requester_confirmation(engine, invoice_workflow):
+    ok, code, _ = engine.can_transition(
+        request=_request(status="awaiting_requester_confirmation"),
+        actor=_creator(),
+        workflow=invoice_workflow,
+        action="cancel",
+        body={"cancel_justification": "não preciso mais"},
+        require_fields=True,
+    )
+    assert ok is True
+    assert code is None
 
 
 def test_generic_workflow_independent_of_invoice(engine):
