@@ -86,7 +86,7 @@ class ChatPresentationStackOrderService:
         metadata: dict[str, Any],
         plan: dict[str, Any],
     ) -> None:
-        """Materializa títulos/framing no plano para MFE render-only (F5-safe)."""
+        """Materializa títulos/framing da resposta atual (não o catálogo inteiro)."""
         from app.domain.services.chat_product_operational_content_service import (
             ChatProductOperationalContentService,
         )
@@ -94,29 +94,29 @@ class ChatPresentationStackOrderService:
             ResultPresentationTitleResolver,
         )
 
-        route_titles = ChatProductOperationalContentService.get_mapping(
+        route_key = cls._current_route_key(metadata, plan)
+        catalog_titles = ChatProductOperationalContentService.get_mapping(
             "presentation",
             "routeTitles",
         )
-        route_framing = ChatProductOperationalContentService.get_mapping(
+        catalog_framing = ChatProductOperationalContentService.get_mapping(
             "presentation",
             "routeFraming",
         )
-        section_titles = {
-            "scope": "Escopo da consulta",
-            "profile": "Ficha cadastral",
-            "highlights": "Síntese executiva (Destaques)",
-            "guide": "Roteiro de produção",
-            "inspection": "Plano de inspeção",
-            "structure": "Estrutura (BOM)",
-            "attention": "Alertas e divergências",
-        }
-
-        if route_titles:
-            plan["routeTitles"] = dict(route_titles)
-        if route_framing:
-            plan["routeFraming"] = dict(route_framing)
-        plan["sectionTitles"] = section_titles
+        catalog_section_titles = ChatProductOperationalContentService.get_mapping(
+            "presentation",
+            "sectionTitles",
+        )
+        if not catalog_section_titles:
+            catalog_section_titles = {
+                "scope": "Escopo da consulta",
+                "profile": "Ficha cadastral",
+                "highlights": "Síntese executiva (Destaques)",
+                "guide": "Roteiro de produção",
+                "inspection": "Plano de inspeção",
+                "structure": "Estrutura (BOM)",
+                "attention": "Alertas e divergências",
+            }
 
         path = str(metadata.get("path") or "")
         resolved = ResultPresentationTitleResolver.resolve(
@@ -124,23 +124,133 @@ class ChatPresentationStackOrderService:
             summary=str(metadata.get("summary") or metadata.get("actionSummary") or ""),
             action_id=str(metadata.get("actionId") or ""),
             metadata=metadata,
-            legacy_title=None,
             fallback="",
         )
-        if resolved.title:
-            metadata["routeTitle"] = resolved.title
-            metadata["title"] = metadata.get("title") or resolved.title
-            plan["resolvedRouteTitle"] = resolved.title
-            plan["titleSource"] = resolved.source
+        route_title = (
+            resolved.title
+            or str((catalog_titles or {}).get(route_key) or "").strip()
+            or str((catalog_titles or {}).get("other") or "").strip()
+        )
+        if route_title:
+            metadata["routeTitle"] = route_title
+            metadata["title"] = metadata.get("title") or route_title
+            plan["resolvedRouteTitle"] = route_title
+            plan["titleSource"] = resolved.source if resolved.title else "ROUTE_CATALOG"
+            plan["routeTitles"] = {route_key: route_title}
 
-        # Preferir sectionTitles no MFE; framing já pode existir via section rules
-        if not isinstance(plan.get("sectionFraming"), dict):
-            framing = ChatProductOperationalContentService.get_mapping(
+        framing = str((catalog_framing or {}).get(route_key) or "").strip() or str(
+            (catalog_framing or {}).get("other") or ""
+        ).strip()
+        if framing:
+            plan["routeFraming"] = {route_key: framing}
+            metadata["routeFraming"] = framing
+
+        active_sections = cls._active_section_ids(plan)
+        section_titles = {
+            section_id: str(catalog_section_titles.get(section_id) or "").strip()
+            for section_id in active_sections
+            if str(catalog_section_titles.get(section_id) or "").strip()
+        }
+        if section_titles:
+            plan["sectionTitles"] = section_titles
+
+        existing_framing = plan.get("sectionFraming")
+        if isinstance(existing_framing, dict) and existing_framing:
+            plan["sectionFraming"] = {
+                key: value
+                for key, value in existing_framing.items()
+                if key in active_sections or not active_sections
+            }
+        else:
+            catalog_section_framing = ChatProductOperationalContentService.get_mapping(
                 "presentation",
                 "sectionFraming",
             )
-            if framing:
-                plan["sectionFraming"] = dict(framing)
+            if catalog_section_framing:
+                plan["sectionFraming"] = {
+                    key: value
+                    for key, value in catalog_section_framing.items()
+                    if key in active_sections or not active_sections
+                }
+
+    @classmethod
+    def _current_route_key(cls, metadata: dict[str, Any], plan: dict[str, Any]) -> str:
+        for candidate in (
+            plan.get("presentationProfileKey"),
+            plan.get("presentationProfile"),
+            metadata.get("routeKey"),
+            metadata.get("presentationProfileKey"),
+        ):
+            token = str(candidate or "").strip()
+            if token:
+                # profile keys like product_stock → stock
+                if "_" in token:
+                    tail = token.rsplit("_", 1)[-1]
+                    if tail in {
+                        "stock",
+                        "structure",
+                        "guide",
+                        "inspection",
+                        "profile",
+                        "analyser",
+                        "parents",
+                    }:
+                        return tail
+                return token
+        path = str(metadata.get("path") or "").lower()
+        for marker in (
+            "stock",
+            "structure",
+            "guide",
+            "inspection",
+            "analyser",
+            "parents",
+        ):
+            if f"/{marker}" in path:
+                return marker
+        return "other"
+
+    @classmethod
+    def _active_section_ids(cls, plan: dict[str, Any]) -> set[str]:
+        active: set[str] = set()
+        for key in ("narrativeOrder", "tableRoleOrder", "tailVisualOrder"):
+            values = plan.get(key)
+            if isinstance(values, list):
+                for item in values:
+                    token = str(item or "").strip()
+                    if token in {
+                        "scope",
+                        "profile",
+                        "highlights",
+                        "guide",
+                        "inspection",
+                        "structure",
+                        "attention",
+                    }:
+                        active.add(token)
+                    if token == "profileTables":
+                        active.add("profile")
+                    if token == "highlights":
+                        active.add("highlights")
+                    if token == "attention":
+                        active.add("attention")
+        availability = plan.get("sectionAvailability")
+        if isinstance(availability, dict):
+            for key, enabled in availability.items():
+                if enabled and str(key) in {
+                    "scope",
+                    "profile",
+                    "highlights",
+                    "guide",
+                    "inspection",
+                    "structure",
+                    "attention",
+                }:
+                    active.add(str(key))
+        # Always allow scope framing when humanized stack is present
+        if plan.get("humanizedStack") or plan.get("sectionFraming"):
+            active.add("scope")
+        return active
 
     @classmethod
     def enrich_metadata(cls, metadata: dict[str, Any]) -> None:

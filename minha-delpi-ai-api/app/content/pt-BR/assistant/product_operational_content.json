@@ -100,15 +100,40 @@
       "código"
     ],
     "linkedScopeStems": {
-      "stock": ["estoque", "stock", "saldo"],
-      "structure": ["estrutura", "bom", "composicao", "composição", "arvore", "árvore"],
-      "sales": ["venda", "vendas"],
-      "description": ["descricao", "descrição", "description"]
+      "stock": [
+        "estoque",
+        "stock",
+        "saldo"
+      ],
+      "structure": [
+        "estrutura",
+        "bom",
+        "composicao",
+        "composição",
+        "arvore",
+        "árvore"
+      ],
+      "sales": [
+        "venda",
+        "vendas"
+      ],
+      "description": [
+        "descricao",
+        "descrição",
+        "description"
+      ]
     },
     "scopeTerms": {
       "stock": {
-        "terms": ["estoque", "stock", "saldo"],
-        "pluralTerms": ["estoques", "saldos"]
+        "terms": [
+          "estoque",
+          "stock",
+          "saldo"
+        ],
+        "pluralTerms": [
+          "estoques",
+          "saldos"
+        ]
       },
       "structure": {
         "terms": [
@@ -121,15 +146,31 @@
           "árvore do produto",
           "arvore do produto"
         ],
-        "pluralTerms": ["estruturas", "composições", "composicoes", "árvores", "arvores"]
+        "pluralTerms": [
+          "estruturas",
+          "composições",
+          "composicoes",
+          "árvores",
+          "arvores"
+        ]
       },
       "sales": {
-        "terms": ["venda", "vendas"],
+        "terms": [
+          "venda",
+          "vendas"
+        ],
         "pluralTerms": []
       },
       "description": {
-        "terms": ["descricao", "descrição", "description"],
-        "pluralTerms": ["descricoes", "descrições"]
+        "terms": [
+          "descricao",
+          "descrição",
+          "description"
+        ],
+        "pluralTerms": [
+          "descricoes",
+          "descrições"
+        ]
       }
     }
   },
@@ -337,6 +378,15 @@
       "purchaseListDetail": "Pedidos de compra linha a linha.",
       "purchaseListPanels": "KPI, gráfico por fornecedor e painel quando disponíveis.",
       "purchaseListAttention": "Paginação ou pedidos sem preço pedem conferência com compras."
+    },
+    "sectionTitles": {
+      "scope": "Escopo da consulta",
+      "profile": "Ficha cadastral",
+      "highlights": "Síntese executiva (Destaques)",
+      "guide": "Roteiro de produção",
+      "inspection": "Plano de inspeção",
+      "structure": "Estrutura (BOM)",
+      "attention": "Alertas e divergências"
     }
   }
 }
