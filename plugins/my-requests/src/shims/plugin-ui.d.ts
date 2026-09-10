@@ -665,6 +665,15 @@ declare module "@delpi/plugin-ui/index" {
     authorUserId?: string | null;
     authorSrc?: string | null;
     mine?: boolean;
+    belowBody?: ReactNode;
+  };
+
+  export type MessageThreadAction = {
+    id: string;
+    label: string;
+    onClick: () => void;
+    danger?: boolean;
+    title?: string;
   };
 
   export type DashboardMessageThreadProps = {
@@ -677,6 +686,8 @@ declare module "@delpi/plugin-ui/index" {
     resolveAttachmentImageSrc?: (
       attachmentId: string,
     ) => string | null | undefined;
+    onAttachmentImageClick?: (attachmentId: string) => void;
+    resolveActions?: (message: MessageThreadItem) => MessageThreadAction[];
   };
 
   export function rewriteInlinePendingInMarkdown(
@@ -723,7 +734,12 @@ declare module "@delpi/plugin-ui/index" {
 
   export type MentionComposerPendingAttachment = {
     id: string;
-    file: File;
+    fileName: string;
+    contentType?: string | null;
+    file?: File | null;
+    previewUrl?: string | null;
+    detail?: string;
+    busy?: boolean;
     kind?: "clip" | "inline";
   };
 

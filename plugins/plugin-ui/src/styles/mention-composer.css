@@ -128,8 +128,9 @@
 
 .delpi-ui-mention-composer__image-thumb {
   position: relative;
-  width: 4.25rem;
-  height: 4.25rem;
+  display: flex;
+  flex-direction: column;
+  width: 7.5rem;
   flex: 0 0 auto;
   overflow: hidden;
   border-radius: 0.55rem;
@@ -145,8 +146,40 @@
 .delpi-ui-mention-composer__image-thumb img {
   display: block;
   width: 100%;
-  height: 100%;
+  height: 4.25rem;
   object-fit: cover;
+}
+
+.delpi-ui-mention-composer__image-thumb-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.35rem 0.45rem 0.45rem;
+  min-width: 0;
+}
+
+.delpi-ui-mention-composer__image-thumb-name {
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-mention-composer__image-thumb-detail {
+  font-size: 0.62rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #0f172a)) 62%,
+    transparent
+  );
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .delpi-ui-mention-composer__image-thumb-remove {

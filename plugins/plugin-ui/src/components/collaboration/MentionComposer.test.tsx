@@ -674,6 +674,7 @@ describe("mention-composer pending strip", () => {
             fileName: "foto.png",
             contentType: "image/png",
             previewUrl: "blob:test-img",
+            detail: "24 KB",
           },
           {
             id: "doc-1",
@@ -687,6 +688,8 @@ describe("mention-composer pending strip", () => {
     );
     expect(screen.getByTestId("mention-composer-image-thumbs")).toBeTruthy();
     expect(screen.getByTestId("mention-composer-document-tray")).toBeTruthy();
+    expect(screen.getByText("foto.png")).toBeTruthy();
+    expect(screen.getByText("24 KB")).toBeTruthy();
     expect(screen.getByText("relatorio.pdf")).toBeTruthy();
     fireEvent.click(screen.getByLabelText("Remove foto.png"));
     expect(onRemove).toHaveBeenCalledWith("img-1");

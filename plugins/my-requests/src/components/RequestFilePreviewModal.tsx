@@ -4,8 +4,10 @@ import { useState } from "react";
 import {
   downloadArtifactBlob,
   downloadAttachmentBlob,
+  downloadCommentAttachmentBlob,
 } from "../api/requestsApi";
 import { MR_PORTAL_SCOPE } from "../ui/mrUi";
+import { formatBytes } from "../utils/formatBytes";
 
 export type RequestFilePreviewTarget =
   | {
@@ -26,6 +28,15 @@ export type RequestFilePreviewTarget =
       contentType?: string | null;
       byteSize?: number | null;
     }
+  | {
+      kind: "comment_attachment";
+      requestId: string;
+      commentId: string;
+      id: string;
+      fileName: string;
+      contentType?: string | null;
+      byteSize?: number | null;
+    }
   | null;
 
 type RequestFilePreviewModalProps = {
@@ -33,12 +44,6 @@ type RequestFilePreviewModalProps = {
   open: boolean;
   onClose: () => void;
 };
-
-function formatBytes(value: number): string {
-  if (value < 1024) return `${value} B`;
-  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
-  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 function triggerBlobDownload(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
@@ -50,6 +55,19 @@ function triggerBlobDownload(blob: Blob, fileName: string) {
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(url);
+}
+
+async function resolveTargetBlob(
+  target: NonNullable<RequestFilePreviewTarget>,
+): Promise<Blob> {
+  if (target.kind === "local") return target.file;
+  if (target.kind === "attachment") return downloadAttachmentBlob(target.id);
+  if (target.kind === "artifact") return downloadArtifactBlob(target.id);
+  return downloadCommentAttachmentBlob(
+    target.requestId,
+    target.commentId,
+    target.id,
+  );
 }
 
 /** Pré-visualização autenticada (blob) + baixar — sem navegar para URL sem JWT. */
@@ -71,21 +89,14 @@ export function RequestFilePreviewModal({
       ? null
       : target.kind === "local"
         ? target.file
-        : target.kind === "attachment"
-          ? () => downloadAttachmentBlob(target.id)
-          : () => downloadArtifactBlob(target.id);
+        : () => resolveTargetBlob(target);
 
   async function onDownload() {
     if (!target || downloadBusy) return;
     setDownloadBusy(true);
     setDownloadError(null);
     try {
-      const blob =
-        target.kind === "local"
-          ? target.file
-          : target.kind === "attachment"
-            ? await downloadAttachmentBlob(target.id)
-            : await downloadArtifactBlob(target.id);
+      const blob = await resolveTargetBlob(target);
       triggerBlobDownload(blob, fileName || "arquivo");
     } catch (err) {
       setDownloadError(

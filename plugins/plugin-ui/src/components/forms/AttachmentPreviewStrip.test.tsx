@@ -40,6 +40,7 @@ describe("AttachmentPreviewStrip", () => {
     );
     expect(screen.getByText("Anexos (1)")).toBeTruthy();
     expect(screen.getByText("foto.png")).toBeTruthy();
+    expect(screen.getByText("10 KB")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Remover foto\.png/ })).toBeNull();
     screen.getByRole("button", { name: /Abrir foto\.png/ }).click();
     expect(onOpen).toHaveBeenCalledWith(

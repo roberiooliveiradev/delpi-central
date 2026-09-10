@@ -83,11 +83,27 @@
 }
 
 .delpi-ui-attachment-preview-strip__caption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   margin: 0;
   padding: 0 8px 8px;
+  min-width: 0;
+}
+
+.delpi-ui-attachment-preview-strip__caption-name {
   font-size: 11px;
   font-weight: 600;
   color: var(--delpi-ui-text, #111111);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-attachment-preview-strip__caption-detail {
+  font-size: 10px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--delpi-ui-text, #111111) 62%, transparent);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

@@ -156,6 +156,9 @@ export type MentionComposerClassNames = {
   fileInput: string;
   imageThumbs: string;
   imageThumb: string;
+  imageThumbMeta: string;
+  imageThumbName: string;
+  imageThumbDetail: string;
   imageThumbRemove: string;
   inlineImageRemove: string;
   documentTray: string;
@@ -280,6 +283,12 @@ export function mentionComposerBemClasses(prefix: string): MentionComposerClassN
     fileInput: pair(`${base}__file`, `${ui}__file`),
     imageThumbs: pair(`${base}__image-thumbs`, `${ui}__image-thumbs`),
     imageThumb: pair(`${base}__image-thumb`, `${ui}__image-thumb`),
+    imageThumbMeta: pair(`${base}__image-thumb-meta`, `${ui}__image-thumb-meta`),
+    imageThumbName: pair(`${base}__image-thumb-name`, `${ui}__image-thumb-name`),
+    imageThumbDetail: pair(
+      `${base}__image-thumb-detail`,
+      `${ui}__image-thumb-detail`,
+    ),
     imageThumbRemove: pair(`${base}__image-thumb-remove`, `${ui}__image-thumb-remove`),
     inlineImageRemove: pair(`${base}__inline-image-remove`, `${ui}__inline-image-remove`),
     documentTray: pair(`${base}__document-tray`, `${ui}__document-tray`),
@@ -1004,8 +1013,23 @@ export function MentionComposer({
             {pendingImages.map((item) => {
               const src = imagePreviewUrls.get(item.id) ?? item.previewUrl ?? "";
               return (
-                <div key={item.id} className={classNames.imageThumb} role="listitem">
+                <div
+                  key={item.id}
+                  className={classNames.imageThumb}
+                  role="listitem"
+                  title={
+                    item.detail
+                      ? `${item.fileName} · ${item.detail}`
+                      : item.fileName
+                  }
+                >
                   {src ? <img src={src} alt="" /> : null}
+                  <span className={classNames.imageThumbMeta}>
+                    <span className={classNames.imageThumbName}>{item.fileName}</span>
+                    {item.detail ? (
+                      <span className={classNames.imageThumbDetail}>{item.detail}</span>
+                    ) : null}
+                  </span>
                   {onRemovePendingAttachment ? (
                     <button
                       type="button"

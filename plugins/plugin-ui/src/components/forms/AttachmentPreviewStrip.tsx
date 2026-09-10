@@ -26,6 +26,8 @@ export type AttachmentPreviewStripClassNames = {
   remove: string;
   thumb: string;
   caption: string;
+  captionName: string;
+  captionDetail: string;
 };
 
 export type AttachmentPreviewStripLabels = {
@@ -63,6 +65,8 @@ export function attachmentPreviewStripBemClasses(
     remove: pair(`${block}__remove`, `${ui}__remove`),
     thumb: pair(`${block}__thumb`, `${ui}__thumb`),
     caption: pair(`${block}__caption`, `${ui}__caption`),
+    captionName: pair(`${block}__caption-name`, `${ui}__caption-name`),
+    captionDetail: pair(`${block}__caption-detail`, `${ui}__caption-detail`),
   };
 }
 
@@ -113,7 +117,12 @@ export function AttachmentPreviewStrip({
                     <ThumbIcon fileName={item.fileName} contentType={item.contentType} />
                   )}
                 </span>
-                <span className={classNames.caption}>{item.fileName}</span>
+                <span className={classNames.caption}>
+                  <span className={classNames.captionName}>{item.fileName}</span>
+                  {item.detail ? (
+                    <span className={classNames.captionDetail}>{item.detail}</span>
+                  ) : null}
+                </span>
               </button>
               {canRemove && onRemove ? (
                 <button

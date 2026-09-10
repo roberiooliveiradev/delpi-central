@@ -112,7 +112,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   comments: {
     section:
-      "Conversa com formatação (negrito, listas etc.) e imagens coladas ou anexadas pelo clipe. As imagens aparecem na bolha da mensagem. Você pode editar as próprias mensagens (aparece «editada»); após a conclusão ou cancelamento, a conversa fica somente leitura.",
+      "Conversa com formatação e imagens (colar ou clipe). O tamanho do arquivo aparece no card de envio e no balão; clique na imagem para ampliar. Editar traz a mensagem de volta ao campo de envio. Após conclusão ou cancelamento, a conversa fica somente leitura.",
     newComment:
       "Escreva, formate e, se precisar, anexe ou cole uma imagem antes de enviar.",
   },
