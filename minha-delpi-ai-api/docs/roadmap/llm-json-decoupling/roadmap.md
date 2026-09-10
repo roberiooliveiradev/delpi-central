@@ -147,9 +147,9 @@ Plano 06 S1–S6: recommendations contextuais + composer budget-safe; `recommend
 
 Planos 07+08 fechados (schema-first presentation + skills/help residual + audit gate). Próximo: plano 09 / Onda H.
 
-### Onda H — cutover e limpeza — **EM_ANDAMENTO** (E9.S1–S8 parcial)
+### Onda H — cutover e limpeza — **ATENDIDO_PARCIAL** (2026-09-10)
 
-Verify-final offline com `globalReleasePass=false`. Próximo: E9.S9 docs. DELETE legado e aceite final só com gates/live plenos.
+Plano 09 S1–S9 entregues offline/docs. **Não** é aceite final: live INCONCLUSIVE, `deleteAuthorized=false`, `globalReleasePass=false`. Próximo: live + DELETE gated + re-verify.
 
 ## 6. Métricas obrigatórias
 

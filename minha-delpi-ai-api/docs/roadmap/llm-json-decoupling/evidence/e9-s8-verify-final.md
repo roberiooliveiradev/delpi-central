@@ -36,4 +36,4 @@ Não declarar aceite final da iniciativa com células INCONCLUSIVE (mesma regra 
 
 ## Próximo
 
-**E9.S9** — documentação e encerramento parcial (estado + débitos explícitos).
+**E9.S9** — documentação — **ATENDIDO_PARCIAL** (`e9-s9-documentation.md`). Débitos: live + DELETE + re-verify.

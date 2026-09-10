@@ -785,3 +785,22 @@ baseline imutável (E0.S2)
 ```
 
 Não alterar o arquivo baseline após início do candidate; comparar side-by-side.
+
+---
+
+# 21. Programa llm-json-decoupling (Onda H) — ponte de evidência
+
+Roadmap executável: `docs/roadmap/llm-json-decoupling/`.
+
+| Artefato | Uso |
+|----------|-----|
+| `tests/fixtures/intelligence_baseline/r1_r11_corpus_v1.json` | Corpus ampliado E9.S1 (20 classes) |
+| `e9_s6_cleanup_gates.json` | Autorização de DELETE (`deleteAuthorized`) |
+| `e9_s8_verify_final_matrix.json` | Matriz verify-final (`globalReleasePass`) |
+| `evidence/execution-ledger.md` | Estado das ondas |
+
+Regras:
+
+- `PASS_OFFLINE` ≠ release;
+- INCONCLUSIVE em dim obrigatória ⇒ `globalPass` / `globalReleasePass` = false;
+- DELETE de `pathMarkers` / `messageSegmentTerms` / strategies JSON só após E9.S6 autorizar.

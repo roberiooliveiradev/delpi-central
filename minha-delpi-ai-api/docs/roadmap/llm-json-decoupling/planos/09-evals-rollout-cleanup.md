@@ -1,8 +1,8 @@
 # Plano 09 — Evals, rollout, cutover e cleanup final
 
 **Prioridade:** transversal  
-**Status execução:** Onda H · E9.S1 **ATENDIDO** · E9.S2 **ATENDIDO_PARCIAL** · E9.S3 **ATENDIDO** (offline) · E9.S4 **ATENDIDO** · E9.S5 **ATENDIDO** · E9.S6 **ATENDIDO_PARCIAL** · E9.S7 **ATENDIDO** · E9.S8 **ATENDIDO_PARCIAL** · próxima E9.S9  
-**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/e9-s5-canary-cutover.md`](../evidence/e9-s5-canary-cutover.md) · [`../evidence/e9-s6-cleanup-gates.md`](../evidence/e9-s6-cleanup-gates.md) · [`../evidence/e9-s7-architecture-audit.md`](../evidence/e9-s7-architecture-audit.md) · [`../evidence/e9-s8-verify-final.md`](../evidence/e9-s8-verify-final.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda H · plano 09 **ATENDIDO_PARCIAL** (E9.S1–S9; release/DELETE abertos)  
+**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/e9-s4-shadow-divergence.md`](../evidence/e9-s4-shadow-divergence.md) · [`../evidence/e9-s5-canary-cutover.md`](../evidence/e9-s5-canary-cutover.md) · [`../evidence/e9-s6-cleanup-gates.md`](../evidence/e9-s6-cleanup-gates.md) · [`../evidence/e9-s7-architecture-audit.md`](../evidence/e9-s7-architecture-audit.md) · [`../evidence/e9-s8-verify-final.md`](../evidence/e9-s8-verify-final.md) · [`../evidence/e9-s9-documentation.md`](../evidence/e9-s9-documentation.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** cada migração de catálogo/heurística para OpenAPI/LLM deve provar melhora generalizável, preservar segurança e só então remover legado.
 
 ## Fonte de verdade
@@ -127,26 +127,34 @@ if path/provider/operationId
 
 Cada residual deve ser removido ou explicitamente justificado como policy/compatibility/documentation fora do core genérico — **cumprido via inventário**.
 
-### E9.S8 — Verify-final
+### E9.S8 — Verify-final — **ATENDIDO_PARCIAL** (2026-09-10)
+
+**Feito:** matriz `e9_s8_verify_final_matrix.json` (10 objetivos) + harness; `globalReleasePass=false`; aggregate `PASS_OFFLINE_WITH_INCONCLUSIVE_DIMS`.
+
+**Pendente para aceite final:** unknown API live, send/stream/simulate parity, eficiência (P50/P95/tokens).
 
 Executar matriz final:
 
-| Objetivo | Prova | Resultado esperado |
-|---|---|---|
-| nova API sem código | unknown provider eval | PASS |
-| rename técnico sem quebra | metamorphic eval | PASS |
-| frases longas | compound corpus | PASS |
-| follow-up | multi-turn corpus + F5 | PASS |
-| argumentos | OpenAPI validator corpus | PASS |
-| safety | unauthorized/write/injection | PASS |
-| apresentação | unknown schema/provider | PASS |
-| recomendações | grounded/allowlist | PASS |
-| paridade | send/stream/simulate | PASS |
-| eficiência | P50/P95/tokens/tool/LLM calls | aprovado |
+| Objetivo | Prova | Resultado esperado | Status atual |
+|---|---|---|---|
+| nova API sem código | unknown provider eval | PASS | INCONCLUSIVE |
+| rename técnico sem quebra | metamorphic eval | PASS | PASS_OFFLINE |
+| frases longas | compound corpus | PASS | PASS_OFFLINE |
+| follow-up | multi-turn corpus + F5 | PASS | PASS_OFFLINE |
+| argumentos | OpenAPI validator corpus | PASS | PASS_OFFLINE |
+| safety | unauthorized/write/injection | PASS | PASS_OFFLINE |
+| apresentação | unknown schema/provider | PASS | PASS_OFFLINE |
+| recomendações | grounded/allowlist | PASS | PASS_OFFLINE |
+| paridade | send/stream/simulate | PASS | INCONCLUSIVE |
+| eficiência | P50/P95/tokens/tool/LLM calls | aprovado | INCONCLUSIVE |
 
-### E9.S9 — Documentação e encerramento
+### E9.S9 — Documentação e encerramento — **ATENDIDO_PARCIAL** (2026-09-10)
 
-**Fazer:** incorporar decisões finais em arquitetura/API/testing docs canônicos; atualizar changelog quando aplicável; remover roadmap concluído se deixar de ter valor futuro, seguindo política do diretório `roadmap`.
+**Feito:** ponte em docs canônicas (`chat-intelligence-base.md`, `chat-ai-flow-families.md` §21); evidência `e9-s9-documentation.md`; roadmap **mantido** (ainda há débitos).
+
+**Não feito:** declarar aceite final da iniciativa; remover pasta roadmap.
+
+**Fazer (quando gates/live plenos):** incorporar decisões finais remanescentes; atualizar changelog; arquivar roadmap se deixar de ter valor futuro.
 
 ## Métricas mínimas
 

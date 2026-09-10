@@ -343,6 +343,8 @@ Mudança do motor de tools exige API externa desconhecida + teste metamórfico.
 
 Tool/path correta sem outcome correto é FAIL R9.
 
+Programa de desacoplamento JSON→OpenAPI/LLM (Onda H): corpus `r1_r11_corpus_v1`, gates de cleanup e verify-final em [`../roadmap/llm-json-decoupling/`](../roadmap/llm-json-decoupling/). **Não** declarar release com dimensão INCONCLUSIVE; DELETE de markers/terms só com `deleteAuthorized=true` (E9.S6).
+
 ---
 
 ## 16. Clean Architecture
@@ -378,6 +380,7 @@ Evitar god services, service por endpoint e dependência reversa.
 - [`new-api-route-checklist.md`](./new-api-route-checklist.md)
 - [`../api/04-actions-openapi.md`](../api/04-actions-openapi.md)
 - [`../testing/chat-ai-flow-families.md`](../testing/chat-ai-flow-families.md)
+- [`../roadmap/llm-json-decoupling/evidence/execution-ledger.md`](../roadmap/llm-json-decoupling/evidence/execution-ledger.md)
 - [`../development/guia-desenvolvimento.md`](../development/guia-desenvolvimento.md)
 - `.cursor/rules/chat-intelligence-base.mdc`
 - `.cursor/rules/openapi-first-universal-tool-routing.mdc`
