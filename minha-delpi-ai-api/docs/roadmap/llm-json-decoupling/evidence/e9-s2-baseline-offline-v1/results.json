@@ -1,0 +1,134 @@
+{
+  "modules": [
+    {
+      "harnessRef": "tests/unit/application/services/test_e1_s3_registry_family_topk_retrieval.py",
+      "caseIds": [
+        "e9.c01.specific_vs_generic"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/application/services/test_openapi_when_not_to_use_retrieval.py",
+      "caseIds": [
+        "e9.c04.no_tool"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_e3_s3_turn_refinement_contract.py",
+      "caseIds": [
+        "e9.c05.required_present"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_e3_s2_follow_up_baseline.py",
+      "caseIds": [
+        "e9.c06.required_missing_clarify",
+        "e9.c09.multi_turn"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_e3_s5_schema_driven_group_by.py",
+      "caseIds": [
+        "e9.c07.enum_type_invalid"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_e5_s2_composition_baseline.py",
+      "caseIds": [
+        "e9.c08.compound"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_e2_s2_understanding_baseline.py",
+      "caseIds": [
+        "e9.c10.typo_synonym"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_e7_s2_presentation_baseline.py",
+      "caseIds": [
+        "e9.c11.unknown_external_openapi"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/application/services/test_e8_s3_help_capabilities_action_id_match.py",
+      "caseIds": [
+        "e9.c13.unauthorized"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_chat_write_confirmation_service.py",
+      "caseIds": [
+        "e9.c14.write_confirmation"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_chat_input_security_service.py",
+      "caseIds": [
+        "e9.c15.injection"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_e7_s3_shape_defaults_primary_path.py",
+      "caseIds": [
+        "e9.c16.schema_presentation"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_e6_s2_recommendation_grounding_contract.py",
+      "caseIds": [
+        "e9.c17.recommendations_grounded"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_e7_s6_titles_framing_stable.py",
+      "caseIds": [
+        "e9.c18.send_stream_simulate"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_e3_s8_persist_reload_continuity.py",
+      "caseIds": [
+        "e9.c19.persist_reload"
+      ],
+      "status": "PASS"
+    },
+    {
+      "harnessRef": "tests/unit/domain/services/test_e5_s3_goal_coverage_contract.py",
+      "caseIds": [
+        "e9.c20.partial_failure"
+      ],
+      "status": "PASS"
+    }
+  ],
+  "fixtures": [
+    {
+      "caseId": "e9.c02.semantic_siblings",
+      "harnessRef": "tests/fixtures/product_description_vs_stock_evals.json",
+      "status": "FIXTURE_INDEXED"
+    },
+    {
+      "caseId": "e9.c03.multi_provider",
+      "harnessRef": "tests/fixtures/nebula_factory_openapi_actions_metamorphic.json",
+      "status": "FIXTURE_INDEXED"
+    },
+    {
+      "caseId": "e9.c12.metamorphic_rename",
+      "harnessRef": "tests/fixtures/nebula_factory_openapi_actions_metamorphic.json",
+      "status": "FIXTURE_INDEXED"
+    }
+  ]
+}

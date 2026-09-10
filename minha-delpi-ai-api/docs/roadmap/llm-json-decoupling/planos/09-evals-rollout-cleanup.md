@@ -1,8 +1,8 @@
 # Plano 09 — Evals, rollout, cutover e cleanup final
 
 **Prioridade:** transversal  
-**Status execução:** Onda H · E9.S1 **ATENDIDO** · próxima E9.S2  
-**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s1-corpus-v1/manifest.json`](../evidence/e9-s1-corpus-v1/manifest.json) · [`../evidence/onda-a-baseline/manifest.json`](../evidence/onda-a-baseline/manifest.json) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda H · E9.S1 **ATENDIDO** · E9.S2 **ATENDIDO_PARCIAL** (offline) · próxima E9.S3  
+**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** cada migração de catálogo/heurística para OpenAPI/LLM deve provar melhora generalizável, preservar segurança e só então remover legado.
 
 ## Fonte de verdade
@@ -38,9 +38,13 @@ Não usar scripts isolados ou smokes históricos como critério final de release
 
 **Pendente para release R1–R11:** execução E9.S2; `openApiSchemaHash` / `actionCatalogHash` runtime.
 
-### E9.S2 — Baseline R1-R11
+### E9.S2 — Baseline R1-R11 — **ATENDIDO_PARCIAL** (2026-09-10)
 
-Cobrir no mínimo:
+**Feito:** baseline offline no corpus v1 — 16 módulos pytest / **99 passed**; mesmo `datasetHash` do E9.S1; evidência `e9-s2-baseline-offline-v1`.
+
+**Pendente:** runners de fixtures JSON; dims live LLM; hashes de catálogo runtime.
+
+Cobrir no mínimo (checklist do plano — harness indexado; execução plena progressiva):
 
 1. action específica vs genérica;
 2. semantic siblings;

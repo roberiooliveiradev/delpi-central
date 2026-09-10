@@ -15,7 +15,7 @@
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
 | G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
-| H — cutover/cleanup | 09 | **EM_ANDAMENTO** | E9.S2 | E9.S1 corpus v1 20/20; Onda A intacta |
+| H — cutover/cleanup | 09 | **EM_ANDAMENTO** | E9.S3 | E9.S1 OK; E9.S2 offline 99 passed |
 
 ## Protocolo por subetapa
 
@@ -129,3 +129,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Plano 08 / Onda G **ATENDIDO** — próxima plano 09 / Onda H |
 | 2026-09-10 | E9.S1 **ATENDIDO** — corpus R1–R11 v1 (20 classes) + manifesto imutável |
 | 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S2 (baseline R1–R11) |
+| 2026-09-10 | E9.S2 **ATENDIDO_PARCIAL** — baseline offline 16 módulos / 99 passed no corpus v1 |
+| 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S3 (candidate por plano) |

@@ -1,0 +1,30 @@
+{
+  "runId": "e9-s2-baseline-offline-v1",
+  "wave": "H",
+  "planStep": "E9.S2",
+  "program": "llm-json-decoupling",
+  "role": "BASELINE",
+  "timestamp": "2026-09-10T19:50:55Z",
+  "gitSha": "736fae75c9b3e01d4374f226e0592b81fe95f710",
+  "environment": "host-offline",
+  "datasetVersion": "intelligence_baseline/r1_r11_corpus_v1",
+  "datasetHash": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8",
+  "corpusFreezeRunId": "e9-s1-corpus-v1",
+  "mode": "offline_harness_subset",
+  "liveLlm": false,
+  "summary": {
+    "pytestModules": 16,
+    "passed": 99,
+    "failed": 0,
+    "errors": 0,
+    "exitCode": 0,
+    "fixtureIndexedOnly": 3
+  },
+  "openApiSchemaHash": "PENDING_RUNTIME",
+  "actionCatalogHash": "PENDING_RUNTIME",
+  "notes": [
+    "E9.S2 offline baseline: reexecuta harnessRefs .py do corpus v1 no mesmo datasetHash.",
+    "Fixtures JSON-only indexadas sem runner dedicado neste passo.",
+    "Dims R7/R8 live e hashes runtime ficam para runs posteriores / L*."
+  ]
+}
