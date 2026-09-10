@@ -170,7 +170,8 @@
   "goalCoverage": {
     "mismatchOnWhenNotToUse": true,
     "requireWhenToUseMatchWhenQuotesExist": true,
-    "emptyPayloadNotFulfilled": true
+    "emptyPayloadNotFulfilled": true,
+    "partialPaginationEnabled": true
   },
   "decomposition": {
     "maxSubtasks": 4,

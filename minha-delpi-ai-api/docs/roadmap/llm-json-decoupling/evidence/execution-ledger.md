@@ -12,7 +12,7 @@
 | B — routing universal | 01 | **ATENDIDO_PARCIAL** | Onda H: DELETE fields registry | Cutover seleção + binder OK; JSON markers deferred |
 | C — entendimento | 02 | **ATENDIDO_PARCIAL** | E2.S4 cutover (após agree) → S5–S7 | S1–S3 OK; S4 shadow-only; DELETE heuristics deferred |
 | D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
-| E — caps/composition | 04, 05 | **EM_ANDAMENTO** | E5.S3 goal coverage contract | plano 04 ATENDIDO; 05 S1–S2 OK |
+| E — caps/composition | 04, 05 | **EM_ANDAMENTO** | E5.S4 planner-driven enrichment | plano 04 ATENDIDO; 05 S1–S3 OK |
 | F — UX inteligente | 06 | **PRONTO_APÓS_E** | E6.S1 | recommendationQueries ainda authority |
 | G — presentation/skills | 07, 08 | **PRONTO_APÓS_F** | inventário residual | Display path→label já limpo |
 | H — cutover/cleanup | 09 | **CONTÍNUO** | E9.S1 corpus ampliado | Não remover legado sem gates |
@@ -84,4 +84,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Plano 04 **ATENDIDO** — Onda E segue no plano 05 |
 | 2026-09-10 | E5.S1 **ATENDIDO** — inventário decisões de composição |
 | 2026-09-10 | E5.S2 **ATENDIDO** — baseline composition (6 famílias + enrich/budget) |
-| 2026-09-10 | Onda E **EM_ANDAMENTO** — próxima E5.S3 |
+| 2026-09-10 | E5.S3 **ATENDIDO** — contrato Goal Coverage (fulfilled/partial/blocked/needs_more_data) |
+| 2026-09-10 | Onda E **EM_ANDAMENTO** — próxima E5.S4 |

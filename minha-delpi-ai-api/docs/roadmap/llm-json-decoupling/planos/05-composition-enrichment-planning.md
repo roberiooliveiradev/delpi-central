@@ -1,8 +1,8 @@
 # Plano 05 — Composition/enrichment -> planejamento orientado por goals e budget
 
 **Prioridade:** P1  
-**Status execução:** Onda E · S1–S2 **ATENDIDO** · próxima **E5.S3**  
-**Evidência:** [`../evidence/e5-s1-composition-inventory.md`](../evidence/e5-s1-composition-inventory.md) · [`../evidence/e5-s2-composition-baseline.md`](../evidence/e5-s2-composition-baseline.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda E · S1–S3 **ATENDIDO** · próxima **E5.S4**  
+**Evidência:** [`../evidence/e5-s1-composition-inventory.md`](../evidence/e5-s1-composition-inventory.md) · [`../evidence/e5-s2-composition-baseline.md`](../evidence/e5-s2-composition-baseline.md) · [`../evidence/e5-s3-goal-coverage-contract.md`](../evidence/e5-s3-goal-coverage-contract.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** consultas compostas e enriquecimentos devem ser escolhidos pelo objetivo real do usuário, pelos dados já disponíveis e pelas actions autorizadas, não por listas fixas de `routeIds` e mapas `scope -> route`.
 
 ## CURRENT
@@ -64,11 +64,13 @@ Medir tool count, task success, redundancy, latency e partial-failure behavior.
 
 **Evidência:** [`../evidence/e5-s2-composition-baseline.md`](../evidence/e5-s2-composition-baseline.md) · harness `test_e5_s2_composition_baseline.py`
 
-### E5.S3 — Goal coverage contract
+### E5.S3 — Goal coverage contract — **ATENDIDO**
 
 **Fazer:** formalizar quando um goal está `fulfilled`, `partial`, `blocked`, `needs_more_data`; usar facts/result metadata, não path literal.
 
 **Teste:** empty payload, partial pagination, sibling schema, unknown API.
+
+**Evidência:** [`../evidence/e5-s3-goal-coverage-contract.md`](../evidence/e5-s3-goal-coverage-contract.md) · harness `test_e5_s3_goal_coverage_contract.py`
 
 ### E5.S4 — Planner-driven enrichment
 

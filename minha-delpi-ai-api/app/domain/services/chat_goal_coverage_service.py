@@ -13,6 +13,20 @@ from app.domain.services.openapi_when_not_to_use_guidance_service import (
     OpenApiWhenNotToUseGuidanceService,
 )
 
+# Outcome canônico (E5.S3) + estados intermediários de planejamento.
+_COVERAGE_OUTCOMES = frozenset(
+    {
+        "pending",
+        "planned",
+        "fulfilled",
+        "partial",
+        "blocked",
+        "needs_more_data",
+        "failed",
+        "mismatch",
+    }
+)
+
 
 @dataclass(frozen=True)
 class GoalCoverageResult:
@@ -22,9 +36,10 @@ class GoalCoverageResult:
     evidence_ok: bool
 
     def as_dict(self) -> dict[str, Any]:
+        status = self.status if self.status in _COVERAGE_OUTCOMES else "pending"
         return {
             "goalId": self.goal_id,
-            "status": self.status,
+            "status": status,
             "stepIds": list(self.step_ids),
             "evidenceOk": self.evidence_ok,
         }
@@ -37,6 +52,9 @@ class GoalCoverageReport:
     pending_goal_ids: tuple[str, ...]
     failed_goal_ids: tuple[str, ...]
     mismatch_goal_ids: tuple[str, ...] = ()
+    partial_goal_ids: tuple[str, ...] = ()
+    blocked_goal_ids: tuple[str, ...] = ()
+    needs_more_data_goal_ids: tuple[str, ...] = ()
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -44,6 +62,9 @@ class GoalCoverageReport:
             "pendingGoalIds": list(self.pending_goal_ids),
             "failedGoalIds": list(self.failed_goal_ids),
             "mismatchGoalIds": list(self.mismatch_goal_ids),
+            "partialGoalIds": list(self.partial_goal_ids),
+            "blockedGoalIds": list(self.blocked_goal_ids),
+            "needsMoreDataGoalIds": list(self.needs_more_data_goal_ids),
             "results": [item.as_dict() for item in self.results],
         }
 
@@ -80,9 +101,23 @@ class ChatGoalCoverageService:
         pending: list[str] = []
         failed: list[str] = []
         mismatch: list[str] = []
+        partial: list[str] = []
+        blocked: list[str] = []
+        needs_more: list[str] = []
         for goal in goals:
             linked = by_goal.get(goal.goal_id) or []
             step_ids = tuple(step.step_id or step.action_id for step in linked)
+            if str(goal.status or "").strip().lower() == "blocked":
+                results.append(
+                    GoalCoverageResult(
+                        goal_id=goal.goal_id,
+                        status="blocked",
+                        step_ids=step_ids,
+                        evidence_ok=False,
+                    )
+                )
+                blocked.append(goal.goal_id)
+                continue
             if not linked:
                 results.append(
                     GoalCoverageResult(
@@ -104,6 +139,17 @@ class ChatGoalCoverageService:
                     )
                 )
                 continue
+            if cls._blocked_execution(linked, results_by_action):
+                results.append(
+                    GoalCoverageResult(
+                        goal_id=goal.goal_id,
+                        status="blocked",
+                        step_ids=step_ids,
+                        evidence_ok=False,
+                    )
+                )
+                blocked.append(goal.goal_id)
+                continue
             evidence_ok = any(
                 ok_by_action.get(step.action_id) is True for step in linked
             )
@@ -119,14 +165,21 @@ class ChatGoalCoverageService:
                 linked=linked,
                 actions_by_id=actions_by_id,
             )
+            partial_ok = evidence_ok and not empty_ok and cls._partial_result_coverage(
+                linked,
+                results_by_action,
+            )
             if capability_mismatch:
                 status = "mismatch"
                 mismatch.append(goal.goal_id)
                 evidence_ok = False
             elif empty_ok:
-                status = "failed"
-                failed.append(goal.goal_id)
+                status = "needs_more_data"
+                needs_more.append(goal.goal_id)
                 evidence_ok = False
+            elif partial_ok:
+                status = "partial"
+                partial.append(goal.goal_id)
             elif evidence_ok:
                 status = "fulfilled"
             elif failed_step:
@@ -144,7 +197,8 @@ class ChatGoalCoverageService:
                 )
             )
 
-        complete = bool(goals) and not pending and not failed and not mismatch
+        incomplete = pending or failed or mismatch or partial or blocked or needs_more
+        complete = bool(goals) and not incomplete
         if not goals:
             complete = bool(steps)
         return GoalCoverageReport(
@@ -153,6 +207,9 @@ class ChatGoalCoverageService:
             pending_goal_ids=tuple(pending),
             failed_goal_ids=tuple(failed),
             mismatch_goal_ids=tuple(mismatch),
+            partial_goal_ids=tuple(partial),
+            blocked_goal_ids=tuple(blocked),
+            needs_more_data_goal_ids=tuple(needs_more),
         )
 
     @classmethod
@@ -215,6 +272,118 @@ class ChatGoalCoverageService:
         if ok is None:
             ok = meta.get("ok")
         return bool(ok)
+
+    @classmethod
+    def _blocked_execution(
+        cls,
+        linked: list[ActionPlanStep],
+        results_by_action: dict[str, dict[str, Any]],
+    ) -> bool:
+        for step in linked:
+            item = results_by_action.get(step.action_id)
+            if not isinstance(item, dict):
+                continue
+            meta = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
+            status_code = item.get("statusCode")
+            if status_code is None:
+                status_code = meta.get("statusCode")
+            try:
+                code = int(status_code) if status_code is not None else None
+            except (TypeError, ValueError):
+                code = None
+            if code in {401, 403}:
+                return True
+            reason = str(
+                item.get("blockReason")
+                or meta.get("blockReason")
+                or item.get("blockedReason")
+                or meta.get("blockedReason")
+                or ""
+            ).strip()
+            if reason:
+                return True
+            if item.get("blocked") is True or meta.get("blocked") is True:
+                return True
+        return False
+
+    @classmethod
+    def _partial_result_coverage(
+        cls,
+        linked: list[ActionPlanStep],
+        results_by_action: dict[str, dict[str, Any]],
+    ) -> bool:
+        if not OpenApiToolRoutingContentService.bool_setting(
+            "goalCoverage",
+            "partialPaginationEnabled",
+            default=True,
+        ):
+            return False
+        return any(
+            cls._looks_partial_result(results_by_action[step.action_id])
+            for step in linked
+            if step.action_id in results_by_action
+            and cls._http_ok(results_by_action[step.action_id])
+        )
+
+    @classmethod
+    def _looks_partial_result(cls, item: dict[str, Any]) -> bool:
+        meta = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
+        notice = meta.get("dataCoverageNotice") or item.get("dataCoverageNotice")
+        if isinstance(notice, dict) and str(notice.get("kind") or "").strip().lower() in {
+            "partial",
+            "truncated",
+            "paginated",
+        }:
+            return True
+        if meta.get("truncated") is True or item.get("truncated") is True:
+            return True
+        if meta.get("hasMore") is True or item.get("hasMore") is True:
+            return True
+        root = cls._unwrap_data(item.get("data"))
+        if not isinstance(root, dict):
+            return False
+        if root.get("hasMore") is True or root.get("truncated") is True:
+            return True
+        pagination = root.get("pagination")
+        if isinstance(pagination, dict):
+            if pagination.get("hasMore") is True or pagination.get("truncated") is True:
+                return True
+            page = cls._as_int(pagination.get("page"))
+            total_pages = cls._as_int(pagination.get("totalPages") or pagination.get("total_pages"))
+            if page is not None and total_pages is not None and total_pages > page:
+                return True
+        items = root.get("items")
+        if not isinstance(items, list):
+            return False
+        shown = len(items)
+        total = cls._as_int(root.get("total"))
+        page = cls._as_int(root.get("page"))
+        total_pages = cls._as_int(root.get("total_pages") or root.get("totalPages"))
+        if total is not None and total > shown:
+            return True
+        if page is not None and total_pages is not None and total_pages > page:
+            return True
+        return False
+
+    @classmethod
+    def _unwrap_data(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        nested = data.get("data")
+        if isinstance(nested, dict) and (
+            "items" in nested or "pagination" in nested or "total" in nested
+        ):
+            return nested
+        return data
+
+    @classmethod
+    def _as_int(cls, value: Any) -> int | None:
+        try:
+            if value is None or value is False:
+                return None
+            return int(value)
+        except (TypeError, ValueError):
+            return None
 
     @classmethod
     def _empty_payload_not_fulfilled(

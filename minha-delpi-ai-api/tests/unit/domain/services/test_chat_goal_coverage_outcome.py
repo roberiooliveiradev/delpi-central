@@ -165,3 +165,5 @@ def test_empty_payload_is_not_fulfilled():
         actions_by_id={"ext.products.stock": _stock_action()},
     )
     assert report.complete is False
+    assert report.results[0].status == "needs_more_data"
+    assert report.needs_more_data_goal_ids == ("g1",)
