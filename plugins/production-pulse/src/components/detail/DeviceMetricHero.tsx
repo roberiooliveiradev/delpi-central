@@ -1,7 +1,7 @@
 import type { DeviceListItem } from "../../types/device";
 import type { LivePollResult } from "../../types/detail";
 import { PP_HELP } from "../../content/helpTooltips";
-import { PpActionButton, PpSectionCard } from "../../app/productionPulseUi";
+import { PpActionButton, PpHintAction, PpSectionCard } from "../../app/productionPulseUi";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
 import {
   driverLabel,
@@ -67,14 +67,14 @@ export function DeviceMetricHero({
             </PpActionButton>
           ) : null}
           {supportsFactoryReset && canCommand && onFactoryReset ? (
-            <PpActionButton
-              variant="ghost"
-              onClick={onFactoryReset}
-              disabled={refreshing}
-              title={PP_HELP.detail.factoryReset}
+            <PpHintAction
+              hint={PP_HELP.detail.factoryReset}
+              ariaLabel={`Ajuda: ${PP_HELP.detail.factoryResetAction}`}
             >
-              {PP_HELP.detail.factoryResetAction}
-            </PpActionButton>
+              <PpActionButton variant="ghost" onClick={onFactoryReset} disabled={refreshing}>
+                {PP_HELP.detail.factoryResetAction}
+              </PpActionButton>
+            </PpHintAction>
           ) : null}
         </div>
       </div>
