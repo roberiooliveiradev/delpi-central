@@ -1,8 +1,8 @@
 # Plano 04 — Capabilities e mini catálogos -> Action Catalog dinâmico
 
 **Prioridade:** P1  
-**Status execução:** Onda E · R04-02 **ATENDIDO** · restante = `capability_registry.action.*` (+ `routeHints` DEAD)  
-**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) §4 · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda E · E4.S1–S2 **ATENDIDO** · R04-02 DONE · próxima = E4.S3 (`uxCapability`)  
+**Evidência:** [`../evidence/e4-s1-capability-inventory.md`](../evidence/e4-s1-capability-inventory.md) · [`../evidence/e4-s2-capability-discovery-baseline.md`](../evidence/e4-s2-capability-discovery-baseline.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** o chat deve explicar e descobrir o que consegue fazer a partir das actions realmente autorizadas na sessão, sem manter um segundo catálogo manual de endpoints/capabilities.
 
 **HEAD revalidado:** pós-`78a25befe` (D1 path→display / capabilities UX)
@@ -65,17 +65,21 @@ Capabilities não-OpenAPI (RAG, web, skills, transforms) continuam em catálogo 
 
 ## Etapas
 
-### E4.S1 — Inventário de consumers (revalidar pós-D1)
+### E4.S1 — Inventário de consumers (revalidar pós-D1) — **ATENDIDO**
 
 **Fazer:** localizar reads de `capability_registry.action.*`, `routeHints`, `descriptionForModel`, `whenToUse`, `whenNot`; confirmar **zero** consumers de `capabilities.pathRules`.
 
-**Pronto quando:** matriz atualizada; pathRules = DELETE confirmado.
+**Feito:** [`../evidence/e4-s1-capability-inventory.md`](../evidence/e4-s1-capability-inventory.md).
 
-### E4.S2 — Baseline de capability discovery
+**Pronto quando:** matriz atualizada; pathRules = DELETE confirmado. ✅
+
+### E4.S2 — Baseline de capability discovery — **ATENDIDO**
 
 **Fazer:** registrar “o que você pode fazer?”, help por tema, agent vs common chat, provider externo (já há smoke live pós-D1 — reusar como baseline).
 
-**Teste:** R1/R4/R7/R9/R10/R11.
+**Feito:** harness discovery + allowed_ids help; [`../evidence/e4-s2-capability-discovery-baseline.md`](../evidence/e4-s2-capability-discovery-baseline.md).
+
+**Teste:** R1/R4/R7/R9/R10/R11. ✅ (freeze unitário das famílias)
 
 ### E4.S3 — Semantic metadata materialization
 

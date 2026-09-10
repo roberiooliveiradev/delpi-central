@@ -12,7 +12,7 @@
 | B — routing universal | 01 | **ATENDIDO_PARCIAL** | Onda H: DELETE fields registry | Cutover seleção + binder OK; JSON markers deferred |
 | C — entendimento | 02 | **ATENDIDO_PARCIAL** | E2.S4 cutover (após agree) → S5–S7 | S1–S3 OK; S4 shadow-only; DELETE heuristics deferred |
 | D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
-| E — caps/composition | 04, 05 | **PARCIAL** | 04: `action.*`; 05: routeIds | pathRules já DONE |
+| E — caps/composition | 04, 05 | **EM_ANDAMENTO** | E4.S3 uxCapability | S1–S2 OK; pathRules DONE; action.* ainda discovery |
 | F — UX inteligente | 06 | **PRONTO_APÓS_E** | E6.S1 | recommendationQueries ainda authority |
 | G — presentation/skills | 07, 08 | **PRONTO_APÓS_F** | inventário residual | Display path→label já limpo |
 | H — cutover/cleanup | 09 | **CONTÍNUO** | E9.S1 corpus ampliado | Não remover legado sem gates |
@@ -75,3 +75,6 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda D **EM_ANDAMENTO** — próxima E3.S8 |
 | 2026-09-10 | E3.S8 **ATENDIDO_PARCIAL** — reload via histórico; DELETE terms → Onda H |
 | 2026-09-10 | Onda D **ATENDIDO_PARCIAL** — plano 03 S1–S7 OK |
+| 2026-09-10 | E4.S1 **ATENDIDO** — inventário capabilities/registry (Onda E) |
+| 2026-09-10 | E4.S2 **ATENDIDO** — baseline discovery + help allowed_ids |
+| 2026-09-10 | Onda E **EM_ANDAMENTO** — próxima E4.S3 |
