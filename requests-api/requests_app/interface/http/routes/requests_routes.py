@@ -577,6 +577,29 @@ async def create_comment_attachment(
     return ok(data, message="Anexo da conversa enviado.", status_code=201)
 
 
+@router.delete(
+    "/requests/{request_id}/comments/{comment_id}/attachments/{attachment_id}"
+)
+def delete_comment_attachment(
+    request_id: UUID,
+    comment_id: UUID,
+    attachment_id: UUID,
+    request: Request,
+):
+    user = _current_user()
+    try:
+        data = build_timeline_use_cases().delete_comment_attachment(
+            user=user,
+            request_id=str(request_id),
+            comment_id=str(comment_id),
+            attachment_id=str(attachment_id),
+            actor_client_id=client_id_from_request(request),
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data, message="Anexo da conversa removido.")
+
+
 @router.get(
     "/requests/{request_id}/comments/{comment_id}/attachments/{attachment_id}/content"
 )

@@ -162,3 +162,10 @@ class InMemoryFileRepository(FileRepositoryPort):
         ]
         items.sort(key=lambda row: row.created_at or _utcnow(), reverse=True)
         return [deepcopy(item) for item in items]
+
+    def delete_comment_attachment(self, attachment_id: UUID | str) -> bool:
+        key = str(attachment_id)
+        if key not in self.comment_attachments:
+            return False
+        del self.comment_attachments[key]
+        return True

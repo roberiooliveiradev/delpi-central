@@ -8,6 +8,7 @@ import {
 
 import {
   createComment,
+  deleteCommentAttachment,
   downloadCommentAttachmentBlob,
   listCommentAttachments,
   listComments,
@@ -143,6 +144,7 @@ export function CommentsPanel({
   const stickToBottomRef = useRef(true);
   const inlineFilesRef = useRef<Record<string, File>>({});
   const attachmentIndexRef = useRef<Map<string, AttachmentIndexEntry>>(new Map());
+  const baselineRemoteIdsRef = useRef<string[]>([]);
 
   const [pendingSrcById, setPendingSrcById] = useState<Map<string, string>>(
     () => new Map(),
@@ -193,6 +195,7 @@ export function CommentsPanel({
       setDraft("");
       setPending([]);
       inlineFilesRef.current = {};
+      baselineRemoteIdsRef.current = [];
     }
   }, [canComment, conversationFrozen]);
 
@@ -372,8 +375,14 @@ export function CommentsPanel({
       setPending((prev) => {
         const next = [...prev];
         for (const item of inserts) {
-          if (!isImageFile(item.file)) continue;
-          if (item.file.size > MAX_IMAGE_BYTES) continue;
+          if (!isImageFile(item.file)) {
+            setError("Só é possível colar imagens (PNG, JPEG, WebP ou GIF).");
+            continue;
+          }
+          if (item.file.size > MAX_IMAGE_BYTES) {
+            setError("A imagem colada excede o limite de 20 MB.");
+            continue;
+          }
           inlineFilesRef.current[item.pendingId] = item.file;
           if (next.some((row) => row.id === item.pendingId)) continue;
           next.push({ id: item.pendingId, file: item.file, kind: "inline" });
@@ -392,11 +401,26 @@ export function CommentsPanel({
   const onFilesSelected = useCallback((files: File[]) => {
     setPending((prev) => {
       const next = [...prev];
+      let rejectedType = false;
+      let rejectedSize = false;
       for (const file of files) {
-        if (!isImageFile(file)) continue;
-        if (file.size > MAX_IMAGE_BYTES) continue;
+        if (!isImageFile(file)) {
+          rejectedType = true;
+          continue;
+        }
+        if (file.size > MAX_IMAGE_BYTES) {
+          rejectedSize = true;
+          continue;
+        }
         const id = crypto.randomUUID();
         next.push({ id, file, kind: "clip" });
+      }
+      if (rejectedType) {
+        setError("Só é possível anexar imagens (PNG, JPEG, WebP ou GIF).");
+      } else if (rejectedSize) {
+        setError("A imagem anexada excede o limite de 20 MB.");
+      } else {
+        setError(null);
       }
       return next.slice(0, MAX_INLINE_IMAGES);
     });
@@ -412,6 +436,7 @@ export function CommentsPanel({
     setDraft("");
     setPending([]);
     inlineFilesRef.current = {};
+    baselineRemoteIdsRef.current = [];
   }, []);
 
   const beginEdit = useCallback(
@@ -422,7 +447,9 @@ export function CommentsPanel({
       const inlineIds = new Set(listInlineAttachmentIdsFromMarkdown(body));
       const metas = attachmentsByCommentId.get(row.id) || [];
       const remotes: PendingRemote[] = [];
+      const allRemoteIds: string[] = [];
       for (const meta of metas) {
+        allRemoteIds.push(meta.id);
         if (inlineIds.has(meta.id)) continue;
         remotes.push({
           kind: "remote",
@@ -435,6 +462,7 @@ export function CommentsPanel({
         });
       }
       inlineFilesRef.current = {};
+      baselineRemoteIdsRef.current = allRemoteIds;
       setEditingId(messageId);
       setDraft(body);
       setPending(remotes);
@@ -467,7 +495,11 @@ export function CommentsPanel({
     const pendingToUuid: Record<string, string> = {};
     for (const pendingId of pendingIds) {
       const file = inlineFilesRef.current[pendingId];
-      if (!file) continue;
+      if (!file) {
+        throw new Error(
+          "Uma imagem colada não pôde ser enviada. Remova-a e cole novamente.",
+        );
+      }
       const uploaded = await uploadCommentAttachment(requestId, commentId, file);
       pendingToUuid[pendingId] = uploaded.id;
     }
@@ -477,6 +509,11 @@ export function CommentsPanel({
     }
     if (Object.keys(pendingToUuid).length) {
       bodyText = rewriteInlinePendingInMarkdown(bodyText, pendingToUuid);
+    }
+    if (listInlinePendingIdsFromMarkdown(bodyText).length > 0) {
+      throw new Error(
+        "Uma imagem colada não pôde ser enviada. Remova-a e cole novamente.",
+      );
     }
     return bodyText.trim() || " ";
   }
@@ -490,6 +527,19 @@ export function CommentsPanel({
     try {
       if (editingId) {
         const finalBody = await applyUploadsAndBody(editingId, text || " ");
+        const remotesKept = pending.filter(
+          (item): item is PendingRemote => item.kind === "remote",
+        );
+        const keptIds = new Set([
+          ...remotesKept.map((item) => item.id),
+          ...listInlineAttachmentIdsFromMarkdown(finalBody),
+        ]);
+        const toDelete = baselineRemoteIdsRef.current.filter(
+          (remoteId) => !keptIds.has(remoteId),
+        );
+        for (const attachmentId of toDelete) {
+          await deleteCommentAttachment(requestId, editingId, attachmentId);
+        }
         await patchComment(requestId, editingId, finalBody.trim() || " ", {
           markAsEdited: true,
         });

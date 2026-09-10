@@ -170,3 +170,171 @@ def test_comment_frozen_when_request_terminal(tmp_path):
             user=_user(), request_id=created["id"], body="depois do fim"
         )
     assert exc.value.code == "conversation_frozen"
+
+
+def _manager():
+    return SimpleNamespace(
+        id="u-manager",
+        name="Gestor",
+        permissions=[
+            "my-requests.access",
+            "my-requests.manage",
+            "my-requests.view.filial-01",
+        ],
+    )
+
+
+def test_delete_comment_attachment_author_positive(tmp_path):
+    invoice = RequestTypeRegistry.from_workflow_content(
+        code="invoice-issuance",
+        name="Emissão NF",
+        workflow_name="invoice_issuance",
+        permission_prefix="my-requests.invoice-issuance",
+        branch_scope="required",
+    )
+    types = InMemoryRequestTypeRepository([invoice])
+    requests = InMemoryRequestRepository()
+    idem = InMemoryIdempotencyRepository()
+    files = InMemoryFileRepository()
+    created = CreateRequestUseCase(types, requests, idem, files=files).execute(
+        user=_user(),
+        type_code="invoice-issuance",
+        payload={},
+        branch_code="01",
+        idempotency_key=str(uuid4()),
+    )
+    timeline = _timeline(types, requests, files, tmp_path)
+    comment = timeline.create_comment(
+        user=_user(), request_id=created["id"], body="com imagem"
+    )
+    uploaded = timeline.upload_comment_attachment(
+        user=_user(),
+        request_id=created["id"],
+        comment_id=comment["id"],
+        original_name="shot.png",
+        content=b"\x89PNG\r\n\x1a\n",
+        mime_type="image/png",
+    )
+    listed = timeline.list_comment_attachments(
+        user=_user(), request_id=created["id"], comment_id=comment["id"]
+    )
+    assert len(listed["items"]) == 1
+
+    removed = timeline.delete_comment_attachment(
+        user=_user(),
+        request_id=created["id"],
+        comment_id=comment["id"],
+        attachment_id=uploaded["id"],
+    )
+    assert removed["id"] == uploaded["id"]
+    listed_after = timeline.list_comment_attachments(
+        user=_user(), request_id=created["id"], comment_id=comment["id"]
+    )
+    assert listed_after["items"] == []
+
+
+def test_delete_comment_attachment_manage_sibling(tmp_path):
+    invoice = RequestTypeRegistry.from_workflow_content(
+        code="invoice-issuance",
+        name="Emissão NF",
+        workflow_name="invoice_issuance",
+        permission_prefix="my-requests.invoice-issuance",
+        branch_scope="required",
+    )
+    types = InMemoryRequestTypeRepository([invoice])
+    requests = InMemoryRequestRepository()
+    idem = InMemoryIdempotencyRepository()
+    files = InMemoryFileRepository()
+    created = CreateRequestUseCase(types, requests, idem, files=files).execute(
+        user=_user(),
+        type_code="invoice-issuance",
+        payload={},
+        branch_code="01",
+        idempotency_key=str(uuid4()),
+    )
+    timeline = _timeline(types, requests, files, tmp_path)
+    comment = timeline.create_comment(
+        user=_user(), request_id=created["id"], body="com imagem"
+    )
+    uploaded = timeline.upload_comment_attachment(
+        user=_user(),
+        request_id=created["id"],
+        comment_id=comment["id"],
+        original_name="shot.png",
+        content=b"png-bytes",
+        mime_type="image/png",
+    )
+    timeline.delete_comment_attachment(
+        user=_manager(),
+        request_id=created["id"],
+        comment_id=comment["id"],
+        attachment_id=uploaded["id"],
+    )
+    listed = timeline.list_comment_attachments(
+        user=_user(), request_id=created["id"], comment_id=comment["id"]
+    )
+    assert listed["items"] == []
+
+
+def test_delete_comment_attachment_forbidden_and_frozen_negative(tmp_path):
+    invoice = RequestTypeRegistry.from_workflow_content(
+        code="invoice-issuance",
+        name="Emissão NF",
+        workflow_name="invoice_issuance",
+        permission_prefix="my-requests.invoice-issuance",
+        branch_scope="required",
+    )
+    types = InMemoryRequestTypeRepository([invoice])
+    requests = InMemoryRequestRepository()
+    idem = InMemoryIdempotencyRepository()
+    files = InMemoryFileRepository()
+    created = CreateRequestUseCase(types, requests, idem, files=files).execute(
+        user=_user(),
+        type_code="invoice-issuance",
+        payload={},
+        branch_code="01",
+        idempotency_key=str(uuid4()),
+    )
+    timeline = _timeline(types, requests, files, tmp_path)
+    comment = timeline.create_comment(
+        user=_user(), request_id=created["id"], body="com imagem"
+    )
+    uploaded = timeline.upload_comment_attachment(
+        user=_user(),
+        request_id=created["id"],
+        comment_id=comment["id"],
+        original_name="shot.png",
+        content=b"png-bytes",
+        mime_type="image/png",
+    )
+
+    with pytest.raises(ApplicationError) as forbidden:
+        timeline.delete_comment_attachment(
+            user=_processor(),
+            request_id=created["id"],
+            comment_id=comment["id"],
+            attachment_id=uploaded["id"],
+        )
+    assert forbidden.value.code == "delete_forbidden"
+
+    with pytest.raises(ApplicationError) as missing:
+        timeline.delete_comment_attachment(
+            user=_user(),
+            request_id=created["id"],
+            comment_id=comment["id"],
+            attachment_id=str(uuid4()),
+        )
+    assert missing.value.code == "attachment_not_found"
+
+    stored = requests.get(created["id"])
+    assert stored is not None
+    stored.status = "completed"
+    requests._requests[str(stored.id)] = stored  # noqa: SLF001 — test double
+    with pytest.raises(ApplicationError) as frozen:
+        timeline.delete_comment_attachment(
+            user=_user(),
+            request_id=created["id"],
+            comment_id=comment["id"],
+            attachment_id=uploaded["id"],
+        )
+    assert frozen.value.code == "conversation_frozen"

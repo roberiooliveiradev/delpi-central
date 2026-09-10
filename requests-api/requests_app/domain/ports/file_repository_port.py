@@ -84,3 +84,6 @@ class FileRepositoryPort(ABC):
     def list_comment_attachments(
         self, comment_id: UUID | str
     ) -> list[RequestCommentAttachment]: ...
+
+    @abstractmethod
+    def delete_comment_attachment(self, attachment_id: UUID | str) -> bool: ...

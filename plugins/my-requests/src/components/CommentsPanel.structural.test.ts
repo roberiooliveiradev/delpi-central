@@ -36,6 +36,11 @@ describe("Request conversation structural", () => {
     expect(panel).toMatch(/RequestFilePreviewModal/);
     expect(panel).toMatch(/formatBytes/);
     expect(panel).toMatch(/Editando mensagem/);
+    expect(panel).toMatch(/baselineRemoteIdsRef/);
+    expect(panel).toMatch(/deleteCommentAttachment/);
+    expect(panel).toMatch(/toDelete/);
+    expect(panel).toMatch(/Uma imagem colada não pôde ser enviada/);
+    expect(panel).toMatch(/excede o limite de 20 MB/);
     expect(panel).not.toMatch(/editingId=/);
     expect(panel).not.toMatch(/renderEditSlot/);
     expect(panel).not.toMatch(/my-requests-domain-list/);

@@ -359,3 +359,51 @@ class TimelineUseCases:
                 code=exc.code, status_code=404, detail=str(exc)
             ) from exc
         return path, attachment
+
+    def delete_comment_attachment(
+        self,
+        *,
+        user,
+        request_id: str,
+        comment_id: str,
+        attachment_id: str,
+        actor_client_id: str | None = None,
+    ) -> dict[str, Any]:
+        request, request_type, actor = self._ctx(user=user, request_id=request_id)
+        self._assert_conversation_mutable(request=request, request_type=request_type)
+        comment = self._files.get_comment(comment_id)
+        if comment is None or str(comment.request_id) != str(request.id):
+            raise ApplicationError(code="not_found", status_code=404)
+        attachment = self._files.get_comment_attachment(attachment_id)
+        if attachment is None or str(attachment.comment_id) != str(comment.id):
+            raise ApplicationError(code="attachment_not_found", status_code=404)
+        is_author = comment.author_user_id == actor.user_id
+        if not (is_author or actor.has_manage):
+            raise ApplicationError(code="delete_forbidden", status_code=403)
+        try:
+            self._attachments.delete_file(storage_key=attachment.storage_key)
+        except StorageError as exc:
+            raise ApplicationError(
+                code=exc.code, status_code=422, detail=str(exc)
+            ) from exc
+        deleted = self._files.delete_comment_attachment(attachment_id)
+        if not deleted:
+            raise ApplicationError(code="attachment_not_found", status_code=404)
+        _safe_realtime(
+            notify_request_timeline,
+            reason="comment.attachment.removed",
+            request_id=str(request.id),
+            request_number=request.request_number,
+            status=request.status,
+            owner_user_id=request.created_by_user_id,
+            actor_user_id=actor.user_id,
+            actor_client_id=actor_client_id,
+        )
+        return json_safe(
+            {
+                "id": attachment.id,
+                "request_id": attachment.request_id,
+                "comment_id": attachment.comment_id,
+                "original_name": attachment.original_name,
+            }
+        )

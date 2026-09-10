@@ -58,6 +58,8 @@ export type JourneyProgress = {
 
 export type RequestCapabilities = {
   can_comment: boolean;
+  /** True when request status is in workflow terminalStatuses. */
+  conversation_frozen?: boolean;
   can_upload_attachment: boolean;
   can_upload_artifact: boolean;
 };

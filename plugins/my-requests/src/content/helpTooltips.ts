@@ -112,9 +112,9 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   comments: {
     section:
-      "Conversa com formatação. Imagem colada fica no texto da mensagem; imagem pelo clipe aparece como anexo com tamanho. Clique na imagem ou no anexo para ampliar. Editar traz a mensagem de volta ao campo de envio. Após conclusão ou cancelamento, a conversa fica somente leitura.",
+      "Conversa com formatação. Imagem colada fica no texto; imagem pelo clipe fica como anexo com tamanho. Ao editar, você pode remover imagens — elas são apagadas de verdade. Clique para ampliar. Após a conclusão, a conversa fica somente leitura.",
     newComment:
-      "Escreva, formate e, se precisar, cole uma imagem no texto ou anexe pelo clipe antes de enviar.",
+      "Escreva, formate e, se precisar, cole uma imagem no texto ou anexe pelo clipe (PNG/JPEG/WebP/GIF, máx. 20 MB).",
   },
   attachments: {
     section:

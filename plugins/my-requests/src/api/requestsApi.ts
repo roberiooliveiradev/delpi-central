@@ -290,6 +290,18 @@ export async function uploadCommentAttachment(
   };
 }
 
+export async function deleteCommentAttachment(
+  requestId: string,
+  commentId: string,
+  attachmentId: string,
+): Promise<void> {
+  await httpDelete(
+    `${API_BASE}/requests/${encodeURIComponent(requestId)}` +
+      `/comments/${encodeURIComponent(commentId)}` +
+      `/attachments/${encodeURIComponent(attachmentId)}`,
+  );
+}
+
 export function commentAttachmentContentUrl(
   requestId: string,
   commentId: string,

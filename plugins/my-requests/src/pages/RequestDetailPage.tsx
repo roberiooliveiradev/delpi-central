@@ -365,11 +365,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
               <CommentsPanel
                 requestId={requestId}
                 canComment={capabilities?.can_comment ?? false}
-                conversationFrozen={
-                  request.status === "completed" ||
-                  request.status === "cancelled" ||
-                  request.status === "rejected"
-                }
+                conversationFrozen={Boolean(capabilities?.conversation_frozen)}
                 refreshKey={timelineEpoch}
               />
 

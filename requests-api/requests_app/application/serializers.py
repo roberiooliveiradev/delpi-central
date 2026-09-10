@@ -79,6 +79,7 @@ def serialize_request(
         else:
             payload["capabilities"] = {
                 "can_comment": False,
+                "conversation_frozen": False,
                 "can_upload_attachment": False,
                 "can_upload_artifact": False,
             }

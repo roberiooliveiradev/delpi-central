@@ -64,6 +64,8 @@ def resolve_request_capabilities(
     return {
         # create/update comment: viewers while request is not terminal
         "can_comment": bool(can_view and not is_terminal),
+        # terminal request — conversation read-only for everyone (banner copy)
+        "conversation_frozen": bool(is_terminal),
         # detail manage (upload + delete): owner + needs_information only
         "can_upload_attachment": can_manage_attachments,
         # upload artifact: process|manage and not terminal / fileImmutableStatuses

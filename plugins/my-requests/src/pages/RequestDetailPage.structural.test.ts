@@ -34,6 +34,7 @@ describe("RequestDetailPage structural", () => {
     expect(page).toMatch(/can_upload_attachment/);
     expect(page).toMatch(/can_upload_artifact/);
     expect(page).toMatch(/can_comment/);
+    expect(page).toMatch(/conversation_frozen/);
     expect(page).toMatch(/allowed_actions/);
   });
 

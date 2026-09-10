@@ -134,6 +134,7 @@ def test_owner_terminal_cannot_upload_attachment():
     )
     assert caps["can_upload_attachment"] is False
     assert caps["can_comment"] is False
+    assert caps["conversation_frozen"] is True
 
 
 def test_owner_in_progress_cannot_manage_attachments():
@@ -144,3 +145,4 @@ def test_owner_in_progress_cannot_manage_attachments():
     )
     assert caps["can_upload_attachment"] is False
     assert caps["can_comment"] is True
+    assert caps["conversation_frozen"] is False

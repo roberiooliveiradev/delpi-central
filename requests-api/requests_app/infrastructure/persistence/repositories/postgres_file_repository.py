@@ -420,3 +420,15 @@ class PostgresFileRepository(FileRepositoryPort):
                 cur.execute(sql, (str(comment_id),))
                 rows = cur.fetchall()
         return [_comment_attachment(dict(row)) for row in rows]
+
+    def delete_comment_attachment(self, attachment_id: UUID | str) -> bool:
+        sql = (
+            f"DELETE FROM {_SCHEMA}.request_comment_attachments "
+            "WHERE id = %s::uuid"
+        )
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (str(attachment_id),))
+                deleted = cur.rowcount > 0
+            conn.commit()
+        return deleted
