@@ -1,7 +1,7 @@
 import type { FirmwareListItem } from "../api/productionPulseApi";
 import type { DeviceListItem } from "../types/device";
 
-export type FirmwareLinkEdgeKind = "explicit" | "inherited";
+export type FirmwareLinkEdgeKind = "explicit";
 
 export type FirmwareLinkGraphNode = {
   id: string;
@@ -41,7 +41,24 @@ export type FirmwareFamilyNode = {
   outdatedCount: number;
   /** Latest published firmware row id for this family (for entity selection). */
   latestFirmwareId?: string | null;
+  /**
+   * Driver keys accepted by the API for this family:
+   * `{ firmwareKey } ∪ driverKey of every catalog version (incl. archived/draft)`.
+   */
+  compatibleDriverKeys: string[];
 };
+
+export type LinkMode =
+  | { origin: "firmware"; firmwareKey: string }
+  | { origin: "device"; deviceId: string };
+
+export type ConnectionCandidateState =
+  | "origin"
+  | "compatible"
+  | "incompatible"
+  | "already-linked"
+  | "replace-link"
+  | "neutral";
 
 /** Ordem canônica de release: publishedAt vence; sem data, versão semântica. */
 export type FirmwareReleaseRef = Pick<FirmwareListItem, "version" | "publishedAt">;
@@ -56,6 +73,91 @@ export function isNewerFirmwareRelease(
   if (candidate.publishedAt && !current.publishedAt) return true;
   if (!candidate.publishedAt && current.publishedAt) return false;
   return candidate.version.localeCompare(current.version, undefined, { numeric: true }) > 0;
+}
+
+/**
+ * Mirrors API `_assert_compatible`:
+ * compatible = { firmwareKey } ∪ { driver_key of every version with that firmware_key }.
+ */
+export function buildCompatibleDriverKeys(
+  firmwares: FirmwareListItem[],
+  firmwareKey: string,
+): string[] {
+  const keys = new Set<string>([firmwareKey]);
+  for (const row of firmwares) {
+    if (row.firmwareKey !== firmwareKey) continue;
+    const dk = String(row.driverKey || "").trim();
+    if (dk) keys.add(dk);
+  }
+  return [...keys].sort();
+}
+
+export function isFirmwareDeviceCompatible(
+  deviceDriverKey: string,
+  compatibleDriverKeys: readonly string[],
+): boolean {
+  const driver = String(deviceDriverKey || "").trim();
+  if (!driver) return false;
+  return compatibleDriverKeys.includes(driver);
+}
+
+/** Effective assigned family for canvas solid edge (explicit column only). */
+export function explicitFirmwareKey(device: DeviceListItem): string | null {
+  const assigned = device.assignedFirmwareKey;
+  if (assigned && String(assigned).trim()) return String(assigned).trim();
+  return null;
+}
+
+/**
+ * Classify a graph node during Connection Mode.
+ * `filterDimmed` is orthogonal and must not be folded into these states.
+ */
+export function resolveConnectionCandidateState(input: {
+  linkMode: LinkMode | null;
+  nodeKind: "firmware" | "device";
+  firmwareKey?: string | null;
+  deviceId?: string | null;
+  deviceDriverKey?: string | null;
+  assignedFirmwareKey?: string | null;
+  familyByKey: ReadonlyMap<string, FirmwareFamilyNode>;
+}): ConnectionCandidateState {
+  const { linkMode } = input;
+  if (!linkMode) return "neutral";
+
+  if (linkMode.origin === "firmware") {
+    if (input.nodeKind === "firmware") {
+      return input.firmwareKey === linkMode.firmwareKey ? "origin" : "neutral";
+    }
+    const family = input.familyByKey.get(linkMode.firmwareKey);
+    if (!family) return "incompatible";
+    const assigned = input.assignedFirmwareKey?.trim() || null;
+    if (assigned === linkMode.firmwareKey) return "already-linked";
+    const compatible = isFirmwareDeviceCompatible(
+      input.deviceDriverKey ?? "",
+      family.compatibleDriverKeys,
+    );
+    if (!compatible) return "incompatible";
+    if (assigned && assigned !== linkMode.firmwareKey) return "replace-link";
+    return "compatible";
+  }
+
+  // origin === "device" — deviceDriverKey / assignedFirmwareKey refer to the origin IoT.
+  if (input.nodeKind === "device") {
+    return input.deviceId === linkMode.deviceId ? "origin" : "neutral";
+  }
+  const family = input.firmwareKey
+    ? input.familyByKey.get(input.firmwareKey)
+    : undefined;
+  if (!family) return "incompatible";
+  const assigned = input.assignedFirmwareKey?.trim() || null;
+  if (assigned === input.firmwareKey) return "already-linked";
+  const compatible = isFirmwareDeviceCompatible(
+    input.deviceDriverKey ?? "",
+    family.compatibleDriverKeys,
+  );
+  if (!compatible) return "incompatible";
+  if (assigned && assigned !== input.firmwareKey) return "replace-link";
+  return "compatible";
 }
 
 export function uniqueFirmwareFamilies(
@@ -77,6 +179,7 @@ export function uniqueFirmwareFamilies(
           linkedCount: 0,
           outdatedCount: 0,
           latestFirmwareId: item.id,
+          compatibleDriverKeys: [],
         },
       });
       continue;
@@ -94,12 +197,14 @@ export function uniqueFirmwareFamilies(
         linkedCount: 0,
         outdatedCount: 0,
         latestFirmwareId: item.id,
+        compatibleDriverKeys: [],
       },
     });
   }
 
   const families = [...byKey.values()].map((entry) => entry.family);
   for (const family of families) {
+    family.compatibleDriverKeys = buildCompatibleDriverKeys(items, family.firmwareKey);
     const linked = devices.filter(
       (device) => explicitFirmwareKey(device) === family.firmwareKey,
     );
@@ -112,17 +217,9 @@ export function uniqueFirmwareFamilies(
   return families.sort((a, b) => a.firmwareKey.localeCompare(b.firmwareKey));
 }
 
-/** Effective assigned family for canvas solid edge (explicit column only). */
-export function explicitFirmwareKey(device: DeviceListItem): string | null {
-  const assigned = device.assignedFirmwareKey;
-  if (assigned && String(assigned).trim()) return String(assigned).trim();
-  return null;
-}
-
 /**
  * Build graph: firmware nodes left, devices right.
- * At most one solid (explicit) edge per device; inherited dashed when
- * assignedFirmwareKey is null and driverKey matches a family.
+ * Only explicit OTA links (`assignedFirmwareKey`) produce edges.
  */
 export function buildFirmwareLinkGraph(input: {
   families: FirmwareFamilyNode[];
@@ -177,7 +274,7 @@ export function buildFirmwareLinkGraph(input: {
     const counterShift = device.periodDeltas?.shift?.counter ?? null;
     const statusMatch = !statusFilter || device.status === statusFilter;
     const dimmed =
-      (!statusMatch) ||
+      !statusMatch ||
       (Boolean(query) &&
         !matchesQuery(
           `${device.name} ${device.ipAddress} ${installed ?? ""} ${device.driverKey}`,
@@ -208,16 +305,6 @@ export function buildFirmwareLinkGraph(input: {
         target: nodeId,
         kind: "explicit",
       });
-      return;
-    }
-
-    if (!explicit && familyKeys.has(device.driverKey)) {
-      edges.push({
-        id: `e-inherited-${device.id}`,
-        source: `fw:${device.driverKey}`,
-        target: nodeId,
-        kind: "inherited",
-      });
     }
   });
 
@@ -240,7 +327,5 @@ export function replaceExplicitEdge(
     target: deviceNodeId,
     kind: "explicit",
   });
-  return next.filter(
-    (edge) => !(edge.target === deviceNodeId && edge.kind === "inherited"),
-  );
+  return next;
 }

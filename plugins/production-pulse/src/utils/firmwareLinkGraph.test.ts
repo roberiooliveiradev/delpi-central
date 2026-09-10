@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import type { FirmwareListItem } from "../api/productionPulseApi";
 import type { DeviceListItem } from "../types/device";
 import {
+  buildCompatibleDriverKeys,
   buildFirmwareLinkGraph,
+  isFirmwareDeviceCompatible,
   replaceExplicitEdge,
+  resolveConnectionCandidateState,
   uniqueFirmwareFamilies,
 } from "./firmwareLinkGraph";
 
@@ -78,6 +81,7 @@ describe("firmwareLinkGraph", () => {
     const counter = families.find((f) => f.firmwareKey === "esp8266_counter_v1");
     expect(counter?.latestVersion).toBe("1.3.0");
     expect(counter?.linkedCount).toBe(1);
+    expect(counter?.compatibleDriverKeys).toContain("esp8266_counter_v1");
   });
 
   it("builds explicit solid edge for assignedFirmwareKey", () => {
@@ -109,7 +113,7 @@ describe("firmwareLinkGraph", () => {
     expect(deviceNode?.availableVersion).toBeTruthy();
   });
 
-  it("builds inherited dashed edge when only driver matches", () => {
+  it("does not create edge when driver matches but no assignedFirmwareKey", () => {
     const families = uniqueFirmwareFamilies(familiesCatalog);
     const { edges } = buildFirmwareLinkGraph({
       families,
@@ -123,7 +127,122 @@ describe("firmwareLinkGraph", () => {
         }),
       ],
     });
-    expect(edges[0]?.kind).toBe("inherited");
+    expect(edges).toHaveLength(0);
+    expect(
+      isFirmwareDeviceCompatible(
+        "esp8266_counter_v1",
+        families.find((f) => f.firmwareKey === "esp8266_counter_v1")!.compatibleDriverKeys,
+      ),
+    ).toBe(true);
+  });
+
+  it("treats historical archived driver as compatible for the family", () => {
+    const catalog: FirmwareListItem[] = [
+      ...familiesCatalog,
+      firmware({
+        id: "legacy",
+        firmwareKey: "esp8266_counter_v1",
+        version: "0.9.0",
+        driverKey: "esp8266_counter_legacy",
+        archivedAt: "2025-01-01T00:00:00Z",
+      }),
+    ];
+    const keys = buildCompatibleDriverKeys(catalog, "esp8266_counter_v1");
+    expect(keys).toContain("esp8266_counter_legacy");
+    expect(isFirmwareDeviceCompatible("esp8266_counter_legacy", keys)).toBe(true);
+    const families = uniqueFirmwareFamilies(catalog);
+    expect(families.find((f) => f.firmwareKey === "esp8266_counter_v1")?.compatibleDriverKeys).toContain(
+      "esp8266_counter_legacy",
+    );
+  });
+
+  it("marks gauge driver incompatible with counter family", () => {
+    const keys = buildCompatibleDriverKeys(familiesCatalog, "esp8266_counter_v1");
+    expect(isFirmwareDeviceCompatible("esp8266_gauge_v1", keys)).toBe(false);
+  });
+
+  it("resolveConnectionCandidateState classifies firmware origin candidates", () => {
+    const families = uniqueFirmwareFamilies(familiesCatalog);
+    const familyByKey = new Map(families.map((f) => [f.firmwareKey, f]));
+    const base = {
+      linkMode: { origin: "firmware" as const, firmwareKey: "esp8266_counter_v1" },
+      familyByKey,
+    };
+    expect(
+      resolveConnectionCandidateState({
+        ...base,
+        nodeKind: "firmware",
+        firmwareKey: "esp8266_counter_v1",
+      }),
+    ).toBe("origin");
+    expect(
+      resolveConnectionCandidateState({
+        ...base,
+        nodeKind: "device",
+        deviceId: "d1",
+        deviceDriverKey: "esp8266_counter_v1",
+        assignedFirmwareKey: null,
+      }),
+    ).toBe("compatible");
+    expect(
+      resolveConnectionCandidateState({
+        ...base,
+        nodeKind: "device",
+        deviceId: "d2",
+        deviceDriverKey: "esp8266_gauge_v1",
+        assignedFirmwareKey: null,
+      }),
+    ).toBe("incompatible");
+    expect(
+      resolveConnectionCandidateState({
+        ...base,
+        nodeKind: "device",
+        deviceId: "d3",
+        deviceDriverKey: "esp8266_counter_v1",
+        assignedFirmwareKey: "esp8266_counter_v1",
+      }),
+    ).toBe("already-linked");
+    expect(
+      resolveConnectionCandidateState({
+        ...base,
+        nodeKind: "device",
+        deviceId: "d4",
+        deviceDriverKey: "esp8266_counter_v1",
+        assignedFirmwareKey: "esp8266_gauge_v1",
+      }),
+    ).toBe("replace-link");
+  });
+
+  it("resolveConnectionCandidateState classifies device origin candidates", () => {
+    const families = uniqueFirmwareFamilies(familiesCatalog);
+    const familyByKey = new Map(families.map((f) => [f.firmwareKey, f]));
+    const base = {
+      linkMode: { origin: "device" as const, deviceId: "d1" },
+      familyByKey,
+      deviceDriverKey: "esp8266_counter_v1",
+      assignedFirmwareKey: null as string | null,
+    };
+    expect(
+      resolveConnectionCandidateState({
+        ...base,
+        nodeKind: "device",
+        deviceId: "d1",
+      }),
+    ).toBe("origin");
+    expect(
+      resolveConnectionCandidateState({
+        ...base,
+        nodeKind: "firmware",
+        firmwareKey: "esp8266_counter_v1",
+      }),
+    ).toBe("compatible");
+    expect(
+      resolveConnectionCandidateState({
+        ...base,
+        nodeKind: "firmware",
+        firmwareKey: "esp8266_gauge_v1",
+      }),
+    ).toBe("incompatible");
   });
 
   it("replaceExplicitEdge keeps one solid edge per device", () => {
