@@ -44,6 +44,14 @@ def _engine() -> WorkflowEngine:
     return WorkflowEngine()
 
 
+def build_request_repository() -> PostgresRequestRepository:
+    return PostgresRequestRepository()
+
+
+def build_request_type_repository() -> PostgresRequestTypeRepository:
+    return PostgresRequestTypeRepository()
+
+
 def build_payload_validator_registry() -> PayloadValidatorRegistry:
     registry = PayloadValidatorRegistry()
     registry.register(InvoiceIssuancePayloadValidator())

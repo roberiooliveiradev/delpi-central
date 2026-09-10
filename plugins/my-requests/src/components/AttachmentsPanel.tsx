@@ -18,11 +18,13 @@ import {
 type AttachmentsPanelProps = {
   requestId: string;
   canUpload?: boolean;
+  refreshKey?: number;
 };
 
 export function AttachmentsPanel({
   requestId,
   canUpload = false,
+  refreshKey = 0,
 }: AttachmentsPanelProps) {
   const [items, setItems] = useState<RequestAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export function AttachmentsPanel({
       if (err.name !== "AbortError") setError(err.message);
     });
     return () => ac.abort();
-  }, [reload]);
+  }, [reload, refreshKey]);
 
   async function onFilesSelected(files: File[]) {
     if (!canUpload || !files.length || busy) return;

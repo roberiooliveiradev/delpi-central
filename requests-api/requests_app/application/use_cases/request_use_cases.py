@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 from uuid import uuid4
 
@@ -10,6 +11,13 @@ from requests_app.application.security.requests_permissions import (
     has_branch_access,
 )
 from requests_app.application.serializers import allowed_actions_for, serialize_request
+from requests_app.application.services.payload_validator_registry import (
+    PayloadValidatorRegistry,
+)
+from requests_app.application.services.requests_realtime_notify import (
+    notify_request_changed,
+    notify_request_created,
+)
 from requests_app.domain.entities import Actor, Request, StatusHistoryEntry
 from requests_app.domain.entities.files import RequestEvent
 from requests_app.domain.exceptions import WorkflowEngineError
@@ -18,15 +26,21 @@ from requests_app.domain.ports import (
     RequestRepositoryPort,
     RequestTypeRepositoryPort,
 )
-from requests_app.application.services.payload_validator_registry import (
-    PayloadValidatorRegistry,
-)
 from requests_app.domain.ports.file_repository_port import FileRepositoryPort
 from requests_app.domain.ports.integration_outbox_port import IntegrationOutboxRepositoryPort
 from requests_app.domain.services.workflow_engine import WorkflowEngine
 from requests_app.infrastructure.gateways.core_notification_adapter import (
     build_notification_payload,
 )
+
+logger = logging.getLogger(__name__)
+
+
+def _safe_realtime(fn, **kwargs) -> None:
+    try:
+        fn(**kwargs)
+    except Exception:  # noqa: BLE001
+        logger.exception("requests_realtime_notify_failed")
 
 
 def _normalize_branch(raw: Any) -> str | None:
@@ -80,6 +94,7 @@ class CreateRequestUseCase:
         branch_code: str | None = None,
         priority: str = "normal",
         idempotency_key: str | None = None,
+        actor_client_id: str | None = None,
     ) -> dict[str, Any]:
         if not idempotency_key or not str(idempotency_key).strip():
             raise ApplicationError(code="idempotency_required", status_code=422)
@@ -175,6 +190,20 @@ class CreateRequestUseCase:
             workflow=workflow,
             actor=actor,
             include_detail_projections=True,
+        )
+        _safe_realtime(
+            notify_request_created,
+            request_id=str(stored.id),
+            request_number=stored.request_number,
+            status=stored.status,
+            owner_user_id=stored.created_by_user_id,
+            actor_user_id=actor.user_id,
+            actor_client_id=actor_client_id,
+            notification={
+                "title": "Nova solicitação",
+                "message": f"{stored.request_number} criada.",
+                "variant": "info",
+            },
         )
         self._idempotency.save(
             key=str(idempotency_key).strip(),
@@ -374,6 +403,7 @@ class UpdateRequestPayloadUseCase:
         payload: dict[str, Any],
         expected_version: int | None = None,
         idempotency_key: str | None = None,
+        actor_client_id: str | None = None,
     ) -> dict[str, Any]:
         if not idempotency_key or not str(idempotency_key).strip():
             raise ApplicationError(code="idempotency_required", status_code=422)
@@ -441,6 +471,16 @@ class UpdateRequestPayloadUseCase:
             actor=actor,
             include_detail_projections=True,
         )
+        _safe_realtime(
+            notify_request_changed,
+            reason="payload.edit",
+            request_id=str(stored.id),
+            request_number=stored.request_number,
+            status=stored.status,
+            owner_user_id=stored.created_by_user_id,
+            actor_user_id=actor.user_id,
+            actor_client_id=actor_client_id,
+        )
         self._idempotency.save(
             key=str(idempotency_key).strip(),
             route=route,
@@ -476,6 +516,7 @@ class TransitionRequestUseCase:
         body: dict[str, Any] | None = None,
         expected_version: int | None = None,
         idempotency_key: str | None = None,
+        actor_client_id: str | None = None,
     ) -> dict[str, Any]:
         if not idempotency_key or not str(idempotency_key).strip():
             raise ApplicationError(code="idempotency_required", status_code=422)
@@ -564,6 +605,22 @@ class TransitionRequestUseCase:
             workflow=workflow,
             actor=actor,
             include_detail_projections=True,
+        )
+        action_name = str(result.history.action or action)
+        _safe_realtime(
+            notify_request_changed,
+            reason=f"transition.{action_name}",
+            request_id=str(stored.id),
+            request_number=stored.request_number,
+            status=stored.status,
+            owner_user_id=stored.created_by_user_id,
+            actor_user_id=actor.user_id,
+            actor_client_id=actor_client_id,
+            notification={
+                "title": "Solicitação atualizada",
+                "message": f"{stored.request_number} → {stored.status}",
+                "variant": "info",
+            },
         )
         self._idempotency.save(
             key=str(idempotency_key).strip(),

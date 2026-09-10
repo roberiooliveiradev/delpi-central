@@ -1,0 +1,72 @@
+# Requests API — realtime (WebSocket)
+
+Atualização live de Minhas Solicitações (fila, minhas, detalhe) via WebSocket
+nativo FastAPI — mesmo padrão do [commercial worklist](../../../commercial-api/docs/architecture/realtime-worklist.md).
+
+**Não substitui** o outbox → Core (`POST /integrations/notifications`) do sino do Portal.
+O WS só invalida UI aberta no MFE; o MFE faz debounce + HTTP refetch.
+
+## Endpoint
+
+```
+wss://{host}/apps/requests-api/v1/realtime/ws?token={jwt}&client_id={uuid}
+```
+
+- **Auth:** JWT em query `token` → `validate_token` + RBAC via core-api (`load_user_rbac`). Exige `my-requests.access` (ou `view-all` / `manage`).
+- **Salas no connect:** `user:{sub}` sempre; `work-queue` se `*.process` / `view-all` / `manage`.
+- **Salas sob demanda:** `request:{uuid}` após `subscribe` (fail-closed: owner / process / view-all / manage + filial).
+- **Keepalive:** cliente envia texto `ping`; servidor responde `{ "type": "pong" }`.
+- **Middleware HTTP:** path `/v1/realtime/ws` é público no JWT middleware (token na query; auth no handler).
+- **Flag:** `REQUESTS_REALTIME_ENABLED` (default `true`). `false` desliga hub notify e rejeita o handshake.
+
+## Subscribe
+
+```json
+{ "type": "subscribe", "requestId": "<uuid>" }
+```
+
+```json
+{ "type": "unsubscribe", "requestId": "<uuid>" }
+```
+
+Acks: `subscribed` | `unsubscribed` | `error` (`requestIdInvalid` | `accessDenied` | …).
+
+## Eventos (P0)
+
+| type | Rooms | Trigger | MFE |
+|------|-------|---------|-----|
+| `request.created` | `work-queue`; `user:{owner}` | create | refetch Mine/WorkQueue |
+| `request.changed` | `request:{id}`; `user:{owner}`; `work-queue` | transition, payload edit | refetch detail + listas |
+| `request.timeline` | `request:{id}` | comment, attachment, artifact | refetch events/painéis |
+
+Payload leve (exemplo):
+
+```json
+{
+  "type": "request.changed",
+  "reason": "transition.start",
+  "requestId": "uuid",
+  "requestNumber": "REQ-…",
+  "status": "in_progress",
+  "actorUserId": "…",
+  "actorClientId": "…",
+  "ownerUserId": "…",
+  "notification": { "title": "…", "message": "…", "variant": "info" }
+}
+```
+
+`notification` é opcional. O MFE ignora toast quando `actorClientId` = client id da aba (header `X-My-Requests-Client-Id`).
+
+## Código
+
+| Peça | Path |
+|------|------|
+| Hub | `requests_app/application/services/requests_realtime_hub.py` |
+| Notify | `requests_app/application/services/requests_realtime_notify.py` |
+| Protocol | `requests_app/application/services/requests_realtime_protocol.py` |
+| Route | `requests_app/interface/http/routes/realtime_routes.py` |
+| MFE | `plugins/my-requests/src/app/MyRequestsRealtimeProvider.tsx` |
+
+## Gateway
+
+`/apps/requests-api/` em `gateway/nginx.conf` e `nginx.dev.conf` com `Upgrade`, `Connection`, `proxy_read_timeout 86400`, `proxy_buffering off`.

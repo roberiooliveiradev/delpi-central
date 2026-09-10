@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { MyRequestsFloatingNoticeProvider } from "./app/MyRequestsFloatingNoticeProvider";
+import { MyRequestsRealtimeProvider } from "./app/MyRequestsRealtimeProvider";
 import { configureHttpClient } from "./api/httpClient";
 import {
   resolveInternalRoute,
@@ -69,7 +70,11 @@ export default function App({
 
   return (
     <RequestsPermissionsProvider permissions={permissions} isSuperadmin={isSuperadmin}>
-      <MyRequestsFloatingNoticeProvider>{page}</MyRequestsFloatingNoticeProvider>
+      <MyRequestsFloatingNoticeProvider>
+        <MyRequestsRealtimeProvider getAccessToken={getAccessToken} enabled>
+          {page}
+        </MyRequestsRealtimeProvider>
+      </MyRequestsFloatingNoticeProvider>
     </RequestsPermissionsProvider>
   );
 }

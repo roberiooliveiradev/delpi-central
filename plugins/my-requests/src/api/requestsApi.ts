@@ -1,4 +1,8 @@
 import { httpGet, httpPatch, httpPost, getAccessToken, DELPI_CALLER_APP } from "./httpClient";
+import {
+  getMyRequestsClientId,
+  MY_REQUESTS_CLIENT_ID_HEADER,
+} from "../app/myRequestsClientId";
 import type {
   Envelope,
   RequestArtifact,
@@ -11,6 +15,14 @@ import type {
 } from "../types/requests";
 
 export const API_BASE = "/apps/requests-api/v1";
+
+function clientHeaders(): Record<string, string> {
+  return {
+    "X-Delpi-Caller-App": DELPI_CALLER_APP,
+    [MY_REQUESTS_CLIENT_ID_HEADER]: getMyRequestsClientId(),
+    ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
+  };
+}
 
 export type RequestListQuery = {
   signal?: AbortSignal;
@@ -96,9 +108,8 @@ export async function createRequest(input: {
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
-      "X-Delpi-Caller-App": DELPI_CALLER_APP,
       "Idempotency-Key": input.idempotencyKey,
-      ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
+      ...clientHeaders(),
     },
     body: JSON.stringify({
       type_code: input.typeCode,
@@ -127,9 +138,8 @@ export async function transitionRequest(
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        "X-Delpi-Caller-App": DELPI_CALLER_APP,
         "Idempotency-Key": input.idempotencyKey,
-        ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
+        ...clientHeaders(),
       },
       body: JSON.stringify({
         version: input.version,
@@ -214,9 +224,8 @@ export async function uploadAttachment(requestId: string, file: File, idempotenc
       method: "POST",
       headers: {
         Accept: "application/json",
-        "X-Delpi-Caller-App": DELPI_CALLER_APP,
         ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
-        ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
+        ...clientHeaders(),
       },
       body: form,
     },
@@ -277,9 +286,8 @@ export async function uploadArtifact(
       method: "POST",
       headers: {
         Accept: "application/json",
-        "X-Delpi-Caller-App": DELPI_CALLER_APP,
         ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
-        ...(getAccessToken() ? { Authorization: `Bearer ${getAccessToken()}` } : {}),
+        ...clientHeaders(),
       },
       body: form,
     },

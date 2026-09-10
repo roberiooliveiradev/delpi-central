@@ -15,11 +15,13 @@ import {
 type CommentsPanelProps = {
   requestId: string;
   canComment?: boolean;
+  refreshKey?: number;
 };
 
 export function CommentsPanel({
   requestId,
   canComment = false,
+  refreshKey = 0,
 }: CommentsPanelProps) {
   const [items, setItems] = useState<RequestComment[]>([]);
   const [body, setBody] = useState("");
@@ -37,7 +39,7 @@ export function CommentsPanel({
       if (err.name !== "AbortError") setError(err.message);
     });
     return () => ac.abort();
-  }, [requestId]);
+  }, [requestId, refreshKey]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();

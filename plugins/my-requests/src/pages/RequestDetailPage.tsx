@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useMyRequestsFloatingNotice } from "../app/MyRequestsFloatingNoticeProvider";
+import { useMyRequestsDetailSync } from "../app/MyRequestsRealtimeProvider";
 import { getRequest, transitionRequest } from "../api/requestsApi";
 import { ActionBar } from "../components/ActionBar";
 import { AppShell } from "../components/AppShell";
@@ -50,6 +51,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [reasonKind, setReasonKind] = useState<ReasonConfirmKind | null>(null);
+  const [timelineEpoch, setTimelineEpoch] = useState(0);
 
   const reload = useCallback(
     async (signal?: AbortSignal) => {
@@ -67,6 +69,22 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
     });
     return () => ac.abort();
   }, [reload]);
+
+  const onRealtimeChanged = useCallback(() => {
+    void reload().catch((err: Error) => {
+      if (err.name !== "AbortError") setLoadError(err.message);
+    });
+    setTimelineEpoch((value) => value + 1);
+  }, [reload]);
+
+  const onRealtimeTimeline = useCallback(() => {
+    setTimelineEpoch((value) => value + 1);
+  }, []);
+
+  useMyRequestsDetailSync(
+    requestId,
+    { onChanged: onRealtimeChanged, onTimeline: onRealtimeTimeline },
+  );
 
   async function runTransition(
     action: string,
@@ -238,10 +256,11 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
             ) : null}
 
             <div className="my-requests-detail-history">
-              <TimelinePanel requestId={requestId} />
+              <TimelinePanel requestId={requestId} refreshKey={timelineEpoch} />
               <CommentsPanel
                 requestId={requestId}
                 canComment={capabilities?.can_comment ?? false}
+                refreshKey={timelineEpoch}
               />
             </div>
 
@@ -249,10 +268,12 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
               <AttachmentsPanel
                 requestId={requestId}
                 canUpload={capabilities?.can_upload_attachment ?? false}
+                refreshKey={timelineEpoch}
               />
               <ArtifactsPanel
                 requestId={requestId}
                 canUpload={capabilities?.can_upload_artifact ?? false}
+                refreshKey={timelineEpoch}
               />
             </section>
           </>

@@ -13,9 +13,10 @@ import {
 
 type TimelinePanelProps = {
   requestId: string;
+  refreshKey?: number;
 };
 
-export function TimelinePanel({ requestId }: TimelinePanelProps) {
+export function TimelinePanel({ requestId, refreshKey = 0 }: TimelinePanelProps) {
   const [items, setItems] = useState<TimelineEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +28,7 @@ export function TimelinePanel({ requestId }: TimelinePanelProps) {
         if (err.name !== "AbortError") setError(err.message);
       });
     return () => ac.abort();
-  }, [requestId]);
+  }, [requestId, refreshKey]);
 
   const timelineItems = useMemo(
     () =>

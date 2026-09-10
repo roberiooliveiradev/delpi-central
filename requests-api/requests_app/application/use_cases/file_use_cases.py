@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -11,6 +12,9 @@ from requests_app.application.services.attachment_storage import (
     AttachmentStorage,
     StorageError,
 )
+from requests_app.application.services.requests_realtime_notify import (
+    notify_request_timeline,
+)
 from requests_app.core.serialize import json_safe
 from requests_app.domain.entities.files import (
     RequestArtifact,
@@ -21,6 +25,8 @@ from requests_app.domain.ports import RequestRepositoryPort, RequestTypeReposito
 from requests_app.domain.ports.file_repository_port import FileRepositoryPort
 from requests_app.domain.services.workflow_engine import WorkflowEngine
 
+logger = logging.getLogger(__name__)
+
 
 def _can_view_request(*, request, actor) -> bool:
     is_owner = request.created_by_user_id == actor.user_id
@@ -30,6 +36,13 @@ def _can_view_request(*, request, actor) -> bool:
 def _is_terminal(request, workflow: dict[str, Any]) -> bool:
     terminals = set((workflow or {}).get("terminalStatuses") or [])
     return request.status in terminals
+
+
+def _safe_realtime(fn, **kwargs) -> None:
+    try:
+        fn(**kwargs)
+    except Exception:  # noqa: BLE001
+        logger.exception("requests_realtime_notify_failed")
 
 
 class FileUseCases:
@@ -69,6 +82,7 @@ class FileUseCases:
         original_name: str,
         content: bytes,
         mime_type: str | None,
+        actor_client_id: str | None = None,
     ) -> dict[str, Any]:
         request, request_type, actor = self._load_request_context(
             user=user, request_id=request_id
@@ -114,6 +128,16 @@ class FileUseCases:
                 actor_name=actor.user_name,
                 payload={"attachment_id": str(attachment.id), "name": attachment.original_name},
             )
+        )
+        _safe_realtime(
+            notify_request_timeline,
+            reason="attachment.created",
+            request_id=str(request.id),
+            request_number=request.request_number,
+            status=request.status,
+            owner_user_id=request.created_by_user_id,
+            actor_user_id=actor.user_id,
+            actor_client_id=actor_client_id,
         )
         return json_safe(
             {
@@ -177,6 +201,7 @@ class FileUseCases:
         content: bytes,
         mime_type: str | None,
         artifact_kind: str = "generic",
+        actor_client_id: str | None = None,
     ) -> dict[str, Any]:
         request, request_type, actor = self._load_request_context(
             user=user, request_id=request_id
@@ -223,6 +248,16 @@ class FileUseCases:
                     "name": artifact.original_name,
                 },
             )
+        )
+        _safe_realtime(
+            notify_request_timeline,
+            reason="artifact.created",
+            request_id=str(request.id),
+            request_number=request.request_number,
+            status=request.status,
+            owner_user_id=request.created_by_user_id,
+            actor_user_id=actor.user_id,
+            actor_client_id=actor_client_id,
         )
         return json_safe(
             {

@@ -1,19 +1,32 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 from uuid import uuid4
 
 from requests_app.application.errors import ApplicationError
 from requests_app.application.security.requests_permissions import actor_for
+from requests_app.application.services.requests_realtime_notify import (
+    notify_request_timeline,
+)
 from requests_app.core.serialize import json_safe
 from requests_app.domain.entities.files import RequestComment, RequestEvent
 from requests_app.domain.ports import RequestRepositoryPort, RequestTypeRepositoryPort
 from requests_app.domain.ports.file_repository_port import FileRepositoryPort
 
+logger = logging.getLogger(__name__)
+
 
 def _can_view(*, request, actor) -> bool:
     is_owner = request.created_by_user_id == actor.user_id
     return bool(is_owner or actor.has_view_all or actor.has_process or actor.has_manage)
+
+
+def _safe_realtime(fn, **kwargs) -> None:
+    try:
+        fn(**kwargs)
+    except Exception:  # noqa: BLE001
+        logger.exception("requests_realtime_notify_failed")
 
 
 class TimelineUseCases:
@@ -100,7 +113,14 @@ class TimelineUseCases:
             "page_size": page_size,
         }
 
-    def create_comment(self, *, user, request_id: str, body: str) -> dict[str, Any]:
+    def create_comment(
+        self,
+        *,
+        user,
+        request_id: str,
+        body: str,
+        actor_client_id: str | None = None,
+    ) -> dict[str, Any]:
         request, actor = self._ctx(user=user, request_id=request_id)
         text = (body or "").strip()
         if not text:
@@ -123,6 +143,21 @@ class TimelineUseCases:
                 actor_name=actor.user_name,
                 payload={"comment_id": str(comment.id)},
             )
+        )
+        _safe_realtime(
+            notify_request_timeline,
+            reason="comment.created",
+            request_id=str(request.id),
+            request_number=request.request_number,
+            status=request.status,
+            owner_user_id=request.created_by_user_id,
+            actor_user_id=actor.user_id,
+            actor_client_id=actor_client_id,
+            notification={
+                "title": "Novo comentário",
+                "message": f"{actor.user_name} comentou em {request.request_number}.",
+                "variant": "info",
+            },
         )
         return json_safe(
             {

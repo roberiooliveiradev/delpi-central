@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionButton, DataTable, type DataTableColumn } from "@delpi/plugin-ui/index";
 
+import { useMyRequestsListSync } from "../app/MyRequestsRealtimeProvider";
 import { listMyRequests, listRequestTypes } from "../api/requestsApi";
 import { AppShell } from "../components/AppShell";
 import { RequestListFilters } from "../components/RequestListFilters";
@@ -46,10 +47,16 @@ export function MinePage() {
   const [filters, setFilters] = useState<RequestListFiltersState>(INITIAL_FILTERS);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [listEpoch, setListEpoch] = useState(0);
 
   const patchFilters = useCallback((patch: Partial<RequestListFiltersState>) => {
     setFilters((prev) => ({ ...prev, ...patch }));
   }, []);
+
+  const bumpList = useCallback(() => {
+    setListEpoch((value) => value + 1);
+  }, []);
+  useMyRequestsListSync(bumpList);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -83,7 +90,7 @@ export function MinePage() {
       })
       .finally(() => setLoading(false));
     return () => ac.abort();
-  }, [filters]);
+  }, [filters, listEpoch]);
 
   const totalPages = Math.max(1, Math.ceil(total / REQUEST_LIST_PAGE_SIZE) || 1);
 

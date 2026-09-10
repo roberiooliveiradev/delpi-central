@@ -58,6 +58,10 @@ class Settings:
         str(_get_env("REQUESTS_OUTBOX_WORKER_ENABLED", default="false") or "false").lower()
         in {"1", "true", "yes", "on"}
     )
+    REQUESTS_REALTIME_ENABLED: bool = (
+        str(_get_env("REQUESTS_REALTIME_ENABLED", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
     CORE_API_URL: str = _get_env("CORE_API_URL", default="http://core-api:8000")
 
 

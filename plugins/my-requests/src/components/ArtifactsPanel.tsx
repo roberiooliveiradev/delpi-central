@@ -23,9 +23,14 @@ import {
 type ArtifactsPanelProps = {
   requestId: string;
   canUpload?: boolean;
+  refreshKey?: number;
 };
 
-export function ArtifactsPanel({ requestId, canUpload = false }: ArtifactsPanelProps) {
+export function ArtifactsPanel({
+  requestId,
+  canUpload = false,
+  refreshKey = 0,
+}: ArtifactsPanelProps) {
   const [items, setItems] = useState<RequestArtifact[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -45,7 +50,7 @@ export function ArtifactsPanel({ requestId, canUpload = false }: ArtifactsPanelP
       if (err.name !== "AbortError") setError(err.message);
     });
     return () => ac.abort();
-  }, [reload]);
+  }, [reload, refreshKey]);
 
   async function onFilesSelected(files: File[]) {
     if (!canUpload || !files.length || busy) return;

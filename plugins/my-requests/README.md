@@ -9,6 +9,7 @@ Microfrontend federado do módulo **Minhas Solicitações**.
 - Ações no detalhe: render-only de `allowed_actions` (label PT na UI; código canônico na chamada)
 - Detalhe: progresso via `journey_progress` + uploads via `capabilities` (projeção da API; MFE não reconstrói workflow)
 - Avisos: `MyRequestsFloatingNoticeProvider` (`FloatingNoticeStack` do `@delpi/plugin-ui`) — erros/sucesso de ações no detalhe
+- **Tempo real:** `MyRequestsRealtimeProvider` → `wss://…/apps/requests-api/v1/realtime/ws` (hint + refetch; anti-eco via `X-My-Requests-Client-Id`). Doc: [realtime-requests.md](../../requests-api/docs/architecture/realtime-requests.md)
 - Ação `view` não vira botão no detalhe (já está visualizando; não é transição)
 - Shell: **TopBar** canônica (`createDashboardTopBar`) + PageHeader contextual — padrão commercial
 - Labels PT-BR: [`src/content/presentationLabels.ts`](src/content/presentationLabels.ts)

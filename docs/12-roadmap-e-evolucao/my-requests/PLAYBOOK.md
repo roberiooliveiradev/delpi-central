@@ -1270,7 +1270,7 @@ Revogação em massa no Core **não** faz parte deste playbook — exige runbook
 - Schema manifest 1.1.0 (`plugin`/`module`) até Core adotar
 - Descomissionamento imediato do plugin `invoice-issuance`
 - Rotas TV Dashboard para filas de solicitação
-- WebSocket realtime na fila (fase 2 — avaliar padrão commercial worklist)
+- ~~WebSocket realtime na fila (fase 2 — avaliar padrão commercial worklist)~~ **Entregue:** ver [`requests-api/docs/architecture/realtime-requests.md`](../../../requests-api/docs/architecture/realtime-requests.md)
 
 ---
 

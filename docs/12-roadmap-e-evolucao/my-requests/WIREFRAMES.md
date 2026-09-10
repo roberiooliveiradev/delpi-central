@@ -5,7 +5,8 @@
 > **API:** `/apps/requests-api` (nunca api-delpi no browser)  
 > **UI kit:** `@delpi/plugin-ui` via Module Federation · factories em [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/src/ui/mrUi.tsx)  
 > **Regras:** `plugins-reusable-components.mdc`, `plugins-visual-design-system.mdc`, `plan-construction.mdc`  
-> **Status:** E5–E23 (wizard NF ProgressTracker + responsivo + EntityDirectoryPicker avatar/badge)
+> **Status:** E5–E23 (wizard NF ProgressTracker + responsivo + EntityDirectoryPicker avatar/badge)  
+> **Tempo real:** listas/detalhe atualizam via WS (`MyRequestsRealtimeProvider`) sem F5 — ver [realtime-requests.md](../../../requests-api/docs/architecture/realtime-requests.md)
 
 ## Convenções
 

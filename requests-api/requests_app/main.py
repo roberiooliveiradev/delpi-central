@@ -11,6 +11,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from delpi_auth.credential_guard import check_credentials
 from requests_app.config import settings
 from requests_app.core.responses import fail
+from requests_app.interface.http.routes.realtime_routes import router as realtime_router
 from requests_app.interface.http.routes.requests_routes import router as requests_router
 from requests_app.middleware.auth_middleware import jwt_middleware
 from requests_app.startup.run_migrations_on_startup import run_migrations_on_startup
@@ -46,14 +47,13 @@ async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
     worker_task = None
+    realtime_worker = None
     from requests_app.infrastructure.schedulers.outbox_worker import (
         run_outbox_worker_loop,
         should_start_outbox_worker,
     )
 
     if should_start_outbox_worker():
-        import asyncio
-
         from requests_app.infrastructure.persistence.repositories.postgres_outbox_repository import (
             PostgresIntegrationOutboxRepository,
         )
@@ -62,9 +62,23 @@ async def lifespan(_app: FastAPI):
             run_outbox_worker_loop(outbox=PostgresIntegrationOutboxRepository())
         )
         logging.getLogger(__name__).info("requests_outbox_worker_started")
+
+    if settings.REQUESTS_REALTIME_ENABLED:
+        from requests_app.application.services.requests_realtime_hub import (
+            requests_realtime_hub,
+        )
+
+        loop = asyncio.get_running_loop()
+        requests_realtime_hub.bind_loop(loop)
+        realtime_worker = asyncio.create_task(requests_realtime_hub.worker())
+        logging.getLogger(__name__).info("requests_realtime_hub_started")
     try:
         yield
     finally:
+        if realtime_worker is not None:
+            realtime_worker.cancel()
+            with suppress(asyncio.CancelledError):
+                await realtime_worker
         if worker_task is not None:
             worker_task.cancel()
             with suppress(asyncio.CancelledError):
@@ -118,3 +132,4 @@ def health():
 
 
 app.include_router(requests_router)
+app.include_router(realtime_router)

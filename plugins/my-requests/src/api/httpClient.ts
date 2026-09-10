@@ -1,3 +1,8 @@
+import {
+  getMyRequestsClientId,
+  MY_REQUESTS_CLIENT_ID_HEADER,
+} from "../app/myRequestsClientId";
+
 type RequestOptions = { signal?: AbortSignal };
 
 const DELPI_CALLER_APP = "my-requests";
@@ -16,6 +21,7 @@ function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: "application/json",
     "X-Delpi-Caller-App": DELPI_CALLER_APP,
+    [MY_REQUESTS_CLIENT_ID_HEADER]: getMyRequestsClientId(),
   };
   const token = accessTokenGetter?.();
   if (token) headers.Authorization = `Bearer ${token}`;

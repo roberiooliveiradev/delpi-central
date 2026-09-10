@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, File, Form, Header, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, Form, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -24,6 +24,7 @@ from requests_app.composition.requests_composer import (
     build_update_request_payload_use_case,
 )
 from requests_app.core.responses import fail, ok
+from requests_app.interface.http.client_id import client_id_from_request
 
 router = APIRouter(prefix="/v1", tags=["Requests"])
 
@@ -166,6 +167,7 @@ def lookup_warehouse_balance(
 @router.post("/requests")
 def create_request(
     body: CreateRequestBody,
+    request: Request,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ):
     user = _current_user()
@@ -177,6 +179,7 @@ def create_request(
             branch_code=body.branch_code,
             priority=body.priority,
             idempotency_key=idempotency_key,
+            actor_client_id=client_id_from_request(request),
         )
     except ApplicationError as exc:
         return _handle(exc)
@@ -249,6 +252,7 @@ def get_request(request_id: UUID):
 def update_request(
     request_id: UUID,
     body: UpdatePayloadBody,
+    request: Request,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ):
     user = _current_user()
@@ -259,6 +263,7 @@ def update_request(
             payload=body.payload,
             expected_version=body.version,
             idempotency_key=idempotency_key,
+            actor_client_id=client_id_from_request(request),
         )
     except ApplicationError as exc:
         return _handle(exc)
@@ -269,6 +274,7 @@ def update_request(
 def transition_request(
     request_id: UUID,
     action: str,
+    request: Request,
     body: TransitionBody | None = None,
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ):
@@ -290,6 +296,7 @@ def transition_request(
             body=transition_body,
             expected_version=payload.version,
             idempotency_key=idempotency_key,
+            actor_client_id=client_id_from_request(request),
         )
     except ApplicationError as exc:
         return _handle(exc)
@@ -311,6 +318,7 @@ def list_attachments(request_id: UUID):
 @router.post("/requests/{request_id}/attachments")
 async def create_attachment(
     request_id: UUID,
+    request: Request,
     file: UploadFile = File(...),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ):
@@ -324,6 +332,7 @@ async def create_attachment(
             original_name=file.filename or "anexo.bin",
             content=content,
             mime_type=file.content_type,
+            actor_client_id=client_id_from_request(request),
         )
     except ApplicationError as exc:
         return _handle(exc)
@@ -361,6 +370,7 @@ def list_artifacts(request_id: UUID):
 @router.post("/requests/{request_id}/artifacts")
 async def create_artifact(
     request_id: UUID,
+    request: Request,
     file: UploadFile = File(...),
     artifact_kind: str = Form(default="generic"),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
@@ -376,6 +386,7 @@ async def create_artifact(
             content=content,
             mime_type=file.content_type,
             artifact_kind=artifact_kind,
+            actor_client_id=client_id_from_request(request),
         )
     except ApplicationError as exc:
         return _handle(exc)
@@ -437,13 +448,14 @@ def list_comments(
 
 
 @router.post("/requests/{request_id}/comments")
-def create_comment(request_id: UUID, body: CommentBody):
+def create_comment(request_id: UUID, body: CommentBody, request: Request):
     user = _current_user()
     try:
         data = build_timeline_use_cases().create_comment(
             user=user,
             request_id=str(request_id),
             body=body.body,
+            actor_client_id=client_id_from_request(request),
         )
     except ApplicationError as exc:
         return _handle(exc)
