@@ -1,0 +1,121 @@
+{
+  "stage": "E6",
+  "status": "INVESTIGATION_COMPLETE",
+  "decision": "KEEP column_labels.fieldFormats; CLEANUP SKIP",
+  "pipeline": {
+    "owner": "ExternalActionColumnLabelService.resolve_field_format / format_field_value",
+    "priority": [
+      "schema_formats (OpenAPI response schema via resolve_schema_formats + x-dataType/x-format/format)",
+      "meta.fieldFormats (ResponseMetaBuilder / api_delpi_success merge)",
+      "column_labels.json fieldFormats",
+      "_infer_field_format (suffix/token heuristics)"
+    ],
+    "catalog": "minha-delpi-ai-api/app/content/pt-BR/assistant/column_labels.json#fieldFormats",
+    "runtimeKeepFileForbidden": "D-09 — do not create field_formats_keep.json runtime"
+  },
+  "counts": {
+    "fieldFormats_total": 148,
+    "OPENAPI_COVERED": 0,
+    "INFERENCE_REDUNDANT_not_openapi": 123,
+    "KEEP_catalog_required": 25
+  },
+  "openapi_coverage_probe": {
+    "api-delpi/app/content/openapi_baseline.json": "operations inventory only — no response property formats extractable",
+    "OpenAPI x-dataType/x-format in response schemas": "not found as durable coverage for catalog keys",
+    "meta.fieldFormats emitters": [
+      "api-delpi/app/interface/http/route_response_helpers.py (infer_scalar_field_formats)",
+      "api-delpi REFUGOS_RANKINGS_FIELD_FORMATS (value/sharePct/…)"
+    ],
+    "overlap_refugos_vs_column_labels_fieldFormats": []
+  },
+  "sample_classifications": [
+    {
+      "key": "due_date",
+      "configured": "date",
+      "class": "INFERENCE_REDUNDANT",
+      "note": "suffix _date → infer date; NOT OPENAPI_COVERED — keep catalog"
+    },
+    {
+      "key": "ebitda_over_rol_pct",
+      "configured": "percent",
+      "class": "INFERENCE_REDUNDANT",
+      "note": "suffix _pct → infer percent; NOT OPENAPI_COVERED"
+    },
+    {
+      "key": "gross_revenue",
+      "configured": "currency",
+      "class": "INFERENCE_REDUNDANT",
+      "note": "token revenue → infer currency; NOT OPENAPI_COVERED"
+    },
+    {
+      "key": "icms_rate",
+      "configured": "percent",
+      "inferred": "currency",
+      "class": "KEEP",
+      "note": "inference would misclassify as currency; catalog is authority"
+    },
+    {
+      "key": "late_ops",
+      "configured": "quantity",
+      "inferred": null,
+      "class": "KEEP",
+      "note": "no safe OpenAPI/infer substitute"
+    },
+    {
+      "key": "material_to_pa_cost_ratio",
+      "configured": "decimal",
+      "inferred": "currency",
+      "class": "KEEP",
+      "note": "decimal not in _ALLOWED_FIELD_FORMATS OpenAPI path; catalog override required"
+    },
+    {
+      "key": "data_producao",
+      "configured": "date",
+      "inferred": null,
+      "class": "KEEP",
+      "note": "PT key without _date/_at suffix"
+    },
+    {
+      "key": "sharePct",
+      "class": "N/A_NOT_IN_CATALOG",
+      "note": "covered only via meta.fieldFormats on refugos rankings — not a catalog redundancy"
+    }
+  ],
+  "KEEP_catalog_required_keys": [
+    "active_pdi_count",
+    "average_roi",
+    "average_unit_value",
+    "cpv_average_monthly",
+    "data_producao",
+    "days_diff",
+    "discounts",
+    "financial_titles",
+    "icms_rate",
+    "items_without_tes",
+    "late_ops",
+    "material_to_pa_cost_ratio",
+    "monthly_average",
+    "on_time_ops",
+    "other_values",
+    "percent_dentro_prazo",
+    "returned_materials",
+    "returns",
+    "total_items",
+    "total_locations",
+    "total_new_clients",
+    "total_ops_finished",
+    "total_products",
+    "total_records",
+    "valid_from"
+  ],
+  "cleanup": {
+    "removed_keys": [],
+    "reason": "Zero OPENAPI_COVERED proven; INFERENCE_REDUNDANT ≠ OPENAPI_COVERED under plan E6.S2"
+  },
+  "exit_criteria_future_openapi_cutover": [
+    "Response schemas (or universal meta.fieldFormats) publish format for key K matching catalog",
+    "Harness proves resolve_field_format(K, schema_formats=…) == catalog without JSON entry",
+    "Sibling + negative keys still format correctly with LLM-off",
+    "Then remove only proven OPENAPI_COVERED keys from column_labels.fieldFormats"
+  ]
+}
