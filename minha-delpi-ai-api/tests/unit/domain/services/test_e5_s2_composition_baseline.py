@@ -102,7 +102,7 @@ _CORPUS: tuple[CompositionBaselineCase, ...] = (
         message="painel de indicadores da engenharia",
         expected_tool_count_min=0,
         expected_tool_count_max=0,
-        notes="route_ids_for_department compose≥3; .plan DEAD_RUNTIME",
+        notes="goals_for_department compose≥3; LIVE via E5.S5 (freeze tool_count=0 histórico)",
     ),
     CompositionBaselineCase(
         family="multi_domain_request",
@@ -204,14 +204,14 @@ def test_e5_s2_department_meta_kpi_compose_routes():
         ChatDepartmentMetaCompositionPlanningService.composition_mode(case.message)
         == "compose"
     )
-    route_ids = ChatDepartmentMetaCompositionPlanningService.route_ids_for_department(
+    goals = ChatDepartmentMetaCompositionPlanningService.goals_for_department(
         "engineering",
         mode="compose",
     )
-    assert route_ids[0] == "dashboardDepartmentIndicators"
-    assert "dashboardDepartmentIdd" in route_ids
-    assert len(route_ids) >= 3
-    assert case.expected_tool_count_min == 0  # .plan DEAD_RUNTIME
+    assert goals[0].goal_id == "dept_meta_indicators"
+    assert len(goals) >= 3
+    # Freeze histórico: family ainda documenta tool_count=0 no corpus; cutover LIVE = E5.S5.
+    assert case.expected_tool_count_min == 0
 
 
 def test_e5_s2_multi_domain_hybrid_signals():
@@ -277,16 +277,15 @@ def test_e5_s2_grounded_enrich_live_after_structure():
 
 
 def test_e5_s2_dead_runtime_plan_methods_not_wired_in_app():
+    """Product enrichment .plan permanece DEAD; department cutover = E5.S5 (LIVE)."""
     app_root = Path(__file__).resolve().parents[4] / "app"
     forbidden = (
         "ChatProductEnrichmentCompositionPlanningService.plan(",
-        "ChatDepartmentMetaCompositionPlanningService.plan(",
     )
     hits: list[str] = []
     for path in app_root.rglob("*.py"):
         if path.name in {
             "chat_product_enrichment_composition_planning_service.py",
-            "chat_department_meta_composition_planning_service.py",
         }:
             continue
         text = path.read_text(encoding="utf-8")
@@ -294,6 +293,16 @@ def test_e5_s2_dead_runtime_plan_methods_not_wired_in_app():
             if needle in text:
                 hits.append(f"{path.relative_to(app_root)}:{needle}")
     assert hits == []
+
+    # E5.S5 wired department goal-driven planning into orchestration.
+    orchestration = (
+        app_root
+        / "application"
+        / "services"
+        / "chat_external_action_orchestration_service.py"
+    ).read_text(encoding="utf-8")
+    assert "plan_goal_driven" in orchestration
+    assert "_enrich_openapi_plan_with_department_meta" in orchestration
 
 
 def test_e5_s2_budget_caps_deterministic_policy():

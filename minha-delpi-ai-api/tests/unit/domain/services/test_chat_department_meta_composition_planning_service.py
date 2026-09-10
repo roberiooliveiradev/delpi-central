@@ -6,23 +6,37 @@ from tests.fixtures.chat_intelligence_regression_cases import (
 )
 
 
-class FakeRegistrySelectionService:
-    def select_registry_route_id(
-        self,
-        route_id,
-        message,
-        *,
-        allowed_action_ids=None,
-        previous_messages=None,
-    ):
-        return {
-            "name": "execute_external_action",
-            "arguments": {
-                "actionId": f"action-{route_id}",
-                "parameters": {"department_id": "engineering"},
-                "routeId": route_id,
-            },
-        }
+def _catalog() -> dict[str, dict]:
+    return {
+        "ext.dashboard.indicators": {
+            "actionId": "ext.dashboard.indicators",
+            "whenToUse": "Use for «metas», «realizado» or «department indicators».",
+            "summary": "Department metas e realizado indicators",
+            "path": "/dashboard/department-indicators",
+            "method": "GET",
+        },
+        "ext.dashboard.idd": {
+            "actionId": "ext.dashboard.idd",
+            "whenToUse": "Use for «idd» or «indicadores estrategicos».",
+            "summary": "Department IDD score",
+            "path": "/dashboard/department-idd",
+            "method": "GET",
+        },
+        "ext.kpi.engineering_lmp": {
+            "actionId": "ext.kpi.engineering_lmp",
+            "whenToUse": "Use for engineering «lmp» KPI.",
+            "summary": "Engineering LMP",
+            "path": "/kpi/engineering/lmp",
+            "method": "GET",
+        },
+        "ext.kpi.commercial_rol": {
+            "actionId": "ext.kpi.commercial_rol",
+            "whenToUse": "Use for commercial «rol» KPI.",
+            "summary": "Commercial ROL",
+            "path": "/kpi/commercial/rol",
+            "method": "GET",
+        },
+    }
 
 
 def test_looks_like_department_meta_composition():
@@ -43,26 +57,24 @@ def test_resolve_department_id_engineering_typo():
     )
 
 
-def test_route_ids_engineering_compose():
+def test_goals_engineering_compose_are_semantic():
+    goals = ChatDepartmentMetaCompositionPlanningService.goals_for_department(
+        "engineering",
+        mode="compose",
+    )
+    assert goals[0].goal_id == "dept_meta_indicators"
+    assert any(goal.goal_id == "dept_idd" for goal in goals)
+    assert any("lmp" in goal.query_hints for goal in goals)
+    assert ChatDepartmentMetaCompositionPlanningService.route_maps_deprecated() is True
+
+
+def test_route_ids_legacy_observer_still_readable():
     route_ids = ChatDepartmentMetaCompositionPlanningService.route_ids_for_department(
         "engineering",
         mode="compose",
     )
-
     assert route_ids[0] == "dashboardDepartmentIndicators"
     assert "dashboardDepartmentIdd" in route_ids
-    assert "engineeringLmpDashboardSummary" in route_ids
-    assert "engineeringTransformaSummary" in route_ids
-    assert len(route_ids) >= 3
-
-
-def test_route_ids_engineering_primary():
-    route_ids = ChatDepartmentMetaCompositionPlanningService.route_ids_for_department(
-        "engineering",
-        mode="primary",
-    )
-
-    assert route_ids == ["dashboardDepartmentIndicators"]
 
 
 def test_composition_mode_primary_vs_compose():
@@ -78,76 +90,46 @@ def test_composition_mode_primary_vs_compose():
         )
         == "compose"
     )
-    assert (
-        ChatDepartmentMetaCompositionPlanningService.composition_mode(
-            "metas e realizado do comercial"
-        )
-        == "compose"
-    )
 
 
-def test_plan_engineering_primary_returns_single_action():
-    planned = ChatDepartmentMetaCompositionPlanningService.plan(
-        FakeRegistrySelectionService(),
+def test_plan_goal_driven_primary_returns_indicators():
+    planned = ChatDepartmentMetaCompositionPlanningService.plan_goal_driven(
         message="qual a meta para engenharia desse mês?",
-        allowed_action_ids=["a", "b", "c"],
+        allowed_action_ids=list(_catalog()),
+        actions_by_id=_catalog(),
         max_calls=5,
     )
-
     assert len(planned) == 1
-    assert planned[0]["arguments"]["actionId"] == "action-dashboardDepartmentIndicators"
+    assert planned[0]["arguments"]["actionId"] == "ext.dashboard.indicators"
+    assert planned[0]["arguments"]["parameters"]["department_id"] == "engineering"
+    assert planned[0]["metadata"]["departmentMetaGoalDriven"] is True
 
 
-def test_plan_engineering_compose_returns_multiple_actions():
-    planned = ChatDepartmentMetaCompositionPlanningService.plan(
-        FakeRegistrySelectionService(),
+def test_plan_goal_driven_compose_returns_multiple():
+    planned = ChatDepartmentMetaCompositionPlanningService.plan_goal_driven(
         message="painel de indicadores da engenharia desse mês",
-        allowed_action_ids=["a", "b", "c"],
+        allowed_action_ids=list(_catalog()),
+        actions_by_id=_catalog(),
         max_calls=5,
     )
-
     assert len(planned) >= 2
     action_ids = [item["arguments"]["actionId"] for item in planned]
-
-    assert action_ids[0] == "action-dashboardDepartmentIndicators"
-    assert "action-dashboardDepartmentIdd" in action_ids
+    assert "ext.dashboard.indicators" in action_ids
+    assert "ext.dashboard.idd" in action_ids
 
 
 def test_plan_unknown_department_returns_empty():
-    planned = ChatDepartmentMetaCompositionPlanningService.plan(
-        FakeRegistrySelectionService(),
+    planned = ChatDepartmentMetaCompositionPlanningService.plan_goal_driven(
         message="qual a meta para marketing desse mês?",
-        allowed_action_ids=["a"],
+        allowed_action_ids=list(_catalog()),
+        actions_by_id=_catalog(),
         max_calls=5,
     )
-
     assert planned == []
 
 
-def test_route_ids_commercial_compose():
-    route_ids = ChatDepartmentMetaCompositionPlanningService.route_ids_for_department(
-        "commercial",
-        mode="compose",
-    )
-
-    assert route_ids[0] == "dashboardDepartmentIndicators"
-    assert "dashboardDepartmentIdd" in route_ids
-    assert "autoTierCHeadOfficeRolTargetPct" in route_ids
-
-
-def test_plan_commercial_primary_returns_single_action():
-    planned = ChatDepartmentMetaCompositionPlanningService.plan(
-        FakeRegistrySelectionService(),
-        message="qual a meta para comercial desse mês?",
-        allowed_action_ids=["a", "b", "c"],
-        max_calls=5,
-    )
-
-    assert len(planned) == 1
-    assert planned[0]["arguments"]["actionId"] == "action-dashboardDepartmentIndicators"
-
-
-def test_department_meta_composition_regression_cases():
+def test_department_meta_composition_regression_cases_goal_driven():
+    catalog = _catalog()
     for case in DEPARTMENT_META_COMPOSITION_CASES:
         department_id = ChatDepartmentMetaCompositionPlanningService.resolve_department_id(
             case["message"]
@@ -157,16 +139,11 @@ def test_department_meta_composition_regression_cases():
             ChatDepartmentMetaCompositionPlanningService.composition_mode(case["message"])
             == case["expected_mode"]
         )
-
-        planned = ChatDepartmentMetaCompositionPlanningService.plan(
-            FakeRegistrySelectionService(),
+        planned = ChatDepartmentMetaCompositionPlanningService.plan_goal_driven(
             message=case["message"],
-            allowed_action_ids=["a", "b", "c"],
+            allowed_action_ids=list(catalog),
+            actions_by_id=catalog,
             max_calls=5,
         )
-
         assert len(planned) >= case["expected_min_planned"]
-        assert (
-            planned[0]["arguments"]["actionId"]
-            == f"action-{case['expected_primary_route_id']}"
-        )
+        assert planned[0]["metadata"]["goalId"] == "dept_meta_indicators"

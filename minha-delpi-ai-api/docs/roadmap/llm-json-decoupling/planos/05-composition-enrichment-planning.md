@@ -1,8 +1,8 @@
 # Plano 05 — Composition/enrichment -> planejamento orientado por goals e budget
 
 **Prioridade:** P1  
-**Status execução:** Onda E · S1–S4 **ATENDIDO** · próxima **E5.S5**  
-**Evidência:** [`../evidence/e5-s1-composition-inventory.md`](../evidence/e5-s1-composition-inventory.md) · [`../evidence/e5-s2-composition-baseline.md`](../evidence/e5-s2-composition-baseline.md) · [`../evidence/e5-s3-goal-coverage-contract.md`](../evidence/e5-s3-goal-coverage-contract.md) · [`../evidence/e5-s4-planner-driven-enrichment.md`](../evidence/e5-s4-planner-driven-enrichment.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda E · S1–S5 **ATENDIDO** · próxima **E5.S6**  
+**Evidência:** [`../evidence/e5-s1-composition-inventory.md`](../evidence/e5-s1-composition-inventory.md) · [`../evidence/e5-s2-composition-baseline.md`](../evidence/e5-s2-composition-baseline.md) · [`../evidence/e5-s3-goal-coverage-contract.md`](../evidence/e5-s3-goal-coverage-contract.md) · [`../evidence/e5-s4-planner-driven-enrichment.md`](../evidence/e5-s4-planner-driven-enrichment.md) · [`../evidence/e5-s5-department-composition-cutover.md`](../evidence/e5-s5-department-composition-cutover.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** consultas compostas e enriquecimentos devem ser escolhidos pelo objetivo real do usuário, pelos dados já disponíveis e pelas actions autorizadas, não por listas fixas de `routeIds` e mapas `scope -> route`.
 
 ## CURRENT
@@ -82,11 +82,13 @@ Medir tool count, task success, redundancy, latency e partial-failure behavior.
 
 **Evidência:** [`../evidence/e5-s4-planner-driven-enrichment.md`](../evidence/e5-s4-planner-driven-enrichment.md) · harness `test_e5_s4_planner_driven_enrichment.py`
 
-### E5.S5 — Department composition cutover
+### E5.S5 — Department composition cutover — **ATENDIDO**
 
 **Fazer:** substituir `primaryRouteId/composeRouteIds` por goals semânticos + retrieval. Taxonomia de departamento pode permanecer como contexto de negócio quando canônica.
 
 **Teste:** financial/commercial/quality/production + provider/path rename.
+
+**Evidência:** [`../evidence/e5-s5-department-composition-cutover.md`](../evidence/e5-s5-department-composition-cutover.md) · harness `test_e5_s5_department_composition_cutover.py`
 
 ### E5.S6 — Entity enrichment cutover
 

@@ -197,8 +197,28 @@ class ChatExternalActionOrchestrationService:
                 memory_snapshot=memory_snapshot,
                 max_calls=max_calls or 12,
             )
+            openapi_planned = cls._enrich_openapi_plan_with_department_meta(
+                selection_service,
+                message=selection_message,
+                planned=openapi_planned,
+                allowed_action_ids=allowed_action_ids,
+                max_calls=max_calls or 12,
+            )
             return _return_planned(
                 openapi_planned,
+                memory_snapshot=memory_snapshot,
+            )
+
+        department_fallback = cls._enrich_openapi_plan_with_department_meta(
+            selection_service,
+            message=selection_message,
+            planned=[],
+            allowed_action_ids=allowed_action_ids,
+            max_calls=max_calls or 12,
+        )
+        if department_fallback:
+            return _return_planned(
+                department_fallback,
                 memory_snapshot=memory_snapshot,
             )
 
@@ -343,6 +363,100 @@ class ChatExternalActionOrchestrationService:
             existing.add(selected_id)
 
         return merged[:merge_cap]
+
+    @classmethod
+    def _enrich_openapi_plan_with_department_meta(
+        cls,
+        selection_service,
+        *,
+        message: str,
+        planned: list[dict],
+        allowed_action_ids: list[str] | None,
+        max_calls: int,
+    ) -> list[dict]:
+        """E5.S5 — composição departamental por goals + Action Catalog (sem routeId)."""
+        from app.domain.services.chat_department_meta_composition_planning_service import (
+            ChatDepartmentMetaCompositionPlanningService,
+        )
+
+        if not ChatDepartmentMetaCompositionPlanningService.cutover_enabled():
+            return list(planned or [])
+        if not ChatDepartmentMetaCompositionPlanningService.looks_like_department_meta_composition(
+            message
+        ):
+            return list(planned or [])
+
+        catalog = cls._actions_by_id_from_selection(
+            selection_service,
+            allowed_action_ids=allowed_action_ids,
+        )
+        if not catalog:
+            return list(planned or [])
+
+        dept_planned = ChatDepartmentMetaCompositionPlanningService.plan_goal_driven(
+            message=message,
+            allowed_action_ids=allowed_action_ids,
+            actions_by_id=catalog,
+            max_calls=max_calls,
+        )
+        if not dept_planned:
+            return list(planned or [])
+
+        items = [item for item in (planned or []) if isinstance(item, dict)]
+        mode = ChatDepartmentMetaCompositionPlanningService.composition_mode(message)
+        limit = max(1, min(int(max_calls), 12))
+
+        if not items or cls._planned_is_clarify_or_unknown_only(items):
+            return dept_planned[:limit]
+
+        if mode != "compose":
+            return items
+
+        existing = {
+            str((item.get("arguments") or {}).get("actionId") or "").strip()
+            for item in items
+            if isinstance(item, dict)
+        }
+        merged = list(items)
+        for item in dept_planned:
+            action_id = str((item.get("arguments") or {}).get("actionId") or "").strip()
+            if not action_id or action_id in existing:
+                continue
+            merged.append(item)
+            existing.add(action_id)
+            if len(merged) >= limit:
+                break
+        return merged
+
+    @classmethod
+    def _actions_by_id_from_selection(
+        cls,
+        selection_service,
+        *,
+        allowed_action_ids: list[str] | None,
+    ) -> dict[str, dict]:
+        allowed = {
+            str(item).strip()
+            for item in (allowed_action_ids or [])
+            if str(item).strip()
+        }
+        catalog: dict[str, dict] = {}
+        repository = getattr(selection_service, "repository", None)
+        list_actions = getattr(repository, "list_actions", None) if repository else None
+        if not callable(list_actions):
+            return catalog
+        try:
+            rows = list_actions() or []
+        except Exception:
+            return catalog
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            action_id = str(row.get("actionId") or row.get("action_id") or "").strip()
+            if not action_id or (allowed and action_id not in allowed):
+                continue
+            catalog[action_id] = dict(row)
+        return catalog
 
     @classmethod
     def _enrich_openapi_plan_with_product_scopes(

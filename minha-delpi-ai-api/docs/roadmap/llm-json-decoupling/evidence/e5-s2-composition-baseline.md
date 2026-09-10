@@ -23,7 +23,7 @@ SUFFICIENT_NO_AUTO_FOLLOWUP = PASS
 | product_360_overview | me fale do produto 10080001 | **0** (DEAD `.plan`) | `looks_like` + `composeRouteIds` no JSON; orquestração não chama `.plan` |
 | structure_plus_stock | estrutura e estoque do 10080001 | **2** LIVE | `plan_product_scope_fetches` |
 | factory_status | status … na fabrica | **1** (single playbook) | predicate + readiness; multi-scope vazio |
-| department_meta_kpi | painel indicadores engenharia | **0** (DEAD `.plan`) | `route_ids_for_department` compose ≥3 no content |
+| department_meta_kpi | painel indicadores engenharia | **0** (freeze S2) / **LIVE S5** | goals+retrieval wired; maps deprecated |
 | multi_domain_request | estoque + meta engenharia | **1** (só produto) | sinais híbridos sem planner unificado |
 | result_already_sufficient | estoque do 10080001 | **1** + sufficiency | sem overview; critic → `sufficient` |
 

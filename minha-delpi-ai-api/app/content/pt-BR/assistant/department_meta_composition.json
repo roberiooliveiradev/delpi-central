@@ -1,5 +1,7 @@
 {
-  "version": "2026.07.1",
+  "version": "2026.09.1",
+  "cutoverEnabled": true,
+  "routeMapsDeprecated": true,
   "triggerTerms": [
     "meta para",
     "meta da",
@@ -27,6 +29,53 @@
     ]
   },
   "defaultMode": "primary",
+  "semanticGoals": {
+    "primary": [
+      {
+        "goalId": "dept_meta_indicators",
+        "intentTemplate": "metas e realizado do departamento {department_id}",
+        "queryHints": [
+          "metas",
+          "realizado",
+          "indicadores",
+          "department indicators",
+          "metas e realizado"
+        ]
+      }
+    ],
+    "compose": [
+      {
+        "goalId": "dept_meta_indicators",
+        "intentTemplate": "metas e realizado do departamento {department_id}",
+        "queryHints": [
+          "metas",
+          "realizado",
+          "indicadores",
+          "department indicators",
+          "metas e realizado"
+        ]
+      },
+      {
+        "goalId": "dept_idd",
+        "intentTemplate": "nota IDD estratégica do departamento {department_id}",
+        "queryHints": ["idd", "indicadores estrategicos", "estratégicos"]
+      },
+      {
+        "goalId": "dept_related_kpi",
+        "intentTemplate": "indicador operacional relacionado do departamento {department_id}",
+        "queryHints": ["kpi"],
+        "departmentQueryHints": {
+          "engineering": ["lmp", "transforma"],
+          "commercial": ["rol"],
+          "financial": ["ebitda"],
+          "production": ["oee"],
+          "quality": ["ppm"],
+          "hr": ["headcount", "rh", "pessoas"],
+          "supplies": ["cpv"]
+        }
+      }
+    ]
+  },
   "byDepartment": {
     "engineering": {
       "primaryRouteId": "dashboardDepartmentIndicators",
@@ -82,6 +131,7 @@
   "selectionReasons": {
     "primary": "Consulta o painel de metas e realizado do departamento.",
     "compose": "Complementa a meta departamental com indicador relacionado.",
-    "iddScore": "Consulta a nota IDD estratégica do departamento."
+    "iddScore": "Consulta a nota IDD estratégica do departamento.",
+    "goalDriven": "Action escolhida por goal semântico + Action Catalog (sem routeId fixo)."
   }
 }
