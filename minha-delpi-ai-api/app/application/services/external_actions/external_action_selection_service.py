@@ -282,12 +282,94 @@ class ExternalActionSelectionService:
             return None
 
         # Prefer single matched action; otherwise let OpenAPI planner disambiguate.
-        return self._select_via_openapi_first(
+        selected = self._select_via_openapi_first(
             message,
             allowed_action_ids=matched_ids,
             previous_messages=previous_messages,
             memory_snapshot=None,
         )
+        if not isinstance(selected, dict):
+            return None
+        shadow = self._build_registry_selection_shadow(
+            message=message,
+            route_id=str(route_id or "").strip(),
+            legacy_action_id=str(selected.get("actionId") or "").strip(),
+            marker_matched_ids=list(matched_ids),
+            full_allowed_ids=list(allowed_action_ids),
+            catalog_actions=list(list_actions()),
+        )
+        if shadow is not None:
+            metadata = dict(selected.get("metadata") or {})
+            metadata["registrySelectionShadow"] = shadow
+            selected = {**selected, "metadata": metadata}
+        return selected
+
+    def _build_registry_selection_shadow(
+        self,
+        *,
+        message: str,
+        route_id: str,
+        legacy_action_id: str,
+        marker_matched_ids: list[str],
+        full_allowed_ids: list[str],
+        catalog_actions: list[dict],
+    ) -> dict | None:
+        """E1.S4 — compara seleção via markers vs retrieval lexical no allowlist completo.
+
+        Não altera a action escolhida. Lexical-only (sem semantic_ranker) para não
+        duplicar custo de embedding/LLM.
+        """
+        from app.application.services.retrieve_action_candidates_service import (
+            RetrieveActionCandidatesService,
+        )
+        from app.domain.services.openapi_tool_routing_content_service import (
+            OpenApiToolRoutingContentService,
+        )
+
+        if not OpenApiToolRoutingContentService.bool_setting(
+            "registrySelectionShadow",
+            "enabled",
+            default=False,
+        ):
+            return None
+
+        top_k = OpenApiToolRoutingContentService.int_setting(
+            "registrySelectionShadow",
+            "topK",
+            default=5,
+        )
+        allowed = [str(item).strip() for item in full_allowed_ids if str(item).strip()]
+        if not allowed:
+            return None
+
+        try:
+            candidates = RetrieveActionCandidatesService(
+                self.repository,
+                semantic_ranker=None,
+            ).retrieve(
+                message,
+                allowed_action_ids=allowed,
+                catalog_actions=catalog_actions,
+                top_k=max(1, top_k),
+            )
+        except Exception:
+            return {
+                "routeId": route_id,
+                "legacyActionId": legacy_action_id,
+                "markerMatchedIds": list(marker_matched_ids),
+                "candidateTopIds": [],
+                "agree": False,
+                "error": "retrieve_failed",
+            }
+
+        candidate_ids = [item.action_id for item in candidates]
+        return {
+            "routeId": route_id,
+            "legacyActionId": legacy_action_id,
+            "markerMatchedIds": list(marker_matched_ids),
+            "candidateTopIds": candidate_ids,
+            "agree": bool(legacy_action_id) and legacy_action_id in candidate_ids,
+        }
 
     def _select_product_for_refinement(
         self,

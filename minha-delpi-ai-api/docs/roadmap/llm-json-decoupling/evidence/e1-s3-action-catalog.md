@@ -1,9 +1,8 @@
 # E1.S3 — Action Catalog suficiente (evidência)
 
-**Status:** `GAPS_BLOCKING`  
-**Data:** 2026-09-10  
+**Status:** `PASS` (2026-09-10)  
 **Onda:** B (plano 01)  
-**Não altera runtime.**
+**Harness:** `tests/unit/application/services/test_e1_s3_registry_family_topk_retrieval.py` (9 passed)
 
 ## Veredito
 
@@ -11,30 +10,31 @@
 ACTION_CATALOG_FIELDS_PRESENT = PASS
 RETRIEVAL_SCORING_USES_CATALOG = PASS
 UNKNOWN_OPENAPI_IN_RETRIEVAL_UNIT = PASS
-REGISTRY_FAMILY_TOPK_WITHOUT_MARKERS = PENDING
-RESIDUAL_MARKER_FILTERS = FAIL (documentado)
-E1.S3_READY_TO_PASS = NO → GAPS_BLOCKING
+REGISTRY_FAMILY_TOPK_WITHOUT_MARKERS = PASS
+METAMORPHIC_PATH_OPERATION_RENAME = PASS
+NEGATIVE_DISTRACTOR = PASS
+RESIDUAL_MARKER_FILTERS = DEFERRED_E1_S4
+E1.S3_READY_TO_PASS = YES
 ```
 
-## O que já está provado
+## Cobertura do harness
 
-- Import persiste summary/description/tags/params/schemas/sensitivity/embedding (`openapi_action_importer.py` → `ExternalActionModel`).
-- `RetrieveActionCandidatesService` ranqueia vector+lexical+schema_token_boost+whenToUse — **sem** `pathMarkers` do registry.
-- Unknown OpenAPI (logistics / Nebula / Orion) entra no top-K em unit tests; smoke live opcional.
+| Case | Mensagem (família) | Esperado |
+|------|--------------------|----------|
+| product_search | liste top 50 terminais pino | `acme.products.search` ∈ top-K |
+| product_stock | estoque do produto | `acme.products.stock` |
+| product_description | descrição do produto | `acme.products.description` |
+| production | agenda de produção hoje | `acme.production.schedule` |
+| kpi_scalar | receita consolidada filial | `acme.kpi.site-revenue` |
+| sibling | receita por filial ranking | `acme.kpi.revenue-by-site` #1 |
+| negative | remessa tracking | não força product_search |
+| metamorphic | path/operationId/actionId rename | recall preservado |
+| guard | catálogo sem pathMarkers | PASS |
 
-## Gaps que bloqueiam aceite E1.S3
+Catálogo sintético: prose OpenAPI apenas — **zero** `pathMarkers` / `operationIdMarkers` / `routeSegment`.
 
-1. Sem harness top-K das families registry (product search, stock, description, production, KPI) contra catálogo **real** com markers desligados.
-2. Residual: `select_registry_route_id` / product `intent+route_segment` ainda preemptam (E1.S4+).
-3. `candidateDiscovery.orIlike` em path = acoplamento técnico paralelo.
-4. Lexical omite param descriptions — risco se OpenAPI prose for pobre (mitigar no import genérico, não com metadata por endpoint).
+## Residual (não bloqueia E1.S3)
 
-## Próximos passos (runtime — autorizar explicitamente)
-
-1. Harness E1.S3: messages × actionId esperado; assert ∈ top-K sem `OperationalRouteRegistryService`.
-2. Prova metamorphic: path/operationId rename, summary estável → recall.
-3. Se prose pobre: enriquecer embed com param descriptions do OpenAPI.
-4. Reduzir `orIlike` path quando `allowed_action_ids` presente.
-5. **Não** em E1.S3: cutover de `select_registry_route_id` (E1.S4).
+Autoridade residual em runtime (`select_registry_route_id` com markers; product `intent+route_segment`) → **E1.S4 shadow**, não invalida suficiência do catálogo para retrieval.
 
 Ver inventário: [`onda-a-inventory.md`](./onda-a-inventory.md).

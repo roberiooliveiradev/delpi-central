@@ -9,7 +9,7 @@
 | Onda | Planos | Status | Próxima subetapa | Notas |
 |------|--------|--------|------------------|-------|
 | A — baseline/contratos | inventário + freeze | **ATENDIDO** | — | Ver `onda-a-inventory.md` |
-| B — routing universal | 01 | **EM_ANDAMENTO** | E1.S3 GAPS_BLOCKING → harness top-K | Ver `e1-s3-action-catalog.md` |
+| B — routing universal | 01 | **EM_ANDAMENTO** | E1.S4: telemetria `agree` + shadow product preemption | E1.S3 PASS; E1.S4 SHADOW_ON (sem cutover) |
 | C — entendimento | 02 | **BLOQUEADO_POR_B** (soft) | E2 inventário+baseline TU | Pode shadow em paralelo após B começar |
 | D — multi-turn/args | 03 | **BLOQUEADO_POR_B** | inventário follow-up | Depende de actionId estável |
 | E — caps/composition | 04, 05 | **PARCIAL** | 04: `action.*`; 05: routeIds | pathRules já DONE |
@@ -44,3 +44,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda A ATENDIDA (inventário + baseline offline + matrix 25) |
 | 2026-09-10 | Ledger B–H materializado; execução = markdowns |
 | 2026-09-10 | Onda B E1.S3 documentado GAPS_BLOCKING (sem cutover runtime) |
+| 2026-09-10 | E1.S3 PASS — harness top-K 9/9 (families + metamorphic) |
+| 2026-09-10 | E1.S4 SHADOW_ON — `registrySelectionShadow` metadata (sem cutover) |

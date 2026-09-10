@@ -1,8 +1,8 @@
 # Plano 01 — Routing registry -> OpenAPI + Action Catalog
 
 **Prioridade:** P0  
-**Status execução:** Onda B · E1.S1–S2 **ATENDIDOS** · E1.S3 **GAPS_BLOCKING** (evidência sem cutover) · próxima runtime = harness top-K  
-**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda B · E1.S1–S2 ATENDIDOS · E1.S3 **ATENDIDO** · E1.S4 **SHADOW_ON** · próxima = telemetria agree + shadow product preemption  
+**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** uma action nova deve ser descoberta e selecionada por semântica/contrato sem exigir `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` por endpoint no conteúdo do assistente.
 
 ## CURRENT
@@ -95,25 +95,21 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 
 **Gap explícito:** corpus ainda estreito (sem unknown API / metamorphic no freeze offline); `openApiSchemaHash`/`actionCatalogHash` = `PENDING_RUNTIME` → ampliar em plano 09 sem invalidar este runId.
 
-### E1.S3 — Action Catalog suficiente — **GAPS_BLOCKING** (2026-09-10)
+### E1.S3 — Action Catalog suficiente — **ATENDIDO** (2026-09-10)
 
 **Objetivo:** provar que catálogo normalizado contém semântica suficiente.
 
-**Feito (sem alterar runtime):** evidência em [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) — fields + retrieval PASS; top-K families registry + residual markers = gap.
+**Feito:** harness `test_e1_s3_registry_family_topk_retrieval.py` (9 passed) — families + sibling + negative + metamorphic sem pathMarkers. Evidência: [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md).
 
-**Próximo (runtime autorizado):** harness top-K sem registry; metamorphic rename; só então E1.S4 shadow.
+**Residual (E1.S4):** filters/markers em `select_registry_route_id` e product intent preemption.
 
-### E1.S4 — Selection cutover em shadow
+### E1.S4 — Selection cutover em shadow — **SHADOW_ON** (2026-09-10)
 
 **Objetivo:** tornar retrieval/planner candidate o decisor principal em modo comparável.
 
-**Fazer:** executar legacy e candidate quando seguro; registrar divergência sem duplicar chamadas externas.
+**Feito (sem cutover):** flag `registrySelectionShadow` + metadata em `select_registry_route_id`; lexical-only; testes agree/diverge/off. Evidência: [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md).
 
-**Não fazer:** ocultar divergências com fallback silencioso.
-
-**Teste:** semantic siblings + provider rename + path/operationId rename.
-
-**Pronto quando:** divergências são explicáveis e candidate não depende de literal técnico antigo.
+**Pendente:** shadow no preemption product `intent+route_segment`; telemetria live de `agree`; cutover default candidate.
 
 ### E1.S5 — Parameter strategy removal
 

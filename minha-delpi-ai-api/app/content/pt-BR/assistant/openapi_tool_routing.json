@@ -6,6 +6,10 @@
     "minCombinedScore": 0.08,
     "candidatePoolLimit": 120
   },
+  "registrySelectionShadow": {
+    "enabled": true,
+    "topK": 5
+  },
   "whenNotToUse": {
     "penalty": 3.0,
     "positiveReward": 3.0,

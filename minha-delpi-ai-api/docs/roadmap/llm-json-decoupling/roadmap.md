@@ -125,7 +125,7 @@ Registry/heurística antiga pode existir temporariamente como shadow/fallback ob
 
 ### Onda B — routing universal — **EM_ANDAMENTO**
 
-Executar plano 01. E1.S3 = `GAPS_BLOCKING` ([`evidence/e1-s3-action-catalog.md`](./evidence/e1-s3-action-catalog.md)). Nenhuma remoção final antes de `unknown external API` + metamorphic rename passarem.
+Plano 01: E1.S3 **ATENDIDO**; E1.S4 **SHADOW_ON** ([`evidence/e1-s4-registry-selection-shadow.md`](./evidence/e1-s4-registry-selection-shadow.md)). Nenhuma remoção final antes de `unknown external API` + metamorphic rename + divergências shadow explicáveis.
 
 ### Onda C — entendimento semântico — **PRONTO após início B**
 

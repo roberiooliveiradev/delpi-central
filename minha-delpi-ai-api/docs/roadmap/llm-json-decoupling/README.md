@@ -43,7 +43,8 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`planos/09-evals-rollout-cleanup.md`](./planos/09-evals-rollout-cleanup.md) | Baseline, shadow/canary, R1-R11, cleanup. |
 | [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) | Estado das ondas A–H e próxima subetapa. |
 | [`evidence/onda-a-inventory.md`](./evidence/onda-a-inventory.md) | Inventário Onda A (consumers + classificação). |
-| [`evidence/e1-s3-action-catalog.md`](./evidence/e1-s3-action-catalog.md) | Prova E1.S3 (Onda B) — GAPS_BLOCKING. |
+| [`evidence/e1-s3-action-catalog.md`](./evidence/e1-s3-action-catalog.md) | Prova E1.S3 (Onda B) — **PASS**. |
+| [`evidence/e1-s4-registry-selection-shadow.md`](./evidence/e1-s4-registry-selection-shadow.md) | Shadow E1.S4 — SHADOW_ON, sem cutover. |
 
 ## Drift HEAD (2026-09-10) — resumido
 
