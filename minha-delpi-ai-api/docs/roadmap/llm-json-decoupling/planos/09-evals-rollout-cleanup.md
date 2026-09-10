@@ -1,8 +1,8 @@
 # Plano 09 — Evals, rollout, cutover e cleanup final
 
 **Prioridade:** transversal  
-**Status execução:** Onda H · E9.S1 **ATENDIDO** · E9.S2 **ATENDIDO_PARCIAL** (offline) · próxima E9.S3  
-**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda H · E9.S1 **ATENDIDO** · E9.S2 **ATENDIDO_PARCIAL** · E9.S3 **ATENDIDO** (offline) · próxima E9.S4  
+**Evidência:** [`../evidence/e9-s1-corpus-expanded.md`](../evidence/e9-s1-corpus-expanded.md) · [`../evidence/e9-s2-baseline-offline.md`](../evidence/e9-s2-baseline-offline.md) · [`../evidence/e9-s3-candidate-plans-offline.md`](../evidence/e9-s3-candidate-plans-offline.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** cada migração de catálogo/heurística para OpenAPI/LLM deve provar melhora generalizável, preservar segurança e só então remover legado.
 
 ## Fonte de verdade
@@ -67,11 +67,11 @@ Cobrir no mínimo (checklist do plano — harness indexado; execução plena pro
 19. persist/reload/F5;
 20. partial failure.
 
-### E9.S3 — Candidate evidence por plano
+### E9.S3 — Candidate evidence por plano — **ATENDIDO** (2026-09-10, offline)
 
-**Fazer:** cada plano 01-08 publica candidate run no mesmo dataset/config; registrar regressions e métricas before/after.
+**Feito:** mapa `e9_s3_plan_candidate_map.json` + runner offline; 8/8 planos `NO_REGRESSION_OFFLINE` no mesmo `datasetHash`; `globalPass=false` com dims deferred INCONCLUSIVE.
 
-**Não fazer:** marcar PASS por porcentagem global se dimensão obrigatória estiver FAIL/INCONCLUSIVE.
+**Não fazer:** marcar PASS global com dimensão obrigatória FAIL/INCONCLUSIVE — **respeitado**.
 
 ### E9.S4 — Shadow divergence telemetry
 

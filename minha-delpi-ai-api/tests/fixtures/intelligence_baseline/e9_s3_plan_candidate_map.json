@@ -1,0 +1,111 @@
+{
+  "datasetVersion": "intelligence_baseline/r1_r11_corpus_v1",
+  "datasetHash": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8",
+  "baselineRunId": "e9-s2-baseline-offline-v1",
+  "notes": [
+    "E9.S3 — candidate offline por plano 01–08 no mesmo dataset do E9.S1/S2.",
+    "Dimensões live LLM / catalog runtime = INCONCLUSIVE neste modo (não PASS)."
+  ],
+  "plans": [
+    {
+      "planId": "01",
+      "name": "routing-registry-openapi",
+      "wave": "B",
+      "harnessRefs": [
+        "tests/unit/application/services/test_e1_s3_registry_family_topk_retrieval.py",
+        "tests/unit/application/services/test_e1_s6b_selection_cutover.py"
+      ],
+      "requiredDimensions": ["R1", "R2", "R4"],
+      "deferredDimensions": ["R7", "R8"]
+    },
+    {
+      "planId": "02",
+      "name": "semantic-understanding-intents",
+      "wave": "C",
+      "harnessRefs": [
+        "tests/unit/domain/services/test_e2_s2_understanding_baseline.py",
+        "tests/unit/domain/services/test_e2_s3_turn_understanding_contract.py"
+      ],
+      "requiredDimensions": ["R4"],
+      "deferredDimensions": ["R8"]
+    },
+    {
+      "planId": "03",
+      "name": "follow-up-refinement-argument-binding",
+      "wave": "D",
+      "harnessRefs": [
+        "tests/unit/domain/services/test_e3_s2_follow_up_baseline.py",
+        "tests/unit/domain/services/test_e3_s3_turn_refinement_contract.py",
+        "tests/unit/domain/services/test_e3_s5_schema_driven_group_by.py",
+        "tests/unit/domain/services/test_e3_s7_follow_up_routing_cutover.py",
+        "tests/unit/domain/services/test_e3_s8_persist_reload_continuity.py"
+      ],
+      "requiredDimensions": ["R5", "R6"],
+      "deferredDimensions": ["R8"]
+    },
+    {
+      "planId": "04",
+      "name": "capabilities-action-catalog",
+      "wave": "E",
+      "harnessRefs": [
+        "tests/unit/domain/services/test_e4_s2_capability_discovery_baseline.py",
+        "tests/unit/domain/services/test_e4_s3_ux_capability_contract.py"
+      ],
+      "requiredDimensions": ["R1", "R3"],
+      "deferredDimensions": ["R7"]
+    },
+    {
+      "planId": "05",
+      "name": "composition-enrichment-planning",
+      "wave": "E",
+      "harnessRefs": [
+        "tests/unit/domain/services/test_e5_s2_composition_baseline.py",
+        "tests/unit/domain/services/test_e5_s3_goal_coverage_contract.py",
+        "tests/unit/domain/services/test_e5_s4_planner_driven_enrichment.py"
+      ],
+      "requiredDimensions": ["R1", "R7"],
+      "deferredDimensions": ["R8"]
+    },
+    {
+      "planId": "06",
+      "name": "recommendations-composer-contextual",
+      "wave": "F",
+      "harnessRefs": [
+        "tests/unit/domain/services/test_e6_s2_recommendation_grounding_contract.py",
+        "tests/unit/domain/services/test_e6_s3_contextual_recommendation_producer.py",
+        "tests/unit/domain/services/test_e6_s4_recommendation_queries_fallback.py",
+        "tests/unit/domain/services/test_e6_s5_composer_contextual.py"
+      ],
+      "requiredDimensions": ["R4"],
+      "deferredDimensions": ["R8"]
+    },
+    {
+      "planId": "07",
+      "name": "presentation-schema-first-residuals",
+      "wave": "G",
+      "harnessRefs": [
+        "tests/unit/domain/services/test_e7_s2_presentation_baseline.py",
+        "tests/unit/domain/services/test_e7_s3_shape_defaults_primary_path.py",
+        "tests/unit/domain/services/test_e7_s4_path_entity_cleanup.py",
+        "tests/unit/domain/services/test_e7_s5_labels_formats_schema_first.py",
+        "tests/unit/domain/services/test_e7_s6_titles_framing_stable.py"
+      ],
+      "requiredDimensions": ["R8", "R9"],
+      "deferredDimensions": ["R7"]
+    },
+    {
+      "planId": "08",
+      "name": "skills-content-residual-catalogs",
+      "wave": "G",
+      "harnessRefs": [
+        "tests/unit/domain/services/test_e8_s1_skills_help_residual_inventory.py",
+        "tests/unit/domain/services/test_e8_s2_skill_catalog_cleanup.py",
+        "tests/unit/application/services/test_e8_s3_help_capabilities_action_id_match.py",
+        "tests/unit/domain/services/test_e8_s4_ear_mixed_bundle_copy_split.py",
+        "tests/unit/scripts/test_e8_s5_audit_assistant_technical_duplication.py"
+      ],
+      "requiredDimensions": ["R11"],
+      "deferredDimensions": ["R8"]
+    }
+  ]
+}

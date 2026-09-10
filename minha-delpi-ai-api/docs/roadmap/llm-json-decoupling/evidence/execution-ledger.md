@@ -15,7 +15,7 @@
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
 | G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
-| H — cutover/cleanup | 09 | **EM_ANDAMENTO** | E9.S3 | E9.S1 OK; E9.S2 offline 99 passed |
+| H — cutover/cleanup | 09 | **EM_ANDAMENTO** | E9.S4 | E9.S1–S3 OK (S2/S3 offline); shadow telemetry |
 
 ## Protocolo por subetapa
 
@@ -131,3 +131,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S2 (baseline R1–R11) |
 | 2026-09-10 | E9.S2 **ATENDIDO_PARCIAL** — baseline offline 16 módulos / 99 passed no corpus v1 |
 | 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S3 (candidate por plano) |
+| 2026-09-10 | E9.S3 **ATENDIDO** — candidate offline planos 01–08; globalPass=false (dims INCONCLUSIVE) |
+| 2026-09-10 | Onda H **EM_ANDAMENTO** — próxima E9.S4 (shadow divergence) |
