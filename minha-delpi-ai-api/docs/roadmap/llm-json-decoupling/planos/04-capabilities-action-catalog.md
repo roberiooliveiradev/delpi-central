@@ -1,8 +1,8 @@
 # Plano 04 — Capabilities e mini catálogos -> Action Catalog dinâmico
 
 **Prioridade:** P1  
-**Status execução:** Onda E · E4.S1–S2 **ATENDIDO** · R04-02 DONE · próxima = E4.S3 (`uxCapability`)  
-**Evidência:** [`../evidence/e4-s1-capability-inventory.md`](../evidence/e4-s1-capability-inventory.md) · [`../evidence/e4-s2-capability-discovery-baseline.md`](../evidence/e4-s2-capability-discovery-baseline.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda E · E4.S1–S3 **ATENDIDO** · próxima = E4.S4 (dynamic view) → E4.S5 (remover `action.*`)  
+**Evidência:** [`../evidence/e4-s1-capability-inventory.md`](../evidence/e4-s1-capability-inventory.md) · [`../evidence/e4-s2-capability-discovery-baseline.md`](../evidence/e4-s2-capability-discovery-baseline.md) · [`../evidence/e4-s3-ux-capability-contract.md`](../evidence/e4-s3-ux-capability-contract.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** o chat deve explicar e descobrir o que consegue fazer a partir das actions realmente autorizadas na sessão, sem manter um segundo catálogo manual de endpoints/capabilities.
 
 **HEAD revalidado:** pós-`78a25befe` (D1 path→display / capabilities UX)
@@ -59,7 +59,7 @@ Capabilities não-OpenAPI (RAG, web, skills, transforms) continuam em catálogo 
 |---|---|---|
 | R04-01 | Separar action capabilities de RAG/web/skill/transform | ABERTO |
 | R04-02 | Eliminar `pathRules` como fonte de classificação por endpoint | **ATENDIDO** |
-| R04-03 | Gerar classificação/label útil a partir da metadata real do Action Catalog | **PARCIAL** (uxCapability no import; evoluir se necessário) |
+| R04-03 | Gerar classificação/label útil a partir da metadata real do Action Catalog | **ATENDIDO** (`uxCapability` contrato E4.S3) |
 | R04-04 | Respeitar `allowed_action_ids` e bindings na Ajuda e no composer | ABERTO (revalidar) |
 | R04-05 | Nova API externa sem alteração manual de capability registry | ABERTO até remover `action.*` |
 
@@ -81,11 +81,13 @@ Capabilities não-OpenAPI (RAG, web, skills, transforms) continuam em catálogo 
 
 **Teste:** R1/R4/R7/R9/R10/R11. ✅ (freeze unitário das famílias)
 
-### E4.S3 — Semantic metadata materialization
+### E4.S3 — Semantic metadata materialization — **ATENDIDO**
 
 **Fazer:** consolidar `uxCapability` como contrato canônico; avaliar lacunas summary/tags/entity/shape; **não** criar `x-delpi.capabilityGroup` manual por operation.
 
-**Teste:** reindex; unknown provider; metamorphic rename; fallback «Outras consultas».
+**Feito:** contrato + testes path-exclusion/rename; evidência [`../evidence/e4-s3-ux-capability-contract.md`](../evidence/e4-s3-ux-capability-contract.md).
+
+**Teste:** reindex/import; unknown; metamorphic rename; fallback «Outras consultas». ✅
 
 ### E4.S4 — Dynamic capability view
 
