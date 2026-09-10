@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
+from production_pulse_app.config import settings
 from production_pulse_app.domain.errors import ContentCodedError
 from production_pulse_app.domain.services.device_validation_service import validate_branch
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
@@ -19,6 +20,8 @@ from production_pulse_app.infrastructure.persistence.repositories.postgres_firmw
 )
 
 logger = logging.getLogger(__name__)
+
+_OPEN_TARGET_STATUSES = ("pending", "authorized", "downloading", "applying")
 
 
 class FirmwareUpdateJobService:
@@ -189,6 +192,76 @@ class FirmwareUpdateJobService:
 
     def authorize_due_scheduled(self) -> int:
         return self._jobs.authorize_due_scheduled_jobs()
+
+    def reconcile_device_installed_version(self, device_id: UUID, version: str) -> bool:
+        """Close open target when device already reports the target to_version."""
+        installed = str(version or "").strip()
+        if not installed:
+            return False
+        target = self._jobs.find_open_target_for_device(device_id)
+        if target is None:
+            return False
+        if str(target.get("to_version") or "") != installed:
+            return False
+        updated = self._jobs.transition_target(
+            target["id"],
+            next_status="updated",
+            allowed_statuses=_OPEN_TARGET_STATUSES,
+            clear_artifact_token=True,
+            touch_finished=True,
+            progress_percent=100,
+        )
+        if updated is None:
+            return False
+        finished = self._jobs.maybe_finish_job(target["job_id"])
+        logger.info(
+            "ota_target_reconciled target_id=%s job_id=%s device_id=%s version=%s job_status=%s",
+            updated["id"],
+            target["job_id"],
+            device_id,
+            installed,
+            (finished or {}).get("status"),
+        )
+        return True
+
+    def fail_stale_open_targets(self, stale_seconds: int | None = None) -> int:
+        seconds = stale_seconds if stale_seconds is not None else settings.PP_OTA_TARGET_STALE_SECONDS
+        seconds = max(1, int(seconds))
+        stale_before = datetime.now(timezone.utc) - timedelta(seconds=seconds)
+        stale_targets = self._jobs.list_stale_open_targets(stale_before)
+        failed_count = 0
+        for target in stale_targets:
+            updated = self._jobs.transition_target(
+                target["id"],
+                next_status="failed",
+                allowed_statuses=_OPEN_TARGET_STATUSES,
+                error_code="ota_target_stale",
+                clear_artifact_token=True,
+                touch_finished=True,
+            )
+            if updated is None:
+                continue
+            finished = self._jobs.maybe_finish_job(target["job_id"])
+            failed_count += 1
+            logger.info(
+                "ota_target_stale target_id=%s job_id=%s device_id=%s job_status=%s",
+                updated["id"],
+                target["job_id"],
+                target["device_id"],
+                (finished or {}).get("status"),
+            )
+        return failed_count
+
+    def reconcile_matching_installed_versions(self) -> int:
+        targets = self._jobs.list_open_targets_for_reconcile()
+        reconciled = 0
+        for target in targets:
+            version = str(target.get("to_version") or "").strip()
+            if not version:
+                continue
+            if self.reconcile_device_installed_version(target["device_id"], version):
+                reconciled += 1
+        return reconciled
 
     def summary(self, *, branch: str, firmware_key: str | None = None) -> dict[str, Any]:
         validate_branch(branch)

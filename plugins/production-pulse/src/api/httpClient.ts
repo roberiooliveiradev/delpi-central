@@ -135,3 +135,26 @@ export async function httpJson<T>(
   if (!response.ok) throw await buildRequestError(response);
   return parseJson<T>(response);
 }
+
+/**
+ * Multipart/form-data with the same auth + error envelope as httpJson.
+ * Do not set Content-Type manually — the browser adds the boundary.
+ */
+export async function httpMultipart<T>(
+  method: string,
+  url: string,
+  form: FormData,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method,
+    headers: authHeaders(),
+    body: form,
+    signal: options.signal,
+  });
+  if (!response.ok) throw await buildRequestError(response);
+  return parseJson<T>(response);
+}
+
+/** Alias kept for call-site clarity (same as httpMultipart). */
+export const httpForm = httpMultipart;

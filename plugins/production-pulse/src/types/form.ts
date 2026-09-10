@@ -77,7 +77,7 @@ export type ProbeResult = {
 };
 
 export const DEFAULT_BINDING_VALUES: BindingFormValues = {
-  anchorType: "equipment",
+  anchorType: "standalone",
   workCenterCode: "",
   workCenterName: "",
   machineLabel: "",

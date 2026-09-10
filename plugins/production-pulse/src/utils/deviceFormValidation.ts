@@ -145,7 +145,7 @@ export function hasBindingInput(binding: BindingFormValues): boolean {
       binding.resourceCode.trim() ||
       binding.toolCode.trim() ||
       binding.notes.trim() ||
-      binding.anchorType !== "equipment",
+      binding.anchorType !== "standalone",
   );
 }
 

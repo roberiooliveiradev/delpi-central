@@ -390,6 +390,36 @@ bool reportOtaStatus(
   return ok;
 }
 
+// Terminal OTA statuses (updated / failed before give-up). Best-effort ACK with
+// limited retries; false still allows restart — backend reconcile covers gaps.
+bool reportTerminalWithRetry(
+  const String& targetId,
+  const String& status,
+  const String& errorCode,
+  const String& installedVersion,
+  int bytesReceived = -1,
+  int bytesTotal = -1,
+  int progressPercent = -1
+) {
+  const int maxAttempts = 3;
+  const unsigned long backoffsMs[3] = {200UL, 400UL, 800UL};
+  for (int attempt = 0; attempt < maxAttempts; attempt++) {
+    if (reportOtaStatus(
+          targetId, status, errorCode, installedVersion, bytesReceived, bytesTotal, progressPercent
+        )) {
+      return true;
+    }
+    Serial.print("OTA terminal report retry status=");
+    Serial.print(status);
+    Serial.print(" attempt=");
+    Serial.println(attempt + 1);
+    delay(backoffsMs[attempt]);
+    yield();
+    ESP.wdtFeed();
+  }
+  return false;
+}
+
 bool applyOtaBinary(const String& artifactUrl, const String& targetId, const String& version) {
   reportOtaStatus(targetId, "downloading", "", "", 0, -1, 0);
   yield();
@@ -400,33 +430,33 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
   http.setTimeout(120000);
   httpEnableRedirects(http);
   if (!http.begin(client, artifactUrl)) {
-    reportOtaStatus(targetId, "failed", "http_begin_failed", "");
+    reportTerminalWithRetry(targetId, "failed", "http_begin_failed", "");
     return false;
   }
   http.addHeader("X-Device-Token", String(cfg.apiToken));
   int code = http.GET();
   if (code != HTTP_CODE_OK) {
     http.end();
-    reportOtaStatus(targetId, "failed", "download_http_" + String(code), "");
+    reportTerminalWithRetry(targetId, "failed", "download_http_" + String(code), "");
     return false;
   }
   // ESP8266 Updater exige tamanho conhecido — não usar UPDATE_SIZE_UNKNOWN (símbolo do ESP32).
   int contentLength = http.getSize();
   if (contentLength <= 0) {
     http.end();
-    reportOtaStatus(targetId, "failed", "missing_content_length", "");
+    reportTerminalWithRetry(targetId, "failed", "missing_content_length", "");
     return false;
   }
   WiFiClient* stream = http.getStreamPtr();
   if (stream == nullptr) {
     http.end();
-    reportOtaStatus(targetId, "failed", "download_stream_null", "");
+    reportTerminalWithRetry(targetId, "failed", "download_stream_null", "");
     return false;
   }
 
   if (!Update.begin((size_t)contentLength)) {
     http.end();
-    reportOtaStatus(targetId, "failed", "update_begin_failed", "");
+    reportTerminalWithRetry(targetId, "failed", "update_begin_failed", "");
     return false;
   }
 
@@ -456,7 +486,7 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
     if (w != (size_t)n) {
       http.end();
       Update.end(false);
-      reportOtaStatus(targetId, "failed", "update_write_failed", "", (int)written, contentLength, -1);
+      reportTerminalWithRetry(targetId, "failed", "update_write_failed", "", (int)written, contentLength, -1);
       return false;
     }
     written += w;
@@ -482,16 +512,17 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
 
   if (written != (size_t)contentLength) {
     Update.end(false);
-    reportOtaStatus(targetId, "failed", "download_incomplete", "", (int)written, contentLength, -1);
+    reportTerminalWithRetry(targetId, "failed", "download_incomplete", "", (int)written, contentLength, -1);
     return false;
   }
 
   reportOtaStatus(targetId, "applying", "", "", contentLength, contentLength, 100);
   if (!Update.end(true) || !Update.isFinished()) {
-    reportOtaStatus(targetId, "failed", "update_end_failed", "");
+    reportTerminalWithRetry(targetId, "failed", "update_end_failed", "");
     return false;
   }
-  reportOtaStatus(targetId, "updated", "", version, contentLength, contentLength, 100);
+  // ACK best-effort; restart regardless so we never loop on report failure.
+  reportTerminalWithRetry(targetId, "updated", "", version, contentLength, contentLength, 100);
   delay(200);
   ESP.restart();
   return true;

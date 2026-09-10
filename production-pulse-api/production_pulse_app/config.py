@@ -84,6 +84,10 @@ class Settings:
     PP_FIRMWARE_ARTIFACT_TOKEN_TTL_SECONDS: int = int(
         _get_env("PP_FIRMWARE_ARTIFACT_TOKEN_TTL_SECONDS", default="600") or "600"
     )
+    # Open OTA targets older than this (by updated_at) are failed as ota_target_stale.
+    PP_OTA_TARGET_STALE_SECONDS: int = int(
+        _get_env("PP_OTA_TARGET_STALE_SECONDS", default="3600") or "3600"
+    )
 
 
 def _optional_positive_int(raw: str | None) -> int | None:
@@ -109,3 +113,17 @@ settings.PP_ONLINE_GRACE_MAX_SECONDS = _optional_positive_int(
 settings.PP_ONLINE_GRACE_MULTIPLIER = _optional_positive_int(
     _get_env("PP_ONLINE_GRACE_MULTIPLIER", default="")
 )
+
+# Env wins; empty env keeps class default (3600) which matches content limits.targetStaleSeconds.
+_ota_stale_env = _get_env("PP_OTA_TARGET_STALE_SECONDS", default="")
+if _ota_stale_env not in (None, ""):
+    settings.PP_OTA_TARGET_STALE_SECONDS = max(1, int(_ota_stale_env))
+else:
+    try:
+        from production_pulse_app.infrastructure.content.firmware_ota_messages_content_service import (
+            ota_target_stale_seconds_default,
+        )
+
+        settings.PP_OTA_TARGET_STALE_SECONDS = ota_target_stale_seconds_default()
+    except Exception:
+        settings.PP_OTA_TARGET_STALE_SECONDS = 3600

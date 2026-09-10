@@ -41,6 +41,13 @@ describe("deviceFormValidation", () => {
     expect(
       hasBindingInput({ ...DEFAULT_BINDING_VALUES, equipmentLabel: "Motor A" }),
     ).toBe(true);
+    expect(
+      hasBindingInput({ ...DEFAULT_BINDING_VALUES, anchorType: "equipment" }),
+    ).toBe(true);
+  });
+
+  it("defaults new devices to standalone Avulso", () => {
+    expect(DEFAULT_BINDING_VALUES.anchorType).toBe("standalone");
   });
 
   it("accepts minimum poll interval of 1 ms", () => {

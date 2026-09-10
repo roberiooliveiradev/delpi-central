@@ -17,7 +17,8 @@ Plataforma de **dispositivos IoT** na rede industrial: contadores de golpe, rota
 |-----------|----------|
 | [ROADMAP.md](./ROADMAP.md) | Fases, subetapas e critérios de pronto (inclui **P3** telemetria) |
 | [TELEMETRY-PERSISTENCE-P3.md](./TELEMETRY-PERSISTENCE-P3.md) | Persistência seletiva, heartbeat, rollups, retenção (padrão mercado) |
-| [FIRMWARE-OTA-P4.md](./FIRMWARE-OTA-P4.md) | OTA: catálogo `firmwares`, campanhas manual/agendada, pull ESP, KPIs de frota |
+| [OTA-PRODUCTION-GRADE-CONTRACTS.md](./OTA-PRODUCTION-GRADE-CONTRACTS.md) | Contratos OTA production-grade + drifts |
+| [ADMIN-HUB-OTA-STABILIZATION.md](./ADMIN-HUB-OTA-STABILIZATION.md) | State machines Admin Hub + feedback + Avulso + OTA recovery |
 | [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md) | Telas, drivers/papéis, regras, API |
 | [SCHEMA.md](./SCHEMA.md) | Modelo Postgres + leituras genéricas (`metrics` JSONB) |
 | [DESIGN-FRONTEND.md](./DESIGN-FRONTEND.md) | Cores, tokens, componentes plugin-ui, estrutura MFE |

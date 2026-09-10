@@ -263,6 +263,18 @@ export const PP_HELP = {
     noPublishedFirmware: "Não há firmware publicado para esta família.",
     deviceJobCreated: "Atualização criada. Acompanhe o progresso; o chip aplica no próximo check OTA.",
     deviceJobFailed: "Não foi possível criar a atualização OTA.",
+    updateStartedTitle: "Atualização iniciada",
+    updateStartedMessage: "A atualização OTA foi enviada para {count} IoT(s).",
+    alreadyInProgressTitle: "Atualização já em andamento",
+    alreadyInProgressMessage: "Este IoT já possui uma atualização OTA ativa.",
+    alreadyInProgressAction: "Ver atualização",
+    noEligibleTitle: "Nenhum IoT elegível",
+    updateFailedTitle: "Falha na atualização",
+    updateInterruptedTitle: "Atualização interrompida",
+    updateInterruptedMessage:
+      "O dispositivo deixou de reportar progresso e a atualização foi encerrada.",
+    familyPartialSkipped:
+      "{skipped} IoT(s) já tinham OTA ativa e foram ignorados; {started} iniciaram atualização.",
     status: {
       pending: "Pendente",
       authorized: "Autorizado",

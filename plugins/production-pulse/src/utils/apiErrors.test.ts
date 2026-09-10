@@ -2,58 +2,39 @@ import { describe, expect, it } from "vitest";
 
 import { ProductionPulseRequestError } from "../api/httpClient";
 import {
-  isApiUnavailableError,
-  isDeviceConnectivityError,
-  isDeviceConnectivityErrorCode,
-  resolveDeviceActionError,
-  resolveProbeErrorMessage,
+  isOperationalNoticeOnly,
+  resolveProductionPulseError,
 } from "./apiErrors";
-import type { ProbeResult } from "../types/form";
 
-describe("apiErrors", () => {
-  it("recognizes device connectivity codes", () => {
-    expect(isDeviceConnectivityErrorCode("network_error")).toBe(true);
-    expect(isDeviceConnectivityErrorCode("validation_error")).toBe(false);
-  });
-
-  it("classifies 422 device connectivity using API message as-is", () => {
-    const err = new ProductionPulseRequestError(
-      "Mensagem canônica da API.",
-      422,
-      "timeout",
+describe("resolveProductionPulseError", () => {
+  it("maps openTargetExists to a single notice-shaped payload", () => {
+    const resolved = resolveProductionPulseError(
+      new ProductionPulseRequestError(
+        "O dispositivo já possui uma atualização OTA em andamento.",
+        409,
+        "openTargetExists",
+      ),
     );
-    expect(isDeviceConnectivityError(err)).toBe(true);
-    expect(resolveDeviceActionError(err, "fallback")).toEqual({
-      kind: "device",
-      message: "Mensagem canônica da API.",
-    });
+    expect(resolved.surface).toBe("notice");
+    expect(resolved.title).toBe("Atualização já em andamento");
+    expect(resolved.message).toContain("já possui");
+    expect(resolved.actionLabel).toBe("Ver atualização");
+    expect(resolved.code).toBe("openTargetExists");
+    expect(isOperationalNoticeOnly(resolved)).toBe(true);
   });
 
-  it("classifies legacy 502 with device code as device error", () => {
-    const err = new ProductionPulseRequestError("Timeout no device.", 502, "timeout");
-    expect(isDeviceConnectivityError(err)).toBe(true);
-  });
-
-  it("classifies gateway 502 without device code as infra", () => {
-    const err = new ProductionPulseRequestError(
-      "API Pulso de Produção indisponível.",
-      502,
+  it("does not treat operational OTA errors as structural StateBox", () => {
+    const resolved = resolveProductionPulseError(
+      new ProductionPulseRequestError("x", 422, "noEligibleDevices"),
     );
-    expect(isDeviceConnectivityError(err)).toBe(false);
-    expect(isApiUnavailableError(err)).toBe(true);
-    expect(resolveDeviceActionError(err, "fallback")).toEqual({
-      kind: "infra",
-      message: "API Pulso de Produção indisponível.",
-    });
+    expect(resolved.surface).toBe("notice");
+    expect(isOperationalNoticeOnly(resolved)).toBe(true);
   });
 
-  it("prefers probe errorMessage from API over raw code", () => {
-    const result: ProbeResult = {
-      driverKey: "esp8266_counter_v1",
-      online: false,
-      error: "timeout",
-      errorMessage: "Mensagem amigável da API.",
-    };
-    expect(resolveProbeErrorMessage(result, "fallback")).toBe("Mensagem amigável da API.");
+  it("maps API unavailable to structural", () => {
+    const resolved = resolveProductionPulseError(
+      new ProductionPulseRequestError("down", 503, "api_unavailable"),
+    );
+    expect(resolved.surface).toBe("structural");
   });
 });

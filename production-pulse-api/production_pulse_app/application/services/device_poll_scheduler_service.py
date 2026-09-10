@@ -103,6 +103,7 @@ class DevicePollSchedulerService:
     async def _tick(self) -> None:
         await self._maybe_purge_raw()
         await self._maybe_authorize_ota_jobs()
+        await self._maybe_recover_ota_targets()
         due_devices = await asyncio.to_thread(self._devices.list_due_for_scheduled_poll)
         for device in due_devices:
             device_id = device["id"]
@@ -119,6 +120,19 @@ class DevicePollSchedulerService:
                 logger.info("Authorized %s scheduled OTA job(s).", authorized)
         except Exception:
             logger.exception("Firmware OTA scheduled authorization failed.")
+
+    async def _maybe_recover_ota_targets(self) -> None:
+        try:
+            stale = await asyncio.to_thread(self._firmware_jobs.fail_stale_open_targets)
+            if stale:
+                logger.info("Marked %s stale OTA target(s).", stale)
+            reconciled = await asyncio.to_thread(
+                self._firmware_jobs.reconcile_matching_installed_versions
+            )
+            if reconciled:
+                logger.info("Reconciled %s OTA target(s) from installed version.", reconciled)
+        except Exception:
+            logger.exception("Firmware OTA target recovery failed.")
 
     async def _maybe_purge_raw(self) -> None:
         interval_s = purge_interval_ms() / 1000.0

@@ -222,7 +222,9 @@ export function DeviceFormPage({
           ? await replaceDevice(deviceId, device)
           : await createDevice(device);
 
-      if (hasBindingInput(binding)) {
+      // Create: always persist operational binding (default Avulso/standalone).
+      // Edit: only upsert when the user provided binding input — do not convert legacy unbound.
+      if (mode === "create" || hasBindingInput(binding)) {
         await upsertDeviceBinding(saved.id, binding);
       }
 

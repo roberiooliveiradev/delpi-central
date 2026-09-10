@@ -158,7 +158,8 @@ Import: `from "@delpi/plugin-ui/index"`. Factory com prefixo `pp` onde existir h
 | `EmptyGuidance` | Filial sem devices + CTA cadastrar |
 | `ScreenLoading` | Carregamento inicial painel |
 | `InlineLoadingProgress` | Poll row / refresh strip |
-| `StateBox` | Erro API / permissão |
+| `StateBox` | Erro API / permissão / load estrutural |
+| `PpFloatingNotices` | Feedback transitório de ação (1 evento = 1 notice; ver [ADMIN-HUB-OTA-STABILIZATION.md](./ADMIN-HUB-OTA-STABILIZATION.md)) |
 
 ### 3.4 Filtros e formulário
 

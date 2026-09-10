@@ -80,6 +80,10 @@ Reconexão: máquina de estados (`idle` / `connecting` / `connected` / `backoff`
 
 Status aditivo: `input1` / `input2` como `0|1` raw (`0` = LOW/ativo).
 
+## OTA — ACK terminal com retry
+
+Reports terminais (`updated` antes do `ESP.restart()`, e `failed` antes de abandonar o apply) usam `reportTerminalWithRetry` (até 3 tentativas, backoff 200/400/800 ms + `yield`/`delay`; sem `ESP.wdtFeed` do ESP8266). Falha do ACK **não** impede o restart — o backend reconcilia. Progresso intermediário (`downloading` / `applying`) permanece single-shot.
+
 ## EEPROM
 
 `CONFIG_MAGIC = 0x50504331` (`PPC1`) — distinto do ESP8266 (`PPS\x02`). Config ESP8266 **não** é migrada automaticamente.

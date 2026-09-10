@@ -52,6 +52,7 @@ Pull autorizado contra a Production Pulse API ([FIRMWARE-OTA-P4.md](../../FIRMWA
    - Parse do envelope `{ "success", "data": { "updateAvailable", "artifactToken", … } }`
    - Download `GET …/device-ota/artifacts/{token}` e `Updater`
    - `POST …/device-ota/report` (`downloading` → `applying` → `updated|failed`) **antes** do stream de download (evita segundo HTTP concorrente)
+   - Reports terminais (`updated` antes do `ESP.restart()`, e `failed` antes de abandonar o apply) usam `reportTerminalWithRetry` (até 3 tentativas, backoff 200/400/800 ms + `ESP.wdtFeed`); falha do ACK **não** impede o restart — o backend reconcilia
 4. MVP do sketch: **HTTP na VLAN** (sem BearSSL/HTTPS).
 
 Checklist lab: [HOMOLOGACAO-OTA-P4.md](../../HOMOLOGACAO-OTA-P4.md).

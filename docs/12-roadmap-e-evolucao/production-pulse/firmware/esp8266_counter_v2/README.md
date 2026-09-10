@@ -20,3 +20,5 @@ Sketch irmão de [`../esp8266_counter_v1/Teste.ino`](../esp8266_counter_v1/Teste
 ## Progresso byte a byte
 
 Durante o download o sketch envia `POST /device-ota/report` com `bytesReceived`, `bytesTotal`, `progressPercent` (throttle ~5% / 32 KiB / máx. 1×/2 s). Falha do report intermediário **não** aborta o flash.
+
+Reports terminais (`updated` antes do restart e `failed` ao abandonar o apply) usam `reportTerminalWithRetry` (até 3 tentativas, backoff 200/400/800 ms). Falha do ACK **não** impede o restart.

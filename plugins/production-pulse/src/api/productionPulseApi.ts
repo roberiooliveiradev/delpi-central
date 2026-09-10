@@ -1,4 +1,4 @@
-import { httpGet, httpJson, PRODUCTION_PULSE_API_BASE, getAccessToken } from "./httpClient";
+import { httpGet, httpJson, httpMultipart, PRODUCTION_PULSE_API_BASE } from "./httpClient";
 import type { DeviceListItem, DeviceSummary } from "../types/device";
 import type { DeviceCommandAudit, DeviceReading, LivePollResult, PaginatedItems } from "../types/detail";
 import type {
@@ -443,21 +443,11 @@ export async function attachFirmwareArtifact(
 ): Promise<FirmwareDetail> {
   const form = new FormData();
   form.set("file", file);
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    "X-Delpi-Caller-App": "production-pulse",
-  };
-  const token = getAccessToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
-  const response = await fetch(
+  const payload = await httpMultipart<ApiEnvelope<FirmwareDetail>>(
+    "POST",
     `${PRODUCTION_PULSE_API_BASE}/firmwares/${encodeURIComponent(firmwareId)}/artifact`,
-    { method: "POST", headers, body: form },
+    form,
   );
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `Erro HTTP ${response.status}`);
-  }
-  const payload = (await response.json()) as ApiEnvelope<FirmwareDetail>;
   return payload.data;
 }
 
@@ -503,29 +493,11 @@ export async function fetchFirmwareDrivers(signal?: AbortSignal): Promise<Firmwa
 }
 
 export async function publishFirmware(form: FormData): Promise<FirmwareDetail> {
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    "X-Delpi-Caller-App": "production-pulse",
-  };
-  const token = getAccessToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
-  const response = await fetch(`${PRODUCTION_PULSE_API_BASE}/firmwares`, {
-    method: "POST",
-    headers,
-    body: form,
-  });
-  if (!response.ok) {
-    const text = await response.text();
-    let message = `Erro HTTP ${response.status}`;
-    try {
-      const body = JSON.parse(text) as { error?: { message?: string } };
-      message = body.error?.message ?? message;
-    } catch {
-      /* ignore */
-    }
-    throw new Error(message);
-  }
-  const payload = (await response.json()) as ApiEnvelope<FirmwareDetail>;
+  const payload = await httpMultipart<ApiEnvelope<FirmwareDetail>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/firmwares`,
+    form,
+  );
   return payload.data;
 }
 

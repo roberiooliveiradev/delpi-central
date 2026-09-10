@@ -171,6 +171,9 @@ Cabeçalho de grupo: `placement_label` + `AnchorTypeBadge` — helps dos badges 
 | Equipamento | `form.anchorEquipment` |
 | Área | `form.anchorArea` |
 | Avulso | `form.anchorStandalone` |
+
+**Default create (2026-09):** novo IoT nasce com `anchorType=standalone` (Avulso) e persiste binding explícito; edit não converte `no_binding` legado. Binding operacional ≠ vínculo OTA.
+
 | CT (bloco TOTVS) | `form.workCenterOptional` |
 | Recurso | `form.resourceOptional` |
 | Ferramenta | `form.toolOptional` |

@@ -58,7 +58,7 @@ Documento de evidência para o plano hub OTA. Não substitui SCHEMA.md / API-ROU
 | Reject write `devices.firmware_source` | **P1** | API DEPRECATED write |
 | Migrate legado source → catálogo | **P1** | EXPAND→MIGRATE→CONTRACT |
 | SHA verify no ESP | **P1** | |
-| Stuck target timeout | **P1** | |
+| Stuck target timeout | **P0 entregue** | `fail_stale_open_targets` + `PP_OTA_TARGET_STALE_SECONDS`; reconcile por versão instalada |
 | Admin download artifact | **P1** | |
 | RBAC `firmware.*` fino | **P1** | hoje `devices.*` |
 | Secret scan / redaction sketch | **P2** | |

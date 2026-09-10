@@ -807,3 +807,53 @@ class PostgresFirmwareUpdateJobRepository:
                 )
                 row = cur.fetchone()
                 return dict(row) if row else None
+
+    def find_open_target_for_device(self, device_id: UUID) -> dict[str, Any] | None:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_TARGET_COLUMNS}
+                    FROM production_pulse.firmware_update_targets
+                    WHERE device_id = %s
+                      AND status = ANY(%s)
+                    ORDER BY updated_at DESC
+                    LIMIT 1
+                    """,
+                    (device_id, list(_OPEN_TARGET_STATUSES)),
+                )
+                row = cur.fetchone()
+                return dict(row) if row else None
+
+    def list_stale_open_targets(self, stale_before: datetime) -> list[dict[str, Any]]:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_TARGET_COLUMNS}
+                    FROM production_pulse.firmware_update_targets
+                    WHERE status = ANY(%s)
+                      AND updated_at < %s
+                    ORDER BY updated_at ASC
+                    """,
+                    (list(_OPEN_TARGET_STATUSES), stale_before),
+                )
+                return [dict(row) for row in cur.fetchall()]
+
+    def list_open_targets_for_reconcile(self) -> list[dict[str, Any]]:
+        """Open targets whose device already reports installed_firmware_version = to_version."""
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_TARGET_COLUMNS}
+                    FROM production_pulse.firmware_update_targets t
+                    JOIN production_pulse.devices d ON d.id = t.device_id
+                    WHERE t.status = ANY(%s)
+                      AND d.installed_firmware_version IS NOT NULL
+                      AND d.installed_firmware_version = t.to_version
+                    ORDER BY t.updated_at ASC
+                    """,
+                    (list(_OPEN_TARGET_STATUSES),),
+                )
+                return [dict(row) for row in cur.fetchall()]

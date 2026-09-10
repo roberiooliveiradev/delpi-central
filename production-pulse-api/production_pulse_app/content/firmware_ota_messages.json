@@ -1,4 +1,9 @@
 {
+  "limits": {
+    "targetStaleSeconds": {
+      "default": 3600
+    }
+  },
   "httpErrors": {
     "firmwareNotFound": "Firmware não encontrado.",
     "firmwareDuplicateVersion": "Já existe esta versão para a família de firmware.",
@@ -8,6 +13,7 @@
     "jobCannotCancel": "Esta campanha não pode ser cancelada no estado atual.",
     "noEligibleDevices": "Nenhum dispositivo elegível para a campanha.",
     "openTargetExists": "O dispositivo já possui uma atualização OTA em andamento.",
+    "ota_target_stale": "A atualização OTA expirou por inatividade. Inicie uma nova campanha se necessário.",
     "deviceOtaUnauthorized": "Token do dispositivo inválido ou ausente.",
     "deviceOtaNotAuthorized": "Não há atualização autorizada para este dispositivo.",
     "deviceOtaArtifactExpired": "Link de download expirado. Consulte novamente.",

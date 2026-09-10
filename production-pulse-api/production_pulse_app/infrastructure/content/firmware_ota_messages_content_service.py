@@ -20,5 +20,17 @@ def firmware_ota_http_message(key: str, *, default: str | None = None) -> str:
     return default or key
 
 
+def ota_target_stale_seconds_default() -> int:
+    """Default stale window from content; env PP_OTA_TARGET_STALE_SECONDS overrides in settings."""
+    limits = _load().get("limits") or {}
+    section = limits.get("targetStaleSeconds") or {}
+    raw = section.get("default", 3600)
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return 3600
+    return max(1, value)
+
+
 def reset_firmware_ota_messages_cache_for_tests() -> None:
     _load.cache_clear()

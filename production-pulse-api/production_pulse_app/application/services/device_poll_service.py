@@ -11,6 +11,9 @@ from production_pulse_app.application.services.device_driver_registry_service im
 from production_pulse_app.application.services.device_reading_rollup_service import (
     DeviceReadingRollupService,
 )
+from production_pulse_app.application.services.firmware_update_job_service import (
+    FirmwareUpdateJobService,
+)
 from production_pulse_app.core.serialize import json_safe
 from production_pulse_app.domain.errors import DeviceDriverError
 from production_pulse_app.domain.services.device_connectivity_status_service import (
@@ -56,12 +59,14 @@ class DevicePollService:
         reading_repository: PostgresDeviceReadingRepository | None = None,
         command_repository: PostgresDeviceCommandRepository | None = None,
         rollup_service: DeviceReadingRollupService | None = None,
+        firmware_job_service: FirmwareUpdateJobService | None = None,
     ) -> None:
         self._devices = device_repository or PostgresDeviceRepository()
         self._bindings = binding_repository or PostgresDeviceBindingRepository()
         self._readings = reading_repository or PostgresDeviceReadingRepository()
         self._commands = command_repository or PostgresDeviceCommandRepository()
         self._rollups = rollup_service or DeviceReadingRollupService()
+        self._firmware_jobs = firmware_job_service or FirmwareUpdateJobService()
         self._registry = get_device_driver_registry()
 
     def _require_device(self, device_id: UUID) -> dict[str, Any]:
@@ -233,11 +238,16 @@ class DevicePollService:
                 delta_metrics=delta_metrics,
             )
 
+        installed_version = self._extract_firmware_version(reading)
         device = self._devices.record_poll_success(
             device_id,
             metrics=canonical,
-            installed_firmware_version=self._extract_firmware_version(reading),
+            installed_firmware_version=installed_version,
         )
+        if installed_version:
+            self._firmware_jobs.reconcile_device_installed_version(
+                device_id, installed_version
+            )
         payload_meta = {
             **meta,
             "readingPersisted": decision.should_persist,
