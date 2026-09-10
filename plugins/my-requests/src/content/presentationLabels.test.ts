@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   actionLabel,
+  actionSuccessMessage,
   artifactKindLabel,
   branchScopeLabel,
   commentTimeLabel,
@@ -24,6 +25,8 @@ describe("presentationLabels", () => {
   it("traduz actions e events", () => {
     expect(actionLabel("start")).toBe("Iniciar atendimento");
     expect(actionLabel("weird_action")).toBe("Weird action");
+    expect(actionSuccessMessage("issue")).toBe("Emissão registrada.");
+    expect(actionSuccessMessage("start")).toBe("Atendimento iniciado.");
     expect(eventLabel("attachment_added")).toBe("Documento anexado");
     expect(eventLabel("attachment_removed")).toBe("Documento removido");
     expect(eventLabel("transition")).toBe("Etapa atualizada");

@@ -46,7 +46,10 @@ def _current_user():
 
 
 def _handle(exc: ApplicationError):
-    return fail(exc.message, status_code=exc.status_code, data={"code": exc.code})
+    data: dict[str, Any] = {"code": exc.code}
+    if exc.field:
+        data["field"] = exc.field
+    return fail(exc.message, status_code=exc.status_code, data=data)
 
 
 def _can_resolve_participant_avatar(user) -> bool:

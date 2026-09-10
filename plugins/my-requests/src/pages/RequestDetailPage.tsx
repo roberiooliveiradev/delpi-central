@@ -22,7 +22,7 @@ import {
 } from "../content/correctionTargets";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
-  actionLabel,
+  actionSuccessMessage,
   formatDateTimePtBr,
   requestTypeLabel,
   statusLabel,
@@ -122,7 +122,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
       });
       setRequest(updated);
       setReasonKind(null);
-      notifySuccess(`${actionLabel(action)} concluído.`);
+      notifySuccess(actionSuccessMessage(action));
     } catch (err) {
       notifyError(
         err instanceof Error ? err.message : "Não foi possível aplicar a ação.",

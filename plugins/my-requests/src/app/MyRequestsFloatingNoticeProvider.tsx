@@ -10,6 +10,11 @@ import {
   type FloatingNoticeInput,
 } from "@delpi/plugin-ui/index";
 
+import {
+  humanizeApiErrorCode,
+  isTechnicalErrorCode,
+} from "../content/apiErrorMessages";
+
 const MR_UI_PREFIX = "my-requests";
 const MR_PORTAL_SCOPE = "dashboard-my-requests";
 
@@ -46,6 +51,38 @@ const MyRequestsFloatingNotices = createFloatingNoticeStack({
   },
 });
 
+type ParsedErrorBody = {
+  message?: string;
+  detail?: string | unknown;
+  data?: { message?: string; code?: string; field?: string };
+};
+
+function messageFromParsedBody(body: ParsedErrorBody): string | null {
+  const code = typeof body.data?.code === "string" ? body.data.code.trim() : "";
+  const field =
+    typeof body.data?.field === "string" ? body.data.field.trim() : null;
+  const candidates = [
+    typeof body.message === "string" ? body.message.trim() : "",
+    typeof body.detail === "string" ? body.detail.trim() : "",
+    typeof body.data?.message === "string" ? body.data.message.trim() : "",
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (isTechnicalErrorCode(candidate)) {
+      return (
+        humanizeApiErrorCode(candidate, { field }) ||
+        humanizeApiErrorCode(code, { field }) ||
+        candidate
+      );
+    }
+    return candidate;
+  }
+  if (code) {
+    return humanizeApiErrorCode(code, { field }) || code;
+  }
+  return null;
+}
+
 /** Extract a user-facing message from API/JSON error payloads. */
 export function friendlyNoticeMessage(raw: unknown, fallback: string): string {
   if (typeof raw !== "string") {
@@ -58,23 +95,15 @@ export function friendlyNoticeMessage(raw: unknown, fallback: string): string {
   if (!trimmed) return fallback;
   if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
     try {
-      const body = JSON.parse(trimmed) as {
-        message?: string;
-        detail?: string | unknown;
-        data?: { message?: string };
-      };
-      if (typeof body.message === "string" && body.message.trim()) {
-        return body.message.trim();
-      }
-      if (typeof body.detail === "string" && body.detail.trim()) {
-        return body.detail.trim();
-      }
-      if (typeof body.data?.message === "string" && body.data.message.trim()) {
-        return body.data.message.trim();
-      }
+      const body = JSON.parse(trimmed) as ParsedErrorBody;
+      const fromBody = messageFromParsedBody(body);
+      if (fromBody) return fromBody;
     } catch {
       // keep trimmed text
     }
+  }
+  if (isTechnicalErrorCode(trimmed)) {
+    return humanizeApiErrorCode(trimmed) || fallback;
   }
   return trimmed;
 }

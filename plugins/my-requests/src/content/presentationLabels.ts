@@ -31,6 +31,19 @@ const ACTION_LABELS: Record<string, string> = {
   reject: "Rejeitar",
 };
 
+/** Toast de sucesso após transição (frase completa, não «rótulo + concluído»). */
+const ACTION_SUCCESS_MESSAGES: Record<string, string> = {
+  start: "Atendimento iniciado.",
+  return: "Solicitação devolvida para ajuste.",
+  resubmit: "Solicitação reenviada.",
+  complete: "Solicitação concluída.",
+  issue: "Emissão registrada.",
+  confirm_fulfillment: "Atendimento confirmado.",
+  reject_fulfillment: "Atendimento devolvido para correção.",
+  cancel: "Solicitação cancelada.",
+  reject: "Solicitação rejeitada.",
+};
+
 const EVENT_LABELS: Record<string, string> = {
   created: "Solicitação criada",
   updated: "Dados atualizados",
@@ -140,6 +153,12 @@ export function statusLabel(
 export function actionLabel(action: string): string {
   const code = action.trim();
   return ACTION_LABELS[code] || humanizeCode(code);
+}
+
+export function actionSuccessMessage(action: string): string {
+  const code = action.trim();
+  if (ACTION_SUCCESS_MESSAGES[code]) return ACTION_SUCCESS_MESSAGES[code];
+  return `${actionLabel(code)} realizado com sucesso.`;
 }
 
 /** Variant hint for ActionButton — only kit-supported values. */

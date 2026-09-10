@@ -2,6 +2,10 @@ import {
   getMyRequestsClientId,
   MY_REQUESTS_CLIENT_ID_HEADER,
 } from "../app/myRequestsClientId";
+import {
+  humanizeApiErrorCode,
+  isTechnicalErrorCode,
+} from "../content/apiErrorMessages";
 
 type RequestOptions = { signal?: AbortSignal };
 
@@ -45,11 +49,13 @@ function looksLikeHtml(body: string, contentType: string | null): boolean {
 
 export class ApiClientError extends Error {
   readonly status: number;
+  readonly code: string | null;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code: string | null = null) {
     super(message);
     this.name = "ApiClientError";
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -62,12 +68,29 @@ async function parseError(response: Response, bodyText?: string): Promise<string
     const body = JSON.parse(text) as {
       message?: string;
       detail?: string | unknown;
-      data?: { message?: string; code?: string };
+      data?: { message?: string; code?: string; field?: string };
     };
-    if (body?.message) return body.message;
-    if (typeof body?.detail === "string" && body.detail.trim()) return body.detail.trim();
-    if (typeof body?.data?.message === "string" && body.data.message.trim()) {
-      return body.data.message.trim();
+    const code =
+      typeof body?.data?.code === "string" ? body.data.code.trim() : "";
+    const field =
+      typeof body?.data?.field === "string" ? body.data.field.trim() : null;
+    const rawMessage =
+      (typeof body?.message === "string" && body.message.trim()) ||
+      (typeof body?.detail === "string" && body.detail.trim()) ||
+      (typeof body?.data?.message === "string" && body.data.message.trim()) ||
+      "";
+    if (rawMessage) {
+      if (isTechnicalErrorCode(rawMessage)) {
+        return (
+          humanizeApiErrorCode(rawMessage, { field }) ||
+          humanizeApiErrorCode(code, { field }) ||
+          rawMessage
+        );
+      }
+      return rawMessage;
+    }
+    if (code) {
+      return humanizeApiErrorCode(code, { field }) || code;
     }
   } catch {
     // ignore
@@ -80,7 +103,7 @@ async function parseError(response: Response, bodyText?: string): Promise<string
   if (response.status === 502 || response.status === 503) {
     return "API de Minhas Solicitações indisponível. Tente novamente em instantes.";
   }
-  return `Erro HTTP ${response.status}`;
+  return `Não foi possível concluir a operação (erro ${response.status}).`;
 }
 
 async function parseJson<T>(response: Response): Promise<T> {

@@ -1,0 +1,75 @@
+/**
+ * Humanized API error codes for Minhas Solicitações notices.
+ * Keep in sync with requests-api `content/pt-BR/engine.json` reasons.
+ */
+
+const FIELD_LABELS: Record<string, string> = {
+  return_reason: "motivo da devolução",
+  cancel_justification: "justificativa de cancelamento",
+  invoice_pdf: "o PDF da nota fiscal",
+};
+
+/** snake_case technical codes → Portuguese copy for toasts/banners. */
+export const MR_API_ERROR_MESSAGES: Record<string, string> = {
+  invalid_transition:
+    "Esta ação não está disponível no status atual da solicitação.",
+  missing_field: "Informe o campo obrigatório: {field}.",
+  stale_version:
+    "A solicitação foi atualizada por outra pessoa. Recarregue a página e tente novamente.",
+  forbidden: "Você não tem permissão para esta ação.",
+  not_found: "Solicitação não encontrada.",
+  type_not_found: "Tipo de solicitação não encontrado.",
+  type_inactive: "Este tipo de solicitação não está ativo no momento.",
+  branch_required: "Informe a filial da solicitação.",
+  branch_invalid: "Filial inválida. Use 01 ou 02.",
+  branch_forbidden: "Você não tem permissão para acessar dados desta filial.",
+  create_forbidden: "Você não pode criar este tipo de solicitação.",
+  edit_forbidden: "Você não pode editar esta solicitação no momento.",
+  idempotency_required: "Não foi possível confirmar a operação. Tente novamente.",
+  payload_required: "Preencha os dados da solicitação antes de continuar.",
+  payload_invalid: "Há dados inválidos no formulário. Revise e tente novamente.",
+  lookup_forbidden: "Você não tem permissão para consultar estes cadastros.",
+  lookup_upstream_unauthorized:
+    "Não foi possível autenticar a busca nos cadastros. Faça login novamente.",
+  lookup_upstream_error:
+    "Falha ao consultar destinatários ou produtos. Tente novamente em instantes.",
+  lookup_upstream_unavailable:
+    "O serviço de busca está indisponível no momento. Tente novamente em breve.",
+  upload_forbidden: "Você não pode enviar arquivos nesta solicitação.",
+  download_forbidden: "Você não pode baixar este arquivo.",
+  delete_forbidden: "Você não pode remover este arquivo.",
+  attachment_not_found: "Anexo não encontrado.",
+  artifact_not_found: "Documento gerado não encontrado.",
+  artifact_required:
+    "Anexe {field} em «Documentos gerados no atendimento» antes de concluir esta etapa.",
+  comment_required: "Escreva uma mensagem antes de enviar.",
+  comment_media_forbidden:
+    "Imagens devem ser coladas ou anexadas pelo clipe da conversa.",
+  conversation_frozen:
+    "Esta solicitação foi finalizada. A conversa está somente leitura.",
+};
+
+const TECHNICAL_CODE_RE = /^[a-z][a-z0-9_]{2,}$/;
+
+export function isTechnicalErrorCode(value: string): boolean {
+  return TECHNICAL_CODE_RE.test(value.trim());
+}
+
+export function humanizeApiErrorCode(
+  code: string,
+  options?: { field?: string | null },
+): string | null {
+  const key = (code || "").trim();
+  if (!key) return null;
+  const template = MR_API_ERROR_MESSAGES[key];
+  if (!template) return null;
+  if (template.includes("{field}")) {
+    const fieldKey = (options?.field || "").trim();
+    const label =
+      (fieldKey && FIELD_LABELS[fieldKey]) ||
+      fieldKey ||
+      "o documento necessário";
+    return template.replaceAll("{field}", label);
+  }
+  return template;
+}
