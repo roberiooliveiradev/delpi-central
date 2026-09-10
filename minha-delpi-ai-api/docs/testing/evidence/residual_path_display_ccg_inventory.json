@@ -1,0 +1,28 @@
+{
+  "BASE_GIT_SHA": "c20064c0657f4d97df33168e7c10b38cdf3dfd6f",
+  "PLAN_REVIEW_GIT_SHA": "c20064c0657f4d97df33168e7c10b38cdf3dfd6f",
+  "catalog_counts_before": {
+    "pathLabels": 112,
+    "englishSummaries": 49,
+    "titlesByPathFragment": 46,
+    "kpiPathMatchers": 41,
+    "dashboardTitlesByPathFragment": 6,
+    "capabilities_pathRules": 60,
+    "data_interpretation_pathTitles": 5
+  },
+  "cutover_incomplete": {
+    "action_labels": "pathLabels still editorial override in default mode",
+    "titles": "legacy_title from fragment/kpi/pathTitles still wins",
+    "stack_plan": "full routeTitles/routeFraming dump",
+    "mfe": "routeTitle(routeKey) + SECTION_BASE domain fallbacks",
+    "capabilities": "pathRules token match; H-CAP not decided",
+    "recommendations": "validator ready; LLM producer not emitting"
+  },
+  "bugs": [
+    "chat_presentation_scalar_field_commentary_service.title_for_path wrong arity"
+  ],
+  "out_of_scope_routing": [
+    "presentation_profiles.pathRules",
+    "pathContains prioritization"
+  ]
+}
