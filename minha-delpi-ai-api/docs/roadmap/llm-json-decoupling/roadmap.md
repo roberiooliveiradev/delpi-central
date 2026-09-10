@@ -135,9 +135,9 @@ Executar plano 02, com foco em pedidos longos, intents próximas, linguagem info
 
 Executar plano 03. Follow-up deve depender de contexto estruturado e schema, não de route substring.
 
-### Onda E — capabilities e composition — **PARCIAL**
+### Onda E — capabilities e composition — **ATENDIDO** (2026-09-10)
 
-Executar planos 04 (restante: mini-catálogo `action.*`) e 05. **Não** reabrir cutover de `pathRules` (D1). Enrichment passa a ser decisão planner-driven sob budget.
+Planos 04 e 05 (S1–S7): Action Catalog discovery + composition/enrichment por goals/budget. Maps `scopeToRouteId` / `primaryRouteId`/`composeRouteIds` removidos.
 
 ### Onda F — UX inteligente — **PRONTO_APÓS_E**
 
