@@ -1242,18 +1242,26 @@ export function FirmwareLinksPage({
         </PpActionButton>
       </PpHintAction>
       {canManage ? (
-        <PpHintAction hint={PP_HELP.hub.newDevice} ariaLabel="Ajuda: Novo IoT">
-          <PpActionButton onClick={() => openModal("device-create", null)}>
-            <Plus size={14} aria-hidden="true" /> IoT
-          </PpActionButton>
-        </PpHintAction>
-      ) : null}
-      {canManage ? (
-        <PpHintAction hint={PP_HELP.hub.newFirmware} ariaLabel="Ajuda: Novo firmware">
-          <PpActionButton onClick={() => openModal("firmware-create", null)}>
-            <Plus size={14} aria-hidden="true" /> FW
-          </PpActionButton>
-        </PpHintAction>
+        <div className="pp-map-overlay-actions__create" role="group" aria-label="Criar">
+          <PpHintAction hint={PP_HELP.hub.newDevice} ariaLabel="Ajuda: Novo IoT">
+            <PpActionButton
+              variant="primary"
+              className="pp-map-overlay-create-btn"
+              onClick={() => openModal("device-create", null)}
+            >
+              <Plus size={14} aria-hidden="true" /> IoT
+            </PpActionButton>
+          </PpHintAction>
+          <PpHintAction hint={PP_HELP.hub.newFirmware} ariaLabel="Ajuda: Novo firmware">
+            <PpActionButton
+              variant="primary"
+              className="pp-map-overlay-create-btn"
+              onClick={() => openModal("firmware-create", null)}
+            >
+              <Plus size={14} aria-hidden="true" /> FW
+            </PpActionButton>
+          </PpHintAction>
+        </div>
       ) : null}
       <PpHintAction hint={PP_HELP.hub.refresh} ariaLabel="Ajuda: Atualizar">
         <PpIconButton
