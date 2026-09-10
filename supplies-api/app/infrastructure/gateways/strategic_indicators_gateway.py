@@ -130,12 +130,17 @@ class StrategicIndicatorsGateway:
         for kpi_id, indicator_id in SI_INDICATOR_BY_KPI.items():
             row = by_id.get(indicator_id) or {}
             goal_value = _as_optional_float(row.get("goal_value"))
-            comparable = _pick_comparable_goal(row.get("goals"), branch=branch)
+            # Prefer SI top-level triad when department-indicators exposes it.
+            comparable = _as_optional_float(row.get("comparable_goal"))
+            if comparable is None:
+                comparable = _pick_comparable_goal(row.get("goals"), branch=branch)
             if comparable is None:
                 comparable = goal_value
             goal_mode = str(row.get("goal_mode") or "standard").strip().lower() or "standard"
-            # Standard mode: reference month = cadastral goal_value.
-            reference = goal_value if goal_mode == "standard" else goal_value
+            reference = _as_optional_float(row.get("reference_goal"))
+            if reference is None:
+                # Standard mode fallback: cadastral goal_value (rollup when SI sends it).
+                reference = goal_value
             metrics[kpi_id] = {
                 "goal_value": goal_value,
                 "comparable_goal": comparable,

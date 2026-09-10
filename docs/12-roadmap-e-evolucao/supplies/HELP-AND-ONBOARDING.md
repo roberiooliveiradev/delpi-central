@@ -29,7 +29,7 @@ Herdar textos já canônicos de:
 - Início vs Visão geral.
 - Como filtrar **Unidade** (MultiSelect Santa Catarina / Espírito Santo) e período na Visão geral / OTD (presets Hoje/Esta semana/mês… + FilterBar + URL shareable) + preferência de filial padrão no perfil.
 - Filtros **rejeitados** na Overview (não entram no chrome global): competence, cliente, segmento, carteira, vendedor, `location` global, `stock_method` global (pertencem a telas de domínio, não ao placar).
-- Metas na Visão geral: **Meta parcial** = `comparableGoal` do SI; **Meta mês** = `referenceGoal`/`goalValue` cadastrada; **Nota IDD** = `iddScore` do SI (não recalcular no MFE). SC pendentes e materiais críticos sem meta SI.
+- Metas na Visão geral: **Meta do período** = `comparableGoal` do SI; **Meta mês** = `referenceGoal`/`goalValue` cadastrada (consolidado = rollup 01+02); **Nota IDD** = `iddScore` do SI (não recalcular no MFE). **Valor do estoque** usa meta de **nível/teto** (sem pró-rata diária nem soma de meses). SC pendentes e materiais críticos sem meta SI.
 - Gráfico OTD com toolbar (granularity/tipo/export) e comparativo valor×meta (sem série inventada).
 - Página OTD (`/analytics/otd`): velocímetros por unidade; Overview = placar; Entregas = atraso operacional.
 - Loading padrão: `SuppliesLoadingCard` (plugin-ui); banners só para error/partial/forbidden.

@@ -191,7 +191,7 @@ export const USER_MANUAL_CONTENT = {
         },
         {
           q: "Por que Meta parcial e Meta mês podem ser diferentes?",
-          a: "A Meta do período (parcial) é a comparable_goal do Strategic Indicators para o recorte De–Até. A Meta mês/referência é a meta cadastrada (goal_value). A Nota IDD é o score do SI — o Portal não recalcula no navegador. SC pendentes e materiais críticos não têm meta SI.",
+          a: "Para indicadores de fluxo (OTD, CPV…), a Meta do período pode ser pró-rata ou acumulada e diferir da Meta mês cadastrada. Para Valor do estoque (snapshot), a meta é o nível/teto cadastrado — não há pró-rata diária nem soma de meses; Meta do período e Meta mês coincidem no consolidado. A Nota IDD é o score do SI. SC pendentes e materiais críticos não têm meta SI.",
         },
         {
           q: "Por que recebi 403?",

@@ -64,7 +64,7 @@ export const SP_HELP = {
   overviewFiltersBranch:
     "Unidades liberadas no seu escopo (Santa Catarina e/ou Espírito Santo). Vazio ou ambas = consolidado. Unidade fora do escopo é bloqueada pela API.",
   overviewGoalTriad:
-    "Meta do período (Meta parcial quando o recorte não cobre o mês inteiro) vem do SI como comparable_goal. Meta mês/referência é a meta cadastrada (goal_value). Nota IDD é o score do SI — não é recalculada no navegador.",
+    "Meta do período vem do SI (comparable_goal). Para estoque (snapshot), a meta é o nível/teto cadastrado — não há pró-rata diária nem soma de meses. Meta mês/referência é a meta cadastrada consolidada. Nota IDD é o score do SI — não é recalculada no navegador.",
   overviewOtdChart:
     "Série de OTD de pedidos de compra com ChartViewShell completo (granularidade, tipo, YoY, cores e exportação). Usa o mesmo filtro de unidade e período da Visão geral. Abra OTD para ver os velocímetros.",
   overviewCompareChart:

@@ -9,7 +9,7 @@ import type { OverviewKpiCard } from "../../api/overview";
 
 const KPI_DIRECTION: Record<string, PerformanceDirection> = {
   "KPI-OTD": "higher_is_better",
-  "KPI-STOCK-VALUE": "higher_is_better",
+  "KPI-STOCK-VALUE": "lower_is_better",
   "KPI-TURNOVER": "higher_is_better",
   "KPI-CPV": "lower_is_better",
   "KPI-SAVINGS": "higher_is_better",

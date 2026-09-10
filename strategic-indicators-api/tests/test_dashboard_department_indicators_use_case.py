@@ -87,6 +87,13 @@ def test_get_dashboard_department_indicators_returns_idd_goals_realized() -> Non
     calculator.resolve_goals_payload_for_calculated.return_value = {
         "01": 100.0,
         "02": 100.0,
+        "consolidated": 100.0,
+    }
+    calculator.resolve_reference_goal.return_value = 100.0
+    calculator.resolve_goal_period_flags.return_value = {
+        "goal_aggregation": "average",
+        "goal_period_kind": "exact",
+        "goal_period_partial": False,
     }
 
     use_case = GetDashboardDepartmentIndicatorsUseCase(
@@ -107,9 +114,65 @@ def test_get_dashboard_department_indicators_returns_idd_goals_realized() -> Non
     indicator = result["indicators"][0]
     assert indicator["indicator_id"] == "quality.ppm"
     assert indicator["realized"] == {"01": 90.0, "02": 90.0}
-    assert indicator["goals"] == {"01": 100.0, "02": 100.0}
+    assert indicator["goals"] == {"01": 100.0, "02": 100.0, "consolidated": 100.0}
     assert indicator["value"] == 90.0
     assert indicator["goal_value"] == 100.0
+    assert indicator["comparable_goal"] == 100.0
+    assert indicator["reference_goal"] == 100.0
+
+
+def test_map_indicator_stock_exposes_rollup_reference_and_level_comparable() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    snapshot_service = MagicMock()
+    use_case = GetDashboardDepartmentIndicatorsUseCase(
+        snapshot_service=snapshot_service,
+        calculator=calculator,
+    )
+    stock = _indicator(
+        indicator_id="supplies-stock-value",
+        department_id="supplies",
+        indicator_name="Valor Total do Estoque",
+        goal_value=2_500_000.0,
+        goal_periodicity="monthly",
+        value=13_100_000.0,
+        score=3.0,
+        gap=None,
+        unit_values={"01": 5_000_000.0, "02": 8_100_000.0},
+        unit_goals={"01": 2_500_000.0, "02": 11_000_000.0},
+        value_unit="currency",
+        value_prefix="R$",
+        performance_direction="lower_is_better",
+    )
+    catalog = SimpleNamespace(
+        indicator_id="supplies-stock-value",
+        value_unit="currency",
+        branch_value_aggregation="auto",
+        branch_goals={
+            "01": {
+                "goal_value": 2_500_000.0,
+                "goal_periodicity": "monthly",
+                "goal_mode": "standard",
+                "monthly_targets": [],
+            },
+            "02": {
+                "goal_value": 11_000_000.0,
+                "goal_periodicity": "monthly",
+                "goal_mode": "standard",
+                "monthly_targets": [],
+            },
+        },
+    )
+    mapped = use_case.map_indicator(
+        indicator=stock,
+        catalog_item=catalog,
+        start_date="01-09-2026",
+        end_date="10-09-2026",
+        competence="2026-09",
+    )
+    assert mapped["goal_value"] == 13_500_000.0
+    assert mapped["reference_goal"] == 13_500_000.0
+    assert mapped["comparable_goal"] == 13_500_000.0
+    assert mapped["comparable_goal"] == mapped["reference_goal"]
 
 
 def test_get_dashboard_department_indicators_returns_none_when_missing() -> None:

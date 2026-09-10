@@ -70,6 +70,37 @@ def test_pick_comparable_goal_branch_and_consolidated():
     assert _pick_comparable_goal({}, branch="01") is None
 
 
+def test_metrics_by_kpi_prefers_si_top_level_triad_for_stock():
+    delpi = MagicMock()
+    delpi.get.return_value = {
+        "item": {
+            "indicators": [
+                {
+                    "indicator_id": "supplies-stock-value",
+                    "goal_value": 13_500_000.0,
+                    "comparable_goal": 13_500_000.0,
+                    "reference_goal": 13_500_000.0,
+                    "goals": {"01": 2_500_000.0, "02": 11_000_000.0, "consolidated": 13_500_000.0},
+                    "score": 3.04,
+                    "performance_direction": "lower_is_better",
+                    "goal_mode": "standard",
+                },
+            ]
+        }
+    }
+    row = StrategicIndicatorsGateway(delpi=delpi).metrics_by_kpi(
+        access_token="t",
+        branch=None,
+        start_date="2026-09-01",
+        end_date="2026-09-10",
+    )["KPI-STOCK-VALUE"]
+    assert row["goal_value"] == 13_500_000.0
+    assert row["comparable_goal"] == 13_500_000.0
+    assert row["reference_goal"] == 13_500_000.0
+    assert row["comparable_goal"] == row["reference_goal"]
+    assert row["performance_direction"] == "lower_is_better"
+
+
 def test_metrics_by_kpi_closed_month_comparable_may_equal_reference():
     delpi = MagicMock()
     delpi.get.return_value = {

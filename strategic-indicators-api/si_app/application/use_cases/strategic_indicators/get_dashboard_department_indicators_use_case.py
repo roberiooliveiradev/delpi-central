@@ -89,14 +89,66 @@ class GetDashboardDepartmentIndicatorsUseCase:
         end_date: str | None,
         competence: str | None,
     ) -> dict:
+        goals = self._calculator.resolve_goals_payload_for_calculated(
+            calculated=indicator,
+            catalog_item=catalog_item,
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
+        presentation_goal_value = self._presentation_goal_value(
+            indicator=indicator,
+            catalog_item=catalog_item,
+        )
+        goal_mode = getattr(indicator, "goal_mode", "standard")
+        reference_goal = self._calculator.resolve_reference_goal(
+            goal_value=presentation_goal_value,
+            goal_periodicity=indicator.goal_periodicity or "monthly",
+            goal_mode=goal_mode,
+            monthly_targets=getattr(indicator, "monthly_targets", None) or [],
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
+        comparable_goal = None
+        if isinstance(goals, dict):
+            for key in ("consolidated", "01", "02"):
+                if goals.get(key) is not None:
+                    try:
+                        comparable_goal = float(goals[key])
+                        break
+                    except (TypeError, ValueError):
+                        continue
+            if comparable_goal is None:
+                for value in goals.values():
+                    try:
+                        if value is not None:
+                            comparable_goal = float(value)
+                            break
+                    except (TypeError, ValueError):
+                        continue
+
+        period_flags = self._calculator.resolve_goal_period_flags(
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+            value_unit=getattr(indicator, "value_unit", None),
+            indicator_id=indicator.indicator_id,
+        )
+
         return {
             "indicator_id": indicator.indicator_id,
             "name": indicator.indicator_name,
             "weight_pct": indicator.weight_pct,
             "goal_label": indicator.goal_label,
-            "goal_value": indicator.goal_value,
+            "goal_value": presentation_goal_value,
+            "comparable_goal": comparable_goal,
+            "reference_goal": reference_goal,
             "goal_periodicity": indicator.goal_periodicity,
-            "goal_mode": getattr(indicator, "goal_mode", "standard"),
+            "goal_mode": goal_mode,
+            "goal_aggregation": period_flags.get("goal_aggregation"),
+            "goal_period_kind": period_flags.get("goal_period_kind"),
+            "goal_period_partial": period_flags.get("goal_period_partial"),
             "performance_direction": getattr(
                 indicator,
                 "performance_direction",
@@ -111,16 +163,52 @@ class GetDashboardDepartmentIndicatorsUseCase:
                 value=indicator.value,
                 department_id=indicator.department_id,
             ),
-            "goals": self._calculator.resolve_goals_payload_for_calculated(
-                calculated=indicator,
-                catalog_item=catalog_item,
-                start_date=start_date,
-                end_date=end_date,
-                competence=competence,
-            ),
+            "goals": goals,
             "classification": indicator.classification,
             "value_unit": getattr(indicator, "value_unit", None),
             "value_prefix": getattr(indicator, "value_prefix", None),
             "value_suffix": getattr(indicator, "value_suffix", None),
             "value_decimals": int(getattr(indicator, "value_decimals", 2) or 2),
         }
+
+    def _presentation_goal_value(self, *, indicator, catalog_item=None) -> float | None:
+        """Cadastral Meta mês for UI: rollup 01+02 when branch goals exist."""
+        from si_app.shared.consolidated_value_aggregation import (
+            aggregate_branch_goal_values,
+        )
+        from si_app.shared.goal_scope import BRANCH_UNIT_CODES
+
+        branch_goals = None
+        if catalog_item is not None:
+            branch_goals = getattr(catalog_item, "branch_goals", None)
+        if not branch_goals:
+            branch_goals = getattr(indicator, "branch_goals", None)
+        if isinstance(branch_goals, dict) and branch_goals:
+            raw_values = [
+                float(branch_goals[code]["goal_value"])
+                for code in BRANCH_UNIT_CODES
+                if branch_goals.get(code) is not None
+                and branch_goals[code].get("goal_value") is not None
+            ]
+            if len(raw_values) >= 2:
+                rolled = aggregate_branch_goal_values(
+                    raw_values,
+                    branch_value_aggregation=(
+                        getattr(catalog_item, "branch_value_aggregation", None)
+                        if catalog_item is not None
+                        else getattr(indicator, "branch_value_aggregation", None)
+                    ),
+                    value_unit=(
+                        getattr(catalog_item, "value_unit", None)
+                        if catalog_item is not None
+                        else getattr(indicator, "value_unit", None)
+                    ),
+                )
+                if rolled is not None:
+                    return float(rolled)
+            if len(raw_values) == 1:
+                return raw_values[0]
+        try:
+            return float(indicator.goal_value) if indicator.goal_value is not None else None
+        except (TypeError, ValueError):
+            return None

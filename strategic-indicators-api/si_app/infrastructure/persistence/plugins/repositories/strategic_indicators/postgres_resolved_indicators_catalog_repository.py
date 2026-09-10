@@ -25,6 +25,7 @@ from si_app.shared.goal_scope import (
 )
 
 from si_app.shared.consolidated_value_aggregation import (
+    aggregate_branch_goal_values,
     is_source_consolidated_mode,
 )
 
@@ -432,13 +433,29 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
         branch_goals: dict[str, dict],
     ) -> StrategicIndicatorCatalogItem:
         primary_goal = pick_primary_branch_goal(branch_goals)
+        raw_values = [
+            float(branch_goals[code]["goal_value"])
+            for code in ("01", "02")
+            if branch_goals.get(code) is not None
+            and branch_goals[code].get("goal_value") is not None
+        ]
+        rolled = aggregate_branch_goal_values(
+            raw_values,
+            branch_value_aggregation=getattr(item, "branch_value_aggregation", None),
+            value_unit=getattr(item, "value_unit", None),
+        )
+        goal_value = (
+            float(rolled)
+            if rolled is not None
+            else float(primary_goal["goal_value"])
+        )
         return StrategicIndicatorCatalogItem(
             indicator_id=item.indicator_id,
             department_id=item.department_id,
             indicator_name=item.indicator_name,
             weight_pct=item.weight_pct,
             goal_label=format_branch_scoped_goal_label(branch_goals),
-            goal_value=float(primary_goal["goal_value"]),
+            goal_value=goal_value,
             goal_periodicity=primary_goal["goal_periodicity"],
             goal_mode=primary_goal.get("goal_mode", "standard"),
             monthly_targets=primary_goal.get("monthly_targets") or [],

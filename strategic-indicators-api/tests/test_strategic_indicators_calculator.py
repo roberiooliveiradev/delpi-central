@@ -362,6 +362,49 @@ def test_goal_prorata_anti_zero_guard() -> None:
     assert comparable == 0.01
 
 
+def test_stock_value_level_goal_no_day_prorata_or_ytd_sum() -> None:
+    """supplies-stock-value is balance/level: comparable = monthly cadastral."""
+    calculator = StrategicIndicatorsCalculator()
+    monthly = 13_500_000.0
+    partial = calculator.calculate_comparable_goal(
+        goal_value=monthly,
+        goal_periodicity="monthly",
+        start_date="01-09-2026",
+        end_date="10-09-2026",
+        value_unit="currency",
+        indicator_id="supplies-stock-value",
+    )
+    assert partial == monthly
+    # Flow sibling still prorates the same currency amount.
+    flow_partial = calculator.calculate_comparable_goal(
+        goal_value=monthly,
+        goal_periodicity="monthly",
+        start_date="01-09-2026",
+        end_date="10-09-2026",
+        value_unit="currency",
+        indicator_id="supplies-negotiation-savings",
+    )
+    assert flow_partial == round(monthly * (10 / 30), 2)
+    ytd = calculator.calculate_comparable_goal(
+        goal_value=monthly,
+        goal_periodicity="monthly",
+        start_date="01-01-2026",
+        end_date="10-09-2026",
+        value_unit="currency",
+        indicator_id="supplies-stock-value",
+    )
+    assert ytd == monthly
+    closed = calculator.calculate_comparable_goal(
+        goal_value=monthly,
+        goal_periodicity="monthly",
+        start_date="01-08-2026",
+        end_date="31-08-2026",
+        value_unit="currency",
+        indicator_id="supplies-stock-value",
+    )
+    assert closed == monthly
+
+
 def test_closed_month_score_parity_with_full_goal() -> None:
     calculator = StrategicIndicatorsCalculator()
     indicator = StrategicIndicatorCatalogItem(

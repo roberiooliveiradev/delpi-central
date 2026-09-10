@@ -507,6 +507,8 @@ class StrategicIndicatorsCalculator:
                 aggregation=aggregation,
             )
 
+        from si_app.domain.services.goal_temporal_policy import is_level_goal_indicator
+
         return self._calculate_standard_period_goal(
             goal_value=goal_value,
             goal_periodicity=goal_periodicity,
@@ -514,6 +516,7 @@ class StrategicIndicatorsCalculator:
             end_date=end_date,
             competence=competence,
             aggregation=aggregation,
+            level_goal=is_level_goal_indicator(indicator_id),
         )
 
     def resolve_reference_goal(
@@ -653,6 +656,7 @@ class StrategicIndicatorsCalculator:
         end_date: str | None,
         competence: str | None,
         aggregation: str = "sum",
+        level_goal: bool = False,
     ) -> float:
         if goal_value <= 0:
             return 0.0
@@ -664,6 +668,10 @@ class StrategicIndicatorsCalculator:
         )
         if monthly_base is None:
             return round(float(goal_value), 2)
+
+        # Snapshot/balance: comparable = monthly level (no day prorata / multi-month sum).
+        if level_goal:
+            return round(float(monthly_base), 2)
 
         start = self._parse_date(start_date)
         end = self._parse_date(end_date)
