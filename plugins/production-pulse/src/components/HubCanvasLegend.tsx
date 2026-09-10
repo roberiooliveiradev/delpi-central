@@ -1,6 +1,6 @@
 import { Ban, Check, Link2 } from "lucide-react";
 
-import { HelpTooltip } from "../app/productionPulseUi";
+import { PpSectionHintLabel } from "../app/productionPulseUi";
 import { PP_HELP } from "../content/helpTooltips";
 
 type HubCanvasLegendProps = {
@@ -13,11 +13,10 @@ export function HubCanvasLegend({ linkModeActive = false }: HubCanvasLegendProps
     return (
       <div className="pp-hub-legend pp-hub-legend--compact" role="group" aria-label="Legenda do modo vínculo">
         <div className="pp-hub-legend__title-row">
-          <span className="pp-hub-legend__title">{PP_HELP.hub.linkModeTitle}</span>
-          <HelpTooltip
-            content={PP_HELP.hub.edgeModesHint}
-            ariaLabel="Ajuda: modo vínculo"
-            placement="bottom"
+          <PpSectionHintLabel
+            label={PP_HELP.hub.linkModeTitle}
+            hint={PP_HELP.hub.edgeModesHint}
+            className="pp-hub-legend__title"
           />
         </div>
         <span className="pp-hub-legend__item pp-hub-legend__item--compatible">
@@ -36,11 +35,10 @@ export function HubCanvasLegend({ linkModeActive = false }: HubCanvasLegendProps
   return (
     <div className="pp-hub-legend pp-hub-legend--compact" role="group" aria-label="Legenda das conexões">
       <div className="pp-hub-legend__title-row">
-        <span className="pp-hub-legend__title">{PP_HELP.hub.edgeModesTitle}</span>
-        <HelpTooltip
-          content={PP_HELP.hub.edgeModesHint}
-          ariaLabel="Ajuda: modos de conexão no mapa"
-          placement="bottom"
+        <PpSectionHintLabel
+          label={PP_HELP.hub.edgeModesTitle}
+          hint={PP_HELP.hub.edgeModesHint}
+          className="pp-hub-legend__title"
         />
       </div>
       <span className="pp-hub-legend__item pp-hub-legend__item--solid">

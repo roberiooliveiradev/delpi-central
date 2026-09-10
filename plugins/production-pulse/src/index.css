@@ -2508,7 +2508,7 @@
 .pp-hub-legend__title-row {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0;
 }
 
 .pp-map-overlay-actions button {
