@@ -1,6 +1,8 @@
-"""Wave-2 SEARCH_ACTIONS when goal coverage mismatches after execute.
+"""Planner-driven enrichment pós-execute via Goal Coverage (E5.S4).
 
-Excludes already-executed actionIds. No path/operationId branches.
+Propõe action adicional somente entre allowed candidates quando há goal
+não coberto (mismatch/pending). Não amplia permissions; não faz fan-out
+por entity/scope map. Dedupa actionId já tentado e respeita budget.
 """
 
 from __future__ import annotations
@@ -8,13 +10,19 @@ from __future__ import annotations
 from typing import Any
 
 from app.domain.models.action_plan import ActionPlan, ActionPlanGoal, ActionPlanStep
-from app.domain.services.chat_goal_coverage_service import ChatGoalCoverageService
+from app.domain.services.chat_goal_coverage_service import (
+    ChatGoalCoverageService,
+    GoalCoverageReport,
+)
 from app.domain.services.openapi_tool_routing_content_service import (
     OpenApiToolRoutingContentService,
 )
 from app.domain.services.openapi_when_not_to_use_guidance_service import (
     OpenApiWhenNotToUseGuidanceService,
 )
+
+# Outcomes que justificam enrichment adicional (não covered / não resolvível só com o resultado atual).
+_UNCOVERED_STATUSES = frozenset({"mismatch", "pending"})
 
 
 class ChatGoalCoverageRetryService:
@@ -50,9 +58,15 @@ class ChatGoalCoverageRetryService:
             message=message,
             actions_by_id=catalog,
         )
-        if not report.mismatch_goal_ids and not report.pending_goal_ids:
+        uncovered = cls._uncovered_goal_ids(report)
+        if not uncovered:
             return []
-        query = cls._search_query(report, plan, message)
+        if report.complete:
+            return []
+        budget = cls._retry_budget(remaining_slots)
+        if budget < 1:
+            return []
+        query = cls._search_query(report, plan, message, uncovered=uncovered)
         remaining_allowed = [item for item in allowed if item not in tried]
         if not remaining_allowed:
             return []
@@ -62,18 +76,69 @@ class ChatGoalCoverageRetryService:
             catalog=catalog,
             retriever=retriever,
         )
-        picked = candidates[: max(1, remaining_slots)]
+        justification = cls._justification(report, uncovered=uncovered, query=query)
         parameters = cls._parameters_from_previous(calls)
         follow_ups: list[dict[str, Any]] = []
-        for action in picked:
+        seen: set[str] = set(tried)
+        for action in candidates:
             action_id = str(action.get("actionId") or action.get("action_id") or "").strip()
-            if not action_id or action_id in tried:
+            if not action_id or action_id in seen:
                 continue
-            follow_ups.append(cls._to_tool_call(action, parameters=parameters, query=query))
-            tried.add(action_id)
-            if len(follow_ups) >= remaining_slots:
+            if action_id not in remaining_allowed:
+                continue
+            follow_ups.append(
+                cls._to_tool_call(
+                    action,
+                    parameters=parameters,
+                    query=query,
+                    justification=justification,
+                )
+            )
+            seen.add(action_id)
+            if len(follow_ups) >= budget:
                 break
         return follow_ups
+
+    @classmethod
+    def _uncovered_goal_ids(cls, report: GoalCoverageReport) -> tuple[str, ...]:
+        wanted: list[str] = []
+        for result in report.results:
+            if result.status in _UNCOVERED_STATUSES and result.goal_id not in wanted:
+                wanted.append(result.goal_id)
+        for goal_id in list(report.mismatch_goal_ids) + list(report.pending_goal_ids):
+            if goal_id and goal_id not in wanted:
+                wanted.append(goal_id)
+        return tuple(wanted)
+
+    @classmethod
+    def _retry_budget(cls, remaining_slots: int) -> int:
+        cap = OpenApiToolRoutingContentService.int_setting(
+            "goalCoverage",
+            "maxRetryActionsPerTurn",
+            default=2,
+        )
+        cap = max(0, int(cap))
+        return max(0, min(int(remaining_slots), cap if cap > 0 else int(remaining_slots)))
+
+    @classmethod
+    def _justification(
+        cls,
+        report: GoalCoverageReport,
+        *,
+        uncovered: tuple[str, ...],
+        query: str,
+    ) -> dict[str, Any]:
+        statuses = {
+            result.goal_id: result.status
+            for result in report.results
+            if result.goal_id in uncovered
+        }
+        return {
+            "enrichmentReason": "goal_coverage_gap",
+            "uncoveredGoalIds": list(uncovered),
+            "uncoveredStatuses": statuses,
+            "coverageQuery": query,
+        }
 
     @classmethod
     def _plan_from_tool_calls(
@@ -107,8 +172,15 @@ class ChatGoalCoverageRetryService:
         )
 
     @classmethod
-    def _search_query(cls, report, plan: ActionPlan, message: str) -> str:
-        wanted = set(report.mismatch_goal_ids) | set(report.pending_goal_ids)
+    def _search_query(
+        cls,
+        report: GoalCoverageReport,
+        plan: ActionPlan,
+        message: str,
+        *,
+        uncovered: tuple[str, ...],
+    ) -> str:
+        wanted = set(uncovered)
         for goal in plan.goals:
             if goal.goal_id in wanted and str(goal.intent or "").strip():
                 return str(goal.intent).strip()
@@ -190,12 +262,26 @@ class ChatGoalCoverageRetryService:
         *,
         parameters: dict[str, Any],
         query: str,
+        justification: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         action_id = str(action.get("actionId") or action.get("action_id") or "").strip()
         reason = OpenApiToolRoutingContentService.get(
             "selectionReasons",
             "openapiFirstPlan",
         )
+        meta: dict[str, Any] = {
+            "selectionMode": "openapi_first",
+            "goalCoverageRetry": True,
+            "compositionRole": "coverage_retry",
+            "actionId": action_id,
+            "providerKey": action.get("providerKey"),
+            "operationId": action.get("operationId") or action.get("operation_id"),
+            "path": action.get("path"),
+            "method": action.get("method"),
+            "coverageQuery": query,
+        }
+        if isinstance(justification, dict):
+            meta.update(justification)
         return {
             "name": "execute_external_action",
             "arguments": {
@@ -203,14 +289,5 @@ class ChatGoalCoverageRetryService:
                 "parameters": dict(parameters),
             },
             "reason": reason,
-            "metadata": {
-                "selectionMode": "openapi_first",
-                "goalCoverageRetry": True,
-                "actionId": action_id,
-                "providerKey": action.get("providerKey"),
-                "operationId": action.get("operationId") or action.get("operation_id"),
-                "path": action.get("path"),
-                "method": action.get("method"),
-                "coverageQuery": query,
-            },
+            "metadata": meta,
         }

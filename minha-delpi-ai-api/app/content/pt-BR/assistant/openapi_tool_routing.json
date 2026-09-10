@@ -171,7 +171,8 @@
     "mismatchOnWhenNotToUse": true,
     "requireWhenToUseMatchWhenQuotesExist": true,
     "emptyPayloadNotFulfilled": true,
-    "partialPaginationEnabled": true
+    "partialPaginationEnabled": true,
+    "maxRetryActionsPerTurn": 2
   },
   "decomposition": {
     "maxSubtasks": 4,

@@ -1,8 +1,8 @@
 # Plano 05 — Composition/enrichment -> planejamento orientado por goals e budget
 
 **Prioridade:** P1  
-**Status execução:** Onda E · S1–S3 **ATENDIDO** · próxima **E5.S4**  
-**Evidência:** [`../evidence/e5-s1-composition-inventory.md`](../evidence/e5-s1-composition-inventory.md) · [`../evidence/e5-s2-composition-baseline.md`](../evidence/e5-s2-composition-baseline.md) · [`../evidence/e5-s3-goal-coverage-contract.md`](../evidence/e5-s3-goal-coverage-contract.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda E · S1–S4 **ATENDIDO** · próxima **E5.S5**  
+**Evidência:** [`../evidence/e5-s1-composition-inventory.md`](../evidence/e5-s1-composition-inventory.md) · [`../evidence/e5-s2-composition-baseline.md`](../evidence/e5-s2-composition-baseline.md) · [`../evidence/e5-s3-goal-coverage-contract.md`](../evidence/e5-s3-goal-coverage-contract.md) · [`../evidence/e5-s4-planner-driven-enrichment.md`](../evidence/e5-s4-planner-driven-enrichment.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** consultas compostas e enriquecimentos devem ser escolhidos pelo objetivo real do usuário, pelos dados já disponíveis e pelas actions autorizadas, não por listas fixas de `routeIds` e mapas `scope -> route`.
 
 ## CURRENT
@@ -72,13 +72,15 @@ Medir tool count, task success, redundancy, latency e partial-failure behavior.
 
 **Evidência:** [`../evidence/e5-s3-goal-coverage-contract.md`](../evidence/e5-s3-goal-coverage-contract.md) · harness `test_e5_s3_goal_coverage_contract.py`
 
-### E5.S4 — Planner-driven enrichment
+### E5.S4 — Planner-driven enrichment — **ATENDIDO**
 
 **Fazer:** permitir que planner/critic proponha action adicional somente entre allowed candidates, justificando qual goal não coberto resolve.
 
 **Não fazer:** auto-fan-out só porque entity pertence a uma lista.
 
 **Teste:** extra action necessária vs desnecessária; max budget; same action duplicate suppression.
+
+**Evidência:** [`../evidence/e5-s4-planner-driven-enrichment.md`](../evidence/e5-s4-planner-driven-enrichment.md) · harness `test_e5_s4_planner_driven_enrichment.py`
 
 ### E5.S5 — Department composition cutover
 
