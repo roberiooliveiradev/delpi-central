@@ -207,6 +207,48 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/AdminSidePanel.tsx")).toMatch(/PpWorkbenchDialog/);
   });
 
+  it("Single Surface Principle: popovers bare + surface; sem panelRef no filho; CSS sem chrome paralelo", () => {
+    const entityLayers = readRelative("components/EntityContextLayers.tsx");
+    const healthChips = readRelative("components/HubOtaKpiChips.tsx");
+    const css = readRelative("index.css");
+
+    for (const source of [entityLayers, healthChips]) {
+      expect(source).toMatch(/variant=["']bare["']/);
+      expect(source).toMatch(/delpi-ui-popover-surface/);
+      expect(source).toMatch(/density=["']compact["']/);
+      expect(source).not.toMatch(/<\w[^>]*\sref=\{panelRef\}/);
+    }
+
+    expect(entityLayers).toMatch(/MoreHorizontal/);
+    expect(entityLayers).toMatch(/PpIconButton/);
+    expect(entityLayers).toMatch(/role=["']menu["']/);
+    expect(entityLayers).toMatch(/Cpu/);
+    expect(entityLayers).toMatch(/FileCode/);
+
+    const sharedPopoverLayout = css.match(
+      /\.pp-entity-summary,\s*\.pp-entity-menu\s*\{[^}]*\}/,
+    )?.[0];
+    const healthBlock = css.match(/\.pp-hub-health-popover\s*\{[^}]*\}/)?.[0];
+    const collapsedBlock = css.match(
+      /\.pp-map-overlay-stack--collapsed\s*\{[^}]*\}/,
+    )?.[0];
+
+    expect(sharedPopoverLayout).toBeTruthy();
+    expect(healthBlock).toBeTruthy();
+    for (const block of [sharedPopoverLayout!, healthBlock!]) {
+      expect(block).not.toMatch(/background\s*:/);
+      expect(block).not.toMatch(/box-shadow\s*:/);
+    }
+
+    expect(collapsedBlock).toBeTruthy();
+    expect(collapsedBlock!).toMatch(/background:\s*transparent/);
+    expect(collapsedBlock!).toMatch(/box-shadow:\s*none/);
+    expect(collapsedBlock!).toMatch(/border:\s*0/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(
+      /pp-map-overlay-stack--collapsed/,
+    );
+  });
+
   it("botões do hero usam PpHintAction + PP_HELP (sem ação órfã)", () => {
     const heroPages = [
       "pages/PanelPage.tsx",
