@@ -6,7 +6,9 @@
   ],
   "authorityShadow": {
     "enabled": true,
-    "cutoverEnabled": true
+    "cutoverEnabled": true,
+    "messageSegmentTermsRole": "observer",
+    "deleteDeferredToWaveH": true
   },
   "followUpTypes": {
     "shipping": {

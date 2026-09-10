@@ -1,8 +1,8 @@
 # Plano 03 — Follow-up, refinement e argument binding generalizados
 
 **Prioridade:** P0  
-**Status execução:** Onda D · **EM_ANDAMENTO** · E3.S1–S7 **ATENDIDO** · próxima = E3.S8 (persist/reload + cleanup)  
-**Evidência:** [`../evidence/e3-s1-multi-turn-state-inventory.md`](../evidence/e3-s1-multi-turn-state-inventory.md) · [`../evidence/e3-s2-follow-up-baseline.md`](../evidence/e3-s2-follow-up-baseline.md) · [`../evidence/e3-s3-turn-refinement-contract.md`](../evidence/e3-s3-turn-refinement-contract.md) · [`../evidence/e3-s4-schema-driven-argument-binder.md`](../evidence/e3-s4-schema-driven-argument-binder.md) · [`../evidence/e3-s5-schema-driven-group-by.md`](../evidence/e3-s5-schema-driven-group-by.md) · [`../evidence/e3-s6-pagination-filter-fast-path.md`](../evidence/e3-s6-pagination-filter-fast-path.md) · [`../evidence/e3-s7-follow-up-routing-cutover.md`](../evidence/e3-s7-follow-up-routing-cutover.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda D · **ATENDIDO_PARCIAL** · E3.S1–S7 OK · E3.S8 parcial (DELETE terms → Onda H)  
+**Evidência:** [`../evidence/e3-s1-multi-turn-state-inventory.md`](../evidence/e3-s1-multi-turn-state-inventory.md) · [`../evidence/e3-s2-follow-up-baseline.md`](../evidence/e3-s2-follow-up-baseline.md) · [`../evidence/e3-s3-turn-refinement-contract.md`](../evidence/e3-s3-turn-refinement-contract.md) · [`../evidence/e3-s4-schema-driven-argument-binder.md`](../evidence/e3-s4-schema-driven-argument-binder.md) · [`../evidence/e3-s5-schema-driven-group-by.md`](../evidence/e3-s5-schema-driven-group-by.md) · [`../evidence/e3-s6-pagination-filter-fast-path.md`](../evidence/e3-s6-pagination-filter-fast-path.md) · [`../evidence/e3-s7-follow-up-routing-cutover.md`](../evidence/e3-s7-follow-up-routing-cutover.md) · [`../evidence/e3-s8-persist-reload-cleanup.md`](../evidence/e3-s8-persist-reload-cleanup.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** continuidade conversacional, paginação, filtros, group-by e complementação de argumentos devem funcionar a partir do estado estruturado da conversa e do schema da action, não de substrings de rota ou frases cadastradas.
 
 ## CURRENT
@@ -130,11 +130,15 @@ Medir R3/R6/R7/R8/R9/R11.
 
 **Teste:** follow-up entre actions irmãs (`preferredRouteId`), troca de domínio e referência a resultado não imediatamente anterior (topic switch sem segment). ✅
 
-### E3.S8 — Persist/reload e cleanup
+### E3.S8 — Persist/reload e cleanup — **ATENDIDO_PARCIAL**
 
 **Fazer:** materializar metadados necessários para não reconsultar LLM só para reconstruir títulos/action refs; remover routeSegments/message terms mortos.
 
-**Teste:** F5, replay, historical turn, send/stream/simulate.
+**Feito:** harness de continuidade F5 via histórico; `deleteDeferredToWaveH` nos terms observer. Evidência [`../evidence/e3-s8-persist-reload-cleanup.md`](../evidence/e3-s8-persist-reload-cleanup.md).
+
+**Não feito:** DELETE de `messageSegmentTerms` (Onda H); Postgres lastAction.
+
+**Teste:** F5/replay via previous_messages; historical turn. ✅ parcial
 
 ## Invariantes
 
