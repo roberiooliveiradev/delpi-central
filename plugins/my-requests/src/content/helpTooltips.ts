@@ -58,9 +58,15 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   detail: {
     section:
-      "Resumo da solicitação: tipo, status, filial e solicitante. As ações possíveis aparecem conforme o andamento atual.",
+      "Resumo do que foi pedido: tipo, status, filial e solicitante. Os dados específicos do tipo e os documentos do pedido ficam nesta mesma fase.",
+    requestPhase:
+      "Tudo o que foi informado ao abrir a solicitação — dados gerais, formulário do tipo e documentos anexados ao pedido.",
+    servicePhase:
+      "Área de atendimento: progresso, ações disponíveis, comunicação e documentos gerados na execução.",
+    historyPhase:
+      "Registro cronológico do que aconteceu na solicitação. A linha do tempo só observa fatos; não é o lugar para conversar.",
     actions:
-      "Use os botões para avançar o atendimento. Devolver e cancelar pedem um motivo antes de confirmar.",
+      "Use os botões para avançar o atendimento. Devolver e cancelar pedem um motivo antes de confirmar. Editar abre o formulário para corrigir quando a solicitação foi devolvida.",
     invoicePayload:
       "Resumo dos dados da emissão (destinatário, tipo de NF, frete e itens) quando a solicitação é de nota fiscal.",
     type: "Qual formulário e fluxo esta solicitação segue.",
@@ -69,7 +75,10 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     requester: "Quem abriu esta solicitação.",
     createdAt: "Data e hora em que a solicitação foi registrada.",
     progress:
-      "Acompanhe as etapas do atendimento e o percentual de andamento. Se estiver aguardando correção, isso aparece em destaque.",
+      "Acompanhe as etapas do atendimento e o percentual de andamento. Em telas menores, use «Ver etapas». O percentual e o texto da etapa atual vêm da API.",
+    returnReason:
+      "Explicação de quem atendeu sobre o que precisa ser corrigido. Use «Corrigir dados» para abrir o formulário e, depois, Reenviar na barra de ações.",
+    cancelReason: "Justificativa registrada quando a solicitação foi cancelada.",
     party: "Cliente ou fornecedor que receberá a nota fiscal.",
     invoiceType: "Tipo da nota escolhido no pedido de emissão.",
     freight: "Quem assume o frete (CIF ou FOB) e dados relacionados.",
@@ -80,13 +89,17 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
       "Histórico do que aconteceu nesta solicitação: criação, mudanças de etapa, comentários e envios de arquivo.",
   },
   comments: {
-    section: "Converse sobre a solicitação com quem acompanha o atendimento.",
+    section:
+      "Comunicação durante o atendimento entre quem pediu e quem executa. Não substitui a linha do tempo.",
     newComment: "Escreva uma mensagem para quem acompanha ou atende esta solicitação.",
   },
   attachments: {
     section:
-      "Arquivos que ajudam a explicar ou complementar o pedido. Quem acompanha a solicitação pode baixar os documentos.",
-    upload: "Envie PDF ou imagem para complementar a solicitação.",
+      "Arquivos que ajudam a explicar ou complementar o pedido. Depois da criação, só dá para adicionar ou remover quando a solicitação estiver devolvida para ajuste.",
+    create:
+      "Anexe PDF ou imagem ao criar a solicitação. Os arquivos são enviados logo após o registro do pedido.",
+    upload:
+      "Envie PDF ou imagem para complementar a solicitação (disponível apenas quando devolvida para ajuste).",
   },
   artifacts: {
     section:

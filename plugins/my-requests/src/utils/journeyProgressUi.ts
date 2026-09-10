@@ -37,6 +37,23 @@ export function journeyBarSummary(progress: JourneyProgress): string | undefined
   return undefined;
 }
 
+/**
+ * Compact tracker copy: current stage position (not count of complete steps),
+ * so it does not contradict journey.percentage from the API.
+ */
+export function journeyTrackerCompactSummary(progress: JourneyProgress): string {
+  const stages = progress.stages || [];
+  const total = stages.length;
+  if (total === 0) return "Etapas do atendimento";
+  let index = stages.findIndex((stage) => stage.id === progress.current_stage_id);
+  if (index < 0) {
+    index = stages.findIndex((stage) => stage.state === "current");
+  }
+  if (index < 0) index = 0;
+  const label = stages[index]?.label || "—";
+  return `Etapa ${index + 1} de ${total} · ${label}`;
+}
+
 export function statusBadgeVariant(
   status: string,
   outcome?: JourneyProgress["outcome"] | null,

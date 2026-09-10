@@ -44,6 +44,13 @@ class InMemoryFileRepository(FileRepositoryPort):
         items.sort(key=lambda row: row.created_at or _utcnow(), reverse=True)
         return [deepcopy(item) for item in items]
 
+    def delete_attachment(self, attachment_id: UUID | str) -> bool:
+        key = str(attachment_id)
+        if key not in self.attachments:
+            return False
+        del self.attachments[key]
+        return True
+
     def create_artifact(self, artifact: RequestArtifact) -> RequestArtifact:
         stored = deepcopy(artifact)
         stored.created_at = stored.created_at or _utcnow()

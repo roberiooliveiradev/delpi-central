@@ -147,4 +147,30 @@ export async function httpPatch<T>(
   return parseJson<T>(response);
 }
 
+export async function httpDelete<T>(
+  url: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: authHeaders(),
+    signal: options.signal,
+  });
+  if (!response.ok) {
+    throw new ApiClientError(response.status, await parseError(response));
+  }
+  if (response.status === 204) {
+    return undefined as T;
+  }
+  const text = await readBodyText(response);
+  if (!text.trim()) {
+    return undefined as T;
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new ApiClientError(response.status, "Resposta inválida da API (não é JSON).");
+  }
+}
+
 export { DELPI_CALLER_APP };

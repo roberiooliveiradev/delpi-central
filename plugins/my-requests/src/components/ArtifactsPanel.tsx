@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
-import { ActionButton, FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel } from "@delpi/plugin-ui/index";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   artifactDownloadUrl,
+  downloadArtifactBlob,
   listArtifacts,
   uploadArtifact,
 } from "../api/requestsApi";
@@ -13,6 +14,7 @@ import {
 } from "../content/presentationLabels";
 import type { RequestArtifact } from "../types/requests";
 import {
+  MyRequestsAttachmentPreviewStrip,
   MyRequestsEmptyState,
   MyRequestsFileDropzone,
   MyRequestsSectionCard,
@@ -26,6 +28,19 @@ type ArtifactsPanelProps = {
   refreshKey?: number;
 };
 
+function isImageArtifact(item: RequestArtifact): boolean {
+  const ct = (item.content_type || "").toLowerCase();
+  if (ct.startsWith("image/")) return true;
+  return /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(item.file_name || "");
+}
+
+function formatBytes(value: number | null | undefined): string | undefined {
+  if (value == null || value <= 0) return undefined;
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export function ArtifactsPanel({
   requestId,
   canUpload = false,
@@ -35,6 +50,8 @@ export function ArtifactsPanel({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [artifactKind, setArtifactKind] = useState<string>("generic");
+  const [thumbUrls, setThumbUrls] = useState<Record<string, string>>({});
+  const thumbUrlsRef = useRef<Record<string, string>>({});
 
   const reload = useCallback(
     async (signal?: AbortSignal) => {
@@ -51,6 +68,64 @@ export function ArtifactsPanel({
     });
     return () => ac.abort();
   }, [reload, refreshKey]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const clearThumbs = () => {
+      for (const url of Object.values(thumbUrlsRef.current)) {
+        URL.revokeObjectURL(url);
+      }
+      thumbUrlsRef.current = {};
+      setThumbUrls({});
+    };
+
+    if (items.length === 0) {
+      clearThumbs();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void (async () => {
+      const next: Record<string, string> = {};
+      for (const item of items) {
+        if (!isImageArtifact(item)) continue;
+        try {
+          const blob = await downloadArtifactBlob(item.id);
+          if (cancelled) return;
+          next[item.id] = URL.createObjectURL(blob);
+        } catch {
+          // icon fallback
+        }
+      }
+      if (cancelled) {
+        for (const url of Object.values(next)) URL.revokeObjectURL(url);
+        return;
+      }
+      clearThumbs();
+      thumbUrlsRef.current = next;
+      setThumbUrls(next);
+    })();
+
+    return () => {
+      cancelled = true;
+      clearThumbs();
+    };
+  }, [items]);
+
+  const stripItems = useMemo(
+    () =>
+      items.map((item) => ({
+        id: item.id,
+        fileName: item.file_name,
+        contentType: item.content_type,
+        previewUrl: thumbUrls[item.id] || null,
+        detail: [item.kind ? artifactKindLabel(item.kind) : null, formatBytes(item.size_bytes)]
+          .filter(Boolean)
+          .join(" · "),
+      })),
+    [items, thumbUrls],
+  );
 
   async function onFilesSelected(files: File[]) {
     if (!canUpload || !files.length || busy) return;
@@ -117,20 +192,13 @@ export function ArtifactsPanel({
           />
         ) : null}
         {items.length > 0 ? (
-          <ul className="my-requests-domain-list">
-            {items.map((item) => (
-              <li key={item.id}>
-                <ActionButton
-                  href={artifactDownloadUrl(item.id)}
-                  title={`Baixar ${item.file_name}`}
-                  variant="link"
-                >
-                  {item.file_name}
-                </ActionButton>
-                {item.kind ? ` (${artifactKindLabel(item.kind)})` : null}
-              </li>
-            ))}
-          </ul>
+          <MyRequestsAttachmentPreviewStrip
+            mode="preview"
+            items={stripItems}
+            onOpen={(item) => {
+              window.open(artifactDownloadUrl(item.id), "_blank", "noopener,noreferrer");
+            }}
+          />
         ) : null}
       </div>
     </MyRequestsSectionCard>

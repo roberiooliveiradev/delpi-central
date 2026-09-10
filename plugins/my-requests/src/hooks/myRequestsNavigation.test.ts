@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  myRequestsEditPath,
   myRequestsNewPath,
   myRequestsPath,
   navigateMyRequestsPath,
@@ -48,6 +49,10 @@ describe("navigateMyRequestsPath", () => {
     expect(myRequestsPath({ requestId: "abc" })).toBe(
       "/apps/my-requests/requests/abc",
     );
+  });
+
+  it("monta path de edição", () => {
+    expect(myRequestsEditPath("abc")).toBe("/apps/my-requests/requests/abc/edit");
   });
 
   it("monta /new?type= para deep link do formulário", () => {

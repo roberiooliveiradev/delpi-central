@@ -34,6 +34,11 @@ export function myRequestsPath(
   return `${BASE}/${route}`;
 }
 
+/** Edit surface for returned requests: `/requests/:id/edit`. */
+export function myRequestsEditPath(requestId: string): string {
+  return `${BASE}/requests/${encodeURIComponent(requestId)}/edit`;
+}
+
 /** `/new` or `/new?type=<code>` (canonical deep link for type forms). */
 export function myRequestsNewPath(typeCode?: string): string {
   const code = String(typeCode || "").trim();

@@ -534,6 +534,41 @@ declare module "@delpi/plugin-ui/index" {
     labels: FileDropzoneLabels;
   }): ComponentType<DashboardFileDropzoneProps>;
 
+  export type AttachmentPreviewStripMode = "preview" | "manage";
+  export type AttachmentPreviewStripItem = {
+    id: string;
+    fileName: string;
+    contentType?: string | null;
+    previewUrl?: string | null;
+    detail?: string;
+    busy?: boolean;
+  };
+  export type AttachmentPreviewStripClassNames = Record<string, string>;
+  export type AttachmentPreviewStripLabels = {
+    empty: string;
+    openAriaLabel: (fileName: string) => string;
+    removeAriaLabel: (fileName: string) => string;
+  };
+  export type DashboardAttachmentPreviewStripProps = {
+    items: AttachmentPreviewStripItem[];
+    onOpen: (item: AttachmentPreviewStripItem) => void;
+    mode?: AttachmentPreviewStripMode;
+    onRemove?: (item: AttachmentPreviewStripItem) => void;
+    heading?: ReactNode;
+    emptyMessage?: string;
+    className?: string;
+    labels?: Partial<AttachmentPreviewStripLabels>;
+  };
+
+  export function attachmentPreviewStripBemClasses(
+    prefix: string,
+  ): AttachmentPreviewStripClassNames;
+
+  export function createDashboardAttachmentPreviewStrip(config: {
+    classNames: AttachmentPreviewStripClassNames;
+    labels: AttachmentPreviewStripLabels;
+  }): ComponentType<DashboardAttachmentPreviewStripProps>;
+
   export type EntityDirectoryOption = {
     id: string;
     label: string;

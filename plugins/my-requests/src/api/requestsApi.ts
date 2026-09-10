@@ -1,4 +1,4 @@
-import { httpGet, httpPatch, httpPost, getAccessToken, DELPI_CALLER_APP } from "./httpClient";
+import { httpDelete, httpGet, httpPost, getAccessToken, DELPI_CALLER_APP } from "./httpClient";
 import {
   getMyRequestsClientId,
   MY_REQUESTS_CLIENT_ID_HEADER,
@@ -159,14 +159,27 @@ export async function transitionRequest(
 export async function patchRequestPayload(
   requestId: string,
   payload: Record<string, unknown>,
-  version?: number,
+  input: { version?: number; idempotencyKey: string },
 ) {
-  return unwrap(
-    await httpPatch<Envelope<RequestDetail>>(`${API_BASE}/requests/${encodeURIComponent(requestId)}`, {
+  const response = await fetch(`${API_BASE}/requests/${encodeURIComponent(requestId)}`, {
+    method: "PATCH",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "Idempotency-Key": input.idempotencyKey,
+      ...clientHeaders(),
+    },
+    body: JSON.stringify({
       payload,
-      version,
+      version: input.version,
     }),
-  );
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Erro HTTP ${response.status}`);
+  }
+  const body = (await response.json()) as Envelope<RequestDetail>;
+  return unwrap(body);
 }
 
 export async function listEvents(requestId: string, options?: { signal?: AbortSignal }) {
@@ -236,6 +249,39 @@ export async function uploadAttachment(requestId: string, file: File, idempotenc
   }
   const body = (await response.json()) as Envelope<Record<string, unknown>>;
   return normalizeAttachment(unwrap(body));
+}
+
+export async function deleteAttachment(attachmentId: string) {
+  return unwrap(
+    await httpDelete<Envelope<{ id: string; deleted: boolean }>>(
+      `${API_BASE}/attachments/${encodeURIComponent(attachmentId)}`,
+    ),
+  );
+}
+
+/** Authenticated blob fetch for image thumbnails (download endpoint). */
+export async function downloadAttachmentBlob(attachmentId: string): Promise<Blob> {
+  const response = await fetch(attachmentDownloadUrl(attachmentId), {
+    method: "GET",
+    headers: clientHeaders(),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Erro HTTP ${response.status}`);
+  }
+  return response.blob();
+}
+
+export async function downloadArtifactBlob(artifactId: string): Promise<Blob> {
+  const response = await fetch(artifactDownloadUrl(artifactId), {
+    method: "GET",
+    headers: clientHeaders(),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Erro HTTP ${response.status}`);
+  }
+  return response.blob();
 }
 
 export async function listArtifacts(requestId: string, options?: { signal?: AbortSignal }) {

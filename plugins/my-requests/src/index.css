@@ -183,7 +183,7 @@
   }
 }
 
-/* Detalhe / atendimento — layout denso (somente composição de página) */
+/* Detalhe — fases Solicitação → Atendimento → Histórico (só composição) */
 .dashboard-my-requests .my-requests-detail-layout {
   display: flex;
   flex-direction: column;
@@ -199,6 +199,34 @@
   gap: 0.5rem 0.75rem;
 }
 
+.dashboard-my-requests .my-requests-detail-phase {
+  display: flex;
+  flex-direction: column;
+  gap: var(--my-requests-section-gap);
+  min-width: 0;
+}
+
+.dashboard-my-requests .my-requests-detail-phase-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--delpi-ui-fg, inherit);
+}
+
+.dashboard-my-requests .my-requests-detail-reason .my-requests-state-banner,
+.dashboard-my-requests .my-requests-detail-reason [class*="state-banner"] {
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.dashboard-my-requests .my-requests-detail-reason-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
 .dashboard-my-requests .my-requests-detail-progress {
   display: flex;
   flex-direction: column;
@@ -206,19 +234,13 @@
   min-width: 0;
 }
 
-.dashboard-my-requests .my-requests-detail-split,
-.dashboard-my-requests .my-requests-detail-history,
-.dashboard-my-requests .my-requests-detail-docs {
+.dashboard-my-requests .my-requests-detail-service-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 1fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(16rem, 1fr);
   gap: var(--my-requests-section-gap);
   align-items: start;
   width: 100%;
   min-width: 0;
-}
-
-.dashboard-my-requests .my-requests-detail-docs {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .dashboard-my-requests .my-requests-upload-field {
@@ -230,9 +252,7 @@
 }
 
 @media (max-width: 1100px) {
-  .dashboard-my-requests .my-requests-detail-split,
-  .dashboard-my-requests .my-requests-detail-history,
-  .dashboard-my-requests .my-requests-detail-docs {
+  .dashboard-my-requests .my-requests-detail-service-grid {
     grid-template-columns: 1fr;
   }
 }

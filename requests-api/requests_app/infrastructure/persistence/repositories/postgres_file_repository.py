@@ -136,6 +136,15 @@ class PostgresFileRepository(FileRepositoryPort):
                 rows = cur.fetchall()
         return [_attachment(dict(row)) for row in rows]
 
+    def delete_attachment(self, attachment_id: UUID | str) -> bool:
+        sql = f"DELETE FROM {_SCHEMA}.request_attachments WHERE id = %s::uuid"
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (str(attachment_id),))
+                deleted = cur.rowcount > 0
+            conn.commit()
+        return deleted
+
     def create_artifact(self, artifact: RequestArtifact) -> RequestArtifact:
         sql = f"""
         INSERT INTO {_SCHEMA}.request_artifacts (

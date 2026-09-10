@@ -10,6 +10,7 @@ import {
   MyRequestsFiltersRow,
   MyRequestsModal,
   MyRequestsFileDropzone,
+  MyRequestsAttachmentPreviewStrip,
   MyRequestsJourneyProgressBar,
   MyRequestsNavigationCard,
   MyRequestsProgressTracker,
@@ -45,6 +46,7 @@ describe("kit-first my-requests", () => {
     expect(typeof MyRequestsCompactPagination).toBe("function");
     expect(typeof MyRequestsModal).toBe("function");
     expect(typeof MyRequestsFileDropzone).toBe("function");
+    expect(typeof MyRequestsAttachmentPreviewStrip).toBe("function");
     expect(typeof MyRequestsProgressTracker).toBe("function");
     expect(typeof MyRequestsJourneyProgressBar).toBe("function");
     expect(typeof MyRequestsAvatar).toBe("function");

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   journeyBarSummary,
+  journeyTrackerCompactSummary,
   mapJourneyStagesToTrackerSteps,
   statusBadgeVariant,
 } from "./journeyProgressUi";
@@ -35,6 +36,24 @@ describe("journeyProgressUi", () => {
       stages: [],
     };
     expect(journeyBarSummary(progress)).toBe("Aguardando informação do solicitante");
+  });
+
+  it("compactSummary usa posição da etapa atual e não contagem de complete", () => {
+    const progress: JourneyProgress = {
+      percentage: 33,
+      current_stage_id: "intake",
+      outcome: "in_progress",
+      summary: null,
+      stages: [
+        { id: "intake", label: "Solicitação criada", state: "current" },
+        { id: "service", label: "Em atendimento", state: "upcoming" },
+        { id: "closure", label: "Conclusão", state: "upcoming" },
+      ],
+    };
+    expect(journeyTrackerCompactSummary(progress)).toBe(
+      "Etapa 1 de 3 · Solicitação criada",
+    );
+    expect(journeyTrackerCompactSummary(progress)).not.toMatch(/0 de 3 concluídas/);
   });
 
   it("escolhe variant de badge coerente com outcome", () => {

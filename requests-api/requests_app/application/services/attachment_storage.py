@@ -119,6 +119,15 @@ class _BaseFileStorage:
             raise StorageError("notFound")
         return path
 
+    def delete_file(self, *, storage_key: str) -> None:
+        try:
+            path = self.resolve_file(storage_key=storage_key)
+        except StorageError as exc:
+            if exc.code == "notFound":
+                return
+            raise
+        path.unlink(missing_ok=True)
+
 
 class AttachmentStorage(_BaseFileStorage):
     kind = "attachment"

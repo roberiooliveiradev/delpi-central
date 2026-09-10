@@ -355,6 +355,20 @@ def download_attachment(attachment_id: UUID):
     )
 
 
+@router.delete("/attachments/{attachment_id}")
+def delete_attachment(attachment_id: UUID, request: Request):
+    user = _current_user()
+    try:
+        data = build_file_use_cases().delete_attachment(
+            user=user,
+            attachment_id=str(attachment_id),
+            actor_client_id=client_id_from_request(request),
+        )
+    except ApplicationError as exc:
+        return _handle(exc)
+    return ok(data, message="Anexo removido.")
+
+
 @router.get("/requests/{request_id}/artifacts")
 def list_artifacts(request_id: UUID):
     user = _current_user()

@@ -27,6 +27,11 @@ from requests_app.domain.services.workflow_engine import WorkflowEngine
 
 logger = logging.getLogger(__name__)
 
+# Create bootstrap (submitted) + returned (needs_information). Staff never manages
+# requester attachments. Detail capability only exposes needs_information.
+_ATTACHMENT_UPLOAD_STATUSES = frozenset({"submitted", "needs_information"})
+_ATTACHMENT_DELETE_STATUS = "needs_information"
+
 
 def _can_view_request(*, request, actor) -> bool:
     is_owner = request.created_by_user_id == actor.user_id
@@ -36,6 +41,16 @@ def _can_view_request(*, request, actor) -> bool:
 def _is_terminal(request, workflow: dict[str, Any]) -> bool:
     terminals = set((workflow or {}).get("terminalStatuses") or [])
     return request.status in terminals
+
+
+def _owner_may_upload_attachment(*, request, actor) -> bool:
+    is_owner = request.created_by_user_id == actor.user_id
+    return bool(is_owner and request.status in _ATTACHMENT_UPLOAD_STATUSES)
+
+
+def _owner_may_delete_attachment(*, request, actor) -> bool:
+    is_owner = request.created_by_user_id == actor.user_id
+    return bool(is_owner and request.status == _ATTACHMENT_DELETE_STATUS)
 
 
 def _safe_realtime(fn, **kwargs) -> None:
@@ -88,10 +103,9 @@ class FileUseCases:
             user=user, request_id=request_id
         )
         workflow = request_type.workflow_definition or {}
-        is_owner = request.created_by_user_id == actor.user_id
         if _is_terminal(request, workflow):
             raise ApplicationError(code="upload_forbidden", status_code=403)
-        if not (is_owner or actor.has_process or actor.has_manage):
+        if not _owner_may_upload_attachment(request=request, actor=actor):
             raise ApplicationError(code="upload_forbidden", status_code=403)
         try:
             stored = self._attachments.save(
@@ -191,6 +205,55 @@ class FileUseCases:
             )
         )
         return path, attachment
+
+    def delete_attachment(
+        self,
+        *,
+        user,
+        attachment_id: str,
+        actor_client_id: str | None = None,
+    ) -> dict[str, Any]:
+        attachment = self._files.get_attachment(attachment_id)
+        if attachment is None:
+            raise ApplicationError(code="attachment_not_found", status_code=404)
+        request, request_type, actor = self._load_request_context(
+            user=user, request_id=str(attachment.request_id)
+        )
+        if not _owner_may_delete_attachment(request=request, actor=actor):
+            raise ApplicationError(code="delete_forbidden", status_code=403)
+        try:
+            self._attachments.delete_file(storage_key=attachment.storage_key)
+        except StorageError as exc:
+            raise ApplicationError(
+                code=exc.code, status_code=422, detail=str(exc)
+            ) from exc
+        deleted = self._files.delete_attachment(attachment_id)
+        if not deleted:
+            raise ApplicationError(code="attachment_not_found", status_code=404)
+        self._files.append_event(
+            RequestEvent(
+                id=uuid4(),
+                request_id=request.id,
+                event_type="attachment_removed",
+                actor_user_id=actor.user_id,
+                actor_name=actor.user_name,
+                payload={
+                    "attachment_id": str(attachment.id),
+                    "name": attachment.original_name,
+                },
+            )
+        )
+        _safe_realtime(
+            notify_request_timeline,
+            reason="attachment.deleted",
+            request_id=str(request.id),
+            request_number=request.request_number,
+            status=request.status,
+            owner_user_id=request.created_by_user_id,
+            actor_user_id=actor.user_id,
+            actor_client_id=actor_client_id,
+        )
+        return {"id": str(attachment.id), "deleted": True}
 
     def upload_artifact(
         self,

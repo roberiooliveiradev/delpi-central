@@ -103,10 +103,12 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), a
 | Admin | `/admin` | SectionCard, DataTable, StatusBadge, StateBanner (gate manage) | **E14 + E20 labels** |
 | Nova (genérico) | `/new` | SectionCard + grid `NavigationCard` (sem Filial no shell); filial só no form do tipo |
 | Wizard NF | `/new` → specialized | **entregue E21:** ProgressTracker, JourneyProgressBar, SectionCard, SegmentToggle, TextField, SelectField, FormActions (footer), ActionButton, StateBanner, DetailFields (seleção/conferência) |
-| Detalhe | `/requests/:id` | ProgressTracker + JourneyProgressBar (`journey_progress`), SectionCard grid, DetailFields+hints, ActionBar, Timeline, Comentários, Documentos (attachments≠artifacts) |
-| Payload NF | detalhe | SectionCard, DetailFields com hint |
-| Comentários | detalhe | SectionCard, FieldLabel+hint, NativeTextArea (se `capabilities.can_comment`) |
-| Documentos | detalhe | SectionCard irmãos: solicitação + atendimento; FileDropzone composto com FieldLabel; SelectField «Tipo de documento» |
+| Detalhe | `/requests/:id` | Fases solicitação→atendimento→histórico; ProgressTracker+JourneyProgressBar; ActionBar; Comments; Attachments/Artifacts com PreviewStrip |
+| Edição | `/requests/:id/edit` | Wizard/form em modo edit (`PATCH` + Idempotency-Key) |
+| Payload NF | detalhe (fase solicitação) | SectionCard, DetailFields com hint |
+| Comentários | detalhe (fase atendimento) | SectionCard, FieldLabel+hint, NativeTextArea (se `capabilities.can_comment`) |
+| Documentos pedido | detalhe (fase solicitação) | AttachmentPreviewStrip; FileDropzone só se `can_upload_attachment` |
+| Documentos atendimento | detalhe (fase atendimento) | PreviewStrip + FileDropzone se `can_upload_artifact` |
 | Schema MP | `/new` type MP | SchemaFormPage + SectionCard + kit fields | **entregue E7** |
 
 ---
@@ -120,7 +122,8 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), a
 | `/new` | WF-03 | **entregue E19** | Grid NavigationCard; filial no form |
 | `/new` + `invoice-issuance` | WF-04 | **entregue E21; responsivo E22** | Wizard 6 passos + ProgressTracker + JourneyProgressBar + Conferência; layout fluido + progresso sequencial |
 | `/new` + `raw-material-creation` | WF-07 | **entregue** | SchemaFormPage |
-| `/requests/:id` | WF-05 | **entregue (layout denso + journey)** | Grid resumo/ações · histórico · documentos; progresso da API |
+| `/requests/:id` | WF-05 | **entregue (jornada IA + edit + anexos)** | Solicitação → Atendimento → Histórico; edit em `/edit` |
+| `/requests/:id/edit` | WF-05b | **entregue** | Corrigir payload + anexos quando devolvida |
 | `/admin` | WF-06 | **entregue E14** | RequestTypes read-only (`manage`) |
 
 ---
@@ -414,30 +417,50 @@ Zero CSS chrome do kit no MFE; layout de página só em `index.css` (`.my-reques
 ```text
 ┌─ PageHeader: REQ-2026-000042                    [StatusBadge] ──────┐
 └─────────────────────────────────────────────────────────────────────┘
-┌─ SectionCard «Progresso do atendimento» ────────────────────────────┐
-│ ProgressTracker (etapas) + JourneyProgressBar (%)                   │
-│ Fonte: journey_progress da API (não hardcode no MFE)                │
+
+┌─ Motivo da devolução † (se return_reason) ──────────────────────────┐
+│ texto em destaque · [Corrigir dados]† se allowed_actions tem edit   │
 └─────────────────────────────────────────────────────────────────────┘
-┌─ Dados da solicitação (DetailFields+hints) ─┬─ Ações disponíveis ───┐
-│ Tipo · Status · Filial · Solicitante · Data │ ActionBar             │
-└─────────────────────────────────────────────┴───────────────────────┘
-┌─ SectionCard «Dados da emissão» † type=invoice-issuance ────────────┐
-│ DetailFields + hints · lista itens                                  │
+
+  O QUE FOI SOLICITADO
+┌─ Dados da solicitação (DetailFields+hints) ─────────────────────────┐
 └─────────────────────────────────────────────────────────────────────┘
-┌─ Linha do tempo ────────────────────────────┬─ Comentários ─────────┐
-│ Timeline                                    │ lista · form†         │
-└─────────────────────────────────────────────┴───────────────────────┘
-┌─ Documentos da solicitação ─────────────────┬─ Docs. do atendimento ┐
-│ descrição · dropzone† · links               │ tipo doc† · dropzone† │
-│ † capabilities.can_upload_attachment        │ † can_upload_artifact │
-└─────────────────────────────────────────────┴───────────────────────┘
+┌─ Dados da emissão † type=invoice-issuance ──────────────────────────┐
+└─────────────────────────────────────────────────────────────────────┘
+┌─ Documentos da solicitação (AttachmentPreviewStrip) ────────────────┐
+│ dropzone† só se capabilities.can_upload_attachment (devolvida)      │
+└─────────────────────────────────────────────────────────────────────┘
+
+  ATENDIMENTO
+┌─ Progresso (ProgressTracker desktop / compact ≤768 + JourneyBar %) ─┐
+│ Fonte: journey_progress · compactSummary = «Etapa N de M · label»   │
+└─────────────────────────────────────────────────────────────────────┘
+┌─ Ações disponíveis ─────────────────┬─ Comentários ─────────────────┐
+│ ActionBar (allowed_actions)         │ form† can_comment              │
+└─────────────────────────────────────┴───────────────────────────────┘
+┌─ Documentos gerados no atendimento (PreviewStrip + kind†) ──────────┐
+└─────────────────────────────────────────────────────────────────────┘
+
+  HISTÓRICO
+┌─ Linha do tempo (último bloco funcional) ───────────────────────────┐
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-Desktop: grids 2 colunas (resumo|ações, histórico|comentários, docs|docs).  
-≤1100px: uma coluna.  
+Desktop: service-grid 2 colunas (ações|comentários). ≤1100px: 1 coluna.  
+Tracker: `default` em desktop; `compact` ≤768px.  
 **Regra:** botões = `allowed_actions`; uploads/comentário = `capabilities` (API).  
-**Kit:** ProgressTracker · JourneyProgressBar · ModalShell · FileDropzone · SelectField · FieldLabel+hint · DetailFields.hint  
-**Ajuda:** `helpTooltips.detail.*` / `attachments` / `artifacts` / `comments`
+`edit` → `/requests/:id/edit` (não é toast).  
+**Kit:** ProgressTracker · JourneyProgressBar · AttachmentPreviewStrip · ModalShell · FileDropzone · DetailFields.hint  
+**Ajuda:** `helpTooltips.detail.*` / `attachments` / `artifacts` / `comments` / `timeline`
+
+### WF-05b — Corrigir (`/requests/:id/edit`)
+
+```text
+┌─ Wizard NF / SchemaForm / Generic (mode=edit) ──────────────────────┐
+│ Prefill do payload · PATCH + Idempotency-Key · anexos manage        │
+│ Sucesso → volta ao detalhe; Reenviar permanece na ActionBar         │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
 ### WF-06 — Admin tipos (E14 — entregue; labels E20)
 

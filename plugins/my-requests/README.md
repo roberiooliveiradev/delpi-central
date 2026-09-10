@@ -3,11 +3,13 @@
 Microfrontend federado do módulo **Minhas Solicitações**.
 
 - Tile: `/apps/my-requests`
-- Rotas internas: `/mine`, `/work-queue`, `/new`, `/requests/:id`, `/admin`
+- Rotas internas: `/mine`, `/work-queue`, `/new`, `/requests/:id`, `/requests/:id/edit`, `/admin`
 - API: **somente** `/apps/requests-api` (`X-Delpi-Caller-App: my-requests`)
 - **Proibido** chamar api-delpi no browser
 - Ações no detalhe: render-only de `allowed_actions` (label PT na UI; código canônico na chamada)
-- Detalhe: progresso via `journey_progress` + uploads via `capabilities` (projeção da API; MFE não reconstrói workflow)
+- Detalhe: fases **O que foi solicitado → Atendimento → Histórico**; progresso via `journey_progress`; uploads via `capabilities`
+- Devolução: card «Motivo da devolução» + rota `/requests/:id/edit` (wizard/form); `PATCH` payload + `resubmit` na ActionBar
+- Anexos do pedido: miniaturas (`AttachmentPreviewStrip`); anexar na criação; no detalhe manage só com `can_upload_attachment` (`needs_information`); `DELETE /attachments/{id}`
 - Avisos: `MyRequestsFloatingNoticeProvider` (`FloatingNoticeStack` do `@delpi/plugin-ui`) — erros/sucesso de ações no detalhe
 - **Tempo real:** `MyRequestsRealtimeProvider` → `wss://…/apps/requests-api/v1/realtime/ws` (hint + refetch; anti-eco via `X-My-Requests-Client-Id`). Sino Portal ao criador nos gates da jornada (outbox→Core). Doc: [realtime-requests.md](../../requests-api/docs/architecture/realtime-requests.md)
 - Ação `view` não vira botão no detalhe (já está visualizando; não é transição)

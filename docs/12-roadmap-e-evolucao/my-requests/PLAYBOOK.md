@@ -733,7 +733,7 @@ Seeds: `invoice-issuance` (specialized), `raw-material-creation` (schema_driven)
 ```
 
 - `journey_progress`: projeção de `workflow_definition.journey` (declarativo no RequestType). Ausente/`null` se o tipo não tiver jornada. **Não** confundir com progresso do wizard de criação.
-- `capabilities`: projeção não-transicional (comentário/uploads) espelhando enforcement dos use cases; **não** substitui `allowed_actions`.
+- `capabilities`: projeção não-transicional (comentário/uploads) espelhando enforcement dos use cases; **não** substitui `allowed_actions`. `can_upload_attachment` no detalhe = owner + `needs_information` (create bootstrap não usa essa flag).
 - Timeline/attachments/artifacts continuam em rotas irmãs (não embutidos no detail).
 
 ### 10.3 Timeline, comentários, arquivos
@@ -746,6 +746,7 @@ Seeds: `invoice-issuance` (specialized), `raw-material-creation` (schema_driven)
 | GET | `/requests/{id}/attachments` | `list_request_attachments` |
 | POST | `/requests/{id}/attachments` | `create_request_attachment` |
 | GET | `/attachments/{id}/download` | `download_request_attachment` |
+| DELETE | `/attachments/{id}` | `delete_request_attachment` |
 | GET | `/requests/{id}/artifacts` | `list_request_artifacts` |
 | POST | `/requests/{id}/artifacts` | `create_request_artifact` |
 | GET | `/artifacts/{id}/download` | `download_request_artifact` |
@@ -881,7 +882,10 @@ Cada RequestType declara subset em `workflow_definition.statuses`. Nem todo tipo
 
 | Aspecto | Valor |
 |---------|-------|
-| Quem envia | Solicitante (status não terminal) |
+| Quem envia | **Solicitante (owner)** |
+| Quando (enforcement upload) | `submitted` (bootstrap pós-create) ou `needs_information` (devolvida) |
+| Quando (capability / UI detalhe) | só `needs_information` → `can_upload_attachment` |
+| Remoção | `DELETE /attachments/{id}` — owner + `needs_information` |
 | MIME | PDF, JPEG, PNG, WEBP, TXT, DOC/DOCX, XLS/XLSX (lista commercial-api) |
 | Tamanho max | 25 MB |
 | Storage env | `MY_REQUESTS_ATTACHMENT_UPLOAD_DIR` → `/app/data/my-requests-attachments` |
@@ -889,6 +893,7 @@ Cada RequestType declara subset em `workflow_definition.statuses`. Nem todo tipo
 | Path disco | `{request_id}/{uuid}{ext}` |
 | DB | `request_attachments`: `original_name`, `stored_name`, `mime_type`, `size_bytes`, `checksum_sha256`, `created_by_user_id` |
 | Download | GET autenticado; audit em `request_events` |
+| UI | `AttachmentPreviewStrip` (miniaturas); staging na criação |
 
 ### 13.2 Artifacts (saída)
 

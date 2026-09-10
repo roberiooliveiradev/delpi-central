@@ -23,6 +23,9 @@ class FileRepositoryPort(ABC):
     def list_attachments(self, request_id: UUID | str) -> list[RequestAttachment]: ...
 
     @abstractmethod
+    def delete_attachment(self, attachment_id: UUID | str) -> bool: ...
+
+    @abstractmethod
     def create_artifact(self, artifact: RequestArtifact) -> RequestArtifact: ...
 
     @abstractmethod

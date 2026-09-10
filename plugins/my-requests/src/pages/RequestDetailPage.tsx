@@ -1,3 +1,4 @@
+import { ActionButton } from "@delpi/plugin-ui/index";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useMyRequestsFloatingNotice } from "../app/MyRequestsFloatingNoticeProvider";
@@ -21,6 +22,11 @@ import {
   statusLabel,
 } from "../content/presentationLabels";
 import { InvoiceIssuancePayloadPanel } from "../features/invoice-issuance/ui/InvoiceIssuancePayloadPanel";
+import {
+  myRequestsEditPath,
+  navigateMyRequestsPath,
+} from "../hooks/myRequestsNavigation";
+import { useViewportMaxWidth } from "../hooks/useViewportMaxWidth";
 import { useRequestsPermissions } from "../security/RequestsPermissionsContext";
 import { canCreateAnyRequest } from "../security/requestsAccess";
 import type { RequestDetail } from "../types/requests";
@@ -35,6 +41,7 @@ import {
 } from "../ui/mrUi";
 import {
   journeyBarSummary,
+  journeyTrackerCompactSummary,
   mapJourneyStagesToTrackerSteps,
   statusBadgeVariant,
 } from "../utils/journeyProgressUi";
@@ -52,6 +59,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
   const [busy, setBusy] = useState(false);
   const [reasonKind, setReasonKind] = useState<ReasonConfirmKind | null>(null);
   const [timelineEpoch, setTimelineEpoch] = useState(0);
+  const compactDensity = useViewportMaxWidth(768);
 
   const reload = useCallback(
     async (signal?: AbortSignal) => {
@@ -115,16 +123,17 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
     }
   }
 
+  function openEdit() {
+    navigateMyRequestsPath(myRequestsEditPath(requestId));
+  }
+
   async function onAction(action: string) {
     if (!request) return;
     if (action === "view") {
       return;
     }
     if (action === "edit") {
-      notifyInfo(
-        "Ajuste os dados quando a solicitação estiver aguardando informação e use Reenviar para continuar.",
-        { title: "Editar solicitação" },
-      );
+      openEdit();
       return;
     }
     if (action === "return" || action === "cancel") {
@@ -149,6 +158,7 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
     [journey],
   );
   const capabilities = request?.capabilities ?? null;
+  const canEdit = Boolean(request?.allowed_actions?.includes("edit"));
 
   return (
     <AppShell
@@ -170,40 +180,48 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
               />
             </header>
 
-            {journey ? (
+            {request.return_reason ? (
               <MyRequestsSectionCard
-                title="Progresso do atendimento"
-                hint={MY_REQUESTS_HELP_TOOLTIPS.detail.progress}
+                title="Motivo da devolução"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.detail.returnReason}
+                className="my-requests-detail-reason"
               >
-                <div className="my-requests-detail-progress">
-                  <MyRequestsProgressTracker
-                    steps={trackerSteps}
-                    currentStepId={journey.current_stage_id || trackerSteps[0]?.id}
-                    density="compact"
-                    ariaLabel="Etapas do atendimento"
-                  />
-                  <MyRequestsJourneyProgressBar
-                    value={journey.percentage}
-                    label="Progresso do atendimento"
-                    summary={journeyBarSummary(journey)}
-                    ariaLabel="Percentual do atendimento"
-                  />
-                </div>
+                <MyRequestsStateBanner variant="error">
+                  {request.return_reason}
+                </MyRequestsStateBanner>
+                {canEdit ? (
+                  <div className="my-requests-detail-reason-actions">
+                    <ActionButton type="button" variant="primary" onClick={openEdit}>
+                      Corrigir dados
+                    </ActionButton>
+                  </div>
+                ) : null}
               </MyRequestsSectionCard>
             ) : null}
 
-            {request.return_reason ? (
-              <MyRequestsStateBanner variant="error">
-                Motivo da devolução: {request.return_reason}
-              </MyRequestsStateBanner>
-            ) : null}
             {request.cancel_justification ? (
-              <MyRequestsStateBanner variant="error">
-                Motivo do cancelamento: {request.cancel_justification}
-              </MyRequestsStateBanner>
+              <MyRequestsSectionCard
+                title="Motivo do cancelamento"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.detail.cancelReason}
+                className="my-requests-detail-reason"
+              >
+                <MyRequestsStateBanner variant="error">
+                  {request.cancel_justification}
+                </MyRequestsStateBanner>
+              </MyRequestsSectionCard>
             ) : null}
 
-            <div className="my-requests-detail-split">
+            <section
+              className="my-requests-detail-phase"
+              aria-labelledby="my-requests-phase-request"
+            >
+              <h2
+                id="my-requests-phase-request"
+                className="my-requests-detail-phase-title"
+              >
+                O que foi solicitado
+              </h2>
+
               <MyRequestsSectionCard
                 title="Dados da solicitação"
                 hint={MY_REQUESTS_HELP_TOOLTIPS.detail.section}
@@ -239,42 +257,90 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
                 />
               </MyRequestsSectionCard>
 
-              <MyRequestsSectionCard
-                title="Ações disponíveis"
-                hint={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}
-              >
-                <ActionBar
-                  actions={request.allowed_actions || []}
-                  busy={busy}
-                  onAction={onAction}
-                />
-              </MyRequestsSectionCard>
-            </div>
+              {request.type_code === "invoice-issuance" ? (
+                <InvoiceIssuancePayloadPanel payload={request.payload} />
+              ) : null}
 
-            {request.type_code === "invoice-issuance" ? (
-              <InvoiceIssuancePayloadPanel payload={request.payload} />
-            ) : null}
-
-            <div className="my-requests-detail-history">
-              <TimelinePanel requestId={requestId} refreshKey={timelineEpoch} />
-              <CommentsPanel
-                requestId={requestId}
-                canComment={capabilities?.can_comment ?? false}
-                refreshKey={timelineEpoch}
-              />
-            </div>
-
-            <section className="my-requests-detail-docs" aria-label="Documentos">
               <AttachmentsPanel
                 requestId={requestId}
                 canUpload={capabilities?.can_upload_attachment ?? false}
                 refreshKey={timelineEpoch}
               />
+            </section>
+
+            <section
+              className="my-requests-detail-phase"
+              aria-labelledby="my-requests-phase-service"
+            >
+              <h2
+                id="my-requests-phase-service"
+                className="my-requests-detail-phase-title"
+              >
+                Atendimento
+              </h2>
+
+              {journey ? (
+                <MyRequestsSectionCard
+                  title="Progresso do atendimento"
+                  hint={MY_REQUESTS_HELP_TOOLTIPS.detail.progress}
+                >
+                  <div className="my-requests-detail-progress">
+                    <MyRequestsProgressTracker
+                      steps={trackerSteps}
+                      currentStepId={
+                        journey.current_stage_id || trackerSteps[0]?.id
+                      }
+                      density={compactDensity ? "compact" : "default"}
+                      compactSummary={journeyTrackerCompactSummary(journey)}
+                      ariaLabel="Etapas do atendimento"
+                    />
+                    <MyRequestsJourneyProgressBar
+                      value={journey.percentage}
+                      label="Progresso do atendimento"
+                      summary={journeyBarSummary(journey)}
+                      ariaLabel="Percentual do atendimento"
+                    />
+                  </div>
+                </MyRequestsSectionCard>
+              ) : null}
+
+              <div className="my-requests-detail-service-grid">
+                <MyRequestsSectionCard
+                  title="Ações disponíveis"
+                  hint={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}
+                >
+                  <ActionBar
+                    actions={request.allowed_actions || []}
+                    busy={busy}
+                    onAction={onAction}
+                  />
+                </MyRequestsSectionCard>
+
+                <CommentsPanel
+                  requestId={requestId}
+                  canComment={capabilities?.can_comment ?? false}
+                  refreshKey={timelineEpoch}
+                />
+              </div>
+
               <ArtifactsPanel
                 requestId={requestId}
                 canUpload={capabilities?.can_upload_artifact ?? false}
                 refreshKey={timelineEpoch}
               />
+            </section>
+
+            <section
+              className="my-requests-detail-phase"
+              aria-labelledby="my-requests-phase-history"
+            >
+              <h2
+                id="my-requests-phase-history"
+                className="my-requests-detail-phase-title"
+              >
+                Histórico
+              </h2>
+              <TimelinePanel requestId={requestId} refreshKey={timelineEpoch} />
             </section>
           </>
         ) : null}

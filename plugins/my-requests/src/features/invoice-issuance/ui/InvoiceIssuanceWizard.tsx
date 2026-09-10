@@ -2,8 +2,14 @@ import { X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionButton, FieldLabel, NativeTextAreaControl } from "@delpi/plugin-ui/index";
 
-import { createRequest } from "../../../api/requestsApi";
+import { createRequest, patchRequestPayload } from "../../../api/requestsApi";
 import { AppShell } from "../../../components/AppShell";
+import {
+  revokeStagedPreviews,
+  StagedAttachmentsField,
+  type StagedAttachment,
+} from "../../../components/StagedAttachmentsField";
+import { AttachmentsPanel } from "../../../components/AttachmentsPanel";
 import { MY_REQUESTS_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import {
   branchCodeForCreate,
@@ -66,7 +72,12 @@ import type {
   ProductHit,
 } from "../domain/types";
 import { WIZARD_STEPS } from "../domain/wizardSteps";
+import {
+  buildInvoiceIssuancePayload,
+  prefillInvoiceWizardFromPayload,
+} from "../domain/invoiceWizardPayload";
 import { useInvoiceLookupSearch } from "./useInvoiceLookupSearch";
+import { uploadStagedAttachments } from "../../../utils/uploadStagedAttachments";
 
 export { WIZARD_STEPS } from "../domain/wizardSteps";
 
@@ -86,6 +97,10 @@ type InvoiceIssuanceWizardProps = {
   /** @deprecated Prefer branch selection inside the wizard via branch_scope */
   lockedBranch?: string;
   onCancel?: () => void;
+  mode?: "create" | "edit";
+  requestId?: string;
+  initialPayload?: Record<string, unknown>;
+  initialVersion?: number;
 };
 
 function stepIndex(stepId: WizardStepId): number {
@@ -103,7 +118,12 @@ export function InvoiceIssuanceWizard({
   requestType,
   lockedBranch,
   onCancel,
+  mode = "create",
+  requestId,
+  initialPayload,
+  initialVersion,
 }: InvoiceIssuanceWizardProps) {
+  const isEdit = mode === "edit";
   const access = useRequestsPermissions();
   const branchOptions = (access.branches.length ? access.branches : ["01", "02"]).map(
     (code) => ({
@@ -113,6 +133,10 @@ export function InvoiceIssuanceWizard({
     }),
   );
   const showBranch = showsBranchField(requestType.branch_scope);
+  const prefill = useMemo(
+    () => (isEdit ? prefillInvoiceWizardFromPayload(initialPayload) : null),
+    [isEdit, initialPayload],
+  );
   const [branchCode, setBranchCode] = useState(
     lockedBranch || branchOptions[0]?.value || "",
   );
@@ -120,25 +144,35 @@ export function InvoiceIssuanceWizard({
     ? branchCode || branchOptions[0]?.value || ""
     : "";
 
-  const [stepId, setStepId] = useState<WizardStepId>("recipient");
+  const [stepId, setStepId] = useState<WizardStepId>(isEdit ? "review" : "recipient");
   const [returnToReview, setReturnToReview] = useState(false);
   const [compactDensity, setCompactDensity] = useState(
     () => typeof window !== "undefined" && window.innerWidth < 768,
   );
 
-  const [partyType, setPartyType] = useState<PartyType>("customer");
-  const [party, setParty] = useState<Party | null>(null);
-  const [invoiceType, setInvoiceType] = useState<InvoiceType>("sale");
-  const [invoiceTypeOther, setInvoiceTypeOther] = useState("");
+  const [partyType, setPartyType] = useState<PartyType>(
+    prefill?.partyType || "customer",
+  );
+  const [party, setParty] = useState<Party | null>(prefill?.party || null);
+  const [invoiceType, setInvoiceType] = useState<InvoiceType>(
+    prefill?.invoiceType || "sale",
+  );
+  const [invoiceTypeOther, setInvoiceTypeOther] = useState(
+    prefill?.invoiceTypeOther || "",
+  );
   const [pendingProducts, setPendingProducts] = useState<EntityDirectoryOption[]>([]);
-  const [items, setItems] = useState<IssuanceItem[]>([]);
-  const [freightMode, setFreightMode] = useState<FreightMode>("cif");
-  const [carrier, setCarrier] = useState<Carrier | null>(null);
-  const [weightKg, setWeightKg] = useState("1");
-  const [volumeCount, setVolumeCount] = useState("1");
-  const [observation, setObservation] = useState("");
+  const [items, setItems] = useState<IssuanceItem[]>(prefill?.items || []);
+  const [freightMode, setFreightMode] = useState<FreightMode>(
+    prefill?.freightMode || "cif",
+  );
+  const [carrier, setCarrier] = useState<Carrier | null>(prefill?.carrier || null);
+  const [weightKg, setWeightKg] = useState(prefill?.weightKg || "1");
+  const [volumeCount, setVolumeCount] = useState(prefill?.volumeCount || "1");
+  const [observation, setObservation] = useState(prefill?.observation || "");
+  const [stagedAttachments, setStagedAttachments] = useState<StagedAttachment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [version, setVersion] = useState(initialVersion ?? 1);
 
   const headingRef = useRef<HTMLHeadingElement>(null);
   const lookups = useInvoiceLookupSearch(partyType);
@@ -198,6 +232,11 @@ export function InvoiceIssuanceWizard({
   useEffect(() => {
     headingRef.current?.focus();
   }, [stepId]);
+
+  useEffect(() => {
+    return () => revokeStagedPreviews(stagedAttachments);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- revoke only on unmount
+  }, []);
 
   function selectParty(hit: Party) {
     lookups.rememberParty(hit);
@@ -354,39 +393,66 @@ export function InvoiceIssuanceWizard({
     }
     setBusy(true);
     setError(null);
+    const payload = buildInvoiceIssuancePayload({
+      party,
+      invoiceType,
+      invoiceTypeOther,
+      freightMode,
+      carrier,
+      weightKg,
+      volumeCount,
+      observation,
+      items,
+    });
     try {
-      const created = await createRequest({
-        typeCode: "invoice-issuance",
-        branchCode: branchCodeForCreate(requestType.branch_scope, branch),
-        idempotencyKey: crypto.randomUUID(),
-        payload: {
-          party_type: party.party_type,
-          party_code: party.party_code,
-          party_store: party.party_store,
-          party_name: party.party_name,
-          tax_id: party.tax_id,
-          invoice_type: invoiceType,
-          invoice_type_other: invoiceType === "other" ? invoiceTypeOther : null,
-          freight_mode: freightMode,
-          carrier_code: carrier?.carrier_code || null,
-          carrier_name: carrier?.carrier_name || null,
-          weight_kg: Number(weightKg),
-          volume_count: Number(volumeCount),
-          observation: observation || null,
-          items: items.map((item) => ({
-            product_code: item.product_code,
-            product_description: item.product_description,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            stock_write_off: item.stock_write_off,
-            sales_order: item.sales_order || null,
-            sales_order_item: item.sales_order_item || null,
-          })),
-        },
-      });
-      navigateMyRequestsPath(myRequestsPath({ requestId: created.id }));
+      let targetId = requestId || "";
+      if (isEdit) {
+        if (!requestId) {
+          setError("Solicitação inválida para edição.");
+          setBusy(false);
+          return;
+        }
+        const updated = await patchRequestPayload(requestId, payload, {
+          version,
+          idempotencyKey: crypto.randomUUID(),
+        });
+        setVersion(updated.version);
+        targetId = updated.id;
+      } else {
+        const created = await createRequest({
+          typeCode: "invoice-issuance",
+          branchCode: branchCodeForCreate(requestType.branch_scope, branch),
+          idempotencyKey: crypto.randomUUID(),
+          payload,
+        });
+        targetId = created.id;
+      }
+
+      if (stagedAttachments.length > 0) {
+        const result = await uploadStagedAttachments(
+          targetId,
+          stagedAttachments.map((row) => row.file),
+        );
+        revokeStagedPreviews(stagedAttachments);
+        setStagedAttachments([]);
+        if (result.failed > 0) {
+          setError(
+            `Solicitação salva, mas ${result.failed} documento(s) não foram enviados.`,
+          );
+          navigateMyRequestsPath(myRequestsPath({ requestId: targetId }));
+          return;
+        }
+      }
+
+      navigateMyRequestsPath(myRequestsPath({ requestId: targetId }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível criar a solicitação.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : isEdit
+            ? "Não foi possível atualizar a solicitação."
+            : "Não foi possível criar a solicitação.",
+      );
       setBusy(false);
     }
   }
@@ -780,6 +846,16 @@ export function InvoiceIssuanceWizard({
             ]}
           />
         </MyRequestsSectionCard>
+
+        {isEdit && requestId ? (
+          <AttachmentsPanel requestId={requestId} canUpload refreshKey={0} />
+        ) : (
+          <StagedAttachmentsField
+            items={stagedAttachments}
+            onChange={setStagedAttachments}
+            busy={busy}
+          />
+        )}
       </div>
     );
   }
@@ -808,7 +884,11 @@ export function InvoiceIssuanceWizard({
   const showSubmit = stepId === "review";
 
   return (
-    <AppShell title="Nova emissão de NF" subtitle={subtitleParts.join(" · ")} canCreate>
+    <AppShell
+      title={isEdit ? "Corrigir emissão de NF" : "Nova emissão de NF"}
+      subtitle={subtitleParts.join(" · ")}
+      canCreate
+    >
       <div className="my-requests-wizard-stack" data-help="invoice-wizard">
         {showBranch ? (
           <div className="my-requests-wizard-branch">
@@ -895,7 +975,7 @@ export function InvoiceIssuanceWizard({
                 disabled={busy || !reviewReady}
                 onClick={submit}
               >
-                Enviar
+                {isEdit ? "Salvar correção" : "Enviar"}
               </ActionButton>
             ) : null}
           </MyRequestsFormActions>

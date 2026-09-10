@@ -37,57 +37,58 @@ def _request(*, owner: str = "u-owner", status: str = "submitted") -> Request:
     )
 
 
-def test_owner_can_comment_and_upload_attachment_not_artifact():
+def test_owner_submitted_cannot_manage_attachments_on_detail():
+    """Capability is presentation-only: create bootstrap uses use-case, not this flag."""
     caps = resolve_request_capabilities(
-        _request(owner="u-owner"),
+        _request(owner="u-owner", status="submitted"),
         actor=_actor(user_id="u-owner", has_create=True),
         workflow=_TERMINAL_WF,
     )
     assert caps["can_comment"] is True
+    assert caps["can_upload_attachment"] is False
+    assert caps["can_upload_artifact"] is False
+
+
+def test_owner_needs_information_can_manage_attachments():
+    caps = resolve_request_capabilities(
+        _request(owner="u-owner", status="needs_information"),
+        actor=_actor(user_id="u-owner", has_create=True),
+        workflow=_TERMINAL_WF,
+    )
     assert caps["can_upload_attachment"] is True
     assert caps["can_upload_artifact"] is False
 
 
-def test_processor_can_upload_artifact_and_attachment():
+def test_processor_can_upload_artifact_not_attachment():
     caps = resolve_request_capabilities(
         _request(owner="u-owner", status="in_progress"),
         actor=_actor(user_id="u-proc", has_process=True),
         workflow=_TERMINAL_WF,
     )
     assert caps["can_comment"] is True
-    assert caps["can_upload_attachment"] is True
+    assert caps["can_upload_attachment"] is False
     assert caps["can_upload_artifact"] is True
 
 
-def test_manage_same_as_process_for_uploads():
+def test_manage_same_as_process_for_artifacts():
     caps = resolve_request_capabilities(
-        _request(owner="u-owner"),
+        _request(owner="u-owner", status="needs_information"),
         actor=_actor(user_id="u-mgr", has_manage=True),
         workflow=_TERMINAL_WF,
     )
-    assert caps["can_upload_attachment"] is True
+    assert caps["can_upload_attachment"] is False
     assert caps["can_upload_artifact"] is True
 
 
 def test_view_all_readonly_can_comment_not_upload():
     caps = resolve_request_capabilities(
-        _request(owner="u-owner"),
+        _request(owner="u-owner", status="needs_information"),
         actor=_actor(user_id="u-view", has_view_all=True),
         workflow=_TERMINAL_WF,
     )
     assert caps["can_comment"] is True
     assert caps["can_upload_attachment"] is False
     assert caps["can_upload_artifact"] is False
-
-
-def test_terminal_blocks_attachment_not_artifact_for_processor():
-    caps = resolve_request_capabilities(
-        _request(owner="u-owner", status="completed"),
-        actor=_actor(user_id="u-proc", has_process=True),
-        workflow=_TERMINAL_WF,
-    )
-    assert caps["can_upload_attachment"] is False
-    assert caps["can_upload_artifact"] is True
 
 
 def test_owner_terminal_cannot_upload_attachment():
@@ -98,3 +99,12 @@ def test_owner_terminal_cannot_upload_attachment():
     )
     assert caps["can_upload_attachment"] is False
     assert caps["can_comment"] is True
+
+
+def test_owner_in_progress_cannot_manage_attachments():
+    caps = resolve_request_capabilities(
+        _request(owner="u-owner", status="in_progress"),
+        actor=_actor(user_id="u-owner", has_create=True),
+        workflow=_TERMINAL_WF,
+    )
+    assert caps["can_upload_attachment"] is False

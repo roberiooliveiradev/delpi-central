@@ -46,22 +46,29 @@ A **filial**, quando o tipo exige, aparece **dentro** do formulário (01 = Santa
 
 ## Detalhe
 
-Mostra o número da solicitação, o **status** em destaque e o **progresso do atendimento** (etapas + percentual vindos do sistema — não é o mesmo progresso do formulário de criação). Os **botões de ação** mudam conforme o andamento — só aparecem as opções liberadas para você naquele momento. **Devolver** e **cancelar** pedem um motivo em uma janela do app. Passe o mouse nos títulos dos campos (Tipo, Status, Filial, etc.) para ver a ajuda.
+A leitura da página segue três fases:
 
-Em telas largas, resumo e ações ficam lado a lado; linha do tempo e comentários também; os dois tipos de documentos ficam em colunas. Em telas menores, tudo empilha em uma coluna.
+1. **O que foi solicitado** — dados gerais, dados do tipo (ex.: emissão) e documentos do pedido;
+2. **Atendimento** — progresso, ações, comentários e documentos gerados no atendimento;
+3. **Histórico** — linha do tempo (último bloco).
 
-Painéis:
+O **status** aparece no topo. Se a solicitação foi **devolvida para ajuste**, o **motivo da devolução** aparece em um card em destaque com o botão **Corrigir dados** (quando liberado). Isso abre o formulário de edição; depois de salvar, use **Reenviar solicitação** nas ações disponíveis.
 
-| Painel | Uso |
-|--------|-----|
-| Progresso do atendimento | Etapas e percentual do andamento; avisa se estiver aguardando informação |
-| Dados da solicitação | Tipo, status, filial, solicitante e data |
-| Ações disponíveis | Botões liberados no momento |
-| Dados da emissão | Resumo da NF (quando for esse tipo) |
-| Linha do tempo | Histórico do que aconteceu |
-| Comentários | Conversa sobre o pedido (quando permitido) |
-| Documentos da solicitação | Arquivos que ajudam a explicar ou complementar o pedido |
-| Documentos gerados no atendimento | Resultados do atendimento (ex.: nota fiscal em PDF) — quem atende pode enviar; solicitantes costumam só baixar |
+O **progresso do atendimento** (etapas + percentual) vem do sistema. Em telas largas o rastreador fica horizontal; em telas estreitas usa «Ver etapas». Os **botões de ação** só mostram o que a API liberou. **Devolver** e **cancelar** pedem motivo em uma janela.
+
+Documentos do pedido usam miniaturas. Você pode anexar arquivos **ao criar** a solicitação. No detalhe, adicionar ou remover anexos do pedido só é possível quando ela está **devolvida para ajuste**. Documentos gerados no atendimento continuam a cargo de quem processa.
+
+| Painel | Fase | Uso |
+|--------|------|-----|
+| Motivo da devolução / cancelamento | topo | Destaque do motivo + atalho para corrigir |
+| Dados da solicitação | Solicitação | Tipo, status, filial, solicitante e data |
+| Dados da emissão | Solicitação | Resumo da NF (quando for esse tipo) |
+| Documentos da solicitação | Solicitação | Anexos do pedido (miniaturas) |
+| Progresso do atendimento | Atendimento | Etapas e percentual |
+| Ações disponíveis | Atendimento | Botões liberados no momento |
+| Comentários | Atendimento | Comunicação operacional |
+| Documentos gerados no atendimento | Atendimento | Resultados (ex.: NF em PDF) |
+| Linha do tempo | Histórico | Registro do que aconteceu |
 
 ## Administração (tipos)
 
@@ -77,6 +84,7 @@ Seis etapas: destinatário → tipo de NF → itens → frete → adicionais →
 - Etapas futuras ficam bloqueadas até a anterior estar pronta; etapas concluídas podem ser reabertas.
 - Ao selecionar o destinatário, o fluxo avança automaticamente para o tipo de NF.
 - Na conferência, revise cada bloco e use **Alterar** para corrigir e voltar. Não há checklist técnico na tela — só o resumo amigável antes de **Enviar**.
+- Na conferência você também pode **anexar documentos** que complementam o pedido; eles são enviados junto com a criação.
 - O rascunho fica só na sessão atual (recarregar a página perde o preenchimento).
 - O formulário usa a largura da página (responsivo em desktop e celular).
 

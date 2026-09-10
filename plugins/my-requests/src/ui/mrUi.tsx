@@ -1,5 +1,7 @@
 import {
+  attachmentPreviewStripBemClasses,
   createCompactPagination,
+  createDashboardAttachmentPreviewStrip,
   createDashboardDetailFieldGrid,
   createDashboardEmptyState,
   createDashboardFileDropzone,
@@ -154,6 +156,15 @@ export const MyRequestsFileDropzone = createDashboardFileDropzone({
   labels: {
     title: "Arraste um arquivo ou clique para selecionar",
     hint: "PDF ou imagem · máx. 25 MB",
+  },
+});
+
+export const MyRequestsAttachmentPreviewStrip = createDashboardAttachmentPreviewStrip({
+  classNames: attachmentPreviewStripBemClasses(MR_UI_PREFIX),
+  labels: {
+    empty: "Nenhum arquivo.",
+    openAriaLabel: (fileName) => `Abrir ${fileName}`,
+    removeAriaLabel: (fileName) => `Remover ${fileName}`,
   },
 });
 
