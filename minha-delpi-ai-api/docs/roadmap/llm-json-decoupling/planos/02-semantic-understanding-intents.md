@@ -1,7 +1,7 @@
 # Plano 02 — NLU manual -> Turn Understanding + planner estruturado
 
 **Prioridade:** P0  
-**Status execução:** Onda C · E2.S1–S3 **ATENDIDOS** · E2.S4 **SHADOW_ON** · Onda C **ATENDIDO_PARCIAL** (cutover/DELETE deferred)  
+**Status execução:** Onda C · E2.S1–S3 **ATENDIDOS** · E2.S4 **CUTOVER_PARTIAL** (product dial OFF) · Onda C **ATENDIDO_PARCIAL** (production/KPI/DELETE deferred)  
 **Evidência:** [`../evidence/e2-s1-heuristic-intent-inventory.md`](../evidence/e2-s1-heuristic-intent-inventory.md) · [`../evidence/e2-s2-understanding-baseline.md`](../evidence/e2-s2-understanding-baseline.md) · [`../evidence/e2-s3-turn-understanding-contract.md`](../evidence/e2-s3-turn-understanding-contract.md) · [`../evidence/e2-s4-authority-shadow.md`](../evidence/e2-s4-authority-shadow.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** frases longas, sinônimos, linguagem informal, typos e pedidos compostos devem ser compreendidos sem manutenção contínua de `terms`, `excludes`, regex e predicates por domínio.
 
@@ -99,13 +99,13 @@ O campo `intent` é semântico, não enum por endpoint.
 
 **Feito:** entity + `TURN_UNDERSTANDING_JSON_SCHEMA` + validator/fallback; `analyze` emite contrato validado com `goals`/`entities`/`presentationIntent`/`needsTool`; sem path tokens. Evidência: [`../evidence/e2-s3-turn-understanding-contract.md`](../evidence/e2-s3-turn-understanding-contract.md).
 
-### E2.S4 — Product/production/KPI migration — **SHADOW_ON** (2026-09-10)
+### E2.S4 — Product/production/KPI migration — **CUTOVER_PARTIAL** (2026-09-10)
 
 **Fazer:** substituir gradualmente gates… / **Não fazer:** apagar heurística antes de shadow compare.
 
-**Feito (sem cutover):** `TurnUnderstandingAuthorityShadowService` compara authority vs TU e anexa `authorityShadow` no prepare. Evidência: [`../evidence/e2-s4-authority-shadow.md`](../evidence/e2-s4-authority-shadow.md).
+**Feito:** shadow compare + dial `productFamilyAuthorityShadow` + mapper TU→product intent + cutover point em `detect` (default OFF). Evidência: [`../evidence/e2-s4-authority-shadow.md`](../evidence/e2-s4-authority-shadow.md).
 
-**Pendente:** cutover por família; E2.S5–S7.
+**Pendente:** ligar dial product em canary; production/KPI; E2.S5–S7.
 
 ### E2.S5 — Generic intent/router migration
 

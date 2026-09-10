@@ -45,6 +45,34 @@ class ChatConversationalIntelligenceFlagService:
         return cls.is_enabled(TASK_PLANNER_ENABLED)
 
     @classmethod
+    def product_family_authority_shadow_config(cls) -> dict:
+        node = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "productFamilyAuthorityShadow",
+        )
+        return node if isinstance(node, dict) else {}
+
+    @classmethod
+    def product_family_authority_shadow_enabled(cls) -> bool:
+        config = cls.product_family_authority_shadow_config()
+        if "enabled" not in config:
+            return True
+        return bool(config.get("enabled"))
+
+    @classmethod
+    def product_family_cutover_enabled(cls) -> bool:
+        """E2.S4 — dial OFF by default; only product family when enabled."""
+        config = cls.product_family_authority_shadow_config()
+        if not cls.product_family_authority_shadow_enabled():
+            return False
+        if not bool(config.get("cutoverEnabled")):
+            return False
+        families = config.get("families")
+        if isinstance(families, dict) and "product" in families:
+            return bool(families.get("product"))
+        return True
+
+    @classmethod
     def _env_override(cls, key: str) -> bool | None:
         from app.domain.services.chat_domain_config_service import (
             ChatDomainConfigService,

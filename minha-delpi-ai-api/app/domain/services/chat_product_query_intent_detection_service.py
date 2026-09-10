@@ -15,16 +15,13 @@ class ChatProductQueryIntentDetectionService:
     BUNDLE = "product_query_intent"
 
     @classmethod
-    def detect(cls, message: str) -> str:
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+    def detect(cls, message: str, *, force_legacy: bool = False) -> str:
+        if not force_legacy and cls._product_family_cutover_enabled():
+            mapped = cls._detect_from_turn_understanding(message)
+            if mapped:
+                return mapped
 
-        for step in cls._detect_pipeline():
-            intent = cls._evaluate_step(step, message, normalized)
-
-            if intent:
-                return intent
-
-        return cls._default_intent()
+        return cls._detect_legacy(message)
 
     @classmethod
     def refine_operational_intent_from_full(
@@ -32,7 +29,13 @@ class ChatProductQueryIntentDetectionService:
         message: str,
         *,
         normalized: str | None = None,
+        force_legacy: bool = False,
     ) -> str:
+        if not force_legacy and cls._product_family_cutover_enabled():
+            mapped = cls._detect_from_turn_understanding(message)
+            if mapped and mapped not in {"full", "multi_scope"}:
+                return mapped
+
         normalized_text = normalized or ChatMessageNormalizationService.normalize_for_matching(
             message
         )
@@ -44,6 +47,34 @@ class ChatProductQueryIntentDetectionService:
                 return intent
 
         return "full"
+
+    @classmethod
+    def _detect_legacy(cls, message: str) -> str:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        for step in cls._detect_pipeline():
+            intent = cls._evaluate_step(step, message, normalized)
+
+            if intent:
+                return intent
+
+        return cls._default_intent()
+
+    @classmethod
+    def _detect_from_turn_understanding(cls, message: str) -> str | None:
+        from app.domain.services.turn_understanding_product_intent_mapper_service import (
+            TurnUnderstandingProductIntentMapperService,
+        )
+
+        return TurnUnderstandingProductIntentMapperService.from_message(message)
+
+    @classmethod
+    def _product_family_cutover_enabled(cls) -> bool:
+        from app.domain.services.chat_conversational_intelligence_flag_service import (
+            ChatConversationalIntelligenceFlagService,
+        )
+
+        return ChatConversationalIntelligenceFlagService.product_family_cutover_enabled()
 
     @classmethod
     def looks_like_mixed_documental_operational(cls, normalized: str) -> bool:

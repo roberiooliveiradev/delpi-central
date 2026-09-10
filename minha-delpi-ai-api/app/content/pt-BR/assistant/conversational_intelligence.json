@@ -4,6 +4,15 @@
     "turnUnderstandingShadow": true,
     "taskPlannerEnabled": false
   },
+  "productFamilyAuthorityShadow": {
+    "enabled": true,
+    "cutoverEnabled": false,
+    "families": {
+      "product": true,
+      "production": false,
+      "kpi": false
+    }
+  },
   "envOverrides": {
     "turnUnderstandingShadow": "CHAT_TURN_UNDERSTANDING_SHADOW",
     "taskPlannerEnabled": "CHAT_TASK_PLANNER_ENABLED"

@@ -1,47 +1,46 @@
-# E2.S4 — Authority vs TU shadow (sem cutover)
+# E2.S4 — Product-family cutover dial (default OFF)
 
-**Status:** `SHADOW_ON` (2026-09-10) — **não** é cutover de product/production/KPI  
+**Status:** `CUTOVER_PARTIAL` (2026-09-10) — família **product** instrumentada; dial `cutoverEnabled=false`  
 **Onda:** C (plano 02)
 
 ## O que entrou
 
 | Peça | Path |
 |------|------|
-| Compare | `TurnUnderstandingAuthorityShadowService.compare` |
-| Telemetria | log `turn_understanding_authority_shadow` |
-| Wiring | `shadowTurnUnderstanding.authorityShadow` no prepare |
+| Dial | `conversational_intelligence.json` → `productFamilyAuthorityShadow` |
+| Flag | `ChatConversationalIntelligenceFlagService.product_family_cutover_enabled` |
+| Mapper | `TurnUnderstandingProductIntentMapperService` (goals → enum) |
+| Cutover point | `ChatProductQueryIntentDetectionService.detect` / `refine_*` |
+| Shadow | `candidateProductIntent` + `cutover` do dial; legacy via `force_legacy=True` |
 
-## Contrato metadata
+## Dial (default seguro)
 
 ```json
-{
-  "kind": "turn_understanding_authority",
-  "cutover": false,
-  "agree": true,
-  "agreeProduct": true,
-  "agreeProduction": true,
-  "agreeKpi": true,
-  "agreeCompound": true,
-  "productIntent": "stock",
-  "productionKind": null,
-  "kpiMatched": false,
-  "goalCount": 1
+"productFamilyAuthorityShadow": {
+  "enabled": true,
+  "cutoverEnabled": false,
+  "families": { "product": true, "production": false, "kpi": false }
 }
 ```
 
-Authority continua em `product_query_intent` / `production_operational_intent` / `department_kpi_rules`.
+Com `cutoverEnabled=false`: comportamento idêntico ao pré-cutover (SHADOW_DOES_NOT_CHANGE_SELECTION).
 
-## Aceite parcial
+## Aceite
 
 ```text
 SHADOW_COMPARE_WIRED = PASS
-SHADOW_DOES_NOT_CHANGE_SELECTION = PASS
-CUTOVER_PRODUCT_PRODUCTION_KPI = NOT_STARTED
+SHADOW_DOES_NOT_CHANGE_SELECTION = PASS (dial OFF)
+PRODUCT_MAPPER_STOCK_SYNONYM = PASS
+PRODUCT_MAPPER_COMPOUND_MULTI_SCOPE = PASS
+PRODUCT_MAPPER_NEGATIVE_SMALLTALK = PASS
+CUTOVER_PRODUCT_DIAL = READY (OFF in prod JSON)
+CUTOVER_PRODUCTION_KPI = NOT_STARTED
+DELETE_HEURISTICS = BLOCKED
 ```
 
-## Deferred (bloqueia Onda C ATENDIDO pleno)
+## Não feito nesta fatia
 
-- Cutover por família com agree ≥ limiar
-- E2.S5 intent_router migration
-- E2.S6 métricas compound live
-- E2.S7 DELETE de heurísticas
+- Ligar `cutoverEnabled=true` em produção
+- Production / KPI families
+- E2.S5 intent_router / analysis vocabulary
+- E2.S7 DELETE de `product_query_intent` heuristics

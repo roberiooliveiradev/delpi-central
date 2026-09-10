@@ -16,6 +16,7 @@ _REQUIRED_IDS = {
     "parameterStrategyShadow",
     "followUpRoutingAuthorityShadow",
     "turnUnderstandingShadow",
+    "productFamilyAuthorityShadow",
     "taskPlannerEnabled",
     "departmentCompositionCutover",
     "entityEnrichmentCutover",

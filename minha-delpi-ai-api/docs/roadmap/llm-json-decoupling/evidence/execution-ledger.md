@@ -159,3 +159,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: E9.S12.D (`routeSegment`) ou cutover TU |
 | 2026-09-10 | E9.S12.D **ATENDIDO** — DELETE registry `routeSegment`; `RouteSegmentInferenceService`; follow-up JSON KEEP |
 | 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: cutover TU (plano-02) |
+| 2026-09-10 | E2.S4 **CUTOVER_PARTIAL** — dial productFamilyAuthorityShadow (OFF) + mapper TU→product intent |
+| 2026-09-10 | Onda C/H **ATENDIDO_PARCIAL** — próximo: canary `cutoverEnabled=true` product OU production/KPI |

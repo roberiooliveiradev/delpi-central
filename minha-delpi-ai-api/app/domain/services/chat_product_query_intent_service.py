@@ -47,8 +47,11 @@ class ChatProductQueryIntentService:
     _CALENDAR_YEAR_RE = ChatProductQueryIntentVocabulary.__dict__["CALENDAR_YEAR_RE"]
 
     @classmethod
-    def detect(cls, message: str) -> str:
-        return ChatProductQueryIntentDetectionService.detect(message)
+    def detect(cls, message: str, *, force_legacy: bool = False) -> str:
+        return ChatProductQueryIntentDetectionService.detect(
+            message,
+            force_legacy=force_legacy,
+        )
 
     @classmethod
     def refine_operational_intent_from_full(
@@ -56,10 +59,12 @@ class ChatProductQueryIntentService:
         message: str,
         *,
         normalized: str | None = None,
+        force_legacy: bool = False,
     ) -> str:
         return ChatProductQueryIntentDetectionService.refine_operational_intent_from_full(
             message,
             normalized=normalized,
+            force_legacy=force_legacy,
         )
 
     @classmethod

@@ -1,4 +1,4 @@
-"""E2.S4 — shadow compare authority heuristics vs contrato TU (sem cutover)."""
+"""E2.S4 — shadow compare authority heuristics vs contrato TU (+ dial product cutover)."""
 
 from __future__ import annotations
 
@@ -20,6 +20,9 @@ class TurnUnderstandingAuthorityShadowService:
         if contract is None:
             return None
 
+        from app.domain.services.chat_conversational_intelligence_flag_service import (
+            ChatConversationalIntelligenceFlagService,
+        )
         from app.domain.services.chat_product_query_intent_service import (
             ChatProductQueryIntentService,
         )
@@ -29,8 +32,17 @@ class TurnUnderstandingAuthorityShadowService:
         from app.domain.services.chat_department_kpi_intent_service import (
             ChatDepartmentKpiIntentService,
         )
+        from app.domain.services.turn_understanding_product_intent_mapper_service import (
+            TurnUnderstandingProductIntentMapperService,
+        )
 
-        product = str(ChatProductQueryIntentService.detect(message) or "").strip()
+        # Always compare against legacy heuristic (observer), never post-cutover detect.
+        product = str(
+            ChatProductQueryIntentService.detect(message, force_legacy=True) or ""
+        ).strip()
+        candidate_product = TurnUnderstandingProductIntentMapperService.from_understanding(
+            contract
+        )
         production = ChatProductionOperationalIntentService.resolve(message)
         production_name = production.name if production is not None else None
         kpi = ChatDepartmentKpiIntentService.resolve(message)
@@ -46,7 +58,6 @@ class TurnUnderstandingAuthorityShadowService:
 
         agree_product = True
         if product and product not in {"full", "multi_scope"}:
-            # Authority named a product intent — TU should mention related prose or code.
             tokens = {
                 "stock": ("estoque", "saldo"),
                 "structure": ("estrutura",),
@@ -57,6 +68,8 @@ class TurnUnderstandingAuthorityShadowService:
             agree_product = any(token in goal_text for token in needles) or (
                 bool(extracted_code) and extracted_code in entity_codes
             )
+            if candidate_product:
+                agree_product = agree_product or candidate_product == product
         elif extracted_code:
             agree_product = extracted_code in entity_codes or not entity_codes
 
@@ -74,12 +87,14 @@ class TurnUnderstandingAuthorityShadowService:
             )
 
         agree_compound = contract.subtask_count >= 2 or product != "multi_scope"
+        cutover = ChatConversationalIntelligenceFlagService.product_family_cutover_enabled()
 
         shadow = {
             "kind": "turn_understanding_authority",
-            "cutover": False,
+            "cutover": bool(cutover),
             "goalCount": contract.subtask_count,
             "productIntent": product or None,
+            "candidateProductIntent": candidate_product,
             "productionKind": production_name,
             "kpiMatched": kpi_hit,
             "agreeProduct": bool(agree_product),
@@ -105,6 +120,8 @@ class TurnUnderstandingAuthorityShadowService:
                 "agreeKpi": bool(shadow.get("agreeKpi")),
                 "goalCount": int(shadow.get("goalCount") or 0),
                 "productIntent": shadow.get("productIntent"),
+                "candidateProductIntent": shadow.get("candidateProductIntent"),
+                "cutover": bool(shadow.get("cutover")),
                 "productionKind": shadow.get("productionKind"),
             },
         )

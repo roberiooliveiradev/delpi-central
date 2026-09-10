@@ -77,11 +77,27 @@
       "moduleOwner": "app/domain/services/chat_conversational_intelligence_flag_service.py",
       "defaultState": "shadow_only",
       "flagReversible": true,
-      "rollbackHow": "featureFlags.turnUnderstandingShadow=false ou CHAT_TURN_UNDERSTANDING_SHADOW=0 → para shadow; authority heurística permanece (sem cutover de família).",
+      "rollbackHow": "featureFlags.turnUnderstandingShadow=false ou CHAT_TURN_UNDERSTANDING_SHADOW=0 → para shadow metadata.",
       "observability": "workspace_context.shadowTurnUnderstanding / authorityShadow",
       "sideEffects": false,
       "evidence": "docs/roadmap/llm-json-decoupling/evidence/e2-s4-authority-shadow.md",
       "liveL1L4Applicable": false
+    },
+    {
+      "id": "productFamilyAuthorityShadow",
+      "owner": "plano-02 / Onda C / E2.S4",
+      "controlKind": "content_json",
+      "controlSurface": "app/content/pt-BR/assistant/conversational_intelligence.json",
+      "controlPath": ["productFamilyAuthorityShadow", "cutoverEnabled"],
+      "envOverride": null,
+      "moduleOwner": "app/domain/services/chat_product_query_intent_detection_service.py",
+      "defaultState": "cutover_off",
+      "flagReversible": true,
+      "rollbackHow": "productFamilyAuthorityShadow.cutoverEnabled=false → detect volta ao pipeline legado; mapper permanece observer no shadow.",
+      "observability": "authorityShadow.candidateProductIntent / cutover",
+      "sideEffects": true,
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e2-s4-authority-shadow.md",
+      "liveL1L4Applicable": true
     },
     {
       "id": "taskPlannerEnabled",

@@ -155,7 +155,7 @@
       "surface": "app/content/pt-BR/assistant/ (plano-02)",
       "owner": "plano-02 / Onda C",
       "status": "BLOCKED",
-      "blockReason": "cutover de família ainda shadow-only (E2.S4); gates incompletos"
+      "blockReason": "cutover de família parcial (E2.S4 dial OFF); production/KPI + E2.S5–S7 incompletos"
     }
   ],
   "passStatusesForDelete": ["PASS", "PASS_OFFLINE_AND_LIVE", "APPROVED"],
