@@ -80,6 +80,14 @@ class ChatPresentationStackOrderService:
         cls._materialize_display_titles(metadata, plan)
         return plan
 
+    _STABLE_TITLE_SOURCES = frozenset(
+        {
+            "SLOT_TITLE",
+            "PRESENTATION_TITLE",
+            "ACTION_DISPLAY_LABEL",
+        }
+    )
+
     @classmethod
     def _materialize_display_titles(
         cls,
@@ -119,23 +127,49 @@ class ChatPresentationStackOrderService:
             }
 
         path = str(metadata.get("path") or "")
-        resolved = ResultPresentationTitleResolver.resolve(
-            path=path,
-            summary=str(metadata.get("summary") or metadata.get("actionSummary") or ""),
-            action_id=str(metadata.get("actionId") or ""),
-            metadata=metadata,
-            fallback="",
-        )
-        route_title = (
-            resolved.title
-            or str((catalog_titles or {}).get(route_key) or "").strip()
-            or str((catalog_titles or {}).get("other") or "").strip()
-        )
+        # E7.S6 — write-once: título materializado estável não é reinferido no rematerialize (F5).
+        prior_source = str(
+            plan.get("titleSource") or metadata.get("titleSource") or ""
+        ).strip()
+        prior_title = str(
+            plan.get("resolvedRouteTitle")
+            or metadata.get("routeTitle")
+            or metadata.get("title")
+            or ""
+        ).strip()
+        if not prior_title:
+            presentation = metadata.get("presentation")
+            if isinstance(presentation, dict):
+                prior_title = str(presentation.get("title") or "").strip()
+
+        if prior_title and prior_source in cls._STABLE_TITLE_SOURCES:
+            route_title = prior_title
+            title_source = prior_source
+        else:
+            resolved = ResultPresentationTitleResolver.resolve(
+                path=path,
+                summary=str(
+                    metadata.get("summary") or metadata.get("actionSummary") or ""
+                ),
+                action_id=str(metadata.get("actionId") or ""),
+                metadata=metadata,
+                fallback="",
+            )
+            route_title = (
+                resolved.title
+                or str((catalog_titles or {}).get(route_key) or "").strip()
+                or str((catalog_titles or {}).get("other") or "").strip()
+            )
+            title_source = (
+                resolved.source if resolved.title else "ROUTE_CATALOG"
+            )
+
         if route_title:
             metadata["routeTitle"] = route_title
             metadata["title"] = metadata.get("title") or route_title
+            metadata["titleSource"] = title_source
             plan["resolvedRouteTitle"] = route_title
-            plan["titleSource"] = resolved.source if resolved.title else "ROUTE_CATALOG"
+            plan["titleSource"] = title_source
             plan["routeTitles"] = {route_key: route_title}
 
         framing = str((catalog_framing or {}).get(route_key) or "").strip() or str(

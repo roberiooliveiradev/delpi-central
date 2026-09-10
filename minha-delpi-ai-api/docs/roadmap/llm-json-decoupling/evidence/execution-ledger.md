@@ -14,7 +14,7 @@
 | D — multi-turn/args | 03 | **ATENDIDO_PARCIAL** | Onda H: DELETE terms | S1–S7 OK; S8 reload OK; DELETE deferred |
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
-| G — presentation/skills | 07, 08 | **EM_ANDAMENTO** | E7.S6 | E7.S1–S5 OK; formats schema-first no build |
+| G — presentation/skills | 07, 08 | **EM_ANDAMENTO** | E7.S7 | E7.S1–S6 OK; titles write-once F5 |
 | H — cutover/cleanup | 09 | **CONTÍNUO** | E9.S1 corpus ampliado | Não remover legado sem gates |
 
 ## Protocolo por subetapa
@@ -112,3 +112,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda G **EM_ANDAMENTO** — próxima E7.S5 (labels/formats) |
 | 2026-09-10 | E7.S5 **ATENDIDO** — formats schema-first no build; labels preservados |
 | 2026-09-10 | Onda G **EM_ANDAMENTO** — próxima E7.S6 (titles/framing) |
+| 2026-09-10 | E7.S6 **ATENDIDO** — titles write-once + framing separado; F5 sem reinferência |
+| 2026-09-10 | Onda G **EM_ANDAMENTO** — próxima E7.S7 (MFE render-only) |

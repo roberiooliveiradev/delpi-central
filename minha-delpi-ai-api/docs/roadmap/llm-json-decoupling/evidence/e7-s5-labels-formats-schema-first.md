@@ -59,4 +59,4 @@ Labels: `OpenAPI/meta → humanize → discovery` preservado; `schema_formats` p
 
 ## Próximo
 
-**E7.S6** — titles/framing estáveis (metadata/action/schema; history/F5).
+**E7.S7** — MFE render-only + cleanup de JSON duplicado no frontend.

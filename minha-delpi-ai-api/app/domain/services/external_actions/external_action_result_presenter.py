@@ -196,8 +196,14 @@ class ExternalActionResultPresenter:
 
         return normalized
 
-    def _infer_items_title(self, items: list, path: str) -> str | None:
-        return infer_items_title(items, path)
+    def _infer_items_title(
+        self,
+        items: list,
+        path: str,
+        *,
+        metadata: dict | None = None,
+    ) -> str | None:
+        return infer_items_title(items, path, metadata=metadata)
 
     def _build_items_table(
         self,

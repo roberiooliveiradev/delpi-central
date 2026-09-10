@@ -43,7 +43,40 @@ class ChatPresentationTitleNormalizationService:
                 if str(title or "").strip()
             }
             fallback_title = str(policy.get("fallbackTitle") or "").strip()
-            title = presenter._infer_items_title([], path) or fallback_title or None
+            # E7.S6 — não reinferir quando titleSource estável e título já válido.
+            stable_source = str(metadata.get("titleSource") or "").strip() in {
+                "SLOT_TITLE",
+                "PRESENTATION_TITLE",
+                "ACTION_DISPLAY_LABEL",
+            }
+            # Ao corrigir wrongTitles, não alimentar o título errado de volta ao resolver.
+            infer_metadata = {
+                key: value
+                for key, value in metadata.items()
+                if key
+                not in {
+                    "title",
+                    "routeTitle",
+                    "titleSource",
+                    "presentation",
+                    "tablePresentation",
+                    "chartPresentation",
+                    "kpiPresentation",
+                    "textPresentation",
+                    "dashboardPresentation",
+                    "stackPresentationPlan",
+                }
+            }
+            title = None
+            if not stable_source:
+                # Policy fallbackTitle tem precedência sobre reinferência path/shape (E7.S6).
+                title = (
+                    fallback_title
+                    or presenter._infer_items_title([], path, metadata=infer_metadata)
+                    or None
+                )
+            elif fallback_title:
+                title = fallback_title
 
             if not title:
                 continue
@@ -55,6 +88,9 @@ class ChatPresentationTitleNormalizationService:
                     continue
 
                 current = str(presentation.get("title") or "").strip()
+
+                if stable_source and current and current not in wrong_titles:
+                    continue
 
                 if not current or current in wrong_titles:
                     presentation["title"] = title
@@ -81,6 +117,9 @@ class ChatPresentationTitleNormalizationService:
 
                     nested_type = str(nested.get("type") or "").strip().lower()
                     current = str(nested.get("title") or "").strip()
+
+                    if stable_source and current and current not in wrong_titles:
+                        continue
 
                     if panel_types and nested_type in panel_types and (
                         not current or current in wrong_titles

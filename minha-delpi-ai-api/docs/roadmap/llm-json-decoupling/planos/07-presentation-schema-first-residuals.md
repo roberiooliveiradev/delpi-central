@@ -1,8 +1,8 @@
 # Plano 07 — Presentation residual -> schema/shape-first
 
 **Prioridade:** P2  
-**Status execução:** Onda G · E7.S1–S5 **ATENDIDO** · próxima E7.S6 · display path→label **não** reabrir  
-**Evidência:** [`../evidence/e7-s1-presentation-residual-inventory.md`](../evidence/e7-s1-presentation-residual-inventory.md) · [`../evidence/e7-s2-presentation-baseline.md`](../evidence/e7-s2-presentation-baseline.md) · [`../evidence/e7-s3-shape-defaults-primary-path.md`](../evidence/e7-s3-shape-defaults-primary-path.md) · [`../evidence/e7-s4-path-entity-cleanup.md`](../evidence/e7-s4-path-entity-cleanup.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda G · E7.S1–S6 **ATENDIDO** · próxima E7.S7 · display path→label **não** reabrir  
+**Evidência:** [`../evidence/e7-s1-presentation-residual-inventory.md`](../evidence/e7-s1-presentation-residual-inventory.md) · [`../evidence/e7-s2-presentation-baseline.md`](../evidence/e7-s2-presentation-baseline.md) · [`../evidence/e7-s3-shape-defaults-primary-path.md`](../evidence/e7-s3-shape-defaults-primary-path.md) · [`../evidence/e7-s4-path-entity-cleanup.md`](../evidence/e7-s4-path-entity-cleanup.md) · [`../evidence/e7-s5-labels-formats-schema-first.md`](../evidence/e7-s5-labels-formats-schema-first.md) · [`../evidence/e7-s6-titles-framing-stable.md`](../evidence/e7-s6-titles-framing-stable.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** novas actions e APIs devem produzir apresentação útil sem exigir profile, path rule, title map ou presenter dedicado por endpoint.
 
 **HEAD revalidado:** pós-E7.S3 (`8d7836483`+)
@@ -92,9 +92,11 @@ Medir R4/R5/R7/R8/R9/R11 — **baseline TU PASS** (R7 parcial sem multi-surface)
 
 ### E7.S6 — Titles/framing
 
-**Fazer:** títulos estáveis vêm de metadata/action/schema; framing contextual pode ser produzido pela síntese do turno. Copy genérica continua configurável.
+**Status:** **ATENDIDO** (2026-09-10) — evidência [`../evidence/e7-s6-titles-framing-stable.md`](../evidence/e7-s6-titles-framing-stable.md)
 
-**Teste:** history/F5 não reinfere título materializado.
+**Feito:** write-once de título materializado (`titleSource` no metadata); F5/path rename não reinferem; `fallbackTitle` de policy > reinferência path/shape; framing permanece campo separado.
+
+**Teste:** history/F5 não reinfere título materializado — PASS.
 
 ### E7.S7 — MFE render-only e cleanup
 
