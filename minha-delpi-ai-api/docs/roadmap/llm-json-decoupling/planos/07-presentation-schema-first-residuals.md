@@ -1,7 +1,7 @@
 # Plano 07 — Presentation residual -> schema/shape-first
 
 **Prioridade:** P2  
-**Status execução:** Onda G · E7.S1–S4 **ATENDIDO** · próxima E7.S5 · display path→label **não** reabrir  
+**Status execução:** Onda G · E7.S1–S5 **ATENDIDO** · próxima E7.S6 · display path→label **não** reabrir  
 **Evidência:** [`../evidence/e7-s1-presentation-residual-inventory.md`](../evidence/e7-s1-presentation-residual-inventory.md) · [`../evidence/e7-s2-presentation-baseline.md`](../evidence/e7-s2-presentation-baseline.md) · [`../evidence/e7-s3-shape-defaults-primary-path.md`](../evidence/e7-s3-shape-defaults-primary-path.md) · [`../evidence/e7-s4-path-entity-cleanup.md`](../evidence/e7-s4-path-entity-cleanup.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** novas actions e APIs devem produzir apresentação útil sem exigir profile, path rule, title map ou presenter dedicado por endpoint.
 
@@ -84,7 +84,9 @@ Medir R4/R5/R7/R8/R9/R11 — **baseline TU PASS** (R7 parcial sem multi-surface)
 
 ### E7.S5 — Labels e formats
 
-**Fazer:** preservar pipeline `OpenAPI/meta -> humanize -> discovery/cache` para labels; formats preferem schema e depois fallback determinístico.
+**Status:** **ATENDIDO** (2026-09-10) — evidência [`../evidence/e7-s5-labels-formats-schema-first.md`](../evidence/e7-s5-labels-formats-schema-first.md)
+
+**Feito:** `build_presentation` wiring `resolve_schema_formats` → `_active_schema_formats`; colunas propagam `schema_formats`; meta override + JSON/inferência fallback; sem LLM de tipo.
 
 **Não fazer:** LLM decidir tipo monetário/percentual sem validação.
 

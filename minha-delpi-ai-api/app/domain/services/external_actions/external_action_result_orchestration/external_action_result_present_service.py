@@ -50,6 +50,8 @@ class ExternalActionResultPresentService:
         previous_formats = host._active_schema_formats
         previous_path = host._active_presentation_path
         host._active_presentation_path = str(path or "").strip()
+        # present() não recebe response_schema; formats vêm de meta.fieldFormats
+        # (build_presentation é o owner schema-first — E7.S5).
         host._active_schema_labels = host._column_labels.merge_meta_field_labels({}, data)
         host._active_schema_formats = host._column_labels.merge_meta_field_formats({}, data)
 

@@ -30,8 +30,9 @@ class ExternalActionResultBuildService:
             schema_labels,
             data,
         )
+        # E7.S5 — schema OpenAPI primeiro; meta.fieldFormats sobrescreve; JSON só fallback.
         host._active_schema_formats = host._column_labels.merge_meta_field_formats(
-            {},
+            host._column_labels.resolve_schema_formats(response_schema),
             data,
         )
 

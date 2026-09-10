@@ -979,6 +979,7 @@ class ExternalActionColumnLabelService:
         path: str = "",
         profile_name: str | None = None,
         schema_labels: dict[str, str] | None = None,
+        schema_formats: dict[str, str] | None = None,
         skip_keys: frozenset[str] | None = None,
     ) -> list[dict[str, str]]:
         dict_items = [item for item in items if isinstance(item, dict)]
@@ -1024,7 +1025,14 @@ class ExternalActionColumnLabelService:
         columns: list[dict[str, str]] = []
 
         for key in ordered_keys:
-            columns.append(self.enrich_column(key, label_map[key]))
+            columns.append(
+                self.enrich_column_def(
+                    key,
+                    label=label_map[key],
+                    schema_labels=schema_labels,
+                    schema_formats=schema_formats,
+                )
+            )
 
         return columns
 
@@ -1371,8 +1379,20 @@ class ExternalActionColumnLabelService:
     def infer_column_type(self, key: str) -> str | None:
         return self.resolve_field_format(key)
 
-    def enrich_column(self, key: str, label: str) -> dict:
-        return self.enrich_column_def(key, label=label)
+    def enrich_column(
+        self,
+        key: str,
+        label: str,
+        *,
+        schema_formats: dict[str, str] | None = None,
+        schema_labels: dict[str, str] | None = None,
+    ) -> dict:
+        return self.enrich_column_def(
+            key,
+            label=label,
+            schema_labels=schema_labels,
+            schema_formats=schema_formats,
+        )
 
     @staticmethod
     def format_num(value) -> str:

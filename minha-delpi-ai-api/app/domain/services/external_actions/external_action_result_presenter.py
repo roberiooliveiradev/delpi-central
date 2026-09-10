@@ -227,7 +227,12 @@ class ExternalActionResultPresenter:
         )
 
     def _enrich_column(self, key: str, label: str) -> dict:
-        return self._column_labels.enrich_column(key, label)
+        return self._column_labels.enrich_column(
+            key,
+            label,
+            schema_labels=self._active_schema_labels,
+            schema_formats=self._active_schema_formats,
+        )
 
     def _format_field_value(self, key: str, value: object) -> str:
         return self._column_labels.format_field_value(
@@ -253,6 +258,7 @@ class ExternalActionResultPresenter:
             path=path,
             profile_name=profile_name,
             schema_labels=self._active_schema_labels,
+            schema_formats=self._active_schema_formats,
         )
 
     def _markdown_column_pairs_for_items(
