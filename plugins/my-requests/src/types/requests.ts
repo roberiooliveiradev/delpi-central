@@ -96,6 +96,8 @@ export type RequestComment = {
   author_user_id?: string | null;
   author_name?: string | null;
   created_at?: string | null;
+  /** Presentation projection — not persisted. */
+  is_mine?: boolean;
 };
 
 export type RequestAttachment = {

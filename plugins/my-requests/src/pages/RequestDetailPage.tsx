@@ -337,24 +337,22 @@ export function RequestDetailPage({ requestId }: RequestDetailPageProps) {
                 </MyRequestsSectionCard>
               ) : null}
 
-              <div className="my-requests-detail-service-grid">
-                <MyRequestsSectionCard
-                  title="Ações disponíveis"
-                  hint={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}
-                >
-                  <ActionBar
-                    actions={request.allowed_actions || []}
-                    busy={busy}
-                    onAction={onAction}
-                  />
-                </MyRequestsSectionCard>
-
-                <CommentsPanel
-                  requestId={requestId}
-                  canComment={capabilities?.can_comment ?? false}
-                  refreshKey={timelineEpoch}
+              <MyRequestsSectionCard
+                title="Ações disponíveis"
+                hint={MY_REQUESTS_HELP_TOOLTIPS.detail.actions}
+              >
+                <ActionBar
+                  actions={request.allowed_actions || []}
+                  busy={busy}
+                  onAction={onAction}
                 />
-              </div>
+              </MyRequestsSectionCard>
+
+              <CommentsPanel
+                requestId={requestId}
+                canComment={capabilities?.can_comment ?? false}
+                refreshKey={timelineEpoch}
+              />
 
               <ArtifactsPanel
                 requestId={requestId}

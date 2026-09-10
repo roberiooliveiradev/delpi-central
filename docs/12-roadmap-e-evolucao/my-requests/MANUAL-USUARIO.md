@@ -4,7 +4,7 @@ Espelho da Ajuda in-app (`plugins/my-requests/src/content/helpTooltips.ts`).
 
 ## O que é
 
-**Minhas Solicitações** reúne pedidos do dia a dia (emissão de nota fiscal, criação de matéria-prima e outros tipos) em um único lugar. Você acompanha o andamento, conversa por comentários e envia arquivos — tudo com a mesma aparência dos demais módulos do portal.
+**Minhas Solicitações** reúne pedidos do dia a dia (emissão de nota fiscal, criação de matéria-prima e outros tipos) em um único lugar. Você acompanha o andamento, conversa na solicitação e envia arquivos — tudo com a mesma aparência dos demais módulos do portal.
 
 Layout por tela: [WIREFRAMES.md](./WIREFRAMES.md).
 
@@ -49,12 +49,12 @@ A **filial**, quando o tipo exige, aparece **dentro** do formulário (01 = Santa
 A leitura da página segue três fases:
 
 1. **O que foi solicitado** — dados gerais, dados do tipo (ex.: emissão) e documentos do pedido;
-2. **Atendimento** — progresso, ações, comentários e documentos gerados no atendimento;
+2. **Atendimento** — progresso, ações (com ícone e ajuda), conversa sobre a solicitação e documentos gerados no atendimento;
 3. **Histórico** — linha do tempo (último bloco).
 
 O **status** aparece no topo. Se a solicitação foi **devolvida para ajuste**, o **motivo da devolução** aparece em um card em destaque com o botão **Corrigir dados** (quando liberado). Isso abre o formulário de edição; depois de salvar, use **Reenviar solicitação** nas ações disponíveis.
 
-O **progresso do atendimento** (etapas + percentual) vem do sistema. Em telas largas o rastreador fica horizontal; em telas estreitas usa «Ver etapas». Os **botões de ação** só mostram o que a API liberou. **Devolver** e **cancelar** pedem motivo em uma janela.
+O **progresso do atendimento** (etapas + percentual) vem do sistema. Em telas largas o rastreador fica horizontal; em telas estreitas usa «Ver etapas». Os **botões de ação** ocupam a largura da seção (ícone + texto + ajuda ao passar o mouse) e só mostram o que a API liberou. **Devolver** e **cancelar** pedem motivo em uma janela. A **conversa sobre a solicitação** fica abaixo das ações, em formato de mensagens (foto do Portal ou iniciais), e atualiza em tempo real.
 
 Documentos do pedido usam miniaturas. Clique para **abrir em modal** (pré-visualizar e **baixar** com a sessão autenticada — não use a URL de download direto no navegador). Você pode anexar arquivos **ao criar** a solicitação (ficam pendentes até enviar o pedido). No detalhe, adicionar anexos do pedido só é possível quando ela está **devolvida para ajuste**: selecione os arquivos, revise/descarte e use **Salvar documentos**. Documentos gerados no atendimento seguem o mesmo fluxo de seleção → Salvar, a cargo de quem processa.
 
@@ -67,8 +67,8 @@ Ao **devolver** uma solicitação, além do motivo em texto, quem atende pode **
 | Dados da emissão | Solicitação | Resumo da NF (quando for esse tipo) |
 | Documentos da solicitação | Solicitação | Anexos do pedido (miniaturas) |
 | Progresso do atendimento | Atendimento | Etapas e percentual |
-| Ações disponíveis | Atendimento | Botões liberados no momento |
-| Comentários | Atendimento | Comunicação operacional |
+| Ações disponíveis | Atendimento | Botões com ícone e ajuda |
+| Conversa sobre a solicitação | Atendimento | Mensagens entre solicitante e atendimento |
 | Documentos gerados no atendimento | Atendimento | Resultados (ex.: NF em PDF) |
 | Linha do tempo | Histórico | Registro do que aconteceu |
 

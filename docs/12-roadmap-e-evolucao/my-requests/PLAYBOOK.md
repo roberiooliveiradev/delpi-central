@@ -751,6 +751,17 @@ Seeds: `invoice-issuance` (specialized), `raw-material-creation` (schema_driven)
 | POST | `/requests/{id}/artifacts` | `create_request_artifact` |
 | GET | `/artifacts/{id}/download` | `download_request_artifact` |
 
+**Comentários / conversa (UX):** o domínio permanece `RequestComment` e os paths `/comments`. A projeção de listagem/criação inclui `is_mine` (comparação `author_user_id` × actor autenticado; **não** é coluna no banco). A UI ordena ASC para o chat; a API lista `created_at DESC` (paginação futura).
+
+**Avatar de participantes (BFF):**
+
+| Método | Path | Notas |
+|--------|------|-------|
+| GET | `/participants/{user_id}/avatar` | Proxy JWT → Core S2S `/integrations/person-profiles/{id}/photo` |
+| POST | `/participants/lookup` | `{ ids[] }` → `has_photo` (Core lookup); sem PII sensível |
+
+Owner da foto: **core-api** (`CORE_USER_AVATAR_UPLOAD_DIR`). `requests-api` não persiste cópia. MFE não chama Core nem commercial-api para avatar de terceiro.
+
 ### 10.4 Extensões type-specific (invoice-issuance)
 
 Sub-router: `/v1/types/invoice-issuance/lookups/*` — **fora** do engine core.

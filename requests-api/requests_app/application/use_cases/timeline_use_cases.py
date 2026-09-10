@@ -91,7 +91,7 @@ class TimelineUseCases:
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
-        self._ctx(user=user, request_id=request_id)
+        request, actor = self._ctx(user=user, request_id=request_id)
         items, total = self._files.list_comments(
             request_id, page=page, page_size=page_size
         )
@@ -104,6 +104,7 @@ class TimelineUseCases:
                         "author_name": item.author_name,
                         "body": item.body,
                         "created_at": item.created_at,
+                        "is_mine": item.author_user_id == actor.user_id,
                     }
                 )
                 for item in items
@@ -166,5 +167,6 @@ class TimelineUseCases:
                 "author_name": comment.author_name,
                 "body": comment.body,
                 "created_at": comment.created_at,
+                "is_mine": True,
             }
         )

@@ -646,6 +646,85 @@ declare module "@delpi/plugin-ui/index" {
     prefix: string,
   ): ComponentType<DashboardInitialsAvatarProps>;
 
+  export type HintActionProps = {
+    hint: string;
+    ariaLabel: string;
+    placement?: "top" | "bottom";
+    suppressed?: boolean;
+    children: ReactElement;
+  };
+
+  export function HintAction(props: HintActionProps): ReactNode;
+
+  export type MessageThreadItem = {
+    id: string;
+    kind: string;
+    bodyText: string;
+    createdAtLabel: string;
+    authorName?: string | null;
+    authorUserId?: string | null;
+    authorSrc?: string | null;
+    mine?: boolean;
+  };
+
+  export type DashboardMessageThreadProps = {
+    messages: readonly MessageThreadItem[];
+    listAriaLabel: string;
+    emptyLabel: string;
+    emptyContent?: ReactNode;
+    portalScopeClassName?: string;
+    className?: string;
+  };
+
+  export function createDashboardMessageThread(
+    prefix: string,
+  ): ComponentType<DashboardMessageThreadProps>;
+
+  export type MentionComposerLabels = {
+    placeholder: string;
+    sendAriaLabel: string;
+    attachAriaLabel: string;
+    mentionListAriaLabel: string;
+    mentionEmptyLabel: string;
+  };
+
+  export type DashboardMentionComposerProps = {
+    value: string;
+    onChange: (value: string) => void;
+    onSubmit: (markdown: string) => void;
+    labels: MentionComposerLabels;
+    mentionHits?: readonly unknown[];
+    disabled?: boolean;
+    submitting?: boolean;
+    showAttach?: boolean;
+    portalScopeClassName?: string;
+    submitOnEnter?: boolean;
+    submitOnModEnter?: boolean;
+  };
+
+  export function createDashboardMentionComposer(
+    prefix: string,
+  ): ComponentType<DashboardMentionComposerProps>;
+
+  export type DashboardRoomConversationChatColumnProps = {
+    msgsRef?: React.Ref<HTMLDivElement | null>;
+    onMsgsScroll?: React.UIEventHandler<HTMLDivElement>;
+    children: ReactNode;
+    dock: ReactNode;
+  };
+
+  export type DashboardRoomPanelProps = {
+    children: ReactNode;
+    "aria-label"?: string;
+  };
+
+  export function createDashboardRoomConversationShell(prefix: string): {
+    Shell: ComponentType<Record<string, unknown>>;
+    ChatColumn: ComponentType<DashboardRoomConversationChatColumnProps>;
+    Panel: ComponentType<DashboardRoomPanelProps>;
+    classNames: Record<string, string>;
+  };
+
   export type FloatingNoticeVariant = "error" | "warning" | "success" | "info";
 
   export type FloatingNoticeInput = {

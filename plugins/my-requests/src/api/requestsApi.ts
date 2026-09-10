@@ -360,3 +360,33 @@ export function attachmentDownloadUrl(attachmentId: string) {
 export function artifactDownloadUrl(artifactId: string) {
   return `${API_BASE}/artifacts/${encodeURIComponent(artifactId)}/download`;
 }
+
+export function participantAvatarUrl(userId: string) {
+  return `${API_BASE}/participants/${encodeURIComponent(userId)}/avatar`;
+}
+
+export async function lookupParticipantsHasPhoto(
+  userIds: string[],
+  options?: { signal?: AbortSignal },
+): Promise<Array<{ user_id: string; has_photo: boolean }>> {
+  const body = await httpPost<
+    Envelope<{ items: Array<{ user_id: string; has_photo: boolean }> }>
+  >(`${API_BASE}/participants/lookup`, { ids: userIds }, options);
+  return unwrap(body).items || [];
+}
+
+export async function downloadParticipantAvatarBlob(
+  userId: string,
+  options?: { signal?: AbortSignal },
+): Promise<Blob> {
+  const response = await fetch(participantAvatarUrl(userId), {
+    method: "GET",
+    headers: clientHeaders(),
+    signal: options?.signal,
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Erro HTTP ${response.status}`);
+  }
+  return response.blob();
+}

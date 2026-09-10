@@ -73,8 +73,12 @@ Fonte de verdade do binding: `src/ui/mrUi.tsx` + imports diretos. **Proibido** p
 | `FilePreviewModal` | `RequestFilePreviewModal` | Prévia + baixar autenticado (blob) |
 | `ActionButton` | — | Nav, ações, links de linha |
 | `DataTable` + `dataTableBemClasses` | `mrDataTableClassNames` | `/mine`, `/work-queue` |
-| `FieldLabel` | — | Comentários, observação NF |
-| `NativeTextAreaControl` | — | Comentários, observação NF |
+| `FieldLabel` | — | Observação NF |
+| `NativeTextAreaControl` | — | Observação NF |
+| `createDashboardMessageThread` | `MyRequestsMessageThread` | Conversa no detalhe |
+| `createDashboardMentionComposer` | `MyRequestsMentionComposer` | Composer da conversa |
+| `createDashboardRoomConversationShell` | `MyRequestsRoomPanel` / `ChatColumn` | Frame da conversa embutida |
+| `HintAction` | — | Help por botão de ação |
 
 ### 1.2 Previstos / propostos — não inventar UI ad hoc
 
@@ -107,7 +111,8 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), a
 | Detalhe | `/requests/:id` | Fases solicitação→atendimento→histórico; ProgressTracker+JourneyProgressBar; ActionBar; Comments; Attachments/Artifacts com PreviewStrip |
 | Edição | `/requests/:id/edit` | Wizard/form em modo edit (`PATCH` + Idempotency-Key) |
 | Payload NF | detalhe (fase solicitação) | SectionCard, DetailFields com hint |
-| Comentários | detalhe (fase atendimento) | SectionCard, FieldLabel+hint, NativeTextArea (se `capabilities.can_comment`) |
+| Comentários / Conversa | detalhe (fase atendimento) | MessageThread + MentionComposer; full-width abaixo das ações (`capabilities.can_comment` no composer) |
+| Ações disponíveis | detalhe (fase atendimento) | SectionCard full-width; ActionButton + ícone + HintAction |
 | Documentos pedido | detalhe (fase solicitação) | PreviewStrip + modal autenticado; staging → Salvar se `can_upload_attachment` |
 | Documentos atendimento | detalhe (fase atendimento) | PreviewStrip + modal autenticado; staging → Salvar se `can_upload_artifact` |
 | Schema MP | `/new` type MP | SchemaFormPage + SectionCard + kit fields | **entregue E7** |
@@ -436,9 +441,12 @@ Zero CSS chrome do kit no MFE; layout de página só em `index.css` (`.my-reques
 ┌─ Progresso (ProgressTracker desktop / compact ≤768 + JourneyBar %) ─┐
 │ Fonte: journey_progress · compactSummary = «Etapa N de M · label»   │
 └─────────────────────────────────────────────────────────────────────┘
-┌─ Ações disponíveis ─────────────────┬─ Comentários ─────────────────┐
-│ ActionBar (allowed_actions)         │ form† can_comment              │
-└─────────────────────────────────────┴───────────────────────────────┘
+┌─ Ações disponíveis (full-width · ícone + HintAction) ───────────────┐
+│ ActionBar (allowed_actions → resolveActionPresentation)             │
+└─────────────────────────────────────────────────────────────────────┘
+┌─ Conversa sobre a solicitação (MessageThread + MentionComposer) ────┐
+│ RoomPanel · avatares Core via BFF · is_mine · can_comment no dock   │
+└─────────────────────────────────────────────────────────────────────┘
 ┌─ Documentos gerados no atendimento (PreviewStrip + kind†) ──────────┐
 └─────────────────────────────────────────────────────────────────────┘
 
@@ -447,12 +455,13 @@ Zero CSS chrome do kit no MFE; layout de página só em `index.css` (`.my-reques
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-Desktop: service-grid 2 colunas (ações|comentários). ≤1100px: 1 coluna.  
+Desktop/mobile: Atendimento em stack full-width (Progresso → Ações → Conversa → Documentos gerados).  
 Tracker: `default` em desktop; `compact` ≤768px.  
-**Regra:** botões = `allowed_actions`; uploads/comentário = `capabilities` (API).  
+**Regra:** botões = `allowed_actions`; uploads/composer = `capabilities` (API).  
 `edit` → `/requests/:id/edit` (não é toast).  
-**Kit:** ProgressTracker · JourneyProgressBar · AttachmentPreviewStrip · ModalShell · FileDropzone · DetailFields.hint  
-**Ajuda:** `helpTooltips.detail.*` / `attachments` / `artifacts` / `comments` / `timeline`
+**Kit:** ProgressTracker · JourneyProgressBar · MessageThread · MentionComposer · RoomPanel · AttachmentPreviewStrip · ModalShell · FileDropzone · HintAction · DetailFields.hint  
+**Ajuda:** `helpTooltips.detail.*` / `actions.*` / `attachments` / `artifacts` / `comments` / `timeline`  
+**Avatar:** MFE → `GET /apps/requests-api/v1/participants/{user_id}/avatar` → Core S2S person-profile (sem storage no my_requests).
 
 ### WF-05b — Corrigir (`/requests/:id/edit`)
 

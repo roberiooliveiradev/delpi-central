@@ -16,6 +16,9 @@ import {
   MyRequestsProgressTracker,
   MyRequestsAvatar,
   MyRequestsEntityDirectoryPicker,
+  MyRequestsMentionComposer,
+  MyRequestsMessageThread,
+  MyRequestsRoomPanel,
   MyRequestsSectionCard,
   MyRequestsTopBar,
   TextField,
@@ -51,6 +54,9 @@ describe("kit-first my-requests", () => {
     expect(typeof MyRequestsJourneyProgressBar).toBe("function");
     expect(typeof MyRequestsAvatar).toBe("function");
     expect(typeof MyRequestsEntityDirectoryPicker).toBe("function");
+    expect(typeof MyRequestsMessageThread).toBe("function");
+    expect(typeof MyRequestsMentionComposer).toBe("function");
+    expect(typeof MyRequestsRoomPanel).toBe("function");
   });
 
   it("não reintroduz chrome primitivo local (__btn / __panel / __table)", () => {

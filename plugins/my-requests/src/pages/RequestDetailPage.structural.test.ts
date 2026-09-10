@@ -44,7 +44,7 @@ describe("RequestDetailPage structural", () => {
     const artifacts = read("components/ArtifactsPanel.tsx");
 
     expect(page).toMatch(/my-requests-detail-phase/);
-    expect(page).toMatch(/my-requests-detail-service-grid/);
+    expect(page).not.toMatch(/my-requests-detail-service-grid/);
     expect(page).toMatch(/O que foi solicitado/);
     expect(page).toMatch(/Atendimento/);
     expect(page).toMatch(/Histórico/);
@@ -52,12 +52,14 @@ describe("RequestDetailPage structural", () => {
     expect(page).not.toMatch(/my-requests-detail-history/);
     expect(page).not.toMatch(/my-requests-detail-docs/);
     expect(css).toMatch(/my-requests-detail-phase/);
-    expect(css).toMatch(/my-requests-detail-service-grid/);
+    expect(css).not.toMatch(/my-requests-detail-service-grid/);
+    expect(css).toMatch(/my-requests-detail-conversation/);
     expect(css).not.toMatch(/my-requests-detail-split/);
 
     const requestPhase = indexOfOrFail(page, "my-requests-phase-request");
     const attachmentsIdx = indexOfOrFail(page, "<AttachmentsPanel");
     const servicePhase = indexOfOrFail(page, "my-requests-phase-service");
+    const actionBarIdx = indexOfOrFail(page, "<ActionBar");
     const commentsIdx = indexOfOrFail(page, "<CommentsPanel");
     const artifactsIdx = indexOfOrFail(page, "<ArtifactsPanel");
     const historyPhase = indexOfOrFail(page, "my-requests-phase-history");
@@ -65,7 +67,8 @@ describe("RequestDetailPage structural", () => {
 
     expect(requestPhase).toBeLessThan(attachmentsIdx);
     expect(attachmentsIdx).toBeLessThan(servicePhase);
-    expect(servicePhase).toBeLessThan(commentsIdx);
+    expect(servicePhase).toBeLessThan(actionBarIdx);
+    expect(actionBarIdx).toBeLessThan(commentsIdx);
     expect(commentsIdx).toBeLessThan(artifactsIdx);
     expect(artifactsIdx).toBeLessThan(historyPhase);
     expect(historyPhase).toBeLessThan(timelineIdx);

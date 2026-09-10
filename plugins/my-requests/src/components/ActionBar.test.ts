@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { actionLabel } from "../content/presentationLabels";
 import { ActionBar } from "./ActionBar";
@@ -19,5 +22,15 @@ describe("ActionBar render-only", () => {
   it("filtra view antes de renderizar botões", async () => {
     const { filterDetailBarActions } = await import("../utils/operationalActions");
     expect(filterDetailBarActions(["view", "start"])).toEqual(["start"]);
+  });
+
+  it("usa apresentação central com HintAction e ícone", () => {
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "ActionBar.tsx"),
+      "utf8",
+    );
+    expect(source).toMatch(/HintAction/);
+    expect(source).toMatch(/resolveActionPresentation/);
+    expect(source).toMatch(/<Icon/);
   });
 });

@@ -10,6 +10,7 @@ const REQUIRED_SECTIONS = [
   "invoiceWizard",
   "rawMaterialForm",
   "detail",
+  "actions",
   "timeline",
   "comments",
   "attachments",
@@ -35,6 +36,10 @@ describe("MY_REQUESTS_HELP_TOOLTIPS", () => {
     expect(MY_REQUESTS_HELP_TOOLTIPS.detail.status.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.detail.branch.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.comments.newComment.length).toBeGreaterThan(10);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.comments.section).toMatch(/conversa/i);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.actions.start.length).toBeGreaterThan(10);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.actions.return.length).toBeGreaterThan(10);
+    expect(MY_REQUESTS_HELP_TOOLTIPS.actions.complete.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.attachments.upload.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.attachments.create.length).toBeGreaterThan(10);
     expect(MY_REQUESTS_HELP_TOOLTIPS.attachments.pending.length).toBeGreaterThan(10);

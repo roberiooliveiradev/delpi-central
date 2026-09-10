@@ -9,9 +9,12 @@ import {
   createDashboardFormActions,
   createDashboardJourneyProgressBar,
   createDashboardLoadingState,
+  createDashboardMentionComposer,
+  createDashboardMessageThread,
   createDashboardNavigationCard,
   createDashboardPageHeader,
   createDashboardProgressTracker,
+  createDashboardRoomConversationShell,
   createDashboardSectionCard,
   createDashboardSegmentToggle,
   createDashboardSelectField,
@@ -26,6 +29,7 @@ import {
   EntityDirectoryPicker,
   fileDropzoneBemClasses,
   formActionsBemClasses,
+  HintAction,
   loadingStateCardBemClasses,
   navigationCardBemClasses,
   pageHeaderTitleRowBemClasses,
@@ -38,7 +42,10 @@ import {
 export type {
   EntityDirectoryOption,
   EntityDirectoryPickerProps,
+  MessageThreadItem,
 } from "@delpi/plugin-ui/index";
+
+export { HintAction };
 
 /** Prefixo BEM dual-class do MFE (pares com `.delpi-ui-*` no remote). */
 export const MR_UI_PREFIX = "my-requests";
@@ -178,6 +185,15 @@ export const MyRequestsJourneyProgressBar = createDashboardJourneyProgressBar({
 });
 
 export const MyRequestsAvatar = createInitialsAvatar(MR_UI_PREFIX);
+
+export const MyRequestsMessageThread = createDashboardMessageThread(MR_UI_PREFIX);
+
+export const MyRequestsMentionComposer = createDashboardMentionComposer(MR_UI_PREFIX);
+
+const roomConversationKit = createDashboardRoomConversationShell(MR_UI_PREFIX);
+export const MyRequestsRoomConversationChatColumn = roomConversationKit.ChatColumn;
+export const MyRequestsRoomPanel = roomConversationKit.Panel;
+export const myRequestsRoomConversationClassNames = roomConversationKit.classNames;
 
 /** Typeahead genérico do kit (avatar/chips via slots no consumidor). */
 export const MyRequestsEntityDirectoryPicker = EntityDirectoryPicker;

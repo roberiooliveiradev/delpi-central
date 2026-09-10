@@ -1,6 +1,6 @@
-import { ActionButton } from "@delpi/plugin-ui/index";
+import { ActionButton, HintAction } from "@delpi/plugin-ui/index";
 
-import { actionButtonVariant, actionLabel } from "../content/presentationLabels";
+import { resolveActionPresentation } from "../content/resolveActionPresentation";
 import type { AllowedAction } from "../types/requests";
 import { filterDetailBarActions } from "../utils/operationalActions";
 import { MyRequestsEmptyState, MyRequestsFormActions } from "../ui/mrUi";
@@ -19,17 +19,28 @@ export function ActionBar({ actions, busy = false, onAction }: ActionBarProps) {
   }
   return (
     <MyRequestsFormActions>
-      {visible.map((action) => (
-        <ActionButton
-          key={action}
-          type="button"
-          variant={actionButtonVariant(action)}
-          disabled={busy}
-          onClick={() => onAction(action)}
-        >
-          {actionLabel(action)}
-        </ActionButton>
-      ))}
+      {visible.map((action) => {
+        const presentation = resolveActionPresentation(action);
+        const { Icon } = presentation;
+        return (
+          <HintAction
+            key={action}
+            hint={presentation.help}
+            ariaLabel={`Ajuda: ${presentation.label}`}
+            placement="top"
+          >
+            <ActionButton
+              type="button"
+              variant={presentation.variant}
+              disabled={busy}
+              onClick={() => onAction(action)}
+            >
+              <Icon aria-hidden size={16} strokeWidth={2} />
+              {presentation.label}
+            </ActionButton>
+          </HintAction>
+        );
+      })}
     </MyRequestsFormActions>
   );
 }

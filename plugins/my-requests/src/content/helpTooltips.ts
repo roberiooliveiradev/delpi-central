@@ -62,11 +62,11 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     requestPhase:
       "Tudo o que foi informado ao abrir a solicitação — dados gerais, formulário do tipo e documentos anexados ao pedido.",
     servicePhase:
-      "Área de atendimento: progresso, ações disponíveis, comunicação e documentos gerados na execução.",
+      "Área de atendimento: progresso, ações disponíveis, conversa sobre a solicitação e documentos gerados na execução.",
     historyPhase:
       "Registro cronológico do que aconteceu na solicitação. A linha do tempo só observa fatos; não é o lugar para conversar.",
     actions:
-      "Use os botões para avançar o atendimento. Devolver e cancelar pedem um motivo antes de confirmar. Editar abre o formulário para corrigir quando a solicitação foi devolvida.",
+      "Use os botões para avançar o atendimento. Cada ação explica o impacto. Devolver e cancelar pedem um motivo antes de confirmar.",
     invoicePayload:
       "Resumo dos dados da emissão (destinatário, tipo de NF, frete e itens) quando a solicitação é de nota fiscal.",
     type: "Qual formulário e fluxo esta solicitação segue.",
@@ -86,14 +86,28 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
     freight: "Quem assume o frete (CIF ou FOB) e dados relacionados.",
     items: "Quantidade de produtos incluídos na emissão.",
   },
+  actions: {
+    start:
+      "Inicia o tratamento desta solicitação e altera seu andamento para atendimento.",
+    return:
+      "Devolve a solicitação para que o solicitante corrija ou complemente as informações.",
+    resubmit: "Envia novamente a solicitação após as correções solicitadas.",
+    complete:
+      "Finaliza o atendimento quando todas as providências necessárias foram realizadas.",
+    issue: "Registra a emissão da nota fiscal conforme o fluxo desta solicitação.",
+    cancel: "Encerra a solicitação sem conclusão. Uma justificativa será solicitada.",
+    reject: "Encerra a solicitação como rejeitada.",
+    edit: "Abre os dados da solicitação para realizar as correções permitidas.",
+    view: "Abre a visualização desta solicitação.",
+  },
   timeline: {
     section:
-      "Histórico do que aconteceu nesta solicitação: criação, mudanças de etapa, comentários e envios de arquivo.",
+      "Histórico do que aconteceu nesta solicitação: criação, mudanças de etapa, mensagens e envios de arquivo.",
   },
   comments: {
     section:
-      "Comunicação durante o atendimento entre quem pediu e quem executa. Não substitui a linha do tempo.",
-    newComment: "Escreva uma mensagem para quem acompanha ou atende esta solicitação.",
+      "Use esta conversa para trocar informações com quem solicitou ou está atendendo. As mensagens ficam registradas nesta solicitação e não substituem a linha do tempo.",
+    newComment: "Escreva uma mensagem para as pessoas que acompanham esta solicitação.",
   },
   attachments: {
     section:

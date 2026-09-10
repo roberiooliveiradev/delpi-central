@@ -4,12 +4,18 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, File, Form, Header, HTTPException, Query, Request, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 
+from delpi_auth.authz_core import has_permission
 from delpi_auth.request_context import get_current_user
 
 from requests_app.application.errors import ApplicationError
+from requests_app.application.security.requests_permissions import (
+    ACCESS_PERMISSION,
+    MANAGE_PERMISSION,
+    VIEW_ALL_PERMISSION,
+)
 from requests_app.composition.requests_composer import (
     build_create_request_use_case,
     build_file_use_cases,
@@ -24,6 +30,9 @@ from requests_app.composition.requests_composer import (
     build_update_request_payload_use_case,
 )
 from requests_app.core.responses import fail, ok
+from requests_app.infrastructure.gateways.core_person_profile_adapter import (
+    CorePersonProfileAdapter,
+)
 from requests_app.interface.http.client_id import client_id_from_request
 
 router = APIRouter(prefix="/v1", tags=["Requests"])
@@ -38,6 +47,20 @@ def _current_user():
 
 def _handle(exc: ApplicationError):
     return fail(exc.message, status_code=exc.status_code, data={"code": exc.code})
+
+
+def _can_resolve_participant_avatar(user) -> bool:
+    """Module reader: access / view-all / manage / any my-requests.* permission."""
+    if (
+        has_permission(user, ACCESS_PERMISSION)
+        or has_permission(user, VIEW_ALL_PERMISSION)
+        or has_permission(user, MANAGE_PERMISSION)
+    ):
+        return True
+    perms = getattr(user, "permissions", None)
+    if isinstance(perms, (list, set, tuple, frozenset)):
+        return any(str(p).startswith("my-requests") for p in perms)
+    return False
 
 
 class CreateRequestBody(BaseModel):
@@ -476,3 +499,42 @@ def create_comment(request_id: UUID, body: CommentBody, request: Request):
     except ApplicationError as exc:
         return _handle(exc)
     return ok(data, message="Comentário criado.", status_code=201)
+
+class ParticipantLookupBody(BaseModel):
+    ids: list[str] = Field(default_factory=list, max_length=50)
+
+
+@router.post("/participants/lookup")
+def lookup_participants(body: ParticipantLookupBody):
+    """Batch has_photo from Core person-profile (S2S). No private PII."""
+    user = _current_user()
+    if not _can_resolve_participant_avatar(user):
+        return fail("Sem permissão.", 403, data={"code": "forbidden"})
+    adapter = CorePersonProfileAdapter()
+    has_map = adapter.lookup_has_photo(body.ids)
+    items = [
+        {"user_id": uid, "has_photo": bool(has_map.get(uid))}
+        for uid in (str(i).strip() for i in body.ids)
+        if str(i).strip()
+    ]
+    return ok({"items": items})
+
+
+@router.get("/participants/{user_id}/avatar")
+def get_participant_avatar(user_id: str):
+    """Proxy Core person-profile photo (canonical Portal avatar). Ownership stays in Core."""
+    user = _current_user()
+    if not _can_resolve_participant_avatar(user):
+        return fail("Sem permissão.", 403, data={"code": "forbidden"})
+    uid = (user_id or "").strip()
+    if not uid:
+        return fail("user_id inválido.", 422, data={"code": "validation_error"})
+    photo = CorePersonProfileAdapter().get_photo(uid)
+    if photo is None:
+        return fail("Foto não encontrada.", 404, data={"code": "not_found"})
+    content, content_type, file_name = photo
+    return Response(
+        content=content,
+        media_type=content_type or "application/octet-stream",
+        headers={"Content-Disposition": f'inline; filename="{file_name}"'},
+    )
