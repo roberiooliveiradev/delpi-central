@@ -1,8 +1,8 @@
 # Plano 05 — Composition/enrichment -> planejamento orientado por goals e budget
 
 **Prioridade:** P1  
-**Status execução:** Onda E · consumers `routeId`/composition no inventário §2 · após/com 04  
-**Evidência:** [`../evidence/onda-a-inventory.md`](../evidence/onda-a-inventory.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda E · S1–S2 **ATENDIDO** · próxima **E5.S3**  
+**Evidência:** [`../evidence/e5-s1-composition-inventory.md`](../evidence/e5-s1-composition-inventory.md) · [`../evidence/e5-s2-composition-baseline.md`](../evidence/e5-s2-composition-baseline.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** consultas compostas e enriquecimentos devem ser escolhidos pelo objetivo real do usuário, pelos dados já disponíveis e pelas actions autorizadas, não por listas fixas de `routeIds` e mapas `scope -> route`.
 
 ## CURRENT
@@ -48,17 +48,21 @@ current goals
 
 ## Etapas
 
-### E5.S1 — Inventário de decisões de composição
+### E5.S1 — Inventário de decisões de composição — **ATENDIDO**
 
 **Fazer:** mapear onde entity/profile/artifact dispara tool adicional e como o sistema decide primary vs enrich.
 
 **Classificar:** `DETERMINISTIC_POLICY` para caps/budget; `SEMANTIC_ROUTING_HEURISTIC` para route maps; `BUSINESS_RULE` quando houver regra real de domínio.
 
-### E5.S2 — Baseline de composição
+**Evidência:** [`../evidence/e5-s1-composition-inventory.md`](../evidence/e5-s1-composition-inventory.md)
+
+### E5.S2 — Baseline de composição — **ATENDIDO**
 
 Cobrir product 360, structure + stock, factory status, departmental meta + KPI, multi-domain request e resultado já suficiente.
 
 Medir tool count, task success, redundancy, latency e partial-failure behavior.
+
+**Evidência:** [`../evidence/e5-s2-composition-baseline.md`](../evidence/e5-s2-composition-baseline.md) · harness `test_e5_s2_composition_baseline.py`
 
 ### E5.S3 — Goal coverage contract
 
