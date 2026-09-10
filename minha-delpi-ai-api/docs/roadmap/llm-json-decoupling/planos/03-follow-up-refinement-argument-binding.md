@@ -1,8 +1,8 @@
 # Plano 03 — Follow-up, refinement e argument binding generalizados
 
 **Prioridade:** P0  
-**Status execução:** Onda D · **EM_ANDAMENTO** · E3.S1–S5 **ATENDIDO** · próxima = E3.S6 (pagination/filter fast paths)  
-**Evidência:** [`../evidence/e3-s1-multi-turn-state-inventory.md`](../evidence/e3-s1-multi-turn-state-inventory.md) · [`../evidence/e3-s2-follow-up-baseline.md`](../evidence/e3-s2-follow-up-baseline.md) · [`../evidence/e3-s3-turn-refinement-contract.md`](../evidence/e3-s3-turn-refinement-contract.md) · [`../evidence/e3-s4-schema-driven-argument-binder.md`](../evidence/e3-s4-schema-driven-argument-binder.md) · [`../evidence/e3-s5-schema-driven-group-by.md`](../evidence/e3-s5-schema-driven-group-by.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda D · **EM_ANDAMENTO** · E3.S1–S6 **ATENDIDO** · próxima = E3.S7 (follow-up cutover)  
+**Evidência:** [`../evidence/e3-s1-multi-turn-state-inventory.md`](../evidence/e3-s1-multi-turn-state-inventory.md) · [`../evidence/e3-s2-follow-up-baseline.md`](../evidence/e3-s2-follow-up-baseline.md) · [`../evidence/e3-s3-turn-refinement-contract.md`](../evidence/e3-s3-turn-refinement-contract.md) · [`../evidence/e3-s4-schema-driven-argument-binder.md`](../evidence/e3-s4-schema-driven-argument-binder.md) · [`../evidence/e3-s5-schema-driven-group-by.md`](../evidence/e3-s5-schema-driven-group-by.md) · [`../evidence/e3-s6-pagination-filter-fast-path.md`](../evidence/e3-s6-pagination-filter-fast-path.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** continuidade conversacional, paginação, filtros, group-by e complementação de argumentos devem funcionar a partir do estado estruturado da conversa e do schema da action, não de substrings de rota ou frases cadastradas.
 
 ## CURRENT
@@ -114,11 +114,13 @@ Medir R3/R6/R7/R8/R9/R11.
 
 **Teste:** mesma semântica com provider/path/operationId renomeados; group_by diferente; action sem group_by deve rejeitar/clarificar. ✅
 
-### E3.S6 — Pagination/filter fast paths
+### E3.S6 — Pagination/filter fast paths — **ATENDIDO**
 
 **Fazer:** manter parsers determinísticos para valores explícitos quando vantajoso (`página 3`, `50 linhas`, `filial 01`), mas aplicar delta apenas sobre parâmetros aceitos pelo schema.
 
-**Teste:** phrases exatas + frases livres + field inexistente.
+**Feito:** `SchemaDrivenPaginationFilterService` + evidência [`../evidence/e3-s6-pagination-filter-fast-path.md`](../evidence/e3-s6-pagination-filter-fast-path.md).
+
+**Teste:** phrases exatas + frases livres + field inexistente. ✅
 
 ### E3.S7 — Follow-up cutover
 
