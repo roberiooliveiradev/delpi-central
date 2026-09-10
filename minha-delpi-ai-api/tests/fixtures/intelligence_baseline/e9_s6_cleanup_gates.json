@@ -73,11 +73,17 @@
   "deleteCandidates": [
     {
       "id": "registry_path_markers",
-      "fields": ["pathMarkers", "operationIdMarkers", "excludePathMarkers", "routeSegment", "pathSuffix"],
+      "fields": ["pathMarkers", "operationIdMarkers", "excludePathMarkers", "pathSuffix", "pathExactEnd"],
       "surface": "app/content/pt-BR/assistant/operational_route_registry.json",
       "owner": "plano-01 / Onda B",
-      "status": "BLOCKED",
-      "blockReason": "29 routes só pathMarkers; resolve_route_action + vocabulary/domain ainda AUTHORITY; OpenAPI catalog local não backfill operationIds"
+      "status": "DELETED",
+      "deletedAt": "E9.S12.C",
+      "authorization": "APPROVED",
+      "authorizationSource": "user:siga + backfill operationIds from api-delpi OpenAPI + resolver exact match",
+      "replacement": "route.operationIds",
+      "blockReason": null,
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s12c-registry-operation-ids.md",
+      "note": "routeSegment e parameters.strategy permanecem (E9.S12.D/E)"
     },
     {
       "id": "registry_parameter_strategy_fields",
@@ -133,5 +139,5 @@
     }
   ],
   "passStatusesForDelete": ["PASS", "PASS_OFFLINE_AND_LIVE", "APPROVED"],
-  "note": "deleteAuthorized global=false; E9.S12.A/B DELETED; registry markers/strategy + TU heuristics BLOCKED (STOP-THE-LINE)."
+  "note": "deleteAuthorized global=false; E9.S12.A/B/C DELETED (terms, playbook/narrative path, registry path markers). strategy + routeSegment + TU BLOCKED."
 }

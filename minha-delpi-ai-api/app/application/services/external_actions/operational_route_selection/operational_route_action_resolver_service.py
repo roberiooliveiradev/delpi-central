@@ -41,6 +41,13 @@ class OperationalRouteActionResolverService:
         if not isinstance(route_spec, dict):
             return None
 
+        # E9.S12.C — authority = operationIds canônicos (OpenAPI).
+        # Compat: operationIdMarkers/pathMarkers ainda lidos se presentes (testes/KPI virtual).
+        operation_ids = [
+            str(item).strip()
+            for item in (route_spec.get("operationIds") or [])
+            if str(item).strip()
+        ]
         path_markers = [
             str(marker).lower()
             for marker in (route_spec.get("pathMarkers") or [])
@@ -60,7 +67,8 @@ class OperationalRouteActionResolverService:
         path_suffix = str(route_spec.get("pathSuffix") or "").strip().lower()
 
         if (
-            not path_markers
+            not operation_ids
+            and not path_markers
             and not operation_markers
             and not path_exact_end
             and not path_suffix
@@ -68,11 +76,22 @@ class OperationalRouteActionResolverService:
             return None
 
         if candidates is None:
-            candidates = self._catalog.find_allowed_actions_by_markers(
-                path_markers=path_markers or ([path_exact_end] if path_exact_end else []),
-                operation_markers=operation_markers,
-                allowed_action_ids=allowed_action_ids,
-            )
+            if operation_ids and hasattr(
+                self._catalog, "find_allowed_actions_by_operation_ids"
+            ):
+                candidates = self._catalog.find_allowed_actions_by_operation_ids(
+                    operation_ids=operation_ids,
+                    allowed_action_ids=allowed_action_ids,
+                    method=str(route_spec.get("method") or "GET"),
+                )
+            if not candidates:
+                candidates = self._catalog.find_allowed_actions_by_markers(
+                    path_markers=path_markers
+                    or ([path_exact_end] if path_exact_end else []),
+                    operation_markers=operation_markers
+                    or [oid.lower() for oid in operation_ids],
+                    allowed_action_ids=allowed_action_ids,
+                )
 
             if not candidates:
                 candidates = self._catalog.load_candidates(
@@ -87,6 +106,7 @@ class OperationalRouteActionResolverService:
         )
 
         expected_method = str(route_spec.get("method") or "GET").upper()
+        operation_id_set = {oid.lower() for oid in operation_ids}
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message or "")
         matching: list[tuple[dict, dict, str]] = []
@@ -98,49 +118,64 @@ class OperationalRouteActionResolverService:
             path = str(action.get("path") or "").lower()
             operation_id = str(action.get("operationId") or "").lower()
 
-            if path_exact_end and not path.rstrip("/").endswith(path_exact_end.rstrip("/")):
-                continue
-
-            if path_suffix and not path.rstrip("/").endswith(path_suffix.rstrip("/")):
-                if not operation_markers or not any(
-                    marker in operation_id for marker in operation_markers
+            if operation_id_set:
+                if operation_id not in operation_id_set:
+                    continue
+            else:
+                if path_exact_end and not path.rstrip("/").endswith(
+                    path_exact_end.rstrip("/")
                 ):
                     continue
 
-            if path_markers and not any(marker in path for marker in path_markers):
-                if not (
-                    path_suffix
-                    and path.rstrip("/").endswith(path_suffix.rstrip("/"))
-                ):
+                if path_suffix and not path.rstrip("/").endswith(path_suffix.rstrip("/")):
                     if not operation_markers or not any(
                         marker in operation_id for marker in operation_markers
                     ):
                         continue
 
-            if exclude_path_markers and any(marker in path for marker in exclude_path_markers):
-                continue
-
-            if operation_markers and not any(
-                marker in operation_id for marker in operation_markers
-            ):
-                if path_markers or path_exact_end or path_suffix:
-                    if not path_markers or not any(marker in path for marker in path_markers):
-                        if not path_suffix or not path.rstrip("/").endswith(
-                            path_suffix.rstrip("/")
+                if path_markers and not any(marker in path for marker in path_markers):
+                    if not (
+                        path_suffix
+                        and path.rstrip("/").endswith(path_suffix.rstrip("/"))
+                    ):
+                        if not operation_markers or not any(
+                            marker in operation_id for marker in operation_markers
                         ):
                             continue
 
-            if (
-                not path_markers
-                and not path_exact_end
-                and not path_suffix
-                and operation_markers
-                and not any(marker in operation_id for marker in operation_markers)
-            ):
-                continue
+                if exclude_path_markers and any(
+                    marker in path for marker in exclude_path_markers
+                ):
+                    continue
 
-            if "search" in path and not path_markers and not path_exact_end and not path_suffix:
-                continue
+                if operation_markers and not any(
+                    marker in operation_id for marker in operation_markers
+                ):
+                    if path_markers or path_exact_end or path_suffix:
+                        if not path_markers or not any(
+                            marker in path for marker in path_markers
+                        ):
+                            if not path_suffix or not path.rstrip("/").endswith(
+                                path_suffix.rstrip("/")
+                            ):
+                                continue
+
+                if (
+                    not path_markers
+                    and not path_exact_end
+                    and not path_suffix
+                    and operation_markers
+                    and not any(marker in operation_id for marker in operation_markers)
+                ):
+                    continue
+
+                if (
+                    "search" in path
+                    and not path_markers
+                    and not path_exact_end
+                    and not path_suffix
+                ):
+                    continue
 
             if not self._action_fits_route_affinity(route, action, path=path):
                 continue

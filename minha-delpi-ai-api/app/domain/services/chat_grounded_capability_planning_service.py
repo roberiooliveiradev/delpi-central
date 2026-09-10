@@ -685,17 +685,26 @@ class ChatGroundedCapabilityPlanningService:
                 )
             if not isinstance(route, dict):
                 continue
-            markers = (
-                ((route.get("route") or {}).get("pathMarkers") or [])
-                if isinstance(route.get("route"), dict)
-                else []
-            )
-            if not any(
-                str(marker).strip().rstrip("/").lower() in path_norm
-                or path_norm.endswith(str(marker).strip().rstrip("/").lower())
-                for marker in markers
+            route_node = route.get("route") if isinstance(route.get("route"), dict) else {}
+            operation_ids = [
+                str(item).strip().lower()
+                for item in (route_node.get("operationIds") or [])
+                if str(item).strip()
+            ]
+            markers = [
+                str(marker).strip().rstrip("/").lower()
+                for marker in (route_node.get("pathMarkers") or [])
                 if str(marker).strip()
+            ]
+            if operation_ids:
+                # E9.S12.C — binding canônico por operationId; pathMarkers opcionais.
+                pass
+            elif markers and not any(
+                marker in path_norm or path_norm.endswith(marker)
+                for marker in markers
             ):
+                continue
+            elif not operation_ids and not markers:
                 continue
             if hasattr(selection_service, "select_registry_route_id"):
                 try:

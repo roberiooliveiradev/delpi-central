@@ -192,10 +192,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "/directives/"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_directives"
         ],
         "method": "GET"
@@ -215,12 +212,8 @@
         "customPredicate": "exclusiveRawMaterialCatalog"
       },
       "route": {
-        "pathMarkers": [
-          "exclusive-raw-materials/catalog",
-          "/structure/exclusivity/catalog"
-        ],
-        "operationIdMarkers": [
-          "get_exclusive_raw_material_catalog"
+        "operationIds": [
+          "list_exclusive_raw_materials_catalog"
         ],
         "method": "GET"
       },
@@ -240,10 +233,7 @@
         "customPredicate": "rawMaterialPriceIntelligence"
       },
       "route": {
-        "pathMarkers": [
-          "raw-material-price-intelligence"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_raw_material_price_intelligence"
         ],
         "method": "GET"
@@ -264,10 +254,7 @@
         "customPredicate": "costImpactSimulation"
       },
       "route": {
-        "pathMarkers": [
-          "cost-impact-simulation"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_cost_impact_simulation"
         ],
         "method": "GET"
@@ -287,10 +274,7 @@
         "customPredicate": "productionStatus"
       },
       "route": {
-        "pathMarkers": [
-          "production-status"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_production_status"
         ],
         "method": "GET"
@@ -310,10 +294,7 @@
         "customPredicate": "shippingStatus"
       },
       "route": {
-        "pathMarkers": [
-          "shipping-status"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_shipping_status"
         ],
         "method": "GET"
@@ -333,10 +314,7 @@
         "customPredicate": "structureExclusivity"
       },
       "route": {
-        "pathMarkers": [
-          "/structure/exclusivity"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_structure_exclusivity"
         ],
         "method": "GET"
@@ -362,10 +340,7 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "factory-status"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_factory_status"
         ],
         "method": "GET"
@@ -387,11 +362,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "/guide"
-        ],
-        "operationIdMarkers": [
-          "guide",
+        "operationIds": [
           "get_product_guide"
         ],
         "method": "GET"
@@ -415,11 +386,7 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/products/"
-        ],
-        "pathSuffix": "/by-supplier-part-number",
-        "operationIdMarkers": [
+        "operationIds": [
           "search_products_by_supplier_part_number"
         ],
         "method": "GET"
@@ -445,13 +412,8 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/products/"
-        ],
-        "pathSuffix": "/suppliers",
-        "operationIdMarkers": [
-          "get_product_suppliers",
-          "suppliers"
+        "operationIds": [
+          "get_product_suppliers"
         ],
         "method": "GET"
       },
@@ -486,18 +448,8 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/purchases"
-        ],
-        "operationIdMarkers": [
-          "get_product_purchases",
-          "purchases"
-        ],
-        "excludePathMarkers": [
-          "last-purchase",
-          "purchase-price-history",
-          "purchase-budget-history",
-          "top-products"
+        "operationIds": [
+          "get_product_purchases"
         ],
         "method": "GET"
       },
@@ -518,12 +470,8 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "/pricing"
-        ],
-        "operationIdMarkers": [
-          "get_product_pricing",
-          "pricing"
+        "operationIds": [
+          "get_product_pricing"
         ],
         "method": "GET"
       },
@@ -544,12 +492,10 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "open-orders"
-        ],
-        "operationIdMarkers": [
-          "open_orders",
-          "get_product_sales_open_orders"
+        "operationIds": [
+          "get_product_sales_open_orders",
+          "list_totvs_open_orders",
+          "list_totvs_open_orders_by_customer"
         ],
         "method": "GET"
       },
@@ -570,11 +516,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "/sales/billing"
-        ],
-        "operationIdMarkers": [
-          "billing",
+        "operationIds": [
           "get_product_sales_billing"
         ],
         "method": "GET"
@@ -610,12 +552,8 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/pricing"
-        ],
-        "operationIdMarkers": [
-          "get_product_pricing",
-          "pricing"
+        "operationIds": [
+          "get_product_pricing"
         ],
         "method": "GET"
       },
@@ -636,12 +574,9 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "/inspection"
-        ],
-        "operationIdMarkers": [
-          "list_product_inspection",
-          "inspection"
+        "operationIds": [
+          "get_product_inspection",
+          "get_public_quality_label_inspection"
         ],
         "method": "GET"
       },
@@ -662,16 +597,8 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "/products/"
-        ],
-        "pathSuffix": "/customers",
-        "operationIdMarkers": [
-          "get_product_customers",
-          "customers"
-        ],
-        "excludePathMarkers": [
-          "/search"
+        "operationIds": [
+          "get_product_customers"
         ],
         "method": "GET"
       },
@@ -692,12 +619,8 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "/internal-movements"
-        ],
-        "operationIdMarkers": [
-          "get_product_internal_movements",
-          "internal_movements"
+        "operationIds": [
+          "get_product_internal_movements"
         ],
         "method": "GET"
       },
@@ -722,10 +645,7 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "last-purchase"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_last_purchase"
         ],
         "method": "GET"
@@ -746,10 +666,7 @@
         "customPredicate": "purchasePriceHistory"
       },
       "route": {
-        "pathMarkers": [
-          "purchase-price-history"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_purchase_price_history"
         ],
         "method": "GET"
@@ -770,10 +687,7 @@
         "customPredicate": "purchaseBudgetHistory"
       },
       "route": {
-        "pathMarkers": [
-          "purchase-budget-history"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_purchase_budget_history"
         ],
         "method": "GET"
@@ -791,14 +705,8 @@
       "intentBinding": "stock",
       "routeSegment": "stock",
       "route": {
-        "pathMarkers": [
-          "/stock"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_stock"
-        ],
-        "excludePathMarkers": [
-          "/stock-value"
         ],
         "method": "GET"
       },
@@ -817,10 +725,7 @@
         "customPredicate": "structureExcel"
       },
       "route": {
-        "pathMarkers": [
-          "/structure/excel"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_structure_excel"
         ],
         "method": "GET"
@@ -838,15 +743,8 @@
       "intentBinding": "structure",
       "routeSegment": "structure",
       "route": {
-        "pathMarkers": [
-          "/structure"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_structure"
-        ],
-        "excludePathMarkers": [
-          "/structure/exclusivity",
-          "/structure/excel"
         ],
         "method": "GET"
       },
@@ -863,10 +761,7 @@
       "intentBinding": "parents",
       "routeSegment": "parents",
       "route": {
-        "pathMarkers": [
-          "/parents"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_parents"
         ],
         "method": "GET"
@@ -883,15 +778,8 @@
       "domain": "product",
       "intentBinding": "sales",
       "route": {
-        "pathMarkers": [
-          "/sales"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_sales_summary"
-        ],
-        "excludePathMarkers": [
-          "/sales/billing",
-          "/sales-order"
         ],
         "method": "GET"
       },
@@ -913,10 +801,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "/inbound-invoice"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_inbound_invoice_items"
         ],
         "method": "GET"
@@ -939,10 +824,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "/outbound-invoice"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_outbound_invoice_items"
         ],
         "method": "GET"
@@ -972,9 +854,9 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/inbound-invoice",
-          "/outbound-invoice"
+        "operationIds": [
+          "get_product_inbound_invoice_items",
+          "get_product_outbound_invoice_items"
         ],
         "method": "GET"
       },
@@ -994,10 +876,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "/analyser"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_analyser"
         ],
         "method": "GET"
@@ -1014,10 +893,7 @@
       "domain": "product",
       "intentBinding": "summary",
       "route": {
-        "pathMarkers": [
-          "/summary"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_summary"
         ],
         "method": "GET"
@@ -1034,10 +910,7 @@
       "domain": "product",
       "intentBinding": "analyser",
       "route": {
-        "pathMarkers": [
-          "/analyser"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_analyser"
         ],
         "method": "GET"
@@ -1054,8 +927,7 @@
       "domain": "product",
       "intentBinding": "description",
       "route": {
-        "pathExactEnd": "/products/{code}",
-        "operationIdMarkers": [
+        "operationIds": [
           "get_product_detail"
         ],
         "method": "GET"
@@ -1072,13 +944,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "consumption",
       "route": {
-        "pathMarkers": [
-          "/production/consumption/top-items"
-        ],
-        "excludePathMarkers": [
-          "by-work-center",
-          "top-items-validated",
-          "by-item/"
+        "operationIds": [
+          "get_production_consumption_top_items"
         ],
         "method": "GET"
       },
@@ -1097,8 +964,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "consumptionByWorkCenter",
       "route": {
-        "pathMarkers": [
-          "/production/consumption/top-items-by-work-center"
+        "operationIds": [
+          "get_production_consumption_top_items_by_work_center"
         ],
         "method": "GET"
       },
@@ -1117,8 +984,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "consumptionValidated",
       "route": {
-        "pathMarkers": [
-          "/production/consumption/top-items-validated"
+        "operationIds": [
+          "get_production_consumption_top_items_validated"
         ],
         "method": "GET"
       },
@@ -1137,8 +1004,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "purchasesRanking",
       "route": {
-        "pathMarkers": [
-          "/purchases/top-products"
+        "operationIds": [
+          "get_purchases_top_products"
         ],
         "method": "GET"
       },
@@ -1157,8 +1024,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "lossesTop",
       "route": {
-        "pathMarkers": [
-          "/production/losses/top-materials"
+        "operationIds": [
+          "get_production_losses_top_materials"
         ],
         "method": "GET"
       },
@@ -1177,8 +1044,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "lossesRecords",
       "route": {
-        "pathMarkers": [
-          "/production/losses/records"
+        "operationIds": [
+          "get_production_losses_records"
         ],
         "method": "GET"
       },
@@ -1202,8 +1069,8 @@
         "reasonKey": "productionSqlFastPath"
       },
       "route": {
-        "pathMarkers": [
-          "/production/schedule/today"
+        "operationIds": [
+          "get_production_schedule_today"
         ],
         "method": "GET"
       },
@@ -1228,8 +1095,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "ordersOpen",
       "route": {
-        "pathMarkers": [
-          "/production/orders/open"
+        "operationIds": [
+          "get_production_orders_open"
         ],
         "method": "GET"
       },
@@ -1248,11 +1115,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "ordersFinished",
       "route": {
-        "pathMarkers": [
-          "/production/orders/finished"
-        ],
-        "excludePathMarkers": [
-          "finished-without-consumption"
+        "operationIds": [
+          "get_production_orders_finished"
         ],
         "method": "GET"
       },
@@ -1271,8 +1135,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "workCenterSummary",
       "route": {
-        "pathMarkers": [
-          "/production/work-centers/order-summary"
+        "operationIds": [
+          "get_production_work_center_order_summary"
         ],
         "method": "GET"
       },
@@ -1291,8 +1155,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "allocationGaps",
       "route": {
-        "pathMarkers": [
-          "/production/allocation-gaps"
+        "operationIds": [
+          "get_production_allocation_gaps"
         ],
         "method": "GET"
       },
@@ -1311,8 +1175,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "finishedWithoutConsumption",
       "route": {
-        "pathMarkers": [
-          "/production/orders/finished-without-consumption"
+        "operationIds": [
+          "get_production_orders_finished_without_consumption"
         ],
         "method": "GET"
       },
@@ -1331,8 +1195,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "averagePlannedTime",
       "route": {
-        "pathMarkers": [
-          "/production/work-centers/average-planned-time"
+        "operationIds": [
+          "get_production_work_center_average_planned_time"
         ],
         "method": "GET"
       },
@@ -1351,8 +1215,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "consumptionByItem",
       "route": {
-        "pathMarkers": [
-          "/production/consumption/by-item/"
+        "operationIds": [
+          "get_production_consumption_by_item"
         ],
         "method": "GET"
       },
@@ -1371,8 +1235,8 @@
       "domain": "productionOperational",
       "productionOperationalKind": "plannedVsRealTime",
       "route": {
-        "pathMarkers": [
-          "/production/planned-vs-real-time"
+        "operationIds": [
+          "get_production_planned_vs_real_time"
         ],
         "method": "GET"
       },
@@ -1394,11 +1258,7 @@
         "termsFrom": "external_action_responses.actionSelection.kpiQuestions.cpvTerms"
       },
       "route": {
-        "pathMarkers": [
-          "/supplies/cpv"
-        ],
-        "operationIdMarkers": [
-          "cpv",
+        "operationIds": [
           "get_supplies_cpv"
         ],
         "method": "GET"
@@ -1418,11 +1278,7 @@
         "customPredicate": "suppliesOtdRoute"
       },
       "route": {
-        "pathMarkers": [
-          "/supplies/otd"
-        ],
-        "operationIdMarkers": [
-          "otd",
+        "operationIds": [
           "get_supplies_otd"
         ],
         "method": "GET"
@@ -1442,10 +1298,7 @@
         "termsFrom": "external_action_responses.actionSelection.kpiQuestions.departmentIddAllTerms"
       },
       "route": {
-        "pathMarkers": [
-          "/dashboard/departments-indicators"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_dashboard_departments_indicators"
         ],
         "method": "GET"
@@ -1465,10 +1318,7 @@
         "termsFrom": "external_action_responses.actionSelection.kpiQuestions.departmentIddIndicatorsTerms"
       },
       "route": {
-        "pathMarkers": [
-          "/dashboard/department-indicators"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_dashboard_department_indicators"
         ],
         "method": "GET"
@@ -1489,10 +1339,7 @@
         "excludeTermsFrom": "external_action_responses.actionSelection.kpiQuestions.departmentIddIndicatorsTerms"
       },
       "route": {
-        "pathMarkers": [
-          "/dashboard/department-idd"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_dashboard_department_idd"
         ],
         "method": "GET"
@@ -1513,12 +1360,8 @@
         "excludeTermsFrom": "external_action_responses.actionSelection.kpiQuestions.inventoryTurnoverExcludeDepartmentIddTerms"
       },
       "route": {
-        "pathMarkers": [
-          "/supplies/inventory-turnover"
-        ],
-        "operationIdMarkers": [
-          "inventory_turnover",
-          "inventory-turnover"
+        "operationIds": [
+          "get_supplies_inventory_turnover"
         ],
         "method": "GET"
       },
@@ -1537,12 +1380,7 @@
         "termsFrom": "external_action_responses.actionSelection.kpiQuestions.suppliesStockTerms"
       },
       "route": {
-        "pathMarkers": [
-          "/supplies/stock-value"
-        ],
-        "operationIdMarkers": [
-          "stock_value",
-          "stock-value",
+        "operationIds": [
           "get_supplies_stock_value"
         ],
         "method": "GET"
@@ -1562,11 +1400,7 @@
         "termsFrom": "external_action_responses.actionSelection.kpiQuestions.suppliesStockTerms"
       },
       "route": {
-        "pathMarkers": [
-          "/supplies/stock-balances/summary"
-        ],
-        "operationIdMarkers": [
-          "stock_balances_summary",
+        "operationIds": [
           "get_supplies_stock_balances_summary"
         ],
         "method": "GET"
@@ -1586,11 +1420,7 @@
         "termsFrom": "external_action_responses.actionSelection.kpiQuestions.suppliesStockTerms"
       },
       "route": {
-        "pathMarkers": [
-          "/supplies/stock-balances/items"
-        ],
-        "operationIdMarkers": [
-          "stock_balances_items",
+        "operationIds": [
           "get_supplies_stock_balances_items"
         ],
         "method": "GET"
@@ -1611,11 +1441,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "/supplies/safety-stock/items/",
-          "/details"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_supplies_safety_stock_item_details"
         ],
         "method": "GET"
@@ -1636,10 +1462,7 @@
         "requiresProductIdentifier": false
       },
       "route": {
-        "pathMarkers": [
-          "/supplies/safety-stock/consumption-analysis/items"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_supplies_safety_stock_consumption_analysis_items"
         ],
         "method": "GET"
@@ -1660,10 +1483,7 @@
         "requiresProductIdentifier": true
       },
       "route": {
-        "pathMarkers": [
-          "/supplies/safety-stock/consumption-analysis/items/"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_supplies_safety_stock_consumption_analysis_item_details"
         ],
         "method": "GET"
@@ -1683,12 +1503,9 @@
         "customPredicate": "productionOtdDetailRoute"
       },
       "route": {
-        "pathMarkers": [
-          "/production/otd"
-        ],
-        "operationIdMarkers": [
-          "production_otd",
-          "get_production_otd"
+        "operationIds": [
+          "get_production_otd",
+          "get_production_otd_series"
         ],
         "method": "GET"
       },
@@ -1707,15 +1524,9 @@
         "customPredicate": "productionOeeDetailRoute"
       },
       "route": {
-        "pathMarkers": [
-          "/production/oee"
-        ],
-        "excludePathMarkers": [
-          "/appointments"
-        ],
-        "operationIdMarkers": [
-          "production_oee",
-          "get_production_oee"
+        "operationIds": [
+          "get_production_oee",
+          "get_production_oee_series"
         ],
         "method": "GET"
       },
@@ -1734,12 +1545,8 @@
         "customPredicate": "productionOeeAppointmentRoute"
       },
       "route": {
-        "pathMarkers": [
-          "/production/oee/appointments"
-        ],
-        "operationIdMarkers": [
-          "production_oee_appointment",
-          "get_production_oee_appointment"
+        "operationIds": [
+          "get_production_oee_appointment_by_id"
         ],
         "method": "GET"
       },
@@ -1758,12 +1565,10 @@
         "customPredicate": "productionEficienciaFabrilRoute"
       },
       "route": {
-        "pathMarkers": [
-          "/production/eficiencia-fabril/"
-        ],
-        "operationIdMarkers": [
-          "eficiencia_fabril_dashboard",
-          "get_eficiencia_fabril_dashboard"
+        "operationIds": [
+          "get_eficiencia_fabril_dashboard",
+          "get_eficiencia_fabril_efficiency_by_work_center",
+          "list_eficiencia_fabril_appointments"
         ],
         "method": "GET"
       },
@@ -1782,15 +1587,8 @@
         "customPredicate": "saleOrdersList"
       },
       "route": {
-        "pathSuffix": "/sales",
-        "operationIdMarkers": [
+        "operationIds": [
           "list_sale_orders"
-        ],
-        "excludePathMarkers": [
-          "/lmps",
-          "/products/",
-          "{code}",
-          "/lmp"
         ],
         "method": "GET"
       },
@@ -1809,12 +1607,7 @@
         "customPredicate": "commercialRol"
       },
       "route": {
-        "pathMarkers": [
-          "/commercial/rol/series",
-          "/commercial/rol/summary",
-          "/financial/rol"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_commercial_rol_series",
           "get_commercial_rol_summary",
           "get_financial_rol"
@@ -1843,14 +1636,8 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/transforma-mais/processes/summary"
-        ],
-        "operationIdMarkers": [
+        "operationIds": [
           "get_transforma_mais_summary"
-        ],
-        "excludePathMarkers": [
-          "/lmps"
         ],
         "method": "GET"
       },
@@ -1869,13 +1656,8 @@
         "customPredicate": "transformaQuestion"
       },
       "route": {
-        "pathMarkers": [
-          "transforma-mais",
-          "/processes"
-        ],
-        "excludePathMarkers": [
-          "/summary",
-          "/lmps"
+        "operationIds": [
+          "list_transforma_mais_processes"
         ],
         "method": "GET"
       },
@@ -1901,16 +1683,10 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/lmps/{sale_number}",
-          "{sale_number}"
-        ],
-        "operationIdMarkers": [
-          "get_lmp",
-          "by_sale_number"
-        ],
-        "excludePathMarkers": [
-          "transforma"
+        "operationIds": [
+          "get_lmp_by_sale_number",
+          "get_lmp_history_events",
+          "get_lmp_history_flow"
         ],
         "method": "GET"
       },
@@ -1936,14 +1712,8 @@
         ]
       },
       "route": {
-        "pathSuffix": "/lmps/dashboard/summary",
-        "operationIdMarkers": [
-          "get_lmps_dashboard_summary",
-          "lmps_dashboard_summary"
-        ],
-        "excludePathMarkers": [
-          "transforma",
-          "{sale_number}"
+        "operationIds": [
+          "get_lmps_dashboard_summary"
         ],
         "method": "GET"
       },
@@ -1969,13 +1739,8 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/lmps",
-          "/dashboard/items"
-        ],
-        "excludePathMarkers": [
-          "transforma",
-          "{sale_number}"
+        "operationIds": [
+          "list_lmps_dashboard_items"
         ],
         "method": "GET"
       },
@@ -2001,12 +1766,8 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/lmps",
-          "/dashboard/charts"
-        ],
-        "excludePathMarkers": [
-          "transforma"
+        "operationIds": [
+          "get_lmps_dashboard_charts"
         ],
         "method": "GET"
       },
@@ -2032,15 +1793,8 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/lmps",
-          "dashboard"
-        ],
-        "excludePathMarkers": [
-          "/summary",
-          "/items",
-          "/charts",
-          "transforma"
+        "operationIds": [
+          "list_lmps_dashboard"
         ],
         "method": "GET"
       },
@@ -2059,14 +1813,8 @@
         "customPredicate": "lmpCatchAll"
       },
       "route": {
-        "pathSuffix": "/lmps",
-        "operationIdMarkers": [
+        "operationIds": [
           "list_lmps"
-        ],
-        "excludePathMarkers": [
-          "{",
-          "dashboard",
-          "transforma"
         ],
         "method": "GET"
       },
@@ -2085,13 +1833,8 @@
         "customPredicate": "productSearchWithGroupCode"
       },
       "route": {
-        "pathMarkers": [
-          "/products/"
-        ],
-        "pathSuffix": "/search",
-        "excludePathMarkers": [
-          "/system/",
-          "/customers/"
+        "operationIds": [
+          "search_products"
         ],
         "method": "GET"
       },
@@ -2123,13 +1866,8 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/products/"
-        ],
-        "pathSuffix": "/search",
-        "excludePathMarkers": [
-          "/system/",
-          "/customers/"
+        "operationIds": [
+          "search_products"
         ],
         "method": "GET"
       },
@@ -2159,10 +1897,9 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/system/tables/"
+        "operationIds": [
+          "get_protheus_table_schema"
         ],
-        "pathSuffix": "/schema",
         "method": "GET"
       },
       "parameters": {
@@ -2190,10 +1927,9 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/system/tables/"
+        "operationIds": [
+          "get_protheus_table_indexes"
         ],
-        "pathSuffix": "/indexes",
         "method": "GET"
       },
       "parameters": {
@@ -2221,10 +1957,9 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/system/tables/"
+        "operationIds": [
+          "get_protheus_table_relations"
         ],
-        "pathSuffix": "/relations",
         "method": "GET"
       },
       "parameters": {
@@ -2252,12 +1987,8 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/system/tables/"
-        ],
-        "pathSuffix": "/columns",
-        "excludePathMarkers": [
-          "/columns/search"
+        "operationIds": [
+          "list_protheus_table_columns"
         ],
         "method": "GET"
       },
@@ -2291,8 +2022,8 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/system/columns/search"
+        "operationIds": [
+          "search_protheus_columns_by_description"
         ],
         "method": "GET"
       },
@@ -2318,8 +2049,8 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/system/tables/search"
+        "operationIds": [
+          "search_tables_by_description"
         ],
         "method": "GET"
       },
@@ -2345,15 +2076,8 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/system/tables/"
-        ],
-        "excludePathMarkers": [
-          "/search",
-          "/columns",
-          "/relations",
-          "/schema",
-          "/indexes"
+        "operationIds": [
+          "get_protheus_table"
         ],
         "method": "GET"
       },
@@ -2364,5 +2088,16 @@
         "reasonKey": "systemMetadata"
       }
     }
-  ]
+  ],
+  "cleanupMeta": {
+    "pathMarkersDeletedAt": "E9.S12.C",
+    "operationIdsCanonical": true,
+    "backfillSource": "api-delpi/openapi_baseline.json",
+    "report": {
+      "exact_from_markers": 32,
+      "path_backfill": 51,
+      "forced": 1,
+      "empty": 0
+    }
+  }
 }

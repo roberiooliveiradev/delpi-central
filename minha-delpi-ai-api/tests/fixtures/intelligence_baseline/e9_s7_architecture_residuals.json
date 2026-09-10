@@ -18,9 +18,11 @@
         "app/application/services/external_actions/external_action_selection_service.py",
         "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py"
       ],
-      "disposition": "REMOVE_WHEN_GATES_PASS",
-      "justification": "Ainda lidos por resolver/selection compare e domains; authority de seleção já cutover OpenAPI-first quando cutoverEnabled. DELETE bloqueado por E9.S6.",
-      "inCoreGenericSelection": "observer_or_compat"
+      "disposition": "REMOVED",
+      "justification": "E9.S12.C — pathMarkers/exclude/suffix/exactEnd removidos; binding canônico route.operationIds (OpenAPI exact).",
+      "inCoreGenericSelection": false,
+      "deletedAt": "E9.S12.C",
+      "replacement": "route.operationIds"
     },
     {
       "id": "operationIdMarkers",
@@ -31,9 +33,11 @@
         "app/application/services/external_actions/external_action_selection_service.py",
         "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py"
       ],
-      "disposition": "REMOVE_WHEN_GATES_PASS",
-      "justification": "Mesmo padrão pathMarkers; residual pós-cutover E1.S6B.",
-      "inCoreGenericSelection": "observer_or_compat"
+      "disposition": "REMOVED",
+      "justification": "E9.S12.C — substituídos por operationIds exatos; compat residual só em rotas virtuais KPI/testes.",
+      "inCoreGenericSelection": false,
+      "deletedAt": "E9.S12.C",
+      "replacement": "route.operationIds"
     },
     {
       "id": "parameterStrategy_per_endpoint",

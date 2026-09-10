@@ -329,6 +329,7 @@ class OperationalRouteRegistryService:
 
     @classmethod
     def route_path_marker_for_segment(cls, segment: str) -> str | None:
+        """Hint de path por segment — pós-E9.S12.C usa routeSegment (pathMarkers removidos)."""
         normalized = str(segment or "").strip().lower()
 
         if not normalized:
@@ -339,20 +340,16 @@ class OperationalRouteRegistryService:
                 continue
 
             route_spec = route.get("route")
+            if isinstance(route_spec, dict):
+                markers = route_spec.get("pathMarkers")
+                if isinstance(markers, list):
+                    for marker in markers:
+                        value = str(marker or "").strip()
+                        if value:
+                            return value
 
-            if not isinstance(route_spec, dict):
-                continue
-
-            markers = route_spec.get("pathMarkers")
-
-            if not isinstance(markers, list):
-                continue
-
-            for marker in markers:
-                value = str(marker or "").strip()
-
-                if value:
-                    return value
+            # Canonical fallback: segment as path fragment (ex.: stock → /stock).
+            return f"/{normalized}"
 
         return None
 

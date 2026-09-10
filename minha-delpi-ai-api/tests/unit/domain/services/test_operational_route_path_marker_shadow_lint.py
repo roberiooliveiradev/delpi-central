@@ -1,4 +1,4 @@
-"""Lint de shadow de pathMarkers em catch-alls domainProductSearch."""
+"""Lint de shadow de pathMarkers — pós-E9.S12.C markers removidos do registry."""
 
 from __future__ import annotations
 
@@ -36,10 +36,10 @@ def test_product_search_routes_have_no_path_marker_shadow() -> None:
     assert report.ok, report.errors
 
 
-def test_product_search_by_description_uses_products_search_suffix() -> None:
+def test_product_search_by_description_uses_operation_ids() -> None:
     route = OperationalRouteRegistryService.route_by_id("productSearchByDescription")
     route_spec = route.get("route") or {}
 
-    assert "/products/" in (route_spec.get("pathMarkers") or [])
-    assert str(route_spec.get("pathSuffix") or "") == "/search"
-    assert "/customers/" in (route_spec.get("excludePathMarkers") or [])
+    assert "search_products" in (route_spec.get("operationIds") or [])
+    assert not (route_spec.get("pathMarkers") or [])
+    assert not (route_spec.get("pathSuffix") or "")

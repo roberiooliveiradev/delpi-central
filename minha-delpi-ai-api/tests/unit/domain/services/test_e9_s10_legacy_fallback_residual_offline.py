@@ -55,6 +55,6 @@ def test_e9_s10_negative_remaining_residuals_still_gated():
     )
     assert gates.get("deleteAuthorized") is False
     by_id = {c["id"]: c for c in gates.get("deleteCandidates") or []}
-    assert by_id["registry_path_markers"]["status"] == "BLOCKED"
     assert by_id["registry_parameter_strategy_fields"]["status"] == "BLOCKED"
     assert by_id["turn_understanding_heuristics_json"]["status"] == "BLOCKED"
+    assert by_id["registry_path_markers"]["status"] == "DELETED"

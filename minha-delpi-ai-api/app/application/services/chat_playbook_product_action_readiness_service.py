@@ -44,7 +44,9 @@ class ChatPlaybookProductActionReadinessService:
         ]
         operation_markers = [
             str(marker).strip()
-            for marker in (route_spec.get("operationIdMarkers") or [])
+            for marker in (
+                route_spec.get("operationIds") or route_spec.get("operationIdMarkers") or []
+            )
             if str(marker).strip()
         ]
 

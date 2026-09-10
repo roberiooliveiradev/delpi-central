@@ -108,6 +108,11 @@ class OperationalRouteDomainSelectionService:
                 ),
             },
             "route": {
+                "operationIds": [
+                    str(token).strip()
+                    for token in (spec.operation_tokens or [])
+                    if str(token).strip()
+                ],
                 "pathMarkers": path_markers or list(spec.path_prefixes),
                 "operationIdMarkers": list(spec.operation_tokens),
                 "method": spec.method,

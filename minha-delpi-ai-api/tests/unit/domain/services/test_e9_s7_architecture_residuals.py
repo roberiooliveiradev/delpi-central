@@ -64,7 +64,7 @@ def test_e9_s7_no_delete_while_gates_block():
         for r in data["residuals"]
         if r.get("disposition") == "REMOVE_WHEN_GATES_PASS"
     ]
-    assert len(remove_pending) >= 3
+    assert len(remove_pending) >= 1
 
 
 def test_e9_s7_justified_or_removed_not_silently_empty():

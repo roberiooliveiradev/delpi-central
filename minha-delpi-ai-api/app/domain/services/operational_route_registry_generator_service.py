@@ -108,8 +108,7 @@ class OperationalRouteRegistryGeneratorService:
             "operationId": operation_id,
             "priority": 1,
             "route": {
-                "pathMarkers": cls.path_markers(path),
-                "operationIdMarkers": cls.operation_id_markers(operation_id),
+                "operationIds": [operation_id],
                 "method": "GET",
             },
             "parameters": {
@@ -243,6 +242,14 @@ class OperationalRouteRegistryGeneratorService:
 
         if not isinstance(route_spec, dict):
             return False
+
+        operation_ids = {
+            str(item).strip().lower()
+            for item in (route_spec.get("operationIds") or [])
+            if str(item).strip()
+        }
+        if operation_id.lower() in operation_ids:
+            return True
 
         operation_markers = [
             str(marker).lower()

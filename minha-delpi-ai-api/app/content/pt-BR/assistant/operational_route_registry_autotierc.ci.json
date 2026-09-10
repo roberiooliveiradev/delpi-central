@@ -1,10 +1,10 @@
 {
   "version": "2026.06.16",
-  "note": "CI-only autoTierC mirror of api-delpi OpenAPI baseline. Not loaded for chat action selection (OpenAPI Action Catalog is the runtime source).",
+  "note": "CI-only autoTierC mirror of api-delpi OpenAPI baseline. Not loaded for chat action selection.",
   "autoTierCRoutesMeta": {
-    "generatedAt": "2026-09-04T18:13:18Z",
+    "generatedAt": "2026-09-10T21:29:03Z",
     "sourceBaseline": "/home/analistaptd/projetos/delpi-central/api-delpi/app/content/openapi_baseline.json",
-    "operationCount": 422
+    "operationCount": 412
   },
   "autoTierCRoutes": [
     {
@@ -14,12 +14,8 @@
       "operationId": "download_audit_5s_nc_attachment",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/attachments/file"
-        ],
-        "operationIdMarkers": [
-          "download_audit",
-          "download"
+        "operationIds": [
+          "download_audit_5s_nc_attachment"
         ],
         "method": "GET"
       },
@@ -45,12 +41,8 @@
       "operationId": "download_audit_5s_response_attachment",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/attachments/file"
-        ],
-        "operationIdMarkers": [
-          "download_audit",
-          "download"
+        "operationIds": [
+          "download_audit_5s_response_attachment"
         ],
         "method": "GET"
       },
@@ -76,12 +68,8 @@
       "operationId": "download_guias_procedimentos_attachment_file",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/attachments/file"
-        ],
-        "operationIdMarkers": [
-          "download_guias",
-          "download"
+        "operationIds": [
+          "download_guias_procedimentos_attachment_file"
         ],
         "method": "GET"
       },
@@ -107,12 +95,8 @@
       "operationId": "download_guias_procedimentos_media_file",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/media/file"
-        ],
-        "operationIdMarkers": [
-          "download_guias",
-          "download"
+        "operationIds": [
+          "download_guias_procedimentos_media_file"
         ],
         "method": "GET"
       },
@@ -138,12 +122,8 @@
       "operationId": "download_kaizen_evidence",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/evidences/file"
-        ],
-        "operationIdMarkers": [
-          "download_kaizen",
-          "download"
+        "operationIds": [
+          "download_kaizen_evidence"
         ],
         "method": "GET"
       },
@@ -169,12 +149,8 @@
       "operationId": "download_planejamento_orcamentario_capex_attachment",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/attachments/download"
-        ],
-        "operationIdMarkers": [
-          "download_planejamento",
-          "download"
+        "operationIds": [
+          "download_planejamento_orcamentario_capex_attachment"
         ],
         "method": "GET"
       },
@@ -199,12 +175,8 @@
       "operationId": "download_planejamento_orcamentario_document",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/documents/download"
-        ],
-        "operationIdMarkers": [
-          "download_planejamento",
-          "download"
+        "operationIds": [
+          "download_planejamento_orcamentario_document"
         ],
         "method": "GET"
       },
@@ -229,12 +201,8 @@
       "operationId": "download_quality_action_plan_evidence",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/evidences/file"
-        ],
-        "operationIdMarkers": [
-          "download_quality",
-          "download"
+        "operationIds": [
+          "download_quality_action_plan_evidence"
         ],
         "method": "GET"
       },
@@ -260,12 +228,8 @@
       "operationId": "export_kaizen_records",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/records/export"
-        ],
-        "operationIdMarkers": [
-          "export_kaizen",
-          "export"
+        "operationIds": [
+          "export_kaizen_records"
         ],
         "method": "GET"
       },
@@ -291,12 +255,8 @@
       "operationId": "export_lmp_nonconformities",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/nonconformities/export"
-        ],
-        "operationIdMarkers": [
-          "export_lmp",
-          "export"
+        "operationIds": [
+          "export_lmp_nonconformities"
         ],
         "method": "GET"
       },
@@ -322,12 +282,8 @@
       "operationId": "export_planejamento_orcamentario_capex_consolidation_xlsx",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/consolidation/export.xlsx"
-        ],
-        "operationIdMarkers": [
-          "export_planejamento",
-          "export"
+        "operationIds": [
+          "export_planejamento_orcamentario_capex_consolidation_xlsx"
         ],
         "method": "GET"
       },
@@ -352,12 +308,8 @@
       "operationId": "export_proposta_comercial_pdf",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/propostas-comerciais/pdf"
-        ],
-        "operationIdMarkers": [
-          "export_proposta",
-          "export"
+        "operationIds": [
+          "export_proposta_comercial_pdf"
         ],
         "method": "GET"
       },
@@ -382,12 +334,8 @@
       "operationId": "export_quality_action_plan_pdf",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/export/pdf"
-        ],
-        "operationIdMarkers": [
-          "export_quality",
-          "export"
+        "operationIds": [
+          "export_quality_action_plan_pdf"
         ],
         "method": "GET"
       },
@@ -413,12 +361,8 @@
       "operationId": "export_quality_action_plan_rnc_8d",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/export/rnc-8d"
-        ],
-        "operationIdMarkers": [
-          "export_quality",
-          "export"
+        "operationIds": [
+          "export_quality_action_plan_rnc_8d"
         ],
         "method": "GET"
       },
@@ -444,12 +388,8 @@
       "operationId": "export_quality_action_plan_rnc_8d_pdf",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/rnc-8d/pdf"
-        ],
-        "operationIdMarkers": [
-          "export_quality",
-          "export"
+        "operationIds": [
+          "export_quality_action_plan_rnc_8d_pdf"
         ],
         "method": "GET"
       },
@@ -475,12 +415,8 @@
       "operationId": "export_supplies_third_party_materials_returns",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/returns/export"
-        ],
-        "operationIdMarkers": [
-          "export_supplies",
-          "export"
+        "operationIds": [
+          "export_supplies_third_party_materials_returns"
         ],
         "method": "GET"
       },
@@ -505,12 +441,8 @@
       "operationId": "get_audit_5s_analytics_dashboard",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/analytics/dashboard"
-        ],
-        "operationIdMarkers": [
-          "get_audit",
-          "get"
+        "operationIds": [
+          "get_audit_5s_analytics_dashboard"
         ],
         "method": "GET"
       },
@@ -536,12 +468,8 @@
       "operationId": "get_audit_5s_audit",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/audit-5s/audits"
-        ],
-        "operationIdMarkers": [
-          "get_audit",
-          "get"
+        "operationIds": [
+          "get_audit_5s_audit"
         ],
         "method": "GET"
       },
@@ -567,12 +495,8 @@
       "operationId": "get_audit_5s_catalog",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/audit-5s/catalog"
-        ],
-        "operationIdMarkers": [
-          "get_audit",
-          "get"
+        "operationIds": [
+          "get_audit_5s_catalog"
         ],
         "method": "GET"
       },
@@ -598,12 +522,8 @@
       "operationId": "get_audit_5s_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/audit-5s/summary"
-        ],
-        "operationIdMarkers": [
-          "get_audit",
-          "get"
+        "operationIds": [
+          "get_audit_5s_summary"
         ],
         "method": "GET"
       },
@@ -628,12 +548,8 @@
       "operationId": "get_audit_5s_summary_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/summary/series"
-        ],
-        "operationIdMarkers": [
-          "get_audit",
-          "get"
+        "operationIds": [
+          "get_audit_5s_summary_series"
         ],
         "method": "GET"
       },
@@ -658,12 +574,8 @@
       "operationId": "get_caller_stats",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/system/caller-stats"
-        ],
-        "operationIdMarkers": [
-          "get_caller",
-          "get"
+        "operationIds": [
+          "get_caller_stats"
         ],
         "method": "GET"
       },
@@ -688,12 +600,8 @@
       "operationId": "get_commercial_proposal",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial/proposals"
-        ],
-        "operationIdMarkers": [
-          "get_commercial",
-          "get"
+        "operationIds": [
+          "get_commercial_proposal"
         ],
         "method": "GET"
       },
@@ -718,12 +626,8 @@
       "operationId": "get_commercial_proposal_history_events",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/history/events"
-        ],
-        "operationIdMarkers": [
-          "get_commercial",
-          "get"
+        "operationIds": [
+          "get_commercial_proposal_history_events"
         ],
         "method": "GET"
       },
@@ -748,12 +652,8 @@
       "operationId": "get_commercial_rol_by_branch",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/rol/by-branch"
-        ],
-        "operationIdMarkers": [
-          "get_commercial",
-          "get"
+        "operationIds": [
+          "get_commercial_rol_by_branch"
         ],
         "method": "GET"
       },
@@ -778,12 +678,8 @@
       "operationId": "get_commercial_rol_by_customer",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/rol/by-customer"
-        ],
-        "operationIdMarkers": [
-          "get_commercial",
-          "get"
+        "operationIds": [
+          "get_commercial_rol_by_customer"
         ],
         "method": "GET"
       },
@@ -808,12 +704,8 @@
       "operationId": "get_commercial_rol_by_product",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/rol/by-product"
-        ],
-        "operationIdMarkers": [
-          "get_commercial",
-          "get"
+        "operationIds": [
+          "get_commercial_rol_by_product"
         ],
         "method": "GET"
       },
@@ -832,78 +724,14 @@
       }
     },
     {
-      "id": "autoTierCCommercialRolSeries",
-      "domain": "autoTierC",
-      "autoGenerated": true,
-      "operationId": "get_commercial_rol_series",
-      "priority": 1,
-      "route": {
-        "pathMarkers": [
-          "/rol/series"
-        ],
-        "operationIdMarkers": [
-          "get_commercial",
-          "get"
-        ],
-        "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
-      },
-      "presentation": {
-        "reasonKey": "genericSemanticFallback"
-      },
-      "openapi": {
-        "tier": "B",
-        "entity": "commercial_rol_series",
-        "tags": [
-          "Comercial"
-        ]
-      }
-    },
-    {
-      "id": "autoTierCCommercialRolSummary",
-      "domain": "autoTierC",
-      "autoGenerated": true,
-      "operationId": "get_commercial_rol_summary",
-      "priority": 1,
-      "route": {
-        "pathMarkers": [
-          "/rol/summary"
-        ],
-        "operationIdMarkers": [
-          "get_commercial",
-          "get"
-        ],
-        "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
-      },
-      "presentation": {
-        "reasonKey": "genericSemanticFallback"
-      },
-      "openapi": {
-        "tier": "B",
-        "entity": "commercial_rol_target",
-        "tags": [
-          "Comercial"
-        ]
-      }
-    },
-    {
       "id": "autoTierCConnectionPoolStats",
       "domain": "autoTierC",
       "autoGenerated": true,
       "operationId": "get_connection_pool_stats",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/system/connection-pools"
-        ],
-        "operationIdMarkers": [
-          "get_connection",
-          "get"
+        "operationIds": [
+          "get_connection_pool_stats"
         ],
         "method": "GET"
       },
@@ -928,12 +756,8 @@
       "operationId": "get_console_alerts",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/system/console-alerts"
-        ],
-        "operationIdMarkers": [
-          "get_console",
-          "get"
+        "operationIds": [
+          "get_console_alerts"
         ],
         "method": "GET"
       },
@@ -958,12 +782,8 @@
       "operationId": "get_console_health",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/system/console-health"
-        ],
-        "operationIdMarkers": [
-          "get_console",
-          "get"
+        "operationIds": [
+          "get_console_health"
         ],
         "method": "GET"
       },
@@ -988,12 +808,8 @@
       "operationId": "get_cultura_delpi_content",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/cultura-delpi/content"
-        ],
-        "operationIdMarkers": [
-          "get_cultura",
-          "get"
+        "operationIds": [
+          "get_cultura_delpi_content"
         ],
         "method": "GET"
       },
@@ -1019,12 +835,8 @@
       "operationId": "get_customer_avatar",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/customers/avatar"
-        ],
-        "operationIdMarkers": [
-          "get_customer",
-          "get"
+        "operationIds": [
+          "get_customer_avatar"
         ],
         "method": "GET"
       },
@@ -1049,12 +861,8 @@
       "operationId": "get_depreciation_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production/depreciation_pct"
-        ],
-        "operationIdMarkers": [
-          "get_depreciation",
-          "get"
+        "operationIds": [
+          "get_depreciation_pct"
         ],
         "method": "GET"
       },
@@ -1079,12 +887,8 @@
       "operationId": "get_direct_labor_cost_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production/direct_labor_cost_pct"
-        ],
-        "operationIdMarkers": [
-          "get_direct",
-          "get"
+        "operationIds": [
+          "get_direct_labor_cost_pct"
         ],
         "method": "GET"
       },
@@ -1103,48 +907,14 @@
       }
     },
     {
-      "id": "autoTierCEficienciaFabrilEfficiencyByWorkCenter",
-      "domain": "autoTierC",
-      "autoGenerated": true,
-      "operationId": "get_eficiencia_fabril_efficiency_by_work_center",
-      "priority": 1,
-      "route": {
-        "pathMarkers": [
-          "/eficiencia-fabril/efficiency-by-work-center"
-        ],
-        "operationIdMarkers": [
-          "get_eficiencia",
-          "get"
-        ],
-        "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
-      },
-      "presentation": {
-        "reasonKey": "genericSemanticFallback"
-      },
-      "openapi": {
-        "tier": "C",
-        "entity": null,
-        "tags": [
-          "Produção"
-        ]
-      }
-    },
-    {
       "id": "autoTierCEnvelopeContracts",
       "domain": "autoTierC",
       "autoGenerated": true,
       "operationId": "get_envelope_contracts",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/system/envelope-contracts"
-        ],
-        "operationIdMarkers": [
-          "get_envelope",
-          "get"
+        "operationIds": [
+          "get_envelope_contracts"
         ],
         "method": "GET"
       },
@@ -1169,12 +939,8 @@
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/despesas-centro-custo/filtros"
-        ],
-        "operationIdMarkers": [
-          "get_financeiro",
-          "get"
+        "operationIds": [
+          "get_financeiro_despesas_centro_custo_filtros"
         ],
         "method": "GET"
       },
@@ -1199,12 +965,8 @@
       "operationId": "get_financeiro_despesas_centro_custo_lancamentos",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/despesas-centro-custo/lancamentos"
-        ],
-        "operationIdMarkers": [
-          "get_financeiro",
-          "get"
+        "operationIds": [
+          "get_financeiro_despesas_centro_custo_lancamentos"
         ],
         "method": "GET"
       },
@@ -1229,12 +991,8 @@
       "operationId": "get_financeiro_despesas_centro_custo_ranking_centros",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/despesas-centro-custo/ranking-centros"
-        ],
-        "operationIdMarkers": [
-          "get_financeiro",
-          "get"
+        "operationIds": [
+          "get_financeiro_despesas_centro_custo_ranking_centros"
         ],
         "method": "GET"
       },
@@ -1259,12 +1017,8 @@
       "operationId": "get_financeiro_despesas_centro_custo_ranking_fornecedores",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/despesas-centro-custo/ranking-fornecedores"
-        ],
-        "operationIdMarkers": [
-          "get_financeiro",
-          "get"
+        "operationIds": [
+          "get_financeiro_despesas_centro_custo_ranking_fornecedores"
         ],
         "method": "GET"
       },
@@ -1289,12 +1043,8 @@
       "operationId": "get_financeiro_despesas_centro_custo_resumo",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/despesas-centro-custo/resumo"
-        ],
-        "operationIdMarkers": [
-          "get_financeiro",
-          "get"
+        "operationIds": [
+          "get_financeiro_despesas_centro_custo_resumo"
         ],
         "method": "GET"
       },
@@ -1319,12 +1069,8 @@
       "operationId": "get_financeiro_despesas_centro_custo_serie",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/despesas-centro-custo/serie"
-        ],
-        "operationIdMarkers": [
-          "get_financeiro",
-          "get"
+        "operationIds": [
+          "get_financeiro_despesas_centro_custo_serie"
         ],
         "method": "GET"
       },
@@ -1349,12 +1095,8 @@
       "operationId": "get_financeiro_inadimplencia_clientes",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inadimplencia/clientes"
-        ],
-        "operationIdMarkers": [
-          "get_financeiro",
-          "get"
+        "operationIds": [
+          "get_financeiro_inadimplencia_clientes"
         ],
         "method": "GET"
       },
@@ -1379,12 +1121,8 @@
       "operationId": "get_financeiro_inadimplencia_faixas_atraso",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inadimplencia/faixas-atraso"
-        ],
-        "operationIdMarkers": [
-          "get_financeiro",
-          "get"
+        "operationIds": [
+          "get_financeiro_inadimplencia_faixas_atraso"
         ],
         "method": "GET"
       },
@@ -1409,12 +1147,8 @@
       "operationId": "get_financeiro_inadimplencia_mensal",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inadimplencia/mensal"
-        ],
-        "operationIdMarkers": [
-          "get_financeiro",
-          "get"
+        "operationIds": [
+          "get_financeiro_inadimplencia_mensal"
         ],
         "method": "GET"
       },
@@ -1439,12 +1173,8 @@
       "operationId": "get_financeiro_inadimplencia_resumo",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inadimplencia/resumo"
-        ],
-        "operationIdMarkers": [
-          "get_financeiro",
-          "get"
+        "operationIds": [
+          "get_financeiro_inadimplencia_resumo"
         ],
         "method": "GET"
       },
@@ -1469,12 +1199,8 @@
       "operationId": "get_financeiro_inadimplencia_titulos",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inadimplencia/titulos"
-        ],
-        "operationIdMarkers": [
-          "get_financeiro",
-          "get"
+        "operationIds": [
+          "get_financeiro_inadimplencia_titulos"
         ],
         "method": "GET"
       },
@@ -1499,12 +1225,8 @@
       "operationId": "get_financial_ebitda_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/financial/ebitda_pct"
-        ],
-        "operationIdMarkers": [
-          "get_financial",
-          "get"
+        "operationIds": [
+          "get_financial_ebitda_pct"
         ],
         "method": "GET"
       },
@@ -1530,12 +1252,8 @@
       "operationId": "get_financial_fixed_cost_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/financial/fixed_cost_pct"
-        ],
-        "operationIdMarkers": [
-          "get_financial",
-          "get"
+        "operationIds": [
+          "get_financial_fixed_cost_pct"
         ],
         "method": "GET"
       },
@@ -1561,12 +1279,8 @@
       "operationId": "get_financial_pmr",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/financial/pmr"
-        ],
-        "operationIdMarkers": [
-          "get_financial",
-          "get"
+        "operationIds": [
+          "get_financial_pmr"
         ],
         "method": "GET"
       },
@@ -1592,12 +1306,8 @@
       "operationId": "get_financial_purchase_freight_links",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/purchase-freight/links"
-        ],
-        "operationIdMarkers": [
-          "get_financial",
-          "get"
+        "operationIds": [
+          "get_financial_purchase_freight_links"
         ],
         "method": "GET"
       },
@@ -1617,49 +1327,14 @@
       }
     },
     {
-      "id": "autoTierCFinancialRol",
-      "domain": "autoTierC",
-      "autoGenerated": true,
-      "operationId": "get_financial_rol",
-      "priority": 1,
-      "route": {
-        "pathMarkers": [
-          "/financial/rol"
-        ],
-        "operationIdMarkers": [
-          "get_financial",
-          "get"
-        ],
-        "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
-      },
-      "presentation": {
-        "reasonKey": "genericSemanticFallback"
-      },
-      "openapi": {
-        "tier": "B",
-        "entity": "financial_rol",
-        "tags": [
-          "Financeiro",
-          "Financeiro"
-        ]
-      }
-    },
-    {
       "id": "autoTierCFinancialRolInvoices",
       "domain": "autoTierC",
       "autoGenerated": true,
       "operationId": "get_financial_rol_invoices",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/rol/invoices"
-        ],
-        "operationIdMarkers": [
-          "get_financial",
-          "get"
+        "operationIds": [
+          "get_financial_rol_invoices"
         ],
         "method": "GET"
       },
@@ -1685,12 +1360,8 @@
       "operationId": "get_guias_procedimentos_admin_department",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/admin/departments"
-        ],
-        "operationIdMarkers": [
-          "get_guias",
-          "get"
+        "operationIds": [
+          "get_guias_procedimentos_admin_department"
         ],
         "method": "GET"
       },
@@ -1716,12 +1387,8 @@
       "operationId": "get_guias_procedimentos_admin_procedure",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/admin/procedures"
-        ],
-        "operationIdMarkers": [
-          "get_guias",
-          "get"
+        "operationIds": [
+          "get_guias_procedimentos_admin_procedure"
         ],
         "method": "GET"
       },
@@ -1747,12 +1414,8 @@
       "operationId": "get_guias_procedimentos_department",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/guias-procedimentos/departments"
-        ],
-        "operationIdMarkers": [
-          "get_guias",
-          "get"
+        "operationIds": [
+          "get_guias_procedimentos_department"
         ],
         "method": "GET"
       },
@@ -1778,12 +1441,8 @@
       "operationId": "get_guias_procedimentos_procedure",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/guias-procedimentos/procedures"
-        ],
-        "operationIdMarkers": [
-          "get_guias",
-          "get"
+        "operationIds": [
+          "get_guias_procedimentos_procedure"
         ],
         "method": "GET"
       },
@@ -1809,12 +1468,8 @@
       "operationId": "get_health",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/health"
-        ],
-        "operationIdMarkers": [
-          "get_health",
-          "get"
+        "operationIds": [
+          "get_health"
         ],
         "method": "GET"
       },
@@ -1839,12 +1494,8 @@
       "operationId": "get_hr_active_pdi_count",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr/active-pdi-count"
-        ],
-        "operationIdMarkers": [
-          "get_hr",
-          "get"
+        "operationIds": [
+          "get_hr_active_pdi_count"
         ],
         "method": "GET"
       },
@@ -1869,12 +1520,8 @@
       "operationId": "get_hr_performance_reviews_completion",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr/performance-reviews-completion"
-        ],
-        "operationIdMarkers": [
-          "get_hr",
-          "get"
+        "operationIds": [
+          "get_hr_performance_reviews_completion"
         ],
         "method": "GET"
       },
@@ -1899,12 +1546,8 @@
       "operationId": "get_hr_snapshot",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr/snapshot"
-        ],
-        "operationIdMarkers": [
-          "get_hr",
-          "get"
+        "operationIds": [
+          "get_hr_snapshot"
         ],
         "method": "GET"
       },
@@ -1929,12 +1572,8 @@
       "operationId": "get_inspecoes_entrada_historico",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-entrada/historico"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_entrada_historico"
         ],
         "method": "GET"
       },
@@ -1959,12 +1598,8 @@
       "operationId": "get_inspecoes_entrada_historico_detalhe",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/historico/detalhe"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_entrada_historico_detalhe"
         ],
         "method": "GET"
       },
@@ -1989,12 +1624,8 @@
       "operationId": "get_inspecoes_entrada_pendentes",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-entrada/pendentes"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_entrada_pendentes"
         ],
         "method": "GET"
       },
@@ -2019,12 +1650,8 @@
       "operationId": "get_inspecoes_entrada_pendentes_fornecedor",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-entrada/pendentes-fornecedor"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_entrada_pendentes_fornecedor"
         ],
         "method": "GET"
       },
@@ -2049,12 +1676,8 @@
       "operationId": "get_inspecoes_entrada_rejeitadas_ensaiador",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-entrada/rejeitadas-ensaiador"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_entrada_rejeitadas_ensaiador"
         ],
         "method": "GET"
       },
@@ -2079,12 +1702,8 @@
       "operationId": "get_inspecoes_entrada_rejeitadas_produto",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-entrada/rejeitadas-produto"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_entrada_rejeitadas_produto"
         ],
         "method": "GET"
       },
@@ -2109,12 +1728,8 @@
       "operationId": "get_inspecoes_entrada_resumo",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-entrada/resumo"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_entrada_resumo"
         ],
         "method": "GET"
       },
@@ -2139,12 +1754,8 @@
       "operationId": "get_inspecoes_processo_auditoria_apontamentos",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-processo/auditoria-apontamentos"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_processo_auditoria_apontamentos"
         ],
         "method": "GET"
       },
@@ -2169,12 +1780,8 @@
       "operationId": "get_inspecoes_processo_historico",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-processo/historico"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_processo_historico"
         ],
         "method": "GET"
       },
@@ -2199,12 +1806,8 @@
       "operationId": "get_inspecoes_processo_historico_detalhe",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/historico/detalhe"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_processo_historico_detalhe"
         ],
         "method": "GET"
       },
@@ -2229,12 +1832,8 @@
       "operationId": "get_inspecoes_processo_por_ensaiador",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-processo/por-ensaiador"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_processo_por_ensaiador"
         ],
         "method": "GET"
       },
@@ -2259,12 +1858,8 @@
       "operationId": "get_inspecoes_processo_por_operacao",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-processo/por-operacao"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_processo_por_operacao"
         ],
         "method": "GET"
       },
@@ -2289,12 +1884,8 @@
       "operationId": "get_inspecoes_processo_por_produto",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-processo/por-produto"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_processo_por_produto"
         ],
         "method": "GET"
       },
@@ -2319,12 +1910,8 @@
       "operationId": "get_inspecoes_processo_ranking_ensaio",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-processo/ranking-ensaio"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_processo_ranking_ensaio"
         ],
         "method": "GET"
       },
@@ -2349,12 +1936,8 @@
       "operationId": "get_inspecoes_processo_resumo",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspecoes-processo/resumo"
-        ],
-        "operationIdMarkers": [
-          "get_inspecoes",
-          "get"
+        "operationIds": [
+          "get_inspecoes_processo_resumo"
         ],
         "method": "GET"
       },
@@ -2379,47 +1962,13 @@
       "operationId": "get_invoice_issuance_request",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/invoice-issuance/requests"
-        ],
-        "operationIdMarkers": [
-          "get_invoice",
-          "get"
+        "operationIds": [
+          "get_invoice_issuance_request"
         ],
         "method": "GET"
       },
       "parameters": {
         "strategy": "none"
-      },
-      "presentation": {
-        "reasonKey": "genericSemanticFallback"
-      },
-      "openapi": {
-        "tier": "C",
-        "entity": null,
-        "tags": [
-          "Invoice issuance"
-        ]
-      }
-    },
-    {
-      "id": "autoTierCInvoiceIssuanceWarehouse01Balance",
-      "domain": "autoTierC",
-      "autoGenerated": true,
-      "operationId": "get_invoice_issuance_warehouse_01_balance",
-      "priority": 1,
-      "route": {
-        "pathMarkers": [
-          "/products/warehouse-01-balance"
-        ],
-        "operationIdMarkers": [
-          "get_invoice",
-          "get"
-        ],
-        "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
       },
       "presentation": {
         "reasonKey": "genericSemanticFallback"
@@ -2439,12 +1988,8 @@
       "operationId": "get_kaizen_at_date",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/records/at"
-        ],
-        "operationIdMarkers": [
-          "get_kaizen",
-          "get"
+        "operationIds": [
+          "get_kaizen_at_date"
         ],
         "method": "GET"
       },
@@ -2470,12 +2015,8 @@
       "operationId": "get_kaizen_by_id",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality/kaizens"
-        ],
-        "operationIdMarkers": [
-          "get_kaizen",
-          "get"
+        "operationIds": [
+          "get_kaizen_by_id"
         ],
         "method": "GET"
       },
@@ -2500,12 +2041,8 @@
       "operationId": "get_kaizen_record",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/kaizens/records"
-        ],
-        "operationIdMarkers": [
-          "get_kaizen",
-          "get"
+        "operationIds": [
+          "get_kaizen_record"
         ],
         "method": "GET"
       },
@@ -2531,12 +2068,8 @@
       "operationId": "get_kaizen_records_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/records/summary"
-        ],
-        "operationIdMarkers": [
-          "get_kaizen",
-          "get"
+        "operationIds": [
+          "get_kaizen_records_summary"
         ],
         "method": "GET"
       },
@@ -2562,12 +2095,8 @@
       "operationId": "get_kaizen_revision",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/records/revisions"
-        ],
-        "operationIdMarkers": [
-          "get_kaizen",
-          "get"
+        "operationIds": [
+          "get_kaizen_revision"
         ],
         "method": "GET"
       },
@@ -2593,12 +2122,8 @@
       "operationId": "get_kaizen_savings_investment_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/savings-investment/series"
-        ],
-        "operationIdMarkers": [
-          "get_kaizen",
-          "get"
+        "operationIds": [
+          "get_kaizen_savings_investment_series"
         ],
         "method": "GET"
       },
@@ -2624,12 +2149,8 @@
       "operationId": "get_kaizen_savings_timeline",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/records/savings-timeline"
-        ],
-        "operationIdMarkers": [
-          "get_kaizen",
-          "get"
+        "operationIds": [
+          "get_kaizen_savings_timeline"
         ],
         "method": "GET"
       },
@@ -2655,12 +2176,8 @@
       "operationId": "get_kaizen_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/kaizens/summary"
-        ],
-        "operationIdMarkers": [
-          "get_kaizen",
-          "get"
+        "operationIds": [
+          "get_kaizen_summary"
         ],
         "method": "GET"
       },
@@ -2685,12 +2202,8 @@
       "operationId": "get_kaizen_summary_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/summary/series"
-        ],
-        "operationIdMarkers": [
-          "get_kaizen",
-          "get"
+        "operationIds": [
+          "get_kaizen_summary_series"
         ],
         "method": "GET"
       },
@@ -2715,12 +2228,8 @@
       "operationId": "get_lancamento_notas_fiscais_request",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/lancamento-notas-fiscais/requests"
-        ],
-        "operationIdMarkers": [
-          "get_lancamento",
-          "get"
+        "operationIds": [
+          "get_lancamento_notas_fiscais_request"
         ],
         "method": "GET"
       },
@@ -2745,12 +2254,8 @@
       "operationId": "get_lmp_nonconformity",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/lmps/nonconformities"
-        ],
-        "operationIdMarkers": [
-          "get_lmp",
-          "get"
+        "operationIds": [
+          "get_lmp_nonconformity"
         ],
         "method": "GET"
       },
@@ -2776,12 +2281,8 @@
       "operationId": "get_lmp_nonconformity_streak",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/nonconformities/streak"
-        ],
-        "operationIdMarkers": [
-          "get_lmp",
-          "get"
+        "operationIds": [
+          "get_lmp_nonconformity_streak"
         ],
         "method": "GET"
       },
@@ -2807,12 +2308,8 @@
       "operationId": "get_mini_applicators_ferramenta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/mini-applicators/ferramentas"
-        ],
-        "operationIdMarkers": [
-          "get_mini",
-          "get"
+        "operationIds": [
+          "get_mini_applicators_ferramenta"
         ],
         "method": "GET"
       },
@@ -2837,12 +2334,8 @@
       "operationId": "get_mini_applicators_golpes",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/ferramentas/golpes"
-        ],
-        "operationIdMarkers": [
-          "get_mini",
-          "get"
+        "operationIds": [
+          "get_mini_applicators_golpes"
         ],
         "method": "GET"
       },
@@ -2867,12 +2360,8 @@
       "operationId": "get_mural_acessos_hub",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/mural-acessos/hubs"
-        ],
-        "operationIdMarkers": [
-          "get_mural",
-          "get"
+        "operationIds": [
+          "get_mural_acessos_hub"
         ],
         "method": "GET"
       },
@@ -2898,12 +2387,8 @@
       "operationId": "get_mural_acessos_hub_qr",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hubs/qr.png"
-        ],
-        "operationIdMarkers": [
-          "get_mural",
-          "get"
+        "operationIds": [
+          "get_mural_acessos_hub_qr"
         ],
         "method": "GET"
       },
@@ -2929,12 +2414,8 @@
       "operationId": "get_mural_acessos_link_image",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/links/image"
-        ],
-        "operationIdMarkers": [
-          "get_mural",
-          "get"
+        "operationIds": [
+          "get_mural_acessos_link_image"
         ],
         "method": "GET"
       },
@@ -2960,12 +2441,8 @@
       "operationId": "get_my_seller_portfolio",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/sellers/me"
-        ],
-        "operationIdMarkers": [
-          "get_my",
-          "get"
+        "operationIds": [
+          "get_my_seller_portfolio"
         ],
         "method": "GET"
       },
@@ -2990,12 +2467,8 @@
       "operationId": "get_new_business_rol_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial/new-business-rol-pct"
-        ],
-        "operationIdMarkers": [
-          "get_new",
-          "get"
+        "operationIds": [
+          "get_new_business_rol_pct"
         ],
         "method": "GET"
       },
@@ -3020,12 +2493,8 @@
       "operationId": "get_new_business_rol_target_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial/new-business-rol-target-pct"
-        ],
-        "operationIdMarkers": [
-          "get_new",
-          "get"
+        "operationIds": [
+          "get_new_business_rol_target_pct"
         ],
         "method": "GET"
       },
@@ -3050,12 +2519,8 @@
       "operationId": "get_new_clients_average",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial/new-clients-average"
-        ],
-        "operationIdMarkers": [
-          "get_new",
-          "get"
+        "operationIds": [
+          "get_new_clients_average"
         ],
         "method": "GET"
       },
@@ -3080,12 +2545,8 @@
       "operationId": "get_new_clients_rol_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial/new-clients-rol-pct"
-        ],
-        "operationIdMarkers": [
-          "get_new",
-          "get"
+        "operationIds": [
+          "get_new_clients_rol_pct"
         ],
         "method": "GET"
       },
@@ -3110,12 +2571,8 @@
       "operationId": "get_nonconformity_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/nonconformities/series"
-        ],
-        "operationIdMarkers": [
-          "get_nonconformity",
-          "get"
+        "operationIds": [
+          "get_nonconformity_series"
         ],
         "method": "GET"
       },
@@ -3140,12 +2597,8 @@
       "operationId": "get_nonconformity_streak",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/nonconformities/streak"
-        ],
-        "operationIdMarkers": [
-          "get_nonconformity",
-          "get"
+        "operationIds": [
+          "get_nonconformity_streak"
         ],
         "method": "GET"
       },
@@ -3170,12 +2623,8 @@
       "operationId": "get_observability_snapshot",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/system/observability-snapshot"
-        ],
-        "operationIdMarkers": [
-          "get_observability",
-          "get"
+        "operationIds": [
+          "get_observability_snapshot"
         ],
         "method": "GET"
       },
@@ -3200,12 +2649,8 @@
       "operationId": "get_on_time_delivery_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production/on_time_delivery_pct"
-        ],
-        "operationIdMarkers": [
-          "get_on",
-          "get"
+        "operationIds": [
+          "get_on_time_delivery_pct"
         ],
         "method": "GET"
       },
@@ -3230,12 +2675,8 @@
       "operationId": "get_openapi_diff",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/system/openapi-diff"
-        ],
-        "operationIdMarkers": [
-          "get_openapi",
-          "get"
+        "operationIds": [
+          "get_openapi_diff"
         ],
         "method": "GET"
       },
@@ -3260,12 +2701,8 @@
       "operationId": "get_overall_equipment_effectiveness_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production/overall_equipment_effectiveness_pct"
-        ],
-        "operationIdMarkers": [
-          "get_overall",
-          "get"
+        "operationIds": [
+          "get_overall_equipment_effectiveness_pct"
         ],
         "method": "GET"
       },
@@ -3290,12 +2727,8 @@
       "operationId": "get_personal_report_subscription",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/reports/personal-subscriptions"
-        ],
-        "operationIdMarkers": [
-          "get_personal",
-          "get"
+        "operationIds": [
+          "get_personal_report_subscription"
         ],
         "method": "GET"
       },
@@ -3321,12 +2754,8 @@
       "operationId": "get_planejamento_orcamentario_admin_budget_responsibility",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/admin/budget-responsibilities"
-        ],
-        "operationIdMarkers": [
-          "get_planejamento",
-          "get"
+        "operationIds": [
+          "get_planejamento_orcamentario_admin_budget_responsibility"
         ],
         "method": "GET"
       },
@@ -3351,12 +2780,8 @@
       "operationId": "get_planejamento_orcamentario_admin_exercise",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/admin/exercises"
-        ],
-        "operationIdMarkers": [
-          "get_planejamento",
-          "get"
+        "operationIds": [
+          "get_planejamento_orcamentario_admin_exercise"
         ],
         "method": "GET"
       },
@@ -3381,12 +2806,8 @@
       "operationId": "get_planejamento_orcamentario_admin_guidance",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/exercises/guidance"
-        ],
-        "operationIdMarkers": [
-          "get_planejamento",
-          "get"
+        "operationIds": [
+          "get_planejamento_orcamentario_admin_guidance"
         ],
         "method": "GET"
       },
@@ -3411,12 +2832,8 @@
       "operationId": "get_planejamento_orcamentario_capex_category_icon_image",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/categories/icon-image"
-        ],
-        "operationIdMarkers": [
-          "get_planejamento",
-          "get"
+        "operationIds": [
+          "get_planejamento_orcamentario_capex_category_icon_image"
         ],
         "method": "GET"
       },
@@ -3441,12 +2858,8 @@
       "operationId": "get_planejamento_orcamentario_capex_consolidation_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/consolidation/summary"
-        ],
-        "operationIdMarkers": [
-          "get_planejamento",
-          "get"
+        "operationIds": [
+          "get_planejamento_orcamentario_capex_consolidation_summary"
         ],
         "method": "GET"
       },
@@ -3471,12 +2884,8 @@
       "operationId": "get_planejamento_orcamentario_capex_investment",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/capex/investments"
-        ],
-        "operationIdMarkers": [
-          "get_planejamento",
-          "get"
+        "operationIds": [
+          "get_planejamento_orcamentario_capex_investment"
         ],
         "method": "GET"
       },
@@ -3501,12 +2910,8 @@
       "operationId": "get_planejamento_orcamentario_capex_plan",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/capex/plans"
-        ],
-        "operationIdMarkers": [
-          "get_planejamento",
-          "get"
+        "operationIds": [
+          "get_planejamento_orcamentario_capex_plan"
         ],
         "method": "GET"
       },
@@ -3531,12 +2936,8 @@
       "operationId": "get_planejamento_orcamentario_capex_review",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/capex/review"
-        ],
-        "operationIdMarkers": [
-          "get_planejamento",
-          "get"
+        "operationIds": [
+          "get_planejamento_orcamentario_capex_review"
         ],
         "method": "GET"
       },
@@ -3561,12 +2962,8 @@
       "operationId": "get_planejamento_orcamentario_context",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/planejamento-orcamentario/context"
-        ],
-        "operationIdMarkers": [
-          "get_planejamento",
-          "get"
+        "operationIds": [
+          "get_planejamento_orcamentario_context"
         ],
         "method": "GET"
       },
@@ -3591,12 +2988,8 @@
       "operationId": "get_planejamento_orcamentario_guidance_current",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/guidance/current"
-        ],
-        "operationIdMarkers": [
-          "get_planejamento",
-          "get"
+        "operationIds": [
+          "get_planejamento_orcamentario_guidance_current"
         ],
         "method": "GET"
       },
@@ -3621,12 +3014,8 @@
       "operationId": "get_planejamento_orcamentario_personnel_plan",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/personnel/plans"
-        ],
-        "operationIdMarkers": [
-          "get_planejamento",
-          "get"
+        "operationIds": [
+          "get_planejamento_orcamentario_personnel_plan"
         ],
         "method": "GET"
       },
@@ -3651,12 +3040,8 @@
       "operationId": "get_planejamento_orcamentario_personnel_review",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/personnel/review"
-        ],
-        "operationIdMarkers": [
-          "get_planejamento",
-          "get"
+        "operationIds": [
+          "get_planejamento_orcamentario_personnel_review"
         ],
         "method": "GET"
       },
@@ -3681,12 +3066,8 @@
       "operationId": "get_ppm_external_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/external/series"
-        ],
-        "operationIdMarkers": [
-          "get_ppm",
-          "get"
+        "operationIds": [
+          "get_ppm_external_series"
         ],
         "method": "GET"
       },
@@ -3712,12 +3093,8 @@
       "operationId": "get_ppm_external_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/external/summary"
-        ],
-        "operationIdMarkers": [
-          "get_ppm",
-          "get"
+        "operationIds": [
+          "get_ppm_external_summary"
         ],
         "method": "GET"
       },
@@ -3743,12 +3120,8 @@
       "operationId": "get_ppm_internal_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/internal/series"
-        ],
-        "operationIdMarkers": [
-          "get_ppm",
-          "get"
+        "operationIds": [
+          "get_ppm_internal_series"
         ],
         "method": "GET"
       },
@@ -3774,12 +3147,8 @@
       "operationId": "get_ppm_internal_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/internal/summary"
-        ],
-        "operationIdMarkers": [
-          "get_ppm",
-          "get"
+        "operationIds": [
+          "get_ppm_internal_summary"
         ],
         "method": "GET"
       },
@@ -3805,12 +3174,8 @@
       "operationId": "get_process_inspection_plans_orders_without_plan",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/process-inspection-plans/orders-without-plan"
-        ],
-        "operationIdMarkers": [
-          "get_process",
-          "get"
+        "operationIds": [
+          "get_process_inspection_plans_orders_without_plan"
         ],
         "method": "GET"
       },
@@ -3835,12 +3200,8 @@
       "operationId": "get_process_inspection_plans_product",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/process-inspection-plans/products"
-        ],
-        "operationIdMarkers": [
-          "get_process",
-          "get"
+        "operationIds": [
+          "get_process_inspection_plans_product"
         ],
         "method": "GET"
       },
@@ -3865,12 +3226,8 @@
       "operationId": "get_process_inspection_plans_products",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/process-inspection-plans/products"
-        ],
-        "operationIdMarkers": [
-          "get_process",
-          "get"
+        "operationIds": [
+          "get_process_inspection_plans_products"
         ],
         "method": "GET"
       },
@@ -3895,12 +3252,8 @@
       "operationId": "get_process_inspection_plans_products_without_plan",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/process-inspection-plans/products-without-plan"
-        ],
-        "operationIdMarkers": [
-          "get_process",
-          "get"
+        "operationIds": [
+          "get_process_inspection_plans_products_without_plan"
         ],
         "method": "GET"
       },
@@ -3925,12 +3278,8 @@
       "operationId": "get_process_inspection_plans_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/process-inspection-plans/summary"
-        ],
-        "operationIdMarkers": [
-          "get_process",
-          "get"
+        "operationIds": [
+          "get_process_inspection_plans_summary"
         ],
         "method": "GET"
       },
@@ -3955,12 +3304,8 @@
       "operationId": "get_produced_quantity",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality/produced-quantity"
-        ],
-        "operationIdMarkers": [
-          "get_produced",
-          "get"
+        "operationIds": [
+          "get_produced_quantity"
         ],
         "method": "GET"
       },
@@ -3986,12 +3331,8 @@
       "operationId": "get_product_drawing",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/products/drawing"
-        ],
-        "operationIdMarkers": [
-          "get_product",
-          "get"
+        "operationIds": [
+          "get_product_drawing"
         ],
         "method": "GET"
       },
@@ -4016,12 +3357,8 @@
       "operationId": "get_product_drawing_pdf",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/drawing/pdf"
-        ],
-        "operationIdMarkers": [
-          "get_product",
-          "get"
+        "operationIds": [
+          "get_product_drawing_pdf"
         ],
         "method": "GET"
       },
@@ -4046,12 +3383,8 @@
       "operationId": "get_product_raw_material_set_shortages",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/products/raw-material-set-shortages"
-        ],
-        "operationIdMarkers": [
-          "get_product",
-          "get"
+        "operationIds": [
+          "get_product_raw_material_set_shortages"
         ],
         "method": "GET"
       },
@@ -4076,12 +3409,8 @@
       "operationId": "get_production_appointments_finished_ops_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/finished-ops/series"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_appointments_finished_ops_series"
         ],
         "method": "GET"
       },
@@ -4106,12 +3435,8 @@
       "operationId": "get_production_appointments_produced_totals",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/appointments/produced-totals"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_appointments_produced_totals"
         ],
         "method": "GET"
       },
@@ -4136,12 +3461,8 @@
       "operationId": "get_production_appointments_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/appointments/series"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_appointments_series"
         ],
         "method": "GET"
       },
@@ -4166,12 +3487,8 @@
       "operationId": "get_production_appointments_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/appointments/summary"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_appointments_summary"
         ],
         "method": "GET"
       },
@@ -4196,12 +3513,8 @@
       "operationId": "get_production_cost_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production/production_cost_pct"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_cost_pct"
         ],
         "method": "GET"
       },
@@ -4226,12 +3539,8 @@
       "operationId": "get_production_machine_load_operations",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/machine-load/operations"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_machine_load_operations"
         ],
         "method": "GET"
       },
@@ -4256,12 +3565,8 @@
       "operationId": "get_production_machine_load_work_centers",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/machine-load/work-centers"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_machine_load_work_centers"
         ],
         "method": "GET"
       },
@@ -4286,12 +3591,8 @@
       "operationId": "get_production_order_by_op",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/orders/by-op"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_order_by_op"
         ],
         "method": "GET"
       },
@@ -4316,12 +3617,8 @@
       "operationId": "get_production_order_sets_incomplete",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production-order-sets/incomplete"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_order_sets_incomplete"
         ],
         "method": "GET"
       },
@@ -4346,12 +3643,8 @@
       "operationId": "get_production_pcp_orders_items",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/pcp-orders/items"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_pcp_orders_items"
         ],
         "method": "GET"
       },
@@ -4376,12 +3669,8 @@
       "operationId": "get_production_pcp_orders_ranking",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/pcp-orders/ranking"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_pcp_orders_ranking"
         ],
         "method": "GET"
       },
@@ -4406,12 +3695,8 @@
       "operationId": "get_production_pcp_orders_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/pcp-orders/summary"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_pcp_orders_summary"
         ],
         "method": "GET"
       },
@@ -4436,12 +3721,8 @@
       "operationId": "get_production_unproductive_hours_items",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/unproductive-hours/items"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_unproductive_hours_items"
         ],
         "method": "GET"
       },
@@ -4466,12 +3747,8 @@
       "operationId": "get_production_unproductive_hours_ranking",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/unproductive-hours/ranking"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_unproductive_hours_ranking"
         ],
         "method": "GET"
       },
@@ -4496,12 +3773,8 @@
       "operationId": "get_production_unproductive_hours_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/unproductive-hours/summary"
-        ],
-        "operationIdMarkers": [
-          "get_production",
-          "get"
+        "operationIds": [
+          "get_production_unproductive_hours_summary"
         ],
         "method": "GET"
       },
@@ -4526,12 +3799,8 @@
       "operationId": "get_proposta_comercial",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/propostas-comerciais"
-        ],
-        "operationIdMarkers": [
-          "get_proposta",
-          "get"
+        "operationIds": [
+          "get_proposta_comercial"
         ],
         "method": "GET"
       },
@@ -4556,13 +3825,8 @@
       "operationId": "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/protheus-users/by-email"
-        ],
-        "operationIdMarkers": [
-          "get_protheus_user_by_email",
-          "get_protheus",
-          "get"
+        "operationIds": [
+          "get_protheus_user_by_email_route_supplies_protheus_users_by_email_get"
         ],
         "method": "GET"
       },
@@ -4587,12 +3851,8 @@
       "operationId": "get_public_mural_acessos_link_image",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/links/image"
-        ],
-        "operationIdMarkers": [
-          "get_public",
-          "get"
+        "operationIds": [
+          "get_public_mural_acessos_link_image"
         ],
         "method": "GET"
       },
@@ -4617,12 +3877,8 @@
       "operationId": "get_public_scheduling_availability",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/resources/availability"
-        ],
-        "operationIdMarkers": [
-          "get_public",
-          "get"
+        "operationIds": [
+          "get_public_scheduling_availability"
         ],
         "method": "GET"
       },
@@ -4647,12 +3903,8 @@
       "operationId": "get_public_scheduling_resource",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/scheduling/resources"
-        ],
-        "operationIdMarkers": [
-          "get_public",
-          "get"
+        "operationIds": [
+          "get_public_scheduling_resource"
         ],
         "method": "GET"
       },
@@ -4677,12 +3929,8 @@
       "operationId": "get_quality_action_plan_detail",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality/action-plans"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_action_plan_detail"
         ],
         "method": "GET"
       },
@@ -4708,12 +3956,8 @@
       "operationId": "get_quality_action_plan_evidence_content",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/evidences/content"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_action_plan_evidence_content"
         ],
         "method": "GET"
       },
@@ -4739,12 +3983,8 @@
       "operationId": "get_quality_action_plan_knowledge_graph",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/intelligence/knowledge-graph"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_action_plan_knowledge_graph"
         ],
         "method": "GET"
       },
@@ -4770,12 +4010,8 @@
       "operationId": "get_quality_action_plan_revision",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/action-plans/revisions"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_action_plan_revision"
         ],
         "method": "GET"
       },
@@ -4801,12 +4037,8 @@
       "operationId": "get_quality_action_plan_similar_cases",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/action-plans/similar-cases"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_action_plan_similar_cases"
         ],
         "method": "GET"
       },
@@ -4832,12 +4064,8 @@
       "operationId": "get_quality_action_plans_dashboard",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/action-plans/dashboard"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_action_plans_dashboard"
         ],
         "method": "GET"
       },
@@ -4863,12 +4091,8 @@
       "operationId": "get_quality_label",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality/labels"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_label"
         ],
         "method": "GET"
       },
@@ -4894,12 +4118,8 @@
       "operationId": "get_quality_label_certificate",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/labels/certificate"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_label_certificate"
         ],
         "method": "GET"
       },
@@ -4925,12 +4145,8 @@
       "operationId": "get_quality_label_certificate_pdf",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/certificate/pdf"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_label_certificate_pdf"
         ],
         "method": "GET"
       },
@@ -4956,12 +4172,8 @@
       "operationId": "get_quality_label_inspector",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/inspectors/me"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_label_inspector"
         ],
         "method": "GET"
       },
@@ -4987,12 +4199,8 @@
       "operationId": "get_quality_label_inspector_signature",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/me/signature"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_label_inspector_signature"
         ],
         "method": "GET"
       },
@@ -5018,12 +4226,8 @@
       "operationId": "get_quality_label_qr",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/labels/qr"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_label_qr"
         ],
         "method": "GET"
       },
@@ -5049,12 +4253,8 @@
       "operationId": "get_quality_returned_totals",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality/returned-totals"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_returned_totals"
         ],
         "method": "GET"
       },
@@ -5080,12 +4280,8 @@
       "operationId": "get_quality_rework_cost_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality/rework-cost-pct"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_rework_cost_pct"
         ],
         "method": "GET"
       },
@@ -5111,12 +4307,8 @@
       "operationId": "get_quality_rework_cost_pct_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/rework-cost-pct/series"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_rework_cost_pct_series"
         ],
         "method": "GET"
       },
@@ -5142,12 +4334,8 @@
       "operationId": "get_quality_scrap_cost_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality/scrap-cost-pct"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_scrap_cost_pct"
         ],
         "method": "GET"
       },
@@ -5173,12 +4361,8 @@
       "operationId": "get_quality_scrap_cost_pct_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/scrap-cost-pct/series"
-        ],
-        "operationIdMarkers": [
-          "get_quality",
-          "get"
+        "operationIds": [
+          "get_quality_scrap_cost_pct_series"
         ],
         "method": "GET"
       },
@@ -5204,12 +4388,8 @@
       "operationId": "get_query_cache_stats",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/query-cache/stats"
-        ],
-        "operationIdMarkers": [
-          "get_query",
-          "get"
+        "operationIds": [
+          "get_query_cache_stats"
         ],
         "method": "GET"
       },
@@ -5234,12 +4414,8 @@
       "operationId": "get_refugos_filtros",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/refugos/filtros"
-        ],
-        "operationIdMarkers": [
-          "get_refugos",
-          "get"
+        "operationIds": [
+          "get_refugos_filtros"
         ],
         "method": "GET"
       },
@@ -5264,12 +4440,8 @@
       "operationId": "get_refugos_health",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/refugos/health"
-        ],
-        "operationIdMarkers": [
-          "get_refugos",
-          "get"
+        "operationIds": [
+          "get_refugos_health"
         ],
         "method": "GET"
       },
@@ -5294,12 +4466,8 @@
       "operationId": "get_refugos_rankings",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/refugos/rankings"
-        ],
-        "operationIdMarkers": [
-          "get_refugos",
-          "get"
+        "operationIds": [
+          "get_refugos_rankings"
         ],
         "method": "GET"
       },
@@ -5324,12 +4492,8 @@
       "operationId": "get_refugos_registros",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/refugos/registros"
-        ],
-        "operationIdMarkers": [
-          "get_refugos",
-          "get"
+        "operationIds": [
+          "get_refugos_registros"
         ],
         "method": "GET"
       },
@@ -5354,12 +4518,8 @@
       "operationId": "get_refugos_resumo",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/refugos/resumo"
-        ],
-        "operationIdMarkers": [
-          "get_refugos",
-          "get"
+        "operationIds": [
+          "get_refugos_resumo"
         ],
         "method": "GET"
       },
@@ -5384,12 +4544,8 @@
       "operationId": "get_refugos_scrap_cost_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/refugos/scrap_cost_pct"
-        ],
-        "operationIdMarkers": [
-          "get_refugos",
-          "get"
+        "operationIds": [
+          "get_refugos_scrap_cost_pct"
         ],
         "method": "GET"
       },
@@ -5414,12 +4570,8 @@
       "operationId": "get_refugos_serie",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/refugos/serie"
-        ],
-        "operationIdMarkers": [
-          "get_refugos",
-          "get"
+        "operationIds": [
+          "get_refugos_serie"
         ],
         "method": "GET"
       },
@@ -5444,12 +4596,8 @@
       "operationId": "get_report_definition",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/reports/definitions"
-        ],
-        "operationIdMarkers": [
-          "get_report",
-          "get"
+        "operationIds": [
+          "get_report_definition"
         ],
         "method": "GET"
       },
@@ -5475,12 +4623,8 @@
       "operationId": "get_report_run",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/reports/runs"
-        ],
-        "operationIdMarkers": [
-          "get_report",
-          "get"
+        "operationIds": [
+          "get_report_run"
         ],
         "method": "GET"
       },
@@ -5506,12 +4650,8 @@
       "operationId": "get_report_schedule",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/definitions/schedule"
-        ],
-        "operationIdMarkers": [
-          "get_report",
-          "get"
+        "operationIds": [
+          "get_report_schedule"
         ],
         "method": "GET"
       },
@@ -5537,12 +4677,8 @@
       "operationId": "get_request_lookup_warehouse_01_balance",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/products/warehouse-01-balance"
-        ],
-        "operationIdMarkers": [
-          "get_request",
-          "get"
+        "operationIds": [
+          "get_request_lookup_warehouse_01_balance"
         ],
         "method": "GET"
       },
@@ -5567,12 +4703,8 @@
       "operationId": "get_retrabalhos_colaboradores",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/retrabalhos/colaboradores"
-        ],
-        "operationIdMarkers": [
-          "get_retrabalhos",
-          "get"
+        "operationIds": [
+          "get_retrabalhos_colaboradores"
         ],
         "method": "GET"
       },
@@ -5597,12 +4729,8 @@
       "operationId": "get_retrabalhos_detalhes",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/retrabalhos/detalhes"
-        ],
-        "operationIdMarkers": [
-          "get_retrabalhos",
-          "get"
+        "operationIds": [
+          "get_retrabalhos_detalhes"
         ],
         "method": "GET"
       },
@@ -5627,12 +4755,8 @@
       "operationId": "get_retrabalhos_filtros",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/retrabalhos/filtros"
-        ],
-        "operationIdMarkers": [
-          "get_retrabalhos",
-          "get"
+        "operationIds": [
+          "get_retrabalhos_filtros"
         ],
         "method": "GET"
       },
@@ -5657,12 +4781,8 @@
       "operationId": "get_retrabalhos_health",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/retrabalhos/health"
-        ],
-        "operationIdMarkers": [
-          "get_retrabalhos",
-          "get"
+        "operationIds": [
+          "get_retrabalhos_health"
         ],
         "method": "GET"
       },
@@ -5687,12 +4807,8 @@
       "operationId": "get_retrabalhos_mensal",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/retrabalhos/mensal"
-        ],
-        "operationIdMarkers": [
-          "get_retrabalhos",
-          "get"
+        "operationIds": [
+          "get_retrabalhos_mensal"
         ],
         "method": "GET"
       },
@@ -5717,12 +4833,8 @@
       "operationId": "get_retrabalhos_recursos",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/retrabalhos/recursos"
-        ],
-        "operationIdMarkers": [
-          "get_retrabalhos",
-          "get"
+        "operationIds": [
+          "get_retrabalhos_recursos"
         ],
         "method": "GET"
       },
@@ -5747,12 +4859,8 @@
       "operationId": "get_retrabalhos_resumo",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/retrabalhos/resumo"
-        ],
-        "operationIdMarkers": [
-          "get_retrabalhos",
-          "get"
+        "operationIds": [
+          "get_retrabalhos_resumo"
         ],
         "method": "GET"
       },
@@ -5777,12 +4885,8 @@
       "operationId": "get_retrabalhos_rework_cost_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/retrabalhos/rework_cost_pct"
-        ],
-        "operationIdMarkers": [
-          "get_retrabalhos",
-          "get"
+        "operationIds": [
+          "get_retrabalhos_rework_cost_pct"
         ],
         "method": "GET"
       },
@@ -5807,12 +4911,8 @@
       "operationId": "get_sales_conversion_rate",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial/closing-rate"
-        ],
-        "operationIdMarkers": [
-          "get_sales",
-          "get"
+        "operationIds": [
+          "get_sales_conversion_rate"
         ],
         "method": "GET"
       },
@@ -5837,12 +4937,8 @@
       "operationId": "get_sales_conversion_rate_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/closing-rate/series"
-        ],
-        "operationIdMarkers": [
-          "get_sales",
-          "get"
+        "operationIds": [
+          "get_sales_conversion_rate_series"
         ],
         "method": "GET"
       },
@@ -5867,12 +4963,8 @@
       "operationId": "get_sales_order_otd",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial/sales-order-otd"
-        ],
-        "operationIdMarkers": [
-          "get_sales",
-          "get"
+        "operationIds": [
+          "get_sales_order_otd"
         ],
         "method": "GET"
       },
@@ -5897,12 +4989,8 @@
       "operationId": "get_sales_order_otd_by_branch",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/sales-order-otd/by-branch"
-        ],
-        "operationIdMarkers": [
-          "get_sales",
-          "get"
+        "operationIds": [
+          "get_sales_order_otd_by_branch"
         ],
         "method": "GET"
       },
@@ -5927,12 +5015,8 @@
       "operationId": "get_sales_order_otd_by_customer",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/sales-order-otd/by-customer"
-        ],
-        "operationIdMarkers": [
-          "get_sales",
-          "get"
+        "operationIds": [
+          "get_sales_order_otd_by_customer"
         ],
         "method": "GET"
       },
@@ -5957,12 +5041,8 @@
       "operationId": "get_sales_order_otd_line_detail",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/sales-order-otd/lines"
-        ],
-        "operationIdMarkers": [
-          "get_sales",
-          "get"
+        "operationIds": [
+          "get_sales_order_otd_line_detail"
         ],
         "method": "GET"
       },
@@ -5987,12 +5067,8 @@
       "operationId": "get_sales_order_otd_panel",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/sales-order-otd/panel"
-        ],
-        "operationIdMarkers": [
-          "get_sales",
-          "get"
+        "operationIds": [
+          "get_sales_order_otd_panel"
         ],
         "method": "GET"
       },
@@ -6017,12 +5093,8 @@
       "operationId": "get_sales_order_otd_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/sales-order-otd/series"
-        ],
-        "operationIdMarkers": [
-          "get_sales",
-          "get"
+        "operationIds": [
+          "get_sales_order_otd_series"
         ],
         "method": "GET"
       },
@@ -6047,12 +5119,8 @@
       "operationId": "get_sales_order_otd_series_by_customer",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/sales-order-otd/series-by-customer"
-        ],
-        "operationIdMarkers": [
-          "get_sales",
-          "get"
+        "operationIds": [
+          "get_sales_order_otd_series_by_customer"
         ],
         "method": "GET"
       },
@@ -6077,12 +5145,8 @@
       "operationId": "get_sales_order_otd_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/sales-order-otd/summary"
-        ],
-        "operationIdMarkers": [
-          "get_sales",
-          "get"
+        "operationIds": [
+          "get_sales_order_otd_summary"
         ],
         "method": "GET"
       },
@@ -6107,12 +5171,8 @@
       "operationId": "get_seller_portfolio",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/pedidos-venda-abertos/sellers"
-        ],
-        "operationIdMarkers": [
-          "get_seller",
-          "get"
+        "operationIds": [
+          "get_seller_portfolio"
         ],
         "method": "GET"
       },
@@ -6137,12 +5197,8 @@
       "operationId": "get_si_indicator_commercial_closing_rate_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial-closing-rate/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_commercial_closing_rate_meta"
         ],
         "method": "GET"
       },
@@ -6167,12 +5223,8 @@
       "operationId": "get_si_indicator_commercial_closing_rate_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial-closing-rate/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_commercial_closing_rate_realized"
         ],
         "method": "GET"
       },
@@ -6197,12 +5249,8 @@
       "operationId": "get_si_indicator_commercial_new_business_rol_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial-new-business-rol/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_commercial_new_business_rol_meta"
         ],
         "method": "GET"
       },
@@ -6227,12 +5275,8 @@
       "operationId": "get_si_indicator_commercial_new_business_rol_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial-new-business-rol/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_commercial_new_business_rol_realized"
         ],
         "method": "GET"
       },
@@ -6257,12 +5301,8 @@
       "operationId": "get_si_indicator_commercial_rol_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial-rol/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_commercial_rol_meta"
         ],
         "method": "GET"
       },
@@ -6287,12 +5327,8 @@
       "operationId": "get_si_indicator_commercial_rol_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial-rol/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_commercial_rol_realized"
         ],
         "method": "GET"
       },
@@ -6317,12 +5353,8 @@
       "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial-sales-order-otd/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_commercial_sales_order_otd_meta"
         ],
         "method": "GET"
       },
@@ -6347,12 +5379,8 @@
       "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial-sales-order-otd/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_commercial_sales_order_otd_realized"
         ],
         "method": "GET"
       },
@@ -6377,12 +5405,8 @@
       "operationId": "get_si_indicator_engineering_projects_on_time_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/engineering-projects-on-time/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_engineering_projects_on_time_meta"
         ],
         "method": "GET"
       },
@@ -6407,12 +5431,8 @@
       "operationId": "get_si_indicator_engineering_projects_on_time_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/engineering-projects-on-time/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_engineering_projects_on_time_realized"
         ],
         "method": "GET"
       },
@@ -6437,12 +5457,8 @@
       "operationId": "get_si_indicator_engineering_transforma_plus_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/engineering-transforma-plus/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_engineering_transforma_plus_meta"
         ],
         "method": "GET"
       },
@@ -6467,12 +5483,8 @@
       "operationId": "get_si_indicator_engineering_transforma_plus_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/engineering-transforma-plus/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_engineering_transforma_plus_realized"
         ],
         "method": "GET"
       },
@@ -6497,12 +5509,8 @@
       "operationId": "get_si_indicator_financial_ebitda_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/financial-ebitda/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_financial_ebitda_meta"
         ],
         "method": "GET"
       },
@@ -6527,12 +5535,8 @@
       "operationId": "get_si_indicator_financial_ebitda_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/financial-ebitda/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_financial_ebitda_realized"
         ],
         "method": "GET"
       },
@@ -6557,12 +5561,8 @@
       "operationId": "get_si_indicator_financial_fixed_cost_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/financial-fixed-cost/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_financial_fixed_cost_meta"
         ],
         "method": "GET"
       },
@@ -6587,12 +5587,8 @@
       "operationId": "get_si_indicator_financial_fixed_cost_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/financial-fixed-cost/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_financial_fixed_cost_realized"
         ],
         "method": "GET"
       },
@@ -6617,12 +5613,8 @@
       "operationId": "get_si_indicator_financial_pmr_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/financial-pmr/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_financial_pmr_meta"
         ],
         "method": "GET"
       },
@@ -6647,12 +5639,8 @@
       "operationId": "get_si_indicator_financial_pmr_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/financial-pmr/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_financial_pmr_realized"
         ],
         "method": "GET"
       },
@@ -6677,12 +5665,8 @@
       "operationId": "get_si_indicator_hr_absenteeism_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr-absenteeism/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_hr_absenteeism_meta"
         ],
         "method": "GET"
       },
@@ -6707,12 +5691,8 @@
       "operationId": "get_si_indicator_hr_absenteeism_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr-absenteeism/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_hr_absenteeism_realized"
         ],
         "method": "GET"
       },
@@ -6737,12 +5717,8 @@
       "operationId": "get_si_indicator_hr_pdi_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr-pdi/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_hr_pdi_meta"
         ],
         "method": "GET"
       },
@@ -6767,12 +5743,8 @@
       "operationId": "get_si_indicator_hr_pdi_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr-pdi/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_hr_pdi_realized"
         ],
         "method": "GET"
       },
@@ -6797,12 +5769,8 @@
       "operationId": "get_si_indicator_hr_performance_reviews_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr-performance-reviews/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_hr_performance_reviews_meta"
         ],
         "method": "GET"
       },
@@ -6827,12 +5795,8 @@
       "operationId": "get_si_indicator_hr_performance_reviews_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr-performance-reviews/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_hr_performance_reviews_realized"
         ],
         "method": "GET"
       },
@@ -6857,12 +5821,8 @@
       "operationId": "get_si_indicator_hr_satisfaction_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr-satisfaction/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_hr_satisfaction_meta"
         ],
         "method": "GET"
       },
@@ -6887,12 +5847,8 @@
       "operationId": "get_si_indicator_hr_satisfaction_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr-satisfaction/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_hr_satisfaction_realized"
         ],
         "method": "GET"
       },
@@ -6917,12 +5873,8 @@
       "operationId": "get_si_indicator_hr_training_hours_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr-training-hours/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_hr_training_hours_meta"
         ],
         "method": "GET"
       },
@@ -6947,12 +5899,8 @@
       "operationId": "get_si_indicator_hr_training_hours_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr-training-hours/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_hr_training_hours_realized"
         ],
         "method": "GET"
       },
@@ -6977,12 +5925,8 @@
       "operationId": "get_si_indicator_hr_turnover_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr-turnover/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_hr_turnover_meta"
         ],
         "method": "GET"
       },
@@ -7007,12 +5951,8 @@
       "operationId": "get_si_indicator_hr_turnover_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr-turnover/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_hr_turnover_realized"
         ],
         "method": "GET"
       },
@@ -7037,12 +5977,8 @@
       "operationId": "get_si_indicator_production_costs_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production-costs/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_production_costs_meta"
         ],
         "method": "GET"
       },
@@ -7067,12 +6003,8 @@
       "operationId": "get_si_indicator_production_costs_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production-costs/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_production_costs_realized"
         ],
         "method": "GET"
       },
@@ -7097,12 +6029,8 @@
       "operationId": "get_si_indicator_production_depreciation_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production-depreciation/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_production_depreciation_meta"
         ],
         "method": "GET"
       },
@@ -7127,12 +6055,8 @@
       "operationId": "get_si_indicator_production_depreciation_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production-depreciation/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_production_depreciation_realized"
         ],
         "method": "GET"
       },
@@ -7157,12 +6081,8 @@
       "operationId": "get_si_indicator_production_direct_labor_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production-direct-labor/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_production_direct_labor_meta"
         ],
         "method": "GET"
       },
@@ -7187,12 +6107,8 @@
       "operationId": "get_si_indicator_production_direct_labor_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production-direct-labor/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_production_direct_labor_realized"
         ],
         "method": "GET"
       },
@@ -7217,12 +6133,8 @@
       "operationId": "get_si_indicator_production_oee_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production-oee/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_production_oee_meta"
         ],
         "method": "GET"
       },
@@ -7247,12 +6159,8 @@
       "operationId": "get_si_indicator_production_oee_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production-oee/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_production_oee_realized"
         ],
         "method": "GET"
       },
@@ -7277,12 +6185,8 @@
       "operationId": "get_si_indicator_production_otd_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production-otd/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_production_otd_meta"
         ],
         "method": "GET"
       },
@@ -7307,12 +6211,8 @@
       "operationId": "get_si_indicator_production_otd_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production-otd/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_production_otd_realized"
         ],
         "method": "GET"
       },
@@ -7337,12 +6237,8 @@
       "operationId": "get_si_indicator_quality_audit_5s_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-audit-5s/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_audit_5s_meta"
         ],
         "method": "GET"
       },
@@ -7367,12 +6263,8 @@
       "operationId": "get_si_indicator_quality_audit_5s_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-audit-5s/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_audit_5s_realized"
         ],
         "method": "GET"
       },
@@ -7397,12 +6289,8 @@
       "operationId": "get_si_indicator_quality_kaizen_financial_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-kaizen-financial/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_kaizen_financial_meta"
         ],
         "method": "GET"
       },
@@ -7427,12 +6315,8 @@
       "operationId": "get_si_indicator_quality_kaizen_financial_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-kaizen-financial/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_kaizen_financial_realized"
         ],
         "method": "GET"
       },
@@ -7457,12 +6341,8 @@
       "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-kaizen-ideas/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_kaizen_ideas_meta"
         ],
         "method": "GET"
       },
@@ -7487,12 +6367,8 @@
       "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-kaizen-ideas/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_kaizen_ideas_realized"
         ],
         "method": "GET"
       },
@@ -7517,12 +6393,8 @@
       "operationId": "get_si_indicator_quality_ppm_external_components_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-ppm-external-components/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_ppm_external_components_meta"
         ],
         "method": "GET"
       },
@@ -7547,12 +6419,8 @@
       "operationId": "get_si_indicator_quality_ppm_external_components_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-ppm-external-components/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_ppm_external_components_realized"
         ],
         "method": "GET"
       },
@@ -7577,12 +6445,8 @@
       "operationId": "get_si_indicator_quality_ppm_external_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-ppm-external/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_ppm_external_meta"
         ],
         "method": "GET"
       },
@@ -7607,12 +6471,8 @@
       "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-ppm-external-plugs/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_ppm_external_plugs_meta"
         ],
         "method": "GET"
       },
@@ -7637,12 +6497,8 @@
       "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-ppm-external-plugs/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_ppm_external_plugs_realized"
         ],
         "method": "GET"
       },
@@ -7667,12 +6523,8 @@
       "operationId": "get_si_indicator_quality_ppm_external_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-ppm-external/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_ppm_external_realized"
         ],
         "method": "GET"
       },
@@ -7697,12 +6549,8 @@
       "operationId": "get_si_indicator_quality_ppm_internal_components_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-ppm-internal-components/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_ppm_internal_components_meta"
         ],
         "method": "GET"
       },
@@ -7727,12 +6575,8 @@
       "operationId": "get_si_indicator_quality_ppm_internal_components_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-ppm-internal-components/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_ppm_internal_components_realized"
         ],
         "method": "GET"
       },
@@ -7757,12 +6601,8 @@
       "operationId": "get_si_indicator_quality_ppm_internal_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-ppm-internal/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_ppm_internal_meta"
         ],
         "method": "GET"
       },
@@ -7787,12 +6627,8 @@
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-ppm-internal-plugs/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_ppm_internal_plugs_meta"
         ],
         "method": "GET"
       },
@@ -7817,12 +6653,8 @@
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-ppm-internal-plugs/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_ppm_internal_plugs_realized"
         ],
         "method": "GET"
       },
@@ -7847,12 +6679,8 @@
       "operationId": "get_si_indicator_quality_ppm_internal_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-ppm-internal/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_ppm_internal_realized"
         ],
         "method": "GET"
       },
@@ -7877,12 +6705,8 @@
       "operationId": "get_si_indicator_quality_rework_cost_pct_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-rework-cost-pct/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_rework_cost_pct_meta"
         ],
         "method": "GET"
       },
@@ -7907,12 +6731,8 @@
       "operationId": "get_si_indicator_quality_rework_cost_pct_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-rework-cost-pct/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_rework_cost_pct_realized"
         ],
         "method": "GET"
       },
@@ -7937,12 +6757,8 @@
       "operationId": "get_si_indicator_quality_scrap_cost_pct_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-scrap-cost-pct/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_scrap_cost_pct_meta"
         ],
         "method": "GET"
       },
@@ -7967,12 +6783,8 @@
       "operationId": "get_si_indicator_quality_scrap_cost_pct_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality-scrap-cost-pct/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_quality_scrap_cost_pct_realized"
         ],
         "method": "GET"
       },
@@ -7997,12 +6809,8 @@
       "operationId": "get_si_indicator_supplies_cpv_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/supplies-cpv/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_supplies_cpv_meta"
         ],
         "method": "GET"
       },
@@ -8027,12 +6835,8 @@
       "operationId": "get_si_indicator_supplies_cpv_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/supplies-cpv/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_supplies_cpv_realized"
         ],
         "method": "GET"
       },
@@ -8057,12 +6861,8 @@
       "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/supplies-negotiation-savings/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_supplies_negotiation_savings_meta"
         ],
         "method": "GET"
       },
@@ -8087,12 +6887,8 @@
       "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/supplies-negotiation-savings/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_supplies_negotiation_savings_realized"
         ],
         "method": "GET"
       },
@@ -8117,12 +6913,8 @@
       "operationId": "get_si_indicator_supplies_otd_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/supplies-otd/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_supplies_otd_meta"
         ],
         "method": "GET"
       },
@@ -8147,12 +6939,8 @@
       "operationId": "get_si_indicator_supplies_otd_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/supplies-otd/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_supplies_otd_realized"
         ],
         "method": "GET"
       },
@@ -8177,12 +6965,8 @@
       "operationId": "get_si_indicator_supplies_stock_turnover_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/supplies-stock-turnover/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_supplies_stock_turnover_meta"
         ],
         "method": "GET"
       },
@@ -8207,12 +6991,8 @@
       "operationId": "get_si_indicator_supplies_stock_turnover_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/supplies-stock-turnover/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_supplies_stock_turnover_realized"
         ],
         "method": "GET"
       },
@@ -8237,12 +7017,8 @@
       "operationId": "get_si_indicator_supplies_stock_value_meta",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/supplies-stock-value/meta"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_supplies_stock_value_meta"
         ],
         "method": "GET"
       },
@@ -8267,12 +7043,8 @@
       "operationId": "get_si_indicator_supplies_stock_value_realized",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/supplies-stock-value/realized"
-        ],
-        "operationIdMarkers": [
-          "get_si",
-          "get"
+        "operationIds": [
+          "get_si_indicator_supplies_stock_value_realized"
         ],
         "method": "GET"
       },
@@ -8297,12 +7069,8 @@
       "operationId": "get_smoke_definitions",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/system/smoke-definitions"
-        ],
-        "operationIdMarkers": [
-          "get_smoke",
-          "get"
+        "operationIds": [
+          "get_smoke_definitions"
         ],
         "method": "GET"
       },
@@ -8327,12 +7095,8 @@
       "operationId": "get_sql_health",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/system/sql-health"
-        ],
-        "operationIdMarkers": [
-          "get_sql",
-          "get"
+        "operationIds": [
+          "get_sql_health"
         ],
         "method": "GET"
       },
@@ -8357,12 +7121,8 @@
       "operationId": "get_supplies_negotiation_savings_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/negotiation-savings/summary"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_negotiation_savings_summary"
         ],
         "method": "GET"
       },
@@ -8387,12 +7147,8 @@
       "operationId": "get_supplies_purchase_order_otd",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/supplies/purchase-order-otd"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_purchase_order_otd"
         ],
         "method": "GET"
       },
@@ -8417,12 +7173,8 @@
       "operationId": "get_supplies_purchase_order_otd_panel",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/purchase-order-otd/panel"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_purchase_order_otd_panel"
         ],
         "method": "GET"
       },
@@ -8447,12 +7199,8 @@
       "operationId": "get_supplies_purchase_order_otd_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/purchase-order-otd/series"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_purchase_order_otd_series"
         ],
         "method": "GET"
       },
@@ -8477,12 +7225,8 @@
       "operationId": "get_supplies_purchase_request_lines",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/purchase-requests/lines"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_purchase_request_lines"
         ],
         "method": "GET"
       },
@@ -8507,12 +7251,8 @@
       "operationId": "get_supplies_purchase_requests_open_coverage",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/purchase-requests/open-coverage"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_purchase_requests_open_coverage"
         ],
         "method": "GET"
       },
@@ -8537,12 +7277,8 @@
       "operationId": "get_supplies_safety_stock_consumption_analysis_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/consumption-analysis/summary"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_safety_stock_consumption_analysis_summary"
         ],
         "method": "GET"
       },
@@ -8567,12 +7303,8 @@
       "operationId": "get_supplies_safety_stock_filters",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/safety-stock/filters"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_safety_stock_filters"
         ],
         "method": "GET"
       },
@@ -8597,12 +7329,8 @@
       "operationId": "get_supplies_safety_stock_item_suppliers",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/items/suppliers"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_safety_stock_item_suppliers"
         ],
         "method": "GET"
       },
@@ -8627,12 +7355,8 @@
       "operationId": "get_supplies_safety_stock_items",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/safety-stock/items"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_safety_stock_items"
         ],
         "method": "GET"
       },
@@ -8657,12 +7381,8 @@
       "operationId": "get_supplies_safety_stock_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/safety-stock/summary"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_safety_stock_summary"
         ],
         "method": "GET"
       },
@@ -8687,12 +7407,8 @@
       "operationId": "get_supplies_safety_stock_supplier_purchase_price_history",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/suppliers/purchase-price-history"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_safety_stock_supplier_purchase_price_history"
         ],
         "method": "GET"
       },
@@ -8717,12 +7433,8 @@
       "operationId": "get_supplies_third_party_materials_shipment",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/third-party-materials/shipments"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_third_party_materials_shipment"
         ],
         "method": "GET"
       },
@@ -8747,12 +7459,8 @@
       "operationId": "get_supplies_third_party_materials_shipments",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/third-party-materials/shipments"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_third_party_materials_shipments"
         ],
         "method": "GET"
       },
@@ -8777,12 +7485,8 @@
       "operationId": "get_supplies_third_party_materials_summary",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/third-party-materials/summary"
-        ],
-        "operationIdMarkers": [
-          "get_supplies",
-          "get"
+        "operationIds": [
+          "get_supplies_third_party_materials_summary"
         ],
         "method": "GET"
       },
@@ -8807,12 +7511,8 @@
       "operationId": "get_totvs_outbound_invoice",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/pedidos-venda-abertos/totvs-outbound-invoices"
-        ],
-        "operationIdMarkers": [
-          "get_totvs",
-          "get"
+        "operationIds": [
+          "get_totvs_outbound_invoice"
         ],
         "method": "GET"
       },
@@ -8837,12 +7537,8 @@
       "operationId": "get_transformometro_savings_investment_series",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/savings-investment/series"
-        ],
-        "operationIdMarkers": [
-          "get_transformometro",
-          "get"
+        "operationIds": [
+          "get_transformometro_savings_investment_series"
         ],
         "method": "GET"
       },
@@ -8867,12 +7563,8 @@
       "operationId": "get_weg_rol_target_pct",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial/weg-rol-target-pct"
-        ],
-        "operationIdMarkers": [
-          "get_weg",
-          "get"
+        "operationIds": [
+          "get_weg_rol_target_pct"
         ],
         "method": "GET"
       },
@@ -8897,12 +7589,8 @@
       "operationId": "list_audit_5s_areas",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/audit-5s/areas"
-        ],
-        "operationIdMarkers": [
-          "list_audit",
-          "list"
+        "operationIds": [
+          "list_audit_5s_areas"
         ],
         "method": "GET"
       },
@@ -8928,12 +7616,8 @@
       "operationId": "list_audit_5s_audit_nc_attachments",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/audits/nc-attachments"
-        ],
-        "operationIdMarkers": [
-          "list_audit",
-          "list"
+        "operationIds": [
+          "list_audit_5s_audit_nc_attachments"
         ],
         "method": "GET"
       },
@@ -8959,12 +7643,8 @@
       "operationId": "list_audit_5s_audits",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/audit-5s/audits"
-        ],
-        "operationIdMarkers": [
-          "list_audit",
-          "list"
+        "operationIds": [
+          "list_audit_5s_audits"
         ],
         "method": "GET"
       },
@@ -8990,12 +7670,8 @@
       "operationId": "list_audit_5s_catalog_publications",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/catalog/publications"
-        ],
-        "operationIdMarkers": [
-          "list_audit",
-          "list"
+        "operationIds": [
+          "list_audit_5s_catalog_publications"
         ],
         "method": "GET"
       },
@@ -9021,12 +7697,8 @@
       "operationId": "list_audit_5s_criteria",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/audit-5s/criteria"
-        ],
-        "operationIdMarkers": [
-          "list_audit",
-          "list"
+        "operationIds": [
+          "list_audit_5s_criteria"
         ],
         "method": "GET"
       },
@@ -9052,12 +7724,8 @@
       "operationId": "list_audit_5s_nc_actions",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/nonconformities/actions"
-        ],
-        "operationIdMarkers": [
-          "list_audit",
-          "list"
+        "operationIds": [
+          "list_audit_5s_nc_actions"
         ],
         "method": "GET"
       },
@@ -9083,12 +7751,8 @@
       "operationId": "list_audit_5s_nc_attachments",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/nonconformities/attachments"
-        ],
-        "operationIdMarkers": [
-          "list_audit",
-          "list"
+        "operationIds": [
+          "list_audit_5s_nc_attachments"
         ],
         "method": "GET"
       },
@@ -9114,12 +7778,8 @@
       "operationId": "list_audit_5s_nc_candidates",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/audits/nc-candidates"
-        ],
-        "operationIdMarkers": [
-          "list_audit",
-          "list"
+        "operationIds": [
+          "list_audit_5s_nc_candidates"
         ],
         "method": "GET"
       },
@@ -9145,12 +7805,8 @@
       "operationId": "list_audit_5s_nonconformities",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/audits/nonconformities"
-        ],
-        "operationIdMarkers": [
-          "list_audit",
-          "list"
+        "operationIds": [
+          "list_audit_5s_nonconformities"
         ],
         "method": "GET"
       },
@@ -9176,12 +7832,8 @@
       "operationId": "list_audit_5s_nonconformities_board",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/audit-5s/nonconformities"
-        ],
-        "operationIdMarkers": [
-          "list_audit",
-          "list"
+        "operationIds": [
+          "list_audit_5s_nonconformities_board"
         ],
         "method": "GET"
       },
@@ -9207,12 +7859,8 @@
       "operationId": "list_audit_5s_response_attachments",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/responses/attachments"
-        ],
-        "operationIdMarkers": [
-          "list_audit",
-          "list"
+        "operationIds": [
+          "list_audit_5s_response_attachments"
         ],
         "method": "GET"
       },
@@ -9238,12 +7886,8 @@
       "operationId": "list_cliente_notas_fiscais_saida",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/clientes/notas-fiscais"
-        ],
-        "operationIdMarkers": [
-          "list_cliente",
-          "list"
+        "operationIds": [
+          "list_cliente_notas_fiscais_saida"
         ],
         "method": "GET"
       },
@@ -9268,12 +7912,8 @@
       "operationId": "list_commercial_proposals",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/commercial/proposals"
-        ],
-        "operationIdMarkers": [
-          "list_commercial",
-          "list"
+        "operationIds": [
+          "list_commercial_proposals"
         ],
         "method": "GET"
       },
@@ -9292,78 +7932,14 @@
       }
     },
     {
-      "id": "autoTierCEficienciaFabrilAppointments",
-      "domain": "autoTierC",
-      "autoGenerated": true,
-      "operationId": "list_eficiencia_fabril_appointments",
-      "priority": 1,
-      "route": {
-        "pathMarkers": [
-          "/eficiencia-fabril/appointments"
-        ],
-        "operationIdMarkers": [
-          "list_eficiencia",
-          "list"
-        ],
-        "method": "GET"
-      },
-      "parameters": {
-        "strategy": "date_branch"
-      },
-      "presentation": {
-        "reasonKey": "genericSemanticFallback"
-      },
-      "openapi": {
-        "tier": "B",
-        "entity": "eficiencia_fabril_appointment",
-        "tags": [
-          "Produção"
-        ]
-      }
-    },
-    {
-      "id": "autoTierCExclusiveRawMaterialsCatalog",
-      "domain": "autoTierC",
-      "autoGenerated": true,
-      "operationId": "list_exclusive_raw_materials_catalog",
-      "priority": 1,
-      "route": {
-        "pathMarkers": [
-          "/exclusive-raw-materials/catalog"
-        ],
-        "operationIdMarkers": [
-          "list_exclusive",
-          "list"
-        ],
-        "method": "GET"
-      },
-      "parameters": {
-        "strategy": "product_code"
-      },
-      "presentation": {
-        "reasonKey": "genericSemanticFallback"
-      },
-      "openapi": {
-        "tier": "A",
-        "entity": "exclusive_raw_materials_catalog",
-        "tags": [
-          "products"
-        ]
-      }
-    },
-    {
       "id": "autoTierCGuiasProcedimentosAdminDepartments",
       "domain": "autoTierC",
       "autoGenerated": true,
       "operationId": "list_guias_procedimentos_admin_departments",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/admin/departments"
-        ],
-        "operationIdMarkers": [
-          "list_guias",
-          "list"
+        "operationIds": [
+          "list_guias_procedimentos_admin_departments"
         ],
         "method": "GET"
       },
@@ -9389,12 +7965,8 @@
       "operationId": "list_guias_procedimentos_admin_procedure_attachments",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/procedures/attachments"
-        ],
-        "operationIdMarkers": [
-          "list_guias",
-          "list"
+        "operationIds": [
+          "list_guias_procedimentos_admin_procedure_attachments"
         ],
         "method": "GET"
       },
@@ -9420,12 +7992,8 @@
       "operationId": "list_guias_procedimentos_admin_procedure_media",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/procedures/media"
-        ],
-        "operationIdMarkers": [
-          "list_guias",
-          "list"
+        "operationIds": [
+          "list_guias_procedimentos_admin_procedure_media"
         ],
         "method": "GET"
       },
@@ -9451,12 +8019,8 @@
       "operationId": "list_guias_procedimentos_admin_procedures",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/admin/procedures"
-        ],
-        "operationIdMarkers": [
-          "list_guias",
-          "list"
+        "operationIds": [
+          "list_guias_procedimentos_admin_procedures"
         ],
         "method": "GET"
       },
@@ -9482,12 +8046,8 @@
       "operationId": "list_guias_procedimentos_departments",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/guias-procedimentos/departments"
-        ],
-        "operationIdMarkers": [
-          "list_guias",
-          "list"
+        "operationIds": [
+          "list_guias_procedimentos_departments"
         ],
         "method": "GET"
       },
@@ -9513,12 +8073,8 @@
       "operationId": "list_guias_procedimentos_procedure_attachments",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/procedures/attachments"
-        ],
-        "operationIdMarkers": [
-          "list_guias",
-          "list"
+        "operationIds": [
+          "list_guias_procedimentos_procedure_attachments"
         ],
         "method": "GET"
       },
@@ -9544,12 +8100,8 @@
       "operationId": "list_guias_procedimentos_procedure_media",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/procedures/media"
-        ],
-        "operationIdMarkers": [
-          "list_guias",
-          "list"
+        "operationIds": [
+          "list_guias_procedimentos_procedure_media"
         ],
         "method": "GET"
       },
@@ -9575,12 +8127,8 @@
       "operationId": "list_hr_branches",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hr/branches"
-        ],
-        "operationIdMarkers": [
-          "list_hr",
-          "list"
+        "operationIds": [
+          "list_hr_branches"
         ],
         "method": "GET"
       },
@@ -9599,48 +8147,14 @@
       }
     },
     {
-      "id": "autoTierCInvoiceIssuanceOpenSalesOrders",
-      "domain": "autoTierC",
-      "autoGenerated": true,
-      "operationId": "list_invoice_issuance_open_sales_orders",
-      "priority": 1,
-      "route": {
-        "pathMarkers": [
-          "/invoice-issuance/open-sales-orders"
-        ],
-        "operationIdMarkers": [
-          "list_invoice",
-          "list"
-        ],
-        "method": "GET"
-      },
-      "parameters": {
-        "strategy": "none"
-      },
-      "presentation": {
-        "reasonKey": "genericSemanticFallback"
-      },
-      "openapi": {
-        "tier": "C",
-        "entity": null,
-        "tags": [
-          "Invoice issuance"
-        ]
-      }
-    },
-    {
       "id": "autoTierCInvoiceIssuanceRequests",
       "domain": "autoTierC",
       "autoGenerated": true,
       "operationId": "list_invoice_issuance_requests",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/invoice-issuance/requests"
-        ],
-        "operationIdMarkers": [
-          "list_invoice",
-          "list"
+        "operationIds": [
+          "list_invoice_issuance_requests"
         ],
         "method": "GET"
       },
@@ -9665,12 +8179,8 @@
       "operationId": "list_kaizen_audit_log",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/records/audit-log"
-        ],
-        "operationIdMarkers": [
-          "list_kaizen",
-          "list"
+        "operationIds": [
+          "list_kaizen_audit_log"
         ],
         "method": "GET"
       },
@@ -9696,12 +8206,8 @@
       "operationId": "list_kaizen_evidences",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/records/evidences"
-        ],
-        "operationIdMarkers": [
-          "list_kaizen",
-          "list"
+        "operationIds": [
+          "list_kaizen_evidences"
         ],
         "method": "GET"
       },
@@ -9727,12 +8233,8 @@
       "operationId": "list_kaizen_history",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/records/history"
-        ],
-        "operationIdMarkers": [
-          "list_kaizen",
-          "list"
+        "operationIds": [
+          "list_kaizen_history"
         ],
         "method": "GET"
       },
@@ -9758,12 +8260,8 @@
       "operationId": "list_kaizen_records",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/kaizens/records"
-        ],
-        "operationIdMarkers": [
-          "list_kaizen",
-          "list"
+        "operationIds": [
+          "list_kaizen_records"
         ],
         "method": "GET"
       },
@@ -9789,12 +8287,8 @@
       "operationId": "list_kaizen_revisions",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/records/revisions"
-        ],
-        "operationIdMarkers": [
-          "list_kaizen",
-          "list"
+        "operationIds": [
+          "list_kaizen_revisions"
         ],
         "method": "GET"
       },
@@ -9820,12 +8314,8 @@
       "operationId": "list_lancamento_notas_fiscais_request_purchase_orders",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/requests/purchase-orders"
-        ],
-        "operationIdMarkers": [
-          "list_lancamento",
-          "list"
+        "operationIds": [
+          "list_lancamento_notas_fiscais_request_purchase_orders"
         ],
         "method": "GET"
       },
@@ -9850,12 +8340,8 @@
       "operationId": "list_lancamento_notas_fiscais_requests",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/lancamento-notas-fiscais/requests"
-        ],
-        "operationIdMarkers": [
-          "list_lancamento",
-          "list"
+        "operationIds": [
+          "list_lancamento_notas_fiscais_requests"
         ],
         "method": "GET"
       },
@@ -9880,12 +8366,8 @@
       "operationId": "list_lmp_nonconformities",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/lmps/nonconformities"
-        ],
-        "operationIdMarkers": [
-          "list_lmp",
-          "list"
+        "operationIds": [
+          "list_lmp_nonconformities"
         ],
         "method": "GET"
       },
@@ -9911,12 +8393,8 @@
       "operationId": "list_lmp_nonconformity_history",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/nonconformities/history"
-        ],
-        "operationIdMarkers": [
-          "list_lmp",
-          "list"
+        "operationIds": [
+          "list_lmp_nonconformity_history"
         ],
         "method": "GET"
       },
@@ -9942,12 +8420,8 @@
       "operationId": "list_lmp_problem_tags",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/nonconformities/problem-tags"
-        ],
-        "operationIdMarkers": [
-          "list_lmp",
-          "list"
+        "operationIds": [
+          "list_lmp_problem_tags"
         ],
         "method": "GET"
       },
@@ -9973,12 +8447,8 @@
       "operationId": "list_mini_applicators_componentes",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/ferramentas/componentes"
-        ],
-        "operationIdMarkers": [
-          "list_mini",
-          "list"
+        "operationIds": [
+          "list_mini_applicators_componentes"
         ],
         "method": "GET"
       },
@@ -10003,12 +8473,8 @@
       "operationId": "list_mini_applicators_ferramentas",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/mini-applicators/ferramentas"
-        ],
-        "operationIdMarkers": [
-          "list_mini",
-          "list"
+        "operationIds": [
+          "list_mini_applicators_ferramentas"
         ],
         "method": "GET"
       },
@@ -10033,12 +8499,8 @@
       "operationId": "list_mini_applicators_pecas",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/ferramentas/pecas"
-        ],
-        "operationIdMarkers": [
-          "list_mini",
-          "list"
+        "operationIds": [
+          "list_mini_applicators_pecas"
         ],
         "method": "GET"
       },
@@ -10063,12 +8525,8 @@
       "operationId": "list_mini_applicators_pecas_reposicao",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/mini-applicators/pecas-reposicao"
-        ],
-        "operationIdMarkers": [
-          "list_mini",
-          "list"
+        "operationIds": [
+          "list_mini_applicators_pecas_reposicao"
         ],
         "method": "GET"
       },
@@ -10093,12 +8551,8 @@
       "operationId": "list_mural_acessos_hubs",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/mural-acessos/hubs"
-        ],
-        "operationIdMarkers": [
-          "list_mural",
-          "list"
+        "operationIds": [
+          "list_mural_acessos_hubs"
         ],
         "method": "GET"
       },
@@ -10124,12 +8578,8 @@
       "operationId": "list_mural_acessos_links",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/hubs/links"
-        ],
-        "operationIdMarkers": [
-          "list_mural",
-          "list"
+        "operationIds": [
+          "list_mural_acessos_links"
         ],
         "method": "GET"
       },
@@ -10155,12 +8605,8 @@
       "operationId": "list_my_scheduling_bookings",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/bookings/mine"
-        ],
-        "operationIdMarkers": [
-          "list_my",
-          "list"
+        "operationIds": [
+          "list_my_scheduling_bookings"
         ],
         "method": "GET"
       },
@@ -10186,12 +8632,8 @@
       "operationId": "list_nonconformities",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality/nonconformities"
-        ],
-        "operationIdMarkers": [
-          "list_nonconformities",
-          "list"
+        "operationIds": [
+          "list_nonconformities"
         ],
         "method": "GET"
       },
@@ -10216,12 +8658,8 @@
       "operationId": "list_ops_abertas_pedidos_venda",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/pedidos-venda-abertos/ops-abertas"
-        ],
-        "operationIdMarkers": [
-          "list_ops",
-          "list"
+        "operationIds": [
+          "list_ops_abertas_pedidos_venda"
         ],
         "method": "GET"
       },
@@ -10246,12 +8684,8 @@
       "operationId": "list_pedidos_venda_abertos",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/pedidos-venda-abertos"
-        ],
-        "operationIdMarkers": [
-          "list_pedidos",
-          "list"
+        "operationIds": [
+          "list_pedidos_venda_abertos"
         ],
         "method": "GET"
       },
@@ -10276,12 +8710,8 @@
       "operationId": "list_pending_scheduling_bookings",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/bookings/pending"
-        ],
-        "operationIdMarkers": [
-          "list_pending",
-          "list"
+        "operationIds": [
+          "list_pending_scheduling_bookings"
         ],
         "method": "GET"
       },
@@ -10307,12 +8737,8 @@
       "operationId": "list_planejamento_orcamentario_admin_budget_responsibilities",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/admin/budget-responsibilities"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_admin_budget_responsibilities"
         ],
         "method": "GET"
       },
@@ -10337,12 +8763,8 @@
       "operationId": "list_planejamento_orcamentario_admin_capex_categories",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/capex/categories"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_admin_capex_categories"
         ],
         "method": "GET"
       },
@@ -10367,12 +8789,8 @@
       "operationId": "list_planejamento_orcamentario_admin_documents",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/guidance/documents"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_admin_documents"
         ],
         "method": "GET"
       },
@@ -10397,12 +8815,8 @@
       "operationId": "list_planejamento_orcamentario_admin_exercises",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/admin/exercises"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_admin_exercises"
         ],
         "method": "GET"
       },
@@ -10427,12 +8841,8 @@
       "operationId": "list_planejamento_orcamentario_admin_scopes",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/admin/scopes"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_admin_scopes"
         ],
         "method": "GET"
       },
@@ -10457,12 +8867,8 @@
       "operationId": "list_planejamento_orcamentario_capex_categories",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/capex/categories"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_categories"
         ],
         "method": "GET"
       },
@@ -10487,12 +8893,8 @@
       "operationId": "list_planejamento_orcamentario_capex_consolidation_by_area",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/consolidation/by-area"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_consolidation_by_area"
         ],
         "method": "GET"
       },
@@ -10517,12 +8919,8 @@
       "operationId": "list_planejamento_orcamentario_capex_consolidation_by_category",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/consolidation/by-category"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_consolidation_by_category"
         ],
         "method": "GET"
       },
@@ -10547,12 +8945,8 @@
       "operationId": "list_planejamento_orcamentario_capex_consolidation_by_cost_center",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/consolidation/by-cost-center"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_consolidation_by_cost_center"
         ],
         "method": "GET"
       },
@@ -10577,12 +8971,8 @@
       "operationId": "list_planejamento_orcamentario_capex_consolidation_by_month",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/consolidation/by-month"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_consolidation_by_month"
         ],
         "method": "GET"
       },
@@ -10607,12 +8997,8 @@
       "operationId": "list_planejamento_orcamentario_capex_consolidation_by_origin",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/consolidation/by-origin"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_consolidation_by_origin"
         ],
         "method": "GET"
       },
@@ -10637,12 +9023,8 @@
       "operationId": "list_planejamento_orcamentario_capex_consolidation_by_plan_status",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/consolidation/by-plan-status"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_consolidation_by_plan_status"
         ],
         "method": "GET"
       },
@@ -10667,12 +9049,8 @@
       "operationId": "list_planejamento_orcamentario_capex_consolidation_by_priority",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/consolidation/by-priority"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_consolidation_by_priority"
         ],
         "method": "GET"
       },
@@ -10697,12 +9075,8 @@
       "operationId": "list_planejamento_orcamentario_capex_consolidation_by_unit",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/consolidation/by-unit"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_consolidation_by_unit"
         ],
         "method": "GET"
       },
@@ -10727,12 +9101,8 @@
       "operationId": "list_planejamento_orcamentario_capex_consolidation_details",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/consolidation/details"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_consolidation_details"
         ],
         "method": "GET"
       },
@@ -10757,12 +9127,8 @@
       "operationId": "list_planejamento_orcamentario_capex_investment_attachments",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/investments/attachments"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_investment_attachments"
         ],
         "method": "GET"
       },
@@ -10787,12 +9153,8 @@
       "operationId": "list_planejamento_orcamentario_capex_investments",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/capex/investments"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_investments"
         ],
         "method": "GET"
       },
@@ -10817,12 +9179,8 @@
       "operationId": "list_planejamento_orcamentario_capex_my_responsibilities",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/capex/my-responsibilities"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_my_responsibilities"
         ],
         "method": "GET"
       },
@@ -10847,12 +9205,8 @@
       "operationId": "list_planejamento_orcamentario_capex_plan_history",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/plans/history"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_plan_history"
         ],
         "method": "GET"
       },
@@ -10877,12 +9231,8 @@
       "operationId": "list_planejamento_orcamentario_capex_plans",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/capex/plans"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_plans"
         ],
         "method": "GET"
       },
@@ -10907,12 +9257,8 @@
       "operationId": "list_planejamento_orcamentario_capex_review_queue",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/capex/review-queue"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_capex_review_queue"
         ],
         "method": "GET"
       },
@@ -10937,12 +9283,8 @@
       "operationId": "list_planejamento_orcamentario_guidance_documents",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/current/documents"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_guidance_documents"
         ],
         "method": "GET"
       },
@@ -10967,12 +9309,8 @@
       "operationId": "list_planejamento_orcamentario_org_erp_cost_centers",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/org/erp-cost-centers"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_org_erp_cost_centers"
         ],
         "method": "GET"
       },
@@ -10997,12 +9335,8 @@
       "operationId": "list_planejamento_orcamentario_personnel_plan_history",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/plans/history"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_personnel_plan_history"
         ],
         "method": "GET"
       },
@@ -11027,12 +9361,8 @@
       "operationId": "list_planejamento_orcamentario_personnel_plans",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/personnel/plans"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_personnel_plans"
         ],
         "method": "GET"
       },
@@ -11057,12 +9387,8 @@
       "operationId": "list_planejamento_orcamentario_personnel_review_queue",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/personnel/review-queue"
-        ],
-        "operationIdMarkers": [
-          "list_planejamento",
-          "list"
+        "operationIds": [
+          "list_planejamento_orcamentario_personnel_review_queue"
         ],
         "method": "GET"
       },
@@ -11087,12 +9413,8 @@
       "operationId": "list_ppm_external",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/ppm/external"
-        ],
-        "operationIdMarkers": [
-          "list_ppm",
-          "list"
+        "operationIds": [
+          "list_ppm_external"
         ],
         "method": "GET"
       },
@@ -11118,12 +9440,8 @@
       "operationId": "list_ppm_internal",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/ppm/internal"
-        ],
-        "operationIdMarkers": [
-          "list_ppm",
-          "list"
+        "operationIds": [
+          "list_ppm_internal"
         ],
         "method": "GET"
       },
@@ -11149,12 +9467,8 @@
       "operationId": "list_product_drawings",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/products/drawings"
-        ],
-        "operationIdMarkers": [
-          "list_product",
-          "list"
+        "operationIds": [
+          "list_product_drawings"
         ],
         "method": "GET"
       },
@@ -11179,12 +9493,8 @@
       "operationId": "list_production_appointment_work_centers",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/appointments/work-centers"
-        ],
-        "operationIdMarkers": [
-          "list_production",
-          "list"
+        "operationIds": [
+          "list_production_appointment_work_centers"
         ],
         "method": "GET"
       },
@@ -11209,12 +9519,8 @@
       "operationId": "list_production_appointments",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/production/appointments"
-        ],
-        "operationIdMarkers": [
-          "list_production",
-          "list"
+        "operationIds": [
+          "list_production_appointments"
         ],
         "method": "GET"
       },
@@ -11239,12 +9545,8 @@
       "operationId": "list_production_appointments_by_op",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/appointments/by-op"
-        ],
-        "operationIdMarkers": [
-          "list_production",
-          "list"
+        "operationIds": [
+          "list_production_appointments_by_op"
         ],
         "method": "GET"
       },
@@ -11269,12 +9571,8 @@
       "operationId": "list_production_appointments_child_ops",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/appointments/child-ops"
-        ],
-        "operationIdMarkers": [
-          "list_production",
-          "list"
+        "operationIds": [
+          "list_production_appointments_child_ops"
         ],
         "method": "GET"
       },
@@ -11299,12 +9597,8 @@
       "operationId": "list_production_machine_program_top_intermediates",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/machine-programs/top-intermediates"
-        ],
-        "operationIdMarkers": [
-          "list_production",
-          "list"
+        "operationIds": [
+          "list_production_machine_program_top_intermediates"
         ],
         "method": "GET"
       },
@@ -11329,12 +9623,8 @@
       "operationId": "list_propostas_comerciais",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/propostas-comerciais"
-        ],
-        "operationIdMarkers": [
-          "list_propostas",
-          "list"
+        "operationIds": [
+          "list_propostas_comerciais"
         ],
         "method": "GET"
       },
@@ -11359,12 +9649,8 @@
       "operationId": "list_public_mural_acessos_menu",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/mural-acessos/menu"
-        ],
-        "operationIdMarkers": [
-          "list_public",
-          "list"
+        "operationIds": [
+          "list_public_mural_acessos_menu"
         ],
         "method": "GET"
       },
@@ -11389,12 +9675,8 @@
       "operationId": "list_public_mural_acessos_menu_by_token",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/mural-acessos/menu"
-        ],
-        "operationIdMarkers": [
-          "list_public",
-          "list"
+        "operationIds": [
+          "list_public_mural_acessos_menu_by_token"
         ],
         "method": "GET"
       },
@@ -11419,12 +9701,8 @@
       "operationId": "list_quality_action_plan_assignable_users",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/action-plans/assignable-users"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_action_plan_assignable_users"
         ],
         "method": "GET"
       },
@@ -11450,12 +9728,8 @@
       "operationId": "list_quality_action_plan_audit_log",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/action-plans/audit-log"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_action_plan_audit_log"
         ],
         "method": "GET"
       },
@@ -11481,12 +9755,8 @@
       "operationId": "list_quality_action_plan_evidences",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/action-plans/evidences"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_action_plan_evidences"
         ],
         "method": "GET"
       },
@@ -11512,12 +9782,8 @@
       "operationId": "list_quality_action_plan_export_templates",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/action-plans/export-templates"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_action_plan_export_templates"
         ],
         "method": "GET"
       },
@@ -11543,12 +9809,8 @@
       "operationId": "list_quality_action_plan_my_queue",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/action-plans/my-queue"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_action_plan_my_queue"
         ],
         "method": "GET"
       },
@@ -11574,12 +9836,8 @@
       "operationId": "list_quality_action_plan_pending_effectiveness_reviews",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/effectiveness-review/pending"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_action_plan_pending_effectiveness_reviews"
         ],
         "method": "GET"
       },
@@ -11605,12 +9863,8 @@
       "operationId": "list_quality_action_plan_revisions",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/action-plans/revisions"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_action_plan_revisions"
         ],
         "method": "GET"
       },
@@ -11636,12 +9890,8 @@
       "operationId": "list_quality_action_plans",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality/action-plans"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_action_plans"
         ],
         "method": "GET"
       },
@@ -11667,12 +9917,8 @@
       "operationId": "list_quality_action_plans_overdue",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/action-plans/overdue"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_action_plans_overdue"
         ],
         "method": "GET"
       },
@@ -11698,12 +9944,8 @@
       "operationId": "list_quality_action_plans_recurrence",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/action-plans/recurrence"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_action_plans_recurrence"
         ],
         "method": "GET"
       },
@@ -11729,12 +9971,8 @@
       "operationId": "list_quality_branches",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality/branches"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_branches"
         ],
         "method": "GET"
       },
@@ -11759,12 +9997,8 @@
       "operationId": "list_quality_label_audit_events",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/labels/audit-events"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_label_audit_events"
         ],
         "method": "GET"
       },
@@ -11790,12 +10024,8 @@
       "operationId": "list_quality_label_checklist_template",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/labels/checklist-template"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_label_checklist_template"
         ],
         "method": "GET"
       },
@@ -11821,12 +10051,8 @@
       "operationId": "list_quality_labels",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality/labels"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_labels"
         ],
         "method": "GET"
       },
@@ -11852,12 +10078,8 @@
       "operationId": "list_quality_solution_patterns",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/quality/solution-patterns"
-        ],
-        "operationIdMarkers": [
-          "list_quality",
-          "list"
+        "operationIds": [
+          "list_quality_solution_patterns"
         ],
         "method": "GET"
       },
@@ -11883,12 +10105,8 @@
       "operationId": "list_report_definitions",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/reports/definitions"
-        ],
-        "operationIdMarkers": [
-          "list_report",
-          "list"
+        "operationIds": [
+          "list_report_definitions"
         ],
         "method": "GET"
       },
@@ -11914,12 +10132,8 @@
       "operationId": "list_report_providers",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/reports/providers"
-        ],
-        "operationIdMarkers": [
-          "list_report",
-          "list"
+        "operationIds": [
+          "list_report_providers"
         ],
         "method": "GET"
       },
@@ -11945,12 +10159,8 @@
       "operationId": "list_report_recipients",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/definitions/recipients"
-        ],
-        "operationIdMarkers": [
-          "list_report",
-          "list"
+        "operationIds": [
+          "list_report_recipients"
         ],
         "method": "GET"
       },
@@ -11976,12 +10186,8 @@
       "operationId": "list_report_runs",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/reports/runs"
-        ],
-        "operationIdMarkers": [
-          "list_report",
-          "list"
+        "operationIds": [
+          "list_report_runs"
         ],
         "method": "GET"
       },
@@ -12007,12 +10213,8 @@
       "operationId": "list_report_shortage_item_notes",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/definitions/item-notes"
-        ],
-        "operationIdMarkers": [
-          "list_report",
-          "list"
+        "operationIds": [
+          "list_report_shortage_item_notes"
         ],
         "method": "GET"
       },
@@ -12038,12 +10240,8 @@
       "operationId": "list_request_lookup_open_sales_orders",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/request-lookups/open-sales-orders"
-        ],
-        "operationIdMarkers": [
-          "list_request",
-          "list"
+        "operationIds": [
+          "list_request_lookup_open_sales_orders"
         ],
         "method": "GET"
       },
@@ -12068,12 +10266,8 @@
       "operationId": "list_scheduling_bookings",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/scheduling/bookings"
-        ],
-        "operationIdMarkers": [
-          "list_scheduling",
-          "list"
+        "operationIds": [
+          "list_scheduling_bookings"
         ],
         "method": "GET"
       },
@@ -12099,12 +10293,8 @@
       "operationId": "list_scheduling_resources",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/scheduling/resources"
-        ],
-        "operationIdMarkers": [
-          "list_scheduling",
-          "list"
+        "operationIds": [
+          "list_scheduling_resources"
         ],
         "method": "GET"
       },
@@ -12130,12 +10320,8 @@
       "operationId": "list_seller_portfolios",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/pedidos-venda-abertos/sellers"
-        ],
-        "operationIdMarkers": [
-          "list_seller",
-          "list"
+        "operationIds": [
+          "list_seller_portfolios"
         ],
         "method": "GET"
       },
@@ -12160,12 +10346,8 @@
       "operationId": "list_supplies_purchase_request_lines",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/purchase-requests/lines"
-        ],
-        "operationIdMarkers": [
-          "list_supplies",
-          "list"
+        "operationIds": [
+          "list_supplies_purchase_request_lines"
         ],
         "method": "GET"
       },
@@ -12190,12 +10372,8 @@
       "operationId": "list_supplies_purchase_request_recent_linked_orders",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/purchase-requests/recent-linked-orders"
-        ],
-        "operationIdMarkers": [
-          "list_supplies",
-          "list"
+        "operationIds": [
+          "list_supplies_purchase_request_recent_linked_orders"
         ],
         "method": "GET"
       },
@@ -12220,12 +10398,8 @@
       "operationId": "list_supplies_purchase_request_recent_linked_receipts",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/purchase-requests/recent-linked-receipts"
-        ],
-        "operationIdMarkers": [
-          "list_supplies",
-          "list"
+        "operationIds": [
+          "list_supplies_purchase_request_recent_linked_receipts"
         ],
         "method": "GET"
       },
@@ -12250,13 +10424,8 @@
       "operationId": "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/purchase-requests/requesters"
-        ],
-        "operationIdMarkers": [
-          "list_supplies_purchase_request_requesters",
-          "list_supplies",
-          "list"
+        "operationIds": [
+          "list_supplies_purchase_request_requesters_route_supplies_purchase_requests_requesters_get"
         ],
         "method": "GET"
       },
@@ -12281,12 +10450,8 @@
       "operationId": "list_totvs_outbound_invoices",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/pedidos-venda-abertos/totvs-outbound-invoices"
-        ],
-        "operationIdMarkers": [
-          "list_totvs",
-          "list"
+        "operationIds": [
+          "list_totvs_outbound_invoices"
         ],
         "method": "GET"
       },
@@ -12311,12 +10476,8 @@
       "operationId": "list_totvs_recently_closed_orders",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/pedidos-venda-abertos/totvs-recently-closed-orders"
-        ],
-        "operationIdMarkers": [
-          "list_totvs",
-          "list"
+        "operationIds": [
+          "list_totvs_recently_closed_orders"
         ],
         "method": "GET"
       },
@@ -12341,12 +10502,8 @@
       "operationId": "lookup_quality_label_op",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/labels/lookup-op"
-        ],
-        "operationIdMarkers": [
-          "lookup_quality",
-          "lookup"
+        "operationIds": [
+          "lookup_quality_label_op"
         ],
         "method": "GET"
       },
@@ -12372,12 +10529,8 @@
       "operationId": "preview_report_provider_management_revenue_monthly",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/management_revenue_monthly/preview"
-        ],
-        "operationIdMarkers": [
-          "preview_report",
-          "preview"
+        "operationIds": [
+          "preview_report_provider_management_revenue_monthly"
         ],
         "method": "GET"
       },
@@ -12403,12 +10556,8 @@
       "operationId": "preview_report_provider_safety_stock_shortage_30d",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/safety_stock_shortage_30d/preview"
-        ],
-        "operationIdMarkers": [
-          "preview_report",
-          "preview"
+        "operationIds": [
+          "preview_report_provider_safety_stock_shortage_30d"
         ],
         "method": "GET"
       },
@@ -12434,12 +10583,8 @@
       "operationId": "search_active_customers_for_portfolio",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/customers/search"
-        ],
-        "operationIdMarkers": [
-          "search_active",
-          "search"
+        "operationIds": [
+          "search_active_customers_for_portfolio"
         ],
         "method": "GET"
       },
@@ -12464,12 +10609,8 @@
       "operationId": "search_customers",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/customers/search"
-        ],
-        "operationIdMarkers": [
-          "search_customers",
-          "search"
+        "operationIds": [
+          "search_customers"
         ],
         "method": "GET"
       },
@@ -12488,108 +10629,14 @@
       }
     },
     {
-      "id": "autoTierCSearchInvoiceIssuanceCarriers",
-      "domain": "autoTierC",
-      "autoGenerated": true,
-      "operationId": "search_invoice_issuance_carriers",
-      "priority": 1,
-      "route": {
-        "pathMarkers": [
-          "/invoice-issuance/carriers"
-        ],
-        "operationIdMarkers": [
-          "search_invoice",
-          "search"
-        ],
-        "method": "GET"
-      },
-      "parameters": {
-        "strategy": "none"
-      },
-      "presentation": {
-        "reasonKey": "genericSemanticFallback"
-      },
-      "openapi": {
-        "tier": "C",
-        "entity": null,
-        "tags": [
-          "Invoice issuance"
-        ]
-      }
-    },
-    {
-      "id": "autoTierCSearchInvoiceIssuanceParties",
-      "domain": "autoTierC",
-      "autoGenerated": true,
-      "operationId": "search_invoice_issuance_parties",
-      "priority": 1,
-      "route": {
-        "pathMarkers": [
-          "/invoice-issuance/parties"
-        ],
-        "operationIdMarkers": [
-          "search_invoice",
-          "search"
-        ],
-        "method": "GET"
-      },
-      "parameters": {
-        "strategy": "none"
-      },
-      "presentation": {
-        "reasonKey": "genericSemanticFallback"
-      },
-      "openapi": {
-        "tier": "C",
-        "entity": null,
-        "tags": [
-          "Invoice issuance"
-        ]
-      }
-    },
-    {
-      "id": "autoTierCSearchInvoiceIssuanceProducts",
-      "domain": "autoTierC",
-      "autoGenerated": true,
-      "operationId": "search_invoice_issuance_products",
-      "priority": 1,
-      "route": {
-        "pathMarkers": [
-          "/invoice-issuance/products"
-        ],
-        "operationIdMarkers": [
-          "search_invoice",
-          "search"
-        ],
-        "method": "GET"
-      },
-      "parameters": {
-        "strategy": "none"
-      },
-      "presentation": {
-        "reasonKey": "genericSemanticFallback"
-      },
-      "openapi": {
-        "tier": "C",
-        "entity": null,
-        "tags": [
-          "Invoice issuance"
-        ]
-      }
-    },
-    {
       "id": "autoTierCSearchLancamentoNotasFiscaisSuppliers",
       "domain": "autoTierC",
       "autoGenerated": true,
       "operationId": "search_lancamento_notas_fiscais_suppliers",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/lancamento-notas-fiscais/suppliers"
-        ],
-        "operationIdMarkers": [
-          "search_lancamento",
-          "search"
+        "operationIds": [
+          "search_lancamento_notas_fiscais_suppliers"
         ],
         "method": "GET"
       },
@@ -12608,18 +10655,40 @@
       }
     },
     {
+      "id": "autoTierCSearchProtheusColumnsInTable",
+      "domain": "autoTierC",
+      "autoGenerated": true,
+      "operationId": "search_protheus_columns_in_table",
+      "priority": 1,
+      "route": {
+        "operationIds": [
+          "search_protheus_columns_in_table"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "system_metadata"
+      },
+      "presentation": {
+        "reasonKey": "genericSemanticFallback"
+      },
+      "openapi": {
+        "tier": "C",
+        "entity": null,
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    {
       "id": "autoTierCSearchQualityActionPlanEvidences",
       "domain": "autoTierC",
       "autoGenerated": true,
       "operationId": "search_quality_action_plan_evidences",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/evidences/search"
-        ],
-        "operationIdMarkers": [
-          "search_quality",
-          "search"
+        "operationIds": [
+          "search_quality_action_plan_evidences"
         ],
         "method": "GET"
       },
@@ -12645,12 +10714,8 @@
       "operationId": "search_quality_label_ops",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/labels/search-ops"
-        ],
-        "operationIdMarkers": [
-          "search_quality",
-          "search"
+        "operationIds": [
+          "search_quality_label_ops"
         ],
         "method": "GET"
       },
@@ -12676,12 +10741,8 @@
       "operationId": "search_request_lookup_carriers",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/request-lookups/carriers"
-        ],
-        "operationIdMarkers": [
-          "search_request",
-          "search"
+        "operationIds": [
+          "search_request_lookup_carriers"
         ],
         "method": "GET"
       },
@@ -12706,12 +10767,8 @@
       "operationId": "search_request_lookup_parties",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/request-lookups/parties"
-        ],
-        "operationIdMarkers": [
-          "search_request",
-          "search"
+        "operationIds": [
+          "search_request_lookup_parties"
         ],
         "method": "GET"
       },
@@ -12736,12 +10793,8 @@
       "operationId": "search_request_lookup_products",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/request-lookups/products"
-        ],
-        "operationIdMarkers": [
-          "search_request",
-          "search"
+        "operationIds": [
+          "search_request_lookup_products"
         ],
         "method": "GET"
       },
@@ -12766,12 +10819,8 @@
       "operationId": "summarize_commercial_proposals_by_collaborator",
       "priority": 1,
       "route": {
-        "pathMarkers": [
-          "/proposals/collaborator-summary"
-        ],
-        "operationIdMarkers": [
-          "summarize_commercial",
-          "summarize"
+        "operationIds": [
+          "summarize_commercial_proposals_by_collaborator"
         ],
         "method": "GET"
       },

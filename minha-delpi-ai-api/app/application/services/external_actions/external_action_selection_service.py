@@ -299,6 +299,11 @@ class ExternalActionSelectionService:
             return None
 
         route_node = route.get("route") if isinstance(route.get("route"), dict) else {}
+        operation_ids = [
+            str(item).strip().lower()
+            for item in (route_node.get("operationIds") or [])
+            if str(item).strip()
+        ]
         path_markers = [
             str(item).strip().lower()
             for item in (route_node.get("pathMarkers") or [])
@@ -323,6 +328,9 @@ class ExternalActionSelectionService:
                 continue
             path = str(action.get("path") or "").lower()
             operation_id = str(action.get("operationId") or "").lower()
+            if operation_ids and operation_id in operation_ids:
+                matched_ids.append(action_id)
+                continue
             if path_suffix and path_suffix in path:
                 matched_ids.append(action_id)
                 continue

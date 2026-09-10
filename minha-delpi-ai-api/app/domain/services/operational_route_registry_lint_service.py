@@ -696,11 +696,15 @@ class OperationalRouteRegistryLintService:
                 report.add_error(f"autoTierCRoutes.{route_id}: route ausente")
                 continue
 
-            markers = route_spec.get("operationIdMarkers") or route_spec.get("pathMarkers")
+            markers = (
+                route_spec.get("operationIds")
+                or route_spec.get("operationIdMarkers")
+                or route_spec.get("pathMarkers")
+            )
 
             if not markers:
                 report.add_error(
-                    f"autoTierCRoutes.{route_id}: route sem operationIdMarkers/pathMarkers"
+                    f"autoTierCRoutes.{route_id}: route sem operationIds/operationIdMarkers/pathMarkers"
                 )
 
             parameters = route.get("parameters") or {}

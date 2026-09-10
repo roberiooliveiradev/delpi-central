@@ -58,6 +58,35 @@ class ExternalActionProductRouteCatalogService:
     def __init__(self, repository) -> None:
         self.repository = repository
 
+    def find_allowed_actions_by_operation_ids(
+        self,
+        *,
+        operation_ids: list[str],
+        allowed_action_ids: list[str],
+        method: str = "GET",
+    ) -> list[dict]:
+        """Resolve actions por operationId canônico (E9.S12.C) — match exato."""
+        allowed = {str(item) for item in allowed_action_ids if str(item).strip()}
+        wanted = {str(item).strip().lower() for item in operation_ids if str(item).strip()}
+
+        if not allowed or not wanted:
+            return []
+
+        list_actions = getattr(self.repository, "list_actions", None)
+        if not callable(list_actions):
+            return []
+
+        matches: list[dict] = []
+        for action in list_actions():
+            if str(action.get("actionId") or "") not in allowed:
+                continue
+            if str(action.get("method") or "").upper() != method.upper():
+                continue
+            operation_id = str(action.get("operationId") or "").lower()
+            if operation_id in wanted:
+                matches.append(action)
+        return matches
+
     def find_allowed_actions_by_markers(
         self,
         *,
