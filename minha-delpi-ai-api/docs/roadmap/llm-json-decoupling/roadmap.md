@@ -145,8 +145,7 @@ Plano 06 S1–S6: recommendations contextuais + composer budget-safe; `recommend
 
 ### Onda G — apresentação e conteúdo residual — **PRONTO** (após F)
 
-Executar planos 07/08. Inventário residual de presentation/skills; path→label display já limpo.
-Executar planos 07 e 08. Preservar copy/business rules; retirar somente conhecimento técnico duplicado.
+Executar planos 07/08. Inventário residual de presentation/skills; path→label display já limpo. Preservar copy/business rules; retirar somente conhecimento técnico duplicado.
 
 ### Onda H — cutover e limpeza — **CONTÍNUO**
 
