@@ -23,8 +23,9 @@ import { useDelpiDarkMode } from "@delpi/plugin-ui/index";
 import { Ban, Check, Cpu, FileCode, Link2, MoreHorizontal } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { putDeviceFirmwareLink } from "../api/productionPulseApi";
-import { PpStateBox } from "../app/productionPulseUi";
+import { putDeviceFirmwareLink, type FirmwareUpdateTarget } from "../api/productionPulseApi";
+import { PpOtaProgressBar, PpStateBox } from "../app/productionPulseUi";
+import { OtaStatusIndicator } from "./ota/OtaStatusIndicator";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import {
@@ -36,6 +37,10 @@ import {
   type FirmwareLinkGraphEdge,
   type LinkMode,
 } from "../utils/firmwareLinkGraph";
+import {
+  resolveOtaProgressMode,
+  resolveOtaProgressPercent,
+} from "../utils/otaStatusLabels";
 
 /** Show MiniMap only when the graph is large enough to need overview. */
 export const ADMIN_HUB_MINIMAP_NODE_THRESHOLD = 8;
@@ -79,6 +84,7 @@ type DeviceNodeData = {
   counterShift?: number | null;
   installedFirmwareVersion?: string | null;
   availableVersion?: string | null;
+  otaTarget?: FirmwareUpdateTarget | null;
   canManage: boolean;
   onOpenMenu?: (payload: { deviceId: string; nodeId: string }) => void;
   onSelect?: (payload: { deviceId: string; nodeId: string }) => void;
@@ -214,6 +220,20 @@ function DeviceNodeView({ id, data }: NodeProps<Node<DeviceNodeData>>) {
       : state === "already-linked"
         ? `${data.label} — ${PP_HELP.hub.linkAlreadyAssigned}`
         : data.label;
+  const ota = data.otaTarget;
+  const otaPct = ota
+    ? resolveOtaProgressPercent({
+        status: ota.status,
+        progressPercent: ota.progressPercent,
+      })
+    : null;
+  const showOtaBar =
+    Boolean(ota) &&
+    resolveOtaProgressMode({
+      status: ota?.status,
+      progressPercent: ota?.progressPercent,
+    }) === "determinate" &&
+    otaPct != null;
 
   return (
     <div
@@ -266,6 +286,24 @@ function DeviceNodeView({ id, data }: NodeProps<Node<DeviceNodeData>>) {
           {outdated ? " · desatul." : ""}
         </div>
       </div>
+      {ota ? (
+        <div className="pp-map-node__ota nodrag nopan">
+          <OtaStatusIndicator
+            status={ota.status}
+            errorCode={ota.errorCode}
+            deviceOnline={data.status === "online"}
+            progressPercent={ota.progressPercent}
+            density="compact"
+          />
+          {showOtaBar ? (
+            <PpOtaProgressBar
+              value={otaPct!}
+              label="OTA"
+              ariaLabel={`Download OTA ${otaPct}%`}
+            />
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

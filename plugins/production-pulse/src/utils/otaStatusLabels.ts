@@ -2,6 +2,8 @@ import { PP_HELP } from "../content/helpTooltips";
 
 const ACTIVE = new Set(["pending", "authorized", "downloading", "applying"]);
 
+export type OtaProgressMode = "none" | "determinate" | "indeterminate";
+
 export function otaStatusLabel(status: string | null | undefined): string {
   const key = (status || "").trim().toLowerCase();
   const map = PP_HELP.ota.status as Record<string, string>;
@@ -19,16 +21,22 @@ export function isOtaStatusActive(status: string | null | undefined): boolean {
   return ACTIVE.has((status || "").trim().toLowerCase());
 }
 
+export function isOtaStatusTerminal(status: string | null | undefined): boolean {
+  const key = (status || "").trim().toLowerCase();
+  return key === "updated" || key === "failed" || key === "cancelled" || key === "skipped";
+}
+
 /**
  * Prefer device-reported percent while downloading.
- * authorized/pending wait for the chip — no fake download %.
+ * authorized/pending wait for the device — no fake download %.
+ * applying is indeterminate (no synthetic 95%).
  */
 export function resolveOtaProgressPercent(input: {
   status?: string | null;
   progressPercent?: number | null;
 }): number | null {
   const status = (input.status || "").trim().toLowerCase();
-  if (status === "pending" || status === "authorized") {
+  if (status === "pending" || status === "authorized" || status === "applying") {
     return null;
   }
   if (
@@ -43,8 +51,6 @@ export function resolveOtaProgressPercent(input: {
       return typeof input.progressPercent === "number" && Number.isFinite(input.progressPercent)
         ? Math.min(100, Math.max(0, Math.round(input.progressPercent)))
         : null;
-    case "applying":
-      return 95;
     case "updated":
       return 100;
     case "failed":
@@ -58,21 +64,44 @@ export function resolveOtaProgressPercent(input: {
   }
 }
 
-/** Display helper: awaiting chip | real percent | em dash. */
+export function resolveOtaProgressMode(input: {
+  status?: string | null;
+  progressPercent?: number | null;
+}): OtaProgressMode {
+  const status = (input.status || "").trim().toLowerCase();
+  if (status === "applying") return "indeterminate";
+  if (status === "downloading") {
+    const pct = resolveOtaProgressPercent(input);
+    return pct != null ? "determinate" : "indeterminate";
+  }
+  return "none";
+}
+
+/** Display helper: awaiting device | real percent | em dash (no fake applying %). */
 export function formatOtaProgressDisplay(input: {
   status?: string | null;
   progressPercent?: number | null;
+  deviceOnline?: boolean | null;
 }): string {
   const status = (input.status || "").trim().toLowerCase();
   if (status === "pending" || status === "authorized") {
-    return "Aguardando chip";
+    if (input.deviceOnline === false) {
+      return PP_HELP.ota.phase.awaitingOffline;
+    }
+    return PP_HELP.ota.phase.awaiting;
+  }
+  if (status === "applying") {
+    return PP_HELP.ota.phase.applying;
   }
   const pct = resolveOtaProgressPercent(input);
   if (pct === null) return "—";
   return `${pct}%`;
 }
 
-export function formatOtaBytes(received: number | null | undefined, total: number | null | undefined): string | null {
+export function formatOtaBytes(
+  received: number | null | undefined,
+  total: number | null | undefined,
+): string | null {
   if (typeof received !== "number" || typeof total !== "number" || total <= 0) {
     return null;
   }

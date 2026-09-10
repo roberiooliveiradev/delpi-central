@@ -366,3 +366,110 @@ def test_progress_report_updates_updated_at(client, unique_ip, firmware_storage_
     if updated_at.tzinfo is None:
         updated_at = updated_at.replace(tzinfo=timezone.utc)
     assert updated_at > old
+
+
+def _get_target_updated_at(target_id: str) -> datetime:
+    from production_pulse_app.infrastructure.persistence.plugins_postgres_connection import (
+        plugins_connection,
+    )
+
+    with plugins_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT updated_at
+                FROM production_pulse.firmware_update_targets
+                WHERE id = %s
+                """,
+                (target_id,),
+            )
+            row = cur.fetchone()
+    updated_at = row["updated_at"]
+    if updated_at.tzinfo is None:
+        updated_at = updated_at.replace(tzinfo=timezone.utc)
+    return updated_at
+
+
+def test_ota_check_does_not_renew_stale_lease(client, unique_ip, firmware_storage_dir):
+    """Issuing artifact_token on check must not bump updated_at (lease)."""
+    from production_pulse_app.application.services.firmware_update_job_service import (
+        FirmwareUpdateJobService,
+    )
+
+    token = "lease-check-tok"
+    device = _create_device(client, ip=unique_ip, token=token, code="LEASECHK01")
+    device_id = device["id"]
+    firmware_id = _publish_firmware(client, version="5.8.0", payload=b"k" * 40)
+    job_id, target_id = _create_manual_job(client, firmware_id=firmware_id, device_id=device_id)
+
+    old = datetime.now(timezone.utc) - timedelta(hours=2)
+    _set_target_updated_at(target_id, old)
+
+    check = client.get(
+        "/device-ota/check",
+        params={"controllerCode": "LEASECHK01", "branch": "01"},
+        headers={"X-Device-Token": token},
+    )
+    assert check.status_code == 200, check.text
+    assert check.json()["data"]["updateAvailable"] is True
+    assert check.json()["data"].get("artifactToken")
+
+    # Sibling: second check still must not renew lease.
+    check2 = client.get(
+        "/device-ota/check",
+        params={"controllerCode": "LEASECHK01", "branch": "01"},
+        headers={"X-Device-Token": token},
+    )
+    assert check2.status_code == 200, check2.text
+
+    updated_at = _get_target_updated_at(target_id)
+    assert updated_at == old or abs((updated_at - old).total_seconds()) < 1
+
+    failed = FirmwareUpdateJobService().fail_stale_open_targets(stale_seconds=3600)
+    assert failed >= 1
+    targets = client.get(f"/firmware-update-jobs/{job_id}/targets")
+    item = next(t for t in targets.json()["data"]["items"] if t["id"] == target_id)
+    assert item["status"] == "failed"
+    assert item["errorCode"] == "ota_target_stale"
+
+
+def test_ota_check_still_writes_token_without_touching_lease(
+    client, unique_ip, firmware_storage_dir
+):
+    token = "lease-token-tok"
+    device = _create_device(client, ip=unique_ip, token=token, code="LEASETKN01")
+    device_id = device["id"]
+    firmware_id = _publish_firmware(client, version="5.8.1", payload=b"l" * 40)
+    _, target_id = _create_manual_job(client, firmware_id=firmware_id, device_id=device_id)
+
+    recent = datetime.now(timezone.utc) - timedelta(minutes=10)
+    _set_target_updated_at(target_id, recent)
+
+    check = client.get(
+        "/device-ota/check",
+        params={"controllerCode": "LEASETKN01", "branch": "01"},
+        headers={"X-Device-Token": token},
+    )
+    assert check.status_code == 200, check.text
+    assert check.json()["data"]["updateAvailable"] is True
+
+    from production_pulse_app.infrastructure.persistence.plugins_postgres_connection import (
+        plugins_connection,
+    )
+
+    with plugins_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT artifact_token IS NOT NULL AS has_token, updated_at
+                FROM production_pulse.firmware_update_targets
+                WHERE id = %s
+                """,
+                (target_id,),
+            )
+            row = cur.fetchone()
+    assert row["has_token"] is True
+    updated_at = row["updated_at"]
+    if updated_at.tzinfo is None:
+        updated_at = updated_at.replace(tzinfo=timezone.utc)
+    assert abs((updated_at - recent).total_seconds()) < 1

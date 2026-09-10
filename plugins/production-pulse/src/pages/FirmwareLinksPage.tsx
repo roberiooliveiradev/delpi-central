@@ -52,13 +52,15 @@ import {
   PpHostContainedDialog,
   PpIconButton,
   PpNativeTextField,
-  PpOtaProgressBar,
   PpSegmentToggle,
   PpStateBox,
   PpWorkbenchDialog,
   useFloatingNotices,
   type DataTableColumn,
 } from "../app/productionPulseUi";
+import { OtaStatusIndicator } from "../components/ota/OtaStatusIndicator";
+import { OtaTargetProgress } from "../components/ota/OtaTargetProgress";
+import { useProductionPulseOtaMonitor } from "../hooks/useProductionPulseOtaMonitor";
 import {
   CircuitBoard,
   Cpu,
@@ -104,7 +106,10 @@ import {
   transitionAdminHub,
   type AdminHubAction,
 } from "../utils/adminHubLayerTransitions";
-import { resolveProductionPulseError } from "../utils/apiErrors";
+import {
+  isOperationalNoticeOnly,
+  resolveProductionPulseError,
+} from "../utils/apiErrors";
 import {
   uniqueFirmwareFamilies,
   type LinkMode,
@@ -115,11 +120,12 @@ import {
   isPublishedFirmware,
 } from "../utils/hubOtaKpis";
 import { replaceProductionPulse } from "../utils/navigation";
+import { otaStatusLabel } from "../utils/otaStatusLabels";
 import {
-  formatOtaBytes,
-  formatOtaProgressDisplay,
-  otaStatusLabel,
-} from "../utils/otaStatusLabels";
+  otaActiveNoticeId,
+  otaJobCreatedNoticeId,
+  pushResolvedProductionPulseNotice,
+} from "../utils/pushResolvedNotice";
 
 type FirmwareLinksPageProps = {
   branch: string;
@@ -173,7 +179,7 @@ export function FirmwareLinksPage({
   const [loading, setLoading] = useState(true);
   const [jobsLoading, setJobsLoading] = useState(false);
   const [driversLoading, setDriversLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [structuralError, setStructuralError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState("");
@@ -238,12 +244,14 @@ export function FirmwareLinksPage({
     [firmwares, devices],
   );
 
-  const kpis = useMemo(
-    () =>
-      loading
-        ? EMPTY_HUB_OTA_KPIS
-        : computeHubOtaKpis({ firmwares, devices, updateSummary }),
-    [devices, firmwares, loading, updateSummary],
+  const kpis = useMemo(() => {
+    if (loading) return EMPTY_HUB_OTA_KPIS;
+    return computeHubOtaKpis({ firmwares, devices, updateSummary });
+  }, [devices, firmwares, loading, updateSummary]);
+
+  const deviceNameById = useMemo(
+    () => new Map(devices.map((device) => [device.id, device.name])),
+    [devices],
   );
 
   const firmwareById = useMemo(
@@ -364,7 +372,7 @@ export function FirmwareLinksPage({
   const reloadGraph = useCallback(async () => {
     dispatch({ type: "graphReloading" });
     setLoading(true);
-    setError(null);
+    setStructuralError(null);
     try {
       const [catalog, devs, summary] = await Promise.all([
         fetchFirmwares({ includeArchived: true }),
@@ -375,7 +383,9 @@ export function FirmwareLinksPage({
       setDevices(devs);
       setUpdateSummary(summary);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar o Admin.");
+      setStructuralError(
+        err instanceof Error ? err.message : "Falha ao carregar o Admin.",
+      );
     } finally {
       setLoading(false);
     }
@@ -389,13 +399,43 @@ export function FirmwareLinksPage({
         setJobs(await fetchFirmwareUpdateJobs(branch));
       } catch (err) {
         if (!soft) {
-          setError(err instanceof Error ? err.message : "Falha ao carregar atualizações OTA.");
+          setStructuralError(
+            err instanceof Error
+              ? err.message
+              : "Falha ao carregar atualizações OTA.",
+          );
         }
       } finally {
         if (!soft) setJobsLoading(false);
       }
     },
     [branch],
+  );
+
+  const softReloadJobs = useCallback(() => {
+    void reloadJobs({ soft: true });
+  }, [reloadJobs]);
+
+  const otaMonitor = useProductionPulseOtaMonitor({
+    jobs,
+    reloadJobs: softReloadJobs,
+    pushNotice,
+    deviceNameById,
+  });
+
+  const hubKpis = useMemo(
+    () => ({
+      ...kpis,
+      updatingDevices:
+        otaMonitor.activeTargetCount > 0
+          ? otaMonitor.activeTargetCount
+          : kpis.updatingDevices,
+      failedDevices:
+        otaMonitor.failedOpenCount > 0
+          ? otaMonitor.failedOpenCount
+          : kpis.failedDevices,
+    }),
+    [kpis, otaMonitor.activeTargetCount, otaMonitor.failedOpenCount],
   );
 
   const reloadDrivers = useCallback(async () => {
@@ -595,13 +635,13 @@ export function FirmwareLinksPage({
       }
 
       const isSingleDevice = deviceIds?.length === 1;
-      if (isSingleDevice) {
-        const deviceId = deviceIds![0];
+      const singleDeviceId = isSingleDevice ? deviceIds![0] : undefined;
+      if (isSingleDevice && singleDeviceId) {
         try {
-          const status = await fetchDeviceFirmwareUpdateStatus(deviceId);
+          const status = await fetchDeviceFirmwareUpdateStatus(singleDeviceId);
           if (status.active) {
             pushNotice({
-              id: `ota-active-${deviceId}`,
+              id: otaActiveNoticeId(singleDeviceId),
               variant: "warning",
               title: PP_HELP.ota.alreadyInProgressTitle,
               message: PP_HELP.ota.alreadyInProgressMessage,
@@ -649,6 +689,7 @@ export function FirmwareLinksPage({
           skippedActive = checks.length - freeIds.length;
           if (freeIds.length === 0) {
             pushNotice({
+              id: "ota-target-active:family",
               variant: "warning",
               title: PP_HELP.ota.alreadyInProgressTitle,
               message: PP_HELP.ota.alreadyInProgressMessage,
@@ -682,6 +723,7 @@ export function FirmwareLinksPage({
         await reloadJobs({ soft: true });
         if (filterDeviceIds?.length) {
           pushNotice({
+            id: otaJobCreatedNoticeId(job.id),
             variant: "success",
             title: PP_HELP.ota.updateStartedTitle,
             message: PP_HELP.ota.updateStartedMessage.replace(
@@ -691,6 +733,7 @@ export function FirmwareLinksPage({
           });
         } else {
           pushNotice({
+            id: otaJobCreatedNoticeId(job.id),
             variant: "success",
             title: PP_HELP.ota.updateStartedTitle,
             message: PP_HELP.ota.deviceJobCreated,
@@ -706,18 +749,21 @@ export function FirmwareLinksPage({
         }
         await openJobDetails(job.id);
       } catch (err) {
-        const resolved = resolveProductionPulseError(err);
-        pushNotice({
-          variant: resolved.variant,
-          title: resolved.title,
-          message: resolved.message,
-          action: resolved.actionLabel
-            ? {
-                label: resolved.actionLabel,
-                onClick: () => openPanel("jobs"),
-              }
-            : undefined,
+        const openTargetExists =
+          err instanceof ProductionPulseRequestError &&
+          err.code === "openTargetExists";
+        const noticeId = openTargetExists
+          ? singleDeviceId
+            ? otaActiveNoticeId(singleDeviceId)
+            : "ota-target-active:family"
+          : undefined;
+        const resolved = pushResolvedProductionPulseNotice(pushNotice, err, {
+          id: noticeId,
+          onAction: () => openPanel("jobs"),
         });
+        if (resolved && !isOperationalNoticeOnly(resolved)) {
+          setStructuralError(resolved.message);
+        }
       } finally {
         setBusy(false);
       }
@@ -1149,22 +1195,53 @@ export function FirmwareLinksPage({
             <code>{row.deviceId.slice(0, 8)}</code>
           ),
       },
-      { key: "status", header: "Status", render: (row) => otaStatusLabel(row.status) },
       {
         key: "progress",
-        header: "Progresso",
+        header: "Atualização",
         render: (row) => {
-          const display = formatOtaProgressDisplay({
-            status: row.status,
-            progressPercent: row.progressPercent,
-          });
-          const bytes = formatOtaBytes(row.bytesReceived, row.bytesTotal);
-          return <span>{bytes ? `${display} · ${bytes}` : display}</span>;
+          const device = devices.find((item) => item.id === row.deviceId);
+          return (
+            <div className="pp-ota-target-row">
+              <OtaTargetProgress
+                status={row.status}
+                errorCode={row.errorCode}
+                deviceOnline={device?.status === "online"}
+                progressPercent={row.progressPercent}
+                bytesReceived={row.bytesReceived}
+                bytesTotal={row.bytesTotal}
+                updatedAt={row.updatedAt}
+              />
+            </div>
+          );
         },
       },
     ],
     [devices],
   );
+
+  const bottomOtaPriority = useMemo(() => {
+    if (otaMonitor.failedOpenCount > 0) {
+      return { status: "failed" as const, count: otaMonitor.failedOpenCount };
+    }
+    if (otaMonitor.applyingCount > 0) {
+      return { status: "applying" as const, count: otaMonitor.applyingCount };
+    }
+    if (otaMonitor.downloadingCount > 0) {
+      return {
+        status: "downloading" as const,
+        count: otaMonitor.downloadingCount,
+      };
+    }
+    if (otaMonitor.awaitingCount > 0) {
+      return { status: "authorized" as const, count: otaMonitor.awaitingCount };
+    }
+    return null;
+  }, [
+    otaMonitor.applyingCount,
+    otaMonitor.awaitingCount,
+    otaMonitor.downloadingCount,
+    otaMonitor.failedOpenCount,
+  ]);
 
   if (!permissions.canViewDevices) {
     return (
@@ -1245,9 +1322,11 @@ export function FirmwareLinksPage({
         />
       </PpHintAction>
       <HubOtaKpiChips
-        kpis={kpis}
+        kpis={hubKpis}
         loading={loading}
         activeJobs={activeJobCount}
+        awaitingCount={otaMonitor.awaitingCount}
+        downloadingCount={otaMonitor.downloadingCount}
         onOpenJobs={() => openPanel("jobs")}
       />
       <HubCanvasLegend linkModeActive={Boolean(linkMode)} />
@@ -1354,7 +1433,25 @@ export function FirmwareLinksPage({
           {devices.length === 1 ? "" : "s"}
         </span>
       </PpHintAction>
-      {activeJobCount > 0 ? (
+      {bottomOtaPriority ? (
+        <PpHintAction hint={PP_HELP.hub.kpiJobsChip} ariaLabel="Ajuda: Atividade OTA">
+          <button
+            type="button"
+            className="pp-admin-bottom-bar__link pp-job-summary"
+            onClick={() => openPanel("jobs")}
+          >
+            <OtaStatusIndicator
+              status={bottomOtaPriority.status}
+              density="compact"
+              meta={
+                bottomOtaPriority.count > 1
+                  ? `${bottomOtaPriority.count} IoTs`
+                  : undefined
+              }
+            />
+          </button>
+        </PpHintAction>
+      ) : activeJobCount > 0 ? (
         <PpHintAction hint={PP_HELP.hub.kpiJobsChip} ariaLabel="Ajuda: Jobs ativos">
           <button type="button" className="pp-admin-bottom-bar__link" onClick={() => openPanel("jobs")}>
             Job●{activeJobCount}
@@ -1389,14 +1486,14 @@ export function FirmwareLinksPage({
   return (
     <div className="pp-admin-hub">
       <PpFloatingNotices items={floatingNotices} onDismiss={dismissNotice} />
-      {error ? (
+      {structuralError ? (
         <div className="pp-admin-hub__notice">
           <PpStateBox
             variant="error"
             title="Erro"
-            message={error}
+            message={structuralError}
             action={
-              <PpActionButton variant="ghost" onClick={() => setError(null)}>
+              <PpActionButton variant="ghost" onClick={() => setStructuralError(null)}>
                 Fechar
               </PpActionButton>
             }
@@ -1415,6 +1512,7 @@ export function FirmwareLinksPage({
             filterQuery={ui.filters.q}
             filterStatus={ui.filters.status}
             linkMode={linkMode}
+            otaByDeviceId={otaMonitor.targetsByDeviceId}
             onLinkModeChange={setLinkMode}
             onRequestLink={onRequestLink}
             onLinked={() => void reloadGraph()}
@@ -1542,6 +1640,11 @@ export function FirmwareLinksPage({
         anchorEl={anchorEl}
         entity={ui.selectedEntity}
         device={selectedDevice}
+        otaTarget={
+          selectedDevice
+            ? otaMonitor.getTargetForDevice(selectedDevice.id)
+            : undefined
+        }
         firmware={selectedFirmware}
         firmwareMeta={
           selectedFamily
@@ -1743,6 +1846,16 @@ export function FirmwareLinksPage({
             search={`?branch=${encodeURIComponent(branch)}`}
             permissions={permissions}
             embedded
+            hubOtaTarget={otaMonitor.getTargetForDevice(ui.selectedEntity.id)}
+            suppressLocalOtaPoll
+            onOperationalNotice={(notice) =>
+              pushNotice({
+                message: notice.message,
+                variant: notice.variant ?? "info",
+                title: notice.title,
+                id: notice.id,
+              })
+            }
             onClose={closeLayers}
           />
         ) : null}
@@ -1797,31 +1910,12 @@ export function FirmwareLinksPage({
         {targets.length === 0 ? (
           <PpStateBox variant="empty" title="Sem targets" />
         ) : (
-          <>
-            {targets.some(
-              (row) =>
-                typeof row.progressPercent === "number" &&
-                Number.isFinite(row.progressPercent),
-            ) ? (
-              <div className="pp-mb-sm">
-                <PpOtaProgressBar
-                  value={Math.round(
-                    targets.reduce(
-                      (sum, row) => sum + (row.progressPercent ?? 0),
-                      0,
-                    ) / Math.max(1, targets.length),
-                  )}
-                  ariaLabel="Progresso médio do job OTA"
-                />
-              </div>
-            ) : null}
-            <PpDataTable
-              columns={targetColumns}
-              rows={targets}
-              rowKey={(row) => row.id}
-              emptyMessage="Sem targets"
-            />
-          </>
+          <PpDataTable
+            columns={targetColumns}
+            rows={targets}
+            rowKey={(row) => row.id}
+            emptyMessage="Sem targets"
+          />
         )}
       </PpDetailDialog>
 

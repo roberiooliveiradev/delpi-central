@@ -262,15 +262,17 @@ export const PP_HELP = {
       "Versão reportada pelo chip e alvo da última atualização. Sketch .ino é independente do OTA.",
     runningVersion: "Versão que o chip está executando agora (telemetria live ou última reportada).",
     downloadProgress: "Percentual real do download do .bin reportado pelo ESP durante a OTA.",
-    awaitingDevice: "Aguardando chip",
+    awaitingDevice: "Aguardando dispositivo",
     awaitingChip:
-      "Autorizado ou pendente: aguardando o chip buscar o artefato — sem percentual fictício.",
+      "Autorizado ou pendente: aguardando o IoT buscar o artefato — sem percentual fictício.",
     progressPhases: "Etapas da atualização: autorizado, baixando, aplicando e concluído.",
     noPublishedFirmware: "Não há firmware publicado para esta família.",
     deviceJobCreated: "Atualização criada. Acompanhe o progresso; o chip aplica no próximo check OTA.",
     deviceJobFailed: "Não foi possível criar a atualização OTA.",
     updateStartedTitle: "Atualização iniciada",
     updateStartedMessage: "A atualização OTA foi enviada para {count} IoT(s).",
+    updateCompletedTitle: "Atualização concluída",
+    updateCompletedMessage: "{name} foi atualizado para a versão {version}.",
     alreadyInProgressTitle: "Atualização já em andamento",
     alreadyInProgressMessage: "Este IoT já possui uma atualização OTA ativa.",
     alreadyInProgressAction: "Ver atualização",
@@ -278,9 +280,34 @@ export const PP_HELP = {
     updateFailedTitle: "Falha na atualização",
     updateInterruptedTitle: "Atualização interrompida",
     updateInterruptedMessage:
-      "O dispositivo deixou de reportar progresso e a atualização foi encerrada.",
+      "O IoT não reportou progresso dentro do tempo esperado. Verifique alimentação, Wi-Fi e conectividade.",
     familyPartialSkipped:
       "{skipped} IoT(s) já tinham OTA ativa e foram ignorados; {started} iniciaram atualização.",
+    lastActivity: "Última atividade",
+    technicalCode: "Código técnico",
+    phase: {
+      awaiting: "Aguardando dispositivo",
+      awaitingOffline: "Aguardando dispositivo · IoT offline",
+      awaitingOfflineHint:
+        "O IoT está offline. A atualização começa quando ele voltar a responder, enquanto a operação permanecer válida.",
+      awaitingHint: "A atualização foi autorizada. Aguardando o IoT buscar o firmware.",
+      downloading: "Baixando firmware",
+      applying: "Aplicando firmware",
+      updated: "Atualizado",
+      failed: "Atualização falhou",
+      interrupted: "Atualização interrompida",
+      cancelled: "Cancelada",
+    },
+    failureMessages: {
+      ota_target_stale:
+        "O IoT não reportou progresso dentro do tempo esperado. Verifique alimentação, Wi-Fi e conectividade com a Minha DELPI.",
+      ota_failed: "A atualização OTA falhou no dispositivo.",
+      flash_error:
+        "O dispositivo baixou o firmware, mas não conseguiu gravá-lo na memória flash.",
+      download:
+        "O IoT não conseguiu concluir o download do arquivo OTA. Verifique Wi-Fi e conectividade de rede.",
+      generic: "Não foi possível concluir a atualização. Consulte o código técnico no detalhe.",
+    },
     status: {
       pending: "Pendente",
       authorized: "Autorizado",
@@ -298,7 +325,7 @@ export const PP_HELP = {
     operation: {
       idle: "Nenhuma atualização em andamento.",
       pending: "Aguardando autorização da campanha.",
-      authorized: "Autorizado — o chip vai buscar o artefato no próximo check.",
+      authorized: "Autorizado — o IoT vai buscar o artefato no próximo check.",
       downloading: "Baixando o firmware para a flash do chip.",
       applying: "Aplicando o binário e reiniciando o controlador.",
       updated: "Atualização concluída com sucesso.",

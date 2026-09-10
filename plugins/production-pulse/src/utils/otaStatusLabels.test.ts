@@ -19,16 +19,27 @@ describe("resolveOtaProgressPercent", () => {
     expect(resolveOtaProgressPercent({ status: "downloading" })).toBeNull();
   });
 
-  it("maps applying and updated phases", () => {
-    expect(resolveOtaProgressPercent({ status: "applying" })).toBe(95);
+  it("maps applying as null (no fake 95) and updated as 100", () => {
+    expect(resolveOtaProgressPercent({ status: "applying" })).toBeNull();
+    expect(resolveOtaProgressPercent({ status: "applying", progressPercent: 95 })).toBeNull();
     expect(resolveOtaProgressPercent({ status: "updated" })).toBe(100);
   });
 });
 
 describe("formatOtaProgressDisplay", () => {
-  it("shows awaiting chip for authorized/pending", () => {
-    expect(formatOtaProgressDisplay({ status: "authorized" })).toBe("Aguardando chip");
-    expect(formatOtaProgressDisplay({ status: "pending" })).toBe("Aguardando chip");
+  it("shows awaiting device for authorized/pending", () => {
+    expect(formatOtaProgressDisplay({ status: "authorized" })).toBe(
+      "Aguardando dispositivo",
+    );
+    expect(formatOtaProgressDisplay({ status: "pending" })).toBe(
+      "Aguardando dispositivo",
+    );
+  });
+
+  it("shows applying label without percent", () => {
+    expect(formatOtaProgressDisplay({ status: "applying" })).toBe(
+      "Aplicando firmware",
+    );
   });
 
   it("shows percent or em dash otherwise", () => {

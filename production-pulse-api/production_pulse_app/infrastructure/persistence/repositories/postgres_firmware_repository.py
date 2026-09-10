@@ -729,8 +729,10 @@ class PostgresFirmwareUpdateJobRepository:
         bytes_total: int | None = None,
         progress_percent: int | None = None,
         clear_progress: bool = False,
+        touch_activity: bool = True,
     ) -> dict[str, Any]:
-        sets = ["updated_at = NOW()"]
+        # Token-only OTA check must not renew the stale lease (touch_activity=False).
+        sets: list[str] = ["updated_at = NOW()"] if touch_activity else []
         params: list[Any] = []
         if status is not None:
             sets.append("status = %s")
@@ -765,6 +767,9 @@ class PostgresFirmwareUpdateJobRepository:
             if progress_percent is not None:
                 sets.append("progress_percent = %s")
                 params.append(max(0, min(100, int(progress_percent))))
+        if not sets:
+            # No-op update still returns current row (e.g. touch_activity=False with no fields).
+            sets.append("id = id")
         params.append(target_id)
         with plugins_connection() as conn:
             with conn.cursor() as cur:

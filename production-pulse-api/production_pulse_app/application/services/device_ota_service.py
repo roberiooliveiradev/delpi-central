@@ -88,6 +88,7 @@ class DeviceOtaService:
             target["id"],
             artifact_token=token,
             artifact_token_expires_at=expires,
+            touch_activity=False,
         )
         return {
             "updateAvailable": True,
