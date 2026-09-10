@@ -1,0 +1,18 @@
+{
+  "hits_total": 88,
+  "by_class": {
+    "CONTRACT_LEGITIMATE": 73,
+    "DISPLAY_LEGACY_KEEP_DEBT": 6,
+    "TEST_ONLY": 7,
+    "ROUTING_OUT_OF_SCOPE": 1,
+    "DISPLAY_LEGACY_REMOVE": 1
+  },
+  "DISPLAY_LEGACY_REMOVE_remaining": 0,
+  "DISPLAY_LEGACY_REMOVE_samples": [
+    {
+      "line": "minha-delpi-ai-api/app/domain/services/chat_assistant_content_service.py:241:        path_key: str = \"titlesByPathFragment\",",
+      "class": "DISPLAY_LEGACY_REMOVE"
+    }
+  ],
+  "note": "pathRules capabilities retained per E5 H-CAP KEEP; presentation_profiles.pathRules = routing out of scope ; title_for_path default path_key cleared in E9"
+}

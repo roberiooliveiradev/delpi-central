@@ -238,10 +238,13 @@ class ChatAssistantContentService:
         bundle: str,
         path: str,
         *,
-        path_key: str = "titlesByPathFragment",
+        path_key: str = "",
         default: str | None = None,
     ) -> str | None:
-        """Primeiro fragmento de path que casar no mapa de títulos (mais específico primeiro)."""
+        """Lookup opcional por mapa de fragmentos (legado removido; retorna default se vazio)."""
+        if not path_key:
+            return default
+
         lowered = str(path or "").lower()
         fragments = cls.get_mapping(bundle, path_key)
 
