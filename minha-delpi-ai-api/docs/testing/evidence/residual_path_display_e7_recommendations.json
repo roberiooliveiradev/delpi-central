@@ -1,0 +1,45 @@
+{
+  "stage": "E7",
+  "status": "CUTOVER_INCOMPLETE",
+  "decision": "KEEP static humanized_data_response.recommendations as LEGACY_FALLBACK; no producer hook this stage",
+  "findings": {
+    "consumer_ready": true,
+    "consumer": "ChatHumanizedDataResponseService._build_recommendations / _build_structured_recommendations",
+    "validator": "RecommendationActionValidator.filter_items — actionId ∈ allowedActions; textual without actionId allowed",
+    "rbac_invariant": "never bypass validator; actionId is never an executor",
+    "producer_structuredRecommendations": false,
+    "ChatDataInsightService": "builds commentary highlights/attention; does not emit structuredRecommendations",
+    "synthesis_services": "chat_operational_llm_synthesis_* / prose delivery have no recommendations JSON field or emitter",
+    "ChatPresentationRecommendationService": "format/view recommendations only — different concept; not domain next-actions",
+    "followUpSuggestions": "sibling UX surface; not synthesis structuredRecommendations — do not conflate"
+  },
+  "delta_llm_calls_hook_assessment": {
+    "feasible_easily": false,
+    "reason": "No existing turn LLM artifact already carries structuredRecommendations; wiring would require synthesis schema/prompt expansion or a new parse path — not delta calls=0 without new contract work",
+    "rejected_shortcuts": [
+      "dedicated LLM call for recommendations",
+      "bypass RecommendationActionValidator",
+      "map followUpSuggestions blindly into actionable recommendations"
+    ]
+  },
+  "LEGACY_FALLBACK": {
+    "owner": "ChatHumanizedDataResponseContentService.list('recommendations', profile_key) + recommendationQueries",
+    "catalog": "minha-delpi-ai-api/app/content/pt-BR/assistant/humanized_data_response.json",
+    "activation": "when commentary lacks structuredRecommendations and recommendations lists"
+  },
+  "prior_gate": "docs/testing/evidence/catalog_display_e7_recommendations_gate.json — consumer/validator already implemented",
+  "generalization_status": {
+    "E7.S2": "PARTIAL — validator covers allowlist negative; domain/profile unknown still served by static LEGACY_FALLBACK",
+    "grounded_actionIds": "only when producer emits and allowlist filters"
+  },
+  "exit_criteria_cutover": [
+    "Existing turn synthesis (or equivalent composition) emits structuredRecommendations with delta LLM calls = 0 vs current turn",
+    "Items pass RecommendationActionValidator against allowedActions",
+    "Unknown domain/profile: textual or empty — no invented unauthorized actionId",
+    "Positive: structured list preferred over static profile list",
+    "Sibling: second profile/domain same path",
+    "Negative: actionId outside allowlist discarded",
+    "Then mark static JSON recommendations as removable LEGACY_FALLBACK and schedule CLEANUP"
+  ],
+  "cleanup": "SKIP until exit_criteria_cutover PASS"
+}
