@@ -37,6 +37,8 @@ def test_resolve_command_error_message_uses_json_catalog():
 
 
 def test_decrement_floors_negative_and_syncs_hardware():
+    from datetime import datetime, timezone
+
     device_id = uuid4()
     devices = MagicMock()
     devices.get_by_id.return_value = {
@@ -47,12 +49,17 @@ def test_decrement_floors_negative_and_syncs_hardware():
     commands = MagicMock()
     commands.insert.return_value = {"id": uuid4()}
     readings = MagicMock()
-    readings.insert.return_value = {"id": 1}
+    readings.insert.return_value = {
+        "id": 1,
+        "recorded_at": datetime(2026, 9, 10, 12, 0, tzinfo=timezone.utc),
+    }
+    rollups = MagicMock()
 
     service = DeviceCommandService(
         device_repository=devices,
         command_repository=commands,
         reading_repository=readings,
+        rollup_service=rollups,
     )
     driver = MagicMock()
     driver.execute.side_effect = [
@@ -75,3 +82,4 @@ def test_decrement_floors_negative_and_syncs_hardware():
     devices.record_poll_success.assert_called_once()
     persisted = devices.record_poll_success.call_args.kwargs["metrics"]
     assert persisted["counter"] == 0
+    rollups.apply_persisted_reading.assert_called_once()

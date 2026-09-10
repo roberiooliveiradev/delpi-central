@@ -75,11 +75,11 @@ plans:
       - id: e3-s1-test-explicit-link-isolation
         status: completed
         requirements: [RQ-09, RQ-19]
-        note: Teste escrito; suite de integração skip sem Postgres nesta sessão
+        note: PASS com Postgres local
       - id: e3-s2-test-ota-job-driver-isolation
         status: completed
         requirements: [RQ-08, RQ-09]
-        note: Teste escrito; suite de integração skip sem Postgres nesta sessão
+        note: PASS com Postgres local
       - id: e3-s3-preserve-device-ota-channel
         status: completed
         requirements: [RQ-07, RQ-08, RQ-09]
@@ -94,7 +94,7 @@ plans:
       - id: e5-s1-api-bff-verify-final
         status: completed
         requirements: [RQ-02, RQ-07, RQ-08, RQ-09, RQ-19, RQ-21]
-        note: Unitários 24 passed (counter+registry); integração DB pendente no ambiente
+        note: "193 passed / 1 skipped (live) em 2026-09-10"
   validation:
     document: ESP32C3-SUPER-MINI-VALIDATION-PLAN.md
     todos:
@@ -105,9 +105,9 @@ plans:
         status: blocked_needs_toolchain
         requirements: [RQ-10, RQ-21]
       - id: e1-s3-run-api-regression
-        status: pending
+        status: completed
         requirements: [RQ-02, RQ-07, RQ-08, RQ-09, RQ-19, RQ-21]
-        note: Rodar pytest completo com Postgres quando disponível
+        note: "193 passed, 1 skipped (live) com PLUGINS_DB em 127.0.0.1:5433; mocks rollup alinhados"
       - id: e2-s1-validate-live-sta-identity
         status: blocked_needs_live
         requirements: [RQ-03, RQ-04, RQ-18]

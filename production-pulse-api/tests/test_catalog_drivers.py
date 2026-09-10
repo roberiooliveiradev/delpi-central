@@ -37,6 +37,14 @@ def test_get_device_includes_capabilities(client, unique_ip):
     device = fetched.json()["data"]
     assert device["capabilities"] == {
         "metrics": ["counter"],
-        "commands": ["increment", "decrement", "reset"],
+        "commands": [
+            "increment",
+            "decrement",
+            "reset",
+            "set",
+            "configure",
+            "reboot",
+            "factory_reset",
+        ],
         "operatorSurface": "counter_pad",
     }

@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -17,7 +18,7 @@ def test_poll_restores_small_drop_without_recent_command():
         "last_error": None,
         "enabled": True,
     }
-    devices.record_poll_success.side_effect = lambda _id, *, metrics: {
+    devices.record_poll_success.side_effect = lambda _id, *, metrics, **_kwargs: {
         "id": device_id,
         "driver_key": "esp8266_counter_v1",
         "last_metrics": metrics,
@@ -29,16 +30,21 @@ def test_poll_restores_small_drop_without_recent_command():
     bindings = MagicMock()
     bindings.get_active.return_value = {"id": 1}
     readings = MagicMock()
-    readings.insert.return_value = {"id": 9, "recorded_at": "2026-09-02T14:00:00+00:00"}
+    readings.insert.return_value = {
+        "id": 9,
+        "recorded_at": datetime(2026, 9, 2, 14, 0, tzinfo=timezone.utc),
+    }
     readings.latest_recorded_at.return_value = None
     commands = MagicMock()
     commands.has_recent_successful_command.return_value = False
+    rollups = MagicMock()
 
     service = DevicePollService(
         device_repository=devices,
         binding_repository=bindings,
         reading_repository=readings,
         command_repository=commands,
+        rollup_service=rollups,
     )
     driver = MagicMock()
     driver.read.return_value = DeviceReading(metrics={"counter": 0})
@@ -59,6 +65,7 @@ def test_poll_restores_small_drop_without_recent_command():
     driver.execute.assert_called_once()
     assert driver.execute.call_args.args[1] == "set"
     assert driver.execute.call_args.kwargs["payload"] == {"counter": 30}
+    rollups.apply_persisted_reading.assert_called_once()
 
 
 def test_poll_accepts_drop_when_recent_decrement_command():
@@ -73,7 +80,7 @@ def test_poll_accepts_drop_when_recent_decrement_command():
         "last_error": None,
         "enabled": True,
     }
-    devices.record_poll_success.side_effect = lambda _id, *, metrics: {
+    devices.record_poll_success.side_effect = lambda _id, *, metrics, **_kwargs: {
         "id": device_id,
         "driver_key": "esp8266_counter_v1",
         "last_metrics": metrics,
@@ -85,16 +92,21 @@ def test_poll_accepts_drop_when_recent_decrement_command():
     bindings = MagicMock()
     bindings.get_active.return_value = {"id": 1}
     readings = MagicMock()
-    readings.insert.return_value = {"id": 10, "recorded_at": "2026-09-02T14:00:00+00:00"}
+    readings.insert.return_value = {
+        "id": 10,
+        "recorded_at": datetime(2026, 9, 2, 14, 0, tzinfo=timezone.utc),
+    }
     readings.latest_recorded_at.return_value = None
     commands = MagicMock()
     commands.has_recent_successful_command.return_value = True
+    rollups = MagicMock()
 
     service = DevicePollService(
         device_repository=devices,
         binding_repository=bindings,
         reading_repository=readings,
         command_repository=commands,
+        rollup_service=rollups,
     )
     driver = MagicMock()
     driver.read.return_value = DeviceReading(metrics={"counter": 29})
@@ -109,3 +121,4 @@ def test_poll_accepts_drop_when_recent_decrement_command():
     assert payload["meta"].get("counter_decrease_accepted") is True
     assert "counter_restored" not in payload["meta"]
     driver.execute.assert_not_called()
+    rollups.apply_persisted_reading.assert_called_once()
