@@ -417,6 +417,7 @@ class OperationalRouteActionResolverService:
                 action,
                 message,
                 previous_messages=previous_messages,
+                strategy=strategy,
             )
 
         if strategy == "product_search":

@@ -7,7 +7,17 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-_CUTOVER_STRATEGIES = frozenset({"none", "semantic", "sale_orders"})
+# Ordem de expansão do cutover (não pular): none/semantic → sale_orders →
+# supplier_part_number → supplies_stock. product_code/date_branch ficam fora.
+_CUTOVER_STRATEGIES = frozenset(
+    {
+        "none",
+        "semantic",
+        "sale_orders",
+        "supplier_part_number",
+        "supplies_stock",
+    }
+)
 
 
 class ParameterStrategyShadowObservabilityService:
@@ -32,10 +42,10 @@ class ParameterStrategyShadowObservabilityService:
 
 
 class ParameterStrategyShadowService:
-    """Shadow + cutover parcial (`none`/`semantic`/`sale_orders`) → `_bind_arguments`.
+    """Shadow + cutover parcial de strategies → `_bind_arguments`.
 
-    Cutover on: authority = OpenAPI binder; observer = strategy legada.
-    Cutover off: authority = strategy; observer = binder (comportamento E1.S5 shadow).
+    Cutover on: authority = OpenAPI binder (+ defaults de paginação/top no wrapper);
+    observer = strategy legada.
     """
 
     @classmethod
@@ -81,18 +91,75 @@ class ParameterStrategyShadowService:
         message: str,
         *,
         previous_messages: list | None = None,
-    ) -> dict[str, Any]:
+        strategy: str | None = None,
+    ) -> dict[str, Any] | None:
         from app.application.services.plan_external_actions_service import (
             PlanExternalActionsService,
         )
 
-        parameters, _body, _missing = PlanExternalActionsService._bind_arguments(
+        parameters, _body, missing = PlanExternalActionsService._bind_arguments(
             message,
             action,
             context_parameters={},
             previous_messages=previous_messages,
         )
-        return dict(parameters) if isinstance(parameters, dict) else {}
+        params = dict(parameters) if isinstance(parameters, dict) else {}
+        params = cls._apply_cutover_schema_defaults(action, params)
+
+        strategy_name = str(strategy or "").strip()
+        if strategy_name == "supplier_part_number":
+            part = str(params.get("supplier_part_number") or params.get("supplierPartNumber") or "").strip()
+            if not part:
+                return None
+        if strategy_name == "supplier_part_number" and missing:
+            # required ainda faltando após bind → mesmo contrato do legado (skip candidate)
+            required_supplier = {
+                name
+                for name in ("supplier_part_number", "supplierPartNumber")
+                if name in missing
+            }
+            if required_supplier:
+                return None
+        return params
+
+    @classmethod
+    def _apply_cutover_schema_defaults(
+        cls,
+        action: dict[str, Any],
+        parameters: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Defaults de page/page_size/top_limit só no wrapper de cutover (não no cold path)."""
+        from app.domain.services.chat_operational_pagination_defaults_service import (
+            ChatOperationalPaginationDefaultsService,
+        )
+
+        schema_params = action.get("parametersSchema") or action.get("parameters_schema") or []
+        if not isinstance(schema_params, list):
+            return parameters
+        schema_names_lower = {
+            str(item.get("name") or "").strip().lower()
+            for item in schema_params
+            if isinstance(item, dict) and item.get("name")
+        }
+        merged = dict(parameters)
+        for parameter in schema_params:
+            if not isinstance(parameter, dict):
+                continue
+            name = str(parameter.get("name") or "").strip()
+            if not name or name in merged:
+                continue
+            lowered = name.lower()
+            if lowered == "page":
+                merged[name] = 1
+            elif lowered in {"page_size", "pagesize"}:
+                merged[name] = ChatOperationalPaginationDefaultsService.standard()
+            elif lowered in {"top_limit", "toplimit"}:
+                merged[name] = ChatOperationalPaginationDefaultsService.supplies_stock_top_limit()
+            elif lowered == "limit" and "top_limit" in schema_names_lower:
+                merged[name] = ChatOperationalPaginationDefaultsService.supplies_stock_top_limit()
+            elif lowered == "limit" and "page_size" not in schema_names_lower:
+                merged[name] = ChatOperationalPaginationDefaultsService.supplies_stock_top_limit()
+        return merged
 
     @classmethod
     def legacy_strategy_parameters(
@@ -116,6 +183,30 @@ class ParameterStrategyShadowService:
                 message,
                 previous_messages=previous_messages,
             )
+        if name == "supplier_part_number":
+            from app.domain.services.chat_operational_identifier_resolution_service import (
+                ChatOperationalIdentifierResolutionService,
+            )
+            from app.domain.services.chat_operational_pagination_defaults_service import (
+                ChatOperationalPaginationDefaultsService,
+            )
+
+            part_number = ChatOperationalIdentifierResolutionService.primary_supplier_part_number(
+                message or ""
+            )
+            if not part_number:
+                return {}
+            return {
+                "supplier_part_number": part_number,
+                "page": 1,
+                "page_size": ChatOperationalPaginationDefaultsService.standard(),
+            }
+        if name == "supplies_stock":
+            from app.domain.services.operational_api_parameter_builder_service import (
+                OperationalApiParameterBuilderService,
+            )
+
+            return OperationalApiParameterBuilderService.build_supplies_stock(action)
         return {}
 
     @classmethod
@@ -139,7 +230,10 @@ class ParameterStrategyShadowService:
                 action,
                 message,
                 previous_messages=previous_messages,
+                strategy=strategy_name,
             )
+            if binder_params is None:
+                binder_params = {}
             strategy_params = cls.legacy_strategy_parameters(
                 strategy=strategy_name,
                 action=action,
@@ -164,13 +258,13 @@ class ParameterStrategyShadowService:
 
         cutover = cls.cutover_enabled()
         if cutover:
-            # Authority = binder; observer = strategy legada.
             authority_params = binder_params
             observer_params = strategy_params
             authority = "openapi_binder"
         else:
-            # Shadow-only: authority = strategy (já aplicada); observer = binder.
-            authority_params = legacy_parameters if legacy_parameters is not None else strategy_params
+            authority_params = (
+                legacy_parameters if legacy_parameters is not None else strategy_params
+            )
             observer_params = binder_params
             authority = "strategy"
 
@@ -183,7 +277,7 @@ class ParameterStrategyShadowService:
         if strategy_name in {"none", "semantic"}:
             agree = agree_exact
         else:
-            agree = agree_compatible if cutover else agree_compatible
+            agree = agree_compatible
 
         shadow = {
             "strategy": strategy_name,

@@ -1,10 +1,16 @@
 # E1.S5 — Parameter strategy shadow + cutover parcial
 
-**Status:** `CUTOVER_PARTIAL` (2026-09-10)  
-**Onda:** B (plano 01)  
-**Authority agora (cutover):** `none`, `semantic`, `sale_orders` → `PlanExternalActionsService._bind_arguments`  
-**Observer (shadow):** builders legados (`{}` / `build_sale_orders`)  
-**Fora do corte:** `product_code`, `date_branch`, `supplies_stock`, `department_idd`, …
+**Status:** `CUTOVER_PARTIAL` expandido (2026-09-10)  
+**Onda:** B (plano 01)
+
+## Ordem executada (sem pular)
+
+1. `none` / `semantic` → binder  
+2. `sale_orders` → binder  
+3. `supplier_part_number` → binder (+ resolução canônica de papel no `_bind_arguments`)  
+4. `supplies_stock` → binder (+ defaults `top_limit`/`limit` no wrapper de cutover)
+
+**Ainda fora:** `product_code`, `date_branch`, `department_idd`, `lmp`, `product_search`, `exclusive_catalog`, `system_metadata`, `sql`
 
 ## Flags
 
@@ -12,25 +18,27 @@
 "parameterStrategyShadow": {
   "enabled": true,
   "cutoverEnabled": true,
-  "strategies": ["none", "semantic", "sale_orders"]
+  "strategies": [
+    "none", "semantic", "sale_orders",
+    "supplier_part_number", "supplies_stock"
+  ]
 }
 ```
-
-- `cutoverEnabled=false` → volta authority para strategy (só shadow vs binder).
 
 ## Aceite
 
 ```text
 CUTOVER_NONE_SEMANTIC = PASS
 CUTOVER_SALE_ORDERS = PASS
+CUTOVER_SUPPLIER_PART_NUMBER = PASS
+CUTOVER_SUPPLIES_STOCK = PASS
 PRODUCT_DATE_BRANCH_UNTOUCHED = PASS
-SHADOW_STILL_OBSERVES_LEGACY = PASS
-FLAG_ROLLBACK = PASS (cutoverEnabled off)
-FULL_STRATEGY_REMOVAL = NOT_STARTED
+MISSING_SUPPLIER_PN_RETURNS_NONE = PASS
+BINDER_SUPPLIER_ROLE_SCHEMA_DRIVEN = PASS
 ```
 
-## Próximo
+## Próximo (não pular)
 
-1. Live: taxa agree binder vs legacy em `sale_orders`.  
-2. Expandir cutover para `supplier_part_number` / `supplies_stock` se prose/schema bastar.  
-3. E1.S6: cleanup de fields mortos só após evidência ampla.
+1. Próximas strategies da fila segura (ex.: avaliar `exclusive_catalog` / `lmp` com inventário).  
+2. Só então E1.S6 cleanup de fields mortos.  
+3. `product_code` / `date_branch` só com plano próprio (BUSINESS_RULE / TRANSVERSAL).

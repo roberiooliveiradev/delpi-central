@@ -218,6 +218,92 @@ def test_product_code_not_openapi_authority():
     assert ParameterStrategyShadowService.uses_openapi_authority("date_branch") is False
 
 
+def test_supplier_part_number_cutover_binds_identifier():
+    invalidate_openapi_tool_routing_cache()
+    assert ParameterStrategyShadowService.uses_openapi_authority("supplier_part_number") is True
+    action = {
+        "actionId": "acme.products.by-supplier-pn",
+        "method": "GET",
+        "path": "/products/by-supplier-part-number",
+        "operationId": "search_by_supplier_part_number",
+        "parametersSchema": [
+            {
+                "name": "supplier_part_number",
+                "in": "query",
+                "required": True,
+                "schema": {"type": "string"},
+            },
+            {"name": "page", "in": "query", "required": False, "schema": {"type": "integer"}},
+            {"name": "page_size", "in": "query", "required": False, "schema": {"type": "integer"}},
+        ],
+        "enabled": True,
+    }
+    message = "liste produto com part number do fornecedor 008700056"
+    params = ParameterStrategyShadowService.bind_via_openapi(
+        action,
+        message,
+        strategy="supplier_part_number",
+    )
+    assert params is not None
+    assert params["supplier_part_number"] == "008700056"
+    assert params["page"] == 1
+
+
+def test_supplier_part_number_missing_returns_none():
+    invalidate_openapi_tool_routing_cache()
+    action = {
+        "actionId": "acme.products.by-supplier-pn",
+        "method": "GET",
+        "path": "/products/by-supplier-part-number",
+        "parametersSchema": [
+            {
+                "name": "supplier_part_number",
+                "in": "query",
+                "required": True,
+                "schema": {"type": "string"},
+            },
+        ],
+        "enabled": True,
+    }
+    assert (
+        ParameterStrategyShadowService.bind_via_openapi(
+            action,
+            "olá, tudo bem?",
+            strategy="supplier_part_number",
+        )
+        is None
+    )
+
+
+def test_supplies_stock_cutover_fills_top_limit():
+    invalidate_openapi_tool_routing_cache()
+    assert ParameterStrategyShadowService.uses_openapi_authority("supplies_stock") is True
+    action = {
+        "actionId": "acme.supplies.stock-value",
+        "method": "GET",
+        "path": "/supplies/stock-value",
+        "parametersSchema": [
+            {"name": "top_limit", "in": "query", "required": False, "schema": {"type": "integer"}},
+            {"name": "limit", "in": "query", "required": False, "schema": {"type": "integer"}},
+        ],
+        "enabled": True,
+    }
+    params = ParameterStrategyShadowService.bind_via_openapi(
+        action,
+        "top estoque de insumos",
+        strategy="supplies_stock",
+    )
+    assert params is not None
+    assert "top_limit" in params
+    assert int(params["top_limit"]) >= 1
+
+
+def test_date_branch_still_not_in_cutover():
+    invalidate_openapi_tool_routing_cache()
+    assert "date_branch" not in ParameterStrategyShadowService.cutover_strategies()
+    assert "product_code" not in ParameterStrategyShadowService.cutover_strategies()
+
+
 def test_resolver_attaches_parameter_strategy_shadow_for_none(monkeypatch):
     invalidate_openapi_tool_routing_cache()
     from app.application.services.external_actions.operational_route_selection.operational_route_action_resolver_service import (

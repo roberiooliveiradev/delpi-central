@@ -13,7 +13,13 @@
   "parameterStrategyShadow": {
     "enabled": true,
     "cutoverEnabled": true,
-    "strategies": ["none", "semantic", "sale_orders"]
+    "strategies": [
+      "none",
+      "semantic",
+      "sale_orders",
+      "supplier_part_number",
+      "supplies_stock"
+    ]
   },
   "whenNotToUse": {
     "penalty": 3.0,

@@ -1,7 +1,7 @@
 # Plano 01 — Routing registry -> OpenAPI + Action Catalog
 
 **Prioridade:** P0  
-**Status execução:** Onda B · E1.S3 ATENDIDO · E1.S4 SHADOW_ON · E1.S5 **CUTOVER_PARTIAL** (none/semantic/sale_orders) · próxima = E1.S6 prep / expandir strategies  
+**Status execução:** Onda B · E1.S5 **CUTOVER_PARTIAL** (none→sale_orders→supplier_pn→supplies_stock) · próxima = demais strategies da fila (não E1.S6 ainda)  
 **Evidência:** [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** uma action nova deve ser descoberta e selecionada por semântica/contrato sem exigir `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` por endpoint no conteúdo do assistente.
 
@@ -119,11 +119,11 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 
 **Objetivo:** mover binding para `mensagem + contexto + action schema`.
 
-**Feito:** `none`/`semantic`/`sale_orders` usam `_bind_arguments` como authority (`cutoverEnabled=true`); shadow observa builders legados; rollback via flag. Evidência: [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md).
+**Feito (ordem):** `none`/`semantic` → `sale_orders` → `supplier_part_number` → `supplies_stock` com authority `_bind_arguments` (`cutoverEnabled=true`); shadow observa legado; `supplier_part_number` resolve via papel canônico no binder. Evidência: [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md).
 
-**Não tocado:** `product_code`, `date_branch`, `supplies_stock`, `department_idd`.
+**Não tocado:** `product_code`, `date_branch`, `department_idd`, `lmp`, `product_search`, `exclusive_catalog`, `system_metadata`.
 
-**Pendente:** expandir cutover; limpeza de fields (E1.S6).
+**Pendente:** demais strategies na fila; limpeza de fields (E1.S6) só depois.
 
 ### E1.S6 — Cutover e cleanup
 

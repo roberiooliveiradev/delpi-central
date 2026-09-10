@@ -645,6 +645,27 @@ class PlanExternalActionsService:
                 for name in product_param_names:
                     parameters[name] = product_code
 
+        # Supplier part number via resolução canônica de papel — só se o schema declarar.
+        supplier_param_names = {
+            "supplier_part_number",
+            "supplierPartNumber",
+        } & schema_names
+        if supplier_param_names and not any(
+            name in parameters for name in supplier_param_names
+        ):
+            from app.domain.services.chat_operational_identifier_resolution_service import (
+                ChatOperationalIdentifierResolutionService,
+            )
+
+            part_number = (
+                ChatOperationalIdentifierResolutionService.primary_supplier_part_number(
+                    message or ""
+                )
+            )
+            if part_number:
+                for name in supplier_param_names:
+                    parameters[name] = part_number
+
         # Date/branch via builder canônico — só aplica chaves presentes no schema OpenAPI.
         # Include granularity so required series params are filled even when dates already exist.
         date_branch_names = {
