@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Code2, FileCode, Package } from "lucide-react";
 
 import {
   archiveFirmware,
@@ -7,7 +8,6 @@ import {
   patchFirmware,
   publishFirmwareVersion,
   type FirmwareDetail,
-  type FirmwareLifecycle,
 } from "../api/productionPulseApi";
 import {
   PpActionButton,
@@ -18,10 +18,11 @@ import {
   PpNativeTextAreaField,
   PpNativeTextField,
   PpPageHero,
-  PpSectionCard,
   PpStateBox,
   ppShellIcon,
 } from "../app/productionPulseUi";
+import { DetailFactList } from "../components/detail/DetailFactList";
+import { DetailLightCard } from "../components/detail/DetailLightCard";
 import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import {
@@ -30,6 +31,11 @@ import {
   productionPulseFirmwaresPath,
 } from "../constants/routes";
 import { PP_HELP } from "../content/helpTooltips";
+import {
+  formatFirmwareArtifactBytes,
+  firmwareLifecycleBadgeClass,
+  firmwareLifecycleLabel,
+} from "../utils/firmwareCatalogDisplay";
 import { navigateProductionPulse } from "../utils/navigation";
 
 type FirmwareDetailPageProps = {
@@ -39,18 +45,6 @@ type FirmwareDetailPageProps = {
   onDone?: () => void;
   onCancel?: () => void;
 };
-
-function lifecycleLabel(lifecycle: FirmwareLifecycle): string {
-  if (lifecycle === "draft") return PP_HELP.ota.status.draft;
-  if (lifecycle === "archived") return PP_HELP.ota.statusArchived;
-  return PP_HELP.ota.statusPublished;
-}
-
-function lifecycleBadgeClass(lifecycle: FirmwareLifecycle): string {
-  if (lifecycle === "draft") return "pp-lifecycle-badge pp-lifecycle-badge--draft";
-  if (lifecycle === "archived") return "pp-lifecycle-badge pp-lifecycle-badge--archived";
-  return "pp-lifecycle-badge pp-lifecycle-badge--published";
-}
 
 export function FirmwareDetailPage({
   firmwareId,
@@ -104,8 +98,29 @@ export function FirmwareDetailPage({
 
   const heroDescription = useMemo(() => {
     if (!item) return "";
-    return `Família ${item.firmwareKey} · Versão ${item.version} · Driver ${item.driverKey} · ${lifecycleLabel(item.lifecycle)}`;
+    return `Família ${item.firmwareKey} · v${item.version} · Driver ${item.driverKey}`;
   }, [item]);
+
+  const metaFacts = useMemo(() => {
+    if (!item) return [];
+    return [
+      { label: "Família", value: <code>{item.firmwareKey}</code> },
+      { label: "Versão", value: <code>{item.version}</code> },
+      { label: "Driver", value: <code>{item.driverKey}</code> },
+      {
+        label: "Publicado em",
+        value: item.publishedAt ? new Date(item.publishedAt).toLocaleString() : "—",
+      },
+      {
+        label: "Arquivado em",
+        value: item.archivedAt ? new Date(item.archivedAt).toLocaleString() : "—",
+      },
+    ];
+  }, [item]);
+
+  const artifactSizeLabel = item
+    ? formatFirmwareArtifactBytes(item.artifactSizeBytes)
+    : null;
 
   const saveSource = async () => {
     if (!item || !canEditSource) return;
@@ -185,11 +200,81 @@ export function FirmwareDetailPage({
     }
   };
 
+  const heroActions = item ? (
+    <div className="pp-detail-hero-actions">
+      <span className={firmwareLifecycleBadgeClass(item.lifecycle)}>
+        {firmwareLifecycleLabel(item.lifecycle)}
+      </span>
+      {canEditMeta ? (
+        <PpHintAction hint={PP_HELP.ota.editMetadata} ariaLabel="Ajuda: Editar metadados">
+          <PpActionButton
+            variant="ghost"
+            className="pp-hero-brand-btn"
+            onClick={() => setEditMetaOpen(true)}
+          >
+            Editar metadados
+          </PpActionButton>
+        </PpHintAction>
+      ) : null}
+      {canPublish ? (
+        <PpHintAction hint={PP_HELP.ota.publishVersion} ariaLabel="Ajuda: Publicar">
+          <PpActionButton
+            className="pp-hero-brand-btn"
+            onClick={() => setPublishOpen(true)}
+            disabled={busy}
+          >
+            Publicar versão
+          </PpActionButton>
+        </PpHintAction>
+      ) : null}
+      {canArchive ? (
+        <PpHintAction hint={PP_HELP.ota.archiveFirmware} ariaLabel="Ajuda: Arquivar">
+          <PpActionButton
+            variant="ghost"
+            className="pp-hero-brand-btn"
+            onClick={() => setArchiveOpen(true)}
+            disabled={busy}
+          >
+            Arquivar
+          </PpActionButton>
+        </PpHintAction>
+      ) : null}
+      {!embedded ? (
+        <PpHintAction hint={PP_HELP.otaLinks.afterPublish} ariaLabel="Ajuda: Admin mapa">
+          <PpActionButton
+            variant="ghost"
+            className="pp-hero-brand-btn"
+            onClick={() => {
+              if (onDone) {
+                onDone();
+                return;
+              }
+              navigateProductionPulse(
+                productionPulseFirmwareLinksPath({ firmwareKey: item.firmwareKey, branch: "01" }),
+              );
+            }}
+          >
+            Voltar ao mapa
+          </PpActionButton>
+        </PpHintAction>
+      ) : null}
+      {embedded && onCancel ? (
+        <PpActionButton variant="ghost" className="pp-hero-brand-btn" onClick={onCancel}>
+          Fechar
+        </PpActionButton>
+      ) : null}
+    </div>
+  ) : null;
+
   if (!permissions.canViewDevices) {
     return (
       <div className="pp-page-stack">
         <PpPageHero title="Versão de firmware" badge={ppShellIcon} />
-        <PpStateBox variant="error" title="Sem permissão" message="Você não tem permissão para visualizar firmwares." />
+        <PpStateBox
+          variant="error"
+          title="Sem permissão"
+          message="Você não tem permissão para visualizar firmwares."
+        />
       </div>
     );
   }
@@ -197,7 +282,7 @@ export function FirmwareDetailPage({
   if (loading && !item) {
     return (
       <div className="pp-page-stack">
-        <PpPageHero title="Versão de firmware" badge={ppShellIcon} />
+        <PpPageHero title="Versão de firmware" badge={embedded ? undefined : ppShellIcon} />
         <PpStateBox variant="loading" title="Carregando versão…" />
       </div>
     );
@@ -206,12 +291,14 @@ export function FirmwareDetailPage({
   if (error && !item) {
     return (
       <div className="pp-page-stack">
-        <ProductionPulsePagePath
-          panelHref={PRODUCTION_PULSE_BASE_PATH}
-          items={[{ id: "hub", label: "Hub OTA", href: productionPulseFirmwaresPath() }]}
-          current="Versão"
-        />
-        <PpPageHero title="Versão de firmware" badge={ppShellIcon} />
+        {!embedded ? (
+          <ProductionPulsePagePath
+            panelHref={PRODUCTION_PULSE_BASE_PATH}
+            items={[{ id: "hub", label: "Hub OTA", href: productionPulseFirmwaresPath() }]}
+            current="Versão"
+          />
+        ) : null}
+        <PpPageHero title="Versão de firmware" badge={embedded ? undefined : ppShellIcon} />
         <PpStateBox variant="error" title="Erro" message={error} />
       </div>
     );
@@ -220,7 +307,7 @@ export function FirmwareDetailPage({
   if (!item) {
     return (
       <div className="pp-page-stack">
-        <PpPageHero title="Versão de firmware" badge={ppShellIcon} />
+        <PpPageHero title="Versão de firmware" badge={embedded ? undefined : ppShellIcon} />
         <PpStateBox variant="empty" title="Versão não encontrada" />
       </div>
     );
@@ -229,195 +316,103 @@ export function FirmwareDetailPage({
   return (
     <div className={`pp-page-stack pp-firmware-detail${embedded ? " pp-form-page--embedded" : ""}`}>
       {!embedded ? (
-        <>
-      <ProductionPulsePagePath
-        panelHref={PRODUCTION_PULSE_BASE_PATH}
-        items={[{ id: "hub", label: "Admin", href: productionPulseFirmwaresPath() }]}
-        current={item.displayName || `${item.firmwareKey} · ${item.version}`}
-      />
+        <ProductionPulsePagePath
+          panelHref={PRODUCTION_PULSE_BASE_PATH}
+          items={[{ id: "hub", label: "Admin", href: productionPulseFirmwaresPath() }]}
+          current={item.displayName || `${item.firmwareKey} · ${item.version}`}
+        />
+      ) : null}
 
       <PpPageHero
-        title={
-          <>
-            {item.displayName || item.firmwareKey}{" "}
-            <span className={lifecycleBadgeClass(item.lifecycle)}>{lifecycleLabel(item.lifecycle)}</span>
-          </>
-        }
+        title={item.displayName || item.firmwareKey}
         description={heroDescription}
-        badge={ppShellIcon}
-        actions={
-          canManage ? (
-            <div className="pp-inline-actions">
-              {canEditMeta ? (
-                <PpHintAction hint={PP_HELP.ota.editMetadata} ariaLabel="Ajuda: Editar metadados">
-                  <PpActionButton variant="ghost" className="pp-hero-brand-btn" onClick={() => setEditMetaOpen(true)}>
-                    Editar metadados
-                  </PpActionButton>
-                </PpHintAction>
-              ) : null}
-              {canPublish ? (
-                <PpHintAction hint={PP_HELP.ota.publishVersion} ariaLabel="Ajuda: Publicar">
-                  <PpActionButton className="pp-hero-brand-btn" onClick={() => setPublishOpen(true)} disabled={busy}>
-                    Publicar versão
-                  </PpActionButton>
-                </PpHintAction>
-              ) : null}
-              {canArchive ? (
-                <PpHintAction hint={PP_HELP.ota.archiveFirmware} ariaLabel="Ajuda: Arquivar">
-                  <PpActionButton variant="ghost" className="pp-hero-brand-btn" onClick={() => setArchiveOpen(true)} disabled={busy}>
-                    Arquivar
-                  </PpActionButton>
-                </PpHintAction>
-              ) : null}
-              <PpHintAction hint={PP_HELP.otaLinks.afterPublish} ariaLabel="Ajuda: Admin mapa">
-                <PpActionButton
-                  variant="ghost"
-                  className="pp-hero-brand-btn"
-                  onClick={() => {
-                    if (onDone) {
-                      onDone();
-                      return;
-                    }
-                    navigateProductionPulse(
-                      productionPulseFirmwareLinksPath({ firmwareKey: item.firmwareKey, branch: "01" }),
-                    );
-                  }}
-                >
-                  Voltar ao mapa
-                </PpActionButton>
-              </PpHintAction>
-            </div>
-          ) : null
-        }
+        badge={embedded ? undefined : ppShellIcon}
+        actions={heroActions}
       />
-        </>
-      ) : (
-        <div className="pp-inline-actions pp-embedded-fw-actions">
-          {canEditMeta ? (
-            <PpActionButton variant="ghost" onClick={() => setEditMetaOpen(true)}>
-              Editar metadados
-            </PpActionButton>
-          ) : null}
-          {canPublish ? (
-            <PpActionButton onClick={() => setPublishOpen(true)} disabled={busy}>
-              Publicar versão
-            </PpActionButton>
-          ) : null}
-          {canArchive ? (
-            <PpActionButton variant="ghost" onClick={() => setArchiveOpen(true)} disabled={busy}>
-              Arquivar
-            </PpActionButton>
-          ) : null}
-          {onCancel ? (
-            <PpActionButton variant="ghost" onClick={onCancel}>
-              Fechar
-            </PpActionButton>
-          ) : null}
-        </div>
-      )}
 
-      {actionError ? <PpStateBox variant="error" title="Operação" message={actionError} /> : null}
+      {actionError ? (
+        <PpStateBox variant="error" title="Operação" message={actionError} />
+      ) : null}
 
-      <PpSectionCard title="Metadados" hint={PP_HELP.ota.detailMetadata}>
-        <dl className="pp-definition-list">
-          <div>
-            <dt>Família</dt>
-            <dd>
-              <code>{item.firmwareKey}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>Versão</dt>
-            <dd>
-              <code>{item.version}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>Driver</dt>
-            <dd>
-              <code>{item.driverKey}</code>
-            </dd>
-          </div>
-          <div>
-            <dt>Publicado em</dt>
-            <dd>{item.publishedAt ? new Date(item.publishedAt).toLocaleString() : "—"}</dd>
-          </div>
-          <div>
-            <dt>Arquivado em</dt>
-            <dd>{item.archivedAt ? new Date(item.archivedAt).toLocaleString() : "—"}</dd>
-          </div>
-        </dl>
-        {item.releaseNotes ? (
-          <p className="pp-muted" title={PP_HELP.ota.releaseNotes}>
-            <strong>Notas:</strong> {item.releaseNotes}
-          </p>
-        ) : null}
-      </PpSectionCard>
+      <div className="pp-detail-stack">
+        <DetailLightCard icon={FileCode} title="Metadados" hint={PP_HELP.ota.detailMetadata}>
+          <DetailFactList facts={metaFacts} />
+          {item.releaseNotes ? (
+            <p className="pp-muted" title={PP_HELP.ota.releaseNotes}>
+              <strong>Notas:</strong> {item.releaseNotes}
+            </p>
+          ) : null}
+        </DetailLightCard>
 
-      <PpSectionCard title="Sketch (.ino)" hint={PP_HELP.ota.detailSource}>
-        {canEditSource ? (
-          <div className="pp-form-grid">
-            <PpFirmwareSourceField
-              id="fw-detail-source"
-              label="Importar .ino"
-              hint={PP_HELP.ota.sourceFile}
-              editorLabel="Código-fonte"
-              editorHint={PP_HELP.ota.sourceTextarea}
-              value={sourceDraft}
-              onChange={setSourceDraft}
-              rows={16}
-              onReadError={() => setActionError(PP_HELP.ota.sourceFileReadFailed)}
-            />
-            <PpActionButton onClick={() => void saveSource()} disabled={busy}>
-              {busy ? "Salvando…" : "Salvar sketch"}
-            </PpActionButton>
-          </div>
-        ) : item.hasSource && item.sourceText ? (
-          <pre className="pp-firmware-source" tabIndex={0}>
-            {item.sourceText}
-          </pre>
-        ) : (
-          <PpStateBox variant="empty" title="Sem sketch" message={PP_HELP.ota.sourceEmpty} />
-        )}
-      </PpSectionCard>
-
-      <PpSectionCard title="Artefato OTA (.bin)" hint={PP_HELP.ota.detailArtifact}>
-        {item.hasArtifact && item.artifactSha256 ? (
-          <dl className="pp-definition-list">
-            <div>
-              <dt>SHA256</dt>
-              <dd>
-                <code>{item.artifactSha256}</code>
-              </dd>
+        <DetailLightCard icon={Code2} title="Sketch (.ino)" hint={PP_HELP.ota.detailSource}>
+          {canEditSource ? (
+            <div className="pp-form-grid">
+              <PpFirmwareSourceField
+                id="fw-detail-source"
+                label="Importar .ino"
+                hint={PP_HELP.ota.sourceFile}
+                editorLabel="Código-fonte"
+                editorHint={PP_HELP.ota.sourceTextarea}
+                value={sourceDraft}
+                onChange={setSourceDraft}
+                rows={16}
+                onReadError={() => setActionError(PP_HELP.ota.sourceFileReadFailed)}
+              />
+              <PpActionButton onClick={() => void saveSource()} disabled={busy}>
+                {busy ? "Salvando…" : "Salvar sketch"}
+              </PpActionButton>
             </div>
-            <div>
-              <dt>Tamanho</dt>
-              <dd>{item.artifactSizeBytes ? `${item.artifactSizeBytes.toLocaleString("pt-BR")} bytes` : "—"}</dd>
-            </div>
-          </dl>
-        ) : (
-          <PpStateBox variant="empty" title="Sem artefato" message={PP_HELP.ota.artifactEmptyDraft} />
-        )}
-        {canAttachArtifact ? (
-          <div className="pp-form-grid">
-            <PpFirmwareArtifactField
-              id="fw-detail-bin"
-              label="Anexar .bin"
-              hint={PP_HELP.ota.file}
-              file={artifactFile}
-              onChange={setArtifactFile}
+          ) : item.hasSource && item.sourceText ? (
+            <pre className="pp-firmware-source" tabIndex={0}>
+              {item.sourceText}
+            </pre>
+          ) : (
+            <PpStateBox variant="empty" title="Sem sketch" message={PP_HELP.ota.sourceEmpty} />
+          )}
+        </DetailLightCard>
+
+        <DetailLightCard icon={Package} title="Artefato OTA (.bin)" hint={PP_HELP.ota.detailArtifact}>
+          {item.hasArtifact && item.artifactSha256 ? (
+            <DetailFactList
+              facts={[
+                {
+                  label: "SHA256",
+                  value: <code title={item.artifactSha256}>{item.artifactSha256}</code>,
+                },
+                {
+                  label: "Tamanho",
+                  value:
+                    artifactSizeLabel ||
+                    (item.artifactSizeBytes
+                      ? `${item.artifactSizeBytes.toLocaleString("pt-BR")} bytes`
+                      : "—"),
+                },
+              ]}
             />
-            <PpActionButton onClick={() => void attachArtifact()} disabled={busy || !artifactFile}>
-              {busy ? "Anexando…" : "Anexar artefato"}
-            </PpActionButton>
-          </div>
-        ) : null}
-        {isPublished ? (
-          <p className="pp-muted" title={PP_HELP.ota.artifactImmutable}>
-            Artefato publicado é imutável — publique uma nova versão para corrigir o binário.
-          </p>
-        ) : null}
-      </PpSectionCard>
+          ) : (
+            <PpStateBox variant="empty" title="Sem binário" message={PP_HELP.ota.artifactEmptyDraft} />
+          )}
+          {canAttachArtifact ? (
+            <div className="pp-form-grid">
+              <PpFirmwareArtifactField
+                id="fw-detail-bin"
+                label="Anexar .bin"
+                hint={PP_HELP.ota.file}
+                file={artifactFile}
+                onChange={setArtifactFile}
+              />
+              <PpActionButton onClick={() => void attachArtifact()} disabled={busy || !artifactFile}>
+                {busy ? "Anexando…" : "Anexar artefato"}
+              </PpActionButton>
+            </div>
+          ) : null}
+          {isPublished ? (
+            <p className="pp-muted" title={PP_HELP.ota.artifactImmutable}>
+              Artefato publicado é imutável — publique uma nova versão para corrigir o binário.
+            </p>
+          ) : null}
+        </DetailLightCard>
+      </div>
 
       <PpHostContainedDialog open={editMetaOpen} title="Editar metadados" onClose={() => setEditMetaOpen(false)}>
         <div className="pp-form-grid">

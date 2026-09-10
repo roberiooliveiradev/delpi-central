@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { fetchDeviceReadings } from "../../api/productionPulseApi";
 import { PpActionButton, PpReadingsAreaChart, PpSectionCard } from "../../app/productionPulseUi";
+import type { LiveConnectivityIssue } from "../../hooks/useDeviceDetail";
 import type { DeviceListItem } from "../../types/device";
 import type { DeviceReading, LivePollResult } from "../../types/detail";
 import { PP_HELP } from "../../content/helpTooltips";
@@ -15,6 +16,7 @@ import { DeviceMetricHero } from "./DeviceMetricHero";
 type DeviceOverviewTabProps = {
   device: DeviceListItem;
   liveSnapshot: LivePollResult | null;
+  liveConnectivityIssue?: LiveConnectivityIssue | null;
   refreshing: boolean;
   canCommand: boolean;
   onRefreshLive: () => void;
@@ -26,6 +28,7 @@ type DeviceOverviewTabProps = {
 export function DeviceOverviewTab({
   device,
   liveSnapshot,
+  liveConnectivityIssue = null,
   refreshing,
   canCommand,
   onRefreshLive,
@@ -34,7 +37,10 @@ export function DeviceOverviewTab({
   onFactoryReset,
 }: DeviceOverviewTabProps) {
   const [miniReadings, setMiniReadings] = useState<DeviceReading[]>([]);
-  const metricKey = primaryMetricKey(liveSnapshot?.metrics ?? device.lastMetrics, device.capabilities);
+  const metricKey = primaryMetricKey(
+    liveSnapshot?.metrics ?? device.lastMetrics,
+    device.capabilities,
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -60,6 +66,7 @@ export function DeviceOverviewTab({
         <DeviceMetricHero
           device={device}
           liveSnapshot={liveSnapshot}
+          liveConnectivityIssue={liveConnectivityIssue}
           refreshing={refreshing}
           canCommand={canCommand}
           onRefreshLive={onRefreshLive}
@@ -89,7 +96,9 @@ export function DeviceOverviewTab({
         <div className="pp-detail-overview__link-row">
           <PpActionButton
             variant="ghost"
-            onClick={() => navigateProductionPulse(productionPulseDeviceDetailPath(device.id, "history"))}
+            onClick={() =>
+              navigateProductionPulse(productionPulseDeviceDetailPath(device.id, "history"))
+            }
           >
             Ver histórico completo →
           </PpActionButton>

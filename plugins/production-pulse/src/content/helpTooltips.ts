@@ -158,6 +158,11 @@ export const PP_HELP = {
     firmwareCopyFailed: "Não foi possível copiar. Selecione o texto e copie manualmente.",
     liveMetrics:
       "Valores lidos na última comunicação. A tela atualiza sozinha no ritmo do intervalo de poll do dispositivo.",
+    liveOfflineTitle: "IoT inalcançável",
+    liveOfflineFallback: "Não foi possível falar com o dispositivo agora.",
+    liveShowingCache: "Exibindo última leitura em cache de",
+    liveCacheLabel: "Última leitura em cache",
+    actionFailedTitle: "Ação não concluída",
     chipHealth:
       "Telemetria do chip via GET /api/status (versão, uptime, RSSI, heap). Atualiza ao usar «Atualizar agora».",
     chipHealthTitle: "Saúde do chip",

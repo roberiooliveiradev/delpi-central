@@ -1,5 +1,6 @@
 import type { DeviceListItem } from "../../types/device";
 import type { LivePollResult } from "../../types/detail";
+import type { LiveConnectivityIssue } from "../../hooks/useDeviceDetail";
 import { PP_HELP } from "../../content/helpTooltips";
 import { PpActionButton, PpHintAction, PpSectionCard } from "../../app/productionPulseUi";
 import { formatRelativeTime } from "../../utils/deviceDisplay";
@@ -10,10 +11,12 @@ import {
   metricUnit,
   primaryMetricKey,
 } from "../../utils/detailDisplay";
+import { DetailStatusBanner } from "./DetailStatusBanner";
 
 type DeviceMetricHeroProps = {
   device: DeviceListItem;
   liveSnapshot: LivePollResult | null;
+  liveConnectivityIssue?: LiveConnectivityIssue | null;
   refreshing: boolean;
   canCommand: boolean;
   onRefreshLive: () => void;
@@ -25,6 +28,7 @@ type DeviceMetricHeroProps = {
 export function DeviceMetricHero({
   device,
   liveSnapshot,
+  liveConnectivityIssue = null,
   refreshing,
   canCommand,
   onRefreshLive,
@@ -41,18 +45,34 @@ export function DeviceMetricHero({
   const supportsReset = device.capabilities?.commands?.includes("reset") ?? false;
   const supportsFactoryReset =
     device.capabilities?.commands?.includes("factory_reset") ?? false;
+  const deviceOffline =
+    device.status === "offline" || device.online === false || !device.enabled;
+  const showConnectivityWarning = Boolean(liveConnectivityIssue) || deviceOffline;
+  const warningMessage =
+    liveConnectivityIssue?.message || PP_HELP.detail.liveOfflineFallback;
 
   return (
     <PpSectionCard title="Métricas ao vivo" hint={PP_HELP.detail.liveMetrics}>
+      {showConnectivityWarning ? (
+        <DetailStatusBanner
+          variant="warning"
+          title={PP_HELP.detail.liveOfflineTitle}
+          message={`${warningMessage} ${PP_HELP.detail.liveShowingCache} ${formatRelativeTime(recordedAt)}.`}
+        />
+      ) : null}
       <div className="pp-metric-hero">
         <p className="pp-metric-hero__value">
-          {metricKey ? formatMetricValue(metricKey, rawValue).replace(` ${unit ?? ""}`, "").trim() : "—"}
+          {metricKey
+            ? formatMetricValue(metricKey, rawValue).replace(` ${unit ?? ""}`, "").trim()
+            : "—"}
         </p>
         {unit ? <p className="pp-metric-hero__unit">{unit}</p> : null}
         <p className="pp-metric-hero__label">{label}</p>
         <p className="pp-detail-muted">
-          Última leitura: {formatRelativeTime(recordedAt)} · Poll: {device.pollIntervalMs} ms ·{" "}
-          {driverLabel(device.driverKey)}
+          {showConnectivityWarning
+            ? `${PP_HELP.detail.liveCacheLabel}: ${formatRelativeTime(recordedAt)}`
+            : `Última leitura: ${formatRelativeTime(recordedAt)}`}{" "}
+          · Poll: {device.pollIntervalMs} ms · {driverLabel(device.driverKey)}
         </p>
         <div className="pp-metric-hero__actions">
           <PpActionButton variant="ghost" onClick={onRefreshLive} disabled={refreshing}>
@@ -62,7 +82,11 @@ export function DeviceMetricHero({
             Poll agora
           </PpActionButton>
           {supportsReset && canCommand ? (
-            <PpActionButton variant="ghost" onClick={onReset} disabled={refreshing || !device.online}>
+            <PpActionButton
+              variant="ghost"
+              onClick={onReset}
+              disabled={refreshing || !device.online}
+            >
               Reset contador
             </PpActionButton>
           ) : null}

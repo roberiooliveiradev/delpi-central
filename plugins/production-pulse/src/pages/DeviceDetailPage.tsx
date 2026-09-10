@@ -16,6 +16,7 @@ import { DeviceCommandsTab } from "../components/detail/DeviceCommandsTab";
 import { DeviceFirmwareTab } from "../components/detail/DeviceFirmwareTab";
 import { DeviceHistoryTab } from "../components/detail/DeviceHistoryTab";
 import { DeviceOverviewTab } from "../components/detail/DeviceOverviewTab";
+import { DetailStatusBanner } from "../components/detail/DetailStatusBanner";
 import { FactoryResetModal } from "../components/modals/FactoryResetModal";
 import { ResetCounterModal } from "../components/modals/ResetCounterModal";
 import {
@@ -80,6 +81,7 @@ export function DeviceDetailPage({
     loading,
     error,
     actionError,
+    liveConnectivityIssue,
     liveSnapshot,
     refreshing,
     commandsRefreshToken,
@@ -218,7 +220,7 @@ export function DeviceDetailPage({
         description={formatDeviceDetailDescription(device)}
         badge={embedded ? undefined : ppShellIcon}
         actions={
-          <div className="pp-device-detail__hero-actions">
+          <div className="pp-detail-hero-actions">
             <DeviceStatusBadge status={device.status} />
             {permissions.canManageDevices ? (
               <>
@@ -273,12 +275,19 @@ export function DeviceDetailPage({
         aria-label="Abas do dispositivo"
       />
 
-      {actionError ? <p className="pp-detail-banner-error">{actionError}</p> : null}
+      {actionError ? (
+        <DetailStatusBanner
+          variant="warning"
+          title={PP_HELP.detail.actionFailedTitle}
+          message={actionError}
+        />
+      ) : null}
 
       {tab === "overview" ? (
         <DeviceOverviewTab
           device={device}
           liveSnapshot={liveSnapshot}
+          liveConnectivityIssue={liveConnectivityIssue}
           refreshing={refreshing}
           canCommand={permissions.canCommandDevices}
           onRefreshLive={() => void refreshLive()}

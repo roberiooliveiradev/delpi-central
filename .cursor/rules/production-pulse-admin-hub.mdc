@@ -55,6 +55,7 @@ Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.c
 | Clique no nó | Summary popover (`EntityContextLayers`) |
 | Menu ⋯ | Context menu — ícone Lucide + `hint` no próprio item (`PpContextMenuItem` / `hintTrigger="label"`; sem coluna `?`) |
 | Detalhe FW/IoT/Job/Driver | `PpDetailDialog` (wide) |
+| Detalhe modal (embedded) | `PpPageHero` + `pp-detail-hero-actions` + `pp-hero-brand-btn`; body em `DetailLightCard` (ícone + fatos leves); Device: `DetailStatusBanner` para offline/live 422 |
 | CRUD IoT/FW/Driver | `PpWorkbenchDialog` (page) |
 | Agendar OTA | `PpHostContainedDialog` compacto |
 | Confirmação | `PpConfirmDialog` |

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Activity, CircuitBoard, Terminal } from "lucide-react";
 
 import {
   archiveDriver,
@@ -10,10 +11,13 @@ import {
   PpActionButton,
   PpHintAction,
   PpPageHero,
-  PpSectionCard,
   PpStateBox,
   ppShellIcon,
 } from "../app/productionPulseUi";
+import { DetailCommandChips } from "../components/detail/DetailCommandChips";
+import { DetailFactList } from "../components/detail/DetailFactList";
+import { DetailLightCard } from "../components/detail/DetailLightCard";
+import { DetailMetricDefs } from "../components/detail/DetailMetricDefs";
 import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import {
@@ -21,6 +25,7 @@ import {
   productionPulseFirmwareLinksPath,
 } from "../constants/routes";
 import { PP_HELP } from "../content/helpTooltips";
+import { resolveDriverProtocolDisplay } from "../utils/driverCatalogDisplay";
 import { DriverFormPage } from "./DriverFormPage";
 import { navigateProductionPulse } from "../utils/navigation";
 
@@ -68,12 +73,28 @@ export function DriverDetailPage({
 
   const isArchived = Boolean(item?.archivedAt);
   const hubPath = productionPulseFirmwareLinksPath({ branch: "01", panel: "drivers" });
+  const protocol = resolveDriverProtocolDisplay(item?.protocolKind);
 
   const heroDescription = useMemo(() => {
     if (!item) return "";
-    const status = isArchived ? PP_HELP.drivers.statusArchived : PP_HELP.drivers.statusActive;
-    return `${item.key} · ${item.protocolKind} · ${item.roleKey} · ${status}`;
-  }, [isArchived, item]);
+    return `${item.key} · ${protocol.shortLabel} · ${item.roleKey}`;
+  }, [item, protocol.shortLabel]);
+
+  const identityFacts = useMemo(() => {
+    if (!item) return [];
+    return [
+      { label: "Chave", value: <code>{item.key}</code> },
+      { label: "Protocolo", value: protocol.label },
+      { label: "Role", value: item.roleKey },
+      {
+        label: "Operador",
+        value: `${item.operatorSurface} · ${
+          item.operatorEligible ? "elegível" : "não elegível"
+        }`,
+      },
+      { label: "Poll timeout", value: `${item.poll?.timeoutMs ?? 3000} ms` },
+    ];
+  }, [item, protocol.label]);
 
   const goBack = () => {
     if (onCancel) {
@@ -98,6 +119,74 @@ export function DriverDetailPage({
     }
   };
 
+  const handleArchive = () => {
+    if (!item || !canManage) return;
+    if (onRequestArchive) {
+      onRequestArchive(item.key);
+      return;
+    }
+    void archiveDriver(item.key).then((updated) => {
+      setItem(updated);
+      onDone?.();
+    });
+  };
+
+  const statusBadge = (
+    <span
+      className={
+        isArchived
+          ? "pp-lifecycle-badge pp-lifecycle-badge--archived"
+          : "pp-lifecycle-badge pp-lifecycle-badge--published"
+      }
+    >
+      {isArchived ? PP_HELP.drivers.statusArchived : PP_HELP.drivers.statusActive}
+    </span>
+  );
+
+  const heroActions = item ? (
+    <div className="pp-detail-hero-actions">
+      {statusBadge}
+      {canManage && !isArchived ? (
+        <PpActionButton
+          variant="ghost"
+          className="pp-hero-brand-btn"
+          onClick={() => setEditing(true)}
+        >
+          Editar metadados
+        </PpActionButton>
+      ) : null}
+      {canManage && isArchived ? (
+        <PpHintAction hint={PP_HELP.drivers.unarchive} ariaLabel="Ajuda: Reativar">
+          <PpActionButton
+            variant="ghost"
+            className="pp-hero-brand-btn"
+            disabled={busy}
+            onClick={() => void handleUnarchive()}
+          >
+            Reativar
+          </PpActionButton>
+        </PpHintAction>
+      ) : null}
+      {canManage && !isArchived ? (
+        <PpHintAction hint={PP_HELP.drivers.archive} ariaLabel="Ajuda: Arquivar">
+          <PpActionButton
+            variant="ghost"
+            className="pp-hero-brand-btn"
+            disabled={busy}
+            onClick={handleArchive}
+          >
+            Arquivar
+          </PpActionButton>
+        </PpHintAction>
+      ) : null}
+      {embedded ? (
+        <PpActionButton variant="ghost" className="pp-hero-brand-btn" onClick={goBack}>
+          Fechar
+        </PpActionButton>
+      ) : null}
+    </div>
+  ) : null;
+
   if (!permissions.canViewDevices) {
     return (
       <div className="pp-page-stack">
@@ -114,7 +203,10 @@ export function DriverDetailPage({
   if (loading && !item) {
     return (
       <div className="pp-page-stack">
-        <PpPageHero title={PP_HELP.drivers.breadcrumbDetail} badge={ppShellIcon} />
+        <PpPageHero
+          title={PP_HELP.drivers.breadcrumbDetail}
+          badge={embedded ? undefined : ppShellIcon}
+        />
         <PpStateBox variant="loading" title="Carregando tipo de driver…" />
       </div>
     );
@@ -123,7 +215,10 @@ export function DriverDetailPage({
   if (error && !item) {
     return (
       <div className="pp-page-stack">
-        <PpPageHero title={PP_HELP.drivers.breadcrumbDetail} badge={ppShellIcon} />
+        <PpPageHero
+          title={PP_HELP.drivers.breadcrumbDetail}
+          badge={embedded ? undefined : ppShellIcon}
+        />
         <PpStateBox variant="error" title="Erro" message={error} />
       </div>
     );
@@ -132,7 +227,10 @@ export function DriverDetailPage({
   if (!item) {
     return (
       <div className="pp-page-stack">
-        <PpPageHero title={PP_HELP.drivers.breadcrumbDetail} badge={ppShellIcon} />
+        <PpPageHero
+          title={PP_HELP.drivers.breadcrumbDetail}
+          badge={embedded ? undefined : ppShellIcon}
+        />
         <PpStateBox variant="empty" title="Tipo de driver não encontrado" />
       </div>
     );
@@ -158,166 +256,45 @@ export function DriverDetailPage({
   return (
     <div className={`pp-page-stack pp-form-page${embedded ? " pp-form-page--embedded" : ""}`}>
       {!embedded ? (
-        <>
-          <ProductionPulsePagePath
-            panelHref={PRODUCTION_PULSE_BASE_PATH}
-            items={[{ id: "hub", label: "Admin", href: hubPath }]}
-            current={item.labelPt || item.key}
-          />
-          <PpPageHero
-            title={item.labelPt || item.key}
-            description={heroDescription}
-            badge={ppShellIcon}
-            actions={
-              canManage ? (
-                <div className="pp-inline-actions">
-                  {!isArchived ? (
-                    <PpHintAction hint={PP_HELP.drivers.archive} ariaLabel="Ajuda: Arquivar">
-                      <PpActionButton
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => {
-                          if (onRequestArchive) {
-                            onRequestArchive(item.key);
-                            return;
-                          }
-                          void archiveDriver(item.key).then((updated) => {
-                            setItem(updated);
-                            onDone?.();
-                          });
-                        }}
-                      >
-                        Arquivar
-                      </PpActionButton>
-                    </PpHintAction>
-                  ) : (
-                    <PpHintAction hint={PP_HELP.drivers.unarchive} ariaLabel="Ajuda: Reativar">
-                      <PpActionButton
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => void handleUnarchive()}
-                      >
-                        Reativar
-                      </PpActionButton>
-                    </PpHintAction>
-                  )}
-                  {!isArchived ? (
-                    <PpActionButton onClick={() => setEditing(true)}>Editar</PpActionButton>
-                  ) : null}
-                </div>
-              ) : null
-            }
-          />
-        </>
-      ) : (
-        <div className="pp-inline-actions pp-mb-sm">
-          {canManage && !isArchived ? (
-            <PpActionButton onClick={() => setEditing(true)}>Editar metadados</PpActionButton>
-          ) : null}
-          {canManage && isArchived ? (
-            <PpActionButton
-              variant="ghost"
-              disabled={busy}
-              onClick={() => void handleUnarchive()}
-            >
-              Reativar
-            </PpActionButton>
-          ) : null}
-          {canManage && !isArchived ? (
-            <PpActionButton
-              variant="ghost"
-              disabled={busy}
-              onClick={() => {
-                if (onRequestArchive) {
-                  onRequestArchive(item.key);
-                  return;
-                }
-                void archiveDriver(item.key).then((updated) => {
-                  setItem(updated);
-                  onDone?.();
-                });
-              }}
-            >
-              Arquivar
-            </PpActionButton>
-          ) : null}
-          <PpActionButton variant="ghost" onClick={goBack}>
-            Fechar
-          </PpActionButton>
-        </div>
-      )}
+        <ProductionPulsePagePath
+          panelHref={PRODUCTION_PULSE_BASE_PATH}
+          items={[{ id: "hub", label: "Admin", href: hubPath }]}
+          current={item.labelPt || item.key}
+        />
+      ) : null}
+
+      <PpPageHero
+        title={item.labelPt || item.key}
+        description={heroDescription}
+        badge={embedded ? undefined : ppShellIcon}
+        actions={heroActions}
+      />
 
       {actionError ? (
         <PpStateBox variant="error" title="Ação falhou" message={actionError} />
       ) : null}
 
-      <div className="pp-form-layout">
-        <PpSectionCard title="Identidade" hint={PP_HELP.drivers.sectionIdentity}>
-          <dl className="pp-detail-dl">
-            <div>
-              <dt>Chave</dt>
-              <dd>
-                <code>{item.key}</code>
-              </dd>
-            </div>
-            <div>
-              <dt>Protocolo</dt>
-              <dd>{item.protocolKind}</dd>
-            </div>
-            <div>
-              <dt>Role</dt>
-              <dd>{item.roleKey}</dd>
-            </div>
-            <div>
-              <dt>Estado</dt>
-              <dd>
-                {isArchived ? PP_HELP.drivers.statusArchived : PP_HELP.drivers.statusActive}
-              </dd>
-            </div>
-            <div>
-              <dt>Rótulo</dt>
-              <dd>{item.labelPt}</dd>
-            </div>
-            <div>
-              <dt>Descrição</dt>
-              <dd>{item.descriptionPt || "—"}</dd>
-            </div>
-            <div>
-              <dt>Operador</dt>
-              <dd>
-                {item.operatorSurface} ·{" "}
-                {item.operatorEligible ? "elegível" : "não elegível"}
-              </dd>
-            </div>
-            <div>
-              <dt>Poll timeout</dt>
-              <dd>{item.poll?.timeoutMs ?? 3000} ms</dd>
-            </div>
-          </dl>
-        </PpSectionCard>
+      <div className="pp-detail-stack">
+        <DetailLightCard
+          icon={CircuitBoard}
+          title="Identidade"
+          hint={PP_HELP.drivers.sectionIdentity}
+        >
+          <DetailFactList facts={identityFacts} />
+          {item.descriptionPt ? (
+            <p className="pp-muted">
+              <strong>Descrição:</strong> {item.descriptionPt}
+            </p>
+          ) : null}
+        </DetailLightCard>
 
-        <PpSectionCard title="Métricas" hint={PP_HELP.drivers.sectionMetrics}>
-          {(item.metrics ?? []).length === 0 ? (
-            <p className="pp-muted">Sem métricas.</p>
-          ) : (
-            <ul className="pp-muted">
-              {(item.metrics ?? []).map((metric) => (
-                <li key={metric.key}>
-                  <code>{metric.key}</code> — {metric.labelPt || metric.key} ({metric.type})
-                  {metric.primary ? " · primária" : ""}
-                </li>
-              ))}
-            </ul>
-          )}
-        </PpSectionCard>
+        <DetailLightCard icon={Activity} title="Métricas" hint={PP_HELP.drivers.sectionMetrics}>
+          <DetailMetricDefs metrics={item.metrics ?? []} />
+        </DetailLightCard>
 
-        <PpSectionCard title="Comandos" hint={PP_HELP.drivers.sectionCommands}>
-          {(item.commands ?? []).length === 0 ? (
-            <p className="pp-muted">Sem comandos.</p>
-          ) : (
-            <p>{(item.commands ?? []).join(", ")}</p>
-          )}
-        </PpSectionCard>
+        <DetailLightCard icon={Terminal} title="Comandos" hint={PP_HELP.drivers.sectionCommands}>
+          <DetailCommandChips commands={item.commands ?? []} />
+        </DetailLightCard>
       </div>
     </div>
   );

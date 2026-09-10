@@ -6,10 +6,19 @@ import {
   fetchDeviceLive,
   pollDevice,
 } from "../api/productionPulseApi";
+import { ProductionPulseRequestError } from "../api/httpClient";
 import type { DeviceListItem } from "../types/device";
 import type { DeviceDetailTab, LivePollResult } from "../types/detail";
-import { resolveDeviceActionError } from "../utils/apiErrors";
+import {
+  isDeviceConnectivityError,
+  resolveDeviceActionError,
+} from "../utils/apiErrors";
 import { useDeviceLiveRefresh } from "./useDeviceLiveRefresh";
+
+export type LiveConnectivityIssue = {
+  code?: string;
+  message: string;
+};
 
 type UseDeviceDetailOptions = {
   deviceId: string;
@@ -21,6 +30,8 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [liveConnectivityIssue, setLiveConnectivityIssue] =
+    useState<LiveConnectivityIssue | null>(null);
   const [liveSnapshot, setLiveSnapshot] = useState<LivePollResult | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [commandsRefreshToken, setCommandsRefreshToken] = useState(0);
@@ -45,6 +56,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
   }, [reloadDevice]);
 
   const applyLiveSnapshot = useCallback((live: LivePollResult) => {
+    setLiveConnectivityIssue(null);
     setLiveSnapshot(live);
     setDevice((current) =>
       current
@@ -59,17 +71,27 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     );
   }, []);
 
+  const recordLiveConnectivityFailure = useCallback((err: unknown) => {
+    if (!isDeviceConnectivityError(err)) return;
+    const message =
+      err instanceof ProductionPulseRequestError
+        ? err.message
+        : "Não foi possível falar com o dispositivo.";
+    setLiveConnectivityIssue({
+      code: err instanceof ProductionPulseRequestError ? err.code : undefined,
+      message,
+    });
+  }, []);
+
   const quietLiveRefresh = useCallback(async () => {
     if (!enabled) return;
     try {
       const live = await fetchDeviceLive(deviceId);
       applyLiveSnapshot(live);
-      // Histórico/comandos NÃO recarregam no tick live — só em poll/comando explícito.
-      // Recalcular bounds + abort/refetch a cada poll travava presets longos («Este mês»).
-    } catch {
-      // Tick live silencioso — não mascara erros de ações manuais.
+    } catch (err) {
+      recordLiveConnectivityFailure(err);
     }
-  }, [applyLiveSnapshot, deviceId, enabled]);
+  }, [applyLiveSnapshot, deviceId, enabled, recordLiveConnectivityFailure]);
 
   useDeviceLiveRefresh({
     enabled: enabled && Boolean(device),
@@ -84,6 +106,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
 
   const applyDeviceActionFailure = async (err: unknown, fallback: string) => {
     await reloadDevice();
+    recordLiveConnectivityFailure(err);
     const resolved = resolveDeviceActionError(err, fallback);
     if (resolved.kind === "device") {
       setActionError(resolved.message);
@@ -113,6 +136,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     setActionError(null);
     try {
       const polled = await pollDevice(deviceId);
+      setLiveConnectivityIssue(null);
       setLiveSnapshot((current) => ({
         ...polled,
         firmwareVersion: current?.firmwareVersion ?? polled.firmwareVersion,
@@ -134,12 +158,11 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
       );
       setHistoryRefreshToken((value) => value + 1);
       setCommandsRefreshToken((value) => value + 1);
-      // Refresh chip health after persist poll (status is not part of poll path).
       try {
         const live = await fetchDeviceLive(deviceId);
         applyLiveSnapshot(live);
-      } catch {
-        // Health is best-effort after poll.
+      } catch (err) {
+        recordLiveConnectivityFailure(err);
       }
     } catch (err) {
       await applyDeviceActionFailure(err, "Erro ao executar poll.");
@@ -167,6 +190,7 @@ export function useDeviceDetail({ deviceId, enabled }: UseDeviceDetailOptions) {
     loading,
     error,
     actionError,
+    liveConnectivityIssue,
     liveSnapshot,
     refreshing,
     commandsRefreshToken,
