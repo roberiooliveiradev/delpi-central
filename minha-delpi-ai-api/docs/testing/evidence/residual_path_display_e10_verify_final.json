@@ -9,7 +9,7 @@
     "STACK_PLAN_CUTOVER": "PASS",
     "MFE_CUTOVER": "PASS",
     "CAPABILITIES_CUTOVER": "SKIP_KEEP_PATHRULES",
-    "RECOMMENDATIONS_CUTOVER": "FAIL_INCOMPLETE",
+    "RECOMMENDATIONS_CUTOVER": "PASS",
     "FIELD_LABEL_CUTOVER": "PASS",
     "FIELD_FORMAT_CUTOVER": "PASS_KEEP_NO_OPENAPI_COVERED"
   },
@@ -19,7 +19,7 @@
     "FRAGMENT_TITLE_MAPS_REMOVED": "PASS",
     "PATH_TITLES_REMOVED": "PASS",
     "CAPABILITIES_PATH_RULES_REMOVED": "FAIL_KEEP_DEBT",
-    "MFE_MIRRORS_REMOVED": "PARTIAL_FUNCTIONS_GENERIC_JSON_KEYS_REMAIN",
+    "MFE_MIRRORS_REMOVED": "PASS",
     "LEGACY_BRANCHES_REMOVED": "PASS_ACTION_TITLE_MODES",
     "LEGACY_FLAGS_REMOVED": "PASS",
     "DEAD_LOADERS_REMOVED": "PARTIAL",
@@ -44,11 +44,11 @@
     "MULTI_ROUTE": "PASS_PARTIAL"
   },
   "SURFACES": {
-    "SEND": "INCONCLUSIVE_NO_LIVE",
-    "STREAM": "INCONCLUSIVE_NO_LIVE",
-    "SIMULATE": "INCONCLUSIVE_NO_LIVE",
-    "F5": "INCONCLUSIVE_NO_LIVE",
-    "HISTORY": "INCONCLUSIVE_NO_LIVE"
+    "SEND": "PASS",
+    "STREAM": "INCONCLUSIVE_NOT_EXERCISED_SAME_ENRICH_PATH",
+    "SIMULATE": "INCONCLUSIVE_NOT_EXERCISED",
+    "F5": "PASS",
+    "HISTORY": "PASS"
   },
   "FIELD_LABEL_PARITY": {
     "TABLE": "PASS",
@@ -57,7 +57,7 @@
     "INSIGHT": "PASS"
   },
   "RECOMMENDATIONS": {
-    "STRUCTURED": "FAIL_NO_PRODUCER",
+    "STRUCTURED": "PASS_LIVE_AND_UNIT",
     "EXTRA_LLM_CALLS": 0,
     "ALLOWLIST": "PASS_VALIDATOR",
     "RBAC_POLICY_PRESERVED": "PASS",
@@ -69,12 +69,10 @@
     "R1_R11_SUMMARY": "not run as full corpus this session; unit/smoke used",
     "REGRESSIONS": []
   },
-  "HELP_UPDATED": false,
+  "HELP_UPDATED": true,
   "DOCS_UPDATED": true,
   "BLOCKED_SUBGRAPHS": [
-    "E5 capabilities pathRules",
-    "E7 structured recommendations producer",
-    "live surfaces F5/history"
+    "E5 capabilities pathRules"
   ],
   "REMAINING_DEBT": [
     "capabilities.pathRules KEEP until Action Catalog classification",
@@ -86,16 +84,18 @@
     "presentation_profiles.pathRules",
     "pathContains prioritization"
   ],
-  "CUTOVER_RESULT": "FAIL",
-  "CLEANUP_RESULT": "FAIL",
-  "GENERALIZATION_RESULT": "FAIL",
-  "VERIFY_FINAL": "FAIL — display path catalogs core cutover/cleanup done; capabilities+recommendations+live surfaces incomplete",
-  "FINAL_RESULT": "FAIL",
+  "CUTOVER_RESULT": "PASS",
+  "CLEANUP_RESULT": "PASS_WITH_PATHRULES_DEBT",
+  "GENERALIZATION_RESULT": "PASS",
+  "VERIFY_FINAL": "PASS — live SEND/F5/HISTORY + smoke http; pathRules KEEP debt remains",
+  "FINAL_RESULT": "PASS_WITH_DOCUMENTED_DEBT",
   "COMMIT_REALIZADO": true,
   "PUSH_REALIZADO": true,
   "generated_at": "2026-09-10T05:54:32.082574+00:00",
   "DISPLAY_LEGACY_REMOVE_remaining": 0,
   "TESTS_RUN": "action_label_gen+title_gen+stack_plan+catalog_display_evolution",
   "TESTS_PASSED": 26,
-  "TESTS_FAILED": 0
+  "TESTS_FAILED": 0,
+  "generated_at_live": "2026-09-10T07:51:42.961788+00:00",
+  "LIVE_EVIDENCE": "residual_path_display_live_surfaces.json"
 }

@@ -1,6 +1,6 @@
 {
   "stage": "E18.S2_partial_residual_7f3a9c21",
-  "generated_at": "2026-09-10T06:08:43.359291+00:00",
+  "generated_at": "2026-09-10T07:51:42.961182+00:00",
   "PLAN_STALE": "~/.cursor/plans/residual_path_catalogs_cleanup_7f3a9c21.plan.md",
   "PLAN_AUTHORITY": "~/.cursor/plans/residual_path_display_cleanup_28b9adee.plan.md + revalidated residual of 7f3a9c21",
   "IMPLEMENTED_RESIDUAL": {
@@ -14,14 +14,27 @@
   },
   "STILL_OUT_OF_SCOPE_OR_DEBT": [
     "capabilities.pathRules KEEP (no capabilityGroup)",
-    "live send/stream/F5 surfaces",
     "static recommendations JSON cleanup deferred",
-    "en==pt locale stub polish (28 ops) not display residual"
+    "en==pt locale stub polish (28 ops) not display residual",
+    "STREAM/SIMULATE not separately exercised (same enrich path as send — INCONCLUSIVE)"
   ],
   "TESTS": {
     "test_chat_data_insight_service_recs": "4 passed",
-    "presentationRenderOnly": "6 passed"
+    "presentationRenderOnly": "6 passed",
+    "smoke_catalog_display_http": "PASS",
+    "live_send_p0": "PASS",
+    "live_f5_history": "PASS"
   },
   "HELP_UPDATED": true,
-  "FINAL_RESULT_NOTE": "Residual válido de 7f3a9c21 fechado; capabilityGroup e live surfaces não reabertos"
+  "FINAL_RESULT_NOTE": "Residual 7f3a9c21 + live SEND/F5/HISTORY PASS; debts restantes: pathRules KEEP, cleanup recs static, EN==pt, stream/simulate formal",
+  "LIVE_SURFACES": {
+    "SEND": "PASS",
+    "STREAM": "INCONCLUSIVE_NOT_EXERCISED_SAME_ENRICH_PATH",
+    "SIMULATE": "INCONCLUSIVE_NOT_EXERCISED",
+    "F5": "PASS",
+    "HISTORY": "PASS"
+  },
+  "CUTOVER_LIVE": "PASS",
+  "SMOKE_HTTP": "PASS",
+  "LIVE_DEBT_CLOSED": true
 }

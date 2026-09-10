@@ -1,0 +1,211 @@
+{
+  "stage": "E18.S2_live_surfaces",
+  "generated_at": "2026-09-10T07:51:21.054166+00:00",
+  "agentId": "b85edd53-2fd9-4e2f-ab17-92fd288f4f85",
+  "sessionId": "88607507-5054-4443-84e9-d59a14a1cb7c",
+  "smoke_http": "PASS (capabilities/description/stock)",
+  "cases": {
+    "SEND_capabilities": {
+      "http": 200,
+      "ok": true,
+      "elapsed_s": 24.18,
+      "leaks": [],
+      "tables": 0,
+      "plans": 0,
+      "plan_routeTitles_keys": [],
+      "plan_has_sectionTitles": false,
+      "recommendations_count": 0,
+      "recommendation_sample": [],
+      "titles_sample": [],
+      "content_len": 21554,
+      "content_preview": "Você está usando o agente **Agente Minha DELPI** (Assistente corporativo geral da Minha DELPI, com acesso a conhecimento, APIs autorizadas e ferramentas configuradas.). Abaixo estão as capacidades **deste agente** nesta sessão:\n\nPosso ajudar você nestes formatos:\n\n**Sempre dispon"
+    },
+    "SEND_description": {
+      "http": 200,
+      "ok": true,
+      "elapsed_s": 19.93,
+      "leaks": [],
+      "tables": 2,
+      "plans": 2,
+      "plan_routeTitles_keys": [],
+      "plan_has_sectionTitles": false,
+      "recommendations_count": 9,
+      "recommendation_sample": [
+        {
+          "label": "Filtrar os registros por critério relevante",
+          "query": "Filtrar esta lista por critério relevante",
+          "reason": "Reduzir ruído em listas extensas"
+        },
+        {
+          "label": "Pedir a próxima página se a lista estiver truncada",
+          "query": "Mostrar a próxima página desta consulta",
+          "reason": "Ampliar cobertura quando houver paginação"
+        },
+        {
+          "label": "Detalhar um registro específico da lista",
+          "query": "Detalhar um registro específico desta lista",
+          "reason": "Aprofundar em um item de interesse"
+        }
+      ],
+      "titles_sample": [
+        "Resumo (produto)",
+        "Resultado da consulta",
+        "Resumo (produto)",
+        "Resultado da consulta"
+      ],
+      "content_len": 231,
+      "content_preview": "Código **10080011** (grupo **1008**) — TERM. LINGUETA 6,30X0,80 0,80-2,00MM2 NU S/ISOLACAO FITADO CURTO ROHS\n\n**Pontos de atenção**\n\n- Valor zerado em **Package Quantity** (linha 1).\n\n- Valor zerado em **Media Quantity** (linha 1)."
+    },
+    "SEND_stock": {
+      "http": 200,
+      "ok": true,
+      "elapsed_s": 31.59,
+      "leaks": [],
+      "tables": 2,
+      "plans": 2,
+      "plan_routeTitles_keys": [],
+      "plan_has_sectionTitles": false,
+      "recommendations_count": 10,
+      "recommendation_sample": [
+        {
+          "label": "Mostrar apenas posições com disponível negativo",
+          "query": "Filtrar estoque com disponível negativo",
+          "reason": "Priorizar posições com risco de empenho acima do físico"
+        },
+        {
+          "label": "Ver concentração por filial",
+          "query": "Mostrar concentração de estoque por filial",
+          "reason": "Identificar onde o saldo está concentrado"
+        },
+        {
+          "label": "Pedir a próxima página de estoque",
+          "query": "Mostrar a próxima página de estoque",
+          "reason": "Ampliar cobertura quando a lista estiver truncada"
+        }
+      ],
+      "titles_sample": [
+        "Resumo (produto)",
+        "Estoque (produto)",
+        "Resultado da consulta",
+        "Resumo (produto)",
+        "Estoque (produto)",
+        "Resultado da consulta"
+      ],
+      "content_len": 426,
+      "content_preview": "O produto **10080001**\n\nSaldo disponível total: **2.975.886** un. em **8** posição(ões). Maior concentração na filial **02** (2.589.505 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenho acima do físico — validar com o almoxarifado.\n\n- Empenho e"
+    },
+    "SEND_compound": {
+      "http": 200,
+      "ok": true,
+      "elapsed_s": 34.21,
+      "leaks": [],
+      "tables": 4,
+      "plans": 4,
+      "plan_routeTitles_keys": [],
+      "plan_has_sectionTitles": false,
+      "recommendations_count": 19,
+      "recommendation_sample": [
+        {
+          "label": "Mostrar apenas posições com disponível negativo",
+          "query": "Filtrar estoque com disponível negativo",
+          "reason": "Priorizar posições com risco de empenho acima do físico"
+        },
+        {
+          "label": "Ver concentração por filial",
+          "query": "Mostrar concentração de estoque por filial",
+          "reason": "Identificar onde o saldo está concentrado"
+        },
+        {
+          "label": "Pedir a próxima página de estoque",
+          "query": "Mostrar a próxima página de estoque",
+          "reason": "Ampliar cobertura quando a lista estiver truncada"
+        }
+      ],
+      "titles_sample": [
+        "Estoque (produto)",
+        "Estoque (produto)",
+        "Resultado da consulta",
+        "Resultado da consulta",
+        "Resultado da consulta",
+        "Estoque (produto)",
+        "Estoque (produto)",
+        "Resultado da consulta"
+      ],
+      "content_len": 1095,
+      "content_preview": "O produto **10080011** é um terminal lingueta e possui **57.935 unidades disponíveis** no total — porém com pontos críticos de atenção no saldo.\n\n## Cadastro\n\n- **Código:** 10080011 (grupo **1008** — terminais)\n- **Descrição:** TERM. LINGUETA 6,30X0,80 0,80-2,00MM2 NU S/ISOLACAO "
+    },
+    "SEND_inspection": {
+      "http": 200,
+      "ok": true,
+      "elapsed_s": 38.05,
+      "tables": 2,
+      "plans": 6,
+      "recs": 11,
+      "titles": [
+        "Estoque (produto)",
+        "Resultado da consulta",
+        "Resultado da consulta",
+        "Resultado da consulta",
+        "Resultado da consulta",
+        "Estoque (produto)"
+      ],
+      "content_len": 730,
+      "preview": "O produto **10080011** não possui plano de inspeção cadastrado — a consulta à plataforma não encontrou nenhum registro de inspeção para esse item. Como contexto complementar, o estoque desse mesmo produto foi consultado:"
+    },
+    "F5_history_reload": {
+      "http": 200,
+      "ok": true,
+      "messages_count": 4,
+      "assistant_like_count": 2,
+      "stackPresentationPlan_nodes": 12,
+      "table_nodes": 6,
+      "response_type": "list"
+    },
+    "SEND_sibling_commercial": {
+      "http": 200,
+      "ok": true,
+      "tables": 0,
+      "plans": 0,
+      "plan_routeTitles_keys": [],
+      "plan_has_sectionTitles": false,
+      "recommendations_count": 0,
+      "recommendation_sample": [],
+      "titles_sample": [
+        "Resultado da consulta",
+        "Resultado da consulta"
+      ],
+      "content_len": 437,
+      "content_preview": "Para consultar a **taxa de conversão de vendas** (fechamento de negócios), preciso de um detalhe:\n\n- **Qual período?** Ex.: mês atual, mês passado, um intervalo específico (01/03/2026 a 31/03/2026).\n- **Alguma filial específica** (01 ou 02) ou consolidado?\n\nSe preferir, posso tra"
+    },
+    "SEND_stock_seed": {
+      "http": 200,
+      "ok": true,
+      "elapsed_s": 19.7,
+      "tables": 2,
+      "plans": 2,
+      "recs": 10,
+      "titles": [
+        "Estoque (produto)",
+        "Resultado da consulta",
+        "Estoque (produto)",
+        "Resultado da consulta"
+      ],
+      "content_len": 426,
+      "preview": "O produto **10080001**\n\nSaldo disponível total: **2.975.886** un. em **8** posição(ões). Maior concentração na filial **02** (2.589.505 un. disponíveis). **Pontos de atenção**\n\n- Disponível negativo indica reserva/empenh"
+    }
+  },
+  "SURFACES": {
+    "SEND": "PASS",
+    "STREAM": "INCONCLUSIVE_NOT_EXERCISED_SAME_ENRICH_PATH",
+    "SIMULATE": "INCONCLUSIVE_NOT_EXERCISED",
+    "F5": "PASS",
+    "HISTORY": "PASS"
+  },
+  "CUTOVER_LIVE": "PASS",
+  "NOTES": [
+    "smoke http PASS after fixing body.message",
+    "SEND P0 PASS (capabilities/description/stock/compound/inspection/sibling)",
+    "F5/history via GET /sessions/{id}/messages returns raw list",
+    "STREAM/SIMULATE not separately exercised"
+  ]
+}

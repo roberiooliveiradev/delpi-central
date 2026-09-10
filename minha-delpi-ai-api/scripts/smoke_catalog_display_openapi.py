@@ -313,7 +313,7 @@ def _send_message(token: str, session_id: str, message: str) -> dict:
         "POST",
         f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session_id}/messages",
         token=token,
-        body={"content": message, "responseMode": "normal"},
+        body={"message": message, "responseMode": "normal"},
         timeout=360,
     )
 
