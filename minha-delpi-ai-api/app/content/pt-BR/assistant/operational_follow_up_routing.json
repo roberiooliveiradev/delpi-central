@@ -7,8 +7,9 @@
   "authorityShadow": {
     "enabled": true,
     "cutoverEnabled": true,
-    "messageSegmentTermsRole": "observer",
-    "deleteDeferredToWaveH": true
+    "messageSegmentTermsRole": "removed",
+    "deleteDeferredToWaveH": false,
+    "messageSegmentTermsDeletedAt": "E9.S12.A"
   },
   "followUpTypes": {
     "shipping": {
@@ -16,35 +17,14 @@
       "preferredRouteId": "productShippingStatus",
       "inheritsPlaybookDate": true,
       "grantsProductScope": true,
-      "grantsSpecificProductScope": true,
-      "messageSegmentTerms": [
-        "expedicao",
-        "expedição",
-        "shipping-status",
-        "inspecao final",
-        "inspeção final",
-        "liberado para exped",
-        "e a expedicao",
-        "e a expedição"
-      ]
+      "grantsSpecificProductScope": true
     },
     "structure_exclusivity": {
       "routeSegment": "structure/exclusivity",
       "preferredRouteId": "productStructureExclusivity",
       "inheritsPlaybookDate": false,
       "grantsProductScope": true,
-      "grantsSpecificProductScope": true,
-      "messageSegmentTerms": [
-        "structure/exclusivity",
-        "estrutura exclusiv",
-        "mp exclusiva",
-        "materia prima exclusiva",
-        "matéria-prima exclusiva",
-        "quais sao exclusivas",
-        "quais são exclusivas",
-        "sao exclusivas",
-        "são exclusivas"
-      ]
+      "grantsSpecificProductScope": true
     },
     "structure": {
       "grantsProductScope": false,

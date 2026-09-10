@@ -83,26 +83,8 @@ class ChatOperationalFollowUpRoutingService:
 
     @classmethod
     def message_segment_terms(cls) -> tuple[tuple[str, tuple[str, ...]], ...]:
-        parsed: list[tuple[str, tuple[str, ...]]] = []
-
-        for follow_up_type, config in cls._follow_up_types().items():
-            if not isinstance(config, dict):
-                continue
-
-            segment = str(config.get("routeSegment") or "").strip()
-            terms = config.get("messageSegmentTerms") or []
-
-            if not segment or not isinstance(terms, list):
-                continue
-
-            parsed.append(
-                (
-                    segment,
-                    tuple(str(term) for term in terms if str(term).strip()),
-                )
-            )
-
-        return tuple(parsed)
+        """E9.S12.A — terms removidos do JSON; API vazia (compat shadow/tests)."""
+        return ()
 
     @classmethod
     def authority_shadow_enabled(cls) -> bool:
@@ -120,21 +102,13 @@ class ChatOperationalFollowUpRoutingService:
 
     @classmethod
     def segment_from_message_terms(cls, message: str | None) -> str | None:
-        """Legado: messageSegmentTerms → routeSegment (observer após cutover)."""
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-
-        if not normalized:
-            return None
-
-        for segment, terms in cls.message_segment_terms():
-            if any(term in normalized for term in terms):
-                return segment
-
+        """Legado removido (E9.S12.A): messageSegmentTerms deletados; API retorna None."""
+        del message
         return None
 
     @classmethod
     def segment_from_follow_up_type(cls, message: str | None) -> str | None:
-        """Candidato estruturado: follow_up_type → routeSegment (sem varrer terms)."""
+        """Authority: follow_up_type → routeSegment (sem varrer terms)."""
         from app.domain.services.chat_follow_up_intent_service import (
             ChatFollowUpIntentService,
         )
@@ -154,8 +128,8 @@ class ChatOperationalFollowUpRoutingService:
         legacy = cls.segment_from_message_terms(message)
         candidate = cls.segment_from_follow_up_type(message)
         follow_up_type = ChatFollowUpIntentService.follow_up_type(message)
-        cutover = cls.cutover_enabled()
-        authority = "follow_up_type" if cutover else "message_segment_terms"
+        # E9.S12.A — authority permanente follow_up_type (terms JSON removidos).
+        authority = "follow_up_type"
 
         if cls.authority_shadow_enabled():
             FollowUpRoutingAuthorityShadowService.record(
@@ -165,14 +139,12 @@ class ChatOperationalFollowUpRoutingService:
                     "followUpType": follow_up_type,
                     "agree": legacy == candidate,
                     "authority": authority,
-                    "cutoverEnabled": cutover,
+                    "cutoverEnabled": True,
+                    "messageSegmentTermsRemoved": True,
                 }
             )
 
-        if cutover:
-            return candidate
-
-        return legacy
+        return candidate
 
     @classmethod
     def looks_like_playbook_date_follow_up(

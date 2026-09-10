@@ -61,7 +61,7 @@
       "moduleOwner": "app/domain/services/chat_operational_follow_up_routing_service.py",
       "defaultState": "cutover_on",
       "flagReversible": true,
-      "rollbackHow": "authorityShadow.cutoverEnabled=false → authority=message_segment_terms; follow_up_type vira candidate no shadow.",
+      "rollbackHow": "E9.S12.A: messageSegmentTerms removidos — rollback para terms indisponível. Authority permanente follow_up_type→routeSegment; cutoverEnabled permanece documental/shadow.",
       "observability": "followUpRoutingAuthorityShadow (legacySegment, candidateSegment, agree, authority)",
       "sideEffects": false,
       "evidence": "docs/roadmap/llm-json-decoupling/evidence/e3-s7-follow-up-routing-cutover.md",

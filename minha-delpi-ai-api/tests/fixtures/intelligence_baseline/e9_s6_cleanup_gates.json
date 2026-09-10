@@ -66,8 +66,8 @@
       "id": "legacy_fallback_hit_rate",
       "required": true,
       "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s10-offline-inconclusive-close.md",
-      "note": "Residual explicado (observer terms + recommendationQueries LEGACY_FALLBACK); taxa live ainda PENDING"
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s12a-message-segment-terms-delete.md",
+      "note": "E9.S12.A: messageSegmentTerms REMOVED; residual restante = recommendationQueries LEGACY_FALLBACK + playbookPathMarkers"
     }
   ],
   "deleteCandidates": [
@@ -89,11 +89,23 @@
     },
     {
       "id": "follow_up_message_segment_terms",
-      "fields": ["messageSegmentTerms", "playbookPathMarkers"],
+      "fields": ["messageSegmentTerms"],
+      "surface": "app/content/pt-BR/assistant/operational_follow_up_routing.json",
+      "owner": "plano-03 / Onda D",
+      "status": "DELETED",
+      "deletedAt": "E9.S12.A",
+      "authorization": "APPROVED",
+      "authorizationSource": "user:siga_para_o_delete + cutover follow_up_type permanente + offline positive/sibling/negative",
+      "blockReason": null,
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s12a-message-segment-terms-delete.md"
+    },
+    {
+      "id": "follow_up_playbook_path_markers",
+      "fields": ["playbookPathMarkers"],
       "surface": "app/content/pt-BR/assistant/operational_follow_up_routing.json",
       "owner": "plano-03 / Onda D",
       "status": "BLOCKED",
-      "blockReason": "deleteAuthorized=false; observer ainda usado em rollback flag e shadow"
+      "blockReason": "ainda authority residual em date inherit; migrar antes de DELETE (E9.S12.B)"
     },
     {
       "id": "turn_understanding_heuristics_json",
@@ -105,5 +117,5 @@
     }
   ],
   "passStatusesForDelete": ["PASS", "PASS_OFFLINE_AND_LIVE", "APPROVED"],
-  "note": "PASS_OFFLINE sozinho NÃO autoriza DELETE enquanto gates required tiverem INCONCLUSIVE/PENDING/FAIL."
+  "note": "deleteAuthorized global=false; fatia E9.S12.A (messageSegmentTerms) DELETED com APPROVED explícito. Demais candidatos BLOCKED."
 }

@@ -149,3 +149,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: live Ollama/gateway (latency/cost) → DELETE gated |
 | 2026-09-10 | E9.S11 **ATENDIDO** — efficiency live Kimi p50/p95; provider=openai_compatible; sem Ollama |
 | 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: elevar dims PASS_OFFLINE→PASS ou autorizar DELETE com política explícita |
+| 2026-09-10 | E9.S12.A **ATENDIDO** — DELETE `messageSegmentTerms`; authority permanente follow_up_type; playbookPathMarkers/registry ainda BLOCKED |
+| 2026-09-10 | Onda H **ATENDIDO_PARCIAL** — próximo: E9.S12.B (`playbookPathMarkers`) |

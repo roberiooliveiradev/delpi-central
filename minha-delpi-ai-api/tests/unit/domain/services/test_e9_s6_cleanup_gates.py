@@ -61,13 +61,20 @@ def test_e9_s6_current_evaluation_blocks_delete():
     assert latency["status"] == "PASS"
 
 
-def test_e9_s6_delete_candidates_are_blocked():
+def test_e9_s6_delete_candidates_status():
     data = _load()
     candidates = data.get("deleteCandidates") or []
     assert len(candidates) >= 3
+    by_id = {str(c.get("id")): c for c in candidates}
+    # E9.S12.A — terms deletados com APPROVED; demais BLOCKED
+    terms = by_id["follow_up_message_segment_terms"]
+    assert terms.get("status") == "DELETED"
+    assert terms.get("authorization") == "APPROVED"
     for item in candidates:
-        assert item.get("status") == "BLOCKED", item.get("id")
-        assert str(item.get("blockReason") or "").strip(), item.get("id")
+        status = item.get("status")
+        assert status in {"BLOCKED", "DELETED"}, item.get("id")
+        if status == "BLOCKED":
+            assert str(item.get("blockReason") or "").strip(), item.get("id")
         assert str(item.get("owner") or "").strip(), item.get("id")
         assert item.get("fields"), item.get("id")
 

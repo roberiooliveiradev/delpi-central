@@ -114,8 +114,6 @@ def test_e3_s8_schema_filter_reload_uses_inherited_only():
     assert plan.bind.parameters["code"] == "10080001"
 
 
-def test_e3_s8_message_segment_terms_not_deleted_yet():
-    # Cleanup agressivo fica na Onda H; observer API deve permanecer.
-    terms = ChatOperationalFollowUpRoutingService.message_segment_terms()
-    assert terms
-    assert any(segment == "shipping-status" for segment, _ in terms)
+def test_e3_s8_message_segment_terms_deleted_e9_s12a():
+    # E9.S12.A — DELETE messageSegmentTerms; API vazia.
+    assert ChatOperationalFollowUpRoutingService.message_segment_terms() == ()

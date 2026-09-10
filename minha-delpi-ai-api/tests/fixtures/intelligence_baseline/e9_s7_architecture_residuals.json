@@ -120,9 +120,10 @@
       "coreConsumers": [
         "app/domain/services/chat_operational_follow_up_routing_service.py"
       ],
-      "disposition": "REMOVE_WHEN_GATES_PASS",
-      "justification": "Observer pós-E3.S7; rollback flag ainda depende. DELETE bloqueado E9.S6.",
-      "inCoreGenericSelection": false
+      "disposition": "REMOVED",
+      "justification": "E9.S12.A — campos JSON deletados; authority permanente follow_up_type→routeSegment; APIs observer retornam vazio/None.",
+      "inCoreGenericSelection": false,
+      "deletedAt": "E9.S12.A"
     }
   ]
 }
