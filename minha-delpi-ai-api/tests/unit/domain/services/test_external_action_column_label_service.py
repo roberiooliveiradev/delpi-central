@@ -17,6 +17,26 @@ def test_label_for_uses_openapi_not_json_catalog():
     )
 
 
+def test_enrich_column_def_openapi_beats_humanize_stamp():
+    service = ExternalActionColumnLabelService()
+    column = service.enrich_column_def(
+        "product_code",
+        label="Product Code",
+        schema_labels={"product_code": "Código do produto"},
+    )
+    assert column["label"] == "Código do produto"
+
+
+def test_enrich_column_def_preserves_non_humanize_llm_label():
+    service = ExternalActionColumnLabelService()
+    column = service.enrich_column_def(
+        "mandatory_cc_pc",
+        label="CC obrigatório PC",
+        schema_labels={"mandatory_cc_pc": "Centro de custo PC"},
+    )
+    assert column["label"] == "CC obrigatório PC"
+
+
 def test_label_for_prefers_openapi_schema_title():
     service = ExternalActionColumnLabelService()
 

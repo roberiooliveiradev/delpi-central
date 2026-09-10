@@ -51,65 +51,81 @@ class ChatPresentationApiDeliveredMetadataService:
         download_artifacts: list[Any] = []
         primary = None
 
+        # Labels/formats OpenAPI+meta no host ANTES da montagem da tabela (evita stamp humanize EN).
+        previous_schema_labels = getattr(presenter, "_active_schema_labels", None)
+        previous_schema_formats = getattr(presenter, "_active_schema_formats", None)
+        presenter._active_schema_labels = presenter._column_labels.merge_meta_field_labels(
+            presenter._column_labels.resolve_schema_labels(response_schema),
+            sanitized_data,
+        )
+        presenter._active_schema_formats = presenter._column_labels.merge_meta_field_formats(
+            presenter._column_labels.resolve_schema_formats(response_schema),
+            sanitized_data,
+        )
+
         is_composite = ChatSchemaDrivenPresentationService.is_composite_shape(
             shape=response_shape,
             root=operational_root,
             sections=response_sections if isinstance(response_sections, list) else None,
         )
 
-        if is_composite:
-            composite = ChatSchemaDrivenPresentationService.build_composite_bundle(
-                presenter,
-                sanitized_data,
-                path=resolved_path,
-                entity=entity,
-                sections=response_sections if isinstance(response_sections, list) else None,
-            )
-            text_presentation = composite.text
-            table_presentation = composite.table
-            kpi_presentation = composite.kpi
-            chart_presentation = None
-            tree_presentation = composite.tree
-            composite_tables = list(composite.tables)
-            dashboard_presentation = composite.dashboard
-        else:
-            primary = ChatSchemaDrivenPresentationService.finish_schema_first_primary(
-                presenter,
-                sanitized_data,
-                path=resolved_path,
-                entity=entity,
-                response_schema=response_schema,
-                response_shape=response_shape,
-            )
+        try:
+            if is_composite:
+                composite = ChatSchemaDrivenPresentationService.build_composite_bundle(
+                    presenter,
+                    sanitized_data,
+                    path=resolved_path,
+                    entity=entity,
+                    sections=response_sections if isinstance(response_sections, list) else None,
+                )
+                text_presentation = composite.text
+                table_presentation = composite.table
+                kpi_presentation = composite.kpi
+                chart_presentation = None
+                tree_presentation = composite.tree
+                composite_tables = list(composite.tables)
+                dashboard_presentation = composite.dashboard
+            else:
+                primary = ChatSchemaDrivenPresentationService.finish_schema_first_primary(
+                    presenter,
+                    sanitized_data,
+                    path=resolved_path,
+                    entity=entity,
+                    response_schema=response_schema,
+                    response_shape=response_shape,
+                )
 
-            bundle = ChatSchemaDrivenPresentationService.build_bundle(
-                presenter,
-                sanitized_data,
-                path=resolved_path,
-                entity=entity,
-                response_shape=response_shape,
-            )
+                bundle = ChatSchemaDrivenPresentationService.build_bundle(
+                    presenter,
+                    sanitized_data,
+                    path=resolved_path,
+                    entity=entity,
+                    response_shape=response_shape,
+                )
 
-            text_presentation = bundle.text
-            table_presentation = bundle.table
-            kpi_presentation = bundle.kpi
-            chart_presentation = bundle.chart
-            tree_presentation = bundle.tree
-            download_artifacts = list(bundle.download_artifacts)
+                text_presentation = bundle.text
+                table_presentation = bundle.table
+                kpi_presentation = bundle.kpi
+                chart_presentation = bundle.chart
+                tree_presentation = bundle.tree
+                download_artifacts = list(bundle.download_artifacts)
 
-            if isinstance(primary, dict):
-                primary_type = str(primary.get("type") or "").strip().lower()
+                if isinstance(primary, dict):
+                    primary_type = str(primary.get("type") or "").strip().lower()
 
-                if primary_type == "markdown" and text_presentation is None:
-                    text_presentation = primary
-                elif primary_type == "table":
-                    table_presentation = primary
-                elif primary_type == "kpi":
-                    kpi_presentation = primary
-                elif primary_type in {"chart", "line_chart", "bar_chart"}:
-                    chart_presentation = primary
-                elif primary_type == "tree":
-                    tree_presentation = primary
+                    if primary_type == "markdown" and text_presentation is None:
+                        text_presentation = primary
+                    elif primary_type == "table":
+                        table_presentation = primary
+                    elif primary_type == "kpi":
+                        kpi_presentation = primary
+                    elif primary_type in {"chart", "line_chart", "bar_chart"}:
+                        chart_presentation = primary
+                    elif primary_type == "tree":
+                        tree_presentation = primary
+        finally:
+            presenter._active_schema_labels = previous_schema_labels
+            presenter._active_schema_formats = previous_schema_formats
 
         available_formats: list[str] = []
 

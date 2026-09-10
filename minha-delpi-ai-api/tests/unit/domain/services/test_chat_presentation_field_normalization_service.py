@@ -371,3 +371,43 @@ def test_normalize_table_preserves_existing_llm_labels():
 
     assert labels["mandatory_cc_pc"] == "CC obrigatório PC"
     assert labels["sale_price"] == "Preço de venda"
+
+
+def test_normalize_table_openapi_beats_humanize_stamp_stock_headers():
+    """P0 estoque: Product Code (humanize) não vence title OpenAPI PT-BR."""
+    presentation = {
+        "type": "table",
+        "title": "Estoque (produto)",
+        "columns": [
+            {"key": "product_code", "label": "Product Code"},
+            {"key": "branch", "label": "Branch"},
+            {"key": "warehouse", "label": "Warehouse"},
+            {"key": "available_quantity", "label": "Available Quantity"},
+        ],
+        "rows": [
+            {
+                "product_code": "10080022",
+                "branch": "02",
+                "warehouse": "99",
+                "available_quantity": -34127,
+            }
+        ],
+    }
+    schema_labels = {
+        "product_code": "Código do produto",
+        "branch": "Filial",
+        "warehouse": "Armazém",
+        "available_quantity": "Saldo disponível",
+    }
+
+    normalized = ChatPresentationFieldNormalizationService.normalize_presentation(
+        presentation,
+        path="/products/10080022/stock",
+        schema_labels=schema_labels,
+    )
+    labels = {column["key"]: column["label"] for column in normalized["columns"]}
+
+    assert labels["product_code"] == "Código do produto"
+    assert labels["branch"] == "Filial"
+    assert labels["warehouse"] == "Armazém"
+    assert labels["available_quantity"] == "Saldo disponível"

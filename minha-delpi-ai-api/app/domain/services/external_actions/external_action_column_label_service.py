@@ -167,15 +167,28 @@ class ExternalActionColumnLabelService:
         if not normalized_key:
             return {"key": "", "label": ""}
 
-        resolved_label = (
-            str(label).strip()
-            if isinstance(label, str) and label.strip()
-            else self.label_for(
+        provided = str(label).strip() if isinstance(label, str) and label.strip() else ""
+        schema_label = ""
+        if isinstance(schema_labels, dict):
+            raw_schema = schema_labels.get(normalized_key)
+            if isinstance(raw_schema, str) and raw_schema.strip():
+                schema_label = raw_schema.strip()
+
+        # Humanize EN stamp (ex.: "Product Code") não deve vencer title OpenAPI/meta PT.
+        if (
+            provided
+            and schema_label
+            and self._is_deterministic_humanize_label(normalized_key, provided)
+        ):
+            resolved_label = schema_label
+        elif provided:
+            resolved_label = provided
+        else:
+            resolved_label = self.label_for(
                 normalized_key,
                 schema_labels=schema_labels,
                 enable_discovery=False,
             )
-        )
         column: dict[str, str] = {
             "key": normalized_key,
             "label": resolved_label,
@@ -189,6 +202,17 @@ class ExternalActionColumnLabelService:
             column["dataType"] = field_format
 
         return column
+
+    @classmethod
+    def _is_deterministic_humanize_label(cls, key: str, label: str) -> bool:
+        humanized = cls._humanize_field_key(key)
+        return cls._normalize_label_compare(label) == cls._normalize_label_compare(
+            humanized
+        )
+
+    @staticmethod
+    def _normalize_label_compare(value: str) -> str:
+        return " ".join(str(value or "").strip().lower().split())
 
     def label_for(
         self,
