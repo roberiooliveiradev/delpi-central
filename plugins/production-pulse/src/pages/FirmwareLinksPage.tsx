@@ -1225,7 +1225,13 @@ export function FirmwareLinksPage({
         device={selectedDevice}
         firmware={selectedFirmware}
         canManage={canManage}
-        onClose={() => setLayer({ openLayer: "none" }, false)}
+        onClose={() => {
+          // Não sobrescrever confirm/modal abertos pela ação do menu (ex.: Desvincular).
+          setUi((current) => {
+            if (current.openLayer !== "menu") return current;
+            return { ...current, openLayer: "none" };
+          });
+        }}
         onAction={(action) => void onEntityAction(action)}
       />
 

@@ -207,6 +207,8 @@ export function EntityActionMenu({
   if (!entity || !canManage) return null;
 
   const run = (action: string) => {
+    // Ação primeiro: openConfirm/openModal definem openLayer.
+    // onClose só limpa se ainda estivermos no menu (não clobber confirm/modal).
     onAction(action);
     onClose();
   };
