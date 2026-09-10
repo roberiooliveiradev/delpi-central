@@ -52,8 +52,8 @@ describe("KpiCard", () => {
     expect(screen.getByText("On track")).toBeTruthy();
   });
 
-  it("exibe segunda linha Meta mês e ajuda", () => {
-    render(
+  it("exibe segunda linha Meta mês com ajuda no próprio prefixo (wrap)", () => {
+    const { container } = render(
       <KpiCard
         title="ROL"
         value="100"
@@ -70,8 +70,53 @@ describe("KpiCard", () => {
     );
     expect(screen.getByText("Meta parcial")).toBeTruthy();
     expect(screen.getByText("Meta mês")).toBeTruthy();
-    expect(screen.getByLabelText("Ajuda: Meta parcial")).toBeTruthy();
-    expect(screen.getByLabelText("Ajuda: Meta mês")).toBeTruthy();
+    expect(container.querySelectorAll(".delpi-ui-help-tooltip--wrap").length).toBe(2);
+    expect(container.querySelector("button.delpi-ui-help-tooltip__trigger")).toBeNull();
+
+    const wraps = container.querySelectorAll(".delpi-ui-help-tooltip--wrap");
+    fireEvent.mouseEnter(wraps[0]!);
+    expect(screen.getByRole("tooltip", { hidden: true }).textContent).toBe(
+      "Meta calculada do período",
+    );
+    fireEvent.mouseLeave(wraps[0]!);
+    fireEvent.mouseEnter(wraps[1]!);
+    expect(screen.getByRole("tooltip", { hidden: true }).textContent).toBe("Valor cadastrado");
+  });
+
+  it("titleHint usa wrap no título sem botão ?", () => {
+    const { container } = render(
+      <KpiCard
+        title="OTD compras"
+        titleHint="Percentual de entregas no prazo"
+        value="95%"
+        icon={<span />}
+        classNames={kpiCardBemClasses("ds")}
+        labels={LABELS}
+      />,
+    );
+    const wrap = container.querySelector(".delpi-ui-help-tooltip--wrap");
+    expect(wrap).toBeTruthy();
+    expect(wrap?.textContent).toContain("OTD compras");
+    expect(container.querySelector("button.delpi-ui-help-tooltip__trigger")).toBeNull();
+    fireEvent.mouseEnter(wrap!);
+    expect(screen.getByRole("tooltip", { hidden: true }).textContent).toBe(
+      "Percentual de entregas no prazo",
+    );
+  });
+
+  it("sem hints permanece texto normal sem tooltip wrap", () => {
+    const { container } = render(
+      <KpiCard
+        title="OEE"
+        value="82%"
+        goalLabel="80%"
+        icon={<span />}
+        classNames={kpiCardBemClasses("dp")}
+        labels={LABELS}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-help-tooltip--wrap")).toBeNull();
+    expect(container.querySelector("button.delpi-ui-help-tooltip__trigger")).toBeNull();
   });
 
   it("mostra goalScopeHint sem Meta mês numérica (matriz D)", () => {
@@ -109,7 +154,7 @@ describe("KpiCard", () => {
     expect(container.querySelector(".delpi-ui-kpi-card--negative")).toBeTruthy();
   });
 
-  it("dispara onClick quando interativo e ignora clique no help", () => {
+  it("dispara onClick no card interativo inclusive ao clicar no título com help wrap", () => {
     const onClick = vi.fn();
     render(
       <KpiCard
@@ -128,12 +173,10 @@ describe("KpiCard", () => {
     fireEvent.click(card);
     expect(onClick).toHaveBeenCalledTimes(1);
 
-    const help = card.querySelector("button.delpi-ui-help-tooltip__trigger");
-    expect(help).toBeTruthy();
-    expect(card.querySelector("button button")).toBeNull();
+    expect(card.querySelector("button.delpi-ui-help-tooltip__trigger")).toBeNull();
     onClick.mockClear();
-    fireEvent.click(help as HTMLElement);
-    expect(onClick).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText("ROL"));
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it("mostra placeholder quando loading", () => {

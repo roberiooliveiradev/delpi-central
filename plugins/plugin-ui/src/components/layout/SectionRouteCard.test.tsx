@@ -94,8 +94,8 @@ describe("SectionRouteCard", () => {
     expect(svg?.getAttribute("fill")).toBe("currentColor");
   });
 
-  it("anexa HelpTooltip ao título quando hint é informado", () => {
-    render(
+  it("anexa HelpTooltip wrap ao título quando hint é informado", () => {
+    const { container } = render(
       <SectionRouteCard
         classNames={sectionRouteCardBemClasses("cm")}
         title="Operações"
@@ -103,7 +103,27 @@ describe("SectionRouteCard", () => {
         routes={[{ id: "inventory", label: "Estoque", onClick: () => undefined }]}
       />,
     );
-    expect(screen.getByLabelText("Ajuda: Operações")).toBeTruthy();
+    const wrap = container.querySelector(".delpi-ui-help-tooltip--wrap");
+    expect(wrap).toBeTruthy();
+    expect(wrap?.textContent).toContain("Operações");
+    expect(container.querySelector("button.delpi-ui-help-tooltip__trigger")).toBeNull();
+    fireEvent.mouseEnter(wrap!);
+    expect(screen.getByRole("tooltip", { hidden: true }).textContent).toBe(
+      "Pedidos, entregas e estoques autorizados.",
+    );
+  });
+
+  it("sem hint o título permanece texto normal", () => {
+    const { container } = render(
+      <SectionRouteCard
+        classNames={sectionRouteCardBemClasses("cm")}
+        title="Análises"
+        routes={[{ id: "otd", label: "OTD", onClick: () => undefined }]}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-help-tooltip--wrap")).toBeNull();
+    expect(container.querySelector("button.delpi-ui-help-tooltip__trigger")).toBeNull();
+    expect(screen.getByText("Análises")).toBeTruthy();
   });
 
   it("mostra pin em rota kind create quando onPinClick existe", () => {

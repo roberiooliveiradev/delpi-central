@@ -58,7 +58,7 @@ describe("SimpleKpiCard", () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it("com onClick + titleHint não aninha button dentro de button", () => {
+  it("com onClick + titleHint usa wrap sem botão ? aninhado", () => {
     const onClick = vi.fn();
     render(
       <SimpleKpiCard
@@ -72,12 +72,13 @@ describe("SimpleKpiCard", () => {
     );
     const card = screen.getByRole("button", { name: /Abrir detalhes: Linhas em aberto/i });
     expect(card.tagName).toBe("ARTICLE");
-    expect(card.querySelector("button.delpi-ui-help-tooltip__trigger")).toBeTruthy();
+    expect(card.querySelector(".delpi-ui-help-tooltip--wrap")).toBeTruthy();
+    expect(card.querySelector("button.delpi-ui-help-tooltip__trigger")).toBeNull();
     expect(card.querySelector("button button")).toBeNull();
   });
 
-  it("exibe HelpTooltip quando titleHint é informado", () => {
-    render(
+  it("exibe HelpTooltip wrap quando titleHint é informado", () => {
+    const { container } = render(
       <SimpleKpiCard
         title="Qtd. perdida"
         titleHint="Quantidade perdida apontada em H6_QTDPERD."
@@ -87,7 +88,10 @@ describe("SimpleKpiCard", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Ajuda: Qtd. perdida")).toBeTruthy();
+    const wrap = container.querySelector(".delpi-ui-help-tooltip--wrap");
+    expect(wrap).toBeTruthy();
+    expect(wrap?.textContent).toContain("Qtd. perdida");
+    expect(container.querySelector("button.delpi-ui-help-tooltip__trigger")).toBeNull();
     expect(document.querySelector(".delpi-ui-kpi-title__help")).toBeTruthy();
   });
 

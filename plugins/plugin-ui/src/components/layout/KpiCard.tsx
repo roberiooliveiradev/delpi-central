@@ -43,6 +43,7 @@ export type KpiComparisonTone = "positive" | "negative" | "warning";
 
 export type KpiCardProps = {
   title: string;
+  /** Ajuda no hover do texto do título (HelpTooltip wrap — sem ícone ?). */
   titleHint?: string;
   value: string;
   valueVariant?: "default" | "per-unit";
@@ -52,11 +53,12 @@ export type KpiCardProps = {
   goalLabel?: string | null;
   /** Sobrescreve `labels.goalPrefix` (ex.: Meta parcial / Meta acumulada). */
   goalPrefix?: string | null;
-  /** HelpTooltip ao lado do prefixo da meta do período. */
+  /** HelpTooltip wrap no prefixo da meta do período. */
   goalHint?: string | null;
   /** Segunda linha: Meta mês (reference_goal). */
   monthlyGoalLabel?: string | null;
   monthlyGoalPrefix?: string | null;
+  /** HelpTooltip wrap no prefixo da Meta mês. */
   monthlyGoalHint?: string | null;
   /** Chip de natureza do período (MTD / YTD). */
   periodKindBadge?: string | null;
@@ -221,39 +223,54 @@ export function KpiCard({
       <div className={classNames.header}>
         <div>
           <p className={classNames.title}>
-            {title}
             {titleHint ? (
               <HelpTooltip
                 content={titleHint}
                 ariaLabel={`Ajuda: ${title}`}
+                wrap
+                placement="bottom"
                 className={classNames.titleHelp}
-              />
-            ) : null}
+              >
+                <span className="delpi-ui-section-hint-label">{title}</span>
+              </HelpTooltip>
+            ) : (
+              title
+            )}
           </p>
           <h3 className={valueClassName}>{loading ? "…" : value}</h3>
           {resolvedGoal ? (
             <p className={goalClassName}>
-              <span className={classNames.goalPrefix}>{resolvedGoalPrefix}</span>
               {resolvedGoalHint ? (
                 <HelpTooltip
                   content={resolvedGoalHint}
                   ariaLabel={`Ajuda: ${resolvedGoalPrefix}`}
+                  wrap
+                  placement="bottom"
                   className={classNames.goalHelp}
-                />
-              ) : null}{" "}
+                >
+                  <span className={classNames.goalPrefix}>{resolvedGoalPrefix}</span>
+                </HelpTooltip>
+              ) : (
+                <span className={classNames.goalPrefix}>{resolvedGoalPrefix}</span>
+              )}{" "}
               {resolvedGoal}
             </p>
           ) : null}
           {resolvedMonthlyGoal ? (
             <p className={monthlyClassName}>
-              <span className={classNames.goalPrefix}>{resolvedMonthlyPrefix}</span>
               {resolvedMonthlyHint ? (
                 <HelpTooltip
                   content={resolvedMonthlyHint}
                   ariaLabel={`Ajuda: ${resolvedMonthlyPrefix}`}
+                  wrap
+                  placement="bottom"
                   className={classNames.goalHelp}
-                />
-              ) : null}{" "}
+                >
+                  <span className={classNames.goalPrefix}>{resolvedMonthlyPrefix}</span>
+                </HelpTooltip>
+              ) : (
+                <span className={classNames.goalPrefix}>{resolvedMonthlyPrefix}</span>
+              )}{" "}
               {resolvedMonthlyGoal}
             </p>
           ) : null}

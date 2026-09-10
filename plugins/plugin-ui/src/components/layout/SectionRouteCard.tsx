@@ -100,10 +100,18 @@ export function SectionRouteCard({
         <div className={classNames.titleBlock}>
           <h3 className={classNames.title}>
             <span className={classNames.titleWithHelp}>
-              <span>{title}</span>
               {hint ? (
-                <HelpTooltip content={hint} ariaLabel={`Ajuda: ${title}`} placement="bottom" />
-              ) : null}
+                <HelpTooltip
+                  content={hint}
+                  ariaLabel={`Ajuda: ${title}`}
+                  wrap
+                  placement="bottom"
+                >
+                  <span className="delpi-ui-section-hint-label">{title}</span>
+                </HelpTooltip>
+              ) : (
+                <span>{title}</span>
+              )}
             </span>
           </h3>
           {description ? <p className={classNames.description}>{description}</p> : null}
