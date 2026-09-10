@@ -644,7 +644,8 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
 
   WiFiClient client;
   HTTPClient http;
-  http.setTimeout(120000);
+  // HTTPClient timeout is uint16_t ms on Arduino-ESP32 (max 65535).
+  http.setTimeout(60000);
   httpEnableRedirects(http);
   if (!http.begin(client, artifactUrl)) {
     reportOtaStatus(targetId, "failed", "http_begin_failed", "");
@@ -1032,7 +1033,6 @@ RgbVisualState resolveRgbVisualState() {
 void updateRgbState() {
   RgbVisualState state = resolveRgbVisualState();
   unsigned long now = millis();
-  bool blink = false;
   unsigned long interval = RGB_BLINK_SLOW_MS;
   bool r = false;
   bool g = false;
@@ -1041,18 +1041,15 @@ void updateRgbState() {
 
   switch (state) {
     case RGB_AUTH_ERROR:
-      blink = true;
       interval = RGB_BLINK_FAST_MS;
       r = true;
       break;
     case RGB_OTA_IN_PROGRESS:
-      blink = true;
       interval = RGB_BLINK_OTA_MS;
       r = true;
       g = true;  // yellow/orange
       break;
     case RGB_CONNECTING:
-      blink = true;
       interval = RGB_BLINK_SLOW_MS;
       r = true;
       break;
@@ -1071,7 +1068,6 @@ void updateRgbState() {
         b = true;
       } else {
         // Freshness expired → blinking blue
-        blink = true;
         interval = RGB_BLINK_SLOW_MS;
         b = true;
       }

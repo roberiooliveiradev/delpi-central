@@ -45,9 +45,9 @@ plans:
         status: completed
         requirements: [RQ-08, RQ-09, RQ-18]
       - id: e4-s2-prove-dual-ota-layout
-        status: blocked_needs_toolchain
+        status: completed
         requirements: [RQ-10, RQ-21]
-        block_reason: Prova de partition table efetiva exige Arduino Core 3.3.11 + build/flash local
+        note: "PASS 2026-09-10 — min_spiffs.csv Core 3.3.11 com otadata/ota_0/ota_1; bin 1.1MB < slot 1.9MB"
       - id: e5-s1-additive-device-status
         status: completed
         requirements: [RQ-02, RQ-03, RQ-04, RQ-13, RQ-17]
@@ -60,6 +60,7 @@ plans:
       - id: e6-s1-firmware-verify-final
         status: blocked_needs_live
         requirements: [RQ-01, RQ-02, RQ-03, RQ-04, RQ-05, RQ-06, RQ-07, RQ-08, RQ-09, RQ-10, RQ-11, RQ-12, RQ-13, RQ-14, RQ-15, RQ-16, RQ-17, RQ-18, RQ-20, RQ-21]
+        note: Compile+partitions PASS; restante exige Super Mini USB/LAN
   api_ota:
     document: ESP32C3-SUPER-MINI-API-OTA-PLAN.md
     todos:
