@@ -112,7 +112,7 @@ Registry/heurística antiga pode existir temporariamente como shadow/fallback ob
 
 - `capabilities.pathRules` não é mais CURRENT — ver plano 04.
 - Cold path já é OpenAPI-first — ver plano 01.
-- Recommendations estáticas textuais removidas; `recommendationQueries` ainda authority — ver plano 06.
+- Recommendations estáticas textuais removidas; `recommendationQueries` = LEGACY_FALLBACK (plano 06 ATENDIDO).
 
 ## 5. Ordem de execução
 
@@ -139,9 +139,9 @@ Executar plano 03. Follow-up deve depender de contexto estruturado e schema, nã
 
 Planos 04 e 05 (S1–S7): Action Catalog discovery + composition/enrichment por goals/budget. Maps `scopeToRouteId` / `primaryRouteId`/`composeRouteIds` removidos.
 
-### Onda F — UX inteligente — **EM_ANDAMENTO** (E6.S1–S5 ATENDIDO)
+### Onda F — UX inteligente — **ATENDIDO** (2026-09-10)
 
-Plano 06: recommendations + composer contextuais OK. Próximo: E6.S6 cleanup (manter fallback mínimo).
+Plano 06 S1–S6: recommendations contextuais + composer budget-safe; `recommendationQueries` = LEGACY_FALLBACK.
 
 ### Onda G — apresentação e conteúdo residual — **PRONTO_APÓS_F**
 

@@ -517,6 +517,7 @@ class ChatHumanizedDataResponseService:
             profile_key,
         )
 
+        # LEGACY_FALLBACK — só quando structuredRecommendations ausente.
         return [
             {
                 "text": str(item.get("label") or "").strip(),
@@ -525,6 +526,7 @@ class ChatHumanizedDataResponseService:
                     if str(item.get("query") or "").strip()
                     else {}
                 ),
+                "source": "profile_fallback",
             }
             for item in queries
             if str(item.get("label") or "").strip()

@@ -1,6 +1,6 @@
 # Desacoplamento de JSONs + inteligência LLM — Minha DELPI AI
 
-**Status:** Onda A–E ATENDIDAS · Onda F EM_ANDAMENTO (E6.S1–S4) · G–H via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
+**Status:** Onda A–F ATENDIDAS · G–H via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
 **Escopo:** `minha-delpi-ai-api/app/content` + consumidores runtime relacionados  
 **Objetivo:** remover acoplamentos técnicos e linguísticos que impedem o chat de generalizar para novas APIs, novos domínios e formulações de linguagem natural sem manutenção rota a rota.
 
@@ -37,7 +37,7 @@ O LLM interpreta intenção e contexto. O OpenAPI define contrato. O validator v
 | [`planos/03-follow-up-refinement-argument-binding.md`](./planos/03-follow-up-refinement-argument-binding.md) | Generalizar follow-up/refinement/args via contexto + schema. |
 | [`planos/04-capabilities-action-catalog.md`](./planos/04-capabilities-action-catalog.md) | Mini-catálogo `action.*` → Action Catalog; **pathRules já removido (D1)**. |
 | [`planos/05-composition-enrichment-planning.md`](./planos/05-composition-enrichment-planning.md) | Composition/enrichment planner-driven. |
-| [`planos/06-recommendations-composer-contextual.md`](./planos/06-recommendations-composer-contextual.md) | Recommendations/composer contextuais; D2 ≠ aceite (queries ainda authority). |
+| [`planos/06-recommendations-composer-contextual.md`](./planos/06-recommendations-composer-contextual.md) | Recommendations/composer contextuais — **ATENDIDO** (queries = LEGACY_FALLBACK). |
 | [`planos/07-presentation-schema-first-residuals.md`](./planos/07-presentation-schema-first-residuals.md) | Residuais de apresentação path/entity. |
 | [`planos/08-skills-content-residual-catalogs.md`](./planos/08-skills-content-residual-catalogs.md) | Hints técnicos em skills/help. |
 | [`planos/09-evals-rollout-cleanup.md`](./planos/09-evals-rollout-cleanup.md) | Baseline, shadow/canary, R1-R11, cleanup. |

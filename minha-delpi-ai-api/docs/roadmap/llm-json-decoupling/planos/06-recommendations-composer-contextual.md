@@ -1,11 +1,11 @@
 # Plano 06 — Recommendations e composer -> sugestões contextuais grounded
 
 **Prioridade:** P1  
-**Status execução:** Onda F · E6.S1–S5 **ATENDIDO** · próxima E6.S6 · `recommendationQueries` = LEGACY_FALLBACK  
-**Evidência:** [`../evidence/e6-s1-recommendations-inventory.md`](../evidence/e6-s1-recommendations-inventory.md) · [`../evidence/e6-s2-recommendation-grounding-contract.md`](../evidence/e6-s2-recommendation-grounding-contract.md) · [`../evidence/e6-s3-contextual-recommendation-producer.md`](../evidence/e6-s3-contextual-recommendation-producer.md) · [`../evidence/e6-s4-recommendation-queries-fallback.md`](../evidence/e6-s4-recommendation-queries-fallback.md) · [`../evidence/e6-s5-composer-contextual.md`](../evidence/e6-s5-composer-contextual.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
+**Status execução:** Onda F · **ATENDIDO** (E6.S1–S6) · `recommendationQueries` = LEGACY_FALLBACK  
+**Evidência:** [`../evidence/e6-s1-recommendations-inventory.md`](../evidence/e6-s1-recommendations-inventory.md) · [`../evidence/e6-s2-recommendation-grounding-contract.md`](../evidence/e6-s2-recommendation-grounding-contract.md) · [`../evidence/e6-s3-contextual-recommendation-producer.md`](../evidence/e6-s3-contextual-recommendation-producer.md) · [`../evidence/e6-s4-recommendation-queries-fallback.md`](../evidence/e6-s4-recommendation-queries-fallback.md) · [`../evidence/e6-s5-composer-contextual.md`](../evidence/e6-s5-composer-contextual.md) · [`../evidence/e6-s6-cleanup.md`](../evidence/e6-s6-cleanup.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** próximos passos e sugestões devem considerar o pedido atual, os fatos retornados, limitações, contexto multi-turn e actions permitidas, em vez de listas estáticas por profile.
 
-**HEAD revalidado:** pós-E6.S4 (`fb3b5102b`+)
+**HEAD revalidado:** pós-E6.S5 (`e23e5ed1d`+)
 
 ## EXECUTION_DRIFT (2026-09-10)
 
@@ -129,9 +129,11 @@ Se houver `actionId`, deve pertencer às actions permitidas. Recommendation nunc
 
 **Não fazer:** auto-executar tool a partir da sugestão — **garantido** (só query textual).
 
-### E6.S6 — Cleanup
+### E6.S6 — Cleanup — **ATENDIDO** (2026-09-10)
 
 **Fazer:** remover blocos estáticos mortos só após métricas; manter fallback seguro mínimo.
+
+**Feito:** sem DELETE de `recommendationQueries`/composer groups (ainda fallback/LIVE); prose residual marcado `profile_fallback`; docs alinhados; aceite plano 06 fechado.
 
 ## Métricas específicas
 
@@ -145,7 +147,7 @@ llm_calls_per_turn
 p50/p95 recommendation latency
 ```
 
-## Aceite
+## Aceite — **PASS** (2026-09-10)
 
 ```text
 CONTEXTUAL_RECOMMENDATIONS = PASS
