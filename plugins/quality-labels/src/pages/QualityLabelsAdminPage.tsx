@@ -26,6 +26,7 @@ import {
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { HttpRequestError } from "../api/httpClient";
+import { QL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   createLabel,
   deleteLabel,
@@ -458,7 +459,8 @@ export function QualityLabelsAdminPage() {
             <button
               type="button"
               className="ql-icon-btn"
-              title="Ver auditoria (dados da OP/produto)"
+              title={QL_HELP_TOOLTIPS.labels.auditSnapshot}
+              aria-label="Ver auditoria (dados da OP/produto)"
               onClick={() => setAuditLabel(row)}
             >
               <FileSearch className="ql-icon" />
@@ -476,7 +478,7 @@ export function QualityLabelsAdminPage() {
             <button
               type="button"
               className="ql-icon-btn"
-              title="Imprimir etiqueta (código Delpi e código do cliente)"
+              title={QL_HELP_TOOLTIPS.labels.print}
               onClick={() => void handlePrint(row)}
               disabled={busyId === row.id}
             >
@@ -484,7 +486,7 @@ export function QualityLabelsAdminPage() {
             </button>
             <a
               className="ql-icon-btn"
-              title="Abrir página pública"
+              title={QL_HELP_TOOLTIPS.labels.publicPage}
               href={row.publicUrl}
               target="_blank"
               rel="noreferrer"

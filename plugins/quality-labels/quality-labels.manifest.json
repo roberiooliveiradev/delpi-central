@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "id": "quality-labels",
   "name": "Etiquetas da Qualidade",
-  "description": "Registro de inspeção por OP e geração de etiqueta com QR code público",
+  "description": "Inspeção por OP, etiqueta com QR (CLIENTE + referência) e detalhes do cliente/desenho na leitura pública",
   "icon": "tag-icon",
   "version": "0.1.0",
   "type": "microfrontend",

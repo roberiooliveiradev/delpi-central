@@ -75,6 +75,9 @@
   font-size: 15px;
   line-height: 1.6;
   color: var(--ql-muted);
+}.ql-subtitle .delpi-ui-help-tooltip{
+  margin-left: 6px;
+  vertical-align: middle;
 }.ql-state{
   margin: 0;
   padding: 14px 16px;
@@ -528,6 +531,9 @@
   padding: 14px 20px;
   border-top: 1px solid var(--ql-border);
 }.ql-audit-section__title{
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 0 0 10px;
   font-size: 13px;
   font-weight: 700;
@@ -539,6 +545,9 @@
   gap: 10px 18px;
   margin: 0;
 }.ql-audit-grid__item dt{
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 0;
   font-size: 11px;
   text-transform: uppercase;

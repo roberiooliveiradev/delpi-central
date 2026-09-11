@@ -220,9 +220,9 @@ export function formatDelpiCableLabelCustomerItem(
 }
 
 /**
- * Código do cliente na etiqueta física: item do certificado (desenho)
- * prevalece; senão a referência do cadastro SB1 (`customerReference`).
- * Não usa o código SA1 da empresa.
+ * Código do cliente na etiqueta física: item do certificado prevalece;
+ * senão a referência do cadastro SB1 (`customerReference` / B1_REFEREN).
+ * Não usa o código SA1 da empresa nem o desenho (`B1_CODDES`).
  */
 export function resolveDelpiCableLabelCustomerValue(fields: {
   customerItem?: string | null;
@@ -236,7 +236,7 @@ export function resolveDelpiCableLabelCustomerValue(fields: {
   return formatDelpiCableLabelCustomerItem(fields.customerReference, null);
 }
 
-/** Rótulo da linha do cliente: nome fantasia/razão; senão «CLIENTE». */
+/** Rótulo opcional da linha do cliente. A etiqueta da qualidade imprime sempre «CLIENTE». */
 export function resolveDelpiCableLabelCustomerLabel(
   name?: string | null,
 ): string {

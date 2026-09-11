@@ -228,6 +228,18 @@ Token opaco por recurso (`public_booking_enabled`). Sem login. O admin do MFE ge
 
 Ver `src/apps/central-agendamento/` · doc: [api-delpi/docs/api/central-agendamento.md](../../api-delpi/docs/api/central-agendamento.md).
 
+### Etiquetas da Qualidade (`quality-labels`)
+
+Prova de inspeção sem login, aberta pelo QR colado no cabo:
+
+| Página | Rota | `load` |
+|---|---|---|
+| Inspeção | `/p/quality-labels/inspection/{token}` | `GET /apps/api-delpi/public/quality-labels/inspection/{token}` |
+
+Mostra produto, **nome do cliente**, **código do cliente** (`B1_REFEREN` ou item do certificado) e **código do desenho** (`B1_CODDES`). O PDF do certificado **não** é público. Cadastro e impressão ficam no MFE autenticado `quality-labels`.
+
+Ver `src/apps/quality-labels/` · doc: [plugins/quality-labels/README.md](../quality-labels/README.md) · API: [api-delpi/docs/api/quality-labels.md](../../api-delpi/docs/api/quality-labels.md).
+
 ### Mural de Acessos (`mural-acessos`)
 
 Menu estilo smartphone por mural (token na URL):

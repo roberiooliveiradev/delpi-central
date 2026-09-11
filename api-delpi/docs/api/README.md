@@ -72,6 +72,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [delpi-reports.md](./delpi-reports.md) | Relatórios DELPI. |
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
 | [quality-action-plans-pac.md](./quality-action-plans-pac.md) | PAC Qualidade — CRUD, assignable-users, delegação S2S api-pac, equipe 8D (`member_user_id`). |
+| [quality-labels.md](./quality-labels.md) | Etiquetas da Qualidade — inspeção por OP, QR público, certificado RQ-032. |
 | [guias-procedimentos.md](./guias-procedimentos.md) | Guias e Procedimentos — leitura pública (departamentos e procedimentos publicados). |
 | [canal-denuncia.md](./canal-denuncia.md) | Canal de Denúncia — relato anônimo (portal + formulário público). |
 | [mural-acessos.md](./mural-acessos.md) | Mural de Acessos — vários murais de links + QR público por mural. |
@@ -97,6 +98,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | `api-delpi.data` | Execução de SQL somente leitura (`POST /data/sql`). |
 | `api-delpi.quality.access` | Métricas de qualidade (PPM, kaizen, 5S, NC listagem TOTVS). |
 | `quality-action-plans.read` / `.write` / `.manage` | Plugin PAC Qualidade — planos de ação ([doc](./quality-action-plans-pac.md)). |
+| `quality-labels.view` / `.write` | Plugin Etiquetas da Qualidade — inspeção por OP, QR, certificado ([doc](./quality-labels.md)). |
 | `api-delpi.quality.action-plans.read` | Leitura PAC via api-delpi (alternativa RBAC). |
 | `dashboard-lmps.view` | LMPs e Transforma Mais (alternativa a `api-delpi.access`). |
 | `strategic-indicators.view` | Leitura do plugin Indicadores Estratégicos. |

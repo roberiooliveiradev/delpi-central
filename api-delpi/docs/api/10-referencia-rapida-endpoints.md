@@ -17,6 +17,8 @@ Legenda de permissões:
 | **KZ-W** | Escrita Kaizômetro: `kaizometro.manage` (+ legado `cadastro-kaizen.manage`) + escopo `branch-*`, `api-delpi.quality.access`, … |
 | **público** | Sem JWT (prefixo `/public/...`) |
 | **PAC-W** | Escrita PAC: `quality-action-plans.write`, `.manage` |
+| **QL-R** | Leitura etiquetas: `quality-labels.view`, `quality-labels.write` |
+| **QL-W** | Escrita etiquetas: `quality-labels.write` |
 ---
 
 ## Health
@@ -346,6 +348,33 @@ Doc: [quality-action-plans-pac.md](./quality-action-plans-pac.md)
 | POST | `/quality/action-plans/{plan_id}/actions` | PAC-W |
 | PATCH | `/quality/action-plans/{plan_id}/actions/{action_id}` | PAC-W |
 | POST | `/quality/action-plans/{plan_id}/effectiveness-review` | PAC-W |
+
+---
+
+## Etiquetas da Qualidade (`/quality/labels`)
+
+Doc: [quality-labels.md](./quality-labels.md)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/quality/labels/search-ops` | QL-W |
+| GET | `/quality/labels/lookup-op/{production_order}` | QL-W |
+| GET | `/quality/labels/checklist-template` | QL-R |
+| GET | `/quality/labels/inspectors/me` | QL-R |
+| PUT | `/quality/labels/inspectors/me` | QL-W |
+| POST | `/quality/labels/inspectors/me/signature` | QL-W |
+| GET | `/quality/labels/inspectors/me/signature` | QL-R |
+| POST | `/quality/labels` | QL-W |
+| GET | `/quality/labels` | QL-R |
+| GET | `/quality/labels/audit-events` | QL-R |
+| GET | `/quality/labels/{id}` | QL-R |
+| GET | `/quality/labels/{id}/qr` | QL-R |
+| PATCH | `/quality/labels/{id}/active` | QL-W |
+| DELETE | `/quality/labels/{id}` | QL-W |
+| GET | `/quality/labels/{id}/certificate` | QL-R |
+| PUT | `/quality/labels/{id}/certificate` | QL-W |
+| GET | `/quality/labels/{id}/certificate/pdf` | QL-R |
+| GET | `/public/quality-labels/inspection/{token}` | público |
 
 ---
 

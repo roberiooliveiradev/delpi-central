@@ -717,6 +717,24 @@ Doc: [canal-denuncia.md](./canal-denuncia.md) · Plugin: [plugins/canal-denuncia
 
 Página pública: `/p/canal-denuncia/denuncia/aberto`.
 
+## Etiquetas da Qualidade — `/quality/labels`
+
+Inspeção por OP, etiqueta com QR e certificado RQ-032. CRUD no schema `quality_labels`.
+Etiqueta física: rótulo **CLIENTE** + `B1_REFEREN`. Nome e `B1_CODDES` só no QR/metadados.
+
+**Permissão:** `quality-labels.view` (leitura) · `quality-labels.write` (escrita; também lê)
+
+Doc: [quality-labels.md](./quality-labels.md) · Plugin: [plugins/quality-labels/README.md](../../../plugins/quality-labels/README.md)
+
+| Método | Endpoint | operationId |
+|--------|----------|-------------|
+| POST | `/quality/labels` | `create_quality_label` |
+| GET | `/quality/labels` | `list_quality_labels` |
+| GET | `/quality/labels/{id}` | `get_quality_label` |
+| GET | `/public/quality-labels/inspection/{token}` | `get_public_quality_label_inspection` |
+
+Página pública: `/p/quality-labels/inspection/{token}`. PDF do certificado **não** vai no QR.
+
 ## Mural de Acessos — `/mural-acessos`
 
 Vários murais de links, cada um com QR e menu público. Admin no portal; leitura pública sem JWT.

@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { ClipboardList, History, UserCheck } from "lucide-react";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { configureHttpClient } from "./api/httpClient";
+import { QL_HELP_TOOLTIPS } from "./content/helpTooltips";
 import { QualityLabelsAdminPage } from "./pages/QualityLabelsAdminPage";
 import { QualityLabelsAuditPage } from "./pages/QualityLabelsAuditPage";
 import { QualityLabelsInspectorPage } from "./pages/QualityLabelsInspectorPage";
@@ -28,6 +30,10 @@ export default function App({ getAccessToken }: AppProps) {
             <p className="ql-subtitle">
               Registre inspeções por ordem de produção, gere a etiqueta com QR code e
               acompanhe toda a trilha de auditoria da aplicação.
+              <HelpTooltip
+                content={QL_HELP_TOOLTIPS.overview.etiquetaVsQr}
+                ariaLabel="Ajuda: o que vai na etiqueta e no QR"
+              />
             </p>
           </header>
 

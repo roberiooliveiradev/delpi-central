@@ -1,9 +1,14 @@
 # Playbook — Certificado de Qualidade + Gestão de Inspetor (quality-labels)
 
-> Status: **proposta / pré-implementação**
-> Escopo: substituir o Certificado de Qualidade em Word (RQ-032) por um fluxo digital
-> dentro do plugin **quality-labels**, com anexo por etiqueta, checklist assinalável,
-> assinatura do inspetor e rastreio de cliente a partir da OP.
+> Status: **histórico** (proposta original). O certificado, a aba Inspetor e o rastreio de cliente **já estão no código**.
+> Contrato vigente da etiqueta/QR/metadados: [`plugins/quality-labels/README.md`](../../../plugins/quality-labels/README.md). API: [`api-delpi/docs/api/quality-labels.md`](../../../api-delpi/docs/api/quality-labels.md). Índice: [README.md](./README.md).
+>
+> Drifts conhecidos deste arquivo (não seguir como receita):
+> - certificado é **painel inline** na lista, não modal `CertificateModal.tsx`;
+> - cliente da OP: se `C2_PEDIDO` vazio, usa **última NF** (`SD2+SA1`), não só edição manual;
+> - QR público mostra nome, referência e código do desenho; **não** expõe o PDF do certificado;
+> - permissões vigentes: `quality-labels.view` / `.write` (não `read` na tabela §4);
+> - `GET /labels/{id}/order-customer` **não existe** — cliente entra no snapshot no POST e via `GET /customers/search`.
 
 ---
 
@@ -12,7 +17,7 @@
 Hoje o inspetor preenche o **Certificado de Qualidade (RQ-032 – Rev.00 – 21/01/2021)** em
 um arquivo Word, imprime, assina à mão e arquiva. Queremos:
 
-1. **Certificado digital anexo à etiqueta** — botão na linha da etiqueta abre um modal onde
+1. **Certificado digital anexo à etiqueta** — botão na linha da etiqueta abre um **painel inline** (proposta original falava em modal) onde
    o inspetor preenche o certificado, assinala cada item do checklist como **Aprovado (A) /
    Reprovado (R) / Não aplicável (---)** e pode **adicionar novas linhas** à lista.
 2. **Gestão de inspetor** — nova aba onde o inspetor registra a **assinatura** dele, via
@@ -35,9 +40,7 @@ um arquivo Word, imprime, assina à mão e arquiva. Queremos:
   DELPI são majoritariamente **make-to-stock** (geradas por MRP/estoque, sem pedido).
   As OPs de teste conhecidas (`24490601001`, `10278501001`, `24627601001`) estão **vazias**.
 
-**Decisão:** autopreencher cliente **quando `C2_PEDIDO` existir**; sempre permitir **edição manual**.
-Opcional (fase 2): sugerir clientes prováveis a partir do histórico produto→cliente
-(`SA7010` / notas de saída `SD2010+SA1010`) já existente na api-delpi (`GET /products/{code}/customers`).
+**Decisão vigente:** autopreencher cliente quando `C2_PEDIDO` existir; **se a OP for para estoque**, usar a última NF do produto (`SD2` + `SA1`); sempre permitir edição manual no certificado. Nome de exibição: `COALESCE(A1_NREDUZ, A1_NOME)`. Código do desenho (`B1_CODDES`) e referência (`B1_REFEREN`) vêm do cadastro SB1 — ver README do plugin.
 
 SQL de referência (a encapsular em repositório/use case novo, **não** SQL solto no use case):
 
@@ -65,9 +68,9 @@ WHERE OP.D_E_L_E_T_ = '' AND RTRIM(OP.C2_OP) = ?
   - **Assinatura PNG** → `QualityLabelsQrService` (mesmo plugin) + `PhotoStorage` do customer-experience.
   - **Anexo/PDF** (se necessário) → `PacEvidenceStorage` (subdir por entidade, `FileResponse`).
 - Base de host: `DELPI_DATA_HOST_DIR` (dev `${HOME}/.delpi`, prod `/var/lib/delpi`).
-- Novos diretórios propostos:
+- Novos diretórios (já em produção):
   - `QUALITY_LABELS_SIGNATURE_DIR = /app/data/quality-labels/signatures`
-  - (fase 2, se PDF server-side) `QUALITY_LABELS_CERTIFICATE_DIR = /app/data/quality-labels/certificates`
+  - `QUALITY_LABELS_CERTIFICATE_DIR = /app/data/quality-labels/certificates`
 
 ### 2.3 Estrutura atual do plugin (reuso)
 
@@ -222,10 +225,9 @@ para não inflar o principal — preferir **serviço dedicado** por SRP):
   `quality_label_inspector`, `quality_label_checklist_item`, `quality_label_order_customer`).
 - Auditoria: novos `event_type` (`certificate_saved`, `certificate_issued`, `signature_updated`).
 
-### 4.6 Exposição pública (opcional, fase 2)
+### 4.6 Exposição pública do certificado — **não implementar**
 
-- `GET /public/quality-labels/certificate/{token}` para o cliente ver o certificado completo
-  (não só o selo atual). Reusar `public-hub`. **Decisão pendente** (ver §8).
+- `GET /public/quality-labels/certificate/{token}` **não existe**. O QR público mostra nome, referência e desenho; o PDF do certificado permanece autenticado (`GET /quality/labels/{id}/certificate/pdf`).
 
 ---
 
@@ -240,9 +242,11 @@ para não inflar o principal — preferir **serviço dedicado** por SRP):
   `listChecklistTemplate`.
 - `types/qualityLabels.ts`: `Certificate`, `CertificateItem`, `Inspector`, `OrderCustomer`.
 
-### 5.2 Modal de Certificado (`components/CertificateModal.tsx`)
+### 5.2 Certificado (`CertificateEditor` + `CertificateFormFields` — inline)
 
-Aberto por botão **"Certificado"** (ícone `FileCheck`/`ScrollText`) na linha da etiqueta.
+**Vigente:** painel na linha da etiqueta, **sem modal**. O rascunho abaixo é o desenho original.
+
+Aberto por botão **"Certificado"** (ícone `FileText`) na linha da etiqueta.
 
 Layout, seguindo o RQ-032:
 
@@ -311,18 +315,11 @@ Legenda: **A** = Aprovado · **R** = Reprovado · **---** = Não aplicável.
 
 ## 7. Faseamento
 
-**Fase 1 (MVP):**
-- V004 (inspetores + assinatura) e aba Inspetor com canvas + upload.
-- V005 (template) + seed dos 17 itens.
-- V006 (certificado + itens).
-- Autofill de cliente via `C2_PEDIDO` (editável).
-- Modal de certificado com checklist A/R/--- e adição de linhas.
-- Impressão HTML do certificado (RQ-032).
+**Fase 1 (MVP):** entregue — certificado inline, aba Inspetor, autofill via pedido **ou** última NF, PDF server-side.
 
-**Fase 2 (incrementos):**
-- Sugestão de cliente por histórico produto→cliente.
+**Fase 2 (incrementos restantes):**
 - Gerenciamento do template de checklist na aba Inspetor/Admin.
-- PDF server-side + exposição pública do certificado completo pelo QR.
+- Exposição pública do certificado completo pelo QR (decisão atual: **não**).
 
 ---
 

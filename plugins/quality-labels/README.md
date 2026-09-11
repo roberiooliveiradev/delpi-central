@@ -28,6 +28,34 @@ servida pelo `public-hub`.
 - **Auditoria:** aba dedicada com toda a trilha (criação, emissão de
   certificado, exclusão, etc.).
 
+## Contrato vigente — etiqueta × QR × metadados
+
+Três superfícies, três papéis. Não misturar.
+
+| Superfície | O que o usuário vê |
+|---|---|
+| **Etiqueta física 100×30 mm (frente)** | QR + rótulo **CLIENTE** + referência (`SB1.B1_REFEREN`, ou item manual do certificado) + OP · data |
+| **Etiqueta física (verso)** | Logo Delpi + selo + **DELPI** + código do produto |
+| **Página pública do QR** | Produto, **nome do cliente**, **código do cliente**, **código do desenho** (`SB1.B1_CODDES`), OP, unidade, data, inspetor |
+| **Metadados de auditoria** | Snapshot da OP, produto (`customerReference`, `drawingCode`) e cliente (`name`, `legalName`, `source`) |
+
+| Dado | Origem TOTVS | Etiqueta | QR / metadados |
+|---|---|---|---|
+| Referência do cliente | `SB1.B1_REFEREN` | sim (rótulo CLIENTE) | sim («Código do cliente») |
+| Código do desenho | `SB1.B1_CODDES` | não | sim («Código do desenho») |
+| Nome do cliente | pedido da OP (`SC2→SC5→SA1`) ou, se a OP for para estoque, última NF (`SD2+SA1`); display `COALESCE(A1_NREDUZ, A1_NOME)` | não | sim («Cliente») |
+
+Item do certificado (`customerItem`) vence `B1_REFEREN` só na etiqueta e no «Código do cliente» público. Nome do certificado vence o snapshot no QR.
+
+Etiquetas antigas **sem a chave** no JSON recebem *live fetch* **sem regravar** o snapshot:
+
+| Campo | GET admin (`/{id}`) | GET público |
+|---|---|---|
+| `customerReference` / `drawingCode` | sim | sim |
+| `customerName` | não | sim (se a chave nunca foi capturada) |
+
+Ajuda in-app: `src/content/helpTooltips.ts`. Doc da API: [quality-labels.md](../../api-delpi/docs/api/quality-labels.md). Índice do roadmap: [docs/12-roadmap-e-evolucao/quality-labels/README.md](../../docs/12-roadmap-e-evolucao/quality-labels/README.md).
+
 ## Arquitetura
 
 - **Frontend (este plugin):** React 19 + Vite + Module Federation. Exposto em
@@ -55,6 +83,29 @@ servida pelo `public-hub`.
 - **Página pública:** `public-hub` app `quality-labels`, view `inspection`,
   rota `/p/quality-labels/inspection/{token}`. O certificado é uso
   interno/impresso (PDF), **não** é exposto no QR público.
+- **HTTP client:** header `X-Delpi-Caller-App: quality-labels`.
+
+## Rotas da UI
+
+O MFE é uma única rota de portal (`/apps/quality-labels`) com abas internas
+(não são paths HTTP separados):
+
+| Aba | Conteúdo |
+|---|---|
+| Etiquetas | Registrar OP, lista, imprimir, página pública, certificado inline, snapshot |
+| Inspetor | Perfil e assinatura do login atual |
+| Auditoria | Trilha de eventos (`certificate_saved`, `certificate_issued`, etc.) |
+
+Página pública (sem login): `/p/quality-labels/inspection/{token}`.
+
+## Permissões (Portal)
+
+| Código | Uso |
+|---|---|
+| `quality-labels.view` | Menu, listagem, detalhe, QR, certificado, auditoria, perfil |
+| `quality-labels.write` | Registrar, desativar, excluir, salvar certificado/inspetor (também lê) |
+
+A busca SA1 do certificado (`GET /customers/search`) exige `api-delpi.access`.
 
 ## Rotas da API (api-delpi)
 
@@ -66,17 +117,17 @@ servida pelo `public-hub`.
 | GET | `/quality/labels/inspectors/me` | `quality-labels.view` | `get_quality_label_inspector` |
 | PUT | `/quality/labels/inspectors/me` | `quality-labels.write` | `save_quality_label_inspector` |
 | POST | `/quality/labels/inspectors/me/signature` | `quality-labels.write` | `upload_quality_label_inspector_signature` |
-| GET | `/quality/labels/inspectors/me/signature` | `quality-labels.view` | (PNG) |
+| GET | `/quality/labels/inspectors/me/signature` | `quality-labels.view` | `get_quality_label_inspector_signature` |
 | POST | `/quality/labels` | `quality-labels.write` | `create_quality_label` |
 | GET | `/quality/labels` | `quality-labels.view` | `list_quality_labels` |
 | GET | `/quality/labels/audit-events` | `quality-labels.view` | `list_quality_label_audit_events` |
 | GET | `/quality/labels/{id}` | `quality-labels.view` | `get_quality_label` |
-| GET | `/quality/labels/{id}/qr` | `quality-labels.view` | (PNG) |
+| GET | `/quality/labels/{id}/qr` | `quality-labels.view` | `get_quality_label_qr` |
 | PATCH | `/quality/labels/{id}/active` | `quality-labels.write` | `set_quality_label_active` |
 | DELETE | `/quality/labels/{id}` | `quality-labels.write` | `delete_quality_label` |
 | GET | `/quality/labels/{id}/certificate` | `quality-labels.view` | `get_quality_label_certificate` |
 | PUT | `/quality/labels/{id}/certificate` | `quality-labels.write` | `save_quality_label_certificate` |
-| GET | `/quality/labels/{id}/certificate/pdf` | `quality-labels.view` | (PDF) |
+| GET | `/quality/labels/{id}/certificate/pdf` | `quality-labels.view` | `get_quality_label_certificate_pdf` |
 | GET | `/public/quality-labels/inspection/{token}` | pública (token) | `get_public_quality_label_inspection` |
 | GET | `/customers/search` | `api-delpi.access` | `search_customers` |
 
@@ -87,9 +138,9 @@ Metadado no PostgreSQL + binário em volume Docker (ver
 
 | Conteúdo | Variável | Padrão no container |
 |----------|----------|---------------------|
-| QR code (PNG) | `QUALITY_LABELS_QR_DIR` | `/app/data/quality-labels-qr` |
-| Assinatura do inspetor (PNG) | `QUALITY_LABELS_SIGNATURE_DIR` | `/app/data/quality-labels-signatures` |
-| Certificado (PDF) | `QUALITY_LABELS_CERTIFICATE_DIR` | `/app/data/quality-labels-certificates` |
+| QR code (PNG) | `QUALITY_LABELS_QR_DIR` | `/app/data/quality-labels/qr` |
+| Assinatura do inspetor (PNG) | `QUALITY_LABELS_SIGNATURE_DIR` | `/app/data/quality-labels/signatures` |
+| Certificado (PDF) | `QUALITY_LABELS_CERTIFICATE_DIR` | `/app/data/quality-labels/certificates` |
 
 ## Desenvolvimento
 
@@ -106,7 +157,29 @@ npm run lint
 BASE_URL=http://localhost TOKEN=<jwt-admin> ./scripts/register-manifest.sh
 ```
 
-Depois, atribua a permissão `quality-labels.write` ao perfil dos inspetores.
+Depois, atribua `quality-labels.view` e `quality-labels.write` ao perfil dos inspetores.
+
+## Smoke
+
+```bash
+curl -fsS http://localhost/apps/quality-labels/assets/remoteEntry.js | head
+curl -fsS http://localhost/apps/api-delpi/public/quality-labels/inspection/<token>
+```
+
+Rebuild sequencial do MFE: `./infra/scripts/up-dev-sequential.sh --build quality-labels`.
+
+## Estrutura `src/`
+
+```text
+App.tsx                         abas Etiquetas / Inspetor / Auditoria
+content/helpTooltips.ts         Ajuda in-app (fonte dos textos)
+pages/QualityLabelsAdminPage.tsx
+pages/QualityLabelsInspectorPage.tsx
+pages/QualityLabelsAuditPage.tsx
+utils/labelPrint.ts             imprime via @delpi/plugin-ui (delpiCableLabel.ts)
+components/CertificateEditor.tsx + CertificateFormFields.tsx
+components/AuditMetadataModal.tsx
+```
 
 ## Migrations
 

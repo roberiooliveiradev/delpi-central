@@ -110,7 +110,7 @@ Dados cadastrais do produto (leve, sem o payload completo do analyser).
 | `view` | `full` | `summary` retorna ~15 campos (`code`, `description`, `type`, `unit`, `group_code`, `active`, `blocked`, `default_warehouse`, preços, NCM, revisão, `make_or_buy`). |
 | `legacy` | `false` | Reservado para evoluções de cadastro; playbook usa em rotas fabris. |
 
-Campos típicos (`view=full`): `code`, `description`, `type`, `unit`, `group_code`, `active`, `default_warehouse`, `customer_reference`, `last_purchase_price`, `standard_cost`, `current_revision`, `last_revision_date`, `ncm_ipi_position`.
+Campos típicos (`view=full`): `code`, `description`, `type`, `unit`, `group_code`, `active`, `default_warehouse`, `customer_reference`, `drawing_code`, `last_purchase_price`, `standard_cost`, `current_revision`, `last_revision_date`, `ncm_ipi_position`.
 
 **Referência do cliente:**
 
@@ -118,6 +118,7 @@ Campos típicos (`view=full`): `code`, `description`, `type`, `unit`, `group_cod
 |-----------|-----------------|-------------|
 | `customer_reference` | `SB1.B1_REFEREN` | Código/REF. do cliente no cadastro — no desenho aparece como `REF:` / `COD. CLIENTE` |
 | `customer_reference_old` | `SB1.B1_REFCANT` | Referência anterior (quando houver) |
+| `drawing_code` | `SB1.B1_CODDES` | Código do desenho do cliente — no carimbo aparece como `DES. CLIENTE` |
 
 O chat de análise de desenhos cruza a REF. lida no PDF com `customer_reference` (regra `customer_reference_cross_check`).
 

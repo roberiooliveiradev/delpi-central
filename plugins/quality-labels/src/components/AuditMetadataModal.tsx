@@ -7,8 +7,10 @@ import {
   Loader2,
   X,
 } from "lucide-react";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { getLabel } from "../api/qualityLabelsApi";
+import { QL_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { AuditMetadata, QualityLabel } from "../types/qualityLabels";
 import { formatOperationalUnit } from "../utils/operationalUnits";
 
@@ -208,22 +210,46 @@ export function AuditMetadataModal({ label, onClose }: Props) {
               </section>
 
               <section className="ql-audit-section">
-                <h3 className="ql-audit-section__title">Produto</h3>
+                <h3 className="ql-audit-section__title">
+                  Produto
+                  <HelpTooltip
+                    content={QL_HELP_TOOLTIPS.labels.auditSnapshot}
+                    ariaLabel="Ajuda: snapshot de auditoria"
+                  />
+                </h3>
                 <dl className="ql-audit-grid">
                   <div className="ql-audit-grid__item">
                     <dt>Código Delpi</dt>
                     <dd>{text(product?.code)}</dd>
                   </div>
                   <div className="ql-audit-grid__item">
-                    <dt>Referência do cliente (B1_REFEREN)</dt>
+                    <dt>
+                      Referência do cliente (B1_REFEREN)
+                      <HelpTooltip
+                        content={QL_HELP_TOOLTIPS.fields.customerReference}
+                        ariaLabel="Ajuda: referência do cliente"
+                      />
+                    </dt>
                     <dd>{text(product?.customerReference)}</dd>
                   </div>
                   <div className="ql-audit-grid__item">
-                    <dt>Código do desenho (B1_CODDES)</dt>
+                    <dt>
+                      Código do desenho (B1_CODDES)
+                      <HelpTooltip
+                        content={QL_HELP_TOOLTIPS.fields.drawingCode}
+                        ariaLabel="Ajuda: código do desenho"
+                      />
+                    </dt>
                     <dd>{text(product?.drawingCode ?? label.drawingCode)}</dd>
                   </div>
                   <div className="ql-audit-grid__item">
-                    <dt>Cliente</dt>
+                    <dt>
+                      Cliente
+                      <HelpTooltip
+                        content={QL_HELP_TOOLTIPS.fields.customerName}
+                        ariaLabel="Ajuda: nome do cliente"
+                      />
+                    </dt>
                     <dd>{text(metadata?.customer?.name ?? label.customerName)}</dd>
                   </div>
                   <div className="ql-audit-grid__item">

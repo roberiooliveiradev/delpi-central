@@ -14,7 +14,8 @@ Parte da [biblioteca de padrões TOTVS](./README.md).
 | `B1_CUSTD` | Custo padrão | Fallback de valoração quando `B2_CM1` do almoxarifado falta — [armazem-custo.md](./armazem-custo.md) |
 | `B1_TPMAT` | Produto de terceiro (SX3) | `1` = Não · `2` = Sim |
 | `B1_TIPO` | Tipo de produto | `MP` matéria-prima · `PA` acabado · `PI` intermediário — constante `PRODUCT_TYPE_RAW_MATERIAL` em `protheus_product_types.py` |
-| `B1_REFEREN` | Ref. Cliente | Código do produto no cliente (`customer_reference` na API). Não confundir com SA1. Filtro: prefixo `LIKE` + `Latin1_General_CI_AI` |
+| `B1_REFEREN` | Ref. Cliente | Código do produto no cliente (`customer_reference` na API). Não confundir com SA1. Filtro: prefixo `LIKE` + `Latin1_General_CI_AI`. No desenho aparece como `REF:` / `COD. CLIENTE`. |
+| `B1_CODDES` | Cód. desenho | Código do desenho do cliente (`drawing_code` na API). No carimbo costuma aparecer como `DES. CLIENTE`. Não confundir com `B1_REFEREN`. |
 
 ---
 

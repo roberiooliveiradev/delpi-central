@@ -1,9 +1,16 @@
 # Playbook de Excelência — Etiquetas da Qualidade (Quality Labels)
 
+> **Status:** histórico de implementação (Onda 0, jul/2026). **Não** é fonte vigente.
+> Contrato atual da etiqueta, do QR e dos metadados: [`plugins/quality-labels/README.md`](../../../plugins/quality-labels/README.md), [API](../../../api-delpi/docs/api/quality-labels.md) e o índice [README.md](./README.md) desta pasta.
+>
+> Drifts conhecidos deste arquivo (não seguir como receita):
+> - permissões vigentes: `quality-labels.view` / `quality-labels.write` (não `.read` / `.manage`);
+> - rotas vigentes: README do plugin / `quality-labels.md` (não a tabela da Onda 0 abaixo);
+> - snapshot: chaves **nunca capturadas** recebem live fetch no GET (sem regravar); o restante permanece imutável.
+>
 > **Arquivo:** `docs/12-roadmap-e-evolucao/quality-labels/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 2.0
 > **Data:** 2026-07-02
-> **Status:** proposta (pré-implementação)
 > **Base:** requisito «etiqueta de qualidade por produto/OP com QR público» + convenções do monorepo `delpi-central`.
 >
 > **Mudança v2.0 (decisão do produto):** o plugin **não** tem API própria. O **CRUD vive dentro da `api-delpi`** (módulo novo no PostgreSQL de plugins), reaproveitando o banco gravável, o storage, o RBAC e — em processo — o use case de OP→produto. Só o **MFE admin** e a **página pública no `public-hub`** ficam fora da api-delpi.
@@ -11,6 +18,8 @@
 > **Convenção de nomes:** identificadores técnicos em **inglês**; textos ao usuário em **pt-BR**.
 
 **Relacionado:**
+- `plugins/quality-labels/README.md` — contrato vigente (etiqueta × QR × metadados)
+- `api-delpi/docs/api/quality-labels.md` — rotas e payload público
 - `docs/12-roadmap-e-evolucao/customer-experience/PLAYBOOK-EXCELENCIA.md` — irmão (QR + public-hub + etiqueta)
 - `api-delpi/app/infrastructure/persistence/plugins/README` — regras do PostgreSQL de plugins
 - `api-delpi/docs/api/13-producao-operacional.md` — OP → produto (SC2 → SB1)
@@ -27,8 +36,12 @@ A Delpi produz cabos. Ao final da inspeção da qualidade, o inspetor precisa **
 1. O inspetor digita a **OP** (ordem de produção) no plugin.
 2. A **api-delpi** resolve automaticamente os dados do produto da OP (código, descrição, unidade) — **em processo**, reusando o use case de produção — grava a **data da inspeção** (momento do registro) e o **nome do inspetor** (identidade do portal).
 3. Gera uma **etiqueta imprimível** (QR + logo Delpi + selo «APROVADO QUALIDADE»), colada no cabo — mesma ideia da etiqueta do customer-experience.
-4. Ao escanear, **o cliente** (sem login) vê uma página pública: produto, OP, data da inspeção, inspetor responsável e selo de aprovação.
+4. Ao escanear, **o cliente** (sem login) vê uma página pública: produto, OP, data da inspeção, inspetor responsável, selo de aprovação, **nome do cliente**, **referência** e **código do desenho**.
 5. **Desacoplado sem inflar serviços:** CRUD dentro da api-delpi (banco de plugins), MFE no padrão do portal, página pública no `public-hub` (fora do portal autenticado), tabelas próprias no schema `quality_labels`.
+
+### Contrato vigente (etiqueta × QR)
+
+A etiqueta física 100×30 mm imprime o rótulo **CLIENTE** e a referência `SB1.B1_REFEREN` (ou item manual do certificado). Nome do cliente e `SB1.B1_CODDES` **não** cabem na mídia: ficam no QR e nos metadados de auditoria. Fonte canônica: README do plugin.
 
 ### Definição operacional (métricas de sucesso)
 
@@ -56,7 +69,7 @@ A Delpi produz cabos. Ao final da inspeção da qualidade, o inspetor precisa **
 | **Página pública sem login** | **`public-hub`** — app `quality-labels`, view `inspection` (`/p/quality-labels/inspection/{token}`) | Sem novo container público, sem nova `location` no gateway (já cobre `^~ /p/`) |
 | **Endpoint público** | Nova rota **pública por token na api-delpi** (`/public/quality-labels/inspection/{token}`) via exceção no middleware | api-delpi hoje não tem rota pública por token — adicionar wrapper igual ao do customer-experience |
 | **Geração do QR** | Backend (api-delpi) gera + persiste PNG no volume; **novo** serviço + dep `qrcode` | api-delpi ainda não tem QR — adicionar `qrcode` ao `requirements.txt` |
-| **Etiqueta física** | MFE reusa o padrão `qrLabelPrint.ts` do customer-experience (QR + logo preta + selo, frente/verso) | Consistência visual e DRY |
+| **Etiqueta física** | Kit `@delpi/plugin-ui` (`delpiCableLabel.ts`): QR + logo + selo, frente/verso 100×30 mm | CSS canônico no kit; MFE só passa dados |
 | **Privacidade do link** | Token opaco (`secrets.token_urlsafe(32)`), sem expiração | Anti-enumeração |
 | **Front admin** | MFE `plugins/quality-labels` (React 19 + Vite + Module Federation), `backend` → api-delpi | Padrão do portal |
 | **Storage QR** | Volume `${DELPI_DATA_HOST_DIR}/quality-labels/qr` na api-delpi | Regra `persistent-upload-storage` |
@@ -72,7 +85,7 @@ A Delpi produz cabos. Ao final da inspeção da qualidade, o inspetor precisa **
 | Rota pública | `/apps/api-delpi/public/quality-labels/inspection/{token}` | — | (nova; padrão CX) |
 | Página pública (public-hub) | app `quality-labels`, view `inspection` | — | `customer-experience/thanks` |
 | Prefixo CSS admin/público | `ql-` / `qlp-` | — | `plugins-visual-design-system` |
-| Permissões RBAC | `quality-labels.read/write/manage` | descrições pt-BR no manifesto | `cultura-delpi.*` |
+| Permissões RBAC | `quality-labels.view` / `quality-labels.write` | descrições pt-BR no manifesto | `cultura-delpi.*` |
 
 ---
 
@@ -211,11 +224,13 @@ GET /apps/api-delpi/public/quality-labels/inspection/{token}
 
 ### 5.3 Conteúdo da página (pt-BR)
 
-- Selo **APROVADO** em destaque, produto (código + descrição), OP e filial, data da inspeção e inspetor. Marca Delpi; mobile-first.
+- Selo **APROVADO** em destaque, produto (código + descrição), **nome do cliente**, **código do cliente**, **código do desenho**, OP e filial, data da inspeção e inspetor. Marca Delpi; mobile-first. Contrato vigente: README do plugin.
 
 ---
 
 ## 6. Contrato do módulo na api-delpi (admin — JWT do portal)
+
+> **Proposta Onda 0.** Rotas e permissões vigentes: [quality-labels.md](../../../api-delpi/docs/api/quality-labels.md) (`quality-labels.view` / `.write`).
 
 Envelope `api_delpi_success(data, operation_id=...)` + `route_contract_registry`. RBAC via `@require_any_permission`. Router em `app/interface/http/routes/quality/quality_labels_router.py` (incluir em `quality_router.py`).
 
@@ -232,7 +247,7 @@ Envelope `api_delpi_success(data, operation_id=...)` + `route_contract_registry`
 
 - Registrar cada `operationId` em `route_contract_registry.py` (`RouteContract(entity, shape)`), ex.: `create_quality_label → RouteContract("quality_label", "scalar")`; lista → `paged_list`.
 - **QR:** gerado no `POST` a partir de `{PUBLIC_BASE_URL}/p/quality-labels/inspection/{token}`; novo `QualityLabelsQrService` (copiar `customer-experience-api/.../qr_service.py`), dep `qrcode[pil]` no `api-delpi/requirements.txt`, env `QUALITY_LABELS_QR_DIR`.
-- **Etiqueta física:** o MFE monta a etiqueta frente/verso no cliente (QR + logo preta + selo APROVADO QUALIDADE), reusando `plugins/customer-experience/src/utils/qrLabelPrint.ts` — só usa o download `/quality/labels/{id}/qr`. Avaliar extrair o util para pacote compartilhado (3º consumidor).
+- **Etiqueta física:** o MFE monta a etiqueta frente/verso no cliente (QR + logo + selo) via `@delpi/plugin-ui` (`delpiCableLabel.ts`) e o PNG em `/quality/labels/{id}/qr`. Frente: rótulo **CLIENTE** + `B1_REFEREN`. Nome e `B1_CODDES` só no QR/metadados.
 - **Camadas (padrão api-delpi):**
   ```
   migrations/plugins/quality-labels/V001__create_quality_labels.sql
@@ -311,7 +326,7 @@ Regra `persistent-upload-storage.mdc`. Volume **na api-delpi** (mesmo padrão de
 | 1.2 | Página pública encantadora (branding, animação do selo, OG) | M |
 | 1.3 | Impressão em lote (várias etiquetas por página) | M |
 | 1.4 | Resultado `rejected` (etiqueta «REPROVADO») | M |
-| 1.5 | Extrair `qrLabelPrint` para pacote compartilhado (DRY) | S |
+| 1.5 | CSS/markup da etiqueta no kit `@delpi/plugin-ui` (`delpiCableLabel.ts`) | S | ✅ |
 
 ### Onda 2 — Governança e rastreabilidade
 | # | Entrega | Esforço |
@@ -371,18 +386,18 @@ Testes mínimos: token único, snapshot correto do `by-op`, `inspected_at`/`insp
 | Inflar a api-delpi (god service) | Módulo isolado (schema próprio, repo próprio, use cases finos); seguir camadas do repo |
 | Rota pública fura o RBAC global da api-delpi | Exceção **explícita** só para `/public/quality-labels/`; handler valida token; nunca `@require_permission` ausente por engano em rota admin |
 | OP não resolve no TOTVS | 422 claro; não criar etiqueta sem produto |
-| Dado do produto muda após imprimir | Snapshot no registro (não reconsultar por token) |
+| Dado do produto muda após imprimir | Snapshot no registro. Live fetch só preenche chaves **ausentes** no JSON antigo; não regrava nem altera o que já foi capturado |
 | Nome do inspetor exposto (LGPD) | Flag de exibição (Onda 2); validar jurídico |
 | QR em disco efêmero | Volume persistente no api-delpi desde o 1º commit |
 | Enumeração de etiquetas | Token opaco ≥ 128 bits + rate limit + 404 genérico |
 | Dep nova `qrcode` na api-delpi | Registrar em requirements; testar geração no CI |
-| Duplicar util de etiqueta entre plugins | Extrair `qrLabelPrint` (Onda 1.5) |
+| Duplicar util de etiqueta entre plugins | CSS/markup no `@delpi/plugin-ui` (`delpiCableLabel.ts`) |
 
 ---
 
 ## 13. Resumo executivo
 
-1. **MVP (Onda 0):** inspetor digita a OP → api-delpi resolve o produto **em processo** → registra data + inspetor → gera etiqueta com QR → cliente escaneia e vê a **prova de qualidade** sem login. Sem novo serviço: CRUD dentro da api-delpi (banco de plugins), página no `public-hub`, etiqueta reusada do customer-experience.
+1. **MVP (Onda 0):** inspetor digita a OP → api-delpi resolve o produto **em processo** → registra data + inspetor → gera etiqueta com QR → cliente escaneia e vê a **prova de qualidade** sem login. Sem novo serviço: CRUD dentro da api-delpi (banco de plugins), página no `public-hub`, etiqueta no kit `@delpi/plugin-ui`.
 2. **Onda 1:** etiqueta/página impecáveis, lote, reprovado.
 3. **Ondas 2–3:** anexos/rastreabilidade, LGPD do nome, analytics.
 

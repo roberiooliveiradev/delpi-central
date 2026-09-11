@@ -75,6 +75,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/auditoria-5s` | `auditoria-5s` | microfrontend | plugin | `/apps/auditoria-5s` | `delpi-auditoria-5s` |
 | `plugins/kaizometro` | `kaizometro` | microfrontend | plugin | `/apps/kaizometro` | `delpi-kaizometro` |
 | `plugins/customer-experience` | `customer-experience` | microfrontend | plugin | `/apps/customer-experience` | `delpi-customer-experience` |
+| `plugins/quality-labels` | `quality-labels` | microfrontend | plugin | `/apps/quality-labels` | `delpi-quality-labels` |
 | `plugins/inspecoes-entrada` | `inspecoes-entrada` | microfrontend | plugin | `/apps/inspecoes-entrada` | `delpi-inspecoes-entrada` |
 | `plugins/lancamento-notas-fiscais` | `lancamento-notas-fiscais` | microfrontend | plugin | `/apps/lancamento-notas-fiscais` | `delpi-lancamento-notas-fiscais` |
 | `plugins/invoice-issuance` | `invoice-issuance` | microfrontend arquivado (fora do Compose E13; código no monorepo) | plugin | `/apps/invoice-issuance` (redirect gateway) | — |
@@ -110,6 +111,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 
 **Painéis TV:** gestão em `/apps/tv-dashboard`; apresentação pública em `/p/tv-dashboard/present/{token}` (sem login). API dedicada: `/apps/tv-dashboard-api/*`. Playbook: [../12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md](../12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md).
 **Experiência do Cliente:** admin `/apps/customer-experience`; público `/p/customer-experience/thanks/{token}` e `/form/{token}`. API: `/apps/customer-experience-api/*`. [README do plugin](../../plugins/customer-experience/README.md) · [roadmap](../12-roadmap-e-volucao/customer-experience/).
+**Etiquetas da Qualidade:** admin `/apps/quality-labels`; público `/p/quality-labels/inspection/{token}`. CRUD na api-delpi (`/quality/labels`). [README](../../plugins/quality-labels/README.md) · [API](../../api-delpi/docs/api/quality-labels.md).
 **Portal PCP:** `/apps/production-control` (gestão à vista + demanda + carga máquina + análise de problemas + materiais). API: `/apps/production-control-api/*`. Destino do módulo: **Portal de Produção**, PCP como primeira área — [recado no roadmap](../12-roadmap-e-evolucao/production-control/README.md). [README do plugin](../../plugins/production-control/README.md) · [API](../../production-control-api/README.md).
 **Portal Financeiro:** `/apps/financial` (gestão à vista + faturamento/ROL + inadimplência + despesas por CC + IDD/IGD). API: `/apps/financial-api/*`. Plugins legados permanecem. [README do plugin](../../plugins/financial/README.md) · [API](../../financial-api/README.md) · [spec](../12-roadmap-e-evolucao/financial/README.md).
 **Despesas de Viagem:** `/apps/travel-expenses` (prestação, cupons e pacote). API: `/apps/travel-expenses-api/*`. [README](../../plugins/travel-expenses/README.md) · [API](../../travel-expenses-api/README.md) · [playbook](../12-roadmap-e-evolucao/travel-expenses/PLAYBOOK.md).
@@ -143,6 +145,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |
 | Despesas por Centro de Custo | `/apps/api-delpi/financeiro/despesas-centro-custo/*` |
 | Experiência do Cliente | `/apps/customer-experience-api/*` (participantes + formulários; público por token) |
+| Etiquetas da Qualidade | `/apps/api-delpi/quality/labels/*` (Postgres plugins + TOTVS OP/SB1/SA1); público `/public/quality-labels/inspection/{token}` |
 | Portal PCP | `/apps/production-control-api/*` (subplugins + demanda + carga máquina + análise de problemas + materiais; TOTVS via api-delpi) |
 | Portal Financeiro | `/apps/financial-api/*` (subplugins + overview + faturamento + inadimplência + centros de custo + IDD/IGD; TOTVS via api-delpi, SI direto) |
 | Despesas de Viagem | `/apps/travel-expenses-api/*` (prestações, cupons, PDF; Postgres plugins) |
@@ -194,6 +197,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | eficiencia-fabril | `eficiencia-fabril` |
 | central-agendamento | `central-agendamento` |
 | kaizometro | `kaizometro` |
+| quality-labels | `quality-labels` |
 | inspecoes-entrada | `inspecoes-entrada` |
 | lancamento-notas-fiscais | `lancamento-notas-fiscais` |
 | invoice-issuance | `invoice-issuance` |
@@ -240,6 +244,7 @@ Declaradas no manifesto e persistidas na Core API:
 | mural-acessos | `mural-acessos.access`, `mural-acessos.manage` |
 | reports | `reports.view`, `reports.manage`, `reports.*.filial-sc/es` |
 | kaizometro | `kaizometro.view`, `kaizometro.manage`, `kaizometro.notify-suggestions`, `kaizometro.branch-01`, `kaizometro.branch-02` |
+| quality-labels | `quality-labels.view`, `quality-labels.write` |
 | financial | `financial.access`, `.delinquency.view`, `.cost-centers.view`, `.indicators.view`, `.export`, `.view.filial-01/02` |
 | travel-expenses | `travel-expenses.view`, `.write`, `.manage`, `.admin`, `.unit.filial-01/02` |
 | production-pulse | `production-pulse.access`, `.devices.view`, `.devices.manage`, `.devices.command`, `.operator`, `.view.filial-01/02`, `.admin` |
@@ -270,6 +275,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Canal de Denúncia | [Plugin README](../../plugins/canal-denuncia/README.md) · [API](../../api-delpi/docs/api/canal-denuncia.md) · [público `/p/canal-denuncia/denuncia/aberto`](../../plugins/public-hub/README.md) |
 | Código de Ética | [Plugin README](../../plugins/codigo-etica/README.md) · [público `/p/codigo-etica/codigo/aberto`](../../plugins/public-hub/README.md) |
 | Mural de Acessos | [Plugin README](../../plugins/mural-acessos/README.md) · [API](../../api-delpi/docs/api/mural-acessos.md) · [público `/p/mural-acessos/menu/{token}`](../../plugins/public-hub/README.md) |
+| Etiquetas da Qualidade | [Plugin README](../../plugins/quality-labels/README.md) · [API](../../api-delpi/docs/api/quality-labels.md) · [Roadmap](../12-roadmap-e-evolucao/quality-labels/README.md) · [público `/p/quality-labels/inspection/{token}`](../../plugins/public-hub/README.md) |
 | Delpi Reports | [Plugin README](../../plugins/reports/README.md) · [Roadmap](../12-roadmap-e-evolucao/delpi-reports/README.md) |
 | Portal Comercial | [Plugin README](../../plugins/commercial/README.md) · [Wireframes e rotas](../12-roadmap-e-evolucao/commercial/WIREFRAMES.md) · [Perfis e permissões](../12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md) |
 | Portal Suprimentos | [Plugin README](../../plugins/supplies/README.md) · [Roadmap](../12-roadmap-e-evolucao/supplies/README.md) |
