@@ -794,7 +794,8 @@ Roadmap executável: `docs/roadmap/llm-json-decoupling/`.
 
 | Artefato | Uso |
 |----------|-----|
-| `tests/fixtures/intelligence_baseline/r1_r11_corpus_v1.json` | Corpus ampliado E9.S1 (20 classes) |
+| `tests/fixtures/intelligence_baseline/r1_r11_corpus_v1.json` | Corpus E9.S1 histórico (freeze `371f0cfa…`); **não** é authority de release após J-R2 |
+| `tests/fixtures/intelligence_baseline/r1_r11_corpus_v2.json` | Corpus vigente J-R2 — `requiredDimensions` ⊇ matriz §4; gate `assert_corpus_required_dimensions.py` |
 | `e9_s6_cleanup_gates.json` | Autorização de DELETE (`deleteAuthorized`) |
 | `e9_s8_verify_final_matrix.json` | Matriz verify-final (`globalReleasePass`) |
 | `evidence/execution-ledger.md` | Estado das ondas |

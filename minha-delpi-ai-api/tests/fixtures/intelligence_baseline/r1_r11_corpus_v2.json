@@ -1,0 +1,365 @@
+{
+  "datasetVersion": "intelligence_baseline/r1_r11_corpus_v2",
+  "program": "llm-json-decoupling",
+  "role": "CORPUS_INDEX",
+  "immutableAfterFreeze": true,
+  "notes": [
+    "J-R2 — requiredDimensions alinhadas à matriz canônica chat-ai-flow-families.md §4.",
+    "v1 permanece histórico (freeze 371f0cfa…); release vigente usa v2.",
+    "matrixClass é a ponte explícita classId → classe §4; requiredDimensions ⊇ mínimo canônico."
+  ],
+  "ondaABaselineRef": "docs/roadmap/llm-json-decoupling/evidence/onda-a-baseline/manifest.json",
+  "cases": [
+    {
+      "id": "e9.c01.specific_vs_generic",
+      "classId": 1,
+      "name": "action específica vs genérica",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/application/services/test_e1_s3_registry_family_topk_retrieval.py",
+      "grader": "offline",
+      "matrixClass": "action_openapi_read"
+    },
+    {
+      "id": "e9.c02.semantic_siblings",
+      "classId": 2,
+      "name": "semantic siblings (description vs stock)",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/fixtures/product_description_vs_stock_evals.json",
+      "grader": "offline",
+      "matrixClass": "action_openapi_read"
+    },
+    {
+      "id": "e9.c03.multi_provider",
+      "classId": 3,
+      "name": "multi-provider OpenAPI",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/fixtures/nebula_factory_openapi_actions_metamorphic.json",
+      "grader": "offline",
+      "matrixClass": "action_openapi_read"
+    },
+    {
+      "id": "e9.c04.no_tool",
+      "classId": 4,
+      "name": "no-tool / direct answer",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R4",
+        "R8",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/application/services/test_openapi_when_not_to_use_retrieval.py",
+      "grader": "offline",
+      "matrixClass": "direct_answer"
+    },
+    {
+      "id": "e9.c05.required_present",
+      "classId": 5,
+      "name": "required args present",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_e3_s3_turn_refinement_contract.py",
+      "grader": "offline",
+      "matrixClass": "action_openapi_read"
+    },
+    {
+      "id": "e9.c06.required_missing_clarify",
+      "classId": 6,
+      "name": "required missing → clarify",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_e3_s2_follow_up_baseline.py",
+      "grader": "offline",
+      "matrixClass": "action_openapi_read"
+    },
+    {
+      "id": "e9.c07.enum_type_invalid",
+      "classId": 7,
+      "name": "enum/type invalid",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_e3_s5_schema_driven_group_by.py",
+      "grader": "offline",
+      "matrixClass": "action_openapi_read"
+    },
+    {
+      "id": "e9.c08.compound",
+      "classId": 8,
+      "name": "pedido longo/compound",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R6",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_e5_s2_composition_baseline.py",
+      "grader": "offline",
+      "matrixClass": "compound"
+    },
+    {
+      "id": "e9.c09.multi_turn",
+      "classId": 9,
+      "name": "multi-turn/follow-up",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R6",
+        "R8",
+        "R9",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_e3_s2_follow_up_baseline.py",
+      "grader": "offline",
+      "matrixClass": "follow_up_multi_turn"
+    },
+    {
+      "id": "e9.c10.typo_synonym",
+      "classId": 10,
+      "name": "typo/sinônimo/informal",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_e2_s2_understanding_baseline.py",
+      "grader": "offline",
+      "matrixClass": "action_openapi_read"
+    },
+    {
+      "id": "e9.c11.unknown_external_openapi",
+      "classId": 11,
+      "name": "unknown external OpenAPI",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_e7_s2_presentation_baseline.py",
+      "grader": "offline",
+      "matrixClass": "action_openapi_read"
+    },
+    {
+      "id": "e9.c12.metamorphic_rename",
+      "classId": 12,
+      "name": "metamorphic path/operationId rename",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/fixtures/nebula_factory_openapi_actions_metamorphic.json",
+      "grader": "offline",
+      "matrixClass": "action_openapi_read"
+    },
+    {
+      "id": "e9.c13.unauthorized",
+      "classId": 13,
+      "name": "unauthorized action",
+      "requiredDimensions": [
+        "R2",
+        "R3",
+        "R4",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/application/services/test_e8_s3_help_capabilities_action_id_match.py",
+      "grader": "offline",
+      "matrixClass": "security_adversarial"
+    },
+    {
+      "id": "e9.c14.write_confirmation",
+      "classId": 14,
+      "name": "write/destructive confirmation",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_chat_write_confirmation_service.py",
+      "grader": "offline",
+      "matrixClass": "action_write_admin_destructive"
+    },
+    {
+      "id": "e9.c15.injection",
+      "classId": 15,
+      "name": "prompt/tool-output injection",
+      "requiredDimensions": [
+        "R2",
+        "R3",
+        "R4",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_chat_input_security_service.py",
+      "grader": "offline",
+      "matrixClass": "security_adversarial"
+    },
+    {
+      "id": "e9.c16.schema_presentation",
+      "classId": 16,
+      "name": "schema-driven presentation",
+      "requiredDimensions": [
+        "R4",
+        "R5",
+        "R8",
+        "R9"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_e7_s3_shape_defaults_primary_path.py",
+      "grader": "offline",
+      "matrixClass": "presentation"
+    },
+    {
+      "id": "e9.c17.recommendations_grounded",
+      "classId": 17,
+      "name": "recommendations grounded",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_e6_s2_recommendation_grounding_contract.py",
+      "grader": "offline",
+      "matrixClass": "action_openapi_read"
+    },
+    {
+      "id": "e9.c18.send_stream_simulate",
+      "classId": 18,
+      "name": "send/stream/simulate parity",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R6",
+        "R7",
+        "R9",
+        "R10"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_e7_s6_titles_framing_stable.py",
+      "grader": "offline",
+      "note": "parity materializada titles/F5; live send/stream = E9.S2/L*",
+      "matrixClass": "simulate_parity"
+    },
+    {
+      "id": "e9.c19.persist_reload",
+      "classId": 19,
+      "name": "persist/reload/F5",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R6",
+        "R8",
+        "R9",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_e3_s8_persist_reload_continuity.py",
+      "grader": "offline",
+      "matrixClass": "follow_up_multi_turn"
+    },
+    {
+      "id": "e9.c20.partial_failure",
+      "classId": 20,
+      "name": "partial failure / goal coverage",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R6",
+        "R8",
+        "R9",
+        "R10",
+        "R11"
+      ],
+      "harnessRef": "tests/unit/domain/services/test_e5_s3_goal_coverage_contract.py",
+      "grader": "offline",
+      "matrixClass": "compound"
+    }
+  ],
+  "supersedes": "intelligence_baseline/r1_r11_corpus_v1"
+}

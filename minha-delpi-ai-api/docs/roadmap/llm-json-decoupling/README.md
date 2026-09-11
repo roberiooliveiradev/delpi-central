@@ -99,8 +99,8 @@ Detalhamento e evidências: [`e11-post-close-audit-2026-09-11.md`](./evidence/e1
 
 ```text
 J-R1  evaluator R8 com threshold canônico          ✅ ATENDIDO
-J-R2  requiredDimensions alinhadas automaticamente  ← próxima
-J-R3  evidence reproduzível
+J-R2  requiredDimensions alinhadas automaticamente ✅ ATENDIDO
+J-R3  evidence reproduzível                         ← próxima
 J-R4  unknown external full chain
 J-R5  metamorphic rename verdadeiro
 J-R6  Architecture Enforcement independente

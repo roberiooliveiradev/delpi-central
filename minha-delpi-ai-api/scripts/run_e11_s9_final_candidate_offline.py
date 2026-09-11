@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""E11.S9 — final candidate offline battery on frozen r1_r11_corpus_v1 + E11 sidecars.
+"""E11.S9 — final candidate offline battery on r1_r11_corpus_v2 + E11 sidecars.
 
-Does not mutate the immutable corpus. Sidecar harnesses cover post-E9.S10 upgrades
-(unknown OpenAPI, E11.S2–S8 unit gates). Live surface remains a separate step.
+J-R2: corpus ativo deve passar ChatRequiredDimensionsMatrixService antes dos harnesses.
+v1 (371f0cfa…) permanece histórico e falha o gate de dimensões.
 """
 
 from __future__ import annotations
@@ -15,9 +15,16 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+_ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from app.domain.services.chat_required_dimensions_matrix_service import (  # noqa: E402
+    ChatRequiredDimensionsMatrixService,
+)
 
 EXPECTED_CORPUS_HASH = (
-    "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8"
+    "1147e05d6beae96dcf2322a08195f0bcc7a3727206418cd056692d570ce9523f"
 )
 
 # Sidecars that strengthen corpus proxies without mutating harnessRef freeze.
@@ -105,11 +112,17 @@ def _run_pytest(root: Path, refs: list[str]) -> tuple[dict, str, int]:
 
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
-    corpus_path = root / "tests/fixtures/intelligence_baseline/r1_r11_corpus_v1.json"
+    corpus_path = root / "tests/fixtures/intelligence_baseline/r1_r11_corpus_v2.json"
     routing_path = root / "tests/fixtures/intelligence_baseline/routing_cases.json"
     corpus = json.loads(corpus_path.read_text(encoding="utf-8"))
     dataset_hash = _sha256(corpus_path)
     routing_hash = _sha256(routing_path)
+
+    matrix_report = ChatRequiredDimensionsMatrixService.validate_corpus(corpus)
+    if not matrix_report.ok:
+        print("REQUIRED_DIMENSIONS_MATRIX=FAIL")
+        print(json.dumps(matrix_report.as_dict(), ensure_ascii=False, indent=2))
+        return 2
 
     if dataset_hash != EXPECTED_CORPUS_HASH:
         print("DATASET_HASH_MISMATCH", dataset_hash, EXPECTED_CORPUS_HASH)

@@ -148,6 +148,7 @@ J-R12 novo candidate final + R1–R11 + residual + COMPLETE_GATE
 | 2026-09-11 | Auditoria pós-fechamento encontrou A11-01…A11-12 e invalidou E11.S9/E11.S10 como release evidence |
 | 2026-09-11 | Onda J / Plano 11 **REABERTOS**; fila J-R1…J-R12 passa a ser o estado canônico |
 | 2026-09-11 | **J-R1 ATENDIDO** — `ChatR8LatencyThresholdService`; runner aplica P50/P95 vs alvo canônico; histórico 41s/50s → FAIL; `R8_THRESHOLD_CANONICAL=PASS` |
+| 2026-09-11 | **J-R2 ATENDIDO** — matriz §4 authority; `r1_r11_corpus_v2`; v1 falha gate; `REQUIRED_DIMENSIONS_MATRIX=PASS` |
 
 ## 8. Proibições vigentes
 
@@ -162,6 +163,6 @@ J-R12 novo candidate final + R1–R11 + residual + COMPLETE_GATE
 
 ## 9. Próximo desbloqueio
 
-**J-R1 ATENDIDO.** Próxima etapa obrigatória: **J-R2** (requiredDimensions alinhadas à matriz canônica).
+**J-R1 e J-R2 ATENDIDOS.** Próxima etapa obrigatória: **J-R3** (evidence reproduzível).
 
-Depois: J-R3 (evidence reproduzível). `J-R12` permanece bloqueado até J-R1…J-R11 com COMPLETE_GATE.
+`J-R12` permanece bloqueado até J-R1…J-R11 com COMPLETE_GATE.

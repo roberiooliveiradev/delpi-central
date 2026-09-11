@@ -1,7 +1,7 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** **REABERTO — Onda J / `VERIFY_FINAL_FAILED`** · J-R1 **ATENDIDO** · próxima = **J-R2**  
+**Status execução:** **REABERTO — Onda J / `VERIFY_FINAL_FAILED`** · J-R1–J-R2 **ATENDIDO** · próxima = **J-R3**  
 **BASE_GIT_SHA original (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
 **Candidate anteriormente declarado final:** `782a49721319571f0fe4733d59b8a5cc65ac4c04` — **histórico invalidado como release evidence**  
 **Auditoria pós-fechamento:** [`../evidence/e11-post-close-audit-2026-09-11.md`](../evidence/e11-post-close-audit-2026-09-11.md)  
@@ -269,7 +269,8 @@ Fazer:
 
 ## J-R2 — corrigir requiredDimensions
 
-**Objetivo:** impedir corpus que cubra menos dimensões que a matriz canônica.
+**Objetivo:** impedir corpus que cubra menos dimensões que a matriz canônica.  
+**Status:** **ATENDIDO** · `REQUIRED_DIMENSIONS_MATRIX=PASS` · evidência [`../evidence/e11-j-r2-required-dimensions-matrix.md`](../evidence/e11-j-r2-required-dimensions-matrix.md)
 
 Fazer:
 
@@ -279,7 +280,9 @@ Fazer:
 - compound/action OpenAPI precisam incluir todas as dimensões mínimas aplicáveis;
 - corpus inválido bloqueia runner antes dos testes.
 
-**Gate:** `REQUIRED_DIMENSIONS_MATRIX = PASS`.
+**Gate:** `REQUIRED_DIMENSIONS_MATRIX = PASS` (**cumprido** — `ChatRequiredDimensionsMatrixService` + `r1_r11_corpus_v2` + `assert_corpus_required_dimensions.py`).
+
+**Próxima:** J-R3.
 
 ## J-R3 — evidence reproduzível
 
