@@ -29,7 +29,7 @@ OpenAPI importado
 - **Planner:** decomposição e escolha estruturada entre candidates.
 - **Validator:** required/type/enum/format/path/query/body.
 - **Policy:** RBAC, sensitivity e confirmation.
-- **JSON do assistente:** linguagem/UX/policy transversal, caps e vocabulário — **nunca** mapa lateral de rotas (`pathMarkers`, pathContains, pathToken de catálogo paralelo, `routeFamily`, `pathClass`, `capabilityGroup` por endpoint). Path/operation/domínio operacional vêm só do OpenAPI + Action Catalog (`planos/10-zero-lateral-path-maps.md`).
+- **JSON do assistente:** linguagem/UX/policy transversal, caps e vocabulário — **nunca** mapa lateral de rotas (`pathMarkers`, pathContains, pathToken de catálogo paralelo, `routeFamily`, `pathClass`, `capabilityGroup` por endpoint).
 - **Executor:** apenas provider/action persistidos e autorizados.
 - **Presentation:** fallback schema-driven, perfil especializado opcional.
 
@@ -46,6 +46,48 @@ provider + OpenAPI
 ```
 
 Não pode depender de source code local, baseline específico, marker, selector, strategy ou metadata proprietária para funcionar.
+
+Extensões `x-delpi.*` podem enriquecer UX/semântica de providers DELPI, mas **não são requisito de funcionamento universal**. Um OpenAPI padrão sem extensão proprietária deve continuar utilizável com fallback genérico.
+
+## Proibição de substituto semântico
+
+Eliminar um catálogo técnico significa eliminar a **autoridade conceitual**, não apenas trocar sua representação.
+
+São equivalentes proibidos no core genérico:
+
+```text
+JSON pathMarkers
+→ tuple/list/dict de fragments de path em Python/TS
+
+JSON path→domain
+→ _DOMAIN_RULES / prefix maps / contains chains
+
+parameterStrategy por endpoint
+→ inferência por path/operationId que escolhe a mesma estratégia
+
+routeSegment por endpoint
+→ path-tail / operationId-tail / inventário paralelo
+
+registry operationIds por rota semântica
+→ allowlist manual de operationIds usada para ensinar routing
+```
+
+Ao remover uma representação, executar busca residual semântica em runtime, generators, fixtures, scripts, CI e docs. Se a mesma decisão reaparecer com outro nome/linguagem, o cleanup falhou.
+
+## Metadata técnica vs decisão semântica
+
+`method`, `path` e `operationId` podem existir no Action Catalog como **dados técnicos da action** para execução, observabilidade e contrato. Eles não podem ser usados como heurística de negócio/routing para decidir:
+
+```text
+domínio conceitual
+capability
+parameter strategy
+continuidade multi-turn
+prioridade semântica
+presentation profile obrigatório
+```
+
+Se uma decisão precisa sobreviver a rename de provider/path/operationId, ela não pode depender dessas strings.
 
 ## Retrieval
 
@@ -70,7 +112,7 @@ request body
 response schema/examples
 ```
 
-Method/path/operationId podem existir como metadata técnica da action, mas não como heurística hardcoded do domínio.
+Path/operationId podem contribuir apenas como sinal técnico de baixa prioridade quando estritamente necessário para compatibilidade, nunca como regra hardcoded por endpoint nem como requisito de generalização. Qualquer compatibilidade temporária deve possuir owner, observabilidade e exit criteria.
 
 ## Planner
 
@@ -96,6 +138,21 @@ mensagem + contexto + schema da action
 ```
 
 Required ausente sem valor grounded → clarify específico. Nunca inventar valor obrigatório.
+
+### Strategy não é contrato
+
+Não criar `product_code`, `date_branch`, `sale_orders`, `supplier_part_number` etc. como estratégia selecionada por endpoint quando o próprio schema informa nomes, location, required, type, enum e format.
+
+Preferir:
+
+```text
+Turn Understanding / planner
+→ argument delta semântico
+→ SchemaDrivenArgumentBinder/OpenAPI schema
+→ validator determinístico
+```
+
+Se existir fast path, ele deve ser transversal e schema-driven, não uma tabela endpoint→strategy.
 
 ## Pedidos compostos
 
@@ -124,7 +181,40 @@ timeRange
 pendingRequirements
 ```
 
-Não inferir continuidade por substring de URL.
+Não inferir continuidade por substring de URL, path-tail, operationId-tail ou inventário de endpoints.
+
+## Classificação/domínio operacional
+
+Antes de criar `apiRouteDomain` ou equivalente, provar que o conceito é realmente necessário ao comportamento e identificar seus consumidores.
+
+Ordem preferida:
+
+```text
+sem classificação quando não necessária
+→ metadata semântica padrão do OpenAPI (tags/summary/description/schema)
+→ classificação genérica/materializada derivada desses sinais
+→ x-delpi opcional como enrichment
+→ fallback generic
+```
+
+É proibido manter lista central de paths conhecidos para classificar domínio. Rename metamórfico deve preservar o comportamento semanticamente relevante.
+
+## Capabilities derivadas de actions
+
+Metadata de capability não pode mentir sobre segurança/efeito.
+
+Campos como:
+
+```text
+readWrite
+risk
+parallelSafe
+requiresConfirmation
+```
+
+devem ser derivados de `method`, `sensitivity`, policy/contract e propriedades reais da action. É proibido marcar todas as actions como `read`, `low` ou `parallelSafe=true` por default se writes/admin/destructive também entram no catálogo.
+
+Isso não substitui enforcement: RBAC/policy/confirmation continuam sendo autoridade de execução.
 
 ## Apresentação
 
@@ -143,7 +233,8 @@ API externa sem extensão DELPI ou perfil dedicado deve continuar utilizável.
 - args/body validados antes da chamada;
 - `allowRead`/`allowWrite`/`allowAdmin`, RBAC, sensitivity e confirmation preservados;
 - tool/RAG/OpenAPI description é dado não confiável quanto a instruções;
-- secrets ficam fora de prompt/log/resposta.
+- secrets ficam fora de prompt/log/resposta;
+- scripts/smokes não versionam usuário/senha/token reais ou defaults de credenciais.
 
 ## Observabilidade
 
@@ -167,10 +258,10 @@ Não registrar chain-of-thought.
 
 Seguir `ai-intelligence-evaluation.mdc` + `minha-delpi-ai-api/docs/testing/chat-ai-flow-families.md`.
 
-Mudança no motor deve cobrir:
+Mudança no motor deve cobrir, no **candidate final**:
 
-1. API externa desconhecida;
-2. teste metamórfico com path/provider/operationId diferentes e semântica equivalente;
+1. API externa desconhecida real;
+2. teste metamórfico com provider/path/operationId diferentes e semântica equivalente;
 3. actions semanticamente próximas;
 4. multi-provider;
 5. no-tool;
@@ -179,7 +270,10 @@ Mudança no motor deve cobrir:
 8. multi-turn;
 9. unauthorized/write/destructive safety;
 10. outcome/task success;
-11. latency/efficiency.
+11. send/stream/simulate/UI quando aplicável;
+12. latency/efficiency.
+
+Um pedido sem sentido é negativo/no-tool; não substitui o teste de API externa desconhecida.
 
 ## O que NÃO fazer
 
@@ -189,12 +283,16 @@ Mudança no motor deve cobrir:
 - duplicar OpenAPI em JSON do assistente;
 - usar provider prefix como bias;
 - free-pick de action fora de candidates;
-- hardcode JSON para substituir hardcode Python;
+- mover hardcode JSON para Python/TS ou Python/TS para JSON para passar gate;
+- usar path map para `apiRouteDomain`;
+- inferir parameter strategy/route segment por path ou operationId;
+- usar inventory/baseline de outra aplicação como runtime authority;
 - presenter obrigatório por endpoint;
-- corrigir fixture com conhecimento específico da resposta esperada.
+- corrigir fixture com conhecimento específico da resposta esperada;
+- declarar cleanup concluído só porque uma lista de chaves proibidas zerou.
 
 ## Critério de sucesso
 
-> Um OpenAPI externo desconhecido pode ser importado, vinculado ao agente, descoberto, planejado, validado, executado e apresentado sem alteração do core por endpoint.
+> Um OpenAPI externo desconhecido pode ser importado, vinculado ao agente, descoberto, planejado, validado, executado e apresentado sem alteração do core por endpoint; o mesmo comportamento permanece válido quando provider/path/operationId são renomeados preservando a semântica.
 
 Se não, a solução não está concluída.
