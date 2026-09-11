@@ -14,15 +14,16 @@ O Portal de Engenharia deve funcionar como **módulo-shell do domínio**, no mes
 
 1. A **TopBar** principal segue esta ordem:
 
-   `Início → Visão geral → Sala de interação → Minhas tarefas → LMPs`
+   `Início → Visão geral → Sala de interação → Minhas tarefas → LMPs → Ajuda`
 
-2. **Produtos não fica na TopBar**. É uma ferramenta do Portal de Engenharia, acessível pela vitrine/listagem de ferramentas e por deep links contextuais.
-3. **LMPs** é jornada principal e entra na TopBar depois de Minhas tarefas.
-4. **Sala de interação** é capacidade transversal do portal, com salas gerais e contextuais.
-5. **Controle de MP** aparece como aplicação/ferramenta do Portal, mas o alvo canônico do fluxo é `my-requests` + `requests-api`; não criar segundo MFE de MP.
-6. **TRANSFORMA+** permanece com ownership do Transformômetro; o Portal integra resumo/acesso, não duplica o produto.
-7. **Desenhos e dados autorizados do FILESERVER** devem ser consumidos por backend/API; o browser não acessa compartilhamentos de rede diretamente.
-8. O alvo técnico do portal é um bounded context próprio (`plugins/engineering` + `engineering-api`). Com API própria, o MFE **não chama `api-delpi` diretamente**.
+2. **Ajuda fica na TopBar** como jornada principal e ponto de orientação do módulo.
+3. **Produtos não fica na TopBar**. É uma ferramenta do Portal de Engenharia, acessível pela vitrine/listagem de ferramentas e por deep links contextuais.
+4. **LMPs** é jornada principal e entra na TopBar depois de Minhas tarefas.
+5. **Sala de interação** é capacidade transversal do portal, com salas gerais e contextuais.
+6. **Controle de MP** aparece como aplicação/ferramenta do Portal, mas o alvo canônico do fluxo é `my-requests` + `requests-api`; não criar segundo MFE de MP.
+7. **TRANSFORMA+** permanece com ownership do Transformômetro; o Portal integra resumo/acesso, não duplica o produto.
+8. **Desenhos e dados autorizados do FILESERVER** devem ser consumidos por backend/API; o browser não acessa compartilhamentos de rede diretamente.
+9. O alvo técnico do portal é um bounded context próprio (`plugins/engineering` + `engineering-api`). Com API própria, o MFE **não chama `api-delpi` diretamente**.
 
 ## Documentos deste pacote
 
@@ -42,6 +43,7 @@ Portal de Engenharia
 ├── Sala de interação     → colaboração geral e contextual
 ├── Minhas tarefas        → worklist pessoal consolidada
 ├── LMPs                  → jornada operacional principal
+├── Ajuda                 → orientação, glossário e apoio contextual
 └── Ferramentas           → aplicações e consultas especializadas
     ├── Produtos
     ├── Controle de MP
