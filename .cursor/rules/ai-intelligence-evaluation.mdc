@@ -139,9 +139,50 @@ Para qualquer alteração relevante em retrieval/planner/argument binding/execut
 ```text
 OpenAPI → import/index → agent binding → allowed actions
 → retrieval → planner → validator → policy → executor
+→ apresentação quando aplicável
 ```
 
-Adicionar teste metamórfico: renomear path/provider/operationId preservando `summary`, `description`, parâmetros e schemas. A capacidade correta deve continuar sendo selecionada. Se o teste depende da string antiga do endpoint, a implementação está acoplada.
+### O que conta como `UNKNOWN_EXTERNAL_API`
+
+O caso deve possuir provider/actions/paths/operationIds que **não existiam no runtime nem em catálogos/manuais/tabelas/fixtures de produção antes do teste** e não podem ser adicionados a nenhum selector, vocabulary técnico, path map ou branch do core para fazê-lo passar.
+
+Isto **não** é unknown-provider:
+
+```text
+mensagem sem sentido
+rota conhecida com outro texto
+provider conhecido com action conhecida
+fixture cuja resposta esperada foi ensinada ao runtime
+```
+
+Um negativo como `xyzzy/quux` testa robustez/no-tool, não plugabilidade de API desconhecida.
+
+### Teste metamórfico obrigatório
+
+Renomear, em uma segunda variante semanticamente equivalente:
+
+```text
+provider key
+path
+operationId
+```
+
+preservando `summary`, `description`, tags úteis, parâmetros e schemas. A capability/ação conceitualmente correta deve continuar sendo selecionada e validada.
+
+Se o comportamento depende da string técnica anterior, a implementação está acoplada.
+
+### Proibição de preparar o runtime para o eval
+
+Não adicionar ao core, antes do teste:
+
+- path/provider/operationId do provider fictício;
+- classificação manual de domínio por endpoint;
+- parameter strategy por endpoint;
+- route segment por endpoint;
+- presenter específico;
+- synonym/keyword criado somente para a fixture.
+
+O teste deve provar plugabilidade, não onboarding manual disfarçado.
 
 ## Pedidos compostos
 
@@ -186,6 +227,55 @@ congelar versão do dataset
 ```
 
 Não alterar simultaneamente dataset e expectativa para esconder regressão.
+
+## Frescor da evidência — candidate final
+
+Toda evidência de release pertence ao estado exato que foi avaliado.
+
+Registrar quando material:
+
+```text
+gitSha
+model/provider/modelConfigHash
+agentConfigHash
+openApiSchemaHash
+actionCatalogHash
+datasetVersion
+```
+
+Se depois do CANDIDATE houver mudança que possa afetar uma dimensão já avaliada, aquela dimensão volta para `INCONCLUSIVE` até ser reexecutada no novo HEAD/config.
+
+Exemplos que invalidam prova anterior:
+
+- alterar retrieval/ranking/planner depois de provar unknown API;
+- alterar argument binder depois de provar R3;
+- alterar follow-up/context state depois de provar R6;
+- alterar presenter/render contract depois de provar R5/R7;
+- alterar safety/policy/executor depois de provar R10;
+- substituir JSON por Python heurístico depois do teste metamórfico.
+
+**É proibido reutilizar PASS de SHA anterior como aceite do candidate final.** Baseline histórico continua válido como baseline; candidate/release precisa ser fresco.
+
+### Ordem mínima após última mudança material
+
+Para mudanças em tools/inteligência:
+
+```text
+LAST_MATERIAL_DIFF
+→ unit/contract
+→ positive
+→ sibling
+→ negative/no-tool
+→ unknown external API
+→ metamorphic rename
+→ compound/multi-turn quando aplicável
+→ safety
+→ send/stream/simulate/UI quando aplicável
+→ latency/efficiency quando material
+→ FINAL CANDIDATE EVIDENCE
+```
+
+Se uma nova alteração material ocorrer depois, reexecutar as dimensões afetadas.
 
 ## Trials e variabilidade
 
@@ -248,6 +338,9 @@ tokens/context/tool-count/cost per turn
 - Usar exact-match de prosa como principal medida semântica.
 - Ignorar no-tool, negative, safety, compound ou multi-turn.
 - Reutilizar evidência de commit/model/config diferente como se fosse o mesmo run.
+- Usar um negativo sem sentido como prova de unknown external API.
+- Rodar unknown/metamorphic antes do último diff material e manter o PASS após alterar o motor.
+- Usar catálogo legado como oracle principal para declarar recomendação contextual/generalizada.
 - Remover caso vermelho sem mudança explícita de requisito.
 
 ## Evidência de entrega
@@ -258,14 +351,17 @@ Toda conclusão de mudança de inteligência deve registrar:
 EVAL_SET_VERSION
 BASELINE_RUN_ID
 CANDIDATE_RUN_ID
+CANDIDATE_GIT_SHA
 R1_R11_SUMMARY
 METRICS_BEFORE_AFTER
 REGRESSIONS
 P50_P95
 COST_BUDGET quando material
 EXTERNAL_API_GENERALIZATION quando tools
+METAMORPHIC_RESULT quando tools
 COMPOUND_REQUESTS quando aplicável
 SAFETY_RESULT quando tools/RAG
+RESIDUAL_COUPLING_RESULT quando houve cleanup
 DECISION
 ```
 
