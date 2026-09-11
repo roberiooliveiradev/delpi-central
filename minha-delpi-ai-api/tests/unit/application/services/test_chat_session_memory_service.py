@@ -169,3 +169,82 @@ def test_persist_post_turn_syncs_email_writing_preference():
 
     assert len(repo.synced) == 1
     assert "emailWriting" in repo.synced[0]["snapshot"]["behaviorInstructions"]
+
+
+def test_apply_to_pre_turn_seeds_last_action_from_overlay():
+    repo = FakeMemoryRepository()
+    repo.overlay["lastAction"] = {
+        "name": "stock_lookup",
+        "path": "/products/10080001/stock",
+        "actionId": "acme.products.stock",
+        "params": {"code": "10080001"},
+    }
+    service = ChatSessionMemoryService(repo)
+
+    snapshot = service.apply_to_pre_turn(
+        session_id=uuid4(),
+        snapshot={"operationalFocus": {}, "behaviorInstructions": {}},
+        message="próxima página",
+    )
+
+    assert snapshot["lastAction"]["actionId"] == "acme.products.stock"
+    assert snapshot["persistedMemoryApplied"] is True
+
+
+def test_apply_to_pre_turn_history_last_action_wins_over_overlay():
+    repo = FakeMemoryRepository()
+    repo.overlay["lastAction"] = {
+        "name": "stock_lookup",
+        "path": "/products/OLD/stock",
+        "actionId": "old.stock",
+    }
+    service = ChatSessionMemoryService(repo)
+
+    snapshot = service.apply_to_pre_turn(
+        session_id=uuid4(),
+        snapshot={
+            "operationalFocus": {},
+            "behaviorInstructions": {},
+            "lastAction": {
+                "name": "stock_lookup",
+                "path": "/products/NEW/stock",
+                "actionId": "new.stock",
+            },
+        },
+        message="filtre",
+    )
+
+    assert snapshot["lastAction"]["actionId"] == "new.stock"
+
+
+def test_persist_post_turn_sanitizes_last_action():
+    repo = FakeMemoryRepository()
+    service = ChatSessionMemoryService(repo)
+
+    service.persist_post_turn(
+        session_id=uuid4(),
+        snapshot={
+            "operationalFocus": {},
+            "behaviorInstructions": {},
+            "lastAction": {
+                "name": "stock_lookup",
+                "path": "/products/1/stock",
+                "actionId": "acme.products.stock",
+                "params": {"code": "1"},
+                "rawPayload": {"rows": [1, 2, 3]},
+                "parameterStrategy": "date_branch",
+            },
+        },
+    )
+
+    stored = repo.synced[0]["snapshot"]["lastAction"]
+    assert stored["actionId"] == "acme.products.stock"
+    assert "rawPayload" not in stored
+    assert "parameterStrategy" not in stored
+
+
+def test_sanitize_last_action_negative_empty():
+    assert ChatSessionMemoryService.sanitize_last_action({}) is None
+    assert ChatSessionMemoryService.sanitize_last_action({"params": {"a": 1}}) is None
+    assert ChatSessionMemoryService.sanitize_last_action("x") is None
+

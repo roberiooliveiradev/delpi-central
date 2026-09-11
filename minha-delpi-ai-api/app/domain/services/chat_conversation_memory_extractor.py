@@ -48,7 +48,12 @@ class ChatConversationMemoryExtractor:
             entities["period"] = period
 
         result["operationalFocus"] = entities
-        result["lastAction"] = cls._extract_last_action(previous_messages, tool_calls)
+        extracted_last_action = cls._extract_last_action(previous_messages, tool_calls)
+        if extracted_last_action:
+            result["lastAction"] = extracted_last_action
+        elif not isinstance(result.get("lastAction"), dict) or not result.get("lastAction"):
+            # Preserve overlay-seeded lastAction when history cannot rebuild it (E3.S8).
+            result["lastAction"] = None
         result["lastPresentation"] = cls._extract_last_presentation(previous_messages)
         result["lastResultExcerpt"] = cls._extract_last_result_excerpt(
             previous_messages,

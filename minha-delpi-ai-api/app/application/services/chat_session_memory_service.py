@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 from uuid import UUID
 
 from app.domain.ports.chat_session_memory_repository_port import ChatSessionMemoryRepositoryPort
@@ -11,6 +12,16 @@ from app.domain.services.chat_user_context_item_service import ChatUserContextIt
 
 from app.domain.services.chat_memory_intent_content_service import (
     ChatMemoryIntentContentService,
+)
+
+_LAST_ACTION_KEYS = (
+    "name",
+    "params",
+    "path",
+    "actionId",
+    "operationId",
+    "resultType",
+    "apiRouteDomain",
 )
 
 
@@ -42,6 +53,7 @@ class ChatSessionMemoryService:
                 **snapshot,
                 "operationalFocus": {},
                 "behaviorInstructions": {},
+                "lastAction": None,
                 "persistedMemoryApplied": False,
                 "persistedMemoryCleared": True,
             }
@@ -53,6 +65,7 @@ class ChatSessionMemoryService:
                 **snapshot,
                 "operationalFocus": {},
                 "behaviorInstructions": {},
+                "lastAction": None,
                 "persistedMemoryApplied": False,
                 "persistedMemoryCleared": True,
             }
@@ -60,7 +73,11 @@ class ChatSessionMemoryService:
 
         merged = self._merge_overlay(snapshot, overlay)
 
-        if overlay.get("operationalFocus") or overlay.get("behaviorInstructions"):
+        if (
+            overlay.get("operationalFocus")
+            or overlay.get("behaviorInstructions")
+            or overlay.get("lastAction")
+        ):
             merged["persistedMemoryApplied"] = True
 
         return merged
@@ -78,9 +95,12 @@ class ChatSessionMemoryService:
         if snapshot.get("persistedMemoryCleared"):
             return
 
+        payload = dict(snapshot)
+        payload["lastAction"] = self.sanitize_last_action(payload.get("lastAction"))
+
         self.repository.sync_from_snapshot(
             session_id,
-            snapshot,
+            payload,
             source_message_id=source_message_id,
         )
 
@@ -160,10 +180,45 @@ class ChatSessionMemoryService:
                 entities[key] = token
 
         result["operationalFocus"] = entities
+
+        overlay_last = cls.sanitize_last_action(overlay.get("lastAction"))
+        existing_last = result.get("lastAction")
+        if overlay_last and (
+            not isinstance(existing_last, dict) or not existing_last
+        ):
+            result["lastAction"] = overlay_last
+
         return ChatUserContextItemService.merge_items_into_snapshot(
             result,
             overlay.get("userContextItems"),
         )
+
+    @classmethod
+    def sanitize_last_action(cls, raw: Any) -> dict[str, Any] | None:
+        """Bounded lastAction for Postgres overlay (E3.S8) — no raw tool payload."""
+        if not isinstance(raw, dict):
+            return None
+        out: dict[str, Any] = {}
+        for key in _LAST_ACTION_KEYS:
+            if key not in raw:
+                continue
+            value = raw.get(key)
+            if value in (None, "", []):
+                continue
+            out[key] = value
+        params = out.get("params")
+        if isinstance(params, dict):
+            capped: dict[str, Any] = {}
+            for index, (pkey, pval) in enumerate(params.items()):
+                if index >= 24:
+                    break
+                capped[str(pkey)] = pval
+            out["params"] = capped
+        elif "params" in out:
+            del out["params"]
+        if not (out.get("name") or out.get("actionId") or out.get("path")):
+            return None
+        return out
 
     def compact_for_admin_debug(self, snapshot: dict | None) -> dict:
         base = snapshot or {}

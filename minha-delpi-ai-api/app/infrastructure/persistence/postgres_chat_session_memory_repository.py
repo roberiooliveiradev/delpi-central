@@ -47,9 +47,16 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
 
         period_focus: dict[str, str] = {}
         behavior: dict[str, str] = {}
+        last_action: dict | None = None
 
         for row in rows:
             value = row.value_json
+
+            if row.memory_type == "working" and row.key == "lastAction":
+                if last_action is None and isinstance(value, dict) and value:
+                    last_action = dict(value)
+                continue
+
             scalar = value if isinstance(value, str) else str(value or "").strip()
 
             if not scalar:
@@ -64,13 +71,16 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
             ChatUserContextItemService,
         )
 
-        return ChatUserContextItemService.sync_operational_focus(
+        overlay = ChatUserContextItemService.sync_operational_focus(
             {
                 "operationalFocus": period_focus,
                 "behaviorInstructions": behavior,
                 "userContextItems": self.list_context_items(session_id),
             }
         )
+        if last_action:
+            overlay["lastAction"] = last_action
+        return overlay
 
     def sync_from_snapshot(
         self,
@@ -125,6 +135,20 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
                 expires_at=expires_at,
                 now=now,
             )
+
+        last_action = snapshot.get("lastAction")
+        if isinstance(last_action, dict) and last_action:
+            self._upsert_row(
+                session_id=session_id,
+                memory_type="working",
+                key="lastAction",
+                value_json=last_action,
+                source_message_id=source_message_id,
+                expires_at=expires_at,
+                now=now,
+            )
+        else:
+            self._deactivate_working_key(session_id, "lastAction", now=now)
 
     def _persist_auto_context_items(
         self,
@@ -323,6 +347,23 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
             )
         )
         return int(updated or 0) > 0
+
+    def _deactivate_working_key(
+        self,
+        session_id: UUID,
+        key: str,
+        *,
+        now: datetime,
+    ) -> None:
+        AiChatSessionMemoryModel.query.filter(
+            AiChatSessionMemoryModel.session_id == session_id,
+            AiChatSessionMemoryModel.memory_type == "working",
+            AiChatSessionMemoryModel.key == key,
+            AiChatSessionMemoryModel.active.is_(True),
+        ).update(
+            {"active": False, "updated_at": now},
+            synchronize_session=False,
+        )
 
     def expire_stale(self, *, older_than_days: int = 30) -> int:
         cutoff = datetime.now(timezone.utc) - timedelta(days=older_than_days)

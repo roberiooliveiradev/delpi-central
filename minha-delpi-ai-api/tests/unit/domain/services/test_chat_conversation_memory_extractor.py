@@ -175,3 +175,64 @@ def test_enrich_snapshot_extracts_last_result_excerpt():
 
     assert excerpt.get("presentationType") == "tree"
     assert excerpt.get("topKeys")
+
+
+def test_enrich_snapshot_preserves_overlay_last_action_when_history_empty():
+    """Positive E3.S8: overlay seeds lastAction when toolCalls ausentes."""
+    seeded = {
+        "name": "stock_lookup",
+        "path": "/products/10080001/stock",
+        "actionId": "acme.products.stock",
+        "params": {"code": "10080001"},
+    }
+    snapshot = ChatConversationMemoryExtractor.enrich_snapshot(
+        {"operationalFocus": {}, "lastAction": seeded},
+        previous_messages=[],
+        tool_calls=None,
+    )
+    assert snapshot["lastAction"] == seeded
+
+
+def test_enrich_snapshot_history_overwrites_overlay_last_action():
+    """Sibling: histórico com toolCall ok vence overlay."""
+    seeded = {
+        "name": "stock_lookup",
+        "path": "/products/OLD/stock",
+        "actionId": "old.stock",
+    }
+    snapshot = ChatConversationMemoryExtractor.enrich_snapshot(
+        {"operationalFocus": {}, "lastAction": seeded},
+        previous_messages=[
+            {
+                "role": "assistant",
+                "content": "ok",
+                "metadata": {
+                    "toolCalls": [
+                        {
+                            "name": "execute_external_action",
+                            "arguments": {
+                                "actionId": "acme.products.stock",
+                                "parameters": {"code": "10080001"},
+                            },
+                            "metadata": {
+                                "ok": True,
+                                "path": "/products/10080001/stock",
+                                "actionId": "acme.products.stock",
+                            },
+                        }
+                    ]
+                },
+            }
+        ],
+    )
+    assert snapshot["lastAction"]["actionId"] == "acme.products.stock"
+    assert snapshot["lastAction"]["path"] == "/products/10080001/stock"
+
+
+def test_enrich_snapshot_negative_no_overlay_no_history_clears_last_action():
+    snapshot = ChatConversationMemoryExtractor.enrich_snapshot(
+        {"operationalFocus": {}},
+        previous_messages=[],
+    )
+    assert snapshot["lastAction"] is None
+

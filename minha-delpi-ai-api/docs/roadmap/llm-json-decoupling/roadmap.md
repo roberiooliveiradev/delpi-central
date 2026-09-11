@@ -123,7 +123,7 @@ Registry/heurística antiga pode existir temporariamente como shadow/fallback ob
 3. Hashes de conteúdo assistant no manifest; `openApiSchemaHash` / `actionCatalogHash` = `PENDING_RUNTIME` (plano 09).
 4. Classificar nós → inventário §7.
 
-### Onda B — routing universal — **EM_ANDAMENTO**
+### Onda B — routing universal — **ATENDIDO**
 
 Plano 01: E1.S3 **ATENDIDO**; E1.S4 **SHADOW_ON** ([`evidence/e1-s4-registry-selection-shadow.md`](./evidence/e1-s4-registry-selection-shadow.md)). Nenhuma remoção final antes de `unknown external API` + metamorphic rename + divergências shadow explicáveis.
 
@@ -131,7 +131,7 @@ Plano 01: E1.S3 **ATENDIDO**; E1.S4 **SHADOW_ON** ([`evidence/e1-s4-registry-sel
 
 Executar plano 02, com foco em pedidos longos, intents próximas, linguagem informal, typos e no-tool. Inventário intents: Onda A §6.
 
-### Onda D — multi-turn e argument binding — **BLOQUEADO_SOFT por B**
+### Onda D — multi-turn e argument binding — **ATENDIDO**
 
 Executar plano 03. Follow-up deve depender de contexto estruturado e schema, não de route substring.
 

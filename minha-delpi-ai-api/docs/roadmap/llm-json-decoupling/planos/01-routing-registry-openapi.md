@@ -1,7 +1,7 @@
 # Plano 01 — Routing registry -> OpenAPI + Action Catalog
 
 **Prioridade:** P0  
-**Status execução:** Onda B · E1.S6 **ATENDIDO_PARCIAL** (cutover seleção + binder; DELETE JSON deferred Onda H)  
+**Status execução:** Onda B · E1.S6 **ATENDIDO** (cutover seleção + binder; DELETE JSON via E9.S12.C/D/E)  
 **Evidência:** [`../evidence/e1-s3-action-catalog.md`](../evidence/e1-s3-action-catalog.md) · [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s4-agree-aggregation.md`](../evidence/e1-s4-agree-aggregation.md) · [`../evidence/e1-s5-parameter-strategy-shadow.md`](../evidence/e1-s5-parameter-strategy-shadow.md) · [`../evidence/e1-s6-cleanup-partial.md`](../evidence/e1-s6-cleanup-partial.md) · [`../evidence/e1-s6b-selection-cutover.md`](../evidence/e1-s6b-selection-cutover.md) · [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md)  
 **Objetivo perceptível:** uma action nova deve ser descoberta e selecionada por semântica/contrato sem exigir `pathMarkers`, `operationIdMarkers`, `routeSegment` ou `parameterStrategy` por endpoint no conteúdo do assistente.
 
@@ -114,7 +114,7 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 - audit snapshot + `GET /admin/metrics/registry-selection-shadow/summary` (`agreeRate`);
 - testes agree/diverge/off/product + aggregate. Evidência: [`../evidence/e1-s4-registry-selection-shadow.md`](../evidence/e1-s4-registry-selection-shadow.md) · [`../evidence/e1-s4-agree-aggregation.md`](../evidence/e1-s4-agree-aggregation.md).
 
-**Pendente:** DELETE de fields JSON do registry (deferred Onda H / após migração readiness/lint).
+**Pendente:** — (DELETE registry fields concluído em E9.S12.C/D/E).
 
 ### E1.S5 — Parameter strategy removal — **ATENDIDO** (2026-09-10)
 
@@ -124,17 +124,18 @@ Registry pode permanecer apenas para policy transversal que não duplique contra
 
 **Fora:** `sql` (policy). Limpeza de fields/braços mortos = **E1.S6**.
 
-### E1.S6 — Cutover e cleanup — **ATENDIDO_PARCIAL** (2026-09-10)
+### E1.S6 — Cutover e cleanup — **ATENDIDO** (2026-09-11)
 
 **Objetivo:** retirar autoridade runtime do registry técnico.
 
 **Feito:**
 - **Fatia A:** switch tipado de `build_parameters` removido; binder permanente ([`e1-s6-cleanup-partial.md`](../evidence/e1-s6-cleanup-partial.md)).
-- **Fatia B:** `registrySelectionShadow.cutoverEnabled=true` — authority OpenAPI-first em `select_registry_route_id` e product intent/segment; corpus offline agree + unknown + metamorphic ([`e1-s6b-selection-cutover.md`](../evidence/e1-s6b-selection-cutover.md)).
+- **Fatia B:** `registrySelectionShadow.cutoverEnabled=true` — authority OpenAPI-first ([`e1-s6b-selection-cutover.md`](../evidence/e1-s6b-selection-cutover.md)).
+- **DELETE JSON (Onda H):** `pathMarkers`/`operationIds` canônicos (E9.S12.C), `routeSegment` (E9.S12.D), `parameters.strategy` (E9.S12.E). Registry runtime sem `pathMarkers` nas routes.
 
-**Deferred (Onda H / ledger):** DELETE de fields técnicos no JSON (`pathMarkers`, etc.) enquanto readiness/lint/resolver residual ainda os leem.
+**Aceite perceptível plano 01:** seleção residual não exige markers como authority; unknown provider + metamorphic = PASS (E9.S14).
 
-**Aceite perceptível plano 01:** seleção residual não exige markers como authority; unknown provider + metamorphic no harness cutover = PASS.
+Compat residual: leitores ainda toleram `pathMarkers` se presentes (testes/KPI/`api_route_domains` JUSTIFIED_POLICY) — sem autoridade no registry operacional.
 
 ## Riscos
 
