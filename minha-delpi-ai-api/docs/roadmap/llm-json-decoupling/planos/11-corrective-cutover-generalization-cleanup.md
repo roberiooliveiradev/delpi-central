@@ -1,7 +1,7 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** **REABERTO — Onda J / `VERIFY_FINAL_FAILED`** · J-R1–J-R2 **ATENDIDO** · próxima = **J-R3**  
+**Status execução:** **REABERTO — Onda J / `VERIFY_FINAL_FAILED`** · J-R1–J-R3 **ATENDIDO** · próxima = **J-R4**  
 **BASE_GIT_SHA original (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
 **Candidate anteriormente declarado final:** `782a49721319571f0fe4733d59b8a5cc65ac4c04` — **histórico invalidado como release evidence**  
 **Auditoria pós-fechamento:** [`../evidence/e11-post-close-audit-2026-09-11.md`](../evidence/e11-post-close-audit-2026-09-11.md)  
@@ -286,7 +286,8 @@ Fazer:
 
 ## J-R3 — evidence reproduzível
 
-**Objetivo:** runner ser a única fonte de manifest/veredito.
+**Objetivo:** runner ser a única fonte de manifest/veredito.  
+**Status:** **ATENDIDO** · `EVIDENCE_REPRODUCIBLE=PASS` · evidência [`../evidence/e11-j-r3-evidence-reproducible.md`](../evidence/e11-j-r3-evidence-reproducible.md)
 
 Fazer:
 
@@ -296,7 +297,9 @@ Fazer:
 - teste que reexecuta/verifica consistência estrutural;
 - qualquer divergência = FAIL.
 
-**Gate:** `EVIDENCE_REPRODUCIBLE = PASS`.
+**Gate:** `EVIDENCE_REPRODUCIBLE = PASS` (**cumprido** — `ChatEvidenceReproducibilityService` + align script + provenance no runner offline).
+
+**Próxima:** J-R4.
 
 ## J-R4 — unknown external full chain
 

@@ -1,0 +1,18 @@
+{
+  "runId": "e11-j-r3-evidence-reproducible-v1",
+  "wave": "J",
+  "step": "J-R3",
+  "gate": "EVIDENCE_REPRODUCIBLE",
+  "completeGate": "PASS",
+  "owner": "app.domain.services.chat_evidence_reproducibility_service.ChatEvidenceReproducibilityService",
+  "alignedArtifacts": [
+    "docs/roadmap/llm-json-decoupling/evidence/e11-s9-final-candidate-offline-v1/manifest.json"
+  ],
+  "alignScript": "scripts/align_evidence_release_pass.py",
+  "tests": "tests/unit/domain/services/test_j_r3_evidence_reproducibility.py",
+  "a11_03": {
+    "storedWas": true,
+    "runnerWouldWrite": false,
+    "alignedTo": false
+  }
+}

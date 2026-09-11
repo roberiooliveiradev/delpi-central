@@ -12,7 +12,7 @@
   "routingCasesHash": "7ff3733293815064c9dd346a74b848623ade2113d987b4690adf81a3388e039d",
   "liveLlm": false,
   "aggregateStatus": "PASS_OFFLINE",
-  "globalReleasePass": true,
+  "globalReleasePass": false,
   "reasonGlobalReleasePassFalse": "Live requiredDimensions (send/stream/F5/efficiency) deferred to live battery with SMOKE_USER/PASSWORD; offline alone cannot close VERIFY_FINAL.",
   "dimensionsOffline": {
     "R1": "PASS_OFFLINE",
@@ -485,5 +485,11 @@
     "R9": "PASS",
     "R10": "PASS",
     "R11": "PASS"
+  },
+  "evidenceReproducibility": {
+    "alignedAt": "2026-09-11T19:31:58Z",
+    "source": "plan-11/J-R3 + audit A11-03",
+    "previousGlobalReleasePass": true,
+    "alignedGlobalReleasePass": false
   }
 }

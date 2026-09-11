@@ -22,6 +22,9 @@ if str(_ROOT) not in sys.path:
 from app.domain.services.chat_required_dimensions_matrix_service import (  # noqa: E402
     ChatRequiredDimensionsMatrixService,
 )
+from app.domain.services.chat_evidence_reproducibility_service import (  # noqa: E402
+    ChatEvidenceReproducibilityService,
+)
 
 EXPECTED_CORPUS_HASH = (
     "1147e05d6beae96dcf2322a08195f0bcc7a3727206418cd056692d570ce9523f"
@@ -254,18 +257,40 @@ def main() -> int:
         "R11_live_efficiency": "DEFERRED_LIVE",
     }
 
+    runner_path = Path(__file__).resolve()
+    config_material = {
+        "datasetVersion": corpus.get("datasetVersion"),
+        "datasetHash": dataset_hash,
+        "routingCasesHash": routing_hash,
+        "environment": "host-offline",
+        "liveLlm": False,
+        "role": "FINAL_CANDIDATE_OFFLINE",
+        "planStep": "E11.S9",
+    }
+    provenance = ChatEvidenceReproducibilityService.build_provenance(
+        git_sha=sha,
+        dataset_version=str(corpus.get("datasetVersion") or ""),
+        dataset_hash=dataset_hash,
+        runner_path=runner_path,
+        config_material=config_material,
+        routing_cases_hash=routing_hash,
+    )
+
     manifest = {
         "runId": run_id,
         "wave": "J",
         "planStep": "E11.S9",
         "program": "llm-json-decoupling",
         "role": "FINAL_CANDIDATE_OFFLINE",
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "timestamp": provenance["timestamp"],
         "finalCandidateGitSha": sha,
         "environment": "host-offline",
         "datasetVersion": corpus.get("datasetVersion"),
         "datasetHash": dataset_hash,
         "routingCasesHash": routing_hash,
+        "runnerPath": provenance["runnerPath"],
+        "runnerSha256": provenance["runnerSha256"],
+        "configHash": provenance["configHash"],
         "liveLlm": False,
         "aggregateStatus": aggregate,
         "globalReleasePass": False,
@@ -278,9 +303,20 @@ def main() -> int:
         "cases": case_results,
         "sidecars": sidecar_results,
         "notes": [
-            "Corpus v1 immutable; sidecars reinforce weak harnessRefs (c11/c12/c18).",
+            "Corpus v2 + matrix gate (J-R2); provenance (J-R3).",
             "Historical A–I PASS is not reused as release evidence.",
+            "globalReleasePass forever false while liveDeferred is non-empty.",
         ],
+    }
+    consistency = ChatEvidenceReproducibilityService.validate_manifest(
+        manifest, require_provenance=True
+    )
+    if not consistency.ok:
+        print("EVIDENCE_REPRODUCIBLE=FAIL", consistency.errors)
+        return 2
+    manifest["evidenceReproducibility"] = {
+        "ok": True,
+        "source": ChatEvidenceReproducibilityService.SOURCE,
     }
 
     (run_dir / "manifest.json").write_text(
