@@ -77,7 +77,7 @@ Reconexão: máquina de estados (`idle` / `connecting` / `connected` / `backoff`
 
 ## Endpoints preservados
 
-`GET /`, `GET /api/contador`, `GET|POST /api/config`, `POST /api/incrementar|decrementar|reset|definir|reboot|factory-reset`, `POST /api/ota/check-now` (202, autenticado).
+`GET /`, `GET /api/contador`, `GET /api/status`, `GET|POST /api/config`, `POST /api/incrementar|decrementar|reset|definir|reboot|factory-reset`, `POST /api/ota/check-now` (202, autenticado).
 
 Status aditivo: `input1` / `input2` como `0|1` raw (`0` = LOW/ativo).
 

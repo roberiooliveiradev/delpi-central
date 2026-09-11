@@ -13,8 +13,12 @@ def test_registry_loads_mvp_drivers():
     keys = {item["key"] for item in drivers}
     assert "esp8266_counter_v1" in keys
     assert "esp32c3_counter_v1" in keys
+    assert "esp32_counter_v1" in keys
     assert "esp8266_gauge_v1" in keys
     assert registry.build_capabilities("esp32c3_counter_v1") == registry.build_capabilities(
+        "esp8266_counter_v1"
+    )
+    assert registry.build_capabilities("esp32_counter_v1") == registry.build_capabilities(
         "esp8266_counter_v1"
     )
 

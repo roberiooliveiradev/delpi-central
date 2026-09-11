@@ -23,7 +23,12 @@ def test_seed_drivers_present_in_list(client):
     response = client.get("/drivers")
     assert response.status_code == 200
     keys = {item["key"] for item in response.json()["data"]["items"]}
-    assert {"esp8266_counter_v1", "esp32c3_counter_v1", "esp8266_gauge_v1"} <= keys
+    assert {
+        "esp8266_counter_v1",
+        "esp32c3_counter_v1",
+        "esp32_counter_v1",
+        "esp8266_gauge_v1",
+    } <= keys
 
 
 def test_create_patch_archive_unarchive_driver(client):
