@@ -107,6 +107,42 @@ export function PermanentDeleteDialog({
         text: `${deps.otaTargets} registro(s) OTA`,
       });
     }
+    if (typeof deps.versionCount === "number" && deps.versionCount > 0) {
+      lines.push({
+        icon: <FileCode size={14} aria-hidden />,
+        text: PP_HELP.hub.permanentDeleteDepVersionCount.replace(
+          "{count}",
+          String(deps.versionCount),
+        ),
+      });
+    }
+    if (typeof deps.jobsFinished === "number" && deps.jobsFinished > 0) {
+      lines.push({
+        icon: <FileCode size={14} aria-hidden />,
+        text: PP_HELP.hub.permanentDeleteDepJobsFinished.replace(
+          "{count}",
+          String(deps.jobsFinished),
+        ),
+      });
+    }
+    if (typeof deps.linkedDevices === "number" && deps.linkedDevices > 0) {
+      lines.push({
+        icon: <Cpu size={14} aria-hidden />,
+        text: PP_HELP.hub.permanentDeleteDepLinkedDevices.replace(
+          "{count}",
+          String(deps.linkedDevices),
+        ),
+      });
+    }
+    if (typeof deps.installedDevices === "number" && deps.installedDevices > 0) {
+      lines.push({
+        icon: <Cpu size={14} aria-hidden />,
+        text: PP_HELP.hub.permanentDeleteDepInstalledDevices.replace(
+          "{count}",
+          String(deps.installedDevices),
+        ),
+      });
+    }
     if (deps.hasArtifact === true) {
       lines.push({
         icon: <FileCode size={14} aria-hidden />,

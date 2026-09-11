@@ -7,6 +7,7 @@ import {
   createFirmwareUpdateJob,
   deleteDevicePermanently,
   deleteDriverPermanently,
+  deleteFirmwareFamilyPermanently,
   deleteFirmwarePermanently,
   disableDevice,
   enableDevice,
@@ -15,6 +16,7 @@ import {
   fetchDevices,
   fetchDriverDeletionImpact,
   fetchFirmwareDeletionImpact,
+  fetchFirmwareFamilyDeletionImpact,
   fetchFirmwareUpdateJobs,
   fetchFirmwareUpdateSummary,
   fetchFirmwareUpdateTargets,
@@ -234,7 +236,7 @@ export function FirmwareLinksPage({
     intent: "now" | "schedule";
   } | null>(null);
   const [permanentDelete, setPermanentDelete] = useState<{
-    kind: "device" | "firmware" | "driver";
+    kind: "device" | "firmware" | "firmware-family" | "driver";
     id: string;
     label: string;
     confirmPhrase: string;
@@ -889,7 +891,7 @@ export function FirmwareLinksPage({
 
   const openPermanentDelete = useCallback(
     async (args: {
-      kind: "device" | "firmware" | "driver";
+      kind: "device" | "firmware" | "firmware-family" | "driver";
       id: string;
       label: string;
       confirmPhrase: string;
@@ -908,7 +910,9 @@ export function FirmwareLinksPage({
             ? await fetchDeviceDeletionImpact(args.id)
             : args.kind === "firmware"
               ? await fetchFirmwareDeletionImpact(args.id)
-              : await fetchDriverDeletionImpact(args.id);
+              : args.kind === "firmware-family"
+                ? await fetchFirmwareFamilyDeletionImpact(args.id)
+                : await fetchDriverDeletionImpact(args.id);
         setPermanentDelete((prev) =>
           prev && prev.id === args.id && prev.kind === args.kind
             ? { ...prev, impact, loading: false }
@@ -1074,6 +1078,16 @@ export function FirmwareLinksPage({
             permanentDelete.label,
           ),
         });
+      } else if (permanentDelete.kind === "firmware-family") {
+        await deleteFirmwareFamilyPermanently(permanentDelete.id);
+        pushNotice({
+          variant: "success",
+          title: "Família excluída",
+          message: PP_HELP.hub.permanentDeleteSuccessFirmwareFamily.replace(
+            "{name}",
+            permanentDelete.label,
+          ),
+        });
       } else {
         await deleteDriverPermanently(permanentDelete.id);
         pushNotice({
@@ -1216,6 +1230,15 @@ export function FirmwareLinksPage({
           id: fw.id,
           label: `${fw.firmwareKey} v${fw.version}`,
           confirmPhrase: `v${fw.version}`,
+        });
+        return;
+      }
+      if (action === "permanent-delete-family") {
+        void openPermanentDelete({
+          kind: "firmware-family",
+          id: fw.firmwareKey,
+          label: fw.firmwareKey,
+          confirmPhrase: fw.firmwareKey,
         });
         return;
       }
@@ -2251,13 +2274,21 @@ export function FirmwareLinksPage({
             ? PP_HELP.hub.permanentDeleteDeviceTitle
             : permanentDelete?.kind === "firmware"
               ? PP_HELP.hub.permanentDeleteFirmwareTitle
-              : PP_HELP.hub.permanentDeleteDriverTitle
+              : permanentDelete?.kind === "firmware-family"
+                ? PP_HELP.hub.permanentDeleteFirmwareFamilyTitle
+                : PP_HELP.hub.permanentDeleteDriverTitle
         }
         entityLabel={permanentDelete?.label ?? ""}
         confirmPhrase={permanentDelete?.confirmPhrase ?? ""}
         impact={permanentDelete?.impact ?? null}
         loadingImpact={Boolean(permanentDelete?.loading)}
         confirmBusy={confirmBusy}
+        impactSummary={
+          permanentDelete?.kind === "firmware-family" &&
+          permanentDelete.impact?.dependencies?.willPurgeFinishedJobs === true ? (
+            <p className="pp-muted">{PP_HELP.hub.permanentDeleteFirmwareFamilyPurgeNotice}</p>
+          ) : undefined
+        }
         onConfirm={() => void runPermanentDelete()}
         onCancel={() => setPermanentDelete(null)}
       />

@@ -54,7 +54,8 @@ Decisão de produto explícita: hard delete é permitido, **dependency-aware**.
 | Entidade | Reversível | Definitiva |
 |----------|------------|------------|
 | IoT | Desativar (`POST …/disable`; alias legado `DELETE /devices/{id}`) | Excluir permanentemente (`DELETE …/permanent`) |
-| Firmware | Arquivar versão (`POST …/archive`) | Excluir versão permanentemente (`DELETE /firmwares/{id}`) |
+| Firmware (versão) | Arquivar versão (`POST …/archive`) | Excluir versão permanentemente (`DELETE /firmwares/{id}`) — bloqueia com histórico OTA / instalada / OTA ativa |
+| Firmware (família) | — | Excluir família (`DELETE /firmware-families/{firmwareKey}`) — purga jobs OTA **terminados**; bloqueia só com target OTA aberto; desvincula IoTs (`firmware_key=NULL`) |
 | Driver | Arquivar / Desarquivar | Excluir permanentemente (`DELETE /drivers/{key}`) |
 
 ```text
@@ -64,8 +65,9 @@ Excluir permanentemente = irreversível; remove row; revalida dependências no D
 
 - Soft: `PpConfirmDialog` + `PP_HELP.hub.softDelete*` (sem typed confirm). Nunca rotular soft como «Excluir».
 - Hard: `PermanentDeleteDialog` (typed confirm) + preflight `GET …/deletion-impact`. Proibido `window.confirm` e `force=true` silencioso.
-- Driver com IoTs/firmwares → 409 (sem cascade). Firmware com job OTA / instalado / OTA ativa → 409. IoT com OTA ativa → 409.
+- Driver com IoTs/firmwares → 409 (sem cascade). Firmware **versão** com job OTA / instalado / OTA ativa → 409. Firmware **família** com OTA ativa → 409; histórico terminado é purgado. IoT com OTA ativa → 409.
 - Após hard delete: limpar layers/URL, atualizar graph/catálogo sem reload; notices via `resolveProductionPulseError` / `PpFloatingNotices`.
+- Menu Hub: «Excluir versão…» e «Excluir família permanentemente…» (`kind: firmware-family`, confirmPhrase = `firmwareKey`).
 
 ## Camadas UI (matriz travada)
 

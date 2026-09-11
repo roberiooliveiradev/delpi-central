@@ -254,7 +254,25 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/EntityContextLayers.tsx")).not.toMatch(/\(soft delete\)/);
     expect(readRelative("components/PermanentDeleteDialog.tsx")).toMatch(/PpNativeTextField/);
     expect(readRelative("components/PermanentDeleteDialog.tsx")).not.toMatch(/window\.confirm/);
-    expect(readRelative("api/productionPulseApi.ts")).toMatch(/deleteDevicePermanently/);
+    expect(readRelative("components/EntityContextLayers.tsx")).toMatch(
+      /Excluir família permanentemente/,
+    );
+    expect(readRelative("components/EntityContextLayers.tsx")).toMatch(
+      /permanent-delete-family/,
+    );
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/firmware-family/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(
+      /deleteFirmwareFamilyPermanently/,
+    );
+    expect(readRelative("api/productionPulseApi.ts")).toMatch(
+      /fetchFirmwareFamilyDeletionImpact/,
+    );
+    expect(readRelative("api/productionPulseApi.ts")).toMatch(
+      /firmware-families\//,
+    );
+    expect(readRelative("content/helpTooltips.ts")).toMatch(
+      /permanentDeleteFirmwareFamilyTitle/,
+    );    expect(readRelative("api/productionPulseApi.ts")).toMatch(/deleteDevicePermanently/);
     expect(readRelative("api/productionPulseApi.ts")).toMatch(/\/devices\/\$\{encodeURIComponent\(deviceId\)\}\/disable/);
     expect(readRelative("api/productionPulseApi.ts")).toMatch(
       /\/devices\/\$\{encodeURIComponent\(deviceId\)\}\/permanent/,
@@ -289,6 +307,9 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/ADMIN_HUB_MINIMAP_NODE_THRESHOLD/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/FileCode/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/Cpu/);
+    expect(readRelative("utils/firmwareLagLabel.ts")).toMatch(/resolveFirmwareLagInfo/);
+    expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/resolveFirmwareLagInfo/);
+    expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).not.toMatch(/desatul/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).not.toMatch(/Atualizar vinculados/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/Panel/);
     expect(readRelative("components/FirmwareDeviceLinkCanvas.tsx")).toMatch(/useDelpiDarkMode/);

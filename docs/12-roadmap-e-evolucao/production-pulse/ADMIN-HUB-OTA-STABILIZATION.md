@@ -130,6 +130,8 @@ stateDiagram-v2
 
 Hard delete de IoT remove via CASCADE: bindings, readings, rollups, commands, OTA targets (jobs permanecem; `maybe_finish_job`). Preflight exibe contagens reais. Sem `force=true`. Artifact de firmware: cleanup best-effort após DELETE da row. Registry de driver: invalidar cache após hard delete.
 
+Hard delete de **família OTA** (`DELETE /firmware-families/{firmwareKey}`): purga jobs/targets **terminados**, desvincula `devices.firmware_key`, hard-delete de todas as versões + artefatos. Bloqueia apenas com targets abertos. Exclusão de **versão** isolada continua bloqueando com histórico OTA.
+
 ### Scheduler
 
 `DevicePollSchedulerService` no mesmo tick: authorize scheduled + stale + reconcile batch.

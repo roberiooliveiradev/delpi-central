@@ -32,6 +32,7 @@ import {
 import type { FirmwareListItem, FirmwareUpdateTarget } from "../api/productionPulseApi";
 import { OtaTargetProgress } from "./ota/OtaTargetProgress";
 import { PP_HELP } from "../content/helpTooltips";
+import { formatFamilyOutdatedSummary, resolveFirmwareLagInfo } from "../utils/firmwareLagLabel";
 import type { DeviceListItem } from "../types/device";
 import type { AdminEntityRef } from "../utils/adminHubUiState";
 import { firmwareSiblingsForFamily } from "../utils/firmwareCatalogGrouping";
@@ -145,6 +146,12 @@ export function EntitySummaryPopover({
         ? firmwareSiblingsForFamily(firmware ? [firmware] : [], familyKey)
         : [];
   const showVersionPicker = !isDevice && Boolean(onOpenVersion) && versions.length > 0;
+  const deviceFirmwareLag = isDevice
+    ? resolveFirmwareLagInfo(
+        device?.installedFirmwareVersion,
+        firmwareMeta?.version ?? null,
+      )
+    : null;
 
   return (
     <AnchoredPanelPortal
@@ -187,9 +194,11 @@ export function EntitySummaryPopover({
               +{device.periodDeltas?.day?.counter ?? 0} hoje · +
               {device.periodDeltas?.shift?.counter ?? 0} turno
             </div>
-            <div className="pp-entity-summary__firmware-line">
-              Firmware {device.installedFirmwareVersion ?? "—"}
-              {firmwareMeta?.version ? ` → ${firmwareMeta.version}` : ""}
+            <div
+              className="pp-entity-summary__firmware-line"
+              title={deviceFirmwareLag?.detailLabel}
+            >
+              {deviceFirmwareLag?.detailLabel ?? "—"}
             </div>
             {otaTarget ? (
               <OtaTargetProgress
@@ -237,7 +246,10 @@ export function EntitySummaryPopover({
               {firmwareMeta?.linkedCount ?? 0} IoT vinculado
               {(firmwareMeta?.linkedCount ?? 0) === 1 ? "" : "s"}
               {(firmwareMeta?.outdatedCount ?? 0) > 0
-                ? ` · ⚠ ${firmwareMeta?.outdatedCount} desatual.`
+                ? formatFamilyOutdatedSummary(
+                    firmwareMeta?.outdatedCount ?? 0,
+                    firmwareMeta?.version ?? null,
+                  )
                 : ""}
             </div>
             {firmwareMeta?.firmwareKey || firmware?.firmwareKey ? (
@@ -490,6 +502,13 @@ export function EntityActionMenu({
               destructive
               onSelect={() => run("permanent-delete")}
             />
+            <PpContextMenuItem
+              label="Excluir família permanentemente…"
+              icon={Trash2}
+              hint={PP_HELP.hub.menuPermanentDeleteFirmwareFamily}
+              destructive
+              onSelect={() => run("permanent-delete-family")}
+            />
           </>
         ) : (
           <>
@@ -537,6 +556,13 @@ export function EntityActionMenu({
               hint={PP_HELP.hub.menuPermanentDeleteFirmware}
               destructive
               onSelect={() => run("permanent-delete")}
+            />
+            <PpContextMenuItem
+              label="Excluir família permanentemente…"
+              icon={Trash2}
+              hint={PP_HELP.hub.menuPermanentDeleteFirmwareFamily}
+              destructive
+              onSelect={() => run("permanent-delete-family")}
             />
           </>
         )

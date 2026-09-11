@@ -126,6 +126,10 @@ Detalhe: [API-MFE-DEVICE-EVOLUTION.md](./API-MFE-DEVICE-EVOLUTION.md) · [OPERAT
 | `GET` | `/firmwares` | `devices.view` | Catálogo por `firmwareKey` / `driverKey` |
 | `POST` | `/firmwares` | `devices.manage` | Publica versão + artefato (R60) |
 | `GET` | `/firmwares/{id}` | `devices.view` | Detalhe + sha256 |
+| `GET` | `/firmwares/{id}/deletion-impact` | `devices.manage` | Preflight hard delete de **versão** |
+| `DELETE` | `/firmwares/{id}` | `devices.manage` | Hard delete de versão (bloqueia histórico OTA / instalada / OTA ativa) |
+| `GET` | `/firmware-families/{firmwareKey}/deletion-impact` | `devices.manage` | Preflight hard delete de **família** (agrega versões + jobs) |
+| `DELETE` | `/firmware-families/{firmwareKey}` | `devices.manage` | Hard delete família: purga jobs terminados, desvincula IoTs, apaga todas as versões; 409 se OTA ativa |
 | `GET`/`POST` | `/firmware-update-jobs` | view / manage | Campanhas manual ou `scheduled` (R53–R54) |
 | `POST` | `/firmware-update-jobs/{id}/cancel` | `devices.manage` | Cancela targets abertos |
 | `GET` | `/firmware-update-jobs/{id}/targets` | `devices.view` | Status por device |

@@ -6,6 +6,7 @@ from uuid import UUID
 
 from production_pulse_app.domain.errors import ContentCodedError
 from production_pulse_app.infrastructure.persistence.repositories.postgres_firmware_repository import (
+    FirmwareFamilyActiveTargetsError,
     FirmwareNotFoundError,
     PostgresFirmwareRepository,
 )
@@ -108,5 +109,95 @@ class FirmwareDeletionService:
             "id": str(firmware_id),
             "firmwareKey": impact.get("firmwareKey"),
             "version": impact.get("version"),
+            "dependencies": impact["dependencies"],
+        }
+
+    def get_family_deletion_impact(self, firmware_key: str) -> dict[str, Any]:
+        key = (firmware_key or "").strip()
+        if not key:
+            raise FirmwareNotFoundError(firmware_key or "")
+        deps = self._repo.count_family_deletion_dependencies(key)
+        blockers: list[dict[str, Any]] = []
+        if deps["activeTargets"] > 0:
+            blockers.append(
+                {"code": "firmwareHasActiveTargets", "count": deps["activeTargets"]}
+            )
+        will_purge = deps["jobsFinished"] > 0
+        return {
+            "canDelete": len(blockers) == 0,
+            "blockers": blockers,
+            "versionCount": deps["versionCount"],
+            "jobsFinished": deps["jobsFinished"],
+            "jobsActive": deps["jobsActive"],
+            "activeTargets": deps["activeTargets"],
+            "linkedDevices": deps["linkedDevices"],
+            "installedDevices": deps["installedDevices"],
+            "willPurgeFinishedJobs": will_purge,
+            "dependencies": {
+                "versionCount": deps["versionCount"],
+                "jobsFinished": deps["jobsFinished"],
+                "jobsActive": deps["jobsActive"],
+                "activeTargets": deps["activeTargets"],
+                "linkedDevices": deps["linkedDevices"],
+                "installedDevices": deps["installedDevices"],
+                "willPurgeFinishedJobs": will_purge,
+            },
+            "displayName": key,
+            "firmwareKey": key,
+        }
+
+    def delete_family_permanently(
+        self, firmware_key: str, *, actor_sub: str | None
+    ) -> dict[str, Any]:
+        impact = self.get_family_deletion_impact(firmware_key)
+        if not impact["canDelete"]:
+            code = impact["blockers"][0]["code"]
+            logger.info(
+                "hard_delete_blocked entity_type=firmware_family entity_key=%s code=%s actor_sub=%s",
+                impact.get("firmwareKey"),
+                code,
+                actor_sub,
+            )
+            raise ContentCodedError(code)
+
+        key = str(impact["firmwareKey"])
+        try:
+            result = self._repo.hard_delete_family(key)
+        except FirmwareFamilyActiveTargetsError:
+            raise ContentCodedError("deleteDependencyConflict") from None
+        except FirmwareNotFoundError:
+            raise
+
+        for row in result["deletedVersions"]:
+            artifact_path = row.get("artifact_path")
+            if not artifact_path:
+                continue
+            try:
+                self._storage.delete_relative(str(artifact_path))
+            except Exception:
+                logger.exception(
+                    "firmware_artifact_cleanup_failed firmware_id=%s path=%s",
+                    row.get("id"),
+                    artifact_path,
+                )
+
+        deleted_ids = [str(row["id"]) for row in result["deletedVersions"]]
+        logger.info(
+            "firmware_family_hard_deleted firmware_key=%s versions=%s purged_jobs=%s "
+            "unlinked_devices=%s actor_sub=%s",
+            key,
+            len(deleted_ids),
+            result["purgedJobs"],
+            result["unlinkedDevices"],
+            actor_sub,
+        )
+        return {
+            "deleted": True,
+            "firmwareKey": key,
+            "deletedVersionIds": deleted_ids,
+            "versionCount": len(deleted_ids),
+            "purgedJobs": result["purgedJobs"],
+            "unlinkedDevices": result["unlinkedDevices"],
+            "willPurgeFinishedJobs": impact["willPurgeFinishedJobs"],
             "dependencies": impact["dependencies"],
         }

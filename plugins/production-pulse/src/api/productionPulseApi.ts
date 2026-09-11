@@ -605,6 +605,11 @@ export type PermanentDeleteResult = {
   driverKey?: string;
   firmwareKey?: string;
   version?: string;
+  versionCount?: number;
+  purgedJobs?: number;
+  unlinkedDevices?: number;
+  deletedVersionIds?: string[];
+  willPurgeFinishedJobs?: boolean;
   dependencies?: Record<string, number | boolean>;
 };
 
@@ -636,6 +641,25 @@ export async function deleteFirmwarePermanently(
   const payload = await httpJson<ApiEnvelope<PermanentDeleteResult>>(
     "DELETE",
     `${PRODUCTION_PULSE_API_BASE}/firmwares/${encodeURIComponent(firmwareId)}`,
+  );
+  return payload.data;
+}
+
+export async function fetchFirmwareFamilyDeletionImpact(
+  firmwareKey: string,
+): Promise<DeletionImpact> {
+  const payload = await httpGet<ApiEnvelope<DeletionImpact>>(
+    `${PRODUCTION_PULSE_API_BASE}/firmware-families/${encodeURIComponent(firmwareKey)}/deletion-impact`,
+  );
+  return payload.data;
+}
+
+export async function deleteFirmwareFamilyPermanently(
+  firmwareKey: string,
+): Promise<PermanentDeleteResult> {
+  const payload = await httpJson<ApiEnvelope<PermanentDeleteResult>>(
+    "DELETE",
+    `${PRODUCTION_PULSE_API_BASE}/firmware-families/${encodeURIComponent(firmwareKey)}`,
   );
   return payload.data;
 }

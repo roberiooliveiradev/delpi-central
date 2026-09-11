@@ -269,3 +269,151 @@ def test_driver_hard_delete_free_and_blocked(client, unique_ip):
     blocked = client.delete("/drivers/esp8266_counter_v1")
     assert blocked.status_code == 409
     assert blocked.json()["error"]["code"] == "driverHasDevices"
+
+
+def test_firmware_family_hard_delete_without_deps(client, unique_ip, firmware_storage_dir):
+    _create_device(client, ip=unique_ip)
+    fw = _publish_firmware(client, version="0.1.0", payload=b"family-clean")
+    key = fw["firmwareKey"]
+    matches = list(Path(firmware_storage_dir).rglob("*.bin"))
+    assert matches
+
+    impact = client.get(f"/firmware-families/{key}/deletion-impact")
+    assert impact.status_code == 200
+    body = impact.json()["data"]
+    assert body["canDelete"] is True
+    assert body["versionCount"] == 1
+    assert body["willPurgeFinishedJobs"] is False
+
+    deleted = client.delete(f"/firmware-families/{key}")
+    assert deleted.status_code == 200
+    assert deleted.json()["data"]["deleted"] is True
+    assert deleted.json()["data"]["versionCount"] == 1
+
+    listed = client.get("/firmwares", params={"firmwareKey": key})
+    assert listed.json()["data"]["items"] == []
+    assert not matches[0].exists()
+
+
+def test_firmware_family_hard_delete_purges_finished_jobs(client, unique_ip):
+    from production_pulse_app.infrastructure.persistence.plugins_postgres_connection import (
+        plugins_connection,
+    )
+    from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
+        PostgresDeviceRepository,
+    )
+
+    device = _create_device(client, ip=unique_ip, token="fam-purge")
+    PostgresDeviceRepository().record_installed_firmware_version(
+        UUID(device["id"]), version="1.0.0"
+    )
+    fw_a = _publish_firmware(client, version="3.1.0", payload=b"a")
+    fw_b = _publish_firmware(client, version="3.2.0", payload=b"b")
+    key = fw_a["firmwareKey"]
+
+    job = client.post(
+        "/firmware-update-jobs",
+        json={
+            "firmwareId": fw_a["id"],
+            "branch": "01",
+            "trigger": "manual",
+            "filter": {"onlyOutdated": False, "deviceIds": [device["id"]]},
+        },
+    )
+    assert job.status_code == 201, job.text
+    job_id = job.json()["data"]["id"]
+
+    active_impact = client.get(f"/firmware-families/{key}/deletion-impact")
+    assert active_impact.status_code == 200
+    assert active_impact.json()["data"]["canDelete"] is False
+    assert any(
+        b["code"] == "firmwareHasActiveTargets"
+        for b in active_impact.json()["data"]["blockers"]
+    )
+    blocked = client.delete(f"/firmware-families/{key}")
+    assert blocked.status_code == 409
+
+    with plugins_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE production_pulse.firmware_update_targets
+                SET status = 'updated', finished_at = NOW(), updated_at = NOW()
+                WHERE job_id = %s
+                """,
+                (job_id,),
+            )
+            cur.execute(
+                """
+                UPDATE production_pulse.firmware_update_jobs
+                SET status = 'completed', updated_at = NOW()
+                WHERE id = %s
+                """,
+                (job_id,),
+            )
+        conn.commit()
+
+    impact = client.get(f"/firmware-families/{key}/deletion-impact")
+    assert impact.status_code == 200
+    body = impact.json()["data"]
+    assert body["canDelete"] is True
+    assert body["jobsFinished"] >= 1
+    assert body["willPurgeFinishedJobs"] is True
+    assert body["versionCount"] == 2
+
+    # Version-level delete still blocked by finished history.
+    version_impact = client.get(f"/firmwares/{fw_a['id']}/deletion-impact")
+    assert version_impact.json()["data"]["canDelete"] is False
+    assert any(
+        b["code"] == "firmwareHasUpdateHistory"
+        for b in version_impact.json()["data"]["blockers"]
+    )
+
+    deleted = client.delete(f"/firmware-families/{key}")
+    assert deleted.status_code == 200, deleted.text
+    data = deleted.json()["data"]
+    assert data["purgedJobs"] >= 1
+    assert data["versionCount"] == 2
+    assert fw_a["id"] in data["deletedVersionIds"]
+    assert fw_b["id"] in data["deletedVersionIds"]
+
+    listed = client.get("/firmwares", params={"firmwareKey": key})
+    assert listed.json()["data"]["items"] == []
+
+
+def test_firmware_family_hard_delete_unlinks_devices(client, unique_ip):
+    device = _create_device(client, ip=unique_ip, token="fam-unlink")
+    fw = _publish_firmware(client, version="4.0.0", payload=b"unlink-me")
+    key = fw["firmwareKey"]
+
+    linked = client.put(
+        f"/devices/{device['id']}/firmware-link",
+        json={"firmwareKey": key},
+    )
+    assert linked.status_code == 200, linked.text
+    assert linked.json()["data"]["assignedFirmwareKey"] == key
+
+    deleted = client.delete(f"/firmware-families/{key}")
+    assert deleted.status_code == 200, deleted.text
+    assert deleted.json()["data"]["unlinkedDevices"] >= 1
+
+    still = client.get(f"/devices/{device['id']}")
+    assert still.status_code == 200
+    assert still.json()["data"]["assignedFirmwareKey"] in (None, "")
+    assert still.json()["data"]["id"] == device["id"]
+
+
+def test_firmware_family_hard_delete_404_and_403(client, client_factory):
+    missing = client.get("/firmware-families/does_not_exist_family/deletion-impact")
+    assert missing.status_code == 404
+    assert missing.json()["error"]["code"] == "firmwareFamilyNotFound"
+
+    deleted = client.delete("/firmware-families/does_not_exist_family")
+    assert deleted.status_code == 404
+
+    viewer = client_factory(permissions=["production-pulse.devices.view"])
+    assert viewer.delete("/firmware-families/esp8266_counter_v1").status_code == 403
+    assert (
+        viewer.get("/firmware-families/esp8266_counter_v1/deletion-impact").status_code
+        == 403
+    )

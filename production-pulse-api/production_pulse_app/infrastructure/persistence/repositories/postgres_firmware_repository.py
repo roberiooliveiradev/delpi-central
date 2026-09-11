@@ -20,6 +20,10 @@ class FirmwareNotFoundError(Exception):
     pass
 
 
+class FirmwareFamilyActiveTargetsError(Exception):
+    """Raised inside family hard-delete when open OTA targets still exist."""
+
+
 _FIRMWARE_COLUMNS = """
     id, firmware_key, driver_key, version, display_name, source_text, artifact_path,
     artifact_sha256, artifact_size_bytes, release_notes, min_compatible_version,
@@ -362,6 +366,183 @@ class PostgresFirmwareRepository:
                 row = cur.fetchone()
             conn.commit()
         return dict(row) if row else None
+
+    def count_family_deletion_dependencies(self, firmware_key: str) -> dict[str, int]:
+        key = (firmware_key or "").strip()
+        if not key:
+            raise FirmwareNotFoundError(firmware_key or "")
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT COUNT(*) AS n
+                    FROM production_pulse.firmwares
+                    WHERE firmware_key = %s
+                    """,
+                    (key,),
+                )
+                version_count = int(cur.fetchone()["n"] or 0)
+                if version_count == 0:
+                    raise FirmwareNotFoundError(key)
+
+                cur.execute(
+                    """
+                    SELECT COUNT(*) AS n
+                    FROM production_pulse.firmware_update_targets t
+                    JOIN production_pulse.firmware_update_jobs j ON j.id = t.job_id
+                    JOIN production_pulse.firmwares f ON f.id = j.firmware_id
+                    WHERE f.firmware_key = %s
+                      AND t.status = ANY(%s)
+                    """,
+                    (key, list(_OPEN_TARGET_STATUSES)),
+                )
+                active_targets = int(cur.fetchone()["n"] or 0)
+
+                cur.execute(
+                    """
+                    SELECT COUNT(DISTINCT j.id) AS n
+                    FROM production_pulse.firmware_update_jobs j
+                    JOIN production_pulse.firmwares f ON f.id = j.firmware_id
+                    WHERE f.firmware_key = %s
+                      AND EXISTS (
+                        SELECT 1
+                        FROM production_pulse.firmware_update_targets t
+                        WHERE t.job_id = j.id
+                          AND t.status = ANY(%s)
+                      )
+                    """,
+                    (key, list(_OPEN_TARGET_STATUSES)),
+                )
+                jobs_active = int(cur.fetchone()["n"] or 0)
+
+                cur.execute(
+                    """
+                    SELECT COUNT(*) AS n
+                    FROM production_pulse.firmware_update_jobs j
+                    JOIN production_pulse.firmwares f ON f.id = j.firmware_id
+                    WHERE f.firmware_key = %s
+                      AND NOT EXISTS (
+                        SELECT 1
+                        FROM production_pulse.firmware_update_targets t
+                        WHERE t.job_id = j.id
+                          AND t.status = ANY(%s)
+                      )
+                    """,
+                    (key, list(_OPEN_TARGET_STATUSES)),
+                )
+                jobs_finished = int(cur.fetchone()["n"] or 0)
+
+                cur.execute(
+                    """
+                    SELECT COUNT(*) AS n
+                    FROM production_pulse.devices
+                    WHERE firmware_key = %s
+                    """,
+                    (key,),
+                )
+                linked_devices = int(cur.fetchone()["n"] or 0)
+
+                cur.execute(
+                    """
+                    SELECT COUNT(DISTINCT d.id) AS n
+                    FROM production_pulse.devices d
+                    JOIN production_pulse.firmwares f
+                      ON d.installed_firmware_version = f.version
+                     AND COALESCE(d.firmware_key, d.driver_key)
+                         IN (f.firmware_key, f.driver_key)
+                    WHERE f.firmware_key = %s
+                    """,
+                    (key,),
+                )
+                installed_devices = int(cur.fetchone()["n"] or 0)
+
+        return {
+            "versionCount": version_count,
+            "activeTargets": active_targets,
+            "jobsActive": jobs_active,
+            "jobsFinished": jobs_finished,
+            "linkedDevices": linked_devices,
+            "installedDevices": installed_devices,
+        }
+
+    def hard_delete_family(self, firmware_key: str) -> dict[str, Any]:
+        """Purge finished OTA jobs, unlink devices, hard-delete all versions (one txn)."""
+        key = (firmware_key or "").strip()
+        if not key:
+            raise FirmwareNotFoundError(firmware_key or "")
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT {_FIRMWARE_COLUMNS}
+                    FROM production_pulse.firmwares
+                    WHERE firmware_key = %s
+                    FOR UPDATE
+                    """,
+                    (key,),
+                )
+                versions = [dict(row) for row in cur.fetchall()]
+                if not versions:
+                    raise FirmwareNotFoundError(key)
+
+                firmware_ids = [row["id"] for row in versions]
+
+                cur.execute(
+                    """
+                    SELECT COUNT(*) AS n
+                    FROM production_pulse.firmware_update_targets t
+                    JOIN production_pulse.firmware_update_jobs j ON j.id = t.job_id
+                    WHERE j.firmware_id = ANY(%s)
+                      AND t.status = ANY(%s)
+                    """,
+                    (firmware_ids, list(_OPEN_TARGET_STATUSES)),
+                )
+                if int(cur.fetchone()["n"] or 0) > 0:
+                    raise FirmwareFamilyActiveTargetsError(key)
+
+                cur.execute(
+                    """
+                    DELETE FROM production_pulse.firmware_update_jobs j
+                    WHERE j.firmware_id = ANY(%s)
+                      AND NOT EXISTS (
+                        SELECT 1
+                        FROM production_pulse.firmware_update_targets t
+                        WHERE t.job_id = j.id
+                          AND t.status = ANY(%s)
+                      )
+                    """,
+                    (firmware_ids, list(_OPEN_TARGET_STATUSES)),
+                )
+                purged_jobs = cur.rowcount if cur.rowcount is not None else 0
+
+                cur.execute(
+                    """
+                    UPDATE production_pulse.devices
+                    SET firmware_key = NULL,
+                        target_firmware_version = NULL,
+                        updated_at = NOW()
+                    WHERE firmware_key = %s
+                    """,
+                    (key,),
+                )
+                unlinked_devices = cur.rowcount if cur.rowcount is not None else 0
+
+                cur.execute(
+                    f"""
+                    DELETE FROM production_pulse.firmwares
+                    WHERE firmware_key = %s
+                    RETURNING {_FIRMWARE_COLUMNS}
+                    """,
+                    (key,),
+                )
+                deleted_versions = [dict(row) for row in cur.fetchall()]
+            conn.commit()
+
+        return {
+            "deletedVersions": deleted_versions,
+            "purgedJobs": int(purged_jobs),
+            "unlinkedDevices": int(unlinked_devices),
+        }
 
 
 _JOB_COLUMNS = """

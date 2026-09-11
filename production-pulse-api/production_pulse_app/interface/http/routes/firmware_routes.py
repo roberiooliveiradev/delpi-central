@@ -72,6 +72,15 @@ def _not_found_firmware() -> JSONResponse:
     return JSONResponse(status_code=404, content={k: v for k, v in payload.items() if k != "_status_code"})
 
 
+def _not_found_firmware_family() -> JSONResponse:
+    payload = error(
+        firmware_ota_http_message("firmwareFamilyNotFound"),
+        code="firmwareFamilyNotFound",
+        status_code=404,
+    )
+    return JSONResponse(status_code=404, content={k: v for k, v in payload.items() if k != "_status_code"})
+
+
 @router.get("/firmwares", operation_id="list_firmwares")
 async def list_firmwares(
     request: Request,
@@ -204,6 +213,41 @@ async def delete_firmware_permanently(request: Request, firmware_id: str):
         return _coded_error(exc)
     except (ValueError, FirmwareNotFoundError):
         return _not_found_firmware()
+
+
+@router.get(
+    "/firmware-families/{firmware_key}/deletion-impact",
+    operation_id="get_firmware_family_deletion_impact",
+)
+async def get_firmware_family_deletion_impact(request: Request, firmware_key: str):
+    denied = guard_manage_devices(request)
+    if denied:
+        return denied
+    try:
+        return success(_deletion.get_family_deletion_impact(firmware_key))
+    except FirmwareNotFoundError:
+        return _not_found_firmware_family()
+
+
+@router.delete(
+    "/firmware-families/{firmware_key}",
+    operation_id="delete_firmware_family_permanently",
+)
+async def delete_firmware_family_permanently(request: Request, firmware_key: str):
+    denied = guard_manage_devices(request)
+    if denied:
+        return denied
+    try:
+        return success(
+            _deletion.delete_family_permanently(
+                firmware_key,
+                actor_sub=_actor_sub(request),
+            )
+        )
+    except ContentCodedError as exc:
+        return _coded_error(exc)
+    except FirmwareNotFoundError:
+        return _not_found_firmware_family()
 
 
 @router.get("/firmware-drivers", operation_id="list_firmware_drivers")

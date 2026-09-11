@@ -412,7 +412,11 @@ export const PP_HELP = {
     kpiLinked: "IoTs com vínculo explícito de família — pré-requisito para OTA.",
     kpiUpdating: "IoTs com atualização autorizada, baixando ou aplicando agora.",
     kpiFailed: "IoTs cuja última atualização falhou — verifique erro e rede.",
-    kpiOutdatedSuffix: "desatualizado(s)",
+    kpiOutdatedSuffix: "atrás do catálogo",
+    firmwareLagFamily:
+      "IoTs vinculados cuja versão em execução (reportada pelo chip) difere da última publicada. O job OTA «Atualizado» não basta se o .bin ainda se identifica com a versão antiga.",
+    firmwareLagDevice:
+      "Em execução = o que o chip reporta. Catálogo = última versão publicada da família (instalada → disponível).",
     canvasLegend:
       "Linha sólida = vínculo OTA. Sem linha = sem vínculo. Use Vincular para ver compatibilidade de driver.",
     edgeModesTitle: "Conexões",
@@ -456,19 +460,25 @@ export const PP_HELP = {
     menuPermanentDeleteDevice: "Remove o IoT e dados vinculados (leituras, amarração, OTA…). Irreversível.",
     menuPermanentDeleteFirmware:
       "Remove a versão do catálogo e o artefato .bin, se não houver histórico OTA nem IoTs instalados nela.",
+    menuPermanentDeleteFirmwareFamily:
+      "Remove todas as versões da família OTA e limpa campanhas OTA já finalizadas. Bloqueado se houver OTA ativa.",
     menuPermanentDeleteDriver:
       "Remove o tipo de driver do catálogo. Bloqueado se houver IoTs ou firmwares usando a chave.",
     permanentDeleteDeviceTitle: "Excluir IoT permanentemente",
     permanentDeleteFirmwareTitle: "Excluir versão permanentemente",
+    permanentDeleteFirmwareFamilyTitle: "Excluir família OTA permanentemente",
     permanentDeleteDriverTitle: "Excluir driver permanentemente",
     permanentDeleteLoading: "Analisando dependências…",
     permanentDeleteBlockedTitle: "Não é possível excluir",
     permanentDeleteIrreversible: "Esta ação não pode ser desfeita.",
+    permanentDeleteFirmwareFamilyPurgeNotice:
+      "Campanhas OTA finalizadas desta família serão apagadas junto com o histórico de targets.",
     permanentDeleteTypeLabel: "Para confirmar, digite: {phrase}",
     permanentDeleteConfirmLabel: "Excluir permanentemente",
     permanentDeleteBusy: "Excluindo…",
     permanentDeleteSuccessDevice: "{name} foi excluído permanentemente.",
     permanentDeleteSuccessFirmware: "{name} foi excluída permanentemente.",
+    permanentDeleteSuccessFirmwareFamily: "Família {name} foi excluída permanentemente.",
     permanentDeleteSuccessDriver: "{name} foi excluído permanentemente.",
     permanentDeleteBlockerActiveOta:
       "Este IoT possui uma atualização OTA em andamento. Cancele ou aguarde a conclusão.",
@@ -477,6 +487,10 @@ export const PP_HELP = {
     permanentDeleteBlockerFirmwareInstalled: "Instalada em {count} IoT(s).",
     permanentDeleteBlockerDriverDevices: "{count} IoT(s) usando este driver.",
     permanentDeleteBlockerDriverFirmwares: "{count} versão(ões) de firmware usando este driver.",
+    permanentDeleteDepVersionCount: "{count} versão(ões) de firmware",
+    permanentDeleteDepJobsFinished: "{count} campanha(s) OTA finalizada(s) (serão limpas)",
+    permanentDeleteDepLinkedDevices: "{count} IoT(s) vinculados (serão desvinculados)",
+    permanentDeleteDepInstalledDevices: "{count} IoT(s) reportando versão desta família",
     menuEditDevice: "Abre o formulário do IoT (rede, vínculo de posto, token) em modal.",
     menuRenameDevice: "Altera só o nome exibido do IoT, sem mudar IP ou vínculo.",
     menuOtaDeviceNow:
