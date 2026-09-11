@@ -2,7 +2,7 @@
 
 **Status:** COMPLETE_GATE + **VERIFY_FINAL=PASS**  
 **FINAL_CANDIDATE_GIT_SHA (runtime):** `782a49721319571f0fe4733d59b8a5cc65ac4c04`  
-**HEAD docs/fechamento:** commit deste fechamento S10 (docs-only; runtime candidate inalterado)  
+**HEAD docs/fechamento:** `6b27e54ea02625848d9f6c392f39de7b66d10100` (docs-only; runtime candidate inalterado)  
 **SEMANTIC_* full-tree:** 0 (revalidado `audit_architecture_phase3.py --check-semantic-debt`)
 
 ## Busca residual (conceito)
