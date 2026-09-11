@@ -250,20 +250,9 @@
 }
 
 /*
- * PageHero já é a superfície de card: FilterBar/FiltersRow dentro do hero
- * ficam flush (sem segunda borda/fundo). Densidade compact só reduz gaps.
+ * FiltersRow dentro do hero: sem moldura própria quando o FilterBar (ou o hero)
+ * já enquadra os campos. O FilterBar mantém UMA moldura — não flush no hero.
  */
-.delpi-ui-page-hero .delpi-ui-filter-bar,
-.delpi-ui-page-hero .delpi-ui-filter-bar:not(.delpi-ui-card),
-.delpi-ui-page-hero .delpi-ui-filter-bar.delpi-ui-card {
-  margin-bottom: 0;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
 .delpi-ui-page-hero .delpi-ui-filters-row {
   margin-bottom: 0;
   padding: 0;
@@ -285,6 +274,16 @@
 .delpi-ui-page-hero--compact .delpi-ui-filter-bar {
   gap: 8px;
   margin-bottom: 0;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar:not(.delpi-ui-card) {
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.delpi-ui-page-hero--compact .delpi-ui-filter-bar.delpi-ui-card,
+.delpi-ui-page-hero--compact .delpi-ui-card.delpi-ui-filter-bar {
+  padding: 10px 12px;
 }
 
 .delpi-ui-page-hero--compact .delpi-ui-filter-bar [class*="-filter-bar__header"],

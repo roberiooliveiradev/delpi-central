@@ -86,15 +86,15 @@ Toolbar abspos dentro de lista com `overflow-y: auto` + “fix” com `overflow:
 
 ### Filtros sem borda-sobre-borda (set/2026)
 
-Uma superfície de chrome por bloco de filtros — não empilhar `FilterBar` + `FiltersRow` + PageHero.
+Uma moldura no bloco de filtros — a do `FilterBar` (ou a do `FiltersRow` sozinho). Não empilhar `FilterBar` + `FiltersRow`.
 
 | Contexto | Superfície |
 |----------|------------|
 | `FiltersRow` sozinho | chrome próprio (borda/fundo) |
 | `FiltersRow` dentro de `FilterBar` | só o FilterBar (row fica flush) |
-| Filtros dentro de `PageHero` | só o PageHero (FilterBar/FiltersRow flush) |
+| Filtros dentro de `PageHero` | FilterBar mantém a moldura; FiltersRow fica flush |
 
-Correção: `dashboard-filters.css` + `page-hero.css` no kit. Zero override no MFE. Preferir `FilterBar` `embedded` quando o shell está no hero.
+Correção canônica: `dashboard-filters.css` (+ defesa em `page-hero.css` para FiltersRow). Zero override no MFE.
 ---
 
 ## O que usar do pacote (hoje)

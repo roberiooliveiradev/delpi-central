@@ -41,8 +41,11 @@ describe("PageHero composition — density compact (conteúdo no hero)", () => {
       /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__highlight-label\s*\{[^}]*font-size:/s,
     );
     assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-filter-bar/);
-    // Filtros no hero: flush (sem segundo card); densidade só em gap.
-    assert.match(css, /\.delpi-ui-page-hero \.delpi-ui-filter-bar[^}]*border:\s*none/s);
+    // Uma moldura nos filtros: FilterBar mantém chrome; FiltersRow fica flush.
+    assert.doesNotMatch(
+      css,
+      /\.delpi-ui-page-hero \.delpi-ui-filter-bar[^}]*border:\s*none/s,
+    );
     assert.match(css, /\.delpi-ui-page-hero \.delpi-ui-filters-row\s*\{[^}]*padding:\s*0/s);
   });
 

@@ -165,7 +165,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("layout", "FilterBar"),
   vc("layout", "FilterBarShell", {
     updatedAt: "2026-09-11",
-    changeNote: "Flush no PageHero; FiltersRow interno sem segunda moldura",
+    changeNote: "Uma moldura: FiltersRow interno sem segunda borda (mantém shell no hero)",
   }),
   vc("layout", "FilterInputField"),
   vc("layout", "FilterSelectField", {

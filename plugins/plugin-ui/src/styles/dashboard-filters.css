@@ -160,9 +160,8 @@
 
 /**
  * Single surface — FiltersRow dentro de FilterBar não empilha segunda borda/fundo.
- * O shell (card ou :not(.delpi-ui-card) standalone) é a moldura; campos internos
- * mantêm só a borda do controle. Dentro de PageHero o shell também fica flush
- * (ver page-hero.css).
+ * O shell (card ou :not(.delpi-ui-card) embedded) é a ÚNICA moldura dos filtros;
+ * campos internos mantêm só a borda do controle.
  */
 .delpi-ui-filter-bar .delpi-ui-filters-row {
   margin-bottom: 0;
