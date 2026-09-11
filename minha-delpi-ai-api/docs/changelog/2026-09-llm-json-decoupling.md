@@ -2,58 +2,103 @@
 
 **Roadmap:** [llm-json-decoupling](../roadmap/llm-json-decoupling/README.md)  
 **Ledger:** [execution-ledger.md](../roadmap/llm-json-decoupling/evidence/execution-ledger.md)  
-**Release (Ondas A–H):** `globalReleasePass=true` (E9.S8 / E9.S15)  
-**Reabertura:** Onda I — [plano 10 zero mapa lateral](../roadmap/llm-json-decoupling/planos/10-zero-lateral-path-maps.md)
+**Release histórico (Ondas A–H):** `globalReleasePass=true` no candidate avaliado em E9.S8/E9.S15  
+**Onda I:** executada, aceite arquitetural posteriormente invalidado por drift  
+**Estado vigente:** **REABERTO — Onda J**  
+**Plano ativo:** [plano 11 — corrective cutover/generalization/cleanup](../roadmap/llm-json-decoupling/planos/11-corrective-cutover-generalization-cleanup.md)
 
 ---
 
 ## Resumo
 
-A Minha DELPI AI deixou de depender de catálogos técnicos / markers / heuristics por rota como **autoridade** de routing, follow-up, binding e apresentação. A autoridade canônica passou a:
+As Ondas A–I entregaram avanços importantes no OpenAPI-first, Turn Understanding, schema-driven presentation e cleanup de catálogos. Uma auditoria posterior do código mostrou, porém, que parte do conhecimento removido dos JSONs reapareceu em outra representação no runtime e que algumas provas finais foram reutilizadas após mudanças materiais.
+
+Por isso:
 
 ```text
-OpenAPI + Action Catalog
-→ Turn Understanding + retrieval/planner
-→ schema-driven presentation
-→ recommendations grounded
+PASS histórico ≠ PASS do candidate final atual
 ```
 
-Policies determinísticas (RBAC, required args, confirmation, timeouts) permaneceram fora do LLM.
+O programa só volta a ser considerado concluído após a Onda J provar cutover, generalização, cleanup, segurança, arquitetura e R1–R11 no mesmo candidate final.
 
-### Correção de política (2026-09-11)
+## Correção de política — 2026-09-11
 
-**Nenhum mapa lateral deve existir.**  
-A disposição `JUSTIFIED_POLICY` para `api_route_domains.pathMarkers` (e mapas irmãos por path) foi **revogada**. Domínio/label/classificação operacional devem vir do OpenAPI indexado / Action Catalog — não de JSON paralelo no assistente.
+A regra passa a ser interpretada de forma conceitual:
 
-Débito Onda I: **ATENDIDO** (E10.S1–S5 + live smoke OVERALL=PASS).
+```text
+NENHUM MAPA LATERAL OU SUBSTITUTO SEMÂNTICO DEVE SER AUTHORITY.
+```
+
+Não basta remover `pathMarkers/pathToken/pathContains/pathRules` do JSON. Também são drift:
+
+- path→domain map em Python/TS;
+- endpoint→parameter strategy por path/operationId;
+- continuity/route segment por path-tail/operationId-tail;
+- registry route→operationIds como catálogo técnico de routing;
+- selector/intent/presenter por endpoint;
+- taxonomia proprietária obrigatória para unknown provider funcionar.
+
+## Drifts que reabriram a iniciativa
+
+1. `ApiRouteDomainInferenceService._DOMAIN_RULES` portando fragments de path do catálogo anterior;
+2. `ParameterStrategyInferenceService` recriando endpoint→strategy;
+3. follow-up/route segment dependente de path/operationId inventory;
+4. `route.operationIds` residual como catálogo técnico;
+5. semantic authority duplicada entre heurísticas/mappers e LLM Turn Analysis;
+6. `recommendationQueries` ainda em fallback/oracle;
+7. capability metadata genérica `read/low/parallelSafe` para actions de efeitos diferentes;
+8. Clean Architecture/DI residual;
+9. credential defaults em smoke;
+10. unknown/metamorphic histórico não reexecutado depois do último diff material.
 
 ## Ondas
 
-| Onda | Entrega | Status |
-|------|---------|--------|
-| A | Inventário + baseline freeze | ATENDIDO |
-| B | Registry OpenAPI-first + DELETE markers (E9.S12) | ATENDIDO |
-| C | Turn Understanding cutover (heuristics KEEP_APPROVED) | ATENDIDO |
-| D | Multi-turn/args + Postgres `lastAction` overlay (E3.S8) | ATENDIDO |
-| E | Capabilities / composition | ATENDIDO |
-| F | Recommendations contextual grounded | ATENDIDO |
-| G | Presentation schema-first + skills/help residual | ATENDIDO |
-| H | Evals R1–R11, live gates, DELETE autorizado, release pass | ATENDIDO |
-| I | Zero mapa lateral (`pathMarkers` / pathToken laterais) | **ATENDIDO** |
+| Onda | Entrega | Estado vigente |
+|------|---------|----------------|
+| A | Inventário + baseline freeze | histórico/baseline |
+| B | Registry OpenAPI-first | implementação existente; revalidar residual na J |
+| C | Turn Understanding | implementação existente; cleanup semântico reaberto |
+| D | Multi-turn/args | implementação existente; path coupling reaberto |
+| E | Capabilities/composition | implementação existente; metadata reaberta |
+| F | Recommendations | implementação existente; cutover contextual reaberto |
+| G | Presentation/skills | implementação existente; revalidar candidate final |
+| H | Evals/cutover | PASS histórico, não release atual |
+| I | Zero mapa lateral | **aceite invalidado por substitutos semânticos** |
+| J | Correção cutover + generalização + cleanup | **ABERTA / P0** |
 
-## Evidências-chave de release (H)
+## Regra de execução da Onda J
 
-- E9.S13–S15 live (compound, multi-turn, unknown API, safety, recommendations, send/stream/simulate)
-- E9.S11 efficiency (p50/p95 + tokens metadata)
-- E9.S16 F5/session reload via API
-- E9.S6 `deleteAuthorized=true`
+```text
+CUTOVER
+→ GENERALIZATION
+→ CLEANUP
+→ VERIFY
+→ COMPLETE_GATE
+```
 
-## Residuais
+Cada E11.S* precisa provar wiring, positive/sibling/negative, generalização quando aplicável, residual scan e pós-condições antes de liberar a próxima etapa.
 
-| Item | Disposição atual |
-|------|------------------|
-| Heuristics TU fast paths | KEEP_APPROVED (não é mapa de rota) |
-| Mapas `pathMarkers` laterais | **REMOVED** (E10) |
-| `pathToken` KPI → `catalogToken` | **REMOVED** chave pathToken (E10.S4) |
-| `presentation_profiles.pathRules` | **REMOVED** (E10.S4; entityProfiles + OpenAPI deriver) |
-| Pasta roadmap | arquivado A–I |
+Estados `PARTIAL`, `LEGACY_FALLBACK`, `INCONCLUSIVE`, TODO/FIXME/HACK, flag/fallback sem exit criteria ou evidência de candidate antigo impedem `FINAL_RESULT=PASS` quando são materiais ao objetivo.
+
+## Evidências históricas
+
+As evidências E1–E10 permanecem preservadas em `docs/roadmap/llm-json-decoupling/evidence/`. Elas servem para baseline, comparação e rastreabilidade; não devem ser apagadas nem renomeadas para parecer evidência da Onda J.
+
+## Critério para novo fechamento
+
+Somente registrar novo release quando o Plano 11 produzir no `FINAL_CANDIDATE_GIT_SHA`:
+
+```text
+CUTOVER_RESULT = PASS
+GENERALIZATION_RESULT = PASS
+CLEANUP_RESULT = PASS
+UNKNOWN_EXTERNAL_API = PASS
+METAMORPHIC_RENAME = PASS
+R1_R11_REQUIRED_DIMENSIONS = PASS
+CLEAN_ARCHITECTURE = PASS
+SECURITY_HYGIENE = PASS
+RESIDUAL_SCAN = PASS
+COMPLETE_GATE = PASS
+VERIFY_FINAL = PASS
+FINAL_RESULT = PASS
+```
