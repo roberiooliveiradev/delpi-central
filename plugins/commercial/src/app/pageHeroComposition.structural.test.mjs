@@ -41,22 +41,9 @@ describe("PageHero composition — density compact (conteúdo no hero)", () => {
       /\.delpi-ui-page-hero--compact \.delpi-ui-page-hero__highlight-label\s*\{[^}]*font-size:/s,
     );
     assert.match(css, /\.delpi-ui-page-hero--compact \.delpi-ui-filter-bar/);
-    // Plain default: compact sem sombra; featured+compact restaura card densificado.
-    assert.match(css, /\.delpi-ui-page-hero--compact\s*\{[^}]*box-shadow:\s*none/s);
-    assert.match(
-      css,
-      /\.delpi-ui-page-hero--featured\.delpi-ui-page-hero--compact\s*\{[^}]*box-shadow:/s,
-    );
-  });
-
-  it("kit PageHero default é plain (sem card) para evitar card-sobre-card", () => {
-    const css = readFileSync(
-      join(repoRoot, "plugin-ui/src/styles/page-hero.css"),
-      "utf8",
-    );
-    assert.match(css, /\.delpi-ui-page-hero\s*\{[^}]*background:\s*transparent/s);
-    assert.match(css, /\.delpi-ui-page-hero\s*\{[^}]*box-shadow:\s*none/s);
-    assert.match(css, /\.delpi-ui-page-hero \.delpi-ui-card\s*\{[^}]*box-shadow:\s*none/s);
+    // Filtros no hero: flush (sem segundo card); densidade só em gap.
+    assert.match(css, /\.delpi-ui-page-hero \.delpi-ui-filter-bar[^}]*border:\s*none/s);
+    assert.match(css, /\.delpi-ui-page-hero \.delpi-ui-filters-row\s*\{[^}]*padding:\s*0/s);
   });
 
   it("P0 listas mantêm filtros/chips/highlights como children do hero", () => {

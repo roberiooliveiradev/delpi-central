@@ -14,4 +14,13 @@ describe("dashboard-filters.css — filter-box em formulários", () => {
       /\.delpi-ui-filter-box input:not\(\[type="checkbox"\]\):not\(\[type="radio"\]\),\s*\n\.delpi-ui-filter-box select,\s*\n\.delpi-ui-filter-box textarea \{\s*\n\s*width:\s*100%;/,
     );
   });
+
+  it("FiltersRow dentro de FilterBar não empilha segunda borda/fundo", () => {
+    expect(css).toMatch(
+      /\.delpi-ui-filter-bar \.delpi-ui-filters-row\s*\{[^}]*border:\s*none/s,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-filter-bar \.delpi-ui-filters-row\s*\{[^}]*background:\s*transparent/s,
+    );
+  });
 });

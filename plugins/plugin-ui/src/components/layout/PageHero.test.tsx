@@ -68,17 +68,5 @@ describe("PageHero", () => {
     const root = container.querySelector("[data-density='compact']");
     expect(root?.className).toContain("delpi-ui-page-hero--compact");
     expect(root?.className).toContain("cm-page-hero--compact");
-    expect(root?.getAttribute("data-surface")).toBe("plain");
-    expect(root?.className).not.toContain("delpi-ui-page-hero--featured");
-  });
-
-  it("surface featured é opt-in", () => {
-    const cn = pageHeroBemClasses("cm");
-    const { container } = render(
-      <PageHero classNames={cn} title="Início" surface="featured" />,
-    );
-    const root = container.querySelector("[data-surface='featured']");
-    expect(root?.className).toContain("delpi-ui-page-hero--featured");
-    expect(root?.className).toContain("cm-page-hero--featured");
   });
 });

@@ -95,10 +95,8 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("layout", "PageHero", {
     addedAt: "2026-08-06",
-    updatedAt: "2026-09-11",
     description:
-      "Cabeçalho de página (plain por default, sem chrome de card): eyebrow, título, descrição, highlights; density comfortable|compact; surface featured opt-in.",
-    changeNote: "Default surface=plain — evita card-sobre-card com SectionCard/DataTable",
+      "Card hero de overview/saudação (linguagem SI): eyebrow, título, descrição, highlights; density comfortable|compact.",
   }),
   vc("layout", "ResizableColumns", {
     addedAt: "2026-08-19",
@@ -160,9 +158,15 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("layout", "ChartCard"),
   vc("layout", "ChartToolbar"),
   vc("layout", "ChartGranularityToggle"),
-  vc("layout", "FiltersRow"),
+  vc("layout", "FiltersRow", {
+    updatedAt: "2026-09-11",
+    changeNote: "Chrome flush quando aninhado em FilterBar (sem borda-sobre-borda)",
+  }),
   vc("layout", "FilterBar"),
-  vc("layout", "FilterBarShell"),
+  vc("layout", "FilterBarShell", {
+    updatedAt: "2026-09-11",
+    changeNote: "Flush no PageHero; FiltersRow interno sem segunda moldura",
+  }),
   vc("layout", "FilterInputField"),
   vc("layout", "FilterSelectField", {
     addedAt: CATALOG_EXPAND_DATE,

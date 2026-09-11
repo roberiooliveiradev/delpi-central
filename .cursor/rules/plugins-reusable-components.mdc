@@ -84,17 +84,17 @@ Onda de poda remove CSS local **sem** dual-class/tokens → cards colados, loadi
 
 Toolbar abspos dentro de lista com `overflow-y: auto` + “fix” com `overflow: clip` / `padding-top` → corte e scroll fantasma. **Canônico:** `AnchoredPanelPortal` + `resolveAnchoredPanelCoords` — regra **`plugins-overlay-positioning.mdc`**.
 
-### PageHero sem card-sobre-card (set/2026)
+### Filtros sem borda-sobre-borda (set/2026)
 
-`PageHero` default = **`surface="plain"`** (sem borda/sombra/fundo de card). Conteúdo da página (`SectionCard`, `DataTableSection`, KPIs) é a única superfície de card.
+Uma superfície de chrome por bloco de filtros — não empilhar `FilterBar` + `FiltersRow` + PageHero.
 
-| Fazer | Não fazer |
-|-------|-----------|
-| PageHero plain + SectionCard/DataTable abaixo | PageHero como card + SectionCard “Lista …” logo abaixo (dois cards empilhados) |
-| FilterBar `embedded` quando filtros estão **dentro** do hero | FilterBar com chrome de card aninhado no hero |
-| `surface="featured"` só em home/saudação isolada que precise do card legado | `featured` em listas/admin “porque o DoD pedia PageHero” |
+| Contexto | Superfície |
+|----------|------------|
+| `FiltersRow` sozinho | chrome próprio (borda/fundo) |
+| `FiltersRow` dentro de `FilterBar` | só o FilterBar (row fica flush) |
+| Filtros dentro de `PageHero` | só o PageHero (FilterBar/FiltersRow flush) |
 
-Correção de chrome: só em `plugins/plugin-ui/src/styles/page-hero.css` (+ teste de contrato). Zero override no MFE.
+Correção: `dashboard-filters.css` + `page-hero.css` no kit. Zero override no MFE. Preferir `FilterBar` `embedded` quando o shell está no hero.
 ---
 
 ## O que usar do pacote (hoje)
