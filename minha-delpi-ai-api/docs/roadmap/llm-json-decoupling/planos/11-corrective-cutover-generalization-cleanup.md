@@ -303,7 +303,8 @@ Fazer:
 
 ## J-R4 — unknown external full chain
 
-**Objetivo:** provar plugabilidade real além de seleção/binding.
+**Objetivo:** provar plugabilidade real além de seleção/binding.  
+**Status:** **ATENDIDO** · `UNKNOWN_EXTERNAL_FULL_CHAIN=PASS` · evidência [`../evidence/e11-j-r4-unknown-external-full-chain.md`](../evidence/e11-j-r4-unknown-external-full-chain.md)
 
 Fazer:
 
@@ -315,7 +316,9 @@ Fazer:
 - presentation schema-driven;
 - oracle R9 do outcome.
 
-**Gate:** `UNKNOWN_EXTERNAL_FULL_CHAIN = PASS`.
+**Gate:** `UNKNOWN_EXTERNAL_FULL_CHAIN = PASS` (**cumprido** — HTTP local + `HttpExternalActionGateway` + presentation/outcome).
+
+**Próxima:** J-R5.
 
 ## J-R5 — metamorphic rename verdadeiro
 

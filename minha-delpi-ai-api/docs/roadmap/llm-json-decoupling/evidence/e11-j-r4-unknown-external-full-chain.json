@@ -1,0 +1,13 @@
+{
+  "runId": "e11-j-r4-unknown-external-full-chain-v1",
+  "wave": "J",
+  "step": "J-R4",
+  "gate": "UNKNOWN_EXTERNAL_FULL_CHAIN",
+  "completeGate": "PASS",
+  "providerKey": "acme-harbor-jr4-never-seen",
+  "httpTransport": "ThreadingHTTPServer 127.0.0.1",
+  "executor": "HttpExternalActionGateway",
+  "tests": "tests/unit/application/services/test_j_r4_unknown_external_openapi_full_chain_offline.py",
+  "support": "tests/support/local_openapi_http_server.py",
+  "coreEndpointEdits": 0
+}
