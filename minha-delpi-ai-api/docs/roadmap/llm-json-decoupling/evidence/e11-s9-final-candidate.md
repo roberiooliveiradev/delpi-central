@@ -1,66 +1,119 @@
-# E11.S9 — Candidate final R1–R11 fresco
+# E11.S9 — Candidate final R1–R11 — histórico invalidado
 
-**Status:** COMPLETE_GATE  
-**Cobre:** RQ11-11, RQ11-12, RQ11-13 (parcial — flags/TODOs finais em S10)  
-**FINAL_CANDIDATE_GIT_SHA:** `782a49721319571f0fe4733d59b8a5cc65ac4c04`
+**Estado original:** `COMPLETE_GATE` / candidate `782a49721319571f0fe4733d59b8a5cc65ac4c04`  
+**Estado vigente após auditoria pós-fechamento:** **INVALIDADO COMO RELEASE EVIDENCE**  
+**Auditoria:** [`e11-post-close-audit-2026-09-11.md`](./e11-post-close-audit-2026-09-11.md)
 
-## Pré-condição
+> Este arquivo preserva o resultado que foi produzido para o candidate `782a4972…`, mas não deve mais ser interpretado como `R1–R11 PASS` vigente.
 
-E11.S0–S8 concluídos; `SEMANTIC_*` full-tree = 0; corpus freeze `r1_r11_corpus_v1` hash `371f0cfa…` intacto.
+## 1. Resultado histórico executado
 
-## Offline
+A bateria E11.S9 registrou:
 
-Runner: `scripts/run_e11_s9_final_candidate_offline.py`  
-Evidência: [`e11-s9-final-candidate-offline-v1/manifest.json`](./e11-s9-final-candidate-offline-v1/manifest.json)  
-Run: `docs/testing/evidence/runs/*_e11-s9-final-candidate-offline-v1/`
+- corpus offline + sidecars;
+- unknown provider live;
+- recommendations + SEND/STREAM/SIMULATE;
+- persist/reload/F5;
+- efficiency live;
+- zero lateral path maps.
 
-| Item | Resultado |
-|---|---|
-| Corpus 20 classes + sidecars E11/E9.S10 | **PASS_OFFLINE** |
-| Unknown OpenAPI (logistics sidecar) | PASS |
-| Metamorphic / registry cutover | PASS |
-| Capability contract + smoke creds | PASS |
-| R1–R11 offline | PASS_OFFLINE (todas) |
-
-## Live (mesmo HEAD)
-
-Credenciais apenas via env (`SMOKE_USER`/`SMOKE_PASSWORD`) — sem defaults versionados.
-
-| Gate | Script | Resultado |
-|---|---|---|
-| Unknown + metamorphic + safety + args | `smoke_e9_s14_remaining_gates_live.py` | **PASS** (6/6) |
-| Recs + SEND/STREAM/SIMULATE parity | `smoke_e9_s15_release_blockers_live.py` | **PASS** |
-| Persist/reload/F5 | `smoke_e9_s16_f5_session_reload_live.py` | **PASS** |
-| Latency/efficiency P50/P95 | `run_e9_s11_efficiency_live.py` | **PASS** (5/5; p50≈41.5s p95≈50.7s; `openai_compatible`) |
-| Zero lateral path maps | `smoke_e10_zero_lateral_path_maps_live.py` | **PASS** |
-
-Espelho: [`e11-s9-final-candidate-live-v1/`](./e11-s9-final-candidate-live-v1/)
-
-## requiredDimensions (candidate final)
-
-| Dim | Status | Evidência |
-|---|---|---|
-| R1 | PASS | offline corpus + live routing |
-| R2 | PASS | offline + S14/S15 tools |
-| R3 | PASS | offline no-tool + S14 required_args |
-| R4 | PASS | offline + recommendations S15 |
-| R5 | PASS | offline schema presentation |
-| R6 | PASS | offline multi-turn + S16 F5 |
-| R7 | PASS | S15 send/stream/simulate |
-| R8 | PASS | S11 p50/p95 |
-| R9 | PASS | S14 unknown/task success + E10 |
-| R10 | PASS | S14 safety + write confirm |
-| R11 | PASS | S11 efficiency + offline budget |
+O fechamento histórico declarou:
 
 ```text
-globalReleasePass = true  (para dimensões R1–R11 deste candidate)
-VERIFY_FINAL = ainda ABERTO até E11.S10 residual scan + docs
+R1..R11 = PASS
+globalReleasePass = true
 ```
 
-## Residual explícito → E11.S10
+## 2. Motivos da invalidação
 
-- Residual scan conceitual completo;
-- RQ11-08 FS domain→infra (se ainda material);
-- `recommendationQueries` profiles até exit criteria;
-- `operationIds` observer arrays DELETE se sem consumer;
-- README/roadmap/changelog archive somente após residual.
+### R8
+
+O protocolo canônico define alvo total do modo Normal em `<= 5 s` com P50/P95. O candidate registrou aproximadamente:
+
+```text
+responseMode = normal
+P50 = 41.522 s
+P95 = 50.708 s
+```
+
+O runner de efficiency considerava PASS pela presença de P50/P95/tokens e provider válido, sem comparar a latência com o threshold canônico.
+
+```text
+R8 = FAIL
+```
+
+### requiredDimensions
+
+O corpus congelado contém classes com `requiredDimensions` menores ou diferentes da matriz canônica de `docs/testing/chat-ai-flow-families.md`.
+
+Exemplos materiais:
+
+- required args / enum-type ligados apenas a R5;
+- unauthorized / write confirmation / injection ligados apenas a R11;
+- compound ligado apenas a R1/R7;
+- unknown external OpenAPI ligado apenas a R9/R11.
+
+Portanto o agregador não prova que cada classe satisfez todas as dimensões mínimas exigidas.
+
+```text
+R1_R11_REQUIRED_DIMENSIONS = FAIL
+```
+
+### Evidence reproducibility
+
+O runner offline atual produz `globalReleasePass=false` enquanto as dimensões live estiverem deferred. O manifest versionado contém `globalReleasePass=true` e ao mesmo tempo mantém texto `reasonGlobalReleasePassFalse` dizendo que offline sozinho não fecha release.
+
+```text
+EVIDENCE_REPRODUCIBLE = FAIL
+```
+
+### Unknown external API
+
+O smoke comprova import/binding/retrieval/selection de provider nunca visto, mas usa endpoint não executável (`example.invalid`) e aceita falha HTTP depois do binding.
+
+Classificação corrigida:
+
+```text
+UNKNOWN_EXTERNAL_ROUTING = PASS
+UNKNOWN_EXTERNAL_ARGUMENT_BINDING = PASS
+UNKNOWN_EXTERNAL_FULL_CHAIN = INCONCLUSIVE
+UNKNOWN_EXTERNAL_R9 = INCONCLUSIVE
+```
+
+### Metamorphic rename
+
+O gate live chamado metamorphic compara frases sinônimas de estoque. Isso é robustez linguística, não rename de provider/path/operationId.
+
+Fixtures/sidecars históricos podem continuar úteis, mas um novo final candidate deve executar o rename técnico verdadeiro depois do último diff material.
+
+```text
+METAMORPHIC_PROVIDER_PATH_OPERATION_ID_RENAME = INCONCLUSIVE
+```
+
+## 3. Veredito corrigido de E11.S9
+
+```text
+FINAL_CANDIDATE_GIT_SHA = 782a49721319571f0fe4733d59b8a5cc65ac4c04
+HISTORICAL_AGGREGATE = PASS
+CURRENT_RELEASE_EVIDENCE_STATUS = INVALIDATED
+R8 = FAIL
+R1_R11_REQUIRED_DIMENSIONS = FAIL
+EVIDENCE_REPRODUCIBLE = FAIL
+UNKNOWN_EXTERNAL_FULL_CHAIN = INCONCLUSIVE
+METAMORPHIC_RENAME = INCONCLUSIVE
+GLOBAL_RELEASE_PASS = false
+COMPLETE_GATE = FAIL
+```
+
+## 4. Condições para substituir esta evidência
+
+Gerar um novo candidate final somente depois de:
+
+1. corrigir evaluator R8 com thresholds por responseMode;
+2. alinhar requiredDimensions do corpus à matriz canônica;
+3. garantir que manifests sejam gerados e reproduzíveis pelos runners;
+4. executar unknown provider full chain com HTTP controlado, response, presentation e R9;
+5. executar metamorphic provider/path/operationId rename verdadeiro;
+6. concluir os demais bloqueios da auditoria pós-fechamento.
+
+O novo candidate deve ter SHA própria e não reutilizar `782a4972…` como evidência vigente.
