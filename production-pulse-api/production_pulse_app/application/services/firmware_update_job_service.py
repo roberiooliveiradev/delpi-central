@@ -308,4 +308,8 @@ class FirmwareUpdateJobService:
             "finishedAt": row.get("finished_at"),
             "createdAt": row.get("created_at"),
             "updatedAt": row.get("updated_at"),
+            "wakeStatus": row.get("wake_status"),
+            "wakeAttemptedAt": row.get("wake_attempted_at"),
+            "wakeAcknowledgedAt": row.get("wake_acknowledged_at"),
+            "wakeErrorCode": row.get("wake_error_code"),
         }

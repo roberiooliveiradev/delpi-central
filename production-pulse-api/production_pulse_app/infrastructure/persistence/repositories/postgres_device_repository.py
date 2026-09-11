@@ -25,7 +25,8 @@ _DEVICE_COLUMNS = """
     device_api_token, driver_key, role_key, enabled,
     poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
     last_metrics, last_error, created_at, updated_at, created_by, updated_by,
-    firmware_key, installed_firmware_version, target_firmware_version, firmware_reported_at
+    firmware_key, installed_firmware_version, target_firmware_version, firmware_reported_at,
+    last_ota_check_at
 """
 
 _DEVICE_LIST_COLUMNS = """
@@ -35,7 +36,8 @@ _DEVICE_LIST_COLUMNS = """
     driver_key, role_key, enabled,
     poll_interval_ms, last_seen_at, last_poll_attempt_at, next_poll_at,
     last_metrics, last_error, created_at, updated_at, created_by, updated_by,
-    firmware_key, installed_firmware_version, target_firmware_version, firmware_reported_at
+    firmware_key, installed_firmware_version, target_firmware_version, firmware_reported_at,
+    last_ota_check_at
 """
 
 
@@ -129,6 +131,25 @@ class PostgresDeviceRepository:
                     RETURNING {_DEVICE_COLUMNS}
                     """,
                     (version, device_id),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        if row is None:
+            raise DeviceNotFoundError(str(device_id))
+        return dict(row)
+
+    def record_last_ota_check_at(self, device_id: UUID) -> dict[str, Any]:
+        """Pull telemetry only — does not renew poll lease or bump updated_at."""
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.devices
+                    SET last_ota_check_at = NOW()
+                    WHERE id = %s
+                    RETURNING {_DEVICE_COLUMNS}
+                    """,
+                    (device_id,),
                 )
                 row = cur.fetchone()
             conn.commit()

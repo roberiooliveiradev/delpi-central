@@ -310,7 +310,8 @@ _JOB_COLUMNS = """
 _TARGET_COLUMNS = """
     id, job_id, device_id, status, from_version, to_version, error_code,
     artifact_token, artifact_token_expires_at, authorized_at, started_at, finished_at,
-    created_at, updated_at, bytes_received, bytes_total, progress_percent
+    created_at, updated_at, bytes_received, bytes_total, progress_percent,
+    wake_status, wake_attempted_at, wake_acknowledged_at, wake_error_code
 """
 
 _OPEN_TARGET_STATUSES = ("pending", "authorized", "downloading", "applying")
@@ -572,7 +573,10 @@ class PostgresFirmwareUpdateJobRepository:
             conn.commit()
             return dict(finished) if finished else dict(job)
 
-    def authorize_due_scheduled_jobs(self, *, now: datetime | None = None) -> int:
+    def authorize_due_scheduled_jobs(
+        self, *, now: datetime | None = None
+    ) -> tuple[int, list[dict[str, Any]]]:
+        """Authorize due scheduled jobs; return (job_count, newly authorized targets)."""
         moment = now or datetime.now(timezone.utc)
         with plugins_connection() as conn:
             with conn.cursor() as cur:
@@ -588,20 +592,24 @@ class PostgresFirmwareUpdateJobRepository:
                     (moment,),
                 )
                 job_ids = [row["id"] for row in cur.fetchall()]
-                if job_ids:
-                    cur.execute(
-                        """
-                        UPDATE production_pulse.firmware_update_targets
-                        SET status = 'authorized',
-                            authorized_at = COALESCE(authorized_at, NOW()),
-                            updated_at = NOW()
-                        WHERE job_id = ANY(%s)
-                          AND status = 'pending'
-                        """,
-                        (job_ids,),
-                    )
+                if not job_ids:
+                    conn.commit()
+                    return 0, []
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.firmware_update_targets
+                    SET status = 'authorized',
+                        authorized_at = COALESCE(authorized_at, NOW()),
+                        updated_at = NOW()
+                    WHERE job_id = ANY(%s)
+                      AND status = 'pending'
+                    RETURNING {_TARGET_COLUMNS}
+                    """,
+                    (job_ids,),
+                )
+                targets = [dict(row) for row in cur.fetchall()]
             conn.commit()
-            return len(job_ids)
+            return len(job_ids), targets
 
     def summary_counts(
         self,
@@ -787,6 +795,57 @@ class PostgresFirmwareUpdateJobRepository:
             if row is None:
                 raise FirmwareJobNotFoundError(str(target_id))
             return dict(row)
+
+    def claim_wake_attempt(self, target_id: UUID) -> dict[str, Any] | None:
+        """Mark wake pending once per target. Returns None if already attempted or not authorized."""
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.firmware_update_targets
+                    SET wake_status = 'pending',
+                        wake_attempted_at = NOW(),
+                        wake_error_code = NULL
+                    WHERE id = %s
+                      AND status = 'authorized'
+                      AND wake_attempted_at IS NULL
+                    RETURNING {_TARGET_COLUMNS}
+                    """,
+                    (target_id,),
+                )
+                row = cur.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+
+    def finalize_wake_attempt(
+        self,
+        target_id: UUID,
+        *,
+        wake_status: str,
+        wake_error_code: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Record wake accepted/failed without touching OTA status or error_code."""
+        sets = ["wake_status = %s", "wake_error_code = %s"]
+        params: list[Any] = [wake_status, wake_error_code]
+        if wake_status == "accepted":
+            sets.append("wake_acknowledged_at = NOW()")
+        params.append(target_id)
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    UPDATE production_pulse.firmware_update_targets
+                    SET {", ".join(sets)}
+                    WHERE id = %s
+                      AND status = 'authorized'
+                      AND wake_status = 'pending'
+                    RETURNING {_TARGET_COLUMNS}
+                    """,
+                    params,
+                )
+                row = cur.fetchone()
+            conn.commit()
+            return dict(row) if row else None
 
     def find_status_target_for_device(self, device_id: UUID) -> dict[str, Any] | None:
         """Open target if any, else the most recently updated target for the device."""

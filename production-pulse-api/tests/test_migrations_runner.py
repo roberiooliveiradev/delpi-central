@@ -76,3 +76,17 @@ def test_v013_firmware_version_source_draft_is_present_and_parseable():
     assert "source_text" in text
     assert "firmwares_published_requires_artifact" in text
     assert len(_checksum(text)) == 64
+
+
+def test_v015_ota_wake_telemetry_is_present_and_parseable():
+    migrations = _discover_migrations()
+    by_version = {m.version: m for m in migrations}
+    assert 15 in by_version
+    assert by_version[15].name == "ota_wake_telemetry"
+    path = _migrations_dir() / "V015__ota_wake_telemetry.sql"
+    text = path.read_text(encoding="utf-8")
+    assert "wake_status" in text
+    assert "wake_attempted_at" in text
+    assert "last_ota_check_at" in text
+    assert "error_code" not in text.split("wake_error_code")[0][-40:] or "wake_error_code" in text
+    assert len(_checksum(text)) == 64

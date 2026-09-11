@@ -30,6 +30,7 @@ def device_row_to_api(
         "installedFirmwareVersion": row.get("installed_firmware_version"),
         "targetFirmwareVersion": row.get("target_firmware_version"),
         "firmwareReportedAt": row.get("firmware_reported_at"),
+        "lastOtaCheckAt": row.get("last_ota_check_at"),
         "enabled": row["enabled"],
         "pollIntervalMs": int(row["poll_interval_ms"]),
         "lastSeenAt": row.get("last_seen_at"),

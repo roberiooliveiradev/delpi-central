@@ -72,6 +72,7 @@ class DeviceOtaService:
         return device
 
     def check(self, device: dict[str, Any]) -> dict[str, Any]:
+        self._devices.record_last_ota_check_at(device["id"])
         target = self._jobs.find_authorized_target_for_device(device["id"])
         if target is None:
             return {
