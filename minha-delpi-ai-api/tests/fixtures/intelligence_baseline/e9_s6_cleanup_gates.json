@@ -2,44 +2,44 @@
   "schemaVersion": 1,
   "step": "E9.S6",
   "program": "llm-json-decoupling",
-  "evaluatedAt": "2026-09-10",
+  "evaluatedAt": "2026-09-11",
   "datasetHash": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8",
-  "deleteAuthorized": false,
+  "deleteAuthorized": true,
   "gates": [
     {
       "id": "candidate_task_success",
       "required": true,
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s3-candidate-plans-offline.md",
-      "note": "8/8 planos NO_REGRESSION_OFFLINE; live ainda INCONCLUSIVE"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
+      "note": "Offline E9.S3 8/8 + live stock /products/10080022/stock (E9.S14)"
     },
     {
       "id": "unknown_api",
       "required": true,
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s10-offline-inconclusive-close.md",
-      "note": "E9.S10 logistics-example top-K/plan sem pathMarkers; live LLM pending"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
+      "note": "Offline E9.S10 + live logistics execute_external_action get_shipment_tracking id ABC45871 (E9.S14); HTTP example.invalid esperado"
     },
     {
       "id": "metamorphic",
       "required": true,
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
-      "note": "Corpus class metamorphic offline; live rename pending"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
+      "note": "Offline E9.S2 + live synonym preserva /products/10080022/stock (E9.S14)"
     },
     {
       "id": "safety",
       "required": true,
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
-      "note": "Unauthorized/write/injection harnesses offline; live pending"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
+      "note": "Offline E9.S2 + live injection blocked + write asks confirm (E9.S14)"
     },
     {
       "id": "required_args",
       "required": true,
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
-      "note": "Required present/missing clarify offline"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
+      "note": "Offline E9.S2 + live clarify sem inventar product code (E9.S14)"
     },
     {
       "id": "multi_turn",
@@ -65,9 +65,9 @@
     {
       "id": "legacy_fallback_hit_rate",
       "required": true,
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s12a-message-segment-terms-delete.md",
-      "note": "E9.S12.A/B: messageSegmentTerms + playbookPathMarkers REMOVED; residual = recommendationQueries LEGACY_FALLBACK + registry markers/strategy"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s14-remaining-gates-live.md",
+      "note": "E9.S12.A/B residual offline + live smoke E9.S14 hits=0 (sem legacy markers nos turns)"
     }
   ],
   "deleteCandidates": [
@@ -121,7 +121,7 @@
       "status": "DELETED",
       "deletedAt": "E9.S12.A",
       "authorization": "APPROVED",
-      "authorizationSource": "user:siga_para_o_delete + cutover follow_up_type permanente + offline positive/sibling/negative",
+      "authorizationSource": "user:siga_para_o_delete + cutover follow_up_type permanente + observer positive/sibling/negative",
       "blockReason": null,
       "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s12a-message-segment-terms-delete.md"
     },
@@ -163,5 +163,5 @@
     }
   ],
   "passStatusesForDelete": ["PASS", "PASS_OFFLINE_AND_LIVE", "APPROVED"],
-  "note": "deleteAuthorized global=false; E9.S12.* DELETED; TU heuristics KEEP_APPROVED (plano-02 ATENDIDO)."
+  "note": "deleteAuthorized global=true pós E9.S14 (todos required PASS|PASS_OFFLINE_AND_LIVE); E9.S12.* DELETED; TU heuristics KEEP_APPROVED (plano-02 ATENDIDO)."
 }

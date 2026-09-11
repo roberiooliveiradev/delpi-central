@@ -45,20 +45,32 @@ def test_e9_s6_required_gates_present():
     assert _REQUIRED_GATE_IDS.issubset(ids)
 
 
-def test_e9_s6_current_evaluation_blocks_delete():
-    """Positive (estado atual): deleteAuthorized=false enquanto há PASS_OFFLINE."""
+def test_e9_s6_current_evaluation_authorizes_delete():
+    """Positive (pós E9.S14): deleteAuthorized=true com todos required em status pleno."""
     data = _load()
-    assert data.get("deleteAuthorized") is False
-    assert delete_authorized(data) is False
+    assert data.get("deleteAuthorized") is True
+    assert delete_authorized(data) is True
     offline_only = [
         g["id"]
         for g in data["gates"]
         if g.get("required") and str(g.get("status")) == "PASS_OFFLINE"
     ]
-    # E9.S11: latency_cost=PASS; demais dims offline ainda bloqueiam DELETE.
-    assert offline_only
+    assert not offline_only
     latency = next(g for g in data["gates"] if g["id"] == "latency_cost")
     assert latency["status"] == "PASS"
+    live = {
+        g["id"]
+        for g in data["gates"]
+        if g.get("required") and str(g.get("status")) == "PASS_OFFLINE_AND_LIVE"
+    }
+    assert {
+        "candidate_task_success",
+        "unknown_api",
+        "metamorphic",
+        "safety",
+        "required_args",
+        "legacy_fallback_hit_rate",
+    }.issubset(live)
 
 
 def test_e9_s6_delete_candidates_status():

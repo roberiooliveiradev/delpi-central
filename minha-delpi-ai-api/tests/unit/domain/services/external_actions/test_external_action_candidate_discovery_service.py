@@ -38,3 +38,19 @@ def test_candidate_discovery_how_to_describe_does_not_match_product_terms():
         "como descrever um terminal?"
     )
     assert rule is None or rule["id"] != "productTerms"
+
+
+def test_candidate_discovery_short_ov_token_does_not_match_inside_provider():
+    """E9.S14 — ' ov ' normaliza para 'ov' e não pode casar em 'provider'."""
+    rule = ExternalActionCandidateDiscoveryService.match_filter_rule(
+        "tracking da remessa logística ABC45871 no provider logistics-example"
+    )
+    assert rule is None or rule["id"] != "lmpSales"
+
+
+def test_candidate_discovery_sale_orders_still_matches_lmp_or_ov_word():
+    rule = ExternalActionCandidateDiscoveryService.match_filter_rule(
+        "listar ov do período"
+    )
+    assert rule is not None
+    assert rule["id"] in {"lmpSales", "saleOrdersList"}
