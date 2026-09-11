@@ -1,45 +1,89 @@
 # Plano 10 — Zero mapa lateral por path/rota
 
 **Prioridade:** P0  
-**Status execução:** Onda I · **ATENDIDO** (2026-09-11)  
-**Depende de:** Ondas A–H ATENDIDAS (`globalReleasePass=true`)  
-**Evidência:** [`../evidence/execution-ledger.md`](../evidence/execution-ledger.md) · [`../evidence/e10-s1-lateral-path-maps-inventory.md`](../evidence/e10-s1-lateral-path-maps-inventory.md)  
-**Objetivo perceptível:** nenhuma classificação, hint, factual, enrichment ou response map no `assistant/*.json` usa `pathMarkers` / pathContains / pathToken / pathRules como **mapa lateral** paralelo ao OpenAPI indexado.
+**Status execução:** Onda I · **HISTÓRICO / ACEITE INVALIDADO POR DRIFT**  
+**Plano corretivo vigente:** [`11-corrective-cutover-generalization-cleanup.md`](./11-corrective-cutover-generalization-cleanup.md)  
+**Objetivo original:** nenhuma classificação, hint, factual, enrichment ou response map usa catálogo técnico paralelo ao OpenAPI/Action Catalog.
 
-## Decisão de produto (2026-09-11)
-
-```text
-NENHUM MAPA LATERAL DEVE EXISTIR.
-```
-
-## Entrega
-
-| Subetapa | Status |
-|---|---|
-| E10.S1 inventário + gate | **ATENDIDO** |
-| E10.S2 domínio sem pathMarkers | **ATENDIDO** (`ApiRouteDomainInferenceService` + stamp import) |
-| E10.S3 factual/sufficiency/enrichment/responses | **ATENDIDO** |
-| E10.S4 KPI catalogToken + pathRules DELETE + audit | **ATENDIDO** |
-| E10.S5 docs/ledger/residuals | **ATENDIDO** |
-| E10 live smoke | **ATENDIDO** (`smoke_e10_zero_lateral_path_maps_live.py`) |
-
-## Aceite da Onda I
+## Decisão de produto
 
 ```text
-NO_LATERAL_PATH_MAP = PASS
-API_ROUTE_DOMAINS_PATH_MAP_REMOVED = PASS
-CONTENT_PATHMARKERS_COUNT = 0
-DOMAIN_FROM_OPENAPI_OR_CATALOG = PASS
-UNKNOWN_PROVIDER_STILL_WORKS = PASS (E9.S10 offline)
-NO_NEW_PATH_MAP_SUBSTITUTE = PASS (gate + inference bridge documentada)
-LIVE_PRODUCT_STOCK_DOMAIN = PASS
-LIVE_DEPARTMENT_KPI_SIBLING = PASS
-LIVE_UNKNOWN_SAFE = PASS
+NENHUM MAPA LATERAL OU SUBSTITUTO SEMÂNTICO DEVE SER AUTHORITY.
 ```
 
-Gate: `tests/unit/domain/services/test_e10_zero_lateral_path_maps.py`  
-Live: `scripts/smoke_e10_zero_lateral_path_maps_live.py` → [`../evidence/e10-zero-lateral-path-maps-live.md`](../evidence/e10-zero-lateral-path-maps-live.md)
+A Onda I removeu diversas chaves laterais de `assistant/*.json` e executou smoke conhecido. Essa evidência continua válida para afirmar que determinadas **chaves JSON** foram removidas naquele estado, mas não prova a remoção da autoridade conceitual.
 
-## Nota de bridge
+## EXECUTION_DRIFT pós-implementação
 
-`ApiRouteDomainInferenceService` deriva domínio a partir do **path do contrato OpenAPI** da action (e `delpiMetadata.apiRouteDomain` quando presente). Não há mapa lateral em content JSON. Evolução desejável: publicar `x-delpi.apiRouteDomain` na api-delpi para eliminar a inferência por fragmento de path no AI.
+Uma revisão arquitetural posterior encontrou:
+
+1. `ApiRouteDomainInferenceService._DOMAIN_RULES` com fragments de path conhecidos, portados do antigo mapa JSON;
+2. `ParameterStrategyInferenceService` escolhendo strategy por path/operationId depois do DELETE do catálogo;
+3. continuidade/route segment derivada de path-tail/operationId inventory;
+4. `route.operationIds` como catálogo técnico paralelo residual;
+5. gate E10 procurando nomes de chaves específicas, sem detectar representações equivalentes em Python/TS;
+6. `UNKNOWN_PROVIDER_STILL_WORKS` baseado em evidência E9.S10 anterior às mudanças da Onda I;
+7. smoke `unknown_safe_negative` usando mensagem sem sentido, que é negative/no-tool e **não** unknown external API.
+
+## Reclassificação do aceite anterior
+
+| Critério antigo | Estado histórico | Estado vigente |
+|---|---|---|
+| `CONTENT_PATHMARKERS_COUNT = 0` | PASS para as chaves verificadas | PASS histórico |
+| `API_ROUTE_DOMAINS_PATH_MAP_REMOVED` | JSON removido | **FAIL conceitual** — mapa reapareceu em Python |
+| `DOMAIN_FROM_OPENAPI_OR_CATALOG` | path do contrato usado para inferência | **PARTIAL** — path continua semantic authority |
+| `UNKNOWN_PROVIDER_STILL_WORKS` | E9.S10 offline | **INCONCLUSIVE** para candidate final |
+| `NO_NEW_PATH_MAP_SUBSTITUTE` | declarado PASS | **FAIL** |
+| `LIVE_PRODUCT_STOCK_DOMAIN` | PASS conhecido | PASS histórico, não generalização |
+| `LIVE_DEPARTMENT_KPI_SIBLING` | PASS conhecido | PASS histórico, não metamorphic |
+| `LIVE_UNKNOWN_SAFE` | PASS negativo/no-tool | não conta como unknown API |
+
+## Por que o gate antigo foi insuficiente
+
+O gate validava ausência de nomes como:
+
+```text
+pathMarkers
+pathToken
+pathContains
+pathRules
+```
+
+Isso não detecta equivalentes como:
+
+```text
+_DOMAIN_RULES = [(domain, ("/known/path", ...))]
+if "/products/" in path: strategy = ...
+routeSegment = normalize(path_tail)
+operationIds = [known_operation]
+```
+
+O enforcement correto precisa distinguir uso técnico legítimo de `path/operationId` de **decisão semântica hardcoded**.
+
+## Ação corretiva
+
+A Onda I não deve ser reexecutada isoladamente. Seus drifts foram absorvidos pela Onda J:
+
+- E11.S1 — Architecture Enforcement semântico;
+- E11.S2 — domain classification sem path authority;
+- E11.S3 — argument binding schema-driven;
+- E11.S4 — multi-turn sem path/operationId continuity;
+- E11.S5 — registry/operationIds sem routing authority;
+- E11.S9 — unknown external API + metamorphic no candidate final;
+- E11.S10 — residual scan + docs + verify-final.
+
+## Regra de fechamento
+
+Este plano só pode voltar a ser considerado atendido como objetivo arquitetural quando o Plano 11 provar no **candidate final**:
+
+```text
+PATH_COUPLED_RUNTIME_RULES = 0 para authorities removíveis
+ENDPOINT_STRATEGY_RULES = 0
+MULTI_TURN_PATH_COUPLING = 0
+NO_TECHNICAL_REGISTRY_AUTHORITY = PASS
+UNKNOWN_EXTERNAL_API = PASS
+METAMORPHIC_RENAME = PASS
+RESIDUAL_SCAN = PASS
+```
+
+Evidências antigas permanecem preservadas em `../evidence/` como histórico; não apagá-las nem renomeá-las para simular novo candidate.
