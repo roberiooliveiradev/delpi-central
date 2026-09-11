@@ -163,3 +163,5 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda C/H **ATENDIDO_PARCIAL** — próximo: canary `cutoverEnabled=true` product OU production/KPI |
 | 2026-09-10 | E2.S4 **CUTOVER_PRODUCT_CANARY** — cutoverEnabled=true + grounding anti-RAG; agree 10/10 E2.S2 |
 | 2026-09-10 | Onda C/H **ATENDIDO_PARCIAL** — próximo: production/KPI dials OU E2.S5 |
+| 2026-09-10 | E2.S4 **PRODUCTION_KPI_SHADOW_READY** — mappers+wire OFF; terms normalizados no match production |
+| 2026-09-10 | Onda C/H **ATENDIDO_PARCIAL** — próximo: canary production/KPI OU E2.S5 |

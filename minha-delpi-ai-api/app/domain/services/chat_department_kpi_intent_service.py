@@ -117,7 +117,16 @@ class ChatDepartmentKpiIntentService:
         )
 
     @classmethod
-    def resolve(cls, message: str) -> DepartmentKpiMatch | None:
+    def resolve(cls, message: str, *, force_legacy: bool = False) -> DepartmentKpiMatch | None:
+        if not force_legacy and cls._kpi_family_cutover_enabled():
+            mapped = cls._resolve_from_turn_understanding(message)
+            if mapped is not None:
+                return mapped
+
+        return cls._resolve_legacy(message)
+
+    @classmethod
+    def _resolve_legacy(cls, message: str) -> DepartmentKpiMatch | None:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if not normalized:
@@ -159,6 +168,22 @@ class ChatDepartmentKpiIntentService:
                 )
 
         return best
+
+    @classmethod
+    def _resolve_from_turn_understanding(cls, message: str) -> DepartmentKpiMatch | None:
+        from app.domain.services.turn_understanding_kpi_intent_mapper_service import (
+            TurnUnderstandingKpiIntentMapperService,
+        )
+
+        return TurnUnderstandingKpiIntentMapperService.from_message(message)
+
+    @classmethod
+    def _kpi_family_cutover_enabled(cls) -> bool:
+        from app.domain.services.chat_conversational_intelligence_flag_service import (
+            ChatConversationalIntelligenceFlagService,
+        )
+
+        return ChatConversationalIntelligenceFlagService.kpi_family_cutover_enabled()
 
     @classmethod
     def _has_product_code(cls, normalized: str) -> bool:

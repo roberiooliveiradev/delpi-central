@@ -52,7 +52,21 @@ class ChatProductionOperationalIntentService:
         ).lower()
 
     @classmethod
-    def resolve(cls, message: str | None) -> ProductionOperationalIntentKind | None:
+    def resolve(
+        cls,
+        message: str | None,
+        *,
+        force_legacy: bool = False,
+    ) -> ProductionOperationalIntentKind | None:
+        if not force_legacy and cls._production_family_cutover_enabled():
+            mapped = cls._resolve_from_turn_understanding(message)
+            if mapped is not None:
+                return mapped
+
+        return cls._resolve_legacy(message)
+
+    @classmethod
+    def _resolve_legacy(cls, message: str | None) -> ProductionOperationalIntentKind | None:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if not normalized:
@@ -81,16 +95,47 @@ class ChatProductionOperationalIntentService:
         return None
 
     @classmethod
+    def _resolve_from_turn_understanding(
+        cls,
+        message: str | None,
+    ) -> ProductionOperationalIntentKind | None:
+        from app.domain.services.turn_understanding_production_intent_mapper_service import (
+            TurnUnderstandingProductionIntentMapperService,
+        )
+
+        return TurnUnderstandingProductionIntentMapperService.from_message(
+            str(message or "")
+        )
+
+    @classmethod
+    def _production_family_cutover_enabled(cls) -> bool:
+        from app.domain.services.chat_conversational_intelligence_flag_service import (
+            ChatConversationalIntelligenceFlagService,
+        )
+
+        return ChatConversationalIntelligenceFlagService.production_family_cutover_enabled()
+
+    @classmethod
     def _matches_kind(
         cls,
         normalized: str,
         message: str,
         kind: ProductionOperationalIntentKind,
     ) -> bool:
-        if any(term in normalized for term in cls._terms(kind.value, "excludeTerms")):
+        exclude_terms = tuple(
+            ChatMessageNormalizationService.normalize_for_matching(term)
+            for term in cls._terms(kind.value, "excludeTerms")
+            if str(term or "").strip()
+        )
+        if any(term and term in normalized for term in exclude_terms):
             return False
 
-        if not any(term in normalized for term in cls._terms(kind.value, "terms")):
+        include_terms = tuple(
+            ChatMessageNormalizationService.normalize_for_matching(term)
+            for term in cls._terms(kind.value, "terms")
+            if str(term or "").strip()
+        )
+        if not any(term and term in normalized for term in include_terms):
             return False
 
         if kind == ProductionOperationalIntentKind.PURCHASES_RANKING:

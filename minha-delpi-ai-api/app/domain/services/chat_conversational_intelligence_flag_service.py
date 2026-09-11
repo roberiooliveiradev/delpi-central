@@ -60,17 +60,30 @@ class ChatConversationalIntelligenceFlagService:
         return bool(config.get("enabled"))
 
     @classmethod
-    def product_family_cutover_enabled(cls) -> bool:
-        """E2.S4 — dial OFF by default; only product family when enabled."""
+    def family_cutover_enabled(cls, family: str) -> bool:
+        """E2.S4 — requires enabled ∧ cutoverEnabled ∧ families[family]."""
         config = cls.product_family_authority_shadow_config()
         if not cls.product_family_authority_shadow_enabled():
             return False
         if not bool(config.get("cutoverEnabled")):
             return False
         families = config.get("families")
-        if isinstance(families, dict) and "product" in families:
-            return bool(families.get("product"))
-        return True
+        key = str(family or "").strip().lower()
+        if isinstance(families, dict) and key in families:
+            return bool(families.get(key))
+        return False
+
+    @classmethod
+    def product_family_cutover_enabled(cls) -> bool:
+        return cls.family_cutover_enabled("product")
+
+    @classmethod
+    def production_family_cutover_enabled(cls) -> bool:
+        return cls.family_cutover_enabled("production")
+
+    @classmethod
+    def kpi_family_cutover_enabled(cls) -> bool:
+        return cls.family_cutover_enabled("kpi")
 
     @classmethod
     def _env_override(cls, key: str) -> bool | None:

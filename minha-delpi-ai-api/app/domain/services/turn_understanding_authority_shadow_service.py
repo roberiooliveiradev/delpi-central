@@ -1,4 +1,4 @@
-"""E2.S4 — shadow compare authority heuristics vs contrato TU (+ dial product cutover)."""
+"""E2.S4 — shadow compare authority heuristics vs contrato TU (+ dials por família)."""
 
 from __future__ import annotations
 
@@ -35,18 +35,36 @@ class TurnUnderstandingAuthorityShadowService:
         from app.domain.services.turn_understanding_product_intent_mapper_service import (
             TurnUnderstandingProductIntentMapperService,
         )
+        from app.domain.services.turn_understanding_production_intent_mapper_service import (
+            TurnUnderstandingProductionIntentMapperService,
+        )
+        from app.domain.services.turn_understanding_kpi_intent_mapper_service import (
+            TurnUnderstandingKpiIntentMapperService,
+        )
 
-        # Always compare against legacy heuristic (observer), never post-cutover detect.
         product = str(
             ChatProductQueryIntentService.detect(message, force_legacy=True) or ""
         ).strip()
         candidate_product = TurnUnderstandingProductIntentMapperService.from_understanding(
             contract
         )
-        production = ChatProductionOperationalIntentService.resolve(message)
+        production = ChatProductionOperationalIntentService.resolve(
+            message,
+            force_legacy=True,
+        )
         production_name = production.name if production is not None else None
-        kpi = ChatDepartmentKpiIntentService.resolve(message)
+        candidate_production = TurnUnderstandingProductionIntentMapperService.from_understanding(
+            contract
+        )
+        candidate_production_name = (
+            candidate_production.name if candidate_production is not None else None
+        )
+        kpi = ChatDepartmentKpiIntentService.resolve(message, force_legacy=True)
         kpi_hit = kpi is not None
+        candidate_kpi = TurnUnderstandingKpiIntentMapperService.from_understanding(contract)
+        candidate_kpi_token = (
+            str(candidate_kpi.path_token) if candidate_kpi is not None else None
+        )
 
         goal_text = " ".join(goal.intent for goal in contract.goals).lower()
         entity_codes = {
@@ -79,24 +97,40 @@ class TurnUnderstandingAuthorityShadowService:
                 token in goal_text
                 for token in ("produc", "agenda", "program", "perda", "consumo", "schedule")
             )
+            if candidate_production_name:
+                agree_production = agree_production or (
+                    candidate_production_name == production_name
+                )
 
         agree_kpi = True
         if kpi_hit:
             agree_kpi = any(
                 token in goal_text for token in ("kpi", "indicador", "receita", "meta", "filial")
             )
+            if candidate_kpi_token and kpi is not None:
+                agree_kpi = agree_kpi or candidate_kpi_token == kpi.path_token
 
         agree_compound = contract.subtask_count >= 2 or product != "multi_scope"
-        cutover = ChatConversationalIntelligenceFlagService.product_family_cutover_enabled()
+        cutover_product = (
+            ChatConversationalIntelligenceFlagService.product_family_cutover_enabled()
+        )
+        cutover_production = (
+            ChatConversationalIntelligenceFlagService.production_family_cutover_enabled()
+        )
+        cutover_kpi = ChatConversationalIntelligenceFlagService.kpi_family_cutover_enabled()
 
         shadow = {
             "kind": "turn_understanding_authority",
-            "cutover": bool(cutover),
+            "cutover": bool(cutover_product),
+            "cutoverProduction": bool(cutover_production),
+            "cutoverKpi": bool(cutover_kpi),
             "goalCount": contract.subtask_count,
             "productIntent": product or None,
             "candidateProductIntent": candidate_product,
             "productionKind": production_name,
+            "candidateProductionKind": candidate_production_name,
             "kpiMatched": kpi_hit,
+            "candidateKpi": candidate_kpi_token,
             "agreeProduct": bool(agree_product),
             "agreeProduction": bool(agree_production),
             "agreeKpi": bool(agree_kpi),
@@ -121,7 +155,11 @@ class TurnUnderstandingAuthorityShadowService:
                 "goalCount": int(shadow.get("goalCount") or 0),
                 "productIntent": shadow.get("productIntent"),
                 "candidateProductIntent": shadow.get("candidateProductIntent"),
-                "cutover": bool(shadow.get("cutover")),
                 "productionKind": shadow.get("productionKind"),
+                "candidateProductionKind": shadow.get("candidateProductionKind"),
+                "candidateKpi": shadow.get("candidateKpi"),
+                "cutover": bool(shadow.get("cutover")),
+                "cutoverProduction": bool(shadow.get("cutoverProduction")),
+                "cutoverKpi": bool(shadow.get("cutoverKpi")),
             },
         )
