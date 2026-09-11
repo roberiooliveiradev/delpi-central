@@ -772,8 +772,8 @@ Preencher no final:
 | RQ11-05 | e11-s6 | TU+mappers authority | test_e11_s6_* | ATENDIDO | live R1/R2/R9→S9 |
 | RQ11-06 | e11-s7 | dual-run exit | test_e6_s4_* | ATENDIDO | profiles até exit |
 | RQ11-07 | e11-s7 | method+sensitivity | test_e11_s7_* | ATENDIDO | |
-| RQ11-08 | | | | | |
-| RQ11-09 | | | | | |
+| RQ11-08 | e11-s8 | residual inventário | phase3 | ATENDIDO_PARCIAL | FS→S10 |
+| RQ11-09 | e11-s8 | require_smoke_credentials | test_e11_s8_* | ATENDIDO | |
 | RQ11-10 | | | | | |
 | RQ11-11 | | | | | |
 | RQ11-12 | | | | | |
