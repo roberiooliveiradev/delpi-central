@@ -3550,6 +3550,88 @@
   gap: 0.15rem;
 }
 
+.dashboard-production-pulse .pp-firmware-version-switcher {
+  max-width: 28rem;
+  margin: 0 0 0.75rem;
+}
+
+
+.dashboard-production-pulse .pp-firmware-family:last-child {
+  border-bottom: none;
+}
+
+.dashboard-production-pulse .pp-firmware-family__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.55rem 0.85rem;
+}
+
+.dashboard-production-pulse .pp-firmware-family__toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.45rem 0.55rem;
+  min-width: 0;
+  flex: 1 1 14rem;
+  margin: 0;
+  padding: 0.35rem 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-production-pulse .pp-firmware-family__toggle:focus-visible {
+  outline: 2px solid var(--pp-accent, #3b82f6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.dashboard-production-pulse .pp-firmware-family__icon {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+  color: var(--pp-accent, inherit);
+  opacity: 0.9;
+}
+
+.dashboard-production-pulse .pp-firmware-family__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+  flex: 1 1 10rem;
+}
+
+.dashboard-production-pulse .pp-firmware-family__label {
+  font-weight: 650;
+  word-break: break-word;
+}
+
+.dashboard-production-pulse .pp-firmware-family__meta {
+  font-size: 0.85rem;
+  color: var(--pp-muted, inherit);
+  word-break: break-word;
+}
+
+.dashboard-production-pulse .pp-firmware-family__actions {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.dashboard-production-pulse .pp-firmware-family__versions {
+  margin: 0.15rem 0 0.25rem 1.55rem;
+  padding-left: 0.35rem;
+  border-left: 2px solid color-mix(in srgb, var(--pp-border) 70%, transparent);
+}
+
+.dashboard-production-pulse .pp-firmware-family__versions .pp-firmware-catalog-row {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+
 .dashboard-production-pulse .pp-firmware-catalog-row {
   display: flex;
   flex-wrap: wrap;

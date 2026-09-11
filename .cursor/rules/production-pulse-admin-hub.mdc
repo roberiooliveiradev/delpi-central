@@ -61,7 +61,7 @@ Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.c
 | Confirmação | `PpConfirmDialog` |
 | Catálogos Hub | `PpDetailDialog` — `devices` / `firmwares` / `drivers` / `jobs` |
 | Lista IoTs | `panel=devices` + `DeviceCatalogPanel` embedded |
-| Lista Firmwares | `panel=firmwares` + `FirmwareCatalogListItem` |
+| Lista Firmwares | `panel=firmwares` + `FirmwareFamilyCatalogItem` (família → versões) |
 | Lista Drivers | `panel=drivers` + `DriverTypeListItem` |
 | Lista Jobs OTA | `panel=jobs` + `OtaJobListItem` |
 | Detalhe de Job | `PpDetailDialog` (`modal=job-detail`) com resumo + targets |

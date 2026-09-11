@@ -44,7 +44,7 @@ Helps: `PP_HELP.hub.*`, `PP_HELP.otaLinks.*`.
 | KPIs / frota | `hub.fleetHealth` · `hub.kpiPublished` · `hub.kpiLinked` · `hub.kpiUpdating` · `hub.kpiFailed` |
 | Canvas / legenda | `hub.edgeModesHint` · `hub.edgeSolid` · `hub.edgeNone` · `hub.linkMode*` |
 | Menu ⋯ IoT/FW | `hub.menuEditDevice` … `hub.menuArchiveFirmware` · `hub.startLinkFrom*` |
-| Catálogo | `hub.catalog` · `hub.catalogSearch` |
+| Catálogo | `hub.catalog` · `hub.catalogSearch` · `hub.firmwaresCatalogList` · `hub.firmwareVersionSwitcher` |
 | Form OTA / jobs | `hub.jobs` · `ota.jobCreate` · `ota.jobsList` |
 
 ## WF-PP-FW-NEW — Novo firmware
@@ -56,10 +56,13 @@ Helps: `PP_HELP.hub.*`, `PP_HELP.otaLinks.*`.
 | Binário .bin | `firmwareCreate.sectionArtifact` · `firmwareCreate.artifactField` |
 | Ações | `firmwareCreate.saveDraft` · `firmwareCreate.publish` |
 
+**Nova versão (mesma família):** modal `firmware-version` · título «Nova versão» · `firmwareCreate.breadcrumbNewVersion` · família OTA travada (`lockFamily`).
+
 ## WF-PP-FW-DETAIL — Detalhe versão firmware
 
 | Elemento UI | Chave help |
 |-------------|------------|
+| Switcher de versão | `hub.firmwareVersionSwitcher` |
 | Metadados | `ota.detailMetadata` |
 | Sketch | `ota.detailSource` · `ota.sourceTextarea` |
 | Artefato | `ota.detailArtifact` · `ota.artifactImmutable` |

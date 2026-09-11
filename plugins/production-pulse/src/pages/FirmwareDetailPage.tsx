@@ -8,6 +8,7 @@ import {
   patchFirmware,
   publishFirmwareVersion,
   type FirmwareDetail,
+  type FirmwareListItem,
 } from "../api/productionPulseApi";
 import {
   PpActionButton,
@@ -15,6 +16,7 @@ import {
   PpFirmwareSourceField,
   PpHintAction,
   PpHostContainedDialog,
+  PpNativeSelectField,
   PpNativeTextAreaField,
   PpNativeTextField,
   PpPageHero,
@@ -36,6 +38,7 @@ import {
   firmwareLifecycleBadgeClass,
   firmwareLifecycleLabel,
 } from "../utils/firmwareCatalogDisplay";
+import { firmwareSiblingsForFamily } from "../utils/firmwareCatalogGrouping";
 import { navigateProductionPulse } from "../utils/navigation";
 
 type FirmwareDetailPageProps = {
@@ -44,6 +47,9 @@ type FirmwareDetailPageProps = {
   embedded?: boolean;
   onDone?: () => void;
   onCancel?: () => void;
+  /** Other versions of the same family (from Hub catalog cache). */
+  siblingFirmwares?: FirmwareListItem[];
+  onSelectVersion?: (firmwareId: string) => void;
 };
 
 export function FirmwareDetailPage({
@@ -52,6 +58,8 @@ export function FirmwareDetailPage({
   embedded = false,
   onDone,
   onCancel,
+  siblingFirmwares = [],
+  onSelectVersion,
 }: FirmwareDetailPageProps) {
   const canManage = permissions.canManageDevices;
   const [item, setItem] = useState<FirmwareDetail | null>(null);
@@ -100,6 +108,20 @@ export function FirmwareDetailPage({
     if (!item) return "";
     return `Família ${item.firmwareKey} · v${item.version} · Driver ${item.driverKey}`;
   }, [item]);
+
+  const versionSwitcherOptions = useMemo(() => {
+    if (!item || !onSelectVersion) return [];
+    const siblings = firmwareSiblingsForFamily(siblingFirmwares, item.firmwareKey);
+    if (siblings.length <= 1) return [];
+    return siblings.map((sibling) => {
+      const life = firmwareLifecycleLabel(sibling.lifecycle);
+      const archived = sibling.archivedAt ? " · arquivada" : "";
+      return {
+        value: sibling.id,
+        label: `v${sibling.version} · ${life}${archived}`,
+      };
+    });
+  }, [item, onSelectVersion, siblingFirmwares]);
 
   const metaFacts = useMemo(() => {
     if (!item) return [];
@@ -329,6 +351,22 @@ export function FirmwareDetailPage({
         badge={embedded ? undefined : ppShellIcon}
         actions={heroActions}
       />
+
+      {versionSwitcherOptions.length > 0 && onSelectVersion ? (
+        <div className="pp-firmware-version-switcher">
+          <PpNativeSelectField
+            id="fw-detail-version-switcher"
+            label="Versão da família"
+            hint={PP_HELP.hub.firmwareVersionSwitcher}
+            value={item.id}
+            onChange={(nextId) => {
+              if (nextId && nextId !== item.id) onSelectVersion(nextId);
+            }}
+            options={versionSwitcherOptions}
+            searchable={false}
+          />
+        </div>
+      ) : null}
 
       {actionError ? (
         <PpStateBox variant="error" title="Operação" message={actionError} />

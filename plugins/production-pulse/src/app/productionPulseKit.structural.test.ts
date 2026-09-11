@@ -110,9 +110,22 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("pages/FirmwareCreatePage.tsx")).toMatch(/publishFirmware/);
     expect(readRelative("pages/FirmwareCreatePage.tsx")).toMatch(/embedded/);
     expect(readRelative("pages/FirmwareCreatePage.tsx")).toMatch(/onOpenDriverCreate/);
+    expect(readRelative("pages/FirmwareCreatePage.tsx")).toMatch(/lockFamily/);
+    expect(readRelative("pages/FirmwareCreatePage.tsx")).toMatch(/initialFirmwareKey/);
     expect(readRelative("pages/DriverFormPage.tsx")).toMatch(/createDriver|patchDriver/);
     expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/archiveDriver|unarchiveDriver/);
-    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/FirmwareCatalogListItem/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/FirmwareFamilyCatalogItem/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/groupFirmwareCatalogByFamily/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/breadcrumbNewVersion/);
+    expect(readRelative("components/firmware/FirmwareFamilyCatalogItem.tsx")).toMatch(
+      /FirmwareCatalogListItem/,
+    );
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/firmwaresCatalogList:/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/firmwareVersionSwitcher/);
+    expect(readRelative("content/helpTooltips.ts")).toMatch(/família OTA/);
+    expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/siblingFirmwares/);
+    expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/onSelectVersion/);
+    expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/firmwareSiblingsForFamily/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/DriverTypeListItem/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/panel === \"drivers\"/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/panel === \"devices\"/);

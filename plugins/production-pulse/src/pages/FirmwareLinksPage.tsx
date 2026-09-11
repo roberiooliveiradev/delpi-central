@@ -57,7 +57,7 @@ import {
   type DataTableColumn,
 } from "../app/productionPulseUi";
 import { DriverTypeListItem } from "../components/drivers/DriverTypeListItem";
-import { FirmwareCatalogListItem } from "../components/firmware/FirmwareCatalogListItem";
+import { FirmwareFamilyCatalogItem } from "../components/firmware/FirmwareFamilyCatalogItem";
 import { OtaStatusIndicator } from "../components/ota/OtaStatusIndicator";
 import { OtaJobListItem } from "../components/ota/OtaJobListItem";
 import { OtaTargetProgress } from "../components/ota/OtaTargetProgress";
@@ -109,6 +109,7 @@ import {
   uniqueFirmwareFamilies,
   type LinkMode,
 } from "../utils/firmwareLinkGraph";
+import { groupFirmwareCatalogByFamily } from "../utils/firmwareCatalogGrouping";
 import { isCompactViewport } from "../utils/viewportLayout";
 import {
   computeHubOtaKpis,
@@ -278,23 +279,10 @@ export function FirmwareLinksPage({
     [firmwares],
   );
 
-  const filteredFirmwares = useMemo(() => {
-    const query = catalogSearch.trim().toLowerCase();
-    if (!query) return firmwares;
-    return firmwares.filter((item) =>
-      [
-        item.firmwareKey,
-        item.driverKey,
-        item.version,
-        item.displayName,
-        item.lifecycle,
-        item.artifactSha256 ?? "",
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(query),
-    );
-  }, [catalogSearch, firmwares]);
+  const firmwareCatalogFamilies = useMemo(
+    () => groupFirmwareCatalogByFamily(firmwares, { query: catalogSearch }),
+    [catalogSearch, firmwares],
+  );
 
   const filteredDrivers = useMemo(() => {
     const query = driversSearch.trim().toLowerCase();
@@ -1457,20 +1445,38 @@ export function FirmwareLinksPage({
           ui.openLayer === "modal" &&
           (ui.modal === "firmware-create" || ui.modal === "firmware-version")
         }
-        title="Novo firmware"
+        title={
+          ui.modal === "firmware-version"
+            ? PP_HELP.firmwareCreate.breadcrumbNewVersion
+            : "Novo firmware"
+        }
         onClose={closeLayers}
       >
         <FirmwareCreatePage
           branch={branch}
           permissions={permissions}
           embedded
+          initialFirmwareKey={
+            ui.modal === "firmware-version" ? selectedFirmware?.firmwareKey : undefined
+          }
+          initialDriverKey={
+            ui.modal === "firmware-version" ? selectedFirmware?.driverKey : undefined
+          }
+          initialDisplayName={
+            ui.modal === "firmware-version" ? selectedFirmware?.displayName ?? "" : undefined
+          }
+          lockFamily={ui.modal === "firmware-version"}
           onOpenDriverCreate={() => openModal("driver-create", null)}
           onCancel={closeLayers}
           onDone={() => {
+            const createdVersion = ui.modal === "firmware-version";
             closeLayers();
             void reloadGraph();
             openPanel("firmwares");
-            pushNotice({ variant: "success", message: "Firmware criado." });
+            pushNotice({
+              variant: "success",
+              message: createdVersion ? "Nova versão criada." : "Firmware criado.",
+            });
           }}
         />
       </PpWorkbenchDialog>
@@ -1528,6 +1534,10 @@ export function FirmwareLinksPage({
             }
             permissions={permissions}
             embedded
+            siblingFirmwares={firmwares}
+            onSelectVersion={(nextId) =>
+              openModal("firmware-detail", { type: "firmware", id: nextId })
+            }
             onCancel={closeLayers}
             onDone={() => {
               closeLayers();
@@ -1622,20 +1632,30 @@ export function FirmwareLinksPage({
             Novo firmware
           </PpActionButton>
         ) : null}
-        {filteredFirmwares.length === 0 ? (
+        {firmwareCatalogFamilies.length === 0 ? (
           <PpStateBox variant="empty" title={PP_HELP.ota.catalogEmpty} />
         ) : (
           <div className="pp-firmware-catalog-list" role="list">
-            {filteredFirmwares.map((firmware) => (
-              <div key={firmware.id} role="listitem">
-                <FirmwareCatalogListItem
-                  firmware={firmware}
+            {firmwareCatalogFamilies.map((family) => (
+              <div key={family.firmwareKey} role="listitem">
+                <FirmwareFamilyCatalogItem
+                  family={family}
                   canManage={canManage}
                   busy={busy}
-                  onOpenDetails={() =>
-                    openModal("firmware-detail", { type: "firmware", id: firmware.id })
+                  onOpenVersionDetails={(firmwareId) =>
+                    openModal("firmware-detail", { type: "firmware", id: firmwareId })
                   }
-                  onUpdateLinked={() => void handleUpdateFamily(firmware.firmwareKey)}
+                  onNewVersion={() =>
+                    openModal("firmware-version", {
+                      type: "firmware",
+                      id: family.latest.id,
+                    })
+                  }
+                  onUpdateLinked={
+                    family.latestPublished
+                      ? () => void handleUpdateFamily(family.firmwareKey)
+                      : undefined
+                  }
                 />
               </div>
             ))}

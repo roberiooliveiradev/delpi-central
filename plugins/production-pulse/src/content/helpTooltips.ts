@@ -436,7 +436,10 @@ export const PP_HELP = {
     firmwaresDialogTitle: "Firmwares",
     firmwaresCatalogSearch: "Busca por família, versão, driver ou nome exibido.",
     firmwaresCatalogList:
-      "Lista visual das versões: nome, família, driver, artefato e lifecycle (rascunho/publicado/arquivado).",
+      "Lista por família OTA: expanda para ver versões (rascunho/publicado/arquivado), abrir o detalhe de uma versão ou criar nova versão na mesma família.",
+    firmwareVersionSwitcher:
+      "Troca entre versões da mesma família OTA sem voltar ao catálogo.",
+    catalogNewVersion: "Cria nova versão na família OTA selecionada.",
     panelDrivers: "Abre o catálogo de tipos de driver (protocolo/registry) em modal.",
     driversDialogTitle: "Tipos de driver",
     panelJobs: "Abre a lista de jobs OTA (agendados e em andamento).",
@@ -469,6 +472,7 @@ export const PP_HELP = {
   firmwareCreate: {
     hero: "Nova versão: identificação, sketch (.ino) e artefato (.bin) na mesma release.",
     breadcrumb: "Novo firmware",
+    breadcrumbNewVersion: "Nova versão",
     sectionIdentity: "Família OTA, tipo de driver e versão — imutáveis depois de criar.",
     sectionSource: "Snapshot do sketch da versão. Importar .ino preenche o editor.",
     sectionArtifact: "Binário OTA. Obrigatório para publicar; opcional no rascunho.",

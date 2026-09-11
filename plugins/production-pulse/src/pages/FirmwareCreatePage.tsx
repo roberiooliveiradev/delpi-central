@@ -36,6 +36,12 @@ type FirmwareCreatePageProps = {
   onCancel?: () => void;
   /** Opens Admin Hub driver-create modal (or equivalent). */
   onOpenDriverCreate?: () => void;
+  /** Prefill when creating another version in an existing OTA family. */
+  initialFirmwareKey?: string;
+  initialDriverKey?: string;
+  initialDisplayName?: string;
+  /** Locks família OTA (and keeps driver seed) for «Nova versão». */
+  lockFamily?: boolean;
 };
 
 const DEFAULT_FIRMWARE_KEY = "esp8266_counter_v1";
@@ -47,13 +53,21 @@ export function FirmwareCreatePage({
   onDone,
   onCancel,
   onOpenDriverCreate,
+  initialFirmwareKey,
+  initialDriverKey,
+  initialDisplayName,
+  lockFamily = false,
 }: FirmwareCreatePageProps) {
   const canManage = permissions.canManageDevices;
   const [drivers, setDrivers] = useState<FirmwareDriverCatalogItem[]>([]);
-  const [firmwareKey, setFirmwareKey] = useState(DEFAULT_FIRMWARE_KEY);
-  const [driverKey, setDriverKey] = useState(DEFAULT_FIRMWARE_KEY);
+  const [firmwareKey, setFirmwareKey] = useState(
+    () => initialFirmwareKey?.trim() || DEFAULT_FIRMWARE_KEY,
+  );
+  const [driverKey, setDriverKey] = useState(
+    () => initialDriverKey?.trim() || initialFirmwareKey?.trim() || DEFAULT_FIRMWARE_KEY,
+  );
   const [version, setVersion] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState(() => initialDisplayName ?? "");
   const [releaseNotes, setReleaseNotes] = useState("");
   const [sourceText, setSourceText] = useState("");
   const [binFile, setBinFile] = useState<File | null>(null);
@@ -61,14 +75,30 @@ export function FirmwareCreatePage({
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialFirmwareKey?.trim()) {
+      setFirmwareKey(initialFirmwareKey.trim());
+    }
+    if (initialDriverKey?.trim()) {
+      setDriverKey(initialDriverKey.trim());
+    } else if (initialFirmwareKey?.trim()) {
+      setDriverKey(initialFirmwareKey.trim());
+    }
+    if (initialDisplayName != null) {
+      setDisplayName(initialDisplayName);
+    }
+  }, [initialDisplayName, initialDriverKey, initialFirmwareKey]);
+
+  useEffect(() => {
     let active = true;
     void fetchFirmwareDrivers()
       .then((items) => {
         if (!active) return;
         setDrivers(items);
-        setDriverKey((current) =>
-          items.some((driver) => driver.key === current) ? current : items[0]?.key ?? current,
-        );
+        setDriverKey((current) => {
+          if (items.some((driver) => driver.key === current)) return current;
+          if (lockFamily) return current;
+          return items[0]?.key ?? current;
+        });
       })
       .catch(() => {
         if (active) setDrivers([]);
@@ -76,7 +106,7 @@ export function FirmwareCreatePage({
     return () => {
       active = false;
     };
-  }, []);
+  }, [lockFamily]);
 
   const driverOptions = useMemo(
     () =>
@@ -184,6 +214,8 @@ export function FirmwareCreatePage({
                 hint={PP_HELP.ota.firmwareFamily}
                 value={firmwareKey}
                 onChange={setFirmwareKey}
+                readOnly={lockFamily}
+                disabled={lockFamily}
               />
               {driverOptions.length > 0 ? (
                 <PpNativeSelectField
@@ -194,8 +226,9 @@ export function FirmwareCreatePage({
                   onChange={setDriverKey}
                   options={driverOptions}
                   searchable={false}
+                  disabled={lockFamily}
                   afterControl={
-                    onOpenDriverCreate ? (
+                    !lockFamily && onOpenDriverCreate ? (
                       <PpActionButton variant="ghost" onClick={onOpenDriverCreate}>
                         {PP_HELP.firmwareCreate.registerDriverType}
                       </PpActionButton>
@@ -210,8 +243,10 @@ export function FirmwareCreatePage({
                     hint={PP_HELP.ota.driverKeyEmpty}
                     value={driverKey}
                     onChange={setDriverKey}
+                    readOnly={lockFamily}
+                    disabled={lockFamily}
                   />
-                  {onOpenDriverCreate ? (
+                  {!lockFamily && onOpenDriverCreate ? (
                     <PpActionButton variant="ghost" onClick={onOpenDriverCreate}>
                       {PP_HELP.firmwareCreate.registerDriverType}
                     </PpActionButton>

@@ -1531,7 +1531,9 @@ KPIs OTA ficam no Hub — não no Painel.
 
 ## WF-PP-OTA-02 — `/firmwares` (alias)
 
-Redireciona para `/firmware-links?panel=firmwares` (catálogo em painel lateral).
+Redireciona para `/firmware-links?panel=firmwares` (catálogo em modal).
+
+**Catálogo Firmwares:** 1 linha = **família OTA** (`firmwareKey`); expandir lista as **versões** (`FirmwareFamilyCatalogItem` → `FirmwareCatalogListItem`). Ações na família: Nova versão · Atualizar ligados. Detalhe abre a versão; no detalhe há switcher entre siblings da família.
 
 ## WF-PP-OTA-03 — Admin mapa (`/firmware-links`; home `/apps/production-pulse` → redirect)
 
