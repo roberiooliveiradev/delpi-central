@@ -2,6 +2,7 @@
 """Smoke E2E — Especialista SQL (chat comum + agente Minha DELPI) via API."""
 
 from __future__ import annotations
+from smoke_credentials import require_smoke_credentials
 
 import json
 import os
@@ -15,8 +16,7 @@ import urllib.request
 _BASE_URL = os.environ.get("SMOKE_BASE_URL", "http://localhost").strip()
 _REALM = os.environ.get("SMOKE_REALM", "delpi").strip()
 _CLIENT_ID = os.environ.get("SMOKE_CLIENT_ID", "delpi-central").strip()
-_USERNAME = os.environ.get("SMOKE_USER", "rober").strip()
-_PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
+_USERNAME, _PASSWORD = require_smoke_credentials()
 _CHAT_PREFIX = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 _TIMEOUT = int(os.environ.get("SMOKE_TIMEOUT", "240"))
 _MODE = os.environ.get("SMOKE_SQL_MODE", "both").strip().lower()

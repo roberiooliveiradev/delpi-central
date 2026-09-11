@@ -9,6 +9,7 @@ Variáveis: SMOKE_USER, SMOKE_PASSWORD, SMOKE_PRODUCT_CODE (default 90260140).
 """
 
 from __future__ import annotations
+from smoke_credentials import require_smoke_credentials
 
 import json
 import os
@@ -24,8 +25,7 @@ from app.domain.services.external_actions.external_action_result_presenter impor
 _BASE_URL = os.environ.get("SMOKE_BASE_URL", "http://delpi-gateway").strip()
 _REALM = os.environ.get("SMOKE_REALM", "delpi").strip()
 _CLIENT_ID = os.environ.get("SMOKE_CLIENT_ID", "delpi-central").strip()
-_USERNAME = os.environ.get("SMOKE_USER", "rober").strip()
-_PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
+_USERNAME, _PASSWORD = require_smoke_credentials()
 _PRODUCT_CODE = os.environ.get("SMOKE_PRODUCT_CODE", "90260140").strip()
 
 

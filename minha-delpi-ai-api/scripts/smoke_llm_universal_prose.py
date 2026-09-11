@@ -270,8 +270,8 @@ def main() -> int:
         {
             "grant_type": "password",
             "client_id": "delpi-central",
-            "username": os.environ.get("SMOKE_USER", "rober"),
-            "password": os.environ.get("SMOKE_PASSWORD", "1234"),
+            "username": os.environ.get("SMOKE_USER", ""),
+            "password": os.environ.get("SMOKE_PASSWORD", ""),
         }
     ).encode()
     with urllib.request.urlopen(

@@ -65,8 +65,8 @@ def _token() -> str:
         {
             "grant_type": "password",
             "client_id": os.environ.get("SMOKE_CLIENT_ID", "delpi-central"),
-            "username": os.environ.get("SMOKE_USER", "rober"),
-            "password": os.environ.get("SMOKE_PASSWORD", "1234"),
+            "username": os.environ.get("SMOKE_USER", ""),
+            "password": os.environ.get("SMOKE_PASSWORD", ""),
         }
     ).encode()
     request = urllib.request.Request(

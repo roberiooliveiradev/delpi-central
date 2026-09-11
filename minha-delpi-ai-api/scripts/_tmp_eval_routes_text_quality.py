@@ -2,6 +2,7 @@
 """One-shot: avaliação rota × qualidade do texto (dev stack via docker network)."""
 
 from __future__ import annotations
+from smoke_credentials import require_smoke_credentials
 
 import json
 import os
@@ -16,8 +17,7 @@ KC = os.environ.get(
     "http://keycloak:8080/auth/realms/delpi/protocol/openid-connect/token",
 ).strip()
 CLIENT = os.environ.get("SMOKE_CLIENT_ID", "delpi-central").strip()
-USER = os.environ.get("SMOKE_USER", "rober").strip()
-PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
+USER, PASSWORD = require_smoke_credentials()
 CHAT = os.environ.get("SMOKE_CHAT_PREFIX", "/api/chat").strip()
 CODE = os.environ.get("SMOKE_PRODUCT_CODE", "90260148").strip()
 

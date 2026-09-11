@@ -13,6 +13,7 @@ Variáveis:
 """
 
 from __future__ import annotations
+from smoke_credentials import require_smoke_credentials
 
 import json
 import os
@@ -25,8 +26,7 @@ from dataclasses import dataclass, field
 _BASE_URL = os.environ.get("SMOKE_BASE_URL", "http://localhost").strip()
 _REALM = os.environ.get("SMOKE_REALM", "delpi").strip()
 _CLIENT_ID = os.environ.get("SMOKE_CLIENT_ID", "delpi-central").strip()
-_USERNAME = os.environ.get("SMOKE_USER", "rober").strip()
-_PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
+_USERNAME, _PASSWORD = require_smoke_credentials()
 _CHAT_PREFIX = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 _RESPONSE_MODE = os.environ.get("SMOKE_RESPONSE_MODE", "normal").strip()
 _OFFLINE = os.environ.get("SMOKE_OFFLINE", "").strip().lower() in {"1", "true", "yes"}

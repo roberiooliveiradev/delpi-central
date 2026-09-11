@@ -1,7 +1,7 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED** · E11.S0–S7 **ATENDIDO** · próxima = **E11.S8**  
+**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED** · E11.S0–S8 **ATENDIDO** · próxima = **E11.S9**  
 **BASE_GIT_SHA (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
 **Auditoria-base:** S4 `evidence/e11-s4-structured-continuity.md`  
 **Origem:** revisão arquitetural pós Ondas A–I em 2026-09-11  
@@ -148,8 +148,8 @@ Plano 10 reaproveitou E9.S10, executado antes da alteração posterior do motor 
 | RQ11-05 | Consolidar ownership semântico e remover NLU endpoint/domain-specific redundante | ATENDIDO (E11.S6; vocabulary facet/kind KEEP; pathTokens DELETE) |
 | RQ11-06 | Tornar recommendations contextuais; estático no máximo fallback temporário com exit criteria | ATENDIDO (E11.S7; static=LEGACY_FALLBACK+exit) |
 | RQ11-07 | Derivar capability metadata de contract/sensitivity/policy real | ATENDIDO (E11.S7; method+sensitivity) |
-| RQ11-08 | Corrigir boundaries/DI/filesystem conforme Clean Architecture | ABERTO |
-| RQ11-09 | Remover credenciais hardcoded/defaults sensíveis de scripts/smokes | ABERTO |
+| RQ11-08 | Corrigir boundaries/DI/filesystem conforme Clean Architecture | ATENDIDO_PARCIAL (E11.S8; residual FS→S10) |
+| RQ11-09 | Remover credenciais hardcoded/defaults sensíveis de scripts/smokes | ATENDIDO (E11.S8; SEMANTIC_SMOKE=0) |
 | RQ11-10 | Tornar Architecture Enforcement capaz de detectar substitutos semânticos JSON↔Python/TS | ATENDIDO (E11.S1; debt full-tree ainda vermelho até cleanup) |
 | RQ11-11 | Provar unknown external API + metamorphic rename no candidate final | ABERTO |
 | RQ11-12 | Provar compound, multi-turn, required/missing args, safety, send/stream/simulate e persist/reload no candidate final | ABERTO |
@@ -651,6 +651,10 @@ Remover static recommendation profiles quando métricas e candidate final permit
 - unit tests com dependency injection/fakes;
 - smoke falha claramente quando credential env requerida está ausente;
 - nenhuma credencial aparece em output/evidence.
+
+- **COMPLETE_GATE:** ATENDIDO (credenciais; `SEMANTIC_*` full-tree=0; CA residual→S10)
+- Evidência: [`../evidence/e11-s8-clean-arch-smoke-credentials.md`](../evidence/e11-s8-clean-arch-smoke-credentials.md)
+- `READY_TO_EXECUTE` E11.S9: **sim**
 
 ---
 

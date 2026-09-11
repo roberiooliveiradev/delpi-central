@@ -6,6 +6,7 @@ docs/testing/smoke-complex-consolidated-turns.md Wave I.
 """
 
 from __future__ import annotations
+from smoke_credentials import require_smoke_credentials
 
 import json
 import os
@@ -21,8 +22,7 @@ from typing import Any
 _BASE = os.environ.get("SMOKE_BASE_URL", "http://localhost").strip() or "http://localhost"
 _REALM = os.environ.get("SMOKE_REALM", "delpi").strip()
 _CLIENT_ID = os.environ.get("SMOKE_CLIENT_ID", "delpi-central").strip()
-_USER = os.environ.get("SMOKE_USER", "rober").strip()
-_PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
+_USER, _PASSWORD = require_smoke_credentials()
 _CHAT = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 _MODE = os.environ.get("SMOKE_RESPONSE_MODE", "normal").strip() or "normal"
 _BRANCH = os.environ.get("SMOKE_BRANCH", "01").strip() or "01"

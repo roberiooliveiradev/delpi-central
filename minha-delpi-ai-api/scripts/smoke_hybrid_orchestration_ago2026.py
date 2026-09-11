@@ -14,6 +14,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from smoke_credentials import require_smoke_credentials
+
 
 def _offline_checks() -> list[str]:
     from app.composition.content_composer import configure_domain_infrastructure_ports
@@ -65,8 +67,7 @@ def _http_checks() -> list[str]:
     base = os.environ.get("SMOKE_BASE_URL", "http://localhost").strip()
     realm = os.environ.get("SMOKE_REALM", "delpi").strip()
     client_id = os.environ.get("SMOKE_CLIENT_ID", "delpi-central").strip()
-    username = os.environ.get("SMOKE_USER", "rober").strip()
-    password = os.environ.get("SMOKE_PASSWORD", "1234").strip()
+    username, password = require_smoke_credentials()
     prefix = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
     failures: list[str] = []
 

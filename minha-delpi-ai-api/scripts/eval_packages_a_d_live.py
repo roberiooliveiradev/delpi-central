@@ -2,6 +2,7 @@
 """Avaliação live A–D — critérios do plano compare_grounded_p0."""
 
 from __future__ import annotations
+from smoke_credentials import require_smoke_credentials
 
 import json
 import os
@@ -16,8 +17,7 @@ from dataclasses import dataclass, field
 BASE = os.environ.get("SMOKE_BASE_URL", "http://localhost").strip()
 REALM = os.environ.get("SMOKE_REALM", "delpi").strip()
 CLIENT_ID = os.environ.get("SMOKE_CLIENT_ID", "delpi-central").strip()
-USER = os.environ.get("SMOKE_USER", "rober").strip()
-PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
+USER, PASSWORD = require_smoke_credentials()
 PREFIX = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 
 DADOS_CONSULTADOS = re.compile(r"dados consultados|j[aá] foram consultados", re.I)
