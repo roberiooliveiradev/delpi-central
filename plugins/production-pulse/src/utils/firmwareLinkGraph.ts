@@ -1,5 +1,6 @@
 import type { FirmwareListItem } from "../api/productionPulseApi";
 import type { DeviceListItem } from "../types/device";
+import { isFirmwareBehind } from "./firmwareLagLabel";
 
 export type FirmwareLinkEdgeKind = "explicit";
 
@@ -209,10 +210,9 @@ export function uniqueFirmwareFamilies(
       (device) => explicitFirmwareKey(device) === family.firmwareKey,
     );
     family.linkedCount = linked.length;
-    family.outdatedCount = linked.filter((device) => {
-      const installed = device.installedFirmwareVersion?.trim() || null;
-      return installed !== (family.latestVersion ?? null);
-    }).length;
+    family.outdatedCount = linked.filter((device) =>
+      isFirmwareBehind(device.installedFirmwareVersion, family.latestVersion),
+    ).length;
   }
   return families.sort((a, b) => a.firmwareKey.localeCompare(b.firmwareKey));
 }

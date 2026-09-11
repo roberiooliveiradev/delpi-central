@@ -311,7 +311,7 @@ export function HubMapChrome({
                 ·
               </span>
               <span>
-                <TriangleAlert size={12} aria-hidden="true" /> {kpis.outdatedDevices} desatual.
+                <TriangleAlert size={12} aria-hidden="true" /> {kpis.outdatedDevices} atrás
               </span>
             </>
           )}

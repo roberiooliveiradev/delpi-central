@@ -104,19 +104,19 @@ describe("hubOtaKpis", () => {
         assignedFirmwareKey: "counter",
         installedFirmwareVersion: "1.0.0",
       }),
-      // caso irmão: outra família também atrasada
+      // caso irmão: prefixo de família vs SemVer do catálogo
       device({
         id: "d2",
         name: "B",
         assignedFirmwareKey: "gauge",
-        installedFirmwareVersion: null,
+        installedFirmwareVersion: "esp8266_gauge_v1.0.9.0",
       }),
-      // negativo: já na última publicada
+      // negativo: já na última (formato prefixado ≡ SemVer)
       device({
         id: "d3",
         name: "C",
         assignedFirmwareKey: "counter",
-        installedFirmwareVersion: "1.3.0",
+        installedFirmwareVersion: "esp8266_counter_v1.3.0",
       }),
       // negativo: família sem versão publicada
       device({
@@ -134,6 +134,7 @@ describe("hubOtaKpis", () => {
         installedFirmwareVersion: "1.0.0",
       }),
     ];
+    // d1 atrás; d2 gauge latest is 1.0.0 in CATALOG? check CATALOG
     expect(countOutdatedDevices(devices, CATALOG)).toBe(2);
   });
 

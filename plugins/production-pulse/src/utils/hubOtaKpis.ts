@@ -1,6 +1,7 @@
 import type { FirmwareListItem, FirmwareUpdateSummary } from "../api/productionPulseApi";
 import type { DeviceListItem } from "../types/device";
 import { explicitFirmwareKey, isNewerFirmwareRelease } from "./firmwareLinkGraph";
+import { isFirmwareBehind } from "./firmwareLagLabel";
 
 export type HubOtaKpis = {
   /** Versões elegíveis para OTA (published e não arquivadas). */
@@ -54,7 +55,8 @@ export function countLinkedDevices(devices: DeviceListItem[]): number {
 }
 
 /**
- * Desatualizado = vinculado + família com versão publicada + instalada ≠ publicada.
+ * Desatualizado = vinculado + família com versão publicada + instalada ≠ publicada
+ * (compara SemVer normalizado: esp8266_counter_v1.2.0.0 ≡ 2.0.0).
  * Sem versão instalada reportada, o IoT conta como desatualizado (nunca aplicou OTA).
  */
 export function countOutdatedDevices(
@@ -67,7 +69,7 @@ export function countOutdatedDevices(
     if (!family) return false;
     const latest = latestByFamily.get(family);
     if (!latest) return false;
-    return (device.installedFirmwareVersion?.trim() || null) !== latest;
+    return isFirmwareBehind(device.installedFirmwareVersion, latest);
   }).length;
 }
 

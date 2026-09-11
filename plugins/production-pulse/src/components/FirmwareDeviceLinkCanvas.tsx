@@ -29,6 +29,11 @@ import { OtaStatusIndicator } from "./ota/OtaStatusIndicator";
 import { PP_HELP } from "../content/helpTooltips";
 import type { DeviceListItem } from "../types/device";
 import {
+  formatFamilyOutdatedSummary,
+  isFirmwareBehind,
+  resolveFirmwareLagInfo,
+} from "../utils/firmwareLagLabel";
+import {
   buildFirmwareLinkGraph,
   explicitFirmwareKey,
   resolveConnectionCandidateState,
@@ -140,12 +145,18 @@ function FirmwareNodeView({ id, data }: NodeProps<Node<FirmwareNodeData>>) {
   const outdated = (data.outdatedCount ?? 0) > 0;
   const state = data.connectionState ?? "neutral";
   const blocked = state === "incompatible" || state === "already-linked";
+  const familyLag = formatFamilyOutdatedSummary(
+    data.outdatedCount ?? 0,
+    data.latestVersion ?? null,
+  );
   const ariaLabel =
     state === "incompatible"
       ? `${data.label} — ${PP_HELP.hub.linkIncompatibleFirmware}`
       : state === "already-linked"
         ? `${data.label} — ${PP_HELP.hub.linkAlreadyAssigned}`
-        : data.label;
+        : outdated
+          ? `${data.label} — ${PP_HELP.hub.firmwareLagFamily}`
+          : data.label;
 
   return (
     <div
@@ -199,7 +210,7 @@ function FirmwareNodeView({ id, data }: NodeProps<Node<FirmwareNodeData>>) {
         <div>v{data.latestVersion ?? "—"}</div>
         <div>
           {data.linkedCount ?? 0} IoT
-          {outdated ? ` · ${data.outdatedCount} desatul.` : ""}
+          {familyLag}
         </div>
       </div>
       <Handle type="source" position={Position.Right} isConnectable={data.canManage && state !== "incompatible"} />
@@ -208,10 +219,8 @@ function FirmwareNodeView({ id, data }: NodeProps<Node<FirmwareNodeData>>) {
 }
 
 function DeviceNodeView({ id, data }: NodeProps<Node<DeviceNodeData>>) {
-  const outdated =
-    Boolean(data.availableVersion) &&
-    Boolean(data.installedFirmwareVersion) &&
-    data.availableVersion !== data.installedFirmwareVersion;
+  const lag = resolveFirmwareLagInfo(data.installedFirmwareVersion, data.availableVersion);
+  const outdated = isFirmwareBehind(data.installedFirmwareVersion, data.availableVersion);
   const state = data.connectionState ?? "neutral";
   const blocked = state === "incompatible" || state === "already-linked";
   const ariaLabel =
@@ -219,7 +228,9 @@ function DeviceNodeView({ id, data }: NodeProps<Node<DeviceNodeData>>) {
       ? `${data.label} — ${PP_HELP.hub.linkIncompatible}`
       : state === "already-linked"
         ? `${data.label} — ${PP_HELP.hub.linkAlreadyAssigned}`
-        : data.label;
+        : outdated
+          ? `${data.label} — ${lag.detailLabel}`
+          : data.label;
   const ota = data.otaTarget;
   const otaPct = ota
     ? resolveOtaProgressPercent({
@@ -281,10 +292,7 @@ function DeviceNodeView({ id, data }: NodeProps<Node<DeviceNodeData>>) {
         ) : null}
       </div>
       <div className="pp-map-node__metrics pp-map-node__metrics--compact">
-        <div>
-          FW {data.installedFirmwareVersion ?? "—"}
-          {outdated ? " · desatul." : ""}
-        </div>
+        <div title={lag.detailLabel}>{lag.shortLabel}</div>
       </div>
       {ota ? (
         <div className="pp-map-node__ota nodrag nopan">
