@@ -126,12 +126,9 @@ class OperationalRouteRegistryGeneratorService:
         path: str,
         entity: str | None,
     ) -> str:
-        from app.domain.services.parameter_strategy_inference_service import (
-            ParameterStrategyInferenceService,
-        )
-
-        del entity  # entity retained for call-site compat; path/operation drive inference
-        return ParameterStrategyInferenceService.infer_from_path(path)
+        """Deprecated stub — OpenAPI schema is authority (E11.S3)."""
+        _ = (path, entity)
+        return "schema"
 
     @classmethod
     def route_id_from_operation_id(cls, operation_id: str) -> str:

@@ -311,6 +311,7 @@ def test_supplies_stock_cutover_fills_top_limit():
 def test_e1s5_all_resolver_strategies_in_cutover():
     invalidate_openapi_tool_routing_cache()
     expected = {
+        "schema",
         "none",
         "semantic",
         "sale_orders",
@@ -419,7 +420,8 @@ def test_build_parameters_ignores_cutover_flag_for_dispatch(monkeypatch):
     assert ParameterStrategyShadowService.uses_openapi_authority("none") is False
 
 
-def test_build_parameters_unknown_strategy_returns_none():
+def test_build_parameters_ignores_registry_strategy_uses_schema():
+    """E11.S3 — route.parameters.strategy não é authority; schema bind sempre."""
     invalidate_openapi_tool_routing_cache()
     from app.application.services.external_actions.operational_route_selection.operational_route_action_resolver_service import (
         OperationalRouteActionResolverService,
@@ -430,15 +432,13 @@ def test_build_parameters_unknown_strategy_returns_none():
             return parameters
 
     resolver = OperationalRouteActionResolverService(_Catalog())
-    assert (
-        resolver.build_parameters(
-            {"parameters": {"strategy": "sql"}},
-            _generic_action(),
-            message="rode sql",
-            identifier=None,
-        )
-        is None
+    params = resolver.build_parameters(
+        {"parameters": {"strategy": "sql"}},
+        _generic_action(),
+        message="rode sql",
+        identifier=None,
     )
+    assert isinstance(params, dict)
 
 
 def test_resolver_attaches_parameter_strategy_shadow_for_none(monkeypatch):
@@ -497,6 +497,6 @@ def test_resolver_attaches_parameter_strategy_shadow_for_none(monkeypatch):
     assert selected is not None
     shadow = (selected.get("metadata") or {}).get("parameterStrategyShadow")
     assert isinstance(shadow, dict)
-    assert shadow["strategy"] == "none"
+    assert shadow["strategy"] == "schema"
     assert shadow["authority"] == "openapi_binder"
     assert selected["arguments"]["parameters"] == {}

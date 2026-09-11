@@ -49,46 +49,19 @@ class OperationalRouteVocabularyMatcherService:
             return None
 
         resolved_identifier = str(identifier or "").strip()
+        memory = memory_snapshot or ChatToolGroundingContextService.current_memory_snapshot()
 
-        if match_spec.get("requiresProductIdentifier"):
-            if not resolved_identifier:
-                resolved_identifier = str(
-                    ChatProductQueryIntentService.resolve_product_code(
-                        message or "",
-                        conversation_context,
-                        previous_messages=previous_messages,
-                        memory_snapshot=memory_snapshot
-                        or ChatToolGroundingContextService.current_memory_snapshot(),
-                    )
-                    or ""
-                ).strip()
-
-            if not resolved_identifier:
-                return None
-
-        from app.domain.services.parameter_strategy_inference_service import (
-            ParameterStrategyInferenceService,
-        )
-
-        inferred = ParameterStrategyInferenceService.infer_from_action(
-            None,
-            route=route,
-        ).lower()
-        if (
-            not resolved_identifier
-            and inferred == "product_code"
-        ):
+        # E11.S3 — product code from match flag / schema need, never path→strategy.
+        if match_spec.get("requiresProductIdentifier") and not resolved_identifier:
             resolved_identifier = str(
                 ChatProductQueryIntentService.resolve_product_code(
-                    message,
+                    message or "",
                     conversation_context,
                     previous_messages=previous_messages,
-                    memory_snapshot=memory_snapshot
-                    or ChatToolGroundingContextService.current_memory_snapshot(),
+                    memory_snapshot=memory,
                 )
                 or ""
             ).strip()
-
             if not resolved_identifier:
                 return None
 
@@ -103,6 +76,5 @@ class OperationalRouteVocabularyMatcherService:
             merge_date_parameters=merge_date_parameters,
             conversation_context=conversation_context,
             description_override=description_override,
-            memory_snapshot=memory_snapshot
-            or ChatToolGroundingContextService.current_memory_snapshot(),
+            memory_snapshot=memory,
         )

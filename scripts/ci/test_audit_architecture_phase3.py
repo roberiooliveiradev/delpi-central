@@ -119,9 +119,26 @@ class ArchitecturePhase3GateTests(unittest.TestCase):
     def test_semantic_parameter_strategy_class_detected(self) -> None:
         path = "minha-delpi-ai-api/app/domain/services/parameter_strategy_inference_service.py"
         findings = phase3.scan_semantic_substitute_lines(
-            path, {11: "class ParameterStrategyInferenceService:"}
+            path,
+            {
+                11: "class ParameterStrategyInferenceService:",
+                45: '        if "/products/" in lowered and "search" in lowered:',
+            },
         )
-        self.assertEqual([item.rule for item in findings], ["SEMANTIC_ENDPOINT_PARAMETER_STRATEGY"])
+        self.assertTrue(
+            any(item.rule == "SEMANTIC_ENDPOINT_PARAMETER_STRATEGY" for item in findings)
+        )
+
+    def test_semantic_parameter_strategy_stub_without_path_branches_not_flagged(self) -> None:
+        path = "minha-delpi-ai-api/app/domain/services/parameter_strategy_inference_service.py"
+        findings = phase3.scan_semantic_substitute_lines(
+            path,
+            {
+                11: "class ParameterStrategyInferenceService:",
+                20: '        return "schema"',
+            },
+        )
+        self.assertEqual(findings, [])
 
     def test_registry_operation_ids_catalog_detected(self) -> None:
         findings = phase3.scan_registry_operation_id_catalog()

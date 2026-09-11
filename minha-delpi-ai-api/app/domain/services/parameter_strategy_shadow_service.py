@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 # Fila completa E1.S5 (resolver). sql fica só em domains / fora do resolver.
 _CUTOVER_STRATEGIES = frozenset(
     {
+        "schema",
         "none",
         "semantic",
         "sale_orders",
@@ -28,6 +29,7 @@ _CUTOVER_STRATEGIES = frozenset(
 # Strategies em que o OpenAPI binder é authority; demais usam domain binder via este serviço.
 _BINDER_AUTHORITY = frozenset(
     {
+        "schema",
         "none",
         "semantic",
         "sale_orders",
@@ -98,6 +100,138 @@ class ParameterStrategyShadowService:
     @classmethod
     def uses_openapi_authority(cls, strategy: str) -> bool:
         return str(strategy or "").strip() in _CUTOVER_STRATEGIES and cls.cutover_enabled()
+
+    @classmethod
+    def bind_schema_first(
+        cls,
+        action: dict[str, Any],
+        message: str,
+        *,
+        previous_messages: list | None = None,
+        catalog: Any = None,
+        identifier: str | None = None,
+        conversation_context: str | None = None,
+        memory_snapshot: dict | None = None,
+        production_kind: Any = None,
+        route: dict | None = None,
+        build_date_branch_parameters: Callable[..., dict] | None = None,
+        merge_date_parameters: Callable[..., dict] | None = None,
+        description_override: str | None = None,
+        normalized: str | None = None,
+    ) -> dict[str, Any] | None:
+        """E11.S3 — bind only from OpenAPI schema + message grounding (no path→strategy)."""
+        _ = (merge_date_parameters, description_override, normalized)
+        from app.application.services.plan_external_actions_service import (
+            PlanExternalActionsService,
+        )
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+        from app.domain.services.chat_tool_grounding_context_service import (
+            ChatToolGroundingContextService,
+        )
+
+        schema_params = action.get("parametersSchema") or action.get("parameters_schema") or []
+        schema_names = {
+            str(item.get("name") or "").strip()
+            for item in schema_params
+            if isinstance(item, dict) and item.get("name")
+        }
+        schema_names_lower = {name.lower() for name in schema_names}
+        product_names = {"code", "productcode", "product_code"} & schema_names_lower
+        supplier_names = {
+            "supplier_part_number",
+            "supplierpartnumber",
+        } & schema_names_lower
+        date_names = {
+            "branch",
+            "start_date",
+            "end_date",
+            "date_start",
+            "date_end",
+            "startdate",
+            "enddate",
+            "granularity",
+        } & schema_names_lower
+
+        context_parameters: dict[str, Any] = {}
+        if product_names:
+            code = str(identifier or "").strip()
+            if not code:
+                code = ChatProductQueryIntentService.extract_product_code(message or "") or ""
+            if not code:
+                code = (
+                    ChatProductQueryIntentService.resolve_product_code(
+                        message or "",
+                        conversation_context,
+                        previous_messages=previous_messages,
+                        memory_snapshot=memory_snapshot
+                        or ChatToolGroundingContextService.current_memory_snapshot(),
+                    )
+                    or ""
+                )
+            # Required path/query code without value → cannot bind this action.
+            required_code = False
+            for item in schema_params:
+                if not isinstance(item, dict):
+                    continue
+                name = str(item.get("name") or "").strip().lower()
+                if name in product_names and bool(item.get("required")):
+                    required_code = True
+                    break
+            if required_code and not code:
+                return None
+            if code:
+                context_parameters = {"code": code, "productCode": code, "product_code": code}
+
+        parameters, _body, _missing = PlanExternalActionsService._bind_arguments(
+            message,
+            action,
+            context_parameters=context_parameters,
+            previous_messages=previous_messages,
+        )
+        params = dict(parameters) if isinstance(parameters, dict) else {}
+        params = cls._apply_cutover_schema_defaults(action, params)
+
+        if supplier_names:
+            part = str(
+                params.get("supplier_part_number") or params.get("supplierPartNumber") or ""
+            ).strip()
+            if not part:
+                return None
+
+        if product_names and catalog is not None and hasattr(catalog, "build_product_parameters"):
+            code = str(
+                params.get("code")
+                or params.get("productCode")
+                or context_parameters.get("code")
+                or ""
+            ).strip()
+            if code:
+                built = catalog.build_product_parameters(
+                    action,
+                    code,
+                    message=message,
+                    previous_messages=previous_messages,
+                )
+                if isinstance(built, dict):
+                    params = built
+
+        if date_names:
+            params = cls._enrich_date_branch(
+                action,
+                message,
+                params,
+                previous_messages=previous_messages,
+                production_kind=production_kind,
+                route=route,
+                catalog=catalog,
+                build_date_branch_parameters=build_date_branch_parameters,
+            )
+
+        if catalog is not None and hasattr(catalog, "filter_parameters_to_schema"):
+            params = catalog.filter_parameters_to_schema(action, params)
+        return params
 
     @classmethod
     def bind_via_openapi(

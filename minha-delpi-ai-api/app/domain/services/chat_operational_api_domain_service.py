@@ -88,11 +88,9 @@ class ChatOperationalApiDomainService:
 
     @classmethod
     def parameter_strategy_for_path(cls, path: str) -> str:
-        from app.domain.services.parameter_strategy_inference_service import (
-            ParameterStrategyInferenceService,
-        )
-
-        return ParameterStrategyInferenceService.infer_from_path(path)
+        """Deprecated: path is not strategy authority (E11.S3)."""
+        _ = path
+        return "schema"
 
     @classmethod
     def parameter_strategy_ids(cls) -> frozenset[str]:

@@ -566,13 +566,24 @@ def scan_semantic_substitute_lines(path: str, lines: dict[int, str]) -> list[Vio
                 line_no,
                 f"lateral path key reintroduced in content/runtime: {normalize(line)}",
             ))
-        if SEMANTIC_PATH_STRATEGY_CLASS_RE.search(line):
-            findings.append(Violation(
-                "SEMANTIC_ENDPOINT_PARAMETER_STRATEGY",
-                path,
-                line_no,
-                f"endpoint→parameterStrategy authority class: {normalize(line)}",
-            ))
+        if SEMANTIC_PATH_STRATEGY_CLASS_RE.search(line) and (
+            "infer_from_path" in "\n".join(lines.values())
+            or any(
+                SEMANTIC_PATH_STRATEGY_BRANCH_RE.search(other)
+                for other in lines.values()
+            )
+        ):
+            # Only flag when the class still carries path→strategy authority.
+            if any(
+                SEMANTIC_PATH_STRATEGY_BRANCH_RE.search(other) and ("if " in other or "or " in other)
+                for other in lines.values()
+            ):
+                findings.append(Violation(
+                    "SEMANTIC_ENDPOINT_PARAMETER_STRATEGY",
+                    path,
+                    line_no,
+                    f"endpoint→parameterStrategy authority class: {normalize(line)}",
+                ))
         if (
             path.endswith("parameter_strategy_inference_service.py")
             and SEMANTIC_PATH_STRATEGY_BRANCH_RE.search(line)

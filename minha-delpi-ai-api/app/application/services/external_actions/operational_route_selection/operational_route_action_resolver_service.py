@@ -251,16 +251,7 @@ class OperationalRouteActionResolverService:
                 else {}
             ),
         }
-        strategy = str((route.get("parameters") or {}).get("strategy") or "").strip()
-        if not strategy:
-            from app.domain.services.parameter_strategy_inference_service import (
-                ParameterStrategyInferenceService,
-            )
-
-            strategy = ParameterStrategyInferenceService.infer_from_action(
-                action if isinstance(action, dict) else {},
-                route=route,
-            )
+        strategy = "schema"
         from app.domain.services.parameter_strategy_shadow_service import (
             ParameterStrategyShadowService,
         )
@@ -399,41 +390,48 @@ class OperationalRouteActionResolverService:
 
     @staticmethod
     def _action_fits_route_affinity(route: dict, action: dict, *, path: str) -> bool:
-        """Rejeita action cujo path não combina com a classe da rota do registry.
+        """Rejeita action cujo contrato não combina com a classe da rota do registry.
 
-        Evita shadowing clássico: marker ``/customers`` casando ``/customers/search``
-        quando a rota exige identificador de produto, ou ``product_search`` em
-        ``/customers/search``.
+        E11.S3 — sem parameterStrategy path-inferred. Usa match flags, domain da rota
+        e parâmetros declarados no schema OpenAPI da action.
         """
-        from app.domain.services.parameter_strategy_inference_service import (
-            ParameterStrategyInferenceService,
-        )
         from app.domain.services.route_segment_inference_service import (
             RouteSegmentInferenceService,
         )
 
-        strategy = ParameterStrategyInferenceService.infer_from_action(
-            action,
-            route=route,
-        ).lower()
         match_spec = route.get("match") if isinstance(route.get("match"), dict) else {}
         requires_product = bool(match_spec.get("requiresProductIdentifier"))
         has_product_segment = (
             RouteSegmentInferenceService.has_product_continuity_segment(route)
         )
         domain = str(route.get("domain") or "").strip()
+        route_id = str(route.get("id") or "").strip().lower()
+        path_l = str(path or "").lower()
 
-        if strategy == "product_search" or domain == "domainProductSearch":
-            return "/products/" in path and "search" in path
+        schema_params = action.get("parametersSchema") or action.get("parameters_schema") or []
+        schema_names = {
+            str(item.get("name") or "").strip().lower()
+            for item in schema_params
+            if isinstance(item, dict) and item.get("name")
+        }
 
-        if strategy == "supplier_part_number":
-            return "/products/" in path and "by-supplier-part-number" in path
+        if (
+            domain in {"domainProductSearch", "product_search"}
+            or "search" in route_id
+            or "productsearch" in route_id
+        ):
+            return "/products/" in path_l and "search" in path_l
 
-        if strategy == "product_code" or requires_product or has_product_segment:
-            if "{code}" in path or "{identifier}" in path:
-                return "/products/" in path
+        if "supplier_part_number" in schema_names or "supplierpartnumber" in schema_names:
+            return "by-supplier-part-number" in path_l or "supplier" in path_l
 
-            return "/products/" in path
+        if requires_product or has_product_segment or (
+            {"code", "productcode", "product_code"} & schema_names
+            and ("{code}" in path_l or "{identifier}" in path_l)
+        ):
+            if "{code}" in path_l or "{identifier}" in path_l:
+                return "/products/" in path_l
+            return "/products/" in path_l
 
         return True
 
@@ -453,33 +451,19 @@ class OperationalRouteActionResolverService:
         description_override: str | None = None,
         memory_snapshot: dict | None = None,
     ) -> dict | None:
-        """Bind parameters via ParameterStrategyShadowService (E1.S5/S6 + E9.S12.E).
-
-        Strategy é inferida do OpenAPI (path/operationId); JSON registry não é authority.
-        """
-        from app.domain.services.parameter_strategy_inference_service import (
-            ParameterStrategyInferenceService,
-        )
+        """Bind parameters via schema OpenAPI (E11.S3) — sem path→strategy."""
         from app.domain.services.parameter_strategy_shadow_service import (
             ParameterStrategyShadowService,
         )
 
-        strategy = ParameterStrategyInferenceService.infer_from_action(
-            action,
-            route=route,
-        )
         normalized_text = normalized or ChatMessageNormalizationService.normalize_for_matching(
             message or ""
         )
 
-        if strategy not in ParameterStrategyShadowService.cutover_strategies():
-            return None
-
-        return ParameterStrategyShadowService.bind_via_openapi(
+        return ParameterStrategyShadowService.bind_schema_first(
             action,
             message,
             previous_messages=previous_messages,
-            strategy=strategy,
             catalog=self._catalog,
             identifier=identifier,
             conversation_context=conversation_context,

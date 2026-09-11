@@ -206,9 +206,6 @@ class ExecuteExternalActionUseCase:
         from app.domain.services.chat_operational_api_domain_service import (
             ChatOperationalApiDomainService,
         )
-        from app.domain.services.parameter_strategy_inference_service import (
-            ParameterStrategyInferenceService,
-        )
 
         api_route_domain = ChatOperationalApiDomainService.classify_action(
             {
@@ -216,12 +213,7 @@ class ExecuteExternalActionUseCase:
                 "path": resolved_path,
             }
         )
-        parameter_strategy = ParameterStrategyInferenceService.infer_from_action(
-            {
-                **(action if isinstance(action, dict) else {}),
-                "path": resolved_path,
-            }
-        )
+        parameter_strategy = "schema"
         persisted_request_parameters = {
             key: value
             for key, value in dict(gateway_parameters or {}).items()
