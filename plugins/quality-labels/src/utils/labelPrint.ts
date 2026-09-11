@@ -1,5 +1,7 @@
 import {
   buildDelpiCableLabelDocumentHtml,
+  buildDelpiCableLabelLabeledCodeHtml,
+  formatDelpiCableLabelCustomerItem,
   printDelpiDocumentHtml,
 } from "@delpi/plugin-ui/index";
 
@@ -37,18 +39,32 @@ function formatDate(value: string | null): string {
 
 function buildLabelHtml(label: QualityLabel, qrDataUrl: string): string {
   const topLabel = RESULT_LABELS[label.result] ?? "QUALIDADE";
-  const productCode = escapeHtml(label.productCode);
+  const productCode = label.productCode;
   const op = escapeHtml(label.productionOrder);
   const date = escapeHtml(formatDate(label.inspectedAt));
+  const customerValue = formatDelpiCableLabelCustomerItem(
+    label.customerItem,
+    label.customerItemRev,
+  );
+  const customerHtml = buildDelpiCableLabelLabeledCodeHtml(
+    "customer",
+    "CLIENTE",
+    customerValue,
+  );
+  const productHtml = buildDelpiCableLabelLabeledCodeHtml(
+    "product",
+    "DELPI",
+    productCode,
+  );
   return buildDelpiCableLabelDocumentHtml({
-    title: `Etiqueta da Qualidade — ${productCode}`,
+    title: `Etiqueta da Qualidade — ${escapeHtml(productCode)}`,
     qrDataUrl,
     qrAlt: "QR code da inspeção",
-    qrFooterHtml: `<div class="tag__meta">OP ${op} · ${date}</div>`,
+    qrFooterHtml: `${customerHtml}<div class="tag__meta">OP ${op} · ${date}</div>`,
     sealTopLabel: topLabel,
-    brandFooterHtml: `<div class="tag__product">${productCode}</div>`,
+    brandFooterHtml: productHtml,
     hintHtml:
-      "Recorte na linha externa e dobre na faixa central em volta do cabo: o QR code fica de um lado (frente) e a marca com o selo de qualidade do outro (verso).",
+      "Recorte na linha externa e dobre na faixa central em volta do cabo: o QR (frente) mostra o item do cliente quando houver; o verso traz a marca Delpi, o selo e o código Delpi.",
   });
 }
 

@@ -15,7 +15,7 @@ import { CertificateFormFields } from "./CertificateFormFields";
 
 type Props = {
   label: QualityLabel;
-  onSaved?: (message: string) => void;
+  onSaved?: (message: string, certificate: Certificate) => void;
   onError?: (message: string) => void;
 };
 
@@ -57,9 +57,9 @@ export function CertificateEditor({ label, onSaved, onError }: Props) {
       setForm(certificateToForm(cert));
       if (issue) {
         await openPdf();
-        onSaved?.("Certificado emitido com sucesso. Evento registrado na auditoria.");
+        onSaved?.("Certificado emitido com sucesso. Evento registrado na auditoria.", cert);
       } else {
-        onSaved?.("Certificado salvo como rascunho. Evento registrado na auditoria.");
+        onSaved?.("Certificado salvo como rascunho. Evento registrado na auditoria.", cert);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao salvar o certificado.";

@@ -91,6 +91,9 @@ export type QualityLabel = {
   isActive: boolean;
   createdAt: string | null;
   publicUrl: string;
+  /** Item do cliente no certificado 1:1 — usado na etiqueta física. */
+  customerItem?: string | null;
+  customerItemRev?: string | null;
   /** Snapshot TOTVS no registro — presente em create/get detalhe. */
   auditMetadata?: AuditMetadata;
   hasAuditMetadata?: boolean;

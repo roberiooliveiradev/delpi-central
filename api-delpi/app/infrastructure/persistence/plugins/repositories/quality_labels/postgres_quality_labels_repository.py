@@ -15,6 +15,20 @@ _COLUMNS = (
     "audit_metadata, created_at, updated_at"
 )
 
+# Leitura admin: item do cliente vem do certificado 1:1 (não duplicar na etiqueta).
+_ADMIN_COLUMNS = (
+    "l.id, l.public_token, l.production_order, l.branch, l.product_code, "
+    "l.product_description, l.product_unit, l.order_number, l.inspected_at, "
+    "l.inspector_user_id, l.inspector_name, l.result, l.notes, "
+    "l.inspected_quantity, l.qr_filename, l.view_count, l.is_active, "
+    "l.audit_metadata, l.created_at, l.updated_at, "
+    "c.customer_item, c.customer_item_rev"
+)
+_ADMIN_FROM = """
+              FROM quality_labels.inspection_labels AS l
+              LEFT JOIN quality_labels.certificates AS c ON c.label_id = l.id
+"""
+
 # Unidades operacionais DELPI (filial TOTVS → nome legível).
 _UNIT_NAMES = {"01": "Santa Catarina", "02": "Espírito Santo"}
 
@@ -130,7 +144,7 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
 
     def get_by_id(self, label_id: str) -> dict[str, Any] | None:
         return self.fetch_one(
-            f"SELECT {_COLUMNS} FROM quality_labels.inspection_labels WHERE id = %s",
+            f"SELECT {_ADMIN_COLUMNS} {_ADMIN_FROM} WHERE l.id = %s",
             (label_id,),
         )
 
@@ -146,17 +160,17 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
         production_order: str,
         branch: str | None = None,
     ) -> list[dict[str, Any]]:
-        where = "WHERE production_order = %s"
+        where = "WHERE l.production_order = %s"
         params: list[Any] = [production_order]
         if branch:
-            where += " AND branch = %s"
+            where += " AND l.branch = %s"
             params.append(branch)
         return self.fetch_all(
             f"""
-            SELECT {_COLUMNS}
-              FROM quality_labels.inspection_labels
+            SELECT {_ADMIN_COLUMNS}
+              {_ADMIN_FROM}
               {where}
-             ORDER BY inspected_at DESC
+             ORDER BY l.inspected_at DESC
             """,
             tuple(params),
         )
@@ -183,29 +197,30 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
         params: list[Any] = []
         if search:
             clauses.append(
-                "(production_order ILIKE %s OR product_code ILIKE %s "
-                "OR product_description ILIKE %s OR inspector_name ILIKE %s)"
+                "(l.production_order ILIKE %s OR l.product_code ILIKE %s "
+                "OR l.product_description ILIKE %s OR l.inspector_name ILIKE %s)"
             )
             like = f"%{search}%"
             params.extend([like, like, like, like])
         if branches:
             placeholders = ",".join(["%s"] * len(branches))
-            clauses.append(f"branch IN ({placeholders})")
+            clauses.append(f"l.branch IN ({placeholders})")
             params.extend(branches)
 
         where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
 
         total_row = self.fetch_one(
-            f"SELECT COUNT(*) AS total FROM quality_labels.inspection_labels{where}",
+            f"SELECT COUNT(*) AS total FROM quality_labels.inspection_labels AS l{where}",
             tuple(params),
         )
         total = int(total_row["total"]) if total_row else 0
 
         rows = self.fetch_all(
             f"""
-            SELECT {_COLUMNS}
-              FROM quality_labels.inspection_labels{where}
-             ORDER BY inspected_at DESC
+            SELECT {_ADMIN_COLUMNS}
+              {_ADMIN_FROM}
+              {where}
+             ORDER BY l.inspected_at DESC
              LIMIT %s OFFSET %s
             """,
             tuple(params + [limit, offset]),
@@ -217,6 +232,13 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
         if isinstance(value, (datetime, date)):
             return value.isoformat()
         return value
+
+    @staticmethod
+    def _optional_text(value: Any) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        return text or None
 
     @staticmethod
     def _audit_metadata(row: dict[str, Any]) -> dict[str, Any]:
@@ -258,6 +280,8 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             "viewCount": row.get("view_count", 0),
             "isActive": row.get("is_active", True),
             "createdAt": cls._iso(row.get("created_at")),
+            "customerItem": cls._optional_text(row.get("customer_item")),
+            "customerItemRev": cls._optional_text(row.get("customer_item_rev")),
         }
         if include_audit_metadata:
             metadata = cls._audit_metadata(row)

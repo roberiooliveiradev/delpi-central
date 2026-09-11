@@ -6,7 +6,10 @@ export {
 export {
   buildDelpiCableLabelBrandPanelHtml,
   buildDelpiCableLabelDocumentHtml,
+  buildDelpiCableLabelLabeledCodeHtml,
   buildDelpiCableLabelStyles,
   buildDelpiQualitySealSvg,
+  formatDelpiCableLabelCustomerItem,
+  type DelpiCableLabelCodeVariant,
   type DelpiCableLabelDocumentOptions,
 } from "./delpiCableLabel";

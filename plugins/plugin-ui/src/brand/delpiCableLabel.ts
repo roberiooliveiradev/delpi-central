@@ -95,13 +95,25 @@ export function buildDelpiCableLabelStyles(): string {
       color: #1f2937;
       line-height: 1.2;
     }
-    .tag__product {
+    .tag__product,
+    .tag__customer {
       font-size: 7pt;
       font-weight: 900;
       color: #000000;
       line-height: 1.05;
       letter-spacing: 0.2px;
       padding-top: 0.3mm;
+      max-width: 36mm;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .tag__code-label {
+      font-size: 5pt;
+      font-weight: 800;
+      letter-spacing: 0.35px;
+      text-transform: uppercase;
+      color: #64748b;
     }
     .tag__fold {
       width: 8mm;
@@ -185,6 +197,42 @@ export type DelpiCableLabelDocumentOptions = {
   hintHtml: string;
   caption?: string;
 };
+
+export type DelpiCableLabelCodeVariant = "product" | "customer";
+
+function escapeCableLabelHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Item do cliente na etiqueta física; revisão só entra se o item existir. */
+export function formatDelpiCableLabelCustomerItem(
+  item: string | null | undefined,
+  revision: string | null | undefined = null,
+): string {
+  const code = (item ?? "").trim();
+  if (!code) return "";
+  const rev = (revision ?? "").trim();
+  return rev ? `${code} Rev.${rev}` : code;
+}
+
+/**
+ * Linha rotulada (DELPI / CLIENTE) no painel da etiqueta 100×30 mm.
+ * Valor vazio ou só espaço → string vazia (não renderiza o bloco).
+ */
+export function buildDelpiCableLabelLabeledCodeHtml(
+  variant: DelpiCableLabelCodeVariant,
+  label: string,
+  value: string,
+): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  const cssClass = variant === "customer" ? "tag__customer" : "tag__product";
+  return `<div class="${cssClass}"><span class="tag__code-label">${escapeCableLabelHtml(label)}</span> ${escapeCableLabelHtml(trimmed)}</div>`;
+}
 
 /**
  * Documento completo da etiqueta 100×30 mm (CSS + markup).

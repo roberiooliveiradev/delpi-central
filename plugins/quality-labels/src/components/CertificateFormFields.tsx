@@ -189,6 +189,10 @@ export function CertificateFormFields({
             <span className="ql-badge ql-cert-source">manual</span>
           )}
         </span>
+        <p className="ql-info-note ql-info-note--compact">
+          O item do cliente sai na frente da etiqueta física (QR); o código Delpi
+          fica no verso, junto da marca e do selo.
+        </p>
         <div className="ql-cert-grid">
           <label className="ql-field ql-field--wide">
             <span className="ql-label-text">Nome do cliente</span>

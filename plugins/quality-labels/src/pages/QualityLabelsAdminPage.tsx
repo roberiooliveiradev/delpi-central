@@ -389,6 +389,9 @@ export function QualityLabelsAdminPage() {
           <>
             <span className="ql-cell-strong">{row.productCode}</span>
             <span className={QL_TABLE.sub}>{row.productDescription}</span>
+            {row.customerItem ? (
+              <span className={QL_TABLE.sub}>Cliente {row.customerItem}</span>
+            ) : null}
           </>
         ),
       },
@@ -468,7 +471,7 @@ export function QualityLabelsAdminPage() {
             <button
               type="button"
               className="ql-icon-btn"
-              title="Imprimir etiqueta"
+              title="Imprimir etiqueta (código Delpi e item do cliente)"
               onClick={() => void handlePrint(row)}
               disabled={busyId === row.id}
             >
@@ -777,7 +780,20 @@ export function QualityLabelsAdminPage() {
               </div>
               <CertificateEditor
                 label={expandedLabel}
-                onSaved={(message) => setSuccess(message)}
+                onSaved={(message, cert) => {
+                  setSuccess(message);
+                  setLabels((prev) =>
+                    prev.map((item) =>
+                      item.id === expandedLabel.id
+                        ? {
+                            ...item,
+                            customerItem: cert.customerItem,
+                            customerItemRev: cert.customerItemRev,
+                          }
+                        : item,
+                    ),
+                  );
+                }}
                 onError={(message) => setError(message)}
               />
             </section>
