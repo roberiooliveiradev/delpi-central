@@ -1,43 +1,76 @@
 # Ledger de execução — llm-json-decoupling
 
 **Fonte:** markdowns desta pasta (não `.cursor/plans`).  
-**Atualizado:** 2026-09-11  
-**Baseline freeze:** [`onda-a-baseline/manifest.json`](./onda-a-baseline/manifest.json) (`runId=0249db78-d6fd-45b3-84bf-d11abcd17a6a`)
+**Atualizado:** 2026-09-11 — auditoria corretiva  
+**Baseline histórico:** [`onda-a-baseline/manifest.json`](./onda-a-baseline/manifest.json) (`runId=0249db78-d6fd-45b3-84bf-d11abcd17a6a`)  
+**Plano ativo:** [`../planos/11-corrective-cutover-generalization-cleanup.md`](../planos/11-corrective-cutover-generalization-cleanup.md)
+
+> Os estados A–I abaixo registram o que foi declarado/concluído nos candidates históricos. A auditoria pós-implementação encontrou drifts que invalidam seu uso como aceite do estado atual. A única onda ativa para fechamento do programa é a **J**.
 
 ## Ondas
 
-| Onda | Planos | Status | Próxima subetapa | Notas |
-|------|--------|--------|------------------|-------|
-| A — baseline/contratos | inventário + freeze | **ATENDIDO** | — | Ver `onda-a-inventory.md` |
-| B — routing universal | 01 | **ATENDIDO** | — | Cutover + DELETE registry (E9.S12.C/D/E) |
-| C — entendimento | 02 | **ATENDIDO** | — | E2.S1–S7 100%; fast paths KEEP_APPROVED |
-| D — multi-turn/args | 03 | **ATENDIDO** | — | E3.S1–S8; Postgres lastAction overlay |
-| E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
-| F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
-| G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
-| H — cutover/cleanup | 09 | **ATENDIDO** | — | S1–S15; `globalReleasePass=true`; deleteAuthorized=true |
-| I — zero mapa lateral | 10 | **ATENDIDO** | — | E10.S1–S5; gate zero keys laterais; domínio via catalog/inference |
+| Onda | Planos | Status vigente | Próxima subetapa | Notas |
+|------|--------|----------------|------------------|-------|
+| A — baseline/contratos | inventário + freeze | **HISTÓRICO / BASELINE** | — | Evidência preservada |
+| B — routing universal | 01 | **HISTÓRICO / REVALIDAR NA J** | — | Registry/operationIds residual entra em E11.S5 |
+| C — entendimento | 02 | **HISTÓRICO / REABERTO** | — | Semantic authority/heuristics entram em E11.S6 |
+| D — multi-turn/args | 03 | **HISTÓRICO / REABERTO** | — | Path/operation continuity + strategy entram em E11.S3/S4 |
+| E — caps/composition | 04, 05 | **HISTÓRICO / REVALIDAR NA J** | — | Capability metadata entra em E11.S7 |
+| F — UX inteligente | 06 | **HISTÓRICO / REABERTO** | — | `recommendationQueries`/contextual cutover entra em E11.S7 |
+| G — presentation/skills | 07, 08 | **HISTÓRICO / REVALIDAR NA J** | — | Candidate final E11.S9 |
+| H — cutover/cleanup | 09 | **PASS HISTÓRICO; NÃO RELEASE VIGENTE** | — | Candidate evidence anterior a drifts posteriores |
+| I — zero mapa lateral | 10 | **ACEITE INVALIDADO POR DRIFT** | — | Substitutos semânticos encontrados em runtime |
+| J — correção arquitetural | 11 | **ABERTO / VERIFY_FINAL_FAILED** | **E11.S0** | Cutover → generalization → cleanup → verify → complete gate |
 
 ## Protocolo por subetapa
 
 ```text
-abrir planos/0N-*.md
-→ revalidar HEAD vs EXECUTION_DRIFT
+abrir plano 11
+→ revalidar HEAD + git status
 → READY_TO_EXECUTE?
-→ implementar menor escopo
-→ testes positive/sibling/negative
-→ atualizar STATUS neste ledger + no plano
+→ baseline/precondition
+→ implementar menor escopo no owner canônico
+→ wiring real
+→ unit/contract
+→ positive + sibling + negative
+→ generalization/metamorphic/unknown quando aplicável
+→ adversarial diff review
+→ semantic residual search
+→ postconditions
+→ COMPLETE_GATE
+→ atualizar STATUS/evidência
 → só então avançar dependente
 ```
+
+## Regras de fechamento
+
+Não marcar `ATENDIDO/COMPLETED/100%` se item material permanecer em:
+
+```text
+PARTIAL
+ATENDIDO_PARCIAL
+LEGACY_FALLBACK
+SHADOW_ONLY
+INCONCLUSIVE
+PENDING
+DEFERRED sem justificativa
+TODO/FIXME/HACK/TEMPORARY
+flag/fallback sem exit criteria
+```
+
+Qualquer mudança material posterior ao candidate invalida as dimensões de evidence afetadas até rerun no novo HEAD.
 
 ## Proibições
 
 - Não criar `.plan.md` paralelo para este programa.
-- Não DELETE de registry/intents/queries sem evidência candidate ≥ baseline + unknown API + metamorphic.
+- Não remover catálogo/heurística e recriar a mesma authority em Python/TS/JSON/prompt/metadata.
+- Não DELETE de authority antes de cutover + generalização aplicável.
 - Não reintroduzir `pathRules` / `capabilityGroup` por endpoint.
-- Drift material → `EXECUTION_DRIFT` no markdown do plano afetado + STOP-THE-LINE no subgrafo.
+- Não usar mensagem nonsense como prova de unknown external API.
+- Não reaproveitar PASS de SHA/config anterior como candidate final depois de alteração material.
+- Drift material → `EXECUTION_DRIFT` no Plano 11 + STOP-THE-LINE no subgrafo.
 
-## Registro de progresso
+## Registro de progresso histórico
 
 | Data | Evento |
 |------|--------|
@@ -72,7 +105,7 @@ abrir planos/0N-*.md
 | 2026-09-10 | Onda D **EM_ANDAMENTO** — próxima E3.S6 |
 | 2026-09-10 | E3.S6 **ATENDIDO** — pagination/filter fast path schema-bound |
 | 2026-09-10 | Onda D **EM_ANDAMENTO** — próxima E3.S7 |
-| 2026-09-10 | E3.S7 **ATENDIDO** — cutover follow-up_type→routeSegment (terms observer) |
+| 2026-09-10 | E3.S7 **ATENDIDO** — cutover follow_up_type→routeSegment (terms observer) |
 | 2026-09-10 | Onda D **EM_ANDAMENTO** — próxima E3.S8 |
 | 2026-09-10 | E3.S8 **ATENDIDO_PARCIAL** — reload via histórico; DELETE terms → Onda H |
 | 2026-09-10 | Onda D **ATENDIDO_PARCIAL** — plano 03 S1–S7 OK |
@@ -199,3 +232,11 @@ abrir planos/0N-*.md
 | 2026-09-11 | E10.S1–S5 **ATENDIDO** — zero keys laterais; `ApiRouteDomainInferenceService`; stamp import |
 | 2026-09-11 | Onda I **ATENDIDO** — gate `test_e10_zero_lateral_path_maps` PASS |
 | 2026-09-11 | E10 **live PASS** — `smoke_e10_zero_lateral_path_maps_live.py` (product + KPI sibling + negative) |
+
+## Reabertura corretiva — Onda J
+
+| Data | Evento |
+|------|--------|
+| 2026-09-11 | Auditoria pós A–I: `VERIFY_FINAL_FAILED`; encontrados substitutos semânticos JSON→Python/strategy/routeSegment/registry + stale candidate evidence |
+| 2026-09-11 | Regras `.cursor` endurecidas: `COMPLETE_GATE`, semantic residual search, candidate freshness e unknown API real |
+| 2026-09-11 | Plano 11 criado; próxima subetapa obrigatória = **E11.S0 rebaseline/inventário/freeze** |
