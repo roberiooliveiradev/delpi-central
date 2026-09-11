@@ -81,6 +81,53 @@ class ArchitecturePhase3GateTests(unittest.TestCase):
         b = phase3.Violation("RULE", "x.py", 99, "hello world")
         self.assertEqual(a.fingerprint, b.fingerprint)
 
+    def test_semantic_domain_rules_detected(self) -> None:
+        path = "minha-delpi-ai-api/app/domain/services/api_route_domain_inference_service.py"
+        findings = phase3.scan_semantic_substitute_lines(
+            path, {19: "    _DOMAIN_RULES: tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...] = ("}
+        )
+        self.assertEqual([item.rule for item in findings], ["SEMANTIC_PATH_DOMAIN_MAP"])
+
+    def test_semantic_sibling_path_markers_content_detected(self) -> None:
+        path = "minha-delpi-ai-api/app/content/pt-BR/assistant/api_route_domains.json"
+        findings = phase3.scan_semantic_substitute_lines(
+            path, {12: '      "pathMarkers": ["/products/"],'}
+        )
+        self.assertEqual([item.rule for item in findings], ["SEMANTIC_CONTENT_LATERAL_PATH_KEY"])
+
+    def test_semantic_negative_generic_action_path_not_flagged(self) -> None:
+        path = "minha-delpi-ai-api/app/domain/services/external_action_http_execution_service.py"
+        findings = phase3.scan_semantic_substitute_lines(
+            path, {40: '        path = action.get("path") or ""'}
+        )
+        self.assertEqual(findings, [])
+
+    def test_semantic_negative_fixture_path_outside_scope(self) -> None:
+        path = "minha-delpi-ai-api/tests/fixtures/intelligence_baseline/routing_cases.json"
+        findings = phase3.scan_semantic_substitute_lines(
+            path, {3: '      "pathMarkers": ["/stock"],'}
+        )
+        self.assertEqual(findings, [])
+
+    def test_semantic_smoke_credential_default_detected(self) -> None:
+        path = "minha-delpi-ai-api/scripts/smoke_openapi_first_live.py"
+        findings = phase3.scan_semantic_substitute_lines(
+            path, {31: '_USERNAME = os.environ.get("SMOKE_USER", "rober").strip()'}
+        )
+        self.assertEqual([item.rule for item in findings], ["SEMANTIC_SMOKE_CREDENTIAL_DEFAULT"])
+
+    def test_semantic_parameter_strategy_class_detected(self) -> None:
+        path = "minha-delpi-ai-api/app/domain/services/parameter_strategy_inference_service.py"
+        findings = phase3.scan_semantic_substitute_lines(
+            path, {11: "class ParameterStrategyInferenceService:"}
+        )
+        self.assertEqual([item.rule for item in findings], ["SEMANTIC_ENDPOINT_PARAMETER_STRATEGY"])
+
+    def test_registry_operation_ids_catalog_detected(self) -> None:
+        findings = phase3.scan_registry_operation_id_catalog()
+        self.assertTrue(any(item.rule == "SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG" for item in findings))
+        self.assertGreater(len(findings), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

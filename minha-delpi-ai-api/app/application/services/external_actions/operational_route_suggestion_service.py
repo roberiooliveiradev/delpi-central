@@ -110,7 +110,7 @@ class OperationalRouteSuggestionService:
                 {
                     "operationId": operation_id,
                     "actionId": action_id,
-                    "domain": ChatOperationalApiDomainService.classify_path(path),
+                    "domain": ChatOperationalApiDomainService.classify_action(action),
                     "reason": reason,
                     "score": score,
                     "path": path,

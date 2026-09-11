@@ -266,14 +266,13 @@ class ChatFollowUpTurnContentService:
         ).strip().lower()
         if explicit:
             return explicit
-        path = str(last_action.get("path") or "").strip()
-        if not path:
-            return ""
         from app.domain.services.chat_operational_api_domain_service import (
             ChatOperationalApiDomainService,
         )
 
-        return str(ChatOperationalApiDomainService.classify_path(path) or "").strip().lower()
+        return str(
+            ChatOperationalApiDomainService.classify_action(last_action) or ""
+        ).strip().lower()
 
     @classmethod
     def domains_affine_to_last_action(

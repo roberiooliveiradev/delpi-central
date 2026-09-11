@@ -1,7 +1,8 @@
 """Classificação de domínios de rota operacional — labels/methods em api_route_domains.json.
 
-Domain id inference: ``ApiRouteDomainInferenceService`` (Python constants).
-Content JSON no longer carries pathMarkers / excludePathMarkers.
+Domain id inference: ``ApiRouteDomainInferenceService`` from Action Catalog /
+OpenAPI semantic metadata (explicit apiRouteDomain, entity, category).
+Path fragments are not authority (E11.S2).
 """
 
 from __future__ import annotations
@@ -25,18 +26,52 @@ def _api_route_domains_content() -> dict[str, Any]:
 
 
 class ChatOperationalApiDomainService:
-    """Resolve domínio e estratégia de parâmetros a partir do path/action ou da spec."""
+    """Resolve domínio e estratégia de parâmetros a partir de metadata semântica."""
 
     @classmethod
     def domains(cls) -> dict[str, dict[str, Any]]:
         return dict((_api_route_domains_content().get("domains") or {}))
 
     @classmethod
+    def known_domain_ids(cls) -> frozenset[str]:
+        return frozenset(str(key).strip() for key in cls.domains() if str(key).strip())
+
+    @classmethod
+    def category_to_domain(cls) -> dict[str, str]:
+        bindings = _api_route_domains_content().get("semanticBindings") or {}
+        raw = bindings.get("categoryToDomain") if isinstance(bindings, dict) else {}
+        if not isinstance(raw, dict):
+            return {}
+        return {
+            str(key).strip().lower(): str(value).strip().lower()
+            for key, value in raw.items()
+            if str(key).strip() and str(value).strip()
+        }
+
+    @classmethod
+    def entity_to_domain(cls) -> dict[str, str]:
+        bindings = _api_route_domains_content().get("semanticBindings") or {}
+        raw = bindings.get("entityToDomain") if isinstance(bindings, dict) else {}
+        if not isinstance(raw, dict):
+            return {}
+        return {
+            str(key).strip().lower(): str(value).strip().lower()
+            for key, value in raw.items()
+            if str(key).strip() and str(value).strip()
+        }
+
+    @classmethod
     def classify_action(cls, action: dict[str, Any] | None) -> str:
-        return ApiRouteDomainInferenceService.infer_from_action(action)
+        return ApiRouteDomainInferenceService.infer_from_action(
+            action,
+            known_domain_ids=cls.known_domain_ids(),
+            category_to_domain=cls.category_to_domain(),
+            entity_to_domain=cls.entity_to_domain(),
+        )
 
     @classmethod
     def classify_path(cls, path: str) -> str:
+        """Deprecated stub: path is not domain authority (always generic)."""
         return ApiRouteDomainInferenceService.infer_from_path(path)
 
     @classmethod

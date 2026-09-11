@@ -23,7 +23,7 @@ Arquivos em `assistant/` usados pela API de chat:
 | Arquivo | Uso |
 |---------|-----|
 | `capabilities.json` | Catálogo de capacidades e detecção operacional; buckets UX em `capability_ux_classification.json` (`detection.operationalQueryPatterns`, `suppliesKpiTerms`, …) |
-| `api_route_domains.json` | Labels/methods de domínio operacional + `parameterStrategies` (bindings). Domínio id via `ApiRouteDomainInferenceService` / Action Catalog — sem pathMarkers |
+| `api_route_domains.json` | Labels/methods de domínio operacional + `parameterStrategies` (bindings) + `semanticBindings` (entity/category→domain). Domínio id via metadata OpenAPI/`x-delpi` — sem pathMarkers / path authority |
 | `attachments.json` | Welcome de anexo, preview, arquivo extenso, chips de follow-up e ambiguidade da lousa (`ChatAttachmentContentService`) |
 | `smoke_e2e_scenarios.json` | Perguntas e marcadores dos smokes E2E (`operational_mixed`, `empresa_kpi`) |
 | `column_labels.json` | Colunas e perfis de tabelas operacionais |

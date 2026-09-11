@@ -1,8 +1,9 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED**  
-**Auditoria-base:** `a1b80d354399ade690a284ad8b4c73764b188648` (revalidar HEAD antes de cada subetapa)  
+**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED** · E11.S0–S2 **ATENDIDO** · próxima = **E11.S3**  
+**BASE_GIT_SHA (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
+**Auditoria-base:** revalidar HEAD antes de cada subetapa; inventário em `evidence/e11-s0-rebaseline.md`; gate debt `evidence/e11-s1-semantic-debt-gate.md`; S2 `evidence/e11-s2-api-route-domain-semantic.md`  
 **Origem:** revisão arquitetural pós Ondas A–I em 2026-09-11  
 **Objetivo perceptível:** concluir de fato o desacoplamento OpenAPI-first, removendo authorities paralelas e substitutos semânticos do legado, provando que uma API OpenAPI nunca vista funciona sem código por endpoint e sem deixar `PARTIAL`, `LEGACY_FALLBACK`, `INCONCLUSIVE`, TODO ou dívida material escondida como “concluída”.
 
@@ -140,7 +141,7 @@ Plano 10 reaproveitou E9.S10, executado antes da alteração posterior do motor 
 
 | ID | Requisito | Estado inicial |
 |---|---|---|
-| RQ11-01 | Eliminar path→domain maps/substitutos do core genérico, em qualquer formato | ABERTO |
+| RQ11-01 | Eliminar path→domain maps/substitutos do core genérico, em qualquer formato | ATENDIDO (E11.S2) |
 | RQ11-02 | Eliminar endpoint→parameterStrategy e usar schema OpenAPI como authority | ABERTO |
 | RQ11-03 | Eliminar continuidade multi-turn derivada de path/operationId | ABERTO |
 | RQ11-04 | Remover `operationIds`/registry técnico como authority de routing | ABERTO |
@@ -149,7 +150,7 @@ Plano 10 reaproveitou E9.S10, executado antes da alteração posterior do motor 
 | RQ11-07 | Derivar capability metadata de contract/sensitivity/policy real | ABERTO |
 | RQ11-08 | Corrigir boundaries/DI/filesystem conforme Clean Architecture | ABERTO |
 | RQ11-09 | Remover credenciais hardcoded/defaults sensíveis de scripts/smokes | ABERTO |
-| RQ11-10 | Tornar Architecture Enforcement capaz de detectar substitutos semânticos JSON↔Python/TS | ABERTO |
+| RQ11-10 | Tornar Architecture Enforcement capaz de detectar substitutos semânticos JSON↔Python/TS | ATENDIDO (E11.S1; debt full-tree ainda vermelho até cleanup) |
 | RQ11-11 | Provar unknown external API + metamorphic rename no candidate final | ABERTO |
 | RQ11-12 | Provar compound, multi-turn, required/missing args, safety, send/stream/simulate e persist/reload no candidate final | ABERTO |
 | RQ11-13 | Encerrar flags/shadows/fallbacks/TODOs materiais ou mantê-los explicitamente fora de escopo sem declarar o objetivo global concluído | ABERTO |
@@ -285,6 +286,14 @@ Objetivo final para itens de acoplamento técnico removíveis: **0**, salvo exce
 - cada drift possui producer/consumer/fallback/test/doc mapeados;
 - `READY_TO_EXECUTE` de E11.S1 comprovado.
 
+### Estado E11.S0 (2026-09-11)
+
+- **COMPLETE_GATE:** ATENDIDO
+- Evidência: `evidence/e11-s0-rebaseline.md` + `evidence/e11-s0-debt-metrics.json`
+- Corpus freeze: `routing_cases.json@v1` sha256 `7ff37332…039d`; `r1_r11_corpus_v1` sha256 `371f0cfa…c26b8`
+- RQ11 ledger permanece ABERTO (S0 só reabre/inventaria; não fecha requisitos de cutover)
+- `READY_TO_EXECUTE` E11.S1: **sim**
+
 ---
 
 ## E11.S1 — Architecture Enforcement contra substitutos semânticos
@@ -323,6 +332,14 @@ O gate fica vermelho no baseline pelos drifts reais e não por falso positivo es
 
 **Atenção:** não “corrigir” o gate para ficar verde antes do cleanup. O vermelho é a prova de que o enforcement enxerga a dívida.
 
+### Estado E11.S1 (2026-09-11)
+
+- **COMPLETE_GATE:** ATENDIDO
+- Evidência: `evidence/e11-s1-semantic-debt-gate.{md,json}`
+- RQ11-10: **ATENDIDO** (detecção); dívida permanece até cleanup
+- Gate baseline: **VERMELHO** (274 findings; sem exceção ampla)
+- `READY_TO_EXECUTE` E11.S2: **sim**
+
 ---
 
 ## E11.S2 — `apiRouteDomain`: remover authority path-based
@@ -359,6 +376,14 @@ Remover:
 ### Complete gate
 
 `PATH_COUPLED_RUNTIME_RULES` associado a domain = 0 e unknown/metamorphic PASS no código pós-cleanup.
+
+### Estado E11.S2 (2026-09-11)
+
+- **COMPLETE_GATE:** ATENDIDO
+- Evidência: `evidence/e11-s2-api-route-domain-semantic.md`
+- `SEMANTIC_PATH_DOMAIN_MAP` full-tree = 0
+- RQ11-01 ATENDIDO; unknown/metamorphic unit PASS (live/R11 ficam em E11.S9)
+- `READY_TO_EXECUTE` E11.S3: **sim**
 
 ---
 

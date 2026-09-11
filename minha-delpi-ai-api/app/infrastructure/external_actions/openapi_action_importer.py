@@ -83,13 +83,16 @@ class OpenApiActionImporter:
 
         metadata = dict(delpi_metadata or {})
         if not str(metadata.get("apiRouteDomain") or "").strip():
-            from app.domain.services.api_route_domain_inference_service import (
-                ApiRouteDomainInferenceService,
+            from app.domain.services.chat_operational_api_domain_service import (
+                ChatOperationalApiDomainService,
             )
 
-            metadata["apiRouteDomain"] = ApiRouteDomainInferenceService.infer_from_path(
-                path,
-                operation_id=str(operation_id or ""),
+            metadata["apiRouteDomain"] = ChatOperationalApiDomainService.classify_action(
+                {
+                    "tags": tags,
+                    "operationId": operation_id,
+                    "delpi_metadata": metadata,
+                }
             )
         payload["delpi_metadata"] = metadata
 

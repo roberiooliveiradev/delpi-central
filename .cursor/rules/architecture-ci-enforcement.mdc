@@ -24,6 +24,15 @@ scripts/ci/test_audit_fastapi_authz.py
 scripts/ci/architecture_phase3_exceptions.json
 ```
 
+### `SEMANTIC_PATH_DOMAIN_MAP` / `SEMANTIC_ENDPOINT_PARAMETER_STRATEGY` / `SEMANTIC_PATH_ROUTE_SEGMENT` / `SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG` / `SEMANTIC_SMOKE_CREDENTIAL_DEFAULT` / `SEMANTIC_CONTENT_LATERAL_PATH_KEY`
+
+Detectam substitutos semânticos do legado OpenAPI-first (path→domain, endpoint→strategy, path-tail continuity, registry `operationIds`, defaults de credencial em smoke, reintrodução de `pathMarkers`/equivalentes).
+
+- Full-tree: `python scripts/ci/audit_architecture_phase3.py --check-semantic-debt` (vermelho enquanto a dívida Onda J existir; não mascarar com exceção ampla).
+- Diff-aware (`--check`): bloqueia *novas* introduções dos mesmos padrões no motor/content/scripts.
+
+Negativos legítimos: leitura genérica de `action.path` para HTTP; fixtures/tests mencionando path esperado.
+
 ## Gates do motor Chat AI / integrações
 
 ### `CHAT_ROUTE_HARDCODE`

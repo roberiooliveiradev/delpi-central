@@ -1,115 +1,64 @@
-"""Infer apiRouteDomain from Action Catalog / OpenAPI path (no JSON pathMarkers).
+"""Resolve apiRouteDomain from Action Catalog / OpenAPI semantic metadata.
 
-E10 — domain authority lives in Python constants ported from the former
-``api_route_domains.json`` path maps. Content JSON keeps only labels/methods
-and parameterStrategies binding recipes.
+E11.S2 — path substring maps (former Python domain-rule tables / pathMarkers)
+are not authority.
+Resolution order:
+
+1. explicit ``apiRouteDomain`` (top-level or delpiMetadata / x-delpi)
+2. ``entity`` exact or longest known-domain prefix match
+3. ``category`` → domain via content ``semanticBindings.categoryToDomain``
+4. ``generic`` (unknown / external OpenAPI without enrichment)
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Mapping
 
 
 class ApiRouteDomainInferenceService:
-    """Ordered path→domain matching without reading lateral JSON path maps."""
-
-    # Priority mirrors ChatOperationalApiDomainService._ordered_domains
-    # (named domains first, then remaining domains in former JSON order).
-    # More-specific OpenAPI path fragments before broader prefixes.
-    _DOMAIN_RULES: tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...] = (
-        ("product_search", ("/products/search",), ()),
-        ("product_directives", ("/products/directives/",), ()),
-        (
-            "product_exclusive_catalog",
-            ("/products/exclusive-raw-materials/catalog",),
-            (),
-        ),
-        (
-            "product",
-            ("/products/{code}", "/products/"),
-            (
-                "/products/search",
-                "/products/directives/",
-                "/products/exclusive-raw-materials/",
-            ),
-        ),
-        ("production_consumption", ("/production/consumption/",), ()),
-        ("production_losses", ("/production/losses/",), ()),
-        ("production_schedule", ("/production/schedule/",), ()),
-        ("production_orders", ("/production/orders/",), ()),
-        ("production_work_centers", ("/production/work-centers/",), ()),
-        ("purchases_ranking", ("/purchases/top-products",), ()),
-        ("quality_action_plans", ("/quality/action-plans/",), ()),
-        (
-            "department_idd",
-            (
-                "/dashboard/department-idd",
-                "/dashboard/department-indicators",
-                "/dashboard/departments-indicators",
-            ),
-            (),
-        ),
-        ("safety_stock", ("/supplies/safety-stock/",), ()),
-        ("supplies_kpi", ("/supplies/",), ("/supplies/safety-stock/",)),
-        (
-            "department_kpi",
-            (
-                "/commercial/",
-                "/financial/",
-                "/production/",
-                "/hr/",
-                "/quality/",
-            ),
-            (
-                "/production/consumption/",
-                "/production/losses/",
-                "/production/schedule/",
-                "/production/orders/",
-                "/production/work-centers/",
-                "/production/allocation-gaps",
-                "/production/planned-vs-real-time",
-                "/quality/action-plans/",
-            ),
-        ),
-        ("open_sales_orders", ("/pedidos-venda-abertos/",), ()),
-        ("commercial_proposal_documents", ("/propostas-comerciais/",), ()),
-        ("process_inspection_plans", ("/process-inspection-plans/",), ()),
-        ("lmp", ("/lmp", "/transforma"), ()),
-        ("sql", ("/data/sql", "/data/"), ()),
-        ("system", ("/system/",), ()),
-    )
+    """Semantic apiRouteDomain resolver — no path-fragment authority."""
 
     @classmethod
-    def infer_from_action(cls, action: dict[str, Any] | None) -> str:
+    def infer_from_action(
+        cls,
+        action: dict[str, Any] | None,
+        *,
+        known_domain_ids: frozenset[str] | None = None,
+        category_to_domain: Mapping[str, str] | None = None,
+        entity_to_domain: Mapping[str, str] | None = None,
+    ) -> str:
         payload = action if isinstance(action, dict) else {}
         explicit = cls._explicit_domain(payload)
         if explicit:
             return explicit
 
-        path = str(payload.get("path") or "").strip()
-        operation_id = str(
-            payload.get("operationId") or payload.get("operation_id") or ""
-        ).strip()
-        return cls.infer_from_path(path, operation_id=operation_id)
+        domains = known_domain_ids or frozenset()
+        metadata = cls._metadata(payload)
+
+        entity = str(metadata.get("entity") or payload.get("entity") or "").strip()
+        if entity_to_domain:
+            mapped_entity = str(entity_to_domain.get(entity.lower()) or "").strip().lower()
+            if mapped_entity:
+                return mapped_entity
+        from_entity = cls._domain_from_entity(entity, domains)
+        if from_entity:
+            return from_entity
+
+        category = str(metadata.get("category") or payload.get("category") or "").strip()
+        from_category = cls._domain_from_category(category, category_to_domain)
+        if from_category:
+            return from_category
+
+        return "generic"
 
     @classmethod
     def infer_from_path(cls, path: str, *, operation_id: str = "") -> str:
-        lowered = str(path or "").lower().strip()
-        if not lowered:
-            return "generic"
+        """Path is not semantic authority (E11.S2). Always generic.
 
-        # operation_id reserved for future OpenAPI signals; matching is path-based
-        # to preserve former api_route_domains pathMarkers semantics.
-        _ = str(operation_id or "").strip().lower()
-
-        for domain_id, markers, excludes in cls._DOMAIN_RULES:
-            if not markers:
-                continue
-            if any(marker in lowered for marker in excludes):
-                continue
-            if any(marker in lowered for marker in markers):
-                return domain_id
-
+        Kept as a no-op stub so residual call sites fail closed instead of
+        inventing domain from URL fragments.
+        """
+        _ = (path, operation_id)
         return "generic"
 
     @classmethod
@@ -118,12 +67,45 @@ class ApiRouteDomainInferenceService:
         if top:
             return top.lower()
 
-        metadata = action.get("delpiMetadata") or action.get("delpi_metadata") or {}
-        if isinstance(metadata, dict):
-            nested = str(
-                metadata.get("apiRouteDomain") or metadata.get("api_route_domain") or ""
-            ).strip()
-            if nested:
-                return nested.lower()
+        metadata = cls._metadata(action)
+        nested = str(
+            metadata.get("apiRouteDomain") or metadata.get("api_route_domain") or ""
+        ).strip()
+        if nested:
+            return nested.lower()
 
         return ""
+
+    @classmethod
+    def _metadata(cls, action: dict[str, Any]) -> dict[str, Any]:
+        metadata = action.get("delpiMetadata") or action.get("delpi_metadata") or {}
+        return metadata if isinstance(metadata, dict) else {}
+
+    @classmethod
+    def _domain_from_entity(cls, entity: str, domains: frozenset[str]) -> str:
+        token = str(entity or "").strip().lower()
+        if not token or not domains:
+            return ""
+        if token in domains and token != "generic":
+            return token
+
+        best = ""
+        for domain_id in domains:
+            if not domain_id or domain_id == "generic":
+                continue
+            if token == domain_id or token.startswith(f"{domain_id}_"):
+                if len(domain_id) > len(best):
+                    best = domain_id
+        return best
+
+    @classmethod
+    def _domain_from_category(
+        cls,
+        category: str,
+        category_to_domain: Mapping[str, str] | None,
+    ) -> str:
+        token = str(category or "").strip().lower()
+        if not token or not category_to_domain:
+            return ""
+        mapped = str(category_to_domain.get(token) or "").strip().lower()
+        return mapped

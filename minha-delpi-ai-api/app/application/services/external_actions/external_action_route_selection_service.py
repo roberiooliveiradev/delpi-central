@@ -717,7 +717,7 @@ class ExternalActionRouteSelectionService:
         operation_tokens = [token for token in spec.operation_tokens if token]
 
         if not path_tokens and not operation_tokens:
-            return ChatOperationalApiDomainService.classify_path(path) == spec.domain
+            return ChatOperationalApiDomainService.classify_action(action) == spec.domain
 
         if path_tokens and any(token in path for token in path_tokens):
             return True

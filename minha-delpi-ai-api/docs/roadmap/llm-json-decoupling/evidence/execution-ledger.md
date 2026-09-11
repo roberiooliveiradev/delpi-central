@@ -20,7 +20,7 @@
 | G — presentation/skills | 07, 08 | **HISTÓRICO / REVALIDAR NA J** | — | Candidate final E11.S9 |
 | H — cutover/cleanup | 09 | **PASS HISTÓRICO; NÃO RELEASE VIGENTE** | — | Candidate evidence anterior a drifts posteriores |
 | I — zero mapa lateral | 10 | **ACEITE INVALIDADO POR DRIFT** | — | Substitutos semânticos encontrados em runtime |
-| J — correção arquitetural | 11 | **ABERTO / VERIFY_FINAL_FAILED** | **E11.S0** | Cutover → generalization → cleanup → verify → complete gate |
+| J — correção arquitetural | 11 | **ABERTO / VERIFY_FINAL_FAILED** | **E11.S3** | E11.S0–S2 ATENDIDO; path→domain removido |
 
 ## Protocolo por subetapa
 
@@ -240,3 +240,6 @@ Qualquer mudança material posterior ao candidate invalida as dimensões de evid
 | 2026-09-11 | Auditoria pós A–I: `VERIFY_FINAL_FAILED`; encontrados substitutos semânticos JSON→Python/strategy/routeSegment/registry + stale candidate evidence |
 | 2026-09-11 | Regras `.cursor` endurecidas: `COMPLETE_GATE`, semantic residual search, candidate freshness e unknown API real |
 | 2026-09-11 | Plano 11 criado; próxima subetapa obrigatória = **E11.S0 rebaseline/inventário/freeze** |
+| 2026-09-11 | **E11.S0 ATENDIDO** — BASE `8bc84fc6…`; inventário D11-01..10; freeze corpus; métricas em `e11-s0-debt-metrics.json`; próxima = **E11.S1** |
+| 2026-09-11 | **E11.S1 ATENDIDO** — Phase3 `--check-semantic-debt` vermelho (274); RQ11-10; próxima = **E11.S2** |
+| 2026-09-11 | **E11.S2 ATENDIDO** — apiRouteDomain sem path authority; `SEMANTIC_PATH_DOMAIN_MAP=0`; próxima = **E11.S3** |

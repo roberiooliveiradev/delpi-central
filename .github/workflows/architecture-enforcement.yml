@@ -123,6 +123,10 @@ jobs:
       - name: Enforce Phase 3 architecture gates
         run: python scripts/ci/audit_architecture_phase3.py --check --base "${{ steps.base.outputs.sha }}"
 
+      - name: Report semantic substitute debt (expected red until Onda J cleanup)
+        continue-on-error: true
+        run: python scripts/ci/audit_architecture_phase3.py --check-semantic-debt
+
       - name: Enforce transversal platform guardrails
         run: python scripts/ci/audit_platform_guardrails.py --check --base "${{ steps.base.outputs.sha }}"
 

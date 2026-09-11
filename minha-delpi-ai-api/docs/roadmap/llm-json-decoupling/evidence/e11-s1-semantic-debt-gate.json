@@ -1,0 +1,193 @@
+{
+  "stage": "E11.S1_semantic_debt_gate",
+  "BASE_GIT_SHA": "8bc84fc6d1cea3edc8cd0c08dceee90f9303e777",
+  "gate_exit_code": 1,
+  "gate_red_on_baseline": true,
+  "total": 274,
+  "by_rule": {
+    "SEMANTIC_CONTENT_LATERAL_PATH_KEY": 4,
+    "SEMANTIC_PATH_ROUTE_SEGMENT": 8,
+    "SEMANTIC_ENDPOINT_PARAMETER_STRATEGY": 16,
+    "SEMANTIC_PATH_DOMAIN_MAP": 2,
+    "SEMANTIC_SMOKE_CREDENTIAL_DEFAULT": 160,
+    "SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG": 84
+  },
+  "samples": {
+    "SEMANTIC_CONTENT_LATERAL_PATH_KEY": [
+      {
+        "path": "minha-delpi-ai-api/app/application/services/assistant_capabilities_catalog_generator.py",
+        "line": 52,
+        "message": "lateral path key reintroduced in content/runtime: \"pathMarkers\": markers,",
+        "fingerprint": "d1f37ae890b8166850fa"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/application/services/external_actions/operational_route_selection/operational_route_domain_selection_service.py",
+        "line": 114,
+        "message": "lateral path key reintroduced in content/runtime: \"pathMarkers\": path_markers or list(spec.path_prefixes),",
+        "fingerprint": "9afcafd8c9c0722129ca"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/application/services/external_actions/operational_route_selection/operational_route_domain_selection_service.py",
+        "line": 115,
+        "message": "lateral path key reintroduced in content/runtime: \"operationIdMarkers\": list(spec.operation_tokens),",
+        "fingerprint": "eea846771511cb95e3cd"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/chat_operational_sufficiency_critic_service.py",
+        "line": 356,
+        "message": "lateral path key reintroduced in content/runtime: \"pathMarkers\": [],",
+        "fingerprint": "d8f9acac82eac4952b80"
+      }
+    ],
+    "SEMANTIC_PATH_ROUTE_SEGMENT": [
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/route_segment_inference_service.py",
+        "line": 18,
+        "message": "path-tail/operationId continuity coupling: _operation_id_to_path.cache_clear()",
+        "fingerprint": "0390909b09e145503845"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/route_segment_inference_service.py",
+        "line": 22,
+        "message": "path-tail/operationId continuity coupling: def _operation_id_to_path() -> dict[str, str]:",
+        "fingerprint": "100fe1f09728edbab779"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/route_segment_inference_service.py",
+        "line": 49,
+        "message": "path/operationId→routeSegment authority class: class RouteSegmentInferenceService:",
+        "fingerprint": "d6297e1ae3e8da091fa4"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/route_segment_inference_service.py",
+        "line": 56,
+        "message": "path-tail/operationId continuity coupling: def path_for_operation_id(cls, operation_id: str | None) -> str | None:",
+        "fingerprint": "bef1e65e72e04cb477ad"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/route_segment_inference_service.py",
+        "line": 60,
+        "message": "path-tail/operationId continuity coupling: return _operation_id_to_path().get(target)",
+        "fingerprint": "8a2476d49344ee889df5"
+      }
+    ],
+    "SEMANTIC_ENDPOINT_PARAMETER_STRATEGY": [
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/parameter_strategy_inference_service.py",
+        "line": 11,
+        "message": "endpoint→parameterStrategy authority class: class ParameterStrategyInferenceService:",
+        "fingerprint": "d90a2638f6c114357825"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/parameter_strategy_inference_service.py",
+        "line": 45,
+        "message": "path/operationId→strategy branch: if \"by-supplier-part-number\" in lowered or \"supplier_part_number\" in oid:",
+        "fingerprint": "fc1539d97a505f2be14d"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/parameter_strategy_inference_service.py",
+        "line": 48,
+        "message": "path/operationId→strategy branch: if \"exclusive-raw-materials\" in lowered or \"exclusive_raw_material\" in oid:",
+        "fingerprint": "eebbf4255fd8a7d33300"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/parameter_strategy_inference_service.py",
+        "line": 51,
+        "message": "path/operationId→strategy branch: if \"/system/\" in lowered or \"protheus\" in oid:",
+        "fingerprint": "3f49756f9f1e78fdd2e3"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/parameter_strategy_inference_service.py",
+        "line": 56,
+        "message": "path/operationId→strategy branch: or \"department-indicators\" in lowered",
+        "fingerprint": "d44c57d2ffedadc1510f"
+      }
+    ],
+    "SEMANTIC_PATH_DOMAIN_MAP": [
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/api_route_domain_inference_service.py",
+        "line": 19,
+        "message": "path→domain map substitute (_DOMAIN_RULES): _DOMAIN_RULES: tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...] = (",
+        "fingerprint": "b6ede4f0860fdc3b24a6"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/domain/services/api_route_domain_inference_service.py",
+        "line": 105,
+        "message": "path→domain map substitute (_DOMAIN_RULES): for domain_id, markers, excludes in cls._DOMAIN_RULES:",
+        "fingerprint": "28067875ad2201e412c8"
+      }
+    ],
+    "SEMANTIC_SMOKE_CREDENTIAL_DEFAULT": [
+      {
+        "path": "minha-delpi-ai-api/scripts/smoke_presentation_routes_varied.py",
+        "line": 21,
+        "message": "smoke credential default literal: _USERNAME = os.environ.get(\"SMOKE_USER\", \"rober\").strip()",
+        "fingerprint": "fb540f07e61c5e1480b2"
+      },
+      {
+        "path": "minha-delpi-ai-api/scripts/smoke_presentation_routes_varied.py",
+        "line": 22,
+        "message": "smoke credential default literal: _PASSWORD = os.environ.get(\"SMOKE_PASSWORD\", \"1234\").strip()",
+        "fingerprint": "b951c4d67441d08f2129"
+      },
+      {
+        "path": "minha-delpi-ai-api/scripts/eval_response_modes_product_routes_jun2026.py",
+        "line": 103,
+        "message": "smoke credential default literal: \"username\": os.environ.get(\"SMOKE_USER\", \"rober\"),",
+        "fingerprint": "c4b1a9de888990bd8fa5"
+      },
+      {
+        "path": "minha-delpi-ai-api/scripts/eval_response_modes_product_routes_jun2026.py",
+        "line": 104,
+        "message": "smoke credential default literal: \"password\": os.environ.get(\"SMOKE_PASSWORD\", \"1234\"),",
+        "fingerprint": "e5e3a3f0db4c82f6b8b0"
+      },
+      {
+        "path": "minha-delpi-ai-api/scripts/smoke_intent_route.py",
+        "line": 18,
+        "message": "smoke credential default literal: _USERNAME = os.environ.get(\"SMOKE_USER\", \"rober\").strip()",
+        "fingerprint": "ca98fc84747c55994dda"
+      }
+    ],
+    "SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG": [
+      {
+        "path": "minha-delpi-ai-api/app/content/pt-BR/assistant/operational_route_registry.json",
+        "line": 0,
+        "message": "route productDirectives teaches actions via manual operationIds=['get_product_directives']",
+        "fingerprint": "7424324a453ddfbc6296"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/content/pt-BR/assistant/operational_route_registry.json",
+        "line": 0,
+        "message": "route exclusiveRawMaterialCatalog teaches actions via manual operationIds=['list_exclusive_raw_materials_catalog']",
+        "fingerprint": "156173817e22d0bb7885"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/content/pt-BR/assistant/operational_route_registry.json",
+        "line": 0,
+        "message": "route productRawMaterialPriceIntelligence teaches actions via manual operationIds=['get_product_raw_material_price_intelligence']",
+        "fingerprint": "cb80d170a16844e07b17"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/content/pt-BR/assistant/operational_route_registry.json",
+        "line": 0,
+        "message": "route productCostImpactSimulation teaches actions via manual operationIds=['get_product_cost_impact_simulation']",
+        "fingerprint": "729fc04285694fe580cf"
+      },
+      {
+        "path": "minha-delpi-ai-api/app/content/pt-BR/assistant/operational_route_registry.json",
+        "line": 0,
+        "message": "route productProductionStatus teaches actions via manual operationIds=['get_product_production_status']",
+        "fingerprint": "15f2b6dcd42cc67b6563"
+      }
+    ]
+  },
+  "required_rules_present": {
+    "SEMANTIC_PATH_DOMAIN_MAP": true,
+    "SEMANTIC_ENDPOINT_PARAMETER_STRATEGY": true,
+    "SEMANTIC_PATH_ROUTE_SEGMENT": true,
+    "SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG": true,
+    "SEMANTIC_SMOKE_CREDENTIAL_DEFAULT": true
+  },
+  "note": "Gate intentionally RED until Onda J cleanup. Do not add broad exceptions to turn green early."
+}

@@ -1,0 +1,679 @@
+{
+  "stage": "E11.S0_debt_metrics",
+  "freeze": {
+    "datasetVersion": "intelligence_baseline/routing_cases.json@v1",
+    "routingCasesSha256": "7ff3733293815064c9dd346a74b848623ade2113d987b4690adf81a3388e039d",
+    "r1R11CorpusVersion": "r1_r11_corpus_v1",
+    "r1R11CorpusSha256": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8",
+    "role": "CANDIDATE_CORPUS_ONDA_J",
+    "note": "PASS A-I are historical only; final candidate evidence must be produced in E11.S9 on post-cleanup HEAD"
+  },
+  "generated_at": "2026-09-11T15:58:30.441929+00:00",
+  "BASE_GIT_SHA": "8bc84fc6d1cea3edc8cd0c08dceee90f9303e777",
+  "PATH_COUPLED_RUNTIME_RULES": {
+    "totalApprox": 250,
+    "byPattern": {
+      "DOMAIN_RULES": {
+        "count": 2,
+        "files": 1,
+        "top": [
+          [
+            "app/domain/services/api_route_domain_inference_service.py",
+            2
+          ]
+        ]
+      },
+      "pathMapKeys": {
+        "count": 53,
+        "files": 25,
+        "top": [
+          [
+            "app/application/services/chat_playbook_product_action_readiness_service.py",
+            1
+          ],
+          [
+            "app/application/services/assistant_capabilities_catalog_generator.py",
+            3
+          ],
+          [
+            "app/application/services/external_actions/external_action_candidate_prioritization_service.py",
+            9
+          ],
+          [
+            "app/application/services/external_actions/external_action_empty_rival_recommendation_service.py",
+            1
+          ],
+          [
+            "app/application/services/external_actions/external_action_selection_service.py",
+            1
+          ],
+          [
+            "app/application/services/external_actions/operational_route_selection/operational_route_domain_selection_service.py",
+            1
+          ],
+          [
+            "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py",
+            3
+          ],
+          [
+            "app/domain/entities/turn_refinement.py",
+            3
+          ]
+        ]
+      },
+      "pathClassify": {
+        "count": 12,
+        "files": 8,
+        "top": [
+          [
+            "app/application/services/external_actions/operational_route_suggestion_service.py",
+            1
+          ],
+          [
+            "app/application/services/external_actions/external_action_route_selection_service.py",
+            1
+          ],
+          [
+            "app/infrastructure/external_actions/openapi_action_importer.py",
+            1
+          ],
+          [
+            "app/domain/services/operational_route_registry_generator_service.py",
+            1
+          ],
+          [
+            "app/domain/services/parameter_strategy_inference_service.py",
+            2
+          ],
+          [
+            "app/domain/services/api_route_domain_inference_service.py",
+            2
+          ],
+          [
+            "app/domain/services/chat_follow_up_turn_content_service.py",
+            1
+          ],
+          [
+            "app/domain/services/chat_operational_api_domain_service.py",
+            3
+          ]
+        ]
+      },
+      "ifPathLiteral": {
+        "count": 58,
+        "files": 28,
+        "top": [
+          [
+            "app/application/services/chat_onboarding_milestone_service.py",
+            1
+          ],
+          [
+            "app/application/services/chat_structure_comparison_service.py",
+            5
+          ],
+          [
+            "app/application/services/chat_composite_direct_answer_service.py",
+            1
+          ],
+          [
+            "app/application/services/chat_sql_recovery_service.py",
+            2
+          ],
+          [
+            "app/application/use_cases/execute_external_action_use_case.py",
+            1
+          ],
+          [
+            "app/application/services/external_actions/external_action_route_selection_service.py",
+            1
+          ],
+          [
+            "app/application/services/external_actions/external_action_product_route_catalog_service.py",
+            1
+          ],
+          [
+            "app/infrastructure/external_actions/openapi_action_importer.py",
+            2
+          ]
+        ]
+      },
+      "pathContainsLogic": {
+        "count": 125,
+        "files": 55,
+        "top": [
+          [
+            "app/application/services/chat_onboarding_milestone_service.py",
+            2
+          ],
+          [
+            "app/application/services/chat_structure_comparison_service.py",
+            4
+          ],
+          [
+            "app/application/services/chat_data_interpretation_answer_service.py",
+            1
+          ],
+          [
+            "app/application/services/chat_composite_direct_answer_service.py",
+            3
+          ],
+          [
+            "app/application/services/chat_sql_recovery_service.py",
+            2
+          ],
+          [
+            "app/application/services/external_actions/external_action_candidate_prioritization_service.py",
+            2
+          ],
+          [
+            "app/application/services/external_actions/external_action_empty_rival_recommendation_service.py",
+            1
+          ],
+          [
+            "app/application/services/external_actions/external_action_selection_service.py",
+            2
+          ]
+        ]
+      }
+    }
+  },
+  "OPERATION_ID_COUPLED_RUNTIME_RULES": {
+    "totalApprox": 189,
+    "byPattern": {
+      "oidMarkers": {
+        "count": 10,
+        "files": 7,
+        "top": [
+          [
+            "app/application/services/chat_playbook_product_action_readiness_service.py",
+            1
+          ],
+          [
+            "app/application/services/external_actions/external_action_selection_service.py",
+            1
+          ],
+          [
+            "app/application/services/external_actions/operational_route_selection/operational_route_domain_selection_service.py",
+            1
+          ],
+          [
+            "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py",
+            2
+          ],
+          [
+            "app/domain/entities/turn_understanding.py",
+            1
+          ],
+          [
+            "app/domain/services/operational_route_registry_generator_service.py",
+            2
+          ],
+          [
+            "app/domain/services/operational_route_registry_lint_service.py",
+            2
+          ]
+        ]
+      },
+      "routeSegment": {
+        "count": 178,
+        "files": 30,
+        "top": [
+          [
+            "app/application/services/chat_external_action_orchestration_service.py",
+            1
+          ],
+          [
+            "app/application/services/external_actions/external_action_selection_service.py",
+            25
+          ],
+          [
+            "app/application/services/external_actions/external_action_operational_route_selection_service.py",
+            12
+          ],
+          [
+            "app/application/services/external_actions/external_action_route_selection_service.py",
+            9
+          ],
+          [
+            "app/application/services/external_actions/external_action_refinement_route_selection_service.py",
+            11
+          ],
+          [
+            "app/application/services/external_actions/operational_route_selection/operational_route_domain_selection_service.py",
+            20
+          ],
+          [
+            "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py",
+            3
+          ],
+          [
+            "app/domain/models/operational_api_route_spec.py",
+            6
+          ]
+        ]
+      },
+      "oidInventory": {
+        "count": 1,
+        "files": 1,
+        "top": [
+          [
+            "app/domain/services/route_segment_inference_service.py",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "ENDPOINT_STRATEGY_RULES": {
+    "totalApprox": 37,
+    "byPattern": {
+      "paramStrategySvc": {
+        "count": 16,
+        "files": 6,
+        "top": [
+          [
+            "app/application/use_cases/execute_external_action_use_case.py",
+            2
+          ],
+          [
+            "app/application/services/external_actions/operational_route_selection/operational_route_vocabulary_matcher_service.py",
+            2
+          ],
+          [
+            "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py",
+            6
+          ],
+          [
+            "app/domain/services/operational_route_registry_generator_service.py",
+            2
+          ],
+          [
+            "app/domain/services/parameter_strategy_inference_service.py",
+            1
+          ],
+          [
+            "app/domain/services/chat_operational_api_domain_service.py",
+            3
+          ]
+        ]
+      },
+      "strategyLiteralReturn": {
+        "count": 21,
+        "files": 7,
+        "top": [
+          [
+            "app/domain/services/parameter_strategy_inference_service.py",
+            14
+          ],
+          [
+            "app/domain/services/chat_term_extraction_service.py",
+            1
+          ],
+          [
+            "app/domain/services/chat_evaluation_case_runner_service.py",
+            1
+          ],
+          [
+            "app/domain/services/chat_pdf_region_ocr_engine_service.py",
+            1
+          ],
+          [
+            "app/domain/services/chat_operational_api_domain_service.py",
+            1
+          ],
+          [
+            "app/domain/services/chat_advanced_sql_specialist/chat_advanced_sql_specialist_activation_service.py",
+            2
+          ],
+          [
+            "app/domain/services/external_actions/presenters/sql_presenter.py",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "MANUAL_INTENT_RULES": {
+    "totalApprox": 18,
+    "byPattern": {
+      "tokenRules": {
+        "count": 6,
+        "files": 3,
+        "top": [
+          [
+            "app/domain/services/turn_understanding_production_intent_mapper_service.py",
+            2
+          ],
+          [
+            "app/domain/services/turn_understanding_kpi_intent_mapper_service.py",
+            2
+          ],
+          [
+            "app/domain/services/turn_understanding_product_intent_mapper_service.py",
+            2
+          ]
+        ]
+      },
+      "kpiTokens": {
+        "count": 8,
+        "files": 5,
+        "top": [
+          [
+            "app/domain/entities/turn_refinement.py",
+            1
+          ],
+          [
+            "app/domain/entities/turn_understanding.py",
+            1
+          ],
+          [
+            "app/domain/services/turn_understanding_kpi_intent_mapper_service.py",
+            1
+          ],
+          [
+            "app/domain/services/chat_department_kpi_intent_service.py",
+            4
+          ],
+          [
+            "app/domain/services/chat_production_operational_intent_service.py",
+            1
+          ]
+        ]
+      },
+      "kpiRulesBundle": {
+        "count": 4,
+        "files": 2,
+        "top": [
+          [
+            "app/domain/services/turn_understanding_kpi_intent_mapper_service.py",
+            1
+          ],
+          [
+            "app/domain/services/chat_department_kpi_intent_service.py",
+            3
+          ]
+        ]
+      }
+    }
+  },
+  "TECHNICAL_CATALOG_ENTRIES": {
+    "routesWithOperationIds": 84,
+    "operationIdsApprox": 96,
+    "registryFile": "app/content/pt-BR/assistant/operational_route_registry.json",
+    "recommendationQueriesProfiles": 13
+  },
+  "HARDCODED_SMOKE_CREDENTIAL_DEFAULTS": {
+    "totalApprox": 166,
+    "byPattern": {
+      "smokeCredDefaults": {
+        "count": 166,
+        "files": 83,
+        "top": [
+          [
+            "scripts/smoke_presentation_routes_varied.py",
+            2
+          ],
+          [
+            "scripts/eval_response_modes_product_routes_jun2026.py",
+            2
+          ],
+          [
+            "scripts/smoke_intent_route.py",
+            2
+          ],
+          [
+            "scripts/smoke_openapi_first_live.py",
+            2
+          ],
+          [
+            "scripts/smoke_llm_universal_prose.py",
+            2
+          ],
+          [
+            "scripts/smoke_structure_preference.py",
+            2
+          ],
+          [
+            "scripts/smoke_product_analyser_live.py",
+            2
+          ],
+          [
+            "scripts/smoke_product_sales_routing.py",
+            2
+          ]
+        ]
+      }
+    }
+  },
+  "DOMAIN_SERVICES_WITH_INFRA_IO": {
+    "count": 19,
+    "files": [
+      "app/domain/services/chat_pdf_embedded_text_service.py",
+      "app/domain/services/chat_pdf_table_cell_refinement_service.py",
+      "app/domain/services/chat_drawing_product_code_resolution_service.py",
+      "app/domain/services/operational_route_registry_generator_service.py",
+      "app/domain/services/route_segment_inference_service.py",
+      "app/domain/services/chat_drawing_library_service.py",
+      "app/domain/services/chat_vision_memory_guard_service.py",
+      "app/domain/services/operational_route_registry_service.py",
+      "app/domain/services/workspace_file_ingest_policy_service.py",
+      "app/domain/services/chat_pdf_document_extraction_service.py",
+      "app/domain/services/agent_knowledge_filename_service.py",
+      "app/domain/services/chat_presentation_coverage_service.py",
+      "app/domain/services/prompt_policy_service.py",
+      "app/domain/services/chat_pdf_page_tesseract_ocr_service.py",
+      "app/domain/services/chat_drawing_pdf_extraction_service.py",
+      "app/domain/services/operational_route_registry_lint_service.py",
+      "app/domain/services/chat_drawing_region_service.py",
+      "app/domain/services/chat_presentation_refactor_baseline_service.py",
+      "app/domain/services/openapi_operation_contract_service.py"
+    ]
+  },
+  "APPLICATION_SERVICES_COMPOSING_INFRA_DIRECTLY": {
+    "count": 111,
+    "files": [
+      "app/application/services/knowledge_adaptive_chunker_service.py",
+      "app/application/services/chat_learning_term_confirmation_service.py",
+      "app/application/services/chat_operational_refinement_interactivity_service.py",
+      "app/application/services/chat_onboarding_milestone_service.py",
+      "app/application/services/chat_assistant_catalog_service.py",
+      "app/application/services/chat_attachment_context_service.py",
+      "app/application/services/chat_llm_metadata_service.py",
+      "app/application/services/assistant_capabilities_catalog_validator.py",
+      "app/application/services/chat_tool_context_selection_service.py",
+      "app/application/services/chat_external_action_orchestration_service.py",
+      "app/application/services/chat_drawing_follow_up_service.py",
+      "app/application/services/chat_help_follow_up_service.py",
+      "app/application/services/chat_guided_flow_service.py",
+      "app/application/services/chat_attachment_image_ocr_service.py",
+      "app/application/services/chat_learning_promotion_gate_service.py",
+      "app/application/services/llm_cost_estimator_service.py",
+      "app/application/services/knowledge_semantic_deduplicator_service.py",
+      "app/application/services/chat_tool_context_auxiliary_service.py",
+      "app/application/services/chat_knowledge_candidate_service.py",
+      "app/application/services/external_action_import_job_service.py",
+      "app/application/services/chat_learned_normalization_service.py",
+      "app/application/services/chat_intelligence_metadata_service.py",
+      "app/application/services/chat_memory_knowledge_index_service.py",
+      "app/application/services/chat_meaning_discovery_service.py",
+      "app/application/services/chat_agentic_tool_loop_service.py",
+      "app/application/services/chat_email_follow_up_service.py",
+      "app/application/services/chat_help_error_follow_up_service.py",
+      "app/application/services/chat_drawing_library_attachment_service.py",
+      "app/application/services/chat_text_task_follow_up_service.py",
+      "app/application/services/chat_capabilities_service.py",
+      "app/application/services/chat_glossary_knowledge_index_service.py",
+      "app/application/services/chat_tool_context_execution_service.py",
+      "app/application/services/chat_intelligence_settings_service.py",
+      "app/application/services/chat_fine_tuning_service.py",
+      "app/application/services/chat_presentation_interactivity_service.py",
+      "app/application/services/chat_user_context_service.py",
+      "app/application/services/chat_onboarding_service.py",
+      "app/application/services/chat_tool_context_external_action_formatter.py",
+      "app/application/services/chat_llm_gateway_resolver_service.py",
+      "app/application/services/chat_composite_direct_answer_service.py"
+    ]
+  },
+  "TODO_FIXME_HACK_MATERIAL_COUNT": {
+    "totalApprox": 5,
+    "byPattern": {
+      "todoFixmeHack": {
+        "count": 5,
+        "files": 4,
+        "top": [
+          [
+            "app/domain/services/operational_route_registry_generator_service.py",
+            2
+          ],
+          [
+            "app/domain/services/chat_host_surface_context_service.py",
+            1
+          ],
+          [
+            "app/domain/services/chat_presentation_prose_delivery_content_service.py",
+            1
+          ],
+          [
+            "app/domain/services/chat_clarification_policy_service.py",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "LEGACY_BRANCHES_SHADOWS": {
+    "totalApprox": 39,
+    "byPattern": {
+      "legacyShadow": {
+        "count": 39,
+        "files": 16,
+        "top": [
+          [
+            "app/application/services/presentation_spec_composer_application_service.py",
+            1
+          ],
+          [
+            "app/application/services/external_actions/external_action_selection_service.py",
+            3
+          ],
+          [
+            "app/domain/entities/presentation_data_profile.py",
+            1
+          ],
+          [
+            "app/domain/entities/field_label_bundle.py",
+            4
+          ],
+          [
+            "app/domain/services/chat_product_query_intent_detection_service.py",
+            4
+          ],
+          [
+            "app/domain/services/chat_department_kpi_intent_service.py",
+            2
+          ],
+          [
+            "app/domain/services/chat_production_operational_intent_service.py",
+            2
+          ],
+          [
+            "app/domain/services/chat_humanized_data_response_service.py",
+            2
+          ]
+        ]
+      }
+    }
+  },
+  "CONTENT_LATERAL_PATH_KEYS": {
+    "fileCount": 0,
+    "hits": {}
+  },
+  "SHADOWS_WITHOUT_EXIT": "INVESTIGATE_MANUAL",
+  "LEGACY_FALLBACKS": "INVESTIGATE_MANUAL",
+  "summary": {
+    "PATH_COUPLED_approx": 250,
+    "DOMAIN_RULES_files": [
+      [
+        "app/domain/services/api_route_domain_inference_service.py",
+        2
+      ]
+    ],
+    "ENDPOINT_STRATEGY_approx": 37,
+    "paramStrategySvc": [
+      [
+        "app/application/use_cases/execute_external_action_use_case.py",
+        2
+      ],
+      [
+        "app/application/services/external_actions/operational_route_selection/operational_route_vocabulary_matcher_service.py",
+        2
+      ],
+      [
+        "app/application/services/external_actions/operational_route_selection/operational_route_action_resolver_service.py",
+        6
+      ],
+      [
+        "app/domain/services/operational_route_registry_generator_service.py",
+        2
+      ],
+      [
+        "app/domain/services/parameter_strategy_inference_service.py",
+        1
+      ]
+    ],
+    "routeSegment": [
+      [
+        "app/application/services/chat_external_action_orchestration_service.py",
+        1
+      ],
+      [
+        "app/application/services/external_actions/external_action_selection_service.py",
+        25
+      ],
+      [
+        "app/application/services/external_actions/external_action_operational_route_selection_service.py",
+        12
+      ],
+      [
+        "app/application/services/external_actions/external_action_route_selection_service.py",
+        9
+      ],
+      [
+        "app/application/services/external_actions/external_action_refinement_route_selection_service.py",
+        11
+      ]
+    ],
+    "SMOKE_CRED_approx": 166,
+    "smokeCred_files": [
+      [
+        "scripts/smoke_presentation_routes_varied.py",
+        2
+      ],
+      [
+        "scripts/eval_response_modes_product_routes_jun2026.py",
+        2
+      ],
+      [
+        "scripts/smoke_intent_route.py",
+        2
+      ],
+      [
+        "scripts/smoke_openapi_first_live.py",
+        2
+      ],
+      [
+        "scripts/smoke_llm_universal_prose.py",
+        2
+      ]
+    ],
+    "TECHNICAL_CATALOG": {
+      "routesWithOperationIds": 84,
+      "operationIdsApprox": 96,
+      "registryFile": "app/content/pt-BR/assistant/operational_route_registry.json",
+      "recommendationQueriesProfiles": 13
+    },
+    "CONTENT_LATERAL_KEYS": 0,
+    "DOMAIN_IO": 19,
+    "APP_INFRA_IMPORTS": 111
+  }
+}

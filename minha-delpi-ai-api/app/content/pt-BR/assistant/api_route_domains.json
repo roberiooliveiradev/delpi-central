@@ -1,5 +1,29 @@
 {
   "version": "2026.09.11",
+  "semanticBindings": {
+    "entityToDomain": {
+      "exclusive_raw_materials_catalog": "product_exclusive_catalog",
+      "product_by_supplier_part_number": "product",
+      "product_structure": "product",
+      "product_structure_exclusivity": "product",
+      "quality_action_plan": "quality_action_plans",
+      "process_inspection_plan": "process_inspection_plans"
+    },
+    "categoryToDomain": {
+      "products": "product",
+      "commercial": "department_kpi",
+      "financial": "department_kpi",
+      "hr": "department_kpi",
+      "quality": "department_kpi",
+      "production": "department_kpi",
+      "supplies": "supplies_kpi",
+      "system": "system",
+      "engineering": "generic",
+      "scheduling": "generic",
+      "strategic": "department_idd",
+      "other": "generic"
+    }
+  },
   "domains": {
     "product": {
       "label": "Produto",

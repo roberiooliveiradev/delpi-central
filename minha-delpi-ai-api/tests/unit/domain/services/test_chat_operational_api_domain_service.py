@@ -3,44 +3,55 @@ from app.domain.services.chat_operational_api_domain_service import (
 )
 
 
-def test_classify_product_path():
+def test_classify_action_product_entity():
     assert (
-        ChatOperationalApiDomainService.classify_path(
-            "/products/{code}/stock"
+        ChatOperationalApiDomainService.classify_action(
+            {"delpi_metadata": {"entity": "product_stock", "category": "products"}}
         )
         == "product"
     )
 
 
-def test_classify_product_search_path():
+def test_classify_action_product_search_entity():
     assert (
-        ChatOperationalApiDomainService.classify_path("/products/search")
+        ChatOperationalApiDomainService.classify_action(
+            {"delpiMetadata": {"entity": "product_search", "category": "products"}}
+        )
         == "product_search"
     )
 
 
-def test_classify_department_kpi_path():
+def test_classify_action_department_kpi_category():
     assert (
-        ChatOperationalApiDomainService.classify_path(
-            "/commercial/sales-order-otd"
+        ChatOperationalApiDomainService.classify_action(
+            {"delpiMetadata": {"category": "commercial"}}
         )
         == "department_kpi"
     )
 
 
-def test_classify_supplies_kpi_path():
+def test_classify_action_supplies_kpi_category():
     assert (
-        ChatOperationalApiDomainService.classify_path("/supplies/cpv")
+        ChatOperationalApiDomainService.classify_action(
+            {"delpiMetadata": {"category": "supplies"}}
+        )
         == "supplies_kpi"
     )
 
 
+def test_classify_path_has_no_authority():
+    assert ChatOperationalApiDomainService.classify_path("/products/{code}/stock") == (
+        "generic"
+    )
+
+
 def test_parameter_strategy_from_domain_config():
+    # Domains no longer declare parameterStrategy (E9.S12.E); default is semantic.
     assert (
         ChatOperationalApiDomainService.parameter_strategy_for_domain(
             "department_kpi"
         )
-        == "date_branch"
+        == "semantic"
     )
 
 

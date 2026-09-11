@@ -10,9 +10,12 @@ introduzidas no diff falham. Regras cobertas:
 - UNSAFE_WRITE_RETRY: retry configurado para métodos de escrita sem exceção explícita;
 - SECRET_IN_LOG: segredo/credencial enviado para logger/print/console;
 - SECRET_LITERAL: segredo literal óbvio em código/config de produção.
+- SEMANTIC_* (E11.S1): substitutos de path/domain/strategy/routeSegment/catalog/credenciais;
+  use `--check-semantic-debt` para full-tree (vermelho até cleanup Onda J).
 
 Uso CI:
   python scripts/ci/audit_architecture_phase3.py --check --base <sha>
+  python scripts/ci/audit_architecture_phase3.py --check-semantic-debt
 
 Exceções são temporárias e explícitas em scripts/ci/architecture_phase3_exceptions.json.
 O fingerprint exibido pelo gate deve ser copiado para uma exceção com owner,
@@ -95,6 +98,41 @@ REGISTRY_LIST_FIELDS = {
 REGISTRY_SCALAR_FIELDS = {
     "routeSegment", "pathSuffix", "pathExactEnd", "method",
 }
+
+# E11.S1 — semantic substitutes (JSON↔Python). Full-tree debt via --check-semantic-debt;
+# diff-aware audit() also blocks *new* introductions of the same concepts.
+SEMANTIC_DEBT_SKIP_PARTS = (
+    "/docs/",
+    "/evidence/",
+    "/.cursor/",
+    "/tests/",
+    "/test/",
+    "/fixtures/",
+    "/__pycache__/",
+    "/scripts/ci/",
+    "/node_modules/",
+    "/.venv/",
+)
+SEMANTIC_CONTENT_LATERAL_KEYS_RE = re.compile(
+    r'"(pathMarkers|pathToken|pathContains|pathRules|excludePathMarkers|operationIdMarkers)"\s*:'
+)
+SEMANTIC_DOMAIN_RULES_RE = re.compile(r"\b_DOMAIN_RULES\s*[:=]")
+SEMANTIC_PATH_STRATEGY_CLASS_RE = re.compile(r"\bclass\s+ParameterStrategyInferenceService\b")
+SEMANTIC_PATH_STRATEGY_BRANCH_RE = re.compile(
+    r'(?:in\s+lowered|in\s+path|path\.contains|/products/|/system/|"by-supplier|'
+    r'"exclusive-raw|"department-|"sale-orders|"safety-stock)'
+)
+SEMANTIC_ROUTE_SEGMENT_CLASS_RE = re.compile(r"\bclass\s+RouteSegmentInferenceService\b")
+SEMANTIC_ROUTE_SEGMENT_PATH_TAIL_RE = re.compile(
+    r"\bcontinuity_keys_from_path\b|\bpath_for_operation_id\b|_operation_id_to_path\b"
+)
+SEMANTIC_SMOKE_CRED_DEFAULT_RE = re.compile(
+    r"""(?:os\.environ\.get|getenv)\(\s*['\"]SMOKE_(?:USER|PASSWORD)['\"]\s*,\s*['\"][^'\"]+['\"]"""
+)
+# Legitimate technical use of action path for HTTP — must NOT trip semantic debt alone.
+SEMANTIC_HTTP_PATH_NEGATIVE_RE = re.compile(
+    r"""(?:action|payload|selected)\s*(?:\.\s*get\(\s*['\"]path['\"]|\[['\"]path['\"])"""
+)
 
 
 @dataclass(frozen=True)
@@ -479,17 +517,176 @@ def apply_exceptions(findings: Iterable[Violation], allowed: set[tuple[str, str,
     return blocking, excepted
 
 
+def semantic_debt_path_allowed(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    padded = f"/{normalized}/"
+    if any(part in padded for part in SEMANTIC_DEBT_SKIP_PARTS):
+        # Keep content/assistant JSON in scope even under unusual layouts.
+        if "/app/content/" in normalized and normalized.endswith(".json"):
+            return True
+        return False
+    if not (
+        normalized.startswith("minha-delpi-ai-api/app/")
+        or normalized.startswith("minha-delpi-ai-api/scripts/")
+    ):
+        return False
+    return True
+
+
+def scan_semantic_substitute_lines(path: str, lines: dict[int, str]) -> list[Violation]:
+    """Detect semantic substitutes of legacy path/endpoint authority.
+
+    Does not flag generic reads of ``action.path`` for HTTP execution.
+    """
+    if not semantic_debt_path_allowed(path):
+        return []
+    findings: list[Violation] = []
+    for line_no, line in lines.items():
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("#", "//")):
+            continue
+        if SEMANTIC_HTTP_PATH_NEGATIVE_RE.search(line) and not (
+            SEMANTIC_DOMAIN_RULES_RE.search(line)
+            or SEMANTIC_CONTENT_LATERAL_KEYS_RE.search(line)
+            or SEMANTIC_SMOKE_CRED_DEFAULT_RE.search(line)
+        ):
+            # Pure technical path read for execution/observability.
+            continue
+        if SEMANTIC_DOMAIN_RULES_RE.search(line):
+            findings.append(Violation(
+                "SEMANTIC_PATH_DOMAIN_MAP",
+                path,
+                line_no,
+                f"path→domain map substitute (_DOMAIN_RULES): {normalize(line)}",
+            ))
+        if SEMANTIC_CONTENT_LATERAL_KEYS_RE.search(line):
+            findings.append(Violation(
+                "SEMANTIC_CONTENT_LATERAL_PATH_KEY",
+                path,
+                line_no,
+                f"lateral path key reintroduced in content/runtime: {normalize(line)}",
+            ))
+        if SEMANTIC_PATH_STRATEGY_CLASS_RE.search(line):
+            findings.append(Violation(
+                "SEMANTIC_ENDPOINT_PARAMETER_STRATEGY",
+                path,
+                line_no,
+                f"endpoint→parameterStrategy authority class: {normalize(line)}",
+            ))
+        if (
+            path.endswith("parameter_strategy_inference_service.py")
+            and SEMANTIC_PATH_STRATEGY_BRANCH_RE.search(line)
+            and ("if " in line or "or " in line)
+        ):
+            findings.append(Violation(
+                "SEMANTIC_ENDPOINT_PARAMETER_STRATEGY",
+                path,
+                line_no,
+                f"path/operationId→strategy branch: {normalize(line)}",
+            ))
+        if SEMANTIC_ROUTE_SEGMENT_CLASS_RE.search(line):
+            findings.append(Violation(
+                "SEMANTIC_PATH_ROUTE_SEGMENT",
+                path,
+                line_no,
+                f"path/operationId→routeSegment authority class: {normalize(line)}",
+            ))
+        if (
+            path.endswith("route_segment_inference_service.py")
+            and SEMANTIC_ROUTE_SEGMENT_PATH_TAIL_RE.search(line)
+        ):
+            findings.append(Violation(
+                "SEMANTIC_PATH_ROUTE_SEGMENT",
+                path,
+                line_no,
+                f"path-tail/operationId continuity coupling: {normalize(line)}",
+            ))
+        if SEMANTIC_SMOKE_CRED_DEFAULT_RE.search(line):
+            findings.append(Violation(
+                "SEMANTIC_SMOKE_CREDENTIAL_DEFAULT",
+                path,
+                line_no,
+                f"smoke credential default literal: {normalize(line)}",
+            ))
+    return findings
+
+
+def scan_registry_operation_id_catalog(path: str = REGISTRY_REL) -> list[Violation]:
+    """Flag manual operationIds lists used as routing technical catalog."""
+    file_path = ROOT / path
+    if not file_path.is_file():
+        return []
+    try:
+        payload = json.loads(file_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return [Violation("SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG", path, 0, f"registry JSON inválido: {exc}")]
+    routes = payload.get("routes") if isinstance(payload, dict) else None
+    if not isinstance(routes, list):
+        return []
+    findings: list[Violation] = []
+    for item in routes:
+        if not isinstance(item, dict):
+            continue
+        route_id = str(item.get("id") or "").strip() or "<unknown>"
+        route_spec = item.get("route") if isinstance(item.get("route"), dict) else {}
+        ids = route_spec.get("operationIds")
+        if isinstance(ids, list) and any(str(x).strip() for x in ids):
+            findings.append(Violation(
+                "SEMANTIC_TECHNICAL_OPERATION_ID_CATALOG",
+                path,
+                0,
+                f"route {route_id} teaches actions via manual operationIds={ids!r}",
+            ))
+    return findings
+
+
+def iter_semantic_debt_files() -> Iterable[Path]:
+    roots = [
+        ROOT / "minha-delpi-ai-api" / "app",
+        ROOT / "minha-delpi-ai-api" / "scripts",
+    ]
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for path in root.rglob("*"):
+            if not path.is_file():
+                continue
+            rel = path.relative_to(ROOT).as_posix()
+            if not semantic_debt_path_allowed(rel):
+                continue
+            if path.suffix.lower() not in {".py", ".json", ".ts", ".tsx", ".js", ".sh"}:
+                continue
+            yield path
+
+
+def scan_semantic_debt_workspace() -> list[Violation]:
+    findings: list[Violation] = []
+    for path in iter_semantic_debt_files():
+        rel = path.relative_to(ROOT).as_posix()
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        lines = {i: line for i, line in enumerate(text.splitlines(), start=1)}
+        findings.extend(scan_semantic_substitute_lines(rel, lines))
+    findings.extend(scan_registry_operation_id_catalog())
+    return findings
+
+
 def audit(base: str) -> tuple[list[Violation], list[Violation], list[str]]:
     changes = added_lines(base)
     findings: list[Violation] = []
     for path, lines in sorted(changes.items()):
         findings.extend(scan_chat_route_hardcode(path, lines))
         findings.extend(scan_secret_lines(path, lines))
+        findings.extend(scan_semantic_substitute_lines(path, lines))
         added = set(lines)
         findings.extend(scan_python_http(path, added))
         findings.extend(scan_python_secret_logs(path, added))
     if REGISTRY_REL in changes:
         findings.extend(scan_registry_growth(base))
+        # New/changed registry with operationIds lists also trip semantic debt.
+        findings.extend(scan_registry_operation_id_catalog())
 
     allowed, exception_errors = load_exceptions()
     blocking, excepted = apply_exceptions(findings, allowed)
@@ -500,7 +697,27 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base", help="Commit base para comparação; fallback PHASE3_BASE_SHA/HEAD^")
     parser.add_argument("--check", action="store_true", help="Exit 1 em violação bloqueante")
+    parser.add_argument(
+        "--check-semantic-debt",
+        action="store_true",
+        help="E11.S1: scan full-tree de substitutos semânticos (esperado vermelho até cleanup)",
+    )
     args = parser.parse_args()
+
+    if args.check_semantic_debt:
+        findings = scan_semantic_debt_workspace()
+        print("Architecture Phase 3 — semantic substitute debt (full tree)")
+        by_rule: dict[str, int] = {}
+        for item in findings:
+            by_rule[item.rule] = by_rule.get(item.rule, 0) + 1
+            print(f"  [DEBT] {item.rule} {item.path}:{item.line} {item.message} fingerprint={item.fingerprint}")
+        print(f"totals_by_rule={json.dumps(by_rule, sort_keys=True)}")
+        print(f"total={len(findings)}")
+        if findings:
+            print("[FAIL] semantic substitute debt presente (gate vermelho no baseline até E11 cleanup).")
+            return 1
+        print("[OK] sem substitutos semânticos detectados.")
+        return 0
 
     try:
         base = resolve_base(args.base)
