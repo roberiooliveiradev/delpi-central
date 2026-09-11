@@ -8,6 +8,9 @@ from production_pulse_app.application.services.device_driver_registry_service im
     DeviceDriverNotImplementedError,
     get_device_driver_registry,
 )
+from production_pulse_app.application.services.device_hardware_identity_service import (
+    DeviceHardwareIdentityService,
+)
 from production_pulse_app.application.services.device_reading_rollup_service import (
     DeviceReadingRollupService,
 )
@@ -35,6 +38,7 @@ from production_pulse_app.domain.services.device_reading_delta_service import co
 from production_pulse_app.domain.services.device_reading_persist_policy_service import (
     decide_persist_reading,
 )
+from production_pulse_app.domain.services.hardware_identity_types import HardwareIdentityOutcome
 from production_pulse_app.domain.services.reading_serialization_service import reading_row_to_api
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_binding_repository import (
     PostgresDeviceBindingRepository,
@@ -50,7 +54,6 @@ from production_pulse_app.infrastructure.persistence.repositories.postgres_devic
     PostgresDeviceRepository,
 )
 
-
 class DevicePollService:
     def __init__(
         self,
@@ -60,6 +63,7 @@ class DevicePollService:
         command_repository: PostgresDeviceCommandRepository | None = None,
         rollup_service: DeviceReadingRollupService | None = None,
         firmware_job_service: FirmwareUpdateJobService | None = None,
+        hardware_identity_service: DeviceHardwareIdentityService | None = None,
     ) -> None:
         self._devices = device_repository or PostgresDeviceRepository()
         self._bindings = binding_repository or PostgresDeviceBindingRepository()
@@ -67,6 +71,7 @@ class DevicePollService:
         self._commands = command_repository or PostgresDeviceCommandRepository()
         self._rollups = rollup_service or DeviceReadingRollupService()
         self._firmware_jobs = firmware_job_service or FirmwareUpdateJobService()
+        self._hardware = hardware_identity_service or DeviceHardwareIdentityService()
         self._registry = get_device_driver_registry()
 
     def _require_device(self, device_id: UUID) -> dict[str, Any]:
@@ -175,12 +180,34 @@ class DevicePollService:
         continuity_meta: dict[str, Any] = {}
         accept_decrease = self._has_recent_intentional_decrease(device_id, device["driver_key"])
 
-        restored = self._maybe_hardware_restore_counter(
-            device,
-            previous_metrics=previous_metrics,
-            raw_metrics=raw_metrics,
-            accept_decrease=accept_decrease,
+        identity_meta = dict(reading.meta) if isinstance(reading.meta, dict) else {}
+        raw_counter = raw_metrics.get("counter")
+        prev_logical = previous_metrics.get("counter")
+        if not isinstance(prev_logical, (int, float)) or isinstance(prev_logical, bool):
+            prev_logical = None
+        else:
+            prev_logical = int(prev_logical)
+        raw_counter_int = (
+            int(raw_counter)
+            if isinstance(raw_counter, (int, float)) and not isinstance(raw_counter, bool)
+            else None
         )
+
+        hardware_resolution = self._hardware.resolve_for_poll(
+            device,
+            reading_meta=identity_meta,
+            counter_raw=raw_counter_int,
+            logical_counter=prev_logical,
+        )
+
+        restored = None
+        if hardware_resolution.allow_counter_restore:
+            restored = self._maybe_hardware_restore_counter(
+                device,
+                previous_metrics=previous_metrics,
+                raw_metrics=raw_metrics,
+                accept_decrease=accept_decrease,
+            )
         if restored is not None:
             canonical, continuity_meta = restored
         else:
@@ -195,6 +222,18 @@ class DevicePollService:
                     accept_decrease=accept_decrease,
                 )
 
+        if hardware_resolution.outcome == HardwareIdentityOutcome.HARDWARE_REPLACEMENT:
+            continuity_meta = {
+                **continuity_meta,
+                "hardware_replacement": True,
+                "hardware_identity_outcome": hardware_resolution.outcome.value,
+            }
+            if continuity_meta.get("counter_restored"):
+                continuity_meta["counter_restore_reason"] = "hardware_replacement_baseline"
+                continuity_meta["counter_restore_mode"] = "software_offset"
+            # Never leave a hardware_set path active after replacement.
+            continuity_meta.pop("counter_restore_target", None)
+
         previous_public = public_metrics(previous_metrics)
         canonical_public = public_metrics(canonical)
         delta_metrics, delta_meta = compute_delta_metrics(
@@ -202,7 +241,23 @@ class DevicePollService:
             previous_metrics=previous_public,
             new_metrics=canonical_public,
         )
-        meta = {**continuity_meta, **delta_meta}
+        meta = {
+            **continuity_meta,
+            **delta_meta,
+            "hardwareAssignmentId": str(hardware_resolution.assignment_id)
+            if hardware_resolution.assignment_id
+            else None,
+            "hardwareUnitId": str(hardware_resolution.hardware_unit_id)
+            if hardware_resolution.hardware_unit_id
+            else None,
+            "hardwareIdentityOutcome": hardware_resolution.outcome.value,
+        }
+        if identity_meta.get("hardwareUid"):
+            meta["hardwareUid"] = identity_meta["hardwareUid"]
+        if identity_meta.get("mac"):
+            meta["mac"] = identity_meta["mac"]
+        if identity_meta.get("controllerCode"):
+            meta["controllerCode"] = identity_meta["controllerCode"]
         if meta.get("counter_restored"):
             meta.pop("counter_reset", None)
 
@@ -228,6 +283,7 @@ class DevicePollService:
                 meta=meta,
                 source=source,
                 recorded_at=reading.recorded_at,
+                hardware_assignment_id=hardware_resolution.assignment_id,
             )
             reading_id = int(reading_row["id"])
             recorded_at = reading_row["recorded_at"]
@@ -237,6 +293,29 @@ class DevicePollService:
                 metrics=canonical_public,
                 delta_metrics=delta_metrics,
             )
+
+        counter_delta_val = 0
+        if isinstance(delta_metrics, dict):
+            raw_delta = delta_metrics.get("counter")
+            if isinstance(raw_delta, (int, float)) and not isinstance(raw_delta, bool):
+                counter_delta_val = int(raw_delta)
+
+        prev_uptime = None
+        if isinstance(previous_metrics, dict):
+            prev_uptime = previous_metrics.get("uptimeMs")
+            if not isinstance(prev_uptime, (int, float)) or isinstance(prev_uptime, bool):
+                prev_uptime = None
+            else:
+                prev_uptime = int(prev_uptime)
+        # Prefer last assignment uptime when available via resolution meta path later.
+        self._hardware.apply_poll_summaries(
+            hardware_resolution,
+            device=device,
+            counter_raw=raw_counter_int,
+            counter_delta=max(0, counter_delta_val),
+            previous_uptime_ms=prev_uptime,
+            success_at=recorded_at if isinstance(recorded_at, datetime) else None,
+        )
 
         chip_health = self._chip_health_from_driver(device)
         installed_version = self._extract_firmware_version(reading)

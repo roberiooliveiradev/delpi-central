@@ -39,6 +39,14 @@ Compatibilidade no MFE espelha a API: `{ firmwareKey } ∪ driverKey de todas as
 
 Legenda: `HubCanvasLegend` (+ modo vínculo contextual). Ajuda: `PP_HELP.hub.link*` / `edge*`.
 
+## Ponto lógico vs hardware físico
+
+- `devices` = **ponto lógico** (IP, binding, nome, deep link). Troca de placa **não** cria novo device.
+- Hardware físico = `hardware_units` + `device_hardware_assignments` (histórico de MAC/`hardwareUid`).
+- Poll resolve identidade **antes** de restore/continuidade do contador; replacement ≠ power-loss.
+- UI: aba **Hardware** no detalhe do IoT; canvas sem MAC permanente no node.
+- Soft/hard delete do IoT: preflight deve contar assignments; **não** CASCADE para `hardware_units` (entidade independente).
+
 ## Lifecycle — Desativar/Arquivar vs Excluir permanentemente
 
 Decisão de produto explícita: hard delete é permitido, **dependency-aware**.

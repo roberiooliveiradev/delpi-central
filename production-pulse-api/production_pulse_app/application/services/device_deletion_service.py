@@ -47,6 +47,8 @@ class DeviceDeletionService:
                 "rollups": deps["rollups"],
                 "commands": deps["commands"],
                 "otaTargets": deps["otaTargets"],
+                "hardwareAssignments": deps.get("hardwareAssignments", 0),
+                "hardwareEvents": deps.get("hardwareEvents", 0),
             },
             "displayName": row.get("name"),
             "id": str(device_id),

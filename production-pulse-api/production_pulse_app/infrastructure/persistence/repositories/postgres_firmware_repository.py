@@ -373,7 +373,8 @@ _TARGET_COLUMNS = """
     id, job_id, device_id, status, from_version, to_version, error_code,
     artifact_token, artifact_token_expires_at, authorized_at, started_at, finished_at,
     created_at, updated_at, bytes_received, bytes_total, progress_percent,
-    wake_status, wake_attempted_at, wake_acknowledged_at, wake_error_code
+    wake_status, wake_attempted_at, wake_acknowledged_at, wake_error_code,
+    hardware_assignment_id
 """
 
 
@@ -455,11 +456,22 @@ class PostgresFirmwareUpdateJobRepository:
                         target_status = "authorized" if authorize_now else "pending"
                         authorized_at = datetime.now(timezone.utc) if authorize_now else None
                         cur.execute(
+                            """
+                            SELECT id FROM production_pulse.device_hardware_assignments
+                            WHERE device_id = %s AND effective_to IS NULL
+                            LIMIT 1
+                            """,
+                            (target["device_id"],),
+                        )
+                        assignment_row = cur.fetchone()
+                        assignment_id = assignment_row["id"] if assignment_row else None
+                        cur.execute(
                             f"""
                             INSERT INTO production_pulse.firmware_update_targets (
-                                job_id, device_id, status, from_version, to_version, authorized_at
+                                job_id, device_id, status, from_version, to_version, authorized_at,
+                                hardware_assignment_id
                             )
-                            VALUES (%s, %s, %s, %s, %s, %s)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s)
                             RETURNING {_TARGET_COLUMNS}
                             """,
                             (
@@ -469,6 +481,7 @@ class PostgresFirmwareUpdateJobRepository:
                                 target.get("from_version"),
                                 target["to_version"],
                                 authorized_at,
+                                assignment_id,
                             ),
                         )
                 conn.commit()
@@ -981,3 +994,32 @@ class PostgresFirmwareUpdateJobRepository:
                     (list(_OPEN_TARGET_STATUSES),),
                 )
                 return [dict(row) for row in cur.fetchall()]
+
+    def fail_open_targets_for_device(
+        self,
+        device_id: UUID,
+        *,
+        error_code: str,
+        error_message: str | None = None,
+    ) -> int:
+        """Fail all open OTA targets for a device (e.g. physical hardware replaced)."""
+        del error_message
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE production_pulse.firmware_update_targets
+                    SET status = 'failed',
+                        error_code = %s,
+                        finished_at = NOW(),
+                        updated_at = NOW(),
+                        artifact_token = NULL,
+                        artifact_token_expires_at = NULL
+                    WHERE device_id = %s
+                      AND status = ANY(%s)
+                    """,
+                    (error_code, device_id, list(_OPEN_TARGET_STATUSES)),
+                )
+                count = cur.rowcount
+            conn.commit()
+        return int(count or 0)

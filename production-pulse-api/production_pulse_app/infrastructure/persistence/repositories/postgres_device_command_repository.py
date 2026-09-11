@@ -10,7 +10,7 @@ from production_pulse_app.infrastructure.persistence.plugins_postgres_connection
 )
 
 _COMMAND_COLUMNS = """
-    id, device_id, command_key, issued_by, success, error_message,
+    id, device_id, hardware_assignment_id, command_key, issued_by, success, error_message,
     request_payload, response_payload, created_at
 """
 
@@ -26,20 +26,22 @@ class PostgresDeviceCommandRepository:
         error_message: str | None = None,
         request_payload: dict[str, Any] | None = None,
         response_payload: dict[str, Any] | None = None,
+        hardware_assignment_id: UUID | None = None,
     ) -> dict[str, Any]:
         with plugins_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     f"""
                     INSERT INTO production_pulse.device_commands (
-                        device_id, command_key, issued_by, success, error_message,
+                        device_id, hardware_assignment_id, command_key, issued_by, success, error_message,
                         request_payload, response_payload
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING {_COMMAND_COLUMNS}
                     """,
                     (
                         device_id,
+                        hardware_assignment_id,
                         command_key,
                         issued_by,
                         success,

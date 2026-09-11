@@ -140,6 +140,21 @@ export const PP_HELP = {
     tabCommands: "Auditoria de comandos enviados ao hardware (zerar, +/−).",
     tabFirmware:
       "Versão OTA instalada/alvo, última publicada e sketch resolvido por versão exacta (nunca latest como instalado).",
+    tabHardware:
+      "Placa física atual neste ponto lógico, histórico de substituições (MAC/UID) e golpes por hardware.",
+    hardwareCurrent:
+      "Hardware físico ativo neste ponto: MAC, UID estável, firmware e totais acumulados nesta instalação.",
+    hardwareHistory:
+      "Placas anteriores neste ponto. Expanda para ver totais e registrar motivo da substituição.",
+    hardwareUid:
+      "Identificador estável do silício (chip ID / eFuse). Não muda com reboot — muda só se trocar a placa.",
+    macAddress: "Endereço MAC observado na rede durante esta instalação.",
+    installedTime: "Tempo em que esta placa permaneceu (ou permanece) instalada neste ponto.",
+    onlineTime:
+      "Soma aproximada de tempo online estimado pelos polls bem-sucedidos nesta instalação.",
+    counterOnHardware: "Golpes (delta) atribuídos a esta placa enquanto esteve neste ponto.",
+    legacyUnidentified:
+      "Leituras anteriores ao início da rastreabilidade não têm MAC/UID — o total legado fica separado.",
     firmwareEmpty: "Nenhum sketch disponível para esta versão.",
     firmwareInstalledSource:
       "Sketch da versão exata instalada no cadastro — resolvido no catálogo de firmwares.",

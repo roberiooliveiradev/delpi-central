@@ -11,7 +11,7 @@ from production_pulse_app.infrastructure.persistence.plugins_postgres_connection
 )
 
 _READING_COLUMNS = """
-    id, device_id, metrics, delta_metrics, meta, source, recorded_at, created_at
+    id, device_id, hardware_assignment_id, metrics, delta_metrics, meta, source, recorded_at, created_at
 """
 
 
@@ -25,6 +25,7 @@ class PostgresDeviceReadingRepository:
         meta: dict[str, Any],
         source: str,
         recorded_at: datetime | None = None,
+        hardware_assignment_id: UUID | None = None,
     ) -> dict[str, Any]:
         with plugins_connection() as conn:
             with conn.cursor() as cur:
@@ -32,13 +33,14 @@ class PostgresDeviceReadingRepository:
                     cur.execute(
                         f"""
                         INSERT INTO production_pulse.readings (
-                            device_id, metrics, delta_metrics, meta, source
+                            device_id, hardware_assignment_id, metrics, delta_metrics, meta, source
                         )
-                        VALUES (%s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s)
                         RETURNING {_READING_COLUMNS}
                         """,
                         (
                             device_id,
+                            hardware_assignment_id,
                             Json(metrics),
                             Json(delta_metrics),
                             Json(meta),
@@ -49,13 +51,14 @@ class PostgresDeviceReadingRepository:
                     cur.execute(
                         f"""
                         INSERT INTO production_pulse.readings (
-                            device_id, metrics, delta_metrics, meta, source, recorded_at
+                            device_id, hardware_assignment_id, metrics, delta_metrics, meta, source, recorded_at
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                         RETURNING {_READING_COLUMNS}
                         """,
                         (
                             device_id,
+                            hardware_assignment_id,
                             Json(metrics),
                             Json(delta_metrics),
                             Json(meta),

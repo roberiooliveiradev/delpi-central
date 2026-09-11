@@ -1006,6 +1006,84 @@
   gap: var(--pp-section-gap, 1rem);
 }
 
+.dashboard-production-pulse .pp-hardware-legacy {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--pp-border) 80%, transparent);
+  background: color-mix(in srgb, var(--pp-border) 14%, transparent);
+}
+
+.dashboard-production-pulse .pp-hardware-legacy p {
+  margin: 0;
+  font-size: var(--pp-font-sm, 13px);
+  color: var(--pp-text-muted, var(--pp-muted, inherit));
+}
+
+.dashboard-production-pulse .pp-hardware-summary {
+  margin: 0 0 0.75rem;
+}
+
+.dashboard-production-pulse .pp-hardware-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dashboard-production-pulse .pp-hardware-item {
+  border: 1px solid color-mix(in srgb, var(--pp-border) 85%, transparent);
+  border-radius: 0.45rem;
+  overflow: hidden;
+}
+
+.dashboard-production-pulse .pp-hardware-item__toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.dashboard-production-pulse .pp-hardware-item__toggle:hover {
+  background: color-mix(in srgb, var(--pp-accent, var(--primary)) 6%, transparent);
+}
+
+.dashboard-production-pulse .pp-hardware-item__title {
+  font-weight: 600;
+}
+
+.dashboard-production-pulse .pp-hardware-item__meta {
+  flex: 1 1 auto;
+  font-size: var(--pp-font-sm, 13px);
+  color: var(--pp-text-muted, var(--pp-muted, inherit));
+}
+
+.dashboard-production-pulse .pp-hardware-item__body {
+  padding: 0 0.75rem 0.75rem;
+  border-top: 1px solid color-mix(in srgb, var(--pp-border) 70%, transparent);
+}
+
+.dashboard-production-pulse .pp-hardware-meta-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.dashboard-production-pulse .pp-hardware-meta-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .pp-detail-status-banner {
   display: flex;
   flex-direction: column;

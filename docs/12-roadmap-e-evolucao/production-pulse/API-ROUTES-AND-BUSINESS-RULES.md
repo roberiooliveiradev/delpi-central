@@ -42,8 +42,10 @@
 | `POST` | `/devices/{id}/disable` | `devices.manage` + filial | Desativar (canônico) `enabled=false` |
 | `POST` | `/devices/{id}/enable` | `devices.manage` + filial | Reativar `enabled=true` |
 | `DELETE` | `/devices/{id}` | `devices.manage` + filial | Alias legado = desativar (R8) |
-| `GET` | `/devices/{id}/deletion-impact` | `devices.manage` + filial | Preflight hard delete (contagens + blockers) |
-| `DELETE` | `/devices/{id}/permanent` | `devices.manage` + filial | Hard delete (CASCADE bindings/readings/…; bloqueia OTA ativa) |
+| `GET` | `/devices/{id}/deletion-impact` | `devices.manage` + filial | Preflight hard delete (contagens + blockers; inclui assignments/events) |
+| `DELETE` | `/devices/{id}/permanent` | `devices.manage` + filial | Hard delete (CASCADE bindings/readings/assignments; **não** CASCADE `hardware_units`; bloqueia OTA ativa) |
+| `GET` | `/devices/{id}/hardware-history` | `devices.view` + filial | Histórico físico: current + history + summary + events |
+| `PATCH` | `/devices/{id}/hardware-assignments/{assignmentId}` | `devices.manage` + filial | Motivo/notas de substituição |
 
 ### 1.5 Binding (amarração)
 
@@ -64,16 +66,18 @@
 | `POST` | `/devices/poll-all` | `devices.manage` | Poll em massa (só com binding); query `branch`, `role` |
 | `GET` | `/devices/{id}/readings` | `devices.view` | Histórico; query `from`, `to`, `metric`, `page`, `pageSize` (máx 500), `sampleIntervalMs` (R45), `resolution=raw\|hour\|day` (R50, default `raw`) |
 
-**Poll OK (R14 + continuidade + P3):**
+**Poll OK (R14 + continuidade + P3 + hardware traceability V017):**
 
-1. Driver `read`  
-2. Se métrica monotônica caiu **sem** comando recente → restore hardware/`set` ou offset software (R37)  
-3. Floor ≥ `counterSet.min` (R36)  
-4. `delta_metrics` para `monotonic:true` (R16)  
-5. Atualiza `last_seen_at` / `last_metrics` (R47)  
-6. Insert `readings` **somente** se R46 (mudança/heartbeat) ou caminho de restore materializado; comandos → R48  
+1. Driver `read` (contador + identidade mínima quando disponível; fallback `/api/status` só se legado)  
+2. **Resolver hardware** (`DeviceHardwareIdentityService`) — first / same / replacement / network / legacy  
+3. Se métrica monotônica caiu **sem** comando recente **e** mesmo hardware → restore hardware/`set` ou offset software (R37)  
+4. Se **replacement** → **não** executar `hardware_set`; preservar contador lógico; nova assignment  
+5. Floor ≥ `counterSet.min` (R36)  
+6. `delta_metrics` para `monotonic:true` (R16); acumular summary na assignment  
+7. Atualiza `last_seen_at` / `last_metrics` / `controller_code` cache (R47)  
+8. Insert `readings` com `hardware_assignment_id` quando houver assignment (legado NULL); R46/R48 inalterados  
 
-**Live:** mesmos passos de continuity/floor **sem** insert (exceto se no futuro enrich só em memória).
+**Live:** continuity/floor **sem** insert; identidade não abre assignment neste path.
 
 ### 1.7 Comandos e teste
 

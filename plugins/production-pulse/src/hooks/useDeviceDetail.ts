@@ -214,4 +214,5 @@ export const DEVICE_DETAIL_NAV: DeviceDetailNavItem[] = [
   { id: "history", label: "Histórico" },
   { id: "commands", label: "Comandos" },
   { id: "firmware", label: "Firmware" },
+  { id: "hardware", label: "Hardware" },
 ];

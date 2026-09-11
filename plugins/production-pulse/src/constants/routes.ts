@@ -4,7 +4,13 @@ import type { OperatorAnchorFilter } from "../types/operator";
 export const PRODUCTION_PULSE_BASE_PATH = "/apps/production-pulse";
 export const PRODUCTION_PULSE_OPERATOR_BASE = `${PRODUCTION_PULSE_BASE_PATH}/operator`;
 
-const DEVICE_DETAIL_TABS: DeviceDetailTab[] = ["overview", "history", "commands", "firmware"];
+const DEVICE_DETAIL_TABS: DeviceDetailTab[] = [
+  "overview",
+  "history",
+  "commands",
+  "firmware",
+  "hardware",
+];
 
 const OPERATOR_ANCHOR_FILTERS: OperatorAnchorFilter[] = [
   "",

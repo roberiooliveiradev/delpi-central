@@ -37,6 +37,9 @@ from production_pulse_app.infrastructure.content.device_api_messages_content_ser
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_command_repository import (
     PostgresDeviceCommandRepository,
 )
+from production_pulse_app.infrastructure.persistence.repositories.postgres_device_hardware_assignment_repository import (
+    PostgresDeviceHardwareAssignmentRepository,
+)
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_reading_repository import (
     PostgresDeviceReadingRepository,
 )
@@ -45,7 +48,6 @@ from production_pulse_app.infrastructure.persistence.repositories.postgres_devic
     PostgresDeviceRepository,
 )
 
-
 class DeviceCommandService:
     def __init__(
         self,
@@ -53,11 +55,13 @@ class DeviceCommandService:
         command_repository: PostgresDeviceCommandRepository | None = None,
         reading_repository: PostgresDeviceReadingRepository | None = None,
         rollup_service: DeviceReadingRollupService | None = None,
+        assignment_repository: PostgresDeviceHardwareAssignmentRepository | None = None,
     ) -> None:
         self._devices = device_repository or PostgresDeviceRepository()
         self._commands = command_repository or PostgresDeviceCommandRepository()
         self._readings = reading_repository or PostgresDeviceReadingRepository()
         self._rollups = rollup_service or DeviceReadingRollupService()
+        self._assignments = assignment_repository or PostgresDeviceHardwareAssignmentRepository()
         self._registry = get_device_driver_registry()
 
     def _require_device(self, device_id: UUID) -> dict[str, Any]:
@@ -110,6 +114,8 @@ class DeviceCommandService:
                 result = CommandResult(success=False, error_code=exc.code)
 
         user_error_message = self._resolve_command_error_message(result)
+        active_assignment = self._assignments.get_active_for_device(device_id)
+        assignment_id = UUID(str(active_assignment["id"])) if active_assignment else None
         audit_row = self._commands.insert(
             device_id,
             command_key=normalized_key,
@@ -118,6 +124,7 @@ class DeviceCommandService:
             error_message=user_error_message,
             request_payload=driver_payload if normalized_key == "set" else (payload or {}),
             response_payload=result.response_payload,
+            hardware_assignment_id=assignment_id,
         )
 
         reading_id = None
@@ -195,6 +202,7 @@ class DeviceCommandService:
                 delta_metrics=delta_metrics,
                 meta=meta,
                 source="command",
+                hardware_assignment_id=assignment_id,
             )
             self._rollups.apply_persisted_reading(
                 device_id,

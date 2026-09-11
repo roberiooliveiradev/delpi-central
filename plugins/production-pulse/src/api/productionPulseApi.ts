@@ -228,6 +228,89 @@ export async function fetchDeviceCommands(
   return payload.data;
 }
 
+export type HardwareAssignment = {
+  assignmentId: string;
+  hardwareUnitId: string;
+  hardwareUid?: string | null;
+  macAddress?: string | null;
+  controllerCode?: string | null;
+  identityConfidence?: string | null;
+  ipAddress?: string | null;
+  effectiveFrom?: string | null;
+  effectiveTo?: string | null;
+  active: boolean;
+  firstFirmwareVersion?: string | null;
+  lastFirmwareVersion?: string | null;
+  counterDelta: number;
+  onlineSeconds: number;
+  installedSeconds?: number | null;
+  rebootCount: number;
+  replacementReason?: string | null;
+  replacementNotes?: string | null;
+  firstCounterRaw?: number | null;
+  lastCounterRaw?: number | null;
+  logicalCounterAtStart?: number | null;
+  logicalCounterAtEnd?: number | null;
+};
+
+export type HardwareHistorySummary = {
+  hardwareCount: number;
+  macCount: number;
+  replacementCount: number;
+  assignmentCount: number;
+  legacyUnidentifiedCounterDelta: number;
+  traceabilityStartedAt?: string | null;
+};
+
+export type HardwareHistoryEvent = {
+  id: string;
+  eventType: string;
+  assignmentId?: string | null;
+  hardwareUnitId?: string | null;
+  payload?: Record<string, unknown>;
+  createdAt?: string | null;
+};
+
+export type DeviceHardwareHistory = {
+  deviceId: string;
+  current: HardwareAssignment | null;
+  history: HardwareAssignment[];
+  summary: HardwareHistorySummary;
+  events: HardwareHistoryEvent[];
+};
+
+export type PatchHardwareAssignmentBody = {
+  replacementReason?: string | null;
+  replacementNotes?: string | null;
+};
+
+export async function fetchDeviceHardwareHistory(
+  deviceId: string,
+  options: { signal?: AbortSignal } = {},
+): Promise<DeviceHardwareHistory> {
+  const payload = await httpGet<ApiEnvelope<DeviceHardwareHistory>>(
+    `${PRODUCTION_PULSE_API_BASE}/devices/${encodeURIComponent(deviceId)}/hardware-history`,
+    { signal: options.signal },
+  );
+  return payload.data;
+}
+
+export async function patchDeviceHardwareAssignment(
+  deviceId: string,
+  assignmentId: string,
+  body: PatchHardwareAssignmentBody,
+): Promise<HardwareAssignment> {
+  const payload = await httpJson<ApiEnvelope<HardwareAssignment>>(
+    "PATCH",
+    `${PRODUCTION_PULSE_API_BASE}/devices/${encodeURIComponent(deviceId)}/hardware-assignments/${encodeURIComponent(assignmentId)}`,
+    {
+      replacementReason: body.replacementReason,
+      replacementNotes: body.replacementNotes,
+    },
+  );
+  return payload.data;
+}
+
 export async function executeDeviceCommand(
   deviceId: string,
   commandKey: string,

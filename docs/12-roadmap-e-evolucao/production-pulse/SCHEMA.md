@@ -6,10 +6,22 @@
 
 ## Princípios
 
-1. **Dispositivo IoT** (`devices`) é a entidade central — IP, driver, leituras.
-2. **Amarração** (`device_bindings`) diz **onde** o sensor está no chão de fábrica — CT, máquina, equipamento ou avulso.
-3. **CT TOTVS** é **atalho opcional** — enriquece contexto PCP; **não** é obrigatório para ventilador, motor auxiliar, etc.
-4. **Leituras genéricas** — `metrics` JSONB (golpes, rpm, °C, …) conforme `driver_key`.
+1. **Ponto lógico** (`devices`) é a entidade central estável — IP atual, driver, binding, leituras lógicas e deep links. **Não** é a identidade exclusiva da placa física.
+2. **Hardware físico** (`hardware_units` + `device_hardware_assignments`) rastreia qual silício/MAC ocupou o ponto ao longo do tempo (V017+).
+3. **Amarração** (`device_bindings`) diz **onde** o ponto está no chão de fábrica — CT, máquina, equipamento ou avulso. Troca de placa **não** cria novo binding.
+4. **CT TOTVS** é **atalho opcional** — enriquece contexto PCP; **não** é obrigatório para ventilador, motor auxiliar, etc.
+5. **Leituras genéricas** — `metrics` JSONB (golpes, rpm, °C, …) conforme `driver_key`; novas leituras podem carregar `hardware_assignment_id` (legado = NULL).
+
+```text
+PLACEMENT / BINDING
+        │
+        ▼
+DEVICE LÓGICO (devices.id estável)
+        │
+        ├── Assignment A → Hardware Unit A (MAC A)
+        ├── Assignment B → Hardware Unit B (MAC B)
+        └── Assignment C → Hardware Unit C (MAC C)
+```
 
 ---
 
@@ -17,7 +29,7 @@
 
 ### `devices`
 
-Cadastro de **hardware** na rede (ESP, gateway, futuro Modbus).
+Cadastro do **ponto lógico monitorado** na rede (ESP no IP, gateway, futuro Modbus). A placa física muda via assignments; `controller_code` é **cache do hardware ativo** (compat).
 
 | Coluna | Tipo | Notas |
 |--------|------|-------|
@@ -228,3 +240,35 @@ Identificador opaco para URL e agrupamento hub/picker. Gerado no save do binding
   }]
 }
 ```
+
+---
+
+## Hardware físico (V017)
+
+### `hardware_units`
+
+Placa física (silício). Independente do ponto lógico.
+
+| Coluna | Notas |
+|--------|-------|
+| `hardware_uid` | UNIQUE parcial WHERE NOT NULL — identidade canônica |
+| `current_mac_address` | MAC normalizado `AA:BB:…` |
+| `controller_code` | Compat / fallback |
+| `identity_confidence` | `strong` \| `controller_code` \| `mac_fallback` \| `legacy_unknown` |
+| `identity_source` | `firmware_hardware_uid` \| `controller_code` \| `mac` \| `legacy` \| `manual` |
+
+### `device_hardware_assignments`
+
+Ocupação temporal: 1 ativa por `device_id` e 1 ativa por `hardware_unit_id` (índices parciais).
+
+Snapshots de IP/MAC/controller; summaries `counter_delta_total`, `online_seconds_total`, `reboot_count`; FW first/last.
+
+FK: `device_id` CASCADE; `hardware_unit_id` **RESTRICT** (unit não morre com o device).
+
+### `device_hardware_events`
+
+Eventos discretos (`hardware_detected`, `hardware_replaced`, `network_identity_changed`, …).
+
+### Colunas nullable
+
+`readings.hardware_assignment_id`, `device_commands.hardware_assignment_id`, `firmware_update_targets.hardware_assignment_id` — SET NULL; leituras antigas permanecem NULL (sem backfill).

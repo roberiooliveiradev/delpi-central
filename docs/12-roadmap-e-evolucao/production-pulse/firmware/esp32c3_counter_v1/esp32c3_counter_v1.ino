@@ -960,7 +960,15 @@ long parseContadorDoBody() {
 void enviarContador() {
   maybeNoteBackendContactFromHeader();
   enviarCors();
-  server.send(200, "application/json", "{\"contador\":" + String(contador) + "}");
+  String json =
+    "{"
+    "\"contador\":" + String(contador) + ","
+    "\"hardwareUid\":\"" + controllerCode + "\","
+    "\"controllerCode\":\"" + controllerCode + "\","
+    "\"codigoControlador\":\"" + controllerCode + "\","
+    "\"mac\":\"" + stationMacAddress + "\""
+    "}";
+  server.send(200, "application/json", json);
 }
 
 void enviarStatus() {
@@ -971,6 +979,7 @@ void enviarStatus() {
   bool wifiOk = WiFi.status() == WL_CONNECTED;
   String json =
     "{"
+    "\"hardwareUid\":\"" + controllerCode + "\","
     "\"codigoControlador\":\"" + controllerCode + "\","
     "\"controllerCode\":\"" + controllerCode + "\","
     "\"equipamento\":\"" + controllerCode + "\","

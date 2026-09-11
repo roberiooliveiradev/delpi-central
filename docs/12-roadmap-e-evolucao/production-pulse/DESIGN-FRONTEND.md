@@ -161,6 +161,7 @@ Import: `from "@delpi/plugin-ui/index"`. Factory com prefixo `pp` onde existir h
 | `StateBox` | Erro API / permissão / load estrutural |
 | `PpFloatingNotices` | Feedback transitório de ação (1 evento = 1 notice; ver [ADMIN-HUB-OTA-STABILIZATION.md](./ADMIN-HUB-OTA-STABILIZATION.md)) |
 | `PermanentDeleteDialog` | Hard delete dependency-aware: preflight + typed confirm (`PpNativeTextField`); soft = `PpConfirmDialog` |
+| `DeviceHardwareTab` | Aba Hardware do detalhe IoT: placa atual, histórico de assignments, legado não identificado |
 | `OtaStatusIndicator` / `OtaTargetProgress` | Taxonomia visual OTA (ícone+label+barra real); owner `resolveOtaVisualState` |
 | `PpOtaProgressBar` / `PpProgressTracker` | Progresso quantitativo / lifecycle no detalhe |
 

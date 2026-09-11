@@ -138,6 +138,11 @@ describe("parseProductionPulseRoute", () => {
       deviceId: "abc-123",
       tab: "firmware",
     });
+    expect(parseProductionPulseRoute("/apps/production-pulse/devices/abc-123", "?tab=hardware")).toEqual({
+      kind: "deviceDetail",
+      deviceId: "abc-123",
+      tab: "hardware",
+    });
     expect(parseDeviceDetailTab("invalid")).toBe("overview");
   });
 
@@ -148,6 +153,9 @@ describe("parseProductionPulseRoute", () => {
     );
     expect(productionPulseDeviceDetailPath("abc-123", "firmware")).toBe(
       "/apps/production-pulse/devices/abc-123?tab=firmware",
+    );
+    expect(productionPulseDeviceDetailPath("abc-123", "hardware")).toBe(
+      "/apps/production-pulse/devices/abc-123?tab=hardware",
     );
   });
 

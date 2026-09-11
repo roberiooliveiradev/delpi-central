@@ -6,6 +6,10 @@ from uuid import uuid4
 
 from production_pulse_app.application.services.device_poll_service import DevicePollService
 from production_pulse_app.domain.models.device_reading import DeviceReading
+from production_pulse_app.domain.services.hardware_identity_types import (
+    HardwareIdentityOutcome,
+    HardwareResolutionResult,
+)
 
 
 def test_poll_and_persist_syncs_firmware_version_from_status_identity(monkeypatch):
@@ -28,12 +32,21 @@ def test_poll_and_persist_syncs_firmware_version_from_status_identity(monkeypatc
     bindings.get_active.return_value = {"id": uuid4()}
     readings.latest_recorded_at.return_value = None
 
+    hw = MagicMock()
+    hw.resolve_for_poll.return_value = HardwareResolutionResult(
+        outcome=HardwareIdentityOutcome.SAME_HARDWARE,
+        assignment_id=uuid4(),
+        hardware_unit_id=uuid4(),
+        allow_counter_restore=True,
+    )
+
     service = DevicePollService(
         device_repository=devices,
         binding_repository=bindings,
         reading_repository=readings,
         firmware_job_service=MagicMock(),
         rollup_service=MagicMock(),
+        hardware_identity_service=hw,
     )
     monkeypatch.setattr(service, "_has_recent_intentional_decrease", lambda *_a, **_k: False)
     monkeypatch.setattr(service, "_maybe_hardware_restore_counter", lambda *_a, **_k: None)

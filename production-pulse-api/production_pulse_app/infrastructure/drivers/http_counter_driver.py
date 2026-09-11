@@ -38,17 +38,30 @@ _CAPABILITIES = frozenset(
 def parse_controller_identity(body: Any) -> dict[str, Any]:
     if not isinstance(body, dict):
         return {}
-    code = body.get("controllerCode") or body.get("codigoControlador") or body.get("equipamento")
+    from production_pulse_app.domain.services.hardware_identity_normalize_service import (
+        extract_identity_fields,
+    )
+
+    fields = extract_identity_fields(body)
     payload: dict[str, Any] = {}
-    if code is not None and str(code).strip():
-        payload["controllerCode"] = str(code).strip()
-    mac = body.get("mac")
-    if mac is not None and str(mac).strip():
-        payload["mac"] = str(mac).strip()
+    if fields["controller_code"]:
+        payload["controllerCode"] = fields["controller_code"]
+    if fields["mac_address"]:
+        payload["mac"] = fields["mac_address"]
+    if fields["hardware_uid"]:
+        payload["hardwareUid"] = fields["hardware_uid"]
     ip = body.get("ip")
     if ip is not None and str(ip).strip():
         payload["ip"] = str(ip).strip()
-    for key in ("firmwareVersion", "previousFirmwareVersion", "lastOtaTargetVersion", "uptimeMs", "freeHeap", "rssi", "wifiConnected"):
+    for key in (
+        "firmwareVersion",
+        "previousFirmwareVersion",
+        "lastOtaTargetVersion",
+        "uptimeMs",
+        "freeHeap",
+        "rssi",
+        "wifiConnected",
+    ):
         if key in body and body.get(key) is not None:
             payload[key] = body.get(key)
     return payload
@@ -203,7 +216,18 @@ class HttpCounterDriver:
             timeout_seconds=self._timeout_for(device),
         )
         counter = parse_counter_response(body)
-        return DeviceReading(metrics={"counter": counter})
+        identity = parse_controller_identity(body)
+        meta: dict[str, Any] = {}
+        if identity:
+            meta.update(identity)
+        # Legacy firmwares return only contador — pull identity from status once.
+        if not (
+            meta.get("hardwareUid") or meta.get("controllerCode") or meta.get("mac")
+        ):
+            status_identity = self._fetch_identity(device)
+            if status_identity:
+                meta.update(status_identity)
+        return DeviceReading(metrics={"counter": counter}, meta=meta)
 
     def wake_ota_check(self, device: dict[str, Any]) -> CommandResult:
         """Best-effort POST /api/ota/check-now — not part of operator command catalog."""

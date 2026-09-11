@@ -400,7 +400,9 @@ class PostgresDeviceRepository:
                       (SELECT COUNT(*) FROM production_pulse.firmware_update_targets WHERE device_id = %s) AS ota_targets,
                       (SELECT COUNT(*) FROM production_pulse.firmware_update_targets
                          WHERE device_id = %s
-                           AND status = ANY(%s)) AS active_ota_targets
+                           AND status = ANY(%s)) AS active_ota_targets,
+                      (SELECT COUNT(*) FROM production_pulse.device_hardware_assignments WHERE device_id = %s) AS hardware_assignments,
+                      (SELECT COUNT(*) FROM production_pulse.device_hardware_events WHERE device_id = %s) AS hardware_events
                     """,
                     (
                         device_id,
@@ -410,6 +412,8 @@ class PostgresDeviceRepository:
                         device_id,
                         device_id,
                         ["pending", "authorized", "downloading", "applying"],
+                        device_id,
+                        device_id,
                     ),
                 )
                 row = cur.fetchone()
@@ -420,6 +424,8 @@ class PostgresDeviceRepository:
             "commands": int(row["commands"] or 0),
             "otaTargets": int(row["ota_targets"] or 0),
             "activeOtaTargets": int(row["active_ota_targets"] or 0),
+            "hardwareAssignments": int(row["hardware_assignments"] or 0),
+            "hardwareEvents": int(row["hardware_events"] or 0),
         }
 
     def list_ota_job_ids_for_device(self, device_id: UUID) -> list[UUID]:
@@ -511,6 +517,21 @@ class PostgresDeviceRepository:
         if row is None:
             raise DeviceNotFoundError(str(device_id))
         return dict(row)
+
+    def update_controller_code(self, device_id: UUID, controller_code: str) -> None:
+        """Cache active hardware controller_code on the logical device (compat)."""
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE production_pulse.devices
+                    SET controller_code = %s,
+                        updated_at = NOW()
+                    WHERE id = %s
+                    """,
+                    (controller_code, device_id),
+                )
+            conn.commit()
 
     def update_next_poll_at(self, device_id: UUID, *, next_poll_at: datetime) -> None:
         with plugins_connection() as conn:

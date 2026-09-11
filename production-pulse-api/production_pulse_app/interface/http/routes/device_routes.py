@@ -36,6 +36,9 @@ from production_pulse_app.application.services.device_service import (
     DeviceService,
 )
 from production_pulse_app.application.services.device_deletion_service import DeviceDeletionService
+from production_pulse_app.application.services.device_hardware_history_service import (
+    DeviceHardwareHistoryService,
+)
 from production_pulse_app.core.responses import error, success
 from production_pulse_app.domain.errors import (
     BindingValidationError,
@@ -72,6 +75,7 @@ from production_pulse_app.interface.http.schemas.device_schemas import (
 router = APIRouter(prefix="/devices", tags=["Devices"])
 _service = DeviceService()
 _deletion_service = DeviceDeletionService()
+_hardware_history_service = DeviceHardwareHistoryService()
 _binding_service = DeviceBindingService()
 _firmware_link_service = DeviceFirmwareLinkService()
 _firmware_jobs_service = FirmwareUpdateJobService()
@@ -490,6 +494,46 @@ async def delete_device_permanently(request: Request, device_id: UUID):
     try:
         data = _deletion_service.delete_permanently(
             parse_device_id(str(device_id)),
+            actor_sub=_actor_sub(request),
+        )
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.get("/{device_id}/hardware-history", operation_id="get_device_hardware_history")
+async def get_device_hardware_history(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="view")
+    if denied is not None:
+        return denied
+    try:
+        data = _hardware_history_service.get_history(parse_device_id(str(device_id)))
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.patch(
+    "/{device_id}/hardware-assignments/{assignment_id}",
+    operation_id="patch_device_hardware_assignment",
+)
+async def patch_device_hardware_assignment(
+    request: Request,
+    device_id: UUID,
+    assignment_id: UUID,
+):
+    _, denied = _load_device_for_request(request, device_id, action="manage")
+    if denied is not None:
+        return denied
+    body = await request.json() if request.headers.get("content-type", "").startswith("application/json") else {}
+    if not isinstance(body, dict):
+        body = {}
+    try:
+        data = _hardware_history_service.patch_assignment(
+            parse_device_id(str(device_id)),
+            assignment_id,
+            replacement_reason=body.get("replacementReason") or body.get("replacement_reason"),
+            replacement_notes=body.get("replacementNotes") or body.get("replacement_notes"),
             actor_sub=_actor_sub(request),
         )
         return success(data)

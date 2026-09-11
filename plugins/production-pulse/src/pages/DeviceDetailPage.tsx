@@ -19,6 +19,7 @@ import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import { PermanentDeleteDialog } from "../components/PermanentDeleteDialog";
 import { DeviceCommandsTab } from "../components/detail/DeviceCommandsTab";
 import { DeviceFirmwareTab } from "../components/detail/DeviceFirmwareTab";
+import { DeviceHardwareTab } from "../components/detail/DeviceHardwareTab";
 import { DeviceHistoryTab } from "../components/detail/DeviceHistoryTab";
 import { DeviceOverviewTab } from "../components/detail/DeviceOverviewTab";
 import { DetailStatusBanner } from "../components/detail/DetailStatusBanner";
@@ -128,7 +129,9 @@ export function DeviceDetailPage({
           ? PP_HELP.detail.tabHistory
           : item.id === "commands"
             ? PP_HELP.detail.tabCommands
-            : PP_HELP.detail.tabFirmware,
+            : item.id === "firmware"
+              ? PP_HELP.detail.tabFirmware
+              : PP_HELP.detail.tabHardware,
   }));
 
   const setTab = (nextTab: DeviceDetailTab) => {
@@ -384,6 +387,10 @@ export function DeviceDetailPage({
           suppressLocalPoll={suppressLocalOtaPoll}
           onOperationalNotice={onOperationalNotice}
         />
+      ) : null}
+
+      {tab === "hardware" ? (
+        <DeviceHardwareTab deviceId={deviceId} canManage={permissions.canManageDevices} />
       ) : null}
 
       <ResetCounterModal

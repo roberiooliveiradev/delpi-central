@@ -309,6 +309,16 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("components/detail/DeviceFirmwareTab.tsx")).toMatch(
       /productionPulseFirmwareLinksPath/,
     );
+    expect(readRelative("components/detail/DeviceHardwareTab.tsx")).toMatch(
+      /fetchDeviceHardwareHistory|hardware-history/,
+    );
+    expect(readRelative("components/detail/DeviceHardwareTab.tsx")).not.toMatch(/window\.confirm/);
+    expect(readRelative("hooks/useDeviceDetail.ts")).toMatch(
+      /DEVICE_DETAIL_NAV[\s\S]*id:\s*["']hardware["']/,
+    );
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/DeviceHardwareTab/);
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/tabHardware/);
+    expect(readRelative("api/productionPulseApi.ts")).toMatch(/hardware-history/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/disableDevice/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/deleteDevicePermanently/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/embedded/);
