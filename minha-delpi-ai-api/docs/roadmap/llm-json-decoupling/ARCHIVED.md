@@ -1,12 +1,49 @@
-# Arquivado — Ondas A–I
+# Histórico — Ondas A–I
 
-**Estado (2026-09-11):** Ondas **A–I** concluídas.  
-**Release A–H:** `globalReleasePass=true`.  
-**Onda I:** zero mapa lateral — gate `test_e10_zero_lateral_path_maps.py` PASS; inventário em [`evidence/e10-s1-lateral-path-maps-inventory.md`](./evidence/e10-s1-lateral-path-maps-inventory.md).
+**Estado em 2026-09-11:** este arquivo é **histórico**, não representa o aceite vigente do programa.  
+**Programa atual:** **REABERTO — Onda J**  
+**Plano ativo:** [`planos/11-corrective-cutover-generalization-cleanup.md`](./planos/11-corrective-cutover-generalization-cleanup.md)
 
-Domínio operacional: `ApiRouteDomainInferenceService` + `delpiMetadata.apiRouteDomain` no Action Catalog (stamp no import OpenAPI). Content do assistente sem `pathMarkers` / `pathToken` / `pathContains` / `pathRules` como mapa lateral.
+As Ondas A–I foram executadas e produziram evidências úteis, inclusive `globalReleasePass=true` em um candidate anterior. Uma auditoria posterior do código encontrou drifts materiais que invalidam o uso desses PASS como release do estado atual.
 
-- Plano: [`planos/10-zero-lateral-path-maps.md`](./planos/10-zero-lateral-path-maps.md)
-- Changelog: [`docs/changelog/2026-09-llm-json-decoupling.md`](../../changelog/2026-09-llm-json-decoupling.md)
+Principais motivos da reabertura:
 
-Não criar `.plan.md` paralelo; histórico permanece no Git.
+- mapa path→domain recriado em Python após remoção do JSON;
+- parameter strategy recriada por path/operationId;
+- continuidade multi-turn dependente de path-tail/operationId inventory;
+- registry `operationIds` residual como catálogo técnico;
+- semantic authority duplicada;
+- recommendations ainda com fallback/oracle estático;
+- capability metadata de efeito/risco inadequada;
+- Clean Architecture/DI residual;
+- credential defaults em smoke;
+- unknown-provider/metamorphic não reexecutados após o último diff material.
+
+Portanto:
+
+```text
+PASS A–I = evidência histórica do estado avaliado
+PASS A–I != PASS do candidate final atual
+```
+
+A documentação só volta a ser arquivada como concluída após a Onda J atingir:
+
+```text
+CUTOVER_RESULT = PASS
+GENERALIZATION_RESULT = PASS
+CLEANUP_RESULT = PASS
+COMPLETE_GATE = PASS
+VERIFY_FINAL = PASS
+FINAL_RESULT = PASS
+```
+
+Fontes vigentes:
+
+- [`README.md`](./README.md)
+- [`roadmap.md`](./roadmap.md)
+- [`prompt-cursor-execucao-corretiva.md`](./prompt-cursor-execucao-corretiva.md)
+- [`planos/11-corrective-cutover-generalization-cleanup.md`](./planos/11-corrective-cutover-generalization-cleanup.md)
+
+Histórico detalhado de execução permanece em [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) e no Git.
+
+Não criar `.plan.md` paralelo para o mesmo objetivo.
