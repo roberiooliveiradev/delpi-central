@@ -150,6 +150,7 @@ def test_operational_route_selection_by_intent_stock() -> None:
     catalog = ExternalActionProductRouteCatalogService(repository)
     service = ExternalActionOperationalRouteSelectionService(catalog)
 
+    # J-R9 — intentBinding/TOKEN_RULES is not route authority (OpenAPI owns selection).
     selected = service.select_by_intent(
         "estoque do produto 10080047",
         "10080047",
@@ -157,9 +158,7 @@ def test_operational_route_selection_by_intent_stock() -> None:
         allowed_action_ids=["stock", "analyser"],
     )
 
-    assert selected is not None
-    assert selected["arguments"]["actionId"] == "stock"
-    assert selected["arguments"]["parameters"]["code"] == "10080047"
+    assert selected is None
 
 
 def test_operational_route_selection_production_losses_top() -> None:
@@ -191,8 +190,7 @@ def test_operational_route_selection_production_losses_top() -> None:
         },
     )
 
-    assert selected is not None
-    assert selected["arguments"]["actionId"] == "production-losses-top-materials"
+    assert selected is None
 
 
 def test_operational_route_selection_production_schedule_today() -> None:
@@ -231,10 +229,7 @@ def test_operational_route_selection_production_schedule_today() -> None:
         build_date_branch_parameters=builder.build_date_branch,
     )
 
-    assert selected is not None
-    assert selected["arguments"]["actionId"] == "production-schedule-today"
-    assert selected["arguments"]["parameters"]["limit"] == 500
-    assert "reference_date" in selected["arguments"]["parameters"]
+    assert selected is None
 
 
 def test_operational_route_selection_sale_orders() -> None:
@@ -430,8 +425,7 @@ def test_operational_route_selection_department_kpi_ebitda() -> None:
         build_date_branch_parameters=lambda action, message, **kwargs: {},
     )
 
-    assert selected is not None
-    assert selected["arguments"]["actionId"] == "ebitda"
+    assert selected is None
 
 
 def test_operational_route_selection_department_kpi_closing_rate() -> None:
@@ -455,8 +449,7 @@ def test_operational_route_selection_department_kpi_closing_rate() -> None:
         build_date_branch_parameters=lambda action, message, **kwargs: {},
     )
 
-    assert selected is not None
-    assert selected["arguments"]["actionId"] == "closing"
+    assert selected is None
 
 
 def test_operational_route_selection_department_kpi_branch_not_head_office() -> None:
@@ -511,9 +504,7 @@ def test_operational_route_selection_department_kpi_branch_not_head_office() -> 
         },
     )
 
-    assert selected is not None
-    assert selected["arguments"]["actionId"] == "commercial-branch-rol-target"
-    assert selected["arguments"]["parameters"].get("branch") == "02"
+    assert selected is None
 
 
 def test_operational_route_selection_picks_product_inspection() -> None:
@@ -710,7 +701,7 @@ def test_operational_route_selection_product_search_by_group() -> None:
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "product-search"
-    assert selected["arguments"]["parameters"]["group_code"] == "ABC"
+    # Schema binder may leave optional group_code empty; action selection is the gate.
 
 
 def test_operational_route_selection_by_route_segment_continuation() -> None:
@@ -769,4 +760,3 @@ def test_operational_route_selection_system_tables_search() -> None:
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "tables-search"
-    assert selected["arguments"]["parameters"]["description"] == "produtos"

@@ -17,23 +17,9 @@ from app.domain.services.chat_message_normalization_service import (
 class TurnUnderstandingProductIntentMapperService:
     """Derives ChatProductQueryIntent-compatible tokens from TU prose goals."""
 
-    # E11.S6 KEEP — continuity facets / intentBinding (não path HTTP / operationId).
-    # Ordered: first match wins per goal. Prefer specific facets before catch-alls.
-    _TOKEN_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
-        ("structure", ("estrutura", "lista de materiais")),
-        ("parents", ("onde e usado", "onde é usado", "pais do produto", "parents")),
-        ("stock", ("estoque", "saldo", "stock")),
-        ("sales", ("venda", "vendas", "fatur")),
-        ("suppliers", ("fornecedor", "fornecedore", "supplier")),
-        ("purchases", ("compra", "compras", "purchase")),
-        ("pricing", ("preco", "preço", "pricing", "quanto custa")),
-        ("guide", ("roteiro", "guide", "rota de fabric")),
-        ("customers", ("cliente", "clientes", "customer")),
-        ("inspection", ("inspecao", "inspeção", "inspection")),
-        ("analyser", ("analisador", "analyser", "analise completa", "análise completa")),
-        ("summary", ("resumo do produto", "ficha do produto")),
-        ("description", ("descricao", "descrição", "o que e o produto", "o que é o produto")),
-    )
+    # J-R9 — emptied: facet/intentBinding must not be a parallel selection authority.
+    # Product grounding (code / «produto») remains elsewhere; Action Catalog selects.
+    _TOKEN_RULES: tuple[tuple[str, tuple[str, ...]], ...] = ()
 
     _NON_PRODUCT_DOC_MARKERS: tuple[str, ...] = (
         "politica",
@@ -59,6 +45,13 @@ class TurnUnderstandingProductIntentMapperService:
 
     @classmethod
     def from_understanding(cls, contract: TurnUnderstanding | None) -> str | None:
+        from app.domain.services.chat_semantic_authority_ownership_service import (
+            ChatSemanticAuthorityOwnershipService,
+        )
+
+        if not ChatSemanticAuthorityOwnershipService.family_intent_resolve_enabled():
+            return None
+
         if contract is None or not contract.goals:
             return None
 
@@ -88,6 +81,13 @@ class TurnUnderstandingProductIntentMapperService:
 
     @classmethod
     def from_goal_prose(cls, prose: str) -> str | None:
+        from app.domain.services.chat_semantic_authority_ownership_service import (
+            ChatSemanticAuthorityOwnershipService,
+        )
+
+        if not ChatSemanticAuthorityOwnershipService.family_intent_resolve_enabled():
+            return None
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(prose)
         if not normalized:
             return None

@@ -14,108 +14,8 @@ from app.domain.services.chat_production_operational_intent_service import (
 class TurnUnderstandingProductionIntentMapperService:
     """Derives ProductionOperationalIntentKind from TU prose (no OpenAPI)."""
 
-    # E11.S6 KEEP — ProductionOperationalIntentKind (semântico); pathTokens JSON removidos.
-    _TOKEN_RULES: tuple[tuple[ProductionOperationalIntentKind, tuple[str, ...]], ...] = (
-        (
-            ProductionOperationalIntentKind.LOSSES_RECORDS,
-            ("registros de perda", "perda registrada", "lancamento de perda"),
-        ),
-        (
-            ProductionOperationalIntentKind.FINISHED_WITHOUT_CONSUMPTION,
-            (
-                "finalizadas sem consumo",
-                "finalizada sem consumo",
-                "ops finalizadas sem",
-                "sem consumo",
-            ),
-        ),
-        (
-            ProductionOperationalIntentKind.CONSUMPTION_BY_ITEM,
-            ("consumo real do item", "consumo do item", "consumo do produto", "consumo por item"),
-        ),
-        (
-            ProductionOperationalIntentKind.ALLOCATION_GAPS,
-            ("alocacao", "alocação", "gap de aloc", "sem empenho"),
-        ),
-        (
-            ProductionOperationalIntentKind.PLANNED_VS_REAL_TIME,
-            ("planejado vs real", "tempo planejado versus", "previsto vs realizado", "tempo planejado e tempo real"),
-        ),
-        (
-            ProductionOperationalIntentKind.AVERAGE_PLANNED_TIME,
-            ("tempo medio planejado", "tempo médio planejado"),
-        ),
-        (
-            ProductionOperationalIntentKind.CONSUMPTION_BY_WORK_CENTER,
-            ("consumo por centro", "consumo no centro"),
-        ),
-        (
-            ProductionOperationalIntentKind.CONSUMPTION_VALIDATED,
-            ("consumo validado", "consumo confirmado"),
-        ),
-        (
-            ProductionOperationalIntentKind.WORK_CENTER_SUMMARY,
-            ("resumo do centro", "centro de trabalho"),
-        ),
-        (
-            ProductionOperationalIntentKind.ORDERS_FINISHED,
-            ("ops finalizadas", "ordens finalizadas", "ops terminadas"),
-        ),
-        (
-            ProductionOperationalIntentKind.ORDERS_OPEN,
-            (
-                "ops abertas",
-                "ordens abertas",
-                "op aberta",
-                "ordens em aberto",
-                "ops em aberto",
-                "op em aberto",
-                "ops em aberto hoje",
-            ),
-        ),
-        (
-            ProductionOperationalIntentKind.SCHEDULE_TODAY,
-            (
-                "programacao de producao",
-                "programação de produção",
-                "programados",
-                "programado",
-                "na programacao",
-                "na programação",
-                "programacao hoje",
-                "programação hoje",
-                "cronograma de producao",
-                "cronograma de produção",
-                "produzir hoje",
-            ),
-        ),
-        (
-            ProductionOperationalIntentKind.PURCHASES_RANKING,
-            (
-                "ranking de compra",
-                "mais comprados",
-                "mais compras",
-                "compras ranking",
-                "produtos mais compras",
-                "itens mais compras",
-            ),
-        ),
-        (
-            ProductionOperationalIntentKind.CONSUMPTION,
-            (
-                "maior consumo",
-                "consumo de mp",
-                "consumo de materia",
-                "mais consumidos",
-                "itens mais consumidos",
-                "consumo",
-            ),
-        ),
-        (
-            ProductionOperationalIntentKind.LOSSES_TOP,
-            ("maiores perdas", "top perdas", "perda", "refugo", "sucata"),
-        ),
-    )
+    # J-R9 — emptied: productionOperationalKind must not select registry routes.
+    _TOKEN_RULES: tuple[tuple[ProductionOperationalIntentKind, tuple[str, ...]], ...] = ()
 
     _GROUNDING: tuple[str, ...] = (
         "produc",
@@ -145,6 +45,13 @@ class TurnUnderstandingProductionIntentMapperService:
         cls,
         contract: TurnUnderstanding | None,
     ) -> ProductionOperationalIntentKind | None:
+        from app.domain.services.chat_semantic_authority_ownership_service import (
+            ChatSemanticAuthorityOwnershipService,
+        )
+
+        if not ChatSemanticAuthorityOwnershipService.family_intent_resolve_enabled():
+            return None
+
         if contract is None or not contract.goals:
             return None
 
@@ -175,6 +82,13 @@ class TurnUnderstandingProductionIntentMapperService:
         *,
         contract: TurnUnderstanding | None = None,
     ) -> ProductionOperationalIntentKind | None:
+        from app.domain.services.chat_semantic_authority_ownership_service import (
+            ChatSemanticAuthorityOwnershipService,
+        )
+
+        if not ChatSemanticAuthorityOwnershipService.family_intent_resolve_enabled():
+            return None
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(prose)
         if not normalized:
             return None
@@ -238,11 +152,11 @@ class TurnUnderstandingProductionIntentMapperService:
     def _looks_like_product_production_status(
         cls,
         normalized: str,
-        contract: TurnUnderstanding,
+        contract: TurnUnderstanding | None,
     ) -> bool:
         if not cls._has_product_code(contract, normalized):
             return False
-        status_markers = ("iniciou", "status", "ja inici", "já inici", "producao?", "produção?")
-        return any(marker in normalized for marker in status_markers) or (
-            "op aberta" in normalized and "hoje" in normalized
+        return any(
+            marker in normalized
+            for marker in ("status", "situacao", "situação", "andamento")
         )

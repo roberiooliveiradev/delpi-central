@@ -18,82 +18,18 @@ from app.domain.services.external_actions.external_action_response_content_servi
 class TurnUnderstandingKpiIntentMapperService:
     """Derives DepartmentKpiMatch from TU prose (high-confidence tokens only)."""
 
-    # E11.S6 — catalogToken vocabulary (department_kpi_rules), not HTTP path authority.
-    # Maps prose → catalogToken; OpenAPI selection uses facets/domainTag.
-    _TOKEN_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
-        (
-            "closing-rate",
-            (
-                "taxa de conversao",
-                "taxa de conversão",
-                "closing rate",
-                "conversao de vendas",
-                "conversão de vendas",
-                "fechamento de venda",
-            ),
-        ),
-        (
-            "rol/series",
-            (
-                "serie de rol",
-                "série de rol",
-                "rol no tempo",
-                "evolucao do rol",
-                "evolução do rol",
-            ),
-        ),
-        (
-            "new-clients-rol-pct",
-            ("rol de clientes novos", "clientes novos rol"),
-        ),
-        (
-            "new-business-rol-pct",
-            (
-                "rol novos negocios",
-                "rol novos negócios",
-                "novos negocios rol",
-                "novos negócios rol",
-            ),
-        ),
-        (
-            "rol/summary",
-            (
-                "meta comercial",
-                "meta do comercial",
-                "meta de comercial",
-                "meta de rol comercial",
-                "meta percentual comercial",
-                "meta rol matriz",
-                "rol matriz",
-            ),
-        ),
-        (
-            "rol/by-branch",
-            ("rol por filial", "rol filial", "rol das filiais"),
-        ),
-        ("ebitda", ("ebitda",)),
-        (
-            "/financial/rol",
-            (
-                "rol financeiro",
-                "receita operacional liquida",
-                "receita operacional líquida",
-                "qual o rol",
-                "mostrar o rol",
-                "me mostra o rol",
-                "indicador de rol",
-            ),
-        ),
-        ("oee", ("oee", "overall equipment")),
-        ("kaizens", ("kaizen",)),
-        (
-            "audit-5s",
-            ("auditoria 5s", "audit 5s", "auditoria dos 5s"),
-        ),
-    )
+    # J-R9 — emptied: catalogToken/domainPrefix must not be a parallel selection authority.
+    _TOKEN_RULES: tuple[tuple[str, tuple[str, ...]], ...] = ()
 
     @classmethod
     def from_understanding(cls, contract: TurnUnderstanding | None) -> DepartmentKpiMatch | None:
+        from app.domain.services.chat_semantic_authority_ownership_service import (
+            ChatSemanticAuthorityOwnershipService,
+        )
+
+        if not ChatSemanticAuthorityOwnershipService.family_intent_resolve_enabled():
+            return None
+
         if contract is None or not contract.goals:
             return None
 
@@ -131,6 +67,13 @@ class TurnUnderstandingKpiIntentMapperService:
 
     @classmethod
     def _path_token_from_prose(cls, prose: str) -> str | None:
+        from app.domain.services.chat_semantic_authority_ownership_service import (
+            ChatSemanticAuthorityOwnershipService,
+        )
+
+        if not ChatSemanticAuthorityOwnershipService.family_intent_resolve_enabled():
+            return None
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(prose)
         if not normalized:
             return None

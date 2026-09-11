@@ -38,6 +38,14 @@ class OperationalRouteDomainSelectionService:
         build_date_branch_parameters: Callable[..., dict] | None = None,
         previous_messages: list | None = None,
     ) -> dict | None:
+        from app.domain.services.chat_semantic_authority_ownership_service import (
+            ChatSemanticAuthorityOwnershipService,
+        )
+
+        # J-R9 — KPI catalogToken/domainPrefix is not action-selection authority.
+        if not ChatSemanticAuthorityOwnershipService.family_mapper_may_select_route():
+            return None
+
         from app.domain.models.operational_api_route_spec import OperationalApiRouteSpec
         from app.domain.services.chat_department_kpi_intent_service import (
             ChatDepartmentKpiIntentService,
@@ -114,6 +122,14 @@ class OperationalRouteDomainSelectionService:
         route_segment: str | None = None,
         candidates_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
+        from app.domain.services.chat_semantic_authority_ownership_service import (
+            ChatSemanticAuthorityOwnershipService,
+        )
+
+        # J-R9 — product facet/intentBinding from TOKEN_RULES is not route authority.
+        if not ChatSemanticAuthorityOwnershipService.family_mapper_may_select_route():
+            return None
+
         normalized_intent = str(intent or "").strip().lower()
         normalized_segment = str(route_segment or "").strip().lower()
 
@@ -202,6 +218,14 @@ class OperationalRouteDomainSelectionService:
         build_date_branch_parameters: Callable[..., dict] | None = None,
         path_lookup_loader: Callable[..., list[dict]] | None = None,
     ) -> dict | None:
+        from app.domain.services.chat_semantic_authority_ownership_service import (
+            ChatSemanticAuthorityOwnershipService,
+        )
+
+        # J-R9 — productionOperationalKind → registry route is not action authority.
+        if not ChatSemanticAuthorityOwnershipService.family_mapper_may_select_route():
+            return None
+
         kind = ChatProductionOperationalIntentService.resolve(message)
 
         if not kind:

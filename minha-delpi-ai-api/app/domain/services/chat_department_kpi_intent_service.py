@@ -122,6 +122,17 @@ class ChatDepartmentKpiIntentService:
 
     @classmethod
     def resolve(cls, message: str, *, force_legacy: bool = False) -> DepartmentKpiMatch | None:
+        from app.domain.services.chat_semantic_authority_ownership_service import (
+            ChatSemanticAuthorityOwnershipService,
+        )
+
+        # J-R9 — live resolve that materializes catalogToken is off (Action Catalog owns selection).
+        if (
+            not force_legacy
+            and not ChatSemanticAuthorityOwnershipService.family_intent_resolve_enabled()
+        ):
+            return None
+
         legacy = cls._resolve_legacy(message)
         if force_legacy or not cls._kpi_family_cutover_enabled():
             return legacy

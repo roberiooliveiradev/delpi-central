@@ -38,12 +38,13 @@ def test_production_path_token_for_is_empty():
         assert ChatProductionOperationalIntentService.path_token_for(kind) == ""
 
 
-def test_product_mapper_keeps_facet_vocabulary_not_http_path():
-    intent = TurnUnderstandingProductIntentMapperService.from_goal_prose(
-        "estoque do produto"
+def test_product_mapper_token_rules_removed_after_j_r9():
+    # E11.S6 KEEP superseded by J-R9 — facets are not selection authority.
+    assert TurnUnderstandingProductIntentMapperService._TOKEN_RULES == ()
+    assert (
+        TurnUnderstandingProductIntentMapperService.from_goal_prose("estoque do produto")
+        is None
     )
-    assert intent == "stock"
-    assert "/" not in intent
 
 
 def test_production_bundle_has_no_path_tokens_key():

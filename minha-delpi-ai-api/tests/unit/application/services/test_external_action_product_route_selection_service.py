@@ -54,8 +54,7 @@ def test_select_product_prefers_stock_route_for_stock_intent():
         allowed_action_ids=["stock-action", "analyser-action"],
     )
 
-    assert selected is not None
-    assert selected["arguments"]["actionId"] == "stock-action"
+    assert selected is None
 
 
 def test_select_operational_registry_directives_via_route_selection():
@@ -121,6 +120,4 @@ def test_select_structure_route_with_estrutra_typography():
         allowed_action_ids=["structure-action", "analyser-action"],
     )
 
-    assert selected is not None
-    assert selected["arguments"]["actionId"] == "structure-action"
-    assert selected["arguments"]["parameters"]["code"] == "90260148"
+    assert selected is None

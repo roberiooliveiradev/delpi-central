@@ -52,6 +52,17 @@ class ChatProductionOperationalIntentService:
         *,
         force_legacy: bool = False,
     ) -> ProductionOperationalIntentKind | None:
+        from app.domain.services.chat_semantic_authority_ownership_service import (
+            ChatSemanticAuthorityOwnershipService,
+        )
+
+        # J-R9 — live resolve that materializes productionOperationalKind for selection is off.
+        if (
+            not force_legacy
+            and not ChatSemanticAuthorityOwnershipService.family_intent_resolve_enabled()
+        ):
+            return None
+
         legacy = cls._resolve_legacy(message)
         if force_legacy or not cls._production_family_cutover_enabled():
             return legacy

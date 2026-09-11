@@ -163,7 +163,7 @@ class OperationalRouteActionResolverService:
             if clarification is not None:
                 return clarification
 
-        action, parameters, reason = self._prefer_branch_capable_match(matching)
+        action, parameters, reason = self._prefer_more_specific_match(matching)
 
         result = {
             "name": "execute_external_action",
@@ -336,6 +336,41 @@ class OperationalRouteActionResolverService:
         return matching
 
     @staticmethod
+    def _prefer_more_specific_match(
+        matching: list[tuple[dict, dict, str]],
+    ) -> tuple[dict, dict, str]:
+        """Prefer schema-heavier / branch-capable matches over allowlist order alone.
+
+        J-R8 emptied preferred operationIds; without this, list endpoints win over
+        detail endpoints that share the same vocabulary route.
+        """
+        if len(matching) <= 1:
+            return matching[0]
+
+        def _required_path_filled(action: dict, parameters: dict) -> int:
+            filled = 0
+            for param in action.get("parametersSchema") or []:
+                if not isinstance(param, dict):
+                    continue
+                if str(param.get("in") or "").lower() != "path":
+                    continue
+                if not param.get("required"):
+                    continue
+                name = str(param.get("name") or "").strip()
+                if name and str((parameters or {}).get(name) or "").strip():
+                    filled += 1
+            return filled
+
+        scored = sorted(
+            matching,
+            key=lambda item: _required_path_filled(item[0], item[1]),
+            reverse=True,
+        )
+        best_score = _required_path_filled(scored[0][0], scored[0][1])
+        top = [item for item in scored if _required_path_filled(item[0], item[1]) == best_score]
+        return OperationalRouteActionResolverService._prefer_branch_capable_match(top)
+
+    @staticmethod
     def _prefer_branch_capable_match(
         matching: list[tuple[dict, dict, str]],
     ) -> tuple[dict, dict, str]:
@@ -456,12 +491,6 @@ class OperationalRouteActionResolverService:
         ``path`` permanece só para assinatura/compat; não entra na decisão.
         """
         _ = path  # execução/observabilidade — não authority semântica
-        from app.domain.services.operational_route_registry_service import (
-            OperationalRouteRegistryService,
-        )
-        from app.domain.services.route_segment_inference_service import (
-            RouteSegmentInferenceService,
-        )
 
         match_spec = route.get("match") if isinstance(route.get("match"), dict) else {}
         requires_product = bool(match_spec.get("requiresProductIdentifier"))
@@ -529,10 +558,8 @@ class OperationalRouteActionResolverService:
             # Schema already proves supplier capability — do not require path fragment.
             return True
 
-        facets = RouteSegmentInferenceService.continuity_keys_for_route(
-            route,
-            aliases=OperationalRouteRegistryService.continuity_facet_aliases(),
-        )
+        # Declared continuity only — route-id auto facet is a soft hint (J-R8 emptied
+        # operationIds; id-derived slug must not reject vocabulary-matched routes).
         weak_facets = {
             "full",
             "summary",
@@ -543,9 +570,21 @@ class OperationalRouteActionResolverService:
             "list",
             "generic",
         }
+        declared_facets: set[str] = set()
+        raw_declared = route.get("continuityFacets")
+        if isinstance(raw_declared, list):
+            declared_facets.update(
+                str(item).strip().lower()
+                for item in raw_declared
+                if str(item or "").strip()
+            )
+        for key in ("intentBinding", "routeSegment"):
+            token = str(route.get(key) or "").strip().lower()
+            if token:
+                declared_facets.add(token)
         strong_facets = {
             str(item).strip().lower()
-            for item in facets
+            for item in declared_facets
             if str(item).strip() and str(item).strip().lower() not in weak_facets
         }
 

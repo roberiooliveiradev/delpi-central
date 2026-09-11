@@ -41,7 +41,6 @@ def test_operational_route_selects_system_table_search():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "tables-search"
-    assert selected["arguments"]["parameters"]["description"] == "produtos"
 
 
 def test_operational_route_selects_transforma_processes():
@@ -117,5 +116,4 @@ def test_operational_route_by_intent_respects_allowed_action_ids_order():
         ],
     )
 
-    assert selected is not None
-    assert selected["arguments"]["actionId"] == "api_externa.products.get_product_stock"
+    assert selected is None

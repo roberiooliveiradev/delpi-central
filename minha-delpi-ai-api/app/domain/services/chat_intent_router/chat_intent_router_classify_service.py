@@ -627,8 +627,8 @@ class ChatIntentRouterClassifyService:
 
         ambiguous, candidates = ChatIntentRouterHeuristicsService.operational_ambiguity(normalized, resolved_params)
 
-        department_kpi = ChatIntentRouterHeuristicsService.resolve_department_kpi(normalized)
-
+        # J-R9 — family triage uses transversal looks_operational / sub_intent only.
+        # catalogToken KPI resolve is not proof of operational family (Action Catalog owns actions).
         memory_anchored_operational = bool(memory_entities) and (
             operational_follow_up
             or ChatIntentRouterHeuristicsService.looks_operational(normalized)
@@ -675,7 +675,6 @@ class ChatIntentRouterClassifyService:
         if (
             operational_optimize
             or ChatIntentRouterHeuristicsService.looks_operational(normalized)
-            or department_kpi
             or operational_follow_up
             or memory_anchored_operational
             or ChatIntentRouterHeuristicsService.operational_sub_intent(normalized)
@@ -683,9 +682,6 @@ class ChatIntentRouterClassifyService:
             or period_metric
         ):
             sub = ChatIntentRouterHeuristicsService.operational_sub_intent(normalized)
-
-            if not sub and department_kpi:
-                sub = "department_kpi"
 
             if not sub and (commercial_rol or period_metric):
                 sub = "period_metric"
@@ -713,9 +709,7 @@ class ChatIntentRouterClassifyService:
                 ),
                 decision="operational_action" if not ambiguous else "clarify_operational",
                 reason=(
-                    "department_kpi_keywords"
-                    if department_kpi and not ambiguous
-                    else "operational_sub_intent"
+                    "operational_sub_intent"
                     if sub and not ambiguous and not commercial_rol
                     else "commercial_rol"
                     if commercial_rol and not ambiguous

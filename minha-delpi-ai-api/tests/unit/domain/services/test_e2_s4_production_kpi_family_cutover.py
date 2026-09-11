@@ -1,4 +1,4 @@
-"""E2.S4 — production/KPI family cutover dials (default OFF) + TU mappers."""
+"""E2.S4 — production/KPI family cutover (superseded by J-R9 single owner)."""
 
 from __future__ import annotations
 
@@ -32,109 +32,45 @@ def test_production_and_kpi_dials_default_on_for_canary() -> None:
     assert ChatConversationalIntelligenceFlagService.product_family_cutover_enabled() is True
 
 
-def test_production_mapper_schedule_today() -> None:
-    kind = TurnUnderstandingProductionIntentMapperService.from_message(
-        "programação de produção hoje"
-    )
-    assert kind == ProductionOperationalIntentKind.SCHEDULE_TODAY
-
-
-def test_production_mapper_negative_agenda() -> None:
+def test_j_r9_production_mapper_does_not_emit_kind() -> None:
     assert (
-        TurnUnderstandingProductionIntentMapperService.from_message("agenda de produção")
+        TurnUnderstandingProductionIntentMapperService.from_message(
+            "programação de produção hoje"
+        )
         is None
     )
-
-
-def test_production_mapper_sibling_orders_open() -> None:
-    assert (
-        TurnUnderstandingProductionIntentMapperService.from_message("ops abertas")
-        == ProductionOperationalIntentKind.ORDERS_OPEN
-    )
-
-
-def test_production_mapper_consumption_and_purchases() -> None:
+    assert TurnUnderstandingProductionIntentMapperService.from_message("ops abertas") is None
     assert (
         TurnUnderstandingProductionIntentMapperService.from_message(
             "Quais itens mais consumidos no mês?"
         )
-        == ProductionOperationalIntentKind.CONSUMPTION
-    )
-    assert (
-        TurnUnderstandingProductionIntentMapperService.from_message(
-            "Liste os produtos mais comprados em março"
-        )
-        == ProductionOperationalIntentKind.PURCHASES_RANKING
+        is None
     )
 
 
-def test_production_resolve_uses_mapper_on_canary() -> None:
+def test_j_r9_production_live_resolve_none_legacy_parity_via_force() -> None:
     message = "programação de produção hoje"
+    assert ChatProductionOperationalIntentService.resolve(message) is None
     assert (
-        ChatProductionOperationalIntentService.resolve(message)
+        ChatProductionOperationalIntentService.resolve(message, force_legacy=True)
         == ProductionOperationalIntentKind.SCHEDULE_TODAY
     )
-    assert ChatProductionOperationalIntentService.resolve(
-        message, force_legacy=True
-    ) == ProductionOperationalIntentKind.SCHEDULE_TODAY
 
 
-def test_production_mapper_membership_schedule_with_code() -> None:
+def test_j_r9_kpi_mapper_and_live_resolve_demoted() -> None:
     assert (
-        TurnUnderstandingProductionIntentMapperService.from_message(
-            "O produto 90260255 está na programação de hoje?"
+        TurnUnderstandingKpiIntentMapperService.from_message(
+            "qual a meta comercial deste mês"
         )
-        == ProductionOperationalIntentKind.SCHEDULE_TODAY
+        is None
     )
-    assert (
-        TurnUnderstandingProductionIntentMapperService.from_message(
-            "O chicote 90261486 está programado hoje?"
-        )
-        == ProductionOperationalIntentKind.SCHEDULE_TODAY
+    assert ChatDepartmentKpiIntentService.resolve("qual o ebitda do último trimestre") is None
+    legacy = ChatDepartmentKpiIntentService.resolve(
+        "qual o ebitda do último trimestre",
+        force_legacy=True,
     )
-
-
-def test_production_mapper_ops_em_aberto() -> None:
-    assert (
-        TurnUnderstandingProductionIntentMapperService.from_message(
-            "Quais OPs em aberto hoje na filial 01?"
-        )
-        == ProductionOperationalIntentKind.ORDERS_OPEN
-    )
-
-
-def test_production_resolve_mapper_first_with_fallback() -> None:
-    message = "O produto 90260255 está na programação de hoje?"
-    assert (
-        ChatProductionOperationalIntentService.resolve(message)
-        == ProductionOperationalIntentKind.SCHEDULE_TODAY
-    )
-    # agenda: mapper None → fallback legado None
-    assert ChatProductionOperationalIntentService.resolve("agenda de produção") is None
-
-
-def test_kpi_mapper_meta_comercial_and_oee() -> None:
-    meta = TurnUnderstandingKpiIntentMapperService.from_message(
-        "qual a meta comercial deste mês"
-    )
-    assert meta is not None
-    assert meta.path_token == "rol/summary"
-
-    oee = TurnUnderstandingKpiIntentMapperService.from_message("como está o oee da fábrica")
-    assert oee is not None
-    assert oee.path_token == "oee"
-
-    rol = TurnUnderstandingKpiIntentMapperService.from_message(
-        "qual o rol financeiro do mes"
-    )
-    assert rol is not None
-    assert rol.path_token == "/financial/rol"
-
-    closing = TurnUnderstandingKpiIntentMapperService.from_message(
-        "taxa de conversão de vendas"
-    )
-    assert closing is not None
-    assert closing.path_token == "closing-rate"
+    assert legacy is not None
+    assert legacy.path_token == "ebitda"
 
 
 def test_kpi_mapper_negative_product_code() -> None:
@@ -146,15 +82,7 @@ def test_kpi_mapper_negative_product_code() -> None:
     )
 
 
-def test_kpi_resolve_uses_mapper_on_canary() -> None:
-    message = "qual o ebitda do último trimestre"
-    live = ChatDepartmentKpiIntentService.resolve(message)
-    legacy = ChatDepartmentKpiIntentService.resolve(message, force_legacy=True)
-    assert live is not None and legacy is not None
-    assert live.path_token == legacy.path_token == "ebitda"
-
-
-def test_authority_shadow_candidates_production_kpi() -> None:
+def test_authority_shadow_candidates_production_kpi_demoted() -> None:
     contract = ChatTurnUnderstandingService.analyze("programação de produção hoje")
     shadow = TurnUnderstandingAuthorityShadowService.compare(
         "programação de produção hoje",
@@ -163,11 +91,12 @@ def test_authority_shadow_candidates_production_kpi() -> None:
     assert shadow is not None
     assert shadow["cutoverProduction"] is True
     assert shadow["cutoverKpi"] is True
-    assert shadow["candidateProductionKind"] == "SCHEDULE_TODAY"
-    assert shadow["productionKind"] == "SCHEDULE_TODAY"
+    # J-R9 — mapper candidates no longer materialize kind/catalogToken.
+    assert shadow.get("candidateProductionKind") is None
+    assert shadow.get("candidateKpi") is None
 
 
-def test_dials_off_restore_legacy_parity() -> None:
+def test_force_legacy_ignores_j_r9_gate_for_parity() -> None:
     message = "programação de produção hoje"
     with patch.object(
         ChatConversationalIntelligenceFlagService,
@@ -178,12 +107,14 @@ def test_dials_off_restore_legacy_parity() -> None:
         "kpi_family_cutover_enabled",
         return_value=False,
     ):
-        assert ChatProductionOperationalIntentService.resolve(message) == (
+        assert (
             ChatProductionOperationalIntentService.resolve(message, force_legacy=True)
+            == ProductionOperationalIntentKind.SCHEDULE_TODAY
         )
-        assert ChatDepartmentKpiIntentService.resolve(
-            "qual o ebitda do último trimestre"
-        ) == ChatDepartmentKpiIntentService.resolve(
-            "qual o ebitda do último trimestre",
-            force_legacy=True,
+        assert (
+            ChatDepartmentKpiIntentService.resolve(
+                "qual o ebitda do último trimestre",
+                force_legacy=True,
+            ).path_token
+            == "ebitda"
         )
