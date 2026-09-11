@@ -60,6 +60,8 @@ class Request:
     created_at: datetime | None = None
     updated_at: datetime | None = None
     completed_at: datetime | None = None
+    completed_by_user_id: str | None = None
+    completed_by_name: str | None = None
     cancelled_at: datetime | None = None
 
 

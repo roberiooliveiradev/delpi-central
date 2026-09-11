@@ -4,6 +4,7 @@ import { ActionButton } from "@delpi/plugin-ui/index";
 import {
   REQUEST_LIST_SEARCH_DEBOUNCE_MS,
   REQUEST_STATUS_FILTER_OPTIONS,
+  WORK_QUEUE_MINE_SCOPE_OPTIONS,
   type RequestListFiltersState,
 } from "../content/requestListFilters";
 import type { RequestTypeSummary } from "../types/requests";
@@ -18,6 +19,8 @@ type RequestListFiltersProps = {
   types: RequestTypeSummary[];
   branches: string[];
   disabled?: boolean;
+  /** Work queue only: filter by who completed / who is assigned. */
+  showMineScope?: boolean;
   onChange: (patch: Partial<RequestListFiltersState>) => void;
   onClear: () => void;
 };
@@ -27,6 +30,7 @@ export function RequestListFilters({
   types,
   branches,
   disabled,
+  showMineScope = false,
   onChange,
   onClear,
 }: RequestListFiltersProps) {
@@ -58,6 +62,10 @@ export function RequestListFilters({
     })),
   ];
   const statusOptions = REQUEST_STATUS_FILTER_OPTIONS.map((item) => ({
+    value: item.value,
+    label: item.label,
+  }));
+  const mineScopeOptions = WORK_QUEUE_MINE_SCOPE_OPTIONS.map((item) => ({
     value: item.value,
     label: item.label,
   }));
@@ -99,6 +107,20 @@ export function RequestListFilters({
         options={branchOptions}
         disabled={disabled}
       />
+      {showMineScope ? (
+        <MyRequestsFilterSelectField
+          label="Minhas"
+          value={filters.mineScope || ""}
+          onChange={(value) =>
+            onChange({
+              mineScope: value as RequestListFiltersState["mineScope"],
+              page: 1,
+            })
+          }
+          options={mineScopeOptions}
+          disabled={disabled}
+        />
+      ) : null}
     </MyRequestsFiltersRow>
   );
 }

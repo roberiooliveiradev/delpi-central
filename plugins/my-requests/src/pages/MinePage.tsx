@@ -35,6 +35,7 @@ const INITIAL_FILTERS: RequestListFiltersState = {
   typeCode: "",
   status: "",
   branch: "",
+  mineScope: "",
   page: 1,
 };
 

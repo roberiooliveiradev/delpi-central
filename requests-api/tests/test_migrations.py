@@ -28,6 +28,7 @@ def test_list_migration_files_in_order():
         "V011__invoice_issue_confirmation_workflow.sql",
         "V012__invoice_reject_fulfillment_and_file_lock.sql",
         "V013__invoice_cancel_owner_only_on_awaiting_confirmation.sql",
+        "V014__request_completed_by.sql",
     ]
 
 

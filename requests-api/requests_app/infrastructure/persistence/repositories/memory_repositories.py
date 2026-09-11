@@ -167,6 +167,8 @@ class InMemoryRequestRepository(RequestRepositoryPort):
         branch_code: str | None = None,
         exclude_statuses: list[str] | None = None,
         q: str | None = None,
+        completed_by_user_id: str | None = None,
+        assignee_user_id: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]:
@@ -178,6 +180,8 @@ class InMemoryRequestRepository(RequestRepositoryPort):
         search = normalize_list_search_query(q)
         excluded = set(exclude_statuses or [])
         allowed_types = set(type_codes) if type_codes is not None else None
+        completed_by = str(completed_by_user_id or "").strip()
+        assignee = str(assignee_user_id or "").strip()
         items = []
         for item in self._requests.values():
             if allowed_types is not None and item.type_code not in allowed_types:
@@ -188,6 +192,19 @@ class InMemoryRequestRepository(RequestRepositoryPort):
                 continue
             if item.status in excluded:
                 continue
+            if completed_by and str(item.completed_by_user_id or "").strip() != completed_by:
+                continue
+            if assignee:
+                rid = str(item.id)
+                has_assignee = any(
+                    row.get("request_id") == rid
+                    and row.get("role") == "processor"
+                    and not row.get("released_at")
+                    and str(row.get("assignee_user_id") or "").strip() == assignee
+                    for row in self._assignments
+                )
+                if not has_assignee:
+                    continue
             if search and not request_matches_search(
                 request_number=item.request_number,
                 payload=item.payload,

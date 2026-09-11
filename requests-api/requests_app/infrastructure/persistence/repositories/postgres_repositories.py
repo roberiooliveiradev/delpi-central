@@ -80,6 +80,8 @@ def _row_to_request(row: dict[str, Any], *, type_code: str) -> Request:
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
         completed_at=row.get("completed_at"),
+        completed_by_user_id=row.get("completed_by_user_id"),
+        completed_by_name=row.get("completed_by_name"),
         cancelled_at=row.get("cancelled_at"),
     )
 
@@ -219,6 +221,8 @@ class PostgresRequestRepository(RequestRepositoryPort):
             version = %s,
             updated_at = NOW(),
             completed_at = %s,
+            completed_by_user_id = %s,
+            completed_by_name = %s,
             cancelled_at = %s
         WHERE id = %s::uuid
           AND (%s::int IS NULL OR version = %s)
@@ -236,6 +240,8 @@ class PostgresRequestRepository(RequestRepositoryPort):
                         list(request.correction_targets or []),
                         request.version,
                         request.completed_at,
+                        request.completed_by_user_id,
+                        request.completed_by_name,
                         request.cancelled_at,
                         str(request.id),
                         expected_version,
@@ -359,6 +365,8 @@ class PostgresRequestRepository(RequestRepositoryPort):
         branch_code: str | None = None,
         exclude_statuses: list[str] | None = None,
         q: str | None = None,
+        completed_by_user_id: str | None = None,
+        assignee_user_id: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]:
@@ -383,6 +391,23 @@ class PostgresRequestRepository(RequestRepositoryPort):
         if exclude_statuses:
             where.append("NOT (r.status = ANY(%s))")
             params.append(exclude_statuses)
+        completed_by = str(completed_by_user_id or "").strip()
+        if completed_by:
+            where.append("r.completed_by_user_id = %s")
+            params.append(completed_by)
+        assignee = str(assignee_user_id or "").strip()
+        if assignee:
+            where.append(
+                f"""EXISTS (
+                    SELECT 1
+                    FROM {_SCHEMA}.request_assignments a
+                    WHERE a.request_id = r.id
+                      AND a.role = 'processor'
+                      AND a.released_at IS NULL
+                      AND a.assignee_user_id = %s
+                )"""
+            )
+            params.append(assignee)
         search = normalize_list_search_query(q)
         if search:
             pattern = ilike_contains_pattern(search)

@@ -246,6 +246,7 @@ def list_work_queue(
     status: str | None = Query(default=None),
     branch: str | None = Query(default=None),
     q: str | None = Query(default=None, min_length=2),
+    mine_scope: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ):
@@ -257,6 +258,7 @@ def list_work_queue(
             status=status,
             branch_code=branch,
             q=q,
+            mine_scope=mine_scope,
             page=page,
             page_size=page_size,
         )

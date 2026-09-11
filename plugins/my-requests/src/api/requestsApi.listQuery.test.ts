@@ -38,4 +38,13 @@ describe("buildRequestListQueryParams", () => {
     expect(params.has("branch")).toBe(false);
     expect(params.has("q")).toBe(false);
   });
+
+  it("inclui mine_scope quando informado", () => {
+    const qs = buildRequestListQueryParams({
+      page: 1,
+      mineScope: "completed_by_me",
+    });
+    const params = new URLSearchParams(qs);
+    expect(params.get("mine_scope")).toBe("completed_by_me");
+  });
 });

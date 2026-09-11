@@ -324,6 +324,7 @@ class ListWorkQueueRequestsUseCase:
         status: str | None = None,
         branch_code: str | None = None,
         q: str | None = None,
+        mine_scope: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
@@ -356,12 +357,27 @@ class ListWorkQueueRequestsUseCase:
             if not has_branch_access(sample_actor, branch_code):
                 raise ApplicationError(code="branch_forbidden", status_code=403)
 
+        scope = str(mine_scope or "").strip().lower()
+        if scope and scope not in {"completed_by_me", "assigned_to_me"}:
+            raise ApplicationError(code="invalid_mine_scope", status_code=422)
+        actor_id = str(getattr(user, "id", "") or "").strip()
+        completed_by_user_id = actor_id if scope == "completed_by_me" else None
+        assignee_user_id = actor_id if scope == "assigned_to_me" else None
+        # mine scopes that target closed work must not hide terminals
+        exclude_statuses = (
+            None
+            if status or completed_by_user_id or assignee_user_id
+            else sorted(excluded)
+        )
+
         items, total = self._requests.list_work_queue(
             type_codes=processable,
             status=status,
             branch_code=branch_code,
-            exclude_statuses=None if status else sorted(excluded),
+            exclude_statuses=exclude_statuses,
             q=q,
+            completed_by_user_id=completed_by_user_id,
+            assignee_user_id=assignee_user_id,
             page=page,
             page_size=page_size,
         )

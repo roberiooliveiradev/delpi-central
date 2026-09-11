@@ -65,6 +65,8 @@ def serialize_request(
         "created_at": request.created_at,
         "updated_at": request.updated_at,
         "completed_at": request.completed_at,
+        "completed_by_user_id": request.completed_by_user_id,
+        "completed_by_name": request.completed_by_name,
         "cancelled_at": request.cancelled_at,
         "allowed_actions": allowed_actions or [],
     }

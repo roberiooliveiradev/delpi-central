@@ -12,5 +12,15 @@ export type RequestListFiltersState = {
   typeCode: string;
   status: string;
   branch: string;
+  mineScope: "" | "completed_by_me" | "assigned_to_me";
   page: number;
 };
+
+export const WORK_QUEUE_MINE_SCOPE_OPTIONS: Array<{
+  value: RequestListFiltersState["mineScope"];
+  label: string;
+}> = [
+  { value: "", label: "Todas" },
+  { value: "completed_by_me", label: "Concluídas por mim" },
+  { value: "assigned_to_me", label: "Atribuídas a mim" },
+];

@@ -10,7 +10,7 @@ export const MY_REQUESTS_HELP_TOOLTIPS = {
   },
   workQueue: {
     section:
-      "Lista o que está na sua fila para atender (somente se você puder processar algum tipo, tiver visão ampla ou for administrador). Filtre o que precisa e abra a solicitação para iniciar, devolver, concluir ou registrar a emissão. Ao iniciar, você passa a receber no sino do Portal e em avisos na tela as atualizações e conversas dessa solicitação.",
+      "Lista o que está na sua fila para atender (somente se você puder processar algum tipo, tiver visão ampla ou for administrador). Filtre o que precisa e abra a solicitação para iniciar, devolver, concluir ou registrar a emissão. Ao iniciar, você passa a receber no sino do Portal e em avisos na tela as atualizações e conversas dessa solicitação. A coluna «Concluída por» mostra quem fechou a solicitação; use o filtro Minhas para ver só as concluídas por você ou as atribuídas a você.",
   },
   new: {
     section:

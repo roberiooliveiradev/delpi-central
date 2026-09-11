@@ -32,6 +32,7 @@ export type RequestListQuery = {
   status?: string;
   branch?: string;
   q?: string;
+  mineScope?: "completed_by_me" | "assigned_to_me";
 };
 
 export function buildRequestListQueryParams(options?: RequestListQuery): string {
@@ -46,6 +47,8 @@ export function buildRequestListQueryParams(options?: RequestListQuery): string 
   if (branch) params.set("branch", branch);
   const q = options?.q?.trim();
   if (q && q.length >= 2) params.set("q", q);
+  const mineScope = options?.mineScope?.trim();
+  if (mineScope) params.set("mine_scope", mineScope);
   return params.toString();
 }
 

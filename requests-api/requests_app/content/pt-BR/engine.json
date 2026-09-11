@@ -27,7 +27,8 @@
     "artifact_required": "Anexe {field} em «Documentos gerados no atendimento» antes de concluir esta etapa.",
     "comment_required": "Escreva uma mensagem antes de enviar.",
     "comment_media_forbidden": "Imagens devem ser coladas ou anexadas pelo clipe da conversa.",
-    "conversation_frozen": "Esta solicitação foi finalizada. A conversa está somente leitura."
+    "conversation_frozen": "Esta solicitação foi finalizada. A conversa está somente leitura.",
+    "invalid_mine_scope": "Filtro «minhas» inválido. Use concluídas por mim ou atribuídas a mim."
   },
   "fieldLabels": {
     "return_reason": "motivo da devolução",

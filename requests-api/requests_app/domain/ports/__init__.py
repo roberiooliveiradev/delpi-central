@@ -70,6 +70,8 @@ class RequestRepositoryPort(ABC):
         branch_code: str | None = None,
         exclude_statuses: list[str] | None = None,
         q: str | None = None,
+        completed_by_user_id: str | None = None,
+        assignee_user_id: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Request], int]: ...

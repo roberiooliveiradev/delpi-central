@@ -35,6 +35,7 @@ const INITIAL_FILTERS: RequestListFiltersState = {
   typeCode: "",
   status: "",
   branch: "",
+  mineScope: "",
   page: 1,
 };
 
@@ -79,6 +80,7 @@ export function WorkQueuePage() {
       status: filters.status || undefined,
       branch: filters.branch || undefined,
       q: filters.q || undefined,
+      mineScope: filters.mineScope || undefined,
     })
       .then((data) => {
         setItems(data.items || []);
@@ -134,12 +136,21 @@ export function WorkQueuePage() {
         ),
       },
       { key: "branch", header: "Filial", render: (row) => row.branch_code || "—" },
+      {
+        key: "completed_by",
+        header: "Concluída por",
+        render: (row) => row.completed_by_name?.trim() || "—",
+      },
     ],
     [typeNameByCode],
   );
 
   const emptyMessage =
-    filters.q || filters.typeCode || filters.status || filters.branch
+    filters.q ||
+    filters.typeCode ||
+    filters.status ||
+    filters.branch ||
+    filters.mineScope
       ? "Nenhuma solicitação para os filtros selecionados."
       : "Fila vazia no momento.";
 
@@ -152,6 +163,7 @@ export function WorkQueuePage() {
             types={types}
             branches={access.branches}
             disabled={loading}
+            showMineScope
             onChange={patchFilters}
             onClear={() => setFilters(INITIAL_FILTERS)}
           />

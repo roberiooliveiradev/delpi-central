@@ -19,6 +19,9 @@ export type RequestSummary = {
   created_by_name: string;
   created_at?: string | null;
   updated_at?: string | null;
+  completed_at?: string | null;
+  completed_by_user_id?: string | null;
+  completed_by_name?: string | null;
   allowed_actions: AllowedAction[];
 };
 
@@ -27,7 +30,6 @@ export type RequestDetail = RequestSummary & {
   return_reason?: string | null;
   cancel_justification?: string | null;
   correction_targets?: string[] | null;
-  completed_at?: string | null;
   cancelled_at?: string | null;
   journey_progress?: JourneyProgress | null;
   capabilities?: RequestCapabilities | null;

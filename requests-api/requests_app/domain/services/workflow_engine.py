@@ -379,6 +379,8 @@ class WorkflowEngine:
                 updated.cancelled_at = now
             else:
                 updated.completed_at = now
+                updated.completed_by_user_id = actor.user_id
+                updated.completed_by_name = actor.user_name
 
         if to_status == "submitted":
             updated.return_reason = None
