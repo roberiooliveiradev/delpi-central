@@ -104,6 +104,7 @@ def test_should_not_use_single_analyser_for_two_scopes_without_completa():
 def test_detect_multi_scope_intent():
     intent = ChatProductQueryIntentService.detect(
         "estrutura e roteiro do produto 90260149",
+        force_legacy=True,
     )
 
     assert intent == ChatProductQueryIntent.MULTI_SCOPE
@@ -134,6 +135,7 @@ def test_extract_scopes_empty_for_purchase_budget_history_playbook():
 def test_detect_analyser_for_integrated_three_scopes():
     intent = ChatProductQueryIntentService.detect(
         "análise integrada do cadastro, roteiro e estrutura do 90260149",
+        force_legacy=True,
     )
 
     assert intent == ChatProductQueryIntent.ANALYSER
@@ -157,6 +159,52 @@ def test_plan_fetches_two_routes():
 
     assert "/products/{code}/structure" in paths
     assert "/products/{code}/guide" in paths
+
+
+def test_plan_scope_select_uses_scoped_message_not_compound_utterance():
+    """C4 — OpenAPI-first must not see stock+structure in the same select call."""
+    seen: list[tuple[str, str | None]] = []
+
+    class SpyService(FakeScopeSelectionService):
+        def select_action_for_product(
+            self,
+            message,
+            *,
+            product_code,
+            allowed_action_ids=None,
+            intent=None,
+            route_segment=None,
+            previous_messages=None,
+        ):
+            seen.append((str(message), route_segment))
+            return super().select_action_for_product(
+                message,
+                product_code=product_code,
+                allowed_action_ids=allowed_action_ids,
+                intent=intent,
+                route_segment=route_segment,
+                previous_messages=previous_messages,
+            )
+
+    compound = (
+        "Agora completa: inclui também a estrutura e um comentário se o estoque "
+        "cobre demanda típica."
+    )
+    planned = ChatProductMultiScopePlanningService.plan_product_scope_fetches(
+        SpyService(),
+        message=compound,
+        product_code="90260149",
+        allowed_action_ids=["a1"],
+    )
+
+    assert planned
+    assert all(compound not in msg for msg, _seg in seen)
+    structure_calls = [msg for msg, seg in seen if seg == "structure"]
+    stock_calls = [msg for msg, seg in seen if seg == "stock"]
+    assert structure_calls
+    assert stock_calls
+    assert all("estoque" not in msg.lower() for msg in structure_calls)
+    assert all("estrutura" not in msg.lower() for msg in stock_calls)
 
 
 def test_plan_fetches_single_analyser_when_completa():

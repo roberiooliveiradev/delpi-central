@@ -47,23 +47,40 @@ def _http_json(
     token: str | None = None,
     body: dict | None = None,
     retries: int = 3,
+    timeout: int = 600,
 ) -> Any:
-    data = None
-    headers = {"Accept": "application/json"}
-    if body is not None:
-        data = json.dumps(body).encode("utf-8")
-        headers["Content-Type"] = "application/json"
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
     last_exc: Exception | None = None
+    active_token = token
     for attempt in range(1, max(1, retries) + 1):
+        headers = {"Accept": "application/json"}
+        data = None
+        if body is not None:
+            data = json.dumps(body).encode("utf-8")
+            headers["Content-Type"] = "application/json"
+        if active_token:
+            headers["Authorization"] = f"Bearer {active_token}"
         req = urllib.request.Request(url, data=data, headers=headers, method=method)
         try:
-            with urllib.request.urlopen(req, timeout=420) as resp:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
                 raw = resp.read().decode("utf-8")
                 return json.loads(raw) if raw else None
+        except urllib.error.HTTPError as exc:
+            last_exc = exc
+            if exc.code == 401 and attempt < retries:
+                print(
+                    f"retry {attempt}/{retries} after HTTP 401; renew token",
+                    flush=True,
+                )
+                active_token = _token()
+                time.sleep(1)
+                continue
+            raise
         except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as exc:
             last_exc = exc
+            # Não reenvia POST de mensagem após timeout: Flask dev é single-thread
+            # e o request original ainda pode estar em andamento.
+            if method.upper() == "POST" and "/messages" in url:
+                break
             if attempt >= retries:
                 break
             wait_s = min(30, 5 * attempt)

@@ -16,6 +16,14 @@ def test_follow_up_type_stock():
     assert ChatFollowUpIntentService.follow_up_type("agora estoque") == "stock"
 
 
+def test_follow_up_type_compound_structure_and_stock_does_not_collapse():
+    message = (
+        "Agora completa: inclui também a estrutura e um comentário se o estoque "
+        "cobre demanda típica."
+    )
+    assert ChatFollowUpIntentService.follow_up_type(message) is None
+
+
 def test_follow_up_expedition_short_message():
     assert ChatFollowUpIntentService.is_operational_follow_up("e a expedição?") is True
     assert ChatFollowUpIntentService.follow_up_type("e a expedição?") == "shipping"

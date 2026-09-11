@@ -10,6 +10,9 @@ from app.domain.services.chat_product_query_intent_service import (
 
 
 class ChatFollowUpIntentService:
+    # Guard against extract_requested_scopes → OperationalRouteMatcher → follow_up_type.
+    _resolving_follow_up_type = False
+
     _FOLLOW_UP_PATTERNS = (
         r"\bfornecedores?\b",
         r"\bestoque\b",
@@ -88,6 +91,24 @@ class ChatFollowUpIntentService:
             r"\bsa[ií]da\b", normalized
         ):
             return "outbound_invoice"
+
+        # Pedido composto (ex.: estrutura + estoque): não colapsar num único tipo.
+        # Skip on re-entry: extract_requested_scopes may call OperationalRouteMatcher,
+        # which calls follow_up_type again for product-scope grants.
+        if not cls._resolving_follow_up_type:
+            from app.domain.services.chat_product_multi_scope_planning_service import (
+                ChatProductMultiScopePlanningService,
+            )
+
+            cls._resolving_follow_up_type = True
+            try:
+                scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(
+                    message
+                )
+            finally:
+                cls._resolving_follow_up_type = False
+            if len(scopes) >= 2:
+                return None
 
         if re.search(r"\bestoque\b", normalized):
             return "stock"

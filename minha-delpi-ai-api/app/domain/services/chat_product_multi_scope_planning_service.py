@@ -450,9 +450,12 @@ class ChatProductMultiScopePlanningService:
         previous_messages: list | None,
     ) -> dict | None:
         intent, route_segment = _SCOPE_TO_ROUTE.get(scope, (ChatProductQueryIntent.FULL, None))
+        # Fan-out must not pass the full compound utterance into OpenAPI-first
+        # retrieval (E-C4): stock terms in the same turn would steal authority.
+        scoped_message = cls._scoped_select_message(scope, product_code, fallback=message)
 
         selected = selection_service.select_action_for_product(
-            message,
+            scoped_message,
             product_code=product_code,
             allowed_action_ids=allowed_action_ids,
             intent=intent,
@@ -466,6 +469,27 @@ class ChatProductMultiScopePlanningService:
         selected = dict(selected)
         selected["reason"] = cls._reason_for_scope(scope, product_code)
         return selected
+
+    @classmethod
+    def _scoped_select_message(
+        cls,
+        scope: str,
+        product_code: str,
+        *,
+        fallback: str,
+    ) -> str:
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+
+        label = ChatProductOperationalContentService.scope_label_for_scope_key(scope)
+        text = ChatProductOperationalContentService.format(
+            "multiScope",
+            "scopedSelectMessage",
+            scope=label,
+            code=product_code,
+        ).strip()
+        return text or str(fallback or "").strip()
 
     @classmethod
     def _reason_for_scope(cls, scope: str, product_code: str) -> str:

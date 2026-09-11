@@ -26,7 +26,7 @@ NO_PREMATURE_DELETE = PASS
 | safety | PASS_OFFLINE |
 | required_args | PASS_OFFLINE |
 | multi_turn | **PASS_OFFLINE_AND_LIVE** (C5 E9.S13) |
-| compound | PASS_OFFLINE (C4 structure live FAIL) |
+| compound | **PASS_OFFLINE_AND_LIVE** (C4 E9.S13) |
 | latency_cost | PASS (E9.S11 live) |
 | legacy_fallback_hit_rate | PASS_OFFLINE |
 

@@ -1,5 +1,5 @@
 {
-  "sessionId": "0bb93055-e49d-487e-b326-695d486364cb",
+  "sessionId": "5c8bdedc-3bf4-4624-86f4-ece5823d23de",
   "agentId": "b85edd53-2fd9-4e2f-ab17-92fd288f4f85",
   "productKind": "pa",
   "productCode": "90260149",
@@ -7,34 +7,32 @@
   "turns": [
     {
       "label": "seed",
-      "wallMs": 121066,
+      "wallMs": 94723,
       "paths": [
         "/products/90260149/stock",
         "/products/90260149"
       ],
-      "proseChars": 572,
+      "proseChars": 382,
       "tree": "no tree (ok if table-only)",
       "dashboard": "no structure duplication",
       "markdown": "markdown block structure ok",
-      "prosePreview": "O produto **90260149** é o **CHICOTE EPR SINGELO 235MM**, do grupo **9026**, e está com **estoque zerado** — saldo disponível total de **0 unidades** em 1 posição, sem quantidade física, empenhada ou reservada.\n\n## Cadastro\n\n- **Código:** 90260149\n- **Descrição:** CHICOTE EPR SIN"
+      "prosePreview": "O produto **90260149** é o **CHICOTE EPR SINGELO 235MM** (grupo **9026**) e está com **estoque zerado**: saldo disponível total de **0 unidades** em 1 posição, sem quantidade empenhada ou reservada.\n\n## Cadastro\n\n## Estoque\n\n**Leitura:** com saldo disponível em zero, o estoque at"
     },
     {
       "label": "followup",
-      "wallMs": 343868,
+      "wallMs": 253854,
       "paths": [
         "/products/90260149/stock",
-        "/products/90260149/stock",
+        "/products/90260149/structure",
         "/products/90260149/stock"
       ],
-      "proseChars": 353,
+      "proseChars": 1442,
       "tree": "no tree (ok if table-only)",
       "dashboard": "no structure duplication",
       "markdown": "markdown block structure ok",
-      "prosePreview": "A visão consolidada do produto **90260149** — **CHICOTE EPR SINGELO 235MM** (grupo **9026**) — mostra um item cadastrado, porém com **estoque totalmente zerado**, situação que **não cobre a demanda típica**.\n\n## Estoque e cobertura de demanda\n\nO saldo disponível total é de **0 un"
+      "prosePreview": "Visão consolidada do produto **90260149** — **CHICOTE EPR SINGELO 235MM**: item sem saldo disponível (estoque zerado) e com estrutura de 6 componentes de nível 1, o que indica dependência de reposição de matérias-primas para qualquer produção.\n\n## Cadastro\n\n- **Código:** 90260149"
     }
   ],
-  "failures": [
-    "L1 followup: missing structure/analyser"
-  ],
-  "passed": false
+  "failures": [],
+  "passed": true
 }

@@ -330,6 +330,13 @@ class ChatRouteContextService:
         from app.domain.services.chat_operational_follow_up_routing_service import (
             ChatOperationalFollowUpRoutingService,
         )
+        from app.domain.services.chat_product_multi_scope_planning_service import (
+            ChatProductMultiScopePlanningService,
+        )
+
+        scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(message)
+        if len(scopes) >= 2:
+            return None
 
         routed = ChatOperationalFollowUpRoutingService.segment_from_message(message)
 

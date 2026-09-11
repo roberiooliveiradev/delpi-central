@@ -51,9 +51,9 @@
     {
       "id": "compound",
       "required": true,
-      "status": "PASS_OFFLINE",
-      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s2-baseline-offline.md",
-      "note": "Offline OK; live compound_enum plano-02 + C4 seed OK, mas C4 followup L1 structure FAIL — sem promoção"
+      "status": "PASS_OFFLINE_AND_LIVE",
+      "evidence": "docs/roadmap/llm-json-decoupling/evidence/e9-s13-live-l1l4.md",
+      "note": "Offline E9.S2 + live C4 PA seed/followup L1–L4 PASS (structure+stock); scoped fan-out select"
     },
     {
       "id": "latency_cost",
