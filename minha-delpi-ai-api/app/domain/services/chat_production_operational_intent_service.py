@@ -58,12 +58,17 @@ class ChatProductionOperationalIntentService:
         *,
         force_legacy: bool = False,
     ) -> ProductionOperationalIntentKind | None:
-        if not force_legacy and cls._production_family_cutover_enabled():
-            mapped = cls._resolve_from_turn_understanding(message)
-            if mapped is not None:
-                return mapped
+        legacy = cls._resolve_legacy(message)
+        if force_legacy or not cls._production_family_cutover_enabled():
+            return legacy
 
-        return cls._resolve_legacy(message)
+        mapped = cls._resolve_from_turn_understanding(message)
+        # Agree-gated canary: never diverge from legacy while mapper is incomplete.
+        if mapped is not None and legacy is not None and mapped == legacy:
+            return mapped
+        if mapped is not None and legacy is None:
+            return legacy
+        return legacy
 
     @classmethod
     def _resolve_legacy(cls, message: str | None) -> ProductionOperationalIntentKind | None:

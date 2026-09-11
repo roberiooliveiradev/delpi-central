@@ -9,8 +9,8 @@
     "cutoverEnabled": true,
     "families": {
       "product": true,
-      "production": false,
-      "kpi": false
+      "production": true,
+      "kpi": true
     }
   },
   "envOverrides": {

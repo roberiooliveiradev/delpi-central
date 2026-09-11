@@ -1,47 +1,36 @@
 # E2.S4 — Authority shadow + cutovers por família
 
-**Status:** `CUTOVER_PRODUCT_CANARY` + `PRODUCTION_KPI_SHADOW_READY` (2026-09-10)  
+**Status:** `CUTOVER_ALL_FAMILIES_CANARY` (2026-09-10)  
 **Onda:** C (plano 02)
 
 ## Famílias
 
-| Família | Dial `families.*` | Estado |
-|---------|-------------------|--------|
-| product | `true` | **CANARY ON** (`cutoverEnabled=true`) |
-| production | `false` | mapper + wire + shadow candidates; dial OFF |
-| kpi | `false` | mapper + wire + shadow candidates; dial OFF |
+| Família | Dial | Modo authority |
+|---------|------|----------------|
+| product | `true` | mapper-first + fallback legado |
+| production | `true` | **agree-gated** (só troca quando mapper == legado) |
+| kpi | `true` | **agree-gated** (path_token igual) |
 
-## Peças
-
-| Peça | Path |
-|------|------|
-| Dial | `productFamilyAuthorityShadow` |
-| Flag | `family_cutover_enabled(name)` |
-| Product mapper | `TurnUnderstandingProductIntentMapperService` |
-| Production mapper | `TurnUnderstandingProductionIntentMapperService` |
-| KPI mapper | `TurnUnderstandingKpiIntentMapperService` |
-| Chokes | `detect` / `resolve(..., force_legacy=)` |
-| Shadow | `candidateProductIntent`, `candidateProductionKind`, `candidateKpi`, `cutover*` |
+Production/KPI usam agree-gate para não regressar casos em que o mapper ainda é mais grosso que o legado (ex.: OP status com código, finished-without-consumption).
 
 ## Aceite
 
 ```text
 PRODUCT_CUTOVER_ON = PASS
-PRODUCTION_KPI_DIAL_OFF = PASS
-MAPPER_SCHEDULE_TODAY = PASS
-MAPPER_KPI_ROL = PASS
+PRODUCTION_KPI_DIALS_ON = PASS
+AGREE_GATED_NO_REGRESSION = PASS (89 unitários)
+MAPPER_SCHEDULE_CONSUMPTION_PURCHASES = PASS
+MAPPER_KPI_ROL_EBITDA = PASS
 NEGATIVE_AGENDA / PRODUCT_CODE = PASS
-SHADOW_CANDIDATES = PASS
-FORCE_LEGACY_PARITY_WHEN_OFF = PASS
 DELETE_HEURISTICS = BLOCKED
 ```
 
-## Extra nesta fatia
+## Rollback
 
-- `_matches_kind` normaliza terms/excludes do JSON (paridade com stemming `comprados`→`compras`).
+`families.production=false` / `families.kpi=false` / `cutoverEnabled=false`.
 
 ## Próximo
 
-- Canary production/KPI (`families.*=true`) após agree offline
+- Elevar production/KPI de agree-gated → mapper-first (após cobertura)
 - E2.S5 intent_router / analysis
 - E2.S7 DELETE heurísticas

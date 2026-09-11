@@ -26,9 +26,9 @@ from app.domain.services.turn_understanding_production_intent_mapper_service imp
 )
 
 
-def test_production_and_kpi_dials_default_off() -> None:
-    assert ChatConversationalIntelligenceFlagService.production_family_cutover_enabled() is False
-    assert ChatConversationalIntelligenceFlagService.kpi_family_cutover_enabled() is False
+def test_production_and_kpi_dials_default_on_for_canary() -> None:
+    assert ChatConversationalIntelligenceFlagService.production_family_cutover_enabled() is True
+    assert ChatConversationalIntelligenceFlagService.kpi_family_cutover_enabled() is True
     assert ChatConversationalIntelligenceFlagService.product_family_cutover_enabled() is True
 
 
@@ -53,24 +53,35 @@ def test_production_mapper_sibling_orders_open() -> None:
     )
 
 
-def test_production_resolve_parity_when_dial_off() -> None:
-    message = "programação de produção hoje"
-    assert ChatProductionOperationalIntentService.resolve(message) == (
-        ChatProductionOperationalIntentService.resolve(message, force_legacy=True)
+def test_production_mapper_consumption_and_purchases() -> None:
+    assert (
+        TurnUnderstandingProductionIntentMapperService.from_message(
+            "Quais itens mais consumidos no mês?"
+        )
+        == ProductionOperationalIntentKind.CONSUMPTION
+    )
+    assert (
+        TurnUnderstandingProductionIntentMapperService.from_message(
+            "Liste os produtos mais comprados em março"
+        )
+        == ProductionOperationalIntentKind.PURCHASES_RANKING
     )
 
 
-def test_production_resolve_uses_mapper_when_dial_on() -> None:
+def test_production_resolve_uses_mapper_on_canary() -> None:
     message = "programação de produção hoje"
-    with patch.object(
-        ChatConversationalIntelligenceFlagService,
-        "production_family_cutover_enabled",
-        return_value=True,
-    ):
-        assert (
-            ChatProductionOperationalIntentService.resolve(message)
-            == ProductionOperationalIntentKind.SCHEDULE_TODAY
-        )
+    assert (
+        ChatProductionOperationalIntentService.resolve(message)
+        == ProductionOperationalIntentKind.SCHEDULE_TODAY
+    )
+    assert ChatProductionOperationalIntentService.resolve(
+        message, force_legacy=True
+    ) == ProductionOperationalIntentKind.SCHEDULE_TODAY
+
+
+def test_production_resolve_falls_back_when_mapper_none() -> None:
+    # agenda: mapper None → legacy None
+    assert ChatProductionOperationalIntentService.resolve("agenda de produção") is None
 
 
 def test_kpi_mapper_rol_and_closing_rate() -> None:
@@ -96,11 +107,12 @@ def test_kpi_mapper_negative_product_code() -> None:
     )
 
 
-def test_kpi_resolve_parity_when_dial_off() -> None:
+def test_kpi_resolve_uses_mapper_on_canary() -> None:
     message = "qual o ebitda do último trimestre"
-    assert ChatDepartmentKpiIntentService.resolve(message) == (
-        ChatDepartmentKpiIntentService.resolve(message, force_legacy=True)
-    )
+    live = ChatDepartmentKpiIntentService.resolve(message)
+    legacy = ChatDepartmentKpiIntentService.resolve(message, force_legacy=True)
+    assert live is not None and legacy is not None
+    assert live.path_token == legacy.path_token == "ebitda"
 
 
 def test_authority_shadow_candidates_production_kpi() -> None:
@@ -110,7 +122,29 @@ def test_authority_shadow_candidates_production_kpi() -> None:
         contract,
     )
     assert shadow is not None
-    assert shadow["cutoverProduction"] is False
-    assert shadow["cutoverKpi"] is False
+    assert shadow["cutoverProduction"] is True
+    assert shadow["cutoverKpi"] is True
     assert shadow["candidateProductionKind"] == "SCHEDULE_TODAY"
     assert shadow["productionKind"] == "SCHEDULE_TODAY"
+
+
+def test_dials_off_restore_legacy_parity() -> None:
+    message = "programação de produção hoje"
+    with patch.object(
+        ChatConversationalIntelligenceFlagService,
+        "production_family_cutover_enabled",
+        return_value=False,
+    ), patch.object(
+        ChatConversationalIntelligenceFlagService,
+        "kpi_family_cutover_enabled",
+        return_value=False,
+    ):
+        assert ChatProductionOperationalIntentService.resolve(message) == (
+            ChatProductionOperationalIntentService.resolve(message, force_legacy=True)
+        )
+        assert ChatDepartmentKpiIntentService.resolve(
+            "qual o ebitda do último trimestre"
+        ) == ChatDepartmentKpiIntentService.resolve(
+            "qual o ebitda do último trimestre",
+            force_legacy=True,
+        )

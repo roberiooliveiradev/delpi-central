@@ -118,8 +118,8 @@ def test_authority_shadow_does_not_change_contract():
     )
     assert shadow is not None
     assert shadow["cutover"] is True  # product family canary ON
-    assert shadow["cutoverProduction"] is False
-    assert shadow["cutoverKpi"] is False
+    assert shadow["cutoverProduction"] is True
+    assert shadow["cutoverKpi"] is True
     assert shadow["agreeProduct"] is True
     assert understanding.goals[0].intent  # unchanged
 

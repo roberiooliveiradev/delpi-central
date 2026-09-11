@@ -93,7 +93,7 @@
       "moduleOwner": "app/domain/services/chat_product_query_intent_detection_service.py",
       "defaultState": "cutover_on",
       "flagReversible": true,
-      "rollbackHow": "productFamilyAuthorityShadow.cutoverEnabled=false → detect volta ao pipeline legado; mapper permanece observer no shadow.",
+      "rollbackHow": "productFamilyAuthorityShadow.cutoverEnabled=false ou families.product/production/kpi=false. Production/KPI são agree-gated (sem divergência do legado).",
       "observability": "authorityShadow.candidateProductIntent / cutover",
       "sideEffects": true,
       "evidence": "docs/roadmap/llm-json-decoupling/evidence/e2-s4-authority-shadow.md",

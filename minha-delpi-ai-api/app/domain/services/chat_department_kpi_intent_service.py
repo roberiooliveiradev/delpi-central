@@ -118,12 +118,18 @@ class ChatDepartmentKpiIntentService:
 
     @classmethod
     def resolve(cls, message: str, *, force_legacy: bool = False) -> DepartmentKpiMatch | None:
-        if not force_legacy and cls._kpi_family_cutover_enabled():
-            mapped = cls._resolve_from_turn_understanding(message)
-            if mapped is not None:
-                return mapped
+        legacy = cls._resolve_legacy(message)
+        if force_legacy or not cls._kpi_family_cutover_enabled():
+            return legacy
 
-        return cls._resolve_legacy(message)
+        mapped = cls._resolve_from_turn_understanding(message)
+        if (
+            mapped is not None
+            and legacy is not None
+            and mapped.path_token == legacy.path_token
+        ):
+            return mapped
+        return legacy
 
     @classmethod
     def _resolve_legacy(cls, message: str) -> DepartmentKpiMatch | None:
