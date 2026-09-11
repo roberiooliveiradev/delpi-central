@@ -1,164 +1,197 @@
 # Roadmap — desacoplamento de JSONs e generalização LLM/OpenAPI
 
-**Status:** Ondas A–I **ATENDIDAS** · ver [`ARCHIVED.md`](./ARCHIVED.md) · [`planos/10-zero-lateral-path-maps.md`](./planos/10-zero-lateral-path-maps.md)  
+**Status:** **REABERTO — Onda J P0**  
+**Plano ativo:** [`planos/11-corrective-cutover-generalization-cleanup.md`](./planos/11-corrective-cutover-generalization-cleanup.md)  
 **Owner arquitetural:** Minha DELPI AI / OpenAPI-first tool routing  
-**Dependência:** `../openapi-first-universal-tool-routing.md`  
-**Baseline freeze:** [`evidence/onda-a-baseline/manifest.json`](./evidence/onda-a-baseline/manifest.json)
+**Dependência:** `../openapi-first-universal-tool-routing.md`
 
 ## 1. Resultado esperado
 
-Evoluir o chat de um comportamento parcialmente orientado por catálogos/heurísticas conhecidas para um motor generalizável:
+Evoluir o chat para um motor realmente generalizável, sem catálogo técnico paralelo nem NLU endpoint-specific escondida em outra representação:
 
 ```text
-CURRENT
-mensagem
--> termos/regex/predicates
--> registry/path/operationId conhecidos
--> parameterStrategy específica
--> execução
--> presenter/profile conhecido
-
 TARGET
 mensagem + contexto estruturado
--> Turn Understanding
--> goals/subtasks
--> allowed Action Catalog
--> semantic retrieval
--> structured planner
--> OpenAPI argument binding/validation
--> RBAC/policy/confirmation
--> generic execution
--> responseSchema + metadata
--> schema-driven presentation
--> grounded synthesis/recommendations
+→ semantic understanding
+→ goals/subtasks/entities/references
+→ allowed Action Catalog
+→ semantic retrieval
+→ structured planner restricted to candidates
+→ OpenAPI schema binder + validator
+→ RBAC/policy/confirmation
+→ generic execution
+→ responseSchema + semantic metadata
+→ schema-driven presentation
+→ grounded synthesis + contextual recommendations
 ```
 
-## 2. Ledger de requisitos
+## 2. Estado histórico × estado vigente
 
-| ID | Requisito | Estado no roadmap |
+As Ondas A–I foram executadas e produziram evidências úteis. Uma auditoria posterior encontrou drifts materiais no estado final, portanto:
+
+```text
+PASS histórico ≠ PASS do candidate atual
+```
+
+Os principais drifts são:
+
+- path→domain map movido para Python;
+- parameter strategy recriada por path/operationId;
+- multi-turn continuity recriada por path-tail/operationId inventory;
+- registry `operationIds` residual como catálogo técnico;
+- semantic authority duplicada;
+- recommendations ainda com fallback/oracle estático;
+- capability metadata de efeito/risco incorreta;
+- Clean Architecture/DI residual;
+- credential defaults em smoke;
+- unknown-provider anterior ao último diff material.
+
+A Onda J existe para corrigir esses pontos e produzir **novo candidate final**.
+
+## 3. Ledger macro vigente
+
+| ID | Requisito | Owner na Onda J |
 |---|---|---|
-| RQ-01 | Remover autoridade técnica de JSONs que duplicam path/method/operationId/schema/strategy | ATENDIDO_NO_PLANO |
-| RQ-02 | Reduzir NLU hardcoded por termos, exclusões, regex e predicates | ATENDIDO_NO_PLANO |
-| RQ-03 | Fazer pedidos longos virarem goals/subtasks sem compressão em uma intent única | ATENDIDO_NO_PLANO |
-| RQ-04 | Generalizar follow-up com estado estruturado, sem substring de path | ATENDIDO_NO_PLANO |
-| RQ-05 | Extrair argumentos semanticamente e validar pelo OpenAPI | ATENDIDO_NO_PLANO |
-| RQ-06 | Remover mini Action Catalog/capabilities manuais duplicados | ATENDIDO_NO_PLANO |
-| RQ-07 | Tornar composição/enrichment dependentes do objetivo e das actions permitidas | ATENDIDO_NO_PLANO |
-| RQ-08 | Tornar recomendações e sugestões contextuais sem inventar capabilities | ATENDIDO_NO_PLANO |
-| RQ-09 | Preservar policies, business rules, safety e copy legítima fora do LLM | HERDADO_POR_SOLUCAO_TRANSVERSAL |
-| RQ-10 | Remover acoplamento residual de apresentação por path quando schema/metadata bastam | ATENDIDO_NO_PLANO |
-| RQ-11 | Preservar send/stream/simulate, persistência/F5, histórico e UI | ATENDIDO_NO_PLANO |
-| RQ-12 | Provar API externa desconhecida e teste metamórfico de rename | ATENDIDO_NO_PLANO |
-| RQ-13 | Controlar latência, tokens, tool count e número de chamadas LLM | ATENDIDO_NO_PLANO |
-| RQ-14 | Remover conteúdo morto somente após cutover comprovado | ATENDIDO_NO_PLANO |
+| RQ-01 | Remover autoridade técnica duplicada de path/method/operationId/schema/strategy | E11.S2–S5 |
+| RQ-02 | Remover NLU endpoint/domain-specific desnecessária | E11.S6 |
+| RQ-03 | Pedidos longos → goals/subtasks completos | E11.S6/S9 |
+| RQ-04 | Follow-up por estado estruturado, sem URL substring/tail | E11.S4 |
+| RQ-05 | Argumentos semanticamente extraídos e validados pelo OpenAPI | E11.S3 |
+| RQ-06 | Action/capability sem mini-catálogo técnico paralelo | E11.S5/S7 |
+| RQ-07 | Composition/enrichment dependentes de goals/actions permitidas | revalidar S9 |
+| RQ-08 | Recommendations realmente contextuais e validadas | E11.S7 |
+| RQ-09 | Preservar policy/business/safety determinísticos | transversal/S9 |
+| RQ-10 | Presentation universal schema-first | revalidar S9 |
+| RQ-11 | Preservar send/stream/simulate/persist/F5/UI | E11.S9 |
+| RQ-12 | Provar unknown external API + metamorphic rename no candidate final | E11.S9 |
+| RQ-13 | Controlar latency/tokens/model calls/tool count | E11.S9 |
+| RQ-14 | Cleanup só após generalização; nenhum substituto semântico | E11.S1–S10 |
 
-## 3. Decisões travadas
+O detalhamento atômico está no ledger RQ11-* do Plano 11.
 
-### D-01 — não existe migração cega JSON -> LLM
+## 4. Decisões travadas
 
-Destino depende da natureza do conteúdo:
+### D-01 — não existe migração cega JSON → LLM
 
 | Conteúdo | Destino |
 |---|---|
 | path/method/operationId/params/schema | OpenAPI + Action Catalog |
-| classificação semântica estável de action | materializada no import/index quando necessária |
-| compreensão de pedido/contexto | LLM estruturado |
+| compreensão de pedido/contexto | semantic understanding estruturado |
+| argument delta | planner/TU + binder schema-driven |
 | required/type/enum/format | validator determinístico |
 | RBAC/sensitivity/confirmation | policy determinística |
 | business rule/factual verdict | domínio determinístico |
-| UX/copy/prompt | JSON/conteúdo configurável |
+| UX/copy/prompt | conteúdo configurável |
 | apresentação genérica | responseSchema + payload + metadata |
-| framing/recommendação contextual | síntese LLM existente, quando possível |
+| framing/recommendação contextual | síntese grounded existente quando possível |
 
-### D-02 — preferência de custo/latência
+### D-02 — também não existe migração JSON → hardcode Python/TS
+
+Eliminar um catálogo significa eliminar a **authority conceitual**.
 
 ```text
-fonte canônica direta
-> transformador determinístico
-> cache/materialização semântica
-> reutilizar chamada LLM já existente no turno
-> nova chamada LLM dedicada
+pathMarkers JSON → _DOMAIN_RULES Python = FAIL
+parameterStrategy JSON → if path → strategy = FAIL
+routeSegment JSON → path-tail = FAIL
+path markers → route.operationIds manual = residual técnico
 ```
 
-Nova chamada LLM só entra com justificativa mensurável.
+### D-03 — OpenAPI standard é suficiente para plugabilidade
 
-### D-03 — planner não autoriza execução
+`x-delpi.*` é enrichment opcional. Uma API OpenAPI externa padrão deve conseguir entrar por import/index/binding/policy sem core edit por endpoint.
 
-`retrieval/planner` escolhe entre candidates permitidas; validator e policy continuam soberanos.
+### D-04 — planner não autoriza execução
 
-### D-04 — generalização é critério de arquitetura
+Retrieval/planner escolhe entre candidates permitidas; validator e RBAC/sensitivity/confirmation continuam soberanos.
 
-Uma API externa desconhecida deve operar sem source code, intent, selector, marker, parameter strategy ou presenter por endpoint.
+### D-05 — evidence freshness
 
-### D-05 — compatibilidade antes de remoção
+Candidate evidence pertence ao `gitSha/config/model/catalog/dataset` avaliado. Mudança posterior que afeta a dimensão invalida aquele PASS até rerun.
 
-Registry/heurística antiga pode existir temporariamente como shadow/fallback observável. Só remover após candidate provar cobertura e ausência de regressão material.
+### D-06 — complete means complete
 
-## 4. Matriz de fluxos
+`PARTIAL`, `LEGACY_FALLBACK`, `INCONCLUSIVE`, TODO/FIXME/HACK ou flag sem exit criteria não podem coexistir com `FINAL_RESULT=PASS` quando pertencem ao objetivo material.
 
-| Fluxo | CURRENT principal (HEAD) | TARGET | Prioridade | Plano | Nota |
-|---|---|---|---|---|---|
-| Routing técnico | OpenAPI-first no cold path + **registry residual** (intent/grounded/params) | Action Catalog + retrieval + planner sem preempção | P0 | 01 | Não reinventar OpenAPI-first |
-| Understanding/intents | `product_query_intent`, `production_operational_intent`, `department_kpi_rules`, vocabularies; TU em **shadow** | Turn Understanding estruturado | P0 | 02 | |
-| Follow-up/refinement/args | route segments, terms, regex, `pathContains` | state + schema + planner/binder | P0 | 03 | |
-| Capabilities/actions | `capability_registry.action.*` (+ UX via `uxCapability`; **pathRules removido**) | Action Catalog materializado | P1 | 04 | R04-02 ATENDIDO (D1) |
-| Composition/enrichment | routeIds/scope maps pré-programados | planner orientado a goals/budget | P1 | 05 | |
-| Recommendations/composer | `recommendationQueries` por profile (estático elevado; lista textual removida) | recomendações **contextuais** validadas | P1 | 06 | D2 ≠ aceite 06 |
-| Presentation residual | entity/path profiles e hints | shape/schema-first | P2 | 07 | display maps path→label já limpos |
-| Skills/help residual | endpoint hints em conteúdo editorial | runtime capability lookup | P2 | 08 | |
-| Evals/rollout/cleanup | validação fragmentada | baseline/candidate R1-R11 | transversal | 09 | |
+## 5. Sequência de execução atual
 
-### Drift documental resolvido (2026-09-10)
+### Ondas A–I — histórico
 
-- `capabilities.pathRules` não é mais CURRENT — ver plano 04.
-- Cold path já é OpenAPI-first — ver plano 01.
-- Recommendations estáticas textuais removidas; `recommendationQueries` = LEGACY_FALLBACK (plano 06 ATENDIDO).
+| Onda | Tema | Estado atual |
+|---|---|---|
+| A | baseline/contratos | histórico válido como baseline |
+| B | routing universal | implementação existente, revalidada na Onda J |
+| C | understanding | implementação existente, cleanup reaberto |
+| D | multi-turn/args | implementação existente, path coupling reaberto |
+| E | capabilities/composition | implementação existente, metadata reaberta |
+| F | recommendations | implementação existente, cutover contextual reaberto |
+| G | presentation/skills | implementação existente, revalidar no candidate final |
+| H | eval/cutover | PASS histórico, não release vigente |
+| I | zero mapa lateral | **PASS invalidado por substitutos semânticos encontrados** |
 
-## 5. Ordem de execução
+### Onda J — correção arquitetural — **ABERTA**
 
-### Onda A — congelar baseline e contratos — **ATENDIDO** (2026-09-10)
+Executar sem saltos:
 
-1. Inventariar consumidores e fallbacks atuais. → [`evidence/onda-a-inventory.md`](./evidence/onda-a-inventory.md)
-2. Congelar dataset e métricas de routing offline + flow-family matrix. → [`evidence/onda-a-baseline/`](./evidence/onda-a-baseline/)
-3. Hashes de conteúdo assistant no manifest; `openApiSchemaHash` / `actionCatalogHash` = `PENDING_RUNTIME` (plano 09).
-4. Classificar nós → inventário §7.
+```text
+E11.S0  rebaseline + inventário + freeze
+E11.S1  enforcement que detecta equivalência semântica
+E11.S2  domain classification sem path authority
+E11.S3  argument binder schema-driven; remove endpoint strategy
+E11.S4  multi-turn por structured state; remove path/operation continuity
+E11.S5  remove registry/operationIds como routing authority
+E11.S6  semantic authority única; cleanup de NLU endpoint-specific
+E11.S7  contextual recommendations + capability effect metadata
+E11.S8  Clean Architecture/DI + security hygiene
+E11.S9  final candidate R1–R11 + unknown + metamorphic + live parity
+E11.S10 final residual scan + docs + verify-final
+```
 
-### Onda B — routing universal — **ATENDIDO**
+Para cada workstream:
 
-Plano 01: E1.S3 **ATENDIDO**; E1.S4 **SHADOW_ON** ([`evidence/e1-s4-registry-selection-shadow.md`](./evidence/e1-s4-registry-selection-shadow.md)). Nenhuma remoção final antes de `unknown external API` + metamorphic rename + divergências shadow explicáveis.
+```text
+CUTOVER
+→ GENERALIZATION
+→ CLEANUP
+→ VERIFY
+→ COMPLETE_GATE
+```
 
-### Onda C — entendimento semântico — **PRONTO após início B**
+Não desbloquear etapa dependente sem pós-condição comprovada.
 
-Executar plano 02, com foco em pedidos longos, intents próximas, linguagem informal, typos e no-tool. Inventário intents: Onda A §6.
+## 6. Unknown external API — critério real
 
-### Onda D — multi-turn e argument binding — **ATENDIDO**
+Unknown significa provider/action/paths/operationIds não conhecidos pelo runtime e não adicionados a selector/vocabulary/path map para o teste.
 
-Executar plano 03. Follow-up deve depender de contexto estruturado e schema, não de route substring.
+Fluxo obrigatório:
 
-### Onda E — capabilities e composition — **ATENDIDO** (2026-09-10)
+```text
+OpenAPI fictício
+→ import/index
+→ agent binding
+→ allowed actions
+→ retrieval
+→ planner
+→ validator
+→ policy
+→ executor
+→ presentation
+```
 
-Planos 04 e 05 (S1–S7): Action Catalog discovery + composition/enrichment por goals/budget. Maps `scopeToRouteId` / `primaryRouteId`/`composeRouteIds` removidos.
+Depois executar variante metamórfica renomeando:
 
-### Onda F — UX inteligente — **ATENDIDO** (2026-09-10)
+```text
+provider
+path
+operationId
+```
 
-Plano 06 S1–S6: recommendations contextuais + composer budget-safe; `recommendationQueries` = LEGACY_FALLBACK.
+preservando semântica/schema.
 
-### Onda G — apresentação e conteúdo residual — **ATENDIDO** (2026-09-10)
+Mensagem aleatória sem sentido é negative/no-tool; não é unknown-provider.
 
-Planos 07+08 fechados (schema-first presentation + skills/help residual + audit gate). Próximo: plano 09 / Onda H.
+## 7. Métricas obrigatórias
 
-### Onda H — cutover e limpeza — **ATENDIDO** (2026-09-11)
-
-Plano 09 completo: E9.S1–S15. `deleteAuthorized=true` (E9.S6/S14); **`globalReleasePass=true`** (E9.S8 pós E9.S15 recommendations + send/stream/simulate live).
-
-### Onda I — zero mapa lateral — **ATENDIDO** (2026-09-11)
-
-Plano 10 E10.S1–S5: content sem pathMarkers/pathToken/pathContains/pathRules laterais. Domínio via Action Catalog + `ApiRouteDomainInferenceService`. Gate `test_e10_zero_lateral_path_maps`.
-
-
-## 6. Métricas obrigatórias
-
-Medir baseline/candidate, por família e global:
+Medir baseline e candidate final:
 
 ```text
 task_decomposition_recall
@@ -178,83 +211,88 @@ p50/p95_latency
 llm_calls_per_turn
 tokens_per_turn
 tool_calls_per_turn
-catalog_path_coupling_count
-manual_intent_rule_count
+PATH_COUPLED_RUNTIME_RULES
+OPERATION_ID_COUPLED_RUNTIME_RULES
+ENDPOINT_STRATEGY_RULES
+MANUAL_INTENT_RULES
+LEGACY_FALLBACKS
+SHADOWS_WITHOUT_EXIT
+TECHNICAL_CATALOG_ENTRIES
+HARDCODED_SMOKE_CREDENTIAL_DEFAULTS
+TODO_FIXME_HACK_MATERIAL_COUNT
 ```
 
-## 7. Invariantes de segurança e negócio
+## 8. Invariantes de segurança e negócio
 
 Não migrar para decisão livre do LLM:
 
-- RBAC e permissions;
-- sensitivity/write/admin/destructive classification sem validação canônica;
+- RBAC/permissions;
+- sensitivity/write/admin/destructive enforcement;
 - confirmation policy;
 - URL/host executável;
 - required/type/enum/format;
-- factual verdicts e regras de domínio;
-- regras de desenho/conformidade;
-- limites operacionais, paginação máxima, payload caps, timeout e retries;
+- factual verdicts/regras de domínio;
+- limites operacionais, payload caps, timeout/retry;
 - secrets/config de provider.
 
-## 8. Compatibilidade e rollout
-
-Para cada fluxo de alto risco:
-
-```text
-CURRENT
--> BASELINE
--> candidate em shadow quando possível
--> divergência instrumentada
--> canary restrito
--> default candidate
--> fallback monitorado
--> cleanup do legado
-```
-
-Não manter fallback silencioso que esconda regressão. Toda queda para catálogo antigo deve ser observável.
+Capability metadata descritiva deve ser coerente com method/sensitivity/policy, mas não substitui enforcement.
 
 ## 9. Paridade transversal obrigatória
 
-Cada plano deve avaliar explicitamente:
+Candidate final deve avaliar conforme applicability:
 
 - send;
 - stream;
 - simulate;
+- UI;
+- compound;
 - multi-turn;
+- partial failure;
 - persist/reload/F5;
-- histórico/replay;
+- history/replay;
 - admin/debug/telemetry;
-- MFE render-only quando apresentação estiver envolvida;
-- Ajuda quando comportamento user-facing mudar.
+- schema-driven presentation;
+- Ajuda se user-facing;
+- LLM-off/fallback seguro quando aplicável.
 
 ## 10. Definition of Done global
 
-A iniciativa só pode ser considerada concluída quando:
+Somente fechar/arquivar quando no mesmo candidate final:
 
 ```text
+CUTOVER_RESULT = PASS
+GENERALIZATION_RESULT = PASS
+CLEANUP_RESULT = PASS
 UNKNOWN_EXTERNAL_API = PASS
 METAMORPHIC_PROVIDER_PATH_OPERATION_RENAME = PASS
 COMPOUND_LONG_REQUEST = PASS
 MULTI_TURN_FOLLOW_UP = PASS
 REQUIRED_ARGUMENT_CLARIFY = PASS
 UNAUTHORIZED_WRITE_SAFETY = PASS
-SEND_STREAM_SIMULATE_PARITY = PASS
-PERSIST_RELOAD = PASS
-R1_R11_RELEASE = PASS
-NO_NEW_ENDPOINT_CATALOG = PASS
-NO_MATERIAL_LATENCY_COST_REGRESSION_UNJUSTIFIED = PASS
-RESIDUAL_PATH_COUPLING = explicitamente justificado ou zero no core genérico
+SEMANTIC_AUTHORITY_SINGLE_OWNER = PASS
+CONTEXTUAL_RECOMMENDATIONS = PASS
+CAPABILITY_SECURITY_METADATA = PASS
+CLEAN_ARCHITECTURE = PASS
+SECURITY_HYGIENE = PASS
+SEND_STREAM_SIMULATE_UI = PASS
+PERSIST_RELOAD_F5 = PASS
+R1_R11_REQUIRED_DIMENSIONS = PASS
+NO_ENDPOINT_CATALOG_AUTHORITY = PASS
+RESIDUAL_SCAN = PASS
+DOCS_MATCH_FINAL_HEAD = PASS
+COMPLETE_GATE = PASS
+VERIFY_FINAL = PASS
 ```
 
-## 11. Rastreabilidade macro
+Qualquer `PARTIAL`, required `WARN`, `INCONCLUSIVE`, `LEGACY_FALLBACK` incompatível com o objetivo ou prova de SHA anterior ao último diff material mantém:
 
-| Requisito | Decisão | Plano | Prova principal |
-|---|---|---|---|
-| RQ-01/RQ-12 | D-01/D-04 | 01, 09 | unknown API + metamorphic |
-| RQ-02/RQ-03 | D-01 | 02 | decomposition + semantic siblings |
-| RQ-04/RQ-05 | D-01/D-03 | 03 | multi-turn + args validator |
-| RQ-06 | D-01/D-04 | 04 | dynamic capabilities from catalog |
-| RQ-07 | D-02/D-03 | 05 | goal coverage + budget |
-| RQ-08/RQ-13 | D-02 | 06 | grounded recommendation + LLM-call budget |
-| RQ-09/RQ-10 | D-01 | 07, 08 | schema-first + invariant tests |
-| RQ-11/RQ-14 | D-05 | 09 | parity + cleanup gates |
+```text
+FINAL_RESULT = VERIFY_FINAL_FAILED
+```
+
+## 11. Fontes de execução
+
+- planejamento/rebaseline: [`prompt-cursor-plano-mestre.md`](./prompt-cursor-plano-mestre.md);
+- execução: [`prompt-cursor-execucao-corretiva.md`](./prompt-cursor-execucao-corretiva.md);
+- plano ativo: [`planos/11-corrective-cutover-generalization-cleanup.md`](./planos/11-corrective-cutover-generalization-cleanup.md);
+- histórico: [`evidence/execution-ledger.md`](./evidence/execution-ledger.md) e [`ARCHIVED.md`](./ARCHIVED.md).
