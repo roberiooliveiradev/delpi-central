@@ -10,6 +10,7 @@ export {
   buildDelpiCableLabelStyles,
   buildDelpiQualitySealSvg,
   formatDelpiCableLabelCustomerItem,
+  resolveDelpiCableLabelCustomerValue,
   type DelpiCableLabelCodeVariant,
   type DelpiCableLabelDocumentOptions,
 } from "./delpiCableLabel";

@@ -220,6 +220,22 @@ export function formatDelpiCableLabelCustomerItem(
 }
 
 /**
+ * Código do cliente na etiqueta: item (desenho) prevalece; senão o código SA1.
+ */
+export function resolveDelpiCableLabelCustomerValue(fields: {
+  customerItem?: string | null;
+  customerItemRev?: string | null;
+  customerCode?: string | null;
+}): string {
+  const item = formatDelpiCableLabelCustomerItem(
+    fields.customerItem,
+    fields.customerItemRev,
+  );
+  if (item) return item;
+  return (fields.customerCode ?? "").trim();
+}
+
+/**
  * Linha rotulada (DELPI / CLIENTE) no painel da etiqueta 100×30 mm.
  * Valor vazio ou só espaço → string vazia (não renderiza o bloco).
  */
@@ -241,7 +257,13 @@ export function buildDelpiCableLabelLabeledCodeHtml(
 export function buildDelpiCableLabelDocumentHtml(
   options: DelpiCableLabelDocumentOptions,
 ): string {
-  const caption = options.caption?.trim() || "Aponte a câmera do celular";
+  const caption =
+    options.caption === undefined
+      ? "Aponte a câmera do celular"
+      : options.caption.trim();
+  const captionHtml = caption
+    ? `<div class="tag__caption">${caption}</div>`
+    : "";
   const brandPanel = buildDelpiCableLabelBrandPanelHtml(
     buildDelpiQualitySealSvg(options.sealTopLabel),
     options.brandFooterHtml
@@ -259,7 +281,7 @@ export function buildDelpiCableLabelDocumentHtml(
     <div class="tag">
       <div class="tag__panel tag__qr">
         <img src="${options.qrDataUrl}" alt="${options.qrAlt}" />
-        <div class="tag__caption">${caption}</div>
+        ${captionHtml}
         ${options.qrFooterHtml}
       </div>
       <div class="tag__fold" aria-hidden="true"></div>

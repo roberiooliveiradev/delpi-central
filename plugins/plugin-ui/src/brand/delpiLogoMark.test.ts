@@ -7,6 +7,7 @@ import {
   buildDelpiCableLabelStyles,
   buildDelpiQualitySealSvg,
   formatDelpiCableLabelCustomerItem,
+  resolveDelpiCableLabelCustomerValue,
 } from "./delpiCableLabel";
 
 describe("DELPI_LOGO_MARK_SVG", () => {
@@ -44,6 +45,31 @@ describe("formatDelpiCableLabelCustomerItem", () => {
   it("não imprime revisão se o item do cliente estiver vazio", () => {
     expect(formatDelpiCableLabelCustomerItem("  ", "00")).toBe("");
     expect(formatDelpiCableLabelCustomerItem(null, "00")).toBe("");
+  });
+});
+
+describe("resolveDelpiCableLabelCustomerValue", () => {
+  it("prefere o item do cliente ao código SA1", () => {
+    expect(
+      resolveDelpiCableLabelCustomerValue({
+        customerItem: "2229-07/1",
+        customerItemRev: "00",
+        customerCode: "000123",
+      }),
+    ).toBe("2229-07/1 Rev.00");
+  });
+
+  it("usa o código SA1 quando o item do cliente está vazio", () => {
+    expect(
+      resolveDelpiCableLabelCustomerValue({
+        customerItem: "  ",
+        customerCode: "000123",
+      }),
+    ).toBe("000123");
+  });
+
+  it("devolve vazio quando não há item nem código", () => {
+    expect(resolveDelpiCableLabelCustomerValue({})).toBe("");
   });
 });
 
@@ -130,5 +156,19 @@ describe("buildDelpiCableLabelDocumentHtml", () => {
     expect(html).toContain("DELPI");
     expect(html).toContain("90300005");
     expect(html).toContain("OP 1 · 11/09/2026");
+  });
+
+  it("omite a legenda quando caption é string vazia", () => {
+    const html = buildDelpiCableLabelDocumentHtml({
+      title: "Etiqueta da Qualidade",
+      qrDataUrl: "data:image/png;base64,xx",
+      qrAlt: "QR",
+      caption: "",
+      qrFooterHtml: '<div class="tag__meta">OP 1</div>',
+      sealTopLabel: "APROVADO",
+      hintHtml: "Dobre no centro.",
+    });
+    expect(html).not.toContain('class="tag__caption"');
+    expect(html).not.toContain("Aponte a câmera do celular");
   });
 });

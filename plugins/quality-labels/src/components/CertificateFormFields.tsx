@@ -190,8 +190,9 @@ export function CertificateFormFields({
           )}
         </span>
         <p className="ql-info-note ql-info-note--compact">
-          O item do cliente sai na frente da etiqueta física (QR); o código Delpi
-          fica no verso, junto da marca e do selo.
+          Na etiqueta física, o QR mostra CLIENTE e DELPI. O item do cliente
+          (desenho) prevalece; se estiver vazio, sai o código cadastral do
+          cliente. Salve o certificado antes de imprimir.
         </p>
         <div className="ql-cert-grid">
           <label className="ql-field ql-field--wide">

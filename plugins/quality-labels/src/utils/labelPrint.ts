@@ -1,11 +1,12 @@
 import {
   buildDelpiCableLabelDocumentHtml,
   buildDelpiCableLabelLabeledCodeHtml,
-  formatDelpiCableLabelCustomerItem,
   printDelpiDocumentHtml,
+  resolveDelpiCableLabelCustomerValue,
 } from "@delpi/plugin-ui/index";
 
-import type { QualityLabel } from "../types/qualityLabels";
+import { getCertificate } from "../api/qualityLabelsApi";
+import type { Certificate, QualityLabel } from "../types/qualityLabels";
 
 const RESULT_LABELS: Record<string, string> = {
   approved: "APROVADO",
@@ -37,15 +38,28 @@ function formatDate(value: string | null): string {
   return date.toLocaleDateString("pt-BR");
 }
 
-function buildLabelHtml(label: QualityLabel, qrDataUrl: string): string {
+async function loadCertificateForPrint(labelId: string): Promise<Certificate | null> {
+  try {
+    return await getCertificate(labelId);
+  } catch {
+    return null;
+  }
+}
+
+function buildLabelHtml(
+  label: QualityLabel,
+  qrDataUrl: string,
+  certificate: Certificate | null,
+): string {
   const topLabel = RESULT_LABELS[label.result] ?? "QUALIDADE";
   const productCode = label.productCode;
   const op = escapeHtml(label.productionOrder);
   const date = escapeHtml(formatDate(label.inspectedAt));
-  const customerValue = formatDelpiCableLabelCustomerItem(
-    label.customerItem,
-    label.customerItemRev,
-  );
+  const customerValue = resolveDelpiCableLabelCustomerValue({
+    customerItem: certificate?.customerItem ?? label.customerItem,
+    customerItemRev: certificate?.customerItemRev ?? label.customerItemRev,
+    customerCode: certificate?.customerCode,
+  });
   const customerHtml = buildDelpiCableLabelLabeledCodeHtml(
     "customer",
     "CLIENTE",
@@ -60,18 +74,22 @@ function buildLabelHtml(label: QualityLabel, qrDataUrl: string): string {
     title: `Etiqueta da Qualidade — ${escapeHtml(productCode)}`,
     qrDataUrl,
     qrAlt: "QR code da inspeção",
-    qrFooterHtml: `${customerHtml}<div class="tag__meta">OP ${op} · ${date}</div>`,
+    caption: "",
+    qrFooterHtml: `${customerHtml}${productHtml}<div class="tag__meta">OP ${op} · ${date}</div>`,
     sealTopLabel: topLabel,
     brandFooterHtml: productHtml,
     hintHtml:
-      "Recorte na linha externa e dobre na faixa central em volta do cabo: o QR (frente) mostra o item do cliente quando houver; o verso traz a marca Delpi, o selo e o código Delpi.",
+      "Recorte na linha externa e dobre na faixa central em volta do cabo: o QR (frente) mostra CLIENTE e DELPI; o verso traz a marca, o selo e o código Delpi.",
   });
 }
 
 /** Monta e envia para impressão a etiqueta do cabo (QR + marca + selo). */
 export async function printQualityLabel(label: QualityLabel, qrBlob: Blob): Promise<void> {
-  const qrDataUrl = await blobToDataUrl(qrBlob);
-  const html = buildLabelHtml(label, qrDataUrl);
+  const [qrDataUrl, certificate] = await Promise.all([
+    blobToDataUrl(qrBlob),
+    loadCertificateForPrint(label.id),
+  ]);
+  const html = buildLabelHtml(label, qrDataUrl, certificate);
   if (printDelpiDocumentHtml(html, { iframeTitle: "Etiqueta da Qualidade" })) {
     return;
   }

@@ -10,9 +10,9 @@ servida pelo `public-hub`.
 
 - **Etiquetas + QR code:** registra a inspeção por OP (busca automática do
   produto/unidade no TOTVS), gera a etiqueta e o QR público. A etiqueta física
-  100×30 mm traz o **item do cliente na frente** (QR), quando preenchido no
-  certificado, e o **código Delpi no verso** (marca + selo). Sem item do cliente,
-  a frente fica só com OP e data.
+  100×30 mm traz **CLIENTE e DELPI na frente** (QR): o item do certificado
+  (desenho) prevalece; se vazio, o código SA1. O verso mantém marca, selo e
+  código Delpi. A impressão lê o certificado na hora (não só a linha da lista).
 - **Certificado de qualidade (RQ-032):** seção expansível no formulário de registro
   (collapse) e painel inline na lista de etiquetas — **sem modal**. Checklist A/R/NA,
   linhas customizáveis, busca de cliente TOTVS (SA1) e observações. Ao registrar com
