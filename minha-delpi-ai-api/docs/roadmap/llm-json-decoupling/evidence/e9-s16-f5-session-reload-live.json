@@ -1,0 +1,35 @@
+{
+  "stage": "E9.S16_f5_session_reload",
+  "generated_at": "2026-09-11T14:15:34.193673+00:00",
+  "product_code": "10080022",
+  "surface": "API_SESSION_RELOAD",
+  "note": "Equivalente backend do F5: GET messages + follow-up na mesma sessão (sem Playwright/MFE).",
+  "cases": {
+    "SEED_stock": {
+      "elapsed_s": 46.27,
+      "paths": [
+        "/products/10080022/stock"
+      ],
+      "ok": true
+    },
+    "GET_messages_reload": {
+      "elapsed_s": 0.03,
+      "message_count": 2,
+      "has_stock_tool_in_history": true,
+      "ok": true
+    },
+    "FOLLOWUP_same_product_after_reload": {
+      "elapsed_s": 34.73,
+      "message": "mostre de novo o estoque desse mesmo produto",
+      "paths": [
+        "/products/10080022/stock"
+      ],
+      "product_in_payload": true,
+      "ok": true
+    }
+  },
+  "pass": true,
+  "agentId": "4f9c225b-0414-40d3-a462-040889719b83",
+  "sessionId": "857b60c0-b447-4a8b-9fd5-2419a009f01f",
+  "failed_count": 0
+}

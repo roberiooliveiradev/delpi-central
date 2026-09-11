@@ -215,11 +215,18 @@ class ChatAdminDebugService:
         usage = dict(block.get("usage") or {})
         metrics = metadata.get("metrics") if isinstance(metadata.get("metrics"), dict) else {}
         if metrics:
+            prompt_est = metrics.get("promptTokensEstimated")
+            completion_est = metrics.get("completionTokensEstimated")
+            total_est = metrics.get("totalTokensEstimated")
             usage.update(
                 {
-                    "promptTokensEstimated": metrics.get("promptTokensEstimated"),
-                    "completionTokensEstimated": metrics.get("completionTokensEstimated"),
-                    "totalTokensEstimated": metrics.get("totalTokensEstimated"),
+                    "promptTokensEstimated": prompt_est,
+                    "completionTokensEstimated": completion_est,
+                    "totalTokensEstimated": total_est,
+                    # Canonical aliases for efficiency harnesses (E9.S11 / tokens_per_turn).
+                    "promptTokens": prompt_est,
+                    "completionTokens": completion_est,
+                    "totalTokens": total_est,
                     "estimatedCost": metrics.get("estimatedCost"),
                     "latencyMs": metrics.get("latencyMs"),
                     "tokenSource": "estimated",

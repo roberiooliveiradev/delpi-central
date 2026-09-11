@@ -24,7 +24,7 @@ NO_FALSE_GLOBAL_PASS = PASS
 | nova API sem código | PASS_OFFLINE_AND_LIVE | E9.S14 logistics |
 | rename metamorphic | PASS_OFFLINE_AND_LIVE | E9.S14 |
 | frases longas | PASS_OFFLINE_AND_LIVE | E9.S13 C4 |
-| follow-up | PASS_OFFLINE_AND_LIVE | E9.S13 C5 (F5 browser não medido) |
+| follow-up | PASS_OFFLINE_AND_LIVE | E9.S13 C5 + E9.S16 API reload |
 | argumentos | PASS_OFFLINE_AND_LIVE | E9.S14 |
 | safety | PASS_OFFLINE_AND_LIVE | E9.S14 |
 | apresentação | PASS_OFFLINE_AND_LIVE | offline 07 + live stock/unknown |
@@ -34,8 +34,4 @@ NO_FALSE_GLOBAL_PASS = PASS
 
 ## Decisão
 
-Aceite de release da Onda H / verify-final: **aprovado** (`globalReleasePass=true`). Débitos menores documentados (F5 browser, tokens metadata) não bloqueiam a barra canônica da matriz E9.S8.
-
-## Próximo
-
-E9.S9 — documentação e encerramento com aceite final alinhado a este veredito.
+Aceite de release da Onda H / verify-final: **aprovado** (`globalReleasePass=true`). Débitos opcionais (F5 API reload, tokens, changelog) fechados em E9.S16 / E9.S11 reval / changelog.

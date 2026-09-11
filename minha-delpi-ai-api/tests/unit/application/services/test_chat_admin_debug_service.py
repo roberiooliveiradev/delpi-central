@@ -158,6 +158,9 @@ def test_attach_includes_intelligence_timings():
     assert metadata["adminDebug"]["llm"]["usage"]["promptTokensEstimated"] == 4200
     assert metadata["adminDebug"]["llm"]["usage"]["completionTokensEstimated"] == 380
     assert metadata["adminDebug"]["llm"]["usage"]["totalTokensEstimated"] == 4580
+    assert metadata["adminDebug"]["llm"]["usage"]["promptTokens"] == 4200
+    assert metadata["adminDebug"]["llm"]["usage"]["completionTokens"] == 380
+    assert metadata["adminDebug"]["llm"]["usage"]["totalTokens"] == 4580
     assert metadata["adminDebug"]["llm"]["usage"]["estimatedCost"] == 0.012345
     assert metadata["adminDebug"]["llm"]["usage"]["latencyMs"] == 18218
     assert metadata["adminDebug"]["metrics"]["totalTokensEstimated"] == 4580

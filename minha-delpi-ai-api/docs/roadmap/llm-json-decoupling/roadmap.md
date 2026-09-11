@@ -1,6 +1,6 @@
 # Roadmap — desacoplamento de JSONs e generalização LLM/OpenAPI
 
-**Status:** concluído (ondas A–H **ATENDIDAS**) — ledger [`evidence/execution-ledger.md`](./evidence/execution-ledger.md); pasta mantida como histórico  
+**Status:** **ARQUIVADO** (2026-09-11) — ondas A–H ATENDIDAS; débitos opcionais fechados; ver [`ARCHIVED.md`](./ARCHIVED.md)  
 **Owner arquitetural:** Minha DELPI AI / OpenAPI-first tool routing  
 **Dependência:** `../openapi-first-universal-tool-routing.md`  
 **Baseline freeze:** [`evidence/onda-a-baseline/manifest.json`](./evidence/onda-a-baseline/manifest.json)

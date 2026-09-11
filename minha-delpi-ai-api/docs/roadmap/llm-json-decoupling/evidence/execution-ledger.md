@@ -190,3 +190,8 @@ abrir planos/0N-*.md
 | 2026-09-11 | Onda B **ATENDIDO** — E1.S6 fechado (DELETE registry E9.S12.*) |
 | 2026-09-11 | Onda D **ATENDIDO** — plano 03 S1–S8 completo |
 | 2026-09-11 | Programa llm-json-decoupling **ondas A–H ATENDIDAS** |
+| 2026-09-11 | E9.S16 **ATENDIDO** — F5/session reload API (GET messages + same-product follow-up) |
+| 2026-09-11 | E9.S11 **tokens PASS** — extractor lê *TokensEstimated + aliases adminDebug |
+| 2026-09-11 | Changelog `2026-09-llm-json-decoupling.md` + pasta **ARQUIVADO** |
+| 2026-09-11 | Programa llm-json-decoupling **ENCERRADO** (sem fila ativa) |
+

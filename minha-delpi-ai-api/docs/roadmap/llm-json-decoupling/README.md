@@ -1,6 +1,6 @@
 # Desacoplamento de JSONs + inteligência LLM — Minha DELPI AI
 
-**Status:** Onda A–H **ATENDIDAS** · `globalReleasePass=true` (E9.S15) · via [`evidence/execution-ledger.md`](./evidence/execution-ledger.md)  
+**Status:** **ARQUIVADO** · Ondas A–H ATENDIDAS · `globalReleasePass=true` · débitos opcionais fechados · ver [`ARCHIVED.md`](./ARCHIVED.md)  
 **Escopo:** `minha-delpi-ai-api/app/content` + consumidores runtime relacionados  
 **Objetivo:** remover acoplamentos técnicos e linguísticos que impedem o chat de generalizar para novas APIs, novos domínios e formulações de linguagem natural sem manutenção rota a rota.
 

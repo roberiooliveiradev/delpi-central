@@ -138,6 +138,7 @@ def _extract_usage(response: dict) -> dict[str, Any]:
         meta = {}
     llm = admin.get("llm") if isinstance(admin.get("llm"), dict) else {}
     usage = llm.get("usage") if isinstance(llm.get("usage"), dict) else {}
+    metrics = admin.get("metrics") if isinstance(admin.get("metrics"), dict) else {}
     timings = {}
     intel = admin.get("intelligence") if isinstance(admin.get("intelligence"), dict) else {}
     if isinstance(intel.get("timings"), dict):
@@ -151,12 +152,26 @@ def _extract_usage(response: dict) -> dict[str, Any]:
         or os.environ.get("LLM_PROVIDER")
         or "unknown"
     )
+
+    def _token(*keys: str) -> int | float | None:
+        for source in (usage, metrics, meta.get("metrics") if isinstance(meta.get("metrics"), dict) else {}):
+            if not isinstance(source, dict):
+                continue
+            for key in keys:
+                value = source.get(key)
+                if isinstance(value, (int, float)):
+                    return value
+        return None
+
     return {
         "provider": provider,
-        "promptTokens": usage.get("promptTokens") or usage.get("prompt_tokens"),
-        "completionTokens": usage.get("completionTokens") or usage.get("completion_tokens"),
-        "totalTokens": usage.get("totalTokens") or usage.get("total_tokens"),
-        "llmMs": timings.get("llmMs"),
+        "promptTokens": _token("promptTokens", "promptTokensEstimated", "prompt_tokens"),
+        "completionTokens": _token(
+            "completionTokens", "completionTokensEstimated", "completion_tokens"
+        ),
+        "totalTokens": _token("totalTokens", "totalTokensEstimated", "total_tokens"),
+        "tokenSource": usage.get("tokenSource") or metrics.get("tokenSource") or "unknown",
+        "llmMs": timings.get("llmMs") or usage.get("latencyMs") or metrics.get("latencyMs"),
         "totalMs": timings.get("totalMs"),
         "toolCalls": len(assistant.get("toolCalls") or response.get("toolCalls") or []),
         "answerChars": len(str(assistant.get("content") or response.get("answer") or "")),
@@ -250,6 +265,15 @@ def main() -> int:
             "totals": [int(v) for v in token_totals],
             "avgTotal": statistics.mean(token_totals) if token_totals else None,
             "p50Total": _percentile(sorted(token_totals), 50) if token_totals else None,
+            "trialsWithTokens": len(token_totals),
+            "status": "PASS" if token_totals else "PENDING",
+            "sourceSample": sorted(
+                {
+                    str(t.get("tokenSource") or "")
+                    for t in trials
+                    if t.get("ok") and t.get("tokenSource")
+                }
+            ),
         },
         "errors": errors,
         "trials": trials,
@@ -259,6 +283,7 @@ def main() -> int:
     # Gate: enough ok trials + no ollama provider observed + p95 present
     ollama_seen = any("ollama" in p.lower() for p in providers)
     enough = summary["stack"]["trialsOk"] >= 3
+    tokens_ok = bool(token_totals)
     if not enough:
         decision = "INCONCLUSIVE"
         reason = "menos de 3 trials OK"
@@ -268,9 +293,12 @@ def main() -> int:
     elif summary["latency"]["p95Ms"] is None:
         decision = "INCONCLUSIVE"
         reason = "p95 ausente"
+    elif not tokens_ok:
+        decision = "INCONCLUSIVE"
+        reason = "tokens metadata ausente (totalTokens/Estimated)"
     else:
         decision = "PASS"
-        reason = "p50/p95 medidos no stack openai_compatible"
+        reason = "p50/p95 + tokens metadata no stack openai_compatible"
     summary["decision"] = decision
     summary["decisionReason"] = reason
 

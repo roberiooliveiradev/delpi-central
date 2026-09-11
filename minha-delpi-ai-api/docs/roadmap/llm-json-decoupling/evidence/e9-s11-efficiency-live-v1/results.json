@@ -1,43 +1,48 @@
 {
   "schemaVersion": 1,
   "step": "E9.S11",
-  "evaluatedAt": "2026-09-10T20:50:59.425421+00:00",
+  "evaluatedAt": "2026-09-11T14:10:39.048293+00:00",
   "stack": {
     "expectedProvider": "openai_compatible",
     "observedProviders": [
       "openai_compatible"
     ],
-    "modelEnv": "moonshotai/kimi-k3",
+    "modelEnv": "",
     "baseUrl": "http://localhost",
     "responseMode": "normal",
-    "trialsRequested": 5,
-    "trialsOk": 5
+    "trialsRequested": 3,
+    "trialsOk": 3
   },
   "latency": {
     "wallsMs": [
-      12327,
-      12960,
-      14708,
-      16291,
-      19769
+      43223,
+      51180,
+      63185
     ],
-    "p50Ms": 14708.0,
-    "p95Ms": 19073.399999999998,
-    "avgMs": 15211.0,
-    "minMs": 12327.0,
-    "maxMs": 19769.0,
+    "p50Ms": 51180.0,
+    "p95Ms": 61984.5,
+    "avgMs": 52529.333333333336,
+    "minMs": 43223.0,
+    "maxMs": 63185.0,
     "llmMsSample": [
-      3898.0,
-      1002.0,
-      933.0,
-      4595.0,
-      1098.0
+      9157.0,
+      6380.0,
+      10566.0
     ]
   },
   "tokens": {
-    "totals": [],
-    "avgTotal": null,
-    "p50Total": null
+    "totals": [
+      14,
+      105,
+      31
+    ],
+    "avgTotal": 50.0,
+    "p50Total": 31.0,
+    "trialsWithTokens": 3,
+    "status": "PASS",
+    "sourceSample": [
+      "estimated"
+    ]
   },
   "errors": [],
   "trials": [
@@ -45,13 +50,14 @@
       "id": "smalltalk#1",
       "probeId": "smalltalk",
       "ok": true,
-      "wallMs": 16291,
+      "wallMs": 63185,
       "provider": "openai_compatible",
-      "promptTokens": null,
-      "completionTokens": null,
-      "totalTokens": null,
-      "llmMs": 3898,
-      "totalMs": 10919,
+      "promptTokens": 0,
+      "completionTokens": 14,
+      "totalTokens": 14,
+      "tokenSource": "estimated",
+      "llmMs": 9157,
+      "totalMs": 50103,
       "toolCalls": 0,
       "answerChars": 57
     },
@@ -59,13 +65,14 @@
       "id": "stock#2",
       "probeId": "stock",
       "ok": true,
-      "wallMs": 12960,
+      "wallMs": 51180,
       "provider": "openai_compatible",
-      "promptTokens": null,
-      "completionTokens": null,
-      "totalTokens": null,
-      "llmMs": 1002,
-      "totalMs": 8234,
+      "promptTokens": 0,
+      "completionTokens": 105,
+      "totalTokens": 105,
+      "tokenSource": "estimated",
+      "llmMs": 6380,
+      "totalMs": 43360,
       "toolCalls": 1,
       "answerChars": 420
     },
@@ -73,45 +80,18 @@
       "id": "stock_sibling#3",
       "probeId": "stock_sibling",
       "ok": true,
-      "wallMs": 12327,
+      "wallMs": 43223,
       "provider": "openai_compatible",
-      "promptTokens": null,
-      "completionTokens": null,
-      "totalTokens": null,
-      "llmMs": 933,
-      "totalMs": 11716,
+      "promptTokens": 0,
+      "completionTokens": 31,
+      "totalTokens": 31,
+      "tokenSource": "estimated",
+      "llmMs": 10566,
+      "totalMs": 37235,
       "toolCalls": 1,
-      "answerChars": 426
-    },
-    {
-      "id": "smalltalk#4",
-      "probeId": "smalltalk",
-      "ok": true,
-      "wallMs": 19769,
-      "provider": "openai_compatible",
-      "promptTokens": null,
-      "completionTokens": null,
-      "totalTokens": null,
-      "llmMs": 4595,
-      "totalMs": 17134,
-      "toolCalls": 0,
-      "answerChars": 57
-    },
-    {
-      "id": "stock#5",
-      "probeId": "stock",
-      "ok": true,
-      "wallMs": 14708,
-      "provider": "openai_compatible",
-      "promptTokens": null,
-      "completionTokens": null,
-      "totalTokens": null,
-      "llmMs": 1098,
-      "totalMs": 12500,
-      "toolCalls": 1,
-      "answerChars": 420
+      "answerChars": 125
     }
   ],
   "decision": "PASS",
-  "decisionReason": "p50/p95 medidos no stack openai_compatible"
+  "decisionReason": "p50/p95 + tokens metadata no stack openai_compatible"
 }
