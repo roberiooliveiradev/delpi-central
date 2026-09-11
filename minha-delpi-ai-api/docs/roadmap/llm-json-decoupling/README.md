@@ -104,8 +104,8 @@ J-R3  evidence reproduzível                         ✅ ATENDIDO
 J-R4  unknown external full chain                   ✅ ATENDIDO
 J-R5  metamorphic rename verdadeiro                 ✅ ATENDIDO
 J-R6  Architecture Enforcement independente         ✅ ATENDIDO
-J-R7  zero path semantic affinity                   ← próxima
-J-R8  cleanup registry/content técnico duplicado
+J-R7  zero path semantic affinity                   ✅ ATENDIDO
+J-R8  cleanup registry/content técnico duplicado    ← próxima
 J-R9  semantic single owner
 J-R10 recommendations sem LEGACY_FALLBACK material
 J-R11 Clean Architecture / IO fora de domain
