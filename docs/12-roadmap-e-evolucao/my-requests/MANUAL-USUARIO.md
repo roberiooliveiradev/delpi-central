@@ -32,7 +32,15 @@ Lista o que **você** criou. Use a busca (número, destinatário ou descrição)
 
 ## Fila de trabalho
 
-O que está elegível para o seu atendimento. Mesmos filtros e paginação. Abra a solicitação para iniciar, devolver, concluir ou registrar a emissão, conforme os botões disponíveis.
+O que está elegível para o seu atendimento (tipos que você processa). Mesmos filtros de busca/tipo/status/filial, mais o filtro **Minhas**:
+
+- **Todas** — fila compartilhada (padrão: sem status finais);
+- **Concluídas por mim** — solicitações que **você** fechou (`completed_by`);
+- **Atribuídas a mim** — as que você iniciou o atendimento (assignee).
+
+A tabela mostra também a coluna **Concluída por**. Abra a solicitação para iniciar, devolver, emitir nota, cancelar etc., conforme os botões liberados pela API.
+
+Em emissão de NF, quem **conclui** costuma ser o solicitante (confirmação após a emissão). Quem atende usa **Atribuídas a mim** para achar o que iniciou, inclusive já fechadas.
 
 ## Nova solicitação
 
@@ -54,7 +62,7 @@ A leitura da página segue três fases:
 
 O **status** aparece no topo. Se a solicitação foi **devolvida para ajuste**, o **motivo da devolução** aparece em um card em destaque com o botão **Corrigir dados** (quando liberado). Isso abre o formulário de edição; depois de salvar, use **Reenviar solicitação** nas ações disponíveis.
 
-O **progresso do atendimento** (etapas + percentual) vem do sistema. Em telas largas o rastreador fica horizontal; em telas estreitas usa «Ver etapas». Os **botões de ação** ocupam a largura da seção (ícone + texto + ajuda ao passar o mouse) e só mostram o que a API liberou. **Devolver** e **cancelar** pedem motivo em uma janela. A **conversa sobre a solicitação** fica abaixo das ações, em formato de mensagens (foto do Portal ou iniciais), e atualiza em tempo real.
+O **progresso do atendimento** (etapas + percentual) vem do sistema. Em telas largas o rastreador fica horizontal; em telas estreitas usa «Ver etapas». Os **botões de ação** ocupam a largura da seção (ícone + texto + ajuda ao passar o mouse) e só mostram o que a API liberou. Em atendimento de NF, **Emitir nota fiscal** aparece em «Em atendimento»; sem o PDF em Documentos gerados, o clique avisa o que falta. **Devolver** e **cancelar** pedem motivo em uma janela. A **conversa sobre a solicitação** fica abaixo das ações, em formato de mensagens (foto do Portal ou iniciais), e atualiza em tempo real.
 
 Documentos do pedido usam miniaturas. Clique para **abrir em modal** (pré-visualizar e **baixar** com a sessão autenticada — não use a URL de download direto no navegador). Você pode anexar arquivos **ao criar** a solicitação (ficam pendentes até enviar o pedido). No detalhe, adicionar anexos do pedido só é possível quando ela está **devolvida para ajuste**: selecione os arquivos, revise/descarte e use **Salvar documentos**. Documentos gerados no atendimento seguem o mesmo fluxo de seleção → Salvar, a cargo de quem processa.
 
@@ -102,7 +110,13 @@ Se o portal abrir a mensagem de que você não tem permissão, peça acesso ao a
 
 ## Notificações
 
-Atualizações podem aparecer no sino do portal na categoria **Minhas Solicitações**. Ajuste em Preferências de notificação.
+Atualizações aparecem no **sino do portal** (categoria **Minhas Solicitações**) e em **avisos na tela** quando o módulo está aberto:
+
+- nova solicitação → quem processa o tipo (exceto o criador);
+- mudanças de etapa relevantes → solicitante e/ou quem está atendendo;
+- conversa → a outra parte (solicitante ↔ atendente).
+
+Ajuste preferências no portal. O autor da própria ação não recebe sino dela.
 
 ---
 

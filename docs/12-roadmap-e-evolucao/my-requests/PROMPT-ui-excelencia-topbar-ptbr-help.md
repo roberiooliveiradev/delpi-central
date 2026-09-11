@@ -373,7 +373,9 @@ Cobrir no mínimo os actions atualmente existentes nos workflows:
 | `return` | Devolver para ajuste |
 | `resubmit` | Reenviar solicitação |
 | `complete` | Concluir |
-| `issue` | Registrar emissão |
+| `issue` | Emitir nota fiscal |
+| `confirm_fulfillment` | Confirmar atendimento |
+| `reject_fulfillment` | Devolver para correção |
 | `cancel` | Cancelar solicitação |
 | `reject` | Rejeitar |
 

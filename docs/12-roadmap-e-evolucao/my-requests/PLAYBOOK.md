@@ -545,6 +545,8 @@ sequenceDiagram
 | `created_at` | timestamptz | |
 | `updated_at` | timestamptz | |
 | `completed_at` | timestamptz? | |
+| `completed_by_user_id` | string? | Quem fechou (completed/rejected); V014 |
+| `completed_by_name` | string? | Snapshot do nome |
 | `cancelled_at` | timestamptz? | |
 | `cancel_justification` | text? | |
 
@@ -693,11 +695,13 @@ Seeds: `invoice-issuance` (specialized), `raw-material-creation` (schema_driven)
 |--------|------|-------------|-----------|
 | POST | `/requests` | `create_request` | `{type}.create` |
 | GET | `/requests/mine` | `list_my_requests` | `my-requests.access` |
-| GET | `/requests/work-queue` | `list_work_queue_requests` | `{type}.process` ou `view-all` |
+| GET | `/requests/work-queue` | `list_work_queue_requests` | `{type}.process` ou `view-all` (+ query `mine_scope`) |
 | GET | `/requests/{id}` | `get_request` | owner / view-all / process |
 | POST | `/requests/{id}/transitions/{action}` | `transition_request` | derivado de `allowed_actions` |
 
 **Headers mutantes:** `Idempotency-Key: <uuid>` (obrigatório em POST create e transitions).
+
+**Query `GET /requests/work-queue`:** `type_code`, `status`, `branch`, `q`, `page`, `page_size`, `mine_scope` (`completed_by_me` \| `assigned_to_me`).
 
 **Response `get_request` (campos essenciais):**
 
@@ -710,7 +714,7 @@ Seeds: `invoice-issuance` (specialized), `raw-material-creation` (schema_driven)
   "status_alias": null,
   "branch_code": "01",
   "payload": {},
-  "allowed_actions": ["view", "return", "complete", "cancel"],
+  "allowed_actions": ["view", "return", "issue", "cancel"],
   "journey_progress": {
     "percentage": 66,
     "current_stage_id": "service",
@@ -728,6 +732,8 @@ Seeds: `invoice-issuance` (specialized), `raw-material-creation` (schema_driven)
     "can_upload_artifact": true
   },
   "created_by_name": "...",
+  "completed_by_user_id": null,
+  "completed_by_name": null,
   "created_at": "..."
 }
 ```
@@ -1144,13 +1150,15 @@ src/
 ```text
 Solicitante → /new/invoice-issuance (wizard)
   → POST /requests { type_code, branch_code, payload }
-  → outbox: request.created → notifica processadores
+  → outbox: request.created → notifica processadores (.process)
 Faturamento → /work-queue?type=invoice-issuance
   → POST .../transitions/start
-  → POST .../transitions/complete
-  → POST .../artifacts (PDF NF)
-  → outbox: request.completed → notifica solicitante
-Solicitante → /requests/{id} → download artifact
+  → POST .../artifacts (PDF NF, kind=invoice_pdf)
+  → POST .../transitions/issue  (= complete → awaiting_requester_confirmation)
+  → outbox: gate waiting_requester → notifica solicitante
+Solicitante → /requests/{id}
+  → POST .../transitions/confirm_fulfillment → completed (+ completed_by_*)
+  → download artifact
 ```
 
 ### 18.3 Fluxo feliz — matéria-prima (schema-driven)
@@ -1213,14 +1221,15 @@ Factories: [`plugins/my-requests/src/ui/mrUi.tsx`](../../../plugins/my-requests/
 |------|--------|------|
 | Criar solicitação venda 1 item | POST requests | POST /requests |
 | Listar fila pending | GET requests?status=open | GET work-queue |
-| start → issue | POST start, issue | transitions |
+| start → issue → confirm | POST start, issue | start + PDF + issue → awaiting → confirm_fulfillment |
 | return → edit → resubmit | PATCH + resubmit | transitions + payload update |
 | cancel pending (owner) | POST cancel | transition cancel |
 | cancel in_progress (process) | POST cancel | transition cancel |
 | allowed_actions por papel | get detail | get detail |
 | Gate filial 403 | branch_access | branch_access |
-| Notificação gates ao criador | Core sino | outbox transition (userIds) |
+| Notificação create + gates | Core sino | outbox create (`.process`) + transition (criador/assignee) |
 | Lookup parties/products | GET parties | adapter lookup |
+| Fila minhas / concluída por | — | `mine_scope` + `completed_by_*` |
 
 ### 20.4 O que NÃO remover (pós-E13)
 

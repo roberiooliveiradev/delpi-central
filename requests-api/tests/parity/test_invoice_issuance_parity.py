@@ -27,15 +27,19 @@ from requests_app.application.use_cases.request_use_cases import (
     TransitionRequestUseCase,
     UpdateRequestPayloadUseCase,
 )
+from requests_app.domain.entities import Actor, Request
+from requests_app.domain.entities.files import RequestArtifact
 from requests_app.domain.services.content_loader import load_workflow_definition
 from requests_app.domain.services.invoice_issuance_payload_validator import (
     InvoiceIssuancePayloadValidator,
 )
 from requests_app.domain.services.request_type_registry import RequestTypeRegistry
 from requests_app.domain.services.workflow_engine import WorkflowEngine
-from requests_app.domain.entities import Actor, Request
 from requests_app.infrastructure.gateways.api_delpi_adapter import (
     InMemoryOperationalLookupAdapter,
+)
+from requests_app.infrastructure.persistence.repositories.memory_file_repository import (
+    InMemoryFileRepository,
 )
 from requests_app.infrastructure.persistence.repositories.memory_outbox_repository import (
     InMemoryIntegrationOutboxRepository,
@@ -48,10 +52,11 @@ from requests_app.infrastructure.persistence.repositories.memory_repositories im
 
 FIXTURES = Path(__file__).parent / "fixtures" / "invoice_issuance_lookup_shapes.json"
 
-# Aliases espelhados do legado (pending / returned / issued).
+# Aliases vigentes (legado + confirmação do solicitante).
 LEGACY_STATUS_ALIASES = {
     "submitted": "pending",
     "needs_information": "returned",
+    "awaiting_requester_confirmation": "awaiting_confirmation",
     "completed": "issued",
 }
 
@@ -133,7 +138,7 @@ def stack():
     )
 
 
-def _create(stack, user=None, payload=None, outbox=False):
+def _create(stack, *, user=None, payload=None, outbox: bool = False):
     return CreateRequestUseCase(
         stack.types,
         stack.requests,
@@ -179,11 +184,12 @@ def test_p0_work_queue_lists_pending(stack):
     assert queue["items"][0]["status_alias"] == "pending"
 
 
-def test_p0_start_then_issue_complete(stack):
-    """start → issue — legado POST start/issue ≡ transitions start + complete|issue."""
+def test_p0_start_then_issue_awaits_confirmation(stack):
+    """start → issue (PDF) → awaiting confirmation → confirm → completed."""
     created = _create(stack)
+    files = InMemoryFileRepository()
     started = TransitionRequestUseCase(
-        stack.types, stack.requests, stack.idem
+        stack.types, stack.requests, stack.idem, files=files
     ).execute(
         user=_processor(),
         request_id=created["id"],
@@ -194,16 +200,43 @@ def test_p0_start_then_issue_complete(stack):
     assert "issue" in started["allowed_actions"]
     assert "complete" not in started["allowed_actions"]
 
+    files.create_artifact(
+        RequestArtifact(
+            id=uuid4(),
+            request_id=created["id"],
+            artifact_kind="invoice_pdf",
+            original_name="nf.pdf",
+            stored_name="nf.pdf",
+            storage_key=f"artifacts/{created['id']}/nf.pdf",
+            mime_type="application/pdf",
+            size_bytes=10,
+            checksum_sha256="abc",
+            produced_by_user_id="u-process",
+            produced_by_name="Faturamento",
+        )
+    )
     issued = TransitionRequestUseCase(
-        stack.types, stack.requests, stack.idem
+        stack.types, stack.requests, stack.idem, files=files
     ).execute(
         user=_processor(),
         request_id=created["id"],
         action="issue",
         idempotency_key=str(uuid4()),
     )
-    assert issued["status"] == "completed"
-    assert issued["status_alias"] == "issued"
+    assert issued["status"] == "awaiting_requester_confirmation"
+    assert issued["status_alias"] == "awaiting_confirmation"
+
+    confirmed = TransitionRequestUseCase(
+        stack.types, stack.requests, stack.idem, files=files
+    ).execute(
+        user=_creator(),
+        request_id=created["id"],
+        action="confirm_fulfillment",
+        idempotency_key=str(uuid4()),
+    )
+    assert confirmed["status"] == "completed"
+    assert confirmed["status_alias"] == "issued"
+    assert confirmed["completed_by_user_id"] == "u-create"
 
 
 def test_p0_return_patch_resubmit(stack):
@@ -237,8 +270,8 @@ def test_p0_return_patch_resubmit(stack):
         payload=patched_payload,
         idempotency_key=str(uuid4()),
     )
-    assert float(edited["payload"]["items"][0]["quantity"]) == 2.0
     assert "edit" in edited["allowed_actions"]
+    assert int(edited["payload"]["items"][0]["quantity"]) == 2
 
     resubmitted = TransitionRequestUseCase(
         stack.types, stack.requests, stack.idem
@@ -260,7 +293,7 @@ def test_p0_cancel_pending_owner(stack):
         user=_creator(),
         request_id=created["id"],
         action="cancel",
-        body={"cancel_justification": "Desistiu"},
+        body={"cancel_justification": "Desisti"},
         idempotency_key=str(uuid4()),
     )
     assert cancelled["status"] == "cancelled"
@@ -347,10 +380,20 @@ def test_p0_branch_gate_403(stack):
     assert exc.value.code == "branch_forbidden"
 
 
-def test_p0_notification_outbox_on_creator_gate_transition(stack):
-    """Sino ao criador nos gates (ex.: start) — create não notifica o owner."""
+def test_p0_notification_outbox_on_create_and_creator_gate(stack):
+    """Create notifica processadores; start notifica o criador no gate."""
     created = _create(stack, outbox=True)
-    assert stack.outbox.list_pending() == []
+    create_pending = stack.outbox.list_pending()
+    assert len(create_pending) == 1
+    assert create_pending[0].event_type == "request.created"
+    assert create_pending[0].payload["permissionCodes"] == [
+        "my-requests.invoice-issuance.process"
+    ]
+    assert create_pending[0].payload["excludedUserIds"] == [
+        created["created_by_user_id"]
+    ]
+    for row in list(create_pending):
+        stack.outbox.mark_published(row.id)
 
     TransitionRequestUseCase(
         stack.types, stack.requests, stack.idem, outbox=stack.outbox

@@ -16,7 +16,9 @@ Microfrontend federado do módulo **Minhas Solicitações**.
 - Anexos do pedido: miniaturas + modal autenticado (`RequestFilePreviewModal` / `FilePreviewModal`); staging → **Salvar documentos** no detalhe (`can_upload_attachment`); criação com staging local até submit; `DELETE /attachments/{id}`
 - Artifacts do atendimento: mesmo padrão de modal + staging → Salvar (`can_upload_artifact`)
 - Avisos: `MyRequestsFloatingNoticeProvider` (`FloatingNoticeStack` do `@delpi/plugin-ui`) — erros/sucesso de ações no detalhe
-- **Tempo real:** `MyRequestsRealtimeProvider` → `wss://…/apps/requests-api/v1/realtime/ws` (hint + refetch; anti-eco via `X-My-Requests-Client-Id`). Sino Portal ao criador nos gates da jornada (outbox→Core). Doc: [realtime-requests.md](../../requests-api/docs/architecture/realtime-requests.md)
+- **Tempo real:** `MyRequestsRealtimeProvider` → `wss://…/apps/requests-api/v1/realtime/ws` (hint + refetch; anti-eco via `X-My-Requests-Client-Id`). Sino Portal: create → `.process`; gates de jornada → criador; comentários/atualizações → assignee (quando ator ≠ assignee). Doc: [realtime-requests.md](../../requests-api/docs/architecture/realtime-requests.md)
+- Fila: coluna **Concluída por** + filtro `mine_scope` (`completed_by_me` \| `assigned_to_me`); API grava `completed_by_*` na conclusão (V014)
+- Ação `issue` (Emitir nota fiscal) listada em `in_progress` sem exigir PDF na listagem; PDF obrigatório só na execução
 - Ação `view` não vira botão no detalhe (já está visualizando; não é transição)
 - Shell: **TopBar** canônica (`createDashboardTopBar`) + PageHeader contextual — padrão commercial
 - Labels PT-BR: [`src/content/presentationLabels.ts`](src/content/presentationLabels.ts)

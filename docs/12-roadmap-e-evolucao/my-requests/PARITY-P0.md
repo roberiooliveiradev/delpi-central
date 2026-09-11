@@ -13,15 +13,15 @@ Espelho do checklist [PLAYBOOK.md §20.3](./PLAYBOOK.md). Suite automatizada:
 |------|--------|------|--------------|--------|
 | Criar solicitação venda 1 item | `POST …/requests` | `POST /v1/requests` + validator | `test_p0_create_sale_one_item` | pass (CI) |
 | Listar fila pending | `GET …/requests?status=open` | `GET /v1/requests/work-queue` | `test_p0_work_queue_lists_pending` | pass (CI) |
-| start → issue | `POST start`, `POST issue` | `transitions/start`, `transitions/issue` (= `complete`) | `test_p0_start_then_issue_complete` | pass (CI) |
+| start → issue → confirm | `POST start`, `POST issue` | `transitions/start` + PDF + `issue` → `awaiting_requester_confirmation` → `confirm_fulfillment` → `completed` | `test_p0_start_then_issue_awaits_confirmation` | pass (CI) |
 | return → edit → resubmit | PATCH + resubmit | `return` + PATCH payload + `resubmit` | `test_p0_return_patch_resubmit` | pass (CI) |
 | cancel pending (owner) | `POST cancel` | `transitions/cancel` | `test_p0_cancel_pending_owner` | pass (CI) |
 | cancel in_progress (process) | `POST cancel` | `transitions/cancel` | `test_p0_cancel_in_progress_processor` | pass (CI) |
 | allowed_actions por papel | get detail | get detail / engine | `test_p0_allowed_actions_by_role` | pass (CI) |
 | Gate filial 403 | `branch_access` | `branch_forbidden` | `test_p0_branch_gate_403` | pass (CI) |
-| Notificação create | Core sino direto | outbox `request.created` → Core | `test_p0_notification_outbox_on_create` | pass (CI) |
+| Notificação create + gate | Core sino | outbox `request.created` (`.process`) + `request.transition` ao criador no start | `test_p0_notification_outbox_on_create_and_creator_gate` | pass (CI) |
 | Lookup parties/products/carriers/OV/saldo | GET api-delpi | adapter + `/lookups/*` | `test_p0_lookup_shapes_match_golden` | pass (CI) |
-| Aliases de status | `pending` / `returned` / `issued` | `statusAliases` no workflow | `test_p0_status_aliases_match_legacy` | pass (CI) |
+| Aliases de status | `pending` / `returned` / `issued` | `statusAliases` no workflow (+ `awaiting_confirmation`) | `test_p0_status_aliases_match_legacy` | pass (CI) |
 
 ## E9 verify (2026-09-03)
 
@@ -38,7 +38,7 @@ Espelho do checklist [PLAYBOOK.md §20.3](./PLAYBOOK.md). Suite automatizada:
 
 | Checagem | Resultado |
 |----------|-----------|
-| `pytest requests-api/tests/parity/ -q` | **15 passed** |
+| `pytest requests-api/tests/parity/ -q` | **15 passed** (2026-09-11; fluxo issue→confirm + outbox create) |
 | Dry-run migração (`delpi-requests-api`) | JSON sem erros; `legacy_requests=0`, `missing_attachment_files=[]` (ambiente local sem histórico legado) |
 | `--apply` migração (mesmo container) | No-op idempotente; `migrated=0`, `errors=[]` |
 | Health api-delpi | **200** |
@@ -98,5 +98,16 @@ docker exec delpi-requests-api \
 |-----------------|---------------------|
 | `submitted` | `pending` |
 | `needs_information` | `returned` |
+| `awaiting_requester_confirmation` | `awaiting_confirmation` |
 | `completed` | `issued` |
-| ação `complete` | alias `issue` |
+| ação `complete` (com `actionAlias`) | `issue` (UI: Emitir nota fiscal; exige PDF `invoice_pdf` na execução) |
+
+## Comportamentos vigentes (pós-confirmação / fila)
+
+| Tema | Comportamento canônico |
+|------|------------------------|
+| Emissão NF | `issue` lista em `in_progress` sem PDF; execução exige `invoice_pdf` → `awaiting_requester_confirmation`; solicitante confirma (`confirm_fulfillment`) ou devolve |
+| Conclusão | `completed_by_user_id` / `completed_by_name` gravados ao setar `completed_at` (V014) |
+| Fila `mine_scope` | `completed_by_me` \| `assigned_to_me` em `GET /v1/requests/work-queue` |
+| Notificações | Create → `.process` via `permissionCodes`; gates de jornada → criador; comentários/transições → assignee quando ator ≠ assignee |
+| `allowed_actions` | Artefato **não** esconde ação na listagem (`require_artifacts=False`); enforcement na execução |

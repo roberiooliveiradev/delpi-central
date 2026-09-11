@@ -166,14 +166,15 @@ Ao adicionar item da tabela 1.2: registrar factory em `mrUi.tsx` (se factory), a
 ┌─ Nav … ─────────────────────────────────────────────────────────────┐
 └─────────────────────────────────────────────────────────────────────┘
 ┌─ SectionCard «Pendências» ──────────────────────────────────────────┐
-│ FiltersKit (idem WF-01, incl. busca `q`)                            │
-│ DataTable (mesmas colunas WF-01)                                    │
+│ FiltersKit (busca, tipo, status, filial) + filtro Minhas            │
+│   Minhas: Todas | Concluídas por mim | Atribuídas a mim             │
+│ DataTable: Número · Tipo · Status · Filial · Concluída por          │
 │ Clique no número → /requests/:id (allowed_actions no detalhe)       │
 │ CompactPagination                                                   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Kit:** idem WF-01
+**Kit:** idem WF-01 · filtro `mine_scope` só nesta tela
 
 ### WF-03 — Nova solicitação (`/new`)
 

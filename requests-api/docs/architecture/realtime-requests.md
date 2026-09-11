@@ -11,9 +11,12 @@ O WS só invalida UI aberta no MFE; o MFE faz debounce + HTTP refetch.
 | Canal | Quando | Destino |
 |-------|--------|---------|
 | WebSocket | Qualquer create/transition/edit/comment/files | MFE conectado (hint + refetch) |
+| Outbox → Core sino | Create | `permissionCodes: [{type}.process]` (exclui criador) |
 | Outbox → Core sino | Transição em **gate principal** e ator ≠ criador | `userIds: [created_by_user_id]` |
+| Outbox → Core sino | Comentário / transição com assignee e ator ≠ assignee | `userIds: [assignee]` |
+| Outbox → Core sino | Comentário do atendente | `userIds: [created_by_user_id]` |
 
-Gates (journey): início de atendimento (`service`/`in_progress`), `waiting_requester`, `succeeded`, `rejected`, `cancelled`. Create **não** notifica o criador. Política: `creator_portal_notification_policy.py`. Payload Core: `message` + `action.portal_route` + `userIds` (não `body`/`link`).
+Gates do criador (journey): início de atendimento (`service`/`in_progress`), `waiting_requester`, `succeeded`, `rejected`, `cancelled`. Create **não** notifica o criador. Políticas: `creator_portal_notification_policy.py`, `attendant_portal_notification_policy.py`. Payload Core: `message` + `action.portal_route` + `userIds` / `permissionCodes` (não `body`/`link`).
 
 ## Endpoint
 
@@ -45,8 +48,8 @@ Acks: `subscribed` | `unsubscribed` | `error` (`requestIdInvalid` | `accessDenie
 | type | Rooms | Trigger | MFE |
 |------|-------|---------|-----|
 | `request.created` | `work-queue`; `user:{owner}` | create | refetch Mine/WorkQueue |
-| `request.changed` | `request:{id}`; `user:{owner}`; `work-queue` | transition, payload edit | refetch detail + listas |
-| `request.timeline` | `request:{id}` | comment, attachment, artifact | refetch events/painéis |
+| `request.changed` | `request:{id}`; `user:{owner}`; `user:{assignee?}`; `work-queue` | transition, payload edit | refetch detail + listas |
+| `request.timeline` | `request:{id}`; `user:{owner}`; `user:{assignee?}` | comment, attachment, artifact | refetch events/painéis |
 
 Payload leve (exemplo):
 
