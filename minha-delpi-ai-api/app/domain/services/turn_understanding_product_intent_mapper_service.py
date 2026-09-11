@@ -17,6 +17,7 @@ from app.domain.services.chat_message_normalization_service import (
 class TurnUnderstandingProductIntentMapperService:
     """Derives ChatProductQueryIntent-compatible tokens from TU prose goals."""
 
+    # E11.S6 KEEP — continuity facets / intentBinding (não path HTTP / operationId).
     # Ordered: first match wins per goal. Prefer specific facets before catch-alls.
     _TOKEN_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("structure", ("estrutura", "lista de materiais")),

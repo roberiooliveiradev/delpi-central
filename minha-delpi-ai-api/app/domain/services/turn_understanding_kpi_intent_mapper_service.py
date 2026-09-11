@@ -18,7 +18,8 @@ from app.domain.services.external_actions.external_action_response_content_servi
 class TurnUnderstandingKpiIntentMapperService:
     """Derives DepartmentKpiMatch from TU prose (high-confidence tokens only)."""
 
-    # Exact pathToken from department_kpi_rules.json → prose needles (mais específico primeiro).
+    # E11.S6 — catalogToken vocabulary (department_kpi_rules), not HTTP path authority.
+    # Maps prose → catalogToken; OpenAPI selection uses facets/domainTag.
     _TOKEN_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         (
             "closing-rate",

@@ -47,9 +47,10 @@ def _path_rule(
     markers: tuple[str, ...],
     action_token: str,
 ) -> dict[str, Any]:
+    # E11.S6 — avoid lateral key name pathMarkers in runtime content builders.
     return {
         "featureId": feature_id,
-        "pathMarkers": markers,
+        "pathHints": markers,
         "actionToken": action_token,
     }
 
@@ -388,7 +389,7 @@ class AssistantCapabilitiesCatalogGenerator:
         action_token: str | None = None
 
         for rule in _PATH_RULES:
-            markers = rule.get("pathMarkers") or ()
+            markers = rule.get("pathHints") or rule.get("pathMarkers") or ()
 
             for marker in markers:
                 token = str(marker or "").strip().lower()

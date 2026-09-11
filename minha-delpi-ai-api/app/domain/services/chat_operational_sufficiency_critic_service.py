@@ -353,7 +353,6 @@ class ChatOperationalSufficiencyCriticService:
             str(verdict.plan_id or "sufficiency"): {
                 "anomalyTypes": ["negative_value", "zero_value", "empty_list"],
                 "profileKeys": [],
-                "pathMarkers": [],
                 "followUpRouteIds": list(verdict.follow_up_route_ids),
                 "maxFollowUps": len(verdict.follow_up_route_ids),
             }

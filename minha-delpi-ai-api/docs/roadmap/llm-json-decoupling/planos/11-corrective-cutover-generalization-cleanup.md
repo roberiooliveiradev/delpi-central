@@ -1,7 +1,7 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED** · E11.S0–S5 **ATENDIDO** · próxima = **E11.S6**  
+**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED** · E11.S0–S6 **ATENDIDO** · próxima = **E11.S7**  
 **BASE_GIT_SHA (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
 **Auditoria-base:** S4 `evidence/e11-s4-structured-continuity.md`  
 **Origem:** revisão arquitetural pós Ondas A–I em 2026-09-11  
@@ -145,7 +145,7 @@ Plano 10 reaproveitou E9.S10, executado antes da alteração posterior do motor 
 | RQ11-02 | Eliminar endpoint→parameterStrategy e usar schema OpenAPI como authority | ATENDIDO (E11.S3; path/oid inference removida; helpers schema-driven) |
 | RQ11-03 | Eliminar continuidade multi-turn derivada de path/operationId | ATENDIDO (E11.S4; facetas estruturadas) |
 | RQ11-04 | Remover `operationIds`/registry técnico como authority de routing | ATENDIDO (E11.S5; arrays observer até S10 DELETE) |
-| RQ11-05 | Consolidar ownership semântico e remover NLU endpoint/domain-specific redundante | ABERTO |
+| RQ11-05 | Consolidar ownership semântico e remover NLU endpoint/domain-specific redundante | ATENDIDO (E11.S6; vocabulary facet/kind KEEP; pathTokens DELETE) |
 | RQ11-06 | Tornar recommendations contextuais; estático no máximo fallback temporário com exit criteria | ABERTO |
 | RQ11-07 | Derivar capability metadata de contract/sensitivity/policy real | ABERTO |
 | RQ11-08 | Corrigir boundaries/DI/filesystem conforme Clean Architecture | ABERTO |
@@ -574,7 +574,11 @@ Vocabulário corporativo transversal pode permanecer se não escolher endpoint d
 
 ### Complete gate
 
-`MANUAL_INTENT_RULES` endpoint/domain-specific reduzido a 0 ou exceções comprovadamente transversais e documentadas; compound decomposition e routing R1/R2/R9 PASS.
+`MANUAL_INTENT_RULES` endpoint/domain-specific (pathTokens / pathMarkers de routing) = 0; vocabulary facet/kind transversal documentado como KEEP; compound live R1/R2/R9 → E11.S9.
+
+- **COMPLETE_GATE:** ATENDIDO (`SEMANTIC_CONTENT_LATERAL_PATH_KEY=0`; production pathTokens DELETE; KPI virtual sem markers)
+- Evidência: [`../evidence/e11-s6-semantic-authority-cutover.md`](../evidence/e11-s6-semantic-authority-cutover.md)
+- `READY_TO_EXECUTE` E11.S7: **sim**
 
 ---
 
@@ -757,7 +761,7 @@ Preencher no final:
 | RQ11-02 | | | | | |
 | RQ11-03 | | | | | |
 | RQ11-04 | e11-s5 | cutover+facet | test_e11_s5_* | ATENDIDO | arrays observer |
-| RQ11-05 | | | | | |
+| RQ11-05 | e11-s6 | TU+mappers authority | test_e11_s6_* | ATENDIDO | live R1/R2/R9→S9 |
 | RQ11-06 | | | | | |
 | RQ11-07 | | | | | |
 | RQ11-08 | | | | | |

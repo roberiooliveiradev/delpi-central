@@ -67,40 +67,31 @@ class OperationalRouteDomainSelectionService:
 
     @staticmethod
     def _virtual_department_kpi_route(spec) -> dict:
-        path_markers: list[str] = []
-
-        for token in spec.path_tokens:
-            normalized_token = str(token or "").strip().lower()
-
-            if not normalized_token:
-                continue
-
-            if normalized_token.startswith("/"):
-                path_markers.append(normalized_token)
-                continue
-
-            for prefix in spec.path_prefixes:
-                path_markers.append(
-                    f"{str(prefix).rstrip('/').lower()}/{normalized_token}"
-                )
-
-            if not spec.path_prefixes:
-                path_markers.append(normalized_token)
-
-        # Prefixo de domínio sozinho casa qualquer rota do departamento
-        # (ex.: `/commercial/` → head_office e branch). Só usar como fallback
-        # quando não há marker específico do KPI.
-        if not path_markers:
-            for prefix in spec.path_prefixes:
-                normalized_prefix = str(prefix or "").strip().lower()
-
-                if normalized_prefix and normalized_prefix not in path_markers:
-                    path_markers.append(normalized_prefix)
+        # E11.S6 — rota virtual semântica; selection OpenAPI-first + facets.
+        # catalogToken/domainTag não viram pathMarkers laterais.
+        catalog_tokens = [
+            str(token or "").strip().lower()
+            for token in (spec.path_tokens or ())
+            if str(token or "").strip()
+        ]
+        domain_tags = [
+            str(prefix or "").strip("/").lower()
+            for prefix in (spec.path_prefixes or ())
+            if str(prefix or "").strip()
+        ]
+        primary = catalog_tokens[0] if catalog_tokens else "kpi"
+        leaf = primary.rsplit("/", maxsplit=1)[-1].replace("_", "-")
+        facets = list(dict.fromkeys([*catalog_tokens, leaf, *domain_tags]))
 
         return {
+            "id": f"departmentKpi.{leaf.replace('-', '_')}",
+            "domain": "department_kpi",
+            "intentBinding": leaf,
+            "continuityFacets": facets,
+            "match": {"customPredicate": "departmentKpi"},
             "presentation": {"reasonKey": "departmentKpi"},
             "parameters": {
-                "strategy": spec.parameter_strategy,
+                "strategy": "schema",
                 **(
                     {"branchDefault": spec.branch_default}
                     if getattr(spec, "branch_default", None)
@@ -108,11 +99,7 @@ class OperationalRouteDomainSelectionService:
                 ),
             },
             "route": {
-                # E9.S12.C/D — operationIds = OpenAPI canônicos only.
-                # Virtual KPI uses path/operation markers for catalog match.
                 "operationIds": [],
-                "pathMarkers": path_markers or list(spec.path_prefixes),
-                "operationIdMarkers": list(spec.operation_tokens),
                 "method": spec.method,
             },
         }
@@ -234,17 +221,8 @@ class OperationalRouteDomainSelectionService:
                 candidates_loader=candidates_loader,
             )
         ]
-
-        path_token = ChatProductionOperationalIntentService.path_token_for(kind)
-
-        if path_lookup_loader and path_token:
-            path_candidates = path_lookup_loader(
-                path_token=path_token,
-                allowed_action_ids=allowed_action_ids,
-            )
-
-            if path_candidates:
-                candidate_sets.append(path_candidates)
+        # E11.S6 — sem pathTokens laterais; registry kind + OpenAPI allowlist.
+        _ = path_lookup_loader
 
         for candidates in candidate_sets:
             selected = self._resolver.resolve_route_action(

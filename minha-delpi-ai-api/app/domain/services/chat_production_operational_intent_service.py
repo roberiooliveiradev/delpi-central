@@ -41,15 +41,9 @@ class ChatProductionOperationalIntentService:
 
     @classmethod
     def _path_token(cls, kind: ProductionOperationalIntentKind) -> str:
-        return str(
-            ChatAssistantContentService.get(
-                _BUNDLE,
-                "pathTokens",
-                kind.value,
-                default="",
-            )
-            or ""
-        ).lower()
+        """E11.S6 — pathTokens laterais removidos; kind resolve via registry intentBinding."""
+        _ = kind
+        return ""
 
     @classmethod
     def resolve(

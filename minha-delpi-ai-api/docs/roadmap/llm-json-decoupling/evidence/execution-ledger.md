@@ -20,7 +20,7 @@
 | G — presentation/skills | 07, 08 | **HISTÓRICO / REVALIDAR NA J** | — | Candidate final E11.S9 |
 | H — cutover/cleanup | 09 | **PASS HISTÓRICO; NÃO RELEASE VIGENTE** | — | Candidate evidence anterior a drifts posteriores |
 | I — zero mapa lateral | 10 | **ACEITE INVALIDADO POR DRIFT** | — | Substitutos semânticos encontrados em runtime |
-| J — correção arquitetural | 11 | **ABERTO / VERIFY_FINAL_FAILED** | **E11.S6** | E11.S0–S5 ATENDIDO; operationIds observer-only |
+| J — correção arquitetural | 11 | **ABERTO / VERIFY_FINAL_FAILED** | **E11.S7** | E11.S0–S6 ATENDIDO; semantic authority + pathTokens DELETE |
 
 ## Protocolo por subetapa
 
@@ -246,3 +246,4 @@ Qualquer mudança material posterior ao candidate invalida as dimensões de evid
 | 2026-09-11 | **E11.S3 ATENDIDO** — `bind_schema_first`; path→strategy = 0; próxima = **E11.S4** |
 | 2026-09-11 | **E11.S4 ATENDIDO** — continuity facets sem path-tail/inventory; próxima = **E11.S5** |
 | 2026-09-11 | **E11.S5 ATENDIDO** — registry operationIds sem routing authority (observer); próxima = **E11.S6** |
+| 2026-09-11 | **E11.S6 ATENDIDO** — authority semântica + pathTokens/pathMarkers laterais de routing = 0; próxima = **E11.S7** |

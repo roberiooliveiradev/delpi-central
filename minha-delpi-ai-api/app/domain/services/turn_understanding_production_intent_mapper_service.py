@@ -14,6 +14,7 @@ from app.domain.services.chat_production_operational_intent_service import (
 class TurnUnderstandingProductionIntentMapperService:
     """Derives ProductionOperationalIntentKind from TU prose (no OpenAPI)."""
 
+    # E11.S6 KEEP — ProductionOperationalIntentKind (semântico); pathTokens JSON removidos.
     _TOKEN_RULES: tuple[tuple[ProductionOperationalIntentKind, tuple[str, ...]], ...] = (
         (
             ProductionOperationalIntentKind.LOSSES_RECORDS,

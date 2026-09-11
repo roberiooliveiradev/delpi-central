@@ -187,7 +187,12 @@
       "ops não encerradas",
       "lista de ops abertas"
     ],
-    "excludeTerms": ["finalizad", "concluid", "consumid", "comprad"]
+    "excludeTerms": [
+      "finalizad",
+      "concluid",
+      "consumid",
+      "comprad"
+    ]
   },
   "ordersFinished": {
     "terms": [
@@ -206,7 +211,12 @@
       "ops concluídas",
       "fechadas hoje"
     ],
-    "excludeTerms": ["abert", "pendent", "consumid", "comprad"]
+    "excludeTerms": [
+      "abert",
+      "pendent",
+      "consumid",
+      "comprad"
+    ]
   },
   "workCenterSummary": {
     "terms": [
@@ -227,7 +237,13 @@
       "quantidade ops por ct",
       "abertas e fechadas por ct"
     ],
-    "excludeTerms": ["consumid", "consumo", "empenho", "comprad", "refugo"]
+    "excludeTerms": [
+      "consumid",
+      "consumo",
+      "empenho",
+      "comprad",
+      "refugo"
+    ]
   },
   "consumptionByWorkCenter": {
     "terms": [
@@ -266,7 +282,11 @@
       "consumo apontamento real",
       "validado por apontamento"
     ],
-    "excludeTerms": ["centro de trabalho", " por ct", "comprad"]
+    "excludeTerms": [
+      "centro de trabalho",
+      " por ct",
+      "comprad"
+    ]
   },
   "allocationGaps": {
     "terms": [
@@ -284,7 +304,12 @@
       "reserva zerada",
       "bloqueio por empenho"
     ],
-    "excludeTerms": ["consumid", "comprad", "refugo", "finalizad sem consumo"]
+    "excludeTerms": [
+      "consumid",
+      "comprad",
+      "refugo",
+      "finalizad sem consumo"
+    ]
   },
   "finishedWithoutConsumption": {
     "terms": [
@@ -299,7 +324,11 @@
       "op sem consumo mp",
       "fechou op sem consumir"
     ],
-    "excludeTerms": ["sem empenho", "travamento", "comprad"]
+    "excludeTerms": [
+      "sem empenho",
+      "travamento",
+      "comprad"
+    ]
   },
   "averagePlannedTime": {
     "terms": [
@@ -349,7 +378,12 @@
       "desvio setup",
       "tempo real x planejado"
     ],
-    "excludeTerms": ["consumid", "comprad", "por ct", "centro de trabalho"]
+    "excludeTerms": [
+      "consumid",
+      "comprad",
+      "por ct",
+      "centro de trabalho"
+    ]
   },
   "consumptionByItem": {
     "terms": [
@@ -367,10 +401,19 @@
       "consumo item produção",
       "baixa do componente"
     ],
-    "excludeTerms": ["maior consumo", "top consumo", "ranking de consumo", "comprad"]
+    "excludeTerms": [
+      "maior consumo",
+      "top consumo",
+      "ranking de consumo",
+      "comprad"
+    ]
   },
-  "lossTypeRefugo": ["refugo"],
-  "lossTypeScrap": ["scrap"],
+  "lossTypeRefugo": [
+    "refugo"
+  ],
+  "lossTypeScrap": [
+    "scrap"
+  ],
   "additionalRestRoutePredicates": [
     "productionOtdDetailRoute",
     "productionOeeDetailRoute",
@@ -378,21 +421,8 @@
     "productionEficienciaFabrilRoute",
     "productionPcpOrdersRoute"
   ],
-  "pathTokens": {
-    "consumption": "/production/consumption/top-items",
-    "consumptionByWorkCenter": "/production/consumption/top-items-by-work-center",
-    "consumptionValidated": "/production/consumption/top-items-validated",
-    "purchasesRanking": "/purchases/top-products",
-    "lossesTop": "/production/losses/top-materials",
-    "lossesRecords": "/production/losses/records",
-    "scheduleToday": "/production/schedule/today",
-    "ordersOpen": "/production/orders/open",
-    "ordersFinished": "/production/orders/finished",
-    "workCenterSummary": "/production/work-centers/order-summary",
-    "allocationGaps": "/production/allocation-gaps",
-    "finishedWithoutConsumption": "/production/orders/finished-without-consumption",
-    "averagePlannedTime": "/production/work-centers/average-planned-time",
-    "consumptionByItem": "/production/consumption/by-item/",
-    "plannedVsRealTime": "/production/planned-vs-real-time"
+  "cleanupMeta": {
+    "pathTokensDeletedAt": "E11.S6",
+    "pathTokensDeletedCount": 15
   }
 }
