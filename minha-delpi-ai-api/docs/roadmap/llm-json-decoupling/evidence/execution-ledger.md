@@ -176,3 +176,4 @@ abrir planos/0N-*.md
 | 2026-09-10 | E2.S6 **ATENDIDO** — taskPlannerEnabled=true (fast ainda disabled) |
 | 2026-09-10 | E2.S7 **KEEP_APPROVED** — fast paths JUSTIFIED (TARGET); sem DELETE indevido |
 | 2026-09-10 | Onda C / plano-02 **ATENDIDO 100%** — aceite offline + verify-final |
+| 2026-09-10 | **LIVE** plano-02 cutover **PASS 4/4** (`e2-plano02-cutover-live.md`; Keycloak religado) |

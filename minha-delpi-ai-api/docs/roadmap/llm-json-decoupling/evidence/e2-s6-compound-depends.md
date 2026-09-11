@@ -16,7 +16,8 @@
 | Métrica | Status |
 |---------|--------|
 | `task_decomposition_recall` (proxy offline) | **PASS_OFFLINE** |
-| `multi_request_completion_rate` (outcome L1–L4) | **PASS_OFFLINE_STRUCTURAL** (bridge schedule); live outcome coverage = programa plano-09 |
+| Live HTTP plano-02 | **PASS** (`e2-plano02-cutover-live.md` — 4/4) |
+| `multi_request_completion_rate` (outcome L1–L4) | **PASS_OFFLINE_STRUCTURAL** + live compound multi-tool |
 
 ## Aceite
 
@@ -26,4 +27,5 @@ DEPENDENT_REFERENCE_DEPENDS_ON = PASS
 SINGLE_GOAL_NO_SPURIOUS_DEPENDS = PASS
 TASK_PLANNER_DEFAULT_ON = PASS
 FAST_EXECUTION_STILL_DISABLED = PASS
+LIVE_PLANO02_HTTP = PASS (4/4)
 ```
