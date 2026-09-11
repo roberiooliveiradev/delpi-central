@@ -1,7 +1,7 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** **REABERTO — Onda J / `VERIFY_FINAL_FAILED`** · J-R1–J-R8 **ATENDIDO** · próxima = **J-R9**  
+**Status execução:** **REABERTO — Onda J / `VERIFY_FINAL_FAILED`** · J-R1–J-R9 **ATENDIDO** · próxima = **J-R10**  
 **BASE_GIT_SHA original (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
 **Candidate anteriormente declarado final:** `782a49721319571f0fe4733d59b8a5cc65ac4c04` — **histórico invalidado como release evidence**  
 **Auditoria pós-fechamento:** [`../evidence/e11-post-close-audit-2026-09-11.md`](../evidence/e11-post-close-audit-2026-09-11.md)  
@@ -179,7 +179,7 @@ O producer e o content mantêm `recommendationQueries` estático; LLM contextual
 | RQ11-02 | Eliminar endpoint→parameterStrategy e usar OpenAPI schema | PASS/PARTIAL |
 | RQ11-03 | Eliminar continuidade derivada de path/operationId | PASS/PARTIAL |
 | RQ11-04 | Remover registry/operationIds como authority de routing | **PASS** (J-R8) |
-| RQ11-05 | Consolidar ownership semântico | **PARTIAL/FAIL** |
+| RQ11-05 | Consolidar ownership semântico | **PASS** (J-R9) |
 | RQ11-06 | Recommendations contextuais sem legado material | **FAIL** |
 | RQ11-07 | Capability metadata contract-derived | PASS |
 | RQ11-08 | Clean Architecture boundaries/DI/filesystem | **PARTIAL/FAIL** |
@@ -410,6 +410,8 @@ KEEP apenas heurística realmente transversal, de alta precisão, com negative c
 
 **Gate:** `SEMANTIC_AUTHORITY_SINGLE_OWNER = PASS`.
 
+**Status:** **ATENDIDO** — ver [`../evidence/e11-j-r9-semantic-authority-single-owner.md`](../evidence/e11-j-r9-semantic-authority-single-owner.md).
+
 ## J-R10 — contextual recommendations
 
 Fazer:
@@ -500,7 +502,7 @@ FINAL_RESULT = VERIFY_FINAL_FAILED
 | RQ11-02 | PASS/PARTIAL | cleanup content + R3 canônico |
 | RQ11-03 | PASS/PARTIAL | F5 + true metamorphic final |
 | RQ11-04 | PASS | J-R6/J-R7/J-R8 |
-| RQ11-05 | PARTIAL/FAIL | J-R9 |
+| RQ11-05 | PASS | J-R9 |
 | RQ11-06 | FAIL | J-R10 |
 | RQ11-07 | PASS | revalidate no final candidate |
 | RQ11-08 | PARTIAL/FAIL | J-R11 |

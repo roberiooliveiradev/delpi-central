@@ -1,0 +1,14 @@
+{
+  "step": "J-R9",
+  "gate": "SEMANTIC_AUTHORITY_SINGLE_OWNER",
+  "completeGate": "PASS",
+  "actionSelectionOwner": "openapi_action_catalog",
+  "familyMappersRole": "removed_as_selection_authority",
+  "tokenRulesEmptied": ["kpi", "product", "production"],
+  "domainSelectorsReturnNone": [
+    "select_by_department_kpi",
+    "select_by_intent",
+    "select_production_operational"
+  ],
+  "next": "J-R10"
+}

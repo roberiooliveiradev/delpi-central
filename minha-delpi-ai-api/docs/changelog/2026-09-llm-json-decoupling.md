@@ -79,8 +79,8 @@ J-R5  metamorphic rename verdadeiro
 J-R6  Architecture Enforcement independente
 J-R7  zero path semantic affinity
 J-R8  cleanup registry/content técnico              ✅
-J-R9  semantic single owner                         ← próxima
-J-R10 recommendations sem LEGACY_FALLBACK material
+J-R9  semantic single owner                         ✅
+J-R10 recommendations sem LEGACY_FALLBACK material  ← próxima
 J-R11 Clean Architecture
 J-R12 novo final candidate R1–R11 + residual + COMPLETE_GATE
 ```

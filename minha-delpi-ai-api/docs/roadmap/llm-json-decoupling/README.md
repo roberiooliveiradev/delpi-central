@@ -106,8 +106,8 @@ J-R5  metamorphic rename verdadeiro                 ✅ ATENDIDO
 J-R6  Architecture Enforcement independente         ✅ ATENDIDO
 J-R7  zero path semantic affinity                   ✅ ATENDIDO
 J-R8  cleanup registry/content técnico duplicado    ✅ ATENDIDO
-J-R9  semantic single owner                         ← próxima
-J-R10 recommendations sem LEGACY_FALLBACK material
+J-R9  semantic single owner                         ✅ ATENDIDO
+J-R10 recommendations sem LEGACY_FALLBACK material  ← próxima
 J-R11 Clean Architecture / IO fora de domain
 J-R12 novo candidate R1–R11 + residual + COMPLETE_GATE
 ```
