@@ -1,11 +1,11 @@
 # Portal Suprimentos — documentação mestra
 
-> **Status (2026-09-10):** implementação incremental em andamento · **E1–E5 concluídas** · **E6 C1 funcional concluída, WF-04 ainda em revalidação de DoD**  
+> **Status (2026-09-11):** implementação incremental em andamento · **E1–E6 concluídas** · **WF-04 GATE-FEATURE PASS** (smoke federado `INCONCLUSIVE` neste ambiente)  
 > **Readiness:** **GATE-E1 + GATE-ARCH + GATE-AUTHZ + GATE-RBAC PASS (local)**  
 > **Modo de entrega:** **uma página por vez até DoD** — a próxima página só pode ser promovida a foco após fechamento da atual  
-> **Página em foco:** **Solicitações de compras (WF-04)** — C1 funcional presente; falta fechar novamente o GATE-FEATURE contra o estado atual  
-> **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)** e **OTD analytics (WF-OTD-A)**  
-> **Próxima página após WF-04:** **Pedidos de compra (WF-05)**, somente com autorização explícita do Product Owner  
+> **Página em foco:** **nenhuma** — aguardando autorização explícita do Product Owner para promover **Pedidos de compra (WF-05)**  
+> **Últimas páginas fechadas:** **Início (WF-01)**, **Visão geral (WF-02/WF-02R)**, **OTD analytics (WF-OTD-A)** e **Solicitações de compras (WF-04)**  
+> **Próxima página candidata:** **Pedidos de compra (WF-05)**, somente com autorização explícita do Product Owner  
 > **Id técnico:** `supplies` · **basePath:** `/apps/supplies` · **API:** `supplies-api` · gateway `/apps/supplies-api/` · **CSS root:** `.dashboard-supplies-portal`
 
 O Portal Suprimentos é o hub operacional, analítico e gerencial do domínio de Suprimentos na Minha DELPI. Ele substitui progressivamente experiências fragmentadas por jornadas coesas, preservando bounded contexts, RBAC central, paridade mensurável e rollback.
@@ -33,8 +33,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **E3 — MFE + RBAC coexistência** | **concluída 2026-09-08** — `plugins/supplies`, BFF-only, shell capability-driven, manifest Core, papéis canônicos |
 | **E4 — Home + Ajuda + perfil** | **concluída** — `/home/attention`, Manual/Quero→onde/FAQ/glossário, perfil `/users/:userId`, preferências e avatar Core |
 | **E5 — Overview + OTD analytics** | **concluída** — WF-02/WF-02R + WF-OTD-A; tríade de meta SI, filtros/URL, charts e gauges |
-| **E6.S1–S4 — SC C1 funcional** | **concluídas 2026-09-08** — BFF `/purchase-requests*` → PR-api; lista/detalhe/export; evidência C2 |
-| **E6.S5 — GATE-FEATURE WF-04** | **EM FOCO** — revalidar kit-first, estados, Help, testes, responsividade/tema e docs |
+| **E6 — SC C1 + GATE-FEATURE WF-04** | **concluída 2026-09-11** — BFF C1, lista/detalhe/export, kit-first, Help, testes; smoke federado `INCONCLUSIVE` |
 | RBAC alvo | revisado; menor catálogo suficiente (ADR-007) |
 | Authz Core-first | **GATE-AUTHZ PASS** — fail-closed na fronteira; permissions efetivas do Core, não claims JWT |
 | BIs externos | dump **local** 0/6 documentado; dump Core **produção** obrigatório antes do cutover |
@@ -52,7 +51,7 @@ A documentação desta pasta deve obedecer à hierarquia vigente das regras `.cu
 | **GATE-RBAC** | **PASS local**; persona negativa real/HML continua dependente de usuário não-superadmin |
 | **GATE-API** | **PASS parcial** — fundação + Overview/OTD + SC C1; demais operações entram página a página |
 | **GATE-MFE** | **PASS nas páginas fechadas**; revalidar por página nova |
-| **GATE-FEATURE WF-04** | **ABERTO / EM FOCO** |
+| **GATE-FEATURE WF-04** | **PASS** — smoke federado `INCONCLUSIVE` (não inferido) |
 | **GATE-C2** | futuro; não autorizado enquanto prerequisites não forem provados |
 | **GATE-PARITY** | futuro; evidência quantitativa obrigatória |
 | **GATE-CUTOVER** | futuro; nenhum legado/BI pode permanecer `LEGADO_A_VALIDAR` |
@@ -83,7 +82,7 @@ selecionar página em foco
 | 1 | Início | `/apps/supplies` | **FECHADA (DoD)** |
 | 2 | Visão geral | `/overview` | **FECHADA (DoD)** · WF-02R |
 | — | OTD analytics | `/analytics/otd` | **FECHADA (DoD)** · satélite WF-OTD-A |
-| **3** | **Solicitações de compras** | `/purchase-requests` | **EM FOCO** — C1 funcional; GATE-FEATURE a revalidar |
+| **3** | **Solicitações de compras** | `/purchase-requests` | **FECHADA (DoD)** · WF-04 |
 | 4 | Pedidos de compra | `/purchase-orders` | bloqueada até WF-04 fechar + autorização PO |
 | 5 | Detalhe do pedido | `/purchase-orders/:branch/:number` | bloqueada até WF-05 fechar |
 | 6 | Entregas / atrasos | `/deliveries` | bloqueada até WF-06 fechar |
@@ -126,6 +125,8 @@ selecionar página em foco
 **Visão geral (WF-02/WF-02R):** `/analytics/overview` + `/analytics/otd/series`; filtros por período/unidade com URL shareable; 7 KPIs; tríade SI (`goalValue`, `comparableGoal`, `referenceGoal`, `iddScore`); charts OTD/comparativo; Help sincronizado. Filtros de domínio como `location`/`stock_method` não são globais da Overview.
 
 **OTD analytics (WF-OTD-A):** `/analytics/otd`; gauges por unidade + série; mesmos filtros do Overview; Help sincronizado.
+
+**Solicitações de compras (WF-04):** BFF C1 `/purchase-requests*`; PageHero + FilterBar kit + SectionCard; URL/F5 dos filtros e detalhe; AuthZ access/export/unit/CC fail-closed; estados loading/empty/error/403/404; Help + FAQ; testes MFE estruturais + BFF/security. Smoke federado: `INCONCLUSIVE` neste ambiente.
 
 A manutenção transversal de UI (por exemplo, help embutido no próprio label e loading canônico do `plugin-ui`) pode corrigir componentes compartilhados, mas não reabre uma página fechada salvo regressão material do seu DoD.
 
@@ -211,6 +212,6 @@ Invariantes:
 
 ## 7. Próximo passo operacional
 
-**Único próximo passo autorizado pelo roadmap:** revalidar e fechar **WF-04 Solicitações de compras** contra o GATE-FEATURE atual. Somente depois disso o Product Owner pode autorizar a promoção de **WF-05 Pedidos de compra**.
+**Único próximo passo autorizado pelo roadmap:** Product Owner autorizar a promoção de **WF-05 Pedidos de compra**. Sem essa autorização, a fila permanece bloqueada.
 
 Dump Core de produção dos BIs externos não bloqueia a fila de páginas; bloqueia decisões de paridade/depreciação/redirect e o `GATE-CUTOVER`.

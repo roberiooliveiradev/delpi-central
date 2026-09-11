@@ -1,9 +1,9 @@
 # IMPLEMENTATION-PLAN — Portal Suprimentos
 
-> **Status (2026-09-10):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.  
-> **Entregue:** E1–E5 + E6.S1–S4.  
-> **Em foco:** E6.S5 — revalidar e fechar o GATE-FEATURE do WF-04 Solicitações de Compras.  
-> **Próxima página candidata:** E7 WF-05 Pedidos de Compra, bloqueada até E6.S5 PASS + autorização explícita do Product Owner.  
+> **Status (2026-09-11):** plano executável revisado segundo `evidence-driven-execution.mdc`, `plan-construction.mdc` e `plan-execution.mdc`.  
+> **Entregue:** E1–E6 (incluindo E6.S5 / GATE-FEATURE WF-04).  
+> **Em foco:** nenhuma página — aguardando autorização explícita do Product Owner para E7 WF-05.  
+> **Próxima página candidata:** E7 WF-05 Pedidos de Compra, bloqueada até autorização explícita do Product Owner.  
 > **Modo:** uma página user-facing por vez; etapas futuras abaixo são fila/grafo, não autorização de execução.
 
 Referências: [README](./README.md), ADR-001..ADR-007, [WIREFRAMES](./WIREFRAMES.md), [API-ROUTES](./API-ROUTES.md), [DECISOES_FUNCIONAIS_PENDENTES](./DECISOES_FUNCIONAIS_PENDENTES.md), [HOMOLOGACAO-PARIDADE](./HOMOLOGACAO-PARIDADE.md).
@@ -45,7 +45,7 @@ Invariantes:
 | RQ-03 | AuthZ Core-first e fail-closed | ATENDIDO — E2; revalidar por feature |
 | RQ-04 | Unit/resource scope coerente | HERDADO transversalmente; testar em cada página |
 | RQ-05 | Overview/OTD com KPIs e metas SI canônicas | ATENDIDO — E5 |
-| RQ-06 | SC C1 funcional + DoD da página | PARCIAL — E6.S1–S4 feitos; E6.S5 aberto |
+| RQ-06 | SC C1 funcional + DoD da página | ATENDIDO — E6.S1–S5 |
 | RQ-07 | Pedidos de Compra | BLOQUEADO pela fila — E7 |
 | RQ-08 | Detalhe do Pedido | BLOQUEADO pela fila — E8 |
 | RQ-09 | Entregas/Atrasos | BLOQUEADO pela fila — E9 |
@@ -154,7 +154,7 @@ Overview/OTD fechados com filtros/URL, 7 KPIs, metas SI, charts/gauges e Ajuda.
 
 ---
 
-# E6 — Solicitações de Compras C1 — EM FOCO
+# E6 — Solicitações de Compras C1 — COMPLETED
 
 ## E6.S1 — Gateway PR-api — COMPLETED
 
@@ -176,32 +176,11 @@ Overview/OTD fechados com filtros/URL, 7 KPIs, metas SI, charts/gauges e Ajuda.
 **Evidência:** [evidence/e6-s4-c2-migration-evidence.md](./evidence/e6-s4-c2-migration-evidence.md).  
 **Residual:** medir volumes HML/prod antes de E25.
 
-## E6.S5 — Revalidar GATE-FEATURE WF-04 — PENDING / NEXT
+## E6.S5 — Revalidar GATE-FEATURE WF-04 — COMPLETED 2026-09-11
 
-**Objetivo:** fechar a página atual contra o DoD vigente sem misturar E7.
-
-**Requisitos cobertos:** RQ-04, RQ-06, RQ-19.
-
-**Fazer:**
-- inspecionar `plugins/supplies` e `supplies-api` atuais da jornada SC;
-- criar baseline da UI/estados e inventário de componentes;
-- confirmar kit-first (`PagePath`, `PageHero`, `SectionCard`, filtros/tabela/estados do `plugin-ui` quando aplicáveis);
-- validar loading/empty/partial/error/403/404;
-- validar filtros, query/URL, F5 e detalhe;
-- validar access/export/view-all/unit/CC fail-closed;
-- sincronizar Help e wireframe da página;
-- executar testes positive + sibling + negative e smoke federado quando ambiente permitir.
-
-**Não fazer:** implementar Pedidos, Entregas, C2 ou cutover; criar componente duplicado do kit; enfraquecer CC/unit scope.
-
-**Evidência de ownership:** ADR-002, API-ROUTES e código C1 atual.
-
-**Dependências:** E6.S1–S4 completas.
-
-**Teste:** descobrir e executar os comandos reais atuais de `plugins/supplies` e `supplies-api`; no mínimo suíte PurchaseRequests + BFF/security relacionada + build do MFE. Não declarar smoke PASS se o ambiente não permitir.
-
-**Pronto quando:** GATE-FEATURE WF-04 = PASS e README/WIREFRAMES/API-ROUTES refletem o estado final.
-
+**Entregue:** kit-first (`PagePath`/`PageHero`/`FilterBar`/`SectionCard`/`ActionButton`), mapper 403, Help nos filtros, URL/F5, estados loading/empty/error/404, testes MFE estruturais + BFF/security verdes.  
+**Residual:** smoke federado Portal = `INCONCLUSIVE` neste ambiente; DataTable kit do `plugin-ui` fica para quando houver 2+ páginas tabulares no Portal (lista SC usa tabela de domínio com CSS de layout apenas).  
+**Teste:** `cd plugins/supplies && npm test -- --run src/features/purchase-requests` · `supplies-api/.venv/bin/pytest tests/interface/http/test_purchase_requests_bff.py tests/security/test_purchase_request_export.py tests/infrastructure/gateways/test_purchase_requests_gateway.py -q`.  
 **Commit sugerido:** `fix(supplies): fechar DoD de solicitações de compras`
 
 ---
@@ -212,7 +191,7 @@ As etapas abaixo estão **BLOCKED_BY_QUEUE**. Antes de executar qualquer uma, su
 
 ## E7 — WF-05 Pedidos de Compra
 
-Pré-condição: E6.S5 PASS + autorização explícita PO. Ler/fixar DTOs PO necessários à **lista**, criar BFF da lista, UI/estados/Help/testes e fechar GATE-FEATURE. Não implementar detalhe nem Entregas na mesma etapa.
+Pré-condição: autorização explícita PO (E6.S5 já PASS). Ler/fixar DTOs PO necessários à **lista**, criar BFF da lista, UI/estados/Help/testes e fechar GATE-FEATURE. Não implementar detalhe nem Entregas na mesma etapa.
 
 ## E8 — WF-06 Detalhe do Pedido
 

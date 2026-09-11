@@ -22,6 +22,7 @@ import {
   createDashboardStateBanner,
   createDashboardStatusBadge,
   createDashboardTabularExportButtons,
+  createDashboardTextField,
   createDashboardTitleWithHelp,
   createDashboardTopBar,
   createDashboardTopBarSearchTrigger,
@@ -35,6 +36,7 @@ import {
   sectionRouteCardBemClasses,
   selectFieldPacClasses,
   stateBannerBemClasses,
+  textFieldBemClasses,
   titleWithHelpBemClasses,
   useChartGranularitySelection,
   type SpeedometerGaugeProps,
@@ -145,6 +147,10 @@ export const SuppliesSelectField = createDashboardSelectField({
 
 export const SuppliesDateField = createDashboardDateField({
   classNames: dateFieldBemClasses(UI_PREFIX),
+});
+
+export const SuppliesTextField = createDashboardTextField({
+  classNames: textFieldBemClasses(UI_PREFIX),
 });
 
 export const SuppliesMultiSelectField = createDashboardMultiSelectField({

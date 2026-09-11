@@ -1,7 +1,7 @@
 # PLAYBOOK — Portal Suprimentos (Minha DELPI)
 
-> **Status (2026-09-10):** arquitetura/produto congelados e implementação incremental em andamento. **E1–E5 concluídas; E6 C1 funcional concluída; WF-04 em revalidação de DoD.**  
-> **Próxima página candidata:** WF-05 Pedidos de Compra, somente após fechamento do WF-04 e autorização explícita do Product Owner.  
+> **Status (2026-09-11):** arquitetura/produto congelados e implementação incremental em andamento. **E1–E6 concluídas; WF-04 GATE-FEATURE PASS.**  
+> **Próxima página candidata:** WF-05 Pedidos de Compra, somente com autorização explícita do Product Owner.  
 > **Nome:** Portal Suprimentos · **id:** `supplies` · **basePath:** `/apps/supplies` · **API:** `supplies-api`
 
 Complementos: [README](./README.md) · [INVENTARIO](./INVENTARIO-ATIVOS.md) · [DESIGN-IA](./DESIGN-IA-SUPRIMENTOS.md) · [IMPLEMENTATION-PLAN](./IMPLEMENTATION-PLAN.md) · [WIREFRAMES](./WIREFRAMES.md) · ADRs.

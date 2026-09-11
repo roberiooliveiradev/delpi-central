@@ -86,7 +86,7 @@ export const USER_MANUAL_CONTENT = {
         {
           want: "Abrir solicitações de compras (SC)",
           where: "Solicitações de compras",
-          how: "Lista e detalhe no escopo de CC/filial; exportação CSV se tiver permissão",
+          how: "Lista e detalhe no escopo de CC/filial; URL guarda filtros (F5); exportação CSV se tiver permissão",
         },
         {
           want: "Alterar filial padrão ou densidade das tabelas",
@@ -176,6 +176,10 @@ export const USER_MANUAL_CONTENT = {
         {
           q: "Por que não vejo Exportar CSV?",
           a: "A exportação exige a permissão de exportação além do acesso às solicitações. Ter só a lista não libera o download.",
+        },
+        {
+          q: "Como compartilho o recorte da lista de SC?",
+          a: "A URL guarda filial, período, filtros e a SC aberta no detalhe. Copie o link com o recorte ativo; F5 restaura o mesmo estado.",
         },
         {
           q: "Por que um card da Visão geral aparece indisponível?",

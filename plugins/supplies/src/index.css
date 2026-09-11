@@ -703,52 +703,10 @@
   }
 }
 
-/* Solicitações de compras (E6 C1) */
-.dashboard-supplies-portal .sp-purchase-requests__hero {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.dashboard-supplies-portal .sp-purchase-requests__eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0;
-  color: var(--sp-text-muted);
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.dashboard-supplies-portal .sp-purchase-requests__description {
-  margin: 0;
-  max-width: 52rem;
-  color: var(--sp-text-muted);
-}
-
+/* Solicitações de compras — layout de domínio (chrome = plugin-ui) */
 .dashboard-supplies-portal .sp-purchase-requests__filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 0.75rem 1rem;
-  align-items: end;
-}
-
-.dashboard-supplies-portal .sp-purchase-requests__filters label {
-  display: grid;
-  gap: 0.3rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--sp-text-muted);
-}
-
-.dashboard-supplies-portal .sp-purchase-requests__filters input,
-.dashboard-supplies-portal .sp-purchase-requests__filters select {
-  min-height: 40px;
-  padding: 0.4rem 0.65rem;
-  border: 1px solid var(--sp-border);
-  border-radius: 10px;
-  background: var(--sp-surface);
-  color: var(--sp-text);
-  font: inherit;
+  gap: 0.75rem;
 }
 
 .dashboard-supplies-portal .sp-purchase-requests__filter-actions {
@@ -758,40 +716,13 @@
   align-items: center;
 }
 
-.dashboard-supplies-portal .sp-purchase-requests__btn {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 40px;
-  padding: 0.4rem 0.85rem;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--sp-accent) 88%, black);
-  color: #fff;
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.dashboard-supplies-portal .sp-purchase-requests__btn--ghost {
-  background: color-mix(in srgb, var(--sp-text) 4%, transparent);
-  color: var(--sp-text);
-  border-color: var(--sp-border);
-}
-
-.dashboard-supplies-portal .sp-purchase-requests__btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .dashboard-supplies-portal .sp-purchase-requests__meta {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 0.75rem;
   align-items: center;
+  margin-bottom: 0.75rem;
   color: var(--sp-text-muted);
   font-size: 0.875rem;
 }
@@ -805,7 +736,7 @@
 .dashboard-supplies-portal .sp-purchase-requests__table-wrap {
   overflow-x: auto;
   border: 1px solid var(--sp-border);
-  border-radius: 14px;
+  border-radius: var(--sp-radius, 14px);
   background: var(--sp-surface);
 }
 
@@ -840,34 +771,11 @@
   background: color-mix(in srgb, var(--sp-accent) 8%, transparent);
 }
 
-.dashboard-supplies-portal .sp-purchase-requests__detail {
-  position: sticky;
-  bottom: 0;
-  margin-top: 0.5rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid var(--sp-border);
-  border-radius: 14px;
-  background: var(--sp-surface);
-  box-shadow: 0 -8px 24px color-mix(in srgb, var(--sp-text) 8%, transparent);
-}
-
-.dashboard-supplies-portal .sp-purchase-requests__detail-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-}
-
-.dashboard-supplies-portal .sp-purchase-requests__detail-head h2 {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
 .dashboard-supplies-portal .sp-purchase-requests__detail-body dl {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: 0.75rem;
-  margin: 0.85rem 0;
+  margin: 0.25rem 0 0.85rem;
 }
 
 .dashboard-supplies-portal .sp-purchase-requests__detail-body dt {
@@ -905,6 +813,17 @@
   display: grid;
   gap: 0.65rem;
   justify-items: start;
+}
+
+@media (max-width: 720px) {
+  .dashboard-supplies-portal .sp-purchase-requests__meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-supplies-portal .sp-purchase-requests__table-wrap {
+    margin-inline: -0.25rem;
+  }
 }
 
 /* TopBar user → perfil */

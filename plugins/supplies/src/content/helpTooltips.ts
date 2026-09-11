@@ -73,6 +73,16 @@ export const SP_HELP = {
     "Pontualidade de compras com velocímetros por unidade (Santa Catarina / Espírito Santo) e evolução no tempo. Diferente da Visão geral (placar de KPIs) e de Entregas (atrasos do dia).",
   purchaseRequests:
     "Lista linhas de SC no escopo de centro de custo e filial. Sem CC liberado e sem visão ampla, a lista fica vazia (fail-closed). Exportação CSV exige permissão separada.",
+  purchaseRequestsBranch:
+    "Filial do recorte. Só unidades liberadas na sessão aparecem; a API reforça o escopo de unidade.",
+  purchaseRequestsPeriod:
+    "Período de abertura da SC. Compartilhável pela URL (F5 restaura o recorte).",
+  purchaseRequestsNumber: "Filtra pelo número da solicitação de compras.",
+  purchaseRequestsProduct: "Filtra por código ou trecho de produto/MP da linha.",
+  purchaseRequestsStage:
+    "Situação consolidada da SC (aguardando pedido, parcial, concluída etc.).",
+  purchaseRequestsExport:
+    "Exportação CSV do recorte filtrado. Exige permissão de exportação além do acesso à lista.",
   userProfile:
     "Perfil do Portal Suprimentos: identidade Minha DELPI (foto, cargo e contatos da Core, só leitura), atalhos por capability e preferências (filial padrão e densidade). Edite foto/cargo/contatos em /profile do Portal host.",
   userProfilePrefs:

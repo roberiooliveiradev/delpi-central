@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, ShoppingCart } from "lucide-react";
+import { Download } from "lucide-react";
 
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { buildPluginPath } from "../../app/pluginRoutes";
 import { useSuppliesSession } from "../../app/SuppliesSessionContext";
 import {
+  SuppliesActionButton,
   SuppliesEmptyState,
   SuppliesLoadingCard,
+  SuppliesPageHero,
   SuppliesPagePath,
-  SuppliesTitleWithHelp,
+  SuppliesSectionCard,
+  SuppliesSectionHintLabel,
   SuppliesStateBanner,
 } from "../../app/suppliesUi";
 import { SP_HELP } from "../../content/helpTooltips";
@@ -17,7 +20,11 @@ import {
   getPurchaseRequest,
   listPurchaseRequests,
 } from "./api";
-import { PURCHASE_REQUESTS_CONTENT as C } from "./content";
+import {
+  mapPurchaseRequestsFetchError,
+  PURCHASE_REQUESTS_CONTENT as C,
+} from "./content";
+import { PurchaseRequestsFilters } from "./PurchaseRequestsFilters";
 import {
   buildRequestKey,
   buildUrlSearch,
@@ -29,8 +36,7 @@ import {
   parseQueryFromSearch,
   parseRequestKey,
 } from "./query";
-import type { OverallStage, PurchaseRequestDetail, PurchaseRequestListItem, PurchaseRequestsQuery } from "./types";
-import { OVERALL_STAGE_VALUES } from "./types";
+import type { PurchaseRequestDetail, PurchaseRequestListItem, PurchaseRequestsQuery } from "./types";
 
 type PurchaseRequestsPageProps = {
   basePath: string;
@@ -93,7 +99,8 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
         if (controller.signal.aborted) return;
         setItems([]);
         setTotal(0);
-        setError(err instanceof Error ? err.message : C.error);
+        const message = err instanceof Error ? err.message : C.error;
+        setError(mapPurchaseRequestsFetchError(message));
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -130,7 +137,7 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
           setDetailNotFound(true);
           setDetailError(null);
         } else {
-          setDetailError(message);
+          setDetailError(mapPurchaseRequestsFetchError(message));
         }
       })
       .finally(() => {
@@ -156,9 +163,14 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
   const onExport = () => {
     if (!canExport) return;
     void downloadPurchaseRequestsExport(query).catch((err: unknown) => {
-      setError(err instanceof Error ? err.message : C.error);
+      const message = err instanceof Error ? err.message : C.error;
+      setError(mapPurchaseRequestsFetchError(message));
     });
   };
+
+  const detailTitle = detail?.header
+    ? formatRequestNumber(detail.header.request_number)
+    : C.detailTitle;
 
   return (
     <div className="sp-page-stack sp-purchase-requests">
@@ -175,239 +187,170 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
         current={C.title}
       />
 
-      <header className="sp-purchase-requests__hero">
-        <p className="sp-purchase-requests__eyebrow">
-          <ShoppingCart size={16} strokeWidth={1.75} aria-hidden="true" />
-          {C.eyebrow}
-        </p>
-        <h1>
-          <SuppliesTitleWithHelp title={C.title} hint={SP_HELP.purchaseRequests} />
-        </h1>
-        <p className="sp-purchase-requests__description">{C.description}</p>
-      </header>
-
-      <form
-        className="sp-purchase-requests__filters"
-        onSubmit={(event) => {
-          event.preventDefault();
-          patchQuery({ page: 1 });
-          setReloadKey((value) => value + 1);
-        }}
-      >
-        <label>
-          <span>{C.branchLabel}</span>
-          <select
-            value={query.branch}
-            onChange={(event) => patchQuery({ branch: event.target.value, page: 1, request: "" })}
-          >
-            {units.map((unit) => (
-              <option key={unit} value={unit}>
-                {unit}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>{C.dateFromLabel}</span>
-          <input
-            type="date"
-            value={query.date_from}
-            onChange={(event) => patchQuery({ date_from: event.target.value, page: 1 })}
+      <SuppliesPageHero
+        eyebrow={C.eyebrow}
+        title={
+          <SuppliesSectionHintLabel
+            label={C.title}
+            hint={SP_HELP.purchaseRequests}
           />
-        </label>
-        <label>
-          <span>{C.dateToLabel}</span>
-          <input
-            type="date"
-            value={query.date_to}
-            onChange={(event) => patchQuery({ date_to: event.target.value, page: 1 })}
-          />
-        </label>
-        <label>
-          <span>{C.requestNumberLabel}</span>
-          <input
-            value={query.request_number}
-            onChange={(event) => patchQuery({ request_number: event.target.value, page: 1 })}
-          />
-        </label>
-        <label>
-          <span>{C.productLabel}</span>
-          <input
-            value={query.product_code}
-            onChange={(event) => patchQuery({ product_code: event.target.value, page: 1 })}
-          />
-        </label>
-        <label>
-          <span>{C.stageLabel}</span>
-          <select
-            value={query.overall_stages[0] ?? ""}
-            onChange={(event) => {
-              const value = event.target.value as OverallStage | "";
-              patchQuery({
-                overall_stages: value ? [value] : [],
-                page: 1,
-              });
-            }}
-          >
-            <option value="">{C.stageAll}</option>
-            {OVERALL_STAGE_VALUES.map((stage) => (
-              <option key={stage} value={stage}>
-                {labelOverallStage(stage)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="sp-purchase-requests__filter-actions">
-          <button type="submit" className="sp-purchase-requests__btn">
-            {C.applyFilters}
-          </button>
-          <button
-            type="button"
-            className="sp-purchase-requests__btn sp-purchase-requests__btn--ghost"
-            onClick={() => setQuery(createDefaultQuery(query.branch || defaultBranch))}
-          >
-            {C.clearFilters}
-          </button>
-          {canExport ? (
-            <button
+        }
+        description={C.description}
+        actions={
+          canExport ? (
+            <SuppliesActionButton
               type="button"
-              className="sp-purchase-requests__btn sp-purchase-requests__btn--ghost"
+              variant="ghost"
               title={C.exportTitle}
               onClick={onExport}
             >
-              <Download size={16} strokeWidth={1.75} aria-hidden="true" />
+              <Download size={16} strokeWidth={1.75} aria-hidden="true" />{" "}
               {C.exportLabel}
-            </button>
-          ) : null}
-        </div>
-      </form>
+            </SuppliesActionButton>
+          ) : null
+        }
+        aria-label={C.filtersAriaLabel}
+      >
+        <PurchaseRequestsFilters
+          query={query}
+          units={units}
+          onPatch={patchQuery}
+          onApply={() => {
+            patchQuery({ page: 1 });
+            setReloadKey((value) => value + 1);
+          }}
+          onClear={() => setQuery(createDefaultQuery(query.branch || defaultBranch))}
+        />
+      </SuppliesPageHero>
 
       {error ? (
         <div className="sp-purchase-requests__error">
           <SuppliesStateBanner variant="error">{error}</SuppliesStateBanner>
-          <button
+          <SuppliesActionButton
             type="button"
-            className="sp-purchase-requests__btn"
+            variant="primary"
             onClick={() => setReloadKey((value) => value + 1)}
           >
             {C.retry}
-          </button>
+          </SuppliesActionButton>
         </div>
       ) : null}
 
-      {loading ? <SuppliesLoadingCard title={C.loading} variant="panel" /> : null}
+      <SuppliesSectionCard title={C.listTitle} hint={C.listHint}>
+        {loading ? <SuppliesLoadingCard title={C.loading} variant="panel" /> : null}
 
-      {!loading && !error && items.length === 0 ? (
-        <SuppliesEmptyState title={C.emptyTitle} message={C.emptyMessage} />
-      ) : null}
+        {!loading && !error && items.length === 0 ? (
+          <SuppliesEmptyState title={C.emptyTitle} message={C.emptyMessage} />
+        ) : null}
 
-      {!loading && !error && items.length > 0 ? (
-        <>
-          <div className="sp-purchase-requests__meta">
-            <span>{C.totalLabel(total)}</span>
-            <div className="sp-purchase-requests__pager">
-              <button
-                type="button"
-                className="sp-purchase-requests__btn sp-purchase-requests__btn--ghost"
-                disabled={query.page <= 1}
-                onClick={() => patchQuery({ page: Math.max(1, query.page - 1) })}
-              >
-                {C.prevPage}
-              </button>
-              <span>
-                {C.pageLabel} {query.page} / {totalPages}
-              </span>
-              <button
-                type="button"
-                className="sp-purchase-requests__btn sp-purchase-requests__btn--ghost"
-                disabled={query.page >= totalPages}
-                onClick={() => patchQuery({ page: query.page + 1 })}
-              >
-                {C.nextPage}
-              </button>
+        {!loading && !error && items.length > 0 ? (
+          <>
+            <div className="sp-purchase-requests__meta">
+              <span>{C.totalLabel(total)}</span>
+              <div className="sp-purchase-requests__pager">
+                <SuppliesActionButton
+                  type="button"
+                  variant="ghost"
+                  disabled={query.page <= 1}
+                  onClick={() => patchQuery({ page: Math.max(1, query.page - 1) })}
+                >
+                  {C.prevPage}
+                </SuppliesActionButton>
+                <span>
+                  {C.pageLabel} {query.page} / {totalPages}
+                </span>
+                <SuppliesActionButton
+                  type="button"
+                  variant="ghost"
+                  disabled={query.page >= totalPages}
+                  onClick={() => patchQuery({ page: query.page + 1 })}
+                >
+                  {C.nextPage}
+                </SuppliesActionButton>
+              </div>
             </div>
-          </div>
-          <div className="sp-purchase-requests__table-wrap">
-            <table className="sp-purchase-requests__table">
-              <thead>
-                <tr>
-                  <th>{C.colSc}</th>
-                  <th>{C.colItem}</th>
-                  <th>{C.colProduct}</th>
-                  <th>{C.colRequester}</th>
-                  <th>{C.colCc}</th>
-                  <th>{C.colOpened}</th>
-                  <th>{C.colStage}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => {
-                  const key = `${item.branch}-${item.request_number}-${item.request_item ?? ""}`;
-                  const selected =
-                    query.request === buildRequestKey(item.branch, item.request_number);
-                  return (
-                    <tr
-                      key={key}
-                      className={selected ? "is-selected" : undefined}
-                      onClick={() => onSelectRow(item)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          onSelectRow(item);
-                        }
-                      }}
-                      tabIndex={0}
-                      role="button"
-                    >
-                      <td>{formatRequestNumber(item.request_number)}</td>
-                      <td>{item.request_item || "—"}</td>
-                      <td>
-                        {formatProductLabel(item.product_code, item.product_description)}
-                      </td>
-                      <td>{item.requester?.name || item.requester?.code || "—"}</td>
-                      <td>
-                        {item.cost_center?.code || item.cost_center_code || "—"}
-                      </td>
-                      <td>{formatDatePtBr(item.request_issue_date)}</td>
-                      <td>{labelOverallStage(item.derived?.overall_stage)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </>
-      ) : null}
+            <div className="sp-purchase-requests__table-wrap">
+              <table className="sp-purchase-requests__table">
+                <thead>
+                  <tr>
+                    <th>{C.colSc}</th>
+                    <th>{C.colItem}</th>
+                    <th>{C.colProduct}</th>
+                    <th>{C.colRequester}</th>
+                    <th>{C.colCc}</th>
+                    <th>{C.colOpened}</th>
+                    <th>{C.colStage}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => {
+                    const key = `${item.branch}-${item.request_number}-${item.request_item ?? ""}`;
+                    const selected =
+                      query.request === buildRequestKey(item.branch, item.request_number);
+                    return (
+                      <tr
+                        key={key}
+                        className={selected ? "is-selected" : undefined}
+                        onClick={() => onSelectRow(item)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            onSelectRow(item);
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                      >
+                        <td>{formatRequestNumber(item.request_number)}</td>
+                        <td>{item.request_item || "—"}</td>
+                        <td>
+                          {formatProductLabel(item.product_code, item.product_description)}
+                        </td>
+                        <td>{item.requester?.name || item.requester?.code || "—"}</td>
+                        <td>
+                          {item.cost_center?.code || item.cost_center_code || "—"}
+                        </td>
+                        <td>{formatDatePtBr(item.request_issue_date)}</td>
+                        <td>{labelOverallStage(item.derived?.overall_stage)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : null}
+      </SuppliesSectionCard>
 
       {detailOpen ? (
-        <aside className="sp-purchase-requests__detail" aria-label={C.detailTitle}>
-          <div className="sp-purchase-requests__detail-head">
-            <h2>
-              {detail?.header
-                ? formatRequestNumber(detail.header.request_number)
-                : C.detailTitle}
-            </h2>
-            <button
+        <SuppliesSectionCard
+          title={detailTitle}
+          hint={C.detailHint}
+          actions={
+            <SuppliesActionButton
               type="button"
-              className="sp-purchase-requests__btn sp-purchase-requests__btn--ghost"
+              variant="ghost"
               onClick={() => patchQuery({ request: "" })}
             >
               {C.detailClose}
-            </button>
-          </div>
-          {detailLoading ? <SuppliesLoadingCard title={C.detailLoading} variant="panel" /> : null}
+            </SuppliesActionButton>
+          }
+        >
+          {detailLoading ? (
+            <SuppliesLoadingCard title={C.detailLoading} variant="panel" />
+          ) : null}
           {!detailLoading && (detailError || detailNotFound) ? (
             <div className="sp-purchase-requests__error">
               <SuppliesStateBanner variant="error">
                 {detailNotFound ? C.detailNotFound : detailError}
               </SuppliesStateBanner>
-              <button
+              <SuppliesActionButton
                 type="button"
-                className="sp-purchase-requests__btn"
+                variant="primary"
                 onClick={() => setReloadKey((value) => value + 1)}
               >
                 {C.detailRetry}
-              </button>
+              </SuppliesActionButton>
             </div>
           ) : null}
           {!detailLoading && detail ? (
@@ -448,7 +391,7 @@ export function PurchaseRequestsPage({ basePath }: PurchaseRequestsPageProps) {
               </ul>
             </div>
           ) : null}
-        </aside>
+        </SuppliesSectionCard>
       ) : null}
     </div>
   );

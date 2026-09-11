@@ -1,6 +1,6 @@
 # WIREFRAMES — Portal Suprimentos
 
-> **Status (2026-09-10):** wireframes alinhados ao modo página-a-página. Início, Visão geral e OTD analytics estão fechados; Solicitações de Compras é o foco atual de revalidação; demais páginas são fila e não autorização de implementação.
+> **Status (2026-09-11):** wireframes alinhados ao modo página-a-página. Início, Visão geral, OTD analytics e Solicitações de Compras estão fechados; demais páginas são fila e não autorização de implementação.
 
 Shell comum (padrão Comercial por composição compartilhada, não por cópia de CSS):
 
@@ -173,7 +173,7 @@ SectionCard "OTD no tempo"
 
 ---
 
-## WF-04 — Solicitações de Compras — EM FOCO
+## WF-04 — Solicitações de Compras — FECHADA (DoD)
 
 | Campo | Conteúdo |
 |---|---|
@@ -183,8 +183,9 @@ SectionCard "OTD no tempo"
 | Resource scope | CC fail-closed; `view-all` amplia CC, nunca unidade |
 | Export | `supplies.purchase-requests.export` + scopes |
 | Fonte | PR-api C1; supplies-api/PG somente após C2 |
-| Estado | C1 funcional implementado; revalidar GATE-FEATURE atual antes de promover WF-05 |
-| DoD pendente | kit-first, estados, Help, filtros/URL, tema/mobile/a11y, positive+sibling+negative, smoke |
+| Chrome | PagePath + PageHero + FilterBar kit + SectionCard + ActionButton |
+| Estado | **GATE-FEATURE PASS** (2026-09-11); smoke federado `INCONCLUSIVE` |
+| DoD | kit-first, estados, Help, filtros/URL/F5, tema/mobile, positive+sibling+negative |
 
 ---
 
