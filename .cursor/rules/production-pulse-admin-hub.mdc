@@ -1,6 +1,6 @@
 ---
 description: Production Pulse Admin Hub OTA — canvas-first, explicit OTA edges, Connection Mode, modais host-contained, soft delete
-globs: plugins/production-pulse/src/pages/FirmwareLinksPage.tsx,plugins/production-pulse/src/components/FirmwareDeviceLinkCanvas.tsx,plugins/production-pulse/src/components/HubCanvasLegend.tsx,plugins/production-pulse/src/components/EntityContextLayers.tsx,plugins/production-pulse/src/components/AdminSidePanel.tsx,plugins/production-pulse/src/utils/adminHubUiState.ts,plugins/production-pulse/src/utils/firmwareLinkGraph.ts,plugins/production-pulse/src/app/productionPulseUi.tsx,plugins/production-pulse/src/content/helpTooltips.ts
+globs: plugins/production-pulse/src/pages/FirmwareLinksPage.tsx,plugins/production-pulse/src/components/FirmwareDeviceLinkCanvas.tsx,plugins/production-pulse/src/components/HubCanvasLegend.tsx,plugins/production-pulse/src/components/EntityContextLayers.tsx,plugins/production-pulse/src/components/AdminSidePanel.tsx,plugins/production-pulse/src/utils/adminHubUiState.ts,plugins/production-pulse/src/utils/firmwareLinkGraph.ts,plugins/production-pulse/src/app/productionPulseUi.tsx,plugins/production-pulse/src/content/helpTooltips.ts,plugins/production-pulse/src/realtime/**/*.ts,plugins/production-pulse/src/realtime/**/*.tsx,production-pulse-api/production_pulse_app/application/services/production_pulse_realtime_*.py,production-pulse-api/production_pulse_app/interface/http/routes/realtime_routes.py
 alwaysApply: false
 ---
 
@@ -92,6 +92,15 @@ Excluir permanentemente = irreversível; remove row; revalida dependências no D
 
 **Vocabulário UI:** **Tipo de driver** (`driver_key` / protocolo IoT) ≠ **Família OTA** (`firmware_key` / versões). Painel `panel=drivers`; modais `driver-create` / `driver-detail`.
 **OTA híbrido:** `authorized` + `wakeStatus` → Avisando / Avisado / Não avisou·pull; sem wake → «Aguardando consulta OTA» (sem %); `applying` indeterminate; falhas OTA via `resolveOtaTargetFailure` (wake fail ≠ OTA failed).
+
+## Live refresh (WebSocket)
+
+- Transporte: `wss://…/apps/production-pulse-api/v1/realtime/ws` (hint + HTTP soft refetch). Doc: `production-pulse-api/docs/architecture/realtime-pulse.md`.
+- Eventos P0: `device.updated`, `firmware.catalog.updated`, `ota.job.updated`, `ota.target.updated`.
+- Soft apply **não** usa `setLoading` / `structuralError`; posições do canvas permanecem via `positionById`.
+- Guarda: `linkMode` / drag / overlays (`menu`/`summary`/`inspector`/`confirm`/`modal`/`panel`) / aba oculta → defer.
+- Fallback poll 30s somente com WS desconectado; monitor OTA 3s só com WS down + job ativo.
+- Botão Atualizar do chrome continua hard refresh. Ajuda: `PP_HELP.hub.canvasLiveRefresh`.
 
 URL: `panel`/`modal` shareable; summary/menu/confirm **efêmeros** (não reidratam summary fantasma). Transições: `adminHubLayerTransitions.ts`. Detalhe: `docs/12-roadmap-e-evolucao/production-pulse/ADMIN-HUB-OTA-STABILIZATION.md`.
 

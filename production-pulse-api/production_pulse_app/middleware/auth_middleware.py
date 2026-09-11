@@ -13,10 +13,21 @@ def _strip_root_path(request: Request) -> str:
     return path
 
 
+def _normalize_path(path: str) -> str:
+    normalized = (path or "/").strip() or "/"
+    if len(normalized) > 1 and normalized.endswith("/"):
+        return normalized.rstrip("/")
+    return normalized
+
+
 def _is_public(path: str) -> bool:
-    if path in PUBLIC_EXACT:
+    normalized = _normalize_path(path)
+    if normalized in PUBLIC_EXACT:
         return True
-    return any(path.startswith(prefix) for prefix in PUBLIC_PREFIXES)
+    # Token na query; o handler valida JWT + RBAC.
+    if normalized.endswith("/v1/realtime/ws"):
+        return True
+    return any(normalized.startswith(prefix) for prefix in PUBLIC_PREFIXES)
 
 
 async def jwt_middleware(request: Request, call_next):

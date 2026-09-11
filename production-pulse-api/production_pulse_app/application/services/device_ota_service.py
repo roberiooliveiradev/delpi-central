@@ -8,6 +8,12 @@ from uuid import UUID
 
 from production_pulse_app.config import settings
 from production_pulse_app.domain.errors import ContentCodedError
+from production_pulse_app.application.services.production_pulse_realtime_notify import (
+    notify_device_updated,
+    notify_ota_job_updated,
+    notify_ota_target_updated,
+    safe_realtime,
+)
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
     PostgresDeviceRepository,
 )
@@ -27,6 +33,36 @@ _TERMINAL = ("updated", "failed", "cancelled", "skipped")
 
 class DeviceOtaAuthError(Exception):
     pass
+
+
+def _notify_target(
+    *,
+    reason: str,
+    target: dict[str, Any],
+    device: dict[str, Any],
+    finished: dict[str, Any] | None = None,
+    force: bool = False,
+) -> None:
+    branch = str(device.get("branch") or "")
+    safe_realtime(
+        notify_ota_target_updated,
+        reason=reason,
+        target_id=target["id"],
+        job_id=target["job_id"],
+        device_id=target["device_id"],
+        branch=branch,
+        status=target.get("status"),
+        progress_percent=target.get("progress_percent"),
+        force=force,
+    )
+    if finished is not None:
+        safe_realtime(
+            notify_ota_job_updated,
+            reason="finish",
+            job_id=target["job_id"],
+            branch=branch,
+            status=finished.get("status"),
+        )
 
 
 class DeviceOtaService:
@@ -129,6 +165,12 @@ class DeviceOtaService:
             path = self._storage.open_path(target["artifact_path"])
         except FirmwareArtifactStorageError as exc:
             raise ContentCodedError("firmwareArtifactInvalid") from exc
+        _notify_target(
+            reason="downloading",
+            target=transitioned,
+            device=device,
+            force=True,
+        )
         return path, transitioned
 
     def report(
@@ -200,6 +242,7 @@ class DeviceOtaService:
             )
             if updated is None:
                 raise ContentCodedError("deviceOtaInvalidTransition")
+            _notify_target(reason="progress", target=updated, device=device)
             return {
                 "targetId": str(updated["id"]),
                 "status": updated["status"],
@@ -222,6 +265,7 @@ class DeviceOtaService:
             )
             if updated is None:
                 raise ContentCodedError("deviceOtaInvalidTransition")
+            _notify_target(reason="applying", target=updated, device=device, force=True)
             return {
                 "targetId": str(updated["id"]),
                 "status": updated["status"],
@@ -257,6 +301,19 @@ class DeviceOtaService:
                 target["job_id"],
                 (finished or {}).get("status"),
             )
+            _notify_target(
+                reason="updated",
+                target=updated,
+                device=device,
+                finished=finished,
+                force=True,
+            )
+            safe_realtime(
+                notify_device_updated,
+                reason="installed_version",
+                device_id=device["id"],
+                branch=str(device.get("branch") or ""),
+            )
             return {
                 "targetId": str(updated["id"]),
                 "status": "updated",
@@ -285,6 +342,13 @@ class DeviceOtaService:
             target["job_id"],
             (finished or {}).get("status"),
             updated.get("error_code"),
+        )
+        _notify_target(
+            reason="failed",
+            target=updated,
+            device=device,
+            finished=finished,
+            force=True,
         )
         return {
             "targetId": str(updated["id"]),

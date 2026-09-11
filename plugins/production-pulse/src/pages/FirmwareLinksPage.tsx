@@ -74,6 +74,12 @@ import { OtaTargetProgress } from "../components/ota/OtaTargetProgress";
 import { useProductionPulseOtaMonitor } from "../hooks/useProductionPulseOtaMonitor";
 import { useViewportBucket } from "../hooks/useViewportBucket";
 import {
+  useProductionPulseHubSync,
+  useProductionPulseOtaTargetSync,
+  useProductionPulseRealtime,
+} from "../realtime/ProductionPulseRealtimeProvider";
+import { isHubInteractionBlocking } from "../realtime/hubInteractionGuard";
+import {
   ArrowUp,
   Cpu,
   History,
@@ -153,6 +159,7 @@ type FirmwareLinksPageProps = {
 };
 
 const JOBS_POLL_MS = 3000;
+const GRAPH_FALLBACK_POLL_MS = 30_000;
 
 export function FirmwareLinksPage({
   branch,
@@ -191,6 +198,10 @@ export function FirmwareLinksPage({
   const [catalogSearch, setCatalogSearch] = useState("");
   const [driversSearch, setDriversSearch] = useState("");
   const [linkMode, setLinkMode] = useState<LinkMode | null>(null);
+  const [canvasDragging, setCanvasDragging] = useState(false);
+  const [otaRefreshSignal, setOtaRefreshSignal] = useState(0);
+  const pendingSoftReloadRef = useRef(false);
+  const { connected: realtimeConnected } = useProductionPulseRealtime();
   const [pendingReplaceLink, setPendingReplaceLink] = useState<{
     deviceId: string;
     firmwareKey: string;
@@ -430,6 +441,21 @@ export function FirmwareLinksPage({
     }
   }, [branch, dispatch]);
 
+  const softReloadGraph = useCallback(async () => {
+    try {
+      const [catalog, devs, summary] = await Promise.all([
+        fetchFirmwares({ includeArchived: true }),
+        fetchDevices({ branch }),
+        fetchFirmwareUpdateSummary(branch).catch(() => null),
+      ]);
+      setFirmwares(catalog);
+      setDevices(devs);
+      setUpdateSummary(summary);
+    } catch {
+      // Soft reload: ignore transient errors; hard refresh / next event retries.
+    }
+  }, [branch]);
+
   const reloadJobs = useCallback(
     async (opts?: { soft?: boolean }) => {
       const soft = Boolean(opts?.soft);
@@ -455,11 +481,58 @@ export function FirmwareLinksPage({
     void reloadJobs({ soft: true });
   }, [reloadJobs]);
 
+  const interactionBlocking = isHubInteractionBlocking({
+    linkMode: Boolean(linkMode),
+    dragging: canvasDragging,
+    openLayer: ui.openLayer,
+    documentHidden:
+      typeof document !== "undefined" ? document.visibilityState === "hidden" : false,
+  });
+
+  const requestSoftHubRefresh = useCallback(() => {
+    if (
+      isHubInteractionBlocking({
+        linkMode: Boolean(linkMode),
+        dragging: canvasDragging,
+        openLayer: ui.openLayer,
+        documentHidden:
+          typeof document !== "undefined"
+            ? document.visibilityState === "hidden"
+            : false,
+      })
+    ) {
+      pendingSoftReloadRef.current = true;
+      return;
+    }
+    void softReloadGraph();
+    void reloadJobs({ soft: true });
+  }, [canvasDragging, linkMode, reloadJobs, softReloadGraph, ui.openLayer]);
+
+  useEffect(() => {
+    if (!pendingSoftReloadRef.current) return;
+    if (interactionBlocking) return;
+    pendingSoftReloadRef.current = false;
+    void softReloadGraph();
+    void reloadJobs({ soft: true });
+  }, [interactionBlocking, reloadJobs, softReloadGraph]);
+
+  useProductionPulseHubSync(requestSoftHubRefresh, true);
+
+  const bumpOtaRefresh = useCallback(() => {
+    setOtaRefreshSignal((n) => n + 1);
+    softReloadJobs();
+  }, [softReloadJobs]);
+
+  useProductionPulseOtaTargetSync(bumpOtaRefresh, realtimeConnected);
+
   const otaMonitor = useProductionPulseOtaMonitor({
     jobs,
     reloadJobs: softReloadJobs,
+    reloadGraph: softReloadGraph,
     pushNotice,
     deviceNameById,
+    realtimeConnected,
+    refreshSignal: otaRefreshSignal,
   });
 
   const hubKpis = useMemo(
@@ -528,12 +601,43 @@ export function FirmwareLinksPage({
 
   useEffect(() => {
     if (!hasActiveJob) return;
+    // Jobs list: poll only while WS is down (WS delivers ota.job.updated).
+    if (realtimeConnected) return;
     const timer = window.setInterval(() => {
       void reloadJobs({ soft: true });
       if (detailJobId) void loadTargets(detailJobId);
     }, JOBS_POLL_MS);
     return () => window.clearInterval(timer);
-  }, [detailJobId, hasActiveJob, loadTargets, reloadJobs]);
+  }, [detailJobId, hasActiveJob, loadTargets, realtimeConnected, reloadJobs]);
+
+  useEffect(() => {
+    if (realtimeConnected) return;
+    const timer = window.setInterval(() => {
+      requestSoftHubRefresh();
+    }, GRAPH_FALLBACK_POLL_MS);
+    return () => window.clearInterval(timer);
+  }, [realtimeConnected, requestSoftHubRefresh]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && pendingSoftReloadRef.current) {
+        if (
+          !isHubInteractionBlocking({
+            linkMode: Boolean(linkMode),
+            dragging: canvasDragging,
+            openLayer: ui.openLayer,
+            documentHidden: false,
+          })
+        ) {
+          pendingSoftReloadRef.current = false;
+          void softReloadGraph();
+          void reloadJobs({ soft: true });
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [canvasDragging, linkMode, reloadJobs, softReloadGraph, ui.openLayer]);
 
   useEffect(() => {
     const entity = parseAdminEntity(entityParam);
@@ -1504,10 +1608,12 @@ export function FirmwareLinksPage({
             onOpenDeviceMenu={onOpenDeviceMenu}
             onOpenFirmwareMenu={onOpenFirmwareMenu}
             onNodeDragStart={() => {
+              setCanvasDragging(true);
               if (ui.openLayer === "summary" || ui.openLayer === "menu") {
                 dispatch({ type: "closeTransient" });
               }
             }}
+            onNodeDragStop={() => setCanvasDragging(false)}
             overlayTopRight={overlayTopRight}
             overlayBottom={overlayBottom}
             nodesLocked={nodesLocked}

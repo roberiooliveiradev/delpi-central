@@ -147,7 +147,10 @@ export function HubMapChrome({
               <span className="pp-hub-map-chrome__branch-static">{branchLabel}</span>
             </PpHintAction>
           )}
-          <PpHintAction hint={PP_HELP.hub.refresh} ariaLabel="Ajuda: Atualizar dados">
+          <PpHintAction
+            hint={`${PP_HELP.hub.refresh} ${PP_HELP.hub.canvasLiveRefresh}`}
+            ariaLabel="Ajuda: Atualizar dados"
+          >
             <PpIconButton
               aria-label="Atualizar dados"
               disabled={context.refreshing}

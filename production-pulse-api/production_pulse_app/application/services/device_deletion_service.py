@@ -5,6 +5,10 @@ from typing import Any
 from uuid import UUID
 
 from production_pulse_app.domain.errors import ContentCodedError
+from production_pulse_app.application.services.production_pulse_realtime_notify import (
+    notify_device_updated,
+    safe_realtime,
+)
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
     DeviceNotFoundError,
     PostgresDeviceRepository,
@@ -66,6 +70,9 @@ class DeviceDeletionService:
             )
             raise ContentCodedError(code)
 
+        existing = self._devices.get_by_id(device_id)
+        branch = str((existing or {}).get("branch") or "")
+
         job_ids = self._devices.list_ota_job_ids_for_device(device_id)
         # Re-check active OTA under the same moment as delete.
         deps = self._devices.count_deletion_dependencies(device_id)
@@ -91,6 +98,13 @@ class DeviceDeletionService:
             device_id,
             actor_sub,
             impact["dependencies"],
+        )
+        safe_realtime(
+            notify_device_updated,
+            reason="hard_delete",
+            device_id=device_id,
+            branch=branch,
+            actor_user_id=actor_sub,
         )
         return {
             "deleted": True,

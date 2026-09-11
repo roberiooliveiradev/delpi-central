@@ -5,6 +5,10 @@ from typing import Any
 from uuid import UUID
 
 from production_pulse_app.domain.errors import ContentCodedError
+from production_pulse_app.application.services.production_pulse_realtime_notify import (
+    notify_firmware_catalog_updated,
+    safe_realtime,
+)
 from production_pulse_app.infrastructure.persistence.repositories.postgres_firmware_repository import (
     FirmwareFamilyActiveTargetsError,
     FirmwareNotFoundError,
@@ -104,6 +108,13 @@ class FirmwareDeletionService:
             impact.get("version"),
             actor_sub,
         )
+        safe_realtime(
+            notify_firmware_catalog_updated,
+            reason="delete",
+            firmware_id=firmware_id,
+            firmware_key=impact.get("firmwareKey"),
+            actor_user_id=actor_sub,
+        )
         return {
             "deleted": True,
             "id": str(firmware_id),
@@ -190,6 +201,12 @@ class FirmwareDeletionService:
             result["purgedJobs"],
             result["unlinkedDevices"],
             actor_sub,
+        )
+        safe_realtime(
+            notify_firmware_catalog_updated,
+            reason="family_delete",
+            firmware_key=key,
+            actor_user_id=actor_sub,
         )
         return {
             "deleted": True,

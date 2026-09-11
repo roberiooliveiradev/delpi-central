@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -16,6 +17,7 @@ from production_pulse_app.interface.http.routes.device_routes import router as d
 from production_pulse_app.interface.http.routes.driver_routes import router as drivers_router
 from production_pulse_app.interface.http.routes.firmware_routes import router as firmware_router
 from production_pulse_app.interface.http.routes.operator_routes import router as operator_router
+from production_pulse_app.interface.http.routes.realtime_routes import router as realtime_router
 from production_pulse_app.interface.http.routes.summary_routes import router as summary_router
 from production_pulse_app.middleware.auth_middleware import jwt_middleware
 from production_pulse_app.application.services.device_poll_scheduler_service import (
@@ -33,10 +35,26 @@ async def lifespan(app: FastAPI):
     run_migrations_on_startup()
     register_device_drivers()
     scheduler = None
+    realtime_worker = None
     if settings.PP_POLL_SCHEDULER_ENABLED:
         scheduler = get_device_poll_scheduler()
         await scheduler.start()
+    if settings.PP_REALTIME_ENABLED:
+        from production_pulse_app.application.services.production_pulse_realtime_hub import (
+            production_pulse_realtime_hub,
+        )
+
+        loop = asyncio.get_running_loop()
+        production_pulse_realtime_hub.bind_loop(loop)
+        realtime_worker = asyncio.create_task(production_pulse_realtime_hub.worker())
+        logger.info("production_pulse_realtime_hub_started")
     yield
+    if realtime_worker is not None:
+        realtime_worker.cancel()
+        try:
+            await realtime_worker
+        except asyncio.CancelledError:
+            pass
     if scheduler is not None:
         await scheduler.stop()
         reset_device_poll_scheduler_for_tests()
@@ -90,6 +108,7 @@ def create_app() -> FastAPI:
     app.include_router(summary_router)
     app.include_router(firmware_router)
     app.include_router(device_ota_router)
+    app.include_router(realtime_router)
     return app
 
 

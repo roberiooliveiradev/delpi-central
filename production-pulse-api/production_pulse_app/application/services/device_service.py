@@ -16,6 +16,10 @@ from production_pulse_app.domain.errors import DeviceValidationError
 from production_pulse_app.application.services.device_config_push_service import (
     DeviceConfigPushService,
 )
+from production_pulse_app.application.services.production_pulse_realtime_notify import (
+    notify_device_updated,
+    safe_realtime,
+)
 from production_pulse_app.domain.services.device_validation_service import (
     normalize_controller_code,
     normalize_debounce_ms,
@@ -204,7 +208,15 @@ class DeviceService:
             device_api_token=config_fields.get("device_api_token"),
             actor_sub=actor_sub,
         )
-        return self._with_config_push(row, payload=payload)
+        result = self._with_config_push(row, payload=payload)
+        safe_realtime(
+            notify_device_updated,
+            reason="create",
+            device_id=row["id"],
+            branch=str(row.get("branch") or branch),
+            actor_user_id=actor_sub,
+        )
+        return result
 
     def replace_device(
         self,
@@ -270,7 +282,15 @@ class DeviceService:
             device_api_token=device_api_token,
             actor_sub=actor_sub,
         )
-        return self._with_config_push(row, payload=payload)
+        result = self._with_config_push(row, payload=payload)
+        safe_realtime(
+            notify_device_updated,
+            reason="replace",
+            device_id=row["id"],
+            branch=str(row.get("branch") or branch),
+            actor_user_id=actor_sub,
+        )
+        return result
 
     def patch_device(
         self,
@@ -312,19 +332,51 @@ class DeviceService:
                 float(payload.get("poll_interval_ms") or payload.get("pollIntervalMs"))
             )
         row = self._repository.patch(device_id, updates=updates, actor_sub=actor_sub)
-        return self._with_config_push(row, payload=payload)
+        result = self._with_config_push(row, payload=payload)
+        safe_realtime(
+            notify_device_updated,
+            reason="patch",
+            device_id=row["id"],
+            branch=str(row.get("branch") or ""),
+            actor_user_id=actor_sub,
+        )
+        return result
 
     def delete_device(self, device_id: UUID, *, actor_sub: str | None) -> dict[str, Any]:
         row = self._repository.soft_delete(device_id, actor_sub=actor_sub)
-        return json_safe(device_row_to_api(row))
+        api = json_safe(device_row_to_api(row))
+        safe_realtime(
+            notify_device_updated,
+            reason="soft_delete",
+            device_id=row["id"],
+            branch=str(row.get("branch") or ""),
+            actor_user_id=actor_sub,
+        )
+        return api
 
     def disable_device(self, device_id: UUID, *, actor_sub: str | None) -> dict[str, Any]:
         row = self._repository.soft_delete(device_id, actor_sub=actor_sub)
-        return json_safe(device_row_to_api(row))
+        api = json_safe(device_row_to_api(row))
+        safe_realtime(
+            notify_device_updated,
+            reason="disable",
+            device_id=row["id"],
+            branch=str(row.get("branch") or ""),
+            actor_user_id=actor_sub,
+        )
+        return api
 
     def enable_device(self, device_id: UUID, *, actor_sub: str | None) -> dict[str, Any]:
         row = self._repository.soft_enable(device_id, actor_sub=actor_sub)
-        return json_safe(device_row_to_api(row))
+        api = json_safe(device_row_to_api(row))
+        safe_realtime(
+            notify_device_updated,
+            reason="enable",
+            device_id=row["id"],
+            branch=str(row.get("branch") or ""),
+            actor_user_id=actor_sub,
+        )
+        return api
 
 
 __all__ = [

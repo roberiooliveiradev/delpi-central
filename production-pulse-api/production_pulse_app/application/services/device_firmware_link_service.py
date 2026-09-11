@@ -6,6 +6,10 @@ from uuid import UUID
 
 from production_pulse_app.domain.errors import ContentCodedError
 from production_pulse_app.domain.services.device_serialization_service import device_row_to_api
+from production_pulse_app.application.services.production_pulse_realtime_notify import (
+    notify_device_updated,
+    safe_realtime,
+)
 from production_pulse_app.infrastructure.persistence.repositories.postgres_device_repository import (
     DeviceNotFoundError,
     PostgresDeviceRepository,
@@ -53,7 +57,15 @@ class DeviceFirmwareLinkService:
             firmware_key=normalized,
             actor_sub=actor_sub,
         )
-        return device_row_to_api(row)
+        api = device_row_to_api(row)
+        safe_realtime(
+            notify_device_updated,
+            reason="firmware_link",
+            device_id=row["id"],
+            branch=str(row.get("branch") or ""),
+            actor_user_id=actor_sub,
+        )
+        return api
 
     def _assert_compatible(self, device: dict[str, Any], firmware_key: str) -> None:
         driver_key = str(device.get("driver_key") or "")

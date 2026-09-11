@@ -22,17 +22,12 @@ Base via gateway: `/apps/production-pulse-api`
 
 Envelope: `{ "success", "message", "data" }`.
 
-### Público / health
+### Público / health / realtime
 
 | Método | Path | Auth |
 |--------|------|------|
 | GET | `/health` | não |
-
-### Resumo painel
-
-| Método | Path | Permissão |
-|--------|------|-----------|
-| GET | `/summary?branch=` | `devices.view` |
+| WS | `/v1/realtime/ws?token=&client_id=` | JWT na query + RBAC (`devices.view` / access) — ver `docs/architecture/realtime-pulse.md` |
 
 ### Catálogo
 
@@ -40,6 +35,12 @@ Envelope: `{ "success", "message", "data" }`.
 |--------|------|-----------|
 | GET | `/catalog/drivers` | `devices.view` |
 | GET | `/catalog/work-centers?branch=&search=` | `devices.view` + filial |
+
+### Resumo painel
+
+| Método | Path | Permissão |
+|--------|------|-----------|
+| GET | `/summary?branch=` | `devices.view` |
 
 ### Dispositivos
 

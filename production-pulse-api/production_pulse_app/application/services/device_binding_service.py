@@ -6,6 +6,10 @@ from uuid import UUID
 from production_pulse_app.application.services.work_center_catalog_service import (
     WorkCenterCatalogService,
 )
+from production_pulse_app.application.services.production_pulse_realtime_notify import (
+    notify_device_updated,
+    safe_realtime,
+)
 from production_pulse_app.domain.services.binding_serialization_service import binding_row_to_api
 from production_pulse_app.domain.services.binding_validation_service import (
     BindingValidationError,
@@ -86,14 +90,29 @@ class DeviceBindingService:
             actor_sub=actor_sub,
         )
         self._devices.ensure_next_poll_at(device_id)
-        return binding_row_to_api(row)
+        api = binding_row_to_api(row)
+        safe_realtime(
+            notify_device_updated,
+            reason="binding_upsert",
+            device_id=device_id,
+            branch=str(device.get("branch") or ""),
+            actor_user_id=actor_sub,
+        )
+        return api
 
     def delete_active_binding(self, device_id: UUID, *, actor_sub: str | None) -> None:
-        self._require_device(device_id)
+        device = self._require_device(device_id)
         active = self._bindings.get_active(device_id)
         if active is None:
             raise BindingNotFoundError(str(device_id))
         self._bindings.close_active(device_id, actor_sub=actor_sub)
+        safe_realtime(
+            notify_device_updated,
+            reason="binding_delete",
+            device_id=device_id,
+            branch=str(device.get("branch") or ""),
+            actor_user_id=actor_sub,
+        )
 
     def list_binding_history(
         self,

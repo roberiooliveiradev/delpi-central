@@ -16,6 +16,7 @@ import { OperatorPage } from "./pages/operator/OperatorPage";
 import { PpPageHero, PpStateBox, ppShellIcon } from "./app/productionPulseUi";
 import { navigateProductionPulse } from "./utils/navigation";
 import { formatAdminEntity } from "./utils/adminHubUiState";
+import { ProductionPulseRealtimeProvider } from "./realtime/ProductionPulseRealtimeProvider";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -150,29 +151,31 @@ export default function App({
     ) : null;
 
   return (
-    <div
-      className={[
-        "dashboard-production-pulse",
-        "dashboard-page",
-        isOperatorRoute ? "dashboard-production-pulse--operator" : "",
-        isOperatorFillRoute || isAdminHub ? "dashboard-page--fill" : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      data-pp-viewport={viewport}
-      data-pp-viewport-short={shortViewport && isOperatorRoute ? "true" : undefined}
-    >
-      {isOperatorRoute ? (
-        adminContent
-      ) : (
-        <ProductionPulseShell
-          route={route}
-          permissions={permissionFlags}
-          fillContent={isAdminHub}
-        >
-          {adminContent}
-        </ProductionPulseShell>
-      )}
-    </div>
+    <ProductionPulseRealtimeProvider getAccessToken={getAccessToken} enabled>
+      <div
+        className={[
+          "dashboard-production-pulse",
+          "dashboard-page",
+          isOperatorRoute ? "dashboard-production-pulse--operator" : "",
+          isOperatorFillRoute || isAdminHub ? "dashboard-page--fill" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        data-pp-viewport={viewport}
+        data-pp-viewport-short={shortViewport && isOperatorRoute ? "true" : undefined}
+      >
+        {isOperatorRoute ? (
+          adminContent
+        ) : (
+          <ProductionPulseShell
+            route={route}
+            permissions={permissionFlags}
+            fillContent={isAdminHub}
+          >
+            {adminContent}
+          </ProductionPulseShell>
+        )}
+      </div>
+    </ProductionPulseRealtimeProvider>
   );
 }

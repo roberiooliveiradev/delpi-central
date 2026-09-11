@@ -345,6 +345,7 @@ export type FirmwareDeviceLinkCanvasProps = {
     nodeId: string;
   }) => void;
   onNodeDragStart?: () => void;
+  onNodeDragStop?: () => void;
   overlayTopLeft?: ReactNode;
   overlayTopRight?: ReactNode;
   overlayBottom?: ReactNode;
@@ -411,6 +412,7 @@ function FirmwareDeviceLinkCanvasInner({
   onOpenDeviceMenu,
   onOpenFirmwareMenu,
   onNodeDragStart,
+  onNodeDragStop,
   overlayTopLeft,
   overlayTopRight,
   overlayBottom,
@@ -777,6 +779,7 @@ function FirmwareDeviceLinkCanvasInner({
           isValidConnection={isValidConnection}
           onEdgesDelete={(e) => void onEdgesDelete(e)}
           onNodeDragStart={() => onNodeDragStart?.()}
+          onNodeDragStop={() => onNodeDragStop?.()}
           onPaneClick={() => {
             if (linkMode) onLinkModeChange?.(null);
           }}

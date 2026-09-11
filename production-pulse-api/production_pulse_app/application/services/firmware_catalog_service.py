@@ -6,6 +6,10 @@ from typing import Any
 from uuid import UUID
 
 from production_pulse_app.domain.errors import ContentCodedError, DeviceValidationError
+from production_pulse_app.application.services.production_pulse_realtime_notify import (
+    notify_firmware_catalog_updated,
+    safe_realtime,
+)
 from production_pulse_app.domain.services.device_validation_service import resolve_driver
 from production_pulse_app.domain.services.firmware_version_lifecycle import (
     can_edit_metadata,
@@ -133,6 +137,13 @@ class FirmwareCatalogService:
             api.get("version"),
             publish,
         )
+        safe_realtime(
+            notify_firmware_catalog_updated,
+            reason="create" if not publish else "publish",
+            firmware_id=api.get("id"),
+            firmware_key=api.get("firmwareKey"),
+            actor_user_id=actor_sub,
+        )
         return api
 
     def update_metadata(
@@ -205,7 +216,14 @@ class FirmwareCatalogService:
             self._storage.delete_relative(saved.relative_path)
             raise ContentCodedError("firmwareNotEditable") from exc
         logger.info("firmware_artifact_attached firmware_id=%s", firmware_id)
-        return self._to_detail(updated)
+        detail = self._to_detail(updated)
+        safe_realtime(
+            notify_firmware_catalog_updated,
+            reason="artifact",
+            firmware_id=detail.get("id"),
+            firmware_key=detail.get("firmwareKey"),
+        )
+        return detail
 
     def publish_version(self, firmware_id: UUID) -> dict[str, Any]:
         row = self._repo.get_by_id(firmware_id)
@@ -229,6 +247,12 @@ class FirmwareCatalogService:
             api.get("firmwareKey"),
             api.get("version"),
         )
+        safe_realtime(
+            notify_firmware_catalog_updated,
+            reason="publish",
+            firmware_id=api.get("id"),
+            firmware_key=api.get("firmwareKey"),
+        )
         return api
 
     def archive(self, firmware_id: UUID) -> dict[str, Any]:
@@ -238,6 +262,12 @@ class FirmwareCatalogService:
             row.get("id"),
             row.get("firmwareKey"),
             row.get("version"),
+        )
+        safe_realtime(
+            notify_firmware_catalog_updated,
+            reason="archive",
+            firmware_id=row.get("id"),
+            firmware_key=row.get("firmwareKey"),
         )
         return row
 

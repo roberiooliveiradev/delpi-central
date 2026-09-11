@@ -12,6 +12,12 @@ from production_pulse_app.infrastructure.persistence.repositories.postgres_devic
     PostgresDeviceRepository,
 )
 from production_pulse_app.application.services.device_ota_wake_service import DeviceOtaWakeService
+from production_pulse_app.application.services.production_pulse_realtime_notify import (
+    notify_device_updated,
+    notify_ota_job_updated,
+    notify_ota_target_updated,
+    safe_realtime,
+)
 from production_pulse_app.infrastructure.persistence.repositories.postgres_firmware_repository import (
     FirmwareJobConflictError,
     FirmwareJobNotFoundError,
@@ -185,6 +191,26 @@ class FirmwareUpdateJobService:
             api.get("branch"),
             len(eligible),
         )
+        safe_realtime(
+            notify_ota_job_updated,
+            reason="create",
+            job_id=api["id"],
+            branch=api.get("branch"),
+            status=api.get("status"),
+            actor_user_id=actor_sub,
+        )
+        for target in self._jobs.list_targets(job["id"]):
+            safe_realtime(
+                notify_ota_target_updated,
+                reason="create",
+                target_id=target["id"],
+                job_id=job["id"],
+                device_id=target["device_id"],
+                branch=api.get("branch"),
+                status=target.get("status"),
+                progress_percent=target.get("progress_percent"),
+                force=True,
+            )
         return api
 
     def cancel_job(self, job_id: UUID) -> dict[str, Any]:
@@ -201,12 +227,39 @@ class FirmwareUpdateJobService:
             raise ContentCodedError("jobCannotCancel") from exc
         api = self._job_to_api(job)
         logger.info("ota_job_cancelled job_id=%s", api.get("id"))
+        safe_realtime(
+            notify_ota_job_updated,
+            reason="cancel",
+            job_id=api["id"],
+            branch=api.get("branch"),
+            status=api.get("status"),
+        )
         return api
 
     def authorize_due_scheduled(self) -> int:
         job_count, targets = self._jobs.authorize_due_scheduled_jobs()
         if targets:
             self._wake.wake_authorized_targets(targets)
+            for target in targets:
+                job = self._jobs.get_job(target["job_id"])
+                branch = str((job or {}).get("branch") or "")
+                safe_realtime(
+                    notify_ota_job_updated,
+                    reason="authorize_scheduled",
+                    job_id=target["job_id"],
+                    branch=branch,
+                    status=(job or {}).get("status"),
+                )
+                safe_realtime(
+                    notify_ota_target_updated,
+                    reason="authorize_scheduled",
+                    target_id=target["id"],
+                    job_id=target["job_id"],
+                    device_id=target["device_id"],
+                    branch=branch,
+                    status=target.get("status"),
+                    force=True,
+                )
         return job_count
 
     def reconcile_device_installed_version(self, device_id: UUID, version: str) -> bool:
@@ -238,6 +291,33 @@ class FirmwareUpdateJobService:
             installed,
             (finished or {}).get("status"),
         )
+        job = finished or self._jobs.get_job(target["job_id"])
+        branch = str((job or {}).get("branch") or "")
+        safe_realtime(
+            notify_ota_target_updated,
+            reason="reconcile",
+            target_id=updated["id"],
+            job_id=target["job_id"],
+            device_id=device_id,
+            branch=branch,
+            status="updated",
+            progress_percent=100,
+            force=True,
+        )
+        if finished is not None:
+            safe_realtime(
+                notify_ota_job_updated,
+                reason="finish",
+                job_id=target["job_id"],
+                branch=branch,
+                status=finished.get("status"),
+            )
+        safe_realtime(
+            notify_device_updated,
+            reason="installed_version",
+            device_id=device_id,
+            branch=branch,
+        )
         return True
 
     def fail_stale_open_targets(self, stale_seconds: int | None = None) -> int:
@@ -266,6 +346,26 @@ class FirmwareUpdateJobService:
                 target["device_id"],
                 (finished or {}).get("status"),
             )
+            job = finished or self._jobs.get_job(target["job_id"])
+            branch = str((job or {}).get("branch") or "")
+            safe_realtime(
+                notify_ota_target_updated,
+                reason="stale",
+                target_id=updated["id"],
+                job_id=target["job_id"],
+                device_id=target["device_id"],
+                branch=branch,
+                status="failed",
+                force=True,
+            )
+            if finished is not None:
+                safe_realtime(
+                    notify_ota_job_updated,
+                    reason="finish",
+                    job_id=target["job_id"],
+                    branch=branch,
+                    status=finished.get("status"),
+                )
         return failed_count
 
     def reconcile_matching_installed_versions(self) -> int:

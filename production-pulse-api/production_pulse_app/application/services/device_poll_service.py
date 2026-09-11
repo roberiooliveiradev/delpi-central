@@ -17,6 +17,10 @@ from production_pulse_app.application.services.device_reading_rollup_service imp
 from production_pulse_app.application.services.firmware_update_job_service import (
     FirmwareUpdateJobService,
 )
+from production_pulse_app.application.services.production_pulse_realtime_notify import (
+    notify_device_updated_from_poll,
+    safe_realtime,
+)
 from production_pulse_app.core.serialize import json_safe
 from production_pulse_app.domain.errors import DeviceDriverError
 from production_pulse_app.domain.services.device_connectivity_status_service import (
@@ -333,6 +337,11 @@ class DevicePollService:
             self._firmware_jobs.reconcile_device_installed_version(
                 device_id, installed_version
             )
+        safe_realtime(
+            notify_device_updated_from_poll,
+            device_id=device_id,
+            branch=str(device.get("branch") or ""),
+        )
         payload_meta = {
             **meta,
             "readingPersisted": decision.should_persist,

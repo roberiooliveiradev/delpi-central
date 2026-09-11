@@ -405,6 +405,8 @@ export const PP_HELP = {
       "Admin mapa: firmwares e IoTs no canvas. Popovers, menus e modais host-contained para operar sem sair do mapa.",
     branch: "Filial dos IoTs exibidos no canvas, no disparo e nas atualizações.",
     refresh: "Recarrega firmwares, IoTs e atualizações da filial.",
+    canvasLiveRefresh:
+      "O mapa atualiza sozinho quando IoTs, firmwares ou OTA mudam (WebSocket). O botão Atualizar força um recarregamento completo. Durante arraste, vínculo ou menus, a atualização automática espera você terminar.",
     newDevice: "Cadastra um novo dispositivo IoT nesta filial (modal).",
     newFirmware: "Cria uma nova versão de firmware (modal).",
     newMenu: "Cria IoT ou firmware nesta filial.",

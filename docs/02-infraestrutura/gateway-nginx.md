@@ -129,6 +129,13 @@ Rotas HTTP `/apps/api-delpi/*` podem continuar com `$upstream_api_delpi` + resol
 
 **Dev (`nginx.dev.conf`):** mesma regra — `proxy_pass` estático no socket; Core API em `location ^~ /socket.io` com `proxy_pass http://core-api:8000;` **sem** variável.
 
+### APIs FastAPI com WebSocket (hint + refetch)
+
+Locations de plugin/API que expõem WS nativo (Production Pulse `/v1/realtime/ws`,
+requests, commercial, transformômetro, TV, production-control) precisam de
+`Upgrade` / `Connection $connection_upgrade`, `proxy_http_version 1.1`,
+`proxy_buffering off` e timeout longo no mesmo `location` HTTP da API.
+
 ---
 
 ## 7. Cache de microfrontends

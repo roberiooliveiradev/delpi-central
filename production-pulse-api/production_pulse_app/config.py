@@ -71,6 +71,10 @@ class Settings:
         str(_get_env("PP_POLL_SCHEDULER_ENABLED", default="true") or "true").lower()
         in {"1", "true", "yes", "on"}
     )
+    PP_REALTIME_ENABLED: bool = (
+        str(_get_env("PP_REALTIME_ENABLED", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
     # Preenchido após instanciação (env ou content JSON).
     PP_POLL_SCHEDULER_TICK_MS: int | None = None
 

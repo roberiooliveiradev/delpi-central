@@ -30,10 +30,16 @@ type UseProductionPulseOtaMonitorArgs = {
   jobs: FirmwareUpdateJob[];
   /** Soft-reload jobs list after terminal transitions. */
   reloadJobs?: () => void | Promise<void>;
+  /** Soft-reload canvas graph after terminal OTA transitions. */
+  reloadGraph?: () => void | Promise<void>;
   pushNotice: NoticePush;
   deviceNameById?: Map<string, string>;
   pollMs?: number;
   enabled?: boolean;
+  /** When WebSocket is healthy, skip interval poll (hint-driven refresh instead). */
+  realtimeConnected?: boolean;
+  /** Imperative refresh for WS ota.target hints. */
+  refreshSignal?: number;
 };
 
 export type ProductionPulseOtaMonitor = {
@@ -64,10 +70,13 @@ export function useProductionPulseOtaMonitor(
   const {
     jobs,
     reloadJobs,
+    reloadGraph,
     pushNotice,
     deviceNameById,
     pollMs = DEFAULT_POLL_MS,
     enabled = true,
+    realtimeConnected = false,
+    refreshSignal = 0,
   } = args;
 
   const [targets, setTargets] = useState<FirmwareUpdateTarget[]>([]);
@@ -99,15 +108,17 @@ export function useProductionPulseOtaMonitor(
 
   useEffect(() => {
     void refreshTargets();
-  }, [refreshTargets, activeJobIds]);
+  }, [refreshTargets, activeJobIds, refreshSignal]);
 
   useEffect(() => {
     if (!enabled || activeJobs.length === 0) return;
+    // D-11: poll curto só com WS down (ou sem realtime).
+    if (realtimeConnected) return;
     const id = window.setInterval(() => {
       void refreshTargets();
     }, pollMs);
     return () => window.clearInterval(id);
-  }, [activeJobs.length, enabled, pollMs, refreshTargets]);
+  }, [activeJobs.length, enabled, pollMs, realtimeConnected, refreshTargets]);
 
   // Transition notices
   useEffect(() => {
@@ -158,10 +169,11 @@ export function useProductionPulseOtaMonitor(
     }
 
     prevStatusRef.current = next;
-    if (shouldReloadJobs && reloadJobs) {
-      void reloadJobs();
+    if (shouldReloadJobs) {
+      if (reloadJobs) void reloadJobs();
+      if (reloadGraph) void reloadGraph();
     }
-  }, [targets, pushNotice, deviceNameById, reloadJobs]);
+  }, [targets, pushNotice, deviceNameById, reloadJobs, reloadGraph]);
 
   // Clear seen jobs that disappeared
   useEffect(() => {
