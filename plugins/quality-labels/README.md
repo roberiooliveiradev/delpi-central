@@ -10,9 +10,11 @@ servida pelo `public-hub`.
 
 - **Etiquetas + QR code:** registra a inspeção por OP (busca automática do
   produto/unidade no TOTVS), gera a etiqueta e o QR público. A etiqueta física
-  100×30 mm usa o **item do cliente** (`customerItem` no certificado — referência
-  do desenho) na frente do QR, e o **código Delpi** só no verso. A impressão lê o
-  certificado na hora. Sem item salvo, a frente fica só com OP e data.
+  100×30 mm e a página pública usam a **referência do cliente** do cadastro do
+  produto (`SB1.B1_REFEREN`, gravada em `audit_metadata.product.customerReference`).
+  Se o certificado tiver **item do cliente** preenchido à mão, esse valor
+  prevalece. O **código Delpi** fica só no verso da etiqueta. Sem referência no
+  cadastro e sem item no certificado, a frente da etiqueta sai só com OP e data.
 - **Certificado de qualidade (RQ-032):** seção expansível no formulário de registro
   (collapse) e painel inline na lista de etiquetas — **sem modal**. Checklist A/R/NA,
   linhas customizáveis, busca de cliente TOTVS (SA1) e observações. Ao registrar com
@@ -37,6 +39,8 @@ servida pelo `public-hub`.
     (migrations em `api-delpi/migrations/plugins/quality-labels`).
   - OP → produto: chamada **em processo** ao use case
     `get_production_order_by_op` (TOTVS), sem HTTP interno.
+  - Produto → referência do cliente: `ProductRepository.fetch_product_by_code`
+    (`SB1.B1_REFEREN`), persistida no snapshot `audit_metadata`.
   - OP → cliente (best-effort): `get_order_customer_by_op` (SC2 → SC5 → SA1).
   - Busca de cliente: rota canônica `GET /customers/search` (SA1).
   - Identidade do inspetor: `get_current_user()` (delpi_auth / Core API).

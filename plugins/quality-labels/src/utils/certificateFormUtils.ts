@@ -76,7 +76,7 @@ export function buildEmptyDraft(options: {
     customerName: customer?.name ?? "",
     customerCode: customer?.code ?? "",
     customerStore: customer?.store ?? "",
-    customerItem: "",
+    customerItem: options.lookup?.customerReference?.trim() || "",
     customerItemRev: "",
     customerSource: customer?.source ?? "manual",
     delpiNotes: "",
@@ -104,6 +104,11 @@ export function syncDraftFromInspection(
     next.customerCode = customer.code ?? "";
     next.customerStore = customer.store ?? "";
     next.customerSource = customer.source;
+  }
+
+  const customerReference = options.lookup?.customerReference?.trim();
+  if (customerReference && !next.customerItem.trim()) {
+    next.customerItem = customerReference;
   }
 
   return next;

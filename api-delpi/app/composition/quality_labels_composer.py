@@ -29,6 +29,9 @@ from app.composition.product_composer import (
     build_list_product_inspection_use_case,
     build_list_structure_use_case,
 )
+from app.infrastructure.persistence.totvs.product_repositories.product_repository import (
+    ProductRepository,
+)
 from app.composition.production_operational_composer import (
     build_get_production_order_by_op_use_case,
     build_search_production_orders_by_op_use_case,
@@ -62,6 +65,7 @@ def build_quality_labels_audit_metadata_service() -> QualityLabelsAuditMetadataS
         structure_use_case=build_list_structure_use_case(),
         guide_use_case=build_list_product_guide_use_case(),
         inspection_use_case=build_list_product_inspection_use_case(),
+        product_query_repository=ProductRepository(),
     )
 
 
@@ -72,6 +76,7 @@ def build_quality_labels_service() -> QualityLabelsService:
         production_order_use_case=build_get_production_order_by_op_use_case(),
         search_orders_use_case=build_search_production_orders_by_op_use_case(),
         order_customer_use_case=build_get_order_customer_by_op_use_case(),
+        product_query_repository=ProductRepository(),
         audit_metadata_service=build_quality_labels_audit_metadata_service(),
         audit_repository=PostgresQualityLabelsAuditRepository(),
     )

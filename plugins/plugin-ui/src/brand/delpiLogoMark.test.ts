@@ -72,6 +72,24 @@ describe("resolveDelpiCableLabelCustomerValue", () => {
       resolveDelpiCableLabelCustomerValue({ customerItem: "  ", customerItemRev: "00" }),
     ).toBe("");
   });
+
+  it("usa a referência do cadastro quando o item do certificado está vazio", () => {
+    expect(
+      resolveDelpiCableLabelCustomerValue({
+        customerReference: "2229-07/1",
+      }),
+    ).toBe("2229-07/1");
+  });
+
+  it("o item do certificado prevalece sobre a referência do cadastro", () => {
+    expect(
+      resolveDelpiCableLabelCustomerValue({
+        customerItem: "MANUAL-99",
+        customerItemRev: "00",
+        customerReference: "2229-07/1",
+      }),
+    ).toBe("MANUAL-99 Rev.00");
+  });
 });
 
 describe("buildDelpiCableLabelLabeledCodeHtml", () => {

@@ -24,6 +24,9 @@ from app.application.use_cases.production.get_order_customer_by_op_use_case impo
 from app.application.use_cases.production.search_production_orders_by_op_use_case import (
     SearchProductionOrdersByOpUseCase,
 )
+from app.domain.ports.product.product_query_repository_port import (
+    ProductQueryRepositoryPort,
+)
 from app.infrastructure.persistence.plugins.repositories.quality_labels.postgres_quality_labels_audit_repository import (
     PostgresQualityLabelsAuditRepository,
 )
@@ -59,6 +62,7 @@ class QualityLabelsService:
         production_order_use_case: GetProductionOrderByOpUseCase,
         search_orders_use_case: SearchProductionOrdersByOpUseCase,
         order_customer_use_case: GetOrderCustomerByOpUseCase,
+        product_query_repository: ProductQueryRepositoryPort,
         audit_metadata_service: QualityLabelsAuditMetadataService,
         audit_repository: PostgresQualityLabelsAuditRepository,
     ) -> None:
@@ -67,6 +71,7 @@ class QualityLabelsService:
         self._production_order_use_case = production_order_use_case
         self._search_orders_use_case = search_orders_use_case
         self._order_customer_use_case = order_customer_use_case
+        self._product_query_repository = product_query_repository
         self._audit_metadata_service = audit_metadata_service
         self._audit_repository = audit_repository
 
@@ -117,6 +122,9 @@ class QualityLabelsService:
             "existingLabels": existing_payloads,
             "hasActiveInspection": len(active_existing) > 0,
             "customer": customer,
+            "customerReference": self._lookup_customer_reference(
+                order.get("product_code")
+            ),
         }
 
     def create_label(
@@ -274,7 +282,29 @@ class QualityLabelsService:
             actor_user_id=None,
             actor_name="Cliente (acesso público)",
         )
-        return self._repository.to_public_payload(row)
+        payload = self._repository.to_public_payload(row)
+        if payload.get("customerReference") or self._repository.audit_captured_customer_reference(
+            row
+        ):
+            return payload
+        payload["customerReference"] = self._lookup_customer_reference(
+            row.get("product_code")
+        )
+        return payload
+
+    def _lookup_customer_reference(self, product_code: Any) -> str | None:
+        code = str(product_code or "").strip()
+        if not code:
+            return None
+        try:
+            row = self._product_query_repository.fetch_product_by_code(code)
+        except Exception as exc:  # noqa: BLE001 - best-effort
+            log_error(f"Falha ao buscar referência do cliente do produto {code}: {exc}")
+            return None
+        if not row:
+            return None
+        text = str(row.get("customer_reference") or "").strip()
+        return text or None
 
     def _lookup_customer(
         self,

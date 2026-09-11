@@ -49,6 +49,19 @@ def test_admin_payload_without_certificate_join_has_null_customer_item() -> None
     payload = PostgresQualityLabelsRepository.to_admin_payload(_row())
     assert payload["customerItem"] is None
     assert payload["customerItemRev"] is None
+    assert payload["customerReference"] is None
+
+
+def test_admin_payload_includes_customer_reference_from_audit_snapshot() -> None:
+    payload = PostgresQualityLabelsRepository.to_admin_payload(
+        _row(
+            audit_metadata={
+                "product": {"code": "90300005", "customerReference": "2229-07/1"}
+            }
+        )
+    )
+    assert payload["customerReference"] == "2229-07/1"
+    assert payload["customerItem"] is None
 
 
 def test_public_payload_does_not_expose_customer_item() -> None:
@@ -57,3 +70,34 @@ def test_public_payload_does_not_expose_customer_item() -> None:
     )
     assert "customerItem" not in payload
     assert payload["productCode"] == "90300005"
+    assert payload["customerReference"] == "2229-07/1"
+
+
+def test_public_payload_uses_snapshot_when_certificate_item_is_blank() -> None:
+    payload = PostgresQualityLabelsRepository.to_public_payload(
+        _row(
+            customer_item="  ",
+            audit_metadata={
+                "product": {"code": "90300005", "customerReference": "2229-07/1"}
+            },
+        )
+    )
+    assert payload["customerReference"] == "2229-07/1"
+
+
+def test_public_payload_certificate_item_wins_over_snapshot() -> None:
+    payload = PostgresQualityLabelsRepository.to_public_payload(
+        _row(
+            customer_item="MANUAL-99",
+            audit_metadata={
+                "product": {"code": "90300005", "customerReference": "2229-07/1"}
+            },
+        )
+    )
+    assert payload["customerReference"] == "MANUAL-99"
+
+
+def test_public_payload_omits_customer_reference_when_absent() -> None:
+    payload = PostgresQualityLabelsRepository.to_public_payload(_row())
+    assert payload["customerReference"] is None
+    assert "customerItem" not in payload

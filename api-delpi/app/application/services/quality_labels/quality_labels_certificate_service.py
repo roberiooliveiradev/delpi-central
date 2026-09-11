@@ -198,7 +198,9 @@ class QualityLabelsCertificateService:
             "customerCode": (customer or {}).get("customer_code"),
             "customerStore": (customer or {}).get("customer_store"),
             "customerName": (customer or {}).get("customer_name"),
-            "customerItem": None,
+            "customerItem": PostgresQualityLabelsRepository.customer_reference_from_row(
+                label
+            ),
             "customerItemRev": None,
             "customerSource": "totvs" if customer else "manual",
             "delpiNotes": None,

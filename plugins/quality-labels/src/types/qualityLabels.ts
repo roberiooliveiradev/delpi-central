@@ -22,6 +22,7 @@ export type AuditMetadata = {
   } | null;
   product?: {
     code?: string | null;
+    customerReference?: string | null;
     structure?: Record<string, unknown> | null;
     routing?: Record<string, unknown> | null;
     inspection?: Record<string, unknown> | null;
@@ -56,6 +57,8 @@ export type OpLookup = {
   existingLabels: ExistingLabelBrief[];
   hasActiveInspection: boolean;
   customer: OpCustomerHint | null;
+  /** SB1.B1_REFEREN — referência do desenho no cadastro do produto. */
+  customerReference?: string | null;
 };
 
 export type ChecklistTemplateItem = {
@@ -94,6 +97,8 @@ export type QualityLabel = {
   /** Item do cliente no certificado 1:1 — usado na etiqueta física. */
   customerItem?: string | null;
   customerItemRev?: string | null;
+  /** SB1.B1_REFEREN no snapshot de auditoria — fallback da etiqueta/página pública. */
+  customerReference?: string | null;
   /** Snapshot TOTVS no registro — presente em create/get detalhe. */
   auditMetadata?: AuditMetadata;
   hasAuditMetadata?: boolean;

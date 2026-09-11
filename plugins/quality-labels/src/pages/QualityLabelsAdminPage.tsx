@@ -389,8 +389,10 @@ export function QualityLabelsAdminPage() {
           <>
             <span className="ql-cell-strong">{row.productCode}</span>
             <span className={QL_TABLE.sub}>{row.productDescription}</span>
-            {row.customerItem ? (
-              <span className={QL_TABLE.sub}>Cliente {row.customerItem}</span>
+            {row.customerItem || row.customerReference ? (
+              <span className={QL_TABLE.sub}>
+                Cliente {row.customerItem || row.customerReference}
+              </span>
             ) : null}
           </>
         ),
@@ -471,7 +473,7 @@ export function QualityLabelsAdminPage() {
             <button
               type="button"
               className="ql-icon-btn"
-              title="Imprimir etiqueta (código Delpi e item do cliente)"
+              title="Imprimir etiqueta (código Delpi e código do cliente)"
               onClick={() => void handlePrint(row)}
               disabled={busyId === row.id}
             >

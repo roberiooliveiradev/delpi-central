@@ -207,6 +207,20 @@ export function AuditMetadataModal({ label, onClose }: Props) {
                 </dl>
               </section>
 
+              <section className="ql-audit-section">
+                <h3 className="ql-audit-section__title">Produto</h3>
+                <dl className="ql-audit-grid">
+                  <div className="ql-audit-grid__item">
+                    <dt>Código Delpi</dt>
+                    <dd>{text(product?.code)}</dd>
+                  </div>
+                  <div className="ql-audit-grid__item">
+                    <dt>Referência do cliente (B1_REFEREN)</dt>
+                    <dd>{text(product?.customerReference)}</dd>
+                  </div>
+                </dl>
+              </section>
+
               <section className="ql-audit-cards">
                 <div className="ql-audit-card">
                   <span className="ql-audit-card__value">{countItems(structure)}</span>

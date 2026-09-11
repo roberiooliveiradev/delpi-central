@@ -220,17 +220,20 @@ export function formatDelpiCableLabelCustomerItem(
 }
 
 /**
- * Código do cliente na etiqueta física: somente o item do desenho
- * (campo «Item do cliente» / customerItem). Não usa o código SA1 da empresa.
+ * Código do cliente na etiqueta física: item do certificado (desenho)
+ * prevalece; senão a referência do cadastro SB1 (`customerReference`).
+ * Não usa o código SA1 da empresa.
  */
 export function resolveDelpiCableLabelCustomerValue(fields: {
   customerItem?: string | null;
   customerItemRev?: string | null;
+  customerReference?: string | null;
 }): string {
-  return formatDelpiCableLabelCustomerItem(
-    fields.customerItem,
-    fields.customerItemRev,
-  );
+  const item = (fields.customerItem ?? "").trim();
+  if (item) {
+    return formatDelpiCableLabelCustomerItem(item, fields.customerItemRev);
+  }
+  return formatDelpiCableLabelCustomerItem(fields.customerReference, null);
 }
 
 /**

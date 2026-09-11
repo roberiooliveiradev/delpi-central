@@ -150,7 +150,7 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
 
     def get_by_token(self, token: str) -> dict[str, Any] | None:
         return self.fetch_one(
-            f"SELECT {_COLUMNS} FROM quality_labels.inspection_labels WHERE public_token = %s",
+            f"SELECT {_ADMIN_COLUMNS} {_ADMIN_FROM} WHERE l.public_token = %s",
             (token,),
         )
 
@@ -282,12 +282,38 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             "createdAt": cls._iso(row.get("created_at")),
             "customerItem": cls._optional_text(row.get("customer_item")),
             "customerItemRev": cls._optional_text(row.get("customer_item_rev")),
+            "customerReference": cls.customer_reference_from_row(row),
         }
         if include_audit_metadata:
             metadata = cls._audit_metadata(row)
             payload["auditMetadata"] = metadata
             payload["hasAuditMetadata"] = bool(metadata)
         return payload
+
+    @classmethod
+    def customer_reference_from_row(cls, row: dict[str, Any]) -> str | None:
+        """SB1.B1_REFEREN capturado em audit_metadata.product.customerReference."""
+        product = cls._audit_metadata(row).get("product")
+        if not isinstance(product, dict):
+            return None
+        return cls._optional_text(
+            product.get("customerReference") or product.get("customer_reference")
+        )
+
+    @classmethod
+    def audit_captured_customer_reference(cls, row: dict[str, Any]) -> bool:
+        """True quando o snapshot já tentou gravar B1_REFEREN (mesmo se vazio)."""
+        product = cls._audit_metadata(row).get("product")
+        return isinstance(product, dict) and (
+            "customerReference" in product or "customer_reference" in product
+        )
+
+    @classmethod
+    def resolved_customer_reference(cls, row: dict[str, Any]) -> str | None:
+        """Item manual do certificado vence o snapshot do cadastro SB1."""
+        return cls._optional_text(row.get("customer_item")) or cls.customer_reference_from_row(
+            row
+        )
 
     @classmethod
     def to_public_payload(cls, row: dict[str, Any]) -> dict[str, Any]:
@@ -302,4 +328,5 @@ class PostgresQualityLabelsRepository(PluginBaseRepository):
             "inspectorName": row.get("inspector_name"),
             "result": row.get("result"),
             "companyName": "Delpi Conexões Elétricas",
+            "customerReference": cls.resolved_customer_reference(row),
         }

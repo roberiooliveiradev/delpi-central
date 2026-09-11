@@ -25,10 +25,20 @@ from app.application.use_cases.product.list_product_structure_use_case import (
 from app.application.use_cases.production.get_production_order_by_op_use_case import (
     GetProductionOrderByOpUseCase,
 )
+from app.domain.ports.product.product_query_repository_port import (
+    ProductQueryRepositoryPort,
+)
 
 _SNAPSHOT_VERSION = 1
 _DEFAULT_MAX_DEPTH = 6
 _MAX_LINKED_ORDERS = 50
+
+
+def _optional_text(value: Any) -> str | None:
+    if value in (None, ""):
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 class QualityLabelsAuditMetadataService:
@@ -41,12 +51,14 @@ class QualityLabelsAuditMetadataService:
         structure_use_case: ListProductStructureUseCase,
         guide_use_case: ListProductGuideUseCase,
         inspection_use_case: ListProductInspectionUseCase,
+        product_query_repository: ProductQueryRepositoryPort,
         max_depth: int = _DEFAULT_MAX_DEPTH,
     ) -> None:
         self._production_order_use_case = production_order_use_case
         self._structure_use_case = structure_use_case
         self._guide_use_case = guide_use_case
         self._inspection_use_case = inspection_use_case
+        self._product_query_repository = product_query_repository
         self._max_depth = max_depth
 
     def build(
@@ -69,8 +81,17 @@ class QualityLabelsAuditMetadataService:
         product_code = str(order.get("product_code") or "").strip()
         resolved_branch = order.get("branch") or branch
 
-        product_payload: dict[str, Any] = {"code": product_code or None}
+        product_payload: dict[str, Any] = {
+            "code": product_code or None,
+            "customerReference": None,
+        }
         if product_code:
+            self._capture_product_header(
+                product_code=product_code,
+                product_payload=product_payload,
+                sources=sources,
+                errors=errors,
+            )
             self._capture_product_sections(
                 product_code=product_code,
                 branch=resolved_branch,
@@ -140,6 +161,35 @@ class QualityLabelsAuditMetadataService:
                 }
             )
             return None
+
+    def _capture_product_header(
+        self,
+        *,
+        product_code: str,
+        product_payload: dict[str, Any],
+        sources: list[dict[str, Any]],
+        errors: list[dict[str, str]],
+    ) -> None:
+        params = {"code": product_code}
+        try:
+            row = self._product_query_repository.fetch_product_by_code(product_code)
+            sources.append(
+                {
+                    "operationId": "get_product",
+                    "params": params,
+                    "ok": row is not None,
+                }
+            )
+            if not row:
+                return
+            product_payload["customerReference"] = _optional_text(
+                row.get("customer_reference")
+            )
+        except Exception as exc:
+            errors.append({"operationId": "get_product", "message": str(exc)})
+            sources.append(
+                {"operationId": "get_product", "params": params, "ok": False}
+            )
 
     def _capture_product_sections(
         self,
