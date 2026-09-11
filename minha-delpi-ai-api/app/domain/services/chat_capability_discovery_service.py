@@ -67,6 +67,8 @@ class ChatCapabilityDiscoveryService:
             ux = metadata.get("uxCapability") if isinstance(metadata.get("uxCapability"), dict) else {}
             category = str(ux.get("category") or "").strip()
 
+            contract = cls._capability_contract_from_action(action)
+
             synthesized.append(
                 {
                     "capabilityId": f"action:{action_id}",
@@ -76,13 +78,53 @@ class ChatCapabilityDiscoveryService:
                     + (f" ({category})" if category else ""),
                     "whenToUse": [str(item).strip() for item in when_to_use if str(item).strip()],
                     "whenNot": [str(item).strip() for item in when_not if str(item).strip()],
-                    "readWrite": "read",
-                    "parallelSafe": True,
-                    "risk": "low",
+                    "readWrite": contract["readWrite"],
+                    "parallelSafe": contract["parallelSafe"],
+                    "risk": contract["risk"],
+                    "requiresConfirmation": contract["requiresConfirmation"],
                     "source": "action_catalog",
+                    "contractSource": "method+sensitivity",
                 }
             )
         return synthesized
+
+    @classmethod
+    def _capability_contract_from_action(cls, action: dict[str, Any]) -> dict[str, Any]:
+        """E11.S7 — derive capability metadata from OpenAPI method/sensitivity.
+
+        Reuses ChatWriteConfirmationService (same authority as execution/parallel).
+        """
+        from app.domain.services.chat_write_confirmation_service import (
+            ChatWriteConfirmationService,
+        )
+
+        sensitivity = str(action.get("sensitivity") or "").strip().lower()
+        method = str(action.get("method") or "").strip().upper()
+
+        if sensitivity in {"admin", "destructive"}:
+            risk = "high"
+            read_write = "write"
+        elif sensitivity == "write" or method in {"POST", "PUT", "PATCH", "DELETE"}:
+            risk = "medium"
+            read_write = "write"
+        else:
+            risk = "low"
+            read_write = "read"
+
+        explicit = action.get("requiresConfirmation")
+        if explicit is None:
+            requires_confirmation = ChatWriteConfirmationService.action_requires_confirmation(
+                action
+            )
+        else:
+            requires_confirmation = bool(explicit)
+
+        return {
+            "readWrite": read_write,
+            "parallelSafe": ChatWriteConfirmationService.is_parallel_safe_read(action),
+            "risk": risk,
+            "requiresConfirmation": requires_confirmation,
+        }
 
     @classmethod
     def discover(

@@ -1,7 +1,7 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED** · E11.S0–S6 **ATENDIDO** · próxima = **E11.S7**  
+**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED** · E11.S0–S7 **ATENDIDO** · próxima = **E11.S8**  
 **BASE_GIT_SHA (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
 **Auditoria-base:** S4 `evidence/e11-s4-structured-continuity.md`  
 **Origem:** revisão arquitetural pós Ondas A–I em 2026-09-11  
@@ -146,8 +146,8 @@ Plano 10 reaproveitou E9.S10, executado antes da alteração posterior do motor 
 | RQ11-03 | Eliminar continuidade multi-turn derivada de path/operationId | ATENDIDO (E11.S4; facetas estruturadas) |
 | RQ11-04 | Remover `operationIds`/registry técnico como authority de routing | ATENDIDO (E11.S5; arrays observer até S10 DELETE) |
 | RQ11-05 | Consolidar ownership semântico e remover NLU endpoint/domain-specific redundante | ATENDIDO (E11.S6; vocabulary facet/kind KEEP; pathTokens DELETE) |
-| RQ11-06 | Tornar recommendations contextuais; estático no máximo fallback temporário com exit criteria | ABERTO |
-| RQ11-07 | Derivar capability metadata de contract/sensitivity/policy real | ABERTO |
+| RQ11-06 | Tornar recommendations contextuais; estático no máximo fallback temporário com exit criteria | ATENDIDO (E11.S7; static=LEGACY_FALLBACK+exit) |
+| RQ11-07 | Derivar capability metadata de contract/sensitivity/policy real | ATENDIDO (E11.S7; method+sensitivity) |
 | RQ11-08 | Corrigir boundaries/DI/filesystem conforme Clean Architecture | ABERTO |
 | RQ11-09 | Remover credenciais hardcoded/defaults sensíveis de scripts/smokes | ABERTO |
 | RQ11-10 | Tornar Architecture Enforcement capaz de detectar substitutos semânticos JSON↔Python/TS | ATENDIDO (E11.S1; debt full-tree ainda vermelho até cleanup) |
@@ -625,6 +625,10 @@ Não marcar tudo como read/low/parallel-safe.
 
 Remover static recommendation profiles quando métricas e candidate final permitirem; senão manter como `BLOCKED_WITH_EVIDENCE`, e o plano permanece não concluído se o objetivo original exigir sua remoção.
 
+- **COMPLETE_GATE:** ATENDIDO (capability contract-derived; static recs = LEGACY_FALLBACK com exit criteria)
+- Evidência: [`../evidence/e11-s7-recommendations-capability-metadata.md`](../evidence/e11-s7-recommendations-capability-metadata.md)
+- `READY_TO_EXECUTE` E11.S8: **sim**
+
 ---
 
 ## E11.S8 — Clean Architecture + segurança de scripts
@@ -762,8 +766,8 @@ Preencher no final:
 | RQ11-03 | | | | | |
 | RQ11-04 | e11-s5 | cutover+facet | test_e11_s5_* | ATENDIDO | arrays observer |
 | RQ11-05 | e11-s6 | TU+mappers authority | test_e11_s6_* | ATENDIDO | live R1/R2/R9→S9 |
-| RQ11-06 | | | | | |
-| RQ11-07 | | | | | |
+| RQ11-06 | e11-s7 | dual-run exit | test_e6_s4_* | ATENDIDO | profiles até exit |
+| RQ11-07 | e11-s7 | method+sensitivity | test_e11_s7_* | ATENDIDO | |
 | RQ11-08 | | | | | |
 | RQ11-09 | | | | | |
 | RQ11-10 | | | | | |

@@ -34,6 +34,11 @@ class RecommendationDualRunReport:
     only_in_candidate: tuple[str, ...]
     used_profile_fallback: bool
     false_suggestion_count: int
+    # E11.S7 — static profile is LEGACY_FALLBACK with explicit exit criteria.
+    static_fallback_exit_criteria: str = (
+        "remove recommendationQueries profiles when contextual candidate "
+        "coverage ≥ static for canary corpus and smoke does not use static as oracle"
+    )
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -47,6 +52,8 @@ class RecommendationDualRunReport:
             "onlyInCandidate": list(self.only_in_candidate),
             "usedProfileFallback": self.used_profile_fallback,
             "falseSuggestionCount": self.false_suggestion_count,
+            "staticFallbackRole": "LEGACY_FALLBACK",
+            "staticFallbackExitCriteria": self.static_fallback_exit_criteria,
         }
 
 
