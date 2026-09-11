@@ -15,7 +15,7 @@
 | E — caps/composition | 04, 05 | **ATENDIDO** | — | plano 04+05 S1–S7 OK |
 | F — UX inteligente | 06 | **ATENDIDO** | — | E6.S1–S6 OK; queries = LEGACY_FALLBACK |
 | G — presentation/skills | 07, 08 | **ATENDIDO** | — | Planos 07+08 S1–S* OK |
-| H — cutover/cleanup | 09 | **ATENDIDO_PARCIAL** | promover dims PASS_OFFLINE→PASS / DELETE | S1–S11; efficiency live OK; DELETE ainda bloqueado |
+| H — cutover/cleanup | 09 | **ATENDIDO_PARCIAL** | live dims restantes / DELETE global | S1–S13; multi_turn PASS_OFFLINE_AND_LIVE; deleteAuthorized=false |
 
 ## Protocolo por subetapa
 
@@ -177,3 +177,4 @@ abrir planos/0N-*.md
 | 2026-09-10 | E2.S7 **KEEP_APPROVED** — fast paths JUSTIFIED (TARGET); sem DELETE indevido |
 | 2026-09-10 | Onda C / plano-02 **ATENDIDO 100%** — aceite offline + verify-final |
 | 2026-09-10 | **LIVE** plano-02 cutover **PASS 4/4** (`e2-plano02-cutover-live.md`; Keycloak religado) |
+| 2026-09-10 | E9.S13 **ATENDIDO_PARCIAL** — C5 L1–L4 PASS → `multi_turn=PASS_OFFLINE_AND_LIVE`; C4 structure FAIL; deleteAuthorized=false |

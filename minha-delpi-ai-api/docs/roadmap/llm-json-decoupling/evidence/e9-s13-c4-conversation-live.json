@@ -1,0 +1,40 @@
+{
+  "sessionId": "0bb93055-e49d-487e-b326-695d486364cb",
+  "agentId": "b85edd53-2fd9-4e2f-ab17-92fd288f4f85",
+  "productKind": "pa",
+  "productCode": "90260149",
+  "routeFamily": "product",
+  "turns": [
+    {
+      "label": "seed",
+      "wallMs": 121066,
+      "paths": [
+        "/products/90260149/stock",
+        "/products/90260149"
+      ],
+      "proseChars": 572,
+      "tree": "no tree (ok if table-only)",
+      "dashboard": "no structure duplication",
+      "markdown": "markdown block structure ok",
+      "prosePreview": "O produto **90260149** é o **CHICOTE EPR SINGELO 235MM**, do grupo **9026**, e está com **estoque zerado** — saldo disponível total de **0 unidades** em 1 posição, sem quantidade física, empenhada ou reservada.\n\n## Cadastro\n\n- **Código:** 90260149\n- **Descrição:** CHICOTE EPR SIN"
+    },
+    {
+      "label": "followup",
+      "wallMs": 343868,
+      "paths": [
+        "/products/90260149/stock",
+        "/products/90260149/stock",
+        "/products/90260149/stock"
+      ],
+      "proseChars": 353,
+      "tree": "no tree (ok if table-only)",
+      "dashboard": "no structure duplication",
+      "markdown": "markdown block structure ok",
+      "prosePreview": "A visão consolidada do produto **90260149** — **CHICOTE EPR SINGELO 235MM** (grupo **9026**) — mostra um item cadastrado, porém com **estoque totalmente zerado**, situação que **não cobre a demanda típica**.\n\n## Estoque e cobertura de demanda\n\nO saldo disponível total é de **0 un"
+    }
+  ],
+  "failures": [
+    "L1 followup: missing structure/analyser"
+  ],
+  "passed": false
+}

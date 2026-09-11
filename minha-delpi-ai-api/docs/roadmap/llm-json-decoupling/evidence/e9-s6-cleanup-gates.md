@@ -16,7 +16,7 @@ SIBLING_ALL_PASS_AUTHORIZES = PASS
 NO_PREMATURE_DELETE = PASS
 ```
 
-## Gates (estado atual — pós E9.S10)
+## Gates (estado atual — pós E9.S13)
 
 | Gate | Status |
 |------|--------|
@@ -25,13 +25,13 @@ NO_PREMATURE_DELETE = PASS
 | metamorphic | PASS_OFFLINE |
 | safety | PASS_OFFLINE |
 | required_args | PASS_OFFLINE |
-| multi_turn | PASS_OFFLINE |
-| compound | PASS_OFFLINE |
+| multi_turn | **PASS_OFFLINE_AND_LIVE** (C5 E9.S13) |
+| compound | PASS_OFFLINE (C4 structure live FAIL) |
 | latency_cost | PASS (E9.S11 live) |
 | legacy_fallback_hit_rate | PASS_OFFLINE |
 
 `passStatusesForDelete` = `PASS` | `PASS_OFFLINE_AND_LIVE` | `APPROVED`.  
-**PASS_OFFLINE sozinho não autoriza DELETE.**
+**PASS_OFFLINE sozinho não autoriza DELETE.** `deleteAuthorized` permanece **false**.
 
 ## Candidates BLOCKED (não removidos)
 

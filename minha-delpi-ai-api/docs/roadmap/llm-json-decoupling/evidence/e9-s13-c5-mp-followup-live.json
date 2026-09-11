@@ -1,0 +1,34 @@
+{
+  "sessionId": "f9ed15be-06a2-4383-b2ab-3788c6782c86",
+  "agentId": "b85edd53-2fd9-4e2f-ab17-92fd288f4f85",
+  "productKind": "mp",
+  "productCode": "10080022",
+  "routeFamily": "product",
+  "turns": [
+    {
+      "label": "seed",
+      "wallMs": 144857,
+      "paths": [
+        "/products/10080022/stock",
+        "/products/10080022"
+      ],
+      "proseChars": 929,
+      "markdown": "markdown block structure ok",
+      "prosePreview": "O produto **10080022** é um terminal olhal e o estoque está concentrado na filial 02, com um ponto de atenção crítico: há uma posição com saldo disponível negativo.\n\n## Cadastro\n\n**10080022** (grupo **1008**) — TERM. OLHAL M5 5,30MM 1,00-2,50MM2 8,00MM COMP 19,80MM NU S/ISOLACAO "
+    },
+    {
+      "label": "followup",
+      "wallMs": 227932,
+      "paths": [
+        "/products/10080022/stock",
+        "/products/10080022/stock",
+        "/products/10080022/stock"
+      ],
+      "proseChars": 1352,
+      "markdown": "markdown block structure ok",
+      "prosePreview": "O produto **10080022** segue com saldo disponível total de **17.931 unidades** em **6 posições** — mas a consulta de vendas/saídas recentes **não retornou dados nesta sessão**, então não consigo cruzar estoque com a demanda típica ainda.\n\n## Estoque (consulta atualizada)\n\n- Saldo"
+    }
+  ],
+  "failures": [],
+  "passed": true
+}

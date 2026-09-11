@@ -25,9 +25,7 @@ _PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
 _CHAT = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 _MODE = os.environ.get("SMOKE_RESPONSE_MODE", "normal").strip() or "normal"
 _MP = os.environ.get("SMOKE_MP_CODE", "10080022").strip()
-_AGENT_ID = os.environ.get(
-    "SMOKE_AGENT_ID", "4f9c225b-0414-40d3-a462-040889719b83"
-).strip()
+_AGENT_ID = os.environ.get("SMOKE_AGENT_ID", "").strip()
 _OUT = os.environ.get(
     "SMOKE_EVIDENCE_PATH",
     "docs/testing/evidence/chat-c5-mp-stock-followup-live.json",
@@ -130,13 +128,31 @@ def _markdown_structure_ok(content: str) -> tuple[bool, str]:
     return True, "markdown block structure ok"
 
 
+def _resolve_agent_id(token: str) -> str:
+    if _AGENT_ID:
+        return _AGENT_ID
+    agents = _http_json("GET", f"{_BASE}{_CHAT}/agents?limit=20", token=token)
+    items = agents if isinstance(agents, list) else (agents or {}).get("items") or []
+    for agent in items:
+        if not isinstance(agent, dict):
+            continue
+        if agent.get("enabled") is False:
+            continue
+        aid = str(agent.get("id") or "").strip()
+        if aid:
+            return aid
+    raise RuntimeError(f"nenhum agent disponível: {agents}")
+
+
 def main() -> int:
     token = _token()
+    agent_id = _resolve_agent_id(token)
+    print(f"agent={agent_id}", flush=True)
     session = _http_json(
         "POST",
         f"{_BASE}{_CHAT}/sessions",
         token=token,
-        body={"agentId": _AGENT_ID, "title": "smoke-c5-mp-stock"},
+        body={"agentId": agent_id, "title": "smoke-c5-mp-stock"},
     )
     session_id = str((session or {}).get("id") or "").strip()
     if not session_id:
@@ -145,6 +161,7 @@ def main() -> int:
 
     results: dict[str, Any] = {
         "sessionId": session_id,
+        "agentId": agent_id,
         "productKind": "mp",
         "productCode": _MP,
         "routeFamily": "product",
@@ -154,6 +171,7 @@ def main() -> int:
 
     for label, message in (("seed", SEED), ("followup", FOLLOWUP)):
         print(f"--- {label}: {message}", flush=True)
+        token = _token()
         t0 = time.time()
         try:
             payload = _http_json(
@@ -162,7 +180,7 @@ def main() -> int:
                 token=token,
                 body={
                     "message": message,
-                    "agentId": _AGENT_ID,
+                    "agentId": agent_id,
                     "responseMode": _MODE,
                     "includeAdminDebug": True,
                     "adminDebug": True,
