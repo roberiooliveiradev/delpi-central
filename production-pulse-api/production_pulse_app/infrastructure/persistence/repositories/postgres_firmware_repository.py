@@ -26,6 +26,8 @@ _FIRMWARE_COLUMNS = """
     published_at, created_by, created_at, archived_at
 """
 
+_OPEN_TARGET_STATUSES = ("pending", "authorized", "downloading", "applying")
+
 
 class PostgresFirmwareRepository:
     def list_firmwares(
@@ -301,6 +303,66 @@ class PostgresFirmwareRepository:
                 raise FirmwareNotFoundError(str(firmware_id))
             return dict(row)
 
+    def count_deletion_dependencies(self, firmware_id: UUID) -> dict[str, int]:
+        row = self.get_by_id(firmware_id)
+        if row is None:
+            raise FirmwareNotFoundError(str(firmware_id))
+        firmware_key = row["firmware_key"]
+        version = row["version"]
+        driver_key = row["driver_key"]
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT COUNT(*) AS n
+                    FROM production_pulse.firmware_update_jobs
+                    WHERE firmware_id = %s
+                    """,
+                    (firmware_id,),
+                )
+                jobs = int(cur.fetchone()["n"] or 0)
+                cur.execute(
+                    """
+                    SELECT COUNT(*) AS n
+                    FROM production_pulse.firmware_update_targets t
+                    JOIN production_pulse.firmware_update_jobs j ON j.id = t.job_id
+                    WHERE j.firmware_id = %s
+                      AND t.status = ANY(%s)
+                    """,
+                    (firmware_id, list(_OPEN_TARGET_STATUSES)),
+                )
+                active = int(cur.fetchone()["n"] or 0)
+                cur.execute(
+                    """
+                    SELECT COUNT(*) AS n
+                    FROM production_pulse.devices d
+                    WHERE d.installed_firmware_version = %s
+                      AND COALESCE(d.firmware_key, d.driver_key) IN (%s, %s)
+                    """,
+                    (version, firmware_key, driver_key),
+                )
+                installed = int(cur.fetchone()["n"] or 0)
+        return {
+            "jobs": jobs,
+            "activeTargets": active,
+            "installedDevices": installed,
+        }
+
+    def hard_delete(self, firmware_id: UUID) -> dict[str, Any] | None:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    DELETE FROM production_pulse.firmwares
+                    WHERE id = %s
+                    RETURNING {_FIRMWARE_COLUMNS}
+                    """,
+                    (firmware_id,),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        return dict(row) if row else None
+
 
 _JOB_COLUMNS = """
     id, firmware_id, branch, trigger, scheduled_at, status, filter,
@@ -313,8 +375,6 @@ _TARGET_COLUMNS = """
     created_at, updated_at, bytes_received, bytes_total, progress_percent,
     wake_status, wake_attempted_at, wake_acknowledged_at, wake_error_code
 """
-
-_OPEN_TARGET_STATUSES = ("pending", "authorized", "downloading", "applying")
 
 
 class FirmwareJobConflictError(Exception):

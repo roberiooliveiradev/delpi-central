@@ -39,7 +39,11 @@
 | `POST` | `/devices` | `devices.manage` + filial | Cria; `driver_key` → `role_key` do registry (R24); IP único na filial (R3) |
 | `PUT` | `/devices/{id}` | `devices.manage` + filial | Replace; filial **imutável** (R7) |
 | `PATCH` | `/devices/{id}` | `devices.manage` + filial | Partial (wifi, debounce, token, poll, …) |
-| `DELETE` | `/devices/{id}` | `devices.manage` + filial | Soft delete `enabled=false` (R8) |
+| `POST` | `/devices/{id}/disable` | `devices.manage` + filial | Desativar (canônico) `enabled=false` |
+| `POST` | `/devices/{id}/enable` | `devices.manage` + filial | Reativar `enabled=true` |
+| `DELETE` | `/devices/{id}` | `devices.manage` + filial | Alias legado = desativar (R8) |
+| `GET` | `/devices/{id}/deletion-impact` | `devices.manage` + filial | Preflight hard delete (contagens + blockers) |
+| `DELETE` | `/devices/{id}/permanent` | `devices.manage` + filial | Hard delete (CASCADE bindings/readings/…; bloqueia OTA ativa) |
 
 ### 1.5 Binding (amarração)
 

@@ -206,3 +206,18 @@ class PostgresDeviceDriverRepository:
                     (driver_key,),
                 )
                 return int(cur.fetchone()["n"] or 0)
+
+    def hard_delete(self, driver_key: str) -> bool:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    DELETE FROM production_pulse.device_drivers
+                    WHERE driver_key = %s
+                    RETURNING driver_key
+                    """,
+                    (driver_key,),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        return row is not None

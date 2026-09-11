@@ -120,6 +120,16 @@ stateDiagram-v2
 - Pós-rollback: KPI “desatualizado” continua válido se `installed != latestPublished` — **comportamento conhecido**. Não há pin/`desiredFirmwareVersion` neste ciclo.
 - Labels: Mais recente / Instalada / Selecionada / Publicada / Rascunho / Arquivada — sem « · atual » ambíguo.
 
+### Lifecycle e exclusão definitiva
+
+| Entidade | Reversível | Definitiva | Blockers principais |
+|----------|------------|------------|---------------------|
+| IoT | Desativar | `DELETE /devices/{id}/permanent` | OTA ativa |
+| Firmware (versão) | Arquivar | `DELETE /firmwares/{id}` | Job OTA histórico; OTA ativa; instalado em IoT |
+| Driver | Arquivar | `DELETE /drivers/{key}` | IoTs ou firmwares usando o key |
+
+Hard delete de IoT remove via CASCADE: bindings, readings, rollups, commands, OTA targets (jobs permanecem; `maybe_finish_job`). Preflight exibe contagens reais. Sem `force=true`. Artifact de firmware: cleanup best-effort após DELETE da row. Registry de driver: invalidar cache após hard delete.
+
 ### Scheduler
 
 `DevicePollSchedulerService` no mesmo tick: authorize scheduled + stale + reconcile batch.

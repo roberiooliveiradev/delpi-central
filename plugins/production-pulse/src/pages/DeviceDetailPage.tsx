@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 
-import type { FirmwareUpdateTarget } from "../api/productionPulseApi";
-import { disableDevice } from "../api/productionPulseApi";
+import type { DeletionImpact, FirmwareUpdateTarget } from "../api/productionPulseApi";
+import {
+  deleteDevicePermanently,
+  disableDevice,
+  fetchDeviceDeletionImpact,
+} from "../api/productionPulseApi";
 import {
   PpActionButton,
   PpHintAction,
@@ -12,6 +16,7 @@ import {
   ppShellIcon,
 } from "../app/productionPulseUi";
 import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
+import { PermanentDeleteDialog } from "../components/PermanentDeleteDialog";
 import { DeviceCommandsTab } from "../components/detail/DeviceCommandsTab";
 import { DeviceFirmwareTab } from "../components/detail/DeviceFirmwareTab";
 import { DeviceHistoryTab } from "../components/detail/DeviceHistoryTab";
@@ -50,6 +55,8 @@ type DeviceDetailPageProps = {
     title?: string;
     message: string;
   }) => void;
+  /** Hub coordinates PermanentDeleteDialog; when omitted, detail owns the flow. */
+  onRequestPermanentDelete?: (deviceId: string, label: string) => void;
 };
 
 export function DeviceDetailPage({
@@ -62,6 +69,7 @@ export function DeviceDetailPage({
   hubOtaTarget,
   suppressLocalOtaPoll,
   onOperationalNotice,
+  onRequestPermanentDelete,
 }: DeviceDetailPageProps) {
   const [localTab, setLocalTab] = useState<DeviceDetailTab>(tabProp);
   const tab = embedded ? localTab : tabProp;
@@ -75,6 +83,11 @@ export function DeviceDetailPage({
   const [deactivateOpen, setDeactivateOpen] = useState(false);
   const [deactivateLoading, setDeactivateLoading] = useState(false);
   const [deactivateError, setDeactivateError] = useState<string | null>(null);
+  const [permanentOpen, setPermanentOpen] = useState(false);
+  const [permanentImpact, setPermanentImpact] = useState<DeletionImpact | null>(null);
+  const [permanentLoading, setPermanentLoading] = useState(false);
+  const [permanentBusy, setPermanentBusy] = useState(false);
+  const [permanentError, setPermanentError] = useState<string | null>(null);
 
   const {
     device,
@@ -170,6 +183,46 @@ export function DeviceDetailPage({
     }
   };
 
+  const openLocalPermanentDelete = async () => {
+    if (!device) return;
+    if (onRequestPermanentDelete) {
+      onRequestPermanentDelete(deviceId, device.name);
+      return;
+    }
+    setPermanentOpen(true);
+    setPermanentImpact(null);
+    setPermanentError(null);
+    setPermanentLoading(true);
+    try {
+      const impact = await fetchDeviceDeletionImpact(deviceId);
+      setPermanentImpact(impact);
+    } catch (err) {
+      setPermanentOpen(false);
+      setPermanentError(err instanceof Error ? err.message : "Falha ao analisar dependências.");
+    } finally {
+      setPermanentLoading(false);
+    }
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!device) return;
+    setPermanentBusy(true);
+    setPermanentError(null);
+    try {
+      await deleteDevicePermanently(deviceId);
+      setPermanentOpen(false);
+      if (onClose) {
+        onClose();
+        return;
+      }
+      navigateProductionPulse(panelBackPath);
+    } catch (err) {
+      setPermanentError(err instanceof Error ? err.message : "Falha ao excluir permanentemente.");
+    } finally {
+      setPermanentBusy(false);
+    }
+  };
+
   if (!permissions.canViewDevices) {
     return (
       <div className="pp-page-stack">
@@ -244,6 +297,18 @@ export function DeviceDetailPage({
                     </PpActionButton>
                   </PpHintAction>
                 ) : null}
+                <PpHintAction
+                  hint={PP_HELP.hub.menuPermanentDeleteDevice}
+                  ariaLabel="Ajuda: Excluir permanentemente"
+                >
+                  <PpActionButton
+                    variant="ghost"
+                    className="pp-hero-brand-btn"
+                    onClick={() => void openLocalPermanentDelete()}
+                  >
+                    Excluir permanentemente…
+                  </PpActionButton>
+                </PpHintAction>
               </>
             ) : null}
             <PpHintAction hint={PP_HELP.detail.pollNow} ariaLabel="Ajuda: Atualizar agora">
@@ -281,6 +346,10 @@ export function DeviceDetailPage({
           title={PP_HELP.detail.actionFailedTitle}
           message={actionError}
         />
+      ) : null}
+
+      {permanentError && !permanentOpen ? (
+        <DetailStatusBanner variant="warning" title="Exclusão permanente" message={permanentError} />
       ) : null}
 
       {tab === "overview" ? (
@@ -361,6 +430,23 @@ export function DeviceDetailPage({
           </PpActionButton>
         </div>
       </PpHostContainedDialog>
+
+      <PermanentDeleteDialog
+        open={permanentOpen}
+        title={PP_HELP.hub.permanentDeleteDeviceTitle}
+        entityLabel={device.name}
+        confirmPhrase={device.name}
+        impact={permanentImpact}
+        loadingImpact={permanentLoading}
+        confirmBusy={permanentBusy}
+        onConfirm={() => void handlePermanentDelete()}
+        onCancel={() => {
+          if (permanentBusy) return;
+          setPermanentOpen(false);
+          setPermanentImpact(null);
+          setPermanentError(null);
+        }}
+      />
     </div>
   );
 }

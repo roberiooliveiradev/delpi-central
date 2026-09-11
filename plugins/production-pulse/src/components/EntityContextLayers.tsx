@@ -16,6 +16,7 @@ import {
   PowerOff,
   RefreshCw,
   TextCursorInput,
+  Trash2,
   Upload,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
@@ -403,7 +404,7 @@ export function EntityActionMenu({
           <ContextMenuDivider />
           {device.enabled ? (
             <PpContextMenuItem
-              label="Desativar (soft delete)…"
+              label="Desativar…"
               icon={PowerOff}
               hint={PP_HELP.hub.menuDisableDevice}
               destructive
@@ -417,6 +418,14 @@ export function EntityActionMenu({
               onSelect={() => run("enable")}
             />
           )}
+          <ContextMenuDivider />
+          <PpContextMenuItem
+            label="Excluir permanentemente…"
+            icon={Trash2}
+            hint={PP_HELP.hub.menuPermanentDeleteDevice}
+            destructive
+            onSelect={() => run("permanent-delete")}
+          />
         </>
       ) : null}
       {entity.type === "firmware" && firmware ? (
@@ -467,11 +476,19 @@ export function EntityActionMenu({
             />
             <ContextMenuDivider />
             <PpContextMenuItem
-              label="Arquivar versão (soft delete)…"
+              label="Arquivar versão…"
               icon={Archive}
               hint={PP_HELP.hub.menuArchiveFirmware}
               destructive
               onSelect={() => run("archive")}
+            />
+            <ContextMenuDivider />
+            <PpContextMenuItem
+              label="Excluir versão permanentemente…"
+              icon={Trash2}
+              hint={PP_HELP.hub.menuPermanentDeleteFirmware}
+              destructive
+              onSelect={() => run("permanent-delete")}
             />
           </>
         ) : (
@@ -512,6 +529,14 @@ export function EntityActionMenu({
               icon={Link2}
               hint={PP_HELP.hub.startLinkFromFirmware}
               onSelect={() => run("link")}
+            />
+            <ContextMenuDivider />
+            <PpContextMenuItem
+              label="Excluir versão permanentemente…"
+              icon={Trash2}
+              hint={PP_HELP.hub.menuPermanentDeleteFirmware}
+              destructive
+              onSelect={() => run("permanent-delete")}
             />
           </>
         )

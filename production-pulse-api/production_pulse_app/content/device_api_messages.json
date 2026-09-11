@@ -24,7 +24,8 @@
   "httpErrors": {
     "notFoundDevice": "Dispositivo não encontrado.",
     "notFoundBinding": "Amarração não encontrada.",
-    "duplicateIp": "Já existe dispositivo com este IP ou código de controlador nesta filial."
+    "duplicateIp": "Já existe dispositivo com este IP ou código de controlador nesta filial.",
+    "deviceHasActiveOta": "Este IoT possui uma atualização OTA em andamento. Cancele ou aguarde a conclusão antes de excluí-lo."
   },
   "commandErrors": {
     "unsupported_command": "Este dispositivo não suporta o comando solicitado.",

@@ -486,8 +486,88 @@ export async function fetchDeviceFirmwareSources(
 
 export async function disableDevice(deviceId: string): Promise<{ id: string; enabled: boolean }> {
   const payload = await httpJson<ApiEnvelope<{ id: string; enabled: boolean }>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/devices/${encodeURIComponent(deviceId)}/disable`,
+  );
+  return payload.data;
+}
+
+export async function enableDevice(deviceId: string): Promise<{ id: string; enabled: boolean }> {
+  const payload = await httpJson<ApiEnvelope<{ id: string; enabled: boolean }>>(
+    "POST",
+    `${PRODUCTION_PULSE_API_BASE}/devices/${encodeURIComponent(deviceId)}/enable`,
+  );
+  return payload.data;
+}
+
+export type DeletionBlocker = {
+  code: string;
+  count?: number;
+};
+
+export type DeletionImpact = {
+  canDelete: boolean;
+  blockers: DeletionBlocker[];
+  dependencies: Record<string, number | boolean>;
+  displayName?: string | null;
+  id?: string;
+  firmwareKey?: string;
+  version?: string;
+  driverKey?: string;
+};
+
+export type PermanentDeleteResult = {
+  deleted: boolean;
+  id?: string;
+  driverKey?: string;
+  firmwareKey?: string;
+  version?: string;
+  dependencies?: Record<string, number | boolean>;
+};
+
+export async function fetchDeviceDeletionImpact(deviceId: string): Promise<DeletionImpact> {
+  const payload = await httpGet<ApiEnvelope<DeletionImpact>>(
+    `${PRODUCTION_PULSE_API_BASE}/devices/${encodeURIComponent(deviceId)}/deletion-impact`,
+  );
+  return payload.data;
+}
+
+export async function deleteDevicePermanently(deviceId: string): Promise<PermanentDeleteResult> {
+  const payload = await httpJson<ApiEnvelope<PermanentDeleteResult>>(
     "DELETE",
-    `${PRODUCTION_PULSE_API_BASE}/devices/${encodeURIComponent(deviceId)}`,
+    `${PRODUCTION_PULSE_API_BASE}/devices/${encodeURIComponent(deviceId)}/permanent`,
+  );
+  return payload.data;
+}
+
+export async function fetchFirmwareDeletionImpact(firmwareId: string): Promise<DeletionImpact> {
+  const payload = await httpGet<ApiEnvelope<DeletionImpact>>(
+    `${PRODUCTION_PULSE_API_BASE}/firmwares/${encodeURIComponent(firmwareId)}/deletion-impact`,
+  );
+  return payload.data;
+}
+
+export async function deleteFirmwarePermanently(
+  firmwareId: string,
+): Promise<PermanentDeleteResult> {
+  const payload = await httpJson<ApiEnvelope<PermanentDeleteResult>>(
+    "DELETE",
+    `${PRODUCTION_PULSE_API_BASE}/firmwares/${encodeURIComponent(firmwareId)}`,
+  );
+  return payload.data;
+}
+
+export async function fetchDriverDeletionImpact(driverKey: string): Promise<DeletionImpact> {
+  const payload = await httpGet<ApiEnvelope<DeletionImpact>>(
+    `${PRODUCTION_PULSE_API_BASE}/drivers/${encodeURIComponent(driverKey)}/deletion-impact`,
+  );
+  return payload.data;
+}
+
+export async function deleteDriverPermanently(driverKey: string): Promise<PermanentDeleteResult> {
+  const payload = await httpJson<ApiEnvelope<PermanentDeleteResult>>(
+    "DELETE",
+    `${PRODUCTION_PULSE_API_BASE}/drivers/${encodeURIComponent(driverKey)}`,
   );
   return payload.data;
 }

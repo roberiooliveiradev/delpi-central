@@ -39,14 +39,25 @@ Compatibilidade no MFE espelha a API: `{ firmwareKey } ∪ driverKey de todas as
 
 Legenda: `HubCanvasLegend` (+ modo vínculo contextual). Ajuda: `PP_HELP.hub.link*` / `edge*`.
 
-## Soft delete (não hard delete)
+## Lifecycle — Desativar/Arquivar vs Excluir permanentemente
 
-| Entidade | Ação | API | Efeito |
-|----------|------|-----|--------|
-| IoT | Desativar (soft delete) | `disableDevice` | Para operação; cadastro permanece; filtro Inativos / Reativar |
-| Firmware | Arquivar versão (soft delete) | `archiveFirmware` | Sai de novos disparos; histórico permanece |
+Decisão de produto explícita: hard delete é permitido, **dependency-aware**.
 
-Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.confirm` e exclusão definitiva sem decisão explícita de produto.
+| Entidade | Reversível | Definitiva |
+|----------|------------|------------|
+| IoT | Desativar (`POST …/disable`; alias legado `DELETE /devices/{id}`) | Excluir permanentemente (`DELETE …/permanent`) |
+| Firmware | Arquivar versão (`POST …/archive`) | Excluir versão permanentemente (`DELETE /firmwares/{id}`) |
+| Driver | Arquivar / Desarquivar | Excluir permanentemente (`DELETE /drivers/{key}`) |
+
+```text
+Desativar / Arquivar = reversível; preserva registro e histórico
+Excluir permanentemente = irreversível; remove row; revalida dependências no DELETE
+```
+
+- Soft: `PpConfirmDialog` + `PP_HELP.hub.softDelete*` (sem typed confirm). Nunca rotular soft como «Excluir».
+- Hard: `PermanentDeleteDialog` (typed confirm) + preflight `GET …/deletion-impact`. Proibido `window.confirm` e `force=true` silencioso.
+- Driver com IoTs/firmwares → 409 (sem cascade). Firmware com job OTA / instalado / OTA ativa → 409. IoT com OTA ativa → 409.
+- Após hard delete: limpar layers/URL, atualizar graph/catálogo sem reload; notices via `resolveProductionPulseError` / `PpFloatingNotices`.
 
 ## Camadas UI (matriz travada)
 

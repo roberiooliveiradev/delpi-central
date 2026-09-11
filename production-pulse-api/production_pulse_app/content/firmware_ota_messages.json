@@ -31,6 +31,13 @@
     "firmwareNotEditable": "Esta versão não pode ser editada no estado atual.",
     "firmwareMissingArtifact": "Publicação exige artefato .bin anexado.",
     "firmwareAlreadyPublished": "Esta versão já está publicada.",
-    "firmwareSourceTooLarge": "Sketch (.ino) excede o tamanho máximo permitido."
+    "firmwareSourceTooLarge": "Sketch (.ino) excede o tamanho máximo permitido.",
+    "deviceHasActiveOta": "Este IoT possui uma atualização OTA em andamento. Cancele ou aguarde a conclusão antes de excluí-lo.",
+    "firmwareHasUpdateHistory": "Esta versão possui histórico de campanhas OTA e não pode ser excluída.",
+    "firmwareHasActiveTargets": "Esta versão possui atualização OTA em andamento e não pode ser excluída.",
+    "firmwareInstalledOnDevices": "Esta versão ainda está instalada em IoTs. Troque esses dispositivos para outra versão antes de excluí-la.",
+    "driverHasDevices": "Não é possível excluir este driver: ainda há IoTs usando esta chave.",
+    "driverHasFirmwares": "Não é possível excluir este driver: ainda há versões de firmware usando esta chave.",
+    "deleteDependencyConflict": "Não é possível excluir: surgiram dependências após a análise. Tente novamente."
   }
 }

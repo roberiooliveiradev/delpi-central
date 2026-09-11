@@ -9,6 +9,9 @@ from production_pulse_app.application.services.firmware_catalog_service import (
     FirmwareCatalogService,
     message_for_firmware_error,
 )
+from production_pulse_app.application.services.firmware_deletion_service import (
+    FirmwareDeletionService,
+)
 from production_pulse_app.application.services.firmware_update_job_service import (
     FirmwareUpdateJobService,
 )
@@ -29,7 +32,17 @@ from production_pulse_app.interface.http.rbac_http import (
 
 router = APIRouter(tags=["FirmwareOTA"])
 _catalog = FirmwareCatalogService()
+_deletion = FirmwareDeletionService()
 _jobs = FirmwareUpdateJobService()
+
+_DELETION_CONFLICT_CODES = frozenset(
+    {
+        "firmwareHasUpdateHistory",
+        "firmwareHasActiveTargets",
+        "firmwareInstalledOnDevices",
+        "deleteDependencyConflict",
+    }
+)
 
 
 def _actor_sub(request: Request) -> str | None:
@@ -40,12 +53,13 @@ def _actor_sub(request: Request) -> str | None:
 
 
 def _coded_error(exc: ContentCodedError) -> JSONResponse:
+    status = 409 if exc.code in _DELETION_CONFLICT_CODES else 422
     payload = error(
         message_for_firmware_error(exc.code),
         code=exc.code,
-        status_code=422,
+        status_code=status,
     )
-    status_code = payload.pop("_status_code", 422)
+    status_code = payload.pop("_status_code", status)
     return JSONResponse(status_code=status_code, content=payload)
 
 
@@ -161,6 +175,35 @@ async def archive_firmware(request: Request, firmware_id: str):
     except (ValueError, FirmwareNotFoundError):
         return _not_found_firmware()
     return success(data)
+
+
+@router.get("/firmwares/{firmware_id}/deletion-impact", operation_id="get_firmware_deletion_impact")
+async def get_firmware_deletion_impact(request: Request, firmware_id: str):
+    denied = guard_manage_devices(request)
+    if denied:
+        return denied
+    try:
+        return success(_deletion.get_deletion_impact(UUID(firmware_id)))
+    except (ValueError, FirmwareNotFoundError):
+        return _not_found_firmware()
+
+
+@router.delete("/firmwares/{firmware_id}", operation_id="delete_firmware_permanently")
+async def delete_firmware_permanently(request: Request, firmware_id: str):
+    denied = guard_manage_devices(request)
+    if denied:
+        return denied
+    try:
+        return success(
+            _deletion.delete_permanently(
+                UUID(firmware_id),
+                actor_sub=_actor_sub(request),
+            )
+        )
+    except ContentCodedError as exc:
+        return _coded_error(exc)
+    except (ValueError, FirmwareNotFoundError):
+        return _not_found_firmware()
 
 
 @router.get("/firmware-drivers", operation_id="list_firmware_drivers")

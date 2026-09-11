@@ -36,6 +36,7 @@ type DriverDetailPageProps = {
   onDone?: () => void;
   onCancel?: () => void;
   onRequestArchive?: (driverKey: string) => void;
+  onRequestPermanentDelete?: (driverKey: string, label: string) => void;
 };
 
 export function DriverDetailPage({
@@ -45,6 +46,7 @@ export function DriverDetailPage({
   onDone,
   onCancel,
   onRequestArchive,
+  onRequestPermanentDelete,
 }: DriverDetailPageProps) {
   const canManage = permissions.canManageDevices;
   const [item, setItem] = useState<DriverListItem | null>(null);
@@ -176,6 +178,23 @@ export function DriverDetailPage({
             onClick={handleArchive}
           >
             Arquivar
+          </PpActionButton>
+        </PpHintAction>
+      ) : null}
+      {canManage && onRequestPermanentDelete ? (
+        <PpHintAction
+          hint={PP_HELP.hub.menuPermanentDeleteDriver}
+          ariaLabel="Ajuda: Excluir permanentemente"
+        >
+          <PpActionButton
+            variant="ghost"
+            className="pp-hero-brand-btn"
+            disabled={busy}
+            onClick={() =>
+              onRequestPermanentDelete(item.key, item.labelPt || item.key)
+            }
+          >
+            Excluir permanentemente…
           </PpActionButton>
         </PpHintAction>
       ) : null}

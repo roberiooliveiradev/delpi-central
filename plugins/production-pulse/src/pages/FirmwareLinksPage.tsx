@@ -5,18 +5,24 @@ import {
   archiveFirmware,
   cancelFirmwareUpdateJob,
   createFirmwareUpdateJob,
+  deleteDevicePermanently,
+  deleteDriverPermanently,
+  deleteFirmwarePermanently,
   disableDevice,
-  fetchDevice,
+  enableDevice,
+  fetchDeviceDeletionImpact,
   fetchDeviceFirmwareUpdateStatus,
   fetchDevices,
+  fetchDriverDeletionImpact,
+  fetchFirmwareDeletionImpact,
   fetchFirmwareUpdateJobs,
   fetchFirmwareUpdateSummary,
   fetchFirmwareUpdateTargets,
   fetchFirmwares,
   listDrivers,
   putDeviceFirmwareLink,
-  replaceDevice,
   unarchiveDriver,
+  type DeletionImpact,
   type DriverListItem,
   type FirmwareListItem,
   type FirmwareUpdateJob,
@@ -28,6 +34,7 @@ import {
   EntityActionMenu,
   EntitySummaryPopover,
 } from "../components/EntityContextLayers";
+import { PermanentDeleteDialog } from "../components/PermanentDeleteDialog";
 import { parseOpenFirmwareVersionAction } from "../utils/openFirmwareVersionAction";
 import {
   FirmwareDeviceLinkCanvas,
@@ -225,6 +232,14 @@ export function FirmwareLinksPage({
     selectedFirmwareId: string | null;
     phase: "pick" | "confirm";
     intent: "now" | "schedule";
+  } | null>(null);
+  const [permanentDelete, setPermanentDelete] = useState<{
+    kind: "device" | "firmware" | "driver";
+    id: string;
+    label: string;
+    confirmPhrase: string;
+    impact: DeletionImpact | null;
+    loading: boolean;
   } | null>(null);
   const viewport = useViewportBucket();
   const preferCollapsedChrome = isCompactViewport(viewport);
@@ -872,6 +887,41 @@ export function FirmwareLinksPage({
     [],
   );
 
+  const openPermanentDelete = useCallback(
+    async (args: {
+      kind: "device" | "firmware" | "driver";
+      id: string;
+      label: string;
+      confirmPhrase: string;
+    }) => {
+      setPermanentDelete({
+        kind: args.kind,
+        id: args.id,
+        label: args.label,
+        confirmPhrase: args.confirmPhrase,
+        impact: null,
+        loading: true,
+      });
+      try {
+        const impact =
+          args.kind === "device"
+            ? await fetchDeviceDeletionImpact(args.id)
+            : args.kind === "firmware"
+              ? await fetchFirmwareDeletionImpact(args.id)
+              : await fetchDriverDeletionImpact(args.id);
+        setPermanentDelete((prev) =>
+          prev && prev.id === args.id && prev.kind === args.kind
+            ? { ...prev, impact, loading: false }
+            : prev,
+        );
+      } catch (err) {
+        setPermanentDelete(null);
+        pushResolvedProductionPulseNotice(pushNotice, err);
+      }
+    },
+    [pushNotice],
+  );
+
   const openConfirm = useCallback(
     (kind: AdminHubConfirmKind, id: string) => {
       dispatch({ type: "openConfirm", kind, id });
@@ -920,14 +970,14 @@ export function FirmwareLinksPage({
         await disableDevice(id);
         pushNotice({
           variant: "success",
-          message: "IoT desativado (soft delete). Use o filtro Inativos ou Reativar no menu ⋯.",
+          message: "IoT desativado. Use o filtro Inativos ou Reativar no menu ⋯.",
         });
         await reloadGraph();
       } else if (kind === "archive-firmware") {
         await archiveFirmware(id);
         pushNotice({
           variant: "success",
-          message: "Versão arquivada (soft delete). Não entra em novos disparos OTA.",
+          message: "Versão arquivada. Não entra em novos disparos OTA.",
         });
         await reloadGraph();
       } else if (kind === "archive-driver") {
@@ -1000,6 +1050,53 @@ export function FirmwareLinksPage({
     dispatch({ type: "closeAll" });
   };
 
+  const runPermanentDelete = async () => {
+    if (!permanentDelete) return;
+    setConfirmBusy(true);
+    try {
+      if (permanentDelete.kind === "device") {
+        await deleteDevicePermanently(permanentDelete.id);
+        pushNotice({
+          variant: "success",
+          title: "IoT excluído",
+          message: PP_HELP.hub.permanentDeleteSuccessDevice.replace(
+            "{name}",
+            permanentDelete.label,
+          ),
+        });
+      } else if (permanentDelete.kind === "firmware") {
+        await deleteFirmwarePermanently(permanentDelete.id);
+        pushNotice({
+          variant: "success",
+          title: "Versão excluída",
+          message: PP_HELP.hub.permanentDeleteSuccessFirmware.replace(
+            "{name}",
+            permanentDelete.label,
+          ),
+        });
+      } else {
+        await deleteDriverPermanently(permanentDelete.id);
+        pushNotice({
+          variant: "success",
+          title: "Driver excluído",
+          message: PP_HELP.hub.permanentDeleteSuccessDriver.replace(
+            "{name}",
+            permanentDelete.label,
+          ),
+        });
+        await reloadDrivers();
+      }
+      setPermanentDelete(null);
+      closeLayers();
+      await reloadGraph();
+      await reloadJobs({ soft: true });
+    } catch (err) {
+      pushResolvedProductionPulseNotice(pushNotice, err);
+    } finally {
+      setConfirmBusy(false);
+    }
+  };
+
   const onEntityAction = async (action: string) => {
     if (!ui.selectedEntity) return;
     if (ui.selectedEntity.type === "device") {
@@ -1051,24 +1148,19 @@ export function FirmwareLinksPage({
         return;
       }
       if (action === "enable") {
-        const full = await fetchDevice(device.id);
-        await replaceDevice(device.id, {
-          name: full.name,
-          branch: full.branch,
-          ipAddress: full.ipAddress,
-          controllerCode: full.controllerCode ?? "",
-          firmwareSource: full.firmwareSource ?? "",
-          wifiSsid: full.wifiSsid ?? "",
-          wifiPassword: "",
-          debounceMs: full.debounceMs != null ? String(full.debounceMs) : "",
-          apiToken: "",
-          apiTokenSet: Boolean(full.apiTokenSet),
-          driverKey: full.driverKey,
-          pollIntervalMs: full.pollIntervalMs,
-          enabled: true,
-        });
+        await enableDevice(device.id);
         await reloadGraph();
         pushNotice({ variant: "success", message: "IoT reativado." });
+        return;
+      }
+      if (action === "permanent-delete") {
+        void openPermanentDelete({
+          kind: "device",
+          id: device.id,
+          label: device.name,
+          confirmPhrase: device.name,
+        });
+        return;
       }
       return;
     }
@@ -1116,6 +1208,15 @@ export function FirmwareLinksPage({
       }
       if (action === "archive") {
         openConfirm("archive-firmware", fw.id);
+        return;
+      }
+      if (action === "permanent-delete") {
+        void openPermanentDelete({
+          kind: "firmware",
+          id: fw.id,
+          label: `${fw.firmwareKey} v${fw.version}`,
+          confirmPhrase: `v${fw.version}`,
+        });
         return;
       }
       if (action === "link") {
@@ -1604,6 +1705,14 @@ export function FirmwareLinksPage({
               void reloadDrivers();
             }}
             onRequestArchive={(key) => openConfirm("archive-driver", key)}
+            onRequestPermanentDelete={(key, label) => {
+              void openPermanentDelete({
+                kind: "driver",
+                id: key,
+                label,
+                confirmPhrase: key,
+              });
+            }}
           />
         ) : null}
       </PpDetailDialog>
@@ -1628,6 +1737,14 @@ export function FirmwareLinksPage({
             onDone={() => {
               closeLayers();
               void reloadGraph();
+            }}
+            onRequestPermanentDelete={(id, label) => {
+              void openPermanentDelete({
+                kind: "firmware",
+                id,
+                label,
+                confirmPhrase: label,
+              });
             }}
           />
         ) : null}
@@ -1659,6 +1776,14 @@ export function FirmwareLinksPage({
               }
             }}
             onClose={closeLayers}
+            onRequestPermanentDelete={(id, label) => {
+              void openPermanentDelete({
+                kind: "device",
+                id,
+                label,
+                confirmPhrase: label,
+              });
+            }}
           />
         ) : null}
       </PpDetailDialog>
@@ -2117,6 +2242,24 @@ export function FirmwareLinksPage({
         device={renameDevice}
         onClose={() => setRenameDevice(null)}
         onRenamed={() => void reloadGraph()}
+      />
+
+      <PermanentDeleteDialog
+        open={Boolean(permanentDelete)}
+        title={
+          permanentDelete?.kind === "device"
+            ? PP_HELP.hub.permanentDeleteDeviceTitle
+            : permanentDelete?.kind === "firmware"
+              ? PP_HELP.hub.permanentDeleteFirmwareTitle
+              : PP_HELP.hub.permanentDeleteDriverTitle
+        }
+        entityLabel={permanentDelete?.label ?? ""}
+        confirmPhrase={permanentDelete?.confirmPhrase ?? ""}
+        impact={permanentDelete?.impact ?? null}
+        loadingImpact={Boolean(permanentDelete?.loading)}
+        confirmBusy={confirmBusy}
+        onConfirm={() => void runPermanentDelete()}
+        onCancel={() => setPermanentDelete(null)}
       />
     </div>
   );

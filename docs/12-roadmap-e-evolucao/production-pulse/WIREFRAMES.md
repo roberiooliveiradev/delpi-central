@@ -711,9 +711,18 @@ API: `POST /devices/:id/commands/reset` → toast sucesso → refresh detalhe.
 
 ### WF-PP-04-B — Desativar dispositivo (edit page)
 
-Mesmo padrão ModalShell — «Desativar dispositivo?» → soft delete `enabled=false`.
+Mesmo padrão ModalShell — «Desativar dispositivo?» → `POST /devices/{id}/disable` (`enabled=false`).  
+**Vocabulário:** nunca rotular Desativar/Arquivar como «Excluir».
 
-**Helps (`PP_HELP`):** `modals.resetTitle` · … — [HELP-CONTENT § WF-PP-04](./HELP-CONTENT.md#wf-pp-04--modais).
+### WF-PP-04-C — Excluir permanentemente (IoT / Firmware / Driver)
+
+`PermanentDeleteDialog` (presentacional): preflight `GET …/deletion-impact` → se `canDelete=false`, lista blockers sem typed confirm; se permitido, digitar o rótulo da entidade → `DELETE …/permanent` (IoT) ou `DELETE /firmwares/{id}` / `DELETE /drivers/{key}`.
+
+- Soft continua em `PpConfirmDialog` (Desativar / Arquivar).
+- Sem `window.confirm`.
+- Pós-sucesso no Hub: `closeAll` (limpa entity/modal na URL) + `reloadGraph` sem full page reload.
+
+**Helps (`PP_HELP`):** `modals.resetTitle` · `hub.permanentDelete*` · … — [HELP-CONTENT § WF-PP-04](./HELP-CONTENT.md#wf-pp-04--modais).
 
 ### WF-PP-04 tablet (769–1100px)
 

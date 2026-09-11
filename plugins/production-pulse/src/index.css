@@ -3831,4 +3831,41 @@
   color: #854d0e;
 }
 
+.dashboard-production-pulse .pp-permanent-delete {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dashboard-production-pulse .pp-permanent-delete__entity {
+  margin: 0;
+}
+
+.dashboard-production-pulse .pp-permanent-delete__blocked-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+}
+
+.dashboard-production-pulse .pp-permanent-delete__blockers,
+.dashboard-production-pulse .pp-permanent-delete__deps {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.dashboard-production-pulse .pp-permanent-delete__deps li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  list-style: none;
+  margin-left: -1.1rem;
+}
+
+.dashboard-production-pulse .pp-permanent-delete__confirm {
+  color: var(--delpi-ui-color-danger, #b91c1c);
+  border-color: color-mix(in srgb, var(--delpi-ui-color-danger, #b91c1c) 40%, transparent);
+}
+
 

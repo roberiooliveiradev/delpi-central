@@ -384,6 +384,72 @@ class PostgresDeviceRepository:
     def soft_delete(self, device_id: UUID, *, actor_sub: str | None) -> dict[str, Any]:
         return self.patch(device_id, updates={"enabled": False}, actor_sub=actor_sub)
 
+    def soft_enable(self, device_id: UUID, *, actor_sub: str | None) -> dict[str, Any]:
+        return self.patch(device_id, updates={"enabled": True}, actor_sub=actor_sub)
+
+    def count_deletion_dependencies(self, device_id: UUID) -> dict[str, int]:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                      (SELECT COUNT(*) FROM production_pulse.device_bindings WHERE device_id = %s) AS bindings,
+                      (SELECT COUNT(*) FROM production_pulse.readings WHERE device_id = %s) AS readings,
+                      (SELECT COUNT(*) FROM production_pulse.readings_rollups WHERE device_id = %s) AS rollups,
+                      (SELECT COUNT(*) FROM production_pulse.device_commands WHERE device_id = %s) AS commands,
+                      (SELECT COUNT(*) FROM production_pulse.firmware_update_targets WHERE device_id = %s) AS ota_targets,
+                      (SELECT COUNT(*) FROM production_pulse.firmware_update_targets
+                         WHERE device_id = %s
+                           AND status = ANY(%s)) AS active_ota_targets
+                    """,
+                    (
+                        device_id,
+                        device_id,
+                        device_id,
+                        device_id,
+                        device_id,
+                        device_id,
+                        ["pending", "authorized", "downloading", "applying"],
+                    ),
+                )
+                row = cur.fetchone()
+        return {
+            "bindings": int(row["bindings"] or 0),
+            "readings": int(row["readings"] or 0),
+            "rollups": int(row["rollups"] or 0),
+            "commands": int(row["commands"] or 0),
+            "otaTargets": int(row["ota_targets"] or 0),
+            "activeOtaTargets": int(row["active_ota_targets"] or 0),
+        }
+
+    def list_ota_job_ids_for_device(self, device_id: UUID) -> list[UUID]:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT DISTINCT job_id
+                    FROM production_pulse.firmware_update_targets
+                    WHERE device_id = %s
+                    """,
+                    (device_id,),
+                )
+                return [UUID(str(row["job_id"])) for row in cur.fetchall()]
+
+    def hard_delete(self, device_id: UUID) -> bool:
+        with plugins_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    DELETE FROM production_pulse.devices
+                    WHERE id = %s
+                    RETURNING id
+                    """,
+                    (device_id,),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        return row is not None
+
     def record_poll_success(
         self,
         device_id: UUID,

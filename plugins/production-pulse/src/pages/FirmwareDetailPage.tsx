@@ -4,9 +4,12 @@ import { Code2, FileCode, Package } from "lucide-react";
 import {
   archiveFirmware,
   attachFirmwareArtifact,
+  deleteFirmwarePermanently,
   fetchFirmwareById,
+  fetchFirmwareDeletionImpact,
   patchFirmware,
   publishFirmwareVersion,
+  type DeletionImpact,
   type FirmwareDetail,
   type FirmwareListItem,
 } from "../api/productionPulseApi";
@@ -25,6 +28,7 @@ import {
 } from "../app/productionPulseUi";
 import { DetailFactList } from "../components/detail/DetailFactList";
 import { DetailLightCard } from "../components/detail/DetailLightCard";
+import { PermanentDeleteDialog } from "../components/PermanentDeleteDialog";
 import { ProductionPulsePagePath } from "../components/ProductionPulsePagePath";
 import type { ProductionPulsePermissionFlags } from "../constants/permissions";
 import {
@@ -50,6 +54,7 @@ type FirmwareDetailPageProps = {
   /** Other versions of the same family (from Hub catalog cache). */
   siblingFirmwares?: FirmwareListItem[];
   onSelectVersion?: (firmwareId: string) => void;
+  onRequestPermanentDelete?: (firmwareId: string, label: string) => void;
 };
 
 export function FirmwareDetailPage({
@@ -60,6 +65,7 @@ export function FirmwareDetailPage({
   onCancel,
   siblingFirmwares = [],
   onSelectVersion,
+  onRequestPermanentDelete,
 }: FirmwareDetailPageProps) {
   const canManage = permissions.canManageDevices;
   const [item, setItem] = useState<FirmwareDetail | null>(null);
@@ -74,6 +80,10 @@ export function FirmwareDetailPage({
   const [artifactFile, setArtifactFile] = useState<File | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
+  const [permanentOpen, setPermanentOpen] = useState(false);
+  const [permanentImpact, setPermanentImpact] = useState<DeletionImpact | null>(null);
+  const [permanentLoading, setPermanentLoading] = useState(false);
+  const [permanentBusy, setPermanentBusy] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -222,6 +232,52 @@ export function FirmwareDetailPage({
     }
   };
 
+  const openLocalPermanentDelete = async () => {
+    if (!item || !canManage) return;
+    const label = `${item.displayName || item.firmwareKey} ${item.version}`.trim();
+    if (onRequestPermanentDelete) {
+      onRequestPermanentDelete(item.id, label);
+      return;
+    }
+    setPermanentOpen(true);
+    setPermanentImpact(null);
+    setPermanentLoading(true);
+    setActionError(null);
+    try {
+      const impact = await fetchFirmwareDeletionImpact(item.id);
+      setPermanentImpact(impact);
+    } catch (err) {
+      setPermanentOpen(false);
+      setActionError(err instanceof Error ? err.message : "Falha ao analisar dependências.");
+    } finally {
+      setPermanentLoading(false);
+    }
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!item) return;
+    setPermanentBusy(true);
+    setActionError(null);
+    try {
+      await deleteFirmwarePermanently(item.id);
+      setPermanentOpen(false);
+      if (onDone) {
+        onDone();
+        return;
+      }
+      if (onCancel) {
+        onCancel();
+        return;
+      }
+      navigateProductionPulse(productionPulseFirmwaresPath());
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Falha ao excluir permanentemente.");
+      setPermanentOpen(false);
+    } finally {
+      setPermanentBusy(false);
+    }
+  };
+
   const heroActions = item ? (
     <div className="pp-detail-hero-actions">
       <span className={firmwareLifecycleBadgeClass(item.lifecycle)}>
@@ -258,6 +314,21 @@ export function FirmwareDetailPage({
             disabled={busy}
           >
             Arquivar
+          </PpActionButton>
+        </PpHintAction>
+      ) : null}
+      {canManage ? (
+        <PpHintAction
+          hint={PP_HELP.hub.menuPermanentDeleteFirmware}
+          ariaLabel="Ajuda: Excluir permanentemente"
+        >
+          <PpActionButton
+            variant="ghost"
+            className="pp-hero-brand-btn"
+            disabled={busy}
+            onClick={() => void openLocalPermanentDelete()}
+          >
+            Excluir permanentemente…
           </PpActionButton>
         </PpHintAction>
       ) : null}
@@ -503,6 +574,24 @@ export function FirmwareDetailPage({
           </PpActionButton>
         </div>
       </PpHostContainedDialog>
+
+      {item ? (
+        <PermanentDeleteDialog
+          open={permanentOpen}
+          title={PP_HELP.hub.permanentDeleteFirmwareTitle}
+          entityLabel={`${item.displayName || item.firmwareKey} ${item.version}`.trim()}
+          confirmPhrase={`${item.displayName || item.firmwareKey} ${item.version}`.trim()}
+          impact={permanentImpact}
+          loadingImpact={permanentLoading}
+          confirmBusy={permanentBusy}
+          onConfirm={() => void handlePermanentDelete()}
+          onCancel={() => {
+            if (permanentBusy) return;
+            setPermanentOpen(false);
+            setPermanentImpact(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

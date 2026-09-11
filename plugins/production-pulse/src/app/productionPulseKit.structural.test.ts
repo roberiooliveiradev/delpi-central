@@ -247,7 +247,21 @@ describe("production-pulse kit contracts", () => {
     expect(readRelative("content/helpTooltips.ts")).toMatch(/softDeleteDeviceConfirmTitle/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/edgeModesHint/);
     expect(readRelative("content/helpTooltips.ts")).toMatch(/startLinkFromFirmware/);
-    expect(readRelative("components/EntityContextLayers.tsx")).toMatch(/soft delete/);
+    expect(readRelative("components/EntityContextLayers.tsx")).toMatch(
+      /Excluir permanentemente/,
+    );
+    expect(readRelative("components/EntityContextLayers.tsx")).toMatch(/Desativar…/);
+    expect(readRelative("components/EntityContextLayers.tsx")).not.toMatch(/\(soft delete\)/);
+    expect(readRelative("components/PermanentDeleteDialog.tsx")).toMatch(/PpNativeTextField/);
+    expect(readRelative("components/PermanentDeleteDialog.tsx")).not.toMatch(/window\.confirm/);
+    expect(readRelative("api/productionPulseApi.ts")).toMatch(/deleteDevicePermanently/);
+    expect(readRelative("api/productionPulseApi.ts")).toMatch(/\/devices\/\$\{encodeURIComponent\(deviceId\)\}\/disable/);
+    expect(readRelative("api/productionPulseApi.ts")).toMatch(
+      /\/devices\/\$\{encodeURIComponent\(deviceId\)\}\/permanent/,
+    );
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/deleteDevicePermanently/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/disableDevice/);
+    expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/window\.confirm/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/pp-admin-hub/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).toMatch(/pp-admin-bottom-bar/);
     expect(readRelative("pages/FirmwareLinksPage.tsx")).not.toMatch(/Campanhas OTA/);
@@ -296,7 +310,10 @@ describe("production-pulse kit contracts", () => {
       /productionPulseFirmwareLinksPath/,
     );
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/disableDevice/);
+    expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/deleteDevicePermanently/);
     expect(readRelative("pages/DeviceDetailPage.tsx")).toMatch(/embedded/);
+    expect(readRelative("pages/FirmwareDetailPage.tsx")).toMatch(/deleteFirmwarePermanently/);
+    expect(readRelative("pages/DriverDetailPage.tsx")).toMatch(/onRequestPermanentDelete/);
     expect(readRelative("pages/DeviceFormPage.tsx")).toMatch(/embedded/);
     expect(readRelative("pages/DeviceFormPage.tsx")).not.toMatch(/TestConnectionModal/);
     expect(readRelative("components/DeviceForm.tsx")).not.toMatch(/firmwareSource/);

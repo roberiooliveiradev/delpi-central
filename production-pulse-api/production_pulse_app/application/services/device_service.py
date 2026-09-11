@@ -318,6 +318,14 @@ class DeviceService:
         row = self._repository.soft_delete(device_id, actor_sub=actor_sub)
         return json_safe(device_row_to_api(row))
 
+    def disable_device(self, device_id: UUID, *, actor_sub: str | None) -> dict[str, Any]:
+        row = self._repository.soft_delete(device_id, actor_sub=actor_sub)
+        return json_safe(device_row_to_api(row))
+
+    def enable_device(self, device_id: UUID, *, actor_sub: str | None) -> dict[str, Any]:
+        row = self._repository.soft_enable(device_id, actor_sub=actor_sub)
+        return json_safe(device_row_to_api(row))
+
 
 __all__ = [
     "DeviceConflictError",

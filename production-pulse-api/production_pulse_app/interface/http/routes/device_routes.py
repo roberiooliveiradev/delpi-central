@@ -35,6 +35,7 @@ from production_pulse_app.application.services.device_service import (
     DeviceNotFoundError,
     DeviceService,
 )
+from production_pulse_app.application.services.device_deletion_service import DeviceDeletionService
 from production_pulse_app.core.responses import error, success
 from production_pulse_app.domain.errors import (
     BindingValidationError,
@@ -70,6 +71,7 @@ from production_pulse_app.interface.http.schemas.device_schemas import (
 
 router = APIRouter(prefix="/devices", tags=["Devices"])
 _service = DeviceService()
+_deletion_service = DeviceDeletionService()
 _binding_service = DeviceBindingService()
 _firmware_link_service = DeviceFirmwareLinkService()
 _firmware_jobs_service = FirmwareUpdateJobService()
@@ -77,6 +79,18 @@ _firmware_source_service = FirmwareSourceResolutionService()
 _poll_service = DevicePollService()
 _probe_service = DeviceProbeService()
 _command_service = DeviceCommandService()
+
+_DELETION_CONFLICT_CODES = frozenset(
+    {
+        "deviceHasActiveOta",
+        "firmwareHasUpdateHistory",
+        "firmwareHasActiveTargets",
+        "firmwareInstalledOnDevices",
+        "driverHasDevices",
+        "driverHasFirmwares",
+        "deleteDependencyConflict",
+    }
+)
 
 
 def _actor_sub(request: Request) -> str | None:
@@ -123,12 +137,20 @@ def _handle_domain_errors(exc: Exception):
 
 
 def _json_error(exc: Exception):
-    if isinstance(exc, (DeviceValidationError, BindingValidationError, CommandNotSupportedError)):
-        return content_coded_error_response(exc)
-    payload = _handle_domain_errors(exc)
-    status_code = payload.pop("_status_code", 400)
     from fastapi.responses import JSONResponse
 
+    if isinstance(exc, ContentCodedError):
+        status = 409 if exc.code in _DELETION_CONFLICT_CODES else 422
+        if exc.code in _DELETION_CONFLICT_CODES:
+            payload = error(
+                firmware_ota_http_message(exc.code),
+                code=exc.code,
+                status_code=status,
+            )
+            return JSONResponse(status_code=status, content=payload)
+        return content_coded_error_response(exc, status_code=status)
+    payload = _handle_domain_errors(exc)
+    status_code = payload.pop("_status_code", 400)
     return JSONResponse(status_code=status_code, content=payload)
 
 
@@ -413,11 +435,63 @@ async def patch_device(request: Request, device_id: UUID, body: DevicePatchBody)
 
 @router.delete("/{device_id}")
 async def delete_device(request: Request, device_id: UUID):
+    """Legacy alias: soft-disable (enabled=false). Prefer POST …/disable."""
     _, denied = _load_device_for_request(request, device_id, action="manage")
     if denied is not None:
         return denied
     try:
-        data = _service.delete_device(parse_device_id(str(device_id)), actor_sub=_actor_sub(request))
+        data = _service.disable_device(parse_device_id(str(device_id)), actor_sub=_actor_sub(request))
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.post("/{device_id}/disable", operation_id="disable_device")
+async def disable_device(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="manage")
+    if denied is not None:
+        return denied
+    try:
+        data = _service.disable_device(parse_device_id(str(device_id)), actor_sub=_actor_sub(request))
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.post("/{device_id}/enable", operation_id="enable_device")
+async def enable_device(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="manage")
+    if denied is not None:
+        return denied
+    try:
+        data = _service.enable_device(parse_device_id(str(device_id)), actor_sub=_actor_sub(request))
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.get("/{device_id}/deletion-impact", operation_id="get_device_deletion_impact")
+async def get_device_deletion_impact(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="manage")
+    if denied is not None:
+        return denied
+    try:
+        data = _deletion_service.get_deletion_impact(parse_device_id(str(device_id)))
+        return success(data)
+    except Exception as exc:
+        return _json_error(exc)
+
+
+@router.delete("/{device_id}/permanent", operation_id="delete_device_permanently")
+async def delete_device_permanently(request: Request, device_id: UUID):
+    _, denied = _load_device_for_request(request, device_id, action="manage")
+    if denied is not None:
+        return denied
+    try:
+        data = _deletion_service.delete_permanently(
+            parse_device_id(str(device_id)),
+            actor_sub=_actor_sub(request),
+        )
         return success(data)
     except Exception as exc:
         return _json_error(exc)

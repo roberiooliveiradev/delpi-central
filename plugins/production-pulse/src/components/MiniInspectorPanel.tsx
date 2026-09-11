@@ -195,7 +195,7 @@ export function ConfirmDisableDialog({
   const [busy, setBusy] = useState(false);
   return (
     <PpHostContainedDialog open={open} title="Desativar IoT" onClose={onClose}>
-      <p>Desativar {device?.name}? O dispositivo deixa de ser operado (soft-disable).</p>
+      <p>Desativar {device?.name}? O dispositivo deixa de ser operado e some do filtro de ativos.</p>
       <div className="pp-inline-actions">
         <PpActionButton variant="ghost" onClick={onClose}>
           Voltar

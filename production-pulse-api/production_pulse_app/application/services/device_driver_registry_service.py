@@ -148,6 +148,11 @@ class DeviceDriverRegistryService:
     def clear_implementations_for_tests(self) -> None:
         self._implementations.clear()
 
+    def invalidate_implementation(self, driver_key: str) -> None:
+        normalized = (driver_key or "").strip()
+        if normalized:
+            self._implementations.pop(normalized, None)
+
 
 _default_registry = DeviceDriverRegistryService()
 

@@ -34,7 +34,7 @@ Superfície única Admin: canvas fullscreen + `HubMapChrome` colapsável à dire
 
 **Single Surface Principle:** resumo do nó e menu ⋯ = uma moldura (`variant="bare"` + `delpi-ui-popover-surface`); classes `pp-*` só layout. Hub chrome recolhido = `IconButton` sem card externo; Saúde/Conexões = disclosure inline. Ver [DESIGN-FRONTEND §3.6.1](./DESIGN-FRONTEND.md).
 
-**Conexões:** linha sólida = vínculo OTA explícito; sem linha = sem vínculo. Compatibilidade de driver só no **modo vínculo** (menu Vincular / arraste FW→IoT) — sem linha tracejada permanente. **Soft delete:** Desativar IoT · Arquivar versão. **Menu ⋯:** cada item com `hint` no próprio label (`PpContextMenuItem` / `PP_HELP.hub.menu*`). **Legenda:** título via `PpSectionHintLabel` (sem `HelpTooltip` standalone).
+**Conexões:** linha sólida = vínculo OTA explícito; sem linha = sem vínculo. Compatibilidade de driver só no **modo vínculo** (menu Vincular / arraste FW→IoT) — sem linha tracejada permanente. **Lifecycle:** Desativar / Arquivar (reversível) · Excluir permanentemente (irreversível, dependency-aware, typed confirm). **Menu ⋯:** cada item com `hint` no próprio label (`PpContextMenuItem` / `PP_HELP.hub.menu*`). **Legenda:** título via `PpSectionHintLabel` (sem `HelpTooltip` standalone).
 
 Helps: `PP_HELP.hub.*`, `PP_HELP.otaLinks.*`.
 
