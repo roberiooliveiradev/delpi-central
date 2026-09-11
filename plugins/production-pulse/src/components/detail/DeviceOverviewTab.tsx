@@ -82,6 +82,8 @@ export function DeviceOverviewTab({
           liveSnapshot
             ? {
                 firmwareVersion: liveSnapshot.firmwareVersion,
+                previousFirmwareVersion: liveSnapshot.previousFirmwareVersion,
+                lastOtaTargetVersion: liveSnapshot.lastOtaTargetVersion,
                 uptimeMs: liveSnapshot.uptimeMs,
                 freeHeap: liveSnapshot.freeHeap,
                 rssi: liveSnapshot.rssi,

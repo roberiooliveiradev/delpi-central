@@ -10,7 +10,7 @@ Fonte de referência: `Teste.ino` (flash no Arduino IDE / PlatformIO).
 - Download em chunks com report de `progressPercent` (throttle); ver lab em [`../esp8266_counter_v2/README.md`](../esp8266_counter_v2/README.md).
 - Redirects HTTP: `HTTPC_STRICT_FOLLOW_REDIRECTS` quando o core exporta o enum.
 
-`FIRMWARE_VERSION` atual: `esp8266_counter_v1.3.1`.
+`FIRMWARE_VERSION` atual: `esp8266_counter_v1.3.2`.
 
 ## Endpoints
 

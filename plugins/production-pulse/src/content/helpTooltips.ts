@@ -166,6 +166,8 @@ export const PP_HELP = {
     chipHealth:
       "Telemetria do chip via GET /api/status (versão, uptime, RSSI, heap). Atualiza ao usar «Atualizar agora».",
     chipHealthTitle: "Saúde do chip",
+    chipHealthPreviousVersion: "Versão que rodava no chip antes do último OTA bem-sucedido.",
+    chipHealthLastOtaTarget: "Versão autorizada pelo Pulse na última atualização OTA aplicada no chip.",
     chipHealthVersion: "Firmware",
     chipHealthUptime: "Uptime",
     chipHealthRssi: "Wi-Fi RSSI",

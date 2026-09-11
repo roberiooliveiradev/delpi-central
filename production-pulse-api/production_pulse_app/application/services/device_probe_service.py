@@ -103,7 +103,7 @@ class DeviceProbeService:
                     payload["debounceMs"] = device_config["debounceMs"]
                 if "apiTokenSet" in device_config:
                     payload["apiTokenSet"] = bool(device_config["apiTokenSet"])
-            for key in ("firmwareVersion", "uptimeMs", "freeHeap", "rssi", "wifiConnected"):
+            for key in ("firmwareVersion", "previousFirmwareVersion", "lastOtaTargetVersion", "uptimeMs", "freeHeap", "rssi", "wifiConnected"):
                 if key in meta and meta.get(key) is not None:
                     payload[key] = meta[key]
             return payload

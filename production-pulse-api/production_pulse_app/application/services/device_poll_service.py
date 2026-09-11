@@ -497,7 +497,7 @@ class DevicePollService:
         if not isinstance(identity, dict):
             return {}
         health: dict[str, Any] = {}
-        for key in ("firmwareVersion", "uptimeMs", "freeHeap", "rssi", "wifiConnected"):
+        for key in ("firmwareVersion", "previousFirmwareVersion", "lastOtaTargetVersion", "uptimeMs", "freeHeap", "rssi", "wifiConnected"):
             if key in identity and identity.get(key) is not None:
                 health[key] = identity[key]
         return health

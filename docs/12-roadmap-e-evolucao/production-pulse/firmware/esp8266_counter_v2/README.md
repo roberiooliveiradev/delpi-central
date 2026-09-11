@@ -5,14 +5,14 @@ Sketch irmão de [`../esp8266_counter_v1/Teste.ino`](../esp8266_counter_v1/Teste
 | Item | Valor |
 |------|--------|
 | Pasta Arduino | abra **esta** pasta (`esp8266_counter_v2`) — não misture `.ino` na pasta v1 |
-| `FIRMWARE_VERSION` | `esp8266_counter_v2.0.1` |
+| `FIRMWARE_VERSION` | `esp8266_counter_v2.0.2` |
 | Contrato `/api/*` | Idêntico ao v1 (driver `esp8266_counter_v1`) + `POST /api/ota/check-now` (202) |
 | Pull OTA | ~60 s + jitter 0–15 s; backoff em erro; wake via check-now |
 | UI `/` | Badge **V2**, accent verde, exibe versão |
 
 ## Lab swap v1 ↔ v2
 
-1. Compile/publique o `.bin` do v1 (`esp8266_counter_v1.3.1`) e do v2 (`esp8266_counter_v2.0.1`) no catálogo OTA (mesma `firmwareKey` / `driverKey`).
+1. Compile/publique o `.bin` do v1 (`esp8266_counter_v1.3.2`) e do v2 (`esp8266_counter_v2.0.2`) no catálogo OTA (mesma `firmwareKey` / `driverKey`).
 2. Amarre o IoT em `/firmware-links`.
 3. Dispare campanha para a versão alvo.
 4. No detalhe do device (aba Firmware): acompanhe **% real** + fases PT.

@@ -374,6 +374,20 @@ export function DeviceFirmwareTab({
             </dd>
           </div>
           <div>
+            <dt title={PP_HELP.detail.chipHealthPreviousVersion}>Anterior (no chip)</dt>
+            <dd>
+              <code>
+                {liveSnapshot?.previousFirmwareVersion?.trim() || "—"}
+              </code>
+            </dd>
+          </div>
+          <div>
+            <dt title={PP_HELP.detail.chipHealthLastOtaTarget}>Último alvo OTA (chip)</dt>
+            <dd>
+              <code>{liveSnapshot?.lastOtaTargetVersion?.trim() || "—"}</code>
+            </dd>
+          </div>
+          <div>
             <dt>Instalada (cadastro)</dt>
             <dd>{device.installedFirmwareVersion ?? "—"}</dd>
           </div>

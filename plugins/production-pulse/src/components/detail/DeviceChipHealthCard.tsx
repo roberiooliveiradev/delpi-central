@@ -21,6 +21,8 @@ export function hasChipHealth(health: DeviceChipHealth | null | undefined): bool
   if (!health) return false;
   return (
     health.firmwareVersion != null ||
+    health.previousFirmwareVersion != null ||
+    health.lastOtaTargetVersion != null ||
     health.uptimeMs != null ||
     health.freeHeap != null ||
     health.rssi != null ||
@@ -48,6 +50,18 @@ export function DeviceChipHealthCard({ health }: DeviceChipHealthCardProps) {
           <div className="pp-chip-health__row">
             <dt>{PP_HELP.detail.chipHealthVersion}</dt>
             <dd>{health.firmwareVersion}</dd>
+          </div>
+        ) : null}
+        {health?.previousFirmwareVersion ? (
+          <div className="pp-chip-health__row">
+            <dt>{PP_HELP.detail.chipHealthPreviousVersion}</dt>
+            <dd>{health.previousFirmwareVersion}</dd>
+          </div>
+        ) : null}
+        {health?.lastOtaTargetVersion ? (
+          <div className="pp-chip-health__row">
+            <dt>{PP_HELP.detail.chipHealthLastOtaTarget}</dt>
+            <dd>{health.lastOtaTargetVersion}</dd>
           </div>
         ) : null}
         {uptime ? (

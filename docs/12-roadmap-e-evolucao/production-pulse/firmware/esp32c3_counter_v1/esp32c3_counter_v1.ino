@@ -16,7 +16,7 @@
 static const char* DEFAULT_WIFI_SSID = "YOUR_SSID";
 static const char* DEFAULT_WIFI_PASSWORD = "YOUR_PASSWORD";
 static const unsigned long DEFAULT_DEBOUNCE_MS = 100;
-static const char* FIRMWARE_VERSION = "esp32c3_counter_v1.0.1";
+static const char* FIRMWARE_VERSION = "esp32c3_counter_v1.0.2";
 static const uint16_t EEPROM_SIZE = 512;
 static const uint32_t CONFIG_MAGIC = 0x50504331;  // "PPC1" — distinct from ESP8266 PPS\x02
 
@@ -40,6 +40,19 @@ struct DeviceConfig {
 };
 
 DeviceConfig cfg;
+
+// Persisted outside DeviceConfig (own magic) so Wi-Fi/token layout stays compatible.
+static const uint32_t VERSION_HISTORY_MAGIC = 0x50505648;  // "PPVH"
+static const int VERSION_HISTORY_EEPROM_OFFSET = 400;
+
+struct VersionHistory {
+  uint32_t magic;
+  char previousFirmwareVersion[48];
+  char lastOtaTargetVersion[48];  // Pulse version string from last successful OTA
+};
+
+VersionHistory versionHistory;
+
 long contador = 0;
 
 // Single STA identity source (resolved after WiFi.mode(WIFI_STA)).
@@ -189,6 +202,48 @@ void saveConfigToEeprom() {
   cfg.magic = CONFIG_MAGIC;
   EEPROM.put(0, cfg);
   EEPROM.commit();
+}
+
+
+void saveVersionHistoryToEeprom() {
+  versionHistory.magic = VERSION_HISTORY_MAGIC;
+  EEPROM.put(VERSION_HISTORY_EEPROM_OFFSET, versionHistory);
+  EEPROM.commit();
+}
+
+void loadVersionHistoryFromEeprom() {
+  VersionHistory loaded;
+  EEPROM.get(VERSION_HISTORY_EEPROM_OFFSET, loaded);
+  if (loaded.magic != VERSION_HISTORY_MAGIC) {
+    memset(&versionHistory, 0, sizeof(versionHistory));
+    versionHistory.magic = VERSION_HISTORY_MAGIC;
+    saveVersionHistoryToEeprom();
+    return;
+  }
+  versionHistory = loaded;
+  versionHistory.previousFirmwareVersion[sizeof(versionHistory.previousFirmwareVersion) - 1] = '\0';
+  versionHistory.lastOtaTargetVersion[sizeof(versionHistory.lastOtaTargetVersion) - 1] = '\0';
+}
+
+void rememberFirmwareTransition(const String& pulseTargetVersion) {
+  strncpy(
+    versionHistory.previousFirmwareVersion,
+    FIRMWARE_VERSION,
+    sizeof(versionHistory.previousFirmwareVersion) - 1
+  );
+  versionHistory.previousFirmwareVersion[sizeof(versionHistory.previousFirmwareVersion) - 1] = '\0';
+  String target = pulseTargetVersion;
+  target.trim();
+  if (target.length() == 0) {
+    target = String(FIRMWARE_VERSION);
+  }
+  strncpy(
+    versionHistory.lastOtaTargetVersion,
+    target.c_str(),
+    sizeof(versionHistory.lastOtaTargetVersion) - 1
+  );
+  versionHistory.lastOtaTargetVersion[sizeof(versionHistory.lastOtaTargetVersion) - 1] = '\0';
+  saveVersionHistoryToEeprom();
 }
 
 void loadConfigFromEeprom() {
@@ -773,6 +828,7 @@ bool applyOtaBinary(const String& artifactUrl, const String& targetId, const Str
     return false;
   }
   // ACK best-effort; restart regardless so we never loop on report failure.
+  rememberFirmwareTransition(version);
   reportTerminalWithRetry(targetId, "updated", "", version, contentLength, contentLength, 100);
   delay(200);
   ESP.restart();
@@ -923,6 +979,8 @@ void enviarStatus() {
     "\"mac\":\"" + stationMacAddress + "\","
     "\"status\":\"online\","
     "\"firmwareVersion\":\"" + String(FIRMWARE_VERSION) + "\","
+    "\"previousFirmwareVersion\":\"" + jsonEscape(String(versionHistory.previousFirmwareVersion)) + "\","
+    "\"lastOtaTargetVersion\":\"" + jsonEscape(String(versionHistory.lastOtaTargetVersion)) + "\","
     "\"uptimeMs\":" + String(millis()) + ","
     "\"freeHeap\":" + String(ESP.getFreeHeap()) + ","
     "\"rssi\":" + String(wifiOk ? WiFi.RSSI() : 0) + ","
@@ -1252,7 +1310,21 @@ String paginaPrincipal() {
   html += "<div class='code'>";
   html += FIRMWARE_VERSION;
   html += "</" "div>";
-  html += "<p class='hint'>Versao em execucao reportada em /api/status e na OTA.</" "p>";
+  html += "<p class='hint'>Versao em execucao (binario atual).</" "p>";
+  html += "<p class='label' style='margin-top:1rem'>Versao anterior</" "p>";
+  html += "<div class='code'>";
+  html += (versionHistory.previousFirmwareVersion[0]
+    ? String(versionHistory.previousFirmwareVersion)
+    : String("— (nenhum OTA ainda)"));
+  html += "</" "div>";
+  html += "<p class='hint'>Gravada no chip antes do ultimo OTA bem-sucedido (permite ver se voltou a uma versao anterior).</" "p>";
+  html += "<p class='label' style='margin-top:1rem'>Alvo do ultimo OTA (Pulse)</" "p>";
+  html += "<div class='code'>";
+  html += (versionHistory.lastOtaTargetVersion[0]
+    ? String(versionHistory.lastOtaTargetVersion)
+    : String("—"));
+  html += "</" "div>";
+  html += "<p class='hint'>Versao autorizada pelo Pulse na ultima atualizacao.</" "p>";
   html += "</" "div>";
   html += "<div class='card'>";
   html += "<p class='label'>Codigo do controlador</" "p>";
@@ -1463,6 +1535,7 @@ void setup() {
   input2RawLevel = (input2LastRaw == LOW) ? 0 : 1;
 
   loadConfigFromEeprom();
+  loadVersionHistoryFromEeprom();
 
   WiFi.mode(WIFI_STA);
   resolveStationIdentity();

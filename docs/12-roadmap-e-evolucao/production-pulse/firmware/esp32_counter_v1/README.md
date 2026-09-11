@@ -6,7 +6,7 @@ Família oficial WROOM, isolada de ESP8266 e ESP32-C3. Mesmo contrato HTTP `/api
 |------|--------|
 | Pasta Arduino | `esp32_counter_v1` |
 | Arquivo | `esp32_counter_v1.ino` |
-| `FIRMWARE_VERSION` | `esp32_counter_v1.0.0` |
+| `FIRMWARE_VERSION` | `esp32_counter_v1.0.1` |
 | `driverKey` / `firmwareKey` | `esp32_counter_v1` |
 | Board | **ESP32 Dev Module** (WROOM-32) |
 | FQBN | `esp32:esp32:esp32` |

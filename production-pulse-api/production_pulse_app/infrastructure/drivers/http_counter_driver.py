@@ -48,7 +48,7 @@ def parse_controller_identity(body: Any) -> dict[str, Any]:
     ip = body.get("ip")
     if ip is not None and str(ip).strip():
         payload["ip"] = str(ip).strip()
-    for key in ("firmwareVersion", "uptimeMs", "freeHeap", "rssi", "wifiConnected"):
+    for key in ("firmwareVersion", "previousFirmwareVersion", "lastOtaTargetVersion", "uptimeMs", "freeHeap", "rssi", "wifiConnected"):
         if key in body and body.get(key) is not None:
             payload[key] = body.get(key)
     return payload

@@ -48,6 +48,8 @@ export type LivePollResult = {
   };
   latencyMs?: number;
   firmwareVersion?: string;
+  previousFirmwareVersion?: string;
+  lastOtaTargetVersion?: string;
   uptimeMs?: number;
   freeHeap?: number;
   rssi?: number;
@@ -56,5 +58,11 @@ export type LivePollResult = {
 
 export type DeviceChipHealth = Pick<
   LivePollResult,
-  "firmwareVersion" | "uptimeMs" | "freeHeap" | "rssi" | "wifiConnected"
+  | "firmwareVersion"
+  | "previousFirmwareVersion"
+  | "lastOtaTargetVersion"
+  | "uptimeMs"
+  | "freeHeap"
+  | "rssi"
+  | "wifiConnected"
 >;

@@ -5,7 +5,7 @@ Família nova, isolada do ESP8266. Contrato HTTP `/api/*` compatível com o cont
 | Item | Valor |
 |------|--------|
 | Pasta Arduino | abra **esta** pasta (`esp32c3_counter_v1`) |
-| `FIRMWARE_VERSION` | `esp32c3_counter_v1.0.1` |
+| `FIRMWARE_VERSION` | `esp32c3_counter_v1.0.2` |
 | Board | **ESP32C3 Dev Module** |
 | Arduino core | Espressif **3.3.11** |
 | CPU | 160 MHz |
