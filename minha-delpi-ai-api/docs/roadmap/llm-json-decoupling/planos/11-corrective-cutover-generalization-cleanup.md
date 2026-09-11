@@ -1,7 +1,7 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED** · E11.S0–S8 **ATENDIDO** · próxima = **E11.S9**  
+**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_PENDING_S10** · E11.S0–S9 **ATENDIDO** · próxima = **E11.S10** · `FINAL_CANDIDATE_GIT_SHA=782a4972…`  
 **BASE_GIT_SHA (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
 **Auditoria-base:** S4 `evidence/e11-s4-structured-continuity.md`  
 **Origem:** revisão arquitetural pós Ondas A–I em 2026-09-11  
@@ -151,9 +151,9 @@ Plano 10 reaproveitou E9.S10, executado antes da alteração posterior do motor 
 | RQ11-08 | Corrigir boundaries/DI/filesystem conforme Clean Architecture | ATENDIDO_PARCIAL (E11.S8; residual FS→S10) |
 | RQ11-09 | Remover credenciais hardcoded/defaults sensíveis de scripts/smokes | ATENDIDO (E11.S8; SEMANTIC_SMOKE=0) |
 | RQ11-10 | Tornar Architecture Enforcement capaz de detectar substitutos semânticos JSON↔Python/TS | ATENDIDO (E11.S1; debt full-tree ainda vermelho até cleanup) |
-| RQ11-11 | Provar unknown external API + metamorphic rename no candidate final | ABERTO |
-| RQ11-12 | Provar compound, multi-turn, required/missing args, safety, send/stream/simulate e persist/reload no candidate final | ABERTO |
-| RQ11-13 | Encerrar flags/shadows/fallbacks/TODOs materiais ou mantê-los explicitamente fora de escopo sem declarar o objetivo global concluído | ABERTO |
+| RQ11-11 | Provar unknown external API + metamorphic rename no candidate final | ATENDIDO (E11.S9 live S14 + offline sidecar) |
+| RQ11-12 | Provar compound, multi-turn, required/missing args, safety, send/stream/simulate e persist/reload no candidate final | ATENDIDO (E11.S9 offline+S14/S15/S16) |
+| RQ11-13 | Encerrar flags/shadows/fallbacks/TODOs materiais ou mantê-los explicitamente fora de escopo sem declarar o objetivo global concluído | ABERTO (E11.S10 residual) |
 | RQ11-14 | Atualizar README/roadmap/ledger/changelog/docs canônicas somente com estados sustentados pelo HEAD final | ABERTO |
 
 ---
@@ -704,6 +704,10 @@ Qualquer diff material depois desta bateria invalida as dimensões afetadas e ob
 
 Todas as `requiredDimensions` aplicáveis estão PASS. WARN/INCONCLUSIVE bloqueia release quando a dimensão é required.
 
+- **COMPLETE_GATE:** ATENDIDO — R1–R11 PASS no candidate `782a4972…` (offline + live S14/S15/S16/S11/E10)
+- Evidência: [`../evidence/e11-s9-final-candidate.md`](../evidence/e11-s9-final-candidate.md)
+- `READY_TO_EXECUTE` E11.S10: **sim**
+
 ---
 
 ## E11.S10 — Cleanup final, residual scan, docs e verify-final
@@ -775,9 +779,9 @@ Preencher no final:
 | RQ11-08 | e11-s8 | residual inventário | phase3 | ATENDIDO_PARCIAL | FS→S10 |
 | RQ11-09 | e11-s8 | require_smoke_credentials | test_e11_s8_* | ATENDIDO | |
 | RQ11-10 | | | | | |
-| RQ11-11 | | | | | |
-| RQ11-12 | | | | | |
-| RQ11-13 | | | | | |
+| RQ11-11 | e11-s9 | S14+sidecar | e11-s9-final-candidate | ATENDIDO | sha 782a4972 |
+| RQ11-12 | e11-s9 | S14/S15/S16 | e11-s9-final-candidate | ATENDIDO | |
+| RQ11-13 | | | | ABERTO | E11.S10 |
 | RQ11-14 | | | | | |
 
 Nenhuma célula material pode ser omitida.

@@ -1,0 +1,7 @@
+smoke_e9_s16_f5_session_reload_live base=http://localhost product=10080022
+PASS  bootstrap — session=1e3d23c2-4cd4-41ca-8318-fdceb6efc290
+PASS  SEED_stock — paths=['/products/10080022/stock']
+PASS  GET_messages_reload — n=2
+PASS  FOLLOWUP_same_product_after_reload — paths=['/products/10080022/stock']
+evidence → /home/analistaptd/projetos/delpi-central/minha-delpi-ai-api/docs/roadmap/llm-json-decoupling/evidence/e9-s16-f5-session-reload-live.json
+OVERALL PASS failed=0

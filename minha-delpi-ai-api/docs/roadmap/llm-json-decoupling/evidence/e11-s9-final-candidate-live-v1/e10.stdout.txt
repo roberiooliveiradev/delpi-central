@@ -1,0 +1,8 @@
+smoke_e10_zero_lateral_path_maps_live base=http://localhost product=10080022
+PASS  content_no_lateral_keys — 0 forbidden keys
+PASS  bootstrap — agent=4f9c225b-0414-40d3-a462-040889719b83
+PASS  product_stock_domain — domains=['product'] paths=['/products/10080022/stock']
+PASS  department_kpi_sibling — domains=['department_kpi'] sample=['/commercial/closing-rate/series']
+PASS  unknown_safe_negative — reply_len=0
+evidence → /home/analistaptd/projetos/delpi-central/minha-delpi-ai-api/docs/roadmap/llm-json-decoupling/evidence/e10-zero-lateral-path-maps-live.json
+OVERALL=PASS

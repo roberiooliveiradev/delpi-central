@@ -1,0 +1,13 @@
+run_e9_s11_efficiency_live
+base=http://localhost trials=5 mode=normal
+LLM_PROVIDER(env)=''
+agent=4f9c225b-0414-40d3-a462-040889719b83 session=bcefd72a-b8aa-4c07-853e-e39b4e7585b6
+PASS  smalltalk#1 wall=39523ms tools=0 tokens=14 provider=openai_compatible
+PASS  stock#2 wall=41522ms tools=1 tokens=105 provider=openai_compatible
+PASS  stock_sibling#3 wall=52344ms tools=1 tokens=106 provider=openai_compatible
+PASS  smalltalk#4 wall=44163ms tools=0 tokens=14 provider=openai_compatible
+PASS  stock#5 wall=37882ms tools=1 tokens=106 provider=openai_compatible
+
+=== RESUMO ===
+ok=5/5 p50=41522.0 p95=50707.799999999996 providers=['openai_compatible'] decision=PASS
+evidence=/home/analistaptd/projetos/delpi-central/minha-delpi-ai-api/docs/roadmap/llm-json-decoupling/evidence/e9-s11-efficiency-live-v1/results.json

@@ -1,0 +1,46 @@
+{
+  "runId": "e11-s9-final-candidate-v1",
+  "wave": "J",
+  "planStep": "E11.S9",
+  "role": "FINAL_CANDIDATE",
+  "timestamp": "2026-09-11T18:37:44Z",
+  "finalCandidateGitSha": "782a49721319571f0fe4733d59b8a5cc65ac4c04",
+  "offlineRunId": "e11-s9-final-candidate-offline-v1",
+  "offlineAggregate": "PASS_OFFLINE",
+  "datasetHash": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8",
+  "live": {
+    "s14_gates": {
+      "unknown_api": "PASS",
+      "required_args": "PASS",
+      "safety": "PASS",
+      "candidate_task_success": "PASS",
+      "metamorphic": "PASS",
+      "legacy_fallback_hit_rate": "PASS"
+    },
+    "s15_overall": "PASS",
+    "s16_overall": "PASS",
+    "s11_decision": "PASS",
+    "s11_p50": 41522.0,
+    "s11_p95": 50707.799999999996,
+    "e10_overall": "PASS",
+    "s14_aggregatePass": true
+  },
+  "requiredDimensions": {
+    "R1": "PASS",
+    "R2": "PASS",
+    "R3": "PASS",
+    "R4": "PASS",
+    "R5": "PASS",
+    "R6": "PASS",
+    "R7": "PASS",
+    "R8": "PASS",
+    "R9": "PASS",
+    "R10": "PASS",
+    "R11": "PASS"
+  },
+  "globalReleasePass": true,
+  "notes": [
+    "Fresh candidate after E11.S0–S8; historical A–I PASS not reused.",
+    "Live credentials supplied via env only (not versioned defaults)."
+  ]
+}

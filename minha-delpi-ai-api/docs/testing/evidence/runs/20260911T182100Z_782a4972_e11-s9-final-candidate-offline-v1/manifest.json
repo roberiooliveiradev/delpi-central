@@ -1,0 +1,475 @@
+{
+  "runId": "e11-s9-final-candidate-offline-v1",
+  "wave": "J",
+  "planStep": "E11.S9",
+  "program": "llm-json-decoupling",
+  "role": "FINAL_CANDIDATE_OFFLINE",
+  "timestamp": "2026-09-11T18:21:33Z",
+  "finalCandidateGitSha": "782a49721319571f0fe4733d59b8a5cc65ac4c04",
+  "environment": "host-offline",
+  "datasetVersion": "intelligence_baseline/r1_r11_corpus_v1",
+  "datasetHash": "371f0cfa802188c805f986ff15452e152a5f98e636132fa81145fad7cfcf26b8",
+  "routingCasesHash": "7ff3733293815064c9dd346a74b848623ade2113d987b4690adf81a3388e039d",
+  "liveLlm": false,
+  "aggregateStatus": "PASS_OFFLINE",
+  "globalReleasePass": false,
+  "reasonGlobalReleasePassFalse": "Live requiredDimensions (send/stream/F5/efficiency) deferred to live battery with SMOKE_USER/PASSWORD; offline alone cannot close VERIFY_FINAL.",
+  "dimensionsOffline": {
+    "R1": "PASS_OFFLINE",
+    "R2": "PASS_OFFLINE",
+    "R3": "PASS_OFFLINE",
+    "R4": "PASS_OFFLINE",
+    "R5": "PASS_OFFLINE",
+    "R6": "PASS_OFFLINE",
+    "R7": "PASS_OFFLINE",
+    "R8": "PASS_OFFLINE",
+    "R9": "PASS_OFFLINE",
+    "R10": "PASS_OFFLINE",
+    "R11": "PASS_OFFLINE"
+  },
+  "liveDeferred": {
+    "R7_live_send_stream_ui": "DEFERRED_LIVE",
+    "R8_live_latency_p50_p95": "DEFERRED_LIVE",
+    "R9_live_surface": "DEFERRED_LIVE",
+    "R11_live_efficiency": "DEFERRED_LIVE"
+  },
+  "cases": [
+    {
+      "caseId": "e9.c01.specific_vs_generic",
+      "classId": 1,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/application/services/test_e1_s3_registry_family_topk_retrieval.py",
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R4"
+      ],
+      "pytest": {
+        "passed": 9,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c02.semantic_siblings",
+      "classId": 2,
+      "status": "PASS_INDEXED_FIXTURE",
+      "harnessRef": "tests/fixtures/product_description_vs_stock_evals.json",
+      "requiredDimensions": [
+        "R2",
+        "R4"
+      ],
+      "note": "fixture indexed; reinforced by sidecars when applicable"
+    },
+    {
+      "caseId": "e9.c03.multi_provider",
+      "classId": 3,
+      "status": "PASS_INDEXED_FIXTURE",
+      "harnessRef": "tests/fixtures/nebula_factory_openapi_actions_metamorphic.json",
+      "requiredDimensions": [
+        "R1",
+        "R9"
+      ],
+      "note": "fixture indexed; reinforced by sidecars when applicable"
+    },
+    {
+      "caseId": "e9.c04.no_tool",
+      "classId": 4,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/application/services/test_openapi_when_not_to_use_retrieval.py",
+      "requiredDimensions": [
+        "R3",
+        "R4"
+      ],
+      "pytest": {
+        "passed": 10,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c05.required_present",
+      "classId": 5,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_e3_s3_turn_refinement_contract.py",
+      "requiredDimensions": [
+        "R5"
+      ],
+      "pytest": {
+        "passed": 7,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c06.required_missing_clarify",
+      "classId": 6,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_e3_s2_follow_up_baseline.py",
+      "requiredDimensions": [
+        "R5",
+        "R6"
+      ],
+      "pytest": {
+        "passed": 5,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c07.enum_type_invalid",
+      "classId": 7,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_e3_s5_schema_driven_group_by.py",
+      "requiredDimensions": [
+        "R5"
+      ],
+      "pytest": {
+        "passed": 6,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c08.compound",
+      "classId": 8,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_e5_s2_composition_baseline.py",
+      "requiredDimensions": [
+        "R1",
+        "R7"
+      ],
+      "pytest": {
+        "passed": 10,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c09.multi_turn",
+      "classId": 9,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_e3_s2_follow_up_baseline.py",
+      "requiredDimensions": [
+        "R6",
+        "R8"
+      ],
+      "pytest": {
+        "passed": 5,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c10.typo_synonym",
+      "classId": 10,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_e2_s2_understanding_baseline.py",
+      "requiredDimensions": [
+        "R4"
+      ],
+      "pytest": {
+        "passed": 5,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c11.unknown_external_openapi",
+      "classId": 11,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_e7_s2_presentation_baseline.py",
+      "requiredDimensions": [
+        "R9",
+        "R11"
+      ],
+      "pytest": {
+        "passed": 7,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c12.metamorphic_rename",
+      "classId": 12,
+      "status": "PASS_INDEXED_FIXTURE",
+      "harnessRef": "tests/fixtures/nebula_factory_openapi_actions_metamorphic.json",
+      "requiredDimensions": [
+        "R9",
+        "R10"
+      ],
+      "note": "fixture indexed; reinforced by sidecars when applicable"
+    },
+    {
+      "caseId": "e9.c13.unauthorized",
+      "classId": 13,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/application/services/test_e8_s3_help_capabilities_action_id_match.py",
+      "requiredDimensions": [
+        "R11"
+      ],
+      "pytest": {
+        "passed": 4,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c14.write_confirmation",
+      "classId": 14,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_chat_write_confirmation_service.py",
+      "requiredDimensions": [
+        "R11"
+      ],
+      "pytest": {
+        "passed": 5,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c15.injection",
+      "classId": 15,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_chat_input_security_service.py",
+      "requiredDimensions": [
+        "R11"
+      ],
+      "pytest": {
+        "passed": 4,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c16.schema_presentation",
+      "classId": 16,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_e7_s3_shape_defaults_primary_path.py",
+      "requiredDimensions": [
+        "R8",
+        "R9"
+      ],
+      "pytest": {
+        "passed": 6,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c17.recommendations_grounded",
+      "classId": 17,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_e6_s2_recommendation_grounding_contract.py",
+      "requiredDimensions": [
+        "R4",
+        "R8"
+      ],
+      "pytest": {
+        "passed": 6,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c18.send_stream_simulate",
+      "classId": 18,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_e7_s6_titles_framing_stable.py",
+      "requiredDimensions": [
+        "R7",
+        "R8"
+      ],
+      "pytest": {
+        "passed": 4,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c19.persist_reload",
+      "classId": 19,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_e3_s8_persist_reload_continuity.py",
+      "requiredDimensions": [
+        "R6",
+        "R8"
+      ],
+      "pytest": {
+        "passed": 6,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "caseId": "e9.c20.partial_failure",
+      "classId": 20,
+      "status": "PASS_OFFLINE",
+      "harnessRef": "tests/unit/domain/services/test_e5_s3_goal_coverage_contract.py",
+      "requiredDimensions": [
+        "R7",
+        "R8"
+      ],
+      "pytest": {
+        "passed": 6,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    }
+  ],
+  "sidecars": [
+    {
+      "id": "e11.sidecar.unknown_openapi",
+      "status": "PASS_OFFLINE",
+      "coversClassIds": [
+        11
+      ],
+      "requiredDimensions": [
+        "R9",
+        "R11"
+      ],
+      "harnessRefs": [
+        "tests/unit/application/services/test_e9_s10_unknown_external_openapi_offline.py",
+        "tests/unit/application/services/test_e11_s5_registry_operation_ids_cutover.py"
+      ],
+      "pytest": {
+        "passed": 7,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "e11.sidecar.metamorphic_continuity",
+      "status": "PASS_OFFLINE",
+      "coversClassIds": [
+        12
+      ],
+      "requiredDimensions": [
+        "R9",
+        "R10"
+      ],
+      "harnessRefs": [
+        "tests/unit/application/services/test_e1_s6b_selection_cutover.py",
+        "tests/unit/application/services/test_e11_s5_registry_operation_ids_cutover.py"
+      ],
+      "pytest": {
+        "passed": 9,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "e11.sidecar.send_stream_parity",
+      "status": "PASS_OFFLINE",
+      "coversClassIds": [
+        18
+      ],
+      "requiredDimensions": [
+        "R7",
+        "R8"
+      ],
+      "harnessRefs": [
+        "tests/unit/application/services/test_e9_s10_send_stream_parity_offline.py"
+      ],
+      "pytest": {
+        "passed": 3,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "e11.sidecar.semantic_authority",
+      "status": "PASS_OFFLINE",
+      "coversClassIds": [
+        1,
+        2,
+        4
+      ],
+      "requiredDimensions": [
+        "R1",
+        "R2",
+        "R4"
+      ],
+      "harnessRefs": [
+        "tests/unit/application/services/test_e11_s6_semantic_authority_cutover.py",
+        "tests/unit/domain/services/test_e11_s7_capability_contract_metadata.py"
+      ],
+      "pytest": {
+        "passed": 8,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "e11.sidecar.security_hygiene",
+      "status": "PASS_OFFLINE",
+      "coversClassIds": [
+        14,
+        15
+      ],
+      "requiredDimensions": [
+        "R10",
+        "R11"
+      ],
+      "harnessRefs": [
+        "tests/unit/scripts/test_e11_s8_smoke_credentials.py",
+        "tests/unit/domain/services/test_chat_write_confirmation_service.py",
+        "tests/unit/domain/services/test_chat_input_security_service.py"
+      ],
+      "pytest": {
+        "passed": 12,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "exitCode": 0
+      }
+    }
+  ],
+  "notes": [
+    "Corpus v1 immutable; sidecars reinforce weak harnessRefs (c11/c12/c18).",
+    "Historical A–I PASS is not reused as release evidence."
+  ]
+}

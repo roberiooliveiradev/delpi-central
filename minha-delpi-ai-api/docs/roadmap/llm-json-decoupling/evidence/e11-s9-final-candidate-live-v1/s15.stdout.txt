@@ -1,0 +1,13 @@
+smoke_e9_s15_release_blockers_live base=http://localhost product=10080022
+PASS  bootstrap — agent=4f9c225b-0414-40d3-a462-040889719b83
+PASS  recommendations_catalog_grounded — hits=2/2 catalog=3
+PASS  recommendations_followups — n=4
+PASS  recommendations_sources — keys=['followUpSuggestions', 'operationalRefinementFollowUpSuggestions', 'presentationFollowUpSuggestions']
+PASS  recommendations_no_write
+PASS  recommendations_action_ids — sem actionId rogue
+PASS  SEND_stock — paths=['/products/10080022/stock'] ms=41.58
+PASS  STREAM_stock — plans=2 tables=2 ms=42.19
+PASS  SIMULATE_stock — plans=1 tables=1 ms=14.91
+PASS  parity_send_stream_simulate — 3/3 surfaces PASS
+evidence → /home/analistaptd/projetos/delpi-central/minha-delpi-ai-api/docs/roadmap/llm-json-decoupling/evidence/e9-s15-release-blockers-live.json
+OVERALL PASS failed=0
