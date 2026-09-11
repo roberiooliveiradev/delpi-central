@@ -76,3 +76,17 @@ Documento de evidência para o plano hub OTA. Não substitui SCHEMA.md / API-ROU
 - [ ] Archive versão → não cria job; histórico permanece
 - [ ] `/firmware-jobs?branch=` redireciona preservando filial
 - [ ] UI: authorized sem barra %; downloading com % real
+
+## OTA híbrido (Push Wake + Pull Autorizado)
+
+| Camada | Contrato |
+|---|---|
+| Configure push | API envia `otaBaseUrl`, `branch`, `otaCheckIntervalMs` (`PP_DEVICE_OTA_BASE_URL`) — MFE não é dona da URL |
+| Authorize | Job manual ou scheduled autoriza targets (`status=authorized`) |
+| Wake (push) | Após commit: `DeviceOtaWakeService` → `POST http://{ip}/api/ota/check-now` (best-effort). Falha **não** muda `target.status`/`error_code` |
+| Telemetria wake | `wake_status` / `wake_attempted_at` / `wake_acknowledged_at` / `wake_error_code` em `firmware_update_targets` |
+| Pull | Device: `GET /device-ota/check` (+ artifact + report). Intervalo firmware ~60 s + jitter; flag `otaCheckRequested` |
+| Poll versão | Scheduler/poll sincroniza `firmwareVersion` de `/api/status` → `installed_firmware_version` |
+| UI | `resolveOtaVisualState`: Avisando / Avisado / Não avisou·pull / Aguardando consulta / Offline / download… |
+
+Smoke físico A–K: **PENDENTE_HARDWARE**.

@@ -70,7 +70,7 @@ Confirmação: `PpConfirmDialog` + `PP_HELP.hub.softDelete*`. Proibido `window.c
 | Estado OTA por IoT | `useProductionPulseOtaMonitor` + `resolveOtaVisualState` / `OtaStatusIndicator` |
 
 **Vocabulário UI:** **Tipo de driver** (`driver_key` / protocolo IoT) ≠ **Família OTA** (`firmware_key` / versões). Painel `panel=drivers`; modais `driver-create` / `driver-detail`.
-**OTA:** `pending`/`authorized` = «Aguardando dispositivo» (sem %); `applying` indeterminate; falhas via `resolveOtaTargetFailure`.
+**OTA híbrido:** `authorized` + `wakeStatus` → Avisando / Avisado / Não avisou·pull; sem wake → «Aguardando consulta OTA» (sem %); `applying` indeterminate; falhas OTA via `resolveOtaTargetFailure` (wake fail ≠ OTA failed).
 
 URL: `panel`/`modal` shareable; summary/menu/confirm **efêmeros** (não reidratam summary fantasma). Transições: `adminHubLayerTransitions.ts`. Detalhe: `docs/12-roadmap-e-evolucao/production-pulse/ADMIN-HUB-OTA-STABILIZATION.md`.
 

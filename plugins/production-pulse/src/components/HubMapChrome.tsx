@@ -354,7 +354,7 @@ export function HubMapChrome({
               {typeof diagnostics.awaitingCount === "number" ? (
                 <div className="pp-hub-map-chrome__fact">
                   <strong>{diagnostics.awaitingCount}</strong>
-                  <span>Aguardando dispositivo</span>
+                  <span>Aguardando consulta OTA</span>
                 </div>
               ) : null}
               {typeof diagnostics.downloadingCount === "number" ? (

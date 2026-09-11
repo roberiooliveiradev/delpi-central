@@ -108,7 +108,8 @@ stateDiagram-v2
 - Taxonomia: `resolveOtaVisualState` + `OtaStatusIndicator` / `OtaTargetProgress`.
 - Notices: IDs determinísticos (`ota-target-active:<deviceId>`, …); `pushResolvedProductionPulseNotice`.
 - `applying` = indeterminate (sem % 95 sintético).
-- Fases UI: Aguardando dispositivo / Baixando / Aplicando / Atualizado / Falhou / Interrompida.
+- Fases UI (híbrido): Avisando dispositivo / Avisado · aguardando consulta / Não avisou · aguardando pull / Aguardando consulta OTA / Offline / Baixando / Aplicando / Atualizado / Falhou / Interrompida.
+- Wake é telemetria (`wake_*`); não confundir com falha OTA (`error_code` / `status=failed`).
 
 ### Scheduler
 
