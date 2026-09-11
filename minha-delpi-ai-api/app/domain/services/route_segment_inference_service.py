@@ -1,141 +1,136 @@
-"""E9.S12.D — continuity segment keys derived from OpenAPI paths (operationIds).
+"""E11.S4 — continuity facets from structured route metadata (not path-tail / inventory).
 
-Registry JSON `routeSegment` is no longer authority after cutover.
-Runtime continuity keys (e.g. open-orders, inbound-invoice) may differ from
-path tails (sales/open-orders, inbound-invoice-items); matching normalizes both.
+Authority:
+1. ``route.continuityFacets`` (explicit)
+2. ``route.intentBinding``
+3. ``route.routeSegment`` (legacy field, if present)
+4. facet derived from ``route.id`` (camelCase → kebab after product/domain prefix)
+5. optional aliases passed by the registry loader (no domain FS/content IO)
+
+No filesystem read of OpenAPI operationId inventory. No path substring authority.
 """
 
 from __future__ import annotations
 
-import json
 import re
-from functools import lru_cache
-from pathlib import Path
-from typing import Any
-
-
-def invalidate_route_segment_inference_cache() -> None:
-    _operation_id_to_path.cache_clear()
-
-
-@lru_cache(maxsize=1)
-def _operation_id_to_path() -> dict[str, str]:
-    inventory_path = (
-        Path(__file__).resolve().parents[4]
-        / "api-delpi"
-        / "app"
-        / "content"
-        / "openapi_operation_id_inventory.json"
-    )
-    if not inventory_path.is_file():
-        return {}
-
-    payload = json.loads(inventory_path.read_text(encoding="utf-8"))
-    operations = payload.get("operations") if isinstance(payload, dict) else None
-    if not isinstance(operations, list):
-        return {}
-
-    mapping: dict[str, str] = {}
-    for row in operations:
-        if not isinstance(row, dict):
-            continue
-        operation_id = str(row.get("operationId") or "").strip()
-        path = str(row.get("path") or "").strip()
-        if operation_id and path:
-            mapping[operation_id] = path
-    return mapping
+from typing import Any, Mapping
 
 
 class RouteSegmentInferenceService:
-    """Deriva chaves de continuidade product-path sem ler `route.routeSegment`."""
+    """Continuity facet resolver — structured route metadata only."""
 
-    _PATH_SUFFIXES = ("-items", "-item", "-summary")
-    _CODE_RE = re.compile(r"^\d{5,}$")
+    _CAMEL_1 = re.compile(r"(.)([A-Z][a-z]+)")
+    _CAMEL_2 = re.compile(r"([a-z0-9])([A-Z])")
+    _ID_PREFIXES = ("product", "domain")
 
     @classmethod
     def path_for_operation_id(cls, operation_id: str | None) -> str | None:
-        target = str(operation_id or "").strip()
-        if not target:
-            return None
-        return _operation_id_to_path().get(target)
+        """Deprecated stub — inventory path lookup removed (E11.S4)."""
+        _ = operation_id
+        return None
 
     @classmethod
     def continuity_keys_from_path(cls, path: str | None) -> frozenset[str]:
-        parts = [part for part in str(path or "").lower().strip("/").split("/") if part]
-        if not parts or parts[0] != "products":
-            return frozenset()
-
-        rest = parts[1:]
-        if not rest:
-            return frozenset()
-
-        keys: set[str] = set()
-
-        if len(rest) == 1:
-            if not cls._is_placeholder(rest[0]):
-                keys.add(rest[0])
-            return frozenset(keys)
-
-        if cls._is_placeholder(rest[0]) or cls._looks_like_code(rest[0]):
-            tail_parts = rest[1:]
-        elif cls._is_placeholder(rest[-1]):
-            # /products/directives/{identifier}
-            tail_parts = rest[:-1]
-        else:
-            tail_parts = rest
-
-        if not tail_parts:
-            return frozenset(keys)
-
-        keys.add("/".join(tail_parts))
-        keys.add(tail_parts[-1])
-
-        last = tail_parts[-1]
-        for suffix in cls._PATH_SUFFIXES:
-            if last.endswith(suffix) and len(last) > len(suffix):
-                keys.add(last[: -len(suffix)])
-
-        return frozenset(keys)
+        """Deprecated stub — path-tail is not continuity authority."""
+        _ = path
+        return frozenset()
 
     @classmethod
-    def continuity_keys_for_route(cls, route: dict[str, Any] | None) -> frozenset[str]:
+    def continuity_keys_for_route(
+        cls,
+        route: dict[str, Any] | None,
+        *,
+        aliases: Mapping[str, tuple[str, ...]] | None = None,
+    ) -> frozenset[str]:
         if not isinstance(route, dict):
             return frozenset()
 
         keys: set[str] = set()
 
-        # Compat: declared field still honored if present (tests / transitional).
+        declared_facets = route.get("continuityFacets")
+        if isinstance(declared_facets, list):
+            for item in declared_facets:
+                token = str(item or "").strip().lower()
+                if token:
+                    keys.add(token)
+
+        intent = str(route.get("intentBinding") or "").strip().lower()
+        if intent:
+            keys.add(intent)
+
         declared = str(route.get("routeSegment") or "").strip().lower()
         if declared:
             keys.add(declared)
 
-        route_spec = route.get("route") if isinstance(route.get("route"), dict) else {}
-        for item in route_spec.get("operationIds") or []:
-            path = cls.path_for_operation_id(str(item or "").strip())
-            if path:
-                keys.update(cls.continuity_keys_from_path(path))
+        from_id = cls._facet_from_route_id(str(route.get("id") or ""))
+        if from_id:
+            keys.add(from_id)
 
-        return frozenset(keys)
+        alias_map = aliases or {}
+        expanded = set(keys)
+        for key in keys:
+            expanded.update(alias_map.get(key, ()))
+            for canon, values in alias_map.items():
+                if key == canon or key in values:
+                    expanded.add(canon)
+                    expanded.update(values)
+        return frozenset(expanded)
 
     @classmethod
     def route_matches_segment(
         cls,
         route: dict[str, Any] | None,
         segment: str | None,
+        *,
+        aliases: Mapping[str, tuple[str, ...]] | None = None,
     ) -> bool:
         normalized = str(segment or "").strip().lower()
         if not normalized:
             return False
-        return normalized in cls.continuity_keys_for_route(route)
+        return normalized in cls.continuity_keys_for_route(route, aliases=aliases)
 
     @classmethod
-    def has_product_continuity_segment(cls, route: dict[str, Any] | None) -> bool:
-        return bool(cls.continuity_keys_for_route(route))
-
-    @staticmethod
-    def _is_placeholder(token: str) -> bool:
-        return token.startswith("{") and token.endswith("}")
+    def has_product_continuity_segment(
+        cls,
+        route: dict[str, Any] | None,
+        *,
+        aliases: Mapping[str, tuple[str, ...]] | None = None,
+    ) -> bool:
+        if not isinstance(route, dict):
+            return False
+        match = route.get("match") if isinstance(route.get("match"), dict) else {}
+        if bool(match.get("requiresProductIdentifier")):
+            return True
+        domain = str(route.get("domain") or "").strip().lower()
+        if domain in {"product", "domainproductsearch", "product_search"}:
+            return True
+        return bool(cls.continuity_keys_for_route(route, aliases=aliases))
 
     @classmethod
-    def _looks_like_code(cls, token: str) -> bool:
-        return bool(cls._CODE_RE.fullmatch(token))
+    def _facet_from_route_id(cls, route_id: str) -> str:
+        token = str(route_id or "").strip()
+        if not token:
+            return ""
+        rest = token
+        lowered = token.lower()
+        for prefix in cls._ID_PREFIXES:
+            if lowered.startswith(prefix) and len(token) > len(prefix):
+                boundary = token[len(prefix) : len(prefix) + 1]
+                if boundary.isupper() or boundary.isdigit():
+                    rest = token[len(prefix) :]
+                    break
+        return cls._camel_to_kebab(rest)
+
+    @classmethod
+    def _camel_to_kebab(cls, value: str) -> str:
+        text = str(value or "").strip()
+        if not text:
+            return ""
+        text = cls._CAMEL_1.sub(r"\1-\2", text)
+        text = cls._CAMEL_2.sub(r"\1-\2", text)
+        return text.replace("_", "-").lower().strip("-")
+
+
+def invalidate_route_segment_inference_cache() -> None:
+    """No-op kept for call-site compat (no process cache after E11.S4)."""
+    return None

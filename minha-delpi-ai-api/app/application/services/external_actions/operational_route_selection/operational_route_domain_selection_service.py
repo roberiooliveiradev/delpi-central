@@ -150,7 +150,10 @@ class OperationalRouteDomainSelectionService:
                 RouteSegmentInferenceService,
             )
 
-            route_keys = RouteSegmentInferenceService.continuity_keys_for_route(route)
+            route_keys = RouteSegmentInferenceService.continuity_keys_for_route(
+                route,
+                aliases=OperationalRouteRegistryService.continuity_facet_aliases(),
+            )
 
             if normalized_segment:
                 if route_keys:

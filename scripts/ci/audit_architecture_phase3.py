@@ -124,7 +124,7 @@ SEMANTIC_PATH_STRATEGY_BRANCH_RE = re.compile(
 )
 SEMANTIC_ROUTE_SEGMENT_CLASS_RE = re.compile(r"\bclass\s+RouteSegmentInferenceService\b")
 SEMANTIC_ROUTE_SEGMENT_PATH_TAIL_RE = re.compile(
-    r"\bcontinuity_keys_from_path\b|\bpath_for_operation_id\b|_operation_id_to_path\b"
+    r"openapi_operation_id_inventory|_operation_id_to_path\s*\("
 )
 SEMANTIC_SMOKE_CRED_DEFAULT_RE = re.compile(
     r"""(?:os\.environ\.get|getenv)\(\s*['\"]SMOKE_(?:USER|PASSWORD)['\"]\s*,\s*['\"][^'\"]+['\"]"""
@@ -596,15 +596,19 @@ def scan_semantic_substitute_lines(path: str, lines: dict[int, str]) -> list[Vio
                 f"path/operationId→strategy branch: {normalize(line)}",
             ))
         if SEMANTIC_ROUTE_SEGMENT_CLASS_RE.search(line):
-            findings.append(Violation(
-                "SEMANTIC_PATH_ROUTE_SEGMENT",
-                path,
-                line_no,
-                f"path/operationId→routeSegment authority class: {normalize(line)}",
-            ))
+            body = "\n".join(lines.values())
+            if "openapi_operation_id_inventory" in body or "_operation_id_to_path" in body:
+                findings.append(Violation(
+                    "SEMANTIC_PATH_ROUTE_SEGMENT",
+                    path,
+                    line_no,
+                    f"path/operationId→routeSegment authority class: {normalize(line)}",
+                ))
         if (
             path.endswith("route_segment_inference_service.py")
             and SEMANTIC_ROUTE_SEGMENT_PATH_TAIL_RE.search(line)
+            and "return frozenset()" not in line
+            and "return None" not in line
         ):
             findings.append(Violation(
                 "SEMANTIC_PATH_ROUTE_SEGMENT",

@@ -214,6 +214,18 @@ class ExecuteExternalActionUseCase:
             }
         )
         parameter_strategy = "schema"
+        action_payload = action if isinstance(action, dict) else {}
+        delpi_meta = (
+            action_payload.get("delpiMetadata")
+            or action_payload.get("delpi_metadata")
+            or {}
+        )
+        entity = ""
+        if isinstance(delpi_meta, dict):
+            entity = str(delpi_meta.get("entity") or "").strip()
+        continuity_facet = ""
+        if entity.lower().startswith("product_") and len(entity) > len("product_"):
+            continuity_facet = entity[len("product_") :].replace("_", "-").lower()
         persisted_request_parameters = {
             key: value
             for key, value in dict(gateway_parameters or {}).items()
@@ -238,6 +250,10 @@ class ExecuteExternalActionUseCase:
             "requestParameters": persisted_request_parameters,
             **presentation_metadata,
         }
+        if entity:
+            execution_metadata["entity"] = entity
+        if continuity_facet:
+            execution_metadata["continuityFacet"] = continuity_facet
 
         api_delpi_meta = self._extract_api_delpi_response_meta(sanitized_data)
         if api_delpi_meta:

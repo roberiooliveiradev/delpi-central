@@ -51,6 +51,27 @@ class OperationalRouteRegistryService:
         return str(_registry_content().get("version") or "").strip()
 
     @classmethod
+    def continuity_facet_aliases(cls) -> dict[str, tuple[str, ...]]:
+        raw = _registry_content().get("continuityFacetAliases")
+        if not isinstance(raw, dict):
+            return {}
+        out: dict[str, tuple[str, ...]] = {}
+        for key, values in raw.items():
+            canon = str(key or "").strip().lower()
+            if not canon:
+                continue
+            if isinstance(values, list):
+                aliases = tuple(
+                    str(item).strip().lower() for item in values if str(item).strip()
+                )
+            elif isinstance(values, str) and values.strip():
+                aliases = (values.strip().lower(),)
+            else:
+                aliases = ()
+            out[canon] = aliases
+        return out
+
+    @classmethod
     def dispatch_order(cls) -> list[str]:
         order = _registry_content().get("dispatchOrder")
 
@@ -181,10 +202,13 @@ class OperationalRouteRegistryService:
 
         domain = str(route.get("domain") or "").strip()
         match = route.get("match") if isinstance(route.get("match"), dict) else {}
-        has_segment = RouteSegmentInferenceService.has_product_continuity_segment(route)
+        has_segment = RouteSegmentInferenceService.has_product_continuity_segment(
+            route,
+            aliases=OperationalRouteRegistryService.continuity_facet_aliases(),
+        )
         requires_product = bool(match.get("requiresProductIdentifier"))
 
-        # domainProductSearch before inferred path keys — /products/search also yields keys.
+        # domainProductSearch before product facets — search is catch-all vs identifier routes.
         if domain == "domainProductSearch":
             class_rank = 2
         elif has_segment or requires_product or domain == "product":
@@ -217,7 +241,11 @@ class OperationalRouteRegistryService:
         return [
             route
             for route in cls.routes()
-            if RouteSegmentInferenceService.route_matches_segment(route, normalized)
+            if RouteSegmentInferenceService.route_matches_segment(
+                route,
+                normalized,
+                aliases=cls.continuity_facet_aliases(),
+            )
         ]
 
     @classmethod
@@ -343,7 +371,7 @@ class OperationalRouteRegistryService:
 
     @classmethod
     def route_path_marker_for_segment(cls, segment: str) -> str | None:
-        """Hint de path por segment — pós-E9.S12.D deriva de operationIds (OpenAPI)."""
+        """Hint técnico de path fragment — só se existir rota com a faceta (não deriva inventory)."""
         normalized = str(segment or "").strip().lower()
 
         if not normalized:
@@ -352,7 +380,6 @@ class OperationalRouteRegistryService:
         if not cls.routes_by_segment(normalized):
             return None
 
-        # Canonical: continuity segment as path fragment (ex.: stock → /stock).
         return f"/{normalized}"
 
     @classmethod
@@ -362,13 +389,17 @@ class OperationalRouteRegistryService:
         )
 
         mapping: dict[str, str] = {}
+        aliases = cls.continuity_facet_aliases()
 
         for route in cls.intent_bound_routes():
             intent = str(route.get("intentBinding") or "").strip().lower()
             if not intent:
                 continue
 
-            for segment in RouteSegmentInferenceService.continuity_keys_for_route(route):
+            for segment in RouteSegmentInferenceService.continuity_keys_for_route(
+                route,
+                aliases=aliases,
+            ):
                 # Prefer exact intentBinding key when present among derived keys.
                 if segment == intent or segment not in mapping:
                     mapping[segment] = intent

@@ -1,5 +1,10 @@
 {
   "version": "2026.06.16",
+  "continuityFacetAliases": {
+    "invoices-inbound": ["inbound-invoice"],
+    "invoices-outbound": ["outbound-invoice"],
+    "structure-exclusivity": ["structure/exclusivity"]
+  },
   "dispatchOrder": [
     "sessionRefinement",
     "operationalRoutes",
@@ -693,6 +698,7 @@
       "domain": "product",
       "priority": 113,
       "intentBinding": "full",
+      "continuityFacets": ["inbound-invoice", "invoices-inbound"],
       "match": {
         "customPredicate": "inboundInvoiceRoute",
         "requiresProductIdentifier": true
@@ -712,6 +718,7 @@
       "domain": "product",
       "priority": 112,
       "intentBinding": "full",
+      "continuityFacets": ["outbound-invoice", "invoices-outbound"],
       "match": {
         "customPredicate": "outboundInvoiceRoute",
         "requiresProductIdentifier": true

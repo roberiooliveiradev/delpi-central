@@ -1,9 +1,9 @@
 # Plano 11 — Correção arquitetural: cutover + generalização + cleanup sem residual
 
 **Prioridade:** P0  
-**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED** · E11.S0–S3 **ATENDIDO** · próxima = **E11.S4**  
+**Status execução:** Onda J · **ABERTO / VERIFY_FINAL_FAILED** · E11.S0–S4 **ATENDIDO** · próxima = **E11.S5**  
 **BASE_GIT_SHA (E11.S0):** `8bc84fc6d1cea3edc8cd0c08dceee90f9303e777`  
-**Auditoria-base:** revalidar HEAD antes de cada subetapa; S3 `evidence/e11-s3-schema-argument-binding.md`  
+**Auditoria-base:** S4 `evidence/e11-s4-structured-continuity.md`  
 **Origem:** revisão arquitetural pós Ondas A–I em 2026-09-11  
 **Objetivo perceptível:** concluir de fato o desacoplamento OpenAPI-first, removendo authorities paralelas e substitutos semânticos do legado, provando que uma API OpenAPI nunca vista funciona sem código por endpoint e sem deixar `PARTIAL`, `LEGACY_FALLBACK`, `INCONCLUSIVE`, TODO ou dívida material escondida como “concluída”.
 
@@ -143,7 +143,7 @@ Plano 10 reaproveitou E9.S10, executado antes da alteração posterior do motor 
 |---|---|---|
 | RQ11-01 | Eliminar path→domain maps/substitutos do core genérico, em qualquer formato | ATENDIDO (E11.S2) |
 | RQ11-02 | Eliminar endpoint→parameterStrategy e usar schema OpenAPI como authority | ATENDIDO (E11.S3; path/oid inference removida; helpers schema-driven) |
-| RQ11-03 | Eliminar continuidade multi-turn derivada de path/operationId | ABERTO |
+| RQ11-03 | Eliminar continuidade multi-turn derivada de path/operationId | ATENDIDO (E11.S4; facetas estruturadas) |
 | RQ11-04 | Remover `operationIds`/registry técnico como authority de routing | ABERTO |
 | RQ11-05 | Consolidar ownership semântico e remover NLU endpoint/domain-specific redundante | ABERTO |
 | RQ11-06 | Tornar recommendations contextuais; estático no máximo fallback temporário com exit criteria | ABERTO |
@@ -478,6 +478,13 @@ Remover:
 ### Complete gate
 
 R6 PASS e `PATH/OPERATION_ID_COUPLED_RUNTIME_RULES` de continuidade = 0.
+
+### Estado E11.S4 (2026-09-11)
+
+- **COMPLETE_GATE:** ATENDIDO (`SEMANTIC_PATH_ROUTE_SEGMENT=0`; inventory FS removido)
+- Evidência: `evidence/e11-s4-structured-continuity.md`
+- RQ11-03 ATENDIDO; R6 live em E11.S9
+- `READY_TO_EXECUTE` E11.S5: **sim**
 
 ---
 

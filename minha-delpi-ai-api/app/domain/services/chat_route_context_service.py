@@ -362,6 +362,12 @@ class ChatRouteContextService:
         from app.domain.services.chat_analysis_intent_service import (
             ChatAnalysisIntentService,
         )
+        from app.domain.services.operational_route_registry_service import (
+            OperationalRouteRegistryService,
+        )
+        from app.domain.services.route_segment_inference_service import (
+            RouteSegmentInferenceService,
+        )
 
         for item in reversed((previous_messages or [])[-12:]):
             metadata = cls._message_metadata(item)
@@ -378,6 +384,61 @@ class ChatRouteContextService:
                 if not tool_meta.get("ok"):
                     continue
 
+                # E11.S4 — structured facet / entity before any path-tail.
+                stamped = str(
+                    tool_meta.get("continuityFacet")
+                    or tool_meta.get("routeContinuityFacet")
+                    or ""
+                ).strip().lower()
+                if stamped and (
+                    stamped in cls._PRODUCT_SEGMENT_TO_INTENT
+                    or stamped in cls._PRODUCT_ROUTE_SEGMENTS
+                ):
+                    return stamped
+
+                entity = str(tool_meta.get("entity") or "").strip().lower()
+                if entity.startswith("product_") and len(entity) > len("product_"):
+                    candidate = entity[len("product_") :].replace("_", "-")
+                    if (
+                        candidate in cls._PRODUCT_SEGMENT_TO_INTENT
+                        or candidate in cls._PRODUCT_ROUTE_SEGMENTS
+                    ):
+                        return candidate
+
+                action_id = str(
+                    tool_meta.get("actionId")
+                    or (tool_call.get("arguments") or {}).get("actionId")
+                    or ""
+                ).strip()
+                if action_id:
+                    for route in OperationalRouteRegistryService.routes():
+                        route_spec = (
+                            route.get("route")
+                            if isinstance(route.get("route"), dict)
+                            else {}
+                        )
+                        op_ids = {
+                            str(item).strip()
+                            for item in (route_spec.get("operationIds") or [])
+                            if str(item).strip()
+                        }
+                        # actionId often ends with operationId
+                        matched = any(
+                            action_id.endswith(op) or op in action_id for op in op_ids
+                        )
+                        if not matched and str(route.get("id") or "") not in action_id:
+                            continue
+                        for facet in RouteSegmentInferenceService.continuity_keys_for_route(
+                            route,
+                            aliases=OperationalRouteRegistryService.continuity_facet_aliases(),
+                        ):
+                            if (
+                                facet in cls._PRODUCT_SEGMENT_TO_INTENT
+                                or facet in cls._PRODUCT_ROUTE_SEGMENTS
+                            ):
+                                return facet
+
+                # Last resort legacy: path segment (compat until metadata is always stamped).
                 segment = ChatAnalysisIntentService.extract_product_path_segment(
                     str(tool_meta.get("path") or "")
                 )

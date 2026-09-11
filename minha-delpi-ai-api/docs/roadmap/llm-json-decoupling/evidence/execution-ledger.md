@@ -20,7 +20,7 @@
 | G — presentation/skills | 07, 08 | **HISTÓRICO / REVALIDAR NA J** | — | Candidate final E11.S9 |
 | H — cutover/cleanup | 09 | **PASS HISTÓRICO; NÃO RELEASE VIGENTE** | — | Candidate evidence anterior a drifts posteriores |
 | I — zero mapa lateral | 10 | **ACEITE INVALIDADO POR DRIFT** | — | Substitutos semânticos encontrados em runtime |
-| J — correção arquitetural | 11 | **ABERTO / VERIFY_FINAL_FAILED** | **E11.S4** | E11.S0–S3 ATENDIDO; schema bind sem path→strategy |
+| J — correção arquitetural | 11 | **ABERTO / VERIFY_FINAL_FAILED** | **E11.S5** | E11.S0–S4 ATENDIDO; continuity estruturada |
 
 ## Protocolo por subetapa
 
@@ -244,3 +244,4 @@ Qualquer mudança material posterior ao candidate invalida as dimensões de evid
 | 2026-09-11 | **E11.S1 ATENDIDO** — Phase3 `--check-semantic-debt` vermelho (274); RQ11-10; próxima = **E11.S2** |
 | 2026-09-11 | **E11.S2 ATENDIDO** — apiRouteDomain sem path authority; `SEMANTIC_PATH_DOMAIN_MAP=0`; próxima = **E11.S3** |
 | 2026-09-11 | **E11.S3 ATENDIDO** — `bind_schema_first`; path→strategy = 0; próxima = **E11.S4** |
+| 2026-09-11 | **E11.S4 ATENDIDO** — continuity facets sem path-tail/inventory; próxima = **E11.S5** |
