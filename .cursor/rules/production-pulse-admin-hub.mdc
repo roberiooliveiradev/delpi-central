@@ -76,6 +76,12 @@ URL: `panel`/`modal` shareable; summary/menu/confirm **efêmeros** (não reidrat
 
 Link Mode **não** entra na URL. Builders emitem `modal`. `drawer=` só alias de parse.
 
+## Mobile (≤768)
+
+- Painel esquerdo inicia **recolhido** (`useViewportBucket` + auto-collapse).
+- Toolbar direita: **icon-only** (`.pp-map-overlay-btn-label` oculto); larguras assimétricas `--left` / `--right` anti-colisão.
+- MiniMap desligado no mobile (`showMiniMap={false}`).
+
 ## Anti-padrões
 
 1. Drawer lateral para detalhe/CRUD no Hub.

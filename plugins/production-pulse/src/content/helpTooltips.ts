@@ -459,7 +459,8 @@ export const PP_HELP = {
     focusJobsAnchor: "Atualizações OTA",
     mapSearch: "Filtra e destaca nós no mapa.",
     fleetHealth: "Resumo compacto da saúde OTA da frota.",
-    collapseFilters: "Recolhe ou expande filtros, KPIs e legenda do mapa.",
+    collapseFilters:
+      "Recolhe ou expande filtros, KPIs e legenda do mapa. No celular o painel inicia recolhido para liberar o canvas.",
     lockNodes: "Bloqueia o arraste dos nós no canvas.",
     bottomBar: "Contagens, jobs ativos e atalhos secundários do mapa.",
   },

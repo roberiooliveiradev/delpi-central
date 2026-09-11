@@ -2826,11 +2826,43 @@
 
   .pp-map-overlay-actions {
     gap: 0.35rem;
+    justify-content: flex-end;
   }
 
   .pp-map-overlay-stack:not(.pp-map-overlay-stack--collapsed) {
     max-height: min(48vh, 22rem);
     overflow: auto;
+  }
+
+  /* Anti-colisão: left e right não competem por ~100vw. */
+  .pp-map-overlay-panel--left {
+    max-width: min(20rem, calc(100vw - 4.5rem)) !important;
+  }
+
+  .pp-map-overlay-panel--right {
+    max-width: min(11rem, 46vw) !important;
+  }
+
+  .pp-map-overlay-panel--right .pp-map-overlay-actions {
+    max-width: 100%;
+  }
+
+  .pp-map-overlay-btn-label {
+    display: none;
+  }
+
+  .pp-map-overlay-actions .pp-map-overlay-nav-btn,
+  .pp-map-overlay-actions .pp-map-overlay-create-btn,
+  .pp-map-overlay-actions button {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .pp-map-overlay-actions__create {
+    margin-inline-start: 0;
+    padding-inline-start: 0;
+    border-inline-start: 0;
   }
 }
 
@@ -2913,14 +2945,6 @@
 }
 
 @media (max-width: 768px) {
-  .pp-map-overlay-panel {
-    max-width: calc(100vw - 1.5rem);
-  }
-
-  .pp-map-overlay-actions {
-    max-width: calc(100vw - 1.5rem);
-  }
-
   .pp-admin-side-panel {
     width: 100%;
   }

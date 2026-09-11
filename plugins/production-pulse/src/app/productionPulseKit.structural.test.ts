@@ -315,6 +315,32 @@ describe("production-pulse kit contracts", () => {
     );
   });
 
+  it("Hub mobile: overlays assimétricos, labels compactáveis, MiniMap off e auto-collapse", () => {
+    const css = readRelative("index.css");
+    const hub = readRelative("pages/FirmwareLinksPage.tsx");
+    const canvas = readRelative("components/FirmwareDeviceLinkCanvas.tsx");
+
+    expect(css).toMatch(/\.pp-map-overlay-panel--left/);
+    expect(css).toMatch(/\.pp-map-overlay-panel--right/);
+    expect(css).toMatch(/pp-map-overlay-btn-label/);
+    expect(css).not.toMatch(
+      /@media \(max-width: 768px\) \{\s*\.pp-map-overlay-panel \{\s*max-width:\s*calc\(100vw - 1\.5rem\);/,
+    );
+    expect(css).toMatch(
+      /\.pp-map-overlay-panel--left[\s\S]*?max-width:\s*min\(20rem,\s*calc\(100vw - 4\.5rem\)\)/,
+    );
+    expect(css).toMatch(
+      /\.pp-map-overlay-panel--right[\s\S]*?max-width:\s*min\(11rem,\s*46vw\)/,
+    );
+
+    expect(hub).toMatch(/useViewportBucket/);
+    expect(hub).toMatch(/pp-map-overlay-btn-label/);
+    expect(hub).toMatch(/showMiniMap=\{!isMobile\}/);
+    expect(hub).toMatch(/didAutoCollapseForMobileRef/);
+    expect(canvas).toMatch(/pp-map-overlay-panel--left/);
+    expect(canvas).toMatch(/pp-map-overlay-panel--right/);
+  });
+
   it("botões do hero usam PpHintAction + PP_HELP (sem ação órfã)", () => {
     const heroPages = [
       "pages/PanelPage.tsx",

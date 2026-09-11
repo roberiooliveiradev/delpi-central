@@ -800,12 +800,12 @@ function FirmwareDeviceLinkCanvasInner({
             color={isDark ? "rgba(148, 163, 184, 0.28)" : "rgba(100, 116, 139, 0.35)"}
           />
           {overlayTopLeft ? (
-            <Panel position="top-left" className="pp-map-overlay-panel">
+            <Panel position="top-left" className="pp-map-overlay-panel pp-map-overlay-panel--left">
               {overlayTopLeft}
             </Panel>
           ) : null}
           {overlayTopRight ? (
-            <Panel position="top-right" className="pp-map-overlay-panel">
+            <Panel position="top-right" className="pp-map-overlay-panel pp-map-overlay-panel--right">
               {overlayTopRight}
             </Panel>
           ) : null}
