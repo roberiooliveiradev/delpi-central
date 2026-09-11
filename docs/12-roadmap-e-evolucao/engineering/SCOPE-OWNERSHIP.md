@@ -40,15 +40,11 @@ O Transformômetro continua dono de processos, revisões, instâncias, mediçõe
 
 ### 2.5 FILESERVER e desenhos
 
-A biblioteca atual de desenhos é exposta pela `api-delpi`, que monta o compartilhamento do FILESERVER read-only e fornece:
+A biblioteca atual de desenhos é exposta pela `api-delpi`, que monta o compartilhamento do FILESERVER read-only e fornece contratos de catálogo/metadados/PDF.
 
-- `GET /products/drawings`;
-- `GET /products/{code}/drawing`;
-- `GET /products/{code}/drawing/pdf`.
+O browser não acessa `X:\\...` diretamente.
 
-O browser não acessa `X:\...` diretamente.
-
-Também existem leituras pontuais de arquivos da área de Engenharia em `X:\ENGENHARIA\...`, porém não há hoje uma API canônica genérica de biblioteca documental de Engenharia equivalente à biblioteca de desenhos.
+Também existem leituras pontuais de arquivos da área de Engenharia em `X:\\ENGENHARIA\\...`, porém não há hoje uma API canônica genérica de biblioteca documental de Engenharia equivalente à biblioteca de desenhos. Qualquer biblioteca adicional precisa de allowlist/configuração server-side.
 
 ## 3. Escopo funcional alvo
 
@@ -90,16 +86,17 @@ engineering-api
          ├── requests-api
          ├── transformometro-api
          ├── Strategic Indicators
-         └── Core API quando contrato exigir
+         └── Core API
 ```
 
 ### 4.2 Regras obrigatórias
 
 - MFE `plugins/engineering` chama **somente** `engineering-api` para dados do domínio/composições.
-- `engineering-api` pode consumir `api-delpi` por contrato HTTP; não importa domain/use case de outro serviço.
+- `engineering-api` consome outros serviços por contratos HTTP/ports; não importa domain/use case de outro serviço.
 - `api-delpi` permanece owner de contratos genéricos TOTVS e biblioteca de desenhos já existentes.
 - `requests-api` permanece owner do workflow de Controle de MP.
 - `transformometro-api` permanece owner do TRANSFORMA+.
+- Strategic Indicators permanece owner de metas/realizado/IDD estratégicos.
 - Core API permanece owner de app/manifest/rotas/RBAC/auditoria da plataforma.
 - FILESERVER não é acessado pelo frontend.
 
@@ -113,7 +110,7 @@ Início | Visão geral | Sala de interação | Minhas tarefas | LMPs | Ajuda
 
 ### Ferramentas
 
-As ferramentas aparecem em uma vitrine/listagem própria na home e podem ser acessadas também por deep link contextual:
+As ferramentas aparecem em uma vitrine/listagem própria na Home e podem ser acessadas também por Ctrl+K, Favoritos e deep link contextual:
 
 - Produtos;
 - Controle de MP;
@@ -121,32 +118,23 @@ As ferramentas aparecem em uma vitrine/listagem própria na home e podem ser ace
 - Biblioteca de desenhos;
 - Não conformidades;
 - TRANSFORMA+;
-- futuras ferramentas técnicas.
+- futuras ferramentas técnicas autorizadas.
 
 ## 6. Ownership por capacidade
 
 ### Início
 
-A home é uma composição de leitura. Pode exibir:
-
-- tarefas do usuário;
-- indicadores principais;
-- LMPs recentes ou críticas;
-- salas com atividade recente;
-- atalhos/ferramentas;
-- avisos e alertas.
-
-Não cria ownership novo sobre cada origem.
+A Home é uma composição de leitura. Pode exibir tarefas, indicadores principais, LMPs críticas/recentes, salas/menções, ferramentas e atividade recente. Não cria ownership novo sobre cada origem.
 
 ### Visão geral
 
-Apresenta a Engenharia como área. Indicadores estratégicos devem usar a fonte oficial do Strategic Indicators; indicadores operacionais podem ser compostos pelo `engineering-api` a partir de contratos existentes.
+Apresenta a Engenharia como área. Indicadores estratégicos usam a fonte oficial do Strategic Indicators; indicadores operacionais podem ser compostos pelo `engineering-api` a partir de contratos existentes e fichas aprovadas.
 
 ### Sala de interação
 
-Novo bounded subcontext de colaboração do Portal Engenharia. Deve suportar salas gerais e contextuais. Mensagem não substitui evento oficial de workflow.
+Novo subcontexto de colaboração do Portal Engenharia. Deve suportar salas gerais e contextuais. Mensagem não substitui evento oficial de workflow.
 
-Contextos previstos:
+Contextos candidatos:
 
 - geral da Engenharia;
 - produto;
@@ -155,11 +143,11 @@ Contextos previstos:
 - não conformidade;
 - solicitação de MP.
 
+A política de membership e unicidade por contexto permanece decisão explícita antes da migration.
+
 ### Minhas tarefas
 
-É uma **worklist agregada**, não um novo workflow engine. Cada item precisa carregar origem, tipo, prioridade/estado, deep link e ações permitidas quando houver contrato seguro para isso.
-
-Owners permanecem responsáveis pelos estados reais.
+É uma **worklist agregada**, não um novo workflow engine. Cada item precisa carregar origem, tipo, prioridade/estado, deep link e ações permitidas quando houver contrato seguro para isso. Owners permanecem responsáveis pelos estados reais.
 
 ### LMPs
 
@@ -167,17 +155,7 @@ Owners permanecem responsáveis pelos estados reais.
 
 ### Produtos
 
-Ferramenta interna do portal. Deve concentrar consultas rápidas e ficha 360° do produto:
-
-- pesquisa;
-- cadastro/resumo;
-- estrutura/BOM;
-- onde é usado;
-- desenho;
-- estoque;
-- fornecedores;
-- preço/custo quando permitido;
-- análise ampliada.
+Ferramenta interna do portal para pesquisa, cadastro/resumo, estrutura/BOM, onde é usado, desenho, estoque, fornecedores e preço/custo quando permitido. O backend compõe e protege informação sensível.
 
 ### Controle de MP
 
@@ -185,67 +163,55 @@ O Portal exibe cards, atalhos e status; criação/tratativa navegam para `my-req
 
 ### Documentos técnicos e FILESERVER
 
-Criar uma biblioteca **allowlisted**, não um Explorer web genérico do servidor.
-
-O alvo deve suportar fontes explicitamente configuradas, por exemplo:
-
-```text
-Bibliotecas de Engenharia
-├── desenhos
-├── LMPs
-├── projetos
-└── documentos técnicos
-```
-
-Cada biblioteca define:
-
-- raiz autorizada;
-- extensões permitidas;
-- profundidade/navegação permitida;
-- indexação e metadados;
-- política de download/preview;
-- RBAC;
-- auditoria;
-- tamanho máximo;
-- comportamento quando share indisponível.
+Criar uma biblioteca **allowlisted**, não um Explorer web genérico do servidor. Cada biblioteca define raiz autorizada, extensões, profundidade, metadados, preview/download, RBAC, auditoria, tamanho máximo e comportamento de indisponibilidade.
 
 Proibido expor path físico, credencial SMB/CIFS ou path arbitrário enviado pelo cliente.
 
-## 7. Permissões — direção inicial
+## 7. Permissões — direção mínima
 
-Os códigos finais devem ser confirmados no plano de implementação, mas o modelo funcional precisa distinguir pelo menos:
+O catálogo inicial deve seguir minimização de permissions e ser validado em [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md).
+
+Direção P0:
 
 ```text
 engineering.access
-engineering.overview.view
-engineering.tasks.view
-engineering.rooms.view
-engineering.rooms.write
-engineering.lmps.view
-engineering.products.view
-engineering.documents.view
-engineering.drawings.view
-engineering.admin
+engineering.analytics.access
+engineering.lmps.access
+engineering.products.access
+engineering.documents.access
+engineering.nonconformities.write
+engineering.costs.view
 ```
 
-Permissões dos sistemas integrados continuam próprias (`my-requests.*`, Transformômetro etc.). O Portal não deve conceder acesso indireto que o usuário não possua no owner.
+Sala e Minhas tarefas usam `engineering.access` + resource/self scope enquanto não houver risco que justifique permission adicional. Não criar permissions CRUD de Sala por simetria.
+
+Legados a mapear durante coexistência:
+
+```text
+dashboard-engineering.view
+dashboard-lmps.view
+dashboard-lmps.nc.write
+```
+
+O Portal não deve conceder acesso indireto que o usuário não possua no owner integrado.
 
 ## 8. Integrações e anti-corruption
 
-Cada integração externa ao contexto deve ter adapter próprio no `engineering-api`, com DTO interno do Portal para evitar acoplamento direto da UI aos payloads de terceiros.
+Cada integração externa deve ter adapter próprio no `engineering-api`, com DTO interno do Portal para evitar acoplamento da UI a payloads de terceiros.
 
 ```text
-api-delpi payload ──adapter──> EngineeringProductSummary
-requests-api      ──adapter──> EngineeringTaskItem
-transformometro   ──adapter──> EngineeringTransformaSummary
-SI                ──adapter──> EngineeringIndicatorScore
+api-delpi       ──adapter──> EngineeringLmp/Product DTOs
+requests-api    ──adapter──> EngineeringTask/RawMaterial summary
+transformometro ──adapter──> EngineeringTransformaSummary
+SI              ──adapter──> EngineeringIndicatorScore
+Core            ──adapter──> EffectiveAuthorization/UserIdentity
 ```
 
 ## 9. Cutover dos legados
 
 ### `dashboard-engineering`
 
-Candidato a ser absorvido pela Visão geral. Remover somente após paridade e redirect definidos.
+Candidato a ser absorvido pela Visão geral. Remover somente após paridade de dados/score/permissions e redirect definidos.
 
 ### `dashboard-lmps`
 
@@ -262,5 +228,7 @@ Seguir roadmap próprio. O Portal Engenharia não altera a decisão de migraçã
 - duplicar cadastro mestre de produto;
 - duplicar workflow de Controle MP;
 - duplicar domínio do Transformômetro;
-- converter Sala de interação em fonte oficial de status de processos;
-- acesso irrestrito ao FILESERVER.
+- converter Sala em fonte oficial de status de processos;
+- acesso irrestrito ao FILESERVER;
+- administração P0 sem requisito/owner explícito;
+- hard cutover junto com a primeira entrega do target.
